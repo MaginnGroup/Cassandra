@@ -1,0 +1,129 @@
+!*******************************************************************************
+!
+! This is an input file for SPC/E water.
+!
+! Created by Eliseo Marin 12/13/13
+!*******************************************************************************
+
+
+# Run_Name
+water_spce_298
+!--------------
+
+# Sim_Type
+NPT_MC
+!---------------
+
+# Nbr_Species
+1
+!----------------
+
+# VDW_Style
+LJ cut_tail 10.0
+!----------------
+
+# Rcutoff_Low
+1.0
+!----------------
+
+# Mixing_Rule
+LB
+!----------------
+
+# Charge_Style
+coul Ewald 10.0 0.000001 
+!----------------
+
+# Intra_Scaling
+0.0 0.0 0.0 1.0
+0.0 0.0 0.0 1.0
+0.0 0.0 0.0 1.0
+0.0 0.0 0.0 1.0
+!------------------
+
+# Molecule_Files
+spce.mcf  800
+
+!---------------------
+
+# Pair_Energy
+TRUE
+
+# Box_Info
+1
+CUBIC
+28.0 28.0 28.0
+
+# Temperature_Info
+298.0
+
+# Pressure_Info
+1.0
+!------------------
+
+# Seed_Info
+12082012 12082012
+!-------------------
+
+# Move_Probability_Info
+
+# Prob_Translation
+0.55
+1.0
+ 
+# Prob_Rotation
+0.20
+60.0
+
+# Prob_Regrowth
+0.20  
+1.0
+
+# Prob_Volume
+0.05
+500.0
+
+# Done_Probability_Info
+!----------------------
+# Bond_Prob_Cutoff
+1.0E-10
+
+# CBMC_Info
+kappa_ins 12
+kappa_rot 12
+kappa_dih 12
+rcut_cbmc 6.5  6.5
+
+# Start_Type
+make_config
+800
+
+!------------------
+
+# Run_Type
+Equilibration   200  100
+!------------------
+
+# Average_Info ( 0 == yes, 1 = No)
+1
+
+# Frequency_Info
+freq_type    none
+Nthermofreq  100
+Ncoordfreq   100
+MCsteps      5000
+# Done_Frequency_Info
+!--------------------
+
+# Property_Info 1 
+Energy_Total
+Density
+Volume
+Nmols
+Pressure
+
+# Fragment_Files
+species1/frag1/frag1.dat 1
+
+
+END

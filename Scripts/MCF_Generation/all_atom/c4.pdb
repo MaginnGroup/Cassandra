@@ -1,0 +1,51 @@
+!********************************************************************************
+!   Cassandra - An open source atomistic Monte Carlo software package
+!   developed at the University of Notre Dame.
+!   http://cassandra.nd.edu
+!   Prof. Edward Maginn <ed@nd.edu>
+!   Copyright (2013) University of Notre Dame du Lac
+!
+!   This program is free software: you can redistribute it and/or modify
+!   it under the terms of the GNU General Public License as published by
+!   the Free Software Foundation, either version 3 of the License, or
+!   (at your option) any later version.
+!
+!   This program is distributed in the hope that it will be useful,
+!   but WITHOUT ANY WARRANTY; without even the implied warranty of
+!   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!   GNU General Public License for more details.
+!
+!   You should have received a copy of the GNU General Public License
+!   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+!********************************************************************************
+
+REMARK   1 File created by GaussView 5.0.8
+HETATM    1  C           0      -3.665   1.718   0.000                       C C
+HETATM    2  H           0      -3.308   0.709   0.000                       H H
+HETATM    3  H           0      -3.308   2.222  -0.874                       H H
+HETATM    4  H           0      -4.735   1.718   0.000                       H H
+HETATM    5  C           0      -3.151   2.444   1.257                       C C
+HETATM    6  H           0      -3.507   3.453   1.256                       H H
+HETATM    7  H           0      -3.510   1.940   2.131                       H H
+HETATM    8  C           0      -1.611   2.441   1.259                       C C
+HETATM    9  H           0      -1.253   2.944   0.385                       H H
+HETATM   10  H           0      -1.256   1.432   1.260                       H H
+HETATM   11  C           0      -1.098   3.168   2.516                       C C
+HETATM   12  H           0      -1.456   2.665   3.390                       H H
+HETATM   13  H           0      -0.028   3.166   2.517                       H H
+HETATM   14  H           0      -1.453   4.177   2.515                       H H
+END
+CONECT    1    2    3    4    5
+CONECT    2    1
+CONECT    3    1
+CONECT    4    1
+CONECT    5    6    7    1    8
+CONECT    6    5
+CONECT    7    5
+CONECT    8    9   10    5   11
+CONECT    9    8
+CONECT   10    8
+CONECT   11   12   13   14    8
+CONECT   12   11
+CONECT   13   11
+CONECT   14   11

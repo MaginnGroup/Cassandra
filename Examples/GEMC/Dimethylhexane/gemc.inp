@@ -1,0 +1,124 @@
+! Input file for GEMC simulation of 2,2-Dimethylhexane at T = 354 K
+
+# Run_Name
+gemc
+
+# Sim_Type
+GEMC
+
+# Nbr_Species
+1
+
+# VDW_Style
+LJ   cut_tail   14.00
+LJ   cut_tail   14.00
+
+# Rcutoff_Low
+1.0
+
+# Mixing_Rule
+LB
+
+# Charge_Style
+NONE
+NONE
+
+# Intra_Scaling
+0.0    0.0    0.0    1.0
+0.0   0.0    0.0     1.0
+
+# Molecule_Files
+dimethylhexane_UA_Trappe.mcf 300
+
+# Box_Info
+2
+CUBIC
+38.7600 38.7600 38.7600
+
+CUBIC
+194.06 194.06 194.06
+
+# Temperature_Info
+354.00 354.00 
+
+# Move_Probability_Info
+
+# Prob_Translation 
+0.30
+0.36
+14.0
+
+# Prob_Rotation
+0.30
+30.0
+180.0
+
+# Prob_Regrowth
+0.30
+1.0
+
+# Prob_Volume
+0.005
+200.0
+200.0
+
+# Prob_Swap
+0.095
+insertion method
+reservoir
+
+# Done_Probability_Info
+
+# Bond_Prob_Cutoff
+1.0E-10
+
+# Start_Type
+read_old
+Init_Config/nvt_liq.xyz
+Init_Config/nvt_vap.xyz
+
+# Run_Type
+Production 5000 100
+
+# Frequency_Info
+freq_type   none
+Nthermofreq 250
+Ncoordfreq  5000
+MCsteps     5000
+# Done_Frequency_Info 
+
+# Seed
+1216131116 1216131117
+
+# Average_Info
+1
+
+# Property_Info 1
+Energy_Total
+Density
+Nmols
+Volume
+
+# Property_Info 2
+Energy_Total
+Density
+Nmols
+Volume
+
+# CBMC_Info
+kappa_ins 12
+kappa_rot 0
+kappa_dih 12
+rcut_cbmc 6.5  6.5
+
+# Pair_Energy
+TRUE
+
+# Fragment_Files
+species1/frag1/frag1.dat  1
+species1/frag2/frag2.dat  2
+species1/frag3/frag3.dat  3
+species1/frag4/frag4.dat  4
+
+
+END

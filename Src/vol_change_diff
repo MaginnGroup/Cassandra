@@ -1,0 +1,312 @@
+61a62,63
+>   !
+>   ! 04/03/13 (JS) : selection of box is skipped if it's has lattice attribute.
+80a83,84
+>   USE Neighbor
+>   USE Pref_Bias
+128a133,139
+>   IF(pbias_flag) THEN
+>      i_inside_new(:,:,:,:) = 0
+>   END IF
+> 
+>   new_cells = .FALSE.
+>   xz_change = .FALSE.
+>   energy_old = energy(this_box)
+129a141,146
+>   IF(int_neigh_style == neighb_cell) THEN
+>      linklist_vol(:,:) = linklist(:,:)
+>      cellcnt_vol(:) = cellcnt(:)
+>      headoc_vol(:) = headoc(:)
+>      icellarr_vol(:) = icellarr(:)
+>   END IF
+130a148
+>   DO WHILE (.TRUE.)
+131a150,162
+>      
+>      IF (box_list(this_box)%lattice) CYCLE
+> 
+>      ! Note that if it's an NPT simulation and then the choice of box
+>      ! is correct so exit. This is true even if there is a slit pore
+>      ! since the specification of NPT_MC as simulation type indicates
+>      ! that even the slit pore also undergoes volume changes
+>      IF ( int_sim_type /= sim_npt) THEN
+>         IF (.NOT. l_slit_pore(this_box)) EXIT
+>      ELSE
+>         EXIT
+>      END IF
+>   END DO
+145a177
+>   IF(rranf() .LT. 0.5_DP) xz_change = .TRUE.
+189c221
+<      !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+---
+>      !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+192c224
+<      !$OMP END PARALLEL WORKSHARE
+---
+>      !!$OMP END PARALLEL WORKSHARE
+232a265,276
+>   IF ( int_charge_style(this_box) == charge_eam) THEN
+>   
+>      IF(xz_change) THEN
+> 
+>         box_list(this_box)%length(1,1) = (this_volume / box_list(this_box)%length(2,2)) ** (1.0_DP / 2.0_DP)
+>         box_list(this_box)%length(3,3) = box_list(this_box)%length(1,1)
+> 
+>      ELSE
+> 
+>         box_list(this_box)%length(2,2) = this_volume / box_list(this_box)%length(1,1) / box_list(this_box)%length(3,3)
+> 
+>      END IF
+234c278
+<   IF ( box_list(this_box)%int_box_shape == int_cubic ) THEN
+---
+>   ELSE IF ( box_list(this_box)%int_box_shape == int_cubic ) THEN
+239a284,294
+>   ELSE IF ( l_slit_pore(this_box) ) THEN
+> 
+>      pore_width_old = pore_width
+>      half_pore_width_old = half_pore_width
+> 
+>      pore_width = pore_width + (2.0_DP * rranf() - 1.0_DP) * dmax_pore_width
+>      half_pore_width = 0.5_DP * pore_width
+> 
+>      ratio_width = pore_width / pore_width_old
+>      box_list(this_box)%length(3,3) = ratio_width * box_list(this_box)%length(3,3)
+> 
+312a368
+>   act = 0
+338a395,397
+>               IF ( l_slit_pore(this_box) ) THEN
+> 
+>                  molecule_list(alive,is)%zcom = ratio_width * molecule_list(alive,is)%zcom
+339a399,404
+>                  atom_list(1:natoms(is),alive,is)%rzp = atom_list(1:natoms(is),alive,is)%rzp + &
+>                       molecule_list(alive,is)%zcom - molecule_list(alive,is)%zcom_old
+>                  
+>                  
+>               ELSE
+>                  
+354a420,433
+>                  IF(int_neigh_style == neighb_verlet) THEN
+>                     DO ia = 1,natoms(is)
+>                        act = act + 1          
+>                        xx_old(act) = atom_list(ia,alive,is)%rxp
+>                        dx = molecule_list(alive,is)%xcom - molecule_list(alive,is)%xcom_old
+>                        xx(act) = xx(act) + dx
+>                        yy_old(act) = atom_list(ia,alive,is)%ryp
+>                        dy = molecule_list(alive,is)%ycom - molecule_list(alive,is)%ycom_old
+>                        yy(act) = yy(act) + dy
+>                        zz_old(act) = atom_list(ia,alive,is)%rzp
+>                        dz = molecule_list(alive,is)%zcom - molecule_list(alive,is)%zcom_old
+>                        zz(act) = zz(act) + dz
+>                     END DO
+>                  END IF
+364a444
+>               END IF
+375a456,465
+>   IF(int_neigh_style == neighb_cell .AND. this_box == cell_box) THEN
+>      cellspl_vol = AINT(box_list(cell_box)%length(1,1) / MAX(rcut_vdw(cell_box),rcut_coul(cell_box))) 
+>      IF( cellspl_vol .LT. 3 ) THEN
+>         err_msg = ""
+>         err_msg(1) = "Cells per line must be greater than 3."
+>         CALL Clean_Abort(err_msg,'Volume_Change')
+>      ELSE IF (cellspl_vol .NE. cellspl ) THEN
+>         new_cells = .TRUE.
+>      END IF
+>   END IF  
+392c482
+<      !$OMP PARALLEL WORKSHARE DEFAULT(SHARED) 
+---
+>      !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED) 
+399c489
+<      !$OMP END PARALLEL WORKSHARE
+---
+>      !!$OMP END PARALLEL WORKSHARE
+400a491
+>      IF (l_slit_pore(this_box)) dipole_z_old = dipole_z
+469c560,609
+<      CALL Compute_Total_System_Energy(this_box,.TRUE.,overlap)
+---
+>   IF((int_neigh_style .NE. neighb_none) .AND. (.NOT. new_cells)) THEN
+>      IF(int_neigh_style == neighb_verlet) THEN
+>        
+>         DO is = 1,nspecies
+> 
+>            DO im = 1,nmolecules(is)
+> 
+>               IF(molecule_list(im,is)%which_box .NE. this_box) CYCLE
+> 
+>               CALL Verlet_Check(is,im,nl_update)
+> 
+>               IF(nl_update) EXIT
+> 
+>            END DO
+> 
+>            IF(nl_update) EXIT
+> 
+>         END DO    
+> 
+>      END IF
+> 
+> 
+>      IF(int_neigh_style == neighb_verlet) THEN
+> 
+>         overlap = .FALSE.
+>         total_calc = .TRUE. 
+>         IF(int_charge_style(this_box) == charge_eam) rho_eam(:) = 0.0_DP
+> 
+>         energy(this_box)%inter_vdw = 0.0_DP
+>         energy(this_box)%inter_q = 0.0_DP
+>         energy(this_box)%total = 0.0_DP
+>         energy(this_box)%ewald_reciprocal = 0.0_DP
+> 
+>         energy(this_box)%total = energy(this_box)%total + energy(this_box)%intra + energy(this_box)%intra_vdw + &
+>          energy(this_box)%intra_q
+> 
+>        IF(nl_update) THEN
+>            CALL Verlet_list(1,1,E_vol_vdw,E_vol_qq,overlap)
+>            energy(this_box)%inter_vdw = E_vol_vdw
+>            energy(this_box)%inter_q = E_vol_qq
+>            energy(this_box)%total = E_vol_qq + E_vol_vdw
+>         ELSE
+>            DO is = 1,nspecies
+>               DO im = 1,nmolecules(is)
+>                  CALL Verlet_list(im,is,E_vol_vdw,E_vol_qq,overlap)
+>                  energy(this_box)%inter_vdw = energy(this_box)%inter_vdw + E_vol_vdw
+>                  energy(this_box)%inter_q = energy(this_box)%inter_q + E_vol_qq
+>                  energy(this_box)%total = energy(this_box)%total + E_vol_qq + E_vol_vdw
+>               END DO
+>            END DO
+470a611
+>            IF(int_charge_style(this_box) == charge_eam) THEN
+471a613
+>               DO iatom = 1, total_num_atoms
+472a615,649
+>                  k = num_pairs + nspecies + ss(iatom)
+>                  embed_eam(iatom) = SPL(k,rho_eam(iatom),0)
+>                  E_vol_qq = E_vol_qq + embed_eam(iatom)
+> 
+>               END DO
+>               energy(this_box)%inter_q = energy(this_box)%inter_q + E_vol_qq
+>               energy(this_box)%total = energy(this_box)%total + E_vol_qq
+> 
+>            END IF
+> 
+>         END IF
+>         total_calc = .FALSE.
+> 
+>      ELSE
+> 
+>         CALL Link_Start
+>         CALL Link_Total(.FALSE.,overlap)
+> 
+>      END IF
+> 
+>   ELSE
+> !     E_tot = energy(this_box)%total
+> !     E_vdw = energy(this_box)%inter_vdw
+> !     E_lrc_old = energy(this_box)%lrc
+> !     energy(this_box)%lrc = 0.0_DP
+>      IF(pbias_flag) inside_calc = .TRUE.
+>      CALL Compute_Total_System_Energy(this_box,.TRUE.,overlap)
+>      IF(pbias_flag) inside_calc = .FALSE.
+> 
+> !     IF(abs(E_tot - energy(this_box)%total) .GT. 0.0001_DP) THEN
+> !        superbad = .true.
+> !        write(*,*) 'fubar'
+> !     END IF
+>   
+>   END IF
+474a652
+> !  CALL Verlet_Start
+478a657,662
+>      IF(int_neigh_style == neighb_cell) THEN
+>         linklist(:,:) = linklist_vol(:,:)
+>         cellcnt(:) = cellcnt_vol(:)
+>         headoc(:) = headoc_vol(:)
+>         icellarr(:) = icellarr_vol(:)
+>      END IF
+487a672,681
+>      IF ( l_slit_pore(this_box) ) THEN
+>         
+>         area = box_list(this_box)%length(1,1) * box_list(this_box)%length(2,2)
+>         
+>         delta_volume = area * ( pore_width - pore_width_old)
+> 
+>         p_acc = beta(this_box) * delta_e + beta(this_box) * pressure(this_box) * delta_volume - &
+>              total_molecules * DLOG(ratio_width)
+> 
+>      ELSE
+491a686
+>      END IF
+517a713
+>         IF(pbias_flag) CALL Bias_Bookkeeping_Total
+531c727
+<                     !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+---
+>                     !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+534c730
+<                     !$OMP END PARALLEL WORKSHARE
+---
+>                     !!$OMP END PARALLEL WORKSHARE
+574a771,775
+>         IF(int_neigh_style == neighb_cell .AND. this_box == cell_box .AND. new_cells) THEN
+>            WRITE(logunit,'(A,T15,I3,T25,A,T40,I3)') 'Cells per line of box', cell_box, 'is now :', cellspl
+>            CALL Map_Cells(total_num_atoms)
+>            CALL Link_Start
+>         END IF
+595a797,814
+>         IF(int_neigh_style == neighb_verlet) THEN
+>            act = 0
+>            DO is = 1, nspecies
+>               DO im = 1,nmolecules(is)
+>                  DO ia = 1,natoms(is)
+>                     act = act + 1
+>                     xx(act) = xx_old(act)
+>                     yy(act) = yy_old(act)
+>                     zz(act) = zz_old(act)
+>                  END DO
+>               END DO
+>            END DO
+>         ELSE IF(int_neigh_style == neighb_cell) THEN
+>            linklist(:,:) = linklist_vol(:,:)
+>            cellcnt(:) = cellcnt_vol(:)
+>            headoc(:) = headoc_vol(:)
+>            icellarr(:) = icellarr_vol(:)
+>         END IF
+624a844,853
+>         ELSE IF (l_slit_pore(this_box)) THEN
+>            
+>            IF (ivol_success(this_box) == 0 ) THEN              
+>               dmax_pore_width = 0.1_DP * dmax_pore_width
+>               
+>            ELSE
+>               
+>               dmax_pore_width = 2.0_DP * success_ratio * dmax_pore_width
+>               
+>            END IF
+661a891,894
+>       IF (l_slit_pore(this_box)) THEN
+>          pore_width = pore_width_old
+>          half_pore_width = half_pore_width_old
+>       END IF
+705a939
+>          IF (l_slit_pore(this_box)) dipole_z = dipole_z_old
+747c981
+<          !$OMP PARALLEL WORKSHARE DEFAULT(SHARED) 
+---
+>          !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED) 
+756c990
+<          !$OMP END PARALLEL WORKSHARE
+---
+>          !!$OMP END PARALLEL WORKSHARE
+768a1003,1005
+> 
+>     
+>       
+770a1008,1011
+>   
+> 
+>   
+>   

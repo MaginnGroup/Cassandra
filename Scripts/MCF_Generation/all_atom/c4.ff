@@ -1,0 +1,142 @@
+#********************************************************************************
+#   Cassandra - An open source atomistic Monte Carlo software package
+#   developed at the University of Notre Dame.
+#   http://cassandra.nd.edu
+#   Prof. Edward Maginn <ed@nd.edu>
+#   Copyright (2013) University of Notre Dame du Lac
+#
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#********************************************************************************
+
+atomtypes
+2
+
+begin atom-atomtype
+1 C
+2 H
+3 H
+4 H
+5 C
+6 H
+7 H
+8 C
+9 H
+10 H
+11 C
+12 H
+13 H
+14 H
+end atom-atomtype
+
+dihedraltype OPLS
+
+nonbonded
+C
+Sigma sigma_c
+Epsilon epsilon_c
+
+nonbonded
+H
+Sigma sigma_h
+Epsilon epsilon_h
+
+bonds
+C H
+Length length_1
+Constant fixed
+
+bonds
+C C
+Length length_2
+Constant fixed
+
+angles
+H C H
+Angle angle_1
+Constant constant_angle_1
+
+angles
+H C C
+Angle angle_2
+Constant constant_angle_2
+
+angles
+C C C
+Angle angle_3
+Constant constant_angle_3
+
+dihedrals
+C C C H
+a0 dihedral_1
+a1 dihedral_1
+a2 dihedral_1
+a3 dihedral_1
+
+dihedrals
+C C C C
+a0 dihedral_2
+a1 dihedral_2
+a2 dihedral_2
+a3 dihedral_2
+
+dihedrals
+H C C H
+a0 dihedral_3
+a1 dihedral_3
+a2 dihedral_3
+a3 dihedral_3
+
+charge
+1 0.0
+
+charge
+2 0.0
+
+charge
+3 0.0
+
+charge
+4 0.0
+
+charge
+5 0.0
+
+charge
+6 0.0
+
+charge
+7 0.0
+
+charge
+8 0.0
+
+charge
+9 0.0
+
+charge
+10 0.0
+
+charge
+11 0.0
+
+charge
+12 0.0
+
+charge
+13 0.0
+
+charge
+14 0.0
+
+end

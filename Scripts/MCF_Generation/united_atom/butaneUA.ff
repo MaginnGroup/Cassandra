@@ -1,0 +1,57 @@
+atomtypes
+2
+
+begin atom-atomtype
+1 CH3
+2 CH2
+3 CH2
+4 CH3
+end atom-atomtype
+
+dihedraltype OPLS
+
+nonbonded
+CH3
+Sigma 
+Epsilon 
+
+nonbonded
+CH2
+Sigma 
+Epsilon 
+
+bonds
+CH3 CH2
+Length 
+Constant 
+
+bonds
+CH2 CH2
+Length 
+Constant 
+
+angles
+CH3 CH2 CH2
+Angle 
+Constant 
+
+dihedrals
+CH3 CH2 CH2 CH3
+a0 
+a1 
+a2 
+a3 
+
+charge
+1 
+
+charge
+2 
+
+charge
+3 
+
+charge
+4 
+
+end

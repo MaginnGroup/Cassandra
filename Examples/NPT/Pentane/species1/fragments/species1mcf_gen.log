@@ -1,0 +1,367 @@
+*** Beginning Cassandra simulation ***
+
+Version Cassandra 1.0                                                                                                           
+
+inputfile species1_mcf_gen.inp                                                                                                    
+
+name of run: species1mcf_gen
+
+  Month      Day      Year
+     10       29      2013
+ 
+ Time:  15:01:06
+ 
+machine: maginnfe.crc.nd.edu
+
+
+Simulation type MCF_Gen             
+
+ 
+ **** Copying Inputfile ****** 
+ # Run_Name
+ species1mcf_gen
+ 
+ # Sim_Type
+ MCF_Gen
+ 
+ # Nbr_Species
+ 1
+ 
+ # VDW_Style
+ LJ cut_tail 12.0
+ 
+ # Rcutoff_Low
+ 1.0
+ 
+ # Mixing_Rule
+ LB
+ 
+ # Charge_Style
+ coul Ewald 12.0 0.000001
+ 
+ # Intra_Scaling
+ 0.0 0.0 0.0 1.0
+ 0.0 0.0 0.0 1.0
+ 
+ # Molecule_Files
+ ../../pentane.mcf 50
+ 
+ # Box_Info
+ 1
+ CUBIC
+ 10.0 10.0 10.0
+ 
+ END
+ 
+ **** Finished writing input file *******
+ Number of species simulated:      1
+
+ *** Simulation box data ***
+number of simulation boxes     1
+ 
+Box number      1       Box Shape:      Cubic 
+Each Side Of :        10.0000     Angstrom
+ 
+Cell basis vector lengths in A,     10.0000      10.0000      10.0000
+Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+Distance between box faces    10.0000      10.0000      10.0000
+Box volume, A^3          1000.0000
+ *** Finished loading box information ***
+ 
+   VWD style used is:   LJ             in box:  1
+   VDW sum style is:   cut_tail       in box:  1
+    rcut =    12.000   Angstrom
+ VDW style properly input
+ 
+   Charge style used is:   coul           in box:  1
+    Charge sum style is   Ewald          in box:  1
+    Ewald real space cutoff is  12.000 Angstroms.
+  Ewald real space parameter is   0.310 inverse Angstroms
+    Ewald reciprocal cutoff is  2.3026 inverse Angstroms
+ Charge style properly input
+ 
+Lorentz-Berthelot mixing rule specified
+ 
+ Pair interaction energy arrays will not be stored
+ Energy calculations will be done in a standard way
+ 
+ 
+ Reading molecular connectivity information
+ Species:            1
+ Molecular connectivity file: 
+ ../../pentane.mcf                                                              
+                                          
+   5 atom(s) specified.
+   4 bond(s) specified.
+   3 angle(s) specified.
+   2 dihedral(s) specified.
+   3 fragments specified.
+   0 improper(s) specified.
+   2  fragment bonds specified.
+ 
+Species  Nbr molecules
+-------  -------------
+     1             50
+ 
+L_Coul_CBMC not given for species    1
+ Defaulting to true
+ default  T
+ 
+Species type given for species    1  SORBATE             
+Insertion style given for species    1  COM                 
+Species and atom number   1   1
+ atom name:             C1    
+ element:               C 
+ mass:                     15.0107
+ charge:                    0.0000
+ vdw type:              LJ                  
+ Epsilon / kB in K:        98.0000
+ Sigma in A:                3.7500
+ 
+Species and atom number   1   2
+ atom name:             C2    
+ element:               C 
+ mass:                     14.0107
+ charge:                    0.0000
+ vdw type:              LJ                  
+ Epsilon / kB in K:        46.0000
+ Sigma in A:                3.9500
+ 
+Species and atom number   1   3
+ atom name:             C3    
+ element:               C 
+ mass:                     14.0107
+ charge:                    0.0000
+ vdw type:              LJ                  
+ Epsilon / kB in K:        46.0000
+ Sigma in A:                3.9500
+ 
+Species and atom number   1   4
+ atom name:             C4    
+ element:               C 
+ mass:                     14.0107
+ charge:                    0.0000
+ vdw type:              LJ                  
+ Epsilon / kB in K:        46.0000
+ Sigma in A:                3.9500
+ 
+Species and atom number   1   5
+ atom name:             C5    
+ element:               C 
+ mass:                     15.0107
+ charge:                    0.0000
+ vdw type:              LJ                  
+ Epsilon / kB in K:        98.0000
+ Sigma in A:                3.7500
+ 
+Total number of ring atoms in species     1    0
+Total number of exo atoms in species      1    5
+ Atom ids for ring atoms
+ Atom ids for exo atoms           1           2           3           4
+           5
+ *** Completed assigning atom info ***
+ 
+Species and bond number   1   1
+ atom1:                   1
+ atom2:                   2
+ bond type:             fixed               
+Bond fixed between atoms:      1      2in species   1
+Fixed bond length, in A:    1.5400
+ 
+Species and bond number   1   2
+ atom1:                   2
+ atom2:                   3
+ bond type:             fixed               
+Bond fixed between atoms:      2      3in species   1
+Fixed bond length, in A:    1.5400
+ 
+Species and bond number   1   3
+ atom1:                   3
+ atom2:                   4
+ bond type:             fixed               
+Bond fixed between atoms:      3      4in species   1
+Fixed bond length, in A:    1.5400
+ 
+Species and bond number   1   4
+ atom1:                   4
+ atom2:                   5
+ bond type:             fixed               
+Bond fixed between atoms:      4      5in species   1
+Fixed bond length, in A:    1.5400
+ 
+ *** Completed assigning bond info ***
+ 
+Species and angle number  1   1
+ atom1:                   1
+ atom2:                   2
+ atom3:                   3
+ angle type:            harmonic            
+ K_angle in K/rad^2:    31250.0000
+ theta0 in degrees:       114.0000
+ 
+Species and angle number  1   2
+ atom1:                   2
+ atom2:                   3
+ atom3:                   4
+ angle type:            harmonic            
+ K_angle in K/rad^2:    31250.0000
+ theta0 in degrees:       114.0000
+ 
+Species and angle number  1   3
+ atom1:                   3
+ atom2:                   4
+ atom3:                   5
+ angle type:            harmonic            
+ K_angle in K/rad^2:    31250.0000
+ theta0 in degrees:       114.0000
+ 
+ 
+Molecule    1  is NOT defined to be linear
+ 
+ *** Completed assigning angle info ***
+ 
+Species and dihedral num  1   1
+ atom1:                   1
+ atom2:                   2
+ atom3:                   3
+ atom4:                   4
+ dihedral type:         OPLS                
+ a0, kJ/mol:                0.0000
+ a1, kJ/mol:                2.9519
+ a2, kJ/mol:               -0.5670
+ a3, kJ/mol:                6.5794
+ 
+Species and dihedral num  1   2
+ atom1:                   2
+ atom2:                   3
+ atom3:                   4
+ atom4:                   5
+ dihedral type:         OPLS                
+ a0, kJ/mol:                0.0000
+ a1, kJ/mol:                2.9519
+ a2, kJ/mol:               -0.5670
+ a3, kJ/mol:                6.5794
+ 
+ *** Completed assigning dihedral info ***
+ 
+ No impropers in species            1
+ *** Completed assigning improper info ***
+ 
+ 
+ Total number of atoms in the fragment            1  is            3
+ Identity of these atoms are           2           1           3
+ 
+ Total number of atoms in the fragment            2  is            3
+ Identity of these atoms are           3           2           4
+ 
+ Total number of atoms in the fragment            3  is            3
+ Identity of these atoms are           4           3           5
+ 
+ ******* Finished loading fragment info ********
+ 
+ ******* Generating anchor info ****************
+ 
+ Number of anchors for fragment            1   is           1
+ Anchor ids are           2
+ 
+ Number of anchors for fragment            2   is           1
+ Anchor ids are           3
+ 
+ Number of anchors for fragment            3   is           1
+ Anchor ids are           4
+ 
+ Insertable species:           1
+ 
+ *** Computed bond participation information ***
+ species, atom, local bond nbr, global bond nbr, atom bonded            1
+           1           1           1           2
+ 
+ species, atom, local bond nbr, global bond nbr, atom bonded            1
+           2           1           1           1
+ species, atom, local bond nbr, global bond nbr, atom bonded            1
+           2           2           2           3
+ 
+ species, atom, local bond nbr, global bond nbr, atom bonded            1
+           3           1           2           2
+ species, atom, local bond nbr, global bond nbr, atom bonded            1
+           3           2           3           4
+ 
+ species, atom, local bond nbr, global bond nbr, atom bonded            1
+           4           1           3           3
+ species, atom, local bond nbr, global bond nbr, atom bonded            1
+           4           2           4           5
+ 
+ species, atom, local bond nbr, global bond nbr, atom bonded            1
+           5           1           4           4
+ 
+ 
+ 
+ For species           1
+  Number of atoms that can be displaced           2
+             Atom ID     Reference Atom ID
+                   1                     2
+                   5                     4
+ 
+ Number of atoms in question           1
+ Total number of angles           1
+ Angles for this atom
+           1
+ Position of the atom in these dihedrals
+           1
+ Number of atoms in question           2
+ Total number of angles           2
+ Angles for this atom
+           1           2
+ Position of the atom in these dihedrals
+           2           1
+ Number of atoms in question           3
+ Total number of angles           3
+ Angles for this atom
+           1           2           3
+ Position of the atom in these dihedrals
+           3           2           1
+ Number of atoms in question           4
+ Total number of angles           2
+ Angles for this atom
+           2           3
+ Position of the atom in these dihedrals
+           3           2
+ Number of atoms in question           5
+ Total number of angles           1
+ Angles for this atom
+           3
+ Position of the atom in these dihedrals
+           3
+ Number of atoms in question           1
+ Total number of dihedrals           1
+ Dihedral angles for this atom
+           1
+ Position of the atom in angles
+           1
+ Number of atoms in question           2
+ Total number of dihedrals           2
+ Dihedral angles for this atom
+           1           2
+ Position of the atom in angles
+           2           1
+ Number of atoms in question           3
+ Total number of dihedrals           2
+ Dihedral angles for this atom
+           1           2
+ Position of the atom in angles
+           3           2
+ Number of atoms in question           4
+ Total number of dihedrals           2
+ Dihedral angles for this atom
+           1           2
+ Position of the atom in angles
+           4           3
+ Number of atoms in question           5
+ Total number of dihedrals           1
+ Dihedral angles for this atom
+           2
+ Position of the atom in angles
+           4
+ 
+ Finished generating fragments
+ Exiting
