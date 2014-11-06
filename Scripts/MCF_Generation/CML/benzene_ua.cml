@@ -1,0 +1,39 @@
+!********************************************************************************
+!   Cassandra - An open source atomistic Monte Carlo software package
+!   developed at the University of Notre Dame.
+!   http://cassandra.nd.edu
+!   Prof. Edward Maginn <ed@nd.edu>
+!   Copyright (2013) University of Notre Dame du Lac
+!
+!   This program is free software: you can redistribute it and/or modify
+!   it under the terms of the GNU General Public License as published by
+!   the Free Software Foundation, either version 3 of the License, or
+!   (at your option) any later version.
+!
+!   This program is distributed in the hope that it will be useful,
+!   but WITHOUT ANY WARRANTY; without even the implied warranty of
+!   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!   GNU General Public License for more details.
+!
+!   You should have received a copy of the GNU General Public License
+!   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+!********************************************************************************
+
+<molecule>
+ <atomArray>
+  <atom id="a1" elementType="C" x3="0.682484" y3="-0.092393" z3="1.208751"/> "CH2"
+  <atom id="a2" elementType="C" x3="-0.707439" y3="-0.035189" z3="1.197316"/> "CH2"
+  <atom id="a3" elementType="C" x3="-1.389823" y3="0.057217" z3="-0.011432"/> "CH2"
+  <atom id="a4" elementType="C" x3="-0.682419" y3="0.092478" z3="-1.208755"/> "CH2"
+  <atom id="a5" elementType="C" x3="0.707479" y3="0.035227" z3="-1.197298"/> "CH2"
+  <atom id="a6" elementType="C" x3="1.389894" y3="-0.057174" z3="0.011426"/> "CH2"
+ </atomArray>
+ <bondArray>
+  <bond atomRefs2="a1 a2" order="2"/>
+  <bond atomRefs2="a1 a6" order="1"/>
+  <bond atomRefs2="a2 a3" order="1"/>
+  <bond atomRefs2="a3 a4" order="2"/>
+  <bond atomRefs2="a4 a5" order="1"/>
+  <bond atomRefs2="a5 a6" order="2"/>
+ </bondArray>
+</molecule>

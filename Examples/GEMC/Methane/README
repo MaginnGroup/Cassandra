@@ -1,0 +1,4 @@
+This directory contains a short GEMC-NVT simulation of methane at 175.0 K.
+The example can be run using the following command:
+
+path_for_Cassandra_Executable methane.inp

@@ -1,0 +1,33 @@
+############################################
+# Automatic fragment library generation    #
+# library_setup.py                         #
+############################################
+ 
+  This script sets up fragment library files required to run a Cassandra simulation.
+ 
+  Files required before running:
+ 	MCF files for each species
+ 	Master input file
+	PDB files for each species
+ 
+  These files must be located in the same directory
+
+  Input files produced:
+  
+  /species?/fragments/species?_mcf_gen.inp
+  /species?/frag?/frag?.inp
+
+  where '?' refers to the species id, for example, species 1, species 2 etc.
+ 
+  Fragment libraries located at:
+
+  /species?/frag?/frag?.dat
+
+  The script overwrites the section of the input file where needed (i.e.   Frag_Info)
+  with the aforementioned folder locations. 
+ 
+  Usage: library_setup.py /path/cassandra.exe input_file.inp pdbfilespecies1.pdb pdfilespecies2.pdb ...
+ 
+  Example: library_setup.py /home/Cassandra/cassandra.exe input_file.inp pdb1.pdb pdb2.pdb ...
+                                                                                  
+ 

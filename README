@@ -1,0 +1,180 @@
+!********************************************************************************
+!   Cassandra - An open source atomistic Monte Carlo software package
+!   developed at the University of Notre Dame.
+!   http://cassandra.nd.edu
+!   Prof. Edward Maginn <ed@nd.edu>
+!   Copyright (2013) University of Notre Dame du Lac
+!
+!   This program is free software: you can redistribute it and/or modify
+!   it under the terms of the GNU General Public License as published by
+!   the Free Software Foundation, either version 3 of the License, or
+!   (at your option) any later version.
+!
+!   This program is distributed in the hope that it will be useful,
+!   but WITHOUT ANY WARRANTY; without even the implied warranty of
+!   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!   GNU General Public License for more details.
+!
+!   You should have received a copy of the GNU General Public License
+!   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+!*******************************************************************************
+
+This file describes the layout of the Cassandra distribution directory along 
+with instruction on how to compile the code, run examples and set up your first
+Cassandra simulation.
+
+After unpacking the Cassandra distribution, the parent Cassandra directory will contain
+the following subdirectories:
+
+Documentation
+Examples 
+MCF
+Scripts
+Src
+
+It will also contain this file and license.txt. The license.txt file
+describes the Gnu Public License under which Cassandra is released. By
+using Cassandra, you agree to comply with the terms of the
+license. Please read it carefully before you use the code. 
+
+The following directories are included in the distribution:
+
+
+Documentation
+------------
+Contains the documentation for the code, including a user guide
+(user_guide.pdf) and a tutorial on how to generate molecular
+connectivity files or MCFs (MCF_tutorial.pdf). You can find most
+answers to your questions in these documents. 
+
+Examples
+--------
+This directory contains examples of short Cassandra simulations in 
+NVT, NPT, grand canonical and Gibbs ensembles for a number of systems
+such as methane, isobutane, 2,2-dimethylhexane, cyclohexane, diethylether,
+pentane and the SPC/E model of water. Examples of molecules with varying degrees
+of conformational complexity (LJ particles, branch points, ring moieties) and
+those requiring computation of electrostatic interactions are included. 
+The results from these simulations can also be used to test any modifications 
+you make to the code. The examples contain an input file and some
+output files. If you run a job using the input file, you will
+overwrite the output files. You may wish to copy input and mcf files
+to a clean directory and work with them there, and then see if you can
+match the results contained in the original example directory.
+
+MCF
+---
+Cassandra makes use of molecular connectivity file (*.mcf) for each of the
+species present in the simulation. This directory contains several examples
+of mcf files. Users are encouraged to submit their mcf files to the authors
+for distribution to the Cassandra community. The mcf file can also be 
+included as a supplementary information to your publication as it contains
+information about the force field.
+
+Scripts
+-------
+The Cassandra distribution includes a number of python scripts that help in the setup
+of a simulation. The use of these scripts is described in the README
+files in the Scripts directory. Additional information may be found in
+the MCF_tutorial.pdf file, located in the Documentation directory.  
+
+Src
+---
+Contains the Cassandra source code.
+
+How to compile Cassandra
+------------------------
+The Src directory contains a number of Makefile files that can be used to
+compile the code using different compilers. At present, Makefiles for the
+Intel Fortran Compiler (12.1), gfortran i4.4.7 20120313 (Red Hat 4.4.7-4) and
+Portland group compiler (pgi) (14.6) are included in the distribution. These Makefiles are
+
+Makefile.intel
+Makefile.gfortran
+Makefile.pgfortran
+
+There is also a generic Makefile that can be used as a template for
+creating your own customized makefile. Depending on the architecture
+of the machine you are using, you will need to change compilation
+options and flags.  Note that to change compiler options appropriate
+for your environment, the F90FLAGS line in the Makefiles can be
+edited. You can also modify the optimization options to
+improve the speed of the code or operate in debug mode.
+
+To compile Cassandra, remove any object files using the 'clean' command
+
+> make clean
+
+The compile the code using the proper makefile 
+
+> make -f makefilename
+
+where 'makefilename' is the name of the particular makefile you wish
+to use. If the compilation is successful, an executable will be
+created using the name specified by you in the makefile. For example,
+if Cassandra is compiled with the original version of Makefile.intel
+released with the code, the executable will be 'cassandra_intel.exe'.  
+Similarly for the other makefiles,  executables will be generated with names
+'cassandra_gfortran.exe' and 'cassandra_pgfortran.exe'. Should you desire to
+change the name of the executable produced, simply edit 'EXEC_NAME' in the
+corresponding Makefile. Note that compilation with these Makefiles will 
+generate an executable that is suitable for running simulations on a single 
+core. This is usually done for testing and debugging purposes. 
+
+Cassandra simulations can also be performed on multiple cores on a given
+node using openMP. For this purpose, use any of the following Makefiles:
+
+Makefile.intel.openMP ----> cassandra_intel_openMP.exe
+Makefile.gfortran.openMP ----> cassandra_gfortran_openMP.exe
+Makefile.pgfortran.openMP ----> cassandra_pgfortran_openMP.exe
+
+Before running the openMP enabled executable, the environment variable
+OMP_NUM_THREADS will have to be set to the number of cores you want to
+run the simulation on. For example, for 12-core simulation, the 
+following command is used in tcsh.
+
+> setenv OMP_NUM_THREADS 12
+
+Running a Cassandra Simulation
+----------------------------
+Cassandra requires three input files in order to run. 
+
+1) Input file:
+The input file contains contains various parameters to tell Cassandra
+what kind of simulation to run and for how long. This file usually
+has the '.inp' extension. The user guide in the Documentation
+directory explains the format and requirements of the input file. 
+
+2) MCF file:
+Cassandra requires a "molecular connectivity file" for each species in
+the simulation. These files are identified with the suffix *.mcf. The
+MCF file tells Cassandra the connectivity of the species and what the
+force field parameters are for intermolecular and intramolecular
+interactions. These can be built "by hand", but we also provide a
+python script to make this easier and less error prone. There is a
+tutorial in the Documentation directory and the Scripts directory also
+explains the process of using the scripts to make *.mcf files.
+
+3) Fragment files:
+Cassandra builds and reassembles molecules using a fragment-based
+approach. Any molecule can be decomposed into a series of fragments,
+which are connected to one another via a single dihedral
+angle. Before a simulation begins, Cassandra must determine what these
+fragments are, and then it generates a library of fragments having
+different internal coordinates. The probability distribution of these
+different fragments is known and used by Cassandra when performing
+regrowth or insertion/deletion or particle swap moves. The fragment files must be created prior
+to the simulation. In order to create a fragment file, you must have
+an input and MCF file for the simulation. For the set up of fragment libraries,
+you will use the python script library_setup.py provided 
+in the /Scripts/Frag_Library_Setup directory.
+
+Once these files have been generated, you are ready to run a Cassandra
+simulation. For this, the input file name is specified after the cassandra executable
+command. For example, if you wish to run a simulation using the input
+file 'npt.inp', invoke the command 
+
+>./cassandra_intel.exe npt.inp
+
+This assumes that both the executable file and the input file are in
+the current directory. 

@@ -1,0 +1,126 @@
+#********************************************************************************
+#   Cassandra - An open source atomistic Monte Carlo software package
+#   developed at the University of Notre Dame.
+#   http://cassandra.nd.edu
+#   Prof. Edward Maginn <ed@nd.edu>
+#   Copyright (2013) University of Notre Dame du Lac
+#
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#********************************************************************************
+
+atomtypes
+2
+
+begin atom-atomtype
+1 CH2
+2 CH2
+3 CH2
+4 CH2
+5 CH2
+6 CH2
+7 CH2
+8 CH2
+9 CH2
+10 CH3
+11 CH2
+12 CH2
+13 CH3
+end atom-atomtype
+
+dihedraltype OPLS
+
+nonbonded
+CH2
+Sigma ch2_sigma
+Epsilon ch2_epsilon
+
+nonbonded
+CH3
+Sigma ch3_sigma
+Epsilon ch3_epsilon
+
+bonds
+CH2 CH2
+Length ch2-ch2_length
+Constant fixed
+
+bonds
+CH2 CH3
+Length ch2-ch3_length
+Constant fixed
+
+angles
+CH2 CH2 CH2
+Angle ch2-ch2-ch2_angle
+Constant ch2-ch2-ch2_constant
+
+angles
+CH2 CH2 CH3
+Angle ch2-ch2-ch3_angle
+Constant ch2-ch2-ch3_constant
+
+dihedrals
+CH2 CH2 CH2 CH2
+a0 a0_1
+a1 a1_1
+a2 a2_1
+a3 a3_1
+
+dihedrals
+CH2 CH2 CH2 CH3
+a0 a0_2
+a1 a1_2
+a2 a2_2
+a3 a3_2
+
+charge
+1 0.0
+
+charge
+2 0.0
+
+charge
+3 0.0
+
+charge
+4 0.0
+
+charge
+5 0.0
+
+charge
+6 0.0
+
+charge
+7 0.0
+
+charge
+8 0.0
+
+charge
+9 0.0
+
+charge
+10 0.0
+
+charge
+11 0.0
+
+charge
+12 0.0
+
+charge
+13 0.0
+
+end
