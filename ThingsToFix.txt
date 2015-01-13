@@ -1,0 +1,40 @@
+The following things need to be reviewed for future Cassandra versions
+
+1) Methane GCMC simulation Example
+
+I tried to run the Methane example found on the official release 
+using my own personal computer and none of the deletion/insertion moves were accepted. 
+However, when I tried to run it from maginnfe it ran perfectly.
+
+I dig into the code, and found that there is an variable called  species_list. 
+This contains the type species_list(i)%int_species_type, which should be an integer 
+and its value is related to labeling a species as SORBATE or NORMAL (i.e. 0 or 1). 
+
+This array is never initialized  at least for a GCMC. If I run in Maginnfe, 
+the system automatically and coincidentally sets this to 0 (the correct value) 
+and runs without problem. When I run it in my personal computer, 
+the system sets it to a random number and the system never identifies the 
+methane as a sorbate, setting always its fugacity/chemical pot to 0.
+
+Last Modified: 1/12/15
+
+2) MCF_Gen script does not recognize LJ Particles when using CML files
+
+This was fixed and Eliseo has the script. It has not been updated to Github. 
+This probably needs more testing though.
+
+Last Modified: 1/12/15
+
+3) MCF_Gen script would work better if it uses the 'label' function provided by avogadro.
+This would be used to specify the atom type directly from the avogadro GUI. This is not
+crucial, but it might be helpful
+
+Last Modfied: 1/12/15
+
+4) NVT cutoff: There is no warning if one uses cutoff greater than the box length
+
+Last Modfied: 1/12/15
+
+5) NPT Water Example: it runs  fine for a while, but it crashes with a segmentation fault
+
+Last Modfied: 1/12/15
