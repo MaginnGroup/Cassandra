@@ -38,9 +38,9 @@ import sys, os, argparse, linecache, re
 #*******************************************************************************
 #ARGUMENT PARSE
 #*******************************************************************************
-parser = argparse.ArgumentParser(description=
+parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description=
 """DESCRIPTION:
-To generate a Molecular Connectivity File (.mcf), you will need both a molecular
+To generate a Molecular Connectivity File (.mcf), you will need both a
 configuration file and a file with the force field parameters.
 
 EXAMPLES
@@ -1942,7 +1942,7 @@ else:
 	# We need to make sure all the atomNumber indices are populated.
 	atomParms, bondParms, angleParms, dihedralParms = \
 		checkParms(atomList,  bondList,  angleList,  dihedralList,
-							 atomParms, bondParms, angleParms, dihedralParms)
+		           atomParms, bondParms, angleParms, dihedralParms)
 
 	# Got all the parms we need? write Mcf.
 	writeMcf(configFile, mcfFile, 
