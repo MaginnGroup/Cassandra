@@ -7,11 +7,11 @@ inputfile methane.inp
 name of run: methane
 
   Month      Day      Year
-     07       29      2014
+     02       23      2015
  
- Time:  16:06:54
+ Time:  15:36:11
  
-machine: maginnfe.crc.nd.edu
+machine: muir
 
 
 Simulation type: GCMC                
@@ -51,12 +51,12 @@ Simulation type: GCMC
  TRUE
  
  # Molecule_Files
- methane_UA_TraPPE.mcf 600
+ methane_UA_TraPPE.mcf 700
  
  # Box_Info
  1
  CUBIC
- 31.10743 31.10743 31.10743
+ 35.10743 35.10743 35.10743
  
  # Temperature_Info
  151.0
@@ -70,25 +70,25 @@ Simulation type: GCMC
  # Move_Probability_Info
  
  # Prob_Translation
- 0.8
+ 0.9
  0.5
  
  # Prob_Insertion
- 0.1
+ 0.0000001
  insertion method
  reservoir
  
  # Prob_Deletion
- 0.1
+ 0.0999999
  
  # Done_Probability_Info
  
  # Start_Type
  make_config
- 300
+ 700
  
  # Run_Type
- Equilibration   600
+ Equilibration   550
  
  # Average_Info
  1
@@ -96,8 +96,8 @@ Simulation type: GCMC
  # Frequency_Info
  freq_type    none
  Nthermofreq  600
- Ncoordfreq   6000
- MCsteps      6000
+ Ncoordfreq   600000
+ MCsteps      600000
  # Done_Frequency_Info
  
  # Property_Info 1
@@ -125,12 +125,12 @@ Simulation type: GCMC
 number of simulation boxes     1
  
 Box number      1       Box Shape:      Cubic 
-Each Side Of :        31.1074     Angstrom
+Each Side Of :        35.1074     Angstrom
  
-Cell basis vector lengths in A,     31.1074      31.1074      31.1074
+Cell basis vector lengths in A,     35.1074      35.1074      35.1074
 Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
-Distance between box faces    31.1074      31.1074      31.1074
-Box volume, A^3         30101.7953
+Distance between box faces    35.1074      35.1074      35.1074
+Box volume, A^3         43271.0183
  
  *** Finished loading box information ***
  
@@ -162,7 +162,7 @@ Lorentz-Berthelot mixing rule specified
  
 Species  Nbr molecules
 -------  -------------
-     1            600
+     1            700
  
 L_Coul_CBMC not given for species    1
  Defaulting to true
@@ -284,13 +284,17 @@ de Broglie wavelength of species    1  in box      1   is
  
  ******* Finished reading fugacity info ***********
  
+ ***** Reading Zig_By_Omega Info ***
+ 
+ Zig / Omega for species            1  is    1.00000000000000     
+ 
  ********* Move Probability Info******
-    Translation probability is   0.800000
+    Translation probability is   0.900000
  
 Maximum displacement width for species   1 in box  1  is      0.50000
  
  
-Probability for insertion move is          0.1000
+Probability for insertion move is          0.0000
  
 Insertion will be carried out for species   1
  using the reservoir sampling
@@ -305,12 +309,12 @@ Number of moves is :   3
  
 Thermodynamic quantities will written at every        600 MC steps.
  
-Coordinates will be written at every                 6000 MC steps.
+Coordinates will be written at every               600000 MC steps.
  
 movie header file for box      1 is    methane_H.box1
 movie_XYZ file for box         1 is    methane_box1.xyz
  
-The simulation will be run for                         6000 MC steps.
+The simulation will be run for                       600000 MC steps.
  
  *** Finished reading output info ******* 
  
@@ -356,10 +360,6 @@ MC low cutoff distance is   2.000    Angstrom
  
  checking for dihedral_atoms_to_place
  
- ***** Reading Zig_By_Omega Info ***
- 
- Zig / Omega for species            1  is    1.00000000000000     
- 
  ***** reading CBMC info *********
  
  Writing out CBMC_Info
@@ -373,16 +373,16 @@ Smaller cutoff for CBMC for box          1        6.50
  ******Initial Coordinate Info **********
  
  Initial configuration will be generated
-  Starting number of molecules of species   1   in box   1  is     300
+  Starting number of molecules of species   1   in box   1  is     700
  
-Total number of molecules of species   1   present initially is     300
+Total number of molecules of species   1   present initially is     700
  
  *****Finished reading initial coordinate info *****
  
  ****** Reading Run_Type Information ******
  
  The input run type is Equilibration
- Update frequency is          600
+ Update frequency is          550
  
  ******* Finished reading run type information ******
 starting type make_config                                                                                                             
@@ -397,7 +397,7 @@ Box                1    has charge                0.00000000
   Atomic units-Extensive
  *****************************************
  
-Total system energy is                 -78592.836
+Total system energy is                 137074.166
 Intra molecular energy is                   0.000
 Bond energy is                              0.000
 Bond angle energy is                        0.000
@@ -405,139 +405,10 @@ Dihedral angle energy is                    0.000
 Improper angle energy is                    0.000
 Intra nonbond vdw is                        0.000
 Intra nonbond elec is                       0.000
-Inter molecule vdw is                  -75568.136
-Long range correction is                -3024.699
+Inter molecule vdw is                  148530.114
+Long range correction is               -11455.949
 Inter molecule q is                         0.000
 Reciprocal ewald is                         0.000
 Self ewald is                               0.000
  *******************************************
  
- 
-Translation ratio for species     1  for box 1  is:    0.59000
-Maximum width for translation of species 1  updated in box 1
-new width is   0.59000
- 
- 
-Translation ratio for species     1  for box 1  is:    0.47167
-Maximum width for translation of species 1  updated in box 1
-new width is   0.55657
- 
- 
-Translation ratio for species     1  for box 1  is:    0.47667
-Maximum width for translation of species 1  updated in box 1
-new width is   0.53059
- 
- 
-Translation ratio for species     1  for box 1  is:    0.46833
-Maximum width for translation of species 1  updated in box 1
-new width is   0.49699
- 
- 
-Translation ratio for species     1  for box 1  is:    0.46333
-Maximum width for translation of species 1  updated in box 1
-new width is   0.46054
- 
- 
-Translation ratio for species     1  for box 1  is:    0.43333
-Maximum width for translation of species 1  updated in box 1
-new width is   0.39914
- 
- 
-Translation ratio for species     1  for box 1  is:    0.52667
-Maximum width for translation of species 1  updated in box 1
-new width is   0.42042
- 
- *********** Ending simulation *****************
- 
- 
- ***** Insertion efficiency *****************
-  Total number of insertions for species   1  is         622
- Successful insertions
-                  „   
- 
- ***** Deletion efficiency *****************
- Total number of deletions for species           1 is         593
- Successful deletions           7
- 
- *****************************************
-  Starting energy components for box   1
-  Atomic units-Extensive
- *****************************************
- 
-Total system energy is                -241859.241
-Intra molecular energy is                   0.000
-Bond energy is                              0.000
-Angle energy is                             0.000
-Dihedral enregy is                          0.000
-Improper angle energy is                    0.000
-Intra nonbond vdw is                        0.000
-Intra nonbond elec is                       0.000
-Inter molecule vdw is                 -235788.837
-Long range correction is                -6070.404
-Inter molecule q is                         0.000
-Reciprocal ewald is                         0.000
-Self ewald is                               0.000
- **************************************************
- 
- 
- *****************************************
- Components of energy from total energy call for box   1
- Atomic units-Extensive
- *****************************************
- 
-Total system energy is                -241859.241
-Intra molecular energy is                   0.000
-Bond energy is                              0.000
-Angle energy is                             0.000
-Dihedral enregy is                          0.000
-Improper angle energy is                    0.000
-Intra nonbond vdw is                        0.000
-Intra nonbond elec is                       0.000
-Inter molecule vdw is                 -235788.837
-Long range correction is                -6070.404
-Inter molecule q is                         0.000
-Reciprocal ewald is                         0.000
-Self ewald is                               0.000
- 
- 
- Writing information for box   1
-  *********************************************
- 
- 
-  ******************************************
-  Writing information for species           1
- 
-                Move      Trials     Success   % Success
-           Translate        4785        2332       48.74
-           Insertion         622         132       21.22
-            Deletion         593           7        1.18
- **************************************
- 
- Writing information about fragments
- 
- *************************************
-Writing information for species   1
-  Fragment      Trials     Success   % Success
- *********************************
- *********** Ending simulation *****************
- 
- 
- 
- Writing information about subroutine times
- 
- ******************************************
- 
- Translation time =            4.974231 secs.
- Insertion time =              2.188687 secs.
- Deletion time =               2.004690 secs.
- ********************************************
- 
- 
- Program execution time
-         0      Years
-         0     Months
-         0       Days
-         0      Hours
-         0    Minutes
-        10    Seconds
-       114         ms
