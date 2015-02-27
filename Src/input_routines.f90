@@ -3295,6 +3295,54 @@ SUBROUTINE Get_Box_Info
               box_list(ibox)%length(3,1) = 0.0
               box_list(ibox)%length(3,2) = 0.0
 
+           ELSEIF (box_list(ibox)%box_shape == 'ORTHOGONAL') THEN
+              box_list(ibox)%int_box_shape = int_ortho
+              CALL Parse_String(inputunit,line_nbr,3,nbr_entries,line_array,ierr)
+              line_nbr = line_nbr + 1
+              box_list(ibox)%length(1,1) = String_To_Double(line_array(1))
+              box_list(ibox)%length(2,2) = String_To_Double(line_array(2))
+              box_list(ibox)%length(3,3) = String_To_Double(line_array(3))
+
+              ! Set off-diagonal components to zero
+              box_list(ibox)%length(1,2) = 0.0
+              box_list(ibox)%length(1,3) = 0.0
+              box_list(ibox)%length(2,1) = 0.0
+              box_list(ibox)%length(2,3) = 0.0
+              box_list(ibox)%length(3,1) = 0.0
+              box_list(ibox)%length(3,2) = 0.0
+
+              WRITE (logunit,'(A,T15,I3,T25,A,T40,A)') 'Box number ',ibox,'Box Shape: ', ' Orthorhombic '
+              WRITE (logunit,'(A,T20,F10.4,T35,A)') 'X dimension :', box_list(ibox)%length(1,1), 'Angstrom'
+              WRITE (logunit,'(A,T20,F10.4,T35,A)') 'Y dimension :', box_list(ibox)%length(2,2), 'Angstrom'
+              WRITE (logunit,'(A,T20,F10.4,T35,A)') 'Z dimension :', box_list(ibox)%length(3,3), 'Angstrom'
+              WRITE(logunit,*)
+
+           ELSEIF (box_list(ibox)%box_shape == 'CELL_MATRIX') THEN
+              box_list(ibox)%int_box_shape = int_cell
+              CALL Parse_String(inputunit,line_nbr,3,nbr_entries,line_array,ierr)
+              line_nbr = line_nbr + 1
+              box_list(ibox)%length(1,1) = String_To_Double(line_array(1))
+              box_list(ibox)%length(1,2) = String_To_Double(line_array(2))
+              box_list(ibox)%length(1,3) = String_To_Double(line_array(3))
+
+              CALL Parse_String(inputunit,line_nbr,3,nbr_entries,line_array,ierr)
+              line_nbr = line_nbr + 1
+              box_list(ibox)%length(2,1) = String_To_Double(line_array(1))
+              box_list(ibox)%length(2,2) = String_To_Double(line_array(2))
+              box_list(ibox)%length(2,3) = String_To_Double(line_array(3))
+
+              CALL Parse_String(inputunit,line_nbr,3,nbr_entries,line_array,ierr)
+              line_nbr = line_nbr + 1
+              box_list(ibox)%length(3,1) = String_To_Double(line_array(1))
+              box_list(ibox)%length(3,2) = String_To_Double(line_array(2))
+              box_list(ibox)%length(3,3) = String_To_Double(line_array(3))
+
+              WRITE (logunit,'(A,T15,I3,T25,A,T40,A)') 'Box number ',ibox,'Box Shape : ', ' CELL_MATRIX '
+              WRITE (logunit,'(T5,f10.4,T20,f10.4,T30,f10.4)') box_list(ibox)%length(1,1:3)
+              WRITE (logunit,'(T5,f10.4,T20,f10.4,T30,f10.4)') box_list(ibox)%length(2,1:3)
+              WRITE (logunit,'(T5,f10.4,T20,f10.4,T30,f10.4)') box_list(ibox)%length(3,1:3)
+              WRITE(logunit,*)
+
            ELSE
               err_msg = ""
               err_msg(1) = 'Box type not properly specified as'
