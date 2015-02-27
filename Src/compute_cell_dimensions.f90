@@ -167,6 +167,7 @@ SUBROUTINE Compute_Cell_Dimensions(box_nbr)
        box_list(box_nbr)%length(1,2)*box_list(box_nbr)%length_inv(2,1) + &
        box_list(box_nbr)%length(1,3)*box_list(box_nbr)%length_inv(3,1)
 
+
   IF(ABS(det - box_list(box_nbr)%volume) > tiny_number) THEN
      err_msg = ""
      err_msg(1) = 'Determinant not equal box volume'
