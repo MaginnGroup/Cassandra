@@ -507,6 +507,12 @@ SUBROUTINE Get_Pair_Style
                  int_vdw_sum_style(ibox) = vdw_minimum
                  WRITE(logunit,'(A)') 'Minimum image convention used for VDW'
 
+              ELSEIF (vdw_sum_style(ibox) == 'mie') THEN
+                 int_vdw_sum_style(ibox) = vdw_mie
+		 rcut_vdw(ibox) = String_To_Double(line_array(3))
+                 WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_vdw(ibox), '   Angstrom'
+                 WRITE(logunit,'(A)') 'Mie potential used for VDW'
+
               ELSE
                  err_msg(1) = 'Improper specification of vdw_sum_style'
                  CALL Clean_Abort(err_msg,'Get_Pairstyle')
@@ -5652,6 +5658,77 @@ SUBROUTINE Get_Energy_Check_Info
   END DO
 
   END SUBROUTINE Get_Energy_Check_Info 
+
+SUBROUTINE Get_Mie_Nonbond
+  !---------------------------------------------------------------------------------------
+  ! This subroutine reads in the file information for nonbond Mie potential exponents
+  ! for each species type.
+  !
+  ! Written by Brian and Eliseo on 02/26/15
+  !
+  !---------------------------------------------------------------------------------------
+
+  USE File_Names
+
+  INTEGER :: ierr, nbr_entries, line_nbr, is, Mk, Mi, Mj
+  CHARACTER(120) :: line_array(20), line_string
+  ierr = 0
+  REWIND(inputunit)
+  line_nbr = 0
+  Mk = 1
+
+  ALLOCATE(mie_nlist(nspecies*(nspecies+1)/2))
+  ALLOCATE(mie_mlist(nspecies*(nspecies+1)/2))
+  ALLOCATE(mie_Matrix(nspecies, nspecies))
+
+  DO
+     line_nbr = line_nbr + 1
+     CALL Read_String(inputunit,line_string,ierr)
+
+     IF ( ierr /= 0 ) THEN
+        err_msg = ''
+        err_msg(1) = 'Error reading input file'
+        CALL Clean_Abort(err_msg,'Get_Mie_Nonbond')
+     END IF
+
+     ! Read the input file up to # Mie_Nonbond
+
+     IF (line_string(1:13) == '# Mie_Nonbond') THEN
+        !create symmetric matrix for index of species (e.g. for 3 species it will create a matrix [1, 2, 3; 2, 4,5;3,5,6]
+        DO Mi = 1, nspecies
+           DO Mj = Mi, nspecies
+              mie_Matrix(Mi,Mj) = Mk
+              mie_Matrix(Mj,Mi) = Mk
+              Mk = Mk + 1
+           END DO
+        END DO
+
+        ! parse the string to read in the files for each species
+        DO is = 1, nspecies
+           line_nbr = line_nbr + 1
+           CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
+           mie_nlist(mie_Matrix(String_To_Int(line_array(1)),String_To_Int(line_array(2)))) = String_To_Double(line_array(3))
+           mie_mlist(mie_Matrix(String_To_Int(line_array(1)),String_To_Int(line_array(2)))) = String_To_Double(line_array(4))
+
+           WRITE(logunit,*) 'Mie exponent for ', line_array(1), 'and', line_array(2),  ' is', line_array(3), 'and', line_array(4)
+
+        END DO
+
+        EXIT
+
+     ELSE IF (line_nbr > 10000 .OR. line_string(1:3) == 'END') THEN
+        err_msg = ''
+        err_msg(1) = 'Mie potentials not specified'
+        CALL Clean_Abort(err_msg,'Get_Mie_Nonbond')
+
+     END IF
+
+  END DO
+
+END SUBROUTINE Get_Mie_Nonbond
+
+
+
 
 END MODULE Input_Routines
 

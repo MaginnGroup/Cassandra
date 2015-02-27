@@ -102,6 +102,8 @@ USE Type_Definitions
   INTEGER, PARAMETER :: vdw_minimum = 5
   INTEGER, PARAMETER :: vdw_charmm = 6
   INTEGER, PARAMETER :: vdw_cut_switch = 7
+  INTEGER, PARAMETER :: vdw_mie = 8
+
   INTEGER, PARAMETER :: charge_none = 0
   INTEGER, PARAMETER :: charge_coul = 1
   INTEGER, PARAMETER :: charge_cut = 2
@@ -534,5 +536,10 @@ USE Type_Definitions
 
   REAL(DP) pacc, paccbiased, freev
   REAL(DP), DIMENSION(:,:), ALLOCATABLE :: chpot, chpotid
+
+!!!!! Mie potential variables
+  INTEGER, DIMENSION(:,:), ALLOCATABLE :: mie_Matrix
+  REAL(DP), DIMENSION(:), ALLOCATABLE :: mie_nlist, mie_mlist
+  
 END MODULE Run_Variables
 
