@@ -5664,7 +5664,7 @@ SUBROUTINE Get_Mie_Nonbond
   ! This subroutine reads in the file information for nonbond Mie potential exponents
   ! for each species type.
   !
-  ! Written by Brian and Eliseo on 02/26/15
+  ! Written by Brian Yoo and Eliseo Rimoldi on 02/28/15
   !
   !---------------------------------------------------------------------------------------
 
@@ -5694,7 +5694,9 @@ SUBROUTINE Get_Mie_Nonbond
      ! Read the input file up to # Mie_Nonbond
 
      IF (line_string(1:13) == '# Mie_Nonbond') THEN
-        !create symmetric matrix for index of species (e.g. for 3 species it will create a matrix [1, 2, 3; 2, 4,5;3,5,6]
+        ! create symmetric matrix for index of species (e.g. for 3 species it will create
+	! the following matrix [1,2,3;2,4,5;3,5,6]; This matrix is used to identify
+	! the specified mie_n and mie_m exponents for a given species type.
         DO Mi = 1, nspecies
            DO Mj = Mi, nspecies
               mie_Matrix(Mi,Mj) = Mk
