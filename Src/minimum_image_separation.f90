@@ -129,6 +129,7 @@ END SUBROUTINE Minimum_Image_Separation
 SUBROUTINE Apply_PBC_Anint(ibox,rxijp,ryijp,rzijp,rxij,ryij,rzij)
 
   USE Run_Variables
+  USE Type_Definitions
 
   IMPLICIT NONE
  
@@ -152,7 +153,7 @@ SUBROUTINE Apply_PBC_Anint(ibox,rxijp,ryijp,rzijp,rxij,ryij,rzij)
   ELSE
      
 
-     CALL Cartesian_To_Fractional(rxijp,ryijp,rzijp,fracx,fracy,fracz)
+     CALL Cartesian_To_Fractional(rxijp,ryijp,rzijp,fracx,fracy,fracz,ibox)
 
      !First convert the parent coordinates from the Cartesian to fractional
      !coordinate system
@@ -167,7 +168,7 @@ SUBROUTINE Apply_PBC_Anint(ibox,rxijp,ryijp,rzijp,rxij,ryij,rzij)
      !Convert back to Cartesian coordinates and return the results as
      !the child coordinate separations
 
-     CALL Fractional_To_Cartesian(fracx,fracy,fraz,rxij,ryij,rzij)
+     CALL Fractional_To_Cartesian(fracx,fracy,fracz,rxij,ryij,rzij,ibox)
 
   END IF
 
@@ -184,7 +185,7 @@ SUBROUTINE Fold_Molecule(alive,is,this_box)
 
   REAL(DP) :: dx, dy, dz
 
-  REAL(DP) :: thisx,thisy,thisz, 
+  REAL(DP) :: thisx,thisy,thisz
   REAL(DP) :: thisx2,thisy2,thisz2
   INTEGER :: i
 
@@ -230,75 +231,38 @@ SUBROUTINE Fold_Molecule(alive,is,this_box)
 
   ELSE
 
+
      IF(molecule_list(alive,is)%xcom .GT. box_list(this_box)%hlength(1,1)) THEN
 
 
-     thisx=molecule_list(alive,is)%xcom
-     thisy=molecule_list(alive,is)%ycom
-     thisz=molecule_list(alive,is)%zcom
-
-     CALL Apply_PBC_Anint(this_box,thisx,thisy,thisz,thisx2,thisy2,thisz2)
-     
-     molecule_list(alive,is)%xcom = thisx2
-     molecule_list(alive,is)%ycom = thisy2
-     molecule_list(alive,is)%zcom = thisz2
-
-     DO i = 1, natoms(is)
-
-        thisx=atom_list(i,alive,is)%rxp
-
-        CALL Apply_PBC_Anint(this_box,thisx,thisy,thisz,thisx2,thisy2,thisz2)
-
-        atom_list(alive,is)%rxp = thisx2
-
-     END DO
+        CALL Fold_Molecule_In_Fractional_Coords(alive,is,this_box)  
 
 
-     ELSE IF(molecule_list(alive,is)%xcom .LT. -box_list(this_box)%hlength(1,1))
-THEN
+     ELSE IF(molecule_list(alive,is)%xcom .LT. -box_list(this_box)%hlength(1,1)) THEN
 
+        CALL Fold_Molecule_In_Fractional_Coords(alive,is, this_box)
 
-
-        
-
-
-
-        molecule_list(alive,is)%xcom = &
-             molecule_list(alive,is)%xcom + box_list(this_box)%length(1,1)
-        atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp +
-box_list(this_box)%length(1,1)
      END IF
 
+
+
      IF(molecule_list(alive,is)%ycom .GT. box_list(this_box)%hlength(2,2)) THEN
-        molecule_list(alive,is)%ycom = &
-             molecule_list(alive,is)%ycom - box_list(this_box)%length(2,2)
-        atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp -
-box_list(this_box)%length(2,2)
+        
+        CALL Fold_Molecule_In_Fractional_Coords(alive,is,this_box)  
 
-     ELSE IF(molecule_list(alive,is)%ycom .LT. -box_list(this_box)%hlength(2,2))
-THEN
+     ELSE IF(molecule_list(alive,is)%ycom .LT. -box_list(this_box)%hlength(2,2)) THEN
+        CALL Fold_Molecule_In_Fractional_Coords(alive,is,this_box)  
 
-        molecule_list(alive,is)%ycom = &
-             molecule_list(alive,is)%ycom + box_list(this_box)%length(2,2)
-        atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp +
-box_list(this_box)%length(2,2)
 
      END IF
 
      IF(molecule_list(alive,is)%zcom .GT. box_list(this_box)%hlength(3,3)) THEN
 
-        molecule_list(alive,is)%zcom = &
-             molecule_list(alive,is)%zcom - box_list(this_box)%length(3,3)
-        atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp -
-box_list(this_box)%length(3,3)
+        CALL Fold_Molecule_In_Fractional_Coords(alive,is,this_box)  
 
-     ELSE IF(molecule_list(alive,is)%zcom .LT. -box_list(this_box)%hlength(3,3))
-THEN
+     ELSE IF(molecule_list(alive,is)%zcom .LT. -box_list(this_box)%hlength(3,3)) THEN
 
-        molecule_list(alive,is)%zcom = &
-             molecule_list(alive,is)%zcom + box_list(this_box)%length(3,3)
-        atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp +
-box_list(this_box)%length(3,3)
+        CALL Fold_Molecule_In_Fractional_Coords(alive,is,this_box)  
      END IF
 
 
@@ -315,42 +279,79 @@ box_list(this_box)%length(3,3)
 
 END SUBROUTINE
 
-SUBROUTINE Cartesian_To_Fractional(rx,ry,rz,sx,sy,sz)
+SUBROUTINE Cartesian_To_Fractional(rx,ry,rz,sx,sy,sz,ibox)
+USE Run_Variables
+USE Type_Definitions
 REAL(DP), INTENT(IN) :: rx,ry,rz
 REAL(DP), INTENT(OUT) :: sx,sy,sz
 
      sx = box_list(ibox)%length_inv(1,1)*rx + &
-       box_list(ibox)%length_inv(1,2)*ry +          &
-       box_list(ibox)%length_inv(1,3)*rz
+box_list(ibox)%length_inv(1,2)*ry + &
+box_list(ibox)%length_inv(1,3)*rz
 
      sy = box_list(ibox)%length_inv(2,1)*rx + &
-       box_list(ibox)%length_inv(2,2)*ry +          &
-       box_list(ibox)%length_inv(2,3)*rz
+box_list(ibox)%length_inv(2,2)*ry + &
+box_list(ibox)%length_inv(2,3)*rz
 
      sz = box_list(ibox)%length_inv(3,1)*rx + &
-       box_list(ibox)%length_inv(3,2)*ry +          &
-       box_list(ibox)%length_inv(3,3)*rz
+box_list(ibox)%length_inv(3,2)*ry + &
+box_list(ibox)%length_inv(3,3)*rz
 
 
 END SUBROUTINE
 
 
-SUBROUTINE Fractional_To_Cartesian(sx,sy,sz,rx,ry,rz)
+SUBROUTINE Fractional_To_Cartesian(sx,sy,sz,rx,ry,rz,ibox)
+USE Run_Variables
+USE Type_Definitions
 REAL(DP), INTENT(OUT) :: rx,ry,rz
 REAL(DP), INTENT(IN) :: sx,sy,sz
 
      rx = box_list(ibox)%length(1,1)*sx + &
-       box_list(ibox)%length(1,2)*sy +   &
-       box_list(ibox)%length(1,3)*sz
+box_list(ibox)%length(1,2)*sy + &
+box_list(ibox)%length(1,3)*sz
 
      ry = box_list(ibox)%length(2,1)*sx + &
-       box_list(ibox)%length(2,2)*sy +   &
-       box_list(ibox)%length(2,3)*sz
+box_list(ibox)%length(2,2)*sy + &
+box_list(ibox)%length(2,3)*sz
 
      rz = box_list(ibox)%length(3,1)*sx + &
-       box_list(ibox)%length(3,2)*sy +   &
-       box_list(ibox)%length(3,3)*sz
+box_list(ibox)%length(3,2)*sy + &
+box_list(ibox)%length(3,3)*sz
+
+END SUBROUTINE
+
+SUBROUTINE Fold_Molecule_In_Fractional_Coords(this_im, this_is,this_box)
+USE Run_Variables
+USE Type_Definitions
+INTEGER, INTENT(IN) :: this_im, this_is
+REAL(DP) :: thisx,thisy,thisz
+REAL(DP) :: thisx2,thisy2,thisz2
+INTEGER :: i
 
 
+     thisx=molecule_list(this_im,this_is)%xcom
+     thisy=molecule_list(this_im,this_is)%ycom
+     thisz=molecule_list(this_im,this_is)%zcom
+
+     CALL Apply_PBC_Anint(this_box,thisx,thisy,thisz,thisx2,thisy2,thisz2)
+     
+     molecule_list(this_im,this_is)%xcom = thisx2
+     molecule_list(this_im,this_is)%ycom = thisy2
+     molecule_list(this_im,this_is)%zcom = thisz2
+
+     DO i = 1, natoms(this_is)
+
+        thisx=atom_list(i,this_im,this_is)%rxp
+        thisy=atom_list(i,this_im,this_is)%ryp
+        thisz=atom_list(i,this_im,this_is)%rzp
+
+        CALL Apply_PBC_Anint(this_box,thisx,thisy,thisz,thisx2,thisy2,thisz2)
+
+        atom_list(i,this_im,this_is)%rxp = thisx2
+        atom_list(i,this_im,this_is)%ryp = thisy2
+        atom_list(i,this_im,this_is)%rzp = thisz2
+
+     END DO
 
 END SUBROUTINE
