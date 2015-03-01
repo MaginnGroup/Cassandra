@@ -135,9 +135,10 @@ SUBROUTINE Apply_PBC_Anint(ibox,rxijp,ryijp,rzijp,rxij,ryij,rzij)
   INTEGER, INTENT(IN) :: ibox
   REAL(DP), INTENT(IN) :: rxijp, ryijp, rzijp
   REAL(DP), INTENT(OUT) :: rxij, ryij, rzij
-
+  REAL(DP) :: fracx,fracy,fracz
 
   IF (l_cubic(ibox)) THEN
+
 
      rxij = rxijp - box_list(ibox)%length(1,1)* &
           REAL(ANINT( rxijp / box_list(ibox)%length(1,1)), DP)
@@ -150,10 +151,23 @@ SUBROUTINE Apply_PBC_Anint(ibox,rxijp,ryijp,rzijp,rxij,ryij,rzij)
 
   ELSE
      
-     WRITE(*,*) 'PBC not implemented for box shape other than CUBIC'
-     WRITE(*,*) 'Error occurred in Apply_PBC_Anint'
-     WRITE(*,*) 'Aborting...'
-     STOP
+
+     CALL Cartesian_To_Fractional(rxijp,ryijp,rzijp,fracx,fracy,fracz)
+
+     !First convert the parent coordinates from the Cartesian to fractional
+     !coordinate system
+
+     !Apply periodic boundary conditions to the fractional distances.
+     ! Recall NINT rounds and does not truncate.
+     fracx = fracx - REAL(NINT(fracx),DP)
+     fracy = fracy - REAL(NINT(fracy),DP)
+     fracz = fracz - REAL(NINT(fracz),DP)
+
+
+     !Convert back to Cartesian coordinates and return the results as
+     !the child coordinate separations
+
+     CALL Fractional_To_Cartesian(fracx,fracy,fraz,rxij,ryij,rzij)
 
   END IF
 
@@ -169,6 +183,10 @@ SUBROUTINE Fold_Molecule(alive,is,this_box)
   INTEGER, INTENT(IN) :: alive, is, this_box
 
   REAL(DP) :: dx, dy, dz
+
+  REAL(DP) :: thisx,thisy,thisz, 
+  REAL(DP) :: thisx2,thisy2,thisz2
+  INTEGER :: i
 
   IF (l_cubic(this_box)) THEN
      
@@ -209,17 +227,130 @@ SUBROUTINE Fold_Molecule(alive,is,this_box)
         atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp + box_list(this_box)%length(3,3)
      END IF
 
+
   ELSE
 
-     err_msg = ''
-     err_msg(1) = 'Folding attempted for box shape other than cubic or'
-     err_msg(2) = 'slit_pore geometry'
-     err_msg(3) = 'Folding of molecules is not supported for the the shape of the box'
-     CALL Clean_Abort(err_msg,'Fold_Molecule')
+     IF(molecule_list(alive,is)%xcom .GT. box_list(this_box)%hlength(1,1)) THEN
 
-  END IF
 
-END SUBROUTINE Fold_Molecule
+     thisx=molecule_list(alive,is)%xcom
+     thisy=molecule_list(alive,is)%ycom
+     thisz=molecule_list(alive,is)%zcom
+
+     CALL Apply_PBC_Anint(this_box,thisx,thisy,thisz,thisx2,thisy2,thisz2)
+     
+     molecule_list(alive,is)%xcom = thisx2
+     molecule_list(alive,is)%ycom = thisy2
+     molecule_list(alive,is)%zcom = thisz2
+
+     DO i = 1, natoms(is)
+
+        thisx=atom_list(i,alive,is)%rxp
+
+        CALL Apply_PBC_Anint(this_box,thisx,thisy,thisz,thisx2,thisy2,thisz2)
+
+        atom_list(alive,is)%rxp = thisx2
+
+     END DO
+
+
+     ELSE IF(molecule_list(alive,is)%xcom .LT. -box_list(this_box)%hlength(1,1))
+THEN
+
+
 
         
 
+
+
+        molecule_list(alive,is)%xcom = &
+             molecule_list(alive,is)%xcom + box_list(this_box)%length(1,1)
+        atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp +
+box_list(this_box)%length(1,1)
+     END IF
+
+     IF(molecule_list(alive,is)%ycom .GT. box_list(this_box)%hlength(2,2)) THEN
+        molecule_list(alive,is)%ycom = &
+             molecule_list(alive,is)%ycom - box_list(this_box)%length(2,2)
+        atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp -
+box_list(this_box)%length(2,2)
+
+     ELSE IF(molecule_list(alive,is)%ycom .LT. -box_list(this_box)%hlength(2,2))
+THEN
+
+        molecule_list(alive,is)%ycom = &
+             molecule_list(alive,is)%ycom + box_list(this_box)%length(2,2)
+        atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp +
+box_list(this_box)%length(2,2)
+
+     END IF
+
+     IF(molecule_list(alive,is)%zcom .GT. box_list(this_box)%hlength(3,3)) THEN
+
+        molecule_list(alive,is)%zcom = &
+             molecule_list(alive,is)%zcom - box_list(this_box)%length(3,3)
+        atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp -
+box_list(this_box)%length(3,3)
+
+     ELSE IF(molecule_list(alive,is)%zcom .LT. -box_list(this_box)%hlength(3,3))
+THEN
+
+        molecule_list(alive,is)%zcom = &
+             molecule_list(alive,is)%zcom + box_list(this_box)%length(3,3)
+        atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp +
+box_list(this_box)%length(3,3)
+     END IF
+
+
+
+!  ELSE
+
+ !    err_msg = ''
+  !   err_msg(1) = 'Folding attempted for box shape other than cubic or'
+   !  err_msg(2) = 'slit_pore geometry'
+    ! err_msg(3) = 'Folding of molecules is not supported for the the shape of the box'
+     !CALL Clean_Abort(err_msg,'Fold_Molecule')
+
+  END IF
+
+END SUBROUTINE
+
+SUBROUTINE Cartesian_To_Fractional(rx,ry,rz,sx,sy,sz)
+REAL(DP), INTENT(IN) :: rx,ry,rz
+REAL(DP), INTENT(OUT) :: sx,sy,sz
+
+     sx = box_list(ibox)%length_inv(1,1)*rx + &
+       box_list(ibox)%length_inv(1,2)*ry +          &
+       box_list(ibox)%length_inv(1,3)*rz
+
+     sy = box_list(ibox)%length_inv(2,1)*rx + &
+       box_list(ibox)%length_inv(2,2)*ry +          &
+       box_list(ibox)%length_inv(2,3)*rz
+
+     sz = box_list(ibox)%length_inv(3,1)*rx + &
+       box_list(ibox)%length_inv(3,2)*ry +          &
+       box_list(ibox)%length_inv(3,3)*rz
+
+
+END SUBROUTINE
+
+
+SUBROUTINE Fractional_To_Cartesian(sx,sy,sz,rx,ry,rz)
+REAL(DP), INTENT(OUT) :: rx,ry,rz
+REAL(DP), INTENT(IN) :: sx,sy,sz
+
+     rx = box_list(ibox)%length(1,1)*sx + &
+       box_list(ibox)%length(1,2)*sy +   &
+       box_list(ibox)%length(1,3)*sz
+
+     ry = box_list(ibox)%length(2,1)*sx + &
+       box_list(ibox)%length(2,2)*sy +   &
+       box_list(ibox)%length(2,3)*sz
+
+     rz = box_list(ibox)%length(3,1)*sx + &
+       box_list(ibox)%length(3,2)*sy +   &
+       box_list(ibox)%length(3,3)*sz
+
+
+
+END SUBROUTINE

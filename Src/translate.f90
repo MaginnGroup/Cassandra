@@ -211,13 +211,13 @@ SUBROUTINE Translate(this_box,mc_step)
 ! work for cubic shaped boxes. However, it is easy to extend for nonorthorhombic
 ! boxes where displacements along the basis vectors. 
 
-  IF ( box_list(this_box)%int_box_shape == int_cubic) THEN
+  !IF ( box_list(this_box)%int_box_shape == int_cubic) THEN
 
      dx = ( 2.0_DP * rranf() - 1.0_DP) * max_disp(is,this_box)
      dy = ( 2.0_DP * rranf() - 1.0_DP) * max_disp(is,this_box)
      dz = ( 2.0_DP * rranf() - 1.0_DP) * max_disp(is,this_box)
           
-  END IF
+  !END IF
 
 ! Move atoms by the above vector dx,dy,dz and also update the COM
 
