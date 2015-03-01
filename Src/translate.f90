@@ -231,7 +231,6 @@ SUBROUTINE Translate(this_box,mc_step)
 
 
 !**************************************************************************
-     
   CALL Fold_Molecule(alive,is,this_box)
   
   CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_vdw_move,E_qq_move,inter_overlap)
