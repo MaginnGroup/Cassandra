@@ -191,6 +191,8 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda,which_ancho
 
   END IF
 
+ 
+
   ! Note that for a deletion move, frag_total is undefined, since its an insertion move,
   ! total number of fragments that need to be placed is is_fragments
 
@@ -213,6 +215,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda,which_ancho
 
   ! Note that we need to choose from the reservoir only when insertion
   ! is attempted
+
 
   IF (.NOT. del_Flag) THEN
      
@@ -317,6 +320,29 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda,which_ancho
               x_anchor = (0.5_DP - rranf()) * box_list(this_box)%length(1,1)
               y_anchor = (0.5_DP - rranf()) * box_list(this_box)%length(2,2)
               z_anchor = (0.5_DP - rranf()) * box_list(this_box)%length(3,3)
+
+           ELSE
+
+              !Generate random positions in fractional coordinates
+
+              x_anchor = 0.5_DP - rranf()
+              y_anchor = 0.5_DP - rranf()
+              z_anchor = 0.5_DP - rranf()
+
+              !transform back to cartesian
+
+              x_anchor = box_list(this_box)%length(1,1)*x_anchor + &
+       box_list(this_box)%length(1,2)*y_anchor +   &
+       box_list(this_box)%length(1,3)*z_anchor
+
+              y_anchor = box_list(this_box)%length(2,1)*x_anchor + &
+       box_list(this_box)%length(2,2)*y_anchor +   &
+       box_list(this_box)%length(2,3)*z_anchor
+
+              z_anchor = box_list(this_box)%length(3,1)*x_anchor + &
+       box_list(this_box)%length(3,2)*y_anchor +   &
+       box_list(this_box)%length(3,3)*z_anchor
+
 
            END IF
 
