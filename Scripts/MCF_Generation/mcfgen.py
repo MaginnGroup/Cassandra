@@ -1436,7 +1436,7 @@ returns:
 			atomParms[i]['element'] = line[76:78].strip()
 			if atomParms[i]['name'] == '':
 				atomParms[i]['name'] = atomParms[i]['element'] + i
-			atomParms[i]['type'] = line[80:].strip()
+			atomParms[i]['type'] = line.split()[-1].strip()
 			atomParms[i]['mass'] = periodicTable[atomParms[i]['element']]
 		# read bond info
 		if line[0:6]=='CONECT':
@@ -1486,8 +1486,9 @@ returns:
 			distance = float(ff.readline().split()[1])
 			bondType = ff.readline().split()[1]
 			if bondType != 'fixed':
-				raise Error('Cassandra does not support ' + bondType + 'bonds.')
-			bondParms[index] = (bondType, distance)
+				print 'WARNING: Cassandra does not support harmonic bonds. Force ' + \
+				      'constant will be ignored. .mcf file written with fixed bonds.'
+			bondParms[index] = ('fixed', distance)
 		elif 'angles' in line:
 			index = tuple(ff.readline().split()) #atomType
 			theta = float(ff.readline().split()[1])
