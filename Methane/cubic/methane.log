@@ -7,9 +7,9 @@ inputfile methane.inp
 name of run: methane
 
   Month      Day      Year
-     02       24      2015
+     03       04      2015
  
- Time:  21:47:00
+ Time:  16:36:10
  
 machine: maginnfe.crc.nd.edu
 
@@ -5446,7 +5446,7 @@ Writing information for species   1
  
  ******************************************
  
- Translation time =           15.383878 mins.
+ Translation time =            2.820288 mins.
  ********************************************
  
  
@@ -5455,6 +5455,6 @@ Writing information for species   1
          0     Months
          0       Days
          0      Hours
-        18    Minutes
-        30    Seconds
-       351         ms
+         3    Minutes
+        27    Seconds
+       773         ms

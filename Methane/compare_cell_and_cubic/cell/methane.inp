@@ -13,7 +13,7 @@ NVT_MC
 !----------------
 
 # VDW_Style
-LJ cut_tail 14.0
+LJ cut_tail 12.0
 !----------------
 
 # Charge_Style

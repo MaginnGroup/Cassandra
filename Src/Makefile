@@ -44,7 +44,7 @@
 
 CASS_DIR =  .
 BIN_DIR = $(CASS_DIR)
-EXEC_NAME = cassandra.exe 
+EXEC_NAME = cassandra_debu.exe 
 
 ####################################################################
 ##  Known Machine Types;                                           #
