@@ -186,7 +186,7 @@ SUBROUTINE Fold_Molecule(alive,is,this_box)
   REAL(DP) :: dx, dy, dz
 
   REAL(DP) :: thisx,thisy,thisz
-  REAL(DP) :: thisx2,thisy2,thisz2
+  REAL(DP) :: frac_comx, frac_comy, frac_comz
   INTEGER :: i
 
   IF (l_cubic(this_box)) THEN
@@ -231,14 +231,19 @@ SUBROUTINE Fold_Molecule(alive,is,this_box)
 
   ELSE
 
+  thisx = molecule_list(alive,is)%xcom
+  thisy = molecule_list(alive,is)%ycom
+  thisz = molecule_list(alive,is)%zcom
 
-     IF(molecule_list(alive,is)%xcom .GT. box_list(this_box)%hlength(1,1)) THEN
+  CALL Cartesian_To_Fractional(thisx,thisy,thisz,frac_comx, frac_comy, frac_comz, this_box)
+
+     IF(frac_comx .GT. 0.5) THEN
 
 
         CALL Fold_Molecule_In_Fractional_Coords(alive,is,this_box)  
 
 
-     ELSE IF(molecule_list(alive,is)%xcom .LT. -box_list(this_box)%hlength(1,1)) THEN
+     ELSE IF(frac_comx .LT. -0.5) THEN
 
         CALL Fold_Molecule_In_Fractional_Coords(alive,is, this_box)
 
@@ -246,21 +251,21 @@ SUBROUTINE Fold_Molecule(alive,is,this_box)
 
 
 
-     IF(molecule_list(alive,is)%ycom .GT. box_list(this_box)%hlength(2,2)) THEN
+     IF(frac_comy .GT. 0.5) THEN
         
         CALL Fold_Molecule_In_Fractional_Coords(alive,is,this_box)  
 
-     ELSE IF(molecule_list(alive,is)%ycom .LT. -box_list(this_box)%hlength(2,2)) THEN
+     ELSE IF(frac_comy .LT. -0.5) THEN
         CALL Fold_Molecule_In_Fractional_Coords(alive,is,this_box)  
 
 
      END IF
 
-     IF(molecule_list(alive,is)%zcom .GT. box_list(this_box)%hlength(3,3)) THEN
+     IF(frac_comz .GT. 0.5) THEN
 
         CALL Fold_Molecule_In_Fractional_Coords(alive,is,this_box)  
 
-     ELSE IF(molecule_list(alive,is)%zcom .LT. -box_list(this_box)%hlength(3,3)) THEN
+     ELSE IF(frac_comz .LT. -0.5) THEN
 
         CALL Fold_Molecule_In_Fractional_Coords(alive,is,this_box)  
      END IF

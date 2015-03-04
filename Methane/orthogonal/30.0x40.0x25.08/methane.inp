@@ -13,7 +13,7 @@ NVT_MC
 !----------------
 
 # VDW_Style
-LJ cut_tail 14.0
+LJ cut_tail 12.0
 !----------------
 
 # Charge_Style
@@ -81,7 +81,7 @@ Equilibration   600
 # Frequency_Info
 freq_type    none
 Nthermofreq  1000
-Ncoordfreq   600000
+Ncoordfreq   6000
 MCsteps      600000
 # Done_Frequency_Info
 !--------------------
