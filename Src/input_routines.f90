@@ -512,6 +512,19 @@ SUBROUTINE Get_Pair_Style
                  CALL Clean_Abort(err_msg,'Get_Pairstyle')
               ENDIF
 
+              IF (rcut_vdw(ibox) > MIN(box_list(ibox)%hlength(1,1), &
+                   box_list(ibox)%hlength(2,2), box_list(ibox)%hlength(3,3))) THEN
+
+                     err_msg = ""
+                     err_msg(1) = 'Initial cutoff greater than minimum box length'
+                     err_msg(2) = 'For box'
+                     err_msg(3) = Int_To_String(ibox)
+                     CALL Clean_Abort(err_msg,'Get_Pairstyle')
+
+    	      ENDIF
+
+
+
            ELSE
  
               int_vdw_style(ibox) = vdw_none
@@ -626,6 +639,18 @@ SUBROUTINE Get_Pair_Style
                     err_msg(1) = 'charge_sum_style not properly specified'
                     CALL Clean_Abort(err_msg,'Get_Pairstyle')
                  ENDIF
+
+                 IF (rcut_coul(ibox) > MIN(box_list(ibox)%hlength(1,1), &
+                     box_list(ibox)%hlength(2,2), box_list(ibox)%hlength(3,3))) THEN
+
+                     err_msg = ""
+                     err_msg(1) = 'Initial cutoff greater than minimum box length'
+                     err_msg(2) = 'For box'
+                     err_msg(3) = Int_To_String(ibox)
+                     CALL Clean_Abort(err_msg,'Get_Pairstyle')
+
+                 ENDIF
+
 
            ELSE
 
