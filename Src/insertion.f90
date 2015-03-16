@@ -325,7 +325,7 @@ SUBROUTINE Insertion(this_box,mcstep,randno)
 
   IF(lchempot) THEN
      ! chemical potential is input
-     pacc = pacc - species_list(is)%chem_potential * beta(this_box)
+     pacc = pacc - species_list(is)%chem_potential * beta(this_box) - box_list(this_box)%volume
   ELSE
      ! user input is fugacity
      pacc = pacc - DLOG(species_list(is)%fugacity * beta(this_box) * box_list(this_box)%volume)
