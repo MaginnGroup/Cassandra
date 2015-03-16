@@ -233,7 +233,7 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
  
   IF(lchempot) THEN
      ! chemical potential is input
-     pacc = pacc + beta(this_box) * species_list(is)%chem_potential 
+     pacc = pacc + beta(this_box) * species_list(is)%chem_potential + box_list(this_box)%volume
   ELSE
      pacc = pacc + DLOG(species_list(is)%fugacity * beta(this_box) * box_list(this_box)%volume)
   END IF 
