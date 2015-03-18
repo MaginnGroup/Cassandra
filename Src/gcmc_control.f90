@@ -86,14 +86,15 @@ SUBROUTINE GCMC_Control
   ! Obtain the temperature of the simulation
   CALL Get_Temperature_Info
 
+  ! Read in the probabilities for all the moves
+  CALL Get_Move_Probabilities
+
   ! Get the information on fugacities
   CALL Get_Fugacity_Info
-
+    
   ! Get the product of z/omega for each of fragments
   CALL Get_Zig_By_Omega
 
-  ! Read in the probabilities for all the moves
-  CALL Get_Move_Probabilities
 
   ! Determine the frequency with which information will be output 
   CALL Get_Frequency_Info
