@@ -46,6 +46,7 @@ MODULE Run_Variables
   !
   !
   ! 08/02/13 : Beta release version
+  ! 03/17/15 (JS) : lactivity defined for GCMC simulations
 !*********************************************************************************
 
 USE Type_Definitions
@@ -79,7 +80,7 @@ USE Type_Definitions
   INTEGER, PARAMETER :: sim_gemc_npt = 7
   INTEGER, PARAMETER :: sim_gemc_ig = 8
   INTEGER, PARAMETER :: sim_mcf = 9
-  LOGICAL :: lchempot, timed_run, openmp_flag, en_flag
+  LOGICAL :: lchempot, lactivity, timed_run, openmp_flag, en_flag
 
   ! The starting seed for the random generator
   ! Note iseed is used for generating points on random sphere for MCF_Gen sim type.

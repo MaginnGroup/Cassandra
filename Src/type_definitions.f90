@@ -45,6 +45,8 @@ MODULE Type_Definitions
   !
   !
   ! 08/02/13 : Beta release version
+  !
+  ! 03/17/19 (JS) : Activity field defined for species class for GCMC simulations.
   !****************************************************************************
   IMPLICIT NONE
 
@@ -80,7 +82,7 @@ MODULE Type_Definitions
      CHARACTER(20) :: species_type, insertion, insert_style
 
      ! State point dependent information
-     REAL(DP) :: fugacity, chem_potential, zig_by_omega
+     REAL(DP) :: fugacity, chem_potential, zig_by_omega, activity
      REAL(DP) :: max_lambda, max_torsion
      REAL(DP), ALLOCATABLE :: de_broglie(:)
 
