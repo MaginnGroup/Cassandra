@@ -13,7 +13,7 @@ NPT_MC
 !----------------
 
 # VDW_Style
-LJ cut_tail 14.0
+LJ cut 14.0
 
 !----------------
 
@@ -82,12 +82,14 @@ CUBIC
 !----------------------
 
 # Start_Type
-read_old
-Init_Config/nvt_liq.xyz
+make_config
+100
+!read_old
+!Init_Config/nvt_liq.xyz
 !------------------
 
 # Run_Type
-Equilibration   5000  3 
+Production   50  100
 !------------------
 
 # Average_Info 
@@ -96,9 +98,9 @@ Equilibration   5000  3
 
 # Frequency_Info
 freq_type    none
-Nthermofreq  220
-Ncoordfreq   2200
-MCsteps      2200
+Nthermofreq  100
+Ncoordfreq   100
+MCsteps      10000
 # Done_Frequency_Info
 !--------------------
 

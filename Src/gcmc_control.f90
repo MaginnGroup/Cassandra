@@ -132,5 +132,11 @@ SUBROUTINE GCMC_Control
   CALL Get_Dihedral_Atoms_To_Place  
 
   CALL Get_CBMC_Info
+
+  DO i=1, nbr_boxes
+          IF (int_vdw_sum_style(i) == vdw_mie) THEN
+                  CALL Get_Mie_Nonbond
+          END IF
+  END DO
   
 END SUBROUTINE GCMC_Control
