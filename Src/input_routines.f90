@@ -3573,7 +3573,9 @@ SUBROUTINE Get_Fugacity_Info
 
   species_list(:)%fugacity = 0.0_DP
   species_list(:)%chem_potential = 0.0_DP
+  species_list(:)%activity = 0.0_DP
   lchempot = .FALSE.
+  lactivity = .FALSE.
 
   inputLOOP: DO
      line_nbr = line_nbr  + 1
@@ -3652,9 +3654,34 @@ SUBROUTINE Get_Fugacity_Info
         
         EXIT
 
+     ELSE IF (line_string(1:15) == '# Activity_Info'  ) THEN
+        ! we found a section that contains the information on Chemical Potential of all the species
+        line_nbr = line_nbr + 1
+        lactivity = .TRUE.
+        WRITE(logunit,*)
+        WRITE(logunit,*) '*********** Activity Info ***************'
+        CALL Parse_String(inputunit,line_nbr,nspec_insert,nbr_entries,line_array,ierr)
+        
+        DO i = 1,nspecies
+
+           IF(species_list(i)%int_species_type == int_sorbate) THEN
+              spec_counter = spec_counter + 1
+              species_list(i)%activity = String_To_Double(line_array(spec_counter))
+           ELSE
+              species_list(i)%activity = 0.0_DP
+           END IF
+
+           WRITE(logunit,*)
+           WRITE(logunit,'(A20,2X,I3,2X,A2,2X,E16.9,2X,A7)')'Activity of species', i, &
+                'is', species_list(i)%activity, 'A^(-3).'
+
+        END DO
+        
+        EXIT
+
      ELSE IF (line_string(1:3) == 'END' .OR. line_nbr > 10000 ) THEN
         err_msg = ''
-        err_msg(1) = 'Fugacity section is missing from the input file'
+        err_msg(1) = 'Activity_Info section is missing from the input file'
         CALL Clean_Abort(err_msg,'Get_Fugacity_Info')
      END IF
      
