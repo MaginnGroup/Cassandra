@@ -1500,6 +1500,7 @@ CONTAINS
     REAL(DP) :: eps,sig,SigOverRsq,SigOverR6,SigOverR12
     REAL(DP) :: SigOverRsq_shift,SigOverR6_shift,SigOverR12_shift
     REAL(DP) :: roffsq_rijsq, roffsq_rijsq_sq, factor2, fscale
+    REAL(DP) :: SigOverR, SigOverRn, SigOverRm, mie_coeff, rij,  mie_n, mie_m
 
     Real(DP) :: qi,qj, qsc
     REAL(DP) :: this_lambda, RsqOverSig, R6OverSig, factorLJ
@@ -1574,7 +1575,7 @@ CONTAINS
                    
                    fscale = 1.0_DP
                    
-                ELSE IF ( rijsq <= roff_switch_sq(ibox)) THEN
+                ELSEIF ( rijsq <= roff_switch_sq(ibox)) THEN
                    
                    roffsq_rijsq = roff_switch_sq(ibox) - rijsq
                    
@@ -1590,13 +1591,24 @@ CONTAINS
                    
                    fscale = 0.0_DP
                    Eij_vdw = 0.0_DP
+                ENDIF
+
+             ELSEIF (int_vdw_sum_style(ibox) == vdw_mie) THEN
+
+                rij = SQRT(rijsq)
                 
-                END IF
+                mie_n = mie_nlist(mie_Matrix(is,js))
+                mie_m = mie_mlist(mie_Matrix(is,js))
+                mie_coeff = mie_n/(mie_n-mie_m) * (mie_n/mie_m)**(mie_m/(mie_n-mie_m))
+                SigOverR = sig/rij
+                SigOverRn = SigOverR ** mie_n
+                SigOverRm = SigOverR ** mie_m
+                Eij_vdw =  mie_coeff * eps * (SigOverRn - SigOverRm)
                 
                 
              ENDIF
              
-             ! Add other potential types here
+             
           ENDIF LJ_12_6_calculation
           
        ENDIF VDW_calculation
@@ -2006,7 +2018,7 @@ CONTAINS
   SUBROUTINE Compute_Ewald_Reciprocal_Energy_Difference(im,im_prev,is,this_box,move_flag,V_recip_difference)
     !************************************************************************************************
     ! The subroutine computes the difference in Ewald reciprocal space energy for a given move.
-    !
+    !/
     ! We will develop this routine for a number of moves.
     !
     ! Translation of COM
@@ -2477,7 +2489,6 @@ CONTAINS
                 SHARED_OVERLAP = .true.
              END IF
              
-             
              E_inter_vdw  = E_inter_vdw + vlj_pair
              E_inter_qq   = E_inter_qq   + vqq_pair
              
@@ -2652,7 +2663,7 @@ CONTAINS
           END IF
           
           ! Now figure out what needs to be computed, then call pair_energy
-          
+
           CALL Energy_Test(rijsq,get_vdw,get_qq,this_box)          
 
           ! Compute vdw and q-q energy using if required
@@ -2672,6 +2683,8 @@ CONTAINS
        END DO
 
     END DO
+
+   
 
     IF (l_pair_nrg) THEN
 
@@ -2833,7 +2846,17 @@ CONTAINS
          
       ELSEIF (int_vdw_sum_style(this_box) == vdw_charmm) THEN
          get_vdw = .TRUE.
-         
+
+      ELSEIF (int_vdw_sum_style(this_box) == vdw_mie) THEN
+
+           
+
+         IF (rijsq <= rcut_vdwsq(this_box)) THEN 
+            get_vdw = .TRUE.
+         ELSE 
+            get_vdw = .FALSE.
+         ENDIF
+
       ELSEIF (int_vdw_sum_style(this_box) == vdw_cut_switch) THEN
          
          IF (rijsq <= roff_switch_sq(this_box)) THEN
@@ -2843,7 +2866,9 @@ CONTAINS
          END IF
          
       ENDIF      
-      
+   
+   
+   
    ELSE
       err_msg = ""
       err_msg(1) = 'vdw_style must be NONE of LJ'
@@ -3132,6 +3157,7 @@ CONTAINS
     INTEGER :: itype,jtype, this_box
     REAL(DP) :: eps,sig,SigOverRsq,SigOverR6,SigOverR12
     REAL(DP) :: SigOverRsq_shift,SigOverR6_shift,SigOverR12_shift
+    REAL(DP) :: SigOverR, SigOverRn, SigOverRm, mie_coeff, mie_n, mie_m
     REAL(DP) :: roffsq_rijsq, roffsq_rijsq_sq, factor2, fscale
     REAL(DP) :: qi,qj, qsc, erf_val, this_lambda
     REAL(DP) :: rij, ewald_constant, exp_const, Wij_self
@@ -3218,13 +3244,25 @@ CONTAINS
                    Wij_vdw = Wij_vdw + &
                         (8.0_DP * rijsq * rijsq * roffsq_rijsq * Eij_vdw * switch_factor1(ibox))/(3.0_DP)
 
+                END IF
+             ELSEIF (int_vdw_sum_style(ibox) == vdw_mie) THEN
+                rij = SQRT(rijsq)
+
+                mie_n = mie_nlist(mie_Matrix(is,js))
+                mie_m = mie_mlist(mie_Matrix(is,js))
+                mie_coeff = mie_n/(mie_n-mie_m) * (mie_n/mie_m)**(mie_m/(mie_n-mie_m))
+                SigOverR = sig/rij
+                SigOverRn = SigOverR ** mie_n
+                SigOverRm = SigOverR ** mie_m
+                Wij_vdw = (mie_coeff * eps) *(mie_n * SigOverRn - mie_m * SigOverRm)
+
+
                 ELSE
 
                    fscale = 0.0_DP
                    Eij_vdw = 0.0_DP
                    Wij_vdw = 0.0_DP
                 
-                END IF
                 
                                
              ENDIF
@@ -3268,7 +3306,7 @@ CONTAINS
              rij = SQRT(rijsq)
              ewald_constant = 2.0_DP * alpha_ewald(ibox) / rootPI
              exp_const = EXP(-alpha_ewald(ibox)*alpha_ewald(ibox)*rijsq) 
-             ! May need to protect against very small rijsq
+             ! May need to protect against very smamie_coeffsq
              erf_val = 1.0_DP - erfc(alpha_ewald(ibox) * rij)
              Wij_qq = qi*qj*( (qsc - erf_val)/rij + ewald_constant*exp_const )
 

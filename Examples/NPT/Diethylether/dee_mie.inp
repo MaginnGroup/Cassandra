@@ -1,7 +1,7 @@
 ! This is the input file for an NPT simulation of diethylether at 343.15 K
 
 # Run_Name
-dee
+dee_mie
 !--------------
 
 # Sim_Type
@@ -13,7 +13,7 @@ NPT_MC
 !----------------
 
 # VDW_Style
-LJ cut 14.0
+LJ mie 14.0
 
 !----------------
 
@@ -84,8 +84,6 @@ CUBIC
 # Start_Type
 make_config
 100
-!read_old
-!Init_Config/nvt_liq.xyz
 !------------------
 
 # Run_Type
@@ -124,6 +122,7 @@ kappa_dih 12
 rcut_cbmc 6.5  
 !-----------------
 
-
+# Mie_Nonbond
+1 1 12 6
 
 END
