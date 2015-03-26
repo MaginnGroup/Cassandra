@@ -227,13 +227,17 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
      delta_e_pacc = delta_e_pacc - E_angle - nrg_ring_frag_tot
   END IF
 
-  pacc = beta(this_box) * (-delta_e_pacc) - DLOG(alpha_ratio) + &
+  pacc = beta(this_box) * (-delta_e_pacc) - DLOG(alpha_ratio)  &
          - DLOG(REAL(nmols(is,this_box),DP)) - DLOG(P_reverse) + &
          DLOG(species_list(is)%zig_by_omega)
- 
-  IF(lchempot) THEN
+
+  IF (lactivity) THEN
+     ! user input is activity
+     pacc = pacc + DLOG(species_list(is)%activity * box_list(this_box)%volume)
+
+  ELSE IF(lchempot) THEN
      ! chemical potential is input
-     pacc = pacc + beta(this_box) * species_list(is)%chem_potential 
+     pacc = pacc + beta(this_box) * species_list(is)%chem_potential + box_list(this_box)%volume
   ELSE
      pacc = pacc + DLOG(species_list(is)%fugacity * beta(this_box) * box_list(this_box)%volume)
   END IF 

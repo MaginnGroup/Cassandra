@@ -322,10 +322,12 @@ SUBROUTINE Insertion(this_box,mcstep,randno)
   pacc = pacc - DLOG(alpha_ratio) + DLOG(P_forward) - DLOG(species_list(is)%zig_by_omega) &
        +  DLOG(REAL(nmols(is,this_box)+1,DP)) 
 
-
-  IF(lchempot) THEN
+  IF (lactivity) THEN
+     ! user input is activity
+     pacc = pacc - DLOG(species_list(is)%activity * box_list(this_box)%volume)
+  ELSE IF(lchempot) THEN
      ! chemical potential is input
-     pacc = pacc - species_list(is)%chem_potential * beta(this_box)
+     pacc = pacc - species_list(is)%chem_potential * beta(this_box) 
   ELSE
      ! user input is fugacity
      pacc = pacc - DLOG(species_list(is)%fugacity * beta(this_box) * box_list(this_box)%volume)
