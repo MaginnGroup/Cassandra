@@ -723,6 +723,8 @@ SUBROUTINE Get_Mixing_Rules
            WRITE(logunit,'(A)') 'Lorentz-Berthelot mixing rule specified'
         ELSEIF (mix_rule == 'geometric') THEN
            WRITE(logunit,'(A)') 'Geometric mixing rule specified'
+        ELSEIF (mix_rule == 'custom') THEN
+           WRITE(logunit,'(A)') 'Custom mixing rule specified'
         ELSE
            err_msg(1) = 'Mixing rule not supported'
            err_msg(2) = mix_rule
@@ -1419,6 +1421,7 @@ SUBROUTINE Get_Atom_Info(is)
            nonbond_list(ia,is)%charge = String_To_Double(line_array(5))
            IF(nonbond_list(ia,is)%charge .NE. 0.0_DP) has_charge(is) = .TRUE. 
            nonbond_list(ia,is)%vdw_potential_type = line_array(6)
+	   
 
            species_list(is)%molecular_weight = species_list(is)%molecular_weight + &
                 nonbond_list(ia,is)%mass
@@ -1442,7 +1445,6 @@ SUBROUTINE Get_Atom_Info(is)
            IF (nonbond_list(ia,is)%vdw_potential_type == 'LJ') THEN
               ! epsilon/kB in K read in
               nonbond_list(ia,is)%vdw_param(1) = String_To_Double(line_array(7))
-
               ! sigma = Angstrom
               nonbond_list(ia,is)%vdw_param(2) = String_To_Double(line_array(8))
 
@@ -1453,7 +1455,6 @@ SUBROUTINE Get_Atom_Info(is)
 
               ! Convert epsilon to atomic units amu A^2/ps^2
               nonbond_list(ia,is)%vdw_param(1) = kboltz* nonbond_list(ia,is)%vdw_param(1) 
-
               ! Set number of vdw parameters
               nbr_vdw_params = 2
 
@@ -2452,14 +2453,14 @@ SUBROUTINE Get_Fragment_Info(is)
   WRITE(logunit,*)
   WRITE(logunit,*) '******* Generating anchor info ****************'
 
-!  IF (nfragments(is) == 1) THEN
+  IF (nfragments(is) == 1) THEN
 
-!     nanchors = 1
-!     frag_list(1,is)%nanchors = nanchors
-!     ALLOCATE(frag_list(1,is)%anchor(nanchors))
-!     frag_list(1,is)%anchor(1) = 1
+     nanchors = 1
+     frag_list(1,is)%nanchors = nanchors
+     ALLOCATE(frag_list(1,is)%anchor(nanchors))
+     frag_list(1,is)%anchor(1) = 1
 
-!  ELSE
+  ELSE
 
      DO ifrag = 1, nfragments(is)
 
@@ -2521,7 +2522,7 @@ SUBROUTINE Get_Fragment_Info(is)
 
      END DO
      
-!  END IF
+  END IF
 
   ! Output info
 
