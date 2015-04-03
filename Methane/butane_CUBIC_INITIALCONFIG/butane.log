@@ -7,9 +7,9 @@ inputfile c4.inp
 name of run: butane
 
   Month      Day      Year
-     03       15      2015
+     03       29      2015
  
- Time:  18:04:29
+ Time:  14:54:57
  
 machine: maginnfe.crc.nd.edu
 
@@ -52,7 +52,7 @@ Simulation type: NVT_MC
  TRUE
  
  # Molecule_Files
- c4.mcf   220
+ c4.mcf   192
  
  # Box_Info
  1
@@ -80,7 +80,7 @@ Simulation type: NVT_MC
  
  # Start_Type
  make_config
- 220
+ 192
  
  # Run_Type
  Equilibration   50  100
@@ -163,7 +163,7 @@ Lorentz-Berthelot mixing rule specified
  
 Species  Nbr molecules
 -------  -------------
-     1            220
+     1            192
  
 L_Coul_CBMC not given for species    1
  Defaulting to true
@@ -573,9 +573,9 @@ MC low cutoff distance is   1.000    Angstrom
  ******Initial Coordinate Info **********
  
  Initial configuration will be generated
-  Starting number of molecules of species   1   in box   1  is     220
+  Starting number of molecules of species   1   in box   1  is     192
  
-Total number of molecules of species   1   present initially is     220
+Total number of molecules of species   1   present initially is     192
  
  *****Finished reading initial coordinate info *****
  
@@ -597,16 +597,16 @@ Box                1    has charge                0.00000000
   Atomic units-Extensive
  *****************************************
  
-Total system energy is                 116913.405
-Intra molecular energy is              136443.198
+Total system energy is                  40105.634
+Intra molecular energy is              113906.998
 Bond energy is                              0.000
-Bond angle energy is                    52841.620
-Dihedral angle energy is                83601.578
+Bond angle energy is                    45463.027
+Dihedral angle energy is                68443.971
 Improper angle energy is                    0.000
 Intra nonbond vdw is                        0.000
 Intra nonbond elec is                       0.000
-Inter molecule vdw is                   -9641.024
-Long range correction is                -9888.769
+Inter molecule vdw is                  -66269.555
+Long range correction is                -7531.809
 Inter molecule q is                         0.000
 Reciprocal ewald is                         0.000
 Self ewald is                               0.000
@@ -622,16 +622,16 @@ Number of vectors is                         3039
   Atomic units - Extensive
  *****************************************
  
-Total system energy is                 112015.475
-Intra molecular energy is              136443.198
+Total system energy is                  40031.304
+Intra molecular energy is              113906.998
 Bond energy is                              0.000
-Angle energy is                         52841.620
-Dihedral energy is                      83601.578
+Angle energy is                         45463.027
+Dihedral energy is                      68443.971
 Improper energy is                          0.000
 Intra nonbond vdw is                        0.000
 Intra nonbond elec is                       0.000
-Inter molecule vdw is                  -14538.955
-Long range correction is                -9888.769
+Inter molecule vdw is                  -66343.885
+Long range correction is                -7531.809
 Inter molecule q is                         0.000
 Reciprocal ewald is                         0.000
 Self ewald is                               0.000
@@ -643,16 +643,16 @@ Self ewald is                               0.000
  Atomic units-Extensive
  *****************************************
  
-Total system energy is                 112015.475
-Intra molecular energy is              136443.198
+Total system energy is                  40031.304
+Intra molecular energy is              113906.998
 Bond energy is                              0.000
-Angle energy is                         52841.620
-Dihedral energy is                      83601.578
+Angle energy is                         45463.027
+Dihedral energy is                      68443.971
 Improper energy is                          0.000
 Intra nonbond vdw is                        0.000
 Intra nonbond elec is                       0.000
-Inter molecule vdw is                  -14538.955
-Long range correction is                -9888.769
+Inter molecule vdw is                  -66343.885
+Long range correction is                -7531.809
 Inter molecule q is                         0.000
 Reciprocal ewald is                         0.000
 Self ewald is                               0.000
@@ -667,7 +667,7 @@ Self ewald is                               0.000
   Writing information for species           1
  
                 Move      Trials     Success   % Success
-              Rotate           1           1      100.00
+           Translate           1           1      100.00
  **************************************
  
  Writing information about fragments
@@ -684,7 +684,7 @@ Writing information for species   1
  
  ******************************************
  
- Rotation time =               0.001000 secs.
+ Translation time =            0.001000 secs.
  ********************************************
  
  
@@ -695,4 +695,4 @@ Writing information for species   1
          0      Hours
          0    Minutes
          3    Seconds
-       170         ms
+        81         ms

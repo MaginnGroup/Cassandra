@@ -7,9 +7,9 @@ inputfile c4.inp
 name of run: butane
 
   Month      Day      Year
-     03       15      2015
+     03       29      2015
  
- Time:  18:13:04
+ Time:  14:54:56
  
 machine: maginnfe.crc.nd.edu
 
@@ -52,14 +52,14 @@ Simulation type: NVT_MC
  TRUE
  
  # Molecule_Files
- c4.mcf   220
+ c4.mcf   192
  
  # Box_Info
  1
  CELL_MATRIX
- 34.2911 0.00000 1.00000
+ 35.2911 0.00000 0.00000
  0.00000 35.2911 0.00000
- 1.00000 0.00000 34.2911
+ 0.00000 0.00000 35.2911
  
  # Temperature_Info
  343.15
@@ -82,7 +82,7 @@ Simulation type: NVT_MC
  
  # Start_Type
  make_config
- 220
+ 192
  
  # Run_Type
  Equilibration   50  100
@@ -124,14 +124,14 @@ Simulation type: NVT_MC
 number of simulation boxes     1
  
 Box number      1       Box Shape :     CELL_MATRIX 
-       34.2911         0.0000    1.0000
+       35.2911         0.0000    0.0000
         0.0000        35.2911    0.0000
-        1.0000         0.0000   34.2911
+        0.0000         0.0000   35.2911
  
-Cell basis vector lengths in A,     34.3057      35.2911      34.3057
-Cosine of angles alpha, beta, gamma     0.0000       0.0583       0.0000
-Distance between box faces    34.2474      35.2911      34.2474
-Box volume, A^3         41462.7913
+Cell basis vector lengths in A,     35.2911      35.2911      35.2911
+Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+Distance between box faces    35.2911      35.2911      35.2911
+Box volume, A^3         43953.7148
  
  *** Finished loading box information ***
  
@@ -167,7 +167,7 @@ Lorentz-Berthelot mixing rule specified
  
 Species  Nbr molecules
 -------  -------------
-     1            220
+     1            192
  
 L_Coul_CBMC not given for species    1
  Defaulting to true
@@ -577,9 +577,9 @@ MC low cutoff distance is   1.000    Angstrom
  ******Initial Coordinate Info **********
  
  Initial configuration will be generated
-  Starting number of molecules of species   1   in box   1  is     220
+  Starting number of molecules of species   1   in box   1  is     192
  
-Total number of molecules of species   1   present initially is     220
+Total number of molecules of species   1   present initially is     192
  
  *****Finished reading initial coordinate info *****
  
@@ -601,20 +601,20 @@ Box                1    has charge                0.00000000
   Atomic units-Extensive
  *****************************************
  
-Total system energy is                 172048.240
-Intra molecular energy is              145497.060
+Total system energy is                  40105.634
+Intra molecular energy is              113906.998
 Bond energy is                              0.000
-Bond angle energy is                    61076.075
-Dihedral angle energy is                84420.985
+Bond angle energy is                    45463.027
+Dihedral angle energy is                68443.971
 Improper angle energy is                    0.000
 Intra nonbond vdw is                        0.000
 Intra nonbond elec is                       0.000
-Inter molecule vdw is                   37034.028
-Long range correction is               -10482.848
+Inter molecule vdw is                  -66269.555
+Long range correction is                -7531.809
 Inter molecule q is                         0.000
 Reciprocal ewald is                         0.000
 Self ewald is                               0.000
-Number of vectors is                         2884
+Number of vectors is                         3039
  *******************************************
  
  *********** Ending simulation *****************
@@ -626,16 +626,16 @@ Number of vectors is                         2884
   Atomic units - Extensive
  *****************************************
  
-Total system energy is                 170647.623
-Intra molecular energy is              145497.060
+Total system energy is                  40031.304
+Intra molecular energy is              113906.998
 Bond energy is                              0.000
-Angle energy is                         61076.075
-Dihedral energy is                      84420.985
+Angle energy is                         45463.027
+Dihedral energy is                      68443.971
 Improper energy is                          0.000
 Intra nonbond vdw is                        0.000
 Intra nonbond elec is                       0.000
-Inter molecule vdw is                   35633.411
-Long range correction is               -10482.848
+Inter molecule vdw is                  -66343.885
+Long range correction is                -7531.809
 Inter molecule q is                         0.000
 Reciprocal ewald is                         0.000
 Self ewald is                               0.000
@@ -647,16 +647,16 @@ Self ewald is                               0.000
  Atomic units-Extensive
  *****************************************
  
-Total system energy is                 170647.623
-Intra molecular energy is              145497.060
+Total system energy is                  40031.304
+Intra molecular energy is              113906.998
 Bond energy is                              0.000
-Angle energy is                         61076.075
-Dihedral energy is                      84420.985
+Angle energy is                         45463.027
+Dihedral energy is                      68443.971
 Improper energy is                          0.000
 Intra nonbond vdw is                        0.000
 Intra nonbond elec is                       0.000
-Inter molecule vdw is                   35633.411
-Long range correction is               -10482.848
+Inter molecule vdw is                  -66343.885
+Long range correction is                -7531.809
 Inter molecule q is                         0.000
 Reciprocal ewald is                         0.000
 Self ewald is                               0.000
@@ -688,7 +688,6 @@ Writing information for species   1
  
  ******************************************
  
- Translation time =            0.001000 secs.
  ********************************************
  
  
@@ -699,4 +698,4 @@ Writing information for species   1
          0      Hours
          0    Minutes
          3    Seconds
-       303         ms
+       166         ms

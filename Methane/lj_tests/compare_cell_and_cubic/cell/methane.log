@@ -1,0 +1,5466 @@
+*** Beginning Cassandra simulation ***
+
+Version Cassandra 1.0                                                                                                           
+
+inputfile methane.inp                                                                                                             
+
+name of run: methane
+
+  Month      Day      Year
+     03       04      2015
+ 
+ Time:  16:59:58
+ 
+machine: maginnfe.crc.nd.edu
+
+
+Simulation type: NVT_MC              
+
+ 
+ **** Copying Inputfile ****** 
+ 
+ # Run_Name
+ methane
+ 
+ # Sim_Type
+ NVT_MC
+ 
+ # Nbr_Species
+ 1
+ 
+ # VDW_Style
+ LJ cut_tail 12.0
+ 
+ # Charge_Style
+ NONE
+ 
+ # Intra_Scaling
+ 0.0 0.0 0.0 1.0
+ 0.0 0.0 0.0 1.0
+ 
+ # Mixing_Rule
+ LB
+ 
+ # Seed_Info
+ 1219130951 1219130952
+ 
+ # Rcutoff_Low
+ 2.0
+ 
+ # Pair_Energy
+ TRUE
+ 
+ # Molecule_Files
+ methane_UA_TraPPE.mcf 500
+ 
+ # Box_Info
+ 1
+ CELL_MATRIX
+ 31.10743 0.000000 0.000000
+ 0.000000 31.10743 0.000000
+ 0.000000 0.000000 31.10743
+ 
+ # Temperature_Info
+ 151.0
+ 
+ # Move_Probability_Info
+ 
+ # Prob_Translation
+ 1.0
+ 0.5
+ 
+ 
+ # Done_Probability_Info
+ 
+ # Start_Type
+ read_old
+ ../initial.xyz
+ 
+ # Run_Type
+ Equilibration   600
+ 
+ # Average_Info
+ 1
+ 
+ # Frequency_Info
+ freq_type    none
+ Nthermofreq  1000
+ Ncoordfreq   600000
+ MCsteps      600000
+ # Done_Frequency_Info
+ 
+ # Property_Info 1
+ Energy_Total
+ Pressure
+ 
+ 
+ # Fragment_Files
+ methane.dat 1
+ 
+ # CBMC_Info
+ kappa_ins 12
+ kappa_rot 0
+ kappa_dih 0
+ rcut_cbmc 6.5
+ 
+ 
+ END
+ 
+ **** Finished writing input file *******
+ Number of species simulated:      1
+
+ *** Simulation box data ***
+number of simulation boxes     1
+ 
+Box number      1       Box Shape :     CELL_MATRIX 
+       31.1074         0.0000    0.0000
+        0.0000        31.1074    0.0000
+        0.0000         0.0000   31.1074
+ 
+Cell basis vector lengths in A,     31.1074      31.1074      31.1074
+Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+Distance between box faces    31.1074      31.1074      31.1074
+Box volume, A^3         30101.7953
+ 
+ *** Finished loading box information ***
+ 
+   VDW style used is:   LJ             in box:  1
+   VDW sum style is:   cut_tail       in box:  1
+    rcut =    12.000   Angstrom
+ VDW style properly input
+ 
+   Charge style used is:   NONE           in box:  1
+ Charge style properly input
+ 
+ 
+ Pair interaction energy array storage enabled
+ 
+Lorentz-Berthelot mixing rule specified
+ 
+ Reading molecular connectivity information
+ Species:            1
+ Molecular connectivity file: 
+ methane_UA_TraPPE.mcf                                                          
+                                          
+   1 atom(s) specified.
+   0 bond(s) specified.
+   0 angle(s) specified.
+   0 dihedral(s) specified.
+   0 improper(s) specified.
+   1 fragments specified.
+   0  fragment bonds specified.
+ 
+Species  Nbr molecules
+-------  -------------
+     1            500
+ 
+L_Coul_CBMC not given for species    1
+ Defaulting to true
+ default  T
+ 
+1st_Fragment_Ins_Style not specified for species    1
+using default of "COM" for this species.
+Species and atom number   1   1
+ atom name:             CH4_UA
+ element:               C 
+ mass:                     16.0000
+ charge:                    0.0000
+ vdw type:              LJ                  
+ Epsilon / kB in K:       148.0000
+ Sigma in A:                3.7300
+ 
+Total number of ring atoms in species     1    0
+Total number of exo atoms in species      1    1
+ Atom ids for ring atoms
+ Atom ids for exo atoms           1
+ *** Completed assigning atom info ***
+ 
+ No bonds in species            1
+ *** Completed assigning bond info ***
+ 
+ No angles in species            1
+ 
+Molecule    1  is defined to be linear
+ 
+ *** Completed assigning angle info ***
+ 
+ No dihedrals in species            1
+ *** Completed assigning dihedral info ***
+ 
+ No impropers in species            1
+ *** Completed assigning improper info ***
+ 
+ 
+Total number of atoms in the fragment     1  is   1
+Identity of these atoms are
+           1
+ 
+ ******* Finished loading fragment info ********
+ 
+ ******* Generating anchor info ****************
+ 
+ Number of anchors for fragment     1  is   0
+Anchor id is:
+ Fragment file for fragment 1 is
+ methane.dat                                                                    
+                                          
+ Fragment type           1
+ 
+ Maximum configurations stored           1
+ 
+ 
+ Finished loading fragment coordinates from
+ methane.dat                                                                    
+                                          
+ 
+ intramolecular scaling factors explicitly set
+Intra molecule scaling factors for species             1
+VDW 1-2 scaling factor         0.000
+VDW 1-3 scaling factor         0.000
+VDW 1-4 scaling factor         0.000
+VDW 1-N scaling factor         1.000
+Coulomb 1-2 scaling factor     0.000
+Coulomb 1-3 scaling factor     0.000
+Coulomb 1-4 scaling factor     0.000
+Coulomb 1-N scaling factor     0.000
+ 
+ 
+ *** Completed assigning intramolecular scaling factors ***
+ 
+  There are 1 different atom types in the system 
+     1  CH4_UA
+ 
+ 
+species number and name:  1   methane_UA_TraPPE.mcf                                                                                                   
+ Name      number
+ ------    ------
+CH4_UA      1
+ 
+ 
+ *** Creating VDW interaction table ***
+Mixing rule used is:    LB             
+ 
+Atom 1     Atom 2  epsilon (amu A^2/ps^2)        sigma (A)
+CH4_UA     CH4_UA    123.0542                        3.7300
+ 
+ *** Completed construction of VDW interaction table ***
+ 
+ 
+ *** Creating exclusion table ***
+ 
+     species   atom1      atom2  vdw scale q-q scale
+         1         1         1     0.000     0.000
+ 
+ *** Completed construction of exclusion table ***
+ 
+ 
+ ***** Reading seed info *********
+ 
+ The starting seed s1 is:    153587801
+ 
+ ****** Finished loading the seed ********
+ 
+ **** Simulation temperature information ****
+  Temperature assigned to box     1  is  151.000    K
+ 
+ *** Finished loading information for temperature ****
+ 
+ 
+ ********* Move Probability Info******
+    Translation probability is   1.000000
+ 
+Maximum displacement width for species   1 in box  1  is      0.50000
+ 
+ ***** Finished reading the move probability info *****
+Number of moves is :   1
+ 
+ 
+ ***** reading CBMC info *********
+ 
+ Writing out CBMC_Info
+kappa for first bead insertion              12
+kappa for rotational bias                    0
+kappa for dihedral selection                 0
+ 
+Smaller cutoff for CBMC for box          1        6.50
+ ****** finished loading CBMC_Info ********
+ 
+Thermodynamic quantities will written at every       1000 MC steps.
+ 
+Coordinates will be written at every               600000 MC steps.
+ 
+movie header file for box      1 is    methane_H.box1
+movie_XYZ file for box         1 is    methane_box1.xyz
+ 
+The simulation will be run for                       600000 MC steps.
+ 
+ *** Finished reading output info ******* 
+ 
+ *********** Average Information ***************
+ 
+ Instantaneous values will be output
+ 
+ *********** Ending Average Section ************
+ 
+ **** Writing property output information *****
+ 
+Total number of property files to be written is     1   for box 1
+ Maximum number of properties per file is    2
+ Writing the name of the property files and the corresponding property output
+ 
+ Property file    1   is  methane.instnt_prp1.box1
+ Properties output in these files are
+ 
+ Energy_Total
+ Pressure
+ 
+ ***** Finished writing property information ******
+ 
+MC low cutoff distance is   2.000    Angstrom
+ 
+ *** Computed bond participation information ***
+ 
+ 
+ 
+ Number of atoms in question           1
+ Total number of angles           0
+ Angles for this atom
+ 
+ Position of the atom in these dihedrals
+ 
+ Number of atoms in question           1
+ Total number of dihedrals           0
+ Dihedral angles for this atom
+ 
+ Position of the atom in angles
+ 
+ 
+ checking for dihedral_atoms_to_place
+ 
+ ******Initial Coordinate Info **********
+ 
+ Configurations will be read from old files
+ 
+Starting configuration for box           1 is
+ ../initial.xyz                                                                 
+                                          
+ 
+ *****Finished reading initial coordinate info *****
+ 
+ ****** Reading Run_Type Information ******
+ 
+ The input run type is Equilibration
+ Update frequency is          600
+ 
+ ******* Finished reading run type information ******
+starting type read_old                                                                                                                
+
+ Configurations read successfully
+ ******** Charge Neutrality Check *********#
+Species            1    has charge                0.00000000
+Box                1    has charge                0.00000000
+ 
+ #********Charge Neutrality Check*********#
+ *****************************************
+  Starting energy components for box   1
+  Atomic units-Extensive
+ *****************************************
+ 
+Total system energy is                -358929.788
+Intra molecular energy is                   0.000
+Bond energy is                              0.000
+Bond angle energy is                        0.000
+Dihedral angle energy is                    0.000
+Improper angle energy is                    0.000
+Intra nonbond vdw is                        0.000
+Intra nonbond elec is                       0.000
+Inter molecule vdw is                 -345590.235
+Long range correction is               -13339.553
+Inter molecule q is                         0.000
+Reciprocal ewald is                         0.000
+Self ewald is                               0.000
+ *******************************************
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.31833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31833
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31303
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31616
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33829
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31461
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.29888
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31781
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32204
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34566
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33875
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.44333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30036
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32939
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32939
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35574
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.36286
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.44000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31931
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32570
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33981
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32962
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34610
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34379
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31514
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30359
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.57000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34609
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.36109
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.44167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31896
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30939
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.55500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34343
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32511
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32944
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30968
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32723
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31632
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33424
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32979
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33638
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31732
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31838
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33854
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32613
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33048
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33158
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32937
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33266
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34375
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31281
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33054
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33935
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32917
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32808
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32480
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32155
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32262
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33445
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33556
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31879
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32197
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34451
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33418
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32861
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33518
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31283
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33682
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33008
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32458
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34297
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32697
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32806
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31822
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33519
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32066
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31532
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31637
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32481
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33238
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32463
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31273
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31273
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31690
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31901
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30306
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32528
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33829
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31461
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31356
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31879
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30604
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32644
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30794
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32745
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35582
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.38785
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.42333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32838
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33057
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31955
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32807
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32916
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31709
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34775
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32688
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32797
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32797
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34984
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.43833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30669
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33327
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32994
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32444
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34174
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32465
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35279
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34456
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33767
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32754
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33409
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31850
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32911
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33241
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31468
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31887
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33269
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34600
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35407
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.43500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30804
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30393
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31103
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33902
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34693
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35156
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35038
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34571
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32958
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34276
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.44167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30277
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31892
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33806
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33806
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32341
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32017
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32231
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33627
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34524
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32223
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31793
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34124
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30712
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.55500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34090
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34772
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33497
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35619
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34194
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33396
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31726
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31938
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30021
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30322
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31433
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33424
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33536
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32865
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34289
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33260
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31597
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32124
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30946
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33112
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32450
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33315
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32649
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30908
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32659
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32986
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31447
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31866
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33459
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31340
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32280
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33894
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33668
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31311
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32668
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33322
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33655
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33431
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34433
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35466
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32984
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34083
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35219
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34867
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32078
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32505
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30555
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32490
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31407
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34025
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31416
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30683
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32013
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32226
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34589
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32629
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32412
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32304
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32842
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32842
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34594
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31941
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32367
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33554
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31988
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33161
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32940
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34367
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33909
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34927
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34344
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33658
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34331
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33759
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32971
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33520
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33409
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33297
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32631
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33501
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31938
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33109
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33771
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32758
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30574
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30167
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33083
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31098
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31512
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33718
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34280
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35194
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34490
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32996
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32556
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32122
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31908
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33290
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33401
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.36185
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34134
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32541
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33301
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31858
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31539
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33221
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33553
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30645
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31360
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34183
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30879
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33864
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32960
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32082
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34541
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33390
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30830
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32269
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33237
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31021
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31641
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32801
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31599
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30440
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31556
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31767
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32296
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33050
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31397
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33909
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.44667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30292
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32110
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30183
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.56167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33906
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31080
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32323
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34909
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32349
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33643
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31737
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30150
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31155
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30843
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32180
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35076
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.44167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30984
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30571
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32303
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31872
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33041
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32600
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33252
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35580
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33920
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33580
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32237
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32452
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30830
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32474
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33340
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32451
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33857
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30923
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31438
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32591
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33025
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31594
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.28961
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.55167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31954
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31954
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33019
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30708
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.29889
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31782
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32418
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32201
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33704
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34603
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31835
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31729
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33315
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31205
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31517
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30572
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30877
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32009
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34250
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33337
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35448
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33439
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31210
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31730
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32048
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31300
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31821
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30761
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31991
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31458
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31458
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31668
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34623
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33931
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.44833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30425
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.55833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33974
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32615
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33485
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35383
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33495
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33161
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33050
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31287
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.55167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34520
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32449
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32665
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34516
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31525
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33311
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33978
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32732
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35132
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31619
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31408
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32769
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34298
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31326
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34250
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32651
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33196
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33085
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35401
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33631
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33855
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32049
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33545
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33098
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33870
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34096
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.36369
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35399
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34809
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32256
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32041
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34071
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31345
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31032
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31032
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.56833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35273
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.43167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30452
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.55667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33903
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30626
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31851
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31108
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33907
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33568
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31778
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32943
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33163
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32168
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32275
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.29908
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32002
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33069
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.44333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.29321
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31373
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31269
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.56000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35021
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33970
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32159
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32480
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30640
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.55667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34112
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33771
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31970
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30798
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.56833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35007
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34773
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34889
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33377
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30930
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31239
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32905
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34989
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33706
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33032
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33913
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33348
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35126
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34892
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32566
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32783
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34204
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34888
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32562
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33973
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33520
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32067
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33029
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32919
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33907
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33568
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30882
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31500
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30345
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.56167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34087
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33065
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35930
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34254
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31057
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33231
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32234
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33416
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32970
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33300
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30858
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32504
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32287
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32395
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34230
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35143
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33972
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33405
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34408
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32572
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34093
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33752
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32739
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33066
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32626
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31103
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33799
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32109
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31895
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.56000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35722
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32507
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34566
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33759
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31171
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33353
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33242
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33463
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31567
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31357
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.55833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35015
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31747
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31641
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34383
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34842
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34029
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34936
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34703
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33547
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31981
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33047
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34369
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31390
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32123
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32872
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32215
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31893
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.55333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35295
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33648
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32414
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32198
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31446
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34277
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33363
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34808
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32024
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32344
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33853
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34643
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33604
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32932
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30517
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32144
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32251
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34187
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30882
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33661
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30632
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32368
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33446
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34673
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34326
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34212
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33756
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32068
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31854
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32279
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33785
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33672
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33111
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32228
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34914
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35612
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34425
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34540
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33619
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33395
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32615
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33485
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34155
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34383
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33007
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33007
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34768
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33493
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33605
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31140
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33943
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33830
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34845
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33335
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33890
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34681
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34681
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33294
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33072
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33403
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34739
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33581
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32909
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32909
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.57167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.37626
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34992
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35225
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32055
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32376
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33671
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34681
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32831
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33597
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32589
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33676
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34461
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34347
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34232
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34118
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32526
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33827
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31233
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.55333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34565
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33989
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33876
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33198
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34194
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33510
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34851
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.43500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30320
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.29815
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.55167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32896
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31799
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32117
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32331
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35456
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.42667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30256
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31164
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32618
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33705
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35054
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33768
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34219
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32736
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32845
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34706
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34590
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33207
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33982
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32396
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35096
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33341
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32896
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33554
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.44167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.29639
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.55000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32603
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33690
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34252
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32767
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32003
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34350
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32747
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34166
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35532
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35651
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34225
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33883
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.36367
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34306
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33620
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32724
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34360
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33215
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32108
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34997
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33481
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32030
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33097
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33428
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32091
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.29952
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32348
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32240
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.29339
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.55000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32272
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33671
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33222
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34551
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32823
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33261
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35257
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32554
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33313
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33868
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34659
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31308
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33813
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33926
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32229
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.55000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35452
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.41333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.29307
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.56167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32922
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32922
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33141
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33031
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34682
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34104
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31149
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33952
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34405
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32455
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35484
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34775
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33731
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34968
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.44833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31355
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32086
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32728
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33710
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31912
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32869
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32541
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31673
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33046
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35028
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34328
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35129
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34777
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32807
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35431
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34132
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35839
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.44000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31538
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34061
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32472
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32147
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31718
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.29604
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.57167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33847
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33847
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33847
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33508
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30939
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.55167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34136
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34250
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34022
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33795
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34246
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33789
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35028
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.36546
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32891
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34646
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32682
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33227
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34999
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32433
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33730
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34067
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33613
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35069
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34602
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33102
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34206
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31355
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34177
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33722
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34733
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32534
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30582
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33334
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32334
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31579
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32737
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30337
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33067
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32846
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32080
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34539
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.36036
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.41833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30150
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33065
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32624
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32189
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32833
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30863
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32509
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33051
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31839
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32051
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31303
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34225
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33768
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32755
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31773
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.55167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35056
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35173
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33649
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30845
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31153
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.56833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35411
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33758
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32745
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32309
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30262
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32885
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34968
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34735
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33345
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33901
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35031
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33396
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31838
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31944
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30560
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33005
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33995
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32748
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32093
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34447
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34102
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34330
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33758
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33082
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33413
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31854
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33340
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34230
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35256
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34081
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33400
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33511
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32282
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31099
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33483
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32925
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31388
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34422
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33734
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31935
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32999
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33989
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33536
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33760
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35898
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.44667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32069
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31855
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33023
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34784
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.44167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30726
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33594
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34266
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34494
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32194
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32624
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31536
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32693
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34545
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33394
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31613
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31823
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34263
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33350
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33127
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35115
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33710
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33935
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34048
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35523
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33629
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32396
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33368
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33701
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32129
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32664
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33426
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34429
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32249
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30851
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32394
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32070
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33459
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31340
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32489
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35522
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32206
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30918
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32773
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32227
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.29649
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30538
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31149
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.55333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34472
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33552
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30421
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.56167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34173
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33831
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33380
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34048
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33821
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32468
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31927
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33629
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31051
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30016
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32017
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31910
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32868
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35059
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.44500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31203
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32659
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34400
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33712
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.36072
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35110
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34876
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32435
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33840
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34292
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34977
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34161
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33820
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31903
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32967
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31978
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34110
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31153
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33230
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33120
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34113
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31157
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33961
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33734
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34859
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.36369
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33702
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34039
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34039
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34947
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.44667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31219
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30907
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31834
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33320
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34875
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32899
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32131
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32667
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32013
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.55333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35428
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32594
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33789
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33226
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30457
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.55500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33807
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34934
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33420
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33420
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31415
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33195
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32642
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31880
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32730
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33494
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32266
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31513
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33509
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33174
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31736
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30573
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33426
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33760
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32523
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32739
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33503
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33503
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34285
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33714
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32590
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32590
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32264
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35383
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33732
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35193
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32495
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34228
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31946
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.29284
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31139
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32281
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31097
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.57500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35761
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.44833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32066
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32707
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.54833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35869
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.44000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31565
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33038
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32267
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31837
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30457
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32183
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33899
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35368
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33011
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34111
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35021
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.35137
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34200
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.46500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31806
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30534
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31857
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32388
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33036
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31714
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33617
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.34066
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33384
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33941
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.48167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32696
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32805
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32586
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33347
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31791
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32532
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.49000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31882
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53167
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33901
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30850
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31775
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33258
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.45500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.30265
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.53333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32283
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.50000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32283
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.52500
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33897
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47833
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32428
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51333
+Maximum width for translation of species 1  updated in box 1
+new width is   0.33293
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.47667
+Maximum width for translation of species 1  updated in box 1
+new width is   0.31739
+ 
+ 
+Translation ratio for species     1  for box 1  is:    0.51000
+Maximum width for translation of species 1  updated in box 1
+new width is   0.32374
+ 
+ *********** Ending simulation *****************
+ 
+ 
+ 
+ *****************************************
+    Ending energy components for box   1
+  Atomic units - Extensive
+ *****************************************
+ 
+Total system energy is                -358896.890
+Intra molecular energy is                   0.000
+Bond energy is                              0.000
+Angle energy is                             0.000
+Dihedral energy is                          0.000
+Improper energy is                          0.000
+Intra nonbond vdw is                        0.000
+Intra nonbond elec is                       0.000
+Inter molecule vdw is                 -345557.337
+Long range correction is               -13339.553
+Inter molecule q is                         0.000
+Reciprocal ewald is                         0.000
+Self ewald is                               0.000
+ **************************************************
+ 
+ 
+ *****************************************
+ Components of energy from total energy call for box   1
+ Atomic units-Extensive
+ *****************************************
+ 
+Total system energy is                -358896.890
+Intra molecular energy is                   0.000
+Bond energy is                              0.000
+Angle energy is                             0.000
+Dihedral energy is                          0.000
+Improper energy is                          0.000
+Intra nonbond vdw is                        0.000
+Intra nonbond elec is                       0.000
+Inter molecule vdw is                 -345557.337
+Long range correction is               -13339.553
+Inter molecule q is                         0.000
+Reciprocal ewald is                         0.000
+Self ewald is                               0.000
+ 
+ 
+ 
+ Writing information for box   1
+  *********************************************
+ 
+ 
+  ******************************************
+  Writing information for species           1
+ 
+                Move      Trials     Success   % Success
+           Translate      600000      300313       50.05
+ **************************************
+ 
+ Writing information about fragments
+ 
+ *************************************
+Writing information for species   1
+  Fragment      Trials     Success   % Success
+ *********************************
+ *********** Ending simulation *****************
+ 
+ 
+ 
+ Writing information about subroutine times
+ 
+ ******************************************
+ 
+ Translation time =            2.511751 mins.
+ ********************************************
+ 
+ 
+ Program execution time
+         0      Years
+         0     Months
+         0       Days
+         0      Hours
+         3    Minutes
+         3    Seconds
+       965         ms

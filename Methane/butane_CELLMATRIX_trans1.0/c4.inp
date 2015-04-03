@@ -1,0 +1,120 @@
+! This is the input file for an NVT simulation of diethylether at 343.15 K
+
+# Run_Name
+butane
+!--------------
+
+# Sim_Type
+NVT_MC
+!---------------
+
+# Nbr_Species
+1
+!----------------
+
+# VDW_Style
+LJ cut_tail 14.0
+
+!----------------
+
+# Charge_Style
+coul Ewald 14.0 0.000001 
+!----------------
+
+# Intra_Scaling
+0.0 0.0 0.0 1.0
+0.0 0.0 0.0 1.0
+!----------------
+
+# Mixing_Rule
+LB
+!----------------
+
+# Seed_Info
+1219130921 1219130922
+!-------------------
+
+# Rcutoff_Low
+1.0
+!-------------------
+
+# Pair_Energy
+TRUE
+!-------------------
+
+# Molecule_Files
+c4.mcf   192
+!-------------------------------
+
+# Box_Info
+1
+CELL_MATRIX
+35.2911 0.00000 0.00000
+0.00000 35.2911 0.00000
+0.00000 0.00000 35.2911
+!----------------------
+
+# Temperature_Info
+343.15 
+!------------------
+
+# Move_Probability_Info
+
+# Prob_Translation
+1.0
+0.4265
+
+# Prob_Rotation
+0.0
+38.0
+
+# Prob_Regrowth
+0.0
+1.0
+
+# Done_Probability_Info
+!----------------------
+
+# Start_Type
+make_config
+192
+!------------------
+
+# Run_Type
+Equilibration   50  100
+!------------------
+
+# Average_Info 
+1
+!--------------------------------
+
+# Frequency_Info
+freq_type    none
+Nthermofreq  1
+Ncoordfreq   10000
+MCsteps      10000
+# Done_Frequency_Info
+!--------------------
+
+# Property_Info 1 
+Energy_Total
+Pressure
+
+!----------------
+
+# Fragment_Files
+species1/frag1/frag1.dat  1
+species1/frag2/frag2.dat  2
+species1/frag3/frag3.dat  3
+!--------------------------
+
+# CBMC_Info
+kappa_ins 12
+kappa_rot 0
+kappa_dih 12
+rcut_cbmc 6.5  
+!-----------------
+
+
+
+END

@@ -43,7 +43,7 @@ TRUE
 !-------------------
 
 # Molecule_Files
-c4.mcf   220
+c4.mcf   192
 !-------------------------------
 
 # Box_Info
@@ -75,7 +75,7 @@ CUBIC
 
 # Start_Type
 make_config
-220
+192
 !------------------
 
 # Run_Type

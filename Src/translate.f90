@@ -185,6 +185,7 @@ SUBROUTINE Translate(this_box,mc_step)
      EXIT
   END DO
 
+
   ! update the trial counter for this molecule
   
   ntrials(is,this_box)%displacement = ntrials(is,this_box)%displacement + 1

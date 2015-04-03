@@ -29,7 +29,8 @@ insertion.o: run_variables.o energy_routines.o io_utilities.o random_generators.
 io_utilities.o: run_variables.o type_definitions.o
 main.o: run_variables.o file_names.o io_utilities.o input_routines.o read_write_checkpoint.o energy_routines.o simulation_properties.o fragment_growth.o
 mcf_control.o: io_utilities.o run_variables.o type_definitions.o input_routines.o atoms_to_place.o
-minimum_image_separation.o: run_variables.o type_definitions.o run_variables.o type_definitions.o run_variables.o type_definitions.o run_variables.o type_definitions.o run_variables.o type_definitions.o run_variables.o type_definitions.o
+min.o: run_variables.o type_definitions.o run_variables.o type_definitions.o run_variables.o type_definitions.o run_variables.o type_definitions.o run_variables.o type_definitions.o run_variables.o type_definitions.o
+minimum_image_separation.o: run_variables.o type_definitions.o run_variables.o type_definitions.o run_variables.o type_definitions.o run_variables.o type_definitions.o run_variables.o type_definitions.o
 nptmc_control.o: io_utilities.o run_variables.o type_definitions.o file_names.o input_routines.o atoms_to_place.o angle_dist_pick.o energy_routines.o
 nptmc_driver.o: run_variables.o random_generators.o file_names.o energy_routines.o read_write_checkpoint.o simulation_properties.o
 nvtmc_control.o: io_utilities.o run_variables.o type_definitions.o file_names.o input_routines.o atoms_to_place.o angle_dist_pick.o energy_routines.o
