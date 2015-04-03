@@ -44,7 +44,7 @@
 
 CASS_DIR =  .
 BIN_DIR = $(CASS_DIR)
-EXEC_NAME = cassandra_debu.exe 
+EXEC_NAME = cassandra.exe 
 
 ####################################################################
 ##  Known Machine Types;                                           #
@@ -62,9 +62,9 @@ LIBS =
 INCS = 
 #
 #F90FLAGS = -c  -ffree-line-length-none
-#F90FLAGS = -c -g -check all -traceback #-warn unused #-openmp
+F90FLAGS = -c -g -check all -traceback #-warn unused #-openmp
 #F90FLAGS = -c -openmp
-F90FLAGS = -p -c -O3
+#F90FLAGS = -p -c -O3
 #F90FLAGS = -c -O3 -openmp
 #OPTFLAGS = 
 #LINKFLAGS = -openmp

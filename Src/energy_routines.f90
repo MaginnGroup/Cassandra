@@ -1730,7 +1730,7 @@ CONTAINS
     const_val = 1.0_DP/(4.0_DP * alpha_ewald(this_box) * alpha_ewald(this_box))
     hcutsq = h_ewald_cut(this_box) * h_ewald_cut(this_box)
 
-    IF (box_list(this_box)%int_box_shape == int_cell) THEN
+    IF (box_list(this_box)%int_box_shape == int_cell .OR. box_list(this_box)%int_box_shape == int_ortho) THEN
        
        ! The most general definition for a wave-vector is h = 2*pi*TRANSPOSE(cell_matrix)^-1)*n
        ! where h is the wave vector and n is a vector of integers
@@ -2735,9 +2735,8 @@ CONTAINS
                (sigij6 / (3.0_DP*rcut3(this_box))))
           
        END DO
-       
+
        e_lrc = e_lrc + REAL( nint_beads(ia,this_box), DP ) * e_lrc_ia_ja
-       
     END DO
 
     e_lrc = 2.0_DP * PI * e_lrc/box_list(this_box)%volume

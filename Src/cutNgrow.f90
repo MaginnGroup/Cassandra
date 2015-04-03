@@ -191,8 +191,7 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
      ! Get the index of imth molecule of species is in this_box
      CALL Get_Index_Molecule(this_box,is,im,alive)
 
-
-
+    
   ! Save the old coordinates of the molecule
 !     energy_olde = energy(this_box)%inter_vdw
 !     CALL Compute_Total_System_Energy(this_box,.FALSE.,overlap)
@@ -400,7 +399,6 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
      CALL Compute_Molecule_Improper_Energy(alive,is,E_improper_o)
      CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is,E_intra_vdw_o, &
              E_intra_qq_o,intra_overlap)
-
 
      IF (.NOT. l_pair_nrg) CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_inter_vdw_o,E_inter_qq_o,cbmc_overlap)
 

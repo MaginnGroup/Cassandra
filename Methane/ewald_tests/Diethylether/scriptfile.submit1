@@ -1,0 +1,10 @@
+#!/bin/csh
+#$ -M emarinri@nd.edu
+#$ -m abe
+#$ -q long
+#$ -N cell_matrix
+#$ -pe smp 4
+module load ompi
+setenv OMP_NUM_THREADS 4
+
+/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra_V1.1/Src/cassandra_intel_openMP.exe cell_matrix.inp > cell_matrix.inp.out

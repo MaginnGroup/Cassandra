@@ -102,9 +102,9 @@ SUBROUTINE NVTMC_Driver
      i = i + 1
      which_step = i
 
-
      ! We will select a move from Golden Sampling scheme
-  
+
+ 
      rand_no = rranf()
     
      IF (rand_no <= cut_trans) THEN
@@ -115,7 +115,6 @@ SUBROUTINE NVTMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        WRITE(*,*) 'translate'
         CALL Translate(this_box,which_step)
 
         IF(.NOT. openmp_flag) THEN
@@ -133,7 +132,6 @@ SUBROUTINE NVTMC_Driver
         ELSE
 !$        time_s = omp_get_wtime()
         END IF
-        WRITE(*,*) 'rotate'
        
         CALL Rotate(this_box)
 
@@ -188,7 +186,6 @@ SUBROUTINE NVTMC_Driver
         ELSE
 !$        time_s = omp_get_wtime()
         END IF
-        WRITE(*,*) 'regrowth'
         
         CALL Cut_N_Grow(this_box,i)
 

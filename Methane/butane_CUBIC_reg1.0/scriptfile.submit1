@@ -1,0 +1,7 @@
+#!/bin/csh
+#$ -M emarinri@nd.edu
+#$ -m abe
+#$ -q long
+#$ -N c4
+
+/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra_V1.1/Src/cassandra.exe c4.inp > c4.inp.out

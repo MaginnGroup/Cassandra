@@ -511,9 +511,8 @@ SUBROUTINE Get_Pair_Style
                  err_msg(1) = 'Improper specification of vdw_sum_style'
                  CALL Clean_Abort(err_msg,'Get_Pairstyle')
               ENDIF
-
-              IF (rcut_vdw(ibox) > MIN(box_list(ibox)%hlength(1,1), &
-                   box_list(ibox)%hlength(2,2), box_list(ibox)%hlength(3,3))) THEN
+              IF (rcut_vdw(ibox) > MIN(box_list(ibox)%face_distance(1)/2.0_DP, &
+                   box_list(ibox)%face_distance(2)/2.0_DP, box_list(ibox)%face_distance(3)/2.0_DP)) THEN
 
                      err_msg = ""
                      err_msg(1) = 'Initial cutoff greater than minimum box length'
@@ -640,8 +639,8 @@ SUBROUTINE Get_Pair_Style
                     CALL Clean_Abort(err_msg,'Get_Pairstyle')
                  ENDIF
 
-                 IF (rcut_coul(ibox) > MIN(box_list(ibox)%hlength(1,1), &
-                     box_list(ibox)%hlength(2,2), box_list(ibox)%hlength(3,3))) THEN
+                 IF (rcut_coul(ibox) > MIN(box_list(ibox)%face_distance(1)/2.0_DP, &
+                   box_list(ibox)%face_distance(2)/2.0_DP, box_list(ibox)%face_distance(3)/2.0_DP)) THEN
 
                      err_msg = ""
                      err_msg(1) = 'Initial cutoff greater than minimum box length'
@@ -3372,7 +3371,7 @@ SUBROUTINE Get_Box_Info
               err_msg = ""
               err_msg(1) = 'Box type not properly specified as'
               err_msg(2) = box_list(ibox)%box_shape
-              err_msg(3) = 'Must be CUBIC'
+              err_msg(3) = 'Must be a CUBIC, ORTHOGONAL, CELL_MATRIX'
               CALL Clean_Abort(err_msg, 'Get_Box_Info')
 
            END IF
