@@ -321,12 +321,12 @@ SUBROUTINE Participation
 
         ! echo the information to the log file for checking
         
-        write(logunit,*)'Number of atoms in question', iatom
+        write(logunit,*)'Number of atom in question', iatom
         write(logunit,*)'Total number of angles', angle_part_list(iatom,ispecies)%nangles
         write(logunit,*)'Angles for this atom'
         write(logunit,*)(angle_part_list(iatom,ispecies)%which_angle(i),i=1, &
              angle_part_list(iatom,ispecies)%nangles)
-        write(logunit,*)'Position of the atom in these dihedrals'
+        write(logunit,*)'Position of the atom in angles'
         write(logunit,*)(angle_part_list(iatom,ispecies)%position(i), i=1, &
              angle_part_list(iatom,ispecies)%nangles)
 
@@ -430,12 +430,12 @@ SUBROUTINE Participation
 
         ! echo the information to the log file for checking
 
-        write(logunit,*)'Number of atoms in question', iatom
+        write(logunit,*)'Number of atom in question', iatom
         write(logunit,*)'Total number of dihedrals', dihedral_part_list(iatom,ispecies)%ndihedrals
         write(logunit,*)'Dihedral angles for this atom'
         write(logunit,*)(dihedral_part_list(iatom,ispecies)%which_dihedral(i),i=1, &
              dihedral_part_list(iatom,ispecies)%ndihedrals)
-        write(logunit,*)'Position of the atom in angles'
+        write(logunit,*)'Position of the atom in dihedrals'
         write(logunit,*)(dihedral_part_list(iatom,ispecies)%position(i), i=1, &
              dihedral_part_list(iatom,ispecies)%ndihedrals)
         
