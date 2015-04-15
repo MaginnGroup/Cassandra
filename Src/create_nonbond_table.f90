@@ -277,8 +277,6 @@
 	          ! LB mixing rule: epsij = (epsi * epsj)^(1/2); sigmaij = 1/2 (sigmai + sigmaj)
         	        IF (mix_rule == 'LB') &
                 	     vdw_param1_table(itype,jtype) = dsqrt(temp_param_i(1)*temp_param_j(1))
-			     print *, vdw_param1_table(itype,jtype), temp_param_i(1), temp_param_j(1)
-			     read(*,*)
 
 	          ! geometric mixing rule: epsij = (epsi * epsj)^(1/2); sigmaij = (sigmai * sigmaj)^(1/2)
         	        IF (mix_rule == 'geometric')  &
@@ -294,8 +292,6 @@
 
         	        IF (mix_rule == 'LB') &
                 	     vdw_param2_table(itype,jtype) = (temp_param_i(2) + temp_param_j(2)) * 0.5
-			     print *, vdw_param2_table(itype,jtype)
-			     read(*,*)
 	                IF (mix_rule == 'geometric') &
         	             vdw_param2_table(itype,jtype) = dsqrt(temp_param_i(2) * temp_param_j(2))
 
