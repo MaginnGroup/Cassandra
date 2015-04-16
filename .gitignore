@@ -1,0 +1,4 @@
+Src/*.[oa]
+Src/*.mod
+*~
+.*.swp
