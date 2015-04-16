@@ -908,7 +908,7 @@ CONTAINS
     REAL(DP) :: E_intra_vdw_new,E_inter_vdw_new,E_intra_qq_new,E_inter_qq_new
     LOGICAL, INTENT(OUT) :: overlap
     
-    INTEGER :: this_box,is,im,ia, mol_is, itype, jtype, rinteraction
+    INTEGER :: this_box,is,im,js,ia, mol_is, itype, jtype, rinteraction
     REAL(DP) :: rxij,ryij,rzij,rijsq,rxijp,ryijp,rzijp
     REAL(DP) :: Eij_vdw,Eij_qq
     REAL(DP) :: eps, sig, SigOverRsq, SigOverR6, SigOverR12
@@ -917,6 +917,7 @@ CONTAINS
     REAL(DP) :: rcom,rx,ry,rz
     REAL(DP) :: rcut, rcutsq
     REAL(DP) :: this_lambda_lj
+    REAL(DP) :: SigOverR, SigOverRn, SigOverRm, mie_coeff,  mie_n, mie_m
 
     LOGICAL :: get_vdw,get_qq, f_intra_nrg, get_interaction
 
@@ -952,10 +953,11 @@ CONTAINS
        err_msg(1) = 'Attempt to compute energy of an atom that does not exist'
        CALL Clean_Abort(err_msg,'Compute_Atom_Nonbond_Energy')      
     ENDIF
-     IF (int_vdw_sum_style(this_box) /= vdw_cut_tail) THEN
+     IF (int_vdw_sum_style(this_box) /= vdw_cut_tail)  THEN
+!	write(*,*) "test"
 !    IF(int_vdw_style(this_box) == vdw_lj .AND. int_vdw_sum_style(this_box) == vdw_cut_tail .AND. &
 !       int_charge_style(this_box) == charge_coul .AND. int_charge_sum_style(this_box) == charge_ewald) THEN
-       
+!       write(*,*) "test"       
        IF (CBMC_Flag) THEN
           rcut = rcut_cbmc(this_box)
        ELSE
@@ -1076,15 +1078,24 @@ CONTAINS
                       eps = eps * vdw_intra_scale(ia,this_atom,is)
                       qsc = charge_intra_scale(ia,this_atom,is)
                    ELSE
-                      
-                      SigOverRsq = (sig**2) / rijsq
-                      SigOverR6  = SigOverRsq * SigOverRsq * SigOverRsq
-                      SigOverR12 = SigOverR6 * SigOverR6
-                      Eij_vdw = 4.0_DP * eps * (SigOverR12 - SigOverR6)
-                      
                       rij = SQRT(rijsq)
+		      !IF (int_vdw_sum_style(this_box) == vdw_mie)  THEN
+		      !	WRITE(*,*) "test"
+                	!mie_n = mie_nlist(mie_Matrix(is,js))
+                	!mie_m = mie_mlist(mie_Matrix(is,js))
+                	!mie_coeff = mie_n/(mie_n-mie_m) *(mie_n/mie_m)**(mie_m/(mie_n-mie_m))
+                	!SigOverR = sig/rij
+                	!SigOverRn = SigOverR ** mie_n
+                	!SigOverRm = SigOverR ** mie_m
+                	!Eij_vdw =  mie_coeff * eps * (SigOverRn - SigOverRm)
+		      !ELSE
+                        SigOverRsq = (sig**2) / rijsq
+                        SigOverR6  = SigOverRsq * SigOverRsq * SigOverRsq
+                        SigOverR12 = SigOverR6 * SigOverR6
+                        Eij_vdw = 4.0_DP * eps * (SigOverR12 - SigOverR6)
+                      !ENDIF
                       
-                      x = alpha_ewald(this_box) * rij
+		      x = alpha_ewald(this_box) * rij
                       T = 1.0_DP / (1.0_DP + P*x)
                       xsq = x*x
                       TP = T * (A1 + T * (A2 + T * (A3 + T * (A4 + T * A5))))
@@ -1500,8 +1511,8 @@ CONTAINS
     REAL(DP) :: eps,sig,SigOverRsq,SigOverR6,SigOverR12
     REAL(DP) :: SigOverRsq_shift,SigOverR6_shift,SigOverR12_shift
     REAL(DP) :: roffsq_rijsq, roffsq_rijsq_sq, factor2, fscale
-    REAL(DP) :: SigOverR, SigOverRn, SigOverRm, mie_coeff, rij,  mie_n, mie_m
-
+    REAL(DP) :: SigOverR, SigOverRn, SigOverRm, mie_coeff, rij,  mie_n, mie_m, rij_shift, SigOverR_shift, SigOverRn_shift, SigOverRm_shift, rcut_vdw
+!    REAL(DP) :: Eij_vdw_check
     Real(DP) :: qi,qj, qsc
     REAL(DP) :: this_lambda, RsqOverSig, R6OverSig, factorLJ
     REAL(DP) :: RsqOverSig_Shift, RsqOverSig6_Shift, factorLJ_Shift
@@ -1596,16 +1607,22 @@ CONTAINS
              ELSEIF (int_vdw_sum_style(ibox) == vdw_mie) THEN
 
                 rij = SQRT(rijsq)
+		rcut_vdw = SQRT(rcut_vdwsq(ibox))
                 
                 mie_n = mie_nlist(mie_Matrix(is,js))
                 mie_m = mie_mlist(mie_Matrix(is,js))
                 mie_coeff = mie_n/(mie_n-mie_m) * (mie_n/mie_m)**(mie_m/(mie_n-mie_m))
                 SigOverR = sig/rij
+		SigOverR_shift = sig/rcut_vdw
+		!use cut-shift potential
+		SigOverRn_shift = SigOverR_shift ** mie_n
+		SigOverRm_shift = SigOverR_shift ** mie_m
                 SigOverRn = SigOverR ** mie_n
                 SigOverRm = SigOverR ** mie_m
-                Eij_vdw =  mie_coeff * eps * (SigOverRn - SigOverRm)
+                Eij_vdw =  mie_coeff * eps * ((SigOverRn - SigOverRm) - (SigOverRn_shift - SigOverRm_shift))
                 
-                
+		!print *, Eij_vdw
+		!READ(*,*)
              ENDIF
              
              
@@ -2848,9 +2865,7 @@ CONTAINS
          get_vdw = .TRUE.
 
       ELSEIF (int_vdw_sum_style(this_box) == vdw_mie) THEN
-
            
-
          IF (rijsq <= rcut_vdwsq(this_box)) THEN 
             get_vdw = .TRUE.
          ELSE 
@@ -3257,11 +3272,11 @@ CONTAINS
                 Wij_vdw = (mie_coeff * eps) *(mie_n * SigOverRn - mie_m * SigOverRm)
 
 
-                ELSE
+             ELSE
 
-                   fscale = 0.0_DP
-                   Eij_vdw = 0.0_DP
-                   Wij_vdw = 0.0_DP
+                fscale = 0.0_DP
+                Eij_vdw = 0.0_DP
+                Wij_vdw = 0.0_DP
                 
                 
                                
