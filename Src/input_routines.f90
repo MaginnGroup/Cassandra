@@ -2453,14 +2453,14 @@ SUBROUTINE Get_Fragment_Info(is)
   WRITE(logunit,*)
   WRITE(logunit,*) '******* Generating anchor info ****************'
 
-  IF (nfragments(is) == 1) THEN
+!  IF (nfragments(is) == 1) THEN
 
-     nanchors = 1
-     frag_list(1,is)%nanchors = nanchors
-     ALLOCATE(frag_list(1,is)%anchor(nanchors))
-     frag_list(1,is)%anchor(1) = 1
+!     nanchors = 1
+!     frag_list(1,is)%nanchors = nanchors
+!     ALLOCATE(frag_list(1,is)%anchor(nanchors))
+!     frag_list(1,is)%anchor(1) = 1
 
-  ELSE
+!  ELSE
 
      DO ifrag = 1, nfragments(is)
 
@@ -2522,7 +2522,7 @@ SUBROUTINE Get_Fragment_Info(is)
 
      END DO
      
-  END IF
+!  END IF
 
   ! Output info
 
