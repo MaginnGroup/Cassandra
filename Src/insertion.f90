@@ -75,10 +75,6 @@ SUBROUTINE Insertion(this_box,mcstep,randno)
   P_forward = 1.0_DP
   nrg_ring_frag_tot = 0.0_DP
 
-  IF (int_sim_type .NE. sim_gemc) THEN
-     this_box = INT(rranf() * nbr_boxes) + 1
-     ! else for GEMC simulation the box will be specified as input
-  END IF
 
   tot_trials(this_box) = tot_trials(this_box) + 1  
   energy_change = energy(1)%inter_vdw
@@ -101,8 +97,15 @@ SUBROUTINE Insertion(this_box,mcstep,randno)
 
   tot_mols = SUM(nmols(is,:))
 
-  IF (tot_mols == (nmolecules(is))) RETURN
+  IF (tot_mols == (nmolecules(is))) THEN
+
+        err_msg = ""
+        err_msg(1) = 'Number of molecule exceeds limit of ' // INT_to_String(tot_mols) 
+        err_msg(2) = 'Increase molecule number limit in input file '
+        CALL Clean_Abort(err_msg,'Insertion')
   ! exit if we are attempting an insertion above maximum number
+
+  END IF
 
   ntrials(is,this_box)%insertion = ntrials(is,this_box)%insertion + 1
   tot_trials(this_box) = tot_trials(this_box) + 1
@@ -319,16 +322,17 @@ SUBROUTINE Insertion(this_box,mcstep,randno)
      pacc = beta(this_box)*delta_e
   END IF
 
-  pacc = pacc - DLOG(alpha_ratio) + DLOG(P_forward) - DLOG(species_list(is)%zig_by_omega) &
-       +  DLOG(REAL(nmols(is,this_box)+1,DP)) 
-
+  !Note that in insertion P_reverse equals 1
+  pacc = pacc + DLOG(P_forward) +  DLOG(REAL(nmols(is,this_box)+1,DP)) 
 
   IF(lchempot) THEN
      ! chemical potential is input
-     pacc = pacc - species_list(is)%chem_potential * beta(this_box)
+     pacc = pacc - species_list(is)%chem_potential * beta(this_box) - &
+DLOG(box_list(this_box)%volume) + 3.0_DP*DLOG(species_list(is)%de_broglie(this_box))
   ELSE
-     ! user input is fugacity
-     pacc = pacc - DLOG(species_list(is)%fugacity * beta(this_box) * box_list(this_box)%volume)
+     ! need to come back and look at it carefully.
+     pacc = pacc - DLOG(species_list(is)%fugacity * beta(this_box) * box_list(this_box)%volume) &
+                + DLOG(species_list(is)%zig_by_omega) 
   END IF
 
 !!$  pacc = beta(this_box)* (delta_e) - DLOG(box_list(this_box)%volume) - &
@@ -342,7 +346,7 @@ SUBROUTINE Insertion(this_box,mcstep,randno)
 
   ! correct for ring biasing if any
 
-  factor = pacc + dg  ! accept based on probability times weighting factor
+!  factor = pacc + dg  ! accept based on probability times weighting factor
  ! factor = pacc 
   
   accept = accept_or_reject(factor)

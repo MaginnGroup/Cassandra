@@ -166,7 +166,7 @@ USE Type_Definitions
   REAL(DP), PARAMETER :: kboltz = 0.8314472_DP
 
   !H_PLANK is Plank's constant in atomic units amu A^2 / ps^3
-  REAL(DP), PARAMETER :: h_PLANK = 39.9031268605_DP
+  REAL(DP), PARAMETER :: h_plank = 39.9031268605_DP
 
   ! The value of the fundamental electron charge squared and divided by
   ! 4*pi*epsilon0, where epsilon0 is the vacuum permittivity.  This value
