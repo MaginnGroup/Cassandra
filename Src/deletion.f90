@@ -79,10 +79,10 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
 
   ! Randomly choose a box to delete particle from
 
-  IF (int_sim_type .NE. sim_gemc) THEN
-     this_box = INT( nbr_boxes * rranf()) + 1
-     ! else the box is specified as input in a GEMC simulation
-  END IF
+!  IF (int_sim_type .NE. sim_gemc) THEN
+!     this_box = INT( nbr_boxes * rranf()) + 1
+!     ! else the box is specified as input in a GEMC simulation
+!  END IF
 
   tot_trials(this_box) = tot_trials(this_box) + 1
 
@@ -227,19 +227,17 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
      delta_e_pacc = delta_e_pacc - E_angle - nrg_ring_frag_tot
   END IF
 
-  pacc = beta(this_box) * (-delta_e_pacc) - DLOG(alpha_ratio)  &
-         - DLOG(REAL(nmols(is,this_box),DP)) - DLOG(P_reverse) + &
-         DLOG(species_list(is)%zig_by_omega)
-
-  IF (lactivity) THEN
-     ! user input is activity
-     pacc = pacc + DLOG(species_list(is)%activity * box_list(this_box)%volume)
-
-  ELSE IF(lchempot) THEN
+  pacc = beta(this_box) * (-delta_e_pacc) - DLOG(alpha_ratio) - &
+         DLOG(REAL(nmols(is,this_box),DP)) - DLOG(P_reverse) 
+ 
+  IF(lchempot) THEN
      ! chemical potential is input
-     pacc = pacc + beta(this_box) * species_list(is)%chem_potential + box_list(this_box)%volume
+     pacc = pacc + beta(this_box) * species_list(is)%chem_potential + &
+       DLOG(box_list(this_box)%volume) - 3.0_DP*DLOG(species_list(is)%de_broglie(this_box)) 
   ELSE
-     pacc = pacc + DLOG(species_list(is)%fugacity * beta(this_box) * box_list(this_box)%volume)
+     pacc = pacc + DLOG(species_list(is)%fugacity * beta(this_box) * box_list(this_box)%volume) &
+     - DLOG(species_list(is)%zig_by_omega)
+
   END IF 
   ! correct for ring biasing if any
 
