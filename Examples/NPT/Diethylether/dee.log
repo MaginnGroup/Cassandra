@@ -7,14 +7,14 @@ inputfile dee.inp
 name of run: dee
 
   Month      Day      Year
-     01       07      2014
+     03       16      2015
  
- Time:  15:11:27
+ Time:  17:23:36
  
 machine: maginnfe.crc.nd.edu
 
 
-Simulation type NPT_MC              
+Simulation type: NPT_MC              
 
  
  **** Copying Inputfile ****** 
@@ -29,7 +29,7 @@ Simulation type NPT_MC
  1
  
  # VDW_Style
- LJ cut_tail 14.0
+ LJ cut 14.0
  
  
  # Charge_Style
@@ -86,20 +86,20 @@ Simulation type NPT_MC
  # Done_Probability_Info
  
  # Start_Type
- read_old
- Init_Config/nvt_liq.xyz
+ make_config
+ 100
  
  # Run_Type
- Equilibration   5000  3
+ Production   50  100
  
  # Average_Info
  1
  
  # Frequency_Info
  freq_type    none
- Nthermofreq  220
- Ncoordfreq   2200
- MCsteps      2200
+ Nthermofreq  100
+ Ncoordfreq   100
+ MCsteps      10000
  # Done_Frequency_Info
  
  # Property_Info 1
@@ -139,8 +139,8 @@ Box volume, A^3         43953.7148
  
  *** Finished loading box information ***
  
-   VWD style used is:   LJ             in box:  1
-   VDW sum style is:   cut_tail       in box:  1
+   VDW style used is:   LJ             in box:  1
+   VDW sum style is:   cut            in box:  1
     rcut =    14.000   Angstrom
  VDW style properly input
  
@@ -177,8 +177,8 @@ L_Coul_CBMC not given for species    1
  Defaulting to true
  default  T
  
-Species type given for species    1  SORBATE             
-Insertion style given for species    1  COM                 
+1st_Fragment_Ins_Style not specified for species    1
+using default of "COM" for this species.
 Species and atom number   1   1
  atom name:             UA_CH3
  element:               C 
@@ -318,27 +318,30 @@ Species and dihedral num  1   2
  *** Completed assigning improper info ***
  
  
- Total number of atoms in the fragment            1  is            3
- Identity of these atoms are           2           1           3
+Total number of atoms in the fragment     1  is   3
+Identity of these atoms are
+           2           1           3
  
- Total number of atoms in the fragment            2  is            3
- Identity of these atoms are           3           4           2
+Total number of atoms in the fragment     2  is   3
+Identity of these atoms are
+           3           4           2
  
- Total number of atoms in the fragment            3  is            3
- Identity of these atoms are           4           3           5
+Total number of atoms in the fragment     3  is   3
+Identity of these atoms are
+           4           3           5
  
  ******* Finished loading fragment info ********
  
  ******* Generating anchor info ****************
  
- Number of anchors for fragment            1   is           1
- Anchor ids are           2
+ Number of anchors for fragment     1  is   1
+Anchor id is:    2
  
- Number of anchors for fragment            2   is           1
- Anchor ids are           3
+ Number of anchors for fragment     2  is   1
+Anchor id is:    3
  
- Number of anchors for fragment            3   is           1
- Anchor ids are           4
+ Number of anchors for fragment     3  is   1
+Anchor id is:    4
  Fragment file for fragment 1 is
  species1/frag1/frag1.dat                                                       
                                           
@@ -351,21 +354,24 @@ Species and dihedral num  1   2
  species1/frag3/frag3.dat                                                       
                                           
  Fragment type           3
-Species and fragment bond number                   1   1
- fragment1:               1
- fragment2:               2
-Species and fragment bond number                   1   2
- fragment1:               2
- fragment2:               3
+Species and fragment bond number   1   1
+ fragment 1:              1
+ fragment 2:              2
+Species and fragment bond number   1   2
+ fragment 1:              2
+ fragment 2:              3
  
- Number of connections of fragment           1  is           1
- These fragments are            2
+ Number of connections of fragment    1  is   1
+ These fragments are:
+           2
  
- Number of connections of fragment           2  is           2
- These fragments are            1           3
+ Number of connections of fragment    2  is   2
+ These fragments are:
+           1           3
  
- Number of connections of fragment           3  is           1
- These fragments are            2
+ Number of connections of fragment    3  is   1
+ These fragments are:
+           2
  
  Maximum configurations stored      100000
  
@@ -383,9 +389,6 @@ Species and fragment bond number                   1   2
  Finished loading fragment coordinates from
  species1/frag3/frag3.dat                                                       
                                           
- 
- 
- Insertable species:           1
  
  intramolecular scaling factors explicitly set
 Intra molecule scaling factors for species             1
@@ -468,7 +471,7 @@ UA_O       UA_O       45.7296                        2.8000
  
  ***** Reading seed info *********
  
-The starting seed s1 is         153587801
+ The starting seed s1 is:    153587801
  
  ****** Finished loading the seed ********
  
@@ -506,7 +509,7 @@ The rotational width for the species     1 in box  1   is      0.6632 radians
  
  Volume moves will be performed in actual volumes
  ***** Finished reading the move probability info *****
- Number of moves is :           4
+Number of moves is :   4
  
  
  ***** reading CBMC info *********
@@ -519,13 +522,14 @@ kappa for dihedral selection                12
 Smaller cutoff for CBMC for box          1        6.50
  ****** finished loading CBMC_Info ********
  
-Thermodynamic quantities will written at every        220 MC steps.
+Thermodynamic quantities will written at every        100 MC steps.
  
-Coordinates will be written at every                 2200 MC steps.
-movie header file for box      1 is              dee_H.box1
-movie_XYZ file for box         1 is              dee_box1.xyz
+Coordinates will be written at every                  100 MC steps.
  
-The simulation will be run for                         2200 MC steps.
+movie header file for box      1 is    dee_H.box1
+movie_XYZ file for box         1 is    dee_box1.xyz
+ 
+The simulation will be run for                        10000 MC steps.
  
  *** Finished reading output info ******* 
  
@@ -550,7 +554,7 @@ Total number of property files to be written is     1   for box 1
  
  *********** Ending Average Section ************
  
-MC cutoff distance is    1.000    Angstrom
+MC low cutoff distance is   1.000    Angstrom
  
  *** Computed bond participation information ***
  species, atom, local bond nbr, global bond nbr, atom bonded 
@@ -684,26 +688,24 @@ MC cutoff distance is    1.000    Angstrom
  
  ******Initial Coordinate Info **********
  
- Configurations will be read from old files
+ Initial configuration will be generated
+  Starting number of molecules of species   1   in box   1  is     100
  
-Starting configuration for box           1 is
- Init_Config/nvt_liq.xyz                                                        
-                                          
+Total number of molecules of species   1   present initially is     100
  
  *****Finished reading initial coordinate info *****
  
  ****** Reading Run_Type Information ******
  
- The input run type is Equilibration
- Update frequency is         5000
+ The input run type is Production
+ Update frequency is           50
  
  Update frequency for adjusting maximum volume displacement is
-           3
+         100
  
  ******* Finished reading run type information ******
-starting type read_old                                                                                                                
+starting type make_config                                                                                                             
 
- Configurations read successfully
  ******** Charge Neutrality Check *********#
 Species            1    has charge                0.00000000
 Box                1    has charge                0.00000000
@@ -714,33 +716,292 @@ Box                1    has charge                0.00000000
   Atomic units-Extensive
  *****************************************
  
-Total system energy is                -250533.360
-Intra molecular energy is              202072.840
+Total system energy is                 178796.813
+Intra molecular energy is              131496.215
 Bond energy is                              0.000
-Bond angle energy is                    66539.042
-Dihedral angle energy is               135533.797
+Bond angle energy is                    50053.274
+Dihedral angle energy is                81442.941
 Improper angle energy is                    0.000
-Intra nonbond vdw is                   -13589.690
-Intra nonbond elec is                 1679076.704
-Inter molecule vdw is                 -379341.031
-Long range correction is               -11806.738
-Inter molecule q is                    -29840.442
-Reciprocal ewald is                     19805.022
-Self ewald is                        -1716910.024
-Number of vectors is             3039
+Intra nonbond vdw is                   118600.953
+Intra nonbond elec is                  763504.031
+Inter molecule vdw is                  -67443.263
+Inter molecule q is                     -2778.586
+Reciprocal ewald is                     15831.110
+Self ewald is                         -780413.647
+Number of vectors is                         3039
  *******************************************
  
  
- Successful volume attempt ratio for box   1   is      0.6667
+Success ratio for rotation of species   1  for box   1  is:   0.62000
  
- Successful volume attempt ratio for box   1   is      0.0000
+Translation ratio for species     1  for box 1  is:    0.68000
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.64000
+ 
+Translation ratio for species     1  for box 1  is:    0.71000
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.66000
+ 
+Translation ratio for species     1  for box 1  is:    0.72667
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.64500
+ 
+Translation ratio for species     1  for box 1  is:    0.74500
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65600
+ 
+Translation ratio for species     1  for box 1  is:    0.73200
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65000
+ 
+Translation ratio for species     1  for box 1  is:    0.75000
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.64286
+ 
+Translation ratio for species     1  for box 1  is:    0.75429
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.63500
+ 
+Translation ratio for species     1  for box 1  is:    0.74000
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.62444
+ 
+Translation ratio for species     1  for box 1  is:    0.73556
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.61800
+ 
+Translation ratio for species     1  for box 1  is:    0.74000
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.62000
+ 
+Translation ratio for species     1  for box 1  is:    0.73636
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.62833
+ 
+Translation ratio for species     1  for box 1  is:    0.74000
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.63231
+ 
+Translation ratio for species     1  for box 1  is:    0.74154
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.63571
+ 
+Translation ratio for species     1  for box 1  is:    0.74857
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.63733
+ 
+Translation ratio for species     1  for box 1  is:    0.74533
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.64000
+ 
+Translation ratio for species     1  for box 1  is:    0.74750
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.64471
+ 
+Translation ratio for species     1  for box 1  is:    0.75294
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65000
+ 
+Translation ratio for species     1  for box 1  is:    0.74667
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65053
+ 
+Translation ratio for species     1  for box 1  is:    0.74105
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65500
+ 
+Translation ratio for species     1  for box 1  is:    0.73900
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.66095
+ 
+Translation ratio for species     1  for box 1  is:    0.74190
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.66182
+ 
+Translation ratio for species     1  for box 1  is:    0.74273
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.66261
+ 
+Translation ratio for species     1  for box 1  is:    0.74348
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.66083
+ 
+Translation ratio for species     1  for box 1  is:    0.74000
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.66160
+ 
+Translation ratio for species     1  for box 1  is:    0.74000
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65923
+ 
+Translation ratio for species     1  for box 1  is:    0.74308
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.66000
+ 
+Translation ratio for species     1  for box 1  is:    0.74370
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65786
+ 
+Translation ratio for species     1  for box 1  is:    0.74429
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65655
+ 
+Translation ratio for species     1  for box 1  is:    0.74276
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65400
+ 
+Translation ratio for species     1  for box 1  is:    0.74200
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65677
+ 
+Translation ratio for species     1  for box 1  is:    0.74258
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65438
+ 
+Translation ratio for species     1  for box 1  is:    0.74125
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65758
+ 
+Translation ratio for species     1  for box 1  is:    0.73758
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65529
+ 
+Translation ratio for species     1  for box 1  is:    0.73824
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65314
+ 
+Translation ratio for species     1  for box 1  is:    0.73886
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65667
+ 
+Translation ratio for species     1  for box 1  is:    0.73722
+ 
+Translation ratio for species     1  for box 1  is:    0.73568
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65622
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65842
+ 
+Translation ratio for species     1  for box 1  is:    0.73632
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65897
+ 
+Translation ratio for species     1  for box 1  is:    0.73487
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.66100
+ 
+Translation ratio for species     1  for box 1  is:    0.73250
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.66146
+ 
+Translation ratio for species     1  for box 1  is:    0.73268
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65810
+ 
+Translation ratio for species     1  for box 1  is:    0.73333
+ 
+Translation ratio for species     1  for box 1  is:    0.73395
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65767
+ 
+Translation ratio for species     1  for box 1  is:    0.73318
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65636
+ 
+Translation ratio for species     1  for box 1  is:    0.73200
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65956
+ 
+Translation ratio for species     1  for box 1  is:    0.72957
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65696
+ 
+Translation ratio for species     1  for box 1  is:    0.72979
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65574
+ 
+Translation ratio for species     1  for box 1  is:    0.72750
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65667
+ 
+Translation ratio for species     1  for box 1  is:    0.72612
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65510
+ 
+Translation ratio for species     1  for box 1  is:    0.72560
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65640
+ 
+Translation ratio for species     1  for box 1  is:    0.72471
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65725
+ 
+Translation ratio for species     1  for box 1  is:    0.72346
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65577
+ 
+Translation ratio for species     1  for box 1  is:    0.72415
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65547
+ 
+Translation ratio for species     1  for box 1  is:    0.72593
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65556
+ 
+Translation ratio for species     1  for box 1  is:    0.72691
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65564
+ 
+Translation ratio for species     1  for box 1  is:    0.72607
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65571
+ 
+Translation ratio for species     1  for box 1  is:    0.72456
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65298
+ 
+Translation ratio for species     1  for box 1  is:    0.72345
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65103
+ 
+Translation ratio for species     1  for box 1  is:    0.72407
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.65051
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.64900
+ 
+Translation ratio for species     1  for box 1  is:    0.72567
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.64721
+ 
+Translation ratio for species     1  for box 1  is:    0.72328
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.64806
+ 
+Translation ratio for species     1  for box 1  is:    0.72323
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.64762
+ 
+Translation ratio for species     1  for box 1  is:    0.72190
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.64469
+ 
+Translation ratio for species     1  for box 1  is:    0.72094
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.64431
+ 
+Translation ratio for species     1  for box 1  is:    0.72092
+ 
+Success ratio for rotation of species   1  for box   1  is:   0.64394
+ 
+Translation ratio for species     1  for box 1  is:    0.71939
  *********** Ending simulation *****************
  
  ************ Regrowth Statistics *************
  
  Fragment Species Regrowth_Trials Regrowth_Success
-           1           1         358         308
-           2           1         380         260
+           1           1        1653        1525
+           2           1        1664        1318
  *****************************************
   Starting energy components for box   1
   Atomic units-Extensive
@@ -748,19 +1009,19 @@ Number of vectors is             3039
  
  
  *************************************************
-Total system energy is                -235737.313
-Intra molecular energy is              203343.421
+Total system energy is                  -1979.798
+Intra molecular energy is              101898.540
 Bond energy is                              0.000
-Bond angle energy is                    84617.027
-Dihedral angle energy is               118726.393
+Bond angle energy is                    43987.813
+Dihedral angle energy is                57910.727
 Improper angle energy is                    0.000
-Intra nonbond vdw is                   -13234.371
-Intra nonbond elec is                 1679682.627
-Inter molecule vdw is                 -367593.232
-Long range correction is               -11805.273
-Inter molecule q is                    -27830.241
-Reciprocal ewald is                     18609.780
-Self ewald is                        -1716910.024
+Intra nonbond vdw is                    -6227.001
+Intra nonbond elec is                  763461.746
+Inter molecule vdw is                  -87117.332
+Long range correction is                    0.000
+Inter molecule q is                     -6483.646
+Reciprocal ewald is                     12901.541
+Self ewald is                         -780413.647
  **************************************************
  
  
@@ -769,19 +1030,19 @@ Self ewald is                        -1716910.024
  Atomic units-Extensive
  *****************************************
  
-Total system energy is                -235737.313
+Total system energy is                  -1979.798
 Bond energy is                              0.000
-Bond angle energy is                    84617.027
-Dihedral angle energy is               118726.393
+Bond angle energy is                    43987.813
+Dihedral angle energy is                57910.727
 Improper angle energy is                    0.000
-Intra molecular energy is              203343.421
-Intra nonbond vdw is                   -13234.371
-Intra nonbond elec is                 1679682.627
-Inter molecule vdw is                 -367593.232
-Long range correction is               -11805.273
-Inter molecule q is                    -27830.241
-Reciprocal ewald is                     18609.780
-Self ewald is                        -1716910.024
+Intra molecular energy is              101898.540
+Intra nonbond vdw is                    -6227.001
+Intra nonbond elec is                  763461.746
+Inter molecule vdw is                  -87117.332
+Long range correction is                    0.000
+Inter molecule q is                     -6483.646
+Reciprocal ewald is                     12901.541
+Self ewald is                         -780413.647
  
  
  
@@ -789,14 +1050,14 @@ Self ewald is                        -1716910.024
   *********************************************
  
                 Move      Trials     Success
-              Volume           7           2
+              Volume          47          38
  
   ******************************************
   Writing information for species           1
  
                 Move      Trials     Success   % Success
-           Translate         711         353       49.65
-              Rotate         744         329       44.22
+           Translate        3305        2379       71.98
+              Rotate        3331        2146       64.43
  **************************************
  
  Writing information about fragments
@@ -804,8 +1065,8 @@ Self ewald is                        -1716910.024
  *************************************
 Writing information for species   1
   Fragment      Trials     Success   % Success
-         1         358         308       86.03
-         2         380         260       68.42
+         1        1653        1525       92.26
+         2        1664        1318       79.21
  *********************************
  *********** Ending simulation *****************
  
@@ -815,10 +1076,10 @@ Writing information for species   1
  
  ******************************************
  
- Translation time =           10.322429 secs.
- Rotation time =              10.867354 secs.
- Volume change time =         20.274919 secs.
- Regrowth time =              19.023104 secs.
+ Translation time =           22.458588 secs.
+ Rotation time =              22.984510 secs.
+ Volume change time =         32.737020 secs.
+ Regrowth time =              31.834155 secs.
  ********************************************
  
  
@@ -827,6 +1088,6 @@ Writing information for species   1
          0     Months
          0       Days
          0      Hours
-         1    Minutes
-        47    Seconds
-       753         ms
+         3    Minutes
+        26    Seconds
+       327         ms

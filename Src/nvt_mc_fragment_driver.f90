@@ -102,7 +102,7 @@ SUBROUTINE NVT_MC_Fragment_Driver
 
         
         rand_atom = INT ( (natoms(is) - 2) * rranf()) + 3
-
+	write(*,*) rand_atom, natoms(is)
         ! save the coordinates
 
         CALL Save_Old_Cartesian_Coordinates(im,is)

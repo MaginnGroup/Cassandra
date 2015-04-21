@@ -343,7 +343,7 @@ for i in xrange(0,len(mcf_files)):
 	current_mcf.close()
 	number_of_atoms = int(linecache.getline(mcf_files[i],line_where_atom_info[i]+1))
 	stride = 0
-	for line_number in xrange(1,total_lines):
+	for line_number in xrange(1,total_lines+1):
 #		counter_atom_type_list = 0
 	        if line_number + stride > line_where_atom_info[i]+1 and line_number + stride < line_where_atom_info[i]+1 + number_of_atoms:
 			for j in xrange(0,number_of_atoms):

@@ -507,6 +507,12 @@ SUBROUTINE Get_Pair_Style
                  int_vdw_sum_style(ibox) = vdw_minimum
                  WRITE(logunit,'(A)') 'Minimum image convention used for VDW'
 
+              ELSEIF (vdw_sum_style(ibox) == 'mie') THEN
+                 int_vdw_sum_style(ibox) = vdw_mie
+		 rcut_vdw(ibox) = String_To_Double(line_array(3))
+                 WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_vdw(ibox), '   Angstrom'
+                 WRITE(logunit,'(A)') 'Mie potential used for VDW'
+
               ELSE
                  err_msg(1) = 'Improper specification of vdw_sum_style'
                  CALL Clean_Abort(err_msg,'Get_Pairstyle')
@@ -717,6 +723,8 @@ SUBROUTINE Get_Mixing_Rules
            WRITE(logunit,'(A)') 'Lorentz-Berthelot mixing rule specified'
         ELSEIF (mix_rule == 'geometric') THEN
            WRITE(logunit,'(A)') 'Geometric mixing rule specified'
+        ELSEIF (mix_rule == 'custom') THEN
+           WRITE(logunit,'(A)') 'Custom mixing rule specified'
         ELSE
            err_msg(1) = 'Mixing rule not supported'
            err_msg(2) = mix_rule
@@ -1413,6 +1421,7 @@ SUBROUTINE Get_Atom_Info(is)
            nonbond_list(ia,is)%charge = String_To_Double(line_array(5))
            IF(nonbond_list(ia,is)%charge .NE. 0.0_DP) has_charge(is) = .TRUE. 
            nonbond_list(ia,is)%vdw_potential_type = line_array(6)
+	   
 
            species_list(is)%molecular_weight = species_list(is)%molecular_weight + &
                 nonbond_list(ia,is)%mass
@@ -1436,7 +1445,6 @@ SUBROUTINE Get_Atom_Info(is)
            IF (nonbond_list(ia,is)%vdw_potential_type == 'LJ') THEN
               ! epsilon/kB in K read in
               nonbond_list(ia,is)%vdw_param(1) = String_To_Double(line_array(7))
-
               ! sigma = Angstrom
               nonbond_list(ia,is)%vdw_param(2) = String_To_Double(line_array(8))
 
@@ -1447,7 +1455,6 @@ SUBROUTINE Get_Atom_Info(is)
 
               ! Convert epsilon to atomic units amu A^2/ps^2
               nonbond_list(ia,is)%vdw_param(1) = kboltz* nonbond_list(ia,is)%vdw_param(1) 
-
               ! Set number of vdw parameters
               nbr_vdw_params = 2
 
@@ -3567,7 +3574,9 @@ SUBROUTINE Get_Fugacity_Info
 
   species_list(:)%fugacity = 0.0_DP
   species_list(:)%chem_potential = 0.0_DP
+  species_list(:)%activity = 0.0_DP
   lchempot = .FALSE.
+  lactivity = .FALSE.
 
   inputLOOP: DO
      line_nbr = line_nbr  + 1
@@ -3646,9 +3655,34 @@ SUBROUTINE Get_Fugacity_Info
         
         EXIT
 
+     ELSE IF (line_string(1:15) == '# Activity_Info'  ) THEN
+        ! we found a section that contains the information on Chemical Potential of all the species
+        line_nbr = line_nbr + 1
+        lactivity = .TRUE.
+        WRITE(logunit,*)
+        WRITE(logunit,*) '*********** Activity Info ***************'
+        CALL Parse_String(inputunit,line_nbr,nspec_insert,nbr_entries,line_array,ierr)
+        
+        DO i = 1,nspecies
+
+           IF(species_list(i)%int_species_type == int_sorbate) THEN
+              spec_counter = spec_counter + 1
+              species_list(i)%activity = String_To_Double(line_array(spec_counter))
+           ELSE
+              species_list(i)%activity = 0.0_DP
+           END IF
+
+           WRITE(logunit,*)
+           WRITE(logunit,'(A20,2X,I3,2X,A2,2X,E16.9,2X,A7)')'Activity of species', i, &
+                'is', species_list(i)%activity, 'A^(-3).'
+
+        END DO
+        
+        EXIT
+
      ELSE IF (line_string(1:3) == 'END' .OR. line_nbr > 10000 ) THEN
         err_msg = ''
-        err_msg(1) = 'Fugacity section is missing from the input file'
+        err_msg(1) = 'Activity_Info section is missing from the input file'
         CALL Clean_Abort(err_msg,'Get_Fugacity_Info')
      END IF
      
@@ -5652,6 +5686,79 @@ SUBROUTINE Get_Energy_Check_Info
   END DO
 
   END SUBROUTINE Get_Energy_Check_Info 
+
+SUBROUTINE Get_Mie_Nonbond
+  !---------------------------------------------------------------------------------------
+  ! This subroutine reads in the file information for nonbond Mie potential exponents
+  ! for each species type.
+  !
+  ! Written by Brian Yoo and Eliseo Rimoldi on 02/28/15
+  !
+  !---------------------------------------------------------------------------------------
+
+  USE File_Names
+
+  INTEGER :: ierr, nbr_entries, line_nbr, is, Mk, Mi, Mj
+  CHARACTER(120) :: line_array(20), line_string
+  ierr = 0
+  REWIND(inputunit)
+  line_nbr = 0
+  Mk = 1
+
+  ALLOCATE(mie_nlist(nspecies*(nspecies+1)/2))
+  ALLOCATE(mie_mlist(nspecies*(nspecies+1)/2))
+  ALLOCATE(mie_Matrix(nspecies, nspecies))
+
+  DO
+     line_nbr = line_nbr + 1
+     CALL Read_String(inputunit,line_string,ierr)
+
+     IF ( ierr /= 0 ) THEN
+        err_msg = ''
+        err_msg(1) = 'Error reading input file'
+        CALL Clean_Abort(err_msg,'Get_Mie_Nonbond')
+     END IF
+
+     ! Read the input file up to # Mie_Nonbond
+
+     IF (line_string(1:13) == '# Mie_Nonbond') THEN
+        ! create symmetric matrix for index of species (e.g. for 3 species it will create
+	! the following matrix [1,2,3;2,4,5;3,5,6]; This matrix is used to identify
+	! the specified mie_n and mie_m exponents for a given species type.
+        DO Mi = 1, nspecies
+           DO Mj = Mi, nspecies
+              mie_Matrix(Mi,Mj) = Mk
+              mie_Matrix(Mj,Mi) = Mk
+              Mk = Mk + 1
+           END DO
+        END DO
+
+        ! parse the string to read in the files for each species
+        DO is = 1, nspecies
+           line_nbr = line_nbr + 1
+           CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
+           mie_nlist(mie_Matrix(String_To_Int(line_array(1)),String_To_Int(line_array(2)))) = String_To_Double(line_array(3))
+           mie_mlist(mie_Matrix(String_To_Int(line_array(1)),String_To_Int(line_array(2)))) = String_To_Double(line_array(4))
+
+           WRITE(logunit,*) 'Mie exponent for ', line_array(1), 'and', line_array(2),  ' is', line_array(3), 'and', line_array(4)
+
+        END DO
+
+        EXIT
+
+     ELSE IF (line_nbr > 10000 .OR. line_string(1:3) == 'END') THEN
+        err_msg = ''
+        err_msg(1) = 'Mie potentials not specified'
+        CALL Clean_Abort(err_msg,'Get_Mie_Nonbond')
+
+     END IF
+
+  END DO
+
+END SUBROUTINE Get_Mie_Nonbond
+
+
+
 
 END MODULE Input_Routines
 

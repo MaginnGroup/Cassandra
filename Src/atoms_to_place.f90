@@ -502,7 +502,7 @@ CONTAINS
     write(logunit,*) 'checking for dihedral_atoms_to_place'
     DO i = 1, nspecies
        DO j = 1,ndihedrals(i)
-          write(logunit,*) 'angle, atom1, atom2, atom3, atom4'
+          write(logunit,*) 'dihedral, atom1, atom2, atom3, atom4'
           write(logunit,*) j,dihedral_list(j,i)%atom1,dihedral_list(j,i)%atom2, dihedral_list(j,i)%atom3, &
                dihedral_list(j,i)%atom4
           write(logunit,*)
