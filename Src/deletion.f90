@@ -224,7 +224,8 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
      pacc = pacc + DLOG(species_list(is)%fugacity * beta(this_box) * box_list(this_box)%volume) &
      - DLOG(species_list(is)%zig_by_omega)
 
-  
+  END IF 
+ 
   accept = accept_or_reject(pacc)
 
 
