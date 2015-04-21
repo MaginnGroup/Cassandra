@@ -67,22 +67,12 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
   REAL(DP) :: check_e, energy_old
   LOGICAL  :: superbad
 
-  ! Solid framework
-
-  !   End of section
   
   pacc = 0.0_DP
   paccbiased = 0.0_DP
   alpha_ratio = 1.0_DP
   nrg_ring_frag_tot = 0.0_DP
   
-
-  ! Randomly choose a box to delete particle from
-
-!  IF (int_sim_type .NE. sim_gemc) THEN
-!     this_box = INT( nbr_boxes * rranf()) + 1
-!     ! else the box is specified as input in a GEMC simulation
-!  END IF
 
   tot_trials(this_box) = tot_trials(this_box) + 1
 
@@ -94,9 +84,6 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
      IF(is_counter == is_1) EXIT
   END DO
 
-!!$  IF(int_sim_type == sim_gcmc) THEN
-!!$     IF( is == 1 ) t_collect = .TRUE.
-!!$  END IF
 
   IF(nmols(is,this_box) == 0) RETURN
 
@@ -211,7 +198,6 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
   ! - delta_e is used to represent actual change in energy. See below when energies are
   ! update upon suceessful deletion
 
-    dg = 0.0_DP
 
   delta_e_pacc = delta_e
 
@@ -238,33 +224,9 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
      pacc = pacc + DLOG(species_list(is)%fugacity * beta(this_box) * box_list(this_box)%volume) &
      - DLOG(species_list(is)%zig_by_omega)
 
-  END IF 
-  ! correct for ring biasing if any
-
-!!$  pacc = beta(this_box) * (-delta_e) - DLOG(REAL(nmols(is,this_box), DP)) + &
-!!$       DLOG(box_list(this_box)%volume) + DLOG(species_list(is)%activity)
-!!$
-!!$  IF (species_list(is)%fragment) THEN
-!!$     pacc = pacc + beta(this_box) * (E_angle + nrg_ring_frag_tot)
-!!$  END IF
-!!$
-!!$  pacc = pacc - DLOG(kappa_ins * P_reverse) 
-
   
-  factor = pacc + dg    
-!  factor = pacc 
-!  write(*,*) 'deletion factor', factor
+  accept = accept_or_reject(pacc)
 
-  accept = accept_or_reject(factor)
-
-  factor = -factor
-  IF( factor < 0.0_DP ) THEN
-    factor = DEXP(factor)
-  ELSE
-    factor = 1.0_DP
-  END IF
-
-  paccbiased = factor
 
   IF(cbmc_overlap) accept = .FALSE.
 
@@ -336,13 +298,6 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
   END IF
 
   IF (l_pair_nrg) DEALLOCATE(pair_vdw_temp,pair_qq_temp)
-
-  pacc = -pacc
-  IF( pacc < 0.0_DP) THEN
-    pacc = DEXP(pacc)
-  ELSE
-    pacc = 1.0_DP
-  END IF
 
 END SUBROUTINE Deletion
 

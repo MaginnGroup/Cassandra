@@ -312,7 +312,6 @@ SUBROUTINE Insertion(this_box,mcstep,randno)
 
   ! calculate weighting function and apply acceptance rule
   
-    dg = 0.0_DP
 
   IF(species_list(is)%int_insert == int_igas) THEN 
      pacc = beta(this_box) * (delta_e - energy_igas(rand_igas,is)%total)
@@ -335,30 +334,9 @@ DLOG(box_list(this_box)%volume) + 3.0_DP*DLOG(species_list(is)%de_broglie(this_b
                 + DLOG(species_list(is)%zig_by_omega) 
   END IF
 
-!!$  pacc = beta(this_box)* (delta_e) - DLOG(box_list(this_box)%volume) - &
-!!$       DLOG(species_list(is)%activity) + DLOG(REAL(nmols(is,this_box) + 1, DP))
-!!$
-!!$  IF (species_list(is)%fragment) THEN
-!!$     pacc = pacc - beta(this_box) * (E_angle - nrg_ring_frag_tot)
-!!$  END IF
-!!$
-!!$  pacc = pacc +  DLOG(kappa_ins * P_forward)
-
-  ! correct for ring biasing if any
-
-!  factor = pacc + dg  ! accept based on probability times weighting factor
- ! factor = pacc 
   
-  accept = accept_or_reject(factor)
+  accept = accept_or_reject(pacc)
   
-  factor = -factor
-  IF( factor < 0.0_DP ) THEN
-    factor = DEXP(factor)
-  ELSE
-    factor = 1.0_DP
-  END IF
-
-  paccbiased = factor
 
   IF (accept) THEN
      ! update the number of molecules
@@ -411,13 +389,5 @@ DLOG(box_list(this_box)%volume) + 3.0_DP*DLOG(species_list(is)%de_broglie(this_b
      
   END IF
 
-  ! Accept or reject the move.
-  ! also, update various arrays that depend on the number of molecules
-  pacc = -pacc
-  IF( pacc < 0.0_DP ) THEN
-    pacc = DEXP(pacc)
-  ELSE
-    pacc = 1.0_DP
-  END IF
 
 END SUBROUTINE Insertion
