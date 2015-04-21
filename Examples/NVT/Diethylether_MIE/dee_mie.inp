@@ -1,11 +1,11 @@
-! This is the input file for an NPT simulation of diethylether at 343.15 K
+! This is the input file for an NVT simulation of diethylether at 343.15 K
 
 # Run_Name
-dee
+dee_mie
 !--------------
 
 # Sim_Type
-NPT_MC
+NVT_MC
 !---------------
 
 # Nbr_Species
@@ -13,7 +13,7 @@ NPT_MC
 !----------------
 
 # VDW_Style
-LJ cut 14.0
+LJ mie 14.0
 
 !----------------
 
@@ -56,10 +56,6 @@ CUBIC
 343.15 
 !------------------
 
-# Pressure_Info
-1.0
-!------------------
-
 # Move_Probability_Info
 
 # Prob_Translation
@@ -71,12 +67,8 @@ CUBIC
 38.0
 
 # Prob_Regrowth
-0.335  
+0.34
 1.0
-
-# Prob_Volume
-0.005
-900.0
 
 # Done_Probability_Info
 !----------------------
@@ -84,8 +76,6 @@ CUBIC
 # Start_Type
 make_config
 100
-!read_old
-!Init_Config/nvt_liq.xyz
 !------------------
 
 # Run_Type
@@ -106,7 +96,6 @@ MCsteps      10000
 
 # Property_Info 1 
 Energy_Total
-Volume
 Pressure
 
 !----------------
@@ -124,6 +113,8 @@ kappa_dih 12
 rcut_cbmc 6.5  
 !-----------------
 
+# Mie_Nonbond
+1 1 12 6
 
 
 END

@@ -46,6 +46,7 @@ MODULE Run_Variables
   !
   !
   ! 08/02/13 : Beta release version
+  ! 03/17/15 (JS) : lactivity defined for GCMC simulations
 !*********************************************************************************
 
 USE Type_Definitions
@@ -79,7 +80,7 @@ USE Type_Definitions
   INTEGER, PARAMETER :: sim_gemc_npt = 7
   INTEGER, PARAMETER :: sim_gemc_ig = 8
   INTEGER, PARAMETER :: sim_mcf = 9
-  LOGICAL :: lchempot, timed_run, openmp_flag, en_flag
+  LOGICAL :: lchempot, lactivity, timed_run, openmp_flag, en_flag
 
   ! The starting seed for the random generator
   ! Note iseed is used for generating points on random sphere for MCF_Gen sim type.
@@ -102,6 +103,8 @@ USE Type_Definitions
   INTEGER, PARAMETER :: vdw_minimum = 5
   INTEGER, PARAMETER :: vdw_charmm = 6
   INTEGER, PARAMETER :: vdw_cut_switch = 7
+  INTEGER, PARAMETER :: vdw_mie = 8
+
   INTEGER, PARAMETER :: charge_none = 0
   INTEGER, PARAMETER :: charge_coul = 1
   INTEGER, PARAMETER :: charge_cut = 2
@@ -534,5 +537,10 @@ USE Type_Definitions
 
   REAL(DP) pacc, paccbiased, freev
   REAL(DP), DIMENSION(:,:), ALLOCATABLE :: chpot, chpotid
+
+!!!!! Mie potential variables
+  INTEGER, DIMENSION(:,:), ALLOCATABLE :: mie_Matrix
+  REAL(DP), DIMENSION(:), ALLOCATABLE :: mie_nlist, mie_mlist
+  
 END MODULE Run_Variables
 
