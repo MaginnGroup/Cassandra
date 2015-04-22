@@ -328,6 +328,14 @@ def lookup(atomlook):
 	tempfile.close()
 
 def initialize(infilename):
+
+	#This function will set the starting atom for the subsequent ring scan.
+	#If an a
+	#It can handle the following special cases:
+	#1) Argon: If no CONECT keyword is found, it will automatically assume it's argon.
+        #2) Cyclic UA model: In this case, a 'ghost' molecule will be used as a starting point.
+
+
 	global cyclic_ua_atom
 	conect_found = False
 	atom =''
@@ -414,6 +422,8 @@ def isAlreadyInRing(atom):
 	
 def bondID():
 
+	#This function will populate the variable "bondList"
+
 	tempfile = open('temporary.temp','r')
 	oldatom=[]
 	for line in tempfile:
@@ -428,6 +438,10 @@ def bondID():
 
 
 def scan(newAtom,oldLine,scanning):
+
+        #This function does a recursive scan on the molecule. The main product of this function
+	#is the list ringList, which contains atoms that form a ring.
+
 	scannedList=[]
 	#branchalreadyscanned=[0]
 	while 1==1:
@@ -493,7 +507,6 @@ def scan(newAtom,oldLine,scanning):
 
 
 def fragID():
-
 	adjacentatoms=[]
 	tempfile=open('temporary.temp','r')
 	for eachring in ringList:
@@ -527,6 +540,9 @@ def fragID():
 	tempfile.close()
 
 def angleID():
+
+	#This function will populate the list angleList
+
 	tempfile=open('temporary.temp','r')
 	for line in tempfile:
 		atomlist=line.split()
@@ -544,6 +560,9 @@ def angleID():
 
 	
 def dihedralID():
+
+	#This function populates the variable dihedralList
+
 	tempfile=open('temporary.temp','r')
 
 	for line in tempfile:
@@ -583,7 +602,6 @@ def atomInfo(infilename, outfilename):
 	matrixcharge = forcefield("charges","read")
 
 	ofile.write(str(len(listofnames))+"\n")
-	
 	for line in ifile:
 		if not line.strip():
 			continue
@@ -592,7 +610,7 @@ def atomInfo(infilename, outfilename):
 			atomname = line[12:16].strip()
 			element = line[76:78].strip()
 			if atomname == '':
-				atomname = element + atomnumber
+				atomname = element+ atomnumber
 			atomtype = line[80:].strip()
 			atommass = str(periodicTable[element])
 			vdwtype = "LJ"
@@ -602,6 +620,7 @@ def atomInfo(infilename, outfilename):
 					if int(item)==int(atomnumber)-1:
 						sigma = rowmatrix[2]
 						epsilon = rowmatrix[3]
+						atom_type_charge = rowmatrix[4]
 						for index,line_charge in enumerate(matrixcharge):
 							if atomnumber == line_charge[0]:
 								charge = line_charge[1] 
@@ -610,7 +629,6 @@ def atomInfo(infilename, outfilename):
 			for eachring in ringList:
 				if atomNumber in eachring:
 					in_a_ring = True
-#tlacaelel
 			if cyclic_ua_atom == True and len(ringList)==0: #This means if there is only one cyclic united atom molecule
 				in_a_ring=True
 
@@ -720,7 +738,6 @@ returns:
 
 	global fragList
 
-#tlacaelel
 	if cyclic_ua_atom == True and len(ringList)==0: 
 	#This means if there is only one cyclic united atom molecule
 		fragList=[]
@@ -733,6 +750,20 @@ returns:
 		elif len(atomList)==2:
 			mcf.write('1\n')
 			mcf.write('1 2 1 2\n')
+
+		# the below elif statement allows for zeolites
+		elif len(atomList)>2:
+			mcf.write('1\n')
+			atomList_indices = []
+			counter = 0
+			# count the atoms
+			for item in atomList:
+				counter = counter + 1
+				atomList_indices.append(counter)
+			str_to_add = " "
+			str_type_list = [str(item) for item in atomList_indices]
+			new_str_list = str_to_add.join(str_type_list)
+			mcf.write("1 %s %s" %(str(atomList_indices[-1]),new_str_list))
 	else:
 		mcf.write(str(len(fragList))+"\n")
 		for index, row in enumerate(fragList):
@@ -816,10 +847,11 @@ def removedoublecounting(thingtoclean):
 			fragConn.append(cleanlist[i])
 
 def fragConnectivity():
+
+	#This function will populate the list fragConn
 	group=[]
 	j=0
 
-#tlacaelel
 	if cyclic_ua_atom == True and len(ringList)==0:
 		fragConn.append("0")
 		return
@@ -845,7 +877,7 @@ def fragConnectivity():
 			
 def fragConnectivityInfo(mcfFile):
 	mcf=open(mcfFile,'a')
-	mcf.write('\n# Fragment_Connectivity\n')
+	mcf.write('\n\n# Fragment_Connectivity\n')
 	mcf.write(str(len(fragConn))+'\n')
 	for index, row in enumerate(fragConn):
 		mcf.write(str(index+1) + spacing + row)
@@ -912,7 +944,6 @@ def ffFileGeneration(infilename,outfilename):
 	ff.write("end atom-atomtype\n\n")
 
 	ff.write("dihedraltype "+dihedralType+"\n\n")
-
 	ff.close()
 
 	forcefield("nonbonded","write")
@@ -920,7 +951,6 @@ def ffFileGeneration(infilename,outfilename):
 	forcefield("angles","write")
 	forcefield("dihedrals","write")
 	forcefield("charges","write")
-
 
 def forcefield(degreeoffreedom,action):
 
@@ -988,9 +1018,9 @@ def forcefield(degreeoffreedom,action):
 
 				# Using the forcefield file, we need to build a matrix with the 
 				# following form:
-				#   MATRIX == #[list of atoms repeated, type of atom, sigma, epsilon]
+				#   MATRIX == #[list of atoms repeated, type of atom, sigma, epsilon, charge]
 				# To do that, we need to find where the "nonbonded" labels are are in 
-				# the ff file so we can get sigma and epsilon
+				# the ff file so we can get sigma, epsilon, and charge
 
 				linewherenonbonded=[]
 				ff=open(ffFile,'r')
@@ -999,7 +1029,7 @@ def forcefield(degreeoffreedom,action):
 						linewherenonbonded.append(index+1)
 				ff.close()
 			
-				# Now, the following three lines will contain the elements of the matrix
+				# Now, the following four lines will contain the elements of the matrix
 
 				for i in linewherenonbonded:
 					vartemporal = linecache.getline(ffFile, i+1).split()[0]
@@ -1007,7 +1037,7 @@ def forcefield(degreeoffreedom,action):
 						linematrix.append(linecache.getline(ffFile, i+1)[0:-1])
 						linematrix.append(linecache.getline(ffFile, i+2)[6:-1])
 						linematrix.append(linecache.getline(ffFile, i+3)[8:-1])
-
+						linematrix.append(linecache.getline(ffFile, i+4)[17:-1])
 				answer.append(linematrix)
 				linematrix=[]		
 				linesrepeated=[]
@@ -1042,7 +1072,8 @@ def forcefield(degreeoffreedom,action):
 				
 				ff.write(row.split()[1] + "\n")
 				ff.write("Sigma \n")
-				ff.write("Epsilon \n\n")
+				ff.write("Epsilon \n")
+				ff.write("atom_type_charge \n\n")
 				linesrepeated=[]
 				ff.close()	
 
@@ -1379,6 +1410,7 @@ def forcefield(degreeoffreedom,action):
 	if degreeoffreedom=="charges":
 
 		if action == "write":
+		
 			for index,row in enumerate(listofnames):
 				ff=open(ffFile,'a')
 				ff.write("charge\n")
@@ -1423,23 +1455,23 @@ returns:
 	atomList = []
 	atomParms = {}
 	bondList = []
-
 	pdb = open(pdbFile,'r')
 
 	for line in pdb:
 		# read atom info
-		if line[0:6]=='HETATM' or line[0:4]=='ATOM':
+		this_line = line.split()
+		if line[0:6]=='HETATM' or line[0:4]=='ATOM': 
 			i = int(line[6:11].strip())
 			atomList.append(i)
 			atomParms[i] = {}
 			atomParms[i]['name'] = line[12:16].strip()
-			atomParms[i]['element'] = line[76:78].strip()
+			atomParms[i]['element'] = line[76:78].strip().title()
 			if atomParms[i]['name'] == '':
 				atomParms[i]['name'] = atomParms[i]['element'] + i
 			atomParms[i]['type'] = line.split()[-1].strip()
 			atomParms[i]['mass'] = periodicTable[atomParms[i]['element']]
 		# read bond info
-		if line[0:6]=='CONECT':
+		if "CONECT" in this_line:
 			lineList = line.split()
 			i = lineList[1]
 			for j in lineList[2:]:
@@ -1450,6 +1482,7 @@ returns:
 	return atomList, atomParms
 
 class Error(Exception):
+
 	"""Base class for exceptions in this module."""
 	pass
 
@@ -1478,17 +1511,22 @@ returns:
 			index = ff.readline().strip() #atomType
 			sigma = float(ff.readline().split()[1])
 			epsilon = float(ff.readline().split()[1])
+			try:
+				atom_type_charge = float(ff.readline().split()[1])
+			except:
+				atom_type_charge = 'None'
+
 			if index not in atomParms: 
 				atomParms[index] = {}
 			atomParms[index]['vdw'] = ('LJ', epsilon, sigma)
+			atomParms[index]['charge'] = (atom_type_charge)
 		elif 'bonds' in line:
 			index = tuple(ff.readline().split()) #atomType
 			distance = float(ff.readline().split()[1])
 			bondType = ff.readline().split()[1]
 			if bondType != 'fixed':
-				print 'WARNING: Cassandra does not support harmonic bonds. Force ' + \
-				      'constant will be ignored. .mcf file written with fixed bonds.'
-			bondParms[index] = ('fixed', distance)
+				raise Error('Cassandra does not support ' + bondType + 'bonds.')
+			bondParms[index] = (bondType, distance)
 		elif 'angles' in line:
 			index = tuple(ff.readline().split()) #atomType
 			theta = float(ff.readline().split()[1])
@@ -1520,7 +1558,11 @@ returns:
 		elif 'charge' in line:
 			data = ff.readline().split()
 			index = int(data[0]) #atomNumber
-			atomParms[index]['charge'] = float(data[1])
+			if len(data)>1:
+				atomParms[index]['charge'] = float(data[1])
+				
+			# else, if the information will be provided by atom type and corrected by checkParms(), do nothing
+				
 		line = ff.readline()
 
 	return atomParms, bondParms, angleParms, dihedralParms
@@ -1730,6 +1772,8 @@ returns:
 				raise Error('Dihedral parms for atoms ' + dihedral + ' not found.')	
 			
 	return atomParms, bondParms, angleParms, dihedralParms
+	print "Revised atomParms."
+	print atomParms
 
 def writeMcf(configFile, mcfFile, 
              atomList, bondList, angleList, dihedralList, ringList,
@@ -1768,7 +1812,7 @@ returns:
 		mcf.write('  %-6s'   % (atomParms[i]['name']))
 		mcf.write('  %-2s'   % (atomParms[i]['element']))
 		mcf.write('  %7.3f'  % (atomParms[i]['mass']))
-		mcf.write('  %+6.3f' % (atomParms[i]['charge']))
+		mcf.write('  %6.3f' % (atomParms[i]['charge']))
 		mcf.write('  %2s  %8.3f  %8.3f' % atomParms[i]['vdw'])
 		for ring in ringList:
 			if str(i) in ring: mcf.write('  ring')
@@ -1877,7 +1921,6 @@ if initialatom == '':
 	initialatom = '1'
 	
 scan_result = scan(initialatom,[],False)
-
 if cyclic_ua_atom==True:
 	#Clean "ghost atom" from temporary_file
 	tempfile2=open('temporary.temp2','w')
@@ -1919,8 +1962,7 @@ else:
 	print "There are " + str(len(fragList)) + " fragments identified"
 print "There are " + str(len(angleList)) + " angles identified"
 print "There are " + str(len(dihedralList)) + " dihedrals identified"
-
-if ffTemplate: 
+if ffTemplate:
 	#GENERATE BLANK FORCEFIELD TEMPLATE
 	if os.path.isfile(ffFile) and not os.path.isfile(ffFile + '.BAK'):
 		os.system('mv ' + ffFile + ' ' + ffFile + '.BAK')
@@ -1929,7 +1971,6 @@ if ffTemplate:
 else:
 	# GENERATE MCF FILE
 	atomList, atomParms, = readPdb(configFile)
-
 	# Read parms
 	if ffFileType == 'native':
 		atomParms, bondParms, angleParms, dihedralParms = \
