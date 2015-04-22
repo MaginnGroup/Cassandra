@@ -326,12 +326,15 @@ SUBROUTINE Insertion(this_box,mcstep,randno)
 
   IF(lchempot) THEN
      ! chemical potential is input
-     pacc = pacc - species_list(is)%chem_potential * beta(this_box) - &
-DLOG(box_list(this_box)%volume) + 3.0_DP*DLOG(species_list(is)%de_broglie(this_box))
+     pacc = pacc - species_list(is)%chem_potential * beta(this_box) &
+                 - DLOG(box_list(this_box)%volume) & 
+                 + 3.0_DP*DLOG(species_list(is)%de_broglie(this_box))
   ELSE
      ! need to come back and look at it carefully.
-     pacc = pacc - DLOG(species_list(is)%fugacity * beta(this_box) * box_list(this_box)%volume) &
-                + DLOG(species_list(is)%zig_by_omega) 
+     pacc = pacc - DLOG(species_list(is)%fugacity) &
+                 - DLOG(beta(this_box)) &
+                 - DLOG(box_list(this_box)%volume) &
+                 + DLOG(species_list(is)%zig_by_omega) 
   END IF
 
   
