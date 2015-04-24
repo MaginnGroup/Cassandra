@@ -230,39 +230,7 @@
        
        ! Here the configuration for this box has been generated
        ! Let's write this out
-       init_config_file = inputfile//'.init_config'
-       init_config_file = init_config_file//Int_To_String(ibox)
-
-       CALL Name_Files(run_name,'.init_config.box',init_config_file)
-       init_config_file1 = TRIM(init_config_file)//Int_To_String(ibox)
-
-       OPEN(UNIT=configunit,file=init_config_file1)
-
-       DO is = 1,nspecies
-          DO im = 1, nmolecules(is)
-
-             alive = locate(im,is)
-
-             IF (molecule_list(alive,is)%live) THEN
-
-                IF (molecule_list(alive,is)%which_box == ibox) THEN
-
-                   DO ia = 1, natoms(is)
-
-                      write(configunit,*) nonbond_list(ia,is)%element, atom_list(ia,im,is)%rxp, &
-                           atom_list(ia,im,is)%ryp,atom_list(ia,im,is)%rzp
-
-                   END DO
-
-                END IF
-
-             END IF
-
-          END DO
-
-       END DO
-
-       CLOSE(UNIT=configunit)
+       CALL Write_Coords(ibox)
        overlap = .FALSE.
 
     END DO  ! ends do loop from line 72 (nbr_boxes)

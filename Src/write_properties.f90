@@ -78,6 +78,12 @@ CONTAINS
     CHARACTER*120 :: prop_to_write
     CHARACTER*120, ALLOCATABLE :: prop_unit(:)
 
+    IF (block_average) THEN
+       WRITE(this_unit,'(A)') '# Block averages'
+    ELSE
+       WRITE(this_unit,'(A)') '# Instantaneous properties'
+    END IF
+
     write_str = ""
     write_str = "# MC_STEP"
     
