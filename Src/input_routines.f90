@@ -5758,8 +5758,157 @@ SUBROUTINE Get_Mie_Nonbond
 END SUBROUTINE Get_Mie_Nonbond
 
 
+SUBROUTINE Get_Lattice_File_Info
+    !-----------------------------------------------------------------
+    !
+    ! This soubroutine gets the name of the xyz file containing lattice
+    ! coordinates
+    !
+    ! First written by Jindal Shah on 10/10/12
+    !
+    !-------------------------------------------------------------------
+
+    IMPLICIT NONE
+
+    INTEGER :: line_nbr, ierr, nbr_entries
+    CHARACTER*120 :: line_string, line_array(20)
+
+    REWIND(inputunit)
+
+    line_nbr = 0
+
+    DO 
+       line_nbr = line_nbr + 1
+       CALL Read_String(inputunit,line_string,ierr)
+       
+       IF (ierr /= 0 ) THEN
+          err_msg = ''
+          err_msg(1) = 'Error reading lattice info in the inputfile'
+          err_msg(2) = 'aborting'
+          CALL Clean_Abort(err_msg,'Get_Lattice_File_Info')
+       END IF
+
+       IF (line_string(1:19) == '# Lattice_File_Info') THEN
+          ! we found the section on Lattice File Info
+          WRITE(logunit,*)
+          WRITE(logunit,*) '***** Found section on lattice file info ****'
+          WRITE(logunit,*) 
+
+          line_nbr = line_nbr + 1
+          CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
+          
+          lattice_file = line_array(1)
+
+          WRITE(logunit,*) 'Lattice coordinates are saved in the file'
+          WRITE(logunit,*) lattice_file
+
+          EXIT
+
+       ELSE
+          
+          IF (line_nbr > 1000 .OR. line_string(1:3) == 'END') THEN
+             
+             err_msg = ''
+             err_msg(1) = '# Lattice_File_Info section is missing in the input file'
+             err_msg(2) = inputfile
+             CALL Clean_Abort(err_msg,'Get_Lattice_File_Info')
+
+          END IF
+
+       END IF
+
+    END DO
+    
+
+    
+END SUBROUTINE Get_Lattice_File_Info
+
+
+SUBROUTINE Get_Lattice_Coordinates
+
+    !-- This subroutine obtains coordinates of the unit cell of the input
+    !-- lattice.
+    !
+    !-- The coordinate file contains the following information
+    !
+    !--- first line reserved for comment
+    !
+    !-- second, third and fourth lines describe the cell matrix
+    !
+    !-- fifth line is for comment
+    !-- sixth line onwards, the coordinates are specified in x,y and z. The first
+    !-- column contains atomic id
+    !
+    !   First written by Jindal Shah on 10/10/12.
+    !
+    !-------------------------------------------------------------------
+
+    IMPLICIT NONE
+
+    INTEGER :: is, iatom
+    CHARACTER*4 :: symbol
+    ! Since this routine is called in the case of potential map generation
+    ! and we do not call Box_Info during the map generation, set the 
+    ! number of boxes to 1
+
+    nbr_boxes = 1
+
+
+    OPEN(UNIT=lattice_file_unit,FILE=lattice_file)
+
+!    READ(lattice_file_unit,*)
+!    READ(lattice_file_unit,*) box_list(1)%length(1,1), box_list(1)%length(1,2), &
+!         box_list(1)%length(1,3)
+!    READ(lattice_file_unit,*) box_list(1)%length(2,1), box_list(1)%length(2,2), &
+!         box_list(1)%length(2,3)
+!    READ(lattice_file_unit,*) box_list(1)%length(3,1), box_list(1)%length(3,2), &
+!         box_list(1)%length(3,3)
+
+    ! skip a line
+    !
+    ! At this point compute all the properties associated with the zeolite box
+!    CALL Compute_Cell_Dimensions(1)
+
+!    READ(lattice_file_unit,*)
+
+    READ(lattice_file_unit,*)
+
+    ! to read in the coordinates of the atoms, we need to first determine how
+    ! many zeolite atoms there are
+    
+!    DO is = 1, nspecies
+!       IF (species_list(is)%int_species_type == int_zeo) EXIT
+!    END DO
+
+!    IF ( is == (nspecies + 1)) THEN
+       ! we could not locate a zeolite species
+
+!       err_msg = ''
+!       err_msg(1) = 'Simulation type is zeolite potential map generation'
+!       err_msg(2) = 'However none of the species appears to be a zeolite species'
+!       err_msg(3) = "Check the '# Species_Type' keyword in all the master mcf files"
+!       CALL Clean_Abort(err_msg,'Get_Lattice_Coordinates')
+
+!    END IF
+
+    is = 1
+
+    n_lat_atoms = natoms(is)
+
+    ! loop over all the coordinates to obtain xyz coordinates
+    ALLOCATE(x_lat(n_lat_atoms),y_lat(n_lat_atoms), z_lat(n_lat_atoms))
+
+    DO iatom = 1, n_lat_atoms
+
+       READ(lattice_file_unit,*) symbol, x_lat(iatom), y_lat(iatom), z_lat(iatom)
+
+    END DO
+
+    CLOSE(UNIT=lattice_file_unit)
+
+    WRITE(logunit,*) 'Finished reading the lattice coordinates'
+    
+END SUBROUTINE Get_Lattice_Coordinates
 
 
 END MODULE Input_Routines
-
-
