@@ -541,6 +541,11 @@ USE Type_Definitions
 !!!!! Mie potential variables
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: mie_Matrix
   REAL(DP), DIMENSION(:), ALLOCATABLE :: mie_nlist, mie_mlist
+
+
+!!!! Zeolite variables
+REAL(DP), ALLOCATABLE, DIMENSION(:) :: x_lat, y_lat, z_lat
+INTEGER :: n_lat_atoms
   
 END MODULE Run_Variables
 
