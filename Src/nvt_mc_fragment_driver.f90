@@ -102,7 +102,6 @@ SUBROUTINE NVT_MC_Fragment_Driver
 
         
         rand_atom = INT ( (natoms(is) - 2) * rranf()) + 3
-	write(*,*) rand_atom, natoms(is)
         ! save the coordinates
 
         CALL Save_Old_Cartesian_Coordinates(im,is)
@@ -172,7 +171,8 @@ SUBROUTINE NVT_MC_Fragment_Driver
      write(*,'(A30,I10)') 'Accepted moves',  naccept
      write(*,*) 'Average intramolecular energy', ac_frag_energy / REAL(n_mcsteps,DP) * atomic_to_kJmol, 'kJ/mol'
      WRITE(*,'(A,2X,F30.10)') 'Z/Omega ',1.0_DP/ (zig_over_omega / REAL(n_mcsteps - n_equilsteps, DP))
-     
+     WRITE(logunit,*) 'Zig by omega will be printed. This is required in GCMC acceptance rule if fugacity is used.'
+     WRITE(logunit, '(A,2X,F30.10)') 'Z/Omega ',1.0_DP/(zig_over_omega/REAL(n_mcsteps - n_equilsteps, DP))
   END DO
 
 
