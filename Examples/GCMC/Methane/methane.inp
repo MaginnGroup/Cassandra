@@ -42,13 +42,13 @@ TRUE
 !-----------
 
 # Molecule_Files
-methane_UA_TraPPE.mcf 600
+methane_UA_TraPPE.mcf 700
 !------------------------
 
 # Box_Info
 1
 CUBIC
-31.10743 31.10743 31.10743
+35.10743 35.10743 35.10743
 !-------------------------
 
 # Temperature_Info
@@ -66,27 +66,27 @@ CUBIC
 # Move_Probability_Info
 
 # Prob_Translation
-0.8
+0.9
 0.5
 
 # Prob_Insertion
-0.1
+0.0000001
 insertion method
 reservoir 
 
 # Prob_Deletion
-0.1
+0.0999999
 
 # Done_Probability_Info
 !----------------------
 
 # Start_Type
 make_config
-300
+700
 !------------------
 
 # Run_Type
-Equilibration   600  
+Equilibration   550
 !------------------
 
 # Average_Info
@@ -96,8 +96,8 @@ Equilibration   600
 # Frequency_Info
 freq_type    none
 Nthermofreq  600
-Ncoordfreq   6000
-MCsteps      6000
+Ncoordfreq   600000
+MCsteps      600000
 # Done_Frequency_Info
 !--------------------
 
