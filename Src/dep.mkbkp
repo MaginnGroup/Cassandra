@@ -24,7 +24,7 @@ get_com.o: type_definitions.o run_variables.o type_definitions.o run_variables.o
 get_internal_coords.o: type_definitions.o run_variables.o type_definitions.o run_variables.o type_definitions.o run_variables.o type_definitions.o run_variables.o type_definitions.o run_variables.o
 grow_molecules.o: run_variables.o type_definitions.o random_generators.o file_names.o energy_routines.o fragment_growth.o simulation_properties.o io_utilities.o run_variables.o type_definitions.o random_generators.o file_names.o energy_routines.o fragment_growth.o
 initialize.o: run_variables.o run_variables.o
-input_routines.o: run_variables.o io_utilities.o file_names.o type_definitions.o random_generators.o energy_routines.o rotation_routines.o random_generators.o run_variables.o file_names.o
+input_routines.o: run_variables.o io_utilities.o file_names.o type_definitions.o random_generators.o energy_routines.o rotation_routines.o random_generators.o run_variables.o file_names.o file_names.o
 insertion.o: run_variables.o energy_routines.o io_utilities.o random_generators.o rotation_routines.o fragment_growth.o
 io_utilities.o: run_variables.o type_definitions.o
 main.o: run_variables.o file_names.o io_utilities.o input_routines.o read_write_checkpoint.o energy_routines.o simulation_properties.o fragment_growth.o
