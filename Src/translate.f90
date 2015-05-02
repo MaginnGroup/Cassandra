@@ -264,7 +264,6 @@ SUBROUTINE Translate(this_box,mc_step)
      
      delta_e = ( E_vdw_move - E_vdw ) + ( E_qq_move - E_qq ) + delta_e
 
-
      IF (int_sim_type == sim_nvt_min) THEN
         IF (delta_e  <= 0.0_DP) THEN
            p_acc = 1.0_DP

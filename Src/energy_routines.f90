@@ -1621,8 +1621,6 @@ CONTAINS
                 SigOverRm = SigOverR ** mie_m
                 Eij_vdw =  mie_coeff * eps * ((SigOverRn - SigOverRm) - (SigOverRn_shift - SigOverRm_shift))
                 
-		!print *, Eij_vdw
-		!READ(*,*)
              ENDIF
              
              
