@@ -80,7 +80,7 @@ USE Type_Definitions
   INTEGER, PARAMETER :: sim_gemc_npt = 7
   INTEGER, PARAMETER :: sim_gemc_ig = 8
   INTEGER, PARAMETER :: sim_mcf = 9
-  LOGICAL :: lchempot, lactivity, timed_run, openmp_flag, en_flag
+  LOGICAL :: lfugacity, lchempot, timed_run, openmp_flag, en_flag
 
   ! The starting seed for the random generator
   ! Note iseed is used for generating points on random sphere for MCF_Gen sim type.
@@ -169,7 +169,7 @@ USE Type_Definitions
   REAL(DP), PARAMETER :: kboltz = 0.8314472_DP
 
   !H_PLANK is Plank's constant in atomic units amu A^2 / ps^3
-  REAL(DP), PARAMETER :: h_PLANK = 39.9031268605_DP
+  REAL(DP), PARAMETER :: h_plank = 39.9031268605_DP
 
   ! The value of the fundamental electron charge squared and divided by
   ! 4*pi*epsilon0, where epsilon0 is the vacuum permittivity.  This value
@@ -541,6 +541,11 @@ USE Type_Definitions
 !!!!! Mie potential variables
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: mie_Matrix
   REAL(DP), DIMENSION(:), ALLOCATABLE :: mie_nlist, mie_mlist
+
+
+!!!! Zeolite variables
+REAL(DP), ALLOCATABLE, DIMENSION(:) :: x_lat, y_lat, z_lat
+INTEGER :: n_lat_atoms
   
 END MODULE Run_Variables
 

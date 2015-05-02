@@ -1,7 +1,7 @@
 ! This is the input file for an NVT simulation of diethylether at 343.15 K
 
 # Run_Name
-dee_mie
+dee_mie_2
 !--------------
 
 # Sim_Type
