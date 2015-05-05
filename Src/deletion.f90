@@ -112,16 +112,18 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
      CALL Build_Molecule(alive,is,this_box,frag_order,this_lambda, which_anchor, P_reverse, nrg_ring_frag_tot, cbmc_overlap)
      DEALLOCATE(frag_order)
      
-     IF (cbmc_overlap) THEN
-        CALL Revert_Old_Cartesian_Coordinates(alive,is)
-        atom_list(1:natoms(is),alive,is)%exist = .TRUE.
-        molecule_list(alive,is)%cfc_lambda = this_lambda
-        
-        WRITE(*,*)
-        WRITE(*,*) 'Warning....energy overlap detected in old configuration in deletion.f90'
-        WRITE(*,*) 'molecule, species', alive, is
-        WRITE(*,*)
-     END IF
+!    Calling Revert_Old_Cartesian_Coordinates without a prior call to Save_Old_Cartesian_Coordinates
+!    will set all atoms in the molecule to a buggy location (e.g. all atoms in the molecule to origin)
+!    IF (cbmc_overlap) THEN
+!        CALL Revert_Old_Cartesian_Coordinates(alive,is)
+!        atom_list(1:natoms(is),alive,is)%exist = .TRUE.
+!        molecule_list(alive,is)%cfc_lambda = this_lambda
+!        
+!        WRITE(*,*)
+!        WRITE(*,*) 'Warning....energy overlap detected in old configuration in deletion.f90'
+!        WRITE(*,*) 'molecule, species', alive, is
+!        WRITE(*,*)
+!     END IF
 
      ktothen = 1
 

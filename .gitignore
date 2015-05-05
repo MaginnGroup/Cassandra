@@ -1,4 +1,5 @@
 Src/*.[oa]
 Src/*.mod
+Src/dep.mk
 *~
 .*.swp
