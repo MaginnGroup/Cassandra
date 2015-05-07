@@ -5099,10 +5099,10 @@ SUBROUTINE Get_Frequency_Info
                  WRITE(logunit,*)
 
                  DO ibox = 1, nbr_boxes
-                    movie_header_file = TRIM(run_name) // '_H.box' // Int_To_String(ibox)
-                    movie_xyz_file = TRIM(run_name) // '_box' // TRIM(Int_To_String(ibox))//'.xyz'
-                    WRITE(logunit,'(A,T30,I3,A,T40,A)') 'movie header file for box ', ibox ,' is', TRIM(movie_header_file)
-                    WRITE(logunit,'(A,T30,I3,A,T40,A)') 'movie_XYZ file for box ', ibox ,' is', TRIM(movie_xyz_file)
+                    movie_header_file = TRIM(run_name) // '.box' // TRIM(Int_To_String(ibox)) // '.H'
+                    movie_xyz_file =    TRIM(run_name) // '.box' // TRIM(Int_To_String(ibox)) // '.xyz'
+                    WRITE(logunit,'(A,T30,I1,A,T40,A)') 'movie header file for box ', ibox ,' is', TRIM(movie_header_file)
+                    WRITE(logunit,'(A,T30,I1,A,T40,A)') 'movie_XYZ file for box ', ibox ,' is', TRIM(movie_xyz_file)
                     OPEN(unit=movie_header_unit+ibox,file=movie_header_file)
                     OPEN(unit=movie_xyz_unit+ibox,file=movie_xyz_file)
                  END DO
@@ -5397,13 +5397,8 @@ USE Run_Variables, ONLY: cpcollect
  ! Name the files for output
   DO ibox = 1, nbr_boxes
      DO i = 1, nbr_prop_files(ibox)
-        IF (block_average) THEN
-           extension = '.blkavg_prp'//Int_To_String(i)
-        ELSE
-           extension = '.instnt_prp'//Int_to_String(i)
-        END IF
-        extension2 = extension // '.box'//Int_To_String(ibox)
-        CALL Name_Files(run_name,extension2,prop_files(i,ibox))
+        extension = '.box' // TRIM(Int_To_String(ibox)) // '.prp' // TRIM(Int_To_String(i))
+        CALL Name_Files(run_name,extension,prop_files(i,ibox))
      END DO
   END DO           
 
