@@ -2425,11 +2425,11 @@ CONTAINS
              END IF
 
           END DO imLoop
+          !$OMP END PARALLEL DO
           IF (SHARED_OVERLAP) THEN
              overlap = .true.
              RETURN
           ENDIF
-          !$OMP END PARALLEL DO
 
           energy(this_box)%intra = energy(this_box)%intra +  v_intra
           energy(this_box)%bond = energy(this_box)%bond + v_bond
