@@ -93,7 +93,9 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
   im = INT(rranf() * nmols(is,this_box)) + 1
 
   CALL Get_Index_Molecule(this_box,is,im,alive)
-  
+
+  CALL Save_Old_Cartesian_Coordinates(alive,is)  
+
   ! Compute the energy of the molecule
   
   ! Intra molecule energy
@@ -105,14 +107,31 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
 
   cbmc_overlap = .FALSE.
 
+
   IF(species_list(is)%fragment .AND. (species_list(is)%int_insert .NE. int_igas)) THEN
      del_Flag = .TRUE.
      get_fragorder = .TRUE.
      ALLOCATE(frag_order(nfragments(is)))
+
+!   write(*,*) 'before'
+!   WRITE(*,*) atom_list(:,alive,is)%rxp
+!   WRITE(*,*) atom_list(:,alive,is)%ryp
+!   WRITE(*,*) atom_list(:,alive,is)%rzp
+
+
      CALL Build_Molecule(alive,is,this_box,frag_order,this_lambda, which_anchor, P_reverse, nrg_ring_frag_tot, cbmc_overlap)
+
+!  write(*,*) 'after'
+!  WRITE(*,*) atom_list(:,alive,is)%rxp
+!  WRITE(*,*) atom_list(:,alive,is)%ryp
+!  WRITE(*,*) atom_list(:,alive,is)%rzp
+
      DEALLOCATE(frag_order)
      
      IF (cbmc_overlap) THEN
+
+! Revert to the COM and Eulerian angles for the molecule
+
         CALL Revert_Old_Cartesian_Coordinates(alive,is)
         atom_list(1:natoms(is),alive,is)%exist = .TRUE.
         molecule_list(alive,is)%cfc_lambda = this_lambda
@@ -230,6 +249,12 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
 
 
   IF(cbmc_overlap) accept = .FALSE.
+
+ 
+  if (alive==80) then
+        write(*,*) 'deletion', alive, accept
+  end if
+
 
   IF (accept) THEN
      ! Update energies

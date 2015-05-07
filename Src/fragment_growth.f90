@@ -214,6 +214,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda,which_ancho
   ! Note that we need to choose from the reservoir only when insertion
   ! is attempted
 
+
   IF (.NOT. del_Flag) THEN
      
      ! obtain a random configuration
@@ -276,6 +277,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda,which_ancho
 
   nrg(:) = 0.0_DP 
 
+
   IF(imreplace .GT. 0) THEN
 
      IF(.NOT. del_FLAG) THEN
@@ -311,6 +313,10 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda,which_ancho
            z_anchor = zcom_old
         
         ELSE
+
+!           write(*,*) 'here inside this if', del_Flag, itrial
+!           read(*,*)
+           
         
            IF (box_list(this_box)%int_box_shape == int_cubic) THEN
            
