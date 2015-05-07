@@ -19,15 +19,15 @@
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*******************************************************************************
 
-FUNCTION accept_or_reject(factor)
+FUNCTION accept_or_reject(ln_pacc)
 
   !*******************************************************************
   !
-  ! The function will test, based on factor, if a move
+  ! The function will test, based on ln_pacc, if a move
   ! is accepted.
   !
-  ! factor is so calculated that the acceptance is in the
-  ! form min(1,exp(-factor)) 
+  ! ln_pacc is so calculated that the acceptance is in the
+  ! form exp[-max(0,ln_pacc)]
   !
   ! 12/10/13  : Beta Release
   !*********************************************************************
@@ -38,23 +38,23 @@ FUNCTION accept_or_reject(factor)
 
   IMPLICIT NONE
 
-  REAL(DP), INTENT(IN) :: factor
+  REAL(DP), INTENT(IN) :: ln_pacc
 
-  REAL(DP) :: p_acc
+  REAL(DP) :: pacc
 
   LOGICAL accept_or_reject
 
   accept_or_reject = .FALSE.
 
-  IF (factor <= 0.0_DP) THEN
+  IF (ln_pacc <= 0.0_DP) THEN
 
      accept_or_reject = .TRUE.
 
-  ELSE IF ( factor < max_kBT) THEN
+  ELSE IF ( ln_pacc < max_kBT) THEN
 
-     p_acc = MIN(1.0_DP, DEXP(-factor))
+     pacc = DEXP(-ln_pacc)
 
-     IF ( rranf() <= p_acc ) THEN
+     IF ( rranf() <= pacc ) THEN
         
         accept_or_reject = .TRUE.
 
