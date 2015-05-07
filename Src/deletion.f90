@@ -21,10 +21,10 @@
 
 SUBROUTINE Deletion(this_box,mcstep,randno)
   
-  !********************************************************************************
-  ! This subroutine deletes a molecule a box. Thexs box is first chosen at random
-  ! and then an adsorbate component is selected at random. Next a randomly chosen
-  ! molecule of this component is deleted from the box
+  !*****************************************************************************
+  !
+  ! PURPOSE: attempt to delete a molecule that was inserted via 
+  !          configurational bias monte carlo
   !
   ! Called by
   !
@@ -33,9 +33,19 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
   ! Revision History
   !
   !   12/10/13 : Beta Release
+  !   Version 1.1
+  !     04/21/15  Corrected acceptance criteria
+  !     05/05/15  Documented this code
   !
+  ! DESCRIPTION: This subroutine performs the following steps:
   !
-  !********************************************************************************
+  ! Step 1) Select a species with uniform probability
+  ! Step 2) Select a molecule with uniform probability
+  ! Step 3) Calculate the bias probability for the reverse insertion move
+  ! Step 4) Calculate the change in potential energy if the molecule is deleted
+  ! Step 5) Accept or reject the move
+  !
+  !*****************************************************************************
   
   USE Type_Definitions
   USE Run_Variables
@@ -43,201 +53,305 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
   USE Simulation_Properties
   USE Energy_Routines
   USE Fragment_Growth
+  USE IO_Utilities
+
+  !*****************************************************************************
+  ! Declare and Initialize Variables
+  !*****************************************************************************
 
   IMPLICIT NONE
 
+  ! Arguments
+  INTEGER, INTENT(INOUT) :: this_box ! attempt to delete a molecule in this_box
+  INTEGER :: mcstep  ! not used
+  REAL(DP) :: randno ! not used
 
-  INTEGER, INTENT(INOUT) :: this_box
+  ! Local declarations
+  INTEGER :: i, i_type               ! atom indices
+  INTEGER :: ifrag                   ! fragment indices
+  INTEGER :: im, alive               ! molecule indices
+  INTEGER :: is, is_rand, is_counter ! species indices
+  INTEGER :: kappa_tot, which_anchor
+  INTEGER, ALLOCATABLE :: frag_order(:)
+  INTEGER :: k, position
 
-  INTEGER :: is, im, alive, k, position, i_type, i, nsorbate, nmols_sorbate, which_anchor
-  INTEGER :: is_1, is_counter, mcstep, ktothen, ifrag
-  INTEGER, ALLOCATABLE :: sorbate_id(:), frag_order(:)
-
-  REAL(DP) :: delta_e, delta_e_pacc, delta_v, E_bond, E_angle, E_dihedral, E_intra_vdw, E_intra_qq, E_inter_vdw
-  REAL(DP) :: E_inter_qq, E_improper
-  REAL(DP) :: E_reciprocal_move, E_self_move, e_lrc, alpha_ratio, factor
-  REAL(DP) :: gnew, gold, dg ! weighting factors for the new mol number and old mol number
-  REAL(DP), ALLOCATABLE :: sorbate_x(:)
-  REAL(DP) :: pick_species, P_reverse, this_lambda, nrg_ring_frag_tot, randno
+  REAL(DP) :: delta_e, delta_e_pacc
+  REAL(DP) :: E_bond, E_angle, E_dihedral, E_improper
+  REAL(DP) :: E_intra_vdw, E_intra_qq
+  REAL(DP) :: E_inter_vdw, E_inter_qq
+  REAL(DP) :: E_reciprocal_move, E_self_move, E_lrc
+  REAL(DP) :: nrg_ring_frag_tot
+  REAL(DP) :: ln_pacc, P_bias, this_lambda
   REAL(DP) :: E_intra_vdw_igas, E_intra_qq_igas
 
-  LOGICAL :: inter_overlap, accept, accept_or_reject, cbmc_overlap, intra_overlap
+  LOGICAL :: inter_overlap, cbmc_overlap, intra_overlap
+  LOGICAL :: accept, accept_or_reject
 
-
-  REAL(DP) :: check_e, energy_old
-  LOGICAL  :: superbad
-
-  
-  pacc = 0.0_DP
-  paccbiased = 0.0_DP
-  alpha_ratio = 1.0_DP
+  ! Initialize variables
+  ln_pacc = 0.0_DP
+  P_bias = 1.0_DP
+  this_lambda = 1.0_DP
   nrg_ring_frag_tot = 0.0_DP
+  inter_overlap = .FALSE.
+  cbmc_overlap = .FALSE.
+  intra_overlap = .FALSE.
   
+  !*****************************************************************************
+  ! Step 1) Select a species with uniform probability
+  !*****************************************************************************
+  !
+  ! All species may not be insertable. For example, in a simulation of dilute
+  ! water (species 3) and CO2 (species 4) in an ionic liquid (species 1 and 2), 
+  ! the number of ionic liquid molecules may be fixed and only the numbers of
+  ! water and CO2 allowed to fluctuate. First, choose a random integer between 1
+  ! and the number of insertable species, nspec_insert:
 
-  tot_trials(this_box) = tot_trials(this_box) + 1
+  is_rand = INT(rranf() * nspec_insert) + 1
 
-  is_1 = INT(rranf() * nspec_insert) + 1
+  ! Now find the index 'is' that corresponds to is_rand. In the example, if
+  ! is_rand == 2 a CO2 molecule will be deleted. CO2 corresponds to 'is' == 4.
+
   is_counter = 0
-
   DO is = 1, nspecies
-     IF(species_list(is)%int_species_type == int_sorbate) is_counter = is_counter + 1
-     IF(is_counter == is_1) EXIT
+     IF(species_list(is)%int_species_type == int_sorbate) THEN
+        is_counter = is_counter + 1
+     END IF
+     IF(is_counter == is_rand) EXIT ! exit the loop when 'is' has been found
   END DO
 
+  ! In the given example, now 'is' would equal 4.
 
-  IF(nmols(is,this_box) == 0) RETURN
+  ! Cannot delete a molecule if there aren't any in the box
+  IF (nmols(is,this_box) == 0) RETURN
+
+  ! Now that a deletion will be attempted, we need to do some bookkeeping:
+  !  * Increment the counters to compute success ratios
 
   ntrials(is,this_box)%deletion = ntrials(is,this_box)%deletion + 1  
-  ! Determine the index of im
+  tot_trials(this_box) = tot_trials(this_box) + 1
+
+  !*****************************************************************************
+  ! Step 2) Select a molecule with uniform probability
+  !*****************************************************************************
+  !
 
   im = INT(rranf() * nmols(is,this_box)) + 1
-
-  CALL Get_Index_Molecule(this_box,is,im,alive)
+  CALL Get_Index_Molecule(this_box,is,im,alive) ! sets the value of 'alive'
   
-  ! Compute the energy of the molecule
+  !*****************************************************************************
+  ! Step 3) Calculate the bias probability for the reverse insertion move
+  !*****************************************************************************
+  !
+  ! The bias probability, P_bias, of the reverse insertion move is required to
+  ! calculate the probability of accepting the deletion. P_bias will be 
+  ! calculated using the following procedure:
+  ! 
+  !   3.1) Select a fragment with uniform probability
+  !   3.2) Select kappa_ins - 1 trial coordinates, each with uniform probability
+  !   3.3) Calculate the probability of hte fragment's current COM
+  !   3.4) For each additional fragment:
+  !          a) Select kappa_dih - 1 trial dihedrals, each with uniform 
+  !             probability
+  !          b) Calculate the probability of the fragment's current dihedral
+  !
+  ! These steps are implemented in the subroutine Build_Molecule
   
-  ! Intra molecule energy
-  
-  delta_e = 0.0_DP
-  P_reverse = 1.0_DP
+  IF(species_list(is)%fragment .AND. &
+     (species_list(is)%int_insert .NE. int_igas)) THEN
 
-  this_lambda = 1.0_DP
+     ! Save the coordinates of 'alive' because Build_Molecule will erase them if
+     ! cbmc_overlap is tripped.
+     CALL Save_Old_Cartesian_Coordinates(alive,is)
 
-  cbmc_overlap = .FALSE.
-
-  IF(species_list(is)%fragment .AND. (species_list(is)%int_insert .NE. int_igas)) THEN
-     del_Flag = .TRUE.
-     get_fragorder = .TRUE.
+     ! Build_Molecule places the first fragment, then calls Fragment_Placement 
+     ! to place the additional fragments
+     del_flag = .TRUE.      ! Don't change the coordinates of 'alive'
+     get_fragorder = .TRUE. !
      ALLOCATE(frag_order(nfragments(is)))
-     CALL Build_Molecule(alive,is,this_box,frag_order,this_lambda, which_anchor, P_reverse, nrg_ring_frag_tot, cbmc_overlap)
+     CALL Build_Molecule(alive,is,this_box,frag_order,this_lambda, &
+             which_anchor, P_bias, nrg_ring_frag_tot, cbmc_overlap)
      DEALLOCATE(frag_order)
      
-!    Calling Revert_Old_Cartesian_Coordinates without a prior call to Save_Old_Cartesian_Coordinates
-!    will set all atoms in the molecule to a buggy location (e.g. all atoms in the molecule to origin)
-!    IF (cbmc_overlap) THEN
-!        CALL Revert_Old_Cartesian_Coordinates(alive,is)
-!        atom_list(1:natoms(is),alive,is)%exist = .TRUE.
-!        molecule_list(alive,is)%cfc_lambda = this_lambda
-!        
-!        WRITE(*,*)
-!        WRITE(*,*) 'Warning....energy overlap detected in old configuration in deletion.f90'
-!        WRITE(*,*) 'molecule, species', alive, is
-!        WRITE(*,*)
-!     END IF
+     ! Why would cbmc_overlap ever be tripped for a deletion move?
+     IF (cbmc_overlap) THEN
+        WRITE(*,*)
+        WRITE(*,*) 'Warning....energy overlap detected in old configuration in deletion.f90'
+        WRITE(*,*) 'molecule, species', alive, is
+        WRITE(*,*)
 
-     ktothen = 1
+        CALL Revert_Old_Cartesian_Coordinates(alive,is)
+        atom_list(1:natoms(is),alive,is)%exist = .TRUE.
+        molecule_list(alive,is)%cfc_lambda = this_lambda
+        
+     END IF
+
+     ! So far P_bias only includes the probability of choosing the insertion 
+     ! point from the collection of trial coordinates times the probability of 
+     ! choosing each dihedral from the collection of trial dihedrals. We need 
+     ! to include the number of trial coordinates, kappa_ins, and the number of
+     ! of trial dihedrals, kappa_dih, for each dihedral.
+     kappa_tot = 1
 
      IF (nfragments(is) /=0 ) THEN
 
-        ktothen = ktothen * kappa_ins
+        kappa_tot = kappa_tot * kappa_ins
 
         IF (kappa_rot /= 0) THEN
-           ktothen = ktothen * kappa_rot
+           kappa_tot = kappa_tot * kappa_rot
         END IF
         
         IF (kappa_dih /=0 ) THEN
-
            DO ifrag = 2, nfragments(is)
-              ktothen = ktothen * kappa_dih
+              kappa_tot = kappa_tot * kappa_dih
            END DO
         END IF
      
      END IF
      
-     P_reverse = P_reverse * REAL(ktothen , DP)
+     P_bias = P_bias * REAL(kappa_tot , DP)
 
   END IF
 
+  !*****************************************************************************
+  ! Step 4) Calculate the change in potential energy if the molecule is deleted
+  !*****************************************************************************
+  !
+  ! Whether the deletion will be accepted depends on the change in potential
+  ! energy, delta_e. The potential energy will be computed in 5 stages:
+  !   4.1) Nonbonded intermolecular energies
+  !   4.2) Bonded intramolecular energies
+  !   4.3) Nonbonded intramolecular energies
+  !   4.4) Ewald energies
+  !   4.5) Long-range energy correction
+  ! 
+
+  ! Recompute the COM
   CALL Get_COM(alive,is)
+
+  ! Compute the distance of the atom farthest from COM
   CALL Compute_Max_COM_Distance(alive,is)
+
+  ! 4.1) Nonbonded intermolecular energies
+
+  IF (l_pair_nrg) THEN
+     CALL Store_Molecule_Pair_Interaction_Arrays(alive,is,this_box, &
+             E_inter_vdw,E_inter_qq)
+  ELSE
+     CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is, &
+             E_inter_vdw,E_inter_qq,inter_overlap)
+  END IF
+
+  delta_e = - E_inter_vdw - E_inter_qq
+
+  ! 4.2) Bonded intramolecular energies
 
   CALL Compute_Molecule_Bond_Energy(alive,is,E_bond)
   CALL Compute_Molecule_Angle_Energy(alive,is,E_angle)
   CALL Compute_Molecule_Dihedral_Energy(alive,is,E_dihedral)
   CALL Compute_Molecule_Improper_Energy(alive,is,E_improper)
 
-  delta_e = delta_e + E_bond + E_angle + E_dihedral + E_improper  
+  delta_e = delta_e - E_bond - E_angle - E_dihedral - E_improper  
   
-  ! Nonbonded energy  
-  CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is,E_intra_vdw,E_intra_qq,intra_overlap)
+  ! 4.3) Nonbonded intramolecular energies
 
-  IF (l_pair_nrg) THEN
-     CALL Store_Molecule_Pair_Interaction_Arrays(alive,is,this_box,E_inter_vdw,E_inter_qq)
-  ELSE
-     CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_inter_vdw,E_inter_qq,inter_overlap)
+  CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is, &
+          E_intra_vdw,E_intra_qq,intra_overlap)
+
+  delta_e = delta_e - E_intra_vdw - E_intra_qq
+
+  ! 4.4) Ewald energies
+
+  IF ( (int_charge_sum_style(this_box) == charge_ewald) .AND. &
+       (has_charge(is)) ) THEN
+
+     CALL Compute_Ewald_Reciprocal_Energy_Difference(alive,alive,is,this_box, &
+             int_deletion,E_reciprocal_move)
+     CALL Compute_Ewald_Self_Energy_Difference(alive,is,this_box, &
+             int_deletion,E_self_move)
+
+     delta_e = delta_e + E_self_move &
+                       + (E_reciprocal_move - energy(this_box)%ewald_reciprocal)
   END IF
 
-  delta_e = delta_e + E_intra_vdw + E_intra_qq
-  delta_e = delta_e + E_inter_vdw + E_inter_qq
-
-  IF ( (int_charge_sum_style(this_box) == charge_ewald) .AND. (has_charge(is)) ) THEN
-     CALL Compute_Ewald_Reciprocal_Energy_Difference(alive,alive,is,this_box,int_deletion,E_reciprocal_move)
-     CALL Compute_Ewald_Self_Energy_Difference(alive,is,this_box,int_deletion,E_self_move)
-     delta_e = delta_e - E_self_move
-     delta_e = delta_e - (E_reciprocal_move - energy(this_box)%ewald_reciprocal)
-  END IF
-
+  ! 4.5) Long-range energy correction
 
   IF (int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
 
      ! subtract off beads for this species
-
      nbeads_out(:) = nint_beads(:,this_box)
 
      DO i = 1, natoms(is)
         i_type = nonbond_list(i,is)%atom_type_number
         nint_beads(i_type,this_box) = nint_beads(i_type,this_box) - 1
      END DO
+
      CALL Compute_LR_correction(this_box,e_lrc)
-     delta_e = delta_e - ( e_lrc - energy(this_box)%lrc )
+     delta_e = delta_e + ( e_lrc - energy(this_box)%lrc )
 
   END IF  
   
-
-  ! calculate the factor in the acceptance rule and the weighting function in necessary
-  ! min(1,exp(-factor)). Note that the energy difference is actually (e_total_new - e_total_old)
-  ! delta_e computed above is (e_total_old - e_total_new) so in the factor below
-  ! - delta_e is used to represent actual change in energy. See below when energies are
-  ! update upon suceessful deletion
-
-
-  delta_e_pacc = delta_e
+  !*****************************************************************************
+  ! Step 5) Accept or reject the move
+  !*****************************************************************************
+  !
+  ! The following quantity is calculated
+  !
+  !                  (p_m) (a_mn) 
+  !    ln_pacc = Log[------------]
+  !                  (p_n) (a_nm)
+  !
+  ! and passed to accept_or_reject() which executes the metropolis criterion.
+  ! The acceptance criterion to delete a molecule that was inserted via CBMC is
+  !
+  !                                               V
+  !    ln_pacc = β[ΔU_mn+U_frag] + βμ' + Log[------------]          (1)
+  !                                          P_bias N Λ^3
+  !
+  !                                     β f' V
+  !            = β[ΔU_mn+U_frag] + Log[--------]
+  !                                    P_bias N 
+  !
+  ! where the primes (') indicate that additional intensive terms have been
+  ! absorbed into the chemical potential and fugacity, respectively.
 
   IF(species_list(is)%int_insert == int_igas) THEN
      igas_flag = .TRUE.
-     CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is,E_intra_vdw_igas,E_intra_qq_igas,intra_overlap)
+     CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is, &
+             E_intra_vdw_igas,E_intra_qq_igas,intra_overlap)
      igas_flag = .FALSE. 
-     delta_e_pacc = delta_e_pacc - E_bond - E_angle - E_dihedral - E_improper - &
-                         E_intra_vdw_igas - E_intra_qq_igas
+     ln_pacc = beta(this_box) * (delta_e + E_bond + E_angle &
+                                         + E_dihedral + E_improper &
+                                         + E_intra_vdw_igas + E_intra_qq_igas)
+  ELSE
+
+     IF(species_list(is)%fragment) THEN
+        ln_pacc = beta(this_box) * (delta_e + E_angle + nrg_ring_frag_tot)
+     END IF
+
   END IF
 
-  IF(species_list(is)%fragment .AND. species_list(is)%int_insert .NE. int_igas) THEN
-     delta_e_pacc = delta_e_pacc - E_angle - nrg_ring_frag_tot
-  END IF
-
-  pacc = beta(this_box) * (-delta_e_pacc) - DLOG(alpha_ratio) - &
-         DLOG(REAL(nmols(is,this_box),DP)) - DLOG(P_reverse) 
+  ! P_bias equals 1.0 unless changed by Build_Molecule
+  ln_pacc = ln_pacc - DLOG(REAL(nmols(is,this_box),DP)) - DLOG(P_bias) 
  
   IF(lchempot) THEN
      ! chemical potential is input
-     pacc = pacc + beta(this_box) * species_list(is)%chem_potential + &
-       DLOG(box_list(this_box)%volume) - 3.0_DP*DLOG(species_list(is)%de_broglie(this_box)) 
+     ln_pacc = ln_pacc + beta(this_box) * species_list(is)%chem_potential &
+                       + DLOG(box_list(this_box)%volume) &
+                       - 3.0_DP*DLOG(species_list(is)%de_broglie(this_box)) 
   ELSE
-     pacc = pacc + DLOG(species_list(is)%fugacity * beta(this_box) * box_list(this_box)%volume) &
-     - DLOG(species_list(is)%zig_by_omega)
-
+     ! fugacity is input
+     ln_pacc = ln_pacc + DLOG(species_list(is)%fugacity) &
+                       + DLOG(beta(this_box)) &
+                       + DLOG(box_list(this_box)%volume)
   END IF 
  
-  accept = accept_or_reject(pacc)
-
-
-  IF(cbmc_overlap) accept = .FALSE.
+  accept = accept_or_reject(ln_pacc)
 
   IF (accept) THEN
      ! Update energies
-
-     energy(this_box)%total = energy(this_box)%total - delta_e
-     energy(this_box)%intra = energy(this_box)%intra - E_bond - E_angle - E_dihedral
+     energy(this_box)%total = energy(this_box)%total + delta_e
+     energy(this_box)%intra = energy(this_box)%intra - E_bond - E_angle &
+                            - E_dihedral - E_improper
      energy(this_box)%bond = energy(this_box)%bond - E_bond
      energy(this_box)%angle = energy(this_box)%angle - E_angle
      energy(this_box)%dihedral = energy(this_box)%dihedral - E_dihedral
@@ -247,19 +361,18 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
      energy(this_box)%inter_vdw = energy(this_box)%inter_vdw - E_inter_vdw
      energy(this_box)%inter_q   = energy(this_box)%inter_q - E_inter_qq
 
-     IF ( int_charge_sum_style(this_box) == charge_ewald .AND. has_charge(is)) THEN
-        
+     IF ( int_charge_sum_style(this_box) == charge_ewald .AND. &
+          has_charge(is)) THEN
         energy(this_box)%ewald_reciprocal = E_reciprocal_move
         energy(this_box)%ewald_self = energy(this_box)%ewald_self + E_self_move
-        
      END IF
 
      IF ( int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
-        energy(this_box)%lrc = e_lrc
+        energy(this_box)%lrc = E_lrc
      END IF
 
-     ! obtain the original position of the deleted molecule so that the linked list
-     ! can be updated
+     ! obtain the original position of the deleted molecule so that the
+     ! linked list can be updated
 
      CALL Get_Position_Molecule(this_box,is,im,position)
 
@@ -270,31 +383,29 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
      END IF
      
      ! move the deleted molecule to the end of alive molecules
-
      locate(nmols(is,this_box),is) = alive
-        
      molecule_list(alive,is)%live = .FALSE.
      atom_list(:,alive,is)%exist = .FALSE.
-
+     
+     ! update the number of molecules
      nmols(is,this_box) = nmols(is,this_box) - 1
+
+     ! Increment counter
      nsuccess(is,this_box)%deletion = nsuccess(is,this_box)%deletion + 1
 
 !     CALL System_Energy_Check(1,mcstep,randno)
   ELSE
 
-     IF ( (int_charge_sum_style(this_box) == charge_ewald) .AND. (has_charge(is)) ) THEN
-        ! restore cos_sum and sin_sum. Note that these were changed when difference in
-        ! reciprocal energies was computed
-
-        !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)        
+     IF ( (int_charge_sum_style(this_box) == charge_ewald) .AND. &
+           (has_charge(is)) ) THEN
+        ! Restore cos_sum and sin_sum. Note that these were changed when
+        ! difference in reciprocal energies was computed
         cos_sum(:,this_box) = cos_sum_old(:,this_box)
         sin_sum(:,this_box) = sin_sum_old(:,this_box)
-        !$OMP END PARALLEL WORKSHARE
-
      END IF
 
      IF ( int_vdw_sum_style(this_box) == vdw_cut_tail ) THEN
-        ! restore the total number of bead types
+        ! Restore the total number of bead types
         nint_beads(:,this_box) = nbeads_out(:)
      END IF
 

@@ -1,4 +1,5 @@
 !********************************************************************************
+
 !   Cassandra - An open source atomistic Monte Carlo software package
 !   developed at the University of Notre Dame.
 !   http://cassandra.nd.edu
@@ -51,7 +52,7 @@ SUBROUTINE Volume_Change(this_box,this_step)
   !
   ! Rescale the COM coordinates of all the molecules and not the actual
   ! atomic positions. This is necessary to ensure that the intramolecular
-  ! enery of molecules do not contribute to the acceptance rule.
+  ! energy of molecules do not contribute to the acceptance rule.
   !
   ! Compute the change in energy due to this move and accept the move
   ! with standard metropolis criterion.
@@ -74,7 +75,7 @@ SUBROUTINE Volume_Change(this_box,this_step)
 
   INTEGER :: ia
 
-  REAL(DP) :: random_displacement, s(3), delta_volume,  p_acc, delta_e, success_ratio
+  REAL(DP) :: random_displacement, s(3), delta_volume, ln_pacc, delta_e, success_ratio
   REAL(DP) :: this_volume
   REAL(DP), DIMENSION(maxk) :: hx_old, hy_old, hz_old, Cn_old
 
@@ -84,7 +85,7 @@ SUBROUTINE Volume_Change(this_box,this_step)
   REAL(DP) :: pres_id
   REAL(DP) :: W_vol_vdw, W_vol_qq
 
-  LOGICAL :: accept, allocation_cos_sin, overlap, xz_change
+  LOGICAL :: accept, allocation_cos_sin, overlap, xz_change, accept_or_reject
 
   TYPE(Box_Class) :: box_list_old
 
@@ -312,9 +313,9 @@ SUBROUTINE Volume_Change(this_box,this_step)
               
               DO i = 1,3
                  
-                 s(i) = box_list_old%length_inv(i,1) * molecule_list(alive,is)%xcom + &
-                      box_list_old%length_inv(i,2) * molecule_list(alive,is)%ycom + &
-                      box_list_old%length_inv(i,3) * molecule_list(alive,is)%zcom
+                 s(i) = box_list_old%length_inv(i,1) * molecule_list(alive,is)%xcom &
+                      + box_list_old%length_inv(i,2) * molecule_list(alive,is)%ycom &
+                      + box_list_old%length_inv(i,3) * molecule_list(alive,is)%zcom
               END DO
               
               
@@ -323,17 +324,17 @@ SUBROUTINE Volume_Change(this_box,this_step)
               
 
                  
-                 molecule_list(alive,is)%xcom = box_list(this_box)%length(1,1) * s(1) + &
-                      box_list(this_box)%length(1,2) * s(2) + &
-                      box_list(this_box)%length(1,3) * s(3)
+                 molecule_list(alive,is)%xcom = box_list(this_box)%length(1,1) * s(1) &
+                                              + box_list(this_box)%length(1,2) * s(2) &
+                                              + box_list(this_box)%length(1,3) * s(3)
                  
-                 molecule_list(alive,is)%ycom = box_list(this_box)%length(2,1) * s(1) + &
-                      box_list(this_box)%length(2,2) * s(2) + &
-                      box_list(this_box)%length(2,3) * s(3)
+                 molecule_list(alive,is)%ycom = box_list(this_box)%length(2,1) * s(1) &
+                                              + box_list(this_box)%length(2,2) * s(2) &
+                                              + box_list(this_box)%length(2,3) * s(3)
                  
-                 molecule_list(alive,is)%zcom = box_list(this_box)%length(3,1) * s(1) + &
-                      box_list(this_box)%length(3,2) * s(2) + &
-                      box_list(this_box)%length(3,3) * s(3)
+                 molecule_list(alive,is)%zcom = box_list(this_box)%length(3,1) * s(1) &
+                                              + box_list(this_box)%length(3,2) * s(2) &
+                                              + box_list(this_box)%length(3,3) * s(3)
               
                  ! Obtain the new positions of atoms in this molecule
                  
@@ -471,32 +472,11 @@ SUBROUTINE Volume_Change(this_box,this_step)
      ! based on the energy, calculate the acceptance ratio
      
         
-        p_acc = beta(this_box) * delta_e + beta(this_box) * pressure(this_box) * delta_volume - &
-             total_molecules * DLOG(box_list(this_box)%volume/box_list_old%volume)
+     ln_pacc = beta(this_box) * delta_e &
+             + beta(this_box) * pressure(this_box) * delta_volume &
+             - total_molecules * DLOG(box_list(this_box)%volume/box_list_old%volume)
+     accept = accept_or_reject(ln_pacc)
 
-     
-     ! the move will be accepted with MIN(1,exp(-p_acc))
-
-     accept = .FALSE.
-     
-     IF ( p_acc <= 0.0_DP) THEN
-        
-        accept = .TRUE.
-        
-     ELSE IF ( p_acc <= max_kBT ) THEN
-        
-        IF (rranf() <= MIN(1.0_DP,exp(-p_acc))) THEN
-           
-           accept = .TRUE.
-           
-        END IF
-        
-     ELSE
-        
-        accept = .FALSE.
-        
-     END IF
-     
      
      IF ( accept ) THEN
 
@@ -588,7 +568,14 @@ SUBROUTINE Volume_Change(this_box,this_step)
   IF (MOD(nvolumes(this_box),nvol_update) == 0 ) THEN
      IF (int_run_style == run_equil) THEN
         success_ratio = REAL(ivol_success(this_box),DP)/REAL(nvol_update,DP)
+     ELSE
+        success_ratio = REAL(nvol_success(this_box),DP)/REAL(nvolumes(this_box),DP)
+     END IF
 
+     WRITE(logunit,*)
+     WRITE(logunit,'(A,I1,A,F8.5)')'Success ratio, volume changes for box ', this_box ,' : ', success_ratio
+
+     IF (int_run_style == run_equil) THEN
         ! check if the acceptane is close to 0.5
         
         IF (box_list(this_box)%box_shape == 'CUBIC') THEN
@@ -602,19 +589,12 @@ SUBROUTINE Volume_Change(this_box,this_step)
               box_list(this_box)%dv_max = 2.0_DP * success_ratio * box_list(this_box)%dv_max
               
            END IF
+           WRITE(logunit,'(A,I1,A,F8.0)') 'Maximum width, volume changes for box ', this_box, ' : ', box_list(this_box)%dv_max
 
         END IF
         
         ivol_success(this_box) = 0
-
-     ELSE
-        
-        success_ratio = REAL(nvol_success(this_box),DP)/REAL(nvolumes(this_box),DP)
-
      END IF
-
-     WRITE(logunit,*)
-     WRITE(logunit,'(A40,2X,I2,2X,A3,2X,F8.4)')'Successful volume attempt ratio for box', this_box ,' is ', success_ratio
 
   END IF
 
