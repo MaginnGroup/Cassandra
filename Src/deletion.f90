@@ -113,18 +113,9 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
      get_fragorder = .TRUE.
      ALLOCATE(frag_order(nfragments(is)))
 
-!   write(*,*) 'before'
-!   WRITE(*,*) atom_list(:,alive,is)%rxp
-!   WRITE(*,*) atom_list(:,alive,is)%ryp
-!   WRITE(*,*) atom_list(:,alive,is)%rzp
-
 
      CALL Build_Molecule(alive,is,this_box,frag_order,this_lambda, which_anchor, P_reverse, nrg_ring_frag_tot, cbmc_overlap)
 
-!  write(*,*) 'after'
-!  WRITE(*,*) atom_list(:,alive,is)%rxp
-!  WRITE(*,*) atom_list(:,alive,is)%ryp
-!  WRITE(*,*) atom_list(:,alive,is)%rzp
 
      DEALLOCATE(frag_order)
      
