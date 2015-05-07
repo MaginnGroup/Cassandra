@@ -125,6 +125,8 @@ SUBROUTINE Insertion(this_box,mcstep,randno)
   molecule_list(alive,is)%molecule_type = int_normal
 
   ! Randomly insert the COM in the simulation box.
+
+
   
   IF (species_list(is)%fragment .AND. (species_list(is)%int_insert & 
        .NE. int_igas) ) THEN
@@ -340,6 +342,9 @@ SUBROUTINE Insertion(this_box,mcstep,randno)
   
   accept = accept_or_reject(pacc)
   
+  if (alive==80) then
+        write(*,*) 'insertion', alive, accept
+  end if
 
   IF (accept) THEN
      ! update the number of molecules
