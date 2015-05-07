@@ -137,6 +137,13 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
 
   im = INT(rranf() * nmols(is,this_box)) + 1
   CALL Get_Index_Molecule(this_box,is,im,alive) ! sets the value of 'alive'
+
+  ! Save the coordinates of 'alive' because Build_Molecule will erase them if
+  ! cbmc_overlap is tripped.
+
+  CALL Save_Old_Cartesian_Coordinates(alive,is)  
+
+  ! Compute the energy of the molecule
   
   !*****************************************************************************
   ! Step 3) Calculate the bias probability for the reverse insertion move
@@ -159,10 +166,6 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
   IF(species_list(is)%fragment .AND. &
      (species_list(is)%int_insert .NE. int_igas)) THEN
 
-     ! Save the coordinates of 'alive' because Build_Molecule will erase them if
-     ! cbmc_overlap is tripped.
-     CALL Save_Old_Cartesian_Coordinates(alive,is)
-
      ! Build_Molecule places the first fragment, then calls Fragment_Placement 
      ! to place the additional fragments
      del_flag = .TRUE.      ! Don't change the coordinates of 'alive'
@@ -172,13 +175,15 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
              which_anchor, P_bias, nrg_ring_frag_tot, cbmc_overlap)
      DEALLOCATE(frag_order)
      
-     ! Why would cbmc_overlap ever be tripped for a deletion move?
+     ! cbmc_overlap will only trip if the molecule being deleted had bad
+     ! contacts
      IF (cbmc_overlap) THEN
         WRITE(*,*)
         WRITE(*,*) 'Warning....energy overlap detected in old configuration in deletion.f90'
         WRITE(*,*) 'molecule, species', alive, is
         WRITE(*,*)
 
+        ! Revert to the COM and Eulerian angles for the molecule
         CALL Revert_Old_Cartesian_Coordinates(alive,is)
         atom_list(1:natoms(is),alive,is)%exist = .TRUE.
         molecule_list(alive,is)%cfc_lambda = this_lambda
@@ -346,6 +351,12 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
   END IF 
  
   accept = accept_or_reject(ln_pacc)
+
+ 
+  if (alive==80) then
+        write(*,*) 'deletion', alive, accept
+  end if
+
 
   IF (accept) THEN
      ! Update energies

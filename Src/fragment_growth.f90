@@ -242,7 +242,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda,&
   ! reservoir
 
   IF (.NOT. del_flag) THEN
-     
+
      ! Pull from the reservoir with uniform probability
      total_frags = frag_list(frag_start,is)%nconfig
      this_fragment = INT(rranf() * total_frags) + 1
@@ -358,6 +358,10 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda,&
            z_anchor = zcom_old
         
         ELSE
+
+!           write(*,*) 'here inside this if', del_Flag, itrial
+!           read(*,*)
+           
         
            ! Select a random trial coordinate
            IF (box_list(this_box)%int_box_shape == int_cubic) THEN
