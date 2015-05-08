@@ -352,12 +352,6 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
  
   accept = accept_or_reject(ln_pacc)
 
- 
-  if (alive==80) then
-        write(*,*) 'deletion', alive, accept
-  end if
-
-
   IF (accept) THEN
      ! Update energies
      energy(this_box)%total = energy(this_box)%total + delta_e
