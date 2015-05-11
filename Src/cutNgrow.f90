@@ -71,7 +71,7 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
   INTEGER :: alive_1, alive_2, locate_1, locate_2
 
   INTEGER, ALLOCATABLE, DIMENSION(:) :: species_id, frag_order
-  REAL(DP), ALLOCATABLE, DIMENSION(:) :: x_box, x_species
+  REAL(DP), ALLOCATABLE, DIMENSION(:) :: x_box
   REAL(DP), ALLOCATABLE :: x_old(:), y_old(:), z_old(:)
   REAL(DP), ALLOCATABLE :: dx(:), dy(:), dz(:)
 
@@ -81,11 +81,10 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
   REAL(DP) :: E_bond_o, E_angle_o, E_dihed_o, delta_e_n, delta_e_o
   REAL(DP) :: E_improper_n, E_improper_o
   REAL(DP) :: E_selferf_n, E_selferf_o
-  REAL(DP) :: E_reciprocal_move, factor, e_prev, delta_intra, phi
+  REAL(DP) :: E_reciprocal_move, ln_pacc, e_prev, delta_intra, phi
   REAL(DP) :: energy_olde, check_e
   REAL(DP) :: nrg_ring_frag_forward, nrg_ring_frag_reverse
   REAL(DP) :: lambda_for_cut
-  REAL(DP) :: attempt_p
 
   LOGICAL ::  cbmc_overlap, accept, accept_or_reject, update_flag, superbad, overlap
   LOGICAL :: del_overlap, cbmc_overlap_f, del_overlap_f, intra_overlap
@@ -106,13 +105,12 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
 
   inside_start = .FALSE.
 !  imp_Flag = .FALSE.
-  attempt_p = 1.0_DP
   nrg_ring_frag_forward = 0.0
   nrg_ring_frag_reverse = 0.0
 
   ! Let us choose a box to pick the species and molecule to pick from.
 
-  ALLOCATE(x_box(nbr_boxes), x_species(nspecies), species_id(nspecies))
+  ALLOCATE(x_box(nbr_boxes), species_id(nspecies))
 
   total_mols = SUM(nmols(:,:))
 
@@ -150,25 +148,17 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
 
   nmolecules_species = 0
   nfrag_species = 0
-  x_species(:) = 0.0_DP
 
   DO is = 1, nspecies
      IF (nfragments(is) >= 1 ) THEN
         nfrag_species = nfrag_species + 1
         species_id(nfrag_species) = is
         nmolecules_species = nmolecules_species + nmols(is,this_box)
-        x_species(nfrag_species) = REAL(nmolecules_species,DP)
      END IF
   END DO
 
   IF(nmolecules_species == 0) RETURN
 
-!  x_species(:) = x_species(:)  / REAL(nmolecules_species,DP)
-
-!  DO is = 2, nfrag_species
-!     x_species(is) = x_species(is) + x_species(is-1)
-!  END DO
-  
   ! select a species
 
   rand_no = rranf()
@@ -182,25 +172,13 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
 
   IF ( nmols(is,this_box) == 0 ) RETURN
 
-  DEALLOCATE(x_species,species_id)
+  DEALLOCATE(species_id)
 
   ! Select a molecule at random for cutting 
-
 
      im = INT ( rranf() * nmolecules_species ) + 1
      ! Get the index of imth molecule of species is in this_box
      CALL Get_Index_Molecule(this_box,is,im,alive)
-
-
-
-  ! Save the old coordinates of the molecule
-!     energy_olde = energy(this_box)%inter_vdw
-!     CALL Compute_Total_System_Energy(this_box,.FALSE.,overlap)
-!     check_e = abs(energy(this_box)%inter_vdw - energy_olde)
-!     if(check_e .GT. 0.0005) THEN
-!        superbad = .true.
-!        write(*,*) 'fubar'
-!     end if
 
   CALL Save_Old_Cartesian_Coordinates(alive,is)
 
@@ -220,7 +198,7 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
 
   ! set deletion flag to false and call the CBMC Cut_Regrow routine
 
-  del_FLAG = .FALSE.
+  del_flag = .FALSE.
   cbmc_overlap = .FALSE.
   del_overlap = .FALSE.
 
@@ -295,7 +273,7 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
   CALL Compute_Molecule_Improper_Energy(alive,is,E_improper_n)
   CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is,E_intra_vdw_n, E_intra_qq_n,intra_overlap)
 
-     CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_inter_vdw_n,E_inter_qq_n,cbmc_overlap)
+  CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_inter_vdw_n,E_inter_qq_n,cbmc_overlap)
 
 
   ! Note that cbmc_overlap could be true when a molecule with single fragment
@@ -352,7 +330,7 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
   
   ! obtain weight of the old positions
 
-  del_FLAG = .TRUE.
+  del_flag = .TRUE.
   del_overlap = .FALSE.
   cbmc_overlap = .FALSE.
 
@@ -407,13 +385,13 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
      delta_e_o = E_intra_vdw_o + E_intra_qq_o + E_inter_vdw_o + E_inter_qq_o + E_dihed_o + E_improper_o - &
                  E_selferf_o
 
-     factor = beta(this_box) * (delta_e_n - delta_e_o) + DLOG(P_forward) - DLOG(P_reverse)
+     ln_pacc = beta(this_box) * (delta_e_n - delta_e_o) + DLOG(P_forward) - DLOG(P_reverse)
      
-     ! Modify factor to allow for ring biasing
+     ! Modify ln_pacc to allow for ring biasing
      
-     factor = factor + beta(this_box) * (nrg_ring_frag_reverse - nrg_ring_frag_forward)
+     ln_pacc = ln_pacc + beta(this_box) * (nrg_ring_frag_reverse - nrg_ring_frag_forward)
 
-     accept = accept_or_reject(factor)
+     accept = accept_or_reject(ln_pacc)
 
   END IF
 

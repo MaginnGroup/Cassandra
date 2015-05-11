@@ -170,6 +170,9 @@ bold = '\033[1m'
 normal = '\033[0m'
 
 gcmc_flag = 0
+chempot_flag = 0
+fugacity_flag = 0
+
 zbyomega = 1
 
 print bold+"\n*********Cassandra setup*********\n"
@@ -208,6 +211,10 @@ for line_number,line in enumerate(in_file):
 			charge_style_line = line_number+1
 		elif line_parse[1] == "Box_Info":
 			box_info_line = line_number+1
+		elif line_parse[1] == "Chemical_Potential_Info":
+			chempot_flag = 1
+		elif line_parse[1] == "Fugacity_Info":
+			fugacity_flag = 1
 
 in_file.close()
 
@@ -226,7 +233,14 @@ for i in xrange(0,nbr_boxes):
 sim_type = linecache.getline(input_file,sim_type_line+1)
 if "GCMC" in sim_type:
 	gcmc_flag = 1
-	print bold+"Grand Canonical simulation found. Will look for Zig/Omega in log files."+normal
+	if chempot_flag == 1 and fugacity_flag == 1:
+		print bold + "Aborting. Both Chemical potential and Fugacity were specified\n"
+		print bold + "within a GCMC simulation. Select only one of these."
+		sys.exit()
+
+	if fugacity_flag == 1:
+		print bold+"Grand Canonical simulation found. Will look for Zig/Omega in log files."+normal
+
 
 
 #Obtain number of species
@@ -482,11 +496,12 @@ for i in xrange(0, nbr_species):
 		        subprocess.call([cassandra_location,'frag'+str(j+1)+'.inp'])
 			if gcmc_flag == 1:
 				logfile = open('frag'+str(j+1)+'.log','r')
-				for line in logfile:
-					if 'Z/Omega' in line:
-						zbyomega = zbyomega * float(line.split()[1])
-				logfile.close()
-			os.chdir('../../')
+				if fugacity_flag == 1:
+					for line in logfile:
+						if 'Z/Omega' in line:
+							zbyomega = zbyomega * float(line.split()[1])
+					logfile.close()
+				os.chdir('../../')
 
 
 #Go back to the master input file and rewrite the location of the fragment libraries.
@@ -510,7 +525,8 @@ for line_number in xrange(1,total_lines):
 
 line_number = line_number + total_frag_counter
 
-if gcmc_flag == 1:
+if gcmc_flag == 1 and fugacity_flag == 1:
+	
 	new_file.write("\n! DO NOT CHANGE THE SECTION ZIG BY OMEGA!")
 	new_file.write("\n# Zig_By_Omega_Info\n")
 	new_file.write(str(zbyomega)+"\n")

@@ -468,7 +468,7 @@ USE Type_Definitions
   LOGICAL :: cpcollect  !  logical determining if the chemical potential info is collected
 
 
-  LOGICAL :: CBMC_Flag, del_Flag, phi_Flag, angle_Flag, imp_Flag
+  LOGICAL :: cbmc_flag, del_flag, phi_Flag, angle_Flag, imp_Flag
 
   ! Some variables for reaction Monte Carlo
   LOGICAL, DIMENSION(:), ALLOCATABLE :: has_charge

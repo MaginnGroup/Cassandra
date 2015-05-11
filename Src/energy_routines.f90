@@ -958,7 +958,7 @@ CONTAINS
 !    IF(int_vdw_style(this_box) == vdw_lj .AND. int_vdw_sum_style(this_box) == vdw_cut_tail .AND. &
 !       int_charge_style(this_box) == charge_coul .AND. int_charge_sum_style(this_box) == charge_ewald) THEN
 !       write(*,*) "test"       
-       IF (CBMC_Flag) THEN
+       IF (cbmc_flag) THEN
           rcut = rcut_cbmc(this_box)
        ELSE
           rcut = rcut_max(this_box)
@@ -1222,7 +1222,7 @@ CONTAINS
                          
                       ELSE
                          !IF (CBMC_flag) THEN
-                         !  IF ( .not. del_Flag) THEN
+                         !  IF ( .not. del_flag) THEN
                          !  IF (this_mcstep == 30985 ) THEN
                          !    write(301,*) ia, im, rijsq
                          ! END IF
@@ -1323,7 +1323,7 @@ CONTAINS
              
              CALL Energy_Test(rijsq,get_vdw,get_qq,this_box)
              
-             IF(CBMC_Flag.and.species_list(is)%L_Coul_CBMC) THEN
+             IF(cbmc_flag.and.species_list(is)%L_Coul_CBMC) THEN
                 get_qq=.false.
              ENDIF
              
@@ -1404,7 +1404,7 @@ CONTAINS
 
     l_pair_store = .FALSE.
 
-    IF (l_pair_nrg .AND. (.NOT. CBMC_Flag)) l_pair_store = .TRUE.
+    IF (l_pair_nrg .AND. (.NOT. cbmc_flag)) l_pair_store = .TRUE.
 
     IF (l_pair_store) THEN
        ! find out the location correspoding to im
@@ -2405,6 +2405,9 @@ CONTAINS
                 CALL Compute_Molecule_Nonbond_Intra_Energy(this_im,is,vlj_molecule_intra,vqq_molecule_intra,intra_overlap)
              END IF
 
+             IF (intra_overlap) THEN
+                SHARED_OVERLAP = .true.
+             END IF
              
              
              v_intra = v_intra + v_molecule_bond + v_molecule_angle + &
@@ -2421,6 +2424,10 @@ CONTAINS
 
           END DO imLoop
           !$OMP END PARALLEL DO
+          IF (SHARED_OVERLAP) THEN
+             overlap = .true.
+             RETURN
+          ENDIF
 
           energy(this_box)%intra = energy(this_box)%intra +  v_intra
           energy(this_box)%bond = energy(this_box)%bond + v_bond
@@ -2448,7 +2455,7 @@ CONTAINS
     ! bit obtains the interaction between molecules of different species.
 
     l_pair_store = .FALSE.
-    IF (l_pair_nrg .AND. (.NOT. CBMC_Flag)) l_pair_store = .TRUE.
+    IF (l_pair_nrg .AND. (.NOT. cbmc_flag)) l_pair_store = .TRUE.
     
     DO is = 1, nspecies
        imLOOP1: DO im_1 = 1, nmolecules(is)
@@ -2682,7 +2689,7 @@ CONTAINS
           CALL Energy_Test(rijsq,get_vdw,get_qq,this_box)          
 
           ! Compute vdw and q-q energy using if required
-          IF(CBMC_Flag.and.(.not.species_list(is_1)%L_Coul_CBMC)) THEN
+          IF(cbmc_flag.and.(.not.species_list(is_1)%L_Coul_CBMC)) THEN
              get_qq=.false. 
           ENDIF 
           IF (get_vdw .OR. get_qq) THEN 
@@ -2703,7 +2710,7 @@ CONTAINS
 
     IF (l_pair_nrg) THEN
 
-       IF ( .NOT. CBMC_Flag ) THEN
+       IF ( .NOT. cbmc_flag ) THEN
 
        
 

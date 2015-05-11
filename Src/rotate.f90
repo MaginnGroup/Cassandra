@@ -25,7 +25,7 @@ SUBROUTINE Rotate(this_box)
 
 !********************************************************************************
 ! The subroutine performs rotation of a randomly chosen molecule about one
-! of the axis. The energy of the molecule in old and new configurations will
+! of the axes. The energy of the molecule in old and new configurations will
 ! be determined and the Metropolis criterion will be used for accepting or
 ! rejecting the move.
 !
@@ -66,8 +66,7 @@ SUBROUTINE Rotate(this_box)
   INTEGER  :: iatom, dumcount, ibox
   INTEGER  :: N_fracs, ind, axis
   REAL(DP) :: E_vdw, E_qq, E_vdw_move, E_qq_move
-  REAL(DP) :: delta_e, p_acc, E_reciprocal_move, success_ratio, rand_no
-  REAL(DP) :: attempt_p
+  REAL(DP) :: delta_e, ln_pacc, E_reciprocal_move, success_ratio, rand_no
   REAL(DP), DIMENSION(:), ALLOCATABLE :: dx, dy, dz
   REAL(DP), DIMENSION(:), ALLOCATABLE :: x_old, y_old, z_old
   REAL(DP), DIMENSION(:), ALLOCATABLE :: x_box, x_species
@@ -76,7 +75,7 @@ SUBROUTINE Rotate(this_box)
 
   REAL(DP) :: old_value
   REAL(DP) :: checke
-  LOGICAL :: superbad, overlap
+  LOGICAL :: superbad, overlap, accept, accept_or_reject
 
  ! Pair_Energy arrays and Ewald implementation
 
@@ -252,18 +251,19 @@ SUBROUTINE Rotate(this_box)
      IF (int_sim_type == sim_nvt_min) THEN
         ! Accept only the moves that lower energy
         IF ( delta_e <= 0.0_DP) THEN
-           p_acc = 1.0_DP
+           accept = .TRUE.
         ELSE
-           p_acc = 0.0_DP
+           accept = .FALSE.
         END IF
         
      ELSE
 
-        p_acc = min ( 1.0_DP, DEXP(-beta(this_box) * delta_e) )
+        ln_pacc = beta(this_box) * delta_e
+        accept = accept_or_reject(ln_pacc)
 
      END IF
      
-     IF ( rranf() <= p_acc ) THEN
+     IF ( accept ) THEN
 
         energy(this_box)%total = energy(this_box)%total + delta_e
         energy(this_box)%inter_vdw = energy(this_box)%inter_vdw + E_vdw_move - E_vdw
@@ -283,7 +283,6 @@ SUBROUTINE Rotate(this_box)
         IF (l_pair_nrg) DEALLOCATE(pair_vdw_temp,pair_qq_temp)
         IF (ALLOCATED(cos_mol_old)) DEALLOCATE(cos_mol_old)
         IF (ALLOCATED(sin_mol_old)) DEALLOCATE(sin_mol_old)
-        
        
      ELSE
 
@@ -320,7 +319,7 @@ SUBROUTINE Rotate(this_box)
      END IF
 
      WRITE(logunit,*)
-     WRITE(logunit,'(A,2x,I2,2X,A,2X,I2,2X,A,2X,F8.5)') 'Success ratio for rotation of species', is,'for box',this_box, 'is:', success_ratio
+     WRITE(logunit,'(A,I3,A,I1,A,F8.5)') 'Success ratio, rotation of species ', is,' in box ',this_box, ' : ', success_ratio
 
      IF (int_run_style == run_equil) THEN   
     
@@ -334,6 +333,7 @@ SUBROUTINE Rotate(this_box)
            max_rot(is,this_box) = MIN(PI,1.05_DP*max_rot(is,this_box))
 
         END IF
+        WRITE(logunit,'(A,I3,A,I1,A,F8.5)') 'Maximum width, rotation of species ', is,' in box ', this_box, ' : ', max_rot(is,this_box)
         
      END IF
      
@@ -460,8 +460,8 @@ CONTAINS
 
     ! Pick random eulerians
     
-    theta = ACOS(1.0_DP-2.0_DP*rranf())
-    phi  = (1.0_DP - 2.0_DP * rranf()) * PI
+    theta = ACOS(1.0_DP - 2.0_DP * rranf())
+    phi   = (1.0_DP - 2.0_DP * rranf()) * PI
     psi   = (1.0_DP - 2.0_DP * rranf()) * PI
 
     ! shift the origin to the COM of the molecule
@@ -489,12 +489,15 @@ CONTAINS
 
     DO ia = 1, natoms(is)
 
-       rxpnew = rot11*atom_list(ia,alive,is)%rxp + rot12*atom_list(ia,alive,is)%ryp + &
-            rot13*atom_list(ia,alive,is)%rzp
-       rypnew = rot21*atom_list(ia,alive,is)%rxp + rot22*atom_list(ia,alive,is)%ryp + &
-            rot23*atom_list(ia,alive,is)%rzp
-       rzpnew = rot31*atom_list(ia,alive,is)%rxp + rot32*atom_list(ia,alive,is)%ryp + &
-            rot33*atom_list(ia,alive,is)%rzp
+       rxpnew = rot11*atom_list(ia,alive,is)%rxp & 
+              + rot12*atom_list(ia,alive,is)%ryp &
+              + rot13*atom_list(ia,alive,is)%rzp
+       rypnew = rot21*atom_list(ia,alive,is)%rxp &
+              + rot22*atom_list(ia,alive,is)%ryp &
+              + rot23*atom_list(ia,alive,is)%rzp
+       rzpnew = rot31*atom_list(ia,alive,is)%rxp &
+              + rot32*atom_list(ia,alive,is)%ryp &
+              + rot33*atom_list(ia,alive,is)%rzp
 
        atom_list(ia,alive,is)%rxp = rxpnew
        atom_list(ia,alive,is)%ryp = rypnew

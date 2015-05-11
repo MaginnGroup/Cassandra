@@ -21,18 +21,21 @@
 
 MODULE Fragment_Growth
 
-  !******************************************************************************
-  ! The module performs the tasks related to insertion, deletion, cut and regrowth
-  ! of molecules based on fragment sampling. It also contains routine to obtain
-  ! order of fragment placement.
+  !*****************************************************************************
+  ! The module performs the tasks related to insertion, deletion, cut and 
+  ! regrowth of molecules based on fragment sampling. It also contains a routine
+  ! to obtain order of fragment placement.
   !
   ! CONTAINS
   !      
-  ! Fragment_Order
   ! Build_Molecule
-  ! Delete_Molecule
+  ! Build_Rigid_Fragment
   ! Cut_Regrow
+  ! Fragment_Order
+  ! Fragment_Placement
   ! Get_Aligner_Hanger
+  ! Single_Fragment_Regrowth
+  ! Get_Common_Fragment_Atoms
   !
   ! Used by
   !
@@ -49,6 +52,8 @@ MODULE Fragment_Growth
   ! Revision history
   !
   !   12/10/13 : Beta Release
+  !   Version 1.1
+  !     05/01/15 Documented the Build_Molecule subroutine
   !*****************************************************************************
 
   USE Run_Variables
@@ -60,103 +65,122 @@ MODULE Fragment_Growth
 
 CONTAINS
 
-!******************************************************************************
-SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda,which_anchor,&
-     attempt_prob, nrg_ring_frag_total, cbmc_overlap)
-!******************************************************************************
+!*******************************************************************************
+SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda,&
+                  which_anchor,attempt_prob, nrg_ring_frag_total, cbmc_overlap)
+!*******************************************************************************
 !
-! The subroutine builds the molecule from scratch, it also has the capability 
-! to regrow part of the input molecule
+! PURPOSE: build the molecule from scratch or regrow part of the input molecule
 !
 ! First written by Jindal Shah on 07/18/07
 !
 ! 05/25/08 (JS) : First committed to the repository
 !
 ! 01/20/0 (JS) : Boltzmann weight of the trial is computed irrespoective of
-!                 its energy. Previously, an energy cutoff was used to set
-!                 the Boltzmann weight
+!                its energy. Previously, an energy cutoff was used to set
+!                the Boltzmann weight
 !
-! 
+! DESCRIPTION: This subroutine performs the following steps
 !
-!********************************************************************************
+! Step 1) Select which fragment will be inserted first
+! Step 2) Choose a conformation for the first fragment
+! Step 3) Rotate the first fragment
+! Step 4) Choose kappa_ins positions for the first fragment's COM
+! Step 5) Choose kappa_dih orientations for each additional fragment
+!
+!*******************************************************************************
 
   USE Rotation_Routines
   USE IO_Utilities
   USE File_Names
   USE Energy_Routines
 
-  INTEGER :: this_im, is, this_box
+  !*****************************************************************************
+  ! Declare and Initialize Variables
+  !*****************************************************************************
+
+  ! Arguments
+  INTEGER :: this_im  ! molecule index
+  INTEGER :: is       ! species index
+  INTEGER :: this_box ! box index
   INTEGER, DIMENSION(1:nfragments(is)) :: frag_order
-
-  REAL(DP) :: attempt_prob
-  REAL(DP), INTENT(IN) :: this_lambda
+  REAL(DP), INTENT(IN) :: this_lambda ! fractional molecule?
+  INTEGER :: which_anchor  ! 
+  REAL(DP) :: attempt_prob ! 
   REAL(DP), INTENT(OUT) :: nrg_ring_frag_total
-  LOGICAL, INTENT(INOUT) :: cbmc_overlap
+  LOGICAL, INTENT(INOUT) :: cbmc_overlap ! did all trials have core overlap?
 
-  INTEGER :: which_anchor
-  !-------------------------------
-
-  INTEGER :: is_fragments, frag_start, frag_start_old, frag_total, i, this_atom
-  INTEGER :: anchor, ifrag, total_connect, frag_connect
-  INTEGER :: j, im
-  INTEGER :: ii,jj,kk, total_frags, this_fragment
+  ! Local declarations
+  INTEGER :: i, j, this_atom      ! atom indices
+  INTEGER :: ifrag, this_fragment ! fragment indices
+  INTEGER :: im                   ! molecule indices
+  INTEGER :: is_fragments ! number of fragments in each molecule of species 'is'
+  INTEGER :: total_frags  ! total number of conformations for this fragment in 
+                          ! the reservoir
+  INTEGER :: frag_start, frag_start_old ! random fragment to start growing from
+  INTEGER :: frag_total   ! number of non-zero entries in frag_order
 
   INTEGER, ALLOCATABLE, DIMENSION(:) :: live, deadend, central
   INTEGER, ALLOCATABLE, DIMENSION(:) :: frag_placed
 
-  REAL(DP) :: x_anchor, y_anchor, z_anchor, xcom_old, ycom_old, zcom_old
+  REAL(DP) :: x_anchor, y_anchor, z_anchor ! new COM coordinates for the 
+                                           ! first fragment
+  REAL(DP) :: xcom_old, ycom_old, zcom_old ! old COM coordinates for the
+                                           ! first fragment
   REAL(DP) :: dx, dy, dz
 
-  REAL(DP) :: x_this, y_this, z_this,tempx, tempy, tempz, temp_var, E_ang
-
-  LOGICAL :: overlap
-
+  LOGICAL :: overlap ! TRUE if there is core overlap between a trial atom 
+                     ! position and a an atom already in the box
 
   CHARACTER  :: this_file*120, symbol*1
 
   TYPE(Atom_Class), ALLOCATABLE, DIMENSION(:) :: config_list
 
   ! Variables associated with the CBMC part
-
   INTEGER :: itrial, trial, frag_type, n_frag_atoms
 
-  REAL(DP) :: weight(MAX(kappa_ins,kappa_rot,kappa_dih)), rand_no, e_dihed, E_intra_vdw, &
-       E_intra_qq, E_inter_vdw
-  REAL(DP) :: E_inter_qq,e_total
-  REAL(DP) :: nrg(MAX(kappa_ins,kappa_rot,kappa_dih)), nrg_kBT, time0, time1, nrg_ring_frag
+  REAL(DP) :: weight(MAX(kappa_ins,kappa_rot,kappa_dih)), rand_no, E_dihed
+  REAL(DP) :: E_intra_vdw, E_intra_qq, E_inter_vdw, E_inter_qq, E_total
+  REAL(DP) :: nrg(MAX(kappa_ins,kappa_rot,kappa_dih)), nrg_kBT, nrg_ring_frag
 
   LOGICAL :: del_overlap
 
   Type(Atom_Class) :: rtrial(MAXVAL(natoms),0:MAX(kappa_ins,kappa_rot,kappa_dih))
-  ! slit pore 
+  ! Slit pore variables
 
   LOGICAL :: framework_overlap
   REAL(DP) :: E_framework
 
+!  ! DEBUGging variables
+!  INTEGER :: M_XYZ_unit
+
+  ! Initialize variables
   n_frag_atoms = 0
-  CBMC_Flag = .TRUE.
   attempt_prob = 1.0_DP
-  
-  ! mark all the atoms as deleted 
-  
-  ! Assign a locate number for the molecule
-
-  this_box = molecule_list(this_im,is)%which_box
-  
-  atom_list(:,this_im,is)%exist = .FALSE.
-
-  is_fragments = nfragments(is)
+  this_box = molecule_list(this_im,is)%which_box ! which box this_im is in
+  atom_list(:,this_im,is)%exist = .FALSE. ! mark all the atoms as deleted 
+  molecule_list(this_im,is)%cfc_lambda = 0.0_DP
+  is_fragments = nfragments(is) ! number of fragments per molecule
   IF (ALLOCATED(frag_placed)) DEALLOCATE(frag_placed)
   ALLOCATE(frag_placed(is_fragments))
-  frag_placed(:) = 0
-
+  frag_placed(:) = 0 ! =1 if fragment been placed
   nrg_ring_frag_total = 0.0_DP
+  cbmc_flag = .TRUE.
 
+  !*****************************************************************************
+  ! Step 1) Select which fragment will be inserted first
+  !*****************************************************************************
+  !
+  ! One fragment will be inserted first, and then additional fragments will
+  ! be added one at a time
+  !
+
+  ! When is get_fragorder .FALSE.?
   IF (get_fragorder) THEN
  
      ! First obtain a random fragment to grow from
         
-     frag_start = INT ( rranf() * nfragments(is)) + 1
+     frag_start = INT ( rranf() * is_fragments) + 1
      frag_start_old = frag_start
  
      ! Obtain the order of fragment addition
@@ -166,7 +190,6 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda,which_ancho
      IF (ALLOCATED(central)) DEALLOCATE(central)
      
      ALLOCATE(live(is_fragments),deadend(is_fragments),central(is_fragments))      
-
      live(:) = 0
      central(:) = 0
      deadend(:) = 0
@@ -176,14 +199,17 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda,which_ancho
      live(frag_start) = 1
      frag_total = 1
      
+     ! If this molecule is made up of multiple fragments, select an order in 
+     ! which the fragments will be grown
      IF (is_fragments > 1 ) THEN
 
-        CALL Fragment_Order(frag_start,is,frag_total,frag_order,live,deadend,central)
+        CALL Fragment_Order(frag_start,is,frag_total,frag_order, & 
+                            live,deadend,central)
         
      END IF
 
-     ! Note that the call to Fragment_Order might have changed the identity of frag_start
-     ! so restore the value calculated above
+     ! Restore the value of frag_start calculated above since the call to 
+     ! Fragment_Order might have changed it
      
      frag_start = frag_start_old
 
@@ -191,71 +217,87 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda,which_ancho
 
   END IF
 
-  ! Note that for a deletion move, frag_total is undefined, since its an insertion move,
-  ! total number of fragments that need to be placed is is_fragments
+  ! For a deletion move, frag_total is undefined?
+  ! The total number of fragments that need to be placed is is_fragments
 
   frag_total = is_fragments
 
-  ! At this point, we have the order in which we will grow the molecule from
-     
-  ! let us place the first fragment. We will use choose a configuration from the
-  ! library and assign it to the atoms in the fragment. This fragment will undergo
-  ! a COM rotation before its anchor is randomly inserted in the simulation box.
+  !
+  ! At this point, we have the order in which we will grow the molecule.
 
-  ! Add the part to read in the coordinates from its file.
+  !*****************************************************************************
+  ! Step 2) Choose a conformation for the first fragment
+  !*****************************************************************************
+  !   
+  ! A fragment library was previously generated via a single fragment MC 
+  ! simulation. Since the fragments were sampled according to the Boltzmann 
+  ! distribution, we can now pull from the reservoir with uniform probability.
+  ! The reservoir of fragment conformations is stored in frag_coords.
+  !
 
-  ! we will make all the atoms of frag_start as part of the simulations
-
-  atom_list(:,this_im,is)%exist = .FALSE.
-  molecule_list(this_im,is)%cfc_lambda = 0.0_DP
-
+  ! If get_fragorder = .FALSE., then frag_start is not yet defined
   frag_start = frag_order(1)
 
-  ! Note that we need to choose from the reservoir only when insertion
-  ! is attempted
+  ! If inserting a molecule, choose the first fragment's conformation from the 
+  ! reservoir
 
-  IF (.NOT. del_Flag) THEN
-     
-     ! obtain a random configuration
+  IF (.NOT. del_flag) THEN
 
+     ! Pull from the reservoir with uniform probability
      total_frags = frag_list(frag_start,is)%nconfig
-     
-     ! Choose a fragment at random
-     
      this_fragment = INT(rranf() * total_frags) + 1
 
+     ! What does this specify? Is the fragment linear? a ring?
      frag_type = frag_list(frag_start,is)%type
-          
+     
+     ! Read the coordinates for every atom
      DO i = 1, frag_list(frag_start,is)%natoms 
         
         this_atom = frag_list(frag_start,is)%atoms(i)
         
-        atom_list(this_atom,this_im,is)%rxp = frag_coords(i,this_fragment,frag_type)%rxp
-        atom_list(this_atom,this_im,is)%ryp = frag_coords(i,this_fragment,frag_type)%ryp
-        atom_list(this_atom,this_im,is)%rzp = frag_coords(i,this_fragment,frag_type)%rzp
+        atom_list(this_atom,this_im,is)%rxp = &
+                                      frag_coords(i,this_fragment,frag_type)%rxp
+        atom_list(this_atom,this_im,is)%ryp = &
+                                      frag_coords(i,this_fragment,frag_type)%ryp
+        atom_list(this_atom,this_im,is)%rzp = &
+                                      frag_coords(i,this_fragment,frag_type)%rzp
 
      END DO
 
   END IF
   
+  ! Turn on the molecule and its individual atoms
   molecule_list(this_im,is)%cfc_lambda = this_lambda
   
   DO i =1, frag_list(frag_start,is)%natoms
      this_atom = frag_list(frag_start,is)%atoms(i)
      atom_list(this_atom,this_im,is)%exist = .TRUE.
-
-
   END DO
 
- ! Now apply the rotation matrix so that the resulting orientation is random
+  !*****************************************************************************
+  ! Step 3) Rotate the first fragment
+  !*****************************************************************************
+  !
+  ! At this time, only a single orientation is selected with uniform 
+  ! probability. Future releases may attempt multiple orientations.
+  ! 
 
   CALL Get_COM(this_im,is)
   CALL Compute_Max_COM_Distance(this_im,is)
   
-  IF ( .NOT. del_FLAG) CALL Rotate_Molecule_Eulerian(this_im,is)
+  ! If inserting the fragment, select a random orientation 
+  IF ( .NOT. del_flag) CALL Rotate_Molecule_Eulerian(this_im,is)
 
-  ! Store the position as 0th trial
-  
+  !*****************************************************************************
+  ! Step 4) Choose kappa_ins positions for the first fragment's COM
+  !*****************************************************************************
+  ! 
+  ! The first fragment will now be inserted into the simulation box. Multiple
+  ! trial coordinates will be randomly generated. Each trial will be weighted
+  ! by the Boltzmann factor of change in potential energy. One trial will be
+  ! selected from the weighted distribution.
+
+  ! Store the conformation and orientation as 0th trial
   DO i = 1, frag_list(frag_start,is)%natoms
 
      this_atom = frag_list(frag_start,is)%atoms(i)
@@ -266,23 +308,27 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda,which_ancho
 
   END DO
 
-  ! store the COM
-  
+  ! Store the COM
   xcom_old = molecule_list(this_im,is)%xcom
   ycom_old = molecule_list(this_im,is)%ycom
   zcom_old = molecule_list(this_im,is)%zcom
 
   ! We will place this fragment based only on its external weight
 
+  ! The energy of each trial coordinate will be stored in the array nrg.
   nrg(:) = 0.0_DP 
 
+  ! When is imreplace greater than 0?
   IF(imreplace .GT. 0) THEN
 
-     IF(.NOT. del_FLAG) THEN
+     IF(.NOT. del_flag) THEN
 
-        dx = molecule_list(imreplace,isreplace)%xcom - molecule_list(this_im,is)%xcom
-        dy = molecule_list(imreplace,isreplace)%ycom - molecule_list(this_im,is)%ycom
-        dz = molecule_list(imreplace,isreplace)%zcom - molecule_list(this_im,is)%zcom
+        dx = molecule_list(imreplace,isreplace)%xcom &
+           - molecule_list(this_im,is)%xcom
+        dy = molecule_list(imreplace,isreplace)%ycom &
+           - molecule_list(this_im,is)%ycom
+        dz = molecule_list(imreplace,isreplace)%zcom &
+           - molecule_list(this_im,is)%zcom
 
         molecule_list(this_im,is)%xcom = molecule_list(imreplace,isreplace)%xcom
         molecule_list(this_im,is)%ycom = molecule_list(imreplace,isreplace)%ycom
@@ -301,42 +347,42 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda,which_ancho
 
   ELSE
 
+     ! Loop over the multiple trial coordinates
      DO itrial = 1, kappa_ins
 
-        IF ( del_Flag .AND. (itrial == 1 )) THEN
+        IF ( del_flag .AND. (itrial == 1 )) THEN
         
-           ! choose old center of mass for fragment placement
+           ! Use the COM of the current position
            x_anchor = xcom_old
            y_anchor = ycom_old
            z_anchor = zcom_old
         
         ELSE
-        
-           IF (box_list(this_box)%int_box_shape == int_cubic) THEN
+
+!           write(*,*) 'here inside this if', del_Flag, itrial
+!           read(*,*)
            
+        
+           ! Select a random trial coordinate
+           IF (box_list(this_box)%int_box_shape == int_cubic) THEN
               x_anchor = (0.5_DP - rranf()) * box_list(this_box)%length(1,1)
               y_anchor = (0.5_DP - rranf()) * box_list(this_box)%length(2,2)
               z_anchor = (0.5_DP - rranf()) * box_list(this_box)%length(3,3)
-
            END IF
 
         END IF
-     
-        ! move all the atoms of the fragment
-     
+
+        ! Place the fragment (and all its atoms) at the trial coordinate
         DO i = 1, frag_list(frag_start,is)%natoms
         
            this_atom = frag_list(frag_start,is)%atoms(i)
         
-              ! displace the atom
-           atom_list(this_atom,this_im,is)%rxp = rtrial(this_atom,0)%rxp - &
-                xcom_old + x_anchor
-           
-           atom_list(this_atom,this_im,is)%ryp = rtrial(this_atom,0)%ryp - &
-                ycom_old + y_anchor
-           
-           atom_list(this_atom,this_im,is)%rzp = rtrial(this_atom,0)%rzp - &
-                zcom_old + z_anchor
+           atom_list(this_atom,this_im,is)%rxp = & 
+                                   rtrial(this_atom,0)%rxp - xcom_old + x_anchor
+           atom_list(this_atom,this_im,is)%ryp = & 
+                                   rtrial(this_atom,0)%ryp - ycom_old + y_anchor
+           atom_list(this_atom,this_im,is)%rzp = &
+                                   rtrial(this_atom,0)%rzp - zcom_old + z_anchor
            
            rtrial(this_atom,itrial)%rxp = atom_list(this_atom,this_im,is)%rxp
            rtrial(this_atom,itrial)%ryp = atom_list(this_atom,this_im,is)%ryp
@@ -348,44 +394,37 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda,which_ancho
         molecule_list(this_im,is)%ycom = y_anchor
         molecule_list(this_im,is)%zcom = z_anchor
 
-        ! If it's a slit pore simulation, check the atomic coordinates to
-        ! ensure that the entire molecule is confined inside the pore
-
-        ! Carry out the following only if there all the atoms of the fragment are inside the 
-        ! framework
+        ! Note that the COM position is always chosen inside the simulation box 
+        ! so there is no need to call Fold_Molecule.
+           
+        ! For the sake of completeness we calculate the distance of the atom 
+        ! furtherst from the COM
+        CALL Compute_Max_COM_Distance(this_im,is)
+           
+        ! Calculate the intermolecular energy of the fragment. Note that
+        ! cbmc_flag has been set to true so that the following call will compute
+        ! interaction energy of the growing molecule within a small distance
         overlap = .FALSE.
-
-           ! Note that the COM position is always chosen inside the simulation box so there is
-           ! No need for Fold_Molecule call.
-           
-           ! For the sake of completeness we calculate the distance of the atom furtherst from the COM
-           CALL Compute_Max_COM_Distance(this_im,is)
-           
-           ! calculate the intermolecular energy of the fragment. Note that the
-           ! CBMC flag has been set to true so that the following call will compute
-           ! interaction energy of the growing molecule within a small distance
-                                 
-           CALL Compute_Molecule_Nonbond_Inter_Energy(this_im,is,E_inter_vdw,E_inter_qq,overlap)
-
-          
-           nrg(itrial) = nrg(itrial) + E_inter_vdw + E_inter_qq 
-
+        CALL Compute_Molecule_Nonbond_Inter_Energy(this_im,is,&
+                E_inter_vdw,E_inter_qq,overlap)
+        nrg(itrial) = nrg(itrial) + E_inter_vdw + E_inter_qq 
 
         IF (overlap) THEN
-           ! the energy is too high, set the weight to zero
 
+           ! the energy is too high, set the weight to zero
            weight(itrial) = 0.0_DP
 
         ELSE
 
            nrg_kBT = beta(this_box) * nrg(itrial)
-!!$
-!!$        ! compute the weight of this trial for the reverse move and first
-!!$        ! trial. The following IF-ELSE construct ensures that the weight
-!!$        ! for the reverse move is always computed.
-!!$
-           IF ( del_Flag .AND. (itrial == 1) ) THEN
 
+           ! compute the weight of this trial for the reverse move and first
+           ! trial. The following IF-ELSE construct ensures that the weight
+           ! for the reverse move is always computed.
+           IF ( del_flag .AND. (itrial == 1) ) THEN
+
+              ! The molecule is in the simulation at the current coordinate and
+              ! so cannot have 0 weight.
               weight(itrial) = DEXP(-nrg_kBT)
 
            ELSE IF ( nrg_kBT >= max_kBT) THEN
@@ -398,38 +437,52 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda,which_ancho
            
            END IF
 
-
         END IF
 
+!        ! BEGIN DEBUGGING OUTPUT
+!        ! Write out the fragment coordinates for each trial position
+!        M_XYZ_unit = movie_xyz_unit + this_box
+!        DO i = 1, frag_list(frag_start,is)%natoms
+!           this_atom = frag_list(frag_start,is)%atoms(i)
+!           WRITE(M_XYZ_unit,*) &
+!              TRIM(nonbond_list(this_atom,is)%element) // &
+!              TRIM(int_to_string(itrial)), & 
+!              rtrial(this_atom,itrial)%rxp, &
+!              rtrial(this_atom,itrial)%ryp, &
+!              rtrial(this_atom,itrial)%rzp
+!        END DO
+!        IF (itrial==1) WRITE(*,*) 'POS:trial ', 'energy'
+!        WRITE(*,*) itrial, nrg(itrial), weight(itrial)
+!        ! END DEBUGGING OUTPUT
+
+        ! Store the cumulative weight of each trial
         IF (itrial > 1 ) weight(itrial) = weight(itrial-1) + weight(itrial)
      
-     
-     ! Note that if the overlap flag is true, the following update is not
-     ! true. But, it does not matter as the trial will not be picked due
-     ! to its zero weight.
-    
      END DO
 
 
-     ! Reject the move is the total weight is still zero
+     ! Reject the move if the total weight is still zero
 
      IF (weight(kappa_ins) == 0.0_DP) THEN
 
         cbmc_overlap = .TRUE.
-        CBMC_Flag = .FALSE.
+        cbmc_flag = .FALSE.
         RETURN
 
      END IF
 
+     ! Select one of the trial coordinates
      attempt_prob = 1.0_DP
 
-     IF (del_Flag) THEN
-
+     IF (del_flag) THEN
+        
+        ! For a deletion move, we want the weight of the current position,
+        ! which is stored in trial 1.
         trial = 1
 
      ELSE
 
-     ! Choose one from Golden sampling for an insertion move
+        ! Choose one from Golden sampling for an insertion move
      
         rand_no = rranf() * weight(kappa_ins)
      
@@ -439,31 +492,32 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda,which_ancho
      
         trial = i
 
+        IF ( trial == kappa_ins + 1 ) THEN
+           ! None of the trials were picked. Could be due to the fact that all 
+           ! the trials had a very small cumulative weight
+
+           cbmc_overlap = .TRUE.
+           cbmc_flag = .FALSE.
+           RETURN
+        END IF
+
      END IF
 
-     IF ( trial == kappa_ins + 1 ) THEN
-        ! it means that none of the trials could be picked
-        ! and this could be due to the fact that all the trials
-        ! generated resulted in a very small weight
-
-        cbmc_overlap = .TRUE.
-        CBMC_Flag = .FALSE.
-        RETURN
-        
-     END IF
-
+     ! Compute the weight of the selected trial coordinate
      IF (trial == 1) THEN
-        attempt_prob = attempt_prob * weight(1)/ weight(kappa_ins)
+        attempt_prob = attempt_prob * weight(1) / weight(kappa_ins)
      ELSE
-        attempt_prob = attempt_prob *  (weight(trial) - weight(trial-1))/weight(kappa_ins)
+        attempt_prob = attempt_prob * (weight(trial) - weight(trial-1)) &
+                     / weight(kappa_ins)
      END IF
   
+     ! This line is not used
      e_total = nrg(trial)
 
-     ! We chose the ith trial position for placement. So give the trial positions
-     ! to the atoms of the first fragment. Note that for the deletion move,
-     ! the first trial is picked so that the following assignment for positions is
-     ! properly done.
+     ! We chose the ith trial coordinate for placement. Store the ith trial
+     ! coordinates in the atom_list array. Note that for the deletion move,
+     ! trial=1 has the current coordinates of the fragment, so the molecule
+     ! is not moved.
   
      DO i = 1, frag_list(frag_start,is)%natoms
      
@@ -473,10 +527,9 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda,which_ancho
         atom_list(this_atom,this_im,is)%ryp = rtrial(this_atom,trial)%ryp
         atom_list(this_atom,this_im,is)%rzp = rtrial(this_atom,trial)%rzp
      
-     
-     ! we compute COM of the fully grown molecule
      END DO
 
+     ! Compute COM of the fully grown molecule
      CALL Get_COM(this_im,is)
 
   END IF
@@ -485,19 +538,20 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda,which_ancho
   e_total = 0.0_DP
   frag_placed(frag_start) = 1
 
+  ! We have our first segment placed in the system. 
 
-
-  ! We have our first segment placed in the system If this is a ring fragment then
-  ! we need intramolecular energies of the fragment used in biasing.
-  ! For insertion, it is the energy in the gas phase. For, deletion move, it is the
-  ! energy of the old configuration. Note that this energy does not include angle
-  ! bending energy as it cancels out from the acceptance rule
+  ! If this is a ring fragment,
+  ! then we need intramolecular energies of the fragment used in biasing.
+  ! For insertion, it is the energy in the gas phase. For deletion, it is 
+  ! the energy of the old configuration. Note that this energy does not include
+  ! angle bending energy as it cancels out from the acceptance rule.
 
   IF (frag_list(frag_start,is)%ring) THEN
 
-     IF (del_Flag) THEN
+     IF (del_flag) THEN
         ! compute the old energy
-        CALL Compute_Ring_Fragment_Energy(frag_start,this_im,is,this_box,nrg_ring_frag)
+        CALL Compute_Ring_Fragment_Energy(frag_start,this_im,is,this_box,&
+                nrg_ring_frag)
      ELSE
         nrg_ring_frag = nrg_frag(this_fragment,frag_type)
      END IF
@@ -505,46 +559,37 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda,which_ancho
      
   END IF
 
+  !*****************************************************************************
+  ! Step 5) Select kappa_dih orientations for each additional fragment
+  !*****************************************************************************
+  ! 
   ! Now we will place rest of the segments based on the initial fragment placed
 
-  CALL Compute_Molecule_Dihedral_Energy(this_im,is,e_dihed)
-  e_total = e_dihed
+  ! Why will the dihedral energy be anything other than zero?
+  CALL Compute_Molecule_Dihedral_Energy(this_im,is,E_dihed)
+  E_total = E_dihed
 
+  ! If we've gotten this far, cbmc_oveflap = FALSE
   del_overlap = .FALSE.
 
+  CALL Fragment_Placement(this_box,this_im,is,2,frag_total,frag_order, &
+                          frag_placed,this_lambda,E_total,attempt_prob, &
+                          nrg_ring_frag_total,cbmc_overlap,del_overlap)
 
-!  IF ( .NOT. del_flag) THEN
-!	 write(*,*) atom_list(:,this_im,is)%rxp
-!         write(*,*) atom_list(:,this_im,is)%ryp
-!         write(*,*) atom_list(:,this_im,is)%rzp
-!  END IF
+  ! Note that cbmc_overlap may be TRUE and the cbmc_flag will be properly 
+  ! assigned FALSE while exiting the code.
 
-!!$  write(*,*) 'fragment placed', this_fragment
-!!$  DO i = 1, frag_list(this_fragment,is)%natoms
-!!$     this_atom = frag_list(this_fragment,is)%atoms(i)
-!!$     write(12,*) nonbond_list(this_atom,is)%element, atom_list(this_atom,this_im,is)%rxp, &
-!!$          atom_list(this_atom,this_im,is)%ryp, atom_list(this_atom,this_im,is)%rzp
-!!$  END DO
-!!$  read(*,*)
+  ! Note that del_overlap may be true while computing the weight of
+  ! an old configuration. So set cbmc_overlap to TRUE so that the 
+  ! calling routine appropriately sets the coordinates of the atoms that were 
+  ! not grown
 
- CALL Fragment_Placement(this_box,this_im,is,2,frag_total,frag_order,frag_placed,this_lambda, &
-       e_total,attempt_prob,nrg_ring_frag_total, cbmc_overlap, del_overlap)
+  IF (del_overlap) cbmc_overlap = .TRUE.
 
+  ! Mark cbmc_flag as FALSE so that intermolecular nonbonded interactions
+  ! are properly computed for the molecule
 
-  ! Note that cbmc_overlap flag may be true and the CBMC_Flag will be properly assigned FALSE while 
-  ! exiting the code.
-
- ! Note that the 'del_overlap' flag may be true while computing the weight of an old 
- ! configuration. So set cbmc_overlap is set to true so that the calling routine 
- ! appropriately sets the coordinates of the atoms that were not grown
-
- IF (del_overlap) cbmc_overlap = .TRUE.
-
-  ! Mark the CBMC flag as false so that intermolecular nonbonded interactions are properly
-  ! computed for the molecule
-
-
-  CBMC_Flag = .FALSE.
+  cbmc_flag = .FALSE.
   
 END SUBROUTINE Build_Molecule
 
@@ -593,7 +638,7 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
   INTEGER :: itrial, trial, frag_type
   REAL(DP) :: weight(MAX(kappa_ins,kappa_rot,kappa_dih)), rand_no
   REAL(DP) :: e_dihed, E_intra_vdw, E_intra_qq, E_inter_vdw
-  REAL(DP) :: E_inter_qq,e_total
+  REAL(DP) :: E_inter_qq, E_total
   REAL(DP) :: nrg(MAX(kappa_ins,kappa_rot,kappa_dih)), nrg_kBT, time0, time1, nrg_ring_frag
   LOGICAL :: del_overlap
   TYPE(Atom_Class) :: rtrial(MAXVAL(natoms),0:MAX(kappa_ins,kappa_rot,kappa_dih))
@@ -601,7 +646,7 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
 
 
   weight(:)=0.0_DP
-  CBMC_Flag = .TRUE.
+  cbmc_flag = .TRUE.
   attempt_prob = 1.0_DP
   
   ! Assign a locate number for the molecule
@@ -663,7 +708,7 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
 
 
   DO itrial = 1, kappa_ins
-     IF (del_FLAG .and.(itrial.eq.1)) THEN
+     IF (del_flag .and.(itrial.eq.1)) THEN
         rtrial(first_atom,itrial)%rxp =  atom_list(first_atom,this_im,is)%rxp
         rtrial(first_atom,itrial)%ryp =  atom_list(first_atom,this_im,is)%ryp
         rtrial(first_atom,itrial)%rzp =  atom_list(first_atom,this_im,is)%rzp
@@ -697,7 +742,7 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
      CALL Compute_Molecule_Nonbond_Inter_Energy(this_im,is,E_inter_vdw,E_inter_qq,overlap)
 
 
-!    WRITE(8,*) del_Flag,this_box, itrial, this_im,E_inter_vdw,  E_inter_qq,overlap
+!    WRITE(8,*) del_flag,this_box, itrial, this_im,E_inter_vdw,  E_inter_qq,overlap
 
   ! compute weight for itrial 
 
@@ -711,7 +756,7 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
 !!$        ! compute the weight of this trial for the reverse move and first
 !!$        ! trial. The following IF-ELSE construct ensures that the weight
 !!$        ! for the reverse move is always computed.
-         IF ( del_Flag .AND. (itrial == 1) ) THEN
+         IF ( del_flag .AND. (itrial == 1) ) THEN
             weight(itrial) = DEXP(-nrg_kBT)
          ELSE IF ( nrg_kBT >= max_kBT) THEN
             weight(itrial) = 0.0_DP
@@ -726,13 +771,13 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
 
   IF (weight(kappa_ins) == 0.0_DP) THEN
       cbmc_overlap = .TRUE.
-      CBMC_Flag = .FALSE.
+      cbmc_flag = .FALSE.
       RETURN
   END IF
 
   attempt_prob = 1.0_DP
 
-  IF (del_Flag) THEN
+  IF (del_flag) THEN
       trial = 1
 !     write(*,*) weight(1), this_box, nrg
   ELSE
@@ -768,7 +813,7 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
 
 ! if it is insertion move, get the fragment from the reservoir
 
-  IF (.NOT. del_Flag) THEN
+  IF (.NOT. del_flag) THEN
      ! obtain a random configuration
      total_frags = frag_list(frag_start,is)%nconfig
      ! Choose a fragment at random
@@ -802,7 +847,7 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
 ! select one from trials
 
   DO itrial = 1, kappa_rot
-     IF(del_Flag .and. (itrial.eq.1)) THEN
+     IF(del_flag .and. (itrial.eq.1)) THEN
        DO i=1,frag_list(frag_start,is)%natoms
           this_atom = frag_list(frag_start,is)%atoms(i)
           rtrial(this_atom,itrial)%rxp = atom_list(this_atom,this_im,is)%rxp
@@ -858,7 +903,7 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
 
 !     atom_list(first_atom,this_im,is)%exist = .true.
 
-!     Write(8,*) 'First fragment attempt vdw qq',itrial, E_inter_vdw, E_inter_qq,this_box,del_Flag,overlap
+!     Write(8,*) 'First fragment attempt vdw qq',itrial, E_inter_vdw, E_inter_qq,this_box,del_flag,overlap
 
  ! compute weight for itrial 
      IF (overlap) THEN
@@ -870,7 +915,7 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
 !!$        ! compute the weight of this trial for the reverse move and first
 !!$        ! trial. The following IF-ELSE construct ensures that the weight
 !!$        ! for the reverse move is always computed.
-         IF ( del_Flag .AND. (itrial == 1) ) THEN
+         IF ( del_flag .AND. (itrial == 1) ) THEN
             weight(itrial) = DEXP(-nrg_kBT)
          ELSE IF ( nrg_kBT >= max_kBT) THEN
             weight(itrial) = 0.0_DP
@@ -883,11 +928,11 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
 
   IF (weight(kappa_rot) == 0.0_DP) THEN
       cbmc_overlap = .TRUE.
-      CBMC_Flag = .FALSE.
+      cbmc_flag = .FALSE.
       RETURN
   END IF
 
-  IF (del_Flag) THEN
+  IF (del_flag) THEN
       trial = 1
 !     write(*,*) weight(1), this_box, nrg
   ELSE
@@ -927,7 +972,7 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
 
   IF (frag_list(frag_start,is)%ring) THEN
 
-     IF (del_Flag) THEN
+     IF (del_flag) THEN
         ! compute the old energy
         CALL Compute_Ring_Fragment_Energy(frag_start,this_im,is,this_box,nrg_ring_frag)
      ELSE
@@ -945,7 +990,7 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
   CALL Fragment_Placement(this_box,this_im,is,2,frag_total,frag_order,frag_placed,this_lambda, &
        e_total,attempt_prob,nrg_ring_frag_total, cbmc_overlap, del_overlap)
 
-  CBMC_Flag = .FALSE.
+  cbmc_flag = .FALSE.
 
 END SUBROUTINE Build_Rigid_Fragment
 
@@ -982,7 +1027,7 @@ SUBROUTINE Cut_Regrow(this_im,is,frag_start,frag_end,frag_order,frag_total,this_
   LOGICAL :: cbmc_overlap, overlap, del_overlap
 
 
-  CBMC_Flag = .TRUE.
+  cbmc_flag = .TRUE.
   
   del_overlap = .FALSE.
 
@@ -1108,9 +1153,9 @@ SUBROUTINE Cut_Regrow(this_im,is,frag_start,frag_end,frag_order,frag_total,this_
   ! do not cause trouble while growing the molecule. Since dihedral, intramolecular
   ! nonbond and intermolecular nonbond energies are used in biasing in fragment
   ! placement, we will compute these energies. Note that this is computed only when
-  ! del_FLAG is false. We will use the energy computed here when del_FLAG is true.
+  ! del_flag is false. We will use the energy computed here when del_flag is true.
 
-  IF (.NOT. del_FLAG) THEN
+  IF (.NOT. del_flag) THEN
 
      CALL Compute_Molecule_Dihedral_Energy(this_im,is,e_dihed)
 !     CALL Compute_Molecule_Nonbond_Intra_Energy(this_im,is,E_intra_vdw,E_intra_qq)
@@ -1128,7 +1173,7 @@ SUBROUTINE Cut_Regrow(this_im,is,frag_start,frag_end,frag_order,frag_total,this_
   CALL Fragment_Placement(this_box,this_im,is,1,frag_total,frag_order,frag_placed,this_lambda, &
        e_total,attempt_prob,nrg_ring_frag_tot,  cbmc_overlap, del_overlap)
 
-  CBMC_Flag = .FALSE.
+  cbmc_flag = .FALSE.
   
 
 END SUBROUTINE Cut_Regrow
@@ -1136,7 +1181,8 @@ END SUBROUTINE Cut_Regrow
 
 
 !*******************************************************************************
-RECURSIVE SUBROUTINE Fragment_Order(this_frag,is,frag_total,frag_order,live,deadend,central)
+RECURSIVE SUBROUTINE Fragment_Order(this_frag,is,frag_total,frag_order,live, &
+                                    deadend,central)
 !*******************************************************************************
 !
 ! The subroutine obtains the order in which a molecule of species 'is' will be
@@ -1152,9 +1198,9 @@ RECURSIVE SUBROUTINE Fragment_Order(this_frag,is,frag_total,frag_order,live,dead
 !               |
 !               C
 !               |
-!            C- C - C
+!           C - C - C
 !               |
-!            C- C - C
+!           C - C - C
 !
 !*********************************************************************************
   USE Run_Variables
@@ -1315,13 +1361,29 @@ RECURSIVE SUBROUTINE Fragment_Order(this_frag,is,frag_total,frag_order,live,dead
 
 END SUBROUTINE Fragment_Order
 
-!**************************************************************************************************
-SUBROUTINE Fragment_Placement(this_box,this_im,is,frag_start,frag_total,frag_order,frag_placed, &
-    this_lambda, e_total,attempt_prob, nrg_ring_frag_tot, cbmc_overlap, del_overlap)
-!**************************************************************************************************
+!*******************************************************************************
+SUBROUTINE Fragment_Placement(this_box,this_im,is,frag_start,frag_total, &
+           frag_order,frag_placed, this_lambda, e_total,attempt_prob, &
+           nrg_ring_frag_tot, cbmc_overlap, del_overlap)
+!*******************************************************************************
+!
+! PURPOSE: place the remaining fragments of the molecule
+!
+! DESCRIPTION: This subroutine performs the following steps
+!
+! Step 1) Select a fragment conformation
+! Step 2) Align the fragment to the growing molecule
+! Step 3) Select kappa_dih orientations for each additional fragment
+! Step 4) Compute the energy of the fragment 
+! Step 5) Select a trial dihedral using the weighted probabilities
+!
+!*******************************************************************************
 
   USE IO_Utilities
 
+  !*****************************************************************************
+  ! Declare and Initialize Variables
+  !*****************************************************************************
 
   INTEGER, INTENT(IN) :: this_im, is, frag_start, frag_total, this_box
   INTEGER, DIMENSION(1:nfragments(is)), INTENT(IN) :: frag_order
@@ -1362,7 +1424,8 @@ SUBROUTINE Fragment_Placement(this_box,this_im,is,frag_start,frag_total,frag_ord
   TYPE(Atom_Class), ALLOCATABLE, DIMENSION(:) :: config_list
   TYPE(Atom_Class), ALLOCATABLE, DIMENSION(:,:) :: config_temp_list
 
-
+!  ! DEBUGging variables
+!  INTEGER :: M_XYZ_unit
 
 
   IF (.NOT. ALLOCATED(counted)) ALLOCATE(counted(nfragments(is)))
@@ -1377,55 +1440,53 @@ SUBROUTINE Fragment_Placement(this_box,this_im,is,frag_start,frag_total,frag_ord
   config_list(:)%ryp = 0.0_DP
   config_list(:)%rzp = 0.0_DP
   dumcount = 0
-
   e_prev = e_total
+
 
   DO i = frag_start, frag_total
 
      ifrag = frag_order(i)
 
+     !**************************************************************************
+     ! Step 1) Select a fragment conformation
+     !**************************************************************************
+     !
 
+     IF ( del_flag) THEN
 
-     IF ( del_Flag) THEN
-
-        ! use the existing coordinates for the second fragment
+        ! For a deletion move, use the existing conformation for each additional
+        ! fragment
 
         DO j = 1, frag_list(ifrag,is)%natoms
            this_atom = frag_list(ifrag,is)%atoms(j)
 
            atom_list(this_atom,this_im,is)%exist = .TRUE.
-
 
            config_list(this_atom)%rxp = atom_list(this_atom,this_im,is)%rxp
            config_list(this_atom)%ryp = atom_list(this_atom,this_im,is)%ryp
            config_list(this_atom)%rzp = atom_list(this_atom,this_im,is)%rzp
-           
-
         END DO
 
+        ! For a ring fragment, calculate the fragment intramolecular energy
+
         IF (frag_list(ifrag,is)%ring) THEN
-           ! obtain the fragment intramolecular + dihedral angle energy
-           CALL Compute_Ring_Fragment_Energy(ifrag,this_im,is,this_box,nrg_ring_frag)
+           CALL Compute_Ring_Fragment_Energy(ifrag,this_im,is,this_box, &
+                   nrg_ring_frag)
            nrg_ring_frag_tot = nrg_ring_frag_tot + nrg_ring_frag
-           
         END IF
 
      ELSE
         
-        ! let us read in the coordinates from a reservoir file
-        
-        ! Read in the configuration from the reservoir
-      
+        ! Select a fragment conformation from the reservoir
+        ! The reservoir was populated with a Boltzmann distribution, so now we
+        ! can pull from it with a uniform probability
         
         total_frags = frag_list(ifrag,is)%nconfig
-        frag_type = frag_list(ifrag,is)%type
-        
-        ! Pick one from the reservoir
-        
         this_fragment = INT(rranf() * total_frags) + 1
         
         ! Read in the coordinates
         
+        frag_type = frag_list(ifrag,is)%type
         DO j = 1, frag_list(ifrag,is)%natoms
            
            this_atom = frag_list(ifrag,is)%atoms(j)
@@ -1433,14 +1494,18 @@ SUBROUTINE Fragment_Placement(this_box,this_im,is,frag_start,frag_total,frag_ord
            atom_list(this_atom,this_im,is)%exist = .TRUE.
 
            
-           config_list(this_atom)%rxp = frag_coords(j,this_fragment,frag_type)%rxp
-           config_list(this_atom)%ryp = frag_coords(j,this_fragment,frag_type)%ryp
-           config_list(this_atom)%rzp = frag_coords(j,this_fragment,frag_type)%rzp
+           config_list(this_atom)%rxp = &
+              frag_coords(j,this_fragment,frag_type)%rxp
+           config_list(this_atom)%ryp = &
+              frag_coords(j,this_fragment,frag_type)%ryp
+           config_list(this_atom)%rzp = &
+              frag_coords(j,this_fragment,frag_type)%rzp
            
         END DO
      
+        ! For a ring fragment, access the fragment intramolecular energy 
+
         IF (frag_list(ifrag,is)%ring) THEN
-           ! access the intramolecular + dihedral angle energy for this fragment
            nrg_ring_frag = nrg_frag(this_fragment,frag_type)
            nrg_ring_frag_tot = nrg_ring_frag_tot + nrg_ring_frag
         END IF
@@ -1449,10 +1514,13 @@ SUBROUTINE Fragment_Placement(this_box,this_im,is,frag_start,frag_total,frag_ord
 
      END IF
      
-     ! Note that there has to be only one connection of ifrag that is already placed
-     
-     ! Let us find out which that fragment is
-     
+     !**************************************************************************
+     ! Step 2) Align the fragment to the growing molecule
+     !**************************************************************************
+     !
+
+     ! Note that there has to be only one connection of ifrag that is already 
+     ! placed. Let us find out which fragment that is
 
      total_connect = 0
      connection(:) = 0
@@ -1470,7 +1538,8 @@ SUBROUTINE Fragment_Placement(this_box,this_im,is,frag_start,frag_total,frag_ord
 
      IF (total_connect > 1 ) THEN
         err_msg = ''
-        err_msg(1) = 'More than one connections of' // TRIM(Int_To_String(ifrag)) // 'exist'
+        err_msg(1) = 'More than one connections of' // &
+                     TRIM(Int_To_String(ifrag)) // 'exist'
         CALL Clean_Abort(err_msg,'Fragment_Placement')
      END IF
      
@@ -1479,14 +1548,15 @@ SUBROUTINE Fragment_Placement(this_box,this_im,is,frag_start,frag_total,frag_ord
      frag_connect = connection(1)
 
     
-     ! Note that frag_connect already has anchor of ifrag placed both for fixed and variable
-     ! bond length cases so all we have to do is obtain the coordinates of these atoms in the
-     ! configuration and align it to their coordinates in the simulation box.
-
+     ! Note that frag_connect already has anchor of ifrag placed both for fixed 
+     ! and variable bond length cases so all we have to do is obtain the 
+     ! coordinates of these atoms in the configuration and align it to their 
+     ! coordinates in the simulation box.
      
      ! find anchor atom ids for both the fragments
 
-     CALL Get_Common_Fragment_Atoms(is,ifrag,frag_connect,anchor_ifrag,anchor_frag_connect)
+     CALL Get_Common_Fragment_Atoms(is,ifrag,frag_connect,anchor_ifrag, &
+             anchor_frag_connect)
      nfrag_atoms = 0
      atom_id(:) = 0
      
@@ -1494,7 +1564,8 @@ SUBROUTINE Fragment_Placement(this_box,this_im,is,frag_start,frag_total,frag_ord
        
         this_atom = frag_list(ifrag,is)%atoms(j)
         
-        IF ( (this_atom /= anchor_ifrag) .AND. (this_atom /= anchor_frag_connect)) THEN
+        IF ( (this_atom /= anchor_ifrag) .AND. &
+             (this_atom /= anchor_frag_connect)) THEN
            nfrag_atoms = nfrag_atoms + 1
            atom_id(nfrag_atoms) = this_atom
         END IF
@@ -1505,13 +1576,16 @@ SUBROUTINE Fragment_Placement(this_box,this_im,is,frag_start,frag_total,frag_ord
 !     anchor_frag_connect = frag_list(frag_connect,is)%anchor(1)
 !     write(*,*) anchor_ifrag, anchor_frag_connect, frag_connect
 !     write(*,*) anchor_ifrag, anchor_frag_connect, frag_connect
-     ! find one atom of ifrag and frag_connect that will be used for generating xy plane
+
+     ! Find one atom of ifrag and frag_connect that will be used for generating 
+     ! xy plane
 
      DO j = 1, frag_list(ifrag,is)%natoms
 
         this_atom = frag_list(ifrag,is)%atoms(j)
 
-        IF ( (this_atom /= anchor_ifrag) .AND. (this_atom /= anchor_frag_connect)) EXIT
+        IF ( (this_atom /= anchor_ifrag) .AND. &
+             (this_atom /= anchor_frag_connect)) EXIT
 
      END DO
 
@@ -1523,14 +1597,17 @@ SUBROUTINE Fragment_Placement(this_box,this_im,is,frag_start,frag_total,frag_ord
 
         this_atom = frag_list(frag_connect,is)%atoms(j)
      
-        IF ( (this_atom /= anchor_ifrag) .AND. (this_atom /= anchor_frag_connect)) EXIT
+        IF ( (this_atom /= anchor_ifrag) .AND. &
+             (this_atom /= anchor_frag_connect)) EXIT
 
      END DO
 
      
      atom_frag_connect = this_atom
 
-     ! Now use three atoms to obtain aligner and hanger matrix for the two fragments
+     ! Now use three atoms to obtain aligner and hanger matrix for the two 
+     ! fragments: 
+
      ! atom1 == origin
      ! atom2 == id of the atom along which +ve x - axis is aligned
      ! atom3 == helps to obtain y-axis so that atom1-atom2-atom3 define xy plane
@@ -1542,21 +1619,27 @@ SUBROUTINE Fragment_Placement(this_box,this_im,is,frag_start,frag_total,frag_ord
 
      ! for ifrag
 
-     vec1(1) = config_list(anchor_ifrag)%rxp - config_list(anchor_frag_connect)%rxp
-     vec1(2) = config_list(anchor_ifrag)%ryp - config_list(anchor_frag_connect)%ryp
-     vec1(3) = config_list(anchor_ifrag)%rzp - config_list(anchor_frag_connect)%rzp
+     vec1(1) = config_list(anchor_ifrag)%rxp &
+             - config_list(anchor_frag_connect)%rxp
+     vec1(2) = config_list(anchor_ifrag)%ryp &
+             - config_list(anchor_frag_connect)%ryp
+     vec1(3) = config_list(anchor_ifrag)%rzp &
+             - config_list(anchor_frag_connect)%rzp
 
 
-     vec2(1) = config_list(atom_ifrag)%rxp - config_list(anchor_frag_connect)%rxp
-     vec2(2) = config_list(atom_ifrag)%ryp - config_list(anchor_frag_connect)%ryp
-     vec2(3) = config_list(atom_ifrag)%rzp - config_list(anchor_frag_connect)%rzp
+     vec2(1) = config_list(atom_ifrag)%rxp &
+             - config_list(anchor_frag_connect)%rxp
+     vec2(2) = config_list(atom_ifrag)%ryp &
+             - config_list(anchor_frag_connect)%ryp
+     vec2(3) = config_list(atom_ifrag)%rzp &
+             - config_list(anchor_frag_connect)%rzp
 
         
      CALL Get_Aligner_Hanger(vec1, vec2, aligner_ifrag,hanger_ifrag)
      
      ! Calculate this only for inserting a molecule
      
-     IF ( .NOT. del_Flag) THEN
+     IF ( .NOT. del_flag) THEN
         
         
         ! for frag_connect
@@ -1583,7 +1666,8 @@ SUBROUTINE Fragment_Placement(this_box,this_im,is,frag_start,frag_total,frag_ord
 
      END IF
         
-     ! Apply aligner of ifrag and then hanger of frag_connect to join the two fragments.
+     ! Apply aligner of ifrag and then hanger of frag_connect to join the two 
+     ! fragments.
      
      ! Apply aligner of ifrag
      
@@ -1604,51 +1688,60 @@ SUBROUTINE Fragment_Placement(this_box,this_im,is,frag_start,frag_total,frag_ord
         tempy = config_list(this_atom)%ryp
         tempz = config_list(this_atom)%rzp
         
-        config_list(this_atom)%rxp = tempx * aligner_ifrag(1,1) + tempy * aligner_ifrag(1,2) + &
-             tempz * aligner_ifrag(1,3)
-        config_list(this_atom)%ryp = tempx * aligner_ifrag(2,1) + tempy * aligner_ifrag(2,2) + &
-             tempz * aligner_ifrag(2,3)
-        config_list(this_atom)%rzp = tempx * aligner_ifrag(3,1) + tempy * aligner_ifrag(3,2) + &
-             tempz * aligner_ifrag(3,3)
+        config_list(this_atom)%rxp = tempx * aligner_ifrag(1,1) &
+                                   + tempy * aligner_ifrag(1,2) &
+                                   + tempz * aligner_ifrag(1,3)
+        config_list(this_atom)%ryp = tempx * aligner_ifrag(2,1) &
+                                   + tempy * aligner_ifrag(2,2) &
+                                   + tempz * aligner_ifrag(2,3)
+        config_list(this_atom)%rzp = tempx * aligner_ifrag(3,1) &
+                                   + tempy * aligner_ifrag(3,2) &
+                                   + tempz * aligner_ifrag(3,3)
         
      END DO
      
-     ! At this point, we can generate kappa positions of the fragment as two anchor positions
-     ! are aligned. This is, in effect, equivalent to rotating the non-anchor atoms around
-     ! the x-axis. Note that the coordinates of the anchoring atoms do not change due to
-     ! this rotation. For the deletion move, the first trial must be the one corresponding
-     ! to the actual coordinates, hence there should be no rotation about x-axis.
+     !**************************************************************************
+     ! Step 3) Select kappa_dih orientations for each additional fragment
+     !**************************************************************************
+     ! 
+     ! At this point, we can generate kappa_dih positions of the fragment as two 
+     ! anchor positions are aligned. This is, in effect, equivalent to rotating 
+     ! the non-anchor atoms around the x-axis. Note that the coordinates of the 
+     ! anchoring atoms do not change due to this rotation. For the deletion 
+     ! move, the first trial must be the one corresponding to the actual 
+     ! coordinates, hence there should be no rotation about x-axis.
 
-     IF ( del_Flag ) THEN
+     IF ( del_flag ) THEN
 
         theta = 0.0_DP
 
-        ! also note that we will transform the position based on hanger_ifrag so that
-        ! the original positions are recovered
+        ! also note that we will transform the position based on hanger_ifrag so
+        ! that the original positions are recovered
 
         hanger_frag_connect(:,:) = hanger_ifrag(:,:)
 
      ELSE
 
-        ! choose a random theta 
+        ! Select a random theta with uniform probability
         
         theta = twopi * rranf()
         
      END IF
 
-     ! initialize the energies
+     ! Now that we have a starting theta, the other dihedral positions are 
+     ! uniformly spaced around the 2pi disc. We need to calculate the atomic
+     ! coordinates:
 
-     nrg(:) = 0.0_DP
-     nrg_dihed(:) = 0.0_DP
+     ! Loop over the trial dihedrals
      ii = 1
-
      DO 
-!     DO ii = 1, kappa
+!     DO ii = 1, kappa_dih
 
         config_temp_list(:,ii)%rxp  = config_list(:)%rxp
         config_temp_list(:,ii)%ryp  = 0.0_DP
         config_temp_list(:,ii)%rzp  = 0.0_DP
         
+        ! Loop over atoms
         DO j = 1, frag_list(ifrag,is)%natoms
            
            this_atom = frag_list(ifrag,is)%atoms(j)
@@ -1657,11 +1750,14 @@ SUBROUTINE Fragment_Placement(this_box,this_im,is,frag_start,frag_total,frag_ord
            tempy = config_list(this_atom)%ryp
            tempz = config_list(this_atom)%rzp
            
-           config_temp_list(this_atom,ii)%ryp =  DCOS(theta) * tempy + DSIN(theta) * tempz
-           config_temp_list(this_atom,ii)%rzp = -DSIN(theta) * tempy + DCOS(theta) * tempz
+           config_temp_list(this_atom,ii)%ryp =  DCOS(theta) * tempy &
+                                              +  DSIN(theta) * tempz
+           config_temp_list(this_atom,ii)%rzp = -DSIN(theta) * tempy &
+                                              +  DCOS(theta) * tempz
            
         END DO
 
+        ! Loop over atoms (again)
         DO j = 1, frag_list(ifrag,is)%natoms
            
            this_atom = frag_list(ifrag,is)%atoms(j)
@@ -1670,70 +1766,81 @@ SUBROUTINE Fragment_Placement(this_box,this_im,is,frag_start,frag_total,frag_ord
            tempy = config_temp_list(this_atom,ii)%ryp
            tempz = config_temp_list(this_atom,ii)%rzp
            
-           config_temp_list(this_atom,ii)%rxp = tempx * hanger_frag_connect(1,1) + &
-                tempy * hanger_frag_connect(1,2) + &
-                tempz * hanger_frag_connect(1,3)
+           config_temp_list(this_atom,ii)%rxp = tempx*hanger_frag_connect(1,1) &
+                                              + tempy*hanger_frag_connect(1,2) &
+                                              + tempz*hanger_frag_connect(1,3)
            
-           config_temp_list(this_atom,ii)%ryp = tempx * hanger_frag_connect(2,1) + &
-                tempy * hanger_frag_connect(2,2) + &
-                tempz * hanger_frag_connect(2,3) 
+           config_temp_list(this_atom,ii)%ryp = tempx*hanger_frag_connect(2,1) &
+                                              + tempy*hanger_frag_connect(2,2) &
+                                              + tempz*hanger_frag_connect(2,3) 
            
-           config_temp_list(this_atom,ii)%rzp = tempx * hanger_frag_connect(3,1) + &
-                tempy * hanger_frag_connect(3,2) + &
-                tempz * hanger_frag_connect(3,3)
+           config_temp_list(this_atom,ii)%rzp = tempx*hanger_frag_connect(3,1) &
+                                              + tempy*hanger_frag_connect(3,2) &
+                                              + tempz*hanger_frag_connect(3,3)
 
 
            IF ( this_atom /= anchor_ifrag) THEN
               IF ( this_atom /= anchor_frag_connect) THEN
                  
-                 config_temp_list(this_atom,ii)%rxp = config_temp_list(this_atom,ii)%rxp + &
+                 config_temp_list(this_atom,ii)%rxp = &
+                      config_temp_list(this_atom,ii)%rxp + &
                       atom_list(anchor_frag_connect,this_im,is)%rxp
                  
-                 config_temp_list(this_atom,ii)%ryp = config_temp_list(this_atom,ii)%ryp + &
+                 config_temp_list(this_atom,ii)%ryp = &
+                      config_temp_list(this_atom,ii)%ryp + &
                       atom_list(anchor_frag_connect,this_im,is)%ryp
                  
-                 config_temp_list(this_atom,ii)%rzp = config_temp_list(this_atom,ii)%rzp + &
+                 config_temp_list(this_atom,ii)%rzp = &
+                      config_temp_list(this_atom,ii)%rzp + &
                       atom_list(anchor_frag_connect,this_im,is)%rzp
                  
-!                 write(*,*) this_atom
-                 atom_list(this_atom,this_im,is)%rxp = config_temp_list(this_atom,ii)%rxp 
+                 atom_list(this_atom,this_im,is)%rxp = &
+                      config_temp_list(this_atom,ii)%rxp 
+                 
+                 atom_list(this_atom,this_im,is)%ryp = &
+                      config_temp_list(this_atom,ii)%ryp 
+                 
+                 atom_list(this_atom,this_im,is)%rzp = &
+                      config_temp_list(this_atom,ii)%rzp  
 
-                 
-                 atom_list(this_atom,this_im,is)%ryp = config_temp_list(this_atom,ii)%ryp 
-                 
-                 
-                 atom_list(this_atom,this_im,is)%rzp = config_temp_list(this_atom,ii)%rzp  
-!                 write(*,*) atom_list(this_atom,this_im,is)%rxp, atom_list(this_atom,this_im,is)%ryp, &
-!                      atom_list(this_atom,this_im,is)%rzp
-                 
               END IF
            END IF
            
         END DO
 
+        ! Exit the loop if we've computed atomic coords for all trial dihedrals
+        IF( ii == kappa_dih ) EXIT
 
-
-
-           IF( ii == kappa_dih ) EXIT
-           ii = ii + 1
-
-           theta = theta + twopi / REAL(kappa_dih,DP)
-
+        ! Increment the counter and dihedral angle
+        ii = ii + 1
+        theta = theta + twopi / REAL(kappa_dih,DP)
 
      END DO
 
+     !**************************************************************************
+     ! Step 4) Compute the energy of the fragment 
+     !**************************************************************************
+     ! 
+     ! Initialize the energies
+
+     nrg(:) = 0.0_DP
+     nrg_dihed(:) = 0.0_DP
+
      DO ii = 1, kappa_dih
 
+        ! Reload the coordinates for the atoms of this fragment
         DO j = 1, frag_list(ifrag,is)%natoms
            
            this_atom = frag_list(ifrag,is)%atoms(j)
            
            IF (this_atom /= anchor_ifrag) THEN
               IF (this_atom /= anchor_frag_connect) THEN
-!                 write(*,*) this_atom
-                 atom_list(this_atom,this_im,is)%rxp = config_temp_list(this_atom,ii)%rxp 
-                 atom_list(this_atom,this_im,is)%ryp = config_temp_list(this_atom,ii)%ryp 
-                 atom_list(this_atom,this_im,is)%rzp = config_temp_list(this_atom,ii)%rzp  
+                 atom_list(this_atom,this_im,is)%rxp = &
+                    config_temp_list(this_atom,ii)%rxp 
+                 atom_list(this_atom,this_im,is)%ryp = &
+                    config_temp_list(this_atom,ii)%ryp 
+                 atom_list(this_atom,this_im,is)%rzp = &
+                    config_temp_list(this_atom,ii)%rzp  
               END IF
            END IF
 
@@ -1742,60 +1849,45 @@ SUBROUTINE Fragment_Placement(this_box,this_im,is,frag_start,frag_total,frag_ord
         CALL Get_COM(this_im,is)
         CALL Compute_Max_COM_Distance(this_im,is)
 
-        ! if it's a slit pore simulation first check to ensure that the atoms
-        ! are inside the pore
-
-
+        ! Turn all the atoms off
         overlap = .FALSE.
-           DO j = 1, nfrag_atoms
-              atom_list(atom_id(j),this_im,is)%exist = .FALSE.
-           END DO
+        DO j = 1, nfrag_atoms
+           atom_list(atom_id(j),this_im,is)%exist = .FALSE.
+        END DO
            
-           nrg_intra_vdw = 0.0_DP
-           nrg_intra_qq = 0.0_DP
-           nrg_inter_vdw = 0.0_DP
-           nrg_inter_qq = 0.0_DP
+        ! Initialize the energies
+        nrg_intra_vdw = 0.0_DP
+        nrg_intra_qq = 0.0_DP
+        nrg_inter_vdw = 0.0_DP
+        nrg_inter_qq = 0.0_DP
            
-           DO j = 1, nfrag_atoms
+        ! Compute the atomic energies as the fragment is slowly turned on
+        DO j = 1, nfrag_atoms
               
-              atom_list(atom_id(j),this_im,is)%exist = .TRUE.
+           atom_list(atom_id(j),this_im,is)%exist = .TRUE.
               
+           CALL Compute_Atom_Nonbond_Energy(atom_id(j),this_im,is, &
+                E_intra_vdw,E_inter_vdw,E_intra_qq,E_inter_qq,overlap)
               
-              
-              CALL Compute_Atom_Nonbond_Energy(atom_id(j), this_im, is, E_intra_vdw, &
-                   E_inter_vdw, E_intra_qq,E_inter_qq,overlap)
-              
-              IF (overlap) THEN
-                 ! if it is the last trial, the atom exist flag may not be
-                 ! properly set to true
-                 IF ( ii == kappa_dih)  THEN                    
-                    DO k = 1, nfrag_atoms
-                       atom_list(atom_id(k),this_im,is)%exist = .TRUE.
-                    END DO
-                    
-                 END IF
-                 
-                 EXIT
-
+           IF (overlap) THEN
+              ! if it is the last trial, the atom exist flag may not be
+              ! properly set to true
+              IF ( ii == kappa_dih)  THEN                    
+                 DO k = 1, nfrag_atoms
+                    atom_list(atom_id(k),this_im,is)%exist = .TRUE.
+                 END DO
               END IF
+              
+              EXIT
+
+           END IF
            
-              nrg_intra_vdw = nrg_intra_vdw + E_intra_vdw
-              nrg_intra_qq  = nrg_intra_qq  + E_intra_qq
-              nrg_inter_vdw = nrg_inter_vdw + E_inter_vdw
-              nrg_inter_qq  = nrg_inter_qq  + E_inter_qq
+           nrg_intra_vdw = nrg_intra_vdw + E_intra_vdw
+           nrg_intra_qq  = nrg_intra_qq  + E_intra_qq
+           nrg_inter_vdw = nrg_inter_vdw + E_inter_vdw
+           nrg_inter_qq  = nrg_inter_qq  + E_inter_qq
               
-              
-           END DO
-
-       
-!        CALL Compute_Molecule_Nonbond_Intra_Energy(this_im,is,E_intra_vdw,E_intra_qq)
-
-!        CALL Compute_Molecule_Nonbond_Inter_Energy(this_im,is,E_inter_vdw, E_inter_qq, overlap)
-
-        ! subtract off the energy upto this point. Note that e_prev is the energy
-        ! of the molecule upto this point. The substraction also helps to avoid
-        ! overflow.
-
+        END DO
 
 !        write(*,*) nrg(ii), e_dihed, E_intra_vdw, e_prev
 
@@ -1814,30 +1906,54 @@ SUBROUTINE Fragment_Placement(this_box,this_im,is,frag_start,frag_total,frag_ord
                 nrg_inter_vdw + nrg_inter_qq - e_prev
 
            IF (frag_list(ifrag,is)%ring) THEN
-              ! subtract off the biasing energy used to sample intramolecular DOFs
+              ! subtract the biasing energy used to sample intramolecular DOFs
               nrg(ii) = nrg(ii) - nrg_ring_frag
            END IF
            
            nrg_kBT = beta(this_box) * nrg(ii)
            weight(ii) = DEXP(-nrg_kBT)
-
            
         END IF
 
+!        ! BEGIN DEBUGGING OUTPUT
+!        ! Write out the fragment coordinates for each trial position
+!        M_XYZ_unit = movie_xyz_unit + this_box
+!        DO j = 1, frag_list(ifrag,is)%natoms
+!           this_atom = frag_list(ifrag,is)%atoms(j)
+!           WRITE(M_XYZ_unit,*) &
+!              TRIM(nonbond_list(this_atom,is)%element) // &
+!              TRIM(int_to_string(ii)), & 
+!              atom_list(this_atom,this_im,is)%rxp, &
+!              atom_list(this_atom,this_im,is)%ryp, &
+!              atom_list(this_atom,this_im,is)%rzp
+!        END DO
+!        IF (ii==1) WRITE(*,*) 'DIH' // TRIM(int_to_string(i)) // &
+!                              ':trial ', 'energy'
+!        WRITE(*,*) ii, nrg(ii), weight(ii)
+!        ! END DEBUGGING OUTPUT
+                 
+        ! Track the cumulative weights for Goldman sampling
         IF ( ii > 1 ) weight(ii) = weight(ii-1) + weight(ii)
 
-        
 !        WRITE(*,*) 'weight',overlap, ii, nrg_kBT
 !        WRITE(*,*) 'energy', e_prev, nrg(ii)
            
-
      END DO
 
+     !**************************************************************************
+     ! Step 5) Select a trial dihedral using the weighted probabilities
+     !**************************************************************************
+     ! 
+     ! 
+
+     ! If the cumulative weight is 0, then all trial dihedrals had core overlap
      IF (weight(kappa_dih) == 0.0_DP) THEN
         cbmc_overlap = .TRUE.
+        
+        ! This should mean that somehow a configuration was accepted even tho
+        ! it had core overlap.
         IF (del_flag) THEN
            write(*,*) 'overlap detected in the deletion attempt'
-
         END IF
 
         RETURN
@@ -1847,49 +1963,48 @@ SUBROUTINE Fragment_Placement(this_box,this_im,is,frag_start,frag_total,frag_ord
 
 !     write(*,*) 'weight', weight
 
-     IF (del_Flag) THEN
+     IF (del_flag) THEN
+
+        ! Use trial 1, which holds the current coordinates of the fragment
         trial = 1
+
      ELSE
 
+        ! Select a trial from the weighted distribution
         prob_pick = rranf() * weight(kappa_dih)
 
         DO ii = 1, kappa_dih
-!!$           
+
            IF ( prob_pick <= weight(ii) ) EXIT
-!!$        
+
         END DO
-!!$        
+
         trial = ii
-!!$        
+
      END IF
 
+     ! Recover the individual probability for the accepted trial
      IF (trial == 1) THEN
-        attempt_prob = attempt_prob * weight(1)/weight(kappa_dih)
+        attempt_prob = attempt_prob * weight(1) / weight(kappa_dih)
      ELSE
-        attempt_prob = attempt_prob * (weight(trial) - weight(trial-1))/weight(kappa_dih)
-          
+        attempt_prob = attempt_prob * (weight(trial) - weight(trial-1)) / &
+           weight(kappa_dih)
      END IF
 
-
+     ! If the probability of the accepted trial is 0, abort
+     ! These configs should have been caught when checking the cumulative weight
      IF (attempt_prob == 0.0_DP) THEN
-        IF (del_FLAG) THEN
-            write(*,*) 'old configuration has zero weight'
-            write(*,*) 'aborting'
+
+        IF (del_flag) THEN
+           write(*,*) 'old configuration has zero weight'
+           write(*,*) 'aborting'
            del_overlap = .TRUE.
-           cbmc_overlap = .TRUE.
-
-
-           RETURN
-           
-        ELSE
-
-           cbmc_overlap = .TRUE.
-           RETURN
-           
         END IF
+
+        cbmc_overlap = .TRUE.
+        RETURN
            
      END IF
-     
      
      ! Give the coordinates of this conformation to atom_list
      
@@ -1899,10 +2014,12 @@ SUBROUTINE Fragment_Placement(this_box,this_im,is,frag_start,frag_total,frag_ord
         
         IF (this_atom /= anchor_ifrag) THEN
            IF (this_atom /= anchor_frag_connect) THEN
-!              write(*,*) this_atom
-              atom_list(this_atom,this_im,is)%rxp = config_temp_list(this_atom,trial)%rxp
-              atom_list(this_atom,this_im,is)%ryp = config_temp_list(this_atom,trial)%ryp
-              atom_list(this_atom,this_im,is)%rzp = config_temp_list(this_atom,trial)%rzp
+              atom_list(this_atom,this_im,is)%rxp = &
+                 config_temp_list(this_atom,trial)%rxp
+              atom_list(this_atom,this_im,is)%ryp = &
+                 config_temp_list(this_atom,trial)%ryp
+              atom_list(this_atom,this_im,is)%rzp = &
+                 config_temp_list(this_atom,trial)%rzp
            END IF
         END IF
      END DO
@@ -1917,12 +2034,6 @@ SUBROUTINE Fragment_Placement(this_box,this_im,is,frag_start,frag_total,frag_ord
 
   END DO
 
-!!$  DO i = 1, frag_list(1,is)%natoms
-!!$     this_atom = frag_list(1,is)%atoms(i)
-!!$     write(13,*) nonbond_list(this_atom,is)%element, atom_list(this_atom,this_im,is)%rxp, &
-!!$          atom_list(this_atom,this_im,is)%ryp, atom_list(this_atom,this_im,is)%rzp
-!!$  END DO
-
   DEALLOCATE(counted)
   DEALLOCATE(config_list)
   DEALLOCATE(config_temp_list)
@@ -1930,7 +2041,7 @@ SUBROUTINE Fragment_Placement(this_box,this_im,is,frag_start,frag_total,frag_ord
  END SUBROUTINE Fragment_Placement
                  
 !***************************************************************************************************
- SUBROUTINE Get_Aligner_Hanger(vec1,vec2,aligner,hanger)
+SUBROUTINE Get_Aligner_Hanger(vec1,vec2,aligner,hanger)
 !***************************************************************************************************
 
 
@@ -1984,7 +2095,7 @@ SUBROUTINE Fragment_Placement(this_box,this_im,is,frag_start,frag_total,frag_ord
 !***********************************************************
 !
 !*********************************************************************
- SUBROUTINE Single_Fragment_Regrowth(alive,is)
+SUBROUTINE Single_Fragment_Regrowth(alive,is)
 !*********************************************************************
    ! This routine is used when a species contains only one fragment
    ! and a change in intramolecular degrees of freedom is desired. 
@@ -2063,7 +2174,7 @@ SUBROUTINE Fragment_Placement(this_box,this_im,is,frag_start,frag_total,frag_ord
  END SUBROUTINE Single_Fragment_Regrowth
 
  !***********************************************************************************
- SUBROUTINE Get_Common_Fragment_Atoms(is,frag1,frag2,atom1,atom2)
+SUBROUTINE Get_Common_Fragment_Atoms(is,frag1,frag2,atom1,atom2)
    !*********************************************************************************
    !
    ! This routine determines atoms connecting two fragments

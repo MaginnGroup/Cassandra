@@ -83,7 +83,7 @@ SUBROUTINE Chempot(this_box,is)
 
   IF(species_list(is)%fragment) THEN
 
-     del_Flag = .FALSE.
+     del_flag = .FALSE.
      get_fragorder = .TRUE.
      this_lambda = molecule_list(alive,is)%cfc_lambda
      anchor_dummy = 0

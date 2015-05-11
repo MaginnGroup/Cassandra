@@ -40,7 +40,7 @@ SUBROUTINE Translate(this_box,mc_step)
   !        Store_Molecule_Pair_Interaction_Arrays
   !        Compute_Molecule_Nonbond_Inter_Energy
   !        Save_Old_Cartesian_Coordinates
-  !        Revert_Old_Cartestian_Coordinates
+  !        Revert_Old_Cartesian_Coordinates
   !        Reset_Molecule_Pair_Interaction_Arrays
   !        Get_Position_Alive
   !        Compute_Ewald_Reciprocal_Energy_Difference
@@ -65,7 +65,7 @@ SUBROUTINE Translate(this_box,mc_step)
   
   REAL(DP), ALLOCATABLE :: x_box(:), x_species(:)
 
-  REAL(DP) :: dx, dy, dz, delta_e, delta_v, p_acc 
+  REAL(DP) :: dx, dy, dz, delta_e, delta_v
   REAL(DP) :: E_intra, E_vdw, E_qq
   REAL(DP) :: E_vdw_move, E_qq_move
   REAL(DP) :: E_reciprocal_move, rand_no
@@ -73,15 +73,14 @@ SUBROUTINE Translate(this_box,mc_step)
   REAL(DP) :: old_value
   REAL(DP) :: W_vdw, W_qq, W_vdw_move, W_qq_move
 
-  REAL(DP) :: success_ratio
+  REAL(DP) :: success_ratio, ln_pacc
   REAL(DP), ALLOCATABLE :: x_old(:), y_old(:), z_old(:)
   REAL(DP) :: rcut_small
 
-  LOGICAL :: inter_overlap, overlap, update_flag
+  LOGICAL :: inter_overlap, overlap, update_flag, accept, accept_or_reject
 ! Variables for prefferential sammpling
 
   INTEGER, ALLOCATABLE :: ni_before(:)
-  REAL(DP) :: attempt_p 
   LOGICAL  :: inside_start
 
  ! Pair_Energy arrays and Ewald implementation
@@ -99,7 +98,6 @@ SUBROUTINE Translate(this_box,mc_step)
   E_qq = 0.0_DP
   E_reciprocal_move = 0.0_DP
   inter_overlap = .FALSE.
-  attempt_p = 1.0_DP
 
   IF(nbr_boxes .GT. 1) THEN
 
@@ -266,17 +264,18 @@ SUBROUTINE Translate(this_box,mc_step)
 
      IF (int_sim_type == sim_nvt_min) THEN
         IF (delta_e  <= 0.0_DP) THEN
-           p_acc = 1.0_DP
+           accept = .TRUE.
         ELSE
-           p_acc = 0.0_DP
+           accept = .FALSE.
         END IF
      ELSE
 
-         p_acc = MIN( 1.0_DP, attempt_p * DEXP(-beta(this_box) * delta_e) )
+         ln_pacc = beta(this_box) * delta_e
+         accept = accept_or_reject(ln_pacc)
 
      END IF
 
-     IF ( rranf() <= p_acc ) THEN
+     IF ( accept ) THEN
 
         ! accept the move and update the global energies
         energy(this_box)%inter_vdw = energy(this_box)%inter_vdw + E_vdw_move - E_vdw
@@ -326,7 +325,7 @@ SUBROUTINE Translate(this_box,mc_step)
      END IF
 
      WRITE(logunit,*)
-     WRITE(logunit,'(A,2X,I3,2X,A,I2,2x,A,2X,F8.5)')'Translation ratio for species ', is , 'for box', this_box, 'is: ', success_ratio
+     WRITE(logunit,'(A,I3,A,I1,A,F8.5)')'Success ratio, translation of species ', is , ' in box ', this_box, ' : ', success_ratio
 
      !nsuccess(is,this_box)%displacement = 0
 
@@ -342,9 +341,7 @@ SUBROUTINE Translate(this_box,mc_step)
              max_disp(is,this_box) = MIN(rcut_small,2.0_DP*success_ratio*max_disp(is,this_box))
          END IF
 
-         WRITE(logunit,'(A,1X,I1,1X,A,1X,I1)') 'Maximum width for translation of species', is,' updated in box', this_box
-         WRITE(logunit,'(A,2X,F8.5)') 'new width is', max_disp(is,this_box)
-         WRITE(logunit,*)
+         WRITE(logunit,'(A,I3,A,I1,A,F8.5)') 'Maximum width, translation of species ', is,' in box ', this_box, ' : ', max_disp(is,this_box)
         
      END IF
 
