@@ -243,7 +243,7 @@ SUBROUTINE GEMC_Particle_Transfer(box_in, box_out)
 
   IF (species_list(this_species)%fragment .AND. species_list(this_species)%int_insert .NE. int_igas ) THEN
 
-     del_Flag = .FALSE.
+     del_flag = .FALSE.
      get_fragorder = .TRUE.
      ALLOCATE(frag_order(nfragments(this_species)))
      lambda_for_build = molecule_list(alive,this_species)%cfc_lambda
@@ -399,7 +399,7 @@ SUBROUTINE GEMC_Particle_Transfer(box_in, box_out)
      ! above. so in this case frag_order becomes input to the routine. We obtain
      ! P_delete via this call. Note that, cbmc_overlap should be false as we are
      ! dealing with an existing molecule.
-     del_Flag = .TRUE. 
+     del_flag = .TRUE. 
      get_fragorder = .FALSE.
 
      IF (species_list(this_species)%lcom) THEN

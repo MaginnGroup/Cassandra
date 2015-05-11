@@ -108,7 +108,7 @@ SUBROUTINE Zig_By_Omega
           CALL Save_Old_Cartesian_Coordinates(alive,is)
 
           nrg_ring_frag_forward = 0.0_DP
-          del_FLAG = .FALSE.
+          del_flag = .FALSE.
           cbmc_overlap = .FALSE.
           del_overlap = .FALSE.
           P_forward = 1.0_DP

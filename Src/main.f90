@@ -247,7 +247,7 @@ PROGRAM Main
   atom_list(:,:,:)%exist = .FALSE.
   molecule_list(:,:)%cfc_lambda = 0.0_DP
 
-  CBMC_Flag = .FALSE.
+  cbmc_flag = .FALSE.
 
   DO is = 1, nspecies
      DO im = 1, nmolecules(is)
@@ -416,19 +416,20 @@ PROGRAM Main
      
   DO i = 1, nbr_boxes
        
-  IF ( start_type == 'make_config' .and. int_vdw_sum_style(i) == vdw_cut_tail) &
+     IF ( start_type == 'make_config' .and. &
+          int_vdw_sum_style(i) == vdw_cut_tail) &
                 CALL Compute_Beads(i)
-  		CALL Compute_Total_System_Energy(i,.TRUE.,overlap)
-  END DO
+     CALL Compute_Total_System_Energy(i,.TRUE.,overlap)
            
 
-  IF (overlap) THEN
-     ! overlap was detected between two molecules so abort the program
-     err_msg = ''
-     err_msg(1) = 'Overlap detected in the starting structure'
-     err_msg(2) = 'Start type '//start_type
-     CALL Clean_Abort(err_msg,'Main')
-  END IF
+     IF (overlap) THEN
+        ! overlap was detected between two atoms so abort the program
+        err_msg = ''
+        err_msg(1) = 'Overlap detected in the starting structure'
+        err_msg(2) = 'Start type '//start_type
+        CALL Clean_Abort(err_msg,'Main')
+     END IF
+  END DO
   
   ! write out the initial energy components to the log file
   
