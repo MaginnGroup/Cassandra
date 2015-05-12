@@ -2400,6 +2400,7 @@ CONTAINS
              CALL Compute_Molecule_Dihedral_Energy(this_im,is,v_molecule_dihedral)
              CALL Compute_Molecule_Improper_Energy(this_im,is,v_molecule_improper)
 
+             intra_overlap = .FALSE.
              IF (int_charge_sum_style(this_box) == charge_ewald) THEN
                 CALL Compute_Molecule_Nonbond_Intra_Energy(this_im,is,vlj_molecule_intra,vqq_molecule_intra,intra_overlap, &
                      v_molecule_selfrf)
