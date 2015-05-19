@@ -102,9 +102,9 @@ SUBROUTINE NVTMC_Driver
      i = i + 1
      which_step = i
 
-
      ! We will select a move from Golden Sampling scheme
-  
+
+ 
      rand_no = rranf()
     
      IF (rand_no <= cut_trans) THEN
