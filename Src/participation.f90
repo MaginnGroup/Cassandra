@@ -984,7 +984,7 @@ CONTAINS
 
              ELSE
                 
-                WRITE(201,'(I5,2X,I5,2X,I5,2X,I5,2X,A9,2X,F10.3)') frag_2_nangles, &
+                WRITE(201,'(I5,2X,I5,2X,I5,2X,I5,2X,A9,2X,F10.5)') frag_2_nangles, &
                      local_id_1, local_id_2, local_id_3, "fixed", &
                      angle_list(this_angle,is)%angle_param(1)
 
@@ -1254,7 +1254,7 @@ CONTAINS
 
        IF (improper_list(this_improper,is)%improper_potential_type == 'harmonic') THEN
 
-          WRITE(201,'(I5,2X,4(I4,2X),A8,2X,2(F8.3,2X))') i, &
+          WRITE(201,'(I5,2X,4(I4,2X),A8,2X,F10.3,2X,F10.5)') i, &
                first_atom(i), second_atom(i), third_atom(i), fourth_atom(i), &
                'harmonic', &
                improper_list(this_improper,is)%improper_param(1)/kboltz, &

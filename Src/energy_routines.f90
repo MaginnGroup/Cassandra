@@ -2349,8 +2349,8 @@ CONTAINS
     INTEGER :: locate_1, locate_2
     LOGICAL :: l_pair_store, my_overlap, shared_overlap
 
-    my_overlap=.false.
-    shared_overlap = .false.
+    my_overlap = .FALSE.
+    shared_overlap = .FALSE.
     overlap = .FALSE.
 
     ! Initialize the energies
@@ -2394,12 +2394,14 @@ CONTAINS
              
              ! Check to see if the molecule is alive 
              IF( .NOT. molecule_list(this_im,is)%live ) CYCLE imLOOP
+             IF (SHARED_OVERLAP) CYCLE imLOOP
 
              CALL Compute_Molecule_Bond_Energy(this_im,is,v_molecule_bond)
              CALL Compute_Molecule_Angle_Energy(this_im,is,v_molecule_angle)
              CALL Compute_Molecule_Dihedral_Energy(this_im,is,v_molecule_dihedral)
              CALL Compute_Molecule_Improper_Energy(this_im,is,v_molecule_improper)
 
+             intra_overlap = .FALSE.
              IF (int_charge_sum_style(this_box) == charge_ewald) THEN
                 CALL Compute_Molecule_Nonbond_Intra_Energy(this_im,is,vlj_molecule_intra,vqq_molecule_intra,intra_overlap, &
                      v_molecule_selfrf)
@@ -2408,10 +2410,9 @@ CONTAINS
              END IF
 
              IF (intra_overlap) THEN
-                SHARED_OVERLAP = .true.
+                SHARED_OVERLAP = .TRUE.
              END IF
-             
-             
+
              v_intra = v_intra + v_molecule_bond + v_molecule_angle + &
                                       v_molecule_dihedral + v_molecule_improper 
              v_bond = v_bond + v_molecule_bond
@@ -2427,9 +2428,9 @@ CONTAINS
           END DO imLoop
           !$OMP END PARALLEL DO
           IF (SHARED_OVERLAP) THEN
-             overlap = .true.
+             overlap = .TRUE.
              RETURN
-          ENDIF
+          END IF
 
           energy(this_box)%intra = energy(this_box)%intra +  v_intra
           energy(this_box)%bond = energy(this_box)%bond + v_bond
