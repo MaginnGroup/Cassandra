@@ -144,7 +144,7 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
    IMPLICIT NONE
 
    INTEGER, INTENT(IN) :: this_bond, this_molecule, is
-   INTEGER             :: atom1, atom2
+   INTEGER             :: atom1, atom2, this_box
    REAL(DP)            :: rx21, ry21, rz21, r21sq, r21
 
   
@@ -158,6 +158,11 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
    rx21 = atom_list(atom1,this_molecule,is)%rxp - atom_list(atom2,this_molecule,is)%rxp
    ry21 = atom_list(atom1,this_molecule,is)%ryp - atom_list(atom2,this_molecule,is)%ryp
    rz21 = atom_list(atom1,this_molecule,is)%rzp - atom_list(atom2,this_molecule,is)%rzp
+
+!   this_box = molecule_list(this_molecule,is)%which_box
+!   IF (l_cubic(this_box) == .FALSE.) THEN
+!   CALL Minimum_Image_Separation(this_box,rx21,ry21,rz21,rx21,ry21,rz21)
+!   END IF
 
    r21sq = rx21 * rx21 + ry21 * ry21 + rz21 * rz21
    r21   = DSQRT(r21sq)
@@ -192,7 +197,7 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
 
    INTEGER, INTENT(IN) :: this_angle, this_molecule, is
 
-   INTEGER             :: atom1, atom2, atom3
+   INTEGER             :: atom1, atom2, atom3, this_box
    REAL(DP)            :: rx21, ry21, rz21, rx32, ry32, rz32
    REAL(DP)            :: C22, C23, C33, inv_rt_C3322, costheta, theta
 
@@ -217,8 +222,15 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
    ry32 = atom_list(atom3,this_molecule,is)%ryp - atom_list(atom2,this_molecule,is)%ryp
    rz32 = atom_list(atom3,this_molecule,is)%rzp - atom_list(atom2,this_molecule,is)%rzp
    
+!   this_box = molecule_list(this_molecule,is)%which_box
+!   IF (l_cubic(this_box) == .FALSE.) THEN
+!   CALL Minimum_Image_Separation(this_box,rx21,ry21,rz21,rx21,ry21,rz21)
+!   CALL Minimum_Image_Separation(this_box,rx32,ry32,rz32,rx32,ry32,rz32)
+!   END IF
+
 ! The C values are just various dot products between vectors
 !r21 and r32 and the square root of C33*C22
+
 
    C23 = rx21 * rx32 + ry21 * ry32 + rz21 * rz32
    C22 = rx21 * rx21 + ry21 * ry21 + rz21 * rz21
@@ -235,7 +247,6 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
 ! Calculate the angle. Note that the actual bond angle is pi - theta
 
    theta = PI - DACOS(costheta)
-
 
  END SUBROUTINE Get_Bond_Angle
 
@@ -264,7 +275,7 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
 
    INTEGER, INTENT(IN) :: this_dihedral, this_molecule, is
 
-   INTEGER             :: atom1, atom2, atom3, atom4
+   INTEGER             :: atom1, atom2, atom3, atom4, this_box
 
    REAL(DP)            :: rx12, ry12, rz12, rx32, ry32, rz32
    REAL(DP)            :: rx34, ry34, rz34, mx, my, mz, nx, ny, nz
@@ -296,6 +307,14 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
    rx34 = atom_list(atom3,this_molecule,is)%rxp - atom_list(atom4,this_molecule,is)%rxp
    ry34 = atom_list(atom3,this_molecule,is)%ryp - atom_list(atom4,this_molecule,is)%ryp
    rz34 = atom_list(atom3,this_molecule,is)%rzp - atom_list(atom4,this_molecule,is)%rzp
+
+
+!   this_box = molecule_list(this_molecule,is)%which_box
+!   IF (l_cubic(this_box) == .FALSE.) THEN
+!   CALL Minimum_Image_Separation(this_box,rx12,ry12,rz12,rx12,ry12,rz12)
+!   CALL Minimum_Image_Separation(this_box,rx32,ry32,rz32,rx32,ry32,rz32)
+!   CALL Minimum_Image_Separation(this_box,rx34,ry34,rz34,rx34,ry34,rz34)
+!   END IF
 
 ! Vector m is normal to the plane formed by atoms 1, 2 and 3
 
@@ -354,7 +373,7 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
 
    INTEGER, INTENT(IN) :: this_improper, is, this_molecule
 
-   INTEGER             :: atom1, atom2, atom3, atom4, im
+   INTEGER             :: atom1, atom2, atom3, atom4, im, this_box
 
    REAL(DP)            :: rx12, ry12, rz12, rx32, ry32, rz32
    REAL(DP)            :: rx34, ry34, rz34, mx, my, mz, nx, ny, nz
@@ -387,6 +406,13 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
    rx34 = atom_list(atom3,this_molecule,is)%rxp - atom_list(atom4,this_molecule,is)%rxp
    ry34 = atom_list(atom3,this_molecule,is)%ryp - atom_list(atom4,this_molecule,is)%ryp
    rz34 = atom_list(atom3,this_molecule,is)%rzp - atom_list(atom4,this_molecule,is)%rzp
+
+!   this_box = molecule_list(this_molecule,is)%which_box
+!   IF (l_cubic(this_box) == .FALSE.) THEN
+!   CALL Minimum_Image_Separation(this_box,rx12,ry12,rz12,rx12,ry12,rz12)
+!   CALL Minimum_Image_Separation(this_box,rx32,ry32,rz32,rx32,ry32,rz32)
+!   CALL Minimum_Image_Separation(this_box,rx34,ry34,rz34,rx34,ry34,rz34)
+!   END IF
 
 ! Vector m is normal to the plane formed by atoms 1, 2 and 3
 

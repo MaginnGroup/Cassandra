@@ -167,6 +167,7 @@ SUBROUTINE Compute_Cell_Dimensions(box_nbr)
        box_list(box_nbr)%length(1,2)*box_list(box_nbr)%length_inv(2,1) + &
        box_list(box_nbr)%length(1,3)*box_list(box_nbr)%length_inv(3,1)
 
+
   IF(ABS(det - box_list(box_nbr)%volume) > tiny_number) THEN
      err_msg = ""
      err_msg(1) = 'Determinant not equal box volume'
@@ -182,8 +183,9 @@ SUBROUTINE Compute_Cell_Dimensions(box_nbr)
 
   ! Compute half of the box length to be used in Fold_Molecule
 
-  box_list(box_nbr)%hlength(1,1) =0.5_DP * box_list(box_nbr)%length(1,1)
-  box_list(box_nbr)%hlength(2,2) =0.5_DP * box_list(box_nbr)%length(2,2)
-  box_list(box_nbr)%hlength(3,3) =0.5_DP * box_list(box_nbr)%length(3,3)
+  box_list(box_nbr)%hlength(1,1) =0.5_DP * box_list(box_nbr)%basis_length(1)
+  box_list(box_nbr)%hlength(2,2) =0.5_DP * box_list(box_nbr)%basis_length(2)
+  box_list(box_nbr)%hlength(3,3) =0.5_DP * box_list(box_nbr)%basis_length(3)
 
+      
 END SUBROUTINE Compute_Cell_Dimensions
