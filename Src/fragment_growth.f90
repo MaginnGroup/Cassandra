@@ -1053,7 +1053,7 @@ SUBROUTINE Cut_Regrow(this_im,is,frag_live,frag_dead,frag_order,frag_total, &
   LOGICAL :: cbmc_overlap
   LOGICAL :: del_overlap
 
-  ! Local declaratoins
+  ! Local declarations
   INTEGER :: is_fragments, frag_bond, frag_start
   INTEGER :: this_box, i_frag, frag_no, i, this_atom, anchor, this_frag
   INTEGER :: anchor_live, anchor_dead
