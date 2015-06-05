@@ -1,4 +1,4 @@
-!********************************************************************************
+!*******************************************************************************
 !   Cassandra - An open source atomistic Monte Carlo software package
 !   developed at the University of Notre Dame.
 !   http://cassandra.nd.edu
@@ -17,14 +17,15 @@
 !
 !   You should have received a copy of the GNU General Public License
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-!********************************************************************************
+!*******************************************************************************
 
-!********************************************************************************
+!*******************************************************************************
 SUBROUTINE Translate(this_box,mc_step)
-!********************************************************************************
+!*******************************************************************************
 
-  !********************************************************************************
-  ! This subroutine performs a COM translation move for a randomly chosen molecule.
+  !*****************************************************************************
+  ! This subroutine performs a COM translation move for a randomly chosen 
+  ! molecule.
   !
   ! 
   ! CALLED BY 
@@ -47,7 +48,7 @@ SUBROUTINE Translate(this_box,mc_step)
   !
   !
   !  12/10/13 : Beta release
-  !********************************************************************************
+  !*****************************************************************************
 
   USE Type_Definitions
   USE Run_Variables
@@ -58,37 +59,29 @@ SUBROUTINE Translate(this_box,mc_step)
 
   IMPLICIT NONE
 
-  INTEGER  :: is, im, i, this_box, nmolecules_species, alive, total_mols, ibox, nmols_box
-  INTEGER  :: dumcount, iatom, stupid_step
-  INTEGER  :: mc_step, this_im, ia
-  INTEGER  :: N_fracs, ind
+  ! Arguments
+  INTEGER  :: this_box   ! box index
+  INTEGER  :: mc_step
+
+  ! Local declarations
+  INTEGER  :: ibox       ! box index
+  INTEGER  :: is         ! species index
+  INTEGER  :: im, alive  ! molecule indices
+  INTEGER  :: total_mols ! number of molecules in the system
   
+  REAL(DP) :: nmols_box(nbr_boxes)
   REAL(DP), ALLOCATABLE :: x_box(:), x_species(:)
-
-  REAL(DP) :: dx, dy, dz, delta_e, delta_v
-  REAL(DP) :: E_intra, E_vdw, E_qq
-  REAL(DP) :: E_vdw_move, E_qq_move
-  REAL(DP) :: E_reciprocal_move, rand_no
-  REAL(DP) :: E_vdw_ch, E_qq_ch
-  REAL(DP) :: old_value
-  REAL(DP) :: W_vdw, W_qq, W_vdw_move, W_qq_move
-
-  REAL(DP) :: success_ratio, ln_pacc
-  REAL(DP), ALLOCATABLE :: x_old(:), y_old(:), z_old(:)
+  REAL(DP) :: rand_no
+  REAL(DP) :: dx, dy, dz
+  REAL(DP) :: delta_e, ln_pacc, success_ratio
+  REAL(DP) :: E_vdw, E_qq, E_vdw_move, E_qq_move, E_reciprocal_move
   REAL(DP) :: rcut_small
 
-  LOGICAL :: inter_overlap, overlap, update_flag, accept, accept_or_reject
-! Variables for prefferential sammpling
+  LOGICAL :: inter_overlap, overlap, accept, accept_or_reject
 
-  INTEGER, ALLOCATABLE :: ni_before(:)
-  LOGICAL  :: inside_start
-
- ! Pair_Energy arrays and Ewald implementation
-
-  INTEGER :: start, locate_im, count, this_species, position
-!  REAL(DP), ALLOCATABLE :: pair_vdw_temp(:), pair_qq_temp(:)
+  ! Pair_Energy arrays and Ewald implementation
+  INTEGER :: position
   REAL(DP), ALLOCATABLE :: cos_mol_old(:), sin_mol_old(:)
-
 
 ! Done with that section
 
@@ -99,32 +92,36 @@ SUBROUTINE Translate(this_box,mc_step)
   E_reciprocal_move = 0.0_DP
   inter_overlap = .FALSE.
 
-  IF(nbr_boxes .GT. 1) THEN
+  ! Sum the total number of molecules 
+  total_mols = 0 ! sum over species, box
+  DO ibox = 1, nbr_boxes
+    nmols_box(ibox) = 0
+    DO is = 1, nspecies
+      ! Only count mobile species
+      IF ( max_disp(is,ibox) > 0. ) THEN
+        total_mols = total_mols + nmols(is,ibox)
+        nmols_box(ibox) = nmols_box(ibox) + nmols(is,ibox)
+      END IF
+    END DO
+  END DO
 
-    ! Choose a box based on its total mol fraction
+  ! If there are no molecules then return
+  IF (total_mols == 0) RETURN
+
+  ! If needed, choose a box based on its total mol fraction
+  IF(nbr_boxes .GT. 1) THEN
 
     ALLOCATE(x_box(nbr_boxes)) 
 
-    total_mols = SUM(nmols(:,:))
-  
-    ! If there are no molecules in the box then return to gcmc_driver
-
-    IF (total_mols == 0) RETURN
-
     DO ibox = 1, nbr_boxes
-       nmols_box = SUM(nmols(:,ibox))
-       x_box(ibox) = REAL(nmols_box,DP)/REAL(total_mols,DP)
+       x_box(ibox) = REAL(nmols_box(ibox),DP)/REAL(total_mols,DP)
        IF ( ibox > 1 ) THEN
           x_box(ibox) = x_box(ibox) + x_box(ibox-1)
        END IF
     END DO
   
-    ! Choose a box based on overall mol fraction
-
-    rand_no = rranf()
-
     DO ibox = 1, nbr_boxes
-       IF ( rand_no <= x_box(ibox)) EXIT
+       IF ( rranf() <= x_box(ibox)) EXIT
     END DO
 
     this_box = ibox
@@ -136,88 +133,69 @@ SUBROUTINE Translate(this_box,mc_step)
 
   END IF
 
-  ! Now choose species based on the mol fraction as well
+  ! If there are no molecules in this box then return
+  IF( nmols_box(this_box) == 0 ) RETURN
 
+  ! Choose species based on the mol fraction, using Golden sampling
   ALLOCATE(x_species(nspecies))
 
-  nmolecules_species = SUM(nmols(:,this_box))
-!     IF ( nmolecules_species /= 0 .AND. rranf() <=  prob_species_trans(is) ) EXIT
-  IF( nmolecules_species == 0 ) RETURN
-
   DO is = 1, nspecies
-     x_species(is) = REAL(nmols(is,this_box), DP) / REAL(nmolecules_species,DP)
+     IF ( max_disp(is,this_box) > 0. ) THEN
+       x_species(is) = REAL(nmols(is,this_box), DP)/REAL(nmols_box(this_box),DP)
+     ELSE
+       x_species(is) = 0.0_DP
+     END IF
      IF ( is > 1 ) THEN
         x_species(is) = x_species(is) + x_species(is-1)
      END IF
   END DO
 
-  ! choose a species based on its mole fraction
-
   rand_no = rranf()
-  
   DO is = 1, nspecies
      IF( rand_no <= x_species(is)) EXIT
   END DO
 
-  IF (has_charge(is)) THEN
-     rcut_small = MIN(rcut_vdw(this_box),rcut_coul(this_box))
-  ELSE
-     rcut_small = rcut_vdw(this_box)
-  END IF
-! number of molecules of species in this box
-
-  nmolecules_species = nmols(is,this_box)
-
   DEALLOCATE(x_species)
 
+  ! If the molecule can't move then return
+  IF ( max_disp(is,this_box) == 0. ) RETURN
+
+  ! Choose a molecule at random for displacement
+  im = INT ( rranf() * nmols(is,this_box) ) + 1
+  ! Get the index of imth molecule of species is in this_box
+  CALL Get_Index_Molecule(this_box,is,im,alive)
+
+  ! update the trial counters
   tot_trials(this_box) = tot_trials(this_box) + 1
-
-  ! Select a molecule at random for displacement
-
-  DO
-
-     im = INT ( rranf() * nmolecules_species ) + 1
-     ! Get the index of imth molecule of species is in this_box
-     CALL Get_Index_Molecule(this_box,is,im,alive)
-
-     EXIT
-  END DO
-
-
-  ! update the trial counter for this molecule
-  
   ntrials(is,this_box)%displacement = ntrials(is,this_box)%displacement + 1
 
-  ! Compute the LJ and real space intermolecular energies of this molecule
-
+  ! obtain the energy of the molecule before the move.  Note that due to
+  ! this move, the interatomic energies such as vdw and electrostatics will
+  ! change. Also the ewald_reciprocal energy will change but there will
+  ! be no change in intramolecular energies.
   IF (l_pair_nrg) THEN
-     CALL Store_Molecule_Pair_Interaction_Arrays(alive,is,this_box,E_vdw,E_qq)
+    CALL Store_Molecule_Pair_Interaction_Arrays(alive,is,this_box,E_vdw,E_qq)
   ELSE
-     CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_vdw,E_qq,inter_overlap)
+    CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_vdw,E_qq,inter_overlap)
   END IF
-
-  CALL Save_Old_Cartesian_Coordinates(alive,is)
 
   IF (inter_overlap)  THEN
-        WRITE(*,*) 'Disaster, overlap in the old configruation'
-        WRITE(*,*) 'Translate'
-        WRITE(*,*) alive, is, this_box
-        WRITE(*,*) 'inter overlap', inter_overlap
-!        STOP
+     WRITE(*,*) 'Disaster, overlap in the old configruation'
+     WRITE(*,*) 'Translate'
+     WRITE(*,*) alive, is, this_box
   END IF
 
-! Generate a random displacement vector. Note that the current formalism will
-! work for cubic shaped boxes. However, it is easy to extend for nonorthorhombic
-! boxes where displacements along the basis vectors. 
+  ! Store the old positions of the atoms
+  CALL Save_Old_Cartesian_Coordinates(alive,is)
 
-
+  ! Generate a random displacement vector. Note that the current formalism will
+  ! work for cubic shaped boxes. However, it is easy to extend for nonorthorhombic
+  ! boxes where displacements along the basis vectors. 
   dx = ( 2.0_DP * rranf() - 1.0_DP) * max_disp(is,this_box)
   dy = ( 2.0_DP * rranf() - 1.0_DP) * max_disp(is,this_box)
   dz = ( 2.0_DP * rranf() - 1.0_DP) * max_disp(is,this_box)
-          
 
-! Move atoms by the above vector dx,dy,dz and also update the COM
-
+  ! Move atoms by the above vector dx,dy,dz and also update the COM
   atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp + dx
   atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp + dy
   atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp + dz
@@ -227,17 +205,18 @@ SUBROUTINE Translate(this_box,mc_step)
   molecule_list(alive,is)%zcom = molecule_list(alive,is)%zcom + dz
 
 
-!**************************************************************************
+  !**************************************************************************
   CALL Fold_Molecule(alive,is,this_box)
   
   CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_vdw_move,E_qq_move,inter_overlap)
   
-   IF (inter_overlap) THEN ! Move is rejected
-     
-      CALL Revert_Old_Cartesian_Coordinates(alive,is)
-      IF (l_pair_nrg) CALL Reset_Molecule_Pair_Interaction_Arrays(alive,is,this_box)
+  ! If an overlap is detected, immediately reject the move
+  IF (inter_overlap) THEN ! Move is rejected
+    
+     CALL Revert_Old_Cartesian_Coordinates(alive,is)
+     IF (l_pair_nrg) CALL Reset_Molecule_Pair_Interaction_Arrays(alive,is,this_box)
 
-   ELSE
+  ELSE
 
      delta_e = 0.0_DP
 
@@ -319,8 +298,8 @@ SUBROUTINE Translate(this_box,mc_step)
   IF ( MOD(ntrials(is,this_box)%displacement,nupdate) == 0 ) THEN
      IF ( int_run_style == run_equil ) THEN 
         success_ratio = REAL(nequil_success(is,this_box)%displacement,DP)/REAL(nupdate,DP)
-        ELSE
-            success_ratio = REAL(nsuccess(is,this_box)%displacement,DP)/REAL(ntrials(is,this_box)%displacement,DP)
+     ELSE
+        success_ratio = REAL(nsuccess(is,this_box)%displacement,DP)/REAL(ntrials(is,this_box)%displacement,DP)
      END IF
 
      WRITE(logunit,*)
@@ -337,6 +316,12 @@ SUBROUTINE Translate(this_box,mc_step)
          IF  ( success_ratio < 0.00005 ) THEN
              max_disp(is,this_box) = 0.1_DP*max_disp(is,this_box)
          ELSE
+             ! minimum max_disp for this species
+             IF (has_charge(is)) THEN
+                rcut_small = MIN(rcut_vdw(this_box),rcut_coul(this_box))
+             ELSE
+                rcut_small = rcut_vdw(this_box)
+             END IF
              max_disp(is,this_box) = MIN(rcut_small,2.0_DP*success_ratio*max_disp(is,this_box))
          END IF
 
