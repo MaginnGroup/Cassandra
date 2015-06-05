@@ -505,7 +505,6 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
      ELSE
 
         ! Choose one from Golden sampling for an insertion move
-     
         rand_no = rranf() * weight(kappa_ins)
      
         DO i = 1, kappa_ins
@@ -1883,7 +1882,7 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
 !        WRITE(*,*) ii, nrg(ii), weight(ii)
 !        ! END DEBUGGING OUTPUT
                  
-        ! Track the cumulative weights for Goldman sampling
+        ! Track the cumulative weights for Golden sampling
         IF ( ii > 1 ) weight(ii) = weight(ii-1) + weight(ii)
 
 !        WRITE(*,*) 'weight',overlap, ii, nrg_kBT

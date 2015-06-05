@@ -102,6 +102,7 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
 
   LOGICAL :: l_charge
 
+  E_reciprocal_move = 0.0_DP
 
   inside_start = .FALSE.
 !  imp_Flag = .FALSE.
@@ -429,8 +430,8 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
      IF (int_charge_sum_style(this_box) == charge_ewald) THEN
         energy(this_box)%ewald_reciprocal = energy(this_box)%ewald_reciprocal + &
              E_reciprocal_move
-        energy(this_box)%ewald_self = energy(this_box)%ewald_self - (E_selferf_n - &
-                                                                     E_selferf_o)
+        energy(this_box)%ewald_self = energy(this_box)%ewald_self - & 
+                                      (E_selferf_n - E_selferf_o)
      END IF
 
      regrowth_success(frag_total,is) = regrowth_success(frag_total,is) + 1
@@ -464,6 +465,3 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
   DEALLOCATE(new_atom_list)
 
 END SUBROUTINE Cut_N_Grow
-
-
-     
