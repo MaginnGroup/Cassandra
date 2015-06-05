@@ -1,4 +1,4 @@
-!********************************************************************************
+!*******************************************************************************
 !   Cassandra - An open source atomistic Monte Carlo software package
 !   developed at the University of Notre Dame.
 !   http://cassandra.nd.edu
@@ -21,7 +21,7 @@
 
   SUBROUTINE Grow_Molecules
 
-    !****************************************************************************
+    !***************************************************************************
     ! The subroutine generates initial configuration of molecules for box 1.
     ! It is based on an input geometry of molecule of each of the species.
     ! First a random point is selected in the simulation box for the placement
@@ -59,7 +59,8 @@
 
     INTEGER, ALLOCATABLE,DIMENSION(:) :: frag_order
 
-    REAL(DP) :: rxijp, ryijp, rzijp, rxij, ryij, rzij, rsq, attempt_prob, lambda_for_build
+    REAL(DP) :: rxijp, ryijp, rzijp, rxij, ryij, rzij, rsq, lambda_for_build
+    REAL(DP) :: P_seq, P_bias
     REAL(DP) :: rand_lambda,lambda_ins,lambda_del
     REAL(DP) :: nrg_ring_frag_tot
 
@@ -124,9 +125,12 @@
                    atom_list(:,alive,is)%exist = .FALSE.
                    cbmc_overlap = .FALSE.
                    get_fragorder = .TRUE.
+                   P_seq = 1.0_DP
+                   P_bias = 1.0_DP
                    lambda_for_build = molecule_list(alive,is)%cfc_lambda
-                   CALL Build_Molecule(alive,is,this_box,frag_order,lambda_for_build,which_anchor, &
-                        attempt_prob,nrg_ring_frag_tot,cbmc_overlap)
+                   CALL Build_Molecule(alive,is,this_box,frag_order, &
+                           lambda_for_build,P_seq,P_bias, &
+                           nrg_ring_frag_tot,cbmc_overlap)
                    IF (cbmc_overlap) CYCLE InsertionLOOP
                    atom_list(:,alive,is)%exist = .TRUE.       
 
@@ -334,7 +338,7 @@
     REAL(DP) :: E_bond, E_angle, E_dihedral, E_improper, E_intra_vdw, E_intra_qq
     REAL(DP) :: d_bond, d_angle, d_dihedral, d_improper, d_intra_vdw, d_intra_qq, delta_e
     REAL(DP) :: factor
-    REAL(DP) :: P_forward, e_prev, lambda_for_cut, nrg_ring_frag_forward
+    REAL(DP) :: P_seq, P_bias, e_prev, lambda_for_cut, nrg_ring_frag_forward
     CHARACTER(2) :: dummy_element
     LOGICAL :: cbmc_overlap, del_overlap, intra_overlap
     LOGICAL :: accept, accept_or_reject
@@ -411,7 +415,8 @@
           del_flag = .FALSE.
           cbmc_overlap = .FALSE.
           del_overlap = .FALSE.
-          P_forward = 1.0_DP
+          P_seq = 1.0_DP
+          P_bias = 1.0_DP
 
           IF(nfragments(is) == 1) THEN
 
@@ -422,7 +427,7 @@
 
              lambda_for_cut = molecule_list(alive,is)%cfc_lambda
              CALL Cut_Regrow(alive,is,frag_start,frag_end,frag_order,frag_total,lambda_for_cut, &
-                  e_prev,P_forward, nrg_ring_frag_forward, cbmc_overlap, del_overlap)
+                  e_prev,P_seq,P_bias, nrg_ring_frag_forward, cbmc_overlap, del_overlap)
 
              IF (cbmc_overlap .or. del_overlap) THEN
                 atom_list(1:natoms(is),alive,is)%exist = .TRUE.

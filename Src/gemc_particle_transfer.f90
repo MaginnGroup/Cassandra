@@ -1,4 +1,4 @@
-!********************************************************************************
+!*******************************************************************************
 !   Cassandra - An open source atomistic Monte Carlo software package
 !   developed at the University of Notre Dame.
 !   http://cassandra.nd.edu
@@ -21,7 +21,7 @@
 
 SUBROUTINE GEMC_Particle_Transfer(box_in, box_out)
 
-  !********************************************************************************
+  !*****************************************************************************
   !
   ! This subroutine performs particle swaps in a GEMC ensemble.
   !
@@ -47,7 +47,7 @@ SUBROUTINE GEMC_Particle_Transfer(box_in, box_out)
   ! Revision history
   !
   !   12/10/13 : Beta Release
-  !*********************************************************************************
+  !*****************************************************************************
 
   USE Run_Variables
   USE Random_Generators
@@ -77,7 +77,8 @@ SUBROUTINE GEMC_Particle_Transfer(box_in, box_out)
   REAL(DP) :: E_intra_vdw_in, E_intra_qq_in
   REAL(DP) :: E_inter_vdw_in, E_inter_qq_in
   REAL(DP) :: E_reciprocal_move_in, E_self_move_in, e_lrc_in, E_bond_in, E_improper_in
-  REAL(DP) :: E_angle_in, E_dihed_in, delta_e_in, delta_e_in_pacc, factor, P_forward, P_reverse, potw, CP_energy
+  REAL(DP) :: E_angle_in, E_dihed_in, delta_e_in, delta_e_in_pacc, potw, CP_energy
+  REAL(DP) :: P_seq, P_forward, P_reverse, ln_pacc
   REAL(DP) :: lambda_for_build
   LOGICAL :: inter_overlap, accept, accept_or_reject, cbmc_overlap, forward
   LOGICAL :: intra_overlap
@@ -102,6 +103,7 @@ SUBROUTINE GEMC_Particle_Transfer(box_in, box_out)
   inter_overlap = .false.
   cbmc_overlap = .false.
 
+  P_seq = 1.0_DP
   P_forward = 1.0_DP
   P_reverse = 1.0_DP
 
@@ -248,11 +250,13 @@ SUBROUTINE GEMC_Particle_Transfer(box_in, box_out)
      ALLOCATE(frag_order(nfragments(this_species)))
      lambda_for_build = molecule_list(alive,this_species)%cfc_lambda
     IF (species_list(this_species)%lcom) THEN
-        CALL Build_Molecule(alive,this_species,box_in,frag_order,lambda_for_build, which_anchor,P_forward, &
-          nrg_ring_frag_in,cbmc_overlap)
+        CALL Build_Molecule(alive,this_species,box_in,frag_order, &
+                lambda_for_build,P_seq,P_forward,nrg_ring_frag_in, &
+                cbmc_overlap)
      ELSE
-        CALL Build_Rigid_Fragment(alive,this_species,box_in,frag_order,lambda_for_build, which_anchor,P_forward, &
-          nrg_ring_frag_in,cbmc_overlap)
+        CALL Build_Rigid_Fragment(alive,this_species,box_in,frag_order, &
+                lambda_for_build,P_seq,P_forward,nrg_ring_frag_in, &
+                cbmc_overlap)
      END IF
   ELSE
      CALL New_Positions(box_in,alive,this_species,rand_igas)
@@ -395,19 +399,21 @@ SUBROUTINE GEMC_Particle_Transfer(box_in, box_out)
 
   call cpu_time(time0)
   IF ( species_list(this_species)%fragment .AND. species_list(this_species)%int_insert .NE. int_igas) THEN
-     ! Note that we need to use the same fragment order in which we inserted the molecule
-     ! above. so in this case frag_order becomes input to the routine. We obtain
-     ! P_delete via this call. Note that, cbmc_overlap should be false as we are
-     ! dealing with an existing molecule.
+     ! Note that we need to use the same fragment order in which we inserted the
+     ! molecule above, so in this case frag_order and P_seq become input to 
+     ! the routine. We obtain P_delete via this call. Note that, cbmc_overlap 
+     ! should be false as we are dealing with an existing molecule.
      del_flag = .TRUE. 
      get_fragorder = .FALSE.
 
      IF (species_list(this_species)%lcom) THEN
-        CALL Build_Molecule(alive,this_species,box_out,frag_order,lambda_for_build, which_anchor,P_reverse, &
-             nrg_ring_frag_out,cbmc_overlap)
+        CALL Build_Molecule(alive,this_species,box_out,frag_order, &
+                lambda_for_build,P_seq,P_reverse,nrg_ring_frag_out, &
+                cbmc_overlap)
      ELSE
-        CALL Build_Rigid_Fragment(alive,this_species,box_out,frag_order,lambda_for_build, &
-             which_anchor, P_reverse, nrg_ring_frag_out,cbmc_overlap)
+        CALL Build_Rigid_Fragment(alive,this_species,box_out,frag_order, &
+                lambda_for_build,P_seq,P_reverse,nrg_ring_frag_out, &
+                cbmc_overlap)
      END IF
         
      IF (cbmc_overlap) THEN
@@ -511,17 +517,21 @@ SUBROUTINE GEMC_Particle_Transfer(box_in, box_out)
      delta_e_out_pacc = delta_e_out_pacc - e_angle_out - nrg_ring_frag_out
   END IF
 
-  ! Define a factor that will be used to accept or reject the move. Note that
-  ! the change in energy of box_out is actually negative of delta_e_out calculated
-  ! above
+  ! Define ln_pacc that will be used to accept or reject the move. Note that
+  ! the change in energy of box_out is actually negative of delta_e_out 
+  ! calculated above
 
-  factor = beta(box_in)*delta_e_in_pacc - beta(box_out)*delta_e_out_pacc
+  ln_pacc = beta(box_in)*delta_e_in_pacc - beta(box_out)*delta_e_out_pacc
 
-  factor = factor - DLOG((box_list(box_in)%volume * REAL(nmols(this_species,box_out),DP))/ &
-                          (box_list(box_out)%volume * REAL(nmols(this_species,box_in) + 1, DP)))
-  factor = factor + DLOG(P_forward) - DLOG(P_reverse)
+  ln_pacc = ln_pacc - DLOG(box_list(box_in)%volume) &
+                    + DLOG(box_list(box_out)%volume) &
+                    - DLOG(REAL(nmols(this_species,box_out),DP)) &
+                    + DLOG(REAL(nmols(this_species,box_in) + 1, DP))
 
-  accept = accept_or_reject(factor)
+  ! The same order of insertion is used in both the 
+  ln_pacc = ln_pacc + DLOG(P_forward / P_reverse)
+
+  accept = accept_or_reject(ln_pacc)
 
   IF (accept) THEN
      

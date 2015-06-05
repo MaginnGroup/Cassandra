@@ -1,5 +1,4 @@
-!********************************************************************************
-
+!*******************************************************************************
 !   Cassandra - An open source atomistic Monte Carlo software package
 !   developed at the University of Notre Dame.
 !   http://cassandra.nd.edu
@@ -18,11 +17,11 @@
 !
 !   You should have received a copy of the GNU General Public License
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-!********************************************************************************
+!*******************************************************************************
 
 
 SUBROUTINE Volume_Change(this_box,this_step)
-!********************************************************************************
+  !*****************************************************************************
   ! The subroutine performs a volume perturbation move. Presently, the routine
   ! is set up to perform volume changes in cubic simulation box. Extension
   ! to nonorthorhombic cells will be undertaken later.

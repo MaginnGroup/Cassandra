@@ -79,13 +79,14 @@ SUBROUTINE Insertion(this_box,mcstep,randno)
   REAL(DP) :: E_inter_vdw, E_inter_qq
   REAL(DP) :: E_reciprocal_move, E_self_move, E_lrc
   REAL(DP) :: nrg_ring_frag_tot
-  REAL(DP) :: ln_pacc, P_bias, this_lambda
+  REAL(DP) :: ln_pacc, P_seq, P_bias, this_lambda
 
   LOGICAL :: inter_overlap, cbmc_overlap, intra_overlap
   LOGICAL :: accept, accept_or_reject
 
   ! Initialize variables
   ln_pacc = 0.0_DP
+  P_seq = 1.0_DP
   P_bias = 1.0_DP
   this_lambda = 1.0_DP
   nrg_ring_frag_tot = 0.0_DP
@@ -181,18 +182,18 @@ SUBROUTINE Insertion(this_box,mcstep,randno)
      get_fragorder = .TRUE.
      ALLOCATE(frag_order(nfragments(is)))
      CALL Build_Molecule(alive,is,this_box,frag_order,this_lambda, &
-             which_anchor,P_bias, nrg_ring_frag_tot, cbmc_overlap)
+             P_seq,P_bias,nrg_ring_frag_tot,cbmc_overlap)
      DEALLOCATE(frag_order)
 
      ! Turn the molecule on
      molecule_list(alive,is)%live = .TRUE.
      atom_list(:,alive,is)%exist = .TRUE.
 
-     ! So far P_bias only includes the probability of choosing the insertion 
-     ! point from the collection of trial coordinates times the probability of 
-     ! choosing each dihedral from the collection of trial dihedrals. We need 
-     ! to include the number of trial coordinates, kappa_ins, and the number of
-     ! of trial dihedrals, kappa_dih, for each dihedral.
+     ! So far P_bias only includes the probability of choosing the 
+     ! insertion point from the collection of trial coordinates times the 
+     ! probability of choosing each dihedral from the collection of trial 
+     ! dihedrals. We need to include the number of trial coordinates, kappa_ins,
+     ! and the number of trial dihedrals, kappa_dih, for each dihedral.
      kappa_tot = 1
 
      IF (nfragments(is) /= 0 ) THEN
@@ -414,25 +415,25 @@ SUBROUTINE Insertion(this_box,mcstep,randno)
   !
   ! The following quantity is calculated
   !
-  !                  (p_m) (α_mn) 
-  !    ln_pacc = Log[------------]
-  !                  (p_n) (α_nm)
+  !                  p_m a_mn 
+  !    ln_pacc = Log[--------]
+  !                  p_n a_nm
   !
   ! and passed to accept_or_reject() which executes the metropolis criterion.
   ! The acceptance criterion to insert a molecule via CBMC is
   !
-  !                                          P_bias (N + 1) Λ^3
-  !    ln_pacc = β[ΔU_mn-U_frag] - βμ' + Log[------------------]          (1)
-  !                                                  V
+  !                                            P_seq P_bias (N + 1) Lambda^3
+  !    ln_pacc = b(dU_mn-U_frag) - b mu' + Log[-----------------------------]  
+  !                                                         V
   !
-  !                                     P_bias (N + 1) 
-  !            = β[ΔU_mn-U_frag]  + Log[--------------]
-  !                                         β f' V
+  !                                    P_seq P_bias (N + 1) 
+  !            = b(dU_mn-U_frag) + Log[--------------------]
+  !                                           b f' V
   !
   ! where the primes (') indicate that additional intensive terms have been
   ! absorbed into the chemical potential and fugacity, respectively.
 
-  ! Compute the acceptance criterion according to Eqs. (1)
+  ! Compute the acceptance criterion
 
   IF(species_list(is)%int_insert == int_igas) THEN 
      ln_pacc = beta(this_box) * (delta_e - energy_igas(rand_igas,is)%total)
@@ -442,19 +443,19 @@ SUBROUTINE Insertion(this_box,mcstep,randno)
      ln_pacc = beta(this_box) * delta_e
   END IF
 
-  ! P_bias equals 1.0 unless changed by Build_Molecule.
-  ln_pacc = ln_pacc + DLOG(P_bias) +  DLOG(REAL(nmols(is,this_box)+1,DP)) 
+  ! P_seq and P_bias equal 1.0 unless changed by Build_Molecule.
+  ln_pacc = ln_pacc + DLOG(P_seq * P_bias) &
+                    + DLOG(REAL(nmols(is,this_box)+1,DP)) &
+                    - DLOG(box_list(this_box)%volume) 
 
   IF(lchempot) THEN
      ! chemical potential is input
      ln_pacc = ln_pacc - species_list(is)%chem_potential * beta(this_box) &
-                       - DLOG(box_list(this_box)%volume) & 
                        + 3.0_DP*DLOG(species_list(is)%de_broglie(this_box))
   ELSE
      ! fugacity is input
      ln_pacc = ln_pacc - DLOG(species_list(is)%fugacity) &
-                       - DLOG(beta(this_box)) &
-                       - DLOG(box_list(this_box)%volume)
+                       - DLOG(beta(this_box))
   END IF
   
   accept = accept_or_reject(ln_pacc)
