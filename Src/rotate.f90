@@ -61,66 +61,70 @@ SUBROUTINE Rotate(this_box)
   IMPLICIT NONE
 
 !  !$ include 'omp_lib.h'
+  ! Arguments
+  INTEGER  :: this_box   ! box index
 
-  INTEGER  :: is, im, ia, this_box, nmolecules_species, alive, i, nmols_box, total_mols
-  INTEGER  :: iatom, dumcount, ibox
-  INTEGER  :: N_fracs, ind, axis
-  REAL(DP) :: E_vdw, E_qq, E_vdw_move, E_qq_move
-  REAL(DP) :: delta_e, ln_pacc, E_reciprocal_move, success_ratio, rand_no
+  ! Local delcarations
+  INTEGER  :: ibox       ! box index
+  INTEGER  :: is         ! species index
+  INTEGER  :: im, alive  ! molecule indices
+  INTEGER  :: total_mols ! number of molecules in the system
+
+  REAL(DP) :: nmols_box(nbr_boxes)
+  REAL(DP), ALLOCATABLE :: x_box(:), x_species(:)
+  REAL(DP) :: rand_no
   REAL(DP), DIMENSION(:), ALLOCATABLE :: dx, dy, dz
-  REAL(DP), DIMENSION(:), ALLOCATABLE :: x_old, y_old, z_old
-  REAL(DP), DIMENSION(:), ALLOCATABLE :: x_box, x_species
+  REAL(DP) :: delta_e, ln_pacc, success_ratio
+  REAL(DP) :: E_vdw, E_qq, E_vdw_move, E_qq_move, E_reciprocal_move
 
-  LOGICAL :: inter_overlap, update_flag, inside_start
+  LOGICAL :: inter_overlap, overlap, accept, accept_or_reject
 
-  REAL(DP) :: old_value
-  REAL(DP) :: checke
-  LOGICAL :: superbad, overlap, accept, accept_or_reject
-
- ! Pair_Energy arrays and Ewald implementation
-
-  INTEGER :: start, locate_im, count, this_species, position, this_im
+  ! Pair_Energy arrays and Ewald implementation
+  INTEGER :: position
   REAL(DP), ALLOCATABLE :: cos_mol_old(:), sin_mol_old(:)
 
   ! Framework energy related variables
-
   REAL(DP) :: E_framework, E_framework_move, E_correction_move
   LOGICAL :: framework_overlap
 
 ! Done with that section
 
-  ! choose a box at random
-  inter_overlap = .FALSE.
   E_vdw_move = 0.0_DP
-  E_vdw = 0.0_DP
   E_qq_move = 0.0_DP
+  E_vdw = 0.0_DP
   E_qq = 0.0_DP
   E_reciprocal_move = 0.0_DP
+  inter_overlap = .FALSE.
 
+  ! Sum the total number of molecules 
+  total_mols = 0 ! sum over species, box
+  DO ibox = 1, nbr_boxes
+    nmols_box(ibox) = 0
+    DO is = 1, nspecies
+      ! Only count mobile species
+      IF ( max_rot(is,ibox) > 0. ) THEN
+        total_mols = total_mols + nmols(is,ibox)
+        nmols_box(ibox) = nmols_box(ibox) + nmols(is,ibox)
+      END IF
+    END DO
+  END DO
+
+  ! If there are no molecules then return
+  IF (total_mols == 0) RETURN
+
+  ! If needed, choose a box based on its total mol fraction
   IF(nbr_boxes .GT. 1) THEN
 
-    ! Choose a box based on its total mol fraction
-
-    ALLOCATE(x_box(nbr_boxes)) 
-
-    total_mols = SUM(nmols(:,:))
-  
-    ! If there are no molecules in the box then return to gcmc_driver
-
-    IF (total_mols == 0) RETURN
+    ALLOCATE(x_box(nbr_boxes))
 
     DO ibox = 1, nbr_boxes
-       nmols_box = SUM(nmols(:,ibox))
-       x_box(ibox) = REAL(nmols_box,DP)/REAL(total_mols,DP)
+       x_box(ibox) = REAL(nmols_box(ibox),DP)/REAL(total_mols,DP)
        IF ( ibox > 1 ) THEN
           x_box(ibox) = x_box(ibox) + x_box(ibox-1)
        END IF
     END DO
-  
-    ! Choose a box based on overall mol fraction
 
     rand_no = rranf()
-
     DO ibox = 1, nbr_boxes
        IF ( rand_no <= x_box(ibox)) EXIT
     END DO
@@ -134,93 +138,73 @@ SUBROUTINE Rotate(this_box)
 
   END IF
 
-  ! Now choose species based on the mol fraction as well
+  ! If there are no molecules in this box then return
+  IF( nmols_box(this_box) == 0 ) RETURN
 
+  ! Choose species based on the mol fraction, using Golden sampling
   ALLOCATE(x_species(nspecies))
 
-  nmolecules_species = 0
-  x_species = 0.0_DP
- 
   DO is = 1, nspecies
-     IF(max_rot(is,this_box) == 0.0_DP) CYCLE
-     nmolecules_species = nmolecules_species + nmols(is,this_box)
+     IF ( max_rot(is,this_box) > 0. ) THEN
+       x_species(is) = REAL(nmols(is,this_box), DP)/REAL(nmols_box(this_box),DP)
+     ELSE
+       x_species(is) = 0.0_DP
+     END IF
+     IF ( is > 1 ) THEN
+       x_species(is) = x_species(is) + x_species(is-1)
+     END IF
   END DO
-
-  IF( nmolecules_species == 0 ) RETURN
-
-  DO is = 1, nspecies
-     IF(max_rot(is,this_box) == 0.0_DP) CYCLE
-     x_species(is) = REAL(nmols(is,this_box), DP) / REAL(nmolecules_species,DP)
-  END DO
-
-  DO is = 2, nspecies
-     x_species(is) = x_species(is) + x_species(is-1)
-  END DO
-  ! choose a species based on its mole fraction
 
   rand_no = rranf()
-  
   DO is = 1, nspecies
-     IF( rand_no <= x_species(is)) EXIT
+     IF ( rand_no <= x_species(is) ) EXIT
   END DO
-
-  ! number of molecules of species in this box
-
-  nmolecules_species = nmols(is,this_box)
 
   DEALLOCATE(x_species)
 
-! Select a molecule at random for displacement
+  ! If the molecule can't move then return
+  IF ( max_rot(is,this_box) == 0. ) RETURN
 
+  ! Choose a molecule at random for rotation
+  im = INT ( rranf() * nmols(is,this_box) ) + 1
+  ! Get the index of imth molecule of species is in this_box
+  CALL Get_Index_Molecule(this_box,is,im,alive)
+
+  ! update the trial counters
   tot_trials(this_box) = tot_trials(this_box) + 1
-  DO
-
-     im = INT ( rranf() * nmolecules_species ) + 1
-     ! Get the index of imth molecule of species is in this_box
-     CALL Get_Index_Molecule(this_box,is,im,alive)
-        EXIT
-  END DO
-
-
-  ! update trial counter
   ntrials(is,this_box)%rotation = ntrials(is,this_box)%rotation + 1
-
-! Store the old positions of the atoms
-
-  CALL Save_Old_Cartesian_Coordinates(alive,is)
 
   ! obtain the energy of the molecule before the move.  Note that due to
   ! this move, the interatomic energies such as vdw and electrostatics will
   ! change. Also the ewald_reciprocal energy will change but there will
   ! be no change in intramolecular energies.
-  
   IF (l_pair_nrg) THEN
-     CALL Store_Molecule_Pair_Interaction_Arrays(alive,is,this_box,E_vdw,E_qq)
+    CALL Store_Molecule_Pair_Interaction_Arrays(alive,is,this_box,E_vdw,E_qq)
   ELSE
-     CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_vdw,E_qq,inter_overlap)
+    CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_vdw,E_qq,inter_overlap)
   END IF
 
   IF (inter_overlap)  THEN
-        WRITE(*,*) 'Disaster, overlap in the old configruation'
-        WRITE(*,*) 'Rotation'
-        WRITE(*,*) alive, is, this_box
-!        STOP
+     WRITE(*,*) 'Disaster, overlap in the old configruation'
+     WRITE(*,*) 'Rotation'
+     WRITE(*,*) alive, is, this_box
   END IF       
 
-! change the Eulerian angles of the molecule
+  ! Store the old positions of the atoms
+  CALL Save_Old_Cartesian_Coordinates(alive,is)
 
+  ! change the Eulerian angles of the molecule
   IF(species_list(is)%linear) THEN
      CALL Rotate_Molecule_Eulerian
   ELSE
      CALL Rotate_Molecule_Axis(dx,dy,dz)
   END IF
 
-     ! Now compute the energy of the molecule after the rotation. If an overlap is detected, immediately
-     ! reject the move
-        CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_vdw_move,E_qq_move,inter_overlap)
+  ! Now compute the energy of the molecule after the rotation. 
+  CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_vdw_move,E_qq_move,inter_overlap)
 
-
-  IF (inter_overlap) THEN ! Move is rejected
+  ! If an overlap is detected, immediately reject the move
+  IF (inter_overlap) THEN
      
      CALL Revert_Old_Cartesian_Coordinates(alive,is)
      IF (l_pair_nrg) CALL Reset_Molecule_Pair_Interaction_Arrays(alive,is,this_box)
@@ -314,8 +298,8 @@ SUBROUTINE Rotate(this_box)
 
      IF (int_run_style == run_equil) THEN
         success_ratio = REAL(nequil_success(is,this_box)%rotation,DP)/REAL(nupdate,DP)
-        ELSE
-            success_ratio = REAL(nsuccess(is,this_box)%rotation,DP)/REAL(ntrials(is,this_box)%rotation,DP)
+     ELSE
+        success_ratio = REAL(nsuccess(is,this_box)%rotation,DP)/REAL(ntrials(is,this_box)%rotation,DP)
      END IF
 
      WRITE(logunit,*)
@@ -369,7 +353,6 @@ CONTAINS
 
     ! randomly choose an axis about which a rotation needs to be performed
 
-
     axis = INT ( 3.0_DP * rranf() ) + 1
 
     IF ( axis == 1 ) THEN
@@ -387,6 +370,7 @@ CONTAINS
     END IF
 
     ! Define the rotational matrix 
+
 
     cospsi1 = DCOS(psi1)
     cospsi2 = DCOS(psi2)
@@ -406,7 +390,12 @@ CONTAINS
     
     rot31   = sinpsi1*sinpsi2
     rot32   = -cospsi1*sinpsi2
+
     rot33   = cospsi2
+!    IF (alive==30) THEN
+ !   WRITE(*,*) 'molecule',molecule_list(alive,is)%ycom
+  !  END IF
+  !WRITE(*,*) molecule_list(30,1)%ycom
 
     ! Move the origin to the COM of this molecule
 

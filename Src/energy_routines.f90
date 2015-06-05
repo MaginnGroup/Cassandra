@@ -1757,7 +1757,7 @@ CONTAINS
     const_val = 1.0_DP/(4.0_DP * alpha_ewald(this_box) * alpha_ewald(this_box))
     hcutsq = h_ewald_cut(this_box) * h_ewald_cut(this_box)
 
-    IF (box_list(this_box)%int_box_shape == int_cell) THEN
+    IF (box_list(this_box)%int_box_shape == int_cell .OR. box_list(this_box)%int_box_shape == int_ortho) THEN
        
        ! The most general definition for a wave-vector is h = 2*pi*TRANSPOSE(cell_matrix)^-1)*n
        ! where h is the wave vector and n is a vector of integers
@@ -2347,8 +2347,8 @@ CONTAINS
     INTEGER :: locate_1, locate_2
     LOGICAL :: l_pair_store, my_overlap, shared_overlap
 
-    my_overlap=.false.
-    shared_overlap = .false.
+    my_overlap = .FALSE.
+    shared_overlap = .FALSE.
     overlap = .FALSE.
 
     ! Initialize the energies
@@ -2392,12 +2392,14 @@ CONTAINS
              
              ! Check to see if the molecule is alive 
              IF( .NOT. molecule_list(this_im,is)%live ) CYCLE imLOOP
+             IF (SHARED_OVERLAP) CYCLE imLOOP
 
              CALL Compute_Molecule_Bond_Energy(this_im,is,v_molecule_bond)
              CALL Compute_Molecule_Angle_Energy(this_im,is,v_molecule_angle)
              CALL Compute_Molecule_Dihedral_Energy(this_im,is,v_molecule_dihedral)
              CALL Compute_Molecule_Improper_Energy(this_im,is,v_molecule_improper)
 
+             intra_overlap = .FALSE.
              IF (int_charge_sum_style(this_box) == charge_ewald) THEN
                 CALL Compute_Molecule_Nonbond_Intra_Energy(this_im,is,vlj_molecule_intra,vqq_molecule_intra,intra_overlap, &
                      v_molecule_selfrf)
@@ -2406,10 +2408,9 @@ CONTAINS
              END IF
 
              IF (intra_overlap) THEN
-                SHARED_OVERLAP = .true.
+                SHARED_OVERLAP = .TRUE.
              END IF
-             
-             
+
              v_intra = v_intra + v_molecule_bond + v_molecule_angle + &
                                       v_molecule_dihedral + v_molecule_improper 
              v_bond = v_bond + v_molecule_bond
@@ -2425,9 +2426,9 @@ CONTAINS
           END DO imLoop
           !$OMP END PARALLEL DO
           IF (SHARED_OVERLAP) THEN
-             overlap = .true.
+             overlap = .TRUE.
              RETURN
-          ENDIF
+          END IF
 
           energy(this_box)%intra = energy(this_box)%intra +  v_intra
           energy(this_box)%bond = energy(this_box)%bond + v_bond
@@ -2770,9 +2771,8 @@ CONTAINS
                (sigij6 / (3.0_DP*rcut3(this_box))))
           
        END DO
-       
+
        e_lrc = e_lrc + REAL( nint_beads(ia,this_box), DP ) * e_lrc_ia_ja
-       
     END DO
 
     e_lrc = 2.0_DP * PI * e_lrc/box_list(this_box)%volume
