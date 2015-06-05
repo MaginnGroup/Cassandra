@@ -75,7 +75,7 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
   REAL(DP), ALLOCATABLE :: x_old(:), y_old(:), z_old(:)
   REAL(DP), ALLOCATABLE :: dx(:), dy(:), dz(:)
 
-  REAL(DP) :: rand_no, P_forward, P_reverse, E_bond_n, E_angle_n, E_dihed_n
+  REAL(DP) :: rand_no, P_seq, P_forward, P_reverse, E_bond_n, E_angle_n, E_dihed_n
   REAL(DP) :: E_intra_vdw_n, E_intra_qq_n, E_inter_vdw_n, E_inter_qq_n
   REAL(DP) :: E_intra_vdw_o, E_intra_qq_o, E_inter_vdw_o, E_inter_qq_o
   REAL(DP) :: E_bond_o, E_angle_o, E_dihed_o, delta_e_n, delta_e_o
@@ -201,7 +201,7 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
   del_flag = .FALSE.
   cbmc_overlap = .FALSE.
   del_overlap = .FALSE.
-
+  P_seq = 1.0_DP
   P_forward = 1.0_DP
 
   ALLOCATE(frag_order(nfragments(is)))
@@ -218,7 +218,7 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
 
      lambda_for_cut = molecule_list(alive,is)%cfc_lambda
      CALL Cut_Regrow(alive,is,frag_start,frag_end,frag_order,frag_total,lambda_for_cut, &
-          e_prev,P_forward, nrg_ring_frag_forward, cbmc_overlap, del_overlap)
+          e_prev, P_seq, P_forward, nrg_ring_frag_forward, cbmc_overlap, del_overlap)
 
   END IF
 
@@ -341,7 +341,7 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
      lambda_for_cut = molecule_list(alive,is)%cfc_lambda
      nrg_ring_frag_reverse = 0.0_DP
      CALL Cut_Regrow(alive,is,frag_start,frag_end,frag_order,frag_total, lambda_for_cut, & 
-          e_prev, P_reverse, nrg_ring_frag_reverse, cbmc_overlap, del_overlap)
+          e_prev, P_seq, P_reverse, nrg_ring_frag_reverse, cbmc_overlap, del_overlap)
 
      atom_list(1:natoms(is),alive,is)%exist = .true.
 

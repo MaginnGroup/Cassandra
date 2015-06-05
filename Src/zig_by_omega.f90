@@ -50,7 +50,7 @@ SUBROUTINE Zig_By_Omega
 
   REAL(DP) :: E_bond, E_angle, E_dihedral, E_improper, E_intra_vdw, E_intra_qq
   REAL(DP) :: d_bond, d_angle, d_dihedral, d_improper, d_intra_vdw, d_intra_qq, delta_e
-  REAL(DP) :: nrg_ring_frag_forward, P_forward, lambda_for_cut, e_prev, factor
+  REAL(DP) :: nrg_ring_frag_forward, P_seq, P_bias, lambda_for_cut, e_prev, factor
 
   CHARACTER(2) :: dummy_element
 
@@ -111,7 +111,8 @@ SUBROUTINE Zig_By_Omega
           del_flag = .FALSE.
           cbmc_overlap = .FALSE.
           del_overlap = .FALSE.
-          P_forward = 1.0_DP
+          P_seq = 1.0_DP
+          P_bias = 1.0_DP
 
           IF(nfragments(is) == 1) THEN
   
@@ -122,7 +123,7 @@ SUBROUTINE Zig_By_Omega
 
              lambda_for_cut = molecule_list(alive,is)%cfc_lambda
              CALL Cut_Regrow(alive,is,frag_start,frag_end,frag_order,frag_total,lambda_for_cut, &
-                     e_prev,P_forward, nrg_ring_frag_forward, cbmc_overlap, del_overlap)
+                     e_prev,P_seq,P_bias, nrg_ring_frag_forward, cbmc_overlap, del_overlap)
 
 
              ! if cbmc_overlap or del_overlap is true then the molecule may have been only partially grown
