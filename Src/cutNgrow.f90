@@ -379,7 +379,6 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
      CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is,E_intra_vdw_o, &
              E_intra_qq_o,intra_overlap)
 
-
      IF (.NOT. l_pair_nrg) CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_inter_vdw_o,E_inter_qq_o,cbmc_overlap)
 
      delta_e_o = E_intra_vdw_o + E_intra_qq_o + E_inter_vdw_o + E_inter_qq_o + E_dihed_o + E_improper_o - &

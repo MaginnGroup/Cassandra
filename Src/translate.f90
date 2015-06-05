@@ -183,6 +183,7 @@ SUBROUTINE Translate(this_box,mc_step)
      EXIT
   END DO
 
+
   ! update the trial counter for this molecule
   
   ntrials(is,this_box)%displacement = ntrials(is,this_box)%displacement + 1
@@ -209,13 +210,11 @@ SUBROUTINE Translate(this_box,mc_step)
 ! work for cubic shaped boxes. However, it is easy to extend for nonorthorhombic
 ! boxes where displacements along the basis vectors. 
 
-  IF ( box_list(this_box)%int_box_shape == int_cubic) THEN
 
-     dx = ( 2.0_DP * rranf() - 1.0_DP) * max_disp(is,this_box)
-     dy = ( 2.0_DP * rranf() - 1.0_DP) * max_disp(is,this_box)
-     dz = ( 2.0_DP * rranf() - 1.0_DP) * max_disp(is,this_box)
+  dx = ( 2.0_DP * rranf() - 1.0_DP) * max_disp(is,this_box)
+  dy = ( 2.0_DP * rranf() - 1.0_DP) * max_disp(is,this_box)
+  dz = ( 2.0_DP * rranf() - 1.0_DP) * max_disp(is,this_box)
           
-  END IF
 
 ! Move atoms by the above vector dx,dy,dz and also update the COM
 
@@ -229,7 +228,6 @@ SUBROUTINE Translate(this_box,mc_step)
 
 
 !**************************************************************************
-     
   CALL Fold_Molecule(alive,is,this_box)
   
   CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_vdw_move,E_qq_move,inter_overlap)

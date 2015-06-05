@@ -181,7 +181,6 @@ SUBROUTINE Rotate(this_box)
         EXIT
   END DO
 
-
   ! update trial counter
   ntrials(is,this_box)%rotation = ntrials(is,this_box)%rotation + 1
 
@@ -369,7 +368,6 @@ CONTAINS
 
     ! randomly choose an axis about which a rotation needs to be performed
 
-
     axis = INT ( 3.0_DP * rranf() ) + 1
 
     IF ( axis == 1 ) THEN
@@ -387,6 +385,7 @@ CONTAINS
     END IF
 
     ! Define the rotational matrix 
+
 
     cospsi1 = DCOS(psi1)
     cospsi2 = DCOS(psi2)
@@ -406,7 +405,12 @@ CONTAINS
     
     rot31   = sinpsi1*sinpsi2
     rot32   = -cospsi1*sinpsi2
+
     rot33   = cospsi2
+!    IF (alive==30) THEN
+ !   WRITE(*,*) 'molecule',molecule_list(alive,is)%ycom
+  !  END IF
+  !WRITE(*,*) molecule_list(30,1)%ycom
 
     ! Move the origin to the COM of this molecule
 

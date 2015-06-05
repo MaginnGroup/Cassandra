@@ -361,15 +361,36 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
         
         ELSE
 
-!           write(*,*) 'here inside this if', del_Flag, itrial
-!           read(*,*)
-           
         
            ! Select a random trial coordinate
            IF (box_list(this_box)%int_box_shape == int_cubic) THEN
               x_anchor = (0.5_DP - rranf()) * box_list(this_box)%length(1,1)
               y_anchor = (0.5_DP - rranf()) * box_list(this_box)%length(2,2)
               z_anchor = (0.5_DP - rranf()) * box_list(this_box)%length(3,3)
+
+           ELSE
+
+              !Generate random positions in fractional coordinates
+
+              x_anchor = 0.5_DP - rranf()
+              y_anchor = 0.5_DP - rranf()
+              z_anchor = 0.5_DP - rranf()
+
+              !transform back to cartesian
+
+              x_anchor = box_list(this_box)%length(1,1)*x_anchor + &
+                       box_list(this_box)%length(1,2)*y_anchor +   &
+                       box_list(this_box)%length(1,3)*z_anchor
+
+              y_anchor = box_list(this_box)%length(2,1)*x_anchor + &
+                       box_list(this_box)%length(2,2)*y_anchor +   &
+                       box_list(this_box)%length(2,3)*z_anchor
+
+              z_anchor = box_list(this_box)%length(3,1)*x_anchor + &
+                       box_list(this_box)%length(3,2)*y_anchor +   &
+                       box_list(this_box)%length(3,3)*z_anchor
+
+
            END IF
 
         END IF
