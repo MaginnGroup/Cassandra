@@ -153,11 +153,9 @@ SUBROUTINE NPTMC_Control
   CALL Get_Dihedral_Atoms_To_Place  
 
   ! Determine whether mie potentials are used
-  DO i=1, nbr_boxes
-          IF (int_vdw_sum_style(i) == vdw_mie) THEN
-                CALL Get_Mie_Nonbond
-          END IF
-  END DO
+  IF (int_vdw_sum_style(i) == vdw_mie) THEN
+      CALL Get_Mie_Nonbond
+  END IF
 
   
 END SUBROUTINE NPTMC_Control

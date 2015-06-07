@@ -5776,7 +5776,7 @@ SUBROUTINE Get_Mie_Nonbond
         END DO
 
         ! parse the string to read in the files for each species
-        DO is = 1, nspecies
+        DO is = 1, nspecies*nspecies
            line_nbr = line_nbr + 1
            CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
            mie_nlist(mie_Matrix(String_To_Int(line_array(1)),String_To_Int(line_array(2)))) = String_To_Double(line_array(3))
