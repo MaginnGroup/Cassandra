@@ -1,0 +1,3 @@
+\beamer@endinputifotherversion {3.06pt}
+\select@language {english}
+\beamer@sectionintoc {1}{Cassandra Tutorial}{2}{0}{1}

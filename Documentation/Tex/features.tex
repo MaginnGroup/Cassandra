@@ -1,0 +1,154 @@
+\chapter{Features}
+
+\section{Slit\_Pore} 
+%
+This section describes the changes to the code to enable a simulation
+in a slit pore geometry. The slit pore is defined to be the geometry
+in which there is a 2-D periodicity and finite length in the third 
+dimension. Cassandra handles the 2-D periodicity in the X and Y directions;
+the finite length is aligned along the Z direction. In the input file
+to the Cassandra executable, the following indicate that simulation
+involves a slit pore geometry: \\ \\
+%
+{\bf input\_routines.f90} \\ \\
+%
+The box shape is defined to be ``Slit\_Pore'' and the lengths in X and
+Y directions are read in along with the pore width in the Z direction.
+The pore width is stored in the variable ``{\em pore\_width}''. For the ease
+of calculation of various properties related to the box, the pore width
+is set as the dimension in the z direction. Note that
+this value does not have any impact on the actual simulation. 
+Whether a given simulation box has a slit pore geometry is specified by
+the logical array variable `{\em l\_slit\_pore}'\\ \\
+%
+For the solid framework calculations, another routine, 'Get\_Solid\_Potential\_Type'
+has been added. This routine determines the type of solid potential that is to
+be used in the simulation. The keyword is specified by '\# Solid\_Potential\_Type'.
+At present, acceptable value is 'Steele'. More potential types can be easily added. \\ \\
+%
+{\bf minimum\_image\_separation.f90} \\ \\
+%
+All the routines `Minimum\_Image\_Separation', 'Apply\_PBC\_Int' and
+'Fold\_Molecule' apply PBC in two dimensions if the variable '{\em
+l\_slit\_pore}' is evaluated to be TRUE. \\ \\
+%
+A new routine 'Compute\_Molecule\_Position\_Slit\_Pore' has also been
+added to this file. The purpose of this routine is to evaluate the
+z coordinates of all the atoms of the molecule undergoing perturbation
+to enusre that they are confined to the slit pore. If any of the atoms
+crosses the pore wall boundaries then an overlap flag is set to .TRUE.
+and the corresponding move will be rejected.
+%
+{\bf Solid Fluid Interactions for a Structureless Wall} \\ \\
+%
+The interactions due to a structureless wall on a fluid is 
+represented by the Steele 10-4-3 potential that has the form
+%
+\begin{equation}
+\phi_{sf} (z)  =  2 \pi \rho_s \epsilon_{sf} \sigma_{sf}^2 \Delta
+ \left [ \frac {2} {5} \left ( \frac {\sigma_{sf}}{z} \right )^{10}
+  - \left ( \frac {\sigma_{sf}} {z} \right )^4
+  - \left ( \frac {\sigma_{sf}^4} {3\Delta(z+0.61*\Delta)^3} \right ) \right ].
+\label{Eq:Steele_Pot}
+\end{equation}
+where the $\epsilon$ and $\sigma$ have their usual meaning and are the cross
+interaction parameters between the wall and fluid of interest. The potential
+parameters and other parameters in the above equation correpsond to those
+representative of a graphite wall \\ \\
+%
+$\sigma_{ss} = 0.340$ nm , $\epsilon_{ss}/K = 28.0$ K \\ \\
+%
+$\rho_s = 114$ nm$^{-3}$, $\Delta = 0.335$ nm. \\ \\
+%
+The cross interaction parameters are calculated using the Lorentz-Berthelot
+combining rule. In the code, the length parameters are input in \AA while
+the energy paramter in the atomic units and conversions are carried out 
+accordingly. \\ \\
+%
+{\bf create\_nonbond\_table.f90} \\ \\
+%
+Since the prefactor in equation~\ref{Eq:Steele_Pot} is a constant during
+the course of a simulation for each atomtype, it is calculated and
+stored in the array variable '{\em pre\_steele}'. Similarly, the cross
+parameter $\sigma_{sf}$ is precalculated and stored in the array 
+variable '{\em sigma\_steele}'. Additional variables are defined as
+'{\em sigma\_ss}', '{eps\_ss}', '{rho\_s}', 'delta\_s'. Also, two more
+variables corresponding to the the quanties that remain constant during
+the simulations are defined: \\ \\
+%
+sig\_delta(:) = sigma\_steele(:) \/ delta\_s \/ 3000.0 \\ \\
+%
+The factor $3000.0$ is due to the conversion of nm$^{-3}$ to $\AA^3$. 
+Another constant is \\ \\
+%
+delta\_constant = 0.61 * delta\_s \\ \\
+%
+For a given pore width H, the contibution of the pore walls to the
+total potential at any point $z$ in the pore is given by 
+\begin{equation}
+\phi_{pore}(z) = \phi_{sf}(z) + \phi_{sf}(H-z).
+\label{Eq:Total_Wall_Potential}
+\end{equation}
+%
+{\bf energy\_routines.f90} \\ \\
+%
+This subroutine is modified by adding a routine that calculates the 
+potential energy of the molecule in the presence of Steele potential
+wall. The new subroutine is labled as \\ \\
+%
+Compute\_Molecule\_Framework\_Energy. \\ \\
+%
+Though at present the routine computes potential energy due to
+walls only, additional wall potential and look up tables for the
+zeolitic systems will be placed here. The total energy due to the framework
+will be returned as {\em E\_framework}. {\bf Note that currently there isn't
+ a routine to calculate the energy of a single atom or a fragment
+with the framework. Something that needs to be done in the future.} \\ \\
+%
+For electrostatic systems, a 3D Ewald summation has been implemented
+with a correction term as given in the paper by Yeh and Berkowitz. The
+correction term depends on the dipole of the simulation box in z
+direction and is given by
+% Correction term for 3D Ewald summation in slab geometry
+%
+\begin{equation}
+E_{correction} = \frac {2\pi} {V} \left ( \sum_{i = 1}^{i=N} q_i z_i \right )^2
+\end{equation}
+The correction energy is stored in the 'energy' class by the variable
+'ewald\_correction'. Additionally, a 'dipole\_z' vector was defined to
+hold the z component of the dipole of a given box. When this routine
+is called to computed the Ewald correction term, 'dipole\_z' gets
+reset. Hence if a move is rejected, the dipole needs to be switched
+back to the original value. \\ \\
+%
+{\bf translate.f90} \\ \\
+As with any other energy calculations, the energy of the molecule with
+the framework is calculated before. The translation is performed in all
+the directions. However, if the simulation involves slit pore geometry
+then a check is performed to ensure that the entire molecule is still
+within the pore after the translation has been performed. If this condition
+is violated the move is immediately rejectd. In future, the energy of
+the molecule with framework will be stored so that the computation
+of the old energy can be avoided. \\ \\
+%
+{\bf insertion.f90} \\ \\
+%
+The insertion is to be carried out within the pore volume. So the random
+position of the molecule is generated along the X and Y directions in a
+standard way while that in the z direction is confined between 0 and the
+width of the pore. i.e.,
+\begin{equation}
+{\displaystyle molecule\_list(alive,is)\%zcom = rranf() * pore\_width}
+\end{equation}
+
+
+If an atom crosses the pore boundaries, the move is
+immediately rejected as in the translate move. Framework energy is calculated
+if all the atomic positions fall within the pore volume and this energy
+is added to the change in energy required in the final acceptance rule.
+
+
+
+
+
+
