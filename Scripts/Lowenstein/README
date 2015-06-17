@@ -1,0 +1,48 @@
+This script inserts aluminum in to a silicate structure up to the specified Lowenstein ratio.
+ 
+
+
+  To execute in terminal , within this directory:
+  gfortran Lowenstein_Script.f90 -o Lowenstein_Script; ./Lowenstein_Script
+
+
+  File required before running:
+    PDB file of the structure.
+
+
+  File produced:  yournewstructure.xyz
+
+  Format of the input pdb:
+
+ Line 1 is read by format code: (8X,2(F8.4,1X),F8.4,3(F7.3))
+ and assigned, respectively, to xlength, ylength, zlength, alphaAngle, betaAngle, gammaAngle
+ which correspond to the a,b,c,alpha,beta,gamma parameters of a unit cell
+
+
+
+  remaining lines:
+0        1         2         3         4         5         6         7         8         9
+1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+
+------######--------------------#######-#######-#######---------------------AA----------------------
+
+.
+.
+.
+.
+END
+
+corresponding to:
+      Atom index                 xcoord ycoord zcoord                     element
+
+
+
+The input pdb file must contain: x, y, and z coordinates, and the element associated with that atom number;
+and the parameters of the unit cell: a,b,c, alpha,beta,gamma.
+The only elements permitted in the original structure are Si, O, and Al.
+
+For an example .pdb file, please examine: example.pdb
+
+example_ratio_1_1.xyz is an xyz file for example.pdb with a Lowenstein ratio of 1.00
+example_ratio_2_1.xyz is an xyz file for example.pdb with a Lowenstein ratio of 2.00
+ 
