@@ -152,13 +152,10 @@ SUBROUTINE NPTMC_Control
   ! angles exist
   CALL Get_Dihedral_Atoms_To_Place  
 
-
-  DO i=1, nbr_boxes
-          IF (int_vdw_sum_style(i) == vdw_mie) THEN
-                Print *, "test"  
-                CALL Get_Mie_Nonbond
-          END IF
-  END DO
+  ! Determine whether mie potentials are used
+  IF (int_vdw_sum_style(i) == vdw_mie) THEN
+      CALL Get_Mie_Nonbond
+  END IF
 
   
 END SUBROUTINE NPTMC_Control

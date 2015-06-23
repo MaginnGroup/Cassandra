@@ -1,0 +1,65 @@
+\section{Development Log}
+\subsection{CFC GEMC NPT}
+%
+%
+% 
+The following files were changed first by looking for the 'gemc\_npt' in the *.f90 files. \\ \\
+%
+Another simulation type {\em sim\_cfc\_gemc\_npt} has been added to the code. This simulation type enables a CFC GEMC simulation to be carried out in an NPT formalism. The ensemble can be used to simulation absorption of gases into a non-volatile solvent or for binary phase equilibria. \\ \\
+%
+Following changes have been made to the code: \\ \\
+%
+\texttt{run\_variables.f90} \\ 
+
+The variable {\em sim\_cfc\_gemc\_npt} has been added to run\_variables.f90 \\ \\
+%
+\texttt{ input\_routines.f90} \\
+
+The variable {\em sim\_type} for this simulation will be read in as {\bf CFC\_GEMC\_NPT}. In the {Get\_Move\_Probabilities} subroutine, the code checks that probability for volume move ({\em prob\_volume}) and probability of lambda change ({\em prob\_lambda}) are defined when the simulation type is {\em sim\_cfc\_gemc\_npt}. In the {Get\_Run\_Type}, it is checked if volume update is specified when running CFC GEMC NPT simulation in 'Equilibration' mode. The number of fractional molecules for a given species are also read from  the input file.\\ \\
+%
+\texttt{main.f90} \\
+
+A call to CFC\_GEMC\_Control is made when simulation type is set to 'CFC\_GEMC\_NPT'. Similarly, a call to {CFC\_GEMC\_Driver} is made once all the parameters are gathered for the simulation. \\ \\
+%
+\texttt{accumulate.f90} \\
+
+ 
+ The accumulators {\em ac\_enthalpy, ac\_pv, ac\_density, ac\_nmols} are updated. \\ \\
+ %
+ %
+ %
+ \texttt{ read\_write\_checkpoint.f90} \\
+ 
+ The output of box volume and total number of volume trials and number of successful volume trials are output. Similarly, the maximum volume displacement widths are written to the checkpoint file. The same quantities are read from the checkpoint file for the CFC\_GEMC\_NPT simulation type. \\ \\
+ 
+ {\bf The following subroutines were modified by searching for 'cfc\_gemc' and determining if changes need to be made for CFC\_GEMC\_NPT simulation type.} \\ \\
+ %
+ %
+ \texttt{energy\_routines.f90} \\ 
+ %
+ All the modifications appear for setting the variable CFC\_Flag to be true. \\ \\
+ %
+  \texttt{grow\_molecules.f90} \\ 
+ 
+ Fractional particles are assigned in a Gibbs ensemble simulation. \\ \\
+ %
+ \texttt{cfc\_gemc\_driver.f90} \\ 
+ 
+ Volume\_Change.f90 is called for a CFC\_GEMC\_NPT simulation. \\ \\
+ %
+ \texttt{cfc\_gemc\_control.f90} \\ 
+ 
+ Pressure is read from the input file. \\ \\
+ %
+ \texttt{create\_nonbond\_table.f90} \\ 
+ 
+ Allocation of the array nfrac\_beads. \\ \\
+ 
+%
+\texttt{precalculate.f90} \\
+
+$\tau$ and $ \tau^{1/2}$ are assigned values. \\ \\
+%
+\texttt{simulation\_properties.f90} \\
+
+nfrac\_beads array is initialized to zero.

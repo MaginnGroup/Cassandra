@@ -1,0 +1,207 @@
+\chapter{Force Field} \label{Chapter:Force Field}
+
+
+\section{Bonds} \label{Sec:Bonds}
+Cassandra is designed assuming all bond lengths are fixed. If you wish
+to utilize a force field developed with flexible bond lengths, we
+recommend that you either use the nominal or ``equilibrium'' bond
+lengths of the force field as the fixed bond lengths specified for a
+Cassandra simulation or carry out an energy minimization of the
+molecule with a package that treats flexible bond lengths and utilize
+the bond lengths obtained from the minimization. 
+
+\section{Angles}\label{Sec:Angles}
+
+Cassandra supports two types of bond angles:
+\begin{itemize}
+\item `fixed' : The angle declared as fixed is not perturbed during the course of the simulation.
+\item `harmonic' : The bond angle energy is calculated as 
+\begin{equation}
+E_\theta = K_\theta (\theta - \theta_0)^2
+\label{Eq:angle_potential}
+\end{equation}
+where the user must specify $K_\theta$ and $\theta_0$. Note that a factor
+of $1/2$ is {\bf not used} in the energy calculation of a bond
+angle. Make sure you know how the force constant is defined in any
+force field you use. 
+\end{itemize}
+
+\section{Dihedrals}\label{Sec:Dih}
+
+Cassandra can handle four different types of dihedral angles:
+
+\begin{itemize}
+
+\item `OPLS': The functional form of the dihedral potential is
+\begin{equation}
+E_\phi = a_0 + a_1\, \left ( 1 + \cos(\phi)  \right ) + a_2 \, \left ( 1 -
+  \cos(2\phi)\right ) + a_3 \, \left ( 1 + \cos (3\phi)\right )
+\label{Eq:phi_OPLS}
+\end{equation}
+where $a_0$, $a_1$, $a_2$ and $a_3$ are specified by the user.
+
+\item `CHARMM': The functional form of the potential is
+\begin{equation}
+E_\phi = a_0 * (1 + \cos (a_1*\phi - \delta))
+\label{Eq:phi_CHARMM}
+\end{equation}
+where $a_0$, $a_1$ and $\delta$ are specified by the user.
+
+\item `harmonic': The dihedral potential is of the form:
+\begin{equation}
+E_\phi = K_\phi (\phi - \phi_0)^2
+\label{Eq:phi_harmonic}
+\end{equation}
+where $K_\phi$ and $\phi_0$ are specified by the user. 
+
+\item `none' : There is no dihedral potential between the given atoms.  
+
+\end{itemize}
+
+\section{Impropers}\label{Sec:Imp}
+
+Improper energy calculations can be carried out with the following two options:
+
+\begin{itemize}
+
+\item `none': The improper energy is set to zero for the improper angle.
+
+\item `harmonic': The following functional form is used to calculate
+  the energy due to an improper angle
+%
+\begin{equation}
+E_\psi = K_\psi \left ( \psi - \psi_0 \right )^2
+\end{equation}
+\end{itemize}
+where $K_\psi$ and $\psi_0$ are specified by the user.
+
+\section{Nonbonded}\label{Sec:NB}
+The nonbonded interactions between two atoms $i$ and $j$ are due to repulsion-dispersion interactions and electrostatic interactions (if any). 
+\subsection{Repulsion-Dispersion Interactions} \label{Sec:LJ}
+The repulsion-dispersion interactions can take one of the following forms:
+
+\begin{itemize}
+
+\item Lennard-Jones 12-6 potential (LJ):
+
+\begin{equation}
+ {\cal V}(r_{ij})= 4 \epsilon_{ij} \left [  \left ( \frac {\sigma_{ij}} { r_{ij} }\right )^{12} - \left ( \frac {\sigma_{ij}} { r_{ij} }\right )^{6}\ \right ]
+\end{equation}
+where $\epsilon_{ij}$ and $\sigma_{ij}$ are the energy and size
+parameters set by the user. For unlike interactions, different
+combining rules can be used, as described elsewhere. Note that this
+option only evaluates the energy up to a specified cutoff
+distance.  As described below, analytic tail corrections to the pressure and energy can be specified to account for the finite cutoff distance. 
+
+%\item CHARMM:
+
+%\begin{equation}
+%{\cal V} (r_{ij})=  \epsilon_{ij} \left [  \left ( \frac {r_{min,ij}} { r_{ij} }\right )^{12} - \left ( \frac {r_{min,ij}} { r_{ij} }\right )^{6}\ \right ]
+%\end{equation}
+
+\item Cut and shift potential:
+
+\begin{equation}
+{\cal V}(r_{ij})= 4 \epsilon_{ij} \left [  \left ( \frac {\sigma_{ij}} { r_{ij} }\right )^{12} - \left ( \frac {\sigma_{ij}} { r_{ij} }\right )^{6}\ \right ] -  4 \epsilon_{ij} \left [  \left ( \frac {\sigma_{ij}} { r_{cut}}\right )^{12} - \left ( \frac {\sigma_{ij}} { r_{cut} }\right )^{6}\ \right ]
+\label{Eq:cut_shift}
+\end{equation}
+where $\epsilon_{ij}$ and $\sigma_{ij}$ are the energy and size
+parameters set by the user and $r_{cut}$ is the cutoff distance. This
+option forces the potential energy to be zero at the cutoff
+distance. For unlike interactions, different 
+combining rules can be used, as described elsewhere.
+
+%%%%%%%%%%%%%%
+% Cut and switch potential
+%%%%%%%%%%%%%%%
+
+\item Cut and switch potential:
+
+\begin{equation}
+ {\cal V}(r_{ij})= 4 \epsilon_{ij} \left [  \left ( \frac {\sigma_{ij}} { r_{ij} }\right )^{12} - \left ( \frac {\sigma_{ij}} { r_{ij} }\right )^{6}\ \right ] f
+ \label{Eq:cut_switch}
+\end{equation}
+%
+The factor $f$ takes the following values:
+
+\begin{eqnarray}
+	f = 
+	\begin{cases}
+	
+		1.0 \, \, \, &  r_ {ij}  \le r_{on} \\
+		\frac { (r_{off}^2 - r_{ij}^2) (r_{off}^2 - r_{on}^2 + 2r_{ij}^2)} {\left ( r_{off}^2 - r_{on}^2 \right )^3}  \, \, \,  & r_{on} \textless r_{ij} \textless r_{off}\\
+		0.0 \, \, \, & r_{ij} \ge r_{off} 
+		
+	\end{cases}
+\end{eqnarray}
+where $\epsilon_{ij}$ and $\sigma_{ij}$ are the energy and size
+parameters set by the user. This option smoothly forces the potential
+to go to zero at a distance $r_{off}$, and begins altering the
+potential at a distance of $r_{on}$. Both of these parameters must be
+specified by the user. For unlike interactions, different 
+combining rules can be used, as described elsewhere.
+
+\item Tail corrections: If the Lennard-Jones potential is used, standard Lennard-Jones tail corrections are used to approximate the long range dispersion interactions
+
+\end{itemize}
+
+\subsection{Electrostatics}\label{Sec:qq}
+
+Electrostatic interactions are given by  Coulomb's law
+
+\begin{equation}
+{\cal V}_{elec} (r_{ij}) = \frac{1}{4\pi\epsilon_0} \frac {q_i q_j} {r_{ij}}.
+\label{Eq:Coulomb}
+\end{equation}
+where $q_i$ and $q_j$ are partial charges specified by the user and
+placed on atomic positions given by $r_i$ and $r_j$. In a simulation,
+the electrostatic interactions are calculated using either an Ewald
+summation or a direct summation using the minimum image convention. \\
+
+Note that the total energy that is printed out in the property file is extensive. 
+Consequently, to obtain intensive energies, the printed energies must divided by 
+the total number of molecules in the system. 
+
+\section{Cassandra Units}
+The following table provides units used in Cassandra:
+
+\begin{center}
+\begin{table}[h]
+	\begin{center}
+	\caption{Cassandra units for input variables}
+	\begin{tabular} {l l l} \\ \hline \hline
+	Bond length  & l  & \AA \\ \hline \\
+	\multicolumn{3}{c} {\bf Angles} \\ \\
+	Nominal bond angle & $\theta_0$ & degrees \\ 
+	Bond angle force constant & $K_\theta$ & K/rad$^2$ \\ \\ \hline \\
+	\multicolumn{3}{c} {\bf{Dihedral angle}}  \\  \\
+	OPLS & $a_0$, $a_1$,  $a_2$, $a_3$ & kJ/mol \\ \\
+	CHARMM & $a_0$ & kJ/mol \\
+	                 & $a_1$ & dimensionless \\
+	                 & $\delta$ & degrees \\ \\
+	 harmonic & $K_\phi$ & K/rad$^2$ \\
+	                 & $\phi_0$ & degrees \\  \\\hline \\
+	 \multicolumn{3}{c}{\bf {Improper angle}} \\ \\
+	 Force constant & $K_\psi$ &  K/rad$^2$\\
+				& $\psi_0$ & degrees \\ \\ \hline \\
+				\multicolumn{3}{c}{\bf Nonbonded} \\ \\
+	Energy parameter 	& $\epsilon/k_B$ & K \\
+	Collision diameter &	 $\sigma$ & \AA \\
+	Charge			& q & e \\  \\ \hline \\
+				\multicolumn{3}{c}{\bf {Simulation Parameters}} \\ \\
+	Simulation box length & & \AA \\
+	Volume                       & & \AA$^3$ \\
+	Distances                   & & \AA \\
+	Rotational width         & & degrees \\
+	Temperature               & & K \\
+	Pressure                      & & bar \\
+	Chemical potential       & & kJ/mol \\
+	Energy                   & & kJ/mol \\
+	Fugacity                       & & bar \\ \hline \hline
+	
+	\end{tabular}
+	\end{center}
+	\label{Tab:Cassandra_Units}
+\end{table}
+\end{center}
+

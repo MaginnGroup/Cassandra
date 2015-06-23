@@ -1,0 +1,9 @@
+\section*{Pair Energy Storage}
+Any MC move requires calculation of the change in the energy of the system. This, usually,
+means calculation of the energy of the system before and after the move has been 
+attempted. For example, in a translation move, atomic positions of a randomly selected
+molecule are perturbed. The acceptance rule for this move requires that the energy of the
+molecule in old and new configurations is required. If the energy of the molecule in old
+state is available, considerable savings in the calculation can be achieved. Cassandra
+implments this strategy by storing the interactions between two molecules in an array.
+Two arrays are defined: {\bf pair\_nrg\_vdw} and {\bf pair\_nrg\_elec}.

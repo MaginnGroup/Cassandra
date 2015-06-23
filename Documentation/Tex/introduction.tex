@@ -1,0 +1,40 @@
+\chapter{Introduction}
+Cassandra is an open source Monte Carlo package capable of simulating
+any number of molecules composed of rings, chains, or both. It can be
+used to simulate compounds such as small organic molecules, oligomers,
+aqueous solutions and ionic liquids. It handles a standard ``Class
+I''-type force field having fixed bond lengths, harmonic bond angles
+and improper angles, a CHARMM or OPLS-style dihedral potential, a
+Lennard-Jones 12-6 potential and fixed partial charges. It does {\em
+  not} treat flexible bond lengths. Cassandra uses OpenMP parallelization and comes
+with a number of scripts, utilities and examples to help with
+simulation setup. \\ \\ 
+%
+Cassandra is capable of simulating systems in the following ensembles: \\ 
+%
+\begin{itemize}
+\item Canonical (NVT) 
+\item Isothermal-Isobaric (NPT) 
+\item Grand canonical ($\mu$VT) 
+\item Constant volume Gibbs (NVT-Gibbs) 
+\item Constant Pressure Gibbs (NPT- Gibbs)
+\end{itemize}
+
+\section{Distribution}
+Cassandra is distributed as a tar file \texttt{cassandra.tar}. You can unpack the distribution by running the command \\ \\
+%
+\texttt{> tar -xvf cassandra.tar} \\ \\
+%
+Upon successful unpacking of the archive file, the Cassandra directory will have a number of subdirectories. Please refer to the README file in the main Cassandra directory for a detailed information on each of the subdirectories. \\ \\
+%
+\texttt{Documentation} - Contains this user guide and a document showing how molecular connectivity files are generated.\\ \\
+%
+\texttt{Examples} - Contains example input files and short simulations of various systems in the above ensembles. \\ \\
+%
+\texttt{MCF} - Molecular connectivity files for a number of
+molecules. These can be used as the basis for generating your own MCF files for
+molecules of interest. \\ \\ 
+%
+\texttt{Scripts} - Useful scripts to set up simulation input files. \\ \\
+%
+\texttt{Src} - Cassandra source code. \\ \\
