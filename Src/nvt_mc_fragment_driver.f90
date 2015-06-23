@@ -1,4 +1,4 @@
-!********************************************************************************
+!*******************************************************************************
 !   Cassandra - An open source atomistic Monte Carlo software package
 !   developed at the University of Notre Dame.
 !   http://cassandra.nd.edu
@@ -17,7 +17,7 @@
 !
 !   You should have received a copy of the GNU General Public License
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-!********************************************************************************
+!*******************************************************************************
 ! This file contains three subroutines: 
 !
 !
@@ -31,12 +31,12 @@
 !
 ! 08/07/13 : Created beta version
 !    
-!*********************************************************************************************
+!*******************************************************************************
 
 SUBROUTINE NVT_MC_Fragment_Driver
-  !************************************************************************************
-  ! The subroutine carries out atoms displacement to sample conformations of a branch
-  ! point. 
+  !*****************************************************************************
+  ! The subroutine carries out atoms displacement to sample conformations of a 
+  ! branch point. 
   !
   ! CALLED BY
   !
@@ -64,12 +64,12 @@ SUBROUTINE NVT_MC_Fragment_Driver
   INTEGER :: is, im, this_box, i, rand_atom, naccept, ia
   INTEGER :: naverage
 
-  REAL(DP) :: e_angle_old, e_angle_new, delta_e_angle, p_acc, old_coord, new_coord
+  REAL(DP) :: e_angle_old, e_angle_new, delta_e_angle, ln_pacc, old_coord, new_coord
   REAL(DP) :: area_o, area_n
   REAL(DP) :: e_improper_n, e_improper_o, delta_e_improper, delta_e, e_total_o
   REAL(DP) :: ac_frag_energy, zig_over_omega
 
-  LOGICAL :: theta_bound
+  LOGICAL :: theta_bound, accept, accept_or_reject
 
   ! compute angle energy for the input conformation
 
@@ -97,9 +97,10 @@ SUBROUTINE NVT_MC_Fragment_Driver
 
      DO i = 1, n_mcsteps
         
-        ! Note that the 1st atom is at the origin while the second atom is
-        ! aligned along the x axis. So, we sample only the natoms(is) - 2 atoms
+        ! Atom 1 is fixed at the origin
+        ! Atom 2 is fixed on the x axis with a rigid bond
 
+        ! We sample only the natoms(is) - 2 atoms
         
         rand_atom = INT ( (natoms(is) - 2) * rranf()) + 3
         ! save the coordinates
@@ -120,9 +121,10 @@ SUBROUTINE NVT_MC_Fragment_Driver
         END IF
         delta_e = delta_e_angle + delta_e_improper
 
-        p_acc = min(1.0_DP, DEXP(-beta(this_box)*delta_e))
+        ln_pacc = beta(this_box) * delta_e
+        accept = accept_or_reject(ln_pacc)
         
-        IF ( rranf() < p_acc) THEN
+        IF ( accept ) THEN
 
            ! update energies 
 
@@ -149,12 +151,12 @@ SUBROUTINE NVT_MC_Fragment_Driver
         IF ( i > n_equilsteps ) THEN
 
            ac_frag_energy = ac_frag_energy + e_total_o
-           zig_over_omega = zig_over_omega + EXP(beta(this_box) * e_total_o)
+           zig_over_omega = zig_over_omega + DEXP(beta(this_box) * e_total_o)
           
            IF (MOD(i,nthermo_freq) == 0) THEN
               !           WRITE(frag_file_unit,*) natoms(is)
               
-              WRITE(frag_file_unit,*) temperature(this_box), e_angle_old
+              WRITE(frag_file_unit,*) temperature(this_box), e_total_o
               DO ia = 1, natoms(is)
                  WRITE(frag_file_unit,*) nonbond_list(ia,is)%element, atom_list(ia,im,is)%rxp, atom_list(ia,im,is)%ryp, &
                       atom_list(ia,im,is)%rzp
@@ -169,10 +171,10 @@ SUBROUTINE NVT_MC_Fragment_Driver
      END DO
      write(*,'(A30,I10)') 'Number of Trial moves', n_mcsteps
      write(*,'(A30,I10)') 'Accepted moves',  naccept
-     write(*,*) 'Average intramolecular energy', ac_frag_energy / REAL(n_mcsteps,DP) * atomic_to_kJmol, 'kJ/mol'
-     WRITE(*,'(A,2X,F30.10)') 'Z/Omega ',1.0_DP/ (zig_over_omega / REAL(n_mcsteps - n_equilsteps, DP))
+     write(*,*) 'Average intramolecular energy', ac_frag_energy / REAL(n_mcsteps - n_equilsteps, DP) * atomic_to_kJmol, 'kJ/mol'
+     WRITE(*,'(X,A,2X,F30.10)') 'Z/Omega ', 1.0_DP / (zig_over_omega / REAL(n_mcsteps - n_equilsteps, DP))
      WRITE(logunit,*) 'Zig by omega will be printed. This is required in GCMC acceptance rule if fugacity is used.'
-     WRITE(logunit, '(A,2X,F30.10)') 'Z/Omega ',1.0_DP/(zig_over_omega/REAL(n_mcsteps - n_equilsteps, DP))
+     WRITE(logunit, '(A,2X,F30.10)') 'Z/Omega ', 1.0_DP / (zig_over_omega / REAL(n_mcsteps - n_equilsteps, DP))
   END DO
 
 
@@ -197,11 +199,7 @@ SUBROUTINE Change_Phi_Theta(this_atom,im,is,theta_bound)
   theta_bound = .false.
 
 
-!  delta_cos = 0.2_DP
-!  delta_phi = 10.0_DP * PI/180.0_DP
-
   ! Get spherical coordinates
-
   this_x = atom_list(this_atom,im,is)%rxp
   this_y = atom_list(this_atom,im,is)%ryp
   this_z = atom_list(this_atom,im,is)%rzp
@@ -212,8 +210,10 @@ SUBROUTINE Change_Phi_Theta(this_atom,im,is,theta_bound)
   rho = DSQRT(rho)
   bond_length = DSQRT(bond_length)
 
+  ! azimuthal angle
   theta = DACOS(this_z/bond_length)
   
+  ! polar angle
   phi = DASIN(this_y/rho)
 
 
@@ -224,13 +224,8 @@ SUBROUTINE Change_Phi_Theta(this_atom,im,is,theta_bound)
   END IF
 
   ! Change theta and phi
-
   dcostheta = (2.0_DP * rranf() - 1.0_DP ) * delta_cos_max 
   dphi = (2.0_DP * rranf() - 1.0_DP ) * delta_phi_max 
-
-
-!  theta = DACOS(2.0_DP * rranf() - 1.0_DP)
-!  phi = (2.0_DP * rranf()) * PI
 
   ! new polar and azimuthal anlges
   IF ( (ABS(DCOS(theta) + dcostheta) > 1.0_DP) ) THEN

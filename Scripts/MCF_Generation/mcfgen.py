@@ -36,9 +36,10 @@
 import sys, os, argparse, linecache, re
 
 #*******************************************************************************
-#ARGUMENT PARSE
+# ARGUMENT PARSE
 #*******************************************************************************
-parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description=
+parser = argparse.ArgumentParser(
+formatter_class=argparse.RawDescriptionHelpFormatter, description=
 """DESCRIPTION:
 To generate a Molecular Connectivity File (.mcf), you will need both a
 configuration file and a file with the force field parameters.
@@ -56,50 +57,28 @@ To generate a .mcf from forcefield parameters in the literature:
 To generate a .mcf from a GROMACS forcefield file
 
   1) Run
-	     > python mcfgen.py molecule.pdb -f molecule.itp
-			 
-NOTE: The mass of pseudoatoms must be manually entered into the .mcf file.
+       > python mcfgen.py molecule.pdb -f molecule.itp
+
+NOTES:
+  1) The mass of pseudoatoms must be manually entered into the .mcf file.
+  2) This script does not currently support multiple dihedrals for the same 4 
+     atoms.
+  3) Improper definitions are not currently read from Gromacs forcefield files.
 """)
 parser.add_argument('configFile', 
-                help="""CONFIGFILE must be in either .pdb or .cml 
-format. A .pdb file can be generated using Gaussview, 
-while .cml files can be generated using Avogadro. 
-""")
+								help="""CONFIGFILE must be in either .pdb or .cml format. """ + 
+										 """A .pdb file can be generated using Gaussview, """ +
+										 """while .cml files can be generated using Avogadro.""")
 parser.add_argument('--ffTemplate', action='store_true',
-                help="""Generate a blank force field file template.
-""")
+								help="""Generate a blank force field file template.""")
 parser.add_argument('--ffFile', '-f', nargs=1, 
-                help="""The default FFFILE is molecule.ff, a custom format for 
-this script. Alternatively, the forcefile parms can 
-be supplied in GROMACS format (.itp).
-""")
+								help="""The default FFFILE is molecule.ff, a custom format """ +
+										 """for this script. Alternatively, the forcefile """ +
+										 """parms can be supplied in GROMACS format (.itp).""")
 parser.add_argument('--mcfFile', '-m', nargs=1, 
-                help="""The default MCFFILE is molecule.mcf.
-""")
-
+								help="""The default MCFFILE is molecule.mcf.""")
 
 args = parser.parse_args()
-
-
-configFile=args.configFile
-basename = os.path.splitext(os.path.basename(configFile))[0]
-ffTemplate = args.ffTemplate
-
-if args.ffFile:
-	ffFile = args.ffFile[0]
-	ffFileExt = os.path.splitext(ffFile)[1]
-	if ffFileExt == '.ff':
-		ffFileType = 'native'
-	elif ffFileExt == '.itp' or ffFileExt == '.top':
-		ffFileType = 'gromacs'
-else:
-	ffFile = basename + '.ff'
-	ffFileType = 'native'
-
-if args.mcfFile:
-	mcfFile = args.mcfFile[0]
-else:
-	mcfFile = basename + '.mcf'
 
 #*******************************************************************************
 # VARIABLE DEFINITIONS
@@ -885,12 +864,6 @@ def fragConnectivityInfo(mcfFile):
 	mcf.write('\n\nEND\n')
 	mcf.close()
 
-def improperInfo(mcfFile):
-	mcf=open(mcfFile,'a')
-	mcf.write("\n# Improper_Info\n")
-	mcf.write("0\n")
-	mcf.close()
-
 def ffFileGeneration(infilename,outfilename):
 
 	print "\n\n*********Force field template file generation*********\n"
@@ -914,7 +887,7 @@ def ffFileGeneration(infilename,outfilename):
 	global dihedralType
 	if len(dihedralList) > 0:
 		dihedralType = raw_input("Enter the dihedral functional form " + 
-		                         "(CHARMM/OPLS/harmonic): ")
+		                         "(CHARMM/OPLS/harmonic/none): ")
 	else:
 		dihedralType = "NONE" 
 		#This is just a default. It will not affect molecules with no dihedrals.
@@ -923,10 +896,12 @@ def ffFileGeneration(infilename,outfilename):
 	#Each row in dihedarlList_atomType has each dihedral expressed as atomType
 	#Each row in angleList_atomType has each angle expressed as atomType
 
-
-	for i, rowdihedral in enumerate(dihedralList):
-		rowdihedralstr=rowdihedral.split()
-		dihedralList_atomType.append(lookupinlist(listofnames, rowdihedralstr))
+	if dihedralType == "NONE" or dihedralType == "none" or not dihedralType:
+		dihedralType = "none"
+	else:
+		for i, rowdihedral in enumerate(dihedralList):
+			rowdihedralstr=rowdihedral.split()
+			dihedralList_atomType.append(lookupinlist(listofnames, rowdihedralstr))
 
 	for i, rowangle in enumerate(angleList):
 		rowanglestr=rowangle.split()
@@ -949,7 +924,8 @@ def ffFileGeneration(infilename,outfilename):
 	forcefield("nonbonded","write")
 	forcefield("bonded","write")
 	forcefield("angles","write")
-	forcefield("dihedrals","write")
+	if dihedralType != "none":
+		forcefield("dihedrals","write")
 	forcefield("charges","write")
 
 def forcefield(degreeoffreedom,action):
@@ -1401,8 +1377,8 @@ def forcefield(degreeoffreedom,action):
 					linesrepeated=[]
 					ff.close()
 				elif dihedralType == "harmonic":
-					ff.write("K \n")
-					ff.write("phi \n\n")
+					ff.write("Angle \n")
+					ff.write("Constant \n\n")
 					linesrepeated=[]
 					ff.close()
 
@@ -1495,11 +1471,14 @@ returns:
 	bondParms, dict = (i,j): (type, length)	
 	angleParms, dict = (i,j,k): (type, [ktheta,] angle)
 	dihedralParms, dict = (i,j,k,l): (type, parms)
+	improperParms, dict = (i,j,k,l): (type, kpsi, angle)
 """
 	
 	bondParms = {}
 	angleParms = {}
 	dihedralParms = {}
+	improperParms = {}
+	global dihedralType
 
 	ff = open(ffFile,'r')
 
@@ -1512,7 +1491,7 @@ returns:
 			sigma = float(ff.readline().split()[1])
 			epsilon = float(ff.readline().split()[1])
 			try:
-				atom_type_charge = float(ff.readline().split()[1])
+				atom_type_charge = ff.readline().split()[1] # store as string
 			except:
 				atom_type_charge = 'None'
 
@@ -1550,22 +1529,27 @@ returns:
 				c3 = float(ff.readline().split()[1])
 				dihedralParms[index] = (dihedralType, c0, c1, c2, c3)
 			elif dihedralType == 'harmonic':
-				kphi = float(ff.readline().split()[1])
 				phi = float(ff.readline().split()[1])
+				kphi = float(ff.readline().split()[1])
 				dihedralParms[index] = (dihedralType, kphi, phi)
 			elif dihedralType == 'none':
 				dihedralParms[index] = (dihedralType,)
+		elif 'impropers' in line:
+			index = tuple([int(i) for i in ff.readline().split()]) #atomNumber
+			psi = float(ff.readline().split()[1])
+			kpsi = float(ff.readline().split()[1])
+			improperParms[index] = ('harmonic',kpsi,psi)
 		elif 'charge' in line:
 			data = ff.readline().split()
 			index = int(data[0]) #atomNumber
 			if len(data)>1:
-				atomParms[index]['charge'] = float(data[1])
+				atomParms[index]['charge'] = data[1] #store as string
 				
 			# else, if the information will be provided by atom type and corrected by checkParms(), do nothing
 				
 		line = ff.readline()
 
-	return atomParms, bondParms, angleParms, dihedralParms
+	return atomParms, bondParms, angleParms, dihedralParms, improperParms
 
 def readGromacs(ffFile, atomParms, bondParms, angleParms, dihedralParms, 
                 vdwType = None, comboRule = None):
@@ -1620,24 +1604,24 @@ returns:
 						index = int(data[0]) #atomNumber
 						if index not in atomParms:
 							atomParms[index] = {}
-						atomParms[index]['charge'] = float(data[6])
+						atomParms[index]['charge'] = data[6] #store as string
 					elif 'atomtypes' in section:
-						if data[4] != 'A':
+						if data[-3] != 'A':
 							raise Error('ptype is not A. Cassandra only supports point ' + 
 													'particles.')
 						index = data[0].upper() #atomType
 						if index not in atomParms:
 							atomParms[index] = {}
 						atomParms[index]['mass'] = float(data[2])
-						atomParms[index]['charge'] = float(data[3])
+						atomParms[index]['charge'] = data[3] #store as string
 						if comboRule == '1':
-							C6 = float(data[5])
-							C12 = float(data[6])
+							C6 = float(data[-2])
+							C12 = float(data[-1])
 							sigma = ((C12 / C6)**(1/6.)) * 10
 							epsilon = C6**2 / 4 / C12 / Rg
 						elif comboRule == '2' or comboRule == '3':
-							sigma = float(data[5]) * 10
-							epsilon = float(data[6]) / Rg
+							sigma = float(data[-2]) * 10
+							epsilon = float(data[-1]) / Rg
 						atomParms[index]['vdw'] = (vdwType, epsilon, sigma)
 					# Look for bondParms
 					elif 'bond' in section:
@@ -1777,7 +1761,7 @@ returns:
 
 def writeMcf(configFile, mcfFile, 
              atomList, bondList, angleList, dihedralList, ringList,
-             atomParms, bondParms, angleParms, dihedralParms):
+             atomParms, bondParms, angleParms, dihedralParms, improperParms):
 	"""arguments:
 	configFile, string = configuration file
 	mcfFile, string = molecular connectivity file
@@ -1790,6 +1774,7 @@ def writeMcf(configFile, mcfFile,
 	bondParms, dict = 
 	angleParms, dict = 
 	dihedralParms, dict =
+	improperParms, dict = 
 returns:
 	none
 """
@@ -1812,7 +1797,7 @@ returns:
 		mcf.write('  %-6s'   % (atomParms[i]['name']))
 		mcf.write('  %-2s'   % (atomParms[i]['element']))
 		mcf.write('  %7.3f'  % (atomParms[i]['mass']))
-		mcf.write('  %6.3f' % (atomParms[i]['charge']))
+		mcf.write('  %s' % (atomParms[i]['charge']))
 		mcf.write('  %2s  %8.3f  %8.3f' % atomParms[i]['vdw'])
 		for ring in ringList:
 			if str(i) in ring: mcf.write('  ring')
@@ -1880,19 +1865,52 @@ returns:
 			mcf.write('  %-8s' % dihedralParms[ijkl])
 		mcf.write('\n')
 
+	if improperParms:
+		mcf.write('\n!Improper Format\n')
+		mcf.write('!index i j k l type parameters\n')
+		mcf.write('!type="harmonic", parms=force_constant equilibrium_improper\n')
+	mcf.write('\n# Improper_Info\n')
+	mcf.write(str(len(improperParms)) + '\n')
+	nImproper = 0
+	for ijkl in improperParms:
+		nImproper = nImproper + 1
+		mcf.write('%-4d' % (nImproper))
+		mcf.write('  %-4d  %-4d  %-4d  %-4d' % ijkl)
+		mcf.write('  %-8s  %8.1f  %8.2f' % improperParms[ijkl])
+		mcf.write('\n')
+
 	mcf.close()
-	improperInfo(mcfFile)
 	fragInfo(mcfFile)
 	fragConnectivityInfo(mcfFile)
-
 
 #*******************************************************************************
 # FILE MANAGEMENT
 #*******************************************************************************
+configFile=args.configFile
 infilename_type = check_type_infilename(configFile)
 if infilename_type == 'cml':
 	cml_to_pdb(configFile)
-        configFile = configFile + '.pdb'
+	configFile = configFile + '.pdb'
+
+basename = os.path.splitext(os.path.basename(configFile))[0]
+ffTemplate = args.ffTemplate
+
+if args.ffFile:
+	ffFile = args.ffFile[0]
+	ffFileExt = os.path.splitext(ffFile)[1]
+	if ffFileExt == '.ff':
+		ffFileType = 'native'
+	elif ffFileExt == '.itp' or ffFileExt == '.top':
+		ffFileType = 'gromacs'
+else:
+	ffFile = basename + '.ff'
+	ffFileType = 'native'
+
+if args.mcfFile:
+	mcfFile = args.mcfFile[0]
+else:
+	mcfFile = basename + '.mcf'
+
 
 #*******************************************************************************
 # MAIN PROGRAM BEGINS HERE
@@ -1973,15 +1991,18 @@ else:
 	atomList, atomParms, = readPdb(configFile)
 	# Read parms
 	if ffFileType == 'native':
-		atomParms, bondParms, angleParms, dihedralParms = \
+		atomParms, bondParms, angleParms, dihedralParms, improperParms = \
 			readNative(ffFile, atomParms)
 	elif ffFileType == 'gromacs':
 		atomParms, bondParms, angleParms, dihedralParms = \
 			readGromacs(ffFile, atomParms, {}, {}, {})
+		improperParms = {}
 	
 	# Check parms
 	# The *Parms dictionaries may contain entries with atomType indices.
 	# We need to make sure all the atomNumber indices are populated.
+	if dihedralType == 'none':
+		dihedralList = []
 	atomParms, bondParms, angleParms, dihedralParms = \
 		checkParms(atomList,  bondList,  angleList,  dihedralList,
 		           atomParms, bondParms, angleParms, dihedralParms)
@@ -1989,7 +2010,7 @@ else:
 	# Got all the parms we need? write Mcf.
 	writeMcf(configFile, mcfFile, 
 	         atomList, bondList, angleList, dihedralList, ringList,
-	         atomParms, bondParms, angleParms, dihedralParms)
+	         atomParms, bondParms, angleParms, dihedralParms, improperParms)
 
 os.system("rm temporary.temp")
 if infilename_type == 'cml':
