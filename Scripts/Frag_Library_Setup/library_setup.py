@@ -411,7 +411,7 @@ for i in xrange(0, nbr_species):
 	input_mcf_gen.write("# Charge_Style\ncoul Ewald 12.0 0.000001\n\n")
 	input_mcf_gen.write("# Intra_Scaling\n0.0 0.0 0.0 1.0\n0.0 0.0 0.0 1.0\n\n")
 	input_mcf_gen.write("# Molecule_Files\n../../"+mcf_files[i]+" 50\n\n")
-	input_mcf_gen.write("# Box_Info\n1\nCUBIC\n10.0 10.0 10.0\n\nEND")
+	input_mcf_gen.write("# Box_Info\n1\nCUBIC\n25.0 25.0 25.0\n\nEND")
 	print "Done..."
 	input_mcf_gen.close()
 	print "Running Cassandra to generate MCF files..."+normal
@@ -502,6 +502,7 @@ for i in xrange(0, nbr_species):
 							zbyomega = zbyomega * float(line.split()[1])
 					logfile.close()
 				os.chdir('../../')
+			os.chdir('../../')
 
 
 #Go back to the master input file and rewrite the location of the fragment libraries.
