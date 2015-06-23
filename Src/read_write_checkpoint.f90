@@ -605,8 +605,8 @@ SUBROUTINE Write_Trials_Success
 
   DO ibox = 1, nbr_boxes
 
-     WRITE(logunit,'(A28,2X,I2)') ' Writing information for box', ibox
-     WRITE(logunit,*) ' *********************************************'
+     WRITE(logunit,'(X,A27,X,I2)') 'Writing information for box', ibox
+     WRITE(logunit,'(X,A59)') '***********************************************************'
      WRITE(logunit,*)
 
      IF (nvolumes(ibox) /= 0 ) THEN
@@ -617,8 +617,8 @@ SUBROUTINE Write_Trials_Success
      DO is = 1, nspecies
         
         WRITE(logunit,*) 
-        WRITE(logunit,*) ' ******************************************'
-        WRITE(logunit,*) ' Writing information for species', is
+        WRITE(logunit,'(X,A59)') '***********************************************************'
+        WRITE(logunit,'(X,A31,X,I2)') 'Writing information for species', is
         WRITE(logunit,*)
         WRITE(logunit,'(A20,2x,A10,2x,A10,2x,A10)') 'Move', 'Trials', 'Success', '% Success'
         
@@ -627,8 +627,8 @@ SUBROUTINE Write_Trials_Success
         IF (ntrials(is,ibox)%displacement /= 0 ) THEN
         
            WRITE(logunit,11) 'Translate', ntrials(is,ibox)%displacement, &
-                nsuccess(is,ibox)%displacement &
-                ,100.0*dble(nsuccess(is,ibox)%displacement)/dble(ntrials(is,ibox)%displacement)
+                nsuccess(is,ibox)%displacement, &
+                100.0*dble(nsuccess(is,ibox)%displacement)/dble(ntrials(is,ibox)%displacement)
         END IF
 
         ! rotation
@@ -690,14 +690,14 @@ SUBROUTINE Write_Trials_Success
                 100.0*dble(nsuccess(is,ibox)%disp_atom)/dble(ntrials(is,ibox)%disp_atom)
 
         END IF
-        WRITE(logunit,*) '**************************************'
+        WRITE(logunit,'(X,A59)') '***********************************************************'
         WRITE(logunit,*)
      END DO
         
   END DO
 
 11 FORMAT(A20,2x,I10,2x,I10,2x,f10.2)
-12 FORMAT(3(I10,2x),F10.2)
+12 FORMAT(I20,2x,I10,2x,I10,2x,f10.2)
 
   IF( SUM(nfragments) .GT. 0 ) THEN
 
@@ -708,9 +708,9 @@ SUBROUTINE Write_Trials_Success
         IF (species_list(is)%fragment) THEN
  
            WRITE(logunit,*)
-           WRITE(logunit,*)'*************************************'
-           WRITE(logunit,'(A31,2X,I2)') 'Writing information for species', is
-           WRITE(logunit,'(A10,2x,A10,2x,A10,2X,A10)') 'Fragment', 'Trials', 'Success', '% Success'
+           WRITE(logunit,'(X,A59)') '***********************************************************'
+           WRITE(logunit,'(X,A31,X,I2)') 'Writing information for species', is
+           WRITE(logunit,'(A20,2x,A10,2x,A10,2X,A10)') 'Fragment', 'Trials', 'Success', '% Success'
 
            DO ifrag = 1, nfragments(is)
               
@@ -720,7 +720,7 @@ SUBROUTINE Write_Trials_Success
                       100.0_DP * dble(regrowth_success(ifrag,is))/dble(regrowth_trials(ifrag,is))
               END IF
            END DO
-           WRITE(logunit,*)'*********************************'
+           WRITE(logunit,'(X,A59)') '***********************************************************'
         END IF
      
      END DO
@@ -736,7 +736,7 @@ SUBROUTINE Write_Subroutine_Times
 WRITE(logunit,*)
 WRITE(logunit,*) 'Writing information about subroutine times'
 WRITE(logunit,*)
-WRITE(logunit,*) '******************************************'
+WRITE(logunit,'(X,A59)') '***********************************************************'
 WRITE(logunit,*)
 
 

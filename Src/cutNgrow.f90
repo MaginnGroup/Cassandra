@@ -21,10 +21,10 @@
 
 SUBROUTINE Cut_N_Grow(this_box,mcstep)
 
-  !********************************************************************************
+  !*****************************************************************************
   !
-  ! The subroutine is used to sample conformations of molecules with cut and grow
-  ! method proposed in Macedonia and Maginn, Mol. Phys., 1999.
+  ! The subroutine is used to sample conformations of molecules with cut and
+  ! grow method proposed in Macedonia and Maginn, Mol. Phys., 1999.
   !
   ! Basic algorithm is described below.
   !
@@ -33,12 +33,13 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
   ! A species from the box is chosen at random based on its mole fraction in the
   ! box.
   !
-  ! A molecular of the species is chosen at random
+  ! A molecule of the species is chosen at random
   !
   ! One of the connections in the molecule is severed and randomly selected part
   ! of the molecule is deleted.
   !
-  ! Configurational biasing is then used to regrow the deleted portion of the molecule
+  ! Configurational biasing is then used to regrow the deleted portion of the
+  ! molecule
   !
   ! Called by
   !
@@ -51,7 +52,7 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
   !
   !   12/10/13 : Beta Release
   !`
-  !*********************************************************************************
+  !*****************************************************************************
 
 
 
@@ -86,7 +87,7 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
   REAL(DP) :: nrg_ring_frag_forward, nrg_ring_frag_reverse
   REAL(DP) :: lambda_for_cut
 
-  LOGICAL ::  cbmc_overlap, accept, accept_or_reject, update_flag, superbad, overlap
+  LOGICAL ::  cbmc_overlap, accept, accept_or_reject, update_flag, overlap
   LOGICAL :: del_overlap, cbmc_overlap_f, del_overlap_f, intra_overlap
   LOGICAL  :: inside_start, inside_finish
 
@@ -218,18 +219,20 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
      nrg_ring_frag_forward = 0.0_DP
 
      lambda_for_cut = molecule_list(alive,is)%cfc_lambda
-     CALL Cut_Regrow(alive,is,frag_start,frag_end,frag_order,frag_total,lambda_for_cut, &
-          e_prev, P_seq, P_forward, nrg_ring_frag_forward, cbmc_overlap, del_overlap)
+     CALL Cut_Regrow(alive,is,frag_start,frag_end,frag_order,frag_total, &
+          lambda_for_cut, e_prev, P_seq, P_forward, nrg_ring_frag_forward, &
+          cbmc_overlap, del_overlap)
 
   END IF
 
-  ! The last trial in the CBMC move may have resulted into an overlap so some of 
-  ! the atoms of that fragment might have 'exist' attribute as false. Make them alive
+  ! The last trial in the CBMC move may have resulted in an overlap, so some
+  ! of the atoms of that fragment might have 'exist' attribute as false. Make 
+  ! them alive
 
   atom_list(:,alive,is)%exist = .TRUE.
 
 
- ! Increment the total number of trials for growing frag_total 
+  ! Increment the total number of trials for growing frag_total 
  
   regrowth_trials(frag_total,is) = regrowth_trials(frag_total,is) + 1
 
@@ -293,11 +296,11 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
   END IF
 
   ! Note that the energy difference will not include angle energies as these
-  ! terms cancel out in the acceptance rule. However, they are needed in updating
-  ! energies if the move is accepted
+  ! terms cancel out in the acceptance rule. However, they are needed in 
+  ! updating energies if the move is accepted
 
-  delta_e_n = E_intra_vdw_n + E_intra_qq_n + E_inter_qq_n + E_inter_vdw_n + E_dihed_n + E_improper_n - &
-              E_selferf_n
+  delta_e_n = E_intra_vdw_n + E_intra_qq_n + E_inter_qq_n + E_inter_vdw_n &
+            + E_dihed_n + E_improper_n - E_selferf_n
 
   IF (l_charge) THEN
      ! store cos_mol and sin_mol arrays
@@ -341,8 +344,9 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
 
      lambda_for_cut = molecule_list(alive,is)%cfc_lambda
      nrg_ring_frag_reverse = 0.0_DP
-     CALL Cut_Regrow(alive,is,frag_start,frag_end,frag_order,frag_total, lambda_for_cut, & 
-          e_prev, P_seq, P_reverse, nrg_ring_frag_reverse, cbmc_overlap, del_overlap)
+     CALL Cut_Regrow(alive,is,frag_start,frag_end,frag_order,frag_total, &
+          lambda_for_cut, e_prev, P_seq, P_reverse, nrg_ring_frag_reverse, &
+          cbmc_overlap, del_overlap)
 
      atom_list(1:natoms(is),alive,is)%exist = .true.
 
@@ -382,15 +386,13 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
 
      IF (.NOT. l_pair_nrg) CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_inter_vdw_o,E_inter_qq_o,cbmc_overlap)
 
-     delta_e_o = E_intra_vdw_o + E_intra_qq_o + E_inter_vdw_o + E_inter_qq_o + E_dihed_o + E_improper_o - &
-                 E_selferf_o
+     delta_e_o = E_intra_vdw_o + E_intra_qq_o + E_inter_vdw_o + E_inter_qq_o &
+               + E_dihed_o + E_improper_o - E_selferf_o
 
-     ln_pacc = beta(this_box) * (delta_e_n - delta_e_o) + DLOG(P_forward) - DLOG(P_reverse)
+     ln_pacc = beta(this_box) * (delta_e_n - nrg_ring_frag_forward) &
+             - beta(this_box) * (delta_e_o - nrg_ring_frag_reverse) &
+             + DLOG(P_forward / P_reverse)
      
-     ! Modify ln_pacc to allow for ring biasing
-     
-     ln_pacc = ln_pacc + beta(this_box) * (nrg_ring_frag_reverse - nrg_ring_frag_forward)
-
      accept = accept_or_reject(ln_pacc)
 
   END IF
