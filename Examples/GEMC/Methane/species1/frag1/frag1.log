@@ -7,14 +7,14 @@ inputfile frag1.inp
 name of run: frag1
 
   Month      Day      Year
-     12       16      2013
+     03       26      2015
  
- Time:  11:07:23
+ Time:  15:49:05
  
 machine: maginnfe.crc.nd.edu
 
 
-Simulation type NVT_MC_Fragment     
+Simulation type: NVT_MC_Fragment     
 
  
  **** Copying Inputfile ****** 
@@ -96,9 +96,10 @@ Cell basis vector lengths in A,     20.0000      20.0000      20.0000
 Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
 Distance between box faces    20.0000      20.0000      20.0000
 Box volume, A^3          8000.0000
+ 
  *** Finished loading box information ***
  
-   VWD style used is:   NONE           in box:  1
+   VDW style used is:   NONE           in box:  1
  VDW style properly input
  
    Charge style used is:   NONE           in box:  1
@@ -129,9 +130,6 @@ L_Coul_CBMC not given for species    1
  Defaulting to true
  default  T
  
-No species type given for species    1
- Defaulting to normal
- assigned to type normal              
 Species and atom number   1   1
  atom name:             CH4_  
  element:               C 
@@ -160,9 +158,6 @@ Molecule    1  is defined to be linear
  
  No impropers in species            1
  *** Completed assigning improper info ***
- 
- 
- Insertable species:           1
  
  intramolecular scaling factors explicitly set
 Intra molecule scaling factors for species             1
@@ -205,31 +200,32 @@ Mixing rule used is:    LB
  
  ***** Reading seed info *********
  
-The starting seed s1 is         153587801
+ The starting seed s1 is:    153587801
  
  ****** Finished loading the seed ********
  
  **** Simulation temperature information ****
- Temperature assigned to box           1 is   175.000000000000       K
+  Temperature assigned to box     1  is  175.000    K
  
  *** Finished loading information for temperature ****
  
  
- *********Move Probability Info******
-Translation probability is                 1.0000
+ ********* Move Probability Info******
+    Translation probability is   1.000000
  
  
  Maximum width in cosine of polar angle is  0.200000000000000     
  Maximum width (degrees) in azimuthal angle is   10.0000000000000     
  ***** Finished reading the move probability info *****
- Number of moves is :           1
+Number of moves is :   1
  
  
 Thermodynamic quantities will written at every         10 MC steps.
  
 Coordinates will be written at every                   90 MC steps.
-movie header file for box      1 is              frag1_H.box1
-movie_XYZ file for box         1 is              frag1_box1.xyz
+ 
+movie header file for box      1 is    frag1_H.box1
+movie_XYZ file for box         1 is    frag1_box1.xyz
  
 The simulation will be run for                      1100000 MC steps.
  
@@ -265,7 +261,7 @@ Starting configuration for box           1 is
  
  *****Finished reading initial coordinate info *****
  
- ****** Reading Run_Type Infomraiton ******
+ ****** Reading Run_Type Information ******
  
  The input run type is Production
  Update frequency is         1000
@@ -274,13 +270,16 @@ Starting configuration for box           1 is
 starting type read_old                                                                                                                
 
  Configurations read successfully
- #********Charge Neutrality Check*********#
-Species            1    has charge                0.0000
+ ******** Charge Neutrality Check *********#
+Species            1    has charge                0.00000000
 Box                1    has charge                0.00000000
+ 
  #********Charge Neutrality Check*********#
  *****************************************
-  Starting energy components for box           1
+  Starting energy components for box   1
+  Atomic units-Extensive
  *****************************************
+ 
 Total system energy is                      0.000
 Intra molecular energy is                   0.000
 Bond energy is                              0.000
@@ -294,26 +293,4 @@ Inter molecule q is                         0.000
 Reciprocal ewald is                         0.000
 Self ewald is                               0.000
  *******************************************
-         Number of Trial moves   1100000
-                Accepted moves   1100000
- Average intramolecular energy  0.000000000000000E+000 kJ/mol
-Z/Omega                     1.0000000000
- *********** Ending simulation *****************
  
- 
- 
- Writing information about subroutine times
- 
- ******************************************
- 
- ********************************************
- 
- 
- Program execution time
-         0      Years
-         0     Months
-         0       Days
-         0      Hours
-         0    Minutes
-         3    Seconds
-       561         ms

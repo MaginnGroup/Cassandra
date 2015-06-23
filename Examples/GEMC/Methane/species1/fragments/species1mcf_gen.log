@@ -7,14 +7,14 @@ inputfile species1_mcf_gen.inp
 name of run: species1mcf_gen
 
   Month      Day      Year
-     12       16      2013
+     03       26      2015
  
- Time:  11:07:23
+ Time:  13:17:41
  
 machine: maginnfe.crc.nd.edu
 
 
-Simulation type MCF_Gen             
+Simulation type: MCF_Gen             
 
  
  **** Copying Inputfile ****** 
@@ -66,9 +66,10 @@ Cell basis vector lengths in A,     10.0000      10.0000      10.0000
 Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
 Distance between box faces    10.0000      10.0000      10.0000
 Box volume, A^3          1000.0000
+ 
  *** Finished loading box information ***
  
-   VWD style used is:   LJ             in box:  1
+   VDW style used is:   LJ             in box:  1
    VDW sum style is:   cut_tail       in box:  1
     rcut =    12.000   Angstrom
  VDW style properly input
@@ -107,8 +108,8 @@ L_Coul_CBMC not given for species    1
  Defaulting to true
  default  T
  
-Species type given for species    1  SORBATE             
-Insertion style given for species    1  COM                 
+1st_Fragment_Ins_Style not specified for species    1
+using default of "COM" for this species.
 Species and atom number   1   1
  atom name:             CH4_UA
  element:               C 
@@ -140,18 +141,16 @@ Molecule    1  is defined to be linear
  *** Completed assigning improper info ***
  
  
- Total number of atoms in the fragment            1  is            1
- Identity of these atoms are           1
+Total number of atoms in the fragment     1  is   1
+Identity of these atoms are
+           1
  
  ******* Finished loading fragment info ********
  
  ******* Generating anchor info ****************
  
- Number of anchors for fragment            1   is           1
- Anchor ids are           1
- 
- Insertable species:           1
- 
+ Number of anchors for fragment     1  is   0
+Anchor id is:
  *** Computed bond participation information ***
  
  
@@ -168,6 +167,3 @@ Molecule    1  is defined to be linear
  
  Position of the atom in angles
  
- 
- Finished generating fragments
- Exiting

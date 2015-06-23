@@ -886,6 +886,7 @@ CONTAINS
     ! However, after much effort a value of 0 will be returned for the energy!
     !
     ! CALLED BY:
+    ! Atom_Displacement/Fragment_Growth
     ! CALLS: 
     ! Minimum_Image_Separation
     ! Clean_Abort
@@ -906,9 +907,8 @@ CONTAINS
     INTEGER, INTENT(IN) :: this_atom,this_molecule,this_species
     REAL(DP), INTENT(OUT) :: E_intra_vdw,E_inter_vdw,E_intra_qq,E_inter_qq
     REAL(DP) :: E_intra_vdw_new,E_inter_vdw_new,E_intra_qq_new,E_inter_qq_new
-    LOGICAL, INTENT(OUT) :: overlap
-    
-    INTEGER :: this_box,is,im,js,ia, mol_is, itype, jtype, rinteraction
+    LOGICAL, INTENT(OUT) :: overlap   
+    INTEGER :: this_box,is,im,js,ia, mol_is, itype, jtype, rinteraction, vdw_in
     REAL(DP) :: rxij,ryij,rzij,rijsq,rxijp,ryijp,rzijp
     REAL(DP) :: Eij_vdw,Eij_qq
     REAL(DP) :: eps, sig, SigOverRsq, SigOverR6, SigOverR12
@@ -918,7 +918,7 @@ CONTAINS
     REAL(DP) :: rcut, rcutsq
     REAL(DP) :: this_lambda_lj
     REAL(DP) :: SigOverR, SigOverRn, SigOverRm, mie_coeff,  mie_n, mie_m
-
+ 
     LOGICAL :: get_vdw,get_qq, f_intra_nrg, get_interaction
 
     REAL(DP), PARAMETER :: A1 = 0.254829592_DP, A2 = -0.284496736_DP
@@ -953,11 +953,26 @@ CONTAINS
        err_msg(1) = 'Attempt to compute energy of an atom that does not exist'
        CALL Clean_Abort(err_msg,'Compute_Atom_Nonbond_Energy')      
     ENDIF
-     IF (int_vdw_sum_style(this_box) /= vdw_cut_tail)  THEN
-!	write(*,*) "test"
+
+
+     ! (B.Y.): temporary fix to passing next few lines for vdw sum styles other
+     ! than vdw_cut_tail.  
+
+     IF (int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
+       vdw_in = vdw_cut_tail
+     ELSEIF (int_vdw_sum_style(this_box) == vdw_cut) THEN
+       vdw_in = vdw_cut
+     ELSEIF (int_vdw_sum_style(this_box) == vdw_cut_shift) THEN
+       vdw_in = vdw_cut_shift
+     ELSEIF (int_vdw_sum_style(this_box) == vdw_cut_switch) THEN
+       vdw_in = vdw_cut_switch
+     ELSEIF (int_vdw_sum_style(this_box) == vdw_mie) THEN
+       vdw_in = vdw_mie
+     ENDIF
+
+     IF (int_vdw_sum_style(this_box) /= vdw_in)  THEN
 !    IF(int_vdw_style(this_box) == vdw_lj .AND. int_vdw_sum_style(this_box) == vdw_cut_tail .AND. &
 !       int_charge_style(this_box) == charge_coul .AND. int_charge_sum_style(this_box) == charge_ewald) THEN
-!       write(*,*) "test"       
        IF (cbmc_flag) THEN
           rcut = rcut_cbmc(this_box)
        ELSE
@@ -1079,21 +1094,10 @@ CONTAINS
                       qsc = charge_intra_scale(ia,this_atom,is)
                    ELSE
                       rij = SQRT(rijsq)
-		      !IF (int_vdw_sum_style(this_box) == vdw_mie)  THEN
-		      !	WRITE(*,*) "test"
-                	!mie_n = mie_nlist(mie_Matrix(is,js))
-                	!mie_m = mie_mlist(mie_Matrix(is,js))
-                	!mie_coeff = mie_n/(mie_n-mie_m) *(mie_n/mie_m)**(mie_m/(mie_n-mie_m))
-                	!SigOverR = sig/rij
-                	!SigOverRn = SigOverR ** mie_n
-                	!SigOverRm = SigOverR ** mie_m
-                	!Eij_vdw =  mie_coeff * eps * (SigOverRn - SigOverRm)
-		      !ELSE
-                        SigOverRsq = (sig**2) / rijsq
-                        SigOverR6  = SigOverRsq * SigOverRsq * SigOverRsq
-                        SigOverR12 = SigOverR6 * SigOverR6
-                        Eij_vdw = 4.0_DP * eps * (SigOverR12 - SigOverR6)
-                      !ENDIF
+                      SigOverRsq = (sig**2) / rijsq
+                      SigOverR6  = SigOverRsq * SigOverRsq * SigOverRsq
+                      SigOverR12 = SigOverR6 * SigOverR6
+                      Eij_vdw = 4.0_DP * eps * (SigOverR12 - SigOverR6)
                       
 		      x = alpha_ewald(this_box) * rij
                       T = 1.0_DP / (1.0_DP + P*x)
@@ -1621,8 +1625,6 @@ CONTAINS
                 SigOverRm = SigOverR ** mie_m
                 Eij_vdw =  mie_coeff * eps * ((SigOverRn - SigOverRm) - (SigOverRn_shift - SigOverRm_shift))
                 
-		!print *, Eij_vdw
-		!READ(*,*)
              ENDIF
              
              
