@@ -502,7 +502,6 @@ for i in xrange(0, nbr_species):
 							zbyomega = zbyomega * float(line.split()[1])
 					logfile.close()
 				os.chdir('../../')
-			os.chdir('../../')
 
 
 #Go back to the master input file and rewrite the location of the fragment libraries.
