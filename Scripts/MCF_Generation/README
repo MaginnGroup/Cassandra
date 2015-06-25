@@ -73,7 +73,7 @@ an ff file with the same basename is in the current folder:
  F  |  F
   \ | /
    \|/
-F---P---F
+    P
    /|\
   / | \
  F  |  F
