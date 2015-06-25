@@ -143,7 +143,7 @@
                       atom_list(1,alive,is)%rzp = (rranf() - 0.5_DP) * box_list(this_box)%length(3,3)                      
                    END IF
                    
-                   ! insert the rest of the molecules
+                   ! insert the rest of the molecule
                    
                    DO ia = 2,natoms(is)
                       

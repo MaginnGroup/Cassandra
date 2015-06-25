@@ -164,7 +164,7 @@ PROGRAM Main
      CALL Clean_Abort(err_msg,'Read_Checkpointfile')
   ENDIF
 
-  WRITE(logunit,'(a,/)') '*** Beginning Cassandra simulation ***'
+  WRITE(logunit,'(A60)') '************** Beginning Cassandra simulation **************'
 
   WRITE(logunit,'(a,a,/)') 'Version ',version
   WRITE(logunit,'(a,a,/)') 'inputfile ',inputfile
@@ -329,7 +329,7 @@ PROGRAM Main
   ! NR: I believe we have all the information to compute the 
   !     system charge and charge on each species
 
-   Write(logunit,*) '******** Charge Neutrality Check *********#'
+   Write(logunit,'(X,A59)') '***************** Charge Neutrality Check *****************'
 
    q_tot_sys = 0.0_DP; q_mol=0.0_DP
    
@@ -338,7 +338,7 @@ PROGRAM Main
       Do ia = 1, natoms(is)     
          q_mol = q_mol + nonbond_list(ia,is)%charge 
       END DO 
-      Write(logunit,'(A,T15,2X,I4,4x,A,T45,4x,f12.8)')'Species', is, 'has charge', q_mol 
+      Write(logunit,'(X,A,T15,2X,I4,4x,A,T45,4x,f12.8)')'Species', is, 'has charge', q_mol 
    ENDDO
 
    DO ibox = 1,nbr_boxes
@@ -354,7 +354,7 @@ PROGRAM Main
             END IF
          END DO
       END DO
-      Write(logunit,'(A,T13,4X,I4,4X,A,T45,4X,f12.8)')'Box ', ibox, 'has charge', q_tot_sys
+      Write(logunit,'(X,A,T13,4X,I4,4X,A,T45,4X,f12.8)')'Box ', ibox, 'has charge', q_tot_sys
       WRITE(logunit,*)
 
       IF (ABS(q_tot_sys) .gt. 0.000001) THEN
@@ -367,7 +367,7 @@ PROGRAM Main
       END IF
    END DO
 
-   Write(logunit,*) '#********Charge Neutrality Check*********#'
+   Write(logunit,'(X,A59)') '***************** Charge Neutrality Check *****************'
  ! NR: At this point we can initialize random number generator
 
   CALL init_seeds(iseed1, iseed3)
@@ -435,30 +435,29 @@ PROGRAM Main
   
   DO i = 1,nbr_boxes
      
-     WRITE(logunit,*) '*****************************************'
-     WRITE(logunit,'(A36,2X,I2)') ' Starting energy components for box', i
+     WRITE(logunit,'(X,A59)') '***********************************************************'
+     WRITE(logunit,'(X,A36,2X,I2)') 'Starting energy components for box', i
      WRITE(logunit,*) ' Atomic units-Extensive'
-     WRITE(logunit,*) '*****************************************'
      WRITE(logunit,*)
      
-     WRITE(logunit,'(A,T30,F20.3)') 'Total system energy is' , energy(i)%total
-     WRITE(logunit,'(A,T30,F20.3)') 'Intra molecular energy is', energy(i)%intra
-     WRITE(logunit,'(A,T30,F20.3)') 'Bond energy is', energy(i)%bond
-     WRITE(logunit,'(A,T30,F20.3)') 'Bond angle energy is', energy(i)%angle
-     WRITE(logunit,'(A,T30,F20.3)') 'Dihedral angle energy is', energy(i)%dihedral
-     WRITE(logunit,'(A,T30,F20.3)') 'Improper angle energy is', energy(i)%improper
-     WRITE(logunit,'(A,T30,F20.3)') 'Intra nonbond vdw is', energy(i)%intra_vdw
-     WRITE(logunit,'(A,T30,F20.3)') 'Intra nonbond elec is', energy(i)%intra_q
-     WRITE(logunit,'(A,T30,F20.3)') 'Inter molecule vdw is', energy(i)%inter_vdw
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Total system energy is' , energy(i)%total
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecular energy is', energy(i)%intra
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Bond energy is', energy(i)%bond
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Bond angle energy is', energy(i)%angle
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Dihedral angle energy is', energy(i)%dihedral
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Improper angle energy is', energy(i)%improper
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra nonbond vdw is', energy(i)%intra_vdw
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra nonbond elec is', energy(i)%intra_q
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule vdw is', energy(i)%inter_vdw
      IF (int_vdw_sum_style(i) == vdw_cut_tail) THEN
-        WRITE(logunit,'(A,T30,F20.3)') 'Long range correction is', energy(i)%lrc
+        WRITE(logunit,'(X,A,T30,F20.3)') 'Long range correction is', energy(i)%lrc
      END IF
-     WRITE(logunit,'(A,T30,F20.3)') 'Inter molecule q is', energy(i)%inter_q
-     WRITE(logunit,'(A,T30,F20.3)') 'Reciprocal ewald is', energy(i)%ewald_reciprocal
-     WRITE(logunit,'(A,T30,F20.3)') 'Self ewald is', energy(i)%ewald_self
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule q is', energy(i)%inter_q
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald is', energy(i)%ewald_reciprocal
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Self ewald is', energy(i)%ewald_self
 
-     IF( int_charge_sum_style(i) == charge_ewald) WRITE(logunit,'(A,T30,I20)') 'Number of vectors is', nvecs(i)
-     WRITE(logunit,*) '*******************************************'
+     IF( int_charge_sum_style(i) == charge_ewald) WRITE(logunit,'(X,A,T30,I20)') 'Number of vectors is', nvecs(i)
+     WRITE(logunit,'(X,A59)') '***********************************************************'
      WRITE(logunit,*)
 
   END DO
@@ -562,7 +561,7 @@ PROGRAM Main
 
 !$OMP END PARALLEL
 
-  write(logunit,*) '*********** Ending simulation *****************'
+  write(logunit,'(X,A59)') '******************** Ending simulation ********************'
   write(logunit,*)
   write(logunit,*)
 
@@ -588,7 +587,7 @@ PROGRAM Main
 
   CALL Write_Subroutine_Times
 
-  WRITE(logunit,*) '********************************************'
+  WRITE(logunit,'(X,A59)') '***********************************************************'
   WRITE(logunit,*)
   WRITE(logunit,*)
   

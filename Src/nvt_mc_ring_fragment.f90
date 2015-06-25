@@ -1,5 +1,5 @@
 
-!********************************************************************************
+!*******************************************************************************
 !   Cassandra - An open source atomistic Monte Carlo software package
 !   developed at the University of Notre Dame.
 !   http://cassandra.nd.edu
@@ -18,23 +18,23 @@
 !
 !   You should have received a copy of the GNU General Public License
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-!********************************************************************************
+!*******************************************************************************
 !
 ! This file contains routines to sample ring fragment 
 !
 ! It is based on the flip move outlined in Peristeras et al., Macromolecules, 2005, 38, 386-397
 !
-! Sampling of ring bond angles are accomplished by flipping a branched ring atom around the
-! axis formed by neighboring ring atoms. Any exocyclic atoms attached to the atom being flipped
-! will also undergo rotation about the axis. This preserves the bond length constraint. Jacobian
-! of the move cancels out for forward and reverse moves. Please see the reference for further
-! details.
+! Sampling of ring bond angles are accomplished by flipping a branched ring atom
+! around the axis formed by neighboring ring atoms. Any exocyclic atoms attached
+! to the atom being flipped will also undergo rotation about the axis. This 
+! preserves the bond length constraint. Jacobian of the move cancels out for 
+! forward and reverse moves. Please see the reference for further details.
 !
 ! There are three routines:
 !
 ! NVT_MC_Ring_Fragment
 !  
-!     This is the driver routine that performs the two moves - Flip_Move and Atom_Displacement_Move
+!     This is the driver routine that performs the two moves - 
 !
 ! Flip_Move
 !
@@ -45,10 +45,10 @@
 !     Performs spherical coordinate change move on the exocyclic atoms
 !
 ! 08/07/13 : Created beta version
-!**********************************************************************************************
+!*******************************************************************************
 
 SUBROUTINE NVT_MC_Ring_Fragment
-  !********************************************************************************************
+  !*****************************************************************************
   !
   ! CALLED BY
   !
@@ -59,7 +59,7 @@ SUBROUTINE NVT_MC_Ring_Fragment
   !        Flip_Move
   !        Atom_Displacement_Move
   !
-  !********************************************************************************************
+  !*****************************************************************************
 
   USE Run_Variables
   USE Random_Generators
@@ -119,12 +119,13 @@ SUBROUTINE NVT_MC_Ring_Fragment
      ! Store information with given frequency
      
      IF (MOD(i,nthermo_freq) == 0) THEN
-        WRITE(frag_file_unit,*) temperature(this_box), energy(this_box)%dihedral+ &
-             energy(this_box)%intra_vdw + energy(this_box)%intra_q + &
-             energy(this_box)%improper
+        WRITE(frag_file_unit,*) temperature(this_box), &
+             energy(this_box)%dihedral + energy(this_box)%intra_vdw + &
+             energy(this_box)%intra_q + energy(this_box)%improper
 
         DO ia = 1, natoms(is)
-           WRITE(frag_file_unit,*) nonbond_list(ia,is)%element, atom_list(ia,im,is)%rxp, atom_list(ia,im,is)%ryp, &
+           WRITE(frag_file_unit,*) nonbond_list(ia,is)%element, &
+                atom_list(ia,im,is)%rxp, atom_list(ia,im,is)%ryp, &
                 atom_list(ia,im,is)%rzp
         END DO
 
