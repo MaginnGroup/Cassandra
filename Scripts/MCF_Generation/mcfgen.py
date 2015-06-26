@@ -896,7 +896,7 @@ def ffFileGeneration(infilename,outfilename):
 	#Each row in dihedarlList_atomType has each dihedral expressed as atomType
 	#Each row in angleList_atomType has each angle expressed as atomType
 
-	if dihedralType == "NONE" or dihedralType == "none" or not dihedralType:
+	if not dihedralType or dihedralType == "NONE" or dihedralType == "none":
 		dihedralType = "none"
 	else:
 		for i, rowdihedral in enumerate(dihedralList):
@@ -1993,6 +1993,8 @@ else:
 	if ffFileType == 'native':
 		atomParms, bondParms, angleParms, dihedralParms, improperParms = \
 			readNative(ffFile, atomParms)
+		if dihedralType == 'none':
+			dihedralList = []
 	elif ffFileType == 'gromacs':
 		atomParms, bondParms, angleParms, dihedralParms = \
 			readGromacs(ffFile, atomParms, {}, {}, {})
@@ -2001,8 +2003,6 @@ else:
 	# Check parms
 	# The *Parms dictionaries may contain entries with atomType indices.
 	# We need to make sure all the atomNumber indices are populated.
-	if dihedralType == 'none':
-		dihedralList = []
 	atomParms, bondParms, angleParms, dihedralParms = \
 		checkParms(atomList,  bondList,  angleList,  dihedralList,
 		           atomParms, bondParms, angleParms, dihedralParms)
