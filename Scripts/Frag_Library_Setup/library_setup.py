@@ -679,17 +679,16 @@ for line_number in xrange(1,total_lines+1):
 		new_file.write('!------------------------------------------------------' + 
 	 	               '---one line per fragment\n\n')
 		if gcmc_flag == 1 and fugacity_flag == 1:
-			new_file.write("\n! DO NOT CHANGE THE SECTION ZIG BY OMEGA!")
 			new_file.write("\n# Zig_By_Omega_Info\n")
 			new_file.write(str(zbyomega)+"\n")
 		omit = True
+	elif not omit:
+		new_file.write(linecache.getline(input_file,line_number))
 	elif line_number > frag_files_line:
 		if linecache.getline(input_file,line_number)[0] == '#' or \
 		   'END' in linecache.getline(input_file,line_number):
 			omit = False
 			new_file.write(linecache.getline(input_file,line_number))
-	elif not omit:
-		new_file.write(linecache.getline(input_file,line_number))
 
 in_file.close()
 new_file.close()

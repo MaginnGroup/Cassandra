@@ -4,11 +4,40 @@
 \usepackage{gensymb}
 \usepackage[dvips]{graphicx}
 \usepackage{graphicx}
+\usepackage[procnames]{listings} % for code snippets
 \setlength{\oddsidemargin}{0in}
 \setlength{\evensidemargin}{0in}
 \setlength{\textwidth}{6.5in}
+\graphicspath{{Figures/}} % Specifies the directory where pictures are stored
 %\setcounter{secnumdepth}{3}
 %\usepackage{cases}
+\usepackage{color}
+\definecolor{red}{RGB}{255,0,0}
+\definecolor{green}{RGB}{0,255,0}
+\definecolor{blue}{RGB}{0,0,255}
+\definecolor{ltgray}{RGB}{220,220,220}
+
+\linespread{1.2} % Line spacing
+\setlength\parindent{0pt} % Uncomment to remove all indentation from paragraphs
+\setlength{\parskip}{\baselineskip}
+
+\usepackage{listings}
+\lstset{language=[90]Fortran,
+	aboveskip=3mm,
+	belowskip=3mm,
+	showstringspaces=false,
+	basicstyle=\ttfamily\small,
+	keywordstyle=\color{red},
+	commentstyle=\color{blue},
+	breaklines=true,
+	breakatwhitespace=true,
+	tabsize=2,
+	backgroundcolor=\color{ltgray},
+	numbers=left,
+	numberblanklines=true,
+	escapeinside=||
+}
+\renewcommand{\lstlistingname}{Code}
 
 \begin{document}
 \include{title}
@@ -18,9 +47,8 @@
 \include{forcefield}
 \include{howto}
 \include{input_files}
+\include{acceptance_criteria}
 %\include{acknowledgement}
 \bibliography{reference}
 \bibliographystyle{unsrt}
 \end{document}
-
-
