@@ -61,7 +61,7 @@ PROGRAM Lowenstein_v1
   CALL readInput(maxAtomNumber,xlength,ylength,zlength,alphaAngle,betaAngle,gammaAngle, &
                  Coordinates_Matrix,Element_Array, Desired_Ratio, newFileName)
 
-  
+
   ! identify the neighbors
   CALL findNearestNeighbors(Actual_Neighbors)
 
@@ -91,6 +91,7 @@ PROGRAM Lowenstein_v1
   Try_Again: DO
     IF ((Lowenstein_Ratio .GT. 1.01_DP*Desired_Ratio) .AND. (ntries .LT. 20)) THEN
       ntries = ntries + 1
+
       ! reset the structures; reset Lowenstein_Ratio; call the process again
       CALL createLowensteinStructures(Lowenstein_Mask, Lowenstein_Si, Lowenstein_Al, Si_Count, Al_Count, &
                                       Lowenstein_Configuration)
@@ -105,19 +106,19 @@ PROGRAM Lowenstein_v1
   END DO Try_Again
 
   ! Now that the specified ratio has been achieved, create an output xyz file.
-  WRITE(*,801), 'Desired Lowenstein Ratio: ', Desired_Ratio
-  WRITE(*,801), 'Actual Lowenstein Ratio: ', Lowenstein_Ratio
+  WRITE(*,801) 'Desired Lowenstein Ratio: ', Desired_Ratio
+  WRITE(*,801) 'Actual Lowenstein Ratio: ', Lowenstein_Ratio
   801 FORMAT(A26,2X,F9.6)
 
 
   OPEN (UNIT = 25, FILE = newFileName, STATUS = "NEW", POSITION = "ASIS", &
          ACTION = "WRITE",  IOSTAT = OpenStatus)
-  WRITE(25,800), maxAtomNumber
+  WRITE(25,800) maxAtomNumber
   800 FORMAT(1X,I6.1/)
   ijk = 0
   DO ijk = 1, maxAtomNumber
     Lowenstein_Configuration(ijk) = ADJUSTR(Lowenstein_Configuration(ijk)) ! return to original style
-    WRITE(25,600, ADVANCE = "NO"), Lowenstein_Configuration(ijk), Coordinates_Matrix(ijk,1), Coordinates_Matrix(ijk,2), &
+    WRITE(25,600, ADVANCE = "NO") Lowenstein_Configuration(ijk), Coordinates_Matrix(ijk,1), Coordinates_Matrix(ijk,2), &
                    Coordinates_Matrix(ijk,3)
   END DO
   600 FORMAT(A2, 3(3X,F17.12)/)
@@ -165,6 +166,7 @@ PROGRAM Lowenstein_v1
       READ *, initSeed
       WRITE(*, '(1X, A)', ADVANCE = "NO") "Enter the name of the output file: "
       READ *, outFile
+ 
 
       IF (initSeed == 'Y') THEN
         CALL RANDOM_SEED(size = nSeed)
@@ -174,11 +176,11 @@ PROGRAM Lowenstein_v1
         CALL RANDOM_SEED(PUT = randomVarSeed)
         DEALLOCATE(randomVarSeed)
       ELSE
-        WRITE(*,*), 'Response other than "Y", using default seed'
+        WRITE(*,*) 'Response other than "Y", using default seed'
         CALL RANDOM_SEED()
       END IF
 
-      READ(15,350), xmax, ymax, zmax, alphaAngle, betaAngle, gammaAngle
+      READ(15,350) xmax, ymax, zmax, alphaAngle, betaAngle, gammaAngle
       350 FORMAT(8X,2(F8.4,1X),F8.4,3(F7.3))
 
       nline = 0
@@ -201,7 +203,7 @@ PROGRAM Lowenstein_v1
       ! Assume it is a .pdb file since pdb's provide a,b,c, alpha, beta, gamma for the cell dimensions
       nline = 1
       ReadTheFile: DO
-        READ(15,FMT = '(6X,I5.1)',END = 10,IOSTAT = readStatus), NumAtoms(nline)
+        READ(15,FMT = '(6X,I5.1)',END = 10,IOSTAT = readStatus) NumAtoms(nline)
         IF (readStatus /= 0) THEN
           EXIT
         END IF
@@ -221,7 +223,7 @@ PROGRAM Lowenstein_v1
       READ(15,*)
 
       DO nline = 1, maxAtomNumber
-        READ(15,450,END=10, IOSTAT = readStatus), Coordinates(nline,1), Coordinates(nline,2), Coordinates(nline,3), &
+        READ(15,450,END=10, IOSTAT = readStatus) Coordinates(nline,1), Coordinates(nline,2), Coordinates(nline,3), &
                                      Element(nline)
         Element(nline) = ADJUSTL(Element(nline))
         ! ADJUSTL accounts for leading blanks which will occur for elements O, H, F, etc..
@@ -491,9 +493,9 @@ PROGRAM Lowenstein_v1
 
       ! Deallocate the pointers. note that some input files will not have any aluminum - 
       ! therefore, check for P2 otherwise a runtime error will occur
-      DEALLOCATE(P1)
+      NULLIFY(P1)
       IF (ASSOCIATED(P2)) THEN
-        DEALLOCATE(P2)
+        NULLIFY(P2)
       END IF
 
       IF (ALLOCATED(config)) THEN
@@ -502,6 +504,7 @@ PROGRAM Lowenstein_v1
 
       ALLOCATE(config(maxAtomNumber))
       config = Element_Array
+
 
     END SUBROUTINE createLowensteinStructures
 
@@ -560,7 +563,7 @@ PROGRAM Lowenstein_v1
       DO WHILE (actual .GT. Desired_Ratio)
 
         i = i + 1
-         
+
         numInList = COUNT(logicalMask) ! counts the number of valid silicon sites for this iteration
 
         ! Now, change the ratio of swaps vs insertions according to the current state of the ratio.
@@ -608,10 +611,12 @@ PROGRAM Lowenstein_v1
           CASE ('Swap')
             selectAL = NINT(nAL*(randSelectAL(i)))
             ! insert an aluminum
-            elementID = 'SI' 
+            elementID = 'SI'
+          
             CALL lowensteinInsert(selectSI,listSI,listAL,config,elementID,logicalMask)
             ! insert a silicon
             elementID = 'AL'
+         
             CALL lowensteinInsert(selectAL,listSI,listAL,config,elementID,logicalMask) 
 
             ! we now have our two atoms; fix the lists, and repair the mask
@@ -620,6 +625,7 @@ PROGRAM Lowenstein_v1
 
           CASE ('Insert')
             elementID = 'SI'
+        
             CALL lowensteinInsert(selectSI,listSI,listAL,config,elementID,logicalMask)
  
             ! now, fix the list, and repair the mask
@@ -663,9 +669,11 @@ PROGRAM Lowenstein_v1
       TYPE(Lowenstein_List), POINTER :: P1
 
       INTEGER :: j
-
-      NULLIFY(P1)
-      ALLOCATE(P1)
+      
+      IF (ASSOCIATED(P1)) THEN
+        NULLIFY(P1)
+      END IF
+      
       ! check the elementID, and traverse the appropriate list to the selectedAtom
       IF (elementID == 'SI') THEN
         P1 => listSI
@@ -678,10 +686,9 @@ PROGRAM Lowenstein_v1
             P1 => P1%Next
           END DO
       END IF
-
+     
       ! P1 will now be pointing towards our selected atom's actual index within the structure
-      selectedAtom = P1%atomIndex
-      NULLIFY(P1)
+      selectedAtom = P1%atomIndex 
       ! insert the atom and alter config and the logicalMask
       IF (config(selectedAtom) == 'SI') THEN
         config(selectedAtom) = 'AL'
@@ -691,6 +698,7 @@ PROGRAM Lowenstein_v1
         logicalMask(selectedAtom) = .TRUE. ! note that this is inherently true
       END IF
 
+      NULLIFY(P1)
     END SUBROUTINE lowensteinInsert
 
     !-fixStructures-------------------------------------------------------------------------------------
