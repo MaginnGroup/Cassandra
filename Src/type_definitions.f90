@@ -535,14 +535,12 @@ MODULE Type_Definitions
 
 !-------------------------------------------------------------------------------------------------
 
- TYPE Frag_Coord_Class_XYZ
-    ! This class holds the information for atomic coordinates of atoms in each fragment
-    ! Dimension (MAXVAL(frag_list(:,:)%type, MAX_Config, MAXVAL(frag_list(:,:)%natoms)
-    REAL(DP) :: rxp, ryp, rzp
- END TYPE Frag_Coord_Class_XYZ
-
  TYPE Frag_Coord_Class
-    REAL(DP) :: natoms_this_frag, nconfig_this_frag, fragtype_this_frag
+    REAL(DP) :: rxp, ryp, rzp
  END TYPE Frag_Coord_Class
+
+ TYPE Frag_Library_Class
+    TYPE(Frag_Coord_Class), DIMENSION(:,:,:), ALLOCATABLE :: frag_coords
+ END TYPE Frag_Library_Class
 
 END MODULE Type_Definitions
