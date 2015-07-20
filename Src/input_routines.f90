@@ -2996,48 +2996,47 @@ SUBROUTINE Get_Fragment_Coords
 
   ! Allocate arrays for frag_coords
   
-  nfrag_types = MAXVAL(frag_list(:,:)%type)
-  natoms_max = MAXVAL(frag_list(:,:)%natoms)
   ! Determine maximum number of configurations
   
   ALLOCATE(config_read(nfrag_types))
   config_read(:) = .FALSE.
 
-  max_config = 0
 
-
-  DO is = 1, nspecies
-     IF (nfragments(is) /=0 ) THEN
-
-        DO ifrag = 1, nfragments(is)
-           
-           ifrag_type = frag_list(ifrag,is)%type
-
-           ! open the file and read # of configurations
-           OPEN(UNIT=10,FILE=res_file(ifrag,is))
-
-
-           READ(10,*) this_config
-           frag_list(ifrag,is)%nconfig = this_config
-           max_config = MAX(this_config,max_config)
-           write(*,*) 'nfrag_types=', nfrag_types
-                      
-           CLOSE(UNIT=10)
-
-        END DO
-     END IF
-  END DO
-  WRITE(logunit,*) 
-  WRITE(logunit,*) 'Maximum configurations stored', max_config
-  WRITE(logunit,*)
-
-  ALLOCATE(frag_coords(natoms_max,max_config,nfrag_types),STAT=Allocatestatus)
-
+  ALLOCATE(frag_library(nspecies),STAT=Allocatestatus)
   IF (Allocatestatus /= 0 ) THEN
      err_msg = ''
      err_msg(1) = 'Error allocating array for frag_coords'
      CALL Clean_Abort(err_msg,'Get_Frag_Coords')
   END IF
+
+
+  DO is = 1, nspecies
+
+     max_config = 0
+     nfrag_types = MAXVAL(frag_list(:,is)%type)
+     natoms_max = MAXVAL(frag_list(:,is)%natoms)
+
+     IF (nfragments(is) /=0 ) THEN
+        DO ifrag = 1, nfragments(is)           
+           ifrag_type = frag_list(ifrag,is)%type
+           ! open the file and read # of configurations
+           OPEN(UNIT=10,FILE=res_file(ifrag,is))
+           READ(10,*) this_config
+           frag_list(ifrag,is)%nconfig = this_config
+           max_config = MAX(this_config,max_config)                      
+           CLOSE(UNIT=10)
+        END DO
+     END IF
+
+  ALLOCATE(frag_library(is)%frag_coords(natoms_max,max_config, nfrag_types)
+  
+
+  END DO
+
+  WRITE(logunit,*) 
+  WRITE(logunit,*) 'Maximum configurations stored', max_config
+  WRITE(logunit,*)
+
 
   ALLOCATE(nrg_frag(max_config,nfrag_types), STAT = AllocateStatus)
 
