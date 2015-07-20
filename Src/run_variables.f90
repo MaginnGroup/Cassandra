@@ -364,7 +364,7 @@ USE Type_Definitions
   TYPE(Fragment_Bond_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: fragment_bond_list
 
   ! Array for storing coordinates of fragments
-  TYPE(Frag_Coord_Class), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: frag_coords
+  TYPE(Frag_Coord_Class), DIMENSION(:), ALLOCATABLE, TARGET :: frag_coords
 
  ! Array for storing energies of fragments
   ! Dimensions of (max_config,nfrag_types)
