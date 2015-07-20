@@ -1458,7 +1458,7 @@ SUBROUTINE Get_Atom_Info(is)
               CALL Clean_Abort(err_msg,'Get_Atom_Info')
            ENDIF
 
-           WRITE(logunit,'(A,T25,I3,1x,I3)') 'Species and atom number', is,ia
+           WRITE(logunit,'(A,T25,I3,1x,I5)') 'Species and atom number', is,ia
            WRITE(logunit,'(A,T25,A)') ' atom name:',nonbond_list(ia,is)%atom_name
            WRITE(logunit,'(A,T25,A)') ' element:',nonbond_list(ia,is)%element
            WRITE(logunit,'(A,T25,F10.4)') ' mass:',nonbond_list(ia,is)%mass
@@ -2302,7 +2302,7 @@ SUBROUTINE Get_Fragment_Anchor_Info(is)
            line_nbr = line_nbr + 1
            
            CALL Parse_String(molfile_unit,line_nbr,2,nbr_entries,line_array,ierr)
-           write(*,*) i, String_To_Int(line_array(1))
+           ! write(*,*) i, String_To_Int(line_array(1))
            IF ( String_To_Int(line_array(1)) /= i ) THEN
               ! fragments are not listed sequentially
               err_msg = ''
@@ -2380,11 +2380,11 @@ SUBROUTINE Get_Fragment_Info(is)
   INTEGER :: i_atom, j_atom, atom1, atom2
   INTEGER, ALLOCATABLE :: anchor_id(:)
   CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(50000) :: line_array_zeo(10000)
 
   line_nbr = 0
   ierr = 0
   REWIND(molfile_unit)
-
   DO
      line_nbr = line_nbr + 1
      CALL Read_String(molfile_unit,line_string,ierr)
@@ -2399,6 +2399,7 @@ SUBROUTINE Get_Fragment_Info(is)
         line_nbr = line_nbr + 1
         CALL Parse_String(molfile_unit,line_nbr,1,nbr_entries,line_array,ierr)
         ! Make sure that number of fragments has not changed
+
         IF (String_To_Int(line_array(1)) /= nfragments(is)) THEN
            err_msg = ''
            err_msg(1) = 'Number of fragments is inconsistent'
@@ -2412,28 +2413,30 @@ SUBROUTINE Get_Fragment_Info(is)
 
         ! Now read in the information for each of the fragments, number of atoms
         ! in the fragment, anchor and atom ids
-        
+  
+      
         DO ifrag = 1, nfragments(is)
            
            line_nbr = line_nbr + 1
            ! We will first determine number of atoms in the current fragment and then
            ! allocate the array frag_list(i,j)%atoms and also read in the anchor
-           CALL Parse_String(molfile_unit,line_nbr, 2, nbr_entries, line_array,ierr)
+           CALL Parse_String_Zeolite_Frag(molfile_unit,line_nbr, 2, nbr_entries, line_array_zeo,ierr)
            
-           IF ( ifrag /= String_To_Int(line_array(1))) THEN
+           IF ( ifrag /= String_To_Int(line_array_zeo(1))) THEN
               err_msg = ''
               err_msg = 'Fragments must be listed sequentially'
               CALL Clean_Abort(err_msg,'Get_Fragment_Info')
            END IF
 
-           frag_list(ifrag,is)%natoms = String_To_Int(line_array(2))
+           frag_list(ifrag,is)%natoms = String_To_Int(line_array_zeo(2))
 
            ! read in the identity of atoms
            backspace(molfile_unit)
            
            min_entries = 2 + frag_list(ifrag,is)%natoms
 
-           CALL Parse_String(molfile_unit,line_nbr,min_entries,nbr_entries,line_array,ierr)
+           CALL Parse_String_Zeolite_Frag(molfile_unit,line_nbr,min_entries,nbr_entries,line_array_zeo,ierr)
+
 
            IF (ierr /= 0) THEN
               err_msg = ''
@@ -2445,7 +2448,7 @@ SUBROUTINE Get_Fragment_Info(is)
            ALLOCATE(frag_list(ifrag,is)%atoms(frag_list(ifrag,is)%natoms))
 
            DO iatom = 1, frag_list(ifrag,is)%natoms
-              frag_list(ifrag,is)%atoms(iatom) = String_To_Int(line_array(iatom+2))
+              frag_list(ifrag,is)%atoms(iatom) = String_To_Int(line_array_zeo(iatom+2))
            END DO
           
            WRITE(logunit,*)
@@ -2995,13 +2998,13 @@ SUBROUTINE Get_Fragment_Coords
   
   nfrag_types = MAXVAL(frag_list(:,:)%type)
   natoms_max = MAXVAL(frag_list(:,:)%natoms)
-  
   ! Determine maximum number of configurations
   
   ALLOCATE(config_read(nfrag_types))
   config_read(:) = .FALSE.
 
   max_config = 0
+
 
   DO is = 1, nspecies
      IF (nfragments(is) /=0 ) THEN
@@ -3012,24 +3015,23 @@ SUBROUTINE Get_Fragment_Coords
 
            ! open the file and read # of configurations
            OPEN(UNIT=10,FILE=res_file(ifrag,is))
-           READ(10,*) this_config
 
+
+           READ(10,*) this_config
            frag_list(ifrag,is)%nconfig = this_config
            max_config = MAX(this_config,max_config)
-
-           
+           write(*,*) 'nfrag_types=', nfrag_types
+                      
            CLOSE(UNIT=10)
 
         END DO
      END IF
   END DO
-  
   WRITE(logunit,*) 
   WRITE(logunit,*) 'Maximum configurations stored', max_config
   WRITE(logunit,*)
 
   ALLOCATE(frag_coords(natoms_max,max_config,nfrag_types),STAT=Allocatestatus)
-
 
   IF (Allocatestatus /= 0 ) THEN
      err_msg = ''
@@ -3054,20 +3056,18 @@ SUBROUTINE Get_Fragment_Coords
 
   config_read(:) = .FALSE.
 
+
   DO is = 1, nspecies
-     
-     IF(nfragments(is) /=0 ) THEN
+     iF(nfragments(is) /=0 ) THEN
         
         DO ifrag = 1, nfragments(is)
            
            ifrag_type = frag_list(ifrag,is)%type
-           
            IF (config_read(ifrag_type)) CYCLE
 
            ! open the file and read # of configurations
            OPEN(UNIT=10,FILE=res_file(ifrag,is))
            READ(10,*) this_config
-           
            DO iconfig = 1, this_config
 
               ! read in the energy of the fragment
@@ -3077,13 +3077,11 @@ SUBROUTINE Get_Fragment_Coords
               DO ia = 1, frag_list(ifrag,is)%natoms
 
                  READ(10,*) symbol, x_this, y_this, z_this
-                 
                  frag_coords(ia,iconfig,ifrag_type)%rxp = x_this
                  frag_coords(ia,iconfig,ifrag_type)%ryp = y_this
                  frag_coords(ia,iconfig,ifrag_type)%rzp = z_this
 
                  this_atom = frag_list(ifrag,is)%atoms(ia)
-
  !                WRITE(12,*) nonbond_list(this_atom,is)%element, frag_coords(ia,iconfig,ifrag_type)%rxp, &
  !                     frag_coords(ia,iconfig,ifrag_type)%ryp, frag_coords(ia,iconfig,ifrag_type)%rzp
                  
@@ -3091,20 +3089,18 @@ SUBROUTINE Get_Fragment_Coords
 
            END DO
 
-
            WRITE(logunit,*)
            WRITE(logunit,*) 'Finished loading fragment coordinates from'
            WRITE(logunit,*) res_file(ifrag,is)
            WRITE(logunit,*)
            
-           config_read(ifrag_type) = .TRUE.
+            config_read(ifrag_type) = .TRUE.
            
            CLOSE(UNIT=10)
            
         END DO
 
      END IF
-           
            
   END DO
 
@@ -4751,7 +4747,6 @@ SUBROUTINE Get_Start_Type
               ! Make sure that the characters of the string are alphanumeric with
               ! a possibility of a . (dot). or _ (dash). The first character must be an alphabet
               CALL Check_String(line_array(1),ierr)
-              write(*,*) line_array(1)
               IF (ierr /= 0 ) THEN
                  err_msg = ""
                  err_msg(1) = 'An error in the input line ' // TRIM(Int_to_String(line_nbr)) &

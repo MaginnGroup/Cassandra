@@ -118,7 +118,7 @@ CONTAINS
 
     ! Recall: LEN_TRIM() is length of string, not counting trailing blanks
     DO i=1,LEN_TRIM(string) 
-       IF (string(i:i) .EQ. ' ') THEN
+        IF (string(i:i) .EQ. ' ') THEN
           IF (.NOT. space_start) space_start = .TRUE.
           ! This means a new set of spaces has been found
        ELSE
@@ -144,6 +144,88 @@ CONTAINS
       
     END SUBROUTINE Parse_String
 
+!********************************************************************************
+  SUBROUTINE Parse_String_Zeolite_Frag(file_number,line_nbr,min_entries,nbr_entries,line_array_zeo,ierr) 
+!********************************************************************************
+! This routine reads one line from the file file_number. It reads the total number
+! of entries on the line and places the entries in the character array line_array
+! in consecutive order. It skips leading blanks, and determines if an entry is 
+! different by detecting a space between entries. It also tests to see if the 
+! minimum number of entries specified was met or not. If not, and error is returned.
+!********************************************************************************
+    CHARACTER(50000), INTENT(OUT) :: line_array_zeo(10000)
+    INTEGER, INTENT(IN) :: file_number,min_entries,line_nbr
+    INTEGER, INTENT(OUT) :: nbr_entries
+    INTEGER, INTENT(INOUT) :: ierr
+    
+    CHARACTER(50000) :: string
+    INTEGER :: line_position,i
+    LOGICAL :: space_start
+!********************************************************************************
+
+! Zero counter for number of entries found
+    nbr_entries = 0
+
+! Counter for positon on the line
+    line_position = 1
+
+! clear entry array
+    line_array_zeo = ""
+      
+! Read the string from the file
+    CALL Read_String_Zeo(file_number,string,ierr)
+    IF (string(1:1) .NE. ' ') THEN
+
+       ! first character is an entry, so advance counter
+       nbr_entries = nbr_entries + 1
+    ENDIF
+
+    space_start = .FALSE. 
+
+    ! Recall: LEN_TRIM() is length of string, not counting trailing blanks
+    DO i=1,LEN_TRIM(string) 
+       IF (string(i:i) .EQ. ' ') THEN
+          IF (.NOT. space_start) space_start = .TRUE.
+          ! This means a new set of spaces has been found
+       ELSE
+          IF (space_start) THEN
+             nbr_entries = nbr_entries + 1
+             line_position = 1
+          ENDIF
+          space_start = .FALSE.
+          line_array_zeo(nbr_entries)(line_position:line_position) = &
+               string(i:i)
+          line_position = line_position + 1
+       ENDIF
+       
+    ENDDO
+
+    ! Test to see if the minimum number of entries was read in      
+    IF (nbr_entries < min_entries) THEN
+       err_msg = ""
+       err_msg(1) = 'Expected at least '// TRIM(Int_To_String(min_entries))//&
+            ' input(s) on line '//TRIM(Int_To_String(line_nbr))//' of input file.'
+       CALL Clean_Abort(err_msg,'Parse_String_Zeolite_Frag')
+    END IF
+      
+    END SUBROUTINE Parse_String_Zeolite_Frag
+
+!********************************************************************************
+  SUBROUTINE Read_String_Zeo(file_number,string,ierr)
+!********************************************************************************
+! This routine just reads a single string from a file with unit number
+! equal to file_number and returns that 150 character string. It returns
+! ierr .ne. 0 if it couldn't read the file.
+!********************************************************************************
+    INTEGER, INTENT(IN) :: file_number
+    INTEGER, INTENT(OUT) :: ierr
+    CHARACTER(50000), INTENT(OUT) :: string
+!********************************************************************************
+
+    READ(file_number,'(A50000)',IOSTAT=ierr) string
+    IF (ierr .NE. 0) RETURN
+
+END SUBROUTINE Read_String_Zeo
 
 
 !****************************************************************************
