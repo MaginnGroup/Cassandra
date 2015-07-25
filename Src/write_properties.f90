@@ -172,7 +172,7 @@ CONTAINS
 
    USE Simulation_Properties
    
-   INTEGER :: file_number, ii, is, is_dens, is_cp, is_lambda, total_frac
+   INTEGER :: file_number, ii, is, is_dens, is_cp, is_lambda, total_frac, ibox, jbox
    REAL(DP),DIMENSION(:), ALLOCATABLE :: write_buff
    CHARACTER(FILENAME_LEN) :: prop_written
 
@@ -194,6 +194,25 @@ CONTAINS
    is_dens = 1
    is_cp = 1
    is_lambda = 1
+
+   IF (int_sim_type == sim_gemc .and. this_box == 1) THEN
+          
+           constant_vol = .TRUE.
+ 
+            p_plus_1 = .TRUE.
+            p_calc = .FALSE.               
+            DO WHILE(.NOT. p_calc)
+               CALL shell_gemc_nvt_volume(ibox,jbox)
+            END DO            
+            p_plus_1 = .FALSE.
+            p_calc = .FALSE.
+            DO WHILE(.NOT. p_calc)
+            CALL shell_gemc_nvt_volume(ibox,jbox)
+            END DO
+            
+            constant_vol = .FALSE.
+
+   END IF
 
    DO WHILE ( ii <= prop_per_file(file_number,this_box))
 
@@ -245,13 +264,21 @@ CONTAINS
          P_inst(this_box) = ((Pressure_tensor(1,1,this_box) + Pressure_tensor(2,2,this_box) + &
                              Pressure_tensor(3,3,this_box)) / 3.0_DP) * atomic_to_bar
     
-         IF(int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
+         IF(int_vdw_sum_style(this_box) == vdw_cut_tail .or. int_vdw_sum_style(this_box) == born_cut_tail) THEN
             P_inst(this_box) = P_inst(this_box) + ((virial(this_box)%lrc / box_list(this_box)%volume) * atomic_to_bar) 
          END IF
 
          P_ideal(this_box) = SUM(nmols(:,this_box)) / box_list(this_box)%volume * temperature(this_box) * p_const
 
          write_buff(ii+1) = P_ideal(this_box) + P_inst(this_box)
+
+      ELSE IF (prop_written == 'Pressure1') THEN
+
+         write_buff(ii+1) = P_inst_plus(this_box)
+
+      ELSE IF (prop_written == 'Pressure2') THEN
+
+        write_buff(ii+1) = P_inst_minus(this_box)
 
       ELSE IF (prop_written == 'Volume') THEN
          

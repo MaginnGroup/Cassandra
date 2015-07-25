@@ -89,7 +89,7 @@ PROGRAM Main
 !  !$ include 'omp_lib.h'
 
   INTEGER(4) :: count
-  INTEGER :: i, j, is, im, ia, this_im, ibox, nmol_is, this_box, int_phi
+  INTEGER :: i, j, is, is1, im, ia, ia1, this_im, ibox, nmol_is, this_box, int_phi
   INTEGER :: alive, t_num
 
   INTEGER :: nyears, nmonths, ndays, nhours, nmin, nsec, nms
@@ -97,7 +97,7 @@ PROGRAM Main
   CHARACTER(120) filename1
   CHARACTER(80) :: name
 
-  LOGICAL :: overlap, cbmc_overlap, superbad, inside_ch
+  LOGICAL :: overlap, cbmc_overlap, superbad, inside_ch,  conv_drude
 
   REAL(DP) :: attempt_prob, phi
   REAL(DP) :: E_st_vdw, E_st_qq, W_st_vdw, W_st_qq, e_lrc, w_lrc
@@ -261,6 +261,30 @@ PROGRAM Main
      CALL Initialize(i)
   END DO
 
+  IF(int_charge_sum_style(1) == charge_gaussian) THEN
+  ALLOCATE(alp_ij(MAXVAL(natoms), nspecies, MAXVAL(natoms), nspecies), alp_ia(MAXVAL(natoms), nspecies, nbr_boxes))
+  alp_ij = 0.0_DP
+  alp_ia = 0.0_DP
+  DO is = 1, nspecies
+    DO ia = 1, natoms(is)
+
+       DO is1 = 1, nspecies
+          DO ia1 = 1, natoms(is1)
+            alp_ij(ia,is,ia1,is1) = nonbond_list(ia,is)%g_alpha * nonbond_list(ia1,is1)%g_alpha &
+                & / dsqrt(nonbond_list(ia,is)%g_alpha * nonbond_list(ia,is)%g_alpha + nonbond_list(ia1,is1)%g_alpha * nonbond_list(ia1,is1)%g_alpha)
+           END DO
+       END DO
+
+        DO ibox = 1, nbr_boxes
+          alp_ia(ia,is,ibox) = nonbond_list(ia,is)%g_alpha * alpha_ewald(ibox) &
+                & / dsqrt(nonbond_list(ia,is)%g_alpha * nonbond_list(ia,is)%g_alpha + alpha_ewald(ibox) * alpha_ewald(ibox))
+       END DO
+
+      END DO
+    END DO
+  END IF
+
+
   WRITE(*,*) 'Beginning Cassandra Simulation'
   WRITE(*,*) 
 
@@ -290,7 +314,7 @@ PROGRAM Main
 
   ! Ewald stuff
 
-  IF ( int_charge_sum_style(1) == charge_ewald) THEN
+  IF ( int_charge_sum_style(1) == charge_ewald .or.  int_charge_sum_style(1) == charge_gaussian  ) THEN
      
      ALLOCATE(hx(maxk,nbr_boxes),hy(maxk,nbr_boxes),hz(maxk,nbr_boxes), &
           hsq(maxk,nbr_boxes), Cn(maxk,nbr_boxes),Stat=AllocateStatus)
@@ -413,14 +437,18 @@ PROGRAM Main
 
   ! compute total system energy
   overlap = .FALSE.
-     
+  CALL Initialize_MP
+    
   DO i = 1, nbr_boxes
        
      IF ( start_type == 'make_config' .and. &
-          int_vdw_sum_style(i) == vdw_cut_tail) &
+          int_vdw_sum_style(i) == vdw_cut_tail .or. int_vdw_sum_style(this_box) == born_cut_tail) &
                 CALL Compute_Beads(i)
+     IF(shell_mpm) CALL SHELL_RELAX(i, conv_drude)
      CALL Compute_Total_System_Energy(i,.TRUE.,overlap)
-           
+     print *, 'multiparticle move with shell particle', shell_mpm
+     print *, 'EM for box',i,'convergence = ', conv_drude
+        
 
      IF (overlap) THEN
         ! overlap was detected between two atoms so abort the program
@@ -429,7 +457,12 @@ PROGRAM Main
         err_msg(2) = 'Start type '//start_type
         CALL Clean_Abort(err_msg,'Main')
      END IF
+
   END DO
+
+
+
+
   
   ! write out the initial energy components to the log file
   
@@ -449,19 +482,19 @@ PROGRAM Main
      WRITE(logunit,'(X,A,T30,F20.3)') 'Intra nonbond vdw is', energy(i)%intra_vdw
      WRITE(logunit,'(X,A,T30,F20.3)') 'Intra nonbond elec is', energy(i)%intra_q
      WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule vdw is', energy(i)%inter_vdw
-     IF (int_vdw_sum_style(i) == vdw_cut_tail) THEN
+     IF (int_vdw_sum_style(i) == vdw_cut_tail .or. int_vdw_sum_style(i) == born_cut_tail) THEN
         WRITE(logunit,'(X,A,T30,F20.3)') 'Long range correction is', energy(i)%lrc
      END IF
      WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule q is', energy(i)%inter_q
      WRITE(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald is', energy(i)%ewald_reciprocal
      WRITE(logunit,'(X,A,T30,F20.3)') 'Self ewald is', energy(i)%ewald_self
 
-     IF( int_charge_sum_style(i) == charge_ewald) WRITE(logunit,'(X,A,T30,I20)') 'Number of vectors is', nvecs(i)
+     IF( int_charge_sum_style(i) == charge_ewald .or. int_charge_sum_style(i) == charge_gaussian) WRITE(logunit,'(X,A,T30,I20)') 'Number of vectors is', nvecs(i)
      WRITE(logunit,'(X,A59)') '***********************************************************'
      WRITE(logunit,*)
 
   END DO
-
+  
   ! obtain the number of molecules of each species in a simulation box
   ! only if it isn't a new configuration.
 

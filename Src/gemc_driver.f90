@@ -87,10 +87,9 @@ SUBROUTINE GEMC_Driver
      i = i + 1
 
      ! We will select a move from Golden Sampling scheme
-
      rand_no = rranf()
      which_step = i
-
+     
      IF (rand_no <= cut_trans) THEN
  
         IF(.NOT. openmp_flag) THEN
@@ -99,7 +98,11 @@ SUBROUTINE GEMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
         
-        CALL Translate(this_box,which_step)
+        IF(shell_mpm) THEN
+           CALL Translate_MP(this_box,which_step)
+        ELSE
+           CALL Translate(this_box,which_step)
+        END IF
         
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -108,7 +111,7 @@ SUBROUTINE GEMC_Driver
         END IF
 
         movetime(imove_trans) = movetime(imove_trans) + time_e - time_s
- 
+
      ELSE IF ( rand_no <= cut_rot) THEN
  
         IF(.NOT. openmp_flag) THEN
@@ -116,8 +119,12 @@ SUBROUTINE GEMC_Driver
         ELSE
 !$        time_s = omp_get_wtime()
         END IF
-
-        CALL Rotate(this_box)
+        
+        IF(shell_mpm) THEN
+             CALL Rotate_MP(this_box)
+        ELSE
+             CALL Rotate(this_box)
+        END IF
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -159,8 +166,12 @@ SUBROUTINE GEMC_Driver
 
         ELSE
 
+        IF(shell_mpm) THEN
+          CALL Shell_GEMC_NVT_Volume(this_box, other_box)  
+        ELSE
           CALL GEMC_NVT_Volume(this_box, other_box)
           volume_move = .TRUE.
+        END IF
 
         END IF
 
@@ -198,7 +209,11 @@ SUBROUTINE GEMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
         
-        CALL GEMC_Particle_Transfer(this_box,other_box)
+        IF(shell_mpm) THEN
+                CALL Shell_GEMC_Particle_Transfer(this_box,other_box)
+        ELSE
+                CALL GEMC_Particle_Transfer(this_box,other_box)
+        END IF
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -247,6 +262,7 @@ SUBROUTINE GEMC_Driver
         movetime(imove_atom_displacement) = movetime(imove_atom_displacement) + time_e - time_s
 
      END IF
+
 
      ! Accumulate averages. Note that the averages must
      ! be updated for both the boxes for the moves that
@@ -302,14 +318,13 @@ SUBROUTINE GEMC_Driver
            END IF
         END IF
 
-        IF(write_flag) THEN
 
+        IF(write_flag) THEN
 
            DO ibox = 1, nbr_boxes
               
               CALL Write_Properties(i,ibox)
               CALL Reset(ibox)
-
 
                DO j = 1,nspecies
 
@@ -319,7 +334,8 @@ SUBROUTINE GEMC_Driver
            END DO
 
         END IF
- 
+
+
         write_flag = .FALSE.
 
         IF(.NOT. timed_run) THEN

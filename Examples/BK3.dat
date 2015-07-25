@@ -1,0 +1,10 @@
+1
+298.0 0.0
+O1    1.000000   1.00000    0.000   !oxygen
+DM    1.162874   1.21043    0.000   !virtual site
+G1    1.162874   1.21043    0.000   !drude particle attached to the virtual site
+H2    1.975000   1.00000    0.000   !hydrogen 1
+G2    1.975000   1.00000    0.000   !drude particle attached to hydrogen 1
+H3    0.755550   1.94386    0.000   !hydrogen 2
+G3    0.755550   1.94386    0.000   !drude particle attached to hydogen 2
+ 

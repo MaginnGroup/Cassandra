@@ -59,7 +59,7 @@ SUBROUTINE NPTMC_Driver
 
   IMPLICIT NONE
 
-!  !$ include 'omp_lib.h'
+! !$ include 'omp_lib.h'
 
   INTEGER :: i,j,k, this_box, ibox, is, ifrag, which_step, ireac
   INTEGER :: howmanyfrac, ii,jj, im1, im2, alive1, alive2
@@ -135,7 +135,6 @@ SUBROUTINE NPTMC_Driver
      i = i + 1
 
      ! We will select a move from Golden Sampling scheme
-  
      rand_no = rranf()
      which_step = i
 
@@ -146,8 +145,12 @@ SUBROUTINE NPTMC_Driver
         ELSE
 !$        time_s = omp_get_wtime()
         END IF
-
-        CALL Translate(this_box,which_step)
+        
+        IF(shell_mpm) THEN
+               CALL Translate_MP(this_box,which_step)
+        ELSE
+               CALL Translate(this_box,which_step)
+        END IF
         
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -164,8 +167,12 @@ SUBROUTINE NPTMC_Driver
         ELSE
 !$        time_s = omp_get_wtime()
         END IF
-
-        CALL Rotate(this_box)
+        
+        IF(shell_mpm) THEN
+                CALL Rotate_MP(this_box,which_step)
+        ELSE
+               CALL Rotate(this_box)
+        END IF
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)

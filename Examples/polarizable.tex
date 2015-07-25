@@ -1,0 +1,163 @@
+\documentclass[12pt]{article}
+\usepackage[latin1]{inputenc}
+\usepackage[reqno]{amsmath}
+\usepackage{amssymb,latexsym}
+\usepackage[pdftex]{color,graphicx}
+\usepackage{multirow}
+\usepackage{multicol}
+\usepackage{caption}
+\usepackage{float}
+%\usepackage{cite}
+\usepackage{gensymb}
+\usepackage{color} \newcommand{\cor}{\color{red}}
+\usepackage[sort, numbers, super, compress]{natbib}
+\usepackage{indentfirst}
+\setlength{\parindent}{24pt}
+\renewcommand{\thesection}{\Roman{section}.} 
+\renewcommand{\thesubsection}{\Alph{subsection}.}
+
+\title{\textbf{Simulation of Drude oscillator based polarizable force field with Cassandra}}
+\date{}
+\begin{document}
+\maketitle 
+\section{Algorithm}
+\subsection{Multi-particle move}
+Force/torque biased multi-particle translation/rotation moves were implemented (mpm\_translate\_rotate.f90). All particles are translated or rotated simultaneously in one step. For translation move, the translation vector for particle $k$ is given as,
+\begin{equation}
+\boldsymbol{t}_{k} = \beta A \boldsymbol{F}_{k}^{old} + \boldsymbol{\gamma}_{k}
+\end{equation}
+\noindent{$\boldsymbol{F}_{k}^{old}$ is the force on particle $k$, $\boldsymbol{\gamma}_{k}$ is a random number chosen from a Gaussian distribution with 0 mean and variance $2 A$, and $A$ is adjusted during the simulation to reach a certain acceptance ratio (0.33).} The acceptance criteria of the multi-particle translation move is given by,\\
+\begin{equation}
+ s^{old->new} = \sum_{k=1}^{N} -(\beta A \boldsymbol{F}_{k}^{old} - \boldsymbol{\gamma}_{k} )^2/(4A)
+\end{equation}
+\begin{equation}
+ s^{new->old} = \sum_{k=1}^{N} -(\beta A \boldsymbol{F}_{k}^{new} + \boldsymbol{\gamma}_{k} )^2/(4A)
+\end{equation}
+\begin{equation}
+  \mathrm{Prob} = min \big( 1,\mathrm{exp}(-\beta \Delta U + s^{new->old} - s^{old->new} \big)
+\end{equation}
+The details for the multi-particle translation/rotation move can be found in Moucka et al., {\it Mol. Sim.} 2013, 39, 1125-1134. 
+\subsection{Ewald summation for Gaussian charge} 
+
+A Gaussian charge is represented by a spherical charge distribution,
+\begin{equation}
+ \rho_{i}(r) = \frac{q_i}{(2 \pi \sigma_i^2)^{3/2}} \mathrm{exp}\Big(\frac{-|\boldsymbol{r}-\boldsymbol{r_i}|}{2\sigma_i^2}\Big)
+\end{equation}
+\noindent{where $\sigma_i$ is the with of the charge distribution. The interaction between two Gaussian charges is given by,}
+\begin{equation}
+ U_{ij} = \frac{q_i q_j}{r_{ij}} \mathrm{erf}(\alpha_{ij} r_{ij})
+\end{equation}
+\noindent{where $\alpha_{ij} =1/ \sqrt{2 (\sigma_i^2 + \sigma_j^2)} $.} The direct-space part of the Ewald summation is given as,
+\begin{equation}
+ U^{dir} = \sum_{i=1}^{N} \sum_{j=i+1}^{N} \frac{q_i q_j}{r_{ij}} \Big[ \mathrm{erf}(\alpha_{ij}r_{ij}) - \mathrm{erf}(k r_{ij}) \Big]
+\end{equation}
+\noindent{$k$ is the convergence parameter for the Ewald summation, and the reciprocal part of the summation is the same as that for point charge. The details of the calculation can be found at Kiss et al., {\it J. Chem. Theory. Comput.} 2014, 10, 5513-5519.} \\
+
+\subsection{Energy minimization for Drude particles}
+The forces acting on Drude particles are calculated at every MC step, and the positions of Drude particles are calculated by the following iteration,
+\begin{equation}
+ \boldsymbol{r}_{kD}(n) = \boldsymbol{r}_{kD}(n-1) + \boldsymbol{F}_{kD}/K
+\end{equation}
+\noindent{where $K$ is the spring constant ($K = q^2/\alpha$, $\alpha$ is the polarizability). The iteration is terminated if 
+\begin{equation}
+ \max_{i=1...N}|\boldsymbol{r}_{kD}(n) - \boldsymbol{r}_{kD}(n-1)| < 10^{-4} \mathrm{nm}
+\end{equation}
+
+
+\section{Simulation Input}
+
+A set of recently proposed polarizable H$_2$O, Na$^+$ and Cl$^-$ force field models (BK3 models) is used here as an example. The vdW interactions of the BK3 force fields are represented by the Buckingham Exp-6 potential. The details of the force fields can be found in {\it J. Chem. Phys.} 2013, 138, 204507 and 2014, 141, 114501.
+
+\subsection{MCF File}
+\noindent{\# Atom\_Info} \\
+Integer(1) \\
+Integer(2) Character(3) Character(4) Real(5) Real(6) Character(7) Real(8) Real(9) Real(10) Real(11) Real(12) Real(13) \\
+
+\noindent{Integer(1): total number of atoms in the species.} \\
+
+\noindent{Integer(2): index of the atom.} \\
+
+\noindent{Character(3): type of the atom.} \\
+
+\noindent{Character(4): element name of the atom. `G' indicates that the atom is a Drude particle (shell). The Drude particle (shell) must follow its connecting atom (core) in MCF file.} \\
+
+\noindent{Real(5): mass of the atom.} \\
+
+\noindent{Real(6): charge (e).} \\
+
+\noindent{Character(7): function form for vdW interaction. `Born' is the Born (Buckingham Exp-6) potential.
+$U = A\mathrm{exp}(-B r) - C^6/r^6$.} \\
+
+\noindent{Real(8): A parameter of the Exp-6 potential, in Kelvin.} \\
+
+\noindent{Real(9): B parameter of the Exp-6 potential, in \AA$^{-1}$.} \\
+
+\noindent{Real(10): C parameter of the Exp-6 potential, in Kelvin.} \\
+
+\noindent{Real(10): minimum cut off distance for the Exp-6 potential, in \AA. } \\
+
+\noindent{Real(11): width of the Gaussian charge ($\sigma$), in \AA.} \\
+
+\noindent{Real(12): polarizablility of the atom ($\alpha$), in \AA$^3$.} \\
+
+\noindent{\# Bond\_Info} \\
+Integer(1) \\
+Integer(2) Integer(3) Integer(4) Character(5) Real(6) Real(7) \\
+
+\noindent{Integer(1): total number of bonds in the species.} \\
+
+\noindent{Integer(2): index of the bond.} \\
+
+\noindent{Integer(3), Integer(4): IDs of the atoms in the bond.} \\
+
+\noindent{Character(5): type of the bond. `fixed' for fixed bond and `harmonic' for harmonic bond. For a core-shell unit, the bond type must be `harmonic' and the spring constant ($\frac{1}{2}q^2/\alpha$) must be provided.} \\
+
+\noindent{Real(6): bond length in $\AA$ if the bond type is `fixed' or spring constant ($\frac{1}{2}K)$ if  the bond type is 'harmonic'.} \\
+
+\noindent{Real(7): bond length for harmonic bond in $\AA$. For a core-shell unit, this value is 0.}
+
+\subsection{Input File}
+
+\noindent{\# VDW\_Style} \\
+Character(1) Character(2) Real(3) \\
+
+\noindent{Character(1): type of vdW interaction. `LJ' for Lennard-Jones potential and `Born' for Born (Buckingham exp-6) potential.} \\
+
+\noindent{Character(2): cut-off scheme for vdW interaction. For Buckingham potential, only `cut\_tail' is permitted.} \\
+
+\noindent{Real(3): cut off distance in \AA.} \\
+
+\noindent{\# Mixing\_Rule} \\
+Character(1) \\
+
+\noindent{Character(1): `LB', `Geometric' and `Kong' are permitted. `Kong' is the mixing rule for Buckingham potential.} \\
+
+\noindent{\# Pair\_Energy} \\
+Character(1) \\
+
+\noindent{Character(1): For simulation of polarizable model, use `FALSE'.} \\
+
+
+\noindent{\# Prob\_Translation} \\
+Real(1) \\
+Real(i,j) \\
+
+\noindent{Real(1): Probability for the move.} \\
+
+\noindent{Real(i,j): Adjustable parameter for the multi-particle move or maximum displacement for the single particle move.} \\
+
+
+\noindent{\# Property\_Info} \\
+
+`Pressure1': calculate pressure by the energy fluctuation due to a positive (volume of the box increases) trial volume change. \\
+
+`Pressure2': calculate pressure by the energy fluctuation due to a negative (volume of the box decreases) trial volume change. \\
+
+The pressure of a system is estimated by ({\it J. Chem. Phys., 1996, 105, 8469}),
+\begin{equation}
+P = \frac{k_B T}{\Delta V}\mathrm{ln}\big<\frac{V'}{V}\mathrm{exp}(-\beta \Delta U)\big>
+\end{equation}
+
+\noindent{$\Delta V$ is set to 25 $\AA^3$, $V'=V\pm\Delta V$, and the instantaneous value of $\frac{V'}{V}\mathrm{exp}(-\beta \Delta U)$ is output. }
+
+\end{document}

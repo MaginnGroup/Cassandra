@@ -84,7 +84,7 @@ SUBROUTINE Volume_Change(this_box,this_step)
   REAL(DP) :: pres_id
   REAL(DP) :: W_vol_vdw, W_vol_qq
 
-  LOGICAL :: accept, allocation_cos_sin, overlap, xz_change, accept_or_reject
+  LOGICAL :: accept, allocation_cos_sin, overlap, xz_change, accept_or_reject, conv_drude
 
   TYPE(Box_Class) :: box_list_old
 
@@ -178,7 +178,7 @@ SUBROUTINE Volume_Change(this_box,this_step)
      
   END IF
 
-  IF (int_charge_sum_style(this_box) == charge_ewald) THEN
+  IF (int_charge_sum_style(this_box) == charge_ewald .or. int_charge_sum_style(this_box) == charge_gaussian  ) THEN
      
      ! store the cos_mol and sin_mol arrays
 
@@ -244,7 +244,7 @@ SUBROUTINE Volume_Change(this_box,this_step)
         
         rcut_max_old = rcut_max(this_box)
         
-        IF( int_charge_sum_style(this_box) == charge_ewald ) THEN
+        IF( int_charge_sum_style(this_box) == charge_ewald .or. int_charge_sum_style(this_box) == charge_gaussian ) THEN
            
            !           alpha_ewald_old = alpha_ewald(this_box)
            h_ewald_cut_old = h_ewald_cut(this_box)
@@ -263,7 +263,7 @@ SUBROUTINE Volume_Change(this_box,this_step)
         
         rcut_max(this_box) = rcut_vdw(this_box)
         
-        IF ( int_charge_sum_style(this_box) == charge_ewald) THEN
+        IF ( int_charge_sum_style(this_box) == charge_ewald .or. int_charge_sum_style(this_box) == charge_gaussian) THEN
            
 !           alpha_ewald(this_box) = ewald_p_sqrt(this_box) / rcut_coul(this_box)
            h_ewald_cut(this_box) = 2.0_DP * ewald_p(this_box) / rcut_coul(this_box)
@@ -361,7 +361,7 @@ SUBROUTINE Volume_Change(this_box,this_step)
  
   energy_old = energy(this_box)
 
-  IF (int_charge_sum_style(this_box) == charge_ewald) THEN
+  IF (int_charge_sum_style(this_box) == charge_ewald .or. int_charge_sum_style(this_box) == charge_gaussian) THEN
      
      ! The calculation of Ewald reciprocal energy is tricky. The k vectors for this_box will change along with
      ! total number of k vectors for the box. It may so happen that the resultant k vectors may exceed the
@@ -450,14 +450,16 @@ SUBROUTINE Volume_Change(this_box,this_step)
 
 
   END IF
+     
+     conv_drude = .TRUE.
+     IF(shell_mpm) THEN
+        CALL shell_relax(this_box, conv_drude)
+        IF (conv_drude) CALL Compute_Total_System_Energy(this_box,.TRUE.,overlap)
+     ELSE
+        CALL Compute_Total_System_Energy(this_box,.TRUE.,overlap)
+     END IF
 
-     CALL Compute_Total_System_Energy(this_box,.TRUE.,overlap)
-
-
-
-
-
-
+     
   IF (overlap) THEN
      ! reject move
      CALL Reset_Coords
@@ -468,8 +470,7 @@ SUBROUTINE Volume_Change(this_box,this_step)
      
      delta_e = energy(this_box)%total - energy_old%total
      
-     ! based on the energy, calculate the acceptance ratio
-     
+     ! based on the energy, calculate the acceptance ratio     
         
      ln_pacc = beta(this_box) * delta_e &
              + beta(this_box) * pressure(this_box) * delta_volume &
@@ -477,15 +478,14 @@ SUBROUTINE Volume_Change(this_box,this_step)
      accept = accept_or_reject(ln_pacc)
 
      
-     IF ( accept ) THEN
-
+     IF ( accept .and. conv_drude) THEN
 
         nvol_success(this_box) = nvol_success(this_box) + 1
         ivol_success(this_box) = ivol_success(this_box) + 1
         ! energy, positions and box dimensions are already updated
 
         
-        IF (int_charge_sum_style(this_box) == charge_ewald) THEN
+        IF (int_charge_sum_style(this_box) == charge_ewald .or. int_charge_sum_style(this_box) == charge_gaussian) THEN
            ! put the sin_sum and cos_sum for other boxes
            ! Note that hx,hy,hz and Cn are updated when the total energy routine is called above. So
            ! there is no need to update these arrays.
@@ -655,7 +655,7 @@ SUBROUTINE Volume_Change(this_box,this_step)
          
          rcut_max_old = rcut_max(this_box)
          
-         IF( int_charge_sum_style(this_box) == charge_ewald ) THEN
+         IF( int_charge_sum_style(this_box) == charge_ewald .or. int_charge_sum_style(this_box) == charge_gaussian ) THEN
             
             !           alpha_ewald(this_box) = alpha_ewald_old
            h_ewald_cut(this_box) = h_ewald_cut_old
@@ -665,7 +665,7 @@ SUBROUTINE Volume_Change(this_box,this_step)
 
      END IF
          
-     IF (int_charge_sum_style(this_box) == charge_ewald) THEN
+     IF (int_charge_sum_style(this_box) == charge_ewald .or. int_charge_sum_style(this_box) == charge_gaussian ) THEN
             
          ! reset the terms related to Ewald reciprocal energy
          ! reset the total number of kvectors

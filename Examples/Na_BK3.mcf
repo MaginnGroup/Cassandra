@@ -1,4 +1,3 @@
-
 !********************************************************************************
 !   Cassandra - An open source atomistic Monte Carlo software package
 !   developed at the University of Notre Dame.
@@ -18,49 +17,36 @@
 !
 !   You should have received a copy of the GNU General Public License
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+!********************************************************************************
+!*******************************************************************************
+!
 !*******************************************************************************
 
-FUNCTION accept_or_reject(ln_pacc)
 
-  !*******************************************************************
-  !
-  ! The function will test, based on ln_pacc, if a move
-  ! is accepted.
-  !
-  ! ln_pacc is so calculated that the acceptance is in the
-  ! form exp[-max(0,ln_pacc)]
-  !
-  ! 12/10/13  : Beta Release
-  !*********************************************************************
+# Atom_Info
+2
+1    Na  Na    23.0   11.0  Born 1.02231508E+015  15.0  66149.79  0.03  0.65  0.0
+2    G1   G    0.00  -10.0  Born             0.0  0.01       0.0  1.00  0.65  0.157
 
-  USE Type_Definitions, ONLY : DP
-  USE Run_Variables, ONLY : max_kBT
-  USE Random_Generators
 
-  IMPLICIT NONE
+# Bond_Info
+1
+1 1 2 harmonic 44245923.0 0.0
 
-  REAL(DP), INTENT(IN) :: ln_pacc
+# Angle_Info
+0
 
-  REAL(DP) :: pacc
+# Dihedral_Info
+0
 
-  LOGICAL accept_or_reject
+# Fragment_Info
+1
+1 2 1 2
 
-  accept_or_reject = .FALSE.
+# Improper_Info
+0
 
-  IF (ln_pacc <= 0.0_DP) THEN
+# Fragment_Connectivity
+0
 
-     accept_or_reject = .TRUE.
-
-  ELSE IF ( ln_pacc < max_kBT) THEN
-
-     pacc = DEXP(-ln_pacc)
-
-     IF ( rranf() <= pacc ) THEN
-        
-        accept_or_reject = .TRUE.
-
-     END IF
-
-  END IF
-
-END FUNCTION accept_or_reject
+END

@@ -100,3 +100,109 @@ SUBROUTINE precalculate
     ALLOCATE(energy(nbr_boxes),virial(nbr_boxes))
 
   END SUBROUTINE precalculate
+
+
+
+
+SUBROUTINE generate_reaf_table(ibox)
+
+USE Run_variables
+USE Energy_Routines
+
+IMPLICIT NONE
+
+integer, intent(in) :: ibox
+integer             :: i, j, k, bin
+real                :: cut_reaf
+real                :: r_rc, p_rc, p_rc_prime, du_dr, rij, rijsq
+cut_reaf = rcut_coul(ibox)
+
+DO i = 1, int(cut_reaf/reaf_width) + 1
+
+rij = i*reaf_width
+rijsq = rij*rij
+r_rc = rij/rcut_coul(ibox)
+
+p_rc = (1.0 - r_rc)
+p_rc_prime = -4.0*p_rc*p_rc*p_rc*(1.0+1.6*r_rc+0.4*r_rc*r_rc)
+p_rc_prime = p_rc_prime + p_rc*p_rc*p_rc*p_rc*(1.6+0.8*r_rc)
+p_rc = p_rc*p_rc*p_rc*p_rc*(1.0 + 1.6_DP*r_rc + 0.4_DP*r_rc*r_rc)
+dU_dr = (-1.0)/rijsq*p_rc + 1.0/sqrt(rijsq*rcut_coulsq(ibox))*p_rc_prime
+du_dr = du_dr*(-1.0)*charge_factor
+
+
+reaf(i,ibox) = dU_dr
+
+END DO
+
+END SUBROUTINE generate_reaf_table
+
+SUBROUTINE Initialize_MP
+
+USE Type_Definitions
+USE Run_variables
+USE Energy_Routines
+
+!LOGICAL, INTENT(OUT), optional :: mpm_logical
+
+ shell_mpm = .FALSE.
+
+  DO i = 1, nbr_boxes
+     DO is = 1, nspecies
+      DO im = 1, nmolecules(is)
+        DO ia = 1, natoms(is)
+            atom_list(ia,im,is)%drude_type = .FALSE.
+            if(nonbond_list(ia,is)%element == 'G' ) then
+            atom_list(ia,im,is)%drude_type = .TRUE.
+            shell_mpm = .TRUE.
+            end if
+        END DO
+      END DO
+    END DO
+  END DO
+
+  ! mpm force and torque
+
+  IF(shell_mpm) THEN
+
+  ALLOCATE( Mxx(nspecies, MAXVAL(nmolecules)), stat = AllocateStatus)
+  ALLOCATE( Myy(nspecies, MAXVAL(nmolecules)), stat = AllocateStatus)
+  ALLOCATE( Mzz(nspecies, MAXVAL(nmolecules)), stat = AllocateStatus)
+
+  ALLOCATE( Fxx(nspecies, MAXVAL(nmolecules), MAXVAL(natoms)) , stat = AllocateStatus)
+  ALLOCATE( Fyy(nspecies, MAXVAL(nmolecules), MAXVAL(natoms)) , stat = AllocateStatus)
+  ALLOCATE( Fzz(nspecies, MAXVAL(nmolecules), MAXVAL(natoms)) , stat = AllocateStatus)
+
+  ALLOCATE(drudeFx(nspecies,maxval(nmolecules),maxval(natoms)))
+  ALLOCATE(drudeFy(nspecies,maxval(nmolecules),maxval(natoms)))
+  ALLOCATE(drudeFz(nspecies,maxval(nmolecules),maxval(natoms)))
+  ALLOCATE(dmpmx(nspecies,SUM(nmolecules)), dmpmy(nspecies,sum(nmolecules)), dmpmz(nspecies,sum(nmolecules)) )
+  ALLOCATE(thetax(nspecies,SUM(nmolecules)), thetay(nspecies,sum(nmolecules)), thetaz(nspecies,sum(nmolecules)))
+ 
+  drudeFx = 0.0_DP
+  drudeFy = 0.0_DP
+  drudeFz = 0.0_DP
+
+  Fxx = 0.0; Fyy = 0.0 ; Fzz = 0.0
+
+  Mxx = 0.0_DP; Myy = 0.0_DP; Mzz = 0.0_DP
+ 
+  dmpmx = 0.0_DP; dmpmy = 0.0_DP; dmpmz = 0.0_DP
+  thetax = 0.0_DP; thetay = 0.0_DP; thetaz = 0.0_DP
+
+  reaf_width = 0.01
+
+  ALLOCATE(reaf(int(maxval(rcut_coul)/reaf_width)+1,nbr_boxes))
+  
+  reaf = 0.0_DP
+  
+  ! Generate table for reaction field force
+  DO ibox = 1, nbr_boxes
+      CALL generate_reaf_table(ibox)
+  END DO
+
+  mpm_logical = .TRUE.
+
+END IF
+
+END SUBROUTINE Initialize_MP

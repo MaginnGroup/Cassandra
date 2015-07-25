@@ -1,3 +1,4 @@
+
 #!********************************************************************************
 #!   Cassandra - An open source atomistic Monte Carlo software package
 #!   developed at the University of Notre Dame.
@@ -61,8 +62,8 @@ FC = ifort
 LIBS = 
 INCS = 
 #
-#F90FLAGS = -c  -ffree-line-length-none
-F90FLAGS = -c -g -check all -traceback #-warn unused #-openmp
+F90FLAGS = -c  -ffree-line-length-none
+#F90FLAGS = -c -g -check all -traceback #-warn unused #-openmp
 #F90FLAGS = -c -openmp
 #F90FLAGS = -p -c -O3
 #F90FLAGS = -c -O3 -openmp
@@ -128,6 +129,10 @@ OBJS =	main.o \
         atom_displacement.o \
         chempot.o \
         pair_nrg_variables.o \
+        shell_gemc_nvt_volume.o\
+        shell_gemc_particle_transfer.o\
+        shell_relax.o\
+        mpm_translate_rotate.o
 
 
 ####################################################################

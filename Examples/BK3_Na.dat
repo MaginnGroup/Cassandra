@@ -1,0 +1,6 @@
+1
+298.0 0.0
+Na    1.50   1.20    0.000  !Na atom (core)
+G1    1.50   1.20    0.000  !drude particle (shell)
+
+ 

@@ -1,4 +1,3 @@
-
 !********************************************************************************
 !   Cassandra - An open source atomistic Monte Carlo software package
 !   developed at the University of Notre Dame.
@@ -18,49 +17,43 @@
 !
 !   You should have received a copy of the GNU General Public License
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+!********************************************************************************
+!*******************************************************************************
+!
+! This is an input file for BK3 Cl.
+!
+
 !*******************************************************************************
 
-FUNCTION accept_or_reject(ln_pacc)
+!**********************************************************************************
+!Molecular connectivity file for water.pdb
+!**********************************************************************************
 
-  !*******************************************************************
-  !
-  ! The function will test, based on ln_pacc, if a move
-  ! is accepted.
-  !
-  ! ln_pacc is so calculated that the acceptance is in the
-  ! form exp[-max(0,ln_pacc)]
-  !
-  ! 12/10/13  : Beta Release
-  !*********************************************************************
 
-  USE Type_Definitions, ONLY : DP
-  USE Run_Variables, ONLY : max_kBT
-  USE Random_Generators
+# Atom_Info
+2
+1    Cl  Cl    35.45  -11.0  Born 113056021.0 3.10  962178.90  0.788  0.96 0.0
+2    G1   G    0.000   10.0  Born         0.0 0.01        0.0  1.000  0.96 3.5
 
-  IMPLICIT NONE
 
-  REAL(DP), INTENT(IN) :: ln_pacc
+# Bond_Info
+1
+1 1 2 harmonic 1984745.7 0.0
 
-  REAL(DP) :: pacc
+# Angle_Info
+0
 
-  LOGICAL accept_or_reject
+# Dihedral_Info
+0
 
-  accept_or_reject = .FALSE.
+# Fragment_Info
+1
+1 2 1 2
 
-  IF (ln_pacc <= 0.0_DP) THEN
+# Improper_Info
+0
 
-     accept_or_reject = .TRUE.
+# Fragment_Connectivity
+0
 
-  ELSE IF ( ln_pacc < max_kBT) THEN
-
-     pacc = DEXP(-ln_pacc)
-
-     IF ( rranf() <= pacc ) THEN
-        
-        accept_or_reject = .TRUE.
-
-     END IF
-
-  END IF
-
-END FUNCTION accept_or_reject
+END
