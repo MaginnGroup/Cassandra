@@ -1,0 +1,128 @@
+!******************************************************************************
+!
+! This is an input file for SPC/E water.
+!
+! Created by Eliseo Marin 12/13/13
+!*******************************************************************************
+
+
+# Run_Name
+BK3_salt_H2O_NPT
+!--------------
+
+# Sim_Type
+NPT_MC
+!---------------
+
+# Nbr_Species
+3
+!----------------
+
+# VDW_Style
+Born cut_tail 10.0   !Born (bukcingham potential) cut-off distance 12.0 A
+!----------------
+
+# Rcutoff_Low
+0.1
+!----------------
+
+# Mixing_Rule
+kong                ! Kong mixing rule for buckingham potential
+!----------------
+
+# Charge_Style
+coul Gaussian_charge 10.00 0.0001    !Ewald sum for Gaussian charge
+!----------------
+
+# Intra_Scaling
+0.0  0.0  0.0  0.0
+0.0  0.0  0.0  0.0
+0.0  0.0  0.0  0.0
+0.0  0.0  0.0  0.0
+0.0  0.0  0.0  0.0
+0.0  0.0  0.0  0.0
+!------------------
+
+# Molecule_Files
+BK3.mcf    256
+Na_BK3.mcf 2
+Cl_BK3.mcf 2
+!---------------------
+
+# Pair_Energy
+FALSE                     !Pair_Energy must be set to FALSE
+
+# Box_Info
+1
+CUBIC
+30.0
+
+# Temperature_Info
+298.15
+
+# Pressure_Info
+1.0
+!------------------
+
+# Seed_Info
+2082012 82012
+!-------------------
+
+# Move_Probability_Info
+
+# Prob_Translation
+0.3
+0.002 0.002 0.002      !adjustable parameter for multiparticle translation move
+
+# Prob_Rotation
+0.3
+0.001 0.001 0.001      !adjustable parameter for multiparticle rotation move
+
+# Prob_Volume
+0.4
+300
+
+# Done_Probability_Info
+
+!----------------------
+# Bond_Prob_Cutoff
+1.0E-10
+
+# CBMC_Info
+kappa_ins 10
+kappa_rot 0
+kappa_dih 10
+rcut_cbmc 9.0 9.0
+
+# Start_Type
+make_config
+256 
+2   
+2   
+
+# Run_Type
+Equilibration   100 100
+!------------------
+
+# Average_Info ( 0 == yes, 1 = No)
+1
+
+# Frequency_Info
+freq_type    none
+Nthermofreq  100
+Ncoordfreq   100
+MCsteps      500
+# Done_Frequency_Info
+!--------------------
+
+# Property_Info 1 
+Energy_Total
+Volume
+Density
+
+# Fragment_Files
+BK3.dat 1
+BK3_Na.dat 2
+BK3_Cl.dat 3
+
+END
