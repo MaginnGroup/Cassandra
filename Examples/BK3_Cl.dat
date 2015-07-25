@@ -1,0 +1,4 @@
+1
+298.0 0.0
+Cl    1.00   2.00    0.000 !Chloride (core)
+G1    1.00   2.00    0.000 !drude particle (shell)
