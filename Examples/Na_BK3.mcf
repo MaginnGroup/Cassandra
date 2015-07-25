@@ -1,0 +1,52 @@
+!********************************************************************************
+!   Cassandra - An open source atomistic Monte Carlo software package
+!   developed at the University of Notre Dame.
+!   http://cassandra.nd.edu
+!   Prof. Edward Maginn <ed@nd.edu>
+!   Copyright (2013) University of Notre Dame du Lac
+!
+!   This program is free software: you can redistribute it and/or modify
+!   it under the terms of the GNU General Public License as published by
+!   the Free Software Foundation, either version 3 of the License, or
+!   (at your option) any later version.
+!
+!   This program is distributed in the hope that it will be useful,
+!   but WITHOUT ANY WARRANTY; without even the implied warranty of
+!   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!   GNU General Public License for more details.
+!
+!   You should have received a copy of the GNU General Public License
+!   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+!********************************************************************************
+!*******************************************************************************
+!
+!*******************************************************************************
+
+
+# Atom_Info
+2
+1    Na  Na    23.0   11.0  Born 1.02231508E+015  15.0  66149.79  0.03  0.65  0.0
+2    G1   G    0.00  -10.0  Born             0.0  0.01       0.0  1.00  0.65  0.157
+
+
+# Bond_Info
+1
+1 1 2 harmonic 44245923.0 0.0
+
+# Angle_Info
+0
+
+# Dihedral_Info
+0
+
+# Fragment_Info
+1
+1 2 1 2
+
+# Improper_Info
+0
+
+# Fragment_Connectivity
+0
+
+END
