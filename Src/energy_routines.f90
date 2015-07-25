@@ -1,3 +1,5 @@
+
+
 !********************************************************************************
 !   Cassandra - An open source atomistic Monte Carlo software package
 !   developed at the University of Notre Dame.
@@ -968,6 +970,8 @@ CONTAINS
        vdw_in = vdw_cut_switch
      ELSEIF (int_vdw_sum_style(this_box) == vdw_mie) THEN
        vdw_in = vdw_mie
+     ELSEIF (int_vdw_sum_style(this_box) == born_cut_tail) THEN
+       vdw_in = born_cut_tail 
      ENDIF
 
      IF (int_vdw_sum_style(this_box) /= vdw_in)  THEN
@@ -1093,12 +1097,24 @@ CONTAINS
                       eps = eps * vdw_intra_scale(ia,this_atom,is)
                       qsc = charge_intra_scale(ia,this_atom,is)
                    ELSE
+                      
                       rij = SQRT(rijsq)
+                      IF(vdw_in == born_cut_tail) THEN                     
+                      SigoverR6 = rijsq*rijsq*rijsq
+                      
+                      IF(rij > vdw_param4_table(itype,jtype)) THEN
+                      Eij_vdw = vdw_param1_table(itype,jtype)*DEXP(-vdw_param2_table(itype,jtype) * rij) - vdw_param3_table(itype,jtype)/sigoverR6
+                      ELSE
+                      Eij_vdw = vdw_param1_table(itype,jtype) * 10000000.0_DP
+                      END IF
+
+                      ELSE
                       SigOverRsq = (sig**2) / rijsq
                       SigOverR6  = SigOverRsq * SigOverRsq * SigOverRsq
                       SigOverR12 = SigOverR6 * SigOverR6
                       Eij_vdw = 4.0_DP * eps * (SigOverR12 - SigOverR6)
-                      
+                      END IF
+
 		      x = alpha_ewald(this_box) * rij
                       T = 1.0_DP / (1.0_DP + P*x)
                       xsq = x*x
@@ -1517,6 +1533,10 @@ CONTAINS
     REAL(DP) :: roffsq_rijsq, roffsq_rijsq_sq, factor2, fscale
     REAL(DP) :: SigOverR, SigOverRn, SigOverRm, mie_coeff, rij,  mie_n, mie_m, rij_shift, SigOverR_shift, SigOverRn_shift, SigOverRm_shift, rcut_vdw
 !    REAL(DP) :: Eij_vdw_check
+
+    REAL(DP) :: A_eps,B_eps_r,C_eps_r6,r_born_max
+    REAL(DP) :: sqrt_r,r6
+
     Real(DP) :: qi,qj, qsc
     REAL(DP) :: this_lambda, RsqOverSig, R6OverSig, factorLJ
     REAL(DP) :: RsqOverSig_Shift, RsqOverSig6_Shift, factorLJ_Shift
@@ -1629,6 +1649,33 @@ CONTAINS
              
              
           ENDIF LJ_12_6_calculation
+
+
+               Born_exp6_calculation:  IF (int_vdw_style(1) == born_cut_tail) THEN
+                
+                   sqrt_r = sqrt(rijsq)
+                   R6 = rijsq*rijsq*rijsq
+               
+                   !test buckingham exp-6 model alpha = 12 for water
+                    A_eps      = vdw_param1_table(itype,jtype)
+                    B_eps_r    = vdw_param2_table(itype,jtype)
+                    C_eps_r6   = vdw_param3_table(itype,jtype)
+                    r_born_max = vdw_param4_table(itype,jtype)
+
+                    IF (is == js .AND. im == jm) THEN
+                    ! This controls 1-2, 1-3, and 1-4 interactions               
+                    A_eps = A_eps * vdw_intra_scale(ia,ja,is)
+                    C_eps_r6 = C_eps_r6 * vdw_intra_scale(ia,ja,is)
+                    ENDIF
+
+                    IF(rijsq > r_born_max*r_born_max) THEN
+                    Eij_vdw = A_eps*EXP(-B_eps_r*sqrt_r) - C_eps_r6/R6
+                    ELSE
+                    Eij_vdw = A_eps*100000000.0_DP
+                    END IF
+
+            ENDIF Born_exp6_calculation
+
           
        ENDIF VDW_calculation
   
@@ -1645,7 +1692,7 @@ CONTAINS
                 qsc = charge_intra_scale(ia,ja,is)
              END IF
              Eij_qq = qsc*charge_factor*(qi*qj)/SQRT(rijsq)
-          ELSEIF (int_charge_sum_style(ibox) == charge_ewald .AND. ( .NOT. igas_flag) ) THEN
+          ELSEIF ((int_charge_sum_style(ibox) == charge_ewald .or. int_charge_sum_style(ibox) == charge_gaussian) .AND. ( .NOT. igas_flag) ) THEN
              ! Real space Ewald part
              this_box = molecule_list(im,is)%which_box
              CALL Ewald_Real(ia,im,is,qi,ja,jm,js,qj,rijsq,Eij_qq,this_box)
@@ -1679,6 +1726,8 @@ CONTAINS
     INTEGER :: ia,im,is,ja,jm,js,ibox
     REAL(DP) :: qi,qj,qsc,rijsq,rij,erf_val
     REAL(DP) :: Eij
+    REAL(DP) :: alpha_ij, alpha_ia, alpha_ja
+    REAL(DP) :: fun_erfc
 
     qsc = 1.0_DP
     ibox = molecule_list(im,is)%which_box 
@@ -1697,9 +1746,41 @@ CONTAINS
     ! Come back to this later.
 
     rij = SQRT(rijsq)
+
+    IF(int_charge_sum_style(ibox) == charge_ewald) THEN
     ! May need to protect against very small rijsq
     erf_val = 1.0_DP - erfc(alpha_ewald(ibox) * rij)
     Eij = (qi*qj/rij)*(qsc - erf_val)*charge_factor
+
+
+    ELSE IF(int_charge_sum_style(ibox) == charge_gaussian) THEN
+
+        IF (abs(qi) > 1d-5 .and. abs(qj) > 1d-5) THEN
+
+        alpha_ij = alp_ij(ia,is,ja,js)
+
+        erf_val = 1.0_DP - derfc(alpha_ewald(ibox) * rij)
+
+      !  erf_val = 1.0_DP - fun_erfc(alpha_ewald(ibox) * rij)
+
+      !  print *, derfc(alpha_ewald(ibox) * rij), fun_erfc(alpha_ewald(ibox) * rij), rij
+      !  erf(alpha_ij*rij)
+
+        IF(is .NE. js .or. im .NE. jm) THEN
+          Eij = qi*qj/rij*(1.0_DP - erfc(alpha_ij*rij)  - erf_val)*charge_factor
+        ELSE
+          Eij = (qi*qj/rij)*(qsc - erf_val)*charge_factor
+          IF(rij<1d-6) Eij = -1.0_DP*qi*qj*alpha_ewald(ibox)*2.0/rootPI*charge_factor
+        END IF
+
+        ELSE
+
+        Eij = 0.0
+
+        END IF
+
+    END IF
+
 !                   IF(en_flag) THEN
 !                      WRITE(60,"(4I4,2F8.5,F24.12)") ia, ja, jm, js, qi,qj, Eij
 !                   END IF
@@ -2404,7 +2485,7 @@ CONTAINS
              CALL Compute_Molecule_Improper_Energy(this_im,is,v_molecule_improper)
 
              intra_overlap = .FALSE.
-             IF (int_charge_sum_style(this_box) == charge_ewald) THEN
+             IF (int_charge_sum_style(this_box) == charge_ewald .or. int_charge_sum_style(this_box) == charge_gaussian) THEN
                 CALL Compute_Molecule_Nonbond_Intra_Energy(this_im,is,vlj_molecule_intra,vqq_molecule_intra,intra_overlap, &
                      v_molecule_selfrf)
              ELSE
@@ -2423,7 +2504,7 @@ CONTAINS
              v_improper = v_improper + v_molecule_improper
              v_intra_vdw = v_intra_vdw + vlj_molecule_intra 
              v_intra_qq   = v_intra_qq   + vqq_molecule_intra
-             IF (int_charge_sum_style(this_box) == charge_ewald) THEN
+             IF (int_charge_sum_style(this_box) == charge_ewald .or. int_charge_sum_style(this_box) == charge_gaussian) THEN
                 v_selfrf  = v_selfrf + v_molecule_selfrf
              END IF
 
@@ -2441,7 +2522,7 @@ CONTAINS
           energy(this_box)%improper = energy(this_box)%improper + v_improper
           energy(this_box)%intra_vdw = energy(this_box)%intra_vdw + v_intra_vdw
           energy(this_box)%intra_q   = energy(this_box)%intra_q   + v_intra_qq
-          IF (int_charge_sum_style(this_box) == charge_ewald) THEN
+          IF (int_charge_sum_style(this_box) == charge_ewald .or. int_charge_sum_style(this_box) == charge_gaussian) THEN
              energy(this_box)%erf_self = energy(this_box)%erf_self + v_selfrf
           END IF
        END DO
@@ -2610,7 +2691,7 @@ CONTAINS
 
     ! Compute the reciprocal and self energy terms of the electrostatic energies if flag for Ewald is set.
 
-    IF (int_charge_sum_style(this_box) == charge_ewald) THEN
+    IF (int_charge_sum_style(this_box) == charge_ewald .or. int_charge_sum_style(this_box) == charge_gaussian) THEN
 
        ! Ewald reciprocal energy -- Note that the call changes global V_ewald_reciprocal(this_box)
 
@@ -2630,7 +2711,7 @@ CONTAINS
     END IF
 
     ! Long range correction if it is required
-    IF (int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
+    IF (int_vdw_sum_style(this_box) == vdw_cut_tail .or. int_vdw_sum_style(this_box) == born_cut_tail) THEN
        CALL Compute_LR_Correction(this_box,e_lrc)
        ! add to the correction to the total energy of the system
        energy(this_box)%lrc = e_lrc
@@ -2752,9 +2833,12 @@ CONTAINS
     REAL(DP) :: epsij, sigij, sigij2, sigij6, sigij12
 
     REAL(DP) :: e_lrc_ia_ja
-
-    e_lrc = 0.0_DP
+    REAL(DP) :: A_eps, B_eps, C_eps, rcutoff
     
+    e_lrc = 0.0_DP
+   
+    IF(int_vdw_style(this_box) == vdw_lj) THEN 
+
     DO ia = 1, nbr_atomtypes
        
        e_lrc_ia_ja = 0.0_DP
@@ -2778,6 +2862,27 @@ CONTAINS
 
        e_lrc = e_lrc + REAL( nint_beads(ia,this_box), DP ) * e_lrc_ia_ja
     END DO
+
+    ELSE
+   
+     rcutoff = rcut3(this_box)**(1.0/3.0)
+     DO ia = 1, nbr_atomtypes
+        e_lrc_ia_ja = 0.0_DP
+         DO ja = 1, nbr_atomtypes
+          A_EPS = vdw_param1_table(ia,ja)
+          B_EPS = vdw_param2_table(ia,ja)
+          C_EPS = vdw_param3_table(ia,ja)
+          IF (B_EPS > tiny_number) THEN
+          e_lrc_ia_ja = e_lrc_ia_ja +  &
+              (A_eps/(B_eps*B_eps*B_eps)*dexp(-1.0*B_eps*rcutoff)*(B_eps*B_eps*rcutoff*rcutoff + 2.0*B_eps*rcutoff + 2.0)  - C_EPS/rcut3(this_box)/3.0 ) * REAL( nint_beads(ja,this_box), DP )
+          END IF
+       END DO
+
+       e_lrc = e_lrc + REAL( nint_beads(ia,this_box), DP ) * e_lrc_ia_ja
+    END DO
+
+    ENDIF
+
 
     e_lrc = 2.0_DP * PI * e_lrc/box_list(this_box)%volume
     
@@ -2858,7 +2963,8 @@ CONTAINS
          ELSE
             get_vdw = .FALSE.  
          ENDIF
-      ELSEIF (int_vdw_sum_style(this_box) == vdw_cut .OR. int_vdw_sum_style(this_box) &
+  
+     ELSEIF (int_vdw_sum_style(this_box) == vdw_cut .OR. int_vdw_sum_style(this_box) &
            == vdw_cut_shift .OR. int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
          
          IF (rijsq <= rcut_vdwsq(this_box)) THEN
@@ -2888,10 +2994,24 @@ CONTAINS
          ELSE
             get_vdw = .FALSE.
          END IF
+
+      END IF 
+ 
+    ELSEIF(int_vdw_style(this_box) == born_cut_tail) THEN
          
-      ENDIF      
-   
-   
+        IF (CBMC_flag) THEN
+          IF (rijsq <= rcut_cbmcsq) THEN
+            get_vdw = .TRUE.
+          ELSE
+            get_vdw = .FALSE.
+          ENDIF
+        ELSE
+           IF (rijsq <= rcut_vdwsq(this_box)) THEN
+            get_vdw = .TRUE.
+           ELSE
+            get_vdw = .FALSE.
+          ENDIF
+        END IF
    
    ELSE
       err_msg = ""
@@ -2905,7 +3025,8 @@ CONTAINS
       get_qq = .FALSE.
    ELSEIF (int_charge_style(this_box) == charge_coul) THEN
       
-      IF (int_charge_sum_style(this_box) == charge_cut .OR. int_charge_sum_style(this_box) == charge_ewald) THEN
+      IF (int_charge_sum_style(this_box) == charge_cut .OR. int_charge_sum_style(this_box) == charge_ewald .or. &
+        & int_charge_sum_style(this_box) == charge_gaussian ) THEN
          IF(CBMC_flag) THEN
             IF (rijsq <= rcut_cbmcsq) THEN
                get_qq = .TRUE.
@@ -3046,13 +3167,13 @@ CONTAINS
       END DO imLOOP3
     END DO
     
-    IF (int_charge_sum_style(this_box) == charge_ewald) THEN
+    IF (int_charge_sum_style(this_box) == charge_ewald .OR. int_charge_sum_style(this_box) == charge_gaussian ) THEN
        
        CALL Compute_System_Ewald_Reciprocal_Force(this_box)
        
     END IF
     
-    IF (int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
+    IF (int_vdw_sum_style(this_box) == vdw_cut_tail .OR. int_vdw_sum_style(this_box) == born_cut_tail ) THEN
 
        CALL Compute_LR_Force(this_box,w_lrc)
        virial(this_box)%lrc = w_lrc
@@ -3185,7 +3306,8 @@ CONTAINS
     REAL(DP) :: roffsq_rijsq, roffsq_rijsq_sq, factor2, fscale
     REAL(DP) :: qi,qj, qsc, erf_val, this_lambda
     REAL(DP) :: rij, ewald_constant, exp_const, Wij_self
-
+    
+    REAL(DP) :: A_eps, B_eps_r, C_eps_r6, sqrt_r, r_born_max, R6
   !------------------------------------------------------------------------------------------
 
     Wij_vdw = 0.0_DP
@@ -3293,7 +3415,37 @@ CONTAINS
              
              ! Add other potential types here
           ENDIF LJ_12_6_calculation
-          
+         
+                Born_cut_calculation: IF (int_vdw_style(1) == born_cut_tail) THEN
+
+                   sqrt_r = sqrt(rijsq)
+                   R6 = rijsq*rijsq*rijsq
+                   !R8 = R6*rijsq
+                   !test buckingham exp-6 model alpha = 12 for water
+                    A_eps      = vdw_param1_table(itype,jtype)
+                    B_eps_r    = vdw_param2_table(itype,jtype)
+                    C_eps_r6   = vdw_param3_table(itype,jtype)
+                    r_born_max = vdw_param4_table(itype,jtype)
+
+                   IF (is == js .AND. im == jm) THEN
+                   ! This controls 1-2, 1-3, and 1-4 interactions               
+                   A_eps = A_eps * vdw_intra_scale(ia,ja,is)
+                   C_eps_r6 = C_eps_r6*vdw_intra_scale(ia,ja,is)
+                   ENDIF
+
+                    IF(rijsq > r_born_max*r_born_max) THEN
+                    Wij_vdw = A_eps*EXP(B_eps_r*(-sqrt_r))*sqrt_r*B_eps_r - C_eps_r6/R6*6.0
+                    ELSE
+                    Wij_vdw = A_eps*100000000.0_DP
+                    if(A_eps > tiny_number) then
+                    write(*,*) 'error virial'
+                    STOP
+                    END IF
+
+                  END IF
+                 ENDIF Born_cut_calculation
+
+
        ENDIF VDW_calculation
        qq_calculation: IF (get_qq) THEN
 
@@ -3389,21 +3541,25 @@ CONTAINS
     !
     !
     !**************************************************************************************************************
-    
     INTEGER, INTENT(IN) :: this_box
     REAL(DP), INTENT(OUT) :: w_lrc
-    
+
     INTEGER ::   ia, ja
 
     REAL(DP) :: epsij, sigij
     REAL(DP) :: w_lrc_ia_ja
+    REAL(DP) :: A_epsij, B_epsij_r, C_epsij_R6
 
-    w_lrc = 0.0_DP 
+    REAL(DP) :: rcutof
+    w_lrc = 0.0_DP
+
+
+   IF(int_vdw_style(1) == vdw_lj) THEN
 
     DO ia = 1, nbr_atomtypes
 
        w_lrc_ia_ja = 0.0_DP
-          
+
        DO ja = 1, nbr_atomtypes
 
           epsij = vdw_param1_table(ia,ja)
@@ -3411,7 +3567,7 @@ CONTAINS
 
           w_lrc_ia_ja = w_lrc_ia_ja + nint_beads(ja,this_box) * epsij * ((2.0_DP / 3.0_DP * &
                         sigij**12 / rcut9(this_box)) - (sigij**6 / rcut3(this_box)))
-             
+
        END DO
 
        w_lrc = w_lrc + nint_beads(ia,this_box) * w_lrc_ia_ja
@@ -3420,7 +3576,28 @@ CONTAINS
 
     w_lrc = 16.0_DP / 3.0_DP * PI * w_lrc / box_list(this_box)%volume
 
+    ELSE
+
+    rcutof = rcut3(this_box)**(1.0/3.0)
+    DO ia = 1, nbr_atomtypes
+      w_lrc_ia_ja = 0.0_DP
+      DO ja = 1, nbr_atomtypes
+          A_EPSij = vdw_param1_table(ia,ja)
+          B_EPSij_R = vdw_param2_table(ia,ja)
+          C_EPSij_R6 = vdw_param3_table(ia,ja)
+          IF(A_epsij > tiny_number .and. B_EPSij_R>tiny_number) THEN
+          w_lrc_ia_ja = w_lrc_ia_ja + real(nint_beads(ja,this_box)) * &
+          (-C_epsij_r6/rcut3(this_box)/3.0)
+          END IF
+       END DO
+     w_lrc = w_lrc + real(nint_beads(ia,this_box)) * w_lrc_ia_ja
+   END DO
+   w_lrc = 2.0_DP / 3.0_DP * PI * w_lrc / box_list(this_box)%volume
+   END IF
+
   END SUBROUTINE Compute_LR_Force
+
+
 
   SUBROUTINE Compute_System_Ewald_Reciprocal_Force(this_box)
     !*****************************************************************************************
@@ -4027,5 +4204,591 @@ CONTAINS
 
   END SUBROUTINE Compute_System_Ewald_Reciprocal_Energy2
 
+
+
+
+ ! polarizable force field related calculation
+
+ !==================Force and Torque Calculation===================================================
+
+
+    SUBROUTINE compute_molecule_inter_overlap(im, is, this_box, overlap)
+
+    IMPLICIT NONE
+
+    INTEGER, INTENT(IN) :: im, is, this_box
+    LOGICAL, INTENT(OUT) :: overlap
+
+    INTEGER  :: ispecies, imolecule, this_locate, ja, ia
+    REAL(DP) :: rxijp, ryijp, rzijp, rxij, ryij, rzij, rijsq
+    LOGICAL  :: shared_overlap
+
+    overlap = .FALSE.
+    shared_overlap =.FALSE.
+    speciesLoop: DO ispecies = 1, nspecies
+
+
+       moleculeLoop: DO imolecule = 1, nmolecules(ispecies)
+
+          this_locate = locate(imolecule,ispecies)
+
+          IF (ispecies == is .AND. this_locate == im) CYCLE moleculeLOOP
+          IF (molecule_list(this_locate,ispecies)%which_box /= this_box) CYCLE moleculeLOOP
+          IF (.NOT. molecule_list(this_locate,ispecies)%live) CYCLE moleculeLOOP
+          IF (shared_overlap)  CYCLE moleculeLOOP
+
+          DO ia = 1, natoms(is)
+            DO ja = 1, natoms(ispecies)
+
+                rxijp = atom_list(ia,im,is)%rxp - atom_list(ja,this_locate,ispecies)%rxp
+                ryijp = atom_list(ia,im,is)%ryp - atom_list(ja,this_locate,ispecies)%ryp
+                rzijp = atom_list(ia,im,is)%rzp - atom_list(ja,this_locate,ispecies)%rzp
+                CALL Minimum_Image_Separation(this_box,rxijp,ryijp,rzijp,rxij,ryij,rzij)
+
+                rijsq = rxij*rxij + ryij*ryij + rzij*rzij
+
+                IF(rijsq < rcut_lowsq) THEN
+                overlap = .TRUE.
+                END IF
+
+            END DO
+          END DO
+
+      END DO moleculeLoop
+
+        IF (overlap) shared_overlap = .TRUE.
+    END DO speciesLoop
+
+   END SUBROUTINE compute_molecule_inter_overlap
+
+
+
+
+    SUBROUTINE Compute_Molecule_Nonbond_Inter_Force(im, is, F1, F2, F3, E_inter_vdw, E_inter_qq, overlap, enecal)
+
+    IMPLICIT NONE
+    
+    INTEGER, INTENT(IN):: im, is
+    REAL(DP), INTENT(OUT) :: F1(maxval(natoms)), F2(maxval(natoms)), F3(maxval(natoms)) 
+    REAL(DP), INTENT(OUT) :: E_inter_vdw, E_inter_qq
+    LOGICAL, INTENT(IN) :: enecal
+    LOGICAL :: overlap
+    
+    
+    !---------------------------------------------------------------------------------------------------
+
+    INTEGER  :: this_box, ispecies, imolecule, this_locate, j
+    
+    REAL(DP) :: Eij_vdw, Eij_qq
+    REAL(DP) :: eps
+    REAL(DP) :: rcom, rx, ry, rz
+
+    LOGICAL :: get_interaction
+
+    INTEGER :: locate_1, locate_2
+
+    LOGICAL :: l_pair_store 
+    LOGICAL :: my_overlap, shared_overlap
+    REAL(DP) :: F_x(maxval(natoms)), F_y(maxval(natoms)), F_z(maxval(natoms))
+
+
+    E_inter_vdw = 0.0
+    E_inter_qq = 0.0
+    DO j = 1, maxval(natoms)
+    F1(j) = 0.0_DP; F_x(j) = 0.0
+    F2(j) = 0.0_DP; F_y(j) = 0.0
+    F3(j) = 0.0_DP; F_z(j) = 0.0
+    END DO
+
+
+    overlap = .FALSE.
+    my_overlap = .FALSE.
+    shared_overlap = .false.
+   
+    this_box =  molecule_list(im,is)%which_box
+   
+    speciesLoop: DO ispecies = 1, nspecies
+       
+    
+       moleculeLoop: DO imolecule = 1, nmolecules(ispecies)
+       
+          IF(shared_overlap) CYCLE
+       
+          this_locate = locate(imolecule,ispecies) 
+      
+          IF (ispecies == is .AND. this_locate == im) CYCLE moleculeLOOP          
+  
+          IF (molecule_list(this_locate,ispecies)%which_box /= this_box) CYCLE moleculeLOOP
+
+          IF(.NOT. molecule_list(this_locate,ispecies)%live) CYCLE moleculeLOOP          
+
+          CALL Check_Interaction(im,is,this_locate,ispecies,get_interaction,rcom,rx,ry,rz) 
+
+          IF (.NOT. get_interaction) CYCLE moleculeLOOP                 
+ 
+         CALL Compute_Molecule_Pair_Interaction_Force(im,is,this_locate,ispecies,this_box, &
+               F_x, F_y, F_z, Eij_vdw, Eij_qq, my_overlap, enecal)                  
+
+          DO j = 1, maxval(natoms)
+          F1(j) = F1(j) + F_x(j)
+          F2(j) = F2(j) + F_y(j)
+          F3(j) = F3(j) + F_z(j)
+          END DO  
+  
+          IF(my_overlap) shared_overlap = .TRUE.
+
+          E_inter_vdw = E_inter_vdw + Eij_vdw
+          E_inter_qq = E_inter_qq + Eij_qq
+           
+        
+       END DO moleculeLoop 
+
+       IF(shared_overlap) THEN
+        overlap = .TRUE.
+        RETURN
+       END IF
+
+    END DO speciesLoop
+
+    END SUBROUTINE Compute_Molecule_Nonbond_Inter_Force
+
+    SUBROUTINE Compute_Molecule_Pair_Interaction_Force(im_1,is_1,im_2,is_2,this_box, F_x, F_y, F_z, vlj_pair, vqq_pair, overlap, enecal)
+
+    IMPLICIT NONE
+
+    INTEGER, INTENT(IN) :: im_1, is_1, im_2, is_2, this_box
+    LOGICAL, INTENT(IN) :: enecal
+    REAL(DP), INTENT(OUT) :: F_x(maxval(natoms)), F_y(maxval(natoms)), F_z(maxval(natoms)), vlj_pair, vqq_pair
+    LOGICAL, INTENT(OUT) :: overlap
+    !----------------------------------------------------------------------------------------------------------
+
+    INTEGER :: ia, ja 
+
+    REAL(DP) :: rxijp, ryijp, rzijp, rxij, ryij, rzij, rijsq, rij, Eij_vdw, Eij_qq
+
+    LOGICAL :: get_vdw, get_qq
+
+    INTEGER :: locate_im_1, locate_im_2, old_style
+
+    REAL(DP) :: eps, sig, sigoverrsq,sigOverR6, SigOverR12
+    REAL(DP) :: qi, qj, qsc, r_rc
+    REAL(DP) :: p_rc, p_rc_prime, du_dr, R_C
+    REAL(DP) :: A_eps, B_eps_r, C_eps_r6, D_eps_r8, sqrt_r, r6, r8, r_born_max
+    REAL(DP) :: alpha_ij, erf_val, fun_erfc
+    INTEGER  :: itype, jtype
+    INTEGER  :: this_box1
+
+    F_x = 0.0_DP
+    F_y = 0.0_DP
+    F_z = 0.0_DP
+    vlj_pair = 0.0_DP
+    vqq_pair = 0.0_DP
+    qsc = 1.0_DP
+
+    DO ia = 1, natoms(is_1)
+
+       IF (.NOT. atom_list(ia,im_1,is_1)%exist) CYCLE
+
+       DO ja = 1, natoms(is_2)
+          ! Obtain the minimum image separation
+          
+          IF ( .NOT. atom_list(ja,im_2,is_2)%exist) CYCLE
+
+          rxijp = atom_list(ia,im_1,is_1)%rxp - atom_list(ja,im_2,is_2)%rxp
+          ryijp = atom_list(ia,im_1,is_1)%ryp - atom_list(ja,im_2,is_2)%ryp
+          rzijp = atom_list(ia,im_1,is_1)%rzp - atom_list(ja,im_2,is_2)%rzp
+         
+          ! Now get the minimum image separation 
+
+          CALL Minimum_Image_Separation(this_box,rxijp,ryijp,rzijp,rxij,ryij,rzij)
+
+          rijsq = rxij*rxij + ryij*ryij + rzij*rzij
+        
+          ! Now figure out what needs to be computed, then call pair_energy
+
+          IF(rijsq < rcut_lowsq) THEN
+            overlap = .TRUE.
+            RETURN
+          END IF
+          
+          CALL Energy_Test(rijsq,get_vdw,get_qq,this_box)          
+
+     
+          IF (get_vdw) THEN 
+
+             IF (int_vdw_style(1) == born_cut_tail) THEN
+
+             IF (atom_list(ia,im_1,is_1)%exist .AND. atom_list(ja,im_2,is_2)%exist) THEN 
+
+              itype = nonbond_list(ia,is_1)%atom_type_number
+              jtype = nonbond_list(ja,is_2)%atom_type_number
+              rij = sqrt(rijsq) 
+              R6 = rijsq*rijsq*rijsq 
+              
+              A_eps      = vdw_param1_table(itype,jtype)
+              B_eps_r    = vdw_param2_table(itype,jtype)
+              C_eps_r6   = vdw_param3_table(itype,jtype)
+              r_born_max = vdw_param4_table(itype,jtype)
+
+              IF (is_1 == is_2 .AND. im_1 == im_2) THEN                
+                ! This controls 1-2, 1-3, and 1-4 interactions               
+                A_eps = A_eps * vdw_intra_scale(ia,ja,is_1)
+                C_eps_r6 = C_eps_r6* vdw_intra_scale(ia,ja,is_1)
+              ENDIF
+       
+              IF(rij > r_born_max) THEN
+                  du_dr = (B_eps_r*A_eps*dexp(-B_eps_r*rij)*rij - C_eps_r6/R6)/rijsq
+                  F_x(ia) = F_x(ia) + du_dr*rxij 
+                  F_y(ia) = F_y(ia) + du_dr*ryij 
+                  F_z(ia) = F_z(ia) + du_dr*rzij
+              ELSE
+                  F_x(ia) = F_x(ia) + A_eps*100000000.0_DP
+                  F_y(ia) = F_y(ia) + A_eps*100000000.0_DP
+                  F_z(ia) = F_z(ia) + A_eps*100000000.0_DP
+              END IF
+
+
+              IF (enecal) THEN
+              Eij_vdw = A_eps*dexp(-B_eps_r*rij) - C_eps_r6/R6
+              
+              if(rij < r_born_max) then
+                Eij_vdw = A_eps*1d7; 
+              end if
+
+              vlj_pair = Vlj_pair + Eij_vdw
+              
+              END IF
+
+              END IF
+             
+            END IF
+
+             IF (int_vdw_style(1) == vdw_lj) THEN
+
+               IF (atom_list(ia,im_1,is_1)%exist .AND. atom_list(ja,im_2,is_2)%exist) THEN            
+
+                itype = nonbond_list(ia,is_1)%atom_type_number
+                jtype = nonbond_list(ja,is_2)%atom_type_number          
+
+                eps = vdw_param1_table(itype,jtype)
+                sig = vdw_param2_table(itype,jtype)
+
+               IF (is_1 == is_2 .AND. im_1 == im_2) THEN            
+                  eps = eps * vdw_intra_scale(ia,ja,is_1)
+               ENDIF
+             
+                SigOverRsq = sig*sig/rijsq
+                SigOverR6 = SigOverRsq * SigOverRsq * SigOverRsq
+                SigOverR12 = SigOverR6 * SigOverR6             
+                
+                du_dr = 4.0_DP*eps*(2.0*SigOverR12 - SigOverR6)/Rijsq
+
+                F_x(ia) = F_x(ia) + du_dr*rxij
+                F_y(ia) = F_y(ia) + du_dr*ryij
+                F_z(ia) = F_z(ia) + du_dr*rzij
+                IF (enecal) THEN
+                   Eij_vdw = 4.0_DP*eps*(SigOverR12 - SigOverR6)
+                   vlj_pair = Vlj_pair + Eij_vdw
+                END IF
+              END IF
+             END IF    
+         END IF
+
+         IF (get_qq) THEN         
+               qsc = 1.0_DP
+               IF (is_1 == is_2 .AND. im_1 == im_2) THEN
+               ! This controls 1-2, 1-3, and 1-4 interactions               
+                 qsc = charge_intra_scale(ia,ja,is_1)
+               ENDIF
+                qi = nonbond_list(ia,is_1)%charge 
+                qj = nonbond_list(ja,is_2)%charge
+            IF (abs(qi) > 1D-5 .and. abs(qj) > 1D-5) THEN
+                
+                rij = sqrt(rijsq)
+                du_dr = qsc/rij*qi*qj               
+
+                F_x(ia) = F_x(ia) + rxij*reaf(int(rij/reaf_width),this_box)*du_dr  ! use the generated reaction field table for quick force calculation
+                F_y(ia) = F_y(ia) + ryij*reaf(int(rij/reaf_width),this_box)*du_dr
+                F_z(ia) = F_z(ia) + rzij*reaf(int(rij/reaf_width),this_box)*du_dr
+
+                IF(int_charge_sum_style(this_box) == charge_gaussian) THEN
+                  
+                  alpha_ij = alp_ij(ia,is_1,ja,is_2)
+
+                  erf_val = 1.0_DP - erfc(alpha_ij*rij)
+                  DU_Dr  = -1.0*qsc*charge_factor*qi*qj*( -(erf_val-1.0)/rijsq + 2.0/rootPI*alpha_ij*exp(-alpha_ij*alpha_ij*rijsq)/rij)
+                  F_x(ia) = F_x(ia) + DU_DR*rxij/rij
+                  F_y(ia) = F_y(ia) + DU_DR*ryij/rij 
+                  F_z(ia) = F_z(ia) + DU_DR*rzij/rij
+                END IF
+
+              END IF
+                this_box1 = molecule_list(im_2,is_2)%which_box
+                IF(this_box1 .NE. this_box) THEN
+                   print *, 'incorrect box index in pair force calculation'
+                   STOP
+                END IF
+                IF (enecal) THEN
+                  CALL Ewald_Real(ia,im_1,is_1,qi,ja,im_2,is_2,qj,rijsq,Eij_qq,this_box)
+                  vqq_pair = vqq_pair + Eij_qq
+                END IF
+
+         END IF
+                   
+       END DO
+
+    END DO
+ 
+   END SUBROUTINE Compute_Molecule_Pair_Interaction_Force
+
+
+
+  SUBROUTINE Compute_Molecule_Torque(im, is, this_box, F_x, F_y, F_z, M_xx, M_yy, M_zz)
+
+    IMPLICIT NONE
+
+    INTEGER, INTENT(IN)   :: im, is, this_box
+    REAL(DP), INTENT(IN)  :: F_x(maxval(natoms)), F_y(maxval(natoms)), F_z(maxval(natoms))
+    REAL(DP), INTENT(OUT) :: M_xx, M_yy, M_zz
+    REAL(DP) :: rxijp, ryijp, rzijp, rxij, ryij, rzij
+    INTEGER :: i, ia
+    
+    M_xx = 0.0_DP
+    M_yy = 0.0_DP
+    M_zz = 0.0_DP
+
+    DO ia = 1, natoms(is)
+    
+    rxijp = atom_list(ia,im,is)%rxp - molecule_list(im,is)%xcom
+    ryijp = atom_list(ia,im,is)%ryp - molecule_list(im,is)%ycom
+    rzijp = atom_list(ia,im,is)%rzp - molecule_list(im,is)%zcom
+
+    CALL Minimum_Image_Separation(this_box,rxijp,ryijp,rzijp,rxij,ryij,rzij)
+    
+    M_zz = -F_x(ia)*ryij + F_y(ia)*rxij + M_zz
+    M_yy = -F_z(ia)*rxij + F_x(ia)*rzij + M_yy
+    M_xx = -F_y(ia)*rzij + F_z(ia)*ryij + M_xx
+
+    END DO
+
+ END SUBROUTINE Compute_Molecule_Torque
+
+
+
+ SUBROUTINE Compute_drude_cos_sin_sum(this_box)
+
+    IMPLICIT NONE
+
+    INTEGER, INTENT(IN) :: this_box
+
+    INTEGER :: i, is, im, ia, this_locate
+    REAL(DP) :: hdotr
+    REAL(DP) :: k_sq_i, ek_beta
+    REAL(DP) :: cos_val, sin_val
+
+    !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+    cos_sum(:,this_box) = 0.0_DP
+    sin_sum(:,this_box) = 0.0_DP
+    !$OMP END PARALLEL WORKSHARE
+
+    DO is = 1, nspecies
+
+       IF ( .NOT. has_charge(is)) CYCLE
+           
+       DO im = 1, nmolecules(is)
+
+          this_locate = locate(im,is)
+
+          IF( .NOT. molecule_list(this_locate,is)%live) CYCLE          
+          IF( molecule_list(this_locate,is)%which_box /= this_box ) CYCLE                   
+           
+          !$OMP PARALLEL DO DEFAULT(SHARED)&
+          !$OMP SCHEDULE(STATIC)&
+          !$OMP PRIVATE(i,ia,hdotr, k_sq_i, cos_val, sin_val, ek_beta)
+
+           DO i = 1, nvecs(this_box)
+
+             cos_mol(i,this_locate) = 0.0_DP
+             sin_mol(i,this_locate) = 0.0_DP
+
+             DO ia = 1, natoms(is)
+
+                IF(abs(nonbond_list(ia,is)%charge)<1D-5) CYCLE !this site does not have charge
+                ! compute hdotr 
+                hdotr = hx(i,this_box) * atom_list(ia,this_locate,is)%rxp + &
+                        hy(i,this_box) * atom_list(ia,this_locate,is)%ryp + &
+                        hz(i,this_box) * atom_list(ia,this_locate,is)%rzp
+
+                cos_mol(i,this_locate) = cos_mol(i,this_locate) + nonbond_list(ia,is)%charge * DCOS(hdotr)
+                sin_mol(i,this_locate) = sin_mol(i,this_locate) + nonbond_list(ia,is)%charge * DSIN(hdotr)
+
+             END DO
+
+             cos_sum(i,this_box) = cos_sum(i,this_box) + cos_mol(i,this_locate)
+             sin_sum(i,this_box) = sin_sum(i,this_box) + sin_mol(i,this_locate)
+          END DO
+         
+          !$OMP END PARALLEL DO
+       END DO
+
+    END DO
+ 
+ END SUBROUTINE Compute_drude_cos_sin_sum
+
+
+ SUBROUTINE Compute_molecule_drude_force(is1,im1,ia1,this_box, Fxd, Fyd, Fzd)
+    
+    IMPLICIT NONE
+
+    INTEGER,  INTENT(IN) :: is1, im1, ia1, this_box
+    REAL(DP), INTENT(OUT):: Fxd, Fyd, Fzd
+
+    INTEGER :: i, is, im, ia, this_locate, k
+
+    REAL(DP) :: un, const_val, this_scaling
+    REAL(DP) :: charge_i, charge_j 
+    REAL(DP) :: ewald_constant, exp_const
+    REAL(DP) :: rxijp, ryijp, rzijp, rxij, ryij, rzij, rijsq, rij
+    REAL(DP) :: erf_val, forced, hdotr, qsc
+    REAL(DP) :: alpha_ij, exp_factor
+    REAL(DP) :: force_factor, exp1
+    REAL(DP) :: fun_erfc
+
+    Fxd = 0.0_DP
+    Fyd = 0.0_DP
+    Fzd = 0.0_DP
+    charge_i = nonbond_list(ia1,is1)%charge    
+
+     DO i = 1, nvecs(this_box)        
+        hdotr =   hx(i,this_box) * atom_list(ia1,im1,is1)%rxp + &
+                  hy(i,this_box) * atom_list(ia1,im1,is1)%ryp + &
+                  hz(i,this_box) * atom_list(ia1,im1,is1)%rzp
+
+        hdotr =  DSIN(hdotr)*cos_sum(i,this_box) - DCOS(hdotr)*sin_sum(i,this_box)
+        hdotr = hdotr*2.0*Cn(i,this_box)
+               
+        Fxd   =  Fxd + hdotr*hx(i,this_box)
+        Fyd   =  Fyd + hdotr*hy(i,this_box)
+        Fzd   =  Fzd + hdotr*hz(i,this_box)
+    END DO   
+
+    DO is = 1, nspecies
+
+      IF ( .NOT. has_charge(is)) CYCLE
+
+      DO im = 1, nmolecules(is)
+          
+        this_locate = locate(im,is)
+
+        IF( .NOT. molecule_list(this_locate,is)%live) CYCLE          
+        IF( molecule_list(this_locate,is)%which_box /= this_box ) CYCLE                   
+
+          DO ia = 1, natoms(is)
+
+          IF(abs(nonbond_list(ia1,is1)%charge) < 1d-5 .or. abs(nonbond_list(ia,is)%charge) < 1d-5  ) CYCLE
+        
+          rxijp = atom_list(ia1,im1,is1)%rxp - atom_list(ia,this_locate,is)%rxp
+          ryijp = atom_list(ia1,im1,is1)%ryp - atom_list(ia,this_locate,is)%ryp
+          rzijp = atom_list(ia1,im1,is1)%rzp - atom_list(ia,this_locate,is)%rzp
+    
+          CALL Minimum_Image_Separation(this_box,rxijp,ryijp,rzijp,rxij,ryij,rzij)
+          rijsq = rxij*rxij + ryij*ryij + rzij*rzij     
+        
+
+          IF (rijsq < rcut_coulsq(this_box) ) THEN
+            
+            rij = DSQRT(rijsq)       
+            
+            IF(int_charge_sum_style(this_box) == charge_ewald) THEN
+                ewald_constant = 2.0_DP *  alpha_ewald(this_box) / rootPI
+                exp_const = DEXP(-1.0_DP*alpha_ewald(this_box)*alpha_ewald(this_box)*rijsq) 
+                ! May need to protect against very small rijsq
+                erf_val = 1.0_DP - erfc(alpha_ewald(this_box) * rij)
+                qsc = 1.0        
+                IF(is == is1 .and. this_locate==im1) then
+                  qsc = charge_intra_scale(ia,ia1,is1)
+                END IF
+                forced = (ewald_constant*exp_const + (qsc - erf_val )/rij ) * nonbond_list(ia,is)%charge
+                IF (is .NE. is1 .or. this_locate .NE. im1 .or. ia .NE. ia1) THEN
+                  IF(rij > 1d-6) THEN
+                  Fxd =  Fxd + forced*rxij/rijsq
+                  Fyd =  Fyd + forced*ryij/rijsq
+                  Fzd =  Fzd + forced*rzij/rijsq
+                  END IF
+                END IF
+            
+            ELSE IF(int_charge_sum_style(this_box) == charge_gaussian) THEN
+                              
+                ewald_constant = 2.0_DP *  alpha_ewald(this_box) / rootPI
+                exp_const = DEXP(-1.0_DP*alpha_ewald(this_box)*alpha_ewald(this_box)*rijsq)    
+     
+                erf_val = 1.0_DP - derfc(alpha_ewald(this_box) * rij)
+  
+                IF (is == is1 .and. this_locate == im1) THEN
+                    if(rij>1d-5 .and. ia .NE. ia1) then
+                    qsc          = charge_intra_scale(ia,ia1,is1)                  
+                    force_factor = (ewald_constant*exp_const + (qsc - erf_val )/rij ) * nonbond_list(ia,is)%charge / rijsq                                                            
+                    Fxd = Fxd + force_factor*rxij
+                    Fyd = Fyd + force_factor*ryij
+                    Fzd = Fzd + force_factor*rzij
+                    end if
+                ELSE
+                    alpha_ij = alp_ij(ia,is,ia1,is1)
+                    exp1  = exp(-1.0_DP*alpha_ij*alpha_ij*rijsq) 
+                    force_factor = (1.0_DP - derfc(alpha_ij*rij))/rij - erf_val/rij + ewald_constant*exp_const - 2.0*alpha_ij*exp1/rootPI
+                    force_factor = force_factor/rijsq*nonbond_list(ia,is)%charge                  
+                    Fxd = Fxd + force_factor*rxij
+                    Fyd = Fyd + force_factor*ryij
+                    Fzd = Fzd + force_factor*rzij
+               END IF
+            END IF
+        END IF      
+     END DO
+    END DO
+  END DO
+
+  Fxd = Fxd * charge_i * charge_factor
+  Fyd = Fyd * charge_i * charge_factor
+  Fzd = Fzd * charge_i * charge_factor
+
+
+  if(ia1 - 1 .LE. 0) then
+  print *, 'drude particle should be attached to the previous atom, fatal error'
+  end if
+
+  rxijp = atom_list(ia1-1,im1,is1)%rxp - atom_list(ia1,im1,is1)%rxp
+  ryijp = atom_list(ia1-1,im1,is1)%ryp - atom_list(ia1,im1,is1)%ryp
+  rzijp = atom_list(ia1-1,im1,is1)%rzp - atom_list(ia1,im1,is1)%rzp
+  CALL Minimum_Image_Separation(this_box,rxijp,ryijp,rzijp,rxij,ryij,rzij)
+  Fxd = Fxd + rxij*nonbond_list(ia1,is1)%pol_alpha
+  Fyd = Fyd + ryij*nonbond_list(ia1,is1)%pol_alpha
+  Fzd = Fzd + rzij*nonbond_list(ia1,is1)%pol_alpha
+
+  END SUBROUTINE Compute_molecule_drude_force
+
 END MODULE Energy_Routines
 
+REAL FUNCTION fun_erfc(x)
+
+  USE Type_Definitions
+
+  IMPLICIT NONE
+
+  REAL(DP) :: x
+
+  Real(DP), Parameter :: a1 =  0.254829592
+  Real(DP), Parameter :: a2 = -0.284496736
+  Real(DP), Parameter :: a3 =  1.421413741
+  Real(DP), Parameter :: a4 = -1.453152027
+  Real(DP), Parameter :: a5 =  1.061405429
+  Real(DP), Parameter :: pp =  0.3275911
+
+  Real(DP) :: tt, exp_val
+
+  tt = 1.0d0/(1.0d0+pp*x)
+  exp_val = exp(-x*x)
+  fun_erfc = tt*(a1+tt*(a2+tt*(a3+tt*(a4+tt*a5))))*exp_val
+
+  RETURN
+
+END FUNCTION fun_erfc
