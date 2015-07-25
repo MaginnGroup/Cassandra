@@ -379,7 +379,7 @@ SUBROUTINE Insertion(this_box,mcstep,randno)
 
   ! 3.5) Ewald energies
 
-  IF ( (int_charge_sum_style(this_box) == charge_ewald) .AND. &
+  IF ( (int_charge_sum_style(this_box) == charge_ewald .or. int_charge_sum_style(this_box) == charge_gaussian ) .AND. &
        (has_charge(is)) ) THEN
  
      CALL Compute_Ewald_Reciprocal_Energy_Difference(alive,alive,is,this_box, &
@@ -394,7 +394,7 @@ SUBROUTINE Insertion(this_box,mcstep,randno)
 
   ! 3.6) Long-range energy correction
 
-  IF (int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
+  IF (int_vdw_sum_style(this_box) == vdw_cut_tail .or. int_vdw_sum_style(this_box) == born_cut_tail ) THEN
 
      ! increase number of integer beads
      nbeads_in = nint_beads(:,this_box)
@@ -476,13 +476,13 @@ SUBROUTINE Insertion(this_box,mcstep,randno)
      energy(this_box)%inter_vdw = energy(this_box)%inter_vdw + E_inter_vdw
      energy(this_box)%inter_q = energy(this_box)%inter_q + E_inter_qq
 
-     IF ( int_charge_sum_style(this_box) == charge_ewald .AND. &
+     IF ( (int_charge_sum_style(this_box) == charge_ewald  .or. int_charge_sum_style(this_box) == charge_gaussian) .AND. &
           has_charge(is)) THEN
         energy(this_box)%ewald_reciprocal = E_reciprocal_move
         energy(this_box)%ewald_self = energy(this_box)%ewald_self + E_self_move
      END IF
 
-     IF (int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
+     IF (int_vdw_sum_style(this_box) == vdw_cut_tail .or. int_vdw_sum_style(this_box) == born_cut_tail) THEN
         energy(this_box)%lrc = e_lrc
      END IF
 
@@ -495,7 +495,7 @@ SUBROUTINE Insertion(this_box,mcstep,randno)
      atom_list(:,alive,is)%exist = .FALSE.
      molecule_list(alive,is)%molecule_type = int_none
      
-     IF ( int_charge_sum_style(this_box) == charge_ewald .AND. &
+     IF ( (int_charge_sum_style(this_box) == charge_ewald .or. int_charge_sum_style(this_box) == charge_gaussian) .AND. &
           has_charge(is) ) THEN
         ! Restore cos_sum and sin_sum. Note that these were changed when the
         ! difference in reciprocal energies was computed.
@@ -503,7 +503,7 @@ SUBROUTINE Insertion(this_box,mcstep,randno)
         sin_sum(:,this_box) = sin_sum_old(:,this_box)
      END IF
 
-     IF ( int_vdw_sum_style(this_box) == vdw_cut_tail ) THEN
+     IF ( int_vdw_sum_style(this_box) == vdw_cut_tail .or. int_vdw_sum_style(this_box) == born_cut_tail ) THEN
         ! Restore the total number of bead types
         nint_beads(:,this_box) = nbeads_in(:)
      END IF
