@@ -86,7 +86,7 @@ SUBROUTINE NVTMC_Driver
   openmp_flag = .FALSE.
 
   i = 0
-
+  this_box = 1
 !$ openmp_flag = .TRUE.
 
   write(*,*) 'openmp_flag = ', openmp_flag
@@ -104,8 +104,8 @@ SUBROUTINE NVTMC_Driver
 
      ! We will select a move from Golden Sampling scheme
 
- 
      rand_no = rranf()
+ 
     
      IF (rand_no <= cut_trans) THEN
  
@@ -115,7 +115,13 @@ SUBROUTINE NVTMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Translate(this_box,which_step)
+        IF(shell_mpm) THEN
+                CALL Translate_MP(this_box,which_step)
+        ELSE
+                CALL Translate(this_box,which_step)
+        END IF
+
+        !CALL Translate(this_box,which_step)
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -132,8 +138,14 @@ SUBROUTINE NVTMC_Driver
         ELSE
 !$        time_s = omp_get_wtime()
         END IF
-       
-        CALL Rotate(this_box)
+  
+        IF(shell_mpm) THEN
+                CALL Rotate_MP(this_box,which_step)
+        ELSE
+                CALL Rotate(this_box)
+        END IF
+     
+        !CALL Rotate(this_box)
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
