@@ -427,7 +427,7 @@ SUBROUTINE Get_Pair_Style
            vdw_style(ibox) = line_array(1)
            WRITE(logunit,'(A,2x,A,A,I3)') '   VDW style used is: ',vdw_style(ibox), 'in box:', ibox
 
-           IF (vdw_style(ibox) /= 'NONE') THEN
+           IF (vdw_style(ibox) /= 'NONE' .AND. vdw_style(ibox) /= 'Born' ) THEN
               int_vdw_style(ibox) = vdw_lj
               vdw_sum_style(ibox) = line_array(2)
               WRITE(logunit,'(A,2x,A,A,I3)') '   VDW sum style is: ',vdw_sum_style(ibox), 'in box:', ibox
@@ -509,14 +509,16 @@ SUBROUTINE Get_Pair_Style
 
               ELSEIF (vdw_sum_style(ibox) == 'mie') THEN
                  int_vdw_sum_style(ibox) = vdw_mie
-		 rcut_vdw(ibox) = String_To_Double(line_array(3))
+		             rcut_vdw(ibox) = String_To_Double(line_array(3))
                  WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_vdw(ibox), '   Angstrom'
                  WRITE(logunit,'(A)') 'Mie potential used for VDW'
-
+              
               ELSE
                  err_msg(1) = 'Improper specification of vdw_sum_style'
                  CALL Clean_Abort(err_msg,'Get_Pairstyle')
               ENDIF
+
+
               IF (rcut_vdw(ibox) > MIN(box_list(ibox)%face_distance(1)/2.0_DP, &
                    box_list(ibox)%face_distance(2)/2.0_DP, box_list(ibox)%face_distance(3)/2.0_DP)) THEN
 
@@ -528,7 +530,15 @@ SUBROUTINE Get_Pair_Style
 
     	      ENDIF
 
-
+           ELSEIF (vdw_style(ibox) == 'Born') THEN !The Born potential (exp-6 potential)
+          
+                  int_vdw_style(ibox) = born_cut_tail
+                  vdw_sum_style(ibox) = line_array(2)
+                  int_vdw_sum_style(ibox) = born_cut_tail
+                  rcut_vdw(ibox) = String_To_Double(line_array(3))
+                  rcut3(ibox) = rcut_vdw(ibox) * rcut_vdw(ibox) * rcut_vdw(ibox)
+                  rcut9(ibox) = rcut3(ibox) * rcut3(ibox) * rcut3(ibox)           
+                  !The Born potential is cut and tail correction will be added
 
            ELSE
  
@@ -579,8 +589,14 @@ SUBROUTINE Get_Pair_Style
 
                     WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_coul(ibox), '   Angstrom'
 
-                 ELSEIF (charge_sum_style(ibox) == 'Ewald') THEN
-                    int_charge_sum_style(ibox) = charge_ewald
+                 ELSEIF (charge_sum_style(ibox) == 'Ewald' .or. charge_sum_style(ibox) == 'Gaussian_charge' ) THEN
+                    
+                    IF(charge_sum_style(ibox) == 'Ewald') THEN
+                         int_charge_sum_style(ibox) = charge_ewald
+                    ELSE
+                         int_charge_sum_style(ibox) = charge_gaussian
+                    END IF
+                    
                     rcut_coul(ibox) = String_To_Double(line_array(3))
 
                     IF (l_half_len_cutoff(ibox)) THEN
@@ -747,6 +763,8 @@ SUBROUTINE Get_Mixing_Rules
            WRITE(logunit,'(A)') 'Lorentz-Berthelot mixing rule specified'
         ELSEIF (mix_rule == 'geometric') THEN
            WRITE(logunit,'(A)') 'Geometric mixing rule specified'
+        ELSE IF (mix_rule == 'kong') THEN
+           WRITE(logunit,'(A)') 'kong mixing rule'
         ELSEIF (mix_rule == 'custom') THEN
            WRITE(logunit,'(A)') 'Custom mixing rule specified'
         ELSE
@@ -1115,7 +1133,8 @@ SUBROUTINE Get_Molecule_Info
         IF ( .NOT. (int_sim_type == sim_frag .OR. int_sim_type == sim_ring )) THEN
            CALL Get_Insertion_Style(is)
         END IF
-        CALL Get_Atom_Info(is)
+
+        CALL Get_Atom_Info(is)      
         CALL Get_Bond_Info(is)
         CALL Get_Angle_Info(is)
         CALL Get_Dihedral_Info(is)
@@ -1482,6 +1501,24 @@ SUBROUTINE Get_Atom_Info(is)
               ! Set number of vdw parameters
               nbr_vdw_params = 2
 
+
+           ELSE IF (nonbond_list(ia,is)%vdw_potential_type == 'Born') THEN !Born (exp-6) potential
+
+              nonbond_list(ia,is)%vdw_param(1) = String_To_Double(line_array(7))   ! A
+              nonbond_list(ia,is)%vdw_param(2) = String_To_Double(line_array(8))   ! B
+              nonbond_list(ia,is)%vdw_param(3) = String_To_Double(line_array(9))   ! C
+              nonbond_list(ia,is)%vdw_param(4) = String_To_Double(line_array(10))  ! rmax
+              WRITE(logunit,'(A,T25,F18.4)') ' Epsilon / kB in K:', &
+                   nonbond_list(ia,is)%vdw_param(1)
+              WRITE(logunit,'(A,T25,F10.4)') ' Sigma B / A^-1:', &
+                   nonbond_list(ia,is)%vdw_param(2)
+              WRITE(logunit,'(A,T25,F18.4)') ' EpsilonC / kB in K:', &
+                   nonbond_list(ia,is)%vdw_param(3)
+              
+                   nonbond_list(ia,is)%vdw_param(1) = kboltz* nonbond_list(ia,is)%vdw_param(1) 
+                   nonbond_list(ia,is)%vdw_param(3) = kboltz* nonbond_list(ia,is)%vdw_param(3)
+                   nbr_vdw_params = 4
+
            ELSEIF (nonbond_list(ia,is)%vdw_potential_type == 'NONE') THEN
               WRITE(logunit,'(A,I6,1x,I6)') & 
                    'No VDW potential assigned to atom, species: ',ia,is
@@ -1510,6 +1547,24 @@ SUBROUTINE Get_Atom_Info(is)
               nexo_atoms(is) = nexo_atoms(is) + 1
               exo_atom_ids(nexo_atoms(is),is) = ia
            END IF
+
+
+           ! Input the width of the Gaussian Charge, input the polarizability of atom (polarizability of core) (the last 2 entry)
+           IF ( (nbr_entries .GE. 9 .and. (.NOT. nonbond_list(ia,is)%ring_atom)  .and. nonbond_list(ia,is)%vdw_potential_type .NE. 'Born') &
+            & .or. (nbr_entries .GT. 10 .and. nonbond_list(ia,is)%vdw_potential_type == 'Born') )THEN
+                
+                nonbond_list(ia,is)%g_alpha = String_To_Double(line_array(nbr_entries-1))
+                
+                nonbond_list(ia,is)%g_alpha = 1.0/nonbond_list(ia,is)%g_alpha/sqrt(2.0)
+
+                nonbond_list(ia,is)%pol_alpha = String_To_Double(line_array(nbr_entries))
+ 
+                IF(nonbond_list(ia,is)%pol_alpha > tiny_number) nonbond_list(ia,is)%pol_alpha = 1389.32198*100.0*nonbond_list(ia,is)%charge*nonbond_list(ia,is)%charge/nonbond_list(ia,is)%pol_alpha 
+
+                 WRITE(logunit,*) 'gaussian width of atom ', ia, 'species', is, ' equal to ', 1.0/sqrt(2.0)/nonbond_list(ia,is)%g_alpha, String_To_Double(line_array(nbr_entries-1))
+                 WRITE(logunit,*) 'polarizability of atom ', ia, 'species', is, ' equal to ', String_To_Double(line_array(nbr_entries))
+
+           END IF
               
 
            WRITE(logunit,*)
@@ -1530,6 +1585,7 @@ SUBROUTINE Get_Atom_Info(is)
      ENDIF
 
   ENDDO
+
   WRITE(logunit,'(A, T40, I4,A, T45, I4)') 'Total number of ring atoms in species', is, ' is', nring_atoms(is)
   WRITE(logunit,'(A, T40, I4,A, T45, I4)') 'Total number of exo atoms in species', is, ' is', nexo_atoms(is)
 
@@ -1634,6 +1690,19 @@ SUBROUTINE Get_Bond_Info(is)
 
               ! Set number of bond parameters
               nbr_bond_params = 1
+
+            ELSE IF (bond_list(ib,is)%bond_potential_type == 'harmonic' ) THEN
+                bond_list(ib,is)%int_bond_type = int_harmonic
+                WRITE(logunit,'(A,I6,1x,I6, A, I4)') &
+                   'Harmonic bond between atoms: ',bond_list(ib,is)%atom1, bond_list(ib,is)%atom2, &
+                   'in species', is
+                ! Harmonic bond
+                bond_list(ib,is)%bond_param(1) = String_To_Double(line_array(5))
+                bond_list(ib,is)%bond_param(2) = String_To_Double(line_array(6))
+                WRITE(logunit,*) 'Fixed bond length, in A:',bond_list(ib,is)%bond_param(1)
+
+               ! Set number of bond parameters
+               nbr_bond_params = 2
 
            ELSE
               err_msg = ""
@@ -3450,6 +3519,10 @@ SUBROUTINE Get_Box_Info
   ALLOCATE(W_tensor_elec(3,3,nbr_boxes), Pressure_tensor(3,3,nbr_boxes))
 
   ALLOCATE(P_inst(nbr_boxes),P_ideal(nbr_boxes))
+
+  ALLOCATE(P_inst_plus(nbr_boxes),P_inst_minus(nbr_boxes))
+
+  constant_vol = .FALSE.
 
   W_tensor_charge(:,:,:) = 0.0_DP
   W_tensor_recip(:,:,:) = 0.0_DP
