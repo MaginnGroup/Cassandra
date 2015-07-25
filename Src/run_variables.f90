@@ -104,12 +104,15 @@ USE Type_Definitions
   INTEGER, PARAMETER :: vdw_charmm = 6
   INTEGER, PARAMETER :: vdw_cut_switch = 7
   INTEGER, PARAMETER :: vdw_mie = 8
+  INTEGER, PARAMETER :: born_cut_tail = 9
 
   INTEGER, PARAMETER :: charge_none = 0
   INTEGER, PARAMETER :: charge_coul = 1
   INTEGER, PARAMETER :: charge_cut = 2
   INTEGER, PARAMETER :: charge_ewald = 3
   INTEGER, PARAMETER :: charge_minimum = 4
+  INTEGER, PARAMETER :: charge_gaussian = 5
+
 
   REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_cbmc 
   REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_vdw, rcut_coul, ron_charmm, roff_charmm, rcut_max
@@ -126,7 +129,7 @@ USE Type_Definitions
   INTEGER, DIMENSION(:,:), ALLOCATABLE ::vdw_int_table
   REAL(DP), DIMENSION(:,:), ALLOCATABLE :: vdw_param1_table
   REAL(DP), DIMENSION(:,:), ALLOCATABLE :: vdw_param2_table, vdw_param3_table
-  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: vdw_param4_table, vdw_param5_table
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: vdw_param4_table, vdw_param5_table!, vdw_param6_table
   REAL(DP), DIMENSION(:), ALLOCATABLE :: alpha_ewald, h_ewald_cut
   REAL(DP), DIMENSION(:), ALLOCATABLE :: alphal_ewald
   REAL(DP), DIMENSION(:), ALLOCATABLE :: ewald_p_sqrt, ewald_p
@@ -518,6 +521,10 @@ USE Type_Definitions
   REAL(DP), DIMENSION(:), ALLOCATABLE :: P_inst
   REAL(DP), DIMENSION(:), ALLOCATABLE :: P_ideal
 
+  REAL(DP), DIMENSION(:), ALLOCATABLE :: P_inst_plus, P_inst_minus
+  
+  LOGICAL :: constant_vol, P_calc, p_plus_1
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Energy check
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -544,8 +551,32 @@ USE Type_Definitions
 
 
 !!!! Zeolite variables
-REAL(DP), ALLOCATABLE, DIMENSION(:) :: x_lat, y_lat, z_lat
-INTEGER :: n_lat_atoms
-  
+  REAL(DP), ALLOCATABLE, DIMENSION(:) :: x_lat, y_lat, z_lat
+  INTEGER :: n_lat_atoms
+
+!Gaussian charge variables
+  REAL(DP), ALLOCATABLE :: alp_ij(:,:,:,:), alp_ia(:,:,:)
+! Reaction field table
+  REAL(DP), DIMENSION(:,:) , ALLOCATABLE :: reaf
+  REAL(DP) :: reaf_width
+
+! shell particle 
+  LOGICAL :: shell_mpm  
+
+! multiparticle move 
+  REAL(DP), DIMENSION(:,:,:), ALLOCATABLE :: Fxx, Fyy, Fzz
+  REAL(DP), DIMENSION(:,:,:), ALLOCATABLE :: Fxx_old, Fyy_old, Fzz_old
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: Mxx, Myy, Mzz
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: Mxx_old, Myy_old, Mzz_old
+  REAL(DP), DIMENSION(:,:,:), ALLOCATABLE :: drudeFx, drudeFy, drudeFz
+   
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: dmpmx,dmpmy,dmpmz
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: thetax,thetay,thetaz
+
+  INTEGER :: check_err ! counter for unconverged EM
+
+ ! pressure calculation using trial volume change in GEMC-NVT simulation
+
+
 END MODULE Run_Variables
 
