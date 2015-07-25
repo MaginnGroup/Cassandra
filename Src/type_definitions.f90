@@ -200,6 +200,7 @@ MODULE Type_Definitions
      REAL(DP) :: rxp_nls, ryp_nls, rzp_nls  ! The starting positions for the neighbor list
      REAL(DP) :: rxp_old, ryp_old, rzp_old
      LOGICAL :: exist
+     LOGICAL :: drude_type
 
   END TYPE Atom_Class
   !****************************************************************************
@@ -228,6 +229,10 @@ MODULE Type_Definitions
      INTEGER :: atom_type_number
 
      LOGICAL :: ring_atom
+
+     REAL(DP) :: g_alpha
+     REAL(DP) :: pol_alpha
+
 
   END TYPE Nonbond_Class
   !****************************************************************************
