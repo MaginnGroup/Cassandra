@@ -267,7 +267,7 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
 
   ! 4.4) Ewald energies
 
-  IF ( (int_charge_sum_style(this_box) == charge_ewald) .AND. &
+  IF ( (int_charge_sum_style(this_box) == charge_ewald .or. int_charge_sum_style(this_box) == charge_gaussian) .AND. &
        (has_charge(is)) ) THEN
 
      CALL Compute_Ewald_Reciprocal_Energy_Difference(alive,alive,is,this_box, &
@@ -281,7 +281,7 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
 
   ! 4.5) Long-range energy correction
 
-  IF (int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
+  IF (int_vdw_sum_style(this_box) == vdw_cut_tail .or. int_vdw_sum_style(this_box) == born_cut_tail) THEN
 
      ! subtract off beads for this species
      nbeads_out(:) = nint_beads(:,this_box)
@@ -367,13 +367,13 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
      energy(this_box)%inter_vdw = energy(this_box)%inter_vdw - E_inter_vdw
      energy(this_box)%inter_q   = energy(this_box)%inter_q - E_inter_qq
 
-     IF ( int_charge_sum_style(this_box) == charge_ewald .AND. &
+     IF ( (int_charge_sum_style(this_box) == charge_ewald .or. int_charge_sum_style(this_box) == charge_gaussian) .AND. &
           has_charge(is)) THEN
         energy(this_box)%ewald_reciprocal = E_reciprocal_move
         energy(this_box)%ewald_self = energy(this_box)%ewald_self + E_self_move
      END IF
 
-     IF ( int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
+     IF ( int_vdw_sum_style(this_box) == vdw_cut_tail .or. int_vdw_sum_style(this_box) == born_cut_tail) THEN
         energy(this_box)%lrc = E_lrc
      END IF
 
@@ -402,7 +402,7 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
 !     CALL System_Energy_Check(1,mcstep,randno)
   ELSE
 
-     IF ( (int_charge_sum_style(this_box) == charge_ewald) .AND. &
+     IF ( (int_charge_sum_style(this_box) == charge_ewald .or. int_charge_sum_style(this_box) == charge_gaussian) .AND. &
            (has_charge(is)) ) THEN
         ! Restore cos_sum and sin_sum. Note that these were changed when
         ! difference in reciprocal energies was computed
@@ -410,7 +410,7 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
         sin_sum(:,this_box) = sin_sum_old(:,this_box)
      END IF
 
-     IF ( int_vdw_sum_style(this_box) == vdw_cut_tail ) THEN
+     IF ( int_vdw_sum_style(this_box) == vdw_cut_tail .or. int_vdw_sum_style(this_box) == born_cut_tail ) THEN
         ! Restore the total number of bead types
         nint_beads(:,this_box) = nbeads_out(:)
      END IF
