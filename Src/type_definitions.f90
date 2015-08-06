@@ -535,12 +535,15 @@ MODULE Type_Definitions
 
 !-------------------------------------------------------------------------------------------------
 
- TYPE Frag_Coord_Class
+ TYPE Library_Coords_Class
     REAL(DP) :: rxp, ryp, rzp
- END TYPE Frag_Coord_Class
+ END TYPE Library_Coords_Class
 
- TYPE Frag_Library_Class
-    TYPE(Frag_Coord_Class), DIMENSION(:,:,:), ALLOCATABLE :: frag_coords
- END TYPE Frag_Library_Class
+
+
+ TYPE Energy_Fragment_Class
+    REAL(DP), DIMENSION(:), ALLOCATABLE :: this_config_energy
+ END TYPE Energy_Fragment_Class
+
 
 END MODULE Type_Definitions
