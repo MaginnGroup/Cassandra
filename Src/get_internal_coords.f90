@@ -158,7 +158,6 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
    rx21 = atom_list(atom1,this_molecule,is)%rxp - atom_list(atom2,this_molecule,is)%rxp
    ry21 = atom_list(atom1,this_molecule,is)%ryp - atom_list(atom2,this_molecule,is)%ryp
    rz21 = atom_list(atom1,this_molecule,is)%rzp - atom_list(atom2,this_molecule,is)%rzp
-
 !   this_box = molecule_list(this_molecule,is)%which_box
 !   IF (l_cubic(this_box) == .FALSE.) THEN
 !   CALL Minimum_Image_Separation(this_box,rx21,ry21,rz21,rx21,ry21,rz21)

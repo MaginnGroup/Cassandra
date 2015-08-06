@@ -2984,108 +2984,175 @@ SUBROUTINE Get_Fragment_Coords
   !
   !*********************************************************************************
 
-  INTEGER :: nfrag_types, natoms_max, max_config, is, ifrag, ifrag_type, this_config
-  INTEGER :: iconfig, ia, this_atom
+  INTEGER :: nfrag_types, this_fragment, is, ifrag, ifrag_type, this_config
+  INTEGER :: iconfig, ia, this_atom, ntcoords,  nl, nfl, aux
 
   REAL(DP) :: x_this, y_this, z_this
   REAL(DP) :: this_temperature, this_nrg
 
   CHARACTER :: symbol*1
 
+  INTEGER, DIMENSION (:), ALLOCATABLE :: natoms_this_frag, nconfig_this_frag 
+  INTEGER, DIMENSION (:), ALLOCATABLE :: frag_library
   LOGICAL, ALLOCATABLE :: config_read(:)
 
   ! Allocate arrays for frag_coords
   
   ! Determine maximum number of configurations
   
-  ALLOCATE(config_read(nfrag_types))
-  config_read(:) = .FALSE.
+  !ALLOCATE(config_read(nfrag_types))
+  !config_read(:) = .FALSE.
+  nfrag_types = MAXVAL(frag_list(:,:)%type)
 
+!  ALLOCATE(frag_library(nfrag_types),STAT=Allocatestatus)
+!  IF (Allocatestatus /= 0 ) THEN
+!     err_msg = ''
+!     err_msg(1) = 'Error allocating array frag_library'
+!     CALL Clean_Abort(err_msg,'Get_Fragment_File_Info')
+!  END IF
 
-  ALLOCATE(frag_library(nspecies),STAT=Allocatestatus)
-  IF (Allocatestatus /= 0 ) THEN
-     err_msg = ''
-     err_msg(1) = 'Error allocating array for frag_coords'
-     CALL Clean_Abort(err_msg,'Get_Frag_Coords')
-  END IF
-
-
-  DO is = 1, nspecies
-
-     max_config = 0
-     nfrag_types = MAXVAL(frag_list(:,is)%type)
-     natoms_max = MAXVAL(frag_list(:,is)%natoms)
-
-     IF (nfragments(is) /=0 ) THEN
-        DO ifrag = 1, nfragments(is)           
-           ifrag_type = frag_list(ifrag,is)%type
-           ! open the file and read # of configurations
-           OPEN(UNIT=10,FILE=res_file(ifrag,is))
-           READ(10,*) this_config
-           frag_list(ifrag,is)%nconfig = this_config
-           max_config = MAX(this_config,max_config)                      
-           CLOSE(UNIT=10)
-        END DO
-     END IF
-
-  ALLOCATE(frag_library(is)%frag_coords(natoms_max,max_config, nfrag_types)
+     ALLOCATE(natoms_this_frag(nfrag_types), STAT = AllocateStatus)
+       IF (Allocatestatus /= 0 ) THEN
+            err_msg = ''
+            err_msg(1) = 'Error allocating array natoms_this_frag'
+            CALL Clean_Abort(err_msg,'Get_Fragment_File_Info')
+       END IF
   
+    ALLOCATE(nconfig_this_frag(nfrag_types), STAT = AllocateStatus)
+       IF (Allocatestatus /= 0 ) THEN
+          err_msg = ''
+          err_msg(1) = 'Error allocating array nconfig_this_frag'
+          CALL Clean_Abort(err_msg,'Get_Fragment_File_Info')
+       END IF
 
-  END DO
 
-  WRITE(logunit,*) 
-  WRITE(logunit,*) 'Maximum configurations stored', max_config
-  WRITE(logunit,*)
+     ALLOCATE(frag_position_library(nfrag_types), STAT = AllocateStatus)
+        IF (Allocatestatus /= 0 ) THEN
+           err_msg = ''
+           err_msg(1) = 'Error allocating array frag_position_library'
+           CALL Clean_Abort(err_msg,'Get_Fragment_File_Info')
+        END IF
+     ALLOCATE(nrg_frag(nfrag_types), STAT = AllocateStatus)
+          IF (Allocatestatus /= 0 ) THEN
+           err_msg = ''
+           err_msg(1) = 'Error allocating array energy of fragments'
+           CALL Clean_Abort(err_msg,'Get_Fragment_File_Info')
+        END IF
+
+   !  ALLOCATE(nrg_frag(nfrag_types), STAT = AllocateStatus)
+   !    IF (Allocatestatus /= 0 ) THEN
+   !        err_msg = ''
+   !        err_msg(1) = 'Error allocating array nrg_frag'
+   !        CALL Clean_Abort(err_msg,'Get_Fragment_File_Info')
+   !     END IF
+! Allocate arrays for library_coords
 
 
-  ALLOCATE(nrg_frag(max_config,nfrag_types), STAT = AllocateStatus)
-
-  IF (Allocatestatus /= 0 ) THEN
-     err_msg = ''
-     err_msg(1) = 'Error allocating array for nrg_frag'
-     CALL Clean_Abort(err_msg,'Get_Frag_Coords')
-  END IF
+   ntcoords = 0 
+    DO is =1, nspecies
   
+       IF (nfragments(is) /=0) THEN
+           DO ifrag = 1, nfragments(is)
+              ifrag_type = frag_list(ifrag,is)%type
+              natoms_this_frag(ifrag_type) = frag_list(ifrag,is)%natoms
+              OPEN(UNIT=10,FILE=res_file(ifrag,is))
+              READ(10,*) this_config
+
+              ntcoords = ntcoords+natoms_this_frag(ifrag_type)*this_config 
+              nconfig_this_frag(ifrag_type) = this_config
+              CLOSE (UNIT=10)
+           END DO 
+        END IF
+    END DO
+
+
+    ALLOCATE(library_coords(ntcoords),STAT = AllocateStatus)
+      IF (Allocatestatus /= 0 ) THEN
+         err_msg = ''
+         err_msg(1) = 'Error allocating library_coords'
+         CALL Clean_Abort(err_msg,'Get_Fragment_File_Info')
+      END IF 
+       
+    DO ifrag = 1, nfrag_types
+        aux = nconfig_this_frag(ifrag)
+        ALLOCATE(nrg_frag(ifrag)%this_config_energy(aux), STAT = AllocateStatus)
+        IF (AllocateStatus /= 0 ) THEN
+           err_msg = ''
+           err_msg(1) = 'Error allocating something'
+           CALL Clean_Abort(err_msg,'Get_Fragment_File_Info')
+        END IF
+    END DO
+
+     WRITE(logunit,*)
+     WRITE(logunit,*) 'library_coords array successfully allocated'
+     WRITE(logunit,*)
+
+
+   !Get the start line positions of the fragments to allocate in the frag_postion_library
+    nl = 0
+    nfl = 0
+     DO ifrag = 1, nfrag_types
+       IF (ifrag ==1) THEN
+         nl = 1
+         frag_position_library(ifrag) = nl
+         nfl = natoms_this_frag(ifrag)*nconfig_this_frag(ifrag)
+       ELSE
+         nl = nfl+1
+         frag_position_library(ifrag) = nl
+         nfl = nfl+ natoms_this_frag(ifrag)*nconfig_this_frag(ifrag)
+      END IF
+     END DO
+
 
   ! Load coordinates
   
-  frag_coords(:,:,:)%rxp = 0.0_DP
-  frag_coords(:,:,:)%ryp = 0.0_DP
-  frag_coords(:,:,:)%rzp = 0.0_DP
+  library_coords(:)%rxp = 0.0_DP
+  library_coords(:)%ryp = 0.0_DP
+  library_coords(:)%rzp = 0.0_DP
+  !frag_library(:)%frag_coords(:,:)%rxp = 0.0_DP
+  !frag_library(:)%frag_coords(:,:)%ryp = 0.0_DP
+  ! frag_library(:)%frag_coords(:,:)%rzp = 0.0_DP
 
-  config_read(:) = .FALSE.
+  
+
+
 
 
   DO is = 1, nspecies
-     iF(nfragments(is) /=0 ) THEN
+     IF(nfragments(is) /=0 ) THEN
         
         DO ifrag = 1, nfragments(is)
            
            ifrag_type = frag_list(ifrag,is)%type
-           IF (config_read(ifrag_type)) CYCLE
+     !      IF (config_read(ifrag_type)) CYCLE
 
            ! open the file and read # of configurations
            OPEN(UNIT=10,FILE=res_file(ifrag,is))
            READ(10,*) this_config
+           frag_list(ifrag,is)%nconfig = this_config
            DO iconfig = 1, this_config
 
               ! read in the energy of the fragment
               READ(10,*) this_temperature, this_nrg
-              nrg_frag(iconfig,ifrag_type) = this_nrg
+              nrg_frag(ifrag_type)%this_config_energy(iconfig) = this_nrg
               ! read coordinates
               DO ia = 1, frag_list(ifrag,is)%natoms
-
+                
                  READ(10,*) symbol, x_this, y_this, z_this
-                 frag_coords(ia,iconfig,ifrag_type)%rxp = x_this
-                 frag_coords(ia,iconfig,ifrag_type)%ryp = y_this
-                 frag_coords(ia,iconfig,ifrag_type)%rzp = z_this
-
-                 this_atom = frag_list(ifrag,is)%atoms(ia)
- !                WRITE(12,*) nonbond_list(this_atom,is)%element, frag_coords(ia,iconfig,ifrag_type)%rxp, &
- !                     frag_coords(ia,iconfig,ifrag_type)%ryp, frag_coords(ia,iconfig,ifrag_type)%rzp
-                 
+      !           frag_library(ifrag_type)%frag_coords(ia,iconfig)%rxp = x_this
+      !           frag_library(ifrag_type)%frag_coords(ia,iconfig)%ryp = y_this
+      !           frag_library(ifrag_type)%frag_coords(ia,iconfig)%rzp = z_this
+                  nl = (frag_position_library(ifrag_type)-1)+ &
+                            (iconfig-1)*natoms_this_frag(ifrag_type) +ia
+                  library_coords(nl)%rxp = x_this
+                  library_coords(nl)%ryp = y_this
+                  library_coords(nl)%rzp = z_this
+           write(*,*) 'x,y,z coordinates of frag_type and iconfig'
+           write(*,*) 'frag_type s', ifrag_type, 'and iconfig isi', iconfig
+           write(*,*) library_coords(nl)%rxp
+           write(*,*) library_coords(nl)%ryp  
+           write(*,*) library_coords(nl)%rzp
               END DO
-
            END DO
 
            WRITE(logunit,*)
@@ -3093,7 +3160,7 @@ SUBROUTINE Get_Fragment_Coords
            WRITE(logunit,*) res_file(ifrag,is)
            WRITE(logunit,*)
            
-            config_read(ifrag_type) = .TRUE.
+      !     config_read(ifrag_type) = .TRUE.
            
            CLOSE(UNIT=10)
            
@@ -3102,8 +3169,8 @@ SUBROUTINE Get_Fragment_Coords
      END IF
            
   END DO
-
-  DEALLOCATE(config_read)
+  
+!DEALLOCATE(config_read)
 
 
 END SUBROUTINE Get_Fragment_Coords

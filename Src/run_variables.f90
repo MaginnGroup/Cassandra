@@ -296,6 +296,11 @@ USE Type_Definitions
   INTEGER, DIMENSION(:), ALLOCATABLE :: nbr_improper_params, nbr_vdw_params
   INTEGER, DIMENSION(:), ALLOCATABLE :: nbr_dihedral_params
 
+  ! Information of the position line where starts the coordinates storage of
+  ! each fragment type
+
+   INTEGER, DIMENSION(:), ALLOCATABLE :: frag_position_library
+
   ! **********************************************************************************
   ! Basic data structures are in the form of arrays. Derived from 
 
@@ -364,11 +369,14 @@ USE Type_Definitions
   TYPE(Fragment_Bond_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: fragment_bond_list
 
   ! Array for storing coordinates of fragments
-  TYPE(Frag_Library_Class), DIMENSION(:), ALLOCATABLE, TARGET :: frag_library
+  !TYPE(Frag_Library_Class), DIMENSION(:), ALLOCATABLE :: frag_library
+  TYPE(Library_Coords_Class), DIMENSION(:), ALLOCATABLE :: library_coords
 
- ! Array for storing energies of fragments
-  ! Dimensions of (max_config,nfrag_types)
-  REAL(DP), DIMENSION(:,:), ALLOCATABLE, TARGET :: nrg_frag
+  ! Array for storing the energy of each configuration of each fragment
+  ! nrg_frag has dimension (number of fragment )
+  TYPE(Energy_Fragment_Class), DIMENSION(:), ALLOCATABLE, TARGET :: nrg_frag
+  
+
 
 
   ! **********************************************************************************

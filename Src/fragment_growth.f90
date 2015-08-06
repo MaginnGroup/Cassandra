@@ -122,7 +122,9 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                           ! the reservoir
   INTEGER :: frag_start   ! random fragment to start growing from
   INTEGER :: frag_total   ! number of non-zero entries in frag_order
-
+  INTEGER :: nl           ! number of the line where the x,y,x coords of the atom
+                          ! of  the config and fragment randomly selected
+                          ! were stored in the frag_position_library
   INTEGER, ALLOCATABLE, DIMENSION(:) :: live
   INTEGER, ALLOCATABLE, DIMENSION(:) :: frag_placed
 
@@ -246,28 +248,33 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   IF (.NOT. del_flag) THEN
 
      ! Pull from the reservoir with uniform probability
-     total_frags = frag_list(frag_start,is)%nconfig
+     !total_fragments is the number of configurations of the frag_start
+     ! this_frag is the randomly configuration choosen
+      total_frags = frag_list(frag_start,is)%nconfig
      this_fragment = INT(rranf() * total_frags) + 1
 
-     ! What does this specify? Is the fragment linear? a ring?
+    
      frag_type = frag_list(frag_start,is)%type
      
-     ! Read the coordinates for every atom
+     ! Read the coordinates for every atomi
+     ! this_fragment is the randomly config selected
      DO i = 1, frag_list(frag_start,is)%natoms 
         
         this_atom = frag_list(frag_start,is)%atoms(i)
         
+        nl = (frag_position_library(frag_type)-1) + &
+                                           frag_list(frag_start,is)%natoms*(this_fragment -1) + i 
         atom_list(this_atom,this_im,is)%rxp = &
-                                      frag_coords(i,this_fragment,frag_type)%rxp
+                                    !  frag_coords(i,this_fragment,frag_type)%rxp
+                                       library_coords(nl)%rxp
         atom_list(this_atom,this_im,is)%ryp = &
-                                      frag_coords(i,this_fragment,frag_type)%ryp
+                                     ! frag_coords(i,this_fragment,frag_type)%ryp
+                                        library_coords(nl)%ryp
         atom_list(this_atom,this_im,is)%rzp = &
-                                      frag_coords(i,this_fragment,frag_type)%rzp
-
-     END DO
-
+                                     ! frag_coords(i,this_fragment,frag_type)%rzp
+                                        library_coords(nl)%rzp
+      END DO
   END IF
-  
   ! Turn on the molecule and its individual atoms
   molecule_list(this_im,is)%cfc_lambda = this_lambda
   
@@ -342,7 +349,6 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
            atom_list(this_atom,this_im,is)%rxp = rtrial(this_atom,0)%rxp + dx
            atom_list(this_atom,this_im,is)%ryp = rtrial(this_atom,0)%ryp + dy
            atom_list(this_atom,this_im,is)%rzp = rtrial(this_atom,0)%rzp + dz
-
         END DO
 
      END IF
@@ -574,7 +580,8 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
         CALL Compute_Ring_Fragment_Energy(frag_start,this_im,is,this_box,&
                 nrg_ring_frag)
      ELSE
-        nrg_ring_frag = nrg_frag(this_fragment,frag_type)
+        nrg_ring_frag =  nrg_frag(frag_type)%this_config_energy(this_fragment) 
+                        ! nrg_frag(this_fragment,frag_type)
      END IF
      nrg_ring_frag_total = nrg_ring_frag_total + nrg_ring_frag
      
@@ -640,6 +647,9 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
 
   INTEGER :: this_im, is, this_box, first_atom
   INTEGER, DIMENSION(1:nfragments(is)) :: frag_order
+  INTEGER :: nl, nlo      ! number of the line where the x,y,x coords of
+                          ! config and fragment randomly selected
+                          !were stored in the frag_position_library
   REAL(DP), INTENT(IN) :: this_lambda
   REAL(DP) :: P_seq
   REAL(DP) :: P_bias
@@ -839,15 +849,30 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
      frag_type = frag_list(frag_start,is)%type
      DO i = 1, frag_list(frag_start,is)%natoms 
         this_atom = frag_list(frag_start,is)%atoms(i)
-        rtrial(this_atom,0)%rxp = frag_coords(i,this_fragment,frag_type)%rxp-&
-                                  frag_coords(1,this_fragment,frag_type)%rxp+&
-                                  atom_list(first_atom,this_im,is)%rxp 
-        rtrial(this_atom,0)%ryp = frag_coords(i,this_fragment,frag_type)%ryp-&
-                                  frag_coords(1,this_fragment,frag_type)%ryp+&
-                                  atom_list(first_atom,this_im,is)%ryp
-        rtrial(this_atom,0)%rzp = frag_coords(i,this_fragment,frag_type)%rzp-&
-                                  frag_coords(1,this_fragment,frag_type)%rzp+&
-                                  atom_list(first_atom,this_im,is)%rzp 
+        nlo = (frag_position_library(frag_type)-1) + &
+                                            frag_list(1,is)%natoms*(this_fragment-1) + 1
+        nl = (frag_position_library(frag_type)-1) + &
+                                           frag_list(1,is)%natoms*(this_fragment-1)+i
+
+                    
+         rtrial(this_atom,0)%rxp = library_coords(nl)%rxp -&
+                                   library_coords(nlo)%rxp +&
+                                   atom_list(first_atom,this_im,is)%rxp
+         rtrial(this_atom,0)%ryp = library_coords(nl)%ryp -&
+                                   library_coords(nlo)%ryp +& 
+                                   atom_list(first_atom,this_im,is)%ryp
+         rtrial(this_atom,0)%rzp = library_coords(nl)%rzp -& 
+                                   library_coords(nlo)%rzp +& 
+                                   atom_list(first_atom,this_im,is)%rzp
+      !  rtrial(this_atom,0)%rxp = frag_coords(i,this_fragment,frag_type)%rxp-&
+      !                            frag_coords(1,this_fragment,frag_type)%rxp+&
+      !                            atom_list(first_atom,this_im,is)%rxp 
+      !  rtrial(this_atom,0)%ryp = frag_coords(i,this_fragment,frag_type)%ryp-&
+      !                            frag_coords(1,this_fragment,frag_type)%ryp+&
+      !                            atom_list(first_atom,this_im,is)%ryp
+      !  rtrial(this_atom,0)%rzp = frag_coords(i,this_fragment,frag_type)%rzp-&
+      !                            frag_coords(1,this_fragment,frag_type)%rzp+&
+      !                            atom_list(first_atom,this_im,is)%rzp 
      END DO
   ELSE
      DO i = 1,frag_list(frag_start,is)%natoms
@@ -994,7 +1019,8 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
         ! compute the old energy
         CALL Compute_Ring_Fragment_Energy(frag_start,this_im,is,this_box,nrg_ring_frag)
      ELSE
-        nrg_ring_frag = nrg_frag(this_fragment,frag_type)
+        nrg_ring_frag =   nrg_frag(frag_type)%this_config_energy(this_fragment) 
+                         !nrg_frag(this_fragment,frag_type)
      END IF
      nrg_ring_frag_total = nrg_ring_frag_total + nrg_ring_frag
 
@@ -1356,6 +1382,9 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
 
   INTEGER :: ispecies, jmol, k
 
+  INTEGER :: nl, nlo      ! number of the line where start the x,y,x coords of
+                          ! config and fragment randomly selected
+
   INTEGER :: total_frags, this_fragment, nfrag_atoms
   REAL(DP) :: x_this,y_this,z_this, vec1(3), vec2(3), aligner_ifrag(3,3)
   REAL(DP) :: hanger_ifrag(3,3), aligner_frag_connect(3,3), hanger_frag_connect(3,3)
@@ -1438,26 +1467,38 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
         ! Read in the coordinates
         
         frag_type = frag_list(ifrag,is)%type
+        write(*,*) 'In Fragment_Placement'
+        write(*,*) 'Fragment type is', frag_type
+        write(*,*) 'Configuration is', this_fragment  
         DO j = 1, frag_list(ifrag,is)%natoms
            
            this_atom = frag_list(ifrag,is)%atoms(j)
            
            atom_list(this_atom,this_im,is)%exist = .TRUE.
 
+           nl = (frag_position_library(frag_type)-1) + &
+                        frag_list(frag_start,is)%natoms*(this_fragment-1)+ j
            
            config_list(this_atom)%rxp = &
-              frag_coords(j,this_fragment,frag_type)%rxp
+                 library_coords(nl)%rxp
+              !frag_coords(j,this_fragment,frag_type)%rxp
            config_list(this_atom)%ryp = &
-              frag_coords(j,this_fragment,frag_type)%ryp
+                 library_coords(nl)%ryp
+              !frag_coords(j,this_fragment,frag_type)%ryp
            config_list(this_atom)%rzp = &
-              frag_coords(j,this_fragment,frag_type)%rzp
-           
+                 library_coords(nl)%rzp
+              !frag_coords(j,this_fragment,frag_type)%rzp
+        write(*,*) 'Position x,y z of each atom of this fragment'
+        write(*,*) config_list(this_atom)%rxp
+        write(*,*) config_list(this_atom)%ryp
+        write(*,*) config_list(this_atom)%rzp  
         END DO
      
         ! For a ring fragment, access the fragment intramolecular energy 
 
         IF (frag_list(ifrag,is)%ring) THEN
-           nrg_ring_frag = nrg_frag(this_fragment,frag_type)
+           nrg_ring_frag =  nrg_frag(frag_type)%this_config_energy(this_fragment)
+                              ! nrg_frag(this_fragment,frag_type)
            nrg_ring_frag_tot = nrg_ring_frag_tot + nrg_ring_frag
         END IF
         
@@ -2065,6 +2106,8 @@ SUBROUTINE Single_Fragment_Regrowth(alive,is)
    
    INTEGER, INTENT(IN) :: alive, is
 
+   INTEGER :: nl, nlo      ! number of the line where start the x,y,x coords of
+                           ! config and fragment randomly selected
    INTEGER :: total_frags, i, this_atom, this_fragment, frag_type
 
    REAL(DP) :: temp_var, E_ang,x_this, y_this, z_this
@@ -2079,16 +2122,23 @@ SUBROUTINE Single_Fragment_Regrowth(alive,is)
    this_fragment = INT(rranf() * total_frags) + 1
    
    frag_type = frag_list(1,is)%type
-   
+
    DO i = 1, frag_list(1,is)%natoms 
       
       this_atom = frag_list(1,is)%atoms(i)
-      
-      atom_list(this_atom,alive,is)%rxp = frag_coords(i,this_fragment,frag_type)%rxp
-      atom_list(this_atom,alive,is)%ryp = frag_coords(i,this_fragment,frag_type)%ryp
-      atom_list(this_atom,alive,is)%rzp = frag_coords(i,this_fragment,frag_type)%rzp
-      
+      nl = (frag_position_library(frag_type)-1) + &
+                                           frag_list(1,is)%natoms*(this_fragment -1) + i      
+      atom_list(this_atom,alive,is)%rxp =  library_coords(nl)%rxp
+                                             !frag_coords(i,this_fragment,frag_type)%rxp
+      atom_list(this_atom,alive,is)%ryp =  library_coords(nl)%ryp
+                                             !frag_coords(i,this_fragment,frag_type)%ryp
+      atom_list(this_atom,alive,is)%rzp =  library_coords(nl)%rzp
+                                              !frag_coords(i,this_fragment,frag_type)%rzp
+   write(*,*) atom_list(this_atom,alive,is)%rxp
+   write(*,*) atom_list(this_atom,alive,is)%ryp      
+   write(*,*) atom_list(this_atom,alive,is)%rzp
    END DO
+
 
 
    ! COM and max_com_distance. Note that the following calls destroy

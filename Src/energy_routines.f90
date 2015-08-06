@@ -223,7 +223,6 @@ CONTAINS
        CALL Clean_Abort(err_msg,'Compute_Bond_Energy')
     END IF
 
-
   END SUBROUTINE Compute_Bond_Energy
   !----------------------------------------------------------------------------------------------            
 
@@ -268,7 +267,6 @@ CONTAINS
        energy = energy + eb
     ENDDO
   
-
   END SUBROUTINE Compute_Molecule_Bond_Energy
   !----------------------------------------------------------------------------------------------            
 
@@ -322,7 +320,7 @@ CONTAINS
              ELSEIF (angle_list(iangle,species)%angle_potential_type == 'harmonic') THEN
                 k = angle_list(iangle,species)%angle_param(1)
                 theta0 = angle_list(iangle,species)%angle_param(2)
-                
+                 
                 CALL Get_Bond_Angle(iangle,molecule,species,theta)
                 energy = k*(theta-theta0)**2
                 ierr = 0
@@ -342,6 +340,7 @@ CONTAINS
                 theta0 = angle_list(iangle,species)%angle_param(2)
                 
                 CALL Get_Bond_Angle(iangle,molecule,species,theta)
+                write(*,*) 'Bond_Angle', iangle, molecule, species, theta
                 energy = k*(theta-theta0)**2
                 ierr = 0
                 write(logunit,*) 'angle, theta, energy  ',iangle,theta*180.0_DP/PI, energy*atomic_to_kjmol
@@ -362,7 +361,7 @@ CONTAINS
        CALL Clean_Abort(err_msg,'Compute_Angle_Energy')
     END IF
 
-  END SUBROUTINE Compute_Angle_Energy
+END SUBROUTINE Compute_Angle_Energy
   !----------------------------------------------------------------------------------------------              
 
   SUBROUTINE Compute_Molecule_Angle_Energy(molecule,species,energy)
@@ -403,7 +402,9 @@ CONTAINS
        energy = energy + ea
     ENDDO
 
-  END SUBROUTINE Compute_Molecule_Angle_Energy
+ write(*,*) 'Molecule Angle energy', molecule, species, energy  
+
+END SUBROUTINE Compute_Molecule_Angle_Energy
   !----------------------------------------------------------------------------------------------              
 
   SUBROUTINE Compute_Dihedral_Energy(at1,at2,at3,at4,molecule,species,energy_dihed)
@@ -1184,7 +1185,6 @@ CONTAINS
                          IF (rijsq <= rcut_lowsq) THEN
                             IF (.not.(l_bonded(ia,this_atom,is))) THEN
                                overlap = .true.
-!                               write(*,*) 'bonded overlap', ia, this_atom, im, rijsq
                                RETURN
                             ENDIF
                          END IF
@@ -1247,7 +1247,8 @@ CONTAINS
           END DO SpeciesLoop
           
        END IF
-       
+     
+
      END SUBROUTINE Compute_Atom_Nonbond_Energy
 
   !----------------------------------------------------------------------------------------------              
@@ -1346,7 +1347,8 @@ CONTAINS
        END IF
        
     END DO
-    
+   
+ 
   END SUBROUTINE Compute_Molecule_Nonbond_Intra_Energy
   !----------------------------------------------------------------------------------------------------------
 
@@ -1484,7 +1486,7 @@ CONTAINS
        ENDIF
        
     END DO speciesLoop
-    
+  
   END SUBROUTINE Compute_Molecule_Nonbond_Inter_Energy
   !------------------------------------------------------------------------------------------
   !------------------------------------------------------------------------------------------
