@@ -1,0 +1,71 @@
+\chapter{Utilities}
+
+\section{Lowenstein Script} \label{Sec:Lowenstein}
+This is a script provided for easy augmentation of a given silicate structure subject to the 
+Lowenstein Rule for zeolites.  Given a single unit cell of arbitrary shape, this script randomly inserts Aluminum
+atoms until the specified Lowenstein Ratio (\# Si / \# Al) is achieved.  Acceptable target ratios are on the range
+of [1.0, inf).
+
+\subsection{Usage} \label{sec:Usage}
+To use the Lowenstein\_Script.f90: compile the script, open the executable, and run the program.
+Sample code would be:
+
+\texttt{> gfortran Lowenstein\_Script.f90 -o Lowenstein\_Script; ./Lowenstein\_Script} \\
+
+Following this, the user is presented with four sequential prompts:
+
+\texttt{> Enter the name of the initial data file:}  \\
+\texttt{> Enter the desired final Lowenstein Ratio ( [1.0, inf)): } \\
+\texttt{> Use random initial seed? (Y/N): }\\
+\texttt{> Enter the name of the output file: } \\
+
+
+To reproduce a structure with an identical Lowenstein ratio as example\_ratio\_2\_1.xyz (which has a Lowenstein ratio 
+of 2), one might respond to the prompts with:
+
+\texttt{> Enter the name of the initial data file:  example.pdb  }\\
+\texttt{> Enter the desired final Lowenstein Ratio ( [1.0, inf)):  2.0  }\\
+\texttt{> Use random initial seed? (Y/N): Y  } \\
+\texttt{> Enter the name of the output file: output\_file.xyz  } \\
+
+The file output\_file.xyz will contain your new structure with a Lowenstein Ratio of 2.0 and will 
+be placed in the current directory.
+
+
+\subsection{Input} \label{sec:Input}
+The script reads the first line of the .pdb according to the following format code:
+
+\begin{lstlisting}[firstnumber=184, caption=Lowenstein\_Script.f90]
+    350 FORMAT(8X,2(F8.4,1X),F8.4,3(F7.3))
+\end{lstlisting}
+
+This data is stored in variables corresponding to the A, B, C, $\alpha$, $\beta$, and $\gamma$   
+parameters of a unit cell and is required for the script to function.
+
+The next line of code in the file should contain information pertaining to atom number 1 of the unit cell, and 
+all other atoms should immediately follow on distinct lines, uninterrupted until the 'END' statement of the file is reached.
+
+Information for each atom that should be present on their respective line includes:
+\begin{itemize}
+\item x-coordinate
+\item y-coordinate
+\item z-coordinate
+\item element
+\end{itemize}
+
+The format code that reads in this information is given by:
+
+\begin{lstlisting}[firstnumber=231, caption=Lowenstein\_Script.f90]
+    450 FORMAT(31X,3(F7.3,1X),21X,A2)
+\end{lstlisting}
+
+For a direct example of acceptable input format, see:  /Scripts/Lowenstein/example.pdb
+
+\section{Input File GUI} \label{Sec:GUI}
+This script provides a graphical user interface with which the user may create input files for use in simulations.  The GUI is written
+ in Python and uses the wxWidgets for Python module, which may be found at:   
+
+http://wxpython.org/download.php 
+
+
+
