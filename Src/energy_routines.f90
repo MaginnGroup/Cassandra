@@ -3058,6 +3058,7 @@ CONTAINS
     
     W_tensor_elec(:,:,this_box) = (W_tensor_charge(:,:,this_box) + W_tensor_recip(:,:,this_box))*charge_factor 
     W_tensor_total(:,:,this_box) = W_tensor_vdw(:,:,this_box) + W_tensor_elec(:,:,this_box) 
+    !DEBUG
     WRITE(*,"(A16,F15.6,F15.6,F15.6)") "W_tensor_vdw=" &
                               , W_tensor_vdw(1,1,this_box) &
                               , W_tensor_vdw(2,2,this_box) &
@@ -3360,7 +3361,9 @@ CONTAINS
           ENDIF
 
        ENDIF qq_calculation
-       IF (ABS(Wij_vdw) >= 0.5 .OR. ABS(Wij_qq) >= 0.5) THEN
+       !DEBUG
+       !IF (ABS(Wij_vdw) >= 0.5 .OR. ABS(Wij_qq) >= 0.5) THEN
+       IF (is == 2 .AND. im == 1 .AND. js == 2 .AND. jm ==8) THEN
          WRITE(*,"(I4,I4,I4,I4,I4,I4,F15.0,F15.0)") is, im, ia, js, jm, ja, Wij_vdw, Wij_qq
        END IF
 
