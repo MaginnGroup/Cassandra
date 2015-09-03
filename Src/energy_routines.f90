@@ -3362,8 +3362,7 @@ CONTAINS
 
        ENDIF qq_calculation
        !DEBUG
-       !IF (ABS(Wij_vdw) >= 0.5 .OR. ABS(Wij_qq) >= 0.5) THEN
-       IF (is == 2 .AND. im == 1 .AND. js == 2 .AND. jm ==8) THEN
+       IF (ABS(Wij_vdw) >= 0.5 .OR. ABS(Wij_qq) >= 0.5) THEN
          WRITE(*,"(I4,I4,I4,I4,I4,I4,F15.0,F15.0)") is, im, ia, js, jm, ja, Wij_vdw, Wij_qq
        END IF
 
