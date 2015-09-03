@@ -3031,9 +3031,6 @@ CONTAINS
                
                CALL Compute_Molecule_Pair_Force(this_im_1,is_1,this_im_2,is_2,this_box,tv_pair,tc_pair,rx,ry,rz)
                
-               !                W_tensor_vdw(:,:,this_box) = W_tensor_vdw(:,:,this_box) + tv_pair(:,:)
-!                W_tensor_charge(:,:,this_box) = W_tensor_charge(:,:,this_box) + tc_pair(:,:)
-               
                w_inter_vdw(:,:) = w_inter_vdw(:,:) + tv_pair(:,:)
                w_inter_charge(:,:) = w_inter_charge(:,:) + tc_pair(:,:)
                
@@ -3061,6 +3058,21 @@ CONTAINS
     
     W_tensor_elec(:,:,this_box) = (W_tensor_charge(:,:,this_box) + W_tensor_recip(:,:,this_box))*charge_factor 
     W_tensor_total(:,:,this_box) = W_tensor_vdw(:,:,this_box) + W_tensor_elec(:,:,this_box) 
+    WRITE(*,"(A16,F15.6,F15.6,F15.6)") "W_tensor_vdw=" &
+                              , W_tensor_vdw(1,1,this_box) &
+                              , W_tensor_vdw(2,2,this_box) &
+                              , W_tensor_vdw(3,3,this_box)
+
+    WRITE(*,"(A16,F15.6,F15.6,F15.6)") "W_tensor_charge=" &
+                              , W_tensor_charge(1,1,this_box) &
+                              , W_tensor_charge(2,2,this_box) &
+                              , W_tensor_charge(3,3,this_box)
+
+    WRITE(*,"(A16,F15.6,F15.6,F15.6)") "W_tensor_recip=" &
+                              , W_tensor_recip(1,1,this_box) &
+                              , W_tensor_recip(2,2,this_box) &
+                              , W_tensor_recip(3,3,this_box)
+
     
   END SUBROUTINE Compute_Forces
   
@@ -3348,6 +3360,9 @@ CONTAINS
           ENDIF
 
        ENDIF qq_calculation
+       IF (ABS(Wij_vdw) >= 0.5 .OR. ABS(Wij_qq) >= 0.5) THEN
+         WRITE(*,"(I4,I4,I4,I4,I4,I4,F15.0,F15.0)") is, im, ia, js, jm, ja, Wij_vdw, Wij_qq
+       END IF
 
     ENDIF ExistCheck
 !------------------------------------------------------------------------------
