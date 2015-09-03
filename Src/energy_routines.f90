@@ -3058,22 +3058,6 @@ CONTAINS
     
     W_tensor_elec(:,:,this_box) = (W_tensor_charge(:,:,this_box) + W_tensor_recip(:,:,this_box))*charge_factor 
     W_tensor_total(:,:,this_box) = W_tensor_vdw(:,:,this_box) + W_tensor_elec(:,:,this_box) 
-    !DEBUG
-    WRITE(*,"(A16,F15.6,F15.6,F15.6)") "W_tensor_vdw=" &
-                              , W_tensor_vdw(1,1,this_box) &
-                              , W_tensor_vdw(2,2,this_box) &
-                              , W_tensor_vdw(3,3,this_box)
-
-    WRITE(*,"(A16,F15.6,F15.6,F15.6)") "W_tensor_charge=" &
-                              , W_tensor_charge(1,1,this_box) &
-                              , W_tensor_charge(2,2,this_box) &
-                              , W_tensor_charge(3,3,this_box)
-
-    WRITE(*,"(A16,F15.6,F15.6,F15.6)") "W_tensor_recip=" &
-                              , W_tensor_recip(1,1,this_box) &
-                              , W_tensor_recip(2,2,this_box) &
-                              , W_tensor_recip(3,3,this_box)
-
     
   END SUBROUTINE Compute_Forces
   
@@ -3244,10 +3228,6 @@ CONTAINS
                 SigOverR12 = SigOverR6 * SigOverR6
                 
                 Wij_vdw = (24.0_DP * eps) * (2.0_DP*SigOverR12 - SigOverR6)
-             !DEBUG
-             IF (is == 2 .AND. im == 65 .AND. js == 2 .AND. jm == 255) THEN
-               WRITE(*,"(I4,I4,I4,I4,I4,I4,F12.9,F12.9,F12.9,F15.4)") is, im, ia, js, jm, ja, SigOverRsq, SigOverR6, SigOverR12, Wij_vdw
-             END IF
 
              ELSEIF (int_vdw_sum_style(ibox) == vdw_cut_shift) THEN
                 SigOverRsq = (sig**2)/rijsq
