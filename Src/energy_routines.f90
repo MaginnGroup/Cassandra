@@ -3244,6 +3244,11 @@ CONTAINS
                 SigOverR12 = SigOverR6 * SigOverR6
                 
                 Wij_vdw = (24.0_DP * eps) * (2.0_DP*SigOverR12 - SigOverR6)
+             !DEBUG
+             IF (is == 2 .AND. im == 65 .AND. js == 2 .AND. jm == 255) THEN
+               WRITE(*,"(I4,I4,I4,I4,I4,I4,F12.9,F12.9,F12.9,F15.4)") is, im, ia, js, jm, ja, SigOverRsq, SigOverR6, SigOverR12, Wij_vdw
+             END IF
+
              ELSEIF (int_vdw_sum_style(ibox) == vdw_cut_shift) THEN
                 SigOverRsq = (sig**2)/rijsq
                 SigOverR6 = SigOverRsq * SigOverRsq * SigOverRsq
@@ -3361,10 +3366,6 @@ CONTAINS
           ENDIF
 
        ENDIF qq_calculation
-       !DEBUG
-       IF (ABS(Wij_vdw) >= 0.5 .OR. ABS(Wij_qq) >= 0.5) THEN
-         WRITE(*,"(I4,I4,I4,I4,I4,I4,F15.0,F15.0)") is, im, ia, js, jm, ja, Wij_vdw, Wij_qq
-       END IF
 
     ENDIF ExistCheck
 !------------------------------------------------------------------------------
