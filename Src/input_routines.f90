@@ -5221,7 +5221,7 @@ SUBROUTINE Get_Simulation_Length_Info
 
   ! Check to make sure that all the quantities are defined in the input file
 
-  IF (n_mcsteps == 0 .OR. ncoord_freq == 0 .OR. nthermo_freq == 0) THEN
+  IF (n_mcsteps < 0 .OR. ncoord_freq <= 0 .OR. nthermo_freq <= 0) THEN
   
      err_msg = ""
      err_msg(1) = 'At least one of the keywords is missing in the input file.'

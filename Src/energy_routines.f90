@@ -3031,9 +3031,6 @@ CONTAINS
                
                CALL Compute_Molecule_Pair_Force(this_im_1,is_1,this_im_2,is_2,this_box,tv_pair,tc_pair,rx,ry,rz)
                
-               !                W_tensor_vdw(:,:,this_box) = W_tensor_vdw(:,:,this_box) + tv_pair(:,:)
-!                W_tensor_charge(:,:,this_box) = W_tensor_charge(:,:,this_box) + tc_pair(:,:)
-               
                w_inter_vdw(:,:) = w_inter_vdw(:,:) + tv_pair(:,:)
                w_inter_charge(:,:) = w_inter_charge(:,:) + tc_pair(:,:)
                
@@ -3231,6 +3228,7 @@ CONTAINS
                 SigOverR12 = SigOverR6 * SigOverR6
                 
                 Wij_vdw = (24.0_DP * eps) * (2.0_DP*SigOverR12 - SigOverR6)
+
              ELSEIF (int_vdw_sum_style(ibox) == vdw_cut_shift) THEN
                 SigOverRsq = (sig**2)/rijsq
                 SigOverR6 = SigOverRsq * SigOverRsq * SigOverRsq
