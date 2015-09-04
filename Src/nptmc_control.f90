@@ -41,7 +41,7 @@ SUBROUTINE NPTMC_Control
   !        Get_Pressure_Info          
   !        Get_Move_Probabilities     
   !        Get_CBMC_Info              
-  !        Get_Frequency_Info         
+  !        Get_Simulation_Length_Info         
   !        Get_Property_Info          
   !        Average_Info               
   !        Get_Neighbor_Style         
@@ -116,7 +116,7 @@ SUBROUTINE NPTMC_Control
 
   CALL Get_CBMC_Info
   ! Determine the frequency with which information will be output 
-  CALL Get_Frequency_Info
+  CALL Get_Simulation_Length_Info
 
   ! Properties to be output
   CALL Get_Property_Info
