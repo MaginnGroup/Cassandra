@@ -488,6 +488,22 @@ PROGRAM Main
 
   END DO
 
+  ! Write initial properties, if requested
+  IF (start_type == 'make_config' .OR. n_mcsteps == 0) THEN
+    DO ibox = 1, nbr_boxes
+      CALL Write_Properties(0,ibox)
+      CALL Reset(ibox)
+    END DO
+  END IF
+
+  ! End program if no moves specified
+  IF (n_mcsteps == 0) THEN
+    write(logunit,*) ""
+    write(logunit,'(X,A59)') '******************** Ending simulation ********************'
+    WRITE(*,*)
+    WRITE(*,*) 'Cassandra simulation complete'
+    STOP
+  END IF
 
   ! Now begin simulation by calling apropriate driver routines
   ! Add routines here...
