@@ -4,7 +4,8 @@ gas-phase pentane at temperature T=336K and pressure P=3.38bar.
 I. FILES REQUIRED TO RUN THE SIMULATION
 
 pentane.pdb
-    created in Gaussview
+    created in Gaussview. Alternatively, this file can be created by hand, Avogadro
+    or obtained online.
 
 pentane.ff
     An empty template was created with the following command
