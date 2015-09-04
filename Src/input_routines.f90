@@ -5073,8 +5073,7 @@ SUBROUTINE Get_Seed_Info
 END SUBROUTINE Get_Seed_Info
 !*********************************************************************************************
 
-SUBROUTINE Get_Frequency_Info
-  ! This subroutine obtains frequency for writing to various files
+SUBROUTINE Get_Simulation_Length_Info
 
   INTEGER :: ierr, line_nbr, nbr_entries, ibox
   CHARACTER(120) :: line_string, line_array(20),movie_header_file, &
@@ -5095,17 +5094,17 @@ SUBROUTINE Get_Frequency_Info
      
      IF ( ierr /= 0 ) THEN
         err_msg = ""
-        err_msg(1) = "Error encoutered while reading initial coordinate information"
-        CALL Clean_Abort(err_msg,'Get_Initial_coordinates_Info')
+        err_msg(1) = "Error encoutered while reading simulation length information"
+        CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
      END IF
      
-     IF (line_string(1:16) == '# Frequency_Info') THEN
+     IF (line_string(1:24) == '# Simulation_Length_Info') THEN
         ! We found a section that contains frequency info. We will read in the frequency information
         line_nbr = line_nbr + 1
         CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
-        IF (line_array(1) == 'freq_type') THEN
+        IF (line_array(1) == 'Units') THEN
 
-           IF (line_array(2) == 'Timed') THEN
+           IF (line_array(2) == 'Minutes') THEN
               timed_run = .TRUE.
            ELSE
               timed_run = .FALSE.
@@ -5114,8 +5113,9 @@ SUBROUTINE Get_Frequency_Info
         ELSE  
            err_msg = ""
            err_msg(1) = 'A keyword is missing in the input file.'
-           err_msg(2) = 'Check for freq_type.'
-           CALL Clean_Abort(err_msg,'Get_Frequency_Info')
+           err_msg(2) = 'In section Simulation Length Info.'
+           err_msg(2) = 'Keyword Units is missing.'
+           CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
         END IF
 
         FreqLOOP: DO
@@ -5123,31 +5123,31 @@ SUBROUTINE Get_Frequency_Info
            CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
            IF(timed_run) THEN
 
-              IF (line_array(1) == 'thermofreq') THEN
+              IF (line_array(1) == 'Prop_Freq') THEN
  
                  nthermo_freq = String_To_Int(line_array(2))
 
                  WRITE(logunit,*) 
                  WRITE(logunit,'(A,T50,I8,A)') 'Thermodynamic quantities will written at every', nthermo_freq, ' minutes.'
 
-              ELSE IF (line_array(1) == 'coordfreq') THEN
+              ELSE IF (line_array(1) == 'Coord_Freq') THEN
               
                  ncoord_freq = String_To_Int(line_array(2))
 
                  WRITE(logunit,*)
                  WRITE(logunit,'(A,T50,I8,A)') 'Coordinates will be written at every', ncoord_freq, ' minutes.'
 
-              ELSE IF (line_array(1) == 'Stop') THEN
+              ELSE IF (line_array(1) == 'Total_Time') THEN
 
                  n_mcsteps = String_To_Int(line_array(2))
 
                  WRITE(logunit,*) 
                  WRITE(logunit,'(A32,2X,I12,2X,A10)' ) 'The simulation will be run for ', n_mcsteps, ' minutes.'
 
-              ELSE IF (line_array(2) == 'Done_Frequency_Info') THEN
+              ELSE IF (line_array(2) == 'Done_Simulation_Length_Info') THEN
               
                  WRITE(logunit,*)
-                 WRITE(logunit,*)'*** Finished reading output info ******* '
+                 WRITE(logunit,*)'*** Finished Reading Simulation Length Info *******'
               
                  EXIT FreqLOOP
 
@@ -5155,14 +5155,14 @@ SUBROUTINE Get_Frequency_Info
 
            ELSE
 
-              IF (line_array(1) == 'Nthermofreq') THEN
+              IF (line_array(1) == 'Prop_Freq') THEN
 
                  nthermo_freq = String_To_Int(line_array(2))
               
                  WRITE(logunit,*) 
                  WRITE(logunit,'(A,T50,I8,A)') 'Thermodynamic quantities will written at every', nthermo_freq, ' MC steps.'
 
-              ELSE IF (line_array(1) == 'Ncoordfreq') THEN
+              ELSE IF (line_array(1) == 'Coord_Freq') THEN
               
                  ncoord_freq = String_To_Int(line_array(2))
 
@@ -5194,10 +5194,10 @@ SUBROUTINE Get_Frequency_Info
                  WRITE(logunit, '(A,I10)') 'Number of equilibrium steps', n_equilsteps
                  
 
-              ELSE IF (line_array(2) == 'Done_Frequency_Info') THEN
+              ELSE IF (line_array(2) == 'Done_Simulation_Length_Info') THEN
               
                  WRITE(logunit,*)
-                 WRITE(logunit,*)'*** Finished reading output info ******* '
+                 WRITE(logunit,*)'*** Finished Reading Simulation Length Info ******* '
               
                  EXIT FreqLOOP
 
@@ -5212,8 +5212,8 @@ SUBROUTINE Get_Frequency_Info
      ELSE IF (line_string(1:3) == 'END' .OR. line_nbr > 10000 ) THEN
               
         err_msg = ""
-        err_msg(1) = 'Frequency info for output not specified in the input file'
-        CALL Clean_Abort(err_msg,'Get_Frequency_Info')
+        err_msg(1) = 'Simulation length information not specified in the input file'
+        CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
 
      END IF
            
@@ -5227,16 +5227,16 @@ SUBROUTINE Get_Frequency_Info
      err_msg(1) = 'At least one of the keywords is missing in the input file.'
 
      IF(timed_run) THEN
-        err_msg(2) = 'Check for coordfreq, thermofreq and Stop.'
+        err_msg(2) = 'Check for Coord_Freq, Prop_Freq and Stop.'
      ELSE
-        err_msg(2) = 'Check for Ncoordfreq, Nthermofreq, and MCsteps'
+        err_msg(2) = 'Check for Coord_Freq, Prop_Freq, and MCsteps'
      END IF
 
-     CALL Clean_Abort(err_msg,'Get_Frequency_Info')
+     CALL Clean_Abort(err_msg,'Get_Simulaton_Length_Info')
 
   END IF
   
-END SUBROUTINE Get_Frequency_Info
+END SUBROUTINE Get_Simulation_Length_Info
 !*****************************************************************************************************
 
 !*****************************************************************************************************
