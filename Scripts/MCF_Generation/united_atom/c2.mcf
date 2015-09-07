@@ -1,38 +1,22 @@
-!********************************************************************************
-!   Cassandra - An open source atomistic Monte Carlo software package
-!   developed at the University of Notre Dame.
-!   http://cassandra.nd.edu
-!   Prof. Edward Maginn <ed@nd.edu>
-!   Copyright (2013) University of Notre Dame du Lac
-!
-!   This program is free software: you can redistribute it and/or modify
-!   it under the terms of the GNU General Public License as published by
-!   the Free Software Foundation, either version 3 of the License, or
-!   (at your option) any later version.
-!
-!   This program is distributed in the hope that it will be useful,
-!   but WITHOUT ANY WARRANTY; without even the implied warranty of
-!   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-!   GNU General Public License for more details.
-!
-!   You should have received a copy of the GNU General Public License
-!   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-!********************************************************************************
-
-
-!**********************************************************************************
+!*******************************************************************************
 !Molecular connectivity file for c2.pdb
-!**********************************************************************************
-
+!*******************************************************************************
+!Atom Format
+!index type element mass charge type parameters
+!type="LJ", parms=epsilon sigma
 
 # Atom_Info
 2
-1    C1    C    12.0107    0.0    LJ    98.0    3.75
-2    C2    C    12.0107    0.0    LJ    98.0    3.75
+1     C       C    12.011  0.0  LJ    98.000     3.750
+2     C       C    12.011  0.0  LJ    98.000     3.750
+
+!Bond Format
+!index i j type parameters
+!type="fixed", parms=bondLength
 
 # Bond_Info
 1
-1    1    2    fixed     1.54
+1     1     2     fixed     1.540
 
 # Angle_Info
 0
@@ -40,11 +24,16 @@
 # Dihedral_Info
 0
 
+# Improper_Info
+0
+
+!Fragment Format
+!index number_of_atoms_in_fragment branch_point other_atoms
+
 # Fragment_Info
 1
 1 2 1 2
-# Improper_Info
-0
+
 
 # Fragment_Connectivity
 0

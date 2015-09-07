@@ -23,79 +23,45 @@ atomtypes
 2
 
 begin atom-atomtype
-1 C
-2 H
-3 H
-4 H
-5 C
-6 H
-7 H
-8 C
-9 H
-10 H
-11 C
-12 H
-13 H
-14 H
+1 CH3
+2 CH2
+3 CH2
+4 CH3
 end atom-atomtype
 
 dihedraltype OPLS
 
 nonbonded
-C
-Sigma sigma_c
-Epsilon epsilon_c
+CH3
+Sigma 3.75
+Epsilon 98.0
 
 nonbonded
-H
-Sigma sigma_h
-Epsilon epsilon_h
+CH2
+Sigma 3.95
+Epsilon 46.0
 
 bonds
-C H
-Length length_1
+CH3 CH2
+Length 1.54
 Constant fixed
 
 bonds
-C C
-Length length_2
+CH2 CH2
+Length 1.54
 Constant fixed
 
 angles
-H C H
-Angle angle_1
-Constant constant_angle_1
-
-angles
-H C C
-Angle angle_2
-Constant constant_angle_2
-
-angles
-C C C
-Angle angle_3
-Constant constant_angle_3
+CH3 CH2 CH2
+Angle 114.0
+Constant 31250.0
 
 dihedrals
-C C C H
-a0 dihedral_1
-a1 dihedral_1
-a2 dihedral_1
-a3 dihedral_1
-
-dihedrals
-C C C C
-a0 dihedral_2
-a1 dihedral_2
-a2 dihedral_2
-a3 dihedral_2
-
-dihedrals
-H C C H
-a0 dihedral_3
-a1 dihedral_3
-a2 dihedral_3
-a3 dihedral_3
+CH3 CH2 CH2 CH3
+a0 0.0
+a1 2.9517
+a2 -0.5661
+a3 6.579
 
 charge
 1 0.0
@@ -108,35 +74,5 @@ charge
 
 charge
 4 0.0
-
-charge
-5 0.0
-
-charge
-6 0.0
-
-charge
-7 0.0
-
-charge
-8 0.0
-
-charge
-9 0.0
-
-charge
-10 0.0
-
-charge
-11 0.0
-
-charge
-12 0.0
-
-charge
-13 0.0
-
-charge
-14 0.0
 
 end
