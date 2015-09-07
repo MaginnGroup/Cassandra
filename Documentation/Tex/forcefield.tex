@@ -230,16 +230,15 @@ Electrostatic interactions are given by  Coulomb's law
 where $q_i$ and $q_j$ are partial charges specified by the user and
 placed on atomic positions given by $r_i$ and $r_j$. In a simulation,
 the electrostatic interactions are calculated using either an Ewald
-summation or a direct summation using the minimum image convention. \\
-
-Note that the total energy that is printed out in the property file is extensive. 
+summation or a direct summation using the minimum image convention. Note that 
+the total energy that is printed out in the property file is extensive. 
 Consequently, to obtain intensive energies, the printed energies must divided by 
 the total number of molecules in the system. 
 
 \begin{center}
 \begin{table}[h]
 	\begin{center}
-	\caption{Cassandra units for repulsion-dispersion interactions}
+	\caption{Cassandra units for coulombic interactions}
 	\begin{tabular} {l l l} \\ \hline \hline
 	 Parameter & Symbol &  Units \\
 	Charge &	 $q$ & e \\ \\ \hline \\
@@ -248,13 +247,14 @@ the total number of molecules in the system.
 	\label{Tab:LJ_Units}
 \end{table}
 \end{center}
-\section{Cassandra Units}
-The following table provides a summary of the units used in Cassandra:
+
+%\section{Cassandra Units}
+%The following table provides a summary of the units used in Cassandra:
 
 \begin{center}
 \begin{table}[h]
 	\begin{center}
-	\caption{Cassandra units for input variables}
+	\caption{Summary of Cassandra units for input variables}
 	\begin{tabular} {l l l} \\ \hline \hline
 	Bond length  & l  & \AA \\ \hline \\
 	\multicolumn{3}{c} {\bf Angles} \\ \\
@@ -282,8 +282,7 @@ The following table provides a summary of the units used in Cassandra:
 	Temperature               & & K \\
 	Pressure                      & & bar \\
 	Chemical potential       & & kJ/mol \\
-	Energy                   & & kJ/mol \\
-	Fugacity                       & & bar \\ \hline \hline
+	Energy                   & & kJ/mol \\ \hline \hline
 	
 	\end{tabular}
 	\end{center}

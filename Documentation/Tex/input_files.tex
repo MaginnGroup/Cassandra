@@ -1220,25 +1220,25 @@ Production 250}
 %
 %%%%%%%%%%%%%%%%
 %
-% Frequency_Info
+% Simulation_Length
 %
 %%%%%%%%%%%%%%%%
-\subsection{Frequency}\label{sec:Frequency_Info}
-{\bf \# Frequency\_Info} \\
-{\it freq\_type  Character(1)} \\
-{\it Nthermofreq} or {\em thermofreq} {\it Integer(2)} \\
-{\it Ncoordfreq} or {\em coordfreq} {\it Integer(3)} \\
+\subsection{Frequency}\label{sec:Simulation_Length_Info}
+{\bf \# Simulation\_Length\_Info} \\
+{\it Units  Character(1)} \\
+{\it Prop\_Freq} or {\em thermofreq} {\it Integer(2)} \\
+{\it Coord\_Freq} or {\em coordfreq} {\it Integer(3)} \\
 {\it MCsteps} or {\em Stop} {\it Integer(4)} \\ 
-{\bf \# Done\_Frequency\_Info} \\ \\
+{\bf \# Done\_Simulation\_Length\_Info} \\ \\
 %
 This section specifies the frequency at which thermodynamic properties and coordinates are output
 to a file. {\it Character(1)} determines the method by which the simulation is terminated and
-data is output. If {\it Character(1)} is to `Timed', then the simulation stops after the specified 
+data is output. If {\it Character(1)} is to `Minutes', then the simulation stops after the specified 
 time in minutes. The format for this option is given below: \\ \\
 %
-{\bf freq\_type    Timed} \\
-thermofreq       {\it Integer(2) }\\
-coordfreq         {\it Integer(3)} \\
+{\bf Units    Minutes} \\
+Prop\_Freq       {\it Integer(2) }\\
+Coord\_Freq        {\it Integer(3)} \\
 Stop                  {\it Integer(4)} \\ \\
 %
 With this option, thermodynamic quantities are output every {\it Integer(2)} minutes, 
@@ -1248,23 +1248,23 @@ such that thermodynamic quantities are written every minute and the coordinates 
 every 10 minutes, use the following: \\ \\
 %
 \texttt{
-\# Frequency\_Info \\
-freq\_type    Timed \\
-thermofreq    1 \\
-coordfreq       10 \\
+\# Simulation\_Length\_Info \\
+Units    Minutes \\
+Prop\_Freq    1 \\
+Coord\_Freq       10 \\
 Stop                 60 \\ 
-\# Done\_Frequency\_Info \\ \\}
+\# Done\_Simulation\_Length\_Info \\ \\}
 %
 Note that similar to \texttt{\# Move\_Probabilities} section, the end of the frequency section 
 always includes the \\ \texttt{\#~Done\_Frequency\_Info} line. \\ \\
 %
 Simulations can also be run for a given number of MC steps. To enable this feature, 
-{\it Character(1)} is set to `none'. Additional information is required and is given in the
+{\it Character(1)} is set to `Steps'. Additional information is required and is given in the
 following format: \\ \\
 %
-{\bf freq\_type    none} \\
-Nthermofreq       {\it Integer(2) }\\
-Ncoordfreq         {\it Integer(3)} \\
+{\bf Units    Steps} \\
+Prop\_Freq       {\it Integer(2) }\\
+Coord\_Freq         {\it Integer(3)} \\
 MCsteps                  {\it Integer(4)} \\ \\
 %
 With this option, thermodynamic quantities are output every {\it Integer(2)} MC steps,
@@ -1275,12 +1275,12 @@ To run a simulation of 50,000 steps such that thermodynamic quantities are print
 every 100 MC steps and coordinates are output every 10,000 steps, use the following: \\ \\
 %
 \texttt{
-\# Frequency\_Info \\
-freq\_type none \\
-Nthermofreq   100 \\
-Ncoordfreq     10000 \\
-MCsteps          50000 \\
-\# Done\_Frequency\_Info}
+\# Simulation\_Length\_Info \\
+Units           Steps \\
+Prop\_Freq      100 \\
+Coord\_Freq     10000 \\
+MCsteps         50000 \\
+\# Done\_Simulation\_Length\_Info}
 %
 %
 %%%%%%%%%%%%%%%%
