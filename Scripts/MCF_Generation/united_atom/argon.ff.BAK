@@ -23,54 +23,17 @@ atomtypes
 1
 
 begin atom-atomtype
-1 CH2
-2 CH2
-3 CH2
-4 CH2
-5 CH2
-6 CH2
+1 Argon_type
 end atom-atomtype
 
-dihedraltype OPLS
+dihedraltype NONE
 
 nonbonded
-CH2
-Sigma ch2_sigma
-Epsilon ch2_epsilon
-
-bonds
-CH2 CH2
-Length ch2-ch2_length
-Constant fixed
-
-angles
-CH2 CH2 CH2
-Angle ch2-ch2-ch2_angle
-Constant ch2-ch2-ch2_constant
-
-dihedrals
-CH2 CH2 CH2 CH2
-a0 a0
-a1 a1
-a2 a2
-a3 a3
+Argon_type
+Sigma 3.40
+Epsilon 120.0
 
 charge
 1 0.0
-
-charge
-2 0.0
-
-charge
-3 0.0
-
-charge
-4 0.0
-
-charge
-5 0.0
-
-charge
-6 0.0
 
 end

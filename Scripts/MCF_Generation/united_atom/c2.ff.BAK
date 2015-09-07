@@ -31,18 +31,18 @@ dihedraltype NONE
 
 nonbonded
 CH3
-Sigma 
-Epsilon 
+Sigma 3.75
+Epsilon 98.0
 
 bonds
 CH3 CH3
-Length 
-Constant 
+Length 1.54
+Constant fixed
 
 charge
-1 0
+1 0.0
 
 charge
-2 0
+2 0.0
 
 end
