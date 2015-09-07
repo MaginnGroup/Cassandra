@@ -601,9 +601,9 @@ for i in xrange(0, nbr_species):
 					input_frag.write("# Move_Probability_Info\n# Prob_Ring\n1.0 35.0\n" + 
 													 "# Done_Probability_Info\n\n")
 				input_frag.write("# Run_Type\nProduction 1000 10\n\n")
-				input_frag.write("# Frequency_Info\nfreq_type    none\n"+
-					               "Nthermofreq  100\nNcoordfreq   5000\n"+
-					               "MCsteps      1000000\n# Done_Frequency_Info\n\n")
+				input_frag.write("# Simulation_Length_Info\nUnits    Steps\n"+
+					               "Prop_Freq  100\nCoord_Freq   5000\n"+
+					               "MCsteps      1000000\n# Done_Simulation_Length_Info\n\n")
 				input_frag.write("# Property_Info 1\nEnergy_Total\n\n")
 				input_frag.write("# File_Info\nfrag"+str(j+1)+".dat\n\n")
 				input_frag.write("END")
@@ -640,10 +640,10 @@ for i in xrange(0, nbr_species):
 				input_frag.write("# Start_Type\nread_old\n../fragments/frag_"+str(j+1)+
 												 "_1.xyz 1\n\n")
 				input_frag.write("# Run_Type\nProduction 1000 10\n\n")
-				input_frag.write("# Frequency_Info\nfreq_type    none\n"+
-												 "Nthermofreq  10\nNcoordfreq   90\n"+
+				input_frag.write("# Simulation_Length_Info\nUnits  Steps\n"+
+												 "Prop_Freq  10\nCoord_Freq   90\n"+
 												 "MCsteps      1100000\nNequilSteps  100000\n"+
-												 "# Done_Frequency_Info\n\n")
+												 "# Done_Simulation_Length_Info\n\n")
 				input_frag.write("# File_Info\nfrag"+str(j+1)+".dat\n\n")
 				input_frag.write("END")
 				input_frag.close()
