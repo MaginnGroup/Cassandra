@@ -31,12 +31,13 @@
 #	PDB files for each species
 #	MCF files for each species
 #
-# Input files produced:
+# Fragment libraries are located in:
 # 
-# /species?/fragments/species?_mcf_gen.inp
-# /species?/frag?/frag?.inp
+# /species?/frag?/frag?.dat
 #
-# The script overwrites the section of the input file where needed 
+# Where ? stands for the species id (i.e. species1, species2 ...)
+#
+# Note that the script overwrites the section of the input file where needed 
 # (i.e. # Frag_Info) with the aforementioned folder locations. 
 #
 #*******************************************************************************
