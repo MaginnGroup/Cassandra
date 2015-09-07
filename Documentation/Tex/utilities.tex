@@ -70,7 +70,7 @@ http://wxpython.org/download.php
 \section{Generator of MCF files}
 \label{utility:mcfgen}
 
-The script mcf\_gen.py is a tool that aims to ease the setup of MCF files from scratch (see section \ref{sec:MCF_File} to learn more
+The script \texttt{mcf\_gen.py} is a tool that aims to ease the setup of MCF files from scratch (see section \ref{sec:MCF_File} to learn more
 about MCF files), as the generation of these files by hand can be error prone. 
 In this section, a pentane MCF file will be generated to demonstrate the use of this tool.
 The Transferable Potentials for Phase Equilibria (TraPPE) force field will be used to represent the pentane molecular interactions. 
@@ -87,79 +87,79 @@ U = \sum_{angles} K_\theta(\theta-\theta_0)^2 +
 First, generate (or obtain) a PDB file or a CML file. To generate a PDB or CML file, 
 software such as Gaussview or Avogadro can be used. Alternatively, PDB files can
 be downloaded from the internet (e.g. www.rcsb.org). In this example, a pentane PDB file using the 
-program Gaussview v5.08 will be generated. \\
+program Gaussview v5.08 will be generated, as shown below. \\
 
-After launching the Gaussview interface, click on the ``Element Fragment'' button located on the upper-left corner of the
-window.
-
-
-\begin{figure}[h]
-\begin{center}
-\includegraphics[height=1in]{gaussian1final.eps}
-\end{center}
-\end{figure}
-
-A periodic table will appear. Click on the ``Carbon'' button. 
-
-\begin{figure}[h]
-\begin{center}
-\includegraphics[height=3in]{gaussian2final.eps}
-\end{center}
-\end{figure}
-
-Click on the main workplace to insert the first $CH_4$ fragment.
-To increase the chain length, click on a hydrogen attached to the carbon. 
-
-\begin{figure}[h]
-\begin{center}
-\includegraphics[height=2in]{gaussian3final.eps}
-\end{center}
-\end{figure}
-
-The final pentane structure should look something like this
-
-\begin{figure}[h]
-\begin{center}
-\includegraphics[height=2in]{gaussian4final.eps}
-\end{center}
-\end{figure}
-\vspace{3in}
-Right click on any place of the workplace, select the option builder and then
-select delete atoms.
-
-\begin{figure}[h]
-\begin{center}
-\includegraphics[height=2.5in]{gaussian5final.eps}
-\end{center}
-\end{figure}
-
-Click on all the hydrogen atoms to delete them 
-
-\begin{figure}[h]
-\begin{center}
-\includegraphics[height=2.5in]{gaussian7final.eps}
-\end{center}
-\end{figure}
-
-\vspace{3in}
-Go back to main menu, click on File - Save.
-
-\begin{figure}[h]
-\begin{center}
-\includegraphics[height=2.5in]{gaussian8final.eps}
-\end{center}
-\end{figure}
-
-Type the name of the file and select PDB as the file type from the bottom menu.
-
-\begin{figure}[h]
-\begin{center}
-\includegraphics[height=2.5in]{gaussian9final.eps}
-\end{center}
-\end{figure}
-
-\vspace{3in}
-Close Gaussview. Back in the terminal, open the PDB file using your favorite text editor.
+%After launching the Gaussview interface, click on the ``Element Fragment'' button located on the upper-left corner of the
+%window.
+%
+%
+%\begin{figure}[h]
+%\begin{center}
+%\includegraphics[height=1in]{gaussian1final.eps}
+%\end{center}
+%\end{figure}
+%
+%A periodic table will appear. Click on the ``Carbon'' button. 
+%
+%\begin{figure}[h]
+%\begin{center}
+%\includegraphics[height=3in]{gaussian2final.eps}
+%\end{center}
+%\end{figure}
+%
+%Click on the main workplace to insert the first $CH_4$ fragment.
+%To increase the chain length, click on a hydrogen attached to the carbon. 
+%
+%\begin{figure}[h]
+%\begin{center}
+%\includegraphics[height=2in]{gaussian3final.eps}
+%\end{center}
+%\end{figure}
+%
+%The final pentane structure should look something like this
+%
+%\begin{figure}[h]
+%\begin{center}
+%\includegraphics[height=2in]{gaussian4final.eps}
+%\end{center}
+%\end{figure}
+%\vspace{3in}
+%Right click on any place of the workplace, select the option builder and then
+%select delete atoms.
+%
+%\begin{figure}[h]
+%\begin{center}
+%\includegraphics[height=2.5in]{gaussian5final.eps}
+%\end{center}
+%\end{figure}
+%
+%Click on all the hydrogen atoms to delete them 
+%
+%\begin{figure}[h]
+%\begin{center}
+%\includegraphics[height=2.5in]{gaussian7final.eps}
+%\end{center}
+%\end{figure}
+%
+%\vspace{3in}
+%Go back to main menu, click on File - Save.
+%
+%\begin{figure}[h]
+%\begin{center}
+%\includegraphics[height=2.5in]{gaussian8final.eps}
+%\end{center}
+%\end{figure}
+%
+%Type the name of the file and select PDB as the file type from the bottom menu.
+%
+%\begin{figure}[h]
+%\begin{center}
+%\includegraphics[height=2.5in]{gaussian9final.eps}
+%\end{center}
+%\end{figure}
+%
+%\vspace{3in}
+%Close Gaussview. Back in the terminal, open the PDB file using your favorite text editor.
 
 \begin{figure}[h]
 \begin{center}
@@ -194,9 +194,8 @@ column between quotation marks.
 \end{center}
 \end{figure}
 
-In the terminal, Run the following commands:\\
-\texttt{>module load python} \\
-\texttt{>module python mcfgen.py}
+In the terminal, run the following command:\\
+\texttt{>python mcfgen.py pentane.pdb --ffTemplate}
 
 This command will create an .ff file. The first three sections of the FF file are displayed next. 
 Do not modify these.
@@ -210,7 +209,7 @@ Do not modify these.
 The force field parameters for non-bonded (not shown), bonded, angle, dihedral (not shown)
 and coulombic interactions (not shown) must be entered next to the corresponding keyword.
 For example, the angle type CH3 CH2 CH2 has an angle of 114.0. This value must be placed
-next to the ``Angle'' keyword. 
+next to the ``Angle'' keyword.
 
 \begin{figure}[h]
 \begin{center}
@@ -219,17 +218,18 @@ next to the ``Angle'' keyword.
 \end{figure}
 
 \vspace{3in}
-For more examples of filled ff files, please refer to the examples contained in the /Scripts/ directory. Using the 
+For more examples of filled ff files, please refer to the examples contained in the /Scripts/MCF\_Generation/ directory. Using the
 filled .ff file, run: \\
 
-\texttt{> python mcfgen.py} \\
+\texttt{> python mcfgen.py pentane.pdb} \\
 
-Check the file pentane.mcf for any possible errors.
+Check the file newly created pentane.mcf for any possible errors. This example can be found in the directory 
+/Scripts/MCF\_Generation/PDB/
 
 \section{Generate library of fragment configurations}
 \label{utility:libgen}
 
-The goal of the script library\_setup.py is to automate the generation of fragment libraries.
+The goal of the script \texttt{library\_setup.py} is to automate the generation of fragment libraries.
 As a starting point, the script requires the simulation input file, and the MCF and PDB 
 files for each of the species. To run this script, type \\
 
