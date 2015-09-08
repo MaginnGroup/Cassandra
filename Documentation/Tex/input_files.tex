@@ -1017,9 +1017,18 @@ in the boxes they are present in at the start of the simulation. \\ \\
 {\bf \# Prob\_Ring} \\
 {\it Real(1) Real(2)} \\ \\
 %
-This keyword is used when flip moves are to be attempted to sample bond angles and dihedral angles in a ring fragment. For more details on this move, see our publication \cite{Shah:2011}. The relative probability of attempting a flip move is 
-specified by {\it Real(1)} while the maximum angular displacement in degrees for the move is given by {\it Real(2)}. For example, if the flip is to be attempted 30\% of the 
-time and the maximum angular displacement for the move is 20\degree~specify the following: \\ \\
+This keyword is used when flip moves are to be attempted to sample bond angles and 
+dihedral angles in a ring fragment. 
+For more details on this move, see our publication \cite{Shah:2011}. 
+Note that this keyword is used only in input files
+that generate configuration libraries of ring moieties. The input file of the 
+actual simulation would involve the ``# Prob\_Regrowth'' keyword.
+The relative probability of attempting a flip move is 
+specified by {\it Real(1)} while the maximum angular displacement 
+in degrees for the move is given by {\it Real(2)}. 
+For example, if the flip is to be attempted 30\% of the 
+time and the maximum angular displacement for the 
+move is 20\degree~specify the following: \\ \\
 %
 \texttt{
 \# Prob\_Ring \\

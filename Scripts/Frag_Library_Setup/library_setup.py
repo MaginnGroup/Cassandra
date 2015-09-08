@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env 
+
 #*******************************************************************************
 #   Cassandra - An open source atomistic Monte Carlo software package
 #   developed at the University of Notre Dame.
@@ -313,6 +314,19 @@ if "GCMC" in sim_type:
 nbr_species = int(linecache.getline(input_file,nbr_species_line+1))
 print bold+"Number of species found: " + normal + str(nbr_species)
 
+#Open PDB Files. Is there any files without the CONECT keyword (e.g. zeolite)? If so, 
+#tag it. This species will be assumed to be comprised of rigid fragment.
+
+pdb_without_conect = []
+conect_found = False
+for this_species,each_pdb in enumerate(pdb_files):
+	this_pdb = open(each_pdb,'r')
+	for line in this_pdb:
+		if 'CONECT' in line:
+			conect_found = True
+	if conect_found == False:
+		pdb_without_conect.append(this_species)
+
 #Look for MCF files
 mcf_files = []
 for i in xrange(0,nbr_species):
@@ -456,6 +470,12 @@ for i in xrange(0, nbr_species):
 
 #Now, create input files for fragment MCF generation
 for i in xrange(0, nbr_species):
+
+	if i in pdb_without_conect:
+		print "\n\n" + bold + "MCF generation file not created for species 1."
+		print "Fragment configuration will be taken from PDB file."
+		continue
+
 	if nbr_atoms[i] >= 3:
 		for element in files_ring_to_copy:
 			if str(i) in element[0]:
@@ -487,9 +507,17 @@ print bold+"Done..."
 fragment_is_rigid = [] # Boolean entry for each i,j
 ring_is_rigid = [] # frag_id's for each frag that has a rigid ring
 for i in xrange(0, nbr_species):
+
 	if nbr_atoms[i] < 3:
+
 		temp_rigid = [True]
 		temp_ring_rigid = []
+
+	elif i in pdb_without_conect:
+		
+		temp_rigid = [True]
+		temp_ring_rigid = []
+
 	else:
 		temp_rigid = []
 		temp_ring_rigid = []
