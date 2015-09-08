@@ -318,14 +318,16 @@ print bold+"Number of species found: " + normal + str(nbr_species)
 #tag it. This species will be assumed to be comprised of rigid fragment.
 
 pdb_without_conect = []
-conect_found = False
 for this_species,each_pdb in enumerate(pdb_files):
 	this_pdb = open(each_pdb,'r')
+	conect_found = False	
 	for line in this_pdb:
 		if 'CONECT' in line:
 			conect_found = True
+			break
 	if conect_found == False:
 		pdb_without_conect.append(this_species)
+	
 
 #Look for MCF files
 mcf_files = []
@@ -464,9 +466,12 @@ for i in xrange(0,len(mcf_files)):
 #/species?/frag?
 
 for i in xrange(0, nbr_species):
-	os.system("mkdir -p species"+str(i+1)+"/fragments/")
+
 	for j in xrange(0,nbr_fragments[i]):
 		os.system("mkdir -p species"+str(i+1)+"/frag"+str(j+1))
+
+	if i not in pdb_without_conect: 
+		os.system("mkdir -p species"+str(i+1)+"/fragments/")
 
 #Now, create input files for fragment MCF generation
 for i in xrange(0, nbr_species):
