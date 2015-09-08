@@ -8,7 +8,6 @@
 \BOOKMARK [1][-]{section.2.5}{Nonbonded}{chapter.2}
 \BOOKMARK [2][-]{subsection.2.5.1}{Repulsion-Dispersion Interactions}{section.2.5}
 \BOOKMARK [2][-]{subsection.2.5.2}{Electrostatics}{section.2.5}
-\BOOKMARK [1][-]{section.2.6}{Cassandra Units}{chapter.2}
 \BOOKMARK [0][-]{chapter.3}{Cassandra Basics}{}
 \BOOKMARK [1][-]{section.3.1}{Flow Diagram}{chapter.3}
 \BOOKMARK [1][-]{section.3.2}{Cassandra Simulation Setup}{chapter.3}
@@ -64,10 +63,15 @@
 \BOOKMARK [2][-]{subsection.5.3.1}{Inserting a Molecule with Configurational Bias Monte Carlo}{section.5.3}
 \BOOKMARK [2][-]{subsection.5.3.2}{Deleting a Molecule that was Inserted via Configurational Bias Monte Carlo}{section.5.3}
 \BOOKMARK [2][-]{subsection.5.3.3}{Regrowing a Molecule with Configurational Bias Monte Carlo}{section.5.3}
-\BOOKMARK [1][-]{section.5.4}{Multiphase Systems}{chapter.5}
-\BOOKMARK [2][-]{subsection.5.4.1}{Gibbs Ensemble Monte Carlo}{section.5.4}
+\BOOKMARK [1][-]{section.5.4}{Gibbs Ensemble Monte Carlo}{chapter.5}
+\BOOKMARK [2][-]{subsection.5.4.1}{Gibbs Ensemble-NVT}{section.5.4}
+\BOOKMARK [2][-]{subsection.5.4.2}{Gibbs Ensemble-NPT}{section.5.4}
 \BOOKMARK [1][-]{section.5.5}{Multicomponent Systems}{chapter.5}
-\BOOKMARK [2][-]{subsection.5.5.1}{Reaction Ensemble Monte Carlo}{section.5.5}
+\BOOKMARK [2][-]{subsection.5.5.1}{Reaction Ensemble Monte Carlo \(RxMC\)}{section.5.5}
+\BOOKMARK [2][-]{subsection.5.5.2}{Increment from x1=0 to 0<x2<1}{section.5.5}
+\BOOKMARK [2][-]{subsection.5.5.3}{Increment from x1 to x2, where 0<x1<x2<1}{section.5.5}
+\BOOKMARK [2][-]{subsection.5.5.4}{Increment from x1<1 to x2=1}{section.5.5}
+\BOOKMARK [2][-]{subsection.5.5.5}{React in the ideal gas phase: change from x1=1 to x2=0}{section.5.5}
 \BOOKMARK [1][-]{section.5.6}{Appendix}{chapter.5}
 \BOOKMARK [2][-]{subsection.5.6.1}{Inserting a Molecule Randomly}{section.5.6}
 \BOOKMARK [2][-]{subsection.5.6.2}{Deleting a Molecule Inserted Randomly}{section.5.6}
@@ -76,3 +80,5 @@
 \BOOKMARK [2][-]{subsection.6.1.1}{Usage}{section.6.1}
 \BOOKMARK [2][-]{subsection.6.1.2}{Input}{section.6.1}
 \BOOKMARK [1][-]{section.6.2}{Input File GUI}{chapter.6}
+\BOOKMARK [1][-]{section.6.3}{Generator of MCF files}{chapter.6}
+\BOOKMARK [1][-]{section.6.4}{Generate library of fragment configurations}{chapter.6}
