@@ -35,28 +35,27 @@
 \contentsline {subsection}{\numberline {4.1.12}Simulation Box}{33}{subsection.4.1.12}
 \contentsline {subsection}{\numberline {4.1.13}Temperature}{34}{subsection.4.1.13}
 \contentsline {subsection}{\numberline {4.1.14}Pressure}{34}{subsection.4.1.14}
-\contentsline {subsection}{\numberline {4.1.15}Fugacity}{34}{subsection.4.1.15}
-\contentsline {subsection}{\numberline {4.1.16}Chemical Potential}{35}{subsection.4.1.16}
-\contentsline {subsection}{\numberline {4.1.17}Move Probabilities}{35}{subsection.4.1.17}
+\contentsline {subsection}{\numberline {4.1.15}Chemical Potential}{34}{subsection.4.1.15}
+\contentsline {subsection}{\numberline {4.1.16}Move Probabilities}{35}{subsection.4.1.16}
 \contentsline {subsubsection}{Translation}{35}{section*.2}
 \contentsline {subsubsection}{Rotation}{36}{section*.3}
 \contentsline {subsubsection}{Regrowth}{37}{section*.4}
-\contentsline {subsubsection}{Volume}{38}{section*.5}
-\contentsline {subsubsection}{Insertion and Deletion Moves}{39}{section*.6}
-\contentsline {subsection}{\numberline {4.1.18}Start Type}{41}{subsection.4.1.18}
-\contentsline {subsection}{\numberline {4.1.19}Run Type}{43}{subsection.4.1.19}
-\contentsline {subsection}{\numberline {4.1.20}Frequency}{44}{subsection.4.1.20}
-\contentsline {subsection}{\numberline {4.1.21}Average}{45}{subsection.4.1.21}
-\contentsline {subsection}{\numberline {4.1.22}Property Output}{46}{subsection.4.1.22}
-\contentsline {subsection}{\numberline {4.1.23}Fragment Files}{47}{subsection.4.1.23}
-\contentsline {subsection}{\numberline {4.1.24}File Info}{48}{subsection.4.1.24}
-\contentsline {subsection}{\numberline {4.1.25}CBMC parameters}{48}{subsection.4.1.25}
+\contentsline {subsubsection}{Volume}{37}{section*.5}
+\contentsline {subsubsection}{Insertion and Deletion Moves}{38}{section*.6}
+\contentsline {subsection}{\numberline {4.1.17}Start Type}{41}{subsection.4.1.17}
+\contentsline {subsection}{\numberline {4.1.18}Run Type}{43}{subsection.4.1.18}
+\contentsline {subsection}{\numberline {4.1.19}Frequency}{44}{subsection.4.1.19}
+\contentsline {subsection}{\numberline {4.1.20}Average}{45}{subsection.4.1.20}
+\contentsline {subsection}{\numberline {4.1.21}Property Output}{45}{subsection.4.1.21}
+\contentsline {subsection}{\numberline {4.1.22}Fragment Files}{47}{subsection.4.1.22}
+\contentsline {subsection}{\numberline {4.1.23}File Info}{47}{subsection.4.1.23}
+\contentsline {subsection}{\numberline {4.1.24}CBMC parameters}{48}{subsection.4.1.24}
 \contentsline {section}{\numberline {4.2}MCF File}{49}{section.4.2}
-\contentsline {subsection}{\numberline {4.2.1}Atom Info}{50}{subsection.4.2.1}
-\contentsline {subsection}{\numberline {4.2.2}Bond Info}{52}{subsection.4.2.2}
-\contentsline {subsection}{\numberline {4.2.3}Angle Info}{53}{subsection.4.2.3}
-\contentsline {subsection}{\numberline {4.2.4}Dihedral Info}{54}{subsection.4.2.4}
-\contentsline {subsection}{\numberline {4.2.5}Fragment Info}{55}{subsection.4.2.5}
+\contentsline {subsection}{\numberline {4.2.1}Atom Info}{49}{subsection.4.2.1}
+\contentsline {subsection}{\numberline {4.2.2}Bond Info}{51}{subsection.4.2.2}
+\contentsline {subsection}{\numberline {4.2.3}Angle Info}{52}{subsection.4.2.3}
+\contentsline {subsection}{\numberline {4.2.4}Dihedral Info}{53}{subsection.4.2.4}
+\contentsline {subsection}{\numberline {4.2.5}Fragment Info}{54}{subsection.4.2.5}
 \contentsline {subsection}{\numberline {4.2.6}Fragment Connectivity}{55}{subsection.4.2.6}
 \contentsline {chapter}{\numberline {5}Implementing the Metropolis Acceptance Criteria}{57}{chapter.5}
 \contentsline {section}{\numberline {5.1}Canonical Monte Carlo}{58}{section.5.1}
