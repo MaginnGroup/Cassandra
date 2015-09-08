@@ -1,0 +1,42 @@
+!*******************************************************************************
+!Molecular connectivity file for c2.pdb
+!*******************************************************************************
+!Atom Format
+!index type element mass charge type parameters
+!type="LJ", parms=epsilon sigma
+
+# Atom_Info
+2
+1     C       C    12.011  0.0  LJ    98.000     3.750
+2     C       C    12.011  0.0  LJ    98.000     3.750
+
+!Bond Format
+!index i j type parameters
+!type="fixed", parms=bondLength
+
+# Bond_Info
+1
+1     1     2     fixed     1.540
+
+# Angle_Info
+0
+
+# Dihedral_Info
+0
+
+# Improper_Info
+0
+
+!Fragment Format
+!index number_of_atoms_in_fragment branch_point other_atoms
+
+# Fragment_Info
+1
+1 2 1 2
+
+
+# Fragment_Connectivity
+0
+
+
+END

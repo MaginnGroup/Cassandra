@@ -1,0 +1,36 @@
+!*******************************************************************************
+!Molecular connectivity file for argon.pdb
+!*******************************************************************************
+!Atom Format
+!index type element mass charge type parameters
+!type="LJ", parms=epsilon sigma
+
+# Atom_Info
+1
+1     Ar      Ar   39.948  0.0  LJ   120.000     3.400
+
+# Bond_Info
+0
+
+# Angle_Info
+0
+
+# Dihedral_Info
+0
+
+# Improper_Info
+0
+
+!Fragment Format
+!index number_of_atoms_in_fragment branch_point other_atoms
+
+# Fragment_Info
+1
+1 1 1
+
+
+# Fragment_Connectivity
+0
+
+
+END

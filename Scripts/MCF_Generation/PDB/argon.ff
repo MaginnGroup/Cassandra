@@ -1,0 +1,19 @@
+atomtypes
+1
+
+begin atom-atomtype
+1 Argon_type
+end atom-atomtype
+
+dihedraltype none
+
+nonbonded
+Argon_type
+Sigma 3.40
+Epsilon  120.0
+atom_type_charge 
+
+charge
+1 0.0
+
+end

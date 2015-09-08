@@ -12,46 +12,48 @@ dihedraltype OPLS
 
 nonbonded
 CH3
-Sigma 
-Epsilon 
+Sigma 3.75
+Epsilon 98.0
+atom_type_charge 
 
 nonbonded
 CH2
-Sigma 
-Epsilon 
+Sigma 3.95
+Epsilon 46.0
+atom_type_charge 
 
 bonds
 CH3 CH2
-Length 
-Constant 
+Length 1.54
+Constant fixed
 
 bonds
 CH2 CH2
-Length 
-Constant 
+Length 1.54
+Constant fixed
 
 angles
 CH3 CH2 CH2
-Angle 
-Constant 
+Angle 114.0
+Constant 31250.0
 
 dihedrals
 CH3 CH2 CH2 CH3
-a0 
-a1 
-a2 
-a3 
+a0 0.0
+a1 2.9517
+a2 -0.5661
+a3 6.579
 
 charge
-1 
+1 0.0
 
 charge
-2 
+2 0.0
 
 charge
-3 
+3 0.0
 
 charge
-4 
+4 0.0
 
 end
