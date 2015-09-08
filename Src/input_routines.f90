@@ -5430,7 +5430,7 @@ USE Run_Variables, ONLY: cpcollect
            line_nbr = line_nbr + 1
            CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
            
-           IF (nbr_entries == 0) THEN
+           IF (nbr_entries == 0 .OR. line_array(1)(1:1) == '!') THEN
               prop_per_file(nbr_prop_files(this_box),this_box) = nbr_properties
           
               EXIT innerLOOP1

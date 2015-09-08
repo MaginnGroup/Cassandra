@@ -6,11 +6,11 @@ inputfile equil.inp
 name of run: equil.out
 
   Month      Day      Year
-     09       02      2015
+     09       08      2015
  
- Time:  17:04:59
+ Time:  16:59:13
  
-machine: cannon
+machine: maginnfe.crc.nd.edu
 
 
 Simulation type: NPT_MC              
@@ -89,12 +89,12 @@ Simulation type: NPT_MC
  # Average_Info
  1
  
- # Frequency_Info
- freq_type    none
- Nthermofreq  2010
- Ncoordfreq   2010
+ # Simulation_Length_Info
+ Units        Steps
+ Prop_Freq    2010
+ Coord_Freq   2010
  MCsteps      201000
- # Done_Frequency_Info
+ # Done_Simulation_Length_Info
  
  # Property_Info 1
  Energy_Total
@@ -538,7 +538,7 @@ movie_XYZ file for box       1 is      equil.out.box1.xyz
  
 The simulation will be run for                       201000 MC steps.
  
- *** Finished reading output info ******* 
+ *** Finished Reading Simulation Length Info ******* 
  
  **** Writing property output information *****
  
@@ -553,7 +553,6 @@ Total number of property files to be written is     1   for box 1
  Pressure
  Volume
  Density
- !------------------------------------------------------------------------------
  
  ***** Finished writing property information ******
  
@@ -823,55 +822,47 @@ Maximum width, volume changes for box 1 :  273703.
  
 Success ratio, translation of species   1 in box 1 :  0.76556
 Maximum width, translation of species   1 in box 1 : 14.00000
- *********** Ending simulation *****************
+******************** END OF SIMULATION ********************
  
- ************ Regrowth Statistics *************
  
- Fragment Species Regrowth_Trials Regrowth_Success
-           1           1       33515       31725
-           2           1       33014       29805
- *****************************************
-  Starting energy components for box   1
+ ***********************************************************
+ Ending energy components for box   1
   Atomic units-Extensive
- *****************************************
+ -----------------------------------------------------------
+ Total system energy is                172901.753
+ Intra molecular energy is             196408.949
+ Bond energy is                             0.000
+ Angle energy is                        84820.931
+ Dihedral energy is                    111588.018
+ Improper angle energy is                   0.000
+ Intra nonbond vdw is                  -11026.605
+ Intra nonbond elec is                      0.000
+ Inter molecule vdw is                 -12239.572
+ Long range correction is                -241.019
+ Inter molecule q is                        0.000
+ Reciprocal ewald is                        0.000
+ Self ewald is                              0.000
+ ***********************************************************
  
  
- *************************************************
-Total system energy is                 172901.753
-Intra molecular energy is              196408.949
-Bond energy is                              0.000
-Bond angle energy is                    84820.931
-Dihedral angle energy is               111588.018
-Improper angle energy is                    0.000
-Intra nonbond vdw is                   -11026.605
-Intra nonbond elec is                       0.000
-Inter molecule vdw is                  -12239.572
-Long range correction is                 -241.019
-Inter molecule q is                         0.000
-Reciprocal ewald is                         0.000
-Self ewald is                               0.000
- **************************************************
- 
- 
- *****************************************
- Components of energy from total energy call for box   1
- Atomic units-Extensive
- *****************************************
- 
-Total system energy is                 172901.753
-Bond energy is                              0.000
-Bond angle energy is                    84820.931
-Dihedral angle energy is               111588.018
-Improper angle energy is                    0.000
-Intra molecular energy is              196408.949
-Intra nonbond vdw is                   -11026.605
-Intra nonbond elec is                       0.000
-Inter molecule vdw is                  -12239.572
-Long range correction is                 -241.019
-Inter molecule q is                         0.000
-Reciprocal ewald is                         0.000
-Self ewald is                               0.000
- 
+ ***********************************************************
+ Energy components from total energy call for box   1
+  Atomic units-Extensive
+ -----------------------------------------------------------
+ Total system energy is                172901.753
+ Intra molecular energy is             196408.949
+ Bond energy is                             0.000
+ Angle energy is                        84820.931
+ Dihedral energy is                    111588.018
+ Improper angle energy is                   0.000
+ Intra nonbond vdw is                  -11026.605
+ Intra nonbond elec is                      0.000
+ Inter molecule vdw is                 -12239.572
+ Long range correction is                -241.019
+ Inter molecule q is                        0.000
+ Reciprocal ewald is                        0.000
+ Self ewald is                              0.000
+ ***********************************************************
  
  
  Writing information for box  1
@@ -892,22 +883,19 @@ Self ewald is                               0.000
  
  ***********************************************************
  Writing information for species  1
-            Fragment      Trials     Success   % Success
+         # Fragments      Trials     Success   % Success
                    1       33515       31725       94.66
                    2       33014       29805       90.28
  ***********************************************************
- ******************** Ending simulation ********************
- 
- 
  
  Writing information about subroutine times
  
  ***********************************************************
  
- Translation time =           16.985059 secs.
- Rotation time =              16.725043 secs.
- Volume change time =         15.484961 secs.
- Regrowth time =               0.058339 hrs.
+ Translation time =           51.768149 secs.
+ Rotation time =              52.303210 secs.
+ Volume change time =         46.735879 secs.
+ Regrowth time =               0.174325 hrs.
  ***********************************************************
  
  
@@ -916,6 +904,6 @@ Self ewald is                               0.000
          0     Months
          0       Days
          0      Hours
-         4    Minutes
-        26    Seconds
-       188         ms
+        13    Minutes
+        14    Seconds
+       354         ms
