@@ -710,7 +710,7 @@ SUBROUTINE Write_Trials_Success
            WRITE(logunit,*)
            WRITE(logunit,'(X,A59)') '***********************************************************'
            WRITE(logunit,'(X,A31,X,I2)') 'Writing information for species', is
-           WRITE(logunit,'(A20,2x,A10,2x,A10,2X,A10)') 'Fragment', 'Trials', 'Success', '% Success'
+           WRITE(logunit,'(A20,2x,A10,2x,A10,2X,A10)') '# Fragments', 'Trials', 'Success', '% Success'
 
            DO ifrag = 1, nfragments(is)
               
