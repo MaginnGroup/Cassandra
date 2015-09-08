@@ -474,8 +474,8 @@ cubic \AA\ and the second will be 60 X 60 X 60 cubic \AA.
 {\bf \# Temperature\_Info} \\ 
 {\it Real(1) Real(2) .... } \\ \\
 %
-Sets the temperature in Kelvin {\it Real(1) Real(2) ... } for simulation
-boxes 1, 2, ... 
+The temperature setpoint in Kelvin {\it Real(1) Real(2) ... } for simulation
+boxes 1, 2, ... .
 %%%%%%%%%%%%%%%%
 %
 % Pressure_Info
@@ -485,25 +485,9 @@ boxes 1, 2, ...
 {\bf \# Pressure\_Info} \\
 {\it Real(1) Real(2) ... } \\
 %
-Specifies the pressure in bar {\it Real(1) Real(2) ...} for simulation
-boxes 1, 2, ... Note that if the simulation type does not require an
-input pressure (for example, an NVT simulation), this command will be
-ignored.  
-%%%%%%%%%%%%%%%%
-%
-% Fugacity_Info
-%
-%%%%%%%%%%%%%%%%
-\subsection{Fugacity}\label{sec:Fugacity_Info}
-{\bf \# Fugacity\_Info} \\
-{\it Real(1) Real(2) ...} \\ \\
-%
-Specifies the fugacities in bar {\it Real(1) Real(2) ...} of {\bf
-  insertable} species in the order in which they appear in the
-Molecule\_Files section.  The fugacity will be arbitrarily set to zero
-for species that cannot be swapped or exchanged with a reservoir. This
-option is used with grand canonical ensemble simulations. It will be
-ignored for all other simulation types.
+The pressure setpoint in bar {\it Real(1) Real(2) ...} for simulation
+boxes 1, 2, ... . If the simulation type does not require an
+input pressure (e.g., NVT), this command will be ignored.  
 %%%%%%%%%%%%%%%%%%
 %
 %  Chemical_Potential_Info
@@ -513,18 +497,12 @@ ignored for all other simulation types.
 {\bf \# Chemical\_Potential\_Info} \\
 {\it Real(1) Real(2) ....} \\ \\
 %
-This keyword is only used for grand canonical simulations and may be
-used instead of fugacity. It sets the
-chemical potential of the insertable species in the order in which
-they appear in the \texttt{Molecule\_Files} section. The chemical potentials
-will be set arbitrarily to zero for species that cannot be swapped or
-exchanged with a reservoir. Note that the de Broglie wavelength of the
-species in each box is automatically calculated and used in the
-acceptance rules. Units of chemical potential are kJ/mol. \textbf{Note: if you
-specify BOTH a fugacity AND a chemical potential, Cassandra will use
-whichever one appears first in the input file and will ignore the
-other keyword. We recommend that you do not list both keywords in any
-input file.}
+The chemical potential setpoint (shifted by a species-specific constant) 
+in kJ/mol of each insertable species. 
+Each chemical potential will be assigned in the order species appear in 
+the \texttt{Molecule\_Files} section. 
+This keyword is only used for grand canonical simulations.
+See Eq. (\ref{eq:muShift}) for more information about the shift.
 
 %%%%%%%%%%%%%%%%
 %
@@ -663,7 +641,7 @@ the translation probability as \\ \\
 10.0 11.0} 
 \\ \\
 This will tell Cassandra to attempt center of mass translations 25\%
-of the time. For box 1, the maximum displacement will be 2.0 \AA\ for
+of the total moves. For box 1, the maximum displacement will be 2.0 \AA\ for
 species 1 and 2.5 \AA\ for species 2. For box 2, the maximum
 displacement for species 1 will be 10.0 \AA\ and it will be 11.0
 \AA\ for species 2. Note that attempted moves will occur with equal
@@ -742,7 +720,7 @@ the rotational probability as \\ \\
 180.0 0.0} \\
 \\ 
 %
-This will tell Cassandra to perform rotational moves 25\% of the time. For box 1,
+This will tell Cassandra to perform rotational moves 25\% of the total moves. For box 1,
 the maximum rotational width will be 30\degree\ for species 1 and 0.0\degree\
 for species 2. For box 2, the maximum rotational width will be 180\degree\ for
 species 1 and 0.0\degree\ for species 2. Note that, since the maximum rotational
@@ -755,7 +733,7 @@ For a single box simulation with three species such that the first species has r
  0.25 \\
 30.0 10.0 0.0}
 \\ \\
-This will tell Cassandra to attempt rotational move 25\% of the time. 
+This will tell Cassandra to attempt rotational move 25\% of the total moves. 
 The maximum rotational width for species 1 is 30\degree\ and that for species 2
  is 10.0\degree. Since the species 2 is a linear molecule, its rotation will
  be attempted in Eulerian angles and Cassandra will not use this value. 
@@ -816,7 +794,7 @@ species is monatomic, you would specify the following: \\ \\
 0.3 \\
 0.0 0.7 0.3 } \\ \\
 %
-This will tell Cassandra to attempt regrowth move 30\% of the time. The relative probabilities of
+This will tell Cassandra to attempt regrowth move 30\% of the total moves. The relative probabilities of
 performing regrowth moves on species 1, 2 and 3 are 0.0, 0.7 and 0.3 respectively. 
 %%%%%%%%%%%%%%%%
 %
@@ -857,7 +835,7 @@ you would specify the following: \\ \\
 300} \\ \\
 %                                                                                                                                           
 This will tell Cassandra to attempt volume moves 2\% of the
-time. The box volume would be changed by random amounts ranging from
+total moves. The box volume would be changed by random amounts ranging from
 -300 \AA$^3$ to +300 \AA$^3$. For a liquid box 20 \AA\ per side,
 this would result in a maximum box edge length change of about 0.25
 \AA, which is a reasonable value.  
@@ -873,16 +851,16 @@ following: \\ \\
 5000} \\ \\
 %
 This will tell Cassandra to attempt volume moves 2\% of the
-time. The first box volume (assumed here to be smaller and of higher
+total moves. The first box volume (assumed here to be smaller and of higher
 density, such as would occur if it were the liquid box) would be
 changed by random amounts ranging from 
 -300 \AA $^3$ to +300 \AA $^3$. The second box volume would be
 changed by random amounts ranging from
 -5000 \AA $^3$ to +5000 \AA $^3$. As with all move probabilities, you
 can experiment with making 
-bolder or more conservative moves. Note that if the \# Run\_Type is set
-to 'Equilibration', Cassandra will attempt to optimize the boldness of
-moves to achieve about 50\% acceptance rates. 
+larger or smaller moves. Note that if the \# Run\_Type is set
+to 'Equilibration', Cassandra will attempt to optimize the magnitude of
+the volume change to achieve about 50\% acceptance rates. 
 %If you wish to perform a GEMC-NVT simulation, you might specify the
 %following: \\ \\
 %                                                                                                                                           
@@ -931,7 +909,7 @@ reservoir \\
 insertion method \\
 reservoir} \\ \\ 
 %
-This will tell Cassandra to attempt insertions 10\% of the time and
+This will tell Cassandra to attempt insertions 10\% of the total moves and
 both species will be inserted using
 the reservoir insertion method.  \\ \\
 %                                                                                                                                           
@@ -943,7 +921,7 @@ reservoir \\
 insertion method \\
 none} \\ \\ 
 %
-This will tell Cassandra to attempt insertions 10\% of the time. Only
+This will tell Cassandra to attempt insertions 10\% of the total moves. Only
 species 1 will be inserted, while species 2 will not get inserted. \\ \\
 %%%%%%%%%%%%%%%%
 %
@@ -988,7 +966,7 @@ insertion method \\
 none \\ \\
 }
 %
-This will tell Cassandra to attempt swap moves 10\% of the time. Attempts will be made to transfer species 1 and 2 between available boxes while molecules of species 3 will remain
+This will tell Cassandra to attempt swap moves 10\% of the total moves. Attempts will be made to transfer species 1 and 2 between available boxes while molecules of species 3 will remain
 in the boxes they are present in at the start of the simulation. \\ \\
 %
 %
