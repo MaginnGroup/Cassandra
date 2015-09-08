@@ -1,79 +1,78 @@
-\BOOKMARK [0][-]{chapter.1}{Introduction}{}% 1
-\BOOKMARK [1][-]{section.1.1}{Distribution}{chapter.1}% 2
-\BOOKMARK [0][-]{chapter.2}{Force Field}{}% 3
-\BOOKMARK [1][-]{section.2.1}{Bonds}{chapter.2}% 4
-\BOOKMARK [1][-]{section.2.2}{Angles}{chapter.2}% 5
-\BOOKMARK [1][-]{section.2.3}{Dihedrals}{chapter.2}% 6
-\BOOKMARK [1][-]{section.2.4}{Impropers}{chapter.2}% 7
-\BOOKMARK [1][-]{section.2.5}{Nonbonded}{chapter.2}% 8
-\BOOKMARK [2][-]{subsection.2.5.1}{Repulsion-Dispersion Interactions}{section.2.5}% 9
-\BOOKMARK [2][-]{subsection.2.5.2}{Electrostatics}{section.2.5}% 10
-\BOOKMARK [1][-]{section.2.6}{Cassandra Units}{chapter.2}% 11
-\BOOKMARK [0][-]{chapter.3}{Cassandra Basics}{}% 12
-\BOOKMARK [1][-]{section.3.1}{Flow Diagram}{chapter.3}% 13
-\BOOKMARK [1][-]{section.3.2}{Cassandra Simulation Setup}{chapter.3}% 14
-\BOOKMARK [1][-]{section.3.3}{Cassandra File Preparation}{chapter.3}% 15
-\BOOKMARK [2][-]{subsection.3.3.1}{MCF File}{section.3.3}% 16
-\BOOKMARK [2][-]{subsection.3.3.2}{Input File}{section.3.3}% 17
-\BOOKMARK [2][-]{subsection.3.3.3}{Fragment Library Generation}{section.3.3}% 18
-\BOOKMARK [1][-]{section.3.4}{Running a Simulation}{chapter.3}% 19
-\BOOKMARK [1][-]{section.3.5}{Restarting a Simulation}{chapter.3}% 20
-\BOOKMARK [1][-]{section.3.6}{Cassandra Output Files}{chapter.3}% 21
-\BOOKMARK [0][-]{chapter.4}{Files Required to Run Cassandra}{}% 22
-\BOOKMARK [1][-]{section.4.1}{Simulation Input File}{chapter.4}% 23
-\BOOKMARK [2][-]{subsection.4.1.1}{Run Name}{section.4.1}% 24
-\BOOKMARK [2][-]{subsection.4.1.2}{Simulation Type}{section.4.1}% 25
-\BOOKMARK [2][-]{subsection.4.1.3}{Number of species}{section.4.1}% 26
-\BOOKMARK [2][-]{subsection.4.1.4}{VDW Style}{section.4.1}% 27
-\BOOKMARK [2][-]{subsection.4.1.5}{Charge Style}{section.4.1}% 28
-\BOOKMARK [2][-]{subsection.4.1.6}{Intramolecular Scaling}{section.4.1}% 29
-\BOOKMARK [2][-]{subsection.4.1.7}{Mixing Rule}{section.4.1}% 30
-\BOOKMARK [2][-]{subsection.4.1.8}{Starting Seed}{section.4.1}% 31
-\BOOKMARK [2][-]{subsection.4.1.9}{Minimum Cutoff}{section.4.1}% 32
-\BOOKMARK [2][-]{subsection.4.1.10}{Pair Energy Storage}{section.4.1}% 33
-\BOOKMARK [2][-]{subsection.4.1.11}{Molecule Files}{section.4.1}% 34
-\BOOKMARK [2][-]{subsection.4.1.12}{Simulation Box}{section.4.1}% 35
-\BOOKMARK [2][-]{subsection.4.1.13}{Temperature}{section.4.1}% 36
-\BOOKMARK [2][-]{subsection.4.1.14}{Pressure}{section.4.1}% 37
-\BOOKMARK [2][-]{subsection.4.1.15}{Fugacity}{section.4.1}% 38
-\BOOKMARK [2][-]{subsection.4.1.16}{Chemical Potential}{section.4.1}% 39
-\BOOKMARK [2][-]{subsection.4.1.17}{Move Probabilities}{section.4.1}% 40
-\BOOKMARK [2][-]{subsection.4.1.18}{Start Type}{section.4.1}% 41
-\BOOKMARK [2][-]{subsection.4.1.19}{Run Type}{section.4.1}% 42
-\BOOKMARK [2][-]{subsection.4.1.20}{Frequency}{section.4.1}% 43
-\BOOKMARK [2][-]{subsection.4.1.21}{Average}{section.4.1}% 44
-\BOOKMARK [2][-]{subsection.4.1.22}{Property Output}{section.4.1}% 45
-\BOOKMARK [2][-]{subsection.4.1.23}{Fragment Files}{section.4.1}% 46
-\BOOKMARK [2][-]{subsection.4.1.24}{File Info}{section.4.1}% 47
-\BOOKMARK [2][-]{subsection.4.1.25}{CBMC parameters}{section.4.1}% 48
-\BOOKMARK [1][-]{section.4.2}{MCF File}{chapter.4}% 49
-\BOOKMARK [2][-]{subsection.4.2.1}{Atom Info}{section.4.2}% 50
-\BOOKMARK [2][-]{subsection.4.2.2}{Bond Info}{section.4.2}% 51
-\BOOKMARK [2][-]{subsection.4.2.3}{Angle Info}{section.4.2}% 52
-\BOOKMARK [2][-]{subsection.4.2.4}{Dihedral Info}{section.4.2}% 53
-\BOOKMARK [2][-]{subsection.4.2.5}{Fragment Info}{section.4.2}% 54
-\BOOKMARK [2][-]{subsection.4.2.6}{Fragment Connectivity}{section.4.2}% 55
-\BOOKMARK [0][-]{chapter.5}{Implementing the Metropolis Acceptance Criteria}{}% 56
-\BOOKMARK [1][-]{section.5.1}{Canonical Monte Carlo}{chapter.5}% 57
-\BOOKMARK [2][-]{subsection.5.1.1}{Translating a Molecule}{section.5.1}% 58
-\BOOKMARK [2][-]{subsection.5.1.2}{Rotating a Molecule}{section.5.1}% 59
-\BOOKMARK [2][-]{subsection.5.1.3}{Regrowing a Molecule}{section.5.1}% 60
-\BOOKMARK [2][-]{subsection.5.1.4}{Canonical Partition Function}{section.5.1}% 61
-\BOOKMARK [1][-]{section.5.2}{Isothermal-Isobaric Monte Carlo}{chapter.5}% 62
-\BOOKMARK [2][-]{subsection.5.2.1}{Scaling the Volume}{section.5.2}% 63
-\BOOKMARK [1][-]{section.5.3}{Grand Canonical Monte Carlo}{chapter.5}% 64
-\BOOKMARK [2][-]{subsection.5.3.1}{Inserting a Molecule with Configurational Bias Monte Carlo}{section.5.3}% 65
-\BOOKMARK [2][-]{subsection.5.3.2}{Deleting a Molecule that was Inserted via Configurational Bias Monte Carlo}{section.5.3}% 66
-\BOOKMARK [2][-]{subsection.5.3.3}{Regrowing a Molecule with Configurational Bias Monte Carlo}{section.5.3}% 67
-\BOOKMARK [1][-]{section.5.4}{Multiphase Systems}{chapter.5}% 68
-\BOOKMARK [2][-]{subsection.5.4.1}{Gibbs Ensemble Monte Carlo}{section.5.4}% 69
-\BOOKMARK [1][-]{section.5.5}{Multicomponent Systems}{chapter.5}% 70
-\BOOKMARK [2][-]{subsection.5.5.1}{Reaction Ensemble Monte Carlo}{section.5.5}% 71
-\BOOKMARK [1][-]{section.5.6}{Appendix}{chapter.5}% 72
-\BOOKMARK [2][-]{subsection.5.6.1}{Inserting a Molecule Randomly}{section.5.6}% 73
-\BOOKMARK [2][-]{subsection.5.6.2}{Deleting a Molecule Inserted Randomly}{section.5.6}% 74
-\BOOKMARK [0][-]{chapter.6}{Utilities}{}% 75
-\BOOKMARK [1][-]{section.6.1}{Lowenstein Script}{chapter.6}% 76
-\BOOKMARK [2][-]{subsection.6.1.1}{Usage}{section.6.1}% 77
-\BOOKMARK [2][-]{subsection.6.1.2}{Input}{section.6.1}% 78
-\BOOKMARK [1][-]{section.6.2}{Input File GUI}{chapter.6}% 79
+\BOOKMARK [0][-]{chapter.1}{Introduction}{}
+\BOOKMARK [1][-]{section.1.1}{Distribution}{chapter.1}
+\BOOKMARK [0][-]{chapter.2}{Force Field}{}
+\BOOKMARK [1][-]{section.2.1}{Bonds}{chapter.2}
+\BOOKMARK [1][-]{section.2.2}{Angles}{chapter.2}
+\BOOKMARK [1][-]{section.2.3}{Dihedrals}{chapter.2}
+\BOOKMARK [1][-]{section.2.4}{Impropers}{chapter.2}
+\BOOKMARK [1][-]{section.2.5}{Nonbonded}{chapter.2}
+\BOOKMARK [2][-]{subsection.2.5.1}{Repulsion-Dispersion Interactions}{section.2.5}
+\BOOKMARK [2][-]{subsection.2.5.2}{Electrostatics}{section.2.5}
+\BOOKMARK [1][-]{section.2.6}{Cassandra Units}{chapter.2}
+\BOOKMARK [0][-]{chapter.3}{Cassandra Basics}{}
+\BOOKMARK [1][-]{section.3.1}{Flow Diagram}{chapter.3}
+\BOOKMARK [1][-]{section.3.2}{Cassandra Simulation Setup}{chapter.3}
+\BOOKMARK [1][-]{section.3.3}{Cassandra File Preparation}{chapter.3}
+\BOOKMARK [2][-]{subsection.3.3.1}{MCF File}{section.3.3}
+\BOOKMARK [2][-]{subsection.3.3.2}{Input File}{section.3.3}
+\BOOKMARK [2][-]{subsection.3.3.3}{Fragment Library Generation}{section.3.3}
+\BOOKMARK [1][-]{section.3.4}{Running a Simulation}{chapter.3}
+\BOOKMARK [1][-]{section.3.5}{Restarting a Simulation}{chapter.3}
+\BOOKMARK [1][-]{section.3.6}{Cassandra Output Files}{chapter.3}
+\BOOKMARK [0][-]{chapter.4}{Files Required to Run Cassandra}{}
+\BOOKMARK [1][-]{section.4.1}{Simulation Input File}{chapter.4}
+\BOOKMARK [2][-]{subsection.4.1.1}{Run Name}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.2}{Simulation Type}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.3}{Number of species}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.4}{VDW Style}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.5}{Charge Style}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.6}{Intramolecular Scaling}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.7}{Mixing Rule}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.8}{Starting Seed}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.9}{Minimum Cutoff}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.10}{Pair Energy Storage}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.11}{Molecule Files}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.12}{Simulation Box}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.13}{Temperature}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.14}{Pressure}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.15}{Chemical Potential}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.16}{Move Probabilities}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.17}{Start Type}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.18}{Run Type}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.19}{Frequency}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.20}{Average}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.21}{Property Output}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.22}{Fragment Files}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.23}{File Info}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.24}{CBMC parameters}{section.4.1}
+\BOOKMARK [1][-]{section.4.2}{MCF File}{chapter.4}
+\BOOKMARK [2][-]{subsection.4.2.1}{Atom Info}{section.4.2}
+\BOOKMARK [2][-]{subsection.4.2.2}{Bond Info}{section.4.2}
+\BOOKMARK [2][-]{subsection.4.2.3}{Angle Info}{section.4.2}
+\BOOKMARK [2][-]{subsection.4.2.4}{Dihedral Info}{section.4.2}
+\BOOKMARK [2][-]{subsection.4.2.5}{Fragment Info}{section.4.2}
+\BOOKMARK [2][-]{subsection.4.2.6}{Fragment Connectivity}{section.4.2}
+\BOOKMARK [0][-]{chapter.5}{Implementing the Metropolis Acceptance Criteria}{}
+\BOOKMARK [1][-]{section.5.1}{Canonical Monte Carlo}{chapter.5}
+\BOOKMARK [2][-]{subsection.5.1.1}{Translating a Molecule}{section.5.1}
+\BOOKMARK [2][-]{subsection.5.1.2}{Rotating a Molecule}{section.5.1}
+\BOOKMARK [2][-]{subsection.5.1.3}{Regrowing a Molecule}{section.5.1}
+\BOOKMARK [2][-]{subsection.5.1.4}{Canonical Partition Function}{section.5.1}
+\BOOKMARK [1][-]{section.5.2}{Isothermal-Isobaric Monte Carlo}{chapter.5}
+\BOOKMARK [2][-]{subsection.5.2.1}{Scaling the Volume}{section.5.2}
+\BOOKMARK [1][-]{section.5.3}{Grand Canonical Monte Carlo}{chapter.5}
+\BOOKMARK [2][-]{subsection.5.3.1}{Inserting a Molecule with Configurational Bias Monte Carlo}{section.5.3}
+\BOOKMARK [2][-]{subsection.5.3.2}{Deleting a Molecule that was Inserted via Configurational Bias Monte Carlo}{section.5.3}
+\BOOKMARK [2][-]{subsection.5.3.3}{Regrowing a Molecule with Configurational Bias Monte Carlo}{section.5.3}
+\BOOKMARK [1][-]{section.5.4}{Multiphase Systems}{chapter.5}
+\BOOKMARK [2][-]{subsection.5.4.1}{Gibbs Ensemble Monte Carlo}{section.5.4}
+\BOOKMARK [1][-]{section.5.5}{Multicomponent Systems}{chapter.5}
+\BOOKMARK [2][-]{subsection.5.5.1}{Reaction Ensemble Monte Carlo}{section.5.5}
+\BOOKMARK [1][-]{section.5.6}{Appendix}{chapter.5}
+\BOOKMARK [2][-]{subsection.5.6.1}{Inserting a Molecule Randomly}{section.5.6}
+\BOOKMARK [2][-]{subsection.5.6.2}{Deleting a Molecule Inserted Randomly}{section.5.6}
+\BOOKMARK [0][-]{chapter.6}{Utilities}{}
+\BOOKMARK [1][-]{section.6.1}{Lowenstein Script}{chapter.6}
+\BOOKMARK [2][-]{subsection.6.1.1}{Usage}{section.6.1}
+\BOOKMARK [2][-]{subsection.6.1.2}{Input}{section.6.1}
+\BOOKMARK [1][-]{section.6.2}{Input File GUI}{chapter.6}

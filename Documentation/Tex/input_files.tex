@@ -474,7 +474,7 @@ cubic \AA\ and the second will be 60 X 60 X 60 cubic \AA.
 {\bf \# Temperature\_Info} \\ 
 {\it Real(1) Real(2) .... } \\ \\
 %
-Sets the temperature in Kelvin {\it Real(1) Real(2) ... } for simulation
+The temperature setpoint in Kelvin {\it Real(1) Real(2) ... } for simulation
 boxes 1, 2, ... 
 %%%%%%%%%%%%%%%%
 %
@@ -485,25 +485,9 @@ boxes 1, 2, ...
 {\bf \# Pressure\_Info} \\
 {\it Real(1) Real(2) ... } \\
 %
-Specifies the pressure in bar {\it Real(1) Real(2) ...} for simulation
-boxes 1, 2, ... Note that if the simulation type does not require an
-input pressure (for example, an NVT simulation), this command will be
-ignored.  
-%%%%%%%%%%%%%%%%
-%
-% Fugacity_Info
-%
-%%%%%%%%%%%%%%%%
-\subsection{Fugacity}\label{sec:Fugacity_Info}
-{\bf \# Fugacity\_Info} \\
-{\it Real(1) Real(2) ...} \\ \\
-%
-Specifies the fugacities in bar {\it Real(1) Real(2) ...} of {\bf
-  insertable} species in the order in which they appear in the
-Molecule\_Files section.  The fugacity will be arbitrarily set to zero
-for species that cannot be swapped or exchanged with a reservoir. This
-option is used with grand canonical ensemble simulations. It will be
-ignored for all other simulation types.
+The pressure setpoint in bar {\it Real(1) Real(2) ...} for simulation
+boxes 1, 2, ... . If the simulation type does not require an
+input pressure (e.g., NVT), this command will be ignored.  
 %%%%%%%%%%%%%%%%%%
 %
 %  Chemical_Potential_Info
@@ -513,18 +497,12 @@ ignored for all other simulation types.
 {\bf \# Chemical\_Potential\_Info} \\
 {\it Real(1) Real(2) ....} \\ \\
 %
-This keyword is only used for grand canonical simulations and may be
-used instead of fugacity. It sets the
-chemical potential of the insertable species in the order in which
-they appear in the \texttt{Molecule\_Files} section. The chemical potentials
-will be set arbitrarily to zero for species that cannot be swapped or
-exchanged with a reservoir. Note that the de Broglie wavelength of the
-species in each box is automatically calculated and used in the
-acceptance rules. Units of chemical potential are kJ/mol. \textbf{Note: if you
-specify BOTH a fugacity AND a chemical potential, Cassandra will use
-whichever one appears first in the input file and will ignore the
-other keyword. We recommend that you do not list both keywords in any
-input file.}
+The chemical potential setpoint (shifted by a species-specific constant) 
+in kJ/mol of each insertable species. 
+Each chemical potential will be assigned in the order species appear in 
+the \textt{Molecule\_Files} section. 
+This keyword is only used for grand canonical simulations.
+See Eq. (\ref{eq:muShift}) for more information about the shift.
 
 %%%%%%%%%%%%%%%%
 %
