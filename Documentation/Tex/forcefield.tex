@@ -10,6 +10,19 @@ Cassandra simulation or carry out an energy minimization of the
 molecule with a package that treats flexible bond lengths and utilize
 the bond lengths obtained from the minimization. 
 
+\begin{center}
+\begin{table}[h]
+	\begin{center}
+	\caption{Cassandra units for bonds}
+	\begin{tabular} {l l l} \\ \hline \hline
+	Parameter  & Symbol  & Units \\ \hline \\
+	Bond length  & l  & \AA \\ \hline \\
+	\end{tabular}
+	\end{center}
+	\label{Tab:Bond_Units}
+\end{table}
+\end{center}
+
 \section{Angles}\label{Sec:Angles}
 
 Cassandra supports two types of bond angles:
@@ -25,6 +38,20 @@ of $1/2$ is {\bf not used} in the energy calculation of a bond
 angle. Make sure you know how the force constant is defined in any
 force field you use. 
 \end{itemize}
+
+\begin{center}
+\begin{table}[h]
+	\begin{center}
+	\caption{Cassandra units for angles}
+	\begin{tabular} {l l l} \\ \hline \hline
+	Parameter  & Symbol  & Units \\ \hline \\
+	Nominal bond angle & $\theta_0$ & degrees \\ 
+	Bond angle force constant & $K_\theta$ & K/rad$^2$ \\ \\ \hline \\
+	\end{tabular}
+	\end{center}
+	\label{Tab:Angle_Units}
+\end{table}
+\end{center}
 
 \section{Dihedrals}\label{Sec:Dih}
 
@@ -42,7 +69,7 @@ where $a_0$, $a_1$, $a_2$ and $a_3$ are specified by the user.
 
 \item `CHARMM': The functional form of the potential is
 \begin{equation}
-E_\phi = a_0 * (1 + \cos (a_1*\phi - \delta))
+E_\phi = a_0  (1 + \cos (a_1\phi - \delta))
 \label{Eq:phi_CHARMM}
 \end{equation}
 where $a_0$, $a_1$ and $\delta$ are specified by the user.
@@ -57,6 +84,24 @@ where $K_\phi$ and $\phi_0$ are specified by the user.
 \item `none' : There is no dihedral potential between the given atoms.  
 
 \end{itemize}
+
+\begin{center}
+\begin{table}[h]
+	\begin{center}
+	\caption{Cassandra units for dihedrals}
+	\begin{tabular} {l l l} \\ \hline \hline
+	Functional Form & Parameter & Units \\ \\
+	OPLS & $a_0$, $a_1$,  $a_2$, $a_3$ & kJ/mol \\ \\
+	CHARMM & $a_0$ & kJ/mol \\
+	                 & $a_1$ & dimensionless \\
+	                 & $\delta$ & degrees \\ \\
+	 harmonic & $K_\phi$ & K/rad$^2$ \\
+	                 & $\phi_0$ & degrees \\  \\\hline \\
+	\end{tabular}
+	\end{center}
+	\label{Tab:Dihedral_Units}
+\end{table}
+\end{center}
 
 \section{Impropers}\label{Sec:Imp}
 
@@ -74,6 +119,21 @@ E_\psi = K_\psi \left ( \psi - \psi_0 \right )^2
 \end{equation}
 \end{itemize}
 where $K_\psi$ and $\psi_0$ are specified by the user.
+
+\begin{center}
+\begin{table}[h]
+	\begin{center}
+	\caption{Cassandra units for impropers}
+	\begin{tabular} {l l l} \\ \hline \hline
+	 Parameter      & Symbol   &  Units \\
+	 Force constant & $K_\psi$ &  K/rad$^2$\\
+	 Improper	& $\psi_0$ & degrees \\ \\ \hline \\
+	
+	\end{tabular}
+	\end{center}
+	\label{Tab:Improper_Units}
+\end{table}
+\end{center}
 
 \section{Nonbonded}\label{Sec:NB}
 The nonbonded interactions between two atoms $i$ and $j$ are due to repulsion-dispersion interactions and electrostatic interactions (if any). 
@@ -145,6 +205,20 @@ combining rules can be used, as described elsewhere.
 
 \end{itemize}
 
+\begin{center}
+\begin{table}[h]
+	\begin{center}
+	\caption{Cassandra units for repulsion-dispersion interactions}
+	\begin{tabular} {l l l} \\ \hline \hline
+	 Parameter & Symbol &  Units \\
+	Energy parameter 	& $\epsilon/k_B$ & K \\
+	Collision diameter &	 $\sigma$ & \AA \\ \\ \hline \\
+	\end{tabular}
+	\end{center}
+	\label{Tab:LJ_Units}
+\end{table}
+\end{center}
+
 \subsection{Electrostatics}\label{Sec:qq}
 
 Electrostatic interactions are given by  Coulomb's law
@@ -156,19 +230,31 @@ Electrostatic interactions are given by  Coulomb's law
 where $q_i$ and $q_j$ are partial charges specified by the user and
 placed on atomic positions given by $r_i$ and $r_j$. In a simulation,
 the electrostatic interactions are calculated using either an Ewald
-summation or a direct summation using the minimum image convention. \\
-
-Note that the total energy that is printed out in the property file is extensive. 
+summation or a direct summation using the minimum image convention. Note that 
+the total energy that is printed out in the property file is extensive. 
 Consequently, to obtain intensive energies, the printed energies must divided by 
 the total number of molecules in the system. 
-
-\section{Cassandra Units}
-The following table provides units used in Cassandra:
 
 \begin{center}
 \begin{table}[h]
 	\begin{center}
-	\caption{Cassandra units for input variables}
+	\caption{Cassandra units for coulombic interactions}
+	\begin{tabular} {l l l} \\ \hline \hline
+	 Parameter & Symbol &  Units \\
+	Charge &	 $q$ & e \\ \\ \hline \\
+	\end{tabular}
+	\end{center}
+	\label{Tab:LJ_Units}
+\end{table}
+\end{center}
+
+%\section{Cassandra Units}
+%The following table provides a summary of the units used in Cassandra:
+
+\begin{center}
+\begin{table}[h]
+	\begin{center}
+	\caption{Summary of Cassandra units for input variables}
 	\begin{tabular} {l l l} \\ \hline \hline
 	Bond length  & l  & \AA \\ \hline \\
 	\multicolumn{3}{c} {\bf Angles} \\ \\
@@ -183,7 +269,7 @@ The following table provides units used in Cassandra:
 	                 & $\phi_0$ & degrees \\  \\\hline \\
 	 \multicolumn{3}{c}{\bf {Improper angle}} \\ \\
 	 Force constant & $K_\psi$ &  K/rad$^2$\\
-				& $\psi_0$ & degrees \\ \\ \hline \\
+	 Improper angle	& $\psi_0$ & degrees \\ \\ \hline \\
 				\multicolumn{3}{c}{\bf Nonbonded} \\ \\
 	Energy parameter 	& $\epsilon/k_B$ & K \\
 	Collision diameter &	 $\sigma$ & \AA \\
@@ -196,8 +282,7 @@ The following table provides units used in Cassandra:
 	Temperature               & & K \\
 	Pressure                      & & bar \\
 	Chemical potential       & & kJ/mol \\
-	Energy                   & & kJ/mol \\
-	Fugacity                       & & bar \\ \hline \hline
+	Energy                   & & kJ/mol \\ \hline \hline
 	
 	\end{tabular}
 	\end{center}

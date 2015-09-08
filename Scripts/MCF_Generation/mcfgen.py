@@ -196,7 +196,11 @@ periodicTable={'H': 1.0079,
 'C1': 13.0186,
 'C2': 14.0265,
 'C3': 15.0344,
-'C4': 16.0423}
+'C4': 16.0423,
+'CH': 13.0186,
+'CH2': 14.0265,
+'CH3': 15.0344,
+'CH4': 16.0423}
 
 #*******************************************************************************
 # FUNCTION DEFINITIONS
@@ -308,8 +312,7 @@ def lookup(atomlook):
 
 def initialize(infilename):
 
-	#This function will set the starting atom for the subsequent ring scan.
-	#If an a
+	#This function will set the starting atom for the subsequent ring scan
 	#It can handle the following special cases:
 	#1) Argon: If no CONECT keyword is found, it will automatically assume it's argon.
         #2) Cyclic UA model: In this case, a 'ghost' molecule will be used as a starting point.
@@ -486,6 +489,9 @@ def scan(newAtom,oldLine,scanning):
 
 
 def fragID():
+
+	#This function will populate the variable "fragList"
+
 	adjacentatoms=[]
 	tempfile=open('temporary.temp','r')
 	for eachring in ringList:
@@ -567,141 +573,7 @@ def dihedralID():
 	removedoublecounting("dihedrals")
 	
 				
-def atomInfo(infilename, outfilename): 
-	
-	ifile = open(infilename, 'r')
-	ofile = open(outfilename,'w')
-	ofile.write("!**********************************************************************************\n")
-	ofile.write("!Molecular connectivity file for " + infilename + "\n")
-	ofile.write("!**********************************************************************************\n")
 
-	ofile.write("\n# Atom_Info\n")
-
-	matrix = forcefield("nonbonded","read")
-	matrixcharge = forcefield("charges","read")
-
-	ofile.write(str(len(listofnames))+"\n")
-	for line in ifile:
-		if not line.strip():
-			continue
-		if line[0:6]=='HETATM' or line[0:4]=='ATOM':
-			atomnumber = line[6:11].strip()
-			atomname = line[12:16].strip()
-			element = line[76:78].strip()
-			if atomname == '':
-				atomname = element+ atomnumber
-			atomtype = line[80:].strip()
-			atommass = str(periodicTable[element])
-			vdwtype = "LJ"
-
-			for rowmatrix in matrix:
-				for item in rowmatrix[0]:
-					if int(item)==int(atomnumber)-1:
-						sigma = rowmatrix[2]
-						epsilon = rowmatrix[3]
-						atom_type_charge = rowmatrix[4]
-						for index,line_charge in enumerate(matrixcharge):
-							if atomnumber == line_charge[0]:
-								charge = line_charge[1] 
-
-			in_a_ring = False
-			for eachring in ringList:
-				if atomNumber in eachring:
-					in_a_ring = True
-			if cyclic_ua_atom == True and len(ringList)==0: #This means if there is only one cyclic united atom molecule
-				in_a_ring=True
-
-			ofile.write(atomnumber + spacing + atomname + spacing + atomelement + spacing + atommass + spacing + charge + spacing + vdwtype + spacing + epsilon + spacing + sigma)
-			if in_a_ring:
-				ofile.write(spacing + "ring")
-			ofile.write("\n")
-	
-	ifile.close()
-	ofile.close()
-	#carfile.close()
-
-def bondInfo(outfilename):
-	ofile = open(outfilename,'a')
-	ofile.write("\n# Bond_Info\n")
-	ofile.write(str(len(bondList))+"\n")
-	
-	matrix = forcefield("bonded","read")
-	
-
-	for index, row in enumerate(bondList):
-		bond=row.split()
-		for rowmatrix in matrix:
-			for item in rowmatrix[0]:
-				if index == item:
-					length=rowmatrix[2]
-					constant = rowmatrix[3]
-		ofile.write(str(index+1) + spacing + bond[0] + spacing + bond[1] + spacing + "fixed" + spacing + length+"\n")
-
-	ofile.close()
-
-
-def angleInfo(outfilename):
-
-	ofile = open(outfilename,'a')
-
-	ofile.write("\n# Angle_Info\n")
-	ofile.write(str(len(angleList))+"\n")
-
-	matrix = forcefield("angles","read") #matrix=[repeatedlines, angle type, force constant, angle)
-
-	for index, row in enumerate(angleList):
-		angle=row.split()
-		for rowmatrix in matrix:
-			for item in rowmatrix[0]:
-				if index == item:
-					angleconstant=rowmatrix[3]
-					if "fixed" in  angleconstant:
-						angletype = "fixed"
-						angleconstant = ""
-					else:
-						angletype = "harmonic"
-					eqmangle=rowmatrix[2]
-
-		ofile.write(str(index+1) + spacing + angle[0] + spacing + angle[1] + spacing + angle[2] + spacing + angletype + spacing + angleconstant + spacing + eqmangle + "\n")
-
-	ofile.close()
-
-
-
-def dihedralInfo(outfilename):
-	ofile = open(outfilename,'a')
-
-	ofile.write("\n# Dihedral_Info\n")
-	ofile.write(str(len(dihedralList))+"\n")
-
-	matrix=forcefield("dihedrals","read")   #matrix=[repeatedlines, dihedral type, K, n, gamma)
-
-	for index, row in enumerate(dihedralList):
-		dihedral=row.split()
-		for rowmatrix in matrix:
-			for item in rowmatrix[0]:
-				if index == item:
-					if dihedralType == "CHARMM": 
-						K = rowmatrix[2]
-						n = rowmatrix[3]
-						gamma = rowmatrix[4]
-						ofile.write(str(index+1) + spacing + dihedral[0] + spacing + dihedral[1] + spacing + dihedral[2] + spacing + dihedral[3] + spacing + dihedralType + spacing + K + spacing + n + spacing + gamma + "\n")
-					elif dihedralType == "OPLS":
-						a0 = rowmatrix[2]
-						a1 = rowmatrix[3]
-						a2 = rowmatrix[4]
-						a3 = rowmatrix[5]
-						ofile.write(str(index+1) + spacing + dihedral[0] + spacing + dihedral[1] + spacing + dihedral[2] + spacing + dihedral[3] + spacing + dihedralType + spacing + a0 + spacing + a1 + spacing + a2 + spacing + a3 + "\n")
-					elif dihedralType == "harmonic":
-						k = rowmatrix[2]
-						phi = rowmatrix[3]
-						ofile.write(str(index+1) + spacing + dihedral[0] + spacing + dihedral[1] + spacing + dihedral[2] + spacing + dihedral[3] + spacing + dihedralType + spacing + k + spacing + phi+ "\n")
-
-
-
-				
-
-	ofile.close()
 		
 
 def fragInfo(mcfFile):
@@ -753,17 +625,6 @@ returns:
 	mcf.close()
 
 
-def tablelookup(element, thingtolook):
-
-	for i in xrange(0,108):
-		line = pt[i]
-		if line[3]==element:
-			if thingtolook=="mass":
-				return line[1]
-			elif thingtolook=="name":
-				return line[2]
-			elif thingtolook=="atomic_number":
-				return line[0]
 
 
 def removedoublecounting(thingtoclean):
@@ -1436,7 +1297,7 @@ returns:
 	for line in pdb:
 		# read atom info
 		this_line = line.split()
-		if line[0:6]=='HETATM' or line[0:4]=='ATOM': 
+		if line[0:6]=='HETATM' or line[0:4]=='ATOM':
 			i = int(line[6:11].strip())
 			atomList.append(i)
 			atomParms[i] = {}
@@ -1445,7 +1306,10 @@ returns:
 			if atomParms[i]['name'] == '':
 				atomParms[i]['name'] = atomParms[i]['element'] + i
 			atomParms[i]['type'] = line.split()[-1].strip()
-			atomParms[i]['mass'] = periodicTable[atomParms[i]['element']]
+			try:
+				atomParms[i]['mass'] = periodicTable[atomParms[i]['element']]
+			except:
+				atomParms[i]['mass'] = 0.0
 		# read bond info
 		if "CONECT" in this_line:
 			lineList = line.split()
@@ -1931,6 +1795,9 @@ listofnames=[]
 cyclic_ua_atom = True
 
 #RING SCAN
+#Initialize returns the intial atom
+#to start the ring scan
+#If molecule is argon, it initial atom is empty
 initialatom=initialize(configFile)
 if initialatom == '':
 	tempfile = open('temporary.temp','w')
