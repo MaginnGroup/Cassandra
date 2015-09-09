@@ -145,7 +145,7 @@ SUBROUTINE NVTMC_Control
   CALL Get_Dihedral_Atoms_To_Place
 
   DO i=1,nbr_boxes
-  IF (int_vdw_sum_style(i) == vdw_mie) THEN
+  IF (int_vdw_sum_style(i) == vdw_mie .OR. int_vdw_sum_style(i) == vdw_mie_cut_shift) THEN
       CALL Get_Mie_Nonbond
   END IF
   END DO

@@ -513,6 +513,12 @@ SUBROUTINE Get_Pair_Style
                  WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_vdw(ibox), '   Angstrom'
                  WRITE(logunit,'(A)') 'Mie potential used for VDW'
 
+              ELSEIF (vdw_sum_style(ibox) == 'mie_cut_shift') THEN 
+                 int_vdw_sum_style(ibox) = vdw_mie_cut_shift
+                 rcut_vdw(ibox) = String_To_Double(line_array(3))
+                 WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_vdw(ibox), 'Angstrom'
+                 WRITE(logunit,'(A)') 'Mie cut shift potential used for VDW'
+
               ELSE
                  err_msg(1) = 'Improper specification of vdw_sum_style'
                  CALL Clean_Abort(err_msg,'Get_Pairstyle')
