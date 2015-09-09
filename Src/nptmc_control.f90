@@ -154,7 +154,7 @@ SUBROUTINE NPTMC_Control
 
   ! Determine whether mie potentials are used
   DO i=1,nbr_boxes
-  IF (int_vdw_sum_style(i) == vdw_mie) THEN
+  IF (int_vdw_sum_style(i) == vdw_mie .OR. int_vdw_sum_style(i) == vdw_mie_cut_shift) THEN
       CALL Get_Mie_Nonbond
   END IF
   END DO
