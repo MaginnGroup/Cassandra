@@ -4,8 +4,7 @@ gas-phase pentane at temperature T=336K and pressure P=3.38bar.
 I. FILES REQUIRED TO RUN THE SIMULATION
 
 pentane.pdb
-    created in Gaussview. Alternatively, this file can be created by hand, Avogadro
-    or obtained online.
+    This file was created in Gaussview.
 
 pentane.ff
     An empty template was created with the following command
@@ -28,7 +27,10 @@ pentane.mcf
 
     Note that this command requires the file pentane.ff in the same directory.
 
-nvt.inp
+equil.inp
+    This input file uses the make_config option. It populates a simulation
+		box with 200 molecules of pentane.
+
     The initial volume was chosen to be slightly less than ideal gas volume
 
        V.ideal = N kB T / P = 200 * kB * 336K / 3.38 bar = (140 A)^3
@@ -57,7 +59,5 @@ III. OUTPUT FILES
 All output files are named equil.out.* , as defined in the input file. Please 
 see the Cassandra manual for more information on each output file type.
 
-equil.out.box1.prp1 contains 100 entries. equil.out.box1.H and 
-equil.out.box1.xyz each contain one additional entry at time t=0
-because the inital configuration was generated using the make_config option.
-
+Averages were taken over the last 50 sweeps. The average pressure is 3.42 bar. 
+The average molar volume is 7529 cm^3/mol.

@@ -95,12 +95,12 @@ Equilibration   6667  100
 1
 !------------------------------------------------------------ 0 == yes, 1 == no
 
-# Frequency_Info
-freq_type    none
-Nthermofreq  2010
-Ncoordfreq   2010
+# Simulation_Length_Info
+Units        Steps
+Prop_Freq    2010
+Coord_Freq   2010
 MCsteps      201000
-# Done_Frequency_Info
+# Done_Simulation_Length_Info
 !----------------- 201 moves = 1 sweep; output every 10 sweeps; run 1000 sweeps
 
 # Property_Info 1
