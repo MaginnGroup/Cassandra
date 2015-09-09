@@ -968,6 +968,8 @@ CONTAINS
        vdw_in = vdw_cut_switch
      ELSEIF (int_vdw_sum_style(this_box) == vdw_mie) THEN
        vdw_in = vdw_mie
+     ELSEIF (int_vdw_sum_style(this_box) == vdw_mie_cut_shift) THEN
+       vdw_in = vdw_mie_cut_shift
      ENDIF
 
      IF (int_vdw_sum_style(this_box) /= vdw_in)  THEN
@@ -1608,7 +1610,23 @@ CONTAINS
                    Eij_vdw = 0.0_DP
                 ENDIF
 
-             ELSEIF (int_vdw_sum_style(ibox) == vdw_mie) THEN
+
+             ELSEIF (int_vdw_sum_style(ibox) == vdw_mie) THEN 
+
+                rij = SQRT(rijsq)
+                rcut_vdw = SQRT(rcut_vdwsq(ibox))
+     
+                mie_n = mie_nlist(mie_Matrix(is,js))
+                mie_m = mie_mlist(mie_Matrix(is,js))
+                mie_coeff = mie_n/(mie_n-mie_m) *(mie_n/mie_m)**(mie_m/(mie_n-mie_m))
+                SigOverR = sig/rij
+                SigOverRn = SigOverR ** mie_n
+                SigOverRm = SigOverR ** mie_m
+                Eij_vdw =  mie_coeff * eps * ((SigOverRn - SigOverRm))
+
+
+
+             ELSEIF (int_vdw_sum_style(ibox) == vdw_mie_cut_shift) THEN
 
                 rij = SQRT(rijsq)
 		rcut_vdw = SQRT(rcut_vdwsq(ibox))
@@ -2881,6 +2899,14 @@ CONTAINS
             get_vdw = .FALSE.
          ENDIF
 
+      ELSEIF (int_vdw_sum_style(this_box) == vdw_mie_cut_shift) THEN
+
+         IF (rijsq <= rcut_vdwsq(this_box)) THEN
+            get_vdw = .TRUE.
+         ELSE
+            get_vdw = .FALSE.
+         ENDIF
+
       ELSEIF (int_vdw_sum_style(this_box) == vdw_cut_switch) THEN
          
          IF (rijsq <= roff_switch_sq(this_box)) THEN
@@ -3267,7 +3293,7 @@ CONTAINS
                         (8.0_DP * rijsq * rijsq * roffsq_rijsq * Eij_vdw * switch_factor1(ibox))/(3.0_DP)
 
                 END IF
-             ELSEIF (int_vdw_sum_style(ibox) == vdw_mie) THEN
+             ELSEIF (int_vdw_sum_style(ibox) == vdw_mie .OR. int_vdw_sum_style(ibox) == vdw_mie_cut_shift) THEN
                 rij = SQRT(rijsq)
 
                 mie_n = mie_nlist(mie_Matrix(is,js))
@@ -3277,6 +3303,7 @@ CONTAINS
                 SigOverRn = SigOverR ** mie_n
                 SigOverRm = SigOverR ** mie_m
                 Wij_vdw = (mie_coeff * eps) *(mie_n * SigOverRn - mie_m * SigOverRm)
+
 
 
              ELSE

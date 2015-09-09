@@ -104,6 +104,7 @@ USE Type_Definitions
   INTEGER, PARAMETER :: vdw_charmm = 6
   INTEGER, PARAMETER :: vdw_cut_switch = 7
   INTEGER, PARAMETER :: vdw_mie = 8
+  INTEGER, PARAMETER :: vdw_mie_cut_shift = 9
 
   INTEGER, PARAMETER :: charge_none = 0
   INTEGER, PARAMETER :: charge_coul = 1
