@@ -364,63 +364,63 @@ SUBROUTINE NVTMC_Driver
 
   ! let us check if at the end of the simulation, the energies are properly updated
 
-  write(logunit,*) '*********** Ending simulation *****************'
-  write(logunit,*)
-  write(logunit,*)
-
-  DO this_box = 1, nbr_boxes
-
-    ! Display the components of the energy.
-
-     WRITE(logunit,*) 
-     WRITE(logunit,*) '*****************************************'
-     WRITE(logunit,'(A36,2X,I2)') ' Ending energy components for box', this_box
-     WRITE(logunit,*) ' Atomic units - Extensive'
-     WRITE(logunit,*) '*****************************************'
-     WRITE(logunit,*)
-
-     write(logunit,'(A,T30,F20.3)') 'Total system energy is' , energy(this_box)%total
-     write(logunit,'(A,T30,F20.3)') 'Intra molecular energy is', energy(this_box)%intra
-     write(logunit,'(A,T30,F20.3)') 'Bond energy is', energy(this_box)%bond
-     write(logunit,'(A,T30,F20.3)') 'Angle energy is', energy(this_box)%angle
-     write(logunit,'(A,T30,F20.3)') 'Dihedral energy is', energy(this_box)%dihedral
-     write(logunit,'(A,T30,F20.3)') 'Improper energy is', energy(this_box)%improper
-     write(logunit,'(A,T30,F20.3)') 'Intra nonbond vdw is', energy(this_box)%intra_vdw
-     write(logunit,'(A,T30,F20.3)') 'Intra nonbond elec is', energy(this_box)%intra_q
-     write(logunit,'(A,T30,F20.3)') 'Inter molecule vdw is', energy(this_box)%inter_vdw
-     write(logunit,'(A,T30,F20.3)') 'Long range correction is', energy(this_box)%lrc
-     write(logunit,'(A,T30,F20.3)') 'Inter molecule q is', energy(this_box)%inter_q
-     write(logunit,'(A,T30,F20.3)') 'Reciprocal ewald is', energy(this_box)%ewald_reciprocal
-     write(logunit,'(A,T30,F20.3)') 'Self ewald is', energy(this_box)%ewald_self
-     write(logunit,*) '**************************************************'
-
-     write(logunit,*)
-
-     CALL Compute_Total_System_Energy(this_box,.TRUE., overlap)
-     write(logunit,*)
-     WRITE(logunit,*) '*****************************************'
-     write(logunit,'(A52,2X,I2)') 'Components of energy from total energy call for box', this_box
-     WRITE(logunit,*) 'Atomic units-Extensive'
-     WRITE(logunit,*) '*****************************************'
-     WRITE(logunit,*)
-     
-
-     write(logunit,'(A,T30,F20.3)') 'Total system energy is' , energy(this_box)%total
-     write(logunit,'(A,T30,F20.3)') 'Intra molecular energy is', energy(this_box)%intra
-     write(logunit,'(A,T30,F20.3)') 'Bond energy is', energy(this_box)%bond
-     write(logunit,'(A,T30,F20.3)') 'Angle energy is', energy(this_box)%angle
-     write(logunit,'(A,T30,F20.3)') 'Dihedral energy is', energy(this_box)%dihedral
-     write(logunit,'(A,T30,F20.3)') 'Improper energy is', energy(this_box)%improper
-     write(logunit,'(A,T30,F20.3)') 'Intra nonbond vdw is', energy(this_box)%intra_vdw
-     write(logunit,'(A,T30,F20.3)') 'Intra nonbond elec is', energy(this_box)%intra_q
-     write(logunit,'(A,T30,F20.3)') 'Inter molecule vdw is', energy(this_box)%inter_vdw
-     write(logunit,'(A,T30,F20.3)') 'Long range correction is', energy(this_box)%lrc
-     write(logunit,'(A,T30,F20.3)') 'Inter molecule q is', energy(this_box)%inter_q
-     write(logunit,'(A,T30,F20.3)') 'Reciprocal ewald is', energy(this_box)%ewald_reciprocal
-     write(logunit,'(A,T30,F20.3)') 'Self ewald is', energy(this_box)%ewald_self
-     write(logunit,*)
-
-  END DO
+!  write(logunit,*) '*********** Ending simulation *****************'
+!  write(logunit,*)
+!  write(logunit,*)
+!
+!  DO this_box = 1, nbr_boxes
+!
+!    ! Display the components of the energy.
+!
+!     WRITE(logunit,*) 
+!     WRITE(logunit,*) '*****************************************'
+!     WRITE(logunit,'(A36,2X,I2)') ' Ending energy components for box', this_box
+!     WRITE(logunit,*) ' Atomic units - Extensive'
+!     WRITE(logunit,*) '*****************************************'
+!     WRITE(logunit,*)
+!
+!     write(logunit,'(A,T30,F20.3)') 'Total system energy is' , energy(this_box)%total
+!     write(logunit,'(A,T30,F20.3)') 'Intra molecular energy is', energy(this_box)%intra
+!     write(logunit,'(A,T30,F20.3)') 'Bond energy is', energy(this_box)%bond
+!     write(logunit,'(A,T30,F20.3)') 'Angle energy is', energy(this_box)%angle
+!     write(logunit,'(A,T30,F20.3)') 'Dihedral energy is', energy(this_box)%dihedral
+!     write(logunit,'(A,T30,F20.3)') 'Improper energy is', energy(this_box)%improper
+!     write(logunit,'(A,T30,F20.3)') 'Intra nonbond vdw is', energy(this_box)%intra_vdw
+!     write(logunit,'(A,T30,F20.3)') 'Intra nonbond elec is', energy(this_box)%intra_q
+!     write(logunit,'(A,T30,F20.3)') 'Inter molecule vdw is', energy(this_box)%inter_vdw
+!     write(logunit,'(A,T30,F20.3)') 'Long range correction is', energy(this_box)%lrc
+!     write(logunit,'(A,T30,F20.3)') 'Inter molecule q is', energy(this_box)%inter_q
+!     write(logunit,'(A,T30,F20.3)') 'Reciprocal ewald is', energy(this_box)%ewald_reciprocal
+!     write(logunit,'(A,T30,F20.3)') 'Self ewald is', energy(this_box)%ewald_self
+!     write(logunit,*) '**************************************************'
+!
+!     write(logunit,*)
+!
+!     CALL Compute_Total_System_Energy(this_box,.TRUE., overlap)
+!     write(logunit,*)
+!     WRITE(logunit,*) '*****************************************'
+!     write(logunit,'(A52,2X,I2)') 'Components of energy from total energy call for box', this_box
+!     WRITE(logunit,*) 'Atomic units-Extensive'
+!     WRITE(logunit,*) '*****************************************'
+!     WRITE(logunit,*)
+!     
+!
+!     write(logunit,'(A,T30,F20.3)') 'Total system energy is' , energy(this_box)%total
+!     write(logunit,'(A,T30,F20.3)') 'Intra molecular energy is', energy(this_box)%intra
+!     write(logunit,'(A,T30,F20.3)') 'Bond energy is', energy(this_box)%bond
+!     write(logunit,'(A,T30,F20.3)') 'Angle energy is', energy(this_box)%angle
+!     write(logunit,'(A,T30,F20.3)') 'Dihedral energy is', energy(this_box)%dihedral
+!     write(logunit,'(A,T30,F20.3)') 'Improper energy is', energy(this_box)%improper
+!     write(logunit,'(A,T30,F20.3)') 'Intra nonbond vdw is', energy(this_box)%intra_vdw
+!     write(logunit,'(A,T30,F20.3)') 'Intra nonbond elec is', energy(this_box)%intra_q
+!     write(logunit,'(A,T30,F20.3)') 'Inter molecule vdw is', energy(this_box)%inter_vdw
+!     write(logunit,'(A,T30,F20.3)') 'Long range correction is', energy(this_box)%lrc
+!     write(logunit,'(A,T30,F20.3)') 'Inter molecule q is', energy(this_box)%inter_q
+!     write(logunit,'(A,T30,F20.3)') 'Reciprocal ewald is', energy(this_box)%ewald_reciprocal
+!     write(logunit,'(A,T30,F20.3)') 'Self ewald is', energy(this_box)%ewald_self
+!     write(logunit,*)
+!
+!  END DO
 
   IF(int_run_style == run_test) THEN
 
@@ -432,6 +432,6 @@ SUBROUTINE NVTMC_Driver
   
   END IF   
 
-  CALL Write_Trials_Success
+!  CALL Write_Trials_Success
      
 END SUBROUTINE NVTMC_Driver

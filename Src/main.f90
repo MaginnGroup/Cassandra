@@ -235,9 +235,9 @@ PROGRAM Main
 
   ! Initialize the counters for simulation
   
-  DO i = 1, nbr_boxes
-     CALL Initialize(i)
-     CALL Reset(i)
+  DO ibox = 1, nbr_boxes
+     CALL Initialize(ibox)
+     CALL Reset(ibox)
   END DO
 
   ! Initialize the atom list and molecule list arrays
@@ -257,8 +257,8 @@ PROGRAM Main
 
 ! Initialize the counters for simulation
 
-  DO i = 1, nbr_boxes
-     CALL Initialize(i)
+  DO ibox = 1, nbr_boxes
+     CALL Initialize(ibox)
   END DO
 
   WRITE(*,*) 'Beginning Cassandra Simulation'
@@ -302,9 +302,9 @@ PROGRAM Main
         CALL Clean_Abort(err_msg,'precalculate')
      END IF
      
-     do i = 1, nbr_boxes
-        CALL  Ewald_Reciprocal_Lattice_Vector_Setup(i)
-     end do
+     DO ibox = 1, nbr_boxes
+        CALL  Ewald_Reciprocal_Lattice_Vector_Setup(ibox)
+     END DO
      
      ! Here we can allocate the memory for cos_sum, sin_sum etc
      
@@ -322,8 +322,8 @@ PROGRAM Main
  
   END IF
 
-  DO i = 1, nbr_boxes
-     CALL Reset(i)
+  DO ibox = 1, nbr_boxes
+     CALL Reset(ibox)
   END DO
 
   ! NR: I believe we have all the information to compute the 
@@ -414,12 +414,12 @@ PROGRAM Main
   ! compute total system energy
   overlap = .FALSE.
      
-  DO i = 1, nbr_boxes
+  DO ibox = 1, nbr_boxes
        
      IF ( start_type == 'make_config' .and. &
-          int_vdw_sum_style(i) == vdw_cut_tail) &
-                CALL Compute_Beads(i)
-     CALL Compute_Total_System_Energy(i,.TRUE.,overlap)
+          int_vdw_sum_style(ibox) == vdw_cut_tail) &
+                CALL Compute_Beads(ibox)
+     CALL Compute_Total_System_Energy(ibox,.TRUE.,overlap)
            
 
      IF (overlap) THEN
@@ -433,30 +433,31 @@ PROGRAM Main
   
   ! write out the initial energy components to the log file
   
-  DO i = 1,nbr_boxes
+  DO ibox = 1,nbr_boxes
      
      WRITE(logunit,'(X,A59)') '***********************************************************'
-     WRITE(logunit,'(X,A36,2X,I2)') 'Starting energy components for box', i
+     WRITE(logunit,'(X,A36,2X,I2)') 'Starting energy components for box', ibox
      WRITE(logunit,*) ' Atomic units-Extensive'
      WRITE(logunit,*)
      
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Total system energy is' , energy(i)%total
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecular energy is', energy(i)%intra
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Bond energy is', energy(i)%bond
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Bond angle energy is', energy(i)%angle
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Dihedral angle energy is', energy(i)%dihedral
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Improper angle energy is', energy(i)%improper
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra nonbond vdw is', energy(i)%intra_vdw
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra nonbond elec is', energy(i)%intra_q
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule vdw is', energy(i)%inter_vdw
-     IF (int_vdw_sum_style(i) == vdw_cut_tail) THEN
-        WRITE(logunit,'(X,A,T30,F20.3)') 'Long range correction is', energy(i)%lrc
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Total system energy is' , energy(ibox)%total
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecular energy is', energy(ibox)%intra
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Bond energy is', energy(ibox)%bond
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Bond angle energy is', energy(ibox)%angle
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Dihedral angle energy is', energy(ibox)%dihedral
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Improper angle energy is', energy(ibox)%improper
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra nonbond vdw is', energy(ibox)%intra_vdw
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra nonbond elec is', energy(ibox)%intra_q
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule vdw is', energy(ibox)%inter_vdw
+     IF (int_vdw_sum_style(ibox) == vdw_cut_tail) THEN
+        WRITE(logunit,'(X,A,T30,F20.3)') 'Long range correction is', energy(ibox)%lrc
      END IF
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule q is', energy(i)%inter_q
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald is', energy(i)%ewald_reciprocal
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Self ewald is', energy(i)%ewald_self
-
-     IF( int_charge_sum_style(i) == charge_ewald) WRITE(logunit,'(X,A,T30,I20)') 'Number of vectors is', nvecs(i)
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule q is', energy(ibox)%inter_q
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald is', energy(ibox)%ewald_reciprocal
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Self ewald is', energy(ibox)%ewald_self
+     IF( int_charge_sum_style(ibox) == charge_ewald) THEN
+        WRITE(logunit,'(X,A,T30,I20)') 'Number of vectors is', nvecs(ibox)
+     END IF
      WRITE(logunit,'(X,A59)') '***********************************************************'
      WRITE(logunit,*)
 
@@ -569,7 +570,108 @@ PROGRAM Main
   END IF
 
   !***************************************************************************
-  ! let us check if at the end of the simulation, the energies are properly updated
+  ! Report current energies and compute the energies from scratch
+
+  DO ibox = 1, nbr_boxes
+    WRITE(logunit,'(A59)') &
+       '******************** END OF SIMULATION ********************'
+    WRITE(logunit,*)
+    WRITE(logunit,*)
+
+    ! Write the current components of the energy to log
+    WRITE(logunit,'(X,A59)') &
+       '***********************************************************'
+    WRITE(logunit,'(X,A32,2X,I2)') 'Ending energy components for box', ibox
+    WRITE(logunit,*) ' Atomic units-Extensive'
+    WRITE(logunit,'(X,A59)') &
+       '-----------------------------------------------------------'
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Total system energy is' , &
+       energy(ibox)%total
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecular energy is', &
+       energy(ibox)%intra
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Bond energy is', energy(ibox)%bond
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Angle energy is', energy(ibox)%angle
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Dihedral energy is', &
+       energy(ibox)%dihedral
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Improper angle energy is', &
+       energy(ibox)%improper
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra nonbond vdw is', &
+       energy(ibox)%intra_vdw
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra nonbond elec is', &
+       energy(ibox)%intra_q
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule vdw is', &
+       energy(ibox)%inter_vdw
+    IF (int_vdw_sum_style(ibox) == vdw_cut_tail) THEN
+      WRITE(logunit,'(X,A,T30,F20.3)') 'Long range correction is', &
+         energy(ibox)%lrc
+    END IF
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule q is', &
+       energy(ibox)%inter_q
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald is', &
+       energy(ibox)%ewald_reciprocal
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Self ewald is', energy(ibox)%ewald_self
+    
+    WRITE(logunit,'(X,A59)') &
+       '***********************************************************'
+
+    ! Write the current total energy to stdout
+    WRITE(*,*)
+    WRITE(*,*) "Ending Energy"
+    WRITE(*,"(X,A7,I1,A4,T15,F24.12)") 'Energy(', ibox, ') = ', &
+       energy(ibox)%total
+
+    ! Compute the energies from scratch
+    CALL Compute_Total_System_Energy(ibox,.TRUE.,overlap)
+
+    ! Write the recomputed total energy to stdout
+    WRITE(*,*)
+    WRITE(*,*) "Final Energy"
+    WRITE(*,"(X,A7,I1,A4,T15,F24.12)") 'Energy(', ibox, ') = ', &
+       energy(ibox)%total
+
+    ! Write the recomputed energy components to log
+    WRITE(logunit,*)
+    WRITE(logunit,*)
+    WRITE(logunit,'(X,A59)') &
+       '***********************************************************'
+    WRITE(logunit,'(X,A48,2X,I2)') &
+       'Energy components from total energy call for box', ibox
+    WRITE(logunit,*) ' Atomic units-Extensive'
+    WRITE(logunit,'(X,A59)') &
+       '-----------------------------------------------------------'
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Total system energy is' , &
+       energy(ibox)%total
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecular energy is', &
+       energy(ibox)%intra
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Bond energy is', energy(ibox)%bond
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Angle energy is', energy(ibox)%angle
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Dihedral energy is', &
+       energy(ibox)%dihedral
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Improper angle energy is', &
+       energy(ibox)%improper
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra nonbond vdw is', &
+       energy(ibox)%intra_vdw
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra nonbond elec is', &
+       energy(ibox)%intra_q
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule vdw is', &
+       energy(ibox)%inter_vdw
+    IF (int_vdw_sum_style(ibox) == vdw_cut_tail) THEN
+      WRITE(logunit,'(X,A,T30,F20.3)') 'Long range correction is', &
+         energy(ibox)%lrc
+    END IF
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule q is', &
+       energy(ibox)%inter_q
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald is', &
+       energy(ibox)%ewald_reciprocal
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Self ewald is', energy(ibox)%ewald_self
+    WRITE(logunit,'(X,A59)') &
+       '***********************************************************'
+  END DO
+
+  ! Write success ratios of each move type
+  CALL Write_Trials_Success
+
+
 !$OMP PARALLEL
 
 !  t_num = omp_get_thread_num()
@@ -577,24 +679,18 @@ PROGRAM Main
 
 !$OMP END PARALLEL
 
-  write(logunit,'(X,A59)') '******************** Ending simulation ********************'
-  write(logunit,*)
-  write(logunit,*)
-
-
   IF(cpcollect) THEN
      DO is = 1,nspecies
-        DO i = 1, nbr_boxes
-           IF(ntrials(is,i)%cpcalc > 0) THEN
-             write(logunit,'(A,I2,A,I2,A,F24.12)') 'Chemical potential for species',is,'in box',i, 'is', &
-                                                 chpot(is,i) / ntrials(is,i)%cpcalc
-             write(logunit,'(A,I2,A,I2,A,F24.12)') 'Ideal Chemical potential for species',is,'in box',i, 'is', &
-                                                 chpotid(is,i) / ntrials(is,i)%cpcalc
+        DO ibox = 1, nbr_boxes
+           IF(ntrials(is,ibox)%cpcalc > 0) THEN
+             write(logunit,'(A,I2,A,I2,A,F24.12)') 'Chemical potential for species',is,'in box',ibox, &
+                                                 'is', chpot(is,ibox) / ntrials(is,ibox)%cpcalc
+             write(logunit,'(A,I2,A,I2,A,F24.12)') 'Ideal Chemical potential for species',is,'in box', &
+                                                 ibox, 'is', chpotid(is,ibox) / ntrials(is,ibox)%cpcalc
            END IF
         END DO
      END DO
   END IF
-
 
   CALL DATE_AND_TIME(date,time,zone,end_values)
   CALL cpu_time(tot_time)
