@@ -216,14 +216,16 @@ combining rules can be used, as described elsewhere.
 
 
 where $\epsilon_{ij}$ and $\sigma_{ij}$ are the energy and size
-parameters and $n$ and $m$ are the repulsive and attractive exponents set by the user. This option allows for the use of a generalized LJ potential (for LJ, $n$ = 12 and $m$ = 6). Both n and m can take on separate integer or float values set by the user. For unlike interactions, different 
+parameters and $n$ and $m$ are the repulsive and attractive exponents set by the user. This option allows for the use of a generalized LJ potential (for LJ, $n$ = 12 and $m$ = 6).  Note that this
+option only evaluates the energy up to a specified cutoff
+distance. Both n and m can take on separate integer or float values set by the user. For unlike interactions, different 
 combining rules can be used, as described elsewhere.
 
 \item Mie cut and shift potential:
 
 \begin{equation}
  {\cal V}(r_{ij})=  \left ( \frac{n}{n-m} \right ) \left ( \frac {n}{m} \right )^{\frac{m}{n-m}}\epsilon_{ij} \left [  \left ( \frac {\sigma_{ij}} { r_{ij} }\right )^{n} - \left ( \frac {\sigma_{ij}} { r_{ij} }\right )^{m}\ \right  ] -  \left ( \frac{n}{n-m} \right ) \left ( \frac {n}{m} \right )^{\frac{m}{n-m}}\epsilon_{ij} \left [  \left ( \frac {\sigma_{ij}} { r_{cut}}\right )^{n} - \left ( \frac {\sigma_{ij}} { r_{cut} }\right )^{m}\ \right]  
- \label{Eq:mie}
+ \label{Eq:mie_cut_shift}
 \end{equation}
 
 
