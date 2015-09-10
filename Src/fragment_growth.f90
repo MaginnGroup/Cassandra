@@ -188,10 +188,13 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   !    *  .FALSE. when transfering a molecule out of a box (GEMC deletion), 
   !       since the frag_order was already selected as part of transferring the 
   !       molecule into the other box
+
+
   IF (get_fragorder) THEN
  
      ! Select a fragment to insert first
-        
+     
+     !write(*,*) 'this is the random number', rranf()   
      frag_start = INT ( rranf() * is_fragments) + 1
      P_seq = 1.0_DP / is_fragments ! uniform prob of choosing a fragment
  
@@ -807,7 +810,6 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
 
   IF (del_flag) THEN
       trial = 1
-!     write(*,*) weight(1), this_box, nrg
   ELSE
    ! Choose one from Golden sampling for an insertion move
       rand_no = rranf() * weight(kappa_ins)
@@ -1307,12 +1309,14 @@ SUBROUTINE Fragment_Order(this_frag,is,frag_total,frag_order,live,P_seq)
      !**************************************************************************
      ! Choose a random fragment
      i_frag = INT( rranf() * n_connect ) + 1
+     !write(*,*) 'randon number in Select wich fragment to add next', rranf()
      i_frag_id = hanging_connections(i_frag)
      P_seq = P_seq / n_connect ! fragment chosen with uniform probability
 
      ! Add i_frag_id to frag_order, make i_frag_id live
      frag_total = frag_total + 1
      frag_order(frag_total) = i_frag_id
+     !write(*,*) frag_order(frag_total)
      live(i_frag_id) = 1
 
      !**************************************************************************
@@ -1422,17 +1426,18 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
   dumcount = 0
   e_prev = e_total
 
-
+ ! write(*,*) 'frag start', frag_start
   DO i = frag_start, frag_total
 
      ifrag = frag_order(i)
-
+  !   write(*,*) 'ifrag=frag_order(i)=', frag_order(i)
+     
      !**************************************************************************
      ! Step 1) Select a fragment conformation
      !**************************************************************************
      !
-
-     IF ( del_flag) THEN
+     !write(*,*) del_flag
+      IF ( del_flag) THEN
 
         ! For a deletion move, use the existing conformation for each additional
         ! fragment
@@ -1456,20 +1461,27 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
         END IF
 
      ELSE
+
+        ! Select a fragment conformation from the reservoir
+        ! The reservoir was populated with a Boltzmann distribution, so now we
+        ! can pull from it with a uniform probability
+
+        total_frags = frag_list(ifrag,is)%nconfig
+        this_fragment = INT(rranf() * total_frags) + 1
         
         ! Select a fragment conformation from the reservoir
         ! The reservoir was populated with a Boltzmann distribution, so now we
         ! can pull from it with a uniform probability
         
-        total_frags = frag_list(ifrag,is)%nconfig
         this_fragment = INT(rranf() * total_frags) + 1
-        
+   !       write(*,*) 'the randon number for choose the configuration is', rranf()
+   !     write(*,*) 'this_config', this_fragment        
         ! Read in the coordinates
-        
+   !     write (*,*) 'coordinates in config_list'
         frag_type = frag_list(ifrag,is)%type
-        write(*,*) 'In Fragment_Placement'
-        write(*,*) 'Fragment type is', frag_type
-        write(*,*) 'Configuration is', this_fragment  
+   !     write(*,*) 'frag_type', frag_type
+   !     write(*,*) 'config',  this_fragment
+
         DO j = 1, frag_list(ifrag,is)%natoms
            
            this_atom = frag_list(ifrag,is)%atoms(j)
@@ -1488,11 +1500,10 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
            config_list(this_atom)%rzp = &
                  library_coords(nl)%rzp
               !frag_coords(j,this_fragment,frag_type)%rzp
-        write(*,*) 'Position x,y z of each atom of this fragment'
-        write(*,*) config_list(this_atom)%rxp
-        write(*,*) config_list(this_atom)%ryp
-        write(*,*) config_list(this_atom)%rzp  
-        END DO
+        ! write(*,*) config_list(this_atom)%rxp
+        ! write(*,*) config_list(this_atom)%ryp
+        ! write(*,*) config_list(this_atom)%rzp
+         END DO
      
         ! For a ring fragment, access the fragment intramolecular energy 
 
@@ -1624,15 +1635,21 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
              - config_list(anchor_frag_connect)%ryp
      vec2(3) = config_list(atom_ifrag)%rzp &
              - config_list(anchor_frag_connect)%rzp
+       
+    ! write(*,*) 'values for vec1 and vec2 before call Get_aligner_Hanger'
+    ! DO j = 1, 3
+    !    write(*,*) vec1(i)
+    !    write(*,*) vec2(i)
+    ! END DO
 
-        
      CALL Get_Aligner_Hanger(vec1, vec2, aligner_ifrag,hanger_ifrag)
      
      ! Calculate this only for inserting a molecule
      
      IF ( .NOT. del_flag) THEN
         
-        
+     !  write(*,*) 'atom_frag_connect and its atom_list'
+     !  write(*,*) atom_frag_connect, atom_list(atom_frag_connect,this_im,is)%rxp
         ! for frag_connect
         
         vec1(1) = atom_list(anchor_ifrag,this_im,is)%rxp - &
@@ -1652,7 +1669,14 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
         
         vec2(3) = atom_list(atom_frag_connect,this_im,is)%rzp - &
              atom_list(anchor_frag_connect,this_im,is)%rzp     
-        
+     
+      !  write(*,*) 'values fo vec1 and vec2 for inserting molecule &
+      !              before call Get_aligner_Hanger'
+      !  DO j = 1, 3
+      !  write(*,*) vec1(i)
+      !  write(*,*)vec2(i)
+      !  END DO
+
         CALL Get_Aligner_Hanger(vec1, vec2, aligner_frag_connect,hanger_frag_connect)
 
      END IF
@@ -1670,7 +1694,7 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
      config_list(:)%rxp = config_list(:)%rxp - tempx
      config_list(:)%ryp = config_list(:)%ryp - tempy
      config_list(:)%rzp = config_list(:)%rzp - tempz
-     
+         
      DO j = 1, frag_list(ifrag,is)%natoms
         
         this_atom = frag_list(ifrag,is)%atoms(j)
@@ -1688,7 +1712,6 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
         config_list(this_atom)%rzp = tempx * aligner_ifrag(3,1) &
                                    + tempy * aligner_ifrag(3,2) &
                                    + tempz * aligner_ifrag(3,3)
-        
      END DO
      
      !**************************************************************************
@@ -1716,7 +1739,6 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
         ! Select a random theta with uniform probability
         
         theta = twopi * rranf()
-        
      END IF
 
      ! Now that we have a starting theta, the other dihedral positions are 
@@ -1731,7 +1753,6 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
         config_temp_list(:,ii)%rxp  = config_list(:)%rxp
         config_temp_list(:,ii)%ryp  = 0.0_DP
         config_temp_list(:,ii)%rzp  = 0.0_DP
-        
         ! Loop over atoms
         DO j = 1, frag_list(ifrag,is)%natoms
            
@@ -1740,16 +1761,27 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
            tempx = config_list(this_atom)%rxp
            tempy = config_list(this_atom)%ryp
            tempz = config_list(this_atom)%rzp
-           
            config_temp_list(this_atom,ii)%ryp =  DCOS(theta) * tempy &
                                               +  DSIN(theta) * tempz
            config_temp_list(this_atom,ii)%rzp = -DSIN(theta) * tempy &
                                               +  DCOS(theta) * tempz
-           
+
         END DO
 
         ! Loop over atoms (again)
-        DO j = 1, frag_list(ifrag,is)%natoms
+        
+        ! write(*,*)'hanger_frag_connect'
+        ! write(*,*) hanger_frag_connect(1,1)
+        ! write(*,*) hanger_frag_connect(1,2)
+        ! write(*,*) hanger_frag_connect(1,3) 
+        ! write(*,*) hanger_frag_connect(2,1)
+        ! write(*,*) hanger_frag_connect(2,2)
+        ! write(*,*) hanger_frag_connect(2,3)
+        ! write(*,*) hanger_frag_connect(3,1)
+        ! write(*,*) hanger_frag_connect(3,2)
+        ! write(*,*) hanger_frag_connect(3,3)
+
+             DO j = 1, frag_list(ifrag,is)%natoms
            
            this_atom = frag_list(ifrag,is)%atoms(j)
            
@@ -1769,7 +1801,7 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
                                               + tempy*hanger_frag_connect(3,2) &
                                               + tempz*hanger_frag_connect(3,3)
 
-
+    
            IF ( this_atom /= anchor_ifrag) THEN
               IF ( this_atom /= anchor_frag_connect) THEN
                  
@@ -1796,7 +1828,9 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
 
               END IF
            END IF
-           
+           !write(*,*) atom_list(this_atom,this_im,is)%rxp
+           !write(*,*) atom_list(this_atom,this_im,is)%ryp
+           !write(*,*) atom_list(this_atom,this_im,is)%rzp
         END DO
 
         ! Exit the loop if we've computed atomic coords for all trial dihedrals
@@ -1820,6 +1854,7 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
      DO ii = 1, kappa_dih
 
         ! Reload the coordinates for the atoms of this fragment
+      !   write(*,*) 'In compute energy of the fragment'
         DO j = 1, frag_list(ifrag,is)%natoms
            
            this_atom = frag_list(ifrag,is)%atoms(j)
@@ -1834,7 +1869,12 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
                     config_temp_list(this_atom,ii)%rzp  
               END IF
            END IF
-
+       !  write(*,*) 'this_atom, this_im'
+       !  write(*,*) this_atom, this_im
+       !  write(*,*) 'atom list x, y z'
+       !  write(*,*) atom_list(this_atom,this_im,is)%rxp
+       !  write(*,*) atom_list(this_atom,this_im,is)%ryp
+       !  write(*,*) atom_list(this_atom,this_im,is)%rzp
         END DO
  
         CALL Get_COM(this_im,is)
@@ -2042,9 +2082,15 @@ SUBROUTINE Get_Aligner_Hanger(vec1,vec2,aligner,hanger)
    
    REAL(DP) :: vec1(3), vec2(3), perp_vec1(3), perp_vec2(3)
    REAL(DP), INTENT(OUT) :: aligner(3,3), hanger(3,3)
+  
+   INTEGER :: i, j
    
-   INTEGER :: i
-   
+  !  DO i = 1, 3
+  ! write(*,*) 'values fo vec1 and vec2'
+  !  write(*,*) vec1(i)
+  !  write(*,*)vec2(i)
+  !  END DO
+
    aligner(:,:) = 0.0_DP
    hanger(:,:) = 0.0_DP
    
@@ -2079,7 +2125,12 @@ SUBROUTINE Get_Aligner_Hanger(vec1,vec2,aligner,hanger)
       hanger(i,3) = perp_vec1(i)
       
    END DO
-   
+   ! write(*,*) 'values of aligner(i,j)and hanger(i,j)'
+   ! DO i=1, 3
+   ! DO j=1, 3
+   !   write(*,*) i, j, aligner(i,j), hanger(i,j)
+   !  END DO
+   ! END DO
    
    
  END SUBROUTINE Get_Aligner_Hanger
@@ -2134,9 +2185,6 @@ SUBROUTINE Single_Fragment_Regrowth(alive,is)
                                              !frag_coords(i,this_fragment,frag_type)%ryp
       atom_list(this_atom,alive,is)%rzp =  library_coords(nl)%rzp
                                               !frag_coords(i,this_fragment,frag_type)%rzp
-   write(*,*) atom_list(this_atom,alive,is)%rxp
-   write(*,*) atom_list(this_atom,alive,is)%ryp      
-   write(*,*) atom_list(this_atom,alive,is)%rzp
    END DO
 
 

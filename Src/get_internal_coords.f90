@@ -220,7 +220,22 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
    rx32 = atom_list(atom3,this_molecule,is)%rxp - atom_list(atom2,this_molecule,is)%rxp
    ry32 = atom_list(atom3,this_molecule,is)%ryp - atom_list(atom2,this_molecule,is)%ryp
    rz32 = atom_list(atom3,this_molecule,is)%rzp - atom_list(atom2,this_molecule,is)%rzp
-   
+
+!   WRITE(*,*) 'in get bond angle, atom 1 x y z'
+!   WRITE(*,*) atom_list(atom1,this_molecule,is)%rxp
+!   WRITE(*,*) atom_list(atom1,this_molecule,is)%ryp
+!   WRITE(*,*) atom_list(atom1,this_molecule,is)%rzp
+!   WRITE(*,*) 'in get bond angle, atom 2 x y z'
+!   WRITE(*,*) atom_list(atom2,this_molecule,is)%rxp
+!   WRITE(*,*) atom_list(atom2,this_molecule,is)%ryp
+!   WRITE(*,*) atom_list(atom2,this_molecule,is)%rzp
+!   WRITE(*,*) 'in get bond angle, atom 3 x y z'
+!   WRITE(*,*) atom_list(atom3,this_molecule,is)%rxp
+!   WRITE(*,*) atom_list(atom3,this_molecule,is)%ryp
+!   WRITE(*,*) atom_list(atom3,this_molecule,is)%rzp
+ 
+ 
+ 
 !   this_box = molecule_list(this_molecule,is)%which_box
 !   IF (l_cubic(this_box) == .FALSE.) THEN
 !   CALL Minimum_Image_Separation(this_box,rx21,ry21,rz21,rx21,ry21,rz21)
@@ -247,7 +262,21 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
 
    theta = PI - DACOS(costheta)
 
- END SUBROUTINE Get_Bond_Angle
+  ! write(*,*) 'In get_Bond Angle', 'this angle is', this_angle
+  ! write(*,*) 'atoms 1 and atom 2 are'
+  ! write(*,*) atom1, atom2
+  ! write(*,*) 'the distance between them are'
+  ! write(*,*) rx21, ry21, rz21
+
+
+   !write(*,*) 'atoms 2 and atom 3 are'
+   !write(*,*) atom2, atom3
+   !write(*,*) 'the distance between them are'
+   !write(*,*) rx32, ry32, rz32
+
+   !write(*,*) 'value fo angle is', theta
+
+END SUBROUTINE Get_Bond_Angle
 
 
 !********************************************************************************
