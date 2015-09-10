@@ -106,12 +106,12 @@ A linear molecule is rotated differently than a nonlinear molecule. A molecule i
 
 Even though three angles are randomly chosen, the probability of the resulting orientation is $d\cos(\theta)d\phi/4\pi$.
 
-\begin{figure}[h]
-	\centering
-	\includegraphics[width=0.9\textwidth]{EulerAngles}
-	\caption{Procedure for rotating linear molecules. \newline Image from mathworld.wolfram.com/EulerAngles.html.}
-	\label{fig:EulerAngles}
-\end{figure}
+%\begin{figure}[h]
+%	\centering
+%	\includegraphics[width=0.9\textwidth]{EulerAngles}
+%	\caption{Procedure for rotating linear molecules. \newline Image from mathworld.wolfram.com/EulerAngles.html.}
+%	\label{fig:EulerAngles}
+%\end{figure}
 
 If the molecule is nonlinear:
 
@@ -221,6 +221,7 @@ where the differential volume element $d\mathbf{q}_m^N$ has subscript $m$ becuas
 \end{equation}
 
 \subsection{Scaling the Volume}
+\label{subsec:scaling_the_volume}
 In Cassandra, new volumes are sampled as follows:
 
 \begin{enumerate}
@@ -319,12 +320,12 @@ Random insertions and deletions (see Section \ref{sec:appendix}) in the liquid p
 
 In Configurational Bias Monte Carlo (CBMC), the molecular conformation of the inserted molecule is molded to the insertion cavity. First, the molecule is parsed into fragments such that each fragment is composed of (a) a central atom and the atoms directly bonded to it (see Fig. \ref{fig:propaneFragments}), or (b) a ring of atoms and all the atoms directly bonded to them. Then, a position, orientation and molecular conformation of the molecule to be inserted are selected via the following steps:
 
-\begin{figure}[h]
-	\centering
-	\includegraphics[width=0.99\textwidth]{c3}
-	\caption{(a) An all-atom model of propane. (b) The same model as in (a), but parsed into three fragments.}
-	\label{fig:propaneFragments}
-\end{figure}
+%\begin{figure}[h]
+%	\centering
+%	\includegraphics[width=0.99\textwidth]{c3}
+%	\caption{(a) An all-atom model of propane. (b) The same model as in (a), but parsed into three fragments.}
+%	\label{fig:propaneFragments}
+%\end{figure}
 
 
 \begin{enumerate}
@@ -610,18 +611,242 @@ Eq. (\ref{eq:pAcc_cbmcRegrow}) is implemented in subroutine cut\_N\_grow() in fi
 \end{tabular}
 \end{table}
 
-\section{Multiphase Systems}
-\label{sec:multiphase}
-\subsection{Gibbs Ensemble Monte Carlo} 
+\section{Gibbs Ensemble Monte Carlo} 
 \label{sec:gibbs}
 
-[SECTION INCOMPLETE]
+The Gibbs Ensemble Monte Carlo method is a standard technique for studying phase equilibria of pure fluids
+and mixtures. It is oftentimes the method of choice to study vapor-liquid equilibria due to its intuitive 
+physical basis. 
+In Cassandra, the NVT and NPT versions of the Gibbs Ensemble (GEMC-NVT and GEMC-NPT) are implemented. 
+The GEMC-NVT method is suitable for simulating vapor liquid equilibria of pure systems, since
+pure substances require the specification of only one intensive variable 
+(temperature) to completely specify a state of two phases. 
+By contrast, mixtures require the specification of an additional degree of freedom (pressure).
+Thus, in the GEMC-NPT method, the pressure is specified in addition to temperature. \\
+
+In section \ref{sec:gibbs_nvt}, the acceptance rules for the NVT version will be derived and 
+references to their implementation in Cassandra will be
+presented. For information about the implementation of the NPT version, 
+please refer to section \ref{sec:gibbs_npt}
+
+\subsection{Gibbs Ensemble-NVT}
+\label{sec:gibbs_nvt}
+
+In the GEMC-NVT method, the system is comprised by two boxes, one representing a vapor phase 
+(denoted by superscript \textit{v}) and the other representing a liquid phase (denoted by superscript \textit{l}).
+These boxes are in thermal contact with a heat bath that maintains them at constant temperature, thus ensuring
+thermal equilibrium.
+To achieve phase equilibrium, the boxes are allowed to exchange volume and particles under the constraint of constant total volume ($V^t=V^l + V^v$)
+and constant number of particles ($N^t=N^l + N^v$). The partition function of this system is
+
+\begin{equation}
+Q\left(N^t,V^t,T\right) = \frac{1}{\Lambda^{3N^t}N^t!} \sum^{N^t}_{N{^l}} \frac{N^t!}{N^l!N^v!} \int^{V^t}_0  dV^l (V^l)^{N^l} (V^v)^{N^v} \int d \textbf{s}^{N^l} e^{-\beta U\left(\textbf{s}^{N^l}\right)} \int d \textbf{s}^{N^v} e^{-\beta U\left(\textbf{s}^{N^v}\right)}
+\label{eq:gemc_nvt_partition}
+\end{equation}
+
+
+Where $\Lambda$ is the de Broglie wavelength, $\textbf{s}^{N^l}$ and $\textbf{s}^{N^v}$ are the scaled coordinates of the atoms in the two phases, $U\left(\textbf{s}^{N^l}\right)$ and $U\left(\textbf{s}^{N^v}\right)$ are the potential energies of the liquid and the vapor box, respectively. The microstate probability distribution is
+
+\begin{equation}
+p_m \propto (V^l)^{N^l} (V^v)^{N^v} e^{-\beta U \left(\textbf{s}^{N^l}\right) -\beta U \left(\textbf{s}^{N^v}\right)}
+\label{eq:gemc_nvt_prob_dist}
+\end{equation}
+
+Note that the particle number factorials are not included in equation \ref{eq:gemc_nvt_prob_dist}, as particles are
+distinguishable in a simulation (see also equation \ref{eq:pMuVT}). \\
+
+In the GEMC-NVT technique, thermal equilibrium is attained by performing translation, rotation and regrowth moves. 
+The acceptance rules for these moves can be extracted from the probability 
+distribution \ref{eq:gemc_nvt_prob_dist}, and their functional form is exactly the same as that presented
+in sections \ref{sec:translate}, \ref{sec:rotate}, \ref{sec:regrow} and \ref{sec:cbmcRegrow}, namely \\
+
+
+\begin{equation}
+\ln \left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = - \beta \Delta U
+\end{equation}
+
+
+Exchange of volume between the two boxes is carried out to achieve pressure equilibrium. Assuming 
+volume is being transfered from box A to box B, the 
+acceptance rule is also derived from equation \ref{eq:gemc_nvt_prob_dist} and yields
+
+\begin{equation}
+\ln \left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = - \beta \Delta U^A - \beta \Delta U^B + N^A \ln\left(\frac{V^A_m}{V^A_n}\right) + N^B \ln\left(\frac{V^B_m}{V^B_n}\right)
+\label{eq:gemc_nvt_volume}
+\end{equation}
+
+\begin{table}
+\caption{Variable symbols and code names for the volume scaling move in the GEMC-NVT method.}
+\label{table:gemc_nvt_volume}
+\centering
+\begin{tabular}{|c|c|} \hline
+ {\bf Symbol} & {\bf Code name} \\ \hline
+ $\beta^A$ & beta(box1) \\
+ $\beta^B$ & beta(box2) \\
+ $\Delta U^A$ & delta\_e\_1 \\
+ $\Delta U^B$ & delta\_e\_2 \\
+ $N^A$ & tot\_mol\_box\_1 \\
+ $N^B$ & tot\_mol\_box\_2 \\
+ $V^A_m$ & box\_list(box1)\%volume \\
+ $V^B_m$ & box\_list(box2)\%volume \\
+ $V^A_n$ & box\_list\_old\_1\%volume \\
+ $V^B_n$ & box\_list\_old\_2\%volume \\
+ \hline
+\multicolumn{2}{c}{}
+\end{tabular}
+\end{table}
+
+
+
+This acceptance rule is implemented in the file gemc\_nvt\_volume.f90 as follows
+
+\begin{minipage}{\linewidth}
+\begin{lstlisting}[firstnumber=475, caption=gemc\_nvt\_volume.f90]
+factor = beta(box1) * delta_e_1 + beta(box2) * delta_e_2 - &
+                 tot_mol_box1 * DLOG( box_list(box1)%volume / box_list_old_1%volume) - &
+                 tot_mol_box2 * DLOG( box_list(box2)%volume / box_list_old_2%volume)
+
+\end{lstlisting}
+\end{minipage}
+
+Finally, exchange of particles is conducted between the two boxes to attain equality of chemical potentials.
+If the particle is transfered from box A into box B, the acceptance rule for this move is
+
+\begin{equation}
+\ln \left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = \ln \left( \frac{\alpha_{mn}}{\alpha_{nm}} \right)  \ln \left(\frac{V^B}{V^A}\right) -\beta \Delta U^A - \beta \Delta U^B
+\label{eq:gemc_nvt_transfer}
+\end{equation}
+
+Note that in contrast to the volume move, the particle swap is not a symmetric move, as it might 
+involve configurational biased regrowths. For the case of transfering a molecule from box A into box B, the forward probability $\alpha_{nm}$ is calculated
+as follows
+
+\begin{enumerate}
+\item Pick box A
+\item Pick a molecule from box A out of the $N^A_n$ possible molecules
+\item Insert molecule in box B using protocol presented in section \ref{sec:cbmcInsert}
+\end{enumerate}
+
+The attempt probability of generating configuration m is
+
+\begin{align}
+\alpha_{nm} &= \frac{1}{2} \frac{1}{N^A_n} p_{seq_{nm}}\ \frac{d\mathbf{q}_{rot}}{Z_{rot}}\ \frac{\kappa_{ins}V^B d\mathbf{s}}{V^B}\ \left[\frac{e^{-\beta \Delta U_k^{ins}}}{\sum_k{e^{-\beta \Delta U_k^{ins}}}}\right]^B\ \times \nonumber \\
+&\ \ \ \left[\prod_{i=1}^{N_{frag}}{\frac{e^{-\beta U(\mathbf{q}_{frag_i})}d\mathbf{q}_{frag_i}}{Z_{frag_i}}}\right]_{nm}\ \left[\prod_{j=1}^{N_{frag}-1}{\frac{\kappa_{dih}d\phi}{2\pi}\ \frac{e^{-\beta \Delta U_k^{dih}}}{\sum_k{e^{-\beta \Delta U_k^{dih}}}}}\right]_{nm} \\
+\label{eq:gemc_nvt_transfer_forward}
+& = \frac{1}{2} \frac{1}{N^A_n} p_{seq_{nm}}\ p_{bias_{nm}}\ \frac{e^{-\beta U(\mathbf{q}_{frag_{nm}})}d\mathbf{q}_{rot}d\mathbf{s}\prod_{i=1}^{N_{frag}}d\mathbf{q}_{frag_{i,nm}}\prod_{j=1}^{N_{frag}-1}d\phi_{nm}}{Z_{rot}Z_{frag}\Omega_{dih}}
+\end{align}
+
+
+Once the new configuration $m$ has been generated, the reverse probability $\alpha_{mn}$ must be calculated. This represents
+the probability of generating the old state n, pretending that the current state is m.
+The procedure is similar as before
+
+\begin{enumerate}
+\item Pick box B
+\item Pick the swapped molecule from box B of the $N^B_n+1$ possible molecules
+\item Insert molecule back in box A using protocol presented in section \ref{sec:cbmcInsert}
+\end{enumerate}
+
+The attempt probability of generating the old configuration n pretending we are in the new configuration m is
+
+\begin{equation}
+\alpha_{mn} = \frac{1}{2} \frac{1}{N^B_n+1} p_{seq_{mn}}\ p_{bias_{mn}}\ \frac{e^{-\beta U(\mathbf{q}_{frag_{mn}})}d\mathbf{q}_{rot}d\mathbf{s}\prod_{i=1}^{N_{frag}}d\mathbf{q}_{frag_{i,mn}}\prod_{j=1}^{N_{frag}-1}d\phi_{mn}}{Z_{rot}Z_{frag}\Omega_{dih}}
+\label{eq:gemc_nvt_transfer_reverse}
+\end{equation}
+
+The acceptance rule now becomes
+\begin{equation}
+\ln \left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = \ln \left( \frac{ p_{bias_{mn}}}{p_{bias_{nm}}} \frac{N^A_n}{N^B_n+1} \frac{V^B}{V^A} \right) + \beta U(\mathbf{q}_{frag_{nm}})- \beta U(\mathbf{q}_{frag_{mn}}) -\beta \Delta U^A - \beta \Delta U^B
+\label{eq:gemc_transfer_final}
+\end{equation}
+
+Note that the terms $p_{seq}$ cancelled out, as the same fragment regrowth sequence is used in the forward and reverse moves.
+The implementation of the particle swap move is found in the file gemc\_particle\_transfer.f90 as follows
+
+\begin{table}
+\caption{Variable symbols and code names for the particle transfer move in the GEMC-NVT method.}
+\label{table:gemc_transfer}
+\centering
+\begin{tabular}{|c|c|} \hline
+ {\bf Symbol} & {\bf Code name} \\ \hline
+ $\beta^A$ & beta(box\_out) \\
+ $\beta^B$ & beta(box\_in) \\
+ $\Delta U^A$ & -delta\_e\_out \\
+ $\Delta U^B$ & delta\_e\_in \\
+ $U(\mathbf{q}_{frag_{nm}})$ & e\_angle\_in + nrg\_ring\_frag\_in \\
+ $U(\mathbf{q}_{frag_{mn}})$ & e\_angle\_out + nrg\_ring\_frag\_out \\
+ $V^A_m$ & box\_list(box\_out)\%volume \\
+ $V^B_m$ & box\_list(box\_in)\%volume \\
+ $p_{bias_{nm}}$ & P\_forward \\
+ $p_{bias_{mn}}$ & P\_reverse \\
+ \hline
+\multicolumn{2}{c}{}
+\end{tabular}
+\end{table}
+
+\begin{minipage}{\linewidth}
+\begin{lstlisting}[firstnumber=505, caption=gemc\_particle\_transfer.f90]
+delta_e_in_pacc = delta_e_in
+delta_e_out_pacc = delta_e_out
+\end{lstlisting}
+
+\begin{lstlisting}[firstnumber=518]
+delta_e_in_pacc = delta_e_in_pacc - e_angle_in - nrg_ring_frag_in
+delta_e_out_pacc = delta_e_out_pacc - e_angle_out - nrg_ring_frag_out
+\end{lstlisting}
+
+
+\begin{lstlisting}[firstnumber=526]
+ln_pacc = beta(box_in)*delta_e_in_pacc - beta(box_out)*delta_e_out_pacc
+
+ln_pacc = ln_pacc - DLOG(box_list(box_in)%volume) &
+                    + DLOG(box_list(box_out)%volume) &
+                    - DLOG(REAL(nmols(this_species,box_out),DP)) &
+                    + DLOG(REAL(nmols(this_species,box_in) + 1, DP))
+
+ln_pacc = ln_pacc + DLOG(P_forward / P_reverse)
+accept = accept_or_reject(ln_pacc)
+\end{lstlisting}
+\end{minipage}
+
+
+\subsection{Gibbs Ensemble-NPT} 
+\label{sec:gibbs_npt}
+
+In the GEMC-NPT method, the system is comprised of two boxes. These boxes are allowed to exchange
+particles to attain equality of chemical potential. In contrast to
+the GEMC-NVT method, the volume of each box is allowed to fluctuate
+independently from the other box. As a result, the total volume of the system is not constant and the 
+pressure must be specified as a simulation parameter in addition to the temperature.
+This is consistent with the Gibbs phase rule, which requires the specification of two intensive
+variables (e.g. pressure and temperature) to fully specify a state with two phases. \\
+
+The probability distribution of this ensemble is very similar to its NVT counterpart (see
+equation \ref{eq:gemc_nvt_prob_dist}), 
+
+\begin{equation}
+p_m \propto (V^l)^{N^l} (V^v)^{N^v} e^{-\beta U \left(\textbf{s}^{N^l}\right) -\beta U \left(\textbf{s}^{N^v}\right)
+- \beta P \left(V^l + V^v\right) }
+\label{eq:gemc_npt_prob_dist}
+\end{equation}
+
+Thermal equilibration moves can be derived from the above probability distribution. They involve
+the usual translation, rotation and regrowth moves. The functional form of the acceptance rule
+is the same as those exposed in 
+sections \ref{sec:translate}, \ref{sec:rotate}, \ref{sec:regrow}, \ref{sec:cbmcRegrow}.
+Similarly, particle swap moves are carried out in the same way as it was exposed in section \ref{sec:gibbs_nvt}. 
+Finally, volume moves are carried out by picking one of the boxes and performing a volume change using the protocol
+exposed in section \ref{subsec:scaling_the_volume}. 
+
+
+
+
 
 \section{Multicomponent Systems} 
 
 Sections \ref{sec:NVT}-\ref{sec:multiphase} have each been developed for pure component systems. The Monte Carlo moves and acceptance criteria for multicomponent systems are straightforward extensions of the pure component moves. The only modification needed to translate, rotate and regrow molecules is to first select a species. In these moves, a species is selected randomly in proportion to its mole fraction $N_i/N$. When inserting and deleting a molecule, the mole fractions of each species change. In these cases, a species in a multicomponent system is selected instead with uniform probability $1/N_{species}$. In either case, species selection is symmetric for both forward and reverse moves and so cancels from the acceptance criterion.
 
-In contrast, Reaction Ensemble Monte Carlo (RxMC) fundamentally occurs in a multicomponent grand canonical ensemble because the number of molecules of all species involved in a reaction change simultaneously. In the multicomponent grand canonical ensemble, the temperature $T$, volume $V$ and set of chemical potentials $\{\mu\} = \mu_1, \ldots, \mu_s$ of each species are held constant. The partition function for a system with $s$ species is
+In contrast, a reaction move that changes the number of molecules of several species simultaneously will depend on the chemical potentials of each species. In the multicomponent grand canonical ensemble, the temperature $T$, volume $V$ and set of chemical potentials $\{\mu\} = \mu_1, \ldots, \mu_s$ of each species are held constant. The partition function for a system with $s$ species is
 
 \begin{equation}
 \label{eq:partitionFn_MuiVT}
@@ -643,43 +868,173 @@ p_m &= \frac{e^{-\beta U_m} \prod\limits_{i=1}^s{d\mathbf{q}_i^{N_{im}}}}{Z(\{N\
 &= \frac{e^{-\beta U_m + \beta \mu_i N_{im}}}{\Xi(\{\mu\},V,T)}\ \prod\limits_{i=1}^s\left[\frac{Q_i(1,V,T)}{Z_i(1,V,T)}\ d\mathbf{q}_i\right]^{N_{im}}
 \end{align}
 
-The ratio of microstates is 
+The ratio of microstate probabilities is
 
 \begin{equation}
 \label{eq:pMuiVT_ratio}
 \frac{p_m}{p_n} = e^{\beta \Delta U - \beta \mu_i \Delta N_i}\ \prod\limits_{i=1}^s\left[\frac{Q_i(1,V,T)}{Z_i(1,V,T)}\ d\mathbf{q}_i\right]^{-\Delta N_i}
 \end{equation}
 
-\subsection{Reaction Ensemble Monte Carlo}
+\subsection{Reaction Ensemble Monte Carlo (RxMC)}
 \label{sec:rxmc}
-In Reaction Ensemble Monte Carlo, the number of molecules of each species can only change by a stoichiometric amount $\nu_i$ as a reaction occurs in the forward direction or $-\nu_i$ as a reaction occurs in the reverse direction. Moreover, reaction equilibrium occurs when the following condition is met
+In Reaction Ensemble Monte Carlo, the number of molecules of each species can only change by a stoichiometric amount $\nu_i$ as a reaction occurs. For reactants $\nu_i<0$; for products $\nu_i>0$. Reaction equilibrium occurs when the following condition is met
 
 \begin{equation}
 \label{eq:rxnEquil}
 \sum\limits_{i=1}^{s}{\nu_i \mu_i} = 0
 \end{equation}
 
-Substituting Eq. (\ref{eq:rxnEquil}) and $\Delta N_i = \pm \nu_i$ into Eq. (\ref{eq:pMuiVT_ratio}) gives
+\noindent
+Substituting Eq. (\ref{eq:rxnEquil}) and $\Delta N_i = \nu_i$ into Eq. (\ref{eq:pMuiVT_ratio}) gives
 
 \begin{equation}
 \label{eq:pMuiVT_ratio_2}
-\frac{p_m}{p_n} = e^{\beta \Delta U}\ \prod\limits_{i=1}^s\left[\frac{Q_i(1,V,T)}{Z_i(1,V,T)}\ d\mathbf{q}_i\right]^{\mp \nu_i}
+\frac{p_m}{p_n} = e^{\beta \Delta U}\ \prod\limits_{i=1}^s\left[\frac{Q_i(1,V,T)}{Z_i(1,V,T)}\ d\mathbf{q}_i\right]^{-\nu_i}
 \end{equation}
 
-The product of partition functions can be replaced by the equilibrium constant of an ideal gas $K_{eq}$ or the standard change of free energy $\Delta G_{rxn}^o$
+\noindent
+The product of partition functions can be replaced by the equilibrium constant of an ideal gas $K_{eq}$ or the standard change in free energy of the reaction $\Delta G_{rxn}^{o}$ at standard pressure $P\degree$
 
 \begin{equation}
 \label{eq:Keq_ideal}
-\prod\limits_{i=1}^s{\left(\frac{Q_i(1,V,T)}{V}\right)^{\nu_i}} = K_{eq} = e^{-\beta \Delta G_{rxn}^o} (P\degree k_BT)^{\Delta \nu}
+\prod\limits_{i=1}^s{\left(\frac{Q_i(1,V,T)}{V}\right)^{\nu_i}} = K_{eq} = e^{-\beta \Delta G_{rxn}^{o}} \left(\frac{P\degree}{k_BT}\right)^{\Delta \nu}
 \end{equation}
 
-where $P\degree$ is the standard pressure (by default, 1 atm). Substituting Eq. (\ref{eq:Keq_ideal}) and $Z(1,V,T) = VZ_{rot}Z_{int}$ into Eq. (\ref{eq:pMuiVT_ratio_2}) gives
+\noindent
+where $\Delta \nu = \sum_i \nu_i$ and $K_{eq}$ has units $[\textrm{volume}]^{-\Delta \nu}$. Substituting Eq. (\ref{eq:Keq_ideal}) and $Z_i(1,V,T) = VZ_{rot,i}Z_{int,i}$ into Eq. (\ref{eq:pMuiVT_ratio_2}) gives
 
 \begin{align}
 \label{eq:pMuiVT_ratio_3}
-\frac{p_m}{p_n} &= e^{\beta \Delta U}\ K_{eq}^{\mp 1}\ \prod\limits_{i=1}^s\left[\frac{d\mathbf{q}_i}{Z_{rot,i}Z_{int,i}}\right]^{\mp \nu_i} \\
-&= e^{\beta \Delta U \pm \beta \Delta G_{rxn}^o}\ \prod\limits_{i=1}^s\left[\frac{d\mathbf{q}_i}{P\degree k_BT\ Z_{rot,i}Z_{int,i}}\right]^{\mp \nu_i}
+\frac{p_m}{p_n} &= e^{\beta \Delta U}\ K_{eq}^{-1}\ \prod\limits_{i=1}^s\left[\frac{d\mathbf{q}_i}{Z_{rot,i}Z_{int,i}}\right]^{-\nu_i} \\
+\label{eq:pMuiVT_ratio_4}
+&= e^{\beta \Delta U + \beta \Delta G_{rxn}^{o}}\ \prod\limits_{i=1}^s\left[\frac{P\degree d\mathbf{q}_i}{k_BT\ Z_{rot,i}Z_{int,i}}\right]^{-\nu_i}
 \end{align}
+
+\noindent
+In the liquid phase, the change in energy $\Delta U$ from deleting reactants and inserting products in one step is prohibitively high. And yet, the number of molecules of each species $i$ must change by $\nu_i$ in a single step for Eqs. (\ref{eq:pMuiVT_ratio_3}-\ref{eq:pMuiVT_ratio_4}) to apply. 
+
+In Cassandra, reactants are phased out of the system as products are phased in using multiple steps. For example, to simulate the reaction
+
+\begin{equation}
+\label{eq:rxnABC}
+A + B \rightleftharpoons C
+\end{equation}
+
+\noindent
+an ideal gas (i.e., non-interacting) molecule of $C$, $C_0$, is inserted into the simulation box. Then the interaction of $C_0$ is increased as the interaction of $A$ and $B$ is decreased
+
+\begin{equation}
+\label{eq:rxnABC_lambda}
+A + B + C_0 \rightleftharpoons A_{1-x} + B_{1-x} + C_x \rightleftharpoons A_0 + B_0 + C
+\end{equation}
+
+\noindent
+where $x$ is the extent of the reaction and the subscripts indicate how strongly a molecule interacts with other molecules in the system. The initial state $A + B + C_0$ corresponds to $x=0$; there is one molecule $C_0$ that does not interact with any other molecules, whereas all $A$ and $B$ molecules interact fully with the rest of the system. The final state $A_0 + B_0 + C$ corresponds to $x=1$; there is one molecule each $A_0$ and $B_0$ that do not interact  with any other molecules, whereas all $C$ molecules interact fully with the rest of the system. At intermediate states $A_{1-x} + B_{1-x} + C_x$, $x$ can take on fixed values between 0 and 1 (e.g. 0.2, 0.4, 0.6, 0.8). The molecules involved in the reaction have been tagged; in this example, there is one fractional molecule of each species. In each case, the number of molecules of all species is constant. At either end point (x=0 or x=1), the ideal gas molecules can react according to 
+
+\begin{equation}
+\label{eq:rxnABC_ideal}
+A_0 + B_0 \rightleftharpoons C_0
+\end{equation}
+
+\noindent
+where, in the forward direction, the ideal gas reactants are deleted from the system and ideal gas products are inserted. The number of molecules of each species changes by $\nu_i$. 
+
+Reaction equilibrium is established by changing the extent of reaction using a series of moves:
+
+\begin{itemize}
+	\item Increment from $x_1=0$ to $x_2>0$.
+	\item Increment from $x_1$ to $x_2$, where $0 < x_1 < x_2 < 1$.
+	\item Increment from $x_1<1$ to $x_2=1$.
+	\item React in the ideal gas phase: change from $x_1=1$ to $x_2=0$.
+\end{itemize}
+
+\noindent
+Each move can occur in the forward and reverse direction. Acceptance criteria are derived for each forward move.
+
+\subsection{Increment from $x_1=0$ to $0<x_2<1$}
+The number of molecules in the system does not change, so Eq. (\ref{eq:pMuiVT_ratio}) reduces to 
+
+\begin{equation}
+\label{eq:pMuiVT_noDeltaN}
+\frac{p_m}{p_n} = e^{\beta \Delta U}
+\end{equation}
+
+\noindent
+The probability of generating microstate $n$ from microstate $m$ is the probability of selecting $-\nu_i$ reactant molecules of each species from the $N_{im}$ integer molecules in the system
+
+\begin{equation}
+\alpha_{mn} = \prod_{i \in react} \frac{(-\nu_i)!(N_{im}+\nu_i)!}{N_{im}!}
+\end{equation}
+
+\noindent
+In the reverse step, no molecules need to be chosen. The probability $\alpha_{nm}=1$. The acceptance criteria is therefore
+
+\begin{equation}
+\ln\left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = \beta \Delta U  + \ln\left( \prod_{i \in react}\frac{(-\nu_i)!(N_{im}+\nu_i)!}{N_{im}!} \right)
+\end{equation}
+
+\noindent
+If there is not a stoichiometric amount of any reactant in microstate $m$, this move will not be attempted.
+
+\subsection{Increment from $x_1$ to $x_2$, where $0<x_1<x_2<1$}
+The ratio of microstate probabilities is given by Eq. (\ref{eq:pMuiVT_noDeltaN}). No molecules need to be selected in either the forward or reverse direction, so $\alpha_{mn}=\alpha_{nm}=1$. The acceptance criteria is
+
+\begin{equation}
+\ln\left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = \beta \Delta U
+\end{equation}
+
+\subsection{Increment from $x_1<1$ to $x_2=1$}
+The ratio of microstate probabilities is given by Eq. (\ref{eq:pMuiVT_noDeltaN}). No molecules need to be selected in the forward direction, so $\alpha_{nm}=1$. In the reverse step, the probability of generating microstate $m$ from microstate $n$ is the probability of selecting $\nu_i$ product molecules of each species from the $N_{in}=N_{im}+\nu_i$ integer molecules in the system
+
+\begin{equation}
+\alpha_{nm} = \prod_{i \in prod} \frac{\nu_i!N_{im}!}{(N_{im}+\nu_i)!}
+\end{equation}
+
+\noindent
+The acceptance criteria is 
+
+\begin{equation}
+\ln\left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = \beta \Delta U  + \ln\left( \prod_{i \in prod}\frac{(N_{im}+\nu_i)!}{\nu_i!N_{im}!} \right)
+\end{equation}
+
+\subsection{React in the ideal gas phase: change from $x_1=1$ to $x_2=0$}
+In this step, the number of molecules of each species $i$ changes by $\nu_i$. The ratio of microstate probabilities is given by Eqs. (\ref{eq:pMuiVT_ratio_3}-\ref{eq:pMuiVT_ratio_4}). In the forward move, the ideal gas reactants are deleted and ideal gas products are inserted. The probability of generating microstate $n$ from microstate $m$ is the probability of inserting the ideal gas products (see Eq. (\ref{eq:alpha_randomInsert}) and the discussion that proceeds it) 
+
+\begin{equation}
+\alpha_{mn} = \prod_{i \in prod} \frac{e^{-\beta U_{int,i}}d\mathbf{q}_i}{Z_i(1,V,T)}
+\end{equation}
+
+\noindent
+where $U_{int,i}$ is the internal energy of the inserted molecule. In the reverse move, ideal gas reactants are inserted with probability
+
+\begin{equation}
+\alpha_{nm} = \prod_{i \in react} \frac{e^{-\beta U_{int,i}}d\mathbf{q}_i}{Z_i(1,V,T)}
+\end{equation}
+
+\noindent
+The ratio of the forward and reverse move is
+
+\begin{equation}
+\frac{\alpha_{mn}}{\alpha_{nm}} = \exp \left(-\beta \sum_{i \in prod} U_{int,i} + \beta \sum_{i \in react} U_{int,i} \right) \prod_{i=1}^s \left( \frac{d\mathbf{q}_i}{Z_i(1,V,T)} \right)^{\nu_i}
+\end{equation}
+
+\noindent
+where the sums are over the ideal gas molecules and the product is over the species. Since the molecules being inserted and deleted do not interact with any other molecules, the change in energy between microstates $m$ and $n$ is only due to the internal energy of the ideal gas molecules
+
+\begin{equation}
+\Delta U = \sum_{i \in prod} U_{int,i} - \sum_{i \in react} U_{int,i}
+\end{equation}
+
+\noindent
+The change in energy cancels from the acceptance criteria
+
+\begin{align}
+\ln\left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) &= \beta \Delta G_{rxn}^{o} + \ln \left( \prod_{i=1}^s \left[ \frac{P\degree d\mathbf{q}_i}{k_BT Z_{rot,i}Z_{int,i}} \frac{Z_i(1,V,T)}{d\mathbf{q}_i} \right]^{-\nu_i} \right) \\
+&= \beta \Delta G_{rxn}^{o} - \Delta \nu \ln(\beta P^o V)
+\end{align}
+
+\noindent
+Since the acceptance criteria does not depend on the configuration of molecules, the move can be accepted or rejected before generating microstate $n$.
 
 \section{Appendix}
 \label{sec:appendix}
@@ -688,15 +1043,18 @@ where $P\degree$ is the standard pressure (by default, 1 atm). Substituting Eq. 
 To insert a molecule, a position, orientation and molecular conformation must each be selected. The probability of inserting the new molecule at a random location is $d\mathbf{r}/V$, where $d\mathbf{r}$ is a Cartesian volume element of a single atom. The probability of choosing the molecule orientation is $d\mathbf{q}_{rot}/Z_{rot}$, which for a linear molecule is $d \cos(\theta) d\phi / 4\pi$ and for a nonlinear molecule is $d \cos(\theta)d\phi d\psi/8\pi^2$. The probability of the molecule conformation only depends on the remaining $2M-5$ internal bond angles, dihedral angles and improper angles $\mathbf{q}_{int}$. A thermal ensemble of configurations is Boltzmann distributed $e^{-\beta U(\mathbf{q}_{int})}/Z_{int}$. The overall probability $\alpha_{mn}$ is
 
 \begin{equation}
+\label{eq:alpha_randomInsert}
 \alpha_{mn} = \frac{d\mathbf{r}}{V}\ \frac{d\mathbf{q}_{rot}}{Z_{rot}}\ \frac{e^{-\beta U(\mathbf{q}_{int,N+1,n})}}{Z_{int}}\ d\mathbf{q}_{int} = \frac{e^{-\beta U(\mathbf{q_{N+1,n}})}}{Z(1,V,T)}\ d\mathbf{q}.
 \end{equation}
 
+\noindent
 where we have used Eq.\ (\ref{eq:configPartitionFn_1VT}) to recover $Z(1,V,T)$ and recognized that only internal degrees of freedom contribute to the potential energy of the isolated $N+1$th molecule in microstate $n$, $U(\mathbf{q}_{N+1,n}) = U(\mathbf{q}_{int,N+1,n})$. For a point particle with no rotational or internal degrees of freedom, $\alpha_{mn}$ reduces to $d\mathbf{r}/V$. For molecules with internal flexibility, a library of configurations distributed according to $e^{-\beta U(\mathbf{q}_{int})}/Z_{int}$ can be generated from a single molecule MC simulation. In the reverse move, 1 of the $N+1$ particles is randomly selected for deletion. The probability $\alpha_{nm}$ of picking the molecule we just inserted is
 
 \begin{equation}
 \alpha_{nm} = \frac{1}{N+1}
 \end{equation}
 
+\noindent
 The acceptance probability for a random insertion move is 
 
 \begin{equation}
@@ -704,12 +1062,14 @@ The acceptance probability for a random insertion move is
 \ln\left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = \beta \left[\Delta U - U(\mathbf{q}_{N+1})\right] - \beta \mu + \ln\left( \frac{N+1}{Q(1,V,T)} \right)
 \end{equation}
 
+\noindent
 where $U(\mathbf{q}_{N+1})$ is the intramolecular potential energy of the inserted molecule. $Q(1,V,T)$ is typically not known {\em a priori}, nor is it easily estimated. Substituting Eq.\ (\ref{eq:partitionFn_1VT}) into Eq.\ (\ref{eq:pAcc_randomInsertMu}) and absorbing $Q_{rot+int}$ into a shifted chemical potential $\mu'$
 
 \begin{equation}
 \mu' = \mu - k_BT\ln(Q_{rot+int})
 \end{equation}
 
+\noindent
 gives the acceptance criteria for inserting a molecule
 
 \begin{equation}
@@ -717,6 +1077,7 @@ gives the acceptance criteria for inserting a molecule
 \ln\left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = \beta \left[\Delta U - U(\mathbf{q}_{N+1})\right] - \beta \mu' + \ln\left( \frac{(N+1)\Lambda^3}{V} \right).
 \end{equation}
 
+\noindent
 The terms absorbed into $\mu'$ are intensive and therefore GCMC simulations using Eq.\ (\ref{eq:pAcc_randomInsertMuShift}) will converge to a specific average density. However, the value of $\mu'$ that corresponds to the converged density will {\em not} match tabulated values of $\mu$ computed from experimental data.
 
 Substituting Eq.\ (\ref{eq:mu}) into Eq.\ (\ref{eq:pAcc_randomInsertMu}) gives
@@ -726,23 +1087,27 @@ Substituting Eq.\ (\ref{eq:mu}) into Eq.\ (\ref{eq:pAcc_randomInsertMu}) gives
 \ln\left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = \beta \left[\Delta U - U(\mathbf{q}_{N+1})\right] + \ln\left( \frac{N+1}{\beta f V} \right)
 \end{equation}
 
+\noindent
 where no terms have been absorbed into the fugacity $f$. Note also that the partition function has completely been eliminated from the acceptance criteria.
 
 \subsection{Deleting a Molecule Inserted Randomly}
 \label{sec:randomDelete}
 
+\noindent
 The probability $\alpha_{mn}$ of choosing a molecule to delete is
 
 \begin{equation}
 \alpha_{mn} = \frac{1}{N}
 \end{equation}
 
+\noindent
 The probability $\alpha_{nm}$ of inserting that molecule back in is
 
 \begin{equation}
 \alpha_{nm} = \frac{e^{-\beta U(\mathbf{q})}}{Z(1,V,T)}\ d\mathbf{q}
 \end{equation}
 
+\noindent
 The acceptance probability for deleting a molecule inserted randomly is
 
 \begin{align}

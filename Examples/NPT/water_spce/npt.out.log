@@ -1,0 +1,604 @@
+************** Beginning Cassandra simulation **************
+Version Cassandra 1.0                                                                                                           
+
+inputfile npt.inp                                                                                                                 
+
+name of run: npt.out
+
+  Month      Day      Year
+     09       09      2015
+ 
+ Time:  14:19:34
+ 
+machine: cannon
+
+
+Simulation type: NPT_MC              
+
+ 
+ **** Copying Inputfile ****** 
+ 
+ # Run_Name
+ npt.out
+ 
+ # Sim_Type
+ NPT_MC
+ 
+ # Nbr_Species
+ 1
+ 
+ # VDW_Style
+ LJ cut_tail 12.0
+ 
+ # Charge_Style
+ coul Ewald 12.0 0.000001
+ 
+ # Intra_Scaling
+ 0.0 0.0 0.0 1.0
+ 0.0 0.0 0.0 1.0
+ 
+ # Mixing_Rule
+ LB
+ 
+ # Seed_Info
+ 21498 489625
+ 
+ # Rcutoff_Low
+ 0.85
+ 
+ # Molecule_Files
+ spce.mcf 600
+ 
+ # Box_Info
+ 1
+ CUBIC
+ 30.
+ 
+ # Temperature_Info
+ 300.0
+ 
+ # Pressure_Info
+ 1.0
+ 
+ # Move_Probability_Info
+ 
+ # Prob_Translation
+ 0.499168
+ 1.00
+ 
+ # Prob_Rotation
+ 0.499168
+ 38.0
+ 
+ # Prob_Volume
+ 0.001664
+ 200.
+ 
+ # Done_Probability_Info
+ 
+ # Start_Type
+ checkpoint
+ npt.inp.chk
+ 
+ # Run_Type
+ Production   20000  100
+ 
+ 
+ # Average_Info
+ 1
+ 
+ # Simulation_Length_Info
+ Units        Steps
+ Prop_Freq    6010
+ Coord_Freq   6010
+ MCsteps      60100
+ # Done_Simulation_Length_Info
+ 
+ # Property_Info 1
+ Energy_Total
+ Pressure
+ Volume
+ Density
+ 
+ # Fragment_Files
+ species1/frag1/frag1.dat  1
+ 
+ # CBMC_Info
+ kappa_ins 12
+ kappa_rot 0
+ kappa_dih 10
+ rcut_cbmc 6.5
+ 
+ END
+ 
+ **** Finished writing input file *******
+ Number of species simulated:      1
+
+ *** Simulation box data ***
+number of simulation boxes     1
+ 
+Box number      1       Box Shape:      Cubic 
+Each Side Of :        30.0000     Angstrom
+ 
+Cell basis vector lengths in A,     30.0000      30.0000      30.0000
+Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+Distance between box faces    30.0000      30.0000      30.0000
+Box volume, A^3         27000.0000
+ 
+ *** Finished loading box information ***
+ 
+   VDW style used is:   LJ             in box:  1
+   VDW sum style is:   cut_tail       in box:  1
+    rcut =    12.000   Angstrom
+ VDW style properly input
+ 
+   Charge style used is:   coul           in box:  1
+    Charge sum style is   Ewald          in box:  1
+    Ewald real space cutoff is  12.000 Angstroms.
+  Ewald real space parameter is   0.310 inverse Angstroms
+    Ewald reciprocal cutoff is  2.3026 inverse Angstroms
+ Charge style properly input
+ 
+Lorentz-Berthelot mixing rule specified
+ 
+ Pair interaction energy arrays will not be stored
+ Energy calculations will be done in a standard way
+ 
+ 
+ Reading molecular connectivity information
+ Species:            1
+ Molecular connectivity file: 
+ spce.mcf                                                                       
+                                          
+   3 atom(s) specified.
+   2 bond(s) specified.
+   1 angle(s) specified.
+   0 dihedral(s) specified.
+   1 fragments specified.
+   0 improper(s) specified.
+   0  fragment bonds specified.
+ 
+Species  Nbr molecules
+-------  -------------
+     1            600
+ 
+L_Coul_CBMC not given for species    1
+ Defaulting to true
+ default  T
+ 
+1st_Fragment_Ins_Style not specified for species    1
+using default of "COM" for this species.
+Species and atom number   1   1
+ atom name:             O1    
+ element:               O 
+ mass:                     16.0000
+ charge:                   -0.8476
+ vdw type:              LJ                  
+ Epsilon / kB in K:        78.2000
+ Sigma in A:                3.1656
+ 
+Species and atom number   1   2
+ atom name:             H2    
+ element:               H 
+ mass:                      1.0000
+ charge:                    0.4238
+ vdw type:              LJ                  
+ Epsilon / kB in K:         0.0000
+ Sigma in A:                0.0000
+ 
+Species and atom number   1   3
+ atom name:             H3    
+ element:               H 
+ mass:                      1.0000
+ charge:                    0.4238
+ vdw type:              LJ                  
+ Epsilon / kB in K:         0.0000
+ Sigma in A:                0.0000
+ 
+Total number of ring atoms in species     1    0
+Total number of exo atoms in species      1    3
+ Atom ids for ring atoms
+ Atom ids for exo atoms           1           2           3
+ *** Completed assigning atom info ***
+ 
+Species and bond number   1   1
+ atom1:                   1
+ atom2:                   2
+ bond type:             fixed               
+Bond fixed between atoms:      1      2 in species   1
+Fixed bond length, in A:    1.0000
+ 
+Species and bond number   1   2
+ atom1:                   1
+ atom2:                   3
+ bond type:             fixed               
+Bond fixed between atoms:      1      3 in species   1
+Fixed bond length, in A:    1.0000
+ 
+ *** Completed assigning bond info ***
+ 
+Species and angle number  1   1
+ atom1:                   2
+ atom2:                   1
+ atom3:                   3
+ angle type:            fixed               
+Angle fixed between atoms:      2      1      3in species   1
+ fixed bond angle in deg  109.4700
+ 
+ 
+Molecule    1  is NOT defined to be linear
+ 
+ *** Completed assigning angle info ***
+ 
+ No dihedrals in species            1
+ *** Completed assigning dihedral info ***
+ 
+ No impropers in species            1
+ *** Completed assigning improper info ***
+ 
+ 
+Total number of atoms in the fragment     1  is   3
+Identity of these atoms are
+           1           2           3
+ 
+ ******* Finished loading fragment info ********
+ 
+ ******* Generating anchor info ****************
+ 
+ Number of anchors for fragment     1  is   1
+Anchor id is:    1
+ Fragment file for fragment 1 is
+ species1/frag1/frag1.dat                                                       
+                                          
+ Fragment type           1
+ 
+ Maximum configurations stored           1
+ 
+ 
+ Finished loading fragment coordinates from
+ species1/frag1/frag1.dat                                                       
+                                          
+ 
+ intramolecular scaling factors explicitly set
+Intra molecule scaling factors for species             1
+VDW 1-2 scaling factor         0.000
+VDW 1-3 scaling factor         0.000
+VDW 1-4 scaling factor         0.000
+VDW 1-N scaling factor         1.000
+Coulomb 1-2 scaling factor     0.000
+Coulomb 1-3 scaling factor     0.000
+Coulomb 1-4 scaling factor     0.000
+Coulomb 1-N scaling factor     1.000
+ 
+ 
+ *** Completed assigning intramolecular scaling factors ***
+ 
+  There are 3 different atom types in the system 
+     1  O1    
+     2  H2    
+     3  H3    
+ 
+ 
+species number and name:  1   spce.mcf                                                                                                                
+ Name      number
+ ------    ------
+O1          1
+H2          2
+H3          3
+ 
+ 
+ *** Creating VDW interaction table ***
+Mixing rule used is:    LB             
+ 
+Atom 1     Atom 2  epsilon (amu A^2/ps^2)        sigma (A)
+O1         O1         65.0192                        3.1656
+O1         H2          0.0000                        0.0000
+O1         H3          0.0000                        0.0000
+H2         O1          0.0000                        0.0000
+H2         H2          0.0000                        0.0000
+H2         H3          0.0000                        0.0000
+H3         O1          0.0000                        0.0000
+H3         H2          0.0000                        0.0000
+H3         H3          0.0000                        0.0000
+ 
+ *** Completed construction of VDW interaction table ***
+ 
+ 
+ *** Creating exclusion table ***
+ 
+     species   atom1      atom2  vdw scale q-q scale
+         1         1         1     0.000     0.000
+         1         1         2     0.000     0.000
+         1         1         3     0.000     0.000
+         1         2         1     0.000     0.000
+         1         2         2     0.000     0.000
+         1         2         3     0.000     0.000
+         1         3         1     0.000     0.000
+         1         3         2     0.000     0.000
+         1         3         3     0.000     0.000
+ 
+ *** Completed construction of exclusion table ***
+ 
+ 
+ ***** Reading seed info *********
+ 
+ The starting seed s1 is:    153587801
+ 
+ ****** Finished loading the seed ********
+ 
+ **** Simulation temperature information ****
+  Temperature assigned to box     1  is  300.000    K
+ 
+ *** Finished loading information for temperature ****
+ 
+ 
+ ************* Reading pressure Info ***********
+ 
+ Pressure of box           1  is   6.022137376997844E-003  amu / (A ps^2). 
+ 
+ ********* Finished reading pressure info ********
+ 
+ ********* Move Probability Info******
+    Translation probability is   0.499168
+ 
+Maximum displacement width for species   1 in box  1  is      1.00000
+ 
+       Rotation probability is   0.499168
+ 
+The rotational width for the species     1 in box  1   is      0.6632 radians
+ 
+ 
+         Probability for volume move is    0.001664
+ 
+ Writing maximum volume displacement elements for box           1
+ 
+                 200.000   A^3
+ 
+ Volume moves will be performed in actual volumes
+ ***** Finished reading the move probability info *****
+Number of moves is :   3
+ 
+ 
+ ***** reading CBMC info *********
+ 
+ Writing out CBMC_Info
+kappa for first bead insertion              12
+kappa for rotational bias                    0
+kappa for dihedral selection                10
+ 
+Smaller cutoff for CBMC for box          1        6.50
+ ****** finished loading CBMC_Info ********
+ 
+Thermodynamic quantities will written at every       6010 MC steps.
+ 
+Coordinates will be written at every                 6010 MC steps.
+ 
+movie header file for box    1 is      npt.out.box1.H
+movie_XYZ file for box       1 is      npt.out.box1.xyz
+ 
+The simulation will be run for                        60100 MC steps.
+ 
+ *** Finished Reading Simulation Length Info ******* 
+ 
+ **** Writing property output information *****
+ 
+Total number of property files to be written is     1   for box 1
+ Maximum number of properties per file is    5
+ Writing the name of the property files and the corresponding property output
+ 
+ Property file    1   is  npt.out.box1.prp1
+ Properties output in these files are
+ 
+ Energy_Total
+ Pressure
+ Volume
+ Density
+ 
+ ***** Finished writing property information ******
+ 
+ *********** Average Information ***************
+ 
+ Instantaneous values will be output
+ 
+ *********** Ending Average Section ************
+ 
+MC low cutoff distance is   0.850    Angstrom
+ 
+ *** Computed bond participation information ***
+ species, atom, local bond nbr, global bond nbr, atom bonded 
+    1         1       1            1                 2
+ species, atom, local bond nbr, global bond nbr, atom bonded 
+    1         1       2            2                 3
+ 
+ species, atom, local bond nbr, global bond nbr, atom bonded 
+    1         2       1            1                 1
+ 
+ species, atom, local bond nbr, global bond nbr, atom bonded 
+    1         3       1            2                 1
+ 
+ 
+ 
+ For species           1
+  Number of atoms that can be displaced           2
+             Atom ID     Reference Atom ID
+                   2                     1
+                   3                     1
+ 
+ Number of atom in question           1
+ Total number of angles           1
+ Angles for this atom
+           1
+ Position of the atom in angles
+           2
+ Number of atom in question           2
+ Total number of angles           1
+ Angles for this atom
+           1
+ Position of the atom in angles
+           1
+ Number of atom in question           3
+ Total number of angles           1
+ Angles for this atom
+           1
+ Position of the atom in angles
+           3
+ Number of atom in question           1
+ Total number of dihedrals           0
+ Dihedral angles for this atom
+ 
+ Position of the atom in dihedrals
+ 
+ Number of atom in question           2
+ Total number of dihedrals           0
+ Dihedral angles for this atom
+ 
+ Position of the atom in dihedrals
+ 
+ Number of atom in question           3
+ Total number of dihedrals           0
+ Dihedral angles for this atom
+ 
+ Position of the atom in dihedrals
+ 
+ information about angle           1
+ the atom that is moved is           2
+ atoms that change their position due to this move
+           2
+ the atoms is moved is           3
+ atoms that change their position due to this move
+           3
+ 
+ checking for dihedral_atoms_to_place
+ 
+ ******Initial Coordinate Info **********
+ 
+ Starting configuration will be obtained from check point files
+ 
+ Starting configuration is 
+ npt.inp.chk                                                                    
+                                          
+ 
+ *****Finished reading initial coordinate info *****
+ 
+ ****** Reading Run_Type Information ******
+ 
+ The input run type is Production
+ Update frequency is        20000
+ 
+ Update frequency for adjusting maximum volume displacement is
+         100
+ 
+ ******* Finished reading run type information ******
+starting type checkpoint                                                                                                              
+
+ ***************** Charge Neutrality Check *****************
+ Species           1    has charge                0.00000000
+ Box               1    has charge                0.00000000
+ 
+ ***************** Charge Neutrality Check *****************
+ ***********************************************************
+   Starting energy components for box   1
+  Atomic units-Extensive
+ 
+ Total system energy is              -2813071.965
+ Intra molecular energy is                  0.000
+ Bond energy is                             0.000
+ Bond angle energy is                       0.000
+ Dihedral angle energy is                   0.000
+ Improper angle energy is                   0.000
+ Intra nonbond vdw is                       0.000
+ Intra nonbond elec is               15461951.746
+ Inter molecule vdw is                 555034.283
+ Long range correction is               -6256.734
+ Inter molecule q is                 -3137539.104
+ Reciprocal ewald is                    12477.340
+ Self ewald is                      -15698739.496
+ Number of vectors is                        2041
+ ***********************************************************
+ 
+ 
+Success ratio, translation of species   1 in box 1 :  0.49905
+ 
+Success ratio, rotation of species   1 in box 1 :  0.50050
+******************** END OF SIMULATION ********************
+ 
+ 
+ ***********************************************************
+ Ending energy components for box   1
+  Atomic units-Extensive
+ -----------------------------------------------------------
+ Total system energy is              -2799144.305
+ Intra molecular energy is                  0.000
+ Bond energy is                             0.000
+ Angle energy is                            0.000
+ Dihedral energy is                         0.000
+ Improper angle energy is                   0.000
+ Intra nonbond vdw is                       0.000
+ Intra nonbond elec is               15461951.746
+ Inter molecule vdw is                 560063.869
+ Long range correction is               -6254.713
+ Inter molecule q is                 -3129734.515
+ Reciprocal ewald is                    13568.803
+ Self ewald is                      -15698739.496
+ ***********************************************************
+ 
+ 
+ ***********************************************************
+ Energy components from total energy call for box   1
+  Atomic units-Extensive
+ -----------------------------------------------------------
+ Total system energy is              -2799144.305
+ Intra molecular energy is                  0.000
+ Bond energy is                             0.000
+ Angle energy is                            0.000
+ Dihedral energy is                         0.000
+ Improper angle energy is                   0.000
+ Intra nonbond vdw is                       0.000
+ Intra nonbond elec is               15461951.746
+ Inter molecule vdw is                 560063.869
+ Long range correction is               -6254.713
+ Inter molecule q is                 -3129734.515
+ Reciprocal ewald is                    13568.803
+ Self ewald is                      -15698739.496
+ ***********************************************************
+ 
+ 
+ Writing information for box  1
+ ***********************************************************
+ 
+                Move      Trials     Success
+              Volume          99          57
+ 
+ ***********************************************************
+ Writing information for species  1
+ 
+                Move      Trials     Success   % Success
+           Translate       30118       15004       49.82
+              Rotate       29883       14868       49.75
+ ***********************************************************
+ 
+ Writing information about fragments
+ 
+ ***********************************************************
+ Writing information for species  1
+         # Fragments      Trials     Success   % Success
+ ***********************************************************
+ 
+ Writing information about subroutine times
+ 
+ ***********************************************************
+ 
+ Translation time =            4.172661 mins.
+ Rotation time =               4.144058 mins.
+ Volume change time =          2.926716 mins.
+ ***********************************************************
+ 
+ 
+ Program execution time
+         0      Years
+         0     Months
+         0       Days
+         0      Hours
+        11    Minutes
+        38    Seconds
+        51         ms

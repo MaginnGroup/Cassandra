@@ -1,4 +1,0 @@
-This directory contains a short NPT simulation of diethylether at 343.15 K.
-The example can be run using the following command:
-
-path_for_Cassandra_Executable dee.inp

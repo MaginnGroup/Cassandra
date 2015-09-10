@@ -1,0 +1,1145 @@
+************** Beginning Cassandra simulation **************
+Version Cassandra 1.0                                                                                                           
+
+inputfile nvt.inp                                                                                                                 
+
+name of run: nvt.out
+
+  Month      Day      Year
+     09       08      2015
+ 
+ Time:  18:47:20
+ 
+machine: cannon
+
+
+Simulation type: NVT_MC              
+
+ 
+ **** Copying Inputfile ****** 
+ 
+ # Run_Name
+ nvt.out
+ 
+ # Sim_Type
+ NVT_MC
+ 
+ # Nbr_Species
+ 1
+ 
+ # VDW_Style
+ LJ cut_tail 14.
+ 
+ # Charge_Style
+ NONE
+ 
+ # Intra_Scaling
+ 0.0 0.0 0.0 1.0
+ 
+ # Mixing_Rule
+ LB
+ 
+ # Seed_Info
+ 19619 763630450
+ 
+ # Rcutoff_Low
+ 2.0
+ 
+ # Molecule_Files
+ dmh.mcf 150
+ 
+ # Box_Info
+ 1
+ CUBIC
+ 120.
+ 
+ # Temperature_Info
+ 445.0
+ 
+ # Move_Probability_Info
+ 
+ # Prob_Translation
+ 0.333333
+ 20.0
+ 
+ # Prob_Rotation
+ 0.333333
+ 180.0
+ 
+ # Prob_Regrowth
+ 0.333334
+ 1.0
+ 
+ # Done_Probability_Info
+ 
+ # Start_Type
+ checkpoint
+ nvt.inp.chk
+ 
+ # Run_Type
+ Production   5000  100
+ 
+ 
+ # Average_Info
+ 1
+ 
+ # Simulation_Length_Info
+ Units        Steps
+ Prop_Freq    1500
+ Coord_Freq   1500
+ MCsteps      150000
+ # Done_Simulation_Length_Info
+ 
+ # Property_Info 1
+ Energy_Total
+ Pressure
+ 
+ # Fragment_Files
+ species1/frag1/frag1.dat  1
+ species1/frag2/frag2.dat  2
+ species1/frag3/frag3.dat  3
+ species1/frag4/frag4.dat  4
+ 
+ # CBMC_Info
+ kappa_ins 12
+ kappa_rot 0
+ kappa_dih 10
+ rcut_cbmc 6.5
+ 
+ END
+ 
+ **** Finished writing input file *******
+ Number of species simulated:      1
+
+ *** Simulation box data ***
+number of simulation boxes     1
+ 
+Box number      1       Box Shape:      Cubic 
+Each Side Of :       120.0000     Angstrom
+ 
+Cell basis vector lengths in A,    120.0000     120.0000     120.0000
+Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+Distance between box faces   120.0000     120.0000     120.0000
+Box volume, A^3       1728000.0000
+ 
+ *** Finished loading box information ***
+ 
+   VDW style used is:   LJ             in box:  1
+   VDW sum style is:   cut_tail       in box:  1
+    rcut =    14.000   Angstrom
+ VDW style properly input
+ 
+   Charge style used is:   NONE           in box:  1
+ Charge style properly input
+ 
+Lorentz-Berthelot mixing rule specified
+ 
+ Pair interaction energy arrays will not be stored
+ Energy calculations will be done in a standard way
+ 
+ 
+ Reading molecular connectivity information
+ Species:            1
+ Molecular connectivity file: 
+ dmh.mcf                                                                        
+                                          
+   8 atom(s) specified.
+   7 bond(s) specified.
+   9 angle(s) specified.
+   5 dihedral(s) specified.
+   0 improper(s) specified.
+   4 fragments specified.
+   3  fragment bonds specified.
+ 
+Species  Nbr molecules
+-------  -------------
+     1            150
+ 
+L_Coul_CBMC not given for species    1
+ Defaulting to true
+ default  T
+ 
+1st_Fragment_Ins_Style not specified for species    1
+using default of "COM" for this species.
+Species and atom number   1   1
+ atom name:             CH3_s1
+ element:               C3
+ mass:                     15.0340
+ charge:                    0.0000
+ vdw type:              LJ                  
+ Epsilon / kB in K:        98.0000
+ Sigma in A:                3.7500
+ 
+Species and atom number   1   2
+ atom name:             C_s1  
+ element:               C 
+ mass:                     12.0110
+ charge:                    0.0000
+ vdw type:              LJ                  
+ Epsilon / kB in K:         0.5000
+ Sigma in A:                6.4000
+ 
+Species and atom number   1   3
+ atom name:             CH2_s1
+ element:               C2
+ mass:                     14.0270
+ charge:                    0.0000
+ vdw type:              LJ                  
+ Epsilon / kB in K:        46.0000
+ Sigma in A:                3.9500
+ 
+Species and atom number   1   4
+ atom name:             CH2_s1
+ element:               C2
+ mass:                     14.0270
+ charge:                    0.0000
+ vdw type:              LJ                  
+ Epsilon / kB in K:        46.0000
+ Sigma in A:                3.9500
+ 
+Species and atom number   1   5
+ atom name:             CH2_s1
+ element:               C2
+ mass:                     14.0270
+ charge:                    0.0000
+ vdw type:              LJ                  
+ Epsilon / kB in K:        46.0000
+ Sigma in A:                3.9500
+ 
+Species and atom number   1   6
+ atom name:             CH3_s1
+ element:               C3
+ mass:                     15.0340
+ charge:                    0.0000
+ vdw type:              LJ                  
+ Epsilon / kB in K:        98.0000
+ Sigma in A:                3.7500
+ 
+Species and atom number   1   7
+ atom name:             CH3_s1
+ element:               C3
+ mass:                     15.0340
+ charge:                    0.0000
+ vdw type:              LJ                  
+ Epsilon / kB in K:        98.0000
+ Sigma in A:                3.7500
+ 
+Species and atom number   1   8
+ atom name:             CH3_s1
+ element:               C3
+ mass:                     15.0340
+ charge:                    0.0000
+ vdw type:              LJ                  
+ Epsilon / kB in K:        98.0000
+ Sigma in A:                3.7500
+ 
+Total number of ring atoms in species     1    0
+Total number of exo atoms in species      1    8
+ Atom ids for ring atoms
+ Atom ids for exo atoms           1           2           3           4
+           5           6           7           8
+ *** Completed assigning atom info ***
+ 
+Species and bond number   1   1
+ atom1:                   1
+ atom2:                   2
+ bond type:             fixed               
+Bond fixed between atoms:      1      2 in species   1
+Fixed bond length, in A:    1.5400
+ 
+Species and bond number   1   2
+ atom1:                   2
+ atom2:                   3
+ bond type:             fixed               
+Bond fixed between atoms:      2      3 in species   1
+Fixed bond length, in A:    1.5400
+ 
+Species and bond number   1   3
+ atom1:                   2
+ atom2:                   7
+ bond type:             fixed               
+Bond fixed between atoms:      2      7 in species   1
+Fixed bond length, in A:    1.5400
+ 
+Species and bond number   1   4
+ atom1:                   2
+ atom2:                   8
+ bond type:             fixed               
+Bond fixed between atoms:      2      8 in species   1
+Fixed bond length, in A:    1.5400
+ 
+Species and bond number   1   5
+ atom1:                   3
+ atom2:                   4
+ bond type:             fixed               
+Bond fixed between atoms:      3      4 in species   1
+Fixed bond length, in A:    1.5400
+ 
+Species and bond number   1   6
+ atom1:                   4
+ atom2:                   5
+ bond type:             fixed               
+Bond fixed between atoms:      4      5 in species   1
+Fixed bond length, in A:    1.5400
+ 
+Species and bond number   1   7
+ atom1:                   5
+ atom2:                   6
+ bond type:             fixed               
+Bond fixed between atoms:      5      6 in species   1
+Fixed bond length, in A:    1.5400
+ 
+ *** Completed assigning bond info ***
+ 
+Species and angle number  1   1
+ atom1:                   1
+ atom2:                   2
+ atom3:                   3
+ angle type:            harmonic            
+ K_angle in K/rad^2:    31250.0000
+ theta0 in degrees:       109.5000
+ 
+Species and angle number  1   2
+ atom1:                   1
+ atom2:                   2
+ atom3:                   7
+ angle type:            harmonic            
+ K_angle in K/rad^2:    31250.0000
+ theta0 in degrees:       109.5000
+ 
+Species and angle number  1   3
+ atom1:                   1
+ atom2:                   2
+ atom3:                   8
+ angle type:            harmonic            
+ K_angle in K/rad^2:    31250.0000
+ theta0 in degrees:       109.5000
+ 
+Species and angle number  1   4
+ atom1:                   3
+ atom2:                   2
+ atom3:                   7
+ angle type:            harmonic            
+ K_angle in K/rad^2:    31250.0000
+ theta0 in degrees:       109.5000
+ 
+Species and angle number  1   5
+ atom1:                   3
+ atom2:                   2
+ atom3:                   8
+ angle type:            harmonic            
+ K_angle in K/rad^2:    31250.0000
+ theta0 in degrees:       109.5000
+ 
+Species and angle number  1   6
+ atom1:                   7
+ atom2:                   2
+ atom3:                   8
+ angle type:            harmonic            
+ K_angle in K/rad^2:    31250.0000
+ theta0 in degrees:       109.5000
+ 
+Species and angle number  1   7
+ atom1:                   2
+ atom2:                   3
+ atom3:                   4
+ angle type:            harmonic            
+ K_angle in K/rad^2:    31250.0000
+ theta0 in degrees:       114.0000
+ 
+Species and angle number  1   8
+ atom1:                   3
+ atom2:                   4
+ atom3:                   5
+ angle type:            harmonic            
+ K_angle in K/rad^2:    31250.0000
+ theta0 in degrees:       114.0000
+ 
+Species and angle number  1   9
+ atom1:                   4
+ atom2:                   5
+ atom3:                   6
+ angle type:            harmonic            
+ K_angle in K/rad^2:    31250.0000
+ theta0 in degrees:       114.0000
+ 
+ 
+Molecule    1  is NOT defined to be linear
+ 
+ *** Completed assigning angle info ***
+ 
+Species and dihedral num  1   1
+ atom1:                   1
+ atom2:                   2
+ atom3:                   3
+ atom4:                   4
+ dihedral type:         OPLS                
+ a0, kJ/mol:                0.0000
+ a1, kJ/mol:                0.0000
+ a2, kJ/mol:                0.0000
+ a3, kJ/mol:                3.8350
+ 
+Species and dihedral num  1   2
+ atom1:                   2
+ atom2:                   3
+ atom3:                   4
+ atom4:                   5
+ dihedral type:         OPLS                
+ a0, kJ/mol:                0.0000
+ a1, kJ/mol:                2.9520
+ a2, kJ/mol:               -0.5670
+ a3, kJ/mol:                6.5790
+ 
+Species and dihedral num  1   3
+ atom1:                   3
+ atom2:                   4
+ atom3:                   5
+ atom4:                   6
+ dihedral type:         OPLS                
+ a0, kJ/mol:                0.0000
+ a1, kJ/mol:                2.9520
+ a2, kJ/mol:               -0.5670
+ a3, kJ/mol:                6.5790
+ 
+Species and dihedral num  1   4
+ atom1:                   4
+ atom2:                   3
+ atom3:                   2
+ atom4:                   7
+ dihedral type:         OPLS                
+ a0, kJ/mol:                0.0000
+ a1, kJ/mol:                0.0000
+ a2, kJ/mol:                0.0000
+ a3, kJ/mol:                3.8350
+ 
+Species and dihedral num  1   5
+ atom1:                   4
+ atom2:                   3
+ atom3:                   2
+ atom4:                   8
+ dihedral type:         OPLS                
+ a0, kJ/mol:                0.0000
+ a1, kJ/mol:                0.0000
+ a2, kJ/mol:                0.0000
+ a3, kJ/mol:                3.8350
+ 
+ *** Completed assigning dihedral info ***
+ 
+ No impropers in species            1
+ *** Completed assigning improper info ***
+ 
+ 
+Total number of atoms in the fragment     1  is   5
+Identity of these atoms are
+           2           1           3           7           8
+ 
+Total number of atoms in the fragment     2  is   3
+Identity of these atoms are
+           3           2           4
+ 
+Total number of atoms in the fragment     3  is   3
+Identity of these atoms are
+           4           3           5
+ 
+Total number of atoms in the fragment     4  is   3
+Identity of these atoms are
+           5           4           6
+ 
+ ******* Finished loading fragment info ********
+ 
+ ******* Generating anchor info ****************
+ 
+ Number of anchors for fragment     1  is   1
+Anchor id is:    2
+ 
+ Number of anchors for fragment     2  is   1
+Anchor id is:    3
+ 
+ Number of anchors for fragment     3  is   1
+Anchor id is:    4
+ 
+ Number of anchors for fragment     4  is   1
+Anchor id is:    5
+ Fragment file for fragment 1 is
+ species1/frag1/frag1.dat                                                       
+                                          
+ Fragment type           1
+ Fragment file for fragment 2 is
+ species1/frag2/frag2.dat                                                       
+                                          
+ Fragment type           2
+ Fragment file for fragment 3 is
+ species1/frag3/frag3.dat                                                       
+                                          
+ Fragment type           3
+ Fragment file for fragment 4 is
+ species1/frag4/frag4.dat                                                       
+                                          
+ Fragment type           4
+Species and fragment bond number   1   1
+ fragment 1:              1
+ fragment 2:              2
+Species and fragment bond number   1   2
+ fragment 1:              2
+ fragment 2:              3
+Species and fragment bond number   1   3
+ fragment 1:              3
+ fragment 2:              4
+ 
+ Number of connections of fragment    1  is   1
+ These fragments are:
+           2
+ 
+ Number of connections of fragment    2  is   2
+ These fragments are:
+           1           3
+ 
+ Number of connections of fragment    3  is   2
+ These fragments are:
+           2           4
+ 
+ Number of connections of fragment    4  is   1
+ These fragments are:
+           3
+ 
+ Maximum configurations stored      100000
+ 
+ 
+ Finished loading fragment coordinates from
+ species1/frag1/frag1.dat                                                       
+                                          
+ 
+ 
+ Finished loading fragment coordinates from
+ species1/frag2/frag2.dat                                                       
+                                          
+ 
+ 
+ Finished loading fragment coordinates from
+ species1/frag3/frag3.dat                                                       
+                                          
+ 
+ 
+ Finished loading fragment coordinates from
+ species1/frag4/frag4.dat                                                       
+                                          
+ 
+ intramolecular scaling factors explicitly set
+Intra molecule scaling factors for species             1
+VDW 1-2 scaling factor         0.000
+VDW 1-3 scaling factor         0.000
+VDW 1-4 scaling factor         0.000
+VDW 1-N scaling factor         1.000
+Coulomb 1-2 scaling factor     0.000
+Coulomb 1-3 scaling factor     0.000
+Coulomb 1-4 scaling factor     0.000
+Coulomb 1-N scaling factor     0.000
+ 
+ 
+ *** Completed assigning intramolecular scaling factors ***
+ 
+  There are 3 different atom types in the system 
+     1  CH3_s1
+     2  C_s1  
+     3  CH2_s1
+ 
+ 
+species number and name:  1   dmh.mcf                                                                                                                 
+ Name      number
+ ------    ------
+CH3_s1      1
+C_s1        2
+CH2_s1      3
+CH2_s1      3
+CH2_s1      3
+CH3_s1      1
+CH3_s1      1
+CH3_s1      1
+ 
+ 
+ *** Creating VDW interaction table ***
+Mixing rule used is:    LB             
+ 
+Atom 1     Atom 2  epsilon (amu A^2/ps^2)        sigma (A)
+CH3_s1     CH3_s1     81.4818                        3.7500
+CH3_s1     C_s1        5.8201                        5.0750
+CH3_s1     CH2_s1     55.8247                        3.8500
+C_s1       CH3_s1      5.8201                        5.0750
+C_s1       C_s1        0.4157                        6.4000
+C_s1       CH2_s1      3.9875                        5.1750
+CH2_s1     CH3_s1     55.8247                        3.8500
+CH2_s1     C_s1        3.9875                        5.1750
+CH2_s1     CH2_s1     38.2466                        3.9500
+ 
+ *** Completed construction of VDW interaction table ***
+ 
+ 
+ *** Creating exclusion table ***
+ 
+     species   atom1      atom2  vdw scale q-q scale
+         1         1         1     0.000     0.000
+         1         1         2     0.000     0.000
+         1         1         3     0.000     0.000
+         1         1         4     0.000     0.000
+         1         1         5     1.000     0.000
+         1         1         6     1.000     0.000
+         1         1         7     0.000     0.000
+         1         1         8     0.000     0.000
+         1         2         1     0.000     0.000
+         1         2         2     0.000     0.000
+         1         2         3     0.000     0.000
+         1         2         4     0.000     0.000
+         1         2         5     0.000     0.000
+         1         2         6     1.000     0.000
+         1         2         7     0.000     0.000
+         1         2         8     0.000     0.000
+         1         3         1     0.000     0.000
+         1         3         2     0.000     0.000
+         1         3         3     0.000     0.000
+         1         3         4     0.000     0.000
+         1         3         5     0.000     0.000
+         1         3         6     0.000     0.000
+         1         3         7     0.000     0.000
+         1         3         8     0.000     0.000
+         1         4         1     0.000     0.000
+         1         4         2     0.000     0.000
+         1         4         3     0.000     0.000
+         1         4         4     0.000     0.000
+         1         4         5     0.000     0.000
+         1         4         6     0.000     0.000
+         1         4         7     0.000     0.000
+         1         4         8     0.000     0.000
+         1         5         1     1.000     0.000
+         1         5         2     0.000     0.000
+         1         5         3     0.000     0.000
+         1         5         4     0.000     0.000
+         1         5         5     0.000     0.000
+         1         5         6     0.000     0.000
+         1         5         7     1.000     0.000
+         1         5         8     1.000     0.000
+         1         6         1     1.000     0.000
+         1         6         2     1.000     0.000
+         1         6         3     0.000     0.000
+         1         6         4     0.000     0.000
+         1         6         5     0.000     0.000
+         1         6         6     0.000     0.000
+         1         6         7     1.000     0.000
+         1         6         8     1.000     0.000
+         1         7         1     0.000     0.000
+         1         7         2     0.000     0.000
+         1         7         3     0.000     0.000
+         1         7         4     0.000     0.000
+         1         7         5     1.000     0.000
+         1         7         6     1.000     0.000
+         1         7         7     0.000     0.000
+         1         7         8     0.000     0.000
+         1         8         1     0.000     0.000
+         1         8         2     0.000     0.000
+         1         8         3     0.000     0.000
+         1         8         4     0.000     0.000
+         1         8         5     1.000     0.000
+         1         8         6     1.000     0.000
+         1         8         7     0.000     0.000
+         1         8         8     0.000     0.000
+ 
+ *** Completed construction of exclusion table ***
+ 
+ 
+ ***** Reading seed info *********
+ 
+ The starting seed s1 is:    153587801
+ 
+ ****** Finished loading the seed ********
+ 
+ **** Simulation temperature information ****
+  Temperature assigned to box     1  is  445.000    K
+ 
+ *** Finished loading information for temperature ****
+ 
+ 
+ ********* Move Probability Info******
+    Translation probability is   0.333333
+ 
+Maximum displacement width for species   1 in box  1  is     20.00000
+ 
+       Rotation probability is   0.333333
+ 
+The rotational width for the species     1 in box  1   is      3.1416 radians
+ 
+ 
+   Probability for regrowth is   0.333334
+ 
+   Cumulative probability for regrowth of species     1  is   1.000000
+ ***** Finished reading the move probability info *****
+Number of moves is :   3
+ 
+ 
+ ***** reading CBMC info *********
+ 
+ Writing out CBMC_Info
+kappa for first bead insertion              12
+kappa for rotational bias                    0
+kappa for dihedral selection                10
+ 
+Smaller cutoff for CBMC for box          1        6.50
+ ****** finished loading CBMC_Info ********
+ 
+Thermodynamic quantities will written at every       1500 MC steps.
+ 
+Coordinates will be written at every                 1500 MC steps.
+ 
+movie header file for box    1 is      nvt.out.box1.H
+movie_XYZ file for box       1 is      nvt.out.box1.xyz
+ 
+The simulation will be run for                       150000 MC steps.
+ 
+ *** Finished Reading Simulation Length Info ******* 
+ 
+ *********** Average Information ***************
+ 
+ Instantaneous values will be output
+ 
+ *********** Ending Average Section ************
+ 
+ **** Writing property output information *****
+ 
+Total number of property files to be written is     1   for box 1
+ Maximum number of properties per file is    3
+ Writing the name of the property files and the corresponding property output
+ 
+ Property file    1   is  nvt.out.box1.prp1
+ Properties output in these files are
+ 
+ Energy_Total
+ Pressure
+ 
+ ***** Finished writing property information ******
+ 
+MC low cutoff distance is   2.000    Angstrom
+ 
+ *** Computed bond participation information ***
+ species, atom, local bond nbr, global bond nbr, atom bonded 
+    1         1       1            1                 2
+ 
+ species, atom, local bond nbr, global bond nbr, atom bonded 
+    1         2       1            1                 1
+ species, atom, local bond nbr, global bond nbr, atom bonded 
+    1         2       2            2                 3
+ species, atom, local bond nbr, global bond nbr, atom bonded 
+    1         2       3            3                 7
+ species, atom, local bond nbr, global bond nbr, atom bonded 
+    1         2       4            4                 8
+ 
+ species, atom, local bond nbr, global bond nbr, atom bonded 
+    1         3       1            2                 2
+ species, atom, local bond nbr, global bond nbr, atom bonded 
+    1         3       2            5                 4
+ 
+ species, atom, local bond nbr, global bond nbr, atom bonded 
+    1         4       1            5                 3
+ species, atom, local bond nbr, global bond nbr, atom bonded 
+    1         4       2            6                 5
+ 
+ species, atom, local bond nbr, global bond nbr, atom bonded 
+    1         5       1            6                 4
+ species, atom, local bond nbr, global bond nbr, atom bonded 
+    1         5       2            7                 6
+ 
+ species, atom, local bond nbr, global bond nbr, atom bonded 
+    1         6       1            7                 5
+ 
+ species, atom, local bond nbr, global bond nbr, atom bonded 
+    1         7       1            3                 2
+ 
+ species, atom, local bond nbr, global bond nbr, atom bonded 
+    1         8       1            4                 2
+ 
+ 
+ 
+ For species           1
+  Number of atoms that can be displaced           4
+             Atom ID     Reference Atom ID
+                   1                     2
+                   6                     5
+                   7                     2
+                   8                     2
+ 
+ Number of atom in question           1
+ Total number of angles           3
+ Angles for this atom
+           1           2           3
+ Position of the atom in angles
+           1           1           1
+ Number of atom in question           2
+ Total number of angles           7
+ Angles for this atom
+           1           2           3           4           5           6
+           7
+ Position of the atom in angles
+           2           2           2           2           2           2
+           1
+ Number of atom in question           3
+ Total number of angles           5
+ Angles for this atom
+           1           4           5           7           8
+ Position of the atom in angles
+           3           1           1           2           1
+ Number of atom in question           4
+ Total number of angles           3
+ Angles for this atom
+           7           8           9
+ Position of the atom in angles
+           3           2           1
+ Number of atom in question           5
+ Total number of angles           2
+ Angles for this atom
+           8           9
+ Position of the atom in angles
+           3           2
+ Number of atom in question           6
+ Total number of angles           1
+ Angles for this atom
+           9
+ Position of the atom in angles
+           3
+ Number of atom in question           7
+ Total number of angles           3
+ Angles for this atom
+           2           4           6
+ Position of the atom in angles
+           3           3           1
+ Number of atom in question           8
+ Total number of angles           3
+ Angles for this atom
+           3           5           6
+ Position of the atom in angles
+           3           3           3
+ Number of atom in question           1
+ Total number of dihedrals           1
+ Dihedral angles for this atom
+           1
+ Position of the atom in dihedrals
+           1
+ Number of atom in question           2
+ Total number of dihedrals           4
+ Dihedral angles for this atom
+           1           2           4           5
+ Position of the atom in dihedrals
+           2           1           3           3
+ Number of atom in question           3
+ Total number of dihedrals           5
+ Dihedral angles for this atom
+           1           2           3           4           5
+ Position of the atom in dihedrals
+           3           2           1           2           2
+ Number of atom in question           4
+ Total number of dihedrals           5
+ Dihedral angles for this atom
+           1           2           3           4           5
+ Position of the atom in dihedrals
+           4           3           2           1           1
+ Number of atom in question           5
+ Total number of dihedrals           2
+ Dihedral angles for this atom
+           2           3
+ Position of the atom in dihedrals
+           4           3
+ Number of atom in question           6
+ Total number of dihedrals           1
+ Dihedral angles for this atom
+           3
+ Position of the atom in dihedrals
+           4
+ Number of atom in question           7
+ Total number of dihedrals           1
+ Dihedral angles for this atom
+           4
+ Position of the atom in dihedrals
+           4
+ Number of atom in question           8
+ Total number of dihedrals           1
+ Dihedral angles for this atom
+           5
+ Position of the atom in dihedrals
+           4
+ information about angle           1
+ the atom that is moved is           1
+ atoms that change their position due to this move
+           1
+ the atoms is moved is           3
+ atoms that change their position due to this move
+           3           4           5           6
+ information about angle           2
+ the atom that is moved is           1
+ atoms that change their position due to this move
+           1
+ the atoms is moved is           7
+ atoms that change their position due to this move
+           7
+ information about angle           3
+ the atom that is moved is           1
+ atoms that change their position due to this move
+           1
+ the atoms is moved is           8
+ atoms that change their position due to this move
+           8
+ information about angle           4
+ the atom that is moved is           3
+ atoms that change their position due to this move
+           3           4           5           6
+ the atoms is moved is           7
+ atoms that change their position due to this move
+           7
+ information about angle           5
+ the atom that is moved is           3
+ atoms that change their position due to this move
+           3           4           5           6
+ the atoms is moved is           8
+ atoms that change their position due to this move
+           8
+ information about angle           6
+ the atom that is moved is           7
+ atoms that change their position due to this move
+           7
+ the atoms is moved is           8
+ atoms that change their position due to this move
+           8
+ information about angle           7
+ the atom that is moved is           2
+ atoms that change their position due to this move
+           2           1           7           8
+ the atoms is moved is           4
+ atoms that change their position due to this move
+           4           5           6
+ information about angle           8
+ the atom that is moved is           3
+ atoms that change their position due to this move
+           3           2           1           7           8
+ the atoms is moved is           5
+ atoms that change their position due to this move
+           5           6
+ information about angle           9
+ the atom that is moved is           4
+ atoms that change their position due to this move
+           4           3           2           1           7           8
+ the atoms is moved is           6
+ atoms that change their position due to this move
+           6
+ 
+ checking for dihedral_atoms_to_place
+ dihedral, atom1, atom2, atom3, atom4
+           1           1           2           3           4
+ 
+ natoms to place if atom 1 moves and the moving atom numbers
+           3           1           7           8           0           0
+           0           0           0
+ natoms to place if atom 4 moves and the moving atom numbers
+           3           4           5           6           0           0
+           0           0           0
+ 
+ dihedral, atom1, atom2, atom3, atom4
+           2           2           3           4           5
+ 
+ natoms to place if atom 1 moves and the moving atom numbers
+           4           2           1           7           8           0
+           0           0           0
+ natoms to place if atom 4 moves and the moving atom numbers
+           2           5           6           0           0           0
+           0           0           0
+ 
+ dihedral, atom1, atom2, atom3, atom4
+           3           3           4           5           6
+ 
+ natoms to place if atom 1 moves and the moving atom numbers
+           5           3           2           1           7           8
+           0           0           0
+ natoms to place if atom 4 moves and the moving atom numbers
+           1           6           0           0           0           0
+           0           0           0
+ 
+ dihedral, atom1, atom2, atom3, atom4
+           4           4           3           2           7
+ 
+ natoms to place if atom 1 moves and the moving atom numbers
+           3           4           5           6           0           0
+           0           0           0
+ natoms to place if atom 4 moves and the moving atom numbers
+           3           7           1           8           0           0
+           0           0           0
+ 
+ dihedral, atom1, atom2, atom3, atom4
+           5           4           3           2           8
+ 
+ natoms to place if atom 1 moves and the moving atom numbers
+           3           4           5           6           0           0
+           0           0           0
+ natoms to place if atom 4 moves and the moving atom numbers
+           3           8           1           7           0           0
+           0           0           0
+ 
+ 
+ ******Initial Coordinate Info **********
+ 
+ Starting configuration will be obtained from check point files
+ 
+ Starting configuration is 
+ nvt.inp.chk                                                                    
+                                          
+ 
+ *****Finished reading initial coordinate info *****
+ 
+ ****** Reading Run_Type Information ******
+ 
+ The input run type is Production
+ Update frequency is         5000
+ 
+ ******* Finished reading run type information ******
+starting type checkpoint                                                                                                              
+
+ ***************** Charge Neutrality Check *****************
+ Species           1    has charge                0.00000000
+ Box               1    has charge                0.00000000
+ 
+ ***************** Charge Neutrality Check *****************
+ ***********************************************************
+   Starting energy components for box   1
+  Atomic units-Extensive
+ 
+ Total system energy is                284255.567
+ Intra molecular energy is             328910.236
+ Bond energy is                             0.000
+ Bond angle energy is                  202790.096
+ Dihedral angle energy is              126120.140
+ Improper angle energy is                   0.000
+ Intra nonbond vdw is                  -30903.846
+ Intra nonbond elec is                      0.000
+ Inter molecule vdw is                 -13232.930
+ Long range correction is                -517.892
+ Inter molecule q is                        0.000
+ Reciprocal ewald is                        0.000
+ Self ewald is                              0.000
+ ***********************************************************
+ 
+ 
+Success ratio, rotation of species   1 in box 1 :  0.86150
+ 
+Success ratio, translation of species   1 in box 1 :  0.64644
+ 
+Success ratio, rotation of species   1 in box 1 :  0.86151
+ 
+Success ratio, translation of species   1 in box 1 :  0.64648
+ 
+Success ratio, rotation of species   1 in box 1 :  0.86154
+ 
+Success ratio, translation of species   1 in box 1 :  0.64652
+ 
+Success ratio, rotation of species   1 in box 1 :  0.86154
+ 
+Success ratio, translation of species   1 in box 1 :  0.64650
+ 
+Success ratio, rotation of species   1 in box 1 :  0.86149
+ 
+Success ratio, translation of species   1 in box 1 :  0.64640
+ 
+Success ratio, rotation of species   1 in box 1 :  0.86151
+ 
+Success ratio, translation of species   1 in box 1 :  0.64643
+ 
+Success ratio, rotation of species   1 in box 1 :  0.86150
+ 
+Success ratio, translation of species   1 in box 1 :  0.64642
+ 
+Success ratio, rotation of species   1 in box 1 :  0.86148
+ 
+Success ratio, translation of species   1 in box 1 :  0.64643
+ 
+Success ratio, rotation of species   1 in box 1 :  0.86148
+ 
+Success ratio, translation of species   1 in box 1 :  0.64644
+ 
+Success ratio, rotation of species   1 in box 1 :  0.86146
+ 
+Success ratio, translation of species   1 in box 1 :  0.64640
+******************** END OF SIMULATION ********************
+ 
+ 
+ ***********************************************************
+ Ending energy components for box   1
+  Atomic units-Extensive
+ -----------------------------------------------------------
+ Total system energy is                292910.382
+ Intra molecular energy is             339745.331
+ Bond energy is                             0.000
+ Angle energy is                       215366.191
+ Dihedral energy is                    124379.140
+ Improper angle energy is                   0.000
+ Intra nonbond vdw is                  -30976.884
+ Intra nonbond elec is                      0.000
+ Inter molecule vdw is                 -15340.173
+ Long range correction is                -517.892
+ Inter molecule q is                        0.000
+ Reciprocal ewald is                        0.000
+ Self ewald is                              0.000
+ ***********************************************************
+ 
+ 
+ ***********************************************************
+ Energy components from total energy call for box   1
+  Atomic units-Extensive
+ -----------------------------------------------------------
+ Total system energy is                292910.382
+ Intra molecular energy is             339745.331
+ Bond energy is                             0.000
+ Angle energy is                       215366.191
+ Dihedral energy is                    124379.140
+ Improper angle energy is                   0.000
+ Intra nonbond vdw is                  -30976.884
+ Intra nonbond elec is                      0.000
+ Inter molecule vdw is                 -15340.173
+ Long range correction is                -517.892
+ Inter molecule q is                        0.000
+ Reciprocal ewald is                        0.000
+ Self ewald is                              0.000
+ ***********************************************************
+ 
+ 
+ Writing information for box  1
+ ***********************************************************
+ 
+ 
+ ***********************************************************
+ Writing information for species  1
+ 
+                Move      Trials     Success   % Success
+           Translate     2552197     1649772       64.64
+              Rotate     2549035     2195874       86.15
+ ***********************************************************
+ 
+ Writing information about fragments
+ 
+ ***********************************************************
+ Writing information for species  1
+         # Fragments      Trials     Success   % Success
+                   1       16653       16219       97.39
+                   2       16636       13484       81.05
+                   3       16649       12440       74.72
+ ***********************************************************
+ 
+ Writing information about subroutine times
+ 
+ ***********************************************************
+ 
+ Translation time =           21.857384 secs.
+ Rotation time =              22.197418 secs.
+ Regrowth time =               0.072483 hrs.
+ ***********************************************************
+ 
+ 
+ Program execution time
+         0      Years
+         0     Months
+         0       Days
+         0      Hours
+         5    Minutes
+        19    Seconds
+       463         ms

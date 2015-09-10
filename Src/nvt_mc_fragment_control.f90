@@ -43,7 +43,7 @@ SUBROUTINE NVT_MC_Fragment_Control
   !       Get_Temperature_Info
   !       Get_Move_Probabilities
   !       Get_File_Info
-  !       Get_Frequency_Info
+  !       Get_Simulation_Length_Info
   !       Precalculate
   !       Participation
   !
@@ -94,7 +94,7 @@ SUBROUTINE NVT_MC_Fragment_Control
   
   ! Frequency info
 
-  CALL Get_Frequency_Info
+  CALL Get_Simulation_Length_Info
 
   ! Get the file names for each of the fragments
 

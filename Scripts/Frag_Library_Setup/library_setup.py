@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env 
+
 #*******************************************************************************
 #   Cassandra - An open source atomistic Monte Carlo software package
 #   developed at the University of Notre Dame.
@@ -31,12 +32,13 @@
 #	PDB files for each species
 #	MCF files for each species
 #
-# Input files produced:
+# Fragment libraries are located in:
 # 
-# /species?/fragments/species?_mcf_gen.inp
-# /species?/frag?/frag?.inp
+# /species?/frag?/frag?.dat
 #
-# The script overwrites the section of the input file where needed 
+# Where ? stands for the species id (i.e. species1, species2 ...)
+#
+# Note that the script overwrites the section of the input file where needed 
 # (i.e. # Frag_Info) with the aforementioned folder locations. 
 #
 #*******************************************************************************
@@ -312,6 +314,21 @@ if "GCMC" in sim_type:
 nbr_species = int(linecache.getline(input_file,nbr_species_line+1))
 print bold+"Number of species found: " + normal + str(nbr_species)
 
+#Open PDB Files. Is there any files without the CONECT keyword (e.g. zeolite)? If so, 
+#tag it. This species will be assumed to be comprised of rigid fragment.
+
+pdb_without_conect = []
+for this_species,each_pdb in enumerate(pdb_files):
+	this_pdb = open(each_pdb,'r')
+	conect_found = False	
+	for line in this_pdb:
+		if 'CONECT' in line:
+			conect_found = True
+			break
+	if conect_found == False:
+		pdb_without_conect.append(this_species)
+	
+
 #Look for MCF files
 mcf_files = []
 for i in xrange(0,nbr_species):
@@ -449,12 +466,21 @@ for i in xrange(0,len(mcf_files)):
 #/species?/frag?
 
 for i in xrange(0, nbr_species):
-	os.system("mkdir -p species"+str(i+1)+"/fragments/")
+
 	for j in xrange(0,nbr_fragments[i]):
 		os.system("mkdir -p species"+str(i+1)+"/frag"+str(j+1))
 
+	if i not in pdb_without_conect: 
+		os.system("mkdir -p species"+str(i+1)+"/fragments/")
+
 #Now, create input files for fragment MCF generation
 for i in xrange(0, nbr_species):
+
+	if i in pdb_without_conect:
+		print "\n\n" + bold + "MCF generation file not created for species 1."
+		print "Fragment configuration will be taken from PDB file."
+		continue
+
 	if nbr_atoms[i] >= 3:
 		for element in files_ring_to_copy:
 			if str(i) in element[0]:
@@ -486,9 +512,17 @@ print bold+"Done..."
 fragment_is_rigid = [] # Boolean entry for each i,j
 ring_is_rigid = [] # frag_id's for each frag that has a rigid ring
 for i in xrange(0, nbr_species):
+
 	if nbr_atoms[i] < 3:
+
 		temp_rigid = [True]
 		temp_ring_rigid = []
+
+	elif i in pdb_without_conect:
+		
+		temp_rigid = [True]
+		temp_ring_rigid = []
+
 	else:
 		temp_rigid = []
 		temp_ring_rigid = []
@@ -601,9 +635,9 @@ for i in xrange(0, nbr_species):
 					input_frag.write("# Move_Probability_Info\n# Prob_Ring\n1.0 35.0\n" + 
 													 "# Done_Probability_Info\n\n")
 				input_frag.write("# Run_Type\nProduction 1000 10\n\n")
-				input_frag.write("# Frequency_Info\nfreq_type    none\n"+
-					               "Nthermofreq  100\nNcoordfreq   5000\n"+
-					               "MCsteps      1000000\n# Done_Frequency_Info\n\n")
+				input_frag.write("# Simulation_Length_Info\nUnits    Steps\n"+
+					               "Prop_Freq  100\nCoord_Freq   5000\n"+
+					               "MCsteps      1000000\n# Done_Simulation_Length_Info\n\n")
 				input_frag.write("# Property_Info 1\nEnergy_Total\n\n")
 				input_frag.write("# File_Info\nfrag"+str(j+1)+".dat\n\n")
 				input_frag.write("END")
@@ -640,10 +674,10 @@ for i in xrange(0, nbr_species):
 				input_frag.write("# Start_Type\nread_old\n../fragments/frag_"+str(j+1)+
 												 "_1.xyz 1\n\n")
 				input_frag.write("# Run_Type\nProduction 1000 10\n\n")
-				input_frag.write("# Frequency_Info\nfreq_type    none\n"+
-												 "Nthermofreq  10\nNcoordfreq   90\n"+
+				input_frag.write("# Simulation_Length_Info\nUnits  Steps\n"+
+												 "Prop_Freq  10\nCoord_Freq   90\n"+
 												 "MCsteps      1100000\nNequilSteps  100000\n"+
-												 "# Done_Frequency_Info\n\n")
+												 "# Done_Simulation_Length_Info\n\n")
 				input_frag.write("# File_Info\nfrag"+str(j+1)+".dat\n\n")
 				input_frag.write("END")
 				input_frag.close()
