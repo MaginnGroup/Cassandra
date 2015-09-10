@@ -396,13 +396,14 @@ END SUBROUTINE Compute_Angle_Energy
           k=angle_list(iangle,species)%angle_param(1)
           theta0 = angle_list(iangle,species)%angle_param(2)
           CALL Get_Bond_Angle(iangle,molecule,species,theta)
+        !  write(*,*) 'values of iangle, molecule, theta'
+        !  write(*,*) iangle,molecule,theta 
           ea = k*(theta-theta0)**2
           ! Add more potential functions here.
        ENDIF
        energy = energy + ea
     ENDDO
 
- write(*,*) 'Molecule Angle energy', molecule, species, energy  
 
 END SUBROUTINE Compute_Molecule_Angle_Energy
   !----------------------------------------------------------------------------------------------              
@@ -646,7 +647,8 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
           a3 = dihedral_list(idihed,species)%dihedral_param(4)
 
           CALL Get_Dihedral_Angle(idihed,molecule,species,phi)
-
+   !          write(*,*) 'values of idihed, moleucle, phi'
+   !       write(*,*) idihed, molecule, phi 
           twophi = 2.0_DP*phi
           threephi = 3.0_DP*phi
           edihed =  a0 + a1*(1.0_DP+COS(phi)) + &
@@ -733,7 +735,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
        ENDIF
        energy_dihed = energy_dihed + edihed
     ENDDO
-
+ 
 
   END SUBROUTINE Compute_Molecule_Dihedral_Energy
   !----------------------------------------------------------------------------------------------              

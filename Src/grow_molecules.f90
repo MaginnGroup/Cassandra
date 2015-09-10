@@ -73,7 +73,6 @@
     ! Needs to be written.
 
     ! Initialize the cfc amd existence flags. 
-   
     overlap = .false. 
     molecule_list(:,:)%live = .false.
 
@@ -120,7 +119,6 @@
                 
                 
                 ! we will grow the molecules if there are fragments in the molecules
-                
                 IF (species_list(is)%fragment) THEN
                    atom_list(:,alive,is)%exist = .FALSE.
                    cbmc_overlap = .FALSE.
@@ -131,6 +129,7 @@
                    CALL Build_Molecule(alive,is,this_box,frag_order, &
                            lambda_for_build,P_seq,P_bias, &
                            nrg_ring_frag_tot,cbmc_overlap)
+                   write(*,*) cbmc_overlap
                    IF (cbmc_overlap) CYCLE InsertionLOOP
                    atom_list(:,alive,is)%exist = .TRUE.       
 
@@ -144,7 +143,6 @@
                    END IF
                    
                    ! insert the rest of the molecule
-                   
                    DO ia = 2,natoms(is)
                       
                       atom_list(ia,alive,is)%rxp = atom_list(1,alive,is)%rxp + init_list(ia,1,is)%rxp - &
@@ -220,6 +218,12 @@
                 ! write to a file for viewing
                 
                 WRITE(*,*) 'successfully inserted molecule', im
+                !DO ia =1, natoms(is)
+                !      write(*,*)  atom_list(ia,alive,is)%rxp
+                !      write(*,*)  atom_list(ia,alive,is)%ryp
+                !      write(*,*)  atom_list(ia,alive,is)%rzp
+                !   END DO
+
                 EXIT
                 
              END DO InsertionLOOP

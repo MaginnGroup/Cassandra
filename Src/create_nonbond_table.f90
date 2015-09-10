@@ -59,7 +59,7 @@
 
     LOGICAL :: repeat_type
     CHARACTER(6), DIMENSION(:), ALLOCATABLE :: temp_atomtypes ! same dimension as atom_name
-    INTEGER :: ii, is, ia, itype, jtype, iset,jset,k
+    INTEGER :: ii, is, ia, itype, jtype, iset,jset,k,itype_1,itype_2
     REAL(DP), DIMENSION(max_nonbond_params) :: temp_param_i, temp_param_j
 
     ! Steele potential
@@ -67,6 +67,7 @@
     REAL(DP) :: sigma_ss, eps_ss, rho_s, delta_s, eps_sf
     !custom mixing rules
     INTEGER :: ierr,line_nbr,nbr_entries, is_1, is_2, ia_1, ia_2, itype_custom, jtype_custom
+    INTEGER ::  i_type1, i_type2
     CHARACTER(120) :: line_string, line_array(20)
 
 
@@ -351,10 +352,10 @@
 !						END DO
 !					END DO
 !				END DO
-                                  DO is_1 = 1, nbr_atomtypes
-                                       itype_custom = is_1
-                                       DO is_2 = 1, nbr_atomtypes
-                                           jtype_custom = is_2
+                                  DO itype_1 = 1, nbr_atomtypes
+                                       itype_custom = itype_1
+                                       DO itype_2 = 1, nbr_atomtypes
+                                           jtype_custom = itype_2
                                            CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
                                            !Convert epsilon to atomic units amu A^2/ps^2
                                            vdw_param1_table(itype_custom,jtype_custom) = kboltz * String_To_Double(line_array(3))

@@ -3147,11 +3147,6 @@ SUBROUTINE Get_Fragment_Coords
                   library_coords(nl)%rxp = x_this
                   library_coords(nl)%ryp = y_this
                   library_coords(nl)%rzp = z_this
-           write(*,*) 'x,y,z coordinates of frag_type and iconfig'
-           write(*,*) 'frag_type s', ifrag_type, 'and iconfig isi', iconfig
-           write(*,*) library_coords(nl)%rxp
-           write(*,*) library_coords(nl)%ryp  
-           write(*,*) library_coords(nl)%rzp
               END DO
            END DO
 
