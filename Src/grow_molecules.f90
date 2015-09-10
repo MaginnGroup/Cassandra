@@ -129,7 +129,6 @@
                    CALL Build_Molecule(alive,is,this_box,frag_order, &
                            lambda_for_build,P_seq,P_bias, &
                            nrg_ring_frag_tot,cbmc_overlap)
-                   write(*,*) cbmc_overlap
                    IF (cbmc_overlap) CYCLE InsertionLOOP
                    atom_list(:,alive,is)%exist = .TRUE.       
 

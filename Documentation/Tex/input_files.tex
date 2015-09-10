@@ -374,9 +374,35 @@ Likewise, for a system including three species, with species 1 interacting with 
 {\it Character} \\ \\
 %
 Sets the method by which Lennard-Jones interactions between unlike atoms are
-calculated. Acceptable options are ``LB''  for Lorentz-Berthelot and
-``geometric'' for geometric. If this keyword is missing, ``LB'' is
-used as default.  
+calculated. Acceptable options are ``LB''  for Lorentz-Berthelot,
+``geometric'', for geometric mixing rule and ``custom'' for allowing the user to provide specific values. 
+If this keyword is missing, ``LB'' is used as default. \\
+
+To illustrate the use of the ``custom'' option, suppose
+the system of interest involves a mixture of methane and butane united atom
+models, where species 1 is methane and species 2 is butane. The cross
+interaction table is as follows:
+
+\texttt{
+{\bf \# Mixing\_Rule} \\
+custom\\
+CH4  CH4  148.00   3.73\\
+CH4  CH3  120.49   3.75\\
+CH4  CH2   82.51   3.83\\
+CH3  CH4  120.49   3.75\\
+CH3  CH3   98.00   3.93\\
+CH3  CH2   67.14   3.85\\
+CH2  CH4   82.51   3.83\\
+CH2  CH3   67.14   3.85\\
+CH2  CH2   46.00   3.93
+}
+\\ \\
+where CH4 is the interaction site associated with methane, CH3 and CH2 are
+the interactions sites associated with butane. The order in which
+this table is constructed must be consistent with the MCF and input files.
+
+
+
 %%%%%%%%%%%%%%%%
 %
 % # Seed_Info
