@@ -844,197 +844,197 @@ exposed in section \ref{subsec:scaling_the_volume}.
 
 \section{Multicomponent Systems} 
 
-Sections \ref{sec:NVT}-\ref{sec:multiphase} have each been developed for pure component systems. The Monte Carlo moves and acceptance criteria for multicomponent systems are straightforward extensions of the pure component moves. The only modification needed to translate, rotate and regrow molecules is to first select a species. In these moves, a species is selected randomly in proportion to its mole fraction $N_i/N$. When inserting and deleting a molecule, the mole fractions of each species change. In these cases, a species in a multicomponent system is selected instead with uniform probability $1/N_{species}$. In either case, species selection is symmetric for both forward and reverse moves and so cancels from the acceptance criterion.
+Sections \ref{sec:NVT}-\ref{sec:gibbs} have each been developed for pure component systems. The Monte Carlo moves and acceptance criteria for multicomponent systems are straightforward extensions of the pure component moves. The only modification needed to translate, rotate and regrow molecules is to first select a species. In these moves, a species is selected randomly in proportion to its mole fraction $N_i/N$. When inserting and deleting a molecule, the mole fractions of each species change. In these cases, a species in a multicomponent system is selected instead with uniform probability $1/N_{species}$. In either case, species selection is symmetric for both forward and reverse moves and so cancels from the acceptance criterion.
 
-In contrast, a reaction move that changes the number of molecules of several species simultaneously will depend on the chemical potentials of each species. In the multicomponent grand canonical ensemble, the temperature $T$, volume $V$ and set of chemical potentials $\{\mu\} = \mu_1, \ldots, \mu_s$ of each species are held constant. The partition function for a system with $s$ species is
-
-\begin{equation}
-\label{eq:partitionFn_MuiVT}
-\Xi(\{\mu\},V,T) = \sum\limits_{N_1=0}^{\infty} \ldots \sum\limits_{N_s=0}^{\infty}Q(\{N\},V,T)\ e^{\beta \mu_i N_i}
-\end{equation}
-
-where $\{N\}$ is the set of $s$ molecule numbers, and a summation is implied over the term $\mu_i N_i$. The probability of the system having $\{N\}$ molecules is 
-
-\begin{equation}
-\label{eq:pNi}
-p(\{N\}) = \frac{Q(\{N\},V,T)e^{\beta \mu_i N_i}}{\Xi(\{\mu\},V,T)}
-\end{equation}
-
-The probability of observing microstate $m$ with $\{N\}_m$ molecules and configuration $\{\mathbf{q}^N\}_m$ is
-
-\begin{align}
-\label{eq:pMuiVT}
-p_m &= \frac{e^{-\beta U_m} \prod\limits_{i=1}^s{d\mathbf{q}_i^{N_{im}}}}{Z(\{N\}_m,V,T)}\ \frac{Q(\{N\}_m,V,T)e^{\beta \mu_i N_{im}}}{\Xi(\{\mu\},V,T)} \nonumber \\
-&= \frac{e^{-\beta U_m + \beta \mu_i N_{im}}}{\Xi(\{\mu\},V,T)}\ \prod\limits_{i=1}^s\left[\frac{Q_i(1,V,T)}{Z_i(1,V,T)}\ d\mathbf{q}_i\right]^{N_{im}}
-\end{align}
-
-The ratio of microstate probabilities is
-
-\begin{equation}
-\label{eq:pMuiVT_ratio}
-\frac{p_m}{p_n} = e^{\beta \Delta U - \beta \mu_i \Delta N_i}\ \prod\limits_{i=1}^s\left[\frac{Q_i(1,V,T)}{Z_i(1,V,T)}\ d\mathbf{q}_i\right]^{-\Delta N_i}
-\end{equation}
-
-\subsection{Reaction Ensemble Monte Carlo (RxMC)}
-\label{sec:rxmc}
-In Reaction Ensemble Monte Carlo, the number of molecules of each species can only change by a stoichiometric amount $\nu_i$ as a reaction occurs. For reactants $\nu_i<0$; for products $\nu_i>0$. Reaction equilibrium occurs when the following condition is met
-
-\begin{equation}
-\label{eq:rxnEquil}
-\sum\limits_{i=1}^{s}{\nu_i \mu_i} = 0
-\end{equation}
-
-\noindent
-Substituting Eq. (\ref{eq:rxnEquil}) and $\Delta N_i = \nu_i$ into Eq. (\ref{eq:pMuiVT_ratio}) gives
-
-\begin{equation}
-\label{eq:pMuiVT_ratio_2}
-\frac{p_m}{p_n} = e^{\beta \Delta U}\ \prod\limits_{i=1}^s\left[\frac{Q_i(1,V,T)}{Z_i(1,V,T)}\ d\mathbf{q}_i\right]^{-\nu_i}
-\end{equation}
-
-\noindent
-The product of partition functions can be replaced by the equilibrium constant of an ideal gas $K_{eq}$ or the standard change in free energy of the reaction $\Delta G_{rxn}^{o}$ at standard pressure $P\degree$
-
-\begin{equation}
-\label{eq:Keq_ideal}
-\prod\limits_{i=1}^s{\left(\frac{Q_i(1,V,T)}{V}\right)^{\nu_i}} = K_{eq} = e^{-\beta \Delta G_{rxn}^{o}} \left(\frac{P\degree}{k_BT}\right)^{\Delta \nu}
-\end{equation}
-
-\noindent
-where $\Delta \nu = \sum_i \nu_i$ and $K_{eq}$ has units $[\textrm{volume}]^{-\Delta \nu}$. Substituting Eq. (\ref{eq:Keq_ideal}) and $Z_i(1,V,T) = VZ_{rot,i}Z_{int,i}$ into Eq. (\ref{eq:pMuiVT_ratio_2}) gives
-
-\begin{align}
-\label{eq:pMuiVT_ratio_3}
-\frac{p_m}{p_n} &= e^{\beta \Delta U}\ K_{eq}^{-1}\ \prod\limits_{i=1}^s\left[\frac{d\mathbf{q}_i}{Z_{rot,i}Z_{int,i}}\right]^{-\nu_i} \\
-\label{eq:pMuiVT_ratio_4}
-&= e^{\beta \Delta U + \beta \Delta G_{rxn}^{o}}\ \prod\limits_{i=1}^s\left[\frac{P\degree d\mathbf{q}_i}{k_BT\ Z_{rot,i}Z_{int,i}}\right]^{-\nu_i}
-\end{align}
-
-\noindent
-In the liquid phase, the change in energy $\Delta U$ from deleting reactants and inserting products in one step is prohibitively high. And yet, the number of molecules of each species $i$ must change by $\nu_i$ in a single step for Eqs. (\ref{eq:pMuiVT_ratio_3}-\ref{eq:pMuiVT_ratio_4}) to apply. 
-
-In Cassandra, reactants are phased out of the system as products are phased in using multiple steps. For example, to simulate the reaction
-
-\begin{equation}
-\label{eq:rxnABC}
-A + B \rightleftharpoons C
-\end{equation}
-
-\noindent
-an ideal gas (i.e., non-interacting) molecule of $C$, $C_0$, is inserted into the simulation box. Then the interaction of $C_0$ is increased as the interaction of $A$ and $B$ is decreased
-
-\begin{equation}
-\label{eq:rxnABC_lambda}
-A + B + C_0 \rightleftharpoons A_{1-x} + B_{1-x} + C_x \rightleftharpoons A_0 + B_0 + C
-\end{equation}
-
-\noindent
-where $x$ is the extent of the reaction and the subscripts indicate how strongly a molecule interacts with other molecules in the system. The initial state $A + B + C_0$ corresponds to $x=0$; there is one molecule $C_0$ that does not interact with any other molecules, whereas all $A$ and $B$ molecules interact fully with the rest of the system. The final state $A_0 + B_0 + C$ corresponds to $x=1$; there is one molecule each $A_0$ and $B_0$ that do not interact  with any other molecules, whereas all $C$ molecules interact fully with the rest of the system. At intermediate states $A_{1-x} + B_{1-x} + C_x$, $x$ can take on fixed values between 0 and 1 (e.g. 0.2, 0.4, 0.6, 0.8). The molecules involved in the reaction have been tagged; in this example, there is one fractional molecule of each species. In each case, the number of molecules of all species is constant. At either end point (x=0 or x=1), the ideal gas molecules can react according to 
-
-\begin{equation}
-\label{eq:rxnABC_ideal}
-A_0 + B_0 \rightleftharpoons C_0
-\end{equation}
-
-\noindent
-where, in the forward direction, the ideal gas reactants are deleted from the system and ideal gas products are inserted. The number of molecules of each species changes by $\nu_i$. 
-
-Reaction equilibrium is established by changing the extent of reaction using a series of moves:
-
-\begin{itemize}
-	\item Increment from $x_1=0$ to $x_2>0$.
-	\item Increment from $x_1$ to $x_2$, where $0 < x_1 < x_2 < 1$.
-	\item Increment from $x_1<1$ to $x_2=1$.
-	\item React in the ideal gas phase: change from $x_1=1$ to $x_2=0$.
-\end{itemize}
-
-\noindent
-Each move can occur in the forward and reverse direction. Acceptance criteria are derived for each forward move.
-
-\subsection{Increment from $x_1=0$ to $0<x_2<1$}
-The number of molecules in the system does not change, so Eq. (\ref{eq:pMuiVT_ratio}) reduces to 
-
-\begin{equation}
-\label{eq:pMuiVT_noDeltaN}
-\frac{p_m}{p_n} = e^{\beta \Delta U}
-\end{equation}
-
-\noindent
-The probability of generating microstate $n$ from microstate $m$ is the probability of selecting $-\nu_i$ reactant molecules of each species from the $N_{im}$ integer molecules in the system
-
-\begin{equation}
-\alpha_{mn} = \prod_{i \in react} \frac{(-\nu_i)!(N_{im}+\nu_i)!}{N_{im}!}
-\end{equation}
-
-\noindent
-In the reverse step, no molecules need to be chosen. The probability $\alpha_{nm}=1$. The acceptance criteria is therefore
-
-\begin{equation}
-\ln\left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = \beta \Delta U  + \ln\left( \prod_{i \in react}\frac{(-\nu_i)!(N_{im}+\nu_i)!}{N_{im}!} \right)
-\end{equation}
-
-\noindent
-If there is not a stoichiometric amount of any reactant in microstate $m$, this move will not be attempted.
-
-\subsection{Increment from $x_1$ to $x_2$, where $0<x_1<x_2<1$}
-The ratio of microstate probabilities is given by Eq. (\ref{eq:pMuiVT_noDeltaN}). No molecules need to be selected in either the forward or reverse direction, so $\alpha_{mn}=\alpha_{nm}=1$. The acceptance criteria is
-
-\begin{equation}
-\ln\left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = \beta \Delta U
-\end{equation}
-
-\subsection{Increment from $x_1<1$ to $x_2=1$}
-The ratio of microstate probabilities is given by Eq. (\ref{eq:pMuiVT_noDeltaN}). No molecules need to be selected in the forward direction, so $\alpha_{nm}=1$. In the reverse step, the probability of generating microstate $m$ from microstate $n$ is the probability of selecting $\nu_i$ product molecules of each species from the $N_{in}=N_{im}+\nu_i$ integer molecules in the system
-
-\begin{equation}
-\alpha_{nm} = \prod_{i \in prod} \frac{\nu_i!N_{im}!}{(N_{im}+\nu_i)!}
-\end{equation}
-
-\noindent
-The acceptance criteria is 
-
-\begin{equation}
-\ln\left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = \beta \Delta U  + \ln\left( \prod_{i \in prod}\frac{(N_{im}+\nu_i)!}{\nu_i!N_{im}!} \right)
-\end{equation}
-
-\subsection{React in the ideal gas phase: change from $x_1=1$ to $x_2=0$}
-In this step, the number of molecules of each species $i$ changes by $\nu_i$. The ratio of microstate probabilities is given by Eqs. (\ref{eq:pMuiVT_ratio_3}-\ref{eq:pMuiVT_ratio_4}). In the forward move, the ideal gas reactants are deleted and ideal gas products are inserted. The probability of generating microstate $n$ from microstate $m$ is the probability of inserting the ideal gas products (see Eq. (\ref{eq:alpha_randomInsert}) and the discussion that proceeds it) 
-
-\begin{equation}
-\alpha_{mn} = \prod_{i \in prod} \frac{e^{-\beta U_{int,i}}d\mathbf{q}_i}{Z_i(1,V,T)}
-\end{equation}
-
-\noindent
-where $U_{int,i}$ is the internal energy of the inserted molecule. In the reverse move, ideal gas reactants are inserted with probability
-
-\begin{equation}
-\alpha_{nm} = \prod_{i \in react} \frac{e^{-\beta U_{int,i}}d\mathbf{q}_i}{Z_i(1,V,T)}
-\end{equation}
-
-\noindent
-The ratio of the forward and reverse move is
-
-\begin{equation}
-\frac{\alpha_{mn}}{\alpha_{nm}} = \exp \left(-\beta \sum_{i \in prod} U_{int,i} + \beta \sum_{i \in react} U_{int,i} \right) \prod_{i=1}^s \left( \frac{d\mathbf{q}_i}{Z_i(1,V,T)} \right)^{\nu_i}
-\end{equation}
-
-\noindent
-where the sums are over the ideal gas molecules and the product is over the species. Since the molecules being inserted and deleted do not interact with any other molecules, the change in energy between microstates $m$ and $n$ is only due to the internal energy of the ideal gas molecules
-
-\begin{equation}
-\Delta U = \sum_{i \in prod} U_{int,i} - \sum_{i \in react} U_{int,i}
-\end{equation}
-
-\noindent
-The change in energy cancels from the acceptance criteria
-
-\begin{align}
-\ln\left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) &= \beta \Delta G_{rxn}^{o} + \ln \left( \prod_{i=1}^s \left[ \frac{P\degree d\mathbf{q}_i}{k_BT Z_{rot,i}Z_{int,i}} \frac{Z_i(1,V,T)}{d\mathbf{q}_i} \right]^{-\nu_i} \right) \\
-&= \beta \Delta G_{rxn}^{o} - \Delta \nu \ln(\beta P^o V)
-\end{align}
-
-\noindent
-Since the acceptance criteria does not depend on the configuration of molecules, the move can be accepted or rejected before generating microstate $n$.
+%In contrast, a reaction move that changes the number of molecules of several species simultaneously will depend on the chemical potentials of each species. In the multicomponent grand canonical ensemble, the temperature $T$, volume $V$ and set of chemical potentials $\{\mu\} = \mu_1, \ldots, \mu_s$ of each species are held constant. The partition function for a system with $s$ species is
+%
+%\begin{equation}
+%\label{eq:partitionFn_MuiVT}
+%\Xi(\{\mu\},V,T) = \sum\limits_{N_1=0}^{\infty} \ldots \sum\limits_{N_s=0}^{\infty}Q(\{N\},V,T)\ e^{\beta \mu_i N_i}
+%\end{equation}
+%
+%where $\{N\}$ is the set of $s$ molecule numbers, and a summation is implied over the term $\mu_i N_i$. The probability of the system having $\{N\}$ molecules is 
+%
+%\begin{equation}
+%\label{eq:pNi}
+%p(\{N\}) = \frac{Q(\{N\},V,T)e^{\beta \mu_i N_i}}{\Xi(\{\mu\},V,T)}
+%\end{equation}
+%
+%The probability of observing microstate $m$ with $\{N\}_m$ molecules and configuration $\{\mathbf{q}^N\}_m$ is
+%
+%\begin{align}
+%\label{eq:pMuiVT}
+%p_m &= \frac{e^{-\beta U_m} \prod\limits_{i=1}^s{d\mathbf{q}_i^{N_{im}}}}{Z(\{N\}_m,V,T)}\ \frac{Q(\{N\}_m,V,T)e^{\beta \mu_i N_{im}}}{\Xi(\{\mu\},V,T)} \nonumber \\
+%&= \frac{e^{-\beta U_m + \beta \mu_i N_{im}}}{\Xi(\{\mu\},V,T)}\ \prod\limits_{i=1}^s\left[\frac{Q_i(1,V,T)}{Z_i(1,V,T)}\ d\mathbf{q}_i\right]^{N_{im}}
+%\end{align}
+%
+%The ratio of microstate probabilities is
+%
+%\begin{equation}
+%\label{eq:pMuiVT_ratio}
+%\frac{p_m}{p_n} = e^{\beta \Delta U - \beta \mu_i \Delta N_i}\ \prod\limits_{i=1}^s\left[\frac{Q_i(1,V,T)}{Z_i(1,V,T)}\ d\mathbf{q}_i\right]^{-\Delta N_i}
+%\end{equation}
+%
+%\subsection{Reaction Ensemble Monte Carlo (RxMC)}
+%\label{sec:rxmc}
+%In Reaction Ensemble Monte Carlo, the number of molecules of each species can only change by a stoichiometric amount $\nu_i$ as a reaction occurs. For reactants $\nu_i<0$; for products $\nu_i>0$. Reaction equilibrium occurs when the following condition is met
+%
+%\begin{equation}
+%\label{eq:rxnEquil}
+%\sum\limits_{i=1}^{s}{\nu_i \mu_i} = 0
+%\end{equation}
+%
+%\noindent
+%Substituting Eq. (\ref{eq:rxnEquil}) and $\Delta N_i = \nu_i$ into Eq. (\ref{eq:pMuiVT_ratio}) gives
+%
+%\begin{equation}
+%\label{eq:pMuiVT_ratio_2}
+%\frac{p_m}{p_n} = e^{\beta \Delta U}\ \prod\limits_{i=1}^s\left[\frac{Q_i(1,V,T)}{Z_i(1,V,T)}\ d\mathbf{q}_i\right]^{-\nu_i}
+%\end{equation}
+%
+%\noindent
+%The product of partition functions can be replaced by the equilibrium constant of an ideal gas $K_{eq}$ or the standard change in free energy of the reaction $\Delta G_{rxn}^{o}$ at standard pressure $P\degree$
+%
+%\begin{equation}
+%\label{eq:Keq_ideal}
+%\prod\limits_{i=1}^s{\left(\frac{Q_i(1,V,T)}{V}\right)^{\nu_i}} = K_{eq} = e^{-\beta \Delta G_{rxn}^{o}} \left(\frac{P\degree}{k_BT}\right)^{\Delta \nu}
+%\end{equation}
+%
+%\noindent
+%where $\Delta \nu = \sum_i \nu_i$ and $K_{eq}$ has units $[\textrm{volume}]^{-\Delta \nu}$. Substituting Eq. (\ref{eq:Keq_ideal}) and $Z_i(1,V,T) = VZ_{rot,i}Z_{int,i}$ into Eq. (\ref{eq:pMuiVT_ratio_2}) gives
+%
+%\begin{align}
+%\label{eq:pMuiVT_ratio_3}
+%\frac{p_m}{p_n} &= e^{\beta \Delta U}\ K_{eq}^{-1}\ \prod\limits_{i=1}^s\left[\frac{d\mathbf{q}_i}{Z_{rot,i}Z_{int,i}}\right]^{-\nu_i} \\
+%\label{eq:pMuiVT_ratio_4}
+%&= e^{\beta \Delta U + \beta \Delta G_{rxn}^{o}}\ \prod\limits_{i=1}^s\left[\frac{P\degree d\mathbf{q}_i}{k_BT\ Z_{rot,i}Z_{int,i}}\right]^{-\nu_i}
+%\end{align}
+%
+%\noindent
+%In the liquid phase, the change in energy $\Delta U$ from deleting reactants and inserting products in one step is prohibitively high. And yet, the number of molecules of each species $i$ must change by $\nu_i$ in a single step for Eqs. (\ref{eq:pMuiVT_ratio_3}-\ref{eq:pMuiVT_ratio_4}) to apply. 
+%
+%In Cassandra, reactants are phased out of the system as products are phased in using multiple steps. For example, to simulate the reaction
+%
+%\begin{equation}
+%\label{eq:rxnABC}
+%A + B \rightleftharpoons C
+%\end{equation}
+%
+%\noindent
+%an ideal gas (i.e., non-interacting) molecule of $C$, $C_0$, is inserted into the simulation box. Then the interaction of $C_0$ is increased as the interaction of $A$ and $B$ is decreased
+%
+%\begin{equation}
+%\label{eq:rxnABC_lambda}
+%A + B + C_0 \rightleftharpoons A_{1-x} + B_{1-x} + C_x \rightleftharpoons A_0 + B_0 + C
+%\end{equation}
+%
+%\noindent
+%where $x$ is the extent of the reaction and the subscripts indicate how strongly a molecule interacts with other molecules in the system. The initial state $A + B + C_0$ corresponds to $x=0$; there is one molecule $C_0$ that does not interact with any other molecules, whereas all $A$ and $B$ molecules interact fully with the rest of the system. The final state $A_0 + B_0 + C$ corresponds to $x=1$; there is one molecule each $A_0$ and $B_0$ that do not interact  with any other molecules, whereas all $C$ molecules interact fully with the rest of the system. At intermediate states $A_{1-x} + B_{1-x} + C_x$, $x$ can take on fixed values between 0 and 1 (e.g. 0.2, 0.4, 0.6, 0.8). The molecules involved in the reaction have been tagged; in this example, there is one fractional molecule of each species. In each case, the number of molecules of all species is constant. At either end point (x=0 or x=1), the ideal gas molecules can react according to 
+%
+%\begin{equation}
+%\label{eq:rxnABC_ideal}
+%A_0 + B_0 \rightleftharpoons C_0
+%\end{equation}
+%
+%\noindent
+%where, in the forward direction, the ideal gas reactants are deleted from the system and ideal gas products are inserted. The number of molecules of each species changes by $\nu_i$. 
+%
+%Reaction equilibrium is established by changing the extent of reaction using a series of moves:
+%
+%\begin{itemize}
+%	\item Increment from $x_1=0$ to $x_2>0$.
+%	\item Increment from $x_1$ to $x_2$, where $0 < x_1 < x_2 < 1$.
+%	\item Increment from $x_1<1$ to $x_2=1$.
+%	\item React in the ideal gas phase: change from $x_1=1$ to $x_2=0$.
+%\end{itemize}
+%
+%\noindent
+%Each move can occur in the forward and reverse direction. Acceptance criteria are derived for each forward move.
+%
+%\subsection{Increment from $x_1=0$ to $0<x_2<1$}
+%The number of molecules in the system does not change, so Eq. (\ref{eq:pMuiVT_ratio}) reduces to 
+%
+%\begin{equation}
+%\label{eq:pMuiVT_noDeltaN}
+%\frac{p_m}{p_n} = e^{\beta \Delta U}
+%\end{equation}
+%
+%\noindent
+%The probability of generating microstate $n$ from microstate $m$ is the probability of selecting $-\nu_i$ reactant molecules of each species from the $N_{im}$ integer molecules in the system
+%
+%\begin{equation}
+%\alpha_{mn} = \prod_{i \in react} \frac{(-\nu_i)!(N_{im}+\nu_i)!}{N_{im}!}
+%\end{equation}
+%
+%\noindent
+%In the reverse step, no molecules need to be chosen. The probability $\alpha_{nm}=1$. The acceptance criteria is therefore
+%
+%\begin{equation}
+%\ln\left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = \beta \Delta U  + \ln\left( \prod_{i \in react}\frac{(-\nu_i)!(N_{im}+\nu_i)!}{N_{im}!} \right)
+%\end{equation}
+%
+%\noindent
+%If there is not a stoichiometric amount of any reactant in microstate $m$, this move will not be attempted.
+%
+%\subsection{Increment from $x_1$ to $x_2$, where $0<x_1<x_2<1$}
+%The ratio of microstate probabilities is given by Eq. (\ref{eq:pMuiVT_noDeltaN}). No molecules need to be selected in either the forward or reverse direction, so $\alpha_{mn}=\alpha_{nm}=1$. The acceptance criteria is
+%
+%\begin{equation}
+%\ln\left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = \beta \Delta U
+%\end{equation}
+%
+%\subsection{Increment from $x_1<1$ to $x_2=1$}
+%The ratio of microstate probabilities is given by Eq. (\ref{eq:pMuiVT_noDeltaN}). No molecules need to be selected in the forward direction, so $\alpha_{nm}=1$. In the reverse step, the probability of generating microstate $m$ from microstate $n$ is the probability of selecting $\nu_i$ product molecules of each species from the $N_{in}=N_{im}+\nu_i$ integer molecules in the system
+%
+%\begin{equation}
+%\alpha_{nm} = \prod_{i \in prod} \frac{\nu_i!N_{im}!}{(N_{im}+\nu_i)!}
+%\end{equation}
+%
+%\noindent
+%The acceptance criteria is 
+%
+%\begin{equation}
+%\ln\left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = \beta \Delta U  + \ln\left( \prod_{i \in prod}\frac{(N_{im}+\nu_i)!}{\nu_i!N_{im}!} \right)
+%\end{equation}
+%
+%\subsection{React in the ideal gas phase: change from $x_1=1$ to $x_2=0$}
+%In this step, the number of molecules of each species $i$ changes by $\nu_i$. The ratio of microstate probabilities is given by Eqs. (\ref{eq:pMuiVT_ratio_3}-\ref{eq:pMuiVT_ratio_4}). In the forward move, the ideal gas reactants are deleted and ideal gas products are inserted. The probability of generating microstate $n$ from microstate $m$ is the probability of inserting the ideal gas products (see Eq. (\ref{eq:alpha_randomInsert}) and the discussion that proceeds it) 
+%
+%\begin{equation}
+%\alpha_{mn} = \prod_{i \in prod} \frac{e^{-\beta U_{int,i}}d\mathbf{q}_i}{Z_i(1,V,T)}
+%\end{equation}
+%
+%\noindent
+%where $U_{int,i}$ is the internal energy of the inserted molecule. In the reverse move, ideal gas reactants are inserted with probability
+%
+%\begin{equation}
+%\alpha_{nm} = \prod_{i \in react} \frac{e^{-\beta U_{int,i}}d\mathbf{q}_i}{Z_i(1,V,T)}
+%\end{equation}
+%
+%\noindent
+%The ratio of the forward and reverse move is
+%
+%\begin{equation}
+%\frac{\alpha_{mn}}{\alpha_{nm}} = \exp \left(-\beta \sum_{i \in prod} U_{int,i} + \beta \sum_{i \in react} U_{int,i} \right) \prod_{i=1}^s \left( \frac{d\mathbf{q}_i}{Z_i(1,V,T)} \right)^{\nu_i}
+%\end{equation}
+%
+%\noindent
+%where the sums are over the ideal gas molecules and the product is over the species. Since the molecules being inserted and deleted do not interact with any other molecules, the change in energy between microstates $m$ and $n$ is only due to the internal energy of the ideal gas molecules
+%
+%\begin{equation}
+%\Delta U = \sum_{i \in prod} U_{int,i} - \sum_{i \in react} U_{int,i}
+%\end{equation}
+%
+%\noindent
+%The change in energy cancels from the acceptance criteria
+%
+%\begin{align}
+%\ln\left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) &= \beta \Delta G_{rxn}^{o} + \ln \left( \prod_{i=1}^s \left[ \frac{P\degree d\mathbf{q}_i}{k_BT Z_{rot,i}Z_{int,i}} \frac{Z_i(1,V,T)}{d\mathbf{q}_i} \right]^{-\nu_i} \right) \\
+%&= \beta \Delta G_{rxn}^{o} - \Delta \nu \ln(\beta P^o V)
+%\end{align}
+%
+%\noindent
+%Since the acceptance criteria does not depend on the configuration of molecules, the move can be accepted or rejected before generating microstate $n$.
 
 \section{Appendix}
 \label{sec:appendix}
