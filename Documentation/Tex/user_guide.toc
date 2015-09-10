@@ -1,13 +1,13 @@
-\contentsline {chapter}{\numberline {1}Introduction}{11}{chapter.1}
-\contentsline {section}{\numberline {1.1}Distribution}{12}{section.1.1}
-\contentsline {chapter}{\numberline {2}Force Field}{13}{chapter.2}
-\contentsline {section}{\numberline {2.1}Bonds}{13}{section.2.1}
-\contentsline {section}{\numberline {2.2}Angles}{13}{section.2.2}
-\contentsline {section}{\numberline {2.3}Dihedrals}{14}{section.2.3}
-\contentsline {section}{\numberline {2.4}Impropers}{15}{section.2.4}
-\contentsline {section}{\numberline {2.5}Nonbonded}{16}{section.2.5}
-\contentsline {subsection}{\numberline {2.5.1}Repulsion-Dispersion Interactions}{16}{subsection.2.5.1}
-\contentsline {subsection}{\numberline {2.5.2}Electrostatics}{17}{subsection.2.5.2}
+\contentsline {chapter}{\numberline {1}Introduction}{9}{chapter.1}
+\contentsline {section}{\numberline {1.1}Distribution}{9}{section.1.1}
+\contentsline {chapter}{\numberline {2}Force Field}{11}{chapter.2}
+\contentsline {section}{\numberline {2.1}Bonds}{11}{section.2.1}
+\contentsline {section}{\numberline {2.2}Angles}{11}{section.2.2}
+\contentsline {section}{\numberline {2.3}Dihedrals}{12}{section.2.3}
+\contentsline {section}{\numberline {2.4}Impropers}{12}{section.2.4}
+\contentsline {section}{\numberline {2.5}Nonbonded}{13}{section.2.5}
+\contentsline {subsection}{\numberline {2.5.1}Repulsion-Dispersion Interactions}{13}{subsection.2.5.1}
+\contentsline {subsection}{\numberline {2.5.2}Electrostatics}{15}{subsection.2.5.2}
 \contentsline {chapter}{\numberline {3}Cassandra Basics}{19}{chapter.3}
 \contentsline {section}{\numberline {3.1}Flow Diagram}{19}{section.3.1}
 \contentsline {section}{\numberline {3.2}Cassandra Simulation Setup}{19}{section.3.2}
@@ -26,64 +26,57 @@
 \contentsline {subsection}{\numberline {4.1.4}VDW Style}{27}{subsection.4.1.4}
 \contentsline {subsection}{\numberline {4.1.5}Charge Style}{29}{subsection.4.1.5}
 \contentsline {subsection}{\numberline {4.1.6}Intramolecular Scaling}{30}{subsection.4.1.6}
-\contentsline {subsection}{\numberline {4.1.7}Mixing Rule}{31}{subsection.4.1.7}
-\contentsline {subsection}{\numberline {4.1.8}Starting Seed}{31}{subsection.4.1.8}
-\contentsline {subsection}{\numberline {4.1.9}Minimum Cutoff}{32}{subsection.4.1.9}
-\contentsline {subsection}{\numberline {4.1.10}Pair Energy Storage}{32}{subsection.4.1.10}
-\contentsline {subsection}{\numberline {4.1.11}Molecule Files}{33}{subsection.4.1.11}
-\contentsline {subsection}{\numberline {4.1.12}Simulation Box}{33}{subsection.4.1.12}
-\contentsline {subsection}{\numberline {4.1.13}Temperature}{34}{subsection.4.1.13}
-\contentsline {subsection}{\numberline {4.1.14}Pressure}{34}{subsection.4.1.14}
-\contentsline {subsection}{\numberline {4.1.15}Chemical Potential}{34}{subsection.4.1.15}
-\contentsline {subsection}{\numberline {4.1.16}Move Probabilities}{35}{subsection.4.1.16}
+\contentsline {subsection}{\numberline {4.1.7}Mie Nonbond}{31}{subsection.4.1.7}
+\contentsline {subsection}{\numberline {4.1.8}Mixing Rule}{31}{subsection.4.1.8}
+\contentsline {subsection}{\numberline {4.1.9}Starting Seed}{32}{subsection.4.1.9}
+\contentsline {subsection}{\numberline {4.1.10}Minimum Cutoff}{32}{subsection.4.1.10}
+\contentsline {subsection}{\numberline {4.1.11}Pair Energy Storage}{33}{subsection.4.1.11}
+\contentsline {subsection}{\numberline {4.1.12}Molecule Files}{33}{subsection.4.1.12}
+\contentsline {subsection}{\numberline {4.1.13}Simulation Box}{33}{subsection.4.1.13}
+\contentsline {subsection}{\numberline {4.1.14}Temperature}{34}{subsection.4.1.14}
+\contentsline {subsection}{\numberline {4.1.15}Pressure}{34}{subsection.4.1.15}
+\contentsline {subsection}{\numberline {4.1.16}Chemical Potential}{34}{subsection.4.1.16}
+\contentsline {subsection}{\numberline {4.1.17}Move Probabilities}{35}{subsection.4.1.17}
 \contentsline {subsubsection}{Translation}{35}{section*.2}
-\contentsline {subsubsection}{Rotation}{36}{section*.3}
-\contentsline {subsubsection}{Regrowth}{37}{section*.4}
+\contentsline {subsubsection}{Rotation}{35}{section*.3}
+\contentsline {subsubsection}{Regrowth}{36}{section*.4}
 \contentsline {subsubsection}{Volume}{37}{section*.5}
 \contentsline {subsubsection}{Insertion and Deletion Moves}{38}{section*.6}
-\contentsline {subsection}{\numberline {4.1.17}Start Type}{41}{subsection.4.1.17}
-\contentsline {subsection}{\numberline {4.1.18}Run Type}{43}{subsection.4.1.18}
-\contentsline {subsection}{\numberline {4.1.19}Frequency}{44}{subsection.4.1.19}
-\contentsline {subsection}{\numberline {4.1.20}Average}{45}{subsection.4.1.20}
-\contentsline {subsection}{\numberline {4.1.21}Property Output}{45}{subsection.4.1.21}
-\contentsline {subsection}{\numberline {4.1.22}Fragment Files}{47}{subsection.4.1.22}
-\contentsline {subsection}{\numberline {4.1.23}File Info}{47}{subsection.4.1.23}
-\contentsline {subsection}{\numberline {4.1.24}CBMC parameters}{48}{subsection.4.1.24}
-\contentsline {section}{\numberline {4.2}MCF File}{49}{section.4.2}
-\contentsline {subsection}{\numberline {4.2.1}Atom Info}{49}{subsection.4.2.1}
-\contentsline {subsection}{\numberline {4.2.2}Bond Info}{51}{subsection.4.2.2}
-\contentsline {subsection}{\numberline {4.2.3}Angle Info}{52}{subsection.4.2.3}
-\contentsline {subsection}{\numberline {4.2.4}Dihedral Info}{53}{subsection.4.2.4}
-\contentsline {subsection}{\numberline {4.2.5}Fragment Info}{54}{subsection.4.2.5}
-\contentsline {subsection}{\numberline {4.2.6}Fragment Connectivity}{55}{subsection.4.2.6}
-\contentsline {chapter}{\numberline {5}Implementing the Metropolis Acceptance Criteria}{57}{chapter.5}
-\contentsline {section}{\numberline {5.1}Canonical Monte Carlo}{58}{section.5.1}
-\contentsline {subsection}{\numberline {5.1.1}Translating a Molecule}{59}{subsection.5.1.1}
-\contentsline {subsection}{\numberline {5.1.2}Rotating a Molecule}{59}{subsection.5.1.2}
-\contentsline {subsection}{\numberline {5.1.3}Regrowing a Molecule}{60}{subsection.5.1.3}
-\contentsline {subsection}{\numberline {5.1.4}Canonical Partition Function}{62}{subsection.5.1.4}
-\contentsline {section}{\numberline {5.2}Isothermal-Isobaric Monte Carlo}{63}{section.5.2}
-\contentsline {subsection}{\numberline {5.2.1}Scaling the Volume}{63}{subsection.5.2.1}
-\contentsline {section}{\numberline {5.3}Grand Canonical Monte Carlo}{65}{section.5.3}
-\contentsline {subsection}{\numberline {5.3.1}Inserting a Molecule with \newline Configurational Bias Monte Carlo}{66}{subsection.5.3.1}
-\contentsline {subsection}{\numberline {5.3.2}Deleting a Molecule that was Inserted via \newline Configurational Bias Monte Carlo}{70}{subsection.5.3.2}
-\contentsline {subsection}{\numberline {5.3.3}Regrowing a Molecule with Configurational Bias Monte Carlo}{73}{subsection.5.3.3}
-\contentsline {section}{\numberline {5.4}Gibbs Ensemble Monte Carlo}{74}{section.5.4}
-\contentsline {subsection}{\numberline {5.4.1}Gibbs Ensemble-NVT}{75}{subsection.5.4.1}
-\contentsline {subsection}{\numberline {5.4.2}Gibbs Ensemble-NPT}{78}{subsection.5.4.2}
-\contentsline {section}{\numberline {5.5}Multicomponent Systems}{79}{section.5.5}
-\contentsline {subsection}{\numberline {5.5.1}Reaction Ensemble Monte Carlo (RxMC)}{80}{subsection.5.5.1}
-\contentsline {subsection}{\numberline {5.5.2}Increment from $x_1=0$ to $0<x_2<1$}{82}{subsection.5.5.2}
-\contentsline {subsection}{\numberline {5.5.3}Increment from $x_1$ to $x_2$, where $0<x_1<x_2<1$}{83}{subsection.5.5.3}
-\contentsline {subsection}{\numberline {5.5.4}Increment from $x_1<1$ to $x_2=1$}{83}{subsection.5.5.4}
-\contentsline {subsection}{\numberline {5.5.5}React in the ideal gas phase: change from $x_1=1$ to $x_2=0$}{84}{subsection.5.5.5}
-\contentsline {section}{\numberline {5.6}Appendix}{85}{section.5.6}
-\contentsline {subsection}{\numberline {5.6.1}Inserting a Molecule Randomly}{85}{subsection.5.6.1}
-\contentsline {subsection}{\numberline {5.6.2}Deleting a Molecule Inserted Randomly}{86}{subsection.5.6.2}
-\contentsline {chapter}{\numberline {6}Utilities}{89}{chapter.6}
-\contentsline {section}{\numberline {6.1}Lowenstein Script}{89}{section.6.1}
-\contentsline {subsection}{\numberline {6.1.1}Usage}{89}{subsection.6.1.1}
-\contentsline {subsection}{\numberline {6.1.2}Input}{90}{subsection.6.1.2}
-\contentsline {section}{\numberline {6.2}Input File GUI}{91}{section.6.2}
-\contentsline {section}{\numberline {6.3}Generator of MCF files}{91}{section.6.3}
-\contentsline {section}{\numberline {6.4}Generate library of fragment configurations}{94}{section.6.4}
+\contentsline {subsection}{\numberline {4.1.18}Start Type}{40}{subsection.4.1.18}
+\contentsline {subsection}{\numberline {4.1.19}Run Type}{41}{subsection.4.1.19}
+\contentsline {subsection}{\numberline {4.1.20}Frequency}{42}{subsection.4.1.20}
+\contentsline {subsection}{\numberline {4.1.21}Average}{43}{subsection.4.1.21}
+\contentsline {subsection}{\numberline {4.1.22}Property Output}{44}{subsection.4.1.22}
+\contentsline {subsection}{\numberline {4.1.23}Fragment Files}{45}{subsection.4.1.23}
+\contentsline {subsection}{\numberline {4.1.24}File Info}{45}{subsection.4.1.24}
+\contentsline {subsection}{\numberline {4.1.25}CBMC parameters}{46}{subsection.4.1.25}
+\contentsline {section}{\numberline {4.2}MCF File}{47}{section.4.2}
+\contentsline {subsection}{\numberline {4.2.1}Atom Info}{47}{subsection.4.2.1}
+\contentsline {subsection}{\numberline {4.2.2}Bond Info}{49}{subsection.4.2.2}
+\contentsline {subsection}{\numberline {4.2.3}Angle Info}{50}{subsection.4.2.3}
+\contentsline {subsection}{\numberline {4.2.4}Dihedral Info}{51}{subsection.4.2.4}
+\contentsline {subsection}{\numberline {4.2.5}Fragment Info}{51}{subsection.4.2.5}
+\contentsline {subsection}{\numberline {4.2.6}Fragment Connectivity}{52}{subsection.4.2.6}
+\contentsline {chapter}{\numberline {5}Utilities}{53}{chapter.5}
+\contentsline {section}{\numberline {5.1}Input File GUI}{53}{section.5.1}
+\contentsline {section}{\numberline {5.2}Generate an MCF file}{53}{section.5.2}
+\contentsline {section}{\numberline {5.3}Generate library of fragment configurations}{56}{section.5.3}
+\contentsline {chapter}{\numberline {6}Implementing the Metropolis Acceptance Criteria}{59}{chapter.6}
+\contentsline {section}{\numberline {6.1}Canonical Monte Carlo}{60}{section.6.1}
+\contentsline {subsection}{\numberline {6.1.1}Translating a Molecule}{61}{subsection.6.1.1}
+\contentsline {subsection}{\numberline {6.1.2}Rotating a Molecule}{61}{subsection.6.1.2}
+\contentsline {subsection}{\numberline {6.1.3}Regrowing a Molecule}{62}{subsection.6.1.3}
+\contentsline {subsection}{\numberline {6.1.4}Canonical Partition Function}{63}{subsection.6.1.4}
+\contentsline {section}{\numberline {6.2}Isothermal-Isobaric Monte Carlo}{64}{section.6.2}
+\contentsline {subsection}{\numberline {6.2.1}Scaling the Volume}{65}{subsection.6.2.1}
+\contentsline {section}{\numberline {6.3}Grand Canonical Monte Carlo}{66}{section.6.3}
+\contentsline {subsection}{\numberline {6.3.1}Inserting a Molecule with \newline Configurational Bias Monte Carlo}{67}{subsection.6.3.1}
+\contentsline {subsection}{\numberline {6.3.2}Deleting a Molecule that was Inserted via \newline Configurational Bias Monte Carlo}{71}{subsection.6.3.2}
+\contentsline {subsection}{\numberline {6.3.3}Regrowing a Molecule with Configurational Bias Monte Carlo}{72}{subsection.6.3.3}
+\contentsline {section}{\numberline {6.4}Gibbs Ensemble Monte Carlo}{74}{section.6.4}
+\contentsline {subsection}{\numberline {6.4.1}Gibbs Ensemble-NVT}{74}{subsection.6.4.1}
+\contentsline {subsection}{\numberline {6.4.2}Gibbs Ensemble-NPT}{78}{subsection.6.4.2}
+\contentsline {section}{\numberline {6.5}Multicomponent Systems}{79}{section.6.5}
+\contentsline {section}{\numberline {6.6}Appendix}{79}{section.6.6}
+\contentsline {subsection}{\numberline {6.6.1}Inserting a Molecule Randomly}{79}{subsection.6.6.1}
+\contentsline {subsection}{\numberline {6.6.2}Deleting a Molecule Inserted Randomly}{81}{subsection.6.6.2}

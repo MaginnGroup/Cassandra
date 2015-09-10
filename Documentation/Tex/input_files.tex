@@ -23,10 +23,10 @@ produced by the simulation. For example,\\ \\
 %
 {\tt{
 \# Run\_Name \\
-dee
+dee.out
 }} \\ \\
 %
-Cassandra will then use \texttt{dee} as prefix for all output files created.
+Cassandra will then use \texttt{dee.out} as prefix for all output files created.
 
 %
 %%%%%%%%%%%%%%%%
@@ -158,6 +158,7 @@ specified as follows:
 \texttt{
 \# VDW\_Style \\
 LJ cut\_switch 12.0 14.0} \\ \\
+%
 In this case, the Lennard-Jones potential would end at 12.0 \AA\ and
 be smoothly taken to zero at 14.0 \AA. Obviously, $r_{on} < r_{off}$ or \emph{Real(i,3)} $<$ \emph{Real(i,4)}.
 %
@@ -176,33 +177,30 @@ boxes have a 10.5 \AA\ cutoff, use the following:
 LJ cut\_shift 10.5 \\
 LJ cut\_shift 10.5 } \\ \\
 %
-
 \texttt{mie}: This option cuts the potential off at a distance
 specified by \emph{Real(i,3)}. It must be used with the keyword ``\# Mie\_Nonbond'' (see section~\ref{sec:Mie_Nonbond}) which specifies exponents $n$ and $m$ for each species. The fourth parameter
 \emph{Real(i,4)/Logical(i,4)} is omitted. The functional form of this
 potential is given in eq~\ref{Eq:mie}. \\ \\
-
+%
 For example, a one box simulation using the mie option can be specified as follows:
-
+%
 \texttt{
 \# VDW\_Style \\
-LJ mie 14 \\
 LJ mie 14 } \\ \\
-
+%
 \texttt{mie\_cut\_shift}: This option cuts the potential off at a distance
 specified by \emph{Real(i,3)} and shifts the entire potential so that
 at this distance the potential is zero. It must be used with the keyword ``\# Mie\_Nonbond'' (see section~\ref{sec:Mie_Nonbond}) which specifies exponents $n$ and $m$ for each species. The fourth parameter
 \emph{Real(i,4)/Logical(i,4)} is omitted. The functional form of this
 potential is given in eq~\ref{Eq:mie_cut_shift}. \\ \\
-
-A two box simulation using the mie\_cut\_shift option with a 14 $\AA$ cutoff can be specified as follows:
+%
+A two box simulation using the mie\_cut\_shift option with a 14 \AA\ cutoff can be specified as follows:
 
 \texttt{
 \# VDW\_Style \\
 LJ mie\_cut\_shift 14 \\
 LJ mie\_cut\_shift 14 } \\ \\
-
-
+%
 {\bf Note: For all options, cutoff distances must be less than or
   equal to the shortest edge length of a simulation box}.
 %%%%%%%%%%%%%%%%
@@ -274,7 +272,7 @@ NONE \\
 NONE}
 \\ \\
 %
-{\bf{Note}} : If the cutoff in VDW\_Style is set to half of the
+{\bf{Note}}: If the cutoff in VDW\_Style is set to half of the
 simulation box length, any cutoff distance specified in the
 Charge\_Style section will default to the half of the simulation box
 length. In the case of Ewald summation, however, the accuracy will be
@@ -340,30 +338,32 @@ interactions, but no interactions will be computed. \
 This keyword should only be used if VDW\_Style is set to ``mie'' or ``mie\_cut\_shift''.
 \textit{Int(i,1)} and \textit{Int(j,2)} specify the index for each species pair combination.  \textit{Real(i,j,3)} and \textit{Real(i,j,4)} are the corresponding $n$ and $m$ exponents, respectively. 
 
-For example, a system with two species interacting with a LJ potential can be specified as follows:
-
-{\it 1 1 12 6} \\
-{\it 1 2 12 6} \\
-{\it 2 1 12 6} \\
-{\it 2 2 12 6} \\
+For example, a system with two species interacting with a LJ potential can be specified as follows:\\ \\
+\texttt{
+\# Mie\_Nonbond \\
+1 1 12 6 \\
+1 2 12 6 \\
+2 1 12 6 \\
+2 2 12 6
+}
 
 \textbf{Note that this keyword sensitive to the correct species pair ordering. Also note that exponents for species pairs $i$ and $j$, along with $j$ and $i$, are both specified. For N species in a system, (N * N) lines should be specified.}
 
 
-Likewise, for a system including three species, with species 1 interacting with $n$ = 9 and $m$ = 6 only with itself and all other pair combinations with $n$ = 12 and $m$ = 4, the following lines can be specified:
-
-{\it 1 1 9 6} \\
-{\it 1 2 12 4} \\
-{\it 1 3 12 4} \\
-{\it 2 1 12 4} \\
-{\it 2 2 12 4} \\
-{\it 2 3 12 4} \\
-{\it 3 1 12 4} \\
-{\it 3 2 12 4} \\
-{\it 3 3 12 4} \\
-
-
-
+Likewise, for a system including three species, with species 1 interacting with $n$ = 9 and $m$ = 6 only with itself and all other pair combinations with $n$ = 12 and $m$ = 4, the following lines can be specified: \\ \\
+\texttt{
+\# Mie\_Nonbond \\
+1 1 \ 9 6 \\
+1 2 12 4 \\
+1 3 12 4 \\
+2 1 12 4 \\
+2 2 12 4 \\
+2 3 12 4 \\
+3 1 12 4 \\
+3 2 12 4 \\
+3 3 12 4
+}
+%
 %%%%%%%%%%%%%%%%
 %
 % # Mixing_Rule
@@ -517,7 +517,7 @@ and is separated from the previous box by a blank line. For a two box
 simulation, box information is given as: \\ \\ 
 %
 \texttt{
-{\bf \# Box\_Info} \\
+\# Box\_Info \\
  2 \\
  CUBIC \\
  30.0  \\
@@ -565,7 +565,7 @@ in kJ/mol of each insertable species.
 Each chemical potential will be assigned in the order species appear in 
 the \texttt{Molecule\_Files} section. 
 This keyword is only used for grand canonical simulations.
-See Eq. (\ref{eq:muShift}) for more information about the shift.
+See Eq. (\ref{eq:muShift}) for more information.
 
 %%%%%%%%%%%%%%%%
 %
@@ -1276,8 +1276,8 @@ Production 250}
 \subsection{Frequency}\label{sec:Simulation_Length_Info}
 {\bf \# Simulation\_Length\_Info} \\
 {\it Units  Character(1)} \\
-{\it Prop\_Freq} or {\em thermofreq} {\it Integer(2)} \\
-{\it Coord\_Freq} or {\em coordfreq} {\it Integer(3)} \\
+{\it Prop\_Freq} {\it Integer(2)} \\
+{\it Coord\_Freq} {\it Integer(3)} \\
 {\it MCsteps} or {\em Stop} {\it Integer(4)} \\ 
 {\bf \# Done\_Simulation\_Length\_Info} \\ \\
 %
@@ -1305,8 +1305,8 @@ Coord\_Freq       10 \\
 Stop                 60 \\ 
 \# Done\_Simulation\_Length\_Info \\ \\}
 %
-Note that similar to \texttt{\# Move\_Probabilities} section, the end of the frequency section 
-always includes the \\ \texttt{\#~Done\_Frequency\_Info} line. \\ \\
+Similar to \texttt{\# Move\_Probabilities} section, the end of the simulation length section 
+always includes the \\ \texttt{\#~Done\_Simulation\_Length\_Info} line. \\ \\
 %
 Simulations can also be run for a given number of MC steps. To enable this feature, 
 {\it Character(1)} is set to `Steps'. Additional information is required and is given in the
@@ -1374,7 +1374,7 @@ interactions in kJ/mol \\
 \texttt{Enthalpy}: Enthalpy of the system (Extensive) kJ/mol \\
 \texttt{Pressure}: Pressure of the system in bar \\
 \texttt{Volume}: Volume of the system in \AA$^3$ \\
-\texttt{Nmols}: Number of mols of species \\
+\texttt{Nmols}: Number of molecules of a species \\
 \texttt{Density}: Density of a species in \#/\AA$^3$ \\ \\
 %
 For example, if you would like total energy, volume and pressure of a one box system to be written, you may 
