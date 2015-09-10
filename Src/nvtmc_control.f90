@@ -41,7 +41,7 @@ SUBROUTINE NVTMC_Control
   !        Get_Temperature_Info        
   !        Get_Move_Probabilities     
   !        Get_CBMC_Info              
-  !        Get_Frequency_Info         
+  !        Get_Simulation_Length_Info         
   !        Get_Property_Info          
   !        Average_Info               
   !        Get_Neighbor_Style         
@@ -114,7 +114,7 @@ SUBROUTINE NVTMC_Control
 
   CALL Get_CBMC_Info
 
-  CALL Get_Frequency_Info
+  CALL Get_Simulation_Length_Info
 
   CALL Average_Info
 
@@ -145,7 +145,7 @@ SUBROUTINE NVTMC_Control
   CALL Get_Dihedral_Atoms_To_Place
 
   DO i=1,nbr_boxes
-  IF (int_vdw_sum_style(i) == vdw_mie) THEN
+  IF (int_vdw_sum_style(i) == vdw_mie .OR. int_vdw_sum_style(i) == vdw_mie_cut_shift) THEN
       CALL Get_Mie_Nonbond
   END IF
   END DO

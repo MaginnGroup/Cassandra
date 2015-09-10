@@ -9,39 +9,38 @@ The current folder contains the following files and folders:
 	(2) /united_atom/: contains examples of MCF files for united atom models generated using this script. The examples provided are:
 		(a) Argon
 		(b) c2 (UA - Ethane)
-		(c) c3 (UA - Propane)
-		(d) c4 (UA - Butane)
-		(e) Cyclohexane (UA - Cyclohexane)
-		(f) c3-cycloheptane-c3 (UA - 1,4 propylcycloheptane)
+		(c) c4 (UA - Butane)
 
-	(3) /all_atom/: contains one example of an MCF file for a butane all atom model.
-
-	(4) /CML/: contains an example of an MCF file generated using this script using CML files.
-		(a) Benzene (AA)
-		(b) Benzene (UA)
-		(c) Ethane (AA)
-		(d) Pentane (UA)
+	(3) /CML/: contains an example of an MCF file generated using this script using CML files.
+		(a) Benzene (UA)
 
 How to use mcfgen.py
 
 Step 1.
    Generate a PDB file using a drawing package. We have used Gaussview to create PDB files and Avogadro to create CML files. 
+   Append the atom type as a tag to each atom in the system, for example, for butane
+
+	HETATM    1  C           0      -1.092   0.549   0.000                       C CH3  <----atom type!
+	HETATM    2  C           0      -0.578   1.275   1.257                       C CH2  
+	HETATM    3  C           0       0.962   1.275   1.257                       C CH2
+	HETATM    4  C           0       1.475   2.004   2.513                       C CH3
+
 
 Step 2.
    Run the following command from the directory containing the pdb or cml file and $PATH is the relative path to mcfgen.py
 
-   > python $PATH/mcfgen.py -fffile pdborcmlfile
+   > python $PATH/mcfgen.py pdborcmlfile --ffTemplate
 
    This will generate an .ff file template, whose name will be the
    same as the original pdb or cml file. This FF file template will have to be
    filled out using the force field parameters found in the
    literature.  Make sure you use proper units, as described in the
-   code documentation. 
+   code documentation.
 
 Step 3.
    After you have filled the ff file, run the command
 
-   > mcfgen.py -cassandra pdborcmlfile
+   > python $PATH/mcfgen.py pdborcmlfile
 
    This command will generate a Cassandra MCF file, whose name will be the same as the original pdb file. The script assumes that
 an ff file with the same basename is in the current folder:
@@ -99,3 +98,6 @@ CONECT    6    1
 CONECT    7    1
 
 (7) Note that the pdb file and ff files must be located in the working directory.
+
+(8) If an element is not found in the periodic table (i.e. possibly a dummy atom, like in TIP5P water models), 
+its mass is assumed to be 0.0

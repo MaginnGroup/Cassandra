@@ -1,0 +1,28 @@
+atomtypes
+1
+
+begin atom-atomtype
+1 CH3
+2 CH3
+end atom-atomtype
+
+dihedraltype none
+
+nonbonded
+CH3
+Sigma 3.75
+Epsilon 98.0
+atom_type_charge 
+
+bonds
+CH3 CH3
+Length 1.54
+Constant fixed
+
+charge
+1 0.0
+
+charge
+2 0.0
+
+end

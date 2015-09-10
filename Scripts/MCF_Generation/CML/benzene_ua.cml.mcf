@@ -1,0 +1,75 @@
+!*******************************************************************************
+!Molecular connectivity file for benzene_ua.cml.pdb
+!*******************************************************************************
+!Atom Format
+!index type element mass charge type parameters
+!type="LJ", parms=epsilon sigma
+
+# Atom_Info
+6
+1     C1      C    12.011  0.0  LJ    50.500     3.695  ring
+2     C2      C    12.011  0.0  LJ    50.500     3.695  ring
+3     C3      C    12.011  0.0  LJ    50.500     3.695  ring
+4     C4      C    12.011  0.0  LJ    50.500     3.695  ring
+5     C5      C    12.011  0.0  LJ    50.500     3.695  ring
+6     C6      C    12.011  0.0  LJ    50.500     3.695  ring
+
+!Bond Format
+!index i j type parameters
+!type="fixed", parms=bondLength
+
+# Bond_Info
+6
+1     1     2     fixed     1.400
+2     1     6     fixed     1.400
+3     2     3     fixed     1.400
+4     3     4     fixed     1.400
+5     4     5     fixed     1.400
+6     5     6     fixed     1.400
+
+!Angle Format
+!index i j k type parameters
+!type="fixed", parms=equilibrium_angle
+!type="harmonic", parms=force_constant equilibrium_angle
+
+# Angle_Info
+6
+1     2     1     6     fixed       120.00
+2     1     2     3     fixed       120.00
+3     2     3     4     fixed       120.00
+4     3     4     5     fixed       120.00
+5     4     5     6     fixed       120.00
+6     1     6     5     fixed       120.00
+
+!Dihedral Format
+!index i j k l type parameters
+!type="none"
+!type="CHARMM", parms=a0 a1 delta
+!type="OPLS", parms=c0 c1 c2 c3
+!type="harmonic", parms=force_constant equilibrium_dihedral
+
+# Dihedral_Info
+6
+1     1     2     3     4     OPLS         0.000     0.000     0.000     0.000
+2     1     6     5     4     OPLS         0.000     0.000     0.000     0.000
+3     2     1     6     5     OPLS         0.000     0.000     0.000     0.000
+4     2     3     4     5     OPLS         0.000     0.000     0.000     0.000
+5     3     2     1     6     OPLS         0.000     0.000     0.000     0.000
+6     3     4     5     6     OPLS         0.000     0.000     0.000     0.000
+
+# Improper_Info
+0
+
+!Fragment Format
+!index number_of_atoms_in_fragment branch_point other_atoms
+
+# Fragment_Info
+1
+1    6    1    2    3    4    5    6
+
+
+# Fragment_Connectivity
+0
+
+
+END

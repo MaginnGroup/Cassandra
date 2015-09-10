@@ -94,8 +94,8 @@ The options for {\it Character(i,1)} are ``LJ'' for a Lennard-Jones
 repulsion-dispersion interactions. {\it Character(i,2)} and {\it Real(i,3)}
  are specified only if {\it Character(i,1)} is set to ``LJ''. {\it Character(i,2)}
  describes the truncation scheme used for the Lennard-Jones potential.
-Options are ``cut'', ``cut\_tail'', ``cut\_switch'' and
-``cut\_shift". Refer to Chapter~\ref{Chapter:Force Field} for the
+Options are ``cut'', ``cut\_tail'', ``cut\_switch'',
+``cut\_shift", ``mie'', and ``mie\_cut\_shift". Refer to Chapter~\ref{Chapter:Force Field} for the
 functional forms.
  The other parameters
 \emph{Real(i,3)} and \emph{Real(i,4)/Logical(i,4)} depend on the
@@ -159,7 +159,7 @@ specified as follows:
 \# VDW\_Style \\
 LJ cut\_switch 12.0 14.0} \\ \\
 In this case, the Lennard-Jones potential would end at 12.0 \AA\ and
-be smooothly taken to zero at 14.0 \AA. Obviously, $r_{on} < r_{off}$ or \emph{Real(i,3)} $<$ \emph{Real(i,4)}.
+be smoothly taken to zero at 14.0 \AA. Obviously, $r_{on} < r_{off}$ or \emph{Real(i,3)} $<$ \emph{Real(i,4)}.
 %
 \\ \\
 \texttt{cut\_shift}: This option cuts the potential off at a distance
@@ -176,6 +176,33 @@ boxes have a 10.5 \AA\ cutoff, use the following:
 LJ cut\_shift 10.5 \\
 LJ cut\_shift 10.5 } \\ \\
 %
+
+\texttt{mie}: This option cuts the potential off at a distance
+specified by \emph{Real(i,3)}. It must be used with the keyword ``\# Mie\_Nonbond'' (see section~\ref{sec:Mie_Nonbond}) which specifies exponents $n$ and $m$ for each species. The fourth parameter
+\emph{Real(i,4)/Logical(i,4)} is omitted. The functional form of this
+potential is given in eq~\ref{Eq:mie}. \\ \\
+
+For example, a one box simulation using the mie option can be specified as follows:
+
+\texttt{
+\# VDW\_Style \\
+LJ mie 14 \\
+LJ mie 14 } \\ \\
+
+\texttt{mie\_cut\_shift}: This option cuts the potential off at a distance
+specified by \emph{Real(i,3)} and shifts the entire potential so that
+at this distance the potential is zero. It must be used with the keyword ``\# Mie\_Nonbond'' (see section~\ref{sec:Mie_Nonbond}) which specifies exponents $n$ and $m$ for each species. The fourth parameter
+\emph{Real(i,4)/Logical(i,4)} is omitted. The functional form of this
+potential is given in eq~\ref{Eq:mie_cut_shift}. \\ \\
+
+A two box simulation using the mie\_cut\_shift option with a 14 $\AA$ cutoff can be specified as follows:
+
+\texttt{
+\# VDW\_Style \\
+LJ mie\_cut\_shift 14 \\
+LJ mie\_cut\_shift 14 } \\ \\
+
+
 {\bf Note: For all options, cutoff distances must be less than or
   equal to the shortest edge length of a simulation box}.
 %%%%%%%%%%%%%%%%
@@ -300,7 +327,43 @@ of the \# Intra\_Scaling keyword, default values of 0.0, 0.0, 0.5 and 1.0 will b
 for 1-2, 1-3, 1-4 and 1-N  for VDW and Coulomb interactions for all
 the species in the simulation.  If \# Charge\_Scaling is set to
 ``NONE'', you must still specify the Intra\_Scaling for Coulombic
-interactions, but no interactions will be computed. 
+interactions, but no interactions will be computed. \
+%%%%%%%%%%%%%%%%
+%
+% Mie Nonbond
+%
+%%%%%%%%%%%%%%%%
+\subsection{Mie Nonbond}\label{sec:Mie_Nonbond}
+{\bf \# Mie\_Nonbond} \\
+{\it Int(i,1) Int(j,2) Real(i,j,3) Real(i,j,4)} * ($N$ species * $N$ species) lines \\ 
+
+This keyword should only be used if VDW\_Style is set to ``mie'' or ``mie\_cut\_shift''.
+\textit{Int(i,1)} and \textit{Int(j,2)} specify the index for each species pair combination.  \textit{Real(i,j,3)} and \textit{Real(i,j,4)} are the corresponding $n$ and $m$ exponents, respectively. 
+
+For example, a system with two species interacting with a LJ potential can be specified as follows:
+
+{\it 1 1 12 6} \\
+{\it 1 2 12 6} \\
+{\it 2 1 12 6} \\
+{\it 2 2 12 6} \\
+
+\textbf{Note that this keyword sensitive to the correct species pair ordering. Also note that exponents for species pairs $i$ and $j$, along with $j$ and $i$, are both specified. For N species in a system, (N * N) lines should be specified.}
+
+
+Likewise, for a system including three species, with species 1 interacting with $n$ = 9 and $m$ = 6 only with itself and all other pair combinations with $n$ = 12 and $m$ = 4, the following lines can be specified:
+
+{\it 1 1 9 6} \\
+{\it 1 2 12 4} \\
+{\it 1 3 12 4} \\
+{\it 2 1 12 4} \\
+{\it 2 2 12 4} \\
+{\it 2 3 12 4} \\
+{\it 3 1 12 4} \\
+{\it 3 2 12 4} \\
+{\it 3 3 12 4} \\
+
+
+
 %%%%%%%%%%%%%%%%
 %
 % # Mixing_Rule
@@ -474,8 +537,8 @@ cubic \AA\ and the second will be 60 X 60 X 60 cubic \AA.
 {\bf \# Temperature\_Info} \\ 
 {\it Real(1) Real(2) .... } \\ \\
 %
-Sets the temperature in Kelvin {\it Real(1) Real(2) ... } for simulation
-boxes 1, 2, ... 
+The temperature setpoint in Kelvin {\it Real(1) Real(2) ... } for simulation
+boxes 1, 2, ... .
 %%%%%%%%%%%%%%%%
 %
 % Pressure_Info
@@ -485,25 +548,9 @@ boxes 1, 2, ...
 {\bf \# Pressure\_Info} \\
 {\it Real(1) Real(2) ... } \\
 %
-Specifies the pressure in bar {\it Real(1) Real(2) ...} for simulation
-boxes 1, 2, ... Note that if the simulation type does not require an
-input pressure (for example, an NVT simulation), this command will be
-ignored.  
-%%%%%%%%%%%%%%%%
-%
-% Fugacity_Info
-%
-%%%%%%%%%%%%%%%%
-\subsection{Fugacity}\label{sec:Fugacity_Info}
-{\bf \# Fugacity\_Info} \\
-{\it Real(1) Real(2) ...} \\ \\
-%
-Specifies the fugacities in bar {\it Real(1) Real(2) ...} of {\bf
-  insertable} species in the order in which they appear in the
-Molecule\_Files section.  The fugacity will be arbitrarily set to zero
-for species that cannot be swapped or exchanged with a reservoir. This
-option is used with grand canonical ensemble simulations. It will be
-ignored for all other simulation types.
+The pressure setpoint in bar {\it Real(1) Real(2) ...} for simulation
+boxes 1, 2, ... . If the simulation type does not require an
+input pressure (e.g., NVT), this command will be ignored.  
 %%%%%%%%%%%%%%%%%%
 %
 %  Chemical_Potential_Info
@@ -513,18 +560,12 @@ ignored for all other simulation types.
 {\bf \# Chemical\_Potential\_Info} \\
 {\it Real(1) Real(2) ....} \\ \\
 %
-This keyword is only used for grand canonical simulations and may be
-used instead of fugacity. It sets the
-chemical potential of the insertable species in the order in which
-they appear in the \texttt{Molecule\_Files} section. The chemical potentials
-will be set arbitrarily to zero for species that cannot be swapped or
-exchanged with a reservoir. Note that the de Broglie wavelength of the
-species in each box is automatically calculated and used in the
-acceptance rules. Units of chemical potential are kJ/mol. \textbf{Note: if you
-specify BOTH a fugacity AND a chemical potential, Cassandra will use
-whichever one appears first in the input file and will ignore the
-other keyword. We recommend that you do not list both keywords in any
-input file.}
+The chemical potential setpoint (shifted by a species-specific constant) 
+in kJ/mol of each insertable species. 
+Each chemical potential will be assigned in the order species appear in 
+the \texttt{Molecule\_Files} section. 
+This keyword is only used for grand canonical simulations.
+See Eq. (\ref{eq:muShift}) for more information about the shift.
 
 %%%%%%%%%%%%%%%%
 %
@@ -663,7 +704,7 @@ the translation probability as \\ \\
 10.0 11.0} 
 \\ \\
 This will tell Cassandra to attempt center of mass translations 25\%
-of the time. For box 1, the maximum displacement will be 2.0 \AA\ for
+of the total moves. For box 1, the maximum displacement will be 2.0 \AA\ for
 species 1 and 2.5 \AA\ for species 2. For box 2, the maximum
 displacement for species 1 will be 10.0 \AA\ and it will be 11.0
 \AA\ for species 2. Note that attempted moves will occur with equal
@@ -742,7 +783,7 @@ the rotational probability as \\ \\
 180.0 0.0} \\
 \\ 
 %
-This will tell Cassandra to perform rotational moves 25\% of the time. For box 1,
+This will tell Cassandra to perform rotational moves 25\% of the total moves. For box 1,
 the maximum rotational width will be 30\degree\ for species 1 and 0.0\degree\
 for species 2. For box 2, the maximum rotational width will be 180\degree\ for
 species 1 and 0.0\degree\ for species 2. Note that, since the maximum rotational
@@ -755,7 +796,7 @@ For a single box simulation with three species such that the first species has r
  0.25 \\
 30.0 10.0 0.0}
 \\ \\
-This will tell Cassandra to attempt rotational move 25\% of the time. 
+This will tell Cassandra to attempt rotational move 25\% of the total moves. 
 The maximum rotational width for species 1 is 30\degree\ and that for species 2
  is 10.0\degree. Since the species 2 is a linear molecule, its rotation will
  be attempted in Eulerian angles and Cassandra will not use this value. 
@@ -816,7 +857,7 @@ species is monatomic, you would specify the following: \\ \\
 0.3 \\
 0.0 0.7 0.3 } \\ \\
 %
-This will tell Cassandra to attempt regrowth move 30\% of the time. The relative probabilities of
+This will tell Cassandra to attempt regrowth move 30\% of the total moves. The relative probabilities of
 performing regrowth moves on species 1, 2 and 3 are 0.0, 0.7 and 0.3 respectively. 
 %%%%%%%%%%%%%%%%
 %
@@ -857,7 +898,7 @@ you would specify the following: \\ \\
 300} \\ \\
 %                                                                                                                                           
 This will tell Cassandra to attempt volume moves 2\% of the
-time. The box volume would be changed by random amounts ranging from
+total moves. The box volume would be changed by random amounts ranging from
 -300 \AA$^3$ to +300 \AA$^3$. For a liquid box 20 \AA\ per side,
 this would result in a maximum box edge length change of about 0.25
 \AA, which is a reasonable value.  
@@ -873,16 +914,16 @@ following: \\ \\
 5000} \\ \\
 %
 This will tell Cassandra to attempt volume moves 2\% of the
-time. The first box volume (assumed here to be smaller and of higher
+total moves. The first box volume (assumed here to be smaller and of higher
 density, such as would occur if it were the liquid box) would be
 changed by random amounts ranging from 
 -300 \AA $^3$ to +300 \AA $^3$. The second box volume would be
 changed by random amounts ranging from
 -5000 \AA $^3$ to +5000 \AA $^3$. As with all move probabilities, you
 can experiment with making 
-bolder or more conservative moves. Note that if the \# Run\_Type is set
-to 'Equilibration', Cassandra will attempt to optimize the boldness of
-moves to achieve about 50\% acceptance rates. 
+larger or smaller moves. Note that if the \# Run\_Type is set
+to 'Equilibration', Cassandra will attempt to optimize the magnitude of
+the volume change to achieve about 50\% acceptance rates. 
 %If you wish to perform a GEMC-NVT simulation, you might specify the
 %following: \\ \\
 %                                                                                                                                           
@@ -931,7 +972,7 @@ reservoir \\
 insertion method \\
 reservoir} \\ \\ 
 %
-This will tell Cassandra to attempt insertions 10\% of the time and
+This will tell Cassandra to attempt insertions 10\% of the total moves and
 both species will be inserted using
 the reservoir insertion method.  \\ \\
 %                                                                                                                                           
@@ -943,7 +984,7 @@ reservoir \\
 insertion method \\
 none} \\ \\ 
 %
-This will tell Cassandra to attempt insertions 10\% of the time. Only
+This will tell Cassandra to attempt insertions 10\% of the total moves. Only
 species 1 will be inserted, while species 2 will not get inserted. \\ \\
 %%%%%%%%%%%%%%%%
 %
@@ -988,7 +1029,7 @@ insertion method \\
 none \\ \\
 }
 %
-This will tell Cassandra to attempt swap moves 10\% of the time. Attempts will be made to transfer species 1 and 2 between available boxes while molecules of species 3 will remain
+This will tell Cassandra to attempt swap moves 10\% of the total moves. Attempts will be made to transfer species 1 and 2 between available boxes while molecules of species 3 will remain
 in the boxes they are present in at the start of the simulation. \\ \\
 %
 %
@@ -1017,9 +1058,18 @@ in the boxes they are present in at the start of the simulation. \\ \\
 {\bf \# Prob\_Ring} \\
 {\it Real(1) Real(2)} \\ \\
 %
-This keyword is used when flip moves are to be attempted to sample bond angles and dihedral angles in a ring fragment. For more details on this move, see our publication \cite{Shah:2011}. The relative probability of attempting a flip move is 
-specified by {\it Real(1)} while the maximum angular displacement in degrees for the move is given by {\it Real(2)}. For example, if the flip is to be attempted 30\% of the 
-time and the maximum angular displacement for the move is 20\degree~specify the following: \\ \\
+This keyword is used when flip moves are to be attempted to sample bond angles and 
+dihedral angles in a ring fragment. 
+For more details on this move, see our publication \cite{Shah:2011}. 
+Note that this keyword is used only in input files
+that generate configuration libraries of ring moieties. The input file of the 
+actual simulation would involve the ``\# Prob\_Regrowth'' keyword.
+The relative probability of attempting a flip move is 
+specified by {\it Real(1)} while the maximum angular displacement 
+in degrees for the move is given by {\it Real(2)}. 
+For example, if the flip is to be attempted 30\% of the 
+time and the maximum angular displacement for the 
+move is 20\degree~specify the following: \\ \\
 %
 \texttt{
 \# Prob\_Ring \\
@@ -1220,25 +1270,25 @@ Production 250}
 %
 %%%%%%%%%%%%%%%%
 %
-% Frequency_Info
+% Simulation_Length
 %
 %%%%%%%%%%%%%%%%
-\subsection{Frequency}\label{sec:Frequency_Info}
-{\bf \# Frequency\_Info} \\
-{\it freq\_type  Character(1)} \\
-{\it Nthermofreq} or {\em thermofreq} {\it Integer(2)} \\
-{\it Ncoordfreq} or {\em coordfreq} {\it Integer(3)} \\
+\subsection{Frequency}\label{sec:Simulation_Length_Info}
+{\bf \# Simulation\_Length\_Info} \\
+{\it Units  Character(1)} \\
+{\it Prop\_Freq} or {\em thermofreq} {\it Integer(2)} \\
+{\it Coord\_Freq} or {\em coordfreq} {\it Integer(3)} \\
 {\it MCsteps} or {\em Stop} {\it Integer(4)} \\ 
-{\bf \# Done\_Frequency\_Info} \\ \\
+{\bf \# Done\_Simulation\_Length\_Info} \\ \\
 %
 This section specifies the frequency at which thermodynamic properties and coordinates are output
 to a file. {\it Character(1)} determines the method by which the simulation is terminated and
-data is output. If {\it Character(1)} is to `Timed', then the simulation stops after the specified 
+data is output. If {\it Character(1)} is to `Minutes', then the simulation stops after the specified 
 time in minutes. The format for this option is given below: \\ \\
 %
-{\bf freq\_type    Timed} \\
-thermofreq       {\it Integer(2) }\\
-coordfreq         {\it Integer(3)} \\
+{\bf Units    Minutes} \\
+Prop\_Freq       {\it Integer(2) }\\
+Coord\_Freq        {\it Integer(3)} \\
 Stop                  {\it Integer(4)} \\ \\
 %
 With this option, thermodynamic quantities are output every {\it Integer(2)} minutes, 
@@ -1248,23 +1298,23 @@ such that thermodynamic quantities are written every minute and the coordinates 
 every 10 minutes, use the following: \\ \\
 %
 \texttt{
-\# Frequency\_Info \\
-freq\_type    Timed \\
-thermofreq    1 \\
-coordfreq       10 \\
+\# Simulation\_Length\_Info \\
+Units    Minutes \\
+Prop\_Freq    1 \\
+Coord\_Freq       10 \\
 Stop                 60 \\ 
-\# Done\_Frequency\_Info \\ \\}
+\# Done\_Simulation\_Length\_Info \\ \\}
 %
 Note that similar to \texttt{\# Move\_Probabilities} section, the end of the frequency section 
 always includes the \\ \texttt{\#~Done\_Frequency\_Info} line. \\ \\
 %
 Simulations can also be run for a given number of MC steps. To enable this feature, 
-{\it Character(1)} is set to `none'. Additional information is required and is given in the
+{\it Character(1)} is set to `Steps'. Additional information is required and is given in the
 following format: \\ \\
 %
-{\bf freq\_type    none} \\
-Nthermofreq       {\it Integer(2) }\\
-Ncoordfreq         {\it Integer(3)} \\
+{\bf Units    Steps} \\
+Prop\_Freq       {\it Integer(2) }\\
+Coord\_Freq         {\it Integer(3)} \\
 MCsteps                  {\it Integer(4)} \\ \\
 %
 With this option, thermodynamic quantities are output every {\it Integer(2)} MC steps,
@@ -1275,12 +1325,12 @@ To run a simulation of 50,000 steps such that thermodynamic quantities are print
 every 100 MC steps and coordinates are output every 10,000 steps, use the following: \\ \\
 %
 \texttt{
-\# Frequency\_Info \\
-freq\_type none \\
-Nthermofreq   100 \\
-Ncoordfreq     10000 \\
-MCsteps          50000 \\
-\# Done\_Frequency\_Info}
+\# Simulation\_Length\_Info \\
+Units           Steps \\
+Prop\_Freq      100 \\
+Coord\_Freq     10000 \\
+MCsteps         50000 \\
+\# Done\_Simulation\_Length\_Info}
 %
 %
 %%%%%%%%%%%%%%%%

@@ -415,78 +415,78 @@ SUBROUTINE NPTMC_Driver
 
   ! let us check if at the end of the simulation, the energies are properly updated
 
-  write(logunit,*) '*********** Ending simulation *****************'
-  write(logunit,*)
-
-  IF ( SUM(nfragments) > 0 ) THEN
-     
-     write(logunit,*) '************ Regrowth Statistics *************'
-     write(logunit,*)
-     write(logunit,*) 'Fragment Species Regrowth_Trials Regrowth_Success'
-     
-     DO is = 1, nspecies
-        DO ifrag = 1, nfragments(is) - 1
-           write(logunit,*) ifrag, is, regrowth_trials(ifrag,is), regrowth_success(ifrag,is)
-        END DO
-     END DO
-  END IF
-
-    ! Display the components of the energy.
-
-  DO this_box = 1, nbr_boxes
-
-     WRITE(logunit,*) '*****************************************'
-     WRITE(logunit,'(A36,2X,I2)') ' Starting energy components for box', this_box
-     WRITE(logunit,*) ' Atomic units-Extensive'
-     WRITE(logunit,*) '*****************************************'
-     WRITE(logunit,*)
-
-     write(logunit,*)
-     write(logunit,*) '*************************************************'
-     write(logunit,'(A,T30,F20.3)') 'Total system energy is' , energy(this_box)%total
-     write(logunit,'(A,T30,F20.3)') 'Intra molecular energy is', energy(this_box)%intra
-     WRITE(logunit,'(A,T30,F20.3)') 'Bond energy is', energy(this_box)%bond
-     WRITE(logunit,'(A,T30,F20.3)') 'Bond angle energy is', energy(this_box)%angle
-     WRITE(logunit,'(A,T30,F20.3)') 'Dihedral angle energy is', energy(this_box)%dihedral
-     WRITE(logunit,'(A,T30,F20.3)') 'Improper angle energy is', energy(this_box)%improper
-     write(logunit,'(A,T30,F20.3)') 'Intra nonbond vdw is', energy(this_box)%intra_vdw
-     write(logunit,'(A,T30,F20.3)') 'Intra nonbond elec is', energy(this_box)%intra_q
-     write(logunit,'(A,T30,F20.3)') 'Inter molecule vdw is', energy(this_box)%inter_vdw
-     write(logunit,'(A,T30,F20.3)') 'Long range correction is', energy(this_box)%lrc
-     write(logunit,'(A,T30,F20.3)') 'Inter molecule q is', energy(this_box)%inter_q
-     write(logunit,'(A,T30,F20.3)') 'Reciprocal ewald is', energy(this_box)%ewald_reciprocal
-     write(logunit,'(A,T30,F20.3)') 'Self ewald is', energy(this_box)%ewald_self
-     
-     write(logunit,*) '**************************************************'
-     write(logunit,*)
-     
-     CALL Compute_Total_System_Energy(this_box,.TRUE.,overlap)
-     
-     ! Display the components of the energy.
-     write(logunit,*)
-     WRITE(logunit,*) '*****************************************'
-     write(logunit,'(A52,2X,I2)') 'Components of energy from total energy call for box', this_box
-     WRITE(logunit,*) 'Atomic units-Extensive'
-     WRITE(logunit,*) '*****************************************'
-     WRITE(logunit,*)
-
-     write(logunit,'(A,T30,F20.3)') 'Total system energy is' , energy(this_box)%total
-     WRITE(logunit,'(A,T30,F20.3)') 'Bond energy is', energy(this_box)%bond
-     WRITE(logunit,'(A,T30,F20.3)') 'Bond angle energy is', energy(this_box)%angle
-     WRITE(logunit,'(A,T30,F20.3)') 'Dihedral angle energy is', energy(this_box)%dihedral
-     WRITE(logunit,'(A,T30,F20.3)') 'Improper angle energy is', energy(this_box)%improper
-     write(logunit,'(A,T30,F20.3)') 'Intra molecular energy is', energy(this_box)%intra
-     write(logunit,'(A,T30,F20.3)') 'Intra nonbond vdw is', energy(this_box)%intra_vdw
-     write(logunit,'(A,T30,F20.3)') 'Intra nonbond elec is', energy(this_box)%intra_q
-     write(logunit,'(A,T30,F20.3)') 'Inter molecule vdw is', energy(this_box)%inter_vdw
-     write(logunit,'(A,T30,F20.3)') 'Long range correction is', energy(this_box)%lrc
-     write(logunit,'(A,T30,F20.3)') 'Inter molecule q is', energy(this_box)%inter_q
-     write(logunit,'(A,T30,F20.3)') 'Reciprocal ewald is', energy(this_box)%ewald_reciprocal
-     write(logunit,'(A,T30,F20.3)') 'Self ewald is', energy(this_box)%ewald_self
-     
-     write(logunit,*)
-
-  END DO
+!  WRITE(logunit,'(A59)') &
+!       '******************** END OF SIMULATION ********************'
+!  write(logunit,*)
+!
+!  IF ( SUM(nfragments) > 0 ) THEN
+!     
+!     write(logunit,*) '************ Regrowth Statistics *************'
+!     write(logunit,*)
+!     write(logunit,*) 'Fragment Species Regrowth_Trials Regrowth_Success'
+!     
+!     DO is = 1, nspecies
+!        DO ifrag = 1, nfragments(is) - 1
+!           write(logunit,*) ifrag, is, regrowth_trials(ifrag,is), regrowth_success(ifrag,is)
+!        END DO
+!     END DO
+!  END IF
+!
+!    ! Display the components of the energy.
+!
+!  DO this_box = 1, nbr_boxes
+!
+!     WRITE(logunit,'(X,A59)') '***********************************************************'
+!     WRITE(logunit,'(X,A36,2X,I2)') 'Ending energy components for box', this_box
+!     WRITE(logunit,*) ' Atomic units-Extensive'
+!     WRITE(logunit,'(X,A59)') '-----------------------------------------------------------'
+!     WRITE(logunit,*)
+!
+!     write(logunit,*)
+!     WRITE(logunit,'(X,A59)') '***********************************************************'
+!     write(logunit,'(X,A,T30,F20.3)') 'Total system energy is' , energy(this_box)%total
+!     write(logunit,'(X,A,T30,F20.3)') 'Intra molecular energy is', energy(this_box)%intra
+!     WRITE(logunit,'(X,A,T30,F20.3)') 'Bond energy is', energy(this_box)%bond
+!     WRITE(logunit,'(X,A,T30,F20.3)') 'Bond angle energy is', energy(this_box)%angle
+!     WRITE(logunit,'(X,A,T30,F20.3)') 'Dihedral angle energy is', energy(this_box)%dihedral
+!     WRITE(logunit,'(X,A,T30,F20.3)') 'Improper angle energy is', energy(this_box)%improper
+!     write(logunit,'(X,A,T30,F20.3)') 'Intra nonbond vdw is', energy(this_box)%intra_vdw
+!     write(logunit,'(X,A,T30,F20.3)') 'Intra nonbond elec is', energy(this_box)%intra_q
+!     write(logunit,'(X,A,T30,F20.3)') 'Inter molecule vdw is', energy(this_box)%inter_vdw
+!     write(logunit,'(X,A,T30,F20.3)') 'Long range correction is', energy(this_box)%lrc
+!     write(logunit,'(X,A,T30,F20.3)') 'Inter molecule q is', energy(this_box)%inter_q
+!     write(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald is', energy(this_box)%ewald_reciprocal
+!     write(logunit,'(X,A,T30,F20.3)') 'Self ewald is', energy(this_box)%ewald_self
+!     WRITE(logunit,'(X,A59)') '***********************************************************'
+!     write(logunit,*)
+!     
+!     CALL Compute_Total_System_Energy(this_box,.TRUE.,overlap)
+!     
+!     ! Display the components of the energy.
+!     write(logunit,*)
+!     WRITE(logunit,'(X,A59)') '***********************************************************'
+!     write(logunit,'(X,A52,2X,I2)') 'Energy components from total energy call for box', this_box
+!     WRITE(logunit,*) ' Atomic units-Extensive'
+!     WRITE(logunit,'(X,A59)') '-----------------------------------------------------------'
+!     WRITE(logunit,*)
+!
+!     write(logunit,'(X,A,T30,F20.3)') 'Total system energy is' , energy(this_box)%total
+!     WRITE(logunit,'(X,A,T30,F20.3)') 'Bond energy is', energy(this_box)%bond
+!     WRITE(logunit,'(X,A,T30,F20.3)') 'Bond angle energy is', energy(this_box)%angle
+!     WRITE(logunit,'(X,A,T30,F20.3)') 'Dihedral angle energy is', energy(this_box)%dihedral
+!     WRITE(logunit,'(X,A,T30,F20.3)') 'Improper angle energy is', energy(this_box)%improper
+!     write(logunit,'(X,A,T30,F20.3)') 'Intra molecular energy is', energy(this_box)%intra
+!     write(logunit,'(X,A,T30,F20.3)') 'Intra nonbond vdw is', energy(this_box)%intra_vdw
+!     write(logunit,'(X,A,T30,F20.3)') 'Intra nonbond elec is', energy(this_box)%intra_q
+!     write(logunit,'(X,A,T30,F20.3)') 'Inter molecule vdw is', energy(this_box)%inter_vdw
+!     write(logunit,'(X,A,T30,F20.3)') 'Long range correction is', energy(this_box)%lrc
+!     write(logunit,'(X,A,T30,F20.3)') 'Inter molecule q is', energy(this_box)%inter_q
+!     write(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald is', energy(this_box)%ewald_reciprocal
+!     write(logunit,'(X,A,T30,F20.3)') 'Self ewald is', energy(this_box)%ewald_self
+!     WRITE(logunit,'(X,A59)') '***********************************************************'
+!     write(logunit,*)
+!
+!  END DO
      
      IF(int_run_style == run_test) THEN
         
@@ -500,7 +500,7 @@ SUBROUTINE NPTMC_Driver
      END IF
 
 
-  CALL Write_Trials_Success
+!  CALL Write_Trials_Success
 
         
  

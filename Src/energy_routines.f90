@@ -971,6 +971,8 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
        vdw_in = vdw_cut_switch
      ELSEIF (int_vdw_sum_style(this_box) == vdw_mie) THEN
        vdw_in = vdw_mie
+     ELSEIF (int_vdw_sum_style(this_box) == vdw_mie_cut_shift) THEN
+       vdw_in = vdw_mie_cut_shift
      ENDIF
 
      IF (int_vdw_sum_style(this_box) /= vdw_in)  THEN
@@ -1612,7 +1614,23 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
                    Eij_vdw = 0.0_DP
                 ENDIF
 
-             ELSEIF (int_vdw_sum_style(ibox) == vdw_mie) THEN
+
+             ELSEIF (int_vdw_sum_style(ibox) == vdw_mie) THEN 
+
+                rij = SQRT(rijsq)
+                rcut_vdw = SQRT(rcut_vdwsq(ibox))
+     
+                mie_n = mie_nlist(mie_Matrix(is,js))
+                mie_m = mie_mlist(mie_Matrix(is,js))
+                mie_coeff = mie_n/(mie_n-mie_m) *(mie_n/mie_m)**(mie_m/(mie_n-mie_m))
+                SigOverR = sig/rij
+                SigOverRn = SigOverR ** mie_n
+                SigOverRm = SigOverR ** mie_m
+                Eij_vdw =  mie_coeff * eps * ((SigOverRn - SigOverRm))
+
+
+
+             ELSEIF (int_vdw_sum_style(ibox) == vdw_mie_cut_shift) THEN
 
                 rij = SQRT(rijsq)
 		rcut_vdw = SQRT(rcut_vdwsq(ibox))
@@ -2885,6 +2903,14 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
             get_vdw = .FALSE.
          ENDIF
 
+      ELSEIF (int_vdw_sum_style(this_box) == vdw_mie_cut_shift) THEN
+
+         IF (rijsq <= rcut_vdwsq(this_box)) THEN
+            get_vdw = .TRUE.
+         ELSE
+            get_vdw = .FALSE.
+         ENDIF
+
       ELSEIF (int_vdw_sum_style(this_box) == vdw_cut_switch) THEN
          
          IF (rijsq <= roff_switch_sq(this_box)) THEN
@@ -3034,9 +3060,6 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
                IF (.NOT. get_interaction ) CYCLE imLOOP4
                
                CALL Compute_Molecule_Pair_Force(this_im_1,is_1,this_im_2,is_2,this_box,tv_pair,tc_pair,rx,ry,rz)
-               
-               !                W_tensor_vdw(:,:,this_box) = W_tensor_vdw(:,:,this_box) + tv_pair(:,:)
-!                W_tensor_charge(:,:,this_box) = W_tensor_charge(:,:,this_box) + tc_pair(:,:)
                
                w_inter_vdw(:,:) = w_inter_vdw(:,:) + tv_pair(:,:)
                w_inter_charge(:,:) = w_inter_charge(:,:) + tc_pair(:,:)
@@ -3235,6 +3258,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
                 SigOverR12 = SigOverR6 * SigOverR6
                 
                 Wij_vdw = (24.0_DP * eps) * (2.0_DP*SigOverR12 - SigOverR6)
+
              ELSEIF (int_vdw_sum_style(ibox) == vdw_cut_shift) THEN
                 SigOverRsq = (sig**2)/rijsq
                 SigOverR6 = SigOverRsq * SigOverRsq * SigOverRsq
@@ -3273,7 +3297,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
                         (8.0_DP * rijsq * rijsq * roffsq_rijsq * Eij_vdw * switch_factor1(ibox))/(3.0_DP)
 
                 END IF
-             ELSEIF (int_vdw_sum_style(ibox) == vdw_mie) THEN
+             ELSEIF (int_vdw_sum_style(ibox) == vdw_mie .OR. int_vdw_sum_style(ibox) == vdw_mie_cut_shift) THEN
                 rij = SQRT(rijsq)
 
                 mie_n = mie_nlist(mie_Matrix(is,js))
@@ -3283,6 +3307,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
                 SigOverRn = SigOverR ** mie_n
                 SigOverRm = SigOverR ** mie_m
                 Wij_vdw = (mie_coeff * eps) *(mie_n * SigOverRn - mie_m * SigOverRm)
+
 
 
              ELSE

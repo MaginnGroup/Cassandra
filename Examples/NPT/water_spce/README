@@ -1,0 +1,51 @@
+This directory contains all the files needed to run a short simulation of 
+liquid-phase water using the SPC/E model with N=600 molecules at temperature 
+T=300K and pressure P=1.0bar.
+
+I. FILES REQUIRED TO RUN THE SIMULATION
+
+spce.mcf
+    This file was created by modifying spc.mcf.
+
+    Parameters from the SPC/E forcefield were manually typed into the blank 
+    template. Parameters for SPC/E are available in the following 
+    publication:
+
+			H. J. C. Berendsen, J. R. Grigera, and T. P. Straatsma. 
+			The Missing Term in Effective Pair Potentials. 
+			J. Phys. Chem 1987, 91, 6269-6271.
+
+npt.inp
+    This input file uses the checkpoint option. It reads the volume, maximum
+		displacement for translations, maximum theta for rotations and molecule 
+		coordinates from the nvt.inp.chk file.
+
+    The move probabilities were selected such that 1 volume move, which 
+    requires (N=600)^2 pairwise energy calculations, is attempted every 
+    N=600 molecule moves. The probability of a volume move is 1/601.
+    The two types of molecule moves--translation and rotation--are equally
+    probable 600/601/2. Regrowth moves are not needed because water is a 
+		rigid molecule.
+
+    Thermodynamic properties are output every 10 sweeps = 6010 moves, for a
+		total of 100 sweeps.
+
+npt.inp.chk
+    This checkpoint file was created by running 50k sweeps in the NPT ensemble,
+		at N=600 molecules, P=1.0bar, and T=300K.
+
+species1/
+    This directory was created with the following command:
+
+    > $CASSANDRA_DIR/Scripts/Frag_Library_Setup/library_setup.py $CASSANDRA_DIR/cassandra.exe nvt.inp spce.pdb
+
+II. RUNNING THE SIMULATION
+
+The simulation can be run with the following command:
+
+> $CASSANDRA_DIR/Src/cassandra.exe nvt.inp
+
+III. OUTPUT FILES
+
+All output files are named nvt.out.* , as defined in the input file. Please 
+see the Cassandra manual for more information on each output file type.
