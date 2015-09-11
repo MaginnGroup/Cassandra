@@ -514,30 +514,16 @@ each species, so do not use larger numbers than are needed.
 \subsection{Simulation Box}\label{sec:Box_Info}
 {\bf \# Box\_Info} \\
 {\it Integer(1)} \\
-{\it Character(i,2)}  \\
-{\it Real(i,3)} \\ \\
+{\it Character(i,1)}  \\
+{\it Real(i,j)} \\ \\
 This keyword sets parameters for the simulation boxes. 
 {\it   Integer(1)} specifies the total number of boxes in the
 simulation. For now, Gibbs ensemble simulations must have two boxes. 
-{\it Character(i,2)} is the shape of the {\it i$^{th}$} simulation
-box. Right now, the only supported box shape in Cassandra is cubic, so
-use the keyword ``CUBIC''.
+{\it Character(i,1)} is the shape of the {\it i$^{th}$} simulation
+box. The allowed keywords are ``CUBIC'', ``ORTHOGONAL'', and ``CELL\_MATRIX''.
 %
-\emph{Real(i,3)} is the length of the box edges for a cubic box in \AA. 
-%
-%If it's ``SLIT\_PORE'' geometry then it is assumed
-%that the periodicity is in the xy plane while the slit pore width is
-%along the z direction. In this case {\it
-%  Real(i,3) Real(i,4)} provide box dimensions in the x and y
-%directions respectively. {\it Real(i,5)} is the pore width if there
-%Ewald summation is not enabled. If the simulation uses Ewald summation
-%then {\it Real(i,5)} will be the length in the z direction for the
-%computation of electrostatic energy using 3D Ewald summation. A good
-%starting point is twice the pore width. {\bf Users are encouraged to check
-%the convergence of the electrostatic energy by varying {\it
-%  Real(i,5)}}. The actual pore width will be determined by {\bf \#
-%Pore\_Width} keyword (\autoref{sec:Pore_Width}). \\ \\
-%
+If {\it Character(i,1)} is ``CUBIC'', \emph{Real(i,j)} is the length 
+of the box edges for a cubic box in \AA. 
 Information for additional boxes is provided in an analogous fashion
 and is separated from the previous box by a blank line. For a two box
 simulation, box information is given as: \\ \\ 
@@ -553,6 +539,49 @@ simulation, box information is given as: \\ \\
 \\ \\
 This will construct two cubic boxes. The first will be 30 X 30 X 30
 cubic \AA\ and the second will be 60 X 60 X 60 cubic \AA.
+
+If {\it Character(i,1)} is ``ORTHOGONAL'', \emph{Real(i,j)} are the three
+dimensions that define the simulation box. For example, 
+
+\texttt{
+\# Box\_Info \\
+ 1 \\
+ ORTHOGONAL \\
+ 30.0 35.0 40.0}
+\\ \\
+
+This will create a simulation box with dimension 30.0 X 35.0 X 40.0 cubic \AA. \\
+
+Finally, if the simulation box is triclinic, set {\it Character(i,1)} to
+''CELL\_MATRIX``. In this case, \emph{Real(i,j)} are
+the three basis vectors that define the simulation box. For example, 
+
+\texttt{
+\# Box\_Info \\
+ 1 \\
+ CELL\_MATRIX \\
+ 30.0 0.00 0.00\\
+ 0.00 35.0 0.00\\
+ 0.00 2.00 40.0}
+\\ \\
+
+This will define a simulation box whose vectors are defined as 
+(30.0, 0.00, 0.00), (0.00,35.0,2.00) and (0.00,0.00,40.00).
+
+%
+%If it's ``SLIT\_PORE'' geometry then it is assumed
+%that the periodicity is in the xy plane while the slit pore width is
+%along the z direction. In this case {\it
+%  Real(i,3) Real(i,4)} provide box dimensions in the x and y
+%directions respectively. {\it Real(i,5)} is the pore width if there
+%Ewald summation is not enabled. If the simulation uses Ewald summation
+%then {\it Real(i,5)} will be the length in the z direction for the
+%computation of electrostatic energy using 3D Ewald summation. A good
+%starting point is twice the pore width. {\bf Users are encouraged to check
+%the convergence of the electrostatic energy by varying {\it
+%  Real(i,5)}}. The actual pore width will be determined by {\bf \#
+%Pore\_Width} keyword (\autoref{sec:Pore_Width}). \\ \\
+%
 %
 %%%%%%%%%%%%%%%%
 %
