@@ -1,70 +1,52 @@
 \chapter{Simulating Rigid Solids and Surfaces}
 
-The simulations involving a rigid solid or surface can be done in the canonical and grand canonical ensemble
-(NVT and GCMC). To obtain for instance an adsorption isotherm you are going to run GCMC simulations 
-of the system adsorbent (solid) + adsorbate (fluid) in a given temperature, chemical potential and volume. 
-The volume is related to the geometry and size of the solid, which is kept constant. 
-Currently, Cassandra supports all kind of geometries, including triclinic. 
-In  order to illustrate how to run GCMC simulation involving a rigid solid we are presenting an example 
-for adsorption of methane in Silicalite (MFI) at 300K. 
-A very detailed information about this example is available in Examples/GCMC/CH4\_in\_Silicalite/README
-
-\section{Files required} \label{sec:solid_files}
-In order to run a simulation involving rigid solids and surfaces you need to provide the following files:
+Simulations involving a rigid solid or surface can be performed in constant volume ensembles
+(i.e., NVT and GCMC). 
+In addition to the files described in Chapter \label{ch:input_files}, 
+the following files are required to run a simulation with a rigid solid or surface:
 
 \begin{itemize}
-\item A molecular connectivity file (MCF) (*.mcf) containing the molecular connectivity 
-information for the solid and the fluid
-\item A file with the coordinates of the all the atoms of solid or surface (*.xyz) 
-in order to be able to start a simulation from a empty solid.
-\item A fragment library file with fragment information 
-\item An input file (*.inp)   
+\item a molecular connectivity file with force field parameters for each atom in the solid (*.mcf)
+\item a fragment library file listing the coordinates of each atom in the solid (*.dat)
+\item a configuration file with the initial coordinates of the all atoms in the system (*.xyz) 
 \end{itemize} 
 
-The MCF and XYZ files can be obtained starting from a PDB file.
+The mcf and fragment library file can be created using the scripts discussed in Sections \label{sec:mcf} and \label{sec:library_setup}. Each of these scripts requires a starting PDB configuration file.
  
-In this session we are going to present just the generation of the files for the solids and surfaces. 
-
-\subsection{Getting a PDB file}\label{sec:solid_pdb}
-There are many ways to obtain a PDB file for a solid. For instance, a zeolite type Silicalite you can get from:
+\section{PDB file}\label{sec:solid_pdb}
+Since the solid structure will be rigid, no bond information is required in the 
+PDB file (i.e., no lines beginning with keyword CONECT). A PDB configuration file can be created in the following ways: 
 
 \begin{itemize}
-\item Literature:
-D. H. Olson, G. T. Kokotailo, S. L. Lawton and W. M. Meier
-Crystal Structure and Structure-Related Properties of ZSM-5
-The Journal of Physical Chemistry, Vol. 85, No. 15, 1981
+\item Manually, with atomic coordinates from the literature. 
+For example, the atomic coordinates of a Silicalite zeolite are published in Ref. \cite{Meier:1981}.
 
-\item Starting from a CIF file:
-The CIF file is provided in the Database of Zeolite Structure (http://www.iza-structure.org/databases/).
-Enter in the page then click on the "Framework Type" menu and select your zeolite. 
-The open window will show you many information about the zeolite type and will give 
-access to the CIF file. The CIF file contains information about the zeolite structure 
-such as cell parameters, space groups, T and O atoms coordinates. 
-You can  convert a CIF file in a PDB file using the free version of both software: MERCURY and VESTA.
-Example using VESTA:
+\item From a Crystallographic Information File (CIF), which can be downloaded from
+the Database of Zeolite Structures (http://www.iza-structure.org/databases/).
+From the home page, click on the menu "Framework Type" and select your zeolite. 
+The website will display structural information about the zeolite and will have 
+a link to download a CIF. The CIF contains information about the 
+zeolite structure such as cell parameters, space groups, T and O atom coordinates. 
+A CIF can be converted into a PDB file using either Mercury or VESTA, both of which
+are available as a free download. 
+For example, using VESTA:
 
 Step 1:
-In the file menu:
-click Open... and then download our CIF file (ex: MFI.cif)
+From the File menu, click Open. Then download the CIF (e.g. MFI.cif)
 
 Step 2:
-In the Objects menu:
-click Boundary... and then fill the Ranges for the fractional coordinates according the size you want.
-Examples:
-for a unit cell the ranges in x, y and z should be -0 to 1. The unit cell of MFI contains 288 atoms.
-for a supercell 2x2x2 the ranges in x, y and z should be -1 to 1. 
-This supercell will contain 2304 atoms = 8x288 atoms
+From the Objects menu, click Boundary. Fill the ranges for the fractional 
+coordinates according the size you want. To output a single unit cell, enter -0 to 1
+in the x, y and z ranges. 
+The unit cell of MFI contains 288 atoms. 
+To output a 2x2x2 crystal, enter -1 to 1 in the x, y and z ranges. 
+This supercell will contain 8x288 = 2304 atoms.
 
 Step 3:
-In the file menu:
-click Export Data... and then choose the name of the file with pdb extension (Ex: MFI8uc.pdb for a structure of MFI with 8 unit cells)
-
+From the File menu, click Export Data. Enter a filename ending with .pdb (e.g. MFI8uc.pdb for a structure of MFI with 8 unit cells)
 \end{itemize}
 
-Done... You created a PDB file.
-
-
-\subsection{Getting a MCF file}\label{sec:solid_mcf}
+\section{Molecular connectivity file}\label{sec:solid_mcf}
 You are going to need the PDB file and information about the solid force field you are going to use in the simulation.
 In literature, you can observe two approaches in order to get the solid force field. 
 In one of them the values for the interaction parameters for each atom of the solid were 
@@ -77,7 +59,7 @@ In the case of MFI there are a few force field available in literature
 The way to convert the PDB file in a MCF file for a solid or surface 
 follows the same procedure described for components in a fluid phase. See \ref{utility:mcfgen}
 
-\subsection{Getting XYZ file}\label{sec:solid_xyz}
+\section{Getting XYZ file}\label{sec:solid_xyz}
 
 Once again there is many ways to convert the PDB file in a XYZ file. 
 You can always do your own script or you can use free software like VMD.
@@ -109,7 +91,7 @@ from an empty solid using the option Read\_Old see /Chapter4/Start/\_Type  T
 
 Done. You have created a XYZ file in a proper format to be used in Cassandra.
 
-\subsection{Preparing the input file}
+\section{Preparing the input file}
 
 At this point, you should have already prepared the MCF and XYZ files following the procedures described above. \\ 
 
@@ -137,7 +119,7 @@ Then all the probabilities involving the solid must be set equal to zero. \\
 
 Now you are ready to obtain the Fragment\_Files. \\
 
-\subsection{Getting the Fragment Files}\label{sec:fragment file}
+\section{Getting the Fragment Files}\label{sec:fragment file}
 Since the solid or surface is considered to be rigid there is just one possible conformation 
 for the atoms. You can use the script provided in \ref{utility:libgen} to
 automatically generate the files for the \texttt{Fragment\_Files}.
@@ -145,3 +127,13 @@ The script will take information from the PDB file. \\
 
 
 Done. You are ready for running your simulation.
+_______________________________________________________________________
+For example, an adsorption isotherm can be computed with a GCMC simulation in which fluid molecules
+are inserted into a crystalline solid.
+
+The simulation box dimensions is related to the geometry and size of the solid, which is kept constant. 
+
+In  order to illustrate how to run GCMC simulation involving a rigid solid we are presenting an example 
+for adsorption of methane in Silicalite (MFI) at 300K. 
+A very detailed information about this example is available in Examples/GCMC/Methane\_Silicalite/README
+
