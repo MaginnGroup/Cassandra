@@ -1,4 +1,0 @@
-This is an example file for a GEMC MC simulation of 2,2-dimethylhexane at 354 K. 
-The example can be run using the following command:
-
-path_for_Cassandra_executable gemc.inp
