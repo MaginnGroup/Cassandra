@@ -1,0 +1,61 @@
+This directory contains all the files needed to run a short simulation of 
+gas-phase methane at temperature T=300K and chemical potential of -35kJ/mol.
+
+I. FILES REQUIRED TO RUN THE SIMULATION
+
+
+CH4.pdb 
+    created in Gaussview
+    The United_Atoms Model was used
+
+CH4.ff 
+    A empty templates were created with the following command
+
+    > $CASSANDRA_DIR/Scripts/MCF_Generation/mcfgen.py CH4.pdb --ffTemplate
+
+    Parameters were manually typed into the blank template.
+    The parameters used were those from Force field - TraPPE available in
+    Martin and Siepmann, J. Phys. Chem. B, 102, 2569-2577 (1998)
+
+CH4.mcf 
+    This file was generated with the following command:
+
+    > $CASSANDRA_DIR/Scripts/MCF_Generation/mcfgen.py CH4.pdb
+
+    Note that this command requires the  CH4.ff file  must be in the same directory.
+
+methane.inp
+    In order to have an idea about the value of the chemical potential at a given temperature(T) and pressure (P)
+     you can start from the expression for monoatomic gas (Hill, An Introduction to Statistical Thermodynamics (1960)):
+
+       mu(T,P) = -kB T ln[(2*Pi*m*kB*T/h^2)^3/2] +kB*Tln(P)
+
+    were kB is the Boltlzmann Constant, m is the mass of the one molecule and h the Planck Constant.
+    Take care with the units!!! The quantity in brackets has dimension of pressure. 
+    The chemical potential (mu) must be in kJ/mol.
+    
+    probablilites used in this example are:
+    translations
+    rotation
+    insertions and deletions
+    All the moviments were taken with equally probability.
+
+
+
+species1/
+    This directory was created with the following command:
+
+    > $CASSANDRA_DIR/Scripts/Frag_Library_Setup/library_setup.py $CASSANDRA_DIR/cassandra.exe methane.inp CH4.pdb
+
+II. RUNNING THE SIMULATION
+
+The simulation can be run with the following command:
+
+> $CASSANDRA_DIR/Src/cassandra.exe methane.inp
+
+III. OUTPUT FILES
+
+All output files are named methane* , as defined in the input file. Please 
+
+see the Cassandra manual for more information on each output file type.
+
