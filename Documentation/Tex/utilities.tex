@@ -1,46 +1,42 @@
 \chapter{Utilities}
 
-\section{Input File GUI} \label{Sec:GUI}
-
-This script provides a graphical user interface with which the user 
+\section{Input File GUI} 
+\label{Sec:GUI}
+This script provides a graphical user interface (GUI) with which the user 
 may create input files for use in simulations.  The GUI is written 
-in Python and uses the wxWidgets for Python module, which may be found at:   
-
-http://wxpython.org/download.php
-
-The GUI was written using Python 2.7.6 with module wxPython 3.0.1.1.
+in Python and uses the wxWidgets for Python module, which may be found at
+http://wxpython.org/download.php. The GUI was written using 
+Python 2.7.6 and wxPython 3.0.1.1.
 
 Upon installing the wxPython bundle compatible with your version of 
 Python, the GUI may be launched by opening
-the terminal, navigating to the /Scripts/ directory containing the GUI script, 
-and executing the following command: 
+the terminal, navigating to the /Scripts/Input\_File\_Generation/
+which contains the GUI script, and executing the following command:  \\ \\
 %
 \texttt{> python InputFileGUI.py}
 %
 
-The GUI will then launch to display the following screen:
+The GUI will launch to display the screen shown in Figure \ref{fig:GUIscreenshot}
 
 \begin{figure}[h]
  \centering
- \includegraphics[width=\textwidth]{GUIscreenshot.png}
+ \includegraphics[width=\textwidth]{GUI_screenshot.eps}
  \caption{Cassandra Input File Graphical User Interface}
  \label{fig:GUIscreenshot}
-%height=1in]{GUIscreenshot.png}
 \end{figure}
 
 Complete all prompts as instructed on all panels of the GUI. 
-Once all information has been provided, return to the home page pictured 
-above and click 'Create Input File' to create your input file.
+Once all information has been provided, return to the Basic Information-Page 1 
+section and click on ``Create Input File'' to create the input file. Note that if no 
+value is entered for a required prompt, the GUI will inform the user 
+via a KeyError message in the terminal.
 
-If you do not have a required value, and wish to enter the value at a later 
-point in time, you may enter '?' and use a text editor later to put the 
-correct value in to the input file manually.  
-
-If no value is entered for a required prompt, the GUI will inform the user 
-via a string in the terminal notifying a KeyError.
+If a given parameter is to be input at a later point in time, 
+enter '?' and subsequently use a text editor to enter the 
+desired value in the input file manually.  
 
 If creating multiple input files, it is strongly encouraged to exit the GUI
-and restart from the terminal each time a file is created, else data from the 
+and restart from the terminal each time a file is created, otherwise, data from the 
 previous file may leak to the next file.
 
 
