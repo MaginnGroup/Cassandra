@@ -29,7 +29,7 @@ CUBIC
 50.0 50.0 50.0
 
 # Temperature_Info
-400.0
+403.0
 
 # Seed_Info
 706111630 70611631
@@ -49,12 +49,12 @@ read_old
 # Run_Type
 Production 1000 10
 
-# Frequency_Info
-freq_type    none
-Nthermofreq  100
-Ncoordfreq   5000
+# Simulation_Length_Info
+Units    Steps
+Prop_Freq  100
+Coord_Freq   5000
 MCsteps      1000000
-# Done_Frequency_Info
+# Done_Simulation_Length_Info
 
 # Property_Info 1
 Energy_Total
