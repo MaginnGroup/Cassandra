@@ -1,5 +1,0 @@
-latex cassandra_setup_help.tex
-latex cassandra_setup_help.tex
-dvips -o cassandra_setup_help.ps cassandra_setup_help.dvi
-ps2pdf cassandra_setup_help.ps
-
