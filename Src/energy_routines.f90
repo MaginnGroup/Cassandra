@@ -340,7 +340,6 @@ CONTAINS
                 theta0 = angle_list(iangle,species)%angle_param(2)
                 
                 CALL Get_Bond_Angle(iangle,molecule,species,theta)
-                write(*,*) 'Bond_Angle', iangle, molecule, species, theta
                 energy = k*(theta-theta0)**2
                 ierr = 0
                 write(logunit,*) 'angle, theta, energy  ',iangle,theta*180.0_DP/PI, energy*atomic_to_kjmol
@@ -396,8 +395,6 @@ END SUBROUTINE Compute_Angle_Energy
           k=angle_list(iangle,species)%angle_param(1)
           theta0 = angle_list(iangle,species)%angle_param(2)
           CALL Get_Bond_Angle(iangle,molecule,species,theta)
-        !  write(*,*) 'values of iangle, molecule, theta'
-        !  write(*,*) iangle,molecule,theta 
           ea = k*(theta-theta0)**2
           ! Add more potential functions here.
        ENDIF
@@ -647,8 +644,6 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
           a3 = dihedral_list(idihed,species)%dihedral_param(4)
 
           CALL Get_Dihedral_Angle(idihed,molecule,species,phi)
-   !          write(*,*) 'values of idihed, moleucle, phi'
-   !       write(*,*) idihed, molecule, phi 
           twophi = 2.0_DP*phi
           threephi = 3.0_DP*phi
           edihed =  a0 + a1*(1.0_DP+COS(phi)) + &
