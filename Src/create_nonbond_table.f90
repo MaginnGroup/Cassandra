@@ -333,25 +333,6 @@
      			IF (line_string(1:13) == '# Mixing_Rule') THEN
 				READ(inputunit,*)
 				! Assign the first entry on the line to the mixing rule
-!				DO is_1 = 1, nspecies
-!					DO ia_1 = 1, natoms(is_1)
-!						itype_custom = nonbond_list(ia_1,is_1)%atom_type_number
-!						DO is_2 = 1, nspecies
-!							DO ia_2 = 1, natoms(is_2)
-!        							CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
-!								jtype_custom = nonbond_list(ia_2,is_2)%atom_type_number
-!								!Convert epsilon to atomic units amu A^2/ps^2 
-!								vdw_param1_table(itype_custom,jtype_custom) = kboltz * String_To_Double(line_array(3))
-!								vdw_param2_table(itype_custom,jtype_custom) = String_To_Double(line_array(4))
-!								!line_nbr = line_nbr + 1
-!		  	  		                  	WRITE(logunit,'(A6,5x,A6,2x,T20,f10.4,T50,f10.4)') &
-!						                       atom_type_list(itype_custom), atom_type_list(jtype_custom), &
-!						                       vdw_param1_table(itype_custom,jtype_custom), vdw_param2_table(itype_custom,jtype_custom)
-!
-!							END DO
-!						END DO
-!					END DO
-!				END DO
                                   DO itype_1 = 1, nbr_atomtypes
                                        itype_custom = itype_1
                                        DO itype_2 = 1, nbr_atomtypes
