@@ -1,0 +1,19 @@
+TITLE       Required
+REMARK   1 File created by GaussView 5.0.8
+HETATM    1  C           0      -5.212   0.434   1.257                       C UA_CH3
+HETATM    2  C           0      -5.725  -0.292   0.000                       C UA_C
+HETATM    3  C           0      -5.212   0.434  -1.257                       C UA_CH2
+HETATM    4  C           0      -3.672   0.437  -1.256                       C UA_CH2
+HETATM    5  C           0      -3.159   1.155  -2.518                       C UA_CH2
+HETATM    6  C           0      -1.619   1.159  -2.515                       C UA_CH3
+HETATM    7  C           0      -5.212  -1.744   0.000                       C UA_CH3
+HETATM    8  C           0      -7.265  -0.292   0.000                       C UA_CH3
+END
+CONECT    1    2
+CONECT    2    1    8    7    3
+CONECT    3    2    4
+CONECT    4    3    5
+CONECT    5    4    6
+CONECT    6    5
+CONECT    7    2
+CONECT    8    2

@@ -50,13 +50,13 @@ read_old
 # Run_Type
 Production 1000 10
 
-# Frequency_Info
-freq_type    none
-Nthermofreq  10
-Ncoordfreq   90
+# Simulation_Length_Info
+Units  Steps
+Prop_Freq  10
+Coord_Freq   90
 MCsteps      1100000
 NequilSteps  100000
-# Done_Frequency_Info
+# Done_Simulation_Length_Info
 
 # File_Info
 frag2.dat

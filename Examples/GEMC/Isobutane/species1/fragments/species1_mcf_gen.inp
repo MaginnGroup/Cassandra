@@ -1,5 +1,5 @@
 # Run_Name
-species1mcf_gen
+species1_mcf_gen
 
 # Sim_Type
 MCF_Gen
@@ -24,11 +24,11 @@ coul Ewald 12.0 0.000001
 0.0 0.0 0.0 1.0
 
 # Molecule_Files
-../../isobutane_UA_Trappe.mcf 50
+../../isobutane.mcf 50
 
 # Box_Info
 1
 CUBIC
-10.0 10.0 10.0
+30.0 30.0 30.0
 
 END

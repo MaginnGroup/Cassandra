@@ -1,5 +1,4 @@
-*** Beginning Cassandra simulation ***
-
+************** Beginning Cassandra simulation **************
 Version Cassandra 1.0                                                                                                           
 
 inputfile frag1.inp                                                                                                               
@@ -7,9 +6,9 @@ inputfile frag1.inp
 name of run: frag1
 
   Month      Day      Year
-     08       07      2014
+     09       07      2015
  
- Time:  14:26:44
+ Time:  14:25:27
  
 machine: maginnfe.crc.nd.edu
 
@@ -49,7 +48,7 @@ Simulation type: NVT_MC_Ring_Fragment
  50.0 50.0 50.0
  
  # Temperature_Info
- 400.0
+ 403.0
  
  # Seed_Info
  706111630 70611631
@@ -69,12 +68,12 @@ Simulation type: NVT_MC_Ring_Fragment
  # Run_Type
  Production 1000 10
  
- # Frequency_Info
- freq_type    none
- Nthermofreq  100
- Ncoordfreq   5000
+ # Simulation_Length_Info
+ Units    Steps
+ Prop_Freq  100
+ Coord_Freq   5000
  MCsteps      1000000
- # Done_Frequency_Info
+ # Done_Simulation_Length_Info
  
  # Property_Info 1
  Energy_Total
@@ -496,7 +495,7 @@ C6_s       C6_s       43.6510                        3.9100
  ****** Finished loading the seed ********
  
  **** Simulation temperature information ****
-  Temperature assigned to box     1  is  400.000    K
+  Temperature assigned to box     1  is  403.000    K
  
  *** Finished loading information for temperature ****
  
@@ -514,12 +513,12 @@ Thermodynamic quantities will written at every        100 MC steps.
  
 Coordinates will be written at every                 5000 MC steps.
  
-movie header file for box      1 is    frag1_H.box1
-movie_XYZ file for box         1 is    frag1_box1.xyz
+movie header file for box    1 is      frag1.box1.H
+movie_XYZ file for box       1 is      frag1.box1.xyz
  
 The simulation will be run for                      1000000 MC steps.
  
- *** Finished reading output info ******* 
+ *** Finished Reading Simulation Length Info ******* 
      Configuration file for species    1   is
                           frag1.dat
  *** Computed bond participation information ***
@@ -555,77 +554,77 @@ The simulation will be run for                      1000000 MC steps.
  
  
  
- Number of atoms in question           1
+ Number of atom in question           1
  Total number of angles           3
  Angles for this atom
            1           2           6
- Position of the atom in these dihedrals
+ Position of the atom in angles
            2           1           1
- Number of atoms in question           2
+ Number of atom in question           2
  Total number of angles           3
  Angles for this atom
            1           2           3
- Position of the atom in these dihedrals
+ Position of the atom in angles
            1           2           1
- Number of atoms in question           3
+ Number of atom in question           3
  Total number of angles           3
  Angles for this atom
            2           3           4
- Position of the atom in these dihedrals
+ Position of the atom in angles
            3           2           1
- Number of atoms in question           4
+ Number of atom in question           4
  Total number of angles           3
  Angles for this atom
            3           4           5
- Position of the atom in these dihedrals
+ Position of the atom in angles
            3           2           1
- Number of atoms in question           5
+ Number of atom in question           5
  Total number of angles           3
  Angles for this atom
            4           5           6
- Position of the atom in these dihedrals
+ Position of the atom in angles
            3           2           3
- Number of atoms in question           6
+ Number of atom in question           6
  Total number of angles           3
  Angles for this atom
            1           5           6
- Position of the atom in these dihedrals
+ Position of the atom in angles
            3           3           2
- Number of atoms in question           1
+ Number of atom in question           1
  Total number of dihedrals           4
  Dihedral angles for this atom
            1           2           3           5
- Position of the atom in angles
+ Position of the atom in dihedrals
            1           1           2           3
- Number of atoms in question           2
+ Number of atom in question           2
  Total number of dihedrals           4
  Dihedral angles for this atom
            1           3           4           5
- Position of the atom in angles
+ Position of the atom in dihedrals
            2           1           1           2
- Number of atoms in question           3
+ Number of atom in question           3
  Total number of dihedrals           4
  Dihedral angles for this atom
            1           4           5           6
- Position of the atom in angles
+ Position of the atom in dihedrals
            3           2           1           1
- Number of atoms in question           4
+ Number of atom in question           4
  Total number of dihedrals           4
  Dihedral angles for this atom
            1           2           4           6
- Position of the atom in angles
+ Position of the atom in dihedrals
            4           4           3           2
- Number of atoms in question           5
+ Number of atom in question           5
  Total number of dihedrals           4
  Dihedral angles for this atom
            2           3           4           6
- Position of the atom in angles
+ Position of the atom in dihedrals
            3           4           4           3
- Number of atoms in question           6
+ Number of atom in question           6
  Total number of dihedrals           4
  Dihedral angles for this atom
            2           3           5           6
- Position of the atom in angles
+ Position of the atom in dihedrals
            2           3           4           4
  
  ******Initial Coordinate Info **********
@@ -647,39 +646,38 @@ Starting configuration for box           1 is
 starting type read_old                                                                                                                
 
  Configurations read successfully
- ******** Charge Neutrality Check *********#
-Species            1    has charge                0.00000000
-Box                1    has charge                0.00000000
+ ***************** Charge Neutrality Check *****************
+ Species           1    has charge                0.00000000
+ Box               1    has charge                0.00000000
  
- #********Charge Neutrality Check*********#
- *****************************************
-  Starting energy components for box   1
+ ***************** Charge Neutrality Check *****************
+ ***********************************************************
+   Starting energy components for box   1
   Atomic units-Extensive
- *****************************************
  
-Total system energy is                 102848.974
-Intra molecular energy is              102848.974
-Bond energy is                              0.000
-Bond angle energy is                      346.511
-Dihedral angle energy is               102502.464
-Improper angle energy is                    0.000
-Intra nonbond vdw is                        0.000
-Intra nonbond elec is                       0.000
-Inter molecule vdw is                       0.000
-Inter molecule q is                         0.000
-Reciprocal ewald is                         0.000
-Self ewald is                               0.000
- *******************************************
+ Total system energy is                102848.974
+ Intra molecular energy is             102848.974
+ Bond energy is                             0.000
+ Bond angle energy is                     346.511
+ Dihedral angle energy is              102502.464
+ Improper angle energy is                   0.000
+ Intra nonbond vdw is                       0.000
+ Intra nonbond elec is                      0.000
+ Inter molecule vdw is                      0.000
+ Inter molecule q is                        0.000
+ Reciprocal ewald is                        0.000
+ Self ewald is                              0.000
+ ***********************************************************
  
- *********** Ending simulation *****************
+ ******************** Ending simulation ********************
  
  
  
  Writing information about subroutine times
  
- ******************************************
+ ***********************************************************
  
- ********************************************
+ ***********************************************************
  
  
  Program execution time
@@ -687,6 +685,6 @@ Self ewald is                               0.000
          0     Months
          0       Days
          0      Hours
-         1    Minutes
-         8    Seconds
-        28         ms
+         0    Minutes
+        27    Seconds
+       261         ms
