@@ -208,16 +208,16 @@ returns:
 	# initialize variables
 	atom_coords = {}
 	pdb = open(pdb_file,'r')
-
+	atom_nbr = 1
 	for line in pdb:
 		# read atom info
 		this_line = line.split()
 		if line[0:6]=='HETATM' or line[0:4]=='ATOM': 
-			i = line[6:11].strip()
 			x = float(line[30:38].strip())
 			y = float(line[38:46].strip())
 			z = float(line[46:54].strip())
-			atom_coords[i] = (x,y,z)
+			atom_coords[atom_nbr] = (x,y,z)
+			atom_nbr = atom_nbr + 1
 
 	pdb.close()
 	return atom_coords
@@ -588,7 +588,7 @@ for i in xrange(0, nbr_species):
 			output_frag.write(str(temperature) + ' 0.0\n')
 			for a in fragment_list[i][j]:
 				output_frag.write('%s' % atom_type_list[i][int(a)-1])
-				output_frag.write(' %8.3f %8.3f %8.3f\n' % atom_coords[a])
+				output_frag.write(' %8.3f %8.3f %8.3f\n' % atom_coords[int(a)])
 			output_frag.close()
 		else:
 			if fragment_has_ring[i][j]:

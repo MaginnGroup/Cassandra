@@ -1,10 +1,7 @@
-!  This is the input file for a short GCMC simulation of methane in gas phase at 300.0 K. 
-!  As result you are going to have an relation between chemical potential versus pressure. 
-! The results accuracy  can be tested comparing the values of density obtained in simulation against experimental values 
-! Reference for density values of methane: B. A. Younglove and J. F. Ely, J. Phys. Chem. Ref. Data, vol 16, No4, 1987
+! This is the input file for a short GCMC simulation of N2 in Silicalite at 77.0 K.
 
 # Run_Name
-methane
+nitrogen_Si
 !--------------
 
 # Sim_Type
@@ -12,20 +9,22 @@ GCMC
 !---------------
 
 # Nbr_Species
-1
+2
 !----------------
 
 # VDW_Style
-LJ cut_tail 14.0
+LJ cut_tail 6.0
 !----------------
 
 # Charge_Style
-NONE
+coul Ewald 6.0 1E-5
 !----------------
 
 # Intra_Scaling
-0.0 0.0 0.0 1.0
-0.0 0.0 0.0 1.0
+0.0  0.0  0.0  0.0
+0.0  0.0  0.0  0.0
+0.0  0.0  0.0  1.0
+0.0  0.0  0.0  1.0
 !------------------
 
 # Mixing_Rule
@@ -33,7 +32,8 @@ LB
 !----------------
 
 # Seed_Info
-1219130951 1219130952
+6752865750 4278117321
+
 !-------------------
 
 # Rcutoff_Low
@@ -45,47 +45,60 @@ TRUE
 !-----------
 
 # Molecule_Files
-CH4.mcf 500
+MFI.mcf 1
+N23S.mcf 100
 !------------------------
 
 # Box_Info
 1
-CUBIC
-100.0  100.0  100.0
+ORTHOGONAL
+20.09  19.738 13.142
 !-------------------------
 
 # Temperature_Info
-300.0 
+77.0 
 !------------------
 
 # Chemical_Potential_Info
--35.0
+-10.0
+!------------------------
+
+# Zig_By_Omega_Info
+1.0
 !------------------------
 
 # Move_Probability_Info
 
 # Prob_Translation
-0.4
-10.0
+0.25
+0.0  2.0
+
+# Prob_Rotation
+0.25
+0.0  180
+
 
 # Prob_Insertion
-0.3
+0.25
 insertion method
-reservoir 
+none
+insertion method
+reservoir
 
 # Prob_Deletion
-0.3
+0.25
 
 # Done_Probability_Info
 !----------------------
 
 # Start_Type
-make_config
-100
+read_old
+MFI.xyz
+
 !------------------
 
 # Run_Type
-Equilibration   550
+Equilibration   600  
 !------------------
 
 # Average_Info
@@ -100,21 +113,23 @@ MCsteps      4000
 # Done_Simulation_Length_Info
 !----------------------------
 
+
 # Property_Info 1 
 Energy_Total
 Nmols
-Volume
+Pressure
 
 !----------------
 
 # Fragment_Files
-species1/frag1/frag1.dat 1
-!---------------
+species1/frag1/frag1.dat  1
+species2/frag1/frag1.dat  2
+!---------------------------------------------------------one line per fragment
 
 # CBMC_Info
 kappa_ins 12
-kappa_rot 12 
-kappa_dih 12
+kappa_rot 12
+kappa_dih 0
 rcut_cbmc 6.5 
 !------------
 

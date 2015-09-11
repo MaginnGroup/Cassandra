@@ -1,0 +1,6 @@
+intel/15.0(21):ERROR:150: Module 'intel/15.0' conflicts with the currently loaded module(s) 'intel/14.0'
+intel/15.0(21):ERROR:102: Tcl command execution failed: conflict intel 
+
+intel/15.0(21):ERROR:150: Module 'intel/15.0' conflicts with the currently loaded module(s) 'intel/14.0'
+intel/15.0(21):ERROR:102: Tcl command execution failed: conflict intel 
+

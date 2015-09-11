@@ -1,0 +1,43 @@
+atomtypes
+2
+
+begin atom-atomtype
+1 N
+2 D
+3 N
+end atom-atomtype
+
+dihedraltype NONE
+
+nonbonded
+N
+Sigma 
+Epsilon 
+atom_type_charge 
+
+nonbonded
+D
+Sigma 
+Epsilon 
+atom_type_charge 
+
+bonds
+N D
+Length 
+Constant 
+
+angles
+N D N
+Angle 
+Constant 
+
+charge
+1 
+
+charge
+2 
+
+charge
+3 
+
+end

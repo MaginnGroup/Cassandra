@@ -1,10 +1,7 @@
-!  This is the input file for a short GCMC simulation of methane in gas phase at 300.0 K. 
-!  As result you are going to have an relation between chemical potential versus pressure. 
-! The results accuracy  can be tested comparing the values of density obtained in simulation against experimental values 
-! Reference for density values of methane: B. A. Younglove and J. F. Ely, J. Phys. Chem. Ref. Data, vol 16, No4, 1987
+! This is the input file for a short GCMC simulation of CH4 in Silicalite at 300.0 K.
 
 # Run_Name
-methane
+methane_Si
 !--------------
 
 # Sim_Type
@@ -12,11 +9,11 @@ GCMC
 !---------------
 
 # Nbr_Species
-1
+2
 !----------------
 
 # VDW_Style
-LJ cut_tail 14.0
+LJ cut_tail 13.0
 !----------------
 
 # Charge_Style
@@ -24,8 +21,10 @@ NONE
 !----------------
 
 # Intra_Scaling
-0.0 0.0 0.0 1.0
-0.0 0.0 0.0 1.0
+0.0  0.0  0.0  0.0
+0.0  0.0  0.0  0.0
+0.0  0.0  0.0  0.0
+0.0  0.0  0.0  0.0
 !------------------
 
 # Mixing_Rule
@@ -33,7 +32,8 @@ LB
 !----------------
 
 # Seed_Info
-1219130951 1219130952
+86722316473 59009854321
+
 !-------------------
 
 # Rcutoff_Low
@@ -45,13 +45,14 @@ TRUE
 !-----------
 
 # Molecule_Files
+Si27ucEM.mcf 1
 CH4.mcf 500
 !------------------------
 
 # Box_Info
 1
-CUBIC
-100.0  100.0  100.0
+ORTHOGONAL
+60.21  59.76 40.26
 !-------------------------
 
 # Temperature_Info
@@ -59,19 +60,21 @@ CUBIC
 !------------------
 
 # Chemical_Potential_Info
--35.0
+-40.0
 !------------------------
 
 # Move_Probability_Info
 
 # Prob_Translation
 0.4
-10.0
+0.0  2.0
 
 # Prob_Insertion
 0.3
 insertion method
-reservoir 
+none
+insertion method
+reservoir
 
 # Prob_Deletion
 0.3
@@ -80,12 +83,12 @@ reservoir
 !----------------------
 
 # Start_Type
-make_config
-100
+read_old
+Si27ucEM.xyz
 !------------------
 
 # Run_Type
-Equilibration   550
+Equilibration   600  
 !------------------
 
 # Average_Info
@@ -97,19 +100,19 @@ Units      Steps
 Prop_Freq    400
 Coord_Freq   4000
 MCsteps      4000
-# Done_Simulation_Length_Info
+Done_Simulation_Length_Info
 !----------------------------
 
 # Property_Info 1 
 Energy_Total
 Nmols
-Volume
 
 !----------------
 
 # Fragment_Files
-species1/frag1/frag1.dat 1
-!---------------
+species1/frag1/frag1.dat  1
+species2/frag1/frag1.dat  2
+!---------------------------------------------------------one line per fragment
 
 # CBMC_Info
 kappa_ins 12
