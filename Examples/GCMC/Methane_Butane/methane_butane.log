@@ -1,0 +1,1276 @@
+************** Beginning Cassandra simulation **************
+Version Cassandra 1.0                                                                                                           
+
+inputfile methane_butane.inp                                                                                                      
+
+name of run: methane_butane
+
+  Month      Day      Year
+     09       10      2015
+ 
+ Time:  10:25:55
+ 
+machine: d8copt056.crc.nd.edu
+
+
+Simulation type: GCMC                
+
+ 
+ **** Copying Inputfile ****** 
+ 
+ # Run_Name
+ methane_butane
+ 
+ # Sim_Type
+ GCMC
+ 
+ # Nbr_Species
+ 2
+ 
+ # VDW_Style
+ LJ cut_tail 13.0
+ 
+ # Charge_Style
+ NONE
+ NONE
+ 
+ # Intra_Scaling
+ 0.0  0.0  0.0  1.0
+ 0.0  0.0  0.0  1.0
+ 0.0  0.0  0.0  1.0
+ 0.0  0.0  0.0  1.0
+ 
+ # Mixing_Rule
+ LB
+ 
+ # Seed_Info
+ 45879702104 5976323210
+ 
+ 
+ # Rcutoff_Low
+ 1.0
+ 
+ # Pair_Energy
+ TRUE
+ 
+ # Molecule_Files
+ CH4.mcf 300
+ C4.mcf 300
+ 
+ # Box_Info
+ 1
+ CUBIC
+ 100.0  100.0 100.0
+ 
+ # Temperature_Info
+ 300.0
+ 
+ # Chemical_Potential_Info
+ -34.41  -31.0
+ 
+ # Zig_By_Omega_Info
+ 1.0
+ -----------------------
+ 
+ # Move_Probability_Info
+ 
+ # Prob_Translation
+ 0.2
+ 2.0  2.0
+ 
+ # Prob_Rotation
+ 0.2
+ 0.0  180.0
+ 
+ # Prob_Regrowth
+ 0.2
+ 0.0 1.0
+ 
+ # Prob_Insertion
+ 0.20
+ insertion method
+ reservoir
+ insertion method
+ reservoir
+ 
+ # Prob_Deletion
+ 0.20
+ 
+ # Done_Probability_Info
+ 
+ # Start_Type
+ make_config
+ 10
+ 90
+ 
+ 
+ # Run_Type
+ Equilibration   600
+ 
+ # Average_Info
+ 1
+ 
+ # Frequency_Info
+ freq_type    none
+ Nthermofreq  500
+ Ncoordfreq   100000
+ MCsteps      200000
+ # Done_Frequency_Info
+ 
+ # Property_Info 1
+ Energy_Total
+ Nmols
+ Volume
+ Pressure
+ 
+ 
+ # Fragment_Files
+ species1/frag1/frag1.dat  1
+ species2/frag1/frag1.dat  2
+ species2/frag2/frag2.dat  3
+ 
+ # Zig_By_Omega_Info
+ 1
+ 
+ # CBMC_Info
+ kappa_ins 12
+ kappa_rot 12
+ kappa_dih 12
+ rcut_cbmc 6.5
+ 
+ 
+ END
+ 
+ **** Finished writing input file *******
+ Number of species simulated:      2
+
+ *** Simulation box data ***
+number of simulation boxes     1
+ 
+Box number      1       Box Shape:      Cubic 
+Each Side Of :       100.0000     Angstrom
+ 
+Cell basis vector lengths in A,    100.0000     100.0000     100.0000
+Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+Distance between box faces   100.0000     100.0000     100.0000
+Box volume, A^3       1000000.0000
+ 
+ *** Finished loading box information ***
+ 
+   VDW style used is:   LJ             in box:  1
+   VDW sum style is:   cut_tail       in box:  1
+    rcut =    13.000   Angstrom
+ VDW style properly input
+ 
+   Charge style used is:   NONE           in box:  1
+ Charge style properly input
+ 
+ 
+ Pair interaction energy array storage enabled
+ 
+Lorentz-Berthelot mixing rule specified
+ 
+ Reading molecular connectivity information
+ Species:            1
+ Molecular connectivity file: 
+ CH4.mcf                                                                        
+                                          
+   1 atom(s) specified.
+   0 bond(s) specified.
+   0 angle(s) specified.
+   0 dihedral(s) specified.
+   0 improper(s) specified.
+   1 fragments specified.
+   0  fragment bonds specified.
+ 
+ Reading molecular connectivity information
+ Species:            2
+ Molecular connectivity file: 
+ C4.mcf                                                                         
+                                          
+   4 atom(s) specified.
+   3 bond(s) specified.
+   2 angle(s) specified.
+   1 dihedral(s) specified.
+   2 fragments specified.
+   0 improper(s) specified.
+   1  fragment bonds specified.
+ 
+Species  Nbr molecules
+-------  -------------
+     1            300
+     2            300
+ 
+L_Coul_CBMC not given for species    1
+ Defaulting to true
+ default  T
+ 
+1st_Fragment_Ins_Style not specified for species    1
+using default of "COM" for this species.
+Species and atom number   1     1
+ atom name:             CH4_s1
+ element:               C 
+ mass:                     16.0000
+ charge:                    0.0000
+ vdw type:              LJ                  
+ Epsilon / kB in K:       147.9500
+ Sigma in A:                3.7300
+ 
+Total number of ring atoms in species     1    0
+Total number of exo atoms in species      1    1
+ Atom ids for ring atoms
+ Atom ids for exo atoms           1
+ *** Completed assigning atom info ***
+ 
+ No bonds in species            1
+ *** Completed assigning bond info ***
+ 
+ No angles in species            1
+ 
+Molecule    1  is defined to be linear
+ 
+ *** Completed assigning angle info ***
+ 
+ No dihedrals in species            1
+ *** Completed assigning dihedral info ***
+ 
+ No impropers in species            1
+ *** Completed assigning improper info ***
+ 
+ 
+Total number of atoms in the fragment     1  is   1
+Identity of these atoms are
+           1
+ 
+ ******* Finished loading fragment info ********
+ 
+ ******* Generating anchor info ****************
+ 
+ Number of anchors for fragment     1  is   0
+Anchor id is:
+ Fragment file for fragment 1 is
+ species1/frag1/frag1.dat                                                       
+                                          
+ Fragment type           1
+L_Coul_CBMC not given for species    2
+ Defaulting to true
+ default  T
+ 
+1st_Fragment_Ins_Style not specified for species    2
+using default of "COM" for this species.
+Species and atom number   2     1
+ atom name:             CH3_s2
+ element:               C 
+ mass:                     15.0107
+ charge:                    0.0000
+ vdw type:              LJ                  
+ Epsilon / kB in K:        98.0000
+ Sigma in A:                3.7500
+ 
+Species and atom number   2     2
+ atom name:             CH2_s2
+ element:               C 
+ mass:                     12.0107
+ charge:                    0.0000
+ vdw type:              LJ                  
+ Epsilon / kB in K:        46.0000
+ Sigma in A:                3.9500
+ 
+Species and atom number   2     3
+ atom name:             CH2_s2
+ element:               C 
+ mass:                     12.0107
+ charge:                    0.0000
+ vdw type:              LJ                  
+ Epsilon / kB in K:        46.0000
+ Sigma in A:                3.9500
+ 
+Species and atom number   2     4
+ atom name:             CH3_s2
+ element:               C 
+ mass:                     15.0107
+ charge:                    0.0000
+ vdw type:              LJ                  
+ Epsilon / kB in K:        98.0000
+ Sigma in A:                3.7500
+ 
+Total number of ring atoms in species     2    0
+Total number of exo atoms in species      2    4
+ Atom ids for ring atoms
+ Atom ids for exo atoms           1           2           3           4
+ *** Completed assigning atom info ***
+ 
+Species and bond number   2   1
+ atom1:                   1
+ atom2:                   2
+ bond type:             fixed               
+Bond fixed between atoms:      1      2 in species   2
+Fixed bond length, in A:    1.5400
+ 
+Species and bond number   2   2
+ atom1:                   2
+ atom2:                   3
+ bond type:             fixed               
+Bond fixed between atoms:      2      3 in species   2
+Fixed bond length, in A:    1.5400
+ 
+Species and bond number   2   3
+ atom1:                   3
+ atom2:                   4
+ bond type:             fixed               
+Bond fixed between atoms:      3      4 in species   2
+Fixed bond length, in A:    1.5400
+ 
+ *** Completed assigning bond info ***
+ 
+Species and angle number  2   1
+ atom1:                   1
+ atom2:                   2
+ atom3:                   3
+ angle type:            harmonic            
+ K_angle in K/rad^2:    31250.0000
+ theta0 in degrees:       114.0000
+ 
+Species and angle number  2   2
+ atom1:                   2
+ atom2:                   3
+ atom3:                   4
+ angle type:            harmonic            
+ K_angle in K/rad^2:    31250.0000
+ theta0 in degrees:       114.0000
+ 
+ 
+Molecule    2  is NOT defined to be linear
+ 
+ *** Completed assigning angle info ***
+ 
+Species and dihedral num  2   1
+ atom1:                   1
+ atom2:                   2
+ atom3:                   3
+ atom4:                   4
+ dihedral type:         OPLS                
+ a0, kJ/mol:                0.0000
+ a1, kJ/mol:                2.9517
+ a2, kJ/mol:               -0.5661
+ a3, kJ/mol:                6.5790
+ 
+ *** Completed assigning dihedral info ***
+ 
+ No impropers in species            2
+ *** Completed assigning improper info ***
+ 
+ 
+Total number of atoms in the fragment     1  is   3
+Identity of these atoms are
+           2           1           3
+ 
+Total number of atoms in the fragment     2  is   3
+Identity of these atoms are
+           3           2           4
+ 
+ ******* Finished loading fragment info ********
+ 
+ ******* Generating anchor info ****************
+ 
+ Number of anchors for fragment     1  is   1
+Anchor id is:    2
+ 
+ Number of anchors for fragment     2  is   1
+Anchor id is:    3
+ Fragment file for fragment 1 is
+ species2/frag1/frag1.dat                                                       
+                                          
+ Fragment type           2
+ Fragment file for fragment 2 is
+ species2/frag2/frag2.dat                                                       
+                                          
+ Fragment type           3
+Species and fragment bond number   2   1
+ fragment 1:              1
+ fragment 2:              2
+ 
+ Number of connections of fragment    1  is   1
+ These fragments are:
+           2
+ 
+ Number of connections of fragment    2  is   1
+ These fragments are:
+           1
+ 
+ library_coords array successfully allocated
+ 
+ 
+ Finished loading fragment coordinates from
+ species1/frag1/frag1.dat                                                       
+                                          
+ 
+ 
+ Finished loading fragment coordinates from
+ species2/frag1/frag1.dat                                                       
+                                          
+ 
+ 
+ Finished loading fragment coordinates from
+ species2/frag2/frag2.dat                                                       
+                                          
+ 
+ intramolecular scaling factors explicitly set
+Intra molecule scaling factors for species             1
+VDW 1-2 scaling factor         0.000
+VDW 1-3 scaling factor         0.000
+VDW 1-4 scaling factor         0.000
+VDW 1-N scaling factor         1.000
+Coulomb 1-2 scaling factor     0.000
+Coulomb 1-3 scaling factor     0.000
+Coulomb 1-4 scaling factor     0.000
+Coulomb 1-N scaling factor     0.000
+ 
+Intra molecule scaling factors for species             2
+VDW 1-2 scaling factor         0.000
+VDW 1-3 scaling factor         0.000
+VDW 1-4 scaling factor         0.000
+VDW 1-N scaling factor         1.000
+Coulomb 1-2 scaling factor     0.000
+Coulomb 1-3 scaling factor     0.000
+Coulomb 1-4 scaling factor     0.000
+Coulomb 1-N scaling factor     0.000
+ 
+ 
+ *** Completed assigning intramolecular scaling factors ***
+ 
+  There are 3 different atom types in the system 
+     1  CH4_s1
+     2  CH3_s2
+     3  CH2_s2
+ 
+ 
+species number and name:  1   CH4.mcf                                                                                                                 
+ Name      number
+ ------    ------
+CH4_s1      1
+ 
+species number and name:  2   C4.mcf                                                                                                                  
+ Name      number
+ ------    ------
+CH3_s2      2
+CH2_s2      3
+CH2_s2      3
+CH3_s2      2
+ 
+ 
+ *** Creating VDW interaction table ***
+Mixing rule used is:    LB             
+ 
+Atom 1     Atom 2  epsilon (amu A^2/ps^2)        sigma (A)
+CH4_s1     CH4_s1    123.0126                        3.7300
+CH4_s1     CH3_s2    100.1164                        3.7400
+CH4_s1     CH2_s2     68.5916                        3.8400
+CH3_s2     CH4_s1    100.1164                        3.7400
+CH3_s2     CH3_s2     81.4818                        3.7500
+CH3_s2     CH2_s2     55.8247                        3.8500
+CH2_s2     CH4_s1     68.5916                        3.8400
+CH2_s2     CH3_s2     55.8247                        3.8500
+CH2_s2     CH2_s2     38.2466                        3.9500
+ 
+ *** Completed construction of VDW interaction table ***
+ 
+ 
+ *** Creating exclusion table ***
+ 
+     species   atom1      atom2  vdw scale q-q scale
+         1         1         1     0.000     0.000
+         2         1         1     0.000     0.000
+         2         1         2     0.000     0.000
+         2         1         3     0.000     0.000
+         2         1         4     0.000     0.000
+         2         2         1     0.000     0.000
+         2         2         2     0.000     0.000
+         2         2         3     0.000     0.000
+         2         2         4     0.000     0.000
+         2         3         1     0.000     0.000
+         2         3         2     0.000     0.000
+         2         3         3     0.000     0.000
+         2         3         4     0.000     0.000
+         2         4         1     0.000     0.000
+         2         4         2     0.000     0.000
+         2         4         3     0.000     0.000
+         2         4         4     0.000     0.000
+ 
+ *** Completed construction of exclusion table ***
+ 
+ 
+ ***** Reading seed info *********
+ 
+ The starting seed s1 is:    153587801
+ 
+ ****** Finished loading the seed ********
+ 
+ **** Simulation temperature information ****
+  Temperature assigned to box     1  is  300.000    K
+ 
+ *** Finished loading information for temperature ****
+ 
+ 
+ ********* Move Probability Info******
+    Translation probability is   0.200000
+ 
+Maximum displacement width for species   1 in box  1  is      2.00000
+ 
+Maximum displacement width for species   2 in box  1  is      2.00000
+ 
+       Rotation probability is   0.200000
+ 
+The rotational width for the species     1 in box  1   is      0.0000 radians
+ 
+The rotational width for the species     2 in box  1   is      3.1416 radians
+ 
+ 
+   Probability for regrowth is   0.200000
+ 
+   Cumulative probability for regrowth of species     1  is   0.000000
+ 
+   Cumulative probability for regrowth of species     2  is   1.000000
+ 
+Probability for insertion move is          0.2000
+ 
+Insertion will be carried out for species   1
+ using the reservoir sampling
+ 
+Insertion will be carried out for species   2
+ using the reservoir sampling
+ 
+Total number of exchangeable species is    2
+ 
+ 
+Probability for deletion move is           0.2000
+ ***** Finished reading the move probability info *****
+Number of moves is :   5
+ 
+ 
+ *********** Fugactiy Info ***************
+ 
+Chemical Potential of sp  1 is    -0.344100000E+04in atomic units
+de Broglie wavelength of species    1  in box      1   is
+  0.2519875236   Angstrom
+ 
+Chemical Potential of sp  2 is    -0.310000000E+04in atomic units
+de Broglie wavelength of species    2  in box      1   is
+  0.1371103087   Angstrom
+ 
+ ******* Finished reading fugacity info ***********
+ 
+Thermodynamic quantities will written at every        500 MC steps.
+ 
+Coordinates will be written at every               100000 MC steps.
+ 
+movie header file for box    1 is      methane_butane.box1.H
+movie_XYZ file for box       1 is      methane_butane.box1.xyz
+ 
+The simulation will be run for                       200000 MC steps.
+ 
+ *** Finished reading output info ******* 
+ 
+ *********** Average Information ***************
+ 
+ Instantaneous values will be output
+ 
+ *********** Ending Average Section ************
+ 
+ **** Writing property output information *****
+ 
+Total number of property files to be written is     1   for box 1
+ Maximum number of properties per file is    5
+ Writing the name of the property files and the corresponding property output
+ 
+ Property file    1   is  methane_butane.box1.prp1
+ Properties output in these files are
+ 
+ Energy_Total
+ Nmols
+ Nmols
+ Volume
+ Pressure
+ 
+ ***** Finished writing property information ******
+ 
+MC low cutoff distance is   1.000    Angstrom
+ 
+ *** Computed bond participation information ***
+ 
+ 
+ species, atom, local bond nbr, global bond nbr, atom bonded 
+    2         1       1            1                 2
+ 
+ species, atom, local bond nbr, global bond nbr, atom bonded 
+    2         2       1            1                 1
+ species, atom, local bond nbr, global bond nbr, atom bonded 
+    2         2       2            2                 3
+ 
+ species, atom, local bond nbr, global bond nbr, atom bonded 
+    2         3       1            2                 2
+ species, atom, local bond nbr, global bond nbr, atom bonded 
+    2         3       2            3                 4
+ 
+ species, atom, local bond nbr, global bond nbr, atom bonded 
+    2         4       1            3                 3
+ 
+ 
+ 
+ For species           2
+  Number of atoms that can be displaced           2
+             Atom ID     Reference Atom ID
+                   1                     2
+                   4                     3
+ 
+ Number of atom in question           1
+ Total number of angles           0
+ Angles for this atom
+ 
+ Position of the atom in angles
+ 
+ Number of atom in question           1
+ Total number of angles           1
+ Angles for this atom
+           1
+ Position of the atom in angles
+           1
+ Number of atom in question           2
+ Total number of angles           2
+ Angles for this atom
+           1           2
+ Position of the atom in angles
+           2           1
+ Number of atom in question           3
+ Total number of angles           2
+ Angles for this atom
+           1           2
+ Position of the atom in angles
+           3           2
+ Number of atom in question           4
+ Total number of angles           1
+ Angles for this atom
+           2
+ Position of the atom in angles
+           3
+ Number of atom in question           1
+ Total number of dihedrals           0
+ Dihedral angles for this atom
+ 
+ Position of the atom in dihedrals
+ 
+ Number of atom in question           1
+ Total number of dihedrals           1
+ Dihedral angles for this atom
+           1
+ Position of the atom in dihedrals
+           1
+ Number of atom in question           2
+ Total number of dihedrals           1
+ Dihedral angles for this atom
+           1
+ Position of the atom in dihedrals
+           2
+ Number of atom in question           3
+ Total number of dihedrals           1
+ Dihedral angles for this atom
+           1
+ Position of the atom in dihedrals
+           3
+ Number of atom in question           4
+ Total number of dihedrals           1
+ Dihedral angles for this atom
+           1
+ Position of the atom in dihedrals
+           4
+ information about angle           1
+ the atom that is moved is           1
+ atoms that change their position due to this move
+           1
+ the atoms is moved is           3
+ atoms that change their position due to this move
+           3           4
+ information about angle           2
+ the atom that is moved is           2
+ atoms that change their position due to this move
+           2           1
+ the atoms is moved is           4
+ atoms that change their position due to this move
+           4
+ 
+ checking for dihedral_atoms_to_place
+ dihedral, atom1, atom2, atom3, atom4
+           1           1           2           3           4
+ 
+ natoms to place if atom 1 moves and the moving atom numbers
+           1           1           0           0           0
+ natoms to place if atom 4 moves and the moving atom numbers
+           1           4           0           0           0
+ 
+ 
+ ***** reading CBMC info *********
+ 
+ Writing out CBMC_Info
+kappa for first bead insertion              12
+kappa for rotational bias                   12
+kappa for dihedral selection                12
+ 
+Smaller cutoff for CBMC for box          1        6.50
+ ****** finished loading CBMC_Info ********
+ 
+ ******Initial Coordinate Info **********
+ 
+ Initial configuration will be generated
+  Starting number of molecules of species   1   in box   1  is      10
+ 
+Total number of molecules of species   1   present initially is      10
+  Starting number of molecules of species   2   in box   1  is      90
+ 
+Total number of molecules of species   2   present initially is      90
+ 
+ *****Finished reading initial coordinate info *****
+ 
+ ****** Reading Run_Type Information ******
+ 
+ The input run type is Equilibration
+ Update frequency is          600
+ 
+ ******* Finished reading run type information ******
+starting type make_config                                                                                                             
+
+ ***************** Charge Neutrality Check *****************
+ Species           1    has charge                0.00000000
+ Species           2    has charge                0.00000000
+ Box               1    has charge                0.00000000
+ 
+ ***************** Charge Neutrality Check *****************
+ ***********************************************************
+   Starting energy components for box   1
+  Atomic units-Extensive
+ 
+ Total system energy is                 40865.924
+ Intra molecular energy is              43815.941
+ Bond energy is                             0.000
+ Bond angle energy is                   19879.190
+ Dihedral angle energy is               23936.751
+ Improper angle energy is                   0.000
+ Intra nonbond vdw is                       0.000
+ Intra nonbond elec is                      0.000
+ Inter molecule vdw is                  -2852.268
+ Long range correction is                 -97.749
+ Inter molecule q is                        0.000
+ Reciprocal ewald is                        0.000
+ Self ewald is                              0.000
+ ***********************************************************
+ 
+ 
+Success ratio, rotation of species   2 in box 1 :  0.97167
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.95833
+Maximum width, translation of species   2 in box 1 :  3.83333
+ 
+Success ratio, rotation of species   2 in box 1 :  0.98500
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.95667
+Maximum width, translation of species   2 in box 1 :  7.33444
+ 
+Success ratio, rotation of species   2 in box 1 :  0.98667
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.92000
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.97000
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.90000
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.96500
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.87500
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.97000
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.90500
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.98167
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.90167
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, translation of species   1 in box 1 :  0.98500
+Maximum width, translation of species   1 in box 1 :  3.94000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.98667
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, rotation of species   2 in box 1 :  0.97500
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.87667
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.98667
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.90833
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.98000
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.92667
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.98167
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.93833
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.99000
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.93333
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.98333
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.91167
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.97167
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   1 in box 1 :  0.96500
+Maximum width, translation of species   1 in box 1 :  7.60420
+ 
+Success ratio, translation of species   2 in box 1 :  0.87500
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.97667
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.89500
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.98167
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, rotation of species   2 in box 1 :  0.98000
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.85333
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.97833
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.87500
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.96500
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.92000
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.98667
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.91667
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.97167
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   1 in box 1 :  0.95333
+Maximum width, translation of species   1 in box 1 : 13.00000
+ 
+Success ratio, translation of species   2 in box 1 :  0.91833
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.96333
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.89167
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.95333
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, rotation of species   2 in box 1 :  0.97167
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.91333
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.97333
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.93000
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.97667
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.93000
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.95833
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.87667
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.97000
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   1 in box 1 :  0.96167
+Maximum width, translation of species   1 in box 1 : 13.00000
+ 
+Success ratio, translation of species   2 in box 1 :  0.90167
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.98000
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, rotation of species   2 in box 1 :  0.97833
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.90333
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.99333
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.91167
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.98833
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.91667
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.98000
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.94000
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.99333
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.91667
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.95667
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.92333
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.98833
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   1 in box 1 :  0.95833
+Maximum width, translation of species   1 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.97333
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.91833
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.97833
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.89167
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.98667
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.91667
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.97167
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.93833
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.99000
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.88667
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.97333
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.92833
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.99167
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   1 in box 1 :  0.97167
+Maximum width, translation of species   1 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.97667
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.92833
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.99500
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.93333
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.99333
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.91333
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.97667
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.90833
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.97333
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.92333
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.97833
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.92000
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.98500
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.91333
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.97333
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   1 in box 1 :  0.95500
+Maximum width, translation of species   1 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.95333
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.88000
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.96667
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.89667
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.98000
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.92000
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.98500
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.90167
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.97833
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.91167
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.97500
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.90500
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.98500
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, rotation of species   2 in box 1 :  0.94833
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.88000
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, translation of species   1 in box 1 :  0.93833
+Maximum width, translation of species   1 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.97333
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.89667
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.98833
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.89667
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.97000
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.90167
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.95167
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.85333
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.98167
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.90167
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.98833
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ *********** Ending simulation *****************
+ 
+ 
+ ***** Insertion efficiency *****************
+  Total number of insertions for species   1  is       19843
+ Successful insertions
+                  @  
+  Total number of insertions for species   2  is       20000
+ Successful insertions
+                  ÷F  
+ 
+ ***** Deletion efficiency *****************
+ Total number of deletions for species           1 is       19869
+ Successful deletions       16412
+ Total number of deletions for species           2 is       19958
+ Successful deletions       18218
+ 
+ *****************************************
+  Starting energy components for box   1
+  Atomic units-Extensive
+ *****************************************
+ 
+Total system energy is                  16009.340
+Intra molecular energy is               16357.042
+Bond energy is                              0.000
+Angle energy is                          7559.980
+Dihedral enregy is                       8797.061
+Improper angle energy is                    0.000
+Intra nonbond vdw is                        0.000
+Intra nonbond elec is                       0.000
+Inter molecule vdw is                    -328.525
+Long range correction is                  -19.177
+Inter molecule q is                         0.000
+Reciprocal ewald is                         0.000
+Self ewald is                               0.000
+ **************************************************
+ 
+ 
+ *****************************************
+ Components of energy from total energy call for box   1
+ Atomic units-Extensive
+ *****************************************
+ 
+Total system energy is                  16009.340
+Intra molecular energy is               16357.042
+Bond energy is                              0.000
+Angle energy is                          7559.980
+Dihedral enregy is                       8797.061
+Improper angle energy is                    0.000
+Intra nonbond vdw is                        0.000
+Intra nonbond elec is                       0.000
+Inter molecule vdw is                    -328.525
+Long range correction is                  -19.177
+Inter molecule q is                         0.000
+Reciprocal ewald is                         0.000
+Self ewald is                               0.000
+ 
+ 
+ Writing information for box  1
+ ***********************************************************
+ 
+ 
+ ***********************************************************
+ Writing information for species  1
+ 
+                Move      Trials     Success   % Success
+           Translate        5285        5077       96.06
+           Insertion       19843       16409       82.69
+            Deletion       19869       16412       82.60
+ ***********************************************************
+ 
+ 
+ ***********************************************************
+ Writing information for species  2
+ 
+                Move      Trials     Success   % Success
+           Translate       34717       31542       90.85
+              Rotate       40080       39159       97.70
+           Insertion       20000       18167       90.83
+            Deletion       19958       18218       91.28
+ ***********************************************************
+ 
+ Writing information about fragments
+ 
+ ***********************************************************
+ Writing information for species  1
+            Fragment      Trials     Success   % Success
+ ***********************************************************
+ 
+ ***********************************************************
+ Writing information for species  2
+            Fragment      Trials     Success   % Success
+                   1       40137       38631       96.25
+ ***********************************************************
+ ******************** Ending simulation ********************
+ 
+ 
+ 
+ Writing information about subroutine times
+ 
+ ***********************************************************
+ 
+ Translation time =           11.866166 secs.
+ Rotation time =              12.472129 secs.
+ Insertion time =              1.620521 mins.
+ Deletion time =               1.669645 mins.
+ Regrowth time =              45.788994 secs.
+ ***********************************************************
+ 
+ 
+ Program execution time
+         0      Years
+         0     Months
+         0       Days
+         0      Hours
+         4    Minutes
+        43    Seconds
+       286         ms
