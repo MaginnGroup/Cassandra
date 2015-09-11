@@ -70,10 +70,10 @@ for the simulation in a given ensemble. Please refer to
 Chapter~\ref{Sec:Input_File}  for further details.
 %
 \subsection{Fragment Library Generation}
-Cassandra makes use of reservoir sampling schemes to sample correctly and efficiently various coupled intramolecular degrees of freedom associated with
-branch points and rings. Details may be found in our
-publication~\cite{Shah:2011}. The idea is to decompose the entire
-molecule into fragments that are either branch points or ring groups,
+Cassandra makes use of reservoir sampling schemes to correctly and efficiently sample the various coupled intramolecular degrees of freedom associated with
+branch points and rings. For more information, please see Ref. \cite{Shah:2011}. 
+The molecule is decomposed 
+into fragments that are either branch points or ring groups,
 each coupled to other fragments via a single dihedral angle. Thus, the
 total number of fragments of a molecule is the sum of branch points
 and ring groups in the molecule. The neighboring fragments are
