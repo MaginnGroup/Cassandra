@@ -68,7 +68,8 @@ A PDB configuration file for a zeolite can be created in the following ways, amo
 \section{Molecular connectivity file}\label{sec:solid_mcf}
 Since the solid structure will be rigid, no bond distances, angle parameters or dihedral parameters are needed in the MCF.
 The PDB file for the rigid solid does not list CONECT information, so the \texttt{mcfgen.py} script will not include bond, 
-angle, or dihedral sections in the force field template (*.ff) or MCF. Only nonbonded parameters are needed.
+angle, or dihedral sections in the force field template (*.ff) or MCF. The entire solid will be listed as a single fragment. 
+Only nonbonded parameters are needed.
 
 \section{Fragment library files}\label{sec:fragment file}
 The \texttt{library\_setup.py} script described in \ref{sec:libgen} will transfer the atomic coordinates 
