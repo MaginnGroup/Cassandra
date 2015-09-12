@@ -16,7 +16,7 @@ all keywords.
 %
 %%%%%%%%%%%%%%%%
 \subsection{Run Name}\label{sec:Run_Name}
-{\bf \# Run\_Name}  - Simulation run name\\
+{\bf \# Run\_Name}\\
 {\it Character*120} \\ \\
 %
 The run name is specified on the next line following the keyword. This name is used as a prefix for all the files
@@ -100,9 +100,10 @@ Options are ``cut'', ``cut\_tail'', ``cut\_switch'',
 functional forms.
  The other parameters
 \emph{Real(i,3)} and \emph{Real(i,4)/Logical(i,4)} depend on the
-selection of \emph{Character(i,2)} as described below:\\ \\
+selection of \emph{Character(i,2)} as described below:
 %
-\texttt{cut}: This option cuts the  potential  off at the  distance
+\begin{itemize}
+\item \textbf{cut}: This option cuts the  potential  off at the  distance
 specified by (\emph{Real(i,3)}). The fourth parameter is omitted. \\ \\
 %
 For example, to simulate one box with a 14 \AA\ cutoff specify the following:
@@ -119,7 +120,7 @@ following: \\ \\
 LJ cut 14.0 \\
 LJ cut 14.0 } \\ \\
 %
-\texttt{cut\_tail}: This options cuts the potential off at a distance
+\item \textbf{cut\_tail}: This options cuts the potential off at a distance
 corresponding to (\emph{Real(i,3)}) and applies analytic tail
 corrections to the energy and pressure. An optional fourth argument
 (\emph{Logical(i,4)}) can be set 
@@ -146,7 +147,7 @@ following:
 LJ cut\_tail 14.0 \\ 
 LJ cut\_tail 20.0 } \\ \\
 %
-\texttt{cut\_switch}: This option cuts the potential off and smoothly
+\item \textbf{cut\_switch}: This option cuts the potential off and smoothly
 brings the potential to zero using a spline. The potential is cutoff
 and the spline turned on at a distance specified by \emph{Real(i,3)}
 (r$_{on}$ in Eq~\ref{Eq:cut_switch}) and the potential goes
@@ -164,7 +165,7 @@ In this case, the Lennard-Jones potential would end at 12.0 \AA\ and
 be smoothly taken to zero at 14.0 \AA. Obviously, $r_{on} < r_{off}$ or \emph{Real(i,3)} $<$ \emph{Real(i,4)}.
 %
 \\ \\
-\texttt{cut\_shift}: This option cuts the potential off at a distance
+\item \textbf{cut\_shift}: This option cuts the potential off at a distance
 specified by \emph{Real(i,3)} and shifts the entire potential so that
 at this distance the potential is zero. The fourth parameter
 \emph{Real(i,4)/Logical(i,4)} is omitted. The functional form of this
@@ -178,30 +179,31 @@ boxes have a 10.5 \AA\ cutoff, use the following:
 LJ cut\_shift 10.5 \\
 LJ cut\_shift 10.5 } \\ \\
 %
-\texttt{mie}: This option cuts the potential off at a distance
+\item \textbf{mie}: This option cuts the potential off at a distance
 specified by \emph{Real(i,3)}. It must be used with the keyword ``\# Mie\_Nonbond'' (see section~\ref{sec:Mie_Nonbond}) which specifies exponents $n$ and $m$ for each species. The fourth parameter
 \emph{Real(i,4)/Logical(i,4)} is omitted. The functional form of this
 potential is given in eq~\ref{Eq:mie}. \\ \\
 %
-For example, a one box simulation using the mie option can be specified as follows:
+For example, a one box simulation using the mie option can be specified as follows: \\ \\
 %
 \texttt{
 \# VDW\_Style \\
 LJ mie 14 } \\ \\
 %
-\texttt{mie\_cut\_shift}: This option cuts the potential off at a distance
+\item \textbf{mie\_cut\_shift}: This option cuts the potential off at a distance
 specified by \emph{Real(i,3)} and shifts the entire potential so that
 at this distance the potential is zero. It must be used with the keyword ``\# Mie\_Nonbond'' (see section~\ref{sec:Mie_Nonbond}) which specifies exponents $n$ and $m$ for each species. The fourth parameter
 \emph{Real(i,4)/Logical(i,4)} is omitted. The functional form of this
-potential is given in eq~\ref{Eq:mie_cut_shift}. \\ \\
+potential is given in eq~\ref{Eq:mie_cut_shift}. \\ \\ 
 %
 A two box simulation using the mie\_cut\_shift option with a 14 \AA\ cutoff can be specified as follows:
-
+\\ \\
 \texttt{
 \# VDW\_Style \\
 LJ mie\_cut\_shift 14 \\
-LJ mie\_cut\_shift 14 } \\ \\
+LJ mie\_cut\_shift 14 } \\ 
 %
+\end{itemize}
 {\bf Note: For all options, cutoff distances must be less than or
   equal to the shortest edge length of a simulation box}.
 %%%%%%%%%%%%%%%%
@@ -398,6 +400,7 @@ CH2  CH2   46.00   3.93
 }
 \\ \\
 The order in which atomtypes are listed must be consistent with the species order in the input file and the atomtype order within each MCF.
+Note that the units of the first parameter (energy parameter) are K, whereas the second parameter (collision diameter) are \AA.
 
 %%%%%%%%%%%%%%%%
 %
