@@ -72,18 +72,18 @@ angle, or dihedral sections in the force field template (*.ff) or MCF. The entir
 Only nonbonded parameters are needed.
 
 \section{Fragment library files}\label{sec:fragment file}
-The \texttt{library\_setup.py} script described in \ref{sec:libgen} will transfer the atomic coordinates 
+The \texttt{library\_setup.py} script will transfer the atomic coordinates 
 from the PDB file to the required fragment library file (*.dat). 
 The *.dat will list a single conformation.
 
 \section{Configuration xyz file}\label{sec:solid_xyz}
-A simulation is initiated from an *.xyz file using the \texttt{read\_old} option. 
-For an NVT simulation, the *.xyz file must list the atomic coordinates for 
+A simulation is initiated from an xyz file using the \texttt{read\_old} option. 
+For an NVT simulation, the xyz file must list the atomic coordinates for 
 the solid framework or surface and any fluid-phase molecules. 
 A GCMC simulation, on the other hand, can be initiated from an empty solid and molecules 
-of insertable species will be inserted as the simulation proceeds. Section \ref{sec:mcf_file}
-details that the \texttt{read\_old} option reads a single header line from the *.xyz that lists the number of 
-molecules of each species. For example, an *.xyz file that lists only the atoms of a zeolite (species 1) and 
+of insertable species will be inserted as the simulation proceeds. Section \ref{sec:Start_Type}
+details that the \texttt{read\_old} option reads a single header line from the xyz file that lists the number of 
+molecules of each species. For example, an xyz file that lists only the atoms of a zeolite (species 1) and 
 no molecules of methane (species 2) would have the following header line:
 
 \texttt{
