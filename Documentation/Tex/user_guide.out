@@ -57,12 +57,11 @@
 \BOOKMARK [1][-]{section.5.2}{Generate an MCF file}{chapter.5}
 \BOOKMARK [1][-]{section.5.3}{Generate library of fragment configurations}{chapter.5}
 \BOOKMARK [0][-]{chapter.6}{Simulating Rigid Solids and Surfaces}{}
-\BOOKMARK [1][-]{section.6.1}{Files required}{chapter.6}
-\BOOKMARK [2][-]{subsection.6.1.1}{Getting a PDB file}{section.6.1}
-\BOOKMARK [2][-]{subsection.6.1.2}{Getting a MCF file}{section.6.1}
-\BOOKMARK [2][-]{subsection.6.1.3}{Getting XYZ file}{section.6.1}
-\BOOKMARK [2][-]{subsection.6.1.4}{Preparing the input file}{section.6.1}
-\BOOKMARK [2][-]{subsection.6.1.5}{Getting the Fragment Files}{section.6.1}
+\BOOKMARK [1][-]{section.6.1}{Input file}{chapter.6}
+\BOOKMARK [1][-]{section.6.2}{PDB file}{chapter.6}
+\BOOKMARK [1][-]{section.6.3}{Molecular connectivity file}{chapter.6}
+\BOOKMARK [1][-]{section.6.4}{Fragment library files}{chapter.6}
+\BOOKMARK [1][-]{section.6.5}{Configuration xyz file}{chapter.6}
 \BOOKMARK [0][-]{chapter.7}{Implementing the Metropolis Acceptance Criteria}{}
 \BOOKMARK [1][-]{section.7.1}{Canonical Monte Carlo}{chapter.7}
 \BOOKMARK [2][-]{subsection.7.1.1}{Translating a Molecule}{section.7.1}
