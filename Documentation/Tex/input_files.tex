@@ -1,7 +1,7 @@
 \chapter{Files Required to Run Cassandra}
 \label{ch:input_files}
 
-\section{Simulation Input File} \label{Sec:Input_File}
+\section{Simulation Input File} \label{sec:Input_File}
 This is a required file that is given as an argument to the Cassandra
 executable. You must generate this by hand, but you can use the input files in the Examples directory as a guide. The input file contains a number of keywords that define simulation parameters
 and thermodynamic state point for the simulation. A keyword is identified
@@ -379,10 +379,9 @@ calculated. Acceptable options are ``LB''  for Lorentz-Berthelot,
 ``geometric'', for geometric mixing rule and ``custom'' for allowing the user to provide specific values. 
 If this keyword is missing, ``LB'' is used as default. \\
 
-To illustrate the use of the ``custom'' option, suppose
-the system of interest involves a mixture of methane and butane united atom
-models, where species 1 is methane and species 2 is butane. The cross
-interaction table is as follows:
+To illustrate the use of the ``custom'' option, consider a mixture of methane (species 1) and butane (species 2) united atom
+models. Methane has a single atomtype, CH4. Butane has two atomtypes: atoms 1 and 4 are type CH3, atoms 2 and 3 are type CH2.
+The cross interaction table is as follows:
 
 \texttt{
 {\bf \# Mixing\_Rule} \\
@@ -398,11 +397,7 @@ CH2  CH3   67.14   3.85\\
 CH2  CH2   46.00   3.93
 }
 \\ \\
-where CH4 is the interaction site associated with methane, CH3 and CH2 are
-the interactions sites associated with butane. The order in which
-this table is constructed must be consistent with the MCF and input files.
-
-
+The order in which atomtypes are listed must be consistent with the species order in the input file and the atomtype order within each MCF.
 
 %%%%%%%%%%%%%%%%
 %
