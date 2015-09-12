@@ -399,7 +399,7 @@ CH2  CH3   67.14   3.85\\
 CH2  CH2   46.00   3.93
 }
 \\ \\
-The order in which atomtypes are listed must be consistent with the species order in the input file and the atomtype order within each MCF.
+The order in which atom types are listed must be consistent with the species order in the input file and the atomtype order within each MCF.
 Note that the units of the first parameter (energy parameter) are K, whereas the second parameter (collision diameter) are \AA.
 
 %%%%%%%%%%%%%%%%
@@ -567,6 +567,9 @@ the three basis vectors that define the simulation box. For example,
 This will define a simulation box whose vectors are defined as 
 (30.0, 0.00, 0.00), (0.00,35.0,2.00) and (0.00,0.00,40.00).
 
+Please note that the ORTHOGONAL and CELL\_MATRIX boxes are
+compatible only with simulations using constant volume ensembles (i.e. 
+NVT or GCMC).
 %
 %If it's ``SLIT\_PORE'' geometry then it is assumed
 %that the periodicity is in the xy plane while the slit pore width is
@@ -763,7 +766,10 @@ species 1 and 2.5 \AA\ for species 2. For box 2, the maximum
 displacement for species 1 will be 10.0 \AA\ and it will be 11.0
 \AA\ for species 2. Note that attempted moves will occur with equal
 probability for a give box, but attempts for a species are
-proportional to their mole fraction in the box.
+proportional to their mole fraction in the box. \\
+
+For a simulation that involves solid frameworks, set the
+maximum displacement associated to the solid species to zero to improve computational efficiency.
 
 %When fragment
 %simulation is carried out, the specification of the move is given by \\ \\
@@ -854,7 +860,10 @@ This will tell Cassandra to attempt rotational move 25\% of the total moves.
 The maximum rotational width for species 1 is 30\degree\ and that for species 2
  is 10.0\degree. Since the species 2 is a linear molecule, its rotation will
  be attempted in Eulerian angles and Cassandra will not use this value. 
-Since the rotational width is set equal to 0\degree\ for species 3, no rotational moves will be attempted for this species. 
+Since the rotational width is set equal to 0\degree\ for species 3, no rotational moves will be attempted for this species.  \\
+
+For a simulation that involves solid frameworks, set the
+maximum rotational width associated to the solid species to zero to improve computational efficiency.
 %%%%%%%%%%%%%%%%
 %
 % Dihedral move
@@ -912,7 +921,10 @@ species is monatomic, you would specify the following: \\ \\
 0.0 0.7 0.3 } \\ \\
 %
 This will tell Cassandra to attempt regrowth move 30\% of the total moves. The relative probabilities of
-performing regrowth moves on species 1, 2 and 3 are 0.0, 0.7 and 0.3 respectively. 
+performing regrowth moves on species 1, 2 and 3 are 0.0, 0.7 and 0.3 respectively.  \\
+
+For a simulation that involves rigid molecules or solid frameworks, set the
+regrowth probability associated to the rigid molecule or solid species to zero to improve computational efficiency.
 %%%%%%%%%%%%%%%%
 %
 % Volume displacement
@@ -978,6 +990,8 @@ can experiment with making
 larger or smaller moves. Note that if the \# Run\_Type is set
 to 'Equilibration', Cassandra will attempt to optimize the magnitude of
 the volume change to achieve about 50\% acceptance rates. 
+
+Please note that the volume perturbation move is only supported for cubic boxes. 
 %If you wish to perform a GEMC-NVT simulation, you might specify the
 %following: \\ \\
 %                                                                                                                                           
@@ -1799,7 +1813,7 @@ mass of the entire pseudoatom.
 %
 %\it Character(7)*20
 \item {\it Character(7)}: Specifies functional form for VDW interactions to be used in the simulation. This
-must match what is given for \texttt{\# VDW\_Style} (\autoref{sec:VDW_Style}) in the input file.  
+must match what is given for \texttt{\# VDW\_Style}  (subsection \ref{sec:VDW_Style}) in the input file.  
 At present only 'LJ' style is permitted.
 %
 \item {\it Real(8)}: The energy parameter in K.
