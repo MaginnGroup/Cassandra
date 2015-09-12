@@ -27,6 +27,7 @@
 #********************************************************************************
 
 import re, wx, os, sys
+from wx.lib.pubsub import setupkwargs
 from wx.lib.pubsub import pub
 
 # dictionary where we will put the user data
@@ -2691,8 +2692,10 @@ def data(obj,val,listStyle=False):
     global obj_counter
     obj_counter += 1
     if obj_counter >= 2:
-      pub.sendMessage("refresh",message=None)
-   
+      try:
+      	pub.sendMessage("refresh",message=None)
+      except: 
+      	pub.sendMessage("refresh")
 
 
 
