@@ -510,30 +510,16 @@ each species, so do not use larger numbers than are needed.
 \subsection{Simulation Box}\label{sec:Box_Info}
 {\bf \# Box\_Info} \\
 {\it Integer(1)} \\
-{\it Character(i,2)}  \\
-{\it Real(i,3)} \\ \\
+{\it Character(i,1)}  \\
+{\it Real(i,j)} \\ \\
 This keyword sets parameters for the simulation boxes. 
 {\it   Integer(1)} specifies the total number of boxes in the
 simulation. For now, Gibbs ensemble simulations must have two boxes. 
-{\it Character(i,2)} is the shape of the {\it i$^{th}$} simulation
-box. Right now, the only supported box shape in Cassandra is cubic, so
-use the keyword ``CUBIC''.
+{\it Character(i,1)} is the shape of the {\it i$^{th}$} simulation
+box. The allowed keywords are ``CUBIC'', ``ORTHOGONAL'', and ``CELL\_MATRIX''.
 %
-\emph{Real(i,3)} is the length of the box edges for a cubic box in \AA. 
-%
-%If it's ``SLIT\_PORE'' geometry then it is assumed
-%that the periodicity is in the xy plane while the slit pore width is
-%along the z direction. In this case {\it
-%  Real(i,3) Real(i,4)} provide box dimensions in the x and y
-%directions respectively. {\it Real(i,5)} is the pore width if there
-%Ewald summation is not enabled. If the simulation uses Ewald summation
-%then {\it Real(i,5)} will be the length in the z direction for the
-%computation of electrostatic energy using 3D Ewald summation. A good
-%starting point is twice the pore width. {\bf Users are encouraged to check
-%the convergence of the electrostatic energy by varying {\it
-%  Real(i,5)}}. The actual pore width will be determined by {\bf \#
-%Pore\_Width} keyword (\autoref{sec:Pore_Width}). \\ \\
-%
+If {\it Character(i,1)} is ``CUBIC'', \emph{Real(i,j)} is the length 
+of the box edges for a cubic box in \AA. 
 Information for additional boxes is provided in an analogous fashion
 and is separated from the previous box by a blank line. For a two box
 simulation, box information is given as: \\ \\ 
@@ -549,6 +535,49 @@ simulation, box information is given as: \\ \\
 \\ \\
 This will construct two cubic boxes. The first will be 30 X 30 X 30
 cubic \AA\ and the second will be 60 X 60 X 60 cubic \AA.
+
+If {\it Character(i,1)} is ``ORTHOGONAL'', \emph{Real(i,j)} are the three
+dimensions that define the simulation box. For example, 
+
+\texttt{
+\# Box\_Info \\
+ 1 \\
+ ORTHOGONAL \\
+ 30.0 35.0 40.0}
+\\ \\
+
+This will create a simulation box with dimension 30.0 X 35.0 X 40.0 cubic \AA. \\
+
+Finally, if the simulation box is triclinic, set {\it Character(i,1)} to
+''CELL\_MATRIX``. In this case, \emph{Real(i,j)} are
+the three basis vectors that define the simulation box. For example, 
+
+\texttt{
+\# Box\_Info \\
+ 1 \\
+ CELL\_MATRIX \\
+ 30.0 0.00 0.00\\
+ 0.00 35.0 0.00\\
+ 0.00 2.00 40.0}
+\\ \\
+
+This will define a simulation box whose vectors are defined as 
+(30.0, 0.00, 0.00), (0.00,35.0,2.00) and (0.00,0.00,40.00).
+
+%
+%If it's ``SLIT\_PORE'' geometry then it is assumed
+%that the periodicity is in the xy plane while the slit pore width is
+%along the z direction. In this case {\it
+%  Real(i,3) Real(i,4)} provide box dimensions in the x and y
+%directions respectively. {\it Real(i,5)} is the pore width if there
+%Ewald summation is not enabled. If the simulation uses Ewald summation
+%then {\it Real(i,5)} will be the length in the z direction for the
+%computation of electrostatic energy using 3D Ewald summation. A good
+%starting point is twice the pore width. {\bf Users are encouraged to check
+%the convergence of the electrostatic energy by varying {\it
+%  Real(i,5)}}. The actual pore width will be determined by {\bf \#
+%Pore\_Width} keyword (\autoref{sec:Pore_Width}). \\ \\
+%
 %
 %%%%%%%%%%%%%%%%
 %
@@ -1197,14 +1226,15 @@ This is a required keyword that marks the end of the section for specifying move
 {\it Character(1) } \\ \\
 %
 This keyword specifies whether Cassandra generates an initial configuration or uses a previously generated configuration
-to start a simulation. {\it Character(1)} takes one of the three options: `make\_config', `checkpoint' or `read\_old' and it
-determines what configuration is used to start a simulation.   \\ \\
+to start a simulation. {\it Character(1)} takes one of the three options: `make\_config', `checkpoint' or `read\_old'. 
 %
-When `make\_config'  is used as the start type, Cassandra will generate an initial configuration. With this option, additional
-information is required on the number of molecules of each species in every box and is specified as follows: \\ \\
+\begin{itemize} 
+\item \textbf{`make\_config'} this keyword is used to generate an initial state using a configurational biased scheme. 
+With this option, additional information is required on the number of molecules of each species in every box and is specified as follows: \\ \\
 %
 %
-{\bf make\_config} \\
+{\bf \# Start\_Type} \\
+{\it make\_config} \\
 {\it Integer(j,k)} * One line for each species and one entry on each line for each box\\ \\
 % 
  where {\it Integer(j,k)} represents the number of molecules of species $j$ in box $k$. Thus, for example, to generate an initial configuration
@@ -1215,15 +1245,21 @@ information is required on the number of molecules of each species in every box 
  \# Start\_Type \\
  make\_config \\
  100 50 \\
- 75 25 \\ \\}
+ 75 25 \\}
  %
 %
-During the course of a simulation, Cassandra periodically generates a checkpoint file (*.chk) containing information about the total number of translation, rotation and
-volume moves along with the random number seeds and the coordinates of all the molecules and their box number at the time the file is written. Cassandra provides
-the capability of restarting from this state point in the event that a simulation crashes or running a production simulation from an equilibrated configuration. For this
-purpose, in addition to the `checkpoint' keyword, additional information in the form of the name of the checkpoint file {\it Character(2)} is required in the following format: \\ \\
+
+\item \textbf{`checkpoint'} this keyword is used to restart a simulation from a checkpoint file.
+During the course of a simulation, Cassandra periodically generates a checkpoint file (*.chk)
+ containing information about the total number of translation, rotation and volume moves along with the random number seeds and 
+the coordinates of all the molecules and their box number at the time the file is written. Cassandra provides
+the capability of restarting from this state point in the event that a simulation crashes or 
+running a production simulation from an equilibrated configuration. For this
+purpose, in addition to the `checkpoint' keyword, additional information in the form of the name of 
+the checkpoint file {\it Character(2)} is required in the following format: \\ \\
 %
-{\bf checkpoint} \\
+{\bf \# Start\_Type} \\
+{\it checkpoint} \\
 {\it Character(2)} \\ \\
 %
 For example, to continue simulations from a checkpoint file `methane\_vle\_T148.chk', you might specify: \\ \\
@@ -1231,15 +1267,17 @@ For example, to continue simulations from a checkpoint file `methane\_vle\_T148.
 \texttt{
 \# Start\_Type \\
 checkpoint \\
-methane\_vle\_T148.chk \\ \\ }
+methane\_vle\_T148.chk \\ }
 %
 %
 %
-Cassandra also provides a `read\_old' option to make use of just the coordinates of molecules to start a simulation. For example, a configuration generated at a lower temperature may
-be used to jump start a simulation at a higher temperature. When the `read\_old' option is used, additional information in the form of the file names {\it Character(k,3)} is required as
+\item {\textbf{`read\_old'}} Cassandra also provides a `read\_old' option to make use of just the coordinates of molecules to start a simulation. 
+For example, a configuration generated at a lower temperature may be used to jump start a simulation at a higher temperature. 
+When the `read\_old' option is used, additional information in the form of the file names {\it Character(k,3)} is required as
 shown below: \\ \\
 %
-{\bf read\_old}\\
+{\bf \# Start\_Type} \\
+{\it read\_old}\\
 {\it Character(k,3)} * One line for each box \\ \\
 %
 For example, to start a GEMC simulation simulation using the configurations of the two boxes, you might specify: \\ \\
@@ -1250,8 +1288,28 @@ read\_old \\
 box1.readold \\ 
 box2.readold \\ \\}
 %
-This will tell Cassandra to use the configurations of the two boxes stored in \texttt{box1.readold} and \texttt{box2.readold} to start a simulation. Note that configurations of the boxes 
-can be easily extracted from the checkpoint file using the utility \texttt{read\_old.py} provided in \texttt{Scripts/Read\_Old}.
+This will tell Cassandra to use the configurations of the two boxes stored in \texttt{box1.readold} and \texttt{box2.readold} to start a simulation. 
+The files \texttt{box1.readold} and \texttt{box2.readold} differ from a typical xyz file in that the first line is the total number of molecules
+of each species. For example, the first four lines of an xyz file for a mixture of 50 methane (species 1) molecules and 30 butane (species 2) molecules are\\
+
+\texttt{
+ \ \ \ \ 50 \ \ \ \ 30\\
+ C    35.3216621555828        23.4086639841907       -21.2699226066799\\
+ C   -5.99142900112297        20.1953876924176        36.9060179722412\\
+ C   -12.2050779845648        28.5047573713517        19.4255817882403\\
+}
+
+The utility \texttt{read\_old.py} is provided to speed up the restart of simulations using the `read\_old' option.
+This tool extracts the last configuration from a previous run, as well as relevant information from the checkpoint file 
+such as maximum displacements for angles or translations. It then creates new input and xyz files that can readily be
+used to restart a simulation using the `read\_old' option. This script is located in \texttt{Scripts/Read\_Old}. For more information, refer to
+the README file located in the same directory.
+\end{itemize}
+
+Note that when a `checkpoint' file is used to restart a simulation, the seeds for random number generation supplied by the user
+will be overwritten by those present in the checkpoint file. By contrast, if \# Start\_Type is set to `read\_old', 
+then the seeds specified in the input file are used.  \\ \\
+
 %
 %%%%%%%%%%%%%%%%
 %
@@ -1295,7 +1353,7 @@ Production 250}
 % Simulation_Length
 %
 %%%%%%%%%%%%%%%%
-\subsection{Frequency}\label{sec:Simulation_Length_Info}
+\subsection{Simulation Length}\label{sec:Simulation_Length_Info}
 {\bf \# Simulation\_Length\_Info} \\
 {\it Units  Character(1)} \\
 {\it Prop\_Freq} {\it Integer(2)} \\
@@ -1366,7 +1424,7 @@ MCsteps         50000 \\
 %
 This section specifies how thermodynamic quantities are output. At present, Cassandra
 writes instantaneous values of thermodynamic quantities at a frequency given by
-either {\it Nthermofreq} or {\it thermofreq} in the \texttt{\# Frequency\_Info} section. {\it Integer(1)}
+either {\it Prop\_Freq} in the \texttt{\# Simulation\_Length\_Info} section. {\it Integer(1)}
 is set to 1 for this purpose. Later versions of Cassandra will have the ability to output block
 averages as well. Thus, you will specify the following section in your input file: \\ \\
 %
