@@ -3,7 +3,10 @@
 
 \section{Simulation Input File} \label{sec:Input_File}
 This is a required file that is given as an argument to the Cassandra
-executable. You must generate this by hand, but you can use the input files in the Examples directory as a guide. The input file contains a number of keywords that define simulation parameters
+executable. This file can be generated manually, but you can use the input files in the Examples 
+directory as a guide. Alternatively, this file can be generated using the graphical user interface 
+for input file generation as explained in section \ref{sec:GUI}.
+The input file contains a number of keywords that define simulation parameters
 and thermodynamic state point for the simulation. A keyword is identified
 by a `\#' while comments follow a `!'. Note that the order of the keywords in the input
 file is immaterial, but the format of the arguments of the keyword are
@@ -338,7 +341,7 @@ interactions, but no interactions will be computed. \
 {\bf \# Mie\_Nonbond} \\
 {\it Int(i,1) Int(j,2) Real(i,j,3) Real(i,j,4)} * ($N$ species * $N$ species) lines \\ 
 
-This keyword should only be used if VDW\_Style is set to ``mie'' or ``mie\_cut\_shift''.
+This keyword should only be used if VDW\_Style is set to ``LJ mie'' or ``LJ mie\_cut\_shift''.
 \textit{Int(i,1)} and \textit{Int(j,2)} specify the index for each species pair combination.  \textit{Real(i,j,3)} and \textit{Real(i,j,4)} are the corresponding $n$ and $m$ exponents, respectively. 
 
 For example, a system with two species interacting with a LJ potential can be specified as follows:\\ \\
@@ -551,7 +554,7 @@ dimensions that define the simulation box. For example,
 
 This will create a simulation box with dimension 30.0 X 35.0 X 40.0 cubic \AA. \\
 
-Finally, if the simulation box is triclinic, set {\it Character(i,1)} to
+Finally, if the simulation box is non-orthogonal, set {\it Character(i,1)} to
 ''CELL\_MATRIX``. In this case, \emph{Real(i,j)} are
 the three basis vectors that define the simulation box. For example, 
 
@@ -565,7 +568,7 @@ the three basis vectors that define the simulation box. For example,
 \\ \\
 
 This will define a simulation box whose vectors are defined as 
-(30.0, 0.00, 0.00), (0.00,35.0,2.00) and (0.00,0.00,40.00).
+(30.0, 0.00, 0.00), (0.00, 35.0, 2.00) and (0.00, 0.00, 40.00).
 
 Please note that the ORTHOGONAL and CELL\_MATRIX boxes are
 compatible only with simulations using constant volume ensembles (i.e. 

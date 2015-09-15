@@ -1,7 +1,7 @@
 \chapter{Utilities}
 
 \section{Input File GUI} 
-\label{Sec:GUI}
+\label{sec:GUI}
 This script provides a graphical user interface (GUI) with which the user 
 may create input files for use in simulations.  The GUI is written 
 in Python and uses the wxWidgets for Python module, which may be found at
@@ -32,15 +32,22 @@ value is entered for a required prompt, the GUI will inform the user
 via a KeyError message in the terminal.
 
 If a given parameter is to be input at a later point in time, 
-enter '?' and subsequently use a text editor to enter the 
+enter ``?'' and subsequently use a text editor to enter the 
 desired value in the input file manually.  
 
 If creating multiple input files, it is strongly encouraged to exit the GUI
 and restart from the terminal each time a file is created, otherwise, data from the 
 previous file may leak to the next file.
 
+A set of executable files are provided that do not require the installation
+of the wxPython module. These executables are available for Unix-like systems.
+In order to run these, the user must change the access permissions of the executable through the
+command \\ \\
 
+\texttt{> chmod +x InputFileGUI\_v1\_1\_UNIX.exe}. 
 
+Then, the user can execute the GUI by typing \\ \\
+\texttt{> ./InputFileGUI\_v1\_1\_UNIX.exe}. 
 \section{Generate an MCF file}
 \label{sec:mcfgen}
 

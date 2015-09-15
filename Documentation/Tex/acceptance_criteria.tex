@@ -180,7 +180,7 @@ where $Q(1,V,T)$ is the partition function of a single molecule in a box. The ce
 Q(1,V,T) = Q_{com}Q_{rot+int} = V \Lambda^{-3} Q_{rot+int}
 \end{equation}
 
-where $\Lambda$ is the de Broglie wavelength of the molecule and the rotational and internal momenta integratals in $Q_{rot+int}$ are not separable since the moments of inertia will depend on the conformation adopted by the molecule. The configurational partition function is further separable into center of mass (translational), orientational and internal degrees of freedom:
+where $\Lambda$ is the de Broglie wavelength of the molecule and the rotational and internal momenta integrals in $Q_{rot+int}$ are not separable since the moments of inertia will depend on the conformation adopted by the molecule. The configurational partition function is further separable into center of mass (translational), orientational and internal degrees of freedom:
 
 \begin{equation}
 \label{eq:configPartitionFn_1VT}
@@ -410,7 +410,7 @@ f'&= f \frac{Z_{frag}\Omega_{dih}}{Z_{int}}
 
 All of the terms in Eqs.\ (\ref{eq:muShift}) and (\ref{eq:fShift}) are intensive. GCMC simulations using Eqs.\ (\ref{eq:pAcc_cbmcInsertMuShift}) and (\ref{eq:pAcc_cbmcInsertFShift}) will converge to the same average density regardless of the simulation volume $V$. However, the values of $\mu'$ or $f'$ that correspond to the converged density will {\em not} match tabulated values of $\mu$ or $f$ computed from experimental data.
 
-Note that the term $Z^{IG}/\Omega$ from Macedonia {\em et al}. would be equivalent to $Z_{int}/\Omega_{frag}\Omega_{dih}$ in the nomenclature used here. The configurational partition function of the disconnected fragments integrates over a Boltzmann factor, $Z_{frag} = \int e^{-\beta U(\mathbf{q}_{frag})} d\mathbf{q}_{frag}$, whereas the term $\Omega_{frag} = \int d\mathbf{q}_{frag}$ does not.
+Note that the term $Z^{IG}/\Omega$ from Macedonia {\em et al} \cite{Macedonia:1999}. would be equivalent to $Z_{int}/\Omega_{frag}\Omega_{dih}$ in the nomenclature used here. The configurational partition function of the disconnected fragments integrates over a Boltzmann factor, $Z_{frag} = \int e^{-\beta U(\mathbf{q}_{frag})} d\mathbf{q}_{frag}$, whereas the term $\Omega_{frag} = \int d\mathbf{q}_{frag}$ does not.
 
 In Cassandra, the insertion move is implemented in the subroutine Insertion in insertion.f90. The relevant lines from version 1.1 are quoted below. The variable names in the insertion.f90 code are identified with symbols in Table \ref{table:cbmcInsert}.
 
@@ -436,6 +436,9 @@ In Cassandra, the insertion move is implemented in the subroutine Insertion in i
   accept = accept_or_reject(ln_pacc)
 \end{lstlisting}
 \end{minipage}
+
+Note that GCMC simulations using fugacities are currently not supported in Cassandra. This feature
+will be implemented in a future release.
 
 \begin{table}
 \caption{Variable symbols and code names for inserting a molecule}
@@ -529,6 +532,9 @@ In Cassandra, the deletion move is implemented in the subroutine Deletion in del
 
 \end{lstlisting}
 \end{minipage}
+
+Note that GCMC simulations using fugacities are currently not supported in Cassandra. This feature
+will be implemented in a future release.
 
 \begin{table}
 \caption{Variable symbols and code names for deleting a molecule}
@@ -818,7 +824,7 @@ particles to attain equality of chemical potential. In contrast to
 the GEMC-NVT method, the volume of each box is allowed to fluctuate
 independently from the other box. As a result, the total volume of the system is not constant and the 
 pressure must be specified as a simulation parameter in addition to the temperature.
-This is consistent with the Gibbs phase rule, which requires the specification of two intensive
+This is consistent with the Gibbs phase rule for mixtures, which requires the specification of two intensive
 variables (e.g. pressure and temperature) to fully specify a state with two phases. \\
 
 The probability distribution of this ensemble is very similar to its NVT counterpart (see
@@ -844,7 +850,8 @@ exposed in section \ref{subsec:scaling_the_volume}.
 
 \section{Multicomponent Systems} 
 
-Sections \ref{sec:NVT}-\ref{sec:gibbs} have each been developed for pure component systems. The Monte Carlo moves and acceptance criteria for multicomponent systems are straightforward extensions of the pure component moves. The only modification needed to translate, rotate and regrow molecules is to first select a species. In these moves, a species is selected randomly in proportion to its mole fraction $N_i/N$. When inserting and deleting a molecule, the mole fractions of each species change. In these cases, a species in a multicomponent system is selected instead with uniform probability $1/N_{species}$. In either case, species selection is symmetric for both forward and reverse moves and so cancels from the acceptance criterion.
+Excluding section \ref{sec:gibbs_npt}, the acceptance rules for all the Monte Carlo techniques exposed in this chapter
+have been developed for pure component systems. The Monte Carlo moves and acceptance criteria for multicomponent systems are straightforward extensions of the pure component moves. The only modification needed to translate, rotate and regrow molecules is to first select a species. In these moves, a species is selected randomly in proportion to its mole fraction $N_i/N$. When inserting and deleting a molecule, the mole fractions of each species change. In these cases, a species in a multicomponent system is selected instead with uniform probability $1/N_{species}$. In either case, species selection is symmetric for both forward and reverse moves and so cancels from the acceptance criterion.
 
 %In contrast, a reaction move that changes the number of molecules of several species simultaneously will depend on the chemical potentials of each species. In the multicomponent grand canonical ensemble, the temperature $T$, volume $V$ and set of chemical potentials $\{\mu\} = \mu_1, \ldots, \mu_s$ of each species are held constant. The partition function for a system with $s$ species is
 %
