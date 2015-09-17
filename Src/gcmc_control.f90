@@ -53,6 +53,7 @@ SUBROUTINE GCMC_Control
 
 !*******************************************************************************
 
+  CALL Get_Verbosity_Info  
   CALL Copy_Inputfile
 
   ! How many species to simulate?
@@ -140,5 +141,5 @@ SUBROUTINE GCMC_Control
       CALL Get_Mie_Nonbond
   END IF
   END DO
-  
+
 END SUBROUTINE GCMC_Control

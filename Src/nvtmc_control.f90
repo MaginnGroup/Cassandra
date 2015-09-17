@@ -77,6 +77,7 @@ SUBROUTINE NVTMC_Control
 !*******************************************************************************
   ! Copy the input file to the logfile
 
+  CALL Get_Verbosity_Info  
   CALL Copy_Inputfile
 
   ! How many species to simulate?

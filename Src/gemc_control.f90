@@ -46,6 +46,7 @@ SUBROUTINE GEMC_Control
   INTEGER ::  i
 !*******************************************************************************
 
+  CALL Get_Verbosity_Info  
   CALL Copy_Inputfile
 
   ! How many species to simulate?
