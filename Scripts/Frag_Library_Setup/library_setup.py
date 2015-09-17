@@ -1,4 +1,4 @@
-#!/usr/bin/env 
+#!/usr/bin/env python
 
 #*******************************************************************************
 #   Cassandra - An open source atomistic Monte Carlo software package
