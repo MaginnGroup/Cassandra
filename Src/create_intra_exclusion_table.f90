@@ -58,8 +58,8 @@ SUBROUTINE Create_Intra_Exclusion_Table
 
   IF (AllocateStatus .NE. 0) THEN
      err_msg = ''
-     err_msg(1) = ' ERROR: Not enough memory for scaling tabless '
-     CALL Clean_Abort(err_msg,'ceate_intra_exclusion_table')
+     err_msg(1) = ' ERROR: Not enough memory for scaling tables '
+     CALL Clean_Abort(err_msg,'create_intra_exclusion_table')
   END IF
   
   DO is=1,nspecies
@@ -146,6 +146,8 @@ SUBROUTINE Create_Intra_Exclusion_Table
   ENDDO SpeciesLoop
 
   ! report info to log
+
+  IF (verbose_log == .TRUE.) THEN
   WRITE(logunit,*)
   WRITE(logunit,*) '*** Creating exclusion table ***'
   WRITE(logunit,*)    
@@ -160,11 +162,11 @@ SUBROUTINE Create_Intra_Exclusion_Table
         ENDDO
      ENDDO
   ENDDO
-  
 
   WRITE(logunit,*)
   WRITE(logunit,*) '*** Completed construction of exclusion table ***'
   WRITE(logunit,*)    
+  END IF
 
 
 END SUBROUTINE Create_Intra_Exclusion_Table

@@ -237,15 +237,6 @@ SUBROUTINE GCMC_Driver
      next_write(this_box) = .true.
      next_rdf_write(this_box) = .true.
 
-     IF(MOD(i, nthermo_freq) == 0) THEN
-
-       WRITE(*,*)
-       WRITE(*,"(A,T15,I10)") ' MC Step =', i
-       WRITE(*,"(A,T15,I8)") 'Nmol(1) = ', nmols(1,1)
-       WRITE(*,"(A,T15,F24.12)") 'Energy(1) =', energy(1)%total
-
-     END IF
-
      IF(.NOT. openmp_flag) THEN
         CALL cpu_time(now_time)
      ELSE

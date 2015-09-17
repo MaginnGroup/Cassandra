@@ -542,7 +542,6 @@ SUBROUTINE Get_Pair_Style
 
            ENDIF
 
-           WRITE(logunit,*) 'VDW style properly input'
            WRITE(logunit,*)
            iassign = iassign + 1
            ! Test if both vdw and coulomb stuff read OK. If so, done.
@@ -1126,7 +1125,7 @@ SUBROUTINE Get_Molecule_Info
         CALL Get_Angle_Info(is)
         CALL Get_Dihedral_Info(is)
         CALL Get_Improper_Info(is)
-     
+  
         IF(nfragments(is) /= 0  ) THEN
            species_list(is)%fragment = .TRUE.
            CALL Get_Fragment_Info(is)
@@ -1211,8 +1210,7 @@ SUBROUTINE Get_L_Coul_CBMC(is)
 ! L_Coul_CBMC not specified. Default is true
         species_list(is)%L_Coul_CBMC = .true.
         WRITE(logunit,'(A,I4)') 'L_Coul_CBMC not given for species ',is
-        WRITE(logunit,*) 'Defaulting to true'
-        WRITE(logunit,*) 'default ',species_list(is)%L_Coul_CBMC
+        WRITE(logunit,*) 'Defaulting to ', species_list(is)%L_Coul_CBMC
 
         EXIT
 
@@ -1464,12 +1462,14 @@ SUBROUTINE Get_Atom_Info(is)
               CALL Clean_Abort(err_msg,'Get_Atom_Info')
            ENDIF
 
-           WRITE(logunit,'(A,T25,I3,1x,I5)') 'Species and atom number', is,ia
-           WRITE(logunit,'(A,T25,A)') ' atom name:',nonbond_list(ia,is)%atom_name
-           WRITE(logunit,'(A,T25,A)') ' element:',nonbond_list(ia,is)%element
-           WRITE(logunit,'(A,T25,F10.4)') ' mass:',nonbond_list(ia,is)%mass
-           WRITE(logunit,'(A,T25,F10.4)') ' charge:',nonbond_list(ia,is)%charge
-           WRITE(logunit,'(A,T25,A)') ' vdw type:',nonbond_list(ia,is)%vdw_potential_type
+           IF (verbose_log == .TRUE.) THEN
+                   WRITE(logunit,'(A,T25,I3,1x,I5)') 'Species and atom number', is,ia
+                   WRITE(logunit,'(A,T25,A)') ' atom name:',nonbond_list(ia,is)%atom_name
+                   WRITE(logunit,'(A,T25,A)') ' element:',nonbond_list(ia,is)%element
+                   WRITE(logunit,'(A,T25,F10.4)') ' mass:',nonbond_list(ia,is)%mass
+                   WRITE(logunit,'(A,T25,F10.4)') ' charge:',nonbond_list(ia,is)%charge
+                   WRITE(logunit,'(A,T25,A)') ' vdw type:',nonbond_list(ia,is)%vdw_potential_type
+           END IF
 
            ! Load vdw parameters, specific for each individual type
            IF (nonbond_list(ia,is)%vdw_potential_type == 'LJ') THEN
@@ -1478,10 +1478,12 @@ SUBROUTINE Get_Atom_Info(is)
               ! sigma = Angstrom
               nonbond_list(ia,is)%vdw_param(2) = String_To_Double(line_array(8))
 
-              WRITE(logunit,'(A,T25,F10.4)') ' Epsilon / kB in K:', &
-                   nonbond_list(ia,is)%vdw_param(1)
-              WRITE(logunit,'(A,T25,F10.4)') ' Sigma in A:', &
-                   nonbond_list(ia,is)%vdw_param(2)
+              IF (verbose_log == .TRUE.) THEN
+                      WRITE(logunit,'(A,T25,F10.4)') ' Epsilon / kB in K:', &
+                           nonbond_list(ia,is)%vdw_param(1)
+                      WRITE(logunit,'(A,T25,F10.4)') ' Sigma in A:', &
+                           nonbond_list(ia,is)%vdw_param(2)
+              END IF
 
               ! Convert epsilon to atomic units amu A^2/ps^2
               nonbond_list(ia,is)%vdw_param(1) = kboltz* nonbond_list(ia,is)%vdw_param(1) 
@@ -1489,8 +1491,13 @@ SUBROUTINE Get_Atom_Info(is)
               nbr_vdw_params = 2
 
            ELSEIF (nonbond_list(ia,is)%vdw_potential_type == 'NONE') THEN
-              WRITE(logunit,'(A,I6,1x,I6)') & 
-                   'No VDW potential assigned to atom, species: ',ia,is
+
+              IF (verbose_log == .TRUE.) THEN
+
+                      WRITE(logunit,'(A,I6,1x,I6)') & 
+                           'No VDW potential assigned to atom, species: ',ia,is
+
+              END IF
 
               ! Set number of vdw parameters
               nbr_vdw_params = 0
@@ -1509,7 +1516,9 @@ SUBROUTINE Get_Atom_Info(is)
                  nring_atoms(is) = nring_atoms(is) + 1
                  ring_atom_ids(nring_atoms(is),is) = ia
                  nonbond_list(ia,is)%ring_atom = .TRUE.
-                 WRITE(logunit,*) ia ,' is a ring atom'
+                 IF (verbose_log == .TRUE.) THEN
+                         WRITE(logunit,*) ia ,' is a ring atom'
+                 END IF
               END IF
            ELSE
               ! this is an not a ring atom
@@ -1517,8 +1526,7 @@ SUBROUTINE Get_Atom_Info(is)
               exo_atom_ids(nexo_atoms(is),is) = ia
            END IF
               
-
-           WRITE(logunit,*)
+           IF (verbose_log == .TRUE.) WRITE(logunit,*)
 
         ENDDO
               
@@ -1536,11 +1544,18 @@ SUBROUTINE Get_Atom_Info(is)
      ENDIF
 
   ENDDO
-  WRITE(logunit,'(A, T40, I4,A, T45, I4)') 'Total number of ring atoms in species', is, ' is', nring_atoms(is)
-  WRITE(logunit,'(A, T40, I4,A, T45, I4)') 'Total number of exo atoms in species', is, ' is', nexo_atoms(is)
 
-  WRITE(logunit,*) 'Atom ids for ring atoms', ring_atom_ids(1:nring_atoms(is),is)
-  WRITE(logunit,*) 'Atom ids for exo atoms', exo_atom_ids(1:nexo_atoms(is),is)
+  IF (verbose_log == .FALSE.) THEN
+        WRITE(logfile, '(A,I2)') 'Dispersion-Repulsion parameters were properly read for species ', is
+  END IF
+
+
+  IF (verbose_log == .TRUE.) THEN
+          WRITE(logunit,'(A, T40, I4,A, T45, I4)') 'Total number of ring atoms in species', is, ' is', nring_atoms(is)
+          WRITE(logunit,'(A, T40, I4,A, T45, I4)') 'Total number of exo atoms in species', is, ' is', nexo_atoms(is)
+          WRITE(logunit,*) 'Atom ids for ring atoms', ring_atom_ids(1:nring_atoms(is),is)
+          WRITE(logunit,*) 'Atom ids for exo atoms', exo_atom_ids(1:nexo_atoms(is),is)
+  END IF
 
   WRITE(logunit,*) '*** Completed assigning atom info ***'
   WRITE(logunit,*)
@@ -1594,7 +1609,7 @@ SUBROUTINE Get_Bond_Info(is)
         ENDIF
         
         IF (nbonds(is) == 0) THEN
-           WRITE(logunit,*) 'No bonds in species ',is
+           IF (verbose_log == .TRUE.) WRITE(logunit,*) 'No bonds in species ',is
            EXIT
         ENDIF
 
@@ -1623,21 +1638,28 @@ SUBROUTINE Get_Bond_Info(is)
            bond_list(ib,is)%atom2 = String_To_Int(line_array(3))
            bond_list(ib,is)%bond_potential_type = line_array(4)
 
-           WRITE(logunit,'(A,T25,I3,1x,I3)') 'Species and bond number', is,ib
-           WRITE(logunit,'(A,T25,I3)') ' atom1:',bond_list(ib,is)%atom1
-           WRITE(logunit,'(A,T25,I3)') ' atom2:',bond_list(ib,is)%atom2
-           WRITE(logunit,'(A,T25,A)') ' bond type:',bond_list(ib,is)%bond_potential_type
+           IF (verbose_log) THEN
+                   WRITE(logunit,'(A,T25,I3,1x,I3)') 'Species and bond number', is,ib
+                   WRITE(logunit,'(A,T25,I3)') ' atom1:',bond_list(ib,is)%atom1
+                   WRITE(logunit,'(A,T25,I3)') ' atom2:',bond_list(ib,is)%atom2
+                   WRITE(logunit,'(A,T25,A)') ' bond type:',bond_list(ib,is)%bond_potential_type
+           END IF
 
            ! Load bond potential parameters, specific for each individual type
            IF (bond_list(ib,is)%bond_potential_type == 'fixed') THEN
               bond_list(ib,is)%int_bond_type = int_none    
-              WRITE(logunit,'(A,I6,1x,I6, A, I4)') & 
+              IF (verbose_log) THEN
+                      WRITE(logunit,'(A,I6,1x,I6, A, I4)') & 
                    'Bond fixed between atoms: ',bond_list(ib,is)%atom1, bond_list(ib,is)%atom2, &
                    ' in species', is
+              END IF
               ! Fixed bond length in A
+              
               bond_list(ib,is)%bond_param(1) = String_To_Double(line_array(5))
-              WRITE(logunit,'(A,T25,F10.4)') 'Fixed bond length, in A:',bond_list(ib,is)%bond_param(1)
-
+        
+              IF (verbose_log) THEN
+                      WRITE(logunit,'(A,T25,F10.4)') 'Fixed bond length, in A:',bond_list(ib,is)%bond_param(1)
+              END IF
               ! Set number of bond parameters
               nbr_bond_params = 1
 
@@ -1647,7 +1669,7 @@ SUBROUTINE Get_Bond_Info(is)
               CALL Clean_Abort(err_msg,'Get_Bond_Info')
            ENDIF
 
-           WRITE(logunit,*)
+           IF (verbose_log) WRITE(logunit,*)
 
         ENDDO
               
@@ -1718,7 +1740,7 @@ SUBROUTINE Get_Angle_Info(is)
         ENDIF
         
         IF (nangles(is) == 0) THEN
-           WRITE(logunit,*) 'No angles in species ',is
+           IF (verbose_log == .TRUE.) WRITE(logunit,*) 'No angles in species ',is
            EXIT
         ENDIF
 
@@ -1748,11 +1770,13 @@ SUBROUTINE Get_Angle_Info(is)
            angle_list(iang,is)%atom3 = String_To_Int(line_array(4))
            angle_list(iang,is)%angle_potential_type = line_array(5)
 
-           WRITE(logunit,'(A,T25,I3,1x,I3)') 'Species and angle number', is,iang
-           WRITE(logunit,'(A,T25,I3)') ' atom1:',angle_list(iang,is)%atom1
-           WRITE(logunit,'(A,T25,I3)') ' atom2:',angle_list(iang,is)%atom2
-           WRITE(logunit,'(A,T25,I3)') ' atom3:',angle_list(iang,is)%atom3
-           WRITE(logunit,'(A,T25,A)') ' angle type:',angle_list(iang,is)%angle_potential_type
+           IF (verbose_log) THEN
+                   WRITE(logunit,'(A,T25,I3,1x,I3)') 'Species and angle number', is,iang
+                   WRITE(logunit,'(A,T25,I3)') ' atom1:',angle_list(iang,is)%atom1
+                   WRITE(logunit,'(A,T25,I3)') ' atom2:',angle_list(iang,is)%atom2
+                   WRITE(logunit,'(A,T25,I3)') ' atom3:',angle_list(iang,is)%atom3
+                   WRITE(logunit,'(A,T25,A)') ' angle type:',angle_list(iang,is)%angle_potential_type
+           END IF
 
            ! Load angle potential parameters, specific for each individual type
            IF (angle_list(iang,is)%angle_potential_type == 'harmonic') THEN
@@ -1764,10 +1788,12 @@ SUBROUTINE Get_Angle_Info(is)
               ! theta0 in degrees
               angle_list(iang,is)%angle_param(2) = String_To_Double(line_array(7))
 
-              WRITE(logunit,'(A,T25,F10.4)') ' K_angle in K/rad^2:', &
-                   angle_list(iang,is)%angle_param(1)
-              WRITE(logunit,'(A,T25,F10.4)') ' theta0 in degrees:', &
-                   angle_list(iang,is)%angle_param(2)
+              IF (verbose_log) THEN
+                      WRITE(logunit,'(A,T25,F10.4)') ' K_angle in K/rad^2:', &
+                           angle_list(iang,is)%angle_param(1)
+                      WRITE(logunit,'(A,T25,F10.4)') ' theta0 in degrees:', &
+                           angle_list(iang,is)%angle_param(2)
+              END IF
 
               ! Convert force constant to atomic units amu A^2/(rad^2 ps^2) 
               ! so that EANGLE = amu A^2/ps^2
@@ -1785,11 +1811,13 @@ SUBROUTINE Get_Angle_Info(is)
               
               angle_list(iang,is)%angle_param(1) = String_To_Double(line_array(6))
 
-              WRITE(logunit,'(A,I6,1x,I6, 1x,I6,A, I4)') & 
+              IF (verbose_log) THEN
+                      WRITE(logunit,'(A,I6,1x,I6, 1x,I6,A, I4)') & 
                    'Angle fixed between atoms: ',angle_list(iang,is)%atom1, angle_list(iang,is)%atom2, &
                    angle_list(iang,is)%atom3,'in species', is
-              WRITE(logunit,'(A,T25,F10.4)') ' fixed bond angle in degrees:', &
+                      WRITE(logunit,'(A,T25,F10.4)') ' fixed bond angle in degrees:', &
                    angle_list(iang,is)%angle_param(1)
+              END IF
 
               ! Set number of angle parameter = 1 for the fixed DOF
               nbr_angle_params = 1
@@ -1801,7 +1829,7 @@ SUBROUTINE Get_Angle_Info(is)
               CALL Clean_Abort(err_msg,'Get_Angle_Info')
            ENDIF
 
-           WRITE(logunit,*)
+           IF (verbose_log) WRITE(logunit,*)
 
         ENDDO
               
@@ -1820,7 +1848,7 @@ SUBROUTINE Get_Angle_Info(is)
 
   ENDDO
 
-  WRITE(logunit,*)
+  IF (verbose_log) WRITE(logunit,*)
   
   ! Now loop over all the angles and the species is linear if
   ! 1. All angles are fixed and the nominal value for each of
@@ -1838,10 +1866,12 @@ SUBROUTINE Get_Angle_Info(is)
 
   IF (nangles_linear == nangles(is)) species_list(is)%linear = .TRUE.
 
-  IF(species_list(is)%linear) THEN
-     WRITE(logunit,'(A,2x,I3,2x,A)') 'Molecule',is,'is defined to be linear'
-  ELSE
-     WRITE(logunit,'(A,2x,I3,2x,A)') 'Molecule',is,'is NOT defined to be linear'
+  IF (verbose_log) THEN
+          IF(species_list(is)%linear) THEN
+             WRITE(logunit,'(A,2x,I3,2x,A)') 'Molecule',is,'is defined to be linear'
+          ELSE
+             WRITE(logunit,'(A,2x,I3,2x,A)') 'Molecule',is,'is NOT defined to be linear'
+          END IF
   END IF
   WRITE(logunit,*)
   WRITE(logunit,*) '*** Completed assigning angle info ***'
@@ -1894,7 +1924,7 @@ SUBROUTINE Get_Dihedral_Info(is)
         ENDIF
         
         IF (ndihedrals(is) == 0) THEN
-           WRITE(logunit,*) 'No dihedrals in species ',is
+           IF (verbose_log == .TRUE.) WRITE(logunit,*) 'No dihedrals in species ',is
            EXIT
         ENDIF
 
@@ -1926,13 +1956,15 @@ SUBROUTINE Get_Dihedral_Info(is)
 
            dihedral_list(idihed,is)%dihedral_potential_type = line_array(6)
 
-           WRITE(logunit,'(A,T25,I3,1x,I3)') 'Species and dihedral number', is,idihed
-           WRITE(logunit,'(A,T25,I3)') ' atom1:',dihedral_list(idihed,is)%atom1
-           WRITE(logunit,'(A,T25,I3)') ' atom2:',dihedral_list(idihed,is)%atom2
-           WRITE(logunit,'(A,T25,I3)') ' atom3:',dihedral_list(idihed,is)%atom3
-           WRITE(logunit,'(A,T25,I3)') ' atom4:',dihedral_list(idihed,is)%atom4
-           WRITE(logunit,'(A,T25,A)') ' dihedral type:', &
+           IF (verbose_log) THEN
+                   WRITE(logunit,'(A,T25,I3,1x,I3)') 'Species and dihedral number', is,idihed
+                   WRITE(logunit,'(A,T25,I3)') ' atom1:',dihedral_list(idihed,is)%atom1
+                   WRITE(logunit,'(A,T25,I3)') ' atom2:',dihedral_list(idihed,is)%atom2
+                   WRITE(logunit,'(A,T25,I3)') ' atom3:',dihedral_list(idihed,is)%atom3
+                   WRITE(logunit,'(A,T25,I3)') ' atom4:',dihedral_list(idihed,is)%atom4
+                   WRITE(logunit,'(A,T25,A)') ' dihedral type:', &
                 dihedral_list(idihed,is)%dihedral_potential_type
+           END IF
 
            ! Load dihedral potential parameters, specific for each individual type
            IF (dihedral_list(idihed,is)%dihedral_potential_type == 'OPLS') THEN
@@ -1945,14 +1977,16 @@ SUBROUTINE Get_Dihedral_Info(is)
               dihedral_list(idihed,is)%dihedral_param(3) = String_To_Double(line_array(9))
               dihedral_list(idihed,is)%dihedral_param(4) = String_To_Double(line_array(10))
 
-              WRITE(logunit,'(A,T25,F10.4)') ' a0, kJ/mol:', &
+              IF (verbose_log) THEN
+                      WRITE(logunit,'(A,T25,F10.4)') ' a0, kJ/mol:', &
                    dihedral_list(idihed,is)%dihedral_param(1)
-              WRITE(logunit,'(A,T25,F10.4)') ' a1, kJ/mol:', &
+                      WRITE(logunit,'(A,T25,F10.4)') ' a1, kJ/mol:', &
                    dihedral_list(idihed,is)%dihedral_param(2)
-              WRITE(logunit,'(A,T25,F10.4)') ' a2, kJ/mol:', &
+                      WRITE(logunit,'(A,T25,F10.4)') ' a2, kJ/mol:', &
                    dihedral_list(idihed,is)%dihedral_param(3)
-              WRITE(logunit,'(A,T25,F10.4)') ' a3, kJ/mol:', &
+                      WRITE(logunit,'(A,T25,F10.4)') ' a3, kJ/mol:', &
                    dihedral_list(idihed,is)%dihedral_param(4)
+              END IF
 
               ! Convert to molecular units amu A^2/ps^2
               dihedral_list(idihed,is)%dihedral_param(1) = kjmol_to_atomic* dihedral_list(idihed,is)%dihedral_param(1)
@@ -1971,12 +2005,15 @@ SUBROUTINE Get_Dihedral_Info(is)
               dihedral_list(idihed,is)%dihedral_param(2) = String_To_Double(line_array(8))
               dihedral_list(idihed,is)%dihedral_param(3) = String_To_Double(line_array(9))
               !
-              WRITE(logunit,'(A,T25,F10.4)') ' a0, kJ/mol:', &
-                   dihedral_list(idihed,is)%dihedral_param(1)
-              WRITE(logunit,'(A,T25,F10.4)') ' n ', &
-                   dihedral_list(idihed,is)%dihedral_param(2)
-              WRITE(logunit,'(A,T25,F10.4)') 'delta', &
-                   dihedral_list(idihed,is)%dihedral_param(3)
+
+              IF (verbose_log) THEN
+                      WRITE(logunit,'(A,T25,F10.4)') ' a0, kJ/mol:', &
+                           dihedral_list(idihed,is)%dihedral_param(1)
+                      WRITE(logunit,'(A,T25,F10.4)') ' n ', &
+                           dihedral_list(idihed,is)%dihedral_param(2)
+                      WRITE(logunit,'(A,T25,F10.4)') 'delta', &
+                           dihedral_list(idihed,is)%dihedral_param(3)
+              END IF
               
               
               ! Convert to molecular units amu A^2/ps^2 and the delta
@@ -2006,25 +2043,27 @@ SUBROUTINE Get_Dihedral_Info(is)
 			  !dihedral_list(idihed,is)%dihedral_param(12) = String_To_Double(line_array(18))
 			  
               !
-              WRITE(logunit,'(A,T25,F10.4)') ' a01, kJ/mol:', &
+
+              IF (verbose_log) THEN
+                      WRITE(logunit,'(A,T25,F10.4)') ' a01, kJ/mol:', &
                    dihedral_list(idihed,is)%dihedral_param(1)
-              WRITE(logunit,'(A,T25,F10.4)') ' n1 ', &
+                      WRITE(logunit,'(A,T25,F10.4)') ' n1 ', &
                    dihedral_list(idihed,is)%dihedral_param(2)
-              WRITE(logunit,'(A,T25,F10.4)') 'delta1', &
+                      WRITE(logunit,'(A,T25,F10.4)') 'delta1', &
                    dihedral_list(idihed,is)%dihedral_param(3)
-              WRITE(logunit,'(A,T25,F10.4)') ' a02, kJ/mol:', &
+                      WRITE(logunit,'(A,T25,F10.4)') ' a02, kJ/mol:', &
                    dihedral_list(idihed,is)%dihedral_param(4)
-              WRITE(logunit,'(A,T25,F10.4)') ' n2 ', &
+                      WRITE(logunit,'(A,T25,F10.4)') ' n2 ', &
                    dihedral_list(idihed,is)%dihedral_param(5)
-              WRITE(logunit,'(A,T25,F10.4)') 'delta2', &
+                      WRITE(logunit,'(A,T25,F10.4)') 'delta2', &
                    dihedral_list(idihed,is)%dihedral_param(6)
-              WRITE(logunit,'(A,T25,F10.4)') ' a03, kJ/mol:', &
+                      WRITE(logunit,'(A,T25,F10.4)') ' a03, kJ/mol:', &
                    dihedral_list(idihed,is)%dihedral_param(7)
-              WRITE(logunit,'(A,T25,F10.4)') ' n3 ', &
+                      WRITE(logunit,'(A,T25,F10.4)') ' n3 ', &
                    dihedral_list(idihed,is)%dihedral_param(8)
-              WRITE(logunit,'(A,T25,F10.4)') 'delta3', &
+                      WRITE(logunit,'(A,T25,F10.4)') 'delta3', &
                    dihedral_list(idihed,is)%dihedral_param(9)
-              
+              END IF
               
               ! Convert to molecular units amu A^2/ps^2 and the delta
               ! parameter to radians
@@ -2046,11 +2085,13 @@ SUBROUTINE Get_Dihedral_Info(is)
               ! theta0 in degrees
               dihedral_list(idihed,is)%dihedral_param(2) = String_To_Double(line_array(8))
 
-              WRITE(logunit,'(A,T25,F10.4)') ' Do_angle in K/rad^2:', &
-                   dihedral_list(idihed,is)%dihedral_param(1)
-              WRITE(logunit,'(A,T25,F10.4)') ' theta0 in degrees:', &
-                   dihedral_list(idihed,is)%dihedral_param(2)
 
+              IF (verbose_log) THEN
+                      WRITE(logunit,'(A,T25,F10.4)') ' Do_angle in K/rad^2:', &
+                   dihedral_list(idihed,is)%dihedral_param(1)
+                      WRITE(logunit,'(A,T25,F10.4)') ' theta0 in degrees:', &
+                   dihedral_list(idihed,is)%dihedral_param(2)
+              END IF
               ! Convert force constant to atomic units amu A^2/(rad^2 ps^2) 
               ! so that Edihedral = amu A^2/ps^2v
               dihedral_list(idihed,is)%dihedral_param(1) = kboltz * dihedral_list(idihed,is)%dihedral_param(1)
@@ -2064,12 +2105,14 @@ SUBROUTINE Get_Dihedral_Info(is)
 
            ELSEIF (dihedral_list(idihed,is)%dihedral_potential_type == 'none') THEN
               dihedral_list(idihed,is)%int_dipot_type = int_none
-              WRITE(logunit,'(A,4(I6,1x),A,I4)') & 
+
+              IF (verbose_log) THEN
+                      WRITE(logunit,'(A,4(I6,1x),A,I4)') & 
                    'No dihedral potential between atoms: ',&
                    dihedral_list(idihed,is)%atom1, dihedral_list(idihed,is)%atom2, &
                    dihedral_list(idihed,is)%atom3, dihedral_list(idihed,is)%atom4, &
                    'in species', is
-
+              END IF
               ! Set number of dihedral parameters
               nbr_dihedral_params = 0
 
@@ -2079,7 +2122,7 @@ SUBROUTINE Get_Dihedral_Info(is)
               CALL Clean_Abort(err_msg,'Get_Dihedral_Info')
            ENDIF
 
-           WRITE(logunit,*)
+           IF (verbose_log) WRITE(logunit,*)
 
         ENDDO
               
@@ -2143,7 +2186,7 @@ INTEGER, INTENT(IN) :: is
         ENDIF
         
         IF (nimpropers(is) == 0) THEN
-           WRITE(logunit,*) 'No impropers in species ',is
+           IF (verbose_log == .TRUE.) WRITE(logunit,*) 'No impropers in species ',is
            EXIT
         ENDIF
 
@@ -2175,14 +2218,15 @@ INTEGER, INTENT(IN) :: is
 
            improper_list(iimprop,is)%improper_potential_type = line_array(6)
 
-           WRITE(logunit,'(A,T25,I3,1x,I3)') 'Species and improper number', is,iimprop
-           WRITE(logunit,'(A,T25,I3)') ' atom1:',improper_list(iimprop,is)%atom1
-           WRITE(logunit,'(A,T25,I3)') ' atom2:',improper_list(iimprop,is)%atom2
-           WRITE(logunit,'(A,T25,I3)') ' atom3:',improper_list(iimprop,is)%atom3
-           WRITE(logunit,'(A,T25,I3)') ' atom4:',improper_list(iimprop,is)%atom4
-           WRITE(logunit,'(A,T25,A)') ' dihedral type:', &
+           IF (verbose_log) THEN
+                   WRITE(logunit,'(A,T25,I3,1x,I3)') 'Species and improper number', is,iimprop
+                   WRITE(logunit,'(A,T25,I3)') ' atom1:',improper_list(iimprop,is)%atom1
+                   WRITE(logunit,'(A,T25,I3)') ' atom2:',improper_list(iimprop,is)%atom2
+                   WRITE(logunit,'(A,T25,I3)') ' atom3:',improper_list(iimprop,is)%atom3
+                   WRITE(logunit,'(A,T25,I3)') ' atom4:',improper_list(iimprop,is)%atom4
+                   WRITE(logunit,'(A,T25,A)') ' dihedral type:', &
                 improper_list(iimprop,is)%improper_potential_type
-
+           END IF
            ! Load improper potential parameters, specific for each individual type
            IF (improper_list(iimprop,is)%improper_potential_type == 'harmonic') THEN
               improper_list(iimprop,is)%int_improp_type = int_harmonic
@@ -2193,9 +2237,10 @@ INTEGER, INTENT(IN) :: is
               improper_list(iimprop,is)%improper_param(1) = String_To_Double(line_array(7))
               improper_list(iimprop,is)%improper_param(2) = String_To_Double(line_array(8))
 
-              WRITE(logunit,'(A,T25,F10.4)') ' K_improper, K/rad^2', &
+              IF (verbose_log) THEN
+                      WRITE(logunit,'(A,T25,F10.4)') ' K_improper, K/rad^2', &
                    improper_list(iimprop,is)%improper_param(1)
-
+              END IF
               ! Convert to molecular units of energy
               improper_list(iimprop,is)%improper_param(1) = kboltz * improper_list(iimprop,is)%improper_param(1)
 
@@ -2213,6 +2258,7 @@ INTEGER, INTENT(IN) :: is
               improper_list(iimprop,is)%improper_param(2) = String_To_Double(line_array(8))
               improper_list(iimprop,is)%improper_param(3) = String_To_Double(line_array(9))
               
+              IF (verbose_log) THEN
               WRITE(logunit,'(A,T25,F10.4)') ' K_improper, KJ/mol', &
                    improper_list(iimprop,is)%improper_param(1)
 
@@ -2221,18 +2267,20 @@ INTEGER, INTENT(IN) :: is
 
               WRITE(logunit,'(A,T25,F10.4)') ' n_improper', &
                    improper_list(iimprop,is)%improper_param(3)
-
+              END IF
               ! Convert to molecular units of energy
               improper_list(iimprop,is)%improper_param(1) = kjmol_to_atomic * improper_list(iimprop,is)%improper_param(1)
 
            ELSEIF (improper_list(iimprop,is)%improper_potential_type == 'none') THEN
               improper_list(iimprop,is)%int_improp_type = int_none    
+
+              IF (verbose_log) THEN
               WRITE(logunit,'(A,4(I6,1x),A,I4)') & 
                    'No improper potential between atoms: ',&
                    improper_list(iimprop,is)%atom1, improper_list(iimprop,is)%atom2, &
                    improper_list(iimprop,is)%atom3, improper_list(iimprop,is)%atom4, &
                    'in species', is
-
+              END IF
               ! Set number of improper parameters
               nbr_improper_params = 0
 
@@ -2337,10 +2385,11 @@ SUBROUTINE Get_Fragment_Anchor_Info(is)
            END DO
 
            ! output information to the log file.
-
-           WRITE(logunit,*)
-           WRITE(logunit,*) 'Number of anchors for fragment ', i, '  is', frag_list(i,is)%nanchors
-           WRITE(logunit,*) 'Anchor ids are', frag_list(i,is)%anchor(:)
+           IF (verbose_log) THEN
+                   WRITE(logunit,*)
+                   WRITE(logunit,*) 'Number of anchors for fragment ', i, '  is', frag_list(i,is)%nanchors
+                   WRITE(logunit,*) 'Anchor ids are', frag_list(i,is)%anchor(:)
+           END IF
 
         END DO
 
@@ -2460,8 +2509,10 @@ SUBROUTINE Get_Fragment_Info(is)
            WRITE(logunit,*)
            WRITE(logunit,'(A38,1x,I4,A4,I4)') 'Total number of atoms in the fragment ', ifrag, 'is', &
                 frag_list(ifrag,is)%natoms
-           WRITE(logunit,'(A27)') 'Identity of these atoms are:'
-           WRITE(logunit,*)  frag_list(ifrag,is)%atoms
+           IF (verbose_log == .TRUE.) THEN
+                   WRITE(logunit,'(A27)') 'Identity of these atoms are:'
+                   WRITE(logunit,*)  frag_list(ifrag,is)%atoms
+           END IF
           
 
         END DO
@@ -2484,7 +2535,7 @@ SUBROUTINE Get_Fragment_Info(is)
   WRITE(logunit,*) 
   WRITE(logunit,*) '******* Finished loading fragment info ********'
   WRITE(logunit,*)
-  WRITE(logunit,*) '******* Generating anchor info ****************'
+  IF (verbose_log) WRITE(logunit,*) '******* Generating anchor info ****************'
 
 !  IF (nfragments(is) == 1) THEN
 
@@ -2562,20 +2613,22 @@ SUBROUTINE Get_Fragment_Info(is)
   frag_list(:,:)%ring = .FALSE.
 
   DO ifrag = 1,nfragments(is)
-     WRITE(logunit,*)
-     WRITE(logunit,'(A32,1x,I4,A4,I4)') 'Number of anchors for fragment ', ifrag, 'is', &
-          frag_list(ifrag,is)%nanchors
-     WRITE(logunit,'(A13,1x,I4)') 'Anchor id is:', frag_list(ifrag,is)%anchor(:)
-     
+     IF (verbose_log == .TRUE.) THEN
+             WRITE(logunit,*)
+             WRITE(logunit,'(A32,1x,I4,A4,I4)') 'Number of anchors for fragment ', ifrag, 'is', &
+                  frag_list(ifrag,is)%nanchors
+             WRITE(logunit,'(A13,1x,I4)') 'Anchor id is:', frag_list(ifrag,is)%anchor(:)
+     END IF
 
      IF (frag_list(ifrag,is)%nanchors > 1) THEN
         frag_list(ifrag,is)%ring = .TRUE.
-        WRITE(logunit,*)
-        WRITE(logunit,*) Int_To_String(ifrag)// ' is a ring fragment'
+        IF (verbose_log == .TRUE.) THEN
+                WRITE(logunit,*)
+                WRITE(logunit,*) Int_To_String(ifrag)// ' is a ring fragment'
+        END IF
      END IF
            
   END DO
-
   
 END SUBROUTINE Get_Fragment_Info
 
@@ -2642,11 +2695,13 @@ SUBROUTINE Get_Fragment_Connect_Info(is)
               frag_list(ifrag,is)%frag_connect(i) = String_To_Int(line_array(2+i))
            END DO
 
-           WRITE(logunit,*) 
-           WRITE(logunit,'(A33,1X,I4,A4,I4)') 'Number of connections of fragment', ifrag, 'is', &
-                frag_list(ifrag,is)%nconnect
-           WRITE(logunit,'(A20)') 'These fragments are:'
-           WRITE(logunit,*) frag_list(ifrag,is)%frag_connect
+           IF (verbose_log) THEN
+                   WRITE(logunit,*) 
+                   WRITE(logunit,'(A33,1X,I4,A4,I4)') 'Number of connections of fragment', ifrag, 'is', &
+                        frag_list(ifrag,is)%nconnect
+                   WRITE(logunit,'(A20)') 'These fragments are:'
+                   WRITE(logunit,*) frag_list(ifrag,is)%frag_connect
+           END IF
 
 
         END DO
@@ -2749,9 +2804,11 @@ SUBROUTINE Get_Fragment_Connectivity_Info(is)
            fragment_bond_list(ifrag,is)%fragment1 = String_To_Int(line_array(2))
            fragment_bond_list(ifrag,is)%fragment2 = String_To_Int(line_array(3))
 
-           WRITE(logunit,'(A32,1X,I3,1x,I3)') 'Species and fragment bond number', is,ifrag
-           WRITE(logunit,'(A,T25,I3)') ' fragment 1:',fragment_bond_list(ifrag,is)%fragment1
-           WRITE(logunit,'(A,T25,I3)') ' fragment 2:',fragment_bond_list(ifrag,is)%fragment2
+           IF (verbose_log) THEN
+                   WRITE(logunit,'(A32,1X,I3,1x,I3)') 'Species and fragment bond number', is,ifrag
+                   WRITE(logunit,'(A,T25,I3)') ' fragment 1:',fragment_bond_list(ifrag,is)%fragment1
+                   WRITE(logunit,'(A,T25,I3)') ' fragment 2:',fragment_bond_list(ifrag,is)%fragment2
+           END IF
 
         END DO
 
@@ -2822,11 +2879,13 @@ SUBROUTINE Get_Fragment_Connectivity_Info(is)
 
      END IF
 
-     WRITE(logunit,*) 
-     WRITE(logunit,'(A34,1X,I4,A4,I4)') 'Number of connections of fragment', ifrag, 'is', &
-          frag_list(ifrag,is)%nconnect
-     WRITE(logunit,'(A21)') 'These fragments are:'
-     WRITE(logunit,*) frag_list(ifrag,is)%frag_connect
+     IF (verbose_log) THEN
+             WRITE(logunit,*) 
+             WRITE(logunit,'(A34,1X,I4,A4,I4)') 'Number of connections of fragment', ifrag, 'is', &
+                  frag_list(ifrag,is)%nconnect
+             WRITE(logunit,'(A21)') 'These fragments are:'
+             WRITE(logunit,*) frag_list(ifrag,is)%frag_connect
+     END IF
 
   END DO
 
@@ -2894,7 +2953,7 @@ SUBROUTINE Get_Fragment_File_Info(is)
 
            WRITE(logunit,*) 'Fragment file for fragment ', TRIM(Int_To_String(ifrag)), ' is'
            WRITE(logunit,*) res_file(ifrag,is)
-           WRITE(logunit,*) 'Fragment type', frag_list(ifrag,is)%type
+           IF (verbose_log==.TRUE.) WRITE(logunit,*) 'Fragment type', frag_list(ifrag,is)%type
 
            IF (nbr_entries > 2 .AND. nbr_entries /= 6) THEN
 
@@ -2945,16 +3004,18 @@ SUBROUTINE Get_Fragment_File_Info(is)
                  frag_list(ifrag,is)%rcut_coulsq = coul_cutoff * coul_cutoff
                  frag_list(ifrag,is)%alpha_ewald = String_To_Double(line_array(6))
 
-                 WRITE(logunit,*)
-                 WRITE(logunit,*) 'Fragment ',TRIM(Int_To_String(ifrag)), ' of species ', TRIM(Int_To_String(is))
-                 WRITE(logunit,*) 'is a ring fragment.'
-                 WRITE(logunit,*)
-                 WRITE(logunit,*) 'Parameters used for generating the fragment conformations'
-                 WRITE(logunit,*)
-                 WRITE(logunit,*) 'VDW cutoff', vdw_cutoff
-                 WRITE(logunit,*) 'Ewald cutoff', coul_cutoff
-                 WRITE(logunit,*) 'Ewald alpha parameter', frag_list(ifrag,is)%alpha_ewald
-                 WRITE(logunit,*)
+                 IF (verbose_log) THEN
+                         WRITE(logunit,*)
+                         WRITE(logunit,*) 'Fragment ',TRIM(Int_To_String(ifrag)), ' of species ', TRIM(Int_To_String(is))
+                         WRITE(logunit,*) 'is a ring fragment.'
+                         WRITE(logunit,*)
+                         WRITE(logunit,*) 'Parameters used for generating the fragment conformations'
+                         WRITE(logunit,*)
+                         WRITE(logunit,*) 'VDW cutoff', vdw_cutoff
+                         WRITE(logunit,*) 'Ewald cutoff', coul_cutoff
+                         WRITE(logunit,*) 'Ewald alpha parameter', frag_list(ifrag,is)%alpha_ewald
+                         WRITE(logunit,*)
+                 END IF
 
               END IF
 
@@ -3752,7 +3813,7 @@ SUBROUTINE Get_Fugacity_Info
         line_nbr = line_nbr + 1
         lchempot = .TRUE.
         WRITE(logunit,*)
-        WRITE(logunit,*) '*********** Fugactiy Info ***************'
+        WRITE(logunit,*) '*********** Chemical potential Info ***************'
         CALL Parse_String(inputunit,line_nbr,nspec_insert,nbr_entries,line_array,ierr)
         
         DO i = 1,nspecies
@@ -3799,7 +3860,7 @@ SUBROUTINE Get_Fugacity_Info
   END DO inputLOOP
   
   WRITE(logunit,*)
-  WRITE(logunit,*) '******* Finished reading fugacity info ***********'
+  WRITE(logunit,*) '******* Finished reading chemical potential info ***********'
 
 END SUBROUTINE Get_Fugacity_Info
 
@@ -6014,5 +6075,64 @@ SUBROUTINE Get_Lattice_Coordinates
     
 END SUBROUTINE Get_Lattice_Coordinates
 
+
+!********************************************************************************
+SUBROUTINE Get_Verbosity_Info
+!********************************************************************************
+! This routine opens the input file and determines the verbosity of messages
+! output to the log file.
+!
+! # Verbose_Logfile
+! TRUE
+!
+! The routine searches for the keyword "# Verbose_Logfile" and then reads the necessary 
+! information underneath the key word.
+!********************************************************************************
+
+  INTEGER :: ierr,line_nbr,nbr_entries
+  CHARACTER(120) :: line_string, line_array(20)
+
+  verbose_log = .FALSE.
+  
+  REWIND(inputunit)
+
+  ierr = 0
+  line_nbr = 0
+
+  DO
+     line_nbr = line_nbr + 1
+
+     CALL Read_String(inputunit,line_string,ierr)
+
+     IF (ierr .NE. 0) THEN
+        EXIT
+     END IF
+
+     IF (line_string(1:17) == '# Verbose_Logfile') THEN
+        line_nbr = line_nbr + 1
+        
+        CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
+        IF (line_array(1) == 'TRUE' .OR. line_array(1) == '.TRUE.' &
+                .OR. line_array(1) == 'true' .OR. line_array(1) == '.true.') THEN
+                verbose_log = .TRUE.
+        ELSE IF (line_array(1) == 'FALSE' .OR. line_array(1) == '.FALSE.' &
+                .OR. line_array(1) == 'false' .OR. line_array(1) == '.false.') THEN
+                verbose_log = .FALSE.
+        ELSE
+
+                err_msg = ""
+                err_msg(1) = "Error reading verbosity for logfile"
+                CALL Clean_Abort(err_msg,'Get_Verbosity_Info')
+        END IF
+
+        EXIT
+
+     ENDIF
+
+  ENDDO
+
+  WRITE(logunit,*) 'Verbosity output to logfile set to ', verbose_log
+
+END SUBROUTINE Get_Verbosity_Info
 
 END MODULE Input_Routines

@@ -133,29 +133,33 @@
 
     
 ! Write the number of different atom types to the screen and logfile
-    WRITE(logunit,'(A)') &
-         '  There are '//TRIM(Int_To_String(nbr_atomtypes))//' different atom types in the system '
-    DO ii = 1, nbr_atomtypes
-       WRITE(logunit,'(3x,I3,2x,A6)') ii, temp_atomtypes(ii)
-    ENDDO
 
-    WRITE(logunit,*)
+    IF (verbose_log == .TRUE.) THEN
+            WRITE(logunit,'(A)') &
+                 '  There are '//TRIM(Int_To_String(nbr_atomtypes))//' different atom types in the system '
+            DO ii = 1, nbr_atomtypes
+               WRITE(logunit,'(3x,I3,2x,A6)') ii, temp_atomtypes(ii)
+            ENDDO
 
-    DO is=1,nspecies
-       WRITE(logunit,*)
-       WRITE(logunit,'(A,T25,I3,3x,A)') 'species number and name:',is, molfile_name(is)
-       WRITE(logunit,*) 'Name      number'
-       WRITE(logunit,*) '------    ------'
+            WRITE(logunit,*)
 
-       DO ia = 1, natoms(is)
-          WRITE(logunit,'(A6,T10,I4)') nonbond_list(ia,is)%atom_name, &
-               nonbond_list(ia,is)%atom_type_number
-       ENDDO
+            DO is=1,nspecies
+               WRITE(logunit,*)
+               WRITE(logunit,'(A,T25,I3,3x,A)') 'species number and name:',is, molfile_name(is)
+               WRITE(logunit,*) 'Name      number'
+               WRITE(logunit,*) '------    ------'
 
-    ENDDO
+               DO ia = 1, natoms(is)
+                  WRITE(logunit,'(A6,T10,I4)') nonbond_list(ia,is)%atom_name, &
+                       nonbond_list(ia,is)%atom_type_number
+               ENDDO
 
-    WRITE(logunit,*)
-    WRITE(logunit,*)
+            ENDDO
+
+            WRITE(logunit,*)
+            WRITE(logunit,*)
+
+    END IF
 
     IF (ALLOCATED(temp_atomtypes)) DEALLOCATE(temp_atomtypes)
 
@@ -185,15 +189,17 @@
     ! Now determine the set of vdw parameters for each type of interaction and load them into vdw_param_table
     ! This is a brute force search - but it is fast.
 
-    WRITE(logunit,*) '*** Creating VDW interaction table ***'
-    WRITE(logunit,'(A,T25,A)') 'Mixing rule used is:', mix_rule
-    WRITE(logunit,*)
+    IF (verbose_log == .TRUE.) THEN
+            WRITE(logunit,*) '*** Creating VDW interaction table ***'
+            WRITE(logunit,'(A,T25,A)') 'Mixing rule used is:', mix_rule
+            WRITE(logunit,*)
 
     ! Write header for logfile output. Specific for the vdw style
-    IF (int_vdw_style(1) == vdw_lj) THEN
-       WRITE(logunit,'(A6,5x,A6,2x,T20,A,T50,A)') 'Atom 1','Atom 2', 'epsilon (amu A^2/ps^2)', 'sigma (A)'
-    ENDIF
+            IF (int_vdw_style(1) == vdw_lj) THEN
+               WRITE(logunit,'(A6,5x,A6,2x,T20,A,T50,A)') 'Atom 1','Atom 2', 'epsilon (amu A^2/ps^2)', 'sigma (A)'
+            ENDIF
 
+    END IF
     DO itype = 1, nbr_atomtypes
 
        DO jtype = 1, nbr_atomtypes
@@ -300,7 +306,7 @@
 
         	  ENDIF
              
-	         IF (int_vdw_style(1) == vdw_lj) THEN
+	         IF (int_vdw_style(1) == vdw_lj .AND. verbose_log == .TRUE.) THEN
         	    ! Report parameters to logfile. Format is specific to vdw type. Add others here if 
 	            ! other than LJ potential is used.
 
@@ -341,9 +347,11 @@
                                            !Convert epsilon to atomic units amu A^2/ps^2
                                            vdw_param1_table(itype_custom,jtype_custom) = kboltz * String_To_Double(line_array(3))
                                            vdw_param2_table(itype_custom,jtype_custom) = String_To_Double(line_array(4))
+                                           IF (verbose_log == .TRUE.) THEN
                                            WRITE(logunit,'(A6,5x,A6,2x,T20,f10.4,T50,f10.4)') &
                                                   atom_type_list(itype_custom), atom_type_list(jtype_custom), &
                                                    vdw_param1_table(itype_custom,jtype_custom), vdw_param2_table(itype_custom,jtype_custom)
+                                           END IF
                                         END DO
                                    END DO   
 				RETURN
@@ -353,10 +361,11 @@
          ENDDO
     
 	 ENDDO
- 
+
+ IF (verbose_log == .TRUE.) THEN
  WRITE(logunit,*)
  WRITE(logunit,*) '*** Completed construction of VDW interaction table ***'
  WRITE(logunit,*)    
-
+ END IF
 
 END SUBROUTINE Create_Nonbond_Table

@@ -211,7 +211,8 @@ SUBROUTINE Participation
   END DO
 
   ! Echo to logfile for checking
-  WRITE(logunit,*) '*** Computed bond participation information ***'
+  IF (verbose_log) THEN
+  WRITE(logunit,*) '*** Bond participation information ***'
   DO ispecies = 1, nspecies
 
      DO iatom = 1, natoms(ispecies)
@@ -227,7 +228,6 @@ SUBROUTINE Participation
 
   DO ispecies = 1, nspecies
      IF(species_list(ispecies)%f_atom_disp) THEN
-        
         WRITE(logunit,*)
         WRITE(logunit,*) 'For species', ispecies
         WRITE(logunit,*) ' Number of atoms that can be displaced', species_list(ispecies)%ndisp_atoms
@@ -237,10 +237,10 @@ SUBROUTINE Participation
                 species_list(ispecies)%disp_atom_ref(iatom)
         END DO
      END IF
-  END DO
-        
+  END DO        
   
   WRITE(logunit,*)
+  END IF
 
   !***************************************************************************
   ! This part of the program computes the participation matrix for angles.
@@ -320,16 +320,16 @@ SUBROUTINE Participation
         angle_part_list(iatom,ispecies)%nangles = tot_angles
 
         ! echo the information to the log file for checking
-        
-        write(logunit,*)'Number of atom in question', iatom
-        write(logunit,*)'Total number of angles', angle_part_list(iatom,ispecies)%nangles
-        write(logunit,*)'Angles for this atom'
-        write(logunit,*)(angle_part_list(iatom,ispecies)%which_angle(i),i=1, &
-             angle_part_list(iatom,ispecies)%nangles)
-        write(logunit,*)'Position of the atom in angles'
-        write(logunit,*)(angle_part_list(iatom,ispecies)%position(i), i=1, &
-             angle_part_list(iatom,ispecies)%nangles)
-
+        IF (verbose_log) THEN        
+                write(logunit,*)'Number of atom in question', iatom
+                write(logunit,*)'Total number of angles', angle_part_list(iatom,ispecies)%nangles
+                write(logunit,*)'Angles for this atom'
+                write(logunit,*)(angle_part_list(iatom,ispecies)%which_angle(i),i=1, &
+                     angle_part_list(iatom,ispecies)%nangles)
+                write(logunit,*)'Position of the atom in angles'
+                write(logunit,*)(angle_part_list(iatom,ispecies)%position(i), i=1, &
+                     angle_part_list(iatom,ispecies)%nangles)
+        END IF
      END DO
 
   END DO
@@ -430,14 +430,16 @@ SUBROUTINE Participation
 
         ! echo the information to the log file for checking
 
-        write(logunit,*)'Number of atom in question', iatom
-        write(logunit,*)'Total number of dihedrals', dihedral_part_list(iatom,ispecies)%ndihedrals
-        write(logunit,*)'Dihedral angles for this atom'
-        write(logunit,*)(dihedral_part_list(iatom,ispecies)%which_dihedral(i),i=1, &
-             dihedral_part_list(iatom,ispecies)%ndihedrals)
-        write(logunit,*)'Position of the atom in dihedrals'
-        write(logunit,*)(dihedral_part_list(iatom,ispecies)%position(i), i=1, &
-             dihedral_part_list(iatom,ispecies)%ndihedrals)
+        IF (verbose_log) THEN
+                write(logunit,*)'Number of atom in question', iatom
+                write(logunit,*)'Total number of dihedrals', dihedral_part_list(iatom,ispecies)%ndihedrals
+                write(logunit,*)'Dihedral angles for this atom'
+                write(logunit,*)(dihedral_part_list(iatom,ispecies)%which_dihedral(i),i=1, &
+                     dihedral_part_list(iatom,ispecies)%ndihedrals)
+                write(logunit,*)'Position of the atom in dihedrals'
+                write(logunit,*)(dihedral_part_list(iatom,ispecies)%position(i), i=1, &
+                     dihedral_part_list(iatom,ispecies)%ndihedrals)
+        END IF
         
      END DO
 
