@@ -1,0 +1,118 @@
+! This is the input file for a short simulation of diethylether
+
+# Run_Name
+nvt.out
+!------------------------------------------------------------------------------
+
+# Sim_Type
+NVT_MC
+!------------------------------------------------------------------------------
+
+# Nbr_Species
+1
+!------------------------------------------------------------------------------
+
+# VDW_Style
+LJ cut_tail 14.0
+!------------------------------------------------------------------------------
+
+# Charge_Style
+coul Ewald 14.0 0.000001
+!------------------------------------------------------------------------------
+
+# Intra_Scaling
+0.0 0.0 0.0 1.0
+0.0 0.0 0.0 1.0
+!----------------------------------------------vdw, coul lines for each species
+
+# Mixing_Rule
+LB
+!------------------------------------------------------------------------------
+
+# Seed_Info
+55001389 1764321284
+!------------------------------------------------------------------------------
+
+# Rcutoff_Low
+2.0
+!------------------------------------------------------------------------------
+
+# Molecule_Files
+dee.mcf 220
+!----------------------------------------------------------one line per species
+
+# Box_Info
+1
+CUBIC
+34.66583687
+!-------------------------------------------------------line 1: number of boxes
+!--------------------------------------------------------------line 2: box type
+!--------------------------------------------------------------line 3: box size
+
+# Temperature_Info
+343.0
+!------------------------------------------------------------------------------
+
+# Move_Probability_Info
+
+# Prob_Translation
+0.333333
+0.50
+
+# Prob_Rotation
+0.333333
+30.0
+
+# Prob_Regrowth
+0.333334
+1.0
+
+# Done_Probability_Info
+!---------------------one line for each box and one entry/line for each species
+!-----------------------------------------each molecule moves per volume change
+
+# Start_Type
+make_config
+220
+!--------make_config: one line for each species and one entry/line for each box
+!------------------------------------------------------------read_old: filename
+!----------------------------------------------------------checkpoint: filename
+
+# Run_Type
+Equilibration   22000 100
+!-------------------------Equilibration: update maximum widths every 100 sweeps
+
+
+# Average_Info
+1
+!------------------------------------------------------------ 0 == yes, 1 == no
+
+# Simulation_Length_Info
+Units        Steps
+Prop_Freq    2200
+Coord_Freq   2200
+MCsteps      22000
+# Done_Simulation_Length_Info
+!------------------ 220 moves = 1 sweep; output every 10 sweeps; run 100 sweeps
+
+# Property_Info 1 
+Energy_Total
+Pressure
+Volume
+Density
+!------------------------------------------------------------------------------
+
+# Fragment_Files
+species1/frag1/frag1.dat  1
+species1/frag2/frag2.dat  2
+species1/frag3/frag3.dat  3
+!---------------------------------------------------------one line per fragment
+
+# CBMC_Info
+kappa_ins 12
+kappa_rot 0
+kappa_dih 10
+rcut_cbmc 6.5 
+!------------------------------------------------------------------------------
+
+END

@@ -1,0 +1,1804 @@
+ Beginning Cassandra Simulation
+ 
+ F
+ successfully inserted molecule           1
+ F
+ successfully inserted molecule           2
+ F
+ successfully inserted molecule           3
+ F
+ successfully inserted molecule           4
+ F
+ successfully inserted molecule           5
+ F
+ successfully inserted molecule           6
+ F
+ successfully inserted molecule           7
+ F
+ successfully inserted molecule           8
+ F
+ successfully inserted molecule           9
+ F
+ successfully inserted molecule          10
+ F
+ successfully inserted molecule           1
+ F
+ successfully inserted molecule           2
+ F
+ successfully inserted molecule           3
+ F
+ successfully inserted molecule           4
+ F
+ successfully inserted molecule           5
+ F
+ successfully inserted molecule           6
+ F
+ successfully inserted molecule           7
+ F
+ successfully inserted molecule           8
+ F
+ successfully inserted molecule           9
+ F
+ successfully inserted molecule          10
+ F
+ successfully inserted molecule          11
+ F
+ successfully inserted molecule          12
+ F
+ successfully inserted molecule          13
+ F
+ successfully inserted molecule          14
+ F
+ successfully inserted molecule          15
+ F
+ successfully inserted molecule          16
+ F
+ successfully inserted molecule          17
+ F
+ successfully inserted molecule          18
+ F
+ successfully inserted molecule          19
+ F
+ successfully inserted molecule          20
+ F
+ successfully inserted molecule          21
+ F
+ successfully inserted molecule          22
+ F
+ successfully inserted molecule          23
+ F
+ successfully inserted molecule          24
+ F
+ successfully inserted molecule          25
+ F
+ successfully inserted molecule          26
+ F
+ successfully inserted molecule          27
+ F
+ successfully inserted molecule          28
+ F
+ successfully inserted molecule          29
+ F
+ successfully inserted molecule          30
+ F
+ successfully inserted molecule          31
+ F
+ successfully inserted molecule          32
+ F
+ successfully inserted molecule          33
+ F
+ successfully inserted molecule          34
+ F
+ successfully inserted molecule          35
+ F
+ successfully inserted molecule          36
+ F
+ successfully inserted molecule          37
+ F
+ successfully inserted molecule          38
+ F
+ successfully inserted molecule          39
+ F
+ successfully inserted molecule          40
+ F
+ successfully inserted molecule          41
+ F
+ successfully inserted molecule          42
+ F
+ successfully inserted molecule          43
+ F
+ successfully inserted molecule          44
+ F
+ successfully inserted molecule          45
+ F
+ successfully inserted molecule          46
+ F
+ successfully inserted molecule          47
+ F
+ successfully inserted molecule          48
+ F
+ successfully inserted molecule          49
+ F
+ successfully inserted molecule          50
+ F
+ successfully inserted molecule          51
+ F
+ successfully inserted molecule          52
+ F
+ successfully inserted molecule          53
+ F
+ successfully inserted molecule          54
+ F
+ successfully inserted molecule          55
+ F
+ successfully inserted molecule          56
+ F
+ successfully inserted molecule          57
+ F
+ successfully inserted molecule          58
+ F
+ successfully inserted molecule          59
+ F
+ successfully inserted molecule          60
+ F
+ successfully inserted molecule          61
+ F
+ successfully inserted molecule          62
+ F
+ successfully inserted molecule          63
+ F
+ successfully inserted molecule          64
+ F
+ successfully inserted molecule          65
+ F
+ successfully inserted molecule          66
+ F
+ successfully inserted molecule          67
+ F
+ successfully inserted molecule          68
+ F
+ successfully inserted molecule          69
+ F
+ successfully inserted molecule          70
+ F
+ successfully inserted molecule          71
+ F
+ successfully inserted molecule          72
+ F
+ successfully inserted molecule          73
+ F
+ successfully inserted molecule          74
+ F
+ successfully inserted molecule          75
+ F
+ successfully inserted molecule          76
+ F
+ successfully inserted molecule          77
+ F
+ successfully inserted molecule          78
+ F
+ successfully inserted molecule          79
+ F
+ successfully inserted molecule          80
+ F
+ successfully inserted molecule          81
+ F
+ successfully inserted molecule          82
+ F
+ successfully inserted molecule          83
+ F
+ successfully inserted molecule          84
+ F
+ successfully inserted molecule          85
+ F
+ successfully inserted molecule          86
+ F
+ successfully inserted molecule          87
+ F
+ successfully inserted molecule          88
+ F
+ successfully inserted molecule          89
+ F
+ successfully inserted molecule          90
+ 
+ MC Step =           500
+Nmol(1) =            8
+Energy(1) =         29324.813405977242
+ 
+ MC Step =          1000
+Nmol(1) =            4
+Energy(1) =         25847.546015124459
+ 
+ MC Step =          1500
+Nmol(1) =            5
+Energy(1) =         19574.609525110416
+ 
+ MC Step =          2000
+Nmol(1) =            7
+Energy(1) =         15112.800298338825
+ 
+ MC Step =          2500
+Nmol(1) =            6
+Energy(1) =         21101.069468838556
+ 
+ MC Step =          3000
+Nmol(1) =            4
+Energy(1) =         14377.778339438159
+ 
+ MC Step =          3500
+Nmol(1) =            6
+Energy(1) =         17464.136523580237
+ 
+ MC Step =          4000
+Nmol(1) =            3
+Energy(1) =         22560.114206879945
+ 
+ MC Step =          4500
+Nmol(1) =            4
+Energy(1) =         17703.949318323543
+ 
+ MC Step =          5000
+Nmol(1) =            5
+Energy(1) =         18270.601604169940
+ 
+ MC Step =          5500
+Nmol(1) =            6
+Energy(1) =         17682.866184282484
+ 
+ MC Step =          6000
+Nmol(1) =            7
+Energy(1) =         19790.970541909152
+ 
+ MC Step =          6500
+Nmol(1) =            2
+Energy(1) =         16985.038634369215
+ 
+ MC Step =          7000
+Nmol(1) =            6
+Energy(1) =         18762.741829969240
+ 
+ MC Step =          7500
+Nmol(1) =            4
+Energy(1) =         12358.746973926129
+ 
+ MC Step =          8000
+Nmol(1) =            5
+Energy(1) =         19235.927518736131
+ 
+ MC Step =          8500
+Nmol(1) =            4
+Energy(1) =         17508.210945500701
+ 
+ MC Step =          9000
+Nmol(1) =            5
+Energy(1) =         18870.520678294553
+ 
+ MC Step =          9500
+Nmol(1) =            4
+Energy(1) =         14974.256351423395
+ 
+ MC Step =         10000
+Nmol(1) =           10
+Energy(1) =         19619.692887809771
+ 
+ MC Step =         10500
+Nmol(1) =            4
+Energy(1) =         23959.644471496602
+ 
+ MC Step =         11000
+Nmol(1) =            8
+Energy(1) =         24956.343267127675
+ 
+ MC Step =         11500
+Nmol(1) =            7
+Energy(1) =         21531.087335160642
+ 
+ MC Step =         12000
+Nmol(1) =            4
+Energy(1) =         20727.205160717840
+ 
+ MC Step =         12500
+Nmol(1) =            4
+Energy(1) =         25204.701600792054
+ 
+ MC Step =         13000
+Nmol(1) =            5
+Energy(1) =         25633.848864503339
+ 
+ MC Step =         13500
+Nmol(1) =            5
+Energy(1) =         19932.215738107079
+ 
+ MC Step =         14000
+Nmol(1) =            8
+Energy(1) =         18125.909316358608
+ 
+ MC Step =         14500
+Nmol(1) =            9
+Energy(1) =         23685.943651312034
+ 
+ MC Step =         15000
+Nmol(1) =            6
+Energy(1) =         17239.163195242134
+ 
+ MC Step =         15500
+Nmol(1) =            4
+Energy(1) =         20164.861811861167
+ 
+ MC Step =         16000
+Nmol(1) =            8
+Energy(1) =         21788.066155695644
+ 
+ MC Step =         16500
+Nmol(1) =            4
+Energy(1) =         20151.805378838159
+ 
+ MC Step =         17000
+Nmol(1) =            6
+Energy(1) =         17066.482688058662
+ 
+ MC Step =         17500
+Nmol(1) =            6
+Energy(1) =         19510.435704166077
+ 
+ MC Step =         18000
+Nmol(1) =            8
+Energy(1) =         18185.130311294408
+ 
+ MC Step =         18500
+Nmol(1) =            2
+Energy(1) =         17997.428684121347
+ 
+ MC Step =         19000
+Nmol(1) =            7
+Energy(1) =         16466.310341027503
+ 
+ MC Step =         19500
+Nmol(1) =            5
+Energy(1) =         17215.292973042437
+ 
+ MC Step =         20000
+Nmol(1) =            7
+Energy(1) =         14792.736177510831
+ 
+ MC Step =         20500
+Nmol(1) =            6
+Energy(1) =         21049.910239627930
+ 
+ MC Step =         21000
+Nmol(1) =            3
+Energy(1) =         29036.501152937177
+ 
+ MC Step =         21500
+Nmol(1) =            5
+Energy(1) =         21220.520941362007
+ 
+ MC Step =         22000
+Nmol(1) =            7
+Energy(1) =         16128.489112409228
+ 
+ MC Step =         22500
+Nmol(1) =            9
+Energy(1) =         18214.542784606045
+ 
+ MC Step =         23000
+Nmol(1) =            6
+Energy(1) =         18517.703483681213
+ 
+ MC Step =         23500
+Nmol(1) =            2
+Energy(1) =         15669.145473661054
+ 
+ MC Step =         24000
+Nmol(1) =            6
+Energy(1) =         17724.353229730892
+ 
+ MC Step =         24500
+Nmol(1) =            7
+Energy(1) =         20985.597641784538
+ 
+ MC Step =         25000
+Nmol(1) =            2
+Energy(1) =         15082.511856905201
+ 
+ MC Step =         25500
+Nmol(1) =            3
+Energy(1) =         18137.481539765908
+ 
+ MC Step =         26000
+Nmol(1) =            1
+Energy(1) =         20863.860728549873
+ 
+ MC Step =         26500
+Nmol(1) =            4
+Energy(1) =         18391.150467879539
+ 
+ MC Step =         27000
+Nmol(1) =            8
+Energy(1) =         20508.158320818322
+ 
+ MC Step =         27500
+Nmol(1) =            4
+Energy(1) =         23468.969578997665
+ 
+ MC Step =         28000
+Nmol(1) =            5
+Energy(1) =         20686.074396082546
+ 
+ MC Step =         28500
+Nmol(1) =            8
+Energy(1) =         15454.048729071883
+ 
+ MC Step =         29000
+Nmol(1) =            8
+Energy(1) =         18004.487174503476
+ 
+ MC Step =         29500
+Nmol(1) =            5
+Energy(1) =         20102.626779799732
+ 
+ MC Step =         30000
+Nmol(1) =            5
+Energy(1) =         18260.665433965100
+ 
+ MC Step =         30500
+Nmol(1) =            6
+Energy(1) =         11827.310662456246
+ 
+ MC Step =         31000
+Nmol(1) =            5
+Energy(1) =         13628.608875636895
+ 
+ MC Step =         31500
+Nmol(1) =            7
+Energy(1) =         11193.845316112134
+ 
+ MC Step =         32000
+Nmol(1) =            6
+Energy(1) =         15478.206179190254
+ 
+ MC Step =         32500
+Nmol(1) =            4
+Energy(1) =         18962.162865627375
+ 
+ MC Step =         33000
+Nmol(1) =            4
+Energy(1) =         12537.317014044907
+ 
+ MC Step =         33500
+Nmol(1) =            5
+Energy(1) =         20627.403682002532
+ 
+ MC Step =         34000
+Nmol(1) =            1
+Energy(1) =         18321.066173519495
+ 
+ MC Step =         34500
+Nmol(1) =            5
+Energy(1) =         15941.329106102328
+ 
+ MC Step =         35000
+Nmol(1) =            6
+Energy(1) =         13240.703289386916
+ 
+ MC Step =         35500
+Nmol(1) =            6
+Energy(1) =         12174.427350784341
+ 
+ MC Step =         36000
+Nmol(1) =            3
+Energy(1) =         15470.124100459674
+ 
+ MC Step =         36500
+Nmol(1) =            3
+Energy(1) =         15472.493910457468
+ 
+ MC Step =         37000
+Nmol(1) =            3
+Energy(1) =         15879.845774628924
+ 
+ MC Step =         37500
+Nmol(1) =            7
+Energy(1) =         18562.565112738572
+ 
+ MC Step =         38000
+Nmol(1) =            6
+Energy(1) =         24096.283425516536
+ 
+ MC Step =         38500
+Nmol(1) =            4
+Energy(1) =         16992.071726793212
+ 
+ MC Step =         39000
+Nmol(1) =            6
+Energy(1) =         26153.412474377001
+ 
+ MC Step =         39500
+Nmol(1) =            5
+Energy(1) =         19222.929302413744
+ 
+ MC Step =         40000
+Nmol(1) =            6
+Energy(1) =         13138.747187909417
+ 
+ MC Step =         40500
+Nmol(1) =            2
+Energy(1) =         13259.353596544057
+ 
+ MC Step =         41000
+Nmol(1) =            8
+Energy(1) =         12735.963384615219
+ 
+ MC Step =         41500
+Nmol(1) =            8
+Energy(1) =         15999.995118344174
+ 
+ MC Step =         42000
+Nmol(1) =            2
+Energy(1) =         16850.570146189428
+ 
+ MC Step =         42500
+Nmol(1) =           11
+Energy(1) =         16062.460251208866
+ 
+ MC Step =         43000
+Nmol(1) =            4
+Energy(1) =          9839.846330354203
+ 
+ MC Step =         43500
+Nmol(1) =            3
+Energy(1) =         19402.187701580318
+ 
+ MC Step =         44000
+Nmol(1) =            5
+Energy(1) =         20667.475105684203
+ 
+ MC Step =         44500
+Nmol(1) =            3
+Energy(1) =         26791.437757585016
+ 
+ MC Step =         45000
+Nmol(1) =            6
+Energy(1) =         19527.184536181852
+ 
+ MC Step =         45500
+Nmol(1) =            3
+Energy(1) =         21938.295472698643
+ 
+ MC Step =         46000
+Nmol(1) =            3
+Energy(1) =         19135.932420339504
+ 
+ MC Step =         46500
+Nmol(1) =            7
+Energy(1) =         13774.586910139498
+ 
+ MC Step =         47000
+Nmol(1) =            6
+Energy(1) =         14959.747325273220
+ 
+ MC Step =         47500
+Nmol(1) =            7
+Energy(1) =         12474.725788909675
+ 
+ MC Step =         48000
+Nmol(1) =            6
+Energy(1) =         13911.587406213817
+ 
+ MC Step =         48500
+Nmol(1) =           11
+Energy(1) =         15113.390801287629
+ 
+ MC Step =         49000
+Nmol(1) =            6
+Energy(1) =         17632.964708983080
+ 
+ MC Step =         49500
+Nmol(1) =            9
+Energy(1) =         13592.502898786368
+ 
+ MC Step =         50000
+Nmol(1) =            5
+Energy(1) =         15973.554668747256
+ 
+ MC Step =         50500
+Nmol(1) =            4
+Energy(1) =         11035.646115840227
+ 
+ MC Step =         51000
+Nmol(1) =            5
+Energy(1) =         17339.488605834911
+ 
+ MC Step =         51500
+Nmol(1) =            4
+Energy(1) =         20497.231322215855
+ 
+ MC Step =         52000
+Nmol(1) =            3
+Energy(1) =         18067.945287492505
+ 
+ MC Step =         52500
+Nmol(1) =            7
+Energy(1) =         24432.304540160214
+ 
+ MC Step =         53000
+Nmol(1) =            6
+Energy(1) =         18776.539302568232
+ 
+ MC Step =         53500
+Nmol(1) =           10
+Energy(1) =         18163.417500492920
+ 
+ MC Step =         54000
+Nmol(1) =            5
+Energy(1) =         22508.523903818794
+ 
+ MC Step =         54500
+Nmol(1) =            6
+Energy(1) =         13971.386264145554
+ 
+ MC Step =         55000
+Nmol(1) =            8
+Energy(1) =         18661.381767110812
+ 
+ MC Step =         55500
+Nmol(1) =            6
+Energy(1) =         15059.320208091767
+ 
+ MC Step =         56000
+Nmol(1) =            5
+Energy(1) =         15328.751155327456
+ 
+ MC Step =         56500
+Nmol(1) =            5
+Energy(1) =         30747.044424785374
+ 
+ MC Step =         57000
+Nmol(1) =            2
+Energy(1) =         20775.839064203959
+ 
+ MC Step =         57500
+Nmol(1) =            8
+Energy(1) =         18804.853122084722
+ 
+ MC Step =         58000
+Nmol(1) =            6
+Energy(1) =         16941.616787680901
+ 
+ MC Step =         58500
+Nmol(1) =            5
+Energy(1) =         12249.020846606119
+ 
+ MC Step =         59000
+Nmol(1) =            8
+Energy(1) =         17189.403947355648
+ 
+ MC Step =         59500
+Nmol(1) =            6
+Energy(1) =         13819.518714577736
+ 
+ MC Step =         60000
+Nmol(1) =            3
+Energy(1) =         20252.980358115801
+ 
+ MC Step =         60500
+Nmol(1) =            6
+Energy(1) =         16131.215421354109
+ 
+ MC Step =         61000
+Nmol(1) =            9
+Energy(1) =         19895.895519395974
+ 
+ MC Step =         61500
+Nmol(1) =            6
+Energy(1) =         18608.978389621945
+ 
+ MC Step =         62000
+Nmol(1) =            4
+Energy(1) =         14781.544935410826
+ 
+ MC Step =         62500
+Nmol(1) =            6
+Energy(1) =         13978.330125551834
+ 
+ MC Step =         63000
+Nmol(1) =            8
+Energy(1) =         17635.527845418244
+ 
+ MC Step =         63500
+Nmol(1) =            8
+Energy(1) =         17450.283241974477
+ 
+ MC Step =         64000
+Nmol(1) =            3
+Energy(1) =         16805.107928150770
+ 
+ MC Step =         64500
+Nmol(1) =            4
+Energy(1) =         31466.698792161234
+ 
+ MC Step =         65000
+Nmol(1) =            2
+Energy(1) =         20271.250820626858
+ 
+ MC Step =         65500
+Nmol(1) =            7
+Energy(1) =         19906.768224555450
+ 
+ MC Step =         66000
+Nmol(1) =            6
+Energy(1) =         18834.079074633053
+ 
+ MC Step =         66500
+Nmol(1) =            8
+Energy(1) =         15705.892496922324
+ 
+ MC Step =         67000
+Nmol(1) =            8
+Energy(1) =         20578.776982843548
+ 
+ MC Step =         67500
+Nmol(1) =            4
+Energy(1) =         18984.474481236743
+ 
+ MC Step =         68000
+Nmol(1) =            4
+Energy(1) =         19387.502574061327
+ 
+ MC Step =         68500
+Nmol(1) =            5
+Energy(1) =         22014.875579647611
+ 
+ MC Step =         69000
+Nmol(1) =            1
+Energy(1) =         16762.816435944645
+ 
+ MC Step =         69500
+Nmol(1) =            6
+Energy(1) =         22418.907335450745
+ 
+ MC Step =         70000
+Nmol(1) =            6
+Energy(1) =         11479.628743191060
+ 
+ MC Step =         70500
+Nmol(1) =            3
+Energy(1) =         16387.179215723074
+ 
+ MC Step =         71000
+Nmol(1) =            6
+Energy(1) =         16212.661164607860
+ 
+ MC Step =         71500
+Nmol(1) =            2
+Energy(1) =         15460.237120319531
+ 
+ MC Step =         72000
+Nmol(1) =            6
+Energy(1) =         15148.441776678268
+ 
+ MC Step =         72500
+Nmol(1) =            7
+Energy(1) =         17680.699301722867
+ 
+ MC Step =         73000
+Nmol(1) =            8
+Energy(1) =         20238.528014633055
+ 
+ MC Step =         73500
+Nmol(1) =            3
+Energy(1) =         15456.341227473362
+ 
+ MC Step =         74000
+Nmol(1) =            7
+Energy(1) =         16308.155397803785
+ 
+ MC Step =         74500
+Nmol(1) =            5
+Energy(1) =         15095.247074865934
+ 
+ MC Step =         75000
+Nmol(1) =            3
+Energy(1) =         15813.125419864882
+ 
+ MC Step =         75500
+Nmol(1) =            4
+Energy(1) =         21625.020888559084
+ 
+ MC Step =         76000
+Nmol(1) =            2
+Energy(1) =         21452.510104952846
+ 
+ MC Step =         76500
+Nmol(1) =            7
+Energy(1) =         14276.912804316258
+ 
+ MC Step =         77000
+Nmol(1) =            6
+Energy(1) =         15749.468181054079
+ 
+ MC Step =         77500
+Nmol(1) =            4
+Energy(1) =         12018.957648795535
+ 
+ MC Step =         78000
+Nmol(1) =            2
+Energy(1) =         15842.238820607034
+ 
+ MC Step =         78500
+Nmol(1) =            6
+Energy(1) =         18392.325140735607
+ 
+ MC Step =         79000
+Nmol(1) =            7
+Energy(1) =         21527.419364521058
+ 
+ MC Step =         79500
+Nmol(1) =            3
+Energy(1) =         22745.444265569702
+ 
+ MC Step =         80000
+Nmol(1) =            7
+Energy(1) =         23741.745713444390
+ 
+ MC Step =         80500
+Nmol(1) =            6
+Energy(1) =         23572.999187458609
+ 
+ MC Step =         81000
+Nmol(1) =            4
+Energy(1) =         26265.570217108540
+ 
+ MC Step =         81500
+Nmol(1) =            4
+Energy(1) =         22512.438286364555
+ 
+ MC Step =         82000
+Nmol(1) =            7
+Energy(1) =         21632.413057031587
+ 
+ MC Step =         82500
+Nmol(1) =            8
+Energy(1) =         25074.448834699346
+ 
+ MC Step =         83000
+Nmol(1) =            6
+Energy(1) =         20461.362196111360
+ 
+ MC Step =         83500
+Nmol(1) =            3
+Energy(1) =         22246.789576074603
+ 
+ MC Step =         84000
+Nmol(1) =            6
+Energy(1) =         16230.823818206074
+ 
+ MC Step =         84500
+Nmol(1) =            4
+Energy(1) =         26333.568077620155
+ 
+ MC Step =         85000
+Nmol(1) =            3
+Energy(1) =         18849.323868579457
+ 
+ MC Step =         85500
+Nmol(1) =            5
+Energy(1) =         15754.253162226674
+ 
+ MC Step =         86000
+Nmol(1) =            9
+Energy(1) =         16094.622061409194
+ 
+ MC Step =         86500
+Nmol(1) =            9
+Energy(1) =         20957.891570774558
+ 
+ MC Step =         87000
+Nmol(1) =            8
+Energy(1) =         18248.962908891612
+ 
+ MC Step =         87500
+Nmol(1) =            4
+Energy(1) =         20000.533874845085
+ 
+ MC Step =         88000
+Nmol(1) =            9
+Energy(1) =         16995.622244090311
+ 
+ MC Step =         88500
+Nmol(1) =            3
+Energy(1) =         17333.296485984050
+ 
+ MC Step =         89000
+Nmol(1) =            4
+Energy(1) =         21002.574890317177
+ 
+ MC Step =         89500
+Nmol(1) =            4
+Energy(1) =         21562.736051977638
+ 
+ MC Step =         90000
+Nmol(1) =            3
+Energy(1) =         19553.553787593122
+ 
+ MC Step =         90500
+Nmol(1) =            8
+Energy(1) =         15724.640974719860
+ 
+ MC Step =         91000
+Nmol(1) =            8
+Energy(1) =         21312.799716617905
+ 
+ MC Step =         91500
+Nmol(1) =            4
+Energy(1) =         17740.982921666375
+ 
+ MC Step =         92000
+Nmol(1) =            5
+Energy(1) =         18841.886535571597
+ 
+ MC Step =         92500
+Nmol(1) =            3
+Energy(1) =         17577.631515736772
+ 
+ MC Step =         93000
+Nmol(1) =            5
+Energy(1) =         13738.155780151190
+ 
+ MC Step =         93500
+Nmol(1) =           12
+Energy(1) =         16299.193205277372
+ 
+ MC Step =         94000
+Nmol(1) =            7
+Energy(1) =         17649.655342834114
+ 
+ MC Step =         94500
+Nmol(1) =            4
+Energy(1) =         23639.173216913390
+ 
+ MC Step =         95000
+Nmol(1) =            3
+Energy(1) =         16980.932962394756
+ 
+ MC Step =         95500
+Nmol(1) =            5
+Energy(1) =         13691.279151694085
+ 
+ MC Step =         96000
+Nmol(1) =            3
+Energy(1) =         14035.542775786684
+ 
+ MC Step =         96500
+Nmol(1) =           10
+Energy(1) =         25767.435473878446
+ 
+ MC Step =         97000
+Nmol(1) =            1
+Energy(1) =         23218.133247890983
+ 
+ MC Step =         97500
+Nmol(1) =            5
+Energy(1) =         16315.470348783294
+ 
+ MC Step =         98000
+Nmol(1) =            2
+Energy(1) =         21760.892463971621
+ 
+ MC Step =         98500
+Nmol(1) =            6
+Energy(1) =         20975.420120953477
+ 
+ MC Step =         99000
+Nmol(1) =            6
+Energy(1) =         12470.202130693977
+ 
+ MC Step =         99500
+Nmol(1) =            6
+Energy(1) =         19679.746567055281
+ 
+ MC Step =        100000
+Nmol(1) =            4
+Energy(1) =         16214.594514591903
+ 
+ MC Step =        100500
+Nmol(1) =            3
+Energy(1) =         19487.380359349641
+ 
+ MC Step =        101000
+Nmol(1) =            7
+Energy(1) =         18286.369557898812
+ 
+ MC Step =        101500
+Nmol(1) =            9
+Energy(1) =         14720.037316390106
+ 
+ MC Step =        102000
+Nmol(1) =            6
+Energy(1) =         20017.753120955014
+ 
+ MC Step =        102500
+Nmol(1) =            2
+Energy(1) =         17005.274786617105
+ 
+ MC Step =        103000
+Nmol(1) =            3
+Energy(1) =         16030.116542935291
+ 
+ MC Step =        103500
+Nmol(1) =            3
+Energy(1) =         16625.108664413601
+ 
+ MC Step =        104000
+Nmol(1) =            3
+Energy(1) =         16974.723353713114
+ 
+ MC Step =        104500
+Nmol(1) =            8
+Energy(1) =         15920.589964471952
+ 
+ MC Step =        105000
+Nmol(1) =            5
+Energy(1) =         17927.653366899187
+ 
+ MC Step =        105500
+Nmol(1) =            6
+Energy(1) =         18612.234258269862
+ 
+ MC Step =        106000
+Nmol(1) =            7
+Energy(1) =         14564.654057215141
+ 
+ MC Step =        106500
+Nmol(1) =            8
+Energy(1) =         19873.262401964093
+ 
+ MC Step =        107000
+Nmol(1) =            5
+Energy(1) =         16714.989149811641
+ 
+ MC Step =        107500
+Nmol(1) =            2
+Energy(1) =         21304.903486550902
+ 
+ MC Step =        108000
+Nmol(1) =            6
+Energy(1) =         18053.780877378700
+ 
+ MC Step =        108500
+Nmol(1) =            5
+Energy(1) =         19457.509012436534
+ 
+ MC Step =        109000
+Nmol(1) =           10
+Energy(1) =         17531.964497181001
+ 
+ MC Step =        109500
+Nmol(1) =            6
+Energy(1) =         14931.734500233943
+ 
+ MC Step =        110000
+Nmol(1) =            6
+Energy(1) =         15995.514655697953
+ 
+ MC Step =        110500
+Nmol(1) =            3
+Energy(1) =         16041.538001666881
+ 
+ MC Step =        111000
+Nmol(1) =            2
+Energy(1) =         18901.344290302819
+ 
+ MC Step =        111500
+Nmol(1) =            6
+Energy(1) =         22359.737511267009
+ 
+ MC Step =        112000
+Nmol(1) =            4
+Energy(1) =         20359.052831816607
+ 
+ MC Step =        112500
+Nmol(1) =            5
+Energy(1) =         21665.217194463628
+ 
+ MC Step =        113000
+Nmol(1) =            5
+Energy(1) =         15929.082603046709
+ 
+ MC Step =        113500
+Nmol(1) =            7
+Energy(1) =         17112.307153282381
+ 
+ MC Step =        114000
+Nmol(1) =           10
+Energy(1) =         15208.524045184393
+ 
+ MC Step =        114500
+Nmol(1) =            2
+Energy(1) =         16738.286403782276
+ 
+ MC Step =        115000
+Nmol(1) =            6
+Energy(1) =         17571.158426793780
+ 
+ MC Step =        115500
+Nmol(1) =            6
+Energy(1) =         16612.343195248446
+ 
+ MC Step =        116000
+Nmol(1) =            7
+Energy(1) =         22280.178490440769
+ 
+ MC Step =        116500
+Nmol(1) =            5
+Energy(1) =         18230.188357972784
+ 
+ MC Step =        117000
+Nmol(1) =            8
+Energy(1) =         19064.039264310810
+ 
+ MC Step =        117500
+Nmol(1) =            4
+Energy(1) =         21585.522412994804
+ 
+ MC Step =        118000
+Nmol(1) =            3
+Energy(1) =         18831.686447512853
+ 
+ MC Step =        118500
+Nmol(1) =            6
+Energy(1) =         20197.668103969285
+ 
+ MC Step =        119000
+Nmol(1) =            5
+Energy(1) =         18913.055410182904
+ 
+ MC Step =        119500
+Nmol(1) =            8
+Energy(1) =         18987.229100123142
+ 
+ MC Step =        120000
+Nmol(1) =            2
+Energy(1) =         15882.709023157080
+ 
+ MC Step =        120500
+Nmol(1) =            3
+Energy(1) =         25851.135446310182
+ 
+ MC Step =        121000
+Nmol(1) =            4
+Energy(1) =         23766.960010943800
+ 
+ MC Step =        121500
+Nmol(1) =            5
+Energy(1) =         16939.571750706957
+ 
+ MC Step =        122000
+Nmol(1) =            4
+Energy(1) =         17991.923294021977
+ 
+ MC Step =        122500
+Nmol(1) =            8
+Energy(1) =         15817.928233405237
+ 
+ MC Step =        123000
+Nmol(1) =            8
+Energy(1) =         16417.596061672310
+ 
+ MC Step =        123500
+Nmol(1) =            6
+Energy(1) =         15218.382064231570
+ 
+ MC Step =        124000
+Nmol(1) =            7
+Energy(1) =         16368.098804370515
+ 
+ MC Step =        124500
+Nmol(1) =            1
+Energy(1) =         19833.518295032929
+ 
+ MC Step =        125000
+Nmol(1) =            4
+Energy(1) =         18551.763148453538
+ 
+ MC Step =        125500
+Nmol(1) =            3
+Energy(1) =         22951.417767211042
+ 
+ MC Step =        126000
+Nmol(1) =            2
+Energy(1) =         21528.816234884853
+ 
+ MC Step =        126500
+Nmol(1) =            7
+Energy(1) =         10083.255548150750
+ 
+ MC Step =        127000
+Nmol(1) =            5
+Energy(1) =         18161.847843112057
+ 
+ MC Step =        127500
+Nmol(1) =            8
+Energy(1) =         18096.013738607806
+ 
+ MC Step =        128000
+Nmol(1) =            6
+Energy(1) =         14583.905394547368
+ 
+ MC Step =        128500
+Nmol(1) =            8
+Energy(1) =         17189.741382688120
+ 
+ MC Step =        129000
+Nmol(1) =            7
+Energy(1) =         21465.611574877770
+ 
+ MC Step =        129500
+Nmol(1) =            3
+Energy(1) =         15903.412841102305
+ 
+ MC Step =        130000
+Nmol(1) =            8
+Energy(1) =         22979.442956036986
+ 
+ MC Step =        130500
+Nmol(1) =            7
+Energy(1) =         17109.542872392711
+ 
+ MC Step =        131000
+Nmol(1) =            4
+Energy(1) =         22555.523423533112
+ 
+ MC Step =        131500
+Nmol(1) =            5
+Energy(1) =         16097.167311825455
+ 
+ MC Step =        132000
+Nmol(1) =            7
+Energy(1) =         20008.997341173574
+ 
+ MC Step =        132500
+Nmol(1) =            9
+Energy(1) =         20643.205529657025
+ 
+ MC Step =        133000
+Nmol(1) =            7
+Energy(1) =         16896.562759393586
+ 
+ MC Step =        133500
+Nmol(1) =            8
+Energy(1) =         11314.857728432213
+ 
+ MC Step =        134000
+Nmol(1) =            7
+Energy(1) =         13784.884620271765
+ 
+ MC Step =        134500
+Nmol(1) =            5
+Energy(1) =         13970.325505119496
+ 
+ MC Step =        135000
+Nmol(1) =            8
+Energy(1) =         15128.604283220557
+ 
+ MC Step =        135500
+Nmol(1) =            8
+Energy(1) =         18629.951237395311
+ 
+ MC Step =        136000
+Nmol(1) =           11
+Energy(1) =         14302.488205478134
+ 
+ MC Step =        136500
+Nmol(1) =            5
+Energy(1) =         21861.752475149009
+ 
+ MC Step =        137000
+Nmol(1) =           11
+Energy(1) =         21139.108803385439
+ 
+ MC Step =        137500
+Nmol(1) =            2
+Energy(1) =         18408.247874536220
+ 
+ MC Step =        138000
+Nmol(1) =            6
+Energy(1) =         16906.798524539532
+ 
+ MC Step =        138500
+Nmol(1) =           10
+Energy(1) =         14831.969973750007
+ 
+ MC Step =        139000
+Nmol(1) =            2
+Energy(1) =         18660.360194307970
+ 
+ MC Step =        139500
+Nmol(1) =            8
+Energy(1) =         20300.673571439071
+ 
+ MC Step =        140000
+Nmol(1) =            5
+Energy(1) =         11218.692217410146
+ 
+ MC Step =        140500
+Nmol(1) =            5
+Energy(1) =         15654.885485527164
+ 
+ MC Step =        141000
+Nmol(1) =            1
+Energy(1) =         16132.110261121057
+ 
+ MC Step =        141500
+Nmol(1) =            6
+Energy(1) =         12360.214383626877
+ 
+ MC Step =        142000
+Nmol(1) =            3
+Energy(1) =         19184.793432085618
+ 
+ MC Step =        142500
+Nmol(1) =            5
+Energy(1) =         19113.771577093314
+ 
+ MC Step =        143000
+Nmol(1) =            8
+Energy(1) =         12288.186511940172
+ 
+ MC Step =        143500
+Nmol(1) =            5
+Energy(1) =         17695.120443382908
+ 
+ MC Step =        144000
+Nmol(1) =            7
+Energy(1) =         16716.169499172895
+ 
+ MC Step =        144500
+Nmol(1) =            7
+Energy(1) =         20201.497358736084
+ 
+ MC Step =        145000
+Nmol(1) =            4
+Energy(1) =         13879.639387227820
+ 
+ MC Step =        145500
+Nmol(1) =            4
+Energy(1) =         17047.185947082813
+ 
+ MC Step =        146000
+Nmol(1) =            7
+Energy(1) =         16810.783566223919
+ 
+ MC Step =        146500
+Nmol(1) =            5
+Energy(1) =         13030.761078475531
+ 
+ MC Step =        147000
+Nmol(1) =            5
+Energy(1) =         13764.101190259929
+ 
+ MC Step =        147500
+Nmol(1) =            6
+Energy(1) =         12383.520750017862
+ 
+ MC Step =        148000
+Nmol(1) =            7
+Energy(1) =         21603.120705100126
+ 
+ MC Step =        148500
+Nmol(1) =            6
+Energy(1) =         23907.557986072930
+ 
+ MC Step =        149000
+Nmol(1) =            4
+Energy(1) =         16401.995928917509
+ 
+ MC Step =        149500
+Nmol(1) =            4
+Energy(1) =         21204.588397607553
+ 
+ MC Step =        150000
+Nmol(1) =            4
+Energy(1) =         19971.102710124167
+ 
+ MC Step =        150500
+Nmol(1) =           10
+Energy(1) =         13544.903769859598
+ 
+ MC Step =        151000
+Nmol(1) =            2
+Energy(1) =         18316.191787138436
+ 
+ MC Step =        151500
+Nmol(1) =            2
+Energy(1) =         16915.419462249025
+ 
+ MC Step =        152000
+Nmol(1) =            3
+Energy(1) =         23312.532720807143
+ 
+ MC Step =        152500
+Nmol(1) =            4
+Energy(1) =         18132.249132699890
+ 
+ MC Step =        153000
+Nmol(1) =            5
+Energy(1) =         18208.401326490952
+ 
+ MC Step =        153500
+Nmol(1) =            2
+Energy(1) =         25568.008149163710
+ 
+ MC Step =        154000
+Nmol(1) =            5
+Energy(1) =         19211.020512083960
+ 
+ MC Step =        154500
+Nmol(1) =            3
+Energy(1) =         22668.605699728796
+ 
+ MC Step =        155000
+Nmol(1) =            7
+Energy(1) =         16364.398266655531
+ 
+ MC Step =        155500
+Nmol(1) =            5
+Energy(1) =         15967.360524276213
+ 
+ MC Step =        156000
+Nmol(1) =            6
+Energy(1) =         19890.634220755594
+ 
+ MC Step =        156500
+Nmol(1) =            7
+Energy(1) =         18529.024903554604
+ 
+ MC Step =        157000
+Nmol(1) =            6
+Energy(1) =         23200.860422111695
+ 
+ MC Step =        157500
+Nmol(1) =            3
+Energy(1) =         20410.455999901067
+ 
+ MC Step =        158000
+Nmol(1) =            6
+Energy(1) =         23404.888493129387
+ 
+ MC Step =        158500
+Nmol(1) =            3
+Energy(1) =         19267.208484492148
+ 
+ MC Step =        159000
+Nmol(1) =            5
+Energy(1) =         11950.528622514790
+ 
+ MC Step =        159500
+Nmol(1) =            7
+Energy(1) =         17356.790903174358
+ 
+ MC Step =        160000
+Nmol(1) =           11
+Energy(1) =         20798.096569250141
+ 
+ MC Step =        160500
+Nmol(1) =            2
+Energy(1) =         16857.226866623649
+ 
+ MC Step =        161000
+Nmol(1) =            3
+Energy(1) =         17772.114134269730
+ 
+ MC Step =        161500
+Nmol(1) =            6
+Energy(1) =         14441.768825876848
+ 
+ MC Step =        162000
+Nmol(1) =            8
+Energy(1) =         13397.684321346838
+ 
+ MC Step =        162500
+Nmol(1) =            4
+Energy(1) =         12791.305773203634
+ 
+ MC Step =        163000
+Nmol(1) =            4
+Energy(1) =         16933.863298001776
+ 
+ MC Step =        163500
+Nmol(1) =            6
+Energy(1) =         18074.485633712749
+ 
+ MC Step =        164000
+Nmol(1) =            4
+Energy(1) =         16110.360486105579
+ 
+ MC Step =        164500
+Nmol(1) =            7
+Energy(1) =         25463.776055521681
+ 
+ MC Step =        165000
+Nmol(1) =            4
+Energy(1) =         21323.556144835009
+ 
+ MC Step =        165500
+Nmol(1) =            3
+Energy(1) =         15449.413179878606
+ 
+ MC Step =        166000
+Nmol(1) =            5
+Energy(1) =         18530.945220286936
+ 
+ MC Step =        166500
+Nmol(1) =            8
+Energy(1) =         18313.533744400953
+ 
+ MC Step =        167000
+Nmol(1) =            6
+Energy(1) =         14108.805107797334
+ 
+ MC Step =        167500
+Nmol(1) =            3
+Energy(1) =         24808.751594204899
+ 
+ MC Step =        168000
+Nmol(1) =            4
+Energy(1) =         19109.142232457678
+ 
+ MC Step =        168500
+Nmol(1) =            1
+Energy(1) =         17734.058236836012
+ 
+ MC Step =        169000
+Nmol(1) =            4
+Energy(1) =         17372.860342342610
+ 
+ MC Step =        169500
+Nmol(1) =            6
+Energy(1) =         23389.969549786507
+ 
+ MC Step =        170000
+Nmol(1) =            2
+Energy(1) =         23114.969605647024
+ 
+ MC Step =        170500
+Nmol(1) =            7
+Energy(1) =         20317.449860629189
+ 
+ MC Step =        171000
+Nmol(1) =            4
+Energy(1) =         17896.691053333579
+ 
+ MC Step =        171500
+Nmol(1) =            6
+Energy(1) =         14550.066160348659
+ 
+ MC Step =        172000
+Nmol(1) =            6
+Energy(1) =         14547.449731526198
+ 
+ MC Step =        172500
+Nmol(1) =            2
+Energy(1) =         18615.619008674050
+ 
+ MC Step =        173000
+Nmol(1) =            4
+Energy(1) =         14122.126451544040
+ 
+ MC Step =        173500
+Nmol(1) =            5
+Energy(1) =         15648.077136075945
+ 
+ MC Step =        174000
+Nmol(1) =            3
+Energy(1) =         15087.396095356535
+ 
+ MC Step =        174500
+Nmol(1) =            3
+Energy(1) =         14387.487370432495
+ 
+ MC Step =        175000
+Nmol(1) =            9
+Energy(1) =         16628.757508444425
+ 
+ MC Step =        175500
+Nmol(1) =            2
+Energy(1) =         15804.970541308581
+ 
+ MC Step =        176000
+Nmol(1) =            5
+Energy(1) =         11068.463704137190
+ 
+ MC Step =        176500
+Nmol(1) =           12
+Energy(1) =         15283.633711934632
+ 
+ MC Step =        177000
+Nmol(1) =            6
+Energy(1) =         17040.946327695183
+ 
+ MC Step =        177500
+Nmol(1) =            1
+Energy(1) =         13564.710466447330
+ 
+ MC Step =        178000
+Nmol(1) =            8
+Energy(1) =          9819.550513390317
+ 
+ MC Step =        178500
+Nmol(1) =            4
+Energy(1) =         17720.260455603999
+ 
+ MC Step =        179000
+Nmol(1) =            6
+Energy(1) =         18097.903918726784
+ 
+ MC Step =        179500
+Nmol(1) =            4
+Energy(1) =         14574.911306614496
+ 
+ MC Step =        180000
+Nmol(1) =            4
+Energy(1) =         20587.610605827955
+ 
+ MC Step =        180500
+Nmol(1) =            2
+Energy(1) =         15960.443528360789
+ 
+ MC Step =        181000
+Nmol(1) =            5
+Energy(1) =         15767.656553977118
+ 
+ MC Step =        181500
+Nmol(1) =            6
+Energy(1) =         17096.313653218916
+ 
+ MC Step =        182000
+Nmol(1) =            7
+Energy(1) =         21323.603461244096
+ 
+ MC Step =        182500
+Nmol(1) =            5
+Energy(1) =         18831.704686367048
+ 
+ MC Step =        183000
+Nmol(1) =            4
+Energy(1) =         20524.180036941263
+ 
+ MC Step =        183500
+Nmol(1) =            4
+Energy(1) =         18252.796420544058
+ 
+ MC Step =        184000
+Nmol(1) =            5
+Energy(1) =         16494.231683903792
+ 
+ MC Step =        184500
+Nmol(1) =            3
+Energy(1) =         15985.177943619325
+ 
+ MC Step =        185000
+Nmol(1) =            6
+Energy(1) =         28555.776081475098
+ 
+ MC Step =        185500
+Nmol(1) =            5
+Energy(1) =         26362.475216259230
+ 
+ MC Step =        186000
+Nmol(1) =            3
+Energy(1) =         17823.369483207527
+ 
+ MC Step =        186500
+Nmol(1) =            6
+Energy(1) =         20022.267669393474
+ 
+ MC Step =        187000
+Nmol(1) =            5
+Energy(1) =         26284.215651791466
+ 
+ MC Step =        187500
+Nmol(1) =            5
+Energy(1) =         21835.596694350166
+ 
+ MC Step =        188000
+Nmol(1) =            3
+Energy(1) =         15705.594681635203
+ 
+ MC Step =        188500
+Nmol(1) =            6
+Energy(1) =         10643.151018509783
+ 
+ MC Step =        189000
+Nmol(1) =            5
+Energy(1) =         18947.388990807471
+ 
+ MC Step =        189500
+Nmol(1) =            5
+Energy(1) =         21266.986229503265
+ 
+ MC Step =        190000
+Nmol(1) =            4
+Energy(1) =         23789.768264831964
+ 
+ MC Step =        190500
+Nmol(1) =            3
+Energy(1) =         17996.772279250112
+ 
+ MC Step =        191000
+Nmol(1) =            7
+Energy(1) =         20811.488489200627
+ 
+ MC Step =        191500
+Nmol(1) =            4
+Energy(1) =         28262.926050055201
+ 
+ MC Step =        192000
+Nmol(1) =            5
+Energy(1) =         17500.147938816976
+ 
+ MC Step =        192500
+Nmol(1) =            5
+Energy(1) =         13834.140904720703
+ 
+ MC Step =        193000
+Nmol(1) =            6
+Energy(1) =          9128.862769307214
+ 
+ MC Step =        193500
+Nmol(1) =            7
+Energy(1) =         20611.857045045348
+ 
+ MC Step =        194000
+Nmol(1) =            1
+Energy(1) =         12580.776973029360
+ 
+ MC Step =        194500
+Nmol(1) =            5
+Energy(1) =         20515.478022667041
+ 
+ MC Step =        195000
+Nmol(1) =            5
+Energy(1) =         14893.282240899403
+ 
+ MC Step =        195500
+Nmol(1) =            4
+Energy(1) =         16981.156169823171
+ 
+ MC Step =        196000
+Nmol(1) =            5
+Energy(1) =         10809.528794352405
+ 
+ MC Step =        196500
+Nmol(1) =            3
+Energy(1) =         13403.356234022018
+ 
+ MC Step =        197000
+Nmol(1) =            5
+Energy(1) =         13653.888111569428
+ 
+ MC Step =        197500
+Nmol(1) =            2
+Energy(1) =         17684.329017316428
+ 
+ MC Step =        198000
+Nmol(1) =            4
+Energy(1) =         19375.808738484211
+ 
+ MC Step =        198500
+Nmol(1) =            6
+Energy(1) =         23922.577546691835
+ 
+ MC Step =        199000
+Nmol(1) =            5
+Energy(1) =         17856.242683534063
+ 
+ MC Step =        199500
+Nmol(1) =            8
+Energy(1) =         15592.764961101480
+ 
+ MC Step =        200000
+Nmol(1) =            7
+Energy(1) =         16009.340411238645
+ 
+ Cassandra simulation complete
