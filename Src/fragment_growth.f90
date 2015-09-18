@@ -1475,17 +1475,8 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
            this_atom = frag_list(ifrag,is)%atoms(j)
            
            atom_list(this_atom,this_im,is)%exist = .TRUE.
-           write(*,*) '*****'
-           write(*,*) frag_type
-           write(*,*) frag_type, frag_position_library(frag_type)
-           write(*,*) frag_type, frag_position_library(frag_type), frag_start
-           write(*,*) frag_type, frag_position_library(frag_type), frag_start, frag_list(frag_start,is)%natoms
-           write(*,*) frag_type, frag_position_library(frag_type), frag_start, frag_list(frag_start,is)%natoms, this_fragment
-           write(*,*) frag_type, frag_position_library(frag_type), frag_start, frag_list(frag_start,is)%natoms, this_fragment, j
            nl = (frag_position_library(frag_type)-1) + &
-                        frag_list(frag_start,is)%natoms*(this_fragment-1)+ j
-           write(*,*) frag_type, frag_position_library(frag_type), frag_start, frag_list(frag_start,is)%natoms, this_fragment, j, nl
-           write(*,*) '*****'
+                        frag_list(ifrag,is)%natoms*(this_fragment-1)+ j
            config_list(this_atom)%rxp = &
                  library_coords(nl)%rxp
               !frag_coords(j,this_fragment,frag_type)%rxp
