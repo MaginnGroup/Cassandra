@@ -4608,20 +4608,24 @@ SUBROUTINE Get_Move_Probabilities
 
      END IF
 
+
+    IF (verbose_log == .TRUE.) THEN
      ! log the probabilties of choosing a pair of box
-     WRITE(logunit,*)
-     WRITE(logunit,*) '******** Box pair selection probabilities *********'
-     WRITE(logunit,*)
+             WRITE(logunit,*)
+             WRITE(logunit,*) '******** Box pair selection probabilities *********'
+             WRITE(logunit,*)
 
-     DO ibox = 1, nbr_boxes
+             DO ibox = 1, nbr_boxes
 
-        DO kbox = 1, nbr_boxes
+                DO kbox = 1, nbr_boxes
 
-           WRITE(logunit,'(I3,2X,I3,2X,F10.6)') ibox, kbox, prob_swap_boxes(ibox,kbox)
+                   WRITE(logunit,'(I3,2X,I3,2X,F10.6)') ibox, kbox, prob_swap_boxes(ibox,kbox)
 
-        END DO
+                END DO
 
-     END DO
+             END DO
+    END IF
+
 
   END IF
 
@@ -5035,6 +5039,7 @@ SUBROUTINE Get_CBMC_Info
         line_nbr = line_nbr + 1
         call parse_string(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
         kappa_rot = string_to_int(line_array(2))
+        kappa_rot = 0
         line_nbr = line_nbr + 1
         call parse_string(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
         kappa_dih = string_to_int(line_array(2))
@@ -5042,7 +5047,7 @@ SUBROUTINE Get_CBMC_Info
         write(logunit,*)
         write(logunit,*) 'Writing out CBMC_Info'
         write(logunit,'(a,t35,2i12)') 'kappa for first bead insertion ', kappa_ins
-        write(logunit,'(a,t35,2i12)') 'kappa for rotational bias', kappa_rot
+        write(logunit,'(a,t35,2i12)') 'Orientational bias not supported. Kappa for rotations is set to ', kappa_rot
         write(logunit,'(a,t35,2i12)') 'kappa for dihedral selection ', kappa_dih
         write(logunit,*)
 
