@@ -113,7 +113,8 @@ Pressure
 !----------------
 
 # Fragment_Files
-species1/frag1/frag1.dat 1 
+species1/frag1/frag1.dat  1
+!---------------------------------------------------------one line per fragment
 
 # CBMC_Info
 kappa_ins 12
