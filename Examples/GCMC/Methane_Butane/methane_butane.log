@@ -6,9 +6,9 @@ inputfile methane_butane.inp
 name of run: methane_butane
 
   Month      Day      Year
-     09       18      2015
+     09       21      2015
  
- Time:  17:34:26
+ Time:  11:01:16
  
 machine: maginnfe.crc.nd.edu
 
@@ -125,7 +125,6 @@ Simulation type: GCMC
  species1/frag1/frag1.dat  1
  species2/frag1/frag1.dat  2
  species2/frag2/frag2.dat  3
- 
  
  # CBMC_Info
  kappa_ins 12
@@ -392,7 +391,7 @@ MC low cutoff distance is   1.000    Angstrom
  
  Writing out CBMC_Info
 kappa for first bead insertion              12
-kappa for rotational bias                    0
+Orientational bias not supported.            0tations is set to 
 kappa for dihedral selection                10
  
 Smaller cutoff for CBMC for box          1        6.50
@@ -428,15 +427,15 @@ starting type make_config
    Starting energy components for box   1
   Atomic units-Extensive
  
- Total system energy is                 38756.527
- Intra molecular energy is              44379.587
+ Total system energy is                 39808.634
+ Intra molecular energy is              44095.902
  Bond energy is                             0.000
- Bond angle energy is                   19879.190
- Dihedral angle energy is               24500.397
+ Bond angle energy is                   19808.463
+ Dihedral angle energy is               24287.439
  Improper angle energy is                   0.000
  Intra nonbond vdw is                       0.000
  Intra nonbond elec is                      0.000
- Inter molecule vdw is                  -5503.453
+ Inter molecule vdw is                  -4167.662
  Long range correction is                -119.606
  Inter molecule q is                        0.000
  Reciprocal ewald is                        0.000
@@ -444,98 +443,101 @@ starting type make_config
  ***********************************************************
  
  
-Success ratio, rotation of species   2 in box 1 :  0.94000
+Success ratio, rotation of species   2 in box 1 :  0.94167
 Maximum width, rotation of species   2 in box 1 :  3.14159
  
-Success ratio, translation of species   2 in box 1 :  0.89167
-Maximum width, translation of species   2 in box 1 :  3.56667
+Success ratio, translation of species   2 in box 1 :  0.89667
+Maximum width, translation of species   2 in box 1 :  3.58667
  
-Success ratio, rotation of species   2 in box 1 :  0.93333
-Maximum width, rotation of species   2 in box 1 :  3.14159
- 
-Success ratio, translation of species   1 in box 1 :  0.96667
-Maximum width, translation of species   1 in box 1 :  3.86667
- 
-Success ratio, rotation of species   2 in box 1 :  0.89667
-Maximum width, rotation of species   2 in box 1 :  3.14159
- 
-Success ratio, rotation of species   2 in box 1 :  0.94667
-Maximum width, rotation of species   2 in box 1 :  3.14159
- 
-Success ratio, translation of species   1 in box 1 :  0.94500
-Maximum width, translation of species   1 in box 1 :  7.30800
- 
-Success ratio, translation of species   2 in box 1 :  0.86000
-Maximum width, translation of species   2 in box 1 :  6.13467
- 
-Success ratio, rotation of species   2 in box 1 :  0.95833
+Success ratio, rotation of species   2 in box 1 :  0.97000
 Maximum width, rotation of species   2 in box 1 :  3.14159
  
 Success ratio, translation of species   1 in box 1 :  0.96333
-Maximum width, translation of species   1 in box 1 : 13.00000
+Maximum width, translation of species   1 in box 1 :  3.85333
  
-Success ratio, rotation of species   2 in box 1 :  0.95833
+Success ratio, rotation of species   2 in box 1 :  0.95167
 Maximum width, rotation of species   2 in box 1 :  3.14159
  
-Success ratio, translation of species   2 in box 1 :  0.85500
-Maximum width, translation of species   2 in box 1 : 10.49028
+Success ratio, translation of species   2 in box 1 :  0.85333
+Maximum width, translation of species   2 in box 1 :  6.12124
  
-Success ratio, rotation of species   2 in box 1 :  0.95333
-Maximum width, rotation of species   2 in box 1 :  3.14159
- 
-Success ratio, translation of species   1 in box 1 :  0.94667
-Maximum width, translation of species   1 in box 1 : 13.00000
+Success ratio, translation of species   1 in box 1 :  0.96167
+Maximum width, translation of species   1 in box 1 :  7.41124
  
 Success ratio, rotation of species   2 in box 1 :  0.93833
 Maximum width, rotation of species   2 in box 1 :  3.14159
  
-Success ratio, translation of species   2 in box 1 :  0.83167
-Maximum width, translation of species   2 in box 1 : 13.00000
- 
-Success ratio, rotation of species   2 in box 1 :  0.97167
+Success ratio, rotation of species   2 in box 1 :  0.94500
 Maximum width, rotation of species   2 in box 1 :  3.14159
  
-Success ratio, translation of species   1 in box 1 :  0.94667
+Success ratio, translation of species   1 in box 1 :  0.95667
 Maximum width, translation of species   1 in box 1 : 13.00000
  
-Success ratio, rotation of species   2 in box 1 :  0.93500
+Success ratio, rotation of species   2 in box 1 :  0.97000
 Maximum width, rotation of species   2 in box 1 :  3.14159
  
-Success ratio, translation of species   2 in box 1 :  0.75500
-Maximum width, translation of species   2 in box 1 : 13.00000
+Success ratio, translation of species   2 in box 1 :  0.87667
+Maximum width, translation of species   2 in box 1 : 10.73258
  
-Success ratio, rotation of species   2 in box 1 :  0.93500
-Maximum width, rotation of species   2 in box 1 :  3.14159
- 
-Success ratio, translation of species   1 in box 1 :  0.91667
-Maximum width, translation of species   1 in box 1 : 13.00000
- 
-Success ratio, rotation of species   2 in box 1 :  0.94167
-Maximum width, rotation of species   2 in box 1 :  3.14159
- 
-Success ratio, translation of species   2 in box 1 :  0.79667
-Maximum width, translation of species   2 in box 1 : 13.00000
- 
-Success ratio, rotation of species   2 in box 1 :  0.91167
+Success ratio, rotation of species   2 in box 1 :  0.97500
 Maximum width, rotation of species   2 in box 1 :  3.14159
  
 Success ratio, translation of species   1 in box 1 :  0.94167
 Maximum width, translation of species   1 in box 1 : 13.00000
  
+Success ratio, rotation of species   2 in box 1 :  0.92333
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.82500
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.96000
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   1 in box 1 :  0.94833
+Maximum width, translation of species   1 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.94000
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.82000
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
 Success ratio, rotation of species   2 in box 1 :  0.95500
 Maximum width, rotation of species   2 in box 1 :  3.14159
  
-Success ratio, translation of species   2 in box 1 :  0.83000
-Maximum width, translation of species   2 in box 1 : 13.00000
- 
-Success ratio, translation of species   1 in box 1 :  0.95667
+Success ratio, translation of species   1 in box 1 :  0.92833
 Maximum width, translation of species   1 in box 1 : 13.00000
  
-Success ratio, rotation of species   2 in box 1 :  0.95333
+Success ratio, rotation of species   2 in box 1 :  0.93833
 Maximum width, rotation of species   2 in box 1 :  3.14159
  
-Success ratio, rotation of species   2 in box 1 :  0.90167
+Success ratio, translation of species   2 in box 1 :  0.81833
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.95000
 Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   1 in box 1 :  0.95167
+Maximum width, translation of species   1 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.96667
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   1 in box 1 :  0.95167
+Maximum width, translation of species   1 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.94333
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   2 in box 1 :  0.82667
+Maximum width, translation of species   2 in box 1 : 13.00000
+ 
+Success ratio, rotation of species   2 in box 1 :  0.95833
+Maximum width, rotation of species   2 in box 1 :  3.14159
+ 
+Success ratio, translation of species   1 in box 1 :  0.93500
+Maximum width, translation of species   1 in box 1 : 13.00000
 ******************** END OF SIMULATION ********************
  
  
@@ -543,16 +545,16 @@ Maximum width, rotation of species   2 in box 1 :  3.14159
  Ending energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                 14981.253
- Intra molecular energy is              15833.804
+ Total system energy is                 16800.935
+ Intra molecular energy is              20769.080
  Bond energy is                             0.000
- Angle energy is                         7633.533
- Dihedral energy is                      8200.271
+ Angle energy is                        11422.374
+ Dihedral energy is                      9346.705
  Improper angle energy is                   0.000
  Intra nonbond vdw is                       0.000
  Intra nonbond elec is                      0.000
- Inter molecule vdw is                   -823.068
- Long range correction is                 -29.483
+ Inter molecule vdw is                  -3925.732
+ Long range correction is                 -42.413
  Inter molecule q is                        0.000
  Reciprocal ewald is                        0.000
  Self ewald is                              0.000
@@ -563,16 +565,16 @@ Maximum width, rotation of species   2 in box 1 :  3.14159
  Energy components from total energy call for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                 14981.253
- Intra molecular energy is              15833.804
+ Total system energy is                 16800.935
+ Intra molecular energy is              20769.080
  Bond energy is                             0.000
- Angle energy is                         7633.533
- Dihedral energy is                      8200.271
+ Angle energy is                        11422.374
+ Dihedral energy is                      9346.705
  Improper angle energy is                   0.000
  Intra nonbond vdw is                       0.000
  Intra nonbond elec is                      0.000
- Inter molecule vdw is                   -823.068
- Long range correction is                 -29.483
+ Inter molecule vdw is                  -3925.732
+ Long range correction is                 -42.413
  Inter molecule q is                        0.000
  Reciprocal ewald is                        0.000
  Self ewald is                              0.000
@@ -587,9 +589,9 @@ Maximum width, rotation of species   2 in box 1 :  3.14159
  Writing information for species  1
  
                 Move      Trials     Success   % Success
-           Translate        5312        5036       94.80
-           Insertion        4998        4665       93.34
-            Deletion        4994        4638       92.87
+           Translate        5470        5189       94.86
+           Insertion        4939        4577       92.67
+            Deletion        4840        4546       93.93
  ***********************************************************
  
  
@@ -597,10 +599,10 @@ Maximum width, rotation of species   2 in box 1 :  3.14159
  Writing information for species  2
  
                 Move      Trials     Success   % Success
-           Translate        4646        3847       82.80
-              Rotate        9925        9334       94.05
-           Insertion        5113        4354       85.16
-            Deletion        4953        4409       89.02
+           Translate        4508        3797       84.23
+              Rotate       10036        9547       95.13
+           Insertion        5138        4409       85.81
+            Deletion        4998        4456       89.16
  ***********************************************************
  
  Writing information about fragments
@@ -613,18 +615,18 @@ Maximum width, rotation of species   2 in box 1 :  3.14159
  ***********************************************************
  Writing information for species  2
          # Fragments      Trials     Success   % Success
-                   1       10059        9404       93.49
+                   1       10071        9424       93.58
  ***********************************************************
  
  Writing information about subroutine times
  
  ***********************************************************
  
- Translation time =            0.326942 secs.
- Rotation time =               0.391948 secs.
- Insertion time =              3.202509 secs.
- Deletion time =               2.938563 secs.
- Regrowth time =               3.847412 secs.
+ Translation time =            0.369935 secs.
+ Rotation time =               0.346958 secs.
+ Insertion time =              3.233513 secs.
+ Deletion time =               2.925550 secs.
+ Regrowth time =               3.862411 secs.
  ***********************************************************
  
  
@@ -635,4 +637,4 @@ Maximum width, rotation of species   2 in box 1 :  3.14159
          0      Hours
          0    Minutes
         14    Seconds
-       758         ms
+       997         ms

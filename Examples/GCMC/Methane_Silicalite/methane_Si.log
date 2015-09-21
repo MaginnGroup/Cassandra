@@ -6,9 +6,9 @@ inputfile methane_Si.inp
 name of run: methane_Si
 
   Month      Day      Year
-     09       18      2015
+     09       21      2015
  
- Time:  17:38:01
+ Time:  11:19:37
  
 machine: maginnfe.crc.nd.edu
 
@@ -353,7 +353,7 @@ MC low cutoff distance is   1.000    Angstrom
  
  Writing out CBMC_Info
 kappa for first bead insertion              12
-kappa for rotational bias                    0
+Orientational bias not supported.            0tations is set to 
 kappa for dihedral selection                12
  
 Smaller cutoff for CBMC for box          1        6.50
@@ -488,9 +488,9 @@ Maximum width, translation of species   2 in box 1 :  0.90813
  
  ***********************************************************
  
- Translation time =            2.146693 secs.
- Insertion time =              9.788508 secs.
- Deletion time =               9.347562 secs.
+ Translation time =            2.543621 secs.
+ Insertion time =             11.959186 secs.
+ Deletion time =              11.383257 secs.
  ***********************************************************
  
  
@@ -500,5 +500,5 @@ Maximum width, translation of species   2 in box 1 :  0.90813
          0       Days
          0      Hours
          0    Minutes
-        33    Seconds
-       599         ms
+        37    Seconds
+       611         ms

@@ -6,9 +6,9 @@ inputfile methane_butane_Si.inp
 name of run: methane_butane_Si
 
   Month      Day      Year
-     09       18      2015
+     09       21      2015
  
- Time:  17:35:38
+ Time:  11:04:51
  
 machine: maginnfe.crc.nd.edu
 
@@ -490,7 +490,7 @@ MC low cutoff distance is   1.000    Angstrom
  
  Writing out CBMC_Info
 kappa for first bead insertion              12
-kappa for rotational bias                    0
+Orientational bias not supported.            0tations is set to 
 kappa for dihedral selection                10
  
 Smaller cutoff for CBMC for box          1        6.50
@@ -542,20 +542,23 @@ starting type read_old
  ***********************************************************
  
  
-Success ratio, rotation of species   3 in box 1 :  0.10333
+Success ratio, rotation of species   3 in box 1 :  0.11167
 Maximum width, rotation of species   3 in box 1 :  2.98451
  
-Success ratio, translation of species   2 in box 1 :  0.19000
-Maximum width, translation of species   2 in box 1 :  0.76000
+Success ratio, translation of species   2 in box 1 :  0.17667
+Maximum width, translation of species   2 in box 1 :  0.70667
  
-Success ratio, rotation of species   3 in box 1 :  0.09167
+Success ratio, rotation of species   3 in box 1 :  0.10500
 Maximum width, rotation of species   3 in box 1 :  2.83529
  
-Success ratio, translation of species   2 in box 1 :  0.47500
-Maximum width, translation of species   2 in box 1 :  0.72200
+Success ratio, translation of species   3 in box 1 :  0.01667
+Maximum width, translation of species   3 in box 1 :  0.06667
  
-Success ratio, rotation of species   3 in box 1 :  0.10000
+Success ratio, rotation of species   3 in box 1 :  0.09167
 Maximum width, rotation of species   3 in box 1 :  2.69352
+ 
+Success ratio, translation of species   2 in box 1 :  0.53833
+Maximum width, translation of species   2 in box 1 :  0.76084
 ******************** END OF SIMULATION ********************
  
  
@@ -563,16 +566,16 @@ Maximum width, rotation of species   3 in box 1 :  2.69352
  Ending energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is              -1243003.911
- Intra molecular energy is              62407.239
+ Total system energy is              -1268274.691
+ Intra molecular energy is              60354.699
  Bond energy is                             0.000
- Angle energy is                        27609.964
- Dihedral energy is                     34797.275
+ Angle energy is                        27782.729
+ Dihedral energy is                     32571.970
  Improper angle energy is                   0.000
  Intra nonbond vdw is                       0.000
  Intra nonbond elec is                      0.000
- Inter molecule vdw is               -1273356.065
- Long range correction is              -32055.085
+ Inter molecule vdw is               -1295321.997
+ Long range correction is              -33307.393
  Inter molecule q is                        0.000
  Reciprocal ewald is                        0.000
  Self ewald is                              0.000
@@ -583,16 +586,16 @@ Maximum width, rotation of species   3 in box 1 :  2.69352
  Energy components from total energy call for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is               -450881.710
- Intra molecular energy is              62407.239
+ Total system energy is               -461874.432
+ Intra molecular energy is              60354.699
  Bond energy is                             0.000
- Angle energy is                        27609.964
- Dihedral energy is                     34797.275
+ Angle energy is                        27782.729
+ Dihedral energy is                     32571.970
  Improper angle energy is                   0.000
  Intra nonbond vdw is                       0.000
  Intra nonbond elec is                      0.000
- Inter molecule vdw is                -481233.863
- Long range correction is              -32055.085
+ Inter molecule vdw is                -488921.739
+ Long range correction is              -33307.393
  Inter molecule q is                        0.000
  Reciprocal ewald is                        0.000
  Self ewald is                              0.000
@@ -614,9 +617,9 @@ Maximum width, rotation of species   3 in box 1 :  2.69352
  Writing information for species  2
  
                 Move      Trials     Success   % Success
-           Translate        1504         555       36.90
-           Insertion         976         378       38.73
-            Deletion        1004         245       24.40
+           Translate        1323         481       36.36
+           Insertion         980         376       38.37
+            Deletion         955         235       24.61
  ***********************************************************
  
  
@@ -624,10 +627,10 @@ Maximum width, rotation of species   3 in box 1 :  2.69352
  Writing information for species  3
  
                 Move      Trials     Success   % Success
-           Translate         599          14        2.34
-              Rotate        1941         193        9.94
-           Insertion         967          84        8.69
-            Deletion         974           0        0.00
+           Translate         686          69       10.06
+              Rotate        2001         202       10.09
+           Insertion        1008          87        8.63
+            Deletion        1026           0        0.00
  ***********************************************************
  
  Writing information about fragments
@@ -645,18 +648,18 @@ Maximum width, rotation of species   3 in box 1 :  2.69352
  ***********************************************************
  Writing information for species  3
          # Fragments      Trials     Success   % Success
-                   1        1891        1185       62.67
+                   1        2014        1237       61.42
  ***********************************************************
  
  Writing information about subroutine times
  
  ***********************************************************
  
- Translation time =            3.517471 secs.
- Rotation time =               5.914117 secs.
- Insertion time =             21.748683 secs.
- Deletion time =              26.480970 secs.
- Regrowth time =              26.435976 secs.
+ Translation time =            6.599972 secs.
+ Rotation time =              11.614257 secs.
+ Insertion time =             41.989619 secs.
+ Deletion time =              52.073097 secs.
+ Regrowth time =              53.600837 secs.
  ***********************************************************
  
  
@@ -665,6 +668,6 @@ Maximum width, rotation of species   3 in box 1 :  2.69352
          0     Months
          0       Days
          0      Hours
-         1    Minutes
-        41    Seconds
-       249         ms
+         3    Minutes
+        12    Seconds
+       220         ms

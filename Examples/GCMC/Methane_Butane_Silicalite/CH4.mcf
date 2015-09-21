@@ -14,7 +14,7 @@
 
 # Atom_Info
 1
-1    CH4_s1    C    16.00    0.0    LJ    147.95    3.73
+1    CH4_s1_s2    C    16.00    0.0    LJ    147.95    3.73
 
 
 ! List the number of bonds in the molecule below keyword '# Bond_Info'. 
