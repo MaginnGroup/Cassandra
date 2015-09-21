@@ -1529,6 +1529,23 @@ frag\_1\_2.dat 4 \\ \\
 This will tell Cassandra to use the files frag\_1\_1.dat, frag\_2\_1.dat and frag\_3\_1.dat for the three
 fragments of species 1. Since species 2 has two identical fragment, Cassandra will use the same
 fragment library frag\_1\_2.dat for these fragments. 
+
+%%%%%%%%%%%%%%%%
+%
+% Verbose_logfile
+%
+%%%%%%%%%%%%%%%
+
+\subsection{Verbosity in log file}\label{sec:Verbose_Logfile}
+{\bf \# Verbose\_Logfile} \\
+{\it Logical(1)} \\ \\
+%
+This optional keyword is used to control the level of detail about the simulation
+setup that is output to the log file. Controling this can be useful for development
+purposes. This keyword is optional. If this keyword is not found,
+the value Logical(1) is set to FALSE by default. Allowed values for Logical(1) are
+TRUE or FALSE.
+
 %%%%%%%%%%%%%%%%
 %
 % File_Info
