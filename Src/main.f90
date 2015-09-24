@@ -112,7 +112,7 @@ PROGRAM Main
   INTEGER, ALLOCATABLE, DIMENSION(:) :: frag_order
 !********************************************************************************
 ! Code name and version. Change as updates are made.
-  version = 'Cassandra 1.0'
+  version = 'Cassandra 1.1'
   e_start%inter_vdw = 0.0_DP
 ! Get starting time information (intrinsic function)
   CALL DATE_AND_TIME(date,time,zone,begin_values)
