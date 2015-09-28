@@ -1301,10 +1301,11 @@ returns:
 			i = int(line[6:11].strip())
 			atomList.append(i)
 			atomParms[i] = {}
-			atomParms[i]['name'] = line[12:16].strip()
+			#atomParms[i]['name'] = line[12:16].strip()
 			atomParms[i]['element'] = line[76:78].strip().title()
-			if atomParms[i]['name'] == '':
-				atomParms[i]['name'] = atomParms[i]['element'] + i
+			atomParms[i]['name'] = atomParms[i]['element'] + str(i)
+			#if atomParms[i]['name'] == '':
+#				atomParms[i]['name'] = atomParms[i]['element'] + str(i)
 			atomParms[i]['type'] = line.split()[-1].strip()
 			try:
 				atomParms[i]['mass'] = periodicTable[atomParms[i]['element']]
