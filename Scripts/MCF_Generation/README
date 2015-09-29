@@ -43,7 +43,11 @@ Step 3.
    > python $PATH/mcfgen.py pdborcmlfile
 
    This command will generate a Cassandra MCF file, whose name will be the same as the original pdb file. The script assumes that
-an ff file with the same basename is in the current folder:
+an ff file with the same basename is in the current folder.
+
+   Note that if you are creating a mcf file that involves a solid, you'll have to add the flag --solid to the command, as
+
+   > python $PATH/mcfgen.py solid.pdb --solid
 
 (1) CHECK ANY FILE PRODUCED BY THIS SCRIPT.
 
