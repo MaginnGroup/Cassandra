@@ -1,0 +1,150 @@
+# Run_Name
+gemc_isobutane
+
+!------------------------------------------------------------------------------
+
+# Sim_Type
+GEMC
+
+!------------------------------------------------------------------------------
+
+# Nbr_Species
+1
+
+!------------------------------------------------------------------------------
+
+# VDW_Style
+LJ   cut_tail   14.00
+LJ   cut_tail   14.00
+!------------------------------------------------------------------------------
+
+# Charge_Style
+NONE
+NONE
+!------------------------------------------------------------------------------
+
+# Intra_Scaling
+0.0    0.0    0.0     1.0
+0.0    0.0    0.0     1.0
+
+# Mixing_Rule
+LB
+!------------------------------------------------------------------------------
+
+# Seed
+1216131145 1216131146
+!------------------------------------------------------------------------------
+
+# Rcutoff_Low
+1.0
+!------------------------------------------------------------------------------
+
+# Pair_Energy
+TRUE
+!------------------------------------------------------------------------------
+
+# Molecule_Files
+isobutane.mcf 400
+
+!----------------------------------------------------------one line per species
+
+# Box_Info
+2
+CUBIC
+35.3700 35.3700 35.3700
+
+CUBIC
+100.8100 100.8100 100.8100
+
+!-------------------------------------------------------line 1: number of boxes
+!--------------------------------------------------------------line 2: box type
+!--------------------------------------------------------------line 3: box size
+!--------------------------------------------------------------repeat for second box
+
+# Temperature_Info
+304.00 304.00 
+
+!----------------------------------------------------------one temperature per box
+
+# Move_Probability_Info
+
+# Prob_Translation 
+0.40
+0.15
+14.0
+
+# Prob_Rotation
+0.40
+30.0
+180.0
+
+# Prob_Volume
+0.005
+200.0
+200.0
+
+# Prob_Swap
+0.195
+insertion method
+reservoir
+
+# Done_Probability_Info
+
+!---------------------one line for each box and one entry/line for each species
+!-----------------------------------------each molecule moves per volume change
+
+# Start_Type
+read_old
+Init_Config/nvt_liq.xyz
+Init_Config/nvt_vap.xyz
+
+!--------make_config: one line for each species and one entry/line for each box
+!------------------------------------------------------------read_old: filename
+!----------------------------------------------------------checkpoint: filename
+
+# Run_Type
+Equilibration 100 100
+
+!-------------------------Equilibration: update maximum widths every 100 steps/update maximum
+!-------------------------volume displacement every 100 steps
+
+
+# Average_Info
+1
+!------------------------------------------------------------ 0 == yes, 1 == no
+
+# Simulation_Length_Info
+Units       Steps
+Prop_Freq   100
+Coord_Freq  2200
+MCsteps     2200
+# Done_Simulation_Length_Info
+!------------------ simulation length every 2200 steps, XYZ output every 2200 steps, property
+!---------------------------------------output every 100 steps
+
+# Property_Info 1
+Energy_Total
+Density
+Nmols
+Volume
+!------------------------------------------------------------------------------
+
+# Property_Info 2
+Energy_Total
+Density
+Nmols
+Volume
+!------------------------------------------------------------------------------
+
+# Fragment_Files
+species1/frag1/frag1.dat  1
+!---------------------------------------------------------one line per fragment
+
+# CBMC_Info
+kappa_ins 12
+kappa_rot 0
+kappa_dih 12
+rcut_cbmc 6.5  6.5
+!------------------------------------------------------------------------------
+
+END
