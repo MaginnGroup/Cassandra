@@ -78,6 +78,9 @@ parser.add_argument('--ffFile', '-f', nargs=1,
 parser.add_argument('--mcfFile', '-m', nargs=1, 
 								help="""The default MCFFILE is molecule.mcf.""")
 
+parser.add_argument('--zeolite', '-z', action = 'store_true', 
+								help ="""Create an MCF file for zeolites""")
+
 args = parser.parse_args()
 
 #*******************************************************************************
@@ -732,15 +735,20 @@ def ffFileGeneration(infilename,outfilename):
 	print "Reading Modified PDB File..."
 	ifile = open(infilename,'r')
 	atomtypenames=[]
+
+	atom_nbr = 1
+
 	for line in ifile:
 		if not line.strip():
 			continue
 		linestring = line.split()
 		if linestring[0]=='HETATM' or linestring[0] == 'ATOM':
-			atomNumber = linestring[1]
+#			atomNumber = linestring[1]
+			atomNumber = str(atom_nbr)
 			name = linestring[-1]
 			listofnames.append(atomNumber + " " + name)
 			atomtypenames.append(name)
+			atom_nbr = atom_nbr + 1
 	ifile.close()
 	atomtypenames = list(set(atomtypenames))
 	numAtomTypes = str(len(atomtypenames))
@@ -1294,16 +1302,22 @@ returns:
 	bondList = []
 	pdb = open(pdbFile,'r')
 
+	atom_nbr = 1
+
 	for line in pdb:
 		# read atom info
 		this_line = line.split()
 		if line[0:6]=='HETATM' or line[0:4]=='ATOM':
-			i = int(line[6:11].strip())
+#			i = int(line[6:11].strip())
+			i = atom_nbr
 			atomList.append(i)
 			atomParms[i] = {}
 			#atomParms[i]['name'] = line[12:16].strip()
 			atomParms[i]['element'] = line[76:78].strip().title()
-			atomParms[i]['name'] = atomParms[i]['element'] + str(i)
+			if args.zeolite: 
+				atomParms[i]['name'] = atomParms[i]['element']
+			else:
+				atomParms[i]['name'] = atomParms[i]['element'] + str(i)
 			#if atomParms[i]['name'] == '':
 #				atomParms[i]['name'] = atomParms[i]['element'] + str(i)
 			atomParms[i]['type'] = line.split()[-1].strip()
@@ -1311,6 +1325,7 @@ returns:
 				atomParms[i]['mass'] = periodicTable[atomParms[i]['element']]
 			except:
 				atomParms[i]['mass'] = 0.0
+			atom_nbr = atom_nbr + 1
 		# read bond info
 		if "CONECT" in this_line:
 			lineList = line.split()
@@ -1759,6 +1774,7 @@ if infilename_type == 'cml':
 
 basename = os.path.splitext(os.path.basename(configFile))[0]
 ffTemplate = args.ffTemplate
+
 
 if args.ffFile:
 	ffFile = args.ffFile[0]
