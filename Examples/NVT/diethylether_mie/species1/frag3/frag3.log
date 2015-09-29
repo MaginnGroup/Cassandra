@@ -1,0 +1,305 @@
+************** Beginning Cassandra simulation **************
+Version Cassandra 1.1                                                                                                           
+
+inputfile frag3.inp                                                                                                               
+
+name of run: frag3
+
+  Month      Day      Year
+     09       28      2015
+ 
+ Time:  23:18:39
+ 
+machine: maginnfe.crc.nd.edu
+
+
+Simulation type: NVT_MC_Fragment     
+
+ Verbosity output to logfile set to  F
+ 
+ **** Copying Inputfile ****** 
+ # Run_Name
+ frag3
+ 
+ # Sim_Type
+ NVT_MC_Fragment
+ 
+ # Nbr_Species
+ 1
+ 
+ # VDW_Style
+ NONE
+ 
+ # Rcutoff_Low
+ 0.0
+ 
+ # Mixing_Rule
+ LB
+ 
+ # Charge_Style
+ NONE
+ 
+ # Intra_Scaling
+ 0.0 0.0 0.0 1.0
+ 
+ # Molecule_Files
+ ../fragments/frag_3_1.mcf 1
+ 
+ # Box_Info
+ 1
+ CUBIC
+ 20.0 20.0 20.0
+ 
+ # Temperature_Info
+ 343.0
+ 
+ # Seed_Info
+ 706111630 70611631
+ 
+ # Move_Probability_Info
+ # Prob_Translation
+ 1.0
+ 0.2 10.0
+ 1.0
+ # Done_Probability_Info
+ 
+ # Start_Type
+ read_old
+ ../fragments/frag_3_1.xyz 1
+ 
+ # Run_Type
+ Production 1000 10
+ 
+ # Simulation_Length_Info
+ Units  Steps
+ Prop_Freq  10
+ Coord_Freq   90
+ MCsteps      1100000
+ NequilSteps  100000
+ # Done_Simulation_Length_Info
+ 
+ # File_Info
+ frag3.dat
+ 
+ END
+ 
+ **** Finished writing input file *******
+ Number Of Species Simulated:      1
+
+ *** Simulation box data ***
+number of simulation boxes     1
+ 
+Box number      1       Box Shape:      Cubic 
+Each Side Of :        20.0000     Angstrom
+ 
+Cell basis vector lengths in A,     20.0000      20.0000      20.0000
+Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+Distance between box faces    20.0000      20.0000      20.0000
+Box volume, A^3          8000.0000
+ 
+ *** Finished loading box information ***
+ 
+   VDW style used is:   NONE           in box:  1
+ 
+   Charge style used is:   NONE           in box:  1
+ Charge style properly input
+ 
+Lorentz-Berthelot mixing rule specified
+ 
+ Pair interaction energy arrays will not be stored
+ Energy calculations will be done in a standard way
+ 
+ 
+ Reading molecular connectivity information
+ Species:            1
+ Molecular connectivity file: 
+ ../fragments/frag_3_1.mcf                                                      
+                                          
+   3 atom(s) specified.
+   2 bond(s) specified.
+   1 angle(s) specified.
+   0 dihedral(s) specified.
+   0 improper(s) specified.
+ 
+Species  Nbr molecules
+-------  -------------
+     1              1
+ 
+L_Coul_CBMC not given for species    1
+ Defaulting to  T
+ 
+ *** Completed assigning atom info ***
+ 
+ *** Completed assigning bond info ***
+ 
+ 
+ *** Completed assigning angle info ***
+ 
+ *** Completed assigning dihedral info ***
+ 
+ *** Completed assigning improper info ***
+ 
+ intramolecular scaling factors explicitly set
+Intra molecule scaling factors for species             1
+VDW 1-2 scaling factor         0.000
+VDW 1-3 scaling factor         0.000
+VDW 1-4 scaling factor         0.000
+VDW 1-N scaling factor         0.000
+Coulomb 1-2 scaling factor     0.000
+Coulomb 1-3 scaling factor     0.000
+Coulomb 1-4 scaling factor     0.000
+Coulomb 1-N scaling factor     0.000
+ 
+ 
+ *** Completed assigning intramolecular scaling factors ***
+ 
+ 
+ ***** Reading seed info *********
+ 
+ The starting seed s1 is:    153587801
+ 
+ ****** Finished loading the seed ********
+ 
+ **** Simulation temperature information ****
+  Temperature assigned to box     1  is  343.000    K
+ 
+ *** Finished loading information for temperature ****
+ 
+ 
+ ********* Move Probability Info******
+    Translation probability is   1.000000
+ 
+ 
+ Maximum width in cosine of polar angle is  0.200000000000000     
+ Maximum width (degrees) in azimuthal angle is   10.0000000000000     
+ ***** Finished reading the move probability info *****
+Number of moves is :   1
+ 
+ 
+Thermodynamic quantities will written at every         10 MC steps.
+ 
+Coordinates will be written at every                   90 MC steps.
+ 
+movie header file for box    1 is      frag3.box1.H
+movie_XYZ file for box       1 is      frag3.box1.xyz
+ 
+The simulation will be run for                      1100000 MC steps.
+ 
+Number of equilibrium steps    100000
+ 
+ *** Finished Reading Simulation Length Info ******* 
+     Configuration file for species    1   is
+                          frag3.dat
+ 
+ ******Initial Coordinate Info **********
+ 
+ Configurations will be read from old files
+ 
+Starting configuration for box           1 is
+ ../fragments/frag_3_1.xyz                                                      
+                                          
+ 
+ *****Finished reading initial coordinate info *****
+ 
+ ****** Reading Run_Type Information ******
+ 
+ The input run type is Production
+ Update frequency is         1000
+ 
+ ******* Finished reading run type information ******
+starting type read_old                                                                                                                
+
+ Configurations read successfully
+ ***************** Charge Neutrality Check *****************
+ Species           1    has charge               -0.25000000
+ Box               1    has charge               -0.25000000
+ 
+ ***************** Charge Neutrality Check *****************
+ ***********************************************************
+   Starting energy components for box   1
+  Atomic units-Extensive
+ 
+ Total system energy is                 16543.918
+ Intra molecular energy is              16543.918
+ Bond energy is                             0.000
+ Bond angle energy is                   16543.918
+ Dihedral angle energy is                   0.000
+ Improper angle energy is                   0.000
+ Intra nonbond vdw is                       0.000
+ Intra nonbond elec is                      0.000
+ Inter molecule vdw is                      0.000
+ Inter molecule q is                        0.000
+ Reciprocal ewald is                        0.000
+ Self ewald is                              0.000
+ ***********************************************************
+ 
+ Zig by omega will be printed. This is required in GCMC acceptance rule if fugac
+ ity is used.
+Z/Omega                     0.2644717975
+******************** END OF SIMULATION ********************
+ 
+ 
+ ***********************************************************
+ Ending energy components for box   1
+  Atomic units-Extensive
+ -----------------------------------------------------------
+ Total system energy is                 16543.918
+ Intra molecular energy is              16543.918
+ Bond energy is                             0.000
+ Angle energy is                        16543.918
+ Dihedral energy is                         0.000
+ Improper angle energy is                   0.000
+ Intra nonbond vdw is                       0.000
+ Intra nonbond elec is                      0.000
+ Inter molecule vdw is                      0.000
+ Inter molecule q is                        0.000
+ Reciprocal ewald is                        0.000
+ Self ewald is                              0.000
+ ***********************************************************
+ 
+ 
+ ***********************************************************
+ Energy components from total energy call for box   1
+  Atomic units-Extensive
+ -----------------------------------------------------------
+ Total system energy is                    14.141
+ Intra molecular energy is                 14.141
+ Bond energy is                             0.000
+ Angle energy is                           14.141
+ Dihedral energy is                         0.000
+ Improper angle energy is                   0.000
+ Intra nonbond vdw is                       0.000
+ Intra nonbond elec is                      0.000
+ Inter molecule vdw is                      0.000
+ Inter molecule q is                        0.000
+ Reciprocal ewald is                        0.000
+ Self ewald is                              0.000
+ ***********************************************************
+ 
+ 
+ Writing information for box  1
+ ***********************************************************
+ 
+ 
+ ***********************************************************
+ Writing information for species  1
+ 
+                Move      Trials     Success   % Success
+ ***********************************************************
+ 
+ 
+ Writing information about subroutine times
+ 
+ ***********************************************************
+ 
+ ***********************************************************
+ 
+ 
+ Program execution time
+         0      Years
+         0     Months
+         0       Days
+         0      Hours
+         0    Minutes
+         7    Seconds
+       441         ms

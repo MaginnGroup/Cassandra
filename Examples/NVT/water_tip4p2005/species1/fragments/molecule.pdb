@@ -1,0 +1,10 @@
+CRYST1    0.000    0.000    0.000  90.00  90.00  90.00 P 1           1
+ATOM      1  OH2 TIP4W   1       0.000   0.000   0.000  0.00  0.00      WT1  O
+ATOM      2  H1  TIP4W   1       0.757   0.586   0.000  0.00  0.00      WT1  H
+ATOM      3  H2  TIP4W   1      -0.757   0.586   0.000  0.00  0.00      WT1  H
+ATOM      4  M   TIP4W   1       0.000   0.155   0.000  0.00  0.00      WT1  M
+END
+CONECT 1 2 3 4
+CONECT 2 1
+CONECT 3 1
+CONECT 4 1

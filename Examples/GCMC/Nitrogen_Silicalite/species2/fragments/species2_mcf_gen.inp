@@ -1,0 +1,34 @@
+# Run_Name
+species2_mcf_gen
+
+# Sim_Type
+MCF_Gen
+
+# Nbr_Species
+1
+
+# VDW_Style
+LJ cut_tail 12.0
+
+# Rcutoff_Low
+1.0
+
+# Mixing_Rule
+LB
+
+# Charge_Style
+coul Ewald 12.0 0.000001
+
+# Intra_Scaling
+0.0 0.0 0.0 1.0
+0.0 0.0 0.0 1.0
+
+# Molecule_Files
+../../N23S.mcf 50
+
+# Box_Info
+1
+CUBIC
+30.0 30.0 30.0
+
+END
