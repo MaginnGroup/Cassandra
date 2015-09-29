@@ -7,8 +7,8 @@
 
 # Atom_Info
 2
-1     C       C    12.011  0.0  LJ    98.000     3.750
-2     C       C    12.011  0.0  LJ    98.000     3.750
+1     C1      C    12.011  0.0  LJ    98.000     3.750
+2     C2      C    12.011  0.0  LJ    98.000     3.750
 
 !Bond Format
 !index i j type parameters
