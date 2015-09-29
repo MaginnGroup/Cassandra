@@ -23,7 +23,7 @@ I.1.3. mcf files
 CH4.mcf and C4H10.mcf
     These files were generated with the following command:
 
-    > $CASSANDRA_DIR/Scripts/MCF_Generation/mcfgen.py "filename".pdb
+    > $CASSANDRA_DIR/Scripts/MCF_Generation/mcfgen.py "filename".pdb --solid
 
     Note that this command requires the  "ff file"  generated in  I.2  must be in the same directory.
 

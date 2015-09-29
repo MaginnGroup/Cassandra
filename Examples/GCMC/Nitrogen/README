@@ -27,7 +27,7 @@ N23S.ff
 N23S.mcf
     This file was generated with the following command:
 
-    > $CASSANDRA_DIR/Scripts/MCF_Generation/mcfgen.py N23S.pdb
+    > $CASSANDRA_DIR/Scripts/MCF_Generation/mcfgen.py N23S.pdb --solid
 
     Note that this command requires the file N23S.ff in the same directory.
 
