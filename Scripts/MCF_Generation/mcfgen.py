@@ -78,7 +78,7 @@ parser.add_argument('--ffFile', '-f', nargs=1,
 parser.add_argument('--mcfFile', '-m', nargs=1, 
 								help="""The default MCFFILE is molecule.mcf.""")
 
-parser.add_argument('--zeolite', '-z', action = 'store_true', 
+parser.add_argument('--solid', '-s', action = 'store_true', 
 								help ="""Create an MCF file for zeolites""")
 
 args = parser.parse_args()
@@ -1314,7 +1314,7 @@ returns:
 			atomParms[i] = {}
 			#atomParms[i]['name'] = line[12:16].strip()
 			atomParms[i]['element'] = line[76:78].strip().title()
-			if args.zeolite: 
+			if args.solid: 
 				atomParms[i]['name'] = atomParms[i]['element']
 			else:
 				atomParms[i]['name'] = atomParms[i]['element'] + str(i)
