@@ -37,11 +37,11 @@
 
 # Atom_Info
 5
-1      UA_CH3   C      15.0      0.00      LJ   98.0  3.75
-2      UA_CH2   C      14.0      0.25      LJ   46.0  3.95
-3      UA_O     O      16.0     -0.50      LJ   55.0  2.80
-4      UA_CH2   C      14.0      0.25      LJ   46.0  3.95
-5      UA_CH3   C      15.0      0.00      LJ   98.0  3.75      
+1      UA_CH31   C      15.0      0.00      LJ   98.0  3.75
+2      UA_CH22   C      14.0      0.25      LJ   46.0  3.95
+3      UA_O3     O      16.0     -0.50      LJ   55.0  2.80
+4      UA_CH24   C      14.0      0.25      LJ   46.0  3.95
+5      UA_CH35   C      15.0      0.00      LJ   98.0  3.75      
 
 
 ! List the number of bonds in the molecule below keyword '# Bond_Info'. 
