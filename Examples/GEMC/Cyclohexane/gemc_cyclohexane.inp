@@ -1,0 +1,150 @@
+! This is the input file for a simulation of cyclohexane
+
+# Run_Name
+gemc_cyclohexane
+!------------------------------------------------------------------------------
+
+# Sim_Type
+GEMC
+!------------------------------------------------------------------------------
+
+# Nbr_Species
+1
+!------------------------------------------------------------------------------
+
+# VDW_Style
+LJ   cut_tail   14.00
+LJ   cut_tail   30.00
+!------------------------------------------------------------------------------
+
+# Rcutoff_Low
+1.0
+!------------------------------------------------------------------------------
+
+# Mixing_Rule
+LB
+!------------------------------------------------------------------------------
+
+# Charge_Style
+NONE
+NONE
+!------------------------------------------------------------------------------
+
+# Intra_Scaling
+0.0    0.0    0.0     1.0
+0.0    0.0    0.0     1.0
+!----------------------------------------------vdw, coul lines for each species
+
+# Molecule_Files
+cyclohexane.mcf 300
+!----------------------------------------------------------one line per species
+
+# Box_Info
+2
+CUBIC
+38.0
+
+CUBIC
+81.81
+
+!-------------------------------------------------------line 1: number of boxes
+!--------------------------------------------------------------line 2: box type
+!--------------------------------------------------------------line 3: box size
+!--------------------------------------------------------------repeat for second box
+
+# Temperature_Info
+403.0 403.0
+!----------------------------------------------------------one temperature per box
+
+# Move_Probability_Info
+
+# Prob_Translation 
+0.30
+0.50
+14.0
+
+# Prob_Rotation
+0.30
+30.0
+180.0
+
+# Prob_Regrowth
+0.30
+1.0
+
+# Prob_Volume
+0.005
+200.0
+200.0
+
+# Prob_Swap
+0.095
+insertion method
+reservoir
+
+# Done_Probability_Info
+!---------------------one line for each box and one entry/line for each species
+!-----------------------------------------each molecule moves per volume change
+
+# Start_Type
+make_config
+250 50
+!--------make_config: one line for each species and one entry/line for each box
+!------------------------------------------------------------read_old: filename
+!----------------------------------------------------------checkpoint: filename
+
+# Run_Type
+Equilibration 100 100
+!-------------------------Equilibration: update maximum widths every 100 steps/update maximum
+!-------------------------volume displacement every 100 steps
+
+
+# Simulation_Length_Info
+Units       Steps
+Prop_Freq   100
+Coord_Freq  2200
+MCsteps     2200
+# Done_Simulation_Length_Info
+!------------------ simulation length every 2200 steps, XYZ output every 2200 steps, property
+!---------------------------------------output every 100 steps
+
+# Seed
+1216131725 1216131726
+!------------------------------------------------------------------------------
+
+# Average_Info
+1
+!------------------------------------------------------------ 0 == yes, 1 == no
+
+# Property_Info 1
+Energy_Total
+Density
+Nmols
+Volume
+Pressure
+!------------------------------------------------------------------------------
+
+# Property_Info 2
+Energy_Total
+Density
+Nmols
+Volume
+Pressure
+!------------------------------------------------------------------------------
+
+# CBMC_Info
+kappa_ins 12
+kappa_rot 0
+kappa_dih 12
+rcut_cbmc 6.5  6.5
+!------------------------------------------------------------------------------
+
+# Pair_Energy
+TRUE
+!------------------------------------------------------------------------------
+
+# Fragment_Files
+species1/frag1/frag1.dat  1
+!---------------------------------------------------------one line per fragment
+
+END
