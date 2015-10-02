@@ -134,7 +134,7 @@
     
 ! Write the number of different atom types to the screen and logfile
 
-    IF (verbose_log == .TRUE.) THEN
+    IF (verbose_log) THEN
             WRITE(logunit,'(A)') &
                  '  There are '//TRIM(Int_To_String(nbr_atomtypes))//' different atom types in the system '
             DO ii = 1, nbr_atomtypes
@@ -189,7 +189,7 @@
     ! Now determine the set of vdw parameters for each type of interaction and load them into vdw_param_table
     ! This is a brute force search - but it is fast.
 
-    IF (verbose_log == .TRUE.) THEN
+    IF (verbose_log) THEN
             WRITE(logunit,*) '*** Creating VDW interaction table ***'
             WRITE(logunit,'(A,T25,A)') 'Mixing rule used is:', mix_rule
             WRITE(logunit,*)
@@ -306,7 +306,7 @@
 
         	  ENDIF
              
-	         IF (int_vdw_style(1) == vdw_lj .AND. verbose_log == .TRUE.) THEN
+	         IF (int_vdw_style(1) == vdw_lj .AND. verbose_log .EQV. .TRUE.) THEN
         	    ! Report parameters to logfile. Format is specific to vdw type. Add others here if 
 	            ! other than LJ potential is used.
 
@@ -347,7 +347,7 @@
                                            !Convert epsilon to atomic units amu A^2/ps^2
                                            vdw_param1_table(itype_custom,jtype_custom) = kboltz * String_To_Double(line_array(3))
                                            vdw_param2_table(itype_custom,jtype_custom) = String_To_Double(line_array(4))
-                                           IF (verbose_log == .TRUE.) THEN
+                                           IF (verbose_log) THEN
                                            WRITE(logunit,'(A6,5x,A6,2x,T20,f10.4,T50,f10.4)') &
                                                   atom_type_list(itype_custom), atom_type_list(jtype_custom), &
                                                    vdw_param1_table(itype_custom,jtype_custom), vdw_param2_table(itype_custom,jtype_custom)
@@ -362,7 +362,7 @@
     
 	 ENDDO
 
- IF (verbose_log == .TRUE.) THEN
+ IF (verbose_log) THEN
  WRITE(logunit,*)
  WRITE(logunit,*) '*** Completed construction of VDW interaction table ***'
  WRITE(logunit,*)    

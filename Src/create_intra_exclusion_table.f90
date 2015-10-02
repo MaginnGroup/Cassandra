@@ -147,7 +147,7 @@ SUBROUTINE Create_Intra_Exclusion_Table
 
   ! report info to log
 
-  IF (verbose_log == .TRUE.) THEN
+  IF (verbose_log) THEN
   WRITE(logunit,*)
   WRITE(logunit,*) '*** Creating exclusion table ***'
   WRITE(logunit,*)    

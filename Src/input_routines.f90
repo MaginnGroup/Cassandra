@@ -1462,7 +1462,7 @@ SUBROUTINE Get_Atom_Info(is)
               CALL Clean_Abort(err_msg,'Get_Atom_Info')
            ENDIF
 
-           IF (verbose_log == .TRUE.) THEN
+           IF (verbose_log) THEN
                    WRITE(logunit,'(A,T25,I3,1x,I5)') 'Species and atom number', is,ia
                    WRITE(logunit,'(A,T25,A)') ' atom name:',nonbond_list(ia,is)%atom_name
                    WRITE(logunit,'(A,T25,A)') ' element:',nonbond_list(ia,is)%element
@@ -1478,7 +1478,7 @@ SUBROUTINE Get_Atom_Info(is)
               ! sigma = Angstrom
               nonbond_list(ia,is)%vdw_param(2) = String_To_Double(line_array(8))
 
-              IF (verbose_log == .TRUE.) THEN
+              IF (verbose_log) THEN
                       WRITE(logunit,'(A,T25,F10.4)') ' Epsilon / kB in K:', &
                            nonbond_list(ia,is)%vdw_param(1)
                       WRITE(logunit,'(A,T25,F10.4)') ' Sigma in A:', &
@@ -1492,7 +1492,7 @@ SUBROUTINE Get_Atom_Info(is)
 
            ELSEIF (nonbond_list(ia,is)%vdw_potential_type == 'NONE') THEN
 
-              IF (verbose_log == .TRUE.) THEN
+              IF (verbose_log) THEN
 
                       WRITE(logunit,'(A,I6,1x,I6)') & 
                            'No VDW potential assigned to atom, species: ',ia,is
@@ -1516,7 +1516,7 @@ SUBROUTINE Get_Atom_Info(is)
                  nring_atoms(is) = nring_atoms(is) + 1
                  ring_atom_ids(nring_atoms(is),is) = ia
                  nonbond_list(ia,is)%ring_atom = .TRUE.
-                 IF (verbose_log == .TRUE.) THEN
+                 IF (verbose_log) THEN
                          WRITE(logunit,*) ia ,' is a ring atom'
                  END IF
               END IF
@@ -1526,7 +1526,7 @@ SUBROUTINE Get_Atom_Info(is)
               exo_atom_ids(nexo_atoms(is),is) = ia
            END IF
               
-           IF (verbose_log == .TRUE.) WRITE(logunit,*)
+           IF (verbose_log) WRITE(logunit,*)
 
         ENDDO
               
@@ -1545,12 +1545,12 @@ SUBROUTINE Get_Atom_Info(is)
 
   ENDDO
 
-  IF (verbose_log == .FALSE.) THEN
+  IF (verbose_log .EQV. .FALSE.) THEN
         WRITE(logfile, '(A,I2)') 'Dispersion-Repulsion parameters were properly read for species ', is
   END IF
 
 
-  IF (verbose_log == .TRUE.) THEN
+  IF (verbose_log) THEN
           WRITE(logunit,'(A, T40, I4,A, T45, I4)') 'Total number of ring atoms in species', is, ' is', nring_atoms(is)
           WRITE(logunit,'(A, T40, I4,A, T45, I4)') 'Total number of exo atoms in species', is, ' is', nexo_atoms(is)
           WRITE(logunit,*) 'Atom ids for ring atoms', ring_atom_ids(1:nring_atoms(is),is)
@@ -1609,7 +1609,7 @@ SUBROUTINE Get_Bond_Info(is)
         ENDIF
         
         IF (nbonds(is) == 0) THEN
-           IF (verbose_log == .TRUE.) WRITE(logunit,*) 'No bonds in species ',is
+           IF (verbose_log) WRITE(logunit,*) 'No bonds in species ',is
            EXIT
         ENDIF
 
@@ -1740,7 +1740,7 @@ SUBROUTINE Get_Angle_Info(is)
         ENDIF
         
         IF (nangles(is) == 0) THEN
-           IF (verbose_log == .TRUE.) WRITE(logunit,*) 'No angles in species ',is
+           IF (verbose_log) WRITE(logunit,*) 'No angles in species ',is
            EXIT
         ENDIF
 
@@ -1924,7 +1924,7 @@ SUBROUTINE Get_Dihedral_Info(is)
         ENDIF
         
         IF (ndihedrals(is) == 0) THEN
-           IF (verbose_log == .TRUE.) WRITE(logunit,*) 'No dihedrals in species ',is
+           IF (verbose_log) WRITE(logunit,*) 'No dihedrals in species ',is
            EXIT
         ENDIF
 
@@ -2186,7 +2186,7 @@ INTEGER, INTENT(IN) :: is
         ENDIF
         
         IF (nimpropers(is) == 0) THEN
-           IF (verbose_log == .TRUE.) WRITE(logunit,*) 'No impropers in species ',is
+           IF (verbose_log) WRITE(logunit,*) 'No impropers in species ',is
            EXIT
         ENDIF
 
@@ -2509,7 +2509,7 @@ SUBROUTINE Get_Fragment_Info(is)
            WRITE(logunit,*)
            WRITE(logunit,'(A38,1x,I4,A4,I4)') 'Total number of atoms in the fragment ', ifrag, 'is', &
                 frag_list(ifrag,is)%natoms
-           IF (verbose_log == .TRUE.) THEN
+           IF (verbose_log) THEN
                    WRITE(logunit,'(A27)') 'Identity of these atoms are:'
                    WRITE(logunit,*)  frag_list(ifrag,is)%atoms
            END IF
@@ -2613,7 +2613,7 @@ SUBROUTINE Get_Fragment_Info(is)
   frag_list(:,:)%ring = .FALSE.
 
   DO ifrag = 1,nfragments(is)
-     IF (verbose_log == .TRUE.) THEN
+     IF (verbose_log) THEN
              WRITE(logunit,*)
              WRITE(logunit,'(A32,1x,I4,A4,I4)') 'Number of anchors for fragment ', ifrag, 'is', &
                   frag_list(ifrag,is)%nanchors
@@ -2622,7 +2622,7 @@ SUBROUTINE Get_Fragment_Info(is)
 
      IF (frag_list(ifrag,is)%nanchors > 1) THEN
         frag_list(ifrag,is)%ring = .TRUE.
-        IF (verbose_log == .TRUE.) THEN
+        IF (verbose_log) THEN
                 WRITE(logunit,*)
                 WRITE(logunit,*) Int_To_String(ifrag)// ' is a ring fragment'
         END IF
@@ -2953,7 +2953,7 @@ SUBROUTINE Get_Fragment_File_Info(is)
 
            WRITE(logunit,*) 'Fragment file for fragment ', TRIM(Int_To_String(ifrag)), ' is'
            WRITE(logunit,*) res_file(ifrag,is)
-           IF (verbose_log==.TRUE.) WRITE(logunit,*) 'Fragment type', frag_list(ifrag,is)%type
+           IF (verbose_log) WRITE(logunit,*) 'Fragment type', frag_list(ifrag,is)%type
 
            IF (nbr_entries > 2 .AND. nbr_entries /= 6) THEN
 
@@ -4609,7 +4609,7 @@ SUBROUTINE Get_Move_Probabilities
      END IF
 
 
-    IF (verbose_log == .TRUE.) THEN
+    IF (verbose_log) THEN
      ! log the probabilties of choosing a pair of box
              WRITE(logunit,*)
              WRITE(logunit,*) '******** Box pair selection probabilities *********'
