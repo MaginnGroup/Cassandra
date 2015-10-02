@@ -548,7 +548,7 @@ USE Type_Definitions
   REAL(DP), DIMENSION(:,:), ALLOCATABLE :: chpot, chpotid
 
 !!!!! Mie potential variables
-  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: mie_Matrix
+  INTEGER, DIMENSION(:,:), ALLOCATABLE :: mie_Matrix
   REAL(DP), DIMENSION(:), ALLOCATABLE :: mie_nlist, mie_mlist
 
 
