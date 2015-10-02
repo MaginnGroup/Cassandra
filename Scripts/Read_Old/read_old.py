@@ -127,8 +127,8 @@ h_file=[]
 mcf_files = []
 
 for i in xrange(nboxes):
-        xyz_file.append(run_name + "_box"+str(i+1)+".xyz")
-        h_file.append(run_name + "_H.box"+str(i+1))
+        xyz_file.append(run_name + ".box"+str(i+1)+".xyz")
+        h_file.append(run_name + ".box"+str(i+1)+".H")
 
 for i in xrange(0,nbr_species):
 	mcf_files.append(linecache.getline(input_file,molec_files_line+i+1).split()[0])
