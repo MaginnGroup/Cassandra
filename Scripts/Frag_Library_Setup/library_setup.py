@@ -137,14 +137,19 @@ def cml_to_pdb(infilename):
 	for i,line in enumerate(cml_atom_info):
 		for j,element in enumerate(line):
 			if is_number(cml_atom_info[i][j]):
-				temp.append(cml_atom_info[i][j])
+				temp.append(float(cml_atom_info[i][j]))
 		coordinates.append(temp)
 		temp=[]
 
 	filepdb = open(os.path.splitext(infilename)[0]+'.pdb','w')
 
 	for line_nbr, line in enumerate(cml_atom_info):
-		filepdb.write('HETATM       '+str(line_nbr+1)+'       '+line[1]+'       '+coordinates[line_nbr][0]+'     '+coordinates[line_nbr][1]+'     '+coordinates[line_nbr][2]+'     '+line[1]+'       '+line[5]+"\n")
+		filepdb.write(
+			'%-6s%5d  %-3s              %8.3f%8.3f%8.3f%6.2f%6.2f          %2s   %2s\n' 
+			% ('HETATM', line_nbr+1, line[1], 
+				coordinates[line_nbr][0], 
+				coordinates[line_nbr][1], 
+				coordinates[line_nbr][2], 0., 0., line[1], line[5]) )
 		
 	cml_aux_vector1 = []
 	cml_aux_vector2 = []

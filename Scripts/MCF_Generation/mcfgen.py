@@ -78,9 +78,6 @@ parser.add_argument('--ffFile', '-f', nargs=1,
 parser.add_argument('--mcfFile', '-m', nargs=1, 
 								help="""The default MCFFILE is molecule.mcf.""")
 
-parser.add_argument('--solid', '-s', action = 'store_true', 
-								help ="""Create an MCF file for zeolites""")
-
 args = parser.parse_args()
 
 #*******************************************************************************
@@ -239,7 +236,7 @@ def cml_to_pdb(infilename):
 		                     linecache.getline(infilename, i))[0].split())
 
 
-	filePdb = open(infilename+'.pdb','w')
+	filePdb = open(basename+'.pdb','w')
 
 	for line_nbr, line in enumerate(cml_atom_info):
 		pdbFormat='%-6s%5d %-4s%60s%2s  %s\n'
@@ -620,10 +617,11 @@ returns:
 			mcf.write("1 %s %s" %(str(atomList_indices[-1]),new_str_list))
 	else:
 		mcf.write(str(len(fragList))+"\n")
-		for index, row in enumerate(fragList):
-			mcf.write(str(index+1) + spacing + str(len(row)))
-			for item in row:
-				mcf.write(spacing+item)
+		for index, frag in enumerate(fragList):
+			mcf.write(str(index+1) + spacing + str(len(frag)))
+			for i in frag:
+				iMcf = atomList.index(int(i))+1 #mcf index
+				mcf.write(spacing+str(iMcf))
 			mcf.write("\n")
 	mcf.close()
 
@@ -732,27 +730,6 @@ def ffFileGeneration(infilename,outfilename):
 
 	print "\n\n*********Force field template file generation*********\n"
 
-	print "Reading Modified PDB File..."
-	ifile = open(infilename,'r')
-	atomtypenames=[]
-
-	atom_nbr = 1
-
-	for line in ifile:
-		if not line.strip():
-			continue
-		linestring = line.split()
-		if linestring[0]=='HETATM' or linestring[0] == 'ATOM':
-#			atomNumber = linestring[1]
-			atomNumber = str(atom_nbr)
-			name = linestring[-1]
-			listofnames.append(atomNumber + " " + name)
-			atomtypenames.append(name)
-			atom_nbr = atom_nbr + 1
-	ifile.close()
-	atomtypenames = list(set(atomtypenames))
-	numAtomTypes = str(len(atomtypenames))
-
 	global dihedralType
 	if len(dihedralList) > 0:
 		dihedralType = raw_input("Enter the dihedral functional form " + 
@@ -767,527 +744,94 @@ def ffFileGeneration(infilename,outfilename):
 
 	if not dihedralType or dihedralType == "NONE" or dihedralType == "none":
 		dihedralType = "none"
-	else:
-		for i, rowdihedral in enumerate(dihedralList):
-			rowdihedralstr=rowdihedral.split()
-			dihedralList_atomType.append(lookupinlist(listofnames, rowdihedralstr))
+	ff=open(ffFile,'w')
 
-	for i, rowangle in enumerate(angleList):
-		rowanglestr=rowangle.split()
-		angleList_atomType.append(lookupinlist(listofnames, rowanglestr))
-
-	for i, rowbond in enumerate(bondList):
-		rowbondstr = rowbond.split()
-		bondList_atomType.append(lookupinlist(listofnames, rowbondstr))
-
-	ff=open(ffFile,'a')
-	ff.write("atomtypes\n"+numAtomTypes+ "\n\n")
+	# Write list of atomtypes
+	ff.write("atomtypes\n"+str(numAtomTypes)+ "\n\n")
 	ff.write("begin atom-atomtype\n")
-	for line in listofnames:
-		ff.write(line + "\n")
+	for ffIndex,pdbIndex in enumerate(atomList):
+		iType = atomParms[pdbIndex]['type']
+		ff.write(str(ffIndex+1) + " " + iType + "\n")
 	ff.write("end atom-atomtype\n\n")
 
 	ff.write("dihedraltype "+dihedralType+"\n\n")
-	ff.close()
 
-	forcefield("nonbonded","write")
-	forcefield("bonded","write")
-	forcefield("angles","write")
+	# Write nonbonded entries
+	atomTypesWritten = []
+	for i in atomList:
+		iType = atomParms[i]['type']
+		if iType not in atomTypesWritten:
+			atomTypesWritten.append(iType)
+			ff.write("nonbonded\n")
+			ff.write(iType + "\n")
+			ff.write("Sigma \n")
+			ff.write("Epsilon \n")
+			ff.write("atom_type_charge \n\n")
+
+	# Write bond entries
+	bondTypesWritten = []
+	for bond in bondList:
+		ij = tuple([int(i) for i in bond.split()])
+		ji = ij[::-1]
+		ijType = tuple([atomParms[i]['type'] for i in ij])
+		jiType = ijType[::-1]
+		if ijType not in bondTypesWritten and jiType not in bondTypesWritten:
+			bondTypesWritten.append(ijType)
+			ff.write("bonds\n")
+			ff.write(ijType[0] + " " + ijType[1] + "\n")
+			ff.write("Length \n")
+			ff.write("Constant \n\n")
+
+  # Write angle entries
+	angleTypesWritten = []
+	for angle in angleList:
+		ijk = tuple([int(i) for i in angle.split()])
+		kji = ijk[::-1]
+		ijkType = tuple([atomParms[i]['type'] for i in ijk])
+		kjiType = ijkType[::-1]
+		if ijkType not in angleTypesWritten and kjiType not in angleTypesWritten:
+			angleTypesWritten.append(ijkType)
+			ff.write("angles\n")
+			ff.write(ijkType[0] + " " + ijkType[1] + " " +ijkType[2] + "\n")
+			ff.write("Angle \n")
+			ff.write("Constant \n\n")
+	
+	# Write dihedral entries
 	if dihedralType != "none":
-		forcefield("dihedrals","write")
-	forcefield("charges","write")
-
-def forcefield(degreeoffreedom,action):
-
-	#Answer will be a matrix whose rows, given by linematrix, will be:
-	#[list of atoms repeated, type of atom, sigma, epsilon]
-
-	global dihedralType
-
-	answer=[]
-	linematrix=[]
-
-	# If the script will read from the ff file, the list that relates atom name
-	# and atom type is still unknown. 
-	# The following lines read the atom-atomtype section in the file, and save it 
-	# in listofnames. 
-	# listofnames=[atomNumber atomType]
-
-	if action == "read":
-		
-		listofnames[:] = []
-		lineindex = 0
-		flag = 0
-		ff = open(ffFile,'r')
-		for linea in ff:
-			lineindex=lineindex+1
-			if "begin atom-atomtype" in linea:
-				flag = 1
-				continue
-
-			if "end atom-atomtype" in linea:
-				flag = 0
-				break	
-
-			if flag ==1 :
-				listofnames.append(linea[0:-1])
-
-
-	if degreeoffreedom == "nonbonded":
-	# The following lines will read listofnames and identify which atoms numbers 
-	# share the same atom type. One variable is produced: Linesrepeated, which 
-	# contains those atoms that share the same atom type.
-		if action == "read":
-			linesrepeated=[]
-			rowalreadyscanned=[]
-
-			for index,row in enumerate(listofnames):
-				rowvector1=row.split()
-				flag=0
-				for oldsets in rowalreadyscanned:
-					oldset=oldsets.split()
-					if oldset[1]==rowvector1[1]:
-						flag=1
-					
-				if flag==1: continue
-	
-				for i in range(index+1, len(listofnames)):
-					rowvector2=listofnames[i].split()
-					if rowvector1[1]==rowvector2[1]:
-						linesrepeated.append(i)
-						
-				linesrepeated.append(index)
-				rowalreadyscanned.append(row)
-
-				linematrix.append(linesrepeated)
-
-				# Using the forcefield file, we need to build a matrix with the 
-				# following form:
-				#   MATRIX == #[list of atoms repeated, type of atom, sigma, epsilon, charge]
-				# To do that, we need to find where the "nonbonded" labels are are in 
-				# the ff file so we can get sigma, epsilon, and charge
-
-				linewherenonbonded=[]
-				ff=open(ffFile,'r')
-				for index, line in enumerate(ff):
-					if "nonbonded" in line:
-						linewherenonbonded.append(index+1)
-				ff.close()
-			
-				# Now, the following four lines will contain the elements of the matrix
-
-				for i in linewherenonbonded:
-					vartemporal = linecache.getline(ffFile, i+1).split()[0]
-					if vartemporal==rowvector1[1]:
-						linematrix.append(linecache.getline(ffFile, i+1)[0:-1])
-						linematrix.append(linecache.getline(ffFile, i+2)[6:-1])
-						linematrix.append(linecache.getline(ffFile, i+3)[8:-1])
-						linematrix.append(linecache.getline(ffFile, i+4)[17:-1])
-				answer.append(linematrix)
-				linematrix=[]		
-				linesrepeated=[]
-
-		elif action == "write":
-
-			linesrepeated=[]
-			rowalreadyscanned=[]
-
-			for index,row in enumerate(listofnames):
-				rowvector1=row.split()
-				flag=0
-				for oldsets in rowalreadyscanned:
-					oldset=oldsets.split()
-					if oldset[1]==rowvector1[1]:
-						flag=1
-					
-				if flag==1: continue
-	
-				for i in range(index+1, len(listofnames)):
-					rowvector2=listofnames[i].split()
-					if rowvector1[1]==rowvector2[1]:
-						linesrepeated.append(i)
-						
-				linesrepeated.append(index)
-				rowalreadyscanned.append(row)
-
-
-	
-				ff=open(ffFile,'a')
-				ff.write("nonbonded\n")
-				
-				ff.write(row.split()[1] + "\n")
-				ff.write("Sigma \n")
-				ff.write("Epsilon \n")
-				ff.write("atom_type_charge \n\n")
-				linesrepeated=[]
-				ff.close()	
-
-
-	if degreeoffreedom=="bonded":
-
-		if action == "read":
-
-			for i, rowbond in enumerate(bondList):
-				rowbondstr = rowbond.split()
-				bondList_atomType.append(lookupinlist(listofnames, rowbondstr))
-
-			linesrepeated=[]
-			rowalreadyscanned=[]
-
-			for index,row in enumerate(bondList_atomType):
-				flag=0
-				for oldsets in rowalreadyscanned:
-					if oldsets==row:
-						flag=1
-					else:
-						reverse = [j for j in reversed(oldsets)]
-						if row==reverse:
-							flag=1
-				if flag==1: continue
-
-				for i in range(index+1, len(bondList_atomType)):
-					if row==bondList_atomType[i]:
-						linesrepeated.append(i)
-					else:
-						reverse = [j for j in reversed(bondList_atomType[i])]
-						if row==reverse:
-							linesrepeated.append(i)
-	
-				linesrepeated.append(index)
-				rowalreadyscanned.append(row)
-
-				linematrix.append(linesrepeated)
-
-				#We need to find where the "bonds" labels are are in the ff
-				#file so we can get K and angle
-
-				linewherebonded=[]
-				ff=open(ffFile,'r')
-				for index, line in enumerate(ff):
-					if "bonds" in line:
-						linewherebonded.append(index+1)
-				ff.close()
-			
-				#Now, the following two lines will contain the elements of the matrix
-
-				for i in linewherebonded:
-
-					#Read from ffFile which bondtype we'll work with (e.g. A-A, A-B)
-					vartemporal = linecache.getline(ffFile, i+1)[0:-1].split()
-
-					if set(vartemporal)==set(row):
-						linematrix.append(linecache.getline(ffFile, i+1)[0:-1])
-						linematrix.append(linecache.getline(ffFile, i+2)[6:-1])
-						linematrix.append(linecache.getline(ffFile, i+3)[8:-1])
-
-				answer.append(linematrix)
-				linematrix=[]		
-				linesrepeated=[]
-
-
-		if action=="write":
-
-			linesrepeated=[]
-			rowalreadyscanned=[]
-
-			for index,row in enumerate(bondList_atomType):
-				flag=0
-				for oldsets in rowalreadyscanned:
-					if oldsets==row:
-						flag=1
-					else:
-						reverse = [j for j in reversed(oldsets)]
-						if row==reverse:
-							flag=1
-				if flag==1: continue
-
-				for i in range(index+1, len(bondList_atomType)):
-					if row==bondList_atomType[i]:
-						linesrepeated.append(i)
-					else:
-						reverse = [j for j in reversed(bondList_atomType[i])]
-						if row==reverse:
-							linesrepeated.append(i)
-	
-				linesrepeated.append(index)
-				rowalreadyscanned.append(row)
-
-				ff=open(ffFile,'a')
-				ff.write("bonds\n")
-				ff.write(str(row[0]) + " " + str(row[1]) + "\n")
-				ff.write("Length \n")
-				ff.write("Constant \n\n")
-				linesrepeated=[]
-				ff.close()
-
-
-	if degreeoffreedom=="angles":
-
-		if action == "read":
-			for i, rowangle in enumerate(angleList):
-				rowanglestr=rowangle.split()
-				angleList_atomType.append(lookupinlist(listofnames, rowanglestr))
-
-			linesrepeated=[]
-			rowalreadyscanned=[]
-
-			for index,row in enumerate(angleList_atomType):
-				flag=0
-				for oldsets in rowalreadyscanned:
-					if oldsets==row:
-						flag=1
-					else:
-						reverse = [j for j in reversed(oldsets)]
-						if row==reverse:
-							flag=1
-				if flag==1: continue
-
-				for i in range(index+1, len(angleList_atomType)):
-					if row==angleList_atomType[i]:
-						linesrepeated.append(i)
-					else:
-						reverse = [j for j in reversed(angleList_atomType[i])]
-						if row==reverse:
-							linesrepeated.append(i)
-	
-				linesrepeated.append(index)
-				rowalreadyscanned.append(row)
-
-
-				linematrix.append(linesrepeated)
-
-				#We need to find where the "angles" labels are are in the ff
-				#file so we can get K and angle
-
-				linewhereangle=[]
-				ff=open(ffFile,'r')
-				for index, line in enumerate(ff):
-					if "angles" in line:
-						linewhereangle.append(index+1)
-				ff.close()
-			
-				#Now, the following two lines will contain the elements of the matrix
-
-				for i in linewhereangle:
-
-					#Read from ffFile which angle type we'll work with (e.g. A-A-B, A-B-A)
-					vartemporal = linecache.getline(ffFile, i+1)[0:-1].split()
-
-					if vartemporal==row:
-						linematrix.append(linecache.getline(ffFile, i+1)[0:-1])
-						linematrix.append(linecache.getline(ffFile, i+2)[6:-1])
-						linematrix.append(linecache.getline(ffFile, i+3)[8:-1])
-
-				answer.append(linematrix)
-				linematrix=[]		
-				linesrepeated=[]
-
-
-		if action=="write":
-
-			linesrepeated=[]
-			rowalreadyscanned=[]
-
-			for index,row in enumerate(angleList_atomType):
-				flag=0
-				for oldsets in rowalreadyscanned:
-					if oldsets==row:
-						flag=1
-					else:
-						reverse = [j for j in reversed(oldsets)]
-						if row==reverse:
-							flag=1
-				if flag==1: continue
-
-				for i in range(index+1, len(angleList_atomType)):
-					if row==angleList_atomType[i]:
-						linesrepeated.append(i)
-					else:
-						reverse = [j for j in reversed(angleList_atomType[i])]
-						if row==reverse:
-							linesrepeated.append(i)
-	
-				linesrepeated.append(index)
-				rowalreadyscanned.append(row)
-
-
-				ff=open(ffFile,'a')
-				ff.write("angles\n")
-				ff.write(row[0] + " " + row[1] + " " +row[2] + "\n")
-				ff.write("Angle \n")
-				ff.write("Constant \n\n")
-				linesrepeated=[]
-				ff.close()
-
-
-	if degreeoffreedom=="dihedrals":
-
-		if action=="read":
-
-			for i, rowdihedral in enumerate(dihedralList):
-				rowdihedralstr=rowdihedral.split()
-				dihedralList_atomType.append(lookupinlist(listofnames, rowdihedralstr))
-		
-			linesrepeated=[]
-			rowalreadyscanned=[]
-
-			for index,row in enumerate(dihedralList_atomType):
-				flag=0
-				for oldsets in rowalreadyscanned:
-					if oldsets==row:
-						flag=1
-					else:
-						reverse = [j for j in reversed(oldsets)]
-						if row==reverse:
-							flag=1
-				if flag==1: continue
-
-				for i in range(index+1, len(dihedralList_atomType)):
-					if row==dihedralList_atomType[i]:
-						linesrepeated.append(i)
-					else:
-						reverse = [j for j in reversed(dihedralList_atomType[i])]
-						if row==reverse:
-							linesrepeated.append(i)
-	
-				linesrepeated.append(index)
-				rowalreadyscanned.append(row)
-
-
-				linematrix.append(linesrepeated)
-
-				#We need to find where the "dihedrals" labels are are in the ff
-				#file so we can get K and angle
-
-				linewheredihedral=[]
-				ff=open(ffFile,'r')
-				for index, line in enumerate(ff):
-					if "dihedrals" in line:
-						linewheredihedral.append(index+1)
-					if line[0:12] == "dihedraltype":
-						dihedralType = line.split()[1]
-				ff.close()
-			
-
-				for i in linewheredihedral:
-
-					vartemporal = linecache.getline(ffFile, i+1)[0:-1].split()
-
-					if vartemporal==row:
-						if dihedralType == "CHARMM":
-							linematrix.append(linecache.getline(ffFile, i+1)[0:-1])
-							linematrix.append(linecache.getline(ffFile, i+2)[1:-1])
-							linematrix.append(linecache.getline(ffFile, i+3)[1:-1])
-							linematrix.append(linecache.getline(ffFile, i+4)[5:-1])
-						elif dihedralType == "OPLS":
-							linematrix.append(linecache.getline(ffFile, i+1)[0:-1])
-							linematrix.append(linecache.getline(ffFile, i+2)[2:-1])
-							linematrix.append(linecache.getline(ffFile, i+3)[2:-1])
-							linematrix.append(linecache.getline(ffFile, i+4)[2:-1])
-							linematrix.append(linecache.getline(ffFile, i+5)[2:-1])
-						elif dihedralType == "harmonic":
-							linematrix.append(linecache.getline(ffFile, i+1)[0:-1])
-							linematrix.append(linecache.getline(ffFile, i+2)[2:-1])
-							linematrix.append(linecache.getline(ffFile, i+3)[3:-1])
-
-
-				answer.append(linematrix)
-				linematrix=[]		
-				linesrepeated=[]
-
-
-		if action=="write":
-
-
-			linesrepeated=[]
-			rowalreadyscanned=[]
-
-			for index,row in enumerate(dihedralList_atomType):
-				flag=0
-				for oldsets in rowalreadyscanned:
-					if oldsets==row:
-						flag=1
-					else:
-						reverse = [j for j in reversed(oldsets)]
-						if row==reverse:
-							flag=1
-				if flag==1: continue
-
-				for i in range(index+1, len(dihedralList_atomType)):
-					if row==dihedralList_atomType[i]:
-						linesrepeated.append(i)
-					else:
-						reverse = [j for j in reversed(dihedralList_atomType[i])]
-						if row==reverse:
-							linesrepeated.append(i)
-	
-				linesrepeated.append(index)
-				rowalreadyscanned.append(row)
-
-
-
-				ff=open(ffFile,'a')
+		dihedTypesWritten = []
+		for dihed in dihedralList:
+			ijkl = tuple([int(i) for i in dihed.split()])
+			lkji = ijkl[::-1]
+			ijklType = tuple([atomParms[i]['type'] for i in ijkl])
+			lkjiType = ijklType[::-1]
+			if ijklType not in dihedTypesWritten and \
+			   lkjiType not in dihedTypesWritten:
+				dihedTypesWritten.append(ijklType)
 				ff.write("dihedrals\n")
-				ff.write(row[0] + " " + row[1] + " " +row[2] + " " + row[3] + "\n")
-
-#				global dihedralType
+				ff.write(ijklType[0] + " " + ijklType[1] + " " +ijklType[2] + " " + 
+				         ijklType[3] + "\n")
 
 				if dihedralType == "CHARMM":
 					ff.write("K \n")
 					ff.write("n \n")
 					ff.write("Gamma \n\n")
-					linesrepeated=[]
-					ff.close()
 				elif dihedralType == "OPLS":
 					ff.write("a0 \n")
 					ff.write("a1 \n")
 					ff.write("a2 \n")
 					ff.write("a3 \n\n")
-					linesrepeated=[]
-					ff.close()
 				elif dihedralType == "harmonic":
 					ff.write("Angle \n")
 					ff.write("Constant \n\n")
-					linesrepeated=[]
-					ff.close()
 
+	# Write charge entries
+	for ffIndex,pdbIndex in enumerate(atomList):
+		ff.write("charge\n")
+		ff.write(str(ffIndex+1) + " \n\n")
 
-	if degreeoffreedom=="charges":
+	ff.write("end\n")
+	ff.close()
 
-		if action == "write":
-		
-			for index,row in enumerate(listofnames):
-				ff=open(ffFile,'a')
-				ff.write("charge\n")
-				ff.write(row.split()[0] + " \n\n")
-	
-
-			ff.write("end")
-			ff.close()
-
-		if action == "read":
-
-			ff=open(ffFile,'r')
-			for index, line in enumerate(ff):
-				if "charge" in line:
-					answer.append(linecache.getline(ffFile, index+2).split())
-			ff.close()
-		
-			
-
-
-	if action=="read": return answer
-
-
-def lookupinlist(namelist, degreeoffreedomlist):
-	row = []
-	for element in degreeoffreedomlist:
-		for item in namelist:
-			itemstr=item.split()
-			if itemstr[0] == element:
-				row.append(itemstr[1])
-				break
-	return row
 
 def readPdb(pdbFile):
 	"""arguments:
@@ -1300,42 +844,58 @@ returns:
 	atomList = []
 	atomParms = {}
 	bondList = []
+	numAtomTypes = 0
+	repeatedIndex = False
 	pdb = open(pdbFile,'r')
-
-	atom_nbr = 1
 
 	for line in pdb:
 		# read atom info
 		this_line = line.split()
 		if line[0:6]=='HETATM' or line[0:4]=='ATOM':
-#			i = int(line[6:11].strip())
-			i = atom_nbr
+			i = int(line[6:11].strip()) 
+			# Store the atomIndex in a list so we can write the correct number 
+			# of atoms to the MCF
 			atomList.append(i)
-			atomParms[i] = {}
-			#atomParms[i]['name'] = line[12:16].strip()
-			atomParms[i]['element'] = line[76:78].strip().title()
-			if args.solid: 
-				atomParms[i]['name'] = atomParms[i]['element']
+			# Store the atom type by index
+			iType = line.split()[-1].strip()
+			if i not in atomParms:
+				atomParms[i] = {}
+				atomParms[i]['type'] = iType
 			else:
-				atomParms[i]['name'] = atomParms[i]['element'] + str(i)
-			#if atomParms[i]['name'] == '':
-#				atomParms[i]['name'] = atomParms[i]['element'] + str(i)
-			atomParms[i]['type'] = line.split()[-1].strip()
-			try:
-				atomParms[i]['mass'] = periodicTable[atomParms[i]['element']]
-			except:
-				atomParms[i]['mass'] = 0.0
-			atom_nbr = atom_nbr + 1
+				repeatedIndex = True
+				if 'type' in atomParms[i] and atomParms[i]['type'] != iType:
+					raise Error("PDB contains a repeated index with different" +
+								" atom types: atom " + str(i) + " cannot have types " +
+								atomParms[i]['type'] + " and " + iType)
+			# Store the atome element by type
+			iElement = line[76:78].strip().title()
+			if iType not in atomParms:
+				numAtomTypes += 1
+				atomParms[iType] = {}
+				atomParms[iType]['element'] = iElement
+				try:
+					atomParms[iType]['mass'] = periodicTable[iElement]
+				except:
+					atomParms[iType]['mass'] = 0.0
+			elif 'element' in atomParms[iType] and \
+			     atomParms[iType]['element'] != iElement:
+				raise Error("PDB contains a repeated type with different" +
+				      " elements: atom type " + iType + " cannot be elements " +
+							atomParms[iType]['element'] + " and " + iElement)
 		# read bond info
 		if "CONECT" in this_line:
-			lineList = line.split()
-			i = lineList[1]
-			for j in lineList[2:]:
-				if not any([True for bond in bondList if bond[0]==int(j)]):
-					bondList.append((int(i), int(j)))
+			if repeatedIndex:
+				raise Error("PDB contains a repeated index. Cannot determine bond " +
+				            "connectivity.")
+			else:
+				lineList = line.split()
+				i = lineList[1] # will match to the PDB index, not the PDB line number
+				for j in lineList[2:]:
+					if not any([True for bond in bondList if bond[0]==int(j)]):
+						bondList.append((int(i), int(j)))
 
 	pdb.close()
-	return atomList, atomParms
+	return atomList, atomParms, numAtomTypes
 
 class Error(Exception):
 
@@ -1387,7 +947,7 @@ returns:
 				raise Error('Cassandra does not support ' + bondType + 'bonds.')
 			bondParms[index] = (bondType, distance)
 		elif 'angles' in line:
-			index = tuple(ff.readline().split()) #atomType
+			index = tuple(ff.readline().split()) #atomType by atomType
 			theta = float(ff.readline().split()[1])
 			ktheta = ff.readline().split()[1]
 			if ktheta == 'fixed':
@@ -1591,7 +1151,7 @@ returns:
 
 	# Check that we have all the parms we need
 	for i in atomList:
-		for parm in ['vdw', 'charge']:
+		for parm in ['vdw', 'charge', 'element', 'mass']:
 			if parm not in atomParms[i]:
 				iType = atomParms[i]['type']
 				if parm in atomParms[iType]:
@@ -1636,8 +1196,8 @@ returns:
 				raise Error('Dihedral parms for atoms ' + dihedral + ' not found.')	
 			
 	return atomParms, bondParms, angleParms, dihedralParms
-	print "Revised atomParms."
-	print atomParms
+#	print "Revised atomParms."
+#	print atomParms
 
 def writeMcf(configFile, mcfFile, 
              atomList, bondList, angleList, dihedralList, ringList,
@@ -1672,15 +1232,15 @@ returns:
 	          '!type="LJ", parms=epsilon sigma\n')
 	mcf.write('\n# Atom_Info\n')
 	mcf.write(str(len(atomList))+'\n')
-	for i in atomList:
-		mcf.write('%-4d'     % (i))
-		mcf.write('  %-6s'   % (atomParms[i]['name']))
-		mcf.write('  %-2s'   % (atomParms[i]['element']))
-		mcf.write('  %7.3f'  % (atomParms[i]['mass']))
-		mcf.write('  %s' % (atomParms[i]['charge']))
-		mcf.write('  %2s  %8.3f  %8.3f' % atomParms[i]['vdw'])
+	for mcfIndex,pdbIndex in enumerate(atomList):
+		mcf.write('%-4d'     % (mcfIndex+1))
+		mcf.write('  %-6s'   % (atomParms[pdbIndex]['type']))
+		mcf.write('  %-2s'   % (atomParms[pdbIndex]['element']))
+		mcf.write('  %7.3f'  % (atomParms[pdbIndex]['mass']))
+		mcf.write('  %s' % (atomParms[pdbIndex]['charge']))
+		mcf.write('  %2s  %8.3f  %8.3f' % atomParms[pdbIndex]['vdw'])
 		for ring in ringList:
-			if str(i) in ring: mcf.write('  ring')
+			if str(pdbIndex) in ring: mcf.write('  ring')
 		mcf.write('\n')
 	
 	if bondList:
@@ -1691,11 +1251,12 @@ returns:
 	mcf.write(str(len(bondList)) + '\n')
 	nBond = 0
 	for bond in bondList:
-		ij = tuple([int(i) for i in bond.split()])
+		ij = tuple([int(i) for i in bond.split()]) #pdb indices
 		if ij not in bondParms: ij = ij[::-1]
+		ijMcf = tuple([atomList.index(i)+1 for i in ij]) #mcf indices
 		nBond = nBond + 1
 		mcf.write('%-4d' % (nBond))
-		mcf.write('  %-4d  %-4d' % ij)
+		mcf.write('  %-4d  %-4d' % ijMcf)
 		mcf.write('  %5s  %8.3f' % bondParms[ij])
 		mcf.write('\n')
 
@@ -1708,11 +1269,12 @@ returns:
 	mcf.write(str(len(angleList)) + '\n')
 	nAngle = 0
 	for angle in angleList:
-		ijk = tuple([int(i) for i in angle.split()])
+		ijk = tuple([int(i) for i in angle.split()]) #pdb indices
 		if ijk not in angleParms: ijk = ijk[::-1]
+		ijkMcf = tuple([atomList.index(i)+1 for i in ijk]) #mcf indices
 		nAngle = nAngle + 1
 		mcf.write('%-4d' % (nAngle))
-		mcf.write('  %-4d  %-4d  %-4d' % ijk)
+		mcf.write('  %-4d  %-4d  %-4d' % ijkMcf)
 		if angleParms[ijk][0] == 'harmonic':
 			mcf.write('  %-8s  %8.1f  %8.2f' % angleParms[ijk])
 		elif angleParms[ijk][0] == 'fixed':
@@ -1730,11 +1292,12 @@ returns:
 	mcf.write(str(len(dihedralList)) + '\n')
 	nDihedral = 0
 	for dihedral in dihedralList:
-		ijkl = tuple([int(i) for i in dihedral.split()])
+		ijkl = tuple([int(i) for i in dihedral.split()]) #pdb indices
 		if ijkl not in dihedralParms: ijkl = ijkl[::-1]
+		ijklMcf = tuple([atomList.index(i)+1 for i in ijkl]) #mcf indices
 		nDihedral = nDihedral + 1
 		mcf.write('%-4d' % (nDihedral))
-		mcf.write('  %-4d  %-4d  %-4d  %-4d' % ijkl)
+		mcf.write('  %-4d  %-4d  %-4d  %-4d' % ijklMcf)
 		if dihedralParms[ijkl][0] == 'CHARMM':
 			mcf.write('  %-8s  %8.3f  %8.1f  %8.1f' % dihedralParms[ijkl])
 		elif dihedralParms[ijkl][0] == 'OPLS':
@@ -1753,9 +1316,10 @@ returns:
 	mcf.write(str(len(improperParms)) + '\n')
 	nImproper = 0
 	for ijkl in improperParms:
+		ijklMcf = tuple([atomList.index(i)+1 for i in ijkl]) #mcf indices
 		nImproper = nImproper + 1
 		mcf.write('%-4d' % (nImproper))
-		mcf.write('  %-4d  %-4d  %-4d  %-4d' % ijkl)
+		mcf.write('  %-4d  %-4d  %-4d  %-4d' % ijklMcf)
 		mcf.write('  %-8s  %8.1f  %8.2f' % improperParms[ijkl])
 		mcf.write('\n')
 
@@ -1767,14 +1331,13 @@ returns:
 # FILE MANAGEMENT
 #*******************************************************************************
 configFile=args.configFile
+basename = os.path.splitext(os.path.basename(configFile))[0]
 infilename_type = check_type_infilename(configFile)
 if infilename_type == 'cml':
 	cml_to_pdb(configFile)
-	configFile = configFile + '.pdb'
+	configFile = basename + '.pdb'
 
-basename = os.path.splitext(os.path.basename(configFile))[0]
 ffTemplate = args.ffTemplate
-
 
 if args.ffFile:
 	ffFile = args.ffFile[0]
@@ -1864,6 +1427,9 @@ else:
 	print "There are " + str(len(fragList)) + " fragments identified"
 print "There are " + str(len(angleList)) + " angles identified"
 print "There are " + str(len(dihedralList)) + " dihedrals identified"
+
+print "Reading Modified PDB File..."
+atomList, atomParms, numAtomTypes = readPdb(configFile)
 if ffTemplate:
 	#GENERATE BLANK FORCEFIELD TEMPLATE
 	if os.path.isfile(ffFile) and not os.path.isfile(ffFile + '.BAK'):
@@ -1872,7 +1438,6 @@ if ffTemplate:
 	print 'Finished'
 else:
 	# GENERATE MCF FILE
-	atomList, atomParms, = readPdb(configFile)
 	# Read parms
 	if ffFileType == 'native':
 		atomParms, bondParms, angleParms, dihedralParms, improperParms = \
