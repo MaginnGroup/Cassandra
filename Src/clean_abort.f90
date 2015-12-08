@@ -50,7 +50,7 @@ SUBROUTINE Clean_Abort(fail_message,sub_where_failed)
   !   io_utilites
   !   main
   !   minimum_image_separtion
-  !   ring_fragent_driver
+  !   ring_fragment_driver
   !   participation
   !   rigid_dihedral_change
   !   rigid_insertion
