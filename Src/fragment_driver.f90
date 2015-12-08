@@ -21,7 +21,7 @@
 ! This file contains three subroutines: 
 !
 !
-! NVT_MC_Fragment_Driver
+! Fragment_Driver
 !
 !    It performs MC moves to sample angle distribution for a given fragment
 !
@@ -33,7 +33,7 @@
 !    
 !*******************************************************************************
 
-SUBROUTINE NVT_MC_Fragment_Driver
+SUBROUTINE Fragment_Driver
   !*****************************************************************************
   ! The subroutine carries out atoms displacement to sample conformations of a 
   ! branch point. 
@@ -179,7 +179,7 @@ SUBROUTINE NVT_MC_Fragment_Driver
 
 
 
-END SUBROUTINE NVT_MC_Fragment_Driver
+END SUBROUTINE Fragment_Driver
 
 !**********************************************************************************
 SUBROUTINE Change_Phi_Theta(this_atom,im,is,theta_bound)

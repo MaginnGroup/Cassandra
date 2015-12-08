@@ -81,8 +81,8 @@ OBJS =	main.o \
         pair_nrg_routines.o \
 	nvtmc_control.o \
 	nvtmc_driver.o \
-	nvt_mc_fragment_control.o \
-	nvt_mc_fragment_driver.o \
+	fragment_control.o \
+	fragment_driver.o \
         nptmc_control.o \
 	mcf_control.o \
         nptmc_driver.o \
@@ -115,8 +115,8 @@ OBJS =	main.o \
 	gemc_control.o \
         gemc_driver.o \
 	gemc_particle_transfer.o \
-        cutNgrow.o \
-        nvt_mc_ring_fragment.o \
+        cut_n_grow.o \
+        ring_fragent_driver.o \
         atom_displacement.o \
         chempot.o \
         pair_nrg_variables.o \

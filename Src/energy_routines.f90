@@ -116,7 +116,7 @@ MODULE Energy_Routines
   !   angle_distortion
   !   atom_displacement
   !   chempot
-  !   cutNgrow
+  !   cut_n_grow
   !   deletion
   !   fragment_growth
   !   gcmc_control
@@ -133,8 +133,8 @@ MODULE Energy_Routines
   !   nptmc_driver
   !   nvtmc_control
   !   nvtmc_driver
-  !   nvt_mc_fragment_driver
-  !   nvt_mc_ring_fragment
+  !   fragment_driver
+  !   ring_fragent_driver
   !   precalculate
   !   rotate
   !   translate

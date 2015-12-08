@@ -32,7 +32,7 @@
 !
 ! There are three routines:
 !
-! NVT_MC_Ring_Fragment
+! Ring_Fragment_Driver
 !  
 !     This is the driver routine that performs the two moves - 
 !
@@ -47,7 +47,7 @@
 ! 08/07/13 : Created beta version
 !*******************************************************************************
 
-SUBROUTINE NVT_MC_Ring_Fragment
+SUBROUTINE Ring_Fragment_Driver
   !*****************************************************************************
   !
   ! CALLED BY
@@ -144,14 +144,14 @@ SUBROUTINE NVT_MC_Ring_Fragment
   WRITE(*,*) 'Final energy of the configuration', energy(this_box)%total
   WRITE(*,'(A,2x,E30.20)') 'Zig/Omega', zig_by_omega/n_mcsteps
 
-END SUBROUTINE NVT_MC_Ring_Fragment
+END SUBROUTINE Ring_Fragment_Driver
 !*********************************************************************************************
 SUBROUTINE Flip_Move(im,is,this_box,accept)
   !********************************************************************************************
   !
   ! CALLED BY
   !
-  !        nvt_mc_ring_fragment
+  !        ring_fragent_driver
   !
   ! CALLS
   !

@@ -20,7 +20,7 @@
 !********************************************************************************
 
 !*******************************************************************************
-SUBROUTINE NVT_MC_Fragment_Control
+SUBROUTINE Fragment_Control
   !*******************************************************************************
   ! Reads in all the necessary information to carry out sampling of fragments
   ! using atom displacemnt 
@@ -106,4 +106,4 @@ SUBROUTINE NVT_MC_Fragment_Control
   CALL Participation
 
 
-END SUBROUTINE NVT_MC_Fragment_Control
+END SUBROUTINE Fragment_Control

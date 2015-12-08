@@ -53,7 +53,7 @@ SUBROUTINE Atom_Displacement(this_box)
   ! gemc_driver
   ! nvtmc_driver
   ! nptmc_driver
-  ! nvt_mc_ring_fragment
+  ! ring_fragent_driver
   !
   ! Revision history
   !

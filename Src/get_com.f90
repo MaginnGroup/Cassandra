@@ -50,7 +50,7 @@ SUBROUTINE Get_COM(alive,is)
   !
   !        angle_distortion
   !        atom_displacement
-  !        cutNgrow
+  !        cut_n_grow
   !        deletion
   !        fragment_growth
   !        gemc_particle_transfer
@@ -119,9 +119,9 @@ SUBROUTINE Get_Internal_Coordinates(alive,ispecies)
   ! CALLED BY
   !
   !   angle_distortion
-  !   cutNgrow
+  !   cut_n_grow
   !   rigid_dihedral_change
-  !   nvt_mc_fragment_driver
+  !   fragment_driver
   !
   ! CALLS
   !
