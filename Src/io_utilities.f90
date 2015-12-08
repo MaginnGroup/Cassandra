@@ -31,7 +31,7 @@ MODULE IO_Utilities
   !   chempot
   !   compute_cell_dimensions
   !   create_nonbond_table
-  !   cutNgrow
+  !   cut_n_grow
   !   fragment_growth
   !   gcmc_control
   !   gemc_control
@@ -44,8 +44,8 @@ MODULE IO_Utilities
   !   mcf_control
   !   nptmc_control
   !   nvtmc_control
-  !   nvt_mc_fragment_control
-  !   nvt_mc_ring_fragment
+  !   fragment_control
+  !   ring_fragent_driver
   !   participation
   !   volume_change
   !

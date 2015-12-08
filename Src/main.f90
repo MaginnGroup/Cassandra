@@ -41,7 +41,7 @@ PROGRAM Main
   !        NPTMC_Control
   !        GCMC_Control
   !        GEMC_Control
-  !        NVT_MC_Fragment_Control
+  !        Fragment_Control
   !        MCF_Control
   !        Get_Start_Type
   !        Get_Run_Type
@@ -66,8 +66,8 @@ PROGRAM Main
   !        NPTMC_Driver
   !        GCMC_Driver
   !        GEMC_Driver
-  !        NVT_MC_Fragment_Driver
-  !        NVT_MC_Ring_Fragment
+  !        Fragment_Driver
+  !        Ring_Fragment_Driver
   !        Write_Subroutine_Times
   !
   !  08/07/13 : Created beta version
@@ -205,7 +205,7 @@ PROGRAM Main
        int_sim_type == sim_gemc_npt) THEN
      CALL GEMC_Control
   ELSE IF (int_sim_type == sim_frag .OR. int_sim_type == sim_ring) THEN
-     CALL NVT_MC_Fragment_Control
+     CALL Fragment_Control
   ELSE IF (int_sim_type == sim_mcf) THEN
      CALL MCF_Control
   ELSE
@@ -561,11 +561,11 @@ PROGRAM Main
 
   ELSE IF (int_sim_type == sim_frag) THEN
 
-     CALL NVT_MC_Fragment_Driver
+     CALL Fragment_Driver
 
   ELSE IF (int_sim_type == sim_ring) THEN
 
-     CALL NVT_MC_Ring_Fragment
+     CALL Ring_Fragment_Driver
 
   END IF
 

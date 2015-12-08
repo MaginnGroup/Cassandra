@@ -40,13 +40,13 @@ MODULE Fragment_Growth
   ! Used by
   !
   !   chempot
-  !   cutNgrow
+  !   cut_n_grow
   !   deletion
   !   gemc_particle_transfer
   !   grow_molecules
   !   insertion
   !   main
-  !   nvt_mc_ring_fragment
+  !   ring_fragent_driver
   !   zig_by_omega
   ! 
   ! Revision history

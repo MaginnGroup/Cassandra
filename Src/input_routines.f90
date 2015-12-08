@@ -33,7 +33,7 @@ MODULE Input_Routines
   !    mcf_control
   !    nptmc_control
   !    nvtmc_control
-  !    nvt_mc_fragment_control
+  !    fragment_control
   !
   ! Revision history
   !

@@ -133,7 +133,7 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
 !        energy_routines
 !               Compute_Bond_Energy
 !               Compute_Molecule_Bond_Energy
-!        nvt_mc_fragment_driver
+!        fragment_driver
 !        get_com  
 !********************************************************************************
 
