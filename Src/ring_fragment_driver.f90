@@ -151,7 +151,7 @@ SUBROUTINE Flip_Move(im,is,this_box,accept)
   !
   ! CALLED BY
   !
-  !        ring_fragent_driver
+  !        ring_fragment_driver
   !
   ! CALLS
   !

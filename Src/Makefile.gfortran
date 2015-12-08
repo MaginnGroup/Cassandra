@@ -116,7 +116,7 @@ OBJS =	main.o \
         gemc_driver.o \
 	gemc_particle_transfer.o \
         cut_n_grow.o \
-        ring_fragent_driver.o \
+        ring_fragment_driver.o \
         atom_displacement.o \
         chempot.o \
         pair_nrg_variables.o \

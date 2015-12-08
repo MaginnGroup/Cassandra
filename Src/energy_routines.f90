@@ -134,7 +134,7 @@ MODULE Energy_Routines
   !   nvtmc_control
   !   nvtmc_driver
   !   fragment_driver
-  !   ring_fragent_driver
+  !   ring_fragment_driver
   !   precalculate
   !   rotate
   !   translate

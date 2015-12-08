@@ -133,15 +133,15 @@ OBJS =  main.o \
 ####################################################################
 
 %o: %f90
-  ${FC} ${F90FLAGS} ${INCS} ${OPTFLAGS} ${LINK_F90} $<
+	${FC} ${F90FLAGS} ${INCS} ${OPTFLAGS} ${LINK_F90} $<
 
 exe: $(OBJS)
-  $(FC) $(OPTFLAGS) -o $(BIN_DIR)/$(EXEC_NAME) $(OBJS) $(LIBS) $(LINK_F90) $(LINKFLAGS)
+	$(FC) $(OPTFLAGS) -o $(BIN_DIR)/$(EXEC_NAME) $(OBJS) $(LIBS) $(LINK_F90) $(LINKFLAGS)
 
 clean:
-  rm *.o *.mod dep.mk
+	rm *.o *.mod dep.mk
 
 dep.mk:
-  ./get_deps
+	./get_deps
 
 include dep.mk

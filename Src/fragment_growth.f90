@@ -46,7 +46,7 @@ MODULE Fragment_Growth
   !   grow_molecules
   !   insertion
   !   main
-  !   ring_fragent_driver
+  !   ring_fragment_driver
   !   zig_by_omega
   ! 
   ! Revision history
