@@ -33,7 +33,7 @@ SUBROUTINE GCMC_Driver
   !   12/10/13 : Beta Release
 !*******************************************************************************
 
-  USE Run_Variables
+  USE Global_Variables
   USE Random_Generators
   USE File_Names
   USE Energy_Routines

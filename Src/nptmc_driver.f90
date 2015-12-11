@@ -50,7 +50,7 @@ SUBROUTINE NPTMC_Driver
   !  08/07/13  : Created beta version
   !*******************************************************************************
 
-  USE Run_Variables
+  USE Global_Variables
   USE Random_Generators
   USE File_Names
   USE Energy_Routines

@@ -54,7 +54,7 @@ SUBROUTINE Fragment_Driver
   !
   !***************************************************************************************
 
-  USE Run_Variables
+  USE Global_Variables
   USE Random_Generators
   USE Energy_Routines
   USE File_Names
@@ -184,7 +184,7 @@ END SUBROUTINE Fragment_Driver
 !**********************************************************************************
 SUBROUTINE Change_Phi_Theta(this_atom,im,is,theta_bound)
 !**********************************************************************************
-  USE Run_Variables
+  USE Global_Variables
   USE Random_Generators, ONLY : rranf
 
   IMPLICIT NONE

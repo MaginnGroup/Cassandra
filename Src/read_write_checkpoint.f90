@@ -31,7 +31,7 @@ MODULE Read_Write_Checkpoint
   ! Revision History: 
   ! 12/10/13  :: Beta version 
   !**************************************************************************
-  USE Run_Variables
+  USE Global_Variables
   USE File_Names
   USE Simulation_Properties
   USE Random_Generators, ONLY : s1,s2,s3,s4,s5, rranf

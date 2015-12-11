@@ -53,7 +53,7 @@ MODULE IO_Utilities
   !
   !    12/10/13  : Beta version
   !********************************************************************************
-  USE Run_Variables
+  USE Global_Variables
 
   IMPLICIT NONE
 

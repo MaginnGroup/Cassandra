@@ -148,7 +148,7 @@ MODULE Energy_Routines
   !-----------------------------------------------------------------------------------
 
   USE Type_Definitions
-  USE Run_Variables
+  USE Global_Variables
   USE File_Names
   USE Pair_Nrg_Routines
  !$  USE OMP_LIB
@@ -421,7 +421,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     ! 01/19/09 (JS) : Added CHARMM functional form
 	! 12/8/12 (AV): Added AMBER functional form for multiple dihedrals
   !----------------------------------------------------------------------------------------------            
-  USE Run_Variables
+  USE Global_Variables
     INTEGER :: at1,at2,at3,at4,molecule,species
     REAL(DP) :: energy_dihed
 
@@ -605,7 +605,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     ! Revision history:
     ! AV: Added AMBER dihedral style:  12/8/12
     !----------------------------------------------------------------------------------------------              
-  USE Run_Variables  
+  USE Global_Variables  
     ! Passed to 
     INTEGER :: molecule,species
     
@@ -1763,7 +1763,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     !******************************************************************************************
     
     USE Type_Definitions
-    USE Run_Variables
+    USE Global_Variables
     
     IMPLICIT NONE
     
@@ -1928,7 +1928,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     !*****************************************************************************************
     
     USE Type_Definitions
-    USE Run_Variables
+    USE Global_Variables
 
     IMPLICIT NONE
 
@@ -2066,7 +2066,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     !***********************************************************************************************
 
     USE Type_Definitions
-    USE Run_Variables
+    USE Global_Variables
     
     IMPLICIT NONE
 
@@ -2243,7 +2243,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     !*******************************************************************************************
 
     USE Type_Definitions
-    USE Run_Variables
+    USE Global_Variables
     
     IMPLICIT NONE
 
@@ -2302,7 +2302,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     !**********************************************************************************************
 
     USE Type_Definitions
-    USE Run_Variables
+    USE Global_Variables
 
     IMPLICIT NONE
 
@@ -3457,7 +3457,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     !*****************************************************************************************
     
     USE Type_Definitions
-    USE Run_Variables
+    USE Global_Variables
 
     IMPLICIT NONE
 
@@ -3754,7 +3754,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
 
   SUBROUTINE System_Energy_Check(this_box,i_step,randno)
 
-     USE Run_Variables
+     USE Global_Variables
 
      INTEGER, INTENT(IN) :: this_box, i_step
      REAL(DP), INTENT(IN) :: randno
@@ -3915,7 +3915,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     !*****************************************************************************************
     
     USE Type_Definitions
-    USE Run_Variables
+    USE Global_Variables
 
     IMPLICIT NONE
 

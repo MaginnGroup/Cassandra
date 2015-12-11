@@ -50,7 +50,7 @@
     ! 03/27/14 Eliseo Rimoldi : custom (manually input) nonbond potentials added
 
 !********************************************************************************
-    USE Run_Variables
+    USE Global_Variables
     USE Type_Definitions
     USE IO_Utilities
     USE File_Names

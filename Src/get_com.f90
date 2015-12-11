@@ -67,7 +67,7 @@ SUBROUTINE Get_COM(alive,is)
   !        None
   !***********************************************************************
   USE Type_Definitions
-  USE Run_Variables
+  USE Global_Variables
   IMPLICIT NONE
   
   INTEGER, INTENT(IN) :: alive,is
@@ -134,7 +134,7 @@ SUBROUTINE Get_Internal_Coordinates(alive,ispecies)
   !***********************************************************************
   
   USE Type_Definitions
-  USE Run_Variables
+  USE Global_Variables
   
   IMPLICIT NONE
   
@@ -217,7 +217,7 @@ SUBROUTINE Compute_Max_Com_Distance(alive,is)
   !
   !*****************************************************************************
 
-  USE Run_Variables
+  USE Global_Variables
 
   IMPLICIT NONE
 

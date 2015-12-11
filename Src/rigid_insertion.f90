@@ -47,7 +47,7 @@ SUBROUTINE Rigid_Insertion
 
   
   USE Type_Definitions
-  USE Run_Variables
+  USE Global_Variables
 
   IMPLICIT NONE
 

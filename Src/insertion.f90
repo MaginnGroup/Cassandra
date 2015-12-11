@@ -46,7 +46,7 @@ SUBROUTINE Insertion(this_box,mcstep,randno)
   !
   !*****************************************************************************
 
-  USE Run_Variables
+  USE Global_Variables
   USE Energy_Routines
   USE IO_Utilities
   USE Random_Generators

@@ -38,7 +38,7 @@ SUBROUTINE GEMC_NVT_Volume(box1, box2)
   !   12/05/13 : Beta Release
   !*************************************************************************
 
-  USE Run_Variables
+  USE Global_Variables
   USE Random_Generators
   USE Volume
   USE IO_Utilities

@@ -49,7 +49,7 @@ SUBROUTINE NVTMC_Driver
 
   !*******************************************************************************
 
-  USE Run_Variables
+  USE Global_Variables
   USE Random_Generators
   USE File_Names
   USE Energy_Routines

@@ -36,7 +36,7 @@ SUBROUTINE Zig_By_Omega
   ! 12/10/13 : Beta version
   !******************************************************************************
 
-  USE Run_Variables
+  USE Global_Variables
   USE Type_Definitions
   USE Random_Generators
   USE File_Names

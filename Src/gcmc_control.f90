@@ -34,7 +34,7 @@ SUBROUTINE GCMC_Control
   !
 !*******************************************************************************
   USE IO_Utilities
-  USE Run_Variables
+  USE Global_Variables
   USE Type_Definitions
   USE File_Names
   USE Input_Routines

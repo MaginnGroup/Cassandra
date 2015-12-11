@@ -57,7 +57,7 @@ SUBROUTINE NVTMC_Control
   ! 08/07/13  : Created beta version
 !*******************************************************************************
   USE IO_Utilities
-  USE Run_Variables
+  USE Global_Variables
   USE Type_Definitions
   USE File_Names
   USE Input_Routines

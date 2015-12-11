@@ -25,7 +25,7 @@ SUBROUTINE precalculate
     !
     ! 12/10/13  : Beta version 
 !********************************************************************************    
-    USE Run_variables
+    USE Global_Variables
     USE File_Names
     USE Energy_Routines
     IMPLICIT NONE

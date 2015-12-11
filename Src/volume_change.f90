@@ -58,7 +58,7 @@ SUBROUTINE Volume_Change(this_box,this_step)
   !*****************************************************************************
 
   USE Type_Definitions
-  USE Run_Variables
+  USE Global_Variables
   USE File_Names
   USE Random_Generators
   USE Energy_Routines

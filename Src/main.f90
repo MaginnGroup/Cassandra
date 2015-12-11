@@ -75,7 +75,7 @@ PROGRAM Main
   !
 !********************************************************************************
 
-  USE Run_Variables
+  USE Global_Variables
   USE File_Names
   USE IO_Utilities
   USE Input_Routines

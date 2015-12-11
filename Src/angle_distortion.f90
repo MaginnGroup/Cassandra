@@ -38,7 +38,7 @@ SUBROUTINE Angle_Distortion(this_box)
 ! 12/10/13  : Beta Release
 !********************************************************************************
   USE Type_Definitions
-  USE Run_Variables
+  USE Global_Variables
   USE Angle_Dist_Pick
   USE Random_Generators
   USE Simulation_Properties

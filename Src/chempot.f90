@@ -37,7 +37,7 @@ SUBROUTINE Chempot(this_box,is)
   ! 
   !*******************************************************************************
 
-  USE Run_Variables
+  USE Global_Variables
   USE Energy_Routines
   USE IO_Utilities
   USE Random_Generators
