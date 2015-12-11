@@ -58,7 +58,7 @@ MODULE Fragment_Growth
   !     
   !*****************************************************************************
 
-  USE Run_Variables
+  USE Global_Variables
   USE Energy_Routines
   USE Random_Generators
   USE Read_Write_Checkpoint
@@ -1054,7 +1054,7 @@ SUBROUTINE Cut_Regrow(this_im,is,frag_live,frag_dead,frag_order,frag_total, &
   !
   !*****************************************************************************
 
-  USE Run_Variables
+  USE Global_Variables
   USE Random_Generators
 
   IMPLICIT NONE
@@ -1259,7 +1259,7 @@ SUBROUTINE Fragment_Order(this_frag,is,frag_total,frag_order,live,P_seq)
 !   Loop thru steps 2 and 3 until all fragments are live.
 !
 !*******************************************************************************
-  USE Run_Variables
+  USE Global_Variables
   USE Random_Generators
   
   IMPLICIT NONE

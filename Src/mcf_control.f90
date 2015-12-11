@@ -40,7 +40,7 @@ SUBROUTINE MCF_Control
   !
   !*******************************************************************************
   USE IO_Utilities
-  USE Run_Variables
+  USE Global_Variables
   USE Type_Definitions
   USE Input_Routines
   USE Atoms_To_Place

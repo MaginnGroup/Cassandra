@@ -35,7 +35,7 @@ SUBROUTINE Write_Properties(this_mc_step,this_box)
   ! 08/12/13 : Created beta version
 !*********************************************************************************
 
-  USE Run_Variables
+  USE Global_Variables
   USE File_Names
   USE Energy_Routines
 
@@ -337,7 +337,7 @@ SUBROUTINE Write_Coords(this_box)
   ! 08/12/13 (JS) : Created beta version
   !*************************************************************************************
   
-  USE Run_Variables
+  USE Global_Variables
   USE Simulation_Properties
   USE File_Names, ONLY : movie_header_unit,movie_xyz_unit 
 

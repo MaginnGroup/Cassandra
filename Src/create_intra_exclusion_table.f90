@@ -45,7 +45,7 @@ SUBROUTINE Create_Intra_Exclusion_Table
   !
   !   12/10/13 : Beta Release
   !-----------------------------------------------------------------------------  
-  USE Run_Variables
+  USE Global_Variables
   USE Type_Definitions
   USE File_Names
 

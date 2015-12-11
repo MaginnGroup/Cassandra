@@ -56,7 +56,7 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
 
 
 
-  USE Run_Variables
+  USE Global_Variables
   USE Energy_Routines
   USE Fragment_Growth, ONLY : Cut_Regrow, Single_Fragment_Regrowth
   USE Random_Generators, ONLY : rranf

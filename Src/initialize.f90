@@ -43,7 +43,7 @@ SUBROUTINE Initialize(this_box)
   !
   ! 08/06/13 (JS) : Created beta version
   !*********************************************************************
-  USE Run_Variables
+  USE Global_Variables
  
   IMPLICIT NONE
 
@@ -129,7 +129,7 @@ SUBROUTINE Reset(this_box)
   ! Written by Jindal Shah on 01/09/08
   !
   !*********************************************************************
-  USE Run_Variables
+  USE Global_Variables
 
   IMPLICIT NONE
 

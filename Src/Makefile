@@ -74,7 +74,7 @@ F90FLAGS = -c -g -check all -traceback #-warn unused #-openmp
 OBJS =  main.o \
   file_names.o \
   type_definitions.o \
-  run_variables.o \
+  global_variables.o \
   io_utilities.o \
   atoms_to_place.o \
   simulation_properties.o \

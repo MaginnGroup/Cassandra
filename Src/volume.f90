@@ -54,7 +54,7 @@ MODULE Volume
   ! 08/12/13 : Created the beta version
   !************************************************************************
 
-  USE Run_Variables
+  USE Global_Variables
   USE Type_Definitions
   
   IMPLICIT NONE

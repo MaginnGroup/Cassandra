@@ -43,7 +43,7 @@ MODULE Pair_Nrg_Routines
   !!********************************************************************
 
   USE Type_Definitions
-  USE Run_Variables
+  USE Global_Variables
   USE Pair_Nrg_Variables
 
   IMPLICIT NONE

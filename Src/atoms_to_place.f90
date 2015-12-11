@@ -46,7 +46,7 @@ MODULE Atoms_To_Place
   !********************************************************************
 
   USE Type_Definitions
-  USE Run_Variables
+  USE Global_Variables
   USE File_Names
 
 

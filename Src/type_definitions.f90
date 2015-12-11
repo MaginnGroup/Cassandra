@@ -38,7 +38,7 @@ MODULE Type_Definitions
   !      nvtmc_control
   !      participation
   !      random_generators ONLY : DP
-  !      run_variables
+  !      global_variables
   !      translate
   !
   ! Revision history:
@@ -68,7 +68,7 @@ MODULE Type_Definitions
   INTEGER, PARAMETER :: nregions = 1000
   
   ! Define some classes to hold variables associated with different objects
-  ! in the simulation. These will be converted to lists in run_variables for speed.
+  ! in the simulation. These will be converted to lists in global_variables for speed.
 
   !****************************************************************************
   TYPE Species_Class

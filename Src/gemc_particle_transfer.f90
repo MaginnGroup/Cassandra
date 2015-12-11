@@ -49,7 +49,7 @@ SUBROUTINE GEMC_Particle_Transfer(box_in, box_out)
   !   12/10/13 : Beta Release
   !*****************************************************************************
 
-  USE Run_Variables
+  USE Global_Variables
   USE Random_Generators
   USE Simulation_Properties
   USE Energy_Routines
@@ -685,7 +685,7 @@ END SUBROUTINE GEMC_Particle_Transfer
 
 SUBROUTINE New_Positions(this_box,alive,is,rand_igas)
 
-  USE Run_Variables
+  USE Global_Variables
   USE Rotation_Routines
   USE File_Names
 

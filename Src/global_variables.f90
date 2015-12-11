@@ -20,7 +20,7 @@
 !********************************************************************************
 
 !********************************************************************************
-MODULE Run_Variables
+MODULE Global_Variables
 !********************************************************************************
  
   ! Written by: Ed Maginn
@@ -556,5 +556,5 @@ USE Type_Definitions
 REAL(DP), ALLOCATABLE, DIMENSION(:) :: x_lat, y_lat, z_lat
 INTEGER :: n_lat_atoms
   
-END MODULE Run_Variables
+END MODULE Global_Variables
 

@@ -62,7 +62,7 @@ SUBROUTINE Atom_Displacement(this_box)
   !*************************************************************************************
 
 
-  USE Run_Variables
+  USE Global_Variables
   USE Random_Generators
   USE Energy_Routines
   USE Simulation_Properties, ONLY : Get_Index_Molecule

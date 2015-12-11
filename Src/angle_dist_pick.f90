@@ -42,7 +42,7 @@ MODULE Angle_Dist_Pick
 !*********************************************************************************
 
   USE Type_Definitions
-  USE Run_Variables
+  USE Global_Variables
   USE File_Names
 
 
@@ -198,7 +198,7 @@ CONTAINS
     !**********************************************************************************************
 
     USE Type_Definitions
-    USE Run_Variables
+    USE Global_Variables
     USE Random_Generators
     USE File_Names
 
@@ -268,7 +268,7 @@ CONTAINS
     !**********************************************************************************
 
     USE Type_Definitions
-    USE Run_Variables
+    USE Global_Variables
     USE File_Names
     
     IMPLICIT NONE

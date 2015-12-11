@@ -63,7 +63,7 @@ SUBROUTINE Participation
 !**********************************************************************
 
   USE Type_Definitions
-  USE Run_Variables
+  USE Global_Variables
   USE IO_Utilities
   USE File_Names
   USE Random_Generators, ONLY : Generate_Random_Sphere

@@ -61,7 +61,7 @@ SUBROUTINE Ring_Fragment_Driver
   !
   !*****************************************************************************
 
-  USE Run_Variables
+  USE Global_Variables
   USE Random_Generators
   USE Energy_Routines
   
@@ -165,7 +165,7 @@ SUBROUTINE Flip_Move(im,is,this_box,accept)
   !        Revert_Old_Cartesian_Coordinates
   !********************************************************************************************
 
-  USE Run_Variables
+  USE Global_Variables
   USE Random_Generators
   USE Fragment_Growth, ONLY : Get_Aligner_Hanger
   USE IO_Utilities
@@ -383,7 +383,7 @@ SUBROUTINE Atom_Displacement_Move(im,is,this_box,accept)
   !
   !********************************************************************************************
 
-  USE Run_Variables
+  USE Global_Variables
   USE Random_Generators
   USE Energy_Routines
 

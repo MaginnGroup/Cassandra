@@ -67,7 +67,7 @@ SUBROUTINE Rigid_Dihedral_Change(this_box)
 !*********************************************************************************
 
   USE Type_Definitions
-  USE Run_Variables
+  USE Global_Variables
   USE Random_Generators
   USE Simulation_Properties
   USE File_Names

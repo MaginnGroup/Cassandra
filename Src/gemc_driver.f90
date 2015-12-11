@@ -33,7 +33,7 @@ SUBROUTINE GEMC_Driver
   !   12/10/13 : Beta Release
   !****************************************************************************
 
-  USE Run_Variables
+  USE Global_Variables
   USE Random_Generators
   USE Read_Write_Checkpoint
   USE Energy_Routines, ONLY: Compute_Total_System_Energy

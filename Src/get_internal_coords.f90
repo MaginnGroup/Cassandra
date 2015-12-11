@@ -37,7 +37,7 @@ SUBROUTINE Get_Internal_Coords
   !********************************************************************************
 
   USE Type_Definitions
-  USE Run_Variables
+  USE Global_Variables
   
   IMPLICIT NONE
 
@@ -139,7 +139,7 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
 
 
    USE Type_Definitions
-   USE Run_Variables
+   USE Global_Variables
 
    IMPLICIT NONE
 
@@ -190,7 +190,7 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
 !********************************************************************************
    
    USE Type_Definitions
-   USE Run_Variables
+   USE Global_Variables
  
    IMPLICIT NONE
 
@@ -297,7 +297,7 @@ END SUBROUTINE Get_Bond_Angle
 !********************************************************************************
 
    USE Type_Definitions
-   USE Run_Variables
+   USE Global_Variables
 
    IMPLICIT NONE
 
@@ -395,7 +395,7 @@ END SUBROUTINE Get_Bond_Angle
 !********************************************************************************
 
    USE Type_Definitions
-   USE Run_Variables
+   USE Global_Variables
 
    IMPLICIT NONE
 

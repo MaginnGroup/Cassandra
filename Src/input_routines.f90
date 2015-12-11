@@ -40,7 +40,7 @@ MODULE Input_Routines
   !    12/10/13  : Beta version
   !***************************************************************************
 
-  USE Run_Variables
+  USE Global_Variables
   USE IO_Utilities
   USE File_Names
   USE Type_Definitions
@@ -5435,7 +5435,7 @@ SUBROUTINE Get_Property_Info
   ! will be written in respective files.
   !***************************************************************************************************
 
-USE Run_Variables, ONLY: cpcollect
+USE Global_Variables, ONLY: cpcollect
 
   INTEGER :: ierr, line_nbr, nbr_properties, max_properties, nbr_entries
   INTEGER :: i, j, this_box, ibox, is, average_id, ifrac

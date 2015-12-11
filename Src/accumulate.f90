@@ -35,7 +35,7 @@ SUBROUTINE Accumulate(this_box)
 ! 12/10/13  : Beta Release
 !
 !********************************************************************************
-  USE Run_Variables
+  USE Global_Variables
   USE Simulation_Properties
 
   IMPLICIT NONE
