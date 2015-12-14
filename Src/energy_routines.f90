@@ -1012,14 +1012,7 @@ CONTAINS
     ! passed each component of separation but right now this is unnecessary. 
     !
     ! LJ potential:
-    !   Full molecules:
     !      Eij =  4*epsilon(i,j) * [ (sigma(i,j)/rij)^12 - (sigma(i,j)/rij)^6 ]
-    !
-    !   Fractional molecules:
-    !      Eij = 
-    !           [             1                                1              ]
-    ! 4*lij*eij*[ -----------------------------  -  ------------------------- ]
-    !           [ ((0.5(1-lij)^2+(rij/sij)^6)^2    (0.5(1-lij)^2+(rij/sij)^6) ]
     !
     !
 
