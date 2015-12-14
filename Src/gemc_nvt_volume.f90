@@ -19,7 +19,7 @@
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*******************************************************************************
 
-SUBROUTINE GEMC_NVT_Volume(box1, box2)
+SUBROUTINE GEMC_NVT_Volume(box1, box2, accept)
 
   !***********************************************************************
   !
@@ -124,8 +124,8 @@ SUBROUTINE GEMC_NVT_Volume(box1, box2)
   ! store the pair interactions
 
   IF (l_pair_nrg) THEN
-     ALLOCATE(pair_nrg_vdw_old(SUM(nmolecules),SUM(nmolecules)))
-     ALLOCATE(pair_nrg_qq_old(SUM(nmolecules),SUM(nmolecules)))
+     ALLOCATE(pair_nrg_vdw_old(SUM(max_molecules),SUM(max_molecules)))
+     ALLOCATE(pair_nrg_qq_old(SUM(max_molecules),SUM(max_molecules)))
 
      pair_nrg_vdw_old(:,:) = pair_nrg_vdw(:,:)
      pair_nrg_qq_old(:,:) = pair_nrg_qq(:,:)
@@ -137,7 +137,7 @@ SUBROUTINE GEMC_NVT_Volume(box1, box2)
   IF ( int_charge_sum_style(box1) == charge_ewald .OR. &
        int_charge_sum_style(box2) == charge_ewald ) THEN
      
-     ALLOCATE(cos_mol_old(MAXVAL(nvecs),SUM(nmolecules)), Stat = AllocateStatus)
+     ALLOCATE(cos_mol_old(MAXVAL(nvecs),SUM(max_molecules)), Stat = AllocateStatus)
      
      IF (AllocateStatus /= 0 ) THEN
         err_msg = ''
@@ -145,7 +145,7 @@ SUBROUTINE GEMC_NVT_Volume(box1, box2)
         CALL Clean_Abort(err_msg,'gemc_nvt_volume.f90')
      END IF
      
-     ALLOCATE(sin_mol_old(MAXVAL(nvecs),SUM(nmolecules)), Stat = AllocateStatus)
+     ALLOCATE(sin_mol_old(MAXVAL(nvecs),SUM(max_molecules)), Stat = AllocateStatus)
 
      IF (AllocateStatus /= 0 ) THEN
         err_msg = ''
@@ -414,7 +414,7 @@ SUBROUTINE GEMC_NVT_Volume(box1, box2)
            CALL Clean_Abort(err_msg,'GEMC_NVT_VOLUME')
         END IF
 
-        ALLOCATE(cos_mol(MAXVAL(nvecs),SUM(nmolecules)), Stat = AllocateStatus)
+        ALLOCATE(cos_mol(MAXVAL(nvecs),SUM(max_molecules)), Stat = AllocateStatus)
         
         IF (AllocateStatus /= 0) THEN
            err_msg = ''
@@ -423,7 +423,7 @@ SUBROUTINE GEMC_NVT_Volume(box1, box2)
            CALL Clean_Abort(err_msg,'gemc_volume_change.f90')
         END IF
         
-        ALLOCATE(sin_mol(MAXVAL(nvecs),SUM(nmolecules)), Stat = AllocateStatus)
+        ALLOCATE(sin_mol(MAXVAL(nvecs),SUM(max_molecules)), Stat = AllocateStatus)
         
         IF (AllocateStatus /= 0) THEN
            err_msg = ''
@@ -450,7 +450,7 @@ SUBROUTINE GEMC_NVT_Volume(box1, box2)
      second_box = box1
   END IF
 
-  CALL Compute_Total_System_Energy(first_box, .FALSE., overlap)
+  CALL Compute_System_Total_Energy(first_box, .TRUE., overlap)
   
    IF (overlap) THEN 
 
@@ -458,7 +458,7 @@ SUBROUTINE GEMC_NVT_Volume(box1, box2)
 
    ELSE
       
-      CALL Compute_Total_System_Energy(second_box, .FALSE.,overlap)
+      CALL Compute_System_Total_Energy(second_box, .TRUE.,overlap)
      
       ! actually there should be no overlap for the box whose dimensions
       ! increase but we will include this check only for safety.
@@ -521,28 +521,28 @@ SUBROUTINE GEMC_NVT_Volume(box1, box2)
                   
                   ! Now assign cos_mol and sin_mol for the molecules present in other
                   ! boxes. Note that cos_mol for box1 and box2 have been assigned
-                  ! when a call to Compute_Total_System_Energy was placed.
+                  ! when a call to Compute_System_Total_Energy was placed.
                   
-                  DO is = 1, nspecies
-                     DO im = 1, nmolecules(is)
-                        alive = locate(im,is)
-                        
-                        IF (.NOT. molecule_list(alive,is)%live) CYCLE
-                        
-                        my_box = molecule_list(alive,is)%which_box
-                        
-                        IF (my_box == box1 .OR. my_box == box2) CYCLE
-                        
-                        CALL Get_Position_Alive(alive,is,position)
-                        
-                        !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-                        cos_mol(1:nvecs(my_box),position) = cos_mol_old(1:nvecs(my_box),position)
-                        sin_mol(1:nvecs(my_box),position) = sin_mol_old(1:nvecs(my_box),position)
-                        
-                        cos_mol(nvecs(my_box)+1:MAXVAL(nvecs),position) = 0.0_DP
-                        sin_mol(nvecs(my_box)+1:MAXVAL(nvecs),position) = 0.0_DP
-                        !!$OMP END PARALLEL WORKSHARE
-                        
+                  DO ibox = 1, nbr_boxes
+                     DO is = 1, nspecies
+                        DO im = 1, nmols(is,ibox)
+                           alive = locate(im,is,ibox)
+                           
+                           my_box = molecule_list(alive,is)%which_box
+                           
+                           IF (my_box == box1 .OR. my_box == box2) CYCLE
+                           
+                           CALL Get_Position_Alive(alive,is,position)
+                           
+                           !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+                           cos_mol(1:nvecs(my_box),position) = cos_mol_old(1:nvecs(my_box),position)
+                           sin_mol(1:nvecs(my_box),position) = sin_mol_old(1:nvecs(my_box),position)
+                           
+                           cos_mol(nvecs(my_box)+1:MAXVAL(nvecs),position) = 0.0_DP
+                           sin_mol(nvecs(my_box)+1:MAXVAL(nvecs),position) = 0.0_DP
+                           !!$OMP END PARALLEL WORKSHARE
+                           
+                        END DO
                      END DO
                   END DO
                END IF
@@ -698,14 +698,14 @@ SUBROUTINE GEMC_NVT_Volume(box1, box2)
               CALL Clean_Abort(err_msg,'Volume_Change')
            END IF
            
-           ALLOCATE(cos_mol(MAXVAL(nvecs),SUM(nmolecules)),Stat = Allocatestatus)
+           ALLOCATE(cos_mol(MAXVAL(nvecs),SUM(max_molecules)),Stat = Allocatestatus)
            IF (Allocatestatus /= 0) THEN
               err_msg = ''
               err_msg(1) = 'Memory could not be allocated for cos_mol in the volume rejection'
               CALL Clean_Abort(err_msg,'GEMC NVT Volume_Change')
            END IF
            
-           ALLOCATE(sin_mol(MAXVAL(nvecs),SUM(nmolecules)),Stat = Allocatestatus)
+           ALLOCATE(sin_mol(MAXVAL(nvecs),SUM(max_molecules)),Stat = Allocatestatus)
           IF (Allocatestatus /= 0) THEN
              err_msg = ''
              err_msg(1) = 'Memory could not be allocated for sin_mol in the volume rejection'

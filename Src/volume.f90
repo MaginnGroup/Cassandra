@@ -78,25 +78,20 @@ CONTAINS
 
     DO is = 1, nspecies
        
-       DO im = 1, nmolecules(is)
+       DO im = 1, nmols(is,this_box)
           
-          alive = locate(im,is)
+          alive = locate(im,is,this_box)
           
           IF (molecule_list(alive,is)%live) THEN
              
-             IF (molecule_list(alive,is)%which_box == this_box ) THEN
-                
-                total_molecules = total_molecules + 1
-                
-                ! store the unperturbed position of this molecule. Note that
-                ! this call to the routine will save Cartesian coordinates
-                ! as well as COMs of this molecule
-                
-                CALL Save_Old_Cartesian_Coordinates(alive,is)
-                
-                
-             END IF
+             total_molecules = total_molecules + 1
              
+             ! store the unperturbed position of this molecule. Note that
+             ! this call to the routine will save Cartesian coordinates
+             ! as well as COMs of this molecule
+             
+             CALL Save_Old_Cartesian_Coordinates(alive,is)
+                
           END IF
           
        END DO
@@ -117,12 +112,10 @@ CONTAINS
     INTEGER :: is, im, alive
 
     DO is = 1, nspecies
-       DO im = 1, nmolecules(is)
-          alive = locate(im,is)
+       DO im = 1, nmols(is,this_box)
+          alive = locate(im,is,this_box)
           IF (molecule_list(alive,is)%live) THEN
-             IF (molecule_list(alive,is)%which_box == this_box) THEN
-                CALL Revert_Old_Cartesian_Coordinates(alive,is)
-             END IF
+             CALL Revert_Old_Cartesian_Coordinates(alive,is)
           END IF
        END DO
     END DO
@@ -151,54 +144,49 @@ CONTAINS
 
     DO is = 1, nspecies
        
-       DO im = 1, nmolecules(is)
+       DO im = 1, nmols(is,this_box)
           
-          alive = locate(im,is)
+          alive = locate(im,is,this_box)
           
           IF (molecule_list(alive,is)%live) THEN
              
-             IF ( molecule_list(alive,is)%which_box == this_box ) THEN
+             ! obtain the new coordinates of the COM for this molecule
+             
+             ! first determine the fractional coordinate
+             
+             DO i = 1,3
                 
-                
-                ! obtain the new coordinates of the COM for this molecule
-                
-                ! first determine the fractional coordinate
-                
-                DO i = 1,3
-                   
-                   s(i) = box_list_old%length_inv(i,1) * molecule_list(alive,is)%xcom + &
-                        box_list_old%length_inv(i,2) * molecule_list(alive,is)%ycom + &
-                        box_list_old%length_inv(i,3) * molecule_list(alive,is)%zcom
-                END DO
-                
-                
-                ! now obtain the new positions of COMs
-                
-                
-                molecule_list(alive,is)%xcom = box_list(this_box)%length(1,1) * s(1) &
-                     + box_list(this_box)%length(1,2) * s(2) + &
-                       box_list(this_box)%length(1,3) * s(3)
-                
-                molecule_list(alive,is)%ycom = box_list(this_box)%length(2,1) * s(1) &
-                     + box_list(this_box)%length(2,2) * s(2) + &
-                       box_list(this_box)%length(2,3) * s(3)
-                
-                molecule_list(alive,is)%zcom = box_list(this_box)%length(3,1) * s(1) &
-                     + box_list(this_box)%length(3,2) * s(2) + &
-                       box_list(this_box)%length(3,3) * s(3)
-                
-                ! Obtain the new positions of atoms in this molecule
-                
-                atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp + &
-                     molecule_list(alive,is)%xcom - molecule_list(alive,is)%xcom_old
-                
-                atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp + &
-                     molecule_list(alive,is)%ycom - molecule_list(alive,is)%ycom_old
-                
-                atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp + &
-                     molecule_list(alive,is)%zcom - molecule_list(alive,is)%zcom_old
-                
-             END IF
+                s(i) = box_list_old%length_inv(i,1) * molecule_list(alive,is)%xcom + &
+                     box_list_old%length_inv(i,2) * molecule_list(alive,is)%ycom + &
+                     box_list_old%length_inv(i,3) * molecule_list(alive,is)%zcom
+             END DO
+             
+             
+             ! now obtain the new positions of COMs
+             
+             
+             molecule_list(alive,is)%xcom = box_list(this_box)%length(1,1) * s(1) &
+                  + box_list(this_box)%length(1,2) * s(2) + &
+                    box_list(this_box)%length(1,3) * s(3)
+             
+             molecule_list(alive,is)%ycom = box_list(this_box)%length(2,1) * s(1) &
+                  + box_list(this_box)%length(2,2) * s(2) + &
+                    box_list(this_box)%length(2,3) * s(3)
+             
+             molecule_list(alive,is)%zcom = box_list(this_box)%length(3,1) * s(1) &
+                  + box_list(this_box)%length(3,2) * s(2) + &
+                    box_list(this_box)%length(3,3) * s(3)
+             
+             ! Obtain the new positions of atoms in this molecule
+             
+             atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp + &
+                  molecule_list(alive,is)%xcom - molecule_list(alive,is)%xcom_old
+             
+             atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp + &
+                  molecule_list(alive,is)%ycom - molecule_list(alive,is)%ycom_old
+             
+             atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp + &
+                  molecule_list(alive,is)%zcom - molecule_list(alive,is)%zcom_old
              
           END IF
           

@@ -60,7 +60,6 @@ SUBROUTINE Get_COM(alive,is)
   !        read_write_checkpoint
   !        rigid_dihedral_change
   !        rotate
-  !        zig_by_omega
   !
   ! CALLS
   !

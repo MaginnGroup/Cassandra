@@ -32,17 +32,13 @@
 !
 ! There are three routines:
 !
-! Ring_Fragment_Driver
+! Ring_Fragment
 !  
 !     This is the driver routine that performs the two moves - 
 !
 ! Flip_Move
 !
 !     Carries out moves to sample endocyclic degrees of freedom of the ring
-!
-! Atom_Displacement_Move
-!
-!     Performs spherical coordinate change move on the exocyclic atoms
 !
 ! 08/07/13 : Created beta version
 !*******************************************************************************
@@ -57,7 +53,7 @@ SUBROUTINE Ring_Fragment_Driver
   ! CALLS
   !
   !        Flip_Move
-  !        Atom_Displacement_Move
+  !        Atom_Displacement
   !
   !*****************************************************************************
 
@@ -70,12 +66,12 @@ SUBROUTINE Ring_Fragment_Driver
   INTEGER :: is, im, this_box, i, ia, nring_success, nexoring_success
   INTEGER :: nexoring_trials, nring_trials
 
-  REAL(DP) :: rand_no, zig_by_omega
+  REAL(DP) :: rand_no 
 
   LOGICAL :: overlap, accept
 
   is = 1
-  im = locate(1,is)
+  im = locate(1,is,1)
 
   this_box = molecule_list(im,is)%which_box
 
@@ -83,7 +79,6 @@ SUBROUTINE Ring_Fragment_Driver
   nexoring_success = 0
   nring_trials = 0
   nexoring_trials = 0
-  zig_by_omega = 0.0_DP
   ! obtain energy of starting conformation
   
   OPEN(UNIT=frag_file_unit,file=frag_file(is))
@@ -102,12 +97,10 @@ SUBROUTINE Ring_Fragment_Driver
            nring_success = nring_success + 1
         END IF
 
-
      ELSE IF (rand_no <= cut_atom_displacement) THEN
         
         nexoring_trials = nexoring_trials + 1
-
-        CALL Atom_Displacement_Move(im,is,this_box,accept)
+        CALL Atom_Displacement(this_box,accept)
 
         IF (accept) THEN
            nexoring_success = nexoring_success + 1
@@ -115,9 +108,7 @@ SUBROUTINE Ring_Fragment_Driver
 
      END IF
 
-     zig_by_omega = zig_by_omega + EXP(beta(this_box) * energy(this_box)%total)
      ! Store information with given frequency
-     
      IF (MOD(i,nthermo_freq) == 0) THEN
         WRITE(frag_file_unit,*) temperature(this_box), &
              energy(this_box)%dihedral + energy(this_box)%intra_vdw + &
@@ -129,29 +120,25 @@ SUBROUTINE Ring_Fragment_Driver
                 atom_list(ia,im,is)%rzp
         END DO
 
-!        WRITE(*,*) 'Improper angle energy is', energy(1)%improper
-        
      END IF
 
   END DO
 
   CLOSE(UNIT=frag_file_unit)
 
-  WRITE(*,*) 'number of ring trials', nring_trials
-  WRITE(*,*) 'Number of successful ring trials', nring_success
-  WRITE(*,*) 'number of exoring trials', nexoring_trials
-  WRITE(*,*) 'Number of successful exoring trials', nexoring_success
-  WRITE(*,*) 'Final energy of the configuration', energy(this_box)%total
-  WRITE(*,'(A,2x,E30.20)') 'Zig/Omega', zig_by_omega/n_mcsteps
+  WRITE(*,'(X,A,T40,I)') 'Number of ring trials', nring_trials
+  WRITE(*,'(X,A,T40,I)') 'Number of successful ring trials', nring_success
+  WRITE(*,'(X,A,T40,I)') 'Number of exoring trials', nexoring_trials
+  WRITE(*,'(X,A,T40,I)') 'Number of successful exoring trials', nexoring_success
 
 END SUBROUTINE Ring_Fragment_Driver
-!*********************************************************************************************
+!*******************************************************************************
 SUBROUTINE Flip_Move(im,is,this_box,accept)
-  !********************************************************************************************
+  !*****************************************************************************
   !
   ! CALLED BY
   !
-  !        ring_fragment_driver
+  !        nvt_mc_ring_fragment
   !
   ! CALLS
   !
@@ -161,9 +148,9 @@ SUBROUTINE Flip_Move(im,is,this_box,accept)
   !        Compute_Molecule_Angle_Energy
   !        Compute_Molecule_Dihedral_Energy
   !        Compute_Molecule_Nonbond_Intra_Energy
-  !        Compute_Ewald_Reciprocal_Energy_Difference
+  !        Update_System_Ewald_Reciprocal_Energy
   !        Revert_Old_Cartesian_Coordinates
-  !********************************************************************************************
+  !*****************************************************************************
 
   USE Global_Variables
   USE Random_Generators
@@ -181,7 +168,8 @@ SUBROUTINE Flip_Move(im,is,this_box,accept)
   REAL(DP) :: domega, cosomega, sinomega, a(3), b(3), c(3)
 
   REAL(DP) :: delta_e, delta_angle, delta_dihed, delta_intra, e_angle_n, e_dihed_n
-  REAL(DP) :: e_improper_n, delta_improper, E_intra_vdw, E_intra_qq, factor, e_recip_diff
+  REAL(DP) :: e_improper_n, delta_improper, E_intra_vdw, E_intra_qq, factor, e_recip
+  REAL(DP) :: E_periodic_qq
 
   LOGICAL :: accept, accept_or_reject,intra_overlap
 
@@ -320,13 +308,16 @@ SUBROUTINE Flip_Move(im,is,this_box,accept)
   CALL Compute_Molecule_Dihedral_Energy(im,is,e_dihed_n)
   CALL Compute_Molecule_Improper_Energy(im,is,e_improper_n)
 
- ! Note that we will not compute the reciprocal space Ewald in the ring biasing case
-  CALL Compute_Molecule_Nonbond_Intra_Energy(im,is,E_intra_vdw,E_intra_qq,intra_overlap)
+  ! Note that we will not compute the reciprocal space Ewald in the ring biasing
+  ! case, nor will we use the E_periodic_qq
+  CALL Compute_Molecule_Nonbond_Intra_Energy(im,is,E_intra_vdw,E_intra_qq, &
+       E_periodic_qq,intra_overlap)
+
 
   IF (int_charge_sum_style(this_box) == charge_ewald) THEN
-     ! Compute Ewald reciprocal energy difference
-     CALL Compute_Ewald_Reciprocal_Energy_Difference(im,im,is,this_box,int_intra,e_recip_diff)
-     delta_e = e_recip_diff
+    ! Compute Ewald reciprocal energy difference
+    CALL Update_System_Ewald_Reciprocal_Energy(im,is,this_box,int_intra,e_recip)
+    delta_e = (e_recip - energy(this_box)%ewald_reciprocal)
   END IF
 
   ! Change in energy due to the move
@@ -353,6 +344,10 @@ SUBROUTINE Flip_Move(im,is,this_box,accept)
      energy(this_box)%intra_vdw = E_intra_vdw
      energy(this_box)%intra_q = E_intra_qq
      
+     IF(int_charge_sum_style(this_box) == charge_ewald .AND. &
+       has_charge(is)) THEN
+        energy(this_box)%ewald_reciprocal = E_recip
+     END IF
   ELSE
 
      CALL Revert_Old_Cartesian_Coordinates(im,is)
@@ -363,123 +358,3 @@ SUBROUTINE Flip_Move(im,is,this_box,accept)
 END SUBROUTINE Flip_Move
 
 !************************************************************************************
-SUBROUTINE Atom_Displacement_Move(im,is,this_box,accept)
-  !********************************************************************************************
-  !
-  ! CALLED BY
-  !
-  !        main
-  !
-  ! CALLS
-  !
-  !        Save_Old_Cartesian_Coordinates
-  !        Change_Phi_Theta
-  !        Compute_Molecule_Angle_Energy
-  !        Compute_Molecule_Dihedral_Energy
-  !        Compute_Molecule_Improper_Energy
-  !        Compute_Molecule_Nonbond_Intra_Energy
-  !        Compute_Ewald_Reciprocal_Energy_Difference
-  !        Revert_Old_Cartesian_Coordinates
-  !
-  !********************************************************************************************
-
-  USE Global_Variables
-  USE Random_Generators
-  USE Energy_Routines
-
-  IMPLICIT NONE
-
-  INTEGER, INTENT(IN) :: im,is,this_box
-  LOGICAL, INTENT(OUT) :: accept
-
-  ! Local variables
-
-  INTEGER :: this_atom, branch_atom, i
-
-  REAL(DP) :: old_coord, new_coord, area_o, area_n
-  REAL(DP) :: delta_e, delta_angle, delta_dihed, delta_intra, e_angle_n, e_dihed_n
-  REAL(DP) :: e_improper_n, e_improper_o, delta_improper
-  REAL(DP) :: E_intra_vdw, E_intra_qq, factor, e_recip_diff
-
-  LOGICAL ::  accept_or_reject, theta_bound,intra_overlap
-
-  accept = .FALSE.
-
-  ! Save old coordinates
-  CALL Save_Old_Cartesian_Coordinates(im,is)
-
-  ! Choose an exo-ring atom to move
-
-  this_atom = INT ( rranf() * nexo_atoms(is)) + 1
-
-  ! obtain actual id 
-
-  this_atom = exo_atom_ids(this_atom,is)
-
-  !change coordinates wrt to the branch point
-
-  ! Figure out the branch point of exo cyclic atom. The exocyclic atom will be
-  ! attached to exactly one ring atom. Therefore, loop over the bondpart_list and
-  ! of this_atom to see which one is the ring atom
-
-  DO i = 1, bondpart_list(this_atom,is)%nbonds
-     branch_atom = bondpart_list(this_atom,is)%atom(i)
-     IF (nonbond_list(branch_atom,is)%ring_atom) EXIT
-  END DO
-
-  atom_list(this_atom,im,is)%rxp = atom_list(this_atom,im,is)%rxp - atom_list(branch_atom,1,1)%rxp
-  atom_list(this_atom,im,is)%ryp = atom_list(this_atom,im,is)%ryp - atom_list(branch_atom,1,1)%ryp
-  atom_list(this_atom,im,is)%rzp = atom_list(this_atom,im,is)%rzp - atom_list(branch_atom,1,1)%rzp
-
-  ! perturb the atom 
-
-  CALL Change_Phi_Theta(this_atom,im,is,theta_bound)
-
-  atom_list(this_atom,im,is)%rxp = atom_list(this_atom,im,is)%rxp + atom_list(branch_atom,1,1)%rxp
-  atom_list(this_atom,im,is)%ryp = atom_list(this_atom,im,is)%ryp + atom_list(branch_atom,1,1)%ryp
-  atom_list(this_atom,im,is)%rzp = atom_list(this_atom,im,is)%rzp + atom_list(branch_atom,1,1)%rzp
-
-  ! Compute changes in energies
-  delta_e = 0.0_DP
-  CALL Compute_Molecule_Angle_Energy(im,is,e_angle_n)
-  CALL Compute_Molecule_Dihedral_Energy(im,is,e_dihed_n)
-  CALL Compute_Molecule_Improper_Energy(im,is,e_improper_n)
-  CALL Compute_Molecule_Nonbond_Intra_Energy(im,is,E_intra_vdw,E_intra_qq,intra_overlap)
-
-  IF (int_charge_sum_style(this_box) == charge_ewald) THEN
-     ! Compute Ewald reciprocal energy difference
-     CALL Compute_Ewald_Reciprocal_Energy_Difference(im,im,is,this_box,int_intra,e_recip_diff)
-     delta_e = e_recip_diff
-  END IF
-  
-  ! Change in energy due to the move
-  
-  delta_angle = e_angle_n - energy(this_box)%angle
-  delta_dihed = e_dihed_n - energy(this_box)%dihedral
-  delta_improper = e_improper_n - energy(this_box)%improper
-  delta_intra = e_intra_vdw + e_intra_qq - energy(this_box)%intra_vdw - energy(this_box)%intra_q
-
-  delta_e = delta_angle + delta_dihed + delta_intra + delta_e + delta_improper
-  
-  factor = beta(this_box) * delta_e
- 
-  accept = accept_or_reject(factor)
-
-  IF (accept) THEN
-
-     ! update energies
-     energy(this_box)%total = energy(this_box)%total + delta_e
-     energy(this_box)%intra = energy(this_box)%intra + delta_angle + delta_dihed + delta_improper
-     energy(this_box)%angle = e_angle_n
-     energy(this_box)%dihedral = e_dihed_n
-     energy(this_box)%improper = e_improper_n
-     energy(this_box)%intra_vdw = E_intra_vdw
-     energy(this_box)%intra_q = E_intra_qq
-     
-  ELSE
-
-     CALL Revert_Old_Cartesian_Coordinates(im,is)
-   
-  END IF
-  
-END SUBROUTINE Atom_Displacement_Move

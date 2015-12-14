@@ -45,7 +45,6 @@ SUBROUTINE Rigid_Dihedral_Change(this_box)
 ! Calls
 !
 !   Get_Nmolecules_Species
-!   Get_Index_Molecules
 !   Save_Old_Cartesian_Coordinates
 !   Save_Old_Internal_Coordinates
 !   Compute_Molecule_Bond_Energy
@@ -54,7 +53,7 @@ SUBROUTINE Rigid_Dihedral_Change(this_box)
 !   Compute_Molecule_Improper_Energy
 !   Compute_Molecule_Nonbond_Intra_Energy
 !   Compute_Molecule_Nonbond_Inter_Energy
-!   Compute_Ewald_Reciprocal_Energy_Difference
+!   Update_System_Ewald_Reciprocal_Energy
 !   Get_COM
 !   Get_Internal_Coordinates
 !   Revert_Old_Cartesian_Coordinates
@@ -77,7 +76,7 @@ SUBROUTINE Rigid_Dihedral_Change(this_box)
 
 !  !$ include 'omp_lib.h'
   
-  INTEGER :: this_box, is, nmolecules_species, im, dihedral_to_move, alive
+  INTEGER :: this_box, is, im, dihedral_to_move, alive
   INTEGER :: i, j, this_atom
   INTEGER :: atom1, atom2, atom3, atom4, iatom1, iatom2, iatom3, iatom4
   INTEGER :: natoms_to_place
@@ -87,7 +86,7 @@ SUBROUTINE Rigid_Dihedral_Change(this_box)
   REAL(DP) :: perp_vec1(3), perp_vec2(3), aligner(3,3), hanger(3,3)
   REAL(DP) :: phi_trial, cosphi, sinphi, tempx, tempy, tempz
 
-  REAL(DP) :: E_bond, E_angle, E_dihedral, E_improper, E_intra_vdw, E_intra_qq, E_inter_vdw, E_inter_qq
+  REAL(DP) :: E_bond, E_angle, E_dihedral, E_improper, E_intra_vdw, E_intra_qq, E_inter_vdw, E_inter_qq, E_periodic_qq
   REAL(DP) :: E_bond_move, E_angle_move, E_dihedral_move, E_improper_move, E_intra_vdw_move
   REAL(DP) :: E_intra_qq_move, W_intra_vdw, W_intra_qq, W_inter_vdw, W_inter_qq
   REAL(DP) :: W_intra_vdw_move, W_intra_qq_move, W_inter_vdw_move, W_inter_qq_move
@@ -121,21 +120,14 @@ SUBROUTINE Rigid_Dihedral_Change(this_box)
 
      IF ( ndihedrals(is) == 0 ) CYCLE
 
-     ! Obtain number of molecules of this species
-
-     CALL Get_Nmolecules_Species(this_box,is, nmolecules_species)
-
-     IF (nmolecules_species /= 0) EXIT
+     IF (nmols(is,this_box) /= 0) EXIT
 
   END DO
 
   ! Choose one of the molecules at random
-
-  im = INT( rranf() * nmolecules_species ) + 1
-
+  im = INT( rranf() * nmols(is,this_box) ) + 1
   ! Get the index of imth molecule of species is in the box.
-
-  CALL Get_Index_Molecule(this_box,is,im,alive)
+  alive = locate(im,is,this_box)
 
   ntrials(is,this_box)%dihedral = ntrials(is,this_box)%dihedral + 1
 
@@ -151,8 +143,9 @@ SUBROUTINE Rigid_Dihedral_Change(this_box)
   CALL Compute_Molecule_Improper_Energy(alive,is,E_improper)
   
   ! Compute the nobonded interaction before the move
-  CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is,E_intra_vdw,E_intra_qq,intra_overlap)
+  CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is,E_intra_vdw,E_intra_qq,E_periodic_qq,intra_overlap)
   CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_inter_vdw,E_inter_qq,inter_overlap)
+  E_inter_qq = E_inter_qq + E_periodic_qq
   ! compute the energy related to the framework
 
   IF (inter_overlap) THEN
@@ -371,12 +364,13 @@ SUBROUTINE Rigid_Dihedral_Change(this_box)
      CALL Get_COM(alive,is)
      CALL Compute_Max_COM_Distance(alive,is)
      
-     CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is,E_intra_vdw_move,E_intra_qq_move,intra_overlap)
+     CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is,E_intra_vdw_move,E_intra_qq_move,E_periodic_qq,intra_overlap)
 
      IF (intra_overlap) inter_overlap = .TRUE.
 
      IF ( .NOT. inter_overlap) THEN
         CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_inter_vdw_move,E_inter_qq_move,inter_overlap)
+        E_inter_qq_move = E_inter_qq_move + E_periodic_qq
      
      END IF
      
@@ -396,18 +390,21 @@ SUBROUTINE Rigid_Dihedral_Change(this_box)
 
 
      IF (int_charge_sum_style(this_box) == charge_ewald) THEN
-        CALL Compute_Ewald_Reciprocal_Energy_Difference(alive,alive,is,this_box,int_intra,E_reciprocal_move)
-        delta_e = E_reciprocal_move
+        CALL Update_System_Ewald_Reciprocal_Energy(alive,is,this_box, &
+             int_intra,E_reciprocal_move)
+        delta_e = E_reciprocal_move - energy(this_box)%ewald_reciprocal
 
         
      END IF
 
      ! energy difference
 
-     delta_e = E_bond_move - E_bond + E_angle_move - E_angle + E_dihedral_move - E_dihedral + &
-          E_improper_move - E_improper + E_intra_vdw_move - E_intra_vdw + E_intra_qq_move - E_intra_qq + &
-          E_inter_vdw_move - E_inter_vdw + E_inter_qq_move - E_inter_qq + delta_e
-
+     delta_e = delta_e + (E_bond_move - E_bond) + (E_angle_move - E_angle) &
+             + (E_dihedral_move - E_dihedral) + (E_improper_move - E_improper) &
+             + (E_intra_vdw_move - E_intra_vdw) &
+             + (E_intra_qq_move - E_intra_qq) &
+             + (E_inter_vdw_move - E_inter_vdw) &
+             + (E_inter_qq_move - E_inter_qq)
 
      IF ( int_sim_type == sim_nvt_min) THEN
         IF ( delta_e <= 0.0_DP ) THEN
@@ -435,8 +432,7 @@ SUBROUTINE Rigid_Dihedral_Change(this_box)
         energy(this_box)%inter_q   = energy(this_box)%inter_q   + E_inter_qq_move - E_inter_qq
 
         IF (int_charge_sum_style(this_box) == charge_ewald) THEN
-           energy(this_box)%ewald_reciprocal = energy(this_box)%ewald_reciprocal + E_reciprocal_move
-
+           energy(this_box)%ewald_reciprocal = E_reciprocal_move
         END IF
 
         energy(this_box)%total = energy(this_box)%total + delta_e

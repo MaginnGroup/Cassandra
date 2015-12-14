@@ -71,9 +71,9 @@ SUBROUTINE Rigid_Insertion
 
   nmolecules_is = 0
 
-  DO i = 1, nmolecules(is)
+  DO im = 1, nmols(is,this_box)
 
-     alive = locate(i,is)
+     alive = locate(im,is,this_box)
 
      IF ( molecule_list(alive,is)%alive ) THEN
 
@@ -85,7 +85,7 @@ SUBROUTINE Rigid_Insertion
 
   ! Provide an array bound check
 
-  IF ( nmolecules_is + 1 .GE. MAXVAL(nmolecules) ) THEN
+  IF ( nmolecules_is + 1 .GE. MAXVAL(max_molecules) ) THEN
 
      ! We do not have sufficient memory to store the information for this molecule
      ! Abort simulation with a flag
@@ -99,13 +99,13 @@ SUBROUTINE Rigid_Insertion
 
   ! Assign a locate number for this molecule
 
-  IF ( molecule_list(nmolecules_is+1,is) = 0 ) THEN
-     locate(nmolecules_is+1,is) = nmolecules_is
+  IF ( locate(nmolecules_is+1,is,this_box) = 0 ) THEN
+     locate(nmolecules_is+1,is,this_box) = nmolecules_is
      ! otherwise we will use the locate number of a previously deleted molecule that has 
      ! been moved to the end of the array.
   END IF
 
-  alive = locate(nmolecules_is+1,is)
+  alive = locate(nmolecules_is+1,is,this_box)
   
   ! in the end if the move is accepted we will make this molecule alive and assign it
   ! to this_box

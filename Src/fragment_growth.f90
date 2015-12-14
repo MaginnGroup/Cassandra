@@ -47,7 +47,6 @@ MODULE Fragment_Growth
   !   insertion
   !   main
   !   ring_fragment_driver
-  !   zig_by_omega
   ! 
   ! Revision history
   !
@@ -164,7 +163,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   P_bias = 1.0_DP
   this_box = molecule_list(this_im,is)%which_box ! which box this_im is in
   atom_list(:,this_im,is)%exist = .FALSE. ! mark all the atoms as deleted 
-  molecule_list(this_im,is)%cfc_lambda = 0.0_DP
+  molecule_list(this_im,is)%frac = 0.0_DP
   is_fragments = nfragments(is) ! number of fragments per molecule
   IF (ALLOCATED(frag_placed)) DEALLOCATE(frag_placed)
   ALLOCATE(frag_placed(is_fragments))
@@ -278,7 +277,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
       END DO
   END IF
   ! Turn on the molecule and its individual atoms
-  molecule_list(this_im,is)%cfc_lambda = this_lambda
+  molecule_list(this_im,is)%frac = this_lambda
   
   DO i =1, frag_list(frag_start,is)%natoms
      this_atom = frag_list(frag_start,is)%atoms(i)
@@ -723,7 +722,7 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
   ! we will make all the atoms of frag_start as part of the simulations
 
   atom_list(:,this_im,is)%exist = .FALSE.
-  molecule_list(this_im,is)%cfc_lambda = 0.0_DP
+  molecule_list(this_im,is)%frac = 0.0_DP
 
   frag_start = frag_order(1)
 
@@ -731,7 +730,7 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
   ! Note that we need to choose from the reservoir only when insertion
   ! is attempted
 
-  molecule_list(this_im,is)%cfc_lambda = this_lambda
+  molecule_list(this_im,is)%frac = this_lambda
 
   ! NR: Select the location of first bead of the fragment
 

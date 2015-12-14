@@ -44,7 +44,7 @@ SUBROUTINE Translate(this_box,mc_step)
   !        Revert_Old_Cartesian_Coordinates
   !        Reset_Molecule_Pair_Interaction_Arrays
   !        Get_Position_Alive
-  !        Compute_Ewald_Reciprocal_Energy_Difference
+  !        Update_Ewald_Reciprocal_Energy
   !
   !
   !  12/10/13 : Beta release
@@ -230,8 +230,8 @@ SUBROUTINE Translate(this_box,mc_step)
         sin_mol_old(:) = sin_mol(1:nvecs(this_box),position)
         !$OMP END PARALLEL WORKSHARE
 
-        CALL Compute_Ewald_Reciprocal_Energy_Difference(alive,alive,is,this_box,int_translation,E_reciprocal_move)
-        delta_e = E_reciprocal_move
+        CALL Update_System_Ewald_Reciprocal_Energy(alive,is,this_box,int_translation,E_reciprocal_move)
+        delta_e = E_reciprocal_move - energy(this_box)%ewald_reciprocal
         
      END IF
      

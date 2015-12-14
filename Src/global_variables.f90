@@ -199,7 +199,8 @@ USE Type_Definitions
   REAL(DP), PARAMETER :: kJmol_to_kcalmol = 0.239005736_DP
 
   ! small number for comparison
-  REAL(DP), PARAMETER :: tiny_number = 0.0000001_DP
+  REAL(DP), PARAMETER :: tiny_number  = 0.0000001_DP
+  REAL(DP), PARAMETER :: small_number = 0.00001_DP
 
   ! converstion for ideal pressure
   REAL(DP), PARAMETER :: p_const = 138.06505
@@ -262,15 +263,14 @@ USE Type_Definitions
   INTEGER, DIMENSION(:), ALLOCATABLE :: n_igas, n_igas_update, n_igas_moves, nzovero ! integers for ideal gas reservoir
   LOGICAL :: first_res_update, igas_flag
   LOGICAL, DIMENSION(:), ALLOCATABLE :: zig_calc
-  INTEGER, DIMENSION(:), ALLOCATABLE :: nmolecules, natoms, nmol_start, nring_atoms, nexo_atoms
+  INTEGER, DIMENSION(:), ALLOCATABLE :: max_molecules, natoms, nmol_start, nring_atoms, nexo_atoms
   INTEGER, DIMENSION(:), ALLOCATABLE :: nbonds, nangles
   INTEGER, DIMENSION(:), ALLOCATABLE :: ndihedrals, nimpropers
   INTEGER, DIMENSION(:), ALLOCATABLE :: nfragments, fragment_bonds
 
   ! array to hold the total number of molecules of each species in a given box
 
-  INTEGER, DIMENSION(:,:), ALLOCATABLE :: nmols, nmol_actual
-  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: nmols_cfc
+  INTEGER, DIMENSION(:,:), ALLOCATABLE :: nmols, nmols_initial
 
   ! array to hold ring atom ids and exo atom ids for a fragment
   ! will have (MAXVAL(natoms), nspecies) dimensions
@@ -310,17 +310,17 @@ USE Type_Definitions
   ! Array with dimension (nspecies)
   TYPE(Species_Class), DIMENSION(:), ALLOCATABLE, TARGET :: species_list
     
-  ! Array with dimensions (nmolecules,nspecies)
+  ! Array with dimensions (max_molecules,nspecies)
   TYPE(Molecule_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: molecule_list
   TYPE(Molecule_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: molecule_list_igas
 
-  ! Array with dimensions (coordinate index, nmolecules, nspecies)
+  ! Array with dimensions (coordinate index, max_molecules, nspecies)
   TYPE(Internal_Coord_Class), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: internal_coord_list
 
   ! Array with dimension (nbonds)
   TYPE(Internal_Coord_Class_Old), DIMENSION(:), ALLOCATABLE, TARGET :: internal_coord_list_old
 
-  ! Array with dimensions (natoms, nmolecules, nspecies)
+  ! Array with dimensions (natoms, max_molecules, nspecies)
   TYPE(Atom_Class), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: atom_list
   TYPE(Atom_Class), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: atom_list_igas
   ! Array with dimension (natoms,1,nspecies) Describes positions of starting gemoetry if a configuration is to be generated
@@ -382,9 +382,9 @@ USE Type_Definitions
 
   ! **********************************************************************************
 
-  ! Linked list for open ensemble simulations, will have dimensions of (MAXVAL(nmolecules),nspecies)
+  ! Linked list for open ensemble simulations, will have dimensions of (MAXVAL(max_molecules),nspecies)
 
-  INTEGER, DIMENSION(:,:), ALLOCATABLE, TARGET :: locate
+  INTEGER, DIMENSION(:,:,:), ALLOCATABLE, TARGET :: locate
 
   ! Array with angle probability info with dimension (MAXVAL(nangles),nspecies)
   
@@ -401,7 +401,7 @@ USE Type_Definitions
   TYPE(Energy_Class), DIMENSION(:), ALLOCATABLE, TARGET :: energy, virial
   TYPE(Energy_Class), DIMENSION(:), ALLOCATABLE, TARGET :: ac_energy, ac_virial
   
-  ! Will have dimension (MAXVAL(nmolecules))
+  ! Will have dimension (MAXVAL(max_molecules))
   TYPE(Energy_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: energy_igas
 
   ! Accumulators for thermodynamic averages,
@@ -465,7 +465,7 @@ USE Type_Definitions
   !*********************************************************************************************************
   ! Information on the output of data
 
-  INTEGER :: nthermo_freq, ncoord_freq, n_mcsteps, n_equilsteps, this_mcstep
+  INTEGER :: nthermo_freq, ncoord_freq, n_mcsteps, n_equilsteps, i_mcstep
  
   INTEGER,DIMENSION(:),ALLOCATABLE :: nbr_prop_files
 
@@ -540,7 +540,7 @@ USE Type_Definitions
   REAL(DP) :: copy_time, recip_time
 
   ! cos_mol and sin_mol arrays hold k space vectors for each molecule
-  ! dimensions == (SUM(nmolecules), MAX(nvecs))
+  ! dimensions == (SUM(max_molecules), MAX(nvecs))
   REAL(DP), ALLOCATABLE :: cos_mol(:,:) , sin_mol(:,:)
   LOGICAL :: l_pair_nrg
 
@@ -555,6 +555,9 @@ USE Type_Definitions
 !!!! Zeolite variables
 REAL(DP), ALLOCATABLE, DIMENSION(:) :: x_lat, y_lat, z_lat
 INTEGER :: n_lat_atoms
+
+!!! Pair_Nrg_Variables
+REAL(DP), ALLOCATABLE :: pair_vdw_temp(:), pair_qq_temp(:)
   
 END MODULE Global_Variables
 

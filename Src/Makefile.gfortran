@@ -111,7 +111,6 @@ OBJS =	main.o \
 	insertion.o \
 	deletion.o \
         accept_or_reject.o \
-	zig_by_omega.o \
 	gemc_control.o \
         gemc_driver.o \
 	gemc_particle_transfer.o \

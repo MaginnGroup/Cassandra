@@ -63,7 +63,7 @@ SUBROUTINE Angle_Distortion(this_box)
   REAL(DP) :: rand, p_acc
   
   REAL(DP) :: E_bond, E_angle, E_dihedral, E_improper, E_intra_vdw, E_intra_qq
-  REAL(DP) :: E_inter_vdw, E_inter_qq
+  REAL(DP) :: E_inter_vdw, E_inter_qq, E_periodic_qq
   REAL(DP) :: E_bond_move, E_angle_move, E_dihedral_move, E_improper_move, E_intra_vdw_move
   REAL(DP) :: E_intra_qq_move, E_inter_vdw_move, E_inter_qq_move
   REAL(DP) :: E_reciprocal_move
@@ -102,23 +102,16 @@ SUBROUTINE Angle_Distortion(this_box)
 
      IF ( angle_list(angle_to_move,is)%angle_potential_type == 'fixed') CYCLE
 
-     ! Obtain number of molecules of this species
-
-     CALL Get_Nmolecules_Species(this_box,is,nmolecules_species)
-
      ! Make sure that molecules of the selected species exist in the simulation box
 
-     IF ( nmolecules_species /= 0 ) EXIT
+     IF ( nmols(is,this_box) /= 0 ) EXIT
 
   END DO
 
   ! Select a molecule at random for the move
-
-  im = INT( rranf() * nmolecules_species ) + 1
-
+  im = INT( rranf() * nmols(is,this_box) ) + 1
   ! Get the index of imth molecule of species is in the box.
-
-  CALL Get_Index_Molecule(this_box,is,im,alive)
+  alive = locate(im,is,this_box)
 
   ntrials(is,this_box)%angle = ntrials(is,this_box)%angle + 1
 
@@ -128,12 +121,13 @@ SUBROUTINE Angle_Distortion(this_box)
   CALL Compute_Molecule_Dihedral_Energy(alive,is,E_dihedral)
   CALL Compute_Molecule_Improper_Energy(alive,is,E_improper)
 
-  CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is,E_intra_vdw,E_intra_qq,intra_overlap)
+  CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is,E_intra_vdw,E_intra_qq,E_periodic_qq,intra_overlap)
   IF (l_pair_nrg) THEN
      CALL Store_Molecule_Pair_Interaction_Arrays(alive,is,this_box,E_inter_vdw,E_inter_qq)
   ELSE
      CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_inter_vdw,E_inter_qq,inter_overlap)
   END IF
+  E_inter_qq = E_inter_qq + E_periodic_qq
 
   IF (inter_overlap)  THEN
      WRITE(*,*) 'Disaster, overlap in the old configruation'
@@ -360,8 +354,9 @@ SUBROUTINE Angle_Distortion(this_box)
   CALL Get_COM(alive,is)
   CALL Compute_Max_COM_Distance(alive,is)
 
-  CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is,E_intra_vdw_move,E_intra_qq_move,intra_overlap)
+  CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is,E_intra_vdw_move,E_intra_qq_move,E_periodic_qq,intra_overlap)
   CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_inter_vdw_move,E_inter_qq_move,inter_overlap)
+  E_inter_qq_move = E_inter_qq_move + E_periodic_qq
 
 
   IF (inter_overlap) THEN
@@ -391,16 +386,22 @@ SUBROUTINE Angle_Distortion(this_box)
         cos_mol_old(:) = cos_mol(1:nvecs(this_box),position)
         sin_mol_old(:) = sin_mol(1:nvecs(this_box),position)
         
-        CALL Compute_Ewald_Reciprocal_Energy_Difference(alive,alive,is,this_box,int_intra,E_reciprocal_move)
-        delta_e = E_reciprocal_move
+        CALL Update_System_Ewald_Reciprocal_Energy(alive,is,this_box, &
+             int_intra,E_reciprocal_move)
+        delta_e = (E_reciprocal_move - energy(this_box)%ewald_reciprocal)
             
      END IF
      
      ! energy difference
 
-     delta_e = E_bond_move - E_bond + E_angle_move - E_angle + E_dihedral_move - E_dihedral + &
-          E_improper_move - E_improper + E_intra_vdw_move - E_intra_vdw + E_intra_qq_move - E_intra_qq + &
-          E_inter_vdw_move - E_inter_vdw + E_inter_qq_move - E_inter_qq + delta_e
+     delta_e = (E_bond_move - E_bond) &
+             + (E_angle_move - E_angle) &
+             + (E_dihedral_move - E_dihedral) &
+             + (E_improper_move - E_improper) &
+             + (E_intra_vdw_move - E_intra_vdw) &
+             + (E_intra_qq_move - E_intra_qq) &
+             + (E_inter_vdw_move - E_inter_vdw) &
+             + (E_inter_qq_move - E_inter_qq) + delta_e
 
      IF ( int_sim_type == sim_nvt_min ) THEN
         IF ( delta_e <= 0.0_DP ) THEN
@@ -428,7 +429,7 @@ SUBROUTINE Angle_Distortion(this_box)
         energy(this_box)%inter_q   = energy(this_box)%inter_q   + E_inter_qq_move - E_inter_qq
 
         IF (int_charge_sum_style(this_box) == charge_ewald) THEN
-           energy(this_box)%ewald_reciprocal = energy(this_box)%ewald_reciprocal + E_reciprocal_move
+           energy(this_box)%ewald_reciprocal = E_reciprocal_move
 
         END IF
 

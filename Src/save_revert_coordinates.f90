@@ -34,7 +34,7 @@
 ! coordinates of the molecule if the attempted move is rejected.
 !
 ! Note that in all the routines input 'im' is the linked number for the input
-! molecule i.e. im = locate(molecule #,species #)
+! molecule i.e. im = locate(molecule #,species #,box #)
 !
 ! Written by Jindal Shah
 ! 

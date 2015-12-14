@@ -41,7 +41,7 @@ SUBROUTINE Rotate(this_box)
 !   Save_Old_Cartesian_Coordinates
 !   Compute_Molecule_Nonbond_Inter_Energy
 !   Rotate_Molecule_Axis
-!   Compute_Ewald_Reciprocal_Energy_Difference
+!   Update_System_Ewald_Reciprocal_Energy
 !   Get_COM
 !   Revert_Old_Cartesian_Coordinates
 !
@@ -223,8 +223,8 @@ SUBROUTINE Rotate(this_box)
         sin_mol_old(:) = sin_mol(1:nvecs(this_box),position)
         !$OMP END PARALLEL WORKSHARE
 
-        CALL Compute_Ewald_Reciprocal_Energy_Difference(alive,alive,is,this_box,int_rotation,E_reciprocal_move)
-        delta_e = E_reciprocal_move
+        CALL Update_System_Ewald_Reciprocal_Energy(alive,is,this_box,int_rotation,E_reciprocal_move)
+        delta_e = E_reciprocal_move - energy(this_box)%ewald_reciprocal
 
      END IF
      

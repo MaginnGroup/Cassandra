@@ -20,7 +20,7 @@
 !*******************************************************************************
 
 
-SUBROUTINE Volume_Change(this_box,this_step)
+SUBROUTINE Volume_Change(this_box,accept)
   !*****************************************************************************
   ! The subroutine performs a volume perturbation move. Presently, the routine
   ! is set up to perform volume changes in cubic simulation box. Extension
@@ -38,7 +38,7 @@ SUBROUTINE Volume_Change(this_box,this_step)
   !   Compute_Cell_Dimensions
   !   Ewald_Reciprocal_Lattice_Vector_Setup
   !   Clean_Abort
-  !   Compute_Total_System_Energy
+  !   Compute_System_Total_Energy
   !   Revert_Old_Cartesian_Coordinates
   !   
   ! Revision History
@@ -70,7 +70,7 @@ SUBROUTINE Volume_Change(this_box,this_step)
 !  !$ include 'omp_lib.h'
 
   INTEGER :: is, im, alive, this_box, i, total_molecules, nvecs_old, ibox
-  INTEGER :: nvecs_max, k, iatom, this_step
+  INTEGER :: nvecs_max, k, iatom
 
   INTEGER :: ia
 
@@ -103,37 +103,38 @@ SUBROUTINE Volume_Change(this_box,this_step)
 
   REAL(DP) :: time1,time0
  
+  CHARACTER(7) :: box_str, cutoff_str
   ! Framework related stuff
-
   REAL(DP) :: pore_width_old, ratio_width, area, half_pore_width_old
 
   ! Done with that section
 
   ! Randomly choose a box for volume perturbation
-
-
-
-     this_box = INT ( rranf() * nbr_boxes ) + 1
+  this_box = INT ( rranf() * nbr_boxes ) + 1
 
   ! increase the total number of trials for this box
-
   tot_trials(this_box) = tot_trials(this_box) + 1
   
   ! increment the number of volume moves for this box
-  
   nvolumes(this_box) = nvolumes(this_box) + 1
+
+  ! Perform a random walk in dv_max
+  delta_volume = (1.0_DP - 2.0_DP * rranf()) * box_list(this_box)%dv_max
+  this_volume = box_list(this_box)%volume + delta_volume
+  
+  ! Reject the move
+  IF (this_volume < 0.0_DP) RETURN
 
   ! store the old configuration of all atoms and COMs of molecules, also
   ! calculate the total number of molecules in the box to be used in
   ! the acceptance rule
-
   total_molecules = 0
 
   DO is = 1, nspecies
      
-     DO im = 1, nmolecules(is)
+     DO im = 1, nmols(is,this_box)
         
-        alive = locate(im,is)
+        alive = locate(im,is,this_box)
 
         IF (molecule_list(alive,is)%live) THEN
 
@@ -168,8 +169,8 @@ SUBROUTINE Volume_Change(this_box,this_step)
   
   IF (l_pair_nrg) THEN
      
-     ALLOCATE(pair_nrg_vdw_old(SUM(nmolecules),SUM(nmolecules)))
-     ALLOCATE(pair_nrg_qq_old(SUM(nmolecules),SUM(nmolecules)))
+     ALLOCATE(pair_nrg_vdw_old(SUM(max_molecules),SUM(max_molecules)))
+     ALLOCATE(pair_nrg_qq_old(SUM(max_molecules),SUM(max_molecules)))
      
      !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
      pair_nrg_vdw_old(:,:) = pair_nrg_vdw(:,:)
@@ -182,7 +183,7 @@ SUBROUTINE Volume_Change(this_box,this_step)
      
      ! store the cos_mol and sin_mol arrays
 
-     ALLOCATE(cos_mol_old(MAXVAL(nvecs),SUM(nmolecules)), Stat = AllocateStatus)
+     ALLOCATE(cos_mol_old(MAXVAL(nvecs),SUM(max_molecules)), Stat = AllocateStatus)
 
      IF (AllocateStatus /=0 ) THEN
         err_msg = ''
@@ -191,7 +192,7 @@ SUBROUTINE Volume_Change(this_box,this_step)
         CALL Clean_Abort(err_msg,'Volume_Change')
      END IF
 
-     ALLOCATE(sin_mol_old(MAXVAL(nvecs),SUM(nmolecules)), Stat = AllocateStatus)
+     ALLOCATE(sin_mol_old(MAXVAL(nvecs),SUM(max_molecules)), Stat = AllocateStatus)
 
      IF (AllocateStatus /=0 ) THEN
         err_msg = ''
@@ -207,15 +208,9 @@ SUBROUTINE Volume_Change(this_box,this_step)
   END IF
 
   ! Store the box_list matrix
-
   box_list_old = box_list(this_box)
 
-  ! Perform a random walk in dv_max
-
-  delta_volume = (1.0_DP - 2.0_DP * rranf()) * box_list(this_box)%dv_max
-  this_volume = box_list(this_box)%volume + delta_volume
-
-
+  ! Change the box size
   IF ( box_list(this_box)%int_box_shape == int_cubic ) THEN
 
      box_list(this_box)%length(1,1) = this_volume ** (1.0_DP/3.0_DP)
@@ -246,12 +241,12 @@ SUBROUTINE Volume_Change(this_box,this_step)
         
         IF( int_charge_sum_style(this_box) == charge_ewald ) THEN
            
-           !           alpha_ewald_old = alpha_ewald(this_box)
+           ! alpha_ewald_old = alpha_ewald(this_box)
            h_ewald_cut_old = h_ewald_cut(this_box)
            
         END IF
         
-        rcut_vdw(this_box) = 0.5_DP * box_list(this_box)%length(1,1)
+        rcut_vdw(this_box) = 0.49_DP * box_list(this_box)%length(1,1)
         rcut_coul(this_box) = rcut_vdw(this_box)
         rcut_vdwsq(this_box) = rcut_vdw(this_box) * rcut_vdw(this_box)
         rcut_coulsq(this_box) = rcut_vdwsq(this_box)
@@ -276,13 +271,33 @@ SUBROUTINE Volume_Change(this_box,this_step)
      
      
      IF ( box_list(this_box)%int_box_shape == int_cubic) THEN
-        IF ( 0.5 * box_list(this_box)%length(1,1) < rcut_vdw(this_box) .OR. &
-             0.5 * box_list(this_box)%length(1,1) < rcut_coul(this_box) .OR. &
-             0.5 * box_list(this_box)%length(1,1) < roff_charmm(this_box) .OR. &
-             0.5 * box_list(this_box)%length(1,1) < roff_switch(this_box) ) THEN
+        IF ( 0.5 * box_list(this_box)%length(1,1) < rcut_vdw(this_box) ) THEN
+           WRITE(cutoff_str,'(F7.3)') rcut_vdw(this_box)
+           WRITE(box_str,'(F7.3)') 0.5*box_list(this_box)%length(1,1)
            err_msg = ''
-           err_msg(1) = 'Cutoff is greater than the half box length'
-           err_msg(2) = Int_to_String(this_box)
+           err_msg(1) = 'VDW cutoff =' // cutoff_str // ' is greater than the'
+           err_msg(2) = 'half box length of box ' // TRIM(Int_To_String(this_box)) // ' = ' // box_str
+           CALL Clean_Abort(err_msg,'Volume_Change')
+        ELSE IF ( 0.5 * box_list(this_box)%length(1,1) < rcut_coul(this_box) ) THEN
+           WRITE(cutoff_str,'(F7.3)') rcut_coul(this_box)
+           WRITE(box_str,'(F7.3)') 0.5*box_list(this_box)%length(1,1)
+           err_msg = ''
+           err_msg(1) = 'Coulomb cutoff =' // cutoff_str // ' is greater than the'
+           err_msg(2) = 'half box length of box ' // TRIM(Int_To_String(this_box)) // ' = ' // box_str
+           CALL Clean_Abort(err_msg,'Volume_Change')
+        ELSE IF ( 0.5 * box_list(this_box)%length(1,1) < roff_charmm(this_box) ) THEN
+           WRITE(cutoff_str,'(F7.3)') roff_charmm(this_box)
+           WRITE(box_str,'(F7.3)') 0.5*box_list(this_box)%length(1,1)
+           err_msg = ''
+           err_msg(1) = 'Charmm cutoff =' // cutoff_str // ' is greater than the'
+           err_msg(2) = 'half box length of box ' // TRIM(Int_To_String(this_box)) // ' = ' // box_str
+           CALL Clean_Abort(err_msg,'Volume_Change')
+        ELSE IF ( 0.5 * box_list(this_box)%length(1,1) < roff_switch(this_box) ) THEN
+           WRITE(cutoff_str,'(F7.3)') roff_switch(this_box)
+           WRITE(box_str,'(F7.3)') 0.5*box_list(this_box)%length(1,1)
+           err_msg = ''
+           err_msg(1) = 'Switch cutoff =' // cutoff_str // ' is greater than the'
+           err_msg(2) = 'half box length of box ' // TRIM(Int_To_String(this_box)) // ' = ' // box_str
            CALL Clean_Abort(err_msg,'Volume_Change')
         END IF
      END IF
@@ -297,9 +312,9 @@ SUBROUTINE Volume_Change(this_box,this_step)
   
   DO is = 1, nspecies
 
-     DO im = 1, nmolecules(is)
+     DO im = 1, nmols(is,this_box)
         
-        alive = locate(im,is)
+        alive = locate(im,is,this_box)
         
         IF (molecule_list(alive,is)%live) THEN
            
@@ -317,35 +332,28 @@ SUBROUTINE Volume_Change(this_box,this_step)
                       + box_list_old%length_inv(i,3) * molecule_list(alive,is)%zcom
               END DO
               
-              
-              
               ! now obtain the new positions of COMs
+              molecule_list(alive,is)%xcom = box_list(this_box)%length(1,1) * s(1) &
+                                           + box_list(this_box)%length(1,2) * s(2) &
+                                           + box_list(this_box)%length(1,3) * s(3)
               
-
-                 
-                 molecule_list(alive,is)%xcom = box_list(this_box)%length(1,1) * s(1) &
-                                              + box_list(this_box)%length(1,2) * s(2) &
-                                              + box_list(this_box)%length(1,3) * s(3)
-                 
-                 molecule_list(alive,is)%ycom = box_list(this_box)%length(2,1) * s(1) &
-                                              + box_list(this_box)%length(2,2) * s(2) &
-                                              + box_list(this_box)%length(2,3) * s(3)
-                 
-                 molecule_list(alive,is)%zcom = box_list(this_box)%length(3,1) * s(1) &
-                                              + box_list(this_box)%length(3,2) * s(2) &
-                                              + box_list(this_box)%length(3,3) * s(3)
+              molecule_list(alive,is)%ycom = box_list(this_box)%length(2,1) * s(1) &
+                                           + box_list(this_box)%length(2,2) * s(2) &
+                                           + box_list(this_box)%length(2,3) * s(3)
               
-                 ! Obtain the new positions of atoms in this molecule
-                 
-                 
-                 atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp + &
-                      molecule_list(alive,is)%xcom - molecule_list(alive,is)%xcom_old
-                 
-                 atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp + &
-                      molecule_list(alive,is)%ycom - molecule_list(alive,is)%ycom_old
-                 
-                 atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp + &
-                      molecule_list(alive,is)%zcom - molecule_list(alive,is)%zcom_old
+              molecule_list(alive,is)%zcom = box_list(this_box)%length(3,1) * s(1) &
+                                           + box_list(this_box)%length(3,2) * s(2) &
+                                           + box_list(this_box)%length(3,3) * s(3)
+              
+              ! Obtain the new positions of atoms in this molecule
+              atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp + &
+                   molecule_list(alive,is)%xcom - molecule_list(alive,is)%xcom_old
+              
+              atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp + &
+                   molecule_list(alive,is)%ycom - molecule_list(alive,is)%ycom_old
+              
+              atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp + &
+                   molecule_list(alive,is)%zcom - molecule_list(alive,is)%zcom_old
                  
               
            END IF
@@ -386,11 +394,9 @@ SUBROUTINE Volume_Change(this_box,this_step)
 
      ! Determine the new k vectors for this box. The call will change Cn, hx, hy and hz and hence will
      ! change cos_sum and sin_sum.
-     
      CALL Ewald_Reciprocal_Lattice_Vector_Setup(this_box)
 
      ! Now check to see if we need to reallocate the cos_sum and sin_sum arrays
-     
      allocation_cos_sin = .FALSE.
 
      IF (nvecs(this_box) > nvecs_max) THEN
@@ -424,7 +430,7 @@ SUBROUTINE Volume_Change(this_box,this_step)
            CALL Clean_Abort(err_msg,'Volume_Change')
         END IF
 
-        ALLOCATE(cos_mol(nvecs(this_box),SUM(nmolecules)), Stat = AllocateStatus)
+        ALLOCATE(cos_mol(nvecs(this_box),SUM(max_molecules)), Stat = AllocateStatus)
 
         IF (Allocatestatus /= 0) THEN
            err_msg = ''
@@ -433,7 +439,7 @@ SUBROUTINE Volume_Change(this_box,this_step)
            CALL Clean_Abort(err_msg,'Volume_Change')
         END IF
 
-        ALLOCATE(sin_mol(nvecs(this_box),SUM(nmolecules)), Stat = AllocateStatus)
+        ALLOCATE(sin_mol(nvecs(this_box),SUM(max_molecules)), Stat = AllocateStatus)
 
         IF (Allocatestatus /= 0) THEN
            err_msg = ''
@@ -443,7 +449,6 @@ SUBROUTINE Volume_Change(this_box,this_step)
         END IF
         
         ! Mark this event with the following flag
-        
         allocation_cos_sin = .TRUE.
         
      END IF
@@ -451,12 +456,7 @@ SUBROUTINE Volume_Change(this_box,this_step)
 
   END IF
 
-     CALL Compute_Total_System_Energy(this_box,.TRUE.,overlap)
-
-
-
-
-
+  CALL Compute_System_Total_Energy(this_box,.TRUE.,overlap)
 
   IF (overlap) THEN
      ! reject move
@@ -465,12 +465,9 @@ SUBROUTINE Volume_Change(this_box,this_step)
   ELSE 
      
      ! change in the energy of the system 
-     
      delta_e = energy(this_box)%total - energy_old%total
      
      ! based on the energy, calculate the acceptance ratio
-     
-        
      ln_pacc = beta(this_box) * delta_e &
              + beta(this_box) * pressure(this_box) * delta_volume &
              - total_molecules * DLOG(box_list(this_box)%volume/box_list_old%volume)
@@ -478,7 +475,6 @@ SUBROUTINE Volume_Change(this_box,this_step)
 
      
      IF ( accept ) THEN
-
 
         nvol_success(this_box) = nvol_success(this_box) + 1
         ivol_success(this_box) = ivol_success(this_box) + 1
@@ -513,21 +509,22 @@ SUBROUTINE Volume_Change(this_box,this_step)
               
               !              CALL cpu_time(time0)
               
-              DO is = 1, nspecies
-                 DO im = 1, nmolecules(is)
-                    alive = locate(im,is)
-                    IF (.NOT. molecule_list(alive,is)%live) CYCLE
-                    ! skip the molecules in 'this_box'
-                    my_box = molecule_list(alive,is)%which_box
-                    IF (my_box == this_box )CYCLE 
-                    CALL Get_Position_Alive(alive,is,position)
-                    
-                    cos_mol(1:nvecs(my_box),position) = cos_mol_old(1:nvecs(my_box),position)
-                    !                    cos_mol(nvecs(my_box)+1,nvecs(this_box)) = 0.0_DP
-                    
-                    sin_mol(1:nvecs(my_box),position) = sin_mol_old(1:nvecs(my_box),position)
-                    !                   sin_mol(nvecs(my_box)+1,nvecs(this_box)) = 0.0_DP
-                    
+              DO ibox = 1, nbr_boxes
+                 ! skip the molecules in 'this_box'
+                 IF (ibox == this_box )CYCLE 
+                 DO is = 1, nspecies
+                    DO im = 1, nmols(is,ibox)
+                       alive = locate(im,is,ibox)
+                       IF (.NOT. molecule_list(alive,is)%live) CYCLE
+                       CALL Get_Position_Alive(alive,is,position)
+                       
+                       cos_mol(1:nvecs(ibox),position) = cos_mol_old(1:nvecs(ibox),position)
+                       !                    cos_mol(nvecs(ibox)+1,nvecs(this_box)) = 0.0_DP
+                       
+                       sin_mol(1:nvecs(ibox),position) = sin_mol_old(1:nvecs(ibox),position)
+                       !                   sin_mol(nvecs(ibox)+1,nvecs(this_box)) = 0.0_DP
+                       
+                    END DO
                  END DO
               END DO
               
@@ -535,22 +532,6 @@ SUBROUTINE Volume_Change(this_box,this_step)
            END IF
            DEALLOCATE(cos_mol_old,sin_mol_old)
         END IF
-
-
-!  This section is for when things are f'ed up
-        
-!        energy_bef = energy(this_box)%inter_q
-!        CALL Compute_Total_System_Energy(this_box,.TRUE.,overlap)
-!        checke = abs(energy_bef - energy(this_box)%inter_q)
-
-!        IF(checke .GT. 0.00001) THEN
-!          superbad = .TRUE.
-!          write(*,*) 'This is fubar.'
-!        END IF
-
-!        energy(this_box)%inter_q = energy_bef
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
      ELSE
         
@@ -575,18 +556,19 @@ SUBROUTINE Volume_Change(this_box,this_step)
      WRITE(logunit,'(A,I1,A,F8.5)')'Success ratio, volume changes for box ', this_box ,' : ', success_ratio
 
      IF (int_run_style == run_equil) THEN
-        ! check if the acceptane is close to 0.5
-        
+        ! dv_max will be adjusted to achieve 0.5 acceptance using the formula
+        !
+        !     dv_max = 2 * success_ratio * dv_max
+        !
+        ! If the current success_ratio is too low, dv_max will be decreased.
+        ! Otherwise, dv_max will be increased. 
+      
         IF (box_list(this_box)%box_shape == 'CUBIC') THEN
            
            IF ( success_ratio < 0.0001 ) THEN
-              
-              box_list(this_box)%dv_max = 0.1 * DP * box_list(this_box)%dv_max
-              
+              box_list(this_box)%dv_max = 0.1_DP * box_list(this_box)%dv_max
            ELSE
-              
               box_list(this_box)%dv_max = 2.0_DP * success_ratio * box_list(this_box)%dv_max
-              
            END IF
            WRITE(logunit,'(A,I1,A,F8.0)') 'Maximum width, volume changes for box ', this_box, ' : ', box_list(this_box)%dv_max
 
@@ -597,7 +579,7 @@ SUBROUTINE Volume_Change(this_box,this_step)
 
   END IF
 
-    
+
 
   CONTAINS
 
@@ -605,17 +587,13 @@ SUBROUTINE Volume_Change(this_box,this_step)
       
       DO is = 1, nspecies
          
-         DO im = 1, nmolecules(is)
+         DO im = 1, nmols(is,this_box)
             
-            alive = locate(im,is)
+            alive = locate(im,is,this_box)
 
             IF (molecule_list(alive,is)%live) THEN
                
-               IF (molecule_list(alive,is)%which_box == this_box) THEN
-                  
-                  CALL Revert_Old_Cartesian_Coordinates(alive,is)
-                  
-               END IF
+               CALL Revert_Old_Cartesian_Coordinates(alive,is)
                
             END IF
             
@@ -694,7 +672,7 @@ SUBROUTINE Volume_Change(this_box,this_step)
                CALL Clean_Abort(err_msg,'Volume_Change')
             END IF
             
-            ALLOCATE(cos_mol(MAXVAL(nvecs),SUM(nmolecules)), Stat = AllocateStatus)
+            ALLOCATE(cos_mol(MAXVAL(nvecs),SUM(max_molecules)), Stat = AllocateStatus)
             
             IF (Allocatestatus /= 0) THEN
                err_msg = ''
@@ -702,7 +680,7 @@ SUBROUTINE Volume_Change(this_box,this_step)
                CALL Clean_Abort(err_msg,'Volume_Change')
             END IF
             
-            ALLOCATE(sin_mol(MAXVAL(nvecs),SUM(nmolecules)), Stat = AllocateStatus)
+            ALLOCATE(sin_mol(MAXVAL(nvecs),SUM(max_molecules)), Stat = AllocateStatus)
             
             IF (Allocatestatus /= 0) THEN
                err_msg = ''

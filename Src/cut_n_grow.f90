@@ -1,4 +1,4 @@
-!********************************************************************************
+!*******************************************************************************
 !   Cassandra - An open source atomistic Monte Carlo software package
 !   developed at the University of Notre Dame.
 !   http://cassandra.nd.edu
@@ -19,7 +19,7 @@
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*******************************************************************************
 
-SUBROUTINE Cut_N_Grow(this_box,mcstep)
+SUBROUTINE Cut_N_Grow(this_box,accept)
 
   !*****************************************************************************
   !
@@ -80,7 +80,7 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
   REAL(DP) :: E_intra_vdw_n, E_intra_qq_n, E_inter_vdw_n, E_inter_qq_n
   REAL(DP) :: E_intra_vdw_o, E_intra_qq_o, E_inter_vdw_o, E_inter_qq_o
   REAL(DP) :: E_bond_o, E_angle_o, E_dihed_o, delta_e_n, delta_e_o
-  REAL(DP) :: E_improper_n, E_improper_o
+  REAL(DP) :: E_improper_n, E_improper_o, E_periodic_qq
   REAL(DP) :: E_selferf_n, E_selferf_o
   REAL(DP) :: E_reciprocal_move, ln_pacc, e_prev, delta_intra, phi
   REAL(DP) :: energy_olde, check_e
@@ -111,23 +111,34 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
   nrg_ring_frag_reverse = 0.0
 
   ! Let us choose a box to pick the species and molecule to pick from.
-
   ALLOCATE(x_box(nbr_boxes), species_id(nspecies))
 
-  total_mols = SUM(nmols(:,:))
-
-  IF(total_mols == 0) RETURN
-
+  ! Sum the number of regrowable molecules in each box
+  total_mols = 0
   DO ibox = 1, nbr_boxes
-     nmols_box = SUM(nmols(:,ibox))
-     x_box(ibox) = REAL(nmols_box,DP)/REAL(total_mols,DP)
+     nmols_box = 0
+     DO is = 1, nspecies
+        IF (is == 1 .AND. prob_growth_species(is) > 0.0_DP) THEN
+           total_mols = total_mols + nmols(is,ibox)
+           nmols_box  = nmols_box  + nmols(is,ibox)
+        ELSE IF (is > 1) THEN
+           IF (prob_growth_species(is) > prob_growth_species(is-1)) THEN
+              total_mols = total_mols + nmols(is,ibox)
+              nmols_box  = nmols_box  + nmols(is,ibox)
+           END IF
+        END IF
+     END DO
+     x_box(ibox) = REAL(nmols_box,DP)
+  END DO
+  IF(total_mols == 0) RETURN
+  DO ibox = 1, nbr_boxes
+     x_box(ibox) = x_box(ibox)/REAL(total_mols,DP)
      IF (ibox > 1 ) THEN
         x_box(ibox) = x_box(ibox) + x_box(ibox-1)
      END IF
   END DO
 
   ! Choose a box
-
   rand_no = rranf()
 
   DO ibox = 1,nbr_boxes
@@ -147,7 +158,6 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
   ! NR: Changing based on probability based on species
   ! We might have situations where we don't want to do
   ! regrowth for some molecules types
-
   nmolecules_species = 0
   nfrag_species = 0
 
@@ -162,7 +172,6 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
   IF(nmolecules_species == 0) RETURN
 
   ! select a species
-
   rand_no = rranf()
 
   DO is = 1, nspecies
@@ -170,17 +179,14 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
   END DO
 
   is = species_id(is)
-  nmolecules_species = nmols(is,this_box)
 
   IF ( nmols(is,this_box) == 0 ) RETURN
 
   DEALLOCATE(species_id)
 
   ! Select a molecule at random for cutting 
-
-     im = INT ( rranf() * nmolecules_species ) + 1
-     ! Get the index of imth molecule of species is in this_box
-     CALL Get_Index_Molecule(this_box,is,im,alive)
+  im = INT ( rranf() * nmols(is,this_box) ) + 1
+  alive = locate(im,is,this_box)
 
   CALL Save_Old_Cartesian_Coordinates(alive,is)
 
@@ -210,7 +216,7 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
 
   IF ( nfragments(is) == 1 ) THEN
 
-    lambda_for_cut = molecule_list(alive,is)%cfc_lambda
+    lambda_for_cut = molecule_list(alive,is)%frac
     CALL Single_Fragment_Regrowth(alive,is)
     frag_total = 1
 
@@ -218,10 +224,9 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
 
      nrg_ring_frag_forward = 0.0_DP
 
-     lambda_for_cut = molecule_list(alive,is)%cfc_lambda
-     CALL Cut_Regrow(alive,is,frag_start,frag_end,frag_order,frag_total, &
-          lambda_for_cut, e_prev, P_seq, P_forward, nrg_ring_frag_forward, &
-          cbmc_overlap, del_overlap)
+     lambda_for_cut = molecule_list(alive,is)%frac
+     CALL Cut_Regrow(alive,is,frag_start,frag_end,frag_order,frag_total,lambda_for_cut, &
+          e_prev,P_seq,P_forward, nrg_ring_frag_forward, cbmc_overlap, del_overlap)
 
   END IF
 
@@ -246,12 +251,12 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
   IF (cbmc_overlap) THEN
      CALL Revert_Old_Cartesian_Coordinates(alive,is)
      ! It may so happen that only part of the molecule was grown, so make
-     ! all the atoms alive and set the cfc_lambda values
+     ! all the atoms alive and set the frac values
  
      DO iatom = 1, natoms(is)    
         atom_list(iatom,alive,is)%exist = .TRUE.
      END DO
-     molecule_list(alive,is)%cfc_lambda = lambda_for_cut
+     molecule_list(alive,is)%frac = lambda_for_cut
 
      DEALLOCATE(frag_order)
 
@@ -275,9 +280,12 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
   CALL Compute_Molecule_Angle_Energy(alive,is,E_angle_n)
   CALL Compute_Molecule_Dihedral_Energy(alive,is,E_dihed_n)
   CALL Compute_Molecule_Improper_Energy(alive,is,E_improper_n)
-  CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is,E_intra_vdw_n, E_intra_qq_n,intra_overlap)
+  CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is,E_intra_vdw_n, &
+       E_intra_qq_n,E_periodic_qq,intra_overlap)
 
-  CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_inter_vdw_n,E_inter_qq_n,cbmc_overlap)
+  CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_inter_vdw_n, &
+       E_inter_qq_n,cbmc_overlap)
+  E_inter_qq_n = E_inter_qq_n + E_periodic_qq
 
 
   ! Note that cbmc_overlap could be true when a molecule with single fragment
@@ -287,7 +295,7 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
     
      CALL Revert_Old_Cartesian_Coordinates(alive,is)
      
-     molecule_list(alive,is)%cfc_lambda = lambda_for_cut
+     molecule_list(alive,is)%frac = lambda_for_cut
      
      IF (l_pair_nrg) CALL Reset_Molecule_Pair_Interaction_Arrays(alive,is,this_box)
 
@@ -314,9 +322,10 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
      !$OMP END PARALLEL WORKSHARE
 
      ! Compute the change in Ewald reciprocal energy due to the move
-     CALL Compute_Ewald_Reciprocal_Energy_Difference(alive,alive,is,this_box, &
-          int_intra, E_reciprocal_move)
-     delta_e_n = delta_e_n + E_reciprocal_move
+     CALL Update_System_Ewald_Reciprocal_Energy(alive,is,this_box, &
+          int_intra,E_reciprocal_move)
+     delta_e_n = delta_e_n &
+               + (E_reciprocal_move - energy(this_box)%ewald_reciprocal)
 
   END IF
 
@@ -342,7 +351,7 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
 
   IF (nfragments(is) /= 1) THEN
 
-     lambda_for_cut = molecule_list(alive,is)%cfc_lambda
+     lambda_for_cut = molecule_list(alive,is)%frac
      nrg_ring_frag_reverse = 0.0_DP
      CALL Cut_Regrow(alive,is,frag_start,frag_end,frag_order,frag_total, &
           lambda_for_cut, e_prev, P_seq, P_reverse, nrg_ring_frag_reverse, &
@@ -357,7 +366,7 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
         
         CALL Revert_Old_Cartesian_Coordinates(alive,is)
         
-        molecule_list(alive,is)%cfc_lambda = lambda_for_cut
+        molecule_list(alive,is)%frac = lambda_for_cut
 
         accept = .FALSE.
 
@@ -382,9 +391,10 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
      CALL Compute_Molecule_Dihedral_Energy(alive,is,E_dihed_o)
      CALL Compute_Molecule_Improper_Energy(alive,is,E_improper_o)
      CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is,E_intra_vdw_o, &
-             E_intra_qq_o,intra_overlap)
+             E_intra_qq_o,E_periodic_qq,intra_overlap)
 
      IF (.NOT. l_pair_nrg) CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_inter_vdw_o,E_inter_qq_o,cbmc_overlap)
+     E_inter_qq_o = E_inter_qq_o + E_periodic_qq
 
      delta_e_o = E_intra_vdw_o + E_intra_qq_o + E_inter_vdw_o + E_inter_qq_o &
                + E_dihed_o + E_improper_o - E_selferf_o
@@ -429,9 +439,8 @@ SUBROUTINE Cut_N_Grow(this_box,mcstep)
                                                                e_inter_vdw_o
      energy(this_box)%inter_q = energy(this_box)%inter_q + e_inter_qq_n - e_inter_qq_o
 
-     IF (int_charge_sum_style(this_box) == charge_ewald) THEN
-        energy(this_box)%ewald_reciprocal = energy(this_box)%ewald_reciprocal + &
-             E_reciprocal_move
+     IF (l_charge) THEN
+        energy(this_box)%ewald_reciprocal = E_reciprocal_move
         energy(this_box)%ewald_self = energy(this_box)%ewald_self - & 
                                       (E_selferf_n - E_selferf_o)
      END IF

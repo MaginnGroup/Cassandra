@@ -540,7 +540,7 @@ SUBROUTINE Participation
                    nonbond_list(ia,is)%mass, nonbond_list(ia,is)%charge, 'NONE', &
                    (nonbond_list(ia,is)%vdw_param(1))/kboltz, nonbond_list(ia,is)%vdw_param(2)
               
-              ! write the 'read_old' file for the fragment
+              ! write the 'read_config' file for the fragment
               
               WRITE(203,*) '1'  ! indicating one molecule
               

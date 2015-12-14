@@ -36,7 +36,7 @@ SUBROUTINE GEMC_Driver
   USE Global_Variables
   USE Random_Generators
   USE Read_Write_Checkpoint
-  USE Energy_Routines, ONLY: Compute_Total_System_Energy
+  USE Energy_Routines, ONLY: Compute_System_Total_Energy
   USE File_Names
   USE IO_Utilities, ONLY: Int_To_String
 
@@ -396,96 +396,5 @@ SUBROUTINE GEMC_Driver
 
   END DO
   
-  ! let us check if at the end of the simulation, the energies are properly updated
-
-!  write(logunit,*) '*********** Ending simulation *****************'
-!  write(logunit,*)
-!  write(logunit,*)
-!  write(logunit,*) '***** Insertion efficiency *****************'
-!  DO ibox = 1, nbr_boxes
-!     DO is = 1, nspecies
-!        write(logunit,*) 'Total number of insertions for species', is , 'is', ntrials(is,ibox)%insertion
-!        write(logunit,*) 'Successful insertions', nsuccess(is,ibox)%insertion
-!     END DO
-!     write(logunit,*)
-!  END DO
-!
-!  write(logunit,*) '***** Deletion efficiency *****************'
-!  DO ibox = 1, nbr_boxes
-!    DO is = 1, nspecies
-!       write(logunit,*) 'Total number of deletions for species', is , 'is', ntrials(is,ibox)%deletion
-!       write(logunit,*) 'Successful deletions', nsuccess(is,ibox)%deletion
-!    END DO
-!    write(logunit,*)
-!  END DO
-!
-! 
-!
-!    ! Display the components of the energy.
-!
-!
-!  DO ibox = 1, nbr_boxes
-!
-!     WRITE(logunit,*) '*****************************************'
-!     WRITE(logunit,'(A36,2X,I2)') ' Starting energy components for box', ibox
-!     WRITE(logunit,*) ' Atomic units - Extensive'
-!     WRITE(logunit,*) '*****************************************'
-!     WRITE(logunit,*)
-!     
-!     write(logunit,'(A,T30,F20.3)') 'Total system energy is' , energy(ibox)%total
-!     write(logunit,'(A,T30,F20.3)') 'Intra molecular energy is', energy(ibox)%intra
-!     WRITE(logunit,'(A,T30,F20.3)') 'Bond energy is', energy(ibox)%bond
-!     WRITE(logunit,'(A,T30,F20.3)') 'Bond angle energy is', energy(ibox)%angle
-!     WRITE(logunit,'(A,T30,F20.3)') 'Dihedral angle energy is', energy(ibox)%dihedral
-!     write(logunit,'(A,T30,F20.3)') 'Intra nonbond vdw is', energy(ibox)%intra_vdw
-!     write(logunit,'(A,T30,F20.3)') 'Intra nonbond elec is', energy(ibox)%intra_q
-!     write(logunit,'(A,T30,F20.3)') 'Inter molecule vdw is', energy(ibox)%inter_vdw
-!     write(logunit,'(A,T30,F20.3)') 'Long range correction is', energy(ibox)%lrc
-!     write(logunit,'(A,T30,F20.3)') 'Inter molecule q is', energy(ibox)%inter_q
-!     write(logunit,'(A,T30,F20.3)') 'Reciprocal ewald is', energy(ibox)%ewald_reciprocal
-!     write(logunit,'(A,T30,F20.3)') 'Self ewald is', energy(ibox)%ewald_self
-!     
-!     write(logunit,*) '**************************************************'
-!     
-!     write(logunit,*)
-!     
-!    CALL Compute_Total_System_Energy(ibox,.TRUE.,overlap)
-!    
-!    ! Display the components of the energy.
-!     write(logunit,*)
-!     WRITE(logunit,*) '*****************************************'
-!     write(logunit,'(A52,2X,I2)') 'Components of energy from total energy call for box', ibox
-!     WRITE(logunit,*) 'Atomic units-Extensive'
-!     WRITE(logunit,*) '*****************************************'
-!     WRITE(logunit,*)
-!
-!     write(logunit,'(A,T30,F20.3)') 'Total system energy is' , energy(ibox)%total
-!     write(logunit,'(A,T30,F20.3)') 'Intra molecular energy is', energy(ibox)%intra
-!     WRITE(logunit,'(A,T30,F20.3)') 'Bond energy is', energy(ibox)%bond
-!     WRITE(logunit,'(A,T30,F20.3)') 'Bond angle energy is', energy(ibox)%angle
-!     WRITE(logunit,'(A,T30,F20.3)') 'Dihedral angle energy is', energy(ibox)%dihedral
-!     write(logunit,'(A,T30,F20.3)') 'Intra nonbond vdw is', energy(ibox)%intra_vdw
-!     write(logunit,'(A,T30,F20.3)') 'Intra nonbond elec is', energy(ibox)%intra_q
-!     write(logunit,'(A,T30,F20.3)') 'Inter molecule vdw is', energy(ibox)%inter_vdw
-!     write(logunit,'(A,T30,F20.3)') 'Long range correction is', energy(ibox)%lrc
-!     write(logunit,'(A,T30,F20.3)') 'Inter molecule q is', energy(ibox)%inter_q
-!     write(logunit,'(A,T30,F20.3)') 'Reciprocal ewald is', energy(ibox)%ewald_reciprocal
-!     write(logunit,'(A,T30,F20.3)') 'Self ewald is', energy(ibox)%ewald_self
-!     write(logunit,*) '**************************************************'
-!    
-!     write(logunit,*)
-!
-!     IF( int_run_style == run_test ) THEN
-!        OPEN(75,FILE='compare.dat',POSITION='APPEND')
-!        IF( ibox == 1 ) WRITE(75,"(T20,A,A)") testname, 'in the gemc ensemble'
-!        WRITE(75,"(A,T25,I2,1X,A,F24.12)") 'Total energy of box',ibox,'is:',energy(ibox)%total
-!        WRITE(75,"(A,T25,I2,1X,A,F24.12)") 'Density of box',ibox,'is:',SUM(nmols(:,ibox))/box_list(ibox)%volume
-!        WRITE(75,*)
-!        CLOSE(75)
-!     END IF
-!
-!  END DO
-!
-! CALL Write_Trials_Success
 
 END SUBROUTINE GEMC_Driver

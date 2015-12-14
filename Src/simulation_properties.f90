@@ -78,16 +78,12 @@ CONTAINS
     
     nmolecules_species = 0
 
-    DO i = 1, nmolecules(this_species)
+    DO i = 1, nmols(this_species,this_box)
        
-       alive = locate(i,this_species)
+       alive = locate(i,this_species,this_box)
        
        IF ( molecule_list(alive,this_species)%live ) THEN
-          IF ( molecule_list(alive,this_species)%which_box == this_box ) THEN
-             
-             nmolecules_species = nmolecules_species + 1
-             
-          END IF
+          nmolecules_species = nmolecules_species + 1
        END IF
        
     END DO
@@ -111,17 +107,13 @@ CONTAINS
 
     nmolecules_this_species = 0
 
-    DO i = 1, nmolecules(this_species)
+    DO i = 1, nmols(this_species,this_box)
 
-       alive = locate(i,this_species)
+       alive = locate(i,this_species,this_box)
        
        IF ( .NOT. molecule_list(alive,this_species)%live ) CYCLE
 
-       IF ( molecule_list(alive,this_species)%which_box == this_box ) THEN
-          
-          nmolecules_this_species = nmolecules_this_species + 1
-
-       END IF
+       nmolecules_this_species = nmolecules_this_species + 1
 
        IF ( nmolecules_this_species == im ) EXIT 
 
@@ -141,17 +133,13 @@ CONTAINS
 
     nmolecules_this_species = 0
 
-    DO i = 1,nmolecules(is)
+    DO i = 1,nmols(is,this_box)
        
-       alive = locate(i,is)
+       alive = locate(i,is,this_box)
 
        IF (.NOT. molecule_list(alive,is)%live) CYCLE
        
-       IF ( molecule_list(alive,is)%which_box == this_box ) THEN
-          
-          nmolecules_this_species = nmolecules_this_species + 1
-          
-       END IF
+       nmolecules_this_species = nmolecules_this_species + 1
        
        IF ( nmolecules_this_species == im ) EXIT   
 
@@ -174,18 +162,15 @@ CONTAINS
     
     nmolecules_species = 0
 
-    DO i = 1, nmolecules(this_species)
+    DO i = 1, nmols(this_species,this_box)
        
-       alive = locate(i,this_species)
+       alive = locate(i,this_species,this_box)
        
        IF ( molecule_list(alive,this_species)%live ) THEN
-          IF ( molecule_list(alive,this_species)%which_box == this_box ) THEN
-             
-             IF (molecule_list(alive,this_species)%molecule_type == int_normal) THEN
+          IF (molecule_list(alive,this_species)%molecule_type == int_normal) THEN
 
-                nmolecules_species = nmolecules_species + 1
-                
-             END IF
+             nmolecules_species = nmolecules_species + 1
+             
           END IF
        END IF
        
@@ -199,11 +184,12 @@ CONTAINS
 
     IMPLICIT NONE
 
-    INTEGER :: is, alive, position, i, this_locate
+    INTEGER :: is, alive, position, i, this_locate, this_box
 
-    DO i = 1, nmolecules(is)
+    this_box = molecule_list(alive,is)%which_box
+    DO i = 1, nmols(is,this_box)
 
-       this_locate = locate(i,is)
+       this_locate = locate(i,is,this_box)
 
        IF (this_locate == alive ) EXIT
 
@@ -232,12 +218,11 @@ CONTAINS
     nint_beads(:,this_box) = 0
 
     DO is = 1, nspecies
-       DO im = 1, nmolecules(is) 
+       DO im = 1, nmols(is,this_box) 
 
-          alive = locate(im,is)
+          alive = locate(im,is,this_box)
           
           IF (.NOT. molecule_list(alive,is)%live ) CYCLE
-          IF (molecule_list(alive,is)%which_box /= this_box ) CYCLE
 
           IF (molecule_list(alive,is)%molecule_type == int_normal) THEN
              
