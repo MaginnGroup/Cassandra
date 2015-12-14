@@ -41,81 +41,81 @@ SUBROUTINE Get_Internal_Coords
   
   IMPLICIT NONE
 
-  INTEGER :: ispecies, imolecules, ibonds, iangles, idihedrals, iimpropers, alive
+  INTEGER :: ispecies, imolecules, ibonds, iangles, idihedrals, iimpropers, alive, ibox
   REAL(DP) :: bond_length, theta, phi
   
-  DO ispecies = 1, nspecies
+  DO ibox = 1, nbr_boxes
+     DO ispecies = 1, nspecies
+        DO imolecules = 1,nmols(ispecies,ibox)
 
-     DO imolecules = 1,nmolecules(ispecies)
+           ! obtain the linked index associated with this molecule
 
-        ! obtain the linked index associated with this molecule
+           alive = locate(imolecules,ispecies,ibox)
 
-        alive = locate(imolecules,ispecies)
-
-        IF ( .NOT. molecule_list(alive,ispecies)%live) CYCLE
-        
-        DO ibonds = 1, nbonds(ispecies)
+           IF ( .NOT. molecule_list(alive,ispecies)%live) CYCLE
            
-           CALL Get_Bond_Length(ibonds,alive,ispecies, bond_length)
+           DO ibonds = 1, nbonds(ispecies)
+              
+              CALL Get_Bond_Length(ibonds,alive,ispecies, bond_length)
 
-           ! Assign the bond length to the internal coordinate
+              ! Assign the bond length to the internal coordinate
 
-           internal_coord_list(ibonds,alive,ispecies)%bond_length_angstrom = &
-                bond_length
+              internal_coord_list(ibonds,alive,ispecies)%bond_length_angstrom = &
+                   bond_length
+              
+           END DO
            
-        END DO
-        
-        DO iangles = 1, nangles(ispecies)
+           DO iangles = 1, nangles(ispecies)
 
-           CALL Get_Bond_Angle(iangles,alive,ispecies,theta)
+              CALL Get_Bond_Angle(iangles,alive,ispecies,theta)
 
-           ! Assign this angle to internal_coord_list
+              ! Assign this angle to internal_coord_list
 
-           internal_coord_list(iangles,alive,ispecies)%bond_angle_radians = &
-                theta
+              internal_coord_list(iangles,alive,ispecies)%bond_angle_radians = &
+                   theta
 
-           ! Convert the angle into degrees
+              ! Convert the angle into degrees
 
-           internal_coord_list(iangles,alive,ispecies)%bond_angle_degrees = &
-                theta * 180.0 / PI
-   
-        END DO
+              internal_coord_list(iangles,alive,ispecies)%bond_angle_degrees = &
+                   theta * 180.0 / PI
+      
+           END DO
 
-        DO idihedrals = 1, ndihedrals(ispecies)
+           DO idihedrals = 1, ndihedrals(ispecies)
+              
+              CALL Get_Dihedral_Angle(idihedrals,alive,ispecies,phi)
+
+              ! Assign this value to the internal_coord_list
+
+              internal_coord_list(idihedrals,alive,ispecies)%dihedral_angle_radians &
+                   = phi
+              
+              ! Convert the angle into degrees
+              
+              internal_coord_list(idihedrals,alive,ispecies)%dihedral_angle_degrees &
+                   = phi * 180.0 / PI
+              
+           END DO
            
-           CALL Get_Dihedral_Angle(idihedrals,alive,ispecies,phi)
+           DO iimpropers = 1, nimpropers(ispecies)
+              
+              CAll Get_Improper_Angle(iimpropers,alive,ispecies,phi)
 
-           ! Assign this value to the internal_coord_list
+              ! Assign this value to the internal_coord_list
 
-           internal_coord_list(idihedrals,alive,ispecies)%dihedral_angle_radians &
-                = phi
+              internal_coord_list(iimpropers,alive,ispecies)%improper_angle_radians &
+                   = phi
+
+              ! Convert the angle into degrees
+
+              internal_coord_list(iimpropers,alive,ispecies)%improper_angle_degrees &
+                   = phi * 180.0 / PI
+              
+           END DO
            
-           ! Convert the angle into degrees
-           
-           internal_coord_list(idihedrals,alive,ispecies)%dihedral_angle_degrees &
-                = phi * 180.0 / PI
-           
-        END DO
-        
-        DO iimpropers = 1, nimpropers(ispecies)
-           
-           CAll Get_Improper_Angle(iimpropers,alive,ispecies,phi)
-
-           ! Assign this value to the internal_coord_list
-
-           internal_coord_list(iimpropers,alive,ispecies)%improper_angle_radians &
-                = phi
-
-           ! Convert the angle into degrees
-
-           internal_coord_list(iimpropers,alive,ispecies)%improper_angle_degrees &
-                = phi * 180.0 / PI
-           
-        END DO
-        
-     END DO ! do loop on imolecules
-     
-  END DO ! do loop on ispecies
+        END DO ! do loop on imolecules
+     END DO ! do loop on ispecies
+  END DO ! do loop on ibox
   
  
 END SUBROUTINE Get_Internal_Coords
@@ -133,7 +133,7 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
 !        energy_routines
 !               Compute_Bond_Energy
 !               Compute_Molecule_Bond_Energy
-!        fragment_driver
+!        nvt_mc_fragment_driver
 !        get_com  
 !********************************************************************************
 
@@ -158,6 +158,7 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
    rx21 = atom_list(atom1,this_molecule,is)%rxp - atom_list(atom2,this_molecule,is)%rxp
    ry21 = atom_list(atom1,this_molecule,is)%ryp - atom_list(atom2,this_molecule,is)%ryp
    rz21 = atom_list(atom1,this_molecule,is)%rzp - atom_list(atom2,this_molecule,is)%rzp
+
 !   this_box = molecule_list(this_molecule,is)%which_box
 !   IF (l_cubic(this_box) == .FALSE.) THEN
 !   CALL Minimum_Image_Separation(this_box,rx21,ry21,rz21,rx21,ry21,rz21)
@@ -220,22 +221,7 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
    rx32 = atom_list(atom3,this_molecule,is)%rxp - atom_list(atom2,this_molecule,is)%rxp
    ry32 = atom_list(atom3,this_molecule,is)%ryp - atom_list(atom2,this_molecule,is)%ryp
    rz32 = atom_list(atom3,this_molecule,is)%rzp - atom_list(atom2,this_molecule,is)%rzp
-
-!   WRITE(*,*) 'in get bond angle, atom 1 x y z'
-!   WRITE(*,*) atom_list(atom1,this_molecule,is)%rxp
-!   WRITE(*,*) atom_list(atom1,this_molecule,is)%ryp
-!   WRITE(*,*) atom_list(atom1,this_molecule,is)%rzp
-!   WRITE(*,*) 'in get bond angle, atom 2 x y z'
-!   WRITE(*,*) atom_list(atom2,this_molecule,is)%rxp
-!   WRITE(*,*) atom_list(atom2,this_molecule,is)%ryp
-!   WRITE(*,*) atom_list(atom2,this_molecule,is)%rzp
-!   WRITE(*,*) 'in get bond angle, atom 3 x y z'
-!   WRITE(*,*) atom_list(atom3,this_molecule,is)%rxp
-!   WRITE(*,*) atom_list(atom3,this_molecule,is)%ryp
-!   WRITE(*,*) atom_list(atom3,this_molecule,is)%rzp
- 
- 
- 
+   
 !   this_box = molecule_list(this_molecule,is)%which_box
 !   IF (l_cubic(this_box) == .FALSE.) THEN
 !   CALL Minimum_Image_Separation(this_box,rx21,ry21,rz21,rx21,ry21,rz21)
@@ -262,21 +248,7 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
 
    theta = PI - DACOS(costheta)
 
-  ! write(*,*) 'In get_Bond Angle', 'this angle is', this_angle
-  ! write(*,*) 'atoms 1 and atom 2 are'
-  ! write(*,*) atom1, atom2
-  ! write(*,*) 'the distance between them are'
-  ! write(*,*) rx21, ry21, rz21
-
-
-   !write(*,*) 'atoms 2 and atom 3 are'
-   !write(*,*) atom2, atom3
-   !write(*,*) 'the distance between them are'
-   !write(*,*) rx32, ry32, rz32
-
-   !write(*,*) 'value fo angle is', theta
-
-END SUBROUTINE Get_Bond_Angle
+ END SUBROUTINE Get_Bond_Angle
 
 
 !********************************************************************************

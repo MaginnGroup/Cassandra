@@ -19,7 +19,7 @@
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*******************************************************************************
 
-SUBROUTINE Deletion(this_box,mcstep,randno)
+SUBROUTINE Deletion(this_box,accept)
   
   !*****************************************************************************
   !
@@ -63,35 +63,36 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
 
   ! Arguments
   INTEGER, INTENT(INOUT) :: this_box ! attempt to delete a molecule in this_box
-  INTEGER :: mcstep  ! not used
-  REAL(DP) :: randno ! not used
+  LOGICAL, INTENT(OUT) :: accept
 
   ! Local declarations
   INTEGER :: i, i_type               ! atom indices
   INTEGER :: ifrag                   ! fragment indices
-  INTEGER :: im, alive               ! molecule indices
+  INTEGER :: im                      ! molecule INDEX
+  INTEGER :: lm                      ! molecule LOCATE
   INTEGER :: is, is_rand, is_counter ! species indices
   INTEGER :: kappa_tot, which_anchor
   INTEGER, ALLOCATABLE :: frag_order(:)
-  INTEGER :: k, position
+  INTEGER :: k 
 
   REAL(DP) :: delta_e, delta_e_pacc
   REAL(DP) :: E_bond, E_angle, E_dihedral, E_improper
   REAL(DP) :: E_intra_vdw, E_intra_qq
-  REAL(DP) :: E_inter_vdw, E_inter_qq
-  REAL(DP) :: E_reciprocal_move, E_self_move, E_lrc
+  REAL(DP) :: E_inter_vdw, E_inter_qq, E_periodic_qq
+  REAL(DP) :: E_reciprocal, E_self, E_lrc
   REAL(DP) :: nrg_ring_frag_tot
   REAL(DP) :: ln_pacc, P_seq, P_bias, this_lambda
   REAL(DP) :: E_intra_vdw_igas, E_intra_qq_igas
 
   LOGICAL :: inter_overlap, cbmc_overlap, intra_overlap
-  LOGICAL :: accept, accept_or_reject
+  LOGICAL :: accept_or_reject, fh_outside_bounds
+
+  INTEGER :: old_subensemble
 
   ! Initialize variables
   ln_pacc = 0.0_DP
   P_seq = 1.0_DP
   P_bias = 1.0_DP
-  this_lambda = 1.0_DP
   nrg_ring_frag_tot = 0.0_DP
   inter_overlap = .FALSE.
   cbmc_overlap = .FALSE.
@@ -124,28 +125,27 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
 
   ! Cannot delete a molecule if there aren't any in the box
   IF (nmols(is,this_box) == 0) RETURN
+ 
 
   ! Now that a deletion will be attempted, we need to do some bookkeeping:
   !  * Increment the counters to compute success ratios
-
   ntrials(is,this_box)%deletion = ntrials(is,this_box)%deletion + 1  
   tot_trials(this_box) = tot_trials(this_box) + 1
 
   !*****************************************************************************
   ! Step 2) Select a molecule with uniform probability
   !*****************************************************************************
-  !
-
   im = INT(rranf() * nmols(is,this_box)) + 1
-  CALL Get_Index_Molecule(this_box,is,im,alive) ! sets the value of 'alive'
+  lm = locate(im,is,this_box)
 
-  ! Save the coordinates of 'alive' because Build_Molecule will erase them if
+  ! If fractional molecule, need to use lambda in reverse insertion move
+  this_lambda = molecule_list(lm,is)%frac
+
+  ! Save the coordinates of 'lm' because Build_Molecule will erase them if
   ! cbmc_overlap is tripped.
 
-  CALL Save_Old_Cartesian_Coordinates(alive,is)  
+  CALL Save_Old_Cartesian_Coordinates(lm,is)  
 
-  ! Compute the energy of the molecule
-  
   !*****************************************************************************
   ! Step 3) Calculate the bias probability for the reverse insertion move
   !*****************************************************************************
@@ -169,33 +169,27 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
 
      ! Build_Molecule places the first fragment, then calls Fragment_Placement 
      ! to place the additional fragments
-     del_flag = .TRUE.      ! Don't change the coordinates of 'alive'
+     del_flag = .TRUE.      ! Don't change the coordinates of 'lm'
      get_fragorder = .TRUE. !
      ALLOCATE(frag_order(nfragments(is)))
-     CALL Build_Molecule(alive,is,this_box,frag_order,this_lambda, &
+     CALL Build_Molecule(lm,is,this_box,frag_order,this_lambda, &
              P_seq, P_bias, nrg_ring_frag_tot, cbmc_overlap)
      DEALLOCATE(frag_order)
      
      ! cbmc_overlap will only trip if the molecule being deleted had bad
      ! contacts
      IF (cbmc_overlap) THEN
-        WRITE(*,*)
-        WRITE(*,*) 'Warning....energy overlap detected in old configuration in deletion.f90'
-        WRITE(*,*) 'molecule, species', alive, is
-        WRITE(*,*)
-
-        ! Revert to the COM and Eulerian angles for the molecule
-        CALL Revert_Old_Cartesian_Coordinates(alive,is)
-        atom_list(1:natoms(is),alive,is)%exist = .TRUE.
-        molecule_list(alive,is)%cfc_lambda = this_lambda
-        
+        err_msg = ""
+        err_msg(1) = "Energy overlap detected in existing configuration"
+        err_msg(2) = "of molecule " // TRIM(Int_To_String(lm)) // " of species " // TRIM(Int_To_String(is))
+        CALL Clean_Abort(err_msg, "Deletion")
      END IF
 
-     ! So far P_bias only includes the probability of choosing the 
-     ! insertion point from the collection of trial coordinates times the 
-     ! probability of choosing each dihedral from the collection of trial 
-     ! dihedrals. We need to include the number of trial coordinates, kappa_ins,
-     ! and the number of trial dihedrals, kappa_dih, for each dihedral.
+     ! So far P_bias only includes the probability of choosing the insertion 
+     ! point from the collection of trial coordinates times the probability of 
+     ! choosing each dihedral from the collection of trial dihedrals. We need 
+     ! to include the number of trial coordinates, kappa_ins, and the number of
+     ! of trial dihedrals, kappa_dih, for each dihedral.
      kappa_tot = 1
 
      IF (nfragments(is) /=0 ) THEN
@@ -232,18 +226,18 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
   ! 
 
   ! Recompute the COM
-  CALL Get_COM(alive,is)
+  CALL Get_COM(lm,is)
 
   ! Compute the distance of the atom farthest from COM
-  CALL Compute_Max_COM_Distance(alive,is)
+  CALL Compute_Max_COM_Distance(lm,is)
 
   ! 4.1) Nonbonded intermolecular energies
 
   IF (l_pair_nrg) THEN
-     CALL Store_Molecule_Pair_Interaction_Arrays(alive,is,this_box, &
+     CALL Store_Molecule_Pair_Interaction_Arrays(lm,is,this_box, &
              E_inter_vdw,E_inter_qq)
   ELSE
-     CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is, &
+     CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is, &
              E_inter_vdw,E_inter_qq,inter_overlap)
   END IF
 
@@ -251,32 +245,32 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
 
   ! 4.2) Bonded intramolecular energies
 
-  CALL Compute_Molecule_Bond_Energy(alive,is,E_bond)
-  CALL Compute_Molecule_Angle_Energy(alive,is,E_angle)
-  CALL Compute_Molecule_Dihedral_Energy(alive,is,E_dihedral)
-  CALL Compute_Molecule_Improper_Energy(alive,is,E_improper)
+  CALL Compute_Molecule_Bond_Energy(lm,is,E_bond)
+  CALL Compute_Molecule_Angle_Energy(lm,is,E_angle)
+  CALL Compute_Molecule_Dihedral_Energy(lm,is,E_dihedral)
+  CALL Compute_Molecule_Improper_Energy(lm,is,E_improper)
 
   delta_e = delta_e - E_bond - E_angle - E_dihedral - E_improper  
   
   ! 4.3) Nonbonded intramolecular energies
 
-  CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is, &
-          E_intra_vdw,E_intra_qq,intra_overlap)
+  CALL Compute_Molecule_Nonbond_Intra_Energy(lm,is, &
+          E_intra_vdw,E_intra_qq,E_periodic_qq,intra_overlap) 
+  E_inter_qq = E_inter_qq + E_periodic_qq
 
-  delta_e = delta_e - E_intra_vdw - E_intra_qq
+  delta_e = delta_e - E_intra_vdw - E_intra_qq - E_periodic_qq
 
   ! 4.4) Ewald energies
 
   IF ( (int_charge_sum_style(this_box) == charge_ewald) .AND. &
        (has_charge(is)) ) THEN
 
-     CALL Compute_Ewald_Reciprocal_Energy_Difference(alive,alive,is,this_box, &
-             int_deletion,E_reciprocal_move)
-     CALL Compute_Ewald_Self_Energy_Difference(alive,is,this_box, &
-             int_deletion,E_self_move)
+     CALL Update_System_Ewald_Reciprocal_Energy(lm,is,this_box, &
+             int_deletion,E_reciprocal)
+     CALL Compute_Molecule_Ewald_Self_Energy(lm,is,this_box,E_self)
 
-     delta_e = delta_e + E_self_move &
-                       + (E_reciprocal_move - energy(this_box)%ewald_reciprocal)
+     delta_e = delta_e - E_self &
+                       + (E_reciprocal - energy(this_box)%ewald_reciprocal)
   END IF
 
   ! 4.5) Long-range energy correction
@@ -322,8 +316,8 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
 
   IF(species_list(is)%int_insert == int_igas) THEN
      igas_flag = .TRUE.
-     CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is, &
-             E_intra_vdw_igas,E_intra_qq_igas,intra_overlap)
+     CALL Compute_Molecule_Nonbond_Intra_Energy(lm,is, &
+             E_intra_vdw_igas,E_intra_qq_igas,E_periodic_qq,intra_overlap)
      igas_flag = .FALSE. 
      ln_pacc = beta(this_box) * (delta_e + E_bond + E_angle &
                                          + E_dihedral + E_improper &
@@ -348,7 +342,7 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
   ELSE
      ! fugacity is input
      ln_pacc = ln_pacc + DLOG(species_list(is)%fugacity) &
-                       + DLOG(beta(this_box))
+                       + DLOG(beta(this_box)) 
   END IF 
  
   accept = accept_or_reject(ln_pacc)
@@ -369,31 +363,29 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
 
      IF ( int_charge_sum_style(this_box) == charge_ewald .AND. &
           has_charge(is)) THEN
-        energy(this_box)%ewald_reciprocal = E_reciprocal_move
-        energy(this_box)%ewald_self = energy(this_box)%ewald_self + E_self_move
+        energy(this_box)%ewald_reciprocal = E_reciprocal
+        energy(this_box)%ewald_self = energy(this_box)%ewald_self - E_self
      END IF
 
      IF ( int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
         energy(this_box)%lrc = E_lrc
      END IF
 
-     ! obtain the original position of the deleted molecule so that the
-     ! linked list can be updated
-
-     CALL Get_Position_Molecule(this_box,is,im,position)
-
-     IF (position < SUM(nmols(is,:))) THEN
-        DO k = position + 1, SUM(nmols(is,:))
-           locate(k-1,is) = locate(k,is)
+     ! remove the deleted LOCATE from this_box's list
+     IF (im < nmols(is,this_box)) THEN
+        DO k = im + 1, nmols(is,this_box)
+           locate(k-1,is,this_box) = locate(k,is,this_box)
         END DO
      END IF
+     locate(nmols(is,this_box),is,this_box) = 0
      
-     ! move the deleted molecule to the end of alive molecules
-     locate(nmols(is,this_box),is) = alive
-     molecule_list(alive,is)%live = .FALSE.
-     atom_list(:,alive,is)%exist = .FALSE.
-     
+     ! move LOCATE to list of unused LOCATES
+     nmols(is,0) = nmols(is,0) + 1
+     locate(nmols(is,0),is,0) = lm
+
      ! update the number of molecules
+     molecule_list(lm,is)%live = .FALSE.
+     atom_list(:,lm,is)%exist = .FALSE.
      nmols(is,this_box) = nmols(is,this_box) - 1
 
      ! Increment counter
@@ -418,6 +410,7 @@ SUBROUTINE Deletion(this_box,mcstep,randno)
   END IF
 
   IF (l_pair_nrg) DEALLOCATE(pair_vdw_temp,pair_qq_temp)
+
 
 END SUBROUTINE Deletion
 

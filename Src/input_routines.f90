@@ -166,20 +166,20 @@ SUBROUTINE Get_Nspecies
 
   ALLOCATE( molfile_name(nspecies),Stat = AllocateStatus )
   IF (AllocateStatus /= 0 ) THEN
-     write(*,*)'memory could no tbe allocated for molfile_name array'
+     write(*,*)'memory could not be allocated for molfile_name array'
      write(*,*)'stopping'
      STOP
   END IF
-  ALLOCATE( nmolecules(nspecies), natoms(nspecies), Stat = AllocateStatus )
+  ALLOCATE( max_molecules(nspecies), natoms(nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0 ) THEN
-     write(*,*)'memory could no tbe allocated for nmolecules or natoms array'
+     write(*,*)'memory could not be allocated for max_molecules or natoms array'
      write(*,*)'stopping'
      STOP
   END IF
 
   ALLOCATE (nring_atoms(nspecies), nexo_atoms(nspecies), Stat = AllocateStatus)
   IF (AllocateStatus /= 0 ) THEN
-     write(*,*)'memory could no tbe allocated for nmolecules or natoms array'
+     write(*,*)'memory could not be allocated for max_molecules or natoms array'
      write(*,*)'stopping'
      STOP
   END IF
@@ -187,21 +187,21 @@ SUBROUTINE Get_Nspecies
 
   ALLOCATE( nbonds(nspecies), nangles(nspecies),Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for nbonds or nangles array'
+     write(*,*)'memory could not be allocated for nbonds or nangles array'
      write(*,*)'stopping'
      STOP
   END IF
 
   ALLOCATE( ndihedrals(nspecies), nimpropers(nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for ndihedrals or nimpropers array'
+     write(*,*)'memory could not be allocated for ndihedrals or nimpropers array'
      write(*,*)'stopping'
      STOP
   END IF
 
   ALLOCATE(nbr_bond_params(nspecies),Stat = AllocateStatus)
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for nbr_bond_params array'
+     write(*,*)'memory could not be allocated for nbr_bond_params array'
      write(*,*)'stopping'
      STOP
   END IF
@@ -209,28 +209,28 @@ SUBROUTINE Get_Nspecies
   ALLOCATE(nbr_angle_params(nspecies),Stat = AllocateStatus)
 
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for molfile_name array'
+     write(*,*)'memory could not be allocated for molfile_name array'
      write(*,*)'stopping'
      STOP
   END IF
 
   ALLOCATE(nbr_dihedral_params(nspecies),Stat = AllocateStatus)
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for nbr_dihedral_params array'
+     write(*,*)'memory could not be allocated for nbr_dihedral_params array'
      write(*,*)'stopping'
      STOP
   END IF
 
   ALLOCATE(nbr_improper_params(nspecies),Stat = AllocateStatus)
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for nbr_improper_params array'
+     write(*,*)'memory could not be allocated for nbr_improper_params array'
      write(*,*)'stopping'
      STOP
   END IF
 
   ALLOCATE(nbr_vdw_params(nspecies),Stat = AllocateStatus)
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for nbr_vdw_params array'
+     write(*,*)'memory could not be allocated for nbr_vdw_params array'
      write(*,*)'stopping'
      STOP
   END IF
@@ -251,7 +251,7 @@ SUBROUTINE Get_Nspecies
 
 ! Initialize everything
   molfile_name = ''
-  nmolecules = 0
+  max_molecules = 0
   natoms = 0
   nbonds = 0
   nangles = 0
@@ -409,7 +409,7 @@ SUBROUTINE Get_Pair_Style
      IF (ierr .NE. 0) THEN
         err_msg = ""
         err_msg(1) = "Error reading pairstyle."
-        CALL Clean_Abort(err_msg,'Get_Pairstyle')
+        CALL Clean_Abort(err_msg,'Get_Pair_Style')
      END IF
 
      IF (line_string(1:11) == '# VDW_Style') THEN
@@ -521,7 +521,7 @@ SUBROUTINE Get_Pair_Style
 
               ELSE
                  err_msg(1) = 'Improper specification of vdw_sum_style'
-                 CALL Clean_Abort(err_msg,'Get_Pairstyle')
+                 CALL Clean_Abort(err_msg,'Get_Pair_Style')
               ENDIF
               IF (rcut_vdw(ibox) > MIN(box_list(ibox)%face_distance(1)/2.0_DP, &
                    box_list(ibox)%face_distance(2)/2.0_DP, box_list(ibox)%face_distance(3)/2.0_DP)) THEN
@@ -530,7 +530,7 @@ SUBROUTINE Get_Pair_Style
                      err_msg(1) = 'Initial cutoff greater than minimum box length'
                      err_msg(2) = 'For box'
                      err_msg(3) = Int_To_String(ibox)
-                     CALL Clean_Abort(err_msg,'Get_Pairstyle')
+                     CALL Clean_Abort(err_msg,'Get_Pair_Style')
 
     	      ENDIF
 
@@ -641,13 +641,13 @@ SUBROUTINE Get_Pair_Style
                     IF (int_vdw_sum_style(ibox) /= vdw_minimum .AND. int_vdw_style(ibox) /= vdw_none) THEN
                        err_msg=""
                        err_msg(1) = 'Minimum image requires both vdw and q-q to be so-specified'
-                       CALL Clean_Abort(err_msg,'Get_Pairstyle')
+                       CALL Clean_Abort(err_msg,'Get_Pair_Style')
                     ELSE
                        WRITE(logunit,'(A)') 'Minimum image convention used for VDW'
                     ENDIF
                  ELSE
                     err_msg(1) = 'charge_sum_style not properly specified'
-                    CALL Clean_Abort(err_msg,'Get_Pairstyle')
+                    CALL Clean_Abort(err_msg,'Get_Pair_Style')
                  ENDIF
 
                  IF (rcut_coul(ibox) > MIN(box_list(ibox)%face_distance(1)/2.0_DP, &
@@ -657,7 +657,7 @@ SUBROUTINE Get_Pair_Style
                      err_msg(1) = 'Initial cutoff greater than minimum box length'
                      err_msg(2) = 'For box'
                      err_msg(3) = Int_To_String(ibox)
-                     CALL Clean_Abort(err_msg,'Get_Pairstyle')
+                     CALL Clean_Abort(err_msg,'Get_Pair_Style')
 
                  ENDIF
 
@@ -694,7 +694,7 @@ SUBROUTINE Get_Pair_Style
 ! No pairstyle specified so abort
         err_msg = ""
         err_msg(1) = 'No simulation start type  specified in inputfile'
-        CALL Clean_Abort(err_msg,'Get_Pairstyle')
+        CALL Clean_Abort(err_msg,'Get_Pair_Style')
      ENDIF
      
   ENDDO
@@ -842,7 +842,7 @@ SUBROUTINE Get_Molecule_Info
               ! of molecules, and starting number of molecules for this species
 
               molfile_name(i) = line_array(1)
-              nmolecules(i) = String_To_Int(line_array(2))
+              max_molecules(i) = String_To_Int(line_array(2))
           
               WRITE(logunit,*)
               WRITE(logunit,*) 'Reading molecular connectivity information'
@@ -962,92 +962,92 @@ SUBROUTINE Get_Molecule_Info
   WRITE(logunit,'(A7,2x,A13)') 'Species', 'Nbr molecules'
   WRITE(logunit,'(A7,2x,A13)') '-------', '-------------'
   DO i=1,nspecies
-     WRITE(logunit,'(I6,2x,I13)') i,nmolecules(i) 
+     WRITE(logunit,'(I6,2x,I13)') i,max_molecules(i) 
   ENDDO
   WRITE(logunit,*)
 
-  ! Allocate arrays that depend on nmolecules, natoms, and nspecies
+  ! Allocate arrays that depend on max_molecules, natoms, and nspecies
   ! N.B.: MAXVAL instrinsic function selects the largest value from an array
 
-  ALLOCATE( atom_list(MAXVAL(natoms), MAXVAL(nmolecules), nspecies), Stat = AllocateStatus )
+  ALLOCATE( atom_list(MAXVAL(natoms), MAXVAL(max_molecules), nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for atom_list array'
+     write(*,*)'memory could not be allocated for atom_list array'
      write(*,*)'stopping'
      STOP
   END IF
 
   ALLOCATE( nonbond_list(MAXVAL(natoms), nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for nonbond_list array'
+     write(*,*)'memory could not be allocated for nonbond_list array'
      write(*,*)'stopping'
      STOP
   END IF
 
   ALLOCATE( ring_atom_ids(MAXVAL(natoms), nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for ring_atom_ids array'
+     write(*,*)'memory could not be allocated for ring_atom_ids array'
      write(*,*)'stopping'
      STOP
   END IF
   
   ALLOCATE( exo_atom_ids(MAXVAL(natoms), nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for exo_atom_ids array'
+     write(*,*)'memory could not be allocated for exo_atom_ids array'
      write(*,*)'stopping'
      STOP
   END IF
 
   ALLOCATE( bond_list(MAXVAL(nbonds), nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for bond_list array'
+     write(*,*)'memory could not be allocated for bond_list array'
      write(*,*)'stopping'
      STOP
   END IF
 
   ALLOCATE( angle_list(MAXVAL(nangles), nspecies),Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for angle_list array'
+     write(*,*)'memory could not be allocated for angle_list array'
      write(*,*)'stopping'
      STOP
   END IF
 
   ALLOCATE( dihedral_list(MAXVAL(ndihedrals), nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for dihedral_list array'
+     write(*,*)'memory could not be allocated for dihedral_list array'
      write(*,*)'stopping'
      STOP
   END IF
 
   ALLOCATE( improper_list(MAXVAL(nimpropers), nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for improper_list array'
+     write(*,*)'memory could not be allocated for improper_list array'
      write(*,*)'stopping'
      STOP
   END IF
 
-  ALLOCATE( molecule_list(MAXVAL(nmolecules), nspecies), Stat = AllocateStatus )
+  ALLOCATE( molecule_list(MAXVAL(max_molecules), nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for molecule_list array'
+     write(*,*)'memory could not be allocated for molecule_list array'
      write(*,*)'stopping'
      STOP
   END IF
 
-  ALLOCATE( locate(MAXVAL(nmolecules),nspecies), Stat = AllocateStatus )
+  ALLOCATE( locate(MAXVAL(max_molecules),nspecies,0:nbr_boxes), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for locate array'
+     write(*,*)'memory could not be allocated for locate array'
      write(*,*)'stopping'
      STOP
   END IF
 
   IF (l_pair_nrg) THEN
-     ALLOCATE( pair_nrg_vdw(SUM(nmolecules),SUM(nmolecules)), Stat = AllocateStatus)
+     ALLOCATE( pair_nrg_vdw(SUM(max_molecules),SUM(max_molecules)), Stat = AllocateStatus)
      IF (AllocateStatus /= 0 ) THEN
         write(*,*) 'memmory could not be allocated for pair_nrg_vdw array'
         write(*,*) 'aborting'
         STOP
      END IF
      
-     ALLOCATE( pair_nrg_qq(SUM(nmolecules),SUM(nmolecules)), Stat = AllocateStatus)
+     ALLOCATE( pair_nrg_qq(SUM(max_molecules),SUM(max_molecules)), Stat = AllocateStatus)
      IF (AllocateStatus /= 0 ) THEN
         write(*,*) 'memmory could not be allocated for pair_nrg_qq array'
         write(*,*) 'aborting'
@@ -1057,16 +1057,16 @@ SUBROUTINE Get_Molecule_Info
 
   ALLOCATE( species_list(nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for species_list array'
+     write(*,*)'memory could not be allocated for species_list array'
      write(*,*)'stopping'
      STOP
   END IF
 
   max_index = MAX(MAXVAL(nbonds),MAXVAL(nangles),MAXVAL(ndihedrals),MAXVAL(nimpropers))
 
-  ALLOCATE( internal_coord_list(max_index, MAXVAL(nmolecules), nspecies), Stat = AllocateStatus )
+  ALLOCATE( internal_coord_list(max_index, MAXVAL(max_molecules), nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for internal_coord_list array'
+     write(*,*)'memory could not be allocated for internal_coord_list array'
      write(*,*)'stopping'
      STOP
   END IF
@@ -1074,7 +1074,7 @@ SUBROUTINE Get_Molecule_Info
   ALLOCATE(internal_coord_list_old(max_index), Stat = AllocateStatus)
   IF (AllocateStatus /= 0) THEN
      err_msg = ''
-     err_msg(1) = 'memory could no tbe allocated for internal_coord_list_old array'
+     err_msg(1) = 'memory could not be allocated for internal_coord_list_old array'
      CALL Clean_Abort(err_msg,'Get_Molecule_Info')
   END IF 
  
@@ -2638,7 +2638,7 @@ SUBROUTINE Get_Fragment_Connect_Info(is)
 !********************************************************************************
 ! The subroutine goes through the molecular connectivity file and obtains
 ! information on fragment connections. It assigns the total number of connections
-! for a fragment and fragmet ids of these connections. The end result is
+! for a fragment and fragment ids of these connections. The end result is
 !
 ! frag_list(ifrag,is)%nconnect 
 ! frag_list(ifrag,is)%(1:nconnect) get assigned
@@ -2948,7 +2948,7 @@ SUBROUTINE Get_Fragment_File_Info(is)
            CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
 
            res_file(ifrag,is) = TRIM(line_array(1))
-           ! assign a fragmet type 
+           ! assign a fragment type 
            frag_list(ifrag,is)%type = String_To_Int(line_array(2))
 
            WRITE(logunit,*) 'Fragment file for fragment ', TRIM(Int_To_String(ifrag)), ' is'
@@ -3404,14 +3404,14 @@ SUBROUTINE Get_Box_Info
         ! Allocate arrays associated with the box variables
         ALLOCATE(box_list(nbr_boxes), STAT=AllocateStatus)
         IF (AllocateStatus /= 0) THEN
-           write(*,*)'memory could no tbe allocated for box_list array'
+           write(*,*)'memory could not be allocated for box_list array'
            write(*,*)'stopping'
            STOP
         END IF
 
         ALLOCATE(l_cubic(nbr_boxes), STAT=AllocateStatus)
         IF (AllocateStatus /= 0) THEN
-           write(*,*)'memory could no tbe allocated for l_cubic array'
+           write(*,*)'memory could not be allocated for l_cubic array'
            write(*,*)'stopping'
            STOP
         END IF
@@ -3545,7 +3545,7 @@ SUBROUTINE Get_Box_Info
 
   ! Allocate memory for total number of mols of each species in a given box
 
-  ALLOCATE(nmols(nspecies,nbr_boxes),Stat=Allocatestatus)
+  ALLOCATE(nmols(nspecies,0:nbr_boxes),Stat=Allocatestatus)
   IF (Allocatestatus /=0) THEN
      err_msg = ''
      err_msg(1) = 'Memory could not be allocated for nmols'
@@ -3868,7 +3868,7 @@ END SUBROUTINE Get_Fugacity_Info
 SUBROUTINE Get_Move_Probabilities
   ! This routine goes through the input file and obtains probabilities for each of the
   ! moves to be performed. At the end of the routine a check is made to ensure that
-  ! all probabilities add upto 1.0_DP
+  ! all probabilities add up to 1.0_DP
   !
 
   IMPLICIT NONE
@@ -4333,23 +4333,23 @@ SUBROUTINE Get_Move_Probabilities
 
                  IF(species_list(is)%insertion == 'IGAS') THEN
 
-                    ALLOCATE( molecule_list_igas(MAXVAL(nmolecules), nspecies), Stat = AllocateStatus )
+                    ALLOCATE( molecule_list_igas(MAXVAL(max_molecules), nspecies), Stat = AllocateStatus )
                     IF (AllocateStatus /= 0) THEN
-                       write(*,*)'memory could no tbe allocated for molecule_list_igas array'
+                       write(*,*)'memory could not be allocated for molecule_list_igas array'
                        write(*,*)'stopping'
                        STOP
                     END IF
 
-                    ALLOCATE( atom_list_igas(MAXVAL(natoms), MAXVAL(nmolecules), nspecies), Stat = AllocateStatus )
+                    ALLOCATE( atom_list_igas(MAXVAL(natoms), MAXVAL(max_molecules), nspecies), Stat = AllocateStatus )
                     IF (AllocateStatus /= 0) THEN
-                       write(*,*)'memory could no tbe allocated for atom_list_igas array'
+                       write(*,*)'memory could not be allocated for atom_list_igas array'
                        write(*,*)'stopping'
                        STOP
                     END IF
 
-                    ALLOCATE( energy_igas(MAXVAL(nmolecules), nspecies), Stat = AllocateStatus )
+                    ALLOCATE( energy_igas(MAXVAL(max_molecules), nspecies), Stat = AllocateStatus )
                     IF (AllocateStatus /= 0) THEN
-                       write(*,*)'memory could no tbe allocated for energy_igas array'
+                       write(*,*)'memory could not be allocated for energy_igas array'
                        write(*,*)'stopping'
                        STOP
                     END IF
@@ -4364,8 +4364,8 @@ SUBROUTINE Get_Move_Probabilities
                     DEALLOCATE(molecule_list)
                     DEALLOCATE(atom_list)
 
-                    ALLOCATE(molecule_list(MAXVAL(nmolecules)+1, nspecies))
-                    ALLOCATE(atom_list(MAXVAL(natoms),MAXVAL(nmolecules)+1, nspecies))
+                    ALLOCATE(molecule_list(MAXVAL(max_molecules)+1, nspecies))
+                    ALLOCATE(atom_list(MAXVAL(natoms),MAXVAL(max_molecules)+1, nspecies))
 
                  END IF
 
@@ -4398,7 +4398,7 @@ SUBROUTINE Get_Move_Probabilities
            ELSE IF (line_string(1:15 ) == '# Prob_Regrowth') THEN
               ALLOCATE(prob_growth_species(nspecies))
               num_moves = num_moves + 1
-              ! Probability for regroth of molecule is specified
+              ! Probability for regrowth of molecule is specified
               line_nbr = line_nbr + 1
               CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
 
@@ -4693,7 +4693,7 @@ SUBROUTINE Get_Move_Probabilities
   IF (ABS(cut_atom_displacement-1.0_DP) > tiny_number ) THEN
 
      err_msg = ""
-     err_msg(1) = 'Probabilities do not add upto 1.0'
+     err_msg(1) = 'Probabilities do not add up to 1.0'
      CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
 
   END IF
@@ -4709,10 +4709,11 @@ SUBROUTINE Get_Start_Type
   ! There are three options to start a run
   ! 'make_config' --- will attempt to generate an initial configuration by random insertion
   !               --- molecules
-  ! 'read_old' --- read from an exisiting file
+  ! 'read_config' --- read from an exisiting file
+  ! 'add_to_config' --- read from an exisiting file and then insert additional molecules
   ! 'checkpoint'  --- read from a crash file
 
-  INTEGER :: ierr, line_nbr, nbr_entries, i,j, ibox
+  INTEGER :: ierr, line_nbr, nbr_entries, i,j, ibox, is
   CHARACTER(120) :: line_string, line_array(20)
   CHARACTER(1) :: first_character
   CHARACTER(4) :: symbol
@@ -4747,9 +4748,9 @@ SUBROUTINE Get_Start_Type
            IF (line_array(1) == 'make_config') THEN
 
               start_type = 'make_config'
-              ALLOCATE(nmol_actual(nspecies,nbr_boxes),Stat = AllocateStatus)
+              ALLOCATE(nmols_initial(nspecies,nbr_boxes),Stat = AllocateStatus)
               IF (AllocateStatus /= 0 ) THEN
-                 write(*,*)'memory could no tbe allocated for nmol_actual array'
+                 write(*,*)'memory could not be allocated for nmols_initial array'
                  write(*,*)'stopping'
                  STOP
               END IF
@@ -4784,13 +4785,13 @@ SUBROUTINE Get_Start_Type
                  ! assign actual number of molecules of this species in each box
                  
                  DO ibox = 1, nbr_boxes
-                    nmol_actual(i,ibox) = String_To_Int(line_array(ibox))
-                    WRITE(logunit,'(A41,2x,I2,2X,A7,2X,I2,2X,A2,2X,I6)') 'Starting number of molecules of species', i, ' in box ', ibox, 'is',  nmol_actual(i,ibox)
+                    nmols_initial(i,ibox) = String_To_Int(line_array(ibox))
+                    WRITE(logunit,'(A41,2x,I2,2X,A7,2X,I2,2X,A2,2X,I6)') 'Starting number of molecules of species', i, ' in box ', ibox, 'is',  nmols_initial(i,ibox)
                  END DO
  
-                 species_list(i)%nmoltotal = SUM(nmol_actual(i,:))
+                 species_list(i)%nmoltotal = SUM(nmols_initial(i,:))
 
-                 IF (species_list(i)%nmoltotal > nmolecules(i)) THEN
+                 IF (species_list(i)%nmoltotal > max_molecules(i)) THEN
                     err_msg = ''
                     err_msg(1) = 'Actual number of molecules of species' // INT_To_String(i) // 'is'
                     err_msg(2) = 'greater than maximum allowed'
@@ -4837,13 +4838,13 @@ SUBROUTINE Get_Start_Type
               
               EXIT inputLOOP
 
-           ELSE IF (line_array(1) == 'read_old') THEN
+           ELSE IF (line_array(1) == 'read_config') THEN
               ! in this case we will read in the information of coordinates for
               ! all the boxes so that there must be nbr_boxes lines following the
               ! keyword.
               ALLOCATE(old_config_file(nbr_boxes))
               
-              start_type = 'read_old'
+              start_type = 'read_config'
 
               WRITE(logunit,*)
               WRITE(logunit,*) 'Configurations will be read from old files'
@@ -4896,6 +4897,60 @@ SUBROUTINE Get_Start_Type
            
               EXIT inputLOOP
 
+           ELSE IF (line_array(1) == 'add_to_config') THEN
+
+              start_type = 'add_to_config'
+
+              ALLOCATE(old_config_file(nbr_boxes))
+              ! Allocate memory for initial nmols
+              ALLOCATE(nmols_initial(nspecies,nbr_boxes),Stat=Allocatestatus)
+              IF (Allocatestatus /=0) THEN
+                 err_msg = ''
+                 err_msg(1) = 'Memory could not be allocated for nmols_initial'
+                 CALL Clean_Abort(err_msg,'Get_Start_Type')
+              END IF
+
+              WRITE(logunit,*)
+              WRITE(logunit,*) 'Molecules will be inserted into configuration read from xyz file(s)'
+
+              DO ibox = 1,nbr_boxes
+                line_nbr = line_nbr + 1
+                CALL Parse_String(inputunit,line_nbr,1+nspecies,nbr_entries,line_array,ierr)
+                ! Make sure that the characters of the string are alphanumeric with
+                ! a possibility of a . (dot). The first character must be an alphabet
+                CALL Check_String(line_array(1),ierr)
+                IF (ierr /= 0 ) THEN
+                   err_msg = ""
+                   err_msg(1) = 'An error in the input line ' // TRIM(Int_to_String(line_nbr)) &
+                        // ' of input file.'
+                   CALL Clean_Abort(err_msg,'Get_Start_Type')
+                END IF
+
+                WRITE(logunit,*)
+                WRITE(logunit,'(A,T40,I3,A,T50)')'Starting configuration for box ', ibox, ' is'
+                WRITE(logunit,*) ADJUSTL(line_array(1))
+                old_config_file(ibox) = TRIM(ADJUSTL(line_array(1)))
+                 
+                DO is = 1, nspecies
+                   ! assign initial number of molecules of this species in each box
+                   nmols_initial(is,ibox) = String_To_Int(line_array(1+is))
+                   WRITE(logunit,'(X,I6,A22,I2,A22,I2)') nmols_initial(is,ibox), ' molecules of species ', is, ' will be added to box ', ibox
+ 
+                   species_list(is)%nmoltotal = SUM(nmols_initial(is,1:ibox))
+
+                   IF (species_list(is)%nmoltotal > max_molecules(is)) THEN
+                      err_msg = ''
+                      err_msg(1) = 'Additional number of molecules of species ' // TRIM(Int_To_String(is)) // ' is ' // TRIM(Int_To_String(species_list(is)%nmoltotal))
+                      err_msg(2) = 'Maximum molecules allowed is ' // TRIM(Int_To_String(max_molecules(is)))
+                      CALL Clean_Abort(err_msg,'Get_Start_Type')
+                   END IF
+
+                   WRITE(logunit,*) 
+                   WRITE(logunit,'(A31,I2,A16,I6)') 'Number of molecules of species ', is , ' to be added is ', species_list(is)%nmoltotal
+                END DO
+              END DO
+
+              EXIT inputLOOP
            END IF
                        
         END DO Start_Type_LOOP
@@ -5070,72 +5125,6 @@ SUBROUTINE Get_CBMC_Info
   end do
 end subroutine get_cbmc_info
 !*****************************************************************************************
-SUBROUTINE Get_Zig_By_Omega
-!*************************************
-! This subroutine is called when chemical potential is used in a GCMC simulation. It goes
-! through the input file and looks for the keyword '# Zig_By_Omega_Info'. For all the
-! species that exchange with the reserovir are included. Zig_By_Omega will be set to
-! zero for rest of the species
-!
-! Written by Jindal Shah on 10/28/13
-!*************************************
-
-  INTEGER :: ierr, line_nbr, nbr_entries, i, spec_counter
-  CHARACTER(120) :: line_string, line_array(20)
-
-  REWIND(inputunit)
-
-  ierr = 0
-  line_nbr = 0
-  spec_counter = 0
-
-  DO
-     line_nbr = line_nbr + 1
-     CALL Read_String(inputunit,line_string,ierr)
-     
-     IF (ierr /= 0 ) THEN
-        err_msg = ''
-        err_msg(1) = 'An error occurred while reading inputfile'
-        err_msg(2) = inputfile
-        CALL Clean_Abort(err_msg,'Get_Zig_By_Omega')
-
-     END IF
-
-     IF (line_string(1:19) == '# Zig_By_Omega_Info') THEN
-
-        WRITE(logunit,*)
-        WRITE(logunit,*) '***** Reading Zig_By_Omega Info ***'
-        line_nbr = line_nbr + 1
-        CALL Parse_String(inputunit,line_nbr,nspec_insert,nbr_entries,line_array,ierr)
-        
-        DO i = 1, nspecies
-           IF (species_list(i)%int_species_type == int_sorbate) THEN
-              spec_counter = spec_counter + 1
-              species_list(i)%zig_by_omega = String_To_Double(line_array(spec_counter))
-           ELSE
-              species_list(i)%zig_by_omega = 0.0_DP
-           END IF
-
-           WRITE(logunit,*)
-           WRITE(logunit,*) 'Zig / Omega for species ', i, ' is ', species_list(i)%zig_by_omega
-
-        END DO
-
-        EXIT
-
-     ELSE IF (line_string(1:3) == 'END' .OR. line_nbr > 10000) THEN
-        
-        err_msg = ''
-        err_msg(1) = 'Zig_By_Omega_Info section is missing from the input fiel'
-        err_msg(2) = inputfile
-
-        CALL Clean_Abort(err_msg,'Get_Zig_By_Omega')
-
-     END IF
-
-  END DO
-
-END SUBROUTINE Get_Zig_By_Omega
 !*****************************************************************************************
 
 SUBROUTINE Get_Seed_Info
@@ -5470,7 +5459,7 @@ USE Global_Variables, ONLY: cpcollect
         ! file is to be written
         this_box = String_To_Int(line_array(3))
         nbr_prop_files(this_box) = nbr_prop_files(this_box) + 1
-        !--- Now go through the lines following this keyword upto a point where
+        !--- Now go through the lines following this keyword up to a point where
         !-- a blank is encountered or a '#' or '# Property_Info'
         nbr_properties = 0
         innerLOOP: DO
@@ -5638,9 +5627,9 @@ USE Global_Variables, ONLY: cpcollect
      DEALLOCATE(molecule_list)
      DEALLOCATE(atom_list)
 
-     ALLOCATE(locate(MAXVAL(nmolecules)+1,nspecies))
-     ALLOCATE(molecule_list(MAXVAL(nmolecules)+1,nspecies))
-     ALLOCATE(atom_list(MAXVAL(natoms),MAXVAL(nmolecules)+1,nspecies))
+     ALLOCATE(locate(MAXVAL(max_molecules)+1,nspecies,0:nbr_boxes))
+     ALLOCATE(molecule_list(MAXVAL(max_molecules)+1,nspecies))
+     ALLOCATE(atom_list(MAXVAL(natoms),MAXVAL(max_molecules)+1,nspecies))
 
   END IF
 
@@ -5784,7 +5773,7 @@ SUBROUTINE Get_File_Info
         CALL Clean_Abort(err_msg,'Get_File_Info')
      END IF
 
-     ! Read the input file upto # File_Info
+     ! Read the input file up to # File_Info
 
      IF (line_string(1:11) == '# File_Info') THEN
         ! parse the string to read in the files for each species

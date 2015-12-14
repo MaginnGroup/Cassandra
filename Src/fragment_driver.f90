@@ -61,13 +61,13 @@ SUBROUTINE Fragment_Driver
 
   IMPLICIT NONE
 
-  INTEGER :: is, im, this_box, i, rand_atom, naccept, ia
+  INTEGER :: is, im, this_box, rand_atom, naccept, ia
   INTEGER :: naverage
 
   REAL(DP) :: e_angle_old, e_angle_new, delta_e_angle, ln_pacc, old_coord, new_coord
   REAL(DP) :: area_o, area_n
   REAL(DP) :: e_improper_n, e_improper_o, delta_e_improper, delta_e, e_total_o
-  REAL(DP) :: ac_frag_energy, zig_over_omega
+  REAL(DP) :: ac_frag_energy
 
   LOGICAL :: theta_bound, accept, accept_or_reject
 
@@ -77,7 +77,7 @@ SUBROUTINE Fragment_Driver
      
      naccept = 0
 
-     im = locate(1,is)
+     im = locate(1,is,1)
 
      CALL Compute_Molecule_Angle_Energy(im,is,e_angle_old)
      e_total_o = e_angle_old
@@ -93,67 +93,70 @@ SUBROUTINE Fragment_Driver
      WRITE(frag_file_unit,*) (n_mcsteps-n_equilsteps)/nthermo_freq
 
      ac_frag_energy = 0.0_DP
-     zig_over_omega = 0.0_DP
 
-     DO i = 1, n_mcsteps
+     DO i_mcstep = 1, n_mcsteps
         
-        ! Atom 1 is fixed at the origin
-        ! Atom 2 is fixed on the x axis with a rigid bond
+!        ! Atom 1 is fixed at the origin
+!        ! Atom 2 is fixed on the x axis with a rigid bond
+!
+!        ! We sample only the natoms(is) - 2 atoms
+!        
+!        rand_atom = INT ( (natoms(is) - 2) * rranf()) + 3
+!        ! save the coordinates
+!
+!        CALL Save_Old_Cartesian_Coordinates(im,is)
+!        CALL Save_Old_Internal_Coordinates(im,is)
+!
+!        CALL Change_Phi_Theta(rand_atom,im,is,theta_bound)
+!        
+!        CALL Compute_Molecule_Angle_Energy(im,is,e_angle_new)
+!        IF(nimpropers(is) .GT. 0) CALL Compute_Molecule_Improper_Energy(im,is,e_improper_n)
+!
+!        delta_e_angle = e_angle_new - e_angle_old 
+!        IF(nimpropers(is) .GT. 0) THEN
+!           delta_e_improper = e_improper_n - e_improper_o
+!        ELSE
+!           delta_e_improper = 0.0_DP
+!        END IF
+!        delta_e = delta_e_angle + delta_e_improper
+!
+!        ln_pacc = beta(this_box) * delta_e
+!        accept = accept_or_reject(ln_pacc)
+!        
+!        IF ( accept ) THEN
+!
+!           ! update energies 
+!
+!           e_angle_old = e_angle_old + delta_e_angle
+!           e_total_o = e_angle_old
+!
+!           IF(nimpropers(is) .GT. 0) THEN
+!              e_improper_o = e_improper_o + delta_e_improper
+!              e_total_o = e_total_o + e_improper_o
+!           END IF
+!
+!           naccept = naccept + 1
+!
+!           CALL Get_Internal_Coordinates(im,is)
+!           
+!        ELSE
+!
+!           CALL Revert_Old_Cartesian_Coordinates(im,is)
+!
+!        END IF
+!
 
-        ! We sample only the natoms(is) - 2 atoms
         
-        rand_atom = INT ( (natoms(is) - 2) * rranf()) + 3
-        ! save the coordinates
+        CALL Atom_Displacement(this_box,accept)
 
-        CALL Save_Old_Cartesian_Coordinates(im,is)
-        CALL Save_Old_Internal_Coordinates(im,is)
-
-        CALL Change_Phi_Theta(rand_atom,im,is,theta_bound)
-        
-        CALL Compute_Molecule_Angle_Energy(im,is,e_angle_new)
-        IF(nimpropers(is) .GT. 0) CALL Compute_Molecule_Improper_Energy(im,is,e_improper_n)
-
-        delta_e_angle = e_angle_new - e_angle_old 
-        IF(nimpropers(is) .GT. 0) THEN
-           delta_e_improper = e_improper_n - e_improper_o
-        ELSE
-           delta_e_improper = 0.0_DP
-        END IF
-        delta_e = delta_e_angle + delta_e_improper
-
-        ln_pacc = beta(this_box) * delta_e
-        accept = accept_or_reject(ln_pacc)
-        
-        IF ( accept ) THEN
-
-           ! update energies 
-
-           e_angle_old = e_angle_old + delta_e_angle
-           e_total_o = e_angle_old
-
-           IF(nimpropers(is) .GT. 0) THEN
-              e_improper_o = e_improper_o + delta_e_improper
-              e_total_o = e_total_o + e_improper_o
-           END IF
-
-           naccept = naccept + 1
-
-           CALL Get_Internal_Coordinates(im,is)
-           
-        ELSE
-
-           CALL Revert_Old_Cartesian_Coordinates(im,is)
-
-        END IF
+        IF (accept) naccept = naccept + 1
 
         ! Store information with given frequency
-
-        IF ( i > n_equilsteps ) THEN
+        IF ( i_mcstep > n_equilsteps ) THEN
 
            ac_frag_energy = ac_frag_energy + e_total_o
-           zig_over_omega = zig_over_omega + DEXP(beta(this_box) * e_total_o)
           
-           IF (MOD(i,nthermo_freq) == 0) THEN
+           IF (MOD(i_mcstep,nthermo_freq) == 0) THEN
               !           WRITE(frag_file_unit,*) natoms(is)
               
               WRITE(frag_file_unit,*) temperature(this_box), e_total_o
@@ -169,12 +172,8 @@ SUBROUTINE Fragment_Driver
         ! revert coordinates, revert        
        
      END DO
-     write(*,'(A30,I10)') 'Number of Trial moves', n_mcsteps
-     write(*,'(A30,I10)') 'Accepted moves',  naccept
-     write(*,*) 'Average intramolecular energy', ac_frag_energy / REAL(n_mcsteps - n_equilsteps, DP) * atomic_to_kJmol, 'kJ/mol'
-     WRITE(*,'(X,A,2X,F30.10)') 'Z/Omega ', 1.0_DP / (zig_over_omega / REAL(n_mcsteps - n_equilsteps, DP))
-     WRITE(logunit,*) 'Zig by omega will be printed. This is required in GCMC acceptance rule if fugacity is used.'
-     WRITE(logunit, '(A,2X,F30.10)') 'Z/Omega ', 1.0_DP / (zig_over_omega / REAL(n_mcsteps - n_equilsteps, DP))
+     WRITE(*,'(A30,I10)') 'Number of Trial moves', n_mcsteps
+     WRITE(*,'(A30,I10)') 'Accepted moves',  naccept
   END DO
 
 

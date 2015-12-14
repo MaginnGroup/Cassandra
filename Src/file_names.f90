@@ -54,7 +54,6 @@ MODULE File_Names
   !   rotate
   !   volume_change
   !   write_properties
-  !   zig_by_omega
   !
   ! Revision history: 
   !

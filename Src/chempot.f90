@@ -1,4 +1,4 @@
-!********************************************************************************
+!*******************************************************************************
 !   Cassandra - An open source atomistic Monte Carlo software package
 !   developed at the University of Notre Dame.
 !   http://cassandra.nd.edu
@@ -21,7 +21,7 @@
 
 SUBROUTINE Chempot(this_box,is)
 
-  !********************************************************************************
+  !*****************************************************************************
   !
   ! The subroutine calculates the chemical potential of the species in the system.  
   !
@@ -35,7 +35,7 @@ SUBROUTINE Chempot(this_box,is)
   !
   !   12/10/13  : Beta Release
   ! 
-  !*******************************************************************************
+  !*****************************************************************************
 
   USE Global_Variables
   USE Energy_Routines
@@ -54,7 +54,7 @@ SUBROUTINE Chempot(this_box,is)
 
   REAL(DP) :: dx, dy, dz 
   REAL(DP) :: E_bond, E_angle, E_dihedral, E_intra_vdw, E_intra_qq
-  REAL(DP) :: E_inter_vdw, E_inter_qq, E_improper
+  REAL(DP) :: E_inter_vdw, E_inter_qq, E_improper, E_periodic_qq
   REAL(DP) :: delta_e, E_reciprocal_move, E_self_move, E_lrc
   REAL(DP) :: prefact, CP_energy, nrg_ring_frag_tot
 
@@ -71,13 +71,13 @@ SUBROUTINE Chempot(this_box,is)
   ntrials(is,this_box)%cpcalc = ntrials(is,this_box)%cpcalc + 1
  
   
-  IF ( locate(nmolecules(is)+1,is) == 0 ) THEN
-     locate(nmolecules(is)+1,is) = nmolecules(is)+1
+  IF ( locate(max_molecules(is)+1,is,this_box) == 0 ) THEN
+     locate(max_molecules(is)+1,is,this_box) = max_molecules(is)+1
   END IF
 
-  alive = locate(nmolecules(is)+1,is)
+  alive = locate(max_molecules(is)+1,is,this_box)
   molecule_list(alive,is)%which_box = this_box
-  molecule_list(alive,is)%cfc_lambda = 1.0_DP
+  molecule_list(alive,is)%frac = 1.0_DP
   molecule_list(alive,is)%molecule_type = int_normal
   molecule_list(alive,is)%live = .TRUE.
 
@@ -87,7 +87,7 @@ SUBROUTINE Chempot(this_box,is)
 
      del_flag = .FALSE.
      get_fragorder = .TRUE.
-     this_lambda = molecule_list(alive,is)%cfc_lambda
+     this_lambda = molecule_list(alive,is)%frac
      anchor_dummy = 0
      ALLOCATE(frag_order(nfragments(is)))
      CALL Build_Molecule(alive,is,this_box,frag_order,this_lambda, &
@@ -154,16 +154,21 @@ SUBROUTINE Chempot(this_box,is)
 
 
   ! Nonbonded energy
-  CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is,E_intra_vdw,E_intra_qq,intra_overlap)
-  CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_inter_vdw,E_inter_qq,inter_overlap)
+  CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is,E_intra_vdw,E_intra_qq, &
+       E_periodic_qq,intra_overlap)
+  CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_inter_vdw,E_inter_qq, &
+       inter_overlap)
+  E_inter_qq = E_inter_qq + E_periodic_qq
 
 !    delta_e = delta_e + E_inter_vdw + E_inter_qq
   delta_e = delta_e + E_intra_vdw + E_intra_qq + E_inter_vdw + E_inter_qq
 
   IF ( int_charge_sum_style(this_box) == charge_ewald .AND. has_charge(is)) THEN
-     CALL Compute_Ewald_Reciprocal_Energy_Difference(alive,alive,is,this_box,int_insertion,E_reciprocal_move)
-     CALL Compute_Ewald_Self_Energy_Difference(alive,is,this_box,int_insertion,E_self_move)
-     delta_e = delta_e + (E_reciprocal_move-energy(this_box)%ewald_reciprocal) + E_self_move
+     CALL Update_System_Ewald_Reciprocal_Energy(alive,is,this_box, &
+          int_insertion,E_reciprocal_move)
+     CALL Compute_Molecule_Ewald_Self_Energy(alive,is,this_box,E_self_move)
+     delta_e = delta_e + E_self_move &
+                       + (E_reciprocal_move-energy(this_box)%ewald_reciprocal)
   END IF
 
   IF (int_vdw_sum_style(this_box) == vdw_cut_tail) THEN

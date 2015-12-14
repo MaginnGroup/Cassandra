@@ -93,11 +93,6 @@ SUBROUTINE GCMC_Control
   ! Get the information on fugacities
   CALL Get_Fugacity_Info
     
-  ! Get the product of z/omega for each of fragments
-  IF (lfugacity) THEN
-          CALL Get_Zig_By_Omega
-  END IF 
-
   ! Determine the frequency with which information will be output 
   CALL Get_Simulation_Length_Info
 

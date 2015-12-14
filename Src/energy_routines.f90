@@ -1,4 +1,4 @@
-!********************************************************************************
+!*******************************************************************************
 !   Cassandra - An open source atomistic Monte Carlo software package
 !   developed at the University of Notre Dame.
 !   http://cassandra.nd.edu
@@ -20,110 +20,167 @@
 !*******************************************************************************
 
 MODULE Energy_Routines
-  !-----------------------------------------------------------------------------------
+  !-----------------------------------------------------------------------------
   ! This modules contains a collection of all the routines involved in computing
   ! energies and associated quantities. 
   ! 
-  ! Compute_Bond_Energy: passed two atom indices, the molecule index and the species
-  ! index
-  !                      it returns the energy of the bond between those two atoms, 
-  !                      consistent with the potential type. 
-  !                      Currently supports fixed and harmonic.
+  ! Compute_Bond_Energy: passed two atom indices, the molecule index and the 
+  !                       species index it returns the energy of the bond
+  !                       between those two atoms, consistent with the potential
+  !                       type. 
+  !                       Currently supports none and harmonic.
   !
-  ! Compute_Molecule_Bond_Energy: passed a molecule and species index, this returns
-  ! the total bond energy associated with that molecule. 
-  !                       Currently supports fixed and harmonic.
+  ! Compute_Molecule_Bond_Energy: passed a molecule and species index, this
+  !                       returns the total bond energy associated with that
+  !                       molecule 
+  !                       Currently supports none and harmonic.
   ! 
-  ! Compute_Angle_Energy: passed indices for three bonded atoms atom1,atom2,atom3 where atom3 
-  !                       is the apex of a the angle, along with the molecule and species index
-  !                       it returns the energy associated with that bond angle.
-  !                       Currently supports fixed and harmonic.
+  ! Compute_Angle_Energy: passed indices for three bonded atoms atom1,atom2,
+  !                       atom3 where atom3 is the apex of a the angle, along 
+  !                       with the molecule and species index it returns the 
+  !                       energy associated with that bond angle.
+  !                       Currently supports none and harmonic.
   !
-  ! Compute_Molecule_Angle_Energy: Passed a molecule and species index, it returns the total energy
-  !                       of that molecule due to bond angles.
-  !                       Currently supports fixed and harmonic.
+  ! Compute_Molecule_Angle_Energy: Passed a molecule and species index, it 
+  !                       returns the total energy of that molecule due to bond 
+  !                       angles.
+  !                       Currently supports none and harmonic.
   !
-  ! Compute_Dihedral_Energy: Passed 4 contiguous atoms that form a dihedral and the molecule and
-  !                        species indices, it returns the energy of that dihedral.  
-  !                        Currently supports none and OPLS.
+  ! Compute_Dihedral_Energy: Passed 4 contiguous atoms that form a dihedral and 
+  !                       the molecule and species indices, it returns the 
+  !                       energy of that dihedral.  
+  !                       Currently supports none and OPLS.
   !
-  ! Compute_Molecule_Dihedral_Energy: Passed a molecule and species index, it returns the total 
-  !                        dihedral energy of that molecule. 
-  !                        Currently supports none and OPLS.
+  ! Compute_Molecule_Dihedral_Energy: Passed a molecule and species index, it 
+  !                       returns the total dihedral energy of that molecule. 
+  !                       Currently supports none and OPLS.
   !
-  ! Compute_Improper_Energy: Passed the indices of 4 atoms making up an improper angle, along with
-  !                        the species and molecule index, this returns the energy of that improper. 
-  !                        This has not been tested!!! 
-  !                        Supports improper of the harmonic form: E = k*(phi-phi0)^2
+  ! Compute_Improper_Energy: Passed the indices of 4 atoms making up an improper
+  !                       angle, along with the species and molecule index, 
+  !                       this returns the energy of that improper. 
+  !                       This has not been tested!!! 
+  !                       Currently supports harmonic.
   !
-  ! Compute_Molecule_Imroper_Energy: Passed molecule and species indices, this computes the 
-  !                         total improper energy of the molecule. Not yet tested!!!
-  !                        Supports improper of the harmonic form: E = k*(phi-phi0)^2
+  ! Compute_Molecule_Improper_Energy: Passed molecule and species indices, this 
+  !                       computes the total improper energy of the molecule. 
+  !                       Not yet tested!!!
+  !                       Currently supports harmonic.
   !
-  ! Compute_Atom_Nonbond_Energy: passed indices of an atom, molecule and species, this 
-  !                        returns the vdw and either direct charge-charge or the real space
-  !                        part of the Ewald energy of this atom with all existing atoms in the 
-  !                        system. It accounts for intramolecular scaling of 1-2, 1-3 and 1-4.
-  !                        Supports vdw_style = none or LJ and charge_style none or coul.
-  !                        For LJ, it supports rcut, cut_tail and cut_shift, though TAIL CORRECTIONS
-  !                        HAVE NOT YET BEEN ADDED. LJ is assumed to be 12-6 LJ.
-  !                        For charge_style = coul, it supports rcut and Ewald is roughed in.
-  !                        However, the Ewald parts of the code need some thought, especially in 
-  !                        light of computing energy differences. This routine also returns the 
-  !                        virial contribution. It needs more testing, but I believe it works. 
+  ! Compute_Atom_Nonbond_Energy: passed indices of an atom, molecule and
+  !                       species, this returns the vdw and either direct 
+  !                       charge-charge or the real space part of the Ewald 
+  !                       energy of this atom with all existing atoms in the 
+  !                       system. It accounts for intramolecular scaling of 1-2,
+  !                       1-3 and 1-4.
   !
-  ! Pair_Energy: Computes the vdw and q-q pair energy between atoms ia and ja of molecules im and jm
-  !              and species is and js, given their separation rijsq. I have passed each component of 
-  !              separation nut right now this is unnecessary. 
-  !              It also computes the real space part of the Ewald sum if necessary.
+  !                       Supports vdw_style = none or LJ
+  !                       For LJ, it supports rcut, cut_tail and cut_shift, 
+  !                       though TAIL CORRECTIONS HAVE NOT YET BEEN ADDED. 
+  !                       LJ is assumed to be 12-6 LJ.
   !
-  !              LJ potential: Eij = 4*epsilon(i,j) * [ (sigma(i,j)/rij)^12 - (sigma(i,j)/rij)^6 ]
-  !              Wij = -rij/3 * d Eij / d rij. Use the virial in: P = NkBT + < W >
+  !                       Supports charge_style none or coul.
+  !                       For charge_style = coul, it supports rcut and Ewald is
+  !                       roughed in. However, the Ewald parts of the code need 
+  !                       some thought, especially in light of computing energy
+  !                       differences. This routine also returns the virial 
+  !                       contribution. It needs more testing, but I believe it 
+  !                       works. 
   !
-  ! Ewald_Real: Real space part of Ewald sum. Not tested. Need to add reciprical, self
-  !             and energy difference sin and cos sums. Contains erfc function.
+  ! Compute_Molecule_Nonbond_Intra_Energy: passed molecule and species indices,
+  !                       returns the intramolecular LJ and electrostatic energy
+  !                       of the molecule.
   !
+  ! Compute_Molecule_Nonbond_Inter_Energy: passed molecule and species indices,
+  !                       returns the intermolecular LJ and electrostatic energy
+  !                       between this molecule and all other molecules in the 
+  !                       system.
+  !
+  ! Compute_MoleculePair_Energy: 
+  ! Compute_MoleculePair_Force:
+  !                       Computes the intermolecular energy/force between a 
+  !                       pair of input molecules.
+  !
+  ! Compute_AtomPair_Energy:
+  ! Compute_AtomPair_Force:
+  !                       Computes the vdw and q-q pair energy/force between i
+  !                       atoms ia and ja of molecules im and jm of species is 
+  !                       and js, given their separation rijsq. I have passed 
+  !                       each component of separation nut right now this is 
+  !                       unnecessary. 
+  !                       It also computes the real space part of the Ewald sum 
+  !                       if necessary.
+  !
+  !                       LJ potential: 
+  !                         Eij = 4*epsilon(i,j) * 
+  !                                 [ (sigma(i,j)/rij)^12 - (sigma(i,j)/rij)^6 ]
+  !                         Wij = -rij/3 * d Eij / d rij. 
+  !                         Use the virial in: P = NkBT + < W >
+  !
+  ! Compute_AtomPair_Ewald_Real: Real space part of Ewald sum. Need to add
+  !                       reciprocal, self and energy difference sin and cos 
+  !                       sums. Contains erfc function.
   ! 
   ! Ewald_Reciprocal_Lattice_Vector_Setup : Sets up lattice vectors for Ewald
-  !         Summation for the input box.
+  !                       Summation for the input box.
   !
-  ! Compute_System_Ewald_Reciprocal_Energy : Computes reciprocal space energy
-  !          for a given box. 
+  ! Compute_System_Ewald_Reciprocal_Energy:
+  ! Compute_System_Ewald_Reciprocal_Force: 
+  !                       Computes reciprocal space energy/force for a given box
   !
-  ! Compute_Ewald_Reciprocal_Energy_Difference: Computes difference in 
-  !          reciprocal space energy due to various moves. The routine 
-  !          makes use of the fact that for a given move, the coordinates
-  !          of only one moleule are perturbed. Hence cos_sum and sin_sum
-  !          arrays can be computed by taking differences of q_i cos(k * r_i)
-  !          terms in new and old configurations.
-  !
+  ! Update_System_Ewald_Reciprocal_Energy: 
+  !                       Updates the  
+  !                       reciprocal space energy due to various moves. The 
+  !                       routine makes use of the fact that for a given move, 
+  !                       the coordinates of only one molecule are perturbed. 
+  !                       Hence cos_sum and sin_sum arrays can be computed by 
+  !                       taking differences of q_i cos(k * r_i) terms in new 
+  !                       and old configurations.
   !  
   ! Compute_System_Ewald_Self_Energy: Calculation of self energy for the Ewald
-  !          summation is obtained from this subroutine.
+  !                       summation is obtained from this subroutine.
   !
-  ! Compute_System_Ewald_Self_Energy_Difference: Determines the difference
-  !          in self energy when the number of particles changes in the system.
+  ! Compute_Molecule_Ewald_Self_Energy: Computes the self energy of the given
+  !                       molecule.
   !
-  ! Compute_Total_System_Energy: Computes the total system energy of the system.
-  ! Compute_Molecule_Pair_Interaction: Comptues the energy of interactions
-  !          between pair of molecules in a given box.
+  ! Compute_System_Total_Energy: 
+  ! Compute_System_Total_Force: 
+  !                       Computes the total system energy/forces within a given
+  !                       box. Forces are then used to compute the pressure 
+  !                       tensor.
   !
-  ! Compute_LR_Correction: Determines long range correction when the flag
-  !          is set to 'cut_tail'.
+  ! Compute_LR_Correction:
+  ! Compute_LR_Force: 
+  !                       Determines long range correction when the flag is set 
+  !                       to 'cut_tail'.
+  !
+  ! Check_MoleculePair_Cutoff:
+  !
+  ! Check_AtomPair_Cutoff:
+  !
+  ! Get_Molecule_Energy: Computes the intra- and inter-molecular energy of 
+  !                       a given molecule interacting with all other molecules.
+  !
+  ! Compute_Ring_Fragment_Energy: Computes the energy of a ring fragment in its
+  !                       old conformation.
+  !
+  ! System_Energy_Check:
+  !
+  !
+  !
   !
   ! Used by
   !
   !   angle_distortion
   !   atom_displacement
   !   chempot
-  !   cut_n_grow
+  !   cutNgrow
   !   deletion
   !   fragment_growth
   !   gcmc_control
   !   gcmc_driver
   !   gemc_control
   !   gemc_driver
-  !   gemc_nvt_volume
+  ! 
   !   gemc_particle_transfer
   !   grow_molecules
   !   input_routines
@@ -133,19 +190,18 @@ MODULE Energy_Routines
   !   nptmc_driver
   !   nvtmc_control
   !   nvtmc_driver
-  !   fragment_driver
-  !   ring_fragment_driver
+  !   nvt_mc_fragment_driver
+  !   nvt_mc_ring_fragment
   !   precalculate
   !   rotate
   !   translate
   !   volume_change
   !   write_properties
-  !   zig_by_omega
   !
   ! Revision history
   !
   !   12/10/13  : Beta Release
-  !-----------------------------------------------------------------------------------
+  !-----------------------------------------------------------------------------
 
   USE Type_Definitions
   USE Global_Variables
@@ -157,10 +213,10 @@ MODULE Energy_Routines
 
 CONTAINS
   
-  !----------------------------------------------------------------------------------------------
+  !-----------------------------------------------------------------------------
 
   SUBROUTINE Compute_Bond_Energy(at1,at2,molecule,species,energy)
-    !----------------------------------------------------------------------------------------------             
+    !---------------------------------------------------------------------------
     ! Given two atoms, the molecule and the species type, this routine figures out the bond 
     ! parameters and returns the energy associated with the bond. It uses the participation matrices
     ! computed earlier to avoid having to loop over all bonds in the molecule.
@@ -181,7 +237,7 @@ CONTAINS
     ! local
     INTEGER :: i, nbr_bonds,ierr,ibond
     REAL(DP) :: k,l0,length
-  !----------------------------------------------------------------------------------------------
+  !-----------------------------------------------------------------------------
     ierr = 1
 
     ! Compute the number of atoms bonded to at1
@@ -223,12 +279,13 @@ CONTAINS
        CALL Clean_Abort(err_msg,'Compute_Bond_Energy')
     END IF
 
+
   END SUBROUTINE Compute_Bond_Energy
-  !----------------------------------------------------------------------------------------------            
+  !-----------------------------------------------------------------------------
 
 
   SUBROUTINE Compute_Molecule_Bond_Energy(molecule,species,energy)
-    !----------------------------------------------------------------------------------------------            
+    !---------------------------------------------------------------------------
     ! Given a molecule number and species,this routine computes the total bond energy
     ! of the entire molecule.
 
@@ -251,7 +308,7 @@ CONTAINS
 
     ! Local
     REAL(DP) :: k,l0,eb
-  !----------------------------------------------------------------------------------------------            
+  !-----------------------------------------------------------------------------
     energy = 0.0_DP
     DO ibond=1,nbonds(species)
        IF (bond_list(ibond,species)%int_bond_type == int_none) THEN
@@ -267,12 +324,13 @@ CONTAINS
        energy = energy + eb
     ENDDO
   
+
   END SUBROUTINE Compute_Molecule_Bond_Energy
-  !----------------------------------------------------------------------------------------------            
+  !-----------------------------------------------------------------------------
 
 
   SUBROUTINE Compute_Angle_Energy(at1,at2,at3,molecule,species,energy)
-  !----------------------------------------------------------------------------------------------            
+  !-----------------------------------------------------------------------------
     ! This routine is passed three atoms with at2 being the central atom, along with the molecule and 
     ! species number, and computes the energy associated with the angle formed by the three atoms.
     ! It does this by finding the number of angles associated with the central atom (at2), finds the global
@@ -287,7 +345,7 @@ CONTAINS
     ! Written by: E. Maginn
     ! Date: Mon Nov 26 06:27:24 MST 2007
     ! Revision history:    
-  !----------------------------------------------------------------------------------------------            
+  !-----------------------------------------------------------------------------
     ! Passed
     INTEGER :: at1,at2,at3,molecule,species
 
@@ -297,7 +355,7 @@ CONTAINS
     ! Local
     INTEGER :: i,ierr,nbr_angles,iangle
     REAL(DP) :: k,theta0,theta
-  !----------------------------------------------------------------------------------------------            
+  !-----------------------------------------------------------------------------
     ierr = 1
 
     ! Number of angles associated with the central atom
@@ -320,7 +378,7 @@ CONTAINS
              ELSEIF (angle_list(iangle,species)%angle_potential_type == 'harmonic') THEN
                 k = angle_list(iangle,species)%angle_param(1)
                 theta0 = angle_list(iangle,species)%angle_param(2)
-                 
+                
                 CALL Get_Bond_Angle(iangle,molecule,species,theta)
                 energy = k*(theta-theta0)**2
                 ierr = 0
@@ -360,11 +418,11 @@ CONTAINS
        CALL Clean_Abort(err_msg,'Compute_Angle_Energy')
     END IF
 
-END SUBROUTINE Compute_Angle_Energy
-  !----------------------------------------------------------------------------------------------              
+  END SUBROUTINE Compute_Angle_Energy
+  !-----------------------------------------------------------------------------
 
   SUBROUTINE Compute_Molecule_Angle_Energy(molecule,species,energy)
-    !----------------------------------------------------------------------------------------------              
+    !---------------------------------------------------------------------------
     ! This routine is passed a molecule and species index. It then computes the total
     ! bond angle energy of this molecule.  
 
@@ -374,7 +432,7 @@ END SUBROUTINE Compute_Angle_Energy
     ! Written by: E. Maginn
     ! Date: Mon Nov 26 06:27:24 MST 2007
     ! Revision history:    
-    !----------------------------------------------------------------------------------------------              
+    !---------------------------------------------------------------------------
     USE Random_Generators
     ! Passed to 
     INTEGER :: molecule,species
@@ -385,7 +443,7 @@ END SUBROUTINE Compute_Angle_Energy
     ! Local
     INTEGER :: iangle
     REAL(DP) :: k,theta0,theta,ea
-  !----------------------------------------------------------------------------------------------              
+  !-----------------------------------------------------------------------------
 
     energy = 0.0_DP
     DO iangle=1,nangles(species)
@@ -401,12 +459,11 @@ END SUBROUTINE Compute_Angle_Energy
        energy = energy + ea
     ENDDO
 
-
-END SUBROUTINE Compute_Molecule_Angle_Energy
-  !----------------------------------------------------------------------------------------------              
+  END SUBROUTINE Compute_Molecule_Angle_Energy
+  !-----------------------------------------------------------------------------
 
   SUBROUTINE Compute_Dihedral_Energy(at1,at2,at3,at4,molecule,species,energy_dihed)
-  !----------------------------------------------------------------------------------------------            
+  !-----------------------------------------------------------------------------
     ! This routine is passed 4 bonded atoms, and the molecule and species index. It figures out
     ! the type of torsion potential used and the parameters, and returns the energy of this torsion
     ! angle.
@@ -419,15 +476,15 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     ! Revision history: 
     !
     ! 01/19/09 (JS) : Added CHARMM functional form
-	! 12/8/12 (AV): Added AMBER functional form for multiple dihedrals
-  !----------------------------------------------------------------------------------------------            
+    ! 12/08/12 (AV) : Added AMBER functional form for multiple dihedrals
+  !----------------------------------------------------------------------------------
   USE Global_Variables
     INTEGER :: at1,at2,at3,at4,molecule,species
     REAL(DP) :: energy_dihed
 
     INTEGER :: i,ierr, nbr_dihed, idihed
     REAL(DP) :: a0,a1,a2,a3,a4,a5,a6,a7,a8,phi,twophi,threephi
-  !----------------------------------------------------------------------------------------------            
+  !----------------------------------------------------------------------------------
   ierr = 1
   energy_dihed = 0.0_DP
 
@@ -590,10 +647,10 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     END IF
 
   END SUBROUTINE Compute_Dihedral_Energy
-  !----------------------------------------------------------------------------------------------            
+  !-----------------------------------------------------------------------------
 
   SUBROUTINE Compute_Molecule_Dihedral_Energy(molecule,species,energy_dihed)
-   !----------------------------------------------------------------------------------------------              
+   !----------------------------------------------------------------------------
     ! This routine is passed a molecule and species index. It then computes the total
     ! dihedral angle energy of this molecule.  
 
@@ -604,7 +661,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     ! Date: Mon Nov 26 10:01:22 MST 2007
     ! Revision history:
     ! AV: Added AMBER dihedral style:  12/8/12
-    !----------------------------------------------------------------------------------------------              
+    !---------------------------------------------------------------------------
   USE Global_Variables  
     ! Passed to 
     INTEGER :: molecule,species
@@ -615,7 +672,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     ! Local
     INTEGER :: idihed, atom1, atom2, atom3, atom4
     REAL(DP) :: a0,a1,a2,a3,a4,a5,a6,a7,a8,edihed,phi,twophi,threephi
-  !----------------------------------------------------------------------------------------------              
+  !-----------------------------------------------------------------------------
 
     energy_dihed = 0.0_DP
     DO idihed=1,ndihedrals(species)
@@ -644,6 +701,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
           a3 = dihedral_list(idihed,species)%dihedral_param(4)
 
           CALL Get_Dihedral_Angle(idihed,molecule,species,phi)
+
           twophi = 2.0_DP*phi
           threephi = 3.0_DP*phi
           edihed =  a0 + a1*(1.0_DP+COS(phi)) + &
@@ -730,14 +788,14 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
        ENDIF
        energy_dihed = energy_dihed + edihed
     ENDDO
- 
+
 
   END SUBROUTINE Compute_Molecule_Dihedral_Energy
-  !----------------------------------------------------------------------------------------------              
+  !-----------------------------------------------------------------------------
 
 
   SUBROUTINE Compute_Improper_Energy(at1,at2,at3,at4,molecule,species,energy)
-  !----------------------------------------------------------------------------------------------              
+  !-----------------------------------------------------------------------------
     ! This routine is passed 4 atoms making up an imprioper angle, as well as the molecule 
     ! and species indices. It computes the energy assuming a harmonic improper style of the form
     !                                E = k*(phi-phi0)^2 
@@ -757,13 +815,13 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     ! Written by: E. Maginn
     ! Date: Mon Nov 26 10:01:22 MST 2007
     ! Revision history:    
-  !----------------------------------------------------------------------------------------------              
+  !-----------------------------------------------------------------------------
     INTEGER :: at1,at2,at3,at4,molecule,species
     REAL(DP) :: energy
 
     INTEGER :: ierr, iimprop
     REAL(DP) :: k,phi0,phi
-  !----------------------------------------------------------------------------------------------              
+  !-----------------------------------------------------------------------------
     ierr = 1
     energy = 0.0_DP
 
@@ -824,12 +882,13 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
 
 
   END SUBROUTINE Compute_Improper_Energy
-  !----------------------------------------------------------------------------------------------              
+  !-----------------------------------------------------------------------------
 
   SUBROUTINE Compute_Molecule_Improper_Energy(molecule,species,energy)
-  !----------------------------------------------------------------------------------------------              
-    ! This routie is passed the molecule and species index, and returns the total improper
-    ! energy of that molecule. Only "none" and "harminic" types are supported.
+  !-----------------------------------------------------------------------------
+    ! This routine is passed the molecule and species index, and returns the
+    ! total improper energy of that molecule. Only "none" and "harminic" types
+    ! are supported.
 
     ! Called by:
     ! Calls: Get_Improper_Angle
@@ -837,11 +896,11 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     ! Written by: E. Maginn
     ! Date: Mon Nov 26 11:37:40 MST 2007
     ! Revision history
-  !----------------------------------------------------------------------------------------------              
+  !-----------------------------------------------------------------------------
     INTEGER :: molecule,species,iimprop
     REAL(DP) :: energy
     REAL(DP) :: eimprop,k,phi0,phi,n_imp,d_imp
-  !----------------------------------------------------------------------------------------------              
+  !-----------------------------------------------------------------------------
     energy = 0.0_DP
     DO iimprop=1,nimpropers(species)
        IF (improper_list(iimprop,species)%int_improp_type == int_none) THEN
@@ -866,75 +925,85 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     ENDDO
     
   END SUBROUTINE Compute_Molecule_Improper_Energy
-  !----------------------------------------------------------------------------------------------              
+  !-----------------------------------------------------------------------------
 
-  SUBROUTINE Compute_Atom_Nonbond_Energy(this_atom,this_molecule,this_species,E_intra_vdw, &
-       E_inter_vdw,E_intra_qq,E_inter_qq,overlap)
-
-    ! Computes the energy components between one particular atom and ALL others in its box, accounting
-    ! for exclusions, scalings and existence. It returns two components of energy and the virial for the passed atom.
-    ! Note that if this is used to compute the energy of several atoms, care must
-    ! be taken to avoid "double counting" the energy. 
-    ! This would most typically be used to compute energies for addition of atoms during CBMC growth.
-
-    ! Note that the VDW energy (without LRC) is returned as is the real space part of the q-q interactions
-    ! (for Ewald) or the direct sum 1-1 part for charge_sum_style = cut.
-
-    ! if vdw_style == 'NONE' and charge_style='NONE' then this routine should really not be called.
-    ! However, after much effort a value of 0 will be returned for the energy!
+  SUBROUTINE Compute_Atom_Nonbond_Energy(this_atom,this_molecule,this_species, &
+       E_intra_vdw,E_inter_vdw,E_intra_qq,E_inter_qq,overlap)
+    !---------------------------------------------------------------------------
+    ! Computes the energy components between one particular atom and ALL others
+    ! in its box, accounting for exclusions, scalings and existence. It returns
+    ! two components of energy and the virial for the passed atom. Note that if
+    ! this is 
+    ! used to compute the energy of several atoms, care must be taken to avoid 
+    ! "double counting" the energy. This would most typically be used to compute
+    ! energies for addition of atoms during CBMC growth.
+    !
+    ! Note that the VDW energy (without LRC) is returned as is the real space 
+    ! part of the q-q interactions (for Ewald) or the direct sum 1-1 part for 
+    ! charge_sum_style = cut.
+    !
+    ! If vdw_style == 'NONE' and charge_style == 'NONE' then this routine should
+    ! really not be called. However, after much effort a value of 0 will be 
+    ! returned for the energy!
     !
     ! CALLED BY:
     ! Atom_Displacement/Fragment_Growth
+    !
     ! CALLS: 
     ! Minimum_Image_Separation
     ! Clean_Abort
-    ! Pair_Energy
-
+    ! Compute_AtomPair_Energy
+    !
     ! Written by: E. Maginn
     ! Date: Wed Nov 28 14:23:16 MST 2007
     ! Revision history:
     !
-    ! 01/22/09 (JS) : Modified to separate out intra and intermolecule energy terms. Also
-    !                 identity of molecules is obtained via locate array
+    ! 01/22/09 (JS) : Modified to separate out intra and intermolecule energy 
+    !                 terms. Also identity of molecules is obtained via locate 
+    !                 array
     !
-    ! 03/11/11 (JS) : Note that the loops for energy calculations are unrolled in this routine (Tom Rosch's code)
-    !                 Need to figure out how to do openMP here so that other routines can be called much the same
-    !                 way as done in Compute_Molecule_Nonbond_Inter_Energy
-    !----------------------------------------------------------------------------------------------              
+    ! 03/11/11 (JS) : Note that the loops for energy calculations are unrolled
+    !                 in this routine (Tom Rosch's code)
+    !                 Need to figure out how to do openMP here so that other
+    !                 routines can be called much the same way as done in 
+    !                 Compute_Molecule_Nonbond_Inter_Energy
+    !---------------------------------------------------------------------------
 
     INTEGER, INTENT(IN) :: this_atom,this_molecule,this_species
     REAL(DP), INTENT(OUT) :: E_intra_vdw,E_inter_vdw,E_intra_qq,E_inter_qq
-    REAL(DP) :: E_intra_vdw_new,E_inter_vdw_new,E_intra_qq_new,E_inter_qq_new
     LOGICAL, INTENT(OUT) :: overlap   
     INTEGER :: this_box,is,im,js,ia, mol_is, itype, jtype, rinteraction, vdw_in
     REAL(DP) :: rxij,ryij,rzij,rijsq,rxijp,ryijp,rzijp
-    REAL(DP) :: Eij_vdw,Eij_qq
+    REAL(DP) :: Eij_intra_vdw,Eij_inter_vdw,Eij_intra_qq,Eij_inter_qq
     REAL(DP) :: eps, sig, SigOverRsq, SigOverR6, SigOverR12
     REAL(DP) :: qi, qj, rij, erf_val, erfc_val, qsc
     REAL(DP) :: T, x, xsq, TP
     REAL(DP) :: rcom,rx,ry,rz
     REAL(DP) :: rcut, rcutsq
-    REAL(DP) :: this_lambda_lj
     REAL(DP) :: SigOverR, SigOverRn, SigOverRm, mie_coeff,  mie_n, mie_m
  
-    LOGICAL :: get_vdw,get_qq, f_intra_nrg, get_interaction
+    LOGICAL :: get_vdw,get_qq, get_interaction
 
     REAL(DP), PARAMETER :: A1 = 0.254829592_DP, A2 = -0.284496736_DP
     REAL(DP), PARAMETER :: A3 = 1.421413741_DP, A4 = -1.453152027_DP
     REAL(DP), PARAMETER :: A5 = 1.061405429_DP, P = 0.3275911_DP
 
-
-    !----------------------------------------------------------------------------------------------              
+    !---------------------------------------------------------------------------
     E_inter_vdw = 0.0_DP
     E_intra_vdw = 0.0_DP
     E_inter_qq = 0.0_DP
     E_intra_qq = 0.0_DP
-    E_inter_vdw_new = 0.0_DP
-    E_intra_vdw_new = 0.0_DP
-    E_inter_qq_new = 0.0_DP
-    E_intra_qq_new = 0.0_DP
+    Eij_inter_vdw = 0.0_DP
+    Eij_intra_vdw = 0.0_DP
+    Eij_inter_qq = 0.0_DP
+    Eij_intra_qq = 0.0_DP
 
-    f_intra_nrg = .FALSE.
+    ! Check that this_atom exists
+    IF (.NOT. atom_list(this_atom,this_molecule,this_species)%exist ) THEN
+       err_msg = ""
+       err_msg(1) = 'Attempt to compute energy of an atom that does not exist'
+       CALL Clean_Abort(err_msg,'Compute_Atom_Nonbond_Energy')      
+    ENDIF
 
     ! Set the box number this particular atom is in.
     this_box = molecule_list(this_molecule,this_species)%which_box
@@ -946,322 +1015,114 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     ! Initialize the overlap flag to false to indicate no overlap between atoms.
     overlap = .FALSE.
    
-    IF (.NOT. atom_list(this_atom,this_molecule,this_species)%exist ) THEN
-       err_msg = ""
-       err_msg(1) = 'Attempt to compute energy of an atom that does not exist'
-       CALL Clean_Abort(err_msg,'Compute_Atom_Nonbond_Energy')      
-    ENDIF
-
-
-     ! (B.Y.): temporary fix to passing next few lines for vdw sum styles other
-     ! than vdw_cut_tail.  
-
-     IF (int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
-       vdw_in = vdw_cut_tail
-     ELSEIF (int_vdw_sum_style(this_box) == vdw_cut) THEN
-       vdw_in = vdw_cut
-     ELSEIF (int_vdw_sum_style(this_box) == vdw_cut_shift) THEN
-       vdw_in = vdw_cut_shift
-     ELSEIF (int_vdw_sum_style(this_box) == vdw_cut_switch) THEN
-       vdw_in = vdw_cut_switch
-     ELSEIF (int_vdw_sum_style(this_box) == vdw_mie) THEN
-       vdw_in = vdw_mie
-     ELSEIF (int_vdw_sum_style(this_box) == vdw_mie_cut_shift) THEN
-       vdw_in = vdw_mie_cut_shift
-     ENDIF
-
-     IF (int_vdw_sum_style(this_box) /= vdw_in)  THEN
-!    IF(int_vdw_style(this_box) == vdw_lj .AND. int_vdw_sum_style(this_box) == vdw_cut_tail .AND. &
-!       int_charge_style(this_box) == charge_coul .AND. int_charge_sum_style(this_box) == charge_ewald) THEN
-       IF (cbmc_flag) THEN
-          rcut = rcut_cbmc(this_box)
-       ELSE
-          rcut = rcut_max(this_box)
-       END IF
+    SpeciesLoop:DO is=1,nspecies
        
-       rcutsq = rcut * rcut
-       
-       DO is=1,nspecies
+       MoleculeLoop:DO mol_is=1,nmols(is,this_box)
           
-          !$OMP PARALLEL DO DEFAULT(SHARED) &
-          !$OMP PRIVATE(im,mol_is,rxijp,ryijp,rzijp,rijsq,rinteraction,T,x,xsq,TP,erfc_val,ia,f_intra_nrg) &
-          !$OMP PRIVATE(itype,jtype,eps,sig,SigOverRsq,SigOverR6,SigOverR12,rij,erf_val,Eij_vdw,Eij_qq,qsc) &
-          !$OMP SCHEDULE(DYNAMIC) &
-          !$OMP REDUCTION(+:E_inter_vdw,E_inter_qq,E_intra_vdw,E_intra_qq)
+          im = locate(mol_is,is,this_box) ! molecule INDEX
+          IF (.NOT. molecule_list(im,is)%live) CYCLE MoleculeLoop
           
-          DO mol_is=1,nmolecules(is)
-             
-             IF(overlap) CYCLE
-             
-             im = locate(mol_is,is)
-             
-             IF( .NOT. molecule_list(im,is)%live ) CYCLE 
-             
-             rxijp = molecule_list(im,is)%xcom - molecule_list(this_molecule,this_species)%xcom
-             ryijp = molecule_list(im,is)%ycom - molecule_list(this_molecule,this_species)%ycom
-             rzijp = molecule_list(im,is)%zcom - molecule_list(this_molecule,this_species)%zcom
-             
-             IF (rxijp.gt.box_list(this_box)%hlength(1,1)) THEN
-                rxijp = rxijp-box_list(this_box)%length(1,1)
-             ELSEIF (rxijp.lt.-box_list(this_box)%hlength(1,1)) THEN
-                rxijp = rxijp+box_list(this_box)%length(1,1)
-             ENDIF
+          ! Check tos see if atom is to interact with the molecule based
+          ! on COM cutoff.
+          CALL Check_MoleculePair_Cutoff(im,is,this_molecule,this_species, &
+               get_interaction,rcom,rx,ry,rz)
+          
+          IF (.NOT. get_interaction) CYCLE MoleculeLoop
 
-             IF (ryijp.gt.box_list(this_box)%hlength(2,2)) THEN
-                ryijp = ryijp-box_list(this_box)%length(2,2)
-             ELSEIF (ryijp.lt.-box_list(this_box)%hlength(2,2)) THEN
-                ryijp = ryijp+box_list(this_box)%length(2,2)
-             ENDIF
-             
-             IF (rzijp.gt.box_list(this_box)%hlength(3,3)) THEN
-                rzijp = rzijp-box_list(this_box)%length(3,3)
-             ELSEIF (rzijp.lt.-box_list(this_box)%hlength(3,3)) THEN
-                rzijp = rzijp+box_list(this_box)%length(3,3)
-             ENDIF
-
-             rijsq = rxijp*rxijp + ryijp*ryijp + rzijp*rzijp
-             rinteraction = rcut + molecule_list(im,is)%max_dcom &
-                  + molecule_list(this_molecule,this_species)%max_dcom
-             rinteraction = rinteraction * rinteraction
-             
-             IF (rijsq .GT. rinteraction) CYCLE 
-             
-             DO ia=1,natoms(is)
+          AtomLoop:DO ia=1,natoms(is)
+             ! Test for intramolecular interaction
+             IF (.NOT. atom_list(ia,im,is)%exist ) CYCLE AtomLoop  
+             IF (is == this_species .AND. im == this_molecule) THEN
                 
-                IF (overlap) CYCLE
-                IF (is == this_species .AND. im == this_molecule) THEN
+                IF (ia == this_atom) THEN
+                   ! Avoid computing energy with self
+                   CYCLE AtomLoop
+                ELSE
+                   ! Intra energy. Do not apply PBC
+                   IF ( .NOT. atom_list(ia,im,is)%exist) CYCLE AtomLoop
+
+                   ! Interatomic distance
+                   rxij = atom_list(ia,im,is)%rxp &
+                        - atom_list(this_atom,this_molecule,this_species)%rxp
+                   ryij = atom_list(ia,im,is)%ryp &
+                        - atom_list(this_atom,this_molecule,this_species)%ryp
+                   rzij = atom_list(ia,im,is)%rzp &
+                        - atom_list(this_atom,this_molecule,this_species)%rzp
                    
-                   IF (ia == this_atom) CYCLE
-                   IF (.NOT. atom_list(ia,im,is)%exist ) CYCLE 
-                   
-                   rxijp = atom_list(ia,im,is)%rxp - atom_list(this_atom,this_molecule,this_species)%rxp
-                   ryijp = atom_list(ia,im,is)%ryp - atom_list(this_atom,this_molecule,this_species)%ryp
-                   rzijp = atom_list(ia,im,is)%rzp - atom_list(this_atom,this_molecule,this_species)%rzp
-                   
-                   rijsq = rxijp*rxijp + ryijp*ryijp + rzijp*rzijp
+                   rijsq = rxij*rxij + ryij*ryij + rzij*rzij
                    
                    IF (rijsq <= rcut_lowsq) THEN
-                      overlap = .true.
-                   END IF
-
-                ELSE
-                   
-                   rxijp = atom_list(ia,im,is)%rxp - atom_list(this_atom,this_molecule,this_species)%rxp
-                   ryijp = atom_list(ia,im,is)%ryp - atom_list(this_atom,this_molecule,this_species)%ryp
-                   rzijp = atom_list(ia,im,is)%rzp - atom_list(this_atom,this_molecule,this_species)%rzp
-                   
-                   IF (rxijp.gt.box_list(this_box)%hlength(1,1)) THEN
-                      rxijp = rxijp-box_list(this_box)%length(1,1)
-                   ELSEIF (rxijp.lt.-box_list(this_box)%hlength(1,1)) THEN
-                      rxijp = rxijp+box_list(this_box)%length(1,1)
-                   ENDIF
-                   
-                   IF (ryijp.gt.box_list(this_box)%hlength(2,2)) THEN
-                      ryijp = ryijp-box_list(this_box)%length(2,2)
-                   ELSEIF (ryijp.lt.-box_list(this_box)%hlength(2,2)) THEN
-                      ryijp = ryijp+box_list(this_box)%length(2,2)
-                   ENDIF
-                   
-                   IF (rzijp.gt.box_list(this_box)%hlength(3,3)) THEN
-                      rzijp = rzijp-box_list(this_box)%length(3,3)
-                   ELSEIF (rzijp.lt.-box_list(this_box)%hlength(3,3)) THEN
-                      rzijp = rzijp+box_list(this_box)%length(3,3)
-                   ENDIF
-                   
-                   rijsq = rxijp*rxijp + ryijp*ryijp + rzijp*rzijp
-                   
-                   IF (rijsq < rcut_lowsq) THEN
-                      overlap = .true.
-                   END IF
-                   
-                ENDIF
-
-                IF(.NOT. overlap .AND. rijsq <= rcutsq) THEN         
-                   
-                   qsc = 1.0_DP
-                   itype = nonbond_list(ia,is)%atom_type_number
-                   jtype = nonbond_list(this_atom,this_species)%atom_type_number
-                   eps = vdw_param1_table(itype,jtype)
-                   sig = vdw_param2_table(itype,jtype)
-                   qi = nonbond_list(ia,is)%charge
-                   qj = nonbond_list(this_atom,this_species)%charge
-                   
-                   this_lambda_lj = 1.0_DP
-                   
-                   IF(is == this_species .AND. im == this_molecule) THEN
-                      f_intra_nrg = .TRUE.
-                      eps = eps * vdw_intra_scale(ia,this_atom,is)
-                      qsc = charge_intra_scale(ia,this_atom,is)
-                   ELSE
-                      rij = SQRT(rijsq)
-                      SigOverRsq = (sig**2) / rijsq
-                      SigOverR6  = SigOverRsq * SigOverRsq * SigOverRsq
-                      SigOverR12 = SigOverR6 * SigOverR6
-                      Eij_vdw = 4.0_DP * eps * (SigOverR12 - SigOverR6)
-                      
-		      x = alpha_ewald(this_box) * rij
-                      T = 1.0_DP / (1.0_DP + P*x)
-                      xsq = x*x
-                      TP = T * (A1 + T * (A2 + T * (A3 + T * (A4 + T * A5))))
-                      erfc_val = TP * EXP(-xsq)
-                      
-                      erf_val = 1.0_DP - erfc_val
-                      
-                      Eij_qq = (qi*qj/rij)*(qsc - erf_val)*charge_factor
-                      
-                      
-                      IF (f_intra_nrg) THEN
-                         
-                         E_intra_vdw = E_intra_vdw + Eij_vdw
-                         E_intra_qq = E_intra_qq + Eij_qq
-                         f_intra_nrg = .FALSE.
-                         
-                      ELSE
-                         
-                         E_inter_vdw = E_inter_vdw + Eij_vdw
-                         E_inter_qq = E_inter_qq + Eij_qq
-
-                      END IF
-                      
-                   ENDIF
-             
-                ENDIF
-
-             END DO
-
-          END DO
-
-       !$OMP END PARALLEL DO
-       
-          IF(overlap) RETURN
-       
-       END DO
-    
-    ELSE
-       SpeciesLoop:DO is=1,nspecies
-          
-          MoleculeLoop:DO mol_is=1,nmolecules(is)
-             
-             im = locate(mol_is,is)
-             
-             ! Make sure that the molecule exists in the simulation
-             
-             IF( .NOT. molecule_list(im,is)%live ) CYCLE MoleculeLoop
-             
-             ! Only allow interactions in the same box
-             IF (this_box /= molecule_list(im,is)%which_box) CYCLE MoleculeLoop
-             
-             ! Check tos see if atom is to interact with the molecule based
-             ! on COM cutoff.
-             
-             CALL Check_Interaction(im,is,this_molecule,this_species,get_interaction,rcom,rx,ry,rz)
-             
-             IF ( .NOT. get_interaction) CYCLE MoleculeLoop
-             
-                AtomLoop:DO ia=1,natoms(is)
-                   ! Test for intramolecular interaction
-                   IF (.NOT. atom_list(ia,im,is)%exist ) CYCLE AtomLoop  
-                   IF (is == this_species .AND. im == this_molecule) THEN
-                      
-                      IF (ia == this_atom) THEN
-                         ! Avoid computing energy with self
-                         CYCLE AtomLoop
-                      ELSE
-                         ! Intra energy. Do not apply PBC
-                         
-                         f_intra_nrg = .TRUE.
-                         
-                         IF ( .NOT. atom_list(ia,im,is)%exist) CYCLE AtomLoop
-                         
-                         
-                         ! Find distance between this atom and all others in the system
-                         rxij = atom_list(ia,im,is)%rxp - atom_list(this_atom,this_molecule,this_species)%rxp
-                         ryij = atom_list(ia,im,is)%ryp - atom_list(this_atom,this_molecule,this_species)%ryp
-                         rzij = atom_list(ia,im,is)%rzp - atom_list(this_atom,this_molecule,this_species)%rzp
-                         
-                         rijsq = rxij*rxij + ryij*ryij + rzij*rzij
-                         
-                         IF (rijsq <= rcut_lowsq) THEN
-                            IF (.not.(l_bonded(ia,this_atom,is))) THEN
-                               overlap = .true.
-                               RETURN
-                            ENDIF
-                         END IF
-                      ENDIF
-                      
-                   ELSE                      
-                      
-                      ! It is an intermolecular energy so apply pbc. First compute the parent separation
-                      rxijp = atom_list(ia,im,is)%rxp - atom_list(this_atom,this_molecule,this_species)%rxp
-                      ryijp = atom_list(ia,im,is)%ryp - atom_list(this_atom,this_molecule,this_species)%ryp
-                      rzijp = atom_list(ia,im,is)%rzp - atom_list(this_atom,this_molecule,this_species)%rzp
-                      
-                      ! Now get the minimum image separation 
-                      CALL Minimum_Image_Separation(this_box,rxijp,ryijp,rzijp,rxij,ryij,rzij)
-                      
-                      rijsq = rxij*rxij + ryij*ryij + rzij*rzij
-                      
-                      IF (rijsq < rcut_lowsq) THEN
+                      IF (.not.(l_bonded(ia,this_atom,is))) THEN
                          overlap = .true.
                          RETURN
-                      END IF
-                      
-                   ENDIF
-                   
-                   CALL Energy_Test(rijsq,get_vdw,get_qq,this_box)
-                   
-                   ! Compute vdw and q-q energy using if required
-                   IF (get_vdw .OR. get_qq) THEN 
-                      
-                      CALL Pair_Energy(rxij,ryij,rzij,rijsq,is,im,ia,this_species,this_molecule,this_atom,&
-                           get_vdw,get_qq,Eij_vdw,Eij_qq)
-                      
-                      IF (f_intra_nrg) THEN
-                         ! put the energies in intramolecular
-                         E_intra_vdw = E_intra_vdw + Eij_vdw
-                         E_intra_qq = E_intra_qq + Eij_qq
-                         
-                         f_intra_nrg = .FALSE.
-                         
-                      ELSE
-                         !IF (CBMC_flag) THEN
-                         !  IF ( .not. del_flag) THEN
-                         !  IF (this_mcstep == 30985 ) THEN
-                         !    write(301,*) ia, im, rijsq
-                         ! END IF
-                         ! END IF
-                         ! END IF
-                         
-                         E_inter_vdw = E_inter_vdw + Eij_vdw
-                         E_inter_qq = E_inter_qq + Eij_qq
-                         
-                      END IF
-                      
-                   ENDIF
-                   
-                END DO AtomLoop
+                      ENDIF
+                   END IF
+                ENDIF
                 
-             END DO MoleculeLoop
+             ELSE                      
+                ! Intermolecular energy so apply pbc. 
+
+                ! First compute the parent separation
+                rxijp = atom_list(ia,im,is)%rxp &
+                      - atom_list(this_atom,this_molecule,this_species)%rxp
+                ryijp = atom_list(ia,im,is)%ryp &
+                      - atom_list(this_atom,this_molecule,this_species)%ryp
+                rzijp = atom_list(ia,im,is)%rzp &
+                      - atom_list(this_atom,this_molecule,this_species)%rzp
+                
+                ! Now get the minimum image separation 
+                CALL Minimum_Image_Separation(this_box,rxijp,ryijp,rzijp, &
+                     rxij,ryij,rzij)
+                
+                rijsq = rxij*rxij + ryij*ryij + rzij*rzij
+                
+                IF (rijsq < rcut_lowsq) THEN
+                   overlap = .true.
+                   RETURN
+                END IF
+                
+             ENDIF
              
-          END DO SpeciesLoop
+             CALL Check_AtomPair_Cutoff(rijsq,get_vdw,get_qq,this_box)
+             
+             ! Compute vdw and q-q energy using if required
+             IF (get_vdw .OR. get_qq) THEN 
+                
+                CALL Compute_AtomPair_Energy(rxij,ryij,rzij,rijsq, &
+                     is,im,ia,this_species,this_molecule,this_atom,&
+                     get_vdw,get_qq, &
+                     Eij_intra_vdw,Eij_intra_qq,Eij_inter_vdw,Eij_inter_qq)
+                
+                E_intra_vdw = E_intra_vdw + Eij_intra_vdw
+                E_intra_qq  = E_intra_qq  + Eij_intra_qq
+                E_inter_vdw = E_inter_vdw + Eij_inter_vdw
+                E_inter_qq  = E_inter_qq  + Eij_inter_qq
+             ENDIF
+             
+          END DO AtomLoop
+             
+       END DO MoleculeLoop
           
-       END IF
-     
+    END DO SpeciesLoop
+          
+  END SUBROUTINE Compute_Atom_Nonbond_Energy
 
-     END SUBROUTINE Compute_Atom_Nonbond_Energy
+  !-----------------------------------------------------------------------------
 
-  !----------------------------------------------------------------------------------------------              
-
-  SUBROUTINE Compute_Molecule_Nonbond_Intra_Energy(im,is,E_intra_vdw,E_intra_qq,intra_overlap,E_self)
-
-    ! The subroutine calculates the intramolecular LJ potential energy and electrostatic
-    ! energy of an entire molecule. The routine is based off the above routine 'Compute
-    ! _Atom_Nonbond_Intra_Energy' and takes care of double counting by looping only over
-    ! i+1 to natoms for ith atom interaction. 
+  SUBROUTINE Compute_Molecule_Nonbond_Intra_Energy(im,is, &
+    E_intra_vdw,E_intra_qq,E_inter_qq,intra_overlap,E_self)
+    !---------------------------------------------------------------------------
+    ! The subroutine calculates the intramolecular LJ potential energy and 
+    ! electrostatic energy of an entire molecule. The routine is based off the 
+    ! above routine 'Compute_Atom_Nonbond_Intra_Energy' and takes care of double
+    ! counting by looping only over i+1 to natoms for ith atom interaction. 
+    !
+    ! Only the minimum image electrostatic energy is stored in E_intra_qq. The
+    ! periodic image electrostatic energy is stored in E_inter_qq.
     !
     ! CALLS
     ! 
-    ! Pair_Energy
+    ! Compute_AtomPair_Energy
     !
     ! CALLED BY
     !
@@ -1270,25 +1131,23 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     !
     !
     ! Written by Jindal Shah on 12/05/07
-    !***************************************************************************************
+    !***************************************************************************
 
     IMPLICIT NONE
 
     INTEGER :: ia, ja, im, is, this_box
 
-    REAL(DP) :: E_intra_vdw, E_intra_qq, rxij, ryij, rzij, rijsq
+    REAL(DP) :: E_intra_vdw, E_intra_qq, E_inter_qq
+    REAL(DP) :: rxij, ryij, rzij, rijsq
     REAL(DP) :: E_intra_vdw_old, E_intra_qq_old
-    REAL(DP) :: Eij_vdw, Eij_qq
+    REAL(DP) :: Eij_intra_vdw, Eij_intra_qq, Eij_inter_vdw, Eij_inter_qq
     REAL(DP), OPTIONAL :: E_self
     
-    REAL(DP), PARAMETER :: A1 = 0.254829592_DP, A2 = -0.284496736_DP
-    REAL(DP), PARAMETER :: A3 = 1.421413741_DP, A4 = -1.453152027_DP
-    REAL(DP), PARAMETER :: A5 = 1.061405429_DP, P = 0.3275911_DP
-
     LOGICAL :: get_vdw, get_qq, intra_overlap
 
     E_intra_vdw = 0.0_DP
     E_intra_qq = 0.0_DP
+    E_inter_qq = 0.0_DP
     E_intra_vdw_old = 0.0_DP
     E_intra_qq_old = 0.0_DP
     IF(PRESENT(E_self)) E_self = 0.0_DP
@@ -1325,7 +1184,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
                 ENDIF
              END IF
              
-             CALL Energy_Test(rijsq,get_vdw,get_qq,this_box)
+             CALL Check_AtomPair_Cutoff(rijsq,get_vdw,get_qq,this_box)
              
              IF(cbmc_flag.and.species_list(is)%L_Coul_CBMC) THEN
                 get_qq=.false.
@@ -1334,10 +1193,13 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
              ! Compute vdw and q-q energy using if required
              IF (get_vdw .OR. get_qq) THEN 
                 
-                CALL Pair_Energy(rxij,ryij,rzij,rijsq,is,im,ia,is,im,ja,get_vdw,get_qq,Eij_vdw,Eij_qq)
+                CALL Compute_AtomPair_Energy(rxij,ryij,rzij,rijsq, &
+                   is,im,ia,is,im,ja,get_vdw,get_qq, &
+                   Eij_intra_vdw,Eij_intra_qq,Eij_inter_vdw,Eij_inter_qq)
                 
-                E_intra_vdw = E_intra_vdw + Eij_vdw
-                E_intra_qq  = E_intra_qq + Eij_qq
+                E_intra_vdw = E_intra_vdw + Eij_intra_vdw
+                E_intra_qq  = E_intra_qq + Eij_intra_qq
+                E_inter_qq  = E_inter_qq + Eij_inter_qq
                 
              END IF
              
@@ -1346,21 +1208,20 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
        END IF
        
     END DO
-   
- 
+    
   END SUBROUTINE Compute_Molecule_Nonbond_Intra_Energy
-  !----------------------------------------------------------------------------------------------------------
+  !-----------------------------------------------------------------------------
 
-  SUBROUTINE Compute_Molecule_Nonbond_Inter_Energy(im,is,E_inter_vdw,E_inter_qq,overlap)
-
-    !**************************************************************************************************
-    ! This subroutine computes interatomic LJ and charge interactions as well as virials associated
-    ! with these interactions. 
+  SUBROUTINE Compute_Molecule_Nonbond_Inter_Energy(im,is, &
+    E_inter_vdw,E_inter_qq,overlap)
+    !***************************************************************************
+    ! This subroutine computes interatomic LJ and charge interactions as well as 
+    ! virials associated with these interactions. 
     !
     ! CALLS
     ! 
     ! Minimum_Image_Separation
-    ! Pair_Energy
+    ! Compute_MoleculePair_Energy
     ! Clean_Abort
     !
     ! CALLED BY
@@ -1369,9 +1230,12 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     ! Rotation
     ! Rigid_Dihedral_Change
     ! Angle_Distortion
+    ! Insertion
+    ! Deletion
+    ! Reaction
     !
     ! Written by Jindal Shah on 12/07/07
-    !***************************************************************************************************
+    !***************************************************************************
 
     IMPLICIT NONE
 
@@ -1380,17 +1244,13 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     INTEGER, INTENT(IN):: im, is
     REAL(DP), INTENT(OUT) :: E_inter_vdw, E_inter_qq
     LOGICAL :: overlap
-    !---------------------------------------------------------------------------------------------------
+    !---------------------------------------------------------------------------
 
     INTEGER  :: ispecies, imolecule, this_box, this_locate
     
     REAL(DP) :: Eij_vdw, Eij_qq
     REAL(DP) :: eps
     REAL(DP) :: rcom, rx, ry, rz
-
-    REAL(DP), PARAMETER :: A1 = 0.254829592_DP, A2 = -0.284496736_DP
-    REAL(DP), PARAMETER :: A3 = 1.421413741_DP, A4 = -1.453152027_DP
-    REAL(DP), PARAMETER :: A5 = 1.061405429_DP, P = 0.3275911_DP
 
     LOGICAL :: get_interaction
 
@@ -1403,7 +1263,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     E_inter_qq = 0.0_DP
     overlap = .FALSE.
     my_overlap = .FALSE.
-    shared_overlap = .false.
+    shared_overlap = .FALSE.
     
     this_box = molecule_list(im,is)%which_box
 
@@ -1413,13 +1273,11 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
 
     IF (l_pair_store) THEN
        ! find out the location correspoding to im
-       
        IF (is == 1) THEN
           locate_1 = im
        ELSE
-          locate_1 = SUM(nmolecules(1:is-1)) + im
+          locate_1 = SUM(max_molecules(1:is-1)) + im
        END IF
-
     END IF
 
     speciesLoop: DO ispecies = 1, nspecies
@@ -1431,27 +1289,20 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
        !$OMP REDUCTION(+:E_inter_vdw,E_inter_qq) & 
        !$OMP REDUCTION(.OR.:my_overlap)  
 
-       
-       moleculeLoop: DO imolecule = 1, nmolecules(ispecies)
+       moleculeLoop: DO imolecule = 1, nmols(ispecies,this_box)
           
           IF(shared_overlap) CYCLE
           
-          this_locate = locate(imolecule,ispecies)
+          this_locate = locate(imolecule,ispecies,this_box)
+          IF (.NOT. molecule_list(this_locate,ispecies)%live) CYCLE moleculeLoop
+          IF (ispecies == is .AND. this_locate == im) CYCLE moleculeLoop
           
-          IF (ispecies == is .AND. this_locate == im) CYCLE moleculeLOOP
-          
-          IF (molecule_list(this_locate,ispecies)%which_box /= this_box) CYCLE moleculeLOOP
-          
-          ! make sure that the molecule is currently part of the simulation
-          
-          IF(.NOT. molecule_list(this_locate,ispecies)%live) CYCLE moleculeLOOP
-          
+          ! reset pair energy, if storing energies
           IF (l_pair_store) THEN
-             
              IF (ispecies == 1) THEN
                 locate_2 = this_locate
              ELSE
-                locate_2 = SUM(nmolecules(1:ispecies-1)) + this_locate
+                locate_2 = SUM(max_molecules(1:ispecies-1)) + this_locate
              END IF
              
              pair_nrg_vdw(locate_1,locate_2) = 0.0_DP
@@ -1459,19 +1310,18 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
              
              pair_nrg_qq(locate_1,locate_2) = 0.0_DP
              pair_nrg_qq(locate_2,locate_1) = 0.0_DP
-             
           END IF
           
           ! Determine if any atoms of these two molecules will interact
-          CALL Check_Interaction(im,is,this_locate,ispecies,get_interaction,rcom,rx,ry,rz) 
+          CALL Check_MoleculePair_Cutoff(im,is,this_locate,ispecies,get_interaction, &
+               rcom,rx,ry,rz) 
 
           IF (.NOT. get_interaction) CYCLE moleculeLOOP       
           
+          CALL Compute_MoleculePair_Energy(im,is,this_locate,ispecies, &
+               this_box,Eij_vdw,Eij_qq,my_overlap)
           
-          CALL Compute_Molecule_Pair_Interaction(im,is,this_locate,ispecies,this_box, &
-               Eij_vdw,Eij_qq,my_overlap)
-          
-          IF( my_overlap) shared_overlap = .true.
+          IF (my_overlap) shared_overlap = .TRUE.
           
           E_inter_vdw = E_inter_vdw + Eij_vdw
           E_inter_qq  = E_inter_qq + Eij_qq
@@ -1480,256 +1330,360 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
        !$OMP END PARALLEL DO
        
        IF(shared_overlap) THEN
-          overlap = .true.
+          overlap = .TRUE.
           RETURN
        ENDIF
        
     END DO speciesLoop
-  
+    
   END SUBROUTINE Compute_Molecule_Nonbond_Inter_Energy
-  !------------------------------------------------------------------------------------------
-  !------------------------------------------------------------------------------------------
-  SUBROUTINE Pair_Energy &
-       (rxij,ryij,rzij,rijsq,is,im,ia,js,jm,ja,get_vdw,get_qq,Eij_vdw,Eij_qq)
+  !-----------------------------------------------------------------------------
 
-    ! LJ potential: Eij = 4*epsilon(i,j) * [ (sigma(i,j)/rij)^12 - (sigma(i,j)/rij)^6 ]
+  SUBROUTINE Compute_MoleculePair_Energy(im,is,jm,js,this_box, &
+    vlj_pair,vqq_pair,overlap)
+    !***************************************************************************
+    ! The subroutine returns the interaction energy of the input molecule with 
+    ! another molecule. Thus, it computes the intermolecular vdw and 
+    ! electrostatic interactions. 
+    !
+    ! CALLS
+    !
+    ! Minimum_Image_Separation
+    ! Check_AtomPair_Cutoff
+    ! Compute_AtomPair_Energy
+    ! Get_Position_Alive
+    !
+    ! CALLED BY
+    !
+    ! Compute_Molecule_Nonbond_Inter_Energy
+    ! Compute_System_Total_Energy
+    !***************************************************************************
+  
+    IMPLICIT NONE
 
-    ! Computes the vdw and q-q pair energy between atoms ia and ja of molecules im and jm
-    ! and species is and js, given their separation rijsq. I have passed each component of 
-    ! separation nut right now this is unnecessary. 
+    INTEGER, INTENT(IN) :: im, is, jm, js, this_box
+    REAL(DP), INTENT(OUT) :: vlj_pair,vqq_pair
+    LOGICAL, INTENT(OUT) :: overlap
+    !---------------------------------------------------------------------------
+
+    INTEGER :: ia, ja 
+
+    REAL(DP) :: rxijp, ryijp, rzijp, rxij, ryij, rzij, rijsq
+    REAL(DP) :: Eij_intra_vdw, Eij_intra_qq, Eij_inter_vdw, Eij_inter_qq
+
+    LOGICAL :: get_vdw, get_qq
+
+    INTEGER :: locate_im, locate_jm
+
+    vlj_pair = 0.0_DP
+    vqq_pair = 0.0_DP
+    overlap = .FALSE.
+
+    DO ia = 1, natoms(is)
+
+      IF (.NOT. atom_list(ia,im,is)%exist) CYCLE
+
+      DO ja = 1, natoms(js)
+          
+        IF ( .NOT. atom_list(ja,jm,js)%exist) CYCLE
+
+        ! Obtain the minimum image separation
+        rxijp = atom_list(ia,im,is)%rxp - atom_list(ja,jm,js)%rxp
+        ryijp = atom_list(ia,im,is)%ryp - atom_list(ja,jm,js)%ryp
+        rzijp = atom_list(ia,im,is)%rzp - atom_list(ja,jm,js)%rzp
+          
+        ! Now get the minimum image separation 
+        CALL Minimum_Image_Separation(this_box,rxijp,ryijp,rzijp,rxij,ryij,rzij)
+
+        rijsq = rxij*rxij + ryij*ryij + rzij*rzij
+
+        IF( rijsq < rcut_lowsq ) THEN
+          overlap = .TRUE.
+          RETURN
+        END IF
+          
+        ! Now figure out what needs to be computed, then call pair_energy
+        CALL Check_AtomPair_Cutoff(rijsq,get_vdw,get_qq,this_box)          
+
+        IF(cbmc_flag .AND. (.NOT. species_list(is)%L_Coul_CBMC)) THEN
+          get_qq=.FALSE. 
+        ENDIF 
+
+        ! Compute vdw and q-q energy, if required
+        IF (get_vdw .OR. get_qq) THEN 
+
+          CALL Compute_AtomPair_Energy(rxij,ryij,rzij,rijsq, &
+               is,im,ia,js,jm,ja,get_vdw,get_qq, &
+               Eij_intra_vdw,Eij_intra_qq,Eij_inter_vdw,Eij_inter_qq)
+
+          vlj_pair = vlj_pair + Eij_inter_vdw
+          vqq_pair = vqq_pair + Eij_inter_qq
+
+        END IF
+      END DO
+    END DO
+
+    IF (l_pair_nrg) THEN
+      IF ( .NOT. cbmc_flag ) THEN
+        ! if here then, there was no overlap between im and jm
+        ! update the interaction energy of the pair
+        ! first find out the position of each im in the pair interaction energy
+        CALL Get_Position_Alive(im,is,locate_im)
+        CALL Get_Position_Alive(jm,js,locate_jm)
+          
+        pair_nrg_vdw(locate_im,locate_jm) = vlj_pair 
+        pair_nrg_vdw(locate_jm,locate_im) = vlj_pair 
+          
+        pair_nrg_qq(locate_im,locate_jm) = vqq_pair 
+        pair_nrg_qq(locate_jm,locate_im) = vqq_pair 
+      END IF
+    END IF
+
+  END SUBROUTINE Compute_MoleculePair_Energy
+  !-----------------------------------------------------------------------------
+
+  SUBROUTINE Compute_AtomPair_Energy(rxij,ryij,rzij,rijsq,is,im,ia,js,jm,ja, &
+    get_vdw,get_qq,E_intra_vdw,E_intra_qq,E_inter_vdw,E_inter_qq)
+
+    ! Computes the vdw and q-q pair energy between atoms ia and ja of molecules
+    ! im and jm and species is and js, given their separation rijsq. I have 
+    ! passed each component of separation but right now this is unnecessary. 
+    !
+    ! LJ potential:
+    !   Full molecules:
+    !      Eij =  4*epsilon(i,j) * [ (sigma(i,j)/rij)^12 - (sigma(i,j)/rij)^6 ]
+    !
+    !   Fractional molecules:
+    !      Eij = 
+    !           [             1                                1              ]
+    ! 4*lij*eij*[ -----------------------------  -  ------------------------- ]
+    !           [ ((0.5(1-lij)^2+(rij/sij)^6)^2    (0.5(1-lij)^2+(rij/sij)^6) ]
+    !
+    !
+
     ! It also computes the real space part of the Ewald sum if necessary.
 
-    ! Called by: Compute_Atom_Nonbond_Energy
-    ! Calls: CFC_LJ_Scaling
-    !        Ewald_Real
-  !------------------------------------------------------------------------------------------
+    ! Called by: 
+    !   Compute_Atom_Nonbond_Energy
+    !   Compute_Molecule_Nonbond_Energy
+    ! Calls: 
+    !   Compute_AtomPair_Ewald_Real
+  !----------------------------------------------------------------------------
     ! Passed to
     REAL(DP) :: rxij,ryij,rzij,rijsq
     INTEGER :: is,im,ia,js,jm,ja,ibox
     LOGICAL :: get_vdw,get_qq
 
     ! Returned
-    REAL(DP) :: Eij_vdw,Eij_qq
+    REAL(DP) :: E_intra_vdw,E_intra_qq
+    REAL(DP) :: E_inter_vdw,E_inter_qq
 
     ! Local
-    INTEGER :: itype,jtype, this_box
-    REAL(DP) :: eps,sig,SigOverRsq,SigOverR6,SigOverR12
-    REAL(DP) :: SigOverRsq_shift,SigOverR6_shift,SigOverR12_shift
+    ! LJ potential
+    INTEGER :: itype, jtype
+    REAL(DP) :: eps, sig, Eij_vdw
+    REAL(DP) :: SigByR2, SigByR6, SigByR12
+    REAL(DP) :: SigByR2_shift, SigByR6_shift, SigByR12_shift
     REAL(DP) :: roffsq_rijsq, roffsq_rijsq_sq, factor2, fscale
-    REAL(DP) :: SigOverR, SigOverRn, SigOverRm, mie_coeff, rij,  mie_n, mie_m, rij_shift, SigOverR_shift, SigOverRn_shift, SigOverRm_shift, rcut_vdw
-!    REAL(DP) :: Eij_vdw_check
-    Real(DP) :: qi,qj, qsc
-    REAL(DP) :: this_lambda, RsqOverSig, R6OverSig, factorLJ
-    REAL(DP) :: RsqOverSig_Shift, RsqOverSig6_Shift, factorLJ_Shift
+    ! Mie potential
+    REAL(DP) :: rij, rij_shift, rcut_vdw
+    REAL(DP) :: mie_coeff, mie_n, mie_m
+    REAL(DP) :: SigByR, SigByRn, SigByRm
+    REAL(DP) :: SigByR_shift, SigByRn_shift, SigByRm_shift
+    ! Coulomb potential
+    REAL(DP) :: qi, qj, Eij_qq
 
-    LOGICAL :: fraction
-
-  !------------------------------------------------------------------------------------------
-    Eij_vdw = 0.0_DP
-    Eij_qq = 0.0_DP
-    fraction = .false.
-    this_lambda = 1.0_DP
-
+    E_intra_vdw = 0.0_DP
+    E_intra_qq  = 0.0_DP
+    E_inter_vdw = 0.0_DP
+    E_inter_qq  = 0.0_DP
+  !----------------------------------------------------------------------------
     ibox = molecule_list(im,is)%which_box
 
     ! If either atom is not yet present, then don't try to compute an energy
-    ExistCheck: IF (atom_list(ia,im,is)%exist .AND. atom_list(ja,jm,js)%exist) THEN
+    ExistCheck: &
+    IF (atom_list(ia,im,is)%exist .AND. atom_list(ja,jm,js)%exist) THEN
 
-       ! Determine atom type indices
-       itype = nonbond_list(ia,is)%atom_type_number
-       jtype = nonbond_list(ja,js)%atom_type_number
+      ! Determine atom type indices
+      itype = nonbond_list(ia,is)%atom_type_number
+      jtype = nonbond_list(ja,js)%atom_type_number
        
-       VDW_calculation: IF (get_vdw) THEN
+      VDW_calc: &
+      IF (get_vdw) THEN
 
-          LJ_12_6_calculation: IF (int_vdw_style(1) == vdw_lj) THEN
-             ! For now, assume all interactions are the same. Use the lookup table created in Compute_Nonbond_Table
-             eps = vdw_param1_table(itype,jtype)
-             sig = vdw_param2_table(itype,jtype)
+        IF (int_vdw_style(ibox) == vdw_lj) THEN
 
-             ! Apply intramolecular scaling if necessary
-             IF (is == js .AND. im == jm) THEN
-                
-                ! This controls 1-2, 1-3, and 1-4 interactions
-                
-                eps = eps * vdw_intra_scale(ia,ja,is)
+          ! For now, assume all interactions are the same. 
+          ! Use the lookup table created in Compute_Nonbond_Table
+          eps = vdw_param1_table(itype,jtype)
+          sig = vdw_param2_table(itype,jtype)
 
-             ENDIF
-                
-             SigOverRsq = (sig**2) / rijsq
-             SigOverR6  = SigOverRsq * SigOverRsq * SigOverRsq
-             SigOverR12 = SigOverR6 * SigOverR6
-             
-             IF (int_vdw_sum_style(ibox) == vdw_charmm) THEN
-
-                ! use the form for modified LJ potential
-                
-                Eij_vdw = eps * (SigOverR12 - 2.0_DP * SigOverR6)
-
-             ELSEIF (int_vdw_sum_style(ibox) == vdw_cut .OR. int_vdw_sum_style(ibox) == vdw_cut_tail) THEN
-                 
-                   Eij_vdw = 4.0_DP * eps * (SigOverR12 - SigOverR6)
-
-             ELSEIF (int_vdw_sum_style(ibox) == vdw_cut_shift) THEN
-                
-                SigOverRsq = (sig**2)/rijsq
-                SigOverR6 = SigOverRsq * SigOverRsq * SigOverRsq
-                SigOverR12 = SigOverR6 * SigOverR6
-
-                
-                SigOverRsq_shift = sig**2/rcut_vdwsq(ibox)
-                SigOverR6_shift = SigOverRsq_shift * SigOverRsq_shift * SigOverRsq_shift
-                SigOverR12_shift = SigOverR6_shift * SigOverR6_shift
-                
-                Eij_vdw = 4.0_DP * eps * ( (SigOverR12 - SigOverR6) - (SigOverR12_shift - SigOverR6_shift) )
-
-                
-             ELSEIF (int_vdw_sum_style(ibox) == vdw_cut_switch) THEN
-                
-                Eij_vdw = 4.0_DP * eps * (SigOverR12 - SigOverR6)
-                                            
-                IF ( (rijsq < ron_switch_sq(ibox) )) THEN
-                   
-                   fscale = 1.0_DP
-                   
-                ELSEIF ( rijsq <= roff_switch_sq(ibox)) THEN
-                   
-                   roffsq_rijsq = roff_switch_sq(ibox) - rijsq
-                   
-                   roffsq_rijsq_sq = roffsq_rijsq * roffsq_rijsq
-                   
-                   factor2 = switch_factor2(ibox) + 2.0_DP * rijsq
-                   
-                   fscale = roffsq_rijsq_sq * factor2 * switch_factor1(ibox)
-                   
-                   Eij_vdw = fscale * Eij_vdw
-
-                ELSE
-                   
-                   fscale = 0.0_DP
-                   Eij_vdw = 0.0_DP
-                ENDIF
-
-
-             ELSEIF (int_vdw_sum_style(ibox) == vdw_mie) THEN 
-
-                rij = SQRT(rijsq)
-                rcut_vdw = SQRT(rcut_vdwsq(ibox))
-     
-                mie_n = mie_nlist(mie_Matrix(is,js))
-                mie_m = mie_mlist(mie_Matrix(is,js))
-                mie_coeff = mie_n/(mie_n-mie_m) *(mie_n/mie_m)**(mie_m/(mie_n-mie_m))
-                SigOverR = sig/rij
-                SigOverRn = SigOverR ** mie_n
-                SigOverRm = SigOverR ** mie_m
-                Eij_vdw =  mie_coeff * eps * ((SigOverRn - SigOverRm))
-
-
-
-             ELSEIF (int_vdw_sum_style(ibox) == vdw_mie_cut_shift) THEN
-
-                rij = SQRT(rijsq)
-		rcut_vdw = SQRT(rcut_vdwsq(ibox))
-                
-                mie_n = mie_nlist(mie_Matrix(is,js))
-                mie_m = mie_mlist(mie_Matrix(is,js))
-                mie_coeff = mie_n/(mie_n-mie_m) * (mie_n/mie_m)**(mie_m/(mie_n-mie_m))
-                SigOverR = sig/rij
-		SigOverR_shift = sig/rcut_vdw
-		!use cut-shift potential
-		SigOverRn_shift = SigOverR_shift ** mie_n
-		SigOverRm_shift = SigOverR_shift ** mie_m
-                SigOverRn = SigOverR ** mie_n
-                SigOverRm = SigOverR ** mie_m
-                Eij_vdw =  mie_coeff * eps * ((SigOverRn - SigOverRm) - (SigOverRn_shift - SigOverRm_shift))
-                
-             ENDIF
-             
-             
-          ENDIF LJ_12_6_calculation
-          
-       ENDIF VDW_calculation
-  
-       qq_calculation: IF (get_qq) THEN
-          
-          qi = nonbond_list(ia,is)%charge
-          qj = nonbond_list(ja,js)%charge
-
-          
-          IF (int_charge_sum_style(ibox) == charge_cut .OR. igas_flag) THEN
-             ! Apply charge scaling for intramolecular energies
-             qsc = 1.0_DP
-             IF ( is == js .AND. im == jm ) THEN
-                qsc = charge_intra_scale(ia,ja,is)
-             END IF
-             Eij_qq = qsc*charge_factor*(qi*qj)/SQRT(rijsq)
-          ELSEIF (int_charge_sum_style(ibox) == charge_ewald .AND. ( .NOT. igas_flag) ) THEN
-             ! Real space Ewald part
-             this_box = molecule_list(im,is)%which_box
-             CALL Ewald_Real(ia,im,is,qi,ja,jm,js,qj,rijsq,Eij_qq,this_box)
-             
-             ! self and recipricoal parts need to be computed as total energy differences between original
-             ! configuration and the perturbed configuration. These terms are thus added on after all atoms 
-             ! have been moved. 
-
+          ! Apply intramolecular scaling if necessary
+          IF (is == js .AND. im == jm) THEN
+            ! This controls 1-2, 1-3, and 1-4 interactions
+            eps = eps * vdw_intra_scale(ia,ja,is)
           ENDIF
+                
+          SigByR2 = (sig**2) / rijsq
+          SigByR6 = SigByR2 * SigByR2 * SigByR2
+          SigByR12 = SigByR6 * SigByR6
+             
+          ! use standard LJ potential
+          Eij_vdw = 4.0_DP * eps * (SigByR12 - SigByR6)
 
-       ENDIF qq_calculation
+          IF (int_vdw_sum_style(ibox) == vdw_cut_shift) THEN
+            ! shift the LJ potential
+            SigByR2_shift = sig**2/rcut_vdwsq(ibox)
+            SigByR6_shift = SigByR2_shift * SigByR2_shift * SigByR2_shift
+            SigByR12_shift = SigByR6_shift * SigByR6_shift
+              
+            Eij_vdw = Eij_vdw &
+                    - 4.0_DP * eps * (SigByR12_shift - SigByR6_shift)
+
+          ELSE IF (int_vdw_sum_style(ibox) == vdw_cut_switch) THEN
+            ! scale the LJ potential
+            IF ( rijsq < ron_switch_sq(ibox) ) THEN
+              fscale = 1.0_DP
+            ELSEIF ( rijsq <= roff_switch_sq(ibox) ) THEN
+              roffsq_rijsq = roff_switch_sq(ibox) - rijsq
+              roffsq_rijsq_sq = roffsq_rijsq * roffsq_rijsq
+              factor2 = switch_factor2(ibox) + 2.0_DP * rijsq
+              fscale = roffsq_rijsq_sq * factor2 * switch_factor1(ibox)
+              Eij_vdw = fscale * Eij_vdw
+            ELSE
+              fscale = 0.0_DP
+              Eij_vdw = 0.0_DP
+            END IF
+          ELSE IF (int_vdw_sum_style(ibox) == vdw_charmm) THEN
+            ! use the form for modified LJ potential
+            Eij_vdw = eps * (SigByR12 - 2.0_DP * SigByR6)
+          END IF
+
+        ELSE IF (int_vdw_style(ibox) == vdw_mie) THEN
+
+          rij = SQRT(rijsq)
+          rcut_vdw = SQRT(rcut_vdwsq(ibox))
+              
+          mie_n = mie_nlist(mie_Matrix(is,js))
+          mie_m = mie_mlist(mie_Matrix(is,js))
+          mie_coeff = mie_n/(mie_n-mie_m) * (mie_n/mie_m)**(mie_m/(mie_n-mie_m))
+          SigByR = sig/rij
+          Eij_vdw =  mie_coeff * eps * (SigByRn - SigByRm)
+          !use cut-shift potential
+          IF (int_vdw_sum_style(ibox) == vdw_cut_shift) THEN
+            SigByR_shift = sig/rcut_vdw
+            SigByRn_shift = SigByR_shift ** mie_n
+            SigByRm_shift = SigByR_shift ** mie_m
+            SigByRn = SigByR ** mie_n
+            SigByRm = SigByR ** mie_m
+            Eij_vdw =  Eij_vdw - mie_coeff * eps * (SigByRn_shift - SigByRm_shift)
+          END IF
+              
+        END IF
+
+        IF (is == js .AND. im == jm) THEN
+          E_intra_vdw = Eij_vdw
+          E_inter_vdw = 0.0_DP
+        ELSE
+          E_intra_vdw = 0.0_DP
+          E_inter_vdw = Eij_vdw
+        ENDIF
+          
+      ENDIF VDW_calc
+  
+      qq_calc: IF (get_qq) THEN
+          
+        qi = nonbond_list(ia,is)%charge
+        qj = nonbond_list(ja,js)%charge
+          
+        IF (int_charge_sum_style(ibox) == charge_cut .OR. &
+            int_charge_sum_style(ibox) == charge_minimum .OR. igas_flag) THEN
+          Eij_qq = charge_factor*(qi*qj)/SQRT(rijsq)
+          ! Apply charge scaling for intramolecular energies
+          IF ( is == js .AND. im == jm ) THEN
+            E_intra_qq = E_intra_qq + charge_intra_scale(ia,ja,is) * Eij_qq
+          ELSE
+            E_inter_qq = E_inter_qq + Eij_qq
+          END IF
+        ELSEIF (int_charge_sum_style(ibox) == charge_ewald .AND. &
+                ( .NOT. igas_flag) ) THEN
+          ! Real space Ewald part
+          CALL Compute_AtomPair_Ewald_Real(ia,im,is,qi,ja,jm,js,qj, &
+               rijsq,E_intra_qq,E_inter_qq,ibox)
+             
+          ! self and reciprocal parts need to be computed as total energy 
+          ! differences between original configuration and the perturbed 
+          ! configuration.
+
+        ENDIF
+
+      ENDIF qq_calc
        
     ENDIF ExistCheck
 
-  END SUBROUTINE Pair_Energy
+  END SUBROUTINE Compute_AtomPair_Energy
 
-  !------------------------------------------------------------------------------------------
-  SUBROUTINE Ewald_Real(ia,im,is,qi,ja,jm,js,qj,rijsq,Eij,ibox)
-  !------------------------------------------------------------------------------------------
-    ! Real space part of the Ewald sum between atoms 1a and jq with 
+  !-----------------------------------------------------------------------------
+
+  SUBROUTINE Compute_AtomPair_Ewald_Real(ia,im,is,qi,ja,jm,js,qj,rijsq, &
+    E_intra_qq,E_inter_qq,ibox)
+  !-----------------------------------------------------------------------------
+    ! Real space part of the Ewald sum between atoms ia and ja with 
     ! charges qi and qj.
+    !
+    ! Miniumum image charges interact via Coulomb's law: qi*qj/rij
+    !   * Intramolecular: scaled for 1-2, 1-3 and 1-4 interactions
+    !
+    ! The real space part of the periodic image charge is qi*qj/rij*erf
+    !
+    !
+    ! CALLED BY: 
+    !
+    ! Compute_AtomPair_Energy
+  !-----------------------------------------------------------------------------
+    ! Arguments
+    INTEGER :: ia,im,is
+    REAL(DP) :: qi
+    INTEGER :: ja,jm,js
+    REAL(DP) :: qj
+    REAL(DP) :: rijsq
+    REAL(DP) :: E_intra_qq, E_inter_qq
+    INTEGER :: ibox
 
-    ! For intramolecular scaling, we want Efull - (1-w)*qiqj/rij
-    ! where Efull is the non-scaled real-space sum and w is the intramolecular
-    ! scaling between i and j. We thus have to subtract 
-    ! (1-lambda)qiqj/rij from this to get the correct scaling. 
+    ! Local variables
+    REAL(DP) :: rij,erf_val
+    REAL(DP) :: Eij_qq
 
-    ! Called by: Pair_Energy
-    ! Calls: CFC_qq_scaling
-  !------------------------------------------------------------------------------------------
-    INTEGER :: ia,im,is,ja,jm,js,ibox
-    REAL(DP) :: qi,qj,qsc,rijsq,rij,erf_val
-    REAL(DP) :: Eij
-
-    qsc = 1.0_DP
     ibox = molecule_list(im,is)%which_box 
-
-    ! Apply intramolecular scaling if necessary
-    IF (is == js .AND. im == jm) THEN
-       
-       ! Intramolecular charge scaling
-       qsc = charge_intra_scale(ia,ja,is)
-              
-    ENDIF
-
-    ! Real space part: This does the intrascaling correct. For cfc intra,
-    ! we use full scaling. I think for CFC inter, we simply scale the actual 
-    ! value of the charge, but do NOT scale it here for intra interactions.
-    ! Come back to this later.
 
     rij = SQRT(rijsq)
     ! May need to protect against very small rijsq
     erf_val = 1.0_DP - erfc(alpha_ewald(ibox) * rij)
-    Eij = (qi*qj/rij)*(qsc - erf_val)*charge_factor
-!                   IF(en_flag) THEN
-!                      WRITE(60,"(4I4,2F8.5,F24.12)") ia, ja, jm, js, qi,qj, Eij
-!                   END IF
+    Eij_qq = qi * qj / rij * charge_factor
 
-!------------------------------------------------------------------------------
+    ! Minimum image real space energy
+    IF (is == js .AND. im == jm) THEN
+       ! Intramolecular charge scaling
+       E_intra_qq = charge_intra_scale(ia,ja,is) * Eij_qq
+       E_inter_qq = 0.0_DP
+    ELSE
+       E_intra_qq = 0.0_DP
+       E_inter_qq = Eij_qq
+    ENDIF
+
+    ! Periodic image real space energy
+    E_inter_qq = E_inter_qq - erf_val * Eij_qq
+    
+
+  !-----------------------------------------------------------------------------
   CONTAINS
 
     FUNCTION erfc(x)
-      !**************************************************************************
-      !                                                                         *
-      ! Calculate the complementary error function for  a number
-      !                                                                         *
-      !**************************************************************************
+      !*************************************************************************
+      !
+      ! Calculate the complementary error function for a number
+      !
+      !*************************************************************************
 
       REAL(DP) :: erfc
       REAL(DP), PARAMETER :: A1 = 0.254829592_DP, A2 = -0.284496736_DP
@@ -1745,14 +1699,14 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
       erfc = TP * EXP(-xsq)
 
     END FUNCTION erfc
-!------------------------------------------------------------------------------
+  !-----------------------------------------------------------------------------
 
-  END SUBROUTINE Ewald_Real
+  END SUBROUTINE Compute_AtomPair_Ewald_Real
 
-  !********************************************************************************************
+  !*****************************************************************************
 
   SUBROUTINE Ewald_Reciprocal_Lattice_Vector_Setup(this_box)
-    !******************************************************************************************
+    !***************************************************************************
     ! This subroutine sets up the reciprocal lattice vector constants required in the reciprocal
     ! space summation. Note that these constants need to be recomputed every time a volume
     ! change move is attempted. 
@@ -1760,7 +1714,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     !
     ! Added by Jindal Shah on 12/05/07
     !
-    !******************************************************************************************
+    !***************************************************************************
     
     USE Type_Definitions
     USE Global_Variables
@@ -1849,6 +1803,11 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
        DO nz = -kz_max, kz_max
           DO ny = -ky_max, ky_max
              DO nx = 0, kx_max
+                IF ( kvecs > maxk) THEN
+                   err_msg = ""
+                   err_msg(1) = 'Total number of k vectors exceeded'
+                   CALL Clean_Abort(err_msg,'Ewald_Reciprocal_Lattice_Vector_Setup')
+                END IF
 
                 IF ( (nx == 0) .AND. (ny == 0) .AND. (nz == 0)) CYCLE
 
@@ -1885,12 +1844,6 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
                    
                 END IF
                 
-                IF ( kvecs - 1 > maxk) THEN
-                   err_msg = ""
-                   err_msg(1) = 'Total number of k vectors exceeded'
-                   CALL Clean_Abort(err_msg,'Ewald_Reciprocal_Lattice_Vector_Setup')
-                END IF
-                
              END DO
           END DO
        END DO
@@ -1906,164 +1859,23 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
 
     
   END SUBROUTINE Ewald_Reciprocal_Lattice_Vector_Setup
-  !*******************************************************************************************
+  !*****************************************************************************
 
-  SUBROUTINE Compute_System_Ewald_Reciprocal_Energy(this_box)
-    !*****************************************************************************************
-    ! This subroutine computes the sin and cos sum terms for the calculation of reciprocal
-    ! energy of the input box. 
+  SUBROUTINE Update_System_Ewald_Reciprocal_Energy(im,is,ibox, &
+    move_flag,E_reciprocal)
+    !***************************************************************************
+    ! The subroutine computes the difference in Ewald reciprocal space energy 
+    ! for a given move.
     !
-    ! Based on APSS code reciprocal_ewald.f90
-    !
-    ! Added by Jindal Shah on 12/05/07
-    ! Modified by Tom Rosch on 06/11/09 (See Wheeler, Mol. Phys. 1997 Vol. 92 pg. 55)
-    !
-    ! Modified on 04/28/09 to account for fractional molecules. The routine computes 
-    !     energy of the integer and fractional particles with scaled charges. However, long
-    !     range interactions of a fractional molecule with itself is computed with unscaled
-    !     charges.
-    ! 
-    !
-    !*************************************************************************
-    !*****************************************************************************************
-    
-    USE Type_Definitions
-    USE Global_Variables
-
-    IMPLICIT NONE
-
-!    !$ include 'omp_lib.h'
-
-    INTEGER :: i, is, im, ia, this_locate, this_box
-
-    REAL(DP) :: un, const_val
-    REAL(DP) :: cn_val, hx_val, hy_val, hz_val, charge, hdotr, energy_temp
-
-    REAL(DP) :: this_scaling, cos_sum_locate, sin_sum_locate
-
-
-    ! individual k-space vector stuff
-
-    INTEGER, ALLOCATABLE :: im_locate(:,:)
-
-    ! loop over all the k vectors of this box
-
-    const_val = 1.0_DP/(2.0_DP * alpha_ewald(this_box) * alpha_ewald(this_box))
-    energy(this_box)%ewald_reciprocal = 0.0_DP
-    
-    
-    energy_temp = 0.0_DP
-    !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-    cos_sum(:,this_box) = 0.0_DP
-    sin_sum(:,this_box) = 0.0_DP
-    !$OMP END PARALLEL WORKSHARE
-
-    ALLOCATE(im_locate(MAXVAL(nmolecules),nspecies))
-
-
-    DO is = 1, nspecies
-
-       DO im = 1, nmolecules(is)
-
-          this_locate = locate(im,is)
-          
-          IF (.NOT. molecule_list(this_locate,is)%live) CYCLE
-
-          IF (molecule_list(this_locate,is)%which_box /= this_box) CYCLE
-
-          IF (is == 1) THEN
-             im_locate(im,is) = this_locate
-          ELSE
-             im_locate(im,is) = SUM(nmolecules(1:is-1)) + this_locate
-          END IF
-
-       END DO
-
-    END DO
-
-    DO i = 1, nvecs(this_box)
-
-       cn_val = Cn(i,this_box)
-       hx_val = hx(i,this_box)
-       hy_val = hy(i,this_box)
-       hz_val = hz(i,this_box)
-
-       ! Loop over all the atoms present in this box to calculate sin_sum and cos_sum
-       ! for each of the vector
-
-       DO is = 1, nspecies
-          IF( .NOT. has_charge(is) ) CYCLE
-          DO im = 1, nmolecules(is)
-             this_locate = locate(im,is)
-
-             IF( .NOT. molecule_list(this_locate,is)%live) CYCLE
-
-             IF( molecule_list(this_locate,is)%which_box /= this_box ) CYCLE
-
-    
-             cos_sum_locate = 0.0_DP
-             sin_sum_locate = 0.0_DP
-             
-             DO ia = 1, natoms(is)
-                
-                ! compute hdotr 
-                
-                hdotr = hx_val * atom_list(ia,this_locate,is)%rxp + &
-                        hy_val * atom_list(ia,this_locate,is)%ryp + &
-                        hz_val * atom_list(ia,this_locate,is)%rzp
-                
-                charge = nonbond_list(ia,is)%charge
-                
-                cos_sum_locate = cos_sum_locate + charge * DCOS(hdotr)
-                sin_sum_locate = sin_sum_locate + charge * DSIN(hdotr)
-                
-             END DO
-
-             ! Note that only the molecules that belong to 'this_box'
-             ! has its cos_mol and sin_mol vectors changed
-             
-             
-             cos_mol(i,im_locate(im,is)) = cos_sum_locate
-             sin_mol(i,im_locate(im,is)) = sin_sum_locate
-             
-             ! Compute charge scaling. It needs to be done only for the first
-             ! k vector. We will store this and then use it for subsequent
-             ! k vectors.
-
-             this_scaling = 1.0_DP
-
-             
-             cos_sum(i,this_box) = cos_sum(i,this_box) + this_scaling * cos_sum_locate
-             sin_sum(i,this_box) = sin_sum(i,this_box) + this_scaling * sin_sum_locate
-             
-          END DO
-       END DO
-       
-       un = cn_val * (cos_sum(i,this_box) * cos_sum(i,this_box) + sin_sum(i,this_box) * sin_sum(i,this_box))         
-       energy_temp = energy_temp + un
-       
-    END DO
-    
-    energy(this_box)%ewald_reciprocal = energy(this_box)%ewald_reciprocal + energy_temp
-    energy(this_box)%ewald_reciprocal = energy(this_box)%ewald_reciprocal * charge_factor
-    
-        
-  END SUBROUTINE Compute_System_Ewald_Reciprocal_Energy
-  !*************************************************************************************************
-
-  SUBROUTINE Compute_Ewald_Reciprocal_Energy_Difference(im,im_prev,is,this_box,move_flag,V_recip_difference)
-    !************************************************************************************************
-    ! The subroutine computes the difference in Ewald reciprocal space energy for a given move.
-    !/
     ! We will develop this routine for a number of moves.
     !
     ! Translation of COM
     ! Rotation about COM
-    ! Angle Distortion
-    ! Rigid Dihedral rotation
+    ! Angle distortion
+    ! Rigid dihedral rotation
     ! Molecule insertion
-    ! Molecule Deletion
-    !***********************************************************************************************
+    ! Molecule deletion
+    !***************************************************************************
 
     USE Type_Definitions
     USE Global_Variables
@@ -2072,298 +1884,281 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
 
 !    !$ include 'omp_lib.h'
 
-    INTEGER, INTENT(IN) :: im, im_prev, is, this_box
+    ! Arguments
+    INTEGER, INTENT(IN) :: ibox   ! box index, 1...nbr_boxes
+    INTEGER, INTENT(IN) :: is     ! species index, 1...nspecies
+    INTEGER, INTENT(IN) :: im     ! molecule 'locate', index to atom_list
     INTEGER, INTENT(IN) :: move_flag
-    REAL(DP), INTENT(OUT) :: V_recip_difference
 
-    ! Note that im_prev is included here in the anticipation that the routine will be used
-    ! for CFC move. At present the input value of im_prev is immaterial.
-
+    ! Returns
+    REAL(DP), INTENT(OUT) :: E_reciprocal
 
     ! Local variables
-    
-    REAL(DP) :: const_val
-    INTEGER :: i, ia
+    REAL(DP) :: q
+    INTEGER :: i, ia, jm, js
 
-    REAL(DP) :: hdotr_new
+    REAL(DP) :: hdotr
 
-    REAL(DP) :: cos_sum_im, cos_sum_im_o, sin_sum_im, sin_sum_im_o
+    REAL(DP) :: cos_mol_im, cos_mol_im_o, sin_mol_im, sin_mol_im_o
 
     ! storage stuff
+    INTEGER :: im_locate  ! index to cos_mol, sin_mol
 
-    INTEGER :: im_locate, im_prev_locate
-
-    ! get the location of im and im_prev
-
-    IF (is==1) THEN
-       im_locate = im
-       im_prev_locate = im_prev
-    ELSE
-       im_locate = SUM(nmolecules(1:is-1)) + im
-       im_prev_locate = SUM(nmolecules(1:is-1)) + im_prev
-    END IF
-
-    V_recip_difference = 0.0_DP
-    const_val = 1.0_DP/(2.0_DP * alpha_ewald(this_box) * alpha_ewald(this_box))
+    ! Initialize variables
+    E_reciprocal = 0.0_DP
 
     !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-    cos_sum_old(1:nvecs(this_box),this_box) = cos_sum(1:nvecs(this_box),this_box)
-    sin_sum_old(1:nvecs(this_box),this_box) = sin_sum(1:nvecs(this_box),this_box)
+    cos_sum_old(1:nvecs(ibox),ibox) = cos_sum(1:nvecs(ibox),ibox)
+    sin_sum_old(1:nvecs(ibox),ibox) = sin_sum(1:nvecs(ibox),ibox)
     !$OMP END PARALLEL WORKSHARE
 
-    IF ( move_flag == int_translation .OR. move_flag == int_rotation .OR. move_flag == int_intra ) THEN
+    ! get the location of im for cos_mol, sin_mol arrays
+    IF (is==1) THEN
+      im_locate = im
+    ELSE
+      im_locate = SUM(max_molecules(1:is-1)) + im
+    END IF
 
+    IF ( move_flag == int_translation .OR. move_flag == int_rotation .OR. &
+         move_flag == int_intra ) THEN
 
-       ! only the particle coordinates change. Therefore, the contribution of cos(hdotr) and
-       ! sin(hdotr) of the old coordinates will be subtracted off for each of reciprocal vectors
-       ! and corresponding terms for the new coordinates are added.
+      ! only the particle coordinates change. Therefore, the contribution of 
+      ! cos(hdotr) and sin(hdotr) of the old coordinates will be subtracted 
+      ! off for each of reciprocal vectors and corresponding terms for the new
+      ! coordinates are added.
 
-       ! Note that the flag INTRA will refer to any of the moves that correspond to the 
-       ! intramolecular DOF change.
-       
+      ! Note that the flag INTRA will refer to any of the moves that
+      ! correspond to the intramolecular DOF change.
            
-       !$OMP PARALLEL DO DEFAULT(SHARED) &
-       !$OMP PRIVATE(i,ia,cos_sum_im,sin_sum_im) &
-       !$OMP PRIVATE(cos_sum_im_o, sin_sum_im_o) &
-       !$OMP PRIVATE(hdotr_new) &
-       !$OMP SCHEDULE(STATIC) &
-       !$OMP REDUCTION(+:v_recip_difference)
-       DO i = 1, nvecs(this_box)
+      !$OMP PARALLEL DO DEFAULT(SHARED) &
+      !$OMP PRIVATE(i,ia,cos_mol_im,sin_mol_im) &
+      !$OMP PRIVATE(cos_mol_im_o, sin_mol_im_o) &
+      !$OMP PRIVATE(hdotr) &
+      !$OMP SCHEDULE(STATIC) &
+      !$OMP REDUCTION(+:E_reciprocal)
+      DO i = 1, nvecs(ibox)
 
-          cos_sum_im = 0.0_DP
-          sin_sum_im = 0.0_DP
+        cos_mol_im = 0.0_DP
+        sin_mol_im = 0.0_DP
 
-          DO ia = 1,natoms(is)
-
-             ! let us compute the old and new hdotr
-
-             hdotr_new = hx(i,this_box) * atom_list(ia,im,is)%rxp + &
-                         hy(i,this_box) * atom_list(ia,im,is)%ryp + &
-                         hz(i,this_box) * atom_list(ia,im,is)%rzp
+        DO ia = 1,natoms(is)
+          ! compute the new hdotr
+          hdotr = hx(i,ibox) * atom_list(ia,im,is)%rxp + &
+                  hy(i,ibox) * atom_list(ia,im,is)%ryp + &
+                  hz(i,ibox) * atom_list(ia,im,is)%rzp
              
-             cos_sum_im = cos_sum_im + nonbond_list(ia,is)%charge * DCOS(hdotr_new)
-             sin_sum_im = sin_sum_im + nonbond_list(ia,is)%charge * DSIN(hdotr_new)
+          q = nonbond_list(ia,is)%charge
+          cos_mol_im = cos_mol_im + q * DCOS(hdotr)
+          sin_mol_im = sin_mol_im + q * DSIN(hdotr)
+        END DO
 
+        cos_mol_im_o = cos_mol(i,im_locate)
+        sin_mol_im_o = sin_mol(i,im_locate)
 
-          END DO
+        cos_sum(i,ibox) = cos_sum(i,ibox) &
+                        + (cos_mol_im - cos_mol_im_o)
+        sin_sum(i,ibox) = sin_sum(i,ibox) &
+                        + (sin_mol_im - sin_mol_im_o)
 
-          cos_sum_im_o = cos_mol(i,im_locate)
-          sin_sum_im_o = sin_mol(i,im_locate)
+        E_reciprocal = E_reciprocal + cn(i,ibox) * (cos_sum(i,ibox) &
+                     * cos_sum(i,ibox) + sin_sum(i,ibox) * sin_sum(i,ibox))
 
-          cos_sum(i,this_box) = cos_sum(i,this_box) + cos_sum_im - cos_sum_im_o
-          sin_sum(i,this_box) = sin_sum(i,this_box) + sin_sum_im - sin_sum_im_o
+        ! set the molecules cos and sin terms to the one calculated here
+        cos_mol(i,im_locate) = cos_mol_im
+        sin_mol(i,im_locate) = sin_mol_im
 
-          v_recip_difference = v_recip_difference + cn(i,this_box) * (cos_sum(i,this_box) * &
-               cos_sum(i,this_box) + sin_sum(i,this_box) * sin_sum(i,this_box))
-
-          ! set the molecules cos and sin terms to the one calculated here
-          cos_mol(i,im_locate) = cos_sum_im
-          sin_mol(i,im_locate) = sin_sum_im
-
-       END DO
-       !$OMP END PARALLEL DO
-
-       v_recip_difference = v_recip_difference * charge_factor - energy(this_box)%ewald_reciprocal
-
-       RETURN
+      END DO
+      !$OMP END PARALLEL DO
 
     ELSE IF ( move_flag == int_deletion) THEN
 
-       ! We need to subtract off the cos(hdotr) and sin(hdor) for each of the k vectors.
+      ! We need to subtract off the cos(hdotr) and sin(hdotr) for each of the 
+      ! k vectors.
 
-       !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-       cos_sum(1:nvecs(this_box),this_box) = cos_sum(1:nvecs(this_box),this_box) - &
-            cos_mol(1:nvecs(this_box),im_locate)
-       sin_sum(1:nvecs(this_box),this_box) = sin_sum(1:nvecs(this_box),this_box) - &
-            sin_mol(1:nvecs(this_box),im_locate)
-       !$OMP END PARALLEL WORKSHARE
+      !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+      cos_sum(1:nvecs(ibox),ibox) = cos_sum(1:nvecs(ibox),ibox) &
+                            - cos_mol(1:nvecs(ibox),im_locate)
+      sin_sum(1:nvecs(ibox),ibox) = sin_sum(1:nvecs(ibox),ibox) &
+                            - sin_mol(1:nvecs(ibox),im_locate)
+      !$OMP END PARALLEL WORKSHARE
 
-       !$OMP PARALLEL DO DEFAULT(SHARED) &
-       !$OMP PRIVATE(i) &
-       !$OMP SCHEDULE(STATIC) &
-       !$OMP REDUCTION(+:v_recip_difference)
-       DO i = 1, nvecs(this_box)
+      !$OMP PARALLEL DO DEFAULT(SHARED) &
+      !$OMP PRIVATE(i) &
+      !$OMP SCHEDULE(STATIC) &
+      !$OMP REDUCTION(+:E_reciprocal)
+      DO i = 1, nvecs(ibox)
              
-          v_recip_difference = v_recip_difference + cn(i,this_box) * ( cos_sum(i,this_box) * cos_sum(i,this_box) + &
-                                     sin_sum(i,this_box) * sin_sum(i,this_box) )
+        E_reciprocal = E_reciprocal + cn(i,ibox) &
+                     * ( cos_sum(i,ibox) * cos_sum(i,ibox) &
+                       + sin_sum(i,ibox) * sin_sum(i,ibox) )
 
-       END DO
-       !$OMP END PARALLEL DO
-       v_recip_difference = v_recip_difference * charge_factor
- 
+      END DO
+      !$OMP END PARALLEL DO
+
     ELSE IF ( move_flag == int_insertion ) THEN
 
-       !$OMP PARALLEL DO DEFAULT(SHARED) &
-       !$OMP PRIVATE(i, ia, hdotr_new) &
-       !$OMP SCHEDULE(STATIC) &
-       !$OMP REDUCTION(+:v_recip_difference) 
+      !$OMP PARALLEL DO DEFAULT(SHARED) &
+      !$OMP PRIVATE(i, ia, hdotr) &
+      !$OMP SCHEDULE(STATIC) &
+      !$OMP REDUCTION(+:E_reciprocal) 
 
-       DO i = 1, nvecs(this_box)
+      DO i = 1, nvecs(ibox)
 
-          cos_mol(i,im_locate) = 0.0_DP
-          sin_mol(i,im_locate) = 0.0_DP
+        cos_mol(i,im_locate) = 0.0_DP
+        sin_mol(i,im_locate) = 0.0_DP
           
-          DO ia = 1, natoms(is)
+        DO ia = 1, natoms(is)
+          ! Compute the new hdotr vector
+          hdotr = hx(i,ibox) * atom_list(ia,im,is)%rxp + &
+                  hy(i,ibox) * atom_list(ia,im,is)%ryp + &
+                  hz(i,ibox) * atom_list(ia,im,is)%rzp
 
-             ! Compute the new hdotr vector
+          q = nonbond_list(ia,is)%charge
+          cos_mol(i,im_locate) = cos_mol(i,im_locate) + q * DCOS(hdotr)
+          sin_mol(i,im_locate) = sin_mol(i,im_locate) + q * DSIN(hdotr)
+        END DO
 
-             hdotr_new = hx(i,this_box) * atom_list(ia,im,is)%rxp + &
-                         hy(i,this_box) * atom_list(ia,im,is)%ryp + &
-                         hz(i,this_box) * atom_list(ia,im,is)%rzp
-
-             cos_mol(i,im_locate) = cos_mol(i,im_locate) +  nonbond_list(ia,is)%charge * DCOS(hdotr_new)
-             sin_mol(i,im_locate) = sin_mol(i,im_locate) +  nonbond_list(ia,is)%charge * DSIN(hdotr_new)
-
-          END DO
-
-          cos_sum(i,this_box) = cos_sum(i,this_box) + cos_mol(i,im_locate)
-          sin_sum(i,this_box) = sin_sum(i,this_box) + sin_mol(i,im_locate)
-
+        cos_sum(i,ibox) = cos_sum(i,ibox) &
+                        + cos_mol(i,im_locate)
+        sin_sum(i,ibox) = sin_sum(i,ibox) &
+                        + sin_mol(i,im_locate)
   
-          v_recip_difference = v_recip_difference + cn(i,this_box) * ( cos_sum(i,this_box) * cos_sum(i,this_box) + &
-                                     sin_sum(i,this_box) * sin_sum(i,this_box) )
+        E_reciprocal = E_reciprocal + cn(i,ibox) &
+                     * ( cos_sum(i,ibox) * cos_sum(i,ibox) &
+                       + sin_sum(i,ibox) * sin_sum(i,ibox) )
 
-       END DO
-
-       !$OMP END PARALLEL DO
-
-       v_recip_difference = v_recip_difference * charge_factor
-
+      END DO
+      !$OMP END PARALLEL DO
     END IF
 
-  END SUBROUTINE Compute_Ewald_Reciprocal_Energy_Difference
-  !********************************************************************************************
+    E_reciprocal = E_reciprocal * charge_factor
+
+  END SUBROUTINE Update_System_Ewald_Reciprocal_Energy
+  !*****************************************************************************
 
   SUBROUTINE Compute_System_Ewald_Self_Energy(this_box)
-    ! ******************************************************************************************
-    ! This subroutine calculates the constant term that arises from particles interacting with
-    ! themselves in the reciprocal space. The subroutine needs to be called only once as it
-    ! is a constant term as long as the particles and their charges remain the same.
-    !
-    !*******************************************************************************************
+    !***************************************************************************
+    ! This subroutine calculates the constant term that arises from particles 
+    ! interacting with themselves in the reciprocal space. The subroutine needs 
+    ! to be called only once as it is a constant term as long as the particles 
+    ! and their charges remain the same.
+    !***************************************************************************
 
     USE Type_Definitions
     USE Global_Variables
     
     IMPLICIT NONE
 
-    INTEGER :: is,im, this_locate, ia,  this_box
-    REAL(DP) :: charge
+    ! Arguments
+    INTEGER :: this_box
 
-    energy(this_box)%ewald_self = 0.0_DP
+    ! Returns
+    ! energy(this_box)%ewald_self, global variable
+
+    ! Local Variables
+    INTEGER :: is,im, this_locate, ia
+    REAL(DP) :: q, E_self
+
+    E_self = 0.0_DP
     
     DO is = 1, nspecies
+      imLOOP: DO im = 1, nmols(is,this_box)
 
-      imLOOP: DO im = 1, nmolecules(is)
+        this_locate = locate(im,is,this_box)
+        IF (.NOT. molecule_list(this_locate,is)%live) CYCLE imLOOP
 
-          this_locate = locate(im,is)
-
-          ! sum only those molecules that are in this_box.
-          
-          IF (.NOT. molecule_list(this_locate,is)%live) CYCLE imLOOP
-
-          IF ( molecule_list(this_locate,is)%which_box /= this_box ) CYCLE imLOOP
-
-          DO ia = 1, natoms(is)
-                
-             ! obtain the charge
-             charge = nonbond_list(ia,is)%charge 
-             energy(this_box)%ewald_self = energy(this_box)%ewald_self + (charge*charge)
-             
-          END DO
-
-       END DO imLOOP
-          
+        DO ia = 1, natoms(is)
+          ! obtain the charge
+          q = nonbond_list(ia,is)%charge 
+          E_self = E_self + q * q
+        END DO
+      END DO imLOOP
     END DO
 
-    energy(this_box)%ewald_self = energy(this_box)%ewald_self * alpha_ewald(this_box) / rootPI
-    energy(this_box)%ewald_self = - energy(this_box)%ewald_self * charge_factor
+    E_self = - E_self * charge_factor * alpha_ewald(this_box) / rootPI
+    energy(this_box)%ewald_self = E_self
 
-    ! Note that the ewald self constant computed here is slightly different than what is
-    ! computed in APSS. It has a negative sign and is already multiplied by a the charge_factor
-    ! for proper unit conversion
+    ! Note that the ewald self constant computed here is slightly different than
+    ! what is computed in APSS. It has a negative sign and is already multiplied
+    ! by a the charge_factor for proper unit conversion
 
   END SUBROUTINE Compute_System_Ewald_Self_Energy
-  !********************************************************************************************
+  !*****************************************************************************
 
-  SUBROUTINE Compute_Ewald_Self_Energy_Difference(im,is,this_box,move_flag,V_self_difference)
-
-    !*******************************************************************************************
-    ! This subroutine calculates the difference in self Ewald energy for the input molecule(s)
-    ! The routine needs to be called for the following moves. The two input molecules are im and
-    ! im_prev. Note that im_prev is included anticipating that CFC moves will be implemented.
-    ! In all other cases, the identity
-    ! of im_prev is of no consequence. The difference is computed
-    ! for molecules in 'this_box' while V_self_difference is returned to the calling routine.
+  SUBROUTINE Compute_Molecule_Ewald_Self_Energy(im,is,this_box,E_self)
+    !***************************************************************************
+    ! This subroutine calculates the self Ewald energy for the 
+    ! input molecule.
     !
+    ! CALLED BY:
+    ! 
+    ! Chempot
+    ! GEMC_Particle_Transfer
     ! Insertion
     ! Deletion
+    ! Reaction
     !
-    !**********************************************************************************************
+    !***************************************************************************
 
     USE Type_Definitions
     USE Global_Variables
 
     IMPLICIT NONE
 
+    ! Arguments
     INTEGER, INTENT(IN) :: im, is, this_box
-    INTEGER, INTENT(IN) :: move_flag
     
-    REAL(DP), INTENT(OUT) :: V_self_difference
+    ! Returns
+    REAL(DP), INTENT(OUT) :: E_self
 
+    ! Local variables
     INTEGER :: ia
+    REAL(DP) :: q
     
-    V_self_difference = 0.0_DP
+    ! Initialize variables
+    E_self = 0.0_DP
 
-    IF ( move_flag == int_insertion ) THEN
+    ! Compute E_self
+    DO ia = 1, natoms(is)
+      q = nonbond_list(ia,is)%charge
+      E_self = E_self + q * q
+    END DO
 
-       DO ia = 1, natoms(is)
-          V_self_difference = V_self_difference + nonbond_list(ia,is)%charge * nonbond_list(ia,is)%charge
-       END DO
+    E_self = - E_self * charge_factor * alpha_ewald(this_box) / rootPI
 
-       V_self_difference = - charge_factor * V_self_difference * alpha_ewald(this_box)/rootPI
+  END SUBROUTINE Compute_Molecule_Ewald_Self_Energy
+  !*****************************************************************************
 
-    ELSE IF ( move_flag == int_deletion ) THEN
-
-       DO ia = 1,natoms(is)
-          V_self_difference = V_self_difference + nonbond_list(ia,is)%charge*nonbond_list(ia,is)%charge
-       END DO
-
-       V_self_difference = charge_factor * V_self_difference * alpha_ewald(this_box)/rootPI
-
-    END IF
-
-  END SUBROUTINE Compute_Ewald_Self_Energy_Difference
-  !****************************************************************************************************
-  !**************************************************************************************************
-  SUBROUTINE Compute_Total_System_Energy(this_box,intra_flag,overlap)
-    !**************************************************************************************************
-    ! The subroutine calculates the total energy of a given box. The identity of the box is passed to
-    ! the routine along with the intra_flag to indicate whether intramolecular computation is required.
-    ! The flag will mostly be set to true except in the case of volume change move that is designed so
+  SUBROUTINE Compute_System_Total_Energy(this_box,intra_flag,overlap)
+    !***************************************************************************
+    ! The subroutine calculates the total energy of a given box. The identity of
+    ! the box is passed to the routine along with the intra_flag to indicate 
+    ! whether intramolecular computation is required. The flag will mostly be 
+    ! set to true except in the case of volume change move that is designed so 
     ! that the intramolecular DOFs do not change. 
-    !
-    !***************************************************************************************************
+    !***************************************************************************
 
     IMPLICIT NONE
 
     INTEGER, INTENT(IN) :: this_box
     LOGICAL, INTENT(IN) :: intra_flag
+    LOGICAL, INTENT(OUT) :: overlap
 
-    !----------------------------------------------------------------------------------------------------
+    !---------------------------------------------------------------------------
 
     INTEGER :: im, is, this_im, im_1, im_2, is_1, is_2, this_im_1, this_im_2
 
     REAL(DP) :: v_molecule_bond, v_molecule_angle, v_molecule_dihedral, v_molecule_improper
-    REAL(DP) :: vlj_molecule_intra, vqq_molecule_intra
+    REAL(DP) :: vlj_molecule_intra, vqq_molecule_intra, vqq_molecule_inter
     REAL(DP) :: vlj_pair, vqq_pair, e_lrc
     REAL(DP) :: rcom, rx, ry, rz
     REAL(DP) :: E_inter_vdw, E_inter_qq
     REAL(DP) :: v_selfrf, v_molecule_selfrf
     REAL(DP) :: rijsq
-    REAL(DP) :: v_bond, v_angle, v_dihedral, v_intra, v_intra_vdw, v_intra_qq, v_improper
+    REAL(DP) :: v_bond, v_angle, v_dihedral, v_intra, v_improper
+    REAL(DP) :: v_intra_vdw, v_intra_qq, v_inter_qq
     
-    LOGICAL :: overlap, get_interaction,intra_overlap
+    LOGICAL :: get_interaction,intra_overlap
 
     INTEGER :: locate_1, locate_2
     LOGICAL :: l_pair_store, my_overlap, shared_overlap
@@ -2378,6 +2173,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     energy(this_box)%inter_vdw = 0.0_DP
     energy(this_box)%inter_q = 0.0_DP
     energy(this_box)%ewald_reciprocal = 0.0_DP
+    energy(this_box)%lrc = 0.0_DP
     ! Compute the intramolecular energy of the system if the flag is set.
 
     IF (intra_flag) THEN
@@ -2399,20 +2195,18 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
           v_improper = 0.0_DP
           v_intra_vdw= 0.0_DP
           v_intra_qq = 0.0_DP
+          v_inter_qq = 0.0_DP
           v_selfrf = 0.0_DP
           !$OMP PARALLEL DO DEFAULT(SHARED) &
           !$OMP SCHEDULE(DYNAMIC) &
           !$OMP PRIVATE(im, this_im, v_molecule_bond, v_molecule_angle, v_molecule_dihedral) &
-          !$OMP PRIVATE(v_molecule_improper,vlj_molecule_intra,vqq_molecule_intra, intra_overlap) &
-          !$OMP REDUCTION(+:v_intra,v_bond, v_angle, v_dihedral,v_improper, v_intra_vdw, v_intra_qq, v_selfrf)  
-          imLoop:DO im = 1,nmolecules(is)
+          !$OMP PRIVATE(v_molecule_improper,vlj_molecule_intra,vqq_molecule_intra, vqq_molecule_inter, intra_overlap) &
+          !$OMP REDUCTION(+:v_intra,v_bond, v_angle, v_dihedral,v_improper, v_intra_vdw, v_intra_qq, v_inter_qq, v_selfrf)  
+          imLoop:DO im = 1, nmols(is,this_box)
              
-             this_im = locate(im,is)
-             ! Check to see the molecule belongs to this_box
-             IF( molecule_list(this_im,is)%which_box /= this_box ) CYCLE imLOOP
-             
-             ! Check to see if the molecule is alive 
-             IF( .NOT. molecule_list(this_im,is)%live ) CYCLE imLOOP
+             this_im = locate(im,is,this_box)
+             IF (.NOT. molecule_list(this_im,is)%live) CYCLE imLoop
+          
              IF (SHARED_OVERLAP) CYCLE imLOOP
 
              CALL Compute_Molecule_Bond_Energy(this_im,is,v_molecule_bond)
@@ -2422,10 +2216,13 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
 
              intra_overlap = .FALSE.
              IF (int_charge_sum_style(this_box) == charge_ewald) THEN
-                CALL Compute_Molecule_Nonbond_Intra_Energy(this_im,is,vlj_molecule_intra,vqq_molecule_intra,intra_overlap, &
-                     v_molecule_selfrf)
+                CALL Compute_Molecule_Nonbond_Intra_Energy(this_im,is, &
+                     vlj_molecule_intra,vqq_molecule_intra,vqq_molecule_inter, &
+                     intra_overlap,v_molecule_selfrf)
              ELSE
-                CALL Compute_Molecule_Nonbond_Intra_Energy(this_im,is,vlj_molecule_intra,vqq_molecule_intra,intra_overlap)
+                CALL Compute_Molecule_Nonbond_Intra_Energy(this_im,is, &
+                     vlj_molecule_intra,vqq_molecule_intra,vqq_molecule_inter, &
+                     intra_overlap)
              END IF
 
              IF (intra_overlap) THEN
@@ -2439,7 +2236,8 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
              v_dihedral = v_dihedral + v_molecule_dihedral
              v_improper = v_improper + v_molecule_improper
              v_intra_vdw = v_intra_vdw + vlj_molecule_intra 
-             v_intra_qq   = v_intra_qq   + vqq_molecule_intra
+             v_intra_qq = v_intra_qq + vqq_molecule_intra
+             v_inter_qq = v_inter_qq + vqq_molecule_inter
              IF (int_charge_sum_style(this_box) == charge_ewald) THEN
                 v_selfrf  = v_selfrf + v_molecule_selfrf
              END IF
@@ -2458,6 +2256,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
           energy(this_box)%improper = energy(this_box)%improper + v_improper
           energy(this_box)%intra_vdw = energy(this_box)%intra_vdw + v_intra_vdw
           energy(this_box)%intra_q   = energy(this_box)%intra_q   + v_intra_qq
+          energy(this_box)%inter_q = energy(this_box)%inter_q + v_inter_qq
           IF (int_charge_sum_style(this_box) == charge_ewald) THEN
              energy(this_box)%erf_self = energy(this_box)%erf_self + v_selfrf
           END IF
@@ -2465,28 +2264,28 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
 
     END IF
 
-    ! The total system energy. Note that intra_flag is not used for this calculation, beacuse, if the flag
-    ! is true, we already computed the energy, if not we are using the old global energy (the routine
+    ! The total system energy. Note that intra_flag is not used for this 
+    ! calculation, beacuse, if the flag is true, we already computed the energy,
+    ! if not we are using the old global energy (the routine
     ! did not modify the energy).
 
-    energy(this_box)%total = energy(this_box)%total + energy(this_box)%intra + energy(this_box)%intra_vdw + &
-         energy(this_box)%intra_q
+    energy(this_box)%total = energy(this_box)%total + energy(this_box)%intra &
+                           + energy(this_box)%intra_vdw &
+                           + energy(this_box)%intra_q
     
-    ! Calculate the total intermolecular energy of the system. The calculation is divided into two parts
-    ! The first part computes the interaction between the molecules of the same species, while the second
+    ! Calculate the total intermolecular energy of the system. The calculation 
+    ! is divided into two parts. The first part computes the interaction between
+    ! the molecules of the same species, while the second
     ! bit obtains the interaction between molecules of different species.
 
     l_pair_store = .FALSE.
     IF (l_pair_nrg .AND. (.NOT. cbmc_flag)) l_pair_store = .TRUE.
     
     DO is = 1, nspecies
-       imLOOP1: DO im_1 = 1, nmolecules(is)
-          this_im_1 = locate(im_1,is)
-          ! is it in this box?
-          IF ( molecule_list(this_im_1,is)%which_box /= this_box ) CYCLE imLOOP1
-          ! is alive?
-          IF ( .NOT. molecule_list(this_im_1,is)%live ) CYCLE imLOOP1
-          
+       imLOOP1: DO im_1 = 1, nmols(is,this_box)
+          this_im_1 = locate(im_1,is,this_box)
+          IF (.NOT. molecule_list(this_im_1,is)%live) CYCLE imLOOP1
+
           IF (l_pair_store) CALL Get_Position_Alive(this_im_1, is, locate_1) 
       
           E_inter_vdw = 0.0_DP
@@ -2499,12 +2298,10 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
           !$OMP PRIVATE(my_overlap) &
           !$OMP REDUCTION(+: E_inter_vdw, E_inter_qq) 
           
-          imLOOP2: DO im_2 = im_1 + 1, nmolecules(is)
-             this_im_2 = locate(im_2,is)
-             ! allow interactions only in the box
-             IF ( molecule_list(this_im_2,is)%which_box /= this_box ) CYCLE imLOOP2
-             ! is it alive?
-             IF ( .NOT. molecule_list(this_im_2,is)%live ) CYCLE imLOOP2
+          imLOOP2: DO im_2 = im_1 + 1, nmols(is,this_box)
+             this_im_2 = locate(im_2,is,this_box)
+             IF (.NOT. molecule_list(this_im_2,is)%live) CYCLE imLOOP2
+          
              IF (SHARED_OVERLAP) CYCLE imLOOP2
              
              IF (l_pair_store) THEN
@@ -2518,15 +2315,16 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
 
              END IF
              
-             CALL Check_Interaction(this_im_1,is,this_im_2,is,get_interaction,rcom,rx,ry,rz)
+             CALL Check_MoleculePair_Cutoff(this_im_1,is,this_im_2,is,get_interaction, &
+                  rcom,rx,ry,rz)
              
             ! rijsq = rcom * rcom 
              
              IF (.NOT. get_interaction) CYCLE imLoop2
              ! Compute the intermolecular interactions between these two molecules
              
-             CALL Compute_Molecule_Pair_Interaction(this_im_1,is,this_im_2,is,this_box,vlj_pair, &
-                  vqq_pair,my_overlap)
+             CALL Compute_MoleculePair_Energy(this_im_1,is,this_im_2,is, &
+                  this_box,vlj_pair,vqq_pair,my_overlap)
              
              !             IF (overlap) RETURN
              IF (my_overlap) THEN
@@ -2534,7 +2332,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
              END IF
              
              E_inter_vdw  = E_inter_vdw + vlj_pair
-             E_inter_qq   = E_inter_qq   + vqq_pair
+             E_inter_qq   = E_inter_qq  + vqq_pair
              
           END DO imLOOP2
           !$OMP END PARALLEL DO
@@ -2552,10 +2350,9 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     ! Now compute the interaction with the molecules between different species
 
     DO is_1 = 1, nspecies
-       imLOOP3: DO im_1 = 1, nmolecules(is_1)
-          this_im_1 = locate(im_1,is_1)
-          IF( molecule_list(this_im_1,is_1)%which_box /= this_box ) CYCLE imLOOP3
-          IF( .NOT. molecule_list(this_im_1,is_1)%live ) CYCLE imLOOP3
+       imLOOP3: DO im_1 = 1, nmols(is_1,this_box)
+          this_im_1 = locate(im_1,is_1,this_box)
+          IF (.NOT. molecule_list(this_im_1,is_1)%live) CYCLE imLOOP3
           
           IF (l_pair_store) CALL Get_Position_Alive(this_im_1,is_1,locate_1)
           
@@ -2570,11 +2367,10 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
              !$OMP PRIVATE(my_overlap) &
              !$OMP REDUCTION(+: E_inter_vdw, E_inter_qq) 
              
-             imLOOP4: DO im_2 = 1,nmolecules(is_2)
-                this_im_2 = locate(im_2,is_2)
-                IF ( molecule_list(this_im_2,is_2)%which_box /= this_box ) CYCLE imLOOP4
-                IF ( .NOT. molecule_list(this_im_2,is_2)%live ) CYCLE imLOOP4
-
+             imLOOP4: DO im_2 = 1, nmols(is_2,this_box)
+                this_im_2 = locate(im_2,is_2,this_box)
+                IF (.NOT. molecule_list(this_im_2,is_2)%live) CYCLE imLOOP4
+          
                 IF (SHARED_OVERLAP) CYCLE imLOOP4
                 
                 IF (l_pair_store) THEN
@@ -2588,8 +2384,10 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
                    
                 END IF
                 
-                ! Check to see if the interaction needs to be computed between the molecules
-                CALL Check_Interaction(this_im_1,is_1,this_im_2,is_2,get_interaction,rcom,rx,ry,rz)
+                ! Check to see if the interaction needs to be computed between 
+                ! the molecules
+                CALL Check_MoleculePair_Cutoff(this_im_1,is_1,this_im_2,is_2, &
+                     get_interaction,rcom,rx,ry,rz)
 !                rijsq = rcom * rcom
 
                 IF (.NOT. get_interaction ) CYCLE imLOOP4
@@ -2597,15 +2395,15 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
                 ! Note that this call will modify the pair interaction energies
                 ! if l_pair_nrg variable is .TRUE.
 
-                CALL Compute_Molecule_Pair_Interaction(this_im_1,is_1,this_im_2,is_2,this_box,vlj_pair, &
-                     vqq_pair,my_overlap)
+                CALL Compute_MoleculePair_Energy(this_im_1,is_1,this_im_2,is_2,&
+                     this_box,vlj_pair,vqq_pair,my_overlap)
                 
                 IF (my_overlap) THEN
                    SHARED_OVERLAP = .true.
                 END IF
                 
                 E_inter_vdw  = E_inter_vdw + vlj_pair
-                E_inter_qq   = E_inter_qq   + vqq_pair                
+                E_inter_qq   = E_inter_qq  + vqq_pair                
              
              END DO imLOOP4
              !$OMP END PARALLEL DO 
@@ -2614,7 +2412,8 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
                 RETURN
              ENDIF
              
-             energy(this_box)%inter_vdw = energy(this_box)%inter_vdw + E_inter_vdw
+             energy(this_box)%inter_vdw = energy(this_box)%inter_vdw &
+                                        + E_inter_vdw
              energy(this_box)%inter_q = energy(this_box)%inter_q + E_inter_qq
              
           END DO
@@ -2629,21 +2428,21 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
 
     IF (int_charge_sum_style(this_box) == charge_ewald) THEN
 
-       ! Ewald reciprocal energy -- Note that the call changes global V_ewald_reciprocal(this_box)
+       ! Ewald reciprocal energy -- Note that the call changes global 
+       ! energy(this_box)%ewald_reciprocal
+       CALL Compute_System_Ewald_Reciprocal_Energy(this_box)
 
-
-       CALL Compute_System_Ewald_Reciprocal_Energy2(this_box)
-
-       energy(this_box)%total = energy(this_box)%total + energy(this_box)%ewald_reciprocal
+       energy(this_box)%total = energy(this_box)%total &
+                              + energy(this_box)%ewald_reciprocal
        
-       ! Ewald self energy -- Note that the call changes global V_ewald_self(this_box)
-       
-
+       ! Ewald self energy -- Note that the call changes global 
+       ! energy(this_box)%ewald_self
        CALL Compute_System_Ewald_Self_Energy(this_box)
 
-       energy(this_box)%ewald_self = energy(this_box)%ewald_self - energy(this_box)%erf_self
-       energy(this_box)%total = energy(this_box)%total + energy(this_box)%ewald_self 
-
+       energy(this_box)%ewald_self = energy(this_box)%ewald_self &
+                                   - energy(this_box)%erf_self
+       energy(this_box)%total = energy(this_box)%total &
+                              + energy(this_box)%ewald_self 
     END IF
 
     ! Long range correction if it is required
@@ -2654,114 +2453,14 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
        energy(this_box)%total = energy(this_box)%total + energy(this_box)%lrc
     END IF
 
-  END SUBROUTINE Compute_Total_System_Energy
-  !*********************************************************************************************************
+  END SUBROUTINE Compute_System_Total_Energy
+  !*****************************************************************************
 
-  SUBROUTINE Compute_Molecule_Pair_Interaction(im_1,is_1,im_2,is_2,this_box,vlj_pair,vqq_pair,overlap)
-    !**********************************************************************************************************
-    ! The subroutine returns the interaction energy of the input molecule with another molecule. Thus,
-    ! it computes the intermolecular vdw and electrostatic interactions. 
-    !**********************************************************************************************************
-  
-    IMPLICIT NONE
-
-    INTEGER, INTENT(IN) :: im_1, is_1, im_2, is_2, this_box
-    REAL(DP), INTENT(OUT) :: vlj_pair,vqq_pair
-    LOGICAL, INTENT(OUT) :: overlap
-    !----------------------------------------------------------------------------------------------------------
-
-    INTEGER :: ia, ja 
-
-    REAL(DP) :: rxijp, ryijp, rzijp, rxij, ryij, rzij, rijsq, Eij_vdw, Eij_qq
-
-    LOGICAL :: get_vdw, get_qq
-
-    INTEGER :: locate_im_1, locate_im_2
-
-    vlj_pair = 0.0_DP
-    vqq_pair = 0.0_DP
-    overlap = .FALSE.
-
-    DO ia = 1, natoms(is_1)
-
-       IF (.NOT. atom_list(ia,im_1,is_1)%exist) CYCLE
-
-       DO ja = 1, natoms(is_2)
-          ! Obtain the minimum image separation
-          
-          IF ( .NOT. atom_list(ja,im_2,is_2)%exist) CYCLE
-
-          rxijp = atom_list(ia,im_1,is_1)%rxp - atom_list(ja,im_2,is_2)%rxp
-          ryijp = atom_list(ia,im_1,is_1)%ryp - atom_list(ja,im_2,is_2)%ryp
-          rzijp = atom_list(ia,im_1,is_1)%rzp - atom_list(ja,im_2,is_2)%rzp
-          
-          ! Now get the minimum image separation 
-          CALL Minimum_Image_Separation(this_box,rxijp,ryijp,rzijp,rxij,ryij,rzij)
-
-          rijsq = rxij*rxij + ryij*ryij + rzij*rzij
-
-          IF( rijsq < rcut_lowsq ) THEN
-!             WRITE(*,*) im_1,is_1,im_2,is_2,rijsq,rcut_lowsq
-             overlap = .TRUE.
-             RETURN
-          END IF
-          
-          ! Now figure out what needs to be computed, then call pair_energy
-
-          CALL Energy_Test(rijsq,get_vdw,get_qq,this_box)          
-
-          ! Compute vdw and q-q energy using if required
-          IF(cbmc_flag.and.(.not.species_list(is_1)%L_Coul_CBMC)) THEN
-             get_qq=.false. 
-          ENDIF 
-          IF (get_vdw .OR. get_qq) THEN 
-
-             CALL Pair_Energy(rxij,ryij,rzij,rijsq,is_1,im_1,ia,is_2,im_2,ja,&
-                  get_vdw,get_qq,Eij_vdw,Eij_qq)
-
-             vlj_pair = vlj_pair + Eij_vdw
-             vqq_pair = vqq_pair + Eij_qq
-
-          END IF
-
-       END DO
-
-    END DO
-
-   
-
-    IF (l_pair_nrg) THEN
-
-       IF ( .NOT. cbmc_flag ) THEN
-
-       
-
-          ! if here then, there was no overlap between im_1 and im_2
-          ! update the interaction energy of the pair
-          ! first find out the position of im_2 in the pair interaction energy
-
-          CALL Get_Position_Alive(im_1,is_1,locate_im_1)
-          CALL Get_Position_Alive(im_2,is_2,locate_im_2)
-          
-          pair_nrg_vdw(locate_im_1,locate_im_2) = vlj_pair 
-          pair_nrg_vdw(locate_im_2,locate_im_1) = vlj_pair 
-          
-          pair_nrg_qq(locate_im_1,locate_im_2) = vqq_pair 
-          pair_nrg_qq(locate_im_2,locate_im_1) = vqq_pair 
-          
-
-       END IF
-       
-    END IF
-  
-  END SUBROUTINE Compute_Molecule_Pair_Interaction
-
-  !----------------------------------------------------------------------------------------------
   SUBROUTINE Compute_LR_Correction(this_box, e_lrc)
-    !*************************************************************************************************************
+    !***************************************************************************
     ! The subroutine calculates the long range correction for the given box.
     !
-    !**************************************************************************************************************
+    !***************************************************************************
     INTEGER, INTENT(IN) :: this_box
     REAL(DP), INTENT(OUT) :: e_lrc
     
@@ -2771,7 +2470,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     REAL(DP) :: e_lrc_ia_ja
 
     e_lrc = 0.0_DP
-    
+
     DO ia = 1, nbr_atomtypes
        
        e_lrc_ia_ja = 0.0_DP
@@ -2790,7 +2489,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
           e_lrc_ia_ja = e_lrc_ia_ja + nint_beads(ja,this_box) * &
                4.0_DP * epsij * (sigij12 /(9.0_DP*rcut9(this_box)) - &
                (sigij6 / (3.0_DP*rcut3(this_box))))
-          
+
        END DO
 
        e_lrc = e_lrc + REAL( nint_beads(ia,this_box), DP ) * e_lrc_ia_ja
@@ -2800,9 +2499,10 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     
   END SUBROUTINE Compute_LR_Correction
   
-  !*****************************************************************************************************************
+  !*****************************************************************************
 
-  SUBROUTINE Check_Interaction(im_1,is_1,im_2,is_2,get_interaction,rcom,rxcom,rycom,rzcom)
+  SUBROUTINE Check_MoleculePair_Cutoff(im_1,is_1,im_2,is_2,get_interaction, &
+    rcom,rxcom,rycom,rzcom)
     
     REAL(DP) :: rxijp, ryijp, rzijp, rcom, rxcom, rycom, rzcom, rinteraction
     
@@ -2849,11 +2549,11 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
        
     END IF
     
- END SUBROUTINE Check_Interaction
-!******************************************************************************************
+ END SUBROUTINE Check_MoleculePair_Cutoff
+!*******************************************************************************
 
-!******************************************************************************************
- SUBROUTINE Energy_Test(rijsq,get_vdw,get_qq,this_box)
+!*******************************************************************************
+ SUBROUTINE Check_AtomPair_Cutoff(rijsq,get_vdw,get_qq,this_box)
    
    INTEGER  :: this_box
    REAL(DP) :: rijsq,rcut_cbmcsq
@@ -2895,14 +2595,6 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
          IF (rijsq <= rcut_vdwsq(this_box)) THEN 
             get_vdw = .TRUE.
          ELSE 
-            get_vdw = .FALSE.
-         ENDIF
-
-      ELSEIF (int_vdw_sum_style(this_box) == vdw_mie_cut_shift) THEN
-
-         IF (rijsq <= rcut_vdwsq(this_box)) THEN
-            get_vdw = .TRUE.
-         ELSE
             get_vdw = .FALSE.
          ENDIF
 
@@ -2953,13 +2645,14 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
    
    RETURN
    
- END SUBROUTINE Energy_Test
+ END SUBROUTINE Check_AtomPair_Cutoff
  
- SUBROUTINE Compute_Forces(this_box)
+ SUBROUTINE Compute_System_Total_Force(this_box)
    
-   !**************************************************************************************************
-   ! The subroutine calculates the total forces of a given box. The identity of the box is passed to
-   ! the routine. The forces are then used to compute the pressure tensor.
+   !****************************************************************************
+   ! The subroutine calculates the total forces of a given box. 
+   ! The identity of the box is passed to the routine. 
+   ! The forces are then used to compute the pressure tensor.
    !
    ! CALLS
    !
@@ -2967,14 +2660,15 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
    !
    ! Volume_Change
    ! Main
+   ! Write_Properties_Buffer
    !
-   !***************************************************************************************************
+   !****************************************************************************
 
    IMPLICIT NONE
    
    INTEGER, INTENT(IN) :: this_box
    
-   !----------------------------------------------------------------------------------------------------
+   !----------------------------------------------------------------------------
    
    INTEGER ::  is, im_1, im_2, is_1, is_2, this_im_1, this_im_2
    
@@ -2988,12 +2682,9 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
    W_tensor_charge(:,:,this_box) = 0.0_DP
    
    DO is = 1, nspecies
-      imLOOP1: DO im_1 = 1, nmolecules(is)
-         this_im_1 = locate(im_1,is)
-         ! is it in this box?
-         IF ( molecule_list(this_im_1,is)%which_box /= this_box ) CYCLE imLOOP1
-         ! is alive?
-         IF ( .NOT. molecule_list(this_im_1,is)%live ) CYCLE imLOOP1
+      imLOOP1: DO im_1 = 1, nmols(is,this_box)
+         this_im_1 = locate(im_1,is,this_box)
+         IF (.NOT. molecule_list(this_im_1,is)%live) CYCLE imLOOP1
          
          w_inter_vdw(:,:) = 0.0_DP
          w_inter_charge(:,:) = 0.0_DP
@@ -3003,18 +2694,17 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
          !$OMP PRIVATE(im_2, this_im_2, get_interaction) &
          !$OMP PRIVATE(rcom, rx, ry, rz, tv_pair, tc_pair) &
          !$OMP REDUCTION(+:w_inter_vdw, w_inter_charge)
-         imLOOP2: DO im_2 = im_1 + 1, nmolecules(is)
-            this_im_2 = locate(im_2,is)
-            ! allow interactions only in the box
-            IF ( molecule_list(this_im_2,is)%which_box /= this_box ) CYCLE imLOOP2
-            ! is it alive?
-            IF ( .NOT. molecule_list(this_im_2,is)%live ) CYCLE imLOOP2
-            
-            CALL Check_Interaction(this_im_1,is,this_im_2,is,get_interaction,rcom,rx,ry,rz)
+         imLOOP2: DO im_2 = im_1 + 1, nmols(is,this_box)
+            this_im_2 = locate(im_2,is,this_box)
+            IF (.NOT. molecule_list(this_im_2,is)%live) CYCLE imLOOP2
+         
+            CALL Check_MoleculePair_Cutoff(this_im_1,is,this_im_2,is,get_interaction, &
+                                   rcom,rx,ry,rz)
             
             IF (.NOT. Get_Interaction) CYCLE imLOOP2
             
-            CALL Compute_Molecule_Pair_Force(this_im_1,is,this_im_2,is,this_box,tv_pair,tc_pair,rx,ry,rz)
+            CALL Compute_MoleculePair_Force(this_im_1,is,this_im_2,is, &
+                   this_box,tv_pair,tc_pair,rx,ry,rz)
             
             w_inter_vdw(:,:) = w_inter_vdw(:,:) + tv_pair(:,:)
             w_inter_charge(:,:) = w_inter_charge(:,:) + tc_pair(:,:)
@@ -3029,10 +2719,9 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
    END DO
    
    DO is_1 = 1, nspecies
-      imLOOP3: DO im_1 = 1, nmolecules(is_1)
-         this_im_1 = locate(im_1,is_1)
-         IF( molecule_list(this_im_1,is_1)%which_box /= this_box ) CYCLE imLOOP3
-         IF( .NOT. molecule_list(this_im_1,is_1)%live ) CYCLE imLOOP3
+      imLOOP3: DO im_1 = 1, nmols(is_1,this_box)
+         this_im_1 = locate(im_1,is_1,this_box)
+         IF (.NOT. molecule_list(this_im_1,is_1)%live) CYCLE imLOOP3
          
          DO is_2 = is_1 + 1, nspecies
             
@@ -3044,17 +2733,19 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
             !$OMP PRIVATE(im_2, this_im_2, get_interaction) &
             !$OMP PRIVATE(rcom, rx, ry, rz, tv_pair, tc_pair) &
             !$OMP REDUCTION(+:w_inter_vdw,w_inter_charge)
-            imLOOP4: DO im_2 = 1,nmolecules(is_2)
-               this_im_2 = locate(im_2,is_2)
-               IF ( molecule_list(this_im_2,is_2)%which_box /= this_box ) CYCLE imLOOP4
-               IF ( .NOT. molecule_list(this_im_2,is_2)%live ) CYCLE imLOOP4
+            imLOOP4: DO im_2 = 1, nmols(is_2,this_box)
+               this_im_2 = locate(im_2,is_2,this_box)
+               IF (.NOT. molecule_list(this_im_2,is_2)%live) CYCLE imLOOP4
                
                ! Check to see if the interaction needs to be computed between the molecules
-               CALL Check_Interaction(this_im_1,is_1,this_im_2,is_2,get_interaction,rcom,rx,ry,rz)
+               CALL Check_MoleculePair_Cutoff(this_im_1,is_1,this_im_2,is_2,get_interaction,rcom,rx,ry,rz)
                
                IF (.NOT. get_interaction ) CYCLE imLOOP4
                
-               CALL Compute_Molecule_Pair_Force(this_im_1,is_1,this_im_2,is_2,this_box,tv_pair,tc_pair,rx,ry,rz)
+               CALL Compute_MoleculePair_Force(this_im_1,is_1,this_im_2,is_2,this_box,tv_pair,tc_pair,rx,ry,rz)
+               
+               !                W_tensor_vdw(:,:,this_box) = W_tensor_vdw(:,:,this_box) + tv_pair(:,:)
+!                W_tensor_charge(:,:,this_box) = W_tensor_charge(:,:,this_box) + tc_pair(:,:)
                
                w_inter_vdw(:,:) = w_inter_vdw(:,:) + tv_pair(:,:)
                w_inter_charge(:,:) = w_inter_charge(:,:) + tc_pair(:,:)
@@ -3084,22 +2775,24 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     W_tensor_elec(:,:,this_box) = (W_tensor_charge(:,:,this_box) + W_tensor_recip(:,:,this_box))*charge_factor 
     W_tensor_total(:,:,this_box) = W_tensor_vdw(:,:,this_box) + W_tensor_elec(:,:,this_box) 
     
-  END SUBROUTINE Compute_Forces
+  END SUBROUTINE Compute_System_Total_Force
+  !-----------------------------------------------------------------------------
   
-  SUBROUTINE Compute_Molecule_Pair_Force(im_1,is_1,im_2,is_2,this_box,tens_vdw,tens_charge,rabx,raby,rabz)
-    !**********************************************************************************************************
-    ! The subroutine returns the interaction force of the input molecule with another molecule. Thus,
+  SUBROUTINE Compute_MoleculePair_Force(im,is,jm,js,this_box,tens_vdw,tens_charge,rabx,raby,rabz)
+    !***************************************************************************
+    ! The subroutine returns the interaction force of the input molecule with 
+    ! another molecule. Thus,
     ! it computes the intermolecular vdw and electrostatic interactions. 
     !
     ! CALLED BY
     !
     ! Added by Jindal Shah on 12/10/07
-    !**********************************************************************************************************
+    !***************************************************************************
   
     IMPLICIT NONE
 
-    INTEGER, INTENT(IN) :: im_1, is_1, im_2, is_2, this_box
-    !----------------------------------------------------------------------------------------------------------
+    INTEGER, INTENT(IN) :: im, is, jm, js, this_box
+    !---------------------------------------------------------------------------
 
     INTEGER :: ia, ja 
 
@@ -3114,27 +2807,27 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     tens_vdw(:,:) = 0.0_DP
     tens_charge(:,:) = 0.0_DP
 
-    DO ia = 1, natoms(is_1)
-       DO ja = 1, natoms(is_2)
-          ! Obtain the minimum image separation
+    DO ia = 1, natoms(is)
+       DO ja = 1, natoms(js)
 
-          rxijp = atom_list(ia,im_1,is_1)%rxp - atom_list(ja,im_2,is_2)%rxp
-          ryijp = atom_list(ia,im_1,is_1)%ryp - atom_list(ja,im_2,is_2)%ryp
-          rzijp = atom_list(ia,im_1,is_1)%rzp - atom_list(ja,im_2,is_2)%rzp
+          ! Obtain the minimum image separation
+          rxijp = atom_list(ia,im,is)%rxp - atom_list(ja,jm,js)%rxp
+          ryijp = atom_list(ia,im,is)%ryp - atom_list(ja,jm,js)%ryp
+          rzijp = atom_list(ia,im,is)%rzp - atom_list(ja,jm,js)%rzp
           
           ! Now get the minimum image separation 
-          CALL Minimum_Image_Separation(this_box,rxijp,ryijp,rzijp,rxij,ryij,rzij)
+          CALL Minimum_Image_Separation(this_box,rxijp,ryijp,rzijp, &
+                  rxij,ryij,rzij)
 
           rijsq = rxij*rxij + ryij*ryij + rzij*rzij
 
           ! Now figure out what needs to be computed, then call pair_energy
-          
-          CALL Energy_Test(rijsq,get_vdw,get_qq,this_box)          
+          CALL Check_AtomPair_Cutoff(rijsq,get_vdw,get_qq,this_box)          
 
           ! Compute vdw and q-q energy using if required
           IF (get_vdw .OR. get_qq) THEN 
 
-             CALL Pair_Force(rijsq,is_1,im_1,ia,is_2,im_2,ja,&
+             CALL Compute_AtomPair_Force(rijsq,is,im,ia,js,jm,ja,&
                   get_vdw,get_qq,Wij_vdw,Wij_qq)
 
              ffc = Wij_vdw/rijsq
@@ -3175,214 +2868,137 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
 
     END DO
 
-  END SUBROUTINE Compute_Molecule_Pair_Force
-  !------------------------------------------------------------------------------------------
-  SUBROUTINE Pair_Force &
+  END SUBROUTINE Compute_MoleculePair_Force
+  !-----------------------------------------------------------------------------
+  SUBROUTINE Compute_AtomPair_Force &
        (rijsq,is,im,ia,js,jm,ja,get_vdw,get_qq,Wij_vdw,Wij_qq)
 
-    ! LJ potential:  Wij = -rij/3 * d Eij / d rij. Use the virial in: P = NkBT + < W >
+    ! LJ potential:  Wij = -rij/3 * d Eij / d rij. 
+    ! Use the virial in: P = NkT + < W >
 
-    ! Computes the vdw and q-q pair force between atoms ia and ja of molecules im and jm
-    ! and species is and js, given their separation rijsq. I have passed each component of 
-    ! separation nut right now this is unnecessary. 
+    ! Computes the vdw and q-q pair force between atoms ia and ja of molecules 
+    ! im and jm and species is and js, given their separation rijsq. I have 
+    ! passed each component of separation but right now this is unnecessary. 
     ! It also computes the real space part of the Ewald sum if necessary.
 
-    ! Called by: 
-    ! Calls: CFC_LJ_Scaling
-    !        Ewald_Real
-  !------------------------------------------------------------------------------------------
+    ! Called by: Compute_System_Total_Force
+  !-----------------------------------------------------------------------------
     ! Passed to
     REAL(DP) :: rxij,ryij,rzij,rijsq
-    INTEGER :: is,im,ia,js,jm,ja,ibox
-    LOGICAL :: get_vdw,get_qq, fraction
+    INTEGER :: is,im,ia,js,jm,ja
+    LOGICAL :: get_vdw,get_qq
 
     ! Returned
-    REAL(DP) :: Wij_vdw,Wij_qq,Eij_vdw
+    REAL(DP) :: Wij_vdw,Wij_qq
 
     ! Local
-    INTEGER :: itype,jtype, this_box
-    REAL(DP) :: eps,sig,SigOverRsq,SigOverR6,SigOverR12
-    REAL(DP) :: SigOverRsq_shift,SigOverR6_shift,SigOverR12_shift
-    REAL(DP) :: SigOverR, SigOverRn, SigOverRm, mie_coeff, mie_n, mie_m
+    INTEGER :: ibox
+    ! LJ potential
+    INTEGER :: itype, jtype
+    REAL(DP) :: eps, sig, Eij_vdw
+    REAL(DP) :: SigByR2,SigByR6,SigByR12
+    REAL(DP) :: SigByR2_shift,SigByR6_shift,SigByR12_shift
     REAL(DP) :: roffsq_rijsq, roffsq_rijsq_sq, factor2, fscale
-    REAL(DP) :: qi,qj, qsc, erf_val, this_lambda
-    REAL(DP) :: rij, ewald_constant, exp_const, Wij_self
-
-  !------------------------------------------------------------------------------------------
+    ! Mie potential
+    REAL(DP) :: SigByR, SigByRn, SigByRm, mie_coeff, mie_n, mie_m
+    ! Coulomb potential
+    REAL(DP) :: qi, qj, erfc_val, prefactor
+    REAL(DP) :: rij, ewald_constant, exp_const
 
     Wij_vdw = 0.0_DP
     Wij_qq = 0.0_DP
-    fraction = .false.
-    this_lambda = 1.0_DP
-
+  !-----------------------------------------------------------------------------
     ibox = molecule_list(im,is)%which_box
 
     ! If either atom is not yet present, then don't try to compute an energy
-    ExistCheck: IF (atom_list(ia,im,is)%exist .AND. atom_list(ja,jm,js)%exist) THEN
+    ExistCheck: &
+    IF (atom_list(ia,im,is)%exist .AND. atom_list(ja,jm,js)%exist) THEN
 
        ! Determine atom type indices
        itype = nonbond_list(ia,is)%atom_type_number
        jtype = nonbond_list(ja,js)%atom_type_number
        
-       VDW_calculation: IF (get_vdw) THEN
+       VDW_calc: &
+       IF (get_vdw) THEN
 
-          LJ_12_6_calculation: IF (int_vdw_style(1) == vdw_lj) THEN
-             ! For now, assume all interactions are the same. Use the lookup table created in Compute_Nonbond_Table
-             eps = vdw_param1_table(itype,jtype)
-             sig = vdw_param2_table(itype,jtype)
+         IF (int_vdw_style(ibox) == vdw_lj) THEN
+           ! For now, assume all interactions are the same. 
+           ! Use the lookup table created in Compute_Nonbond_Table
+           eps = vdw_param1_table(itype,jtype)
+           sig = vdw_param2_table(itype,jtype)
 
-             ! Apply intramolecular scaling if necessary
-             IF (is == js .AND. im == jm) THEN
-                
-                ! This controls 1-2, 1-3, and 1-4 interactions
-                
-                eps = eps * vdw_intra_scale(ia,ja,is)
+           SigByR2 = (sig**2.0_DP) / rijsq
+           SigByR6  = SigByR2 * SigByR2 * SigByR2
+           SigByR12 = SigByR6 * SigByR6
 
-             ENDIF
+           ! Default potential for vdw_cut, vdw_cut_tail, vdw_cut_shift
+           Wij_vdw = (24.0_DP * eps) * (2.0_DP*SigByR12 - SigByR6)
 
-             IF (int_vdw_sum_style(ibox) == vdw_charmm) THEN
-                SigOverRsq = (sig**2.0_DP)/rijsq
-                SigOverR6  = SigOverRsq * SigOverRsq * SigOverRsq
-                SigOverR12 = SigOverR6 * SigOverR6
-
-                Wij_vdw = (12.0_DP * eps ) * (SigOverR12 - SigOverR6)
-
-             ELSEIF (int_vdw_sum_style(ibox) == vdw_cut .OR. int_vdw_sum_style(ibox) == vdw_cut_tail) THEN
-                SigOverRsq = (sig**2)/rijsq
-                SigOverR6 = SigOverRsq * SigOverRsq * SigOverRsq
-                SigOverR12 = SigOverR6 * SigOverR6
-                
-                Wij_vdw = (24.0_DP * eps) * (2.0_DP*SigOverR12 - SigOverR6)
-
-             ELSEIF (int_vdw_sum_style(ibox) == vdw_cut_shift) THEN
-                SigOverRsq = (sig**2)/rijsq
-                SigOverR6 = SigOverRsq * SigOverRsq * SigOverRsq
-                SigOverR12 = SigOverR6 * SigOverR6
-
-                SigOverRsq_shift = sig**2/rcut_vdwsq(ibox)
-                SigOverR6_shift = SigOverRsq_shift * SigOverRsq_shift * SigOverRsq_shift
-                SigOverR12_shift = SigOverR6_shift * SigOverR6_shift
-
-                Wij_vdw = (24.0_DP * eps) * (2.0_DP*SigOverR12 - SigOverR6) 
-
-             ELSEIF (int_vdw_sum_style(ibox) == vdw_cut_switch) THEN
-                
-                SigOverRsq = (sig**2)/rijsq
-                SigOverR6 = SigOverRsq * SigOverRsq * SigOverRsq
-                SigOverR12 = SigOverR6 * SigOverR6
-                
-                IF ( (rijsq < ron_switch_sq(ibox) )) THEN
-                   
-                   Wij_vdw = (24.0_DP * eps) * (2.0_DP*SigOverR12 - SigOverR6)
-                   fscale = 1.0_DP
-                   
-                ELSE IF ( rijsq <= roff_switch_sq(ibox)) THEN
-                   
-                   roffsq_rijsq = roff_switch_sq(ibox) - rijsq
-                  
-                   roffsq_rijsq_sq = roffsq_rijsq * roffsq_rijsq
-
-                   factor2 = switch_factor2(ibox) + 2.0_DP * rijsq
-
-                   fscale = roffsq_rijsq_sq * factor2 * switch_factor1(ibox)
-
-                   Eij_vdw = fscale * Eij_vdw
-                   Wij_vdw = fscale * ( 24.0_DP * eps / 3.0_DP ) * (2.0_DP*SigOverR12 - SigOverR6)
-                   Wij_vdw = Wij_vdw + &
-                        (8.0_DP * rijsq * rijsq * roffsq_rijsq * Eij_vdw * switch_factor1(ibox))/(3.0_DP)
-
-                END IF
-             ELSEIF (int_vdw_sum_style(ibox) == vdw_mie .OR. int_vdw_sum_style(ibox) == vdw_mie_cut_shift) THEN
-                rij = SQRT(rijsq)
-
-                mie_n = mie_nlist(mie_Matrix(is,js))
-                mie_m = mie_mlist(mie_Matrix(is,js))
-                mie_coeff = mie_n/(mie_n-mie_m) * (mie_n/mie_m)**(mie_m/(mie_n-mie_m))
-                SigOverR = sig/rij
-                SigOverRn = SigOverR ** mie_n
-                SigOverRm = SigOverR ** mie_m
-                Wij_vdw = (mie_coeff * eps) *(mie_n * SigOverRn - mie_m * SigOverRm)
-
-
-
-             ELSE
-
-                fscale = 0.0_DP
-                Eij_vdw = 0.0_DP
-                Wij_vdw = 0.0_DP
-                
-                
-                               
-             ENDIF
-             
-             ! Add other potential types here
-          ENDIF LJ_12_6_calculation
-          
-       ENDIF VDW_calculation
-       qq_calculation: IF (get_qq) THEN
-
-          qi = nonbond_list(ia,is)%charge
-          qj = nonbond_list(ja,js)%charge
-
-
-          IF (int_charge_sum_style(ibox) == charge_cut) THEN
-             ! Apply charge scaling for intramolecular energies
-             qsc = 1.0_DP
-             IF ( is == js .AND. im == jm ) THEN
-                qsc = charge_intra_scale(ia,ja,is)
+           IF (int_vdw_sum_style(ibox) == vdw_cut_switch) THEN
+             IF (rijsq > ron_switch_sq(ibox) .AND. &
+                 rijsq <= roff_switch_sq(ibox)) THEN
+               roffsq_rijsq = roff_switch_sq(ibox) - rijsq
+               roffsq_rijsq_sq = roffsq_rijsq * roffsq_rijsq
+               factor2 = switch_factor2(ibox) + 2.0_DP * rijsq
+               fscale = roffsq_rijsq_sq * factor2 * switch_factor1(ibox)
+               Eij_vdw = 4.0_DP * eps * (SigByR12 - SigByR6)
+               Eij_vdw = fscale * Eij_vdw
+               Wij_vdw = fscale / 3.0_DP * Wij_vdw
+               Wij_vdw = Wij_vdw + 8.0_DP * rijsq * rijsq * roffsq_rijsq &
+                       * Eij_vdw * switch_factor1(ibox) / 3.0_DP
+             ELSE IF (rijsq > roff_switch_sq(ibox)) THEN
+               Wij_vdw = 0.0_DP
              END IF
-             Wij_qq = qsc*charge_factor*(qi*qj)/SQRT(rijsq)
-          ELSEIF (int_charge_sum_style(ibox) == charge_ewald) THEN
-             ! Real space Ewald part
-             this_box = molecule_list(im,is)%which_box
-             qsc = 1.0_DP
-             ibox = molecule_list(im,is)%which_box 
+           ELSEIF (int_vdw_sum_style(ibox) == vdw_charmm) THEN
+             ! Use the CHARMM LJ potential
+             Wij_vdw = (12.0_DP * eps) * (SigByR12 - SigByR6)
+           END IF
+         ELSE IF (int_vdw_style(ibox) == vdw_mie) THEN
+           rij = SQRT(rijsq)
 
-             ! Apply intramolecular scaling if necessary
-             IF (is == js .AND. im == jm) THEN
-       
-                ! Intramolecular charge scaling
-                qsc = charge_intra_scale(ia,ja,is)
+           mie_n = mie_nlist(mie_Matrix(is,js))
+           mie_m = mie_mlist(mie_Matrix(is,js))
+           mie_coeff = mie_n/(mie_n-mie_m)*(mie_n/mie_m)**(mie_m/(mie_n-mie_m))
+           SigByR = sig/rij
+           SigByRn = SigByR ** mie_n
+           SigByRm = SigByR ** mie_m
+           Wij_vdw = (mie_coeff * eps) *(mie_n * SigByRn - mie_m * SigByRm)
 
-             ENDIF
+         ! Add other potential types here
+         ENDIF
+            
+       ENDIF VDW_calc
 
-             ! Real space part: This does the intrascaling correct. For cfc intra,
-             ! we use full scaling. I think for CFC inter, we simply scale the actual 
-             ! value of the charge, but do NOT scale it here for intra interactions.
-             ! Come back to this later.
+       qq_calc: IF (get_qq) THEN
 
-             rij = SQRT(rijsq)
-             ewald_constant = 2.0_DP * alpha_ewald(ibox) / rootPI
-             exp_const = EXP(-alpha_ewald(ibox)*alpha_ewald(ibox)*rijsq) 
-             ! May need to protect against very smamie_coeffsq
-             erf_val = 1.0_DP - erfc(alpha_ewald(ibox) * rij)
-             Wij_qq = qi*qj*( (qsc - erf_val)/rij + ewald_constant*exp_const )
+         qi = nonbond_list(ia,is)%charge
+         qj = nonbond_list(ja,js)%charge
 
-             IF (is == js .AND. im == jm) THEN
+         rij = SQRT(rijsq)
+         prefactor = qi * qj / rij
+         IF (int_charge_sum_style(ibox) == charge_cut) THEN
+           Wij_qq = prefactor * charge_factor
+         ELSEIF (int_charge_sum_style(ibox) == charge_ewald) THEN
+           ewald_constant = 2.0_DP * alpha_ewald(ibox) / rootPI
+           exp_const = EXP(-alpha_ewald(ibox)*alpha_ewald(ibox)*rijsq) 
+           ! May need to protect against very small rij
+           erfc_val = erfc(alpha_ewald(ibox) * rij)
+           Wij_qq = ( prefactor * erfc_val &
+                  + qi * qj * ewald_constant * exp_const )
+         ENDIF
 
-                Wij_self = (qsc - 1.0_DP) * qi*qj * (erf_val/rij - ewald_constant * exp_const)
-                Wij_qq = Wij_qq + Wij_self
-
-             END IF
-
-             ! self and recipricoal parts need to be computed as total energy differences between original
-             ! configuration and the perturbed configuration. These terms are thus added on after all atoms 
-             ! have been moved. 
-
-          ENDIF
-
-       ENDIF qq_calculation
+       ENDIF qq_calc
 
     ENDIF ExistCheck
 !------------------------------------------------------------------------------
   CONTAINS
 
     FUNCTION erfc(x)
-      !**************************************************************************
-      !                                                                         *
+      !*************************************************************************
+      !
       ! Calculate the complementary error function for  a number
-      !                                                                         *
-      !**************************************************************************
+      !
+      !*************************************************************************
 
       REAL(DP) :: erfc
       REAL(DP), PARAMETER :: A1 = 0.254829592_DP, A2 = -0.284496736_DP
@@ -3400,11 +3016,11 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     END FUNCTION erfc
 !------------------------------------------------------------------------------
 
-  END SUBROUTINE Pair_Force
+  END SUBROUTINE Compute_AtomPair_Force
 
-  !----------------------------------------------------------------------------------------------
+  !-----------------------------------------------------------------------------
   SUBROUTINE Compute_LR_Force(this_box, w_lrc)
-    !*************************************************************************************************************
+    !***************************************************************************
     ! The subroutine calculates the long range correction for the given box.
     !
     ! Called by
@@ -3412,7 +3028,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     ! First written by Jindal Shah on 01/10/08
     !
     !
-    !**************************************************************************************************************
+    !***************************************************************************
     
     INTEGER, INTENT(IN) :: this_box
     REAL(DP), INTENT(OUT) :: w_lrc
@@ -3447,14 +3063,15 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
   END SUBROUTINE Compute_LR_Force
 
   SUBROUTINE Compute_System_Ewald_Reciprocal_Force(this_box)
-    !*****************************************************************************************
+    !***************************************************************************
     ! This subroutine computes the long range forces due to electrostatics
     !
     ! Based on APSS code reciprocal_ewald.f90
     !
-    ! Added by Tom Rosch on 06/11/09 (See Wheeler, Mol. Phys. 1997 Vol. 92 pg. 55)
+    ! Added by Tom Rosch on 06/11/09 
+    ! (See Wheeler, Mol. Phys. 1997 Vol. 92 pg. 55)
     !
-    !*****************************************************************************************
+    !***************************************************************************
     
     USE Type_Definitions
     USE Global_Variables
@@ -3514,12 +3131,10 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
 
     DO is = 1, nspecies
 
-       DO im = 1, nmolecules(is)
+       DO im = 1, nmols(is,this_box)
 
-          this_locate = locate(im,is)
-
+          this_locate = locate(im,is,this_box)
           IF( .NOT. molecule_list(this_locate,is)%live) CYCLE
-          IF( molecule_list(this_locate,is)%which_box /= this_box ) CYCLE
 
           xcmi = molecule_list(this_locate,is)%xcom
           ycmi = molecule_list(this_locate,is)%ycom
@@ -3584,28 +3199,51 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
   END SUBROUTINE Compute_System_Ewald_Reciprocal_Force
 
   !***********************************************************
-  SUBROUTINE Compute_Molecule_Energy(im,is,f_intra,this_nrg,overlap,f_inter, E_self)
-    !****************************************************************
-    !
+  SUBROUTINE Get_Molecule_Energy(im,is,f_intra,f_inter, f_compute, this_nrg, overlap)
+    !******************************************************
     ! This routine computes the energy of a molecule to be used in
-    ! various moves. 
+    ! various moves. It has two optional flags, f_intra and f_inter.
+    ! These flags control if this_nrg will contain only intra-, inter-, or intra and inter
+    ! molecular interactions.
+    ! If the flag f_compute is true, the inter and intra molecular interactions
+    ! will be recomputed. If it's false, the intermolecular energy will be 
+    ! obtained through the pair_nrg vectors. Note that if f_compute is false, 
+    ! no intra energies will be sent back (maybe we can fix this in the future)
     !
-    ! First written by Jindal Shah on 01/30/09.
+    ! CALLED BY
     !
-    ! 10/11/10 (JS) : optional logical flag if intermolecular interactions
-    !                 are to be computed. 
     !
-    !*****************************************************************
-    
+    ! CALLS
+    !
+    !     Compute_Molecule_Nonbond_Inter_Energy
+    !     Compute_Molecule_Bond_Energy
+    !     Compute_Molecule_Angle_Energy
+    !     Compute_Molecule_Dihedral_Energy
+    !     Compute_Molecule_Nonbond_Intra_Energy
+    !     Store_Molecule_Pair_Interaction_Arrays
+    !
+    ! INPUT VARIABLES
+    !
+    !     im:        the INDEX of the molecule of interest
+    !     is:        the species of the molecule of interest
+    !     f_intra:   flag controlling whether intra molecular interactions will be computed
+    !     f_inter:   flag controlling whether inter molecular interactions will be computed
+    !
+    ! OUTPUT VARIABLES
+    !
+    !     this_nrg:  variable containing the energies associated to the molecule of interest.
+    !                The associated type is "Energy Class"
+    !******************************************************
+
+
     INTEGER, INTENT(IN) :: im,is
-    LOGICAL, INTENT(IN) :: f_intra
-    REAL(DP), INTENT(OUT), OPTIONAL :: E_self
-    LOGICAL, INTENT(IN), OPTIONAL :: f_inter
-    
+    LOGICAL, INTENT(IN) :: f_intra, f_inter, f_compute
     Type(Energy_Class), INTENT(OUT) :: this_nrg
-    
     LOGICAL, INTENT(OUT) :: overlap
-    LOGICAL :: intra_overlap, l_inter
+   
+    LOGICAL :: intra_overlap, inter_overlap
+    REAL(DP) :: E_inter_qq, E_self
+    INTEGER :: this_box
 
     this_nrg%total = 0.0_DP
     this_nrg%bond = 0.0_DP
@@ -3619,45 +3257,63 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     this_nrg%lrc = 0.0_DP
     this_nrg%ewald_reciprocal = 0.0_DP
     this_nrg%ewald_self = 0.0_DP
-    IF(PRESENT(E_self)) E_self = 0.0_DP
+
+    IF (f_compute == .TRUE.) THEN 
+
+	    inter_overlap = .FALSE.
+
+	    IF (f_inter) THEN
+	       CALL Compute_Molecule_Nonbond_Inter_Energy(im,is,this_nrg%inter_vdw, &
+        	    this_nrg%inter_q,inter_overlap)
+	    END IF
     
-    overlap = .FALSE.
-
-    l_inter = .TRUE.
-
-    IF (present(f_inter)) THEN
-
-       IF ( .NOT. f_inter) l_inter = .FALSE.
-
-    END IF
+	    IF(inter_overlap) THEN
+                overlap = .TRUE.
+                RETURN
+            END IF
     
+	    IF (f_intra) THEN
 
-    IF (l_inter) THEN
-       CALL Compute_Molecule_Nonbond_Inter_Energy(im,is,this_nrg%inter_vdw,this_nrg%inter_q,overlap)
-    END IF
-    
-    IF(overlap) RETURN
-    
-    IF (f_intra) THEN
-       ! compute intramolecular bonded energy for this molecule
-       CALL Compute_Molecule_Bond_Energy(im,is,this_nrg%bond)
-       CALL Compute_Molecule_Angle_Energy(im,is,this_nrg%angle)
-       CALL Compute_Molecule_Dihedral_Energy(im,is,this_nrg%dihedral)
-       CALL Compute_Molecule_Nonbond_Intra_Energy(im,is,this_nrg%intra_vdw,this_nrg%intra_q,intra_overlap,E_self)
+	       CALL Compute_Molecule_Bond_Energy(im,is,this_nrg%bond)
+	       CALL Compute_Molecule_Angle_Energy(im,is,this_nrg%angle)
+	       CALL Compute_Molecule_Dihedral_Energy(im,is,this_nrg%dihedral)
+	       CALL Compute_Molecule_Nonbond_Intra_Energy(im,is,this_nrg%intra_vdw,&
+        	    this_nrg%intra_q,E_inter_qq,intra_overlap,E_self)
        
-       this_nrg%intra = this_nrg%bond + this_nrg%angle + this_nrg%dihedral
-    END IF
-       
-    
-  END SUBROUTINE Compute_Molecule_Energy
+               IF (intra_overlap) THEN
+                  overlap = .TRUE.
+                  RETURN
+               END IF
 
-  SUBROUTINE Compute_Ring_Fragment_Energy(this_frag,this_im,is,this_box,nrg_ring_frag)
-    !******************************************************************************************
+	       this_nrg%inter_q = this_nrg%inter_q + E_inter_qq
+	       this_nrg%intra = this_nrg%bond + this_nrg%angle + this_nrg%dihedral
+	    END IF
+!   ELSE
+
+!            IF ( l_pair_nrg ) THEN
+
+!                IF (f_inter) THEN
+!                        this_box = molecule_list(im,is)%which_box
+!                        CALL Store_Molecule_Pair_Interaction_Arrays(im,is,this_box, this_nrg%inter_vdw, this_nrg%inter_q)
+!                END IF
+
+!            END IF
+
+   END IF
+    
+  END SUBROUTINE Get_Molecule_Energy
+
+  !-----------------------------------------------------------------------------
+
+  SUBROUTINE Compute_Ring_Fragment_Energy(this_frag,this_im,is,this_box, &
+    nrg_ring_frag)
+    !***************************************************************************
     !
-    ! This subroutine calculates the energy of a ring fragment in its old conformation
+    ! This subroutine calculates the energy of a ring fragment in its old 
+    ! conformation
     ! 
     ! CALLED BY: 
-    !           fragment_growth.f90
+    !       fragment_growth.f90
     !
     ! CALLS :
     !       Compute_Molecule_Dihedral_Energy
@@ -3665,7 +3321,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     !
     ! Written by Jindal Shah on 10/03/09
     !
-    !******************************************************************************************
+    !***************************************************************************
 
     INTEGER, INTENT(IN) :: this_frag, this_im, is
     REAL(DP), INTENT(OUT) :: nrg_ring_frag
@@ -3676,7 +3332,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     INTEGER :: i, this_atom
 
 !    REAL(DP) :: rcut_vdwsq_box, rcut_coulsq_box, alpha_ewald_box
-    REAL(DP) :: e_dihed,  e_improper, nrg_vdw, nrg_qq
+    REAL(DP) :: e_dihed,  e_improper, nrg_vdw, nrg_qq, nrg_inter_qq
 
     LOGICAL :: intra_overlap
     LOGICAL, ALLOCATABLE, DIMENSION(:) :: exist_flag_old
@@ -3728,10 +3384,11 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
 
     CALL Compute_Molecule_Dihedral_Energy(this_im,is,e_dihed)
     CALL Compute_Molecule_Improper_Energy(this_im,is,e_improper)
-    CALL Compute_Molecule_Nonbond_Intra_Energy(this_im,is,nrg_vdw,nrg_qq,intra_overlap)
+    CALL Compute_Molecule_Nonbond_Intra_Energy(this_im,is,nrg_vdw,nrg_qq, &
+         nrg_inter_qq,intra_overlap)
 
 
-    nrg_ring_frag = nrg_vdw + nrg_qq + e_dihed + e_improper
+    nrg_ring_frag = nrg_vdw + nrg_qq + nrg_inter_qq + e_dihed + e_improper
 
     ! Now reset all the cutoffs back
 !!$
@@ -3751,6 +3408,8 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
     DEALLOCATE(exist_flag_old)
 
   END SUBROUTINE Compute_Ring_Fragment_Energy
+
+  !-----------------------------------------------------------------------------
 
   SUBROUTINE System_Energy_Check(this_box,i_step,randno)
 
@@ -3780,7 +3439,7 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
      e_check%ewald_reciprocal = energy(this_box)%ewald_reciprocal
      e_check%ewald_self = energy(this_box)%ewald_self
 
-     CALL Compute_Total_System_Energy(this_box,.TRUE.,inter_overlap)
+     CALL Compute_System_Total_Energy(this_box,.TRUE.,inter_overlap)
 
      e_diff%total = ABS(energy(this_box)%total - e_check%total)
      e_diff%bond = ABS(energy(this_box)%bond - e_check%bond)
@@ -3906,103 +3565,86 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
 
    END SUBROUTINE System_Energy_Check
 
-   SUBROUTINE Compute_System_Ewald_Reciprocal_Energy2(this_box)
-    !*****************************************************************************************
-    ! This subroutine computes the sin and cos sum terms for the calculation of reciprocal
-    ! energy of the input box. 
-    !
-    !*************************************************************************
-    !*****************************************************************************************
+  SUBROUTINE Compute_System_Ewald_Reciprocal_Energy(this_box)
+    !***************************************************************************
+    ! This subroutine computes the sin and cos sum terms for the calculation of
+    ! reciprocal energy of the input box. 
+    !***************************************************************************
     
     USE Type_Definitions
     USE Global_Variables
 
     IMPLICIT NONE
 
-!    !$ include 'omp_lib.h'
+!   !$ include 'omp_lib.h'
 
-    INTEGER :: i, is, im, ia, this_locate, this_box
+    ! Arguments
+    INTEGER :: this_box
 
-    REAL(DP) :: un, const_val, this_scaling
-    REAL(DP) :: charge, hdotr, energy_temp
+    ! Returns
+    ! GLOBAL VARIABLE :: energy(this_box)%ewald_reciprocal
+
+    ! Local Variables
+    INTEGER :: i, is, im, ia, this_locate
+    REAL(DP) :: un, const_val
+    REAL(DP) :: charge, hdotr, E_reciprocal
 
     ! individual k-space vector stuff
-
     INTEGER ::  position
     INTEGER, ALLOCATABLE :: im_locate(:,:)
 
     ! openmp stuff
+!   INTEGER :: omp_get_num_threads, omp_get_thread_num
 
-!    INTEGER :: omp_get_num_threads, omp_get_thread_num
-
-    
-    ! loop over all the k vectors of this box
-          
+    ! Initialize variables
     const_val = 1.0_DP/(2.0_DP * alpha_ewald(this_box) * alpha_ewald(this_box))
-    energy(this_box)%ewald_reciprocal = 0.0_DP
-
-    ALLOCATE(im_locate(MAXVAL(nmolecules),nspecies))
-    
-    
-    DO is = 1, nspecies
-       
-       DO im = 1, nmolecules(is)
-          
-          this_locate = locate(im,is)
-          
-          IF (.NOT. molecule_list(this_locate,is)%live) CYCLE
-
-          IF (molecule_list(this_locate,is)%which_box /= this_box) CYCLE
-
-          IF (is == 1) THEN
-             im_locate(im,is) = this_locate
-          ELSE
-             im_locate(im,is) = SUM(nmolecules(1:is-1)) + this_locate
-          END IF
-
-       END DO
-
-    END DO   
-    
-    energy_temp = 0.0_DP
+    E_reciprocal = 0.0_DP
     !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
     cos_sum(:,this_box) = 0.0_DP
     sin_sum(:,this_box) = 0.0_DP
     !$OMP END PARALLEL WORKSHARE
 
+    ! Create an index, im_locate, for each live molecule in this_box
+    ! im_locate will be used to access cos_mol and sin_mol
+    ALLOCATE(im_locate(MAXVAL(max_molecules),nspecies))
     DO is = 1, nspecies
+       DO im = 1, nmols(is,this_box)
+          this_locate = locate(im,is,this_box)
+          IF (.NOT. molecule_list(this_locate,is)%live) CYCLE
 
-       IF ( .NOT. has_charge(is)) CYCLE
+          ! create index
+          IF (is == 1) THEN
+             im_locate(im,is) = this_locate
+          ELSE
+             im_locate(im,is) = SUM(max_molecules(1:is-1)) + this_locate
+          END IF
+
+       END DO
+    END DO   
+    
+    ! Loop over each species, molecule
+    DO is = 1, nspecies
+       ! skip nonpolar species
+       IF (.NOT. has_charge(is)) CYCLE
        
-       DO im = 1, nmolecules(is)
-
-          this_locate = locate(im,is)
-
+       DO im = 1, nmols(is,this_box)
+          this_locate = locate(im,is,this_box) ! index to atom_list, molecule_list
           IF( .NOT. molecule_list(this_locate,is)%live) CYCLE
-          
-          IF( molecule_list(this_locate,is)%which_box /= this_box ) CYCLE          
 
-          ! let us put the scaling for this molecule as 1.0. So no
-          ! CFC particle. If its a fraction particle, then the scaling
-          ! will be determined when the loop over k vectos is executed
+          position = im_locate(im,is) ! index to cos_mol, sin_mol
 
-          
-          position = im_locate(im,is)
-          this_scaling = 1.0_DP
-          
           !$OMP PARALLEL DO DEFAULT(SHARED) &
           !$OMP PRIVATE(i,ia,hdotr,charge) &
           !$OMP SCHEDULE(STATIC)
 
+          ! loop over all the k vectors of this box
           DO i = 1, nvecs(this_box)
 
              cos_mol(i,position) = 0.0_DP
              sin_mol(i,position) = 0.0_DP
              
              DO ia = 1, natoms(is)
-                
                 ! compute hdotr 
-                
                 hdotr = hx(i,this_box) * atom_list(ia,this_locate,is)%rxp + &
                         hy(i,this_box) * atom_list(ia,this_locate,is)%ryp + &
                         hz(i,this_box) * atom_list(ia,this_locate,is)%rzp
@@ -4011,45 +3653,39 @@ END SUBROUTINE Compute_Molecule_Angle_Energy
                 
                 cos_mol(i,position) = cos_mol(i,position) + charge * DCOS(hdotr)
                 sin_mol(i,position) = sin_mol(i,position) + charge * DSIN(hdotr)
-                
              END DO
 
-             cos_sum(i,this_box) = cos_sum(i,this_box) + this_scaling * cos_mol(i,position)
-             sin_sum(i,this_box) = sin_sum(i,this_box) + this_scaling * sin_mol(i,position)
-             
+             cos_sum(i,this_box) = cos_sum(i,this_box) &
+                                 + cos_mol(i,position)
+             sin_sum(i,this_box) = sin_sum(i,this_box) &
+                                 + sin_mol(i,position)
           END DO
           
           !$OMP END PARALLEL DO
           
        END DO
-       
     END DO
     
-    ! At the end of all the loops we have computed cos_sum, sin_sum, cos_mol and sin_mol
-    ! for each of the k-vectors. Now let us calcualte the reciprocal space energy 
+    ! At the end of all the loops we have computed cos_sum, sin_sum, cos_mol and
+    ! sin_mol for each of the k-vectors. Now let us calculate the reciprocal 
+    ! space energy 
     
-
-    energy_temp = 0.0_DP
-
     !$OMP PARALLEL DO DEFAULT(SHARED) &
     !$OMP PRIVATE(i,  un)  &
     !$OMP SCHEDULE(STATIC) &
-    !$OMP REDUCTION(+:energy_temp)
+    !$OMP REDUCTION(+:E_reciprocal)
 
     DO i = 1, nvecs(this_box)
-
-       un =  cos_sum(i,this_box) * cos_sum(i,this_box) + & 
-            sin_sum(i,this_box) * sin_sum(i,this_box)
-
-       energy_temp = energy_temp + Cn(i,this_box) * un
-
+       un =  cos_sum(i,this_box) * cos_sum(i,this_box) & 
+          +  sin_sum(i,this_box) * sin_sum(i,this_box)
+       E_reciprocal = E_reciprocal + Cn(i,this_box) * un
     END DO
 
     !$OMP END PARALLEL DO
     
-    energy(this_box)%ewald_reciprocal = energy_temp * charge_factor
+    energy(this_box)%ewald_reciprocal = E_reciprocal * charge_factor
 
-  END SUBROUTINE Compute_System_Ewald_Reciprocal_Energy2
+  END SUBROUTINE Compute_System_Ewald_Reciprocal_Energy
 
 END MODULE Energy_Routines
 

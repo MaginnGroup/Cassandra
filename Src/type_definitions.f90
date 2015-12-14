@@ -82,7 +82,7 @@ MODULE Type_Definitions
      CHARACTER(20) :: species_type, insertion, insert_style
 
      ! State point dependent information
-     REAL(DP) :: fugacity, chem_potential, zig_by_omega, activity
+     REAL(DP) :: fugacity, chem_potential, activity
      REAL(DP) :: max_lambda, max_torsion
      REAL(DP), ALLOCATABLE :: de_broglie(:)
 
@@ -109,7 +109,7 @@ MODULE Type_Definitions
      ! NR: Adding to have an option not to include 
      ! Coul interaction during biased growth
      LOGICAL :: L_Coul_CBMC 
-     ! N.B. natoms, nmolecules, etc. are in a separate arrays
+     ! N.B. natoms, max_molecules, etc. are in a separate arrays
      ! NR: for insertion style
      LOGICAL :: lcom 
 
@@ -122,7 +122,7 @@ MODULE Type_Definitions
   !****************************************************************************
   TYPE Molecule_Class
 
-     ! The molecule list will have dimensions (nmolecules,nspecies)
+     ! The molecule list will have dimensions (max_molecules,nspecies)
 
      ! What kind of molecule is this? normal, fractional, fixed, etc. 
      ! Note that the following integers will be defined for the type
@@ -141,11 +141,10 @@ MODULE Type_Definitions
      ! com and euler angles refer to the x,y and z com coordinates
      ! and 1, 2 and 3 euler angles of the molecule. The suffix
      ! old denotes old coordinates.
-     ! cfc_lambda is the scaling parameter for the atom used in CFC moves. 
-     ! If there is no CFC, lambda = 1.0_DP
+     ! frac is the fractional scaling parameter for the molecule
      REAL(DP)  :: xcom, ycom, zcom, euler1, euler2, euler3
      REAL(DP)  :: xcom_old, ycom_old, zcom_old, euler1_old,euler2_old,euler3_old
-     REAL(DP)  :: cfc_lambda
+     REAL(DP)  :: frac
      ! This variable records the maximum distance of any psuedo atom from its
      ! COM. This is used to speed up energy calculations.
 
@@ -162,7 +161,7 @@ MODULE Type_Definitions
   TYPE Internal_Coord_Class
 
      ! The internal coordinate list will have dimensions 
-     ! (MAXVAL(nbonds), MAXVAL(nmolecules), MAXVAL(nspecies))
+     ! (MAXVAL(nbonds), MAXVAL(max_molecules), MAXVAL(nspecies))
 
      REAL(DP) :: bond_length_angstrom
      REAL(DP) :: bond_angle_degrees, bond_angle_radians
@@ -194,7 +193,7 @@ MODULE Type_Definitions
      ! in the system. For example, if we are growing a molecule, some atoms may
      ! not yet have been placed, and so exist = 'false'.
 
-     ! atom_list has dimensions (natoms, nmolecules, nspecies)
+     ! atom_list has dimensions (natoms, max_molecules, nspecies)
      
      REAL(DP) :: rxp, ryp, rzp
      REAL(DP) :: rxp_nls, ryp_nls, rzp_nls  ! The starting positions for the neighbor list

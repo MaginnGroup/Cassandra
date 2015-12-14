@@ -1,4 +1,4 @@
-!********************************************************************************
+!*******************************************************************************
 !   Cassandra - An open source atomistic Monte Carlo software package
 !   developed at the University of Notre Dame.
 !   http://cassandra.nd.edu
@@ -17,7 +17,7 @@
 !
 !   You should have received a copy of the GNU General Public License
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-!********************************************************************************
+!*******************************************************************************
 SUBROUTINE Write_Properties(this_mc_step,this_box)
   ! The subroutine will write desired properties to the property files. It is
   ! called by respective drivers such as.
@@ -33,7 +33,7 @@ SUBROUTINE Write_Properties(this_mc_step,this_box)
   !   None
   !
   ! 08/12/13 : Created beta version
-!*********************************************************************************
+!*******************************************************************************
 
   USE Global_Variables
   USE File_Names
@@ -159,7 +159,7 @@ CONTAINS
     
   END SUBROUTINE Write_Header
 
- SUBROUTINE Write_Properties_Buffer(file_number)
+  SUBROUTINE Write_Properties_Buffer(file_number)
    !************************************************************************
    ! The subroutine fills in a line buffer based on which properties are to
    ! be written and then write the buffer to a file.
@@ -173,6 +173,7 @@ CONTAINS
    USE Simulation_Properties
    
    INTEGER :: file_number, ii, is, is_dens, is_cp, is_lambda, total_frac
+   INTEGER :: nmols_is, nmols_box, iis
    REAL(DP),DIMENSION(:), ALLOCATABLE :: write_buff
    CHARACTER(FILENAME_LEN) :: prop_written
 
@@ -208,6 +209,15 @@ CONTAINS
          END IF
          write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
 
+
+      ELSE IF (prop_written == 'Temperature') THEN
+
+         write_buff(ii+1) = 1.0_DP/(beta(this_box)*kboltz)
+
+      ELSE IF (prop_written == 'Thermodynamic_Pressure') THEN
+
+         write_buff(ii+1) = pressure(this_box)*atomic_to_bar
+
       ELSE IF (prop_written == 'Energy_LJ') THEN
 
          IF ( block_average) THEN
@@ -224,7 +234,10 @@ CONTAINS
             write_buff(ii+1) = (ac_energy(this_box)%inter_q + ac_energy(this_box)%intra_q) / &
                  REAL(nthermo_freq,DP)
          ELSE
-            write_buff(ii+1) = energy(this_box)%inter_q + energy(this_box)%intra_q
+            write_buff(ii+1) = energy(this_box)%inter_q &
+                             + energy(this_box)%intra_q &
+                             + energy(this_box)%ewald_reciprocal &
+                             + energy(this_box)%ewald_self
          END IF
          write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
 
@@ -239,17 +252,25 @@ CONTAINS
 
       ELSE IF (prop_written == 'Pressure') THEN
 
-         CALL Compute_Forces(this_box)
+         CALL Compute_System_Total_Force(this_box)
 
-         Pressure_tensor(:,:,this_box) = W_tensor_total(:,:,this_box) / box_list(this_box)%volume
-         P_inst(this_box) = ((Pressure_tensor(1,1,this_box) + Pressure_tensor(2,2,this_box) + &
-                             Pressure_tensor(3,3,this_box)) / 3.0_DP) * atomic_to_bar
+         Pressure_tensor(:,:,this_box) = W_tensor_total(:,:,this_box) &
+                                       / box_list(this_box)%volume
+         P_inst(this_box) = ((Pressure_tensor(1,1,this_box) &
+                            + Pressure_tensor(2,2,this_box) &
+                            + Pressure_tensor(3,3,this_box)) / 3.0_DP) &
+                          * atomic_to_bar
     
          IF(int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
-            P_inst(this_box) = P_inst(this_box) + ((virial(this_box)%lrc / box_list(this_box)%volume) * atomic_to_bar) 
+            P_inst(this_box) = P_inst(this_box) &
+                             + virial(this_box)%lrc &
+                             / box_list(this_box)%volume * atomic_to_bar
          END IF
 
-         P_ideal(this_box) = SUM(nmols(:,this_box)) / box_list(this_box)%volume * temperature(this_box) * p_const
+         nmols_box = SUM(nmols(:,1:nbr_boxes))
+         P_ideal(this_box) = nmols_box &
+                           / box_list(this_box)%volume * temperature(this_box) &
+                           * p_const
 
          write_buff(ii+1) = P_ideal(this_box) + P_inst(this_box)
 
@@ -272,7 +293,7 @@ CONTAINS
       ELSE IF (prop_written == 'Nmols') THEN
 
          IF (block_average) THEN
-            write_buff(ii+1) = ac_nmols(is,this_box) / REAL(nthermo_freq,DP)
+               write_buff(ii+1) = ac_nmols(is,this_box) / REAL(nthermo_freq,DP)
          ELSE
                write_buff(ii+1) = nmols(is,this_box)
          END IF
@@ -282,7 +303,7 @@ CONTAINS
          ! species, we will have correct index
          is = is + 1
          
-         
+
       ELSE IF (prop_written == 'Density') THEN
 
          IF (block_average) THEN
@@ -321,9 +342,9 @@ CONTAINS
  END SUBROUTINE Write_Properties_Buffer
  
 END SUBROUTINE Write_Properties
-!**************************************************************************************
+!*******************************************************************************
 SUBROUTINE Write_Coords(this_box)
-  !************************************************************************************
+  !*****************************************************************************
   ! The subroutine writes coordinates of simulation box for later analyis of
   ! RDFs. It gets called by driver routines.
   !
@@ -335,7 +356,7 @@ SUBROUTINE Write_Coords(this_box)
   !        nvtmc_driver
   !
   ! 08/12/13 (JS) : Created beta version
-  !*************************************************************************************
+  !*****************************************************************************
   
   USE Global_Variables
   USE Simulation_Properties
@@ -345,7 +366,7 @@ SUBROUTINE Write_Coords(this_box)
 
   INTEGER, INTENT(IN) :: this_box
 
- !************************************************************************************
+ !******************************************************************************
   
   INTEGER :: ii, jj, is, nmolecules_is, im, this_im, ia 
   INTEGER :: M_XYZ_unit,MH_unit,Num_Atoms
@@ -368,19 +389,17 @@ SUBROUTINE Write_Coords(this_box)
   
   !-- Number of molecules of each of the species
   DO is = 1, nspecies
-     CALL Get_Nmolecules_Species(this_box,is,nmolecules_is)
-     WRITE(MH_unit,*) is,nmolecules_is
-     Num_Atoms = Num_Atoms + nmolecules_is*natoms(is)
+     WRITE(MH_unit,*) is,nmols(is,this_box)
+     Num_Atoms = Num_Atoms + nmols(is,this_box)*natoms(is)
   END DO
 
-  !--- Write the coordinates of molecules in this box
+  !-- Write the coordinates of molecules in this box
   WRITE(M_XYZ_unit,*) Num_Atoms
   WRITE(M_XYZ_unit,*)
   DO is = 1,nspecies
-     DO im = 1,nmolecules(is)
-        this_im = locate(im,is)
-        IF(molecule_list(this_im,is)%live  .AND. &
-           molecule_list(this_im,is)%which_box == this_box ) THEN
+     DO im = 1, nmols(is,this_box)
+        this_im = locate(im,is,this_box)
+        IF(molecule_list(this_im,is)%live) THEN
            DO ia = 1, natoms(is)
               WRITE(M_XYZ_unit,*) nonbond_list(ia,is)%element, &
                    atom_list(ia,this_im,is)%rxp, &
@@ -392,5 +411,4 @@ SUBROUTINE Write_Coords(this_box)
   END DO
 
 END SUBROUTINE Write_Coords
-
 

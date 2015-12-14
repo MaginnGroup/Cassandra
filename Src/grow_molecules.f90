@@ -37,24 +37,25 @@
     !
     !   12/10/13 : Beta version
     ! 
-    !*************************************************************************
+    !***************************************************************************
     USE Global_Variables
     USE Type_Definitions
     USE Random_Generators
     USE File_Names
     USE Energy_Routines
     USE Fragment_Growth
-    USE Simulation_Properties, ONLY : Compute_Beads, Get_Index_Molecule
+    USE Simulation_Properties, ONLY : Compute_Beads
     USE IO_Utilities
 
     IMPLICIT NONE
 
     ! Local
-    INTEGER :: is,im,ia, this_box, alive, this_im, n_start, n_end
+    INTEGER :: is,im,ia, this_box, alive, this_im, im_base, locate_base
     INTEGER :: is2, im2, ja, ibox, which_anchor
     INTEGER :: isdstart,isdend,isistart,isiend,ireac
     INTEGER :: i,m,box_start,box_end, ii
     INTEGER :: im_this,im_other, other_box, alive_this, alive_other, this_atom
+    INTEGER :: i_frac
 
 
     INTEGER, ALLOCATABLE,DIMENSION(:) :: frag_order
@@ -67,56 +68,43 @@
     LOGICAL :: overlap, cbmc_overlap
 
     CHARACTER*120 :: init_config_file, init_config_file1
-!********************************************************************************
-    ! Place all the molecules in the box using CB growth.
+!*******************************************************************************
+    ! Place molecules in the box using CB growth.
 
-    ! Needs to be written.
-
-    ! Initialize the cfc amd existence flags. 
     overlap = .false. 
-    molecule_list(:,:)%live = .false.
-
-    DO is = 1, nspecies
-       DO im = 1, nmolecules(is)
-          locate(im,is) = im
-       END DO
-    END DO
-
-    n_start = 0
-    n_end = 0
     del_flag = .FALSE. 
+
     DO ibox = 1, nbr_boxes
 
        DO is=1,nspecies         
 
+          IF (nmols_initial(is,ibox) > nmols(is,ibox)) &
+            WRITE(*,*) 'inserting molecules of species ', is, ' into box ', ibox
+          
           IF (species_list(is)%fragment) THEN
              ALLOCATE(frag_order(nfragments(is)))
           END IF
           
-          IF (ibox /=1) THEN
-             n_start = SUM(nmol_actual(is,1:ibox-1))
-             n_end = SUM(nmol_actual(is,1:ibox))
-          ELSE
-             n_start = 0
-             n_end = nmol_actual(is,1)
-          END IF
+          ! if there are already molecules in the box, start at next number
+          im_base = nmols(is,ibox)
 
-          DO im= n_start + 1, n_end
+          ! LOCATE numbering is continuous across all boxes
+          locate_base = SUM(nmols(is,1:nbr_boxes))
 
-             alive = locate(im,is)
-             
+          DO im = im_base+1, im_base+nmols_initial(is,ibox)
+             nmols(is,ibox) = nmols(is,ibox) + 1
+             locate(im,is,ibox) = im -im_base + locate_base
+             alive = locate(im,is,ibox)
              molecule_list(alive,is)%which_box = ibox
              molecule_list(alive,is)%live = .true.
              
              molecule_list(alive,is)%molecule_type = int_normal
              
-             molecule_list(alive,is)%cfc_lambda = 1.0_DP
+             molecule_list(alive,is)%frac = 1.0_DP
              atom_list(:,alive,is)%exist = .TRUE.
              
-             this_box = molecule_list(alive,is)%which_box
-             ! Now let us insert the first atom of this molecule randomly in this box
+             ! Now let us insert the molecule randomly in this box
              InsertionLOOP: DO
-                
                 
                 ! we will grow the molecules if there are fragments in the molecules
                 IF (species_list(is)%fragment) THEN
@@ -125,8 +113,8 @@
                    get_fragorder = .TRUE.
                    P_seq = 1.0_DP
                    P_bias = 1.0_DP
-                   lambda_for_build = molecule_list(alive,is)%cfc_lambda
-                   CALL Build_Molecule(alive,is,this_box,frag_order, &
+                   lambda_for_build = molecule_list(alive,is)%frac
+                   CALL Build_Molecule(alive,is,ibox,frag_order, &
                            lambda_for_build,P_seq,P_bias, &
                            nrg_ring_frag_tot,cbmc_overlap)
                    IF (cbmc_overlap) CYCLE InsertionLOOP
@@ -134,11 +122,11 @@
 
                 ELSE
                    
-                   IF(box_list(this_box)%box_shape == 'CUBIC') THEN
+                   IF(box_list(ibox)%box_shape == 'CUBIC') THEN
                       ! -- all the cell lengths are identical,
-                      atom_list(1,alive,is)%rxp = (rranf() - 0.5_DP) * box_list(this_box)%length(1,1)
-                      atom_list(1,alive,is)%ryp = (rranf() - 0.5_DP) * box_list(this_box)%length(2,2)
-                      atom_list(1,alive,is)%rzp = (rranf() - 0.5_DP) * box_list(this_box)%length(3,3)                      
+                      atom_list(1,alive,is)%rxp = (rranf() - 0.5_DP) * box_list(ibox)%length(1,1)
+                      atom_list(1,alive,is)%ryp = (rranf() - 0.5_DP) * box_list(ibox)%length(2,2)
+                      atom_list(1,alive,is)%rzp = (rranf() - 0.5_DP) * box_list(ibox)%length(3,3)                      
                    END IF
                    
                    ! insert the rest of the molecule
@@ -153,7 +141,6 @@
                    END DO
                    
                    ! Obtain COM of the molecule
-
                    CALL Get_COM(alive,is)
                    
                    CALL Rotate_Molecule_Eulerian
@@ -161,48 +148,35 @@
                 END IF
                 
                 ! Obtain the new COM of the molecule
-                
                 CALL Get_COM(alive,is)
                 
                 ! Check for any overlaps with previously inserted molecules
-                
                 DO is2 = 1, nspecies
-                   im2LOOP: DO im2 = 1, nmolecules(is2)
-                      this_im = locate(im2,is2)
+                   im2LOOP: DO im2 = 1, nmols(is2,ibox)
+                      this_im = locate(im2,is2,ibox)
                       
                       ! skip the test for this molecule
+                      IF ((is2 == is) .AND. (alive==this_im)) CYCLE im2LOOP
                       
-                      IF ( molecule_list(this_im,is2)%live) THEN
+                      ! check the overlap with all the atoms of this molecule
+                      DO ia = 1, natoms(is)
                          
-                         IF ( molecule_list(this_im,is2)%which_box == this_box ) THEN
+                         DO ja = 1, natoms(is2)
                             
-                            IF ((is2 == is) .AND. (alive==this_im)) CYCLE im2LOOP
+                            rxijp = atom_list(ia,alive,is)%rxp - atom_list(ja,this_im,is2)%rxp
+                            ryijp = atom_list(ia,alive,is)%ryp - atom_list(ja,this_im,is2)%ryp
+                            rzijp = atom_list(ia,alive,is)%rzp - atom_list(ja,this_im,is2)%rzp
                             
-                            ! check the overlap with all the atoms of this molecule
+                            CALL Minimum_Image_Separation(ibox,rxijp,ryijp,rzijp,rxij,ryij,rzij)
                             
-                            DO ia = 1, natoms(is)
-                               
-                               DO ja = 1, natoms(is2)
-                                  
-                                  rxijp = atom_list(ia,alive,is)%rxp - atom_list(ja,this_im,is2)%rxp
-                                  ryijp = atom_list(ia,alive,is)%ryp - atom_list(ja,this_im,is2)%ryp
-                                  rzijp = atom_list(ia,alive,is)%rzp - atom_list(ja,this_im,is2)%rzp
-                                  
-                                  CALL Minimum_Image_Separation(this_box,rxijp,ryijp,rzijp,rxij,ryij,rzij)
-                                  
-                                  rsq = rxij * rxij + ryij * ryij + rzij * rzij
-                                  
-                                  IF (rsq < rcut_lowsq) CYCLE InsertionLOOP
-                                  
-                                  ! reject the insertion and go back for another trial
-                                  
-                               END DO
-                               
-                            END DO
+                            rsq = rxij * rxij + ryij * ryij + rzij * rzij
                             
-                         END IF
+                            IF (rsq < rcut_lowsq) CYCLE InsertionLOOP
+                            ! reject the insertion and go back for another trial
+                            
+                         END DO
                          
-                      END IF
+                      END DO
                       
                    END DO im2LOOP
                    
@@ -212,24 +186,14 @@
                 ! exit and insert another molecule
                 
                 ! compute the distance of the psuedoatom farthest from the COM.
-                
                 CALL Compute_Max_Com_Distance(alive,is)
-                ! write to a file for viewing
                 
-                WRITE(*,*) 'successfully inserted molecule', im
-                !DO ia =1, natoms(is)
-                !      write(*,*)  atom_list(ia,alive,is)%rxp
-                !      write(*,*)  atom_list(ia,alive,is)%ryp
-                !      write(*,*)  atom_list(ia,alive,is)%rzp
-                !   END DO
-
+                WRITE(*,*) 'successfully inserted molecule ', alive
                 EXIT
                 
              END DO InsertionLOOP
              
           ENDDO  ! this ends the do loop from line 88
-          
-          nmols(is,ibox) = nmol_actual(is,ibox)
           
           IF (ALLOCATED(frag_order)) DEALLOCATE(frag_order)
           
@@ -241,11 +205,19 @@
        overlap = .FALSE.
 
     END DO  ! ends do loop from line 72 (nbr_boxes)
+
+    ! Add LOCATE for any unplaced molecules in array under BOX==0, in reverse
+    ! order
+    DO is = 1, nspecies
+      DO im = max_molecules(is), SUM(nmols(is,1:nbr_boxes)) + 1, -1
+        nmols(is,0) = nmols(is,0) + 1
+        locate(nmols(is,0),is,0) = im
+      END DO
+    END DO
+
     
     DO ibox = 1, nbr_boxes
-
        IF(int_vdw_sum_style(ibox) == vdw_cut_tail) CALL Compute_Beads(ibox)
-
     END DO
 
   CONTAINS
@@ -319,12 +291,12 @@
 
 
   SUBROUTINE Update_Reservoir(is)
-    !****************************************************************************
+    !***************************************************************************
     ! The subroutine generates atomic positions for reservoir molecules
-    !                 the event that the long range corrections are to be computed.
+    ! the event that the long range corrections are to be computed.
     !
     ! 01/06/10 (JS) : Ring biasing added while growing a molecule
-    !********************************************************************************
+    !***************************************************************************
     USE Global_Variables
     USE Type_Definitions
     USE Random_Generators
@@ -338,8 +310,8 @@
     INTEGER :: is, i, ii, ia, alive, kappa_old
     INTEGER :: frag_start, frag_end, frag_total, this_box
     INTEGER, ALLOCATABLE, DIMENSION(:) :: frag_order
-    REAL(DP) :: E_bond, E_angle, E_dihedral, E_improper, E_intra_vdw, E_intra_qq
-    REAL(DP) :: d_bond, d_angle, d_dihedral, d_improper, d_intra_vdw, d_intra_qq, delta_e
+    REAL(DP) :: E_bond, E_angle, E_dihedral, E_improper, E_intra_vdw, E_intra_qq, E_inter_qq
+    REAL(DP) :: d_bond, d_angle, d_dihedral, d_improper, d_intra_vdw, d_intra_qq, d_inter_qq, delta_e
     REAL(DP) :: factor
     REAL(DP) :: P_seq, P_bias, e_prev, lambda_for_cut, nrg_ring_frag_forward
     CHARACTER(2) :: dummy_element
@@ -353,7 +325,7 @@
     kappa_dih = 1
     this_box = 1
 
-    alive = nmolecules(is) + 1
+    alive = max_molecules(is) + 1
 
     atom_list(:,alive,is)%exist = .TRUE.
     molecule_list(alive,is)%live = .TRUE. 
@@ -384,7 +356,7 @@
        CALL Compute_Molecule_Angle_Energy(alive,is,E_angle)
        CALL Compute_Molecule_Dihedral_Energy(alive,is,E_dihedral)
        CALL Compute_Molecule_Improper_Energy(alive,is,E_improper)
-       CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is,E_intra_vdw,E_intra_qq,intra_overlap)
+       CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is,E_intra_vdw,E_intra_qq,E_inter_qq,intra_overlap)
 
        energy_igas(i,is)%bond = E_bond
        energy_igas(i,is)%angle = E_angle
@@ -392,7 +364,8 @@
        energy_igas(i,is)%improper = E_improper
        energy_igas(i,is)%intra_vdw = E_intra_vdw
        energy_igas(i,is)%intra_q = E_intra_qq
-       energy_igas(i,is)%total = E_bond + E_angle + E_dihedral + E_improper + E_intra_vdw + E_intra_qq
+       energy_igas(i,is)%inter_q = E_inter_qq
+       energy_igas(i,is)%total = E_bond + E_angle + E_dihedral + E_improper + E_intra_vdw + E_intra_qq + E_inter_qq
 
     END IF
 
@@ -428,7 +401,7 @@
 
           ELSE
 
-             lambda_for_cut = molecule_list(alive,is)%cfc_lambda
+             lambda_for_cut = molecule_list(alive,is)%frac
              CALL Cut_Regrow(alive,is,frag_start,frag_end,frag_order,frag_total,lambda_for_cut, &
                   e_prev,P_seq,P_bias, nrg_ring_frag_forward, cbmc_overlap, del_overlap)
 
@@ -449,7 +422,7 @@
              CALL Compute_Molecule_Angle_Energy(alive,is,E_angle)
              CALL Compute_Molecule_Dihedral_Energy(alive,is,E_dihedral)
              CALL Compute_Molecule_Improper_Energy(alive,is,E_improper)
-             CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is,E_intra_vdw,E_intra_qq,intra_overlap)
+             CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is,E_intra_vdw,E_intra_qq,E_inter_qq,intra_overlap)
              
              d_bond = E_bond - energy_igas(i,is)%bond
              d_angle = E_angle - energy_igas(i,is)%angle
@@ -457,8 +430,9 @@
              d_improper = E_improper - energy_igas(i,is)%improper
              d_intra_vdw = E_intra_vdw - energy_igas(i,is)%intra_vdw
              d_intra_qq = E_intra_qq - energy_igas(i,is)%intra_q
+             d_inter_qq = E_inter_qq - energy_igas(i,is)%inter_q
              
-             delta_e = d_bond + d_angle + d_dihedral + d_improper + d_intra_vdw + d_intra_qq
+             delta_e = d_bond + d_angle + d_dihedral + d_improper + d_intra_vdw + d_intra_qq + d_inter_qq
              
              factor = beta(this_box) * delta_e
              
@@ -474,7 +448,8 @@
              energy_igas(i,is)%improper = E_improper
              energy_igas(i,is)%intra_vdw = E_intra_vdw
              energy_igas(i,is)%intra_q = E_intra_qq
-             energy_igas(i,is)%total = E_bond + E_angle + E_dihedral + E_improper + E_intra_vdw + E_intra_qq
+             energy_igas(i,is)%inter_q = E_inter_qq
+             energy_igas(i,is)%total = E_bond + E_angle + E_dihedral + E_improper + E_intra_vdw + E_intra_qq + E_inter_qq
  
           ELSE
 

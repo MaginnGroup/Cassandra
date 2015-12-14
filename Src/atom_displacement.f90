@@ -228,8 +228,7 @@ SUBROUTINE Atom_Displacement(this_box)
   IF (int_charge_sum_style(this_box) == charge_ewald) THEN
      ! compute change in ewald reciprocal energy difference
 
-     CALL Compute_Ewald_Reciprocal_Energy_Difference(alive,alive,is,this_box,&
-          int_intra, e_recip_move)
+     CALL Update_System_Ewald_Reciprocal_Energy(alive,is,this_box,int_translation,e_recip_move)
 
   END IF
   
@@ -252,7 +251,7 @@ SUBROUTINE Atom_Displacement(this_box)
   delta_e = E_intra_vdw_n + E_inter_vdw_n + E_intra_qq_n + E_inter_qq_n + E_ang_n + E_dihed_n - &
             E_intra_vdw_o - E_inter_vdw_o - E_intra_qq_o - E_inter_qq_o - E_ang_o - E_dihed_o
   delta_e = delta_e + e_improper_n - e_improper_o
-  delta_e = delta_e + e_recip_move
+  delta_e = delta_e + (e_recip_move - energy(this_box)%ewald_reciprocal)
 
   factor = beta(this_box) * delta_e
 

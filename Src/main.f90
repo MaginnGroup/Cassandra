@@ -1,4 +1,4 @@
-!********************************************************************************
+!*******************************************************************************
 !   Cassandra - An open source atomistic Monte Carlo software package
 !   developed at the University of Notre Dame.
 !   http://cassandra.nd.edu
@@ -17,11 +17,11 @@
 !
 !   You should have received a copy of the GNU General Public License
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-!********************************************************************************
+!*******************************************************************************
 
-!********************************************************************************
+!*******************************************************************************
 PROGRAM Main
-!********************************************************************************
+!*******************************************************************************
   ! Driver routine for CASSANDRA code.
   !
   ! CALLED BY
@@ -57,7 +57,7 @@ PROGRAM Main
   !        Get_COM
   !        Compute_Max_COM_Distance
   !        Fold_Molecule
-  !        Compute_Total_System_Energy
+  !        Compute_System_Total_Energy
   !        Get_Molecules_Species
   !        Update_Reservoirs
   !        Angle_Distortion
@@ -67,13 +67,13 @@ PROGRAM Main
   !        GCMC_Driver
   !        GEMC_Driver
   !        Fragment_Driver
-  !        Ring_Fragment_Driver
+  !        Ring_Fragment
   !        Write_Subroutine_Times
   !
   !  08/07/13 : Created beta version
   !
   !
-!********************************************************************************
+!*******************************************************************************
 
   USE Global_Variables
   USE File_Names
@@ -89,8 +89,9 @@ PROGRAM Main
 !  !$ include 'omp_lib.h'
 
   INTEGER(4) :: count
-  INTEGER :: i, j, is, im, ia, this_im, ibox, nmol_is, this_box, int_phi
+  INTEGER :: i, j, is, im, ia, this_im, ibox, nmol_is, int_phi
   INTEGER :: alive, t_num
+  INTEGER :: initial_mcstep
 
   INTEGER :: nyears, nmonths, ndays, nhours, nmin, nsec, nms
   CHARACTER(120) :: version
@@ -112,7 +113,7 @@ PROGRAM Main
   INTEGER, ALLOCATABLE, DIMENSION(:) :: frag_order
 !********************************************************************************
 ! Code name and version. Change as updates are made.
-  version = 'Cassandra 1.1'
+  version = 'Cassandra Development Version'
   e_start%inter_vdw = 0.0_DP
 ! Get starting time information (intrinsic function)
   CALL DATE_AND_TIME(date,time,zone,begin_values)
@@ -202,7 +203,7 @@ PROGRAM Main
   ELSE IF (int_sim_type == sim_gcmc) THEN
      CALL GCMC_Control
   ELSE IF (int_sim_type == sim_gemc.OR. int_sim_type == sim_gemc_ig .OR. &
-       int_sim_type == sim_gemc_npt) THEN
+           int_sim_type == sim_gemc_npt) THEN
      CALL GEMC_Control
   ELSE IF (int_sim_type == sim_frag .OR. int_sim_type == sim_ring) THEN
      CALL Fragment_Control
@@ -221,7 +222,7 @@ PROGRAM Main
   ! Determine if it is equilibration or production or test
   CALL Get_Run_Type
 
-  WRITE(logunit,'(a,a,/)') 'starting type ',start_type
+  WRITE(logunit,'(a,a,/)') ' Starting type ',start_type
 
   IF( int_run_style == run_test ) THEN
 
@@ -234,7 +235,6 @@ PROGRAM Main
   END IF
 
   ! Initialize the counters for simulation
-  
   DO ibox = 1, nbr_boxes
      CALL Initialize(ibox)
      CALL Reset(ibox)
@@ -243,53 +243,48 @@ PROGRAM Main
   ! Initialize the atom list and molecule list arrays
   molecule_list(:,:)%live = .FALSE.
   molecule_list(:,:)%which_box = 0
-  
   atom_list(:,:,:)%exist = .FALSE.
-  molecule_list(:,:)%cfc_lambda = 0.0_DP
+  molecule_list(:,:)%frac = 0.0_DP
 
   cbmc_flag = .FALSE.
-
-  DO is = 1, nspecies
-     DO im = 1, nmolecules(is)
-        locate(im,is) = im
-     END DO
-  END DO
-
-! Initialize the counters for simulation
-
-  DO ibox = 1, nbr_boxes
-     CALL Initialize(ibox)
-  END DO
 
   WRITE(*,*) 'Beginning Cassandra Simulation'
   WRITE(*,*) 
 
   IF (start_type == 'make_config') THEN
-     ! Get required info from inputfile, then grow molecules using CBMC
+     ! Initialize system with no molecules
+     nmols = 0
+     molecule_list(:,:)%live = .false.
+     ! Grow molecules using CBMC
      CALL Grow_Molecules
+     initial_mcstep = 0
 
-  ELSEIF (start_type == 'read_old') THEN
+  ELSEIF (start_type == 'read_config') THEN
      ! Read in old coordinates and restart a new simulation, 
      ! Note that the counters have already been set to zero by the call to
      ! initialize and reset above.
-
      CALL Restart_From_Old
+     initial_mcstep = 0
 
+  ELSEIF (start_type == 'add_to_config') THEN
+     ! Add molecules using CBMC to configuration read from file
+     CALL Restart_From_Old
+     CALL Grow_Molecules
+     initial_mcstep = 0
+     
   ELSEIF (start_type == 'checkpoint') THEN
      ! Restart from checkpoint. Shall we verify match between stuff in cpt 
      ! and stuff input, or override with cpt info?
-
-     CALL Read_Checkpoint
+     CALL Read_Checkpoint(initial_mcstep)
      
   ELSE
      err_msg = ""
-     err_msg(1) = "make_config start type improperly specificed."
+     err_msg(1) = "Start type " // start_type // " is not a valid option."
      CALL Clean_Abort(err_msg,'Main')
      
   ENDIF
 
   ! Ewald stuff
-
   IF ( int_charge_sum_style(1) == charge_ewald) THEN
      
      ALLOCATE(hx(maxk,nbr_boxes),hy(maxk,nbr_boxes),hz(maxk,nbr_boxes), &
@@ -314,8 +309,8 @@ PROGRAM Main
      ALLOCATE(sin_sum_old(MAXVAL(nvecs),nbr_boxes))
      ALLOCATE(cos_sum_start(MAXVAL(nvecs),nbr_boxes))
      ALLOCATE(sin_sum_start(MAXVAL(nvecs),nbr_boxes))
-     ALLOCATE(cos_mol(  MAXVAL(nvecs), SUM(nmolecules)))
-     ALLOCATE(sin_mol(  MAXVAL(nvecs), SUM(nmolecules)))
+     ALLOCATE(cos_mol(MAXVAL(nvecs), SUM(max_molecules)))
+     ALLOCATE(sin_mol(MAXVAL(nvecs), SUM(max_molecules)))
      ! initialize these vectors
      cos_mol(:,:) = 0.0_DP
      sin_mol(:,:) = 0.0_DP
@@ -329,7 +324,7 @@ PROGRAM Main
   ! NR: I believe we have all the information to compute the 
   !     system charge and charge on each species
 
-   Write(logunit,'(X,A59)') '***************** Charge Neutrality Check *****************'
+   WRITE(logunit,'(X,A59)') '***************** Charge Neutrality Check *****************'
 
    q_tot_sys = 0.0_DP; q_mol=0.0_DP
    
@@ -338,23 +333,19 @@ PROGRAM Main
       Do ia = 1, natoms(is)     
          q_mol = q_mol + nonbond_list(ia,is)%charge 
       END DO 
-      Write(logunit,'(X,A,T15,2X,I4,4x,A,T45,4x,f12.8)')'Species', is, 'has charge', q_mol 
+      WRITE(logunit,'(X,A,T15,2X,I4,4x,A,T45,4x,f12.8)')'Species', is, 'has charge', q_mol 
    ENDDO
 
-   DO ibox = 1,nbr_boxes
+   DO ibox = 1, nbr_boxes
       q_tot_sys = 0.0_DP 
-      DO is = 1,nspecies
-         DO im = 1,nmolecules(is)
-            this_im  = locate(im,is)
-            this_box = molecule_list(this_im,is)%which_box
-            IF (ibox .eq. this_box) THEN
-               DO ia = 1,natoms(is)
-                  q_tot_sys = q_tot_sys + nonbond_list(ia,is)%charge 
-               END DO 
-            END IF
+      DO is = 1, nspecies
+         DO im = 1, nmols(is,ibox)
+            DO ia = 1,natoms(is)
+               q_tot_sys = q_tot_sys + nonbond_list(ia,is)%charge 
+            END DO 
          END DO
       END DO
-      Write(logunit,'(X,A,T13,4X,I4,4X,A,T45,4X,f12.8)')'Box ', ibox, 'has charge', q_tot_sys
+      WRITE(logunit,'(X,A,T13,4X,I4,4X,A,T45,4X,f12.8)')'Box ', ibox, 'has charge', q_tot_sys
       WRITE(logunit,*)
 
       IF (ABS(q_tot_sys) .gt. 0.000001) THEN
@@ -390,36 +381,37 @@ PROGRAM Main
 
  ! Calculate COM and distance of the atom farthest to the COM.
 
-  DO is = 1, nspecies
-     DO im = 1, nmolecules(is)
-        this_im = locate(im,is)
-        IF( .NOT. molecule_list(this_im,is)%live) CYCLE
-        CALL Get_COM(this_im,is)
-        CALL Compute_Max_Com_Distance(this_im,is)
+  DO ibox = 1, nbr_boxes
+     DO is = 1, nspecies
+        DO im = 1, nmols(is,ibox)
+           this_im = locate(im,is,ibox)
+           CALL Get_COM(this_im,is)
+           CALL Compute_Max_Com_Distance(this_im,is)
+        END DO
      END DO
   END DO
 
- IF ((start_type == 'read_old') .or. (start_type == 'checkpoint')) THEN
+ IF (start_type /= 'make_config') THEN
   ! Fold the molecules. 
-    DO is = 1, nspecies
-     DO im = 1, nmolecules(is)
-        this_im = locate(im,is)
-        IF( .NOT. molecule_list(this_im,is)%live) CYCLE
-        this_box = molecule_list(this_im,is)%which_box
-        CALL Fold_Molecule(this_im,is,this_box) 
-     END DO
+    DO ibox = 1, nbr_boxes
+       DO is = 1, nspecies
+          DO im = 1, nmols(is,ibox)
+             this_im = locate(im,is,ibox)
+             CALL Fold_Molecule(this_im,is,ibox) 
+          END DO
+       END DO
     END DO
-  END IF
+ END IF
 
   ! compute total system energy
   overlap = .FALSE.
      
-  DO ibox = 1, nbr_boxes
+  DO i = 1, nbr_boxes
        
      IF ( start_type == 'make_config' .and. &
-          int_vdw_sum_style(ibox) == vdw_cut_tail) &
-                CALL Compute_Beads(ibox)
-     CALL Compute_Total_System_Energy(ibox,.TRUE.,overlap)
+          int_vdw_sum_style(i) == vdw_cut_tail) &
+                CALL Compute_Beads(i)
+     CALL Compute_System_Total_Energy(i,.TRUE.,overlap)
            
 
      IF (overlap) THEN
@@ -438,7 +430,7 @@ PROGRAM Main
      WRITE(logunit,'(X,A59)') '***********************************************************'
      WRITE(logunit,'(X,A36,2X,I2)') 'Starting energy components for box', ibox
      WRITE(logunit,*) ' Atomic units-Extensive'
-     WRITE(logunit,*)
+     WRITE(logunit,'(X,A59)') '-----------------------------------------------------------'
      
      WRITE(logunit,'(X,A,T30,F20.3)') 'Total system energy is' , energy(ibox)%total
      WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecular energy is', energy(ibox)%intra
@@ -446,51 +438,35 @@ PROGRAM Main
      WRITE(logunit,'(X,A,T30,F20.3)') 'Bond angle energy is', energy(ibox)%angle
      WRITE(logunit,'(X,A,T30,F20.3)') 'Dihedral angle energy is', energy(ibox)%dihedral
      WRITE(logunit,'(X,A,T30,F20.3)') 'Improper angle energy is', energy(ibox)%improper
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra nonbond vdw is', energy(ibox)%intra_vdw
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra nonbond elec is', energy(ibox)%intra_q
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecule vdw is', energy(ibox)%intra_vdw
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecule q is', energy(ibox)%intra_q
      WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule vdw is', energy(ibox)%inter_vdw
-     IF (int_vdw_sum_style(ibox) == vdw_cut_tail) THEN
+     IF (int_vdw_sum_style(ibox) == vdw_cut_tail) &
         WRITE(logunit,'(X,A,T30,F20.3)') 'Long range correction is', energy(ibox)%lrc
-     END IF
      WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule q is', energy(ibox)%inter_q
      WRITE(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald is', energy(ibox)%ewald_reciprocal
      WRITE(logunit,'(X,A,T30,F20.3)') 'Self ewald is', energy(ibox)%ewald_self
-     IF( int_charge_sum_style(ibox) == charge_ewald) THEN
+
+     IF (int_charge_sum_style(ibox) == charge_ewald) &
         WRITE(logunit,'(X,A,T30,I20)') 'Number of vectors is', nvecs(ibox)
-     END IF
      WRITE(logunit,'(X,A59)') '***********************************************************'
      WRITE(logunit,*)
 
   END DO
 
-  ! obtain the number of molecules of each species in a simulation box
-  ! only if it isn't a new configuration.
-
-  IF( (start_type /= 'make_config') .OR. (start_type /= 'read_old') ) THEN
-
-    DO ibox = 1,nbr_boxes
-       DO is = 1, nspecies
-          CALL Get_Nmolecules_Species(ibox,is,nmol_is)
-          nmols(is,ibox) = nmol_is
-       END DO
-    END DO
-
-  END IF
-  
   ! Populate the reservoir box if necessary
-
   DO is = 1, nspecies
 
-     IF(species_list(is)%int_insert == int_igas) THEN
-        first_res_update = .TRUE.
-        CALL Update_Reservoir(is)
-        first_res_update = .FALSE.
-     END IF
+    IF(species_list(is)%int_insert == int_igas) THEN
+      first_res_update = .TRUE.
+      CALL Update_Reservoir(is)
+      first_res_update = .FALSE.
+    END IF
 
   END DO
 
-  ! Write initial properties, if requested
-  IF (start_type == 'make_config' .OR. n_mcsteps == 0) THEN
+  ! Write initial properties, if needed
+  IF (start_type == 'make_config' .OR. n_mcsteps <= initial_mcstep) THEN
     DO ibox = 1, nbr_boxes
       CALL Write_Properties(0,ibox)
       CALL Reset(ibox)
@@ -498,7 +474,7 @@ PROGRAM Main
   END IF
 
   ! End program if no moves specified
-  IF (n_mcsteps == 0) THEN
+  IF (n_mcsteps <= initial_mcstep) THEN
     write(logunit,*) ""
     write(logunit,'(X,A59)') '******************** Ending simulation ********************'
     WRITE(*,*)
@@ -512,52 +488,47 @@ PROGRAM Main
   IF (int_run_style == run_test .AND. n_mcsteps == 1) THEN
 
      DO
-        
-        CALL Angle_Distortion(ibox)
-        IF(nsuccess(1,1)%angle .NE. 0) EXIT
-        
+       CALL Angle_Distortion(ibox)
+       IF(nsuccess(1,1)%angle .NE. 0) EXIT
      END DO
      
      IF(ndihedrals(1) .GT. 0) THEN
         
-        DO
-           
-           CALL Rigid_Dihedral_Change(ibox)
-           IF(nsuccess(1,1)%dihedral .NE. 0) EXIT
-           
-        END DO
+       DO
+         CALL Rigid_Dihedral_Change(ibox)
+         IF(nsuccess(1,1)%dihedral .NE. 0) EXIT
+       END DO
 
      END IF
 
-     CALL Compute_Total_System_Energy(1,.TRUE.,overlap)
+     CALL Compute_System_Total_Energy(1,.TRUE.,overlap)
      WRITE(logunit,'(A,T30,F20.3)')'Intra molecular energy is:', energy(1)%intra
-     WRITE(logunit,'(A,T30,F20.3)')'Intra nonbond vdw is:', energy(1)%intra_vdw
-     WRITE(logunit,'(A,T30,F20.3)')'Intra nonbond elec is:', energy(1)%intra_q
+     WRITE(logunit,'(A,T30,F20.3)')'Intra molecule vdw is:', energy(1)%intra_vdw
+     WRITE(logunit,'(A,T30,F20.3)')'Intra molecule q is:', energy(1)%intra_q
      
      OPEN(75,FILE='compare.dat')
      WRITE(75,'(T20,A,A)') 'Energy for a single', testname
      WRITE(75,'(A,T30,F20.3)')'Intra molecular energy is:', energy(1)%intra
-     WRITE(75,'(A,T30,F20.3)')'Intra nonbond vdw is:', energy(1)%intra_vdw
-     WRITE(75,'(A,T30,F20.3)')'Intra nonbond elec is:', energy(1)%intra_q
+     WRITE(75,'(A,T30,F20.3)')'Intra molecule vdw is:', energy(1)%intra_vdw
+     WRITE(75,'(A,T30,F20.3)')'Intra molecule q is:', energy(1)%intra_q
      CLOSE(75)
      
   ELSE IF (int_sim_type == sim_nvt .OR. int_sim_type == sim_nvt_min) THEN
      
-     CALL NVTMC_Driver
+     CALL NVTMC_Driver(initial_mcstep)
      
   ELSE IF (int_sim_type == sim_npt) THEN
      
-     CALL NPTMC_Driver
-  
+     CALL NPTMC_Driver(initial_mcstep)
 
   ELSE IF (int_sim_type == sim_gcmc) THEN
 
-     CALL GCMC_Driver
+     CALL GCMC_Driver(initial_mcstep)
 
   ELSE IF (int_sim_type == sim_gemc .OR. int_sim_type == sim_gemc_ig .OR. &
      int_sim_type == sim_gemc_npt) THEN
      
-     CALL GEMC_Driver
+     CALL GEMC_Driver(initial_mcstep)
 
   ELSE IF (int_sim_type == sim_frag) THEN
 
@@ -595,9 +566,9 @@ PROGRAM Main
        energy(ibox)%dihedral
     WRITE(logunit,'(X,A,T30,F20.3)') 'Improper angle energy is', &
        energy(ibox)%improper
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra nonbond vdw is', &
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecule vdw is', &
        energy(ibox)%intra_vdw
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra nonbond elec is', &
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecule q is', &
        energy(ibox)%intra_q
     WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule vdw is', &
        energy(ibox)%inter_vdw
@@ -616,17 +587,14 @@ PROGRAM Main
 
     ! Write the current total energy to stdout
     WRITE(*,*)
-    WRITE(*,*) "Ending Energy"
-    WRITE(*,"(X,A7,I1,A4,T15,F24.12)") 'Energy(', ibox, ') = ', &
+    WRITE(*,"(X,A14,I1,A4,T15,F24.12)") 'Ending Energy(', ibox, ') = ', &
        energy(ibox)%total
 
     ! Compute the energies from scratch
-    CALL Compute_Total_System_Energy(ibox,.TRUE.,overlap)
+    CALL Compute_System_Total_Energy(ibox,.TRUE.,overlap)
 
     ! Write the recomputed total energy to stdout
-    WRITE(*,*)
-    WRITE(*,*) "Final Energy"
-    WRITE(*,"(X,A7,I1,A4,T15,F24.12)") 'Energy(', ibox, ') = ', &
+    WRITE(*,"(X,A14,I1,A4,T15,F24.12)") ' Final Energy(', ibox, ') = ', &
        energy(ibox)%total
 
     ! Write the recomputed energy components to log
@@ -649,9 +617,9 @@ PROGRAM Main
        energy(ibox)%dihedral
     WRITE(logunit,'(X,A,T30,F20.3)') 'Improper angle energy is', &
        energy(ibox)%improper
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra nonbond vdw is', &
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecule vdw is', &
        energy(ibox)%intra_vdw
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra nonbond elec is', &
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecule q is', &
        energy(ibox)%intra_q
     WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule vdw is', &
        energy(ibox)%inter_vdw
@@ -671,7 +639,6 @@ PROGRAM Main
   ! Write success ratios of each move type
   CALL Write_Trials_Success
 
-
 !$OMP PARALLEL
 
 !  t_num = omp_get_thread_num()
@@ -679,18 +646,21 @@ PROGRAM Main
 
 !$OMP END PARALLEL
 
+
   IF(cpcollect) THEN
-     DO is = 1,nspecies
-        DO ibox = 1, nbr_boxes
-           IF(ntrials(is,ibox)%cpcalc > 0) THEN
-             write(logunit,'(A,I2,A,I2,A,F24.12)') 'Chemical potential for species',is,'in box',ibox, &
-                                                 'is', chpot(is,ibox) / ntrials(is,ibox)%cpcalc
-             write(logunit,'(A,I2,A,I2,A,F24.12)') 'Ideal Chemical potential for species',is,'in box', &
-                                                 ibox, 'is', chpotid(is,ibox) / ntrials(is,ibox)%cpcalc
-           END IF
-        END DO
-     END DO
+    DO is = 1,nspecies
+      DO ibox = 1, nbr_boxes
+        IF(ntrials(is,ibox)%cpcalc > 0) THEN
+          WRITE(logunit,'(A,I2,A,I2,A,F24.12)') 'Chemical potential for species', &
+            is,'in box',ibox,'is',chpot(is,ibox) / ntrials(is,i)%cpcalc
+          WRITE(logunit,'(A,I2,A,I2,A,F24.12)') &
+            'Ideal Chemical potential for species',is,'in box',i, 'is', &
+            chpotid(is,i) / ntrials(is,i)%cpcalc
+        END IF
+      END DO
+    END DO
   END IF
+
 
   CALL DATE_AND_TIME(date,time,zone,end_values)
   CALL cpu_time(tot_time)

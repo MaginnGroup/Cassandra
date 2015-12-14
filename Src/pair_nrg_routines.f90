@@ -22,7 +22,7 @@ MODULE Pair_Nrg_Routines
   !********************************************************************
   ! This module contains several routines are used when l_pair_nrg flag 
   ! is .TRUE. i.e., when pair interaction energy arrays are stored and
-  ! used for efificent calculations.
+  ! used for efficient calculations.
   !
   ! Get_Position_Alive
   !
@@ -44,7 +44,6 @@ MODULE Pair_Nrg_Routines
 
   USE Type_Definitions
   USE Global_Variables
-  USE Pair_Nrg_Variables
 
   IMPLICIT NONE
 
@@ -77,7 +76,7 @@ CONTAINS
     IF ( is == 1) THEN
        position = alive
     ELSE
-       position = SUM(nmolecules(1:is-1)) + alive
+       position = SUM(max_molecules(1:is-1)) + alive
     END IF
 
   END SUBROUTINE Get_Position_Alive
@@ -86,10 +85,15 @@ CONTAINS
   !********************************************************
   SUBROUTINE Store_Molecule_Pair_Interaction_Arrays(alive,is,this_box,E_vdw,E_qq, &
        n_cls_mol, id_cls_mol, is_cls_mol, box_cls_mol, box_nrg_vdw, box_nrg_qq)
-    ! this subroutine stores energy pair interaction arrays
-    ! for a molecule
-    ! gets called by routines that perturb single molecule
-    ! such as
+
+    !******************************************************
+    ! This subroutine stores energy pair interaction arrays
+    ! for one or more molecules. It gets called by routines that perturb
+    ! one or more molecules
+    !
+    ! The pair interactions are stored in global temp arrays. The routine
+    ! also returns total intermolecular vdw and real space electrostatic interaction
+    ! energies of the molecule being perturbed
     !
     ! CALLED BY
     !
@@ -103,11 +107,56 @@ CONTAINS
     !
     !        Get_Position_Alive
     !
-    ! The pair interactions are stored in global temp arrays. The routine
-    ! also returns total vdw and real space electrostatic interaction
-    ! energies of the molecule being perturbed
+    ! INPUT VARIABLES
+    !
+    ! alive:       LOCATE of the molecule.
+    !              Not used if we want to get interaction energies of two
+    !              molecules (use a dummy variable in this case).
+    ! is:          species type of the molecule. Not used if we want to get
+    !              energies for two molecules (use dummy var)
+    ! this_box:    box where alive is located.
+    !              Not used if we want to get energies
+    !              for two molecules (use dummy var)
+    ! n_cls_mol:   optional argument. This equals the number of particles 
+    !              for which we want to compute interaction energies. Typically
+    !              used if we are interested in getting interaction energies of
+    !              two different molecules (i.e. DFC).
+    ! id_cls_mol:  optional argument. This equals the ID of particles for which we want to compute
+    !              interaction energies. Typically used in DFC.
+    ! is_cls_mol:  optional argument. This equals the species number of particles for which we want
+    !              to compute interaction energies. Typically used in DFC.
+    ! box_cls_mol: optional argument. This contains the boxes where the
+    !              molecules of interest are located
+    !
+    ! OUTPUT VARIABLES
+    !
+    ! E_vdw:       Intermolecular VDW interaction energy of a single molecule 
+    ! E_qq:        Intermolecular electrostatic energy of a single molecule
+    ! box_nrg_vdw: optional argument. VDW energies of molecules in each box
+    ! box_nrg_qq:  optional argument. Electrostatic energies of molecules in each box
     !
     !
+    ! USAGE EXAMPLE:
+    !
+    ! For a single molecule in one box, we can store the pair arrays by 
+    !
+    ! Store_Molecule_Pair_Interaction_Arrays(alive,is,this_box,E_vdw,E_qq)
+    !
+    ! Note that we'll also get interaction energies through E_vdw, E_qq.
+    !
+    ! For two molecules in the same box, we can store the pair energies by
+    !
+    ! Store_Molecule_Pair_Interaction_Arrays(dummy1,dummy2,dummy3, E_vdw,
+    ! E_qq, 2, [16 73], [1 2], [1 1], box_nrg_vdw, box_nrg_qq)
+    !
+    ! In this case, dummy* variables are ignored. E_vdw E_qq will contain
+    ! inter vdw and electrostatic interactions of the last specified molecule
+    ! (i.e. 73.). '2' Stands for the number
+    ! of molecules for which we want to save arrays. [16 73] is a vector
+    ! that contains the alive IDS of the molecules of interest. [1 1] is a
+    ! vector that contains species ID of the molecules of interest.
+    ! Box_nrg_vdw and box_nrg_qq are vectors that will contain the interaction
+    ! energies for each box. In this example, the numbers will be the same.
     !******************************************************
 
     INTEGER :: alive, is, this_box
@@ -125,17 +174,17 @@ CONTAINS
     IF ( .NOT. present(n_cls_mol)) THEN
        ! only a single molecule storage is necessary
        n_mols = 1
-       ALLOCATE(pair_vdw_temp(SUM(nmolecules)))
-       ALLOCATE(pair_qq_temp(SUM(nmolecules)))
+       ALLOCATE(pair_vdw_temp(SUM(max_molecules)))
+       ALLOCATE(pair_qq_temp(SUM(max_molecules)))
 
     ELSE
 
        ! storage for multiple molecules is required
-       ! we will form an array that is n_cls_mol * SUM(nmolecules)
+       ! we will form an array that is n_cls_mol * SUM(max_molecules)
        n_mols = n_cls_mol
 
-       ALLOCATE(pair_vdw_temp(n_mols*SUM(nmolecules)))
-       ALLOCATE(pair_qq_temp(n_mols*SUM(nmolecules)))
+       ALLOCATE(pair_vdw_temp(n_mols*SUM(max_molecules)))
+       ALLOCATE(pair_qq_temp(n_mols*SUM(max_molecules)))
 
        IF ( present(box_cls_mol)) THEN
           box_nrg_vdw(:) = 0.0_DP
@@ -175,14 +224,15 @@ CONTAINS
           
        CALL Get_Position_Alive(alive,is,locate_1)
 
+       !Get_Position_Alive is used in conjunction with pair_vdw/pair_qq arrays
 
-       stride = (imol-1) * SUM(nmolecules)
+       stride = (imol-1) * SUM(max_molecules)
        
        speciesLoop: DO this_species = 1, nspecies
           
-          molidLoop: DO this_im = 1, nmolecules(this_species)
+          molidLoop: DO this_im = 1, max_molecules(this_species)
              
-             locate_im = locate(this_im,this_species)
+             locate_im = locate(this_im,this_species,this_box)
              
              IF (molecule_list(locate_im,this_species)%live) THEN
                 IF (molecule_list(locate_im,this_species)%which_box == this_box ) THEN
@@ -264,13 +314,13 @@ CONTAINS
        
        CALL Get_Position_Alive(alive,is,locate_1)
 
-       stride = (imol - 1) * SUM(nmolecules)
+       stride = (imol - 1) * SUM(max_molecules)
        
        DO this_species = 1, nspecies
           
-          DO this_im = 1, nmolecules(this_species)
+          DO this_im = 1, max_molecules(this_species)
              
-             locate_im = locate(this_im,this_species)
+             locate_im = locate(this_im,this_species,this_box)
              
              IF (molecule_list(locate_im,this_species)%live) THEN
                 
