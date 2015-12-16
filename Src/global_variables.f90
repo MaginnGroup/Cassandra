@@ -81,6 +81,8 @@ USE Type_Definitions
   INTEGER, PARAMETER :: sim_gemc_ig = 8
   INTEGER, PARAMETER :: sim_mcf = 9
   LOGICAL :: lfugacity, lchempot, timed_run, openmp_flag, en_flag, verbose_log
+  CHARACTER(10) :: sim_length_units
+  INTEGER :: steps_per_sweep
 
   ! The starting seed for the random generator
   ! Note iseed is used for generating points on random sphere for MCF_Gen sim type.
