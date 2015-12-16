@@ -4689,12 +4689,24 @@ SUBROUTINE Get_Move_Probabilities
   cut_ring = cut_regrowth + prob_ring
   cut_atom_displacement = cut_ring + prob_atom_displacement
 
+  steps_per_sweep = INT(cut_atom_displacement)
+  IF (steps_per_sweep == 0) steps_per_sweep = 1
 
   IF (ABS(cut_atom_displacement-1.0_DP) > tiny_number ) THEN
 
-     err_msg = ""
-     err_msg(1) = 'Probabilities do not add up to 1.0'
-     CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
+     WRITE (logunit,*) 'Move probabilities do not sum to 1.0'
+     WRITE (logunit,'(A,F12.6)') 'Dividing each probability by ', cut_atom_displacement
+     cut_trans = cut_trans / cut_atom_displacement
+     cut_rot = cut_rot / cut_atom_displacement
+     cut_torsion = cut_torsion / cut_atom_displacement
+     cut_volume = cut_volume / cut_atom_displacement
+     cut_angle = cut_angle / cut_atom_displacement
+     cut_insertion = cut_insertion / cut_atom_displacement
+     cut_deletion = cut_deletion / cut_atom_displacement
+     cut_swap = cut_swap / cut_atom_displacement
+     cut_regrowth = cut_regrowth / cut_atom_displacement
+     cut_ring = cut_ring / cut_atom_displacement
+     cut_atom_displacement = cut_atom_displacement / cut_atom_displacement
 
   END IF
 
@@ -5220,8 +5232,9 @@ SUBROUTINE Get_Simulation_Length_Info
         line_nbr = line_nbr + 1
         CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
         IF (line_array(1) == 'Units') THEN
+           sim_length_units = line_array(2)
 
-           IF (line_array(2) == 'Minutes') THEN
+           IF (sim_length_units == 'Minutes') THEN
               timed_run = .TRUE.
            ELSE
               timed_run = .FALSE.
@@ -5275,6 +5288,7 @@ SUBROUTINE Get_Simulation_Length_Info
               IF (line_array(1) == 'Prop_Freq') THEN
 
                  nthermo_freq = String_To_Int(line_array(2))
+                 IF (sim_length_units == 'Sweeps') nthermo_freq = nthermo_freq * steps_per_sweep
               
                  WRITE(logunit,*) 
                  WRITE(logunit,'(A,T50,I8,A)') 'Thermodynamic quantities will written at every', nthermo_freq, ' MC steps.'
@@ -5282,6 +5296,7 @@ SUBROUTINE Get_Simulation_Length_Info
               ELSE IF (line_array(1) == 'Coord_Freq') THEN
               
                  ncoord_freq = String_To_Int(line_array(2))
+                 IF (sim_length_units == 'Sweeps') ncoord_freq = ncoord_freq * steps_per_sweep
 
                  WRITE(logunit,*)
                  WRITE(logunit,'(A,T50,I8,A)') 'Coordinates will be written at every', ncoord_freq, ' MC steps.'
@@ -5299,6 +5314,7 @@ SUBROUTINE Get_Simulation_Length_Info
               ELSE IF (line_array(1) == 'MCsteps') THEN
 
                  n_mcsteps = String_To_Int(line_array(2))
+                 IF (sim_length_units == 'Sweeps') n_mcsteps = n_mcsteps * steps_per_sweep
                  WRITE(logunit,*) 
                  WRITE(logunit,'(A,T50,I10,A)' ) 'The simulation will be run for ', n_mcsteps, ' MC steps.'
 
@@ -5307,6 +5323,7 @@ SUBROUTINE Get_Simulation_Length_Info
               ELSE IF (line_array(1) == 'NequilSteps') THEN
                  
                  n_equilsteps = String_To_Int(line_array(2))
+                 IF (sim_length_units == 'Sweeps') n_equilsteps = n_equilsteps * steps_per_sweep
                  WRITE(logunit,*) 
                  WRITE(logunit, '(A,I10)') 'Number of equilibrium steps', n_equilsteps
                  
