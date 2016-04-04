@@ -1060,119 +1060,131 @@ CONTAINS
     IF (atom_list(ia,im,is)%exist .AND. atom_list(ja,jm,js)%exist) THEN
 
       ! Determine atom type indices
-      itype = nonbond_list(ia,is)%atom_type_number
-      jtype = nonbond_list(ja,js)%atom_type_number
-       
-      VDW_calc: &
-      IF (get_vdw) THEN
+         itype = nonbond_list(ia,is)%atom_type_number
+         jtype = nonbond_list(ja,js)%atom_type_number
+          
+         VDW_calc: &
+         IF (get_vdw) THEN
 
-        IF (int_vdw_style(ibox) == vdw_lj) THEN
+              IF (int_vdw_style(ibox) == vdw_lj) THEN
 
-          ! For now, assume all interactions are the same. 
-          ! Use the lookup table created in Compute_Nonbond_Table
-          eps = vdw_param1_table(itype,jtype)
-          sig = vdw_param2_table(itype,jtype)
+                   ! For now, assume all interactions are the same. 
+                   ! Use the lookup table created in Compute_Nonbond_Table
+                   eps = vdw_param1_table(itype,jtype)
+                   sig = vdw_param2_table(itype,jtype)
 
-          ! Apply intramolecular scaling if necessary
-          IF (is == js .AND. im == jm) THEN
-            ! This controls 1-2, 1-3, and 1-4 interactions
-            eps = eps * vdw_intra_scale(ia,ja,is)
-          ENDIF
+                   ! Apply intramolecular scaling if necessary
+                   IF (is == js .AND. im == jm) THEN
+                     ! This controls 1-2, 1-3, and 1-4 interactions
+                     eps = eps * vdw_intra_scale(ia,ja,is)
+                   ENDIF
+                         
+                   SigByR2 = (sig**2) / rijsq
+                   SigByR6 = SigByR2 * SigByR2 * SigByR2
+                   SigByR12 = SigByR6 * SigByR6
+                      
+                   ! use standard LJ potential
+                   Eij_vdw = 4.0_DP * eps * (SigByR12 - SigByR6)
+
+                   IF (int_vdw_sum_style(ibox) == vdw_cut_shift) THEN
+                         ! shift the LJ potential
+                         SigByR2_shift = sig**2/rcut_vdwsq(ibox)
+                         SigByR6_shift = SigByR2_shift * SigByR2_shift * SigByR2_shift
+                         SigByR12_shift = SigByR6_shift * SigByR6_shift
+                           
+                         Eij_vdw = Eij_vdw &
+                                 - 4.0_DP * eps * (SigByR12_shift - SigByR6_shift)
+
+                   ELSE IF (int_vdw_sum_style(ibox) == vdw_cut_switch) THEN
+                         ! scale the LJ potential
+                         IF ( rijsq < ron_switch_sq(ibox) ) THEN
+                           fscale = 1.0_DP
+                         ELSEIF ( rijsq <= roff_switch_sq(ibox) ) THEN
+                           roffsq_rijsq = roff_switch_sq(ibox) - rijsq
+                           roffsq_rijsq_sq = roffsq_rijsq * roffsq_rijsq
+                           factor2 = switch_factor2(ibox) + 2.0_DP * rijsq
+                           fscale = roffsq_rijsq_sq * factor2 * switch_factor1(ibox)
+                           Eij_vdw = fscale * Eij_vdw
+                         ELSE
+                           fscale = 0.0_DP
+                           Eij_vdw = 0.0_DP
+                         END IF
+                   ELSE IF (int_vdw_sum_style(ibox) == vdw_charmm) THEN
+                         ! use the form for modified LJ potential
+                         Eij_vdw = eps * (SigByR12 - 2.0_DP * SigByR6)
+                   END IF
+
+              ELSE IF (int_vdw_style(ibox) == vdw_mie) THEN
+
+                   rij = SQRT(rijsq)
+                   rcut_vdw = SQRT(rcut_vdwsq(ibox))
+                       
+                   mie_n = mie_nlist(mie_Matrix(is,js))
+                   mie_m = mie_mlist(mie_Matrix(is,js))
+                   mie_coeff = mie_n/(mie_n-mie_m) * (mie_n/mie_m)**(mie_m/(mie_n-mie_m))
+                   SigByR = sig/rij
+                   Eij_vdw =  mie_coeff * eps * (SigByRn - SigByRm)
+                   !use cut-shift potential
+                   IF (int_vdw_sum_style(ibox) == vdw_cut_shift) THEN
+                         SigByR_shift = sig/rcut_vdw
+                         SigByRn_shift = SigByR_shift ** mie_n
+                         SigByRm_shift = SigByR_shift ** mie_m
+                         SigByRn = SigByR ** mie_n
+                         SigByRm = SigByR ** mie_m
+                         Eij_vdw =  Eij_vdw - mie_coeff * eps * (SigByRn_shift - SigByRm_shift)
+                   END IF
+                    
+              END IF
+
+              IF (is == js .AND. im == jm) THEN
+                   E_intra_vdw = Eij_vdw
+                   E_inter_vdw = 0.0_DP
+              ELSE
+                   E_intra_vdw = 0.0_DP
+                   E_inter_vdw = Eij_vdw
+              ENDIF
                 
-          SigByR2 = (sig**2) / rijsq
-          SigByR6 = SigByR2 * SigByR2 * SigByR2
-          SigByR12 = SigByR6 * SigByR6
-             
-          ! use standard LJ potential
-          Eij_vdw = 4.0_DP * eps * (SigByR12 - SigByR6)
-
-          IF (int_vdw_sum_style(ibox) == vdw_cut_shift) THEN
-            ! shift the LJ potential
-            SigByR2_shift = sig**2/rcut_vdwsq(ibox)
-            SigByR6_shift = SigByR2_shift * SigByR2_shift * SigByR2_shift
-            SigByR12_shift = SigByR6_shift * SigByR6_shift
-              
-            Eij_vdw = Eij_vdw &
-                    - 4.0_DP * eps * (SigByR12_shift - SigByR6_shift)
-
-          ELSE IF (int_vdw_sum_style(ibox) == vdw_cut_switch) THEN
-            ! scale the LJ potential
-            IF ( rijsq < ron_switch_sq(ibox) ) THEN
-              fscale = 1.0_DP
-            ELSEIF ( rijsq <= roff_switch_sq(ibox) ) THEN
-              roffsq_rijsq = roff_switch_sq(ibox) - rijsq
-              roffsq_rijsq_sq = roffsq_rijsq * roffsq_rijsq
-              factor2 = switch_factor2(ibox) + 2.0_DP * rijsq
-              fscale = roffsq_rijsq_sq * factor2 * switch_factor1(ibox)
-              Eij_vdw = fscale * Eij_vdw
-            ELSE
-              fscale = 0.0_DP
-              Eij_vdw = 0.0_DP
-            END IF
-          ELSE IF (int_vdw_sum_style(ibox) == vdw_charmm) THEN
-            ! use the form for modified LJ potential
-            Eij_vdw = eps * (SigByR12 - 2.0_DP * SigByR6)
-          END IF
-
-        ELSE IF (int_vdw_style(ibox) == vdw_mie) THEN
-
-          rij = SQRT(rijsq)
-          rcut_vdw = SQRT(rcut_vdwsq(ibox))
-              
-          mie_n = mie_nlist(mie_Matrix(is,js))
-          mie_m = mie_mlist(mie_Matrix(is,js))
-          mie_coeff = mie_n/(mie_n-mie_m) * (mie_n/mie_m)**(mie_m/(mie_n-mie_m))
-          SigByR = sig/rij
-          Eij_vdw =  mie_coeff * eps * (SigByRn - SigByRm)
-          !use cut-shift potential
-          IF (int_vdw_sum_style(ibox) == vdw_cut_shift) THEN
-            SigByR_shift = sig/rcut_vdw
-            SigByRn_shift = SigByR_shift ** mie_n
-            SigByRm_shift = SigByR_shift ** mie_m
-            SigByRn = SigByR ** mie_n
-            SigByRm = SigByR ** mie_m
-            Eij_vdw =  Eij_vdw - mie_coeff * eps * (SigByRn_shift - SigByRm_shift)
-          END IF
-              
-        END IF
-
-        IF (is == js .AND. im == jm) THEN
-          E_intra_vdw = Eij_vdw
-          E_inter_vdw = 0.0_DP
-        ELSE
-          E_intra_vdw = 0.0_DP
-          E_inter_vdw = Eij_vdw
-        ENDIF
-          
-      ENDIF VDW_calc
+         ENDIF VDW_calc
   
-      qq_calc: IF (get_qq) THEN
-          
-        qi = nonbond_list(ia,is)%charge
-        qj = nonbond_list(ja,js)%charge
-          
-        IF (int_charge_sum_style(ibox) == charge_cut .OR. &
-            int_charge_sum_style(ibox) == charge_minimum .OR. igas_flag) THEN
-          Eij_qq = charge_factor*(qi*qj)/SQRT(rijsq)
-          ! Apply charge scaling for intramolecular energies
-          IF ( is == js .AND. im == jm ) THEN
-            E_intra_qq = E_intra_qq + charge_intra_scale(ia,ja,is) * Eij_qq
-          ELSE
-            E_inter_qq = E_inter_qq + Eij_qq
-          END IF
-        ELSEIF (int_charge_sum_style(ibox) == charge_ewald .AND. &
-                ( .NOT. igas_flag) ) THEN
-          ! Real space Ewald part
-          CALL Compute_AtomPair_Ewald_Real(ia,im,is,qi,ja,jm,js,qj, &
-               rijsq,E_intra_qq,E_inter_qq,ibox)
+         qq_calc: IF (get_qq) THEN
              
-          ! self and reciprocal parts need to be computed as total energy 
-          ! differences between original configuration and the perturbed 
-          ! configuration.
+              qi = nonbond_list(ia,is)%charge
+              qj = nonbond_list(ja,js)%charge
+                
+              IF (int_charge_sum_style(ibox) == charge_cut .OR. &
+                  int_charge_sum_style(ibox) == charge_minimum .OR. igas_flag) THEN
 
-        ENDIF
+                   Eij_qq = charge_factor*(qi*qj)/SQRT(rijsq)
+                   ! Apply charge scaling for intramolecular energies
+                   IF ( is == js .AND. im == jm ) THEN
+                     E_intra_qq = E_intra_qq + charge_intra_scale(ia,ja,is) * Eij_qq
+                   ELSE
+                     E_inter_qq = E_inter_qq + Eij_qq
+                   END IF
 
-      ENDIF qq_calc
+              ELSEIF (int_charge_sum_style(ibox) == charge_ewald .AND. &
+                      ( .NOT. igas_flag) ) THEN
+                   ! Real space Ewald part
+                   CALL Compute_AtomPair_Ewald_Real(ia,im,is,qi,ja,jm,js,qj, &
+                        rijsq,E_intra_qq,E_inter_qq,ibox)
+                      
+                   ! self and reciprocal parts need to be computed as total energy 
+                   ! differences between original configuration and the perturbed 
+                   ! configuration.
+
+              ELSEIF (int_charge_sum_style(ibox) == charge_dsf) THEN
+                   this_box = molecule_list(im,is)%which_box
+                   CALL Damped_Shifted_Force(ia,im,is,qi,ja,jm,js,qj,rijsq,Eij_qq,this_box)
+                   IF ( is == js .AND. im == jm ) THEN
+                         qsc = charge_intra_scale(ia,ja,is)
+                         IF (qsc == 1.0_DP) CONTINUE
+                         Eij_qq = Eij_qq - (1.0_DP-qsc)*charge_factor*(qi*qj)/SQRT(rijsq)
+                   END IF
+      
+   
+              ENDIF
+
+         ENDIF qq_calc
        
     ENDIF ExistCheck
 
