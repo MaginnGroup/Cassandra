@@ -126,10 +126,10 @@ SUBROUTINE Ring_Fragment_Driver
 
   CLOSE(UNIT=frag_file_unit)
 
-  WRITE(*,'(X,A,T40,I)') 'Number of ring trials', nring_trials
-  WRITE(*,'(X,A,T40,I)') 'Number of successful ring trials', nring_success
-  WRITE(*,'(X,A,T40,I)') 'Number of exoring trials', nexoring_trials
-  WRITE(*,'(X,A,T40,I)') 'Number of successful exoring trials', nexoring_success
+  WRITE(*,'(X,A,T40,I8)') 'Number of ring trials', nring_trials
+  WRITE(*,'(X,A,T40,I8)') 'Number of successful ring trials', nring_success
+  WRITE(*,'(X,A,T40,I8)') 'Number of exoring trials', nexoring_trials
+  WRITE(*,'(X,A,T40,I8)') 'Number of successful exoring trials', nexoring_success
 
 END SUBROUTINE Ring_Fragment_Driver
 !*******************************************************************************

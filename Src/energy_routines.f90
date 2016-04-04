@@ -2813,7 +2813,7 @@ CONTAINS
     this_nrg%ewald_reciprocal = 0.0_DP
     this_nrg%ewald_self = 0.0_DP
 
-    IF (f_compute == .TRUE.) THEN 
+    IF (f_compute .eqv. .TRUE.) THEN 
 
 	    inter_overlap = .FALSE.
 
