@@ -99,4 +99,18 @@ SUBROUTINE precalculate
 
     ALLOCATE(energy(nbr_boxes),virial(nbr_boxes))
 
+  !Damped Shifted Force Factors
+
+
+   ALLOCATE(dsf_factor1(nbr_boxes))
+   ALLOCATE(dsf_factor2(nbr_boxes))
+ 
+   DO ibox = 1, nbr_boxes
+           dsf_factor1(ibox) = erfc(alpha_dsf*rcut_coul(ibox))/rcut_coul(ibox) 
+           dsf_factor2(ibox) = dsf_factor1(ibox)/rcut_coul(ibox) + &
+                 2.0_DP*alpha_dsf*DEXP(-alpha_dsf*alpha_dsf*rcut_coul(ibox)*rcut_coul(ibox)) / &
+                 (rootPI * rcut_coul(ibox))
+   END DO
+ 
+
   END SUBROUTINE precalculate

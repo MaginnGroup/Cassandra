@@ -113,6 +113,7 @@ USE Type_Definitions
   INTEGER, PARAMETER :: charge_cut = 2
   INTEGER, PARAMETER :: charge_ewald = 3
   INTEGER, PARAMETER :: charge_minimum = 4
+  INTEGER, PARAMETER :: charge_dsf = 5
 
   REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_cbmc 
   REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_vdw, rcut_coul, ron_charmm, roff_charmm, rcut_max
@@ -560,6 +561,10 @@ INTEGER :: n_lat_atoms
 
 !!! Pair_Nrg_Variables
 REAL(DP), ALLOCATABLE :: pair_vdw_temp(:), pair_qq_temp(:)
+
+!!!! DSF variables
+REAL(DP) :: alpha_dsf
+REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   
 END MODULE Global_Variables
 

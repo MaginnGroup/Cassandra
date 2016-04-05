@@ -584,6 +584,15 @@ SUBROUTINE Get_Pair_Style
 
                     WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_coul(ibox), '   Angstrom'
 
+
+                 ELSEIF (charge_sum_style(ibox) == 'DSF') THEN
+                    int_charge_sum_style(ibox) = charge_dsf
+                    rcut_coul(ibox) = String_To_Double(line_array(3))
+
+                    alpha_dsf = String_To_Double(line_array(4))
+                    WRITE(logunit,*) 'Damping alpha was specified to ',alpha_dsf
+
+
                  ELSEIF (charge_sum_style(ibox) == 'Ewald') THEN
                     int_charge_sum_style(ibox) = charge_ewald
                     rcut_coul(ibox) = String_To_Double(line_array(3))

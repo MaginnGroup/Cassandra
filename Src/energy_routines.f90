@@ -1173,15 +1173,7 @@ CONTAINS
                    ! configuration.
 
               ELSEIF (int_charge_sum_style(ibox) == charge_dsf) THEN
-                   this_box = molecule_list(im,is)%which_box
-                   CALL Damped_Shifted_Force(ia,im,is,qi,ja,jm,js,qj,rijsq,Eij_qq,this_box)
-                   IF ( is == js .AND. im == jm ) THEN
-                         qsc = charge_intra_scale(ia,ja,is)
-                         IF (qsc == 1.0_DP) CONTINUE
-                         Eij_qq = Eij_qq - (1.0_DP-qsc)*charge_factor*(qi*qj)/SQRT(rijsq)
-                   END IF
-      
-   
+                   CALL Damped_Shifted_Force(ia,im,is,qi,ja,jm,js,qj,rijsq,E_intra_qq,E_inter_qq,ibox)
               ENDIF
 
          ENDIF qq_calc
@@ -1189,6 +1181,74 @@ CONTAINS
     ENDIF ExistCheck
 
   END SUBROUTINE Compute_AtomPair_Energy
+
+
+SUBROUTINE Damped_Shifted_Force(ia,im,is,qi,ja,jm,js,qj,rijsq,E_intra_qq,E_inter_qq,ibox)
+USE Global_Variables
+IMPLICIT NONE
+INTEGER :: ia,im,is,ja,jm,js,ibox
+REAL(DP) :: qi,qj,rijsq,rij, Eij, qsc, E_intra_qq,E_inter_qq
+
+
+      rij = SQRT(rijsq)
+      Eij = dsf_factor2(ibox)*(rij-rcut_coul(ibox)) - dsf_factor1(ibox) + erfc(alpha_dsf*rij)/rij
+      Eij = qi*qj*Eij*charge_factor
+
+      IF (is==js .AND. im==jm) THEN
+              qsc = charge_intra_scale(ia,ja,is)
+              E_intra_qq = Eij - (1.0_DP-qsc)*charge_factor*(qi*qj)/SQRT(rijsq)
+              E_inter_qq = 0.0_DP
+
+      ELSE
+
+              E_intra_qq = 0.0_DP
+              E_inter_qq = Eij
+      END IF
+
+
+END SUBROUTINE Damped_Shifted_Force
+
+SUBROUTINE Compute_System_DSF_Self_Energy(this_box)
+
+  USE Type_Definitions
+  USE Global_Variables
+
+  IMPLICIT NONE
+
+  INTEGER :: is,im, this_locate, ia,  this_box
+  REAL(DP) :: q
+
+  energy(this_box)%dsf_self = 0.0_DP
+
+  DO is = 1, nspecies
+
+    imLOOP: DO im = 1, nmols(is, this_box)
+
+        this_locate = locate(im,is, this_box)
+
+        ! sum only those molecules that are in this_box.
+
+        IF (.NOT. molecule_list(this_locate,is)%live) CYCLE imLOOP
+
+        IF ( molecule_list(this_locate,is)%which_box /= this_box ) CYCLE imLOOP
+
+        DO ia = 1, natoms(is)
+
+           ! obtain the charge
+           q = nonbond_list(ia,is)%charge 
+           energy(this_box)%dsf_self = energy(this_box)%dsf_self + (q*q)
+        END DO
+
+     END DO imLOOP
+
+  END DO
+
+  energy(this_box)%dsf_self = energy(this_box)%dsf_self * &
+                                    (alpha_dsf / rootPI + dsf_factor1(this_box)/2.0_DP)
+  energy(this_box)%dsf_self = - energy(this_box)%dsf_self * charge_factor
+
+END SUBROUTINE Compute_System_DSF_Self_Energy
+
 
   !-----------------------------------------------------------------------------
 
