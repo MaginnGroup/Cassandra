@@ -589,8 +589,14 @@ SUBROUTINE Get_Pair_Style
                     int_charge_sum_style(ibox) = charge_dsf
                     rcut_coul(ibox) = String_To_Double(line_array(3))
 
-                    alpha_dsf = String_To_Double(line_array(4))
-                    WRITE(logunit,*) 'Damping alpha was specified to ',alpha_dsf
+                    IF (nbr_entries == 4) THEN
+                            alpha_dsf(ibox) = String_To_Double(line_array(4))
+                            WRITE(logunit,*) 'Damping alpha was specified to ',alpha_dsf(ibox)
+                    ELSE
+                            alpha_dsf(ibox) = 0.425_DP - rcut_coul(ibox)*0.02_DP
+                            WRITE(logunit,*) 'No damping alpha was specified. Assume depends linearly with rcut. Alpha set to ',alpha_dsf(ibox)
+
+                    END IF
 
 
                  ELSEIF (charge_sum_style(ibox) == 'Ewald') THEN
