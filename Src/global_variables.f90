@@ -563,7 +563,7 @@ INTEGER :: n_lat_atoms
 REAL(DP), ALLOCATABLE :: pair_vdw_temp(:), pair_qq_temp(:)
 
 !!!! DSF variables
-REAL(DP) :: alpha_dsf
+REAL(DP), ALLOCATABLE, DIMENSION(:) :: alpha_dsf
 REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   
 END MODULE Global_Variables

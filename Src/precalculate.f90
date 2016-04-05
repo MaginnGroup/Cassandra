@@ -104,11 +104,12 @@ SUBROUTINE precalculate
 
    ALLOCATE(dsf_factor1(nbr_boxes))
    ALLOCATE(dsf_factor2(nbr_boxes))
+   ALLOCATE(alpha_dsf(nbr_boxes))
  
    DO ibox = 1, nbr_boxes
-           dsf_factor1(ibox) = erfc(alpha_dsf*rcut_coul(ibox))/rcut_coul(ibox) 
+           dsf_factor1(ibox) = erfc(alpha_dsf(ibox)*rcut_coul(ibox))/rcut_coul(ibox) 
            dsf_factor2(ibox) = dsf_factor1(ibox)/rcut_coul(ibox) + &
-                 2.0_DP*alpha_dsf*DEXP(-alpha_dsf*alpha_dsf*rcut_coul(ibox)*rcut_coul(ibox)) / &
+                 2.0_DP*alpha_dsf(ibox)*DEXP(-alpha_dsf(ibox)*alpha_dsf(ibox)*rcut_coul(ibox)*rcut_coul(ibox)) / &
                  (rootPI * rcut_coul(ibox))
    END DO
  

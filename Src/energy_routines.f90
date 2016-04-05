@@ -1191,7 +1191,7 @@ REAL(DP) :: qi,qj,rijsq,rij, Eij, qsc, E_intra_qq,E_inter_qq
 
 
       rij = SQRT(rijsq)
-      Eij = dsf_factor2(ibox)*(rij-rcut_coul(ibox)) - dsf_factor1(ibox) + erfc(alpha_dsf*rij)/rij
+      Eij = dsf_factor2(ibox)*(rij-rcut_coul(ibox)) - dsf_factor1(ibox) + erfc(alpha_dsf(ibox)*rij)/rij
       Eij = qi*qj*Eij*charge_factor
 
       IF (is==js .AND. im==jm) THEN
@@ -1244,7 +1244,7 @@ SUBROUTINE Compute_System_DSF_Self_Energy(this_box)
   END DO
 
   energy(this_box)%dsf_self = energy(this_box)%dsf_self * &
-                                    (alpha_dsf / rootPI + dsf_factor1(this_box)/2.0_DP)
+                                    (alpha_dsf(this_box) / rootPI + dsf_factor1(this_box)/2.0_DP)
   energy(this_box)%dsf_self = - energy(this_box)%dsf_self * charge_factor
 
 END SUBROUTINE Compute_System_DSF_Self_Energy
