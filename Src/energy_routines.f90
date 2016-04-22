@@ -1115,6 +1115,14 @@ CONTAINS
                    END IF
 
               ELSE IF (int_vdw_style(ibox) == vdw_mie) THEN
+		   eps = vdw_param1_table(itype,jtype)
+		   sig = vdw_param2_table(itype,jtype)
+		   
+                   ! Apply intramolecular scaling if necessary
+                   IF (is == js .AND. im == jm) THEN 
+                     ! This controls 1-2, 1-3, and 1-4 interactions
+                     eps = eps * vdw_intra_scale(ia,ja,is)
+                   ENDIF
 
                    rij = SQRT(rijsq)
                    rcut_vdw = SQRT(rcut_vdwsq(ibox))
@@ -1122,15 +1130,16 @@ CONTAINS
                    mie_n = mie_nlist(mie_Matrix(is,js))
                    mie_m = mie_mlist(mie_Matrix(is,js))
                    mie_coeff = mie_n/(mie_n-mie_m) * (mie_n/mie_m)**(mie_m/(mie_n-mie_m))
+
                    SigByR = sig/rij
+                   SigByRn = SigByR ** mie_n
+                   SigByRm = SigByR ** mie_m
                    Eij_vdw =  mie_coeff * eps * (SigByRn - SigByRm)
                    !use cut-shift potential
                    IF (int_vdw_sum_style(ibox) == vdw_cut_shift) THEN
                          SigByR_shift = sig/rcut_vdw
                          SigByRn_shift = SigByR_shift ** mie_n
                          SigByRm_shift = SigByR_shift ** mie_m
-                         SigByRn = SigByR ** mie_n
-                         SigByRm = SigByR ** mie_m
                          Eij_vdw =  Eij_vdw - mie_coeff * eps * (SigByRn_shift - SigByRm_shift)
                    END IF
                     
@@ -1604,9 +1613,9 @@ END SUBROUTINE Compute_System_DSF_Self_Energy
 
       !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
       cos_sum(1:nvecs(ibox),ibox) = cos_sum(1:nvecs(ibox),ibox) &
-                            - cos_mol(1:nvecs(ibox),im_locate)
+                            - cos_mol(1:nvecs(ibox),im_locate) 
       sin_sum(1:nvecs(ibox),ibox) = sin_sum(1:nvecs(ibox),ibox) &
-                            - sin_mol(1:nvecs(ibox),im_locate)
+                            - sin_mol(1:nvecs(ibox),im_locate) 
       !$OMP END PARALLEL WORKSHARE
 
       !$OMP PARALLEL DO DEFAULT(SHARED) &
@@ -1646,7 +1655,7 @@ END SUBROUTINE Compute_System_DSF_Self_Energy
         END DO
 
         cos_sum(i,ibox) = cos_sum(i,ibox) &
-                        + cos_mol(i,im_locate)
+                        + cos_mol(i,im_locate) 
         sin_sum(i,ibox) = sin_sum(i,ibox) &
                         + sin_mol(i,im_locate)
   
@@ -2217,13 +2226,13 @@ END SUBROUTINE Compute_System_DSF_Self_Energy
       ELSEIF (int_vdw_sum_style(this_box) == vdw_charmm) THEN
          get_vdw = .TRUE.
 
-      ELSEIF (int_vdw_sum_style(this_box) == vdw_mie) THEN
-           
-         IF (rijsq <= rcut_vdwsq(this_box)) THEN 
-            get_vdw = .TRUE.
-         ELSE 
-            get_vdw = .FALSE.
-         ENDIF
+      !ELSEIF (int_vdw_sum_style(this_box) == vdw_mie) THEN
+      !     
+      !   IF (rijsq <= rcut_vdwsq(this_box)) THEN 
+      !      get_vdw = .TRUE.
+      !   ELSE 
+      !      get_vdw = .FALSE.
+      !   ENDIF
 
       ELSEIF (int_vdw_sum_style(this_box) == vdw_cut_switch) THEN
          
@@ -2235,11 +2244,28 @@ END SUBROUTINE Compute_System_DSF_Self_Energy
          
       ENDIF      
    
-   
+  
+   ELSEIF (int_vdw_style(this_box) == vdw_mie) THEN 
+     
+      IF (CBMC_flag) THEN 
+         IF (rijsq <= rcut_cbmcsq) THEN 
+            get_vdw = .TRUE.
+         ELSE
+            get_vdw = .FALSE.  
+         ENDIF
+      ELSEIF (int_vdw_sum_style(this_box) == vdw_cut .OR. int_vdw_sum_style(this_box) &
+           == vdw_cut_shift ) THEN 
+     
+         IF (rijsq <= rcut_vdwsq(this_box)) THEN 
+            get_vdw = .TRUE.
+         ELSE
+            get_vdw = .FALSE.
+         ENDIF
+      END IF 
    
    ELSE
       err_msg = ""
-      err_msg(1) = 'vdw_style must be NONE of LJ'
+      err_msg(1) = 'vdw_style must be NONE of LJ or Mie'
       CALL Clean_Abort(err_msg,'Compute_Atom_Nonbond_Energy')
       
    ENDIF VDW_Test2
@@ -2581,8 +2607,10 @@ END SUBROUTINE Compute_System_DSF_Self_Energy
              Wij_vdw = (12.0_DP * eps) * (SigByR12 - SigByR6)
            END IF
          ELSE IF (int_vdw_style(ibox) == vdw_mie) THEN
+           eps = vdw_param1_table(itype,jtype)
+           sig = vdw_param2_table(itype,jtype)
            rij = SQRT(rijsq)
-
+	   
            mie_n = mie_nlist(mie_Matrix(is,js))
            mie_m = mie_mlist(mie_Matrix(is,js))
            mie_coeff = mie_n/(mie_n-mie_m)*(mie_n/mie_m)**(mie_m/(mie_n-mie_m))

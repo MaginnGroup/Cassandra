@@ -195,7 +195,7 @@
             WRITE(logunit,*)
 
     ! Write header for logfile output. Specific for the vdw style
-            IF (int_vdw_style(1) == vdw_lj) THEN
+            IF (int_vdw_style(1) == vdw_lj .OR. int_vdw_style(1) == vdw_mie) THEN
                WRITE(logunit,'(A6,5x,A6,2x,T20,A,T50,A)') 'Atom 1','Atom 2', 'epsilon (amu A^2/ps^2)', 'sigma (A)'
             ENDIF
 
@@ -269,7 +269,7 @@
         	  ! be created manually and then this routine should be bypassed.
 
 
-	          IF (int_vdw_style(1) == vdw_lj) THEN
+	          IF (int_vdw_style(1) == vdw_lj .OR. int_vdw_style(1) == vdw_mie) THEN
         	     ! There are two vdw parameters
 
 	             ! Set LJ epsilon
@@ -306,7 +306,7 @@
 
         	  ENDIF
              
-	         IF (int_vdw_style(1) == vdw_lj .AND. verbose_log .EQV. .TRUE.) THEN
+	         IF ((int_vdw_style(1) == vdw_lj .OR. int_vdw_style(1) == vdw_mie).AND. verbose_log .EQV. .TRUE.) THEN
         	    ! Report parameters to logfile. Format is specific to vdw type. Add others here if 
 	            ! other than LJ potential is used.
 

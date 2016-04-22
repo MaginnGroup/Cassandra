@@ -20,7 +20,7 @@
 !*******************************************************************************
 
 
-SUBROUTINE Volume_Change(this_box,accept)
+SUBROUTINE Volume_Change(this_box)
   !*****************************************************************************
   ! The subroutine performs a volume perturbation move. Presently, the routine
   ! is set up to perform volume changes in cubic simulation box. Extension

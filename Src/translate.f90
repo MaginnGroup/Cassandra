@@ -20,7 +20,7 @@
 !*******************************************************************************
 
 !*******************************************************************************
-SUBROUTINE Translate(this_box,mc_step)
+SUBROUTINE Translate(this_box)
 !*******************************************************************************
 
   !*****************************************************************************
@@ -209,7 +209,6 @@ SUBROUTINE Translate(this_box,mc_step)
   CALL Fold_Molecule(alive,is,this_box)
   
   CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_vdw_move,E_qq_move,inter_overlap)
-  
   ! If an overlap is detected, immediately reject the move
   IF (inter_overlap) THEN ! Move is rejected
     
@@ -236,7 +235,10 @@ SUBROUTINE Translate(this_box,mc_step)
      END IF
      
      ! Compute the difference in old and new energy
-     
+     !print *, 'E_reciprocal_move', E_reciprocal_move
+     !print *, ' E_vdw_move - E_vdw', ( E_vdw_move - E_vdw )
+     !print *, 'E_qq_move - E_qq', E_qq_move - E_qq 
+     !print *, 'delta_e before', delta_e
      delta_e = ( E_vdw_move - E_vdw ) + ( E_qq_move - E_qq ) + delta_e
 
      IF (int_sim_type == sim_nvt_min) THEN
@@ -259,11 +261,14 @@ SUBROUTINE Translate(this_box,mc_step)
         energy(this_box)%inter_q   = energy(this_box)%inter_q   + E_qq_move - E_qq
         
         IF(int_charge_sum_style(this_box) == charge_ewald .AND. has_charge(is)) THEN
-           energy(this_box)%ewald_reciprocal = energy(this_box)%ewald_reciprocal + E_reciprocal_move
+           energy(this_box)%ewald_reciprocal =  E_reciprocal_move
         END IF
-        
         energy(this_box)%total = energy(this_box)%total + delta_e
 
+
+        !print *, 'translate delta e', delta_e 
+	!print *, 'tot e', energy(this_box)%total
+	!read(*,*)
         ! update success counter
         
         nsuccess(is,this_box)%displacement = nsuccess(is,this_box)%displacement + 1

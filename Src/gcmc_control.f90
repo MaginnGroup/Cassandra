@@ -131,10 +131,8 @@ SUBROUTINE GCMC_Control
 
   CALL Get_CBMC_Info
 
-  DO i=1, 1
-  IF (int_vdw_sum_style(i) == vdw_mie .OR. int_vdw_sum_style(i) == vdw_mie_cut_shift) THEN
+  IF (int_vdw_style(1) == vdw_mie ) THEN
       CALL Get_Mie_Nonbond
   END IF
-  END DO
 
 END SUBROUTINE GCMC_Control
