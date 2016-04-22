@@ -19,7 +19,7 @@
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*******************************************************************************
 
-SUBROUTINE Cut_N_Grow(this_box,accept)
+SUBROUTINE Cut_N_Grow(this_box)
 
   !*****************************************************************************
   !
@@ -439,6 +439,9 @@ SUBROUTINE Cut_N_Grow(this_box,accept)
                                                                e_inter_vdw_o
      energy(this_box)%inter_q = energy(this_box)%inter_q + e_inter_qq_n - e_inter_qq_o
 
+     print *, 'regrow delta_e_n delta_e_o', delta_e_n, delta_e_o
+     print *, 'tot e', energy(this_box)%total
+     read(*,*)
      IF (l_charge) THEN
         energy(this_box)%ewald_reciprocal = E_reciprocal_move
         energy(this_box)%ewald_self = energy(this_box)%ewald_self - & 
