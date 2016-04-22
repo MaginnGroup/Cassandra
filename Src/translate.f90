@@ -235,10 +235,6 @@ SUBROUTINE Translate(this_box)
      END IF
      
      ! Compute the difference in old and new energy
-     !print *, 'E_reciprocal_move', E_reciprocal_move
-     !print *, ' E_vdw_move - E_vdw', ( E_vdw_move - E_vdw )
-     !print *, 'E_qq_move - E_qq', E_qq_move - E_qq 
-     !print *, 'delta_e before', delta_e
      delta_e = ( E_vdw_move - E_vdw ) + ( E_qq_move - E_qq ) + delta_e
 
      IF (int_sim_type == sim_nvt_min) THEN
@@ -266,9 +262,6 @@ SUBROUTINE Translate(this_box)
         energy(this_box)%total = energy(this_box)%total + delta_e
 
 
-        !print *, 'translate delta e', delta_e 
-	!print *, 'tot e', energy(this_box)%total
-	!read(*,*)
         ! update success counter
         
         nsuccess(is,this_box)%displacement = nsuccess(is,this_box)%displacement + 1
