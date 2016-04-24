@@ -1151,18 +1151,8 @@ CONTAINS
               qi = nonbond_list(ia,is)%charge
               qj = nonbond_list(ja,js)%charge
                 
-              IF (int_charge_sum_style(ibox) == charge_cut .OR. &
-                  int_charge_sum_style(ibox) == charge_minimum .OR. igas_flag) THEN
 
-                   Eij_qq = charge_factor*(qi*qj)/SQRT(rijsq)
-                   ! Apply charge scaling for intramolecular energies
-                   IF ( is == js .AND. im == jm ) THEN
-                     E_intra_qq = E_intra_qq + charge_intra_scale(ia,ja,is) * Eij_qq
-                   ELSE
-                     E_inter_qq = E_inter_qq + Eij_qq
-                   END IF
-
-              ELSEIF (int_charge_sum_style(ibox) == charge_ewald .AND. &
+              IF (int_charge_sum_style(ibox) == charge_ewald .AND. &
                       ( .NOT. igas_flag) ) THEN
                    ! Real space Ewald part
                    CALL Compute_AtomPair_Ewald_Real(ia,im,is,qi,ja,jm,js,qj, &
@@ -1173,8 +1163,20 @@ CONTAINS
                    ! configuration.
 
               ELSEIF (int_charge_sum_style(ibox) == charge_dsf) THEN
-                   CALL Damped_Shifted_Force(ia,im,is,qi,ja,jm,js,qj,rijsq,E_intra_qq,E_inter_qq,ibox)
-              ENDIF
+                   CALL Compute_AtomPair_DSF_Energy(ia,im,is,qi,ja,jm,js,qj,rijsq,E_intra_qq,E_inter_qq,ibox)
+
+              ELSEIF (int_charge_sum_style(ibox) == charge_cut .OR. &
+                  int_charge_sum_style(ibox) == charge_minimum .OR. igas_flag) THEN
+
+                   Eij_qq = charge_factor*(qi*qj)/SQRT(rijsq)
+                   ! Apply charge scaling for intramolecular energies
+                   IF ( is == js .AND. im == jm ) THEN
+                     E_intra_qq = E_intra_qq + charge_intra_scale(ia,ja,is) * Eij_qq
+                   ELSE
+                     E_inter_qq = E_inter_qq + Eij_qq
+                   END IF
+
+             ENDIF
 
          ENDIF qq_calc
        
@@ -1183,7 +1185,7 @@ CONTAINS
   END SUBROUTINE Compute_AtomPair_Energy
 
 
-SUBROUTINE Damped_Shifted_Force(ia,im,is,qi,ja,jm,js,qj,rijsq,E_intra_qq,E_inter_qq,ibox)
+SUBROUTINE Compute_AtomPair_DSF_Energy(ia,im,is,qi,ja,jm,js,qj,rijsq,E_intra_qq,E_inter_qq,ibox)
 USE Global_Variables
 IMPLICIT NONE
 INTEGER :: ia,im,is,ja,jm,js,ibox
@@ -1206,48 +1208,8 @@ REAL(DP) :: qi,qj,rijsq,rij, Eij, qsc, E_intra_qq,E_inter_qq
       END IF
 
 
-END SUBROUTINE Damped_Shifted_Force
+END SUBROUTINE Compute_AtomPair_DSF_Energy
 
-SUBROUTINE Compute_System_DSF_Self_Energy(this_box)
-
-  USE Type_Definitions
-  USE Global_Variables
-
-  IMPLICIT NONE
-
-  INTEGER :: is,im, this_locate, ia,  this_box
-  REAL(DP) :: q
-
-  energy(this_box)%dsf_self = 0.0_DP
-
-  DO is = 1, nspecies
-
-    imLOOP: DO im = 1, nmols(is, this_box)
-
-        this_locate = locate(im,is, this_box)
-
-        ! sum only those molecules that are in this_box.
-
-        IF (.NOT. molecule_list(this_locate,is)%live) CYCLE imLOOP
-
-        IF ( molecule_list(this_locate,is)%which_box /= this_box ) CYCLE imLOOP
-
-        DO ia = 1, natoms(is)
-
-           ! obtain the charge
-           q = nonbond_list(ia,is)%charge 
-           energy(this_box)%dsf_self = energy(this_box)%dsf_self + (q*q)
-        END DO
-
-     END DO imLOOP
-
-  END DO
-
-  energy(this_box)%dsf_self = energy(this_box)%dsf_self * &
-                                    (alpha_dsf(this_box) / rootPI + dsf_factor1(this_box)/2.0_DP)
-  energy(this_box)%dsf_self = - energy(this_box)%dsf_self * charge_factor
-
-END SUBROUTINE Compute_System_DSF_Self_Energy
 
 
   !-----------------------------------------------------------------------------
@@ -1663,7 +1625,7 @@ END SUBROUTINE Compute_System_DSF_Self_Energy
   END SUBROUTINE Update_System_Ewald_Reciprocal_Energy
   !*****************************************************************************
 
-  SUBROUTINE Compute_System_Ewald_Self_Energy(this_box)
+  SUBROUTINE Compute_System_Self_Energy(this_box)
     !***************************************************************************
     ! This subroutine calculates the constant term that arises from particles 
     ! interacting with themselves in the reciprocal space. The subroutine needs 
@@ -1680,80 +1642,88 @@ END SUBROUTINE Compute_System_DSF_Self_Energy
     INTEGER :: this_box
 
     ! Returns
-    ! energy(this_box)%ewald_self, global variable
+    ! energy(this_box)%self, global variable
 
     ! Local Variables
     INTEGER :: is,im, this_locate, ia
     REAL(DP) :: q, E_self
 
     E_self = 0.0_DP
+
     
-    DO is = 1, nspecies
-      imLOOP: DO im = 1, nmols(is,this_box)
+   DO is = 1, nspecies
+     imLOOP: DO im = 1, nmols(is,this_box)
 
-        this_locate = locate(im,is,this_box)
-        IF (.NOT. molecule_list(this_locate,is)%live) CYCLE imLOOP
+       this_locate = locate(im,is,this_box)
+       IF (.NOT. molecule_list(this_locate,is)%live) CYCLE imLOOP
 
-        DO ia = 1, natoms(is)
-          ! obtain the charge
-          q = nonbond_list(ia,is)%charge 
-          E_self = E_self + q * q
-        END DO
-      END DO imLOOP
-    END DO
+       DO ia = 1, natoms(is)
+         ! obtain the charge
+         q = nonbond_list(ia,is)%charge 
+         E_self = E_self + q * q
+       END DO
+     END DO imLOOP
+   END DO
 
-    E_self = - E_self * charge_factor * alpha_ewald(this_box) / rootPI
-    energy(this_box)%ewald_self = E_self
+    IF (int_charge_sum_style(this_box) == charge_ewald) THEN
+           E_self = - E_self * charge_factor * alpha_ewald(this_box) / rootPI
+           energy(this_box)%self = E_self
+    ELSE IF (int_charge_sum_style(this_box) == charge_dsf) THEN
+           E_self = E_self * (alpha_dsf(this_box) / rootPI + dsf_factor1(this_box)/2.0_DP)
+           energy(this_box)%self = - E_self * charge_factor
+    END IF
 
-    ! Note that the ewald self constant computed here is slightly different than
-    ! what is computed in APSS. It has a negative sign and is already multiplied
-    ! by a the charge_factor for proper unit conversion
+END SUBROUTINE Compute_System_Self_Energy
 
-  END SUBROUTINE Compute_System_Ewald_Self_Energy
-  !*****************************************************************************
 
-  SUBROUTINE Compute_Molecule_Ewald_Self_Energy(im,is,this_box,E_self)
-    !***************************************************************************
-    ! This subroutine calculates the self Ewald energy for the 
-    ! input molecule.
-    !
-    ! CALLED BY:
-    ! 
-    ! Chempot
-    ! GEMC_Particle_Transfer
-    ! Insertion
-    ! Deletion
-    ! Reaction
-    !
-    !***************************************************************************
+!*****************************************************************************
 
-    USE Type_Definitions
-    USE Global_Variables
+SUBROUTINE Compute_Molecule_Self_Energy(im,is,this_box,E_self)
+  !***************************************************************************
+  ! This subroutine calculates the self Ewald energy for the 
+  ! input molecule.
+  !
+  ! CALLED BY:
+  ! 
+  ! Chempot
+  ! GEMC_Particle_Transfer
+  ! Insertion
+  ! Deletion
+  ! Reaction
+  !
+  !***************************************************************************
 
-    IMPLICIT NONE
+  USE Type_Definitions
+  USE Global_Variables
 
-    ! Arguments
-    INTEGER, INTENT(IN) :: im, is, this_box
-    
-    ! Returns
-    REAL(DP), INTENT(OUT) :: E_self
+  IMPLICIT NONE
 
-    ! Local variables
-    INTEGER :: ia
-    REAL(DP) :: q
-    
-    ! Initialize variables
-    E_self = 0.0_DP
+  ! Arguments
+  INTEGER, INTENT(IN) :: im, is, this_box
+  
+  ! Returns
+  REAL(DP), INTENT(OUT) :: E_self
 
-    ! Compute E_self
-    DO ia = 1, natoms(is)
-      q = nonbond_list(ia,is)%charge
-      E_self = E_self + q * q
-    END DO
+  ! Local variables
+  INTEGER :: ia
+  REAL(DP) :: q
+  
+  ! Initialize variables
+  E_self = 0.0_DP
 
-    E_self = - E_self * charge_factor * alpha_ewald(this_box) / rootPI
+  ! Compute E_self
+  DO ia = 1, natoms(is)
+    q = nonbond_list(ia,is)%charge
+    E_self = E_self + q * q
+  END DO
 
-  END SUBROUTINE Compute_Molecule_Ewald_Self_Energy
+  IF (int_charge_sum_style(this_box) == charge_ewald) THEN
+         E_self = - E_self * charge_factor * alpha_ewald(this_box) / rootPI
+  ELSE IF (int_charge_sum_style(this_box) == charge_dsf) THEN
+         E_self = - E_self * (alpha_dsf(this_box) / rootPI + dsf_factor1(this_box)/2.0_DP) * charge_factor
+  END IF
+
+END SUBROUTINE Compute_Molecule_Self_Energy
   !*****************************************************************************
 
   SUBROUTINE Compute_System_Total_Energy(this_box,intra_flag,overlap)
@@ -1813,6 +1783,7 @@ END SUBROUTINE Compute_System_DSF_Self_Energy
        energy(this_box)%intra_vdw = 0.0_DP
        energy(this_box)%intra_q = 0.0_DP
        energy(this_box)%erf_self = 0.0_DP
+       energy(this_box)%self = 0.0_DP
 
        DO is = 1, nspecies
           v_intra = 0.0_DP
@@ -2053,23 +2024,23 @@ END SUBROUTINE Compute_System_DSF_Self_Energy
 
     ! Compute the reciprocal and self energy terms of the electrostatic energies if flag for Ewald is set.
 
-    IF (int_charge_sum_style(this_box) == charge_ewald) THEN
 
-       ! Ewald reciprocal energy -- Note that the call changes global 
-       ! energy(this_box)%ewald_reciprocal
-       CALL Compute_System_Ewald_Reciprocal_Energy(this_box)
+
+    IF (int_charge_style(this_box) == charge_coul) THEN
+       IF (int_charge_sum_style(this_box) == charge_ewald) THEN
+
+            CALL Compute_System_Ewald_Reciprocal_Energy(this_box)
+
+            energy(this_box)%total = energy(this_box)%total &
+                                   + energy(this_box)%ewald_reciprocal
+
+       END IF
+
+       CALL Compute_System_Self_Energy(this_box)
 
        energy(this_box)%total = energy(this_box)%total &
-                              + energy(this_box)%ewald_reciprocal
-       
-       ! Ewald self energy -- Note that the call changes global 
-       ! energy(this_box)%ewald_self
-       CALL Compute_System_Ewald_Self_Energy(this_box)
+                              + energy(this_box)%self 
 
-       energy(this_box)%ewald_self = energy(this_box)%ewald_self &
-                                   - energy(this_box)%erf_self
-       energy(this_box)%total = energy(this_box)%total &
-                              + energy(this_box)%ewald_self 
     END IF
 
     ! Long range correction if it is required
@@ -2249,7 +2220,10 @@ END SUBROUTINE Compute_System_DSF_Self_Energy
       get_qq = .FALSE.
    ELSEIF (int_charge_style(this_box) == charge_coul) THEN
       
-      IF (int_charge_sum_style(this_box) == charge_cut .OR. int_charge_sum_style(this_box) == charge_ewald) THEN
+      IF (int_charge_sum_style(this_box) == charge_cut .OR. &
+          int_charge_sum_style(this_box) == charge_ewald .OR. &
+          int_charge_sum_style(this_box) == charge_dsf) THEN
+
          IF(CBMC_flag) THEN
             IF (rijsq <= rcut_cbmcsq) THEN
                get_qq = .TRUE.
@@ -2307,6 +2281,7 @@ END SUBROUTINE Compute_System_DSF_Self_Energy
    
    W_tensor_vdw(:,:,this_box) = 0.0_DP
    W_tensor_charge(:,:,this_box) = 0.0_DP
+   W_tensor_recip(:,:,this_box) = 0.0_DP
    
    DO is = 1, nspecies
       imLOOP1: DO im_1 = 1, nmols(is,this_box)
@@ -2389,7 +2364,7 @@ END SUBROUTINE Compute_System_DSF_Self_Energy
     IF (int_charge_sum_style(this_box) == charge_ewald) THEN
        
        CALL Compute_System_Ewald_Reciprocal_Force(this_box)
-       
+       W_tensor_elec(:,:,this_box) =  W_tensor_recip(:,:,this_box) 
     END IF
     
     IF (int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
@@ -2399,7 +2374,7 @@ END SUBROUTINE Compute_System_DSF_Self_Energy
        
     END IF
     
-    W_tensor_elec(:,:,this_box) = (W_tensor_charge(:,:,this_box) + W_tensor_recip(:,:,this_box))*charge_factor 
+    W_tensor_elec(:,:,this_box) = (W_tensor_elec(:,:,this_box) + W_tensor_charge(:,:,this_box)) * charge_factor
     W_tensor_total(:,:,this_box) = W_tensor_vdw(:,:,this_box) + W_tensor_elec(:,:,this_box) 
     
   END SUBROUTINE Compute_System_Total_Force
@@ -2603,15 +2578,25 @@ END SUBROUTINE Compute_System_DSF_Self_Energy
 
          rij = SQRT(rijsq)
          prefactor = qi * qj / rij
-         IF (int_charge_sum_style(ibox) == charge_cut) THEN
-           Wij_qq = prefactor * charge_factor
-         ELSEIF (int_charge_sum_style(ibox) == charge_ewald) THEN
+         IF (int_charge_sum_style(ibox) == charge_ewald) THEN
            ewald_constant = 2.0_DP * alpha_ewald(ibox) / rootPI
-           exp_const = EXP(-alpha_ewald(ibox)*alpha_ewald(ibox)*rijsq) 
+           exp_const = DEXP(-alpha_ewald(ibox)*alpha_ewald(ibox)*rijsq) 
            ! May need to protect against very small rij
            erfc_val = erfc(alpha_ewald(ibox) * rij)
            Wij_qq = ( prefactor * erfc_val &
                   + qi * qj * ewald_constant * exp_const )
+
+         ELSE IF (int_charge_sum_style(ibox) == charge_dsf) THEN
+
+           Wij_qq = erfc(alpha_dsf(ibox)*rij)/(rijsq) + &
+                    2.0_DP * alpha_dsf(ibox)/rootPI * &
+                    DEXP(-alpha_dsf(ibox)*alpha_dsf(ibox) * rcut_coul(ibox) * rcut_coul(ibox)) / rij - &
+                    dsf_factor2(ibox)
+           Wij_qq = charge_factor*qi*qj*Wij_qq
+                    
+
+         ELSE IF (int_charge_sum_style(ibox) == charge_cut) THEN
+           Wij_qq = prefactor * charge_factor
          ENDIF
 
        ENDIF qq_calc
@@ -2825,111 +2810,6 @@ END SUBROUTINE Compute_System_DSF_Self_Energy
 
   END SUBROUTINE Compute_System_Ewald_Reciprocal_Force
 
-  !***********************************************************
-  SUBROUTINE Get_Molecule_Energy(im,is,f_intra,f_inter, f_compute, this_nrg, overlap)
-    !******************************************************
-    ! This routine computes the energy of a molecule to be used in
-    ! various moves. It has two optional flags, f_intra and f_inter.
-    ! These flags control if this_nrg will contain only intra-, inter-, or intra and inter
-    ! molecular interactions.
-    ! If the flag f_compute is true, the inter and intra molecular interactions
-    ! will be recomputed. If it's false, the intermolecular energy will be 
-    ! obtained through the pair_nrg vectors. Note that if f_compute is false, 
-    ! no intra energies will be sent back (maybe we can fix this in the future)
-    !
-    ! CALLED BY
-    !
-    !
-    ! CALLS
-    !
-    !     Compute_Molecule_Nonbond_Inter_Energy
-    !     Compute_Molecule_Bond_Energy
-    !     Compute_Molecule_Angle_Energy
-    !     Compute_Molecule_Dihedral_Energy
-    !     Compute_Molecule_Nonbond_Intra_Energy
-    !     Store_Molecule_Pair_Interaction_Arrays
-    !
-    ! INPUT VARIABLES
-    !
-    !     im:        the INDEX of the molecule of interest
-    !     is:        the species of the molecule of interest
-    !     f_intra:   flag controlling whether intra molecular interactions will be computed
-    !     f_inter:   flag controlling whether inter molecular interactions will be computed
-    !
-    ! OUTPUT VARIABLES
-    !
-    !     this_nrg:  variable containing the energies associated to the molecule of interest.
-    !                The associated type is "Energy Class"
-    !******************************************************
-
-
-    INTEGER, INTENT(IN) :: im,is
-    LOGICAL, INTENT(IN) :: f_intra, f_inter, f_compute
-    Type(Energy_Class), INTENT(OUT) :: this_nrg
-    LOGICAL, INTENT(OUT) :: overlap
-   
-    LOGICAL :: intra_overlap, inter_overlap
-    REAL(DP) :: E_inter_qq, E_self
-    INTEGER :: this_box
-
-    this_nrg%total = 0.0_DP
-    this_nrg%bond = 0.0_DP
-    this_nrg%angle = 0.0_DP
-    this_nrg%dihedral = 0.0_DP
-    this_nrg%intra = 0.0_DP
-    this_nrg%intra_vdw = 0.0_DP
-    this_nrg%intra_q = 0.0_DP
-    this_nrg%inter_vdw = 0.0_DP
-    this_nrg%inter_q = 0.0_DP
-    this_nrg%lrc = 0.0_DP
-    this_nrg%ewald_reciprocal = 0.0_DP
-    this_nrg%ewald_self = 0.0_DP
-
-    IF (f_compute .eqv. .TRUE.) THEN 
-
-	    inter_overlap = .FALSE.
-
-	    IF (f_inter) THEN
-	       CALL Compute_Molecule_Nonbond_Inter_Energy(im,is,this_nrg%inter_vdw, &
-        	    this_nrg%inter_q,inter_overlap)
-	    END IF
-    
-	    IF(inter_overlap) THEN
-                overlap = .TRUE.
-                RETURN
-            END IF
-    
-	    IF (f_intra) THEN
-
-	       CALL Compute_Molecule_Bond_Energy(im,is,this_nrg%bond)
-	       CALL Compute_Molecule_Angle_Energy(im,is,this_nrg%angle)
-	       CALL Compute_Molecule_Dihedral_Energy(im,is,this_nrg%dihedral)
-	       CALL Compute_Molecule_Nonbond_Intra_Energy(im,is,this_nrg%intra_vdw,&
-        	    this_nrg%intra_q,E_inter_qq,intra_overlap,E_self)
-       
-               IF (intra_overlap) THEN
-                  overlap = .TRUE.
-                  RETURN
-               END IF
-
-	       this_nrg%inter_q = this_nrg%inter_q + E_inter_qq
-	       this_nrg%intra = this_nrg%bond + this_nrg%angle + this_nrg%dihedral
-	    END IF
-!   ELSE
-
-!            IF ( l_pair_nrg ) THEN
-
-!                IF (f_inter) THEN
-!                        this_box = molecule_list(im,is)%which_box
-!                        CALL Store_Molecule_Pair_Interaction_Arrays(im,is,this_box, this_nrg%inter_vdw, this_nrg%inter_q)
-!                END IF
-
-!            END IF
-
-   END IF
-    
-  END SUBROUTINE Get_Molecule_Energy
-
   !-----------------------------------------------------------------------------
 
   SUBROUTINE Compute_Ring_Fragment_Energy(this_frag,this_im,is,this_box, &
@@ -3064,7 +2944,7 @@ END SUBROUTINE Compute_System_DSF_Self_Energy
      e_check%inter_q = energy(this_box)%inter_q
      e_check%lrc = energy(this_box)%lrc
      e_check%ewald_reciprocal = energy(this_box)%ewald_reciprocal
-     e_check%ewald_self = energy(this_box)%ewald_self
+     e_check%self = energy(this_box)%self
 
      CALL Compute_System_Total_Energy(this_box,.TRUE.,inter_overlap)
 
@@ -3079,7 +2959,7 @@ END SUBROUTINE Compute_System_DSF_Self_Energy
      e_diff%inter_q = ABS(energy(this_box)%inter_q - e_check%inter_q)
      e_diff%lrc = ABS(energy(this_box)%lrc - e_check%lrc)
      e_diff%ewald_reciprocal = ABS(energy(this_box)%ewald_reciprocal - e_check%ewald_reciprocal)
-     e_diff%ewald_self = ABS(energy(this_box)%ewald_self - e_check%ewald_self)
+     e_diff%self = ABS(energy(this_box)%self - e_check%self)
 
      IF(e_diff%total .GT. 0.000001) THEN
         WRITE(logunit,*) 'Total energy does not match', 'box: ', this_box
@@ -3147,9 +3027,9 @@ END SUBROUTINE Compute_System_DSF_Self_Energy
         aok = .FALSE.
      END IF
 
-     IF(e_diff%ewald_self .GT. 0.000001) THEN
+     IF(e_diff%self .GT. 0.000001) THEN
         WRITE(logunit,*) 'Self energy does not match', 'box: ', this_box
-        WRITE(logunit,*) 'Cumulative',e_check%ewald_self,'Total',energy(this_box)%ewald_self
+        WRITE(logunit,*) 'Cumulative',e_check%self,'Total',energy(this_box)%self
         aok = .FALSE.
      END IF
 
@@ -3187,7 +3067,7 @@ END SUBROUTINE Compute_System_DSF_Self_Energy
          energy(this_box)%inter_q = e_check%inter_q
          energy(this_box)%lrc = e_check%lrc
          energy(this_box)%ewald_reciprocal = e_check%ewald_reciprocal
-         energy(this_box)%ewald_self = e_check%ewald_self
+         energy(this_box)%self = e_check%self
       END IF 
 
    END SUBROUTINE System_Energy_Check

@@ -19,7 +19,7 @@
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*******************************************************************************
 
-SUBROUTINE Deletion(this_box,accept)
+SUBROUTINE Deletion(this_box)
   
   !*****************************************************************************
   !
@@ -63,7 +63,6 @@ SUBROUTINE Deletion(this_box,accept)
 
   ! Arguments
   INTEGER, INTENT(INOUT) :: this_box ! attempt to delete a molecule in this_box
-  LOGICAL, INTENT(OUT) :: accept
 
   ! Local declarations
   INTEGER :: i, i_type               ! atom indices
@@ -73,7 +72,7 @@ SUBROUTINE Deletion(this_box,accept)
   INTEGER :: is, is_rand, is_counter ! species indices
   INTEGER :: kappa_tot, which_anchor
   INTEGER, ALLOCATABLE :: frag_order(:)
-  INTEGER :: k 
+  INTEGER :: k, mcstep
 
   REAL(DP) :: delta_e, delta_e_pacc
   REAL(DP) :: E_bond, E_angle, E_dihedral, E_improper
@@ -85,7 +84,7 @@ SUBROUTINE Deletion(this_box,accept)
   REAL(DP) :: E_intra_vdw_igas, E_intra_qq_igas
 
   LOGICAL :: inter_overlap, cbmc_overlap, intra_overlap
-  LOGICAL :: accept_or_reject, fh_outside_bounds
+  LOGICAL :: accept_or_reject, fh_outside_bounds, accept
 
   INTEGER :: old_subensemble
 
@@ -262,15 +261,21 @@ SUBROUTINE Deletion(this_box,accept)
 
   ! 4.4) Ewald energies
 
-  IF ( (int_charge_sum_style(this_box) == charge_ewald) .AND. &
-       (has_charge(is)) ) THEN
+  IF (int_charge_style(this_box) == charge_coul) THEN
 
-     CALL Update_System_Ewald_Reciprocal_Energy(lm,is,this_box, &
-             int_deletion,E_reciprocal)
-     CALL Compute_Molecule_Ewald_Self_Energy(lm,is,this_box,E_self)
+      IF ( (int_charge_sum_style(this_box) == charge_ewald) .AND. &
+           (has_charge(is)) ) THEN
+    
+         CALL Update_System_Ewald_Reciprocal_Energy(lm,is,this_box, &
+                 int_deletion,E_reciprocal)
 
-     delta_e = delta_e - E_self &
-                       + (E_reciprocal - energy(this_box)%ewald_reciprocal)
+         delta_e = delta_e + (E_reciprocal - energy(this_box)%ewald_reciprocal)
+
+      END IF
+
+      CALL Compute_Molecule_Self_Energy(lm,is,this_box,E_self)
+
+      delta_e = delta_e - E_self 
   END IF
 
   ! 4.5) Long-range energy correction
@@ -361,11 +366,18 @@ SUBROUTINE Deletion(this_box,accept)
      energy(this_box)%inter_vdw = energy(this_box)%inter_vdw - E_inter_vdw
      energy(this_box)%inter_q   = energy(this_box)%inter_q - E_inter_qq
 
-     IF ( int_charge_sum_style(this_box) == charge_ewald .AND. &
-          has_charge(is)) THEN
-        energy(this_box)%ewald_reciprocal = E_reciprocal
-        energy(this_box)%ewald_self = energy(this_box)%ewald_self - E_self
+
+     IF (int_charge_style(this_box) == charge_coul) THEN
+
+         IF ( int_charge_sum_style(this_box) == charge_ewald .AND. &
+              has_charge(is)) THEN
+            energy(this_box)%ewald_reciprocal = E_reciprocal
+         END IF
+
+         energy(this_box)%self = energy(this_box)%self - E_self
+
      END IF
+
 
      IF ( int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
         energy(this_box)%lrc = E_lrc

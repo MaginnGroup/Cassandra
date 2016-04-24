@@ -474,9 +474,9 @@ MODULE Type_Definitions
     ! total             : total energy of the system
 
     REAL(DP) :: inter_vdw, lrc, inter_q, intra_vdw, intra_q
-    REAL(DP) :: intra, ewald_reciprocal, ewald_self, total
+    REAL(DP) :: intra, ewald_reciprocal, total
     REAL(DP) :: bond, angle, dihedral, improper, erf_self
-    REAL(DP) :: dsf_self
+    REAL(DP) :: self
  END TYPE Energy_Class
  !------------------------------------------------------------------------------------------------
 

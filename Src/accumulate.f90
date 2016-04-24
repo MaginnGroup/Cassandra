@@ -51,7 +51,7 @@ SUBROUTINE Accumulate(this_box)
   ac_energy(this_box)%intra_q   = ac_energy(this_box)%intra_q   + energy(this_box)%intra_q
   ac_energy(this_box)%intra     = ac_energy(this_box)%intra + energy(this_box)%intra
   ac_energy(this_box)%ewald_reciprocal = ac_energy(this_box)%ewald_reciprocal + energy(this_box)%ewald_reciprocal
-  ac_energy(this_box)%ewald_self = ac_energy(this_box)%ewald_self + energy(this_box)%ewald_self
+  ac_energy(this_box)%self = ac_energy(this_box)%self + energy(this_box)%self
 
   IF(int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
      ac_energy(this_box)%lrc = ac_energy(this_box)%lrc + energy(this_box)%lrc

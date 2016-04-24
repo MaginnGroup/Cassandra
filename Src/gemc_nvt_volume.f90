@@ -19,7 +19,7 @@
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*******************************************************************************
 
-SUBROUTINE GEMC_NVT_Volume(box1, box2, accept)
+SUBROUTINE GEMC_NVT_Volume(box1, box2)
 
   !***********************************************************************
   !

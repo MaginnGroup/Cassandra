@@ -585,19 +585,6 @@ SUBROUTINE Get_Pair_Style
                     WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_coul(ibox), '   Angstrom'
 
 
-                 ELSEIF (charge_sum_style(ibox) == 'DSF') THEN
-                    int_charge_sum_style(ibox) = charge_dsf
-                    rcut_coul(ibox) = String_To_Double(line_array(3))
-
-                    IF (nbr_entries == 4) THEN
-                            alpha_dsf(ibox) = String_To_Double(line_array(4))
-                            WRITE(logunit,*) 'Damping alpha was specified to ',alpha_dsf(ibox)
-                    ELSE
-                            alpha_dsf(ibox) = 0.425_DP - rcut_coul(ibox)*0.02_DP
-                            WRITE(logunit,*) 'No damping alpha was specified. Assume depends linearly with rcut. Alpha set to ',alpha_dsf(ibox)
-
-                    END IF
-
 
                  ELSEIF (charge_sum_style(ibox) == 'Ewald') THEN
                     int_charge_sum_style(ibox) = charge_ewald
@@ -614,6 +601,7 @@ SUBROUTINE Get_Pair_Style
                        ALLOCATE(ewald_p(nbr_boxes))
                        ALLOCATE(alpha_ewald(nbr_boxes) , h_ewald_cut(nbr_boxes) )
                        ALLOCATE(alphal_ewald(nbr_boxes) )
+                    
                     END IF
 
                     ewald_tol(ibox) = String_To_Double(line_array(4))
@@ -649,8 +637,39 @@ SUBROUTINE Get_Pair_Style
                          alpha_ewald(ibox), ' inverse Angstroms'
                     WRITE(logunit,'(X,A,F7.4,A)') '   Ewald reciprocal cutoff is ', &
                          h_ewald_cut(ibox), ' inverse Angstroms'
+
+
+
+                 ELSEIF (charge_sum_style(ibox) == 'DSF') THEN
+                    IF (ibox == 1) THEN
+                       ALLOCATE(dsf_factor1(nbr_boxes))
+                       ALLOCATE(dsf_factor2(nbr_boxes))
+                       ALLOCATE(alpha_dsf(nbr_boxes))
+                    END IF
+
+                    int_charge_sum_style(ibox) = charge_dsf
+                    rcut_coul(ibox) = String_To_Double(line_array(3))
+
+                    IF (nbr_entries == 4) THEN
+                            alpha_dsf(ibox) = String_To_Double(line_array(4))
+                            WRITE(logunit,*) 'Damping alpha was specified to ',alpha_dsf(ibox)
+                    ELSE
+                            alpha_dsf(ibox) = 0.425_DP - rcut_coul(ibox)*0.02_DP
+                            IF (alpha_dsf(ibox) < 0.0) THEN
+                                alpha_dsf(ibox) = 3.3930702_DP/rcut_coul(ibox)
+                            END IF
+
+                            WRITE(logunit,*) 'No damping alpha was specified. &
+                                              Assume depends linearly with rcut. &
+                                              Alpha set to ',alpha_dsf(ibox)
+
+                    END IF
  
-               
+                    dsf_factor1(ibox) = erfc(alpha_dsf(ibox)*rcut_coul(ibox))/rcut_coul(ibox) 
+                    dsf_factor2(ibox) = dsf_factor1(ibox)/rcut_coul(ibox) + &
+                          2.0_DP*alpha_dsf(ibox)*DEXP(-alpha_dsf(ibox)*alpha_dsf(ibox)*&
+                          rcut_coul(ibox)*rcut_coul(ibox)) / (rootPI * rcut_coul(ibox))
+                                 
                  ELSEIF (charge_sum_style(ibox) == 'minimum_image') THEN
                     int_charge_sum_style(ibox) = charge_minimum
                     IF (int_vdw_sum_style(ibox) /= vdw_minimum .AND. int_vdw_style(ibox) /= vdw_none) THEN
@@ -724,6 +743,29 @@ SUBROUTINE Get_Pair_Style
      WRITE(logunit,*)
   END IF
   
+CONTAINS
+
+  FUNCTION erfc(x)
+    !*************************************************************************
+    !
+    ! Calculate the complementary error function for  a number
+    !
+    !*************************************************************************
+
+    REAL(DP) :: erfc
+    REAL(DP), PARAMETER :: A1 = 0.254829592_DP, A2 = -0.284496736_DP
+    REAL(DP), PARAMETER :: A3 = 1.421413741_DP, A4 = -1.453152027_DP
+    REAL(DP), PARAMETER :: A5 = 1.061405429_DP, P = 0.3275911_DP
+    REAL(DP) :: T, x, xsq, TP
+
+    T = 1.0_DP / (1.0_DP + P*x)
+    xsq = x*x
+
+    TP = T * (A1 + T * (A2 + T * (A3 + T * (A4 + T * A5))))
+
+    erfc = TP * EXP(-xsq)
+
+  END FUNCTION erfc
 END SUBROUTINE Get_Pair_Style
 
 

@@ -52,7 +52,7 @@ SUBROUTINE Angle_Distortion(this_box)
 
   INTEGER :: this_box, is, im, alive, nmolecules_species
   INTEGER :: angle_to_move, atom1, atom2, atom3, iatom1, iatom2, iatom3
-  INTEGER :: natoms_to_place, this_atom, i, j
+  INTEGER :: natoms_to_place, this_atom, i, j, mcstep
 
   INTEGER, DIMENSION(:), ALLOCATABLE :: atoms_to_place_list
 

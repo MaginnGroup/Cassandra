@@ -68,7 +68,7 @@ SUBROUTINE Rotate(this_box)
   INTEGER  :: ibox       ! box index
   INTEGER  :: is         ! species index
   INTEGER  :: im, alive  ! molecule indices
-  INTEGER  :: total_mols ! number of molecules in the system
+  INTEGER  :: total_mols,mcstep ! number of molecules in the system
 
   REAL(DP) :: nmols_box(nbr_boxes)
   REAL(DP), ALLOCATABLE :: x_box(:), x_species(:)
@@ -254,7 +254,7 @@ SUBROUTINE Rotate(this_box)
         energy(this_box)%inter_q   = energy(this_box)%inter_q + E_qq_move - E_qq
 
         IF ( int_charge_sum_style(this_box) == charge_ewald .AND. has_charge(is)) THEN
-           energy(this_box)%ewald_reciprocal = energy(this_box)%ewald_reciprocal + E_reciprocal_move
+           energy(this_box)%ewald_reciprocal = E_reciprocal_move
         END IF
 
         nsuccess(is,this_box)%rotation = nsuccess(is,this_box)%rotation + 1

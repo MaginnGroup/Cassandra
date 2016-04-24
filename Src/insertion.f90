@@ -19,7 +19,7 @@
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*******************************************************************************
 
-SUBROUTINE Insertion(this_box,accept)
+SUBROUTINE Insertion(this_box)
 
   !*****************************************************************************
   ! 
@@ -71,7 +71,7 @@ SUBROUTINE Insertion(this_box,accept)
   INTEGER :: is, is_rand, is_counter ! species indices
   INTEGER :: kappa_tot, which_anchor
   INTEGER, ALLOCATABLE :: frag_order(:)
-  INTEGER :: rand_igas, tot_mols
+  INTEGER :: rand_igas, tot_mols, mcstep
 
   REAL(DP) :: dx, dy, dz, delta_e
   REAL(DP) :: E_bond, E_angle, E_dihedral, E_improper
@@ -373,15 +373,21 @@ SUBROUTINE Insertion(this_box,accept)
 
   ! 3.5) Ewald energies
 
-  IF ( (int_charge_sum_style(this_box) == charge_ewald) .AND. &
-       has_charge(is) ) THEN
- 
-     CALL Update_System_Ewald_Reciprocal_Energy(lm,is,this_box, &
-             int_insertion,E_reciprocal)
-     CALL Compute_Molecule_Ewald_Self_Energy(lm,is,this_box,E_self)
+  IF (int_charge_style(this_box) == charge_coul) THEN
 
-     delta_e = delta_e + E_self &
-                       + (E_reciprocal - energy(this_box)%ewald_reciprocal)
+        IF ( (int_charge_sum_style(this_box) == charge_ewald) .AND. &
+             has_charge(is) ) THEN
+       
+           CALL Update_System_Ewald_Reciprocal_Energy(lm,is,this_box, &
+                   int_insertion,E_reciprocal)
+
+            delta_e = delta_e + (E_reciprocal - energy(this_box)%ewald_reciprocal)
+           
+        END IF
+
+        CALL Compute_Molecule_Self_Energy(lm,is,this_box,E_self)
+
+        delta_e = delta_e + E_self
 
   END IF
 
@@ -471,10 +477,15 @@ SUBROUTINE Insertion(this_box,accept)
      energy(this_box)%inter_vdw = energy(this_box)%inter_vdw + E_inter_vdw
      energy(this_box)%inter_q = energy(this_box)%inter_q + E_inter_qq
 
-     IF ( int_charge_sum_style(this_box) == charge_ewald .AND. &
-          has_charge(is)) THEN
-        energy(this_box)%ewald_reciprocal = E_reciprocal
-        energy(this_box)%ewald_self = energy(this_box)%ewald_self + E_self
+     IF (int_charge_style(this_box) == charge_coul) THEN
+
+         IF ( int_charge_sum_style(this_box) == charge_ewald .AND. &
+              has_charge(is)) THEN
+            energy(this_box)%ewald_reciprocal = E_reciprocal
+         END IF
+
+         energy(this_box)%self = energy(this_box)%self + E_self
+
      END IF
 
      IF (int_vdw_sum_style(this_box) == vdw_cut_tail) THEN

@@ -237,7 +237,7 @@ CONTAINS
             write_buff(ii+1) = energy(this_box)%inter_q &
                              + energy(this_box)%intra_q &
                              + energy(this_box)%ewald_reciprocal &
-                             + energy(this_box)%ewald_self
+                             + energy(this_box)%self
          END IF
          write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
 
