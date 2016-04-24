@@ -254,7 +254,7 @@ SUBROUTINE Rotate(this_box)
         energy(this_box)%inter_q   = energy(this_box)%inter_q + E_qq_move - E_qq
 
         IF ( int_charge_sum_style(this_box) == charge_ewald .AND. has_charge(is)) THEN
-           energy(this_box)%ewald_reciprocal = E_reciprocal_move
+           energy(this_box)%ewald_reciprocal =  E_reciprocal_move
         END IF
 
         nsuccess(is,this_box)%rotation = nsuccess(is,this_box)%rotation + 1

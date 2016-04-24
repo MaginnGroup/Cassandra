@@ -427,10 +427,10 @@ SUBROUTINE Get_Pair_Style
            vdw_style(ibox) = line_array(1)
            WRITE(logunit,'(A,2x,A,A,I3)') '   VDW style used is: ',vdw_style(ibox), 'in box:', ibox
 
-           IF (vdw_style(ibox) /= 'NONE') THEN
+           IF (vdw_style(ibox) == 'LJ') THEN
               int_vdw_style(ibox) = vdw_lj
               vdw_sum_style(ibox) = line_array(2)
-              WRITE(logunit,'(A,2x,A,A,I3)') '   VDW sum style is: ',vdw_sum_style(ibox), 'in box:', ibox
+              WRITE(logunit,'(A,2x,A,A,I3)') '   LJ VDW sum style is: ',vdw_sum_style(ibox), 'in box:', ibox
 
               IF (vdw_sum_style(ibox) == 'CHARMM') THEN
                  int_vdw_sum_style(ibox) = vdw_charmm
@@ -507,17 +507,6 @@ SUBROUTINE Get_Pair_Style
                  int_vdw_sum_style(ibox) = vdw_minimum
                  WRITE(logunit,'(A)') 'Minimum image convention used for VDW'
 
-              ELSEIF (vdw_sum_style(ibox) == 'mie') THEN
-                 int_vdw_sum_style(ibox) = vdw_mie
-		 rcut_vdw(ibox) = String_To_Double(line_array(3))
-                 WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_vdw(ibox), '   Angstrom'
-                 WRITE(logunit,'(A)') 'Mie potential used for VDW'
-
-              ELSEIF (vdw_sum_style(ibox) == 'mie_cut_shift') THEN 
-                 int_vdw_sum_style(ibox) = vdw_mie_cut_shift
-                 rcut_vdw(ibox) = String_To_Double(line_array(3))
-                 WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_vdw(ibox), 'Angstrom'
-                 WRITE(logunit,'(A)') 'Mie cut shift potential used for VDW'
 
               ELSE
                  err_msg(1) = 'Improper specification of vdw_sum_style'
@@ -534,6 +523,23 @@ SUBROUTINE Get_Pair_Style
 
     	      ENDIF
 
+           ELSEIF (vdw_style(ibox) == 'Mie') THEN
+              int_vdw_style(ibox) = vdw_mie
+              vdw_sum_style(ibox) = line_array(2)
+	      WRITE(logunit,'(A,2x,A,A,I3)') '   Mie VDW sum style is:',vdw_sum_style(ibox), 'in box:', ibox
+
+              IF (vdw_sum_style(ibox) == 'cut') THEN
+                 int_vdw_sum_style(ibox) = vdw_cut
+                 rcut_vdw(ibox) = String_To_Double(line_array(3))
+                 WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_vdw(ibox), 'Angstrom'
+                 WRITE(logunit,'(A)') 'Mie potential used for VDW'
+
+              ELSEIF (vdw_sum_style(ibox) == 'cut_shift') THEN
+                 int_vdw_sum_style(ibox) = vdw_cut_shift
+                 rcut_vdw(ibox) = String_To_Double(line_array(3))
+                 WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_vdw(ibox), 'Angstrom'
+                 WRITE(logunit,'(A)') 'Mie cut shift potential used for VDW'
+	      END IF
 
 
            ELSE
@@ -1529,7 +1535,8 @@ SUBROUTINE Get_Atom_Info(is)
            END IF
 
            ! Load vdw parameters, specific for each individual type
-           IF (nonbond_list(ia,is)%vdw_potential_type == 'LJ') THEN
+           IF (nonbond_list(ia,is)%vdw_potential_type == 'LJ' .OR. &
+		nonbond_list(ia,is)%vdw_potential_type == 'Mie' ) THEN
               ! epsilon/kB in K read in
               nonbond_list(ia,is)%vdw_param(1) = String_To_Double(line_array(7))
               ! sigma = Angstrom
@@ -1546,6 +1553,8 @@ SUBROUTINE Get_Atom_Info(is)
               nonbond_list(ia,is)%vdw_param(1) = kboltz* nonbond_list(ia,is)%vdw_param(1) 
               ! Set number of vdw parameters
               nbr_vdw_params = 2
+
+	   
 
            ELSEIF (nonbond_list(ia,is)%vdw_potential_type == 'NONE') THEN
 
@@ -5973,8 +5982,7 @@ SUBROUTINE Get_Mie_Nonbond
            mie_nlist(mie_Matrix(String_To_Int(line_array(1)),String_To_Int(line_array(2)))) = String_To_Double(line_array(3))
            mie_mlist(mie_Matrix(String_To_Int(line_array(1)),String_To_Int(line_array(2)))) = String_To_Double(line_array(4))
 
-           WRITE(logunit,*) 'Mie exponent for ', line_array(1), 'and', line_array(2),  ' is', line_array(3), 'and', line_array(4)
-
+	   WRITE(logunit,'(A17,I2,A7,I2,A6,F7.2,A7,F7.2)') 'Mie exponent for ', String_To_Int(line_array(1)), '   and ', String_To_Int(line_array(2)),  '   is ', String_To_Double(line_array(3)), '   and ', String_To_Double(line_array(4))
         END DO
 
         EXIT
