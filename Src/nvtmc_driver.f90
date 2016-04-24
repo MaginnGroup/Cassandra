@@ -115,7 +115,7 @@ SUBROUTINE NVTMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Translate(this_box,which_step)
+        CALL Translate(this_box)
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -187,7 +187,7 @@ SUBROUTINE NVTMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
         
-        CALL Cut_N_Grow(this_box,i)
+        CALL Cut_N_Grow(this_box)
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)

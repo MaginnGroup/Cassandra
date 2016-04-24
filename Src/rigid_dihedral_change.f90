@@ -20,7 +20,7 @@
 !********************************************************************************
 
 !********************************************************************************
-SUBROUTINE Rigid_Dihedral_Change(this_box)
+SUBROUTINE Rigid_Dihedral_Change(this_box, mcstep)
 !********************************************************************************
 
 !********************************************************************************
@@ -77,7 +77,7 @@ SUBROUTINE Rigid_Dihedral_Change(this_box)
 !  !$ include 'omp_lib.h'
   
   INTEGER :: this_box, is, im, dihedral_to_move, alive
-  INTEGER :: i, j, this_atom
+  INTEGER :: i, j, this_atom, mcstep
   INTEGER :: atom1, atom2, atom3, atom4, iatom1, iatom2, iatom3, iatom4
   INTEGER :: natoms_to_place
   INTEGER, DIMENSION(:), ALLOCATABLE :: atoms_to_place_list

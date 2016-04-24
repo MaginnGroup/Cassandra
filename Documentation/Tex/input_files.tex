@@ -222,8 +222,9 @@ Cassandra allows the use of fixed partial charges on atomic centers
 using a Coulomb potential of the form given in Eq~\ref{Eq:Coulomb}. To
 specify this option for box {\em i}, set {\it Character(i,1)} to
 ``coul''. For this option,
-{\it Character(i,2)} can be set to either ``Ewald'' if you want to use
-an Ewald sum to compute Coulombic interactions or it can be set to
+{\it Character(i,2)} can be set to ``Ewald'' if you want to use
+an Ewald sum to compute Coulombic interactions, ``DSF'' if you want to use
+the Damped Shifted Force method by Fennell \textit{et al.}\cite{Fennell:2006}, or it can be set to
 ``cut'', in which case the Coulombic interactions will be cut off and
 the long range interactions ignored. For the Ewald option, 
 {\it Real(i,3)} is the real space cutoff distance and {\it Real(i,4)}
@@ -256,7 +257,21 @@ of 30 \AA\ will be used. {\bf Note: When performing Gibbs ensemble
   longer real space cutoff for the larger vapor box to avoid using too
   many reciprocal space vectors.} Also note that the real space
 cutoffs must always be less than or equal to half of the shortest edge
-length of a simulation box. \\ \\
+length of a simulation box. \\ 
+
+If you wish to use the Damped Shifted Force method, the entry {\it Real(i,3)}
+is the electrostatic energy cutoff distance and {\it Real(i,4)} is an optional
+entry to specify the damping parameter. If not specified, Cassandra will
+set this value algorithmically from the cutoff radius. For example, 
+\\ \\
+\texttt{
+\# Charge\_Style \\
+coul DSF 12.0 0.20}\\ 
+
+will use the Damped Shifted Force method for a single box. The electrostatic
+energy cutoff will be set to 12 \AA\ and the damping parameter will be set
+to 0.20, which is a reasonable value for
+typical liquid phase simulations. \\  \\
 %
 If you do not wish to use a Coulomb potential (for example, your model
 has no partial charges), you still must specify \# Charge\_Style. In

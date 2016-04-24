@@ -163,12 +163,16 @@ SUBROUTINE Chempot(this_box,is)
 !    delta_e = delta_e + E_inter_vdw + E_inter_qq
   delta_e = delta_e + E_intra_vdw + E_intra_qq + E_inter_vdw + E_inter_qq
 
-  IF ( int_charge_sum_style(this_box) == charge_ewald .AND. has_charge(is)) THEN
-     CALL Update_System_Ewald_Reciprocal_Energy(alive,is,this_box, &
-          int_insertion,E_reciprocal_move)
-     CALL Compute_Molecule_Ewald_Self_Energy(alive,is,this_box,E_self_move)
-     delta_e = delta_e + E_self_move &
-                       + (E_reciprocal_move-energy(this_box)%ewald_reciprocal)
+  IF (int_charge_style(this_box) == charge_coul) THEN
+       IF ( int_charge_sum_style(this_box) == charge_ewald .AND. has_charge(is)) THEN
+          CALL Update_System_Ewald_Reciprocal_Energy(alive,is,this_box, &
+               int_insertion,E_reciprocal_move)
+
+          delta_e = delta_e + (E_reciprocal_move-energy(this_box)%ewald_reciprocal)
+
+       END IF
+       CALL Compute_Molecule_Self_Energy(alive,is,this_box,E_self_move)
+       delta_e = delta_e + E_self_move 
   END IF
 
   IF (int_vdw_sum_style(this_box) == vdw_cut_tail) THEN

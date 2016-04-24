@@ -143,7 +143,7 @@ SUBROUTINE Reset(this_box)
   ac_energy(this_box)%lrc = 0.0_DP
   ac_energy(this_box)%inter_q = 0.0_DP
   ac_energy(this_box)%ewald_reciprocal = 0.0_DP
-  ac_energy(this_box)%ewald_self = 0.0_DP
+  ac_energy(this_box)%self = 0.0_DP
 
 
   ac_virial(this_box)%total = 0.0_DP
@@ -154,7 +154,7 @@ SUBROUTINE Reset(this_box)
   ac_virial(this_box)%lrc = 0.0_DP
   ac_virial(this_box)%inter_q = 0.0_DP
   ac_virial(this_box)%ewald_reciprocal = 0.0_DP
-  ac_virial(this_box)%ewald_self = 0.0_DP
+  ac_virial(this_box)%self = 0.0_DP
 
   ac_density(:,this_box) = 0.0_DP
   ac_nmols(:,this_box) = 0.0_DP
