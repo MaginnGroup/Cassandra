@@ -84,7 +84,7 @@ SUBROUTINE Volume_Change(this_box,this_step)
   REAL(DP) :: pres_id
   REAL(DP) :: W_vol_vdw, W_vol_qq
 
-  LOGICAL :: accept, allocation_cos_sin, overlap, xz_change, accept_or_reject
+  LOGICAL :: accept, overlap, xz_change, accept_or_reject
 
   TYPE(Box_Class) :: box_list_old
 
@@ -389,69 +389,55 @@ SUBROUTINE Volume_Change(this_box,this_step)
      
      CALL Ewald_Reciprocal_Lattice_Vector_Setup(this_box)
 
-     ! Now check to see if we need to reallocate the cos_sum and sin_sum arrays
+     ! cos_sum, sin_sum, cos_mol, sin_mol need to be reallocated since the
+     ! number of vectors has changed
+
+     ! The operation destoys the cos_sum and sin_sum for other boxes but can be easily restored
+     ! from cos_sum_old and sin_sum_old. Note that these terms for this_box will be calculated
+     ! via the call to total system energy routine.Similar reasoning goes for
+     ! cos_mol and sin_mol
      
-     allocation_cos_sin = .FALSE.
+     IF (ALLOCATED(cos_sum)) DEALLOCATE(cos_sum)
+     IF (ALLOCATED(sin_sum)) DEALLOCATE(sin_sum)
+     IF (ALLOCATED(cos_mol)) DEALLOCATE(cos_mol)
+     IF (ALLOCATED(sin_mol)) DEALLOCATE(sin_mol)
 
-     IF (nvecs(this_box) > nvecs_max) THEN
-        ! then the vectors needs to be allocated to accomodate the new terms for cos_sum and sin_sum
-        ! The operation destoys the cos_sum and sin_sum for other boxes but can be easily restored
-        ! from cos_sum_old and sin_sum_old. Note that these terms for this_box will be calculated
-        ! via the call to total system energy routine.Similar reasoning goes for
-        ! cos_mol and sin_mol
-        
-        IF (ALLOCATED(cos_sum)) DEALLOCATE(cos_sum)
-        IF (ALLOCATED(sin_sum)) DEALLOCATE(sin_sum)
-        IF (ALLOCATED(cos_mol)) DEALLOCATE(cos_mol)
-        IF (ALLOCATED(sin_mol)) DEALLOCATE(sin_mol)
-
-        ALLOCATE(cos_sum(nvecs(this_box),nbr_boxes), Stat = AllocateStatus)
+     ALLOCATE(cos_sum(nvecs(this_box),nbr_boxes), Stat = AllocateStatus)
      
-        IF (Allocatestatus /= 0) THEN
-           err_msg = ''
-           err_msg(1) = 'Memory could not be allocated for cos_sum'
-           err_msg(2) = 'allocation_cos_sin'
-           CALL Clean_Abort(err_msg,'Volume_Change')
-        END IF
-        
+     IF (Allocatestatus /= 0) THEN
+        err_msg = ''
+        err_msg(1) = 'Memory could not be allocated for cos_sum'
+        CALL Clean_Abort(err_msg,'Volume_Change')
+     END IF
+     
 
-        ALLOCATE(sin_sum(nvecs(this_box),nbr_boxes), Stat = AllocateStatus)
+     ALLOCATE(sin_sum(nvecs(this_box),nbr_boxes), Stat = AllocateStatus)
 
-        IF (Allocatestatus /= 0) THEN
-           err_msg = ''
-           err_msg(1) = 'Memory could not be allocated for sin_sum'
-           err_msg(2) = 'allocation_cos_sin'
-           CALL Clean_Abort(err_msg,'Volume_Change')
-        END IF
-
-        ALLOCATE(cos_mol(nvecs(this_box),SUM(nmolecules)), Stat = AllocateStatus)
-
-        IF (Allocatestatus /= 0) THEN
-           err_msg = ''
-           err_msg(1) = 'Memory could not be allocated for cos_mol'
-           err_msg(2) = 'allocation_cos_sin'
-           CALL Clean_Abort(err_msg,'Volume_Change')
-        END IF
-
-        ALLOCATE(sin_mol(nvecs(this_box),SUM(nmolecules)), Stat = AllocateStatus)
-
-        IF (Allocatestatus /= 0) THEN
-           err_msg = ''
-           err_msg(1) = 'Memory could not be allocated for sin_mol'
-           err_msg(2) = 'allocation_cos_sin'
-           CALL Clean_Abort(err_msg,'Volume_Change')
-        END IF
-        
-        ! Mark this event with the following flag
-        
-        allocation_cos_sin = .TRUE.
-        
+     IF (Allocatestatus /= 0) THEN
+        err_msg = ''
+        err_msg(1) = 'Memory could not be allocated for sin_sum'
+        CALL Clean_Abort(err_msg,'Volume_Change')
      END IF
 
+     ALLOCATE(cos_mol(nvecs(this_box),SUM(nmolecules)), Stat = AllocateStatus)
 
+     IF (Allocatestatus /= 0) THEN
+        err_msg = ''
+        err_msg(1) = 'Memory could not be allocated for cos_mol'
+        CALL Clean_Abort(err_msg,'Volume_Change')
+     END IF
+
+     ALLOCATE(sin_mol(nvecs(this_box),SUM(nmolecules)), Stat = AllocateStatus)
+
+     IF (Allocatestatus /= 0) THEN
+        err_msg = ''
+        err_msg(1) = 'Memory could not be allocated for sin_mol'
+        CALL Clean_Abort(err_msg,'Volume_Change')
+     END IF
+        
   END IF
 
-     CALL Compute_Total_System_Energy(this_box,.TRUE.,overlap)
+  CALL Compute_Total_System_Energy(this_box,.TRUE.,overlap)
 
 
 
@@ -489,50 +475,47 @@ SUBROUTINE Volume_Change(this_box,this_step)
            ! put the sin_sum and cos_sum for other boxes
            ! Note that hx,hy,hz and Cn are updated when the total energy routine is called above. So
            ! there is no need to update these arrays.
-           IF ( allocation_cos_sin ) THEN
-              DO ibox = 1, nbr_boxes
-                 IF (ibox /= this_box ) THEN
-                    !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-                    sin_sum(1:nvecs(ibox),ibox) = sin_sum_old(1:nvecs(ibox),ibox)
-                    cos_sum(1:nvecs(ibox),ibox) = cos_sum_old(1:nvecs(ibox),ibox)
-                    !!$OMP END PARALLEL WORKSHARE
-                 END IF
-              END DO
-              
-              ! Now deallocate cos_sum_old and sin_sum_old so that they have the same dimensions
-              ! as sin_sum and cos_sum 
-              
-              DEALLOCATE(cos_sum_old,sin_sum_old)
-              ALLOCATE(cos_sum_old(SIZE(cos_sum,1),nbr_boxes))
-              ALLOCATE(sin_sum_old(SIZE(sin_sum,1),nbr_boxes))
-              DEALLOCATE(cos_sum_start,sin_sum_start)
-              ALLOCATE(cos_sum_start(SIZE(cos_sum,1),nbr_boxes))
-              ALLOCATE(sin_sum_start(SIZE(sin_sum,1),nbr_boxes))
+           DO ibox = 1, nbr_boxes
+              IF (ibox /= this_box ) THEN
+                 !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+                 sin_sum(1:nvecs(ibox),ibox) = sin_sum_old(1:nvecs(ibox),ibox)
+                 cos_sum(1:nvecs(ibox),ibox) = cos_sum_old(1:nvecs(ibox),ibox)
+                 !!$OMP END PARALLEL WORKSHARE
+              END IF
+           END DO
+           
+           ! Now deallocate cos_sum_old and sin_sum_old so that they have the same dimensions
+           ! as sin_sum and cos_sum 
+           
+           DEALLOCATE(cos_sum_old,sin_sum_old)
+           ALLOCATE(cos_sum_old(SIZE(cos_sum,1),nbr_boxes))
+           ALLOCATE(sin_sum_old(SIZE(sin_sum,1),nbr_boxes))
+           DEALLOCATE(cos_sum_start,sin_sum_start)
+           ALLOCATE(cos_sum_start(SIZE(cos_sum,1),nbr_boxes))
+           ALLOCATE(sin_sum_start(SIZE(sin_sum,1),nbr_boxes))
 
-              ! cos_mol
-              
-              !              CALL cpu_time(time0)
-              
-              DO is = 1, nspecies
-                 DO im = 1, nmolecules(is)
-                    alive = locate(im,is)
-                    IF (.NOT. molecule_list(alive,is)%live) CYCLE
-                    ! skip the molecules in 'this_box'
-                    my_box = molecule_list(alive,is)%which_box
-                    IF (my_box == this_box )CYCLE 
-                    CALL Get_Position_Alive(alive,is,position)
-                    
-                    cos_mol(1:nvecs(my_box),position) = cos_mol_old(1:nvecs(my_box),position)
-                    !                    cos_mol(nvecs(my_box)+1,nvecs(this_box)) = 0.0_DP
-                    
-                    sin_mol(1:nvecs(my_box),position) = sin_mol_old(1:nvecs(my_box),position)
-                    !                   sin_mol(nvecs(my_box)+1,nvecs(this_box)) = 0.0_DP
-                    
-                 END DO
+           ! cos_mol
+           
+           !              CALL cpu_time(time0)
+           
+           DO is = 1, nspecies
+              DO im = 1, nmolecules(is)
+                 alive = locate(im,is)
+                 IF (.NOT. molecule_list(alive,is)%live) CYCLE
+                 ! skip the molecules in 'this_box'
+                 my_box = molecule_list(alive,is)%which_box
+                 IF (my_box == this_box )CYCLE 
+                 CALL Get_Position_Alive(alive,is,position)
+                 
+                 cos_mol(1:nvecs(my_box),position) = cos_mol_old(1:nvecs(my_box),position)
+                 !                    cos_mol(nvecs(my_box)+1,nvecs(this_box)) = 0.0_DP
+                 
+                 sin_mol(1:nvecs(my_box),position) = sin_mol_old(1:nvecs(my_box),position)
+                 !                   sin_mol(nvecs(my_box)+1,nvecs(this_box)) = 0.0_DP
+                 
               END DO
-              
-              
-           END IF
+           END DO
+           
            DEALLOCATE(cos_mol_old,sin_mol_old)
         END IF
 
@@ -672,46 +655,41 @@ SUBROUTINE Volume_Change(this_box,this_step)
          nvecs(this_box) = nvecs_old
 
          
-         IF ( allocation_cos_sin ) THEN
-            
-            
-            DEALLOCATE(cos_sum,sin_sum)
-            DEALLOCATE(cos_mol,sin_mol)
-            
-            ALLOCATE(cos_sum(MAXVAL(nvecs),nbr_boxes),Stat = Allocatestatus)
-            
-            IF (Allocatestatus /= 0) THEN
-               err_msg = ''
-               err_msg(1) = 'Memory could not be allocated for cos_sum'
-               err_msg(2) = 'volume move rejected'
-               CALL Clean_Abort(err_msg,'Volume_Change')
-            END IF
-            
-            ALLOCATE(sin_sum(MAXVAL(nvecs),nbr_boxes),Stat = Allocatestatus)
-            IF (Allocatestatus /= 0) THEN
-               err_msg = ''
-               err_msg(1) = 'Memory could not be allocated in the volume rejection'
-               CALL Clean_Abort(err_msg,'Volume_Change')
-            END IF
-            
-            ALLOCATE(cos_mol(MAXVAL(nvecs),SUM(nmolecules)), Stat = AllocateStatus)
-            
-            IF (Allocatestatus /= 0) THEN
-               err_msg = ''
-               err_msg(1) = 'Memory could not be in the volume rejection'
-               CALL Clean_Abort(err_msg,'Volume_Change')
-            END IF
-            
-            ALLOCATE(sin_mol(MAXVAL(nvecs),SUM(nmolecules)), Stat = AllocateStatus)
-            
-            IF (Allocatestatus /= 0) THEN
-               err_msg = ''
-               err_msg(1) = 'Memory could not be allocated in the volume rejection'
-               CALL Clean_Abort(err_msg,'Volume_Change')
-            END IF
-            
+         DEALLOCATE(cos_sum,sin_sum)
+         DEALLOCATE(cos_mol,sin_mol)
+         
+         ALLOCATE(cos_sum(MAXVAL(nvecs),nbr_boxes),Stat = Allocatestatus)
+         
+         IF (Allocatestatus /= 0) THEN
+            err_msg = ''
+            err_msg(1) = 'Memory could not be allocated for cos_sum'
+            err_msg(2) = 'volume move rejected'
+            CALL Clean_Abort(err_msg,'Volume_Change')
          END IF
-
+         
+         ALLOCATE(sin_sum(MAXVAL(nvecs),nbr_boxes),Stat = Allocatestatus)
+         IF (Allocatestatus /= 0) THEN
+            err_msg = ''
+            err_msg(1) = 'Memory could not be allocated in the volume rejection'
+            CALL Clean_Abort(err_msg,'Volume_Change')
+         END IF
+         
+         ALLOCATE(cos_mol(MAXVAL(nvecs),SUM(nmolecules)), Stat = AllocateStatus)
+         
+         IF (Allocatestatus /= 0) THEN
+            err_msg = ''
+            err_msg(1) = 'Memory could not be in the volume rejection'
+            CALL Clean_Abort(err_msg,'Volume_Change')
+         END IF
+         
+         ALLOCATE(sin_mol(MAXVAL(nvecs),SUM(nmolecules)), Stat = AllocateStatus)
+         
+         IF (Allocatestatus /= 0) THEN
+            err_msg = ''
+            err_msg(1) = 'Memory could not be allocated in the volume rejection'
+            CALL Clean_Abort(err_msg,'Volume_Change')
+         END IF
+         
          !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED) 
          cos_mol(1:SIZE(cos_mol_old,1),:) = cos_mol_old(:,:)
          sin_mol(1:SIZE(sin_mol_old,1),:) = sin_mol_old(:,:)
