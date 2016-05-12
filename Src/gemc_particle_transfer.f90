@@ -557,6 +557,9 @@ SUBROUTINE GEMC_Particle_Transfer
         i_type = nonbond_list(i,this_species)%atom_type_number
         nint_beads_mie(this_species,i_type,box_out) = nint_beads_mie(this_species,i_type,box_out) - 1
      END DO
+
+     CALL Compute_LR_correction(box_out,e_lrc_out)
+     delta_e_out = delta_e_out + ( e_lrc_out - energy(box_out)%lrc )
   END IF
 
   delta_e_in_pacc = delta_e_in

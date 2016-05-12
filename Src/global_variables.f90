@@ -106,8 +106,6 @@ USE Type_Definitions
   INTEGER, PARAMETER :: vdw_charmm = 6
   INTEGER, PARAMETER :: vdw_cut_switch = 7
   INTEGER, PARAMETER :: vdw_mie = 8
-  !INTEGER, PARAMETER :: vdw_mie_cut = 9
-  !INTEGER, PARAMETER :: vdw_mie_cut_shift = 10
 
   INTEGER, PARAMETER :: charge_none = 0
   INTEGER, PARAMETER :: charge_coul = 1
@@ -138,7 +136,7 @@ USE Type_Definitions
   
  
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: nint_beads
-  INTEGER, DIMENSION(:,:,:), ALLOCATABLE :: nint_beads_mie ! B.Y.
+  INTEGER, DIMENSION(:,:,:), ALLOCATABLE :: nint_beads_mie 
 
   ! Intramolecular exclusion variables (1-2, 1-3, 1-4 exclusions/scaling)
   ! and the scaling to use for all other intramolecular terms.
