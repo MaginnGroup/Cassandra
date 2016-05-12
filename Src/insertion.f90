@@ -529,7 +529,11 @@ SUBROUTINE Insertion(this_box)
 
      IF ( int_vdw_sum_style(this_box) == vdw_cut_tail ) THEN
         ! Restore the total number of bead types
-        nint_beads(:,this_box) = nbeads_in(:)
+        IF (int_vdw_style(this_box) == vdw_lj) THEN
+           nint_beads(:,this_box) = nbeads_in(:)
+        ELSEIF (int_vdw_style(this_box) == vdw_mie) THEN
+           nint_beads_mie(is,:,this_box) = nbeads_in(:)
+        ENDIF
      END IF
 
   END IF

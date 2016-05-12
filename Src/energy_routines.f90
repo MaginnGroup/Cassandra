@@ -2227,14 +2227,6 @@ END SUBROUTINE Compute_Molecule_Self_Energy
       ELSEIF (int_vdw_sum_style(this_box) == vdw_charmm) THEN
          get_vdw = .TRUE.
 
-      !ELSEIF (int_vdw_sum_style(this_box) == vdw_mie) THEN
-      !     
-      !   IF (rijsq <= rcut_vdwsq(this_box)) THEN 
-      !      get_vdw = .TRUE.
-      !   ELSE 
-      !      get_vdw = .FALSE.
-      !   ENDIF
-
       ELSEIF (int_vdw_sum_style(this_box) == vdw_cut_switch) THEN
          
          IF (rijsq <= roff_switch_sq(this_box)) THEN
@@ -2763,7 +2755,6 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     END DO
     w_lrc =  2.0_DP / 3.0_DP * PI * w_lrc / box_list(this_box)%volume
     END IF
-
   END SUBROUTINE Compute_LR_Force
 
   SUBROUTINE Compute_System_Ewald_Reciprocal_Force(this_box)

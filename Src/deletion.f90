@@ -296,7 +296,9 @@ SUBROUTINE Deletion(this_box)
 
   ELSEIF (int_vdw_sum_style(this_box) == vdw_cut_tail .AND. &
 			int_vdw_style(this_box) == vdw_mie ) THEN
+
      nbeads_out(:) = nint_beads_mie(is,:,this_box)
+
      DO i = 1, natoms(is)
         i_type = nonbond_list(i,is)%atom_type_number
         nint_beads_mie(is,i_type,this_box) = nint_beads_mie(is,i_type,this_box) - 1
