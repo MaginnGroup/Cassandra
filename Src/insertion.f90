@@ -393,7 +393,8 @@ SUBROUTINE Insertion(this_box)
 
   ! 3.6) Long-range energy correction
 
-  IF (int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
+  IF (int_vdw_sum_style(this_box) == vdw_cut_tail .AND. &
+			int_vdw_style(this_box) == vdw_lj) THEN
 
      ! increase number of integer beads
      nbeads_in = nint_beads(:,this_box)
@@ -406,6 +407,17 @@ SUBROUTINE Insertion(this_box)
      CALL Compute_LR_correction(this_box,E_lrc)
      delta_e = delta_e + E_lrc - energy(this_box)%lrc
 
+  ELSEIF (int_vdw_sum_style(this_box) == vdw_cut_tail .AND. &
+			int_vdw_style(this_box) == vdw_mie) THEN
+    nbeads_in = nint_beads_mie(is,:,this_box)
+
+     DO i = 1, natoms(is)
+        i_type = nonbond_list(i,is)%atom_type_number
+        nint_beads_mie(is,i_type,this_box) = nint_beads_mie(is,i_type,this_box) + 1
+     END DO
+
+     CALL Compute_LR_correction(this_box,E_lrc)
+     delta_e = delta_e + E_lrc - energy(this_box)%lrc
   END IF
 
   !*****************************************************************************

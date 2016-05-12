@@ -2071,12 +2071,14 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     INTEGER, INTENT(IN) :: this_box
     REAL(DP), INTENT(OUT) :: e_lrc
     
-    INTEGER ::  ia, ja
-    REAL(DP) :: epsij, sigij, sigij2, sigij6, sigij12
-
+    INTEGER ::  ia, ja, is, js
+    REAL(DP) :: epsij, sigij, sigij2, sigij6, sigij12, mie_n, mie_m, mie_coeff
+    REAL(DP) :: SigOverRcut, SigOverRn, SigOverRm
     REAL(DP) :: e_lrc_ia_ja
 
     e_lrc = 0.0_DP
+
+    IF (int_vdw_style(this_box) == vdw_lj) THEN
 
     DO ia = 1, nbr_atomtypes
        
@@ -2096,13 +2098,41 @@ END SUBROUTINE Compute_Molecule_Self_Energy
           e_lrc_ia_ja = e_lrc_ia_ja + nint_beads(ja,this_box) * &
                4.0_DP * epsij * (sigij12 /(9.0_DP*rcut9(this_box)) - &
                (sigij6 / (3.0_DP*rcut3(this_box))))
-
        END DO
 
        e_lrc = e_lrc + REAL( nint_beads(ia,this_box), DP ) * e_lrc_ia_ja
     END DO
 
     e_lrc = 2.0_DP * PI * e_lrc/box_list(this_box)%volume
+    
+    ELSE IF (int_vdw_style(this_box) == vdw_mie) THEN
+    DO is = 1, nspecies   
+        DO js = 1, nspecies 
+           mie_n = mie_nlist(mie_Matrix(is,js))
+           mie_m = mie_mlist(mie_Matrix(is,js))
+           mie_coeff = mie_n/(mie_n-mie_m)*(mie_n/mie_m)**(mie_m/(mie_n-mie_m))
+           DO ia = 1, nbr_atomtypes	
+           
+               e_lrc_ia_ja = 0.0_DP
+               DO ja = 1, nbr_atomtypes
+                  
+                  epsij = vdw_param1_table(ia,ja)
+                  sigij = vdw_param2_table(ia,ja)
+		  SigOverRcut = sigij/rcut_vdw(this_box)
+		  SigOverRn = SigOverRcut ** mie_n
+		  SigOverRm = SigOverRcut ** mie_m
+                  
+                  e_lrc_ia_ja = e_lrc_ia_ja + nint_beads_mie(js,ja,this_box) * &
+                        mie_coeff * epsij * rcut_vdw(this_box)**3.0 * ((SigOverRn/(3-mie_n)) + &
+                       (SigOverRm / (mie_m -3)))
+               END DO
+               e_lrc = e_lrc + REAL( nint_beads_mie(is,ia,this_box), DP ) * e_lrc_ia_ja
+	       
+           END DO
+        END DO
+    END DO
+    e_lrc = - 2.0_DP * PI * e_lrc/box_list(this_box)%volume
+    END IF
     
   END SUBROUTINE Compute_LR_Correction
   
@@ -2225,7 +2255,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
             get_vdw = .FALSE.  
          ENDIF
       ELSEIF (int_vdw_sum_style(this_box) == vdw_cut .OR. int_vdw_sum_style(this_box) &
-           == vdw_cut_shift ) THEN 
+           == vdw_cut_shift .OR. int_vdw_sum_style(this_box) == vdw_cut_tail) THEN 
      
          IF (rijsq <= rcut_vdwsq(this_box)) THEN 
             get_vdw = .TRUE.
@@ -2673,13 +2703,15 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     INTEGER, INTENT(IN) :: this_box
     REAL(DP), INTENT(OUT) :: w_lrc
     
-    INTEGER ::   ia, ja
+    INTEGER ::   is, js, ia, ja, mie_n, mie_m, mie_coeff
+    REAL(DP) :: SigOverR, SigOverRn, SigOverRm
 
     REAL(DP) :: epsij, sigij
     REAL(DP) :: w_lrc_ia_ja
 
     w_lrc = 0.0_DP 
 
+    IF (int_vdw_style(this_box) == vdw_lj) THEN
     DO ia = 1, nbr_atomtypes
 
        w_lrc_ia_ja = 0.0_DP
@@ -2699,6 +2731,39 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     END DO
 
     w_lrc = 16.0_DP / 3.0_DP * PI * w_lrc / box_list(this_box)%volume
+
+    ELSEIF (int_vdw_style(this_box) == vdw_mie) THEN
+
+    DO is = 1, nspecies
+        DO js = 1, nspecies
+           mie_n = mie_nlist(mie_Matrix(is,js))
+           mie_m = mie_mlist(mie_Matrix(is,js))
+           mie_coeff = mie_n/(mie_n-mie_m)*(mie_n/mie_m)**(mie_m/(mie_n-mie_m))
+
+           DO ia = 1, nbr_atomtypes
+       
+              w_lrc_ia_ja = 0.0_DP
+              DO ja = 1, nbr_atomtypes
+       
+                 epsij = vdw_param1_table(ia,ja)
+                 sigij = vdw_param2_table(ia,ja)
+		 SigOverR = sigij/rcut_vdw(this_box)
+		 SigOverRn = SigOverR**mie_n
+		 SigOverRm = SigOverR**mie_m
+       
+                 w_lrc_ia_ja = w_lrc_ia_ja + nint_beads_mie(js,ja,this_box) * mie_coeff * epsij &
+				 *rcut3(this_box) * (mie_n/(mie_n-3.0_DP) * SigOverRn + mie_m/(3.0_DP-mie_m) * SigOverRm)
+                    
+              END DO
+       
+              w_lrc = w_lrc + nint_beads_mie(is,ia,this_box) * w_lrc_ia_ja
+           END DO
+       
+        END DO
+		
+    END DO
+    w_lrc =  2.0_DP / 3.0_DP * PI * w_lrc / box_list(this_box)%volume
+    END IF
 
   END SUBROUTINE Compute_LR_Force
 

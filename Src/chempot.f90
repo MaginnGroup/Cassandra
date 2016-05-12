@@ -175,8 +175,10 @@ SUBROUTINE Chempot(this_box,is)
        delta_e = delta_e + E_self_move 
   END IF
 
-  IF (int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
+  IF (int_vdw_sum_style(this_box) == vdw_cut_tail .AND. &
+     		int_vdw_style(this_box) == vdw_lj) THEN
      nbeads_in(:) = nint_beads(:,this_box)
+
      DO i = 1, natoms(is)
         i_type = nonbond_list(i,is)%atom_type_number
         nint_beads(i_type,this_box) = nint_beads(i_type,this_box) + 1
@@ -184,6 +186,16 @@ SUBROUTINE Chempot(this_box,is)
      CALL Compute_LR_correction(this_box,e_lrc)
      delta_e = delta_e + e_lrc - energy(this_box)%lrc
      nint_beads(:,this_box) = nbeads_in(:)
+  ELSEIF (int_vdw_sum_style(this_box) == vdw_cut_tail .AND. &
+			int_vdw_style(this_box) == vdw_mie) THEN
+     nbeads_in(:) = nint_beads_mie(is,:,this_box) 
+     DO i = 1, natoms(is)
+        i_type = nonbond_list(i,is)%atom_type_number
+        nint_beads_mie(is,i_type,this_box) = nint_beads_mie(is,i_type,this_box) + 1
+     END DO
+     CALL Compute_LR_correction(this_box,e_lrc)
+     delta_e = delta_e + e_lrc - energy(this_box)%lrc
+     nint_beads_mie(is,:,this_box) = nbeads_in(:)
   END IF
 
   CP_energy = delta_e 
