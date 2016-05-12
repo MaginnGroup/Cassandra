@@ -6007,10 +6007,9 @@ SUBROUTINE Get_Mie_Nonbond
         DO is = 1, nspecies*nspecies
            line_nbr = line_nbr + 1
            CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
-           mie_nlist(mie_Matrix(String_To_Int(line_array(1)),String_To_Int(line_array(2)))) = String_To_Double(line_array(3))
-           mie_mlist(mie_Matrix(String_To_Int(line_array(1)),String_To_Int(line_array(2)))) = String_To_Double(line_array(4))
-
-	   WRITE(logunit,'(A17,I2,A7,I2,A6,F7.2,A7,F7.2)') 'Mie exponent for ', String_To_Int(line_array(1)), '   and ', String_To_Int(line_array(2)),  '   is ', String_To_Double(line_array(3)), '   and ', String_To_Double(line_array(4))
+           mie_nlist(mie_Matrix(String_To_Double(line_array(1)),String_To_Double(line_array(2)))) = String_To_Double(line_array(3))
+           mie_mlist(mie_Matrix(String_To_Double(line_array(1)),String_To_Double(line_array(2)))) = String_To_Double(line_array(4))
+	   WRITE(logunit,'(A17,F7.2,A7,F7.2,A6,F7.2,A7,F7.2)') 'Mie exponent for ', String_To_Double(line_array(1)), '   and ', String_To_Double(line_array(2)),  '   is ', String_To_Double(line_array(3)), '   and ', String_To_Double(line_array(4))
         END DO
 
         EXIT
