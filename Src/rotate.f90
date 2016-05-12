@@ -77,7 +77,7 @@ SUBROUTINE Rotate(this_box)
   REAL(DP) :: delta_e, ln_pacc, success_ratio
   REAL(DP) :: E_vdw, E_qq, E_vdw_move, E_qq_move, E_reciprocal_move
 
-  LOGICAL :: inter_overlap, overlap, accept, accept_or_reject
+  LOGICAL :: inter_overlap, overlap, accept_or_reject
 
   ! Pair_Energy arrays and Ewald implementation
   INTEGER :: position

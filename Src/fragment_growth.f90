@@ -43,7 +43,7 @@ MODULE Fragment_Growth
   !   cut_n_grow
   !   deletion
   !   gemc_particle_transfer
-  !   grow_molecules
+  !   make_config
   !   insertion
   !   main
   !   ring_fragment_driver

@@ -19,7 +19,7 @@
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*******************************************************************************
 
-SUBROUTINE Insertion(this_box,accept)
+SUBROUTINE Insertion(this_box)
 
   !*****************************************************************************
   ! 
@@ -61,7 +61,6 @@ SUBROUTINE Insertion(this_box,accept)
 
   ! Arguments
   INTEGER :: this_box ! attempt to insert a molecule in this_box
-  LOGICAL :: accept
 
   ! Local declarations
   INTEGER :: i, i_type               ! atom indices

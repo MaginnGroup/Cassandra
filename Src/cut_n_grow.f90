@@ -19,7 +19,7 @@
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*******************************************************************************
 
-SUBROUTINE Cut_N_Grow(this_box,accept)
+SUBROUTINE Cut_N_Grow(this_box)
 
   !*****************************************************************************
   !
@@ -87,7 +87,7 @@ SUBROUTINE Cut_N_Grow(this_box,accept)
   REAL(DP) :: nrg_ring_frag_forward, nrg_ring_frag_reverse
   REAL(DP) :: lambda_for_cut
 
-  LOGICAL ::  cbmc_overlap, accept, accept_or_reject, update_flag, overlap
+  LOGICAL ::  cbmc_overlap, accept_or_reject, update_flag, overlap
   LOGICAL :: del_overlap, cbmc_overlap_f, del_overlap_f, intra_overlap
   LOGICAL  :: inside_start, inside_finish
 

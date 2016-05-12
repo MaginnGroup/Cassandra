@@ -19,7 +19,7 @@
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*******************************************************************************
 
-SUBROUTINE GEMC_NVT_Volume(box1, box2, accept)
+SUBROUTINE GEMC_NVT_Volume(box1, box2)
 
   !***********************************************************************
   !
@@ -62,7 +62,7 @@ SUBROUTINE GEMC_NVT_Volume(box1, box2, accept)
   REAL(DP), DIMENSION(maxk) :: hx_old_2, hy_old_2, hz_old_2, Cn_old_2  
   REAL(DP) :: v_ratio_o, v_total, vol_factor
 
-  LOGICAL :: overlap, accept, accept_or_reject, allocation_cos_sin
+  LOGICAL :: overlap, accept_or_reject, allocation_cos_sin
 
   TYPE(Box_Class) :: box_list_old_1, box_list_old_2
   TYPE(Energy_Class) :: energy_old_1, energy_old_2

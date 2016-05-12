@@ -54,7 +54,7 @@ SUBROUTINE Get_COM(alive,is)
   !        deletion
   !        fragment_growth
   !        gemc_particle_transfer
-  !        grow_molecules
+  !        make_config
   !        insertion
   !        main
   !        read_write_checkpoint

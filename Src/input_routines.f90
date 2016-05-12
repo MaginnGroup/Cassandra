@@ -3383,8 +3383,8 @@ SUBROUTINE Get_Box_Info
      END IF
 
      IF (line_string(1:10) == '# Box_Info') THEN
+
         line_nbr = line_nbr + 1
-        
         CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
 
         ! Number of boxes
@@ -3420,8 +3420,9 @@ SUBROUTINE Get_Box_Info
 
         DO ibox = 1,nbr_boxes
            ! Get box type
-           CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
            line_nbr = line_nbr + 1
+           CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
+
            box_list(ibox)%box_shape = line_array(1)
 
            IF (box_list(ibox)%box_shape == 'CUBIC') THEN
@@ -3645,7 +3646,7 @@ SUBROUTINE Get_Temperature_Info
         DO i = 1, nbr_boxes
            temperature(i) = String_To_Double(line_array(i))
            ! compute inverse temperature
-              beta(i) = 1.0_DP / (kboltz * temperature(i))
+           beta(i) = 1.0_DP / (kboltz * temperature(i))
            ! write to the logunit that temperature is specified for box
            
            write(logunit,'(A30,2X,i3,2x,A2,2X,F7.3,2X,A3)')'Temperature assigned to box ', i, 'is', temperature(i), ' K'
@@ -3943,7 +3944,7 @@ SUBROUTINE Get_Move_Probabilities
               CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
               prob_trans = String_To_Double(line_array(1))
 
-              WRITE(logunit,'(A30,2X,F9.6)') 'Translation probability is', prob_trans
+              WRITE(logunit,'(A30,2X,F12.6)') 'Translation probability is', prob_trans
               WRITE(logunit,*)
 
               IF (int_sim_type == sim_ring .OR. int_sim_type == sim_frag) THEN
@@ -3985,7 +3986,7 @@ SUBROUTINE Get_Move_Probabilities
               CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
               prob_rot = String_To_Double(line_array(1))
 
-              WRITE(logunit,'(A30,2X,F9.6)') 'Rotation probability is', prob_rot
+              WRITE(logunit,'(A30,2X,F12.6)') 'Rotation probability is', prob_rot
               WRITE(logunit,*)
 
               DO j = 1, nbr_boxes
@@ -4048,7 +4049,7 @@ SUBROUTINE Get_Move_Probabilities
               prob_volume = String_To_Double(line_array(1))
 
               WRITE(logunit,*)
-              WRITE(logunit,'(A40,2X,F9.6)') 'Probability for volume move is ', prob_volume
+              WRITE(logunit,'(A40,2X,F12.6)') 'Probability for volume move is ', prob_volume
 
               ! Now read in information for each of the boxes for maximum displacement
               IF (int_sim_type == sim_gemc) THEN 
@@ -4118,7 +4119,7 @@ SUBROUTINE Get_Move_Probabilities
                  num_moves = num_moves + 1
                  prob_swap = String_To_Double(line_array(1))
                  WRITE(logunit,*)
-                 WRITE(logunit,'(A40,2X,F9.6)') 'Probability for particle swap is', prob_swap
+                 WRITE(logunit,'(A40,2X,F12.6)') 'Probability for particle swap is', prob_swap
               END IF
 
               ! Assign the second argument as type of insertion to sorbate species
@@ -4405,7 +4406,7 @@ SUBROUTINE Get_Move_Probabilities
               prob_regrowth = String_To_Double(line_array(1))
 
               WRITE(logunit,*)
-              WRITE(logunit,'(A30,2X,F9.6)')' Probability for regrowth is', prob_regrowth
+              WRITE(logunit,'(A30,2X,F12.6)')' Probability for regrowth is', prob_regrowth
 
               ! On the next line read the species probability
               line_nbr = line_nbr + 1
@@ -4719,11 +4720,11 @@ END SUBROUTINE Get_Move_Probabilities
 SUBROUTINE Get_Start_Type
   ! This subroutine will read in the initial coordinates from an input file.
   ! There are three options to start a run
-  ! 'make_config' --- will attempt to generate an initial configuration by random insertion
-  !               --- molecules
-  ! 'read_config' --- read from an exisiting file
+  ! 'make_config'   --- will attempt to generate an initial configuration by
+  !                     randomly inserting molecules
+  ! 'read_config'   --- read from an exisiting file
   ! 'add_to_config' --- read from an exisiting file and then insert additional molecules
-  ! 'checkpoint'  --- read from a crash file
+  ! 'checkpoint'    --- read from a crash file
 
   INTEGER :: ierr, line_nbr, nbr_entries, i,j, ibox, is
   CHARACTER(120) :: line_string, line_array(20)
@@ -4731,9 +4732,42 @@ SUBROUTINE Get_Start_Type
   CHARACTER(4) :: symbol
 
   REAL(DP) :: total_mass, this_mass
+
+  ALLOCATE(start_type(nbr_boxes),Stat=Allocatestatus)
+  IF (Allocatestatus /= 0) THEN
+    err_msg = ''
+    err_msg(1) = 'Memory could not be allocated for start_type'
+    CALL Clean_Abort(err_msg, 'Get_Start_Type')
+  END IF
   
+  ALLOCATE(old_config_file(nbr_boxes),Stat=Allocatestatus)
+  IF (Allocatestatus /= 0) THEN
+    err_msg = ''
+    err_msg(1) = 'Memory could not be allocated for old_config_file'
+    CALL Clean_Abort(err_msg, 'Get_Start_Type')
+  END IF
+
+  ALLOCATE(nmols_to_read(nspecies,nbr_boxes),Stat=Allocatestatus)
+  IF (Allocatestatus /= 0) THEN
+    err_msg = ''
+    err_msg(1) = 'Memory could not be allocated for nmols_to_read'
+    CALL Clean_Abort(err_msg, 'Get_Start_Type')
+  END IF
+
+  ALLOCATE(nmols_to_make(nspecies,nbr_boxes),Stat=Allocatestatus)
+  IF (Allocatestatus /= 0) THEN
+    err_msg = ''
+    err_msg(1) = 'Memory could not be allocated for nmols_to_make'
+    CALL Clean_Abort(err_msg, 'Get_Start_Type')
+  END IF
+
   ierr = 0
   line_nbr = 0
+  ibox = 0
+  nmols_to_make = 0
+  nmols_to_read = 0
+  nmols = 0
+  molecule_list(:,:)%live = .FALSE.
 
   REWIND(inputunit)
 
@@ -4746,229 +4780,169 @@ SUBROUTINE Get_Start_Type
      IF ( ierr /= 0 ) THEN
         err_msg = ""
         err_msg(1) = "Error encoutered while reading initial coordinate information"
-        CALL Clean_Abort(err_msg,'Get_Initial_coordinates_Info')
+        CALL Clean_Abort(err_msg,'Get_Start_Type')
      END IF
 
      IF(line_string(1:12) == '# Start_Type') THEN
         ! we entered the section of input file that contains information on
         ! initial coordinates
         WRITE(logunit,*) 
-        WRITE(logunit,*) '******Initial Coordinate Info **********'
+        WRITE(logunit,*) '********** Start Type Info **********'
         Start_Type_LOOP: DO 
            line_nbr = line_nbr + 1
            CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
+           ibox = ibox + 1
            IF (line_array(1) == 'make_config') THEN
+              start_type(ibox) = 'make_config'
 
-              start_type = 'make_config'
-              ALLOCATE(nmols_initial(nspecies,nbr_boxes),Stat = AllocateStatus)
-              IF (AllocateStatus /= 0 ) THEN
-                 write(*,*)'memory could not be allocated for nmols_initial array'
-                 write(*,*)'stopping'
-                 STOP
+              WRITE(logunit,*)
+              WRITE(logunit,*) 'Initial configuration for box ' // &
+                 TRIM(Int_To_String(ibox)) // ' will be made'
+              
+              ! check number of entries
+              IF (nbr_entries < nspecies + 1) THEN
+                 err_msg = ''
+                 err_msg(1) = 'Simulation has ' // &
+                    TRIM(Int_To_String(nspecies)) // ' species'
+                 err_msg(2) = 'Input file lists number of molecules for ' // &
+                    TRIM(Int_To_String(nbr_entries-1)) // ' species'
+                 CALL Clean_Abort(err_msg, 'Get_Start_Type')
               END IF
-              WRITE(logunit,*)
-              WRITE(logunit,*) 'Initial configuration will be generated'
-              
-              ! read in the initial geometry to generate initial configuration
-              ! for each of the species
-              
-              ! Allocate memory for each of the file names
-              ALLOCATE(init_geomfile(nspecies))
-            
-              DO i = 1, nspecies
-                 line_nbr = line_nbr + 1
-                 CALL Parse_String(inputunit,line_nbr,nbr_boxes,nbr_entries,line_array,ierr)
-                 ! Check the string for alphanumeric characters
-!!$                 CALL Check_String(line_array(1),ierr)
-!!$                 
-!!$                 IF (ierr /= 0) THEN
-!!$                    err_msg = ""
-!!$                    err_msg(1) = 'An error in the input line ' // TRIM(Int_to_String(line_nbr)) &
-!!$                         // ' of input file.'
-!!$                    CALL Clean_Abort(err_msg,'Get_Initial_Coordinates_Info')
-!!$                 END IF
 
-!!$                 init_geomfile(i) = line_array(1)
-!!$
-!!$                 WRITE(logunit,*) 
-!!$                 WRITE(logunit,'(A,T50,I3,A)') 'The initial geometry file for species ', i , ' is'
-!!$                 WRITE(logunit,*) ADJUSTL(init_geomfile(i))
-
-                 ! assign actual number of molecules of this species in each box
-                 
-                 DO ibox = 1, nbr_boxes
-                    nmols_initial(i,ibox) = String_To_Int(line_array(ibox))
-                    WRITE(logunit,'(A41,2x,I2,2X,A7,2X,I2,2X,A2,2X,I6)') 'Starting number of molecules of species', i, ' in box ', ibox, 'is',  nmols_initial(i,ibox)
-                 END DO
+              ! Read nmols_to_make
+              DO is = 1, nspecies
+                 nmols_to_make(is,ibox) = String_To_Int(line_array(is+1))
+                 WRITE(logunit,'(X,A11,2X,I6,2X,A20,2X,I2)') 'Will insert', &
+                    nmols_to_make(is,ibox), 'molecules of species', is
+              END DO
  
-                 species_list(i)%nmoltotal = SUM(nmols_initial(i,:))
-
-                 IF (species_list(i)%nmoltotal > max_molecules(i)) THEN
-                    err_msg = ''
-                    err_msg(1) = 'Actual number of molecules of species' // INT_To_String(i) // 'is'
-                    err_msg(2) = 'greater than maximum allowed'
-                    CALL Clean_Abort(err_msg,'Get_Initial_Coordinates_Info')
-                 END IF
-
-                 WRITE(logunit,*) 
-                 WRITE(logunit,'(A36,2X,I2,2X,A21,2X,I6)') 'Total number of molecules of species ', i , ' present initially is', species_list(i)%nmoltotal
-
-!!$                 ! --- open the geometry file and read in the coordinates 
-!!$                 OPEN(unit=init_geomunit,file=init_geomfile(i),status='old')
-!!$                 ! the file is in xyz format
-!!$
-!!$                 ! obtain COM of the input geometry as well
-!!$                 total_mass = 0.0_DP
-!!$                 
-!!$                 species_list(i)%xcom = 0.0_DP
-!!$                 species_list(i)%ycom = 0.0_DP
-!!$                 species_list(i)%zcom = 0.0_DP
-!!$                 
-!!$
-!!$                 DO j = 1, natoms(i)
-!!$                    READ(init_geomunit,*) symbol, init_list(j,1,i)%rxp, init_list(j,1,i)%ryp, init_list(j,1,i)%rzp
-!!$                    
-!!$                    this_mass = nonbond_list(j,i)%mass
-!!$                    total_mass = total_mass + this_mass
-!!$                    
-!!$                    species_list(i)%xcom = species_list(i)%xcom + this_mass * &
-!!$                         init_list(j,1,i)%rxp
-!!$                    species_list(i)%ycom = species_list(i)%ycom + this_mass * &
-!!$                         init_list(j,1,i)%ryp
-!!$                    species_list(i)%zcom = species_list(i)%zcom + this_mass * &
-!!$                         init_list(j,1,i)%rzp
-!!$                    
-!!$                 END DO
-!!$                 
-!!$                 CLOSE(UNIT=init_geomunit)
-!!$
-!!$                 species_list(i)%xcom = species_list(i)%xcom / total_mass
-!!$                 species_list(i)%ycom = species_list(i)%ycom / total_mass
-!!$                 species_list(i)%zcom = species_list(i)%zcom / total_mass
-                 
-              END DO
-              
-              EXIT inputLOOP
-
            ELSE IF (line_array(1) == 'read_config') THEN
-              ! in this case we will read in the information of coordinates for
-              ! all the boxes so that there must be nbr_boxes lines following the
-              ! keyword.
-              ALLOCATE(old_config_file(nbr_boxes))
-              
-              start_type = 'read_config'
+              start_type(ibox) = 'read_config'
 
               WRITE(logunit,*)
-              WRITE(logunit,*) 'Configurations will be read from old files'
-              DO i = 1,nbr_boxes
-                 line_nbr = line_nbr + 1
-                 CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
-                 ! Make sure that the characters of the string are alphanumeric with
-                 ! a possibility of a . (dot). The first character must be an alphabet
-                 CALL Check_String(line_array(1),ierr)
-                 IF (ierr /= 0 ) THEN
-                    err_msg = ""
-                    err_msg(1) = 'An error in the input line ' // TRIM(Int_to_String(line_nbr)) &
-                         // ' of input file.'
-                    CALL Clean_Abort(err_msg,'Get_Initial_Coordinates_Info')
-                 END IF
-
-                 WRITE(logunit,*)
-                 WRITE(logunit,'(A,T40,I3,A,T50)')'Starting configuration for box ', i, ' is'
-                 WRITE(logunit,*) ADJUSTL(line_array(1))
-                 old_config_file(i) = TRIM(ADJUSTL(line_array(1)))
-                 
+              WRITE(logunit,*) 'Initial configuration for box ' // &
+                 TRIM(Int_To_String(ibox)) // ' will be read from file'
+              
+              ! Check number of entries
+              IF (nbr_entries < nspecies+2) THEN
+                 err_msg = ''
+                 err_msg(1) = 'Simulation has ' // &
+                    TRIM(Int_To_String(nspecies)) // ' species'
+                 err_msg(2) = 'Input file lists number of molecules for ' // &
+                    TRIM(Int_To_String(nbr_entries-2)) // ' species'
+                 CALL Clean_Abort(err_msg,'Get_Start_Type')
+              END IF
+ 
+              ! Read nmols_to_read
+              DO is = 1, nspecies
+                 nmols_to_read(is,ibox) = String_To_Int(line_array(is+1))
+                 WRITE(logunit,'(X,A9,2X,I6,2X,A20,2X,I2)') 'Will read', &
+                    nmols_to_read(is,ibox), 'molecules of species', is
               END DO
-              EXIT inputLOOP
-           ELSE IF (line_array(1) == 'checkpoint') THEN
 
-              start_type = 'checkpoint'
+              ! Make sure that the characters of the string are alphanumeric
+              ! with a possibility of a . (dot).
+              ! The first character must be an alphabet
+              CALL Check_String(line_array(2+nspecies),ierr)
+              IF (ierr /= 0 ) THEN
+                 err_msg = ""
+                 err_msg(1) = 'An error in the input line ' // &
+                      TRIM(Int_to_String(line_nbr)) // ' of input file.'
+                 CALL Clean_Abort(err_msg,'Get_Start_Type')
+              END IF
+              old_config_file(ibox) = TRIM(ADJUSTL(line_array(2+nspecies)))
+
+              WRITE(logunit,'(X,A33,X,A)') &
+                 'Will read configuration from file', old_config_file(ibox)
+                 
+           ELSE IF (line_array(1) == 'add_to_config') THEN
+              start_type(ibox) = 'add_to_config'
 
               WRITE(logunit,*)
-              WRITE(logunit,*) 'Starting configuration will be obtained from check point files'
+              WRITE(logunit,*) 'Initial configuration for box ' // &
+                 TRIM(Int_To_String(ibox)) // ' will add molecules to ' // &
+                 'configuration read from file'
               
-              line_nbr = line_nbr + 1
-              CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
+              ! Read nmols_to_read
+              DO is = 1, nspecies
+                 nmols_to_read(is,ibox) = String_To_Int(line_array(is+1))
+                 WRITE(logunit,'(X,A9,2X,I6,2X,A20,2X,I2)') 'Will read', &
+                    nmols_to_read(is,ibox), 'molecules of species', is
+              END DO
+
+              ! Make sure that the characters of the string are alphanumeric
+              ! with a possibility of a . (dot).
+              ! The first character must be an alphabet
+              CALL Check_String(line_array(2+nspecies),ierr)
+              IF (ierr /= 0 ) THEN
+                 err_msg = ""
+                 err_msg(1) = 'An error in the input line ' // &
+                      TRIM(Int_to_String(line_nbr)) // ' of input file.'
+                 CALL Clean_Abort(err_msg,'Get_Start_Type')
+              END IF
+              old_config_file(ibox) = TRIM(ADJUSTL(line_array(2+nspecies)))
+
+              WRITE(logunit,'(X,A33,X,A)') &
+                 'Will read configuration from file', old_config_file(ibox)
+                 
+              ! Read nmols_to_make
+              DO is = 1, nspecies
+                 ! assign initial number of molecules to add in each box
+                 nmols_to_make(is,ibox) = &
+                    String_To_Int(line_array(2+nspecies+is))
+                 WRITE(logunit,'(X,A11,2X,I6,2X,A20,2X,I2)') 'Will insert', &
+                    nmols_to_make(is,ibox), 'molecules of species', is
+              END DO
+
+           ELSE IF (line_array(1) == 'checkpoint') THEN
+              start_type(1) = 'checkpoint'
+
+              WRITE(logunit,*)
+              WRITE(logunit,*) 'Starting configuration will be read from checkpoint file'
+              
               ! Make sure that the characters of the string are alphanumeric with
-              ! a possibility of a . (dot). or _ (dash). The first character must be an alphabet
-              CALL Check_String(line_array(1),ierr)
+              ! a possibility of a . (dot). or _ (dash).
+              ! The first character must be a letter from the alphabet
+              CALL Check_String(line_array(2),ierr)
               IF (ierr /= 0 ) THEN
                  err_msg = ""
                  err_msg(1) = 'An error in the input line ' // TRIM(Int_to_String(line_nbr)) &
                       // ' of input file.'
-                 CALL Clean_Abort(err_msg,'Get_Initial_Coordinates_Info')
-              END IF
-              
-              restart_file = line_array(1)
-              WRITE(logunit,*)
-              WRITE(logunit,*)'Starting configuration is '
-              WRITE(logunit,*) ADJUSTL(line_array(1))
-              
-              
-              
-           
-              EXIT inputLOOP
-
-           ELSE IF (line_array(1) == 'add_to_config') THEN
-
-              start_type = 'add_to_config'
-
-              ALLOCATE(old_config_file(nbr_boxes))
-              ! Allocate memory for initial nmols
-              ALLOCATE(nmols_initial(nspecies,nbr_boxes),Stat=Allocatestatus)
-              IF (Allocatestatus /=0) THEN
-                 err_msg = ''
-                 err_msg(1) = 'Memory could not be allocated for nmols_initial'
                  CALL Clean_Abort(err_msg,'Get_Start_Type')
               END IF
-
-              WRITE(logunit,*)
-              WRITE(logunit,*) 'Molecules will be inserted into configuration read from xyz file(s)'
-
-              DO ibox = 1,nbr_boxes
-                line_nbr = line_nbr + 1
-                CALL Parse_String(inputunit,line_nbr,1+nspecies,nbr_entries,line_array,ierr)
-                ! Make sure that the characters of the string are alphanumeric with
-                ! a possibility of a . (dot). The first character must be an alphabet
-                CALL Check_String(line_array(1),ierr)
-                IF (ierr /= 0 ) THEN
-                   err_msg = ""
-                   err_msg(1) = 'An error in the input line ' // TRIM(Int_to_String(line_nbr)) &
-                        // ' of input file.'
-                   CALL Clean_Abort(err_msg,'Get_Start_Type')
-                END IF
-
-                WRITE(logunit,*)
-                WRITE(logunit,'(A,T40,I3,A,T50)')'Starting configuration for box ', ibox, ' is'
-                WRITE(logunit,*) ADJUSTL(line_array(1))
-                old_config_file(ibox) = TRIM(ADJUSTL(line_array(1)))
-                 
-                DO is = 1, nspecies
-                   ! assign initial number of molecules of this species in each box
-                   nmols_initial(is,ibox) = String_To_Int(line_array(1+is))
-                   WRITE(logunit,'(X,I6,A22,I2,A22,I2)') nmols_initial(is,ibox), ' molecules of species ', is, ' will be added to box ', ibox
- 
-                   species_list(is)%nmoltotal = SUM(nmols_initial(is,1:ibox))
-
-                   IF (species_list(is)%nmoltotal > max_molecules(is)) THEN
-                      err_msg = ''
-                      err_msg(1) = 'Additional number of molecules of species ' // TRIM(Int_To_String(is)) // ' is ' // TRIM(Int_To_String(species_list(is)%nmoltotal))
-                      err_msg(2) = 'Maximum molecules allowed is ' // TRIM(Int_To_String(max_molecules(is)))
-                      CALL Clean_Abort(err_msg,'Get_Start_Type')
-                   END IF
-
-                   WRITE(logunit,*) 
-                   WRITE(logunit,'(A31,I2,A16,I6)') 'Number of molecules of species ', is , ' to be added is ', species_list(is)%nmoltotal
-                END DO
-              END DO
-
-              EXIT inputLOOP
+              IF (ibox /= 1) THEN
+                 err_msg = ""
+                 err_msg(1) = 'checkpoint must be the first start type option'
+                 CALL Clean_Abort(err_msg, 'Get_Start_Type')
+              END IF
+              
+              restart_file = line_array(2)
+              WRITE(logunit,*) ADJUSTL(restart_file)
+              
+              ibox = nbr_boxes
            END IF
+           IF (ibox == nbr_boxes) EXIT inputLOOP
                        
         END DO Start_Type_LOOP
      END IF
      
   END DO InputLOOP
+
+  DO is = 1, nspecies  
+     species_list(is)%nmoltotal = SUM(nmols_to_read(is,:)) &
+                                + SUM(nmols_to_make(is,:))
+
+     IF (species_list(is)%nmoltotal > max_molecules(is)) THEN
+        err_msg = ''
+        err_msg(1) = 'Initial number of molecules of species ' // &
+                     TRIM(Int_To_String(is)) // ' is ' // &
+                     TRIM(Int_To_String(species_list(is)%nmoltotal))
+        err_msg(2) = 'Maximum number of molecules is ' // &
+                     TRIM(Int_To_String(max_molecules(is)))
+        CALL Clean_Abort(err_msg,'Get_Initial_Coordinates_Info')
+     END IF
+  END DO
+
   WRITE(logunit,*) 
   WRITE(logunit,*) '*****Finished reading initial coordinate info *****'
 END SUBROUTINE Get_Start_Type
@@ -4981,15 +4955,17 @@ SUBROUTINE Get_Run_Type
   ! along with dihedral and angles will be changed to achieve a 50% acceptance.
   !*********************************************************************************
 
-USE Energy_Routines
-USE Rotation_Routines
-USE Random_Generators
+  USE Energy_Routines
+  USE Rotation_Routines
+  USE Random_Generators
 
   IMPLICIT NONE
 
   INTEGER :: ierr, line_nbr, nbr_entries,i, ia 
   CHARACTER(120) :: line_string,line_array(20)
   LOGICAL :: overlap
+
+  REWIND(inputunit)
 
   ierr = 0
   line_nbr = 0
@@ -4999,7 +4975,8 @@ USE Random_Generators
      CALL Read_String(inputunit,line_string,ierr)
      IF (ierr /=0 ) THEN
         err_msg = ""
-        err_msg(1) = 'Error while reading input file'
+        err_msg(1) = 'Error while reading line ' // &
+           TRIM(Int_To_String(line_nbr)) // ' of input file'
         CALL Clean_Abort(err_msg,'Get_Run_Type')
      END IF
      
@@ -5151,7 +5128,7 @@ SUBROUTINE Get_Seed_Info
 
   DO
 
-     IF (start_type == 'checkpoint') THEN
+     IF (start_type(1) == 'checkpoint') THEN
         WRITE(logunit,*) 
         WRITE(logunit,*) 'Seed will be read from a checkpoint file'
         EXIT
@@ -5258,14 +5235,14 @@ SUBROUTINE Get_Simulation_Length_Info
                  nthermo_freq = String_To_Int(line_array(2))
 
                  WRITE(logunit,*) 
-                 WRITE(logunit,'(A,T50,I8,A)') 'Thermodynamic quantities will written at every', nthermo_freq, ' minutes.'
+                 WRITE(logunit,'(A,T50,I8,A)') 'Thermodynamic quantities will written every', nthermo_freq, ' minutes.'
 
               ELSE IF (line_array(1) == 'Coord_Freq') THEN
               
                  ncoord_freq = String_To_Int(line_array(2))
 
                  WRITE(logunit,*)
-                 WRITE(logunit,'(A,T50,I8,A)') 'Coordinates will be written at every', ncoord_freq, ' minutes.'
+                 WRITE(logunit,'(A,T50,I8,A)') 'Coordinates will be written every', ncoord_freq, ' minutes.'
 
               ELSE IF (line_array(1) == 'Total_Time') THEN
 
@@ -5291,7 +5268,7 @@ SUBROUTINE Get_Simulation_Length_Info
                  IF (sim_length_units == 'Sweeps') nthermo_freq = nthermo_freq * steps_per_sweep
               
                  WRITE(logunit,*) 
-                 WRITE(logunit,'(A,T50,I8,A)') 'Thermodynamic quantities will written at every', nthermo_freq, ' MC steps.'
+                 WRITE(logunit,'(A,T50,I8,A)') 'Thermodynamic quantities will written every', nthermo_freq, ' MC steps.'
 
               ELSE IF (line_array(1) == 'Coord_Freq') THEN
               
@@ -5299,7 +5276,7 @@ SUBROUTINE Get_Simulation_Length_Info
                  IF (sim_length_units == 'Sweeps') ncoord_freq = ncoord_freq * steps_per_sweep
 
                  WRITE(logunit,*)
-                 WRITE(logunit,'(A,T50,I8,A)') 'Coordinates will be written at every', ncoord_freq, ' MC steps.'
+                 WRITE(logunit,'(A,T50,I8,A)') 'Coordinates will be written every', ncoord_freq, ' MC steps.'
                  WRITE(logunit,*)
 
                  DO ibox = 1, nbr_boxes

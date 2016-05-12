@@ -19,7 +19,7 @@
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*******************************************************************************
 
-SUBROUTINE Deletion(this_box,accept)
+SUBROUTINE Deletion(this_box)
   
   !*****************************************************************************
   !
@@ -63,7 +63,6 @@ SUBROUTINE Deletion(this_box,accept)
 
   ! Arguments
   INTEGER, INTENT(INOUT) :: this_box ! attempt to delete a molecule in this_box
-  LOGICAL, INTENT(OUT) :: accept
 
   ! Local declarations
   INTEGER :: i, i_type               ! atom indices

@@ -19,7 +19,7 @@
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*******************************************************************************
 
-SUBROUTINE GEMC_Particle_Transfer(box_in, box_out, accept)
+SUBROUTINE GEMC_Particle_Transfer(box_in, box_out)
 
   !*****************************************************************************
   !
@@ -83,7 +83,7 @@ SUBROUTINE GEMC_Particle_Transfer(box_in, box_out, accept)
   REAL(DP) :: E_angle_in, E_dihed_in, delta_e_in, delta_e_in_pacc, potw, CP_energy
   REAL(DP) :: P_seq, P_forward, P_reverse, ln_pacc
   REAL(DP) :: lambda_for_build
-  LOGICAL :: inter_overlap, accept, accept_or_reject, cbmc_overlap, forward
+  LOGICAL :: inter_overlap, accept_or_reject, cbmc_overlap, forward
   LOGICAL :: intra_overlap
  ! ring biasing variables
 

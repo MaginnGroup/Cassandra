@@ -20,7 +20,7 @@
 !*******************************************************************************
 
 !*******************************************************************************
-SUBROUTINE Translate(this_box,mc_step)
+SUBROUTINE Translate(this_box)
 !*******************************************************************************
 
   !*****************************************************************************
@@ -77,7 +77,7 @@ SUBROUTINE Translate(this_box,mc_step)
   REAL(DP) :: E_vdw, E_qq, E_vdw_move, E_qq_move, E_reciprocal_move
   REAL(DP) :: rcut_small
 
-  LOGICAL :: inter_overlap, overlap, accept, accept_or_reject
+  LOGICAL :: inter_overlap, overlap, accept_or_reject
 
   ! Pair_Energy arrays and Ewald implementation
   INTEGER :: position

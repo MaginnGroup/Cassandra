@@ -61,7 +61,7 @@ SUBROUTINE Fragment_Driver
 
   IMPLICIT NONE
 
-  INTEGER :: is, im, this_box, rand_atom, naccept, ia
+  INTEGER :: is, im, ibox, rand_atom, naccept, ia
   INTEGER :: naverage
 
   REAL(DP) :: e_angle_old, e_angle_new, delta_e_angle, ln_pacc, old_coord, new_coord
@@ -69,7 +69,7 @@ SUBROUTINE Fragment_Driver
   REAL(DP) :: e_improper_n, e_improper_o, delta_e_improper, delta_e, e_total_o
   REAL(DP) :: ac_frag_energy
 
-  LOGICAL :: theta_bound, accept, accept_or_reject
+  LOGICAL :: theta_bound, accept_or_reject
 
   ! compute angle energy for the input conformation
 
@@ -87,7 +87,7 @@ SUBROUTINE Fragment_Driver
         e_total_o = e_total_o + e_improper_o
      END IF
 
-     this_box = molecule_list(im,is)%which_box
+     ibox = molecule_list(im,is)%which_box
 
      OPEN(UNIT=frag_file_unit,file=frag_file(is))
      WRITE(frag_file_unit,*) (n_mcsteps-n_equilsteps)/nthermo_freq
@@ -120,7 +120,7 @@ SUBROUTINE Fragment_Driver
 !        END IF
 !        delta_e = delta_e_angle + delta_e_improper
 !
-!        ln_pacc = beta(this_box) * delta_e
+!        ln_pacc = beta(ibox) * delta_e
 !        accept = accept_or_reject(ln_pacc)
 !        
 !        IF ( accept ) THEN
@@ -147,9 +147,7 @@ SUBROUTINE Fragment_Driver
 !
 
         
-        CALL Atom_Displacement(this_box,accept)
-
-        IF (accept) naccept = naccept + 1
+        CALL Atom_Displacement(ibox,accept)
 
         ! Store information with given frequency
         IF ( i_mcstep > n_equilsteps ) THEN
@@ -159,7 +157,7 @@ SUBROUTINE Fragment_Driver
            IF (MOD(i_mcstep,nthermo_freq) == 0) THEN
               !           WRITE(frag_file_unit,*) natoms(is)
               
-              WRITE(frag_file_unit,*) temperature(this_box), e_total_o
+              WRITE(frag_file_unit,*) temperature(ibox), e_total_o
               DO ia = 1, natoms(is)
                  WRITE(frag_file_unit,*) nonbond_list(ia,is)%element, atom_list(ia,im,is)%rxp, atom_list(ia,im,is)%ryp, &
                       atom_list(ia,im,is)%rzp
@@ -172,8 +170,9 @@ SUBROUTINE Fragment_Driver
         ! revert coordinates, revert        
        
      END DO
-     WRITE(*,'(A30,I10)') 'Number of Trial moves', n_mcsteps
-     WRITE(*,'(A30,I10)') 'Accepted moves',  naccept
+     WRITE(*,'(A30,I10)') 'Number of Trial moves', ntrials(is,ibox)%disp_atom
+     WRITE(*,'(A30,I10)') 'Accepted moves',  nsuccess(is,ibox)%disp_atom
+
   END DO
 
 

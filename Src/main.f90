@@ -47,8 +47,8 @@ PROGRAM Main
   !        Get_Run_Type
   !        Initialize
   !        Reset
-  !        Grow_Molecules
-  !        Restart_From_Old
+  !        Make_Config
+  !        Read_Config
   !        Read_Checkpoint
   !        Ewald_Reciprocal_Lattice_Vector_Setup
   !        init_seeds
@@ -91,7 +91,6 @@ PROGRAM Main
   INTEGER(4) :: count
   INTEGER :: i, j, is, im, ia, this_im, ibox, nmol_is, int_phi
   INTEGER :: alive, t_num
-  INTEGER :: initial_mcstep
 
   INTEGER :: nyears, nmonths, ndays, nhours, nmin, nsec, nms
   CHARACTER(120) :: version
@@ -216,13 +215,8 @@ PROGRAM Main
      CALL Clean_Abort(err_msg,'Main')
   ENDIF
 
-  ! Determine type of start
-  CALL Get_Start_Type
-
   ! Determine if it is equilibration or production or test
   CALL Get_Run_Type
-
-  WRITE(logunit,'(a,a,/)') ' Starting type ',start_type
 
   IF( int_run_style == run_test ) THEN
 
@@ -251,38 +245,48 @@ PROGRAM Main
   WRITE(*,*) 'Beginning Cassandra Simulation'
   WRITE(*,*) 
 
-  IF (start_type == 'make_config') THEN
-     ! Initialize system with no molecules
-     nmols = 0
-     molecule_list(:,:)%live = .false.
-     ! Grow molecules using CBMC
-     CALL Grow_Molecules
-     initial_mcstep = 0
+  DO ibox = 1, nbr_boxes
+    IF (start_type(ibox) == 'make_config') THEN
+       ! Insert molecules using CBMC
+       CALL Make_Config(ibox)
+       initial_mcstep = 0
 
-  ELSEIF (start_type == 'read_config') THEN
-     ! Read in old coordinates and restart a new simulation, 
-     ! Note that the counters have already been set to zero by the call to
-     ! initialize and reset above.
-     CALL Restart_From_Old
-     initial_mcstep = 0
+    ELSEIF (start_type(ibox) == 'read_config') THEN
+       ! Read in coordinates
+       ! Note that the counters have already been set to zero by the call to
+       ! initialize and reset above.
+       CALL Read_Config(ibox)
+       initial_mcstep = 0
 
-  ELSEIF (start_type == 'add_to_config') THEN
-     ! Add molecules using CBMC to configuration read from file
-     CALL Restart_From_Old
-     CALL Grow_Molecules
-     initial_mcstep = 0
-     
-  ELSEIF (start_type == 'checkpoint') THEN
-     ! Restart from checkpoint. Shall we verify match between stuff in cpt 
-     ! and stuff input, or override with cpt info?
-     CALL Read_Checkpoint(initial_mcstep)
-     
-  ELSE
-     err_msg = ""
-     err_msg(1) = "Start type " // start_type // " is not a valid option."
-     CALL Clean_Abort(err_msg,'Main')
-     
-  ENDIF
+    ELSEIF (start_type(ibox) == 'add_to_config') THEN
+       ! Add molecules using CBMC to configuration read from file
+       CALL Read_Config(ibox)
+       CALL Make_Config(ibox)
+       initial_mcstep = 0
+       
+    ELSEIF (start_type(ibox) == 'checkpoint') THEN
+       ! Restart from checkpoint. Shall we verify match between stuff in cpt 
+       ! and stuff input, or override with cpt info?
+       CALL Read_Checkpoint
+       ! Read in info for all boxes, so exit loop
+       EXIT
+       
+    ELSE
+       err_msg = ""
+       err_msg(1) = "Start type " // TRIM(start_type(ibox)) // " is not a valid option."
+       CALL Clean_Abort(err_msg,'Main')
+       
+    ENDIF
+  END DO
+
+  ! Add LOCATE for any unplaced molecules in array under BOX==0, 
+  ! in reverse order
+  DO is = 1, nspecies
+    DO im = max_molecules(is), SUM(nmols(is,1:nbr_boxes)) + 1, -1
+      nmols(is,0) = nmols(is,0) + 1
+      locate(nmols(is,0),is,0) = im
+    END DO
+  END DO
 
   ! Ewald stuff
   IF ( int_charge_sum_style(1) == charge_ewald) THEN
@@ -335,6 +339,7 @@ PROGRAM Main
       END DO 
       WRITE(logunit,'(X,A,T15,2X,I4,4x,A,T45,4x,f12.8)')'Species', is, 'has charge', q_mol 
    ENDDO
+   WRITE(logunit,*)
 
    DO ibox = 1, nbr_boxes
       q_tot_sys = 0.0_DP 
@@ -346,7 +351,6 @@ PROGRAM Main
          END DO
       END DO
       WRITE(logunit,'(X,A,T13,4X,I4,4X,A,T45,4X,f12.8)')'Box ', ibox, 'has charge', q_tot_sys
-      WRITE(logunit,*)
 
       IF (ABS(q_tot_sys) .gt. 0.000001) THEN
          IF ( .NOT. ((int_sim_type /=  sim_frag) .OR. (int_sim_type /= sim_ring)) ) THEN
@@ -359,13 +363,10 @@ PROGRAM Main
    END DO
 
    Write(logunit,'(X,A59)') '***************** Charge Neutrality Check *****************'
- ! NR: At this point we can initialize random number generator
 
+  ! initialize random number generator
   CALL init_seeds(iseed1, iseed3)
 
-
-  ! Assign a locate id to all the molecules
-  ! This goes to the maximum number of molecules
 
   ! Compute total number of beads in each box
 
@@ -379,46 +380,30 @@ PROGRAM Main
   ! Internal coordinates
   CALL Get_Internal_Coords
 
- ! Calculate COM and distance of the atom farthest to the COM.
-
+  ! Calculate COM and distance of the atom farthest to the COM.
   DO ibox = 1, nbr_boxes
      DO is = 1, nspecies
         DO im = 1, nmols(is,ibox)
            this_im = locate(im,is,ibox)
            CALL Get_COM(this_im,is)
            CALL Compute_Max_Com_Distance(this_im,is)
+           CALL Fold_Molecule(this_im,is,ibox)
         END DO
      END DO
   END DO
-
- IF (start_type /= 'make_config') THEN
-  ! Fold the molecules. 
-    DO ibox = 1, nbr_boxes
-       DO is = 1, nspecies
-          DO im = 1, nmols(is,ibox)
-             this_im = locate(im,is,ibox)
-             CALL Fold_Molecule(this_im,is,ibox) 
-          END DO
-       END DO
-    END DO
- END IF
 
   ! compute total system energy
   overlap = .FALSE.
      
   DO i = 1, nbr_boxes
        
-     IF ( start_type == 'make_config' .and. &
-          int_vdw_sum_style(i) == vdw_cut_tail) &
-                CALL Compute_Beads(i)
      CALL Compute_System_Total_Energy(i,.TRUE.,overlap)
-           
 
      IF (overlap) THEN
         ! overlap was detected between two atoms so abort the program
         err_msg = ''
         err_msg(1) = 'Overlap detected in the starting structure'
-        err_msg(2) = 'Start type '//start_type
+        err_msg(2) = 'Start type '//start_type(i)
         CALL Clean_Abort(err_msg,'Main')
      END IF
   END DO
@@ -466,12 +451,12 @@ PROGRAM Main
   END DO
 
   ! Write initial properties, if needed
-  IF (start_type == 'make_config' .OR. n_mcsteps <= initial_mcstep) THEN
-    DO ibox = 1, nbr_boxes
-      CALL Write_Properties(0,ibox)
+  DO ibox = 1, nbr_boxes
+    IF (start_type(ibox) == 'make_config' .OR. n_mcsteps <= initial_mcstep) THEN
+      CALL Write_Properties(ibox)
       CALL Reset(ibox)
-    END DO
-  END IF
+    END IF
+  END DO
 
   ! End program if no moves specified
   IF (n_mcsteps <= initial_mcstep) THEN
@@ -515,20 +500,20 @@ PROGRAM Main
      
   ELSE IF (int_sim_type == sim_nvt .OR. int_sim_type == sim_nvt_min) THEN
      
-     CALL NVTMC_Driver(initial_mcstep)
+     CALL NVTMC_Driver
      
   ELSE IF (int_sim_type == sim_npt) THEN
      
-     CALL NPTMC_Driver(initial_mcstep)
+     CALL NPTMC_Driver
 
   ELSE IF (int_sim_type == sim_gcmc) THEN
 
-     CALL GCMC_Driver(initial_mcstep)
+     CALL GCMC_Driver
 
   ELSE IF (int_sim_type == sim_gemc .OR. int_sim_type == sim_gemc_ig .OR. &
      int_sim_type == sim_gemc_npt) THEN
      
-     CALL GEMC_Driver(initial_mcstep)
+     CALL GEMC_Driver
 
   ELSE IF (int_sim_type == sim_frag) THEN
 

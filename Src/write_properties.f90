@@ -18,7 +18,7 @@
 !   You should have received a copy of the GNU General Public License
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*******************************************************************************
-SUBROUTINE Write_Properties(this_mc_step,this_box)
+SUBROUTINE Write_Properties(this_box)
   ! The subroutine will write desired properties to the property files. It is
   ! called by respective drivers such as.
   !
@@ -42,7 +42,7 @@ SUBROUTINE Write_Properties(this_mc_step,this_box)
   IMPLICIT NONE
 
   CHARACTER(24) :: write_str
-  INTEGER :: i, this_box, this_unit, this_mc_step, is, n_start, n_end
+  INTEGER :: i, this_box, this_unit, is, n_start, n_end
   INTEGER :: ifrac, my_ifrac
 
 
@@ -85,7 +85,11 @@ CONTAINS
     END IF
 
     write_str = ""
-    write_str = "# MC_STEP"
+    IF (sim_length_units == 'Steps') THEN
+      write_str = "# MC_STEP"
+    ELSE IF (sim_length_units == 'Sweeps') THEN
+      write_str = "# MC_SWEEP"
+    END IF
     
     WRITE(this_unit,'(A12,2X)',ADVANCE='NO') ADJUSTL(write_str)
     
@@ -181,8 +185,6 @@ CONTAINS
    
    ALLOCATE(write_buff(prop_per_file(file_number,this_box)+1))
 
-   write_buff(1) = this_mc_step
-  
    !***********************************************************************
    ! Fill the elements of write_buff with each of the properties
    ! Note that these are average properties over the frequency interval
@@ -329,7 +331,12 @@ CONTAINS
 
    ! write the line buffer to the property file
 
-   WRITE(this_unit,'(I12,2X)',ADVANCE='NO') this_mc_step
+   IF (sim_length_units == 'Steps') THEN
+     WRITE(this_unit,'(I12,2X)',ADVANCE='NO') i_mcstep
+   ELSE IF (sim_length_units == 'Sweeps') THEN
+     WRITE(this_unit,'(I12,2X)',ADVANCE='NO') i_mcstep / steps_per_sweep
+   END IF
+
    DO ii = 1, prop_per_file(file_number,this_box)-1
 
       WRITE(this_unit,'(E16.8,2X)',ADVANCE='NO') write_buff(ii+1)

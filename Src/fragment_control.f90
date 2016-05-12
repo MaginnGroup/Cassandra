@@ -81,24 +81,21 @@ SUBROUTINE Fragment_Control
   ! Create the intramolecular nonbond scaling arrays.
   CALL Create_Intra_Exclusion_Table  ! Obtain information about the molecules
 
-  ! Random initial seed
+  CALL Get_Start_Type
 
+  ! Random initial seed
   CALL Get_Seed_Info
 
   ! Temperature
-
   CALL Get_Temperature_Info
 
   ! Probabilities
-
   CALL Get_Move_Probabilities
   
   ! Frequency info
-
   CALL Get_Simulation_Length_Info
 
   ! Get the file names for each of the fragments
-
   CALL Get_File_Info
 
   CALL Precalculate

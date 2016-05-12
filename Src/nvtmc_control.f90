@@ -97,15 +97,17 @@ SUBROUTINE NVTMC_Control
   CALL Get_Molecule_Info
 
 
-     ! Determine how intramoleclar scaling of vdw and coul interactions handled.
-     CALL Get_Intra_Scaling
+  ! Determine how intramoleclar scaling of vdw and coul interactions handled.
+  CALL Get_Intra_Scaling
 
-     ! Determine the number and identity of unique atom types, and create a vdw interaction table.
-     CALL Create_Nonbond_Table
+  ! Determine the number and identity of unique atom types, and create a vdw interaction table.
+  CALL Create_Nonbond_Table
 
-     ! Create the intramolecular nonbond scaling arrays.
-     CALL Create_Intra_Exclusion_Table
+  ! Create the intramolecular nonbond scaling arrays.
+  CALL Create_Intra_Exclusion_Table
 
+
+  CALL Get_Start_Type
 
   CALL Get_Seed_Info
 

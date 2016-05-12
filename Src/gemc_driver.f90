@@ -44,7 +44,7 @@ SUBROUTINE GEMC_Driver
 
 !$ include 'omp_lib.h'
 
-  INTEGER :: i,j, this_box, ibox, is, other_box, which_step
+  INTEGER :: i,j, this_box, ibox, is, other_box 
 
   REAL(DP) :: rand_no
   REAL(DP) :: time_start, now_time, thermo_time, coord_time
@@ -65,7 +65,8 @@ SUBROUTINE GEMC_Driver
   openmp_flag = .FALSE.
   write_flag = .FALSE.
   complete = .FALSE.
-  i = 0
+
+  i_mcstep = initial_mcstep
 
   ! The total number of trial move array may not have been set if this
   ! is a fresh run i.e. start_type == make_config. Otherwise this array
@@ -84,12 +85,11 @@ SUBROUTINE GEMC_Driver
 
   DO WHILE (.NOT. complete)
 
-     i = i + 1
+     i_mcstep = i_mcstep + 1
 
      ! We will select a move from Golden Sampling scheme
 
      rand_no = rranf()
-     which_step = i
 
      IF (rand_no <= cut_trans) THEN
  
@@ -99,7 +99,7 @@ SUBROUTINE GEMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
         
-        CALL Translate(this_box,which_step)
+        CALL Translate(this_box)
         
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -218,7 +218,7 @@ SUBROUTINE GEMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Cut_N_Grow(this_box,i)
+        CALL Cut_N_Grow(this_box)
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -261,7 +261,7 @@ SUBROUTINE GEMC_Driver
 
      now_time = ((now_time - time_start) / 60.0_DP) 
      IF(.NOT. timed_run) THEN
-        IF(i == n_mcsteps) complete = .TRUE.
+        IF(i_mcstep == n_mcsteps) complete = .TRUE.
      ELSE
         IF(now_time .GT. n_mcsteps) complete = .TRUE.
      END IF
@@ -293,7 +293,7 @@ SUBROUTINE GEMC_Driver
         ! instantaneous values are to be printed
 
         IF(.NOT. timed_run) THEN
-           IF ( MOD(i,nthermo_freq) == 0) write_flag = .TRUE.
+           IF ( MOD(i_mcstep,nthermo_freq) == 0) write_flag = .TRUE.
         ELSE
            now_time = now_time - thermo_time
            IF(now_time .GT. nthermo_freq) THEN
@@ -307,7 +307,7 @@ SUBROUTINE GEMC_Driver
 
            DO ibox = 1, nbr_boxes
               
-              CALL Write_Properties(i,ibox)
+              CALL Write_Properties(ibox)
               CALL Reset(ibox)
 
 
@@ -323,7 +323,7 @@ SUBROUTINE GEMC_Driver
         write_flag = .FALSE.
 
         IF(.NOT. timed_run) THEN
-           IF ( MOD(i,ncoord_freq) == 0) write_flag = .TRUE.
+           IF ( MOD(i_mcstep,ncoord_freq) == 0) write_flag = .TRUE.
         ELSE
            now_time = now_time - coord_time
            IF(now_time .GT. ncoord_freq) THEN
@@ -335,7 +335,7 @@ SUBROUTINE GEMC_Driver
         IF ( write_flag ) THEN
 
 
-           CALL Write_Checkpoint(i)
+           CALL Write_Checkpoint
            DO ibox = 1, nbr_boxes
               
               CALL Write_Coords(ibox)
@@ -351,7 +351,7 @@ SUBROUTINE GEMC_Driver
         DO ibox = 1, nbr_boxes
            
            IF(.NOT. timed_run) THEN
-              IF ( MOD(i,nthermo_freq) == 0) write_flag = .TRUE.
+              IF ( MOD(i_mcstep,nthermo_freq) == 0) write_flag = .TRUE.
            ELSE
               now_time = now_time - thermo_time
               IF(now_time .GT. nthermo_freq) THEN
@@ -362,17 +362,17 @@ SUBROUTINE GEMC_Driver
            
            IF(write_flag) THEN
               IF (next_write(ibox)) THEN
-                 CALL Write_Properties(tot_trials(ibox),ibox)
+                 CALL Write_Properties(ibox)
                  CALL Reset(ibox)
                  next_write(ibox) = .false.
               END IF
-              IF(ibox == 1) CALL Write_Checkpoint(i)
+              IF(ibox == 1) CALL Write_Checkpoint
            END IF
            
            write_flag = .FALSE.
            
            IF(.NOT. timed_run) THEN
-              IF ( MOD(i,ncoord_freq) == 0) write_flag = .TRUE.
+              IF ( MOD(i_mcstep,ncoord_freq) == 0) write_flag = .TRUE.
            ELSE
               now_time = now_time - coord_time
               IF(now_time .GT. ncoord_freq) THEN
