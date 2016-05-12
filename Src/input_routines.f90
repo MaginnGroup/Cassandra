@@ -539,8 +539,36 @@ SUBROUTINE Get_Pair_Style
                  rcut_vdw(ibox) = String_To_Double(line_array(3))
                  WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_vdw(ibox), 'Angstrom'
                  WRITE(logunit,'(A)') 'Mie cut shift potential used for VDW'
-	      END IF
 
+
+              ELSEIF (vdw_sum_style(ibox) == 'cut_tail') THEN
+                 int_vdw_sum_style(ibox) = vdw_cut_tail
+                 rcut_vdw(ibox) = String_To_Double(line_array(3))
+                
+                 IF ( nbr_entries == 4 ) THEN
+                    ! a fourth entry exists indicating whether the cutoff is half of
+                    ! the box length 
+                    
+                    IF (line_array(4) == 'TRUE' .OR. line_array(4) == 'true') THEN
+                       
+                       l_half_len_cutoff(ibox) = .TRUE.
+                       
+                       ! for now assume that the box is cubic
+                       rcut_vdw(ibox) = 0.5_DP * box_list(ibox)%length(1,1)
+                       
+                       WRITE(logunit,*)
+                       WRITE(logunit,'(A,2x,I5)') 'For box ', ibox
+                       WRITE(logunit,*) 'Cutoffs are set to half of the box length'
+                       
+                    END IF
+
+                 END IF
+
+                 WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_vdw(ibox), '   Angstrom'
+
+                 rcut3(ibox) = rcut_vdw(ibox) * rcut_vdw(ibox) * rcut_vdw(ibox)
+                 !rcut9(ibox) = rcut3(ibox) * rcut3(ibox) * rcut3(ibox)
+	      END IF
 
            ELSE
  

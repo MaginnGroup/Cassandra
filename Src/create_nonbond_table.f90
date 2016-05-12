@@ -178,6 +178,8 @@
     ! Allocate memory for total number bead types in each box
     ALLOCATE(nint_beads(nbr_atomtypes,nbr_boxes))
     
+    ! Allocate memory for total number beads type for mie potential 
+    ALLOCATE(nint_beads_mie(nspecies, nbr_atomtypes,nbr_boxes)) 
     IF (AllocateStatus .NE. 0) THEN
        err_msg = ''
        err_msg(1) = ' ERROR: Not enough memory for vdw interaction table '
