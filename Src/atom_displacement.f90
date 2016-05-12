@@ -88,7 +88,7 @@ SUBROUTINE Atom_Displacement(this_box)
   TYPE(Atom_Class), DIMENSION(:), ALLOCATABLE :: new_atom_list
   TYPE(Molecule_Class) :: new_molecule_list
 
-  LOGICAL :: accept, accept_or_reject, overlap, theta_bound
+  LOGICAL :: accept_or_reject, overlap, theta_bound
 
   
   ! Figure out total number of molecules in each boxes that

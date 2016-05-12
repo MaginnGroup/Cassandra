@@ -84,6 +84,9 @@ SUBROUTINE GEMC_Control
   ! Create the intramolecular nonbond scaling arrays.
   CALL Create_Intra_Exclusion_Table
 
+  ! Start_Type
+  CALL Get_Start_Type
+
   ! Seed info
   CALL Get_Seed_Info
  

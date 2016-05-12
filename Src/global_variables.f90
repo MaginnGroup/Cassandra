@@ -31,7 +31,7 @@ MODULE Global_Variables
   ! compute_cell_dimensions
   ! create_nonbond_table
   ! get_internal_coords
-  ! grow_molecules
+  ! make_config
   ! input_routines
   ! io_utilities
   ! main
@@ -56,7 +56,8 @@ USE Type_Definitions
 !*********************************************************************************
   ! This section contains global variables used by many routines during the run.
 
-  CHARACTER(120) :: run_name,start_type
+  CHARACTER(120) :: run_name
+  CHARACTER(15), DIMENSION(:), ALLOCATABLE :: start_type
   CHARACTER(80) :: err_msg(10)
 
   ! error handling variables
@@ -272,7 +273,8 @@ USE Type_Definitions
 
   ! array to hold the total number of molecules of each species in a given box
 
-  INTEGER, DIMENSION(:,:), ALLOCATABLE :: nmols, nmols_initial
+  INTEGER, DIMENSION(:,:), ALLOCATABLE :: nmols
+  INTEGER, DIMENSION(:,:), ALLOCATABLE :: nmols_to_make, nmols_to_read
 
   ! array to hold ring atom ids and exo atom ids for a fragment
   ! will have (MAXVAL(natoms), nspecies) dimensions
@@ -465,9 +467,12 @@ USE Type_Definitions
   REAL(DP) :: cut_swap, cut_regrowth, cut_ring, cut_atom_displacement, cut_lambda
  
   !*********************************************************************************************************
-  ! Information on the output of data
 
-  INTEGER :: nthermo_freq, ncoord_freq, n_mcsteps, n_equilsteps, i_mcstep
+  ! Timing information
+  ! Initial, current and final number of steps
+  INTEGER :: i_mcstep, initial_mcstep, n_mcsteps, n_equilsteps
+  ! Information on the output of data
+  INTEGER :: nthermo_freq, ncoord_freq
  
   INTEGER,DIMENSION(:),ALLOCATABLE :: nbr_prop_files
 
@@ -478,6 +483,7 @@ USE Type_Definitions
 
   LOGICAL :: cpcollect  !  logical determining if the chemical potential info is collected
 
+  LOGICAL :: accept
 
   LOGICAL :: cbmc_flag, del_flag, phi_Flag, angle_Flag, imp_Flag
 
@@ -487,6 +493,12 @@ USE Type_Definitions
 
   INTEGER :: imreplace, isreplace
 
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! variables for debugging
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+  LOGICAL :: l_debug = .FALSE.
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! variables for the neighbor list

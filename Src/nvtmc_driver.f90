@@ -59,7 +59,7 @@ SUBROUTINE NVTMC_Driver
 
 !  !$ include 'omp_lib.h'
 
-  INTEGER :: i,j, this_box, ibox, ireac, which_step, is, im
+  INTEGER :: i, j, this_box, ibox, ireac, is, im
   INTEGER :: alive1, alive2, im1
   INTEGER, ALLOCATABLE, DIMENSION(:) :: n_inside_old
 
@@ -85,7 +85,7 @@ SUBROUTINE NVTMC_Driver
   complete = .FALSE.
   openmp_flag = .FALSE.
 
-  i = 0
+  i_mcstep = initial_mcstep
 
 !$ openmp_flag = .TRUE.
 
@@ -99,8 +99,7 @@ SUBROUTINE NVTMC_Driver
 
   DO WHILE (.NOT. complete)
 
-     i = i + 1
-     which_step = i
+     i_mcstep= i_mcstep + 1
 
      ! We will select a move from Golden Sampling scheme
 
@@ -115,7 +114,7 @@ SUBROUTINE NVTMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Translate(this_box,which_step)
+        CALL Translate(this_box)
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -187,7 +186,7 @@ SUBROUTINE NVTMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
         
-        CALL Cut_N_Grow(this_box,i)
+        CALL Cut_N_Grow(this_box)
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -233,7 +232,7 @@ SUBROUTINE NVTMC_Driver
 
      now_time = ((now_time - time_start) / 60.0_DP) 
      IF(.NOT. timed_run) THEN
-        IF(i == n_mcsteps) complete = .TRUE.
+        IF(i_mcstep == n_mcsteps) complete = .TRUE.
      ELSE
         IF(now_time .GT. n_mcsteps) complete = .TRUE.
      END IF
@@ -251,7 +250,7 @@ SUBROUTINE NVTMC_Driver
         ! instantaneous values are to be printed
 
         IF(.NOT. timed_run) THEN
-           IF ( MOD(i,nthermo_freq) == 0) write_flag = .TRUE.
+           IF ( MOD(i_mcstep,nthermo_freq) == 0) write_flag = .TRUE.
         ELSE
            now_time = now_time - thermo_time
            IF(now_time .GT. nthermo_freq) THEN
@@ -262,11 +261,11 @@ SUBROUTINE NVTMC_Driver
 
         IF(write_flag) THEN
 
-           CALL Write_Checkpoint(i)
+           CALL Write_Checkpoint
 
            DO ibox = 1, nbr_boxes
               
-              CALL Write_Properties(i,ibox)
+              CALL Write_Properties(ibox)
               CALL Reset(ibox)
 
                DO j = 1,nspecies
@@ -280,7 +279,7 @@ SUBROUTINE NVTMC_Driver
         write_flag = .FALSE.
 
         IF(.NOT. timed_run) THEN
-           IF ( MOD(i,ncoord_freq) == 0) write_flag = .TRUE.
+           IF ( MOD(i_mcstep,ncoord_freq) == 0) write_flag = .TRUE.
         ELSE
            now_time = now_time - coord_time
            IF(now_time .GT. ncoord_freq) THEN
@@ -307,7 +306,7 @@ SUBROUTINE NVTMC_Driver
            
            IF (tot_trials(ibox) /= 0) THEN
               IF(.NOT. timed_run) THEN
-                 IF ( MOD(i,nthermo_freq) == 0) write_flag = .TRUE.
+                 IF ( MOD(i_mcstep,nthermo_freq) == 0) write_flag = .TRUE.
               ELSE
                  now_time = now_time - thermo_time
                  IF(now_time .GT. nthermo_freq) THEN
@@ -318,17 +317,17 @@ SUBROUTINE NVTMC_Driver
 
               IF(write_flag) THEN
                  IF (next_write(ibox)) THEN
-                    CALL Write_Properties(tot_trials(ibox),ibox)
+                    CALL Write_Properties(ibox)
                     CALL Reset(ibox)
                     next_write(ibox) = .false.
                  END IF
-                 IF(ibox == 1) CALL Write_Checkpoint(i)
+                 IF(ibox == 1) CALL Write_Checkpoint
               END IF
 
               write_flag = .FALSE.
               
               IF(.NOT. timed_run) THEN
-                 IF ( MOD(i,ncoord_freq) == 0) write_flag = .TRUE.
+                 IF ( MOD(i_mcstep,ncoord_freq) == 0) write_flag = .TRUE.
               ELSE
                  now_time = now_time - coord_time
                  IF(now_time .GT. ncoord_freq) THEN
@@ -355,7 +354,7 @@ SUBROUTINE NVTMC_Driver
      DO is = 1,nspecies
 
         IF(species_list(is)%int_insert == int_igas) THEN
-           IF(mod(i,n_igas_moves(is)) == 0) CALL Update_Reservoir(is)
+           IF(mod(i_mcstep,n_igas_moves(is)) == 0) CALL Update_Reservoir(is)
         END IF
 
      END DO

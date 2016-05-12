@@ -72,15 +72,15 @@ SUBROUTINE Participation
 
   INTEGER :: ispecies, iatom, jatom, tot_bonds, ibonds, atom1, atom2, i ,j, k
   INTEGER :: atom3, atom4, idihedral, tot_dihedral, tot_angles
-  INTEGER :: iangles, ndisp_atoms, is, ia, this_atom, this_bond, frag_no, ia_nangles
+  INTEGER :: iangles, ndisp_atoms, is, ia, this_atom, this_bond, ia_nangles
   INTEGER :: this_angle, first_atom, third_atom, anchor_atom, ifrag, atom_j
   INTEGER, ALLOCATABLE :: temp_atom_id(:)
 
-  INTEGER :: line_nbr, pdbunit, ierr
+  INTEGER :: line_nbr, ierr
 
   REAL(DP) :: x_this, y_this, z_this, this_l
 
-  CHARACTER(120) :: file_name, car_file, xyz_file
+  CHARACTER(120) :: file_name, car_file, xyz_file, frag_name
   CHARACTER(120) :: line_string
 
   
@@ -464,20 +464,11 @@ SUBROUTINE Participation
            
            anchor_atom = 1
               
-           frag_no = ifrag
-           file_name = 'frag_'//Int_To_String(frag_no)
-           file_name = file_name(1:LEN_TRIM(file_name))//"_"//Int_To_String(is)
-           file_name = file_name(1:LEN_TRIM(file_name))//".mcf"
-           
-           car_file = 'frag_'//Int_To_String(frag_no)
-           car_file = car_file(1:LEN_TRIM(car_file))//"_"//Int_To_String(is)
-           car_file = car_file(1:LEN_TRIM(car_file))//".car"
-           
-           xyz_file = 'frag_'//Int_To_String(frag_no)
-           xyz_file = xyz_file(1:LEN_TRIM(xyz_file))//"_"//Int_To_String(is)
-           xyz_file = xyz_file(1:LEN_TRIM(xyz_file))//".xyz"           
-           
-           
+           frag_name = 'frag_'//TRIM(Int_To_String(ifrag))//'_'//TRIM(Int_To_String(is))
+           file_name = TRIM(frag_name)//'.mcf'
+           car_file  = TRIM(frag_name)//'.car'
+           xyz_file  = TRIM(frag_name)//'.xyz'
+
            OPEN(UNIT=201,file=file_name)
            OPEN(UNIT=202,file=car_file)
            OPEN(UNIT=203,file=xyz_file)
@@ -542,7 +533,8 @@ SUBROUTINE Participation
               
               ! write the 'read_config' file for the fragment
               
-              WRITE(203,*) '1'  ! indicating one molecule
+              WRITE(203,*) frag_list(ifrag,is)%natoms
+              WRITE(203,*) ''
               
               x_this = 0.0_DP
               y_this = 0.0_DP
@@ -1293,22 +1285,21 @@ CONTAINS
     INTEGER :: i, this_atom, j
     REAL(DP) :: x, y, z
     
-    CHARACTER(120) :: car_file, pdb_file, xyz_file
+    CHARACTER(120) :: car_file, pdb_file, xyz_file, frag_name
     CHARACTER(30) :: this_symbol
 
     
     pdb_file = 'molecule.pdb'
 
-    car_file = 'frag_'//Int_To_String(ifrag)
-    car_file = car_file(1:LEN_TRIM(car_file))//"_"//Int_To_String(is)
-    car_file = car_file(1:LEN_TRIM(car_file))//".car"
-    
-    xyz_file = car_file(1:LEN_TRIM(car_file)-4)//'.xyz'
+    frag_name = 'frag_'//TRIM(Int_To_String(ifrag))//'_'//TRIM(Int_To_String(is))
+    car_file  = TRIM(frag_name)//'.car'
+    xyz_file  = TRIM(frag_name)//'.xyz'
 
     ! loop over the fragment atoms
     OPEN(UNIT=202,file=car_file)
-    OPEN(UNIT=204,file=xyz_file)
-    WRITE(204,*)'1'
+    OPEN(UNIT=203,file=xyz_file)
+    WRITE(203,*) frag_list(ifrag,is)%natoms
+    WRITE(203,*) ''
 
     DO i = 1, frag_list(ifrag,is)%natoms
        
@@ -1318,8 +1309,7 @@ CONTAINS
        ! read in the coordinates and output to the car file
 
        line_nbr = 0
-       pdbunit = 203
-       OPEN(UNIT=pdbunit,file=pdb_file)
+       OPEN(UNIT=204,file=pdb_file)
 
        ! Go through the file and find out where 'this_atom' is
        
@@ -1327,7 +1317,7 @@ CONTAINS
 
          line_nbr = line_nbr + 1
 
-         CALL Read_String(pdbunit,line_string,ierr)
+         CALL Read_String(204,line_string,ierr)
          IF (ierr .NE. 0) THEN
             err_msg = ""
             err_msg(1) = "Error reading the pdb file"
@@ -1336,16 +1326,16 @@ CONTAINS
          END IF
 
          IF (line_string(1:6) == 'HETATM' .OR. line_string(1:4) == 'ATOM') THEN
-            backspace(pdbunit)
+            backspace(204)
             line_nbr = line_nbr + 1
             DO j = 1, this_atom-1
-               READ(pdbunit,*)
+               READ(204,*)
             END DO
             ! Now read the coordinates for this atom
-            READ(pdbunit,'(A30,3(F8.3))') this_symbol, x, y, z
+            READ(204,'(A30,3(F8.3))') this_symbol, x, y, z
             
             WRITE(202,'(A,2X,3(F11.7,2X))') nonbond_list(this_atom,is)%atom_name, x,y, z
-            WRITE(204,'(A,2X,3(F11.7,2X))') nonbond_list(this_atom,is)%atom_name, x,y, z
+            WRITE(203,'(A,2X,3(F11.7,2X))') nonbond_list(this_atom,is)%atom_name, x,y, z
 
             EXIT
 
@@ -1367,12 +1357,12 @@ CONTAINS
 
 
        ENDDO 
-       CLOSE(UNIT=pdbunit)
+       CLOSE(UNIT=204)
       
 
     END DO
     CLOSE(UNIT=202)
-    CLOSE(UNIT=204)
+    CLOSE(UNIT=203)
  
  
     
