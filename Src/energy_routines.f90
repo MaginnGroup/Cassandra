@@ -2703,7 +2703,8 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     INTEGER, INTENT(IN) :: this_box
     REAL(DP), INTENT(OUT) :: w_lrc
     
-    INTEGER ::   is, js, ia, ja, mie_n, mie_m, mie_coeff
+    INTEGER ::   is, js, ia, ja
+    REAL(DP) :: mie_n, mie_m, mie_coeff
     REAL(DP) :: SigOverR, SigOverRn, SigOverRm
 
     REAL(DP) :: epsij, sigij
@@ -2739,12 +2740,10 @@ END SUBROUTINE Compute_Molecule_Self_Energy
            mie_n = mie_nlist(mie_Matrix(is,js))
            mie_m = mie_mlist(mie_Matrix(is,js))
            mie_coeff = mie_n/(mie_n-mie_m)*(mie_n/mie_m)**(mie_m/(mie_n-mie_m))
-
            DO ia = 1, nbr_atomtypes
        
               w_lrc_ia_ja = 0.0_DP
               DO ja = 1, nbr_atomtypes
-       
                  epsij = vdw_param1_table(ia,ja)
                  sigij = vdw_param2_table(ia,ja)
 		 SigOverR = sigij/rcut_vdw(this_box)
