@@ -301,5 +301,65 @@ SUBROUTINE Atom_Displacement(this_box)
 
 END SUBROUTINE Atom_Displacement
   
+!**********************************************************************************
+SUBROUTINE Change_Phi_Theta(this_atom,im,is,theta_bound)
+!**********************************************************************************
+  USE Global_Variables
+  USE Random_Generators, ONLY : rranf
 
+  IMPLICIT NONE
+
+  INTEGER, INTENT(IN) :: this_atom,im,is
+
+  LOGICAL, INTENT(INOUT) :: theta_bound
+
+  REAL(DP) :: this_x, this_y, this_z, rho, bond_length, theta, phi, dcostheta
+  REAL(DP) :: dphi
+
+  theta_bound = .false.
+
+
+  ! Get spherical coordinates
+  this_x = atom_list(this_atom,im,is)%rxp
+  this_y = atom_list(this_atom,im,is)%ryp
+  this_z = atom_list(this_atom,im,is)%rzp
+
+  rho = this_x * this_x + this_y * this_y 
+  bond_length = this_z * this_z + rho
+
+  rho = DSQRT(rho)
+  bond_length = DSQRT(bond_length)
+
+  ! azimuthal angle
+  theta = DACOS(this_z/bond_length)
+  
+  ! polar angle
+  phi = DASIN(this_y/rho)
+
+
+  IF ( this_x < 0.0_DP ) THEN
+     
+     phi = PI - DASIN(this_y/rho)
+
+  END IF
+
+  ! Change theta and phi
+  dcostheta = (2.0_DP * rranf() - 1.0_DP ) * delta_cos_max 
+  dphi = (2.0_DP * rranf() - 1.0_DP ) * delta_phi_max 
+
+  ! new polar and azimuthal anlges
+  IF ( (ABS(DCOS(theta) + dcostheta) > 1.0_DP) ) THEN
+     theta_bound = .true.
+     RETURN
+  END IF
+
+  theta =  DACOS(DCOS(theta) + dcostheta)
+  phi = phi + dphi
+  
+  ! new coordinates
+  atom_list(this_atom,im,is)%rxp = bond_length * DSIN(theta) * DCOS(phi)
+  atom_list(this_atom,im,is)%ryp = bond_length * DSIN(theta) * DSIN(phi)
+  atom_list(this_atom,im,is)%rzp = bond_length * DCOS(theta)
+
+END SUBROUTINE Change_Phi_Theta
   
