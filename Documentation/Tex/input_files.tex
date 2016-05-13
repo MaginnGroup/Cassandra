@@ -437,7 +437,7 @@ defined internally while two {\it Integer(1)} and {\it Integer(2)} are
 supplied by the user. {\bf When a `checkpoint' file is used to restart a
 simulation (see \# Start\_Type below), the user supplied seeds will be
 overwritten by those present in the checkpoint file. If \# Start\_Type
-is set to `read\_old', then the seeds specified in the input file are
+is set to `read\_config', then the seeds specified in the input file are
 used}.  \\ \\
 As an example, \\ \\ 
 \texttt{
@@ -1261,88 +1261,104 @@ This is a required keyword that marks the end of the section for specifying move
 {\it Character(1) } \\ \\
 %
 This keyword specifies whether Cassandra generates an initial configuration or uses a previously generated configuration
-to start a simulation. {\it Character(1)} takes one of the three options: `make\_config', `checkpoint' or `read\_old'. 
+to start a simulation. {\it Character(1)} takes one of the four options: `make\_config', `read\_config', `add\_to\_config', or `checkpoint'.
 %
 \begin{itemize} 
-\item \textbf{`make\_config'} this keyword is used to generate an initial state using a configurational biased scheme. 
-With this option, additional information is required on the number of molecules of each species in every box and is specified as follows: \\ \\
-%
+\item \textbf{`make\_config'} will generate an initial configuration using a configurational biased scheme. 
+The number of molecules of each species is specified as follows: \\ \\
 %
 {\bf \# Start\_Type} \\
-{\it make\_config} \\
-{\it Integer(j,k)} * One line for each species and one entry on each line for each box\\ \\
+{\it make\_config Integer(1) Integer(2) ... Integer(n)} * One entry for each species
 % 
- where {\it Integer(j,k)} represents the number of molecules of species $j$ in box $k$. Thus, for example, to generate an initial configuration
- for two species in two boxes such that the numbers of molecules of species 1 in box 1 and 2 are 100 and 50 respectively and those for
- species 2 are 75 and 25 respectively, the input file must contain the following: \\ \\
+ where {\it Integer(i)} is the number of molecules of species $i$. This keyword can be repeated for each box. 
+ Thus, for example, to generate an initial configuration with 100 molecules of species 1 and 75 molecules of species 2
  %
  \texttt{
  \# Start\_Type \\
- make\_config \\
- 100 50 \\
- 75 25 \\}
+ make\_config 100 75 \\}
+ %
+ If the simulation also has a second box with 25 molecules of species 2 only
+ %
+ \texttt{
+ \# Start\_Type \\
+ make\_config 100 75\\
+ make\_config   0 25\\}
  %
 %
+\item {\textbf{`read\_config'}} will use the coordinates from an .xyz file.
+For example, a configuration generated at one temperature may be used to initiate a simulation at another temperature. 
+After `read\_config' the number of molecules of each species must be given, followed by the .xyz filename: \\ \\
+%
+{\bf \# Start\_Type} \\
+{\it read\_config Integer(1) Integer(2) ... Integer(n) Character(1)}\\
+%
+For example, to start a simulation using a configuration of 50 molecules each of species 1 and 2: \\ \\
+%
+\texttt{
+\# Start\_Type \\
+read\_config 50 50 liquid.xyz \\}
+%
+If the simulation also has a second box with 10 molecules of species 1 and 90 molecules of species 2: \\ \\ 
+%
+\texttt{
+\# Start\_Type \\
+read\_config 50 50 liquid.xyz \\
+read\_config 10 90 vapor.xyz \\}
+%
+The .xyz files must have the following format:\\
+%
+\texttt{
+ <number of atoms>\\
+ comment line\\
+ <element> <x> <y> <z>\\
+ ...\\
+}
+%
+The utility \texttt{read\_config.py} is provided to speed up the restart of simulations using the `read\_config' option.
+This tool extracts the last configuration from a previous run, as well as relevant information from the checkpoint file 
+such as maximum displacements for angles or translations. It then creates new input and xyz files that can readily be
+used to restart a simulation using the `read\_config' option. This script is located in \texttt{Scripts/Read\_Config}. 
+For more information, refer to the README file located in the same directory.
+
+\item {\textbf{`add\_to\_config'}} will read the coordinates from an .xyz file, but then insert additional molecules.
+After `add\_to\_config' specify the number of molecules of each species to be read, followed by the .xyz filename, 
+followed by the number of molecules of each species to be added: \\ \\
+%
+{\bf \# Start\_Type} \\
+{\it add\_to\_config Integer(1) Integer(2) ... Integer(n) Character(1) Integer(1) Integer(2) ... Integer(n)}\\
+%
+For example, to start a simulation by reading in a zeolite configuration and adding 30 molecules of methane (species 2): \\ \\
+%
+\texttt{
+\# Start\_Type \\
+add\_to\_config  1  0 MFI.xyz 0 30 \\}
+%
+where the file \textt{MFI.xyz} contains the coordinates of a unit cell of MFI silicalite.
 
 \item \textbf{`checkpoint'} this keyword is used to restart a simulation from a checkpoint file.
 During the course of a simulation, Cassandra periodically generates a checkpoint file (*.chk)
  containing information about the total number of translation, rotation and volume moves along with the random number seeds and 
-the coordinates of all the molecules and their box number at the time the file is written. Cassandra provides
+the coordinates of each molecule and its box number at the time the file is written. Cassandra provides
 the capability of restarting from this state point in the event that a simulation crashes or 
 running a production simulation from an equilibrated configuration. For this
 purpose, in addition to the `checkpoint' keyword, additional information in the form of the name of 
 the checkpoint file {\it Character(2)} is required in the following format: \\ \\
 %
 {\bf \# Start\_Type} \\
-{\it checkpoint} \\
-{\it Character(2)} \\ \\
+{\it checkpoint Character(2)} \\ \\
 %
 For example, to continue simulations from a checkpoint file `methane\_vle\_T148.chk', you might specify: \\ \\
 %
 \texttt{
 \# Start\_Type \\
-checkpoint \\
-methane\_vle\_T148.chk \\ }
+checkpoint methane\_vle\_T148.chk \\ }
 %
 %
 %
-\item {\textbf{`read\_old'}} Cassandra also provides a `read\_old' option to make use of just the coordinates of molecules to start a simulation. 
-For example, a configuration generated at a lower temperature may be used to jump start a simulation at a higher temperature. 
-When the `read\_old' option is used, additional information in the form of the file names {\it Character(k,3)} is required as
-shown below: \\ \\
-%
-{\bf \# Start\_Type} \\
-{\it read\_old}\\
-{\it Character(k,3)} * One line for each box \\ \\
-%
-For example, to start a GEMC simulation simulation using the configurations of the two boxes, you might specify: \\ \\
-%
-\texttt{
-\# Start\_Type \\
-read\_old \\
-box1.readold \\ 
-box2.readold \\ \\}
-%
-This will tell Cassandra to use the configurations of the two boxes stored in \texttt{box1.readold} and \texttt{box2.readold} to start a simulation. 
-The files \texttt{box1.readold} and \texttt{box2.readold} differ from a typical xyz file in that the first line is the total number of molecules
-of each species. For example, the first four lines of an xyz file for a mixture of 50 methane (species 1) molecules and 30 butane (species 2) molecules are\\
-
-\texttt{
- \ \ \ \ 50 \ \ \ \ 30\\
- C    35.3216621555828        23.4086639841907       -21.2699226066799\\
- C   -5.99142900112297        20.1953876924176        36.9060179722412\\
- C   -12.2050779845648        28.5047573713517        19.4255817882403\\
-}
-
-The utility \texttt{read\_old.py} is provided to speed up the restart of simulations using the `read\_old' option.
-This tool extracts the last configuration from a previous run, as well as relevant information from the checkpoint file 
-such as maximum displacements for angles or translations. It then creates new input and xyz files that can readily be
-used to restart a simulation using the `read\_old' option. This script is located in \texttt{Scripts/Read\_Old}. For more information, refer to
-the README file located in the same directory.
 \end{itemize}
 
 Note that when a `checkpoint' file is used to restart a simulation, the seeds for random number generation supplied by the user
-will be overwritten by those present in the checkpoint file. By contrast, if \# Start\_Type is set to `read\_old', 
+will be overwritten by those present in the checkpoint file. By contrast, if \# Start\_Type is set to `read\_config', 
 then the seeds specified in the input file are used.  \\ \\
 
 %
@@ -1683,19 +1699,19 @@ rcut\_cbmc   5.0 6.5}
 %summation is enabled. See \autoref{sec:Box_Info}.
 
 %\newpage
-%\section{read\_old}
+%\section{read\_config}
 %
-%A 'read\_old' file is used to restart a simulation from an equilibrated structure or to continue a run from a previous simulation.
-%This file is required for each box when the ``Start\_Type'' is set as 'read\_old' in the input control file.
+%A 'read\_config' file is used to restart a simulation from an equilibrated structure or to continue a run from a previous simulation.
+%This file is required for each box when the ``Start\_Type'' is set as 'read\_config' in the input control file.
 %On the first line of the file are specified total number of molecules of each species in a given box.
 %From the second line onwards, the x, y and z coordinates are specified for molecules of each species.
 %Usually, this file is obtained from a checkpoint file or the last configuration stored in a movie xyz file. 
-%A sample 'read\_old' file is shown below.
+%A sample 'read\_config' file is shown below.
 %
 %\newpage
 %\section{Checkpoint file}
-%A checkpoint file is similar to 'read\_old' file and is used to restart a simulation from an equilibrated structure or
-%to continue a run from previous simulation. A key difference between the checkpoint and read\_old file is that
+%A checkpoint file is similar to 'read\_config' file and is used to restart a simulation from an equilibrated structure or
+%to continue a run from previous simulation. A key difference between the checkpoint and read\_config file is that
 %thermodynamic averages and MC step are not initialized to zero. The checkpoint file produced by a previous simulation
 %can be directly used to start another simulation. No separate files for multiple boxes are necessary. A checkpoint file
 %contains various information about the state of the system. \\ \\
