@@ -1,14 +1,14 @@
 ************** Beginning Cassandra simulation **************
-Version Cassandra 1.1                                                                                                           
+Version Cassandra Development Version                                                                                           
 
-inputfile /scratch365/emarinri/Verbose_v1.1/Examples_Sep28/NPT/water_spce/npt.inp                                                 
+inputfile npt.inp                                                                                                                 
 
 name of run: npt.out
 
   Month      Day      Year
-     09       30      2015
+     05       13      2016
  
- Time:  17:32:06
+ Time:  00:44:16
  
 machine: maginnfe.crc.nd.edu
 
@@ -29,10 +29,10 @@ Simulation type: NPT_MC
  1
  
  # VDW_Style
- LJ cut_tail 12.0
+ LJ cut_tail 6.0
  
  # Charge_Style
- coul Ewald 12.0 0.000001
+ coul Ewald 6.0 0.000001
  
  # Intra_Scaling
  0.0 0.0 0.0 1.0
@@ -48,12 +48,12 @@ Simulation type: NPT_MC
  0.85
  
  # Molecule_Files
- spce.mcf 600
+ spce.mcf 90
  
  # Box_Info
  1
  CUBIC
- 30.
+ 14.1248913303732
  
  # Temperature_Info
  300.0
@@ -64,35 +64,34 @@ Simulation type: NPT_MC
  # Move_Probability_Info
  
  # Prob_Translation
- 0.499168
+ 90
  1.00
  
  # Prob_Rotation
- 0.499168
+ 90
  38.0
  
  # Prob_Volume
- 0.001664
+ 1
  200.
  
  # Done_Probability_Info
  
  # Start_Type
- checkpoint
- npt.inp.chk
+ read_config 90 npt.inp.xyz
  
  # Run_Type
- Production   20000  100
+ Production   900  10
  
  
  # Average_Info
  1
  
  # Simulation_Length_Info
- Units        Steps
- Prop_Freq    6010
- Coord_Freq   6010
- MCsteps      60100
+ Units        Sweeps
+ Prop_Freq    10
+ Coord_Freq   10
+ MCsteps      100
  # Done_Simulation_Length_Info
  
  # Property_Info 1
@@ -119,24 +118,24 @@ Simulation type: NPT_MC
 number of simulation boxes     1
  
 Box number      1       Box Shape:      Cubic 
-Each Side Of :        30.0000     Angstrom
+Each Side Of :        14.1249     Angstrom
  
-Cell basis vector lengths in A,     30.0000      30.0000      30.0000
+Cell basis vector lengths in A,     14.1249      14.1249      14.1249
 Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
-Distance between box faces    30.0000      30.0000      30.0000
-Box volume, A^3         27000.0000
+Distance between box faces    14.1249      14.1249      14.1249
+Box volume, A^3          2818.0932
  
  *** Finished loading box information ***
  
    VDW style used is:   LJ             in box:  1
    VDW sum style is:   cut_tail       in box:  1
-    rcut =    12.000   Angstrom
+    rcut =     6.000   Angstrom
  
    Charge style used is:   coul           in box:  1
     Charge sum style is   Ewald          in box:  1
-    Ewald real space cutoff is  12.000 Angstroms.
-  Ewald real space parameter is   0.310 inverse Angstroms
-    Ewald reciprocal cutoff is  2.3026 inverse Angstroms
+    Ewald real space cutoff is   6.000 Angstroms.
+  Ewald real space parameter is   0.619 inverse Angstroms
+    Ewald reciprocal cutoff is  4.6052 inverse Angstroms
  Charge style properly input
  
 Lorentz-Berthelot mixing rule specified
@@ -160,7 +159,7 @@ Lorentz-Berthelot mixing rule specified
  
 Species  Nbr molecules
 -------  -------------
-     1            600
+     1             90
  
 L_Coul_CBMC not given for species    1
  Defaulting to  T
@@ -209,6 +208,14 @@ Coulomb 1-N scaling factor     1.000
  *** Completed assigning intramolecular scaling factors ***
  
  
+ ********** Start Type Info **********
+ 
+ Initial configuration for box 1 will be read from file
+ Will read      90  molecules of species   1
+ Will read configuration from file npt.inp.xyz                                                                                                             
+ 
+ *****Finished reading initial coordinate info *****
+ 
  ***** Reading seed info *********
  
  The starting seed s1 is:    153587801
@@ -228,16 +235,16 @@ Coulomb 1-N scaling factor     1.000
  ********* Finished reading pressure info ********
  
  ********* Move Probability Info******
-    Translation probability is   0.499168
+    Translation probability is     90.000000
  
 Maximum displacement width for species   1 in box  1  is      1.00000
  
-       Rotation probability is   0.499168
+       Rotation probability is     90.000000
  
 The rotational width for the species     1 in box  1   is      0.6632 radians
  
  
-         Probability for volume move is    0.001664
+         Probability for volume move is       1.000000
  
  Writing maximum volume displacement elements for box           1
  
@@ -247,6 +254,8 @@ The rotational width for the species     1 in box  1   is      0.6632 radians
  ***** Finished reading the move probability info *****
 Number of moves is :   3
  
+ Move probabilities do not sum to 1.0
+Dividing each probability by   181.000000
  
  ***** reading CBMC info *********
  
@@ -258,14 +267,14 @@ kappa for dihedral selection                10
 Smaller cutoff for CBMC for box          1        6.50
  ****** finished loading CBMC_Info ********
  
-Thermodynamic quantities will written at every       6010 MC steps.
+Thermodynamic quantities will written every          1810 MC steps.
  
-Coordinates will be written at every                 6010 MC steps.
+Coordinates will be written every                    1810 MC steps.
  
 movie header file for box    1 is      npt.out.box1.H
 movie_XYZ file for box       1 is      npt.out.box1.xyz
  
-The simulation will be run for                        60100 MC steps.
+The simulation will be run for                        18100 MC steps.
  
  *** Finished Reading Simulation Length Info ******* 
  
@@ -294,56 +303,106 @@ Total number of property files to be written is     1   for box 1
 MC low cutoff distance is   0.850    Angstrom
  
  
- ******Initial Coordinate Info **********
- 
- Starting configuration will be obtained from check point files
- 
- Starting configuration is 
- npt.inp.chk                                                                    
-                                          
- 
- *****Finished reading initial coordinate info *****
- 
  ****** Reading Run_Type Information ******
  
  The input run type is Production
- Update frequency is        20000
+ Update frequency is          900
  
  Update frequency for adjusting maximum volume displacement is
-         100
+          10
  
  ******* Finished reading run type information ******
-starting type checkpoint                                                                                                              
-
+ 
+ Reading configuration for box           1
+ Reading           90  molecules of species            1
+ Configurations read successfully
  ***************** Charge Neutrality Check *****************
  Species           1    has charge                0.00000000
- Box               1    has charge                0.00000000
  
+ Box               1    has charge                0.00000000
  ***************** Charge Neutrality Check *****************
  ***********************************************************
    Starting energy components for box   1
   Atomic units-Extensive
- 
- Total system energy is              -2813071.965
+ -----------------------------------------------------------
+ Total system energy is               -342123.903
  Intra molecular energy is                  0.000
  Bond energy is                             0.000
  Bond angle energy is                       0.000
  Dihedral angle energy is                   0.000
  Improper angle energy is                   0.000
- Intra nonbond vdw is                       0.000
- Intra nonbond elec is               15461951.746
- Inter molecule vdw is                 555034.283
- Long range correction is               -6256.734
- Inter molecule q is                 -3137539.104
- Reciprocal ewald is                    12477.340
- Self ewald is                      -15698739.496
- Number of vectors is                        2041
+ Intra molecule vdw is                      0.000
+ Intra molecule q is                        0.000
+ Inter molecule vdw is                  63319.784
+ Long range correction is               -7241.666
+ Inter molecule q is                  4212862.349
+ Reciprocal ewald is                    98557.478
+ Self ewald is                       -4709621.849
+ Number of vectors is                        2518
  ***********************************************************
  
  
-Success ratio, translation of species   1 in box 1 :  0.49905
+Success ratio, translation of species   1 in box 1 :  0.02222
  
-Success ratio, rotation of species   1 in box 1 :  0.50050
+Success ratio, rotation of species   1 in box 1 :  0.39333
+ 
+Success ratio, volume changes for box 1 :  0.10000
+ 
+Success ratio, volume changes for box 1 :  0.15000
+ 
+Success ratio, translation of species   1 in box 1 :  0.02111
+ 
+Success ratio, rotation of species   1 in box 1 :  0.39778
+ 
+Success ratio, volume changes for box 1 :  0.23333
+ 
+Success ratio, translation of species   1 in box 1 :  0.02296
+ 
+Success ratio, rotation of species   1 in box 1 :  0.38630
+ 
+Success ratio, volume changes for box 1 :  0.17500
+ 
+Success ratio, translation of species   1 in box 1 :  0.02194
+ 
+Success ratio, volume changes for box 1 :  0.20000
+ 
+Success ratio, rotation of species   1 in box 1 :  0.38667
+ 
+Success ratio, translation of species   1 in box 1 :  0.02067
+ 
+Success ratio, volume changes for box 1 :  0.20000
+ 
+Success ratio, rotation of species   1 in box 1 :  0.38356
+ 
+Success ratio, volume changes for box 1 :  0.20000
+ 
+Success ratio, rotation of species   1 in box 1 :  0.38185
+ 
+Success ratio, translation of species   1 in box 1 :  0.02222
+ 
+Success ratio, volume changes for box 1 :  0.17500
+ 
+Success ratio, rotation of species   1 in box 1 :  0.38016
+ 
+Success ratio, translation of species   1 in box 1 :  0.02381
+ 
+Success ratio, volume changes for box 1 :  0.17778
+ 
+Success ratio, rotation of species   1 in box 1 :  0.38042
+ 
+Success ratio, translation of species   1 in box 1 :  0.02278
+ 
+Success ratio, volume changes for box 1 :  0.18000
+ 
+Success ratio, volume changes for box 1 :  0.20000
+ 
+Success ratio, rotation of species   1 in box 1 :  0.38185
+ 
+Success ratio, translation of species   1 in box 1 :  0.02272
+ 
+Success ratio, volume changes for box 1 :  0.19167
+ 
+Success ratio, rotation of species   1 in box 1 :  0.38244
 ******************** END OF SIMULATION ********************
  
  
@@ -351,19 +410,19 @@ Success ratio, rotation of species   1 in box 1 :  0.50050
  Ending energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is              -2799144.305
+ Total system energy is               -361659.838
  Intra molecular energy is                  0.000
  Bond energy is                             0.000
  Angle energy is                            0.000
  Dihedral energy is                         0.000
  Improper angle energy is                   0.000
- Intra nonbond vdw is                       0.000
- Intra nonbond elec is               15461951.746
- Inter molecule vdw is                 560063.869
- Long range correction is               -6254.713
- Inter molecule q is                 -3129734.515
- Reciprocal ewald is                    13568.803
- Self ewald is                      -15698739.496
+ Intra molecule vdw is                      0.000
+ Intra molecule q is                        0.000
+ Inter molecule vdw is                  74420.304
+ Long range correction is               -7193.412
+ Inter molecule q is                  4185718.942
+ Reciprocal ewald is                    95016.177
+ Self ewald is                       -4709621.849
  ***********************************************************
  
  
@@ -371,50 +430,44 @@ Success ratio, rotation of species   1 in box 1 :  0.50050
  Energy components from total energy call for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is              -2799144.305
+ Total system energy is               -361659.838
  Intra molecular energy is                  0.000
  Bond energy is                             0.000
  Angle energy is                            0.000
  Dihedral energy is                         0.000
  Improper angle energy is                   0.000
- Intra nonbond vdw is                       0.000
- Intra nonbond elec is               15461951.746
- Inter molecule vdw is                 560063.869
- Long range correction is               -6254.713
- Inter molecule q is                 -3129734.515
- Reciprocal ewald is                    13568.803
- Self ewald is                      -15698739.496
+ Intra molecule vdw is                      0.000
+ Intra molecule q is                        0.000
+ Inter molecule vdw is                  74420.304
+ Long range correction is               -7193.412
+ Inter molecule q is                  4185718.942
+ Reciprocal ewald is                    95016.177
+ Self ewald is                       -4709621.849
  ***********************************************************
  
  
  Writing information for box  1
  ***********************************************************
+                Move      Trials     Success   % Success
+              Volume         122          23       18.85
  
-                Move      Trials     Success
-              Volume          99          57
- 
- ***********************************************************
- Writing information for species  1
+   ---------------------------------------------------------
+   Writing information for species  1
  
                 Move      Trials     Success   % Success
-           Translate       30118       15004       49.82
-              Rotate       29883       14868       49.75
- ***********************************************************
+           Translate        8911         200        2.24
+              Rotate        9067        3466       38.23
+   ---------------------------------------------------------
  
- Writing information about fragments
- 
- ***********************************************************
- Writing information for species  1
-         # Fragments      Trials     Success   % Success
  ***********************************************************
  
  Writing information about subroutine times
  
  ***********************************************************
  
- Translation time =            1.073337 mins.
- Rotation time =               1.064538 mins.
- Volume change time =         52.304048 secs.
+ Translation time =            7.919246 secs.
+ Rotation time =               8.348623 secs.
+ Volume change time =          9.932250 secs.
  ***********************************************************
  
  
@@ -423,6 +476,6 @@ Success ratio, rotation of species   1 in box 1 :  0.50050
          0     Months
          0       Days
          0      Hours
-         3    Minutes
-         7    Seconds
-       787         ms
+         0    Minutes
+        27    Seconds
+       520         ms

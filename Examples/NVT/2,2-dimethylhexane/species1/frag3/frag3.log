@@ -1,14 +1,14 @@
 ************** Beginning Cassandra simulation **************
-Version Cassandra 1.1                                                                                                           
+Version Cassandra Development Version                                                                                           
 
 inputfile frag3.inp                                                                                                               
 
 name of run: frag3
 
   Month      Day      Year
-     09       30      2015
+     05       12      2016
  
- Time:  17:28:34
+ Time:  20:26:24
  
 machine: maginnfe.crc.nd.edu
 
@@ -51,7 +51,7 @@ Simulation type: NVT_MC_Fragment
  20.0 20.0 20.0
  
  # Temperature_Info
- 445.0
+ 450.0
  
  # Seed_Info
  706111630 70611631
@@ -64,8 +64,7 @@ Simulation type: NVT_MC_Fragment
  # Done_Probability_Info
  
  # Start_Type
- read_old
- ../fragments/frag_3_1.xyz 1
+ read_config 1 ../fragments/frag_3_1.xyz 1
  
  # Run_Type
  Production 1000 10
@@ -154,6 +153,14 @@ Coulomb 1-N scaling factor     0.000
  *** Completed assigning intramolecular scaling factors ***
  
  
+ ********** Start Type Info **********
+ 
+ Initial configuration for box 1 will be read from file
+ Will read       1  molecules of species   1
+ Will read configuration from file ../fragments/frag_3_1.xyz                                                                                               
+ 
+ *****Finished reading initial coordinate info *****
+ 
  ***** Reading seed info *********
  
  The starting seed s1 is:    153587801
@@ -161,13 +168,13 @@ Coulomb 1-N scaling factor     0.000
  ****** Finished loading the seed ********
  
  **** Simulation temperature information ****
-  Temperature assigned to box     1  is  445.000    K
+  Temperature assigned to box     1  is  450.000    K
  
  *** Finished loading information for temperature ****
  
  
  ********* Move Probability Info******
-    Translation probability is   1.000000
+    Translation probability is      1.000000
  
  
  Maximum width in cosine of polar angle is  0.200000000000000     
@@ -176,9 +183,9 @@ Coulomb 1-N scaling factor     0.000
 Number of moves is :   1
  
  
-Thermodynamic quantities will written at every         10 MC steps.
+Thermodynamic quantities will written every            10 MC steps.
  
-Coordinates will be written at every                   90 MC steps.
+Coordinates will be written every                      90 MC steps.
  
 movie header file for box    1 is      frag3.box1.H
 movie_XYZ file for box       1 is      frag3.box1.xyz
@@ -191,51 +198,39 @@ Number of equilibrium steps       100
      Configuration file for species    1   is
                           frag3.dat
  
- ******Initial Coordinate Info **********
- 
- Configurations will be read from old files
- 
-Starting configuration for box           1 is
- ../fragments/frag_3_1.xyz                                                      
-                                          
- 
- *****Finished reading initial coordinate info *****
- 
  ****** Reading Run_Type Information ******
  
  The input run type is Production
  Update frequency is         1000
  
  ******* Finished reading run type information ******
-starting type read_old                                                                                                                
-
+ 
+ Reading configuration for box           1
+ Reading            1  molecules of species            1
  Configurations read successfully
  ***************** Charge Neutrality Check *****************
  Species           1    has charge                0.00000000
- Box               1    has charge                0.00000000
  
+ Box               1    has charge                0.00000000
  ***************** Charge Neutrality Check *****************
  ***********************************************************
    Starting energy components for box   1
   Atomic units-Extensive
- 
+ -----------------------------------------------------------
  Total system energy is                 15741.753
  Intra molecular energy is              15741.753
  Bond energy is                             0.000
  Bond angle energy is                   15741.753
  Dihedral angle energy is                   0.000
  Improper angle energy is                   0.000
- Intra nonbond vdw is                       0.000
- Intra nonbond elec is                      0.000
+ Intra molecule vdw is                      0.000
+ Intra molecule q is                        0.000
  Inter molecule vdw is                      0.000
  Inter molecule q is                        0.000
  Reciprocal ewald is                        0.000
  Self ewald is                              0.000
  ***********************************************************
  
- Zig by omega will be printed. This is required in GCMC acceptance rule if fugac
- ity is used.
-Z/Omega                     0.0000022833
 ******************** END OF SIMULATION ********************
  
  
@@ -243,14 +238,14 @@ Z/Omega                     0.0000022833
  Ending energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                 15741.753
- Intra molecular energy is              15741.753
+ Total system energy is                   279.365
+ Intra molecular energy is                279.365
  Bond energy is                             0.000
- Angle energy is                        15741.753
+ Angle energy is                          279.365
  Dihedral energy is                         0.000
  Improper angle energy is                   0.000
- Intra nonbond vdw is                       0.000
- Intra nonbond elec is                      0.000
+ Intra molecule vdw is                      0.000
+ Intra molecule q is                        0.000
  Inter molecule vdw is                      0.000
  Inter molecule q is                        0.000
  Reciprocal ewald is                        0.000
@@ -262,14 +257,14 @@ Z/Omega                     0.0000022833
  Energy components from total energy call for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                     4.566
- Intra molecular energy is                  4.566
+ Total system energy is                   279.365
+ Intra molecular energy is                279.365
  Bond energy is                             0.000
- Angle energy is                            4.566
+ Angle energy is                          279.365
  Dihedral energy is                         0.000
  Improper angle energy is                   0.000
- Intra nonbond vdw is                       0.000
- Intra nonbond elec is                      0.000
+ Intra molecule vdw is                      0.000
+ Intra molecule q is                        0.000
  Inter molecule vdw is                      0.000
  Inter molecule q is                        0.000
  Reciprocal ewald is                        0.000
@@ -280,13 +275,14 @@ Z/Omega                     0.0000022833
  Writing information for box  1
  ***********************************************************
  
- 
- ***********************************************************
- Writing information for species  1
+   ---------------------------------------------------------
+   Writing information for species  1
  
                 Move      Trials     Success   % Success
- ***********************************************************
+   Atom Displacement        1100         568       51.64
+   ---------------------------------------------------------
  
+ ***********************************************************
  
  Writing information about subroutine times
  
@@ -302,4 +298,4 @@ Z/Omega                     0.0000022833
          0      Hours
          0    Minutes
          0    Seconds
-        16         ms
+        43         ms

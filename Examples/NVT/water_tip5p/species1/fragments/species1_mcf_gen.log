@@ -1,14 +1,14 @@
 ************** Beginning Cassandra simulation **************
-Version Cassandra 1.1                                                                                                           
+Version Cassandra Development Version                                                                                           
 
 inputfile species1_mcf_gen.inp                                                                                                    
 
 name of run: species1_mcf_gen
 
   Month      Day      Year
-     09       30      2015
+     05       12      2016
  
- Time:  17:28:43
+ Time:  22:13:59
  
 machine: maginnfe.crc.nd.edu
 
