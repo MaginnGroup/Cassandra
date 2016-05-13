@@ -99,4 +99,5 @@ SUBROUTINE precalculate
 
     ALLOCATE(energy(nbr_boxes),virial(nbr_boxes))
 
+ 
   END SUBROUTINE precalculate

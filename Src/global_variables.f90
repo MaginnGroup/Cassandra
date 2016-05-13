@@ -107,13 +107,13 @@ USE Type_Definitions
   INTEGER, PARAMETER :: vdw_charmm = 6
   INTEGER, PARAMETER :: vdw_cut_switch = 7
   INTEGER, PARAMETER :: vdw_mie = 8
-  INTEGER, PARAMETER :: vdw_mie_cut_shift = 9
 
   INTEGER, PARAMETER :: charge_none = 0
   INTEGER, PARAMETER :: charge_coul = 1
   INTEGER, PARAMETER :: charge_cut = 2
   INTEGER, PARAMETER :: charge_ewald = 3
   INTEGER, PARAMETER :: charge_minimum = 4
+  INTEGER, PARAMETER :: charge_dsf = 5
 
   REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_cbmc 
   REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_vdw, rcut_coul, ron_charmm, roff_charmm, rcut_max
@@ -137,6 +137,7 @@ USE Type_Definitions
   
  
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: nint_beads
+  INTEGER, DIMENSION(:,:,:), ALLOCATABLE :: nint_beads_mie 
 
   ! Intramolecular exclusion variables (1-2, 1-3, 1-4 exclusions/scaling)
   ! and the scaling to use for all other intramolecular terms.
@@ -562,7 +563,7 @@ USE Type_Definitions
   REAL(DP), DIMENSION(:,:), ALLOCATABLE :: chpot, chpotid
 
 !!!!! Mie potential variables
-  INTEGER, DIMENSION(:,:), ALLOCATABLE :: mie_Matrix
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: mie_Matrix
   REAL(DP), DIMENSION(:), ALLOCATABLE :: mie_nlist, mie_mlist
 
 
@@ -572,6 +573,10 @@ INTEGER :: n_lat_atoms
 
 !!! Pair_Nrg_Variables
 REAL(DP), ALLOCATABLE :: pair_vdw_temp(:), pair_qq_temp(:)
+
+!!!! DSF variables
+REAL(DP), ALLOCATABLE, DIMENSION(:) :: alpha_dsf
+REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   
 END MODULE Global_Variables
 

@@ -68,7 +68,7 @@ SUBROUTINE Rotate(this_box)
   INTEGER  :: ibox       ! box index
   INTEGER  :: is         ! species index
   INTEGER  :: im, alive  ! molecule indices
-  INTEGER  :: total_mols ! number of molecules in the system
+  INTEGER  :: total_mols,mcstep ! number of molecules in the system
 
   REAL(DP) :: nmols_box(nbr_boxes)
   REAL(DP), ALLOCATABLE :: x_box(:), x_species(:)

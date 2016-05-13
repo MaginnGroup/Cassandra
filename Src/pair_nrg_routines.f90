@@ -230,12 +230,11 @@ CONTAINS
        
        speciesLoop: DO this_species = 1, nspecies
           
-          molidLoop: DO this_im = 1, max_molecules(this_species)
+          molidLoop: DO this_im = 1, nmols(this_species, this_box)
              
              locate_im = locate(this_im,this_species,this_box)
              
              IF (molecule_list(locate_im,this_species)%live) THEN
-                IF (molecule_list(locate_im,this_species)%which_box == this_box ) THEN
                    
                    CALL Get_Position_Alive(locate_im,this_species,locate_2)
                    
@@ -247,7 +246,6 @@ CONTAINS
                    E_vdw = E_vdw + pair_vdw_temp(position)
                    E_qq = E_qq + pair_qq_temp(position)
                    
-                END IF
                 
              END IF
              
@@ -318,13 +316,12 @@ CONTAINS
        
        DO this_species = 1, nspecies
           
-          DO this_im = 1, max_molecules(this_species)
+          DO this_im = 1, nmols(this_species, this_box)
              
              locate_im = locate(this_im,this_species,this_box)
              
              IF (molecule_list(locate_im,this_species)%live) THEN
                 
-                IF (molecule_list(locate_im,this_species)%which_box == this_box) THEN
                    
                    CALL Get_Position_Alive(locate_im,this_species,locate_2)
                    
@@ -334,7 +331,6 @@ CONTAINS
                    pair_nrg_qq(locate_1,locate_2) = pair_qq_temp(locate_2 + stride)
                    pair_nrg_qq(locate_2,locate_1) = pair_qq_temp(locate_2 + stride)
                 
-                END IF
                 
              END IF
              

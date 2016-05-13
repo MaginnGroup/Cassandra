@@ -198,7 +198,7 @@ SUBROUTINE GEMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
         
-        CALL GEMC_Particle_Transfer(this_box,other_box)
+        CALL GEMC_Particle_Transfer
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)

@@ -70,7 +70,7 @@ SUBROUTINE Insertion(this_box)
   INTEGER :: is, is_rand, is_counter ! species indices
   INTEGER :: kappa_tot, which_anchor
   INTEGER, ALLOCATABLE :: frag_order(:)
-  INTEGER :: rand_igas, tot_mols
+  INTEGER :: rand_igas, tot_mols, mcstep
 
   REAL(DP) :: dx, dy, dz, delta_e
   REAL(DP) :: E_bond, E_angle, E_dihedral, E_improper
@@ -372,21 +372,28 @@ SUBROUTINE Insertion(this_box)
 
   ! 3.5) Ewald energies
 
-  IF ( (int_charge_sum_style(this_box) == charge_ewald) .AND. &
-       has_charge(is) ) THEN
- 
-     CALL Update_System_Ewald_Reciprocal_Energy(lm,is,this_box, &
-             int_insertion,E_reciprocal)
-     CALL Compute_Molecule_Ewald_Self_Energy(lm,is,this_box,E_self)
+  IF (int_charge_style(this_box) == charge_coul) THEN
 
-     delta_e = delta_e + E_self &
-                       + (E_reciprocal - energy(this_box)%ewald_reciprocal)
+        IF ( (int_charge_sum_style(this_box) == charge_ewald) .AND. &
+             has_charge(is) ) THEN
+       
+           CALL Update_System_Ewald_Reciprocal_Energy(lm,is,this_box, &
+                   int_insertion,E_reciprocal)
+
+            delta_e = delta_e + (E_reciprocal - energy(this_box)%ewald_reciprocal)
+           
+        END IF
+
+        CALL Compute_Molecule_Self_Energy(lm,is,this_box,E_self)
+
+        delta_e = delta_e + E_self
 
   END IF
 
   ! 3.6) Long-range energy correction
 
-  IF (int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
+  IF (int_vdw_sum_style(this_box) == vdw_cut_tail .AND. &
+			int_vdw_style(this_box) == vdw_lj) THEN
 
      ! increase number of integer beads
      nbeads_in = nint_beads(:,this_box)
@@ -399,6 +406,17 @@ SUBROUTINE Insertion(this_box)
      CALL Compute_LR_correction(this_box,E_lrc)
      delta_e = delta_e + E_lrc - energy(this_box)%lrc
 
+  ELSEIF (int_vdw_sum_style(this_box) == vdw_cut_tail .AND. &
+			int_vdw_style(this_box) == vdw_mie) THEN
+    nbeads_in = nint_beads_mie(is,:,this_box)
+
+     DO i = 1, natoms(is)
+        i_type = nonbond_list(i,is)%atom_type_number
+        nint_beads_mie(is,i_type,this_box) = nint_beads_mie(is,i_type,this_box) + 1
+     END DO
+
+     CALL Compute_LR_correction(this_box,E_lrc)
+     delta_e = delta_e + E_lrc - energy(this_box)%lrc
   END IF
 
   !*****************************************************************************
@@ -470,10 +488,15 @@ SUBROUTINE Insertion(this_box)
      energy(this_box)%inter_vdw = energy(this_box)%inter_vdw + E_inter_vdw
      energy(this_box)%inter_q = energy(this_box)%inter_q + E_inter_qq
 
-     IF ( int_charge_sum_style(this_box) == charge_ewald .AND. &
-          has_charge(is)) THEN
-        energy(this_box)%ewald_reciprocal = E_reciprocal
-        energy(this_box)%ewald_self = energy(this_box)%ewald_self + E_self
+     IF (int_charge_style(this_box) == charge_coul) THEN
+
+         IF ( int_charge_sum_style(this_box) == charge_ewald .AND. &
+              has_charge(is)) THEN
+            energy(this_box)%ewald_reciprocal = E_reciprocal
+         END IF
+
+         energy(this_box)%self = energy(this_box)%self + E_self
+
      END IF
 
      IF (int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
@@ -505,7 +528,11 @@ SUBROUTINE Insertion(this_box)
 
      IF ( int_vdw_sum_style(this_box) == vdw_cut_tail ) THEN
         ! Restore the total number of bead types
-        nint_beads(:,this_box) = nbeads_in(:)
+        IF (int_vdw_style(this_box) == vdw_lj) THEN
+           nint_beads(:,this_box) = nbeads_in(:)
+        ELSEIF (int_vdw_style(this_box) == vdw_mie) THEN
+           nint_beads_mie(is,:,this_box) = nbeads_in(:)
+        ENDIF
      END IF
 
   END IF

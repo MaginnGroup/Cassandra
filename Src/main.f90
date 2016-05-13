@@ -429,11 +429,15 @@ PROGRAM Main
      IF (int_vdw_sum_style(ibox) == vdw_cut_tail) &
         WRITE(logunit,'(X,A,T30,F20.3)') 'Long range correction is', energy(ibox)%lrc
      WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule q is', energy(ibox)%inter_q
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald is', energy(ibox)%ewald_reciprocal
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Self ewald is', energy(ibox)%ewald_self
 
-     IF (int_charge_sum_style(ibox) == charge_ewald) &
+     IF (int_charge_sum_style(ibox) == charge_ewald) THEN
         WRITE(logunit,'(X,A,T30,I20)') 'Number of vectors is', nvecs(ibox)
+        WRITE(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald is', energy(ibox)%ewald_reciprocal
+        WRITE(logunit,'(X,A,T30,F20.3)') 'Self ewald is', energy(ibox)%self
+     END IF
+
+     if (int_charge_sum_style(ibox) == charge_dsf) WRITE(logunit,'(X,A,T30,F20.3)') 'Self DSF is', energy(ibox)%self
+
      WRITE(logunit,'(X,A59)') '***********************************************************'
      WRITE(logunit,*)
 
@@ -563,9 +567,18 @@ PROGRAM Main
     END IF
     WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule q is', &
        energy(ibox)%inter_q
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald is', &
+
+    IF (int_charge_sum_style(ibox) == charge_ewald) THEN
+
+       WRITE(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald is', &
        energy(ibox)%ewald_reciprocal
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Self ewald is', energy(ibox)%ewald_self
+        WRITE(logunit,'(X,A,T30,F20.3)') 'Self ewald is', energy(ibox)%self
+
+    END IF
+
+    IF (int_charge_sum_style(ibox) == charge_dsf) THEN
+         WRITE(logunit,'(X,A,T30,F20.3)') 'Self DSF is', energy(ibox)%self
+    END IF
     
     WRITE(logunit,'(X,A59)') &
        '***********************************************************'
@@ -614,9 +627,20 @@ PROGRAM Main
     END IF
     WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule q is', &
        energy(ibox)%inter_q
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald is', &
+
+
+    IF (int_charge_sum_style(ibox) == charge_ewald) THEN
+
+       WRITE(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald is', &
        energy(ibox)%ewald_reciprocal
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Self ewald is', energy(ibox)%ewald_self
+        WRITE(logunit,'(X,A,T30,F20.3)') 'Self ewald is', energy(ibox)%self
+
+    END IF
+
+    IF (int_charge_sum_style(ibox) == charge_dsf) THEN
+         WRITE(logunit,'(X,A,T30,F20.3)') 'Self DSF is', energy(ibox)%self
+    END IF
+
     WRITE(logunit,'(X,A59)') &
        '***********************************************************'
   END DO
