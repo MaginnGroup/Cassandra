@@ -37,33 +37,33 @@ LB
 !------------------------------------------------------------------------------
 
 # Molecule_Files
-dmh.mcf 150
+dmh.mcf 100
 !----------------------------------------------------------one line per species
 
 # Box_Info
 1
 CUBIC
-120.
+100.
 !-------------------------------------------------------line 1: number of boxes
 !--------------------------------------------------------------line 2: box type
 !--------------------------------------------------------------line 3: box size
 
 # Temperature_Info
-445.0
+450.0
 !------------------------------------------------------------------------------
 
 # Move_Probability_Info
 
 # Prob_Translation
-0.333333
+100
 20.0
 
 # Prob_Rotation
-0.333333
+100
 180.0
 
 # Prob_Regrowth
-0.333334
+100
 1.0
 
 # Done_Probability_Info
@@ -71,15 +71,15 @@ CUBIC
 !-----------------------------------------each molecule moves per volume change
 
 # Start_Type
-checkpoint
-nvt.inp.chk
+make_config 100
 !--------make_config: one line for each species and one entry/line for each box
 !------------------------------------------------------------read_old: filename
 !----------------------------------------------------------checkpoint: filename
 
 # Run_Type
-Production   5000  100
-!-----------------------------Production: report success ratio every 100 sweeps
+Equilibration 1000
+!-----------------------------Equilibration: adjust success ratio every n steps
+!--------------------------------Production: report success ratio every n steps
 
 
 # Average_Info
@@ -87,12 +87,12 @@ Production   5000  100
 !------------------------------------------------------------ 0 == yes, 1 == no
 
 # Simulation_Length_Info
-Units        Steps
-Prop_Freq    1500
-Coord_Freq   1500
-MCsteps      150000
+Units        Sweeps
+Prop_Freq    10
+Coord_Freq   10
+MCsteps      100
 # Done_Simulation_Length_Info
-!----------------- 150 moves = 1 sweep; output every 10 sweeps; run 1000 sweeps
+!------------------ 300 moves = 1 sweep; output every 10 sweeps; run 100 sweeps
 
 # Property_Info 1 
 Energy_Total
