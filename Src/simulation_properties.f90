@@ -216,7 +216,7 @@ CONTAINS
 
     
     nint_beads(:,this_box) = 0
-
+    nint_beads_mie(:,:,this_box) = 0
     DO is = 1, nspecies
        DO im = 1, nmols(is,this_box) 
 
@@ -230,7 +230,7 @@ CONTAINS
                 
                 ia_type = nonbond_list(ia,is)%atom_type_number
                 nint_beads(ia_type,this_box) = nint_beads(ia_type,this_box) + 1
-                
+		nint_beads_mie(is,ia_type,this_box) = nint_beads_mie(is,ia_type,this_box) + 1
              END DO
             
           END IF

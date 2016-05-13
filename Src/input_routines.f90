@@ -427,10 +427,10 @@ SUBROUTINE Get_Pair_Style
            vdw_style(ibox) = line_array(1)
            WRITE(logunit,'(A,2x,A,A,I3)') '   VDW style used is: ',vdw_style(ibox), 'in box:', ibox
 
-           IF (vdw_style(ibox) /= 'NONE') THEN
+           IF (vdw_style(ibox) == 'LJ') THEN
               int_vdw_style(ibox) = vdw_lj
               vdw_sum_style(ibox) = line_array(2)
-              WRITE(logunit,'(A,2x,A,A,I3)') '   VDW sum style is: ',vdw_sum_style(ibox), 'in box:', ibox
+              WRITE(logunit,'(A,2x,A,A,I3)') '   LJ VDW sum style is: ',vdw_sum_style(ibox), 'in box:', ibox
 
               IF (vdw_sum_style(ibox) == 'CHARMM') THEN
                  int_vdw_sum_style(ibox) = vdw_charmm
@@ -507,17 +507,6 @@ SUBROUTINE Get_Pair_Style
                  int_vdw_sum_style(ibox) = vdw_minimum
                  WRITE(logunit,'(A)') 'Minimum image convention used for VDW'
 
-              ELSEIF (vdw_sum_style(ibox) == 'mie') THEN
-                 int_vdw_sum_style(ibox) = vdw_mie
-		 rcut_vdw(ibox) = String_To_Double(line_array(3))
-                 WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_vdw(ibox), '   Angstrom'
-                 WRITE(logunit,'(A)') 'Mie potential used for VDW'
-
-              ELSEIF (vdw_sum_style(ibox) == 'mie_cut_shift') THEN 
-                 int_vdw_sum_style(ibox) = vdw_mie_cut_shift
-                 rcut_vdw(ibox) = String_To_Double(line_array(3))
-                 WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_vdw(ibox), 'Angstrom'
-                 WRITE(logunit,'(A)') 'Mie cut shift potential used for VDW'
 
               ELSE
                  err_msg(1) = 'Improper specification of vdw_sum_style'
@@ -534,7 +523,52 @@ SUBROUTINE Get_Pair_Style
 
     	      ENDIF
 
+           ELSEIF (vdw_style(ibox) == 'Mie') THEN
+              int_vdw_style(ibox) = vdw_mie
+              vdw_sum_style(ibox) = line_array(2)
+	      WRITE(logunit,'(A,2x,A,A,I3)') '   Mie VDW sum style is:',vdw_sum_style(ibox), 'in box:', ibox
 
+              IF (vdw_sum_style(ibox) == 'cut') THEN
+                 int_vdw_sum_style(ibox) = vdw_cut
+                 rcut_vdw(ibox) = String_To_Double(line_array(3))
+                 WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_vdw(ibox), 'Angstrom'
+                 WRITE(logunit,'(A)') 'Mie potential used for VDW'
+
+              ELSEIF (vdw_sum_style(ibox) == 'cut_shift') THEN
+                 int_vdw_sum_style(ibox) = vdw_cut_shift
+                 rcut_vdw(ibox) = String_To_Double(line_array(3))
+                 WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_vdw(ibox), 'Angstrom'
+                 WRITE(logunit,'(A)') 'Mie cut shift potential used for VDW'
+
+
+              ELSEIF (vdw_sum_style(ibox) == 'cut_tail') THEN
+                 int_vdw_sum_style(ibox) = vdw_cut_tail
+                 rcut_vdw(ibox) = String_To_Double(line_array(3))
+                
+                 IF ( nbr_entries == 4 ) THEN
+                    ! a fourth entry exists indicating whether the cutoff is half of
+                    ! the box length 
+                    
+                    IF (line_array(4) == 'TRUE' .OR. line_array(4) == 'true') THEN
+                       
+                       l_half_len_cutoff(ibox) = .TRUE.
+                       
+                       ! for now assume that the box is cubic
+                       rcut_vdw(ibox) = 0.5_DP * box_list(ibox)%length(1,1)
+                       
+                       WRITE(logunit,*)
+                       WRITE(logunit,'(A,2x,I5)') 'For box ', ibox
+                       WRITE(logunit,*) 'Cutoffs are set to half of the box length'
+                       
+                    END IF
+
+                 END IF
+
+                 WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_vdw(ibox), '   Angstrom'
+
+                 rcut3(ibox) = rcut_vdw(ibox) * rcut_vdw(ibox) * rcut_vdw(ibox)
+                 !rcut9(ibox) = rcut3(ibox) * rcut3(ibox) * rcut3(ibox)
+	      END IF
 
            ELSE
  
@@ -584,6 +618,8 @@ SUBROUTINE Get_Pair_Style
 
                     WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_coul(ibox), '   Angstrom'
 
+
+
                  ELSEIF (charge_sum_style(ibox) == 'Ewald') THEN
                     int_charge_sum_style(ibox) = charge_ewald
                     rcut_coul(ibox) = String_To_Double(line_array(3))
@@ -599,6 +635,7 @@ SUBROUTINE Get_Pair_Style
                        ALLOCATE(ewald_p(nbr_boxes))
                        ALLOCATE(alpha_ewald(nbr_boxes) , h_ewald_cut(nbr_boxes) )
                        ALLOCATE(alphal_ewald(nbr_boxes) )
+                    
                     END IF
 
                     ewald_tol(ibox) = String_To_Double(line_array(4))
@@ -634,8 +671,39 @@ SUBROUTINE Get_Pair_Style
                          alpha_ewald(ibox), ' inverse Angstroms'
                     WRITE(logunit,'(X,A,F7.4,A)') '   Ewald reciprocal cutoff is ', &
                          h_ewald_cut(ibox), ' inverse Angstroms'
+
+
+
+                 ELSEIF (charge_sum_style(ibox) == 'DSF') THEN
+                    IF (ibox == 1) THEN
+                       ALLOCATE(dsf_factor1(nbr_boxes))
+                       ALLOCATE(dsf_factor2(nbr_boxes))
+                       ALLOCATE(alpha_dsf(nbr_boxes))
+                    END IF
+
+                    int_charge_sum_style(ibox) = charge_dsf
+                    rcut_coul(ibox) = String_To_Double(line_array(3))
+
+                    IF (nbr_entries == 4) THEN
+                            alpha_dsf(ibox) = String_To_Double(line_array(4))
+                            WRITE(logunit,*) 'Damping alpha was specified to ',alpha_dsf(ibox)
+                    ELSE
+                            alpha_dsf(ibox) = 0.425_DP - rcut_coul(ibox)*0.02_DP
+                            IF (alpha_dsf(ibox) < 0.0) THEN
+                                alpha_dsf(ibox) = 3.3930702_DP/rcut_coul(ibox)
+                            END IF
+
+                            WRITE(logunit,*) 'No damping alpha was specified. &
+                                              Assume depends linearly with rcut. &
+                                              Alpha set to ',alpha_dsf(ibox)
+
+                    END IF
  
-               
+                    dsf_factor1(ibox) = erfc(alpha_dsf(ibox)*rcut_coul(ibox))/rcut_coul(ibox) 
+                    dsf_factor2(ibox) = dsf_factor1(ibox)/rcut_coul(ibox) + &
+                          2.0_DP*alpha_dsf(ibox)*DEXP(-alpha_dsf(ibox)*alpha_dsf(ibox)*&
+                          rcut_coul(ibox)*rcut_coul(ibox)) / (rootPI * rcut_coul(ibox))
+                                 
                  ELSEIF (charge_sum_style(ibox) == 'minimum_image') THEN
                     int_charge_sum_style(ibox) = charge_minimum
                     IF (int_vdw_sum_style(ibox) /= vdw_minimum .AND. int_vdw_style(ibox) /= vdw_none) THEN
@@ -709,6 +777,29 @@ SUBROUTINE Get_Pair_Style
      WRITE(logunit,*)
   END IF
   
+CONTAINS
+
+  FUNCTION erfc(x)
+    !*************************************************************************
+    !
+    ! Calculate the complementary error function for  a number
+    !
+    !*************************************************************************
+
+    REAL(DP) :: erfc
+    REAL(DP), PARAMETER :: A1 = 0.254829592_DP, A2 = -0.284496736_DP
+    REAL(DP), PARAMETER :: A3 = 1.421413741_DP, A4 = -1.453152027_DP
+    REAL(DP), PARAMETER :: A5 = 1.061405429_DP, P = 0.3275911_DP
+    REAL(DP) :: T, x, xsq, TP
+
+    T = 1.0_DP / (1.0_DP + P*x)
+    xsq = x*x
+
+    TP = T * (A1 + T * (A2 + T * (A3 + T * (A4 + T * A5))))
+
+    erfc = TP * EXP(-xsq)
+
+  END FUNCTION erfc
 END SUBROUTINE Get_Pair_Style
 
 
@@ -1472,7 +1563,8 @@ SUBROUTINE Get_Atom_Info(is)
            END IF
 
            ! Load vdw parameters, specific for each individual type
-           IF (nonbond_list(ia,is)%vdw_potential_type == 'LJ') THEN
+           IF (nonbond_list(ia,is)%vdw_potential_type == 'LJ' .OR. &
+		nonbond_list(ia,is)%vdw_potential_type == 'Mie' ) THEN
               ! epsilon/kB in K read in
               nonbond_list(ia,is)%vdw_param(1) = String_To_Double(line_array(7))
               ! sigma = Angstrom
@@ -1489,6 +1581,8 @@ SUBROUTINE Get_Atom_Info(is)
               nonbond_list(ia,is)%vdw_param(1) = kboltz* nonbond_list(ia,is)%vdw_param(1) 
               ! Set number of vdw parameters
               nbr_vdw_params = 2
+
+	   
 
            ELSEIF (nonbond_list(ia,is)%vdw_potential_type == 'NONE') THEN
 
@@ -5890,11 +5984,9 @@ SUBROUTINE Get_Mie_Nonbond
         DO is = 1, nspecies*nspecies
            line_nbr = line_nbr + 1
            CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
-           mie_nlist(mie_Matrix(String_To_Int(line_array(1)),String_To_Int(line_array(2)))) = String_To_Double(line_array(3))
-           mie_mlist(mie_Matrix(String_To_Int(line_array(1)),String_To_Int(line_array(2)))) = String_To_Double(line_array(4))
-
-           WRITE(logunit,*) 'Mie exponent for ', line_array(1), 'and', line_array(2),  ' is', line_array(3), 'and', line_array(4)
-
+           mie_nlist(mie_Matrix(String_To_Double(line_array(1)),String_To_Double(line_array(2)))) = String_To_Double(line_array(3))
+           mie_mlist(mie_Matrix(String_To_Double(line_array(1)),String_To_Double(line_array(2)))) = String_To_Double(line_array(4))
+	   WRITE(logunit,'(A17,F7.2,A7,F7.2,A6,F7.2,A7,F7.2)') 'Mie exponent for ', String_To_Double(line_array(1)), '   and ', String_To_Double(line_array(2)),  '   is ', String_To_Double(line_array(3)), '   and ', String_To_Double(line_array(4))
         END DO
 
         EXIT

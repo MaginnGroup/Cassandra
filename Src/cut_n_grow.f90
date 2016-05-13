@@ -194,10 +194,6 @@ SUBROUTINE Cut_N_Grow(this_box)
   IF (l_pair_nrg) CALL Store_Molecule_Pair_Interaction_Arrays(alive,is,this_box,E_inter_vdw_o, &
        E_inter_qq_o)
   
-  l_charge = .FALSE.
-  IF ((int_charge_sum_style(this_box) == charge_ewald) .AND. (has_charge(is))) l_charge = .TRUE.
-
-
      
   ! We will first cut part of the molecule and then
   ! determine if a suitable position is found. If so, then
@@ -310,7 +306,8 @@ SUBROUTINE Cut_N_Grow(this_box)
   delta_e_n = E_intra_vdw_n + E_intra_qq_n + E_inter_qq_n + E_inter_vdw_n &
             + E_dihed_n + E_improper_n - E_selferf_n
 
-  IF (l_charge) THEN
+  IF (int_charge_sum_style(this_box)  == charge_ewald .AND.&
+      has_charge(is)) THEN
      ! store cos_mol and sin_mol arrays
      
      ALLOCATE(cos_mol_old(nvecs(this_box)),sin_mol_old(nvecs(this_box)))
@@ -439,15 +436,17 @@ SUBROUTINE Cut_N_Grow(this_box)
                                                                e_inter_vdw_o
      energy(this_box)%inter_q = energy(this_box)%inter_q + e_inter_qq_n - e_inter_qq_o
 
-     IF (l_charge) THEN
+     IF (int_charge_sum_style(this_box)  == charge_ewald .AND.&
+         has_charge(is)) THEN
         energy(this_box)%ewald_reciprocal = E_reciprocal_move
-        energy(this_box)%ewald_self = energy(this_box)%ewald_self - & 
+        energy(this_box)%self = energy(this_box)%self - & 
                                       (E_selferf_n - E_selferf_o)
      END IF
 
      regrowth_success(frag_total,is) = regrowth_success(frag_total,is) + 1
 
-     IF (l_charge) DEALLOCATE(cos_mol_old,sin_mol_old)
+     IF (int_charge_sum_style(this_box)  == charge_ewald .AND.&
+      has_charge(is)) DEALLOCATE(cos_mol_old,sin_mol_old)
      IF (l_pair_nrg) DEALLOCATE(pair_vdw_temp,pair_qq_temp)
 
       ! Fold the molecule in case the COM has moved out of cell boundary
@@ -456,7 +455,8 @@ SUBROUTINE Cut_N_Grow(this_box)
      
      ! Positions of the chain is already set to the old position
      
-     IF (l_charge) THEN
+     IF (int_charge_sum_style(this_box)  == charge_ewald .AND.&
+         has_charge(is)) THEN
         
         !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
         cos_sum(1:nvecs(this_box),this_box) = cos_sum_old(1:nvecs(this_box),this_box)

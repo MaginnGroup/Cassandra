@@ -200,7 +200,7 @@ SUBROUTINE NPTMC_Driver
         ELSE
 !$        time_s = omp_get_wtime()
         END IF
-        
+
         CALL Volume_Change(this_box)
 
         IF(.NOT. openmp_flag) THEN

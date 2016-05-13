@@ -70,7 +70,7 @@ SUBROUTINE Volume_Change(this_box)
 !  !$ include 'omp_lib.h'
 
   INTEGER :: is, im, alive, this_box, i, total_molecules, nvecs_old, ibox
-  INTEGER :: nvecs_max, k, iatom
+  INTEGER :: nvecs_max, k, iatom, mcstep
 
   INTEGER :: ia
 
@@ -106,6 +106,7 @@ SUBROUTINE Volume_Change(this_box)
   CHARACTER(7) :: box_str, cutoff_str
   ! Framework related stuff
   REAL(DP) :: pore_width_old, ratio_width, area, half_pore_width_old
+
 
   ! Done with that section
 
