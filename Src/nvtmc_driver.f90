@@ -99,7 +99,7 @@ SUBROUTINE NVTMC_Driver
 
   DO WHILE (.NOT. complete)
 
-     i_mcstep= i_mcstep + 1
+     i_mcstep = i_mcstep + 1
 
      ! We will select a move from Golden Sampling scheme
 

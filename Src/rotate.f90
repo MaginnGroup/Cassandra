@@ -302,8 +302,7 @@ SUBROUTINE Rotate(this_box)
         success_ratio = REAL(nsuccess(is,this_box)%rotation,DP)/REAL(ntrials(is,this_box)%rotation,DP)
      END IF
 
-     WRITE(logunit,*)
-     WRITE(logunit,'(A,I3,A,I1,A,F8.5)') 'Success ratio, rotation of species ', is,' in box ',this_box, ' : ', success_ratio
+     WRITE(logunit,'(X,I9,X,A15,X,I3,X,I3,X,F8.5)',ADVANCE='NO') i_mcstep, 'rotation' , is, this_box, success_ratio
 
      IF (int_run_style == run_equil) THEN   
     
@@ -317,10 +316,12 @@ SUBROUTINE Rotate(this_box)
            max_rot(is,this_box) = MIN(PI,1.05_DP*max_rot(is,this_box))
 
         END IF
-        WRITE(logunit,'(A,I3,A,I1,A,F8.5)') 'Maximum width, rotation of species ', is,' in box ', this_box, ' : ', max_rot(is,this_box)
+        WRITE(logunit,'(X,F9.5)',ADVANCE='NO') max_rot(is,this_box)
         
      END IF
      
+     WRITE(logunit,*)
+
   END IF
 
 !***************************************************************************

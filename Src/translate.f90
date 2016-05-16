@@ -299,8 +299,7 @@ SUBROUTINE Translate(this_box)
         success_ratio = REAL(nsuccess(is,this_box)%displacement,DP)/REAL(ntrials(is,this_box)%displacement,DP)
      END IF
 
-     WRITE(logunit,*)
-     WRITE(logunit,'(A,I3,A,I1,A,F8.5)')'Success ratio, translation of species ', is , ' in box ', this_box, ' : ', success_ratio
+     WRITE(logunit,'(X,I9,X,A15,X,I3,X,I3,X,F8.5)',ADVANCE='NO') i_mcstep, 'translation' , is, this_box, success_ratio
 
      !nsuccess(is,this_box)%displacement = 0
 
@@ -322,13 +321,12 @@ SUBROUTINE Translate(this_box)
              max_disp(is,this_box) = MIN(rcut_small,2.0_DP*success_ratio*max_disp(is,this_box))
          END IF
 
-         WRITE(logunit,'(A,I3,A,I1,A,F8.5)') 'Maximum width, translation of species ', is,' in box ', this_box, ' : ', max_disp(is,this_box)
+         WRITE(logunit,'(X,F9.5)',ADVANCE='NO') max_disp(is,this_box)
         
      END IF
+
+     WRITE(logunit,*)
 
   END IF
 
 END SUBROUTINE Translate
-     
-
-     

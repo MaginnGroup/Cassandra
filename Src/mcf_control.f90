@@ -63,7 +63,6 @@ SUBROUTINE MCF_Control
 
   ! How many species to simulate?
   CALL Get_Nspecies
-  WRITE(logunit,'(a30,1x,I5,/)') 'Number of species simulated: ',nspecies
 
   CALL Get_Box_Info
 
