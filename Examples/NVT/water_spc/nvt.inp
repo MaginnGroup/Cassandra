@@ -79,7 +79,7 @@ checkpoint nvt.inp.chk
 !----------------------------------------------------------checkpoint: filename
 
 # Run_Type
-Production   900
+Equilibration   900
 !-------------------------Equilibration: update maximum widths every 100 sweeps
 !-----------------------------Production: report success ratio every 100 sweeps
 
@@ -92,8 +92,7 @@ Production   900
 Units        Sweeps
 Prop_Freq    10
 Coord_Freq   10
-MCsteps      100
-# Done_Simulation_Length_Info
+Run          100
 !------------------ 180 moves = 1 sweep; output every 10 sweeps; run 100 sweeps
 
 # Property_Info 1 

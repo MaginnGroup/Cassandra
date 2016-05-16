@@ -84,8 +84,7 @@ reservoir
 !----------------------
 
 # Start_Type
-make_config
-50
+make_config 50
 
 !------------------
 
