@@ -540,8 +540,7 @@ SUBROUTINE Volume_Change(this_box)
         success_ratio = REAL(nvol_success(this_box),DP)/REAL(nvolumes(this_box),DP)
      END IF
 
-     WRITE(logunit,*)
-     WRITE(logunit,'(A,I1,A,F8.5)')'Success ratio, volume changes for box ', this_box ,' : ', success_ratio
+     WRITE(logunit,'(X,I9,X,A15,X,3X,X,I3,X,F8.5)',ADVANCE='NO') i_mcstep, 'volume_change' , is, this_box, success_ratio
 
      IF (int_run_style == run_equil) THEN
         ! dv_max will be adjusted to achieve 0.5 acceptance using the formula
@@ -558,12 +557,14 @@ SUBROUTINE Volume_Change(this_box)
            ELSE
               box_list(this_box)%dv_max = 2.0_DP * success_ratio * box_list(this_box)%dv_max
            END IF
-           WRITE(logunit,'(A,I1,A,F8.0)') 'Maximum width, volume changes for box ', this_box, ' : ', box_list(this_box)%dv_max
+           WRITE(logunit,'(X,F9.5)',ADVANCE='NO') box_list(this_box)%dv_max
 
         END IF
         
         ivol_success(this_box) = 0
      END IF
+
+     WRITE(logunit,*)
 
   END IF
 

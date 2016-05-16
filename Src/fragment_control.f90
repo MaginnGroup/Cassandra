@@ -64,7 +64,6 @@ SUBROUTINE Fragment_Control
   ! Number of species to simulate
 
   CALL Get_Nspecies
-  Write(Logunit,'(A30,1x,I5,/)') 'Number Of Species Simulated: ',Nspecies
 
   CALL Get_Box_Info
 

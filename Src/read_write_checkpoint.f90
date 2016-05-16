@@ -513,8 +513,8 @@ SUBROUTINE Write_Trials_Success
 
   DO ibox = 1, nbr_boxes
 
-     WRITE(logunit,'(X,A27,X,I2)') 'Writing information for box', ibox
-     WRITE(logunit,'(X,A59)') '***********************************************************'
+     WRITE(logunit,'(A27,X,I2)') 'Writing information for box', ibox
+     WRITE(logunit,'(A80)') '********************************************************************************'
 
      IF (nvolumes(ibox) /= 0 ) THEN
         WRITE(logunit,'(A20,2X,A10,2X,A10,2X,A10)') 'Move', 'Trials', 'Success', '% Success'
@@ -603,7 +603,7 @@ SUBROUTINE Write_Trials_Success
         WRITE(logunit,*)
       END DO
 
-      WRITE(logunit,'(X,A59)') '***********************************************************'
+      WRITE(logunit,'(A80)') '********************************************************************************'
         
    END DO
 
@@ -614,8 +614,8 @@ SUBROUTINE Write_Trials_Success
      IF (SUM(regrowth_trials(:,:)) .GT. 0) THEN
 
         WRITE(logunit,*)
-        WRITE(logunit,*) 'Writing information about fragments'
-        WRITE(logunit,'(X,A59)') '***********************************************************'
+        WRITE(logunit,'(A)') 'Writing information about fragments'
+        WRITE(logunit,'(A80)') '********************************************************************************'
      
         DO is = 1, nspecies
            
@@ -638,7 +638,7 @@ SUBROUTINE Write_Trials_Success
            END IF
         
         END DO
-        WRITE(logunit,'(X,A59)') '***********************************************************'
+        WRITE(logunit,'(A80)') '********************************************************************************'
 
      END IF
   END IF
@@ -651,9 +651,7 @@ SUBROUTINE Write_Subroutine_Times
 
 WRITE(logunit,*)
 WRITE(logunit,*) 'Writing information about subroutine times'
-WRITE(logunit,*)
-WRITE(logunit,'(X,A59)') '***********************************************************'
-WRITE(logunit,*)
+WRITE(logunit,'(A80)') '********************************************************************************'
 
 
 IF(movetime(imove_trans) .GT. 0.0_DP ) THEN
@@ -788,6 +786,8 @@ IF(movetime(imove_regrowth) .GT. 0.0_DP ) THEN
    END IF
 
 END IF
+
+WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Write_Subroutine_Times
 
