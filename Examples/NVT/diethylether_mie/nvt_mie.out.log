@@ -1,14 +1,14 @@
 ************** Beginning Cassandra simulation **************
-Version Cassandra 1.1                                                                                                           
+Version Cassandra Development Version                                                                                           
 
-inputfile /scratch365/emarinri/Verbose_v1.1/Examples_Sep28/NVT/diethylether_mie/nvt_mie.inp                                       
+inputfile nvt_mie.inp                                                                                                             
 
 name of run: nvt_mie.out
 
   Month      Day      Year
-     09       30      2015
+     05       16      2016
  
- Time:  17:37:39
+ Time:  12:10:32
  
 machine: maginnfe.crc.nd.edu
 
@@ -29,10 +29,10 @@ Simulation type: NVT_MC
  1
  
  # VDW_Style
- LJ mie 14.0
+ LJ cut_tail 14.0      !cut or cut_shift can also be used instead of cut_tail
  
  # Mie_Nonbond
- 1 1 12 6
+ 1 1 12.0 6
  
  # Charge_Style
  coul Ewald 14.0 0.000001
@@ -51,7 +51,7 @@ Simulation type: NVT_MC
  2.0
  
  # Molecule_Files
- dee.mcf 220
+ dee.mcf 50
  
  # Box_Info
  1
@@ -79,7 +79,7 @@ Simulation type: NVT_MC
  
  # Start_Type
  make_config
- 220
+ 50
  
  # Run_Type
  Equilibration   22000 100
@@ -90,9 +90,9 @@ Simulation type: NVT_MC
  
  # Simulation_Length_Info
  Units        Steps
- Prop_Freq    2200
- Coord_Freq   2200
- MCsteps      22000
+ Prop_Freq    1
+ Coord_Freq   10
+ MCsteps      10
  # Done_Simulation_Length_Info
  
  # Property_Info 1
@@ -131,9 +131,8 @@ Box volume, A^3         41658.6380
  *** Finished loading box information ***
  
    VDW style used is:   LJ             in box:  1
-   VDW sum style is:   mie            in box:  1
+   LJ VDW sum style is:   cut_tail       in box:  1
     rcut =    14.000   Angstrom
-Mie potential used for VDW
  
    Charge style used is:   coul           in box:  1
     Charge sum style is   Ewald          in box:  1
@@ -163,7 +162,7 @@ Lorentz-Berthelot mixing rule specified
  
 Species  Nbr molecules
 -------  -------------
-     1            220
+     1             50
  
 L_Coul_CBMC not given for species    1
  Defaulting to  T
@@ -271,14 +270,14 @@ kappa for dihedral selection                10
 Smaller cutoff for CBMC for box          1        6.50
  ****** finished loading CBMC_Info ********
  
-Thermodynamic quantities will written at every       2200 MC steps.
+Thermodynamic quantities will written at every          1 MC steps.
  
-Coordinates will be written at every                 2200 MC steps.
+Coordinates will be written at every                   10 MC steps.
  
 movie header file for box    1 is      nvt_mie.out.box1.H
 movie_XYZ file for box       1 is      nvt_mie.out.box1.xyz
  
-The simulation will be run for                        22000 MC steps.
+The simulation will be run for                           10 MC steps.
  
  *** Finished Reading Simulation Length Info ******* 
  
@@ -306,22 +305,13 @@ Total number of property files to be written is     1   for box 1
  
 MC low cutoff distance is   2.000    Angstrom
  
- Mie exponent for 
-                                                                                
-                                         1and
-                                                                                
-                                         1 is
- 12                                                                             
-                                          and
- 6                                                                              
-                                          
  
  ******Initial Coordinate Info **********
  
  Initial configuration will be generated
-  Starting number of molecules of species   1   in box   1  is     220
+  Starting number of molecules of species   1   in box   1  is      50
  
-Total number of molecules of species   1   present initially is     220
+Total number of molecules of species   1   present initially is      50
  
  *****Finished reading initial coordinate info *****
  
@@ -331,7 +321,7 @@ Total number of molecules of species   1   present initially is     220
  Update frequency is        22000
  
  ******* Finished reading run type information ******
-starting type make_config                                                                                                             
+ Starting type make_config                                                                                                             
 
  ***************** Charge Neutrality Check *****************
  Species           1    has charge                0.00000000
@@ -341,20 +331,21 @@ starting type make_config
  ***********************************************************
    Starting energy components for box   1
   Atomic units-Extensive
- 
- Total system energy is                530242.054
- Intra molecular energy is             318419.759
+ -----------------------------------------------------------
+ Total system energy is                 42530.991
+ Intra molecular energy is              57748.887
  Bond energy is                             0.000
- Bond angle energy is                  105391.989
- Dihedral angle energy is              213027.770
+ Bond angle energy is                   19020.504
+ Dihedral angle energy is               38728.382
  Improper angle energy is                   0.000
- Intra nonbond vdw is                   -2130.544
- Intra nonbond elec is                1679848.176
- Inter molecule vdw is                 226648.429
- Inter molecule q is                   -11827.696
- Reciprocal ewald is                    36193.954
- Self ewald is                       -1716910.024
+ Intra molecule vdw is                  -3261.441
+ Intra molecule q is                        0.000
+ Inter molecule vdw is                  -8976.672
+ Long range correction is                -643.450
+ Inter molecule q is                   380177.666
  Number of vectors is                        2910
+ Reciprocal ewald is                     7692.825
+ Self ewald is                        -390206.824
  ***********************************************************
  
 ******************** END OF SIMULATION ********************
@@ -364,18 +355,19 @@ starting type make_config
  Ending energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is               -226941.643
- Intra molecular energy is             229506.750
+ Total system energy is                 43359.653
+ Intra molecular energy is              58623.928
  Bond energy is                             0.000
- Angle energy is                       105656.093
- Dihedral energy is                    123850.657
+ Angle energy is                        20333.057
+ Dihedral energy is                     38290.871
  Improper angle energy is                   0.000
- Intra nonbond vdw is                  -13559.070
- Intra nonbond elec is                1679092.508
- Inter molecule vdw is                -403192.337
- Inter molecule q is                   -25559.627
- Reciprocal ewald is                    23680.156
- Self ewald is                       -1716910.024
+ Intra molecule vdw is                  -3266.960
+ Intra molecule q is                        0.000
+ Inter molecule vdw is                  -9374.808
+ Long range correction is                -643.450
+ Inter molecule q is                   380274.051
+ Reciprocal ewald is                     7953.717
+ Self ewald is                        -390206.824
  ***********************************************************
  
  
@@ -383,49 +375,51 @@ starting type make_config
  Energy components from total energy call for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is               -226941.643
- Intra molecular energy is             229506.750
+ Total system energy is                 43359.653
+ Intra molecular energy is              58623.928
  Bond energy is                             0.000
- Angle energy is                       105656.093
- Dihedral energy is                    123850.657
+ Angle energy is                        20333.057
+ Dihedral energy is                     38290.871
  Improper angle energy is                   0.000
- Intra nonbond vdw is                  -13559.070
- Intra nonbond elec is                1679092.508
- Inter molecule vdw is                -403192.337
- Inter molecule q is                   -25559.627
- Reciprocal ewald is                    23680.156
- Self ewald is                       -1716910.024
+ Intra molecule vdw is                  -3266.960
+ Intra molecule q is                        0.000
+ Inter molecule vdw is                  -9374.808
+ Long range correction is                -643.450
+ Inter molecule q is                   380274.051
+ Reciprocal ewald is                     7953.717
+ Self ewald is                        -390206.824
  ***********************************************************
  
  
  Writing information for box  1
  ***********************************************************
  
- 
- ***********************************************************
- Writing information for species  1
+   ---------------------------------------------------------
+   Writing information for species  1
  
                 Move      Trials     Success   % Success
-           Translate        7252        2776       38.28
-              Rotate        7434        3577       48.12
+           Translate           4           3       75.00
+   ---------------------------------------------------------
+ 
  ***********************************************************
  
  Writing information about fragments
- 
  ***********************************************************
- Writing information for species  1
-         # Fragments      Trials     Success   % Success
-                   1        3635        3100       85.28
-                   2        3679        2419       65.75
+ 
+   ---------------------------------------------------------
+   Writing information for species  1
+            Fragment      Trials     Success   % Success
+                   1           3           3      100.00
+                   2           3           3      100.00
+   ---------------------------------------------------------
  ***********************************************************
  
  Writing information about subroutine times
  
  ***********************************************************
  
- Translation time =           25.818097 secs.
- Rotation time =              27.125884 secs.
- Regrowth time =              39.104025 secs.
+ Translation time =            0.054992 secs.
+ Regrowth time =               0.126981 secs.
  ***********************************************************
  
  
@@ -434,6 +428,6 @@ starting type make_config
          0     Months
          0       Days
          0      Hours
-         1    Minutes
-        38    Seconds
-       186         ms
+         0    Minutes
+        11    Seconds
+       167         ms
