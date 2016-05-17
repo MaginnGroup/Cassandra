@@ -83,8 +83,7 @@ reservoir
 !----------------------
 
 # Start_Type
-read_old
-Si27ucEM.xyz
+add_to_config 1 0 Si27ucEM.xyz 0 30
 !------------------
 
 # Run_Type

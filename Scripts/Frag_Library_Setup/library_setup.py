@@ -75,22 +75,24 @@ To generate fragment libraries for a mixture of propane and butane:
     > library_setup.py cassandra.exe nvt.inp c3.pdb c4.pdb
 """)
 parser.add_argument('cassandra_path', 
-								help="""path to the cassandra executable""")
+                help="""path to the cassandra executable""")
 parser.add_argument('input_file', 
-								help="""Parameters for the individual fragment MC runs are """ +
-										 """taken from INPUTFILE. The fragment .mcf files are """ +
-										 """generated from the molecular .mcf files given in """ +
-										 """INPUTFILE. The fragment library files (e.g. """ +
-										 """species1/frag1/frag1.dat) will be added to the """ +
-										 """# Frag_Info section of INPUTFILE.""")
+                help="""Parameters for the individual fragment MC runs are """ +
+                     """taken from INPUTFILE. The fragment .mcf files are """ +
+                     """generated from the molecular .mcf files given in """ +
+                     """INPUTFILE. The fragment library files (e.g. """ +
+                     """species1/frag1/frag1.dat) will be added to the """ +
+                     """# Frag_Info section of INPUTFILE.""")
 parser.add_argument('config_files', nargs='+',
-								help="""CONFIGFILES must be in either .pdb or .cml format. """ +
-										 """A .pdb file can be generated using Gaussview, """ +
-										 """while .cml files can be generated using Avogadro. """ +
-										 """CONFIGFILES provide the starting configuration for """ +
-										 """each fragment that has a ring. If the molecule is """ +
-										 """rigid, the coordinates are simply transferred from """ +
-										 """CONFIGFILE to the fragment library file.""")
+                help="""CONFIGFILES must be in either .pdb or .cml format. """ +
+                     """A .pdb file can be generated using Gaussview, """ +
+                     """while .cml files can be generated using Avogadro. """ +
+                     """CONFIGFILES provide the starting configuration for """ +
+                     """each fragment that has a ring. If the molecule is """ +
+                     """rigid, the coordinates are simply transferred from """ +
+                     """CONFIGFILE to the fragment library file.""")
+parser.add_argument('--nConfigs', '-n', type=int, default=100000,
+                help="""number of configurations to write to the fragment library""")
 
 args = parser.parse_args()
 
@@ -248,14 +250,10 @@ input_file = os.path.abspath(args.input_file)
 bold = '\033[1m'
 normal = '\033[0m'
 gcmc_flag = 0
-chempot_flag = 0
-fugacity_flag = 0
-zbyomega = 1
 
-print bold+"\n*********Cassandra setup*********\n"
-
-print "Cassandra location: "+normal+cassandra_path
-print bold+"Scanning input file..."
+print bold+"\n********************** Cassandra Setup *********************\n"+normal
+print bold+"Cassandra location: "+normal+cassandra_path
+print bold+"Scanning input file"+normal
 
 #Locate line number for the following keywords:
 # Nbr_Species
@@ -278,7 +276,7 @@ for line_number,line in enumerate(in_file):
 			molec_files_line = line_number+1
 		elif line_parse[1] == "Start_Type":
 			start_type_line = line_number+1
-                elif line_parse[1] == "Fragment_Files":
+		elif line_parse[1] == "Fragment_Files":
 			frag_files_line = line_number+1
 		elif line_parse[1] == "Temperature_Info":
 			temp_line = line_number+1
@@ -288,10 +286,6 @@ for line_number,line in enumerate(in_file):
 			charge_style_line = line_number+1
 		elif line_parse[1] == "Box_Info":
 			box_info_line = line_number+1
-		elif line_parse[1] == "Chemical_Potential_Info":
-			chempot_flag = 1
-		elif line_parse[1] == "Fugacity_Info":
-			fugacity_flag = 1
 
 in_file.close()
 
@@ -305,19 +299,10 @@ for i in xrange(0,nbr_boxes):
 
 #Obtain simulation type
 sim_type = linecache.getline(input_file,sim_type_line+1)
-if "GCMC" in sim_type:
-	gcmc_flag = 1
-	if chempot_flag == 1 and fugacity_flag == 1:
-		print bold + "Aborting. Both Chemical potential and Fugacity were " + \
-		             "specified within a GCMC simulation. Select only one of these."
-		sys.exit()
-
-	if fugacity_flag == 1:
-		print bold+"Grand Canonical simulation found. Will look for Zig/Omega in log files."+normal
 
 #Obtain number of species
 nbr_species = int(linecache.getline(input_file,nbr_species_line+1))
-print bold+"Number of species found: " + normal + str(nbr_species)
+print bold+"  Number of species found: " + normal + str(nbr_species)
 
 #Open PDB Files. Is there any files without the CONECT keyword (e.g. zeolite)? If so, 
 #tag it. This species will be assumed to be comprised of rigid fragment.
@@ -338,7 +323,7 @@ for this_species,each_pdb in enumerate(pdb_files):
 mcf_files = []
 for i in xrange(0,nbr_species):
 	mcf_files.append(linecache.getline(input_file,molec_files_line+i+1).split()[0])
-	print bold+"The MCF file number " + str(i+1) + " is: " + normal + mcf_files[i]
+	print bold+"  The MCF file number " + str(i+1) + " is: " + normal + mcf_files[i]
 
 #Open the MCF files to record where atom, bond and fragment info is
 line_where_atom_info = []
@@ -386,7 +371,7 @@ fragment_list=[]
 for i in xrange(0, nbr_species):
 	nbr_fragments.append(int(linecache.getline(mcf_files[i],
 	                            line_where_fragment_info[i]+1).split()[0]))
-	print bold+"Species "+str(i+1)+" has "+str(nbr_fragments[i])+ " fragments"
+	print bold+"    Species "+str(i+1)+" has "+str(nbr_fragments[i])+ " fragments" + normal
 	temp_list=[]
 	for j in xrange(0,nbr_fragments[i]):
 		temp_list.append(linecache.getline(mcf_files[i],
@@ -414,9 +399,9 @@ for i,species in enumerate(fragment_list):
 	temp_exoring = []
 
 if any([any(has_ring) for has_ring in fragment_has_ring]):
-	print bold+"Molecules with rings found. These are:"
+	print bold+"Molecules with rings found. These are:" + normal
 	for i,species in enumerate(fragment_has_ring):
-		print "Species "+str(i+1)+" has "+str(sum(species))+ " rings."
+		print bold+"Species "+str(i+1)+" has "+str(sum(species))+ " rings."+normal
 
 #We know what fragments are ring for each species. Copy only those config_files 
 #for the species that have rings
@@ -482,8 +467,8 @@ for i in xrange(0, nbr_species):
 for i in xrange(0, nbr_species):
 
 	if i in pdb_without_conect:
-		print "\n\n" + bold + "MCF generation file not created for species 1."
-		print "Fragment configuration will be taken from PDB file."
+		print "\n\n" + bold + "MCF generation file not created for species "+str(i+1)+bold
+		print bold+"Fragment configuration will be taken from PDB file."+normal
 		continue
 
 	if nbr_atoms[i] >= 3:
@@ -491,7 +476,7 @@ for i in xrange(0, nbr_species):
 			if str(i) in element[0]:
 				os.system("cp "+element[1]+" species"+str(i+1)+"/fragments/molecule.pdb")
 
-		print "\n\n"+bold+"Creating input MCF generation file for species "+str(i+1) +"..."+normal
+		print "\n\n"+bold+"Creating input MCF generation file for species "+str(i+1)+" "+normal
 		input_mcf_gen = open("species"+str(i+1)+"/fragments/species"+str(i+1)+"_mcf_gen.inp",'w')
 		input_mcf_gen.write("# Run_Name\nspecies"+str(i+1)+"_mcf_gen")
 		input_mcf_gen.write("\n\n")
@@ -504,14 +489,14 @@ for i in xrange(0, nbr_species):
 		input_mcf_gen.write("# Intra_Scaling\n0.0 0.0 0.0 1.0\n0.0 0.0 0.0 1.0\n\n")
 		input_mcf_gen.write("# Molecule_Files\n../../"+mcf_files[i]+" 50\n\n")
 		input_mcf_gen.write("# Box_Info\n1\nCUBIC\n30.0 30.0 30.0\n\nEND")
-		print "Done..."
 		input_mcf_gen.close()
-		print "Running Cassandra to generate MCF files..."+normal
+
+		print bold+"Running Cassandra to generate MCF files"+normal
+		sys.stdout.flush()
 		os.chdir('./species'+str(i+1)+'/fragments/')
 		subprocess.call([cassandra_path,'species'+str(i+1)+'_mcf_gen.inp'])
 		os.chdir('../../')
 
-print bold+"Done..."
 
 #Test if fragment and/or ring is rigid
 fragment_is_rigid = [] # Boolean entry for each i,j
@@ -624,7 +609,7 @@ for i in xrange(0, nbr_species):
 				input_frag.write("# Seed_Info\n706111630 70611631\n\n")
 				input_frag.write("# Molecule_Files\n../fragments/frag_"+str(j+1)+
 					               "_1.mcf 1\n\n")
-				input_frag.write("# Start_Type\nread_old\n../fragments/frag_"+str(j+1)+
+				input_frag.write("# Start_Type\nread_config 1 ../fragments/frag_"+str(j+1)+
 					               "_1.xyz 1\n\n")
 				if j in ring_with_exoatoms[i]:
 					if j in ring_is_rigid[i]:
@@ -642,19 +627,14 @@ for i in xrange(0, nbr_species):
 				input_frag.write("# Run_Type\nProduction 1000 10\n\n")
 				input_frag.write("# Simulation_Length_Info\nUnits    Steps\n"+
 					               "Prop_Freq  100\nCoord_Freq   5000\n"+
-					               "MCsteps      1000000\n# Done_Simulation_Length_Info\n\n")
+					               "MCsteps      "+str(100*args.nConfigs)+"\n"+
+                         "# Done_Simulation_Length_Info\n\n")
 				input_frag.write("# Property_Info 1\nEnergy_Total\n\n")
 				input_frag.write("# File_Info\nfrag"+str(j+1)+".dat\n\n")
 				input_frag.write("END")
 				input_frag.close()
 				os.chdir('./species'+str(i+1)+'/frag'+str(j+1)+'/')
 				subprocess.call([cassandra_path,'frag'+str(j+1)+'.inp'])
-				if gcmc_flag == 1:
-					logfile = open('frag'+str(j+1)+'.log','r')
-					for line in logfile:
-						if 'Z/Omega' in line:
-							zbyomega = zbyomega * float(line.split()[1])
-					logfile.close()
 				os.chdir('../../')
 			else:
 				print bold+"Generating fragment library species "+str(i+1)+\
@@ -676,12 +656,13 @@ for i in xrange(0, nbr_species):
 				input_frag.write("# Seed_Info\n706111630 70611631\n\n")
 				input_frag.write("# Move_Probability_Info\n# Prob_Translation\n1.0\n"+
 												 "0.2 10.0\n1.0\n# Done_Probability_Info\n\n")
-				input_frag.write("# Start_Type\nread_old\n../fragments/frag_"+str(j+1)+
+				input_frag.write("# Start_Type\nread_config 1 ../fragments/frag_"+str(j+1)+
 												 "_1.xyz 1\n\n")
 				input_frag.write("# Run_Type\nProduction 1000 10\n\n")
 				input_frag.write("# Simulation_Length_Info\nUnits  Steps\n"+
 												 "Prop_Freq  10\nCoord_Freq   90\n"+
-												 "MCsteps      1100000\nNequilSteps  100000\n"+
+												 "MCsteps      "+str(11*args.nConfigs)+"\n"+
+                         "NequilSteps  "+str(args.nConfigs)+"\n"+
 												 "# Done_Simulation_Length_Info\n\n")
 				input_frag.write("# File_Info\nfrag"+str(j+1)+".dat\n\n")
 				input_frag.write("END")
@@ -689,13 +670,6 @@ for i in xrange(0, nbr_species):
 #				raw_input("here"+str(i)+str(j))
 				os.chdir('./species'+str(i+1)+'/frag'+str(j+1)+'/')
 				subprocess.call([cassandra_path,'frag'+str(j+1)+'.inp'])
-				if gcmc_flag == 1:
-					logfile = open('frag'+str(j+1)+'.log','r')
-					if fugacity_flag == 1:
-						for line in logfile:
-							if 'Z/Omega' in line:
-								zbyomega = zbyomega * float(line.split()[1])
-						logfile.close()
 				os.chdir('../../')
 
 
@@ -717,9 +691,6 @@ for line_number in xrange(1,total_lines+1):
 				               ".dat  " + str(total_frag_counter)+"\n")
 		new_file.write('!------------------------------------------------------' + 
 	 	               '---one line per fragment\n\n')
-		if gcmc_flag == 1 and fugacity_flag == 1:
-			new_file.write("\n# Zig_By_Omega_Info\n")
-			new_file.write(str(zbyomega)+"\n")
 		omit = True
 	elif not omit:
 		new_file.write(linecache.getline(input_file,line_number))
@@ -732,6 +703,6 @@ for line_number in xrange(1,total_lines+1):
 in_file.close()
 new_file.close()
 
-print bold+"Removing temporary input file"
+print bold+"Removing temporary input file"+normal
 os.system("rm "+ input_file+"; mv "+input_file+"temp "+input_file)
-print "Finished"+normal
+print bold+"Finished"+normal

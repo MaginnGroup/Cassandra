@@ -61,7 +61,6 @@ SUBROUTINE Insertion(this_box)
 
   ! Arguments
   INTEGER :: this_box ! attempt to insert a molecule in this_box
-  LOGICAL :: accept
 
   ! Local declarations
   INTEGER :: i, i_type               ! atom indices

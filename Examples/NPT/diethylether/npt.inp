@@ -13,11 +13,11 @@ NPT_MC
 !------------------------------------------------------------------------------
 
 # VDW_Style
-LJ cut_tail 14.0
+LJ cut_tail 7.0
 !------------------------------------------------------------------------------
 
 # Charge_Style
-coul Ewald 14.0 0.000001
+coul Ewald 7.0 0.000001
 !------------------------------------------------------------------------------
 
 # Intra_Scaling
@@ -38,13 +38,13 @@ LB
 !------------------------------------------------------------------------------
 
 # Molecule_Files
-dee.mcf 220
+dee.mcf 30
 !----------------------------------------------------------one line per species
 
 # Box_Info
 1
 CUBIC
-34.2101610953864
+17.5
 !-------------------------------------------------------line 1: number of boxes
 !--------------------------------------------------------------line 2: box type
 !--------------------------------------------------------------line 3: box size
@@ -61,19 +61,19 @@ CUBIC
 # Move_Probability_Info
 
 # Prob_Translation
-0.331825
+30
 0.38134
 
 # Prob_Rotation
-0.331825
+30
 29.807
 
 # Prob_Regrowth
-0.331825
+30
 1.0
 
 # Prob_Volume
-0.004525
+1
 949.18
 
 # Done_Probability_Info
@@ -81,14 +81,13 @@ CUBIC
 !-----------------------------------------each molecule moves per volume change
 
 # Start_Type
-read_old
-npt.inp.xyz
+checkpoint npt.inp.chk
 !--------make_config: one line for each species and one entry/line for each box
 !------------------------------------------------------------read_old: filename
 !----------------------------------------------------------checkpoint: filename
 
 # Run_Type
-Production   7333 100
+Production   1000 10
 !---------------------------Production: report success ratio every 100 sweeps
 
 
@@ -97,12 +96,12 @@ Production   7333 100
 !------------------------------------------------------------ 0 == yes, 1 == no
 
 # Simulation_Length_Info
-Units        Steps
-Prop_Freq    2210
-Coord_Freq   2210
-MCsteps      22100
+Units        Sweeps
+Prop_Freq    10
+Coord_Freq   10
+MCsteps      100
 # Done_Simulation_Length_Info
-!------------------ 221 moves = 1 sweep; output every 10 sweeps; run 100 sweeps
+!------------------  91 moves = 1 sweep; output every 10 sweeps; run 100 sweeps
 
 # Property_Info 1 
 Energy_Total

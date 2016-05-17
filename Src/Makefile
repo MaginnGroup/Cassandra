@@ -102,7 +102,7 @@ OBJS =  main.o \
   save_revert_coordinates.o \
   rotate.o \
   participation.o \
-  grow_molecules.o \
+  make_config.o \
   compute_cell_dimensions.o \
   rigid_dihedral_change.o \
   angle_distortion.o \
@@ -138,7 +138,7 @@ exe: $(OBJS)
 	$(FC) $(OPTFLAGS) -o $(BIN_DIR)/$(EXEC_NAME) $(OBJS) $(LIBS) $(LINK_F90) $(LINKFLAGS)
 
 clean:
-	rm *.o *.mod dep.mk
+	rm -fr *.o *.mod dep.mk
 
 dep.mk:
 	./get_deps

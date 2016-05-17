@@ -84,7 +84,7 @@ SUBROUTINE Deletion(this_box)
   REAL(DP) :: E_intra_vdw_igas, E_intra_qq_igas
 
   LOGICAL :: inter_overlap, cbmc_overlap, intra_overlap
-  LOGICAL :: accept_or_reject, fh_outside_bounds, accept
+  LOGICAL :: accept_or_reject, fh_outside_bounds
 
   INTEGER :: old_subensemble
 

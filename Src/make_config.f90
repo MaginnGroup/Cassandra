@@ -19,7 +19,7 @@
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*******************************************************************************
 
-  SUBROUTINE Grow_Molecules
+  SUBROUTINE Make_Config(ibox)
 
     !***************************************************************************
     ! The subroutine generates initial configuration of molecules for box 1.
@@ -49,9 +49,12 @@
 
     IMPLICIT NONE
 
+    ! Input
+    INTEGER, INTENT(IN) :: ibox
+
     ! Local
     INTEGER :: is,im,ia, this_box, alive, this_im, im_base, locate_base
-    INTEGER :: is2, im2, ja, ibox, which_anchor
+    INTEGER :: is2, im2, ja, which_anchor
     INTEGER :: isdstart,isdend,isistart,isiend,ireac
     INTEGER :: i,m,box_start,box_end, ii
     INTEGER :: im_this,im_other, other_box, alive_this, alive_other, this_atom
@@ -74,151 +77,135 @@
     overlap = .false. 
     del_flag = .FALSE. 
 
-    DO ibox = 1, nbr_boxes
+    DO is=1,nspecies         
 
-       DO is=1,nspecies         
+       IF (nmols_to_make(is,ibox) > 0) &
+         WRITE(logunit,*) 'Inserting ', nmols_to_make(is,ibox), &
+            'molecules of species ', is
+       
+       IF (species_list(is)%fragment) THEN
+          ALLOCATE(frag_order(nfragments(is)))
+       END IF
+       
+       ! if there are already molecules in the box, start at next number
+       im_base = nmols(is,ibox)
 
-          IF (nmols_initial(is,ibox) > nmols(is,ibox)) &
-            WRITE(*,*) 'inserting molecules of species ', is, ' into box ', ibox
+       ! LOCATE numbering is continuous across all boxes
+       locate_base = SUM(nmols(is,1:nbr_boxes))
+
+       DO im = im_base+1, im_base+nmols_to_make(is,ibox)
+          nmols(is,ibox) = nmols(is,ibox) + 1
+          locate(im,is,ibox) = im -im_base + locate_base
+          alive = locate(im,is,ibox)
+          molecule_list(alive,is)%which_box = ibox
+          molecule_list(alive,is)%live = .true.
           
-          IF (species_list(is)%fragment) THEN
-             ALLOCATE(frag_order(nfragments(is)))
-          END IF
+          molecule_list(alive,is)%molecule_type = int_normal
           
-          ! if there are already molecules in the box, start at next number
-          im_base = nmols(is,ibox)
+          molecule_list(alive,is)%frac = 1.0_DP
+          atom_list(:,alive,is)%exist = .TRUE.
+          
+          ! Now let us insert the molecule randomly in this box
+          InsertionLOOP: DO
+             
+             ! we will grow the molecules if there are fragments in the molecules
+             IF (species_list(is)%fragment) THEN
+                atom_list(:,alive,is)%exist = .FALSE.
+                cbmc_overlap = .FALSE.
+                get_fragorder = .TRUE.
+                P_seq = 1.0_DP
+                P_bias = 1.0_DP
+                lambda_for_build = molecule_list(alive,is)%frac
+                CALL Build_Molecule(alive,is,ibox,frag_order, &
+                        lambda_for_build,P_seq,P_bias, &
+                        nrg_ring_frag_tot,cbmc_overlap)
+                IF (cbmc_overlap) CYCLE InsertionLOOP
+                atom_list(:,alive,is)%exist = .TRUE.       
 
-          ! LOCATE numbering is continuous across all boxes
-          locate_base = SUM(nmols(is,1:nbr_boxes))
-
-          DO im = im_base+1, im_base+nmols_initial(is,ibox)
-             nmols(is,ibox) = nmols(is,ibox) + 1
-             locate(im,is,ibox) = im -im_base + locate_base
-             alive = locate(im,is,ibox)
-             molecule_list(alive,is)%which_box = ibox
-             molecule_list(alive,is)%live = .true.
-             
-             molecule_list(alive,is)%molecule_type = int_normal
-             
-             molecule_list(alive,is)%frac = 1.0_DP
-             atom_list(:,alive,is)%exist = .TRUE.
-             
-             ! Now let us insert the molecule randomly in this box
-             InsertionLOOP: DO
+             ELSE
                 
-                ! we will grow the molecules if there are fragments in the molecules
-                IF (species_list(is)%fragment) THEN
-                   atom_list(:,alive,is)%exist = .FALSE.
-                   cbmc_overlap = .FALSE.
-                   get_fragorder = .TRUE.
-                   P_seq = 1.0_DP
-                   P_bias = 1.0_DP
-                   lambda_for_build = molecule_list(alive,is)%frac
-                   CALL Build_Molecule(alive,is,ibox,frag_order, &
-                           lambda_for_build,P_seq,P_bias, &
-                           nrg_ring_frag_tot,cbmc_overlap)
-                   IF (cbmc_overlap) CYCLE InsertionLOOP
-                   atom_list(:,alive,is)%exist = .TRUE.       
-
-                ELSE
-                   
-                   IF(box_list(ibox)%box_shape == 'CUBIC') THEN
-                      ! -- all the cell lengths are identical,
-                      atom_list(1,alive,is)%rxp = (rranf() - 0.5_DP) * box_list(ibox)%length(1,1)
-                      atom_list(1,alive,is)%ryp = (rranf() - 0.5_DP) * box_list(ibox)%length(2,2)
-                      atom_list(1,alive,is)%rzp = (rranf() - 0.5_DP) * box_list(ibox)%length(3,3)                      
-                   END IF
-                   
-                   ! insert the rest of the molecule
-                   DO ia = 2,natoms(is)
-                      
-                      atom_list(ia,alive,is)%rxp = atom_list(1,alive,is)%rxp + init_list(ia,1,is)%rxp - &
-                           init_list(1,1,is)%rxp
-                      atom_list(ia,alive,is)%ryp = atom_list(1,alive,is)%ryp + init_list(ia,1,is)%ryp - &
-                           init_list(1,1,is)%ryp
-                      atom_list(ia,alive,is)%rzp = atom_list(1,alive,is)%rzp + init_list(ia,1,is)%rzp - &
-                           init_list(1,1,is)%rzp
-                   END DO
-                   
-                   ! Obtain COM of the molecule
-                   CALL Get_COM(alive,is)
-                   
-                   CALL Rotate_Molecule_Eulerian
-                   
+                IF(box_list(ibox)%box_shape == 'CUBIC') THEN
+                   ! -- all the cell lengths are identical,
+                   atom_list(1,alive,is)%rxp = (rranf() - 0.5_DP) * box_list(ibox)%length(1,1)
+                   atom_list(1,alive,is)%ryp = (rranf() - 0.5_DP) * box_list(ibox)%length(2,2)
+                   atom_list(1,alive,is)%rzp = (rranf() - 0.5_DP) * box_list(ibox)%length(3,3)                      
                 END IF
                 
-                ! Obtain the new COM of the molecule
+                ! insert the rest of the molecule
+                DO ia = 2,natoms(is)
+                   
+                   atom_list(ia,alive,is)%rxp = atom_list(1,alive,is)%rxp + init_list(ia,1,is)%rxp - &
+                        init_list(1,1,is)%rxp
+                   atom_list(ia,alive,is)%ryp = atom_list(1,alive,is)%ryp + init_list(ia,1,is)%ryp - &
+                        init_list(1,1,is)%ryp
+                   atom_list(ia,alive,is)%rzp = atom_list(1,alive,is)%rzp + init_list(ia,1,is)%rzp - &
+                        init_list(1,1,is)%rzp
+                END DO
+                
+                ! Obtain COM of the molecule
                 CALL Get_COM(alive,is)
                 
-                ! Check for any overlaps with previously inserted molecules
-                DO is2 = 1, nspecies
-                   im2LOOP: DO im2 = 1, nmols(is2,ibox)
-                      this_im = locate(im2,is2,ibox)
+                CALL Rotate_Molecule_Eulerian
+                
+             END IF
+             
+             ! Obtain the new COM of the molecule
+             CALL Get_COM(alive,is)
+             
+             ! Check for any overlaps with previously inserted molecules
+             DO is2 = 1, nspecies
+                im2LOOP: DO im2 = 1, nmols(is2,ibox)
+                   this_im = locate(im2,is2,ibox)
+                   
+                   ! skip the test for this molecule
+                   IF ((is2 == is) .AND. (alive==this_im)) CYCLE im2LOOP
+                   
+                   ! check the overlap with all the atoms of this molecule
+                   DO ia = 1, natoms(is)
                       
-                      ! skip the test for this molecule
-                      IF ((is2 == is) .AND. (alive==this_im)) CYCLE im2LOOP
-                      
-                      ! check the overlap with all the atoms of this molecule
-                      DO ia = 1, natoms(is)
+                      DO ja = 1, natoms(is2)
                          
-                         DO ja = 1, natoms(is2)
-                            
-                            rxijp = atom_list(ia,alive,is)%rxp - atom_list(ja,this_im,is2)%rxp
-                            ryijp = atom_list(ia,alive,is)%ryp - atom_list(ja,this_im,is2)%ryp
-                            rzijp = atom_list(ia,alive,is)%rzp - atom_list(ja,this_im,is2)%rzp
-                            
-                            CALL Minimum_Image_Separation(ibox,rxijp,ryijp,rzijp,rxij,ryij,rzij)
-                            
-                            rsq = rxij * rxij + ryij * ryij + rzij * rzij
-                            
-                            IF (rsq < rcut_lowsq) CYCLE InsertionLOOP
-                            ! reject the insertion and go back for another trial
-                            
-                         END DO
+                         rxijp = atom_list(ia,alive,is)%rxp - atom_list(ja,this_im,is2)%rxp
+                         ryijp = atom_list(ia,alive,is)%ryp - atom_list(ja,this_im,is2)%ryp
+                         rzijp = atom_list(ia,alive,is)%rzp - atom_list(ja,this_im,is2)%rzp
+                         
+                         CALL Minimum_Image_Separation(ibox,rxijp,ryijp,rzijp,rxij,ryij,rzij)
+                         
+                         rsq = rxij * rxij + ryij * ryij + rzij * rzij
+                         
+                         IF (rsq < rcut_lowsq) CYCLE InsertionLOOP
+                         ! reject the insertion and go back for another trial
                          
                       END DO
                       
-                   END DO im2LOOP
+                   END DO
                    
-                END DO
+                END DO im2LOOP
                 
-                ! If here then we did not find overlap of alive with any other molecule in the system. 
-                ! exit and insert another molecule
-                
-                ! compute the distance of the psuedoatom farthest from the COM.
-                CALL Compute_Max_Com_Distance(alive,is)
-                
-                WRITE(*,*) 'successfully inserted molecule ', alive
-                EXIT
-                
-             END DO InsertionLOOP
+             END DO
              
-          ENDDO  ! this ends the do loop from line 88
+             ! If here then we did not find overlap of alive with any other molecule in the system. 
+             ! exit and insert another molecule
+             
+             ! compute the distance of the psuedoatom farthest from the COM.
+             CALL Compute_Max_Com_Distance(alive,is)
+             
+             EXIT
+             
+          END DO InsertionLOOP
           
-          IF (ALLOCATED(frag_order)) DEALLOCATE(frag_order)
-          
-       END DO ! ends do loop from line 74
+       ENDDO  ! this ends the do loop from line 88
        
-       ! Here the configuration for this box has been generated
-       ! Let's write this out
-       CALL Write_Coords(ibox)
-       overlap = .FALSE.
-
-    END DO  ! ends do loop from line 72 (nbr_boxes)
-
-    ! Add LOCATE for any unplaced molecules in array under BOX==0, in reverse
-    ! order
-    DO is = 1, nspecies
-      DO im = max_molecules(is), SUM(nmols(is,1:nbr_boxes)) + 1, -1
-        nmols(is,0) = nmols(is,0) + 1
-        locate(nmols(is,0),is,0) = im
-      END DO
-    END DO
-
+       IF (ALLOCATED(frag_order)) DEALLOCATE(frag_order)
+       
+    END DO ! ends do loop from line 74
     
-    DO ibox = 1, nbr_boxes
-       IF(int_vdw_sum_style(ibox) == vdw_cut_tail) CALL Compute_Beads(ibox)
-    END DO
+    ! Here the configuration for this box has been generated
+    ! Let's write this out
+    CALL Write_Coords(ibox)
+    overlap = .FALSE.
+
+    IF(int_vdw_sum_style(ibox) == vdw_cut_tail) CALL Compute_Beads(ibox)
 
   CONTAINS
     
@@ -287,7 +274,7 @@
     
     !**********************************************************************       
     
-  END SUBROUTINE Grow_Molecules
+  END SUBROUTINE Make_Config
 
 
   SUBROUTINE Update_Reservoir(is)
@@ -316,7 +303,7 @@
     REAL(DP) :: P_seq, P_bias, e_prev, lambda_for_cut, nrg_ring_frag_forward
     CHARACTER(2) :: dummy_element
     LOGICAL :: cbmc_overlap, del_overlap, intra_overlap
-    LOGICAL :: accept, accept_or_reject
+    LOGICAL :: accept_or_reject
 
     igas_flag = .TRUE.
 

@@ -89,8 +89,7 @@ reservoir
 !----------------------
 
 # Start_Type
-read_old
-MFI.xyz
+add_to_config 1 0 MFI.xyz 0 20
 
 !------------------
 

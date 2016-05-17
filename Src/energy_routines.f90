@@ -182,7 +182,7 @@ MODULE Energy_Routines
   !   gemc_driver
   ! 
   !   gemc_particle_transfer
-  !   grow_molecules
+  !   make_config
   !   input_routines
   !   insertion
   !   main

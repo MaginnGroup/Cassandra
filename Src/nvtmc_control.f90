@@ -82,7 +82,6 @@ SUBROUTINE NVTMC_Control
 
   ! How many species to simulate?
   CALL Get_Nspecies
-  WRITE(logunit,'(a30,1x,I5,/)') 'Number of species simulated: ',nspecies
 
   ! Load box shape, number of boxes and box type. Compute various properties of the box
   ! including the volume
@@ -97,15 +96,17 @@ SUBROUTINE NVTMC_Control
   CALL Get_Molecule_Info
 
 
-     ! Determine how intramoleclar scaling of vdw and coul interactions handled.
-     CALL Get_Intra_Scaling
+  ! Determine how intramoleclar scaling of vdw and coul interactions handled.
+  CALL Get_Intra_Scaling
 
-     ! Determine the number and identity of unique atom types, and create a vdw interaction table.
-     CALL Create_Nonbond_Table
+  ! Determine the number and identity of unique atom types, and create a vdw interaction table.
+  CALL Create_Nonbond_Table
 
-     ! Create the intramolecular nonbond scaling arrays.
-     CALL Create_Intra_Exclusion_Table
+  ! Create the intramolecular nonbond scaling arrays.
+  CALL Create_Intra_Exclusion_Table
 
+
+  CALL Get_Start_Type
 
   CALL Get_Seed_Info
 

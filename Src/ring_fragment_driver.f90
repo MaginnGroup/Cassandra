@@ -68,7 +68,7 @@ SUBROUTINE Ring_Fragment_Driver
 
   REAL(DP) :: rand_no 
 
-  LOGICAL :: overlap, accept
+  LOGICAL :: overlap
 
   is = 1
   im = locate(1,is,1)
@@ -91,7 +91,7 @@ SUBROUTINE Ring_Fragment_Driver
      IF ( rand_no <= cut_ring) THEN
         
         nring_trials = nring_trials + 1
-        CALL Flip_Move(im,is,this_box,accept)
+        CALL Flip_Move(im,is,this_box)
 
         IF (accept) THEN
            nring_success = nring_success + 1
@@ -100,7 +100,7 @@ SUBROUTINE Ring_Fragment_Driver
      ELSE IF (rand_no <= cut_atom_displacement) THEN
         
         nexoring_trials = nexoring_trials + 1
-        CALL Atom_Displacement(this_box,accept)
+        CALL Atom_Displacement(this_box)
 
         IF (accept) THEN
            nexoring_success = nexoring_success + 1
@@ -133,7 +133,7 @@ SUBROUTINE Ring_Fragment_Driver
 
 END SUBROUTINE Ring_Fragment_Driver
 !*******************************************************************************
-SUBROUTINE Flip_Move(im,is,this_box,accept)
+SUBROUTINE Flip_Move(im,is,this_box)
   !*****************************************************************************
   !
   ! CALLED BY
@@ -171,7 +171,7 @@ SUBROUTINE Flip_Move(im,is,this_box,accept)
   REAL(DP) :: e_improper_n, delta_improper, E_intra_vdw, E_intra_qq, factor, e_recip
   REAL(DP) :: E_periodic_qq
 
-  LOGICAL :: accept, accept_or_reject,intra_overlap
+  LOGICAL :: accept_or_reject,intra_overlap
 
   ! save the orignal coordinates
 
