@@ -40,9 +40,7 @@ MODULE Read_Write_Checkpoint
 
 CONTAINS
 
-  SUBROUTINE Write_Checkpoint(this_mc_step)
-
-    INTEGER, INTENT(IN) :: this_mc_step
+  SUBROUTINE Write_Checkpoint
 
     INTEGER :: ibox, is, ii, jj, im, this_im, ia, nmolecules_is, this_box
     INTEGER :: total_molecules_is, this_unit, position
@@ -80,7 +78,7 @@ CONTAINS
     END DO
     
     WRITE(chkptunit,*) '********** # of MC steps *********'
-    WRITE(chkptunit,*) this_mc_step
+    WRITE(chkptunit,*) i_mcstep
     WRITE(chkptunit,*) '******** Box info ***********'
     
     DO ibox = 1, nbr_boxes
@@ -142,9 +140,7 @@ CONTAINS
 
 !*******************************************************************************
 
-SUBROUTINE Read_Checkpoint(initial_mcstep)
-
-    INTEGER, INTENT(OUT) :: initial_mcstep
+SUBROUTINE Read_Checkpoint
 
     INTEGER :: ibox, is, ii, jj, im, this_im, ia, nmolecules_is, this_box
     INTEGER :: sp_nmoltotal(nspecies)
@@ -157,7 +153,7 @@ SUBROUTINE Read_Checkpoint(initial_mcstep)
     REAL(DP) :: E_self, xcom_old, ycom_old, zcom_old
     REAL(DP) :: xcom_new, ycom_new, zcom_new
 
-    LOGICAL :: f_checkpoint, f_read_config, overlap
+    LOGICAL :: overlap
     LOGICAL :: lopen
 
     TYPE(Energy_Class) :: inrg
@@ -179,52 +175,33 @@ SUBROUTINE Read_Checkpoint(initial_mcstep)
     
     READ(restartunit,*)
 
-    f_checkpoint = .FALSE.
-    f_read_config = .FALSE.
-    IF (start_type == 'checkpoint') f_checkpoint = .TRUE.
-    IF (start_type == 'read_config') f_read_config = .TRUE.
-
     DO ibox = 1, nbr_boxes
 
        DO is = 1, nspecies
           
           ! read information only if start_type == checkpoint
           
-          IF (f_checkpoint) THEN
+          READ(restartunit,'(5(I10,1x))') this_species, &
+               ntrials(is,ibox)%displacement, &
+               ntrials(is,ibox)%rotation, &
+               ntrials(is,ibox)%dihedral, &
+               ntrials(is,ibox)%angle
 
-             READ(restartunit,'(5(I10,1x))') this_species, &
-                  ntrials(is,ibox)%displacement, &
-                  ntrials(is,ibox)%rotation, &
-                  ntrials(is,ibox)%dihedral, &
-                  ntrials(is,ibox)%angle
+          READ(restartunit,'(5(I10,1x))') this_species, &
+               nsuccess(is,ibox)%displacement, &
+               nsuccess(is,ibox)%rotation, &
+               nsuccess(is,ibox)%dihedral, &
+               nsuccess(is,ibox)%angle
 
-             READ(restartunit,'(5(I10,1x))') this_species, &
-                  nsuccess(is,ibox)%displacement, &
-                  nsuccess(is,ibox)%rotation, &
-                  nsuccess(is,ibox)%dihedral, &
-                  nsuccess(is,ibox)%angle
-
-             READ(restartunit,'(3(E24.15))') max_disp(is,ibox), &
-                  max_rot(is,ibox), species_list(is)%max_torsion
-
-          ELSE IF (f_read_config) THEN
-
-             READ(restartunit,*)
-             READ(restartunit,*)
-             READ(restartunit,*)
-
-          END IF
+          READ(restartunit,'(3(E24.15))') max_disp(is,ibox), &
+               max_rot(is,ibox), species_list(is)%max_torsion
 
        END DO
        
        IF ( int_sim_type == sim_npt .OR. int_sim_type == sim_gemc .OR. &
             int_sim_type == sim_gemc_npt ) THEN
 
-          IF (f_checkpoint) THEN
-             READ(restartunit,*) nvol_success(ibox), nvolumes(ibox)
-          ELSE IF (f_read_config) THEN
-             READ(restartunit,*)
-          END IF
+          READ(restartunit,*) nvol_success(ibox), nvolumes(ibox)
 
        END IF
     END DO
@@ -237,50 +214,25 @@ SUBROUTINE Read_Checkpoint(initial_mcstep)
     
     DO ibox = 1, nbr_boxes
 
-       IF (f_checkpoint) THEN
-          
-          READ(restartunit,*) tot_trials(ibox)
-          READ(restartunit,*) box_list(ibox)%volume
-          READ(restartunit,*) box_list(ibox)%box_shape
-          
-          DO ii = 1, 3
-             READ(restartunit,*) (box_list(ibox)%length(ii,jj), jj=1,3)
-          END DO
-          
-          !--- inverse length
-          DO ii = 1, 3
-             READ(restartunit,*) (box_list(ibox)%length_inv(ii,jj), jj=1,3)
-          END DO
-
-          CALL Compute_Cell_Dimensions(ibox)
-                    
-       ELSE IF (f_read_config) THEN
-
-          READ(restartunit,*)
-          READ(restartunit,*)
-          READ(restartunit,*)
-
-          ! skip box length and box length inverse information
-
-          DO ii = 1, 3
-             READ(restartunit,*)
-          END DO
-
-          DO ii = 1, 3
-             READ(restartunit,*)
-          END DO
-
-       END IF
-
+       READ(restartunit,*) tot_trials(ibox)
+       READ(restartunit,*) box_list(ibox)%volume
+       READ(restartunit,*) box_list(ibox)%box_shape
        
+       DO ii = 1, 3
+          READ(restartunit,*) (box_list(ibox)%length(ii,jj), jj=1,3)
+       END DO
+       
+       !--- inverse length
+       DO ii = 1, 3
+          READ(restartunit,*) (box_list(ibox)%length_inv(ii,jj), jj=1,3)
+       END DO
+
+       CALL Compute_Cell_Dimensions(ibox)
+                    
        IF ( int_sim_type == sim_npt .OR. int_sim_type == sim_gemc .OR. &
             int_sim_type == sim_gemc_npt ) THEN
           
-          IF (f_checkpoint) THEN
-             READ(restartunit,*) box_list(ibox)%dv_max
-          ELSE
-             READ(restartunit,*)
-          END IF
+          READ(restartunit,*) box_list(ibox)%dv_max
 
        END IF
        
@@ -288,13 +240,8 @@ SUBROUTINE Read_Checkpoint(initial_mcstep)
     WRITE(logunit,*) 'Box info read successfully'
     
     READ(restartunit,*)
-    IF (f_checkpoint) THEN
-!       READ(restartunit,*) iseed1, iseed3
-        READ(restartunit,*) s1,s2,s3,s4,s5
-        WRITE(logunit,*) 'Seed info read successfully'
-    ELSE
-       READ(restartunit,*)
-    END IF
+    READ(restartunit,*) s1,s2,s3,s4,s5
+    WRITE(logunit,*) 'Seed info read successfully'
 
     ! read total number of molecules of each of the species
     READ(restartunit,*)
@@ -410,36 +357,17 @@ SUBROUTINE Read_Checkpoint(initial_mcstep)
     END DO
     
     
-    IF ( f_read_config) THEN
-       
-       DO is = 1, nspecies
-          species_list(is)%nmoltotal = SUM(nmols(is,1:nbr_boxes))
-       END DO
-       
-       WRITE(logunit,*) 'Configurations read successfully'
-    END IF
-
-
     DO ibox = 1, nbr_boxes
        IF(int_vdw_sum_style(ibox) == vdw_cut_tail) CALL Compute_Beads(ibox)
     END DO
 
     IF(ALLOCATED(total_molecules)) DEALLOCATE(total_molecules)
 
-    ! Add LOCATE for any unplaced molecules in array under BOX==0, in reverse
-    ! order
-    DO is = 1, nspecies
-      DO im = max_molecules(is), SUM(nmols(is,1:nbr_boxes)) + 1, -1
-        nmols(is,0) = nmols(is,0) + 1
-        locate(nmols(is,0),is,0) = im
-      END DO
-    END DO
-
   END SUBROUTINE Read_Checkpoint
 
 !*******************************************************************************
   
-  SUBROUTINE Restart_From_Old
+  SUBROUTINE Read_Config(ibox)
     !***************************************************************************
     ! The subroutine reads in a configuration to start a new simulation run. 
     ! The format of the input
@@ -450,11 +378,12 @@ SUBROUTINE Read_Checkpoint(initial_mcstep)
     
     IMPLICIT NONE
     
-    INTEGER :: ibox, is, im, ia, nstart, nend, this_im, mols_this, nfrac_global, i, alive, j, this_rxnum
+    ! Input
+    INTEGER :: ibox
+
+    ! Local
+    INTEGER :: is, im, ia, nstart, nend, this_im, mols_this, nfrac_global, i, alive, j, this_rxnum
     INTEGER :: alive_new, counter, m, i_lambda, locate_base
-    
-    INTEGER, DIMENSION(:), ALLOCATABLE ::  total_molecules_this
-    INTEGER, DIMENSION(:), ALLOCATABLE :: n_int
     
     REAL(DP) :: this_lambda
     REAL(DP) :: E_recip, E_self, E_intra
@@ -463,146 +392,110 @@ SUBROUTINE Read_Checkpoint(initial_mcstep)
     LOGICAL :: overlap
     
     Type(Energy_Class) :: inrg
+
+    WRITE(logunit,*)
+    WRITE(logunit,*) 'Reading configuration for box', ibox
   
-    ! Loop over total number of boxes to read in the atomic coordinates
+    OPEN(unit = old_config_unit,file=old_config_file(ibox))
 
-    ALLOCATE(total_molecules_this(nspecies))
-
-    ALLOCATE(n_int(nspecies))
-
-    nmols(:,:) = 0
-    n_int(:) = 0
+    ! *.xyz format has two header lines
+    READ(old_config_unit,*)
+    READ(old_config_unit,*)
     
-    DO ibox = 1, nbr_boxes
+    ! Read in the coordinates of the molecules
+    DO is = 1, nspecies
        
-       OPEN(unit = old_config_unit,file=old_config_file(ibox))
+       WRITE(logunit,*) 'Reading ', nmols_to_read(is,ibox), &
+          ' molecules of species ', is
 
-       ! Read the number of molecules for each of the species
-       READ(old_config_unit,*) (total_molecules_this(is), is = 1, nspecies)
-       
-       ! Read in the coordinates of the molecules
-       DO is = 1, nspecies
+       ! For box 2, need to continue numbering where box 1 left off
+       locate_base = SUM(nmols(is,1:nbr_boxes))
+
+       DO im = 1, nmols_to_read(is,ibox)
+          ! provide a linked number to the molecule
+          locate(im,is,ibox) = im + locate_base
+          this_im = locate(im,is,ibox)
+          molecule_list(this_im,is)%live = .TRUE.
+          this_lambda = 1.0_DP
+          ! By default all the molecules are normal 
+          molecule_list(this_im,is)%molecule_type = int_normal
           
-          WRITE(*,*) 'Reading ', total_molecules_this(is), ' molecules of species ', is
-
-          ! For box 2, need to continue numbering where box 1 left off
-          locate_base = SUM(nmols(is,1:nbr_boxes))
-
-          DO im = 1, total_molecules_this(is)
-             ! provide a linked number to the molecule
-             locate(im,is,ibox) = im + locate_base
-             this_im = locate(im,is,ibox)
-             molecule_list(this_im,is)%live = .TRUE.
-             this_lambda = 1.0_DP
-            ! By default all the molecules are normal 
-             molecule_list(this_im,is)%molecule_type = int_normal
+          DO ia = 1, natoms(is)
              
-             DO ia = 1, natoms(is)
-                
-                READ(old_config_unit,*)nonbond_list(ia,is)%element, &
-                     atom_list(ia,this_im,is)%rxp, &
-                     atom_list(ia,this_im,is)%ryp, &
-                     atom_list(ia,this_im,is)%rzp
-                ! set the frac and exist flags for this atom
-                molecule_list(this_im,is)%frac = this_lambda
-                atom_list(ia,this_im,is)%exist = .TRUE.                
-                
-             END DO
-
-             ! assign the molecule the box id
-             
-             molecule_list(this_im,is)%which_box = ibox
-        ! Now let us ensure that the molecular COM is inside the central simulation box
-          !
-             CALL Get_COM(this_im,is)
-
-             xcom_old = molecule_list(this_im,is)%xcom
-             ycom_old = molecule_list(this_im,is)%ycom
-             zcom_old = molecule_list(this_im,is)%zcom
-
-             ! Apply PBC
-
-             IF (l_cubic(ibox)) THEN
-
-                CALL Apply_PBC_Anint(ibox,xcom_old,ycom_old,zcom_old, &
-                     xcom_new, ycom_new, zcom_new)
-
-             ELSE
-
-                CALL Minimum_Image_Separation(ibox,xcom_old,ycom_old,zcom_old, &
-                     xcom_new, ycom_new, zcom_new)
-
-             END IF
-
-             ! COM in the central simulation box
-
-             molecule_list(this_im,is)%xcom = xcom_new
-             molecule_list(this_im,is)%ycom = ycom_new
-             molecule_list(this_im,is)%zcom = zcom_new
-
-             ! COM in the central simulation box
-
-             molecule_list(this_im,is)%xcom = xcom_new
-             molecule_list(this_im,is)%ycom = ycom_new
-             molecule_list(this_im,is)%zcom = zcom_new
-
-             ! displace atomic coordinates
-
-             atom_list(1:natoms(is),this_im,is)%rxp = atom_list(1:natoms(is),this_im,is)%rxp + &
-                  xcom_new - xcom_old
-             atom_list(1:natoms(is),this_im,is)%ryp = atom_list(1:natoms(is),this_im,is)%ryp + &
-                  ycom_new - ycom_old
-             atom_list(1:natoms(is),this_im,is)%rzp = atom_list(1:natoms(is),this_im,is)%rzp + &
-                  zcom_new - zcom_old
-
-             nmols(is,ibox) = nmols(is,ibox) + 1
+             READ(old_config_unit,*)nonbond_list(ia,is)%element, &
+                  atom_list(ia,this_im,is)%rxp, &
+                  atom_list(ia,this_im,is)%ryp, &
+                  atom_list(ia,this_im,is)%rzp
+             ! set the frac and exist flags for this atom
+             molecule_list(this_im,is)%frac = this_lambda
+             atom_list(ia,this_im,is)%exist = .TRUE.                
              
           END DO
+
+          ! assign the molecule the box id
+          
+          molecule_list(this_im,is)%which_box = ibox
+     ! Now let us ensure that the molecular COM is inside the central simulation box
+       !
+          CALL Get_COM(this_im,is)
+
+          xcom_old = molecule_list(this_im,is)%xcom
+          ycom_old = molecule_list(this_im,is)%ycom
+          zcom_old = molecule_list(this_im,is)%zcom
+
+          ! Apply PBC
+          IF (l_cubic(ibox)) THEN
+             CALL Apply_PBC_Anint(ibox,xcom_old,ycom_old,zcom_old, &
+                  xcom_new, ycom_new, zcom_new)
+          ELSE
+             CALL Minimum_Image_Separation(ibox,xcom_old,ycom_old,zcom_old, &
+                  xcom_new, ycom_new, zcom_new)
+          END IF
+
+          ! COM in the central simulation box
+          molecule_list(this_im,is)%xcom = xcom_new
+          molecule_list(this_im,is)%ycom = ycom_new
+          molecule_list(this_im,is)%zcom = zcom_new
+
+          ! COM in the central simulation box
+          molecule_list(this_im,is)%xcom = xcom_new
+          molecule_list(this_im,is)%ycom = ycom_new
+          molecule_list(this_im,is)%zcom = zcom_new
+
+          ! displace atomic coordinates
+          atom_list(1:natoms(is),this_im,is)%rxp = &
+               atom_list(1:natoms(is),this_im,is)%rxp + xcom_new - xcom_old
+          atom_list(1:natoms(is),this_im,is)%ryp = &
+               atom_list(1:natoms(is),this_im,is)%ryp + ycom_new - ycom_old
+          atom_list(1:natoms(is),this_im,is)%rzp = &
+               atom_list(1:natoms(is),this_im,is)%rzp + zcom_new - zcom_old
+
+          nmols(is,ibox) = nmols(is,ibox) + 1
           
        END DO
-
-       CLOSE(unit = old_config_unit)
        
     END DO
 
+    CLOSE(unit = old_config_unit)
+       
     CALL Get_Internal_Coords
 
-   ! Calculate COM and distance of the atom farthest to the COM.
+    ! Calculate COM and distance of the atom farthest to the COM.
 
-    DO ibox = 1, nbr_boxes
-       DO is = 1, nspecies
-          DO im = 1, nmols(is,ibox)
-             this_im = locate(im,is,ibox)
-             IF( .NOT. molecule_list(this_im,is)%live) CYCLE
-             CALL Get_COM(this_im,is)
-             CALL Compute_Max_Com_Distance(this_im,is)
-          END DO
-       END DO
-    END DO
-
-    nfrac_global = 0
     DO is = 1, nspecies
-       species_list(is)%nmoltotal = SUM(nmols(is,1:nbr_boxes))
+       DO im = 1, nmols(is,ibox)
+          this_im = locate(im,is,ibox)
+          IF( .NOT. molecule_list(this_im,is)%live) CYCLE
+          CALL Get_COM(this_im,is)
+          CALL Compute_Max_Com_Distance(this_im,is)
+       END DO
     END DO
 
     WRITE(logunit,*) 'Configurations read successfully'
 
-    DO ibox = 1, nbr_boxes
-       IF (int_vdw_sum_style(ibox) == vdw_cut_tail) CALL Compute_Beads(ibox)
-    END DO
+    IF (int_vdw_sum_style(ibox) == vdw_cut_tail) CALL Compute_Beads(ibox)
 
-    ! Add LOCATE for any unplaced molecules in array under BOX==0, in reverse
-    ! order
-    DO is = 1, nspecies
-      DO im = max_molecules(is), SUM(nmols(is,1:nbr_boxes)) + 1, -1
-        nmols(is,0) = nmols(is,0) + 1
-        locate(nmols(is,0),is,0) = im
-      END DO
-    END DO
-
-    DEALLOCATE( total_molecules_this)
-    
-  END SUBROUTINE Restart_From_Old
+  END SUBROUTINE Read_Config
 !*******************************************************************************
 
 SUBROUTINE Write_Trials_Success
@@ -620,8 +513,8 @@ SUBROUTINE Write_Trials_Success
 
   DO ibox = 1, nbr_boxes
 
-     WRITE(logunit,'(X,A27,X,I2)') 'Writing information for box', ibox
-     WRITE(logunit,'(X,A59)') '***********************************************************'
+     WRITE(logunit,'(A27,X,I2)') 'Writing information for box', ibox
+     WRITE(logunit,'(A80)') '********************************************************************************'
 
      IF (nvolumes(ibox) /= 0 ) THEN
         WRITE(logunit,'(A20,2X,A10,2X,A10,2X,A10)') 'Move', 'Trials', 'Success', '% Success'
@@ -710,7 +603,7 @@ SUBROUTINE Write_Trials_Success
         WRITE(logunit,*)
       END DO
 
-      WRITE(logunit,'(X,A59)') '***********************************************************'
+      WRITE(logunit,'(A80)') '********************************************************************************'
         
    END DO
 
@@ -721,8 +614,8 @@ SUBROUTINE Write_Trials_Success
      IF (SUM(regrowth_trials(:,:)) .GT. 0) THEN
 
         WRITE(logunit,*)
-        WRITE(logunit,*) 'Writing information about fragments'
-        WRITE(logunit,'(X,A59)') '***********************************************************'
+        WRITE(logunit,'(A)') 'Writing information about fragments'
+        WRITE(logunit,'(A80)') '********************************************************************************'
      
         DO is = 1, nspecies
            
@@ -745,7 +638,7 @@ SUBROUTINE Write_Trials_Success
            END IF
         
         END DO
-        WRITE(logunit,'(X,A59)') '***********************************************************'
+        WRITE(logunit,'(A80)') '********************************************************************************'
 
      END IF
   END IF
@@ -758,9 +651,7 @@ SUBROUTINE Write_Subroutine_Times
 
 WRITE(logunit,*)
 WRITE(logunit,*) 'Writing information about subroutine times'
-WRITE(logunit,*)
-WRITE(logunit,'(X,A59)') '***********************************************************'
-WRITE(logunit,*)
+WRITE(logunit,'(A80)') '********************************************************************************'
 
 
 IF(movetime(imove_trans) .GT. 0.0_DP ) THEN
@@ -895,6 +786,8 @@ IF(movetime(imove_regrowth) .GT. 0.0_DP ) THEN
    END IF
 
 END IF
+
+WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Write_Subroutine_Times
 

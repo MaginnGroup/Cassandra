@@ -47,8 +47,8 @@ PROGRAM Main
   !        Get_Run_Type
   !        Initialize
   !        Reset
-  !        Grow_Molecules
-  !        Restart_From_Old
+  !        Make_Config
+  !        Read_Config
   !        Read_Checkpoint
   !        Ewald_Reciprocal_Lattice_Vector_Setup
   !        init_seeds
@@ -91,7 +91,6 @@ PROGRAM Main
   INTEGER(4) :: count
   INTEGER :: i, j, is, im, ia, this_im, ibox, nmol_is, int_phi
   INTEGER :: alive, t_num
-  INTEGER :: initial_mcstep
 
   INTEGER :: nyears, nmonths, ndays, nhours, nmin, nsec, nms
   CHARACTER(120) :: version
@@ -165,34 +164,26 @@ PROGRAM Main
      CALL Clean_Abort(err_msg,'Read_Checkpointfile')
   ENDIF
 
-  WRITE(logunit,'(A60)') '************** Beginning Cassandra simulation **************'
-
-  WRITE(logunit,'(a,a,/)') 'Version ',version
-  WRITE(logunit,'(a,a,/)') 'inputfile ',inputfile
-
-  i = LEN_TRIM(run_name)
-  WRITE(logunit,'(a,a,/)') 'name of run: ',run_name(1:i)
+  WRITE(logunit,'(A)') 'Run info'
+  WRITE(logunit,'(A80)') '********************************************************************************'
+  WRITE(logunit,'(a,a)') 'version: ', TRIM(version)
+  WRITE(logunit,'(a,a)') 'inputfile: ', TRIM(inputfile)
+  WRITE(logunit,'(a,a)') 'name of run: ',TRIM(run_name)
 
   CALL DATE_AND_TIME(date,time)
 
-  WRITE(logunit,'(a7,T10,a7,T20,a7)') 'Month','Day', 'Year'
-  WRITE(logunit,'(a7,T10,a7,T20,a7)') date(5:6), date(7:8), '20'//date(3:4) 
-
-  WRITE(logunit,*)
-  WRITE(logunit,'(a7,1x,a2,a1,a2,a1,a2)') 'Time: ',time(1:2),':',time(3:4),':',time(5:6)
-  WRITE(logunit,*)
-
+  WRITE(logunit,'(a18,x,a2,a1,a2,a3,a2)') 'date (mm/dd/yyyy):', date(5:6), '/', date(7:8), '/20', date(3:4)
+  WRITE(logunit,'(a5,1x,a2,a1,a2,a1,a2)') 'time:',time(1:2),':',time(3:4),':',time(5:6)
 
 ! Get name of computer running code using intrinsic function.
 
   CALL HOSTNM(name)
-  write(logunit,'(a,a,//)') 'machine: ',name(1:LEN_TRIM(name))
+  WRITE(logunit,'(a,a)') 'machine: ', TRIM(name)
+  WRITE(logunit,'(A80)') '********************************************************************************'
 
 ! Determine the simulation type, and then read in all the necessary information 
 ! from the input file for starting up that type of simulation
   CALL Get_Sim_Type
-
-  WRITE(logunit,'(a,a,/)') 'Simulation type: ',sim_type
 
   ! Check what kind of simulation this is, and then call the appropriate routine
   ! that will load all the relevant information in from the input file
@@ -216,21 +207,16 @@ PROGRAM Main
      CALL Clean_Abort(err_msg,'Main')
   ENDIF
 
-  ! Determine type of start
-  CALL Get_Start_Type
-
   ! Determine if it is equilibration or production or test
   CALL Get_Run_Type
 
-  WRITE(logunit,'(a,a,/)') ' Starting type ',start_type
+  IF (int_run_style == run_test) THEN
 
-  IF( int_run_style == run_test ) THEN
-
-             testname = molfile_name(1)
-             IF(testname(:1) == 'c') testname = 'methane'
-             IF(testname(:2) == 'pr') testname = 'propane'
-             IF(testname(:7) == 'pentane') testname = 'pentane'
-             IF(testname(:7) == 'pentano') testname = 'pentanol'
+     testname = molfile_name(1)
+     IF(testname(:1) == 'c') testname = 'methane'
+     IF(testname(:2) == 'pr') testname = 'propane'
+     IF(testname(:7) == 'pentane') testname = 'pentane'
+     IF(testname(:7) == 'pentano') testname = 'pentanol'
 
   END IF
 
@@ -248,41 +234,61 @@ PROGRAM Main
 
   cbmc_flag = .FALSE.
 
-  WRITE(*,*) 'Beginning Cassandra Simulation'
+  WRITE(*,*) 'Begin Cassandra simulation'
   WRITE(*,*) 
 
-  IF (start_type == 'make_config') THEN
-     ! Initialize system with no molecules
-     nmols = 0
-     molecule_list(:,:)%live = .false.
-     ! Grow molecules using CBMC
-     CALL Grow_Molecules
-     initial_mcstep = 0
+  WRITE(logunit,*)
+  WRITE(logunit,'(A80)') '********************************************************************************'
+  WRITE(logunit,'(A80)') '************************ Begin Cassandra simulation ****************************'
+  WRITE(logunit,'(A80)') '********************************************************************************'
 
-  ELSEIF (start_type == 'read_config') THEN
-     ! Read in old coordinates and restart a new simulation, 
-     ! Note that the counters have already been set to zero by the call to
-     ! initialize and reset above.
-     CALL Restart_From_Old
-     initial_mcstep = 0
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'Initial configuration'
+  WRITE(logunit,'(A80)') '********************************************************************************'
 
-  ELSEIF (start_type == 'add_to_config') THEN
-     ! Add molecules using CBMC to configuration read from file
-     CALL Restart_From_Old
-     CALL Grow_Molecules
-     initial_mcstep = 0
-     
-  ELSEIF (start_type == 'checkpoint') THEN
-     ! Restart from checkpoint. Shall we verify match between stuff in cpt 
-     ! and stuff input, or override with cpt info?
-     CALL Read_Checkpoint(initial_mcstep)
-     
-  ELSE
-     err_msg = ""
-     err_msg(1) = "Start type " // start_type // " is not a valid option."
-     CALL Clean_Abort(err_msg,'Main')
-     
-  ENDIF
+  DO ibox = 1, nbr_boxes
+    IF (start_type(ibox) == 'make_config') THEN
+       ! Insert molecules using CBMC
+       CALL Make_Config(ibox)
+       initial_mcstep = 0
+
+    ELSEIF (start_type(ibox) == 'read_config') THEN
+       ! Read in coordinates
+       ! Note that the counters have already been set to zero by the call to
+       ! initialize and reset above.
+       CALL Read_Config(ibox)
+       initial_mcstep = 0
+
+    ELSEIF (start_type(ibox) == 'add_to_config') THEN
+       ! Add molecules using CBMC to configuration read from file
+       CALL Read_Config(ibox)
+       CALL Make_Config(ibox)
+       initial_mcstep = 0
+       
+    ELSEIF (start_type(ibox) == 'checkpoint') THEN
+       ! Restart from checkpoint. Shall we verify match between stuff in cpt 
+       ! and stuff input, or override with cpt info?
+       CALL Read_Checkpoint
+       ! Read in info for all boxes, so exit loop
+       EXIT
+       
+    ELSE
+       err_msg = ""
+       err_msg(1) = "Start type " // TRIM(start_type(ibox)) // " is not a valid option."
+       CALL Clean_Abort(err_msg,'Main')
+       
+    ENDIF
+  END DO
+  WRITE(logunit,'(A80)') '********************************************************************************'
+
+  ! Add LOCATE for any unplaced molecules in array under BOX==0, 
+  ! in reverse order
+  DO is = 1, nspecies
+    DO im = max_molecules(is), SUM(nmols(is,1:nbr_boxes)) + 1, -1
+      nmols(is,0) = nmols(is,0) + 1
+      locate(nmols(is,0),is,0) = im
+    END DO
+  END DO
 
   ! Ewald stuff
   IF ( int_charge_sum_style(1) == charge_ewald) THEN
@@ -324,7 +330,9 @@ PROGRAM Main
   ! NR: I believe we have all the information to compute the 
   !     system charge and charge on each species
 
-   WRITE(logunit,'(X,A59)') '***************** Charge Neutrality Check *****************'
+   WRITE(logunit,*)
+   WRITE(logunit,'(A)') 'Charge neutrality check'
+   WRITE(logunit,'(A80)') '********************************************************************************'
 
    q_tot_sys = 0.0_DP; q_mol=0.0_DP
    
@@ -335,6 +343,7 @@ PROGRAM Main
       END DO 
       WRITE(logunit,'(X,A,T15,2X,I4,4x,A,T45,4x,f12.8)')'Species', is, 'has charge', q_mol 
    ENDDO
+   WRITE(logunit,*)
 
    DO ibox = 1, nbr_boxes
       q_tot_sys = 0.0_DP 
@@ -346,7 +355,6 @@ PROGRAM Main
          END DO
       END DO
       WRITE(logunit,'(X,A,T13,4X,I4,4X,A,T45,4X,f12.8)')'Box ', ibox, 'has charge', q_tot_sys
-      WRITE(logunit,*)
 
       IF (ABS(q_tot_sys) .gt. 0.000001) THEN
          IF ( .NOT. ((int_sim_type /=  sim_frag) .OR. (int_sim_type /= sim_ring)) ) THEN
@@ -358,14 +366,11 @@ PROGRAM Main
       END IF
    END DO
 
-   Write(logunit,'(X,A59)') '***************** Charge Neutrality Check *****************'
- ! NR: At this point we can initialize random number generator
+   WRITE(logunit,'(A80)') '********************************************************************************'
 
+  ! initialize random number generator
   CALL init_seeds(iseed1, iseed3)
 
-
-  ! Assign a locate id to all the molecules
-  ! This goes to the maximum number of molecules
 
   ! Compute total number of beads in each box
 
@@ -379,46 +384,34 @@ PROGRAM Main
   ! Internal coordinates
   CALL Get_Internal_Coords
 
- ! Calculate COM and distance of the atom farthest to the COM.
-
+  ! Calculate COM and distance of the atom farthest to the COM.
   DO ibox = 1, nbr_boxes
      DO is = 1, nspecies
         DO im = 1, nmols(is,ibox)
            this_im = locate(im,is,ibox)
            CALL Get_COM(this_im,is)
            CALL Compute_Max_Com_Distance(this_im,is)
+           CALL Fold_Molecule(this_im,is,ibox)
         END DO
      END DO
   END DO
 
- IF (start_type /= 'make_config') THEN
-  ! Fold the molecules. 
-    DO ibox = 1, nbr_boxes
-       DO is = 1, nspecies
-          DO im = 1, nmols(is,ibox)
-             this_im = locate(im,is,ibox)
-             CALL Fold_Molecule(this_im,is,ibox) 
-          END DO
-       END DO
-    END DO
- END IF
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'Compute total energy'
+  WRITE(logunit,'(A80)') '********************************************************************************'
 
   ! compute total system energy
   overlap = .FALSE.
      
   DO i = 1, nbr_boxes
        
-     IF ( start_type == 'make_config' .and. &
-          int_vdw_sum_style(i) == vdw_cut_tail) &
-                CALL Compute_Beads(i)
      CALL Compute_System_Total_Energy(i,.TRUE.,overlap)
-           
 
      IF (overlap) THEN
         ! overlap was detected between two atoms so abort the program
         err_msg = ''
         err_msg(1) = 'Overlap detected in the starting structure'
-        err_msg(2) = 'Start type '//start_type
+        err_msg(2) = 'Start type '//start_type(i)
         CALL Clean_Abort(err_msg,'Main')
      END IF
   END DO
@@ -426,9 +419,8 @@ PROGRAM Main
   ! write out the initial energy components to the log file
   
   DO ibox = 1,nbr_boxes
-     
-     WRITE(logunit,'(X,A59)') '***********************************************************'
-     WRITE(logunit,'(X,A36,2X,I2)') 'Starting energy components for box', ibox
+
+     WRITE(logunit,'(X,A34,2X,I2)') 'Starting energy components for box', ibox
      WRITE(logunit,*) ' Atomic units-Extensive'
      WRITE(logunit,'(X,A59)') '-----------------------------------------------------------'
      
@@ -453,10 +445,11 @@ PROGRAM Main
 
      if (int_charge_sum_style(ibox) == charge_dsf) WRITE(logunit,'(X,A,T30,F20.3)') 'Self DSF is', energy(ibox)%self
 
-     WRITE(logunit,'(X,A59)') '***********************************************************'
+     WRITE(logunit,'(X,A59)') '-----------------------------------------------------------'
      WRITE(logunit,*)
 
   END DO
+  WRITE(logunit,'(A80)') '********************************************************************************'
 
   ! Populate the reservoir box if necessary
   DO is = 1, nspecies
@@ -470,17 +463,19 @@ PROGRAM Main
   END DO
 
   ! Write initial properties, if needed
-  IF (start_type == 'make_config' .OR. n_mcsteps <= initial_mcstep) THEN
-    DO ibox = 1, nbr_boxes
-      CALL Write_Properties(0,ibox)
+  DO ibox = 1, nbr_boxes
+    IF (start_type(ibox) == 'make_config' .OR. n_mcsteps <= initial_mcstep) THEN
+      CALL Write_Properties(ibox)
       CALL Reset(ibox)
-    END DO
-  END IF
+    END IF
+  END DO
 
   ! End program if no moves specified
   IF (n_mcsteps <= initial_mcstep) THEN
-    write(logunit,*) ""
-    write(logunit,'(X,A59)') '******************** Ending simulation ********************'
+    WRITE(logunit,'(A80)') '********************************************************************************'
+    WRITE(logunit,'(A80)') '********************************************************************************'
+    WRITE(logunit,'(A80)') '********************************************************************************'
+    WRITE(logunit,*) 'Cassandra simulation complete'
     WRITE(*,*)
     WRITE(*,*) 'Cassandra simulation complete'
     STOP
@@ -488,6 +483,11 @@ PROGRAM Main
 
   ! Now begin simulation by calling apropriate driver routines
   ! Add routines here...
+
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'Run simulation'
+  WRITE(logunit,'(A80)') '********************************************************************************'
+  WRITE(logunit,'(X,A9,X,A15,X,A3,X,A3,X,A8,X,A9)') 'Step', 'Move' , 'Spc', 'Box', 'Success', 'MaxWidth'
 
   IF (int_run_style == run_test .AND. n_mcsteps == 1) THEN
 
@@ -519,20 +519,20 @@ PROGRAM Main
      
   ELSE IF (int_sim_type == sim_nvt .OR. int_sim_type == sim_nvt_min) THEN
      
-     CALL NVTMC_Driver(initial_mcstep)
+     CALL NVTMC_Driver
      
   ELSE IF (int_sim_type == sim_npt) THEN
      
-     CALL NPTMC_Driver(initial_mcstep)
+     CALL NPTMC_Driver
 
   ELSE IF (int_sim_type == sim_gcmc) THEN
 
-     CALL GCMC_Driver(initial_mcstep)
+     CALL GCMC_Driver
 
   ELSE IF (int_sim_type == sim_gemc .OR. int_sim_type == sim_gemc_ig .OR. &
      int_sim_type == sim_gemc_npt) THEN
      
-     CALL GEMC_Driver(initial_mcstep)
+     CALL GEMC_Driver
 
   ELSE IF (int_sim_type == sim_frag) THEN
 
@@ -543,19 +543,20 @@ PROGRAM Main
      CALL Ring_Fragment_Driver
 
   END IF
+  WRITE(logunit,'(A80)') '********************************************************************************'
+
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'Report ending energy & then re-compute from scratch'
+  WRITE(logunit,'(A80)') '********************************************************************************'
 
   !***************************************************************************
   ! Report current energies and compute the energies from scratch
 
   DO ibox = 1, nbr_boxes
-    WRITE(logunit,'(A59)') &
-       '******************** END OF SIMULATION ********************'
     WRITE(logunit,*)
     WRITE(logunit,*)
 
     ! Write the current components of the energy to log
-    WRITE(logunit,'(X,A59)') &
-       '***********************************************************'
     WRITE(logunit,'(X,A32,2X,I2)') 'Ending energy components for box', ibox
     WRITE(logunit,*) ' Atomic units-Extensive'
     WRITE(logunit,'(X,A59)') &
@@ -596,7 +597,7 @@ PROGRAM Main
     END IF
     
     WRITE(logunit,'(X,A59)') &
-       '***********************************************************'
+       '-----------------------------------------------------------'
 
     ! Write the current total energy to stdout
     WRITE(*,*)
@@ -613,8 +614,6 @@ PROGRAM Main
     ! Write the recomputed energy components to log
     WRITE(logunit,*)
     WRITE(logunit,*)
-    WRITE(logunit,'(X,A59)') &
-       '***********************************************************'
     WRITE(logunit,'(X,A48,2X,I2)') &
        'Energy components from total energy call for box', ibox
     WRITE(logunit,*) ' Atomic units-Extensive'
@@ -657,8 +656,9 @@ PROGRAM Main
     END IF
 
     WRITE(logunit,'(X,A59)') &
-       '***********************************************************'
+       '-----------------------------------------------------------'
   END DO
+  WRITE(logunit,'(A80)') '********************************************************************************'
 
   ! Write success ratios of each move type
   CALL Write_Trials_Success
@@ -693,14 +693,17 @@ PROGRAM Main
 
   CALL Write_Subroutine_Times
 
-  WRITE(logunit,'(X,A59)') '***********************************************************'
   WRITE(logunit,*)
-  WRITE(logunit,*)
-  
-  WRITE(logunit,*) 'Program execution time'
-
+  WRITE(logunit,'(A80)') '********************************************************************************'
+  WRITE(logunit,'(A80)') '************************ Cassandra simulation complete *************************'
+  WRITE(logunit,'(A80)') '********************************************************************************'
   WRITE(*,*)
   WRITE(*,*) 'Cassandra simulation complete'
+
+  WRITE(logunit,*)
+  WRITE(logunit,*) 'Program execution time'
+  WRITE(logunit,'(A80)') '********************************************************************************'
+
   nyears = INT(tot_time/3600.0_DP/24.0_DP/365.0_DP)
   month_time = tot_time - REAL(nyears,DP) * 3600.0_DP * 24.0_DP * 365.0_DP
   nmonths = INT(month_time/3600_DP/24.0_DP/30.0_DP)
@@ -722,5 +725,6 @@ PROGRAM Main
   WRITE(logunit,'(I10,1x,a10)') nmin,'Minutes'
   WRITE(logunit,'(I10,1X,a10)') nsec,'Seconds'
   WRITE(logunit,'(I10,1x,a10)') nms,'ms'
+  WRITE(logunit,'(A80)') '********************************************************************************'
   
 END PROGRAM Main

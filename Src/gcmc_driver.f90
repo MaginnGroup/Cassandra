@@ -43,7 +43,7 @@ SUBROUTINE GCMC_Driver
 
 !  !$ include 'omp_lib.h'
 
-  INTEGER :: i, this_box, ibox, is, which_step
+  INTEGER :: i, this_box, ibox, is 
   INTEGER :: ioldN,  delta_n  ! old molecule number and change in molecule number
 
   REAL(DP) :: rand_no
@@ -73,15 +73,14 @@ SUBROUTINE GCMC_Driver
 !$  time_start = omp_get_wtime()
   END IF
 
-  i = 0
+  i_mcstep = initial_mcstep
 
   DO WHILE (.NOT. complete)
 
-     i = i + 1
+     i_mcstep = i_mcstep + 1
 
      ! We will select a move from Golden Sampling scheme
   
-     which_step = i
      rand_no = rranf()
      ioldN = nmols(1,1)  ! store beginning molecule number 
      delta_n = 0
@@ -202,7 +201,7 @@ SUBROUTINE GCMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL cut_N_grow(this_box)
+        CALL Cut_N_Grow(this_box)
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -245,7 +244,7 @@ SUBROUTINE GCMC_Driver
 
      now_time = ((now_time - time_start) / 60.0_DP) 
      IF(.NOT. timed_run) THEN
-        IF(i == n_mcsteps) complete = .TRUE.
+        IF(i_mcstep == n_mcsteps) complete = .TRUE.
      ELSE
         IF(now_time .GT. n_mcsteps) complete = .TRUE.
      END IF
@@ -255,18 +254,18 @@ SUBROUTINE GCMC_Driver
 
         ! instantaneous values are to be printed   
 
-        IF ( MOD(i,nthermo_freq) == 0) THEN
+        IF ( MOD(i_mcstep,nthermo_freq) == 0) THEN
 
            DO ibox = 1, nbr_boxes
            
-              CALL Write_Properties(i,ibox)
+              CALL Write_Properties(ibox)
               CALL Reset(ibox)
               
            END DO
            
         END IF
         
-        IF ( MOD(i,ncoord_freq) == 0 ) THEN
+        IF ( MOD(i_mcstep,ncoord_freq) == 0 ) THEN
            
            DO ibox = 1, nbr_boxes
               
@@ -283,7 +282,7 @@ SUBROUTINE GCMC_Driver
            IF (tot_trials(ibox) /= 0) THEN
               IF(MOD(tot_trials(ibox),nthermo_freq) == 0) THEN
                  IF (next_write(ibox)) THEN
-                    CALL Write_Properties(tot_trials(ibox),ibox)
+                    CALL Write_Properties(ibox)
                     CALL Reset(ibox)
                     next_write(ibox) = .false.
                  END IF
@@ -302,14 +301,14 @@ SUBROUTINE GCMC_Driver
      
      END IF
 
-     IF(MOD(i,ncoord_freq) == 0) THEN
-        CALL Write_Checkpoint(i)
+     IF(MOD(i_mcstep,ncoord_freq) == 0) THEN
+        CALL Write_Checkpoint
      END IF
 
      DO is = 1,nspecies
 
         IF(species_list(is)%int_insert == int_igas) THEN
-           IF(mod(i,n_igas_moves(is)) == 0) CALL Update_Reservoir(is)
+           IF(mod(i_mcstep,n_igas_moves(is)) == 0) CALL Update_Reservoir(is)
         END IF
 
      END DO

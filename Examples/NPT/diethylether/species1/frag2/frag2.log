@@ -1,22 +1,22 @@
 ************** Beginning Cassandra simulation **************
-Version Cassandra 1.1                                                                                                           
+Version Cassandra Development Version                                                                                           
 
 inputfile frag2.inp                                                                                                               
 
 name of run: frag2
 
   Month      Day      Year
-     09       30      2015
- 
- Time:  17:28:22
- 
+     05       12      2016
+
+ Time:  22:40:24
+
 machine: maginnfe.crc.nd.edu
 
 
 Simulation type: NVT_MC_Fragment     
 
  Verbosity output to logfile set to  F
- 
+
  **** Copying Inputfile ****** 
  # Run_Name
  frag2
@@ -64,8 +64,7 @@ Simulation type: NVT_MC_Fragment
  # Done_Probability_Info
  
  # Start_Type
- read_old
- ../fragments/frag_2_1.xyz 1
+ read_config 1 ../fragments/frag_2_1.xyz 1
  
  # Run_Type
  Production 1000 10
@@ -82,63 +81,61 @@ Simulation type: NVT_MC_Fragment
  frag2.dat
  
  END
- 
+
  **** Finished writing input file *******
  Number Of Species Simulated:      1
 
  *** Simulation box data ***
 number of simulation boxes     1
- 
+
 Box number      1       Box Shape:      Cubic 
 Each Side Of :        20.0000     Angstrom
- 
+
 Cell basis vector lengths in A,     20.0000      20.0000      20.0000
 Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
 Distance between box faces    20.0000      20.0000      20.0000
 Box volume, A^3          8000.0000
- 
+
  *** Finished loading box information ***
- 
+
    VDW style used is:   NONE           in box:  1
- 
+
    Charge style used is:   NONE           in box:  1
  Charge style properly input
- 
+
 Lorentz-Berthelot mixing rule specified
- 
+
  Pair interaction energy arrays will not be stored
  Energy calculations will be done in a standard way
- 
- 
+
+
  Reading molecular connectivity information
  Species:            1
- Molecular connectivity file: 
- ../fragments/frag_2_1.mcf                                                      
-                                          
+ Molecular connectivity file: ../fragments/frag_2_1.mcf                                                                                               
    3 atom(s) specified.
    2 bond(s) specified.
    1 angle(s) specified.
    0 dihedral(s) specified.
    0 improper(s) specified.
- 
+
 Species  Nbr molecules
 -------  -------------
      1              1
- 
+
 L_Coul_CBMC not given for species    1
  Defaulting to  T
- 
+
  *** Completed assigning atom info ***
- 
+
  *** Completed assigning bond info ***
- 
- 
+
+
  *** Completed assigning angle info ***
- 
+
  *** Completed assigning dihedral info ***
- 
+
  *** Completed assigning improper info ***
- 
+
  intramolecular scaling factors explicitly set
 Intra molecule scaling factors for species             1
 VDW 1-2 scaling factor         0.000
@@ -149,152 +146,149 @@ Coulomb 1-2 scaling factor     0.000
 Coulomb 1-3 scaling factor     0.000
 Coulomb 1-4 scaling factor     0.000
 Coulomb 1-N scaling factor     0.000
- 
- 
+
+
  *** Completed assigning intramolecular scaling factors ***
- 
- 
+
+
+ ********** Start Type Info **********
+
+ Initial configuration for box 1 will be read from file
+ Will read       1  molecules of species   1
+ Will read configuration from file ../fragments/frag_2_1.xyz                                                                                               
+
+ *****Finished reading initial coordinate info *****
+
  ***** Reading seed info *********
- 
+
  The starting seed s1 is:    153587801
- 
+
  ****** Finished loading the seed ********
- 
+
  **** Simulation temperature information ****
   Temperature assigned to box     1  is  343.000    K
- 
+
  *** Finished loading information for temperature ****
- 
- 
+
+
  ********* Move Probability Info******
-    Translation probability is   1.000000
- 
- 
- Maximum width in cosine of polar angle is  0.200000000000000     
- Maximum width (degrees) in azimuthal angle is   10.0000000000000     
+    Translation probability is      1.000000
+
+
+ Maximum width in cosine of polar angle is  0.20000000000000001     
+ Maximum width (degrees) in azimuthal angle is   10.000000000000000     
  ***** Finished reading the move probability info *****
 Number of moves is :   1
- 
- 
-Thermodynamic quantities will written at every         10 MC steps.
- 
-Coordinates will be written at every                   90 MC steps.
- 
+
+
+Thermodynamic quantities will written every            10 MC steps.
+
+Coordinates will be written every                      90 MC steps.
+
 movie header file for box    1 is      frag2.box1.H
 movie_XYZ file for box       1 is      frag2.box1.xyz
- 
+
 The simulation will be run for                         1100 MC steps.
- 
+
 Number of equilibrium steps       100
- 
+
  *** Finished Reading Simulation Length Info ******* 
      Configuration file for species    1   is
                           frag2.dat
- 
- ******Initial Coordinate Info **********
- 
- Configurations will be read from old files
- 
-Starting configuration for box           1 is
- ../fragments/frag_2_1.xyz                                                      
-                                          
- 
- *****Finished reading initial coordinate info *****
- 
+
  ****** Reading Run_Type Information ******
- 
+
  The input run type is Production
  Update frequency is         1000
- 
- ******* Finished reading run type information ******
-starting type read_old                                                                                                                
 
+ ******* Finished reading run type information ******
+
+ Reading configuration for box           1
+ Reading            1  molecules of species            1
  Configurations read successfully
  ***************** Charge Neutrality Check *****************
  Species           1    has charge                0.00000000
+
  Box               1    has charge                0.00000000
- 
  ***************** Charge Neutrality Check *****************
  ***********************************************************
    Starting energy components for box   1
   Atomic units-Extensive
- 
+ -----------------------------------------------------------
  Total system energy is                   665.382
  Intra molecular energy is                665.382
  Bond energy is                             0.000
  Bond angle energy is                     665.382
  Dihedral angle energy is                   0.000
  Improper angle energy is                   0.000
- Intra nonbond vdw is                       0.000
- Intra nonbond elec is                      0.000
+ Intra molecule vdw is                      0.000
+ Intra molecule q is                        0.000
  Inter molecule vdw is                      0.000
  Inter molecule q is                        0.000
  Reciprocal ewald is                        0.000
  Self ewald is                              0.000
  ***********************************************************
- 
- Zig by omega will be printed. This is required in GCMC acceptance rule if fugac
- ity is used.
-Z/Omega                     0.4565462372
+
 ******************** END OF SIMULATION ********************
- 
- 
+
+
  ***********************************************************
  Ending energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                   665.382
- Intra molecular energy is                665.382
+ Total system energy is                   201.332
+ Intra molecular energy is                201.332
  Bond energy is                             0.000
- Angle energy is                          665.382
+ Angle energy is                          201.332
  Dihedral energy is                         0.000
  Improper angle energy is                   0.000
- Intra nonbond vdw is                       0.000
- Intra nonbond elec is                      0.000
+ Intra molecule vdw is                      0.000
+ Intra molecule q is                        0.000
  Inter molecule vdw is                      0.000
  Inter molecule q is                        0.000
  Reciprocal ewald is                        0.000
  Self ewald is                              0.000
  ***********************************************************
- 
- 
+
+
  ***********************************************************
  Energy components from total energy call for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                     1.148
- Intra molecular energy is                  1.148
+ Total system energy is                   201.332
+ Intra molecular energy is                201.332
  Bond energy is                             0.000
- Angle energy is                            1.148
+ Angle energy is                          201.332
  Dihedral energy is                         0.000
  Improper angle energy is                   0.000
- Intra nonbond vdw is                       0.000
- Intra nonbond elec is                      0.000
+ Intra molecule vdw is                      0.000
+ Intra molecule q is                        0.000
  Inter molecule vdw is                      0.000
  Inter molecule q is                        0.000
  Reciprocal ewald is                        0.000
  Self ewald is                              0.000
  ***********************************************************
- 
- 
+
+
  Writing information for box  1
  ***********************************************************
- 
- 
- ***********************************************************
- Writing information for species  1
- 
+
+   ---------------------------------------------------------
+   Writing information for species  1
+
                 Move      Trials     Success   % Success
+   Atom Displacement        1100         630       57.27
+   ---------------------------------------------------------
+
  ***********************************************************
- 
- 
+
  Writing information about subroutine times
- 
+
  ***********************************************************
- 
+
  ***********************************************************
- 
- 
+
+
  Program execution time
          0      Years
          0     Months

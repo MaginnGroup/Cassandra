@@ -76,10 +76,10 @@ CUBIC
 !-----------------------------------------each molecule moves per volume change
 
 # Start_Type
-make_config
-220
-!--------make_config: one line for each species and one entry/line for each box
-!------------------------------------------------------------read_old: filename
+make_config 220
+!---------------------------------------make_config: one entry for each species
+!-----------------------------read_config: one entry for each species, filename
+!--------add_to_config: read_config arguments followed by make_config arguments
 !----------------------------------------------------------checkpoint: filename
 
 # Run_Type

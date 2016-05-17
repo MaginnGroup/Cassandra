@@ -151,8 +151,7 @@ reservoir
 !----------------------
 
 # Start_Type
-read_old
-Si27uc.xyz
+add_to_config 1 0 0 Si27uc.xyz 0 100 50
 !------------------
 
 # Run_Type

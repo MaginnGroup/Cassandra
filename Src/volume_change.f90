@@ -84,7 +84,7 @@ SUBROUTINE Volume_Change(this_box)
   REAL(DP) :: pres_id
   REAL(DP) :: W_vol_vdw, W_vol_qq
 
-  LOGICAL :: accept, allocation_cos_sin, overlap, xz_change, accept_or_reject
+  LOGICAL :: overlap, xz_change, accept_or_reject
 
   TYPE(Box_Class) :: box_list_old
 
@@ -540,8 +540,7 @@ SUBROUTINE Volume_Change(this_box)
         success_ratio = REAL(nvol_success(this_box),DP)/REAL(nvolumes(this_box),DP)
      END IF
 
-     WRITE(logunit,*)
-     WRITE(logunit,'(A,I1,A,F8.5)')'Success ratio, volume changes for box ', this_box ,' : ', success_ratio
+     WRITE(logunit,'(X,I9,X,A15,X,3X,X,I3,X,F8.5)',ADVANCE='NO') i_mcstep, 'volume_change' , is, this_box, success_ratio
 
      IF (int_run_style == run_equil) THEN
         ! dv_max will be adjusted to achieve 0.5 acceptance using the formula
@@ -558,12 +557,14 @@ SUBROUTINE Volume_Change(this_box)
            ELSE
               box_list(this_box)%dv_max = 2.0_DP * success_ratio * box_list(this_box)%dv_max
            END IF
-           WRITE(logunit,'(A,I1,A,F8.0)') 'Maximum width, volume changes for box ', this_box, ' : ', box_list(this_box)%dv_max
+           WRITE(logunit,'(X,F9.5)',ADVANCE='NO') box_list(this_box)%dv_max
 
         END IF
         
         ivol_success(this_box) = 0
      END IF
+
+     WRITE(logunit,*)
 
   END IF
 
@@ -638,46 +639,41 @@ SUBROUTINE Volume_Change(this_box)
          nvecs(this_box) = nvecs_old
 
          
-         IF ( allocation_cos_sin ) THEN
-            
-            
-            DEALLOCATE(cos_sum,sin_sum)
-            DEALLOCATE(cos_mol,sin_mol)
-            
-            ALLOCATE(cos_sum(MAXVAL(nvecs),nbr_boxes),Stat = Allocatestatus)
-            
-            IF (Allocatestatus /= 0) THEN
-               err_msg = ''
-               err_msg(1) = 'Memory could not be allocated for cos_sum'
-               err_msg(2) = 'volume move rejected'
-               CALL Clean_Abort(err_msg,'Volume_Change')
-            END IF
-            
-            ALLOCATE(sin_sum(MAXVAL(nvecs),nbr_boxes),Stat = Allocatestatus)
-            IF (Allocatestatus /= 0) THEN
-               err_msg = ''
-               err_msg(1) = 'Memory could not be allocated in the volume rejection'
-               CALL Clean_Abort(err_msg,'Volume_Change')
-            END IF
-            
-            ALLOCATE(cos_mol(MAXVAL(nvecs),SUM(max_molecules)), Stat = AllocateStatus)
-            
-            IF (Allocatestatus /= 0) THEN
-               err_msg = ''
-               err_msg(1) = 'Memory could not be in the volume rejection'
-               CALL Clean_Abort(err_msg,'Volume_Change')
-            END IF
-            
-            ALLOCATE(sin_mol(MAXVAL(nvecs),SUM(max_molecules)), Stat = AllocateStatus)
-            
-            IF (Allocatestatus /= 0) THEN
-               err_msg = ''
-               err_msg(1) = 'Memory could not be allocated in the volume rejection'
-               CALL Clean_Abort(err_msg,'Volume_Change')
-            END IF
-            
+         DEALLOCATE(cos_sum,sin_sum)
+         DEALLOCATE(cos_mol,sin_mol)
+         
+         ALLOCATE(cos_sum(MAXVAL(nvecs),nbr_boxes),Stat = Allocatestatus)
+         
+         IF (Allocatestatus /= 0) THEN
+            err_msg = ''
+            err_msg(1) = 'Memory could not be allocated for cos_sum'
+            err_msg(2) = 'volume move rejected'
+            CALL Clean_Abort(err_msg,'Volume_Change')
          END IF
-
+         
+         ALLOCATE(sin_sum(MAXVAL(nvecs),nbr_boxes),Stat = Allocatestatus)
+         IF (Allocatestatus /= 0) THEN
+            err_msg = ''
+            err_msg(1) = 'Memory could not be allocated in the volume rejection'
+            CALL Clean_Abort(err_msg,'Volume_Change')
+         END IF
+         
+         ALLOCATE(cos_mol(MAXVAL(nvecs),SUM(max_molecules)), Stat = AllocateStatus)
+         
+         IF (Allocatestatus /= 0) THEN
+            err_msg = ''
+            err_msg(1) = 'Memory could not be in the volume rejection'
+            CALL Clean_Abort(err_msg,'Volume_Change')
+         END IF
+         
+         ALLOCATE(sin_mol(MAXVAL(nvecs),SUM(max_molecules)), Stat = AllocateStatus)
+         
+         IF (Allocatestatus /= 0) THEN
+            err_msg = ''
+            err_msg(1) = 'Memory could not be allocated in the volume rejection'
+            CALL Clean_Abort(err_msg,'Volume_Change')
+         END IF
+         
          !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED) 
          cos_mol(1:SIZE(cos_mol_old,1),:) = cos_mol_old(:,:)
          sin_mol(1:SIZE(sin_mol_old,1),:) = sin_mol_old(:,:)

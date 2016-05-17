@@ -92,9 +92,7 @@ reservoir
 !----------------------
 
 # Start_Type
-make_config
-10
-90
+make_config 10 90
 
 !------------------
 

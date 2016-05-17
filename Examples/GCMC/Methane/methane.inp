@@ -80,8 +80,7 @@ reservoir
 !----------------------
 
 # Start_Type
-make_config
-100
+make_config 100
 !------------------
 
 # Run_Type
