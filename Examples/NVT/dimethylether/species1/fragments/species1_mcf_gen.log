@@ -1,23 +1,25 @@
-************** Beginning Cassandra simulation **************
-Version Cassandra Development Version                                                                                           
-
-inputfile species1_mcf_gen.inp                                                                                                    
-
+Run info
+********************************************************************************
+version: Cassandra Development Version
+inputfile: species1_mcf_gen.inp
 name of run: species1_mcf_gen
-
-  Month      Day      Year
-     05       12      2016
- 
- Time:  20:37:00
- 
+date (mm/dd/yyyy): 05/18/2016
+time: 17:20:42
 machine: maginnfe.crc.nd.edu
-
-
-Simulation type: MCF_Gen             
-
- Verbosity output to logfile set to  F
+********************************************************************************
  
- **** Copying Inputfile ****** 
+Simulation type
+********************************************************************************
+MCF_Gen             
+********************************************************************************
+ 
+Verbose log file
+********************************************************************************
+Verbose output to logfile: F
+********************************************************************************
+ 
+Copy input file
+********************************************************************************
  # Run_Name
  species1_mcf_gen
  
@@ -52,40 +54,41 @@ Simulation type: MCF_Gen
  30.0 30.0 30.0
  
  END
+********************************************************************************
  
- **** Finished writing input file *******
- Number of species simulated:      1
-
- *** Simulation box data ***
+Number of species
+********************************************************************************
+    1
+********************************************************************************
+ 
+Box info
+********************************************************************************
 number of simulation boxes     1
- 
 Box number      1       Box Shape:      Cubic 
 Each Side Of :        30.0000     Angstrom
- 
 Cell basis vector lengths in A,     30.0000      30.0000      30.0000
 Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
 Distance between box faces    30.0000      30.0000      30.0000
 Box volume, A^3         27000.0000
+********************************************************************************
  
- *** Finished loading box information ***
- 
-   VDW style used is:   LJ             in box:  1
-   VDW sum style is:   cut_tail       in box:  1
-    rcut =    12.000   Angstrom
- 
-   Charge style used is:   coul           in box:  1
-    Charge sum style is   Ewald          in box:  1
-    Ewald real space cutoff is  12.000 Angstroms.
-  Ewald real space parameter is   0.310 inverse Angstroms
-    Ewald reciprocal cutoff is  2.3026 inverse Angstroms
+Pair style
+********************************************************************************
+ VDW style used is:   LJ             in box:  1
+ LJ VDW sum style is:   cut_tail       in box:  1
+ rcut =    12.000   Angstrom
+ Charge style used is:   coul           in box:  1
+ Charge sum style is   Ewald          in box:  1
+ Ewald real space cutoff is  12.000 Angstroms.
+ Ewald real space parameter is   0.310 inverse Angstroms
+ Ewald reciprocal cutoff is  2.3026 inverse Angstroms
  Charge style properly input
- 
-Lorentz-Berthelot mixing rule specified
- 
+ Lorentz-Berthelot mixing rule specified
  Pair interaction energy arrays will not be stored
- Energy calculations will be done in a standard way
+********************************************************************************
  
- 
+Molecule info
+********************************************************************************
  Reading molecular connectivity information
  Species:            1
  Molecular connectivity file: 
@@ -99,31 +102,23 @@ Lorentz-Berthelot mixing rule specified
    1 fragments specified.
    0  fragment bonds specified.
  
-Species  Nbr molecules
--------  -------------
-     1             50
+ Species  Nbr molecules
+ -------  -------------
+      1             50
  
-L_Coul_CBMC not given for species    1
- Defaulting to  T
- 
-1st_Fragment_Ins_Style not specified for species    1
-using default of "COM" for this species.
- *** Completed assigning atom info ***
- 
- *** Completed assigning bond info ***
- 
- 
- *** Completed assigning angle info ***
- 
- *** Completed assigning dihedral info ***
- 
- *** Completed assigning improper info ***
- 
- 
-Total number of atoms in the fragment     1  is   3
- 
- ******* Finished loading fragment info ********
- 
+ Species     1
+ -------------------------------------------------------------------------------
+ L_Coul_CBMC not given, using default T
+ 1st_Fragment_Ins_Style not specified, using default "COM"
+ Atom parameters read
+ Bond parameters read
+ Angle parameters read
+ Dihedral parameters read
+ Improper parameters read
+ Total number of atoms in fragment     1  is   3
+ Fragment info read
+ -------------------------------------------------------------------------------
+********************************************************************************
  
  Finished generating fragments
  Exiting
