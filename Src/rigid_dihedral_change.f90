@@ -20,7 +20,7 @@
 !********************************************************************************
 
 !********************************************************************************
-SUBROUTINE Rigid_Dihedral_Change(this_box, mcstep)
+SUBROUTINE Rigid_Dihedral_Change
 !********************************************************************************
 
 !********************************************************************************
@@ -71,17 +71,20 @@ SUBROUTINE Rigid_Dihedral_Change(this_box, mcstep)
   USE Simulation_Properties
   USE File_Names
   USE Energy_Routines
+  USE IO_Utilities
 
   IMPLICIT NONE
 
 !  !$ include 'omp_lib.h'
   
-  INTEGER :: this_box, is, im, dihedral_to_move, alive
+  INTEGER :: ibox, is, im, dihedral_to_move, lm
   INTEGER :: i, j, this_atom, mcstep
   INTEGER :: atom1, atom2, atom3, atom4, iatom1, iatom2, iatom3, iatom4
   INTEGER :: natoms_to_place
   INTEGER, DIMENSION(:), ALLOCATABLE :: atoms_to_place_list
+  INTEGER :: total_mols, nmols_box(nbr_boxes)
 
+  REAL(DP) :: x_box(nbr_boxes), x_species(nspecies), ln_pacc
   REAL(DP) :: iatom2_rxp, iatom2_ryp, iatom2_rzp, vec23(3), vec21(3)
   REAL(DP) :: perp_vec1(3), perp_vec2(3), aligner(3,3), hanger(3,3)
   REAL(DP) :: phi_trial, cosphi, sinphi, tempx, tempy, tempz
@@ -91,11 +94,11 @@ SUBROUTINE Rigid_Dihedral_Change(this_box, mcstep)
   REAL(DP) :: E_intra_qq_move, W_intra_vdw, W_intra_qq, W_inter_vdw, W_inter_qq
   REAL(DP) :: W_intra_vdw_move, W_intra_qq_move, W_inter_vdw_move, W_inter_qq_move
   REAL(DP) :: E_reciprocal_move, E_inter_vdw_move, E_inter_qq_move, delta_e, p_acc
-  REAL(DP) :: rand, W_reciprocal_move
+  REAL(DP) :: rand_no, W_reciprocal_move
 
   REAL(DP), DIMENSION(3,3) :: tvdm, tcdm, qw_di
 
-  LOGICAL ::  inter_overlap, intra_overlap
+  LOGICAL ::  inter_overlap, intra_overlap, accept_or_reject
 
  ! Variables associated with framework simulations
 
@@ -105,55 +108,79 @@ SUBROUTINE Rigid_Dihedral_Change(this_box, mcstep)
 
   
 
-  ! choose a box at random
+  ! Sum the total number of molecules 
+  total_mols = SUM(nmols(:,:))
+  nmols_box(ibox) = SUM(nmols(:,ibox))
 
-  this_box = INT( rranf() * nbr_boxes ) + 1
-  tot_trials(this_box) = tot_trials(this_box) + 1
+  ! If there are no molecules then return
+  IF (total_mols == 0) RETURN
 
-  ! choose a species at random
+  ! If needed, choose a box based on its total mol fraction
+  IF(nbr_boxes .GT. 1) THEN
 
-  DO WHILE (.true.) 
+    DO ibox = 1, nbr_boxes
+       x_box(ibox) = REAL(nmols_box(ibox),DP)/REAL(total_mols,DP)
+       IF ( ibox > 1 ) THEN
+          x_box(ibox) = x_box(ibox) + x_box(ibox-1)
+       END IF
+    END DO
+  
+    DO ibox = 1, nbr_boxes
+       IF ( rranf() <= x_box(ibox)) EXIT
+    END DO
 
-     is = INT( rranf() * nspecies ) + 1
+  ELSE
 
-     ! check to make sure that it contains at least one dihedral for perturbation
+    ibox = 1
 
-     IF ( ndihedrals(is) == 0 ) CYCLE
+  END IF
 
-     IF (nmols(is,this_box) /= 0) EXIT
+  ! If there are no molecules in this box then return
+  IF( nmols_box(ibox) == 0 ) RETURN
 
+  ! Choose species based on the mol fraction, using Golden sampling
+  DO is = 1, nspecies
+     x_species(is) = REAL(nmols(is,ibox), DP)/REAL(nmols_box(ibox),DP)
+     IF ( is > 1 ) THEN
+        x_species(is) = x_species(is) + x_species(is-1)
+     END IF
+  END DO
+
+  rand_no = rranf()
+  DO is = 1, nspecies
+     IF( rand_no <= x_species(is)) EXIT
   END DO
 
   ! Choose one of the molecules at random
-  im = INT( rranf() * nmols(is,this_box) ) + 1
+  im = INT( rranf() * nmols(is,ibox) ) + 1
   ! Get the index of imth molecule of species is in the box.
-  alive = locate(im,is,this_box)
+  lm = locate(im,is,ibox)
 
-  ntrials(is,this_box)%dihedral = ntrials(is,this_box)%dihedral + 1
+  tot_trials(ibox) = tot_trials(ibox) + 1
+  ntrials(is,ibox)%dihedral = ntrials(is,ibox)%dihedral + 1
 
   ! Store old positions and internal cooridinates
 
-  CALL Save_Old_Cartesian_Coordinates(alive,is)
-  CALL Save_Old_Internal_Coordinates(alive,is)
+  CALL Save_Old_Cartesian_Coordinates(lm,is)
+  CALL Save_Old_Internal_Coordinates(lm,is)
 
   ! Compute the bonded interactions before the move
-  CALL Compute_Molecule_Bond_Energy(alive,is,E_bond)
-  CALL Compute_Molecule_Angle_Energy(alive,is,E_angle)
-  CALL Compute_Molecule_Dihedral_Energy(alive,is,E_dihedral)
-  CALL Compute_Molecule_Improper_Energy(alive,is,E_improper)
+  CALL Compute_Molecule_Bond_Energy(lm,is,E_bond)
+  CALL Compute_Molecule_Angle_Energy(lm,is,E_angle)
+  CALL Compute_Molecule_Dihedral_Energy(lm,is,E_dihedral)
+  CALL Compute_Molecule_Improper_Energy(lm,is,E_improper)
   
   ! Compute the nobonded interaction before the move
-  CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is,E_intra_vdw,E_intra_qq,E_periodic_qq,intra_overlap)
-  CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_inter_vdw,E_inter_qq,inter_overlap)
+  CALL Compute_Molecule_Nonbond_Intra_Energy(lm,is,E_intra_vdw,E_intra_qq,E_periodic_qq,intra_overlap)
+  CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is,E_inter_vdw,E_inter_qq,inter_overlap)
   E_inter_qq = E_inter_qq + E_periodic_qq
   ! compute the energy related to the framework
 
-  IF (inter_overlap) THEN
-     WRITE(*,*) 'Disaster, overlap in the old configruation'
-     WRITE(*,*) 'rigid_dihedral_change.f90'
-     WRITE(*,*) alive, is, this_box
-     WRITE(*,*) 'inter overlap', inter_overlap
-     WRITE(*,*) 'Framework overlap', framework_overlap
+  IF (inter_overlap)  THEN
+     err_msg = ""
+     err_msg(1) = "Energy overlap detected in existing configuration"
+     err_msg(2) = "of molecule " // TRIM(Int_To_String(lm)) // " of species " // TRIM(Int_To_String(is))
+     CALL Clean_Abort(err_msg, "Rigid_Dihedral_Change")
   END IF
      
 
@@ -179,9 +206,9 @@ SUBROUTINE Rigid_Dihedral_Change(this_box, mcstep)
   atoms_to_place_list = 0
   ! Choose one of the ends to move at random and relable the atoms
 
-  rand = rranf()
+  rand_no = rranf()
 
-  IF ( rand < 0.5_DP ) THEN
+  IF ( rand_no < 0.5_DP ) THEN
 
      iatom1 = atom1
      iatom2 = atom2
@@ -214,27 +241,27 @@ SUBROUTINE Rigid_Dihedral_Change(this_box, mcstep)
 
   ! Move all the atoms with respect to iatom2
 
-  iatom2_rxp = atom_list(iatom2,alive,is)%rxp
-  iatom2_ryp = atom_list(iatom2,alive,is)%ryp
-  iatom2_rzp = atom_list(iatom2,alive,is)%rzp
+  iatom2_rxp = atom_list(iatom2,lm,is)%rxp
+  iatom2_ryp = atom_list(iatom2,lm,is)%ryp
+  iatom2_rzp = atom_list(iatom2,lm,is)%rzp
 
-  atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp - iatom2_rxp
-  atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp - iatom2_ryp
-  atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp - iatom2_rzp
+  atom_list(:,lm,is)%rxp = atom_list(:,lm,is)%rxp - iatom2_rxp
+  atom_list(:,lm,is)%ryp = atom_list(:,lm,is)%ryp - iatom2_ryp
+  atom_list(:,lm,is)%rzp = atom_list(:,lm,is)%rzp - iatom2_rzp
 
   ! We will generate a perpendicular frame at atom2 such that x - axis
   ! is aligned along iatom2 --- > iatom3 and y - axis is in the plane
   ! defined by iatom1 - iatom2 - iatom3
 
-  vec23(1) = atom_list(iatom3,alive,is)%rxp - atom_list(iatom2,alive,is)%rxp
-  vec23(2) = atom_list(iatom3,alive,is)%ryp - atom_list(iatom2,alive,is)%ryp
-  vec23(3) = atom_list(iatom3,alive,is)%rzp - atom_list(iatom2,alive,is)%rzp
+  vec23(1) = atom_list(iatom3,lm,is)%rxp - atom_list(iatom2,lm,is)%rxp
+  vec23(2) = atom_list(iatom3,lm,is)%ryp - atom_list(iatom2,lm,is)%ryp
+  vec23(3) = atom_list(iatom3,lm,is)%rzp - atom_list(iatom2,lm,is)%rzp
 
   ! vector from iatom2 to iatom1
 
-  vec21(1) = atom_list(iatom1,alive,is)%rxp - atom_list(iatom2,alive,is)%rxp
-  vec21(2) = atom_list(iatom1,alive,is)%ryp - atom_list(iatom2,alive,is)%ryp
-  vec21(3) = atom_list(iatom1,alive,is)%rzp - atom_list(iatom2,alive,is)%rzp
+  vec21(1) = atom_list(iatom1,lm,is)%rxp - atom_list(iatom2,lm,is)%rxp
+  vec21(2) = atom_list(iatom1,lm,is)%ryp - atom_list(iatom2,lm,is)%ryp
+  vec21(3) = atom_list(iatom1,lm,is)%rzp - atom_list(iatom2,lm,is)%rzp
 
   ! Normalize these vectors
 
@@ -276,15 +303,15 @@ SUBROUTINE Rigid_Dihedral_Change(this_box, mcstep)
      
      this_atom = atoms_to_place_list(j)
 
-     tempx = atom_list(this_atom,alive,is)%rxp
-     tempy = atom_list(this_atom,alive,is)%ryp
-     tempz = atom_list(this_atom,alive,is)%rzp
+     tempx = atom_list(this_atom,lm,is)%rxp
+     tempy = atom_list(this_atom,lm,is)%ryp
+     tempz = atom_list(this_atom,lm,is)%rzp
 
-     atom_list(this_atom,alive,is)%rxp = tempx * aligner(1,1) + tempy * aligner(1,2) + &
+     atom_list(this_atom,lm,is)%rxp = tempx * aligner(1,1) + tempy * aligner(1,2) + &
           tempz * aligner(1,3)
-     atom_list(this_atom,alive,is)%ryp = tempx * aligner(2,1) + tempy * aligner(2,2) + &
+     atom_list(this_atom,lm,is)%ryp = tempx * aligner(2,1) + tempy * aligner(2,2) + &
           tempz * aligner(2,3)
-     atom_list(this_atom,alive,is)%rzp = tempx * aligner(3,1) + tempy * aligner(3,2) + &
+     atom_list(this_atom,lm,is)%rzp = tempx * aligner(3,1) + tempy * aligner(3,2) + &
           tempz * aligner(3,3)
 
   END DO
@@ -306,13 +333,13 @@ SUBROUTINE Rigid_Dihedral_Change(this_box, mcstep)
 
      this_atom = atoms_to_place_list(j)
 
-     tempy = atom_list(this_atom,alive,is)%ryp
-     tempz = atom_list(this_atom,alive,is)%rzp
+     tempy = atom_list(this_atom,lm,is)%ryp
+     tempz = atom_list(this_atom,lm,is)%rzp
 
      ! apply the transformation
      
-     atom_list(this_atom,alive,is)%ryp =  cosphi * tempy + sinphi * tempz
-     atom_list(this_atom,alive,is)%rzp = -sinphi * tempy + cosphi * tempz
+     atom_list(this_atom,lm,is)%ryp =  cosphi * tempy + sinphi * tempz
+     atom_list(this_atom,lm,is)%rzp = -sinphi * tempy + cosphi * tempz
 
   END DO
 
@@ -334,22 +361,22 @@ SUBROUTINE Rigid_Dihedral_Change(this_box, mcstep)
 
      this_atom = atoms_to_place_list(j)
 
-     tempx = atom_list(this_atom,alive,is)%rxp
-     tempy = atom_list(this_atom,alive,is)%ryp
-     tempz = atom_list(this_atom,alive,is)%rzp
+     tempx = atom_list(this_atom,lm,is)%rxp
+     tempy = atom_list(this_atom,lm,is)%ryp
+     tempz = atom_list(this_atom,lm,is)%rzp
 
-     atom_list(this_atom,alive,is)%rxp = tempx * hanger(1,1) + tempy * hanger(1,2) + &
+     atom_list(this_atom,lm,is)%rxp = tempx * hanger(1,1) + tempy * hanger(1,2) + &
           tempz * hanger(1,3)
-     atom_list(this_atom,alive,is)%ryp = tempx * hanger(2,1) + tempy * hanger(2,2) + &
+     atom_list(this_atom,lm,is)%ryp = tempx * hanger(2,1) + tempy * hanger(2,2) + &
           tempz * hanger(2,3)
-     atom_list(this_atom,alive,is)%rzp = tempx * hanger(3,1) + tempy * hanger(3,2) + &
+     atom_list(this_atom,lm,is)%rzp = tempx * hanger(3,1) + tempy * hanger(3,2) + &
           tempz * hanger(3,3)
 
   END DO
 
-  atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp + iatom2_rxp
-  atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp + iatom2_ryp
-  atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp + iatom2_rzp
+  atom_list(:,lm,is)%rxp = atom_list(:,lm,is)%rxp + iatom2_rxp
+  atom_list(:,lm,is)%ryp = atom_list(:,lm,is)%ryp + iatom2_ryp
+  atom_list(:,lm,is)%rzp = atom_list(:,lm,is)%rzp + iatom2_rzp
 
   delta_e = 0.0_DP
   ! Now compute the energy of this molecule in the new conformation. First compute the intramolecular
@@ -361,15 +388,15 @@ SUBROUTINE Rigid_Dihedral_Change(this_box, mcstep)
 
 
   inter_overlap = .FALSE.
-     CALL Get_COM(alive,is)
-     CALL Compute_Max_COM_Distance(alive,is)
+     CALL Get_COM(lm,is)
+     CALL Compute_Max_COM_Distance(lm,is)
      
-     CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is,E_intra_vdw_move,E_intra_qq_move,E_periodic_qq,intra_overlap)
+     CALL Compute_Molecule_Nonbond_Intra_Energy(lm,is,E_intra_vdw_move,E_intra_qq_move,E_periodic_qq,intra_overlap)
 
      IF (intra_overlap) inter_overlap = .TRUE.
 
      IF ( .NOT. inter_overlap) THEN
-        CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_inter_vdw_move,E_inter_qq_move,inter_overlap)
+        CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is,E_inter_vdw_move,E_inter_qq_move,inter_overlap)
         E_inter_qq_move = E_inter_qq_move + E_periodic_qq
      
      END IF
@@ -378,21 +405,21 @@ SUBROUTINE Rigid_Dihedral_Change(this_box, mcstep)
      
      ! Reject the move, reset the old cartesian and internal coordinates
 
-     CALL Revert_Old_Cartesian_Coordinates(alive,is)
-     CALL Revert_Old_Internal_Coordinates(alive,is)
+     CALL Revert_Old_Cartesian_Coordinates(lm,is)
+     CALL Revert_Old_Internal_Coordinates(lm,is)
 
   ELSE
   
-     CALL Compute_Molecule_Bond_Energy(alive,is,E_bond_move)
-     CALL Compute_Molecule_Angle_Energy(alive,is,E_angle_move)
-     CALL Compute_Molecule_Dihedral_Energy(alive,is,E_dihedral_move)
-     CALL Compute_Molecule_Improper_Energy(alive,is,E_improper_move)
+     CALL Compute_Molecule_Bond_Energy(lm,is,E_bond_move)
+     CALL Compute_Molecule_Angle_Energy(lm,is,E_angle_move)
+     CALL Compute_Molecule_Dihedral_Energy(lm,is,E_dihedral_move)
+     CALL Compute_Molecule_Improper_Energy(lm,is,E_improper_move)
 
 
-     IF (int_charge_sum_style(this_box) == charge_ewald) THEN
-        CALL Update_System_Ewald_Reciprocal_Energy(alive,is,this_box, &
+     IF (int_charge_sum_style(ibox) == charge_ewald) THEN
+        CALL Update_System_Ewald_Reciprocal_Energy(lm,is,ibox, &
              int_intra,E_reciprocal_move)
-        delta_e = E_reciprocal_move - energy(this_box)%ewald_reciprocal
+        delta_e = E_reciprocal_move - energy(ibox)%ewald_reciprocal
 
         
      END IF
@@ -415,48 +442,49 @@ SUBROUTINE Rigid_Dihedral_Change(this_box, mcstep)
 
      ELSE
         
-        p_acc = MIN(1.0_DP,DEXP(-beta(this_box)*delta_e))
+        ln_pacc = beta(ibox) * delta_e
+        accept = accept_or_reject(ln_pacc)
 
      END IF
 
-     IF ( rranf() < p_acc ) THEN
+     IF ( accept ) THEN
         ! accept the move and update the energies
-        energy(this_box)%intra = energy(this_box)%intra + E_bond_move - E_bond + E_angle_move - E_angle + &
+        energy(ibox)%intra = energy(ibox)%intra + E_bond_move - E_bond + E_angle_move - E_angle + &
              E_dihedral_move - E_dihedral + E_improper_move - E_improper
-        energy(this_box)%bond = energy(this_box)%bond + E_bond_move - E_bond
-        energy(this_box)%angle = energy(this_box)%angle + E_angle_move - E_angle
-        energy(this_box)%dihedral = energy(this_box)%dihedral + E_dihedral_move - E_dihedral
-        energy(this_box)%intra_vdw = energy(this_box)%intra_vdw + E_intra_vdw_move - E_intra_vdw
-        energy(this_box)%intra_q   = energy(this_box)%intra_q   + E_intra_qq_move - E_intra_qq
-        energy(this_box)%inter_vdw = energy(this_box)%inter_vdw + E_inter_vdw_move - E_inter_vdw
-        energy(this_box)%inter_q   = energy(this_box)%inter_q   + E_inter_qq_move - E_inter_qq
+        energy(ibox)%bond = energy(ibox)%bond + E_bond_move - E_bond
+        energy(ibox)%angle = energy(ibox)%angle + E_angle_move - E_angle
+        energy(ibox)%dihedral = energy(ibox)%dihedral + E_dihedral_move - E_dihedral
+        energy(ibox)%intra_vdw = energy(ibox)%intra_vdw + E_intra_vdw_move - E_intra_vdw
+        energy(ibox)%intra_q   = energy(ibox)%intra_q   + E_intra_qq_move - E_intra_qq
+        energy(ibox)%inter_vdw = energy(ibox)%inter_vdw + E_inter_vdw_move - E_inter_vdw
+        energy(ibox)%inter_q   = energy(ibox)%inter_q   + E_inter_qq_move - E_inter_qq
 
-        IF (int_charge_sum_style(this_box) == charge_ewald) THEN
-           energy(this_box)%ewald_reciprocal = E_reciprocal_move
+        IF (int_charge_sum_style(ibox) == charge_ewald) THEN
+           energy(ibox)%ewald_reciprocal = E_reciprocal_move
         END IF
 
-        energy(this_box)%total = energy(this_box)%total + delta_e
+        energy(ibox)%total = energy(ibox)%total + delta_e
 
         ! update success counter
 
-        nsuccess(is,this_box)%dihedral = nsuccess(is,this_box)%dihedral + 1
+        nsuccess(is,ibox)%dihedral = nsuccess(is,ibox)%dihedral + 1
 
         ! Compute the COM positions
 
-        CALL Get_Internal_Coordinates(alive,is)
+        CALL Get_Internal_Coordinates(lm,is)
 
      ELSE 
 
         ! Reject the move and revert the old coordinates
 
-        CALL Revert_Old_Cartesian_Coordinates(alive,is)
-        CALL Revert_Old_Internal_Coordinates(alive,is)
+        CALL Revert_Old_Cartesian_Coordinates(lm,is)
+        CALL Revert_Old_Internal_Coordinates(lm,is)
 
-        IF (int_charge_sum_style(this_box) == charge_ewald) THEN
+        IF (int_charge_sum_style(ibox) == charge_ewald) THEN
            ! Also reset the old cos_sum and sin_sum for reciprocal space vectors
            !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-           cos_sum(:,this_box) = cos_sum_old(:,this_box)
-           sin_sum(:,this_box) = sin_sum_old(:,this_box)
+           cos_sum(:,ibox) = cos_sum_old(:,ibox)
+           sin_sum(:,ibox) = sin_sum_old(:,ibox)
            !$OMP END PARALLEL WORKSHARE
 
         END IF
@@ -466,6 +494,10 @@ SUBROUTINE Rigid_Dihedral_Change(this_box, mcstep)
   END IF
 
 !  DEALLOCATE(atoms_to_place_list)
+  IF (verbose_log) THEN
+    WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8)') i_mcstep, 'dihed' , lm, is, ibox, accept
+  END IF
+
 
 END SUBROUTINE Rigid_Dihedral_Change
 

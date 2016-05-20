@@ -402,7 +402,7 @@ SUBROUTINE Write_Coords(this_box)
 
   !-- Write the coordinates of molecules in this box
   WRITE(M_XYZ_unit,*) Num_Atoms
-  WRITE(M_XYZ_unit,*)
+  WRITE(M_XYZ_unit,*) 'MC_STEP: ', i_mcstep
   DO is = 1,nspecies
      DO im = 1, nmols(is,this_box)
         this_im = locate(im,is,this_box)

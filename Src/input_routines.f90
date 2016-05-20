@@ -763,12 +763,10 @@ SUBROUTINE Get_Pair_Style
         line_nbr = line_nbr + 1
         CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
 
-        WRITE(logunit,*)
         IF (line_array(1) == 'TRUE' .OR. line_array(1) == 'true') THEN
            l_pair_nrg = .TRUE.
            WRITE(logunit,*) 'Pair interaction energy array storage enabled'
         END IF
-        WRITE(logunit,*)
 
      ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
         IF (iassign == 2*nbr_boxes) EXIT
@@ -1015,13 +1013,13 @@ SUBROUTINE Get_Molecule_Info
                        CALL Read_String(molfile_unit,line_string,ierr)
                        nfragments(i) = String_To_Int(line_string)
                        WRITE(logunit,*) '  ', &
-                            TRIM(Int_To_String(nfragments(i))), ' fragments specified.'
+                            TRIM(Int_To_String(nfragments(i))), ' fragment(s) specified.'
 
                     ELSEIF (line_string(1:23) == '# Fragment_Connectivity') THEN
                        CALL Read_String(molfile_unit,line_string,ierr)
                        fragment_bonds(i) = String_To_Int(line_string)
                        WRITE(logunit,*) '  ', &
-                            TRIM(Int_to_String(fragment_bonds(i))), '  fragment bonds specified.'
+                            TRIM(Int_to_String(fragment_bonds(i))), ' fragment bond(s) specified.'
 
                     END IF
 
@@ -1066,7 +1064,7 @@ SUBROUTINE Get_Molecule_Info
   ENDDO input_file_loop
 
   WRITE(logunit,*)
-  WRITE(logunit,'(X,A7,2x,A13)') 'Species', 'Nbr molecules'
+  WRITE(logunit,'(X,A7,2x,A13)') 'Species', 'Max molecules'
   WRITE(logunit,'(X,A7,2x,A13)') '-------', '-------------'
   DO i=1,nspecies
      WRITE(logunit,'(X,I6,2x,I13)') i,max_molecules(i) 
@@ -1237,7 +1235,7 @@ SUBROUTINE Get_Molecule_Info
         CALL Get_Dihedral_Info(is)
         CALL Get_Improper_Info(is)
   
-        IF(nfragments(is) /= 0  ) THEN
+        IF (nfragments(is) /= 0) THEN
            species_list(is)%fragment = .TRUE.
            CALL Get_Fragment_Info(is)
            IF (int_sim_type /= sim_mcf) THEN
@@ -1573,7 +1571,7 @@ SUBROUTINE Get_Atom_Info(is)
               CALL Clean_Abort(err_msg,'Get_Atom_Info')
            ENDIF
 
-           IF (verbose_log) THEN
+           IF (verbose_log .AND. natoms(is) < 100) THEN
               WRITE(logunit,'(X,A,T25,I3,1x,I5)') 'Species and atom number', is,ia
               WRITE(logunit,'(X,A,T25,A)') ' atom name:',nonbond_list(ia,is)%atom_name
               WRITE(logunit,'(X,A,T25,A)') ' element:',nonbond_list(ia,is)%element
@@ -1590,7 +1588,7 @@ SUBROUTINE Get_Atom_Info(is)
               ! sigma = Angstrom
               nonbond_list(ia,is)%vdw_param(2) = String_To_Double(line_array(8))
 
-              IF (verbose_log) THEN
+              IF (verbose_log .AND. natoms(is) < 100) THEN
                  WRITE(logunit,'(X,A,T25,F10.4)') ' Epsilon / kB in K:', &
                       nonbond_list(ia,is)%vdw_param(1)
                  WRITE(logunit,'(X,A,T25,F10.4)') ' Sigma in A:', &
@@ -1629,9 +1627,7 @@ SUBROUTINE Get_Atom_Info(is)
                  nring_atoms(is) = nring_atoms(is) + 1
                  ring_atom_ids(nring_atoms(is),is) = ia
                  nonbond_list(ia,is)%ring_atom = .TRUE.
-                 IF (verbose_log) THEN
-                         WRITE(logunit,*) ia ,' is a ring atom'
-                 END IF
+                 IF (verbose_log) WRITE(logunit,*) ia ,' is a ring atom'
               END IF
            ELSE
               ! this is an not a ring atom
@@ -1639,8 +1635,6 @@ SUBROUTINE Get_Atom_Info(is)
               exo_atom_ids(nexo_atoms(is),is) = ia
            END IF
               
-           IF (verbose_log) WRITE(logunit,*)
-
         ENDDO
               
         EXIT
@@ -1662,8 +1656,8 @@ SUBROUTINE Get_Atom_Info(is)
   IF (verbose_log) THEN
      WRITE(logunit,'(X, A, T40, I4,A, T45, I4)') 'Total number of ring atoms in species', is, ' is', nring_atoms(is)
      WRITE(logunit,'(X, A, T40, I4,A, T45, I4)') 'Total number of exo atoms in species', is, ' is', nexo_atoms(is)
-     WRITE(logunit,*) ' Atom ids for ring atoms', ring_atom_ids(1:nring_atoms(is),is)
-     WRITE(logunit,*) ' Atom ids for exo atoms', exo_atom_ids(1:nexo_atoms(is),is)
+     WRITE(logunit,*) 'Atom ids for ring atoms', ring_atom_ids(1:nring_atoms(is),is)
+     WRITE(logunit,*) 'Atom ids for exo atoms', exo_atom_ids(1:nexo_atoms(is),is)
   ELSE
      WRITE(logunit, '(X,A)') 'Atom parameters read'
   END IF
@@ -1776,8 +1770,6 @@ SUBROUTINE Get_Bond_Info(is)
               err_msg(1) = 'bond_potential type improperly specified in mcf file'
               CALL Clean_Abort(err_msg,'Get_Bond_Info')
            ENDIF
-
-           IF (verbose_log) WRITE(logunit,*)
 
         ENDDO
               
@@ -1938,8 +1930,6 @@ SUBROUTINE Get_Angle_Info(is)
               CALL Clean_Abort(err_msg,'Get_Angle_Info')
            ENDIF
 
-           IF (verbose_log) WRITE(logunit,*)
-
         ENDDO
               
         EXIT
@@ -1957,8 +1947,6 @@ SUBROUTINE Get_Angle_Info(is)
 
   ENDDO
 
-  IF (verbose_log) WRITE(logunit,*)
-  
   ! Now loop over all the angles and the species is linear if
   ! 1. All angles are fixed and the nominal value for each of
   ! the angles is 180.0_DP
@@ -1977,9 +1965,9 @@ SUBROUTINE Get_Angle_Info(is)
 
   IF (verbose_log) THEN
      IF(species_list(is)%linear) THEN
-        WRITE(logunit,'(A,2x,I3,2x,A)') 'Molecule',is,'is defined to be linear'
+        WRITE(logunit,'(X,A,X,I3,X,A)') 'Species',is,'is linear'
      ELSE
-        WRITE(logunit,'(A,2x,I3,2x,A)') 'Molecule',is,'is NOT defined to be linear'
+        WRITE(logunit,'(X,A,X,I3,X,A)') 'Species',is,'is NOT linear'
      END IF
   ELSE
     WRITE(logunit, '(X,A)') 'Angle parameters read'
@@ -2230,8 +2218,6 @@ SUBROUTINE Get_Dihedral_Info(is)
               CALL Clean_Abort(err_msg,'Get_Dihedral_Info')
            ENDIF
 
-           IF (verbose_log) WRITE(logunit,*)
-
         ENDDO
               
         EXIT
@@ -2399,8 +2385,6 @@ INTEGER, INTENT(IN) :: is
               CALL Clean_Abort(err_msg,'Get_Improper_Info')
            ENDIF
 
-           WRITE(logunit,*)
-
         ENDDO
               
         EXIT
@@ -2497,9 +2481,8 @@ SUBROUTINE Get_Fragment_Anchor_Info(is)
 
            ! output information to the log file.
            IF (verbose_log) THEN
-                   WRITE(logunit,*)
-                   WRITE(logunit,*) 'Number of anchors for fragment ', i, '  is', frag_list(i,is)%nanchors
-                   WRITE(logunit,*) 'Anchor ids are', frag_list(i,is)%anchor(:)
+              WRITE(logunit,*) 'Number of anchors for fragment ', i, '  is', frag_list(i,is)%nanchors
+              WRITE(logunit,*) 'Anchor ids are', frag_list(i,is)%anchor(:)
            END IF
 
         END DO
@@ -2547,7 +2530,7 @@ SUBROUTINE Get_Fragment_Info(is)
   INTEGER :: i_atom, j_atom, atom1, atom2
   INTEGER, ALLOCATABLE :: anchor_id(:)
   CHARACTER(120) :: line_string, line_array(20)
-  CHARACTER(50000) :: line_array_zeo(10000)
+  !CHARACTER(50000) :: line_array_zeo(10000)
 
   line_nbr = 0
   ierr = 0
@@ -2587,22 +2570,22 @@ SUBROUTINE Get_Fragment_Info(is)
            line_nbr = line_nbr + 1
            ! We will first determine number of atoms in the current fragment and then
            ! allocate the array frag_list(i,j)%atoms and also read in the anchor
-           CALL Parse_String_Zeolite_Frag(molfile_unit,line_nbr, 2, nbr_entries, line_array_zeo,ierr)
+           CALL Parse_String(molfile_unit,line_nbr, 2, nbr_entries, line_array,ierr)
            
-           IF ( ifrag /= String_To_Int(line_array_zeo(1))) THEN
+           IF ( ifrag /= String_To_Int(line_array(1))) THEN
               err_msg = ''
               err_msg = 'Fragments must be listed sequentially'
               CALL Clean_Abort(err_msg,'Get_Fragment_Info')
            END IF
 
-           frag_list(ifrag,is)%natoms = String_To_Int(line_array_zeo(2))
+           frag_list(ifrag,is)%natoms = String_To_Int(line_array(2))
 
            ! read in the identity of atoms
            backspace(molfile_unit)
            
            min_entries = 2 + frag_list(ifrag,is)%natoms
 
-           CALL Parse_String_Zeolite_Frag(molfile_unit,line_nbr,min_entries,nbr_entries,line_array_zeo,ierr)
+           CALL Parse_String(molfile_unit,line_nbr,min_entries,nbr_entries,line_array,ierr)
 
 
            IF (ierr /= 0) THEN
@@ -2615,14 +2598,14 @@ SUBROUTINE Get_Fragment_Info(is)
            ALLOCATE(frag_list(ifrag,is)%atoms(frag_list(ifrag,is)%natoms))
 
            DO iatom = 1, frag_list(ifrag,is)%natoms
-              frag_list(ifrag,is)%atoms(iatom) = String_To_Int(line_array_zeo(iatom+2))
+              frag_list(ifrag,is)%atoms(iatom) = String_To_Int(line_array(iatom+2))
            END DO
           
            WRITE(logunit,'(X,A34,1x,I4,A4,I4)') 'Total number of atoms in fragment ', ifrag, 'is', &
                 frag_list(ifrag,is)%natoms
            IF (verbose_log) THEN
               WRITE(logunit,'(X,A27)') 'Identity of these atoms are:'
-              WRITE(logunit,'(X,A)')  frag_list(ifrag,is)%atoms
+              WRITE(logunit,*)  frag_list(ifrag,is)%atoms
            END IF
           
 
@@ -2632,7 +2615,7 @@ SUBROUTINE Get_Fragment_Info(is)
 
      ELSE IF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
         
-        ! Problem reading Improper_Info
+        ! Problem reading Fragment_Info
         err_msg = ""
         err_msg(1) = 'Trouble locating # Fragment_Info keyword'
         CALL Clean_Abort(err_msg,'Get_Fragment_Info')
@@ -2730,7 +2713,7 @@ SUBROUTINE Get_Fragment_Info(is)
      IF (verbose_log) THEN
         WRITE(logunit,'(A32,1x,I4,A4,I4)') 'Number of anchors for fragment ', ifrag, 'is', &
              frag_list(ifrag,is)%nanchors
-        WRITE(logunit,'(A13,1x,I4)') 'Anchor id is:', frag_list(ifrag,is)%anchor(:)
+        WRITE(logunit,'(X,A13,1x,I4)') 'Anchor id is:', frag_list(ifrag,is)%anchor(:)
      END IF
 
      IF (frag_list(ifrag,is)%nanchors > 1) THEN
@@ -2814,7 +2797,6 @@ SUBROUTINE Get_Fragment_Connect_Info(is)
            END DO
 
            IF (verbose_log) THEN
-                   WRITE(logunit,*) 
                    WRITE(logunit,'(A33,1X,I4,A4,I4)') 'Number of connections of fragment', ifrag, 'is', &
                         frag_list(ifrag,is)%nconnect
                    WRITE(logunit,'(A20)') 'These fragments are:'
@@ -2869,8 +2851,8 @@ SUBROUTINE Get_Fragment_Connectivity_Info(is)
 
   IF (verbose_log) THEN
     WRITE(logunit,*)
-    WRITE(logunit,'(A)') 'Fragment connectivity info'
-    WRITE(logunit,'(A80)') '********************************************************************************'
+    WRITE(logunit,'(X,A)') 'Fragment connectivity info'
+    WRITE(logunit,'(X,A)') '-------------------------------------------------------------------------------'
   END IF
 
   ierr = 0
@@ -3005,11 +2987,10 @@ SUBROUTINE Get_Fragment_Connectivity_Info(is)
      END IF
 
      IF (verbose_log) THEN
-             WRITE(logunit,*) 
-             WRITE(logunit,'(A34,1X,I4,A4,I4)') 'Number of connections of fragment', ifrag, 'is', &
-                  frag_list(ifrag,is)%nconnect
-             WRITE(logunit,'(A21)') 'These fragments are:'
-             WRITE(logunit,*) frag_list(ifrag,is)%frag_connect
+        WRITE(logunit,'(A34,1X,I4,A4,I4)') 'Number of connections of fragment', ifrag, 'is', &
+             frag_list(ifrag,is)%nconnect
+        WRITE(logunit,'(A21)') 'These fragments are:'
+        WRITE(logunit,*) frag_list(ifrag,is)%frag_connect
      END IF
 
   END DO
@@ -3017,7 +2998,7 @@ SUBROUTINE Get_Fragment_Connectivity_Info(is)
   DEALLOCATE(temp_frag)
   
   IF (verbose_log) THEN
-    WRITE(logunit,'(A80)') '********************************************************************************'
+    WRITE(logunit,'(X,A)') '-------------------------------------------------------------------------------'
   END IF
  
 END SUBROUTINE Get_Fragment_Connectivity_Info
@@ -3384,7 +3365,6 @@ SUBROUTINE Get_Intra_Scaling
 
   DO
      line_nbr = line_nbr + 1
-
      CALL Read_String(inputunit,line_string,ierr)
 
      IF (ierr /= 0) THEN
@@ -3394,11 +3374,11 @@ SUBROUTINE Get_Intra_Scaling
      END IF
 
      IF (line_string(1:15) == '# Intra_Scaling') THEN
-        line_nbr = line_nbr + 1
         DO is = 1, nspecies
            IF (int_vdw_style(1) /= vdw_none) THEN
               ! Read vdw scaling which is listed first
               line_array = ""
+              line_nbr = line_nbr + 1
               CALL Parse_String(inputunit,line_nbr,4,nbr_entries,line_array,ierr)
            
               ! Test for problems reading file
@@ -3418,12 +3398,18 @@ SUBROUTINE Get_Intra_Scaling
            IF (int_charge_style(1) /= charge_none) THEN
               ! Read coul scaling which is listed second
               line_array = ""
+              line_nbr = line_nbr + 1
               CALL Parse_String(inputunit,line_nbr,4,nbr_entries,line_array,ierr)
               
               scale_1_2_charge(is) = String_To_Double(line_array(1))
               scale_1_3_charge(is) = String_To_Double(line_array(2))
               scale_1_4_charge(is) = String_To_Double(line_array(3))
               scale_1_N_charge(is) = String_To_Double(line_array(4))
+           ELSE
+              scale_1_2_charge(:) = 0.0
+              scale_1_3_charge(:) = 0.0
+              scale_1_4_charge(:) = 0.0
+              scale_1_N_charge(:) = 0.0
            ENDIF
         END DO
         intrascaling_set = .true.
@@ -3464,10 +3450,12 @@ SUBROUTINE Get_Intra_Scaling
      WRITE(logunit,'(X,A,T30,f7.3)') 'VDW 1-4 scaling factor', scale_1_4_vdw(is) 
      WRITE(logunit,'(X,A,T30,f7.3)') 'VDW 1-N scaling factor', scale_1_N_vdw(is) 
 
-     WRITE(logunit,'(X,A,T30,f7.3)') 'Coulomb 1-2 scaling factor', scale_1_2_charge(is) 
-     WRITE(logunit,'(X,A,T30,f7.3)') 'Coulomb 1-3 scaling factor', scale_1_3_charge(is) 
-     WRITE(logunit,'(X,A,T30,f7.3)') 'Coulomb 1-4 scaling factor', scale_1_4_charge(is) 
-     WRITE(logunit,'(X,A,T30,f7.3)') 'Coulomb 1-N scaling factor', scale_1_N_charge(is)
+     IF (int_charge_style(1) /= charge_none) THEN
+       WRITE(logunit,'(X,A,T30,f7.3)') 'Coulomb 1-2 scaling factor', scale_1_2_charge(is) 
+       WRITE(logunit,'(X,A,T30,f7.3)') 'Coulomb 1-3 scaling factor', scale_1_3_charge(is) 
+       WRITE(logunit,'(X,A,T30,f7.3)') 'Coulomb 1-4 scaling factor', scale_1_4_charge(is) 
+       WRITE(logunit,'(X,A,T30,f7.3)') 'Coulomb 1-N scaling factor', scale_1_N_charge(is)
+     END IF 
   END DO
 
   WRITE(logunit,'(A80)') '********************************************************************************'
@@ -3875,7 +3863,7 @@ SUBROUTINE Get_Fugacity_Info
 
   IMPLICIT NONE
 
-  INTEGER :: line_nbr, nbr_entries, ierr, i, spec_counter, j
+  INTEGER :: line_nbr, nbr_entries, ierr, is, spec_counter, ibox
   CHARACTER(120) :: line_string, line_array(20)
 
   REWIND(inputunit)
@@ -3912,19 +3900,20 @@ SUBROUTINE Get_Fugacity_Info
         line_nbr = line_nbr + 1
         CALL Parse_String(inputunit,line_nbr,nspec_insert,nbr_entries,line_array,ierr)
         
-        DO i = 1,nspecies
+        DO is = 1,nspecies
 
-           IF(species_list(i)%int_species_type == int_sorbate) THEN
+           IF(species_list(is)%int_species_type == int_sorbate) THEN
               spec_counter = spec_counter + 1
-              species_list(i)%fugacity = String_To_Double(line_array(spec_counter))
-              species_list(i)%fugacity = species_list(i)%fugacity / atomic_to_bar
+              species_list(is)%fugacity = String_To_Double(line_array(spec_counter))
+              species_list(is)%fugacity = species_list(is)%fugacity / atomic_to_bar
            ELSE
-              species_list(i)%fugacity = 0.0_DP
+              species_list(is)%fugacity = 0.0_DP
            END IF
 
-           WRITE(logunit,'(A,T25,I3,A,T35,E16.9,A)')'Fugacity of species', i, ' is', species_list(i)%fugacity, ' amu /(A ps^2)'
+           WRITE(logunit,'(X,A,X,F16.9)')'Fugacity (amu / A / ps^2)', species_list(is)%fugacity
         END DO
         
+        WRITE(logunit,'(A80)') '********************************************************************************'
         EXIT
 
      ELSE IF (line_string(1:25) == '# Chemical_Potential_Info'  ) THEN
@@ -3936,37 +3925,40 @@ SUBROUTINE Get_Fugacity_Info
         lchempot = .TRUE.
         CALL Parse_String(inputunit,line_nbr,nspec_insert,nbr_entries,line_array,ierr)
         
-        DO i = 1,nspecies
+        DO is = 1,nspecies
 
-           ALLOCATE(species_list(i)%de_broglie(nbr_boxes))
+           ALLOCATE(species_list(is)%de_broglie(nbr_boxes))
 
-           IF(species_list(i)%int_species_type == int_sorbate) THEN
+           IF(species_list(is)%int_species_type == int_sorbate) THEN
               spec_counter = spec_counter + 1
-              species_list(i)%chem_potential = String_To_Double(line_array(spec_counter))
+              species_list(is)%chem_potential = String_To_Double(line_array(spec_counter))
            ELSE
-              species_list(i)%chem_potential = 0.0_DP
+              species_list(is)%chem_potential = 0.0_DP
            END IF
 
            ! convert the chemical potential into atomic units
 
-           species_list(i)%chem_potential = species_list(i)%chem_potential / atomic_to_kJmol
+           species_list(is)%chem_potential = species_list(is)%chem_potential / atomic_to_kJmol
 
-           WRITE(logunit,'(A,T25,I3,A,T35,E16.9,A)')'Chemical Potential of species', i, &
-                ' is', species_list(i)%chem_potential, 'in atomic units'
+           WRITE(logunit,'(A,X,I5)') 'Species', is
+           WRITE(logunit,'(X,A,T40,X,F16.9)') 'Chemical potentiali (internal units):', &
+                 species_list(is)%chem_potential
 
            ! Now compute the de Broglie wavelength for this species in each box
 
-           DO j = 1, nbr_boxes
+           DO ibox = 1, nbr_boxes
 
-              species_list(i)%de_broglie(j) = &
-                   h_plank  * DSQRT( beta(j)/(twopi * species_list(i)%molecular_weight))
+              species_list(is)%de_broglie(ibox) = &
+                   h_plank  * DSQRT( beta(ibox)/(twopi * species_list(is)%molecular_weight))
 
-              WRITE(logunit,'(A,T35,I3,T40,A,T48,I5,T55,A)') 'de Broglie wavelength of species', i, 'in box ', j, ' is'
-              WRITE(logunit,'(F14.10,2x,A)') species_list(i)%de_broglie(j), ' Angstrom'
+              WRITE(logunit,'(X,A,T40,X,F16.9)') &
+                    'de Broglie wavelength (Angstroms):', species_list(is)%de_broglie(ibox)
 
            END DO
    
         END DO
+
+        WRITE(logunit,'(A80)') '********************************************************************************'
         
         EXIT
 
@@ -3978,7 +3970,6 @@ SUBROUTINE Get_Fugacity_Info
      
   END DO inputLOOP
   
-  WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_Fugacity_Info
 
@@ -4056,13 +4047,13 @@ SUBROUTINE Get_Move_Probabilities
            IF(line_string(1:18) == '# Prob_Translation') THEN
               num_moves = num_moves + 1
               ! we found specification of translation routine
-              ! parse this line to figure out what the move proability is. This line
-              ! contains three fields #, Move_Translation and the third field is probability.
+              ! parse this line to figure out what the move proability is.
               line_nbr = line_nbr + 1            
               CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
               prob_trans = String_To_Double(line_array(1))
 
-              WRITE(logunit,'(X,A,2X,F12.6)') 'Translation probability is', prob_trans
+              WRITE(logunit,'(A,T40,F12.6)') &
+                   'Probability for translation', prob_trans
 
               IF (int_sim_type == sim_ring .OR. int_sim_type == sim_frag) THEN
                  ! the second line contains information on delta_cos_max and delta_phi_max
@@ -4101,7 +4092,8 @@ SUBROUTINE Get_Move_Probabilities
               CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
               prob_rot = String_To_Double(line_array(1))
 
-              WRITE(logunit,'(X,A,2X,F12.6)') 'Rotation probability is', prob_rot
+              WRITE(logunit,'(A,T40,F12.6)') &
+                   'Probability for rotation', prob_trans
 
               DO j = 1, nbr_boxes
                  ! get maximum rotational width for each of the species
@@ -4124,7 +4116,8 @@ SUBROUTINE Get_Move_Probabilities
               CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
               prob_torsion = String_To_Double(line_array(1))
 
-              WRITE(logunit,'(X,A,T40,F10.4)') 'Dihedral move probability is', prob_torsion
+              WRITE(logunit,'(A,T40,F12.6)') &
+                   'Probability for dihedral move', prob_torsion
 
               ! Get species dependent maximum displacements
 
@@ -4144,7 +4137,8 @@ SUBROUTINE Get_Move_Probabilities
               CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
               prob_angle = String_To_Double(line_array(1))
 
-              WRITE(logunit,'(X,A,T40,F10.4)') 'Angle move probability is', prob_angle
+              WRITE(logunit,'(A,T40,F12.6)') &
+                   'Probability for angle move', prob_angle
 
            ELSE IF (line_string(1:13) == '# Prob_Volume') THEN
               num_moves = num_moves + 1
@@ -4159,7 +4153,8 @@ SUBROUTINE Get_Move_Probabilities
 
               prob_volume = String_To_Double(line_array(1))
 
-              WRITE(logunit,'(X,A40,2X,F12.6)') 'Probability for volume move is ', prob_volume
+              WRITE(logunit,'(A,T40,F12.6)') &
+                   'Probability for volume move', prob_volume
 
               ! Now read in information for each of the boxes for maximum displacement
               IF (int_sim_type == sim_gemc) THEN 
@@ -4169,21 +4164,21 @@ SUBROUTINE Get_Move_Probabilities
 
                  box_list(:)%dv_max = String_To_Double(line_array(1))
 
-                 WRITE(logunit,*) 'Maximum volume displacement for box in GEMC_NVT simulation is'
-                 WRITE(logunit,"(F10.3)") box_list(1)%dv_max
+                 WRITE(logunit,'(X,A,X,F10.3)') &
+                       'Maximum volume displacement is', box_list(1)%dv_max
 
               ELSE
 
                  DO ibox = 1,nbr_boxes
-
-                    WRITE(logunit,*) 'Writing maximum volume displacement elements for box', ibox
 
                     line_nbr = line_nbr + 1
                     CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
 
                     box_list(ibox)%dv_max = String_To_Double(line_array(1))
 
-                    WRITE(logunit,'((F24.3,2X,A))') box_list(ibox)%dv_max, ' A^3'
+                    WRITE(logunit,'(X,A,X,I2,X,A,X,F10.3,X,A)') &
+                         'Maximum volume displacement for box', ibox, 'is', &
+                         box_list(ibox)%dv_max, ' A^3'
 
 
                  END DO
@@ -4210,7 +4205,8 @@ SUBROUTINE Get_Move_Probabilities
                  WRITE(logunit,*) 'Volume moves will be performed in logarithm of ratio of volumes'
               END IF
 
-           ELSE IF (line_string(1:16) == '# Prob_Insertion' .OR. line_string(1:11) == '# Prob_Swap') THEN
+           ELSE IF (line_string(1:16) == '# Prob_Insertion' .OR. &
+                    line_string(1:11) == '# Prob_Swap') THEN
               ! we found information for insertion move probability or swap move probability
               line_nbr = line_nbr + 1
               CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
@@ -4218,256 +4214,88 @@ SUBROUTINE Get_Move_Probabilities
               IF (line_string(1:16) == '# Prob_Insertion') THEN
                  num_moves = num_moves + 1
                  prob_insertion = String_To_Double(line_array(1))
-                 WRITE(logunit,'(X,A,T40,F10.4)') 'Probability for insertion move is', prob_insertion
+                 WRITE(logunit,'(A,T40,F12.6)') &
+                      'Probability for insertion', prob_insertion
               ELSE IF (line_string(1:11) == '# Prob_Swap') THEN
                  num_moves = num_moves + 1
                  prob_swap = String_To_Double(line_array(1))
-                 WRITE(logunit,'(X,A40,2X,F12.6)') 'Probability for particle swap is', prob_swap
+                 WRITE(logunit,'(A,T40,F12.6)') &
+                      'Probability for particle swap', prob_swap
               END IF
 
-              ! Assign the second argument as type of insertion to sorbate species
-              ! also determine the number of insertable species at this point
+              ! the next line lists 'none' or 'cbmc' for each species
+              line_nbr = line_nbr + 1
+              CALL Parse_String(inputunit,line_nbr,nspecies,nbr_entries,line_array,ierr)
 
               nspec_insert = 0
               DO is = 1, nspecies
 
-                 ! Also read in the file from which the configuration will be read
-                 line_nbr = line_nbr + 1
-                 CALL Read_String(inputunit,line_string2,ierr)
-
-                 IF(line_string2(1:17) .NE. 'insertion method') THEN
-                    err_msg(1) = "Expecting : insertion method"
-                    err_msg(2) = "But found :"
-                    err_msg(3) = line_string2
-                    err_msg(4) = 'in '//TRIM(inputfile)
-                    CALL Clean_Abort(err_msg,'Prob_Insertion')
-                 END IF
-
-                 line_nbr = line_nbr + 1
-                 CALL Read_String(inputunit,line_string2,ierr)
-
-                 IF(line_string2(1:4) == 'IGAS') THEN
-                    species_list(is)%insertion = 'IGAS'
-                    species_list(is)%int_insert = int_igas
-                    nspec_insert = nspec_insert + 1
-                    
-                    IF(.NOT. ALLOCATED(n_igas)) ALLOCATE(n_igas(nspecies))
-                    IF(.NOT. ALLOCATED(n_igas_update)) ALLOCATE(n_igas_update(nspecies))
-                    IF(.NOT. ALLOCATED(n_igas_moves)) ALLOCATE(n_igas_moves(nspecies))
-                    IF(.NOT. ALLOCATED(nzovero)) ALLOCATE(nzovero(nspecies))
-                    
-                    line_nbr = line_nbr + 1
-                    CALL Read_String(inputunit,line_string2,ierr)
-
-                    WRITE(logunit,*) 'Ideal gas configurations will be used for insertion for species ', TRIM(Int_To_String(is))
-
-                    IF(line_string2(1:24) .NE. 'Number of igas particles') THEN
-                       err_msg(1) = "Expection : Number of igas particles"
-                       err_msg(2) = "But found :"
-                       err_msg(3) = line_string2
-                       CALL Clean_Abort(err_msg,'Prob_Insertion')
-                    END IF
-
-                    line_nbr = line_nbr + 1
-                    CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
-                    n_igas(is) = String_To_Int(line_array(1))
-
-                    WRITE(logunit,*) 'Number of ideal gas particles in reservoir is',n_igas
-
-                    line_nbr = line_nbr + 1
-                    CALL Read_String(inputunit,line_string2,ierr)
-
-                    IF(line_string2(1:15) .NE. 'Nupdate, Nmoves') THEN          
-                       err_msg(1) = "Expection : Nupdate, Nmoves, Nzbyomega"
-                       err_msg(2) = "But found :"
-                       err_msg(3) = line_string2
-                       CALL Clean_Abort(err_msg,'Prob_Insertion')
-                    END IF
-
-                    line_nbr = line_nbr + 1
-                    CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
-                    n_igas_update(is) = String_To_Int(line_array(1))
-                    n_igas_moves(is) = String_To_Int(line_array(2))
-                    nzovero(is) = String_To_Int(line_array(3))
-
-                    WRITE(logunit,*) 'Ideal gas reservoir will be updated every', n_igas_update, 'moves.'
-                    WRITE(logunit,*) 'Each molecule will undergo',n_igas_moves, 'Monte Carlo moves.'
-
-                    line_nbr = line_nbr + 1
-                    CALL Read_String(inputunit,line_string2,ierr)
-
-                    IF(line_string2(1:15) .NE. 'configuration f') THEN          
-                       err_msg(1) = "Expection : configuration file"        
-                       err_msg(2) = "But found :"
-                       err_msg(3) = line_string2
-                       CALL Clean_Abort(err_msg,'Prob_Insertion')
-                    END IF
-
-                    line_nbr = line_nbr + 1
-                    CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
-                    sorbate_file(is) = line_array(1)
-                    
-                 ELSE IF(line_string2(1:6) == 'RANDOM') THEN
-                    species_list(is)%insertion = 'RANDOM'
-                    nspec_insert = nspec_insert + 1
-
-                    WRITE(logunit,*) 'Random insertion will be carried out for species ', TRIM(Int_To_String(is))
-                    species_list(is)%int_insert = int_random
-
-                    line_nbr = line_nbr + 1
-                    CALL Read_String(inputunit,line_string2,ierr)
-
-                    IF(line_string2(1:18) .NE. 'configuration file') THEN
-                       err_msg(1) = "Expection : configuration file"      
-                       err_msg(2) = "But found :"
-                       err_msg(3) = line_string2
-                       CALL Clean_Abort(err_msg,'Prob_Insertion')
-                    END IF
-
-                    line_nbr = line_nbr + 1
-                    CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
-                    sorbate_file(is) = line_array(1)
-
-                    WRITE(logunit,*) 'Initial configuration is found in the file', TRIM(sorbate_file(is))
-
-                    OPEN(unit=sorbate_unit,file=sorbate_file(is),status='old')
-                    ! the file is in xyz format
-
-                    ! obtain COM of the input geometry as well
-                    total_mass = 0.0_DP
-
-                    species_list(is)%xcom = 0.0_DP
-                    species_list(is)%ycom = 0.0_DP
-                    species_list(is)%zcom = 0.0_DP
-
-
-                    DO j = 1, natoms(is)
-                       READ(sorbate_unit,*) symbol, init_list(j,1,is)%rxp, init_list(j,1,is)%ryp, init_list(j,1,is)%rzp
-
-                       this_mass = nonbond_list(j,is)%mass
-                       total_mass = total_mass + this_mass
-
-                       species_list(is)%xcom = species_list(is)%xcom + this_mass * &
-                            init_list(j,1,is)%rxp
-                       species_list(is)%ycom = species_list(is)%ycom + this_mass * &
-                            init_list(j,1,is)%ryp
-                       species_list(is)%zcom = species_list(is)%zcom + this_mass * &
-                            init_list(j,1,is)%rzp
-
-                    END DO
-
-                    species_list(is)%xcom = species_list(is)%xcom / total_mass
-                    species_list(is)%ycom = species_list(is)%ycom / total_mass
-                    species_list(is)%zcom = species_list(is)%zcom / total_mass
-
-                    CLOSE(UNIT=sorbate_unit)
-
-                 ELSE IF(line_string2(1:9 ) == 'reservoir ') THEN
+                 IF(line_array(is) == 'CBMC' .OR. line_array(is) == 'cbmc') THEN
                     nspec_insert = nspec_insert + 1
                     species_list(is)%insertion = 'RANDOM'
 
-                    WRITE(logunit,'(X,A,2X,A)') 'Insertion will be carried out for species ', TRIM(Int_To_String(is))
-                    WRITE(logunit,*) 'using the reservoir sampling'
+                    WRITE(logunit,'(X,A,X,A,X,A)') 'Species', TRIM(Int_To_String(is)), 'will be inserted using CBMC'
                     species_list(is)%int_insert = int_random
                     species_list(is)%species_type = 'SORBATE'
                     species_list(is)%int_species_type = int_sorbate
 
-                 ELSE IF(line_string2(1:4) == 'none') THEN
-                    ! it's a species that does not get exchanged with
-                    ! reservoir in the case of a GCMC simulation or
-                    ! swapped in a GEMC simulation
+                 ELSE IF(line_array(is) == 'NONE' .OR. line_array(is) == 'none') THEN
+                    ! species is not inserted
 
                     species_list(is)%insertion = 'NONE'
                     species_list(is)%int_insert = int_noinsert
                     species_list(is)%species_type ='NON_EXCHANGE'
                     species_list(is)%int_species_type = int_solvent
 
-                    WRITE(logunit,'(X,A50,2X,A3)') 'No insertion/swap will be carried out for species', &
-                         TRIM(Int_To_String(is))
+                    WRITE(logunit,'(X,A,X,A,X,A)') 'Species', TRIM(Int_To_String(is)), 'will not be inserted'
+                 ELSE 
+                    err_msg =''
+                    err_msg(1) = 'Insertion method for species ' // TRIM(Int_To_String(is)) // &
+                                 ' is "' // line_array(1) // '"'
+                    err_msg(2) = 'The only supported options are "cbmc" and "none".'
+                    CALL Clean_Abort(err_msg,'Get_Move_Probabiltieis')
                  END IF
 
               END DO
 
-              WRITE(logunit,"(X,A39,2X,I3)") 'Total number of exchangeable species is', nspec_insert
+              WRITE(logunit,"(X,A,2X,I3)") 'Number of insertable species is', nspec_insert
 
               ! Check if individual swap species are defined for species
               l_mol_frac_swap = .TRUE.
 
-              line_nbr = line_nbr + 1
-
-              CALL Read_String(inputunit, line_string2,ierr)
-              IF (line_string2(1:19) == '# Prob_Species_Swap') THEN
-                 l_mol_frac_swap = .FALSE.
-                 ! read the next line where probabilties are specified
-
-                 ALLOCATE(prob_swap_species(nspecies))
+              IF (line_string(1:11) == '# Prob_Swap') THEN
 
                  line_nbr = line_nbr + 1
-                 CALL Parse_String(inputunit,line_nbr,nspecies,nbr_entries,line_array,ierr)
-
-                 DO is = 1, nspecies
-                    prob_swap_species(is) = String_To_Double(line_array(is))
-
-                    WRITE(logunit,'(X,A35,I4,2X,A2,2X,F10.6)') 'Cumulative probabilty of swap for species', is, 'is', &
-                         prob_swap_species(is)                  
-                 END DO
-
-                 IF (ABS(prob_swap_species(nspecies) -1.0_DP) > 0.000001_DP) THEN
-                    err_msg =''
-                    err_msg(1) = 'Individual species swap probabilties do not add up to 1'
-                    CALL Clean_Abort(err_msg,'Get_Move_Probabiltieis')
-                 END IF
-
-              ELSE
-
-                 line_nbr = line_nbr -1
+                 CALL Read_String(inputunit,line_string2,ierr)
+                 ! back up so we can read this line again with Parse_String if needed
+                 line_nbr = line_nbr - 1
                  backspace(inputunit)
 
-              END IF
+                 IF (line_string2(1:17) == 'prob_species_swap') THEN
+                    l_mol_frac_swap = .FALSE.
+                    ! read the line again where probabilties are specified
 
-              DO is = 1,nspecies
+                    ALLOCATE(prob_swap_species(nspecies))
 
-                 IF(species_list(is)%insertion == 'IGAS') THEN
+                    line_nbr = line_nbr + 1
+                    CALL Parse_String(inputunit,line_nbr,nspecies+1,nbr_entries,line_array,ierr)
 
-                    ALLOCATE( molecule_list_igas(MAXVAL(max_molecules), nspecies), Stat = AllocateStatus )
-                    IF (AllocateStatus /= 0) THEN
-                       write(*,*)'memory could not be allocated for molecule_list_igas array'
-                       write(*,*)'stopping'
-                       STOP
+                    DO is = 1, nspecies
+                       prob_swap_species(is) = String_To_Double(line_array(is+1))
+
+                       WRITE(logunit,'(X,A,I4,2X,A2,2X,F10.6)') 'Cumulative probabilty of swap for species', is, 'is', &
+                            prob_swap_species(is)                  
+                    END DO
+
+                    IF (ABS(prob_swap_species(nspecies) -1.0_DP) > 0.000001_DP) THEN
+                       err_msg =''
+                       err_msg(1) = 'Individual species swap probabilties do not add up to 1'
+                       CALL Clean_Abort(err_msg,'Get_Move_Probabiltieis')
                     END IF
-
-                    ALLOCATE( atom_list_igas(MAXVAL(natoms), MAXVAL(max_molecules), nspecies), Stat = AllocateStatus )
-                    IF (AllocateStatus /= 0) THEN
-                       write(*,*)'memory could not be allocated for atom_list_igas array'
-                       write(*,*)'stopping'
-                       STOP
-                    END IF
-
-                    ALLOCATE( energy_igas(MAXVAL(max_molecules), nspecies), Stat = AllocateStatus )
-                    IF (AllocateStatus /= 0) THEN
-                       write(*,*)'memory could not be allocated for energy_igas array'
-                       write(*,*)'stopping'
-                       STOP
-                    END IF
-
-                    molecule_list_igas(:,:)%xcom = 0.0_DP
-                    molecule_list_igas(:,:)%ycom = 0.0_DP
-                    molecule_list_igas(:,:)%zcom = 0.0_DP
-                    atom_list_igas(:,:,:)%rxp = 0.0_DP
-                    atom_list_igas(:,:,:)%ryp = 0.0_DP
-                    atom_list_igas(:,:,:)%rzp = 0.0_DP
-
-                    DEALLOCATE(molecule_list)
-                    DEALLOCATE(atom_list)
-
-                    ALLOCATE(molecule_list(MAXVAL(max_molecules)+1, nspecies))
-                    ALLOCATE(atom_list(MAXVAL(natoms),MAXVAL(max_molecules)+1, nspecies))
 
                  END IF
 
-                 EXIT
-
-              END DO
+              END IF
 
            ELSE IF (line_string(1:15) == '# Prob_Deletion') THEN
               num_moves = num_moves + 1
@@ -4477,18 +4305,8 @@ SUBROUTINE Get_Move_Probabilities
 
               prob_deletion = String_To_Double(line_array(1))
 
-              WRITE(logunit,'(X,A,T40,F10.4)') 'Probability for deletion move is', prob_deletion
-
-!!$           ELSE IF (line_string(1:11) == '# Prob_Swap') THEN
-!!$              ! we found information on the particle swap probability
-!!$              line_nbr = line_nbr + 1
-!!$              CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
-!!$              
-!!$              prob_swap = String_To_Double(line_array(1))
-!!$
-!!$              WRITE(logunit,*)
-!!$              WRITE(logunit,'(A,T40,F10.4)')'Probability for particle swap is', prob_swap
-
+              WRITE(logunit,'(A,T40,F12.6)') &
+                   'Probability for deletion', prob_deletion
 
            ELSE IF (line_string(1:15 ) == '# Prob_Regrowth') THEN
               ALLOCATE(prob_growth_species(nspecies))
@@ -4499,7 +4317,8 @@ SUBROUTINE Get_Move_Probabilities
 
               prob_regrowth = String_To_Double(line_array(1))
 
-              WRITE(logunit,'(X,A30,2X,F12.6)')' Probability for regrowth is', prob_regrowth
+              WRITE(logunit,'(A,T40,F12.6)') &
+                   'Probability for regrowth', prob_regrowth
 
               ! On the next line read the species probability
               line_nbr = line_nbr + 1
@@ -4512,7 +4331,8 @@ SUBROUTINE Get_Move_Probabilities
                          prob_growth_species(is-1)
                  END IF
 
-                 WRITE(logunit,'(X,A50,2X,I3,2X,A2,2X,F9.6)')'Cumulative probability for regrowth of species ',is, 'is ',&
+                 WRITE(logunit,'(X,A,2X,I3,2X,A2,2X,F9.6)') &
+                      'Cumulative probability for regrowth of species ',is, 'is ',&
                       prob_growth_species(is) 
               END DO
 
@@ -4538,8 +4358,8 @@ SUBROUTINE Get_Move_Probabilities
 
               omega_max = omega_max * PI/180.0_DP
 
-              WRITE(logunit,*) 'Ring sampling enabled'
-              WRITE(logunit,*) 'Probability of moving ring atoms', prob_ring
+              WRITE(logunit,'(A,T40,F12.6)') &
+                   'Probability for ring moves', prob_ring
               WRITE(logunit,*) 'Maximum flip angle in radians', omega_max
 
            ELSE IF (line_string(1:24) == '# Prob_Atom_Displacement') THEN
@@ -4550,13 +4370,12 @@ SUBROUTINE Get_Move_Probabilities
 
               prob_atom_displacement = String_To_Double(line_array(1))
 
-              WRITE(logunit,*) 'Atom displacement enabled'
-              WRITE(logunit,*) 'Probability of this move', prob_atom_displacement
+              WRITE(logunit,'(A,T40,F12.6)') &
+                   'Probability for atom displacment', prob_atom_displacement
 
               ! on next line read in the information about delta_cos_max and
               ! delta_phi_max
               line_nbr = line_nbr + 1
-
               CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
 
               delta_cos_max = String_To_Double(line_array(1))
@@ -4759,7 +4578,7 @@ SUBROUTINE Get_Move_Probabilities
 
   END IF
 
-  WRITE(logunit,'(X,A20,I4)') 'Number of moves is :', num_moves
+  WRITE(logunit,'(A20,I4)') 'Number of moves is :', num_moves
 
   movetime(:) = 0.0_DP
   ! For the cumulative probability
@@ -4941,7 +4760,7 @@ SUBROUTINE Get_Start_Type
               old_config_file(ibox) = TRIM(ADJUSTL(line_array(2+nspecies)))
 
               WRITE(logunit,'(X,A33,X,A)') &
-                 'Will read configuration from file', old_config_file(ibox)
+                 'Will read configuration from file', TRIM(old_config_file(ibox))
                  
            ELSE IF (line_array(1) == 'add_to_config') THEN
               start_type(ibox) = 'add_to_config'
@@ -4970,7 +4789,7 @@ SUBROUTINE Get_Start_Type
               old_config_file(ibox) = TRIM(ADJUSTL(line_array(2+nspecies)))
 
               WRITE(logunit,'(X,A33,X,A)') &
-                 'Will read configuration from file', old_config_file(ibox)
+                 'Will read configuration from file', TRIM(old_config_file(ibox))
                  
               ! Read nmols_to_make
               DO is = 1, nspecies
@@ -5089,9 +4908,8 @@ SUBROUTINE Get_Run_Type
            
         ELSE
   
-           WRITE(logunit,*)
            err_msg = ""
-           err_msg(1) = 'Run_Type not supported'
+           err_msg(1) = 'Run_Type "' // line_array(1) // '" not supported'
            CALL Clean_Abort(err_msg,'Get_Run_Type')
 
         END IF
@@ -5151,49 +4969,51 @@ SUBROUTINE Get_CBMC_Info
   ierr = 0
   line_nbr = 0
 
-  IF (MAXVAL(nfragments) == 0) RETURN
-
-  DO
-     line_nbr = line_nbr + 1
-     CALL Read_String(inputunit,line_string,ierr)
-     IF(ierr /= 0) THEN
-        err_msg = ''
-        err_msg(1) = 'Error while reading the Get_CBMC_Info'
-        call clean_abort(err_msg,'Get_CBMC_Info')
-     end if
-
-     if(line_string(1:11) == '# CBMC_Info') then
+  IF (MAXVAL(nfragments) == 0) THEN
+     WRITE(logunit,*) 'CBMC_Info not required'
+  ELSE
+     DO
         line_nbr = line_nbr + 1
-        call parse_string(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
-        kappa_ins = string_to_int(line_array(2))
-        line_nbr = line_nbr + 1
-        call parse_string(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
-        kappa_rot = string_to_int(line_array(2))
-        kappa_rot = 0
-        line_nbr = line_nbr + 1
-        call parse_string(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
-        kappa_dih = string_to_int(line_array(2))
+        CALL Read_String(inputunit,line_string,ierr)
+        IF(ierr /= 0) THEN
+           err_msg = ''
+           err_msg(1) = 'Error while reading the Get_CBMC_Info'
+           call clean_abort(err_msg,'Get_CBMC_Info')
+        END IF
 
-        write(logunit,'(a,t35,2i12)') 'kappa for first bead insertion ', kappa_ins
-        write(logunit,'(a,2i12)') 'Orientational bias not supported. Kappa for rotations is set to ', kappa_rot
-        write(logunit,'(a,t35,2i12)') 'kappa for dihedral selection ', kappa_dih
+        IF (line_string(1:11) == '# CBMC_Info') THEN
+           line_nbr = line_nbr + 1
+           call parse_string(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
+           kappa_ins = string_to_int(line_array(2))
+           line_nbr = line_nbr + 1
+           call parse_string(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
+           kappa_rot = string_to_int(line_array(2))
+           kappa_rot = 0
+           line_nbr = line_nbr + 1
+           call parse_string(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
+           kappa_dih = string_to_int(line_array(2))
 
-        line_nbr = line_nbr + 1 
+           WRITE(logunit,'(a,t35,2i12)') 'kappa for first bead insertion ', kappa_ins
+           WRITE(logunit,'(a,2i12)') 'Orientational bias not supported. Kappa for rotations is set to ', kappa_rot
+           WRITE(logunit,'(a,t35,2i12)') 'kappa for dihedral selection ', kappa_dih
 
-        call parse_string(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
+           line_nbr = line_nbr + 1 
 
-        DO ibox = 1, nbr_boxes
-           rcut_CBMC(ibox) = String_To_Double(line_array(ibox+1))
-           write(logunit,'(a,t35,i8,f12.2)') 'Smaller cutoff for CBMC for box ',ibox, rcut_CBMC(ibox)
-        END DO
-        exit
+           call parse_string(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
 
-     else if(line_string(1:3) == 'end' .or. line_nbr > 10000 ) then
-        err_msg = ''
-        err_msg(1) = 'CBMC_Info not specified'
-        call clean_abort(err_msg,'Get_CBMC_Info')
-     end if
-  end do
+           DO ibox = 1, nbr_boxes
+              rcut_CBMC(ibox) = String_To_Double(line_array(ibox+1))
+              WRITE(logunit,'(a,t35,i8,f12.2)') 'Smaller cutoff for CBMC for box ',ibox, rcut_CBMC(ibox)
+           END DO
+           EXIT
+
+        ELSE IF(line_string(1:3) == 'end' .or. line_nbr > 10000 ) THEN
+           err_msg = ''
+           err_msg(1) = 'CBMC_Info not specified'
+           call clean_abort(err_msg,'Get_CBMC_Info')
+        END IF
+     END DO
+  END IF
 
   WRITE(logunit,'(A80)') '********************************************************************************'
 
@@ -5246,7 +5066,7 @@ SUBROUTINE Get_Seed_Info
            iseed3 = String_To_Int(line_array(2))
 
         END IF
-        WRITE(logunit,'(A25,1X,I12)') 'The starting seed s1 is:', s1
+        WRITE(logunit,'(A25,X,I12,X,I12)') 'The starting seeds are:', iseed1, iseed3
 
         EXIT
         
@@ -5270,6 +5090,7 @@ SUBROUTINE Get_Simulation_Length_Info
   INTEGER :: ierr, line_nbr, nbr_entries, ibox
   CHARACTER(120) :: line_string, line_array(20),movie_header_file, &
                      movie_xyz_file
+  LOGICAL :: l_run
 
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Simulation length info'
@@ -5283,6 +5104,7 @@ SUBROUTINE Get_Simulation_Length_Info
   ncoord_freq = 0
   n_mcsteps = 0
   n_equilsteps = 0
+  l_run = .FALSE.
 
   DO
      line_nbr = line_nbr + 1
@@ -5352,6 +5174,7 @@ SUBROUTINE Get_Simulation_Length_Info
 
            ELSE IF (line_array(1) == 'Run') THEN
 
+              l_run = .TRUE.
               n_mcsteps = String_To_Int(line_array(2))
               WRITE(logunit,'(A,T50,I10,X,A)' ) 'The simulation will be run for ', n_mcsteps, sim_length_units
 
@@ -5383,6 +5206,11 @@ SUBROUTINE Get_Simulation_Length_Info
   END DO
 
   ! Check to make sure that all the quantities are defined in the input file
+  IF (.NOT. l_run) THEN
+     err_msg = ""
+     err_msg(1) = 'The keyword "Run" is missing from the input file.'
+     CALL Clean_Abort(err_msg,'Get_Simulaton_Length_Info')
+  END IF
 
   IF (n_mcsteps < 0 .OR. ncoord_freq <= 0 .OR. nthermo_freq <= 0) THEN
   

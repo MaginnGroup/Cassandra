@@ -19,7 +19,7 @@
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*******************************************************************************
 
-SUBROUTINE GEMC_Particle_Transfer(box_in, box_out)
+SUBROUTINE GEMC_Particle_Transfer
 
   !*****************************************************************************
   !
@@ -739,10 +739,10 @@ SUBROUTINE GEMC_Particle_Transfer(box_in, box_out)
      END IF
 
      IF ( int_vdw_sum_style(box_in) == vdw_cut_tail ) THEN
-	IF (int_vdw_style(box_in) == vdw_lj) THEN
+        IF (int_vdw_style(box_in) == vdw_lj) THEN
            nint_beads(:,box_in) = nbeads_in(:)
-	ELSEIF (int_vdw_style(box_in) == vdw_mie) THEN
-	   nint_beads_mie(this_species,:,box_in) = nbeads_in(:)
+        ELSEIF (int_vdw_style(box_in) == vdw_mie) THEN
+           nint_beads_mie(this_species,:,box_in) = nbeads_in(:)
         END IF
      END IF
 
@@ -751,6 +751,10 @@ SUBROUTINE GEMC_Particle_Transfer(box_in, box_out)
   IF (ALLOCATED(sorbate_id)) DEALLOCATE(sorbate_id)
   IF (ALLOCATED(sorbate_x)) DEALLOCATE(sorbate_x)
   DEALLOCATE(new_atom_list)
+
+  IF (verbose_log) THEN
+    WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8)') i_mcstep, 'swap_to' , alive, this_species, box_in, accept
+  END IF
 
 END SUBROUTINE GEMC_Particle_Transfer
 
