@@ -1,7 +1,7 @@
 ! This is the input file for a short GCMC simulation of Ntrogen in the gas phase at 77.0 K.
 
 # Run_Name
-nitrogen
+nitrogen.out
 !--------------
 
 # Sim_Type
@@ -71,11 +71,9 @@ CUBIC
 0.25
 180.0
 
-
 # Prob_Insertion
 0.25
-insertion method
-reservoir
+cbmc
 
 # Prob_Deletion
 0.25
@@ -85,7 +83,6 @@ reservoir
 
 # Start_Type
 make_config 50
-
 !------------------
 
 # Run_Type
@@ -100,8 +97,7 @@ Equilibration   600
 Units      Steps
 Prop_Freq    400
 Coord_Freq   4000
-MCsteps      4000
-# Done_Simulation_Length_Info
+Run          4000
 !----------------------------
 
 # Property_Info 1 
