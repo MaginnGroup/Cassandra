@@ -1,4 +1,4 @@
-!*******************************************************************************
+!*******************************************************************************/A
 !   Cassandra - An open source atomistic Monte Carlo software package
 !   developed at the University of Notre Dame.
 !   http://cassandra.nd.edu
@@ -73,7 +73,7 @@ SUBROUTINE Fragment_Driver
 
   DO i_mcstep = 1, n_mcsteps
      
-     CALL Atom_Displacement(ibox)
+     CALL Atom_Displacement
 
      ! Store information with given frequency
      IF ( i_mcstep > n_equilsteps ) THEN

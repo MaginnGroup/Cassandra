@@ -472,10 +472,10 @@ PROGRAM Main
 
   ! End program if no moves specified
   IF (n_mcsteps <= initial_mcstep) THEN
+    WRITE(logunit,*)
     WRITE(logunit,'(A80)') '********************************************************************************'
+    WRITE(logunit,'(A80)') '************************ Cassandra simulation complete *************************'
     WRITE(logunit,'(A80)') '********************************************************************************'
-    WRITE(logunit,'(A80)') '********************************************************************************'
-    WRITE(logunit,*) 'Cassandra simulation complete'
     WRITE(*,*)
     WRITE(*,*) 'Cassandra simulation complete'
     STOP
@@ -487,7 +487,7 @@ PROGRAM Main
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Run simulation'
   WRITE(logunit,'(A80)') '********************************************************************************'
-  WRITE(logunit,'(X,A9,X,A15,X,A3,X,A3,X,A8,X,A9)') 'Step', 'Move' , 'Spc', 'Box', 'Success', 'MaxWidth'
+  WRITE(logunit,'(X,A9,X,A10,X,A5,X,A3,X,A3,X,A8,X,A9)') 'Step', 'Move', 'Mol', 'Spc', 'Box', 'Success', 'MaxWidth'
 
   IF (int_run_style == run_test .AND. n_mcsteps == 1) THEN
 

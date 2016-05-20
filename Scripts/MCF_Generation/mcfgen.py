@@ -604,17 +604,18 @@ returns:
 
 		# the below elif statement allows for zeolites
 		elif len(atomList)>2:
-			mcf.write('1\n')
-			atomList_indices = []
-			counter = 0
-			# count the atoms
-			for item in atomList:
-				counter = counter + 1
-				atomList_indices.append(counter)
-			str_to_add = " "
-			str_type_list = [str(item) for item in atomList_indices]
-			new_str_list = str_to_add.join(str_type_list)
-			mcf.write("1 %s %s" %(str(atomList_indices[-1]),new_str_list))
+			mcf.write('0\n')
+#			mcf.write('1\n')
+#			atomList_indices = []
+#			counter = 0
+#			# count the atoms
+#			for item in atomList:
+#				counter = counter + 1
+#				atomList_indices.append(counter)
+#			str_to_add = " "
+#			str_type_list = [str(item) for item in atomList_indices]
+#			new_str_list = str_to_add.join(str_type_list)
+#			mcf.write("1 %s %s" %(str(atomList_indices[-1]),new_str_list))
 	else:
 		mcf.write(str(len(fragList))+"\n")
 		for index, frag in enumerate(fragList):
