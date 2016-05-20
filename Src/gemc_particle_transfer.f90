@@ -746,6 +746,15 @@ SUBROUTINE GEMC_Particle_Transfer
         END IF
      END IF
 
+     IF ( int_vdw_sum_style(box_out) == vdw_cut_tail ) THEN
+         IF (int_vdw_style(box_in) == vdw_lj) THEN
+            nint_beads(:,box_out) = nbeads_out(:)
+        ELSEIF (int_vdw_style(box_out) == vdw_mie) THEN
+	    nint_beads_mie(this_species,:,box_out) = nbeads_out(:)
+        END IF
+     END IF
+
+
   END IF
   
   IF (ALLOCATED(sorbate_id)) DEALLOCATE(sorbate_id)
