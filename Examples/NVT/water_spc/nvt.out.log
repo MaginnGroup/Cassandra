@@ -3,8 +3,8 @@ Run info
 version: Cassandra Development Version
 inputfile: nvt.inp
 name of run: nvt.out
-date (mm/dd/yyyy): 05/16/2016
-time: 17:10:20
+date (mm/dd/yyyy): 05/18/2016
+time: 17:12:12
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -391,8 +391,8 @@ Writing information for box  1
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            6.710438 secs.
- Rotation time =               6.807136 secs.
+ Translation time =            6.685926 secs.
+ Rotation time =               6.815037 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -407,5 +407,5 @@ Writing information for box  1
          0      Hours
          0    Minutes
         14    Seconds
-       457         ms
+        93         ms
 ********************************************************************************

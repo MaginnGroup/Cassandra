@@ -43,8 +43,9 @@
 \BOOKMARK [2][-]{subsection.4.1.21}{Average}{section.4.1}
 \BOOKMARK [2][-]{subsection.4.1.22}{Property Output}{section.4.1}
 \BOOKMARK [2][-]{subsection.4.1.23}{Fragment Files}{section.4.1}
-\BOOKMARK [2][-]{subsection.4.1.24}{File Info}{section.4.1}
-\BOOKMARK [2][-]{subsection.4.1.25}{CBMC parameters}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.24}{Verbosity in log file}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.25}{File Info}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.26}{CBMC parameters}{section.4.1}
 \BOOKMARK [1][-]{section.4.2}{MCF File}{chapter.4}
 \BOOKMARK [2][-]{subsection.4.2.1}{Atom Info}{section.4.2}
 \BOOKMARK [2][-]{subsection.4.2.2}{Bond Info}{section.4.2}

@@ -61,7 +61,7 @@ SUBROUTINE NPTMC_Driver
 
 !  !$ include 'omp_lib.h'
 
-  INTEGER :: i,j,k, this_box, ibox, is, ifrag, ireac
+  INTEGER :: i,j,k, ibox, is, ifrag, ireac
   INTEGER :: howmanyfrac, ii,jj, im1, im2, alive1, alive2
   INTEGER, ALLOCATABLE, DIMENSION(:) :: n_inside_old
 
@@ -99,25 +99,25 @@ SUBROUTINE NPTMC_Driver
 
   i_mcstep = initial_mcstep
 
-  DO this_box = 1,nbr_boxes
-     nsuccess(:,this_box)%displacement = 0
-     nsuccess(:,this_box)%rotation = 0
-     nsuccess(:,this_box)%displacement_e = 0
-     nsuccess(:,this_box)%rotation_e = 0
-     nsuccess(:,this_box)%dihedral = 0
-     nsuccess(:,this_box)%angle = 0
-     nsuccess(:,this_box)%insertion = 0
-     nsuccess(:,this_box)%deletion = 0
-     nsuccess(:,this_box)%disp_atom = 0
-     ntrials(:,this_box)%displacement = 0
-     ntrials(:,this_box)%rotation = 0
-     ntrials(:,this_box)%dihedral = 0
-     ntrials(:,this_box)%angle = 0
-     ntrials(:,this_box)%insertion = 0
-     ntrials(:,this_box)%deletion = 0
-     ntrials(:,this_box)%disp_atom = 0
-     ntrials(:,this_box)%cpcalc = 0
-     tot_trials(this_box) = 0
+  DO ibox = 1,nbr_boxes
+     nsuccess(:,ibox)%displacement = 0
+     nsuccess(:,ibox)%rotation = 0
+     nsuccess(:,ibox)%displacement_e = 0
+     nsuccess(:,ibox)%rotation_e = 0
+     nsuccess(:,ibox)%dihedral = 0
+     nsuccess(:,ibox)%angle = 0
+     nsuccess(:,ibox)%insertion = 0
+     nsuccess(:,ibox)%deletion = 0
+     nsuccess(:,ibox)%disp_atom = 0
+     ntrials(:,ibox)%displacement = 0
+     ntrials(:,ibox)%rotation = 0
+     ntrials(:,ibox)%dihedral = 0
+     ntrials(:,ibox)%angle = 0
+     ntrials(:,ibox)%insertion = 0
+     ntrials(:,ibox)%deletion = 0
+     ntrials(:,ibox)%disp_atom = 0
+     ntrials(:,ibox)%cpcalc = 0
+     tot_trials(ibox) = 0
   END DO
 
 
@@ -147,7 +147,7 @@ SUBROUTINE NPTMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Translate(this_box)
+        CALL Translate
         
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -165,7 +165,7 @@ SUBROUTINE NPTMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Rotate(this_box)
+        CALL Rotate
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -183,7 +183,7 @@ SUBROUTINE NPTMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Rigid_Dihedral_Change(this_box)
+        CALL Rigid_Dihedral_Change
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -201,7 +201,7 @@ SUBROUTINE NPTMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Volume_Change(this_box)
+        CALL Volume_Change
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -219,7 +219,7 @@ SUBROUTINE NPTMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Angle_Distortion(this_box)
+        CALL Angle_Distortion
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -237,7 +237,7 @@ SUBROUTINE NPTMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Cut_N_Grow(this_box)
+        CALL Cut_N_Grow
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -255,7 +255,7 @@ SUBROUTINE NPTMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Atom_Displacement(this_box)
+        CALL Atom_Displacement
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -296,9 +296,11 @@ SUBROUTINE NPTMC_Driver
 
      ! Accumulate averages
  
-     CALL Accumulate(this_box)
-     next_write(this_box) = .true.
-     next_rdf_write(this_box) = .true.
+     DO ibox = 1, nbr_boxes
+        CALL Accumulate(ibox)
+        next_write(ibox) = .true.
+        next_rdf_write(ibox) = .true.
+     END DO
 
      IF ( .NOT. block_average ) THEN
         

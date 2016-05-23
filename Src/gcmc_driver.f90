@@ -43,11 +43,12 @@ SUBROUTINE GCMC_Driver
 
 !  !$ include 'omp_lib.h'
 
-  INTEGER :: i, this_box, ibox, is 
+  INTEGER :: i, ibox, is 
   INTEGER :: ioldN,  delta_n  ! old molecule number and change in molecule number
 
   REAL(DP) :: rand_no
   REAL(DP) :: time_start, now_time
+  REAL(DP) :: energy_old
 
   LOGICAL :: overlap, complete
 
@@ -65,8 +66,6 @@ SUBROUTINE GCMC_Driver
   next_rdf_write(:) = .false.
   complete = .FALSE.
  
-  this_box = 1
-
   IF(.NOT. openmp_flag) THEN
      CALL cpu_time(time_start)
   ELSE
@@ -93,7 +92,7 @@ SUBROUTINE GCMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Translate(this_box)
+        CALL Translate
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -111,7 +110,7 @@ SUBROUTINE GCMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Rotate(this_box)
+        CALL Rotate
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -129,7 +128,7 @@ SUBROUTINE GCMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Rigid_Dihedral_Change(this_box)
+        CALL Rigid_Dihedral_Change
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -147,7 +146,7 @@ SUBROUTINE GCMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Angle_Distortion(this_box)
+        CALL Angle_Distortion
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -165,7 +164,7 @@ SUBROUTINE GCMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
       
-        CALL Insertion(this_box)
+        CALL Insertion
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -183,7 +182,7 @@ SUBROUTINE GCMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Deletion(this_box)
+        CALL Deletion
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -201,7 +200,7 @@ SUBROUTINE GCMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Cut_N_Grow(this_box)
+        CALL Cut_N_Grow
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -219,7 +218,7 @@ SUBROUTINE GCMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Atom_Displacement(this_box)
+        CALL Atom_Displacement
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -230,11 +229,20 @@ SUBROUTINE GCMC_Driver
         movetime(imove_atom_displacement) = movetime(imove_atom_displacement) + time_e - time_s
 
      END IF
+
+     IF (verbose_log) THEN
+       DO ibox = 1, nbr_boxes
+         energy_old = energy(ibox)%total
+         CALL Compute_System_Total_Energy(ibox,.TRUE.,overlap)
+         WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,3(X,F10.2))') i_mcstep, 'energy', ibox, energy_old, energy(ibox)%total, energy_old - energy(ibox)%total
+       END DO
+     END IF
      
-     CALL Accumulate(this_box)
-     
-     next_write(this_box) = .true.
-     next_rdf_write(this_box) = .true.
+     DO ibox = 1, nbr_boxes
+        CALL Accumulate(ibox)
+        next_write(ibox) = .true.
+        next_rdf_write(ibox) = .true.
+     END DO
 
      IF(.NOT. openmp_flag) THEN
         CALL cpu_time(now_time)

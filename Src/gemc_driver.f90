@@ -44,7 +44,7 @@ SUBROUTINE GEMC_Driver
 
 !$ include 'omp_lib.h'
 
-  INTEGER :: i,j, this_box, ibox, is, other_box 
+  INTEGER :: i,j, ibox, is
 
   REAL(DP) :: rand_no
   REAL(DP) :: time_start, now_time, thermo_time, coord_time
@@ -99,7 +99,7 @@ SUBROUTINE GEMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
         
-        CALL Translate(this_box)
+        CALL Translate
         
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -117,7 +117,7 @@ SUBROUTINE GEMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Rotate(this_box)
+        CALL Rotate
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -135,7 +135,7 @@ SUBROUTINE GEMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
         
-        CALL Rigid_Dihedral_Change(this_box)
+        CALL Rigid_Dihedral_Change
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -155,11 +155,11 @@ SUBROUTINE GEMC_Driver
 
         IF(freev .GT. 1 .OR. int_sim_type == sim_gemc_npt) THEN
  
-          CALL Volume_Change(this_box)
+          CALL Volume_Change
 
         ELSE
 
-          CALL GEMC_NVT_Volume(this_box, other_box)
+          CALL GEMC_NVT_Volume
           volume_move = .TRUE.
 
         END IF
@@ -180,7 +180,7 @@ SUBROUTINE GEMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
         
-        CALL Angle_Distortion(this_box)
+        CALL Angle_Distortion
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -218,7 +218,7 @@ SUBROUTINE GEMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Cut_N_Grow(this_box)
+        CALL Cut_N_Grow
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -236,7 +236,7 @@ SUBROUTINE GEMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Atom_Displacement(this_box)
+        CALL Atom_Displacement
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)

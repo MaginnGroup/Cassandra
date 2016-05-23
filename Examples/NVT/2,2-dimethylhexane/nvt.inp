@@ -72,8 +72,9 @@ CUBIC
 
 # Start_Type
 make_config 100
-!--------make_config: one line for each species and one entry/line for each box
-!------------------------------------------------------------read_old: filename
+!---------------------------------------make_config: one entry for each species
+!-----------------------------read_config: one entry for each species, filename
+!--------add_to_config: read_config arguments followed by make_config arguments
 !----------------------------------------------------------checkpoint: filename
 
 # Run_Type
@@ -84,14 +85,13 @@ Equilibration 1000
 
 # Average_Info
 1
-!------------------------------------------------------------ 0 == yes, 1 == no
+!-------------------------------------------- 0 == yes (not supported), 1 == no
 
 # Simulation_Length_Info
 Units        Sweeps
 Prop_Freq    10
 Coord_Freq   10
-MCsteps      100
-# Done_Simulation_Length_Info
+Run          100
 !------------------ 300 moves = 1 sweep; output every 10 sweeps; run 100 sweeps
 
 # Property_Info 1 
