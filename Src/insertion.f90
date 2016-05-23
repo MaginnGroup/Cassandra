@@ -19,7 +19,7 @@
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*******************************************************************************
 
-SUBROUTINE Insertion(this_box)
+SUBROUTINE Insertion
 
   !*****************************************************************************
   ! 
@@ -60,7 +60,7 @@ SUBROUTINE Insertion(this_box)
   IMPLICIT NONE
 
   ! Arguments
-  INTEGER :: this_box ! attempt to insert a molecule in this_box
+  INTEGER :: ibox ! attempt to insert a molecule in ibox
 
   ! Local declarations
   INTEGER :: i, i_type               ! atom indices
@@ -92,6 +92,7 @@ SUBROUTINE Insertion(this_box)
   inter_overlap = .FALSE.
   cbmc_overlap = .FALSE.
   intra_overlap = .FALSE.
+  ibox = 1
 
   !*****************************************************************************
   ! Step 1) Randomly select a species
@@ -132,18 +133,19 @@ SUBROUTINE Insertion(this_box)
   ! Now that an insertion will be attempted, we need to do some bookkeeping:
 
   !  * Increment the counters to compute success ratios
-  ntrials(is,this_box)%insertion = ntrials(is,this_box)%insertion + 1
-  tot_trials(this_box) = tot_trials(this_box) + 1
+  ntrials(is,ibox)%insertion = ntrials(is,ibox)%insertion + 1
+  tot_trials(ibox) = tot_trials(ibox) + 1
 
   !  * Assign a LOCATE for this molecule from the list of unused LOCATEs
-  nmols(is,this_box) = nmols(is,this_box) + 1
-  locate(nmols(is,this_box),is,this_box) = locate(nmols(is,0),is,0)
+  nmols(is,ibox) = nmols(is,ibox) + 1
+  locate(nmols(is,ibox),is,ibox) = locate(nmols(is,0),is,0)
   locate(nmols(is,0),is,0) = 0
   nmols(is,0) = nmols(is,0) - 1
 
   !  * Set properties of the to-be-inserted molecule
-  lm = locate(nmols(is,this_box),is,this_box)
-  molecule_list(lm,is)%which_box = this_box
+  im = nmols(is,ibox)
+  lm = locate(im,is,ibox)
+  molecule_list(lm,is)%which_box = ibox
   molecule_list(lm,is)%frac = this_lambda
   molecule_list(lm,is)%molecule_type = int_normal
 
@@ -172,7 +174,7 @@ SUBROUTINE Insertion(this_box)
      del_flag = .FALSE.     ! Change the coordinates of 'lm'
      get_fragorder = .TRUE.
      ALLOCATE(frag_order(nfragments(is)))
-     CALL Build_Molecule(lm,is,this_box,frag_order,this_lambda, &
+     CALL Build_Molecule(lm,is,ibox,frag_order,this_lambda, &
              P_seq,P_bias,nrg_ring_frag_tot,cbmc_overlap)
      DEALLOCATE(frag_order)
 
@@ -254,14 +256,14 @@ SUBROUTINE Insertion(this_box)
      
      ! Randomize the molecule's COM position anywhere in the box.
 
-     IF ( box_list(this_box)%int_box_shape == int_cubic ) THEN
+     IF ( box_list(ibox)%int_box_shape == int_cubic ) THEN
         
         molecule_list(lm,is)%xcom = &
-                             (rranf() - 0.5_DP) * box_list(this_box)%length(1,1)
+                             (rranf() - 0.5_DP) * box_list(ibox)%length(1,1)
         molecule_list(lm,is)%ycom = &
-                             (rranf() - 0.5_DP) * box_list(this_box)%length(2,2)
+                             (rranf() - 0.5_DP) * box_list(ibox)%length(2,2)
         molecule_list(lm,is)%zcom = &
-                             (rranf() - 0.5_DP) * box_list(this_box)%length(3,3)
+                             (rranf() - 0.5_DP) * box_list(ibox)%length(3,3)
         
      END IF
      
@@ -313,7 +315,7 @@ SUBROUTINE Insertion(this_box)
 
     ! Molecule COM may be outside the box boundary if grown via CBMC, so wrap
     ! the molecule coordinates back in the box (if needed)
-    CALL Fold_Molecule(lm,is,this_box)
+    CALL Fold_Molecule(lm,is,ibox)
 
     ! Recompute the COM in case the molecule was wrapped
     CALL Get_COM(lm,is)
@@ -335,9 +337,21 @@ SUBROUTINE Insertion(this_box)
 
   ! 3.3) Reject the move if there is any core overlap
   IF (cbmc_overlap .OR. inter_overlap .OR. intra_overlap) THEN
+     ! reject the insertion 
+     locate(nmols(is,ibox),is,ibox) = 0
+     nmols(is,ibox) = nmols(is,ibox) - 1
      molecule_list(lm,is)%live = .FALSE.
      atom_list(:,lm,is)%exist = .FALSE.
+     molecule_list(lm,is)%molecule_type = int_none
+
+     ! move locate to the list of unused locates
+     nmols(is,0) = nmols(is,0) + 1
+     locate(nmols(is,0),is,0) = lm
      
+     IF (verbose_log) THEN
+       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8)') i_mcstep, 'insert' , lm, is, ibox, .FALSE.
+     END IF
+
      RETURN
   END IF
 
@@ -372,19 +386,19 @@ SUBROUTINE Insertion(this_box)
 
   ! 3.5) Ewald energies
 
-  IF (int_charge_style(this_box) == charge_coul) THEN
+  IF (int_charge_style(ibox) == charge_coul) THEN
 
-        IF ( (int_charge_sum_style(this_box) == charge_ewald) .AND. &
+        IF ( (int_charge_sum_style(ibox) == charge_ewald) .AND. &
              has_charge(is) ) THEN
        
-           CALL Update_System_Ewald_Reciprocal_Energy(lm,is,this_box, &
+           CALL Update_System_Ewald_Reciprocal_Energy(lm,is,ibox, &
                    int_insertion,E_reciprocal)
 
-            delta_e = delta_e + (E_reciprocal - energy(this_box)%ewald_reciprocal)
+            delta_e = delta_e + (E_reciprocal - energy(ibox)%ewald_reciprocal)
            
         END IF
 
-        CALL Compute_Molecule_Self_Energy(lm,is,this_box,E_self)
+        CALL Compute_Molecule_Self_Energy(lm,is,ibox,E_self)
 
         delta_e = delta_e + E_self
 
@@ -392,31 +406,31 @@ SUBROUTINE Insertion(this_box)
 
   ! 3.6) Long-range energy correction
 
-  IF (int_vdw_sum_style(this_box) == vdw_cut_tail .AND. &
-			int_vdw_style(this_box) == vdw_lj) THEN
+  IF (int_vdw_sum_style(ibox) == vdw_cut_tail .AND. &
+      int_vdw_style(ibox) == vdw_lj) THEN
 
      ! increase number of integer beads
-     nbeads_in = nint_beads(:,this_box)
+     nbeads_in = nint_beads(:,ibox)
 
      DO i = 1, natoms(is)
         i_type = nonbond_list(i,is)%atom_type_number
-        nint_beads(i_type,this_box) = nint_beads(i_type,this_box) + 1
+        nint_beads(i_type,ibox) = nint_beads(i_type,ibox) + 1
      END DO
 
-     CALL Compute_LR_correction(this_box,E_lrc)
-     delta_e = delta_e + E_lrc - energy(this_box)%lrc
+     CALL Compute_LR_correction(ibox,E_lrc)
+     delta_e = delta_e + E_lrc - energy(ibox)%lrc
 
-  ELSEIF (int_vdw_sum_style(this_box) == vdw_cut_tail .AND. &
-			int_vdw_style(this_box) == vdw_mie) THEN
-    nbeads_in = nint_beads_mie(is,:,this_box)
+  ELSEIF (int_vdw_sum_style(ibox) == vdw_cut_tail .AND. &
+          int_vdw_style(ibox) == vdw_mie) THEN
+    nbeads_in = nint_beads_mie(is,:,ibox)
 
      DO i = 1, natoms(is)
         i_type = nonbond_list(i,is)%atom_type_number
-        nint_beads_mie(is,i_type,this_box) = nint_beads_mie(is,i_type,this_box) + 1
+        nint_beads_mie(is,i_type,ibox) = nint_beads_mie(is,i_type,ibox) + 1
      END DO
 
-     CALL Compute_LR_correction(this_box,E_lrc)
-     delta_e = delta_e + E_lrc - energy(this_box)%lrc
+     CALL Compute_LR_correction(ibox,E_lrc)
+     delta_e = delta_e + E_lrc - energy(ibox)%lrc
   END IF
 
   !*****************************************************************************
@@ -446,26 +460,26 @@ SUBROUTINE Insertion(this_box)
   ! Compute the acceptance criterion
 
   IF(species_list(is)%int_insert == int_igas) THEN 
-     ln_pacc = beta(this_box) * (delta_e - energy_igas(rand_igas,is)%total)
+     ln_pacc = beta(ibox) * (delta_e - energy_igas(rand_igas,is)%total)
   ELSEIF (species_list(is)%fragment) THEN
-     ln_pacc = beta(this_box) * (delta_e - E_angle - nrg_ring_frag_tot)
+     ln_pacc = beta(ibox) * (delta_e - E_angle - nrg_ring_frag_tot)
   ELSE
-     ln_pacc = beta(this_box) * delta_e
+     ln_pacc = beta(ibox) * delta_e
   END IF
 
   ! P_seq and P_bias equal 1.0 unless changed by Build_Molecule.
   ln_pacc = ln_pacc + DLOG(P_seq * P_bias) &
-                    + DLOG(REAL(nmols(is,this_box),DP)) &
-                    - DLOG(box_list(this_box)%volume) 
+                    + DLOG(REAL(nmols(is,ibox),DP)) &
+                    - DLOG(box_list(ibox)%volume) 
 
   IF(lchempot) THEN
      ! chemical potential is input
-     ln_pacc = ln_pacc - species_list(is)%chem_potential * beta(this_box) &
-                       + 3.0_DP*DLOG(species_list(is)%de_broglie(this_box))
+     ln_pacc = ln_pacc - species_list(is)%chem_potential * beta(ibox) &
+                       + 3.0_DP*DLOG(species_list(is)%de_broglie(ibox))
   ELSE
      ! fugacity is input
      ln_pacc = ln_pacc - DLOG(species_list(is)%fugacity) &
-                       - DLOG(beta(this_box)) 
+                       - DLOG(beta(ibox)) 
   END IF
   
   accept = accept_or_reject(ln_pacc)
@@ -476,40 +490,40 @@ SUBROUTINE Insertion(this_box)
      ! number of molecules already incremented
 
      ! update the energies
-     energy(this_box)%total = energy(this_box)%total + delta_e
-     energy(this_box)%intra = energy(this_box)%intra + E_bond + E_angle &
+     energy(ibox)%total = energy(ibox)%total + delta_e
+     energy(ibox)%intra = energy(ibox)%intra + E_bond + E_angle &
                             + E_dihedral + E_improper
-     energy(this_box)%bond = energy(this_box)%bond + E_bond
-     energy(this_box)%angle = energy(this_box)%angle + E_angle
-     energy(this_box)%dihedral = energy(this_box)%dihedral + E_dihedral
-     energy(this_box)%improper = energy(this_box)%improper + E_improper
-     energy(this_box)%intra_vdw = energy(this_box)%intra_vdw + E_intra_vdw
-     energy(this_box)%intra_q = energy(this_box)%intra_q + E_intra_qq
-     energy(this_box)%inter_vdw = energy(this_box)%inter_vdw + E_inter_vdw
-     energy(this_box)%inter_q = energy(this_box)%inter_q + E_inter_qq
+     energy(ibox)%bond = energy(ibox)%bond + E_bond
+     energy(ibox)%angle = energy(ibox)%angle + E_angle
+     energy(ibox)%dihedral = energy(ibox)%dihedral + E_dihedral
+     energy(ibox)%improper = energy(ibox)%improper + E_improper
+     energy(ibox)%intra_vdw = energy(ibox)%intra_vdw + E_intra_vdw
+     energy(ibox)%intra_q = energy(ibox)%intra_q + E_intra_qq
+     energy(ibox)%inter_vdw = energy(ibox)%inter_vdw + E_inter_vdw
+     energy(ibox)%inter_q = energy(ibox)%inter_q + E_inter_qq
 
-     IF (int_charge_style(this_box) == charge_coul) THEN
+     IF (int_charge_style(ibox) == charge_coul) THEN
 
-         IF ( int_charge_sum_style(this_box) == charge_ewald .AND. &
+         IF ( int_charge_sum_style(ibox) == charge_ewald .AND. &
               has_charge(is)) THEN
-            energy(this_box)%ewald_reciprocal = E_reciprocal
+            energy(ibox)%ewald_reciprocal = E_reciprocal
          END IF
 
-         energy(this_box)%self = energy(this_box)%self + E_self
+         energy(ibox)%self = energy(ibox)%self + E_self
 
      END IF
 
-     IF (int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
-        energy(this_box)%lrc = E_lrc
+     IF (int_vdw_sum_style(ibox) == vdw_cut_tail) THEN
+        energy(ibox)%lrc = E_lrc
      END IF
 
      ! Increment counter
-     nsuccess(is,this_box)%insertion = nsuccess(is,this_box)%insertion + 1
+     nsuccess(is,ibox)%insertion = nsuccess(is,ibox)%insertion + 1
 
   ELSE
      ! reject the insertion 
-     locate(nmols(is,this_box),is,this_box) = 0
-     nmols(is,this_box) = nmols(is,this_box) - 1
+     locate(nmols(is,ibox),is,ibox) = 0
+     nmols(is,ibox) = nmols(is,ibox) - 1
      molecule_list(lm,is)%live = .FALSE.
      atom_list(:,lm,is)%exist = .FALSE.
      molecule_list(lm,is)%molecule_type = int_none
@@ -518,23 +532,27 @@ SUBROUTINE Insertion(this_box)
      nmols(is,0) = nmols(is,0) + 1
      locate(nmols(is,0),is,0) = lm
      
-     IF ( int_charge_sum_style(this_box) == charge_ewald .AND. &
+     IF ( int_charge_sum_style(ibox) == charge_ewald .AND. &
           has_charge(is) ) THEN
         ! Restore cos_sum and sin_sum. Note that these were changed when the
         ! difference in reciprocal energies was computed.
-        cos_sum(:,this_box) = cos_sum_old(:,this_box)
-        sin_sum(:,this_box) = sin_sum_old(:,this_box)
+        cos_sum(:,ibox) = cos_sum_old(:,ibox)
+        sin_sum(:,ibox) = sin_sum_old(:,ibox)
      END IF
 
-     IF ( int_vdw_sum_style(this_box) == vdw_cut_tail ) THEN
+     IF ( int_vdw_sum_style(ibox) == vdw_cut_tail ) THEN
         ! Restore the total number of bead types
-        IF (int_vdw_style(this_box) == vdw_lj) THEN
-           nint_beads(:,this_box) = nbeads_in(:)
-        ELSEIF (int_vdw_style(this_box) == vdw_mie) THEN
-           nint_beads_mie(is,:,this_box) = nbeads_in(:)
+        IF (int_vdw_style(ibox) == vdw_lj) THEN
+           nint_beads(:,ibox) = nbeads_in(:)
+        ELSEIF (int_vdw_style(ibox) == vdw_mie) THEN
+           nint_beads_mie(is,:,ibox) = nbeads_in(:)
         ENDIF
      END IF
 
+  END IF
+
+  IF (verbose_log) THEN
+    WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8)') i_mcstep, 'insert' , lm, is, ibox, accept
   END IF
 
 END SUBROUTINE Insertion

@@ -20,7 +20,7 @@
 !*******************************************************************************
 
 
-SUBROUTINE Volume_Change(this_box)
+SUBROUTINE Volume_Change
   !*****************************************************************************
   ! The subroutine performs a volume perturbation move. Presently, the routine
   ! is set up to perform volume changes in cubic simulation box. Extension
@@ -566,6 +566,10 @@ SUBROUTINE Volume_Change(this_box)
 
      WRITE(logunit,*)
 
+  END IF
+
+  IF (verbose_log) THEN
+    WRITE(logunit,'(X,I9,X,A10,11X,I3,X,L8)') i_mcstep, 'volume' , this_box, accept
   END IF
 
 

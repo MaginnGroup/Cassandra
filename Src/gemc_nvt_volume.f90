@@ -19,7 +19,7 @@
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*******************************************************************************
 
-SUBROUTINE GEMC_NVT_Volume(box1, box2)
+SUBROUTINE GEMC_NVT_Volume
 
   !***********************************************************************
   !
@@ -48,7 +48,7 @@ SUBROUTINE GEMC_NVT_Volume(box1, box2)
   IMPLICIT NONE
 
 
-  INTEGER, INTENT(OUT) :: box1, box2
+  INTEGER :: box1, box2
 
   ! Local variables
 
@@ -129,7 +129,6 @@ SUBROUTINE GEMC_NVT_Volume(box1, box2)
 
      pair_nrg_vdw_old(:,:) = pair_nrg_vdw(:,:)
      pair_nrg_qq_old(:,:) = pair_nrg_qq(:,:)
-
   END IF
 
   ! store cos_mol and sin_mol
@@ -561,8 +560,11 @@ SUBROUTINE GEMC_NVT_Volume(box1, box2)
 
    END IF
 
+   IF (verbose_log) THEN
+     WRITE(logunit,'(X,I9,X,A10,11X,I3,X,L8)') i_mcstep, 'vol_swap', box1, accept
+   END IF
+
   ! Update the maximum volume modulus of equilibration runs
-   
    IF (MOD(nvolumes(box1),nvol_update) == 0 ) THEN
 
       IF ( int_run_style == run_equil) THEN
@@ -591,9 +593,7 @@ SUBROUTINE GEMC_NVT_Volume(box1, box2)
          
       END IF
 
-      WRITE(logunit,*)
-      WRITE(logunit,'(A35,2X,F10.4,2X,A7,2X,I2)')'Successful volume attempt ratio is ', &
-           success_ratio, 'for box', box1
+      WRITE(logunit,'(X,I9,X,A10,11X,I3,X,F8.5)') i_mcstep, 'vol_swap', box1, success_ratio
       
    END IF
    

@@ -98,8 +98,7 @@ Equilibration   600 10
 Units        Sweeps
 Prop_Freq    10
 Coord_Freq   10
-MCsteps      100
-# Done_Simulation_Length_Info
+Run          100
 !----------------- 201 moves = 1 sweep; output every 10 sweeps; run 1000 sweeps
 
 # Property_Info 1

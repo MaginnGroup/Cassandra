@@ -367,7 +367,7 @@ for i in xrange(0, nbr_species):
 
 #Find how many fragments there are and get a list of them.
 nbr_fragments = []
-fragment_list=[]
+fragment_list = []
 for i in xrange(0, nbr_species):
 	nbr_fragments.append(int(linecache.getline(mcf_files[i],
 	                            line_where_fragment_info[i]+1).split()[0]))
@@ -467,8 +467,11 @@ for i in xrange(0, nbr_species):
 for i in xrange(0, nbr_species):
 
 	if i in pdb_without_conect:
-		print "\n\n" + bold + "MCF generation file not created for species "+str(i+1)+bold
-		print bold+"Fragment configuration will be taken from PDB file."+normal
+		print "\n\n" + bold + "MCF generation file not created for species "+str(i+1)+normal
+		if nbr_fragments[i] == 0:
+			print bold+"No fragment configuration needed."+normal
+		else:
+			print bold+"Fragment configuration will be taken from PDB file."+normal
 		continue
 
 	if nbr_atoms[i] >= 3:
@@ -627,8 +630,7 @@ for i in xrange(0, nbr_species):
 				input_frag.write("# Run_Type\nProduction 1000 10\n\n")
 				input_frag.write("# Simulation_Length_Info\nUnits    Steps\n"+
 					               "Prop_Freq  100\nCoord_Freq   5000\n"+
-					               "MCsteps      "+str(100*args.nConfigs)+"\n"+
-                         "# Done_Simulation_Length_Info\n\n")
+					               "Run          "+str(100*args.nConfigs)+"\n\n")
 				input_frag.write("# Property_Info 1\nEnergy_Total\n\n")
 				input_frag.write("# File_Info\nfrag"+str(j+1)+".dat\n\n")
 				input_frag.write("END")
@@ -661,9 +663,8 @@ for i in xrange(0, nbr_species):
 				input_frag.write("# Run_Type\nProduction 1000 10\n\n")
 				input_frag.write("# Simulation_Length_Info\nUnits  Steps\n"+
 												 "Prop_Freq  10\nCoord_Freq   90\n"+
-												 "MCsteps      "+str(11*args.nConfigs)+"\n"+
-                         "NequilSteps  "+str(args.nConfigs)+"\n"+
-												 "# Done_Simulation_Length_Info\n\n")
+												 "Run          "+str(11*args.nConfigs)+"\n"+
+                         "NequilSteps  "+str(args.nConfigs)+"\n\n")
 				input_frag.write("# File_Info\nfrag"+str(j+1)+".dat\n\n")
 				input_frag.write("END")
 				input_frag.close()

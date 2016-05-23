@@ -48,6 +48,7 @@ SUBROUTINE Create_Intra_Exclusion_Table
   USE Global_Variables
   USE Type_Definitions
   USE File_Names
+  USE IO_Utilities
 
   IMPLICIT NONE
 
@@ -148,24 +149,35 @@ SUBROUTINE Create_Intra_Exclusion_Table
   ! report info to log
 
   IF (verbose_log) THEN
-  WRITE(logunit,*)
-  WRITE(logunit,*) '*** Creating exclusion table ***'
-  WRITE(logunit,*)    
+    WRITE(logunit,*)
+    WRITE(logunit,*) 'Creating exclusion table'
+    WRITE(logunit,'(X,A79)') '-------------------------------------------------------------------------------'
 
-  WRITE(logunit,'(5x,a)') 'species   atom1      atom2  vdw scale q-q scale'
+    IF (int_charge_style(1) == charge_none) THEN
+      WRITE(logunit,'(x,4(A10))') 'species','atom1','atom2','vdw_scale'
+    ELSE
+      WRITE(logunit,'(x,5(A10))') 'species','atom1','atom2','vdw_scale','qq_scale'
+    END IF
 
-  DO is=1,nspecies
-     DO ii=1,natoms(is)
-        DO jj = 1,natoms(is)
-           WRITE(logunit,'(3(I10),2(F10.3))') is,ii,jj,vdw_intra_scale(ii,jj,is),&
-                charge_intra_scale(ii,jj,is)
-        ENDDO
-     ENDDO
-  ENDDO
+    DO is=1,nspecies
+       IF (natoms(is) < 100) THEN
+         DO ii=1,natoms(is)
+            DO jj = ii+1,natoms(is)
+               IF (int_charge_style(1) == charge_none) THEN
+                 WRITE(logunit,'(X,3(I10),F10.3)') is,ii,jj,vdw_intra_scale(ii,jj,is)
+               ELSE
+                 WRITE(logunit,'(X,3(I10),2(F10.3))') is,ii,jj,vdw_intra_scale(ii,jj,is),&
+                      charge_intra_scale(ii,jj,is)
+               END IF
+            ENDDO
+         ENDDO
+       ELSE
+         WRITE(logunit,'(X,A)') 'Species ' // TRIM(Int_To_String(is)) // ' has more than 10,000 interactions'
+       END IF
+    ENDDO
 
-  WRITE(logunit,*)
-  WRITE(logunit,*) '*** Completed construction of exclusion table ***'
-  WRITE(logunit,*)    
+    WRITE(logunit,'(X,A)') '-------------------------------------------------------------------------------'
+    WRITE(logunit,'(A)') '********************************************************************************'
   END IF
 
 

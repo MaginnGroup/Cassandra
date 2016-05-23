@@ -4,7 +4,7 @@
 ! Reference for density values of methane: B. A. Younglove and J. F. Ely, J. Phys. Chem. Ref. Data, vol 16, No4, 1987
 
 # Run_Name
-methane
+methane.out
 !--------------
 
 # Sim_Type
@@ -70,8 +70,7 @@ CUBIC
 
 # Prob_Insertion
 0.3
-insertion method
-reservoir 
+cbmc
 
 # Prob_Deletion
 0.3
@@ -95,15 +94,13 @@ Equilibration   550
 Units      Steps
 Prop_Freq    400
 Coord_Freq   4000
-MCsteps      4000
-# Done_Simulation_Length_Info
+Run          4000
 !----------------------------
 
 # Property_Info 1 
 Energy_Total
 Nmols
 Volume
-
 !----------------
 
 # Fragment_Files
