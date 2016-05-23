@@ -304,9 +304,9 @@ SUBROUTINE Rotate
      ELSE
         success_ratio = REAL(nsuccess(is,ibox)%rotation,DP)/REAL(ntrials(is,ibox)%rotation,DP)
      END IF
-
-     WRITE(logunit,'(X,I9,X,A10,7X,I3,X,I3,X,F8.5)',ADVANCE='NO') &
-           i_mcstep, 'rotate' , is, ibox, success_ratio
+ 
+     WRITE(logunit,'(X,I9,X,A10,X,5X,X,I3,X,I3,X,F8.5)',ADVANCE='NO') &
+           i_mcstep, 'rotate', is, ibox, success_ratio
 
      IF (int_run_style == run_equil) THEN   
     
