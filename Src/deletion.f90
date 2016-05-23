@@ -122,12 +122,7 @@ SUBROUTINE Deletion
   ! In the given example, now 'is' would equal 4.
 
   ! Cannot delete a molecule if there aren't any in the box
-  IF (nmols(is,ibox) == 0) THEN
-    IF (verbose_log) THEN
-      WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8)') i_mcstep, 'delete' , im, is, ibox, accept
-    END IF
-    RETURN
-  END IF
+  IF (nmols(is,ibox) == 0) RETURN
  
 
   ! Now that a deletion will be attempted, we need to do some bookkeeping:

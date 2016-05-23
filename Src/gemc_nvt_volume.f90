@@ -561,7 +561,7 @@ SUBROUTINE GEMC_NVT_Volume
    END IF
 
    IF (verbose_log) THEN
-     WRITE(logunit,'(X,I9,X,A10,11X,I3,X,L8)') i_mcstep, 'vol_swap', box1, accept
+     WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8)') i_mcstep, 'vol_swap', box1, accept
    END IF
 
   ! Update the maximum volume modulus of equilibration runs
@@ -593,7 +593,7 @@ SUBROUTINE GEMC_NVT_Volume
          
       END IF
 
-      WRITE(logunit,'(X,I9,X,A10,11X,I3,X,F8.5)') i_mcstep, 'vol_swap', box1, success_ratio
+      WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,F8.5)') i_mcstep, 'vol_swap', box1, success_ratio
       
    END IF
    
