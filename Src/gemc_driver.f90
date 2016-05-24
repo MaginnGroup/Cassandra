@@ -49,7 +49,6 @@ SUBROUTINE GEMC_Driver
   REAL(DP) :: rand_no
   REAL(DP) :: time_start, now_time, thermo_time, coord_time
 
-  LOGICAL :: volume_move, insertion_move, overlap
   LOGICAL :: write_flag, complete
 
   LOGICAL, DIMENSION(:), ALLOCATABLE :: next_write, next_rdf_write
@@ -58,8 +57,6 @@ SUBROUTINE GEMC_Driver
   ALLOCATE(next_rdf_write(nbr_boxes))
   next_write(:) = .false.
   next_rdf_write(:) = .false.
-  volume_move = .false.
-  insertion_move = .false.
   thermo_time = 0.0
   coord_time = 0.0
   openmp_flag = .FALSE.
@@ -154,14 +151,9 @@ SUBROUTINE GEMC_Driver
         END IF
 
         IF(freev .GT. 1 .OR. int_sim_type == sim_gemc_npt) THEN
- 
           CALL Volume_Change
-
         ELSE
-
           CALL GEMC_NVT_Volume
-          volume_move = .TRUE.
-
         END IF
 
         IF(.NOT. openmp_flag) THEN
@@ -205,8 +197,6 @@ SUBROUTINE GEMC_Driver
         ELSE
 !$         time_e = omp_get_wtime()
         END IF
-
-        insertion_move = .TRUE.
 
         movetime(imove_swap) = movetime(imove_swap) + time_e - time_s
 
@@ -276,14 +266,6 @@ SUBROUTINE GEMC_Driver
      next_write(:) = .TRUE.
      next_rdf_write(:) = .TRUE.
    
-     IF ( volume_move .OR. insertion_move ) THEN
-        ! now set all the flags to false. In practice only one
-        ! flag needs to be turned to false but it is a simpler
-        ! solution than figuring out which move was performed
-        volume_move = .false.
-        insertion_move = .false.
-     END IF
-     
      ! Write the information to various files at regular intervals
      
      ! We will check this for all the boxes

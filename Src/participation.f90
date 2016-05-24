@@ -792,7 +792,7 @@ SUBROUTINE Participation
      
      END DO
      !Amir To Jindal: It the 3rd # format should be 11.7 otherwise it would generate errors. 10/12/12
-	 
+
 100  FORMAT(I5,2X,A4,2X,A4,F11.7,2X,F11.7,2X,A5,2X,F11.7, 2X, F11.7)
 101  FORMAT(I5,2X,I5,2X,I5,2X,A9,2X,F10.3,2X,F8.5)
 102  FORMAT(I5,2X,I5,2X,I5,2X,A9,2X,F8.5)
@@ -801,7 +801,7 @@ SUBROUTINE Participation
 105  FORMAT(A,2X,I5,2X,A2,2X,6(I3,2X))
      
   END IF
-  
+
 CONTAINS
 
   SUBROUTINE Write_Ring_Fragment_MCF_Bond_Info(ifrag,is)

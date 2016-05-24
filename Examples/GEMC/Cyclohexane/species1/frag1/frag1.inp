@@ -38,8 +38,7 @@ CUBIC
 ../fragments/frag_1_1.mcf 1
 
 # Start_Type
-read_old
-../fragments/frag_1_1.xyz 1
+read_config 1 ../fragments/frag_1_1.xyz 1
 
 # Move_Probability_Info
 # Prob_Ring
@@ -53,8 +52,7 @@ Production 1000 10
 Units    Steps
 Prop_Freq  100
 Coord_Freq   5000
-MCsteps      10000
-# Done_Simulation_Length_Info
+Run          10000000
 
 # Property_Info 1
 Energy_Total

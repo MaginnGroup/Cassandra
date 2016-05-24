@@ -308,458 +308,460 @@ SUBROUTINE GEMC_Particle_Transfer
      IF(ALLOCATED(cos_mol_old)) DEALLOCATE(cos_mol_old)
      IF(ALLOCATED(sin_mol_old)) DEALLOCATE(sin_mol_old)
 
-     RETURN
-
-  END IF
-
-  delta_e_in = delta_e_in + E_inter_vdw_in + E_inter_qq_in 
-  
-  !*****************************************************************************
-  ! Step 5) Calculate the change in box_in's potential energy from inserting
-  !         alive
-  !*****************************************************************************
-  ! If here then no overlap was detected. Calculate the rest of the energies
-  IF(species_list(this_species)%int_insert == int_random) THEN
-
-     CALL Compute_Molecule_Bond_Energy(alive,this_species,E_bond_in)
-     CALL Compute_Molecule_Angle_Energy(alive,this_species,E_angle_in)
-     CALL Compute_Molecule_Dihedral_Energy(alive,this_species,E_dihed_in)
-     CALL Compute_Molecule_Improper_Energy(alive,this_species,E_improper_in)
-  
-  ELSE IF(species_list(this_species)%int_insert == int_igas) THEN
-
-     E_bond_in = energy_igas(rand_igas,this_species)%bond
-     E_angle_in = energy_igas(rand_igas,this_species)%angle
-     E_dihed_in = energy_igas(rand_igas,this_species)%dihedral
-     E_improper_in = energy_igas(rand_igas,this_species)%improper
-  
-  END IF
-
-  delta_e_in = delta_e_in + E_bond_in + E_angle_in + E_dihed_in
-
-  CALL Compute_Molecule_Nonbond_Intra_Energy(alive,this_species, &
-       E_intra_vdw_in,E_intra_qq_in,E_periodic_qq,intra_overlap)
-  E_inter_qq_in = E_inter_qq_in + E_periodic_qq
-
-  ! Already added E_inter to delta_e, so add E_periodic directly
-  delta_e_in = delta_e_in + E_intra_vdw_in + E_intra_qq_in + E_periodic_qq
-
-  call cpu_time(time0)
-
-  IF (int_charge_style(box_in) == charge_coul .AND. has_charge(this_species)) THEN
-     
-     IF (int_charge_sum_style(box_in) == charge_ewald) THEN
-
-          ! Note that this call will change cos_mol, sin_mol of alive and this
-          ! will have to be restored below while computing the energy of box_out
-          ! without molecule alive. 
-          CALL Update_System_Ewald_Reciprocal_Energy(alive,this_species,box_in, &
-               int_insertion,E_reciprocal_in)
-     
-          delta_e_in = delta_e_in + (E_reciprocal_in - energy(box_in)%ewald_reciprocal)
-     END IF
-     
-     CALL Compute_Molecule_Self_Energy(alive,this_species,box_in, &
-          E_self_in)
-     delta_e_in = delta_e_in + E_self_in 
-
-  END IF
-
-  call cpu_time(time1)
-  copy_time = copy_time + time1-time0
-
-  IF (int_vdw_sum_style(box_in) == vdw_cut_tail .AND. &
-		int_vdw_style(box_in) == vdw_lj) THEN
-     nbeads_in(:) = nint_beads(:,box_in)
-
-     DO i = 1, natoms(this_species)
-        i_type = nonbond_list(i,this_species)%atom_type_number
-        nint_beads(i_type,box_in) = nint_beads(i_type,box_in) + 1
-     END DO
-        
-     CALL Compute_LR_Correction(box_in,e_lrc_in)
-     delta_e_in = delta_e_in + e_lrc_in - energy(box_in)%lrc
-
-  ELSEIF (int_vdw_sum_style(box_in) == vdw_cut_tail .AND. &
-		int_vdw_style(box_in) == vdw_mie) THEN 
-        nbeads_in(:) = nint_beads_mie(this_species,:,box_in)
-
-     DO i = 1, natoms(this_species)
-        i_type = nonbond_list(i,this_species)%atom_type_number
-        nint_beads_mie(this_species,i_type,box_in) = nint_beads_mie(this_species,i_type,box_in) + 1
-     END DO
-        
-     CALL Compute_LR_Correction(box_in,e_lrc_in)
-     delta_e_in = delta_e_in + e_lrc_in - energy(box_in)%lrc
-   
-  END IF
-
-  IF(cpcollect) THEN
-  
-     potw = 1.0_DP
-     CP_energy = delta_e_in
-     
-     IF(species_list(this_species)%fragment) THEN
-        potw = 1.0_DP / (P_forward * kappa_ins*kappa_rot*kappa_dih &
-             ** (nfragments(this_species)-1)) 
-        CP_energy = delta_e_in - E_angle_in 
-     END IF
-   
-     chpot(this_species,box_in) = chpot(this_species,box_in) &
-      + potw * (box_list(box_in)%volume &
-      / (REAL(nmols(this_species,box_in)))) * DEXP(-beta(box_in) * CP_energy)
-
-  END IF
-
-  !*****************************************************************************
-  ! Step 6) Calculate the change in box_out's potential energy from deleting
-  !         alive
-  !*****************************************************************************
-  ! Need to preserve coordinates of 'alive' in box_in.
-  ALLOCATE(new_atom_list(natoms(this_species)))
-  new_atom_list(:) = atom_list(:,alive,this_species)
-  new_molecule_list = molecule_list(alive,this_species)
-
-  ! Change the box identity of alive back to box_out
-  molecule_list(alive,this_species)%which_box = box_out
-  ! Restore the box_out coordinates
-  CALL Revert_Old_Cartesian_Coordinates(alive,this_species)
-
-  delta_e_out = 0.0_DP
-
-  ! Obtain the weight of the chain if it is made up of fragments
-  call cpu_time(time0)
-  IF ( species_list(this_species)%fragment .AND. &
-       species_list(this_species)%int_insert .NE. int_igas) THEN
-     ! The fragment order was decided when inserting alive into box_in
-     ! Use the same fragment order to calculate trial insertions into box_out 
-     ! 
-     ! So frag_order and P_seq are inputs to the Build_Molecule routine
-     ! We obtain P_reverse via this call. Note that, cbmc_overlap 
-     ! must be false as we are dealing with an existing molecule.
-     del_flag = .TRUE. 
-     get_fragorder = .FALSE.
-
-     IF (species_list(this_species)%lcom) THEN
-        CALL Build_Molecule(alive,this_species,box_out,frag_order, &
-                lambda_for_build,P_seq,P_reverse,nrg_ring_frag_out, &
-                cbmc_overlap)
-     ELSE
-        CALL Build_Rigid_Fragment(alive,this_species,box_out,frag_order, &
-                lambda_for_build,P_seq,P_reverse,nrg_ring_frag_out, &
-                cbmc_overlap)
-     END IF
-        
-     IF (cbmc_overlap) THEN
-        ! If this flag gets tripped, there is an error in the code
-        err_msg = ""
-        err_msg(1) = "Error: existing configuration of " // & 
-           "molecule " // TRIM(Int_To_String(alive))
-        err_msg(2) = "of species " // TRIM(Int_To_String(this_species)) // &
-           " in box " // TRIM(Int_To_String(box_out)) // &
-           " tripped an overlap error"
-        CALL Clean_Abort(err_msg,'GEMC_Particle_Transfer')
-
-!        atom_list(1:natoms(this_species),alive,this_species)%exist = .TRUE.
-!        CALL Revert_Old_Cartesian_Coordinates(alive,this_species)
-!
-!        molecule_list(alive,this_species)%frac = 1.0_DP
-     END IF
-
-  END IF
-
-  CALL Get_COM(alive,this_species)
-  CALL Compute_Max_COM_Distance(alive,this_species)
-  ! debug to see if the COM and max_com_distance are identical
-
-  ! bonded energies
-  CALL Compute_Molecule_Bond_Energy(alive,this_species,e_bond_out)
-  CALL Compute_Molecule_Angle_Energy(alive,this_species,e_angle_out)
-  CALL Compute_Molecule_Dihedral_Energy(alive,this_species,e_dihed_out)
-  CALL Compute_Molecule_Improper_Energy(alive,this_species,e_improper_out)
-
-  delta_e_out = delta_e_out - e_bond_out - e_angle_out - e_dihed_out &
-              - e_improper_out
-
-  ! Nonbonded energy  
-  CALL Compute_Molecule_Nonbond_Intra_Energy(alive,this_species, &
-       E_intra_vdw_out,E_intra_qq_out,E_periodic_qq,intra_overlap)
-
-  IF ( .NOT. l_pair_nrg) THEN
-     CALL Compute_Molecule_Nonbond_Inter_Energy(alive,this_species, &
-          E_inter_vdw_out,E_inter_qq_out,inter_overlap)
-  END IF
-  E_inter_qq_out = E_inter_qq_out + E_periodic_qq
-
-  delta_e_out = delta_e_out - E_intra_vdw_out - E_intra_qq_out &
-              - E_inter_vdw_out - E_inter_qq_out
-
-
-
-
-  IF (int_charge_style(box_out) == charge_coul .AND. has_charge(this_species)) THEN
-        IF (int_charge_sum_style(box_in) == charge_ewald .AND. &
-            int_charge_sum_style(box_out) == charge_ewald) THEN
-           ! Restore the cos_mol and sin_mol as they changed above
-           ! but restoring will destroy the newly computed vector so now here allocate
-           ! cos_mol_new
-           ! sin_mol_new vectors so that if the move is accepted we can restore these
-      
-           call cpu_time(time0)
-      
-           ALLOCATE(cos_mol_new(nvecs(box_in)))
-           ALLOCATE(sin_mol_new(nvecs(box_in)))
-      
-           !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-           cos_mol_new(:) = cos_mol(1:nvecs(box_in),position)
-           sin_mol_new(:) = sin_mol(1:nvecs(box_in),position)
-
-
-           cos_mol(1:nvecs(box_out),position) = cos_mol_old(1:nvecs(box_out))
-           sin_mol(1:nvecs(box_out),position) = sin_mol_old(1:nvecs(box_out))
-           !$OMP END PARALLEL WORKSHARE
-      
-           call cpu_time(time1)
-      
-      !     copy_time = copy_time + time1-time0
-      
-           CALL Update_System_Ewald_Reciprocal_Energy(alive,this_species, &
-                box_out,int_deletion,E_reciprocal_out)
-      
-           delta_e_out = delta_e_out + (E_reciprocal_out - energy(box_out)%ewald_reciprocal)
-      
-        END IF
-      
-        CALL Compute_Molecule_Self_Energy(alive,this_species,box_out, &
-          E_self_out)
-
-        delta_e_out = delta_e_out - E_self_out
-
-  END IF
-
-  
-  IF (int_vdw_sum_style(box_out) == vdw_cut_tail .AND. &
-		int_vdw_style(box_out) == vdw_lj) THEN
-     nbeads_out(:) = nint_beads(:,box_out)
-     DO i = 1, natoms(this_species)
-        i_type = nonbond_list(i,this_species)%atom_type_number
-        nint_beads(i_type,box_out) = nint_beads(i_type,box_out) - 1
-     END DO
-
-     CALL Compute_LR_correction(box_out,e_lrc_out)
-     delta_e_out = delta_e_out + ( e_lrc_out - energy(box_out)%lrc )
-
-  ELSEIF (int_vdw_sum_style(box_out) == vdw_cut_tail .AND. &
-		int_vdw_style(box_out) == vdw_mie) THEN
-     nbeads_out(:) = nint_beads_mie(this_species,:,box_out)
-
-     DO i = 1, natoms(this_species)
-        i_type = nonbond_list(i,this_species)%atom_type_number
-        nint_beads_mie(this_species,i_type,box_out) = nint_beads_mie(this_species,i_type,box_out) - 1
-     END DO
-
-     CALL Compute_LR_correction(box_out,e_lrc_out)
-     delta_e_out = delta_e_out + ( e_lrc_out - energy(box_out)%lrc )
-  END IF
-
-  delta_e_in_pacc = delta_e_in
-  delta_e_out_pacc = delta_e_out
-
-  IF(species_list(this_species)%int_insert == int_igas) THEN
-     igas_flag = .TRUE.
-     CALL Compute_Molecule_Nonbond_Intra_Energy(alive,this_species, &
-          E_intra_vdw_igas,E_intra_qq_igas,E_periodic_qq,intra_overlap)
-     ! Ideal gas should not interact with it's periodic image, so E_periodic_qq
-     ! is not added the delta_e
-     igas_flag = .FALSE. 
-     delta_e_out_pacc = delta_e_out_pacc + e_bond_out + e_angle_out &
-                      + e_dihed_out + e_improper_out &
-                      + E_intra_vdw_igas + E_intra_qq_igas
-     delta_e_in_pacc = delta_e_in_pacc &
-                     - energy_igas(rand_igas,this_species)%total
-  END IF
-
-  IF(species_list(this_species)%fragment .AND. &
-     species_list(this_species)%int_insert .NE. int_igas) THEN
-     delta_e_in_pacc  = delta_e_in_pacc  - e_angle_in  - nrg_ring_frag_in
-     delta_e_out_pacc = delta_e_out_pacc + e_angle_out + nrg_ring_frag_out
-  END IF
-
-  !*****************************************************************************
-  ! Step 7) Accept of reject the move
-  !*****************************************************************************
-  ! Define ln_pacc that will be used to accept or reject the move. Note that
-  ! the change in energy of box_out is actually negative of delta_e_out 
-  ! calculated above
-
-  ln_pacc = beta(box_in)*delta_e_in_pacc + beta(box_out)*delta_e_out_pacc
-
-  ln_pacc = ln_pacc - DLOG(box_list(box_in)%volume) &
-                    + DLOG(box_list(box_out)%volume) &
-                    - DLOG(REAL(nmols(this_species,box_out),DP)) &
-                    + DLOG(REAL(nmols(this_species,box_in), DP))
-
-  ! The same order of insertion is used in both the insertion and 
-  ! reverse deletion, so P_seq does not factor into ln_pacc
-  ln_pacc = ln_pacc + DLOG(P_forward / P_reverse)
-
-  accept = accept_or_reject(ln_pacc)
-
-  IF (accept) THEN
-     ! accept the swap
-     
-     ! already updated the number of molecules in box_in
-
-     ! remove the deleted molecule from box_out locate
-     IF (im_out < nmols(this_species,box_out)) THEN
-        DO k = im_out + 1, nmols(this_species,box_out)
-           locate(k-1,this_species,box_out) = locate(k,this_species,box_out)
-        END DO
-     END IF
-     locate(nmols(this_species,box_out),this_species,box_out) = 0
-
-     ! Update the number of molecules in box_out
-     nmols(this_species,box_out) = nmols(this_species,box_out) - 1
-
-     ! Set the coordinates and properties of molecule alive to box_in values
-     DO i = 1,natoms(this_species)
-       atom_list(i,alive,this_species) = new_atom_list(i)
-     END DO
-     molecule_list(alive,this_species) = new_molecule_list
-     CALL Fold_Molecule(alive,this_species,box_in)
-
-     IF (int_charge_sum_style(box_in) == charge_ewald .AND. &
-         has_charge(this_species)) THEN
-        call cpu_time(time0)
-        !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-        cos_mol(1:nvecs(box_in),position) = cos_mol_new(:)
-        sin_mol(1:nvecs(box_in),position) = sin_mol_new(:)
-        !$OMP END PARALLEL WORKSHARE
-        
-        DEALLOCATE(cos_mol_new,sin_mol_new)
-        
-        call cpu_time(time1)
-!        copy_time = copy_time + time1-time0
-     END IF
-
-     IF (l_pair_nrg) DEALLOCATE(pair_vdw_temp,pair_qq_temp)
-     IF (ALLOCATED(cos_mol_old)) DEALLOCATE(cos_mol_old)
-     IF (ALLOCATED(sin_mol_old)) DEALLOCATE(sin_mol_old)
-     IF (ALLOCATED(cos_mol_new)) DEALLOCATE(cos_mol_new)
-     IF (ALLOCATED(sin_mol_new)) DEALLOCATE(sin_mol_new)
-
-     ! Restore the coordinates of the molecule due to successful insertion
-     CALL Get_Internal_Coordinates(alive,this_species)
-
-     ! Update energies for each box
-     ! box_in
-     energy(box_in)%total = energy(box_in)%total + delta_e_in
-     energy(box_in)%intra = energy(box_in)%intra + e_bond_in + e_angle_in &
-                          + e_dihed_in
-     energy(box_in)%bond = energy(box_in)%bond + e_bond_in
-     energy(box_in)%angle = energy(box_in)%angle + e_angle_in
-     energy(box_in)%dihedral = energy(box_in)%dihedral + e_dihed_in
-     energy(box_in)%intra_vdw = energy(box_in)%intra_vdw + e_intra_vdw_in
-     energy(box_in)%intra_q = energy(box_in)%intra_q + e_intra_qq_in
-     energy(box_in)%inter_vdw = energy(box_in)%inter_vdw + e_inter_vdw_in
-     energy(box_in)%inter_q = energy(box_in)%inter_q + e_inter_qq_in
-
-     IF (int_vdw_sum_style(box_in) == vdw_cut_tail) THEN
-        energy(box_in)%lrc = e_lrc_in
-     END IF
-
-     ! for box_out
-     energy(box_out)%total = energy(box_out)%total + delta_e_out
-     energy(box_out)%intra = energy(box_out)%intra - e_bond_out - e_angle_out &
-                           - e_dihed_out
-     energy(box_out)%bond = energy(box_out)%bond - e_bond_out
-     energy(box_out)%angle = energy(box_out)%angle - e_angle_out
-     energy(box_out)%dihedral = energy(box_out)%dihedral - e_dihed_out
-     energy(box_out)%intra_vdw = energy(box_out)%intra_vdw - e_intra_vdw_out
-     energy(box_out)%intra_q   = energy(box_out)%intra_q - e_intra_qq_out
-     energy(box_out)%inter_vdw = energy(box_out)%inter_vdw - e_inter_vdw_out
-     energy(box_out)%inter_q   = energy(box_out)%inter_q - e_inter_qq_out
-
-     IF (int_vdw_sum_style(box_out) == vdw_cut_tail) THEN
-        energy(box_out)%lrc = e_lrc_out
-     END IF
-
-     IF (has_charge(this_species)) THEN
-        IF (int_charge_sum_style(box_in) == charge_ewald) energy(box_in)%ewald_reciprocal = E_reciprocal_in        
-        IF (int_charge_sum_style(box_out) == charge_ewald) energy(box_out)%ewald_reciprocal = E_reciprocal_out
-        IF (int_charge_style(box_in) == charge_coul) energy(box_in)%self = energy(box_in)%self + E_self_in
-        IF (int_charge_style(box_out) == charge_coul) energy(box_out)%self = energy(box_out)%self + E_self_out
-     END IF
-
-
-     ! Increment counter
-     nsuccess(this_species,box_in)%insertion = &
-        nsuccess(this_species,box_in)%insertion + 1
-     nsuccess(this_species,box_out)%deletion = &
-        nsuccess(this_species,box_out)%deletion + 1
+     accept = .FALSE.
 
   ELSE
-     ! reject the swap. 
 
-     ! Atomic coordinates have not changed as we used the original coordinate
-     ! in box_out to calculate removal energies
-
-     ! Reset the number of molecules and locate of box_in
-     locate(im_in,this_species,box_in) = 0
-     nmols(this_species,box_in) = nmols(this_species,box_in) - 1
-
-
-     IF (has_charge(this_species)) THEN
-         ! Restore the reciprocal space k vectors
-         IF (int_charge_sum_style(box_in) == charge_ewald) THEN
-            !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-            cos_sum(1:nvecs(box_in),box_in) = cos_sum_old(1:nvecs(box_in),box_in)
-            sin_sum(1:nvecs(box_in),box_in) = sin_sum_old(1:nvecs(box_in),box_in)
-            !$OMP END PARALLEL WORKSHARE
+    delta_e_in = delta_e_in + E_inter_vdw_in + E_inter_qq_in 
     
-            DEALLOCATE(cos_mol_new,sin_mol_new)
-         END IF
+    !*****************************************************************************
+    ! Step 5) Calculate the change in box_in's potential energy from inserting
+    !         alive
+    !*****************************************************************************
+    ! If here then no overlap was detected. Calculate the rest of the energies
+    IF(species_list(this_species)%int_insert == int_random) THEN
+
+       CALL Compute_Molecule_Bond_Energy(alive,this_species,E_bond_in)
+       CALL Compute_Molecule_Angle_Energy(alive,this_species,E_angle_in)
+       CALL Compute_Molecule_Dihedral_Energy(alive,this_species,E_dihed_in)
+       CALL Compute_Molecule_Improper_Energy(alive,this_species,E_improper_in)
     
-         IF (int_charge_sum_style(box_out) == charge_ewald) THEN
-            !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-            cos_sum(1:nvecs(box_out),box_out) = cos_sum_old(1:nvecs(box_out),box_out)
-            sin_sum(1:nvecs(box_out),box_out) = sin_sum_old(1:nvecs(box_out),box_out)
-            
-            cos_mol(1:nvecs(box_out),position) = cos_mol_old(:)
-            sin_mol(1:nvecs(box_out),position) = sin_mol_old(:)
-            !$OMP END PARALLEL WORKSHARE
+    ELSE IF(species_list(this_species)%int_insert == int_igas) THEN
+
+       E_bond_in = energy_igas(rand_igas,this_species)%bond
+       E_angle_in = energy_igas(rand_igas,this_species)%angle
+       E_dihed_in = energy_igas(rand_igas,this_species)%dihedral
+       E_improper_in = energy_igas(rand_igas,this_species)%improper
     
-            DEALLOCATE(cos_mol_old)
-            DEALLOCATE(sin_mol_old)
-         END IF
-     END IF
+    END IF
 
-     IF (l_pair_nrg) THEN
-        CALL Reset_Molecule_Pair_Interaction_Arrays(alive,this_species,box_out)
-     END IF
+    delta_e_in = delta_e_in + E_bond_in + E_angle_in + E_dihed_in
 
-     IF ( int_vdw_sum_style(box_in) == vdw_cut_tail ) THEN
-        IF (int_vdw_style(box_in) == vdw_lj) THEN
-           nint_beads(:,box_in) = nbeads_in(:)
-        ELSEIF (int_vdw_style(box_in) == vdw_mie) THEN
-           nint_beads_mie(this_species,:,box_in) = nbeads_in(:)
-        END IF
-     END IF
+    CALL Compute_Molecule_Nonbond_Intra_Energy(alive,this_species, &
+         E_intra_vdw_in,E_intra_qq_in,E_periodic_qq,intra_overlap)
+    E_inter_qq_in = E_inter_qq_in + E_periodic_qq
 
-     IF ( int_vdw_sum_style(box_out) == vdw_cut_tail ) THEN
-         IF (int_vdw_style(box_in) == vdw_lj) THEN
-            nint_beads(:,box_out) = nbeads_out(:)
-        ELSEIF (int_vdw_style(box_out) == vdw_mie) THEN
-	    nint_beads_mie(this_species,:,box_out) = nbeads_out(:)
-        END IF
-     END IF
+    ! Already added E_inter to delta_e, so add E_periodic directly
+    delta_e_in = delta_e_in + E_intra_vdw_in + E_intra_qq_in + E_periodic_qq
+
+    call cpu_time(time0)
+
+    IF (int_charge_style(box_in) == charge_coul .AND. has_charge(this_species)) THEN
+       
+       IF (int_charge_sum_style(box_in) == charge_ewald) THEN
+
+            ! Note that this call will change cos_mol, sin_mol of alive and this
+            ! will have to be restored below while computing the energy of box_out
+            ! without molecule alive. 
+            CALL Update_System_Ewald_Reciprocal_Energy(alive,this_species,box_in, &
+                 int_insertion,E_reciprocal_in)
+       
+            delta_e_in = delta_e_in + (E_reciprocal_in - energy(box_in)%ewald_reciprocal)
+       END IF
+       
+       CALL Compute_Molecule_Self_Energy(alive,this_species,box_in, &
+            E_self_in)
+       delta_e_in = delta_e_in + E_self_in 
+
+    END IF
+
+    call cpu_time(time1)
+    copy_time = copy_time + time1-time0
+
+    IF (int_vdw_sum_style(box_in) == vdw_cut_tail .AND. &
+       int_vdw_style(box_in) == vdw_lj) THEN
+       nbeads_in(:) = nint_beads(:,box_in)
+
+       DO i = 1, natoms(this_species)
+          i_type = nonbond_list(i,this_species)%atom_type_number
+          nint_beads(i_type,box_in) = nint_beads(i_type,box_in) + 1
+       END DO
+          
+       CALL Compute_LR_Correction(box_in,e_lrc_in)
+       delta_e_in = delta_e_in + e_lrc_in - energy(box_in)%lrc
+
+    ELSEIF (int_vdw_sum_style(box_in) == vdw_cut_tail .AND. &
+       int_vdw_style(box_in) == vdw_mie) THEN 
+       nbeads_in(:) = nint_beads_mie(this_species,:,box_in)
+
+       DO i = 1, natoms(this_species)
+          i_type = nonbond_list(i,this_species)%atom_type_number
+          nint_beads_mie(this_species,i_type,box_in) = nint_beads_mie(this_species,i_type,box_in) + 1
+       END DO
+          
+       CALL Compute_LR_Correction(box_in,e_lrc_in)
+       delta_e_in = delta_e_in + e_lrc_in - energy(box_in)%lrc
+     
+    END IF
+
+    IF(cpcollect) THEN
+    
+       potw = 1.0_DP
+       CP_energy = delta_e_in
+       
+       IF(species_list(this_species)%fragment) THEN
+          potw = 1.0_DP / (P_forward * kappa_ins*kappa_rot*kappa_dih &
+               ** (nfragments(this_species)-1)) 
+          CP_energy = delta_e_in - E_angle_in 
+       END IF
+     
+       chpot(this_species,box_in) = chpot(this_species,box_in) &
+        + potw * (box_list(box_in)%volume &
+        / (REAL(nmols(this_species,box_in)))) * DEXP(-beta(box_in) * CP_energy)
+
+    END IF
+
+    !*****************************************************************************
+    ! Step 6) Calculate the change in box_out's potential energy from deleting
+    !         alive
+    !*****************************************************************************
+    ! Need to preserve coordinates of 'alive' in box_in.
+    ALLOCATE(new_atom_list(natoms(this_species)))
+    new_atom_list(:) = atom_list(:,alive,this_species)
+    new_molecule_list = molecule_list(alive,this_species)
+
+    ! Change the box identity of alive back to box_out
+    molecule_list(alive,this_species)%which_box = box_out
+    ! Restore the box_out coordinates
+    CALL Revert_Old_Cartesian_Coordinates(alive,this_species)
+
+    delta_e_out = 0.0_DP
+
+    ! Obtain the weight of the chain if it is made up of fragments
+    call cpu_time(time0)
+    IF ( species_list(this_species)%fragment .AND. &
+         species_list(this_species)%int_insert .NE. int_igas) THEN
+       ! The fragment order was decided when inserting alive into box_in
+       ! Use the same fragment order to calculate trial insertions into box_out 
+       ! 
+       ! So frag_order and P_seq are inputs to the Build_Molecule routine
+       ! We obtain P_reverse via this call. Note that, cbmc_overlap 
+       ! must be false as we are dealing with an existing molecule.
+       del_flag = .TRUE. 
+       get_fragorder = .FALSE.
+
+       IF (species_list(this_species)%lcom) THEN
+          CALL Build_Molecule(alive,this_species,box_out,frag_order, &
+                  lambda_for_build,P_seq,P_reverse,nrg_ring_frag_out, &
+                  cbmc_overlap)
+       ELSE
+          CALL Build_Rigid_Fragment(alive,this_species,box_out,frag_order, &
+                  lambda_for_build,P_seq,P_reverse,nrg_ring_frag_out, &
+                  cbmc_overlap)
+       END IF
+          
+       IF (cbmc_overlap) THEN
+          ! If this flag gets tripped, there is an error in the code
+          err_msg = ""
+          err_msg(1) = "Error: existing configuration of " // & 
+             "molecule " // TRIM(Int_To_String(alive))
+          err_msg(2) = "of species " // TRIM(Int_To_String(this_species)) // &
+             " in box " // TRIM(Int_To_String(box_out)) // &
+             " tripped an overlap error"
+          CALL Clean_Abort(err_msg,'GEMC_Particle_Transfer')
+
+!          atom_list(1:natoms(this_species),alive,this_species)%exist = .TRUE.
+!          CALL Revert_Old_Cartesian_Coordinates(alive,this_species)
+!
+!          molecule_list(alive,this_species)%frac = 1.0_DP
+       END IF
+
+    END IF
+
+    CALL Get_COM(alive,this_species)
+    CALL Compute_Max_COM_Distance(alive,this_species)
+    ! debug to see if the COM and max_com_distance are identical
+
+    ! bonded energies
+    CALL Compute_Molecule_Bond_Energy(alive,this_species,e_bond_out)
+    CALL Compute_Molecule_Angle_Energy(alive,this_species,e_angle_out)
+    CALL Compute_Molecule_Dihedral_Energy(alive,this_species,e_dihed_out)
+    CALL Compute_Molecule_Improper_Energy(alive,this_species,e_improper_out)
+
+    delta_e_out = delta_e_out - e_bond_out - e_angle_out - e_dihed_out &
+                - e_improper_out
+
+    ! Nonbonded energy  
+    CALL Compute_Molecule_Nonbond_Intra_Energy(alive,this_species, &
+         E_intra_vdw_out,E_intra_qq_out,E_periodic_qq,intra_overlap)
+
+    IF ( .NOT. l_pair_nrg) THEN
+       CALL Compute_Molecule_Nonbond_Inter_Energy(alive,this_species, &
+            E_inter_vdw_out,E_inter_qq_out,inter_overlap)
+    END IF
+    E_inter_qq_out = E_inter_qq_out + E_periodic_qq
+
+    delta_e_out = delta_e_out - E_intra_vdw_out - E_intra_qq_out &
+                - E_inter_vdw_out - E_inter_qq_out
 
 
-  END IF
+
+
+    IF (int_charge_style(box_out) == charge_coul .AND. has_charge(this_species)) THEN
+          IF (int_charge_sum_style(box_in) == charge_ewald .AND. &
+              int_charge_sum_style(box_out) == charge_ewald) THEN
+             ! Restore the cos_mol and sin_mol as they changed above
+             ! but restoring will destroy the newly computed vector so now here allocate
+             ! cos_mol_new
+             ! sin_mol_new vectors so that if the move is accepted we can restore these
+        
+             call cpu_time(time0)
+        
+             ALLOCATE(cos_mol_new(nvecs(box_in)))
+             ALLOCATE(sin_mol_new(nvecs(box_in)))
+        
+             !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+             cos_mol_new(:) = cos_mol(1:nvecs(box_in),position)
+             sin_mol_new(:) = sin_mol(1:nvecs(box_in),position)
+
+
+             cos_mol(1:nvecs(box_out),position) = cos_mol_old(1:nvecs(box_out))
+             sin_mol(1:nvecs(box_out),position) = sin_mol_old(1:nvecs(box_out))
+             !$OMP END PARALLEL WORKSHARE
+        
+             call cpu_time(time1)
+        
+        !     copy_time = copy_time + time1-time0
+        
+             CALL Update_System_Ewald_Reciprocal_Energy(alive,this_species, &
+                  box_out,int_deletion,E_reciprocal_out)
+        
+             delta_e_out = delta_e_out + (E_reciprocal_out - energy(box_out)%ewald_reciprocal)
+        
+          END IF
+        
+          CALL Compute_Molecule_Self_Energy(alive,this_species,box_out, &
+            E_self_out)
+
+          delta_e_out = delta_e_out - E_self_out
+
+    END IF
+
+    
+    IF (int_vdw_sum_style(box_out) == vdw_cut_tail .AND. &
+       int_vdw_style(box_out) == vdw_lj) THEN
+       nbeads_out(:) = nint_beads(:,box_out)
+       DO i = 1, natoms(this_species)
+          i_type = nonbond_list(i,this_species)%atom_type_number
+          nint_beads(i_type,box_out) = nint_beads(i_type,box_out) - 1
+       END DO
+
+       CALL Compute_LR_correction(box_out,e_lrc_out)
+       delta_e_out = delta_e_out + ( e_lrc_out - energy(box_out)%lrc )
+
+    ELSEIF (int_vdw_sum_style(box_out) == vdw_cut_tail .AND. &
+       int_vdw_style(box_out) == vdw_mie) THEN
+       nbeads_out(:) = nint_beads_mie(this_species,:,box_out)
+
+       DO i = 1, natoms(this_species)
+          i_type = nonbond_list(i,this_species)%atom_type_number
+          nint_beads_mie(this_species,i_type,box_out) = nint_beads_mie(this_species,i_type,box_out) - 1
+       END DO
+
+       CALL Compute_LR_correction(box_out,e_lrc_out)
+       delta_e_out = delta_e_out + ( e_lrc_out - energy(box_out)%lrc )
+    END IF
+
+    delta_e_in_pacc = delta_e_in
+    delta_e_out_pacc = delta_e_out
+
+    IF(species_list(this_species)%int_insert == int_igas) THEN
+       igas_flag = .TRUE.
+       CALL Compute_Molecule_Nonbond_Intra_Energy(alive,this_species, &
+            E_intra_vdw_igas,E_intra_qq_igas,E_periodic_qq,intra_overlap)
+       ! Ideal gas should not interact with it's periodic image, so E_periodic_qq
+       ! is not added the delta_e
+       igas_flag = .FALSE. 
+       delta_e_out_pacc = delta_e_out_pacc + e_bond_out + e_angle_out &
+                        + e_dihed_out + e_improper_out &
+                        + E_intra_vdw_igas + E_intra_qq_igas
+       delta_e_in_pacc = delta_e_in_pacc &
+                       - energy_igas(rand_igas,this_species)%total
+    END IF
+
+    IF(species_list(this_species)%fragment .AND. &
+       species_list(this_species)%int_insert .NE. int_igas) THEN
+       delta_e_in_pacc  = delta_e_in_pacc  - e_angle_in  - nrg_ring_frag_in
+       delta_e_out_pacc = delta_e_out_pacc + e_angle_out + nrg_ring_frag_out
+    END IF
+
+    !*****************************************************************************
+    ! Step 7) Accept of reject the move
+    !*****************************************************************************
+    ! Define ln_pacc that will be used to accept or reject the move. Note that
+    ! the change in energy of box_out is actually negative of delta_e_out 
+    ! calculated above
+
+    ln_pacc = beta(box_in)*delta_e_in_pacc + beta(box_out)*delta_e_out_pacc
+
+    ln_pacc = ln_pacc - DLOG(box_list(box_in)%volume) &
+                      + DLOG(box_list(box_out)%volume) &
+                      - DLOG(REAL(nmols(this_species,box_out),DP)) &
+                      + DLOG(REAL(nmols(this_species,box_in), DP))
+
+    ! The same order of insertion is used in both the insertion and 
+    ! reverse deletion, so P_seq does not factor into ln_pacc
+    ln_pacc = ln_pacc + DLOG(P_forward / P_reverse)
+
+    accept = accept_or_reject(ln_pacc)
+
+    IF (accept) THEN
+       ! accept the swap
+       
+       ! already updated the number of molecules in box_in
+
+       ! remove the deleted molecule from box_out locate
+       IF (im_out < nmols(this_species,box_out)) THEN
+          DO k = im_out + 1, nmols(this_species,box_out)
+             locate(k-1,this_species,box_out) = locate(k,this_species,box_out)
+          END DO
+       END IF
+       locate(nmols(this_species,box_out),this_species,box_out) = 0
+
+       ! Update the number of molecules in box_out
+       nmols(this_species,box_out) = nmols(this_species,box_out) - 1
+
+       ! Set the coordinates and properties of molecule alive to box_in values
+       DO i = 1,natoms(this_species)
+         atom_list(i,alive,this_species) = new_atom_list(i)
+       END DO
+       molecule_list(alive,this_species) = new_molecule_list
+       CALL Fold_Molecule(alive,this_species,box_in)
+
+       IF (int_charge_sum_style(box_in) == charge_ewald .AND. &
+           has_charge(this_species)) THEN
+          call cpu_time(time0)
+          !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+          cos_mol(1:nvecs(box_in),position) = cos_mol_new(:)
+          sin_mol(1:nvecs(box_in),position) = sin_mol_new(:)
+          !$OMP END PARALLEL WORKSHARE
+          
+          DEALLOCATE(cos_mol_new,sin_mol_new)
+          
+          call cpu_time(time1)
+!          copy_time = copy_time + time1-time0
+       END IF
+
+       IF (l_pair_nrg) DEALLOCATE(pair_vdw_temp,pair_qq_temp)
+       IF (ALLOCATED(cos_mol_old)) DEALLOCATE(cos_mol_old)
+       IF (ALLOCATED(sin_mol_old)) DEALLOCATE(sin_mol_old)
+       IF (ALLOCATED(cos_mol_new)) DEALLOCATE(cos_mol_new)
+       IF (ALLOCATED(sin_mol_new)) DEALLOCATE(sin_mol_new)
+
+       ! Restore the coordinates of the molecule due to successful insertion
+       CALL Get_Internal_Coordinates(alive,this_species)
+
+       ! Update energies for each box
+       ! box_in
+       energy(box_in)%total = energy(box_in)%total + delta_e_in
+       energy(box_in)%intra = energy(box_in)%intra + e_bond_in + e_angle_in &
+                            + e_dihed_in
+       energy(box_in)%bond = energy(box_in)%bond + e_bond_in
+       energy(box_in)%angle = energy(box_in)%angle + e_angle_in
+       energy(box_in)%dihedral = energy(box_in)%dihedral + e_dihed_in
+       energy(box_in)%intra_vdw = energy(box_in)%intra_vdw + e_intra_vdw_in
+       energy(box_in)%intra_q = energy(box_in)%intra_q + e_intra_qq_in
+       energy(box_in)%inter_vdw = energy(box_in)%inter_vdw + e_inter_vdw_in
+       energy(box_in)%inter_q = energy(box_in)%inter_q + e_inter_qq_in
+
+       IF (int_vdw_sum_style(box_in) == vdw_cut_tail) THEN
+          energy(box_in)%lrc = e_lrc_in
+       END IF
+
+       ! for box_out
+       energy(box_out)%total = energy(box_out)%total + delta_e_out
+       energy(box_out)%intra = energy(box_out)%intra - e_bond_out - e_angle_out &
+                             - e_dihed_out
+       energy(box_out)%bond = energy(box_out)%bond - e_bond_out
+       energy(box_out)%angle = energy(box_out)%angle - e_angle_out
+       energy(box_out)%dihedral = energy(box_out)%dihedral - e_dihed_out
+       energy(box_out)%intra_vdw = energy(box_out)%intra_vdw - e_intra_vdw_out
+       energy(box_out)%intra_q   = energy(box_out)%intra_q - e_intra_qq_out
+       energy(box_out)%inter_vdw = energy(box_out)%inter_vdw - e_inter_vdw_out
+       energy(box_out)%inter_q   = energy(box_out)%inter_q - e_inter_qq_out
+
+       IF (int_vdw_sum_style(box_out) == vdw_cut_tail) THEN
+          energy(box_out)%lrc = e_lrc_out
+       END IF
+
+       IF (has_charge(this_species)) THEN
+          IF (int_charge_sum_style(box_in) == charge_ewald) energy(box_in)%ewald_reciprocal = E_reciprocal_in        
+          IF (int_charge_sum_style(box_out) == charge_ewald) energy(box_out)%ewald_reciprocal = E_reciprocal_out
+          IF (int_charge_style(box_in) == charge_coul) energy(box_in)%self = energy(box_in)%self + E_self_in
+          IF (int_charge_style(box_out) == charge_coul) energy(box_out)%self = energy(box_out)%self + E_self_out
+       END IF
+
+
+       ! Increment counter
+       nsuccess(this_species,box_in)%insertion = &
+          nsuccess(this_species,box_in)%insertion + 1
+       nsuccess(this_species,box_out)%deletion = &
+          nsuccess(this_species,box_out)%deletion + 1
+
+    ELSE
+       ! reject the swap. 
+
+       ! Atomic coordinates have not changed as we used the original coordinate
+       ! in box_out to calculate removal energies
+
+       ! Reset the number of molecules and locate of box_in
+       locate(im_in,this_species,box_in) = 0
+       nmols(this_species,box_in) = nmols(this_species,box_in) - 1
+
+
+       IF (has_charge(this_species)) THEN
+           ! Restore the reciprocal space k vectors
+           IF (int_charge_sum_style(box_in) == charge_ewald) THEN
+              !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+              cos_sum(1:nvecs(box_in),box_in) = cos_sum_old(1:nvecs(box_in),box_in)
+              sin_sum(1:nvecs(box_in),box_in) = sin_sum_old(1:nvecs(box_in),box_in)
+              !$OMP END PARALLEL WORKSHARE
+      
+              DEALLOCATE(cos_mol_new,sin_mol_new)
+           END IF
+      
+           IF (int_charge_sum_style(box_out) == charge_ewald) THEN
+              !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+              cos_sum(1:nvecs(box_out),box_out) = cos_sum_old(1:nvecs(box_out),box_out)
+              sin_sum(1:nvecs(box_out),box_out) = sin_sum_old(1:nvecs(box_out),box_out)
+              
+              cos_mol(1:nvecs(box_out),position) = cos_mol_old(:)
+              sin_mol(1:nvecs(box_out),position) = sin_mol_old(:)
+              !$OMP END PARALLEL WORKSHARE
+      
+              DEALLOCATE(cos_mol_old)
+              DEALLOCATE(sin_mol_old)
+           END IF
+       END IF
+
+       IF (l_pair_nrg) THEN
+          CALL Reset_Molecule_Pair_Interaction_Arrays(alive,this_species,box_out)
+       END IF
+
+       IF ( int_vdw_sum_style(box_in) == vdw_cut_tail ) THEN
+          IF (int_vdw_style(box_in) == vdw_lj) THEN
+             nint_beads(:,box_in) = nbeads_in(:)
+          ELSEIF (int_vdw_style(box_in) == vdw_mie) THEN
+             nint_beads_mie(this_species,:,box_in) = nbeads_in(:)
+          END IF
+       END IF
+
+       IF ( int_vdw_sum_style(box_out) == vdw_cut_tail ) THEN
+          IF (int_vdw_style(box_in) == vdw_lj) THEN
+             nint_beads(:,box_out) = nbeads_out(:)
+          ELSEIF (int_vdw_style(box_out) == vdw_mie) THEN
+             nint_beads_mie(this_species,:,box_out) = nbeads_out(:)
+          END IF
+       END IF
+
+
+    END IF
   
+  END IF 
+
   IF (ALLOCATED(sorbate_id)) DEALLOCATE(sorbate_id)
   IF (ALLOCATED(sorbate_x)) DEALLOCATE(sorbate_x)
-  DEALLOCATE(new_atom_list)
+  IF (ALLOCATED(new_atom_list)) DEALLOCATE(new_atom_list)
 
   IF (verbose_log) THEN
     WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8)') i_mcstep, 'swap_to' , alive, this_species, box_in, accept

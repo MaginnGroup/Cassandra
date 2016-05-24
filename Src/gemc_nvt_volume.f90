@@ -47,30 +47,24 @@ SUBROUTINE GEMC_NVT_Volume
 
   IMPLICIT NONE
 
-
-  INTEGER :: box1, box2
-
   ! Local variables
 
-  INTEGER :: tot_mol_box1, tot_mol_box2, first_box, second_box
+  INTEGER :: box_grw, box_shk
   INTEGER :: ibox, nvecs_old_1, nvecs_old_2, nvecs_max
-  INTEGER :: is, im
+  INTEGER :: is, im, lm
 
-  REAL(DP) :: delta_volume, factor, delta_e_1, delta_e_2
+  REAL(DP) :: delta_volume, ln_pacc, delta_e_1, delta_e_2
   REAL(DP) :: success_ratio
   REAL(DP), DIMENSION(maxk) :: hx_old_1, hy_old_1, hz_old_1, Cn_old_1
   REAL(DP), DIMENSION(maxk) :: hx_old_2, hy_old_2, hz_old_2, Cn_old_2  
   REAL(DP) :: v_ratio_o, v_total, vol_factor
 
-  LOGICAL :: overlap, accept_or_reject, allocation_cos_sin
+  LOGICAL :: overlap, accept_or_reject
 
   TYPE(Box_Class) :: box_list_old_1, box_list_old_2
   TYPE(Energy_Class) :: energy_old_1, energy_old_2
 
-  REAL(DP) :: checke
-  LOGICAL :: superbad
-
-  INTEGER :: position, alive, my_box
+  INTEGER :: position
 
   REAL(DP), ALLOCATABLE :: pair_nrg_vdw_old(:,:), pair_nrg_qq_old(:,:)
   REAL(DP), ALLOCATABLE :: cos_mol_old(:,:), sin_mol_old(:,:)
@@ -83,43 +77,29 @@ SUBROUTINE GEMC_NVT_Volume
   REAL(DP) :: h_ewald_cut_old_2, rcut_vdwsq_old_2, rcut_coulsq_old_2, rcut_vdw3_old_2
   REAL(DP) :: rcut_vdw6_old_2, rcut_max_old_2
 
-  IF (f_dv) THEN
-     ! Pick a box at random
-     box1 = INT (rranf() * nbr_boxes) + 1
-     
-     
-     ! Obtain the identity of the other box
-     
-     DO WHILE(.TRUE.)
-        
-        box2 = INT ( rranf() * nbr_boxes) + 1
-        
-        IF ( box2 /= box1 ) EXIT
-        
-     END DO
+  ! Pick the box that will grow with uniform probability
+  box_grw = INT(rranf() * nbr_boxes) + 1
+  
+  ! Pick the box that will shrink with uniform probability
+  box_shk = INT(rranf() * (nbr_boxes - 1)) + 1
+  IF (box_grw <= box_shk) box_shk = box_shk + 1
 
-  ELSE IF (f_vratio) THEN
 
-     box1 = 1
-     box2 = 2
+  tot_trials(box_grw) = tot_trials(box_grw) + 1
+  tot_trials(box_shk) = tot_trials(box_shk) + 1
 
-  END IF
-
-  tot_trials(box1) = tot_trials(box1) + 1
-  tot_trials(box2) = tot_trials(box2) + 1
-
-  nvolumes(box1) = nvolumes(box1) + 1
-  nvolumes(box2) = nvolumes(box2) + 1
+  nvolumes(box_grw) = nvolumes(box_grw) + 1
+  nvolumes(box_shk) = nvolumes(box_shk) + 1
 
   ! store old cell matrix 
 
-  box_list_old_1 = box_list(box1)
-  box_list_old_2 = box_list(box2)
+  box_list_old_1 = box_list(box_grw)
+  box_list_old_2 = box_list(box_shk)
 
   ! Store the old configurations of all atoms and COMs
 
-  CALL Save_Cartesian_Coordinates_Box(box1,tot_mol_box1)
-  CALL Save_Cartesian_Coordinates_Box(box2,tot_mol_box2)
+  CALL Save_Cartesian_Coordinates_Box(box_grw)
+  CALL Save_Cartesian_Coordinates_Box(box_shk)
 
   ! store the pair interactions
 
@@ -127,14 +107,16 @@ SUBROUTINE GEMC_NVT_Volume
      ALLOCATE(pair_nrg_vdw_old(SUM(max_molecules),SUM(max_molecules)))
      ALLOCATE(pair_nrg_qq_old(SUM(max_molecules),SUM(max_molecules)))
 
+     !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
      pair_nrg_vdw_old(:,:) = pair_nrg_vdw(:,:)
      pair_nrg_qq_old(:,:) = pair_nrg_qq(:,:)
+     !!$OMP END PARALLEL WORKSHARE
   END IF
 
   ! store cos_mol and sin_mol
 
-  IF ( int_charge_sum_style(box1) == charge_ewald .OR. &
-       int_charge_sum_style(box2) == charge_ewald ) THEN
+  IF ( int_charge_sum_style(box_grw) == charge_ewald .OR. &
+       int_charge_sum_style(box_shk) == charge_ewald ) THEN
      
      ALLOCATE(cos_mol_old(MAXVAL(nvecs),SUM(max_molecules)), Stat = AllocateStatus)
      
@@ -161,99 +143,99 @@ SUBROUTINE GEMC_NVT_Volume
 
   IF (f_dv) THEN
      
-     delta_volume = (1.0_DP - 2.0_DP * rranf()) * box_list(box1)%dv_max
+     delta_volume = rranf() * box_list(box_grw)%dv_max
      
      ! update each of the box volumes
-     
-     box_list(box1)%volume = box_list(box1)%volume + delta_volume
-     box_list(box2)%volume = box_list(box2)%volume - delta_volume
+     box_list(box_grw)%volume = box_list(box_grw)%volume + delta_volume
+     box_list(box_shk)%volume = box_list(box_shk)%volume - delta_volume
      
   ELSE IF (f_vratio) THEN
 
-!!$  ! new volumes
-     v_ratio_o = (box_list(box1)%volume/box_list(box2)%volume)
-     v_total = box_list(box1)%volume + box_list(box2)%volume
+     v_ratio_o = (box_list(box_grw)%volume/box_list(box_shk)%volume)
+     v_total = box_list(box_grw)%volume + box_list(box_shk)%volume
 
-     delta_volume =  (1.0_DP - 2.0_DP * rranf()) * box_list(box1)%dv_max
+     delta_volume = rranf() * box_list(box_grw)%dv_max
      vol_factor = v_ratio_o * EXP(delta_volume)
-     box_list(box1)%volume = v_total * vol_factor / (1.0_DP + vol_factor)
-     box_list(box2)%volume = v_total - box_list(box1)%volume
+
+     ! update each of the box volumes
+     box_list(box_grw)%volume = v_total * vol_factor / (1.0_DP + vol_factor)
+     box_list(box_shk)%volume = v_total - box_list(box_grw)%volume
   
   END IF
 
-  IF ( box_list(box1)%int_box_shape == int_cubic ) THEN
+  IF ( box_list(box_grw)%int_box_shape == int_cubic ) THEN
 
-     box_list(box1)%length(1,1) = (box_list(box1)%volume) ** (1.0_DP/3.0_DP)
-     box_list(box1)%length(2,2) = box_list(box1)%length(1,1)
-     box_list(box1)%length(3,3) = box_list(box1)%length(2,2)
+     box_list(box_grw)%length(1,1) = (box_list(box_grw)%volume) ** (1.0_DP/3.0_DP)
+     box_list(box_grw)%length(2,2) = box_list(box_grw)%length(1,1)
+     box_list(box_grw)%length(3,3) = box_list(box_grw)%length(2,2)
 
   ELSE
 
      err_msg = ''
      err_msg = 'Noncubic shape encountered for the box'
-     err_msg = Int_To_String(box1)
+     err_msg = Int_To_String(box_grw)
      CALL Clean_Abort(err_msg, 'GEMC_NVT_Volume')
 
   END IF
   
-  IF ( box_list(box2)%int_box_shape == int_cubic ) THEN
+  IF ( box_list(box_shk)%int_box_shape == int_cubic ) THEN
 
-     box_list(box2)%length(1,1) = (box_list(box2)%volume) ** (1.0_DP/3.0_DP)
-     box_list(box2)%length(2,2) = box_list(box2)%length(1,1)
-     box_list(box2)%length(3,3) = box_list(box2)%length(2,2)
+     box_list(box_shk)%length(1,1) = (box_list(box_shk)%volume) ** (1.0_DP/3.0_DP)
+     box_list(box_shk)%length(2,2) = box_list(box_shk)%length(1,1)
+     box_list(box_shk)%length(3,3) = box_list(box_shk)%length(2,2)
 
   ELSE
 
      err_msg = ''
      err_msg = 'Noncubic shape encountered for the box'
-     err_msg = Int_To_String(box2)
+     err_msg = Int_To_String(box_shk)
      CALL Clean_Abort(err_msg, 'GEMC_NVT_Volume')
 
   END IF
 
-  CALL Compute_Cell_Dimensions(box1)
-  CALL Compute_Cell_Dimensions(box2)
+  CALL Compute_Cell_Dimensions(box_grw)
+  CALL Compute_Cell_Dimensions(box_shk)
 
-  IF ( l_half_len_cutoff(box1)) THEN
-     IF ( box_list(box1)%int_box_shape == int_cubic ) THEN
+  IF ( l_half_len_cutoff(box_grw)) THEN
+     IF ( box_list(box_grw)%int_box_shape == int_cubic ) THEN
 
         ! store old cutoffs and other associated quantities
 
-        rcut_vdw_old_1 = rcut_vdw(box1)
-        rcut_coul_old_1 = rcut_coul(box1)
-        rcut_vdwsq_old_1 = rcut_vdwsq(box1)
-        rcut_coulsq_old_1 = rcut_coulsq(box1)
+        rcut_vdw_old_1 = rcut_vdw(box_grw)
+        rcut_coul_old_1 = rcut_coul(box_grw)
+        rcut_vdwsq_old_1 = rcut_vdwsq(box_grw)
+        rcut_coulsq_old_1 = rcut_coulsq(box_grw)
 
-        rcut3_old_1 = rcut3(box1)
-        rcut9_old_1 = rcut9(box1)
-        rcut_vdw3_old_1 = rcut_vdw3(box1)
-        rcut_vdw6_old_1 = rcut_vdw6(box1)
+        rcut3_old_1 = rcut3(box_grw)
+        rcut9_old_1 = rcut9(box_grw)
+        rcut_vdw3_old_1 = rcut_vdw3(box_grw)
+        rcut_vdw6_old_1 = rcut_vdw6(box_grw)
 
-        rcut_max_old_1 = rcut_max(box1)
+        rcut_max_old_1 = rcut_max(box_grw)
         
-        IF (int_charge_sum_style(box1) == charge_ewald) THEN
+        IF (int_charge_sum_style(box_grw) == charge_ewald) THEN
            
-!           alpha_ewald_old_1 = alpha_ewald(box1)
-           h_ewald_cut_old_1 = h_ewald_cut(box1)
+!           alpha_ewald_old_1 = alpha_ewald(box_grw)
+           h_ewald_cut_old_1 = h_ewald_cut(box_grw)
 
         END IF
 
-        rcut_vdw(box1) = 0.5_DP * box_list(box1)%length(1,1)
-        rcut_coul(box1) = rcut_vdw(box1)
-        rcut_vdwsq(box1) = rcut_vdw(box1) * rcut_vdw(box1)
-        rcut_coulsq(box1) = rcut_vdwsq(box1)
+        rcut_vdw(box_grw) = 0.5_DP * box_list(box_grw)%length(1,1)
+        rcut_coul(box_grw) = rcut_vdw(box_grw)
+        rcut_vdwsq(box_grw) = rcut_vdw(box_grw) * rcut_vdw(box_grw)
+        rcut_coulsq(box_grw) = rcut_vdwsq(box_grw)
 
-        rcut_vdw3(box1) = rcut_vdwsq(box1) * rcut_vdw(box1)
-        rcut_vdw6(box1) = rcut_vdw3(box1) * rcut_vdw3(box1)
-        rcut3(box1) = rcut_vdw3(box1)
-        rcut9(box1) = rcut3(box1) * rcut_vdw6(box1)
+        rcut_vdw3(box_grw) = rcut_vdwsq(box_grw) * rcut_vdw(box_grw)
+        rcut_vdw6(box_grw) = rcut_vdw3(box_grw) * rcut_vdw3(box_grw)
+        rcut3(box_grw) = rcut_vdw3(box_grw)
+        rcut9(box_grw) = rcut3(box_grw) * rcut_vdw6(box_grw)
 
-        rcut_max(box1) = rcut_vdw(box1)
+        rcut_max(box_grw) = rcut_vdw(box_grw)
 
-        IF (int_charge_sum_style(box1) == charge_ewald) THEN
+        IF (int_charge_sum_style(box_grw) == charge_ewald) THEN
 
-!           alpha_ewald(box1) = ewald_p_sqrt(box1) / rcut_coul(box1)
-           h_ewald_cut(box1) = 2.0_DP * ewald_p(box1) / rcut_coul(box1)
+!           alpha_ewald(box_grw) = ewald_p_sqrt(box_grw) / rcut_coul(box_grw)
+           h_ewald_cut(box_grw) = 2.0_DP * ewald_p(box_grw) / rcut_coul(box_grw)
 
         END IF
 
@@ -261,60 +243,60 @@ SUBROUTINE GEMC_NVT_Volume
 
   ELSE
 
-     IF ( box_list(box1)%int_box_shape == int_cubic ) THEN
-        IF ( 0.5_DP * box_list(box1)%length(1,1) < rcut_vdw(box1) .OR. &
-             0.5_DP * box_list(box1)%length(1,1) < rcut_coul(box1) .OR. &
-             0.5_DP * box_list(box1)%length(1,1) < roff_charmm(box1) .OR. &
-             0.5_DP * box_list(box1)%length(1,1) < roff_switch(box1) ) THEN
+     IF ( box_list(box_grw)%int_box_shape == int_cubic ) THEN
+        IF ( 0.5_DP * box_list(box_grw)%length(1,1) < rcut_vdw(box_grw) .OR. &
+             0.5_DP * box_list(box_grw)%length(1,1) < rcut_coul(box_grw) .OR. &
+             0.5_DP * box_list(box_grw)%length(1,1) < roff_charmm(box_grw) .OR. &
+             0.5_DP * box_list(box_grw)%length(1,1) < roff_switch(box_grw) ) THEN
            err_msg = ''
            err_msg(1) = 'Cutoff is greater than the half box length'
-           err_msg(2) = Int_to_String(box1)
+           err_msg(2) = Int_to_String(box_grw)
            CALL Clean_Abort(err_msg,'GEMC_NVT_Volume')
         END IF
      END IF
      
   END IF
 
-  IF ( l_half_len_cutoff(box2)) THEN
-     IF ( box_list(box2)%int_box_shape == int_cubic ) THEN
+  IF ( l_half_len_cutoff(box_shk)) THEN
+     IF ( box_list(box_shk)%int_box_shape == int_cubic ) THEN
 
         ! store old cutoffs and other associated quantities
 
-        rcut_vdw_old_2 = rcut_vdw(box2)
-        rcut_coul_old_2 = rcut_coul(box2)
-        rcut_vdwsq_old_2 = rcut_vdwsq(box2)
-        rcut_coulsq_old_2 = rcut_coulsq(box2)
+        rcut_vdw_old_2 = rcut_vdw(box_shk)
+        rcut_coul_old_2 = rcut_coul(box_shk)
+        rcut_vdwsq_old_2 = rcut_vdwsq(box_shk)
+        rcut_coulsq_old_2 = rcut_coulsq(box_shk)
 
-        rcut3_old_2 = rcut3(box2)
-        rcut9_old_2 = rcut9(box2)
-        rcut_vdw3_old_2 = rcut_vdw3(box2)
-        rcut_vdw6_old_2 = rcut_vdw6(box2)
+        rcut3_old_2 = rcut3(box_shk)
+        rcut9_old_2 = rcut9(box_shk)
+        rcut_vdw3_old_2 = rcut_vdw3(box_shk)
+        rcut_vdw6_old_2 = rcut_vdw6(box_shk)
 
-        rcut_max_old_2 = rcut_max(box2)
+        rcut_max_old_2 = rcut_max(box_shk)
         
-        IF (int_charge_sum_style(box2) == charge_ewald) THEN
+        IF (int_charge_sum_style(box_shk) == charge_ewald) THEN
            
-!           alpha_ewald_old_2 = alpha_ewald(box2)
-           h_ewald_cut_old_2 = h_ewald_cut(box2)
+!           alpha_ewald_old_2 = alpha_ewald(box_shk)
+           h_ewald_cut_old_2 = h_ewald_cut(box_shk)
 
         END IF
 
-        rcut_vdw(box2) = 0.5_DP * box_list(box2)%length(1,1)
-        rcut_coul(box2) = rcut_vdw(box2)
-        rcut_vdwsq(box2) = rcut_vdw(box2) * rcut_vdw(box2)
-        rcut_coulsq(box2) = rcut_vdwsq(box2)
+        rcut_vdw(box_shk) = 0.5_DP * box_list(box_shk)%length(1,1)
+        rcut_coul(box_shk) = rcut_vdw(box_shk)
+        rcut_vdwsq(box_shk) = rcut_vdw(box_shk) * rcut_vdw(box_shk)
+        rcut_coulsq(box_shk) = rcut_vdwsq(box_shk)
 
-        rcut_vdw3(box2) = rcut_vdwsq(box2) * rcut_vdw(box2)
-        rcut_vdw6(box2) = rcut_vdw3(box2) * rcut_vdw3(box2)
-        rcut3(box2) = rcut_vdw3(box2)
-        rcut9(box2) = rcut3(box2) * rcut_vdw6(box2)
+        rcut_vdw3(box_shk) = rcut_vdwsq(box_shk) * rcut_vdw(box_shk)
+        rcut_vdw6(box_shk) = rcut_vdw3(box_shk) * rcut_vdw3(box_shk)
+        rcut3(box_shk) = rcut_vdw3(box_shk)
+        rcut9(box_shk) = rcut3(box_shk) * rcut_vdw6(box_shk)
 
-        rcut_max(box2) = rcut_vdw(box2)
+        rcut_max(box_shk) = rcut_vdw(box_shk)
         
-        IF (int_charge_sum_style(box2) == charge_ewald) THEN
+        IF (int_charge_sum_style(box_shk) == charge_ewald) THEN
 
-!           alpha_ewald(box2) = ewald_p_sqrt(box2) / rcut_coul(box2)
-           h_ewald_cut(box2) = 2.0_DP * ewald_p(box2) / rcut_coul(box2)
+!           alpha_ewald(box_shk) = ewald_p_sqrt(box_shk) / rcut_coul(box_shk)
+           h_ewald_cut(box_shk) = 2.0_DP * ewald_p(box_shk) / rcut_coul(box_shk)
 
         END IF
 
@@ -323,14 +305,14 @@ SUBROUTINE GEMC_NVT_Volume
 
   ELSE
      
-     IF ( box_list(box2)%int_box_shape == int_cubic ) THEN
-        IF ( 0.5_DP * box_list(box2)%length(1,1) < rcut_vdw(box2) .OR. &
-             0.5_DP * box_list(box2)%length(1,1) < rcut_coul(box2) .OR. &
-             0.5_DP * box_list(box2)%length(1,1) < roff_charmm(box2) .OR. &
-             0.5_DP * box_list(box2)%length(1,1) < roff_switch(box2) ) THEN
+     IF ( box_list(box_shk)%int_box_shape == int_cubic ) THEN
+        IF ( 0.5_DP * box_list(box_shk)%length(1,1) < rcut_vdw(box_shk) .OR. &
+             0.5_DP * box_list(box_shk)%length(1,1) < rcut_coul(box_shk) .OR. &
+             0.5_DP * box_list(box_shk)%length(1,1) < roff_charmm(box_shk) .OR. &
+             0.5_DP * box_list(box_shk)%length(1,1) < roff_switch(box_shk) ) THEN
            err_msg = ''
            err_msg(1) = 'Cutoff is greater than the half box length'
-           err_msg(2) = Int_To_String(box2)
+           err_msg(2) = Int_To_String(box_shk)
            CALL Clean_Abort(err_msg,'GEMC_NVT_Volume')
         END IF
      END IF
@@ -340,124 +322,100 @@ SUBROUTINE GEMC_NVT_Volume
 
   ! Rescale the COM and all atomic positions
 
-  CALL Scale_COM_Cartesian(box1,box_list_old_1)
-  CALL Scale_COM_Cartesian(box2,box_list_old_2)
+  CALL Scale_COM_Cartesian(box_grw,box_list_old_1)
+  CALL Scale_COM_Cartesian(box_shk,box_list_old_2)
 
   ! Now let us compute the energy change due to the combined move
 
-  energy_old_1 = energy(box1)
-  energy_old_2 = energy(box2)
+  energy_old_1 = energy(box_grw)
+  energy_old_2 = energy(box_shk)
 
-  IF ( int_charge_sum_style(box1) == charge_ewald) THEN
+  IF ( int_charge_sum_style(box_grw) == charge_ewald) THEN
      ! Then we need to determine if the number of k vectors change due to this volume move
      ! we basically follow the procedure outlined in volume_change.f90 for the two boxes.
      ! Note that the number of k vectors will increase only for the box that is expanding
 
      ! store old terms 
 
-     nvecs_old_1 = nvecs(box1)
-     nvecs_old_2 = nvecs(box2)
+     nvecs_old_1 = nvecs(box_grw)
+     nvecs_old_2 = nvecs(box_shk)
      nvecs_max = MAXVAL(nvecs)
 
      !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED) 
      cos_sum_old(:,:) = cos_sum(:,:)
      sin_sum_old(:,:) = sin_sum(:,:)
 
-     hx_old_1(:) = hx(:,box1)
-     hy_old_1(:) = hy(:,box1)
-     hz_old_1(:) = hz(:,box1)
-     Cn_old_1(:) = Cn(:,box1)
+     hx_old_1(:) = hx(:,box_grw)
+     hy_old_1(:) = hy(:,box_grw)
+     hz_old_1(:) = hz(:,box_grw)
+     Cn_old_1(:) = Cn(:,box_grw)
 
-     hx_old_2(:) = hx(:,box2)
-     hy_old_2(:) = hy(:,box2)
-     hz_old_2(:) = hz(:,box2)
-     Cn_old_2(:) = Cn(:,box2)
+     hx_old_2(:) = hx(:,box_shk)
+     hy_old_2(:) = hy(:,box_shk)
+     hz_old_2(:) = hz(:,box_shk)
+     Cn_old_2(:) = Cn(:,box_shk)
 
      !!$OMP END PARALLEL WORKSHARE
 
      ! Determine the new k vectors for this box. The call will change Cn, hx, hy and hz and hence will
      ! change cos_sum and sin_sum.
      
-     CALL Ewald_Reciprocal_Lattice_Vector_Setup(box1)
-     CALL Ewald_Reciprocal_Lattice_Vector_Setup(box2)
+     CALL Ewald_Reciprocal_Lattice_Vector_Setup(box_grw)
+     CALL Ewald_Reciprocal_Lattice_Vector_Setup(box_shk)
 
-     ! check to see if we need to reallocate arrays
+     ! reallocate arrays
 
-     allocation_cos_sin = .FALSE.
+     DEALLOCATE(cos_sum,sin_sum)
 
-     IF ((nvecs(box1) > SIZE(cos_sum,1)) .OR. (nvecs(box2) > SIZE(cos_sum,1))) THEN
-        ! we need to expand the cos_sum and sin_sum arrays
-        allocation_cos_sin = .TRUE.
+     IF (ALLOCATED(cos_mol)) DEALLOCATE(cos_mol)
+     IF (ALLOCATED(sin_mol)) DEALLOCATE(sin_mol)
 
-        DEALLOCATE(cos_sum,sin_sum)
-
-        IF (ALLOCATED(cos_mol)) DEALLOCATE(cos_mol)
-        IF (ALLOCATED(sin_mol)) DEALLOCATE(sin_mol)
-
-        ALLOCATE(cos_sum(MAXVAL(nvecs),nbr_boxes),Stat=AllocateStatus)
-        
-        IF (AllocateStatus /= 0) THEN
-           err_msg = ''
-           err_msg(1) = 'Memory could not be allocated for cos_sum'
-           err_msg(2) = 'allocation_cos_sin'
-           CALL Clean_Abort(err_msg,'GEMC_NVT_VOLUME')
-        END IF
-        
-        
-        ALLOCATE(sin_sum(MAXVAL(nvecs),nbr_boxes), Stat = AllocateStatus)
-        
-        IF (Allocatestatus /= 0) THEN
-           err_msg = ''
-           err_msg(1) = 'Memory could not be allocated for sin_sum'
-           err_msg(2) = 'allocation_cos_sin'
-           CALL Clean_Abort(err_msg,'GEMC_NVT_VOLUME')
-        END IF
-
-        ALLOCATE(cos_mol(MAXVAL(nvecs),SUM(max_molecules)), Stat = AllocateStatus)
-        
-        IF (AllocateStatus /= 0) THEN
-           err_msg = ''
-           err_msg(1) = 'Memory could not be allocated for cos_mol'
-           err_msg(2) = 'allocation_cos_sin'
-           CALL Clean_Abort(err_msg,'gemc_volume_change.f90')
-        END IF
-        
-        ALLOCATE(sin_mol(MAXVAL(nvecs),SUM(max_molecules)), Stat = AllocateStatus)
-        
-        IF (AllocateStatus /= 0) THEN
-           err_msg = ''
-           err_msg(1) = 'Memory could not be allocated for sin_mol'
-           err_msg(2) = 'allocation_cos_sin'
-           CALL Clean_Abort(err_msg,'gemc_volume_change.f90')
-        END IF
-        
+     ALLOCATE(cos_sum(MAXVAL(nvecs),nbr_boxes),Stat=AllocateStatus)
+     
+     IF (AllocateStatus /= 0) THEN
+        err_msg = ''
+        err_msg(1) = 'Memory could not be allocated for cos_sum'
+        CALL Clean_Abort(err_msg,'GEMC_NVT_VOLUME')
      END IF
      
+     
+     ALLOCATE(sin_sum(MAXVAL(nvecs),nbr_boxes), Stat = AllocateStatus)
+     
+     IF (Allocatestatus /= 0) THEN
+        err_msg = ''
+        err_msg(1) = 'Memory could not be allocated for sin_sum'
+        CALL Clean_Abort(err_msg,'GEMC_NVT_VOLUME')
+     END IF
+
+     ALLOCATE(cos_mol(MAXVAL(nvecs),SUM(max_molecules)), Stat = AllocateStatus)
+     
+     IF (AllocateStatus /= 0) THEN
+        err_msg = ''
+        err_msg(1) = 'Memory could not be allocated for cos_mol'
+        CALL Clean_Abort(err_msg,'gemc_volume_change.f90')
+     END IF
+     
+     ALLOCATE(sin_mol(MAXVAL(nvecs),SUM(max_molecules)), Stat = AllocateStatus)
+     
+     IF (AllocateStatus /= 0) THEN
+        err_msg = ''
+        err_msg(1) = 'Memory could not be allocated for sin_mol'
+        CALL Clean_Abort(err_msg,'gemc_volume_change.f90')
+     END IF
+        
   END IF
   
   ! Compute the energies of the boxes. For computational efficiency,
   ! we will determine the energy of the box whose volume decreased
   ! as this box will likely to have more overlaps
 
-  IF (box_list(box1)%volume < box_list_old_1%volume) THEN
-     ! box1 is shrinking
-     first_box = box1
-     second_box = box2
-  ELSE
-     ! else box2 is shrinking
-     first_box = box2
-     second_box = box1
-  END IF
-
-  CALL Compute_System_Total_Energy(first_box, .TRUE., overlap)
+  CALL Compute_System_Total_Energy(box_shk, .TRUE., overlap)
   
    IF (overlap) THEN 
-
       CALL Reset_Coords
-
    ELSE
       
-      CALL Compute_System_Total_Energy(second_box, .TRUE.,overlap)
+      CALL Compute_System_Total_Energy(box_grw, .TRUE.,overlap)
      
       ! actually there should be no overlap for the box whose dimensions
       ! increase but we will include this check only for safety.
@@ -467,84 +425,79 @@ SUBROUTINE GEMC_NVT_Volume
       ELSE
          ! accept or reject the move based on the acceptance rule
          
-         delta_e_1 = energy(box1)%total - energy_old_1%total
-         delta_e_2 = energy(box2)%total - energy_old_2%total
+         delta_e_1 = energy(box_grw)%total - energy_old_1%total
+         delta_e_2 = energy(box_shk)%total - energy_old_2%total
          
          IF (f_dv) THEN
-            factor = beta(box1) * delta_e_1 + beta(box2) * delta_e_2 - &
-                 tot_mol_box1 * DLOG( box_list(box1)%volume / box_list_old_1%volume) - &
-                 tot_mol_box2 * DLOG( box_list(box2)%volume / box_list_old_2%volume)
+            ln_pacc = beta(box_grw) * delta_e_1 + beta(box_shk) * delta_e_2 &
+                    - REAL(SUM(nmols(:,box_grw)),DP) * DLOG( box_list(box_grw)%volume / box_list_old_1%volume) &
+                    - REAL(SUM(nmols(:,box_shk)),DP) * DLOG( box_list(box_shk)%volume / box_list_old_2%volume)
             
          ELSE IF(f_vratio) THEN
             
-            factor = beta(box1) * delta_e_1 + beta(box2) * delta_e_2 - &
-                 REAL((tot_mol_box1 + 1),DP) * DLOG( box_list(box1)%volume / box_list_old_1%volume) - &
-                 REAL((tot_mol_box2 + 1),DP) * DLOG( box_list(box2)%volume / box_list_old_2%volume)
+            ln_pacc = beta(box_grw) * delta_e_1 + beta(box_shk) * delta_e_2 &
+                    - REAL(SUM(nmols(:,box_grw))+1,DP) * DLOG( box_list(box_grw)%volume / box_list_old_1%volume) &
+                    - REAL(SUM(nmols(:,box_shk))+1,DP) * DLOG( box_list(box_shk)%volume / box_list_old_2%volume)
             
          END IF
 
-         accept = accept_or_reject(factor)
+         accept = accept_or_reject(ln_pacc)
          
          IF (accept) THEN
             
-            nvol_success(box1) = nvol_success(box1) + 1
-            nvol_success(box2) = nvol_success(box2) + 1
-            ivol_success(box1) = ivol_success(box1) + 1
-            ivol_success(box2) = ivol_success(box2) + 1
+            nvol_success(box_grw) = nvol_success(box_grw) + 1
+            nvol_success(box_shk) = nvol_success(box_shk) + 1
+            ivol_success(box_grw) = ivol_success(box_grw) + 1
+            ivol_success(box_shk) = ivol_success(box_shk) + 1
             ! energy,positions and box dimensions are already updated
-            IF (int_charge_sum_style(box1) == charge_ewald) THEN
+            IF (int_charge_sum_style(box_grw) == charge_ewald) THEN
                
-               IF (allocation_cos_sin) THEN
+               ! cos_sum and sin_sum were deallocated, destroying the terms
+               ! for boxes other than box_grw, box_shk. so restore these
+               
+               DO ibox = 1, nbr_boxes
                   
-                  ! cos_sum and sin_sum were deallocated, destroying the terms
-                  ! for boxes other than box1, box2. so restore these
-                  
-                  DO ibox = 1, nbr_boxes
+                  IF ( .NOT. ( (ibox /= box_grw) .OR. (ibox /= box_shk))) THEN
+                     ! transfer cos_sum and sin_sum for other boxes
+                     ! Note that direct assignment of cos_sum_old to cos_sum
+                     ! will result into an error as these two arrays are of
+                     ! different dimensions
+                     cos_sum(1:nvecs(ibox),ibox) = cos_sum_old(1:nvecs(ibox),ibox)
+                     sin_sum(1:nvecs(ibox),ibox) = sin_sum_old(1:nvecs(ibox),ibox)
                      
-                     IF ( .NOT. ( (ibox /= box1) .OR. (ibox /= box2))) THEN
-                        ! transfer cos_sum and sin_sum for other boxes
-                        ! Note that direct assignment of cos_sum_old to cos_sum
-                        ! will result into an error as these two arrays are of
-                        ! different dimensions
-                        cos_sum(1:nvecs(ibox),ibox) = cos_sum_old(1:nvecs(ibox),ibox)
-                        sin_sum(1:nvecs(ibox),ibox) = sin_sum_old(1:nvecs(ibox),ibox)
+                  END IF
+                  
+               END DO
+               ! Now deallocate cos_sum_old and sin_sum_old so that they have the same dimensions
+               ! as sin_sum and cos_sum                  
+               DEALLOCATE(cos_sum_old,sin_sum_old)
+               ALLOCATE(cos_sum_old(SIZE(cos_sum,1),nbr_boxes))
+               ALLOCATE(sin_sum_old(SIZE(sin_sum,1),nbr_boxes))
+               
+               ! Now assign cos_mol and sin_mol for the molecules present in other
+               ! boxes. Note that cos_mol for box_grw and box_shk have been assigned
+               ! when a call to Compute_System_Total_Energy was placed.
+               
+               DO ibox = 1, nbr_boxes
+                  IF (ibox == box_grw .OR. ibox == box_shk) CYCLE
                         
-                     END IF
-                     
-                  END DO
-                  ! Now deallocate cos_sum_old and sin_sum_old so that they have the same dimensions
-                  ! as sin_sum and cos_sum                  
-                  DEALLOCATE(cos_sum_old,sin_sum_old)
-                  ALLOCATE(cos_sum_old(SIZE(cos_sum,1),nbr_boxes))
-                  ALLOCATE(sin_sum_old(SIZE(sin_sum,1),nbr_boxes))
-                  
-                  ! Now assign cos_mol and sin_mol for the molecules present in other
-                  ! boxes. Note that cos_mol for box1 and box2 have been assigned
-                  ! when a call to Compute_System_Total_Energy was placed.
-                  
-                  DO ibox = 1, nbr_boxes
-                     DO is = 1, nspecies
-                        DO im = 1, nmols(is,ibox)
-                           alive = locate(im,is,ibox)
-                           
-                           my_box = molecule_list(alive,is)%which_box
-                           
-                           IF (my_box == box1 .OR. my_box == box2) CYCLE
-                           
-                           CALL Get_Position_Alive(alive,is,position)
-                           
-                           !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-                           cos_mol(1:nvecs(my_box),position) = cos_mol_old(1:nvecs(my_box),position)
-                           sin_mol(1:nvecs(my_box),position) = sin_mol_old(1:nvecs(my_box),position)
-                           
-                           cos_mol(nvecs(my_box)+1:MAXVAL(nvecs),position) = 0.0_DP
-                           sin_mol(nvecs(my_box)+1:MAXVAL(nvecs),position) = 0.0_DP
-                           !!$OMP END PARALLEL WORKSHARE
-                           
-                        END DO
+                  DO is = 1, nspecies
+                     DO im = 1, nmols(is,ibox)
+                        lm = locate(im,is,ibox)
+                        
+                        CALL Get_Position_Alive(lm,is,position)
+                        
+                        !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+                        cos_mol(1:nvecs(ibox),position) = cos_mol_old(1:nvecs(ibox),position)
+                        sin_mol(1:nvecs(ibox),position) = sin_mol_old(1:nvecs(ibox),position)
+                        
+                        cos_mol(nvecs(ibox)+1:MAXVAL(nvecs),position) = 0.0_DP
+                        sin_mol(nvecs(ibox)+1:MAXVAL(nvecs),position) = 0.0_DP
+                        !!$OMP END PARALLEL WORKSHARE
+                        
                      END DO
                   END DO
-               END IF
+               END DO
                DEALLOCATE(cos_mol_old,sin_mol_old)
             END IF  ! ends if of 316
             
@@ -561,19 +514,19 @@ SUBROUTINE GEMC_NVT_Volume
    END IF
 
    IF (verbose_log) THEN
-     WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8)') i_mcstep, 'vol_swap', box1, accept
+     WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8)') i_mcstep, 'volswap_to', box_grw, accept
    END IF
 
   ! Update the maximum volume modulus of equilibration runs
-   IF (MOD(nvolumes(box1),nvol_update) == 0 ) THEN
+   IF (MOD(nvolumes(box_grw),nvol_update) == 0 ) THEN
 
       IF ( int_run_style == run_equil) THEN
 
-         success_ratio = REAL(ivol_success(box1),DP)/REAL(nvol_update,DP)
-         ivol_success(box1) = 0
-         ivol_success(box2) = 0
+         success_ratio = REAL(ivol_success(box_grw),DP)/REAL(nvol_update,DP)
+         ivol_success(box_grw) = 0
+         ivol_success(box_shk) = 0
       
-         IF (box_list(box1)%int_box_shape == int_cubic ) THEN
+         IF (box_list(box_grw)%int_box_shape == int_cubic ) THEN
             IF ( success_ratio < 0.0001 ) THEN
                ! decrease the maximum displacement by 5%
                
@@ -589,11 +542,11 @@ SUBROUTINE GEMC_NVT_Volume
 
       ELSE
 
-         success_ratio = REAL(nvol_success(box1),DP)/REAL(nvolumes(box1),DP)
+         success_ratio = REAL(nvol_success(box_grw),DP)/REAL(nvolumes(box_grw),DP)
          
       END IF
 
-      WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,F8.5)') i_mcstep, 'vol_swap', box1, success_ratio
+      WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,3X,X,F8.5)') i_mcstep, 'vol_swap', success_ratio
       
    END IF
    
@@ -603,16 +556,16 @@ SUBROUTINE GEMC_NVT_Volume
      
      IMPLICIT NONE
      
-     CALL Reset_Cartesian_Coordinates_Box(box1)
-     CALL Reset_Cartesian_Coordinates_Box(box2)
+     CALL Reset_Cartesian_Coordinates_Box(box_grw)
+     CALL Reset_Cartesian_Coordinates_Box(box_shk)
      
      ! box list and energy 
      
-     box_list(box1) = box_list_old_1
-     box_list(box2) = box_list_old_2
+     box_list(box_grw) = box_list_old_1
+     box_list(box_shk) = box_list_old_2
      
-     energy(box1) = energy_old_1
-     energy(box2) = energy_old_2
+     energy(box_grw) = energy_old_1
+     energy(box_shk) = energy_old_2
 
      IF (l_pair_nrg) THEN
         
@@ -624,96 +577,92 @@ SUBROUTINE GEMC_NVT_Volume
         DEALLOCATE(pair_nrg_vdw_old,pair_nrg_qq_old)
      END IF
 
-     IF (l_half_len_cutoff(box1)) THEN
+     IF (l_half_len_cutoff(box_grw)) THEN
         
-        rcut_vdw(box1) = rcut_vdw_old_1
-        rcut_coul(box1) = rcut_coul_old_1
-        rcut_vdwsq(box1) = rcut_vdwsq_old_1
-        rcut_coulsq(box1) = rcut_coulsq_old_1
+        rcut_vdw(box_grw) = rcut_vdw_old_1
+        rcut_coul(box_grw) = rcut_coul_old_1
+        rcut_vdwsq(box_grw) = rcut_vdwsq_old_1
+        rcut_coulsq(box_grw) = rcut_coulsq_old_1
         
-        rcut3(box1) = rcut3_old_1
-        rcut9(box1) = rcut9_old_1
-        rcut_vdw3(box1) = rcut_vdw3_old_1
-        rcut_vdw6(box1) = rcut_vdw6_old_1
+        rcut3(box_grw) = rcut3_old_1
+        rcut9(box_grw) = rcut9_old_1
+        rcut_vdw3(box_grw) = rcut_vdw3_old_1
+        rcut_vdw6(box_grw) = rcut_vdw6_old_1
         
-        rcut_max(box1) = rcut_max_old_1
+        rcut_max(box_grw) = rcut_max_old_1
         
-        IF( int_charge_sum_style(box1) == charge_ewald ) THEN
+        IF( int_charge_sum_style(box_grw) == charge_ewald ) THEN
            
-           !           alpha_ewald(box1) = alpha_ewald_old_1
-           h_ewald_cut(box1) = h_ewald_cut_old_1
+           !           alpha_ewald(box_grw) = alpha_ewald_old_1
+           h_ewald_cut(box_grw) = h_ewald_cut_old_1
            
         END IF
         
         
      END IF
 
-     IF (l_half_len_cutoff(box2)) THEN
+     IF (l_half_len_cutoff(box_shk)) THEN
         
-        rcut_vdw(box2) = rcut_vdw_old_2
-        rcut_coul(box2) = rcut_coul_old_2
-        rcut_vdwsq(box2) = rcut_vdwsq_old_2
-        rcut_coulsq(box2) = rcut_coulsq_old_2
+        rcut_vdw(box_shk) = rcut_vdw_old_2
+        rcut_coul(box_shk) = rcut_coul_old_2
+        rcut_vdwsq(box_shk) = rcut_vdwsq_old_2
+        rcut_coulsq(box_shk) = rcut_coulsq_old_2
         
-        rcut3(box2) = rcut3_old_2
-        rcut9(box2) = rcut9_old_2
-        rcut_vdw3(box2) = rcut_vdw3_old_2
-        rcut_vdw6(box2) = rcut_vdw6_old_2
+        rcut3(box_shk) = rcut3_old_2
+        rcut9(box_shk) = rcut9_old_2
+        rcut_vdw3(box_shk) = rcut_vdw3_old_2
+        rcut_vdw6(box_shk) = rcut_vdw6_old_2
         
-        rcut_max(box2) = rcut_max_old_2
+        rcut_max(box_shk) = rcut_max_old_2
 
-        IF( int_charge_sum_style(box2) == charge_ewald ) THEN
+        IF( int_charge_sum_style(box_shk) == charge_ewald ) THEN
            
-!           alpha_ewald(box2) = alpha_ewald_old_2
-           h_ewald_cut(box2) = h_ewald_cut_old_2
+!           alpha_ewald(box_shk) = alpha_ewald_old_2
+           h_ewald_cut(box_shk) = h_ewald_cut_old_2
            
         END IF
         
         
      END IF
      
-     IF (int_charge_sum_style(box1) == charge_ewald) THEN
+     IF (int_charge_sum_style(box_grw) == charge_ewald) THEN
         
-        nvecs(box1) = nvecs_old_1
-        nvecs(box2) = nvecs_old_2
-        
-        IF ( allocation_cos_sin) THEN
-           
-           DEALLOCATE(cos_sum,sin_sum)
-           DEALLOCATE(cos_mol,sin_mol)
-           
-           ALLOCATE(cos_sum(MAXVAL(nvecs),nbr_boxes),stat = AllocateStatus)
-           
-           IF (Allocatestatus /= 0) THEN
-              err_msg = ''
-              err_msg(1) = 'Memory could not be allocated for cos_sum'
-              err_msg(2) = 'volume move rejected'
-              CALL Clean_Abort(err_msg,'Volume_Change')
-           END IF
-           
-           ALLOCATE(sin_sum(MAXVAL(nvecs),nbr_boxes),Stat = Allocatestatus)
-           IF (Allocatestatus /= 0) THEN
-              err_msg = ''
-              err_msg(1) = 'Memory could not be allocated in the volume rejection'
-              CALL Clean_Abort(err_msg,'Volume_Change')
-           END IF
-           
-           ALLOCATE(cos_mol(MAXVAL(nvecs),SUM(max_molecules)),Stat = Allocatestatus)
-           IF (Allocatestatus /= 0) THEN
-              err_msg = ''
-              err_msg(1) = 'Memory could not be allocated for cos_mol in the volume rejection'
-              CALL Clean_Abort(err_msg,'GEMC NVT Volume_Change')
-           END IF
-           
-           ALLOCATE(sin_mol(MAXVAL(nvecs),SUM(max_molecules)),Stat = Allocatestatus)
-          IF (Allocatestatus /= 0) THEN
-             err_msg = ''
-             err_msg(1) = 'Memory could not be allocated for sin_mol in the volume rejection'
-             CALL Clean_Abort(err_msg,'GEMC NVT Volume_Change')
-          END IF
-          
+       nvecs(box_grw) = nvecs_old_1
+       nvecs(box_shk) = nvecs_old_2
+       
+       DEALLOCATE(cos_sum,sin_sum)
+       DEALLOCATE(cos_mol,sin_mol)
+       
+       ALLOCATE(cos_sum(MAXVAL(nvecs),nbr_boxes),stat = AllocateStatus)
+       
+       IF (Allocatestatus /= 0) THEN
+          err_msg = ''
+          err_msg(1) = 'Memory could not be allocated for cos_sum'
+          err_msg(2) = 'volume move rejected'
+          CALL Clean_Abort(err_msg,'Volume_Change')
        END IF
        
+       ALLOCATE(sin_sum(MAXVAL(nvecs),nbr_boxes),Stat = Allocatestatus)
+       IF (Allocatestatus /= 0) THEN
+          err_msg = ''
+          err_msg(1) = 'Memory could not be allocated in the volume rejection'
+          CALL Clean_Abort(err_msg,'Volume_Change')
+       END IF
+       
+       ALLOCATE(cos_mol(MAXVAL(nvecs),SUM(max_molecules)),Stat = Allocatestatus)
+       IF (Allocatestatus /= 0) THEN
+          err_msg = ''
+          err_msg(1) = 'Memory could not be allocated for cos_mol in the volume rejection'
+          CALL Clean_Abort(err_msg,'GEMC NVT Volume_Change')
+       END IF
+       
+       ALLOCATE(sin_mol(MAXVAL(nvecs),SUM(max_molecules)),Stat = Allocatestatus)
+       IF (Allocatestatus /= 0) THEN
+          err_msg = ''
+          err_msg(1) = 'Memory could not be allocated for sin_mol in the volume rejection'
+          CALL Clean_Abort(err_msg,'GEMC NVT Volume_Change')
+       END IF
+          
        !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
        
        cos_sum(:,:) = cos_sum_old(:,:)
@@ -722,15 +671,15 @@ SUBROUTINE GEMC_NVT_Volume
        cos_mol(1:SIZE(cos_mol_old,1),:) = cos_mol_old(:,:)
        sin_mol(1:SIZE(sin_mol_old,1),:) = sin_mol_old(:,:)
        
-       hx(:,box1) = hx_old_1(:)
-       hy(:,box1) = hy_old_1(:)
-       hz(:,box1) = hz_old_1(:)
-       Cn(:,box1) = Cn_old_1(:)
+       hx(:,box_grw) = hx_old_1(:)
+       hy(:,box_grw) = hy_old_1(:)
+       hz(:,box_grw) = hz_old_1(:)
+       Cn(:,box_grw) = Cn_old_1(:)
        
-       hx(:,box2) = hx_old_2(:)
-       hy(:,box2) = hy_old_2(:)
-       hz(:,box2) = hz_old_2(:)
-       Cn(:,box2) = Cn_old_2(:)
+       hx(:,box_shk) = hx_old_2(:)
+       hy(:,box_shk) = hy_old_2(:)
+       hz(:,box_shk) = hz_old_2(:)
+       Cn(:,box_shk) = Cn_old_2(:)
 
        !!$OMP END PARALLEL WORKSHARE
        

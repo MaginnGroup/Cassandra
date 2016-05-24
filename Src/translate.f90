@@ -91,6 +91,7 @@ SUBROUTINE Translate
   E_qq = 0.0_DP
   E_reciprocal_move = 0.0_DP
   inter_overlap = .FALSE.
+  accept = .FALSE.
 
   ! Sum the total number of molecules 
   total_mols = 0 ! sum over species, box
@@ -232,8 +233,6 @@ SUBROUTINE Translate
      IF (int_sim_type == sim_nvt_min) THEN
         IF (delta_e  <= 0.0_DP) THEN
            accept = .TRUE.
-        ELSE
-           accept = .FALSE.
         END IF
      ELSE
 
