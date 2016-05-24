@@ -3,8 +3,8 @@ Run info
 version: Cassandra Development Version
 inputfile: npt.inp
 name of run: npt.out
-date (mm/dd/yyyy): 05/18/2016
-time: 17:23:28
+date (mm/dd/yyyy): 05/24/2016
+time: 00:38:08
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -163,10 +163,10 @@ Molecule info
    3 angle(s) specified.
    2 dihedral(s) specified.
    0 improper(s) specified.
-   3 fragments specified.
-   2  fragment bonds specified.
+   3 fragment(s) specified.
+   2 fragment bond(s) specified.
  
- Species  Nbr molecules
+ Species  Max molecules
  -------  -------------
       1             30
  
@@ -235,17 +235,16 @@ Pressure
  
 Move probabilities
 ********************************************************************************
- Translation probability is     30.000000
+Probability for translation               30.000000
  Maximum displacement width for species  1 in box  1  is      0.38134
- Rotation probability is     30.000000
+Probability for rotation                  30.000000
  The rotational width for the species    1 in box  1   is      0.5202 radians
-    Probability for regrowth is     30.000000
-    Cumulative probability for regrowth of species     1  is   1.000000
-          Probability for volume move is       1.000000
- Writing maximum volume displacement elements for box           1
-                 949.180   A^3
+Probability for regrowth                  30.000000
+ Cumulative probability for regrowth of species     1  is   1.000000
+Probability for volume move                1.000000
+ Maximum volume displacement for box  1 is    949.180  A^3
  Volume moves will be performed in actual volumes
- Number of moves is :   4
+Number of moves is :   4
  Move probabilities do not sum to 1.0
  Dividing each probability by    91.000000
 ********************************************************************************
@@ -262,9 +261,9 @@ Simulation length info
 ********************************************************************************
 Thermodynamic quantities will be written every         10 Sweeps    
 Coordinates will be written every                      10 Sweeps    
-movie header file is                   npt.out.H
-movie_XYZ file is                      npt.out.xyz
-The simulation will be run for                          100 Sweeps    
+ movie header file is                  npt.out.H
+ movie_XYZ file is                     npt.out.xyz
+The simulation will be run for                        100 Sweeps    
 ********************************************************************************
  
 Property info
@@ -344,30 +343,22 @@ Compute total energy
  
 Run simulation
 ********************************************************************************
-      Step            Move Spc Box  Success  MaxWidth
-      1069   volume_change       2  0.00000
- ********* 
-      1605   volume_change       2  0.00000
- ********* 
-      2592   volume_change       2  0.00000
- ********* 
-      3060     translation   1   1  0.51200
-      3087        rotation   1   1  0.52200
-      3622   volume_change       2  0.00000
- ********* 
-      4577   volume_change       2  0.00000
- ********* 
-      5893   volume_change       2  0.00000
- ********* 
-      6043        rotation   1   1  0.52450
-      6122     translation   1   1  0.50650
-      6573   volume_change       2  0.00000
- ********* 
-      7347   volume_change       2  0.00000
- ********* 
-      8141   volume_change       2  0.00000
- ********* 
-      9097        rotation   1   1  0.51367
+      Step       Move   Mol Spc Box  Success  MaxWidth
+      1006     volume             1  0.30000
+      1839     volume             1  0.25000
+      2555     volume             1  0.23333
+      2956     rotate         1   1  0.56400
+      3291  translate         1   1  0.55700
+      3799     volume             1  0.17500
+      5367     volume             1  0.16000
+      5896     volume             1  0.20000
+      5898     rotate         1   1  0.54250
+      6425  translate         1   1  0.56250
+      6504     volume             1  0.20000
+      7568     volume             1  0.21250
+      8280     volume             1  0.21111
+      8854     rotate         1   1  0.53633
+      8921     volume             1  0.24000
 ********************************************************************************
  
 Report ending energy & then re-compute from scratch
@@ -377,18 +368,18 @@ Report ending energy & then re-compute from scratch
  Ending energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                -35751.320
- Intra molecular energy is              30750.400
+ Total system energy is                -37179.628
+ Intra molecular energy is              26941.536
  Bond energy is                             0.000
- Angle energy is                        15051.336
- Dihedral energy is                     15699.063
+ Angle energy is                        11592.310
+ Dihedral energy is                     15349.226
  Improper angle energy is                   0.000
- Intra molecule vdw is                  -1833.162
+ Intra molecule vdw is                  -1819.318
  Intra molecule q is                        0.000
- Inter molecule vdw is                 -43357.162
- Long range correction is              -14117.297
- Inter molecule q is                   421265.900
- Reciprocal ewald is                    39788.190
+ Inter molecule vdw is                 -43321.990
+ Long range correction is              -12567.126
+ Inter molecule q is                   421598.322
+ Reciprocal ewald is                    40237.136
  Self ewald is                        -468248.188
  -----------------------------------------------------------
  
@@ -396,18 +387,18 @@ Report ending energy & then re-compute from scratch
  Energy components from total energy call for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                -35751.320
- Intra molecular energy is              30750.400
+ Total system energy is                -37179.628
+ Intra molecular energy is              26941.536
  Bond energy is                             0.000
- Angle energy is                        15051.336
- Dihedral energy is                     15699.063
+ Angle energy is                        11592.310
+ Dihedral energy is                     15349.226
  Improper angle energy is                   0.000
- Intra molecule vdw is                  -1833.162
+ Intra molecule vdw is                  -1819.318
  Intra molecule q is                        0.000
- Inter molecule vdw is                 -43357.162
- Long range correction is              -14117.297
- Inter molecule q is                   421265.900
- Reciprocal ewald is                    39788.190
+ Inter molecule vdw is                 -43321.990
+ Long range correction is              -12567.126
+ Inter molecule q is                   421598.322
+ Reciprocal ewald is                    40237.136
  Self ewald is                        -468248.188
  -----------------------------------------------------------
 ********************************************************************************
@@ -416,14 +407,14 @@ Report ending energy & then re-compute from scratch
 Writing information for box  1
 ********************************************************************************
                 Move      Trials     Success   % Success
-              Volume          99          15       15.15
+              Volume         102          24       23.53
  
    ---------------------------------------------------------
    Writing information for species  1
  
                 Move      Trials     Success   % Success
-           Translate        2978        1473       49.46
-              Rotate        3000        1541       51.37
+           Translate        2878        1602       55.66
+              Rotate        3073        1649       53.66
    ---------------------------------------------------------
  
 ********************************************************************************
@@ -434,17 +425,17 @@ Writing information about fragments
    ---------------------------------------------------------
    Writing information for species  1
             Fragment      Trials     Success   % Success
-                   1        1534        1322       86.18
-                   2        1489         947       63.60
+                   1        1491        1298       87.06
+                   2        1556        1025       65.87
    ---------------------------------------------------------
 ********************************************************************************
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            3.669783 secs.
- Rotation time =               3.698552 secs.
- Volume change time =          3.248497 secs.
- Regrowth time =               5.810866 secs.
+ Translation time =            3.762914 secs.
+ Rotation time =               4.029034 secs.
+ Volume change time =          3.645465 secs.
+ Regrowth time =               6.098713 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -459,5 +450,5 @@ Writing information about fragments
          0      Hours
          0    Minutes
         18    Seconds
-       971         ms
+        56         ms
 ********************************************************************************

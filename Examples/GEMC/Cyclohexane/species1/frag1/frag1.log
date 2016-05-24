@@ -3,8 +3,8 @@ Run info
 version: Cassandra Development Version
 inputfile: frag1.inp
 name of run: frag1
-date (mm/dd/yyyy): 05/23/2016
-time: 23:17:59
+date (mm/dd/yyyy): 05/24/2016
+time: 00:41:24
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
 
@@ -74,7 +74,7 @@ Copy input file
  Units    Steps
  Prop_Freq  100
  Coord_Freq   5000
- Run          10000000
+ Run          10000
  
  # Property_Info 1
  Energy_Total
@@ -178,7 +178,7 @@ Thermodynamic quantities will be written every        100 Steps
 Coordinates will be written every                    5000 Steps     
  movie header file is                  frag1.H
  movie_XYZ file is                     frag1.xyz
-The simulation will be run for                   10000000 Steps     
+The simulation will be run for                      10000 Steps     
 ********************************************************************************
 
 File info
@@ -243,11 +243,11 @@ Report ending energy & then re-compute from scratch
  Ending energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                 97685.119
- Intra molecular energy is              97685.119
+ Total system energy is                 96954.677
+ Intra molecular energy is              96954.677
  Bond energy is                             0.000
- Angle energy is                         2473.542
- Dihedral energy is                     95211.577
+ Angle energy is                         1646.738
+ Dihedral energy is                     95307.938
  Improper angle energy is                   0.000
  Intra molecule vdw is                      0.000
  Intra molecule q is                        0.000
@@ -259,11 +259,11 @@ Report ending energy & then re-compute from scratch
  Energy components from total energy call for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                 97685.119
- Intra molecular energy is              97685.119
+ Total system energy is                 96954.677
+ Intra molecular energy is              96954.677
  Bond energy is                             0.000
- Angle energy is                         2473.542
- Dihedral energy is                     95211.577
+ Angle energy is                         1646.738
+ Dihedral energy is                     95307.938
  Improper angle energy is                   0.000
  Intra molecule vdw is                      0.000
  Intra molecule q is                        0.000
@@ -298,7 +298,7 @@ Writing information for box  1
          0     Months
          0       Days
          0      Hours
-         3    Minutes
-         1    Seconds
-       902         ms
+         0    Minutes
+         0    Seconds
+       229         ms
 ********************************************************************************

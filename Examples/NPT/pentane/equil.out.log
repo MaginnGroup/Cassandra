@@ -3,8 +3,8 @@ Run info
 version: Cassandra Development Version
 inputfile: equil.inp
 name of run: equil.out
-date (mm/dd/yyyy): 05/18/2016
-time: 17:26:13
+date (mm/dd/yyyy): 05/24/2016
+time: 00:33:58
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -156,10 +156,10 @@ Molecule info
    3 angle(s) specified.
    2 dihedral(s) specified.
    0 improper(s) specified.
-   3 fragments specified.
-   2  fragment bonds specified.
+   3 fragment(s) specified.
+   2 fragment bond(s) specified.
  
- Species  Nbr molecules
+ Species  Max molecules
  -------  -------------
       1             60
  
@@ -199,10 +199,6 @@ Intra molecule scaling factors for species             1
  VDW 1-3 scaling factor        0.000
  VDW 1-4 scaling factor        0.000
  VDW 1-N scaling factor        1.000
- Coulomb 1-2 scaling factor    0.000
- Coulomb 1-3 scaling factor    0.000
- Coulomb 1-4 scaling factor    0.000
- Coulomb 1-N scaling factor    0.000
 ********************************************************************************
  
 Start type
@@ -228,17 +224,16 @@ Pressure
  
 Move probabilities
 ********************************************************************************
- Translation probability is     60.000000
+Probability for translation               60.000000
  Maximum displacement width for species  1 in box  1  is     50.00000
- Rotation probability is     60.000000
+Probability for rotation                  60.000000
  The rotational width for the species    1 in box  1   is      3.1416 radians
-    Probability for regrowth is     60.000000
-    Cumulative probability for regrowth of species     1  is   1.000000
-          Probability for volume move is       1.000000
- Writing maximum volume displacement elements for box           1
-              300000.000   A^3
+Probability for regrowth                  60.000000
+ Cumulative probability for regrowth of species     1  is   1.000000
+Probability for volume move                1.000000
+ Maximum volume displacement for box  1 is 300000.000  A^3
  Volume moves will be performed in actual volumes
- Number of moves is :   4
+Number of moves is :   4
  Move probabilities do not sum to 1.0
  Dividing each probability by   181.000000
 ********************************************************************************
@@ -255,9 +250,9 @@ Simulation length info
 ********************************************************************************
 Thermodynamic quantities will be written every         10 Sweeps    
 Coordinates will be written every                      10 Sweeps    
-movie header file is                   equil.out.H
-movie_XYZ file is                      equil.out.xyz
-The simulation will be run for                          100 Sweeps    
+ movie header file is                  equil.out.H
+ movie_XYZ file is                     equil.out.xyz
+The simulation will be run for                        100 Sweeps    
 ********************************************************************************
  
 Property info
@@ -312,15 +307,15 @@ Compute total energy
  Starting energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                 56137.562
- Intra molecular energy is              61394.268
+ Total system energy is                 64353.447
+ Intra molecular energy is              69424.955
  Bond energy is                             0.000
- Bond angle energy is                   20036.081
- Dihedral angle energy is               41358.187
+ Bond angle energy is                   30524.423
+ Dihedral angle energy is               38900.532
  Improper angle energy is                   0.000
- Intra molecule vdw is                  -3613.314
+ Intra molecule vdw is                  -3593.217
  Intra molecule q is                        0.000
- Inter molecule vdw is                  -1595.089
+ Inter molecule vdw is                  -1429.989
  Long range correction is                 -48.303
  Inter molecule q is                        0.000
  -----------------------------------------------------------
@@ -329,44 +324,37 @@ Compute total energy
  
 Run simulation
 ********************************************************************************
-      Step            Move Spc Box  Success  MaxWidth
-      1009   volume_change       2  0.00000
- *********  *********
-      1803        rotation   1   1  0.93000   3.14159
-      1852     translation   1   1  0.83000  14.00000
-      3210   volume_change       2  0.00000
- *********  *********
-      3595     translation   1   1  0.75167  14.00000
-      3645        rotation   1   1  0.93500   3.14159
-      5321     translation   1   1  0.71833  14.00000
-      5499        rotation   1   1  0.87500   3.14159
-      5592   volume_change       2  0.00000
- *********  *********
-      7139   volume_change       2  0.00000
- *********  *********
-      7213     translation   1   1  0.53333  14.00000
-      7274        rotation   1   1  0.85167   3.14159
-      8266   volume_change       2  0.00000
- *********  *********
-      8989     translation   1   1  0.73167  14.00000
-      9132        rotation   1   1  0.89000   3.14159
-      9620   volume_change       2  0.00000
- *********  *********
-     10923     translation   1   1  0.78167  14.00000
-     10965        rotation   1   1  0.91000   3.14159
-     12116   volume_change       2  0.00000
- *********  *********
-     12641     translation   1   1  0.83500  14.00000
-     12792        rotation   1   1  0.96167   3.14159
-     13809   volume_change       2  0.00000
- *********  *********
-     14431     translation   1   1  0.76167  14.00000
-     14611        rotation   1   1  0.93500   3.14159
-     15466   volume_change       2  0.00000
- *********  *********
-     16209     translation   1   1  0.82000  14.00000
-     16536        rotation   1   1  0.94500   3.14159
-     18059     translation   1   1  0.82000  14.00000
+      Step       Move   Mol Spc Box  Success  MaxWidth
+       917     volume             1  0.20000 *********
+      1832  translate         1   1  0.77500  14.00000
+      1855     rotate         1   1  0.94500   3.14159
+      2118     volume             1  0.90000 *********
+      3576  translate         1   1  0.78333  14.00000
+      3763     rotate         1   1  0.93833   3.14159
+      4630     volume             1  0.50000 *********
+      5361  translate         1   1  0.83333  14.00000
+      5496     rotate         1   1  0.92000   3.14159
+      6403     volume             1  0.70000 *********
+      7079     volume             1  0.30000 *********
+      7181  translate         1   1  0.83333  14.00000
+      7335     rotate         1   1  0.93000   3.14159
+      9026  translate         1   1  0.83667  14.00000
+      9077     rotate         1   1  0.94500   3.14159
+      9251     volume             1  0.80000 *********
+     10769     rotate         1   1  0.93500   3.14159
+     10949  translate         1   1  0.83333  14.00000
+     11927     volume             1  0.40000 *********
+     12560     rotate         1   1  0.92833   3.14159
+     12734  translate         1   1  0.80500  14.00000
+     13425     volume             1  0.40000 *********
+     14356     rotate         1   1  0.92167   3.14159
+     14499     volume             1  0.60000 *********
+     14513  translate         1   1  0.79000  14.00000
+     15903     volume             1  0.70000 *********
+     16239     rotate         1   1  0.94333   3.14159
+     16302  translate         1   1  0.78167  14.00000
+     17741     volume             1  0.30000 *********
+     18071     rotate         1   1  0.96000   3.14159
 ********************************************************************************
  
 Report ending energy & then re-compute from scratch
@@ -376,16 +364,16 @@ Report ending energy & then re-compute from scratch
  Ending energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                 55780.131
- Intra molecular energy is              60553.402
+ Total system energy is                 51294.207
+ Intra molecular energy is              56973.626
  Bond energy is                             0.000
- Angle energy is                        24517.555
- Dihedral energy is                     36035.847
+ Angle energy is                        23523.708
+ Dihedral energy is                     33449.919
  Improper angle energy is                   0.000
- Intra molecule vdw is                  -3538.715
+ Intra molecule vdw is                  -3269.273
  Intra molecule q is                        0.000
- Inter molecule vdw is                  -1178.651
- Long range correction is                 -55.905
+ Inter molecule vdw is                  -2341.047
+ Long range correction is                 -69.100
  Inter molecule q is                        0.000
  -----------------------------------------------------------
  
@@ -393,16 +381,16 @@ Report ending energy & then re-compute from scratch
  Energy components from total energy call for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                 55780.131
- Intra molecular energy is              60553.402
+ Total system energy is                 51294.207
+ Intra molecular energy is              56973.626
  Bond energy is                             0.000
- Angle energy is                        24517.555
- Dihedral energy is                     36035.847
+ Angle energy is                        23523.708
+ Dihedral energy is                     33449.919
  Improper angle energy is                   0.000
- Intra molecule vdw is                  -3538.715
+ Intra molecule vdw is                  -3269.273
  Intra molecule q is                        0.000
- Inter molecule vdw is                  -1178.651
- Long range correction is                 -55.905
+ Inter molecule vdw is                  -2341.047
+ Long range correction is                 -69.100
  Inter molecule q is                        0.000
  -----------------------------------------------------------
 ********************************************************************************
@@ -411,14 +399,14 @@ Report ending energy & then re-compute from scratch
 Writing information for box  1
 ********************************************************************************
                 Move      Trials     Success   % Success
-              Volume          99          54       54.55
+              Volume         112          60       53.57
  
    ---------------------------------------------------------
    Writing information for species  1
  
                 Move      Trials     Success   % Success
-           Translate        6016        4561       75.81
-              Rotate        5933        5439       91.67
+           Translate        5986        4844       80.92
+              Rotate        6012        5631       93.66
    ---------------------------------------------------------
  
 ********************************************************************************
@@ -429,17 +417,17 @@ Writing information about fragments
    ---------------------------------------------------------
    Writing information for species  1
             Fragment      Trials     Success   % Success
-                   1        3050        2878       94.36
-                   2        3002        2691       89.64
+                   1        3041        2886       94.90
+                   2        2949        2670       90.54
    ---------------------------------------------------------
 ********************************************************************************
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.210234 secs.
- Rotation time =               0.220807 secs.
- Volume change time =          0.076070 secs.
- Regrowth time =               1.874632 secs.
+ Translation time =            0.199894 secs.
+ Rotation time =               0.211958 secs.
+ Volume change time =          0.080899 secs.
+ Regrowth time =               1.856632 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -453,6 +441,6 @@ Writing information about fragments
          0       Days
          0      Hours
          0    Minutes
-         4    Seconds
-       684         ms
+         2    Seconds
+       593         ms
 ********************************************************************************

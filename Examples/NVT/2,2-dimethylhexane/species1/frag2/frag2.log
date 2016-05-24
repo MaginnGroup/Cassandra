@@ -3,21 +3,21 @@ Run info
 version: Cassandra Development Version
 inputfile: frag2.inp
 name of run: frag2
-date (mm/dd/yyyy): 05/18/2016
-time: 17:15:30
+date (mm/dd/yyyy): 05/24/2016
+time: 00:32:40
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
- 
+
 Simulation type
 ********************************************************************************
 NVT_MC_Fragment     
 ********************************************************************************
- 
+
 Verbose log file
 ********************************************************************************
 Verbose output to logfile: F
 ********************************************************************************
- 
+
 Copy input file
 ********************************************************************************
  # Run_Name
@@ -75,20 +75,20 @@ Copy input file
  Units  Steps
  Prop_Freq  10
  Coord_Freq   90
- Run          1100000
- NequilSteps  100000
+ Run          1100
+ NequilSteps  100
  
  # File_Info
  frag2.dat
  
  END
 ********************************************************************************
- 
+
 Number of species
 ********************************************************************************
     1
 ********************************************************************************
- 
+
 Box info
 ********************************************************************************
 number of simulation boxes     1
@@ -99,7 +99,7 @@ Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
 Distance between box faces    20.0000      20.0000      20.0000
 Box volume, A^3          8000.0000
 ********************************************************************************
- 
+
 Pair style
 ********************************************************************************
  VDW style used is:   NONE           in box:  1
@@ -108,24 +108,22 @@ Pair style
  Lorentz-Berthelot mixing rule specified
  Pair interaction energy arrays will not be stored
 ********************************************************************************
- 
+
 Molecule info
 ********************************************************************************
  Reading molecular connectivity information
  Species:            1
- Molecular connectivity file: 
- ../fragments/frag_2_1.mcf                                                      
-                                          
+ Molecular connectivity file: ../fragments/frag_2_1.mcf                                                                                               
    3 atom(s) specified.
    2 bond(s) specified.
    1 angle(s) specified.
    0 dihedral(s) specified.
    0 improper(s) specified.
- 
- Species  Nbr molecules
+
+ Species  Max molecules
  -------  -------------
       1              1
- 
+
  Species     1
  -------------------------------------------------------------------------------
  L_Coul_CBMC not given, using default T
@@ -136,7 +134,7 @@ Molecule info
  Improper parameters read
  -------------------------------------------------------------------------------
 ********************************************************************************
- 
+
 Intramolecular nonbonded scaling
 ********************************************************************************
 intramolecular scaling factors explicitly set
@@ -145,78 +143,74 @@ Intra molecule scaling factors for species             1
  VDW 1-3 scaling factor        0.000
  VDW 1-4 scaling factor        0.000
  VDW 1-N scaling factor        0.000
- Coulomb 1-2 scaling factor    0.000
- Coulomb 1-3 scaling factor    0.000
- Coulomb 1-4 scaling factor    0.000
- Coulomb 1-N scaling factor    0.000
 ********************************************************************************
- 
+
 Start type
 ********************************************************************************
  Initial configuration for box 1 will be read from file
  Will read       1  molecules of species   1
- Will read configuration from file ../fragments/frag_2_1.xyz                                                                                               
+ Will read configuration from file ../fragments/frag_2_1.xyz
 ********************************************************************************
- 
+
 Seed info
 ********************************************************************************
   The starting seeds are:    706111630     70611631
 ********************************************************************************
- 
+
 Temperature
 ********************************************************************************
   Temperature assigned to box     1  is  450.000    K
 ********************************************************************************
- 
+
 Move probabilities
 ********************************************************************************
- Translation probability is      1.000000
- Maximum width in cosine of polar angle is  0.200000000000000     
- Maximum width (degrees) in azimuthal angle is   10.0000000000000     
- Number of moves is :   1
+Probability for translation                1.000000
+ Maximum width in cosine of polar angle is  0.20000000000000001     
+ Maximum width (degrees) in azimuthal angle is   10.000000000000000     
+Number of moves is :   1
 ********************************************************************************
- 
+
 Simulation length info
 ********************************************************************************
 Thermodynamic quantities will be written every         10 Steps     
 Coordinates will be written every                      90 Steps     
-movie header file is                   frag2.H
-movie_XYZ file is                      frag2.xyz
-The simulation will be run for                      1100000 Steps     
-Number of equilibrium steps    100000
+ movie header file is                  frag2.H
+ movie_XYZ file is                     frag2.xyz
+The simulation will be run for                       1100 Steps     
+Number of equilibrium steps       100
 ********************************************************************************
- 
+
 File info
 ********************************************************************************
      Configuration file for species    1   is
                           frag2.dat
 ********************************************************************************
- 
+
 Run type
 ********************************************************************************
  The input run type is Production
  Update frequency is         1000
 ********************************************************************************
- 
+
 ********************************************************************************
 ************************ Begin Cassandra simulation ****************************
 ********************************************************************************
- 
+
 Initial configuration
 ********************************************************************************
- 
+
  Reading configuration for box           1
  Reading            1  molecules of species            1
  Configurations read successfully
 ********************************************************************************
- 
+
 Charge neutrality check
 ********************************************************************************
  Species           1    has charge                0.00000000
- 
+
  Box               1    has charge                0.00000000
 ********************************************************************************
- 
+
 Compute total energy
 ********************************************************************************
  Starting energy components for box   1
@@ -233,25 +227,25 @@ Compute total energy
  Inter molecule vdw is                      0.000
  Inter molecule q is                        0.000
  -----------------------------------------------------------
- 
+
 ********************************************************************************
- 
+
 Run simulation
 ********************************************************************************
-      Step            Move Spc Box  Success  MaxWidth
+      Step       Move   Mol Spc Box  Success  MaxWidth
 ********************************************************************************
- 
+
 Report ending energy & then re-compute from scratch
 ********************************************************************************
- 
- 
+
+
  Ending energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                   209.772
- Intra molecular energy is                209.772
+ Total system energy is                     1.270
+ Intra molecular energy is                  1.270
  Bond energy is                             0.000
- Angle energy is                          209.772
+ Angle energy is                            1.270
  Dihedral energy is                         0.000
  Improper angle energy is                   0.000
  Intra molecule vdw is                      0.000
@@ -259,15 +253,15 @@ Report ending energy & then re-compute from scratch
  Inter molecule vdw is                      0.000
  Inter molecule q is                        0.000
  -----------------------------------------------------------
- 
- 
+
+
  Energy components from total energy call for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                   209.772
- Intra molecular energy is                209.772
+ Total system energy is                     1.270
+ Intra molecular energy is                  1.270
  Bond energy is                             0.000
- Angle energy is                          209.772
+ Angle energy is                            1.270
  Dihedral energy is                         0.000
  Improper angle energy is                   0.000
  Intra molecule vdw is                      0.000
@@ -276,28 +270,28 @@ Report ending energy & then re-compute from scratch
  Inter molecule q is                        0.000
  -----------------------------------------------------------
 ********************************************************************************
- 
- 
+
+
 Writing information for box  1
 ********************************************************************************
- 
+
    ---------------------------------------------------------
    Writing information for species  1
- 
+
                 Move      Trials     Success   % Success
-   Atom Displacement     1100000      614358       55.85
+   Atom Displacement        1100         650       59.09
    ---------------------------------------------------------
- 
+
 ********************************************************************************
- 
+
  Writing information about subroutine times
 ********************************************************************************
 ********************************************************************************
- 
+
 ********************************************************************************
 ************************ Cassandra simulation complete *************************
 ********************************************************************************
- 
+
  Program execution time
 ********************************************************************************
          0      Years
@@ -305,6 +299,6 @@ Writing information for box  1
          0       Days
          0      Hours
          0    Minutes
-        11    Seconds
-       987         ms
+         0    Seconds
+         7         ms
 ********************************************************************************
