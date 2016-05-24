@@ -5157,16 +5157,16 @@ SUBROUTINE Get_Simulation_Length_Info
                  ibox = 1
                  movie_header_file = TRIM(run_name) // '.H'
                  movie_xyz_file =    TRIM(run_name) // '.xyz'
-                 WRITE(logunit,'(A,T40,A)') 'movie header file is', TRIM(movie_header_file)
-                 WRITE(logunit,'(A,T40,A)') 'movie_XYZ file is', TRIM(movie_xyz_file)
+                 WRITE(logunit,'(X,A,T40,A)') 'movie header file is', TRIM(movie_header_file)
+                 WRITE(logunit,'(X,A,T40,A)') 'movie_XYZ file is', TRIM(movie_xyz_file)
                  OPEN(unit=movie_header_unit+ibox,file=movie_header_file)
                  OPEN(unit=movie_xyz_unit+ibox,file=movie_xyz_file)
               ELSE
                  DO ibox = 1, nbr_boxes
                     movie_header_file = TRIM(run_name) // '.box' // TRIM(Int_To_String(ibox)) // '.H'
                     movie_xyz_file =    TRIM(run_name) // '.box' // TRIM(Int_To_String(ibox)) // '.xyz'
-                    WRITE(logunit,'(A,T30,I1,A,T40,A)') 'movie header file for box ', ibox ,' is', TRIM(movie_header_file)
-                    WRITE(logunit,'(A,T30,I1,A,T40,A)') 'movie_XYZ file for box ', ibox ,' is', TRIM(movie_xyz_file)
+                    WRITE(logunit,'(X,A,T30,I1,A,T40,A)') 'movie header file for box ', ibox ,' is', TRIM(movie_header_file)
+                    WRITE(logunit,'(X,A,T30,I1,A,T40,A)') 'movie_XYZ file for box ', ibox ,' is', TRIM(movie_xyz_file)
                     OPEN(unit=movie_header_unit+ibox,file=movie_header_file)
                     OPEN(unit=movie_xyz_unit+ibox,file=movie_xyz_file)
                  END DO
@@ -5176,7 +5176,7 @@ SUBROUTINE Get_Simulation_Length_Info
 
               l_run = .TRUE.
               n_mcsteps = String_To_Int(line_array(2))
-              WRITE(logunit,'(A,T50,I10,X,A)' ) 'The simulation will be run for ', n_mcsteps, sim_length_units
+              WRITE(logunit,'(A,T48,I10,X,A)' ) 'The simulation will be run for ', n_mcsteps, sim_length_units
 
            ELSE IF (line_array(1) == 'NequilSteps') THEN
               
@@ -5236,7 +5236,7 @@ END SUBROUTINE Get_Simulation_Length_Info
 !*****************************************************************************************************
 ! The subroutine reads in information as to average properties or block properties will be computed
 !*****************************************************************************************************
-SUBROUTINE Average_Info
+SUBROUTINE Get_Average_Info
 
   CHARACTER(120) :: line_string, line_array(20)
 
@@ -5256,7 +5256,7 @@ SUBROUTINE Average_Info
      IF (ierr /= 0 ) THEN
         err_msg = ''
         err_msg(1) = 'Error encountered while reading input on average'
-        CALL Clean_Abort(err_msg,'Average_Info')
+        CALL Clean_Abort(err_msg,'Get_Average_Info')
      END IF
 
      IF (line_string(1:14) == '# Average_Info' ) THEN
@@ -5280,7 +5280,7 @@ SUBROUTINE Average_Info
 
         err_msg = ''
         err_msg(1) = 'Average information is missing'
-        CALL Clean_Abort(err_msg,'Average_Info')
+        CALL Clean_Abort(err_msg,'Get_Average_Info')
         
      END IF
        
@@ -5289,7 +5289,7 @@ SUBROUTINE Average_Info
 
   WRITE(logunit,'(A80)') '********************************************************************************'
 
-END SUBROUTINE Average_Info
+END SUBROUTINE Get_Average_Info
 
 SUBROUTINE Get_Property_Info
   !***************************************************************************************************

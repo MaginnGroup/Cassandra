@@ -125,7 +125,7 @@ SUBROUTINE NPTMC_Control
   CALL Get_Property_Info
 
   ! Average information
-  CALL Average_Info	
+  CALL Get_Average_Info	
 
 
   CALL Get_Rcutoff_Low

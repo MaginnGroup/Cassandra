@@ -1,0 +1,126 @@
+Run info
+********************************************************************************
+version: Cassandra Development Version
+inputfile: species1_mcf_gen.inp
+name of run: species1_mcf_gen
+date (mm/dd/yyyy): 05/20/2016
+time: 15:28:33
+machine: maginnfe.crc.nd.edu
+********************************************************************************
+ 
+Simulation type
+********************************************************************************
+MCF_Gen             
+********************************************************************************
+ 
+Verbose log file
+********************************************************************************
+Verbose output to logfile: F
+********************************************************************************
+ 
+Copy input file
+********************************************************************************
+ # Run_Name
+ species1_mcf_gen
+ 
+ # Sim_Type
+ MCF_Gen
+ 
+ # Nbr_Species
+ 1
+ 
+ # VDW_Style
+ LJ cut_tail 12.0
+ 
+ # Rcutoff_Low
+ 1.0
+ 
+ # Mixing_Rule
+ LB
+ 
+ # Charge_Style
+ coul Ewald 12.0 0.000001
+ 
+ # Intra_Scaling
+ 0.0 0.0 0.0 1.0
+ 0.0 0.0 0.0 1.0
+ 
+ # Molecule_Files
+ ../../diethylether.mcf 50
+ 
+ # Box_Info
+ 1
+ CUBIC
+ 30.0 30.0 30.0
+ 
+ END
+********************************************************************************
+ 
+Number of species
+********************************************************************************
+    1
+********************************************************************************
+ 
+Box info
+********************************************************************************
+number of simulation boxes     1
+Box number      1       Box Shape:      Cubic 
+Each Side Of :        30.0000     Angstrom
+Cell basis vector lengths in A,     30.0000      30.0000      30.0000
+Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+Distance between box faces    30.0000      30.0000      30.0000
+Box volume, A^3         27000.0000
+********************************************************************************
+ 
+Pair style
+********************************************************************************
+ VDW style used is:   LJ             in box:  1
+ LJ VDW sum style is:   cut_tail       in box:  1
+ rcut =    12.000   Angstrom
+ Charge style used is:   coul           in box:  1
+ Charge sum style is   Ewald          in box:  1
+ Ewald real space cutoff is  12.000 Angstroms.
+ Ewald real space parameter is   0.310 inverse Angstroms
+ Ewald reciprocal cutoff is  2.3026 inverse Angstroms
+ Charge style properly input
+ Lorentz-Berthelot mixing rule specified
+ Pair interaction energy arrays will not be stored
+********************************************************************************
+ 
+Molecule info
+********************************************************************************
+ Reading molecular connectivity information
+ Species:            1
+ Molecular connectivity file: 
+ ../../diethylether.mcf                                                         
+                                          
+   5 atom(s) specified.
+   4 bond(s) specified.
+   3 angle(s) specified.
+   2 dihedral(s) specified.
+   0 improper(s) specified.
+   3 fragment(s) specified.
+   2 fragment bond(s) specified.
+ 
+ Species  Max molecules
+ -------  -------------
+      1             50
+ 
+ Species     1
+ -------------------------------------------------------------------------------
+ L_Coul_CBMC not given, using default T
+ 1st_Fragment_Ins_Style not specified, using default "COM"
+ Atom parameters read
+ Bond parameters read
+ Angle parameters read
+ Dihedral parameters read
+ Improper parameters read
+ Total number of atoms in fragment     1  is   3
+ Total number of atoms in fragment     2  is   3
+ Total number of atoms in fragment     3  is   3
+ Fragment info read
+ -------------------------------------------------------------------------------
+********************************************************************************
+ 
+ Finished generating fragments
+ Exiting
