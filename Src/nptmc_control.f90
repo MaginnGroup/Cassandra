@@ -157,7 +157,6 @@ SUBROUTINE NPTMC_Control
 
   ! Determine whether mie potentials are used
   IF (int_vdw_style(1) == vdw_mie ) THEN
-      CALL Get_Mie_Nonbond
   END IF
   
 END SUBROUTINE NPTMC_Control

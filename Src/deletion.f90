@@ -279,8 +279,7 @@ SUBROUTINE Deletion
 
   ! 4.5) Long-range energy correction
 
-  IF (int_vdw_sum_style(ibox) == vdw_cut_tail .AND. &
-      int_vdw_style(ibox) == vdw_lj ) THEN
+  IF (int_vdw_sum_style(ibox) == vdw_cut_tail) THEN
 
      ! subtract off beads for this species
      nbeads_out(:) = nint_beads(:,ibox)
@@ -288,19 +287,6 @@ SUBROUTINE Deletion
      DO i = 1, natoms(is)
         i_type = nonbond_list(i,is)%atom_type_number
         nint_beads(i_type,ibox) = nint_beads(i_type,ibox) - 1
-     END DO
-
-     CALL Compute_LR_correction(ibox,e_lrc)
-     delta_e = delta_e + ( e_lrc - energy(ibox)%lrc )
-
-  ELSEIF (int_vdw_sum_style(ibox) == vdw_cut_tail .AND. &
-          int_vdw_style(ibox) == vdw_mie ) THEN
-
-     nbeads_out(:) = nint_beads_mie(is,:,ibox)
-
-     DO i = 1, natoms(is)
-        i_type = nonbond_list(i,is)%atom_type_number
-        nint_beads_mie(is,i_type,ibox) = nint_beads_mie(is,i_type,ibox) - 1
      END DO
 
      CALL Compute_LR_correction(ibox,e_lrc)
@@ -429,11 +415,7 @@ SUBROUTINE Deletion
 
      IF ( int_vdw_sum_style(ibox) == vdw_cut_tail ) THEN
         ! Restore the total number of bead types
-        IF (int_vdw_style(ibox) == vdw_lj) THEN
-          nint_beads(:,ibox) = nbeads_out(:)
-        ELSEIF (int_vdw_style(ibox) == vdw_mie) THEN
-          nint_beads_mie(is,:,ibox) = nbeads_out(:)
-        ENDIF
+        nint_beads(:,ibox) = nbeads_out(:)
      END IF
 
   END IF

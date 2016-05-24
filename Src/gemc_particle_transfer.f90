@@ -368,8 +368,7 @@ SUBROUTINE GEMC_Particle_Transfer
     call cpu_time(time1)
     copy_time = copy_time + time1-time0
 
-    IF (int_vdw_sum_style(box_in) == vdw_cut_tail .AND. &
-       int_vdw_style(box_in) == vdw_lj) THEN
+    IF (int_vdw_sum_style(box_in) == vdw_cut_tail) THEN
        nbeads_in(:) = nint_beads(:,box_in)
 
        DO i = 1, natoms(this_species)
@@ -380,18 +379,6 @@ SUBROUTINE GEMC_Particle_Transfer
        CALL Compute_LR_Correction(box_in,e_lrc_in)
        delta_e_in = delta_e_in + e_lrc_in - energy(box_in)%lrc
 
-    ELSEIF (int_vdw_sum_style(box_in) == vdw_cut_tail .AND. &
-       int_vdw_style(box_in) == vdw_mie) THEN 
-       nbeads_in(:) = nint_beads_mie(this_species,:,box_in)
-
-       DO i = 1, natoms(this_species)
-          i_type = nonbond_list(i,this_species)%atom_type_number
-          nint_beads_mie(this_species,i_type,box_in) = nint_beads_mie(this_species,i_type,box_in) + 1
-       END DO
-          
-       CALL Compute_LR_Correction(box_in,e_lrc_in)
-       delta_e_in = delta_e_in + e_lrc_in - energy(box_in)%lrc
-     
     END IF
 
     IF(cpcollect) THEN
@@ -538,8 +525,7 @@ SUBROUTINE GEMC_Particle_Transfer
     END IF
 
     
-    IF (int_vdw_sum_style(box_out) == vdw_cut_tail .AND. &
-       int_vdw_style(box_out) == vdw_lj) THEN
+    IF (int_vdw_sum_style(box_out) == vdw_cut_tail) THEN
        nbeads_out(:) = nint_beads(:,box_out)
        DO i = 1, natoms(this_species)
           i_type = nonbond_list(i,this_species)%atom_type_number
@@ -549,17 +535,6 @@ SUBROUTINE GEMC_Particle_Transfer
        CALL Compute_LR_correction(box_out,e_lrc_out)
        delta_e_out = delta_e_out + ( e_lrc_out - energy(box_out)%lrc )
 
-    ELSEIF (int_vdw_sum_style(box_out) == vdw_cut_tail .AND. &
-       int_vdw_style(box_out) == vdw_mie) THEN
-       nbeads_out(:) = nint_beads_mie(this_species,:,box_out)
-
-       DO i = 1, natoms(this_species)
-          i_type = nonbond_list(i,this_species)%atom_type_number
-          nint_beads_mie(this_species,i_type,box_out) = nint_beads_mie(this_species,i_type,box_out) - 1
-       END DO
-
-       CALL Compute_LR_correction(box_out,e_lrc_out)
-       delta_e_out = delta_e_out + ( e_lrc_out - energy(box_out)%lrc )
     END IF
 
     delta_e_in_pacc = delta_e_in
@@ -739,19 +714,11 @@ SUBROUTINE GEMC_Particle_Transfer
        END IF
 
        IF ( int_vdw_sum_style(box_in) == vdw_cut_tail ) THEN
-          IF (int_vdw_style(box_in) == vdw_lj) THEN
-             nint_beads(:,box_in) = nbeads_in(:)
-          ELSEIF (int_vdw_style(box_in) == vdw_mie) THEN
-             nint_beads_mie(this_species,:,box_in) = nbeads_in(:)
-          END IF
+          nint_beads(:,box_in) = nbeads_in(:)
        END IF
 
        IF ( int_vdw_sum_style(box_out) == vdw_cut_tail ) THEN
-          IF (int_vdw_style(box_in) == vdw_lj) THEN
-             nint_beads(:,box_out) = nbeads_out(:)
-          ELSEIF (int_vdw_style(box_out) == vdw_mie) THEN
-             nint_beads_mie(this_species,:,box_out) = nbeads_out(:)
-          END IF
+          nint_beads(:,box_out) = nbeads_out(:)
        END IF
 
 

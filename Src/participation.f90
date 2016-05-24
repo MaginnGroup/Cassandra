@@ -546,9 +546,20 @@ SUBROUTINE Participation
            ELSE
               
               WRITE(201,*) bondpart_list(ia,is)%nbonds + 1
-              WRITE(201,100) anchor_atom, nonbond_list(ia,is)%atom_name, nonbond_list(ia,is)%element, &
-                   nonbond_list(ia,is)%mass, nonbond_list(ia,is)%charge, 'NONE', &
-                   (nonbond_list(ia,is)%vdw_param(1))/kboltz, nonbond_list(ia,is)%vdw_param(2)
+              WRITE(201,'(I5,2X,2(A4,2X),2(F11.7,2X),A6,2X)',ADVANCE='NO') anchor_atom, &
+                        nonbond_list(ia,is)%atom_name, &
+                        nonbond_list(ia,is)%element, &
+                        nonbond_list(ia,is)%mass, &
+                        nonbond_list(ia,is)%charge, &
+                        nonbond_list(ia,is)%vdw_potential_type
+              DO i = 1, nbr_vdw_params(is)
+                IF (i == 1) THEN
+                  WRITE(201,'(F11.7,2X)',ADVANCE='NO') nonbond_list(ia,is)%vdw_param(i)/kboltz
+                ELSE
+                  WRITE(201,'(F11.7,2X)',ADVANCE='NO') nonbond_list(ia,is)%vdw_param(i)
+                END IF
+              END DO
+              WRITE(201,*)
               
               ! write the 'read_config' file for the fragment
               
@@ -568,9 +579,20 @@ SUBROUTINE Participation
                  
                  this_atom = frag_list(ifrag,is)%atoms(i)
                  
-                 WRITE(201,100) i, nonbond_list(this_atom,is)%atom_name, nonbond_list(this_atom,is)%element, &
-                      nonbond_list(this_atom,is)%mass, nonbond_list(this_atom,is)%charge, 'NONE', &
-                      (nonbond_list(this_atom,is)%vdw_param(1))/kboltz, nonbond_list(this_atom,is)%vdw_param(2)
+                 WRITE(201,'(I5,2X,2(A4,2X),2(F11.7,2X),A6,2X)',ADVANCE='NO') i, &
+                                nonbond_list(this_atom,is)%atom_name, &
+                                nonbond_list(this_atom,is)%element, &
+                                nonbond_list(this_atom,is)%mass, &
+                                nonbond_list(this_atom,is)%charge, &
+                                nonbond_list(this_atom,is)%vdw_potential_type
+                 DO j = 1, nbr_vdw_params(is)
+                   IF (j == 1) THEN
+                     WRITE(201,'(F11.7,2X)',ADVANCE='NO') nonbond_list(ia,is)%vdw_param(j)/kboltz
+                   ELSE
+                     WRITE(201,'(F11.7,2X)',ADVANCE='NO') nonbond_list(ia,is)%vdw_param(j)
+                   END IF
+                 END DO
+                 WRITE(201,*)
                  
               END DO
               

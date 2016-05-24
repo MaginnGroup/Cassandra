@@ -731,6 +731,9 @@ def ffFileGeneration(infilename,outfilename):
 
 	print "\n\n*********Force field template file generation*********\n"
 
+	global vdwType
+	vdwType = raw_input("Enter the VDW type (LJ/Mie):")
+
 	global dihedralType
 	if len(dihedralList) > 0:
 		dihedralType = raw_input("Enter the dihedral functional form " + 
@@ -755,6 +758,7 @@ def ffFileGeneration(infilename,outfilename):
 		ff.write(str(ffIndex+1) + " " + iType + "\n")
 	ff.write("end atom-atomtype\n\n")
 
+	ff.write("vdwtype "+vdwType+"\n")
 	ff.write("dihedraltype "+dihedralType+"\n\n")
 
 	# Write nonbonded entries
@@ -767,6 +771,9 @@ def ffFileGeneration(infilename,outfilename):
 			ff.write(iType + "\n")
 			ff.write("Sigma \n")
 			ff.write("Epsilon \n")
+			if vdwType == 'Mie':
+				ff.write("Repulsive_Exponent \n")
+				ff.write("Dispersive_Exponent \n")
 			ff.write("atom_type_charge \n\n")
 
 	# Write bond entries
@@ -927,10 +934,15 @@ returns:
 	while line:
 		if 'dihedraltype' in line:
 			dihedralType = line.split()[1]
+		elif 'vdwtype' in line:
+			vdwType = line.split()[1]
 		elif 'nonbonded' in line:
 			index = ff.readline().strip() #atomType
 			sigma = float(ff.readline().split()[1])
 			epsilon = float(ff.readline().split()[1])
+			if vdwType == 'Mie':
+				repulsive_exponent = float(ff.readline().split()[1])
+				dispersive_exponent = float(ff.readline().split()[1])
 			try:
 				atom_type_charge = ff.readline().split()[1] # store as string
 			except:
@@ -938,7 +950,10 @@ returns:
 
 			if index not in atomParms: 
 				atomParms[index] = {}
-			atomParms[index]['vdw'] = ('LJ', epsilon, sigma)
+			if vdwType == 'LJ':
+				atomParms[index]['vdw'] = (vdwType, epsilon, sigma)
+			elif vdwType == 'Mie':
+				atomParms[index]['vdw'] = (vdwType, epsilon, sigma, repulsive_exponent, dispersive_exponent)
 			atomParms[index]['charge'] = (atom_type_charge)
 		elif 'bonds' in line:
 			index = tuple(ff.readline().split()) #atomType
@@ -1230,7 +1245,8 @@ returns:
 
 	mcf.write('!Atom Format\n')
 	mcf.write('!index type element mass charge type parameters\n' + 
-	          '!type="LJ", parms=epsilon sigma\n')
+	          '!type="LJ", parms=epsilon sigma\n' + 
+            '!type="Mie", parms=epsilon sigma repulsion_exponent dispersion_exponent\n')
 	mcf.write('\n# Atom_Info\n')
 	mcf.write(str(len(atomList))+'\n')
 	for mcfIndex,pdbIndex in enumerate(atomList):
@@ -1239,7 +1255,9 @@ returns:
 		mcf.write('  %-2s'   % (atomParms[pdbIndex]['element']))
 		mcf.write('  %7.3f'  % (atomParms[pdbIndex]['mass']))
 		mcf.write('  %s' % (atomParms[pdbIndex]['charge']))
-		mcf.write('  %2s  %8.3f  %8.3f' % atomParms[pdbIndex]['vdw'])
+		mcf.write('  %2s' % atomParms[pdbIndex]['vdw'][0])
+		for i in range(1,len(atomParms[pdbIndex]['vdw'])):
+			mcf.write('  %8.3f' % atomParms[pdbIndex]['vdw'][i])
 		for ring in ringList:
 			if str(pdbIndex) in ring: mcf.write('  ring')
 		mcf.write('\n')

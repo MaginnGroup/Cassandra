@@ -4,14 +4,15 @@
 !Atom Format
 !index type element mass charge type parameters
 !type="LJ", parms=epsilon sigma
+!type="Mie", parms=epsilon sigma repulsion_exponent dispersion_exponent
 
 # Atom_Info
 5
-1    C1_s1    C    15.034    0.00    LJ    98.000    3.750
-2    C2_s1    C    14.027    0.25    LJ    46.000    3.950
-3    O3_s1    O    15.999    -0.50    LJ    55.000    2.800
-4    C4_s1    C    14.027    0.25    LJ    46.000    3.950
-5    C5_s1    C    15.034    0.00    LJ    98.000    3.750
+1    C3_s1    C3    15.034    0.00    Mie    98.000    3.750    12.000    6.000
+2    C2_s1    C2    14.027    0.25    Mie    46.000    3.950    12.000    6.000
+3    O_s1    O    15.999    -0.50    Mie    55.000    2.800    12.000    6.000
+4    C2_s1    C2    14.027    0.25    Mie    46.000    3.950    12.000    6.000
+5    C3_s1    C3    15.034    0.00    Mie    98.000    3.750    12.000    6.000
 
 !Bond Format
 !index i j type parameters
