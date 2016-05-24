@@ -52,7 +52,6 @@ SUBROUTINE NVTMC_Control
   !        Get_Angles_Atoms_To_Place   
   !        Angle_Distribution
   !        Get_Dihedral_Atoms_To_Place  
-  !        Get_Mie_Nonbond
   !
   ! 08/07/13  : Created beta version
 !*******************************************************************************
@@ -147,7 +146,6 @@ SUBROUTINE NVTMC_Control
   CALL Get_Dihedral_Atoms_To_Place
 
   IF (int_vdw_style(1) == vdw_mie ) THEN
-      CALL Get_Mie_Nonbond
   END IF
 
 END SUBROUTINE NVTMC_Control

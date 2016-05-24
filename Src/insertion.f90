@@ -406,8 +406,7 @@ SUBROUTINE Insertion
 
   ! 3.6) Long-range energy correction
 
-  IF (int_vdw_sum_style(ibox) == vdw_cut_tail .AND. &
-      int_vdw_style(ibox) == vdw_lj) THEN
+  IF (int_vdw_sum_style(ibox) == vdw_cut_tail) THEN
 
      ! increase number of integer beads
      nbeads_in = nint_beads(:,ibox)
@@ -420,17 +419,6 @@ SUBROUTINE Insertion
      CALL Compute_LR_correction(ibox,E_lrc)
      delta_e = delta_e + E_lrc - energy(ibox)%lrc
 
-  ELSEIF (int_vdw_sum_style(ibox) == vdw_cut_tail .AND. &
-          int_vdw_style(ibox) == vdw_mie) THEN
-    nbeads_in = nint_beads_mie(is,:,ibox)
-
-     DO i = 1, natoms(is)
-        i_type = nonbond_list(i,is)%atom_type_number
-        nint_beads_mie(is,i_type,ibox) = nint_beads_mie(is,i_type,ibox) + 1
-     END DO
-
-     CALL Compute_LR_correction(ibox,E_lrc)
-     delta_e = delta_e + E_lrc - energy(ibox)%lrc
   END IF
 
   !*****************************************************************************
@@ -542,11 +530,7 @@ SUBROUTINE Insertion
 
      IF ( int_vdw_sum_style(ibox) == vdw_cut_tail ) THEN
         ! Restore the total number of bead types
-        IF (int_vdw_style(ibox) == vdw_lj) THEN
-           nint_beads(:,ibox) = nbeads_in(:)
-        ELSEIF (int_vdw_style(ibox) == vdw_mie) THEN
-           nint_beads_mie(is,:,ibox) = nbeads_in(:)
-        ENDIF
+        nint_beads(:,ibox) = nbeads_in(:)
      END IF
 
   END IF

@@ -584,6 +584,11 @@ SUBROUTINE Get_Pair_Style
 
                  rcut3(ibox) = rcut_vdw(ibox) * rcut_vdw(ibox) * rcut_vdw(ibox)
                  !rcut9(ibox) = rcut3(ibox) * rcut3(ibox) * rcut3(ibox)
+
+              ELSEIF (vdw_sum_style(ibox) == 'minimum_image') THEN
+                 int_vdw_sum_style(ibox) = vdw_minimum
+                 WRITE(logunit,'(A)') 'Minimum image convention used for VDW'
+
               END IF
 
            ELSE
@@ -838,7 +843,7 @@ SUBROUTINE Get_Mixing_Rules
 
      IF (ierr .NE. 0) THEN
         err_msg = ""
-        err_msg(1) = "Error reading mixinf rules."
+        err_msg(1) = "Error reading mixing rules."
         CALL Clean_Abort(err_msg,'Get_Mixing_Rules')
      END IF
 
@@ -1536,7 +1541,7 @@ SUBROUTINE Get_Atom_Info(is)
         DO ia = 1,natoms(is)
            ! Now read the entries on the next lines. There must be at least 8 for 
            ! each atom.
-           CALL Parse_String(molfile_unit,line_nbr,8,nbr_entries,line_array,ierr)
+           CALL Parse_String(molfile_unit,line_nbr,6,nbr_entries,line_array,ierr)
 
            ! Test for problems readin file
            IF (ierr /= 0) THEN
@@ -1581,8 +1586,16 @@ SUBROUTINE Get_Atom_Info(is)
            END IF
 
            ! Load vdw parameters, specific for each individual type
-           IF (nonbond_list(ia,is)%vdw_potential_type == 'LJ' .OR. &
-              nonbond_list(ia,is)%vdw_potential_type == 'Mie' ) THEN
+           IF (nonbond_list(ia,is)%vdw_potential_type == 'LJ') THEN
+              ! Set number of vdw parameters
+              nbr_vdw_params(is) = 2
+              
+              IF (nbr_entries < 6 + nbr_vdw_params(is)) THEN
+                 err_msg = ""
+                 err_msg(1) = 'VDW potential type "LJ" requires 2 parameters'
+                 CALL Clean_Abort(err_msg,'Get_Atom_Info')
+              ENDIF
+
               ! epsilon/kB in K read in
               nonbond_list(ia,is)%vdw_param(1) = String_To_Double(line_array(7))
               ! sigma = Angstrom
@@ -1597,11 +1610,45 @@ SUBROUTINE Get_Atom_Info(is)
 
               ! Convert epsilon to atomic units amu A^2/ps^2
               nonbond_list(ia,is)%vdw_param(1) = kboltz* nonbond_list(ia,is)%vdw_param(1) 
-              ! Set number of vdw parameters
-              nbr_vdw_params = 2
 
+           ELSEIF (nonbond_list(ia,is)%vdw_potential_type == 'Mie') THEN
+              ! Set number of vdw parameters
+              nbr_vdw_params(is) = 4
+
+              IF (nbr_entries < 6 + nbr_vdw_params(is)) THEN
+                 err_msg = ""
+                 err_msg(1) = 'VDW potential type "Mie" requires 4 parameters'
+                 CALL Clean_Abort(err_msg,'Get_Atom_Info')
+              ENDIF
+
+              ! epsilon/kB in K read in
+              nonbond_list(ia,is)%vdw_param(1) = String_To_Double(line_array(7))
+              ! sigma = Angstrom
+              nonbond_list(ia,is)%vdw_param(2) = String_To_Double(line_array(8))
+              ! repulsive exponent
+              nonbond_list(ia,is)%vdw_param(3) = String_To_Double(line_array(9))
+              ! dispersive exponent
+              nonbond_list(ia,is)%vdw_param(4) = String_To_Double(line_array(10))
+
+
+              IF (verbose_log .AND. natoms(is) < 100) THEN
+                 WRITE(logunit,'(X,A,T25,F10.4)') ' Epsilon / kB in K:', &
+                      nonbond_list(ia,is)%vdw_param(1)
+                 WRITE(logunit,'(X,A,T25,F10.4)') ' Sigma in A:', &
+                      nonbond_list(ia,is)%vdw_param(2)
+                 WRITE(logunit,'(X,A,T25,F10.4)') ' Repulsive exponent:', &
+                      nonbond_list(ia,is)%vdw_param(3)
+                 WRITE(logunit,'(X,A,T25,F10.4)') ' Dispersive exponent:', &
+                      nonbond_list(ia,is)%vdw_param(4)
+              END IF
+
+              ! Convert epsilon to atomic units amu A^2/ps^2
+              nonbond_list(ia,is)%vdw_param(1) = kboltz* nonbond_list(ia,is)%vdw_param(1) 
 
            ELSEIF (nonbond_list(ia,is)%vdw_potential_type == 'NONE') THEN
+              ! Set number of vdw parameters
+              nbr_vdw_params = 0
+
 
               IF (verbose_log) THEN
 
@@ -1609,9 +1656,6 @@ SUBROUTINE Get_Atom_Info(is)
                       'No VDW potential assigned to atom, species: ',ia,is
 
               END IF
-
-              ! Set number of vdw parameters
-              nbr_vdw_params = 0
 
            ELSE
               err_msg = ""
@@ -5739,82 +5783,6 @@ SUBROUTINE Get_Energy_Check_Info
   WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_Energy_Check_Info 
-
-SUBROUTINE Get_Mie_Nonbond
-  !---------------------------------------------------------------------------------------
-  ! This subroutine reads in the file information for nonbond Mie potential exponents
-  ! for each species type.
-  !
-  ! Written by Brian Yoo and Eliseo Rimoldi on 02/28/15
-  !
-  !---------------------------------------------------------------------------------------
-
-  USE File_Names
-
-  INTEGER :: ierr, nbr_entries, line_nbr, is, Mk, Mi, Mj
-  CHARACTER(120) :: line_array(20), line_string
-
-  WRITE(logunit,*)
-  WRITE(logunit,'(A)') 'Mie nonbond info'
-  WRITE(logunit,'(A80)') '********************************************************************************'
-
-  ierr = 0
-  REWIND(inputunit)
-  line_nbr = 0
-  Mk = 1
-
-  ALLOCATE(mie_nlist(nspecies*(nspecies+1)/2))
-  ALLOCATE(mie_mlist(nspecies*(nspecies+1)/2))
-  ALLOCATE(mie_Matrix(nspecies, nspecies))
-
-  DO
-     line_nbr = line_nbr + 1
-     CALL Read_String(inputunit,line_string,ierr)
-
-     IF ( ierr /= 0 ) THEN
-        err_msg = ''
-        err_msg(1) = 'Error reading input file'
-        CALL Clean_Abort(err_msg,'Get_Mie_Nonbond')
-     END IF
-
-     ! Read the input file up to # Mie_Nonbond
-
-     IF (line_string(1:13) == '# Mie_Nonbond') THEN
-        ! create symmetric matrix for index of species (e.g. for 3 species it will create
-        ! the following matrix [1,2,3;2,4,5;3,5,6]; This matrix is used to identify
-        ! the specified mie_n and mie_m exponents for a given species type.
-        DO Mi = 1, nspecies
-           DO Mj = Mi, nspecies
-              mie_Matrix(Mi,Mj) = Mk
-              mie_Matrix(Mj,Mi) = Mk
-              Mk = Mk + 1
-           END DO
-        END DO
-
-        ! parse the string to read in the files for each species
-        DO is = 1, nspecies*nspecies
-           line_nbr = line_nbr + 1
-           CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
-           mie_nlist(mie_Matrix(String_To_Int(line_array(1)),String_To_Int(line_array(2)))) = String_To_Double(line_array(3))
-           mie_mlist(mie_Matrix(String_To_Int(line_array(1)),String_To_Int(line_array(2)))) = String_To_Double(line_array(4))
-	   WRITE(logunit,'(A17,I2,A7,I2,A6,F7.2,A7,F7.2)') 'Mie exponent for ', String_To_Int(line_array(1)), &
-           '   and ', String_To_Int(line_array(2)),  '   is ', String_To_Double(line_array(3)), '   and ', String_To_Double(line_array(4))
-        END DO
-
-        EXIT
-
-     ELSE IF (line_nbr > 10000 .OR. line_string(1:3) == 'END') THEN
-        err_msg = ''
-        err_msg(1) = 'Mie potentials not specified'
-        CALL Clean_Abort(err_msg,'Get_Mie_Nonbond')
-
-     END IF
-
-  END DO
-
-  WRITE(logunit,'(A80)') '********************************************************************************'
-
-END SUBROUTINE Get_Mie_Nonbond
 
 
 SUBROUTINE Get_Lattice_File_Info

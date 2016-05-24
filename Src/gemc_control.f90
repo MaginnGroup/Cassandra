@@ -141,7 +141,6 @@ SUBROUTINE GEMC_Control
   CALL Get_Dihedral_Atoms_To_Place  
 
   IF (int_vdw_style(1) == vdw_mie ) THEN
-      CALL Get_Mie_Nonbond
   END IF
 
 END SUBROUTINE GEMC_Control

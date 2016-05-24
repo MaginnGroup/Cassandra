@@ -137,7 +137,6 @@ USE Type_Definitions
   
  
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: nint_beads
-  INTEGER, DIMENSION(:,:,:), ALLOCATABLE :: nint_beads_mie 
 
   ! Intramolecular exclusion variables (1-2, 1-3, 1-4 exclusions/scaling)
   ! and the scaling to use for all other intramolecular terms.
@@ -555,10 +554,6 @@ USE Type_Definitions
 
   REAL(DP) pacc, paccbiased, freev
   REAL(DP), DIMENSION(:,:), ALLOCATABLE :: chpot, chpotid
-
-!!!!! Mie potential variables
-  INTEGER, DIMENSION(:,:), ALLOCATABLE :: mie_Matrix
-  REAL(DP), DIMENSION(:), ALLOCATABLE :: mie_nlist, mie_mlist
 
 
 !!!! Zeolite variables

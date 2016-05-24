@@ -182,17 +182,15 @@
   ALLOCATE(vdw_param4_table(nbr_atomtypes,nbr_atomtypes), Stat=AllocateStatus)
   ALLOCATE(vdw_param5_table(nbr_atomtypes,nbr_atomtypes), Stat=AllocateStatus)
 
-  ! Allocate memory for total number bead types in each box
-  ALLOCATE(nint_beads(nbr_atomtypes,nbr_boxes))
-  
-  ! Allocate memory for total number beads type for mie potential 
-  ALLOCATE(nint_beads_mie(nspecies, nbr_atomtypes,nbr_boxes)) 
   IF (AllocateStatus .NE. 0) THEN
      err_msg = ''
      err_msg(1) = ' ERROR: Not enough memory for vdw interaction table '
      CALL Clean_Abort(err_msg,'ceate_nonbond_table')
   END IF
 
+  ! Allocate memory for total number bead types in each box
+  ALLOCATE(nint_beads(nbr_atomtypes,nbr_boxes))
+  
   atom_type_list = ""
 
   ! Now determine the set of vdw parameters for each type of interaction and load them into vdw_param_table
@@ -205,8 +203,12 @@
      WRITE(logunit,'(X,A,T25,A)') 'Mixing rule used is:', mix_rule
 
   ! Write header for logfile output. Specific for the vdw style
-     IF (int_vdw_style(1) == vdw_lj .OR. int_vdw_style(1) == vdw_mie) THEN
+     IF (int_vdw_style(1) == vdw_lj) THEN
         WRITE(logunit,'(X,A6,5X,A6,2X,A12,X,A12)') 'Atom 1','Atom 2', 'epsilon', 'sigma'
+        WRITE(logunit,'(X,6X,5X,6X,2X,A12,X,A12)') 'amu A^2/ps^2', 'Ang'
+     ELSEIF (int_vdw_style(1) == vdw_mie) THEN
+        WRITE(logunit,'(X,A6,5X,A6,2X,A12,X,A12,X,A12,X,A12)') 'Atom 1','Atom 2', 'epsilon', 'sigma', &
+              'rep-expt', 'disp-expt'
         WRITE(logunit,'(X,6X,5X,6X,2X,A12,X,A12)') 'amu A^2/ps^2', 'Ang'
      ENDIF
   END IF
@@ -268,8 +270,8 @@
       ! Found i and j
       IF (mix_rule /= 'custom') THEN
 
-        IF (int_vdw_style(1) == vdw_lj .OR. int_vdw_style(1) == vdw_mie) THEN
-           ! There are two vdw parameters
+        IF (int_vdw_style(1) == vdw_lj) THEN
+           ! There are two vdw parameters that need mixing
 
            ! Set LJ epsilon
            IF ( (temp_param_i(1) <= tiny_number) .OR. (temp_param_j(1) <= tiny_number) ) THEN
@@ -282,8 +284,7 @@
 
            ! LB mixing rule: epsij = (epsi * epsj)^(1/2)
            ! geometric mixing rule: epsij = (epsi * epsj)^(1/2)
-              IF (mix_rule == 'LB' .OR. mix_rule == 'geometric') &
-                   vdw_param1_table(itype,jtype) = dsqrt(temp_param_i(1)*temp_param_j(1))
+              vdw_param1_table(itype,jtype) = dsqrt(temp_param_i(1)*temp_param_j(1))
             
            ENDIF
 
@@ -303,8 +304,7 @@
            ENDIF
 
            IF (verbose_log) THEN
-              ! Report parameters to logfile. Format is specific to vdw type. Add others here if 
-              ! other than LJ potential is used.
+              ! Report parameters to logfile.
 
              WRITE(logunit,'(X,A6,5X,A6,2X,F12.4,X,F12.4)') &
                   atom_type_list(itype), atom_type_list(jtype), &
@@ -312,6 +312,52 @@
 
            ENDIF
 
+        ELSEIF (int_vdw_style(1) == vdw_mie) THEN
+           ! There are two vdw parameters that need mixing and two parameters
+           ! that must be identical
+          IF (temp_param_i(3) == temp_param_j(3) .AND. temp_param_i(4) == temp_param_j(4)) THEN
+
+           ! Set epsilon
+           IF ( (temp_param_i(1) <= tiny_number) .OR. (temp_param_j(1) <= tiny_number) ) THEN
+              vdw_param1_table(itype,jtype) = 0.0_DP
+           ELSE
+              ! LB mixing rule: epsij = (epsi * epsj)^(1/2)
+              ! geometric mixing rule: epsij = (epsi * epsj)^(1/2)
+              vdw_param1_table(itype,jtype) = dsqrt(temp_param_i(1)*temp_param_j(1))
+           ENDIF
+
+           ! Set sigma
+           IF ( (temp_param_i(2) <= tiny_number) .OR. (temp_param_j(2) <= tiny_number) ) THEN
+              vdw_param2_table(itype,jtype) = 0.0_DP
+           ELSE
+              ! LB mixing rule: sigmaij = 1/2 (sigmai + sigmaj)
+              IF (mix_rule == 'LB') &
+                   vdw_param2_table(itype,jtype) = (temp_param_i(2) + temp_param_j(2)) * 0.5
+              ! geometric mixing rule: sigmaij = (sigmai * sigmaj)^(1/2)
+              IF (mix_rule == 'geometric') &
+                   vdw_param2_table(itype,jtype) = dsqrt(temp_param_i(2) * temp_param_j(2))
+           ENDIF
+
+           ! Exponents are the same
+           vdw_param3_table(itype,jtype) = temp_param_i(3)
+           vdw_param4_table(itype,jtype) = temp_param_i(4)
+
+           IF (verbose_log) THEN
+              ! Report parameters to logfile.
+
+             WRITE(logunit,'(X,A6,5X,A6,2X,F12.4,X,F12.4,X,F12.4,X,F12.4)') &
+                  atom_type_list(itype), atom_type_list(jtype), &
+                  vdw_param1_table(itype,jtype), vdw_param2_table(itype,jtype), &
+                  vdw_param3_table(itype,jtype), vdw_param4_table(itype,jtype)
+
+
+           ENDIF
+
+          ELSE
+            err_msg = ""
+            err_msg(1) = "Cross interactions for Mie potential must have same exponents"
+            CALL Clean_Abort(err_msg,'Create_Nonbond_Table')
+          END IF
         ENDIF
 
       END IF
@@ -352,6 +398,8 @@
           DO jtype = 1, nbr_atomtypes
             line_nbr = line_nbr + 1
             CALL Parse_String(inputunit,line_nbr,4,nbr_entries,line_array,ierr)
+     
+            ! Check for errors
             IF (atom_type_list(itype) /= line_array(1) .OR. &
                 atom_type_list(jtype) /= line_array(2)) THEN
               err_msg = ''
@@ -363,14 +411,37 @@
                                                    TRIM(line_array(2))
               CALL Clean_Abort(err_msg,'Create_Nonbond_Table')
             END IF
-            !Convert epsilon to atomic units amu A^2/ps^2
-            vdw_param1_table(itype,jtype) = kboltz * String_To_Double(line_array(3))
-            vdw_param2_table(itype,jtype) = String_To_Double(line_array(4))
-            IF (verbose_log) THEN
-              WRITE(logunit,'(X,A6,5X,A6,2X,F12.4,X,F12.4)') &
-                   atom_type_list(itype), atom_type_list(jtype), &
-                   vdw_param1_table(itype,jtype), &
-                   vdw_param2_table(itype,jtype)
+         
+            ! Load custom parms
+            IF (int_vdw_style(1) == vdw_lj) THEN
+              !Convert epsilon to atomic units amu A^2/ps^2
+              vdw_param1_table(itype,jtype) = kboltz * String_To_Double(line_array(3))
+              !Sigma
+              vdw_param2_table(itype,jtype) = String_To_Double(line_array(4))
+              IF (verbose_log) THEN
+                WRITE(logunit,'(X,A6,5X,A6,2(X,F12.4))') &
+                     atom_type_list(itype), atom_type_list(jtype), &
+                     vdw_param1_table(itype,jtype), &
+                     vdw_param2_table(itype,jtype)
+              END IF
+            ELSEIF (int_vdw_style(1) == vdw_mie) THEN
+              !Convert epsilon to atomic units amu A^2/ps^2
+              vdw_param1_table(itype,jtype) = kboltz * String_To_Double(line_array(3))
+              !Sigma
+              vdw_param2_table(itype,jtype) = String_To_Double(line_array(4))
+              !Repulsive exponent
+              vdw_param3_table(itype,jtype) = String_To_Double(line_array(5))
+              !Dispersive exponent
+              vdw_param4_table(itype,jtype) = String_To_Double(line_array(6))
+              IF (verbose_log) THEN
+                WRITE(logunit,'(X,A6,5X,A6,4(X,F12.4))') &
+                     atom_type_list(itype), atom_type_list(jtype), &
+                     vdw_param1_table(itype,jtype), &
+                     vdw_param2_table(itype,jtype), &
+                     vdw_param3_table(itype,jtype), &
+                     vdw_param4_table(itype,jtype)
+              END IF
+
             END IF
           END DO
         END DO   
