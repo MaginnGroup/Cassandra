@@ -533,7 +533,7 @@ SUBROUTINE GEMC_Particle_Transfer
        END DO
 
        CALL Compute_LR_correction(box_out,e_lrc_out)
-       delta_e_out = delta_e_out - ( e_lrc_out - energy(box_out)%lrc )
+       delta_e_out = delta_e_out + ( e_lrc_out - energy(box_out)%lrc )
 
     END IF
 
