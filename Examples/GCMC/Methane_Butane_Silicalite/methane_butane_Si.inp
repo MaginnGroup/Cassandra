@@ -29,33 +29,21 @@ NONE
 
 # Mixing_Rule
 custom
-SI_s1 SI_s1    0.00   0.0
+SI_s1 SI_s1    0.0    0.0
 SI_s1 O_s1     0.00   0.0
 SI_s1 C4_s2    0.00   0.0
 SI_s1 C3_s3    0.00   0.0
 SI_s1 C2_s3    0.00   0.0
-O_s1  SI_s1    0.00   0.0
 O_s1  O_s1     0.00   0.0
 O_s1  C4_s2   96.50   3.6
 O_s1  C3_s3   80.00   3.6
 O_s1  C2_s3   58.00   3.6
-C4_s2 SI_s1    0.00   0.0
-C4_s2 O_s1    96.50   3.6
 C4_s2 C4_s2  148.00   3.73
 C4_s2 C3_s3  120.49   3.75
 C4_s2 C2_s3   83.40   3.83
-C3_s3 SI_s1    0.00   0.0
-C3_s3 O_s1    80.00   3.6
-C3_s3 C4_s2  120.49   3.75
 C3_s3 C3_s3   98.10   3.77
 C3_s3 C2_s3   67.90   3.85
-C2_s3 SI_s1    0.00   0.0
-C2_s3 O_s1    58.00   3.6
-C2_s3 C4_s2   83.40   3.83
-C2_s3 C3_s3   67.90   3.85
 C2_s3 C2_s3   47.0    3.93
-
-
 !----------------
 
 # Seed_Info
@@ -71,7 +59,7 @@ TRUE
 !-----------
 
 # Molecule_Files
-Si27uc.mcf 1
+unitcell.mcf 1
 CH4.mcf 500
 C4H10.mcf 500
 !------------------------
@@ -115,7 +103,7 @@ none cbmc cbmc
 !----------------------
 
 # Start_Type
-add_to_config 1 0 0 Si27uc.xyz 0 100 50
+add_to_config 1 0 0 unitcell.xyz 0 4 2
 !------------------
 
 # Run_Type
@@ -131,7 +119,6 @@ Units        Steps
 Prop_Freq    400
 Coord_Freq   10000
 Run          10000
-# Done_Simulation_Length_Info
 !----------------------------
 
 # Property_Info 1 

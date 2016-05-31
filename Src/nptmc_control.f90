@@ -75,7 +75,6 @@ SUBROUTINE NPTMC_Control
 
 !*******************************************************************************
 
-  CALL Get_Verbosity_Info  
   CALL Copy_Inputfile
 
   ! How many species to simulate?

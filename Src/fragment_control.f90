@@ -58,7 +58,6 @@ SUBROUTINE Fragment_Control
 
   ! Copy input file to the log file
 
-  CALL Get_Verbosity_Info  
   CALL Copy_Inputfile
   
   ! Number of species to simulate

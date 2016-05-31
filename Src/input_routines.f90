@@ -321,24 +321,13 @@ SUBROUTINE Get_Sim_Type
      END IF
 
      IF (line_string(1:10) == '# Sim_Type') THEN
+
         line_nbr = line_nbr + 1
-         
         CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
 
 ! Assign the first entry on the line to simulation type
         sim_type = line_array(1)
         WRITE(logunit,'(A)') sim_type
-
-        line_nbr = line_nbr + 1
-   
-        IF(sim_type == 'GCMC') THEN
-
-           int_sim_type = sim_gcmc
-     !     CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
-           !     tmmc_update = String_To_Int(line_array(1))
-     !     tmmc_input = line_array(2)
-           
-        END IF
 
         EXIT
 
@@ -346,7 +335,7 @@ SUBROUTINE Get_Sim_Type
 
 ! No sim type specified so abort
         err_msg = ""
-        err_msg(1) = 'No simulation start type  specified in inputfile'
+        err_msg(1) = 'Section "# Sim_Type" missing from inputfile'
         CALL Clean_Abort(err_msg,'Get_Sim_Type')
 
         EXIT
@@ -365,12 +354,18 @@ SUBROUTINE Get_Sim_Type
      int_sim_type = sim_gemc
   ELSEIF(sim_type == 'GEMC_NPT') THEN
      int_sim_type = sim_gemc_npt
+  ELSEIF(sim_type == 'GCMC') THEN
+     int_sim_type = sim_gcmc
   ELSEIF(sim_type == 'NVT_MC_Fragment') THEN
      int_sim_type = sim_frag
   ELSEIF(sim_type == 'NVT_MC_Ring_Fragment') THEN
      int_sim_type = sim_ring
   ELSEIF(sim_type == 'MCF_Gen') THEN
      int_sim_type = sim_mcf
+  ELSE
+     err_msg = ""
+     err_msg(1) = 'Simulation type "' // TRIM(sim_type) //'" is not an available option'
+     CALL Clean_Abort(err_msg,'Get_Sim_Type')
   END IF
   
   WRITE(logunit,'(A80)') '********************************************************************************'
@@ -444,12 +439,12 @@ SUBROUTINE Get_Pair_Style
            ! way it will be summed / truncated, and the remaining to parameters associated with
            ! the sum method
            vdw_style(ibox) = line_array(1)
-           WRITE(logunit,'(A,2x,A,A,I3)') ' VDW style used is: ',vdw_style(ibox), 'in box:', ibox
+           WRITE(logunit,'(A,2x,A,A,I3)') 'VDW style used is: ',vdw_style(ibox), 'in box:', ibox
 
            IF (vdw_style(ibox) == 'LJ') THEN
               int_vdw_style(ibox) = vdw_lj
               vdw_sum_style(ibox) = line_array(2)
-              WRITE(logunit,'(A,2x,A,A,I3)') ' LJ VDW sum style is: ',vdw_sum_style(ibox), 'in box:', ibox
+              WRITE(logunit,'(A,2x,A,A,I3)') ' VDW sum style is: ',vdw_sum_style(ibox), 'in box:', ibox
 
               IF (vdw_sum_style(ibox) == 'CHARMM') THEN
                  int_vdw_sum_style(ibox) = vdw_charmm
@@ -479,7 +474,6 @@ SUBROUTINE Get_Pair_Style
                        ! for now assume that the box is cubic
                        rcut_vdw(ibox) = 0.5_DP * box_list(ibox)%length(1,1)
                        
-                       WRITE(logunit,'(A,2x,I5)') 'For box ', ibox
                        WRITE(logunit,*) 'Cutoffs are set to half of the box length'
                        
                     END IF
@@ -503,7 +497,6 @@ SUBROUTINE Get_Pair_Style
                        ! for now assume that the box is cubic
                        rcut_vdw(ibox) = 0.5_DP * box_list(ibox)%length(1,1)
                        
-                       WRITE(logunit,'(A,2x,I5)') 'For box ', ibox
                        WRITE(logunit,*) 'Cutoffs are set to half of the box length'
                        
                     END IF
@@ -518,11 +511,11 @@ SUBROUTINE Get_Pair_Style
               ELSEIF (vdw_sum_style(ibox) == 'cut_shift') THEN
                  int_vdw_sum_style(ibox) = vdw_cut_shift
                  rcut_vdw(ibox) = String_To_Double(line_array(3))
-                 WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_vdw(ibox), '   Angstrom'
+                 WRITE(logunit,'(A,2x,F7.3, A)') ' rcut = ',rcut_vdw(ibox), '   Angstrom'
 
               ELSEIF (vdw_sum_style(ibox) == 'minimum_image') THEN
                  int_vdw_sum_style(ibox) = vdw_minimum
-                 WRITE(logunit,'(A)') 'Minimum image convention used for VDW'
+                 WRITE(logunit,'(A)') ' Minimum image convention used for VDW'
 
 
               ELSE
@@ -534,8 +527,7 @@ SUBROUTINE Get_Pair_Style
 
                      err_msg = ""
                      err_msg(1) = 'Initial cutoff greater than minimum box length'
-                     err_msg(2) = 'For box'
-                     err_msg(3) = Int_To_String(ibox)
+                     err_msg(2) = 'For box ' // TRIM(Int_To_String(ibox))
                      CALL Clean_Abort(err_msg,'Get_Pair_Style')
 
               ENDIF
@@ -543,19 +535,17 @@ SUBROUTINE Get_Pair_Style
            ELSEIF (vdw_style(ibox) == 'Mie') THEN
               int_vdw_style(ibox) = vdw_mie
               vdw_sum_style(ibox) = line_array(2)
-              WRITE(logunit,'(A,2x,A,A,I3)') '   Mie VDW sum style is:',vdw_sum_style(ibox), 'in box:', ibox
+              WRITE(logunit,'(A,2x,A,A,I3)') ' VDW sum style is:',vdw_sum_style(ibox), 'in box:', ibox
 
               IF (vdw_sum_style(ibox) == 'cut') THEN
                  int_vdw_sum_style(ibox) = vdw_cut
                  rcut_vdw(ibox) = String_To_Double(line_array(3))
-                 WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_vdw(ibox), 'Angstrom'
-                 WRITE(logunit,'(A)') 'Mie potential used for VDW'
+                 WRITE(logunit,'(A,2x,F7.3, A)') ' rcut = ',rcut_vdw(ibox), 'Angstrom'
 
               ELSEIF (vdw_sum_style(ibox) == 'cut_shift') THEN
                  int_vdw_sum_style(ibox) = vdw_cut_shift
                  rcut_vdw(ibox) = String_To_Double(line_array(3))
-                 WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_vdw(ibox), 'Angstrom'
-                 WRITE(logunit,'(A)') 'Mie cut shift potential used for VDW'
+                 WRITE(logunit,'(A,2x,F7.3, A)') ' rcut = ',rcut_vdw(ibox), 'Angstrom'
 
 
               ELSEIF (vdw_sum_style(ibox) == 'cut_tail') THEN
@@ -573,7 +563,6 @@ SUBROUTINE Get_Pair_Style
                        ! for now assume that the box is cubic
                        rcut_vdw(ibox) = 0.5_DP * box_list(ibox)%length(1,1)
                        
-                       WRITE(logunit,'(A,2x,I5)') 'For box ', ibox
                        WRITE(logunit,*) 'Cutoffs are set to half of the box length'
                        
                     END IF
@@ -587,7 +576,7 @@ SUBROUTINE Get_Pair_Style
 
               ELSEIF (vdw_sum_style(ibox) == 'minimum_image') THEN
                  int_vdw_sum_style(ibox) = vdw_minimum
-                 WRITE(logunit,'(A)') 'Minimum image convention used for VDW'
+                 WRITE(logunit,'(A)') ' Minimum image convention used for VDW'
 
               END IF
 
@@ -618,7 +607,7 @@ SUBROUTINE Get_Pair_Style
            ! then next is the way the charges are summed. Following that are the parameters associated
            ! with this particular method of summing charges. 
            charge_style(ibox) = line_array(1)
-           WRITE(logunit,'(A,2x,A,A,I3)') ' Charge style used is: ',charge_style(ibox), 'in box:', ibox
+           WRITE(logunit,'(A,2x,A,A,I3)') 'Charge style used is: ',charge_style(ibox), 'in box:', ibox
 
            IF (charge_style(ibox) /= 'NONE') THEN
                  int_charge_style(ibox) = charge_coul
@@ -731,7 +720,7 @@ SUBROUTINE Get_Pair_Style
                        err_msg(1) = 'Minimum image requires both vdw and q-q to be so-specified'
                        CALL Clean_Abort(err_msg,'Get_Pair_Style')
                     ELSE
-                       WRITE(logunit,'(A)') 'Minimum image convention used for VDW'
+                       WRITE(logunit,'(A)') ' Minimum image convention used for charge'
                     ENDIF
                  ELSE
                     err_msg(1) = 'charge_sum_style not properly specified'
@@ -756,7 +745,6 @@ SUBROUTINE Get_Pair_Style
 
            ENDIF
 
-           WRITE(logunit,*) 'Charge style properly input'
            iassign = iassign + 1
            ! Test if both vdw and coulomb stuff read OK. If so, done.
 
@@ -770,7 +758,7 @@ SUBROUTINE Get_Pair_Style
 
         IF (line_array(1) == 'TRUE' .OR. line_array(1) == 'true') THEN
            l_pair_nrg = .TRUE.
-           WRITE(logunit,*) 'Pair interaction energy array storage enabled'
+           WRITE(logunit,'(A)') 'Pair interaction energy array storage enabled'
         END IF
 
      ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
@@ -788,7 +776,7 @@ SUBROUTINE Get_Pair_Style
    CALL Get_Mixing_Rules
 
   IF (.NOT. l_pair_nrg) THEN
-     WRITE(logunit,*) 'Pair interaction energy arrays will not be stored'
+     WRITE(logunit,'(A)') 'Pair interaction energy arrays will not be stored'
   END IF
   
   WRITE(logunit,'(A80)') '********************************************************************************'
@@ -901,7 +889,8 @@ SUBROUTINE Get_Molecule_Info
 
   INTEGER :: ierr,line_nbr,nbr_entries, i, openstatus, is, max_index
   INTEGER :: mcf_index(5), dummy
-  CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(120) :: line_string, line_array(20), source_dir
+  LOGICAL :: l_source_dir
 
 !********************************************************************************
   WRITE(logunit,*)
@@ -926,7 +915,6 @@ SUBROUTINE Get_Molecule_Info
      END IF
 
      molecule_file_string:IF (line_string(1:16) == '# Molecule_Files') THEN
-        line_nbr = line_nbr + 1
 
         ! next lines must contain the molecule file names of each species in order and
         ! the number of molecules. If this is an open system simulation (i.e. GCMC)
@@ -934,125 +922,144 @@ SUBROUTINE Get_Molecule_Info
         ! array will be allocated. We also determine the maximum number of molecules
         ! of a given species and use this to allocate arrays
 
+        ! Read first line and check for 'directory' keyword
+        line_nbr = line_nbr + 1
+        CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
+
+        IF (ierr .NE. 0) THEN
+           err_msg = ""
+           err_msg(1) = "Error reading molecular connectivity file info."
+           CALL Clean_Abort(err_msg,'Get_Molecule_File_Type')
+        END IF
+
+        IF (line_array(1) == 'directory') THEN
+           source_dir = line_array(2)
+           l_source_dir = .TRUE.
+        ELSE
+           line_nbr = line_nbr - 1
+           backspace(inputunit)
+        END IF
+ 
+        species_loop:DO i=1,nspecies
+
+           line_nbr = line_nbr + 1           
+           CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
+
+           IF (ierr .NE. 0) THEN
+              err_msg = ""
+              err_msg(1) = "Error reading molecular connectivity file."
+              err_msg(2) = "check that number of species and number of files match"
+              CALL Clean_Abort(err_msg,'Get_Molecule_File_Type')
+           END IF
+
+           ! assign the name of the molecular connectivity file, max number
+           ! of molecules, and starting number of molecules for this species
+
+           IF (l_source_dir) THEN
+             molfile_name(i) = TRIM(source_dir) // TRIM(line_array(1))
+           ELSE
+             molfile_name(i) = line_array(1)
+           END IF
+           max_molecules(i) = String_To_Int(line_array(2))
         
+           WRITE(logunit,*) 'Reading molecular connectivity information'
+           WRITE(logunit,*) 'Species: ',i
+           WRITE(logunit,*) 'Molecular connectivity file: ',molfile_name(i)
 
-           species_loop:DO i=1,nspecies
+           ! Open the file and determine how many atoms, bonds, angles, dihedrals and impropers
+           ! this molecule has
+           OPEN(UNIT=molfile_unit,FILE=molfile_name(i),STATUS="OLD",IOSTAT=openstatus,ACTION="READ")
 
-              
-                 CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
+           IF (openstatus .NE. 0) THEN
+              err_msg = ""
+              err_msg(1) = "Unable to open molecular connectivity file."
+              CALL Clean_Abort(err_msg,'Get_Molecule_Info')
+           ENDIF
 
+           REWIND(molfile_unit)
 
-              IF (ierr .NE. 0) THEN
-                 err_msg = ""
-                 err_msg(1) = "Error reading molecular connectivity file."
-                 err_msg(2) = "check that number of species and number of files match"
-                 CALL Clean_Abort(err_msg,'Get_Molecule_File_Type')
-              END IF
+           mcf_index = 0
 
-              ! assign the name of the molecular connectivity file, max number
-              ! of molecules, and starting number of molecules for this species
+           mcf_read_loop:DO 
+              CALL Read_String(molfile_unit,line_string,ierr)
 
-              molfile_name(i) = line_array(1)
-              max_molecules(i) = String_To_Int(line_array(2))
-          
-              WRITE(logunit,*) 'Reading molecular connectivity information'
-              WRITE(logunit,*) 'Species: ',i
-              WRITE(logunit,*) 'Molecular connectivity file: ',molfile_name(i)
+              IF (ierr == 0) THEN
 
-              ! Open the file and determine how many atoms, bonds, angles, dihedrals and impropers
-              ! this molecule has
-              OPEN(UNIT=molfile_unit,FILE=molfile_name(i),STATUS="OLD",IOSTAT=openstatus,ACTION="READ")
+                 IF (line_string(1:11) == '# Atom_Info') THEN
+                    CALL Read_String(molfile_unit,line_string,ierr)
+                    natoms(i) = String_To_Int(line_string)
+                    WRITE(logunit,*) '  ', &
+                         TRIM(Int_To_String(natoms(i))), ' atom(s) specified.'
 
-              IF (openstatus .NE. 0) THEN
-                 err_msg = ""
-                 err_msg(1) = "Unable to open molecular connectivity file."
-                 CALL Clean_Abort(err_msg,'Get_Molecule_Info')
-              ENDIF
+                    mcf_index(1) = 1
 
-              REWIND(molfile_unit)
+                 ELSEIF (line_string(1:11) == '# Bond_Info') THEN
+                    CALL Read_String(molfile_unit,line_string,ierr)
+                    nbonds(i) = String_To_Int(line_string)
+                    WRITE(logunit,*) '  ', &
+                         TRIM(Int_To_String(nbonds(i))), ' bond(s) specified.'
+                    mcf_index(2) = 1
 
-              mcf_index = 0
+                 ELSEIF (line_string(1:12) == '# Angle_Info') THEN
+                    CALL Read_String(molfile_unit,line_string,ierr)
+                    nangles(i) = String_To_Int(line_string)
+                    WRITE(logunit,*) '  ', &
+                         TRIM(Int_To_String(nangles(i))), ' angle(s) specified.'
+                    mcf_index(3) = 1
 
-              mcf_read_loop:DO 
-                 CALL Read_String(molfile_unit,line_string,ierr)
+                 ELSEIF (line_string(1:15) == '# Dihedral_Info') THEN
+                    CALL Read_String(molfile_unit,line_string,ierr)
+                    ndihedrals(i) = String_To_Int(line_string)
+                    WRITE(logunit,*) '  ', &
+                         TRIM(Int_To_String(ndihedrals(i))), ' dihedral(s) specified.'
+                    mcf_index(4) = 1
 
-                 IF (ierr == 0) THEN
+                 ELSEIF (line_string(1:15) == '# Improper_Info') THEN
+                    CALL Read_String(molfile_unit,line_string,ierr)
+                    nimpropers(i) = String_To_Int(line_string)
+                    WRITE(logunit,*) '  ', &
+                         TRIM(Int_To_String(nimpropers(i))), ' improper(s) specified.'
+                    mcf_index(5) = 1
 
-                    IF (line_string(1:11) == '# Atom_Info') THEN
-                       CALL Read_String(molfile_unit,line_string,ierr)
-                       natoms(i) = String_To_Int(line_string)
-                       WRITE(logunit,*) '  ', &
-                            TRIM(Int_To_String(natoms(i))), ' atom(s) specified.'
+                 ELSEIF (line_string(1:15) == '# Fragment_Info') THEN
+                    CALL Read_String(molfile_unit,line_string,ierr)
+                    nfragments(i) = String_To_Int(line_string)
+                    WRITE(logunit,*) '  ', &
+                         TRIM(Int_To_String(nfragments(i))), ' fragment(s) specified.'
 
-                       mcf_index(1) = 1
+                 ELSEIF (line_string(1:23) == '# Fragment_Connectivity') THEN
+                    CALL Read_String(molfile_unit,line_string,ierr)
+                    fragment_bonds(i) = String_To_Int(line_string)
+                    WRITE(logunit,*) '  ', &
+                         TRIM(Int_to_String(fragment_bonds(i))), ' fragment bond(s) specified.'
 
-                    ELSEIF (line_string(1:11) == '# Bond_Info') THEN
-                       CALL Read_String(molfile_unit,line_string,ierr)
-                       nbonds(i) = String_To_Int(line_string)
-                       WRITE(logunit,*) '  ', &
-                            TRIM(Int_To_String(nbonds(i))), ' bond(s) specified.'
-                       mcf_index(2) = 1
-
-                    ELSEIF (line_string(1:12) == '# Angle_Info') THEN
-                       CALL Read_String(molfile_unit,line_string,ierr)
-                       nangles(i) = String_To_Int(line_string)
-                       WRITE(logunit,*) '  ', &
-                            TRIM(Int_To_String(nangles(i))), ' angle(s) specified.'
-                       mcf_index(3) = 1
-
-                    ELSEIF (line_string(1:15) == '# Dihedral_Info') THEN
-                       CALL Read_String(molfile_unit,line_string,ierr)
-                       ndihedrals(i) = String_To_Int(line_string)
-                       WRITE(logunit,*) '  ', &
-                            TRIM(Int_To_String(ndihedrals(i))), ' dihedral(s) specified.'
-                       mcf_index(4) = 1
-
-                    ELSEIF (line_string(1:15) == '# Improper_Info') THEN
-                       CALL Read_String(molfile_unit,line_string,ierr)
-                       nimpropers(i) = String_To_Int(line_string)
-                       WRITE(logunit,*) '  ', &
-                            TRIM(Int_To_String(nimpropers(i))), ' improper(s) specified.'
-                       mcf_index(5) = 1
-
-                    ELSEIF (line_string(1:15) == '# Fragment_Info') THEN
-                       CALL Read_String(molfile_unit,line_string,ierr)
-                       nfragments(i) = String_To_Int(line_string)
-                       WRITE(logunit,*) '  ', &
-                            TRIM(Int_To_String(nfragments(i))), ' fragment(s) specified.'
-
-                    ELSEIF (line_string(1:23) == '# Fragment_Connectivity') THEN
-                       CALL Read_String(molfile_unit,line_string,ierr)
-                       fragment_bonds(i) = String_To_Int(line_string)
-                       WRITE(logunit,*) '  ', &
-                            TRIM(Int_to_String(fragment_bonds(i))), ' fragment bond(s) specified.'
-
-                    END IF
-
-                 ELSE
-                    ! Make sure everything has been specified
-                    IF (SUM(mcf_index) .NE. 5) THEN
-                       err_msg = ""
-                       err_msg(1) =  'Error! In mcf file '
-                       err_msg(2) = molfile_name(i)
-
-                       IF (mcf_index(1) .NE. 1) err_msg(3) = '   natoms  field not present'
-                       IF (mcf_index(2) .NE. 1) err_msg(4) = '   nbonds  field not present'
-                       IF (mcf_index(3) .NE. 1) err_msg(5) = '   nangles  field not present'
-                       IF (mcf_index(4) .NE. 1) err_msg(6) = '   ndihedrals  field not present'
-                       IF (mcf_index(5) .NE. 1) err_msg(7) = '   nimpropers  field not present'
-                       CALL Clean_Abort(err_msg,'Get_Init_Params')
-                    END IF
-                    ! Everything properly specified
-                    EXIT  !Exit when EOF reached
                  END IF
 
-              END DO mcf_read_loop
+              ELSE
+                 ! Make sure everything has been specified
+                 IF (SUM(mcf_index) .NE. 5) THEN
+                    err_msg = ""
+                    err_msg(1) =  'Error! In mcf file '
+                    err_msg(2) = molfile_name(i)
 
-              CLOSE(molfile_unit)
+                    IF (mcf_index(1) .NE. 1) err_msg(3) = '   natoms  field not present'
+                    IF (mcf_index(2) .NE. 1) err_msg(4) = '   nbonds  field not present'
+                    IF (mcf_index(3) .NE. 1) err_msg(5) = '   nangles  field not present'
+                    IF (mcf_index(4) .NE. 1) err_msg(6) = '   ndihedrals  field not present'
+                    IF (mcf_index(5) .NE. 1) err_msg(7) = '   nimpropers  field not present'
+                    CALL Clean_Abort(err_msg,'Get_Init_Params')
+                 END IF
+                 ! Everything properly specified
+                 EXIT  !Exit when EOF reached
+              END IF
 
-           ENDDO species_loop
+           END DO mcf_read_loop
 
-           EXIT
+           CLOSE(molfile_unit)
+
+        ENDDO species_loop
+
+        EXIT
 
      ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
 
@@ -3059,8 +3066,9 @@ SUBROUTINE Get_Fragment_File_Info(is)
 
   INTEGER :: ierr, line_nbr, i, j, ifrag, nbr_entries, is
   REAL(DP) :: vdw_cutoff, coul_cutoff
-  CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(120) :: line_string, line_array(20), source_dir
   CHARACTER(4) :: ring_flag
+  LOGICAL :: l_source_dir
   
   REWIND(inputunit)
 
@@ -3085,11 +3093,28 @@ SUBROUTINE Get_Fragment_File_Info(is)
         ! on each line of input we have name of the file corresponding to 
         ! various fragments
 
-        ! skip the first few  lines for the reservoir file for other species
+        ! Read the first line and check for 'directory' keyword
+        line_nbr = line_nbr + 1
+        CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
 
+        IF (ierr .NE. 0) THEN
+           err_msg = ""
+           err_msg(1) = "Error reading molecular connectivity file."
+           CALL Clean_Abort(err_msg,'Get_Molecule_File_Type')
+        END IF
+
+        IF (line_array(1) == 'directory') THEN
+           source_dir = line_array(2)
+           l_source_dir = .TRUE.
+        ELSE
+           line_nbr = line_nbr - 1
+           backspace(inputunit)
+        END IF
+
+        ! skip the first few  lines for the reservoir file for other species
         DO i = 1, is - 1
-           line_nbr = line_nbr + nfragments(i)
            DO j = 1, nfragments(i)
+              line_nbr = line_nbr + nfragments(i)
               CALL Read_String(inputunit,line_string,ierr)
            END DO
         END DO
@@ -3097,10 +3122,13 @@ SUBROUTINE Get_Fragment_File_Info(is)
         DO ifrag = 1, nfragments(is)
 
            line_nbr = line_nbr + 1
-
            CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
 
-           res_file(ifrag,is) = TRIM(line_array(1))
+           IF (l_source_dir) THEN
+             res_file(ifrag,is) = TRIM(source_dir) // TRIM(line_array(1))
+           ELSE
+             res_file(ifrag,is) = TRIM(line_array(1))
+           END IF
            ! assign a fragment type 
            frag_list(ifrag,is)%type = String_To_Int(line_array(2))
 
@@ -3985,7 +4013,7 @@ SUBROUTINE Get_Fugacity_Info
            species_list(is)%chem_potential = species_list(is)%chem_potential / atomic_to_kJmol
 
            WRITE(logunit,'(A,X,I5)') 'Species', is
-           WRITE(logunit,'(X,A,T40,X,F16.9)') 'Chemical potentiali (internal units):', &
+           WRITE(logunit,'(X,A,T40,X,F16.9)') 'Chemical potential (internal units):', &
                  species_list(is)%chem_potential
 
            ! Now compute the de Broglie wavelength for this species in each box
@@ -5175,9 +5203,7 @@ SUBROUTINE Get_Simulation_Length_Info
 
         ELSE  
            err_msg = ""
-           err_msg(1) = 'A keyword is missing in the input file.'
-           err_msg(2) = 'In section Simulation Length Info.'
-           err_msg(2) = 'Keyword Units is missing.'
+           err_msg(1) = 'Keyword "Units" is missing from "# Simulation_Length_Info" section'
            CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
         END IF
 
