@@ -44,12 +44,11 @@ SUBROUTINE GEMC_Driver
 
 !$ include 'omp_lib.h'
 
-  INTEGER :: i,j, this_box, ibox, is, other_box 
+  INTEGER :: i,j, ibox, is
 
   REAL(DP) :: rand_no
   REAL(DP) :: time_start, now_time, thermo_time, coord_time
 
-  LOGICAL :: volume_move, insertion_move, overlap
   LOGICAL :: write_flag, complete
 
   LOGICAL, DIMENSION(:), ALLOCATABLE :: next_write, next_rdf_write
@@ -58,8 +57,6 @@ SUBROUTINE GEMC_Driver
   ALLOCATE(next_rdf_write(nbr_boxes))
   next_write(:) = .false.
   next_rdf_write(:) = .false.
-  volume_move = .false.
-  insertion_move = .false.
   thermo_time = 0.0
   coord_time = 0.0
   openmp_flag = .FALSE.
@@ -99,7 +96,7 @@ SUBROUTINE GEMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
         
-        CALL Translate(this_box)
+        CALL Translate
         
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -117,7 +114,7 @@ SUBROUTINE GEMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Rotate(this_box)
+        CALL Rotate
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -135,7 +132,7 @@ SUBROUTINE GEMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
         
-        CALL Rigid_Dihedral_Change(this_box)
+        CALL Rigid_Dihedral_Change
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -154,14 +151,9 @@ SUBROUTINE GEMC_Driver
         END IF
 
         IF(freev .GT. 1 .OR. int_sim_type == sim_gemc_npt) THEN
- 
-          CALL Volume_Change(this_box)
-
+          CALL Volume_Change
         ELSE
-
-          CALL GEMC_NVT_Volume(this_box, other_box)
-          volume_move = .TRUE.
-
+          CALL GEMC_NVT_Volume
         END IF
 
         IF(.NOT. openmp_flag) THEN
@@ -180,7 +172,7 @@ SUBROUTINE GEMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
         
-        CALL Angle_Distortion(this_box)
+        CALL Angle_Distortion
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -206,8 +198,6 @@ SUBROUTINE GEMC_Driver
 !$         time_e = omp_get_wtime()
         END IF
 
-        insertion_move = .TRUE.
-
         movetime(imove_swap) = movetime(imove_swap) + time_e - time_s
 
      ELSE IF ( rand_no <= cut_regrowth) THEN
@@ -218,7 +208,7 @@ SUBROUTINE GEMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Cut_N_Grow(this_box)
+        CALL Cut_N_Grow
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -236,7 +226,7 @@ SUBROUTINE GEMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Atom_Displacement(this_box)
+        CALL Atom_Displacement
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -276,14 +266,6 @@ SUBROUTINE GEMC_Driver
      next_write(:) = .TRUE.
      next_rdf_write(:) = .TRUE.
    
-     IF ( volume_move .OR. insertion_move ) THEN
-        ! now set all the flags to false. In practice only one
-        ! flag needs to be turned to false but it is a simpler
-        ! solution than figuring out which move was performed
-        volume_move = .false.
-        insertion_move = .false.
-     END IF
-     
      ! Write the information to various files at regular intervals
      
      ! We will check this for all the boxes

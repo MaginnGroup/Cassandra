@@ -13,11 +13,7 @@ NVT_MC
 !------------------------------------------------------------------------------
 
 # VDW_Style
-LJ mie 14.0
-!------------------------------------------------------------------------------
-
-# Mie_Nonbond
-1 1 12 6
+Mie cut_tail 14.0      !cut or cut_shift can also be used instead of cut_tail
 !------------------------------------------------------------------------------
 
 # Charge_Style
@@ -83,7 +79,7 @@ make_config 220
 !----------------------------------------------------------checkpoint: filename
 
 # Run_Type
-Equilibration   22000 100
+Equilibration   220 100
 !-------------------------Equilibration: update maximum widths every 100 sweeps
 
 
@@ -93,10 +89,9 @@ Equilibration   22000 100
 
 # Simulation_Length_Info
 Units        Steps
-Prop_Freq    2200
+Prop_Freq    220
 Coord_Freq   2200
-MCsteps      22000
-# Done_Simulation_Length_Info
+Run          2200
 !------------------ 220 moves = 1 sweep; output every 10 sweeps; run 100 sweeps
 
 # Property_Info 1 

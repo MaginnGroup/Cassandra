@@ -63,17 +63,17 @@ SUBROUTINE Ring_Fragment_Driver
   
   IMPLICIT NONE
 
-  INTEGER :: is, im, this_box, i, ia, nring_success, nexoring_success
+  INTEGER :: is, im, ibox, i, ia, nring_success, nexoring_success
   INTEGER :: nexoring_trials, nring_trials
 
   REAL(DP) :: rand_no 
 
   LOGICAL :: overlap
 
+  ! Fragment routine is only called with 1 box, species, and molecule
   is = 1
-  im = locate(1,is,1)
-
-  this_box = molecule_list(im,is)%which_box
+  im = 1
+  ibox = 1
 
   nring_success = 0
   nexoring_success = 0
@@ -85,13 +85,13 @@ SUBROUTINE Ring_Fragment_Driver
 
   WRITE(frag_file_unit,*) n_mcsteps/nthermo_freq
 
-  DO i = 1, n_mcsteps
+  DO i_mcstep = 1, n_mcsteps
      rand_no = rranf()
 
      IF ( rand_no <= cut_ring) THEN
         
         nring_trials = nring_trials + 1
-        CALL Flip_Move(im,is,this_box)
+        CALL Flip_Move
 
         IF (accept) THEN
            nring_success = nring_success + 1
@@ -100,7 +100,7 @@ SUBROUTINE Ring_Fragment_Driver
      ELSE IF (rand_no <= cut_atom_displacement) THEN
         
         nexoring_trials = nexoring_trials + 1
-        CALL Atom_Displacement(this_box)
+        CALL Atom_Displacement
 
         IF (accept) THEN
            nexoring_success = nexoring_success + 1
@@ -109,10 +109,8 @@ SUBROUTINE Ring_Fragment_Driver
      END IF
 
      ! Store information with given frequency
-     IF (MOD(i,nthermo_freq) == 0) THEN
-        WRITE(frag_file_unit,*) temperature(this_box), &
-             energy(this_box)%dihedral + energy(this_box)%intra_vdw + &
-             energy(this_box)%intra_q + energy(this_box)%improper
+     IF (MOD(i_mcstep,nthermo_freq) == 0) THEN
+        WRITE(frag_file_unit,*) temperature(ibox), energy(ibox)%total
 
         DO ia = 1, natoms(is)
            WRITE(frag_file_unit,*) nonbond_list(ia,is)%element, &
@@ -133,7 +131,7 @@ SUBROUTINE Ring_Fragment_Driver
 
 END SUBROUTINE Ring_Fragment_Driver
 !*******************************************************************************
-SUBROUTINE Flip_Move(im,is,this_box)
+SUBROUTINE Flip_Move
   !*****************************************************************************
   !
   ! CALLED BY
@@ -160,7 +158,7 @@ SUBROUTINE Flip_Move(im,is,this_box)
 
   IMPLICIT NONE
 
-  INTEGER :: atom_num, this_atom, i, angle_id, atom1, atom2, is, im, this_box, j
+  INTEGER :: atom_num, this_atom, i, angle_id, atom1, atom2, is, im, ibox, j
   INTEGER :: natoms_to_move, atom_i
   INTEGER, DIMENSION(:), ALLOCATABLE :: atoms_to_move
 
@@ -168,25 +166,25 @@ SUBROUTINE Flip_Move(im,is,this_box)
   REAL(DP) :: domega, cosomega, sinomega, a(3), b(3), c(3)
 
   REAL(DP) :: delta_e, delta_angle, delta_dihed, delta_intra, e_angle_n, e_dihed_n
-  REAL(DP) :: e_improper_n, delta_improper, E_intra_vdw, E_intra_qq, factor, e_recip
+  REAL(DP) :: e_improper_n, delta_improper, E_intra_vdw, E_intra_qq, ln_pacc, e_recip
   REAL(DP) :: E_periodic_qq
 
   LOGICAL :: accept_or_reject,intra_overlap
 
-  ! save the orignal coordinates
+  im = 1
+  is = 1
+  ibox = 1
 
+  ! save the orignal coordinates
   Call Save_Old_Cartesian_Coordinates(im,is)
   
   ! Choose a ring atom to flip
-
   atom_num = INT ( rranf() * nring_atoms(is)) + 1
 
   ! obtain id 
-
   this_atom = ring_atom_ids(atom_num,is)
 
   ! Figure out the bond angle that contains this_atom at the apex
-
   DO i = 1, angle_part_list(this_atom,is)%nangles
 
      IF (angle_part_list(this_atom,is)%position(i) == 2 ) THEN
@@ -314,44 +312,48 @@ SUBROUTINE Flip_Move(im,is,this_box)
        E_periodic_qq,intra_overlap)
 
 
-  IF (int_charge_sum_style(this_box) == charge_ewald) THEN
+  IF (int_charge_sum_style(ibox) == charge_ewald) THEN
     ! Compute Ewald reciprocal energy difference
-    CALL Update_System_Ewald_Reciprocal_Energy(im,is,this_box,int_intra,e_recip)
-    delta_e = (e_recip - energy(this_box)%ewald_reciprocal)
+    CALL Update_System_Ewald_Reciprocal_Energy(im,is,ibox,int_intra,e_recip)
+    delta_e = (e_recip - energy(ibox)%ewald_reciprocal)
   END IF
 
   ! Change in energy due to the move
 
-  delta_angle = e_angle_n - energy(this_box)%angle
-  delta_dihed = e_dihed_n - energy(this_box)%dihedral
-  delta_improper = e_improper_n - energy(this_box)%improper
-  delta_intra = e_intra_vdw + e_intra_qq - energy(this_box)%intra_vdw - energy(this_box)%intra_q
+  delta_angle = e_angle_n - energy(ibox)%angle
+  delta_dihed = e_dihed_n - energy(ibox)%dihedral
+  delta_improper = e_improper_n - energy(ibox)%improper
+  delta_intra = e_intra_vdw + e_intra_qq - energy(ibox)%intra_vdw - energy(ibox)%intra_q
 
   delta_e = delta_angle + delta_dihed + delta_improper + delta_intra + delta_e
 
-  factor = beta(this_box) * delta_e
+  ln_pacc = beta(ibox) * delta_e
 
-  accept = accept_or_reject(factor)
+  accept = accept_or_reject(ln_pacc)
 
   IF (accept) THEN
 
      ! update energies
-     energy(this_box)%total = energy(this_box)%total + delta_e
-     energy(this_box)%intra = energy(this_box)%intra + delta_angle + delta_dihed + delta_improper
-     energy(this_box)%angle = e_angle_n
-     energy(this_box)%dihedral = e_dihed_n
-     energy(this_box)%improper = e_improper_n
-     energy(this_box)%intra_vdw = E_intra_vdw
-     energy(this_box)%intra_q = E_intra_qq
+     energy(ibox)%total = energy(ibox)%total + delta_e
+     energy(ibox)%intra = energy(ibox)%intra + delta_angle + delta_dihed + delta_improper
+     energy(ibox)%angle = e_angle_n
+     energy(ibox)%dihedral = e_dihed_n
+     energy(ibox)%improper = e_improper_n
+     energy(ibox)%intra_vdw = E_intra_vdw
+     energy(ibox)%intra_q = E_intra_qq
      
-     IF(int_charge_sum_style(this_box) == charge_ewald .AND. &
+     IF(int_charge_sum_style(ibox) == charge_ewald .AND. &
        has_charge(is)) THEN
-        energy(this_box)%ewald_reciprocal = E_recip
+        energy(ibox)%ewald_reciprocal = E_recip
      END IF
   ELSE
 
      CALL Revert_Old_Cartesian_Coordinates(im,is)
    
+  END IF
+
+  IF (verbose_log) THEN
+    WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8)') i_mcstep, 'flip_move' , im, is, ibox, accept
   END IF
 
 

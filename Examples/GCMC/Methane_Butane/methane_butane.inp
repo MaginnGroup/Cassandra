@@ -1,7 +1,7 @@
 ! This is the input file for a GCMC simulation of a mixture of CH4 and C4H10 at 300.0 K.
 
 # Run_Name
-methane_butane
+methane_butane.out
 !--------------
 
 # Sim_Type
@@ -80,10 +80,7 @@ CUBIC
 
 # Prob_Insertion
 0.20
-insertion method
-reservoir
-insertion method
-reservoir
+cbmc cbmc
 
 # Prob_Deletion
 0.20
@@ -93,7 +90,6 @@ reservoir
 
 # Start_Type
 make_config 10 90
-
 !------------------
 
 # Run_Type
@@ -108,8 +104,7 @@ Equilibration   600
 Units      Steps
 Prop_Freq    500
 Coord_Freq   25000
-MCsteps      50000
-# Done_Simulation_Length_Info
+Run          50000
 !----------------------------
 
 # Property_Info 1 

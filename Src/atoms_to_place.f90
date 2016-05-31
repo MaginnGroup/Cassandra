@@ -236,7 +236,13 @@ CONTAINS
     ALLOCATE(deadend(MAXVAL(natoms)))
     
     ALLOCATE(angle_atoms_to_place_list(MAXVAL(nangles),nspecies),Stat=AllocateStatus)
-          IF (AllocateStatus /= 0 ) STOP
+    IF (AllocateStatus /= 0 ) STOP
+
+    IF (verbose_log .AND. prob_angle > 0) THEN
+       WRITE(logunit,*)
+       write(logunit,'(A)') 'Atoms displaced by angle moves'
+       WRITE(logunit,'(A)') '********************************************************************************'
+    END IF
     
     species_loop:DO ispecies = 1, nspecies
        
@@ -323,18 +329,18 @@ CONTAINS
 
           ! echo the information in the log file
 
-          IF (verbose_log) THEN
-                  write(logunit,*)'information about angle', iangles
+          IF (verbose_log .AND. prob_angle > 0) THEN
+             write(logunit,*)'information about angle', iangles
 
-                  write(logunit,*) 'the atom that is moved is', atom1
+             write(logunit,*) 'the atom that is moved is', atom1
 
-                  write(logunit,*)'atoms that change their position due to this move'
-                  write(logunit,*) (angle_atoms_to_place_list(iangles,ispecies)%atom1(i),i=1, &
+             write(logunit,*)'atoms that change their position due to this move'
+             write(logunit,*) (angle_atoms_to_place_list(iangles,ispecies)%atom1(i),i=1, &
                angle_atoms_to_place_list(iangles,ispecies)%atom1_natoms)
 
-                  write(logunit,*) 'the atoms is moved is', atom3
-                  write(logunit,*) 'atoms that change their position due to this move'
-                  write(logunit,*) (angle_atoms_to_place_list(iangles,ispecies)%atom3(i),i=1, &
+             write(logunit,*) 'the atoms is moved is', atom3
+             write(logunit,*) 'atoms that change their position due to this move'
+             write(logunit,*) (angle_atoms_to_place_list(iangles,ispecies)%atom3(i),i=1, &
                angle_atoms_to_place_list(iangles,ispecies)%atom3_natoms)
           END IF     
              
@@ -351,6 +357,10 @@ CONTAINS
     IF (ALLOCATED(deadend)) DEALLOCATE(deadend)
     IF (ALLOCATED(atoms_to_place_list)) DEALLOCATE(atoms_to_place_list)
 
+    IF (verbose_log .AND. prob_angle > 0) THEN
+       WRITE(logunit,'(A)') '********************************************************************************'
+    END IF
+    
   END SUBROUTINE Get_Angles_Atoms_To_Place
 
 
@@ -499,23 +509,26 @@ CONTAINS
     IF (ALLOCATED(deadend)) DEALLOCATE(deadend)
     IF (ALLOCATED(atoms_to_place_list)) DEALLOCATE(atoms_to_place_list)    
 
-    IF (verbose_log) THEN
-            write(logunit,*)
-            write(logunit,*) 'checking for dihedral_atoms_to_place'
-            DO i = 1, nspecies
-               DO j = 1,ndihedrals(i)
-                  write(logunit,*) 'dihedral, atom1, atom2, atom3, atom4'
-                  write(logunit,*) j,dihedral_list(j,i)%atom1,dihedral_list(j,i)%atom2, dihedral_list(j,i)%atom3, &
-                       dihedral_list(j,i)%atom4
-                  write(logunit,*)
-                  write(logunit,*) 'natoms to place if atom 1 moves and the moving atom numbers'
-                  write(logunit,*) dihedral_atoms_to_place_list(j,i)%atom1_natoms, dihedral_atoms_to_place_list(j,i)%atom1
-                  write(logunit,*) 'natoms to place if atom 4 moves and the moving atom numbers'
-                  write(logunit,*) dihedral_atoms_to_place_list(j,i)%atom4_natoms, dihedral_atoms_to_place_list(j,i)%atom4
-                  write(logunit,*)
-               ENDDO
-            ENDDO       
+    IF (verbose_log .AND. prob_torsion > 0) THEN
+       WRITE(logunit,*)
+       write(logunit,'(A)') 'Atoms displaced by dihedral moves'
+       WRITE(logunit,'(A)') '********************************************************************************'
+       DO i = 1, nspecies
+          DO j = 1,ndihedrals(i)
+             write(logunit,*) 'dihedral, atom1, atom2, atom3, atom4'
+             write(logunit,*) j,dihedral_list(j,i)%atom1,dihedral_list(j,i)%atom2, dihedral_list(j,i)%atom3, &
+                  dihedral_list(j,i)%atom4
+             write(logunit,*)
+             write(logunit,*) 'natoms to place if atom 1 moves and the moving atom numbers'
+             write(logunit,*) dihedral_atoms_to_place_list(j,i)%atom1_natoms, dihedral_atoms_to_place_list(j,i)%atom1
+             write(logunit,*) 'natoms to place if atom 4 moves and the moving atom numbers'
+             write(logunit,*) dihedral_atoms_to_place_list(j,i)%atom4_natoms, dihedral_atoms_to_place_list(j,i)%atom4
+             write(logunit,*)
+          ENDDO
+       ENDDO       
+       WRITE(logunit,'(A)') '********************************************************************************'
     END IF
+
   END SUBROUTINE Get_Dihedral_Atoms_To_Place
 
 !****************************************************************************************************

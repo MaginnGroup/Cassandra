@@ -19,7 +19,7 @@
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*******************************************************************************
 
-SUBROUTINE Deletion(this_box)
+SUBROUTINE Deletion
   
   !*****************************************************************************
   !
@@ -61,15 +61,13 @@ SUBROUTINE Deletion(this_box)
 
   IMPLICIT NONE
 
-  ! Arguments
-  INTEGER, INTENT(INOUT) :: this_box ! attempt to delete a molecule in this_box
-
   ! Local declarations
   INTEGER :: i, i_type               ! atom indices
   INTEGER :: ifrag                   ! fragment indices
   INTEGER :: im                      ! molecule INDEX
   INTEGER :: lm                      ! molecule LOCATE
   INTEGER :: is, is_rand, is_counter ! species indices
+  INTEGER :: ibox ! attempt to delete a molecule in ibox
   INTEGER :: kappa_tot, which_anchor
   INTEGER, ALLOCATABLE :: frag_order(:)
   INTEGER :: k, mcstep
@@ -96,6 +94,7 @@ SUBROUTINE Deletion(this_box)
   inter_overlap = .FALSE.
   cbmc_overlap = .FALSE.
   intra_overlap = .FALSE.
+  ibox = 1
   
   !*****************************************************************************
   ! Step 1) Select a species with uniform probability
@@ -123,19 +122,19 @@ SUBROUTINE Deletion(this_box)
   ! In the given example, now 'is' would equal 4.
 
   ! Cannot delete a molecule if there aren't any in the box
-  IF (nmols(is,this_box) == 0) RETURN
+  IF (nmols(is,ibox) == 0) RETURN
  
 
   ! Now that a deletion will be attempted, we need to do some bookkeeping:
   !  * Increment the counters to compute success ratios
-  ntrials(is,this_box)%deletion = ntrials(is,this_box)%deletion + 1  
-  tot_trials(this_box) = tot_trials(this_box) + 1
+  ntrials(is,ibox)%deletion = ntrials(is,ibox)%deletion + 1  
+  tot_trials(ibox) = tot_trials(ibox) + 1
 
   !*****************************************************************************
   ! Step 2) Select a molecule with uniform probability
   !*****************************************************************************
-  im = INT(rranf() * nmols(is,this_box)) + 1
-  lm = locate(im,is,this_box)
+  im = INT(rranf() * nmols(is,ibox)) + 1
+  lm = locate(im,is,ibox)
 
   ! If fractional molecule, need to use lambda in reverse insertion move
   this_lambda = molecule_list(lm,is)%frac
@@ -171,7 +170,7 @@ SUBROUTINE Deletion(this_box)
      del_flag = .TRUE.      ! Don't change the coordinates of 'lm'
      get_fragorder = .TRUE. !
      ALLOCATE(frag_order(nfragments(is)))
-     CALL Build_Molecule(lm,is,this_box,frag_order,this_lambda, &
+     CALL Build_Molecule(lm,is,ibox,frag_order,this_lambda, &
              P_seq, P_bias, nrg_ring_frag_tot, cbmc_overlap)
      DEALLOCATE(frag_order)
      
@@ -180,7 +179,7 @@ SUBROUTINE Deletion(this_box)
      IF (cbmc_overlap) THEN
         err_msg = ""
         err_msg(1) = "Energy overlap detected in existing configuration"
-        err_msg(2) = "of molecule " // TRIM(Int_To_String(lm)) // " of species " // TRIM(Int_To_String(is))
+        err_msg(2) = "of molecule " // TRIM(Int_To_String(im)) // " of species " // TRIM(Int_To_String(is))
         CALL Clean_Abort(err_msg, "Deletion")
      END IF
 
@@ -233,7 +232,7 @@ SUBROUTINE Deletion(this_box)
   ! 4.1) Nonbonded intermolecular energies
 
   IF (l_pair_nrg) THEN
-     CALL Store_Molecule_Pair_Interaction_Arrays(lm,is,this_box, &
+     CALL Store_Molecule_Pair_Interaction_Arrays(lm,is,ibox, &
              E_inter_vdw,E_inter_qq)
   ELSE
      CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is, &
@@ -261,51 +260,37 @@ SUBROUTINE Deletion(this_box)
 
   ! 4.4) Ewald energies
 
-  IF (int_charge_style(this_box) == charge_coul) THEN
+  IF (int_charge_style(ibox) == charge_coul) THEN
 
-      IF ( (int_charge_sum_style(this_box) == charge_ewald) .AND. &
+      IF ( (int_charge_sum_style(ibox) == charge_ewald) .AND. &
            (has_charge(is)) ) THEN
     
-         CALL Update_System_Ewald_Reciprocal_Energy(lm,is,this_box, &
+         CALL Update_System_Ewald_Reciprocal_Energy(lm,is,ibox, &
                  int_deletion,E_reciprocal)
 
-         delta_e = delta_e + (E_reciprocal - energy(this_box)%ewald_reciprocal)
+         delta_e = delta_e + (E_reciprocal - energy(ibox)%ewald_reciprocal)
 
       END IF
 
-      CALL Compute_Molecule_Self_Energy(lm,is,this_box,E_self)
+      CALL Compute_Molecule_Self_Energy(lm,is,ibox,E_self)
 
       delta_e = delta_e - E_self 
   END IF
 
   ! 4.5) Long-range energy correction
 
-  IF (int_vdw_sum_style(this_box) == vdw_cut_tail .AND. &
-			int_vdw_style(this_box) == vdw_lj ) THEN
+  IF (int_vdw_sum_style(ibox) == vdw_cut_tail) THEN
 
      ! subtract off beads for this species
-     nbeads_out(:) = nint_beads(:,this_box)
+     nbeads_out(:) = nint_beads(:,ibox)
 
      DO i = 1, natoms(is)
         i_type = nonbond_list(i,is)%atom_type_number
-        nint_beads(i_type,this_box) = nint_beads(i_type,this_box) - 1
+        nint_beads(i_type,ibox) = nint_beads(i_type,ibox) - 1
      END DO
 
-     CALL Compute_LR_correction(this_box,e_lrc)
-     delta_e = delta_e + ( e_lrc - energy(this_box)%lrc )
-
-  ELSEIF (int_vdw_sum_style(this_box) == vdw_cut_tail .AND. &
-			int_vdw_style(this_box) == vdw_mie ) THEN
-
-     nbeads_out(:) = nint_beads_mie(is,:,this_box)
-
-     DO i = 1, natoms(is)
-        i_type = nonbond_list(i,is)%atom_type_number
-        nint_beads_mie(is,i_type,this_box) = nint_beads_mie(is,i_type,this_box) - 1
-     END DO
-
-     CALL Compute_LR_correction(this_box,e_lrc)
-     delta_e = delta_e + ( e_lrc - energy(this_box)%lrc )
+     CALL Compute_LR_correction(ibox,e_lrc)
+     delta_e = delta_e + ( e_lrc - energy(ibox)%lrc )
 
   END IF  
   
@@ -338,72 +323,72 @@ SUBROUTINE Deletion(this_box)
      CALL Compute_Molecule_Nonbond_Intra_Energy(lm,is, &
              E_intra_vdw_igas,E_intra_qq_igas,E_periodic_qq,intra_overlap)
      igas_flag = .FALSE. 
-     ln_pacc = beta(this_box) * (delta_e + E_bond + E_angle &
+     ln_pacc = beta(ibox) * (delta_e + E_bond + E_angle &
                                          + E_dihedral + E_improper &
                                          + E_intra_vdw_igas + E_intra_qq_igas)
   ELSE
 
      IF(species_list(is)%fragment) THEN
-        ln_pacc = beta(this_box) * (delta_e + E_angle + nrg_ring_frag_tot)
+        ln_pacc = beta(ibox) * (delta_e + E_angle + nrg_ring_frag_tot)
      END IF
 
   END IF
 
   ! P_seq and P_bias equal 1.0 unless changed by Build_Molecule
   ln_pacc = ln_pacc - DLOG(P_seq * P_bias) &
-                    - DLOG(REAL(nmols(is,this_box),DP)) &
-                    + DLOG(box_list(this_box)%volume)
+                    - DLOG(REAL(nmols(is,ibox),DP)) &
+                    + DLOG(box_list(ibox)%volume)
  
   IF(lchempot) THEN
      ! chemical potential is input
-     ln_pacc = ln_pacc + beta(this_box) * species_list(is)%chem_potential &
-                       - 3.0_DP*DLOG(species_list(is)%de_broglie(this_box)) 
+     ln_pacc = ln_pacc + beta(ibox) * species_list(is)%chem_potential &
+                       - 3.0_DP*DLOG(species_list(is)%de_broglie(ibox)) 
   ELSE
      ! fugacity is input
      ln_pacc = ln_pacc + DLOG(species_list(is)%fugacity) &
-                       + DLOG(beta(this_box)) 
+                       + DLOG(beta(ibox)) 
   END IF 
  
   accept = accept_or_reject(ln_pacc)
 
   IF (accept) THEN
      ! Update energies
-     energy(this_box)%total = energy(this_box)%total + delta_e
-     energy(this_box)%intra = energy(this_box)%intra - E_bond - E_angle &
+     energy(ibox)%total = energy(ibox)%total + delta_e
+     energy(ibox)%intra = energy(ibox)%intra - E_bond - E_angle &
                             - E_dihedral - E_improper
-     energy(this_box)%bond = energy(this_box)%bond - E_bond
-     energy(this_box)%angle = energy(this_box)%angle - E_angle
-     energy(this_box)%dihedral = energy(this_box)%dihedral - E_dihedral
-     energy(this_box)%improper = energy(this_box)%improper - E_improper
-     energy(this_box)%intra_vdw = energy(this_box)%intra_vdw - E_intra_vdw
-     energy(this_box)%intra_q = energy(this_box)%intra_q - E_intra_qq
-     energy(this_box)%inter_vdw = energy(this_box)%inter_vdw - E_inter_vdw
-     energy(this_box)%inter_q   = energy(this_box)%inter_q - E_inter_qq
+     energy(ibox)%bond = energy(ibox)%bond - E_bond
+     energy(ibox)%angle = energy(ibox)%angle - E_angle
+     energy(ibox)%dihedral = energy(ibox)%dihedral - E_dihedral
+     energy(ibox)%improper = energy(ibox)%improper - E_improper
+     energy(ibox)%intra_vdw = energy(ibox)%intra_vdw - E_intra_vdw
+     energy(ibox)%intra_q = energy(ibox)%intra_q - E_intra_qq
+     energy(ibox)%inter_vdw = energy(ibox)%inter_vdw - E_inter_vdw
+     energy(ibox)%inter_q   = energy(ibox)%inter_q - E_inter_qq
 
 
-     IF (int_charge_style(this_box) == charge_coul) THEN
+     IF (int_charge_style(ibox) == charge_coul) THEN
 
-         IF ( int_charge_sum_style(this_box) == charge_ewald .AND. &
+         IF ( int_charge_sum_style(ibox) == charge_ewald .AND. &
               has_charge(is)) THEN
-            energy(this_box)%ewald_reciprocal = E_reciprocal
+            energy(ibox)%ewald_reciprocal = E_reciprocal
          END IF
 
-         energy(this_box)%self = energy(this_box)%self - E_self
+         energy(ibox)%self = energy(ibox)%self - E_self
 
      END IF
 
 
-     IF ( int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
-        energy(this_box)%lrc = E_lrc
+     IF ( int_vdw_sum_style(ibox) == vdw_cut_tail) THEN
+        energy(ibox)%lrc = E_lrc
      END IF
 
-     ! remove the deleted LOCATE from this_box's list
-     IF (im < nmols(is,this_box)) THEN
-        DO k = im + 1, nmols(is,this_box)
-           locate(k-1,is,this_box) = locate(k,is,this_box)
+     ! remove the deleted LOCATE from ibox's list
+     IF (im < nmols(is,ibox)) THEN
+        DO k = im + 1, nmols(is,ibox)
+           locate(k-1,is,ibox) = locate(k,is,ibox)
         END DO
      END IF
-     locate(nmols(is,this_box),is,this_box) = 0
+     locate(nmols(is,ibox),is,ibox) = 0
      
      ! move LOCATE to list of unused LOCATES
      nmols(is,0) = nmols(is,0) + 1
@@ -412,34 +397,34 @@ SUBROUTINE Deletion(this_box)
      ! update the number of molecules
      molecule_list(lm,is)%live = .FALSE.
      atom_list(:,lm,is)%exist = .FALSE.
-     nmols(is,this_box) = nmols(is,this_box) - 1
+     nmols(is,ibox) = nmols(is,ibox) - 1
 
      ! Increment counter
-     nsuccess(is,this_box)%deletion = nsuccess(is,this_box)%deletion + 1
+     nsuccess(is,ibox)%deletion = nsuccess(is,ibox)%deletion + 1
 
 !     CALL System_Energy_Check(1,mcstep,randno)
   ELSE
 
-     IF ( (int_charge_sum_style(this_box) == charge_ewald) .AND. &
+     IF ( (int_charge_sum_style(ibox) == charge_ewald) .AND. &
            (has_charge(is)) ) THEN
         ! Restore cos_sum and sin_sum. Note that these were changed when
         ! difference in reciprocal energies was computed
-        cos_sum(:,this_box) = cos_sum_old(:,this_box)
-        sin_sum(:,this_box) = sin_sum_old(:,this_box)
+        cos_sum(:,ibox) = cos_sum_old(:,ibox)
+        sin_sum(:,ibox) = sin_sum_old(:,ibox)
      END IF
 
-     IF ( int_vdw_sum_style(this_box) == vdw_cut_tail ) THEN
+     IF ( int_vdw_sum_style(ibox) == vdw_cut_tail ) THEN
         ! Restore the total number of bead types
-        IF (int_vdw_style(this_box) == vdw_lj) THEN
-	   nint_beads(:,this_box) = nbeads_out(:)
-        ELSEIF (int_vdw_style(this_box) == vdw_mie) THEN
-	   nint_beads_mie(is,:,this_box) = nbeads_out(:)
-	ENDIF
+        nint_beads(:,ibox) = nbeads_out(:)
      END IF
 
   END IF
 
   IF (l_pair_nrg) DEALLOCATE(pair_vdw_temp,pair_qq_temp)
+
+  IF (verbose_log) THEN
+    WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8)') i_mcstep, 'delete' , lm, is, ibox, accept
+  END IF
 
 
 END SUBROUTINE Deletion

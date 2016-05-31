@@ -1,7 +1,7 @@
 ! This is the input file for a short GCMC simulation of N2 in Silicalite at 77.0 K.
 
 # Run_Name
-nitrogen_Si
+nitrogen_Si.out
 !--------------
 
 # Sim_Type
@@ -33,7 +33,6 @@ LB
 
 # Seed_Info
 6752865750 4278117321
-
 !-------------------
 
 # Rcutoff_Low
@@ -77,10 +76,7 @@ ORTHOGONAL
 
 # Prob_Insertion
 0.25
-insertion method
-none
-insertion method
-reservoir
+none cbmc
 
 # Prob_Deletion
 0.25
@@ -90,7 +86,6 @@ reservoir
 
 # Start_Type
 add_to_config 1 0 MFI.xyz 0 20
-
 !------------------
 
 # Run_Type
@@ -102,10 +97,10 @@ Equilibration   600
 !-------------
 
 # Simulation_Length_Info
-Units      Steps
+Units        Steps
 Prop_Freq    400
 Coord_Freq   4000
-MCsteps      4000
+Run          4000
 # Done_Simulation_Length_Info
 !----------------------------
 
@@ -114,12 +109,10 @@ MCsteps      4000
 Energy_Total
 Nmols
 Pressure
-
 !----------------
 
 # Fragment_Files
-species1/frag1/frag1.dat  1
-species2/frag1/frag1.dat  2
+species2/frag1/frag1.dat  1
 !---------------------------------------------------------one line per fragment
 
 # CBMC_Info
