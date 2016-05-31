@@ -75,12 +75,10 @@ SUBROUTINE NPTMC_Control
 
 !*******************************************************************************
 
-  CALL Get_Verbosity_Info  
   CALL Copy_Inputfile
 
   ! How many species to simulate?
   CALL Get_Nspecies
-  WRITE(logunit,'(a30,1x,I5,/)') 'Number of species simulated: ',nspecies
 
   ! Load box shape, number of boxes and box type. Compute various properties of the box
   ! including the volume
@@ -126,7 +124,7 @@ SUBROUTINE NPTMC_Control
   CALL Get_Property_Info
 
   ! Average information
-  CALL Average_Info	
+  CALL Get_Average_Info	
 
 
   CALL Get_Rcutoff_Low
@@ -158,7 +156,6 @@ SUBROUTINE NPTMC_Control
 
   ! Determine whether mie potentials are used
   IF (int_vdw_style(1) == vdw_mie ) THEN
-      CALL Get_Mie_Nonbond
   END IF
   
 END SUBROUTINE NPTMC_Control

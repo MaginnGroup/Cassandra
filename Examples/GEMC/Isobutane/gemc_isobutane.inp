@@ -1,5 +1,5 @@
 # Run_Name
-gemc_isobutane
+gemc_isobutane.out
 
 !------------------------------------------------------------------------------
 
@@ -85,8 +85,7 @@ CUBIC
 
 # Prob_Swap
 0.195
-insertion method
-reservoir
+cbmc
 
 # Done_Probability_Info
 
@@ -94,9 +93,8 @@ reservoir
 !-----------------------------------------each molecule moves per volume change
 
 # Start_Type
-read_old
-Init_Config/nvt_liq.xyz
-Init_Config/nvt_vap.xyz
+read_config 240 Init_Config/nvt_liq.xyz
+read_config 160 Init_Config/nvt_vap.xyz
 
 !--------make_config: one line for each species and one entry/line for each box
 !------------------------------------------------------------read_old: filename
@@ -117,8 +115,7 @@ Equilibration 100 100
 Units       Steps
 Prop_Freq   100
 Coord_Freq  2200
-MCsteps     2200
-# Done_Simulation_Length_Info
+Run         2200
 !------------------ simulation length every 2200 steps, XYZ output every 2200 steps, property
 !---------------------------------------output every 100 steps
 

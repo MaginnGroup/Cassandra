@@ -58,13 +58,11 @@ SUBROUTINE Fragment_Control
 
   ! Copy input file to the log file
 
-  CALL Get_Verbosity_Info  
   CALL Copy_Inputfile
   
   ! Number of species to simulate
 
   CALL Get_Nspecies
-  Write(Logunit,'(A30,1x,I5,/)') 'Number Of Species Simulated: ',Nspecies
 
   CALL Get_Box_Info
 

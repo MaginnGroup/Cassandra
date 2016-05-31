@@ -57,13 +57,11 @@ SUBROUTINE MCF_Control
 !*******************************************************************************
   ! Copy the input file to the logfile
 
-  CALL Get_Verbosity_Info  
   CALL Copy_Inputfile
 
 
   ! How many species to simulate?
   CALL Get_Nspecies
-  WRITE(logunit,'(a30,1x,I5,/)') 'Number of species simulated: ',nspecies
 
   CALL Get_Box_Info
 

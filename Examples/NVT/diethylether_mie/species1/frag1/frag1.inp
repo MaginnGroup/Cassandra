@@ -8,7 +8,7 @@ NVT_MC_Fragment
 1
 
 # VDW_Style
-NONE
+Mie minimum_image
 
 # Rcutoff_Low
 0.0
@@ -17,9 +17,10 @@ NONE
 LB
 
 # Charge_Style
-NONE
+coul minimum_image
 
 # Intra_Scaling
+0.0 0.0 0.0 1.0
 0.0 0.0 0.0 1.0
 
 # Molecule_Files
@@ -28,7 +29,7 @@ NONE
 # Box_Info
 1
 CUBIC
-20.0 20.0 20.0
+50.0 50.0 50.0
 
 # Temperature_Info
 343.0
@@ -44,8 +45,7 @@ CUBIC
 # Done_Probability_Info
 
 # Start_Type
-read_old
-../fragments/frag_1_1.xyz 1
+read_config 1 ../fragments/frag_1_1.xyz 1
 
 # Run_Type
 Production 1000 10
@@ -54,9 +54,8 @@ Production 1000 10
 Units  Steps
 Prop_Freq  10
 Coord_Freq   90
-MCsteps      1100
+Run          1100
 NequilSteps  100
-# Done_Simulation_Length_Info
 
 # File_Info
 frag1.dat

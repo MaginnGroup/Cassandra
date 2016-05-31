@@ -269,7 +269,7 @@ CONTAINS
                              / box_list(this_box)%volume * atomic_to_bar
          END IF
 
-         nmols_box = SUM(nmols(:,1:nbr_boxes))
+         nmols_box = SUM(nmols(:,this_box))
          P_ideal(this_box) = nmols_box &
                            / box_list(this_box)%volume * temperature(this_box) &
                            * p_const
@@ -402,7 +402,7 @@ SUBROUTINE Write_Coords(this_box)
 
   !-- Write the coordinates of molecules in this box
   WRITE(M_XYZ_unit,*) Num_Atoms
-  WRITE(M_XYZ_unit,*)
+  WRITE(M_XYZ_unit,*) 'MC_STEP: ', i_mcstep
   DO is = 1,nspecies
      DO im = 1, nmols(is,this_box)
         this_im = locate(im,is,this_box)

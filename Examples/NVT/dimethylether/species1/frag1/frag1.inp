@@ -53,9 +53,8 @@ Production 1000 10
 Units  Steps
 Prop_Freq  10
 Coord_Freq   90
-MCsteps      1100
+Run          1100
 NequilSteps  100
-# Done_Simulation_Length_Info
 
 # File_Info
 frag1.dat

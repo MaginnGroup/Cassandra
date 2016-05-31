@@ -1,0 +1,480 @@
+Run info
+********************************************************************************
+version: Cassandra Development Version
+inputfile: nitrogen_Si.inp
+name of run: nitrogen_Si.out
+date (mm/dd/yyyy): 05/19/2016
+time: 14:44:12
+machine: maginnfe.crc.nd.edu
+********************************************************************************
+ 
+Simulation type
+********************************************************************************
+GCMC                
+********************************************************************************
+ 
+Verbose log file
+********************************************************************************
+Verbose output to logfile: F
+********************************************************************************
+ 
+Copy input file
+********************************************************************************
+ 
+ # Run_Name
+ nitrogen_Si.out
+ 
+ # Sim_Type
+ GCMC
+ 
+ # Nbr_Species
+ 2
+ 
+ # VDW_Style
+ LJ cut_tail 6.0
+ 
+ # Charge_Style
+ coul Ewald 6.0 1E-5
+ 
+ # Intra_Scaling
+ 0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  1.0
+ 0.0  0.0  0.0  1.0
+ 
+ # Mixing_Rule
+ LB
+ 
+ # Seed_Info
+ 6752865750 4278117321
+ 
+ # Rcutoff_Low
+ 1.0
+ 
+ # Pair_Energy
+ TRUE
+ 
+ # Molecule_Files
+ MFI.mcf 1
+ N23S.mcf 100
+ 
+ # Box_Info
+ 1
+ ORTHOGONAL
+ 20.09  19.738 13.142
+ 
+ # Temperature_Info
+ 77.0
+ 
+ # Chemical_Potential_Info
+ -10.0
+ 
+ 
+ # Move_Probability_Info
+ 
+ # Prob_Translation
+ 0.25
+ 0.0  2.0
+ 
+ # Prob_Rotation
+ 0.25
+ 0.0  180
+ 
+ 
+ # Prob_Insertion
+ 0.25
+ none cbmc
+ 
+ # Prob_Deletion
+ 0.25
+ 
+ # Done_Probability_Info
+ 
+ # Start_Type
+ add_to_config 1 0 MFI.xyz 0 20
+ 
+ # Run_Type
+ Equilibration   600
+ 
+ # Average_Info
+ 1
+ 
+ # Simulation_Length_Info
+ Units        Steps
+ Prop_Freq    400
+ Coord_Freq   4000
+ Run          4000
+ # Done_Simulation_Length_Info
+ 
+ 
+ # Property_Info 1
+ Energy_Total
+ Nmols
+ Pressure
+ 
+ # Fragment_Files
+ species2/frag1/frag1.dat  1
+ 
+ # CBMC_Info
+ kappa_ins 12
+ kappa_rot 0
+ kappa_dih 10
+ rcut_cbmc 6.5
+ 
+ 
+ END
+********************************************************************************
+ 
+Number of species
+********************************************************************************
+    2
+********************************************************************************
+ 
+Box info
+********************************************************************************
+number of simulation boxes     1
+Box number      1       Box Shape:      Orthorhombic 
+X dimension :         20.0900     Angstrom
+Y dimension :         19.7380     Angstrom
+Z dimension :         13.1420     Angstrom
+Cell basis vector lengths in A,     20.0900      19.7380      13.1420
+Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+Distance between box faces    20.0900      19.7380      13.1420
+Box volume, A^3          5211.2816
+********************************************************************************
+ 
+Pair style
+********************************************************************************
+ VDW style used is:   LJ             in box:  1
+ LJ VDW sum style is:   cut_tail       in box:  1
+ rcut =     6.000   Angstrom
+ Charge style used is:   coul           in box:  1
+ Charge sum style is   Ewald          in box:  1
+ Ewald real space cutoff is   6.000 Angstroms.
+ Ewald real space parameter is   0.566 inverse Angstroms
+ Ewald reciprocal cutoff is  3.8376 inverse Angstroms
+ Charge style properly input
+ Pair interaction energy array storage enabled
+ Lorentz-Berthelot mixing rule specified
+********************************************************************************
+ 
+Molecule info
+********************************************************************************
+ Reading molecular connectivity information
+ Species:            1
+ Molecular connectivity file: 
+ MFI.mcf                                                                        
+                                          
+   288 atom(s) specified.
+   0 bond(s) specified.
+   0 angle(s) specified.
+   0 dihedral(s) specified.
+   0 improper(s) specified.
+   0 fragment(s) specified.
+   0 fragment bond(s) specified.
+ Reading molecular connectivity information
+ Species:            2
+ Molecular connectivity file: 
+ N23S.mcf                                                                       
+                                          
+   3 atom(s) specified.
+   2 bond(s) specified.
+   1 angle(s) specified.
+   0 dihedral(s) specified.
+   0 improper(s) specified.
+   1 fragment(s) specified.
+   0 fragment bond(s) specified.
+ 
+ Species  Max molecules
+ -------  -------------
+      1              1
+      2            100
+ 
+ Species     1
+ -------------------------------------------------------------------------------
+ L_Coul_CBMC not given, using default T
+ 1st_Fragment_Ins_Style not specified, using default "COM"
+ Atom parameters read
+ Bond parameters read
+ Angle parameters read
+ Dihedral parameters read
+ Improper parameters read
+ -------------------------------------------------------------------------------
+ 
+ Species     2
+ -------------------------------------------------------------------------------
+ L_Coul_CBMC not given, using default T
+ 1st_Fragment_Ins_Style not specified, using default "COM"
+ Atom parameters read
+ Bond parameters read
+ Angle parameters read
+ Dihedral parameters read
+ Improper parameters read
+ Total number of atoms in fragment     1  is   3
+ Fragment info read
+ Fragment file for fragment 1 is species2/frag1/frag1.dat
+ -------------------------------------------------------------------------------
+ 
+ Fragment coord info
+ -------------------------------------------------------------------------------
+ library_coords array successfully allocated
+ Finished loading fragment coordinates from
+ species2/frag1/frag1.dat
+ -------------------------------------------------------------------------------
+********************************************************************************
+ 
+Intramolecular nonbonded scaling
+********************************************************************************
+intramolecular scaling factors explicitly set
+Intra molecule scaling factors for species             1
+ VDW 1-2 scaling factor        0.000
+ VDW 1-3 scaling factor        0.000
+ VDW 1-4 scaling factor        0.000
+ VDW 1-N scaling factor        0.000
+ Coulomb 1-2 scaling factor    0.000
+ Coulomb 1-3 scaling factor    0.000
+ Coulomb 1-4 scaling factor    0.000
+ Coulomb 1-N scaling factor    0.000
+Intra molecule scaling factors for species             2
+ VDW 1-2 scaling factor        0.000
+ VDW 1-3 scaling factor        0.000
+ VDW 1-4 scaling factor        0.000
+ VDW 1-N scaling factor        1.000
+ Coulomb 1-2 scaling factor    0.000
+ Coulomb 1-3 scaling factor    0.000
+ Coulomb 1-4 scaling factor    0.000
+ Coulomb 1-N scaling factor    1.000
+********************************************************************************
+ 
+Start type
+********************************************************************************
+ Initial configuration for box 1 will add molecules to configuration read from f
+ ile
+ Will read       1  molecules of species   1
+ Will read       0  molecules of species   2
+ Will read configuration from file MFI.xyz                                                                                                                 
+ Will insert       0  molecules of species   1
+ Will insert      20  molecules of species   2
+********************************************************************************
+ 
+Seed info
+********************************************************************************
+  The starting seeds are:  -1837068842    -16849975
+********************************************************************************
+ 
+Temperature
+********************************************************************************
+  Temperature assigned to box     1  is   77.000    K
+********************************************************************************
+ 
+Move probabilities
+********************************************************************************
+ Translation probability is      0.250000
+ Maximum displacement width for species  1 in box  1  is      0.00000
+ Maximum displacement width for species  2 in box  1  is      2.00000
+ Rotation probability is      0.250000
+ The rotational width for the species    1 in box  1   is      0.0000 radians
+ The rotational width for the species    2 in box  1   is      3.1416 radians
+ Probability for insertion move is         0.2500
+ Species 1 will not be inserted
+ Species 2 will be inserted using CBMC
+         Number of insertable species is    1
+ Probability for deletion move is          0.2500
+ Number of moves is :   4
+********************************************************************************
+ 
+Chemical potential
+********************************************************************************
+Chemical Potential of sp  1 is     0.000000000E+00in atomic units
+de Broglie wavelength of species    1  in box      1   is
+  0.0261964760   Angstrom
+Chemical Potential of sp  2 is    -0.100000000E+04in atomic units
+de Broglie wavelength of species    2  in box      1   is
+  0.3758951588   Angstrom
+********************************************************************************
+ 
+Simulation length info
+********************************************************************************
+Thermodynamic quantities will be written every        400 Steps     
+Coordinates will be written every                    4000 Steps     
+movie header file is                   nitrogen_Si.out.H
+movie_XYZ file is                      nitrogen_Si.out.xyz
+The simulation will be run for                         4000 Steps     
+********************************************************************************
+ 
+Average info
+********************************************************************************
+ Instantaneous values will be output
+********************************************************************************
+ 
+Property info
+********************************************************************************
+Total number of property files to be written is     1   for box 1
+ Maximum number of properties per file is    5
+ Writing the name of the property files and the corresponding property output
+ Property file    1   is  nitrogen_Si.out.prp1
+ Properties output in these files are
+ Energy_Total
+ Nmols
+ Nmols
+ Pressure
+********************************************************************************
+ 
+Minimum distance cutoff
+********************************************************************************
+MC low cutoff distance is   1.000    Angstrom
+********************************************************************************
+ 
+CBMC info
+********************************************************************************
+kappa for first bead insertion              12
+Orientational bias not supported. Kappa for rotations is set to            0
+kappa for dihedral selection                10
+Smaller cutoff for CBMC for box          1        6.50
+********************************************************************************
+ 
+Run type
+********************************************************************************
+ The input run type is Equilibration
+ Update frequency is          600
+********************************************************************************
+ 
+********************************************************************************
+************************ Begin Cassandra simulation ****************************
+********************************************************************************
+ 
+Initial configuration
+********************************************************************************
+ 
+ Reading configuration for box           1
+ Reading            1  molecules of species            1
+ Reading            0  molecules of species            2
+ Configurations read successfully
+ Inserting           20 molecules of species            2
+********************************************************************************
+ 
+Charge neutrality check
+********************************************************************************
+ Species           1    has charge                0.00000000
+ Species           2    has charge                0.00000000
+ 
+ Box               1    has charge                0.00000000
+********************************************************************************
+ 
+Compute total energy
+********************************************************************************
+ Starting energy components for box   1
+  Atomic units-Extensive
+ -----------------------------------------------------------
+ Total system energy is              -6964343.715
+ Intra molecular energy is                  0.000
+ Bond energy is                             0.000
+ Bond angle energy is                       0.000
+ Dihedral angle energy is                   0.000
+ Improper angle energy is                   0.000
+ Intra molecule vdw is                      0.000
+ Intra molecule q is                        0.000
+ Inter molecule vdw is                   3891.298
+ Long range correction is              -14876.196
+ Inter molecule q is                 18856507.727
+ Number of vectors is                        2634
+ Reciprocal ewald is                   595667.570
+ Self ewald is                      -26405534.114
+ -----------------------------------------------------------
+ 
+********************************************************************************
+ 
+Run simulation
+********************************************************************************
+      Step       Move   Mol Spc Box  Success  MaxWidth
+      2349  translate         2   1  0.05167   0.20667
+      2466     rotate         2   1  0.23333   2.98451
+********************************************************************************
+ 
+Report ending energy & then re-compute from scratch
+********************************************************************************
+ 
+ 
+ Ending energy components for box   1
+  Atomic units-Extensive
+ -----------------------------------------------------------
+ Total system energy is              -6990870.238
+ Intra molecular energy is                  0.000
+ Bond energy is                             0.000
+ Angle energy is                            0.000
+ Dihedral energy is                         0.000
+ Improper angle energy is                   0.000
+ Intra molecule vdw is                      0.000
+ Intra molecule q is                        0.000
+ Inter molecule vdw is                 -21084.506
+ Long range correction is              -14876.196
+ Inter molecule q is                 18854646.546
+ Reciprocal ewald is                   595978.032
+ Self ewald is                      -26405534.114
+ -----------------------------------------------------------
+ 
+ 
+ Energy components from total energy call for box   1
+  Atomic units-Extensive
+ -----------------------------------------------------------
+ Total system energy is              -6990870.238
+ Intra molecular energy is                  0.000
+ Bond energy is                             0.000
+ Angle energy is                            0.000
+ Dihedral energy is                         0.000
+ Improper angle energy is                   0.000
+ Intra molecule vdw is                      0.000
+ Intra molecule q is                        0.000
+ Inter molecule vdw is                 -21084.506
+ Long range correction is              -14876.196
+ Inter molecule q is                 18854646.546
+ Reciprocal ewald is                   595978.032
+ Self ewald is                      -26405534.114
+ -----------------------------------------------------------
+********************************************************************************
+ 
+ 
+Writing information for box  1
+********************************************************************************
+ 
+   ---------------------------------------------------------
+   Writing information for species  1
+ 
+                Move      Trials     Success   % Success
+   ---------------------------------------------------------
+ 
+ 
+   ---------------------------------------------------------
+   Writing information for species  2
+ 
+                Move      Trials     Success   % Success
+           Translate        1037         313       30.18
+              Rotate         950         209       22.00
+              Insert         990          16        1.62
+              Delete        1023          16        1.56
+   ---------------------------------------------------------
+ 
+********************************************************************************
+ 
+ Writing information about subroutine times
+********************************************************************************
+ Translation time =            0.929864 secs.
+ Rotation time =               0.890870 secs.
+ Insertion time =              1.828705 secs.
+ Deletion time =               1.862721 secs.
+********************************************************************************
+ 
+********************************************************************************
+************************ Cassandra simulation complete *************************
+********************************************************************************
+ 
+ Program execution time
+********************************************************************************
+         0      Years
+         0     Months
+         0       Days
+         0      Hours
+         0    Minutes
+         6    Seconds
+       341         ms
+********************************************************************************
