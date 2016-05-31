@@ -322,43 +322,6 @@ for 1-2, 1-3, 1-4 and 1-N  for VDW and Coulomb interactions for all
 the species in the simulation.  If \# Charge\_Scaling is set to
 \texttt{NONE}, you must still specify the Intra\_Scaling for Coulombic
 interactions, but no interactions will be computed. \
-%%%%%%%%%%%%%%%%
-%
-% Mie Nonbond
-%
-%%%%%%%%%%%%%%%%
-\subsection{Mie Nonbond}\label{sec:Mie_Nonbond}
-{\bf \# Mie\_Nonbond} \\
-{\it Int(i,1) Int(j,2) Real(i,j,3) Real(i,j,4)} * ($N$ species * $N$ species) lines \\ 
-
-This keyword should only be used if VDW\_Style is set to \texttt{LJ mie} or \texttt{LJ mie\_cut\_shift}.
-\textit{Int(i,1)} and \textit{Int(j,2)} specify the index for each species pair combination.  \textit{Real(i,j,3)} and \textit{Real(i,j,4)} are the corresponding $n$ and $m$ exponents, respectively. 
-
-For example, a system with two species interacting with a LJ potential can be specified as follows:\\ \\
-\texttt{
-\# Mie\_Nonbond \\
-1 1 12 6 \\
-1 2 12 6 \\
-2 1 12 6 \\
-2 2 12 6
-}
-
-\textbf{Note that this keyword sensitive to the correct species pair ordering. Also note that exponents for species pairs $i$ and $j$, along with $j$ and $i$, are both specified. For N species in a system, (N * N) lines should be specified.}
-
-
-Likewise, for a system including three species, with species 1 interacting with $n$ = 9 and $m$ = 6 only with itself and all other pair combinations with $n$ = 12 and $m$ = 4, the following lines can be specified: \\ \\
-\texttt{
-\# Mie\_Nonbond \\
-1 1 \ 9 6 \\
-1 2 12 4 \\
-1 3 12 4 \\
-2 1 12 4 \\
-2 2 12 4 \\
-2 3 12 4 \\
-3 1 12 4 \\
-3 2 12 4 \\
-3 3 12 4
-}
 %
 %%%%%%%%%%%%%%%%
 %
@@ -369,13 +332,16 @@ Likewise, for a system including three species, with species 1 interacting with 
 {\bf \# Mixing\_Rule} \\
 {\it Character} \\ \\
 %
-Sets the method by which Lennard-Jones interactions between unlike atoms are
+Sets the method by which van der Waals interactions between unlike atoms are
 calculated. Acceptable options are \texttt{LB}  for Lorentz-Berthelot,
 \texttt{geometric}, for geometric mixing rule and \texttt{custom} for allowing the user to provide specific values. 
+To use either \texttt{LB} or \texttt{geometric} keywords with the Mie potential, all atomtypes must have the same repulsive and dispersive exponents.
 If this keyword is missing, \texttt{LB} is used as default. \\
 
-To illustrate the use of the \texttt{custom} option, consider a mixture of methane (species 1) and butane (species 2) united atom
-models. Methane has a single atomtype, CH4. Butane has two atomtypes: atoms 1 and 4 are type CH3, atoms 2 and 3 are type CH2.
+To illustrate the use of the \texttt{custom} option, consider a mixture of methane (species 1) 
+and butane (species 2) united atom models using a Lennard-Jones potential. 
+Methane has a single atomtype, CH4. 
+Butane has two atomtypes: pseudoatoms 1 and 4 are type CH3, pseudoatoms 2 and 3 are type CH2.
 The cross interaction table is as follows:
 
 \texttt{
@@ -384,16 +350,17 @@ custom\\
 CH4  CH4  148.00   3.73\\
 CH4  CH3  120.49   3.75\\
 CH4  CH2   82.51   3.83\\
-CH3  CH4  120.49   3.75\\
 CH3  CH3   98.00   3.93\\
 CH3  CH2   67.14   3.85\\
-CH2  CH4   82.51   3.83\\
-CH2  CH3   67.14   3.85\\
 CH2  CH2   46.00   3.93
 }
 \\ \\
-The order in which atom types are listed must be consistent with the species order in the input file and the atomtype order within each MCF.
-Note that the units of the first parameter (energy parameter) are K, whereas the second parameter (collision diameter) are \AA.
+The order in which atom types are listed is unimportant.
+The Lennard-Jones potential requires two parameters: 
+an energy parameter with units K, and a collision diameter with units \AA.
+The Mie potential requires four parameters: 
+an energy parameter with units K, a collision diameter with units \AA,
+a repulsive exponent, and a dispersive exponent.
 
 %%%%%%%%%%%%%%%%
 %
@@ -476,9 +443,9 @@ this feature. If you wish to use this, set {\it Logical} to `TRUE' or `true'.
 {\it Character(i,1) Integer(i,2)}  \\ \\
 %
 This specifies the name of the molecular connectivity file (*.mcf) and
-the maximum total number of molecules of a given species specified by this MCF
-file. A separate line is required for each species present in the
-simulation.  {\it Character(i,1)} is the name of the MCF file for
+the maximum total number of molecules of a given species specified by this MCF.
+A separate line is required for each species present in the
+simulation.  {\it Character(i,1)} is the name of the MCF for
 species {\it i}. {\it Integer(i,2)} denotes the maximum number of
 molecules expected for the species.  \\ \\
 %{\it Integer(i,3)} is
@@ -492,7 +459,7 @@ For example \\ \\
 butane.mcf 100 \\
 hexane.mcf 20\\
 octane.mcf 5} \\ \\
-specifies that there are three different species, and the MCF files
+specifies that there are three different species, and the MCFs
 state the names of the files where information on the three species
 can be found. Species 1 is butane, species 2 is hexane and species 3
 is octane. There can be a maximum of 100 butane molecules, 20 hexane
@@ -1706,10 +1673,10 @@ rcut\_cbmc   5.0 6.5}
 %fractional) along with the scaling parameter is displayed. For a CFC Reactive Monte Carlo simulation, molecule type, index of the fraction and reaction number are output.
 %\end{itemize}
 %\newpage
-\section{MCF File}\label{sec:MCF_File}
+\section{Molecular Connectivity File}\label{sec:MCF_File}
 %
 A Molecular Connectivity File (MCF) defines the information related to bonds, angles, dihedrals, impropers
-fragments and non bonded interactions for a given species. One MCF file is required for each species present in
+fragments and non bonded interactions for a given species. One MCF is required for each species present in
 the system. The information contained in this file involves the force field parameters, atoms
 participating in each of the interactions and the functional form used in each potential contribution.
 The keywords are preceeded by a `\#' and comments follow a `!'. Similarly to the input file, the order
@@ -1718,8 +1685,8 @@ of the keywords is not important. A complete list of the keywords is provided be
 {\bf Note that parameters for all of the following keywords must be separated by spaces only. 
 Do not use the tab character. \\ \\
 %
-Note that MCF files are generated by the script mcfgen.py automatically. The following description is provided for
-the users who wish to modify the MCF file or build the MCF file on their own.} \\ \\ 
+Note that MCFs are generated by the script mcfgen.py automatically. The following description is provided for
+the users who wish to modify the MCF or manually write the MCF.} \\ \\ 
 
 %
 %%%%%%%%%%%%%%%%
@@ -1736,7 +1703,7 @@ the users who wish to modify the MCF file or build the MCF file on their own.} \
 %The keyword sets if, during biased insertion/deletion or regrowth,
 %Coulombic energy is to be used. Acceptable values for {\it Logical(1)}
 %are '.true.', '.TRUE.', '.false' or '.FALSE.'. If the keyword is not
-%specified in the MCF file, the default value is '.TRUE.' \\ \\
+%specified in the MCF, the default value is '.TRUE.' \\ \\
 %
 %For example, to turn off the Coulombic energy calculations during biasing,
 %you would specify the following: \\ \\
@@ -1773,14 +1740,14 @@ the users who wish to modify the MCF file or build the MCF file on their own.} \
 %{\bf \# 1st\_Fragment\_Ins\_Style} \\
 %{\it Character(1)} \\ \\
 %
-%This keyword is a required keyword in MCF file. It sets whether the
+%This keyword is a required keyword in MCF. It sets whether the
 %first fragment is placed based on its center-of-mass or using an atom
 %of a fragment. Acceptable keywords are 'COM', 'com', 'BEAD' and
 %'bead'. For non-ring fragments, COM-based insertion is preferred while
 %for ring fragments it may be advantageous to place an atom via 'BEAD'
 %or 'bead' option before the entire ring is placed. The `BEAD' or `bead' option
 %will be made available in later versions of Cassandra. Thus, this section 
-%appears in the MCF file as follows: \\ \\
+%appears in the MCF as follows: \\ \\
 %
 %\texttt{
 %\# 1st\_Fragment\_Ins\_Style \\
@@ -1799,10 +1766,10 @@ the users who wish to modify the MCF file or build the MCF file on their own.} \
 {\bf \# Atom\_Info} \\
 {\it Integer(1)} \\
 {\it Integer(2)   Character(3)*6  Character(4)*2   Real(5)   Real(6)
-  Character(7)*20     Real(8)    Real(9)  Character(10)} \\ \\
+  Character(7)*20     Optional\_Parms  Character(fin)} \\ \\
 %
 This keyword specifies the information for non-bonded interactions. 
-It is a required keyword in the MCF file. If not specified, the code will abort. The inputs are specified below: 
+It is a required keyword in the MCF. If not specified, the code will abort. The inputs are specified below: 
 %
 %\noindent
 \begin{itemize} 
@@ -1823,21 +1790,41 @@ mass of the entire pseudoatom.
 %
 \item {\it Real(6)}: Charge on the atom.
 %
-%\it Character(7)*20
-\item {\it Character(7)}: Specifies functional form for VDW interactions to be used in the simulation. This
-must match what is given for \texttt{\# VDW\_Style}  (subsection \ref{sec:VDW_Style}) in the input file.  
-At present only 'LJ' style is permitted.
+\item {\it Character(7)}: The functional form for van der Waals (vdW) interactions.
+Options are "LJ" for Lennard-Jones, "Mie" for the Mie potential, 
+or "NONE" if the atom type does not have vdW interactions.
+"LJ" and "Mie" cannot be used in the same simulation.
+This must match what is given for \texttt{\# VDW\_Style}  
+(subsection \ref{sec:VDW_Style}) in the input file.  
+
+\item {\it Character(fin)}: The final entry on the line is 'ring' only if the atom is part 
+of a ring fragment. 
+Note that a ring fragment is defined as 
+those atoms that belong to the ring (e.g. in cyclohexane, all the six carbons) 
+and any atom directly bonded to these ring atoms (e.g. in cyclohexane, all the hydrogens).  
+In other words, all of the ring and exoring atoms are given the ring flag. 
+For atoms that are not part of rings, leave this field blank. 
+\end{itemize} 
+Additional parameters are required for LJ and Mie potentials. For LJ,
 %
+\begin{itemize} 
+\item {\it Real(8)}: The energy parameter in K.
+%
+\item {\it Real(9)}: Collision diameter ($\sigma$)  in \AA.
+\end{itemize} 
+%
+For Mie,
+
+\begin{itemize} 
 \item {\it Real(8)}: The energy parameter in K.
 %
 \item {\it Real(9)}: Collision diameter ($\sigma$)  in \AA.
 %
-\item {\it Character(10)}: Set to `ring' only if a given atom is part of a
-ring fragment. Note that a ring fragment is defined as those atoms that belong to the ring
-(e.g. in cyclohexane, all the six carbons) and any atom directly bonded to these ring atoms
-(e.g. in cyclohexane, all the hydrogens).  In other words, all of the ring and exoring atoms are given the ring
-flag. For atoms that are not part of rings, leave this field blank. 
+\item {\it Real(10)}: The repulsive exponent.
+%
+\item {\it Real(11)}: The dispersive exponent.
 \end{itemize} 
+%
 %
 {\bf Note that for species with a single fragment, the branch point atom
  is listed as the first atom.} \\ \\
@@ -1847,22 +1834,23 @@ For example, for a united atom pentane model: \\ \\
 \texttt{
 \# Atom\_Info\\
 5\\
-1    C1\_s1    C    15.0107    0.0    LJ    98.0    3.75\\
-2    C2\_s1    C    14.0107    0.0    LJ    46.0    3.95\\
-3    C3\_s1    C    14.0107    0.0    LJ    46.0    3.95\\
-4    C4\_s1    C    14.0107    0.0    LJ    46.0    3.95\\
-5    C5\_s1    C    15.0107    0.0    LJ    98.0    3.75\\
+1    CH3\_s1    C    15.0107    0.0    LJ    98.0    3.75\\
+2    CH2\_s1    C    14.0107    0.0    LJ    46.0    3.95\\
+3    CH2\_s1    C    14.0107    0.0    LJ    46.0    3.95\\
+4    CH2\_s1    C    14.0107    0.0    LJ    46.0    3.95\\
+5    CH3\_s1    C    15.0107    0.0    LJ    98.0    3.75\\
 } \\ 
 %
 The number below the keyword \texttt{\# Atom\_Info} specifies a species with 5 interaction sites, consistent with a united atom pentane model. 
 The first column specifies the atom ID of each of the pseudo atoms.
 The second and third columns provide the atom type and atom name, respectively.
 The fourth column represents the atomic mass of each pseudoatom. Note that the mass of
-C1\_s1 is 15.0107 for this united atom model, as it involves a carbon and three hydrogen atoms. 
+CH3\_s1 is 15.0107 for this united atom model, as it involves a carbon and three hydrogen atoms. 
 The same applies for all other interaction sites.
 The fifth column contains the partial charges placed on each of these pseudoatoms.
-The sixth, seventh and eighth columns contain the repulsion-dispersion functional form, the energy parameter
-and the collision diameter respectively. In this case, the usual Lennard-Jones functional form is used. 
+The sixth, seventh and eighth columns contain the repulsion-dispersion functional form, 
+the energy parameter and the collision diameter respectively. 
+In this case, the usual Lennard-Jones functional form is used. 
 Note that none of these atoms used the flag `ring', as no rings
 are present in this molecule. \\ \\
 %
@@ -1871,30 +1859,37 @@ For a molecule containing rings, for example cyclohexane: \\ \\
 \texttt{
 \# Atom\_Info \\
 6\\
-1    C1\_s1    C    14.0107    0.0    LJ    52.5    3.91 ring\\
-2    C2\_s1    C    14.0107    0.0    LJ    52.5    3.91 ring\\
-3    C3\_s1    C    14.0107    0.0    LJ    52.5    3.91 ring\\
-4    C4\_s1    C    14.0107    0.0    LJ    52.5    3.91 ring\\
-5    C5\_s1    C    14.0107    0.0    LJ    52.5    3.91 ring\\
-6    C6\_s1    C    14.0107    0.0    LJ    52.5    3.91 ring\\
+1    CH\_s1    C    13.0107    0.0    LJ    52.5    3.91 ring\\
+2    CH\_s1    C    13.0107    0.0    LJ    52.5    3.91 ring\\
+3    CH\_s1    C    13.0107    0.0    LJ    52.5    3.91 ring\\
+4    CH\_s1    C    13.0107    0.0    LJ    52.5    3.91 ring\\
+5    CH\_s1    C    13.0107    0.0    LJ    52.5    3.91 ring\\
+6    CH\_s1    C    13.0107    0.0    LJ    52.5    3.91 ring\\
 }
 \\
 %
 Note the flag `ring' was appended as the last column for this cyclic molecule. \\ \\
 %
-Finally, for the SPC/E water model:  \\ \\
+For the SPC/E water model:  \\ \\
 %
 \texttt{
 \# Atom\_Info\\
 3\\
 1    O1\_s1    O    16.00     -0.8476    LJ    78.20   3.1656\\
-2    H2\_s1    H    1.000      0.4238    LJ    0.0 0.0\\
-3    H3\_s1    H    1.000      0.4238    LJ    0.0 0.0\\
+2    H2\_s1    H    1.000      0.4238    NONE\\
+3    H3\_s1    H    1.000      0.4238    NONE\\
 } \\ 
 %
-This is a molecule with a single fragment. Therefore, the branch point atom
-must be specified as the first atom in the list. In this case, oxygen is the 
-branch point and thus its atom ID is 1.
+This is a molecule with a single fragment, so the branch point atom is the first atom in the list.
+
+For a single-site model of CO2 using the Mie potential:
+\\
+\texttt{
+\# Atom\_Info\\
+1\\
+1    CO2       C    44.00      0.0       Mie  361.69   3.741   23.0   6.66\\
+} \\
+where the last two parameters are the repulsive and dispersive exponents, respectively.
 
 \subsection{Bond Info}\label{sec:Get_Bond_Info}
 %
@@ -1903,8 +1898,8 @@ branch point and thus its atom ID is 1.
 {\it Integer(i,2) Integer(i,3) Integer(i,4) Character(i,5) Real(i,6) Real(i,7)} \\
 \\
 This section provides information on the number of bonds in a molecule
-and atoms involved in each bond along with its type.  It is a required keyword in the MCF file. If not specified, the code
-will abort. The inputs are specified below: \\ 
+and atoms involved in each bond along with its type.  It is a required keyword in the MCF. 
+If not specified, the code will abort. The inputs are specified below: \\ 
 %
 \begin{itemize}
 
@@ -1947,7 +1942,7 @@ In the above example, two bonds are specified whose fixed length is set to 1.0 \
   Character(i,6) Real(i,7) Real(i,8)} \\ \\
 %
 The section lists the information on the angles in the species. 
-It is a required keyword in the MCF file. If not specified, the code
+It is a required keyword in the MCF. If not specified, the code
 will abort. \\ 
 %
 \begin{itemize}
@@ -2001,8 +1996,8 @@ force constant.
 {\it Integer(i,2) Integer(i,3) Integer(i,4) Integer(i,5) Integer(i,6)
   Character(i,7) Real(i,8) Real(i,9) Real(i,10) Real(i,11)} \\ \\
 %
-This section of the MCF file lists the number of dihedral angles and 
-associated information for a given species. It is a required keyword in the MCF file. 
+This section of the MCF lists the number of dihedral angles and 
+associated information for a given species. It is a required keyword in the MCF. 
 If not specified, the code
 will abort.  
 

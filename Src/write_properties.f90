@@ -269,7 +269,7 @@ CONTAINS
                              / box_list(this_box)%volume * atomic_to_bar
          END IF
 
-         nmols_box = SUM(nmols(:,1:nbr_boxes))
+         nmols_box = SUM(nmols(:,this_box))
          P_ideal(this_box) = nmols_box &
                            / box_list(this_box)%volume * temperature(this_box) &
                            * p_const

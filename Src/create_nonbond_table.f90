@@ -61,6 +61,7 @@
   CHARACTER(6), DIMENSION(:), ALLOCATABLE :: temp_atomtypes ! same dimension as atom_name
   INTEGER :: ii, is, ia, itype, jtype, iset,jset,k,itype_1,itype_2
   REAL(DP), DIMENSION(max_nonbond_params) :: temp_param_i, temp_param_j
+  INTEGER, DIMENSION(:,:), ALLOCATABLE :: vdw_param_set
 
   ! Steele potential
 
@@ -379,6 +380,14 @@
     ierr = 0
     line_nbr = 0
 
+    ALLOCATE(vdw_param_set(nbr_atomtypes,nbr_atomtypes), Stat=AllocateStatus)
+    IF (AllocateStatus .NE. 0) THEN
+       err_msg = ''
+       err_msg(1) = ' ERROR: Not enough memory for vdw_param_set'
+       CALL Clean_Abort(err_msg,'create_nonbond_table')
+    END IF
+    vdw_param_set = 0
+
     DO
 
       line_nbr = line_nbr + 1
@@ -391,61 +400,120 @@
       END IF
 
       IF (line_string(1:13) == '# Mixing_Rule') THEN
+        ! 'custom' line
         line_nbr = line_nbr + 1
-        READ(inputunit,*)
-        ! Assign the first entry on the line to the mixing rule
-        DO itype = 1, nbr_atomtypes
+        READ(inputunit,*) 
+
+        ! custom parameters
+        CustomLOOP: DO
+          line_nbr = line_nbr + 1
+          CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
+          IF (nbr_entries < 4) THEN
+             EXIT CustomLOOP
+          END IF
+
+          ! find itype
+          iset = 0
+          DO itype = 1, nbr_atomtypes
+             IF (atom_type_list(itype) == line_array(1)) THEN
+                iset = 1
+                EXIT
+             END IF
+          END DO
+          IF (iset == 0) THEN
+             err_msg = ''
+             err_msg(1) = 'Atom type ' // TRIM(line_array(1)) // ' on line ' // &
+                          TRIM(Int_To_String(line_nbr)) // ' of input file not found'
+             CALL Clean_Abort(err_msg,'Create_Nonbond_Table')
+          END IF
+
+          ! find jtype
+          jset = 0
           DO jtype = 1, nbr_atomtypes
-            line_nbr = line_nbr + 1
-            CALL Parse_String(inputunit,line_nbr,4,nbr_entries,line_array,ierr)
+             IF (atom_type_list(jtype) == line_array(2)) THEN
+                jset = 1
+                EXIT
+             END IF
+          END DO
+          IF (jset == 0) THEN
+             err_msg = ''
+             err_msg(1) = 'Atom type ' // TRIM(line_array(2)) // ' on line ' // &
+                          TRIM(Int_To_String(line_nbr)) // ' of input file not found'
+             CALL Clean_Abort(err_msg,'Create_Nonbond_Table')
+          END IF
+
+          ! Load custom parms
+          IF (int_vdw_style(1) == vdw_lj) THEN
+            !Convert epsilon to atomic units amu A^2/ps^2
+            vdw_param1_table(itype,jtype) = kboltz * String_To_Double(line_array(3))
+            !Sigma
+            vdw_param2_table(itype,jtype) = String_To_Double(line_array(4))
+            IF (verbose_log) THEN
+              WRITE(logunit,'(X,A6,5X,A6,2(X,F12.4))') &
+                   atom_type_list(itype), atom_type_list(jtype), &
+                   vdw_param1_table(itype,jtype), &
+                   vdw_param2_table(itype,jtype)
+            END IF
+            !Also define parms for reversed indices
+            vdw_param1_table(jtype,itype) = vdw_param1_table(itype,jtype)
+            vdw_param2_table(jtype,itype) = vdw_param2_table(itype,jtype)
+ 
+            ! Mark that the parameters have been set
+            vdw_param_set(itype,jtype) = 1
+            vdw_param_set(jtype,itype) = 1
+
+          ELSEIF (int_vdw_style(1) == vdw_mie) THEN
+            !Convert epsilon to atomic units amu A^2/ps^2
+            vdw_param1_table(itype,jtype) = kboltz * String_To_Double(line_array(3))
+            !Sigma
+            vdw_param2_table(itype,jtype) = String_To_Double(line_array(4))
+            !Repulsive exponent
+            vdw_param3_table(itype,jtype) = String_To_Double(line_array(5))
+            !Dispersive exponent
+            vdw_param4_table(itype,jtype) = String_To_Double(line_array(6))
+            IF (verbose_log) THEN
+              WRITE(logunit,'(X,A6,5X,A6,4(X,F12.4))') &
+                   atom_type_list(itype), atom_type_list(jtype), &
+                   vdw_param1_table(itype,jtype), &
+                   vdw_param2_table(itype,jtype), &
+                   vdw_param3_table(itype,jtype), &
+                   vdw_param4_table(itype,jtype)
+            END IF
+            !Also define parms for reversed indices
+            vdw_param1_table(jtype,itype) = vdw_param1_table(itype,jtype)
+            vdw_param2_table(jtype,itype) = vdw_param2_table(itype,jtype)
+            vdw_param3_table(jtype,itype) = vdw_param3_table(itype,jtype)
+            vdw_param4_table(jtype,itype) = vdw_param4_table(itype,jtype)
+
+            ! Mark that the parameters have been set
+            vdw_param_set(itype,jtype) = 1
+            vdw_param_set(jtype,itype) = 1
+          END IF
+        END DO CustomLOOP
+ 
+        ! Check that all expected atomtypes have been found
+        DO itype = 1, nbr_atomtypes
+          DO jtype = itype, nbr_atomtypes
      
             ! Check for errors
-            IF (atom_type_list(itype) /= line_array(1) .OR. &
-                atom_type_list(jtype) /= line_array(2)) THEN
+            IF (vdw_param_set(itype,jtype) == 0) THEN
               err_msg = ''
-              err_msg(1) = 'Atom type mismatch on line ' // TRIM(Int_To_String(line_nbr)) // &
-                           ' of input file'
-              err_msg(2) = 'Expecting atom types: ' // TRIM(atom_type_list(itype)) // " " // &
-                                                       TRIM(atom_type_list(jtype))
-              err_msg(3) = 'Found atom types: ' // TRIM(line_array(1)) // " " // &
-                                                   TRIM(line_array(2))
+              err_msg(1) = 'Custom parameters not found for atom types: ' // &
+                           TRIM(atom_type_list(itype)) // " " // &
+                           TRIM(atom_type_list(jtype))
               CALL Clean_Abort(err_msg,'Create_Nonbond_Table')
             END IF
          
-            ! Load custom parms
-            IF (int_vdw_style(1) == vdw_lj) THEN
-              !Convert epsilon to atomic units amu A^2/ps^2
-              vdw_param1_table(itype,jtype) = kboltz * String_To_Double(line_array(3))
-              !Sigma
-              vdw_param2_table(itype,jtype) = String_To_Double(line_array(4))
-              IF (verbose_log) THEN
-                WRITE(logunit,'(X,A6,5X,A6,2(X,F12.4))') &
-                     atom_type_list(itype), atom_type_list(jtype), &
-                     vdw_param1_table(itype,jtype), &
-                     vdw_param2_table(itype,jtype)
-              END IF
-            ELSEIF (int_vdw_style(1) == vdw_mie) THEN
-              !Convert epsilon to atomic units amu A^2/ps^2
-              vdw_param1_table(itype,jtype) = kboltz * String_To_Double(line_array(3))
-              !Sigma
-              vdw_param2_table(itype,jtype) = String_To_Double(line_array(4))
-              !Repulsive exponent
-              vdw_param3_table(itype,jtype) = String_To_Double(line_array(5))
-              !Dispersive exponent
-              vdw_param4_table(itype,jtype) = String_To_Double(line_array(6))
-              IF (verbose_log) THEN
-                WRITE(logunit,'(X,A6,5X,A6,4(X,F12.4))') &
-                     atom_type_list(itype), atom_type_list(jtype), &
-                     vdw_param1_table(itype,jtype), &
-                     vdw_param2_table(itype,jtype), &
-                     vdw_param3_table(itype,jtype), &
-                     vdw_param4_table(itype,jtype)
-              END IF
-
-            END IF
           END DO
         END DO   
         EXIT
+
+      ELSE IF (line_string(1:3) == 'END' .OR. line_nbr > 10000 ) THEN
+              
+        err_msg = ""
+        err_msg(1) = 'Section "# Mixing_Rule" missing from input file'
+        CALL Clean_Abort(err_msg,'Create_Nonbond_Table')
+
       END IF
     END DO
   END IF

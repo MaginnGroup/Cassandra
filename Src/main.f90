@@ -181,6 +181,9 @@ PROGRAM Main
   WRITE(logunit,'(a,a)') 'machine: ', TRIM(name)
   WRITE(logunit,'(A80)') '********************************************************************************'
 
+  ! Standard level of output to logfile, or verbose output
+  CALL Get_Verbosity_Info  
+
 ! Determine the simulation type, and then read in all the necessary information 
 ! from the input file for starting up that type of simulation
   CALL Get_Sim_Type

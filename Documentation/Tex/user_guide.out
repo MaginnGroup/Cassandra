@@ -26,27 +26,26 @@
 \BOOKMARK [2][-]{subsection.4.1.4}{VDW Style}{section.4.1}
 \BOOKMARK [2][-]{subsection.4.1.5}{Charge Style}{section.4.1}
 \BOOKMARK [2][-]{subsection.4.1.6}{Intramolecular Scaling}{section.4.1}
-\BOOKMARK [2][-]{subsection.4.1.7}{Mie Nonbond}{section.4.1}
-\BOOKMARK [2][-]{subsection.4.1.8}{Mixing Rule}{section.4.1}
-\BOOKMARK [2][-]{subsection.4.1.9}{Starting Seed}{section.4.1}
-\BOOKMARK [2][-]{subsection.4.1.10}{Minimum Cutoff}{section.4.1}
-\BOOKMARK [2][-]{subsection.4.1.11}{Pair Energy Storage}{section.4.1}
-\BOOKMARK [2][-]{subsection.4.1.12}{Molecule Files}{section.4.1}
-\BOOKMARK [2][-]{subsection.4.1.13}{Simulation Box}{section.4.1}
-\BOOKMARK [2][-]{subsection.4.1.14}{Temperature}{section.4.1}
-\BOOKMARK [2][-]{subsection.4.1.15}{Pressure}{section.4.1}
-\BOOKMARK [2][-]{subsection.4.1.16}{Chemical Potential}{section.4.1}
-\BOOKMARK [2][-]{subsection.4.1.17}{Move Probabilities}{section.4.1}
-\BOOKMARK [2][-]{subsection.4.1.18}{Start Type}{section.4.1}
-\BOOKMARK [2][-]{subsection.4.1.19}{Run Type}{section.4.1}
-\BOOKMARK [2][-]{subsection.4.1.20}{Simulation Length}{section.4.1}
-\BOOKMARK [2][-]{subsection.4.1.21}{Average}{section.4.1}
-\BOOKMARK [2][-]{subsection.4.1.22}{Property Output}{section.4.1}
-\BOOKMARK [2][-]{subsection.4.1.23}{Fragment Files}{section.4.1}
-\BOOKMARK [2][-]{subsection.4.1.24}{Verbosity in log file}{section.4.1}
-\BOOKMARK [2][-]{subsection.4.1.25}{File Info}{section.4.1}
-\BOOKMARK [2][-]{subsection.4.1.26}{CBMC parameters}{section.4.1}
-\BOOKMARK [1][-]{section.4.2}{MCF File}{chapter.4}
+\BOOKMARK [2][-]{subsection.4.1.7}{Mixing Rule}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.8}{Starting Seed}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.9}{Minimum Cutoff}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.10}{Pair Energy Storage}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.11}{Molecule Files}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.12}{Simulation Box}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.13}{Temperature}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.14}{Pressure}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.15}{Chemical Potential}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.16}{Move Probabilities}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.17}{Start Type}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.18}{Run Type}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.19}{Simulation Length}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.20}{Average}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.21}{Property Output}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.22}{Fragment Files}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.23}{Verbosity in log file}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.24}{File Info}{section.4.1}
+\BOOKMARK [2][-]{subsection.4.1.25}{CBMC parameters}{section.4.1}
+\BOOKMARK [1][-]{section.4.2}{Molecular Connectivity File}{chapter.4}
 \BOOKMARK [2][-]{subsection.4.2.1}{Atom Info}{section.4.2}
 \BOOKMARK [2][-]{subsection.4.2.2}{Bond Info}{section.4.2}
 \BOOKMARK [2][-]{subsection.4.2.3}{Angle Info}{section.4.2}
