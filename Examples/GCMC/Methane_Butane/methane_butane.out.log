@@ -3,19 +3,19 @@ Run info
 version: Cassandra Development Version
 inputfile: methane_butane.inp
 name of run: methane_butane.out
-date (mm/dd/yyyy): 05/19/2016
-time: 04:29:56
+date (mm/dd/yyyy): 06/01/2016
+time: 13:40:30
 machine: maginnfe.crc.nd.edu
-********************************************************************************
- 
-Simulation type
-********************************************************************************
-GCMC                
 ********************************************************************************
  
 Verbose log file
 ********************************************************************************
 Verbose output to logfile: F
+********************************************************************************
+ 
+Simulation type
+********************************************************************************
+GCMC                
 ********************************************************************************
  
 Copy input file
@@ -127,7 +127,6 @@ Copy input file
  kappa_dih 10
  rcut_cbmc 6.5
  
- 
  END
 ********************************************************************************
  
@@ -149,12 +148,11 @@ Box volume, A^3       1000000.0000
  
 Pair style
 ********************************************************************************
- VDW style used is:   LJ             in box:  1
- LJ VDW sum style is:   cut_tail       in box:  1
+VDW style used is:   LJ             in box:  1
+ VDW sum style is:   cut_tail       in box:  1
  rcut =    13.000   Angstrom
- Charge style used is:   NONE           in box:  1
- Charge style properly input
- Pair interaction energy array storage enabled
+Charge style used is:   NONE           in box:  1
+Pair interaction energy array storage enabled
  Lorentz-Berthelot mixing rule specified
 ********************************************************************************
  
@@ -239,19 +237,11 @@ Intra molecule scaling factors for species             1
  VDW 1-3 scaling factor        0.000
  VDW 1-4 scaling factor        0.000
  VDW 1-N scaling factor        1.000
- Coulomb 1-2 scaling factor    0.000
- Coulomb 1-3 scaling factor    0.000
- Coulomb 1-4 scaling factor    0.000
- Coulomb 1-N scaling factor    0.000
 Intra molecule scaling factors for species             2
  VDW 1-2 scaling factor        0.000
  VDW 1-3 scaling factor        0.000
  VDW 1-4 scaling factor        0.000
  VDW 1-N scaling factor        1.000
- Coulomb 1-2 scaling factor    0.000
- Coulomb 1-3 scaling factor    0.000
- Coulomb 1-4 scaling factor    0.000
- Coulomb 1-N scaling factor    0.000
 ********************************************************************************
  
 Start type
@@ -273,40 +263,40 @@ Temperature
  
 Move probabilities
 ********************************************************************************
- Translation probability is      0.200000
+Probability for translation                0.200000
  Maximum displacement width for species  1 in box  1  is      2.00000
  Maximum displacement width for species  2 in box  1  is      2.00000
- Rotation probability is      0.200000
+Probability for rotation                   0.200000
  The rotational width for the species    1 in box  1   is      0.0000 radians
  The rotational width for the species    2 in box  1   is      3.1416 radians
-    Probability for regrowth is      0.200000
-    Cumulative probability for regrowth of species     1  is   0.000000
-    Cumulative probability for regrowth of species     2  is   1.000000
- Probability for insertion move is         0.2000
+Probability for regrowth                   0.200000
+ Cumulative probability for regrowth of species     1  is   0.000000
+ Cumulative probability for regrowth of species     2  is   1.000000
+Probability for insertion                  0.200000
  Species 1 will be inserted using CBMC
  Species 2 will be inserted using CBMC
-         Number of insertable species is    2
- Probability for deletion move is          0.2000
- Number of moves is :   5
+ Number of insertable species is    2
+Probability for deletion                   0.200000
+Number of moves is :   5
 ********************************************************************************
  
 Chemical potential
 ********************************************************************************
-Chemical Potential of sp  1 is    -0.354100000E+04in atomic units
-de Broglie wavelength of species    1  in box      1   is
-  0.2519875236   Angstrom
-Chemical Potential of sp  2 is    -0.370000000E+04in atomic units
-de Broglie wavelength of species    2  in box      1   is
-  0.1454184297   Angstrom
+Species     1
+ Chemical potential (internal units):    -3541.000000000
+ de Broglie wavelength (Angstroms):          0.251987524
+Species     2
+ Chemical potential (internal units):    -3700.000000000
+ de Broglie wavelength (Angstroms):          0.145418430
 ********************************************************************************
  
 Simulation length info
 ********************************************************************************
 Thermodynamic quantities will be written every        500 Steps     
 Coordinates will be written every                   25000 Steps     
-movie header file is                   methane_butane.out.H
-movie_XYZ file is                      methane_butane.out.xyz
-The simulation will be run for                        50000 Steps     
+ movie header file is                  methane_butane.out.H
+ movie_XYZ file is                     methane_butane.out.xyz
+The simulation will be run for                      50000 Steps     
 ********************************************************************************
  
 Average info
@@ -498,11 +488,11 @@ Writing information about fragments
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.250959 secs.
- Rotation time =               0.285952 secs.
- Insertion time =              2.129689 secs.
- Deletion time =               1.957691 secs.
- Regrowth time =               2.424633 secs.
+ Translation time =            0.259963 secs.
+ Rotation time =               0.282949 secs.
+ Insertion time =              2.213677 secs.
+ Deletion time =               2.004686 secs.
+ Regrowth time =               2.381641 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -516,6 +506,6 @@ Writing information about fragments
          0       Days
          0      Hours
          0    Minutes
-         9    Seconds
-       969         ms
+        10    Seconds
+       522         ms
 ********************************************************************************

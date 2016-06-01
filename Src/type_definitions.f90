@@ -217,7 +217,7 @@ MODULE Type_Definitions
 
      ! nonbond list has dimensions (MAXVAL(natoms), nspecies)
 
-     CHARACTER(20) :: vdw_potential_type
+     CHARACTER(20) :: vdw_type
      REAL(DP), DIMENSION(max_nonbond_params) :: vdw_param
 
      CHARACTER(2) :: element

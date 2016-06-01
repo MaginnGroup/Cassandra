@@ -92,7 +92,6 @@ SUBROUTINE NVTMC_Control
   ! must be called before this routine.  
   CALL Get_Molecule_Info
 
-
   ! Determine how intramoleclar scaling of vdw and coul interactions handled.
   CALL Get_Intra_Scaling
 
@@ -142,8 +141,5 @@ SUBROUTINE NVTMC_Control
 
   ! Dihedral moves
   CALL Get_Dihedral_Atoms_To_Place
-
-  IF (int_vdw_style(1) == vdw_mie ) THEN
-  END IF
 
 END SUBROUTINE NVTMC_Control

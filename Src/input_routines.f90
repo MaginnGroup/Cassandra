@@ -1570,16 +1570,17 @@ SUBROUTINE Get_Atom_Info(is)
            nonbond_list(ia,is)%mass = String_To_Double(line_array(4))
            nonbond_list(ia,is)%charge = String_To_Double(line_array(5))
            IF(nonbond_list(ia,is)%charge .NE. 0.0_DP) has_charge(is) = .TRUE. 
-           nonbond_list(ia,is)%vdw_potential_type = line_array(6)
+           nonbond_list(ia,is)%vdw_type = line_array(6)
 
            species_list(is)%molecular_weight = species_list(is)%molecular_weight + &
                 nonbond_list(ia,is)%mass
 
-           ! For now, force all atoms to have the same vdw pair style that was
-           ! specified in the input file.  We can relax this restriction later.
-           IF (nonbond_list(ia,is)%vdw_potential_type /= vdw_style(1)) THEN
+           ! Cannot mix "LJ" and "Mie" types
+           IF (nonbond_list(ia,is)%vdw_type /= "NONE" .AND. &
+               nonbond_list(ia,is)%vdw_type /= vdw_style(1)) THEN
               err_msg = ""
-              err_msg(1) = 'vdw_potential type does not equal specified vdw_style'
+              err_msg(1) = 'Cannot have an atom of vdw type ' // TRIM(nonbond_list(ia,is)%vdw_type) // &
+                           ' in a box of vdw type ' // TRIM(vdw_style(1))
               CALL Clean_Abort(err_msg,'Get_Atom_Info')
            ENDIF
 
@@ -1589,11 +1590,11 @@ SUBROUTINE Get_Atom_Info(is)
               WRITE(logunit,'(X,A,T25,A)') ' element:',nonbond_list(ia,is)%element
               WRITE(logunit,'(X,A,T25,F10.4)') ' mass:',nonbond_list(ia,is)%mass
               WRITE(logunit,'(X,A,T25,F10.4)') ' charge:',nonbond_list(ia,is)%charge
-              WRITE(logunit,'(X,A,T25,A)') ' vdw type:',nonbond_list(ia,is)%vdw_potential_type
+              WRITE(logunit,'(X,A,T25,A)') ' vdw type:',nonbond_list(ia,is)%vdw_type
            END IF
 
            ! Load vdw parameters, specific for each individual type
-           IF (nonbond_list(ia,is)%vdw_potential_type == 'LJ') THEN
+           IF (nonbond_list(ia,is)%vdw_type == 'LJ') THEN
               ! Set number of vdw parameters
               nbr_vdw_params(is) = 2
               
@@ -1618,7 +1619,7 @@ SUBROUTINE Get_Atom_Info(is)
               ! Convert epsilon to atomic units amu A^2/ps^2
               nonbond_list(ia,is)%vdw_param(1) = kboltz* nonbond_list(ia,is)%vdw_param(1) 
 
-           ELSEIF (nonbond_list(ia,is)%vdw_potential_type == 'Mie') THEN
+           ELSEIF (nonbond_list(ia,is)%vdw_type == 'Mie') THEN
               ! Set number of vdw parameters
               nbr_vdw_params(is) = 4
 
@@ -1652,7 +1653,7 @@ SUBROUTINE Get_Atom_Info(is)
               ! Convert epsilon to atomic units amu A^2/ps^2
               nonbond_list(ia,is)%vdw_param(1) = kboltz* nonbond_list(ia,is)%vdw_param(1) 
 
-           ELSEIF (nonbond_list(ia,is)%vdw_potential_type == 'NONE') THEN
+           ELSEIF (nonbond_list(ia,is)%vdw_type == 'NONE') THEN
               ! Set number of vdw parameters
               nbr_vdw_params = 0
 
