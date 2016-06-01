@@ -139,7 +139,4 @@ SUBROUTINE GEMC_Control
   ! angles exist
   CALL Get_Dihedral_Atoms_To_Place  
 
-  IF (int_vdw_style(1) == vdw_mie ) THEN
-  END IF
-
 END SUBROUTINE GEMC_Control

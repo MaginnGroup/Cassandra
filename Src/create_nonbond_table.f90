@@ -60,11 +60,10 @@
   LOGICAL :: repeat_type
   CHARACTER(6), DIMENSION(:), ALLOCATABLE :: temp_atomtypes ! same dimension as atom_name
   INTEGER :: ii, is, ia, itype, jtype, iset,jset,k,itype_1,itype_2
-  REAL(DP), DIMENSION(max_nonbond_params) :: temp_param_i, temp_param_j
+  REAL(DP) :: eps_i, eps_j, sig_i, sig_j
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: vdw_param_set
 
   ! Steele potential
-
   REAL(DP) :: sigma_ss, eps_ss, rho_s, delta_s, eps_sf
   !custom mixing rules
   INTEGER :: ierr,line_nbr,nbr_entries, is_1, is_2, ia_1, ia_2, itype_custom, jtype_custom
@@ -97,41 +96,47 @@
         
         repeat_type = .FALSE.
 
-        !----------------------------------------------------------------
-        ! Determine whether the atomtype has already been accounted for
-        !----------------------------------------------------------------
-        IF ((is .EQ. 1).AND.(ia .EQ. 1)) THEN
-           ! If this is the first atomtype obtained, store it in temp_atomtypes
-           nbr_atomtypes = nbr_atomtypes + 1
-           temp_atomtypes(nbr_atomtypes) = nonbond_list(ia,is)%atom_name
+        IF (nonbond_list(ia,is)%vdw_type /= 'NONE') THEN
 
-           ! Store the unique number identifier
-           nonbond_list(ia,is)%atom_type_number = nbr_atomtypes
-          
-        ELSE
-           ! Loop over all current atomtypes to check if the atomtype has been accounted for
-           !   If so, turn the fatomtype flag to true
-           DO ii = 1, nbr_atomtypes
-              IF(nonbond_list(ia,is)%atom_name .EQ. temp_atomtypes(ii)) THEN
-
-                 ! This atom name is already present. Do not advance counter
-                 repeat_type = .TRUE.
-
-                 ! Store the unique number identifier
-                 nonbond_list(ia,is)%atom_type_number = ii
-
-              ENDIF
-           ENDDO
-
-           ! If the atomtype has not been accounted for, add it to the temp_atomtypes list
-           IF(.NOT.repeat_type) THEN
+           !----------------------------------------------------------------
+           ! Determine whether the atomtype has already been accounted for
+           !----------------------------------------------------------------
+           IF ((is .EQ. 1).AND.(ia .EQ. 1)) THEN
+              ! If this is the first atomtype obtained, store it in temp_atomtypes
               nbr_atomtypes = nbr_atomtypes + 1
               temp_atomtypes(nbr_atomtypes) = nonbond_list(ia,is)%atom_name
 
               ! Store the unique number identifier
               nonbond_list(ia,is)%atom_type_number = nbr_atomtypes
-           ENDIF
+             
+           ELSE
+              ! Loop over all current atomtypes to check if the atomtype has been accounted for
+              !   If so, turn the fatomtype flag to true
+              DO ii = 1, nbr_atomtypes
+                 IF(nonbond_list(ia,is)%atom_name .EQ. temp_atomtypes(ii)) THEN
 
+                    ! This atom name is already present. Do not advance counter
+                    repeat_type = .TRUE.
+
+                    ! Store the unique number identifier
+                    nonbond_list(ia,is)%atom_type_number = ii
+
+                 ENDIF
+              ENDDO
+
+              ! If the atomtype has not been accounted for, add it to the temp_atomtypes list
+              IF(.NOT.repeat_type) THEN
+                 nbr_atomtypes = nbr_atomtypes + 1
+                 temp_atomtypes(nbr_atomtypes) = nonbond_list(ia,is)%atom_name
+
+                 ! Store the unique number identifier
+                 nonbond_list(ia,is)%atom_type_number = nbr_atomtypes
+              ENDIF
+
+           ENDIF
+        ELSE
+           ! atom has no atom_type
+           nonbond_list(ia,is)%atom_type_number = 0
         ENDIF
 
      ENDDO
@@ -139,7 +144,7 @@
   ENDDO
 
   
-! ite the number of different atom types to the screen and logfile
+! Write the number of different atom types to the logfile
 
   IF (verbose_log) THEN
      WRITE(logunit,'(A)') &
@@ -169,12 +174,21 @@
 
   END IF
 
-  IF (ALLOCATED(temp_atomtypes)) DEALLOCATE(temp_atomtypes)
 
   ! Create a character array containing the names of each unique atom type, with the index equal
   ! to the atom type number
 
   ALLOCATE(atom_type_list(nbr_atomtypes), Stat=AllocateStatus)
+  IF (AllocateStatus .NE. 0) THEN
+     err_msg = ''
+     err_msg(1) = ' ERROR: Not enough memory for vdw atom_type_list'
+     CALL Clean_Abort(err_msg,'ceate_nonbond_table')
+  END IF
+  atom_type_list = ""
+  DO itype = 1, nbr_atomtypes
+     atom_type_list(itype) = temp_atomtypes(itype)
+  END DO
+  IF (ALLOCATED(temp_atomtypes)) DEALLOCATE(temp_atomtypes)
 
   ! allocate arrays containing vdw parameters for all interaction pairs.
   ALLOCATE(vdw_param1_table(nbr_atomtypes,nbr_atomtypes), Stat=AllocateStatus)
@@ -192,7 +206,14 @@
   ! Allocate memory for total number bead types in each box
   ALLOCATE(nint_beads(nbr_atomtypes,nbr_boxes))
   
-  atom_type_list = ""
+  ! allocated memory for vdw_param_set, to mark which interactions have parameters stored
+  ALLOCATE(vdw_param_set(nbr_atomtypes,nbr_atomtypes), Stat=AllocateStatus)
+  IF (AllocateStatus .NE. 0) THEN
+     err_msg = ''
+     err_msg(1) = ' ERROR: Not enough memory for vdw_param_set'
+     CALL Clean_Abort(err_msg,'create_nonbond_table')
+  END IF
+  vdw_param_set = 0
 
   ! Now determine the set of vdw parameters for each type of interaction and load them into vdw_param_table
   ! This is a brute force search - but it is fast.
@@ -200,8 +221,6 @@
   IF (verbose_log) THEN
      WRITE(logunit,*) 
      WRITE(logunit,*) 'Creating VDW interaction table'
-     WRITE(logunit,'(X,A79)') '-------------------------------------------------------------------------------'
-     WRITE(logunit,'(X,A,T25,A)') 'Mixing rule used is:', mix_rule
 
   ! Write header for logfile output. Specific for the vdw style
      IF (int_vdw_style(1) == vdw_lj) THEN
@@ -212,311 +231,337 @@
               'rep-expt', 'disp-expt'
         WRITE(logunit,'(X,6X,5X,6X,2X,A12,X,A12)') 'amu A^2/ps^2', 'Ang'
      ENDIF
+     WRITE(logunit,'(X,A79)') '-------------------------------------------------------------------------------'
   END IF
 
-  DO itype = 1, nbr_atomtypes
+  ! Populate vdw_param?_table with like interactions
+  DO is = 1, nspecies
+     DO ia = 1, natoms(is)
+        itype = nonbond_list(ia,is)%atom_type_number
+        IF (itype > 0 .AND. vdw_param_set(itype,itype) == 0) THEN
+           IF (nonbond_list(ia,is)%vdw_type == 'LJ') THEN
+              ! epsilon
+              IF (nonbond_list(ia,is)%vdw_param(1) <= tiny_number) THEN
+                 vdw_param1_table(itype,itype) = 0.0_DP
+              ELSE
+                 vdw_param1_table(itype,itype) = nonbond_list(ia,is)%vdw_param(1)
+              END IF
 
-    DO jtype = 1, nbr_atomtypes
+              ! sigma
+              IF (nonbond_list(ia,is)%vdw_param(2) <= tiny_number) THEN
+                 vdw_param2_table(itype,itype) = 0.0_DP
+              ELSE
+                 vdw_param2_table(itype,itype) = nonbond_list(ia,is)%vdw_param(2)
+              END IF
 
-      ! Flags that are tripped when a particular atomtype parameter set is located
-      iset = 0
-      jset = 0
-
-      DO is = 1, nspecies
-
-         DO ia = 1, natoms(is)
-
-            IF (iset == 0) THEN
-               ! Search for atomtype i because the parameters have not been found
-
-               IF (nonbond_list(ia,is)%atom_type_number == itype) THEN
-                  ! This type of atom has been found. Grab its vdw parameters
-
-                  DO k=1, nbr_vdw_params(is)
-                     temp_param_i(k) = nonbond_list(ia,is)%vdw_param(k)
-                  ENDDO
-
-                  ! This atomtype parameters are now determined. Trip flag
-                  iset = 1
-                
-                  atom_type_list(itype) = nonbond_list(ia,is)%atom_name
-  
-               ENDIF
-
-            ENDIF
-
-            IF(jset == 0) THEN
-
-            ! Now search for parameters of type j
-
-               IF (nonbond_list(ia,is)%atom_type_number == jtype) THEN
-
-                  DO k=1, nbr_vdw_params(is)
-                     temp_param_j(k) = nonbond_list(ia,is)%vdw_param(k)
-                  ENDDO
-                
-                  ! This atom type has been located
-                  jset = 1
-
-                  atom_type_list(jtype) = nonbond_list(ia,is)%atom_name
-
-               ENDIF
-
-            ENDIF
-
-         ENDDO
-
-      ENDDO
-
-      ! Found i and j
-      IF (mix_rule /= 'custom') THEN
-
-        IF (int_vdw_style(1) == vdw_lj) THEN
-           ! There are two vdw parameters that need mixing
-
-           ! Set LJ epsilon
-           IF ( (temp_param_i(1) <= tiny_number) .OR. (temp_param_j(1) <= tiny_number) ) THEN
-              vdw_param1_table(itype,jtype) = 0.0_DP
-           ! for parameters with zero, avoid overflow and set to zero
-
-           ELSE
-
-              ! Use specified mixing rule
-
-           ! LB mixing rule: epsij = (epsi * epsj)^(1/2)
-           ! geometric mixing rule: epsij = (epsi * epsj)^(1/2)
-              vdw_param1_table(itype,jtype) = dsqrt(temp_param_i(1)*temp_param_j(1))
-            
-           ENDIF
-
-           ! Set LJ sigma
-           IF ( (temp_param_i(2) <= tiny_number) .OR. (temp_param_j(2) <= tiny_number) ) THEN
-              vdw_param2_table(itype,jtype) = 0.0_DP
-
-           ELSE
-
-           ! LB mixing rule: sigmaij = 1/2 (sigmai + sigmaj)
-              IF (mix_rule == 'LB') &
-                   vdw_param2_table(itype,jtype) = (temp_param_i(2) + temp_param_j(2)) * 0.5
-           ! geometric mixing rule: sigmaij = (sigmai * sigmaj)^(1/2)
-              IF (mix_rule == 'geometric') &
-                   vdw_param2_table(itype,jtype) = dsqrt(temp_param_i(2) * temp_param_j(2))
-
-           ENDIF
-
-           IF (verbose_log) THEN
               ! Report parameters to logfile.
+              IF (verbose_log) THEN
+                WRITE(logunit,'(X,A6,5X,A6,2X,F12.4,X,F12.4)') &
+                     atom_type_list(itype), atom_type_list(itype), &
+                     vdw_param1_table(itype,itype), vdw_param2_table(itype,itype)
+              ENDIF
 
-             WRITE(logunit,'(X,A6,5X,A6,2X,F12.4,X,F12.4)') &
-                  atom_type_list(itype), atom_type_list(jtype), &
-                  vdw_param1_table(itype,jtype), vdw_param2_table(itype,jtype)
+              vdw_param_set(itype,itype) = 1
+           ELSE IF (nonbond_list(ia,is)%vdw_type == 'Mie') THEN
+              ! epsilon
+              IF (nonbond_list(ia,is)%vdw_param(1) <= tiny_number) THEN
+                 vdw_param1_table(itype,itype) = 0.0_DP
+              ELSE
+                 vdw_param1_table(itype,itype) = nonbond_list(ia,is)%vdw_param(1)
+              END IF
 
-           ENDIF
+              ! sigma
+              IF (nonbond_list(ia,is)%vdw_param(2) <= tiny_number) THEN
+                 vdw_param2_table(itype,itype) = 0.0_DP
+              ELSE
+                 vdw_param2_table(itype,itype) = nonbond_list(ia,is)%vdw_param(2)
+              END IF
 
-        ELSEIF (int_vdw_style(1) == vdw_mie) THEN
-           ! There are two vdw parameters that need mixing and two parameters
-           ! that must be identical
-          IF (temp_param_i(3) == temp_param_j(3) .AND. temp_param_i(4) == temp_param_j(4)) THEN
+              ! repuslive exponent
+              vdw_param3_table(itype,itype) = nonbond_list(ia,is)%vdw_param(3)
 
-           ! Set epsilon
-           IF ( (temp_param_i(1) <= tiny_number) .OR. (temp_param_j(1) <= tiny_number) ) THEN
-              vdw_param1_table(itype,jtype) = 0.0_DP
-           ELSE
-              ! LB mixing rule: epsij = (epsi * epsj)^(1/2)
-              ! geometric mixing rule: epsij = (epsi * epsj)^(1/2)
-              vdw_param1_table(itype,jtype) = dsqrt(temp_param_i(1)*temp_param_j(1))
-           ENDIF
+              ! dispersive exponent
+              vdw_param4_table(itype,itype) = nonbond_list(ia,is)%vdw_param(4)
 
-           ! Set sigma
-           IF ( (temp_param_i(2) <= tiny_number) .OR. (temp_param_j(2) <= tiny_number) ) THEN
-              vdw_param2_table(itype,jtype) = 0.0_DP
-           ELSE
-              ! LB mixing rule: sigmaij = 1/2 (sigmai + sigmaj)
-              IF (mix_rule == 'LB') &
-                   vdw_param2_table(itype,jtype) = (temp_param_i(2) + temp_param_j(2)) * 0.5
-              ! geometric mixing rule: sigmaij = (sigmai * sigmaj)^(1/2)
-              IF (mix_rule == 'geometric') &
-                   vdw_param2_table(itype,jtype) = dsqrt(temp_param_i(2) * temp_param_j(2))
-           ENDIF
-
-           ! Exponents are the same
-           vdw_param3_table(itype,jtype) = temp_param_i(3)
-           vdw_param4_table(itype,jtype) = temp_param_i(4)
-
-           IF (verbose_log) THEN
               ! Report parameters to logfile.
+              IF (verbose_log) THEN
+                WRITE(logunit,'(X,A6,5X,A6,2X,F12.4,X,F12.4,X,F12.4,X,F12.4)') &
+                     atom_type_list(itype), atom_type_list(itype), &
+                     vdw_param1_table(itype,itype), vdw_param2_table(itype,itype), &
+                     vdw_param3_table(itype,itype), vdw_param4_table(itype,itype)
+              ENDIF
 
-             WRITE(logunit,'(X,A6,5X,A6,2X,F12.4,X,F12.4,X,F12.4,X,F12.4)') &
-                  atom_type_list(itype), atom_type_list(jtype), &
-                  vdw_param1_table(itype,jtype), vdw_param2_table(itype,jtype), &
-                  vdw_param3_table(itype,jtype), vdw_param4_table(itype,jtype)
+              vdw_param_set(itype,itype) = 1
+           END IF
+        END IF
+     END DO
+  END DO
 
+  ! Populate vdw_param?_table with mixed interactions
+  IF (nbr_atomtypes > 1) THEN
+     IF (verbose_log) THEN
+        WRITE(logunit,'(X,A79)') '-------------------------------------------------------------------------------'
+        WRITE(logunit,'(X,A,T25,A)') 'Mixing rule used is:', mix_rule
+        WRITE(logunit,'(X,A79)') '-------------------------------------------------------------------------------'
+     END IF
 
-           ENDIF
+     IF (mix_rule == 'LB' .OR. mix_rule == 'geometric') THEN
 
-          ELSE
-            err_msg = ""
-            err_msg(1) = "Cross interactions for Mie potential must have same exponents"
-            CALL Clean_Abort(err_msg,'Create_Nonbond_Table')
-          END IF
-        ENDIF
-
-      END IF
-
-    ENDDO
-
-  ENDDO
-
-  ! atom types i and j have been found and vdw parameters loaded into temporary arrays.
-  ! Apply mixing rules and load vdw_table
-
-  ! Adapt this to other potential types and mixing rules. Custom mixing rules can 
-  ! be created manually and then this routine should be bypassed.
-
-  IF (mix_rule == 'custom') THEN
-
-    REWIND(inputunit)
-
-    ierr = 0
-    line_nbr = 0
-
-    ALLOCATE(vdw_param_set(nbr_atomtypes,nbr_atomtypes), Stat=AllocateStatus)
-    IF (AllocateStatus .NE. 0) THEN
-       err_msg = ''
-       err_msg(1) = ' ERROR: Not enough memory for vdw_param_set'
-       CALL Clean_Abort(err_msg,'create_nonbond_table')
-    END IF
-    vdw_param_set = 0
-
-    DO
-
-      line_nbr = line_nbr + 1
-      CALL Read_String(inputunit,line_string,ierr)
-
-      IF (ierr .NE. 0) THEN
-         err_msg = ""
-         err_msg(1) = "Error reading mixing rules."
-         CALL Clean_Abort(err_msg,'Create_Nonbond_Table')
-      END IF
-
-      IF (line_string(1:13) == '# Mixing_Rule') THEN
-        ! 'custom' line
-        line_nbr = line_nbr + 1
-        READ(inputunit,*) 
-
-        ! custom parameters
-        CustomLOOP: DO
-          line_nbr = line_nbr + 1
-          CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
-          IF (nbr_entries < 4) THEN
-             EXIT CustomLOOP
-          END IF
-
-          ! find itype
-          iset = 0
-          DO itype = 1, nbr_atomtypes
-             IF (atom_type_list(itype) == line_array(1)) THEN
-                iset = 1
-                EXIT
-             END IF
-          END DO
-          IF (iset == 0) THEN
-             err_msg = ''
-             err_msg(1) = 'Atom type ' // TRIM(line_array(1)) // ' on line ' // &
-                          TRIM(Int_To_String(line_nbr)) // ' of input file not found'
-             CALL Clean_Abort(err_msg,'Create_Nonbond_Table')
-          END IF
-
-          ! find jtype
-          jset = 0
-          DO jtype = 1, nbr_atomtypes
-             IF (atom_type_list(jtype) == line_array(2)) THEN
-                jset = 1
-                EXIT
-             END IF
-          END DO
-          IF (jset == 0) THEN
-             err_msg = ''
-             err_msg(1) = 'Atom type ' // TRIM(line_array(2)) // ' on line ' // &
-                          TRIM(Int_To_String(line_nbr)) // ' of input file not found'
-             CALL Clean_Abort(err_msg,'Create_Nonbond_Table')
-          END IF
-
-          ! Load custom parms
-          IF (int_vdw_style(1) == vdw_lj) THEN
-            !Convert epsilon to atomic units amu A^2/ps^2
-            vdw_param1_table(itype,jtype) = kboltz * String_To_Double(line_array(3))
-            !Sigma
-            vdw_param2_table(itype,jtype) = String_To_Double(line_array(4))
-            IF (verbose_log) THEN
-              WRITE(logunit,'(X,A6,5X,A6,2(X,F12.4))') &
-                   atom_type_list(itype), atom_type_list(jtype), &
-                   vdw_param1_table(itype,jtype), &
-                   vdw_param2_table(itype,jtype)
-            END IF
-            !Also define parms for reversed indices
-            vdw_param1_table(jtype,itype) = vdw_param1_table(itype,jtype)
-            vdw_param2_table(jtype,itype) = vdw_param2_table(itype,jtype)
- 
-            ! Mark that the parameters have been set
-            vdw_param_set(itype,jtype) = 1
-            vdw_param_set(jtype,itype) = 1
-
-          ELSEIF (int_vdw_style(1) == vdw_mie) THEN
-            !Convert epsilon to atomic units amu A^2/ps^2
-            vdw_param1_table(itype,jtype) = kboltz * String_To_Double(line_array(3))
-            !Sigma
-            vdw_param2_table(itype,jtype) = String_To_Double(line_array(4))
-            !Repulsive exponent
-            vdw_param3_table(itype,jtype) = String_To_Double(line_array(5))
-            !Dispersive exponent
-            vdw_param4_table(itype,jtype) = String_To_Double(line_array(6))
-            IF (verbose_log) THEN
-              WRITE(logunit,'(X,A6,5X,A6,4(X,F12.4))') &
-                   atom_type_list(itype), atom_type_list(jtype), &
-                   vdw_param1_table(itype,jtype), &
-                   vdw_param2_table(itype,jtype), &
-                   vdw_param3_table(itype,jtype), &
-                   vdw_param4_table(itype,jtype)
-            END IF
-            !Also define parms for reversed indices
-            vdw_param1_table(jtype,itype) = vdw_param1_table(itype,jtype)
-            vdw_param2_table(jtype,itype) = vdw_param2_table(itype,jtype)
-            vdw_param3_table(jtype,itype) = vdw_param3_table(itype,jtype)
-            vdw_param4_table(jtype,itype) = vdw_param4_table(itype,jtype)
-
-            ! Mark that the parameters have been set
-            vdw_param_set(itype,jtype) = 1
-            vdw_param_set(jtype,itype) = 1
-          END IF
-        END DO CustomLOOP
- 
-        ! Check that all expected atomtypes have been found
         DO itype = 1, nbr_atomtypes
-          DO jtype = itype, nbr_atomtypes
-     
-            ! Check for errors
-            IF (vdw_param_set(itype,jtype) == 0) THEN
-              err_msg = ''
-              err_msg(1) = 'Custom parameters not found for atom types: ' // &
-                           TRIM(atom_type_list(itype)) // " " // &
-                           TRIM(atom_type_list(jtype))
-              CALL Clean_Abort(err_msg,'Create_Nonbond_Table')
-            END IF
-         
-          END DO
-        END DO   
-        EXIT
+           DO jtype = itype+1, nbr_atomtypes
 
-      ELSE IF (line_string(1:3) == 'END' .OR. line_nbr > 10000 ) THEN
-              
-        err_msg = ""
-        err_msg(1) = 'Section "# Mixing_Rule" missing from input file'
-        CALL Clean_Abort(err_msg,'Create_Nonbond_Table')
+              IF (int_vdw_style(1) == vdw_lj) THEN
+                 ! There are two vdw parameters that need mixing
 
-      END IF
-    END DO
-  END IF
+                 ! epsilon
+                 eps_i = vdw_param1_table(itype,itype)
+                 eps_j = vdw_param1_table(jtype,jtype)
+                 IF ( (eps_i <= tiny_number) .OR. (eps_j <= tiny_number) ) THEN
+                    vdw_param1_table(itype,jtype) = 0.0_DP
+                    ! for parameters with zero, avoid overflow and set to zero
+                 ELSE
+                    ! LB mixing rule: epsij = (epsi * epsj)^(1/2)
+                    ! geometric mixing rule: epsij = (epsi * epsj)^(1/2)
+                    vdw_param1_table(itype,jtype) = dsqrt(eps_i*eps_j)
+                 ENDIF
+
+                 ! sigma
+                 sig_i = vdw_param2_table(itype,itype)
+                 sig_j = vdw_param2_table(jtype,jtype)
+                 IF ( (sig_i <= tiny_number) .OR. (sig_j <= tiny_number) ) THEN
+                    vdw_param2_table(itype,jtype) = 0.0_DP
+                    ! for parameters with zero, avoid overflow and set to zero
+                 ELSE
+                    ! LB mixing rule: sigmaij = 1/2 (sigmai + sigmaj)
+                    IF (mix_rule == 'LB') &
+                         vdw_param2_table(itype,jtype) = (sig_i + sig_j) * 0.5
+                    ! geometric mixing rule: sigmaij = (sigmai * sigmaj)^(1/2)
+                    IF (mix_rule == 'geometric') &
+                         vdw_param2_table(itype,jtype) = dsqrt(sig_i*sig_j)
+                 ENDIF
+
+                 ! Report parameters to logfile.
+                 IF (verbose_log) THEN
+                   WRITE(logunit,'(X,A6,5X,A6,2X,F12.4,X,F12.4)') &
+                        atom_type_list(itype), atom_type_list(jtype), &
+                        vdw_param1_table(itype,jtype), vdw_param2_table(itype,jtype)
+                 ENDIF
+
+                 ! Mixed interactions are symmetric
+                 vdw_param1_table(jtype,itype) = vdw_param1_table(itype,jtype)
+                 vdw_param2_table(jtype,itype) = vdw_param2_table(itype,jtype)
+
+                 ! Mark that the parameters have been set
+                 vdw_param_set(itype,jtype) = 1
+                 vdw_param_set(jtype,itype) = 1
+              ELSEIF (int_vdw_style(1) == vdw_mie) THEN
+                 ! Can only mix params 1 and 2 if params 3 and 4 are identical
+                 IF (vdw_param3_table(itype,itype) == vdw_param3_table(jtype,jtype) .AND. &
+                     vdw_param4_table(itype,itype) == vdw_param4_table(jtype,jtype)) THEN
+
+                    ! epsilon
+                    eps_i = vdw_param1_table(itype,itype)
+                    eps_j = vdw_param2_table(jtype,jtype)
+                    IF ( (eps_i <= tiny_number) .OR. (eps_j <= tiny_number) ) THEN
+                       vdw_param1_table(itype,jtype) = 0.0_DP
+                       ! for parameters with zero, avoid overflow and set to zero
+                    ELSE
+                       ! LB mixing rule: epsij = (epsi * epsj)^(1/2)
+                       ! geometric mixing rule: epsij = (epsi * epsj)^(1/2)
+                       vdw_param1_table(itype,jtype) = dsqrt(eps_i*eps_j)
+                    ENDIF
+
+                    ! sigma
+                    sig_i = vdw_param2_table(itype,itype)
+                    sig_j = vdw_param2_table(jtype,jtype)
+                    IF ( (sig_i <= tiny_number) .OR. (sig_j <= tiny_number) ) THEN
+                       vdw_param2_table(itype,jtype) = 0.0_DP
+                       ! for parameters with zero, avoid overflow and set to zero
+                    ELSE
+                       ! LB mixing rule: sigmaij = 1/2 (sigmai + sigmaj)
+                       IF (mix_rule == 'LB') &
+                            vdw_param2_table(itype,jtype) = (sig_i + sig_j) * 0.5
+                       ! geometric mixing rule: sigmaij = (sigmai * sigmaj)^(1/2)
+                       IF (mix_rule == 'geometric') &
+                            vdw_param2_table(itype,jtype) = dsqrt(sig_i*sig_j)
+                    ENDIF
+
+                    ! Exponents are the same
+                    vdw_param3_table(itype,jtype) = vdw_param3_table(itype,itype)
+                    vdw_param4_table(itype,jtype) = vdw_param4_table(itype,itype)
+
+                    ! Report parameters to logfile.
+                    IF (verbose_log) THEN
+                      WRITE(logunit,'(X,A6,5X,A6,2X,F12.4,X,F12.4,X,F12.4,X,F12.4)') &
+                           atom_type_list(itype), atom_type_list(jtype), &
+                           vdw_param1_table(itype,jtype), vdw_param2_table(itype,jtype), &
+                           vdw_param3_table(itype,jtype), vdw_param4_table(itype,jtype)
+                    ENDIF
+
+                    ! Mixed interactions are symmetric
+                    vdw_param1_table(jtype,itype) = vdw_param1_table(itype,jtype)
+                    vdw_param2_table(jtype,itype) = vdw_param2_table(itype,jtype)
+                    vdw_param3_table(jtype,itype) = vdw_param3_table(itype,jtype)
+                    vdw_param4_table(jtype,itype) = vdw_param4_table(itype,jtype)
+
+                    ! Mark that the parameters have been set
+                    vdw_param_set(itype,jtype) = 1
+                    vdw_param_set(jtype,itype) = 1
+                 ELSE
+                    err_msg = ""
+                    err_msg(1) = "Cross interactions for Mie potential must have same exponents"
+                    CALL Clean_Abort(err_msg,'Create_Nonbond_Table')
+                 END IF
+              END IF
+
+           ENDDO
+        ENDDO
+
+     ELSE IF (mix_rule == 'custom') THEN
+
+       REWIND(inputunit)
+
+       ierr = 0
+       line_nbr = 0
+
+       DO
+
+         line_nbr = line_nbr + 1
+         CALL Read_String(inputunit,line_string,ierr)
+
+         IF (ierr .NE. 0) THEN
+            err_msg = ""
+            err_msg(1) = "Error reading mixing rules."
+            CALL Clean_Abort(err_msg,'Create_Nonbond_Table')
+         END IF
+
+         IF (line_string(1:13) == '# Mixing_Rule') THEN
+           ! 'custom' line
+           line_nbr = line_nbr + 1
+           READ(inputunit,*) 
+
+           ! custom parameters
+           CustomLOOP: DO
+             line_nbr = line_nbr + 1
+             CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
+             IF (nbr_entries < 2) THEN
+                EXIT CustomLOOP
+             END IF
+
+             ! find itype
+             iset = 0
+             DO itype = 1, nbr_atomtypes
+                IF (atom_type_list(itype) == line_array(1)) THEN
+                   iset = 1
+                   EXIT
+                END IF
+             END DO
+             IF (iset == 0) THEN
+                err_msg = ''
+                err_msg(1) = 'Atom type ' // TRIM(line_array(1)) // ' on line ' // &
+                             TRIM(Int_To_String(line_nbr)) // ' of input file not found'
+                CALL Clean_Abort(err_msg,'Create_Nonbond_Table')
+             END IF
+
+             ! find jtype
+             jset = 0
+             DO jtype = 1, nbr_atomtypes
+                IF (atom_type_list(jtype) == line_array(2)) THEN
+                   jset = 1
+                   EXIT
+                END IF
+             END DO
+             IF (jset == 0) THEN
+                err_msg = ''
+                err_msg(1) = 'Atom type ' // TRIM(line_array(2)) // ' on line ' // &
+                             TRIM(Int_To_String(line_nbr)) // ' of input file not found'
+                CALL Clean_Abort(err_msg,'Create_Nonbond_Table')
+             END IF
+
+             IF (vdw_param_set(itype,jtype) == 0) THEN
+                ! Load custom parms
+                IF (int_vdw_style(1) == vdw_lj) THEN
+                  !Convert epsilon to atomic units amu A^2/ps^2
+                  vdw_param1_table(itype,jtype) = kboltz * String_To_Double(line_array(3))
+                  !Sigma
+                  vdw_param2_table(itype,jtype) = String_To_Double(line_array(4))
+                  IF (verbose_log) THEN
+                    WRITE(logunit,'(X,A6,5X,A6,2(X,F12.4))') &
+                         atom_type_list(itype), atom_type_list(jtype), &
+                         vdw_param1_table(itype,jtype), &
+                         vdw_param2_table(itype,jtype)
+                  END IF
+                  !Also define parms for reversed indices
+                  vdw_param1_table(jtype,itype) = vdw_param1_table(itype,jtype)
+                  vdw_param2_table(jtype,itype) = vdw_param2_table(itype,jtype)
+ 
+                  ! Mark that the parameters have been set
+                  vdw_param_set(itype,jtype) = 1
+                  vdw_param_set(jtype,itype) = 1
+
+                ELSEIF (int_vdw_style(1) == vdw_mie) THEN
+                  !Convert epsilon to atomic units amu A^2/ps^2
+                  vdw_param1_table(itype,jtype) = kboltz * String_To_Double(line_array(3))
+                  !Sigma
+                  vdw_param2_table(itype,jtype) = String_To_Double(line_array(4))
+                  !Repulsive exponent
+                  vdw_param3_table(itype,jtype) = String_To_Double(line_array(5))
+                  !Dispersive exponent
+                  vdw_param4_table(itype,jtype) = String_To_Double(line_array(6))
+                  IF (verbose_log) THEN
+                    WRITE(logunit,'(X,A6,5X,A6,4(X,F12.4))') &
+                         atom_type_list(itype), atom_type_list(jtype), &
+                         vdw_param1_table(itype,jtype), &
+                         vdw_param2_table(itype,jtype), &
+                         vdw_param3_table(itype,jtype), &
+                         vdw_param4_table(itype,jtype)
+                  END IF
+                  !Also define parms for reversed indices
+                  vdw_param1_table(jtype,itype) = vdw_param1_table(itype,jtype)
+                  vdw_param2_table(jtype,itype) = vdw_param2_table(itype,jtype)
+                  vdw_param3_table(jtype,itype) = vdw_param3_table(itype,jtype)
+                  vdw_param4_table(jtype,itype) = vdw_param4_table(itype,jtype)
+
+                  ! Mark that the parameters have been set
+                  vdw_param_set(itype,jtype) = 1
+                  vdw_param_set(jtype,itype) = 1
+                END IF
+             ELSE
+                err_msg = ''
+                err_msg(1) = 'Parameters for ' // TRIM(atom_type_list(itype)) // ' and ' // &
+                             TRIM(atom_type_list(jtype)) // ' are repeated'
+                CALL Clean_Abort(err_msg,'Create_Nonbond_Table')
+             END IF
+           END DO CustomLOOP
+ 
+           ! Check that all expected atomtypes have been found
+           DO itype = 1, nbr_atomtypes
+             DO jtype = itype+1, nbr_atomtypes
+        
+               ! Check for errors
+               IF (vdw_param_set(itype,jtype) == 0) THEN
+                 err_msg = ''
+                 err_msg(1) = 'Custom parameters not found for atom types: ' // &
+                              TRIM(atom_type_list(itype)) // " " // &
+                              TRIM(atom_type_list(jtype))
+                 CALL Clean_Abort(err_msg,'Create_Nonbond_Table')
+               END IF
+            
+             END DO
+           END DO   
+           EXIT
+
+         ELSE IF (line_string(1:3) == 'END' .OR. line_nbr > 10000 ) THEN
+                 
+           err_msg = ""
+           err_msg(1) = 'Section "# Mixing_Rule" missing from input file'
+           CALL Clean_Abort(err_msg,'Create_Nonbond_Table')
+
+         END IF
+       END DO ! Loop over inputfile lines
+
+     END IF ! mix_rule
+  END IF ! nbr_atomtypes > 1
 
   IF (verbose_log) THEN
      WRITE(logunit,'(X,A79)') '-------------------------------------------------------------------------------'
