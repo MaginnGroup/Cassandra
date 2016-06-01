@@ -361,7 +361,7 @@
 
                     ! epsilon
                     eps_i = vdw_param1_table(itype,itype)
-                    eps_j = vdw_param2_table(jtype,jtype)
+                    eps_j = vdw_param1_table(jtype,jtype)
                     IF ( (eps_i <= tiny_number) .OR. (eps_j <= tiny_number) ) THEN
                        vdw_param1_table(itype,jtype) = 0.0_DP
                        ! for parameters with zero, avoid overflow and set to zero
