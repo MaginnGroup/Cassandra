@@ -1064,7 +1064,7 @@ CONTAINS
          jtype = nonbond_list(ja,js)%atom_type_number
           
          VDW_calc: &
-         IF (get_vdw) THEN
+         IF (get_vdw .AND. itype /= 0 .AND. jtype /=0) THEN
 
               IF (int_vdw_style(ibox) == vdw_lj) THEN
 
