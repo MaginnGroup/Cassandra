@@ -266,15 +266,18 @@ class p1a(wx.Panel):
             f.write('%s\n' %(myDict['prob vol b2']))
         if 'prob insertion' in myDict:
           f.write('\n# Prob_Insertion\n%s\n' %(myDict['prob insertion']))
-          for i in range(int(myDict['nbrSpecies'])):
-            f.write('%s\n%s\n' %('insertion method',\
-                    myDict['insertion method s%s' %(i+1)]))
+          f.write('%s' %(myDict['insertion method s%s' %(1)]))
+          for i in range(1,int(myDict['nbrSpecies'])):
+            f.write(' %s' %(myDict['insertion method s%s' %(i+1)]))
+          f.write('\n')
         if 'prob insertion' in myDict:
           f.write('\n# Prob_Deletion\n%s\n' %(myDict['prob insertion']))
         if 'prob swap' in myDict:
           f.write('\n# Prob_Swap\n%s\n' %(myDict['prob swap']))
-          for i in range(int(myDict['nbrSpecies'])):
-            f.write('%s\n%s\n' %('insertion method',myDict['swap method s%s' %(i+1)]))
+          f.write('%s' %(myDict['insertion method s%s' %(1)]))
+          for i in range(1,int(myDict['nbrSpecies'])):
+            f.write(' %s' %(myDict['insertion method s%s' %(i+1)]))
+          f.write('\n')
         f.write('\n# Done_Probability_Info\n%s\n\n' %(newsection))
         f.write('# Molecule_Files\n')
         for i in range(int(myDict['nbrSpecies'])):
@@ -299,25 +302,21 @@ class p1a(wx.Panel):
           f.write('%s\n\n' %(newsection))
         f.write('# Start_Type\n')
         if myDict['start type'] == 'make_config':
-          f.write('make_config\n')
-          if int(myDict['nbrBoxes']) == 1:
+          for j in range(int(myDict['nbrBoxes'])):
+            f.write('make_config')
             for i in range(int(myDict['nbrSpecies'])):
-              f.write('%s\n' %(myDict['makeConfig s%s b1' %(i+1)]))
-            f.write('%s\n\n' %(newsection))
-          elif int(myDict['nbrBoxes']) == 2:
-            for i in range(int(myDict['nbrSpecies'])):
-              f.write('%s %s\n' %(myDict['makeConfig s%s b1' %(i+1)],\
-                                  myDict['makeConfig s%s b2' %(i+1)]))
-            f.write('%s\n\n' %(newsection))
+              f.write(' %s' %(myDict['makeConfig s%s b%s' %(i+1,j+1)]))
+            f.write('\n')
+          f.write('%s\n\n' %(newsection))
         elif myDict['start type'] == 'checkpoint':
           f.write('checkpoint\n%s\n%s\n\n' %(myDict['checkpoint file'],newsection))
-        elif myDict['start type'] == 'read_old':
-          f.write('read_old\n')
-          if int(myDict['nbrBoxes']) == 1:
-            f.write('%s\n%s\n\n' %(myDict['read old box 1'], newsection))
-          elif int(myDict['nbrBoxes']) == 2:
-            f.write('%s\n%s\n%s\n\n' %(myDict['read old box 1'],\
-                     myDict['read old box 2'],newsection))
+        elif myDict['start type'] == 'read_config':
+          for j in range(int(myDict['nbrBoxes'])):
+            f.write('read_config')
+            for i in range(int(myDict['nbrSpecies'])):
+              f.write(' %s' %(myDict['readConfig s%s b%s' %(i+1,j+1)]))
+            f.write(' %s\n' % (myDict['read old box %s' %(j+1)]))
+          f.write('%s\n\n' %(newsection))
         f.write('# Run_Type\n')
         tryToWrite(f,'run type','acceptance ratio output','volume displacement output')
         f.write('%s\n\n' %(newsection)) 
@@ -325,12 +324,12 @@ class p1a(wx.Panel):
         f.write('# Simulation_Length_Info\n%s %s\n' %('Units',myDict['freqTypeChoice']))
         if myDict['freqTypeChoice'] == 'Minutes':
           f.write('%s %s\n%s %s\n%s %s\n' %('Prop_Freq',myDict['thermoFreq'],\
-                  'Coord_Freq',myDict['coordFreq'],'Total_Time',myDict['simRunTime']))
-          f.write('# Done_Simulation_Length_Info\n%s\n\n' %(newsection))
+                  'Coord_Freq',myDict['coordFreq'],'Run',myDict['simRunTime']))
+          f.write('%s\n\n' %(newsection))
         elif myDict['freqTypeChoice'] == 'Steps':
           f.write('%s %s\n%s %s\n%s %s\n' %('Prop_Freq',myDict['thermoFreq'],\
-                  'Coord_Freq',myDict['coordFreq'],'MCsteps',myDict['simRunTime']))
-          f.write('# Done_Simulation_Length_Info\n%s\n\n' %(newsection))
+                  'Coord_Freq',myDict['coordFreq'],'Run',myDict['simRunTime']))
+          f.write('%s\n\n' %(newsection))
 
         f.write('# Average_Info\n%s\n%s\n\n' %(myDict['avgInfo'],newsection))
         f.write('# Property_Info 1\n')
@@ -1658,7 +1657,7 @@ class p3e(wx.Panel):
 
     # need to ask for the insertion method for 
     # each species in simulation; use choice widgets to do so
-    choiceOptions = ["", "reservoir","none"]
+    choiceOptions = ["", "cbmc","none"]
     self.choicewidgets3e = []
     choiceNames = ["insertion method s%s" %(i+1) for i in range(maxnbrspecies)]
     choiceCoords = [(i+5,3) for i in range(maxnbrspecies)]
@@ -2182,7 +2181,7 @@ class p4c(wx.Panel):
       
     # choice widgets
     runTypeOptions = ["", "Equilibration", "Production"]
-    startTypeOptions = ["", "make_config", "checkpoint", "read_old"]
+    startTypeOptions = ["", "make_config", "checkpoint", "read_config"]
 
     choiceOptionsList = [startTypeOptions, runTypeOptions]
     self.choicewidgetnames = ["start type","run type"]
@@ -2342,7 +2341,7 @@ class p4c(wx.Panel):
       for item in self.disp_init_hide:
         self.textdisp4c[item].Hide()
         self.textdisp4c[item].SetValue('')
-    elif val == 'make_config':
+    elif val == 'make_config' or val == 'read_config':
       # hide the widgets not pertaining to make config
       for item in self.disp_init_hide:
         self.textdisp4c[item].Hide()
@@ -2373,25 +2372,7 @@ class p4c(wx.Panel):
           self.textwidgets4c[i+6].Hide()
           self.textwidgets4c[i+6].SetValue('')
         self.staticlbls4c[3].Hide()
-    elif val == 'checkpoint' or val == 'read_old':
-      # hide and clear the make config widgets for both
-      for item in self.lbls_init_hide:
-        self.staticlbls4c[item].Hide()
-      for item in self.text_init_hide:
-        self.textwidgets4c[item].Hide()
-        self.textwidgets4c[item].SetValue('')
-      if val == 'checkpoint':
-      # hide and clear read old widgets
-      # show the checkpoint widgets
-        self.buttonwidgets4c[0].Show(),self.textdisp4c[0].Show()
-        self.buttonwidgets4c[1].Hide()
-        self.buttonwidgets4c[1].Hide()
-        self.textdisp4c[1].Hide(), self.textdisp4c[2].Hide()
-        thisName = self.buttonwidgets4c[1].GetName()
-        data(thisName,'')
-        thisName = self.buttonwidgets4c[2].GetName()
-        data(thisName,'')
-      elif val == 'read_old':
+      if val == 'read_config':
         self.buttonwidgets4c[0].Hide(),self.textdisp4c[0].Hide()
         self.buttonwidgets4c[1].Show(), self.textdisp4c[1].Show()
         if myDict['ensemble'][0:4] == "GEMC":
@@ -2400,6 +2381,23 @@ class p4c(wx.Panel):
           self.buttonwidgets4c[2].Hide(), self.textdisp4c[2].Hide()
           thisName = self.buttonwidgets4c[2].GetName()
           data(thisName,'')
+    elif val == 'checkpoint':
+      # hide and clear the make config widgets
+      for item in self.lbls_init_hide:
+        self.staticlbls4c[item].Hide()
+      for item in self.text_init_hide:
+        self.textwidgets4c[item].Hide()
+        self.textwidgets4c[item].SetValue('')
+      # hide and clear read old widgets
+      # show the checkpoint widgets
+      self.buttonwidgets4c[0].Show(),self.textdisp4c[0].Show()
+      self.buttonwidgets4c[1].Hide()
+      self.buttonwidgets4c[1].Hide()
+      self.textdisp4c[1].Hide(), self.textdisp4c[2].Hide()
+      thisName = self.buttonwidgets4c[1].GetName()
+      data(thisName,'')
+      thisName = self.buttonwidgets4c[2].GetName()
+      data(thisName,'')
       # hide and clear the make config widgets
       # hide and clear checkpoint widgets
       # show the read old widget(s) - only box 2 if ensemble is GEMC

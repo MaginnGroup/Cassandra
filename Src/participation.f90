@@ -527,7 +527,7 @@ SUBROUTINE Participation
                     WRITE(201,'(I5,2X,2(A4,2X),2(F11.7,2X),A6,2X,2(F11.7, 2X),A4)') i, &
                          nonbond_list(this_atom,is)%atom_name, nonbond_list(this_atom,is)%element, &
                          nonbond_list(this_atom,is)%mass, nonbond_list(this_atom,is)%charge, &
-                         nonbond_list(this_atom,is)%vdw_potential_type, &
+                         nonbond_list(this_atom,is)%vdw_type, &
                          nonbond_list(this_atom,is)%vdw_param(1)/kboltz, &
                          nonbond_list(this_atom,is)%vdw_param(2), 'ring'
                  ELSE
@@ -535,7 +535,7 @@ SUBROUTINE Participation
                     WRITE(201,'(I5,2X,2(A4,2X),2(F11.7,2X),A6,2X,2(F11.7, 2X))')i, &
                          nonbond_list(this_atom,is)%atom_name, nonbond_list(this_atom,is)%element, &
                          nonbond_list(this_atom,is)%mass, nonbond_list(this_atom,is)%charge, &
-                         nonbond_list(this_atom,is)%vdw_potential_type, &
+                         nonbond_list(this_atom,is)%vdw_type, &
                          nonbond_list(this_atom,is)%vdw_param(1)/kboltz, &
                          nonbond_list(this_atom,is)%vdw_param(2)
                     
@@ -551,7 +551,7 @@ SUBROUTINE Participation
                         nonbond_list(ia,is)%element, &
                         nonbond_list(ia,is)%mass, &
                         nonbond_list(ia,is)%charge, &
-                        nonbond_list(ia,is)%vdw_potential_type
+                        nonbond_list(ia,is)%vdw_type
               DO i = 1, nbr_vdw_params(is)
                 IF (i == 1) THEN
                   WRITE(201,'(F11.7,2X)',ADVANCE='NO') nonbond_list(ia,is)%vdw_param(i)/kboltz
@@ -584,7 +584,7 @@ SUBROUTINE Participation
                                 nonbond_list(this_atom,is)%element, &
                                 nonbond_list(this_atom,is)%mass, &
                                 nonbond_list(this_atom,is)%charge, &
-                                nonbond_list(this_atom,is)%vdw_potential_type
+                                nonbond_list(this_atom,is)%vdw_type
                  DO j = 1, nbr_vdw_params(is)
                    IF (j == 1) THEN
                      WRITE(201,'(F11.7,2X)',ADVANCE='NO') nonbond_list(ia,is)%vdw_param(j)/kboltz

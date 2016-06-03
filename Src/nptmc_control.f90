@@ -154,8 +154,4 @@ SUBROUTINE NPTMC_Control
   ! angles exist
   CALL Get_Dihedral_Atoms_To_Place  
 
-  ! Determine whether mie potentials are used
-  IF (int_vdw_style(1) == vdw_mie ) THEN
-  END IF
-  
 END SUBROUTINE NPTMC_Control

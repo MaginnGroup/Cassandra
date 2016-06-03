@@ -671,11 +671,12 @@ In this example, only one chemical potential (for methane) is required.
 {\bf \# Move\_Probabilities} 
 %
 This section specifies the probabilities associated with different types of
-MC moves to be performed during the course of simulation. Please ensure that
-the move probabilities add up to 1.0. An error will be generated if this is
-not the case. All the headers are optional but an error will be produced if
-a move is required (for example, volume fluctuations in an NPT simulation) and
-the move is not specified. 
+MC moves to be performed during the course of simulation. 
+If the move probabilities do not add up to 1.0, then the probability of each move
+will be divided by the sum.
+All the headers are optional but an error will be produced if a move is required 
+(for example, volume fluctuations in an NPT simulation) 
+and the move is not specified.
 %
 %%%%%%%%%%%%%%%%
 %
