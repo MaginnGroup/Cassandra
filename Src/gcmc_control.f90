@@ -132,7 +132,4 @@ SUBROUTINE GCMC_Control
 
   CALL Get_CBMC_Info
 
-  IF (int_vdw_style(1) == vdw_mie ) THEN
-  END IF
-
 END SUBROUTINE GCMC_Control

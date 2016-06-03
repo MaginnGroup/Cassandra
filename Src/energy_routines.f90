@@ -1064,7 +1064,7 @@ CONTAINS
          jtype = nonbond_list(ja,js)%atom_type_number
           
          VDW_calc: &
-         IF (get_vdw) THEN
+         IF (get_vdw .AND. itype /= 0 .AND. jtype /=0) THEN
 
               IF (int_vdw_style(ibox) == vdw_lj) THEN
 
@@ -2326,6 +2326,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
    W_tensor_vdw(:,:,this_box) = 0.0_DP
    W_tensor_charge(:,:,this_box) = 0.0_DP
    W_tensor_recip(:,:,this_box) = 0.0_DP
+   W_tensor_elec(:,:,this_box) =  0.0_DP
    
    DO is = 1, nspecies
       imLOOP1: DO im_1 = 1, nmols(is,this_box)
@@ -2363,7 +2364,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
          
       END DO imLOOP1
    END DO
-   
+ 
    DO is_1 = 1, nspecies
       imLOOP3: DO im_1 = 1, nmols(is_1,this_box)
          this_im_1 = locate(im_1,is_1,this_box)
@@ -2420,7 +2421,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     
     W_tensor_elec(:,:,this_box) = (W_tensor_elec(:,:,this_box) + W_tensor_charge(:,:,this_box)) * charge_factor
     W_tensor_total(:,:,this_box) = W_tensor_vdw(:,:,this_box) + W_tensor_elec(:,:,this_box) 
-    
+
   END SUBROUTINE Compute_System_Total_Force
   !-----------------------------------------------------------------------------
   
@@ -2636,9 +2637,9 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
            Wij_qq = erfc(alpha_dsf(ibox)*rij)/(rijsq) + &
                     2.0_DP * alpha_dsf(ibox)/rootPI * &
-                    DEXP(-alpha_dsf(ibox)*alpha_dsf(ibox) * rcut_coul(ibox) * rcut_coul(ibox)) / rij - &
+                    DEXP(-alpha_dsf(ibox)*alpha_dsf(ibox) * rijsq) / rij - &
                     dsf_factor2(ibox)
-           Wij_qq = charge_factor*qi*qj*Wij_qq
+           Wij_qq = qi*qj*Wij_qq*rijsq 
                     
 
          ELSE IF (int_charge_sum_style(ibox) == charge_cut) THEN
