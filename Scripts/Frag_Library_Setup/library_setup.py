@@ -281,21 +281,48 @@ for line_number,line in enumerate(in_file):
 		elif line_parse[1] == "Temperature_Info":
 			temp_line = line_number+1
 		elif line_parse[1] == "Sim_Type":
-			sim_type_line = line_number + 1
+			sim_type_line = line_number+1
+		elif line_parse[1] == "VDW_Style":
+			vdw_style_line = line_number+1
 		elif line_parse[1] == "Charge_Style":
 			charge_style_line = line_number+1
 		elif line_parse[1] == "Box_Info":
 			box_info_line = line_number+1
+		elif line_parse[1] == "Intra_Scaling":
+			intra_scaling_line = line_number+1
+		elif line_parse[1] == "Mixing_Rule":
+			mixing_rule = line_number+1
 
 in_file.close()
 
 #Obtain Nbr_Boxes
 nbr_boxes = int(linecache.getline(input_file, box_info_line+1))
 
-#Obtain Charge_Style info
-charge_style = []
-for i in xrange(0,nbr_boxes):
-	charge_style.append(linecache.getline(input_file, charge_style_line+1+i))
+#Obtain VDW_Style and Charge_Style info
+if nbr_boxes == 1:
+	vdw_style = linecache.getline(input_file, vdw_style_line+1).split()[0]
+	charge_style = linecache.getline(input_file, charge_style_line+1).split()[0]
+else:
+	vdw_style = []
+	charge_style = []
+	for i in xrange(1,nbr_boxes+1):
+		vdw_style.append(linecache.getline(input_file, vdw_style_line+i).split()[0])
+		charge_style.append(linecache.getline(input_file, charge_style_line+i).split()[0])
+	if vdw_style[1] != vdw_style[0]:
+		vdw_style = raw_input("VDW_Style for boxes don't match. " +
+		                      "Enter the VDW_Style to use (" + vdw_style[0] + "/" + 
+		                      vdw_style[i-1] + "):")
+	else:
+		vdw_style = vdw_style[0]
+	if vdw_style != 'LJ' or vdw_style != 'Mie':
+		print "Only 'LJ' and 'Mie' VDW_Styles are supported"
+		quit()
+	if charge_style[1] != charge_style[0]:
+		charge_style = raw_input("Charge_Style for boxes don't match. " +
+		               "Enter the Charge_Style to use (" + charge_style[0] + "/" + 
+		               charge_style[i-1] + "):")
+	else:
+		charge_style = charge_style[0]
 
 #Obtain simulation type
 sim_type = linecache.getline(input_file,sim_type_line+1)
@@ -303,6 +330,16 @@ sim_type = linecache.getline(input_file,sim_type_line+1)
 #Obtain number of species
 nbr_species = int(linecache.getline(input_file,nbr_species_line+1))
 print bold+"  Number of species found: " + normal + str(nbr_species)
+
+#Intra_Scaling
+vdw_scaling = []
+charge_scaling = []
+for i in xrange(1,nbr_species+1):
+	if charge_style == 'coul':
+		vdw_scaling.append(linecache.getline(input_file,intra_scaling_line+2*i-1))
+		charge_scaling.append(linecache.getline(input_file,intra_scaling_line+2*i))
+	else:
+		vdw_scaling.append(linecache.getline(input_file,intra_scaling_line+i))
 
 #Open PDB Files. Is there any files without the CONECT keyword (e.g. zeolite)? If so, 
 #tag it. This species will be assumed to be comprised of rigid fragment.
@@ -367,7 +404,7 @@ for i in xrange(0, nbr_species):
 
 #Find how many fragments there are and get a list of them.
 nbr_fragments = []
-fragment_list=[]
+fragment_list = []
 for i in xrange(0, nbr_species):
 	nbr_fragments.append(int(linecache.getline(mcf_files[i],
 	                            line_where_fragment_info[i]+1).split()[0]))
@@ -467,8 +504,11 @@ for i in xrange(0, nbr_species):
 for i in xrange(0, nbr_species):
 
 	if i in pdb_without_conect:
-		print "\n\n" + bold + "MCF generation file not created for species "+str(i+1)+bold
-		print bold+"Fragment configuration will be taken from PDB file."+normal
+		print "\n\n" + bold + "MCF generation file not created for species "+str(i+1)+normal
+		if nbr_fragments[i] == 0:
+			print bold+"No fragment configuration needed."+normal
+		else:
+			print bold+"Fragment configuration will be taken from PDB file."+normal
 		continue
 
 	if nbr_atoms[i] >= 3:
@@ -482,11 +522,16 @@ for i in xrange(0, nbr_species):
 		input_mcf_gen.write("\n\n")
 		input_mcf_gen.write("# Sim_Type\nMCF_Gen\n\n")
 		input_mcf_gen.write("# Nbr_Species\n1\n\n")
-		input_mcf_gen.write("# VDW_Style\nLJ cut_tail 12.0\n\n")
+		input_mcf_gen.write("# VDW_Style\n"+vdw_style+" minimum_image\n\n")
 		input_mcf_gen.write("# Rcutoff_Low\n1.0\n\n")
 		input_mcf_gen.write("# Mixing_Rule\nLB\n\n")
-		input_mcf_gen.write("# Charge_Style\ncoul Ewald 12.0 0.000001\n\n")
-		input_mcf_gen.write("# Intra_Scaling\n0.0 0.0 0.0 1.0\n0.0 0.0 0.0 1.0\n\n")
+		if charge_style == 'coul':
+			input_mcf_gen.write("# Charge_Style\n"+charge_style+" minimum_image\n\n")
+			input_mcf_gen.write("# Intra_Scaling\n"+
+											 vdw_scaling[i]+charge_scaling[i]+"\n")
+		else:
+			input_mcf_gen.write("# Charge_Style\n"+charge_style+"\n\n")
+			input_mcf_gen.write("# Intra_Scaling\n"+vdw_scaling[i]+"\n")
 		input_mcf_gen.write("# Molecule_Files\n../../"+mcf_files[i]+" 50\n\n")
 		input_mcf_gen.write("# Box_Info\n1\nCUBIC\n30.0 30.0 30.0\n\nEND")
 		input_mcf_gen.close()
@@ -589,21 +634,16 @@ for i in xrange(0, nbr_species):
 				input_frag.write("# Run_Name\nfrag"+str(j+1)+"\n\n")
 				input_frag.write("# Sim_Type\nNVT_MC_Ring_Fragment\n\n")
 				input_frag.write("# Nbr_Species\n1\n\n")
-				input_frag.write("# VDW_Style\nLJ cut 14.0\n\n")
+				input_frag.write("# VDW_Style\n"+vdw_style+" minimum_image\n\n")
 				input_frag.write("# Mixing_Rule\nLB\n\n")
 				input_frag.write("# Rcutoff_Low\n1.0\n\n")
-
-				for index,box_charge_style in enumerate(charge_style):
-					if 'NONE' not in box_charge_style:
-						input_frag.write("# Charge_Style\n"+charge_style[index]+"\n")
-						break
-					else:
-						if index+1 == nbr_boxes:
-							input_frag.write("# Charge_Style\nNONE\n\n")
-							break
-
-				input_frag.write("# Intra_Scaling\n0.0 0.0 0.0 1.0\n0.0 0.0 0.0 1.0"+
-					               "\n\n")
+				if charge_style == 'coul':
+					input_frag.write("# Charge_Style\n"+charge_style+" minimum_image\n\n")
+					input_frag.write("# Intra_Scaling\n"+
+													 vdw_scaling[i]+charge_scaling[i]+"\n")
+				else:
+					input_frag.write("# Charge_Style\n"+charge_style+"\n\n")
+					input_frag.write("# Intra_Scaling\n"+vdw_scaling[i]+"\n")
 				input_frag.write("# Box_Info\n1\nCUBIC\n50.0 50.0 50.0\n\n")
 				input_frag.write("# Temperature_Info\n"+str(temperature)+"\n\n")
 				input_frag.write("# Seed_Info\n706111630 70611631\n\n")
@@ -627,8 +667,7 @@ for i in xrange(0, nbr_species):
 				input_frag.write("# Run_Type\nProduction 1000 10\n\n")
 				input_frag.write("# Simulation_Length_Info\nUnits    Steps\n"+
 					               "Prop_Freq  100\nCoord_Freq   5000\n"+
-					               "MCsteps      "+str(100*args.nConfigs)+"\n"+
-                         "# Done_Simulation_Length_Info\n\n")
+					               "Run          "+str(100*args.nConfigs)+"\n\n")
 				input_frag.write("# Property_Info 1\nEnergy_Total\n\n")
 				input_frag.write("# File_Info\nfrag"+str(j+1)+".dat\n\n")
 				input_frag.write("END")
@@ -644,14 +683,19 @@ for i in xrange(0, nbr_species):
 				input_frag.write("# Run_Name\nfrag"+str(j+1)+"\n\n")
 				input_frag.write("# Sim_Type\nNVT_MC_Fragment\n\n")
 				input_frag.write("# Nbr_Species\n1\n\n")
-				input_frag.write("# VDW_Style\nNONE\n\n")
+				input_frag.write("# VDW_Style\n"+vdw_style+" minimum_image\n\n")
 				input_frag.write("# Rcutoff_Low\n0.0\n\n")
 				input_frag.write("# Mixing_Rule\nLB\n\n")
-				input_frag.write("# Charge_Style\nNONE\n\n")
-				input_frag.write("# Intra_Scaling\n0.0 0.0 0.0 1.0\n\n")
+				if charge_style == 'coul':
+					input_frag.write("# Charge_Style\n"+charge_style+" minimum_image\n\n")
+					input_frag.write("# Intra_Scaling\n"+
+													 vdw_scaling[i]+charge_scaling[i]+"\n")
+				else:
+					input_frag.write("# Charge_Style\n"+charge_style+"\n\n")
+					input_frag.write("# Intra_Scaling\n"+vdw_scaling[i]+"\n")
 				input_frag.write("# Molecule_Files\n../fragments/frag_"+str(j+1)+
 												 "_1.mcf 1\n\n")
-				input_frag.write("# Box_Info\n1\nCUBIC\n20.0 20.0 20.0\n\n")
+				input_frag.write("# Box_Info\n1\nCUBIC\n50.0 50.0 50.0\n\n")
 				input_frag.write("# Temperature_Info\n"+str(temperature)+"\n\n")
 				input_frag.write("# Seed_Info\n706111630 70611631\n\n")
 				input_frag.write("# Move_Probability_Info\n# Prob_Translation\n1.0\n"+
@@ -661,9 +705,8 @@ for i in xrange(0, nbr_species):
 				input_frag.write("# Run_Type\nProduction 1000 10\n\n")
 				input_frag.write("# Simulation_Length_Info\nUnits  Steps\n"+
 												 "Prop_Freq  10\nCoord_Freq   90\n"+
-												 "MCsteps      "+str(11*args.nConfigs)+"\n"+
-                         "NequilSteps  "+str(args.nConfigs)+"\n"+
-												 "# Done_Simulation_Length_Info\n\n")
+												 "Run          "+str(11*args.nConfigs)+"\n"+
+                         "NequilSteps  "+str(args.nConfigs)+"\n\n")
 				input_frag.write("# File_Info\nfrag"+str(j+1)+".dat\n\n")
 				input_frag.write("END")
 				input_frag.close()

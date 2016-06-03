@@ -24,43 +24,43 @@
 \contentsline {subsection}{\numberline {4.1.2}Simulation Type}{26}{subsection.4.1.2}
 \contentsline {subsection}{\numberline {4.1.3}Number of species}{26}{subsection.4.1.3}
 \contentsline {subsection}{\numberline {4.1.4}VDW Style}{27}{subsection.4.1.4}
-\contentsline {subsection}{\numberline {4.1.5}Charge Style}{29}{subsection.4.1.5}
+\contentsline {subsection}{\numberline {4.1.5}Charge Style}{28}{subsection.4.1.5}
 \contentsline {subsection}{\numberline {4.1.6}Intramolecular Scaling}{30}{subsection.4.1.6}
-\contentsline {subsection}{\numberline {4.1.7}Mie Nonbond}{31}{subsection.4.1.7}
-\contentsline {subsection}{\numberline {4.1.8}Mixing Rule}{31}{subsection.4.1.8}
-\contentsline {subsection}{\numberline {4.1.9}Starting Seed}{32}{subsection.4.1.9}
-\contentsline {subsection}{\numberline {4.1.10}Minimum Cutoff}{33}{subsection.4.1.10}
-\contentsline {subsection}{\numberline {4.1.11}Pair Energy Storage}{33}{subsection.4.1.11}
-\contentsline {subsection}{\numberline {4.1.12}Molecule Files}{33}{subsection.4.1.12}
-\contentsline {subsection}{\numberline {4.1.13}Simulation Box}{34}{subsection.4.1.13}
-\contentsline {subsection}{\numberline {4.1.14}Temperature}{35}{subsection.4.1.14}
-\contentsline {subsection}{\numberline {4.1.15}Pressure}{35}{subsection.4.1.15}
-\contentsline {subsection}{\numberline {4.1.16}Chemical Potential}{35}{subsection.4.1.16}
-\contentsline {subsection}{\numberline {4.1.17}Move Probabilities}{36}{subsection.4.1.17}
-\contentsline {subsubsection}{Translation}{36}{section*.2}
+\contentsline {subsection}{\numberline {4.1.7}Mixing Rule}{31}{subsection.4.1.7}
+\contentsline {subsection}{\numberline {4.1.8}Starting Seed}{31}{subsection.4.1.8}
+\contentsline {subsection}{\numberline {4.1.9}Minimum Cutoff}{32}{subsection.4.1.9}
+\contentsline {subsection}{\numberline {4.1.10}Pair Energy Storage}{32}{subsection.4.1.10}
+\contentsline {subsection}{\numberline {4.1.11}Molecule Files}{32}{subsection.4.1.11}
+\contentsline {subsection}{\numberline {4.1.12}Simulation Box}{33}{subsection.4.1.12}
+\contentsline {subsection}{\numberline {4.1.13}Temperature}{34}{subsection.4.1.13}
+\contentsline {subsection}{\numberline {4.1.14}Pressure}{34}{subsection.4.1.14}
+\contentsline {subsection}{\numberline {4.1.15}Chemical Potential}{35}{subsection.4.1.15}
+\contentsline {subsection}{\numberline {4.1.16}Move Probabilities}{35}{subsection.4.1.16}
+\contentsline {subsubsection}{Translation}{35}{section*.2}
 \contentsline {subsubsection}{Rotation}{36}{section*.3}
 \contentsline {subsubsection}{Regrowth}{37}{section*.4}
-\contentsline {subsubsection}{Volume}{38}{section*.5}
-\contentsline {subsubsection}{Insertion and Deletion Moves}{39}{section*.6}
-\contentsline {subsection}{\numberline {4.1.18}Start Type}{41}{subsection.4.1.18}
-\contentsline {subsection}{\numberline {4.1.19}Run Type}{43}{subsection.4.1.19}
-\contentsline {subsection}{\numberline {4.1.20}Simulation Length}{44}{subsection.4.1.20}
-\contentsline {subsection}{\numberline {4.1.21}Average}{45}{subsection.4.1.21}
-\contentsline {subsection}{\numberline {4.1.22}Property Output}{45}{subsection.4.1.22}
-\contentsline {subsection}{\numberline {4.1.23}Fragment Files}{46}{subsection.4.1.23}
+\contentsline {subsubsection}{Volume}{37}{section*.5}
+\contentsline {subsubsection}{Insertion and Deletion Moves}{38}{section*.6}
+\contentsline {subsection}{\numberline {4.1.17}Start Type}{40}{subsection.4.1.17}
+\contentsline {subsection}{\numberline {4.1.18}Run Type}{43}{subsection.4.1.18}
+\contentsline {subsection}{\numberline {4.1.19}Simulation Length}{44}{subsection.4.1.19}
+\contentsline {subsection}{\numberline {4.1.20}Average}{45}{subsection.4.1.20}
+\contentsline {subsection}{\numberline {4.1.21}Property Output}{45}{subsection.4.1.21}
+\contentsline {subsection}{\numberline {4.1.22}Fragment Files}{46}{subsection.4.1.22}
+\contentsline {subsection}{\numberline {4.1.23}Verbosity in log file}{47}{subsection.4.1.23}
 \contentsline {subsection}{\numberline {4.1.24}File Info}{47}{subsection.4.1.24}
 \contentsline {subsection}{\numberline {4.1.25}CBMC parameters}{47}{subsection.4.1.25}
-\contentsline {section}{\numberline {4.2}MCF File}{48}{section.4.2}
-\contentsline {subsection}{\numberline {4.2.1}Atom Info}{48}{subsection.4.2.1}
-\contentsline {subsection}{\numberline {4.2.2}Bond Info}{50}{subsection.4.2.2}
-\contentsline {subsection}{\numberline {4.2.3}Angle Info}{51}{subsection.4.2.3}
-\contentsline {subsection}{\numberline {4.2.4}Dihedral Info}{52}{subsection.4.2.4}
+\contentsline {section}{\numberline {4.2}Molecular Connectivity File}{48}{section.4.2}
+\contentsline {subsection}{\numberline {4.2.1}Atom Info}{49}{subsection.4.2.1}
+\contentsline {subsection}{\numberline {4.2.2}Bond Info}{51}{subsection.4.2.2}
+\contentsline {subsection}{\numberline {4.2.3}Angle Info}{52}{subsection.4.2.3}
+\contentsline {subsection}{\numberline {4.2.4}Dihedral Info}{53}{subsection.4.2.4}
 \contentsline {subsection}{\numberline {4.2.5}Fragment Info}{53}{subsection.4.2.5}
-\contentsline {subsection}{\numberline {4.2.6}Fragment Connectivity}{53}{subsection.4.2.6}
+\contentsline {subsection}{\numberline {4.2.6}Fragment Connectivity}{54}{subsection.4.2.6}
 \contentsline {chapter}{\numberline {5}Utilities}{55}{chapter.5}
 \contentsline {section}{\numberline {5.1}Input File GUI}{55}{section.5.1}
-\contentsline {section}{\numberline {5.2}Generate an MCF file}{56}{section.5.2}
-\contentsline {section}{\numberline {5.3}Generate library of fragment configurations}{59}{section.5.3}
+\contentsline {section}{\numberline {5.2}Generate an MCF file}{57}{section.5.2}
+\contentsline {section}{\numberline {5.3}Generate library of fragment configurations}{60}{section.5.3}
 \contentsline {chapter}{\numberline {6}Simulating Rigid Solids and Surfaces}{61}{chapter.6}
 \contentsline {section}{\numberline {6.1}Input file}{61}{section.6.1}
 \contentsline {section}{\numberline {6.2}PDB file}{62}{section.6.2}
@@ -77,12 +77,12 @@
 \contentsline {subsection}{\numberline {7.2.1}Scaling the Volume}{71}{subsection.7.2.1}
 \contentsline {section}{\numberline {7.3}Grand Canonical Monte Carlo}{72}{section.7.3}
 \contentsline {subsection}{\numberline {7.3.1}Inserting a Molecule with \newline Configurational Bias Monte Carlo}{73}{subsection.7.3.1}
-\contentsline {subsection}{\numberline {7.3.2}Deleting a Molecule that was Inserted via \newline Configurational Bias Monte Carlo}{77}{subsection.7.3.2}
+\contentsline {subsection}{\numberline {7.3.2}Deleting a Molecule that was Inserted via \newline Configurational Bias Monte Carlo}{78}{subsection.7.3.2}
 \contentsline {subsection}{\numberline {7.3.3}Regrowing a Molecule with Configurational Bias Monte Carlo}{79}{subsection.7.3.3}
 \contentsline {section}{\numberline {7.4}Gibbs Ensemble Monte Carlo}{81}{section.7.4}
-\contentsline {subsection}{\numberline {7.4.1}Gibbs Ensemble-NVT}{81}{subsection.7.4.1}
+\contentsline {subsection}{\numberline {7.4.1}Gibbs Ensemble-NVT}{82}{subsection.7.4.1}
 \contentsline {subsection}{\numberline {7.4.2}Gibbs Ensemble-NPT}{85}{subsection.7.4.2}
 \contentsline {section}{\numberline {7.5}Multicomponent Systems}{86}{section.7.5}
 \contentsline {section}{\numberline {7.6}Appendix}{86}{section.7.6}
 \contentsline {subsection}{\numberline {7.6.1}Inserting a Molecule Randomly}{86}{subsection.7.6.1}
-\contentsline {subsection}{\numberline {7.6.2}Deleting a Molecule Inserted Randomly}{87}{subsection.7.6.2}
+\contentsline {subsection}{\numberline {7.6.2}Deleting a Molecule Inserted Randomly}{88}{subsection.7.6.2}

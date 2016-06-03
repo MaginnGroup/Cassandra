@@ -59,7 +59,7 @@ SUBROUTINE NVTMC_Driver
 
 !  !$ include 'omp_lib.h'
 
-  INTEGER :: i, j, this_box, ibox, ireac, is, im
+  INTEGER :: i, j, ibox, ireac, is, im
   INTEGER :: alive1, alive2, im1
   INTEGER, ALLOCATABLE, DIMENSION(:) :: n_inside_old
 
@@ -114,7 +114,7 @@ SUBROUTINE NVTMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Translate(this_box)
+        CALL Translate
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -132,7 +132,7 @@ SUBROUTINE NVTMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
        
-        CALL Rotate(this_box)
+        CALL Rotate
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -150,7 +150,7 @@ SUBROUTINE NVTMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
       
-        CALL Rigid_Dihedral_Change(this_box)
+        CALL Rigid_Dihedral_Change
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -168,7 +168,7 @@ SUBROUTINE NVTMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Angle_Distortion(this_box)
+        CALL Angle_Distortion
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -186,7 +186,7 @@ SUBROUTINE NVTMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
         
-        CALL Cut_N_Grow(this_box)
+        CALL Cut_N_Grow
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -204,7 +204,7 @@ SUBROUTINE NVTMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Atom_Displacement(this_box)
+        CALL Atom_Displacement
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -219,8 +219,10 @@ SUBROUTINE NVTMC_Driver
      ! Accumulate averages
 
      IF(cpcollect) THEN
-        DO is = 1, nspecies
-           CALL Chempot(this_box, is)
+        DO ibox = 1, nbr_boxes
+           DO is = 1, nspecies
+              CALL Chempot(ibox, is)
+           END DO
         END DO
      END IF
 
@@ -237,9 +239,11 @@ SUBROUTINE NVTMC_Driver
         IF(now_time .GT. n_mcsteps) complete = .TRUE.
      END IF
 
-     CALL Accumulate(this_box)
-     next_write(this_box) = .true.
-     next_rdf_write(this_box) = .true.
+     DO ibox = 1, nbr_boxes
+        CALL Accumulate(ibox)
+        next_write(ibox) = .true.
+        next_rdf_write(ibox) = .true.
+     END DO
 
      ! Write the information to various files at regular intervals
 

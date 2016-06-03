@@ -73,8 +73,9 @@ CUBIC
 
 # Start_Type
 read_config 100 nvt.inp.xyz
-!--------make_config: one line for each species and one entry/line for each box
-!------------------------------------------------------------read_old: filename
+!---------------------------------------make_config: one entry for each species
+!-----------------------------read_config: one entry for each species, filename
+!--------add_to_config: read_config arguments followed by make_config arguments
 !----------------------------------------------------------checkpoint: filename
 
 # Run_Type
@@ -89,7 +90,7 @@ Production   1100
 Units        Sweeps
 Prop_Freq    10
 Coord_Freq   10
-MCsteps      100
+Run          100
 # Done_Simulation_Length_Info
 !------------------ 330 moves = 1 sweep; output every 10 sweeps; run 100 sweeps
 

@@ -44,8 +44,7 @@ CUBIC
 # Done_Probability_Info
 
 # Start_Type
-read_old
-../fragments/frag_1_1.xyz 1
+read_config 1 ../fragments/frag_1_1.xyz 1
 
 # Run_Type
 Production 1000 10
@@ -54,9 +53,8 @@ Production 1000 10
 Units  Steps
 Prop_Freq  10
 Coord_Freq   90
-MCsteps      1100
-NequilSteps  100
-# Done_Simulation_Length_Info
+Run          1100000
+NequilSteps  100000
 
 # File_Info
 frag1.dat

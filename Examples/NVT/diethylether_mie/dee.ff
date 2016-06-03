@@ -9,24 +9,31 @@ begin atom-atomtype
 5 C3
 end atom-atomtype
 
+vdwtype Mie
 dihedraltype OPLS
 
 nonbonded
 C3
 Sigma 3.750
 Epsilon 98.0
+Repulsive_Exponent 12
+Dispersive_Exponent 6
 atom_type_charge 0.00
 
 nonbonded
 C2
 Sigma 3.950
 Epsilon 46.0
+Repulsive_Exponent 12
+Dispersive_Exponent 6
 atom_type_charge 0.25
 
 nonbonded
 O
 Sigma 2.800
 Epsilon 55.0
+Repulsive_Exponent 12
+Dispersive_Exponent 6
 atom_type_charge -0.50
 
 bonds
