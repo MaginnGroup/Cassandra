@@ -33,20 +33,20 @@ SUBROUTINE Participation
 
 
   ! Note, that the following assignment below:
-  ! bondpart_list(iatom,ispecies)%bond_num(i) = ibonds
+  ! bondpart_list(iatom,is)%bond_num(i) = ibonds
 
   ! sets a local bond number (for a given atom) i equal to the overall bond number of the 
-  ! particular species (ibonds). That is, bondpart_list(iatom,ispecies)%bond_num(1), 
-  ! bondpart_list(iatom,ispecies)%bond_num(2), etc. are the 1st, 2nd, etc. bonds attached
-  ! to atom iatom in species ispecies. The values of these array elements are the overall
+  ! particular species (ibonds). That is, bondpart_list(iatom,is)%bond_num(1), 
+  ! bondpart_list(iatom,is)%bond_num(2), etc. are the 1st, 2nd, etc. bonds attached
+  ! to atom iatom in species is. The values of these array elements are the overall
   ! bond numbers of the species, set in the bond_list array.
 
-  ! bondpart_list(iatom,ispecies)%atom(1) = an atom number
+  ! bondpart_list(iatom,is)%atom(1) = an atom number
   ! gives the glboal atom number in the species (an atom number) connected to atom via its 1st bond while
-  ! bondpart_list(iatom,ispecies)%atom(2) = an atom number
+  ! bondpart_list(iatom,is)%atom(2) = an atom number
   ! gives the glboal atom number in the species connected to atom via its 2nd bond, etc.
-  ! bondpart_list(iatom,ispecies)%nbonds is the total number of bonds attached to atom iatom
-  ! in species ispecies.
+  ! bondpart_list(iatom,is)%nbonds is the total number of bonds attached to atom iatom
+  ! in species is.
 
   ! Written by: Jindal Shah
   ! Date: October, 2007
@@ -70,9 +70,9 @@ SUBROUTINE Participation
 
   IMPLICIT NONE
 
-  INTEGER :: ispecies, iatom, jatom, tot_bonds, ibonds, atom1, atom2, i ,j, k
+  INTEGER :: is, iatom, jatom, tot_bonds, ibonds, atom1, atom2, i ,j, k
   INTEGER :: atom3, atom4, idihedral, tot_dihedral, tot_angles
-  INTEGER :: iangles, ndisp_atoms, is, ia, this_atom, this_bond, ia_nangles
+  INTEGER :: iangles, ndisp_atoms, ia, this_atom, this_bond, ia_nangles
   INTEGER :: this_angle, first_atom, third_atom, anchor_atom, ifrag, atom_j
   INTEGER, ALLOCATABLE :: temp_atom_id(:)
 
@@ -92,27 +92,27 @@ SUBROUTINE Participation
   ! set l_bonded to false. set them to true based on the
   ! molecule connectivity data
   
-  DO ispecies = 1, nspecies
-     DO iatom = 1,natoms(ispecies)
-        DO jatom = 1,natoms(ispecies)
-           l_bonded(iatom,jatom,ispecies) = .false.
+  DO is = 1, nspecies
+     DO iatom = 1,natoms(is)
+        DO jatom = 1,natoms(is)
+           l_bonded(iatom,jatom,is) = .false.
         ENDDO
      ENDDO 
   ENDDO
 
-  DO ispecies = 1,nspecies
-     DO ibonds = 1,nbonds(ispecies)
-        iatom = bond_list(ibonds,ispecies)%atom1
-        jatom = bond_list(ibonds,ispecies)%atom2
-        l_bonded(iatom,jatom,ispecies)=.true.
-        l_bonded(jatom,iatom,ispecies)=.true.
+  DO is = 1,nspecies
+     DO ibonds = 1,nbonds(is)
+        iatom = bond_list(ibonds,is)%atom1
+        jatom = bond_list(ibonds,is)%atom2
+        l_bonded(iatom,jatom,is)=.true.
+        l_bonded(jatom,iatom,is)=.true.
      ENDDO       
   ENDDO   
 
-!  DO ispecies = 1, nspecies
-!     DO iatom = 1,natoms(ispecies)
-!        DO jatom = 1,natoms(ispecies)
-!           WRITE(logunit,*) ispecies,iatom,jatom,l_bonded(iatom,jatom,ispecies) 
+!  DO is = 1, nspecies
+!     DO iatom = 1,natoms(is)
+!        DO jatom = 1,natoms(is)
+!           WRITE(logunit,*) is,iatom,jatom,l_bonded(iatom,jatom,is) 
 !        ENDDO
 !     ENDDO
 !  ENDDO
@@ -122,27 +122,27 @@ SUBROUTINE Participation
   species_list(:)%f_atom_disp = .FALSE.
 
 
-  DO ispecies = 1, nspecies
+  DO is = 1, nspecies
 
      ndisp_atoms = 0
      
-     ALLOCATE(species_list(ispecies)%disp_atom_id(MAXVAL(natoms)))
-     ALLOCATE(species_list(ispecies)%disp_atom_ref(MAXVAL(natoms)))
+     ALLOCATE(species_list(is)%disp_atom_id(MAXVAL(natoms)))
+     ALLOCATE(species_list(is)%disp_atom_ref(MAXVAL(natoms)))
 
-     species_list(ispecies)%disp_atom_id(:) = 0
-     species_list(ispecies)%disp_atom_ref(:) = 0
+     species_list(is)%disp_atom_id(:) = 0
+     species_list(is)%disp_atom_ref(:) = 0
 
-     DO iatom = 1, natoms(ispecies)
+     DO iatom = 1, natoms(is)
 
-        ALLOCATE(bondpart_list(iatom,ispecies)%bond_num(MAXVAL(nbonds)))
-        ALLOCATE(bondpart_list(iatom,ispecies)%atom(MAXVAL(nbonds)))
+        ALLOCATE(bondpart_list(iatom,is)%bond_num(MAXVAL(nbonds)))
+        ALLOCATE(bondpart_list(iatom,is)%atom(MAXVAL(nbonds)))
 
         tot_bonds = 0
 
-        DO ibonds = 1, nbonds(ispecies)
+        DO ibonds = 1, nbonds(is)
            
-           atom1 = bond_list(ibonds,ispecies)%atom1
-           atom2 = bond_list(ibonds,ispecies)%atom2
+           atom1 = bond_list(ibonds,is)%atom1
+           atom2 = bond_list(ibonds,is)%atom2
 
            IF (atom1 == iatom .OR. atom2 == iatom) THEN
 
@@ -161,15 +161,15 @@ SUBROUTINE Participation
                  
               END IF
               ! assign the bond number as well
-              bondpart_list(iatom,ispecies)%bond_num(tot_bonds) = ibonds
+              bondpart_list(iatom,is)%bond_num(tot_bonds) = ibonds
               
               IF (atom1 == iatom) THEN
 
-                 bondpart_list(iatom,ispecies)%atom(tot_bonds) = atom2
+                 bondpart_list(iatom,is)%atom(tot_bonds) = atom2
 
               ELSE
 
-                 bondpart_list(iatom,ispecies)%atom(tot_bonds) = atom1
+                 bondpart_list(iatom,is)%atom(tot_bonds) = atom1
 
               END IF
               
@@ -179,7 +179,7 @@ SUBROUTINE Participation
 
         ! Store the total number of bonds for iatoms
 
-        bondpart_list(iatom,ispecies)%nbonds = tot_bonds
+        bondpart_list(iatom,is)%nbonds = tot_bonds
      
         ! Note that if the atom is connected to more than two atoms
         ! it is a branch point. Also if atom is connected to only one
@@ -193,9 +193,9 @@ SUBROUTINE Participation
            ! be moved
 
            ndisp_atoms = ndisp_atoms + 1
-           species_list(ispecies)%disp_atom_id(ndisp_atoms) = iatom
-           species_list(ispecies)%disp_atom_ref(ndisp_atoms) = &
-                bondpart_list(iatom,ispecies)%atom(1)
+           species_list(is)%disp_atom_id(ndisp_atoms) = iatom
+           species_list(is)%disp_atom_ref(ndisp_atoms) = &
+                bondpart_list(iatom,is)%atom(1)
            
         END IF
            
@@ -203,43 +203,45 @@ SUBROUTINE Participation
 
      ! assign total number of atoms to be displaced
 
-     species_list(ispecies)%ndisp_atoms = ndisp_atoms
+     species_list(is)%ndisp_atoms = ndisp_atoms
      IF (ndisp_atoms > 0 ) THEN
-        species_list(ispecies)%f_atom_disp = .TRUE.
+        species_list(is)%f_atom_disp = .TRUE.
      END IF
 
   END DO
 
   ! Echo to logfile for checking
-  IF (verbose_log) THEN
-  WRITE(logunit,*) '*** Bond participation information ***'
-  DO ispecies = 1, nspecies
+  IF (verbose_log .AND. (prob_ring + prob_atom_displacement > 0)) THEN
+    WRITE(logunit,*)
+    WRITE(logunit,'(A)') 'Bond participation'
+    WRITE(logunit,'(A)') '********************************************************************************'
+    DO is = 1, nspecies
 
-     DO iatom = 1, natoms(ispecies)
+       DO iatom = 1, natoms(is)
 
-        DO ibonds = 1, bondpart_list(iatom,ispecies)%nbonds
-           WRITE(logunit,*) 'species, atom, local bond nbr, global bond nbr, atom bonded '
-           WRITE(logunit,'(3X,I2,7X,I3,5X,I3,10X,I3,15X,I3)') ispecies,iatom,ibonds,bondpart_list(iatom,ispecies)%bond_num(ibonds), bondpart_list(iatom,ispecies)%atom(ibonds)
-        ENDDO
-        WRITE(logunit,*)
-     ENDDO
-     WRITE(logunit,*)
-  ENDDO
+          DO ibonds = 1, bondpart_list(iatom,is)%nbonds
+             WRITE(logunit,*) 'species, atom, local bond nbr, global bond nbr, atom bonded '
+             WRITE(logunit,'(3X,I2,7X,I3,5X,I3,10X,I3,15X,I3)') is,iatom,ibonds,bondpart_list(iatom,is)%bond_num(ibonds), bondpart_list(iatom,is)%atom(ibonds)
+          ENDDO
+          WRITE(logunit,*)
+       ENDDO
+       WRITE(logunit,*)
+    ENDDO
 
-  DO ispecies = 1, nspecies
-     IF(species_list(ispecies)%f_atom_disp) THEN
-        WRITE(logunit,*)
-        WRITE(logunit,*) 'For species', ispecies
-        WRITE(logunit,*) ' Number of atoms that can be displaced', species_list(ispecies)%ndisp_atoms
-        WRITE(logunit,'(2(A20,2x))') 'Atom ID', 'Reference Atom ID'
-        DO iatom = 1, species_list(ispecies)%ndisp_atoms
-           WRITE(logunit,'(2(I20,2x))') species_list(ispecies)%disp_atom_id(iatom), &
-                species_list(ispecies)%disp_atom_ref(iatom)
-        END DO
-     END IF
-  END DO        
-  
-  WRITE(logunit,*)
+    DO is = 1, nspecies
+       IF(species_list(is)%f_atom_disp) THEN
+          WRITE(logunit,*)
+          WRITE(logunit,*) 'For species', is
+          WRITE(logunit,*) ' Number of atoms that can be displaced', species_list(is)%ndisp_atoms
+          WRITE(logunit,'(2(A20,2x))') 'Atom ID', 'Reference Atom ID'
+          DO iatom = 1, species_list(is)%ndisp_atoms
+             WRITE(logunit,'(2(I20,2x))') species_list(is)%disp_atom_id(iatom), &
+                  species_list(is)%disp_atom_ref(iatom)
+          END DO
+       END IF
+    END DO        
+    
+    WRITE(logunit,'(A)') '********************************************************************************'
   END IF
 
   !***************************************************************************
@@ -249,13 +251,13 @@ SUBROUTINE Participation
   !
   ! The information will be stored in
   !
-  ! angle_part_list(iatom,ispecies)%nangles == total number of angles iatom
-  !       of ispecies participates in
-  ! angle_part_list(iatom,ispecies)%which_angle(1) gives the global angle
+  ! angle_part_list(iatom,is)%nangles == total number of angles iatom
+  !       of is participates in
+  ! angle_part_list(iatom,is)%which_angle(1) gives the global angle
   !       number for iatom
-  ! angle_part_list(iatom,ispecies)%which_angle(2) gives the second global
+  ! angle_part_list(iatom,is)%which_angle(2) gives the second global
   !       angle number and so on.
-  ! angle_part_list(iatom,ispecies)%position(1) will give the position of the
+  ! angle_part_list(iatom,is)%position(1) will give the position of the
   !       iatom in the first angle it is encountered in. The position can be 
   !       1,2 or 3.
   !****************************************************************************
@@ -264,30 +266,30 @@ SUBROUTINE Participation
 
   ALLOCATE(angle_part_list(MAXVAL(natoms),nspecies))
 
-  DO ispecies = 1, nspecies
+  DO is = 1, nspecies
 
-     DO iatom = 1, natoms(ispecies)
+     DO iatom = 1, natoms(is)
 
         ! loop over all the angles
 
         tot_angles = 0
 
-        ALLOCATE(angle_part_list(iatom,ispecies)%which_angle(MAXVAL(nangles)))
-        ALLOCATE(angle_part_list(iatom,ispecies)%position(MAXVAL(nangles)))
+        ALLOCATE(angle_part_list(iatom,is)%which_angle(MAXVAL(nangles)))
+        ALLOCATE(angle_part_list(iatom,is)%position(MAXVAL(nangles)))
 
-        DO iangles = 1, nangles(ispecies)
+        DO iangles = 1, nangles(is)
 
            ! obtain three atoms that define the angle
 
-           atom1 = angle_list(iangles,ispecies)%atom1
-           atom2 = angle_list(iangles,ispecies)%atom2
-           atom3 = angle_list(iangles,ispecies)%atom3
+           atom1 = angle_list(iangles,is)%atom1
+           atom2 = angle_list(iangles,is)%atom2
+           atom3 = angle_list(iangles,is)%atom3
 
            IF ( iatom == atom1 ) THEN
 
               tot_angles = tot_angles + 1
-              angle_part_list(iatom,ispecies)%which_angle(tot_angles) = iangles
-              angle_part_list(iatom,ispecies)%position(tot_angles) = 1
+              angle_part_list(iatom,is)%which_angle(tot_angles) = iangles
+              angle_part_list(iatom,is)%position(tot_angles) = 1
               
               CYCLE
 
@@ -296,8 +298,8 @@ SUBROUTINE Participation
            IF ( iatom == atom2 ) THEN
     
               tot_angles = tot_angles + 1
-              angle_part_list(iatom,ispecies)%which_angle(tot_angles) = iangles
-              angle_part_list(iatom,ispecies)%position(tot_angles) = 2
+              angle_part_list(iatom,is)%which_angle(tot_angles) = iangles
+              angle_part_list(iatom,is)%position(tot_angles) = 2
               
               CYCLE
 
@@ -306,8 +308,8 @@ SUBROUTINE Participation
            IF ( iatom == atom3 ) THEN
 
               tot_angles = tot_angles + 1
-              angle_part_list(iatom,ispecies)%which_angle(tot_angles) = iangles
-              angle_part_list(iatom,ispecies)%position(tot_angles) = 3
+              angle_part_list(iatom,is)%which_angle(tot_angles) = iangles
+              angle_part_list(iatom,is)%position(tot_angles) = 3
               
               CYCLE
 
@@ -317,18 +319,24 @@ SUBROUTINE Participation
 
         ! assign the total number of angles 
 
-        angle_part_list(iatom,ispecies)%nangles = tot_angles
+        angle_part_list(iatom,is)%nangles = tot_angles
 
         ! echo the information to the log file for checking
-        IF (verbose_log) THEN        
-                write(logunit,*)'Number of atom in question', iatom
-                write(logunit,*)'Total number of angles', angle_part_list(iatom,ispecies)%nangles
-                write(logunit,*)'Angles for this atom'
-                write(logunit,*)(angle_part_list(iatom,ispecies)%which_angle(i),i=1, &
-                     angle_part_list(iatom,ispecies)%nangles)
-                write(logunit,*)'Position of the atom in angles'
-                write(logunit,*)(angle_part_list(iatom,ispecies)%position(i), i=1, &
-                     angle_part_list(iatom,ispecies)%nangles)
+        IF (verbose_log .AND. prob_angle > 0) THEN
+          WRITE(logunit,*)
+          WRITE(logunit,'(A)') 'Angle participation'
+          WRITE(logunit,'(A)') '********************************************************************************'
+          WRITE(logunit,*)'Number of atom in question', iatom
+          WRITE(logunit,*)'Total number of angles', angle_part_list(iatom,is)%nangles
+          IF (angle_part_list(iatom,is)%nangles > 0) THEN
+            WRITE(logunit,*)'Angles for this atom'
+            WRITE(logunit,*)(angle_part_list(iatom,is)%which_angle(i),i=1, &
+                 angle_part_list(iatom,is)%nangles)
+            WRITE(logunit,*)'Position of the atom in angles'
+            WRITE(logunit,*)(angle_part_list(iatom,is)%position(i), i=1, &
+                 angle_part_list(iatom,is)%nangles)
+          END IF
+          WRITE(logunit,'(A)') '********************************************************************************'
         END IF
      END DO
 
@@ -345,48 +353,53 @@ SUBROUTINE Participation
   ! to determine its new position. The reader is referred to angle_distortion.f90
   ! for further details.
   !
-  ! dihedral_part_list(iatom,ispecies)%ndihedrals === total number of dihedrals
-  !       iatom of ispecies participates in
-  ! dihedral_part_list(iatom,ispecies)%which_dihedral(1) gives the global dihedral
-  !       angle number for iatom of ispecies in which it is present
-  ! dihedral_part_list(iatom,ispecies)%which_dihedral(2) gives the second global
+  ! dihedral_part_list(iatom,is)%ndihedrals === total number of dihedrals
+  !       iatom of is participates in
+  ! dihedral_part_list(iatom,is)%which_dihedral(1) gives the global dihedral
+  !       angle number for iatom of is in which it is present
+  ! dihedral_part_list(iatom,is)%which_dihedral(2) gives the second global
   !       dihedral angle for iatom and so on.
   !
-  ! dihedral_part_list(iatom,ispecies)%position(1) gives the position of the iatom
-  !       in dihedral_part_list(iatom,ispecies)%which_dihedral(1) 
+  ! dihedral_part_list(iatom,is)%position(1) gives the position of the iatom
+  !       in dihedral_part_list(iatom,is)%which_dihedral(1) 
   !
 
+  IF (verbose_log .AND. prob_torsion > 0) THEN
+    WRITE(logunit,*)
+    WRITE(logunit,'(A)') 'Dihedral participation'
+    WRITE(logunit,'(A)') '********************************************************************************'
+  END IF
 
   ! Allocate memeory for the participation list
 
   ALLOCATE(dihedral_part_list(MAXVAL(natoms),nspecies))
 
-  DO ispecies = 1, nspecies
+  DO is = 1, nspecies
 
-     DO iatom = 1, natoms(ispecies)
+     DO iatom = 1, natoms(is)
 
         ! loop over all the dihedrals to determine how many dihedrals contain
         ! iatom
 
         tot_dihedral = 0
 
-        ALLOCATE(dihedral_part_list(iatom,ispecies)%which_dihedral(MAXVAL(ndihedrals)))
-        ALLOCATE(dihedral_part_list(iatom,ispecies)%position(MAXVAL(ndihedrals)))
+        ALLOCATE(dihedral_part_list(iatom,is)%which_dihedral(MAXVAL(ndihedrals)))
+        ALLOCATE(dihedral_part_list(iatom,is)%position(MAXVAL(ndihedrals)))
 
-        DO idihedral = 1, ndihedrals(ispecies)
+        DO idihedral = 1, ndihedrals(is)
 
            ! get the four atoms in the dihedral
 
-           atom1 = dihedral_list(idihedral,ispecies)%atom1
-           atom2 = dihedral_list(idihedral,ispecies)%atom2
-           atom3 = dihedral_list(idihedral,ispecies)%atom3
-           atom4 = dihedral_list(idihedral,ispecies)%atom4
+           atom1 = dihedral_list(idihedral,is)%atom1
+           atom2 = dihedral_list(idihedral,is)%atom2
+           atom3 = dihedral_list(idihedral,is)%atom3
+           atom4 = dihedral_list(idihedral,is)%atom4
 
            IF ( iatom == atom1 ) THEN
 
               tot_dihedral = tot_dihedral + 1
-              dihedral_part_list(iatom,ispecies)%which_dihedral(tot_dihedral) = idihedral
-              dihedral_part_list(iatom,ispecies)%position(tot_dihedral) = 1
+              dihedral_part_list(iatom,is)%which_dihedral(tot_dihedral) = idihedral
+              dihedral_part_list(iatom,is)%position(tot_dihedral) = 1
               
               CYCLE
               
@@ -395,8 +408,8 @@ SUBROUTINE Participation
            IF ( iatom == atom2 ) THEN
 
               tot_dihedral = tot_dihedral + 1
-              dihedral_part_list(iatom,ispecies)%which_dihedral(tot_dihedral) = idihedral
-              dihedral_part_list(iatom,ispecies)%position(tot_dihedral) = 2
+              dihedral_part_list(iatom,is)%which_dihedral(tot_dihedral) = idihedral
+              dihedral_part_list(iatom,is)%position(tot_dihedral) = 2
 
               CYCLE
 
@@ -405,8 +418,8 @@ SUBROUTINE Participation
            IF ( iatom == atom3 ) THEN
 
               tot_dihedral = tot_dihedral + 1
-              dihedral_part_list(iatom,ispecies)%which_dihedral(tot_dihedral) = idihedral
-              dihedral_part_list(iatom,ispecies)%position(tot_dihedral) = 3
+              dihedral_part_list(iatom,is)%which_dihedral(tot_dihedral) = idihedral
+              dihedral_part_list(iatom,is)%position(tot_dihedral) = 3
 
               CYCLE
 
@@ -415,8 +428,8 @@ SUBROUTINE Participation
            IF ( iatom == atom4 ) THEN
 
               tot_dihedral = tot_dihedral + 1
-              dihedral_part_list(iatom,ispecies)%which_dihedral(tot_dihedral) = idihedral
-              dihedral_part_list(iatom,ispecies)%position(tot_dihedral) = 4
+              dihedral_part_list(iatom,is)%which_dihedral(tot_dihedral) = idihedral
+              dihedral_part_list(iatom,is)%position(tot_dihedral) = 4
 
               CYCLE
 
@@ -426,24 +439,30 @@ SUBROUTINE Participation
 
         ! assign the total number of dihedrals found for iatom here
 
-        dihedral_part_list(iatom,ispecies)%ndihedrals = tot_dihedral
+        dihedral_part_list(iatom,is)%ndihedrals = tot_dihedral
 
         ! echo the information to the log file for checking
 
-        IF (verbose_log) THEN
-                write(logunit,*)'Number of atom in question', iatom
-                write(logunit,*)'Total number of dihedrals', dihedral_part_list(iatom,ispecies)%ndihedrals
-                write(logunit,*)'Dihedral angles for this atom'
-                write(logunit,*)(dihedral_part_list(iatom,ispecies)%which_dihedral(i),i=1, &
-                     dihedral_part_list(iatom,ispecies)%ndihedrals)
-                write(logunit,*)'Position of the atom in dihedrals'
-                write(logunit,*)(dihedral_part_list(iatom,ispecies)%position(i), i=1, &
-                     dihedral_part_list(iatom,ispecies)%ndihedrals)
+        IF (verbose_log .AND. prob_torsion > 0) THEN
+          WRITE(logunit,*)'Number of atom in question', iatom
+          WRITE(logunit,*)'Total number of dihedrals', dihedral_part_list(iatom,is)%ndihedrals
+          IF (dihedral_part_list(iatom,is)%ndihedrals > 0) THEN
+            WRITE(logunit,*)'Dihedral angles for this atom'
+            WRITE(logunit,*)(dihedral_part_list(iatom,is)%which_dihedral(i),i=1, &
+                 dihedral_part_list(iatom,is)%ndihedrals)
+            WRITE(logunit,*)'Position of the atom in dihedrals'
+            WRITE(logunit,*)(dihedral_part_list(iatom,is)%position(i), i=1, &
+                 dihedral_part_list(iatom,is)%ndihedrals)
+          END IF
         END IF
         
      END DO
 
   END DO
+
+  IF (verbose_log .AND. prob_torsion > 0) THEN
+    WRITE(logunit,'(A)') '********************************************************************************'
+  END IF
 
   IF (int_sim_type == sim_mcf) THEN
      
@@ -508,7 +527,7 @@ SUBROUTINE Participation
                     WRITE(201,'(I5,2X,2(A4,2X),2(F11.7,2X),A6,2X,2(F11.7, 2X),A4)') i, &
                          nonbond_list(this_atom,is)%atom_name, nonbond_list(this_atom,is)%element, &
                          nonbond_list(this_atom,is)%mass, nonbond_list(this_atom,is)%charge, &
-                         nonbond_list(this_atom,is)%vdw_potential_type, &
+                         nonbond_list(this_atom,is)%vdw_type, &
                          nonbond_list(this_atom,is)%vdw_param(1)/kboltz, &
                          nonbond_list(this_atom,is)%vdw_param(2), 'ring'
                  ELSE
@@ -516,7 +535,7 @@ SUBROUTINE Participation
                     WRITE(201,'(I5,2X,2(A4,2X),2(F11.7,2X),A6,2X,2(F11.7, 2X))')i, &
                          nonbond_list(this_atom,is)%atom_name, nonbond_list(this_atom,is)%element, &
                          nonbond_list(this_atom,is)%mass, nonbond_list(this_atom,is)%charge, &
-                         nonbond_list(this_atom,is)%vdw_potential_type, &
+                         nonbond_list(this_atom,is)%vdw_type, &
                          nonbond_list(this_atom,is)%vdw_param(1)/kboltz, &
                          nonbond_list(this_atom,is)%vdw_param(2)
                     
@@ -527,9 +546,20 @@ SUBROUTINE Participation
            ELSE
               
               WRITE(201,*) bondpart_list(ia,is)%nbonds + 1
-              WRITE(201,100) anchor_atom, nonbond_list(ia,is)%atom_name, nonbond_list(ia,is)%element, &
-                   nonbond_list(ia,is)%mass, nonbond_list(ia,is)%charge, 'NONE', &
-                   (nonbond_list(ia,is)%vdw_param(1))/kboltz, nonbond_list(ia,is)%vdw_param(2)
+              WRITE(201,'(I5,2X,2(A4,2X),2(F11.7,2X),A6,2X)',ADVANCE='NO') anchor_atom, &
+                        nonbond_list(ia,is)%atom_name, &
+                        nonbond_list(ia,is)%element, &
+                        nonbond_list(ia,is)%mass, &
+                        nonbond_list(ia,is)%charge, &
+                        nonbond_list(ia,is)%vdw_type
+              DO i = 1, nbr_vdw_params(is)
+                IF (i == 1) THEN
+                  WRITE(201,'(F11.7,2X)',ADVANCE='NO') nonbond_list(ia,is)%vdw_param(i)/kboltz
+                ELSE
+                  WRITE(201,'(F11.7,2X)',ADVANCE='NO') nonbond_list(ia,is)%vdw_param(i)
+                END IF
+              END DO
+              WRITE(201,*)
               
               ! write the 'read_config' file for the fragment
               
@@ -549,9 +579,20 @@ SUBROUTINE Participation
                  
                  this_atom = frag_list(ifrag,is)%atoms(i)
                  
-                 WRITE(201,100) i, nonbond_list(this_atom,is)%atom_name, nonbond_list(this_atom,is)%element, &
-                      nonbond_list(this_atom,is)%mass, nonbond_list(this_atom,is)%charge, 'NONE', &
-                      (nonbond_list(this_atom,is)%vdw_param(1))/kboltz, nonbond_list(this_atom,is)%vdw_param(2)
+                 WRITE(201,'(I5,2X,2(A4,2X),2(F11.7,2X),A6,2X)',ADVANCE='NO') i, &
+                                nonbond_list(this_atom,is)%atom_name, &
+                                nonbond_list(this_atom,is)%element, &
+                                nonbond_list(this_atom,is)%mass, &
+                                nonbond_list(this_atom,is)%charge, &
+                                nonbond_list(this_atom,is)%vdw_type
+                 DO j = 1, nbr_vdw_params(is)
+                   IF (j == 1) THEN
+                     WRITE(201,'(F11.7,2X)',ADVANCE='NO') nonbond_list(ia,is)%vdw_param(j)/kboltz
+                   ELSE
+                     WRITE(201,'(F11.7,2X)',ADVANCE='NO') nonbond_list(ia,is)%vdw_param(j)
+                   END IF
+                 END DO
+                 WRITE(201,*)
                  
               END DO
               
@@ -773,7 +814,7 @@ SUBROUTINE Participation
      
      END DO
      !Amir To Jindal: It the 3rd # format should be 11.7 otherwise it would generate errors. 10/12/12
-	 
+
 100  FORMAT(I5,2X,A4,2X,A4,F11.7,2X,F11.7,2X,A5,2X,F11.7, 2X, F11.7)
 101  FORMAT(I5,2X,I5,2X,I5,2X,A9,2X,F10.3,2X,F8.5)
 102  FORMAT(I5,2X,I5,2X,I5,2X,A9,2X,F8.5)

@@ -46,7 +46,6 @@ SUBROUTINE GEMC_Control
   INTEGER ::  i
 !*******************************************************************************
 
-  CALL Get_Verbosity_Info  
   CALL Copy_Inputfile
 
   ! How many species to simulate?
@@ -105,13 +104,11 @@ SUBROUTINE GEMC_Control
   ! Determine the frequency with which information will be output 
   CALL Get_Simulation_Length_Info
 
-  CALL Average_Info
-
   ! Properties to be output
   CALL Get_Property_Info
 
   ! Get information on the averages
-  CALL Average_Info
+  CALL Get_Average_Info
 
   CALL Get_Rcutoff_Low
 
@@ -141,9 +138,5 @@ SUBROUTINE GEMC_Control
   ! Determine what dihedral angles a given atom participates and how many such
   ! angles exist
   CALL Get_Dihedral_Atoms_To_Place  
-
-  IF (int_vdw_style(1) == vdw_mie ) THEN
-      CALL Get_Mie_Nonbond
-  END IF
 
 END SUBROUTINE GEMC_Control

@@ -181,6 +181,9 @@ PROGRAM Main
   WRITE(logunit,'(a,a)') 'machine: ', TRIM(name)
   WRITE(logunit,'(A80)') '********************************************************************************'
 
+  ! Standard level of output to logfile, or verbose output
+  CALL Get_Verbosity_Info  
+
 ! Determine the simulation type, and then read in all the necessary information 
 ! from the input file for starting up that type of simulation
   CALL Get_Sim_Type
@@ -330,43 +333,43 @@ PROGRAM Main
   ! NR: I believe we have all the information to compute the 
   !     system charge and charge on each species
 
-   WRITE(logunit,*)
-   WRITE(logunit,'(A)') 'Charge neutrality check'
-   WRITE(logunit,'(A80)') '********************************************************************************'
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'Charge neutrality check'
+  WRITE(logunit,'(A80)') '********************************************************************************'
 
-   q_tot_sys = 0.0_DP; q_mol=0.0_DP
-   
-   DO is = 1, nspecies
-      q_mol = 0.0_DP 
-      Do ia = 1, natoms(is)     
-         q_mol = q_mol + nonbond_list(ia,is)%charge 
-      END DO 
-      WRITE(logunit,'(X,A,T15,2X,I4,4x,A,T45,4x,f12.8)')'Species', is, 'has charge', q_mol 
-   ENDDO
-   WRITE(logunit,*)
+  q_tot_sys = 0.0_DP; q_mol=0.0_DP
+  
+  DO is = 1, nspecies
+     q_mol = 0.0_DP 
+     Do ia = 1, natoms(is)     
+        q_mol = q_mol + nonbond_list(ia,is)%charge 
+     END DO 
+     WRITE(logunit,'(X,A,T15,2X,I4,4x,A,T45,4x,f12.8)')'Species', is, 'has charge', q_mol 
+  ENDDO
+  WRITE(logunit,*)
 
-   DO ibox = 1, nbr_boxes
-      q_tot_sys = 0.0_DP 
-      DO is = 1, nspecies
-         DO im = 1, nmols(is,ibox)
-            DO ia = 1,natoms(is)
-               q_tot_sys = q_tot_sys + nonbond_list(ia,is)%charge 
-            END DO 
-         END DO
-      END DO
-      WRITE(logunit,'(X,A,T13,4X,I4,4X,A,T45,4X,f12.8)')'Box ', ibox, 'has charge', q_tot_sys
+  DO ibox = 1, nbr_boxes
+     q_tot_sys = 0.0_DP 
+     DO is = 1, nspecies
+        DO im = 1, nmols(is,ibox)
+           DO ia = 1,natoms(is)
+              q_tot_sys = q_tot_sys + nonbond_list(ia,is)%charge 
+           END DO 
+        END DO
+     END DO
+     WRITE(logunit,'(X,A,T13,4X,I4,4X,A,T45,4X,f12.8)')'Box ', ibox, 'has charge', q_tot_sys
 
-      IF (ABS(q_tot_sys) .gt. 0.000001) THEN
-         IF ( .NOT. ((int_sim_type /=  sim_frag) .OR. (int_sim_type /= sim_ring)) ) THEN
-            err_msg = ''
-            err_msg(1) = 'Box has net charge'
-            err_msg(2) = Int_To_String(ibox)
-            CALL Clean_Abort(err_msg,'main.f90')
-         END IF
-      END IF
-   END DO
+     IF (ABS(q_tot_sys) .gt. 0.000001) THEN
+        IF ( .NOT. ((int_sim_type /=  sim_frag) .OR. (int_sim_type /= sim_ring)) ) THEN
+           err_msg = ''
+           err_msg(1) = 'Box has net charge'
+           err_msg(2) = Int_To_String(ibox)
+           CALL Clean_Abort(err_msg,'main.f90')
+        END IF
+     END IF
+  END DO
 
-   WRITE(logunit,'(A80)') '********************************************************************************'
+  WRITE(logunit,'(A80)') '********************************************************************************'
 
   ! initialize random number generator
   CALL init_seeds(iseed1, iseed3)
@@ -472,10 +475,10 @@ PROGRAM Main
 
   ! End program if no moves specified
   IF (n_mcsteps <= initial_mcstep) THEN
+    WRITE(logunit,*)
     WRITE(logunit,'(A80)') '********************************************************************************'
+    WRITE(logunit,'(A80)') '************************ Cassandra simulation complete *************************'
     WRITE(logunit,'(A80)') '********************************************************************************'
-    WRITE(logunit,'(A80)') '********************************************************************************'
-    WRITE(logunit,*) 'Cassandra simulation complete'
     WRITE(*,*)
     WRITE(*,*) 'Cassandra simulation complete'
     STOP
@@ -487,7 +490,7 @@ PROGRAM Main
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Run simulation'
   WRITE(logunit,'(A80)') '********************************************************************************'
-  WRITE(logunit,'(X,A9,X,A15,X,A3,X,A3,X,A8,X,A9)') 'Step', 'Move' , 'Spc', 'Box', 'Success', 'MaxWidth'
+  WRITE(logunit,'(X,A9,X,A10,X,A5,X,A3,X,A3,X,A8,X,A9)') 'Step', 'Move', 'Mol', 'Spc', 'Box', 'Success', 'MaxWidth'
 
   IF (int_run_style == run_test .AND. n_mcsteps == 1) THEN
 

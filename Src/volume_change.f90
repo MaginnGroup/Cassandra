@@ -20,7 +20,7 @@
 !*******************************************************************************
 
 
-SUBROUTINE Volume_Change(this_box)
+SUBROUTINE Volume_Change
   !*****************************************************************************
   ! The subroutine performs a volume perturbation move. Presently, the routine
   ! is set up to perform volume changes in cubic simulation box. Extension
@@ -109,6 +109,7 @@ SUBROUTINE Volume_Change(this_box)
 
 
   ! Done with that section
+  accept = .FALSE.
 
   ! Randomly choose a box for volume perturbation
   this_box = INT ( rranf() * nbr_boxes ) + 1
@@ -317,49 +318,38 @@ SUBROUTINE Volume_Change(this_box)
         
         alive = locate(im,is,this_box)
         
-        IF (molecule_list(alive,is)%live) THEN
-           
-           IF ( molecule_list(alive,is)%which_box == this_box ) THEN
-              
-              
-              ! obtain the new coordinates of the COM for this molecule
-              
-              ! first determine the fractional coordinate
-              
-              DO i = 1,3
-                 
-                 s(i) = box_list_old%length_inv(i,1) * molecule_list(alive,is)%xcom &
-                      + box_list_old%length_inv(i,2) * molecule_list(alive,is)%ycom &
-                      + box_list_old%length_inv(i,3) * molecule_list(alive,is)%zcom
-              END DO
-              
-              ! now obtain the new positions of COMs
-              molecule_list(alive,is)%xcom = box_list(this_box)%length(1,1) * s(1) &
-                                           + box_list(this_box)%length(1,2) * s(2) &
-                                           + box_list(this_box)%length(1,3) * s(3)
-              
-              molecule_list(alive,is)%ycom = box_list(this_box)%length(2,1) * s(1) &
-                                           + box_list(this_box)%length(2,2) * s(2) &
-                                           + box_list(this_box)%length(2,3) * s(3)
-              
-              molecule_list(alive,is)%zcom = box_list(this_box)%length(3,1) * s(1) &
-                                           + box_list(this_box)%length(3,2) * s(2) &
-                                           + box_list(this_box)%length(3,3) * s(3)
-              
-              ! Obtain the new positions of atoms in this molecule
-              atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp + &
-                   molecule_list(alive,is)%xcom - molecule_list(alive,is)%xcom_old
-              
-              atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp + &
-                   molecule_list(alive,is)%ycom - molecule_list(alive,is)%ycom_old
-              
-              atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp + &
-                   molecule_list(alive,is)%zcom - molecule_list(alive,is)%zcom_old
-                 
-              
-           END IF
-           
-        END IF
+        ! obtain the new coordinates of the COM for this molecule
+        
+        ! first determine the fractional coordinate
+        
+        DO i = 1,3
+           s(i) = box_list_old%length_inv(i,1) * molecule_list(alive,is)%xcom &
+                + box_list_old%length_inv(i,2) * molecule_list(alive,is)%ycom &
+                + box_list_old%length_inv(i,3) * molecule_list(alive,is)%zcom
+        END DO
+        
+        ! now obtain the new positions of COMs
+        molecule_list(alive,is)%xcom = box_list(this_box)%length(1,1) * s(1) &
+                                     + box_list(this_box)%length(1,2) * s(2) &
+                                     + box_list(this_box)%length(1,3) * s(3)
+        
+        molecule_list(alive,is)%ycom = box_list(this_box)%length(2,1) * s(1) &
+                                     + box_list(this_box)%length(2,2) * s(2) &
+                                     + box_list(this_box)%length(2,3) * s(3)
+        
+        molecule_list(alive,is)%zcom = box_list(this_box)%length(3,1) * s(1) &
+                                     + box_list(this_box)%length(3,2) * s(2) &
+                                     + box_list(this_box)%length(3,3) * s(3)
+        
+        ! Obtain the new positions of atoms in this molecule
+        atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp + &
+             molecule_list(alive,is)%xcom - molecule_list(alive,is)%xcom_old
+        
+        atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp + &
+             molecule_list(alive,is)%ycom - molecule_list(alive,is)%ycom_old
+        
+        atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp + &
+             molecule_list(alive,is)%zcom - molecule_list(alive,is)%zcom_old
         
      END DO
      
@@ -540,7 +530,7 @@ SUBROUTINE Volume_Change(this_box)
         success_ratio = REAL(nvol_success(this_box),DP)/REAL(nvolumes(this_box),DP)
      END IF
 
-     WRITE(logunit,'(X,I9,X,A15,X,3X,X,I3,X,F8.5)',ADVANCE='NO') i_mcstep, 'volume_change' , is, this_box, success_ratio
+     WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,F8.5)',ADVANCE='NO') i_mcstep, 'volume' , this_box, success_ratio
 
      IF (int_run_style == run_equil) THEN
         ! dv_max will be adjusted to achieve 0.5 acceptance using the formula
@@ -566,6 +556,10 @@ SUBROUTINE Volume_Change(this_box)
 
      WRITE(logunit,*)
 
+  END IF
+
+  IF (verbose_log) THEN
+    WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8)') i_mcstep, 'volume' , this_box, accept
   END IF
 
 

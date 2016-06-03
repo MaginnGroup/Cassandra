@@ -1,5 +1,5 @@
 # Run_Name
-gemc_dimethylhexane
+gemc_dimethylhexane.out
 !------------------------------------------------------------------------------
 
 # Sim_Type
@@ -77,8 +77,7 @@ CUBIC
 
 # Prob_Swap
 0.095
-insertion method
-reservoir
+cbmc
 
 # Done_Probability_Info
 
@@ -86,12 +85,8 @@ reservoir
 !-----------------------------------------each molecule moves per volume change
 
 # Start_Type
-make_config
-200 100
-
-read_old
-Init_Config/nvt_liq.xyz
-Init_Config/nvt_vap.xyz
+make_config 200
+make_config 100
 
 !--------make_config: one line for each species and one entry/line for each box
 !------------------------------------------------------------read_old: filename
@@ -107,8 +102,7 @@ Equilibration 100 100
 Units       Steps
 Prop_Freq   100
 Coord_Freq  2200
-MCsteps     2200
-# Done_Simulation_Length_Info
+Run         2200
 
 !------------------ simulation length every 2200 steps, XYZ output every 2200 steps, property
 !---------------------------------------output every 100 steps

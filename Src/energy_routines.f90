@@ -1064,7 +1064,7 @@ CONTAINS
          jtype = nonbond_list(ja,js)%atom_type_number
           
          VDW_calc: &
-         IF (get_vdw) THEN
+         IF (get_vdw .AND. itype /= 0 .AND. jtype /=0) THEN
 
               IF (int_vdw_style(ibox) == vdw_lj) THEN
 
@@ -1115,9 +1115,11 @@ CONTAINS
                    END IF
 
               ELSE IF (int_vdw_style(ibox) == vdw_mie) THEN
-		   eps = vdw_param1_table(itype,jtype)
-		   sig = vdw_param2_table(itype,jtype)
-		   
+                   eps = vdw_param1_table(itype,jtype)
+                   sig = vdw_param2_table(itype,jtype)
+                   mie_n = vdw_param3_table(itype,jtype) ! repulsive exponent
+                   mie_m = vdw_param4_table(itype,jtype) ! dispersive exponent
+
                    ! Apply intramolecular scaling if necessary
                    IF (is == js .AND. im == jm) THEN 
                      ! This controls 1-2, 1-3, and 1-4 interactions
@@ -1127,8 +1129,6 @@ CONTAINS
                    rij = SQRT(rijsq)
                    rcut_vdw = SQRT(rcut_vdwsq(ibox))
                        
-                   mie_n = mie_nlist(mie_Matrix(is,js))
-                   mie_m = mie_mlist(mie_Matrix(is,js))
                    mie_coeff = mie_n/(mie_n-mie_m) * (mie_n/mie_m)**(mie_m/(mie_n-mie_m))
 
                    SigByR = sig/rij
@@ -2080,58 +2080,54 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
     IF (int_vdw_style(this_box) == vdw_lj) THEN
 
-    DO ia = 1, nbr_atomtypes
-       
-       e_lrc_ia_ja = 0.0_DP
-       
-       DO ja = 1, nbr_atomtypes
-          
-          epsij = vdw_param1_table(ia,ja)
-          sigij = vdw_param2_table(ia,ja)
-          
-          sigij2 = sigij*sigij
-          
-          sigij6 = sigij2*sigij2*sigij2 
-          
-          sigij12 = sigij6*sigij6
+      DO ia = 1, nbr_atomtypes
+         
+         e_lrc_ia_ja = 0.0_DP
+         
+         DO ja = 1, nbr_atomtypes
+            
+            epsij = vdw_param1_table(ia,ja)
+            sigij = vdw_param2_table(ia,ja)
+            
+            sigij2 = sigij*sigij
+            
+            sigij6 = sigij2*sigij2*sigij2 
+            
+            sigij12 = sigij6*sigij6
 
-          e_lrc_ia_ja = e_lrc_ia_ja + nint_beads(ja,this_box) * &
-               4.0_DP * epsij * (sigij12 /(9.0_DP*rcut9(this_box)) - &
-               (sigij6 / (3.0_DP*rcut3(this_box))))
-       END DO
+            e_lrc_ia_ja = e_lrc_ia_ja + nint_beads(ja,this_box) * &
+                 4.0_DP * epsij * (sigij12 /(9.0_DP*rcut9(this_box)) - &
+                 (sigij6 / (3.0_DP*rcut3(this_box))))
+         END DO
 
-       e_lrc = e_lrc + REAL( nint_beads(ia,this_box), DP ) * e_lrc_ia_ja
-    END DO
+         e_lrc = e_lrc + REAL( nint_beads(ia,this_box), DP ) * e_lrc_ia_ja
+      END DO
 
-    e_lrc = 2.0_DP * PI * e_lrc/box_list(this_box)%volume
+      e_lrc = 2.0_DP * PI * e_lrc/box_list(this_box)%volume
     
     ELSE IF (int_vdw_style(this_box) == vdw_mie) THEN
-    DO is = 1, nspecies   
-        DO js = 1, nspecies 
-           mie_n = mie_nlist(mie_Matrix(is,js))
-           mie_m = mie_mlist(mie_Matrix(is,js))
-           mie_coeff = mie_n/(mie_n-mie_m)*(mie_n/mie_m)**(mie_m/(mie_n-mie_m))
-           DO ia = 1, nbr_atomtypes	
-           
-               e_lrc_ia_ja = 0.0_DP
-               DO ja = 1, nbr_atomtypes
-                  
-                  epsij = vdw_param1_table(ia,ja)
-                  sigij = vdw_param2_table(ia,ja)
-		  SigOverRcut = sigij/rcut_vdw(this_box)
-		  SigOverRn = SigOverRcut ** mie_n
-		  SigOverRm = SigOverRcut ** mie_m
-                  
-                  e_lrc_ia_ja = e_lrc_ia_ja + nint_beads_mie(js,ja,this_box) * &
-                        mie_coeff * epsij * rcut_vdw(this_box)**3.0 * ((SigOverRn/(3-mie_n)) + &
-                       (SigOverRm / (mie_m -3)))
-               END DO
-               e_lrc = e_lrc + REAL( nint_beads_mie(is,ia,this_box), DP ) * e_lrc_ia_ja
-	       
-           END DO
-        END DO
-    END DO
-    e_lrc = - 2.0_DP * PI * e_lrc/box_list(this_box)%volume
+      DO ia = 1, nbr_atomtypes
+          e_lrc_ia_ja = 0.0_DP
+
+          DO ja = 1, nbr_atomtypes
+             
+             epsij = vdw_param1_table(ia,ja)
+             sigij = vdw_param2_table(ia,ja)
+             mie_n = vdw_param3_table(ia,ja) ! repulsive exponent
+             mie_m = vdw_param4_table(ia,ja) ! dispersive exponent
+             mie_coeff = mie_n/(mie_n-mie_m)*(mie_n/mie_m)**(mie_m/(mie_n-mie_m))
+             SigOverRcut = sigij/rcut_vdw(this_box)
+             SigOverRn = SigOverRcut ** mie_n
+             SigOverRm = SigOverRcut ** mie_m
+             
+             e_lrc_ia_ja = e_lrc_ia_ja + nint_beads(ja,this_box) * &
+                   mie_coeff * epsij * rcut_vdw(this_box)**3.0_DP * ((SigOverRn/(3.0_DP-mie_n)) + &
+                  (SigOverRm / (mie_m -3.0_DP)))
+          END DO
+          e_lrc = e_lrc + REAL( nint_beads(ia,this_box), DP ) * e_lrc_ia_ja
+
+      END DO
+      e_lrc = - 2.0_DP * PI * e_lrc/box_list(this_box)%volume
     END IF
     
   END SUBROUTINE Compute_LR_Correction
@@ -2607,10 +2603,10 @@ END SUBROUTINE Compute_Molecule_Self_Energy
          ELSE IF (int_vdw_style(ibox) == vdw_mie) THEN
            eps = vdw_param1_table(itype,jtype)
            sig = vdw_param2_table(itype,jtype)
+           mie_n = vdw_param3_table(ia,ja) ! repulsive exponent
+           mie_m = vdw_param4_table(ia,ja) ! dispersive exponent
            rij = SQRT(rijsq)
-	   
-           mie_n = mie_nlist(mie_Matrix(is,js))
-           mie_m = mie_mlist(mie_Matrix(is,js))
+
            mie_coeff = mie_n/(mie_n-mie_m)*(mie_n/mie_m)**(mie_m/(mie_n-mie_m))
            SigByR = sig/rij
            SigByRn = SigByR ** mie_n
@@ -2706,55 +2702,50 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     w_lrc = 0.0_DP 
 
     IF (int_vdw_style(this_box) == vdw_lj) THEN
-    DO ia = 1, nbr_atomtypes
+      DO ia = 1, nbr_atomtypes
 
-       w_lrc_ia_ja = 0.0_DP
-          
-       DO ja = 1, nbr_atomtypes
+         w_lrc_ia_ja = 0.0_DP
+            
+         DO ja = 1, nbr_atomtypes
 
-          epsij = vdw_param1_table(ia,ja)
-          sigij = vdw_param2_table(ia,ja)
+            epsij = vdw_param1_table(ia,ja)
+            sigij = vdw_param2_table(ia,ja)
 
-          w_lrc_ia_ja = w_lrc_ia_ja + nint_beads(ja,this_box) * epsij * ((2.0_DP / 3.0_DP * &
-                        sigij**12 / rcut9(this_box)) - (sigij**6 / rcut3(this_box)))
-             
-       END DO
+            w_lrc_ia_ja = w_lrc_ia_ja + nint_beads(ja,this_box) * epsij * ((2.0_DP / 3.0_DP * &
+                          sigij**12 / rcut9(this_box)) - (sigij**6 / rcut3(this_box)))
+               
+         END DO
 
-       w_lrc = w_lrc + nint_beads(ia,this_box) * w_lrc_ia_ja
+         w_lrc = w_lrc + nint_beads(ia,this_box) * w_lrc_ia_ja
 
-    END DO
+      END DO
 
-    w_lrc = 16.0_DP / 3.0_DP * PI * w_lrc / box_list(this_box)%volume
+      w_lrc = 16.0_DP / 3.0_DP * PI * w_lrc / box_list(this_box)%volume
 
     ELSEIF (int_vdw_style(this_box) == vdw_mie) THEN
 
-    DO is = 1, nspecies
-        DO js = 1, nspecies
-           mie_n = mie_nlist(mie_Matrix(is,js))
-           mie_m = mie_mlist(mie_Matrix(is,js))
-           mie_coeff = mie_n/(mie_n-mie_m)*(mie_n/mie_m)**(mie_m/(mie_n-mie_m))
-           DO ia = 1, nbr_atomtypes
+      DO ia = 1, nbr_atomtypes
+      
+         w_lrc_ia_ja = 0.0_DP
+         DO ja = 1, nbr_atomtypes
+            epsij = vdw_param1_table(ia,ja)
+            sigij = vdw_param2_table(ia,ja)
+            mie_n = vdw_param3_table(ia,ja) ! repulsive exponent
+            mie_m = vdw_param4_table(ia,ja) ! dispersive exponent
+            mie_coeff = mie_n/(mie_n-mie_m)*(mie_n/mie_m)**(mie_m/(mie_n-mie_m))
+            SigOverR = sigij/rcut_vdw(this_box)
+            SigOverRn = SigOverR**mie_n
+            SigOverRm = SigOverR**mie_m
+      
+            w_lrc_ia_ja = w_lrc_ia_ja + nint_beads(ja,this_box) * mie_coeff * epsij &
+               *rcut3(this_box) * (mie_n/(mie_n-3.0_DP) * SigOverRn + mie_m/(3.0_DP-mie_m) * SigOverRm)
+               
+         END DO
+      
+         w_lrc = w_lrc + nint_beads(ia,this_box) * w_lrc_ia_ja
+      END DO
        
-              w_lrc_ia_ja = 0.0_DP
-              DO ja = 1, nbr_atomtypes
-                 epsij = vdw_param1_table(ia,ja)
-                 sigij = vdw_param2_table(ia,ja)
-		 SigOverR = sigij/rcut_vdw(this_box)
-		 SigOverRn = SigOverR**mie_n
-		 SigOverRm = SigOverR**mie_m
-       
-                 w_lrc_ia_ja = w_lrc_ia_ja + nint_beads_mie(js,ja,this_box) * mie_coeff * epsij &
-				 *rcut3(this_box) * (mie_n/(mie_n-3.0_DP) * SigOverRn + mie_m/(3.0_DP-mie_m) * SigOverRm)
-                    
-              END DO
-       
-              w_lrc = w_lrc + nint_beads_mie(is,ia,this_box) * w_lrc_ia_ja
-           END DO
-       
-        END DO
-		
-    END DO
-    w_lrc =  2.0_DP / 3.0_DP * PI * w_lrc / box_list(this_box)%volume
+      w_lrc =  2.0_DP / 3.0_DP * PI * w_lrc / box_list(this_box)%volume
     END IF
   END SUBROUTINE Compute_LR_Force
 

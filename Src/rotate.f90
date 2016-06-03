@@ -20,7 +20,7 @@
 !********************************************************************************
 
 !********************************************************************************
-SUBROUTINE Rotate(this_box)
+SUBROUTINE Rotate
 !********************************************************************************
 
 !********************************************************************************
@@ -57,17 +57,16 @@ SUBROUTINE Rotate(this_box)
   USE Energy_Routines
   USE File_Names
   USE Pair_Nrg_Routines
+  USE IO_Utilities
 
   IMPLICIT NONE
 
 !  !$ include 'omp_lib.h'
-  ! Arguments
-  INTEGER  :: this_box   ! box index
 
   ! Local delcarations
-  INTEGER  :: ibox       ! box index
+  INTEGER  :: ibox   ! box index
   INTEGER  :: is         ! species index
-  INTEGER  :: im, alive  ! molecule indices
+  INTEGER  :: im, lm     ! molecule indices
   INTEGER  :: total_mols,mcstep ! number of molecules in the system
 
   REAL(DP) :: nmols_box(nbr_boxes)
@@ -95,6 +94,7 @@ SUBROUTINE Rotate(this_box)
   E_qq = 0.0_DP
   E_reciprocal_move = 0.0_DP
   inter_overlap = .FALSE.
+  accept = .FALSE.
 
   ! Sum the total number of molecules 
   total_mols = 0 ! sum over species, box
@@ -129,24 +129,23 @@ SUBROUTINE Rotate(this_box)
        IF ( rand_no <= x_box(ibox)) EXIT
     END DO
 
-    this_box = ibox
     DEALLOCATE(x_box)
 
   ELSE
 
-    this_box = 1
+    ibox = 1
 
   END IF
 
   ! If there are no molecules in this box then return
-  IF( nmols_box(this_box) == 0 ) RETURN
+  IF( nmols_box(ibox) == 0 ) RETURN
 
   ! Choose species based on the mol fraction, using Golden sampling
   ALLOCATE(x_species(nspecies))
 
   DO is = 1, nspecies
-     IF ( max_rot(is,this_box) > 0. ) THEN
-       x_species(is) = REAL(nmols(is,this_box), DP)/REAL(nmols_box(this_box),DP)
+     IF ( max_rot(is,ibox) > 0. ) THEN
+       x_species(is) = REAL(nmols(is,ibox), DP)/REAL(nmols_box(ibox),DP)
      ELSE
        x_species(is) = 0.0_DP
      END IF
@@ -163,35 +162,36 @@ SUBROUTINE Rotate(this_box)
   DEALLOCATE(x_species)
 
   ! If the molecule can't move then return
-  IF ( max_rot(is,this_box) == 0. ) RETURN
+  IF ( max_rot(is,ibox) == 0. ) RETURN
 
   ! Choose a molecule at random for rotation
-  im = INT ( rranf() * nmols(is,this_box) ) + 1
-  ! Get the index of imth molecule of species is in this_box
-  CALL Get_Index_Molecule(this_box,is,im,alive)
+  im = INT ( rranf() * nmols(is,ibox) ) + 1
+  ! Get the LOCATE of imth molecule of species is in ibox
+  lm = LOCATE(im,is,ibox)
 
   ! update the trial counters
-  tot_trials(this_box) = tot_trials(this_box) + 1
-  ntrials(is,this_box)%rotation = ntrials(is,this_box)%rotation + 1
+  tot_trials(ibox) = tot_trials(ibox) + 1
+  ntrials(is,ibox)%rotation = ntrials(is,ibox)%rotation + 1
 
   ! obtain the energy of the molecule before the move.  Note that due to
   ! this move, the interatomic energies such as vdw and electrostatics will
   ! change. Also the ewald_reciprocal energy will change but there will
   ! be no change in intramolecular energies.
   IF (l_pair_nrg) THEN
-    CALL Store_Molecule_Pair_Interaction_Arrays(alive,is,this_box,E_vdw,E_qq)
+    CALL Store_Molecule_Pair_Interaction_Arrays(lm,is,ibox,E_vdw,E_qq)
   ELSE
-    CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_vdw,E_qq,inter_overlap)
+    CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is,E_vdw,E_qq,inter_overlap)
   END IF
 
   IF (inter_overlap)  THEN
-     WRITE(*,*) 'Disaster, overlap in the old configruation'
-     WRITE(*,*) 'Rotation'
-     WRITE(*,*) alive, is, this_box
-  END IF       
+     err_msg = ""
+     err_msg(1) = "Energy overlap detected in existing configuration"
+     err_msg(2) = "of molecule " // TRIM(Int_To_String(lm)) // " of species " // TRIM(Int_To_String(is))
+     CALL Clean_Abort(err_msg, "Rotate")
+  END IF
 
   ! Store the old positions of the atoms
-  CALL Save_Old_Cartesian_Coordinates(alive,is)
+  CALL Save_Old_Cartesian_Coordinates(lm,is)
 
   ! change the Eulerian angles of the molecule
   IF(species_list(is)%linear) THEN
@@ -201,30 +201,30 @@ SUBROUTINE Rotate(this_box)
   END IF
 
   ! Now compute the energy of the molecule after the rotation. 
-  CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is,E_vdw_move,E_qq_move,inter_overlap)
+  CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is,E_vdw_move,E_qq_move,inter_overlap)
 
   ! If an overlap is detected, immediately reject the move
   IF (inter_overlap) THEN
      
-     CALL Revert_Old_Cartesian_Coordinates(alive,is)
-     IF (l_pair_nrg) CALL Reset_Molecule_Pair_Interaction_Arrays(alive,is,this_box)
+     CALL Revert_Old_Cartesian_Coordinates(lm,is)
+     IF (l_pair_nrg) CALL Reset_Molecule_Pair_Interaction_Arrays(lm,is,ibox)
      
   ELSE
 
      delta_e = 0.0_DP
 
-     IF ((int_charge_sum_style(this_box) == charge_ewald) .AND. (has_charge(is))) THEN
+     IF ((int_charge_sum_style(ibox) == charge_ewald) .AND. (has_charge(is))) THEN
         
-        ALLOCATE(cos_mol_old(nvecs(this_box)),sin_mol_old(nvecs(this_box)))
-        CALL Get_Position_Alive(alive,is,position)
+        ALLOCATE(cos_mol_old(nvecs(ibox)),sin_mol_old(nvecs(ibox)))
+        CALL Get_Position_Alive(lm,is,position)
      
         !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-        cos_mol_old(:) = cos_mol(1:nvecs(this_box),position)
-        sin_mol_old(:) = sin_mol(1:nvecs(this_box),position)
+        cos_mol_old(:) = cos_mol(1:nvecs(ibox),position)
+        sin_mol_old(:) = sin_mol(1:nvecs(ibox),position)
         !$OMP END PARALLEL WORKSHARE
 
-        CALL Update_System_Ewald_Reciprocal_Energy(alive,is,this_box,int_rotation,E_reciprocal_move)
-        delta_e = E_reciprocal_move - energy(this_box)%ewald_reciprocal
+        CALL Update_System_Ewald_Reciprocal_Energy(lm,is,ibox,int_rotation,E_reciprocal_move)
+        delta_e = E_reciprocal_move - energy(ibox)%ewald_reciprocal
 
      END IF
      
@@ -236,33 +236,31 @@ SUBROUTINE Rotate(this_box)
         ! Accept only the moves that lower energy
         IF ( delta_e <= 0.0_DP) THEN
            accept = .TRUE.
-        ELSE
-           accept = .FALSE.
         END IF
         
      ELSE
 
-        ln_pacc = beta(this_box) * delta_e
+        ln_pacc = beta(ibox) * delta_e
         accept = accept_or_reject(ln_pacc)
 
      END IF
      
      IF ( accept ) THEN
 
-        energy(this_box)%total = energy(this_box)%total + delta_e
-        energy(this_box)%inter_vdw = energy(this_box)%inter_vdw + E_vdw_move - E_vdw
-        energy(this_box)%inter_q   = energy(this_box)%inter_q + E_qq_move - E_qq
+        energy(ibox)%total = energy(ibox)%total + delta_e
+        energy(ibox)%inter_vdw = energy(ibox)%inter_vdw + E_vdw_move - E_vdw
+        energy(ibox)%inter_q   = energy(ibox)%inter_q + E_qq_move - E_qq
 
-        IF ( int_charge_sum_style(this_box) == charge_ewald .AND. has_charge(is)) THEN
-           energy(this_box)%ewald_reciprocal = E_reciprocal_move
+        IF ( int_charge_sum_style(ibox) == charge_ewald .AND. has_charge(is)) THEN
+           energy(ibox)%ewald_reciprocal = E_reciprocal_move
         END IF
 
-        nsuccess(is,this_box)%rotation = nsuccess(is,this_box)%rotation + 1
-        nequil_success(is,this_box)%rotation = nequil_success(is,this_box)%rotation + 1
+        nsuccess(is,ibox)%rotation = nsuccess(is,ibox)%rotation + 1
+        nequil_success(is,ibox)%rotation = nequil_success(is,ibox)%rotation + 1
         
         ! Update the COM after rotation
 
-        CALL Get_COM(alive,is)
+        CALL Get_COM(lm,is)
 
         IF (l_pair_nrg) DEALLOCATE(pair_vdw_temp,pair_qq_temp)
         IF (ALLOCATED(cos_mol_old)) DEALLOCATE(cos_mol_old)
@@ -271,52 +269,57 @@ SUBROUTINE Rotate(this_box)
      ELSE
 
         ! Revert to the old coordinates of atoms and com of the molecule
-        CALL Revert_Old_Cartesian_Coordinates(alive,is) 
+        CALL Revert_Old_Cartesian_Coordinates(lm,is) 
         ! Reset the old cos_sum and sin_sum
         
-        IF ((int_charge_sum_style(this_box) == charge_ewald) .AND. (has_charge(is))) THEN
+        IF ((int_charge_sum_style(ibox) == charge_ewald) .AND. (has_charge(is))) THEN
            
            !$OMP PARALLEL WORKSHARE DEFAULT(SHARED) 
-           cos_sum(:,this_box) = cos_sum_old(:,this_box)
-           sin_sum(:,this_box) = sin_sum_old(:,this_box)
-           cos_mol(1:nvecs(this_box),position) =cos_mol_old(:)
-           sin_mol(1:nvecs(this_box),position) =sin_mol_old(:)
+           cos_sum(:,ibox) = cos_sum_old(:,ibox)
+           sin_sum(:,ibox) = sin_sum_old(:,ibox)
+           cos_mol(1:nvecs(ibox),position) =cos_mol_old(:)
+           sin_mol(1:nvecs(ibox),position) =sin_mol_old(:)
            !$OMP END PARALLEL WORKSHARE
 
            DEALLOCATE(cos_mol_old,sin_mol_old)
 
         END IF
         
-        IF (l_pair_nrg)  CALL Reset_Molecule_Pair_Interaction_Arrays(alive,is,this_box)
+        IF (l_pair_nrg)  CALL Reset_Molecule_Pair_Interaction_Arrays(lm,is,ibox)
 
      ENDIF
 
   END IF
  
+  IF (verbose_log) THEN
+    WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8)') i_mcstep, 'rotate' , lm, is, ibox, accept
+  END IF
+
   
-  IF (MOD(ntrials(is,this_box)%rotation, nupdate) == 0) THEN
+  IF (MOD(ntrials(is,ibox)%rotation, nupdate) == 0) THEN
 
      IF (int_run_style == run_equil) THEN
-        success_ratio = REAL(nequil_success(is,this_box)%rotation,DP)/REAL(nupdate,DP)
+        success_ratio = REAL(nequil_success(is,ibox)%rotation,DP)/REAL(nupdate,DP)
      ELSE
-        success_ratio = REAL(nsuccess(is,this_box)%rotation,DP)/REAL(ntrials(is,this_box)%rotation,DP)
+        success_ratio = REAL(nsuccess(is,ibox)%rotation,DP)/REAL(ntrials(is,ibox)%rotation,DP)
      END IF
-
-     WRITE(logunit,'(X,I9,X,A15,X,I3,X,I3,X,F8.5)',ADVANCE='NO') i_mcstep, 'rotation' , is, this_box, success_ratio
+ 
+     WRITE(logunit,'(X,I9,X,A10,X,5X,X,I3,X,I3,X,F8.5)',ADVANCE='NO') &
+           i_mcstep, 'rotate', is, ibox, success_ratio
 
      IF (int_run_style == run_equil) THEN   
     
-         nequil_success(is,this_box)%rotation = 0
+         nequil_success(is,ibox)%rotation = 0
         ! update the width of the species for equilibration run
         
         IF (success_ratio < 0.5) THEN
            ! decrease the width
-           max_rot(is,this_box) = MAX(0.01_DP,0.95_DP*max_rot(is,this_box))
+           max_rot(is,ibox) = MAX(0.01_DP,0.95_DP*max_rot(is,ibox))
         ELSE
-           max_rot(is,this_box) = MIN(PI,1.05_DP*max_rot(is,this_box))
+           max_rot(is,ibox) = MIN(PI,1.05_DP*max_rot(is,ibox))
 
         END IF
-        WRITE(logunit,'(X,F9.5)',ADVANCE='NO') max_rot(is,this_box)
+        WRITE(logunit,'(X,F9.5)',ADVANCE='NO') max_rot(is,ibox)
         
      END IF
      
@@ -358,15 +361,15 @@ CONTAINS
 
     IF ( axis == 1 ) THEN
        
-       psi1 = ( 2.0_DP * rranf() - 1.0_DP) * max_rot(is,this_box)
+       psi1 = ( 2.0_DP * rranf() - 1.0_DP) * max_rot(is,ibox)
       
     ELSE IF ( axis == 2 ) THEN
        
-       psi2 = ( 2.0_DP * rranf() - 1.0_DP) * max_rot(is,this_box)
+       psi2 = ( 2.0_DP * rranf() - 1.0_DP) * max_rot(is,ibox)
 
     ELSE
 
-       psi3 = ( 2.0_DP * rranf() - 1.0_DP) * max_rot(is,this_box)
+       psi3 = ( 2.0_DP * rranf() - 1.0_DP) * max_rot(is,ibox)
 
     END IF
 
@@ -393,45 +396,41 @@ CONTAINS
     rot32   = -cospsi1*sinpsi2
 
     rot33   = cospsi2
-!    IF (alive==30) THEN
- !   WRITE(*,*) 'molecule',molecule_list(alive,is)%ycom
-  !  END IF
-  !WRITE(*,*) molecule_list(30,1)%ycom
 
     ! Move the origin to the COM of this molecule
 
-    atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp - molecule_list(alive,is)%xcom
-    atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp - molecule_list(alive,is)%ycom
-    atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp - molecule_list(alive,is)%zcom
+    atom_list(:,lm,is)%rxp = atom_list(:,lm,is)%rxp - molecule_list(lm,is)%xcom
+    atom_list(:,lm,is)%ryp = atom_list(:,lm,is)%ryp - molecule_list(lm,is)%ycom
+    atom_list(:,lm,is)%rzp = atom_list(:,lm,is)%rzp - molecule_list(lm,is)%zcom
 
     ! Apply the rotation matrix to these coordinates
 
 
     DO ia = 1, natoms(is)
 
-       rxpnew = rot11*atom_list(ia,alive,is)%rxp + rot12*atom_list(ia,alive,is)%ryp + &
-            rot13*atom_list(ia,alive,is)%rzp
-       rypnew = rot21*atom_list(ia,alive,is)%rxp + rot22*atom_list(ia,alive,is)%ryp + &
-            rot23*atom_list(ia,alive,is)%rzp
-       rzpnew = rot31*atom_list(ia,alive,is)%rxp + rot32*atom_list(ia,alive,is)%ryp + &
-            rot33*atom_list(ia,alive,is)%rzp
+       rxpnew = rot11*atom_list(ia,lm,is)%rxp + rot12*atom_list(ia,lm,is)%ryp + &
+            rot13*atom_list(ia,lm,is)%rzp
+       rypnew = rot21*atom_list(ia,lm,is)%rxp + rot22*atom_list(ia,lm,is)%ryp + &
+            rot23*atom_list(ia,lm,is)%rzp
+       rzpnew = rot31*atom_list(ia,lm,is)%rxp + rot32*atom_list(ia,lm,is)%ryp + &
+            rot33*atom_list(ia,lm,is)%rzp
 
-       dxrot(ia) = rxpnew - atom_list(ia,alive,is)%rxp
-       dyrot(ia) = rypnew - atom_list(ia,alive,is)%ryp
-       dzrot(ia) = rzpnew - atom_list(ia,alive,is)%rzp
+       dxrot(ia) = rxpnew - atom_list(ia,lm,is)%rxp
+       dyrot(ia) = rypnew - atom_list(ia,lm,is)%ryp
+       dzrot(ia) = rzpnew - atom_list(ia,lm,is)%rzp
 
-       atom_list(ia,alive,is)%rxp = rxpnew
-       atom_list(ia,alive,is)%ryp = rypnew
-       atom_list(ia,alive,is)%rzp = rzpnew
+       atom_list(ia,lm,is)%rxp = rxpnew
+       atom_list(ia,lm,is)%ryp = rypnew
+       atom_list(ia,lm,is)%rzp = rzpnew
 
     END DO
     
     
     ! Shift the origin back to the space fixed axes.
 
-    atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp + molecule_list(alive,is)%xcom
-    atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp + molecule_list(alive,is)%ycom
-    atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp + molecule_list(alive,is)%zcom
+    atom_list(:,lm,is)%rxp = atom_list(:,lm,is)%rxp + molecule_list(lm,is)%xcom
+    atom_list(:,lm,is)%ryp = atom_list(:,lm,is)%ryp + molecule_list(lm,is)%ycom
+    atom_list(:,lm,is)%rzp = atom_list(:,lm,is)%rzp + molecule_list(lm,is)%zcom
 
   END SUBROUTINE Rotate_Molecule_Axis
   !-----------------------------------------------------------------------------------------------
@@ -456,9 +455,9 @@ CONTAINS
 
     ! shift the origin to the COM of the molecule
 
-    atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp - molecule_list(alive,is)%xcom
-    atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp - molecule_list(alive,is)%ycom
-    atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp - molecule_list(alive,is)%zcom
+    atom_list(:,lm,is)%rxp = atom_list(:,lm,is)%rxp - molecule_list(lm,is)%xcom
+    atom_list(:,lm,is)%ryp = atom_list(:,lm,is)%ryp - molecule_list(lm,is)%ycom
+    atom_list(:,lm,is)%rzp = atom_list(:,lm,is)%rzp - molecule_list(lm,is)%zcom
 
     ! Construct the rotation matrix that needs to be applied to each of the vectors
     ! This is the A matrix in Goldstein notation
@@ -479,27 +478,27 @@ CONTAINS
 
     DO ia = 1, natoms(is)
 
-       rxpnew = rot11*atom_list(ia,alive,is)%rxp & 
-              + rot12*atom_list(ia,alive,is)%ryp &
-              + rot13*atom_list(ia,alive,is)%rzp
-       rypnew = rot21*atom_list(ia,alive,is)%rxp &
-              + rot22*atom_list(ia,alive,is)%ryp &
-              + rot23*atom_list(ia,alive,is)%rzp
-       rzpnew = rot31*atom_list(ia,alive,is)%rxp &
-              + rot32*atom_list(ia,alive,is)%ryp &
-              + rot33*atom_list(ia,alive,is)%rzp
+       rxpnew = rot11*atom_list(ia,lm,is)%rxp & 
+              + rot12*atom_list(ia,lm,is)%ryp &
+              + rot13*atom_list(ia,lm,is)%rzp
+       rypnew = rot21*atom_list(ia,lm,is)%rxp &
+              + rot22*atom_list(ia,lm,is)%ryp &
+              + rot23*atom_list(ia,lm,is)%rzp
+       rzpnew = rot31*atom_list(ia,lm,is)%rxp &
+              + rot32*atom_list(ia,lm,is)%ryp &
+              + rot33*atom_list(ia,lm,is)%rzp
 
-       atom_list(ia,alive,is)%rxp = rxpnew
-       atom_list(ia,alive,is)%ryp = rypnew
-       atom_list(ia,alive,is)%rzp = rzpnew
+       atom_list(ia,lm,is)%rxp = rxpnew
+       atom_list(ia,lm,is)%ryp = rypnew
+       atom_list(ia,lm,is)%rzp = rzpnew
 
     END DO    
 
     ! Shift the origin back to (0,0,0)
 
-    atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp + molecule_list(alive,is)%xcom
-    atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp + molecule_list(alive,is)%ycom
-    atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp + molecule_list(alive,is)%zcom
+    atom_list(:,lm,is)%rxp = atom_list(:,lm,is)%rxp + molecule_list(lm,is)%xcom
+    atom_list(:,lm,is)%ryp = atom_list(:,lm,is)%ryp + molecule_list(lm,is)%ycom
+    atom_list(:,lm,is)%rzp = atom_list(:,lm,is)%rzp + molecule_list(lm,is)%zcom
     
   END SUBROUTINE Rotate_Molecule_Eulerian
 

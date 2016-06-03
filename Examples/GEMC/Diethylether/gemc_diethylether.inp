@@ -1,5 +1,5 @@
 # Run_Name
-gemc_diethylether
+gemc_diethylether.out
 !------------------------------------------------------------------------------
 
 # Sim_Type
@@ -83,8 +83,7 @@ CUBIC
 
 # Prob_Swap
 0.095
-insertion method
-reservoir
+cbmc
 
 # Done_Probability_Info
 
@@ -100,9 +99,8 @@ rcut_cbmc 6.5  6.5
 !------------------------------------------------------------------------------
 
 # Start_Type
-read_old
-Init_Config/liq.initial
-Init_Config/vap.initial
+read_config 220 Init_Config/liq.initial
+read_config  80 Init_Config/vap.initial
 
 !--------make_config: one line for each species and one entry/line for each box
 !------------------------------------------------------------read_old: filename
@@ -125,8 +123,7 @@ Equilibration 100 50
 Units       Steps
 Prop_Freq   100
 Coord_Freq  2200
-MCsteps     2200
-# Done_Simulation_Length_Info
+Run         2200
 !------------------ simulation length every 2200 steps, XYZ output every 2200 steps, property
 !---------------------------------------output every 100 steps
 

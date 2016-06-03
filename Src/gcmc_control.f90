@@ -53,7 +53,6 @@ SUBROUTINE GCMC_Control
 
 !*******************************************************************************
 
-  CALL Get_Verbosity_Info  
   CALL Copy_Inputfile
 
   ! How many species to simulate?
@@ -98,7 +97,7 @@ SUBROUTINE GCMC_Control
   ! Determine the frequency with which information will be output 
   CALL Get_Simulation_Length_Info
 
-  CALL Average_Info
+  CALL Get_Average_Info
   ! Properties to be output
   CALL Get_Property_Info
 
@@ -132,9 +131,5 @@ SUBROUTINE GCMC_Control
   CALL Get_Dihedral_Atoms_To_Place  
 
   CALL Get_CBMC_Info
-
-  IF (int_vdw_style(1) == vdw_mie ) THEN
-      CALL Get_Mie_Nonbond
-  END IF
 
 END SUBROUTINE GCMC_Control
