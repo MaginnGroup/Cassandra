@@ -2196,7 +2196,7 @@ class p4c(wx.Panel):
     # button widgets
     self.buttonwidgetnames = ["checkpoint file", "read old box 1", "read old box 2"]
     buttonwidgetLabels = ["Select Checkpoint File",\
-                          "Select Box 1 Read Old", "Select Box 2 Read Old"]
+                          "Select Box 1 Read Config", "Select Box 2 Read Config"]
     buttonwidgetCoords = [(4,1), (5,1), (6,1)]
     buttonwidgetSpan = (1,2)
     buttonwidgetFlags = (wx.ALIGN_CENTER | wx.RESERVE_SPACE_EVEN_IF_HIDDEN | wx.EXPAND)
@@ -2389,6 +2389,13 @@ class p4c(wx.Panel):
         self.textwidgets4c[item].Hide()
         self.textwidgets4c[item].SetValue('')
       # hide and clear read old widgets
+      self.buttonwidgets4c[1].Hide(), self.textdisp4c[1].Hide()
+      self.buttonwidgets4c[2].Hide(), self.textdisp4c[2].Hide()
+      thisName = self.buttonwidgets4c[1].GetName()
+      data(thisName,'')
+      thisName = self.buttonwidgets4c[2].GetName()
+      data(thisName,'')
+
       # show the checkpoint widgets
       self.buttonwidgets4c[0].Show(),self.textdisp4c[0].Show()
       self.buttonwidgets4c[1].Hide()
@@ -2691,9 +2698,9 @@ def data(obj,val,listStyle=False):
     obj_counter += 1
     if obj_counter >= 2:
       try:
-      	pub.sendMessage("refresh",message=None)
+        pub.sendMessage("refresh",message=None)
       except: 
-      	pub.sendMessage("refresh")
+        pub.sendMessage("refresh")
 
 
 
