@@ -17,7 +17,16 @@ matplotlib 1.x
 
 Example Usage:
 
-python plot.py RUN_NAME.box1.prp1 RUN_NAME.box2.prp1 -skip NUM_LINES -setx -block NUM_BLOCKS  -lg 0
+python plot.py RUN_NAME.box1.prp1 
+
+Optional Arguments:
+
+RUN_NAME.box2.prp1 
+-skip NUM_LINES
+-setx 
+-block NUM_BLOCKS  
+-lg 0 (default)
+-marker '-' (default)
 
 Help:
 python plot.py -h
