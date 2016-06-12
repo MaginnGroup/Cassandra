@@ -17,16 +17,7 @@ matplotlib 1.x
 
 Example Usage:
 
-python plot.py RUN_NAME.box1.prp1 
-
-Optional Arguments:
-
-RUN_NAME.box2.prp1 
--skip NUM_LINES
--setx 
--block NUM_BLOCKS  
--lg 0 (default)
--marker '-' (default)
+python plot.py RUN_NAME.box1.prp1 RUN_NAME.box2.prp1 -skip NUM_LINES -setx -block NUM_BLOCKS  -lg 0
 
 Help:
 python plot.py -h
@@ -77,15 +68,17 @@ y_axis = int(raw_input())+stride
 
 
 #determine output units
-output_options = np.array(['Energy_Total','Enthalpy','Energy_Intra','Energy_Elec','Energy_LJ','Chemical_Potential',
-			 'Nmols','Subensemble','Volume','Pressure','Temperature','Density'])
-output_unit = np.array(['(kJ/mol)-Ext','(kJ/mol)-Ext','(kJ/mol)-Ext','(kJ/mol)-Ext','(kJ/mol)-Ext','(kJ/mol)',
-			'','','(A^3)','(bar)','(K)','(kg/m^3)'])
-output_ndx = np.where(np.in1d(output_options,data_label[y_axis]))
+output_options = ['Energy_Total','Enthalpy','Energy_Intra','Energy_Elec','Energy_LJ','Chemical_Potential',
+				'Nmols','Subensemble','Volume','Pressure','Temperature','Density']
+output_unit = ['(kJ/mol)-Ext','(kJ/mol)-Ext','(kJ/mol)-Ext','(kJ/mol)-Ext','(kJ/mol)-Ext','(kJ/mol)',
+				 ' ',' ','(A^3)','(bar)','(K)','(kg/m^3)']
+for i, option in enumerate(output_options):
+	if data_label[y_axis] == option:
+		output_ndx = i
+	else:
+		output_ndx = 7 #empty
 
-
-
-print '\n'+'Output:', data_label[y_axis],output_unit[output_ndx][0],'\n'
+print '\n'+'Output:', data_label[y_axis], output_unit[output_ndx],'\n'
 file1.close()
 
 #if output is Density, convert value to kg/m^3
@@ -134,11 +127,11 @@ for i in range(len(data)):
 print '*'*(len(legend[0])+35)+'\n'
 
 if x_axis_flag:
-	plt.xlabel(data_label[x_axis]+' '+output_unit[outputx_ndx][0])
+	plt.xlabel(data_label[x_axis]+' '+output_unit[outputx_ndx])
 else:
 	plt.xlabel(data_label[1])
 
-plt.ylabel(data_label[y_axis]+' '+output_unit[output_ndx][0])
+plt.ylabel(data_label[y_axis]+' '+output_unit[output_ndx])
 
 
 #plot legend options
