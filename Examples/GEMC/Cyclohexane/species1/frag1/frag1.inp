@@ -8,20 +8,10 @@ NVT_MC_Ring_Fragment
 1
 
 # VDW_Style
-LJ cut 14.0
-
-# Mixing_Rule
-LB
+lj minimum_image
 
 # Rcutoff_Low
 1.0
-
-# Charge_Style
-NONE
-
-# Intra_Scaling
-0.0 0.0 0.0 1.0
-0.0 0.0 0.0 1.0
 
 # Box_Info
 1
@@ -50,9 +40,9 @@ Production 1000 10
 
 # Simulation_Length_Info
 Units    Steps
-Prop_Freq  100
-Coord_Freq   5000
-Run          10000
+prop_freq  100
+coord_freq   5000
+run          10000
 
 # Property_Info 1
 Energy_Total

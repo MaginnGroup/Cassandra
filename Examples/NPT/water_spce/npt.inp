@@ -20,11 +20,6 @@ LJ cut_tail 6.0
 coul Ewald 6.0 0.000001
 !------------------------------------------------------------------------------
 
-# Intra_Scaling
-0.0 0.0 0.0 1.0
-0.0 0.0 0.0 1.0
-!----------------------------------------------vdw, coul lines for each species
-
 # Mixing_Rule
 LB
 !------------------------------------------------------------------------------
@@ -43,7 +38,7 @@ spce.mcf 90
 
 # Box_Info
 1
-CUBIC
+cubic
 14.1248913303732
 !-------------------------------------------------------line 1: number of boxes
 !--------------------------------------------------------------line 2: box type
@@ -82,7 +77,7 @@ read_config 90 npt.inp.xyz
 !----------------------------------------------------------checkpoint: filename
 
 # Run_Type
-Production   900  10
+production   900  10
 !-------------------------Equilibration: update maximum widths every 100 sweeps
 !-----------------------------Production: report success ratio every 100 sweeps
 
@@ -92,10 +87,10 @@ Production   900  10
 !------------------------------------------------------------------------------
 
 # Simulation_Length_Info
-Units        Sweeps
-Prop_Freq    10
-Coord_Freq   10
-Run          100
+units        sweeps
+prop_freq    10
+coord_freq   10
+run          100
 !------------------ 181 moves = 1 sweep; output every 10 sweeps; run 100 sweeps
 
 # Property_Info 1 
@@ -103,6 +98,7 @@ Energy_Total
 Pressure
 Volume
 Density
+mass_density
 !------------------------------------------------------------------------------
 
 # Fragment_Files
@@ -111,8 +107,6 @@ species1/frag1/frag1.dat  1
 
 # CBMC_Info
 kappa_ins 12
-kappa_rot 0
-kappa_dih 10
 rcut_cbmc 6.5 
 !------------------------------------------------------------------------------
 

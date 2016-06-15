@@ -11,6 +11,8 @@ end atom-atomtype
 
 vdwtype Mie
 dihedraltype OPLS
+scaling_1_4_vdw 0.
+scaling_1_4_charge 0. 
 
 nonbonded
 C3

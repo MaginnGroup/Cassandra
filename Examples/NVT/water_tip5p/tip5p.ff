@@ -9,6 +9,7 @@ begin atom-atomtype
 5 L
 end atom-atomtype
 
+vdwtype LJ
 dihedraltype none
 
 nonbonded

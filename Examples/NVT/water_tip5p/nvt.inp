@@ -5,7 +5,7 @@ nvt.out
 !------------------------------------------------------------------------------
 
 # Sim_Type
-NVT_MC
+nvt_mc
 !------------------------------------------------------------------------------
 
 # Nbr_Species
@@ -13,20 +13,15 @@ NVT_MC
 !------------------------------------------------------------------------------
 
 # VDW_Style
-LJ cut_tail 14.0
+lj cut_tail 14.0
 !------------------------------------------------------------------------------
 
 # Charge_Style
-coul Ewald 50.0 0.000001
+coul ewald 50.0 0.000001
 !------------------------------------------------------------------------------
 
-# Intra_Scaling
-0.0 0.0 0.0 1.0
-0.0 0.0 0.0 1.0
-!----------------------------------------------vdw, coul lines for each species
-
 # Mixing_Rule
-LB
+lb
 !------------------------------------------------------------------------------
 
 # Seed_Info
@@ -43,7 +38,7 @@ tip5p.mcf 90
 
 # Box_Info
 1
-CUBIC
+cubic
 180.
 !-------------------------------------------------------line 1: number of boxes
 !--------------------------------------------------------------line 2: box type
@@ -51,10 +46,6 @@ CUBIC
 
 # Temperature_Info
 500.0
-!------------------------------------------------------------------------------
-
-# Pressure_Info
-1.0
 !------------------------------------------------------------------------------
 
 # Move_Probability_Info
@@ -79,24 +70,19 @@ make_config 90
 !----------------------------------------------------------checkpoint: filename
 
 # Run_Type
-Production   30000  100
-!-----------------------------Production: report success ratio every 100 sweeps
-
-# Average_Info
-1
-!------------------------------------------------------------------------------
+production   900
+!------------------------------Production: report success ratio every 900 steps
 
 # Simulation_Length_Info
-Units        Sweeps
-Prop_Freq    10
-Coord_Freq   10
-Run          100
-# Done_Simulation_Length_Info
+units        sweeps
+prop_freq    10
+coord_freq   10
+run          100
 !------------------ 180 moves = 1 sweep; output every 10 sweeps; run 100 sweeps
 
 # Property_Info 1 
-Energy_Total
-Pressure
+energy_total
+pressure
 !------------------------------------------------------------------------------
 
 # Fragment_Files
@@ -105,8 +91,6 @@ species1/frag1/frag1.dat  1
 
 # CBMC_Info
 kappa_ins 12
-kappa_rot 0
-kappa_dih 10
 rcut_cbmc 6.5 
 !------------------------------------------------------------------------------
 

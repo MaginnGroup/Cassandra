@@ -5,7 +5,7 @@ methane_Si.out
 !--------------
 
 # Sim_Type
-GCMC
+gcmc
 !---------------
 
 # Nbr_Species
@@ -13,22 +13,7 @@ GCMC
 !----------------
 
 # VDW_Style
-LJ cut_tail 13.0
-!----------------
-
-# Charge_Style
-NONE
-!----------------
-
-# Intra_Scaling
-0.0  0.0  0.0  0.0
-0.0  0.0  0.0  0.0
-0.0  0.0  0.0  0.0
-0.0  0.0  0.0  0.0
-!------------------
-
-# Mixing_Rule
-LB
+lj cut_tail 13.0
 !----------------
 
 # Seed_Info
@@ -40,17 +25,17 @@ LB
 !----------------
 
 # Pair_Energy
-TRUE
+true
 !-----------
 
 # Molecule_Files
-Si27ucEM.mcf 1
+SiO2.mcf 2592
 CH4.mcf 500
 !------------------------
 
 # Box_Info
 1
-ORTHOGONAL
+orthogonal
 60.21  59.76 40.26
 !-------------------------
 
@@ -79,27 +64,23 @@ none cbmc
 !----------------------
 
 # Start_Type
-add_to_config 1 0 Si27ucEM.xyz 0 30
+add_to_config 2592 0 Si27ucEM.xyz 0 30
 !------------------
 
 # Run_Type
-Equilibration   600  
+equilibration   600  
 !------------------
 
-# Average_Info
-1
-!-------------
-
 # Simulation_Length_Info
-Units        Steps
-Prop_Freq    400
-Coord_Freq   4000
-Run          4000
+units        steps
+prop_freq    400
+coord_freq   4000
+run          4000
 !----------------------------
 
 # Property_Info 1 
-Energy_Total
-Nmols
+energy_total
+nmols
 !----------------
 
 # Fragment_Files
@@ -108,10 +89,7 @@ species2/frag1/frag1.dat  1
 
 # CBMC_Info
 kappa_ins 12
-kappa_rot  0 
-kappa_dih 12
 rcut_cbmc 6.5 
 !------------
-
 
 END

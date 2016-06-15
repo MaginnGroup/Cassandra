@@ -5,7 +5,7 @@ equil.out
 !------------------------------------------------------------------------------
 
 # Sim_Type
-NPT_MC
+npt_mc
 !------------------------------------------------------------------------------
 
 # Nbr_Species
@@ -13,20 +13,8 @@ NPT_MC
 !------------------------------------------------------------------------------
 
 # VDW_Style
-LJ cut_tail 14.0
+lj cut_tail 14.0
 !------------------------------------------------------------------------------
-
-# Charge_Style
-NONE
-!----------------------------------------"NONE" or "Coul Ewald cutoff accuracy"
-
-# Intra_Scaling
-0.0 0.0 0.0 1.0
-!----------------------------------------------vdw, coul lines for each species
-
-# Mixing_Rule
-LB
-!---------------------------------------------------------------LB or geometric
 
 # Seed_Info
 265834938 610725582
@@ -42,7 +30,7 @@ pentane.mcf   60
 
 # Box_Info
 1
-CUBIC
+cubic
 100.
 !-------------------------------------------------------line 1: number of boxes
 !--------------------------------------------------------------line 2: box type
@@ -86,26 +74,23 @@ make_config 60
 !----------------------------------------------------------checkpoint: filename
 
 # Run_Type
-Equilibration   600 10
+equilibration   600 10
 !-------------------------Equilibration: update maximum widths every 100 sweeps
 !---------------------------Production: report success ratio for each move type
 
-# Average_Info
-1
-!------------------------------------------------------------ 0 == yes, 1 == no
-
 # Simulation_Length_Info
-Units        Sweeps
-Prop_Freq    10
-Coord_Freq   10
-Run          100
+units        sweeps
+prop_freq    10
+coord_freq   10
+run          100
 !----------------- 201 moves = 1 sweep; output every 10 sweeps; run 1000 sweeps
 
 # Property_Info 1
-Energy_Total
-Pressure
-Volume
-Density
+energy_total
+pressure
+volume
+density
+mass_density
 !------------------------------------------------------------------------------
 
 # Fragment_Files
@@ -116,7 +101,6 @@ species1/frag3/frag3.dat  3
 
 # CBMC_Info
 kappa_ins 12
-kappa_rot 0
 kappa_dih 10
 rcut_cbmc 6.5
 !------------------------------------------------------------------------------

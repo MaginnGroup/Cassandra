@@ -8,20 +8,13 @@ NVT_MC_Fragment
 1
 
 # VDW_Style
-Mie minimum_image
+mie minimum_image
 
 # Rcutoff_Low
 0.0
 
-# Mixing_Rule
-LB
-
 # Charge_Style
 coul minimum_image
-
-# Intra_Scaling
-0.0 0.0 0.0 1.0
-0.0 0.0 0.0 1.0
 
 # Molecule_Files
 ../fragments/frag_2_1.mcf 1
@@ -52,10 +45,10 @@ Production 1000 10
 
 # Simulation_Length_Info
 Units  Steps
-Prop_Freq  10
-Coord_Freq   90
-Run          1100
-NequilSteps  100
+prop_freq  10
+coord_freq   90
+run          1100
+nequilsteps  100
 
 # File_Info
 frag2.dat

@@ -1,0 +1,39 @@
+!*******************************************************************************
+!Molecular connectivity file for Si27ucEM.pdb
+!*******************************************************************************
+!Atom Format
+!index type element mass charge type parameters
+!type="LJ", parms=epsilon sigma
+
+# Atom_Info
+3
+1    SI    Si    28.085    0.0    NONE
+2    O    O    15.999    0.0    LJ    120.100    2.698
+3    O    O    15.999    0.0    LJ    120.100    2.698
+
+# Bond_Info
+0
+
+# Angle_Info
+0
+
+# Dihedral_Info
+0
+
+# Improper_Info
+0
+
+!Fragment Format
+!index number_of_atoms_in_fragment branch_point other_atoms
+
+# Fragment_Info
+0
+
+# Fragment_Connectivity
+0
+
+# Intra_Scaling
+0. 0. 0. 0.
+0. 0. 0. 0.
+
+END
