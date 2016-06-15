@@ -23,20 +23,19 @@
 
 #*******************************************************************************
 #
-# Cassandra script for generating fragment libraries automatically
+# Script for generating fragment libraries automatically
 #
 # This script sets up a Cassandra simulation.
 #
-# Files required before running:
-#	Master input file
-#	PDB files for each species
-#	MCF files for each species
+# Required files:
+#	  Cassandra input file
+#	  PDB files for each species
+#	  MCF files for each species
 #
 # Fragment libraries are located in:
-# 
-# /species?/frag?/frag?.dat
+#   species?/frag?/frag?.dat
 #
-# Where ? stands for the species id (i.e. species1, species2 ...)
+# where ? stands for the species id (i.e. species1, species2 ...)
 #
 # Note that the script overwrites the section of the input file where needed 
 # (i.e. # Frag_Info) with the aforementioned folder locations. 
@@ -61,7 +60,7 @@ Creates a library of fragment conformations (e.g. frag1.dat) in the following di
   species?/frag?/frag?.inp
                  frag?.dat
 
-EXAMPLES
+EXAMPLES:
 To generate a fragment library of a water molecule:
 
     > library_setup.py /home/applications/cassandra.exe nvt.inp water.pdb
@@ -75,24 +74,28 @@ To generate fragment libraries for a mixture of propane and butane:
     > library_setup.py cassandra.exe nvt.inp c3.pdb c4.pdb
 """)
 parser.add_argument('cassandra_path', 
-                help="""path to the cassandra executable""")
+                help="path to the cassandra executable")
 parser.add_argument('input_file', 
-                help="""Parameters for the individual fragment MC runs are """ +
-                     """taken from INPUTFILE. The fragment .mcf files are """ +
-                     """generated from the molecular .mcf files given in """ +
-                     """INPUTFILE. The fragment library files (e.g. """ +
-                     """species1/frag1/frag1.dat) will be added to the """ +
-                     """# Frag_Info section of INPUTFILE.""")
+                help="Parameters for the individual fragment MC runs are " +
+                     "taken from INPUTFILE. The fragment .mcf files are " +
+                     "generated from the molecular .mcf files given in " +
+                     "INPUTFILE. The fragment library files (e.g. " +
+                     "species1/frag1/frag1.dat) will be added to the " +
+                     "# Frag_Info section of INPUTFILE.")
 parser.add_argument('config_files', nargs='+',
-                help="""CONFIGFILES must be in either .pdb or .cml format. """ +
-                     """A .pdb file can be generated using Gaussview, """ +
-                     """while .cml files can be generated using Avogadro. """ +
-                     """CONFIGFILES provide the starting configuration for """ +
-                     """each fragment that has a ring. If the molecule is """ +
-                     """rigid, the coordinates are simply transferred from """ +
-                     """CONFIGFILE to the fragment library file.""")
+                help="CONFIGFILES must be in either .pdb or .cml format. " +
+                     "A .pdb file can be generated using Gaussview, " +
+                     "while .cml files can be generated using Avogadro. " +
+                     "CONFIGFILES provide the starting configuration for " +
+                     "each fragment that has a ring. If the molecule is " +
+                     "rigid, the coordinates are simply transferred from " +
+                     "CONFIGFILE to the fragment library file.")
 parser.add_argument('--nConfigs', '-n', type=int, default=100000,
-                help="""number of configurations to write to the fragment library""")
+                help="number of configurations to write to the fragment " +
+                     "library")
+parser.add_argument('--noFlags', action='store_true',
+                help="Suppresses the _s? flags that are appended to each " +
+                     "atom type by default in the .mcf")
 
 args = parser.parse_args()
 
@@ -265,6 +268,11 @@ print bold+"Scanning input file"+normal
 in_file = open(input_file,'r')
 keyword_line = []
 
+# initialize optional keywords
+intra_scaling_line = None
+charge_style_line = None
+mixing_rule_line = None
+
 for line_number,line in enumerate(in_file):
 	if not line.strip():
 		continue
@@ -291,7 +299,7 @@ for line_number,line in enumerate(in_file):
 		elif line_parse[1] == "Intra_Scaling":
 			intra_scaling_line = line_number+1
 		elif line_parse[1] == "Mixing_Rule":
-			mixing_rule = line_number+1
+			mixing_rule_line = line_number+1
 
 in_file.close()
 
@@ -301,28 +309,32 @@ nbr_boxes = int(linecache.getline(input_file, box_info_line+1))
 #Obtain VDW_Style and Charge_Style info
 if nbr_boxes == 1:
 	vdw_style = linecache.getline(input_file, vdw_style_line+1).split()[0]
-	charge_style = linecache.getline(input_file, charge_style_line+1).split()[0]
+	if charge_style_line:
+		charge_style = linecache.getline(input_file, charge_style_line+1).split()[0]
 else:
 	vdw_style = []
 	charge_style = []
 	for i in xrange(1,nbr_boxes+1):
 		vdw_style.append(linecache.getline(input_file, vdw_style_line+i).split()[0])
-		charge_style.append(linecache.getline(input_file, charge_style_line+i).split()[0])
+		if charge_style_line:
+			charge_style.append(linecache.getline(input_file, charge_style_line+i).split()[0])
 	if vdw_style[1] != vdw_style[0]:
 		vdw_style = raw_input("VDW_Style for boxes don't match. " +
 		                      "Enter the VDW_Style to use (" + vdw_style[0] + "/" + 
 		                      vdw_style[i-1] + "):")
 	else:
 		vdw_style = vdw_style[0]
-	if vdw_style != 'LJ' or vdw_style != 'Mie':
+	if vdw_style != 'LJ' and vdw_style != 'lj' and \
+	   vdw_style != 'Mie' and vdw_style != 'mie':
 		print "Only 'LJ' and 'Mie' VDW_Styles are supported"
 		quit()
-	if charge_style[1] != charge_style[0]:
-		charge_style = raw_input("Charge_Style for boxes don't match. " +
-		               "Enter the Charge_Style to use (" + charge_style[0] + "/" + 
-		               charge_style[i-1] + "):")
-	else:
-		charge_style = charge_style[0]
+	if charge_style_line:
+		if charge_style[1] != charge_style[0]:
+			charge_style = raw_input("Charge_Style for boxes don't match. " +
+										 "Enter the Charge_Style to use (" + charge_style[0] + "/" + 
+										 charge_style[i-1] + "):")
+		else:
+			charge_style = charge_style[0]
 
 #Obtain simulation type
 sim_type = linecache.getline(input_file,sim_type_line+1)
@@ -335,11 +347,25 @@ print bold+"  Number of species found: " + normal + str(nbr_species)
 vdw_scaling = []
 charge_scaling = []
 for i in xrange(1,nbr_species+1):
-	if charge_style == 'coul':
-		vdw_scaling.append(linecache.getline(input_file,intra_scaling_line+2*i-1))
-		charge_scaling.append(linecache.getline(input_file,intra_scaling_line+2*i))
-	else:
-		vdw_scaling.append(linecache.getline(input_file,intra_scaling_line+i))
+	if intra_scaling_line:
+		if charge_style_line and charge_style == 'coul':
+			vdw_scaling.append(linecache.getline(input_file,intra_scaling_line+2*i-1))
+			charge_scaling.append(linecache.getline(input_file,intra_scaling_line+2*i))
+		else:
+			vdw_scaling.append(linecache.getline(input_file,intra_scaling_line+i))
+
+#Mixing_Rule
+if mixing_rule_line:
+	mixing_rule = linecache.getline(input_file,mixing_rule_line+1)
+	if mixing_rule.strip() == "custom":
+		i = 1
+		while True:
+			if linecache.getline(input_file,mixing_rule_line+1+i).strip() and \
+			   linecache.getline(input_file,mixing_rule_line+1+i)[1] != '!':
+				mixing_rule = mixing_rule + linecache.getline(input_file,mixing_rule_line+1+i)
+				i += 1
+			else:
+				break
 
 #Open PDB Files. Is there any files without the CONECT keyword (e.g. zeolite)? If so, 
 #tag it. This species will be assumed to be comprised of rigid fragment.
@@ -392,7 +418,11 @@ for i in xrange(0, nbr_species):
 	for j in xrange(0,nbr_atoms[i]):
 		atom_type = linecache.getline(mcf_files[i],
 		                              line_where_atom_info[i]+2+j).split()[1]
-		if atom_type[-3:] != '_s' + str(i+1):
+		#remove old '_s?' flags if present
+		if atom_type[-3:-1] == '_s':
+			atom_type = atom_type[:-3]
+		#add '_s?" flags to atom_types, unless --noFlags given
+		if not args.noFlags:
 			atom_type = atom_type + '_s' + str(i+1)
 		atom_type_list[i][j] = atom_type
 		atom_in_ring = linecache.getline(mcf_files[i],
@@ -524,14 +554,18 @@ for i in xrange(0, nbr_species):
 		input_mcf_gen.write("# Nbr_Species\n1\n\n")
 		input_mcf_gen.write("# VDW_Style\n"+vdw_style+" minimum_image\n\n")
 		input_mcf_gen.write("# Rcutoff_Low\n1.0\n\n")
-		input_mcf_gen.write("# Mixing_Rule\nLB\n\n")
-		if charge_style == 'coul':
-			input_mcf_gen.write("# Charge_Style\n"+charge_style+" minimum_image\n\n")
-			input_mcf_gen.write("# Intra_Scaling\n"+
-											 vdw_scaling[i]+charge_scaling[i]+"\n")
-		else:
-			input_mcf_gen.write("# Charge_Style\n"+charge_style+"\n\n")
-			input_mcf_gen.write("# Intra_Scaling\n"+vdw_scaling[i]+"\n")
+		if mixing_rule_line:
+			input_mcf_gen.write("# Mixing_Rule\n"+mixing_rule+"\n\n")
+		if charge_style_line:
+			if charge_style == 'coul':
+				input_mcf_gen.write("# Charge_Style\n"+charge_style+" minimum_image\n\n")
+				if intra_scaling_line:
+					input_mcf_gen.write("# Intra_Scaling\n"+
+													 vdw_scaling[i]+charge_scaling[i]+"\n")
+			else:
+				input_mcf_gen.write("# Charge_Style\n"+charge_style+"\n\n")
+				if intra_scaling_line:
+					input_mcf_gen.write("# Intra_Scaling\n"+vdw_scaling[i]+"\n")
 		input_mcf_gen.write("# Molecule_Files\n../../"+mcf_files[i]+" 50\n\n")
 		input_mcf_gen.write("# Box_Info\n1\nCUBIC\n30.0 30.0 30.0\n\nEND")
 		input_mcf_gen.close()
@@ -635,15 +669,19 @@ for i in xrange(0, nbr_species):
 				input_frag.write("# Sim_Type\nNVT_MC_Ring_Fragment\n\n")
 				input_frag.write("# Nbr_Species\n1\n\n")
 				input_frag.write("# VDW_Style\n"+vdw_style+" minimum_image\n\n")
-				input_frag.write("# Mixing_Rule\nLB\n\n")
+				if mixing_rule_line:
+					input_frag.write("# Mixing_Rule\n"+mixing_rule+"\n\n")
 				input_frag.write("# Rcutoff_Low\n1.0\n\n")
-				if charge_style == 'coul':
-					input_frag.write("# Charge_Style\n"+charge_style+" minimum_image\n\n")
-					input_frag.write("# Intra_Scaling\n"+
-													 vdw_scaling[i]+charge_scaling[i]+"\n")
-				else:
-					input_frag.write("# Charge_Style\n"+charge_style+"\n\n")
-					input_frag.write("# Intra_Scaling\n"+vdw_scaling[i]+"\n")
+				if charge_style_line:
+					if charge_style == 'coul':
+						input_frag.write("# Charge_Style\n"+charge_style+" minimum_image\n\n")
+						if intra_scaling_line:
+							input_frag.write("# Intra_Scaling\n"+
+															 vdw_scaling[i]+charge_scaling[i]+"\n")
+					else:
+						input_frag.write("# Charge_Style\n"+charge_style+"\n\n")	
+						if intra_scaling_line:
+							input_frag.write("# Intra_Scaling\n"+vdw_scaling[i]+"\n")
 				input_frag.write("# Box_Info\n1\nCUBIC\n50.0 50.0 50.0\n\n")
 				input_frag.write("# Temperature_Info\n"+str(temperature)+"\n\n")
 				input_frag.write("# Seed_Info\n706111630 70611631\n\n")
@@ -666,8 +704,8 @@ for i in xrange(0, nbr_species):
 													 "# Done_Probability_Info\n\n")
 				input_frag.write("# Run_Type\nProduction 1000 10\n\n")
 				input_frag.write("# Simulation_Length_Info\nUnits    Steps\n"+
-					               "Prop_Freq  100\nCoord_Freq   5000\n"+
-					               "Run          "+str(100*args.nConfigs)+"\n\n")
+					               "prop_freq  100\ncoord_freq   5000\n"+
+					               "run          "+str(100*args.nConfigs)+"\n\n")
 				input_frag.write("# Property_Info 1\nEnergy_Total\n\n")
 				input_frag.write("# File_Info\nfrag"+str(j+1)+".dat\n\n")
 				input_frag.write("END")
@@ -685,14 +723,18 @@ for i in xrange(0, nbr_species):
 				input_frag.write("# Nbr_Species\n1\n\n")
 				input_frag.write("# VDW_Style\n"+vdw_style+" minimum_image\n\n")
 				input_frag.write("# Rcutoff_Low\n0.0\n\n")
-				input_frag.write("# Mixing_Rule\nLB\n\n")
-				if charge_style == 'coul':
-					input_frag.write("# Charge_Style\n"+charge_style+" minimum_image\n\n")
-					input_frag.write("# Intra_Scaling\n"+
-													 vdw_scaling[i]+charge_scaling[i]+"\n")
-				else:
-					input_frag.write("# Charge_Style\n"+charge_style+"\n\n")
-					input_frag.write("# Intra_Scaling\n"+vdw_scaling[i]+"\n")
+				if mixing_rule_line:
+					input_frag.write("# Mixing_Rule\n"+mixing_rule+"\n\n")
+				if charge_style_line:
+					if charge_style == 'coul':
+						input_frag.write("# Charge_Style\n"+charge_style+" minimum_image\n\n")
+						if intra_scaling_line:
+							input_frag.write("# Intra_Scaling\n"+
+															 vdw_scaling[i]+charge_scaling[i]+"\n")
+					else:
+						input_frag.write("# Charge_Style\n"+charge_style+"\n\n")
+						if intra_scaling_line:
+							input_frag.write("# Intra_Scaling\n"+vdw_scaling[i]+"\n")
 				input_frag.write("# Molecule_Files\n../fragments/frag_"+str(j+1)+
 												 "_1.mcf 1\n\n")
 				input_frag.write("# Box_Info\n1\nCUBIC\n50.0 50.0 50.0\n\n")
@@ -704,9 +746,9 @@ for i in xrange(0, nbr_species):
 												 "_1.xyz 1\n\n")
 				input_frag.write("# Run_Type\nProduction 1000 10\n\n")
 				input_frag.write("# Simulation_Length_Info\nUnits  Steps\n"+
-												 "Prop_Freq  10\nCoord_Freq   90\n"+
-												 "Run          "+str(11*args.nConfigs)+"\n"+
-                         "NequilSteps  "+str(args.nConfigs)+"\n\n")
+				                 "prop_freq  10\ncoord_freq   90\n"+
+				                 "run          "+str(11*args.nConfigs)+"\n"+
+				                 "nequilsteps  "+str(args.nConfigs)+"\n\n")
 				input_frag.write("# File_Info\nfrag"+str(j+1)+".dat\n\n")
 				input_frag.write("END")
 				input_frag.close()

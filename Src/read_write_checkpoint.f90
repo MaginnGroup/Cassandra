@@ -35,6 +35,7 @@ MODULE Read_Write_Checkpoint
   USE File_Names
   USE Simulation_Properties
   USE Random_Generators, ONLY : s1,s2,s3,s4,s5, rranf
+  USE IO_Utilities
   
   IMPLICIT NONE
 
@@ -176,8 +177,10 @@ SUBROUTINE Read_Checkpoint
     READ(restartunit,*)
 
     DO ibox = 1, nbr_boxes
+       WRITE(logunit,'(X,A)') 'Reading move parameters for box ' // TRIM(Int_To_String(ibox))
 
        DO is = 1, nspecies
+          WRITE(logunit,'(X,A)') 'Reading move parameters for species ' // TRIM(Int_To_String(is))
           
           ! read information only if start_type == checkpoint
           
@@ -196,6 +199,9 @@ SUBROUTINE Read_Checkpoint
           READ(restartunit,'(3(E24.15))') max_disp(is,ibox), &
                max_rot(is,ibox), species_list(is)%max_torsion
 
+          WRITE(logunit,'(2X,A,T20,F9.5)') 'max displacement', max_disp(is,ibox)
+          WRITE(logunit,'(2X,A,T20,F9.5)') 'max rotation', max_rot(is,ibox)
+
        END DO
        
        IF ( int_sim_type == sim_npt .OR. int_sim_type == sim_gemc .OR. &
@@ -213,6 +219,7 @@ SUBROUTINE Read_Checkpoint
     WRITE(logunit,*) 'Number of mc steps read successfully'
     
     DO ibox = 1, nbr_boxes
+       WRITE(logunit,'(X,A)') 'Reading info for box ' // TRIM(Int_To_String(ibox))
 
        READ(restartunit,*) tot_trials(ibox)
        READ(restartunit,*) box_list(ibox)%volume
@@ -233,6 +240,7 @@ SUBROUTINE Read_Checkpoint
             int_sim_type == sim_gemc_npt ) THEN
           
           READ(restartunit,*) box_list(ibox)%dv_max
+          WRITE(logunit,'(2X,A,T20,F9.0)') 'max volume change ', box_list(ibox)%dv_max
 
        END IF
        
@@ -393,7 +401,6 @@ SUBROUTINE Read_Checkpoint
     
     Type(Energy_Class) :: inrg
 
-    WRITE(logunit,*)
     WRITE(logunit,*) 'Reading configuration for box', ibox
   
     OPEN(unit = old_config_unit,file=old_config_file(ibox))
@@ -624,7 +631,7 @@ SUBROUTINE Write_Trials_Success
               WRITE(logunit,*)
               WRITE(logunit,'(3X,A57)') '---------------------------------------------------------'
               WRITE(logunit,'(3X,A31,X,I2)') 'Writing information for species', is
-              WRITE(logunit,'(A20,2x,A10,2x,A10,2X,A10)') 'Fragment', 'Trials', 'Success', '% Success'
+              WRITE(logunit,'(A20,2x,A10,2x,A10,2X,A10)') '#_Frags_Regrown', 'Trials', 'Success', '% Success'
 
               DO ifrag = 1, nfragments(is)
                  

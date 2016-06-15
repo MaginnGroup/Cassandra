@@ -438,12 +438,8 @@ SUBROUTINE Insertion
   !    ln_pacc = b(dU_mn-U_frag) - b mu' + Log[-----------------------------]  
   !                                                         V
   !
-  !                                    P_seq P_bias (N + 1) 
-  !            = b(dU_mn-U_frag) + Log[--------------------]
-  !                                           b f' V
-  !
   ! where the primes (') indicate that additional intensive terms have been
-  ! absorbed into the chemical potential and fugacity, respectively.
+  ! absorbed into the chemical potential.
 
   ! Compute the acceptance criterion
 
@@ -460,15 +456,9 @@ SUBROUTINE Insertion
                     + DLOG(REAL(nmols(is,ibox),DP)) &
                     - DLOG(box_list(ibox)%volume) 
 
-  IF(lchempot) THEN
-     ! chemical potential is input
-     ln_pacc = ln_pacc - species_list(is)%chem_potential * beta(ibox) &
-                       + 3.0_DP*DLOG(species_list(is)%de_broglie(ibox))
-  ELSE
-     ! fugacity is input
-     ln_pacc = ln_pacc - DLOG(species_list(is)%fugacity) &
-                       - DLOG(beta(ibox)) 
-  END IF
+  ! chemical potential
+  ln_pacc = ln_pacc - species_list(is)%chem_potential * beta(ibox) &
+                    + 3.0_DP*DLOG(species_list(is)%de_broglie(ibox))
   
   accept = accept_or_reject(ln_pacc)
   

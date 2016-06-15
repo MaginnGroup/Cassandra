@@ -71,7 +71,7 @@ SUBROUTINE Rotate
 
   REAL(DP) :: nmols_box(nbr_boxes)
   REAL(DP), ALLOCATABLE :: x_box(:), x_species(:)
-  REAL(DP) :: rand_no
+  REAL(DP) :: randno
   REAL(DP), DIMENSION(:), ALLOCATABLE :: dx, dy, dz
   REAL(DP) :: delta_e, ln_pacc, success_ratio
   REAL(DP) :: E_vdw, E_qq, E_vdw_move, E_qq_move, E_reciprocal_move
@@ -124,9 +124,9 @@ SUBROUTINE Rotate
        END IF
     END DO
 
-    rand_no = rranf()
+    randno = rranf()
     DO ibox = 1, nbr_boxes
-       IF ( rand_no <= x_box(ibox)) EXIT
+       IF ( randno <= x_box(ibox)) EXIT
     END DO
 
     DEALLOCATE(x_box)
@@ -154,9 +154,9 @@ SUBROUTINE Rotate
      END IF
   END DO
 
-  rand_no = rranf()
+  randno = rranf()
   DO is = 1, nspecies
-     IF ( rand_no <= x_species(is) ) EXIT
+     IF ( randno <= x_species(is) ) EXIT
   END DO
 
   DEALLOCATE(x_species)
@@ -298,7 +298,7 @@ SUBROUTINE Rotate
   
   IF (MOD(ntrials(is,ibox)%rotation, nupdate) == 0) THEN
 
-     IF (int_run_style == run_equil) THEN
+     IF (int_run_type == run_equil) THEN
         success_ratio = REAL(nequil_success(is,ibox)%rotation,DP)/REAL(nupdate,DP)
      ELSE
         success_ratio = REAL(nsuccess(is,ibox)%rotation,DP)/REAL(ntrials(is,ibox)%rotation,DP)
@@ -307,7 +307,7 @@ SUBROUTINE Rotate
      WRITE(logunit,'(X,I9,X,A10,X,5X,X,I3,X,I3,X,F8.5)',ADVANCE='NO') &
            i_mcstep, 'rotate', is, ibox, success_ratio
 
-     IF (int_run_style == run_equil) THEN   
+     IF (int_run_type == run_equil) THEN   
     
          nequil_success(is,ibox)%rotation = 0
         ! update the width of the species for equilibration run

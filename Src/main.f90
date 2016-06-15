@@ -97,11 +97,11 @@ PROGRAM Main
   CHARACTER(120) filename1
   CHARACTER(80) :: name
 
-  LOGICAL :: overlap, cbmc_overlap, superbad, inside_ch
+  LOGICAL :: overlap, cbmc_overlap, check_charge
 
   REAL(DP) :: attempt_prob, phi
   REAL(DP) :: E_st_vdw, E_st_qq, W_st_vdw, W_st_qq, e_lrc, w_lrc
-  REAL(DP) :: q_tot_sys, q_mol
+  REAL(DP) :: q_box
 
   REAL(DP) :: month_time, day_time, hour_time, min_time, sec_time, ms_time
 
@@ -213,7 +213,7 @@ PROGRAM Main
   ! Determine if it is equilibration or production or test
   CALL Get_Run_Type
 
-  IF (int_run_style == run_test) THEN
+  IF (int_run_type == run_test) THEN
 
      testname = molfile_name(1)
      IF(testname(:1) == 'c') testname = 'methane'
@@ -293,6 +293,45 @@ PROGRAM Main
     END DO
   END DO
 
+  DO ibox = 1, nbr_boxes
+     CALL Reset(ibox)
+  END DO
+
+  ! compute the charge on each species and the box charge
+  check_charge = .FALSE.
+  DO ibox = 1, nbr_boxes
+    IF (int_charge_style(ibox) /= charge_none) check_charge = .TRUE.
+  END DO
+  IF (check_charge) THEN
+     WRITE(logunit,*)
+     WRITE(logunit,'(A)') 'Charge neutrality check'
+     WRITE(logunit,'(A80)') '********************************************************************************'
+
+     DO is = 1, nspecies
+        WRITE(logunit,'(X,A,T35,4x,f12.8)')'Species ' // TRIM(Int_To_String(is)) // ' has charge:', &
+           species_list(is)%total_charge
+     END DO
+     WRITE(logunit,*)
+
+     DO ibox = 1, nbr_boxes
+        q_box = 0.0_DP
+        DO is = 1, nspecies
+           q_box = q_box + REAL(nmols(is,ibox),DP) * species_list(is)%total_charge
+        END DO
+        WRITE(logunit,'(X,A,T35,4X,f12.8)')'Box     ' // TRIM(Int_To_String(ibox)) // ' has charge:', q_box
+
+        IF (ABS(q_box) > tiny_number .AND. &
+           (int_charge_sum_style(ibox) == charge_ewald .OR. int_charge_sum_style(ibox) == charge_dsf)) THEN
+           err_msg = ''
+           err_msg(1) = 'Long-range electrostatics cannot be computed for box ' // TRIM(Int_To_String(ibox)) &
+                     // ' due to its net charge'
+           CALL Clean_Abort(err_msg,'main.f90')
+        END IF
+     END DO
+
+     WRITE(logunit,'(A80)') '********************************************************************************'
+  END IF
+
   ! Ewald stuff
   IF ( int_charge_sum_style(1) == charge_ewald) THEN
      
@@ -325,51 +364,6 @@ PROGRAM Main
      sin_mol(:,:) = 0.0_DP
  
   END IF
-
-  DO ibox = 1, nbr_boxes
-     CALL Reset(ibox)
-  END DO
-
-  ! NR: I believe we have all the information to compute the 
-  !     system charge and charge on each species
-
-  WRITE(logunit,*)
-  WRITE(logunit,'(A)') 'Charge neutrality check'
-  WRITE(logunit,'(A80)') '********************************************************************************'
-
-  q_tot_sys = 0.0_DP; q_mol=0.0_DP
-  
-  DO is = 1, nspecies
-     q_mol = 0.0_DP 
-     Do ia = 1, natoms(is)     
-        q_mol = q_mol + nonbond_list(ia,is)%charge 
-     END DO 
-     WRITE(logunit,'(X,A,T15,2X,I4,4x,A,T45,4x,f12.8)')'Species', is, 'has charge', q_mol 
-  ENDDO
-  WRITE(logunit,*)
-
-  DO ibox = 1, nbr_boxes
-     q_tot_sys = 0.0_DP 
-     DO is = 1, nspecies
-        DO im = 1, nmols(is,ibox)
-           DO ia = 1,natoms(is)
-              q_tot_sys = q_tot_sys + nonbond_list(ia,is)%charge 
-           END DO 
-        END DO
-     END DO
-     WRITE(logunit,'(X,A,T13,4X,I4,4X,A,T45,4X,f12.8)')'Box ', ibox, 'has charge', q_tot_sys
-
-     IF (ABS(q_tot_sys) .gt. 0.000001) THEN
-        IF ( .NOT. ((int_sim_type /=  sim_frag) .OR. (int_sim_type /= sim_ring)) ) THEN
-           err_msg = ''
-           err_msg(1) = 'Box has net charge'
-           err_msg(2) = Int_To_String(ibox)
-           CALL Clean_Abort(err_msg,'main.f90')
-        END IF
-     END IF
-  END DO
-
-  WRITE(logunit,'(A80)') '********************************************************************************'
 
   ! initialize random number generator
   CALL init_seeds(iseed1, iseed3)
@@ -492,7 +486,7 @@ PROGRAM Main
   WRITE(logunit,'(A80)') '********************************************************************************'
   WRITE(logunit,'(X,A9,X,A10,X,A5,X,A3,X,A3,X,A8,X,A9)') 'Step', 'Move', 'Mol', 'Spc', 'Box', 'Success', 'MaxWidth'
 
-  IF (int_run_style == run_test .AND. n_mcsteps == 1) THEN
+  IF (int_run_type == run_test .AND. n_mcsteps == 1) THEN
 
      DO
        CALL Angle_Distortion(ibox)
@@ -532,8 +526,9 @@ PROGRAM Main
 
      CALL GCMC_Driver
 
-  ELSE IF (int_sim_type == sim_gemc .OR. int_sim_type == sim_gemc_ig .OR. &
-     int_sim_type == sim_gemc_npt) THEN
+  ELSE IF (int_sim_type == sim_gemc .OR. &
+           int_sim_type == sim_gemc_ig .OR. &
+           int_sim_type == sim_gemc_npt) THEN
      
      CALL GEMC_Driver
 
@@ -604,14 +599,16 @@ PROGRAM Main
 
     ! Write the current total energy to stdout
     WRITE(*,*)
-    WRITE(*,"(X,A14,I1,A4,T15,F24.12)") 'Ending Energy(', ibox, ') = ', &
+    WRITE(*,'(X,A)') 'Energy of final configuration, box ' // &
+       TRIM(Int_To_String(ibox))
+    WRITE(*,"(2X,A,T30,F24.12)") 'Initial energy + deltas = ', &
        energy(ibox)%total
 
     ! Compute the energies from scratch
     CALL Compute_System_Total_Energy(ibox,.TRUE.,overlap)
 
     ! Write the recomputed total energy to stdout
-    WRITE(*,"(X,A14,I1,A4,T15,F24.12)") ' Final Energy(', ibox, ') = ', &
+    WRITE(*,"(2X,A,T30,F24.12)") 'Energy from scratch = ', &
        energy(ibox)%total
 
     ! Write the recomputed energy components to log

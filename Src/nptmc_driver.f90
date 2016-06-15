@@ -123,7 +123,7 @@ SUBROUTINE NPTMC_Driver
 
 !$ openmp_flag = .TRUE.
 
-  write(*,*) 'openmp_flag = ', openmp_flag
+  WRITE(*,*) 'openmp_flag = ', openmp_flag
 
   IF(.NOT. openmp_flag) THEN
      CALL cpu_time(time_start)
@@ -270,7 +270,7 @@ SUBROUTINE NPTMC_Driver
      IF(echeck_flag) THEN
         IF(MOD(i_mcstep,iecheck) == 0) THEN
            DO ibox = 1,nbr_boxes
-              CALL System_Energy_Check(ibox,i_mcstep,rand_no)
+              CALL Check_System_Energy(ibox,rand_no)
            END DO
         END IF
      END IF
@@ -294,14 +294,9 @@ SUBROUTINE NPTMC_Driver
         IF(now_time .GT. n_mcsteps) complete = .TRUE.
      END IF
 
-     ! Accumulate averages
- 
-     DO ibox = 1, nbr_boxes
-        CALL Accumulate(ibox)
-        next_write(ibox) = .true.
-        next_rdf_write(ibox) = .true.
-     END DO
-
+     next_write(:) = .true.
+     next_rdf_write(:) = .true.
+     ! write properties
      IF ( .NOT. block_average ) THEN
         
         ! instantaneous values are to be printed
@@ -358,6 +353,9 @@ SUBROUTINE NPTMC_Driver
         
         DO ibox = 1, nbr_boxes
            
+           ! Accumulate averages
+           CALL Accumulate(ibox)
+
            IF (tot_trials(ibox) /= 0) THEN
               IF(.NOT. timed_run) THEN
                  IF ( MOD(i_mcstep,nthermo_freq) == 0) write_flag = .TRUE.

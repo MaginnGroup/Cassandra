@@ -520,7 +520,7 @@ SUBROUTINE GEMC_NVT_Volume
   ! Update the maximum volume modulus of equilibration runs
    IF (MOD(nvolumes(box_grw),nvol_update) == 0 ) THEN
 
-      IF ( int_run_style == run_equil) THEN
+      IF ( int_run_type == run_equil) THEN
 
          success_ratio = REAL(ivol_success(box_grw),DP)/REAL(nvol_update,DP)
          ivol_success(box_grw) = 0

@@ -72,11 +72,9 @@
 
 
 !******************************************************************************
-  IF (verbose_log) THEN
-     WRITE(logunit,*)
-     WRITE(logunit,'(A)') 'Nonbond tables'
-     WRITE(logunit,'(A80)') '********************************************************************************'
-  END IF
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'Nonbond tables'
+  WRITE(logunit,'(A80)') '********************************************************************************'
 
   ALLOCATE(temp_atomtypes(1000), Stat=AllocateStatus)
   IF (AllocateStatus .NE. 0) THEN
@@ -444,7 +442,7 @@
            CustomLOOP: DO
              line_nbr = line_nbr + 1
              CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
-             IF (nbr_entries < 2) THEN
+             IF (nbr_entries < 2 .OR. line_array(1)(1:1) == '!') THEN
                 EXIT CustomLOOP
              END IF
 
@@ -457,25 +455,23 @@
                 END IF
              END DO
              IF (iset == 0) THEN
-                err_msg = ''
-                err_msg(1) = 'Atom type ' // TRIM(line_array(1)) // ' on line ' // &
-                             TRIM(Int_To_String(line_nbr)) // ' of input file not found'
-                CALL Clean_Abort(err_msg,'Create_Nonbond_Table')
-             END IF
-
-             ! find jtype
-             jset = 0
-             DO jtype = 1, nbr_atomtypes
-                IF (atom_type_list(jtype) == line_array(2)) THEN
-                   jset = 1
-                   EXIT
+                WRITE(logunit,'(A)') 'Atom type ' // TRIM(line_array(1)) // ' on line ' // &
+                   TRIM(Int_To_String(line_nbr)) // ' of input file not found. Skipping parameters.'
+                CYCLE
+             ELSE
+                ! find jtype
+                jset = 0
+                DO jtype = 1, nbr_atomtypes
+                   IF (atom_type_list(jtype) == line_array(2)) THEN
+                      jset = 1
+                      EXIT
+                   END IF
+                END DO
+                IF (jset == 0) THEN
+                   WRITE(logunit,'(A)') 'Atom type ' // TRIM(line_array(2)) // ' on line ' // &
+                      TRIM(Int_To_String(line_nbr)) // ' of input file not found. Skipping parameters.'
+                   CYCLE
                 END IF
-             END DO
-             IF (jset == 0) THEN
-                err_msg = ''
-                err_msg(1) = 'Atom type ' // TRIM(line_array(2)) // ' on line ' // &
-                             TRIM(Int_To_String(line_nbr)) // ' of input file not found'
-                CALL Clean_Abort(err_msg,'Create_Nonbond_Table')
              END IF
 
              IF (vdw_param_set(itype,jtype) == 0) THEN
@@ -563,8 +559,6 @@
      END IF ! mix_rule
   END IF ! nbr_atomtypes > 1
 
-  IF (verbose_log) THEN
-     WRITE(logunit,'(X,A79)') '-------------------------------------------------------------------------------'
-  END IF
+  WRITE(logunit,'(X,A80)') '********************************************************************************'
 
 END SUBROUTINE Create_Nonbond_Table

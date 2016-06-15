@@ -471,17 +471,9 @@ SUBROUTINE Check_String(string_in,ierr)
   ncharacters = LEN_TRIM(string_in)
   strln = LEN(string_in)
 
-  IF (.NOT.((string_in(1:1) >= 'A' .AND. (string_in(1:1) <= 'Z')) .OR. &
-      (string_in(1:1) >= 'a' .AND. (string_in(1:1) <= 'z')) .OR. &
-      (string_in(1:1) == '.' .OR. string_in(1:1) == '_' .OR. string_in(1:1) == '/' .OR. string_in(1:1) == '~'))) THEN
-     ierr = 1
-     RETURN
-  END IF
-
-
   ! Now check for the rest of the characters
 
-  DO i = 2, ncharacters
+  DO i = 1, ncharacters
      IF ( .NOT. ((string_in(i:i) >=  'A' .AND. (string_in(i:i) <= 'Z')) .OR. &
           (string_in(i:i) >= 'a' .AND. (string_in(i:i) <= 'z')) .OR. &
           (string_in(i:i) >= '0' .AND. (string_in(i:i) <= '9')) .OR. &

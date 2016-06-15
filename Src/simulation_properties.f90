@@ -54,6 +54,7 @@ MODULE Simulation_Properties
 
   USE Type_Definitions
   USE Global_Variables
+  USE Energy_Routines
 
   IMPLICIT NONE
 
@@ -247,6 +248,52 @@ CONTAINS
 
     END IF
   END SUBROUTINE Compute_Beads
+
+!  !****************************************************************************
+
+  SUBROUTINE Compute_Pressure(this_box)
+    !***************************************************************************
+    !
+    ! This subroutine calculates the pressure of the the box
+    ! 
+    ! CALLED BY: 
+    !       Write_Properties
+    !
+    ! CALLS :
+    !       Compute_System_Total_Force
+    !
+    ! Written by Ryan Mullen on 06/11/16
+    !
+    !***************************************************************************
+
+    IMPLICIT NONE
+
+    INTEGER :: this_box
+
+    ! start with the ideal gas pressure
+    pressure(this_box)%computed = SUM(nmols(:,this_box)) * temperature(this_box) &
+                                / box_list(this_box)%volume * p_const
+
+    ! add the pressure from the virial
+    CALL Compute_System_Total_Force(this_box)
+
+    pressure_tensor(:,:,this_box) = W_tensor_total(:,:,this_box) &
+                                  / box_list(this_box)%volume
+    pressure(this_box)%computed = pressure(this_box)%computed &
+                                + ((pressure_tensor(1,1,this_box) &
+                                  + pressure_tensor(2,2,this_box) &
+                                  + pressure_tensor(3,3,this_box)) / 3.0_DP) &
+                                * atomic_to_bar
+    
+    IF(int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
+       pressure(this_box)%computed = pressure(this_box)%computed &
+                                   + virial(this_box)%lrc &
+                                   / box_list(this_box)%volume * atomic_to_bar
+    END IF
+
+  END SUBROUTINE Compute_Pressure
+
+!  !****************************************************************************
 
 END MODULE Simulation_Properties
 

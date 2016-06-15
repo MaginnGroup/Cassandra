@@ -76,7 +76,7 @@ SUBROUTINE MCF_Control
 
 
   WRITE(*,*) 'Finished generating fragments'
-  WRITE(*,*) 'Exiting....'
+  WRITE(*,*) 'Exiting'
   WRITE(*,*)
   WRITE(logunit,*)
   WRITE(logunit,*) 'Finished generating fragments'

@@ -124,7 +124,7 @@
 
              ELSE
                 
-                IF(box_list(ibox)%box_shape == 'CUBIC') THEN
+                IF(box_list(ibox)%box_shape == 'cubic') THEN
                    ! -- all the cell lengths are identical,
                    atom_list(1,alive,is)%rxp = (rranf() - 0.5_DP) * box_list(ibox)%length(1,1)
                    atom_list(1,alive,is)%ryp = (rranf() - 0.5_DP) * box_list(ibox)%length(2,2)

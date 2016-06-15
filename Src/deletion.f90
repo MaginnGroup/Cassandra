@@ -311,12 +311,8 @@ SUBROUTINE Deletion
   !    ln_pacc = b(dU_mn + U_frag) + b mu' + Log[-----------------------]
   !                                              P_seq P_bias N Lambda^3
   !
-  !                                          b f' V
-  !            = b(dU_mn + U_frag) + Log[--------------]
-  !                                      P_seq P_bias N 
-  !
   ! where the primes (') indicate that additional intensive terms have been
-  ! absorbed into the chemical potential and fugacity, respectively.
+  ! absorbed into the chemical potential.
 
   IF(species_list(is)%int_insert == int_igas) THEN
      igas_flag = .TRUE.
@@ -339,15 +335,9 @@ SUBROUTINE Deletion
                     - DLOG(REAL(nmols(is,ibox),DP)) &
                     + DLOG(box_list(ibox)%volume)
  
-  IF(lchempot) THEN
-     ! chemical potential is input
-     ln_pacc = ln_pacc + beta(ibox) * species_list(is)%chem_potential &
+  ! chemical potential
+  ln_pacc = ln_pacc + beta(ibox) * species_list(is)%chem_potential &
                        - 3.0_DP*DLOG(species_list(is)%de_broglie(ibox)) 
-  ELSE
-     ! fugacity is input
-     ln_pacc = ln_pacc + DLOG(species_list(is)%fugacity) &
-                       + DLOG(beta(ibox)) 
-  END IF 
  
   accept = accept_or_reject(ln_pacc)
 
@@ -402,7 +392,7 @@ SUBROUTINE Deletion
      ! Increment counter
      nsuccess(is,ibox)%deletion = nsuccess(is,ibox)%deletion + 1
 
-!     CALL System_Energy_Check(1,mcstep,randno)
+!     CALL Check_System_Energy(1,randno)
   ELSE
 
      IF ( (int_charge_sum_style(ibox) == charge_ewald) .AND. &

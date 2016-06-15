@@ -78,32 +78,28 @@ CONTAINS
     CHARACTER*120 :: prop_to_write
     CHARACTER*120, ALLOCATABLE :: prop_unit(:)
 
+    ! Header line 1
     IF (block_average) THEN
        WRITE(this_unit,'(A)') '# Block averages'
     ELSE
        WRITE(this_unit,'(A)') '# Instantaneous properties'
     END IF
 
+    ! Header line 2, property names
     write_str = ""
-    IF (sim_length_units == 'Steps') THEN
+    IF (sim_length_units == 'Steps' .OR. sim_length_units == 'Minutes') THEN
       write_str = "# MC_STEP"
     ELSE IF (sim_length_units == 'Sweeps') THEN
       write_str = "# MC_SWEEP"
     END IF
     
     WRITE(this_unit,'(A12,2X)',ADVANCE='NO') ADJUSTL(write_str)
-    
-    ! Now write strings for the rest of fields.
-    
-    DO ii = 1, prop_per_file(file_number,this_box)-1
-       
+    DO ii = 1, prop_per_file(file_number,this_box)
        WRITE(this_unit,'(A16,2X)',ADVANCE='NO') (TRIM(prop_output(ii,file_number,this_box)))
-       
     END DO
+    WRITE(this_unit,*)
 
-    WRITE(this_unit,'(A16,2X)') (TRIM(prop_output(ii,file_number,this_box)))
-
-
+    ! Header line 3, units
     ALLOCATE(prop_unit(prop_per_file(file_number,this_box)+1))
 
     prop_unit(:) = ""
@@ -111,13 +107,13 @@ CONTAINS
 
     WRITE(this_unit, '(A12,2X)',ADVANCE='NO') ADJUSTL(prop_unit(1))
 
-    DO ii = 1, prop_per_file(file_number,this_box) - 1
+    DO ii = 1, prop_per_file(file_number,this_box)
 
        prop_to_write = prop_output(ii,file_number,this_box)
 
        IF (prop_to_write(1:6) == 'Energy') THEN
 
-          prop_unit(ii) = '(kJ/mol)-Ext '
+          prop_unit(ii) = '(kJ/mol)-Ext'
 
        ELSE IF (prop_to_write == 'Pressure') THEN
           
@@ -127,9 +123,17 @@ CONTAINS
 
           prop_unit(ii) = '(A^3)'
 
-       ELSE IF (prop_to_write == 'Density') THEN
+       ELSE IF (prop_to_write(1:7) == 'Density') THEN
 
           prop_unit(ii) = '(molec/A^3)'
+
+       ELSE if (prop_to_write == 'Mass_Density') THEN
+ 
+          prop_unit(ii) = '(kg/m^3)'
+
+       ELSE IF (prop_to_write(1:18) == 'Chemical_Potential') THEN
+
+          prop_unit(ii) = '(kJ/mol)'
 
        END IF
 
@@ -137,27 +141,7 @@ CONTAINS
 
     END DO
 
-    prop_to_write = prop_output(ii,file_number,this_box)
-    
-    IF (prop_to_write(1:6) == 'Energy') THEN
-       
-       prop_unit(ii) = '(kJ/mol)-Ext '
-       
-    ELSE IF (prop_to_write == 'Pressure') THEN
-       
-       prop_unit(ii) = '(bar)'
-       
-    ELSE IF (prop_to_write == 'Volume') THEN
-       
-       prop_unit(ii) = '(A^3)'
-       
-    ELSE IF (prop_to_write == 'Density') THEN
-       
-       prop_unit(ii) = '(molec/A^3)'
-
-    END IF
-    
-    WRITE(this_unit,'(A16,2X)') (TRIM(prop_unit(ii)))
+    WRITE(this_unit,*)
 
     DEALLOCATE(prop_unit)
     
@@ -177,7 +161,7 @@ CONTAINS
    USE Simulation_Properties
    
    INTEGER :: file_number, ii, is, is_dens, is_cp, is_lambda, total_frac
-   INTEGER :: nmols_is, nmols_box, iis
+   REAL(DP) :: mass_density
    REAL(DP),DIMENSION(:), ALLOCATABLE :: write_buff
    CHARACTER(FILENAME_LEN) :: prop_written
 
@@ -216,9 +200,9 @@ CONTAINS
 
          write_buff(ii+1) = 1.0_DP/(beta(this_box)*kboltz)
 
-      ELSE IF (prop_written == 'Thermodynamic_Pressure') THEN
+      ELSE IF (prop_written == 'Pressure_Setpoint') THEN
 
-         write_buff(ii+1) = pressure(this_box)*atomic_to_bar
+         write_buff(ii+1) = pressure(this_box)%setpoint * atomic_to_bar
 
       ELSE IF (prop_written == 'Energy_LJ') THEN
 
@@ -254,27 +238,17 @@ CONTAINS
 
       ELSE IF (prop_written == 'Pressure') THEN
 
-         CALL Compute_System_Total_Force(this_box)
+         IF (block_average) THEN
+            write_buff(ii+1) = (ac_pressure(this_box))/REAL(nthermo_freq,DP)
+         ELSE
+            IF (pressure(this_box)%last_calc /= i_mcstep) THEN
+               pressure(this_box)%last_calc = i_mcstep
+               CALL Compute_Pressure(this_box)
+            END IF
 
-         Pressure_tensor(:,:,this_box) = W_tensor_total(:,:,this_box) &
-                                       / box_list(this_box)%volume
-         P_inst(this_box) = ((Pressure_tensor(1,1,this_box) &
-                            + Pressure_tensor(2,2,this_box) &
-                            + Pressure_tensor(3,3,this_box)) / 3.0_DP) &
-                          * atomic_to_bar
-    
-         IF(int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
-            P_inst(this_box) = P_inst(this_box) &
-                             + virial(this_box)%lrc &
-                             / box_list(this_box)%volume * atomic_to_bar
+            write_buff(ii+1) = pressure(this_box)%computed
          END IF
-
-         nmols_box = SUM(nmols(:,this_box))
-         P_ideal(this_box) = nmols_box &
-                           / box_list(this_box)%volume * temperature(this_box) &
-                           * p_const
-
-         write_buff(ii+1) = P_ideal(this_box) + P_inst(this_box)
+         write_buff(ii+1) = write_buff(ii+1) * atomic_to_bar
 
       ELSE IF (prop_written == 'Volume') THEN
          
@@ -285,14 +259,20 @@ CONTAINS
          END IF
 
       ELSE IF (prop_written == 'Enthalpy') THEN
+
          IF (block_average) THEN
             write_buff(ii+1) = (ac_enthalpy(this_box))/REAL(nthermo_freq,DP)
          ELSE
-            write_buff(ii+1) = energy(this_box)%total + pressure(this_box) * box_list(this_box)%volume
+            IF (pressure(this_box)%last_calc /= i_mcstep) THEN
+               pressure(this_box)%last_calc = i_mcstep
+               CALL Compute_Pressure(this_box)
+            END IF
+
+            write_buff(ii+1) = energy(this_box)%total + pressure(this_box)%computed * box_list(this_box)%volume
          END IF
          write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
 
-      ELSE IF (prop_written == 'Nmols') THEN
+      ELSE IF (prop_written(1:5) == 'Nmols') THEN
 
          IF (block_average) THEN
                write_buff(ii+1) = ac_nmols(is,this_box) / REAL(nthermo_freq,DP)
@@ -306,7 +286,7 @@ CONTAINS
          is = is + 1
          
 
-      ELSE IF (prop_written == 'Density') THEN
+      ELSE IF (prop_written(1:7) == 'Density') THEN
 
          IF (block_average) THEN
             write_buff(ii+1) = ac_density(is_dens,this_box)/ REAL(nthermo_freq,DP)
@@ -317,10 +297,21 @@ CONTAINS
          ! in 'Nmols' was incremented
          is_dens = is_dens + 1
 
-      ELSE IF (prop_written == 'Chemical_Potential') THEN
+      ELSE IF (prop_written(1:18) == 'Chemical_Potential') THEN
          write_buff(ii+1) = chpot(is_cp,this_box) / REAL(ntrials(is_cp,this_box)%cpcalc)
          is_cp = is_cp + 1
          
+      ELSE IF (prop_written == "Mass_Density") THEN
+         IF (block_average) THEN
+            write_buff(ii+1) = ac_mass_density(this_box)/ REAL(nthermo_freq,DP)
+         ELSE
+            mass_density = 0.0_DP
+            DO is = 1, nspecies
+               mass_density = mass_density + REAL(nmols(is,this_box),DP) * species_list(is)%molecular_weight
+            END DO
+            write_buff(ii+1) = mass_density / box_list(this_box)%volume
+         END IF
+         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kgm3
       END IF
       
       ! At the end increment property counter by 1
@@ -331,18 +322,18 @@ CONTAINS
 
    ! write the line buffer to the property file
 
-   IF (sim_length_units == 'Steps') THEN
+   IF (sim_length_units == 'Steps' .OR. sim_length_units == 'Minutes') THEN
      WRITE(this_unit,'(I12,2X)',ADVANCE='NO') i_mcstep
    ELSE IF (sim_length_units == 'Sweeps') THEN
      WRITE(this_unit,'(I12,2X)',ADVANCE='NO') i_mcstep / steps_per_sweep
    END IF
 
-   DO ii = 1, prop_per_file(file_number,this_box)-1
+   DO ii = 1, prop_per_file(file_number,this_box)
 
       WRITE(this_unit,'(E16.8,2X)',ADVANCE='NO') write_buff(ii+1)
 
    END DO
-   WRITE(this_unit,'(E16.8,2X)') write_buff(prop_per_file(file_number,this_box)+1)
+   WRITE(this_unit,*)
    
    DEALLOCATE(write_buff)
 

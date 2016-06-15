@@ -71,7 +71,7 @@ SUBROUTINE Translate
   INTEGER  :: nmols_box(nbr_boxes)
 
   REAL(DP) :: x_box(nbr_boxes), x_species(nspecies)
-  REAL(DP) :: rand_no
+  REAL(DP) :: randno
   REAL(DP) :: dx, dy, dz
   REAL(DP) :: delta_e, ln_pacc, success_ratio
   REAL(DP) :: E_vdw, E_qq, E_vdw_move, E_qq_move, E_reciprocal_move
@@ -119,8 +119,9 @@ SUBROUTINE Translate
        END IF
     END DO
   
+    randno = rranf()
     DO ibox = 1, nbr_boxes
-       IF ( rranf() <= x_box(ibox)) EXIT
+       IF ( randno <= x_box(ibox)) EXIT
     END DO
 
   ELSE
@@ -144,9 +145,9 @@ SUBROUTINE Translate
      END IF
   END DO
 
-  rand_no = rranf()
+  randno = rranf()
   DO is = 1, nspecies
-     IF( rand_no <= x_species(is)) EXIT
+     IF( randno <= x_species(is)) EXIT
   END DO
 
   ! If the molecule can't move then return
@@ -288,7 +289,7 @@ SUBROUTINE Translate
   END IF
 
   IF ( MOD(ntrials(is,ibox)%displacement,nupdate) == 0 ) THEN
-     IF ( int_run_style == run_equil ) THEN 
+     IF ( int_run_type == run_equil ) THEN 
         success_ratio = REAL(nequil_success(is,ibox)%displacement,DP)/REAL(nupdate,DP)
      ELSE
         success_ratio = REAL(nsuccess(is,ibox)%displacement,DP)/REAL(ntrials(is,ibox)%displacement,DP)
@@ -299,7 +300,7 @@ SUBROUTINE Translate
 
      !nsuccess(is,ibox)%displacement = 0
 
-     IF ( int_run_style == run_equil ) THEN
+     IF ( int_run_type == run_equil ) THEN
 
         ! check if the acceptace is close to 0.5
 

@@ -85,17 +85,17 @@ SUBROUTINE NVTMC_Driver
   complete = .FALSE.
   openmp_flag = .FALSE.
 
-  i_mcstep = initial_mcstep
-
 !$ openmp_flag = .TRUE.
 
-  write(*,*) 'openmp_flag = ', openmp_flag
+  WRITE(*,*) 'openmp_flag = ', openmp_flag
 
   IF(.NOT. openmp_flag) THEN
      CALL cpu_time(time_start)
   ELSE
 !$  time_start = omp_get_wtime()
   END IF
+
+  i_mcstep = initial_mcstep
 
   DO WHILE (.NOT. complete)
 
@@ -239,16 +239,9 @@ SUBROUTINE NVTMC_Driver
         IF(now_time .GT. n_mcsteps) complete = .TRUE.
      END IF
 
-     DO ibox = 1, nbr_boxes
-        CALL Accumulate(ibox)
-        next_write(ibox) = .true.
-        next_rdf_write(ibox) = .true.
-     END DO
-
+     next_write(:) = .true.
+     next_rdf_write(:) = .true.
      ! Write the information to various files at regular intervals
-
-     ! We will check this for all the boxes
-    
       IF ( .NOT. block_average ) THEN
 
         ! instantaneous values are to be printed
@@ -307,6 +300,9 @@ SUBROUTINE NVTMC_Driver
      ELSE
      
         DO ibox = 1, nbr_boxes
+
+           ! Accumulate averages
+           CALL Accumulate(ibox)
            
            IF (tot_trials(ibox) /= 0) THEN
               IF(.NOT. timed_run) THEN

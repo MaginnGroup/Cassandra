@@ -79,10 +79,10 @@ MODULE Type_Definitions
      REAL(DP) :: molecular_weight, total_charge
 
      ! simulation specific information
-     CHARACTER(20) :: species_type, insertion, insert_style
+     CHARACTER(20) :: species_type, insertion
 
      ! State point dependent information
-     REAL(DP) :: fugacity, chem_potential, activity
+     REAL(DP) :: chem_potential, activity
      REAL(DP) :: max_lambda, max_torsion
      REAL(DP), ALLOCATABLE :: de_broglie(:)
 
@@ -514,12 +514,15 @@ MODULE Type_Definitions
     ! nconfig : total number of conformations in each fragment
     ! Total number of anchors and id of the anchors are stored in 'nanchors' 
     ! and 'anchor' array
+    ! prob_ins : probability of inserting this fragment first
+    ! cum_prob_ins : cumulative probablility of inserting this fragment first
     INTEGER :: natoms, nconnect, nanchors, type, nconfig
     INTEGER, DIMENSION(:), ALLOCATABLE :: anchor
     INTEGER, DIMENSION(:), ALLOCATABLE :: atoms
     INTEGER, DIMENSION(:), ALLOCATABLE :: frag_connect
     LOGICAL:: ring
     REAL(DP)::rcut_vdwsq, rcut_coulsq,alpha_ewald
+    REAL(DP) :: prob_ins, cum_prob_ins
 
  END TYPE Frag_Class
 !-------------------------------------------------------------------------------------------------
@@ -528,7 +531,11 @@ MODULE Type_Definitions
     ! This class holds the information on the fragments involved in a fragment bond
     ! The type has dimensions of (MAXVAL(fragment_bonds), nspecies)
 
-    INTEGER :: fragment1,fragment2
+    ! frag_id of the two fragments connected via this bond
+    INTEGER :: fragment1, fragment2
+    ! probability of deleting fragment1 if this bond is cut
+    ! don't need to store prob_del2, since it must be 1.O_DP - prob_del1
+    REAL(DP) :: prob_del1
 
  END TYPE Fragment_Bond_Class
 
@@ -538,11 +545,28 @@ MODULE Type_Definitions
     REAL(DP) :: rxp, ryp, rzp
  END TYPE Library_Coords_Class
 
-
+!-------------------------------------------------------------------------------------------------
 
  TYPE Energy_Fragment_Class
     REAL(DP), DIMENSION(:), ALLOCATABLE :: this_config_energy
  END TYPE Energy_Fragment_Class
 
+!-------------------------------------------------------------------------------------------------
+
+ TYPE Pressure_Class
+    ! This class holds the pressure for each box
+
+    ! Setpoint pressure, provided for constant pressure simulations
+    REAL(DP) :: setpoint
+
+    ! Computed pressure, kNT/V + virial
+    REAL(DP) :: computed
+
+    ! last calculation
+    INTEGER :: last_calc
+
+ END TYPE Pressure_Class
+
+!-------------------------------------------------------------------------------------------------
 
 END MODULE Type_Definitions

@@ -163,7 +163,7 @@ MODULE Energy_Routines
   ! Compute_Ring_Fragment_Energy: Computes the energy of a ring fragment in its
   !                       old conformation.
   !
-  ! System_Energy_Check:
+  ! Check_System_Energy:
   !
   !
   !
@@ -2993,11 +2993,11 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
   !-----------------------------------------------------------------------------
 
-  SUBROUTINE System_Energy_Check(this_box,i_step,randno)
+  SUBROUTINE Check_System_Energy(this_box,randno)
 
      USE Global_Variables
 
-     INTEGER, INTENT(IN) :: this_box, i_step
+     INTEGER, INTENT(IN) :: this_box
      REAL(DP), INTENT(IN) :: randno
 
      LOGICAL :: inter_overlap
@@ -3110,25 +3110,25 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
      IF(.NOT. aok) THEN
         IF(randno <= cut_trans) THEN
-           WRITE(logunit,*) 'Problem after translation on step', i_step
+           WRITE(logunit,*) 'Problem after translation on step', i_mcstep
         ELSE IF(randno <= cut_rot) THEN
-           WRITE(logunit,*) 'Problem after rotation on step', i_step
+           WRITE(logunit,*) 'Problem after rotation on step', i_mcstep
         ELSE IF(randno <= cut_torsion) THEN
-           WRITE(logunit,*) 'Problem after dihedral on step', i_step
+           WRITE(logunit,*) 'Problem after dihedral on step', i_mcstep
         ELSE IF(randno <= cut_volume) THEN
-           WRITE(logunit,*) 'Problem after volume on step', i_step
+           WRITE(logunit,*) 'Problem after volume on step', i_mcstep
         ELSE IF(randno <= cut_angle) THEN
-           WRITE(logunit,*) 'Problem after angle on step', i_step
+           WRITE(logunit,*) 'Problem after angle on step', i_mcstep
         ELSE IF(randno <= cut_insertion) THEN
-           WRITE(logunit,*) 'Problem after insertion on step', i_step
+           WRITE(logunit,*) 'Problem after insertion on step', i_mcstep
         ELSE IF(randno <= cut_deletion) THEN
-           WRITE(logunit,*) 'Problem after deletion on step', i_step
+           WRITE(logunit,*) 'Problem after deletion on step', i_mcstep
         ELSE IF(randno <= cut_swap) THEN
-           WRITE(logunit,*) 'Problem after swap on step', i_step
+           WRITE(logunit,*) 'Problem after swap on step', i_mcstep
         ELSE IF(randno <= cut_regrowth) THEN
-           WRITE(logunit,*) 'Problem after regrowth on step', i_step
+           WRITE(logunit,*) 'Problem after regrowth on step', i_mcstep
         ELSE IF(randno <= cut_atom_displacement) THEN
-           WRITE(logunit,*) 'Problem after atom displacement on step', i_step
+           WRITE(logunit,*) 'Problem after atom displacement on step', i_mcstep
         END IF
         STOP
       ELSE
@@ -3145,7 +3145,9 @@ END SUBROUTINE Compute_Molecule_Self_Energy
          energy(this_box)%self = e_check%self
       END IF 
 
-   END SUBROUTINE System_Energy_Check
+  END SUBROUTINE Check_System_Energy
+
+  !-----------------------------------------------------------------------------
 
   SUBROUTINE Compute_System_Ewald_Reciprocal_Energy(this_box)
     !***************************************************************************
@@ -3268,6 +3270,8 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     energy(this_box)%ewald_reciprocal = E_reciprocal * charge_factor
 
   END SUBROUTINE Compute_System_Ewald_Reciprocal_Energy
+
+  !-----------------------------------------------------------------------------
 
 END MODULE Energy_Routines
 
