@@ -5,7 +5,7 @@ nvt_mie.out
 !------------------------------------------------------------------------------
 
 # Sim_Type
-NVT_MC
+nvt_mc
 !------------------------------------------------------------------------------
 
 # Nbr_Species
@@ -13,20 +13,11 @@ NVT_MC
 !------------------------------------------------------------------------------
 
 # VDW_Style
-Mie cut_tail 14.0      !cut or cut_shift can also be used instead of cut_tail
+mie cut_tail 14.0      !cut or cut_shift can also be used instead of cut_tail
 !------------------------------------------------------------------------------
 
 # Charge_Style
-coul Ewald 14.0 0.000001
-!------------------------------------------------------------------------------
-
-# Intra_Scaling
-0.0 0.0 0.0 1.0
-0.0 0.0 0.0 1.0
-!----------------------------------------------vdw, coul lines for each species
-
-# Mixing_Rule
-LB
+coul ewald 14.0 0.000001
 !------------------------------------------------------------------------------
 
 # Seed_Info
@@ -43,7 +34,7 @@ dee.mcf 220
 
 # Box_Info
 1
-CUBIC
+cubic
 34.66583687
 !-------------------------------------------------------line 1: number of boxes
 !--------------------------------------------------------------line 2: box type
@@ -79,7 +70,7 @@ make_config 220
 !----------------------------------------------------------checkpoint: filename
 
 # Run_Type
-Equilibration   220 100
+equilibration   220 100
 !-------------------------Equilibration: update maximum widths every 100 sweeps
 
 
@@ -88,17 +79,17 @@ Equilibration   220 100
 !------------------------------------------------------------ 0 == yes, 1 == no
 
 # Simulation_Length_Info
-Units        Steps
-Prop_Freq    220
-Coord_Freq   2200
-Run          2200
+units        steps
+prop_freq    220
+coord_freq   2200
+run          2200
 !------------------ 220 moves = 1 sweep; output every 10 sweeps; run 100 sweeps
 
 # Property_Info 1 
-Energy_Total
-Pressure
-Volume
-Density
+energy_total
+pressure
+volume
+density
 !------------------------------------------------------------------------------
 
 # Fragment_Files
@@ -109,7 +100,6 @@ species1/frag3/frag3.dat  3
 
 # CBMC_Info
 kappa_ins 12
-kappa_rot 0
 kappa_dih 10
 rcut_cbmc 6.5 
 !------------------------------------------------------------------------------

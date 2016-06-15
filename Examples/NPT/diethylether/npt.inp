@@ -5,7 +5,7 @@ npt.out
 !------------------------------------------------------------------------------
 
 # Sim_Type
-NPT_MC
+npt_mc
 !------------------------------------------------------------------------------
 
 # Nbr_Species
@@ -13,17 +13,12 @@ NPT_MC
 !------------------------------------------------------------------------------
 
 # VDW_Style
-LJ cut_tail 7.0
+lj cut_tail 7.0
 !------------------------------------------------------------------------------
 
 # Charge_Style
-coul Ewald 7.0 0.000001
+coul ewald 7.0 0.000001
 !------------------------------------------------------------------------------
-
-# Intra_Scaling
-0.0 0.0 0.0 1.0
-0.0 0.0 0.0 1.0
-!----------------------------------------------vdw, coul lines for each species
 
 # Mixing_Rule
 LB
@@ -43,7 +38,7 @@ dee.mcf 30
 
 # Box_Info
 1
-CUBIC
+cubic
 17.5
 !-------------------------------------------------------line 1: number of boxes
 !--------------------------------------------------------------line 2: box type
@@ -87,26 +82,21 @@ checkpoint npt.inp.chk
 !----------------------------------------------------------checkpoint: filename
 
 # Run_Type
-Production   1000 10
-!---------------------------Production: report success ratio every 100 sweeps
-
-
-# Average_Info
-1
-!------------------------------------------------------------ 0 == yes, 1 == no
+production   300 10
+!---------------------------Production: report success ratio every 10 sweeps
 
 # Simulation_Length_Info
-Units        Sweeps
-Prop_Freq    10
-Coord_Freq   10
-Run          100
+units        sweeps
+prop_freq    10
+coord_freq   10
+run          100
 !------------------  91 moves = 1 sweep; output every 10 sweeps; run 100 sweeps
 
 # Property_Info 1 
-Energy_Total
-Pressure
-Volume
-Density
+energy_total
+pressure
+volume
+density
 !------------------------------------------------------------------------------
 
 # Fragment_Files
@@ -117,7 +107,6 @@ species1/frag3/frag3.dat  3
 
 # CBMC_Info
 kappa_ins 12
-kappa_rot 0
 kappa_dih 10
 rcut_cbmc 6.5 
 !------------------------------------------------------------------------------

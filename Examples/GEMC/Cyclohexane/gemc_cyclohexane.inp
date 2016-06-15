@@ -5,7 +5,7 @@ gemc_cyclohexane.out
 !------------------------------------------------------------------------------
 
 # Sim_Type
-GEMC
+gemc
 !------------------------------------------------------------------------------
 
 # Nbr_Species
@@ -13,27 +13,13 @@ GEMC
 !------------------------------------------------------------------------------
 
 # VDW_Style
-LJ   cut_tail   14.00
-LJ   cut_tail   30.00
+lj   cut_tail   14.00
+lj   cut_tail   30.00
 !------------------------------------------------------------------------------
 
 # Rcutoff_Low
 1.0
 !------------------------------------------------------------------------------
-
-# Mixing_Rule
-LB
-!------------------------------------------------------------------------------
-
-# Charge_Style
-NONE
-NONE
-!------------------------------------------------------------------------------
-
-# Intra_Scaling
-0.0    0.0    0.0     1.0
-0.0    0.0    0.0     1.0
-!----------------------------------------------vdw, coul lines for each species
 
 # Molecule_Files
 cyclohexane.mcf 300
@@ -41,19 +27,19 @@ cyclohexane.mcf 300
 
 # Box_Info
 2
-CUBIC
+cubic
 38.0
 
-CUBIC
+cubic
 81.81
-
 !-------------------------------------------------------line 1: number of boxes
 !--------------------------------------------------------------line 2: box type
 !--------------------------------------------------------------line 3: box size
 !--------------------------------------------------------------repeat for second box
 
 # Temperature_Info
-403.0 403.0
+403.0
+403.0
 !----------------------------------------------------------one temperature per box
 
 # Move_Probability_Info
@@ -75,7 +61,6 @@ CUBIC
 # Prob_Volume
 0.005
 200.0
-200.0
 
 # Prob_Swap
 0.095
@@ -93,26 +78,22 @@ make_config 50
 !----------------------------------------------------------checkpoint: filename
 
 # Run_Type
-Equilibration 100 100
+equilibration 100 100
 !-------------------------Equilibration: update maximum widths every 100 steps/update maximum
 !-------------------------volume displacement every 100 steps
 
 
 # Simulation_Length_Info
-Units       Steps
-Prop_Freq   100
-Coord_Freq  2200
-Run         2200
+units       steps
+prop_freq   100
+coord_freq  2200
+run         2200
 !------------------ simulation length every 2200 steps, XYZ output every 2200 steps, property
 !---------------------------------------output every 100 steps
 
 # Seed
 1216131725 1216131726
 !------------------------------------------------------------------------------
-
-# Average_Info
-1
-!------------------------------------------------------------ 0 == yes, 1 == no
 
 # Property_Info 1
 Energy_Total
@@ -132,8 +113,6 @@ Pressure
 
 # CBMC_Info
 kappa_ins 12
-kappa_rot 0
-kappa_dih 12
 rcut_cbmc 6.5  6.5
 !------------------------------------------------------------------------------
 
