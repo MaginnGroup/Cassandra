@@ -18,15 +18,6 @@ LJ   cut_tail   14.00
 LJ   cut_tail   14.00
 !------------------------------------------------------------------------------
 
-# Charge_Style
-NONE
-NONE
-!------------------------------------------------------------------------------
-
-# Intra_Scaling
-0.0    0.0    0.0     1.0
-0.0    0.0    0.0     1.0
-
 # Mixing_Rule
 LB
 !------------------------------------------------------------------------------
@@ -45,25 +36,23 @@ TRUE
 
 # Molecule_Files
 isobutane.mcf 400
-
 !----------------------------------------------------------one line per species
 
 # Box_Info
 2
-CUBIC
-35.3700 35.3700 35.3700
+cubic
+35.3700
 
-CUBIC
-100.8100 100.8100 100.8100
-
+cubic
+100.8100
 !-------------------------------------------------------line 1: number of boxes
 !--------------------------------------------------------------line 2: box type
 !--------------------------------------------------------------line 3: box size
 !--------------------------------------------------------------repeat for second box
 
 # Temperature_Info
-304.00 304.00 
-
+304.00 
+304.00 
 !----------------------------------------------------------one temperature per box
 
 # Move_Probability_Info
@@ -88,21 +77,18 @@ CUBIC
 cbmc
 
 # Done_Probability_Info
-
 !---------------------one line for each box and one entry/line for each species
 !-----------------------------------------each molecule moves per volume change
 
 # Start_Type
 read_config 240 Init_Config/nvt_liq.xyz
 read_config 160 Init_Config/nvt_vap.xyz
-
 !--------make_config: one line for each species and one entry/line for each box
 !------------------------------------------------------------read_old: filename
 !----------------------------------------------------------checkpoint: filename
 
 # Run_Type
 Equilibration 100 100
-
 !-------------------------Equilibration: update maximum widths every 100 steps/update maximum
 !-------------------------volume displacement every 100 steps
 

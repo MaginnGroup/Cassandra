@@ -8,7 +8,7 @@ NVT_MC_Fragment
 1
 
 # VDW_Style
-NONE
+lj minimum_image
 
 # Rcutoff_Low
 0.0
@@ -16,10 +16,12 @@ NONE
 # Mixing_Rule
 LB
 
+
 # Charge_Style
-NONE
+coul minimum_image
 
 # Intra_Scaling
+0.0 0.0 0.0 1.0
 0.0 0.0 0.0 1.0
 
 # Molecule_Files
@@ -28,7 +30,7 @@ NONE
 # Box_Info
 1
 CUBIC
-20.0 20.0 20.0
+50.0 50.0 50.0
 
 # Temperature_Info
 343.0
@@ -51,10 +53,10 @@ Production 1000 10
 
 # Simulation_Length_Info
 Units  Steps
-Prop_Freq  10
-Coord_Freq   90
-Run          1100
-NequilSteps  100
+prop_freq  10
+coord_freq   90
+run          1100
+nequilsteps  100
 
 # File_Info
 frag2.dat

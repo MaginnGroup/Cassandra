@@ -3,19 +3,19 @@ Run info
 version: Cassandra Development Version
 inputfile: nvt.inp
 name of run: nvt.out
-date (mm/dd/yyyy): 05/24/2016
-time: 00:30:14
+date (mm/dd/yyyy): 06/15/2016
+time: 14:10:24
 machine: maginnfe.crc.nd.edu
+********************************************************************************
+ 
+Verbose log
+********************************************************************************
+Normal output to logfile
 ********************************************************************************
  
 Simulation type
 ********************************************************************************
 NVT_MC              
-********************************************************************************
- 
-Verbose log file
-********************************************************************************
-Verbose output to logfile: F
 ********************************************************************************
  
 Copy input file
@@ -25,23 +25,16 @@ Copy input file
  nvt.out
  
  # Sim_Type
- NVT_MC
+ nvt_mc
  
  # Nbr_Species
  1
  
  # VDW_Style
- LJ cut_tail 12.0
+ lj cut_tail 12.0
  
  # Charge_Style
- coul Ewald 12.0 0.000001
- 
- # Intra_Scaling
- 0.0 0.0 0.0 1.0
- 0.0 0.0 0.0 1.0
- 
- # Mixing_Rule
- LB
+ coul ewald 12.0 0.000001
  
  # Seed_Info
  151 9352
@@ -54,7 +47,7 @@ Copy input file
  
  # Box_Info
  1
- CUBIC
+ cubic
  24.
  
  # Temperature_Info
@@ -80,29 +73,23 @@ Copy input file
  read_config 100 nvt.inp.xyz
  
  # Run_Type
- Production   1100
- 
- # Average_Info
- 1
+ production   1100
  
  # Simulation_Length_Info
- Units        Sweeps
- Prop_Freq    10
- Coord_Freq   10
- Run          100
- # Done_Simulation_Length_Info
+ units        sweeps
+ prop_freq    10
+ coord_freq   10
+ run          100
  
  # Property_Info 1
- Energy_Total
- Pressure
+ energy_total
+ pressure
  
  # Fragment_Files
  species1/frag1/frag1.dat  1
  
  # CBMC_Info
  kappa_ins 12
- kappa_rot 0
- kappa_dih 10
  rcut_cbmc 6.5
  
  END
@@ -110,33 +97,34 @@ Copy input file
  
 Number of species
 ********************************************************************************
-    1
+1
 ********************************************************************************
  
 Box info
 ********************************************************************************
-number of simulation boxes     1
-Box number      1       Box Shape:      Cubic 
-Each Side Of :        24.0000     Angstrom
-Cell basis vector lengths in A,     24.0000      24.0000      24.0000
-Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
-Distance between box faces    24.0000      24.0000      24.0000
-Box volume, A^3         13824.0000
+Number of simulation boxes     1
+Box 1 is cubic               
+ Each Side Of :       24.0000     Angstrom
+ Cell basis vector lengths in A,     24.0000      24.0000      24.0000
+ Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+ Distance between box faces    24.0000      24.0000      24.0000
+ Box volume, A^3         13824.0000
 ********************************************************************************
  
 Pair style
 ********************************************************************************
- VDW style used is:   LJ             in box:  1
- LJ VDW sum style is:   cut_tail       in box:  1
+VDW style used is:   LJ             in box:  1
+ VDW sum style is:   cut_tail       in box:  1
  rcut =    12.000   Angstrom
- Charge style used is:   coul           in box:  1
- Charge sum style is   Ewald          in box:  1
+Charge style in box 1 is coul
+ Charge sum style is   ewald          in box:  1
  Ewald real space cutoff is  12.000 Angstroms.
  Ewald real space parameter is   0.310 inverse Angstroms
  Ewald reciprocal cutoff is  2.3026 inverse Angstroms
- Charge style properly input
- Lorentz-Berthelot mixing rule specified
- Pair interaction energy arrays will not be stored
+Section "# Pair_Energy" is missing from the input file
+ By default, pair interaction energy arrays will not be stored
+Section "# Mixing_Rule" is missing from the input file
+ By default, using Lorentz-Berthelot
 ********************************************************************************
  
 Molecule info
@@ -160,13 +148,20 @@ Molecule info
  
  Species     1
  -------------------------------------------------------------------------------
- L_Coul_CBMC not given, using default T
- 1st_Fragment_Ins_Style not specified, using default "COM"
  Atom parameters read
  Bond parameters read
  Angle parameters read
  Dihedral parameters read
  Improper parameters read
+ Intra molecule scaling factors for species            1
+  VDW 1-2 scaling factor       0.000
+  VDW 1-3 scaling factor       0.000
+  VDW 1-4 scaling factor       0.000
+  VDW 1-N scaling factor       1.000
+  Coulomb 1-2 scaling factor   0.000
+  Coulomb 1-3 scaling factor   0.000
+  Coulomb 1-4 scaling factor   0.000
+  Coulomb 1-N scaling factor   1.000
  Total number of atoms in fragment     1  is   3
  Fragment info read
  Fragment file for fragment 1 is species1/frag1/frag1.dat
@@ -180,35 +175,21 @@ Molecule info
  -------------------------------------------------------------------------------
 ********************************************************************************
  
-Intramolecular nonbonded scaling
-********************************************************************************
-intramolecular scaling factors explicitly set
-Intra molecule scaling factors for species             1
- VDW 1-2 scaling factor        0.000
- VDW 1-3 scaling factor        0.000
- VDW 1-4 scaling factor        0.000
- VDW 1-N scaling factor        1.000
- Coulomb 1-2 scaling factor    0.000
- Coulomb 1-3 scaling factor    0.000
- Coulomb 1-4 scaling factor    0.000
- Coulomb 1-N scaling factor    1.000
-********************************************************************************
- 
 Start type
 ********************************************************************************
- Initial configuration for box 1 will be read from file
+Initial configuration for box 1 will be read from file
  Will read     100  molecules of species   1
  Will read configuration from file nvt.inp.xyz
 ********************************************************************************
  
 Seed info
 ********************************************************************************
-  The starting seeds are:          151         9352
+The starting seeds are:          151         9352
 ********************************************************************************
  
 Temperature
 ********************************************************************************
-  Temperature assigned to box     1  is  329.000    K
+Temperature of box 1 is 329.000 K
 ********************************************************************************
  
 Move probabilities
@@ -226,10 +207,7 @@ Number of moves is :   3
  
 CBMC info
 ********************************************************************************
-kappa for first bead insertion              12
-Orientational bias not supported. Kappa for rotations is set to            0
-kappa for dihedral selection                10
-Smaller cutoff for CBMC for box          1        6.50
+Section "# CBMC_Info" not required
 ********************************************************************************
  
 Simulation length info
@@ -239,19 +217,21 @@ Coordinates will be written every                      10 Sweeps
  movie header file is                  nvt.out.H
  movie_XYZ file is                     nvt.out.xyz
 The simulation will be run for                        100 Sweeps    
+A sweep is defined as                                 330 steps
 ********************************************************************************
  
 Average info
 ********************************************************************************
- Instantaneous values will be output
+Section "# Average_Info" is missing from the input file
+ By default, instantaneous values will be output
 ********************************************************************************
  
 Property info
 ********************************************************************************
 Total number of property files to be written is     1   for box 1
- Maximum number of properties per file is    3
+ Maximum number of properties per file is    2
  Writing the name of the property files and the corresponding property output
- Property file    1   is  nvt.out.prp1
+ Property file    1   is  nvt.out.prp
  Properties output in these files are
  Energy_Total
  Pressure
@@ -264,7 +244,7 @@ MC low cutoff distance is   2.000    Angstrom
  
 Run type
 ********************************************************************************
- The input run type is Production
+ The input run type is production
  Update frequency is         1100
 ********************************************************************************
  
@@ -274,7 +254,6 @@ Run type
  
 Initial configuration
 ********************************************************************************
- 
  Reading configuration for box           1
  Reading          100  molecules of species            1
  Configurations read successfully
@@ -282,9 +261,9 @@ Initial configuration
  
 Charge neutrality check
 ********************************************************************************
- Species           1    has charge                0.00000000
+ Species 1 has charge:                  0.00000000
  
- Box               1    has charge                0.00000000
+ Box     1 has charge:                  0.00000000
 ********************************************************************************
  
 Compute total energy
@@ -395,16 +374,16 @@ Writing information about fragments
  
    ---------------------------------------------------------
    Writing information for species  1
-            Fragment      Trials     Success   % Success
+     #_Frags_Regrown      Trials     Success   % Success
                    1       10929        1384       12.66
    ---------------------------------------------------------
 ********************************************************************************
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            8.606453 secs.
- Rotation time =               8.411052 secs.
- Regrowth time =               8.519439 secs.
+ Translation time =            8.075272 secs.
+ Rotation time =               7.892608 secs.
+ Regrowth time =               8.007708 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -418,6 +397,6 @@ Writing information about fragments
          0       Days
          0      Hours
          0    Minutes
-        26    Seconds
-       212         ms
+        24    Seconds
+       635         ms
 ********************************************************************************

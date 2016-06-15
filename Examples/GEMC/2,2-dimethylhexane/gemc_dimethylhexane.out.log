@@ -3,19 +3,19 @@ Run info
 version: Cassandra Development Version
 inputfile: gemc_dimethylhexane.inp
 name of run: gemc_dimethylhexane.out
-date (mm/dd/yyyy): 05/24/2016
-time: 00:40:34
+date (mm/dd/yyyy): 06/15/2016
+time: 15:52:47
 machine: maginnfe.crc.nd.edu
+********************************************************************************
+ 
+Verbose log
+********************************************************************************
+Normal output to logfile
 ********************************************************************************
  
 Simulation type
 ********************************************************************************
 GEMC                
-********************************************************************************
- 
-Verbose log file
-********************************************************************************
-Verbose output to logfile: F
 ********************************************************************************
  
 Copy input file
@@ -24,43 +24,35 @@ Copy input file
  gemc_dimethylhexane.out
  
  # Sim_Type
- GEMC
+ gemc
  
  # Nbr_Species
  1
  
  # VDW_Style
- LJ   cut_tail   14.00
- LJ   cut_tail   14.00
+ lj   cut_tail   14.00
+ lj   cut_tail   14.00
  
  # Rcutoff_Low
  1.0
  
  # Mixing_Rule
- LB
- 
- # Charge_Style
- NONE
- NONE
- 
- # Intra_Scaling
- 0.0    0.0    0.0     1.0
- 0.0    0.0    0.0     1.0
+ lb
  
  # Molecule_Files
  dimethylhexane.mcf 300
  
  # Box_Info
  2
- CUBIC
- 38.7600 38.7600 38.7600
+ cubic
+ 38.7600
  
- CUBIC
- 194.06 194.06 194.06
- 
+ cubic
+ 194.06
  
  # Temperature_Info
- 354.00 354.00
+ 354.00
+ 354.00
  
  # Move_Probability_Info
  
@@ -81,7 +73,6 @@ Copy input file
  # Prob_Volume
  0.005
  200.0
- 200.0
  
  # Prob_Swap
  0.095
@@ -89,55 +80,43 @@ Copy input file
  
  # Done_Probability_Info
  
- 
  # Start_Type
  make_config 200
  make_config 100
  
- 
  # Run_Type
- Equilibration 100 100
- 
+ equilibration 100 100
  
  # Simulation_Length_Info
- Units       Steps
- Prop_Freq   100
- Coord_Freq  2200
- Run         2200
- 
+ units       steps
+ prop_freq   100
+ coord_freq  2200
+ run         2200
  
  # Seed
  1216131116 1216131117
  
- 
- # Average_Info
- 1
- 
- 
  # Property_Info 1
- Energy_Total
- Density
- Nmols
- Volume
- 
+ energy_total
+ density
+ nmols
+ volume
+ mass_density
  
  # Property_Info 2
- Energy_Total
- Density
- Nmols
- Volume
- 
+ energy_total
+ density
+ nmols
+ volume
+ mass_density
  
  # CBMC_Info
  kappa_ins 12
- kappa_rot 0
  kappa_dih 12
  rcut_cbmc 6.5  6.5
  
- 
  # Pair_Energy
- TRUE
- 
+ true
  
  # Fragment_Files
  species1/frag1/frag1.dat  1
@@ -150,40 +129,39 @@ Copy input file
  
 Number of species
 ********************************************************************************
-    1
+1
 ********************************************************************************
  
 Box info
 ********************************************************************************
-number of simulation boxes     2
-Box number      1       Box Shape:      Cubic 
-Each Side Of :        38.7600     Angstrom
-Cell basis vector lengths in A,     38.7600      38.7600      38.7600
-Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
-Distance between box faces    38.7600      38.7600      38.7600
-Box volume, A^3         58230.6054
-Box number      2       Box Shape:      Cubic 
-Each Side Of :       194.0600     Angstrom
-Cell basis vector lengths in A,    194.0600     194.0600     194.0600
-Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
-Distance between box faces   194.0600     194.0600     194.0600
-Box volume, A^3       7308160.5754
+Number of simulation boxes     2
+Box 1 is cubic               
+ Each Side Of :       38.7600     Angstrom
+ Cell basis vector lengths in A,     38.7600      38.7600      38.7600
+ Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+ Distance between box faces    38.7600      38.7600      38.7600
+ Box volume, A^3         58230.6054
+Box 2 is cubic               
+ Each Side Of :      194.0600     Angstrom
+ Cell basis vector lengths in A,    194.0600     194.0600     194.0600
+ Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+ Distance between box faces   194.0600     194.0600     194.0600
+ Box volume, A^3       7308160.5754
 ********************************************************************************
  
 Pair style
 ********************************************************************************
- VDW style used is:   LJ             in box:  1
- LJ VDW sum style is:   cut_tail       in box:  1
+VDW style used is:   LJ             in box:  1
+ VDW sum style is:   cut_tail       in box:  1
  rcut =    14.000   Angstrom
- VDW style used is:   LJ             in box:  2
- LJ VDW sum style is:   cut_tail       in box:  2
+VDW style used is:   LJ             in box:  2
+ VDW sum style is:   cut_tail       in box:  2
  rcut =    14.000   Angstrom
- Charge style used is:   NONE           in box:  1
- Charge style properly input
- Charge style used is:   NONE           in box:  2
- Charge style properly input
- Pair interaction energy array storage enabled
- Lorentz-Berthelot mixing rule specified
+Section "# Charge_Style" is missing from the input file
+ By default, charge style for box 1 is NONE
+ By default, charge style for box 2 is NONE
+Pair interaction energy array storage enabled
+Lorentz-Berthelot mixing rule specified
 ********************************************************************************
  
 Molecule info
@@ -207,13 +185,16 @@ Molecule info
  
  Species     1
  -------------------------------------------------------------------------------
- L_Coul_CBMC not given, using default T
- 1st_Fragment_Ins_Style not specified, using default "COM"
  Atom parameters read
  Bond parameters read
  Angle parameters read
  Dihedral parameters read
  Improper parameters read
+ Intra molecule scaling factors for species            1
+  VDW 1-2 scaling factor       0.000
+  VDW 1-3 scaling factor       0.000
+  VDW 1-4 scaling factor       0.000
+  VDW 1-N scaling factor       1.000
  Total number of atoms in fragment     1  is   5
  Total number of atoms in fragment     2  is   3
  Total number of atoms in fragment     3  is   3
@@ -236,33 +217,27 @@ Molecule info
  -------------------------------------------------------------------------------
 ********************************************************************************
  
-Intramolecular nonbonded scaling
+Nonbond tables
 ********************************************************************************
-intramolecular scaling factors explicitly set
-Intra molecule scaling factors for species             1
- VDW 1-2 scaling factor        0.000
- VDW 1-3 scaling factor        0.000
- VDW 1-4 scaling factor        0.000
- VDW 1-N scaling factor        1.000
-********************************************************************************
+ ********************************************************************************
  
 Start type
 ********************************************************************************
- Initial configuration for box 1 will be made
+Initial configuration for box 1 will be made
  Will insert     200  molecules of species   1
- Initial configuration for box 2 will be made
+Initial configuration for box 2 will be made
  Will insert     100  molecules of species   1
 ********************************************************************************
  
 Seed info
 ********************************************************************************
-  The starting seeds are:   1216131116   1216131117
+The starting seeds are:   1216131116   1216131117
 ********************************************************************************
  
 Temperature
 ********************************************************************************
-  Temperature assigned to box     1  is  354.000    K
-  Temperature assigned to box     2  is  354.000    K
+Temperature of box 1 is 354.000 K
+Temperature of box 2 is 354.000 K
 ********************************************************************************
  
 Move probabilities
@@ -281,18 +256,20 @@ Probability for volume move                0.005000
 Probability for particle swap              0.095000
  Species 1 will be inserted using CBMC
  Number of insertable species is    1
- Probabilties of swap for individual boxes not specified
- Defaulting to uniform probabilities
+ Keyword prob_swap_to_box is missing from input file
+  By default, box_out will be selected according to its mole fraction
+  By default, box_in will be selected with uniform probability
+ Keyword prob_swap_species is missing from input file
+  By default, species will be selected according to its mole fraction
 Number of moves is :   5
 ********************************************************************************
  
 CBMC info
 ********************************************************************************
-kappa for first bead insertion              12
-Orientational bias not supported. Kappa for rotations is set to            0
-kappa for dihedral selection                12
-Smaller cutoff for CBMC for box          1        6.50
-Smaller cutoff for CBMC for box          2        6.50
+Kappa for first fragment insertion          12
+Kappa for dihedral selection                12
+ Cutoff for CBMC for box 1 is         6.50
+ Cutoff for CBMC for box 2 is         6.50
 ********************************************************************************
  
 Simulation length info
@@ -309,28 +286,31 @@ The simulation will be run for                       2200 Steps
 Property info
 ********************************************************************************
 Total number of property files to be written is     1   for box 1
- Maximum number of properties per file is    4
+ Maximum number of properties per file is    5
  Writing the name of the property files and the corresponding property output
- Property file    1   is  gemc_dimethylhexane.out.box1.prp1
+ Property file    1   is  gemc_dimethylhexane.out.box1.prp
  Properties output in these files are
  Energy_Total
  Density
  Nmols
  Volume
+ Mass_Density
 Total number of property files to be written is     1   for box 2
- Maximum number of properties per file is    4
+ Maximum number of properties per file is    5
  Writing the name of the property files and the corresponding property output
- Property file    1   is  gemc_dimethylhexane.out.box2.prp1
+ Property file    1   is  gemc_dimethylhexane.out.box2.prp
  Properties output in these files are
  Energy_Total
  Density
  Nmols
  Volume
+ Mass_Density
 ********************************************************************************
  
 Average info
 ********************************************************************************
- Instantaneous values will be output
+Section "# Average_Info" is missing from the input file
+ By default, instantaneous values will be output
 ********************************************************************************
  
 Minimum distance cutoff
@@ -340,7 +320,7 @@ MC low cutoff distance is   1.000    Angstrom
  
 Run type
 ********************************************************************************
- The input run type is Equilibration
+ The input run type is equilibration
  Update frequency is          100
  Update frequency for adjusting maximum volume displacement is
          100
@@ -356,28 +336,20 @@ Initial configuration
  Inserting          100 molecules of species            1
 ********************************************************************************
  
-Charge neutrality check
-********************************************************************************
- Species           1    has charge                0.00000000
- 
- Box               1    has charge                0.00000000
- Box               2    has charge                0.00000000
-********************************************************************************
- 
 Compute total energy
 ********************************************************************************
  Starting energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is               2146845.298
- Intra molecular energy is             524417.892
+ Total system energy is               1660712.298
+ Intra molecular energy is             482339.448
  Bond energy is                             0.000
- Bond angle energy is                  241383.263
- Dihedral angle energy is              283034.629
+ Bond angle energy is                  233969.334
+ Dihedral angle energy is              248370.114
  Improper angle energy is                   0.000
- Intra molecule vdw is                 608509.977
+ Intra molecule vdw is                 290163.073
  Intra molecule q is                        0.000
- Inter molecule vdw is                1036100.358
+ Inter molecule vdw is                 910392.706
  Long range correction is              -22182.929
  Inter molecule q is                        0.000
  -----------------------------------------------------------
@@ -385,15 +357,15 @@ Compute total energy
  Starting energy components for box   2
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                256663.629
- Intra molecular energy is             205138.032
+ Total system energy is                266615.487
+ Intra molecular energy is             195091.881
  Bond energy is                             0.000
- Bond angle energy is                  112826.941
- Dihedral angle energy is               92311.090
+ Bond angle energy is                  113412.185
+ Dihedral angle energy is               81679.696
  Improper angle energy is                   0.000
- Intra molecule vdw is                  52972.570
+ Intra molecule vdw is                  72055.940
  Intra molecule q is                        0.000
- Inter molecule vdw is                  -1402.785
+ Inter molecule vdw is                   -488.147
  Long range correction is                 -44.188
  Inter molecule q is                        0.000
  -----------------------------------------------------------
@@ -403,16 +375,17 @@ Compute total energy
 Run simulation
 ********************************************************************************
       Step       Move   Mol Spc Box  Success  MaxWidth
-       467     rotate         1   1  0.33000   0.49742
-       606  translate         1   1  0.39000   0.28080
-       891  translate         1   2  0.90000  14.00000
-       893     rotate         1   2  0.98000   3.14159
-       997     rotate         1   1  0.43000   0.47255
-      1063  translate         1   1  0.49000   0.27518
-      1576     rotate         1   1  0.41000   0.44892
-      1625  translate         1   2  0.91000  14.00000
-      1641     rotate         1   2  0.98000   3.14159
-      1726  translate         1   1  0.56000   0.30821
+       450  translate         1   1  0.50000   0.36000
+       595     rotate         1   1  0.44000   0.49742
+       737  translate         1   2  0.99000  14.00000
+       904     rotate         1   2  0.98000   3.14159
+      1082  translate         1   1  0.44000   0.31680
+      1222     rotate         1   1  0.36000   0.47255
+      1389  translate         1   2  0.94000  14.00000
+      1538     rotate         1   2  0.99000   3.14159
+      1797  translate         1   1  0.51000   0.32314
+      1975     rotate         1   1  0.47000   0.44892
+      2082  translate         1   2  0.94000  14.00000
 ********************************************************************************
  
 Report ending energy & then re-compute from scratch
@@ -422,16 +395,16 @@ Report ending energy & then re-compute from scratch
  Ending energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                185219.927
- Intra molecular energy is             358063.440
+ Total system energy is                112589.950
+ Intra molecular energy is             366062.459
  Bond energy is                             0.000
- Angle energy is                       186067.746
- Dihedral energy is                    171995.693
+ Angle energy is                       189909.408
+ Dihedral energy is                    176153.052
  Improper angle energy is                   0.000
- Intra molecule vdw is                  53362.004
+ Intra molecule vdw is                  18967.858
  Intra molecule q is                        0.000
- Inter molecule vdw is                -212769.079
- Long range correction is              -13436.437
+ Inter molecule vdw is                -258300.715
+ Long range correction is              -14139.653
  Inter molecule q is                        0.000
  -----------------------------------------------------------
  
@@ -439,16 +412,16 @@ Report ending energy & then re-compute from scratch
  Energy components from total energy call for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                185219.927
- Intra molecular energy is             358063.440
+ Total system energy is                112589.950
+ Intra molecular energy is             366062.459
  Bond energy is                             0.000
- Angle energy is                       186067.746
- Dihedral energy is                    171995.693
+ Angle energy is                       189909.408
+ Dihedral energy is                    176153.052
  Improper angle energy is                   0.000
- Intra molecule vdw is                  53362.004
+ Intra molecule vdw is                  18967.858
  Intra molecule q is                        0.000
- Inter molecule vdw is                -212769.079
- Long range correction is              -13436.437
+ Inter molecule vdw is                -258300.715
+ Long range correction is              -14139.653
  Inter molecule q is                        0.000
  -----------------------------------------------------------
  
@@ -456,16 +429,16 @@ Report ending energy & then re-compute from scratch
  Ending energy components for box   2
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                272201.027
- Intra molecular energy is             284472.043
+ Total system energy is                267284.013
+ Intra molecular energy is             261774.417
  Bond energy is                             0.000
- Angle energy is                       171398.434
- Dihedral energy is                    113073.609
+ Angle energy is                       159620.975
+ Dihedral energy is                    102153.442
  Improper angle energy is                   0.000
- Intra molecule vdw is                  -7844.859
+ Intra molecule vdw is                   7050.920
  Intra molecule q is                        0.000
- Inter molecule vdw is                  -4335.785
- Long range correction is                 -90.372
+ Inter molecule vdw is                  -1454.714
+ Long range correction is                 -86.611
  Inter molecule q is                        0.000
  -----------------------------------------------------------
  
@@ -473,16 +446,16 @@ Report ending energy & then re-compute from scratch
  Energy components from total energy call for box   2
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                272201.027
- Intra molecular energy is             284472.043
+ Total system energy is                267284.013
+ Intra molecular energy is             261774.417
  Bond energy is                             0.000
- Angle energy is                       171398.434
- Dihedral energy is                    113073.609
+ Angle energy is                       159620.975
+ Dihedral energy is                    102153.442
  Improper angle energy is                   0.000
- Intra molecule vdw is                  -7844.859
+ Intra molecule vdw is                   7050.920
  Intra molecule q is                        0.000
- Inter molecule vdw is                  -4335.785
- Long range correction is                 -90.372
+ Inter molecule vdw is                  -1454.714
+ Long range correction is                 -86.611
  Inter molecule q is                        0.000
  -----------------------------------------------------------
 ********************************************************************************
@@ -491,32 +464,32 @@ Report ending energy & then re-compute from scratch
 Writing information for box  1
 ********************************************************************************
                 Move      Trials     Success   % Success
-              Volume          16          10       62.50
+              Volume           6           3       50.00
  
    ---------------------------------------------------------
    Writing information for species  1
  
                 Move      Trials     Success   % Success
-           Translate         382         189       49.48
-              Rotate         394         152       38.58
-              Insert         102           5        4.90
-              Delete          99          48       48.48
+           Translate         363         180       49.59
+              Rotate         341         146       42.82
+              Insert         114          15       13.16
+              Delete         130          55       42.31
    ---------------------------------------------------------
  
 ********************************************************************************
 Writing information for box  2
 ********************************************************************************
                 Move      Trials     Success   % Success
-              Volume          16          10       62.50
+              Volume           6           3       50.00
  
    ---------------------------------------------------------
    Writing information for species  1
  
                 Move      Trials     Success   % Success
-           Translate         279         257       92.11
-              Rotate         272         266       97.79
-              Insert          99          48       48.48
-              Delete         102           5        4.90
+           Translate         311         297       95.50
+              Rotate         279         273       97.85
+              Insert         130          55       42.31
+              Delete         114          15       13.16
    ---------------------------------------------------------
  
 ********************************************************************************
@@ -526,20 +499,20 @@ Writing information about fragments
  
    ---------------------------------------------------------
    Writing information for species  1
-            Fragment      Trials     Success   % Success
-                   1         214         188       87.85
-                   2         230         176       76.52
-                   3         212         127       59.91
+     #_Frags_Regrown      Trials     Success   % Success
+                   1         291         250       85.91
+                   2         222         172       77.48
+                   3         143          90       62.94
    ---------------------------------------------------------
 ********************************************************************************
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.340456 secs.
- Rotation time =               0.357718 secs.
- Volume change time =          1.345549 secs.
- Swap time =                   0.679589 secs.
- Regrowth time =               1.757334 secs.
+ Translation time =            0.242089 secs.
+ Rotation time =               0.214552 secs.
+ Volume change time =          0.298899 secs.
+ Swap time =                   0.604950 secs.
+ Regrowth time =               1.103077 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -553,6 +526,6 @@ Writing information about fragments
          0       Days
          0      Hours
          0    Minutes
-         5    Seconds
-       448         ms
+         3    Seconds
+       348         ms
 ********************************************************************************

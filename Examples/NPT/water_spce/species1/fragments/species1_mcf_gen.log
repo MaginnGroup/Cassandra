@@ -3,19 +3,19 @@ Run info
 version: Cassandra Development Version
 inputfile: species1_mcf_gen.inp
 name of run: species1_mcf_gen
-date (mm/dd/yyyy): 05/18/2016
-time: 17:26:54
+date (mm/dd/yyyy): 06/15/2016
+time: 14:29:05
 machine: maginnfe.crc.nd.edu
+********************************************************************************
+ 
+Verbose log
+********************************************************************************
+Normal output to logfile
 ********************************************************************************
  
 Simulation type
 ********************************************************************************
 MCF_Gen             
-********************************************************************************
- 
-Verbose log file
-********************************************************************************
-Verbose output to logfile: F
 ********************************************************************************
  
 Copy input file
@@ -30,7 +30,7 @@ Copy input file
  1
  
  # VDW_Style
- LJ cut_tail 12.0
+ LJ minimum_image
  
  # Rcutoff_Low
  1.0
@@ -38,8 +38,9 @@ Copy input file
  # Mixing_Rule
  LB
  
+ 
  # Charge_Style
- coul Ewald 12.0 0.000001
+ coul minimum_image
  
  # Intra_Scaling
  0.0 0.0 0.0 1.0
@@ -58,33 +59,31 @@ Copy input file
  
 Number of species
 ********************************************************************************
-    1
+1
 ********************************************************************************
  
 Box info
 ********************************************************************************
-number of simulation boxes     1
-Box number      1       Box Shape:      Cubic 
-Each Side Of :        30.0000     Angstrom
-Cell basis vector lengths in A,     30.0000      30.0000      30.0000
-Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
-Distance between box faces    30.0000      30.0000      30.0000
-Box volume, A^3         27000.0000
+Number of simulation boxes     1
+Box 1 is cubic               
+ Each Side Of :       30.0000     Angstrom
+ Cell basis vector lengths in A,     30.0000      30.0000      30.0000
+ Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+ Distance between box faces    30.0000      30.0000      30.0000
+ Box volume, A^3         27000.0000
 ********************************************************************************
  
 Pair style
 ********************************************************************************
- VDW style used is:   LJ             in box:  1
- LJ VDW sum style is:   cut_tail       in box:  1
- rcut =    12.000   Angstrom
- Charge style used is:   coul           in box:  1
- Charge sum style is   Ewald          in box:  1
- Ewald real space cutoff is  12.000 Angstroms.
- Ewald real space parameter is   0.310 inverse Angstroms
- Ewald reciprocal cutoff is  2.3026 inverse Angstroms
- Charge style properly input
- Lorentz-Berthelot mixing rule specified
- Pair interaction energy arrays will not be stored
+VDW style used is:   LJ             in box:  1
+ VDW sum style is:   minimum_image  in box:  1
+ Minimum image convention used for VDW
+Charge style in box 1 is coul
+ Charge sum style is   minimum_image  in box:  1
+ Minimum image convention used for charge
+Section "# Pair_Energy" is missing from the input file
+ By default, pair interaction energy arrays will not be stored
+Lorentz-Berthelot mixing rule specified
 ********************************************************************************
  
 Molecule info
@@ -98,23 +97,30 @@ Molecule info
    2 bond(s) specified.
    1 angle(s) specified.
    0 dihedral(s) specified.
-   1 fragments specified.
+   1 fragment(s) specified.
    0 improper(s) specified.
-   0  fragment bonds specified.
+   0 fragment bond(s) specified.
  
- Species  Nbr molecules
+ Species  Max molecules
  -------  -------------
       1             50
  
  Species     1
  -------------------------------------------------------------------------------
- L_Coul_CBMC not given, using default T
- 1st_Fragment_Ins_Style not specified, using default "COM"
  Atom parameters read
  Bond parameters read
  Angle parameters read
  Dihedral parameters read
  Improper parameters read
+ Intra molecule scaling factors for species            1
+  VDW 1-2 scaling factor       0.000
+  VDW 1-3 scaling factor       0.000
+  VDW 1-4 scaling factor       0.000
+  VDW 1-N scaling factor       1.000
+  Coulomb 1-2 scaling factor   0.000
+  Coulomb 1-3 scaling factor   0.000
+  Coulomb 1-4 scaling factor   0.000
+  Coulomb 1-N scaling factor   1.000
  Total number of atoms in fragment     1  is   3
  Fragment info read
  -------------------------------------------------------------------------------

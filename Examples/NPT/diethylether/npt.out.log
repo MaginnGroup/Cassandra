@@ -3,19 +3,19 @@ Run info
 version: Cassandra Development Version
 inputfile: npt.inp
 name of run: npt.out
-date (mm/dd/yyyy): 05/24/2016
-time: 00:38:08
+date (mm/dd/yyyy): 06/15/2016
+time: 14:17:59
 machine: maginnfe.crc.nd.edu
+********************************************************************************
+ 
+Verbose log
+********************************************************************************
+Normal output to logfile
 ********************************************************************************
  
 Simulation type
 ********************************************************************************
 NPT_MC              
-********************************************************************************
- 
-Verbose log file
-********************************************************************************
-Verbose output to logfile: F
 ********************************************************************************
  
 Copy input file
@@ -25,16 +25,16 @@ Copy input file
  npt.out
  
  # Sim_Type
- NPT_MC
+ npt_mc
  
  # Nbr_Species
  1
  
  # VDW_Style
- LJ cut_tail 7.0
+ lj cut_tail 7.0
  
  # Charge_Style
- coul Ewald 7.0 0.000001
+ coul ewald 7.0 0.000001
  
  # Intra_Scaling
  0.0 0.0 0.0 1.0
@@ -54,7 +54,7 @@ Copy input file
  
  # Box_Info
  1
- CUBIC
+ cubic
  17.5
  
  # Temperature_Info
@@ -88,23 +88,19 @@ Copy input file
  checkpoint npt.inp.chk
  
  # Run_Type
- Production   1000 10
- 
- 
- # Average_Info
- 1
+ production   300 10
  
  # Simulation_Length_Info
- Units        Sweeps
- Prop_Freq    10
- Coord_Freq   10
- Run          100
+ units        sweeps
+ prop_freq    10
+ coord_freq   10
+ run          100
  
  # Property_Info 1
- Energy_Total
- Pressure
- Volume
- Density
+ energy_total
+ pressure
+ volume
+ density
  
  # Fragment_Files
  species1/frag1/frag1.dat  1
@@ -113,7 +109,6 @@ Copy input file
  
  # CBMC_Info
  kappa_ins 12
- kappa_rot 0
  kappa_dih 10
  rcut_cbmc 6.5
  
@@ -122,33 +117,33 @@ Copy input file
  
 Number of species
 ********************************************************************************
-    1
+1
 ********************************************************************************
  
 Box info
 ********************************************************************************
-number of simulation boxes     1
-Box number      1       Box Shape:      Cubic 
-Each Side Of :        17.5000     Angstrom
-Cell basis vector lengths in A,     17.5000      17.5000      17.5000
-Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
-Distance between box faces    17.5000      17.5000      17.5000
-Box volume, A^3          5359.3750
+Number of simulation boxes     1
+Box 1 is cubic               
+ Each Side Of :       17.5000     Angstrom
+ Cell basis vector lengths in A,     17.5000      17.5000      17.5000
+ Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+ Distance between box faces    17.5000      17.5000      17.5000
+ Box volume, A^3          5359.3750
 ********************************************************************************
  
 Pair style
 ********************************************************************************
- VDW style used is:   LJ             in box:  1
- LJ VDW sum style is:   cut_tail       in box:  1
+VDW style used is:   LJ             in box:  1
+ VDW sum style is:   cut_tail       in box:  1
  rcut =     7.000   Angstrom
- Charge style used is:   coul           in box:  1
- Charge sum style is   Ewald          in box:  1
+Charge style in box 1 is coul
+ Charge sum style is   ewald          in box:  1
  Ewald real space cutoff is   7.000 Angstroms.
  Ewald real space parameter is   0.531 inverse Angstroms
  Ewald reciprocal cutoff is  3.9473 inverse Angstroms
- Charge style properly input
- Lorentz-Berthelot mixing rule specified
- Pair interaction energy arrays will not be stored
+Section "# Pair_Energy" is missing from the input file
+ By default, pair interaction energy arrays will not be stored
+Lorentz-Berthelot mixing rule specified
 ********************************************************************************
  
 Molecule info
@@ -172,13 +167,20 @@ Molecule info
  
  Species     1
  -------------------------------------------------------------------------------
- L_Coul_CBMC not given, using default T
- 1st_Fragment_Ins_Style not specified, using default "COM"
  Atom parameters read
  Bond parameters read
  Angle parameters read
  Dihedral parameters read
  Improper parameters read
+ Intra molecule scaling factors for species            1
+  VDW 1-2 scaling factor       0.000
+  VDW 1-3 scaling factor       0.000
+  VDW 1-4 scaling factor       0.000
+  VDW 1-N scaling factor       1.000
+  Coulomb 1-2 scaling factor   0.000
+  Coulomb 1-3 scaling factor   0.000
+  Coulomb 1-4 scaling factor   0.000
+  Coulomb 1-N scaling factor   1.000
  Total number of atoms in fragment     1  is   3
  Total number of atoms in fragment     2  is   3
  Total number of atoms in fragment     3  is   3
@@ -198,23 +200,9 @@ Molecule info
  -------------------------------------------------------------------------------
 ********************************************************************************
  
-Intramolecular nonbonded scaling
-********************************************************************************
-intramolecular scaling factors explicitly set
-Intra molecule scaling factors for species             1
- VDW 1-2 scaling factor        0.000
- VDW 1-3 scaling factor        0.000
- VDW 1-4 scaling factor        0.000
- VDW 1-N scaling factor        1.000
- Coulomb 1-2 scaling factor    0.000
- Coulomb 1-3 scaling factor    0.000
- Coulomb 1-4 scaling factor    0.000
- Coulomb 1-N scaling factor    1.000
-********************************************************************************
- 
 Start type
 ********************************************************************************
- Starting configuration will be read from checkpoint file
+Starting configuration will be read from checkpoint file
  npt.inp.chk
 ********************************************************************************
  
@@ -225,12 +213,12 @@ Seed info
  
 Temperature
 ********************************************************************************
-  Temperature assigned to box     1  is  343.000    K
+Temperature of box 1 is 343.000 K
 ********************************************************************************
  
 Pressure
 ********************************************************************************
- Pressure of box           1  is   2.414877088176135E-002  amu / (A ps^2). 
+Pressure of box 1 is     4.010 bar =  0.241488E-01 amu / (A ps^2)
 ********************************************************************************
  
 Move probabilities
@@ -251,10 +239,9 @@ Number of moves is :   4
  
 CBMC info
 ********************************************************************************
-kappa for first bead insertion              12
-Orientational bias not supported. Kappa for rotations is set to            0
-kappa for dihedral selection                10
-Smaller cutoff for CBMC for box          1        6.50
+Kappa for first fragment insertion          12
+Kappa for dihedral selection                10
+ Cutoff for CBMC for box 1 is         6.50
 ********************************************************************************
  
 Simulation length info
@@ -264,14 +251,15 @@ Coordinates will be written every                      10 Sweeps
  movie header file is                  npt.out.H
  movie_XYZ file is                     npt.out.xyz
 The simulation will be run for                        100 Sweeps    
+A sweep is defined as                                  91 steps
 ********************************************************************************
  
 Property info
 ********************************************************************************
 Total number of property files to be written is     1   for box 1
- Maximum number of properties per file is    5
+ Maximum number of properties per file is    4
  Writing the name of the property files and the corresponding property output
- Property file    1   is  npt.out.prp1
+ Property file    1   is  npt.out.prp
  Properties output in these files are
  Energy_Total
  Pressure
@@ -281,7 +269,8 @@ Total number of property files to be written is     1   for box 1
  
 Average info
 ********************************************************************************
- Instantaneous values will be output
+Section "# Average_Info" is missing from the input file
+ By default, instantaneous values will be output
 ********************************************************************************
  
 Minimum distance cutoff
@@ -291,8 +280,8 @@ MC low cutoff distance is   2.000    Angstrom
  
 Run type
 ********************************************************************************
- The input run type is Production
- Update frequency is         1000
+ The input run type is production
+ Update frequency is          300
  Update frequency for adjusting maximum volume displacement is
           10
 ********************************************************************************
@@ -303,8 +292,14 @@ Run type
  
 Initial configuration
 ********************************************************************************
+ Reading move parameters for box 1
+ Reading move parameters for species 1
+  max displacement   0.38134
+  max rotation       0.52023
  Move info read successfully
  Number of mc steps read successfully
+ Reading info for box 1
+  max volume change     949.
  Box info read successfully
  Seed info read successfully
  Number of molecules read successfully
@@ -313,9 +308,9 @@ Initial configuration
  
 Charge neutrality check
 ********************************************************************************
- Species           1    has charge                0.00000000
+ Species 1 has charge:                  0.00000000
  
- Box               1    has charge                0.00000000
+ Box     1 has charge:                  0.00000000
 ********************************************************************************
  
 Compute total energy
@@ -344,21 +339,35 @@ Compute total energy
 Run simulation
 ********************************************************************************
       Step       Move   Mol Spc Box  Success  MaxWidth
-      1006     volume             1  0.30000
-      1839     volume             1  0.25000
-      2555     volume             1  0.23333
-      2956     rotate         1   1  0.56400
-      3291  translate         1   1  0.55700
-      3799     volume             1  0.17500
-      5367     volume             1  0.16000
-      5896     volume             1  0.20000
-      5898     rotate         1   1  0.54250
-      6425  translate         1   1  0.56250
-      6504     volume             1  0.20000
-      7568     volume             1  0.21250
-      8280     volume             1  0.21111
-      8854     rotate         1   1  0.53633
-      8921     volume             1  0.24000
+       871     rotate         1   1  0.55333
+      1019  translate         1   1  0.57333
+      1090     volume             1  0.40000
+      1593     volume             1  0.25000
+      1764     rotate         1   1  0.52000
+      1956  translate         1   1  0.51500
+      2080     volume             1  0.26667
+      2615     rotate         1   1  0.54333
+      2741     volume             1  0.25000
+      2884  translate         1   1  0.52111
+      3528     rotate         1   1  0.53417
+      3803  translate         1   1  0.50750
+      4366     volume             1  0.26000
+      4406     rotate         1   1  0.53733
+      4716  translate         1   1  0.52133
+      5325     rotate         1   1  0.54056
+      5389     volume             1  0.23333
+      5683  translate         1   1  0.52556
+      6098     volume             1  0.22857
+      6173     rotate         1   1  0.52952
+      6606  translate         1   1  0.53048
+      6922     volume             1  0.20000
+      7089     rotate         1   1  0.53458
+      7503  translate         1   1  0.52958
+      7971     rotate         1   1  0.52963
+      7987     volume             1  0.18889
+      8420  translate         1   1  0.52889
+      8864     volume             1  0.17000
+      8923     rotate         1   1  0.53133
 ********************************************************************************
  
 Report ending energy & then re-compute from scratch
@@ -368,18 +377,18 @@ Report ending energy & then re-compute from scratch
  Ending energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                -37179.628
- Intra molecular energy is              26941.536
+ Total system energy is                -27619.144
+ Intra molecular energy is              37495.983
  Bond energy is                             0.000
- Angle energy is                        11592.310
- Dihedral energy is                     15349.226
+ Angle energy is                        17455.744
+ Dihedral energy is                     20040.239
  Improper angle energy is                   0.000
- Intra molecule vdw is                  -1819.318
+ Intra molecule vdw is                  -1854.972
  Intra molecule q is                        0.000
- Inter molecule vdw is                 -43321.990
- Long range correction is              -12567.126
- Inter molecule q is                   421598.322
- Reciprocal ewald is                    40237.136
+ Inter molecule vdw is                 -41957.985
+ Long range correction is              -13506.041
+ Inter molecule q is                   421303.225
+ Reciprocal ewald is                    39148.834
  Self ewald is                        -468248.188
  -----------------------------------------------------------
  
@@ -387,18 +396,18 @@ Report ending energy & then re-compute from scratch
  Energy components from total energy call for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                -37179.628
- Intra molecular energy is              26941.536
+ Total system energy is                -27619.144
+ Intra molecular energy is              37495.983
  Bond energy is                             0.000
- Angle energy is                        11592.310
- Dihedral energy is                     15349.226
+ Angle energy is                        17455.744
+ Dihedral energy is                     20040.239
  Improper angle energy is                   0.000
- Intra molecule vdw is                  -1819.318
+ Intra molecule vdw is                  -1854.972
  Intra molecule q is                        0.000
- Inter molecule vdw is                 -43321.990
- Long range correction is              -12567.126
- Inter molecule q is                   421598.322
- Reciprocal ewald is                    40237.136
+ Inter molecule vdw is                 -41957.985
+ Long range correction is              -13506.041
+ Inter molecule q is                   421303.225
+ Reciprocal ewald is                    39148.834
  Self ewald is                        -468248.188
  -----------------------------------------------------------
 ********************************************************************************
@@ -407,14 +416,14 @@ Report ending energy & then re-compute from scratch
 Writing information for box  1
 ********************************************************************************
                 Move      Trials     Success   % Success
-              Volume         102          24       23.53
+              Volume         104          18       17.31
  
    ---------------------------------------------------------
    Writing information for species  1
  
                 Move      Trials     Success   % Success
-           Translate        2878        1602       55.66
-              Rotate        3073        1649       53.66
+           Translate        2932        1546       52.73
+              Rotate        3059        1621       52.99
    ---------------------------------------------------------
  
 ********************************************************************************
@@ -424,18 +433,18 @@ Writing information about fragments
  
    ---------------------------------------------------------
    Writing information for species  1
-            Fragment      Trials     Success   % Success
-                   1        1491        1298       87.06
-                   2        1556        1025       65.87
+     #_Frags_Regrown      Trials     Success   % Success
+                   1        2027        1741       85.89
+                   2         978         609       62.27
    ---------------------------------------------------------
 ********************************************************************************
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            3.762914 secs.
- Rotation time =               4.029034 secs.
- Volume change time =          3.645465 secs.
- Regrowth time =               6.098713 secs.
+ Translation time =            3.733113 secs.
+ Rotation time =               3.899422 secs.
+ Volume change time =          3.482197 secs.
+ Regrowth time =               5.675931 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -449,6 +458,6 @@ Writing information about fragments
          0       Days
          0      Hours
          0    Minutes
-        18    Seconds
-        56         ms
+        17    Seconds
+       250         ms
 ********************************************************************************
