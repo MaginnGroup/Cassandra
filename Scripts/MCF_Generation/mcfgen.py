@@ -60,23 +60,86 @@ To generate a .mcf from a GROMACS forcefield file
        > python mcfgen.py molecule.pdb -f molecule.itp
 
 NOTES:
-  1) The mass of pseudoatoms must be manually entered into the .mcf file.
+  1) The Protein Data Bank format (.pdb) defines a fixed 80-character format for
+     HETATM and ATOM records. Entries are not necessarily separated by white 
+     space. The following information is read from each HETATM/ATOM record in 
+     the supplied .pdb file:
+
+     COLUMNS        DATA TYPE       CONTENTS                            
+     ---------------------------------------------------------------------------
+      7 - 11        Integer(5)      Atom serial number.
+
+     31 - 38        Real(8.3)       Orthogonal coordinates for X in Angstroms.
+     
+     39 - 46        Real(8.3)       Orthogonal coordinates for Y in Angstroms.
+     
+     47 - 54        Real(8.3)       Orthogonal coordinates for Z in Angstroms.
+
+     77 - 78        RString(2)      Element symbol, right-justified.      
+     ---------------------------------------------------------------------------
+
+     The element name is used to look up the atomic mass. If the element field
+     is blank or contains an unknown element, the user will be prompted for the
+     atomic mass, unless the --massDefault option is used, in which case the 
+     unknown element will given a mass of MASSDEFAULT.
+
+     In addition to the standard element symbols, the following pseudo-atoms
+     are recognized:
+
+     PSEUDO-ATOM         SYMBOL      MASS
+     ---------------------------------------------------------------------------
+     Methane, CH4        C4          16.0423
+     Methyl, -CH3        C3          15.0344
+     Methanediyl, -CH2-  C2          14.0265
+     Methanetriyl, -CH<  C1          13.0186
+     ---------------------------------------------------------------------------
+    
+     The atom type for each HETATM/ATOM record is taken from the last white-
+     space separated column. This may be the element name, or the user may need
+     to append the atom type to the end of the record.
+
+     After the HETATM/ATOM records, molecular connectivity is determined from a
+     series of CONECT records. If no CONECT records are given for a poly-atomic
+     molecule, the molecule will be listed with zero fragments. A molecule with
+     zero fragments cannot be inserted, deleted or regrown in Cassandra. CONECT
+     records have the following format:
+
+     COLUMNS         DATA TYPE        CONTENTS  
+     ---------------------------------------------------------------------------
+      7 - 11         Integer(5)       Atom serial number
+     
+     12 - 16         Integer(5)       Serial number of bonded atom
+     
+     17 - 21         Integer(5)       Serial number of bonded atom
+     
+     22 - 26         Integer(5)       Serial number of bonded atom
+     
+     27 - 31         Integer(5)       Serial number of bonded atom
+     ---------------------------------------------------------------------------
+
+     If the atom is bonded to more than 4 other atoms, the pattern is continued.
+     The CONECT record is parsed as white-space separated data.
+
   2) This script does not currently support multiple dihedrals for the same 4 
-     atoms.
+     atoms. If mulitple parameters are given for the same dihedral sequence,
+     only the last parameters will be used.
+
   3) Improper definitions are not currently read from Gromacs forcefield files.
 """)
 parser.add_argument('configFile', 
 								help="""CONFIGFILE must be in either .pdb or .cml format. """ + 
 										 """A .pdb file can be generated using Gaussview, """ +
 										 """while .cml files can be generated using Avogadro.""")
-parser.add_argument('--ffTemplate', action='store_true',
+parser.add_argument('--ffTemplate', '-t', action='store_true',
 								help="""Generate a blank force field file template.""")
-parser.add_argument('--ffFile', '-f', nargs=1, 
+parser.add_argument('--ffFile', '-f',  
 								help="""The default FFFILE is molecule.ff, a custom format """ +
 										 """for this script. Alternatively, the forcefile """ +
 										 """parms can be supplied in GROMACS format (.itp).""")
-parser.add_argument('--mcfFile', '-m', nargs=1, 
+parser.add_argument('--mcfFile', '-m', 
 								help="""The default MCFFILE is molecule.mcf.""")
+parser.add_argument('--massDefault', '-d', type=float,
+                help="""Provide a default mass for unknown elements.""")
 
 args = parser.parse_args()
 
@@ -759,7 +822,11 @@ def ffFileGeneration(infilename,outfilename):
 	ff.write("end atom-atomtype\n\n")
 
 	ff.write("vdwtype "+vdwType+"\n")
-	ff.write("dihedraltype "+dihedralType+"\n\n")
+	ff.write("dihedraltype "+dihedralType+"\n")
+	if dihedralType != 'none':
+		ff.write("scaling_1_4_vdw \n")
+		ff.write("scaling_1_4_charge \n")
+	ff.write("\n")
 
 	# Write nonbonded entries
 	atomTypesWritten = []
@@ -877,14 +944,22 @@ returns:
 								atomParms[i]['type'] + " and " + iType)
 			# Store the atome element by type
 			iElement = line[76:78].strip().title()
+			if not iElement: # iElement is blank
+				iElement = 'X'
 			if iType not in atomParms:
 				numAtomTypes += 1
 				atomParms[iType] = {}
 				atomParms[iType]['element'] = iElement
-				try:
-					atomParms[iType]['mass'] = periodicTable[iElement]
-				except:
-					atomParms[iType]['mass'] = 0.0
+				if not ffTemplate:
+					try:
+						atomParms[iType]['mass'] = periodicTable[iElement]
+					except:
+						if args.massDefault or args.massDefault==0:
+							atomParms[iType]['mass'] = args.massDefault
+						else:
+							iMass= raw_input("Atom type " + iType + " is of unknown element " 
+							  + iElement + ". Enter the mass for this atom type: ")
+							atomParms[iType]['mass']=float(iMass)
 			elif 'element' in atomParms[iType] and \
 			     atomParms[iType]['element'] != iElement:
 				raise Error("PDB contains a repeated type with different" +
@@ -926,6 +1001,7 @@ returns:
 	angleParms = {}
 	dihedralParms = {}
 	improperParms = {}
+	scaling_1_4 = {}
 	global dihedralType
 
 	ff = open(ffFile,'r')
@@ -934,8 +1010,16 @@ returns:
 	while line:
 		if 'dihedraltype' in line:
 			dihedralType = line.split()[1]
+			if dihedralType == 'none' or dihedralType == 'NONE':
+				dihedralType = 'none'
+				scaling_1_4['vdw'] = 0.
+				scaling_1_4['charge'] = 0.
 		elif 'vdwtype' in line:
 			vdwType = line.split()[1]
+		elif 'scaling_1_4_vdw' in line:
+			scaling_1_4['vdw'] = float(line.split()[1])
+		elif 'scaling_1_4_charge' in line:
+			scaling_1_4['charge'] = float(line.split()[1])
 		elif 'nonbonded' in line:
 			index = ff.readline().strip() #atomType
 			sigma = float(ff.readline().split()[1])
@@ -990,6 +1074,8 @@ returns:
 				dihedralParms[index] = (dihedralType, kphi, phi)
 			elif dihedralType == 'none':
 				dihedralParms[index] = (dihedralType,)
+				scaling_1_4['vdw'] = 0.
+				scaling_1_4['charge'] = 0.
 		elif 'impropers' in line:
 			index = tuple([int(i) for i in ff.readline().split()]) #atomNumber
 			psi = float(ff.readline().split()[1])
@@ -1005,9 +1091,9 @@ returns:
 				
 		line = ff.readline()
 
-	return atomParms, bondParms, angleParms, dihedralParms, improperParms
+	return atomParms, bondParms, angleParms, dihedralParms, improperParms, scaling_1_4
 
-def readGromacs(ffFile, atomParms, bondParms, angleParms, dihedralParms, 
+def readGromacs(ffFile, atomParms, bondParms, angleParms, dihedralParms, scaling_1_4,
                 vdwType = None, comboRule = None):
 	"""arguments:
 	ffFile, string = filename of the forcefield file
@@ -1035,8 +1121,8 @@ returns:
 				parentDir = os.path.dirname(ffFile)
 				includeFile = os.path.join(parentDir, includeFile)
 			if os.path.isfile(includeFile):
-				atomParms, bondParms, angleParms, dihedralParms = readGromacs(
-				includeFile, atomParms, bondParms, angleParms, dihedralParms, 
+				atomParms, bondParms, angleParms, dihedralParms, scaling_1_4 = readGromacs(
+				includeFile, atomParms, bondParms, angleParms, dihedralParms, scaling_1_4,
 				vdwType, comboRule)
 			else:
 				print 'WARNING: Topology file ' + includeFile + ' not found. ' + \
@@ -1055,6 +1141,8 @@ returns:
 							raise Error('Nonbonded forcefield is not LJ. Cassandra only ' + 
 													'supports LJ interactions at this time.')
 						comboRule = data[1]
+						scaling_1_4['vdw'] = float(data[3])
+						scaling_1_4['charge'] = float(data[4])
 					# Look for atomParms
 					elif 'atoms' in section:
 						index = int(data[0]) #atomNumber
@@ -1145,7 +1233,7 @@ returns:
 
 	ff.close()
 
-	return atomParms, bondParms, angleParms, dihedralParms
+	return atomParms, bondParms, angleParms, dihedralParms, scaling_1_4
 
 def checkParms(atomList, bondList, angleList, dihedralList, 
                atomParms, bondParms, angleParms, dihedralParms):
@@ -1217,7 +1305,7 @@ returns:
 
 def writeMcf(configFile, mcfFile, 
              atomList, bondList, angleList, dihedralList, ringList,
-             atomParms, bondParms, angleParms, dihedralParms, improperParms):
+             atomParms, bondParms, angleParms, dihedralParms, improperParms, scaling_1_4):
 	"""arguments:
 	configFile, string = configuration file
 	mcfFile, string = molecular connectivity file
@@ -1244,9 +1332,9 @@ returns:
 	          '****************************************\n')
 
 	mcf.write('!Atom Format\n')
-	mcf.write('!index type element mass charge type parameters\n' + 
-	          '!type="LJ", parms=epsilon sigma\n' + 
-            '!type="Mie", parms=epsilon sigma repulsion_exponent dispersion_exponent\n')
+	mcf.write('!index type element mass charge vdw_type parameters\n' + 
+	          '!vdw_type="LJ", parms=epsilon sigma\n' + 
+            '!vdw_type="Mie", parms=epsilon sigma repulsion_exponent dispersion_exponent\n')
 	mcf.write('\n# Atom_Info\n')
 	mcf.write(str(len(atomList))+'\n')
 	for mcfIndex,pdbIndex in enumerate(atomList):
@@ -1254,8 +1342,8 @@ returns:
 		mcf.write('  %-6s'   % (atomParms[pdbIndex]['type']))
 		mcf.write('  %-2s'   % (atomParms[pdbIndex]['element']))
 		mcf.write('  %7.3f'  % (atomParms[pdbIndex]['mass']))
-		mcf.write('  %s' % (atomParms[pdbIndex]['charge']))
-		mcf.write('  %2s' % atomParms[pdbIndex]['vdw'][0])
+		mcf.write('  %s'     % (atomParms[pdbIndex]['charge']))
+		mcf.write('  %2s'    % atomParms[pdbIndex]['vdw'][0])
 		for i in range(1,len(atomParms[pdbIndex]['vdw'])):
 			mcf.write('  %8.3f' % atomParms[pdbIndex]['vdw'][i])
 		for ring in ringList:
@@ -1342,6 +1430,13 @@ returns:
 		mcf.write('  %-8s  %8.1f  %8.2f' % improperParms[ijkl])
 		mcf.write('\n')
 
+	mcf.write('\n!Intra Scaling\n')
+	mcf.write('!vdw_scaling    1-2 1-3 1-4 1-N\n')
+	mcf.write('!charge_scaling 1-2 1-3 1-4 1-N\n')
+	mcf.write('\n# Intra_Scaling\n')
+	mcf.write('0. 0. %.4f 1.\n' % (scaling_1_4['vdw']))
+	mcf.write('0. 0. %.4f 1.\n' % (scaling_1_4['charge']))
+
 	mcf.close()
 	fragInfo(mcfFile)
 	fragConnectivityInfo(mcfFile)
@@ -1359,7 +1454,7 @@ if infilename_type == 'cml':
 ffTemplate = args.ffTemplate
 
 if args.ffFile:
-	ffFile = args.ffFile[0]
+	ffFile = args.ffFile
 	ffFileExt = os.path.splitext(ffFile)[1]
 	if ffFileExt == '.ff':
 		ffFileType = 'native'
@@ -1370,7 +1465,7 @@ else:
 	ffFileType = 'native'
 
 if args.mcfFile:
-	mcfFile = args.mcfFile[0]
+	mcfFile = args.mcfFile
 else:
 	mcfFile = basename + '.mcf'
 
@@ -1459,13 +1554,13 @@ else:
 	# GENERATE MCF FILE
 	# Read parms
 	if ffFileType == 'native':
-		atomParms, bondParms, angleParms, dihedralParms, improperParms = \
+		atomParms, bondParms, angleParms, dihedralParms, improperParms, scaling_1_4 = \
 			readNative(ffFile, atomParms)
 		if dihedralType == 'none':
 			dihedralList = []
 	elif ffFileType == 'gromacs':
-		atomParms, bondParms, angleParms, dihedralParms = \
-			readGromacs(ffFile, atomParms, {}, {}, {})
+		atomParms, bondParms, angleParms, dihedralParms, scaling_1_4 = \
+			readGromacs(ffFile, atomParms, {}, {}, {}, {})
 		improperParms = {}
 	
 	# Check parms
@@ -1478,7 +1573,7 @@ else:
 	# Got all the parms we need? write Mcf.
 	writeMcf(configFile, mcfFile, 
 	         atomList, bondList, angleList, dihedralList, ringList,
-	         atomParms, bondParms, angleParms, dihedralParms, improperParms)
+	         atomParms, bondParms, angleParms, dihedralParms, improperParms, scaling_1_4)
 
 os.system("rm temporary.temp")
 if infilename_type == 'cml':

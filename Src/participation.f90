@@ -494,10 +494,6 @@ SUBROUTINE Participation
            
            ! write fragment file
            
-           WRITE(201,'(A)') '#Species_Type'
-           WRITE(201,'(A)') 'NORMAL'
-           WRITE(201,*) 
-           
            WRITE(201,'(A)') '# Atom_Info'
 
            IF (frag_list(ifrag,is)%ring) THEN
@@ -522,23 +518,22 @@ SUBROUTINE Participation
 
                  ! Check to see if this atom is a ring fragment, if so append, 'ring' at the end
 
+                    
+                 WRITE(201,'(I5,2X,2(A4,2X),2(F11.7,2X),A6,2X)',ADVANCE='NO') i, &
+                      nonbond_list(this_atom,is)%atom_name, nonbond_list(this_atom,is)%element, &
+                      nonbond_list(this_atom,is)%mass, nonbond_list(this_atom,is)%charge, &
+                      nonbond_list(this_atom,is)%vdw_type
+                 DO j = 1, nbr_vdw_params(is)
+                   IF (j == 1) THEN
+                     WRITE(201,'(F11.7,2X)',ADVANCE='NO') nonbond_list(ia,is)%vdw_param(j)/kboltz
+                   ELSE
+                     WRITE(201,'(F11.7,2X)',ADVANCE='NO') nonbond_list(ia,is)%vdw_param(j)
+                   END IF
+                 END DO
                  IF (nonbond_list(this_atom,is)%ring_atom) THEN
-                    
-                    WRITE(201,'(I5,2X,2(A4,2X),2(F11.7,2X),A6,2X,2(F11.7, 2X),A4)') i, &
-                         nonbond_list(this_atom,is)%atom_name, nonbond_list(this_atom,is)%element, &
-                         nonbond_list(this_atom,is)%mass, nonbond_list(this_atom,is)%charge, &
-                         nonbond_list(this_atom,is)%vdw_type, &
-                         nonbond_list(this_atom,is)%vdw_param(1)/kboltz, &
-                         nonbond_list(this_atom,is)%vdw_param(2), 'ring'
+                    WRITE(201,'(A)') 'ring'
                  ELSE
-
-                    WRITE(201,'(I5,2X,2(A4,2X),2(F11.7,2X),A6,2X,2(F11.7, 2X))')i, &
-                         nonbond_list(this_atom,is)%atom_name, nonbond_list(this_atom,is)%element, &
-                         nonbond_list(this_atom,is)%mass, nonbond_list(this_atom,is)%charge, &
-                         nonbond_list(this_atom,is)%vdw_type, &
-                         nonbond_list(this_atom,is)%vdw_param(1)/kboltz, &
-                         nonbond_list(this_atom,is)%vdw_param(2)
-                    
+                    WRITE(201,*)
                  END IF
                  
               END DO
@@ -795,6 +790,7 @@ SUBROUTINE Participation
 
            ELSE
               
+              WRITE(201,*) 
               WRITE(201,'(A)') '# Dihedral_Info'
               WRITE(201,'(A)') '0'
               
@@ -803,6 +799,14 @@ SUBROUTINE Participation
               WRITE(201,'(A)') '0'
               WRITE(201,*)
               
+              WRITE(201,*) 
+              WRITE(201,'(A)') '# Intra_Scaling'
+              WRITE(201,'(4(F6.4,X))') scale_1_2_vdw(is), scale_1_3_vdw(is), &
+                                       scale_1_4_vdw(is), scale_1_N_vdw(is)
+              WRITE(201,'(4(F6.4,X))') scale_1_2_charge(is), scale_1_3_charge(is), &
+                                       scale_1_4_charge(is), scale_1_N_charge(is)
+
+              WRITE(201,*) 
               WRITE(201,'(A)') 'END'
 
            END IF
@@ -1305,6 +1309,14 @@ CONTAINS
 
     END DO
 
+    WRITE(201,*) 
+    WRITE(201,'(A)') '# Intra_Scaling'
+    WRITE(201,'(4(F6.4,X))') scale_1_2_vdw(is), scale_1_3_vdw(is), &
+                             scale_1_4_vdw(is), scale_1_N_vdw(is)
+    WRITE(201,'(4(F6.4,X))') scale_1_2_charge(is), scale_1_3_charge(is), &
+                             scale_1_4_charge(is), scale_1_N_charge(is)
+
+    WRITE(201,*) 
     WRITE(201,'(A)') 'END'
 
     CLOSE(UNIT=201)

@@ -168,11 +168,10 @@ in the README file in this directory.
 %\item Random number seeds.
 %\end{itemize}
 %
-%\section{Restart Simulation - 'read\_old'}
+%\section{Restart Simulation - 'read\_config'}
 %The 'read\_old' option in the '\# Start\_Type' can be used restart a
-%simulation from a file that contains only the information about number
-%of molecules of each species in a given box and the coordinates. One
-%input file is required for each box. The following procedure may be
+%simulation from an xyz file
+%One input file is required for each box. The following procedure may be
 %used to generated the last configuration file suitable for input to a
 %Cassandra simulation.
 %
@@ -218,18 +217,18 @@ Cassandra generates several output files which can be used for later analysis. A
 
 \item {\bf Log file} (*.log): Contains basic information on what the run is, timing information and reports the various parameters specified by the user. A complete copy of the input file is reproduced. Other important information includes the move acceptance rates. You can use the log file to keep track of what conditions were simulated.
 
-\item {\bf Coordinate file} (*.box\#.xyz): For each box in the system, a set of xyz coordinates are written out with a frequency specified by the user (Coord\_Freq). The file has as a header the number of atoms in the box. Following this, the atomic coordinates of molecule 1 of species 1 are written, then the coordinates of molecule 2 of species 1 are written, etc. After all the coordinates of the molecules of species 1 are written, the coordinates of the molecules of species 2 are written, etc. You can use this file to do all your structural analysis and post processing.\\
+\item {\bf Coordinate file} (*.xyz or *.box\#.xyz): For each box in the system, a set of xyz coordinates are written out with a frequency specified by the user (Coord\_Freq). The file has as a header the number of atoms in the box. Following this, the atomic coordinates of molecule 1 of species 1 are written, then the coordinates of molecule 2 of species 1 are written, etc. After all the coordinates of the molecules of species 1 are written, the coordinates of the molecules of species 2 are written, etc. You can use this file to do all your structural analysis and post processing.\\
 
 Note that if you generate your initial configuration using the make\_config command, the first ``snapshot'' of the coordinate file
 will contain the initial configuration of all the species in the system for a given box. You can use this configuration to check on whether the initial configuration 
 is reasonable, or use it as an input to other codes. Note that the initial configuration will be generated using a configurational biased scheme,  
-so it may be a better starting configuration that if you used other methods. 
+so it may be a better starting configuration than if you used other methods. 
 
 \item {\bf Checkpoint file} (*.chk): A checkpoint file is written every Coord\_Freq steps. This can be used to restart a simulation from this point using all of the same information as the run that was used to generate the checkpoint file. To do this, you must use the checkpoint restart option (see Chapter \ref{sec:Input_File}). It will basically pick up where the simulation left off, using the same random number seed, maximum displacements, etc. This is useful in case your job crashes and you want to continue running a job. You can also use the checkpoint file to start a new simulation using the  configuration of the checkpoint file as an initial configuration and the optimized maximum displacements.  To do this, use the script read\_old.py. You will need to set a new random number seed if you do this. See the documentation in Chapter \ref{sec:Input_File} for more details.
 
-\item {\bf H-matrix file} (*.box\#.H): This file is written to every Coord\_Freq MC steps. The first line is the box volume in angstrom$^3$. The next three lines are the box coordinates in angstrom in an H-matrix form. Since Cassandra only supports cubic boxes at the moment, this is just a diagonal and symmetric matrix, but is included here for later versions that will enable non-orthogonal boxes. After this, a blank line is written. The next line is the box number, and the final line(s) is(are) the species ID and number of molecules for that species in this box. If there are three species, there will be three lines. This output is repeated every Coord\_Freq times. This file allows you to compute the density of the box during constant pressure simulations.  
+\item {\bf H-matrix file} (*.H or *.box\#.H): This file is written to every Coord\_Freq MC steps. The first line is the box volume in angstrom$^3$. The next three lines are the box coordinates in angstrom in an H-matrix form. Since Cassandra only supports cubic boxes at the moment, this is just a diagonal and symmetric matrix, but is included here for later versions that will enable non-orthogonal boxes. After this, a blank line is written. The next line is the box number, and the final line(s) is(are) the species ID and number of molecules for that species in this box. If there are three species, there will be three lines. This output is repeated every Coord\_Freq times. This file allows you to compute the density of the box during constant pressure simulations.  
 
 
-\item{{\bf Property file}} (*.box\#.prp\#): This file lists the instantaneous thermodynamic and state properties for each box. Note that you can have more than one property file (hence the\# after `prp') and more than one box (also why there is a \# after `box'). The user specifies which properties are to be written and in what order, and these are then reproduced in this file. The file is written to every Prop\_Freq steps. A header is written to the first two lines to designate what each property is. You may use this file to compute thermodynamic averages.
+\item{{\bf Property file}} (*.prp\# or *.box\#.prp\#): This file lists the instantaneous thermodynamic and state properties for each box. Note that you can have more than one property file (hence the\# after `prp') and more than one box (also why there is a \# after `box'). The user specifies which properties are to be written and in what order, and these are then reproduced in this file. The file is written to every Prop\_Freq steps. A header is written to the first two lines to designate what each property is. You may use this file to compute thermodynamic averages.
 
 \end{itemize}

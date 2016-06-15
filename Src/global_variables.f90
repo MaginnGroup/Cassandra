@@ -81,7 +81,7 @@ USE Type_Definitions
   INTEGER, PARAMETER :: sim_gemc_npt = 7
   INTEGER, PARAMETER :: sim_gemc_ig = 8
   INTEGER, PARAMETER :: sim_mcf = 9
-  LOGICAL :: lfugacity, lchempot, timed_run, openmp_flag, en_flag, verbose_log
+  LOGICAL :: timed_run, openmp_flag, en_flag, verbose_log
   CHARACTER(10) :: sim_length_units
   INTEGER :: steps_per_sweep
 
@@ -90,9 +90,9 @@ USE Type_Definitions
  INTEGER (KIND=8) :: iseed, iseed1, iseed3 
 
   ! Variables associated with the nonbond potential
-  CHARACTER(15) :: mix_rule, run_style
+  CHARACTER(15) :: mix_rule, run_type
   CHARACTER(15), DIMENSION(:), ALLOCATABLE :: vdw_style, charge_style, vdw_sum_style, charge_sum_style
-  INTEGER :: int_mix_rule, int_run_style
+  INTEGER :: int_mix_rule, int_run_type
   INTEGER, DIMENSION(:), ALLOCATABLE :: int_vdw_style, int_vdw_sum_style
   INTEGER, DIMENSION(:), ALLOCATABLE :: int_charge_style, int_charge_sum_style
   INTEGER, PARAMETER :: run_equil = 0
@@ -201,6 +201,9 @@ USE Type_Definitions
   !Factor to convert energy in kJ/mol to kcal/mol
   REAL(DP), PARAMETER :: kJmol_to_kcalmol = 0.239005736_DP
 
+  !Factor to convert mass_density in g/mol/A^3 to kg/m^3
+  REAL(DP), PARAMETER :: atomic_to_kgm3 = 1660.54_DP
+
   ! small number for comparison
   REAL(DP), PARAMETER :: tiny_number  = 0.0000001_DP
   REAL(DP), PARAMETER :: small_number = 0.00001_DP
@@ -255,7 +258,9 @@ USE Type_Definitions
   !**********************************************************************************
   ! thermodynamic state point variables
  
-  REAL(DP),DIMENSION(:),ALLOCATABLE,TARGET :: temperature, beta, pressure
+  REAL(DP),DIMENSION(:),ALLOCATABLE,TARGET :: temperature, beta
+  TYPE(Pressure_Class), DIMENSION(:), ALLOCATABLE, TARGET :: pressure
+  LOGICAL :: need_pressure
   
   ! **********************************************************************************
   ! system size integers used in memory allocation.
@@ -411,7 +416,7 @@ USE Type_Definitions
   ! Accumulators for thermodynamic averages,
 
   ! will have dimensions of nbr_boxes
-  REAL(DP), DIMENSION(:),ALLOCATABLE,TARGET :: ac_volume, ac_enthalpy
+  REAL(DP), DIMENSION(:),ALLOCATABLE,TARGET :: ac_volume, ac_enthalpy, ac_pressure, ac_mass_density
   ! will have dimension of (nspecies,nbr_boxes)
   REAL(DP), DIMENSION(:,:), ALLOCATABLE, TARGET :: ac_density, ac_nmols
 
@@ -451,10 +456,10 @@ USE Type_Definitions
   REAL(DP) :: prob_trans, prob_rot, prob_torsion, prob_volume, prob_angle, prob_insertion
   REAL(DP) :: prob_deletion, prob_swap, prob_regrowth, prob_ring, prob_atom_displacement
   REAL(DP), DIMENSION(:), ALLOCATABLE :: prob_rot_species
-  REAL(DP), DIMENSION(:), ALLOCATABLE :: prob_swap_species
-  REAL(DP), ALLOCATABLE :: prob_swap_boxes(:,:)
+  REAL(DP), DIMENSION(:), ALLOCATABLE :: prob_swap_species, cum_prob_swap_species
+  REAL(DP), ALLOCATABLE :: prob_swap_to_box(:,:), cum_prob_swap_to_box(:,:)
 
-  LOGICAL :: l_mol_frac_swap
+  LOGICAL :: l_prob_swap_species, l_prob_swap_to_box
 
   LOGICAL :: f_dv, f_vratio
 
@@ -530,10 +535,7 @@ USE Type_Definitions
   REAL(DP), DIMENSION(:,:,:), ALLOCATABLE :: W_tensor_vdw
   REAL(DP), DIMENSION(:,:,:), ALLOCATABLE :: W_tensor_total
   REAL(DP), DIMENSION(:,:,:), ALLOCATABLE :: W_tensor_elec
-  REAL(DP), DIMENSION(:,:,:), ALLOCATABLE :: Pressure_tensor
-
-  REAL(DP), DIMENSION(:), ALLOCATABLE :: P_inst
-  REAL(DP), DIMENSION(:), ALLOCATABLE :: P_ideal
+  REAL(DP), DIMENSION(:,:,:), ALLOCATABLE :: pressure_tensor
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Energy check

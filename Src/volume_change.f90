@@ -450,7 +450,7 @@ SUBROUTINE Volume_Change
      
      ! based on the energy, calculate the acceptance ratio
      ln_pacc = beta(this_box) * delta_e &
-             + beta(this_box) * pressure(this_box) * delta_volume &
+             + beta(this_box) * pressure(this_box)%setpoint * delta_volume &
              - total_molecules * DLOG(box_list(this_box)%volume/box_list_old%volume)
      accept = accept_or_reject(ln_pacc)
 
@@ -524,7 +524,7 @@ SUBROUTINE Volume_Change
   ! Update the maximum displaement if there are nupdate_vol attempts
   
   IF (MOD(nvolumes(this_box),nvol_update) == 0 ) THEN
-     IF (int_run_style == run_equil) THEN
+     IF (int_run_type == run_equil) THEN
         success_ratio = REAL(ivol_success(this_box),DP)/REAL(nvol_update,DP)
      ELSE
         success_ratio = REAL(nvol_success(this_box),DP)/REAL(nvolumes(this_box),DP)
@@ -532,7 +532,7 @@ SUBROUTINE Volume_Change
 
      WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,F8.5)',ADVANCE='NO') i_mcstep, 'volume' , this_box, success_ratio
 
-     IF (int_run_style == run_equil) THEN
+     IF (int_run_type == run_equil) THEN
         ! dv_max will be adjusted to achieve 0.5 acceptance using the formula
         !
         !     dv_max = 2 * success_ratio * dv_max
@@ -540,14 +540,14 @@ SUBROUTINE Volume_Change
         ! If the current success_ratio is too low, dv_max will be decreased.
         ! Otherwise, dv_max will be increased. 
       
-        IF (box_list(this_box)%box_shape == 'CUBIC') THEN
+        IF (box_list(this_box)%box_shape == 'cubic') THEN
            
            IF ( success_ratio < 0.0001 ) THEN
               box_list(this_box)%dv_max = 0.1_DP * box_list(this_box)%dv_max
            ELSE
               box_list(this_box)%dv_max = 2.0_DP * success_ratio * box_list(this_box)%dv_max
            END IF
-           WRITE(logunit,'(X,F9.5)',ADVANCE='NO') box_list(this_box)%dv_max
+           WRITE(logunit,'(X,F9.0)',ADVANCE='NO') box_list(this_box)%dv_max
 
         END IF
         

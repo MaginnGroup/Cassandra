@@ -54,6 +54,9 @@ SUBROUTINE Initialize(this_box)
   IF ( .NOT. ALLOCATED(ac_density)) ALLOCATE(ac_density(nspecies,nbr_boxes))
   IF ( .NOT. ALLOCATED(ac_nmols)) ALLOCATE(ac_nmols(nspecies,nbr_boxes))
   IF ( .NOT. ALLOCATED(ac_volume)) ALLOCATE(ac_volume(nbr_boxes))
+  IF ( .NOT. ALLOCATED(ac_pressure)) ALLOCATE(ac_pressure(nbr_boxes))
+  IF ( .NOT. ALLOCATED(ac_enthalpy)) ALLOCATE(ac_enthalpy(nbr_boxes))
+  IF ( .NOT. ALLOCATED(ac_mass_density)) ALLOCATE(ac_mass_density(nbr_boxes))
 
   IF ( .NOT. ALLOCATED(nsuccess)) ALLOCATE(nsuccess(nspecies,nbr_boxes))
   ! Allocate the memory for volume counters in NPT simulation
@@ -61,7 +64,6 @@ SUBROUTINE Initialize(this_box)
   IF ( .NOT. ALLOCATED(nvolumes) ) ALLOCATE(nvolumes(nbr_boxes))
   IF ( .NOT. ALLOCATED(nvol_success)) ALLOCATE(nvol_success(nbr_boxes))
   IF ( .NOT. ALLOCATED(ivol_success)) ALLOCATE(ivol_success(nbr_boxes))
-  IF ( .NOT. ALLOCATED(ac_enthalpy)) ALLOCATE(ac_enthalpy(nbr_boxes))
   IF ( .NOT. ALLOCATED(chpot)) ALLOCATE(chpot(nspecies,nbr_boxes))
   IF ( .NOT. ALLOCATED(chpotid)) ALLOCATE(chpotid(nspecies,nbr_boxes))
 
@@ -145,7 +147,6 @@ SUBROUTINE Reset(this_box)
   ac_energy(this_box)%ewald_reciprocal = 0.0_DP
   ac_energy(this_box)%self = 0.0_DP
 
-
   ac_virial(this_box)%total = 0.0_DP
   ac_virial(this_box)%intra = 0.0_DP
   ac_virial(this_box)%intra_vdw = 0.0_DP
@@ -160,7 +161,9 @@ SUBROUTINE Reset(this_box)
   ac_nmols(:,this_box) = 0.0_DP
 
   ac_volume(this_box) = 0.0_DP
+  ac_pressure(this_box) = 0.0_DP
   ac_enthalpy(this_box) = 0.0_DP
+  ac_mass_density(this_box) = 0.0_DP
   
 END SUBROUTINE Reset
   

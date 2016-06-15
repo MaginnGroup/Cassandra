@@ -172,7 +172,7 @@ SUBROUTINE Cut_N_Grow
      IF( rand_no <= x_species(is)) EXIT
   END DO
 
-  ! If the molecule can't move then return
+  ! If the molecule can't be regrown then return
   IF ( is == 1 ) THEN
     IF ( prob_growth_species(is) == 0. ) RETURN
   ELSE IF ( is > 1 ) THEN
@@ -190,7 +190,7 @@ SUBROUTINE Cut_N_Grow
 
 
   IF (l_pair_nrg) CALL Store_Molecule_Pair_Interaction_Arrays(lm,is,ibox,E_inter_vdw_o, &
-       E_inter_qq_o)
+                                                              E_inter_qq_o)
   
      
   ! We will first cut part of the molecule and then
@@ -225,8 +225,8 @@ SUBROUTINE Cut_N_Grow
   END IF
 
   ! The last trial in the CBMC move may have resulted in an overlap, so some
-  ! of the atoms of that fragment might have 'exist' attribute as false. Make 
-  ! them lm
+  ! of the atoms of that fragment might have 'exist' attribute as false. i
+  ! Make them all exist
 
   atom_list(:,lm,is)%exist = .TRUE.
 

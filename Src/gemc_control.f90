@@ -72,9 +72,6 @@ SUBROUTINE GEMC_Control
 
   !END IF
 
-  ! Determine how intramoleclar scaling of vdw and coul interactions handled.
-  CALL Get_Intra_Scaling
-
   ! Determine the number and identity of unique atom types, and create a vdw interaction table.
   CALL Create_Nonbond_Table
 

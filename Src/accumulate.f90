@@ -41,6 +41,7 @@ SUBROUTINE Accumulate(this_box)
   IMPLICIT NONE
 
   INTEGER :: is, this_box, nmolecules_is
+  REAL(DP) :: mass_density
 
   !--- energy accumulators
 
@@ -67,23 +68,31 @@ SUBROUTINE Accumulate(this_box)
   ac_virial(this_box)%ewald_reciprocal = ac_virial(this_box)%ewald_reciprocal + virial(this_box)%ewald_reciprocal
 
   !--- thermodynamic accumulators
-  IF ( int_sim_type == sim_npt  .OR. &
-       int_sim_type == sim_gemc_npt ) THEN
-     ac_enthalpy(this_box) = ac_enthalpy(this_box) + energy(this_box)%total + pressure(this_box) * box_list(this_box)%volume
-  END IF
   ac_volume(this_box) = ac_volume(this_box) + box_list(this_box)%volume
+  IF (need_pressure) THEN
+     IF (pressure(this_box)%last_calc /= i_mcstep) THEN
+        pressure(this_box)%last_calc = i_mcstep
+        CALL Compute_Pressure(this_box)
+     END IF
+     ac_pressure(this_box) = ac_pressure(this_box) + pressure(this_box)%computed
+     ac_enthalpy(this_box) = ac_enthalpy(this_box) &
+                           + energy(this_box)%total + pressure(this_box)%computed * box_list(this_box)%volume
+  END IF
 
   !--- particle density
   
-  IF ( int_sim_type == sim_gcmc .OR. int_sim_type == sim_npt  &
-       .OR. int_sim_type == sim_gemc .OR. &
-       int_sim_type == sim_gemc_ig .OR. &
-       int_sim_type == sim_gemc_npt) THEN
-     DO is = 1, nspecies
-        ac_density(is,this_box) = ac_density(is,this_box) + REAL(nmols(is,this_box),DP) / box_list(this_box)%volume
-        ac_nmols(is,this_box) = ac_nmols(is,this_box) + REAL(nmols(is,this_box),DP)
-     END DO
-  END IF
+  DO is = 1, nspecies
+     ac_density(is,this_box) = ac_density(is,this_box) + REAL(nmols(is,this_box),DP) / box_list(this_box)%volume
+     ac_nmols(is,this_box) = ac_nmols(is,this_box) + REAL(nmols(is,this_box),DP)
+  END DO
+
+  mass_density = 0.0_DP
+  DO is = 1, nspecies
+     mass_density = mass_density &
+                  + REAL(nmols(is,this_box),DP) * species_list(is)%molecular_weight
+  END DO
+  mass_density = mass_density / box_list(this_box)%volume
+  ac_mass_density(this_box) = ac_mass_density(this_box) + mass_density
 
 END SUBROUTINE Accumulate
 

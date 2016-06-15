@@ -113,7 +113,7 @@ SUBROUTINE Rigid_Insertion
 
   ! Randomly insert the COM in the simulation box.
 
-  IF ( box_list(this_box)%shape = 'CUBIC' ) THEN
+  IF ( box_list(this_box)%shape = 'cubic' ) THEN
 
      molecule_list(alive,is)%xcom = (1.0_DP - 0.5_DP * rranf()) * box_list(this_box)%length(1,1)
      molecule_list(alive,is)%ycom = (1.0_DP - 0.5_DP * rranf()) * box_list(this_box)%length(2,2)

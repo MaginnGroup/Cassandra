@@ -42,7 +42,7 @@ SUBROUTINE GEMC_Driver
 
   IMPLICIT NONE
 
-!$ include 'omp_lib.h'
+!  !$ include 'omp_lib.h'
 
   INTEGER :: i,j, ibox, is
 
@@ -73,6 +73,7 @@ SUBROUTINE GEMC_Driver
 
 !$ openmp_flag = .TRUE.
 
+  write(*,*) 'openmp_flag = ', openmp_flag
 
   IF(.NOT. openmp_flag) THEN
      CALL cpu_time(time_start)
@@ -238,11 +239,6 @@ SUBROUTINE GEMC_Driver
 
      END IF
 
-     ! Accumulate averages. Note that the averages must
-     ! be updated for both the boxes for the moves that
-     ! affect both the boxes. These moves are volume
-     ! fluctuation and particle swap
-
      IF(.NOT. openmp_flag) THEN
         CALL cpu_time(now_time)
      ELSE
@@ -256,13 +252,6 @@ SUBROUTINE GEMC_Driver
         IF(now_time .GT. n_mcsteps) complete = .TRUE.
      END IF
 
-     ! Accumulate the average for all the boxes
-     
-     DO ibox = 1, nbr_boxes
-        CALL Accumulate(ibox)
-     END DO
-
-     ! next_write is true for all the boxes
      next_write(:) = .TRUE.
      next_rdf_write(:) = .TRUE.
    
@@ -332,6 +321,9 @@ SUBROUTINE GEMC_Driver
      
         DO ibox = 1, nbr_boxes
            
+           ! Accumulate the average for all the boxes
+           CALL Accumulate(ibox)
+
            IF(.NOT. timed_run) THEN
               IF ( MOD(i_mcstep,nthermo_freq) == 0) write_flag = .TRUE.
            ELSE

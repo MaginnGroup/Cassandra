@@ -39,9 +39,12 @@ SUBROUTINE GEMC_Particle_Transfer
   !
   ! DESCRIPTION: This subrouting performs the following steps:
   !
-  ! Step 1) Select a box 'box_out' from which to remove a particle
-  ! Step 2) Select a species 'this_species' according to its overall mole 
-  !         fraction
+  ! Step 1) Select a box 'box_out' from which to remove a molecule:
+  !          a) according to its mole fraction, and box_in with uniform prob (DEFAULT)
+  !          b) with uniform probability, and box_in with probs from input file
+  ! Step 2) Select a species 'is':
+  !          a) according to its mole fraction in box_out (DEFAULT)
+  !          b) using probabilities in the input file
   ! Step 3) Select a molecule 'alive' in box_out with uniform probability
   ! Step 4) Choose a position, orientation and conformation for alive in box_in
   ! Step 5) Calculate the change in box_in's potential energy from inserting
@@ -62,17 +65,18 @@ SUBROUTINE GEMC_Particle_Transfer
 
   IMPLICIT NONE
 
-  INTEGER :: box_in, box_out, i, k, this_species, i_type
+  INTEGER :: box_in, box_out, i, k, i_type
 
-  INTEGER :: nmols_sorbate, nsorbate, is, ibox, im_in, im_out ,alive, which_anchor
+  INTEGER :: is, ibox, im_in, im_out, alive, which_anchor
   INTEGER :: rand_igas, locate_in
+  INTEGER :: nmols_tot, nmols_box(nbr_boxes)
+  REAL(DP) :: x_box(nbr_boxes), x_is(nspecies)
 
-  INTEGER, ALLOCATABLE :: sorbate_id(:), frag_order(:)
+  INTEGER, ALLOCATABLE :: frag_order(:)
 
-  REAL(DP), ALLOCATABLE :: sorbate_x(:)
   REAL(DP), ALLOCATABLE :: dx(:), dy(:), dz(:)
 
-  REAL(DP) :: pick_species, delta_e_out, delta_e_out_pacc, e_bond_out, e_angle_out, e_dihed_out
+  REAL(DP) :: delta_e_out, delta_e_out_pacc, e_bond_out, e_angle_out, e_dihed_out
   REAL(DP) :: E_intra_vdw_out, E_intra_qq_out, E_periodic_qq
   REAL(DP) :: E_inter_vdw_out, E_inter_qq_out
   REAL(DP) :: E_intra_vdw_igas, E_intra_qq_igas
@@ -83,7 +87,7 @@ SUBROUTINE GEMC_Particle_Transfer
   REAL(DP) :: E_angle_in, E_dihed_in, delta_e_in, delta_e_in_pacc, potw, CP_energy
   REAL(DP) :: P_seq, P_forward, P_reverse, ln_pacc
   REAL(DP) :: lambda_for_build
-  LOGICAL :: inter_overlap, accept_or_reject, cbmc_overlap, forward
+  LOGICAL :: inter_overlap, accept_or_reject, cbmc_overlap
   LOGICAL :: intra_overlap
  ! ring biasing variables
 
@@ -97,12 +101,11 @@ SUBROUTINE GEMC_Particle_Transfer
   INTEGER :: position
 
   REAL(DP), ALLOCATABLE :: cos_mol_old(:), sin_mol_old(:), cos_mol_new(:), sin_mol_new(:)
-  REAL(DP) :: time0, time1, pick_box
+  REAL(DP) :: time0, time1, randno
   
   LOGICAL :: l_charge_in, l_charge_out
 
   potw = 1.0_DP
-  forward = .FALSE.
   inter_overlap = .false.
   cbmc_overlap = .false.
   accept = .false.
@@ -114,103 +117,132 @@ SUBROUTINE GEMC_Particle_Transfer
   !*****************************************************************************
   ! Step 1) Select a box 'box_out' from which to remove a particle
   !*****************************************************************************
-  box_out = INT (rranf() * nbr_boxes) + 1
+  IF (.NOT. l_prob_swap_to_box) THEN
+     ! Choose box_out based on its mol fraction
 
-  ! choose a box in which the particle will be placed
-  pick_box = rranf()
+     ! Sum the number of swappable molecules total & per box
+     nmols_tot = 0 ! sum over species, box
+     nmols_box = 0
+     DO ibox = 1, nbr_boxes
+       DO is = 1, nspecies
+         ! Only count swappable species
+         IF ( species_list(is)%insertion == 'CBMC' ) THEN
+           nmols_tot = nmols_tot + nmols(is,ibox)
+           nmols_box(ibox) = nmols_box(ibox) + nmols(is,ibox)
+         END IF
+       END DO
+     END DO
 
-  DO ibox = 1,nbr_boxes
-     IF (ibox == box_out) CYCLE
+     ! If there are no molecules then return
+     IF (nmols_tot == 0) RETURN
 
-     IF (pick_box <= prob_swap_boxes(box_out,ibox)) EXIT
-  END DO
+     ! Need cumulative mol fractions for Golden sampling
+     DO ibox = 1, nbr_boxes
+        x_box(ibox) = REAL(nmols_box(ibox),DP)/REAL(nmols_tot,DP)
+        IF ( ibox > 1 ) THEN
+           x_box(ibox) = x_box(ibox) + x_box(ibox-1)
+        END IF
+     END DO
 
-  box_in = ibox
+     ! Ready to choose box_out
+     randno = rranf()
+     DO ibox = 1, nbr_boxes
+        IF ( randno <= x_box(ibox)) EXIT
+     END DO
+     box_out = ibox
 
-  P_forward = P_forward * prob_swap_boxes(box_out,box_in)
-  P_reverse = P_reverse * prob_swap_boxes(box_in,box_out)
+     ! If there are no molecules in this box then return
+     IF( nmols_box(box_out) == 0 ) RETURN
+
+     ! Choose box_in with uniform probability
+     ! Since the number of boxes is constant, this step does not change P_forward or P_reverse
+     ibox = INT(rranf() * (nbr_boxes-1)) + 1
+     IF (ibox >= box_out) ibox = ibox + 1
+     box_in = ibox
+
+     P_forward = P_forward * REAL(nmols_box(box_out),DP)/REAL(nmols_tot,DP)
+     P_reverse = P_reverse * REAL(nmols_box(box_in)+1,DP)/REAL(nmols_tot,DP)
+
+  ELSE
+     ! Use the probabilities in the input file
+     box_out = INT (rranf() * nbr_boxes) + 1
+
+     ! choose a box in which the particle will be placed
+     randno = rranf()
+     DO ibox = 1,nbr_boxes
+        IF (ibox == box_out) CYCLE
+        IF (randno <= cum_prob_swap_to_box(box_out,ibox)) EXIT
+     END DO
+     box_in = ibox
+
+     P_forward = P_forward * prob_swap_to_box(box_out,box_in)
+     P_reverse = P_reverse * prob_swap_to_box(box_in,box_out)
+
+  END IF
 
   ! increment total number of trials for each of the boxes
   tot_trials(box_out) = tot_trials(box_out) + 1
   tot_trials(box_in) = tot_trials(box_in) + 1
 
-  IF( box_list(box_out)%volume .lt. box_list(box_in)%volume ) forward = .TRUE.
-
   !*****************************************************************************
-  ! Step 2) Select a species 'this_species' according to its overall mole 
+  ! Step 2) Select a species 'is' according to its overall mole 
   !         fraction
   !*****************************************************************************
-  IF (l_mol_frac_swap) THEN
+  IF (.NOT. l_prob_swap_species) THEN
      
      ! Choose a species based on the overall mole fraction.
-     ! We will base this on the sorbate mole fraction
-     ALLOCATE(sorbate_id(nspecies), sorbate_x(nspecies))
-     
-     nmols_sorbate = 0
-     nsorbate = 0
-     sorbate_x(:) = 0.0_DP
-     
+     ! Need cumulative mol fractions for Golden sampling
+     x_is = 0.0_DP
      DO is = 1, nspecies
-        IF (species_list(is)%species_type == 'SORBATE') THEN
-           nsorbate = nsorbate + 1
-           sorbate_id(nsorbate) = is
-           nmols_sorbate = nmols_sorbate + SUM(nmols(is,1:nbr_boxes))
-           sorbate_x(nsorbate) = REAL(SUM(nmols(is,1:nbr_boxes)),DP)
-           ! do not sum over box=0, the placeholder for unused locates
+        IF (species_list(is)%insertion /= 'none') THEN
+           x_is(is) = REAL(nmols(is,box_out),DP)/REAL(nmols_box(box_out),DP)
+        END IF
+        IF ( is > 1 ) THEN
+           x_is(is) = x_is(is) + x_is(is-1)
         END IF
      END DO
-  
-     IF (nmols_sorbate == 0) RETURN
+ 
+     ! Ready to choose is
+     randno = rranf()
+     DO is = 1, nspecies
+        IF (randno < x_is(is)) EXIT
+     END DO
+     
+     P_forward = P_forward * REAL(nmols(is,box_out),DP) / REAL(nmols_box(box_out),DP)
+     P_reverse = P_reverse * REAL(nmols(is,box_in)+1,DP) / REAL(nmols_box(box_in)+1,DP)
 
-     sorbate_x(:) = sorbate_x(:) / nmols_sorbate
-     
-     DO i = 2, nsorbate
-        sorbate_x(i) = sorbate_x(i) + sorbate_x(i-1)
-     END DO
-     
-     ! Now pick a species at random using Golden sampling
-     pick_species = rranf()
-     
-     DO i = 1, nsorbate
-        IF (pick_species < sorbate_x(i)) EXIT
-     END DO
-     
-     this_species = sorbate_id(i)
-     
   ELSE
      
      ! pick the species based on specified probability
-     pick_species = rranf()
-     
+     randno = rranf()
      DO is = 1, nspecies
-        IF (pick_species <= prob_swap_species(is)) EXIT
+        IF (randno <= cum_prob_swap_species(is)) EXIT
      END DO
      
-     this_species = is
-     
+     ! Since prob_swap_species is constant, this step does not change P_forward or P_reverse
   END IF
 
-  IF (nmols(this_species,box_out) == 0) THEN
+  IF (nmols(is,box_out) == 0) THEN
      IF (cpcollect)  CALL Chempot(box_in)
      RETURN
   END IF
   
   ! Increment counters
-  ntrials(this_species,box_out)%deletion = &
-     ntrials(this_species,box_out)%deletion + 1
-  ntrials(this_species,box_in)%insertion = &
-     ntrials(this_species,box_in)%insertion + 1
-  ntrials(this_species,box_in)%cpcalc = &
-     ntrials(this_species,box_in)%cpcalc + 1
+  ntrials(is,box_out)%deletion = &
+     ntrials(is,box_out)%deletion + 1
+  ntrials(is,box_in)%insertion = &
+     ntrials(is,box_in)%insertion + 1
+  ntrials(is,box_in)%cpcalc = &
+     ntrials(is,box_in)%cpcalc + 1
 
   !*****************************************************************************
   ! Step 3) Select a molecule 'alive' in box_out with uniform probability
   !*****************************************************************************
   ! pick a molecule INDEX at random to delete
-  im_out = INT(rranf() * nmols(this_species,box_out)) + 1
+  im_out = INT(rranf() * nmols(is,box_out)) + 1
   
   ! Obtain the LOCATE of this molecule
-  alive = locate(im_out,this_species,box_out)
+  alive = locate(im_out,is,box_out)
 
   !*****************************************************************************
   ! Step 4) Choose a position, orientation and conformation for alive in box_in
@@ -222,19 +254,19 @@ SUBROUTINE GEMC_Particle_Transfer
   ! the energy of removing molecule from box_out we need to restore these
 
   ! Save the coordinates of 'alive' in 'box_out'
-  CALL Save_Old_Cartesian_Coordinates(alive,this_species)
-  CALL Compute_Molecule_Dihedral_Energy(alive,this_species,e_dihed_out)
+  CALL Save_Old_Cartesian_Coordinates(alive,is)
+  CALL Compute_Molecule_Dihedral_Energy(alive,is,e_dihed_out)
 
   ! Save the interaction energies
-  IF (l_pair_nrg) CALL Store_Molecule_Pair_Interaction_Arrays(alive,this_species, &
+  IF (l_pair_nrg) CALL Store_Molecule_Pair_Interaction_Arrays(alive,is, &
        box_out, E_inter_vdw_out, E_inter_qq_out)
   
   ! Save the k-vectors
   
   IF (int_charge_sum_style(box_in)  == charge_ewald .AND.&
-      has_charge(this_species)) THEN
+      has_charge(is)) THEN
      ALLOCATE(cos_mol_old(nvecs(box_out)), sin_mol_old(nvecs(box_out)))
-     CALL Get_Position_Alive(alive,this_species,position)
+     CALL Get_Position_Alive(alive,is,position)
      
      !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
      cos_mol_old(:) = cos_mol(1:nvecs(box_out),position)
@@ -243,45 +275,39 @@ SUBROUTINE GEMC_Particle_Transfer
   END IF
 
   ! Switch the box identity of alive
-  molecule_list(alive,this_species)%which_box = box_in
-  nmols(this_species,box_in) = nmols(this_species,box_in) + 1
-  im_in = nmols(this_species,box_in) ! INDEX of alive in box_in
-  locate(im_in,this_species,box_in) = alive ! link INDEX to LOCATE
+  molecule_list(alive,is)%which_box = box_in
+  nmols(is,box_in) = nmols(is,box_in) + 1
+  im_in = nmols(is,box_in) ! INDEX of alive in box_in
+  locate(im_in,is,box_in) = alive ! link INDEX to LOCATE
 
   ! set deletion flag to false and call the CBMC growth routine
   cbmc_overlap = .FALSE.
 
   delta_e_in = 0.0_DP
 
-  IF (species_list(this_species)%fragment .AND. &
-      species_list(this_species)%int_insert .NE. int_igas ) THEN
+  IF (species_list(is)%fragment .AND. &
+      species_list(is)%int_insert .NE. int_igas ) THEN
 
      del_flag = .FALSE.
      get_fragorder = .TRUE.
-     ALLOCATE(frag_order(nfragments(this_species)))
-     lambda_for_build = molecule_list(alive,this_species)%frac
-    IF (species_list(this_species)%lcom) THEN
-        CALL Build_Molecule(alive,this_species,box_in,frag_order, &
-                lambda_for_build,P_seq,P_forward,nrg_ring_frag_in, &
-                cbmc_overlap)
-     ELSE
-        CALL Build_Rigid_Fragment(alive,this_species,box_in,frag_order, &
-                lambda_for_build,P_seq,P_forward,nrg_ring_frag_in, &
-                cbmc_overlap)
-     END IF
+     ALLOCATE(frag_order(nfragments(is)))
+     lambda_for_build = molecule_list(alive,is)%frac
+     CALL Build_Molecule(alive,is,box_in,frag_order, &
+             lambda_for_build,P_seq,P_forward,nrg_ring_frag_in, &
+             cbmc_overlap)
   ELSE
-     CALL New_Positions(box_in,alive,this_species,rand_igas)
+     CALL New_Positions(box_in,alive,is,rand_igas)
   END IF
 
-  CALL Get_COM(alive,this_species)
-  CALL Compute_Max_COM_Distance(alive,this_species)
-  CALL Fold_Molecule(alive,this_species,box_in)
+  CALL Get_COM(alive,is)
+  CALL Compute_Max_COM_Distance(alive,is)
+  CALL Fold_Molecule(alive,is,box_in)
 
   ! Build_Molecule returns cbmc_overlap == .TRUE. both in case of a core
   ! overlap and also when the weight of all trials is zero.
 
   IF (.NOT. cbmc_overlap) THEN
-        CALL Compute_Molecule_Nonbond_Inter_Energy(alive,this_species, &
+        CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is, &
              E_inter_vdw_in,E_inter_qq_in,inter_overlap)
   END IF
 
@@ -289,20 +315,20 @@ SUBROUTINE GEMC_Particle_Transfer
      ! reject the swap
 
      ! restore the box identity
-     molecule_list(alive,this_species)%which_box = box_out
-     locate(im_in,this_species,box_in) = 0 ! reset LOCATE
-     nmols(this_species,box_in) = nmols(this_species,box_in) - 1
+     molecule_list(alive,is)%which_box = box_out
+     locate(im_in,is,box_in) = 0 ! reset LOCATE
+     nmols(is,box_in) = nmols(is,box_in) - 1
      ! restore the box_out coordinates
-     CALL Revert_Old_Cartesian_Coordinates(alive,this_species)
+     CALL Revert_Old_Cartesian_Coordinates(alive,is)
 
      ! All atoms will not exist if inter_overlap was tripped before the 
      ! last fragment was placed in Build_Molecule. 
      ! Set exist to TRUE for all atoms and reset frac to 1
-     atom_list(:,alive,this_species)%exist = .TRUE.
-     molecule_list(alive,this_species)%frac = 1.0_DP
+     atom_list(:,alive,is)%exist = .TRUE.
+     molecule_list(alive,is)%frac = 1.0_DP
 
      IF (l_pair_nrg) THEN
-        CALL Reset_Molecule_Pair_Interaction_Arrays(alive,this_species,box_out)
+        CALL Reset_Molecule_Pair_Interaction_Arrays(alive,is,box_out)
      END IF
 
      IF(ALLOCATED(cos_mol_old)) DEALLOCATE(cos_mol_old)
@@ -319,25 +345,25 @@ SUBROUTINE GEMC_Particle_Transfer
     !         alive
     !*****************************************************************************
     ! If here then no overlap was detected. Calculate the rest of the energies
-    IF(species_list(this_species)%int_insert == int_random) THEN
+    IF(species_list(is)%int_insert == int_random) THEN
 
-       CALL Compute_Molecule_Bond_Energy(alive,this_species,E_bond_in)
-       CALL Compute_Molecule_Angle_Energy(alive,this_species,E_angle_in)
-       CALL Compute_Molecule_Dihedral_Energy(alive,this_species,E_dihed_in)
-       CALL Compute_Molecule_Improper_Energy(alive,this_species,E_improper_in)
+       CALL Compute_Molecule_Bond_Energy(alive,is,E_bond_in)
+       CALL Compute_Molecule_Angle_Energy(alive,is,E_angle_in)
+       CALL Compute_Molecule_Dihedral_Energy(alive,is,E_dihed_in)
+       CALL Compute_Molecule_Improper_Energy(alive,is,E_improper_in)
     
-    ELSE IF(species_list(this_species)%int_insert == int_igas) THEN
+    ELSE IF(species_list(is)%int_insert == int_igas) THEN
 
-       E_bond_in = energy_igas(rand_igas,this_species)%bond
-       E_angle_in = energy_igas(rand_igas,this_species)%angle
-       E_dihed_in = energy_igas(rand_igas,this_species)%dihedral
-       E_improper_in = energy_igas(rand_igas,this_species)%improper
+       E_bond_in = energy_igas(rand_igas,is)%bond
+       E_angle_in = energy_igas(rand_igas,is)%angle
+       E_dihed_in = energy_igas(rand_igas,is)%dihedral
+       E_improper_in = energy_igas(rand_igas,is)%improper
     
     END IF
 
     delta_e_in = delta_e_in + E_bond_in + E_angle_in + E_dihed_in
 
-    CALL Compute_Molecule_Nonbond_Intra_Energy(alive,this_species, &
+    CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is, &
          E_intra_vdw_in,E_intra_qq_in,E_periodic_qq,intra_overlap)
     E_inter_qq_in = E_inter_qq_in + E_periodic_qq
 
@@ -346,20 +372,20 @@ SUBROUTINE GEMC_Particle_Transfer
 
     call cpu_time(time0)
 
-    IF (int_charge_style(box_in) == charge_coul .AND. has_charge(this_species)) THEN
+    IF (int_charge_style(box_in) == charge_coul .AND. has_charge(is)) THEN
        
        IF (int_charge_sum_style(box_in) == charge_ewald) THEN
 
             ! Note that this call will change cos_mol, sin_mol of alive and this
             ! will have to be restored below while computing the energy of box_out
             ! without molecule alive. 
-            CALL Update_System_Ewald_Reciprocal_Energy(alive,this_species,box_in, &
+            CALL Update_System_Ewald_Reciprocal_Energy(alive,is,box_in, &
                  int_insertion,E_reciprocal_in)
        
             delta_e_in = delta_e_in + (E_reciprocal_in - energy(box_in)%ewald_reciprocal)
        END IF
        
-       CALL Compute_Molecule_Self_Energy(alive,this_species,box_in, &
+       CALL Compute_Molecule_Self_Energy(alive,is,box_in, &
             E_self_in)
        delta_e_in = delta_e_in + E_self_in 
 
@@ -371,8 +397,8 @@ SUBROUTINE GEMC_Particle_Transfer
     IF (int_vdw_sum_style(box_in) == vdw_cut_tail) THEN
        nbeads_in(:) = nint_beads(:,box_in)
 
-       DO i = 1, natoms(this_species)
-          i_type = nonbond_list(i,this_species)%atom_type_number
+       DO i = 1, natoms(is)
+          i_type = nonbond_list(i,is)%atom_type_number
           nint_beads(i_type,box_in) = nint_beads(i_type,box_in) + 1
        END DO
           
@@ -386,15 +412,15 @@ SUBROUTINE GEMC_Particle_Transfer
        potw = 1.0_DP
        CP_energy = delta_e_in
        
-       IF(species_list(this_species)%fragment) THEN
+       IF(species_list(is)%fragment) THEN
           potw = 1.0_DP / (P_forward * kappa_ins*kappa_rot*kappa_dih &
-               ** (nfragments(this_species)-1)) 
+               ** (nfragments(is)-1)) 
           CP_energy = delta_e_in - E_angle_in 
        END IF
      
-       chpot(this_species,box_in) = chpot(this_species,box_in) &
+       chpot(is,box_in) = chpot(is,box_in) &
         + potw * (box_list(box_in)%volume &
-        / (REAL(nmols(this_species,box_in)))) * DEXP(-beta(box_in) * CP_energy)
+        / (REAL(nmols(is,box_in)))) * DEXP(-beta(box_in) * CP_energy)
 
     END IF
 
@@ -403,21 +429,21 @@ SUBROUTINE GEMC_Particle_Transfer
     !         alive
     !*****************************************************************************
     ! Need to preserve coordinates of 'alive' in box_in.
-    ALLOCATE(new_atom_list(natoms(this_species)))
-    new_atom_list(:) = atom_list(:,alive,this_species)
-    new_molecule_list = molecule_list(alive,this_species)
+    ALLOCATE(new_atom_list(natoms(is)))
+    new_atom_list(:) = atom_list(:,alive,is)
+    new_molecule_list = molecule_list(alive,is)
 
     ! Change the box identity of alive back to box_out
-    molecule_list(alive,this_species)%which_box = box_out
+    molecule_list(alive,is)%which_box = box_out
     ! Restore the box_out coordinates
-    CALL Revert_Old_Cartesian_Coordinates(alive,this_species)
+    CALL Revert_Old_Cartesian_Coordinates(alive,is)
 
     delta_e_out = 0.0_DP
 
     ! Obtain the weight of the chain if it is made up of fragments
     call cpu_time(time0)
-    IF ( species_list(this_species)%fragment .AND. &
-         species_list(this_species)%int_insert .NE. int_igas) THEN
+    IF ( species_list(is)%fragment .AND. &
+         species_list(is)%int_insert .NE. int_igas) THEN
        ! The fragment order was decided when inserting alive into box_in
        ! Use the same fragment order to calculate trial insertions into box_out 
        ! 
@@ -427,53 +453,47 @@ SUBROUTINE GEMC_Particle_Transfer
        del_flag = .TRUE. 
        get_fragorder = .FALSE.
 
-       IF (species_list(this_species)%lcom) THEN
-          CALL Build_Molecule(alive,this_species,box_out,frag_order, &
-                  lambda_for_build,P_seq,P_reverse,nrg_ring_frag_out, &
-                  cbmc_overlap)
-       ELSE
-          CALL Build_Rigid_Fragment(alive,this_species,box_out,frag_order, &
-                  lambda_for_build,P_seq,P_reverse,nrg_ring_frag_out, &
-                  cbmc_overlap)
-       END IF
+       CALL Build_Molecule(alive,is,box_out,frag_order, &
+               lambda_for_build,P_seq,P_reverse,nrg_ring_frag_out, &
+               cbmc_overlap)
           
        IF (cbmc_overlap) THEN
           ! If this flag gets tripped, there is an error in the code
           err_msg = ""
           err_msg(1) = "Error: existing configuration of " // & 
              "molecule " // TRIM(Int_To_String(alive))
-          err_msg(2) = "of species " // TRIM(Int_To_String(this_species)) // &
+          err_msg(2) = "of species " // TRIM(Int_To_String(is)) // &
              " in box " // TRIM(Int_To_String(box_out)) // &
              " tripped an overlap error"
           CALL Clean_Abort(err_msg,'GEMC_Particle_Transfer')
 
-!          atom_list(1:natoms(this_species),alive,this_species)%exist = .TRUE.
-!          CALL Revert_Old_Cartesian_Coordinates(alive,this_species)
+!          atom_list(1:natoms(is),alive,is)%exist = .TRUE.
+!          CALL Revert_Old_Cartesian_Coordinates(alive,is)
 !
-!          molecule_list(alive,this_species)%frac = 1.0_DP
+!          molecule_list(alive,is)%frac = 1.0_DP
        END IF
 
     END IF
 
-    CALL Get_COM(alive,this_species)
-    CALL Compute_Max_COM_Distance(alive,this_species)
+    CALL Get_COM(alive,is)
+    CALL Compute_Max_COM_Distance(alive,is)
     ! debug to see if the COM and max_com_distance are identical
 
     ! bonded energies
-    CALL Compute_Molecule_Bond_Energy(alive,this_species,e_bond_out)
-    CALL Compute_Molecule_Angle_Energy(alive,this_species,e_angle_out)
-    CALL Compute_Molecule_Dihedral_Energy(alive,this_species,e_dihed_out)
-    CALL Compute_Molecule_Improper_Energy(alive,this_species,e_improper_out)
+    CALL Compute_Molecule_Bond_Energy(alive,is,e_bond_out)
+    CALL Compute_Molecule_Angle_Energy(alive,is,e_angle_out)
+    CALL Compute_Molecule_Dihedral_Energy(alive,is,e_dihed_out)
+    CALL Compute_Molecule_Improper_Energy(alive,is,e_improper_out)
 
     delta_e_out = delta_e_out - e_bond_out - e_angle_out - e_dihed_out &
                 - e_improper_out
 
     ! Nonbonded energy  
-    CALL Compute_Molecule_Nonbond_Intra_Energy(alive,this_species, &
+    CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is, &
          E_intra_vdw_out,E_intra_qq_out,E_periodic_qq,intra_overlap)
 
     IF ( .NOT. l_pair_nrg) THEN
-       CALL Compute_Molecule_Nonbond_Inter_Energy(alive,this_species, &
+       CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is, &
             E_inter_vdw_out,E_inter_qq_out,inter_overlap)
     END IF
     E_inter_qq_out = E_inter_qq_out + E_periodic_qq
@@ -484,7 +504,7 @@ SUBROUTINE GEMC_Particle_Transfer
 
 
 
-    IF (int_charge_style(box_out) == charge_coul .AND. has_charge(this_species)) THEN
+    IF (int_charge_style(box_out) == charge_coul .AND. has_charge(is)) THEN
           IF (int_charge_sum_style(box_in) == charge_ewald .AND. &
               int_charge_sum_style(box_out) == charge_ewald) THEN
              ! Restore the cos_mol and sin_mol as they changed above
@@ -510,14 +530,14 @@ SUBROUTINE GEMC_Particle_Transfer
         
         !     copy_time = copy_time + time1-time0
         
-             CALL Update_System_Ewald_Reciprocal_Energy(alive,this_species, &
+             CALL Update_System_Ewald_Reciprocal_Energy(alive,is, &
                   box_out,int_deletion,E_reciprocal_out)
         
              delta_e_out = delta_e_out + (E_reciprocal_out - energy(box_out)%ewald_reciprocal)
         
           END IF
         
-          CALL Compute_Molecule_Self_Energy(alive,this_species,box_out, &
+          CALL Compute_Molecule_Self_Energy(alive,is,box_out, &
             E_self_out)
 
           delta_e_out = delta_e_out - E_self_out
@@ -527,8 +547,8 @@ SUBROUTINE GEMC_Particle_Transfer
     
     IF (int_vdw_sum_style(box_out) == vdw_cut_tail) THEN
        nbeads_out(:) = nint_beads(:,box_out)
-       DO i = 1, natoms(this_species)
-          i_type = nonbond_list(i,this_species)%atom_type_number
+       DO i = 1, natoms(is)
+          i_type = nonbond_list(i,is)%atom_type_number
           nint_beads(i_type,box_out) = nint_beads(i_type,box_out) - 1
        END DO
 
@@ -540,9 +560,9 @@ SUBROUTINE GEMC_Particle_Transfer
     delta_e_in_pacc = delta_e_in
     delta_e_out_pacc = delta_e_out
 
-    IF(species_list(this_species)%int_insert == int_igas) THEN
+    IF(species_list(is)%int_insert == int_igas) THEN
        igas_flag = .TRUE.
-       CALL Compute_Molecule_Nonbond_Intra_Energy(alive,this_species, &
+       CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is, &
             E_intra_vdw_igas,E_intra_qq_igas,E_periodic_qq,intra_overlap)
        ! Ideal gas should not interact with it's periodic image, so E_periodic_qq
        ! is not added the delta_e
@@ -551,11 +571,11 @@ SUBROUTINE GEMC_Particle_Transfer
                         + e_dihed_out + e_improper_out &
                         + E_intra_vdw_igas + E_intra_qq_igas
        delta_e_in_pacc = delta_e_in_pacc &
-                       - energy_igas(rand_igas,this_species)%total
+                       - energy_igas(rand_igas,is)%total
     END IF
 
-    IF(species_list(this_species)%fragment .AND. &
-       species_list(this_species)%int_insert .NE. int_igas) THEN
+    IF(species_list(is)%fragment .AND. &
+       species_list(is)%int_insert .NE. int_igas) THEN
        delta_e_in_pacc  = delta_e_in_pacc  - e_angle_in  - nrg_ring_frag_in
        delta_e_out_pacc = delta_e_out_pacc + e_angle_out + nrg_ring_frag_out
     END IF
@@ -571,8 +591,8 @@ SUBROUTINE GEMC_Particle_Transfer
 
     ln_pacc = ln_pacc - DLOG(box_list(box_in)%volume) &
                       + DLOG(box_list(box_out)%volume) &
-                      - DLOG(REAL(nmols(this_species,box_out),DP)) &
-                      + DLOG(REAL(nmols(this_species,box_in), DP))
+                      - DLOG(REAL(nmols(is,box_out),DP)) &
+                      + DLOG(REAL(nmols(is,box_in), DP))
 
     ! The same order of insertion is used in both the insertion and 
     ! reverse deletion, so P_seq does not factor into ln_pacc
@@ -586,25 +606,25 @@ SUBROUTINE GEMC_Particle_Transfer
        ! already updated the number of molecules in box_in
 
        ! remove the deleted molecule from box_out locate
-       IF (im_out < nmols(this_species,box_out)) THEN
-          DO k = im_out + 1, nmols(this_species,box_out)
-             locate(k-1,this_species,box_out) = locate(k,this_species,box_out)
+       IF (im_out < nmols(is,box_out)) THEN
+          DO k = im_out + 1, nmols(is,box_out)
+             locate(k-1,is,box_out) = locate(k,is,box_out)
           END DO
        END IF
-       locate(nmols(this_species,box_out),this_species,box_out) = 0
+       locate(nmols(is,box_out),is,box_out) = 0
 
        ! Update the number of molecules in box_out
-       nmols(this_species,box_out) = nmols(this_species,box_out) - 1
+       nmols(is,box_out) = nmols(is,box_out) - 1
 
        ! Set the coordinates and properties of molecule alive to box_in values
-       DO i = 1,natoms(this_species)
-         atom_list(i,alive,this_species) = new_atom_list(i)
+       DO i = 1,natoms(is)
+         atom_list(i,alive,is) = new_atom_list(i)
        END DO
-       molecule_list(alive,this_species) = new_molecule_list
-       CALL Fold_Molecule(alive,this_species,box_in)
+       molecule_list(alive,is) = new_molecule_list
+       CALL Fold_Molecule(alive,is,box_in)
 
        IF (int_charge_sum_style(box_in) == charge_ewald .AND. &
-           has_charge(this_species)) THEN
+           has_charge(is)) THEN
           call cpu_time(time0)
           !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
           cos_mol(1:nvecs(box_in),position) = cos_mol_new(:)
@@ -624,7 +644,7 @@ SUBROUTINE GEMC_Particle_Transfer
        IF (ALLOCATED(sin_mol_new)) DEALLOCATE(sin_mol_new)
 
        ! Restore the coordinates of the molecule due to successful insertion
-       CALL Get_Internal_Coordinates(alive,this_species)
+       CALL Get_Internal_Coordinates(alive,is)
 
        ! Update energies for each box
        ! box_in
@@ -659,7 +679,7 @@ SUBROUTINE GEMC_Particle_Transfer
           energy(box_out)%lrc = e_lrc_out
        END IF
 
-       IF (has_charge(this_species)) THEN
+       IF (has_charge(is)) THEN
           IF (int_charge_sum_style(box_in) == charge_ewald) energy(box_in)%ewald_reciprocal = E_reciprocal_in        
           IF (int_charge_sum_style(box_out) == charge_ewald) energy(box_out)%ewald_reciprocal = E_reciprocal_out
           IF (int_charge_style(box_in) == charge_coul) energy(box_in)%self = energy(box_in)%self + E_self_in
@@ -668,10 +688,10 @@ SUBROUTINE GEMC_Particle_Transfer
 
 
        ! Increment counter
-       nsuccess(this_species,box_in)%insertion = &
-          nsuccess(this_species,box_in)%insertion + 1
-       nsuccess(this_species,box_out)%deletion = &
-          nsuccess(this_species,box_out)%deletion + 1
+       nsuccess(is,box_in)%insertion = &
+          nsuccess(is,box_in)%insertion + 1
+       nsuccess(is,box_out)%deletion = &
+          nsuccess(is,box_out)%deletion + 1
 
     ELSE
        ! reject the swap. 
@@ -680,11 +700,11 @@ SUBROUTINE GEMC_Particle_Transfer
        ! in box_out to calculate removal energies
 
        ! Reset the number of molecules and locate of box_in
-       locate(im_in,this_species,box_in) = 0
-       nmols(this_species,box_in) = nmols(this_species,box_in) - 1
+       locate(im_in,is,box_in) = 0
+       nmols(is,box_in) = nmols(is,box_in) - 1
 
 
-       IF (has_charge(this_species)) THEN
+       IF (has_charge(is)) THEN
            ! Restore the reciprocal space k vectors
            IF (int_charge_sum_style(box_in) == charge_ewald) THEN
               !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
@@ -710,7 +730,7 @@ SUBROUTINE GEMC_Particle_Transfer
        END IF
 
        IF (l_pair_nrg) THEN
-          CALL Reset_Molecule_Pair_Interaction_Arrays(alive,this_species,box_out)
+          CALL Reset_Molecule_Pair_Interaction_Arrays(alive,is,box_out)
        END IF
 
        IF ( int_vdw_sum_style(box_in) == vdw_cut_tail ) THEN
@@ -726,12 +746,10 @@ SUBROUTINE GEMC_Particle_Transfer
   
   END IF 
 
-  IF (ALLOCATED(sorbate_id)) DEALLOCATE(sorbate_id)
-  IF (ALLOCATED(sorbate_x)) DEALLOCATE(sorbate_x)
   IF (ALLOCATED(new_atom_list)) DEALLOCATE(new_atom_list)
 
   IF (verbose_log) THEN
-    WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8)') i_mcstep, 'swap_to' , alive, this_species, box_in, accept
+    WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8)') i_mcstep, 'swap_to' , alive, is, box_in, accept
   END IF
 
 END SUBROUTINE GEMC_Particle_Transfer

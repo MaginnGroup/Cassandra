@@ -48,7 +48,6 @@ SUBROUTINE GCMC_Driver
 
   REAL(DP) :: rand_no
   REAL(DP) :: time_start, now_time
-  REAL(DP) :: energy_old
 
   LOGICAL :: overlap, complete
 
@@ -65,7 +64,12 @@ SUBROUTINE GCMC_Driver
   next_write(:) = .false.
   next_rdf_write(:) = .false.
   complete = .FALSE.
- 
+  openmp_flag = .FALSE.
+
+!$ openmp_flag = .TRUE.
+
+  WRITE(*,*) 'openmp_flag = ', openmp_flag
+
   IF(.NOT. openmp_flag) THEN
      CALL cpu_time(time_start)
   ELSE
@@ -230,20 +234,6 @@ SUBROUTINE GCMC_Driver
 
      END IF
 
-     IF (verbose_log) THEN
-       DO ibox = 1, nbr_boxes
-         energy_old = energy(ibox)%total
-         CALL Compute_System_Total_Energy(ibox,.TRUE.,overlap)
-         WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,3(X,F10.2))') i_mcstep, 'energy', ibox, energy_old, energy(ibox)%total, energy_old - energy(ibox)%total
-       END DO
-     END IF
-     
-     DO ibox = 1, nbr_boxes
-        CALL Accumulate(ibox)
-        next_write(ibox) = .true.
-        next_rdf_write(ibox) = .true.
-     END DO
-
      IF(.NOT. openmp_flag) THEN
         CALL cpu_time(now_time)
      ELSE
@@ -257,7 +247,9 @@ SUBROUTINE GCMC_Driver
         IF(now_time .GT. n_mcsteps) complete = .TRUE.
      END IF
 
-
+     next_write(:) = .TRUE.
+     next_rdf_write(:) = .TRUE.
+     ! write properties
      IF ( .NOT. block_average ) THEN
 
         ! instantaneous values are to be printed   
@@ -287,6 +279,8 @@ SUBROUTINE GCMC_Driver
         
         DO ibox = 1, nbr_boxes
            
+           CALL Accumulate(ibox)
+
            IF (tot_trials(ibox) /= 0) THEN
               IF(MOD(tot_trials(ibox),nthermo_freq) == 0) THEN
                  IF (next_write(ibox)) THEN

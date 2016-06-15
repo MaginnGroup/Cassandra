@@ -77,9 +77,11 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
 !
 ! 05/25/08 (JS) : First committed to the repository
 !
-! 01/20/0 (JS) : Boltzmann weight of the trial is computed irrespoective of
+! 01/20/0 (JS) : Boltzmann weight of the trial is computed irrespective of
 !                its energy. Previously, an energy cutoff was used to set
 !                the Boltzmann weight
+!
+! 06/14/16 (RGM) : First fragment selected based on natoms_in_frag / natoms_in_all_frags
 !
 ! DESCRIPTION: This subroutine performs the following steps
 !
@@ -106,6 +108,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   INTEGER :: this_box ! box index
   INTEGER, DIMENSION(1:nfragments(is)) :: frag_order
   REAL(DP), INTENT(IN) :: this_lambda ! fractional molecule?
+  REAL(DP) :: randno
   REAL(DP) :: P_seq   ! probability of frag_order
   REAL(DP) :: P_bias  ! probability of placing each fragment in the box
   REAL(DP), INTENT(OUT) :: nrg_ring_frag_total ! potential energy of the
@@ -116,7 +119,6 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   INTEGER :: i, j, this_atom      ! atom indices
   INTEGER :: ifrag, this_fragment ! fragment indices
   INTEGER :: im                   ! molecule indices
-  INTEGER :: is_fragments ! number of fragments in each molecule of species 'is'
   INTEGER :: total_frags  ! total number of conformations for this fragment in 
                           ! the reservoir
   INTEGER :: frag_start   ! random fragment to start growing from
@@ -164,9 +166,8 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   this_box = molecule_list(this_im,is)%which_box ! which box this_im is in
   atom_list(:,this_im,is)%exist = .FALSE. ! mark all the atoms as deleted 
   molecule_list(this_im,is)%frac = 0.0_DP
-  is_fragments = nfragments(is) ! number of fragments per molecule
   IF (ALLOCATED(frag_placed)) DEALLOCATE(frag_placed)
-  ALLOCATE(frag_placed(is_fragments))
+  ALLOCATE(frag_placed(nfragments(is)))
   frag_placed(:) = 0 ! =1 if fragment been placed
   nrg_ring_frag_total = 0.0_DP
   cbmc_flag = .TRUE.
@@ -192,14 +193,16 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   IF (get_fragorder) THEN
  
      ! Select a fragment to insert first
-     
-     frag_start = INT ( rranf() * is_fragments) + 1
-     P_seq = 1.0_DP / is_fragments ! uniform prob of choosing a fragment
+     randno = rranf()
+     DO ifrag = 1, nfragments(is)
+        IF (randno < frag_list(ifrag,is)%cum_prob_ins) EXIT
+     END DO
+     frag_start = ifrag
+     P_seq = frag_list(frag_start,is)%prob_ins ! weighted prob of choosing ifrag
  
      ! Select the order fragments will be added to frag_start
-     
      IF (ALLOCATED(live)) DEALLOCATE(live)
-     ALLOCATE(live(is_fragments))      
+     ALLOCATE(live(nfragments(is)))      
 
      live(:) = 0
      frag_order(:) = 0
@@ -209,7 +212,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
      
      ! If this molecule is made up of multiple fragments, select an order in 
      ! which the fragments will be grown
-     IF (is_fragments > 1 ) THEN
+     IF (nfragments(is) > 1 ) THEN
 
         CALL Fragment_Order(frag_start,is,frag_total,frag_order,live,P_seq)
         
@@ -221,7 +224,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
 
      ! frag_order is already determined, just need how many fragments will be
      ! placed (answer: all of them)
-     frag_total = is_fragments
+     frag_total = nfragments(is)
 
      ! P_seq was also computed as part of the GEMC insertion move
 
@@ -658,7 +661,7 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
   LOGICAL, INTENT(INOUT) :: cbmc_overlap
   !-------------------------------
 
-  INTEGER :: is_fragments, frag_start, frag_start_old, frag_total, i, this_atom
+  INTEGER :: frag_start, frag_start_old, frag_total, i, this_atom
   INTEGER :: anchor, ifrag, total_connect, frag_connect
   INTEGER :: j, im
   INTEGER :: ii,jj,kk, total_frags, this_fragment
@@ -691,9 +694,8 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
   ! mark all the atoms as deleted 
   atom_list(:,this_im,is)%exist = .FALSE.
 
-  is_fragments = nfragments(is)
   IF (ALLOCATED(frag_placed)) DEALLOCATE(frag_placed)
-  ALLOCATE(frag_placed(is_fragments))
+  ALLOCATE(frag_placed(nfragments(is)))
   frag_placed(:) = 0
   nrg_ring_frag_total = 0.0_DP
 
@@ -703,18 +705,18 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
      P_seq = 1.0_DP
      ! Obtain the order of fragment addition
      IF (ALLOCATED(live)) DEALLOCATE(live)
-     ALLOCATE(live(is_fragments))      
+     ALLOCATE(live(nfragments(is)))      
      live(:) = 0
      frag_order(:) = 0
      frag_order(1) = frag_start
      live(frag_start) = 1
      frag_total = 1
-     IF (is_fragments > 1 ) THEN
+     IF (nfragments(is) > 1 ) THEN
         CALL Fragment_Order(frag_start,is,frag_total,frag_order,live,P_seq)
      END IF
      DEALLOCATE(live)
   ELSE
-     frag_total = is_fragments
+     frag_total = nfragments(is)
   END IF
 
   ! At this point, we have the order in which we will grow the molecule from
@@ -1078,7 +1080,7 @@ SUBROUTINE Cut_Regrow(this_im,is,frag_live,frag_dead,frag_order,frag_total, &
   LOGICAL :: del_overlap
 
   ! Local declarations
-  INTEGER :: is_fragments, frag_bond, frag_start
+  INTEGER :: frag_bond, frag_start
   INTEGER :: this_box, i_frag, frag_no, i, this_atom, anchor, this_frag
   INTEGER :: anchor_live, anchor_dead
   
@@ -1106,12 +1108,10 @@ SUBROUTINE Cut_Regrow(this_im,is,frag_live,frag_dead,frag_order,frag_total, &
 
   this_box = molecule_list(this_im,is)%which_box
 
-  is_fragments = nfragments(is)
-
   ! Choose a fragment bond to cut
 
   IF(ALLOCATED(frag_placed)) DEALLOCATE(frag_placed)
-  ALLOCATE(frag_placed(is_fragments))
+  ALLOCATE(frag_placed(nfragments(is)))
 
   ! When is del_flag == TRUE?
   IF ( .NOT. DEL_FLAG) THEN
@@ -1120,15 +1120,15 @@ SUBROUTINE Cut_Regrow(this_im,is,frag_live,frag_dead,frag_order,frag_total, &
      
      ! Kill one of the fragments
      
-     IF ( rranf() < 0.5_DP) THEN
+     IF ( rranf() < fragment_bond_list(frag_bond,is)%prob_del1) THEN
         
-        frag_live = fragment_bond_list(frag_bond,is)%fragment1
-        frag_dead = fragment_bond_list(frag_bond,is)%fragment2
+        frag_dead = fragment_bond_list(frag_bond,is)%fragment1
+        frag_live = fragment_bond_list(frag_bond,is)%fragment2
         
      ELSE
         
-        frag_live = fragment_bond_list(frag_bond,is)%fragment2
-        frag_dead = fragment_bond_list(frag_bond,is)%fragment1
+        frag_dead = fragment_bond_list(frag_bond,is)%fragment2
+        frag_live = fragment_bond_list(frag_bond,is)%fragment1
         
      END IF
      
@@ -1137,7 +1137,7 @@ SUBROUTINE Cut_Regrow(this_im,is,frag_live,frag_dead,frag_order,frag_total, &
      ! fragments as live, until we come to a terminal fragment. However,  
      ! Fragment_Order will only add dead fragments connected to frag_dead to 
      ! frag_order, so we can get away here with only marking frag_live as live
-     ALLOCATE(live(is_fragments))
+     ALLOCATE(live(nfragments(is)))
      live(:) = 0
      live(frag_live) = 1
 
@@ -1277,8 +1277,10 @@ SUBROUTINE Fragment_Order(this_frag,is,frag_total,frag_order,live,P_seq)
   REAL(DP) :: P_seq   ! the probability of frag_order
 
   ! Local declarations
-  INTEGER :: n_connect, i_frag, j_frag, i_frag_id, j_frag_id, i
-  INTEGER, DIMENSION(1:nfragments(is)) :: hanging_connections
+  INTEGER :: ifrag, jfrag, ifrag_id, jfrag_id, i
+  INTEGER :: nconnect ! number of entires in hanging_connections
+  INTEGER :: hanging_connections(nfragments(is)) ! to hold ids of frags ready to add
+  REAL(DP) :: randno, prob(nfragments(is)), cum_prob(nfragments(is))
 
   !*****************************************************************************
   !   Step 1) Determine the number & identity of hanging connections
@@ -1288,48 +1290,72 @@ SUBROUTINE Fragment_Order(this_frag,is,frag_total,frag_order,live,P_seq)
   ! others. We need to know how many fragments connected to this_frag are not 
   ! yet live, and which fragments those are:
 
-  n_connect = 0 ! to store the number of hanging connections
+  nconnect = 0 ! to store the number of hanging connections
   hanging_connections(:) = 0 ! to store the frag ids that are ready to be added
-  DO i_frag = 1, frag_list(this_frag,is)%nconnect
-     i_frag_id = frag_list(this_frag,is)%frag_connect(i_frag)
-     IF ( live(i_frag_id) == 0 ) THEN
-        n_connect = n_connect + 1
-        hanging_connections(n_connect) = i_frag_id
+  DO ifrag = 1, frag_list(this_frag,is)%nconnect
+     ifrag_id = frag_list(this_frag,is)%frag_connect(ifrag)
+     IF ( live(ifrag_id) == 0 ) THEN
+        nconnect = nconnect + 1
+        hanging_connections(nconnect) = ifrag_id
      END IF
   END DO
 
   ! Loop through steps 2 and 3 until all fragments are live.
 
-  DO WHILE (n_connect > 0)
+  DO WHILE (nconnect > 0)
      !**************************************************************************
      !   Step 2) Select which fragment to add next
      !**************************************************************************
-     ! Choose a random fragment
-     i_frag = INT( rranf() * n_connect ) + 1
-     i_frag_id = hanging_connections(i_frag)
-     P_seq = P_seq / n_connect ! fragment chosen with uniform probability
+     ! Compute probabilty of adding next fragment for each frag in hanging_connections
+     ! weight each fragment by the number of unique atoms in the fragment (natoms - 2)
+     ! On the first loop, store the number of atoms in prob & cum_prob
+     prob = 0
+     cum_prob = 0
+     DO ifrag = 1, nconnect
+        ifrag_id = hanging_connections(ifrag)
+        prob(ifrag) = frag_list(ifrag_id,is)%natoms - 2
+        IF (ifrag == 1) THEN
+          cum_prob(ifrag) = frag_list(ifrag_id,is)%natoms - 2
+        ELSE
+          cum_prob(ifrag) = cum_prob(ifrag-1)  + (frag_list(ifrag_id,is)%natoms - 2)
+        END IF
+     END DO
+     ! On the second loop, divide the prob & cum_prob for each frag by the total number of atoms
+     DO ifrag = 1, nconnect
+        ifrag_id = hanging_connections(ifrag)
+        prob(ifrag) = prob(ifrag) / cum_prob(nconnect)
+        cum_prob(ifrag) = cum_prob(ifrag) / cum_prob(nconnect)
+     END DO
 
-     ! Add i_frag_id to frag_order, make i_frag_id live
+     ! Choose a random fragment
+     randno = rranf()
+     DO ifrag = 1, nconnect
+        IF (randno < cum_prob(ifrag)) EXIT
+     END DO
+     ifrag_id = hanging_connections(ifrag)
+     P_seq = P_seq * prob(ifrag) 
+
+     ! Add ifrag_id to frag_order, make ifrag_id live
      frag_total = frag_total + 1
-     frag_order(frag_total) = i_frag_id
-     live(i_frag_id) = 1
+     frag_order(frag_total) = ifrag_id
+     live(ifrag_id) = 1
 
      !**************************************************************************
      !   Step 3) Update the number & identity of hanging connections
      !**************************************************************************
-     ! Remove i_frag_id from hanging_connections
-     DO j_frag = i_frag, n_connect - 1
-        hanging_connections(j_frag) = hanging_connections(j_frag + 1)
+     ! Remove ifrag_id from hanging_connections
+     DO jfrag = ifrag, nconnect - 1
+        hanging_connections(jfrag) = hanging_connections(jfrag + 1)
      END DO
-     hanging_connections(n_connect) = 0
-     n_connect = n_connect - 1
+     hanging_connections(nconnect) = 0
+     nconnect = nconnect - 1
 
-     ! Update n_connect and hanging_connections
-     DO j_frag = 1, frag_list(i_frag_id,is)%nconnect
-        j_frag_id = frag_list(i_frag_id,is)%frag_connect(j_frag)
-        IF ( live(j_frag_id) == 0 ) THEN
-           n_connect = n_connect + 1
-           hanging_connections(n_connect) = j_frag_id
+     ! Update nconnect and hanging_connections
+     DO jfrag = 1, frag_list(ifrag_id,is)%nconnect
+        jfrag_id = frag_list(ifrag_id,is)%frag_connect(jfrag)
+        IF ( live(jfrag_id) == 0 ) THEN
+           nconnect = nconnect + 1
+           hanging_connections(nconnect) = jfrag_id
         END IF
      END DO
 
