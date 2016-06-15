@@ -75,6 +75,7 @@ output_unit = ['(kJ/mol)-Ext','(kJ/mol)-Ext','(kJ/mol)-Ext','(kJ/mol)-Ext','(kJ/
 for i, option in enumerate(output_options):
 	if data_label[y_axis] == option:
 		output_ndx = i
+		break
 	else:
 		output_ndx = 7 #empty
 
