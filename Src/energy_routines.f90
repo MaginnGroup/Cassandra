@@ -2639,7 +2639,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
                     2.0_DP * alpha_dsf(ibox)/rootPI * &
                     DEXP(-alpha_dsf(ibox)*alpha_dsf(ibox) * rijsq) / rij - &
                     dsf_factor2(ibox)
-           Wij_qq = qi*qj*Wij_qq*rijsq 
+           Wij_qq = qi*qj*Wij_qq*rij
                     
 
          ELSE IF (int_charge_sum_style(ibox) == charge_cut) THEN
