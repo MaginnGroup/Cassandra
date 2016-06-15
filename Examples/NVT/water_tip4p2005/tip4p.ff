@@ -8,6 +8,7 @@ begin atom-atomtype
 4 M
 end atom-atomtype
 
+vdwtype LJ
 dihedraltype none
 
 nonbonded

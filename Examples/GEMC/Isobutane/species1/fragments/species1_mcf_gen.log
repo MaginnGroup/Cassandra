@@ -1,23 +1,25 @@
-************** Beginning Cassandra simulation **************
-Version Cassandra 1.1                                                                                                           
-
-inputfile species1_mcf_gen.inp                                                                                                    
-
+Run info
+********************************************************************************
+version: Cassandra Development Version
+inputfile: species1_mcf_gen.inp
 name of run: species1_mcf_gen
-
-  Month      Day      Year
-     09       30      2015
- 
- Time:  17:28:19
- 
+date (mm/dd/yyyy): 06/15/2016
+time: 16:08:09
 machine: maginnfe.crc.nd.edu
-
-
-Simulation type: MCF_Gen             
-
- Verbosity output to logfile set to  F
+********************************************************************************
  
- **** Copying Inputfile ****** 
+Verbose log
+********************************************************************************
+Normal output to logfile
+********************************************************************************
+ 
+Simulation type
+********************************************************************************
+MCF_Gen             
+********************************************************************************
+ 
+Copy input file
+********************************************************************************
  # Run_Name
  species1_mcf_gen
  
@@ -28,7 +30,7 @@ Simulation type: MCF_Gen
  1
  
  # VDW_Style
- LJ cut_tail 12.0
+ LJ minimum_image
  
  # Rcutoff_Low
  1.0
@@ -36,12 +38,6 @@ Simulation type: MCF_Gen
  # Mixing_Rule
  LB
  
- # Charge_Style
- coul Ewald 12.0 0.000001
- 
- # Intra_Scaling
- 0.0 0.0 0.0 1.0
- 0.0 0.0 0.0 1.0
  
  # Molecule_Files
  ../../isobutane.mcf 50
@@ -52,40 +48,38 @@ Simulation type: MCF_Gen
  30.0 30.0 30.0
  
  END
+********************************************************************************
  
- **** Finished writing input file *******
- Number of species simulated:      1
-
- *** Simulation box data ***
-number of simulation boxes     1
+Number of species
+********************************************************************************
+1
+********************************************************************************
  
-Box number      1       Box Shape:      Cubic 
-Each Side Of :        30.0000     Angstrom
+Box info
+********************************************************************************
+Number of simulation boxes     1
+Box 1 is cubic               
+ Each Side Of :       30.0000     Angstrom
+ Cell basis vector lengths in A,     30.0000      30.0000      30.0000
+ Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+ Distance between box faces    30.0000      30.0000      30.0000
+ Box volume, A^3         27000.0000
+********************************************************************************
  
-Cell basis vector lengths in A,     30.0000      30.0000      30.0000
-Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
-Distance between box faces    30.0000      30.0000      30.0000
-Box volume, A^3         27000.0000
- 
- *** Finished loading box information ***
- 
-   VDW style used is:   LJ             in box:  1
-   VDW sum style is:   cut_tail       in box:  1
-    rcut =    12.000   Angstrom
- 
-   Charge style used is:   coul           in box:  1
-    Charge sum style is   Ewald          in box:  1
-    Ewald real space cutoff is  12.000 Angstroms.
-  Ewald real space parameter is   0.310 inverse Angstroms
-    Ewald reciprocal cutoff is  2.3026 inverse Angstroms
- Charge style properly input
- 
+Pair style
+********************************************************************************
+VDW style used is:   LJ             in box:  1
+ VDW sum style is:   minimum_image  in box:  1
+ Minimum image convention used for VDW
+Section "# Charge_Style" is missing from the input file
+ By default, charge style for box 1 is NONE
+Section "# Pair_Energy" is missing from the input file
+ By default, pair interaction energy arrays will not be stored
 Lorentz-Berthelot mixing rule specified
+********************************************************************************
  
- Pair interaction energy arrays will not be stored
- Energy calculations will be done in a standard way
- 
- 
+Molecule info
+********************************************************************************
  Reading molecular connectivity information
  Species:            1
  Molecular connectivity file: 
@@ -96,34 +90,29 @@ Lorentz-Berthelot mixing rule specified
    3 angle(s) specified.
    0 dihedral(s) specified.
    0 improper(s) specified.
-   1 fragments specified.
-   0  fragment bonds specified.
+   1 fragment(s) specified.
+   0 fragment bond(s) specified.
  
-Species  Nbr molecules
--------  -------------
-     1             50
+ Species  Max molecules
+ -------  -------------
+      1             50
  
-L_Coul_CBMC not given for species    1
- Defaulting to  T
- 
-1st_Fragment_Ins_Style not specified for species    1
-using default of "COM" for this species.
- *** Completed assigning atom info ***
- 
- *** Completed assigning bond info ***
- 
- 
- *** Completed assigning angle info ***
- 
- *** Completed assigning dihedral info ***
- 
- *** Completed assigning improper info ***
- 
- 
-Total number of atoms in the fragment     1  is   4
- 
- ******* Finished loading fragment info ********
- 
+ Species     1
+ -------------------------------------------------------------------------------
+ Atom parameters read
+ Bond parameters read
+ Angle parameters read
+ Dihedral parameters read
+ Improper parameters read
+ Intra molecule scaling factors for species            1
+  VDW 1-2 scaling factor       0.000
+  VDW 1-3 scaling factor       0.000
+  VDW 1-4 scaling factor       0.000
+  VDW 1-N scaling factor       1.000
+ Total number of atoms in fragment     1  is   4
+ Fragment info read
+ -------------------------------------------------------------------------------
+********************************************************************************
  
  Finished generating fragments
  Exiting

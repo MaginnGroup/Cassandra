@@ -3,7 +3,7 @@ gemc_dimethylhexane.out
 !------------------------------------------------------------------------------
 
 # Sim_Type
-GEMC
+gemc
 !------------------------------------------------------------------------------
 
 # Nbr_Species
@@ -11,8 +11,8 @@ GEMC
 !------------------------------------------------------------------------------
 
 # VDW_Style
-LJ   cut_tail   14.00
-LJ   cut_tail   14.00
+lj   cut_tail   14.00
+lj   cut_tail   14.00
 !------------------------------------------------------------------------------
 
 # Rcutoff_Low
@@ -20,18 +20,8 @@ LJ   cut_tail   14.00
 !------------------------------------------------------------------------------
 
 # Mixing_Rule
-LB
+lb
 !------------------------------------------------------------------------------
-
-# Charge_Style
-NONE
-NONE
-!------------------------------------------------------------------------------
-
-# Intra_Scaling
-0.0    0.0    0.0     1.0
-0.0    0.0    0.0     1.0
-!----------------------------------------------vdw, coul lines for each species
 
 # Molecule_Files
 dimethylhexane.mcf 300
@@ -39,19 +29,19 @@ dimethylhexane.mcf 300
 
 # Box_Info
 2
-CUBIC
-38.7600 38.7600 38.7600
+cubic
+38.7600 
 
-CUBIC
-194.06 194.06 194.06
-
+cubic
+194.06 
 !-------------------------------------------------------line 1: number of boxes
 !--------------------------------------------------------------line 2: box type
 !--------------------------------------------------------------line 3: box size
 !--------------------------------------------------------------repeat for second box
 
 # Temperature_Info
-354.00 354.00 
+354.00 
+354.00 
 !----------------------------------------------------------one temperature per box
 
 # Move_Probability_Info
@@ -73,77 +63,63 @@ CUBIC
 # Prob_Volume
 0.005
 200.0
-200.0
 
 # Prob_Swap
 0.095
 cbmc
 
 # Done_Probability_Info
-
 !---------------------one line for each box and one entry/line for each species
 !-----------------------------------------each molecule moves per volume change
 
 # Start_Type
 make_config 200
 make_config 100
-
 !--------make_config: one line for each species and one entry/line for each box
 !------------------------------------------------------------read_old: filename
 !----------------------------------------------------------checkpoint: filename
 
 # Run_Type
-Equilibration 100 100
-
+equilibration 100 100
 !-------------------------Equilibration: update maximum widths every 100 steps/update maximum
 !-------------------------volume displacement every 100 steps
 
 # Simulation_Length_Info
-Units       Steps
-Prop_Freq   100
-Coord_Freq  2200
-Run         2200
-
+units       steps
+prop_freq   100
+coord_freq  2200
+run         2200
 !------------------ simulation length every 2200 steps, XYZ output every 2200 steps, property
 !---------------------------------------output every 100 steps
 
 # Seed
 1216131116 1216131117
-
 !------------------------------------------------------------------------------
 
-# Average_Info
-1
-
-!------------------------------------------------------------ 0 == yes, 1 == no
-
 # Property_Info 1
-Energy_Total
-Density
-Nmols
-Volume
-
+energy_total
+density
+nmols
+volume
+mass_density
 !------------------------------------------------------------------------------
 
 # Property_Info 2
-Energy_Total
-Density
-Nmols
-Volume
-
+energy_total
+density
+nmols
+volume
+mass_density
 !------------------------------------------------------------------------------
 
 # CBMC_Info
 kappa_ins 12
-kappa_rot 0
 kappa_dih 12
 rcut_cbmc 6.5  6.5
-
 !------------------------------------------------------------------------------
 
 # Pair_Energy
-TRUE
-
+true
 !------------------------------------------------------------------------------
 
 # Fragment_Files

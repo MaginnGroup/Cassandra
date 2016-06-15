@@ -3,19 +3,19 @@ Run info
 version: Cassandra Development Version
 inputfile: methane_Si.inp
 name of run: methane_Si.out
-date (mm/dd/yyyy): 05/19/2016
-time: 14:23:21
+date (mm/dd/yyyy): 06/15/2016
+time: 15:37:59
 machine: maginnfe.crc.nd.edu
+********************************************************************************
+ 
+Verbose log
+********************************************************************************
+Normal output to logfile
 ********************************************************************************
  
 Simulation type
 ********************************************************************************
 GCMC                
-********************************************************************************
- 
-Verbose log file
-********************************************************************************
-Verbose output to logfile: F
 ********************************************************************************
  
 Copy input file
@@ -25,25 +25,13 @@ Copy input file
  methane_Si.out
  
  # Sim_Type
- GCMC
+ gcmc
  
  # Nbr_Species
  2
  
  # VDW_Style
- LJ cut_tail 13.0
- 
- # Charge_Style
- NONE
- 
- # Intra_Scaling
- 0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0
- 
- # Mixing_Rule
- LB
+ lj cut_tail 13.0
  
  # Seed_Info
  86722316473 59009854321
@@ -52,15 +40,15 @@ Copy input file
  1.0
  
  # Pair_Energy
- TRUE
+ true
  
  # Molecule_Files
- Si27ucEM.mcf 1
+ SiO2.mcf 2592
  CH4.mcf 500
  
  # Box_Info
  1
- ORTHOGONAL
+ orthogonal
  60.21  59.76 40.26
  
  # Temperature_Info
@@ -85,64 +73,59 @@ Copy input file
  # Done_Probability_Info
  
  # Start_Type
- add_to_config 1 0 Si27ucEM.xyz 0 30
+ add_to_config 2592 0 Si27ucEM.xyz 0 30
  
  # Run_Type
- Equilibration   600
- 
- # Average_Info
- 1
+ equilibration   600
  
  # Simulation_Length_Info
- Units        Steps
- Prop_Freq    400
- Coord_Freq   4000
- Run          4000
+ units        steps
+ prop_freq    400
+ coord_freq   4000
+ run          4000
  
  # Property_Info 1
- Energy_Total
- Nmols
+ energy_total
+ nmols
  
  # Fragment_Files
  species2/frag1/frag1.dat  1
  
  # CBMC_Info
  kappa_ins 12
- kappa_rot  0
- kappa_dih 12
  rcut_cbmc 6.5
- 
  
  END
 ********************************************************************************
  
 Number of species
 ********************************************************************************
-    2
+2
 ********************************************************************************
  
 Box info
 ********************************************************************************
-number of simulation boxes     1
-Box number      1       Box Shape:      Orthorhombic 
-X dimension :         60.2100     Angstrom
-Y dimension :         59.7600     Angstrom
-Z dimension :         40.2600     Angstrom
-Cell basis vector lengths in A,     60.2100      59.7600      40.2600
-Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
-Distance between box faces    60.2100      59.7600      40.2600
-Box volume, A^3        144861.5029
+Number of simulation boxes     1
+Box 1 is orthorhombic        
+ X dimension :        60.2100     Angstrom
+ Y dimension :        59.7600     Angstrom
+ Z dimension :        40.2600     Angstrom
+ Cell basis vector lengths in A,     60.2100      59.7600      40.2600
+ Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+ Distance between box faces    60.2100      59.7600      40.2600
+ Box volume, A^3        144861.5029
 ********************************************************************************
  
 Pair style
 ********************************************************************************
- VDW style used is:   LJ             in box:  1
- LJ VDW sum style is:   cut_tail       in box:  1
+VDW style used is:   LJ             in box:  1
+ VDW sum style is:   cut_tail       in box:  1
  rcut =    13.000   Angstrom
- Charge style used is:   NONE           in box:  1
- Charge style properly input
- Pair interaction energy array storage enabled
- Lorentz-Berthelot mixing rule specified
+Section "# Charge_Style" is missing from the input file
+ By default, charge style for box 1 is NONE
+Pair interaction energy array storage enabled
+Section "# Mixing_Rule" is missing from the input file
+ By default, using Lorentz-Berthelot
 ********************************************************************************
  
 Molecule info
@@ -150,9 +133,9 @@ Molecule info
  Reading molecular connectivity information
  Species:            1
  Molecular connectivity file: 
- Si27ucEM.mcf                                                                   
+ SiO2.mcf                                                                       
                                           
-   7776 atom(s) specified.
+   3 atom(s) specified.
    0 bond(s) specified.
    0 angle(s) specified.
    0 dihedral(s) specified.
@@ -174,29 +157,35 @@ Molecule info
  
  Species  Max molecules
  -------  -------------
-      1              1
+      1           2592
       2            500
  
  Species     1
  -------------------------------------------------------------------------------
- L_Coul_CBMC not given, using default T
- 1st_Fragment_Ins_Style not specified, using default "COM"
  Atom parameters read
  Bond parameters read
  Angle parameters read
  Dihedral parameters read
  Improper parameters read
+ Intra molecule scaling factors for species            1
+  VDW 1-2 scaling factor       0.000
+  VDW 1-3 scaling factor       0.000
+  VDW 1-4 scaling factor       0.000
+  VDW 1-N scaling factor       0.000
  -------------------------------------------------------------------------------
  
  Species     2
  -------------------------------------------------------------------------------
- L_Coul_CBMC not given, using default T
- 1st_Fragment_Ins_Style not specified, using default "COM"
  Atom parameters read
  Bond parameters read
  Angle parameters read
  Dihedral parameters read
  Improper parameters read
+ Intra molecule scaling factors for species            2
+  VDW 1-2 scaling factor       0.000
+  VDW 1-3 scaling factor       0.000
+  VDW 1-4 scaling factor       0.000
+  VDW 1-N scaling factor       1.000
  Total number of atoms in fragment     1  is   1
  Fragment info read
  Fragment file for fragment 1 is species2/frag1/frag1.dat
@@ -210,97 +199,78 @@ Molecule info
  -------------------------------------------------------------------------------
 ********************************************************************************
  
-Intramolecular nonbonded scaling
+Nonbond tables
 ********************************************************************************
-intramolecular scaling factors explicitly set
-Intra molecule scaling factors for species             1
- VDW 1-2 scaling factor        0.000
- VDW 1-3 scaling factor        0.000
- VDW 1-4 scaling factor        0.000
- VDW 1-N scaling factor        0.000
- Coulomb 1-2 scaling factor    0.000
- Coulomb 1-3 scaling factor    0.000
- Coulomb 1-4 scaling factor    0.000
- Coulomb 1-N scaling factor    0.000
-Intra molecule scaling factors for species             2
- VDW 1-2 scaling factor        0.000
- VDW 1-3 scaling factor        0.000
- VDW 1-4 scaling factor        0.000
- VDW 1-N scaling factor        0.000
- Coulomb 1-2 scaling factor    0.000
- Coulomb 1-3 scaling factor    0.000
- Coulomb 1-4 scaling factor    0.000
- Coulomb 1-N scaling factor    0.000
-********************************************************************************
+ ********************************************************************************
  
 Start type
 ********************************************************************************
- Initial configuration for box 1 will add molecules to configuration read from f
- ile
- Will read       1  molecules of species   1
+Initial configuration for box 1 will add molecules to configuration read from file
+ Will read    2592  molecules of species   1
  Will read       0  molecules of species   2
- Will read configuration from file Si27ucEM.xyz                                                                                                            
+ Will read configuration from file Si27ucEM.xyz
  Will insert       0  molecules of species   1
  Will insert      30  molecules of species   2
 ********************************************************************************
  
 Seed info
 ********************************************************************************
-  The starting seeds are:    822970553  -1119687823
+The starting seeds are:    822970553  -1119687823
 ********************************************************************************
  
 Temperature
 ********************************************************************************
-  Temperature assigned to box     1  is  300.000    K
+Temperature of box 1 is 300.000 K
 ********************************************************************************
  
 Move probabilities
 ********************************************************************************
- Translation probability is      0.400000
+Probability for translation                0.400000
  Maximum displacement width for species  1 in box  1  is      0.00000
  Maximum displacement width for species  2 in box  1  is      2.00000
- Probability for insertion move is         0.3000
+Probability for insertion                  0.300000
  Species 1 will not be inserted
  Species 2 will be inserted using CBMC
-         Number of insertable species is    1
- Probability for deletion move is          0.3000
- Number of moves is :   3
+ Number of insertable species is    1
+Probability for deletion                   0.300000
+Number of moves is :   3
 ********************************************************************************
  
 Chemical potential
 ********************************************************************************
-Chemical Potential of sp  1 is     0.000000000E+00in atomic units
-de Broglie wavelength of species    1  in box      1   is
-  0.0025541460   Angstrom
-Chemical Potential of sp  2 is    -0.400000000E+04in atomic units
-de Broglie wavelength of species    2  in box      1   is
-  0.2519875236   Angstrom
+Species     1
+ Chemical potential (internal units):        0.000000000
+ de Broglie wavelength (Angstroms):          0.130035887
+Species     2
+ Chemical potential (internal units):    -4000.000000000
+ de Broglie wavelength (Angstroms):          0.251657440
 ********************************************************************************
  
 Simulation length info
 ********************************************************************************
 Thermodynamic quantities will be written every        400 Steps     
 Coordinates will be written every                    4000 Steps     
-movie header file is                   methane_Si.out.H
-movie_XYZ file is                      methane_Si.out.xyz
-The simulation will be run for                         4000 Steps     
+ movie header file is                  methane_Si.out.H
+ movie_XYZ file is                     methane_Si.out.xyz
+The simulation will be run for                       4000 Steps     
 ********************************************************************************
  
 Average info
 ********************************************************************************
- Instantaneous values will be output
+Section "# Average_Info" is missing from the input file
+ By default, instantaneous values will be output
 ********************************************************************************
  
 Property info
 ********************************************************************************
 Total number of property files to be written is     1   for box 1
- Maximum number of properties per file is    4
+ Maximum number of properties per file is    3
  Writing the name of the property files and the corresponding property output
- Property file    1   is  methane_Si.out.prp1
+ Property file    1   is  methane_Si.out.prp
  Properties output in these files are
  Energy_Total
- Nmols
- Nmols
+ Nmols_1
+ Nmols_2
 ********************************************************************************
  
 Minimum distance cutoff
@@ -310,15 +280,13 @@ MC low cutoff distance is   1.000    Angstrom
  
 CBMC info
 ********************************************************************************
-kappa for first bead insertion              12
-Orientational bias not supported. Kappa for rotations is set to            0
-kappa for dihedral selection                12
-Smaller cutoff for CBMC for box          1        6.50
+Kappa for first fragment insertion          12
+ Cutoff for CBMC for box 1 is         6.50
 ********************************************************************************
  
 Run type
 ********************************************************************************
- The input run type is Equilibration
+ The input run type is equilibration
  Update frequency is          600
 ********************************************************************************
  
@@ -328,20 +296,11 @@ Run type
  
 Initial configuration
 ********************************************************************************
- 
  Reading configuration for box           1
- Reading            1  molecules of species            1
+ Reading         2592  molecules of species            1
  Reading            0  molecules of species            2
  Configurations read successfully
  Inserting           30 molecules of species            2
-********************************************************************************
- 
-Charge neutrality check
-********************************************************************************
- Species           1    has charge                0.00000000
- Species           2    has charge                0.00000000
- 
- Box               1    has charge                0.00000000
 ********************************************************************************
  
 Compute total energy
@@ -349,7 +308,7 @@ Compute total energy
  Starting energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                -44237.761
+ Total system energy is               1835559.202
  Intra molecular energy is                  0.000
  Bond energy is                             0.000
  Bond angle energy is                       0.000
@@ -357,7 +316,7 @@ Compute total energy
  Improper angle energy is                   0.000
  Intra molecule vdw is                      0.000
  Intra molecule q is                        0.000
- Inter molecule vdw is                 -15984.828
+ Inter molecule vdw is                1863812.135
  Long range correction is              -28252.933
  Inter molecule q is                        0.000
  -----------------------------------------------------------
@@ -367,8 +326,8 @@ Compute total energy
 Run simulation
 ********************************************************************************
       Step       Move   Mol Spc Box  Success  MaxWidth
-      1444  translate         2   1  0.20500   0.82000
-      3042  translate         2   1  0.57167   0.93753
+      1506  translate         2   1  0.21333   0.85333
+      3029  translate         2   1  0.55000   0.93867
 ********************************************************************************
  
 Report ending energy & then re-compute from scratch
@@ -378,7 +337,7 @@ Report ending energy & then re-compute from scratch
  Ending energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                -81939.505
+ Total system energy is               1781605.432
  Intra molecular energy is                  0.000
  Bond energy is                             0.000
  Angle energy is                            0.000
@@ -386,8 +345,8 @@ Report ending energy & then re-compute from scratch
  Improper angle energy is                   0.000
  Intra molecule vdw is                      0.000
  Intra molecule q is                        0.000
- Inter molecule vdw is                 -53550.966
- Long range correction is              -28388.539
+ Inter molecule vdw is                1810368.328
+ Long range correction is              -28762.896
  Inter molecule q is                        0.000
  -----------------------------------------------------------
  
@@ -395,7 +354,7 @@ Report ending energy & then re-compute from scratch
  Energy components from total energy call for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                -81939.505
+ Total system energy is               1781605.432
  Intra molecular energy is                  0.000
  Bond energy is                             0.000
  Angle energy is                            0.000
@@ -403,8 +362,8 @@ Report ending energy & then re-compute from scratch
  Improper angle energy is                   0.000
  Intra molecule vdw is                      0.000
  Intra molecule q is                        0.000
- Inter molecule vdw is                 -53550.966
- Long range correction is              -28388.539
+ Inter molecule vdw is                1810368.328
+ Long range correction is              -28762.896
  Inter molecule q is                        0.000
  -----------------------------------------------------------
 ********************************************************************************
@@ -424,18 +383,18 @@ Writing information for box  1
    Writing information for species  2
  
                 Move      Trials     Success   % Success
-           Translate        1582         666       42.10
-              Insert        1223         580       47.42
-              Delete        1195         576       48.20
+           Translate        1623         677       41.71
+              Insert        1166         590       50.60
+              Delete        1211         575       47.48
    ---------------------------------------------------------
  
 ********************************************************************************
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            3.148484 secs.
- Insertion time =             15.105725 secs.
- Deletion time =              14.015885 secs.
+ Translation time =            0.980807 secs.
+ Insertion time =              4.719050 secs.
+ Deletion time =               4.387230 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -449,6 +408,6 @@ Writing information for box  1
          0       Days
          0      Hours
          0    Minutes
-        41    Seconds
-       343         ms
+        18    Seconds
+       803         ms
 ********************************************************************************
