@@ -106,7 +106,9 @@ SUBROUTINE Rigid_Dihedral_Change
 
   LOGICAL :: framework_overlap
 
-  
+  intra_overlap = .FALSE.
+  inter_overlap = .FALSE.
+    
 
   ! Sum the total number of molecules 
   total_mols = SUM(nmols(:,:))
