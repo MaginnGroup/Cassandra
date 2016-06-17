@@ -946,7 +946,7 @@ SUBROUTINE Get_Molecule_Info
 ! connectivity file format is supported.
 !******************************************************************************
 
-  INTEGER :: ierr,line_nbr,nbr_entries, i, openstatus, is, max_index
+  INTEGER :: ierr,line_nbr,nbr_entries, i, openstatus, is, max_index, input_line_nbr
   INTEGER :: mcf_index(5), dummy
   CHARACTER(120) :: line_string, line_array(20), source_dir
   LOGICAL :: l_source_dir
@@ -957,11 +957,12 @@ SUBROUTINE Get_Molecule_Info
   WRITE(logunit,'(A80)') '********************************************************************************'
 
 ! determine the type of molecule input and connectivity
-  REWIND(inputunit)
 
   l_source_dir = .FALSE.
+
   ierr = 0
   line_nbr = 0
+  REWIND(inputunit)
   
   input_file_loop:DO
 
@@ -1036,8 +1037,10 @@ SUBROUTINE Get_Molecule_Info
               CALL Clean_Abort(err_msg,'Get_Molecule_Info')
            ENDIF
 
+           input_line_nbr = line_nbr
            REWIND(molfile_unit)
-
+           ierr = 0
+           line_nbr = 0
            mcf_index = 0
 
            mcf_read_loop:DO 
@@ -1124,6 +1127,8 @@ SUBROUTINE Get_Molecule_Info
            END DO mcf_read_loop
 
            CLOSE(molfile_unit)
+
+           line_nbr = input_line_nbr
 
         ENDDO species_loop
 
@@ -4653,7 +4658,7 @@ SUBROUTINE Get_Start_Type
                  ! check that inserting species have fragments
                  IF (nfragments(is) == 0 .AND. nmols_to_make(is,ibox) /= 0) THEN
                     err_msg = ''
-                    err_msg = 'Cannot insert molecules of species ' // TRIM(Int_To_String(is)) // &
+                    err_msg(1) = 'Cannot insert molecules of species ' // TRIM(Int_To_String(is)) // &
                               ' since species has zero fragments'
                     CALL Clean_Abort(err_msg, 'Get_Start_Type')
                  END IF
