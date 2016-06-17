@@ -110,7 +110,6 @@ SUBROUTINE Rigid_Dihedral_Change
 
   ! Sum the total number of molecules 
   total_mols = SUM(nmols(:,:))
-  nmols_box(ibox) = SUM(nmols(:,ibox))
 
   ! If there are no molecules then return
   IF (total_mols == 0) RETURN
@@ -119,6 +118,7 @@ SUBROUTINE Rigid_Dihedral_Change
   IF(nbr_boxes .GT. 1) THEN
 
     DO ibox = 1, nbr_boxes
+  	   nmols_box(ibox) = SUM(nmols(:,ibox))
        x_box(ibox) = REAL(nmols_box(ibox),DP)/REAL(total_mols,DP)
        IF ( ibox > 1 ) THEN
           x_box(ibox) = x_box(ibox) + x_box(ibox-1)
@@ -132,6 +132,7 @@ SUBROUTINE Rigid_Dihedral_Change
   ELSE
 
     ibox = 1
+	nmols_box(ibox) = SUM(nmols(:,ibox))
 
   END IF
 
@@ -146,11 +147,11 @@ SUBROUTINE Rigid_Dihedral_Change
      END IF
   END DO
 
+
   rand_no = rranf()
   DO is = 1, nspecies
      IF( rand_no <= x_species(is)) EXIT
   END DO
-
   ! Choose one of the molecules at random
   im = INT( rranf() * nmols(is,ibox) ) + 1
   ! Get the index of imth molecule of species is in the box.
