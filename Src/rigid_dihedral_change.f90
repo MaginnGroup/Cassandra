@@ -164,6 +164,7 @@ SUBROUTINE Rigid_Dihedral_Change
   CALL Save_Old_Cartesian_Coordinates(lm,is)
   CALL Save_Old_Internal_Coordinates(lm,is)
 
+  
   ! Compute the bonded interactions before the move
   CALL Compute_Molecule_Bond_Energy(lm,is,E_bond)
   CALL Compute_Molecule_Angle_Energy(lm,is,E_angle)
@@ -172,7 +173,12 @@ SUBROUTINE Rigid_Dihedral_Change
   
   ! Compute the nobonded interaction before the move
   CALL Compute_Molecule_Nonbond_Intra_Energy(lm,is,E_intra_vdw,E_intra_qq,E_periodic_qq,intra_overlap)
-  CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is,E_inter_vdw,E_inter_qq,inter_overlap)
+  IF (l_pair_nrg) THEN
+	CALL Store_Molecule_Pair_Interaction_Arrays(lm,is,ibox,E_inter_vdw,E_inter_qq)
+  ELSE 
+	CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is,E_inter_vdw,E_inter_qq,inter_overlap)
+  END IF
+
   E_inter_qq = E_inter_qq + E_periodic_qq
   ! compute the energy related to the framework
 
@@ -407,7 +413,7 @@ SUBROUTINE Rigid_Dihedral_Change
 
      CALL Revert_Old_Cartesian_Coordinates(lm,is)
      CALL Revert_Old_Internal_Coordinates(lm,is)
-
+	 IF (l_pair_nrg) CALL Reset_Molecule_Pair_Interaction_Arrays(lm,is,ibox)
   ELSE
   
      CALL Compute_Molecule_Bond_Energy(lm,is,E_bond_move)
@@ -472,7 +478,7 @@ SUBROUTINE Rigid_Dihedral_Change
         ! Compute the COM positions
 
         CALL Get_Internal_Coordinates(lm,is)
-
+		IF (l_pair_nrg) DEALLOCATE(pair_vdw_temp,pair_qq_temp)
      ELSE 
 
         ! Reject the move and revert the old coordinates
@@ -488,7 +494,7 @@ SUBROUTINE Rigid_Dihedral_Change
            !$OMP END PARALLEL WORKSHARE
 
         END IF
-
+		IF (l_pair_nrg) CALL Reset_Molecule_Pair_Interaction_Arrays(lm,is,ibox)
      END IF
 
   END IF
