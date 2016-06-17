@@ -137,8 +137,10 @@ CONTAINS
     ! Test to see if the minimum number of entries was read in      
     IF (nbr_entries < min_entries) THEN
        err_msg = ""
-       err_msg(1) = 'Expected at least '// TRIM(Int_To_String(min_entries))//&
-            ' input(s) on line '//TRIM(Int_To_String(line_nbr))//' of input file.'
+       err_msg(1) = 'Error attempting to parse line ' // &
+                    TRIM(Int_To_String(line_nbr)) // ' of input file: '
+       err_msg(2) = TRIM(string)
+       err_msg(3) = 'into at least ' // TRIM(Int_To_String(min_entries)) // ' entries'
        CALL Clean_Abort(err_msg,'Parse_String')
     END IF
       
