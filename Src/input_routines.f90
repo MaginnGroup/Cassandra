@@ -1532,7 +1532,7 @@ SUBROUTINE Get_Atom_Info(is)
 
            ! there may be a card for ring atoms
            nonbond_list(ia,is)%ring_atom = .FALSE.
-           IF (nbr_entries == 9) THEN
+           IF (nbr_entries == 9 ) THEN
               ! this atom is a ring atom
               IF (line_array(9) == 'ring') THEN
                  nring_atoms(is) = nring_atoms(is) + 1
@@ -1540,6 +1540,16 @@ SUBROUTINE Get_Atom_Info(is)
                  nonbond_list(ia,is)%ring_atom = .TRUE.
                  IF (verbose_log) WRITE(logunit,*) ia ,' is a ring atom'
               END IF
+		   ! if we are using the Mie potential
+		   ELSEIF (nbr_entries == 11 ) THEN
+              ! this atom is a ring atom 
+              IF (line_array(11) == 'ring') THEN
+                 nring_atoms(is) = nring_atoms(is) + 1
+                 ring_atom_ids(nring_atoms(is),is) = ia
+                 nonbond_list(ia,is)%ring_atom = .TRUE.
+                 IF (verbose_log) WRITE(logunit,*) ia ,' is a ring atom'
+              END IF
+
            ELSE
               ! this is an not a ring atom
               nexo_atoms(is) = nexo_atoms(is) + 1
