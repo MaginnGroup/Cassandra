@@ -1,0 +1,272 @@
+Run info
+********************************************************************************
+version: Cassandra Development Version
+inputfile: file.inp
+name of run: test3.out
+date (mm/dd/yyyy): 06/20/2016
+time: 14:52:18
+machine: crcfe02.crc.nd.edu
+********************************************************************************
+ 
+Verbose log file
+********************************************************************************
+Verbose output to logfile: F
+********************************************************************************
+ 
+Simulation type
+********************************************************************************
+NVT_MC              
+********************************************************************************
+ 
+Copy input file
+********************************************************************************
+ # Run_Name
+ test3.out
+ 
+ # Sim_Type
+ NVT_MC
+ 
+ # Nbr_Species
+ 1
+ 
+ # VDW_Style
+ LJ cut_tail 12.0
+ 
+ # Charge_Style
+ NONE
+ 
+ # Intra_Scaling
+ 0.0 0.0 0.0 1.0
+ 
+ # Mixing_Rule
+ LB
+ 
+ # Seed_Info
+ 21498 489625
+ 
+ # Rcutoff_Low
+ 1.0
+ 
+ # Molecule_Files
+ lj.mcf 2
+ 
+ # Box_Info
+ 1
+ CUBIC
+ 100.0
+ 
+ # Temperature_Info
+ 300.0
+ 
+ # Move_Probability_Info
+ 
+ # Prob_Translation
+ 1.0
+ 1.00
+ 
+ # Done_Probability_Info
+ 
+ # Start_Type
+ read_config 2 lj.xyz
+ 
+ # Run_Type
+ Equilibration 100
+ 
+ # Average_Info
+ 1
+ 
+ # Simulation_Length_Info
+ Units Steps
+ Prop_Freq 1
+ Coord_Freq 1
+ Run 0
+ 
+ # Property_Info 1
+ Energy_Total
+ Pressure
+ 
+ # Fragment_Files
+ 
+ # CBMC_Info
+ kappa_ins 12
+ kappa_rot 0
+ kappa_dih 10
+ rcut_cbmc 6.5
+ 
+ END
+********************************************************************************
+ 
+Number of species
+********************************************************************************
+    1
+********************************************************************************
+ 
+Box info
+********************************************************************************
+number of simulation boxes     1
+Box number      1       Box Shape:      Cubic 
+Each Side Of :       100.0000     Angstrom
+Cell basis vector lengths in A,    100.0000     100.0000     100.0000
+Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+Distance between box faces   100.0000     100.0000     100.0000
+Box volume, A^3       1000000.0000
+********************************************************************************
+ 
+Pair style
+********************************************************************************
+VDW style used is:   LJ             in box:  1
+ VDW sum style is:   cut_tail       in box:  1
+ rcut =    12.000   Angstrom
+Charge style used is:   NONE           in box:  1
+ Lorentz-Berthelot mixing rule specified
+Pair interaction energy arrays will not be stored
+********************************************************************************
+ 
+Molecule info
+********************************************************************************
+ Reading molecular connectivity information
+ Species:            1
+ Molecular connectivity file: 
+ lj.mcf                                                                         
+                                          
+   1 atom(s) specified.
+   0 bond(s) specified.
+   0 angle(s) specified.
+   0 dihedral(s) specified.
+   0 improper(s) specified.
+   0 fragment(s) specified.
+   0 fragment bond(s) specified.
+ 
+ Species  Max molecules
+ -------  -------------
+      1              2
+ 
+ Species     1
+ -------------------------------------------------------------------------------
+ L_Coul_CBMC not given, using default T
+ 1st_Fragment_Ins_Style not specified, using default "COM"
+ Atom parameters read
+ Bond parameters read
+ Angle parameters read
+ Dihedral parameters read
+ Improper parameters read
+ -------------------------------------------------------------------------------
+********************************************************************************
+ 
+Intramolecular nonbonded scaling
+********************************************************************************
+intramolecular scaling factors explicitly set
+Intra molecule scaling factors for species             1
+ VDW 1-2 scaling factor        0.000
+ VDW 1-3 scaling factor        0.000
+ VDW 1-4 scaling factor        0.000
+ VDW 1-N scaling factor        1.000
+********************************************************************************
+ 
+Start type
+********************************************************************************
+ Initial configuration for box 1 will be read from file
+ Will read       2  molecules of species   1
+ Will read configuration from file lj.xyz
+********************************************************************************
+ 
+Seed info
+********************************************************************************
+  The starting seeds are:        21498       489625
+********************************************************************************
+ 
+Temperature
+********************************************************************************
+  Temperature assigned to box     1  is  300.000    K
+********************************************************************************
+ 
+Move probabilities
+********************************************************************************
+Probability for translation                1.000000
+ Maximum displacement width for species  1 in box  1  is      1.00000
+Number of moves is :   1
+********************************************************************************
+ 
+CBMC info
+********************************************************************************
+ CBMC_Info not required
+********************************************************************************
+ 
+Simulation length info
+********************************************************************************
+Thermodynamic quantities will be written every          1 Steps     
+Coordinates will be written every                       1 Steps     
+ movie header file is                  test3.out.H
+ movie_XYZ file is                     test3.out.xyz
+The simulation will be run for                          0 Steps     
+********************************************************************************
+ 
+Average info
+********************************************************************************
+ Instantaneous values will be output
+********************************************************************************
+ 
+Property info
+********************************************************************************
+Total number of property files to be written is     1   for box 1
+ Maximum number of properties per file is    3
+ Writing the name of the property files and the corresponding property output
+ Property file    1   is  test3.out.prp1
+ Properties output in these files are
+ Energy_Total
+ Pressure
+********************************************************************************
+ 
+Minimum distance cutoff
+********************************************************************************
+MC low cutoff distance is   1.000    Angstrom
+********************************************************************************
+ 
+Run type
+********************************************************************************
+ The input run type is Equilibration
+ Update frequency is          100
+********************************************************************************
+ 
+********************************************************************************
+************************ Begin Cassandra simulation ****************************
+********************************************************************************
+ 
+Initial configuration
+********************************************************************************
+ 
+ Reading configuration for box           1
+ Reading            2  molecules of species            1
+ Configurations read successfully
+********************************************************************************
+ 
+Charge neutrality check
+********************************************************************************
+ Species           1    has charge                0.00000000
+ 
+ Box               1    has charge                0.00000000
+********************************************************************************
+ 
+Compute total energy
+********************************************************************************
+ Starting energy components for box   1
+  Atomic units-Extensive
+ -----------------------------------------------------------
+ Total system energy is                  -100.000
+ Intra molecular energy is                  0.000
+ Bond energy is                             0.000
+ Bond angle energy is                       0.000
+ Dihedral angle energy is                   0.000
+ Improper angle energy is                   0.000
+ Intra molecule vdw is                      0.000
+ Intra molecule q is                        0.000
+ Inter molecule vdw is                   -100.000
+ Long range correction is                  -0.000
+ Inter molecule q is                        0.000
+ -----------------------------------------------------------
+ 
+********************************************************************************
+ 
+********************************************************************************
+************************ Cassandra simulation complete *************************
+********************************************************************************
