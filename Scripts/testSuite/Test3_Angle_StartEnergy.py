@@ -14,7 +14,7 @@ import re
 bold = '\033[1m' #Will make text bold
 normal = '\033[0m' #Will make the next text normal(ie. unbold)
 
-#This prints the starting line.
+#This prints the starting line
 print "\n\n"+bold+"Test 2: Mie Starting Energy Commencing... " + normal 
 #Creates(opens if already existent) the file file.inp which will be our input file while running cassandra
 input_inp = open("mie.inp","w")
