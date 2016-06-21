@@ -1530,26 +1530,13 @@ SUBROUTINE Get_Atom_Info(is)
               CALL Clean_Abort(err_msg,'Get_Atom_Info')
            ENDIF
 
-           ! there may be a card for ring atoms
+           ! the last entry is 'ring' for ring atoms
            nonbond_list(ia,is)%ring_atom = .FALSE.
-           IF (nbr_entries == 9 ) THEN
-              ! this atom is a ring atom
-              IF (line_array(9) == 'ring') THEN
-                 nring_atoms(is) = nring_atoms(is) + 1
-                 ring_atom_ids(nring_atoms(is),is) = ia
-                 nonbond_list(ia,is)%ring_atom = .TRUE.
-                 IF (verbose_log) WRITE(logunit,*) ia ,' is a ring atom'
-              END IF
-		   ! if we are using the Mie potential
-		   ELSEIF (nbr_entries == 11 ) THEN
-              ! this atom is a ring atom 
-              IF (line_array(11) == 'ring') THEN
-                 nring_atoms(is) = nring_atoms(is) + 1
-                 ring_atom_ids(nring_atoms(is),is) = ia
-                 nonbond_list(ia,is)%ring_atom = .TRUE.
-                 IF (verbose_log) WRITE(logunit,*) ia ,' is a ring atom'
-              END IF
-
+           IF (line_array(nbr_entries) == 'ring') THEN
+              nring_atoms(is) = nring_atoms(is) + 1
+              ring_atom_ids(nring_atoms(is),is) = ia
+              nonbond_list(ia,is)%ring_atom = .TRUE.
+              IF (verbose_log) WRITE(logunit,*) ia ,' is a ring atom'
            ELSE
               ! this is an not a ring atom
               nexo_atoms(is) = nexo_atoms(is) + 1
@@ -4063,7 +4050,7 @@ SUBROUTINE Get_Move_Probabilities
               prob_rot = String_To_Double(line_array(1))
 
               WRITE(logunit,'(A,T40,F12.6)') &
-                   'Probability for rotation', prob_trans
+                   'Probability for rotation', prob_rot
 
               DO j = 1, nbr_boxes
                  ! get maximum rotational width for each of the species
