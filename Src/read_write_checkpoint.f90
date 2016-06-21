@@ -199,8 +199,15 @@ SUBROUTINE Read_Checkpoint
           READ(restartunit,'(3(E24.15))') max_disp(is,ibox), &
                max_rot(is,ibox), species_list(is)%max_torsion
 
-          WRITE(logunit,'(2X,A,T20,F9.5)') 'max displacement', max_disp(is,ibox)
-          WRITE(logunit,'(2X,A,T20,F9.5)') 'max rotation', max_rot(is,ibox)
+          IF (prob_trans > 0.0_DP) THEN
+            WRITE(logunit,'(2X,A,T24,F9.5)') 'max displacement', max_disp(is,ibox)
+          END IF
+          IF (prob_rot > 0.0_DP) THEN
+            WRITE(logunit,'(2X,A,T24,F9.5)') 'max rotation', max_rot(is,ibox)
+          END IF
+          IF (prob_torsion > 0.0_DP) THEN
+            WRITE(logunit,'(2X,A,T24,F9.5)') 'max dihedral change', species_list(is)%max_torsion
+          END IF
 
        END DO
        
@@ -211,12 +218,12 @@ SUBROUTINE Read_Checkpoint
 
        END IF
     END DO
-    WRITE(logunit,*) 'Move info read successfully'
+    WRITE(logunit,*) 'Species move info read successfully'
     
     READ(restartunit,*)
     READ(restartunit,*) initial_mcstep
     READ(restartunit,*) 
-    WRITE(logunit,*) 'Number of mc steps read successfully'
+    WRITE(logunit,*) 'Initial MC step is ' // TRIM(Int_To_String(initial_mcstep))
     
     DO ibox = 1, nbr_boxes
        WRITE(logunit,'(X,A)') 'Reading info for box ' // TRIM(Int_To_String(ibox))
@@ -240,7 +247,7 @@ SUBROUTINE Read_Checkpoint
             int_sim_type == sim_gemc_npt ) THEN
           
           READ(restartunit,*) box_list(ibox)%dv_max
-          WRITE(logunit,'(2X,A,T20,F9.0)') 'max volume change ', box_list(ibox)%dv_max
+          WRITE(logunit,'(2X,A,T24,F9.0)') 'max volume change', box_list(ibox)%dv_max
 
        END IF
        
