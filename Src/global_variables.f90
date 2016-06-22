@@ -408,7 +408,8 @@ USE Type_Definitions
   !**********************************************************************************************************
   ! Will have dimension of nbr_boxes
   TYPE(Energy_Class), DIMENSION(:), ALLOCATABLE, TARGET :: energy, virial
-  TYPE(Energy_Class), DIMENSION(:), ALLOCATABLE, TARGET :: ac_energy, ac_virial
+  TYPE(Energy_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: ac_energy
+!  TYPE(Energy_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: ac_virial
   
   ! Will have dimension (MAXVAL(max_molecules))
   TYPE(Energy_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: energy_igas
@@ -416,9 +417,9 @@ USE Type_Definitions
   ! Accumulators for thermodynamic averages,
 
   ! will have dimensions of nbr_boxes
-  REAL(DP), DIMENSION(:),ALLOCATABLE,TARGET :: ac_volume, ac_enthalpy, ac_pressure, ac_mass_density
+  REAL(DP), DIMENSION(:,:),ALLOCATABLE,TARGET :: ac_volume, ac_enthalpy, ac_pressure, ac_mass_density
   ! will have dimension of (nspecies,nbr_boxes)
-  REAL(DP), DIMENSION(:,:), ALLOCATABLE, TARGET :: ac_density, ac_nmols
+  REAL(DP), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: ac_density, ac_nmols
 
   LOGICAL :: block_average
 
@@ -457,9 +458,10 @@ USE Type_Definitions
   REAL(DP) :: prob_deletion, prob_swap, prob_regrowth, prob_ring, prob_atom_displacement
   REAL(DP), DIMENSION(:), ALLOCATABLE :: prob_rot_species
   REAL(DP), DIMENSION(:), ALLOCATABLE :: prob_swap_species, cum_prob_swap_species
-  REAL(DP), ALLOCATABLE :: prob_swap_to_box(:,:), cum_prob_swap_to_box(:,:)
+  REAL(DP), DIMENSION(:), ALLOCATABLE :: prob_swap_from_box, cum_prob_swap_from_box
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: prob_swap_to_box, cum_prob_swap_to_box
 
-  LOGICAL :: l_prob_swap_species, l_prob_swap_to_box
+  LOGICAL :: l_prob_swap_species, l_prob_swap_from_box, l_prob_swap_to_box
 
   LOGICAL :: f_dv, f_vratio
 
@@ -475,9 +477,10 @@ USE Type_Definitions
 
   ! Timing information
   ! Initial, current and final number of steps
-  INTEGER :: i_mcstep, initial_mcstep, n_mcsteps, n_equilsteps
+  INTEGER :: i_mcstep, initial_mcstep, n_mcsteps, n_equilsteps, iblock
   ! Information on the output of data
-  INTEGER :: nthermo_freq, ncoord_freq
+  INTEGER :: nthermo_freq, ncoord_freq, block_avg_freq, nbr_blocks
+  REAL(DP) :: data_points_per_block
  
   INTEGER,DIMENSION(:),ALLOCATABLE :: nbr_prop_files
 

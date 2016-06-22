@@ -1404,7 +1404,7 @@ CONTAINS
             err_msg(3) = 'The atom'
             err_msg(4) = Int_To_String(this_atom)
             err_msg(5) = 'could not be found'
-            CALL Clean_Abort(err_msg,'Get_Runname')
+            CALL Clean_Abort(err_msg,'Write_Ring_Fragment_Car_File')
 
         ENDIF
 

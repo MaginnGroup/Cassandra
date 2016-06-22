@@ -139,7 +139,7 @@ PROGRAM Main
   ENDIF
 
 ! Now read input file and get the run_name
-  CALL Get_Runname
+  CALL Get_Run_Name
 
 ! Create log file and write out some initial information
   CALL Name_Files(run_name,'.log',logfile)
@@ -223,11 +223,11 @@ PROGRAM Main
 
   END IF
 
-  ! Initialize the counters for simulation
-  DO ibox = 1, nbr_boxes
-     CALL Initialize(ibox)
-     CALL Reset(ibox)
-  END DO
+  ! initialize counters
+  CALL Initialize
+
+  ! initialize random number generator
+  CALL Init_Seeds(iseed1, iseed3)
 
   ! Initialize the atom list and molecule list arrays
   molecule_list(:,:)%live = .FALSE.
@@ -257,8 +257,6 @@ PROGRAM Main
 
     ELSEIF (start_type(ibox) == 'read_config') THEN
        ! Read in coordinates
-       ! Note that the counters have already been set to zero by the call to
-       ! initialize and reset above.
        CALL Read_Config(ibox)
        initial_mcstep = 0
 
@@ -275,11 +273,6 @@ PROGRAM Main
        ! Read in info for all boxes, so exit loop
        EXIT
        
-    ELSE
-       err_msg = ""
-       err_msg(1) = "Start type " // TRIM(start_type(ibox)) // " is not a valid option."
-       CALL Clean_Abort(err_msg,'Main')
-       
     ENDIF
   END DO
   WRITE(logunit,'(A80)') '********************************************************************************'
@@ -291,10 +284,6 @@ PROGRAM Main
       nmols(is,0) = nmols(is,0) + 1
       locate(nmols(is,0),is,0) = im
     END DO
-  END DO
-
-  DO ibox = 1, nbr_boxes
-     CALL Reset(ibox)
   END DO
 
   ! compute the charge on each species and the box charge
@@ -365,10 +354,6 @@ PROGRAM Main
  
   END IF
 
-  ! initialize random number generator
-  CALL init_seeds(iseed1, iseed3)
-
-
   ! Compute total number of beads in each box
 
 !  DO ibox = 1, nbr_boxes
@@ -392,6 +377,9 @@ PROGRAM Main
         END DO
      END DO
   END DO
+
+  ! Initialize accumulators
+  CALL Init_Accumulators
 
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Compute total energy'
@@ -462,8 +450,17 @@ PROGRAM Main
   ! Write initial properties, if needed
   DO ibox = 1, nbr_boxes
     IF (start_type(ibox) == 'make_config' .OR. n_mcsteps <= initial_mcstep) THEN
-      CALL Write_Properties(ibox)
-      CALL Reset(ibox)
+      IF (block_average) THEN
+         ! need to write instantaneous props for this first step
+         block_average = .FALSE.
+         CALL Write_Properties(ibox)
+         block_average = .TRUE.
+         ! need to rewrite the header next call so additional props will be
+         ! labeled as block_averages
+         first_open(:,ibox) = .TRUE.
+      ELSE
+         CALL Write_Properties(ibox)
+      END IF
     END IF
   END DO
 
@@ -542,6 +539,13 @@ PROGRAM Main
 
   END IF
   WRITE(logunit,'(A80)') '********************************************************************************'
+
+  ! write error of the mean
+  IF (block_average) THEN
+     DO ibox = 1, nbr_boxes
+        CALL Write_Mean_Error(ibox)
+     END DO
+  END IF
 
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Report ending energy & then re-compute from scratch'

@@ -104,9 +104,6 @@ SUBROUTINE GEMC_Control
   ! Properties to be output
   CALL Get_Property_Info
 
-  ! Get information on the averages
-  CALL Get_Average_Info
-
   CALL Get_Rcutoff_Low
 
   CALL Precalculate
