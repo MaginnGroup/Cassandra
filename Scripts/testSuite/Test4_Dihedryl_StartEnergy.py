@@ -277,4 +277,3 @@ pyplot.savefig('angle.png')
 #	print "Pass Test 3: Angle Starting Energy"
 #else:
 #	print "Test Fails - Check above."
-
