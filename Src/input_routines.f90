@@ -1273,6 +1273,7 @@ SUBROUTINE Get_Molecule_Info
      err_msg(1) = 'memory could not be allocated for frag_list array'
      CALL Clean_Abort(err_msg,'Get_Molecule_Info')
   END IF
+  frag_list(:,:)%natoms = 0 
 
   ALLOCATE(fragment_bond_list(MAXVAL(fragment_bonds),nspecies), Stat = AllocateStatus)
   IF (AllocateStatus /= 0 ) THEN
@@ -2460,7 +2461,6 @@ SUBROUTINE Get_Fragment_Info(is)
         ! Now read in the information for each of the fragments, number of atoms
         ! in the fragment, anchor and atom ids
   
-      
         DO ifrag = 1, nfragments(is)
            
            ! We will first determine number of atoms in the current fragment and then
