@@ -825,32 +825,54 @@ Since the rotational width is set equal to 0\degree\ for species 3, no rotationa
 
 For a simulation that involves solid frameworks, set the
 maximum rotational width associated to the solid species to zero to improve computational efficiency.
-%%%%%%%%%%%%%%%%
-%
-% Dihedral move
-%
-%%%%%%%%%%%%%%%%
-%
-%\subsubsection{Dihedral}
-%{\bf \# Prob\_Dihedral}\\
-%{\it Real(1)} \\
-%{\it Real(j,2) } *One line required for each box. \\ \\
-%
-%The probability of performing a dihedral move is specified by {\it Real(1)} while
-%{\it Real(j,2)} denoted maximum width for a dihedral angle displaceemnt. The width
-%is given in degrees. This move is used only for linear molecules. The use of fragment-based approach is recommended for all types (linear and branched) of  molecules.
-%
+
+
 %%%%%%%%%%%%%%%%
 %
 % Angle perturbation
 %
 %%%%%%%%%%%%%%%%
-%\subsubsection{Angle}
-%{\bf \# Prob\_Angle}\\
-%{\it Real(1)} \\ \\
-%%
-%The probability of performing an angle perturbation move. This move is used only for linear molecules. The use of fragment-based approach is highly recommended for all types (linear and branched) of molecules. 
+\subsubsection{Angle}
+{\bf \# Prob\_Angle} \\
+{\it Real(1)} \\ 
+A molecule will be selected at random and its angle will be perturbed based on its Boltzmann weighted distribution.
+The probability of attempting this move is the only required input. It is specified by {\it Real(1)}. Note that this move is rarely needed since the fragment libraries should already provide efficient sampling of angles. This move, however, may improve sampling of angles for large molecules in the case where parts of its fragments are rarely regrown by a regrowth move. 
+
 %
+\texttt{
+\# Prob\_Angle \\
+0.3 \\
+}
+%
+This will tell Cassandra to attempt angle moves 30\% of the total moves for all molecules containing angles within a given box.
+
+%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%
+%
+% Dihedral move
+%
+%%%%%%%%%%%%%%%%
+\subsubsection{Dihedral}
+{\bf \# Prob\_Dihedral} \\
+{\it Real(1)} \\ 
+{\it Real(1) ... Real(n)} \\
+
+The probability of performing a dihedral move is specified by {\it Real(1)} while
+{\it Real(n)} denotes the maximum width of a dihedral angle displacement for each species. The maximum width is given in degrees. Note that this move is rarely needed since the regrowth moves should already provide efficient sampling of dihedrals. This move, however, may improve sampling of dihedrals for large molecules in the case where the parts of its fragments are rarely regrown (albeit a small maximum width is provided).\\ \\
+%
+\texttt{
+\# Prob\_Dihedral \\
+0.3 \\
+20 0.0 \\
+}\\
+%
+This will tell Cassandra to attempt dihedral moves 30\% of the total moves for all molecules containing dihedrals within a given box.
+The maximum dihedral width will be 20\degree\ for species 1 and 0.0\degree\
+for species 2. Since the maximum dihedral
+width of species 2 is set to 0.0\degree\ in both boxes, no dihedral moves will be
+attempted on species 2. Note that a single max dihedral width is provided, even if species 1 may contain many dihedrals. This is also true
+for simulations with more than one box. Also note that the same max dihedral width is used for systems containing  more than one box.
+
 %
 %%%%%%%%%%%%%%%%
 %
@@ -863,7 +885,7 @@ maximum rotational width associated to the solid species to zero to improve comp
 {\it Real(2,1) ... Real(2,n)} \\ \\
 %
 A regrowth move consists of deleting part of the molecule randomly and
-then regrowing the deleted part via a configurational bias algorithm.
+then regrowing the deleted part via configurational bias algorithm.
 This can result in relatively substantial conformational changes for
 the molecule, but the cost of this move is higher than that of a
 simple translation or rotation. The probability of attempting a
@@ -881,7 +903,7 @@ species is monatomic, you would specify the following: \\ \\
 0.3 \\
 0.0 0.7 0.3 } \\ \\
 %
-This will tell Cassandra to attempt regrowth move 30\% of the total moves. The relative probabilities of
+This will tell Cassandra to attempt regrowth moves for 30\% of the total moves. The relative probabilities of
 performing regrowth moves on species 1, 2 and 3 are 0.0, 0.7 and 0.3 respectively.  \\
 
 For a simulation that involves rigid molecules or solid frameworks, set the
@@ -955,6 +977,11 @@ Please note that the volume perturbation move is only supported for cubic boxes.
 %                
 %This would change each box by a maximum of $\pm$300 \AA $^3$ but
 %instead of uniformly, it will change the volume on $\ln V$.
+
+
+
+
+
 %%%%%%%%%%%%%%%%
 %
 % Insertion
