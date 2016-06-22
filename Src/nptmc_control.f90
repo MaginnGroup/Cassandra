@@ -120,10 +120,6 @@ SUBROUTINE NPTMC_Control
   ! Properties to be output
   CALL Get_Property_Info
 
-  ! Average information
-  CALL Get_Average_Info	
-
-
   CALL Get_Rcutoff_Low
 
   CALL Precalculate
