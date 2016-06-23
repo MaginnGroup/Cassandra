@@ -5,12 +5,12 @@
 
 # Atom_Info
 6
-1    CH2    C2    14.0107    0.0    LJ    52.5    3.91    ring
-2    CH2    C2    14.0107    0.0    LJ    52.5    3.91    ring
-3    CH2    C2    14.0107    0.0    LJ    52.5    3.91    ring
-4    CH2    C2    14.0107    0.0    LJ    52.5    3.91    ring
-5    CH2    C2    14.0107    0.0    LJ    52.5    3.91    ring
-6    CH2    C2    14.0107    0.0    LJ    52.5    3.91    ring
+1    CH2_s1    C2    14.0107    0.0    LJ    52.5    3.91    ring
+2    CH2_s1    C2    14.0107    0.0    LJ    52.5    3.91    ring
+3    CH2_s1    C2    14.0107    0.0    LJ    52.5    3.91    ring
+4    CH2_s1    C2    14.0107    0.0    LJ    52.5    3.91    ring
+5    CH2_s1    C2    14.0107    0.0    LJ    52.5    3.91    ring
+6    CH2_s1    C2    14.0107    0.0    LJ    52.5    3.91    ring
 
 # Bond_Info
 6

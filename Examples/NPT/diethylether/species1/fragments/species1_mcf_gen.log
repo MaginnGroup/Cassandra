@@ -3,21 +3,21 @@ Run info
 version: Cassandra Development Version
 inputfile: species1_mcf_gen.inp
 name of run: species1_mcf_gen
-date (mm/dd/yyyy): 06/15/2016
-time: 14:17:53
+date (mm/dd/yyyy): 06/22/2016
+time: 17:55:12
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
- 
+
 Verbose log
 ********************************************************************************
 Normal output to logfile
 ********************************************************************************
- 
+
 Simulation type
 ********************************************************************************
 MCF_Gen             
 ********************************************************************************
- 
+
 Copy input file
 ********************************************************************************
  # Run_Name
@@ -42,10 +42,6 @@ Copy input file
  # Charge_Style
  coul minimum_image
  
- # Intra_Scaling
- 0.0 0.0 0.0 1.0
- 0.0 0.0 0.0 1.0
- 
  # Molecule_Files
  ../../dee.mcf 50
  
@@ -56,12 +52,12 @@ Copy input file
  
  END
 ********************************************************************************
- 
+
 Number of species
 ********************************************************************************
 1
 ********************************************************************************
- 
+
 Box info
 ********************************************************************************
 Number of simulation boxes     1
@@ -72,7 +68,7 @@ Box 1 is cubic
  Distance between box faces    30.0000      30.0000      30.0000
  Box volume, A^3         27000.0000
 ********************************************************************************
- 
+
 Pair style
 ********************************************************************************
 VDW style used is:   LJ             in box:  1
@@ -85,14 +81,12 @@ Section "# Pair_Energy" is missing from the input file
  By default, pair interaction energy arrays will not be stored
 Lorentz-Berthelot mixing rule specified
 ********************************************************************************
- 
+
 Molecule info
 ********************************************************************************
  Reading molecular connectivity information
  Species:            1
- Molecular connectivity file: 
- ../../dee.mcf                                                                  
-                                          
+ Molecular connectivity file: ../../dee.mcf                                                                                                           
    5 atom(s) specified.
    4 bond(s) specified.
    3 angle(s) specified.
@@ -100,11 +94,11 @@ Molecule info
    0 improper(s) specified.
    3 fragment(s) specified.
    2 fragment bond(s) specified.
- 
+
  Species  Max molecules
  -------  -------------
       1             50
- 
+
  Species     1
  -------------------------------------------------------------------------------
  Atom parameters read
@@ -127,6 +121,6 @@ Molecule info
  Fragment info read
  -------------------------------------------------------------------------------
 ********************************************************************************
- 
+
  Finished generating fragments
  Exiting

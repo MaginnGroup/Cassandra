@@ -3,21 +3,21 @@ Run info
 version: Cassandra Development Version
 inputfile: methane_butane.inp
 name of run: methane_butane.out
-date (mm/dd/yyyy): 06/15/2016
-time: 14:46:42
+date (mm/dd/yyyy): 06/22/2016
+time: 22:29:07
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
- 
+
 Verbose log
 ********************************************************************************
 Normal output to logfile
 ********************************************************************************
- 
+
 Simulation type
 ********************************************************************************
 GCMC                
 ********************************************************************************
- 
+
 Copy input file
 ********************************************************************************
  
@@ -110,12 +110,12 @@ Copy input file
  
  END
 ********************************************************************************
- 
+
 Number of species
 ********************************************************************************
 2
 ********************************************************************************
- 
+
 Box info
 ********************************************************************************
 Number of simulation boxes     1
@@ -126,7 +126,7 @@ Box 1 is cubic
  Distance between box faces   100.0000     100.0000     100.0000
  Box volume, A^3       1000000.0000
 ********************************************************************************
- 
+
 Pair style
 ********************************************************************************
 VDW style used is:   LJ             in box:  1
@@ -138,14 +138,12 @@ Pair interaction energy array storage enabled
 Section "# Mixing_Rule" is missing from the input file
  By default, using Lorentz-Berthelot
 ********************************************************************************
- 
+
 Molecule info
 ********************************************************************************
  Reading molecular connectivity information
  Species:            1
- Molecular connectivity file: 
- CH4.mcf                                                                        
-                                          
+ Molecular connectivity file: CH4.mcf                                                                                                                 
    1 atom(s) specified.
    0 bond(s) specified.
    0 angle(s) specified.
@@ -155,9 +153,7 @@ Molecule info
    0 fragment bond(s) specified.
  Reading molecular connectivity information
  Species:            2
- Molecular connectivity file: 
- C4H10.mcf                                                                      
-                                          
+ Molecular connectivity file: C4H10.mcf                                                                                                               
    4 atom(s) specified.
    3 bond(s) specified.
    2 angle(s) specified.
@@ -165,12 +161,12 @@ Molecule info
    0 improper(s) specified.
    2 fragment(s) specified.
    1 fragment bond(s) specified.
- 
+
  Species  Max molecules
  -------  -------------
       1            300
       2            300
- 
+
  Species     1
  -------------------------------------------------------------------------------
  Atom parameters read
@@ -187,7 +183,7 @@ Molecule info
  Fragment info read
  Fragment file for fragment 1 is species1/frag1/frag1.dat
  -------------------------------------------------------------------------------
- 
+
  Species     2
  -------------------------------------------------------------------------------
  Atom parameters read
@@ -206,7 +202,7 @@ Molecule info
  Fragment file for fragment 2 is species2/frag1/frag1.dat
  Fragment file for fragment 3 is species2/frag2/frag2.dat
  -------------------------------------------------------------------------------
- 
+
  Fragment coord info
  -------------------------------------------------------------------------------
  library_coords array successfully allocated
@@ -217,24 +213,28 @@ Molecule info
  species2/frag2/frag2.dat
  -------------------------------------------------------------------------------
 ********************************************************************************
- 
+
+Nonbond tables
+********************************************************************************
+ ********************************************************************************
+
 Start type
 ********************************************************************************
 Initial configuration for box 1 will be made
  Will insert      10  molecules of species   1
  Will insert      90  molecules of species   2
 ********************************************************************************
- 
+
 Seed info
 ********************************************************************************
 The starting seeds are:  -1364938152   1681355914
 ********************************************************************************
- 
+
 Temperature
 ********************************************************************************
 Temperature of box 1 is 300.000 K
 ********************************************************************************
- 
+
 Move probabilities
 ********************************************************************************
 Probability for translation                0.200000
@@ -253,7 +253,7 @@ Probability for insertion                  0.200000
 Probability for deletion                   0.200000
 Number of moves is :   5
 ********************************************************************************
- 
+
 Chemical potential
 ********************************************************************************
 Species     1
@@ -263,22 +263,17 @@ Species     2
  Chemical potential (internal units):    -3700.000000000
  de Broglie wavelength (Angstroms):          0.132211355
 ********************************************************************************
- 
+
 Simulation length info
 ********************************************************************************
-Thermodynamic quantities will be written every        500 Steps     
+Thermodynamic quantities will be computed every       500 Steps     
 Coordinates will be written every                   25000 Steps     
  movie header file is                  methane_butane.out.H
  movie_XYZ file is                     methane_butane.out.xyz
 The simulation will be run for                      50000 Steps     
+Instantaneous values will be written every            500 Steps     
 ********************************************************************************
- 
-Average info
-********************************************************************************
-Section "# Average_Info" is missing from the input file
- By default, instantaneous values will be output
-********************************************************************************
- 
+
 Property info
 ********************************************************************************
 Total number of property files to be written is     1   for box 1
@@ -292,178 +287,178 @@ Total number of property files to be written is     1   for box 1
  Pressure
  Mass_Density
 ********************************************************************************
- 
+
 Minimum distance cutoff
 ********************************************************************************
 MC low cutoff distance is   1.000    Angstrom
 ********************************************************************************
- 
+
 CBMC info
 ********************************************************************************
 Kappa for first fragment insertion          12
 Kappa for dihedral selection                10
  Cutoff for CBMC for box 1 is         6.50
 ********************************************************************************
- 
+
 Run type
 ********************************************************************************
  The input run type is equilibration
  Update frequency is          600
 ********************************************************************************
- 
+
 ********************************************************************************
 ************************ Begin Cassandra simulation ****************************
 ********************************************************************************
- 
+
 Initial configuration
 ********************************************************************************
  Inserting           10 molecules of species            1
  Inserting           90 molecules of species            2
 ********************************************************************************
- 
+
 Compute total energy
 ********************************************************************************
  Starting energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                 45433.975
- Intra molecular energy is              47829.999
+ Total system energy is                 37281.933
+ Intra molecular energy is              39481.756
  Bond energy is                             0.000
- Bond angle energy is                   23375.468
- Dihedral angle energy is               24454.531
+ Bond angle energy is                   20302.206
+ Dihedral angle energy is               19179.550
  Improper angle energy is                   0.000
  Intra molecule vdw is                      0.000
  Intra molecule q is                        0.000
- Inter molecule vdw is                  -2298.273
+ Inter molecule vdw is                  -2102.073
  Long range correction is                 -97.750
  Inter molecule q is                        0.000
  -----------------------------------------------------------
- 
+
 ********************************************************************************
- 
+
 Run simulation
 ********************************************************************************
       Step       Move   Mol Spc Box  Success  MaxWidth
-      2956     rotate         2   1  0.93667   3.14159
-      5212  translate         2   1  0.91333   3.65333
-      6007     rotate         2   1  0.98833   3.14159
-      7281  translate         1   1  0.97167   3.88667
-      8925     rotate         2   1  0.95833   3.14159
-     11083  translate         2   1  0.89000   6.50293
-     12042     rotate         2   1  0.95833   3.14159
-     13135  translate         1   1  0.97333   7.56604
-     14941     rotate         2   1  0.95000   3.14159
-     17476  translate         2   1  0.86167  11.20672
-     18086     rotate         2   1  0.95333   3.14159
-     19163  translate         1   1  0.96000  13.00000
-     21196     rotate         2   1  0.96333   3.14159
-     23357  translate         2   1  0.83500  13.00000
-     24250     rotate         2   1  0.96500   3.14159
-     25172  translate         1   1  0.93000  13.00000
-     27212     rotate         2   1  0.95667   3.14159
-     28960  translate         2   1  0.85833  13.00000
-     30164     rotate         2   1  0.97500   3.14159
-     31852  translate         1   1  0.92833  13.00000
-     33203     rotate         2   1  0.97333   3.14159
-     34370  translate         2   1  0.87000  13.00000
-     36173     rotate         2   1  0.97667   3.14159
-     38343  translate         1   1  0.93000  13.00000
-     39043     rotate         2   1  0.97167   3.14159
-     40080  translate         2   1  0.86500  13.00000
-     42126     rotate         2   1  0.94833   3.14159
-     44319  translate         1   1  0.93333  13.00000
-     45169     rotate         2   1  0.97333   3.14159
-     46253  translate         2   1  0.85667  13.00000
-     48177     rotate         2   1  0.94333   3.14159
+      2907     rotate         2   1  0.98000   3.14159
+      5723  translate         2   1  0.95000   3.80000
+      5784     rotate         2   1  0.95333   3.14159
+      6886  translate         1   1  0.96500   3.86000
+      8630     rotate         2   1  0.95333   3.14159
+     11434     rotate         2   1  0.98000   3.14159
+     11543  translate         2   1  0.88333   6.71333
+     13585  translate         1   1  0.94167   7.26967
+     14312     rotate         2   1  0.96833   3.14159
+     17510     rotate         2   1  0.95500   3.14159
+     17833  translate         2   1  0.88833  11.92736
+     19522  translate         1   1  0.93833  13.00000
+     20532     rotate         2   1  0.95667   3.14159
+     23506  translate         2   1  0.85333  13.00000
+     23521     rotate         2   1  0.94333   3.14159
+     26097  translate         1   1  0.94167  13.00000
+     26488     rotate         2   1  0.97167   3.14159
+     29214  translate         2   1  0.88833  13.00000
+     29457     rotate         2   1  0.97333   3.14159
+     32321  translate         1   1  0.95500  13.00000
+     32736     rotate         2   1  0.96333   3.14159
+     34688  translate         2   1  0.86667  13.00000
+     35754     rotate         2   1  0.98167   3.14159
+     38714     rotate         2   1  0.94333   3.14159
+     38842  translate         1   1  0.92500  13.00000
+     40462  translate         2   1  0.85500  13.00000
+     41820     rotate         2   1  0.97000   3.14159
+     44722  translate         1   1  0.93167  13.00000
+     45058     rotate         2   1  0.94167   3.14159
+     46823  translate         2   1  0.86500  13.00000
+     48048     rotate         2   1  0.97667   3.14159
 ********************************************************************************
- 
+
 Report ending energy & then re-compute from scratch
 ********************************************************************************
- 
- 
+
+
  Ending energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                 22266.134
- Intra molecular energy is              26116.506
+ Total system energy is                 19819.921
+ Intra molecular energy is              22208.336
  Bond energy is                             0.000
- Angle energy is                        13127.942
- Dihedral energy is                     12988.564
+ Angle energy is                         9534.895
+ Dihedral energy is                     12673.441
  Improper angle energy is                   0.000
  Intra molecule vdw is                      0.000
  Intra molecule q is                        0.000
- Inter molecule vdw is                  -3799.849
- Long range correction is                 -50.523
+ Inter molecule vdw is                  -2333.790
+ Long range correction is                 -54.625
  Inter molecule q is                        0.000
  -----------------------------------------------------------
- 
- 
+
+
  Energy components from total energy call for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                 22266.134
- Intra molecular energy is              26116.506
+ Total system energy is                 19819.921
+ Intra molecular energy is              22208.336
  Bond energy is                             0.000
- Angle energy is                        13127.942
- Dihedral energy is                     12988.564
+ Angle energy is                         9534.895
+ Dihedral energy is                     12673.441
  Improper angle energy is                   0.000
  Intra molecule vdw is                      0.000
  Intra molecule q is                        0.000
- Inter molecule vdw is                  -3799.849
- Long range correction is                 -50.523
+ Inter molecule vdw is                  -2333.790
+ Long range correction is                 -54.625
  Inter molecule q is                        0.000
  -----------------------------------------------------------
 ********************************************************************************
- 
- 
+
+
 Writing information for box  1
 ********************************************************************************
- 
+
    ---------------------------------------------------------
    Writing information for species  1
- 
+
                 Move      Trials     Success   % Success
-           Translate        4782        4521       94.54
-              Insert        5074        4770       94.01
-              Delete        5088        4732       93.00
+           Translate        4705        4430       94.16
+              Insert        4978        4691       94.23
+              Delete        5064        4651       91.84
    ---------------------------------------------------------
- 
- 
+
+
    ---------------------------------------------------------
    Writing information for species  2
- 
+
                 Move      Trials     Success   % Success
-           Translate        5186        4489       86.56
-              Rotate        9947        9563       96.14
-              Insert        5003        4423       88.41
-              Delete        4936        4462       90.40
+           Translate        5142        4530       88.10
+              Rotate        9985        9620       96.34
+              Insert        4968        4424       89.05
+              Delete        5034        4461       88.62
    ---------------------------------------------------------
- 
+
 ********************************************************************************
- 
+
 Writing information about fragments
 ********************************************************************************
- 
+
    ---------------------------------------------------------
    Writing information for species  2
      #_Frags_Regrown      Trials     Success   % Success
-                   1        9984        9346       93.61
+                   1       10124        9474       93.58
    ---------------------------------------------------------
 ********************************************************************************
- 
+
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.275861 secs.
- Rotation time =               0.305745 secs.
- Insertion time =              2.430258 secs.
- Deletion time =               2.254123 secs.
- Regrowth time =               2.661181 secs.
+ Translation time =            0.476947 secs.
+ Rotation time =               0.505923 secs.
+ Insertion time =              4.929232 secs.
+ Deletion time =               4.656297 secs.
+ Regrowth time =               6.436023 secs.
 ********************************************************************************
- 
+
 ********************************************************************************
 ************************ Cassandra simulation complete *************************
 ********************************************************************************
- 
+
  Program execution time
 ********************************************************************************
          0      Years
@@ -471,6 +466,6 @@ Writing information about fragments
          0       Days
          0      Hours
          0    Minutes
-         8    Seconds
-       143         ms
+        21    Seconds
+       736         ms
 ********************************************************************************

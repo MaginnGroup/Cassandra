@@ -3,8 +3,8 @@ Run info
 version: Cassandra Development Version
 inputfile: species1_mcf_gen.inp
 name of run: species1_mcf_gen
-date (mm/dd/yyyy): 06/15/2016
-time: 15:40:20
+date (mm/dd/yyyy): 06/22/2016
+time: 22:26:51
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -35,16 +35,8 @@ Copy input file
  # Rcutoff_Low
  1.0
  
- # Mixing_Rule
- LB
- 
- 
  # Charge_Style
  coul minimum_image
- 
- # Intra_Scaling
- 0.0  0.0  0.0  1.0
- 0.0  0.0  0.0  1.0
  
  # Molecule_Files
  ../../N23S.mcf 50
@@ -83,7 +75,8 @@ Charge style in box 1 is coul
  Minimum image convention used for charge
 Section "# Pair_Energy" is missing from the input file
  By default, pair interaction energy arrays will not be stored
-Lorentz-Berthelot mixing rule specified
+Section "# Mixing_Rule" is missing from the input file
+ By default, using Lorentz-Berthelot
 ********************************************************************************
  
 Molecule info

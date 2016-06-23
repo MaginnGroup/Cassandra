@@ -3,8 +3,8 @@ Run info
 version: Cassandra Development Version
 inputfile: frag2.inp
 name of run: frag2
-date (mm/dd/yyyy): 06/15/2016
-time: 14:45:58
+date (mm/dd/yyyy): 06/22/2016
+time: 22:22:30
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -66,8 +66,8 @@ Copy input file
  Units  Steps
  prop_freq  10
  coord_freq   90
- run          1100
- nequilsteps  100
+ run          1100000
+ nequilsteps  100000
  
  # File_Info
  frag2.dat
@@ -136,6 +136,10 @@ Molecule info
  -------------------------------------------------------------------------------
 ********************************************************************************
  
+Nonbond tables
+********************************************************************************
+ ********************************************************************************
+ 
 Start type
 ********************************************************************************
 Initial configuration for box 1 will be read from file
@@ -163,12 +167,13 @@ Number of moves is :   1
  
 Simulation length info
 ********************************************************************************
-Thermodynamic quantities will be written every         10 Steps     
+Thermodynamic quantities will be computed every        10 Steps     
 Coordinates will be written every                      90 Steps     
  movie header file is                  frag2.H
  movie_XYZ file is                     frag2.xyz
-The simulation will be run for                       1100 Steps     
-Number of equilibrium steps       100
+The simulation will be run for                    1100000 Steps     
+Number of equilibrium steps    100000
+Instantaneous values will be written every             10 Steps     
 ********************************************************************************
  
 File info
@@ -225,10 +230,10 @@ Report ending energy & then re-compute from scratch
  Ending energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                    23.800
- Intra molecular energy is                 23.800
+ Total system energy is                    10.039
+ Intra molecular energy is                 10.039
  Bond energy is                             0.000
- Angle energy is                           23.800
+ Angle energy is                           10.039
  Dihedral energy is                         0.000
  Improper angle energy is                   0.000
  Intra molecule vdw is                      0.000
@@ -241,10 +246,10 @@ Report ending energy & then re-compute from scratch
  Energy components from total energy call for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                    23.800
- Intra molecular energy is                 23.800
+ Total system energy is                    10.039
+ Intra molecular energy is                 10.039
  Bond energy is                             0.000
- Angle energy is                           23.800
+ Angle energy is                           10.039
  Dihedral energy is                         0.000
  Improper angle energy is                   0.000
  Intra molecule vdw is                      0.000
@@ -262,7 +267,7 @@ Writing information for box  1
    Writing information for species  1
  
                 Move      Trials     Success   % Success
-   Atom Displacement        1100         526       47.82
+   Atom Displacement     1100000      547198       49.75
    ---------------------------------------------------------
  
 ********************************************************************************
@@ -282,6 +287,6 @@ Writing information for box  1
          0       Days
          0      Hours
          0    Minutes
-         0    Seconds
-        26         ms
+        24    Seconds
+       673         ms
 ********************************************************************************

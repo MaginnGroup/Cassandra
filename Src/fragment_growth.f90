@@ -259,9 +259,10 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
 
     
      frag_type = frag_list(frag_start,is)%type
-     
-     ! Read the coordinates for every atomi
+    
+     ! Read the coordinates for every atom
      ! this_fragment is the randomly config selected
+
      DO i = 1, frag_list(frag_start,is)%natoms 
         
         this_atom = frag_list(frag_start,is)%atoms(i)
