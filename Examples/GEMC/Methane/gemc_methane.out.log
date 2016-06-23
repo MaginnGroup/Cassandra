@@ -1,23 +1,31 @@
+********************************************************************************
+                ______                                __                        
+               / ____/___ _______________ _____  ____/ /________ _              
+              / /   / __ `/ ___/ ___/ __ `/ __ \/ __  / ___/ __ `/              
+             / /___/ /_/ (__  |__  ) /_/ / / / / /_/ / /  / /_/ /               
+             \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                
+                                                                                
+********************************************************************************
 Run info
 ********************************************************************************
 version: Cassandra Development Version
 inputfile: /afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Examples/GEMC/Methane/gemc_methane.inp
 name of run: gemc_methane.out
-date (mm/dd/yyyy): 06/22/2016
-time: 18:00:51
+date (mm/dd/yyyy): 06/23/2016
+time: 11:36:11
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
-
+ 
 Verbose log
 ********************************************************************************
 Normal output to logfile
 ********************************************************************************
-
+ 
 Simulation type
 ********************************************************************************
 GEMC                
 ********************************************************************************
-
+ 
 Copy input file
 ********************************************************************************
  # Run_Name
@@ -115,12 +123,12 @@ Copy input file
  
  END
 ********************************************************************************
-
+ 
 Number of species
 ********************************************************************************
 1
 ********************************************************************************
-
+ 
 Box info
 ********************************************************************************
 Number of simulation boxes     2
@@ -137,7 +145,7 @@ Box 2 is cubic
  Distance between box faces    37.5000      37.5000      37.5000
  Box volume, A^3         52734.3750
 ********************************************************************************
-
+ 
 Pair style
 ********************************************************************************
 VDW style used is:   LJ             in box:  1
@@ -152,12 +160,14 @@ Section "# Charge_Style" is missing from the input file
 Pair interaction energy array storage enabled
 Lorentz-Berthelot mixing rule specified
 ********************************************************************************
-
+ 
 Molecule info
 ********************************************************************************
  Reading molecular connectivity information
  Species:            1
- Molecular connectivity file: methane.mcf                                                                                                             
+ Molecular connectivity file: 
+ methane.mcf                                                                    
+                                          
    1 atom(s) specified.
    0 bond(s) specified.
    0 angle(s) specified.
@@ -165,11 +175,11 @@ Molecule info
    0 improper(s) specified.
    1 fragment(s) specified.
    0 fragment bond(s) specified.
-
+ 
  Species  Max molecules
  -------  -------------
       1            500
-
+ 
  Species     1
  -------------------------------------------------------------------------------
  Atom parameters read
@@ -186,7 +196,7 @@ Molecule info
  Fragment info read
  Fragment file for fragment 1 is species1/frag1/frag1.dat
  -------------------------------------------------------------------------------
-
+ 
  Fragment coord info
  -------------------------------------------------------------------------------
  library_coords array successfully allocated
@@ -194,11 +204,11 @@ Molecule info
  species1/frag1/frag1.dat
  -------------------------------------------------------------------------------
 ********************************************************************************
-
+ 
 Nonbond tables
 ********************************************************************************
  ********************************************************************************
-
+ 
 Start type
 ********************************************************************************
 Initial configuration for box 1 will be made
@@ -206,18 +216,18 @@ Initial configuration for box 1 will be made
 Initial configuration for box 2 will be made
  Will insert     100  molecules of species   1
 ********************************************************************************
-
+ 
 Seed info
 ********************************************************************************
 The starting seeds are:   1211131639   1211131640
 ********************************************************************************
-
+ 
 Temperature
 ********************************************************************************
 Temperature of box 1 is 175.000 K
 Temperature of box 2 is 175.000 K
 ********************************************************************************
-
+ 
 Move probabilities
 ********************************************************************************
 Probability for translation                0.850000
@@ -234,14 +244,14 @@ Probability for particle swap              0.120000
   By default, species will be selected according to its mole fraction in box_out
 Number of moves is :   3
 ********************************************************************************
-
+ 
 CBMC info
 ********************************************************************************
 Kappa for first fragment insertion          12
  Cutoff for CBMC for box 1 is         6.50
  Cutoff for CBMC for box 2 is         6.50
 ********************************************************************************
-
+ 
 Simulation length info
 ********************************************************************************
 Thermodynamic quantities will be computed every       100 Steps     
@@ -253,7 +263,7 @@ Coordinates will be written every                    2200 Steps
 The simulation will be run for                       2200 Steps     
 Instantaneous values will be written every            100 Steps     
 ********************************************************************************
-
+ 
 Property info
 ********************************************************************************
 Total number of property files to be written is     1   for box 1
@@ -275,12 +285,12 @@ Total number of property files to be written is     1   for box 2
  Volume
  Pressure
 ********************************************************************************
-
+ 
 Minimum distance cutoff
 ********************************************************************************
 MC low cutoff distance is   0.000    Angstrom
 ********************************************************************************
-
+ 
 Run type
 ********************************************************************************
  The input run type is Equilibration
@@ -288,17 +298,17 @@ Run type
  Update frequency for adjusting maximum volume displacement is
          100
 ********************************************************************************
-
+ 
 ********************************************************************************
 ************************ Begin Cassandra simulation ****************************
 ********************************************************************************
-
+ 
 Initial configuration
 ********************************************************************************
  Inserting          400 molecules of species            1
  Inserting          100 molecules of species            1
 ********************************************************************************
-
+ 
 Compute total energy
 ********************************************************************************
  Starting energy components for box   1
@@ -316,7 +326,7 @@ Compute total energy
  Long range correction is               -4504.123
  Inter molecule q is                        0.000
  -----------------------------------------------------------
-
+ 
  Starting energy components for box   2
   Atomic units-Extensive
  -----------------------------------------------------------
@@ -332,9 +342,9 @@ Compute total energy
  Long range correction is                -191.840
  Inter molecule q is                        0.000
  -----------------------------------------------------------
-
+ 
 ********************************************************************************
-
+ 
 Run simulation
 ********************************************************************************
       Step       Move   Mol Spc Box  Success  MaxWidth
@@ -357,11 +367,11 @@ Run simulation
       2009  translate         1   1  0.52000   0.77869
       2195  translate         1   1  0.56000   0.87213
 ********************************************************************************
-
+ 
 Report ending energy & then re-compute from scratch
 ********************************************************************************
-
-
+ 
+ 
  Ending energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
@@ -377,8 +387,8 @@ Report ending energy & then re-compute from scratch
  Long range correction is               -2963.048
  Inter molecule q is                        0.000
  -----------------------------------------------------------
-
-
+ 
+ 
  Energy components from total energy call for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
@@ -394,8 +404,8 @@ Report ending energy & then re-compute from scratch
  Long range correction is               -2963.048
  Inter molecule q is                        0.000
  -----------------------------------------------------------
-
-
+ 
+ 
  Ending energy components for box   2
   Atomic units-Extensive
  -----------------------------------------------------------
@@ -411,8 +421,8 @@ Report ending energy & then re-compute from scratch
  Long range correction is                -542.821
  Inter molecule q is                        0.000
  -----------------------------------------------------------
-
-
+ 
+ 
  Energy components from total energy call for box   2
   Atomic units-Extensive
  -----------------------------------------------------------
@@ -429,57 +439,57 @@ Report ending energy & then re-compute from scratch
  Inter molecule q is                        0.000
  -----------------------------------------------------------
 ********************************************************************************
-
-
+ 
+ 
 Writing information for box  1
 ********************************************************************************
                 Move      Trials     Success   % Success
               Volume          62          42       67.74
-
+ 
    ---------------------------------------------------------
    Writing information for species  1
-
+ 
                 Move      Trials     Success   % Success
            Translate        1402         805       57.42
               Insert          57          22       38.60
               Delete         200          86       43.00
    ---------------------------------------------------------
-
+ 
 ********************************************************************************
 Writing information for box  2
 ********************************************************************************
                 Move      Trials     Success   % Success
               Volume          62          42       67.74
-
+ 
    ---------------------------------------------------------
    Writing information for species  1
-
+ 
                 Move      Trials     Success   % Success
            Translate         479         282       58.87
               Insert         200          86       43.00
               Delete          57          22       38.60
    ---------------------------------------------------------
-
+ 
 ********************************************************************************
-
+ 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.339945 secs.
- Volume change time =          2.665596 secs.
- Swap time =                   0.461930 secs.
+ Translation time =            0.383562 secs.
+ Volume change time =          5.362291 secs.
+ Swap time =                   1.173652 secs.
 ********************************************************************************
-
+ 
 ********************************************************************************
 ************************ Cassandra simulation complete *************************
 ********************************************************************************
-
+ 
  Program execution time
 ********************************************************************************
          0      Years
          0     Months
          0       Days
          0      Hours
-         0    Minutes
-         4    Seconds
-       681         ms
+         9    Minutes
+        38    Seconds
+       810         ms
 ********************************************************************************

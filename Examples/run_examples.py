@@ -4,7 +4,7 @@ normal = '\033[0m'
 
 #############Settings##############
 examples_dir = '/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Examples'
-cassandra = '/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra_gfortran.exe'
+cassandra = '/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra_intel_openMP.exe'
 fraggen = '/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Scripts/Frag_Library_Setup/library_setup.py'
 libgenfile = open('/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Examples/libgenout.dat','a')
 cassoutfile = open('/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Examples/sim.out','a')
@@ -49,7 +49,7 @@ for root, dirs, files in os.walk(examples_dir):
 			libgenfile.write('\n\n' + inputfiles[-1] + \
                            ' ' + pdbfiles[-1] + '\n\n')
 			thisprocess = subprocess.Popen \
-                           ([fraggen, cassandra, inputfiles[-1], pdbfiles[-1]],\
+                           ([fraggen, cassandra, inputfiles[-1], pdbfiles[-1],'-n 100'],\
                             stdout = subprocess.PIPE)
 			stdoutvalue = thisprocess.communicate()[0]
 			libgenfile.write(stdoutvalue)
