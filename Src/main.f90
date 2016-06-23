@@ -152,6 +152,15 @@ PROGRAM Main
      CALL Clean_Abort(err_msg,'Read_Inputfile')
   ENDIF
 
+  WRITE(logunit,'(A80)')'********************************************************************************'
+  
+  WRITE(logunit,'(A80)')'               ______                                __                        '
+  WRITE(logunit,'(A80)')'              / ____/___ _______________ _____  ____/ /________ _              '
+  WRITE(logunit,'(A80)')'             / /   / __ `/ ___/ ___/ __ `/ __ \/ __  / ___/ __ `/              '
+  WRITE(logunit,'(A80)')'            / /___/ /_/ (__  |__  ) /_/ / / / / /_/ / /  / /_/ /               '
+  WRITE(logunit,'(A80)')'            \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                '
+  WRITE(logunit,'(A80)')'                                                                               '
+  WRITE(logunit,'(A80)')'********************************************************************************'
 ! Create a checkpoint file to periodically write system information
 
   CALL Name_Files(run_name,'.chk',checkpointfile)
