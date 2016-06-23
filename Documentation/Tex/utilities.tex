@@ -49,12 +49,12 @@
 %Then, the user can execute the GUI by typing \\ \\
 %\texttt{> ./InputFileGUI\_v1\_2\_UNIX.exe}. 
 
-\section{Generate an MCF file}
+\section{Generate a Molecular Connectivity File}
 \label{sec:mcfgen}
 
-The script \texttt{mcf\_gen.py} is a tool that aims to ease the setup of MCF files from scratch (see section \ref{sec:MCF_File} to learn more
-about MCF files), as the generation of these files by hand can be error prone. 
-In this section, a pentane MCF file will be generated to demonstrate the use of this tool.
+The script \texttt{mcf\_gen.py} is a tool that aims to ease the setup of molecular connectivity files from scratch (see section \ref{sec:MCF_File} to learn more
+about MCFs), as the generation of these files by hand can be error prone. 
+In this section, a pentane MCF will be generated to demonstrate the use of this tool.
 The Transferable Potentials for Phase Equilibria (TraPPE) force field will be used to represent the pentane molecular interactions. 
 This force field involves a pairwise-additive 12-6 Lennard-Jones potential to represent the dispersion-repulsion interactions. Additionally, bond angles and dihedral angles are represented through
 harmonic and OPLS functional forms, respectively. Bond lengths are kept constant. The force field mathematical
@@ -208,11 +208,11 @@ filled .ff file, run: \\
 Check the file newly created pentane.mcf for any possible errors. This example can be found in the directory 
 /Scripts/MCF\_Generation/PDB/
 
-Note that if an MCF file for a rigid solid is being created, this last step must include the --solid flag, as
+Note that if an MCF for a rigid solid is being created, this last step must include the --solid flag, as
 
 \texttt{> python mcfgen.py zeolite.pdb --solid} \\
 
-\section{Generate library of fragment configurations}
+\section{Generate Library of Fragment Configurations}
 \label{sec:libgen}
 
 The goal of the script \texttt{library\_setup.py} is to automate the generation of fragment libraries.

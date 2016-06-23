@@ -52,8 +52,8 @@
 \BOOKMARK [2][-]{subsection.4.2.6}{Fragment Info}{section.4.2}
 \BOOKMARK [2][-]{subsection.4.2.7}{Fragment Connectivity}{section.4.2}
 \BOOKMARK [0][-]{chapter.5}{Utilities}{}
-\BOOKMARK [1][-]{section.5.1}{Generate an MCF file}{chapter.5}
-\BOOKMARK [1][-]{section.5.2}{Generate library of fragment configurations}{chapter.5}
+\BOOKMARK [1][-]{section.5.1}{Generate a Molecular Connectivity File}{chapter.5}
+\BOOKMARK [1][-]{section.5.2}{Generate Library of Fragment Configurations}{chapter.5}
 \BOOKMARK [0][-]{chapter.6}{Simulating Rigid Solids and Surfaces}{}
 \BOOKMARK [1][-]{section.6.1}{Input file}{chapter.6}
 \BOOKMARK [1][-]{section.6.2}{PDB file}{chapter.6}
