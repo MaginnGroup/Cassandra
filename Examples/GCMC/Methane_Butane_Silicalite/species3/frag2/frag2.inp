@@ -59,8 +59,8 @@ Production 1000 10
 Units  Steps
 prop_freq  10
 coord_freq   90
-run          1100000
-nequilsteps  100000
+run          1100
+nequilsteps  100
 
 # File_Info
 frag2.dat
