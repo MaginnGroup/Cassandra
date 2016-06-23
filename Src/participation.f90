@@ -519,7 +519,7 @@ SUBROUTINE Participation
                  ! Check to see if this atom is a ring fragment, if so append, 'ring' at the end
 
                     
-                 WRITE(201,'(I5,2X,2(A4,2X),2(F11.7,2X),A6,2X)',ADVANCE='NO') i, &
+                 WRITE(201,'(I5,2X,2(A8,2X),2(F11.7,2X),A6,2X)',ADVANCE='NO') i, &
                       nonbond_list(this_atom,is)%atom_name, nonbond_list(this_atom,is)%element, &
                       nonbond_list(this_atom,is)%mass, nonbond_list(this_atom,is)%charge, &
                       nonbond_list(this_atom,is)%vdw_type
@@ -541,7 +541,7 @@ SUBROUTINE Participation
            ELSE
               
               WRITE(201,*) bondpart_list(ia,is)%nbonds + 1
-              WRITE(201,'(I5,2X,2(A4,2X),2(F11.7,2X),A6,2X)',ADVANCE='NO') anchor_atom, &
+              WRITE(201,'(I5,2X,2(A8,2X),2(F11.7,2X),A6,2X)',ADVANCE='NO') anchor_atom, &
                         nonbond_list(ia,is)%atom_name, &
                         nonbond_list(ia,is)%element, &
                         nonbond_list(ia,is)%mass, &
@@ -550,7 +550,7 @@ SUBROUTINE Participation
               DO i = 1, nbr_vdw_params(is)
                 IF (i == 1) THEN
                   WRITE(201,'(F11.7,2X)',ADVANCE='NO') nonbond_list(ia,is)%vdw_param(i)/kboltz
-                ELSE
+                 ELSE
                   WRITE(201,'(F11.7,2X)',ADVANCE='NO') nonbond_list(ia,is)%vdw_param(i)
                 END IF
               END DO
@@ -574,7 +574,7 @@ SUBROUTINE Participation
                  
                  this_atom = frag_list(ifrag,is)%atoms(i)
                  
-                 WRITE(201,'(I5,2X,2(A4,2X),2(F11.7,2X),A6,2X)',ADVANCE='NO') i, &
+                 WRITE(201,'(I5,2X,2(A8,2X),2(F11.7,2X),A6,2X)',ADVANCE='NO') i, &
                                 nonbond_list(this_atom,is)%atom_name, &
                                 nonbond_list(this_atom,is)%element, &
                                 nonbond_list(this_atom,is)%mass, &
@@ -1404,7 +1404,7 @@ CONTAINS
             err_msg(3) = 'The atom'
             err_msg(4) = Int_To_String(this_atom)
             err_msg(5) = 'could not be found'
-            CALL Clean_Abort(err_msg,'Get_Runname')
+            CALL Clean_Abort(err_msg,'Write_Ring_Fragment_Car_File')
 
         ENDIF
 

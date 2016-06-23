@@ -117,7 +117,7 @@ SUBROUTINE GEMC_Particle_Transfer
   !*****************************************************************************
   ! Step 1) Select a box 'box_out' from which to remove a particle
   !*****************************************************************************
-  IF (.NOT. l_prob_swap_to_box) THEN
+  IF (.NOT. l_prob_swap_from_box) THEN
      ! Choose box_out based on its mol fraction
 
      ! Sum the number of swappable molecules total & per box
@@ -165,9 +165,15 @@ SUBROUTINE GEMC_Particle_Transfer
 
   ELSE
      ! Use the probabilities in the input file
-     box_out = INT (rranf() * nbr_boxes) + 1
 
-     ! choose a box in which the particle will be placed
+     ! choose a donor box
+     randno = rranf()
+     DO ibox = 1,nbr_boxes
+        IF (randno <= cum_prob_swap_from_box(ibox)) EXIT
+     END DO
+     box_out = ibox
+
+     ! choose an acceptor box
      randno = rranf()
      DO ibox = 1,nbr_boxes
         IF (ibox == box_out) CYCLE
@@ -175,8 +181,10 @@ SUBROUTINE GEMC_Particle_Transfer
      END DO
      box_in = ibox
 
-     P_forward = P_forward * prob_swap_to_box(box_out,box_in)
-     P_reverse = P_reverse * prob_swap_to_box(box_in,box_out)
+     P_forward = P_forward * prob_swap_from_box(box_out) &
+                           * prob_swap_to_box(box_out,box_in)
+     P_reverse = P_reverse * prob_swap_from_box(box_in) &
+                           * prob_swap_to_box(box_in,box_out)
 
   END IF
 
@@ -219,7 +227,8 @@ SUBROUTINE GEMC_Particle_Transfer
         IF (randno <= cum_prob_swap_species(is)) EXIT
      END DO
      
-     ! Since prob_swap_species is constant, this step does not change P_forward or P_reverse
+     ! Since prob_swap_species is constant, it will be the same for forward and reverse move
+     ! and therefore does not change P_forward / P_reverse
   END IF
 
   IF (nmols(is,box_out) == 0) THEN
@@ -240,6 +249,7 @@ SUBROUTINE GEMC_Particle_Transfer
   !*****************************************************************************
   ! pick a molecule INDEX at random to delete
   im_out = INT(rranf() * nmols(is,box_out)) + 1
+  ! the probability of picking im_out will be accounted for when computing ln_pacc
   
   ! Obtain the LOCATE of this molecule
   alive = locate(im_out,is,box_out)
