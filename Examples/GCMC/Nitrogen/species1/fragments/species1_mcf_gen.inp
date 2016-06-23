@@ -13,16 +13,8 @@ lj minimum_image
 # Rcutoff_Low
 1.0
 
-# Mixing_Rule
-LB
-
-
 # Charge_Style
 coul minimum_image
-
-# Intra_Scaling
-0.0  0.0  0.0  1.0
-0.0  0.0  0.0  1.0
 
 # Molecule_Files
 ../../N23S.mcf 50
