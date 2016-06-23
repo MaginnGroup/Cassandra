@@ -7,19 +7,21 @@ Example input files for each ensemble are provided in the Examples directory tha
 modified for new simulations.
 Alternatively, input files can be generated using the graphical user interface as 
 explained in section \ref{sec:GUI}.
-The input file is divided into sections using a section header that starts with a '\#', 
-e.g. \tt{\# Run\_Name} and end with a blank line.
-Section \tt{\# Move\_Probability\_Info} is an exception and terminates with
-\tt{\# Done\_Move\_Probability\_Info}, because subsections
-e.g. \tt{\# Prob\_Translation} are separated by blank lines.
+The input file is divided into sections. 
+Each section begins with a section header that starts with a '\#', 
+e.g. {\tt\# Run\_Name}, and ends with a blank line.
+Section {\tt\# Move\_Probability\_Info} is an exception and terminates with
+{\tt\# Done\_Move\_Probability\_Info}, because subsections
+e.g. {\tt\# Prob\_Translation} are separated by blank lines.
 Comment lines begin with `!' and are ignored. 
 Sections in the input file can be listed in any order, 
 but the order and format of keywords and parameters given in each section 
 are important unless otherwise noted below.
-Previously, some keywords were capitalized, e.g. \tt{cubic}, 
-some contained an initial capital, e.g. \tt{Units}, 
-and some were all lowercase, e.g. \tt{kappa\_ins}.
-New in version 1.2, all keywords are supported in lowercase text.
+Previously, some keywords were capitalized, e.g. {\tt CUBIC}, 
+some contained an initial capital, e.g. {\tt Units}, 
+and some were all lowercase, e.g. {\tt kappa\_ins}.
+New in version 1.2, all keywords are supported in lowercase text; 
+each word in a section header must still begin with an initial capital.
 %
 %%%%%%%%%%%%%%%%
 %
@@ -63,7 +65,7 @@ The following ensembles are supported: \\
 \item fragment or nvt\_mc\_fragment (canonical ensemble simulation of a fragment)
 \item ring\_fragment or nvt\_mc\_ring\_fragment (canonical ensemble simulation of a ring fragment)
 \end{itemize} 
-Simulation types \tt{fragment} and  \tt{ring\_fragment} are 
+Simulation types {\tt fragment} and  {\tt ring\_fragment} are 
 used only for generating a fragment library.
 For example, \\ \\
 \texttt{
@@ -548,14 +550,14 @@ where {\it n} is the number of insertable species and {\it Real(i)} is the
 chemical potential setpoint (shifted by a species-specific constant) of 
 insertable species {\it i} in kJ/mol. Each chemical potential will be assigned 
 in the order species appear in the \texttt{Molecule\_Files} section. 
-For species with insertion method \tt{none}, 
-the chemical potential can be listed as \tt{none} or omitted.
+For species with insertion method {\tt none}, 
+the chemical potential can be listed as {\tt none} or omitted.
 This section is only read for grand canonical simulations.
 See Eq. (\ref{eq:muShift}) for more information. 
 For example, the adsorption of methane (species 2) in a zeolite (species 1) 
 can be computed by inserting methane molecules into a box with a zeolite crystal. 
 In this example, only one chemical potential (for methane) is required 
-and the following are equivalent:
+and the following are equivalent: \\ \\
 %
 \texttt{
 \# Chemical\_Potential\_Info \\
@@ -651,14 +653,14 @@ and the following are equivalent:
 %
 %%%%%%%%%%%%%%%%
 \subsection{Move Probabilities}\label{sec:Move_Probabilities}
-\bf{\# Move\_Probability\_Info} \\
-{[}subsections]} \\
-{\# Done\_Probability\_Info} \\
+{\bf\# Move\_Probability\_Info \\
+{[}subsections] \\
+\# Done\_Probability\_Info} \\
 
 This section specifies the probabilities associated with different types of
 MC moves to be performed during the simulation. 
-The section begins with the header \tt{\# Move\_Probability\_Info} 
-and is terminated by the footer \tt{\# Done\_Probability\_Info}.
+The section begins with the header {\tt \# Move\_Probability\_Info} 
+and is terminated by the footer {\tt \# Done\_Probability\_Info}.
 All the move probability subsections must be between the section header and footer.
  
 If the move probabilities do not sum to 1.0, 
@@ -710,16 +712,13 @@ the translation probability as \\ \\
 This will tell Cassandra to attempt center of mass translations 25\%
 of the total moves. For box 1, the maximum displacement will be 2.0 \AA\ for
 species 1, 2.5 \AA\ for species 2, and 1.0 \AA\ for species 3. 
-For box 2, the maximum displacement for all species is 12.0 \AA\. 
-
-
+For box 2, the maximum displacement for all species is 12.0 \AA . \\ \\
+%
 For a simulation that involves solid frameworks, 
 set the maximum displacement of the solid species to zero.
 Every molecule in the simulation with a maximum displacement greater than zero 
-has an equal chance of being moved.
-
-
-
+has an equal chance of being moved. \\ \\
+%
 %When fragment
 %simulation is carried out, the specification of the move is given by \\ \\
 %
@@ -946,7 +945,7 @@ changed by random amounts ranging from
 -5000 \AA $^3$ to +5000 \AA $^3$. As with all move probabilities, you
 can experiment with making 
 larger or smaller moves. Note that if the \# Run\_Type is set
-to \tt{equilibration}, Cassandra will attempt to optimize the magnitude of
+to {\tt equilibration}, Cassandra will attempt to optimize the magnitude of
 the volume change to achieve about 50\% acceptance rates. 
 
 The volume perturbation move is only supported for cubic boxes. 
@@ -1056,11 +1055,11 @@ As a result, if one species has a much higher mole fraction in the system
 (e.g. if calculating methane solubility in liquid water),
 then most attempted swaps will be of the more abundant species.
 This behavior can be changed by using the optional keywords 
-\tt{prob\_swap\_species} and \tt{prob\_swap\_from\_box}. \\ \\
+{\tt prob\_swap\_species} and {\tt prob\_swap\_from\_box}. \\ \\
 %
 The keyword \texttt{prob\_swap\_species} must be given with $n$ options: 
 {\it Real(3,j)} is the probability of selecting species $j$.
-The keyword \tt{prob\_swap\_from\_box} must be given with $i$ options:
+The keyword {\tt prob\_swap\_from\_box} must be given with $i$ options:
 {\it Real(4,j)} is the probability of selecting a molecule from box $j$.
 For example, to select a molecule of species 1 for 90\% of attempted swaps and 
 to select box 2 as the donor box for 75\% of attempted swaps, use: \\ \\
@@ -1073,7 +1072,7 @@ prob\_swap\_from\_box 0.25 0.75
 %
 The probability of selecting a species with insertion method \texttt{none} must be 0. \\ \\
 %
-%The keyword \tt{prob\_swap\_to\_box} can be used for simulations with more than 2 boxes.
+%The keyword {\tt prob\_swap\_to\_box} can be used for simulations with more than 2 boxes.
 %
 %%%%%%%%%%%%%%%%
 %
@@ -1201,7 +1200,7 @@ move is 20\degree~specify the following: \\ \\
 This section specifies whether Cassandra generates an initial configuration or 
 uses a previously generated configuration to start a simulation. 
 {\it Character(1)} can be one of four keywords:
-\tt{make\_config}, \tt{read\_config}, \tt{add\_to\_config}, or \tt{checkpoint}.
+{\tt make\_config}, {\tt read\_config}, {\tt add\_to\_config}, or {\tt checkpoint}.
 %
 \begin{itemize} 
 \item \textbf{`make\_config'} will generate an initial configuration using a configurational biased scheme. 
@@ -1227,7 +1226,7 @@ If the simulation also has a second box with 25 molecules of species 2 only \\ \
 %
 \item {\textbf{`read\_config'}} will use the coordinates from an .xyz file.
 For example, a configuration generated at one temperature may be used to initiate a simulation at another temperature. 
-After \tt{read\_config} the number of molecules of each species must be given, followed by the .xyz filename: \\ \\
+After {\tt read\_config} the number of molecules of each species must be given, followed by the .xyz filename: \\ \\
 %
 {\bf \# Start\_Type} \\
 {\it read\_config Integer(1) ... Integer(n) Character(1)}\\ \\
@@ -1257,14 +1256,14 @@ The .xyz files must have the following format:\\ \\
  ...\\
 } \\
 %
-The utility \texttt{read\_config.py} is provided to speed up the restart of simulations using the \tt{read\_config} option.
+The utility \texttt{read\_config.py} is provided to speed up the restart of simulations using the {\tt read\_config} option.
 This tool extracts the last configuration from a previous run, as well as relevant information from the checkpoint file 
 such as maximum displacements for angles or translations. It then creates new input and xyz files that can readily be
-used to restart a simulation using the \tt{read\_config} option. This script is located in \texttt{Scripts/Read\_Config}. 
+used to restart a simulation using the {\tt read\_config} option. This script is located in \texttt{Scripts/Read\_Config}. 
 For more information, refer to the README file located in the same directory.
 
 \item {\textbf{`add\_to\_config'}} will read the coordinates from an .xyz file, but then insert additional molecules.
-After \tt{add\_to\_config} specify the number of molecules of each species to be read, followed by the .xyz filename, 
+After {\tt add\_to\_config} specify the number of molecules of each species to be read, followed by the .xyz filename, 
 followed by the number of molecules of each species to be added: \\ \\
 %
 {\bf \# Start\_Type} \\
@@ -1288,7 +1287,7 @@ During the course of a simulation, Cassandra periodically generates a checkpoint
 the coordinates of each molecule and its box number at the time the file is written. Cassandra provides
 the capability of restarting from this state point in the event that a simulation crashes or 
 running a production simulation from an equilibrated configuration. For this
-purpose, in addition to the \tt{checkpoint} keyword, additional information in the form of the name of 
+purpose, in addition to the {\tt checkpoint} keyword, additional information in the form of the name of 
 the checkpoint file {\it Character(1)} is required in the following format: \\ \\
 %
 {\bf \# Start\_Type} \\
@@ -1300,8 +1299,8 @@ For example, to continue simulations from a checkpoint file `methane\_vle\_T148.
 \# Start\_Type \\
 checkpoint methane\_vle\_T148.chk \\ } \\
 %
-Note that when a \tt{checkpoint} file is used to restart a simulation, the seeds for random number generation supplied by the user
-will be overwritten by those present in the checkpoint file. By contrast, if \# Start\_Type is set to \tt{read\_config}, 
+Note that when a {\tt checkpoint} file is used to restart a simulation, the seeds for random number generation supplied by the user
+will be overwritten by those present in the checkpoint file. By contrast, if \# Start\_Type is set to {\tt read\_config}, 
 then the seeds specified in the input file are used.  \\ \\
 %
 \end{itemize}
@@ -1366,12 +1365,12 @@ production 250}
 %
 This section specifies the frequency at which thermodynamic properties and coordinates are output to a file. 
 The \texttt{units} keyword determines the method by which the simulation is terminated and data is output. 
-{\it Character(1)} can be \tt{minutes}, \tt{steps}, or \tt{sweeps}. 
+{\it Character(1)} can be {\tt minutes}, {\tt steps}, or {\tt sweeps}. 
 Thermodynamic quantities are output every {\it Integer(2)} units,
 coordinates are written to the disk every {\it Integer(3)} units and 
 the simulation will stop after {\it Integer(4)} units. \\
 %
-If {\it Character(1)} is \tt{minutes}, then the simulation runs for a specified time.
+If {\it Character(1)} is {\tt minutes}, then the simulation runs for a specified time.
 For example, to run a simulation for 60 minutes with thermodynamic properties written every minute and 
 coordinates output every 10 minutes, use: \\ \\
 %
@@ -1382,7 +1381,7 @@ prop\_freq    1 \\
 coord\_freq   10 \\
 run           60 \\} \\
 %
-If {\it Character(1)} is \tt{steps}, the simulation runs for a specified number of MC steps.
+If {\it Character(1)} is {\tt steps}, the simulation runs for a specified number of MC steps.
 An MC step is defined as a single MC move, regardless of type and independent of system size. 
 To run a simulation of 50,000 steps such that thermodynamic quantities are printed every 100 MC steps and 
 coordinates are output every 10,000 steps, use: \\ \\
@@ -1394,7 +1393,7 @@ prop\_freq      100 \\
 coord\_freq     10000 \\
 run             50000 \\ } \\
 %
-If {\it Character(1)} is \tt{sweeps}, the simulation runs for a specified number of MC sweeps. 
+If {\it Character(1)} is {\tt sweeps}, the simulation runs for a specified number of MC sweeps. 
 The number of MC steps per sweep can be defined using the optional keyword \\ \\
 %
 steps\_per\_sweep {\it Integer(5)} \\ \\
@@ -1414,7 +1413,7 @@ coord\_freq       100 \\
 run               1000 \\
 steps\_per\_sweep 201 \\} \\
 %
-The optional keyword \tt{block\_avg\_freq} switches the thermodynamic output from instantaneous values
+The optional keyword {\tt block\_avg\_freq} switches the thermodynamic output from instantaneous values
 to block average values, where \it{Integer(6)} is the number of units per block.  
 The number of blocks is given by \it{Integer(4)}/\it{Integer(6)} 
 and the number of data points per block is \it{Integer(6)}/\it{Integer(2)}.
@@ -1528,8 +1527,8 @@ fragment library frag\_1\_2.dat for these fragments.
 This optional section is used to control the level of detail about the simulation
 setup that is output to the log file. 
 Controlling this can be useful for development purposes. 
-If this section is missing, {\it Logical} is set to \tt{false} by default. 
-Supported options for {\it Logical} are \tt{true} or \tt{false}. \\ \\
+If this section is missing, {\it Logical} is set to {\tt false} by default. 
+Supported options for {\it Logical} are {\tt true} or {\tt false}. \\ \\
 %
 %%%%%%%%%%%%%%%%
 %
@@ -1568,9 +1567,9 @@ This section sets a number of parameters required for biased insertion/deletion 
 regrowth (\# Prob\_Regrowth section) of molecules. 
 This section is only required if molecules are regrown, inserted and/or deleted. \\ \\
 %
-Keyword \tt{kappa\_ins} is required
-if the section \tt{\# Start\_Type} is given with keyword \tt{make\_config} or \tt{add\_to\_config}, or
-if the section \tt{\# Sim\_Type} is \tt{gcmc}, \tt{gemc} or \tt{gemc\_npt}.
+Keyword {\tt kappa\_ins} is required
+if the section {\tt \# Start\_Type} is given with keyword {\tt make\_config} or {\tt add\_to\_config}, or
+if the section {\tt \# Sim\_Type} is {\tt gcmc}, {\tt gemc} or {\tt gemc\_npt}.
 For a biased insertion, a fragment is chosen to insert first in proportion to the number of atoms in fragment.
 For example, to insert a united-atom molecule of ethylbenzene, 
 the ring fragment has 7 pseudoatoms while the other has 3.
@@ -1586,12 +1585,12 @@ One of the trial positions is then selected randomly based on the Boltzmann weig
 %implemented in later versions of Cassandra and any value for {\it Integer(2)}, at present, is ignored.
 %To avoid any confusion, {\it Integer(2)} is set to 0. \\ \\
 %
-Keyword \tt{kappa\_dih} is required 
+Keyword {\tt kappa\_dih} is required 
 if any species composed of multiple fragments is inserted/deleted or regrown.
 Additional fragments are added to the growing molecule
 using \it{Integer(2)} trial dihedral angles that connect the new fragment to the existing part of molecule. \\ \\
 %
-Keyword \tt{rcut\_cbmc} is required if section \tt{\# CBMC\_Info} is required.
+Keyword {\tt rcut\_cbmc} is required if section {\tt \# CBMC\_Info} is required.
 For all the trials, energy of the partially grown molecule with itself and surrounding molecules is to be calculated. 
 For this purpose, a short cutoff is used. {\it Real(4,i)} specifies the cutoff distance in \AA\ for box $i$. 
 A short cutoff is fast, but might miss some overlaps. You can experiment with this value to optimize it for your system.\\ \\
