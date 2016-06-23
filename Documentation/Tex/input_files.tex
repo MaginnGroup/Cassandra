@@ -717,7 +717,7 @@ For box 2, the maximum displacement for all species is 12.0 \AA . \\ \\
 For a simulation that involves solid frameworks, 
 set the maximum displacement of the solid species to zero.
 Every molecule in the simulation with a maximum displacement greater than zero 
-has an equal chance of being moved. \\ \\
+has an equal chance of being moved.
 %
 %When fragment
 %simulation is carried out, the specification of the move is given by \\ \\
@@ -824,7 +824,7 @@ The probability of attempting this move is the only required input. It is specif
 \texttt{
 \# Prob\_Angle \\
 0.3 \\
-}
+} \\
 %
 This will tell Cassandra to attempt angle moves 30\% of the total moves for all molecules containing angles within a given box.
 
@@ -889,7 +889,7 @@ Thirty percent of the attempted moves will be regrowth moves.
 Seventy percent of the regrowth moves will be attempted on a molecule of species 1
 and the balance of regrowth moves on a molecule of species 2. \\ \\
 %
-{\it Real(2,i)} should be set to zero for monatomic, linear, or rigid species, including solid frameworks. \\ \\
+{\it Real(2,i)} should be set to zero for monatomic, linear, or rigid species, including solid frameworks.
 % 
 %%%%%%%%%%%%%%%%
 %
@@ -1025,7 +1025,7 @@ This subsection is required for GCMC simulations. \\ \\
 {\it Real(1)} \\ 
 {\it Character(2,1) ... Character(2,n)} \\
 {[}{\it prob\_swap\_species Real(3,1) ... Real(3,n)}] \\
-{[}{\it prob\_swap\_from\_box Real(4,1) ... Real(4,i)}] \\
+{[}{\it prob\_swap\_from\_box Real(4,1) ... Real(4,i)}] \\ \\
 %{[}{\it prob\_swap\_to\_box Real(5,1) Real(5,2) ... Real(5,i+1)}] \\ \\
 %
 where $n$ is the number of species and $i$ is the number of boxes.
@@ -1067,8 +1067,8 @@ to select box 2 as the donor box for 75\% of attempted swaps, use: \\ \\
 \texttt{ \# Prob\_Swap\\
 0.1 \\ 
 cbmc cbmc none \\
-prob\_swap\_species 0.9 0.1 0.0 \\ \\}
-prob\_swap\_from\_box 0.25 0.75
+prob\_swap\_species 0.9 0.1 0.0 \\
+prob\_swap\_from\_box 0.25 0.75 \\ \\ }
 %
 The probability of selecting a species with insertion method \texttt{none} must be 0. \\ \\
 %
@@ -1368,7 +1368,7 @@ The \texttt{units} keyword determines the method by which the simulation is term
 {\it Character(1)} can be {\tt minutes}, {\tt steps}, or {\tt sweeps}. 
 Thermodynamic quantities are output every {\it Integer(2)} units,
 coordinates are written to the disk every {\it Integer(3)} units and 
-the simulation will stop after {\it Integer(4)} units. \\
+the simulation will stop after {\it Integer(4)} units. \\ \\
 %
 If {\it Character(1)} is {\tt minutes}, then the simulation runs for a specified time.
 For example, to run a simulation for 60 minutes with thermodynamic properties written every minute and 
@@ -1414,9 +1414,9 @@ run               1000 \\
 steps\_per\_sweep 201 \\} \\
 %
 The optional keyword {\tt block\_avg\_freq} switches the thermodynamic output from instantaneous values
-to block average values, where \it{Integer(6)} is the number of units per block.  
-The number of blocks is given by \it{Integer(4)}/\it{Integer(6)} 
-and the number of data points per block is \it{Integer(6)}/\it{Integer(2)}.
+to block average values, where {\it Integer(6)} is the number of units per block.  
+The number of blocks is given by {\it Integer(4)}/{\it Integer(6)} 
+and the number of data points per block is {\it Integer(6)}/{\it Integer(2)}.
 For example, during a run of 1,000,000 steps, with properties computed every 100 steps and 
 averaged every 100,000 steps, specify
 %
@@ -1577,7 +1577,7 @@ The ring fragment will be inserted first with a probability of 0.7.
 By contrast, to insert a united-atom molecule of dodecane, 
 all ten fragments have 3 pseudoatoms and so one is chosen with uniform probability.
 After choosing a Boltzmann-distributed conformation and an orientation with uniform probability,
-\it{Integer(1)} trial positions are generated for the center-of-mass of the fragment.
+{\it Integer(1)} trial positions are generated for the center-of-mass of the fragment.
 One of the trial positions is then selected randomly based on the Boltzmann weight of the energy of the trial position. \\ \\
 %
 %Once a trial position for the insertion is chosen, rotational bias may be applied by generating a number
@@ -1588,7 +1588,7 @@ One of the trial positions is then selected randomly based on the Boltzmann weig
 Keyword {\tt kappa\_dih} is required 
 if any species composed of multiple fragments is inserted/deleted or regrown.
 Additional fragments are added to the growing molecule
-using \it{Integer(2)} trial dihedral angles that connect the new fragment to the existing part of molecule. \\ \\
+using {\it Integer(2)} trial dihedral angles that connect the new fragment to the existing part of molecule. \\ \\
 %
 Keyword {\tt rcut\_cbmc} is required if section {\tt \# CBMC\_Info} is required.
 For all the trials, energy of the partially grown molecule with itself and surrounding molecules is to be calculated. 

@@ -59,9 +59,8 @@
 \contentsline {subsection}{\numberline {4.2.6}Fragment Info}{54}{subsection.4.2.6}
 \contentsline {subsection}{\numberline {4.2.7}Fragment Connectivity}{55}{subsection.4.2.7}
 \contentsline {chapter}{\numberline {5}Utilities}{57}{chapter.5}
-\contentsline {section}{\numberline {5.1}Input File GUI}{57}{section.5.1}
-\contentsline {section}{\numberline {5.2}Generate an MCF file}{59}{section.5.2}
-\contentsline {section}{\numberline {5.3}Generate library of fragment configurations}{62}{section.5.3}
+\contentsline {section}{\numberline {5.1}Generate an MCF file}{57}{section.5.1}
+\contentsline {section}{\numberline {5.2}Generate library of fragment configurations}{60}{section.5.2}
 \contentsline {chapter}{\numberline {6}Simulating Rigid Solids and Surfaces}{63}{chapter.6}
 \contentsline {section}{\numberline {6.1}Input file}{63}{section.6.1}
 \contentsline {section}{\numberline {6.2}PDB file}{64}{section.6.2}
