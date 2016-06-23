@@ -3,21 +3,21 @@ Run info
 version: Cassandra Development Version
 inputfile: frag1.inp
 name of run: frag1
-date (mm/dd/yyyy): 06/15/2016
-time: 15:55:49
+date (mm/dd/yyyy): 06/22/2016
+time: 17:49:23
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
- 
+
 Verbose log
 ********************************************************************************
 Normal output to logfile
 ********************************************************************************
- 
+
 Simulation type
 ********************************************************************************
 NVT_MC_Ring_Fragment
 ********************************************************************************
- 
+
 Copy input file
 ********************************************************************************
  # Run_Name
@@ -64,7 +64,7 @@ Copy input file
  Units    Steps
  prop_freq  100
  coord_freq   5000
- run          10000
+ run          10000000
  
  # Property_Info 1
  Energy_Total
@@ -74,12 +74,12 @@ Copy input file
  
  END
 ********************************************************************************
- 
+
 Number of species
 ********************************************************************************
 1
 ********************************************************************************
- 
+
 Box info
 ********************************************************************************
 Number of simulation boxes     1
@@ -90,7 +90,7 @@ Box 1 is cubic
  Distance between box faces    50.0000      50.0000      50.0000
  Box volume, A^3        125000.0000
 ********************************************************************************
- 
+
 Pair style
 ********************************************************************************
 VDW style used is:   LJ             in box:  1
@@ -103,24 +103,22 @@ Section "# Pair_Energy" is missing from the input file
 Section "# Mixing_Rule" is missing from the input file
  By default, using Lorentz-Berthelot
 ********************************************************************************
- 
+
 Molecule info
 ********************************************************************************
  Reading molecular connectivity information
  Species:            1
- Molecular connectivity file: 
- ../fragments/frag_1_1.mcf                                                      
-                                          
+ Molecular connectivity file: ../fragments/frag_1_1.mcf                                                                                               
    6 atom(s) specified.
    6 bond(s) specified.
    6 angle(s) specified.
    6 dihedral(s) specified.
    0 improper(s) specified.
- 
+
  Species  Max molecules
  -------  -------------
       1              1
- 
+
  Species     1
  -------------------------------------------------------------------------------
  Atom parameters read
@@ -135,67 +133,68 @@ Molecule info
   VDW 1-N scaling factor       1.000
  -------------------------------------------------------------------------------
 ********************************************************************************
- 
+
 Nonbond tables
 ********************************************************************************
  ********************************************************************************
- 
+
 Start type
 ********************************************************************************
 Initial configuration for box 1 will be read from file
  Will read       1  molecules of species   1
  Will read configuration from file ../fragments/frag_1_1.xyz
 ********************************************************************************
- 
+
 Seed info
 ********************************************************************************
 The starting seeds are:    706111630     70611631
 ********************************************************************************
- 
+
 Temperature
 ********************************************************************************
 Temperature of box 1 is 403.000 K
 ********************************************************************************
- 
+
 Move probabilities
 ********************************************************************************
 Probability for ring moves                 1.000000
- Maximum flip angle in radians  0.610865238200000     
+ Maximum flip angle in radians  0.61086523820000005     
 Number of moves is :   1
 ********************************************************************************
- 
+
 Simulation length info
 ********************************************************************************
-Thermodynamic quantities will be written every        100 Steps     
+Thermodynamic quantities will be computed every       100 Steps     
 Coordinates will be written every                    5000 Steps     
  movie header file is                  frag1.H
  movie_XYZ file is                     frag1.xyz
-The simulation will be run for                      10000 Steps     
+The simulation will be run for                   10000000 Steps     
+Instantaneous values will be written every            100 Steps     
 ********************************************************************************
- 
+
 File info
 ********************************************************************************
      Configuration file for species    1   is
                           frag1.dat
 ********************************************************************************
- 
+
 Run type
 ********************************************************************************
  The input run type is Production
  Update frequency is         1000
 ********************************************************************************
- 
+
 ********************************************************************************
 ************************ Begin Cassandra simulation ****************************
 ********************************************************************************
- 
+
 Initial configuration
 ********************************************************************************
  Reading configuration for box           1
  Reading            1  molecules of species            1
  Configurations read successfully
 ********************************************************************************
- 
+
 Compute total energy
 ********************************************************************************
  Starting energy components for box   1
@@ -212,42 +211,42 @@ Compute total energy
  Inter molecule vdw is                      0.000
  Inter molecule q is                        0.000
  -----------------------------------------------------------
- 
+
 ********************************************************************************
- 
+
 Run simulation
 ********************************************************************************
       Step       Move   Mol Spc Box  Success  MaxWidth
 ********************************************************************************
- 
+
 Report ending energy & then re-compute from scratch
 ********************************************************************************
- 
- 
+
+
  Ending energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                 96954.677
- Intra molecular energy is              96954.677
+ Total system energy is                 97685.119
+ Intra molecular energy is              97685.119
  Bond energy is                             0.000
- Angle energy is                         1646.738
- Dihedral energy is                     95307.938
+ Angle energy is                         2473.542
+ Dihedral energy is                     95211.577
  Improper angle energy is                   0.000
  Intra molecule vdw is                      0.000
  Intra molecule q is                        0.000
  Inter molecule vdw is                      0.000
  Inter molecule q is                        0.000
  -----------------------------------------------------------
- 
- 
+
+
  Energy components from total energy call for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                 96954.677
- Intra molecular energy is              96954.677
+ Total system energy is                 97685.119
+ Intra molecular energy is              97685.119
  Bond energy is                             0.000
- Angle energy is                         1646.738
- Dihedral energy is                     95307.938
+ Angle energy is                         2473.542
+ Dihedral energy is                     95211.577
  Improper angle energy is                   0.000
  Intra molecule vdw is                      0.000
  Intra molecule q is                        0.000
@@ -255,34 +254,34 @@ Report ending energy & then re-compute from scratch
  Inter molecule q is                        0.000
  -----------------------------------------------------------
 ********************************************************************************
- 
- 
+
+
 Writing information for box  1
 ********************************************************************************
- 
+
    ---------------------------------------------------------
    Writing information for species  1
- 
+
                 Move      Trials     Success   % Success
    ---------------------------------------------------------
- 
+
 ********************************************************************************
- 
+
  Writing information about subroutine times
 ********************************************************************************
 ********************************************************************************
- 
+
 ********************************************************************************
 ************************ Cassandra simulation complete *************************
 ********************************************************************************
- 
+
  Program execution time
 ********************************************************************************
          0      Years
          0     Months
          0       Days
          0      Hours
-         0    Minutes
-         0    Seconds
-       109         ms
+         3    Minutes
+        47    Seconds
+       513         ms
 ********************************************************************************

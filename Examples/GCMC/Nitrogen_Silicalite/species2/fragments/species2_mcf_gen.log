@@ -3,8 +3,8 @@ Run info
 version: Cassandra Development Version
 inputfile: species2_mcf_gen.inp
 name of run: species2_mcf_gen
-date (mm/dd/yyyy): 06/15/2016
-time: 15:46:07
+date (mm/dd/yyyy): 06/22/2016
+time: 22:27:18
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -41,10 +41,6 @@ Copy input file
  
  # Charge_Style
  coul minimum_image
- 
- # Intra_Scaling
- 0.0  0.0  0.0  1.0
- 0.0  0.0  0.0  1.0
  
  # Molecule_Files
  ../../N23S.mcf 50

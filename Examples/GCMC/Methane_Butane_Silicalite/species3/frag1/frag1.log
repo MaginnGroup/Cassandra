@@ -3,8 +3,8 @@ Run info
 version: Cassandra Development Version
 inputfile: frag1.inp
 name of run: frag1
-date (mm/dd/yyyy): 06/15/2016
-time: 15:15:20
+date (mm/dd/yyyy): 06/22/2016
+time: 22:25:13
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -37,16 +37,16 @@ Copy input file
  
  # Mixing_Rule
  custom
- SI O     0.00   0.0
- SI CH4    0.00   0.0
- SI CH3    0.00   0.0
- SI CH2    0.00   0.0
- O  CH4   96.50   3.6
- O  CH3   80.00   3.6
- O  CH2   58.00   3.6
- CH4 CH3  120.49   3.75
- CH4 CH2   83.40   3.83
- CH3 CH2   67.90   3.85
+ SI_s1 O_s1     0.00   0.0
+ SI_s1 CH4_s2    0.00   0.0
+ SI_s1 CH3_s3    0.00   0.0
+ SI_s1 CH2_s3    0.00   0.0
+ O_s1  CH4_s2   96.50   3.6
+ O_s1  CH3_s3   80.00   3.6
+ O_s1  CH2_s3   58.00   3.6
+ CH4_s2 CH3_s3  120.49   3.75
+ CH4_s2 CH2_s3   83.40   3.83
+ CH3_s3 CH2_s3   67.90   3.85
  
  
  # Molecule_Files
@@ -80,8 +80,8 @@ Copy input file
  Units  Steps
  prop_freq  10
  coord_freq   90
- run          1100
- nequilsteps  100
+ run          1100000
+ nequilsteps  100000
  
  # File_Info
  frag1.dat
@@ -151,15 +151,15 @@ Molecule info
  
 Nonbond tables
 ********************************************************************************
-Atom type SI on line 18 of input file not found. Skipping parameters.
-Atom type SI on line 19 of input file not found. Skipping parameters.
-Atom type SI on line 20 of input file not found. Skipping parameters.
-Atom type SI on line 21 of input file not found. Skipping parameters.
-Atom type O on line 22 of input file not found. Skipping parameters.
-Atom type O on line 23 of input file not found. Skipping parameters.
-Atom type O on line 24 of input file not found. Skipping parameters.
-Atom type CH4 on line 25 of input file not found. Skipping parameters.
-Atom type CH4 on line 26 of input file not found. Skipping parameters.
+Atom type SI_s1 on line 18 of input file not found. Skipping parameters.
+Atom type SI_s1 on line 19 of input file not found. Skipping parameters.
+Atom type SI_s1 on line 20 of input file not found. Skipping parameters.
+Atom type SI_s1 on line 21 of input file not found. Skipping parameters.
+Atom type O_s1 on line 22 of input file not found. Skipping parameters.
+Atom type O_s1 on line 23 of input file not found. Skipping parameters.
+Atom type O_s1 on line 24 of input file not found. Skipping parameters.
+Atom type CH4_s2 on line 25 of input file not found. Skipping parameters.
+Atom type CH4_s2 on line 26 of input file not found. Skipping parameters.
  ********************************************************************************
  
 Start type
@@ -189,12 +189,13 @@ Number of moves is :   1
  
 Simulation length info
 ********************************************************************************
-Thermodynamic quantities will be written every         10 Steps     
+Thermodynamic quantities will be computed every        10 Steps     
 Coordinates will be written every                      90 Steps     
  movie header file is                  frag1.H
  movie_XYZ file is                     frag1.xyz
-The simulation will be run for                       1100 Steps     
-Number of equilibrium steps       100
+The simulation will be run for                    1100000 Steps     
+Number of equilibrium steps    100000
+Instantaneous values will be written every             10 Steps     
 ********************************************************************************
  
 File info
@@ -251,10 +252,10 @@ Report ending energy & then re-compute from scratch
  Ending energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                    21.365
- Intra molecular energy is                 21.365
+ Total system energy is                   314.347
+ Intra molecular energy is                314.347
  Bond energy is                             0.000
- Angle energy is                           21.365
+ Angle energy is                          314.347
  Dihedral energy is                         0.000
  Improper angle energy is                   0.000
  Intra molecule vdw is                      0.000
@@ -267,10 +268,10 @@ Report ending energy & then re-compute from scratch
  Energy components from total energy call for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                    21.365
- Intra molecular energy is                 21.365
+ Total system energy is                   314.347
+ Intra molecular energy is                314.347
  Bond energy is                             0.000
- Angle energy is                           21.365
+ Angle energy is                          314.347
  Dihedral energy is                         0.000
  Improper angle energy is                   0.000
  Intra molecule vdw is                      0.000
@@ -288,7 +289,7 @@ Writing information for box  1
    Writing information for species  1
  
                 Move      Trials     Success   % Success
-   Atom Displacement        1100         480       43.64
+   Atom Displacement     1100000      547447       49.77
    ---------------------------------------------------------
  
 ********************************************************************************
@@ -308,6 +309,6 @@ Writing information for box  1
          0       Days
          0      Hours
          0    Minutes
-         0    Seconds
-        17         ms
+        20    Seconds
+       919         ms
 ********************************************************************************

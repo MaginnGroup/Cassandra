@@ -8,9 +8,9 @@
 
 # Atom_Info
 3
-1    N    N    14.007    -0.405    LJ    36.400    3.320
-2    D    D    0.000    0.81    NONE
-3    N    N    14.007    -0.405    LJ    36.400    3.320
+1    N_s1    N    14.007    -0.405    LJ    36.400    3.320
+2    D_s1    D    0.000    0.81    NONE
+3    N_s1    N    14.007    -0.405    LJ    36.400    3.320
 
 !Bond Format
 !index i j type parameters

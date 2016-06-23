@@ -10,22 +10,22 @@ libgenfile = open('/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Examples/libgen
 cassoutfile = open('/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Examples/sim.out','a')
 ###################################
 
-#for root, dirs, files in os.walk(examples_dir):
-#	for thisfile in files:
-#		if thisfile.endswith('.out.chk') or \
-#                   thisfile.endswith('.log') or \
-#                   thisfile.endswith('.BAK') or \
-#                   '.box' in thisfile or \
-#                   '.out' in thisfile:
-#			subprocess.call(['rm',root+'/'+thisfile])
-#
-#	try:
-#		
-#		if 'species' in root:
-#			subprocess.call(['rm','-r',root])
-#	except:
-#		pass
-#print bold + 'Done clean up'
+for root, dirs, files in os.walk(examples_dir):
+	for thisfile in files:
+		if thisfile.endswith('.out.chk') or \
+                   thisfile.endswith('.log') or \
+                   thisfile.endswith('.BAK') or \
+                   '.box' in thisfile or \
+                   '.out' in thisfile:
+			subprocess.call(['rm',root+'/'+thisfile])
+
+	try:
+		
+		if 'species' in root:
+			subprocess.call(['rm','-r',root])
+	except:
+		pass
+print bold + 'Done clean up'
 
 pdbfiles = []
 inputfiles = []

@@ -3,21 +3,21 @@ Run info
 version: Cassandra Development Version
 inputfile: frag1.inp
 name of run: frag1
-date (mm/dd/yyyy): 06/15/2016
-time: 16:08:09
+date (mm/dd/yyyy): 06/22/2016
+time: 17:53:50
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
- 
+
 Verbose log
 ********************************************************************************
 Normal output to logfile
 ********************************************************************************
- 
+
 Simulation type
 ********************************************************************************
 NVT_MC_Fragment     
 ********************************************************************************
- 
+
 Copy input file
 ********************************************************************************
  # Run_Name
@@ -70,20 +70,20 @@ Copy input file
  Units  Steps
  prop_freq  10
  coord_freq   90
- run          1100
- nequilsteps  100
+ run          1100000
+ nequilsteps  100000
  
  # File_Info
  frag1.dat
  
  END
 ********************************************************************************
- 
+
 Number of species
 ********************************************************************************
 1
 ********************************************************************************
- 
+
 Box info
 ********************************************************************************
 Number of simulation boxes     1
@@ -94,7 +94,7 @@ Box 1 is cubic
  Distance between box faces    50.0000      50.0000      50.0000
  Box volume, A^3        125000.0000
 ********************************************************************************
- 
+
 Pair style
 ********************************************************************************
 VDW style used is:   LJ             in box:  1
@@ -106,24 +106,22 @@ Section "# Pair_Energy" is missing from the input file
  By default, pair interaction energy arrays will not be stored
 Lorentz-Berthelot mixing rule specified
 ********************************************************************************
- 
+
 Molecule info
 ********************************************************************************
  Reading molecular connectivity information
  Species:            1
- Molecular connectivity file: 
- ../fragments/frag_1_1.mcf                                                      
-                                          
+ Molecular connectivity file: ../fragments/frag_1_1.mcf                                                                                               
    4 atom(s) specified.
    3 bond(s) specified.
    3 angle(s) specified.
    0 dihedral(s) specified.
    0 improper(s) specified.
- 
+
  Species  Max molecules
  -------  -------------
       1              1
- 
+
  Species     1
  -------------------------------------------------------------------------------
  Atom parameters read
@@ -138,69 +136,70 @@ Molecule info
   VDW 1-N scaling factor       1.000
  -------------------------------------------------------------------------------
 ********************************************************************************
- 
+
 Nonbond tables
 ********************************************************************************
  ********************************************************************************
- 
+
 Start type
 ********************************************************************************
 Initial configuration for box 1 will be read from file
  Will read       1  molecules of species   1
  Will read configuration from file ../fragments/frag_1_1.xyz
 ********************************************************************************
- 
+
 Seed info
 ********************************************************************************
 The starting seeds are:    706111630     70611631
 ********************************************************************************
- 
+
 Temperature
 ********************************************************************************
 Temperature of box 1 is 304.000 K
 ********************************************************************************
- 
+
 Move probabilities
 ********************************************************************************
 Probability for translation                1.000000
- Maximum width in cosine of polar angle is  0.200000000000000     
- Maximum width (degrees) in azimuthal angle is   10.0000000000000     
+ Maximum width in cosine of polar angle is  0.20000000000000001     
+ Maximum width (degrees) in azimuthal angle is   10.000000000000000     
 Number of moves is :   1
 ********************************************************************************
- 
+
 Simulation length info
 ********************************************************************************
-Thermodynamic quantities will be written every         10 Steps     
+Thermodynamic quantities will be computed every        10 Steps     
 Coordinates will be written every                      90 Steps     
  movie header file is                  frag1.H
  movie_XYZ file is                     frag1.xyz
-The simulation will be run for                       1100 Steps     
-Number of equilibrium steps       100
+The simulation will be run for                    1100000 Steps     
+Number of equilibrium steps    100000
+Instantaneous values will be written every             10 Steps     
 ********************************************************************************
- 
+
 File info
 ********************************************************************************
      Configuration file for species    1   is
                           frag1.dat
 ********************************************************************************
- 
+
 Run type
 ********************************************************************************
  The input run type is Production
  Update frequency is         1000
 ********************************************************************************
- 
+
 ********************************************************************************
 ************************ Begin Cassandra simulation ****************************
 ********************************************************************************
- 
+
 Initial configuration
 ********************************************************************************
  Reading configuration for box           1
  Reading            1  molecules of species            1
  Configurations read successfully
 ********************************************************************************
- 
+
 Compute total energy
 ********************************************************************************
  Starting energy components for box   1
@@ -217,25 +216,25 @@ Compute total energy
  Inter molecule vdw is                      0.000
  Inter molecule q is                        0.000
  -----------------------------------------------------------
- 
+
 ********************************************************************************
- 
+
 Run simulation
 ********************************************************************************
       Step       Move   Mol Spc Box  Success  MaxWidth
 ********************************************************************************
- 
+
 Report ending energy & then re-compute from scratch
 ********************************************************************************
- 
- 
+
+
  Ending energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                   322.913
- Intra molecular energy is                322.913
+ Total system energy is                   836.431
+ Intra molecular energy is                836.431
  Bond energy is                             0.000
- Angle energy is                          322.913
+ Angle energy is                          836.431
  Dihedral energy is                         0.000
  Improper angle energy is                   0.000
  Intra molecule vdw is                      0.000
@@ -243,15 +242,15 @@ Report ending energy & then re-compute from scratch
  Inter molecule vdw is                      0.000
  Inter molecule q is                        0.000
  -----------------------------------------------------------
- 
- 
+
+
  Energy components from total energy call for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                   322.913
- Intra molecular energy is                322.913
+ Total system energy is                   836.431
+ Intra molecular energy is                836.431
  Bond energy is                             0.000
- Angle energy is                          322.913
+ Angle energy is                          836.431
  Dihedral energy is                         0.000
  Improper angle energy is                   0.000
  Intra molecule vdw is                      0.000
@@ -260,28 +259,28 @@ Report ending energy & then re-compute from scratch
  Inter molecule q is                        0.000
  -----------------------------------------------------------
 ********************************************************************************
- 
- 
+
+
 Writing information for box  1
 ********************************************************************************
- 
+
    ---------------------------------------------------------
    Writing information for species  1
- 
+
                 Move      Trials     Success   % Success
-   Atom Displacement        1100         439       39.91
+   Atom Displacement     1100000      355012       32.27
    ---------------------------------------------------------
- 
+
 ********************************************************************************
- 
+
  Writing information about subroutine times
 ********************************************************************************
 ********************************************************************************
- 
+
 ********************************************************************************
 ************************ Cassandra simulation complete *************************
 ********************************************************************************
- 
+
  Program execution time
 ********************************************************************************
          0      Years
@@ -289,6 +288,6 @@ Writing information for box  1
          0       Days
          0      Hours
          0    Minutes
-         0    Seconds
-        28         ms
+        17    Seconds
+       375         ms
 ********************************************************************************

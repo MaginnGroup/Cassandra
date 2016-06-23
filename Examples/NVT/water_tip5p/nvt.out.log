@@ -1,23 +1,23 @@
 Run info
 ********************************************************************************
 version: Cassandra Development Version
-inputfile: nvt.inp
+inputfile: /afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Examples/NVT/water_tip5p/nvt.inp
 name of run: nvt.out
-date (mm/dd/yyyy): 06/15/2016
-time: 14:04:29
+date (mm/dd/yyyy): 06/22/2016
+time: 18:09:41
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
- 
+
 Verbose log
 ********************************************************************************
 Normal output to logfile
 ********************************************************************************
- 
+
 Simulation type
 ********************************************************************************
 NVT_MC              
 ********************************************************************************
- 
+
 Copy input file
 ********************************************************************************
  
@@ -35,10 +35,6 @@ Copy input file
  
  # Charge_Style
  coul ewald 50.0 0.000001
- 
- # Intra_Scaling
- 0.0 0.0 0.0 1.0
- 0.0 0.0 0.0 1.0
  
  # Mixing_Rule
  lb
@@ -97,12 +93,12 @@ Copy input file
  
  END
 ********************************************************************************
- 
+
 Number of species
 ********************************************************************************
 1
 ********************************************************************************
- 
+
 Box info
 ********************************************************************************
 Number of simulation boxes     1
@@ -113,7 +109,7 @@ Box 1 is cubic
  Distance between box faces   180.0000     180.0000     180.0000
  Box volume, A^3       5832000.0000
 ********************************************************************************
- 
+
 Pair style
 ********************************************************************************
 VDW style used is:   LJ             in box:  1
@@ -128,14 +124,12 @@ Section "# Pair_Energy" is missing from the input file
  By default, pair interaction energy arrays will not be stored
 Lorentz-Berthelot mixing rule specified
 ********************************************************************************
- 
+
 Molecule info
 ********************************************************************************
  Reading molecular connectivity information
  Species:            1
- Molecular connectivity file: 
- tip5p.mcf                                                                      
-                                          
+ Molecular connectivity file: tip5p.mcf                                                                                                               
    5 atom(s) specified.
    4 bond(s) specified.
    6 angle(s) specified.
@@ -143,11 +137,11 @@ Molecule info
    0 improper(s) specified.
    1 fragment(s) specified.
    0 fragment bond(s) specified.
- 
+
  Species  Max molecules
  -------  -------------
       1             90
- 
+
  Species     1
  -------------------------------------------------------------------------------
  Atom parameters read
@@ -168,7 +162,7 @@ Molecule info
  Fragment info read
  Fragment file for fragment 1 is species1/frag1/frag1.dat
  -------------------------------------------------------------------------------
- 
+
  Fragment coord info
  -------------------------------------------------------------------------------
  library_coords array successfully allocated
@@ -176,23 +170,27 @@ Molecule info
  species1/frag1/frag1.dat
  -------------------------------------------------------------------------------
 ********************************************************************************
- 
+
+Nonbond tables
+********************************************************************************
+ ********************************************************************************
+
 Start type
 ********************************************************************************
 Initial configuration for box 1 will be made
  Will insert      90  molecules of species   1
 ********************************************************************************
- 
+
 Seed info
 ********************************************************************************
 The starting seeds are:     62704503     80297575
 ********************************************************************************
- 
+
 Temperature
 ********************************************************************************
 Temperature of box 1 is 500.000 K
 ********************************************************************************
- 
+
 Move probabilities
 ********************************************************************************
 Probability for translation               90.000000
@@ -203,29 +201,24 @@ Number of moves is :   2
  Move probabilities do not sum to 1.0
  Dividing each probability by   180.000000
 ********************************************************************************
- 
+
 CBMC info
 ********************************************************************************
 Kappa for first fragment insertion          12
  Cutoff for CBMC for box 1 is         6.50
 ********************************************************************************
- 
+
 Simulation length info
 ********************************************************************************
-Thermodynamic quantities will be written every         10 Sweeps    
+Thermodynamic quantities will be computed every        10 Sweeps    
 Coordinates will be written every                      10 Sweeps    
  movie header file is                  nvt.out.H
  movie_XYZ file is                     nvt.out.xyz
 The simulation will be run for                        100 Sweeps    
+Instantaneous values will be written every             10 Sweeps    
 A sweep is defined as                                 180 steps
 ********************************************************************************
- 
-Average info
-********************************************************************************
-Section "# Average_Info" is missing from the input file
- By default, instantaneous values will be output
-********************************************************************************
- 
+
 Property info
 ********************************************************************************
 Total number of property files to be written is     1   for box 1
@@ -236,40 +229,40 @@ Total number of property files to be written is     1   for box 1
  Energy_Total
  Pressure
 ********************************************************************************
- 
+
 Minimum distance cutoff
 ********************************************************************************
 MC low cutoff distance is   0.850    Angstrom
 ********************************************************************************
- 
+
 Run type
 ********************************************************************************
  The input run type is production
  Update frequency is          900
 ********************************************************************************
- 
+
 ********************************************************************************
 ************************ Begin Cassandra simulation ****************************
 ********************************************************************************
- 
+
 Initial configuration
 ********************************************************************************
  Inserting           90 molecules of species            1
 ********************************************************************************
- 
+
 Charge neutrality check
 ********************************************************************************
  Species 1 has charge:                  0.00000000
- 
+
  Box     1 has charge:                  0.00000000
 ********************************************************************************
- 
+
 Compute total energy
 ********************************************************************************
  Starting energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                   473.336
+ Total system energy is                   159.838
  Intra molecular energy is                  0.000
  Bond energy is                             0.000
  Bond angle energy is                       0.000
@@ -277,48 +270,48 @@ Compute total energy
  Improper angle energy is                   0.000
  Intra molecule vdw is                      0.000
  Intra molecule q is                        0.000
- Inter molecule vdw is                    -18.636
+ Inter molecule vdw is                     -5.439
  Long range correction is                  -0.262
- Inter molecule q is                   121892.377
+ Inter molecule q is                   121573.480
  Number of vectors is                        8727
- Reciprocal ewald is                      439.383
+ Reciprocal ewald is                      431.586
  Self ewald is                        -121839.527
  -----------------------------------------------------------
- 
+
 ********************************************************************************
- 
+
 Run simulation
 ********************************************************************************
       Step       Move   Mol Spc Box  Success  MaxWidth
-      1741     rotate         1   1  0.99222
-      1856  translate         1   1  0.99000
-      3563     rotate         1   1  0.99222
-      3643  translate         1   1  0.98667
-      5297     rotate         1   1  0.99148
-      5500  translate         1   1  0.98148
-      7095     rotate         1   1  0.99056
-      7290  translate         1   1  0.98139
-      8955     rotate         1   1  0.98889
-      9051  translate         1   1  0.97911
-     10791     rotate         1   1  0.98556
-     10813  translate         1   1  0.97278
-     12586     rotate         1   1  0.98111
-     12604  translate         1   1  0.97000
-     14368     rotate         1   1  0.97958
-     14428  translate         1   1  0.96639
-     16170     rotate         1   1  0.97790
-     16227  translate         1   1  0.96444
-     17945     rotate         1   1  0.97767
+      1799  translate         1   1  0.98111
+      1800     rotate         1   1  0.99333
+      3489  translate         1   1  0.97333
+      3735     rotate         1   1  0.98722
+      5276  translate         1   1  0.97444
+      5541     rotate         1   1  0.98926
+      7061  translate         1   1  0.97528
+      7328     rotate         1   1  0.98833
+      8894  translate         1   1  0.97711
+      9094     rotate         1   1  0.98933
+     10716  translate         1   1  0.97667
+     10872     rotate         1   1  0.98833
+     12537  translate         1   1  0.97635
+     12671     rotate         1   1  0.98841
+     14336  translate         1   1  0.97625
+     14463     rotate         1   1  0.98819
+     16138  translate         1   1  0.97630
+     16254     rotate         1   1  0.98815
+     17881  translate         1   1  0.97544
 ********************************************************************************
- 
+
 Report ending energy & then re-compute from scratch
 ********************************************************************************
- 
- 
+
+
  Ending energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                  -998.833
+ Total system energy is                 -1985.457
  Intra molecular energy is                  0.000
  Bond energy is                             0.000
  Angle energy is                            0.000
@@ -326,18 +319,18 @@ Report ending energy & then re-compute from scratch
  Improper angle energy is                   0.000
  Intra molecule vdw is                      0.000
  Intra molecule q is                        0.000
- Inter molecule vdw is                    -49.813
+ Inter molecule vdw is                    100.955
  Long range correction is                  -0.262
- Inter molecule q is                   120436.369
- Reciprocal ewald is                      454.400
+ Inter molecule q is                   119319.842
+ Reciprocal ewald is                      433.535
  Self ewald is                        -121839.527
  -----------------------------------------------------------
- 
- 
+
+
  Energy components from total energy call for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                  -998.833
+ Total system energy is                 -1985.457
  Intra molecular energy is                  0.000
  Bond energy is                             0.000
  Angle energy is                            0.000
@@ -345,45 +338,45 @@ Report ending energy & then re-compute from scratch
  Improper angle energy is                   0.000
  Intra molecule vdw is                      0.000
  Intra molecule q is                        0.000
- Inter molecule vdw is                    -49.813
+ Inter molecule vdw is                    100.955
  Long range correction is                  -0.262
- Inter molecule q is                   120436.369
- Reciprocal ewald is                      454.400
+ Inter molecule q is                   119319.842
+ Reciprocal ewald is                      433.535
  Self ewald is                        -121839.527
  -----------------------------------------------------------
 ********************************************************************************
- 
- 
+
+
 Writing information for box  1
 ********************************************************************************
- 
+
    ---------------------------------------------------------
    Writing information for species  1
- 
+
                 Move      Trials     Success   % Success
-           Translate        8980        8663       96.47
-              Rotate        9020        8818       97.76
+           Translate        9065        8843       97.55
+              Rotate        8935        8828       98.80
    ---------------------------------------------------------
- 
+
 ********************************************************************************
- 
+
  Writing information about subroutine times
 ********************************************************************************
- Translation time =           20.693799 secs.
- Rotation time =              21.016322 secs.
+ Translation time =            2.373189 mins.
+ Rotation time =               2.343744 mins.
 ********************************************************************************
- 
+
 ********************************************************************************
 ************************ Cassandra simulation complete *************************
 ********************************************************************************
- 
+
  Program execution time
 ********************************************************************************
          0      Years
          0     Months
          0       Days
          0      Hours
-         0    Minutes
-        43    Seconds
-       955         ms
+         5    Minutes
+         3    Seconds
+       727         ms
 ********************************************************************************
