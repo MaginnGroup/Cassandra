@@ -65,7 +65,6 @@ SUBROUTINE Atom_Displacement
   USE Global_Variables
   USE Random_Generators
   USE Energy_Routines
-  USE Simulation_Properties, ONLY : Get_Index_Molecule
 
   IMPLICIT NONE
 
