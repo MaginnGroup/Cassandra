@@ -153,7 +153,6 @@ PROGRAM Main
   ENDIF
 
   WRITE(logunit,'(A80)')'********************************************************************************'
-  
   WRITE(logunit,'(A80)')'               ______                                __                        '
   WRITE(logunit,'(A80)')'              / ____/___ _______________ _____  ____/ /________ _              '
   WRITE(logunit,'(A80)')'             / /   / __ `/ ___/ ___/ __ `/ __ \/ __  / ___/ __ `/              '
@@ -173,6 +172,7 @@ PROGRAM Main
      CALL Clean_Abort(err_msg,'Read_Checkpointfile')
   ENDIF
 
+  WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Run info'
   WRITE(logunit,'(A80)') '********************************************************************************'
   WRITE(logunit,'(a,a)') 'version: ', TRIM(version)
