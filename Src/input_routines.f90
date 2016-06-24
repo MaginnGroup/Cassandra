@@ -5340,6 +5340,15 @@ SUBROUTINE Get_Simulation_Length_Info
               
            ELSE IF (line_array(1) == 'steps_per_sweep' .OR. line_array(1) == 'Steps_Per_Sweep') THEN
 
+              IF (nbr_entries /= 2) THEN
+                 err_msg = ''
+                 err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
+                              TRIM(Int_To_String(line_nbr)) // ' of the input file is given with ' // &
+                              TRIM(Int_To_String(nbr_entries-1)) // ' options'
+                 err_msg(2) = 'Required number of options: ' // TRIM(Int_To_String(n))
+                 CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
+              END IF
+
               steps_per_sweep = String_To_Int(line_array(2))
 
               ! check that steps_per_sweep is positive
