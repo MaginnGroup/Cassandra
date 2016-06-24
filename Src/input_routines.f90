@@ -4483,7 +4483,8 @@ SUBROUTINE Get_Move_Probabilities
                            ' of the input file is not supported'
               err_msg(2) = 'Supported subsections are: Prob_Translation, Prob_Rotation, Prob_Regrowth,'
               err_msg(3) = '                           Prob_Volume, Prob_Insertion, Prob_Deletion,'
-              err_msg(4) = '                           Prob_Swap, Prob_Ring, Prob_Atom_Displacement'
+              err_msg(4) = '                           Prob_Swap, Prob_Ring, Prob_Atom_Displacement,'
+              err_msg(5) = '                           Prob_Angle, Prob_Dihedral'
               CALL Clean_Abort(err_msg,'Get_Sim_Type')
 
            END IF
