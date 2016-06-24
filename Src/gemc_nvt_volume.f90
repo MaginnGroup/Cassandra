@@ -163,7 +163,7 @@ SUBROUTINE GEMC_NVT_Volume
   
   END IF
 
-  IF ( box_list(box_grw)%int_box_shape == int_cubic ) THEN
+  IF ( l_cubic(box_grw) ) THEN
 
      box_list(box_grw)%length(1,1) = (box_list(box_grw)%volume) ** (1.0_DP/3.0_DP)
      box_list(box_grw)%length(2,2) = box_list(box_grw)%length(1,1)
@@ -178,7 +178,7 @@ SUBROUTINE GEMC_NVT_Volume
 
   END IF
   
-  IF ( box_list(box_shk)%int_box_shape == int_cubic ) THEN
+  IF ( l_cubic(box_shk) ) THEN
 
      box_list(box_shk)%length(1,1) = (box_list(box_shk)%volume) ** (1.0_DP/3.0_DP)
      box_list(box_shk)%length(2,2) = box_list(box_shk)%length(1,1)
@@ -197,7 +197,7 @@ SUBROUTINE GEMC_NVT_Volume
   CALL Compute_Cell_Dimensions(box_shk)
 
   IF ( l_half_len_cutoff(box_grw)) THEN
-     IF ( box_list(box_grw)%int_box_shape == int_cubic ) THEN
+     IF ( l_cubic(box_grw) ) THEN
 
         ! store old cutoffs and other associated quantities
 
@@ -243,7 +243,7 @@ SUBROUTINE GEMC_NVT_Volume
 
   ELSE
 
-     IF ( box_list(box_grw)%int_box_shape == int_cubic ) THEN
+     IF ( l_cubic(box_grw) ) THEN
         IF ( 0.5_DP * box_list(box_grw)%length(1,1) < rcut_vdw(box_grw) .OR. &
              0.5_DP * box_list(box_grw)%length(1,1) < rcut_coul(box_grw) .OR. &
              0.5_DP * box_list(box_grw)%length(1,1) < roff_charmm(box_grw) .OR. &
@@ -258,7 +258,7 @@ SUBROUTINE GEMC_NVT_Volume
   END IF
 
   IF ( l_half_len_cutoff(box_shk)) THEN
-     IF ( box_list(box_shk)%int_box_shape == int_cubic ) THEN
+     IF ( l_cubic(box_shk) ) THEN
 
         ! store old cutoffs and other associated quantities
 
@@ -305,7 +305,7 @@ SUBROUTINE GEMC_NVT_Volume
 
   ELSE
      
-     IF ( box_list(box_shk)%int_box_shape == int_cubic ) THEN
+     IF ( l_cubic(box_shk) ) THEN
         IF ( 0.5_DP * box_list(box_shk)%length(1,1) < rcut_vdw(box_shk) .OR. &
              0.5_DP * box_list(box_shk)%length(1,1) < rcut_coul(box_shk) .OR. &
              0.5_DP * box_list(box_shk)%length(1,1) < roff_charmm(box_shk) .OR. &
@@ -513,12 +513,9 @@ SUBROUTINE GEMC_NVT_Volume
 
    END IF
 
-   IF (verbose_log) THEN
-     WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8)') i_mcstep, 'volswap_to', box_grw, accept
-   END IF
-
   ! Update the maximum volume modulus of equilibration runs
    IF (MOD(nvolumes(box_grw),nvol_update) == 0 ) THEN
+      WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,F8.5)',ADVANCE='NO') i_mcstep, 'volswap_to' , box_grw, success_ratio
 
       IF ( int_run_type == run_equil) THEN
 
@@ -526,7 +523,7 @@ SUBROUTINE GEMC_NVT_Volume
          ivol_success(box_grw) = 0
          ivol_success(box_shk) = 0
       
-         IF (box_list(box_grw)%int_box_shape == int_cubic ) THEN
+         IF (l_cubic(box_grw) ) THEN
             IF ( success_ratio < 0.0001 ) THEN
                ! decrease the maximum displacement by 5%
                
@@ -537,6 +534,8 @@ SUBROUTINE GEMC_NVT_Volume
                box_list(:)%dv_max = 2.0_DP*success_ratio * box_list(:)%dv_max
 
             END IF
+
+            WRITE(logunit,'(X,F9.0)',ADVANCE='NO') box_list(box_grw)%dv_max
             
          END IF
 
@@ -546,9 +545,14 @@ SUBROUTINE GEMC_NVT_Volume
          
       END IF
 
-      WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,3X,X,F8.5)') i_mcstep, 'vol_swap', success_ratio
+      WRITE(logunit,*)
       
    END IF
+
+   IF (verbose_log) THEN
+     WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8)') i_mcstep, 'volswap_to', box_grw, accept
+   END IF
+
    
  CONTAINS
    
