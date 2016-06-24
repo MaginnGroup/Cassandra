@@ -4,7 +4,7 @@ normal = '\033[0m'
 
 #############Settings##############
 examples_dir = '/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Examples'
-cassandra = '/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra_intel_openMP.exe'
+cassandra = '/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe'
 fraggen = '/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Scripts/Frag_Library_Setup/library_setup.py'
 libgenfile = open('/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Examples/libgenout.dat','a')
 cassoutfile = open('/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Examples/sim.out','a')

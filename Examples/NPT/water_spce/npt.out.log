@@ -6,13 +6,14 @@
              \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                
                                                                                 
 ********************************************************************************
+ 
 Run info
 ********************************************************************************
 version: Cassandra Development Version
 inputfile: /afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Examples/NPT/water_spce/npt.inp
 name of run: npt.out
-date (mm/dd/yyyy): 06/23/2016
-time: 11:36:47
+date (mm/dd/yyyy): 06/24/2016
+time: 12:01:46
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -415,9 +416,9 @@ Writing information for box  1
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            8.498234 secs.
- Rotation time =               8.749705 secs.
- Volume change time =          3.708494 secs.
+ Translation time =           51.004251 secs.
+ Rotation time =              51.799119 secs.
+ Volume change time =         47.300812 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -430,7 +431,7 @@ Writing information for box  1
          0     Months
          0       Days
          0      Hours
-        21    Minutes
-        15    Seconds
-       316         ms
+         2    Minutes
+        35    Seconds
+       721         ms
 ********************************************************************************

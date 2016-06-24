@@ -6,13 +6,14 @@
              \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                
                                                                                 
 ********************************************************************************
+ 
 Run info
 ********************************************************************************
 version: Cassandra Development Version
 inputfile: /afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Examples/GEMC/2,2-dimethylhexane/gemc_dimethylhexane.inp
 name of run: gemc_dimethylhexane.out
-date (mm/dd/yyyy): 06/23/2016
-time: 11:36:21
+date (mm/dd/yyyy): 06/24/2016
+time: 11:56:49
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -509,11 +510,11 @@ Writing information about fragments
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.095517 secs.
- Rotation time =               0.086967 secs.
- Volume change time =          0.800405 secs.
- Swap time =                   0.897691 secs.
- Regrowth time =               0.825421 secs.
+ Translation time =            5.856104 secs.
+ Rotation time =               5.349183 secs.
+ Volume change time =         22.383594 secs.
+ Swap time =                  13.619929 secs.
+ Regrowth time =              27.747794 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -526,7 +527,7 @@ Writing information about fragments
          0     Months
          0       Days
          0      Hours
-         3    Minutes
-        50    Seconds
-       947         ms
+         1    Minutes
+        31    Seconds
+       233         ms
 ********************************************************************************

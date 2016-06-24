@@ -2550,7 +2550,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
        jtype = nonbond_list(ja,js)%atom_type_number
        
        VDW_calc: &
-       IF (get_vdw) THEN
+       IF (get_vdw .AND. itype /= 0 .AND. jtype /=0) THEN
 
          IF (int_vdw_style(ibox) == vdw_lj) THEN
            ! For now, assume all interactions are the same. 
@@ -2587,8 +2587,8 @@ END SUBROUTINE Compute_Molecule_Self_Energy
          ELSE IF (int_vdw_style(ibox) == vdw_mie) THEN
            eps = vdw_param1_table(itype,jtype)
            sig = vdw_param2_table(itype,jtype)
-           mie_n = vdw_param3_table(ia,ja) ! repulsive exponent
-           mie_m = vdw_param4_table(ia,ja) ! dispersive exponent
+           mie_n = vdw_param3_table(itype,jtype) ! repulsive exponent
+           mie_m = vdw_param4_table(itype,jtype) ! dispersive exponent
            rij = SQRT(rijsq)
 
            mie_coeff = mie_n/(mie_n-mie_m)*(mie_n/mie_m)**(mie_m/(mie_n-mie_m))

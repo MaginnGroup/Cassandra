@@ -6,13 +6,14 @@
              \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                
                                                                                 
 ********************************************************************************
+ 
 Run info
 ********************************************************************************
 version: Cassandra Development Version
 inputfile: /afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Examples/NVT/2,2-dimethylhexane/nvt.inp
 name of run: nvt.out
-date (mm/dd/yyyy): 06/23/2016
-time: 11:37:08
+date (mm/dd/yyyy): 06/24/2016
+time: 12:04:22
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -378,9 +379,9 @@ Writing information about fragments
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            3.058014 secs.
- Rotation time =               2.905191 secs.
- Regrowth time =               8.032536 secs.
+ Translation time =           12.247160 secs.
+ Rotation time =              12.541105 secs.
+ Regrowth time =               0.031988 hrs.
 ********************************************************************************
  
 ********************************************************************************
@@ -393,7 +394,7 @@ Writing information about fragments
          0     Months
          0       Days
          0      Hours
-        15    Minutes
-        20    Seconds
-       276         ms
+         2    Minutes
+        22    Seconds
+       197         ms
 ********************************************************************************

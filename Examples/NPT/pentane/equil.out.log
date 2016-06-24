@@ -6,13 +6,14 @@
              \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                
                                                                                 
 ********************************************************************************
+ 
 Run info
 ********************************************************************************
 version: Cassandra Development Version
 inputfile: /afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Examples/NPT/pentane/equil.inp
 name of run: equil.out
-date (mm/dd/yyyy): 06/23/2016
-time: 11:36:39
+date (mm/dd/yyyy): 06/24/2016
+time: 12:01:17
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -409,10 +410,10 @@ Writing information about fragments
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            1.489654 secs.
- Rotation time =               1.798604 secs.
- Volume change time =          0.704696 secs.
- Regrowth time =               2.959379 secs.
+ Translation time =            2.349632 secs.
+ Rotation time =               2.387624 secs.
+ Volume change time =          0.863872 secs.
+ Regrowth time =              22.536595 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -425,7 +426,7 @@ Writing information about fragments
          0     Months
          0       Days
          0      Hours
-         7    Minutes
-        17    Seconds
-       165         ms
+         0    Minutes
+        28    Seconds
+       698         ms
 ********************************************************************************
