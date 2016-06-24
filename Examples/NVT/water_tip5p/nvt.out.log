@@ -6,13 +6,14 @@
              \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                
                                                                                 
 ********************************************************************************
+ 
 Run info
 ********************************************************************************
 version: Cassandra Development Version
 inputfile: /afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Examples/NVT/water_tip5p/nvt.inp
 name of run: nvt.out
-date (mm/dd/yyyy): 06/23/2016
-time: 11:38:15
+date (mm/dd/yyyy): 06/24/2016
+time: 12:16:16
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -372,8 +373,8 @@ Writing information for box  1
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =           15.459140 secs.
- Rotation time =              15.488652 secs.
+ Translation time =            4.096227 mins.
+ Rotation time =               4.038169 mins.
 ********************************************************************************
  
 ********************************************************************************
@@ -386,7 +387,7 @@ Writing information for box  1
          0     Months
          0       Days
          0      Hours
-        32    Minutes
-        56    Seconds
-       388         ms
+         8    Minutes
+        55    Seconds
+       924         ms
 ********************************************************************************
