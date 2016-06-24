@@ -936,7 +936,7 @@ END SUBROUTINE Get_Mixing_Rules
 !******************************************************************************
 SUBROUTINE Get_Molecule_Info
 !******************************************************************************
-! This routine opens the input file and reads connectivity information for
+! This subroutine opens the input file and reads connectivity information for
 ! each molecule. It determines the number of atoms, bonds, angles, dihedrals
 ! and impropers in each molecule. It the allocates associated arrays amd populates 
 ! most of the atom_class, bond_class, angle_class
