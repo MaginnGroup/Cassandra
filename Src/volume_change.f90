@@ -113,8 +113,6 @@ SUBROUTINE Volume_Change
 
   ! Randomly choose a box for volume perturbation
   this_box = INT ( rranf() * nbr_boxes ) + 1
-!flag
-  WRITE(*,'(X,I9,X,A10,X,5X,X,3X,X,I3)',ADVANCE='NO') i_mcstep, 'volume' , this_box
 
   ! increase the total number of trials for this box
   tot_trials(this_box) = tot_trials(this_box) + 1
@@ -125,8 +123,6 @@ SUBROUTINE Volume_Change
   ! Perform a random walk in dv_max
   delta_volume = (1.0_DP - 2.0_DP * rranf()) * box_list(this_box)%dv_max
   this_volume = box_list(this_box)%volume + delta_volume
-!flag
-  WRITE(*,'(X,F9.0)',ADVANCE='NO') delta_volume
   
   ! Reject the move
   IF (this_volume < 0.0_DP) RETURN
@@ -389,11 +385,7 @@ SUBROUTINE Volume_Change
 
      ! Determine the new k vectors for this box. The call will change Cn, hx, hy and hz and hence will
      ! change cos_sum and sin_sum.
-!flag
-     WRITE(*,'(X,I9)',ADVANCE='NO') nvecs(this_box)
      CALL Ewald_Reciprocal_Lattice_Vector_Setup(this_box)
-!flag
-     WRITE(*,'(X,I9)',ADVANCE='NO') nvecs(this_box)
 
      ! cos_sum and sin_sum need to be re-allocated since the number of vectors has changed
      ! The operation destoys the cos_sum and sin_sum for other boxes but can be easily restored
@@ -461,9 +453,6 @@ SUBROUTINE Volume_Change
              + beta(this_box) * pressure(this_box)%setpoint * delta_volume &
              - total_molecules * DLOG(box_list(this_box)%volume/box_list_old%volume)
      accept = accept_or_reject(ln_pacc)
-!flag
-     WRITE(*,'(X,L8)') accept
-
      
      IF ( accept ) THEN
 
