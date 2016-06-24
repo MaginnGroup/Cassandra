@@ -3556,7 +3556,7 @@ SUBROUTINE Get_Box_Info
            CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
 
            IF (line_array(1) == 'cubic' .OR.  line_array(1)== 'CUBIC') THEN
-              box_list(ibox)%box_shape = 'cubic'
+              box_list(ibox)%box_shape = 'CUBIC'
               box_list(ibox)%int_box_shape = int_cubic
               l_cubic(ibox) = .TRUE.
               ! Read in the x,y,z box edge lengths in A
@@ -3584,7 +3584,7 @@ SUBROUTINE Get_Box_Info
 
            ELSEIF (line_array(1) == 'orthogonal' .OR. line_array(1) == 'ORTHOGONAL' .OR. &
                    line_array(1) == 'orthorhombic' .OR. line_array(1) == 'ORTHORHOMBIC') THEN
-              box_list(ibox)%box_shape = 'orthorhombic'
+              box_list(ibox)%box_shape = 'ORTHORHOMBIC'
               box_list(ibox)%int_box_shape = int_ortho
               line_nbr = line_nbr + 1
               CALL Parse_String(inputunit,line_nbr,3,nbr_entries,line_array,ierr)
@@ -3608,7 +3608,7 @@ SUBROUTINE Get_Box_Info
 
            ELSEIF (line_array(1) == 'cell_matrix' .OR. line_array(1) == 'CELL_MATRIX' .OR. &
                    line_array(1) == 'triclinic' .OR. line_array(1) == 'TRICLINIC') THEN
-              box_list(ibox)%box_shape = 'triclinic'
+              box_list(ibox)%box_shape = 'TRICLINIC'
               box_list(ibox)%int_box_shape = int_cell
               line_nbr = line_nbr + 1
               CALL Parse_String(inputunit,line_nbr,3,nbr_entries,line_array,ierr)
@@ -5345,7 +5345,7 @@ SUBROUTINE Get_Simulation_Length_Info
                  err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
                               TRIM(Int_To_String(line_nbr)) // ' of the input file is given with ' // &
                               TRIM(Int_To_String(nbr_entries-1)) // ' options'
-                 err_msg(2) = 'Required number of options: ' // TRIM(Int_To_String(n))
+                 err_msg(2) = 'Required number of options: 1'
                  CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
               END IF
 
