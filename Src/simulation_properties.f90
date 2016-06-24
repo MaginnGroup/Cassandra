@@ -139,7 +139,8 @@ CONTAINS
              DO ia = 1, natoms(is)
                 
                 ia_type = nonbond_list(ia,is)%atom_type_number
-                nint_beads(ia_type,this_box) = nint_beads(ia_type,this_box) + 1
+                IF (ia_type /= 0 ) nint_beads(ia_type,this_box) = &
+                                   nint_beads(ia_type,this_box) + 1
              END DO
             
           END IF

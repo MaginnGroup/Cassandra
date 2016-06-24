@@ -236,61 +236,70 @@
   DO is = 1, nspecies
      DO ia = 1, natoms(is)
         itype = nonbond_list(ia,is)%atom_type_number
-        IF (itype > 0 .AND. vdw_param_set(itype,itype) == 0) THEN
-           IF (nonbond_list(ia,is)%vdw_type == 'LJ') THEN
-              ! epsilon
-              IF (nonbond_list(ia,is)%vdw_param(1) <= tiny_number) THEN
-                 vdw_param1_table(itype,itype) = 0.0_DP
-              ELSE
-                 vdw_param1_table(itype,itype) = nonbond_list(ia,is)%vdw_param(1)
+        IF (itype > 0) THEN
+           IF (vdw_param_set(itype,itype) == 0) THEN
+              IF (nonbond_list(ia,is)%vdw_type == 'LJ') THEN
+                 ! epsilon
+                 IF (nonbond_list(ia,is)%vdw_param(1) <= tiny_number) THEN
+                    vdw_param1_table(itype,itype) = 0.0_DP
+                 ELSE
+                    vdw_param1_table(itype,itype) = &
+                                           nonbond_list(ia,is)%vdw_param(1)
+                 END IF
+
+                 ! sigma
+                 IF (nonbond_list(ia,is)%vdw_param(2) <= tiny_number) THEN
+                    vdw_param2_table(itype,itype) = 0.0_DP
+                 ELSE
+                    vdw_param2_table(itype,itype) = &
+                                           nonbond_list(ia,is)%vdw_param(2)
+                 END IF
+
+                 ! Report parameters to logfile.
+                 IF (verbose_log) THEN
+                   WRITE(logunit,'(X,A6,5X,A6,2X,F12.4,X,F12.4)') &
+                        atom_type_list(itype), atom_type_list(itype), &
+                        vdw_param1_table(itype,itype), &
+                        vdw_param2_table(itype,itype)
+                 ENDIF
+
+                 vdw_param_set(itype,itype) = 1
+              ELSE IF (nonbond_list(ia,is)%vdw_type == 'Mie') THEN
+                 ! epsilon
+                 IF (nonbond_list(ia,is)%vdw_param(1) <= tiny_number) THEN
+                    vdw_param1_table(itype,itype) = 0.0_DP
+                 ELSE
+                    vdw_param1_table(itype,itype) = &
+                                     nonbond_list(ia,is)%vdw_param(1)
+                 END IF
+
+                 ! sigma
+                 IF (nonbond_list(ia,is)%vdw_param(2) <= tiny_number) THEN
+                    vdw_param2_table(itype,itype) = 0.0_DP
+                 ELSE
+                    vdw_param2_table(itype,itype) = &
+                                     nonbond_list(ia,is)%vdw_param(2)
+                 END IF
+
+                 ! repulsive exponent
+                 vdw_param3_table(itype,itype) = &
+                                  nonbond_list(ia,is)%vdw_param(3)
+
+                 ! dispersive exponent
+                 vdw_param4_table(itype,itype) = &
+                                  nonbond_list(ia,is)%vdw_param(4)
+
+                 ! Report parameters to logfile.
+                 IF (verbose_log) THEN
+                   WRITE(logunit,'(X,A6,5X,A6,2X,F12.4,X,F12.4,X,F12.4,X,F12.4)') &
+                        atom_type_list(itype), atom_type_list(itype), &
+                        vdw_param1_table(itype,itype), vdw_param2_table(itype,itype), &
+                        vdw_param3_table(itype,itype), vdw_param4_table(itype,itype)
+                 ENDIF
+
+                 vdw_param_set(itype,itype) = 1
               END IF
-
-              ! sigma
-              IF (nonbond_list(ia,is)%vdw_param(2) <= tiny_number) THEN
-                 vdw_param2_table(itype,itype) = 0.0_DP
-              ELSE
-                 vdw_param2_table(itype,itype) = nonbond_list(ia,is)%vdw_param(2)
-              END IF
-
-              ! Report parameters to logfile.
-              IF (verbose_log) THEN
-                WRITE(logunit,'(X,A6,5X,A6,2X,F12.4,X,F12.4)') &
-                     atom_type_list(itype), atom_type_list(itype), &
-                     vdw_param1_table(itype,itype), vdw_param2_table(itype,itype)
-              ENDIF
-
-              vdw_param_set(itype,itype) = 1
-           ELSE IF (nonbond_list(ia,is)%vdw_type == 'Mie') THEN
-              ! epsilon
-              IF (nonbond_list(ia,is)%vdw_param(1) <= tiny_number) THEN
-                 vdw_param1_table(itype,itype) = 0.0_DP
-              ELSE
-                 vdw_param1_table(itype,itype) = nonbond_list(ia,is)%vdw_param(1)
-              END IF
-
-              ! sigma
-              IF (nonbond_list(ia,is)%vdw_param(2) <= tiny_number) THEN
-                 vdw_param2_table(itype,itype) = 0.0_DP
-              ELSE
-                 vdw_param2_table(itype,itype) = nonbond_list(ia,is)%vdw_param(2)
-              END IF
-
-              ! repuslive exponent
-              vdw_param3_table(itype,itype) = nonbond_list(ia,is)%vdw_param(3)
-
-              ! dispersive exponent
-              vdw_param4_table(itype,itype) = nonbond_list(ia,is)%vdw_param(4)
-
-              ! Report parameters to logfile.
-              IF (verbose_log) THEN
-                WRITE(logunit,'(X,A6,5X,A6,2X,F12.4,X,F12.4,X,F12.4,X,F12.4)') &
-                     atom_type_list(itype), atom_type_list(itype), &
-                     vdw_param1_table(itype,itype), vdw_param2_table(itype,itype), &
-                     vdw_param3_table(itype,itype), vdw_param4_table(itype,itype)
-              ENDIF
-
-              vdw_param_set(itype,itype) = 1
-           END IF
+            END IF
         END IF
      END DO
   END DO
