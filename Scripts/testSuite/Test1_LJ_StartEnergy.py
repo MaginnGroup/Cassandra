@@ -85,7 +85,7 @@ if err is not None:
 	print("Error.Abort. ")
 
 # Next, we will write over specific lines of the input file created above using a function, called replace_line that is created below. 
-# This fucntion takes three inputs: the name of the file where you would like to replace a line, the line number you would like to replace, and the text you want to replace the old text with. 
+# This function takes three inputs: the name of the file where you would like to replace a line, the line number you would like to replace, and the text you want to replace the old text with. 
 def replace_line(file_name, line_num, text):
 	lines = open(file_name, 'r').readlines()
 	lines[line_num] = text
