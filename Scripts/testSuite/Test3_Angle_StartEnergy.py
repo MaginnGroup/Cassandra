@@ -25,12 +25,9 @@ input_mcf = open("angle.mcf","w") #Creates mcf file and allows for edits
 input_xyz = open("angle.xyz","w") #Creates an input xyz file (used for read_config)
 
 #Write info for the MCF file.
-input_mcf.write("!***********************************************************************\n")
-input_mcf.write("!Molecular Connectivity File\n")
-input_mcf.write("!***********************************************************************\n") 
-input_mcf.write("# Atom_Info\n3\n1   CH3   C3   15.034   0.0   LJ   98.000   3.750\n2   CH2   C2   14.027   0.0   LJ   46.000   3.950\n3   CH3   C3   15.034   0.0   LJ   98.000   3.750\n\n")
+input_mcf.write("# Atom_Info\n3\n1   CH_s1   C3   15.034   0.0   LJ   98.000   3.750\n2   CH2_s1   C2   14.027   0.0   LJ   46.000   3.950\n3   CH3_s1   C3   15.034   0.0   LJ   98.000   3.750\n\n")
 input_mcf.write("# Bond_Info\n2\n1   1   2   fixed   1.540\n2   2   3   fixed   1.540\n\n")
-input_mcf.write("# Angle_Info\n1\n1   1   2   3   harmonic  113.50\n\n")
+input_mcf.write("# Angle_Info\n1\n1   1   2   3   harmonic 31250.0  113.50\n\n")
 input_mcf.write("# Dihedral_Info\n0\n\n")
 input_mcf.write("# Improper_Info\n0\n\n")
 input_mcf.write("# Fragment_Info\n0\n\n")
@@ -41,9 +38,9 @@ input_mcf.close()
 
 #Write info for the XYZ file. 
 input_xyz.write("3\n\n") # This is the number of atoms in the simulation 
-input_xyz.write("C3     -4.399  0.475   -0.041\n") #Location of atom 1
-input_xyz.write("C2     -3.835  1.191    1.200\n") #Location of atom 2
-input_xyz.write("C3     -2.296  1.216    1.249\n") #Location of atom 3
+input_xyz.write("C1     -3.539  -0.293   -0.021 \n") #Location of atom 1
+input_xyz.write("C2     -2.975   0.424    1.220 \n") #Location of atom 2
+input_xyz.write("C3     -1.436   0.448    1.268 \n") #Location of atom 3
 input_xyz.close()
 
 #Write info into the file - this will create each section for the .inp file
@@ -84,10 +81,10 @@ xyz = open("angle.xyz").read() #Reads in the orginal xyz file (used for read_con
 # Run Cassandra Jobs
 # Allows Cassandra run through Python
 # This first subtest runs Cassandra with two molecules in a box of length 100, with the two molecules at a distance of sigma apart. Sigma in this case is 1.0 and epsilon is 120.0. The energy output here should match the Energy output of subtest 2, this is how we will check the accuracy of this test later on in this script.
-print "Running"
+#print "Running"
 proc = sp.Popen(["/afs/crc.nd.edu/x86_64_linux/c/cassandra/src/Cassandra_V1.2/Src/cassandra.exe " + "angle.inp"], stdout=sp.PIPE, shell=True)
 (out, err) = proc.communicate()
-print "done"
+#print "done"
 
 if err is not None:
 	print("Error.Abort. ")
@@ -107,14 +104,14 @@ def replace_line(file_name, line_num, text):
 
 #Changing the xyz input file 
 # Change position of atom 1
-replace_line('angle.xyz', 2, 'C    -2.594  -0.939  1.302 \n') 
+replace_line('angle.xyz', 2, 'C1    -2.103  -0.105  0.018 \n') 
 # Change position of atom 2
-replace_line('angle.xyz', 3, 'C    -2.024  -2.370  1.302 \n')
+replace_line('angle.xyz', 3, 'C2    -1.533   0.610  1.257 \n')
 # Change position of atom 3
-replace_line('angle.xyz', 4, 'C    -0.485  -2.431  1.302 \n')
+replace_line('angle.xyz', 4, 'C3     0.006   0.638  1.311 \n')
 
 # Change the mcf file
-replace_line('angle.mcf', 16, "1   1   2   3   harmonic  114.0\n\n")
+replace_line('angle.mcf', 13, "1   1   2   3   harmonic 31250  114.0\n\n")
 
    
 # Changing the input file:
@@ -136,18 +133,18 @@ if err is not None:
 
 #Changing the xyz input file 
 # Change position of atom 1
-replace_line('angle.xyz', 2, 'C      5.508   1.006   -0.213 \n') 
+replace_line('angle.xyz', 2, 'C1     -3.575  -0.034    0.021 \n') 
 # Change position of atom 2
-replace_line('angle.xyz', 3, 'C      3.970   0.973   -0.272 \n')
+replace_line('angle.xyz', 3, 'C2     -2.998   0.679    1.257 \n')
 # Change position of atom 3
-replace_line('angle.xyz', 4, 'C      3.393   0.261   -1.510 \n')
+replace_line('angle.xyz', 4, 'C3     -1.460   0.711    1.317 \n')
 
 # Changing the input file:
 # Changes the output name so we can run cassandra under a different name (and save those files too!)
 replace_line('angle.inp', 1, 'test3angle.out\n') 
 
 # Change the mcf file
-replace_line('angle.mcf', 16, "1   1   2   3   harmonic  114.5\n\n")
+replace_line('angle.mcf', 13, "1   1   2   3   harmonic 31250  114.5\n\n")
 
 # Cassandra will now be run again, for a third time
 # Run Cassandra Job - Third subtest
@@ -232,13 +229,13 @@ num3 = num3[0]
 
 # This section is a list of all commented out things. This is because if you uncomment this section it will be easier to see why certain checks failed. Uncomment this to see the results from the log files, and the numbers which are being compared in the checks below. 
 # The first four are the lines extracted from the log file. 
-print line1
-print line2
-print line3
+#print line1
+#print line2
+#print line3
 # The next four lines are the number extracted from the lines from the log file.
-print num1
-print num2
-print num3
+#print num1
+#print num2
+#print num3
 
 # Plot these numbers
 x = [113.5, 114, 114.5]
@@ -249,32 +246,32 @@ pyplot.savefig('angle.png')
 
 # Now we will compare and tell the user they passed and/or failed the test! 
 # Check 1
-#if num1 == -0.00 and num1 == num2:
-#	c1 = 1
-#	print "Check 1..."
-#else: 
-#	c1 = 0 
-#	print "Check 1 fails"
+if abs(0.025 - num1) <= 0.05:
+	c1 = 1
+	print "Check 1..."
+else: 
+	c1 = 0 
+	print "Check 1 fails"
 
 # Now for check 2
-#if num2 == -0.00 and num2 == num2:
-#	c2 = 1
-#	print "Check 2..."
-#else: 
-#	c2 = 0
-#	print "Check 2 fails"
+if abs(0.00 - num2) <= 0.01:
+	c2 = 1
+	print "Check 2..."
+else: 
+	c2 = 0
+	print "Check 2 fails"
 
 # Now for check three
-#if num3/100 == -1:
-#	c3 = 1
-#	print "Check 3..."
-#else:
-#	c3 =0
-#	print "Check 3 fails"
+if abs(0.025 - num3) <= 0.05:
+	c3 = 1
+	print "Check 3..."
+else:
+	c3 =0
+	print "Check 3 fails"
 
 # Now, we will see if Cassandra passes the entirety of test 1
-#if c1 == 1 and c2 == 1 and c3 == 1:
-#	print "Pass Test 3: Angle Starting Energy"
-#else:
-#	print "Test Fails - Check above."
+if c1 == 1 and c2 == 1 and c3 == 1:
+	print "Pass Test 3: Angle Starting Energy"
+else:
+	print "Test Fails - Check above."
 
