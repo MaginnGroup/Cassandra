@@ -1,24 +1,27 @@
 # Atom_Info
-3
+4
 1   CH3   C3   15.034   0.0   LJ   98.000   3.750
-2   CH2   C2   14.027   0.0   LJ   46.000   3.950
+2   CH   C   13.019   0.0   LJ   10.000   4.680
 3   CH3   C3   15.034   0.0   LJ   98.000   3.750
+4   CH3   C3   15.034   0.0   LJ   98.000   3.750
 
 # Bond_Info
-2
+3
 1   1   2   fixed   1.540
 2   2   3   fixed   1.540
-
+3   2   4   fixed   1.540
 # Angle_Info
-1
-1   1   2   3   harmonic  113.50
+3
+1   1   2   3   harmonic   31250.0   112.0
+2   1   2   4   harmonic   31250.0   112.0
+3   3   2   4   harmonic   31250.0   112.0
 
 # Dihedral_Info
 0
 
 # Improper_Info
-0
-
+1
+1   1   2   3   harmonic   31250.0   112.0
 # Fragment_Info
 0
 

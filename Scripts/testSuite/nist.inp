@@ -1,5 +1,5 @@
 # Run_Name
-test2_check4.out
+test6_check2_nist4.out
 !---------------
 
 # Sim_Type
@@ -11,7 +11,7 @@ NVT_MC
 !---------------
 
 # VDW_Style
-Mie cut 2.5
+LJ cut_tail 14.16
 !---------------
 
 # Charge_Style
@@ -35,7 +35,7 @@ LB
 !---------------
 
 # Molecule_Files
-mie.mcf 2
+nist.mcf 2
 !----------------
 
 # Box_Info
@@ -58,7 +58,7 @@ CUBIC
 !----------------
 
 # Start_Type
-read_config 2 mie.xyz
+read_config 2 nist4.xyz
 !---------------
 
 # Run_Type

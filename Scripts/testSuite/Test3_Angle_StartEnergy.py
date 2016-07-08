@@ -45,7 +45,7 @@ input_xyz.close()
 
 #Write info into the file - this will create each section for the .inp file
 # This input file is populated with numbers for an LJ simulation with argon
-input_inp.write("# Run_Name\ntest1angle.out\n!---------------\n\n")
+input_inp.write("# Run_Name\ntest3_check1.out\n!---------------\n\n")
 input_inp.write("# Sim_Type\nNVT_MC\n!---------------\n\n")
 input_inp.write("# Nbr_Species\n1\n!---------------\n\n")
 input_inp.write("# VDW_Style\nLJ cut_tail 14.0\n!---------------\n\n")
@@ -116,7 +116,7 @@ replace_line('angle.mcf', 13, "1   1   2   3   harmonic 31250  114.0\n\n")
    
 # Changing the input file:
 # Changes the output name so we can run cassandra under a different name (and save those files too!)
-replace_line('angle.inp', 1, 'test2angle.out\n') 
+replace_line('angle.inp', 1, 'test3_check2.out\n') 
 
 # Now, we will run Cassandra again, with the new numbers. 
 # Run Cassandra Jobs - Again!
@@ -141,7 +141,7 @@ replace_line('angle.xyz', 4, 'C3     -1.460   0.711    1.317 \n')
 
 # Changing the input file:
 # Changes the output name so we can run cassandra under a different name (and save those files too!)
-replace_line('angle.inp', 1, 'test3angle.out\n') 
+replace_line('angle.inp', 1, 'test3_check3.out\n') 
 
 # Change the mcf file
 replace_line('angle.mcf', 13, "1   1   2   3   harmonic 31250  114.5\n\n")
@@ -161,7 +161,7 @@ if err is not None:
 # Finding a string - using an if statement in a for loop
 # For the first test
 # shakes opens the desired file in the read format
-shakes = open("test1angle.out.log", "r")
+shakes = open("test3_check1.out.log", "r")
 
 # The for loop will search line by line in shakes for the words "Total system energy", once found the line will be saved as a variable.
 for line in shakes:
@@ -170,7 +170,7 @@ for line in shakes:
  
 # For the second test
 # The same process is performed her as above, check commenting there if any questions.
-shakes = open("test2angle.out.log", "r")
+shakes = open("test3_check2.out.log", "r")
 
 for line in shakes:
 	if re.match("(.*)Bond angle energy(.*)",line):
@@ -178,7 +178,7 @@ for line in shakes:
   
 # For the third test
 # The same process is followed as in for test 1, check above for commentary. 
-shakes = open("test3angle.out.log", "r")
+shakes = open("test3_check3.out.log", "r")
 
 for line in shakes:
 	if re.match("(.*)Bond angle energy(.*)",line):
@@ -271,7 +271,7 @@ else:
 
 # Now, we will see if Cassandra passes the entirety of test 1
 if c1 == 1 and c2 == 1 and c3 == 1:
-	print "Pass Test 3: Angle Starting Energy"
+	print  bold + "Pass Test 3: Angle Starting Energy" + normal
 else:
-	print "Test Fails - Check above."
+	print bold + "Test Fails - Check above." + normal
 

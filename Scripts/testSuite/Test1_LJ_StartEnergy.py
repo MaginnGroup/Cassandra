@@ -42,7 +42,7 @@ input_xyz.close()
 
 #Write info into the file - this will create each section for the .inp file
 # This input file is populated with numbers for an LJ simulation with argon
-input_inp.write("# Run_Name\ntest1.out\n!---------------\n\n")
+input_inp.write("# Run_Name\ntest1_check1.out\n!---------------\n\n")
 input_inp.write("# Sim_Type\nNVT_MC\n!---------------\n\n")
 input_inp.write("# Nbr_Species\n1\n!---------------\n\n")
 input_inp.write("# VDW_Style\nLJ cut_tail 12.0\n!---------------\n\n")
@@ -105,7 +105,7 @@ replace_line('lj.xyz', 3, 'LJ  49.5  0.0  0.0 \n')
 
 # Changing the input file:
 # Changes the output name so we can run cassandra under a different name (and save those files too!)
-replace_line('file.inp', 1, 'test2.out\n') 
+replace_line('file.inp', 1, 'test1_check2.out\n') 
 
 # Now, we will run Cassandra again, with the new numbers. 
 # Run Cassandra Jobs - Again!
@@ -128,7 +128,7 @@ replace_line('lj.xyz', 3, 'LJ 1.122462  0.0  0.0 \n')
 
 # Changing the input file:
 # Changes the output name so we can run cassandra under a different name (and save those files too!)
-replace_line('file.inp', 1, 'test3.out\n') 
+replace_line('file.inp', 1, 'test1_check3.out\n') 
 
 # Cassandra will now be run again, for a third time
 # Run Cassandra Job - Third subtest
@@ -149,7 +149,7 @@ replace_line('lj.xyz', 3, 'LJ 5.0  0.0  0.0 \n')
 
 # Changing the input file:
 # Changes the output name so we can run cassandra under a different name (and save those files too!)
-replace_line('file.inp', 1, 'test4.out\n') 
+replace_line('file.inp', 1, 'test1_check4.out\n') 
 # For this edit we need to change the VDW_Style section as well. We will change it from a cut_tail 12.0 to a cut 2.5 since the position is 5.0 for the second atom. 
 replace_line('file.inp', 13, 'LJ cut 2.5\n')
 
@@ -168,7 +168,7 @@ if err is not None:
 # Finding a string - using an if statement in a for loop
 # For the first test
 # shakes opens the desired file in the read format
-shakes = open("test1.out.log", "r")
+shakes = open("test1_check1.out.log", "r")
 
 # The for loop will search line by line in shakes for the words "Total system energy", once found the line will be saved as a variable.
 for line in shakes:
@@ -177,7 +177,7 @@ for line in shakes:
  
 # For the second test
 # The same process is performed her as above, check commenting there if any questions.
-shakes = open("test2.out.log", "r")
+shakes = open("test1_check2.out.log", "r")
 
 for line in shakes:
 	if re.match("(.*)Total system energy(.*)",line):
@@ -185,7 +185,7 @@ for line in shakes:
   
 # For the third test
 # The same process is followed as in for test 1, check above for commentary. 
-shakes = open("test3.out.log", "r")
+shakes = open("test1_check3.out.log", "r")
 
 for line in shakes:
 	if re.match("(.*)Total system energy(.*)",line):
@@ -193,7 +193,7 @@ for line in shakes:
  
 # For the fourth test
 # The same process is followed as above, check test 1 for comments. 
-shakes = open("test4.out.log", "r")
+shakes = open("test1_check4.out.log", "r")
 
 for line in shakes:
 	if re.match("(.*)Total system energy(.*)",line):
@@ -301,6 +301,6 @@ else:
 
 # Now, we will see if Cassandra passes the entirety of test 1
 if c1 == 1 and c2 == 1 and c3 == 1 and c4 == 1:
-	print "Pass Test 1: LJ Starting Energy"
+	print bold + "Pass Test 1: LJ Starting Energy" + normal
 else:
-	print "Test Fails - Check above."
+	print bold + "Test Fails - Check above." + normal

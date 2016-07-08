@@ -13,4 +13,12 @@ subprocess.call(["python", "Test1_LJ_StartEnergy.py"])
 #	This this is designed to... 
 subprocess.call(["python", "Test2_Mie_StartEnergy.py"])
 
-# And that worked, so pretty much, I'm a genius. No biggie. 
+# And that worked, so pretty much, I'm a genius. No biggie.
+
+# Test 3: Angle Starting Energy: 
+# 	This test is designed to... 
+subprocess.call(["python", "Test3_Angle_StartEnergy.py"])
+
+# Test 4: Dihedral Starting Energy:
+	# This test is designed to... 
+subprocess.call(["python", "Test4_Dihedral_StartEnergy.py"])

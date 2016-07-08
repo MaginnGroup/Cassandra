@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# This is Test 1 in a series of tests for a testSuite in order to check updates made to the Cassandra program. 
+# This is Test 5 in a series of tests for a testSuite in order to check updates made to the Cassandra program. 
 # Test 1 is an energy test which tests the starting energies for a molecule using the Lennard-Jones equation. This test does not perform any moves in the Cassandra program, it is simply an initial testing of energy. 
 # Test 1 - Checks the starting energy for 4 different scenarios.
 # Import Modules
@@ -25,11 +25,11 @@ input_mcf = open("improper.mcf","w") #Creates mcf file and allows for edits
 input_xyz = open("improper.xyz","w") #Creates an input xyz file (used for read_config)
 
 #Write info for the MCF file.
-input_mcf.write("# Atom_Info\n3\n1   CH3   C3   15.034   0.0   LJ   98.000   3.750\n2   CH2   C2   14.027   0.0   LJ   46.000   3.950\n3   CH3   C3   15.034   0.0   LJ   98.000   3.750\n\n")
-input_mcf.write("# Bond_Info\n2\n1   1   2   fixed   1.540\n2   2   3   fixed   1.540\n\n")
-input_mcf.write("# Angle_Info\n1\n1   1   2   3   harmonic  113.50\n\n")
+input_mcf.write("# Atom_Info\n4\n1   CH3   C3   15.034   0.0   LJ   98.000   3.750\n2   CH   C   13.019   0.0   LJ   10.000   4.680\n3   CH3   C3   15.034   0.0   LJ   98.000   3.750\n4   CH3   C3   15.034   0.0   LJ   98.000   3.750\n\n")
+input_mcf.write("# Bond_Info\n3\n1   1   2   fixed   1.540\n2   2   3   fixed   1.540\n3   2   4   fixed   1.540\n")
+input_mcf.write("# Angle_Info\n3\n1   1   2   3   harmonic   31250.0   112.0\n2   1   2   4   harmonic   31250.0   112.0\n3   3   2   4   harmonic   31250.0   112.0\n\n")
 input_mcf.write("# Dihedral_Info\n0\n\n")
-input_mcf.write("# Improper_Info\n0\n\n")
+input_mcf.write("# Improper_Info\n1\n1   1   2   3   harmonic   31250.0   112.0\n")
 input_mcf.write("# Fragment_Info\n0\n\n")
 input_mcf.write("# Fragment_Connectivity\n0\n\n")
 input_mcf.write("# Intra_Scaling\n0. 0. 0. 0.\n0. 0. 0. 0.\n\n\n")
@@ -38,10 +38,10 @@ input_mcf.close()
 
 #Write info for the XYZ file. 
 input_xyz.write("4\n\n") # This is the number of atoms in the simulation 
-input_xyz.write("C3      0.256   -0.093    0.000 \n") #Location of atom 1
-input_xyz.write("C2      0.826    0.622    1.239 \n") #Location of atom 2
-input_xyz.write("C2      0.769   -1.545    0.000 \n") #Location of atom 3
-input_xyz.write("C3     -1.283   -0.123   -0.053 \n") #Location of atom 4
+input_xyz.write("C3      0.116    0.116    0.000 \n") #Location of atom 1
+input_xyz.write("C       0.687    0.832    1.239 \n") #Location of atom 2
+input_xyz.write("C3      0.630   -1.336    0.000 \n") #Location of atom 3
+input_xyz.write("C3     -1.423    0.086   -0.053 \n") #Location of atom 4
 input_xyz.close()
 
 #Write info into the file - this will create each section for the .inp file
@@ -110,9 +110,6 @@ for line in shakes:
 	if re.match("(.*)Improper angle energy(.*)",line):
 		line1 = line
  
-
-  
- 
 # Here extract number
 num1 = []
 # Use a for loop in order to go through each character in the line independently.
@@ -143,24 +140,8 @@ print num1
 #	c1 = 0 
 #	print "Check 1 fails"
 
-# Now for check 2
-#if num2 == -0.00 and num2 == num2:
-#	c2 = 1
-#	print "Check 2..."
-#else: 
-#	c2 = 0
-#	print "Check 2 fails"
-
-# Now for check three
-#if num3/100 == -1:
-#	c3 = 1
-#	print "Check 3..."
-#else:
-#	c3 =0
-#	print "Check 3 fails"
-
-# Now, we will see if Cassandra passes the entirety of test 1
-#if c1 == 1 and c2 == 1 and c3 == 1:
+# Now, we will see if it passes all the checks, which of course it will because there is only one. 
+#if c1 == 1:
 #	print "Pass Test 5: Improper Angle Energy Starting "
 #else:
 #	print "Test Fails - Check above."
