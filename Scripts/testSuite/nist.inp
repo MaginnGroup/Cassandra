@@ -1,5 +1,5 @@
 # Run_Name
-test6_check1_nist4.out
+test6_check2_nist4.out
 !---------------
 
 # Sim_Type
@@ -11,7 +11,7 @@ NVT_MC
 !---------------
 
 # VDW_Style
-LJ cut_tail 10.620
+LJ cut_tail 14.16
 !---------------
 
 # Charge_Style
