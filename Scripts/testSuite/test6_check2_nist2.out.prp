@@ -1,4 +1,4 @@
 # Instantaneous properties
 # MC_STEP         Energy_Total          Pressure            Volume             Nmols           Density  
 #                 (kJ/mol)-Ext             (bar)             (A^3)                         (molec/A^3)  
-           0   -0.64818063E-01    0.30215558E+03    0.44361864E+05    0.20000000E+01    0.45083768E-04  
+           1   -0.59872506E+03    0.22983592E+05    0.44361864E+05    0.20000000E+03    0.45083768E-02  

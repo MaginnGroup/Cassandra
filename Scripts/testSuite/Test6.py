@@ -251,65 +251,68 @@ print "done"
 
 
 
-## CHECK 2 - This is for a cut_tail with 4 sigma and again using all 4 nist information
-## Now, we will replace some lines for fun. 
-#replace_line("nist.inp", 1, "test6_check2_nist1.out\n")
-#replace_line("nist.inp", 13, "LJ cut_tail 14.16\n")
-#replace_line("nist.inp", 60, "read_config 800 nist1.xyz\n")
-#
-#
-## Run Cassandra
-#print "running 5"
+# CHECK 2 - This is for a cut_tail with 4 sigma and again using all 4 nist information
+# Now, we will replace some lines for fun. 
+replace_line("nist.inp", 1, "test6_check2_nist1.out\n")
+replace_line("nist.inp", 13, "LJ cut_tail 14.16\n")
+replace_line("nist.inp", 60, "read_config 800 nist1.xyz\n")
+replace_line("nist.inp", 37, "nist.mcf 800\n")
+
+
+
+# Run Cassandra
+print "running 5"
+#proc = sp.Popen(["/afs/crc.nd.edu/x86_64_linux/c/cassandra/src/Cassandra_V1.2/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
+proc = sp.Popen(["/afs/crc.nd.edu/user/l/lpink/Git/Cassandra/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
+(out, err) = proc.communicate()
+
+if err is not None: 
+	print("Error.Abort. ")
+print "done 5"
+
+# Check 2 - Nist 2. 
+replace_line("nist.inp", 1, "test6_check2_nist2.out\n")
+replace_line("nist.inp", 60, "read_config 200 nist2.xyz\n")
+replace_line("nist.inp", 37, "nist.mcf 200\n")
+
+# Run Cassandra
+print "running 6"
 ##proc = sp.Popen(["/afs/crc.nd.edu/x86_64_linux/c/cassandra/src/Cassandra_V1.2/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
-#proc = sp.Popen(["/afs/crc.nd.edu/user/l/lpink/Git/Cassandra/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
-#(out, err) = proc.communicate()
-#
-#if err is not None: 
-#	print("Error.Abort. ")
-#print "done 5"
-#
-## Check 2 - Nist 2. 
-#replace_line("nist.inp", 1, "test6_check2_nist2.out\n")
-#replace_line("nist.inp", 60, "read_config 200 nist2.xyz\n")
-#
-#
+proc = sp.Popen(["/afs/crc.nd.edu/user/l/lpink/Git/Cassandra/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
+(out, err) = proc.communicate()
+
+if err is not None: 
+	print("Error.Abort. ")
+print "done 6"
+
+# Check 2 - Nist 3. 
+replace_line("nist.inp", 1, "test6_check2_nist3.out\n")
+replace_line("nist.inp", 60, "read_config 400 nist3.xyz\n")
+replace_line("nist.inp", 37, "nist.mcf 400\n")
+
+# Run Cassandra
+print "running 7"
+#proc = sp.Popen(["/afs/crc.nd.edu/x86_64_linux/c/cassandra/src/Cassandra_V1.2/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
+proc = sp.Popen(["/afs/crc.nd.edu/user/l/lpink/Git/Cassandra/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
+(out, err) = proc.communicate()
+
+if err is not None: 
+	print("Error.Abort. ")
+print "done 7"
+
+# Check 2 - Nist 4. 
+replace_line("nist.inp", 1, "test6_check2_nist4.out\n")
+replace_line("nist.inp", 60, "read_config 30 nist4.xyz\n")
+replace_line("nist.inp", 37, "nist.mcf 30\n")
+
 ## Run Cassandra
-#print "running 6"
+print "running 8"
 ##proc = sp.Popen(["/afs/crc.nd.edu/x86_64_linux/c/cassandra/src/Cassandra_V1.2/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
-#proc = sp.Popen(["/afs/crc.nd.edu/user/l/lpink/Git/Cassandra/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
-#(out, err) = proc.communicate()
-#
-#if err is not None: 
-#	print("Error.Abort. ")
-#print "done 6"
-#
-## Check 2 - Nist 3. 
-#replace_line("nist.inp", 1, "test6_check2_nist3.out\n")
-#replace_line("nist.inp", 60, "read_config 400 nist3.xyz\n")
-#replace_line("nist.inp", 37, "nist.mcf 400\n")
-#
-## Run Cassandra
-#print "running 7"
-##proc = sp.Popen(["/afs/crc.nd.edu/x86_64_linux/c/cassandra/src/Cassandra_V1.2/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
-#proc = sp.Popen(["/afs/crc.nd.edu/user/l/lpink/Git/Cassandra/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
-#(out, err) = proc.communicate()
-#
-#if err is not None: 
-#	print("Error.Abort. ")
-#print "done 7"
-#
-## Check 2 - Nist 4. 
-#replace_line("nist.inp", 1, "test6_check2_nist4.out\n")
-#replace_line("nist.inp", 60, "read_config 30 nist4.xyz\n")
-#
-#
-## Run Cassandra
-#print "running 8"
-##proc = sp.Popen(["/afs/crc.nd.edu/x86_64_linux/c/cassandra/src/Cassandra_V1.2/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
-##(out, err) = proc.communicate()
-#
-##if err is not None: 
-##	print("Error.Abort. ")
-##print "done 8"
-#
-#
+proc = sp.Popen(["/afs/crc.nd.edu/user/l/lpink/Git/Cassandra/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
+(out, err) = proc.communicate()
+
+if err is not None: 
+	print("Error.Abort. ")
+print "done 8"
+
+

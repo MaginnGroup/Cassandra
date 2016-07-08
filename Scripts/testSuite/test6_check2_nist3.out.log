@@ -4,7 +4,7 @@ version: Cassandra Development Version
 inputfile: nist.inp
 name of run: test6_check2_nist3.out
 date (mm/dd/yyyy): 07/08/2016
-time: 14:02:16
+time: 18:06:08
 machine: crcfe02.crc.nd.edu
 ********************************************************************************
  
@@ -79,7 +79,7 @@ Copy input file
  Units Steps
  Prop_Freq 1
  Coord_Freq 1
- Run 0
+ Run 1
  
  # Property_Info 1
  Energy_Total
@@ -201,7 +201,7 @@ Thermodynamic quantities will be written every          1 Steps
 Coordinates will be written every                       1 Steps     
  movie header file is                  test6_check2_nist3.out.H
  movie_XYZ file is                     test6_check2_nist3.out.xyz
-The simulation will be run for                          0 Steps     
+The simulation will be run for                          1 Steps     
 ********************************************************************************
  
 Average info
@@ -242,3 +242,101 @@ Initial configuration
 ********************************************************************************
  Reading configuration for box           1
  Reading          400  molecules of species            1
+ Configurations read successfully
+********************************************************************************
+ 
+Compute total energy
+********************************************************************************
+ Starting energy components for box   1
+  Atomic units-Extensive
+ -----------------------------------------------------------
+ Total system energy is               -119632.262
+ Intra molecular energy is                  0.000
+ Bond energy is                             0.000
+ Bond angle energy is                       0.000
+ Dihedral angle energy is                   0.000
+ Improper angle energy is                   0.000
+ Intra molecule vdw is                      0.000
+ Intra molecule q is                        0.000
+ Inter molecule vdw is                -117538.038
+ Long range correction is               -2094.224
+ Inter molecule q is                        0.000
+ -----------------------------------------------------------
+ 
+********************************************************************************
+ 
+Run simulation
+********************************************************************************
+      Step       Move   Mol Spc Box  Success  MaxWidth
+********************************************************************************
+ 
+Report ending energy & then re-compute from scratch
+********************************************************************************
+ 
+ 
+ Ending energy components for box   1
+  Atomic units-Extensive
+ -----------------------------------------------------------
+ Total system energy is               -119462.117
+ Intra molecular energy is                  0.000
+ Bond energy is                             0.000
+ Angle energy is                            0.000
+ Dihedral energy is                         0.000
+ Improper angle energy is                   0.000
+ Intra molecule vdw is                      0.000
+ Intra molecule q is                        0.000
+ Inter molecule vdw is                -117367.893
+ Long range correction is               -2094.224
+ Inter molecule q is                        0.000
+ -----------------------------------------------------------
+ 
+ 
+ Energy components from total energy call for box   1
+  Atomic units-Extensive
+ -----------------------------------------------------------
+ Total system energy is               -119462.117
+ Intra molecular energy is                  0.000
+ Bond energy is                             0.000
+ Angle energy is                            0.000
+ Dihedral energy is                         0.000
+ Improper angle energy is                   0.000
+ Intra molecule vdw is                      0.000
+ Intra molecule q is                        0.000
+ Inter molecule vdw is                -117367.893
+ Long range correction is               -2094.224
+ Inter molecule q is                        0.000
+ -----------------------------------------------------------
+********************************************************************************
+ 
+ 
+Writing information for box  1
+********************************************************************************
+ 
+   ---------------------------------------------------------
+   Writing information for species  1
+ 
+                Move      Trials     Success   % Success
+           Translate           1           1      100.00
+   ---------------------------------------------------------
+ 
+********************************************************************************
+ 
+ Writing information about subroutine times
+********************************************************************************
+ Translation time =            0.001000 secs.
+********************************************************************************
+ 
+********************************************************************************
+************************ Cassandra simulation complete *************************
+********************************************************************************
+ 
+ Program execution time
+********************************************************************************
+         0      Years
+         0     Months
+         0       Days
+         0      Hours
+         0    Minutes
+         0    Seconds
+       516         ms
+********************************************************************************
