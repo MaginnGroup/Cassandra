@@ -1,19 +1,10 @@
-********************************************************************************
-                ______                                __                        
-               / ____/___ _______________ _____  ____/ /________ _              
-              / /   / __ `/ ___/ ___/ __ `/ __ \/ __  / ___/ __ `/              
-             / /___/ /_/ (__  |__  ) /_/ / / / / /_/ / /  / /_/ /               
-             \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                
-                                                                                
-********************************************************************************
- 
 Run info
 ********************************************************************************
-version: Cassandra 1.2
+version: Cassandra Development Version
 inputfile: nist.inp
 name of run: test6_check2_nist4.out
-date (mm/dd/yyyy): 07/07/2016
-time: 13:34:15
+date (mm/dd/yyyy): 07/08/2016
+time: 13:56:06
 machine: crcfe02.crc.nd.edu
 ********************************************************************************
  
@@ -54,15 +45,15 @@ Copy input file
  55001389 1764321284
  
  # Rcutoff_Low
- 1.0
+ 0.0
  
  # Molecule_Files
- nist.mcf 2
+ nist.mcf 800
  
  # Box_Info
  1
  CUBIC
- 100.0
+ 35.4
  
  # Temperature_Info
  300.0
@@ -117,11 +108,11 @@ Box info
 ********************************************************************************
 Number of simulation boxes     1
 Box 1 is cubic               
- Each Side Of :      100.0000     Angstrom
- Cell basis vector lengths in A,    100.0000     100.0000     100.0000
+ Each Side Of :       35.4000     Angstrom
+ Cell basis vector lengths in A,     35.4000      35.4000      35.4000
  Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
- Distance between box faces   100.0000     100.0000     100.0000
- Box volume, A^3       1000000.0000
+ Distance between box faces    35.4000      35.4000      35.4000
+ Box volume, A^3         44361.8640
 ********************************************************************************
  
 Pair style
@@ -152,7 +143,7 @@ Molecule info
  
  Species  Max molecules
  -------  -------------
-      1              2
+      1            800
  
  Species     1
  -------------------------------------------------------------------------------
@@ -206,12 +197,16 @@ Section "# CBMC_Info" not required
  
 Simulation length info
 ********************************************************************************
-Thermodynamic quantities will be computed every         1 Steps     
+Thermodynamic quantities will be written every          1 Steps     
 Coordinates will be written every                       1 Steps     
  movie header file is                  test6_check2_nist4.out.H
  movie_XYZ file is                     test6_check2_nist4.out.xyz
 The simulation will be run for                          0 Steps     
-Instantaneous values will be written every              1 Steps     
+********************************************************************************
+ 
+Average info
+********************************************************************************
+Instantaneous values will be output
 ********************************************************************************
  
 Property info
@@ -230,7 +225,7 @@ Total number of property files to be written is     1   for box 1
  
 Minimum distance cutoff
 ********************************************************************************
-MC low cutoff distance is   1.000    Angstrom
+MC low cutoff distance is   0.000    Angstrom
 ********************************************************************************
  
 Run type
@@ -246,3 +241,30 @@ Run type
 Initial configuration
 ********************************************************************************
  Reading configuration for box           1
+ Reading            2  molecules of species            1
+ Configurations read successfully
+********************************************************************************
+ 
+Compute total energy
+********************************************************************************
+ Starting energy components for box   1
+  Atomic units-Extensive
+ -----------------------------------------------------------
+ Total system energy is                   -99.914
+ Intra molecular energy is                  0.000
+ Bond energy is                             0.000
+ Bond angle energy is                       0.000
+ Dihedral angle energy is                   0.000
+ Improper angle energy is                   0.000
+ Intra molecule vdw is                      0.000
+ Intra molecule q is                        0.000
+ Inter molecule vdw is                    -99.862
+ Long range correction is                  -0.052
+ Inter molecule q is                        0.000
+ -----------------------------------------------------------
+ 
+********************************************************************************
+ 
+********************************************************************************
+************************ Cassandra simulation complete *************************
+********************************************************************************
