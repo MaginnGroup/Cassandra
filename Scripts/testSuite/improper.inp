@@ -1,5 +1,5 @@
 # Run_Name
-test1improper.out
+nist1.out
 !---------------
 
 # Sim_Type
@@ -11,7 +11,7 @@ NVT_MC
 !---------------
 
 # VDW_Style
-LJ cut_tail 14.0
+LJ cut 10.62
 !---------------
 
 # Charge_Style
@@ -27,7 +27,7 @@ LB
 !---------------
 
 # Seed_Info
-21498 489625
+55001389 1764321284
 !---------------
 
 # Rcutoff_Low
@@ -35,7 +35,7 @@ LB
 !---------------
 
 # Molecule_Files
-improper.mcf 1
+lj.mcf 2
 !----------------
 
 # Box_Info
@@ -51,14 +51,14 @@ CUBIC
 # Move_Probability_Info
 
 # Prob_Translation
-1.0
-1.00
+0.79
+0.5
 
 # Done_Probability_Info
 !----------------
 
 # Start_Type
-read_config 1 improper.xyz
+read_config 2 lj_sample_config_periodic1.xyz
 !---------------
 
 # Run_Type
@@ -78,6 +78,10 @@ Run 0
 
 # Property_Info 1
 Energy_Total
+Pressure
+Volume
+Nmols
+Density
 !---------------
 
 # Fragment_Files

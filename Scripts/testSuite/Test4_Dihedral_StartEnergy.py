@@ -38,15 +38,15 @@ input_mcf.close()
 
 #Write info for the XYZ file. 
 input_xyz.write("4\n\n") # This is the number of atoms in the simulation 
-input_xyz.write("C1     -1.346  -0.192    0.232 \n") #Location of atom 1
-input_xyz.write("C2     -0.757   0.536    1.455 \n") #Location of atom 2
-input_xyz.write("C3      0.782   0.590    1.455 \n") #Location of atom 3
-input_xyz.write("C4      1.371   1.314    0.230 \n") #Location of atom 4
+input_xyz.write("C1     -3.044  -1.167   -0.047 \n") #Location of atom 1
+input_xyz.write("C2     -2.530  -0.441    1.211 \n") #Location of atom 2
+input_xyz.write("C3     -0.994  -0.387    1.304 \n") #Location of atom 3
+input_xyz.write("C4     -0.481   0.339    2.562 \n") #Location of atom 4
 input_xyz.close()
 
 #Write info into the file - this will create each section for the .inp file
 # This input file is populated with numbers for an LJ simulation with argon
-input_inp.write("# Run_Name\ntest1dihedral.out\n!---------------\n\n")
+input_inp.write("# Run_Name\ntest4_OPLS_check1.out\n!---------------\n\n")
 input_inp.write("# Sim_Type\nNVT_MC\n!---------------\n\n")
 input_inp.write("# Nbr_Species\n1\n!---------------\n\n")
 input_inp.write("# VDW_Style\nLJ cut_tail 14.0\n!---------------\n\n")
@@ -107,13 +107,13 @@ def replace_line(file_name, line_num, text):
 
 #Changing the xyz input file
 # Change position of atom 1
-replace_line('dihedral.xyz', 2, 'C1    -3.266   0.685  0.060 \n') 
+replace_line('dihedral.xyz', 2, 'C1    -3.066  -0.379 -0.053 \n') 
 # Change position of atom 2
-replace_line('dihedral.xyz', 3, 'C2    -2.696   1.400  1.299 \n')
+replace_line('dihedral.xyz', 3, 'C2    -2.553   0.347  1.205 \n')
 # Change position of atom 3
-replace_line('dihedral.xyz', 4, 'C3    -1.157   1.428  1.353 \n')
+replace_line('dihedral.xyz', 4, 'C3    -1.018   0.408  1.310 \n')
 # Change the position of atom 4 
-replace_line('dihedral.xyz', 5, 'C4    -0.618  -0.014  1.374 \n')
+replace_line('dihedral.xyz', 5, 'C4    -0.504   1.136  2.566 \n')
 
 # Change the mcf file
 replace_line('dihedral.mcf', 15, "1   1   2   3   harmonic 31250.0  114.0\n")
@@ -121,7 +121,7 @@ replace_line('dihedral.mcf', 16, "2   2   3   4   harmonic 31250.0  114.0\n")
    
 # Changing the input file:
 # Changes the output name so we can run cassandra under a different name (and save those files too!)
-replace_line('dihedral.inp', 1, 'test2dihedral.out\n') 
+replace_line('dihedral.inp', 1, 'test4_OPLS_check2.out\n') 
 
 # Now, we will run Cassandra again, with the new numbers. 
 # Run Cassandra Jobs - Again!
@@ -138,13 +138,13 @@ if err is not None:
 
 #Changing the xyz input file
 # Change position of atom 1
-replace_line('dihedral.xyz', 2, 'C1    -2.158    -0.569   -0.058 \n') 
+replace_line('dihedral.xyz', 2, 'C1     5.923    -0.508    0.000 \n') 
 # Change position of atom 2
-replace_line('dihedral.xyz', 3, 'C2    -1.645     0.157    1.199 \n')
+replace_line('dihedral.xyz', 3, 'C2     4.383    -0.508    0.000 \n')
 # Change position of atom 3
-replace_line('dihedral.xyz', 4, 'C3    -0.111     0.225    1.316 \n')
+replace_line('dihedral.xyz', 4, 'C3     3.744     0.893    0.003 \n')
 # Change the position of atom 4 
-replace_line('dihedral.xyz', 5, 'C4     0.402     0.951    2.573 \n')
+replace_line('dihedral.xyz', 5, 'C4     2.204     0.893    0.002 \n')
 
 # Change the mcf file
 replace_line('dihedral.mcf', 15, "1   1   2   3   harmonic 31250.0  114.5\n")
@@ -152,7 +152,7 @@ replace_line('dihedral.mcf', 16, "2   2   3   4   harmonic 31250.0  114.5\n")
    
 # Changing the input file:
 # Changes the output name so we can run cassandra under a different name (and save those files too!)
-replace_line('dihedral.inp', 1, 'test3dihedral.out\n') 
+replace_line('dihedral.inp', 1, 'test4_OPLS_check3.out\n') 
 
 # Cassandra will now be run again, for a third time
 # Run Cassandra Job - Third subtest
@@ -169,7 +169,7 @@ if err is not None:
 # Finding a string - using an if statement in a for loop
 # For the first test
 # shakes opens the desired file in the read format
-shakes = open("test1dihedral.out.log", "r")
+shakes = open("test4_OPLS_check1.out.log", "r")
 
 # The for loop will search line by line in shakes for the words "Total system energy", once found the line will be saved as a variable.
 for line in shakes:
@@ -178,7 +178,7 @@ for line in shakes:
  
 # For the second test
 # The same process is performed her as above, check commenting there if any questions.
-shakes = open("test2dihedral.out.log", "r")
+shakes = open("test4_OPLS_check2.out.log", "r")
 
 for line in shakes:
 	if re.match("(.*)Dihedral angle energy(.*)",line):
@@ -186,7 +186,7 @@ for line in shakes:
   
 # For the third test
 # The same process is followed as in for test 1, check above for commentary. 
-shakes = open("test3dihedral.out.log", "r")
+shakes = open("test4_OPLS_check3.out.log", "r")
 
 for line in shakes:
 	if re.match("(.*)Dihedral angle energy(.*)",line):
@@ -237,9 +237,9 @@ num3 = num3[0]
 
 # This section is a list of all commented out things. This is because if you uncomment this section it will be easier to see why certain checks failed. Uncomment this to see the results from the log files, and the numbers which are being compared in the checks below. 
 # The first four are the lines extracted from the log file. 
-print line1
-print line2
-print line3
+#print line1
+#print line2
+#print line3
 # The next four lines are the number extracted from the lines from the log file.
 #print num1
 #print num2
@@ -248,45 +248,55 @@ print line3
 print bold +  "Checking OPLS..." + normal
 # Now we will compare and tell the user they passed and/or failed the test! 
 # Check 1
-#if num1 == -0.00 and num1 == num2:
-#	c1 = 1
-#	print "Check 1..."
-#else: 
-#	c1 = 0 
-#	print "Check 1 fails"
+if abs(0.00 - num1) <= 0.05:
+	c1 = 1
+	print "Check 1..."
+else: 
+	c1 = 0 
+	print "Check 1 fails"
 
 # Now for check 2
-#if num2 == -0.00 and num2 == num2:
-#	c2 = 1
-#	print "Check 2..."
-#else: 
-#	c2 = 0
-#	print "Check 2 fails"
+if abs(0.00 - num2) <= 0.05:
+	c2 = 1
+	print "Check 2..."
+else: 
+	c2 = 0
+	print "Check 2 fails"
 
 # Now for check three
-#if num3/100 == -1:
-#	c3 = 1
-#	print "Check 3..."
-#else:
-#	c3 =0
-#	print "Check 3 fails"
+if abs(0.00 - num3) <= 1.00:
+	c3 = 1
+	print "Check 3..."
+else:
+	c3 =0
+	print "Check 3 fails"
 
 # Now, we will see if Cassandra passes the entirety of test 1
-#if c1 == 1 and c2 == 1 and c3 == 1:
-#	t1 = 1
-#	print "Pass OPLS..."
-#else:
-#	t1 = 0
-#	print "OPLS Fails - Check above."
+if c1 == 1 and c2 == 1 and c3 == 1:
+	t1 = 1
+	print "Pass OPLS..."
+else:
+	t1 = 0
+	print "OPLS Fails - Check above."
 
 
 #HARMONIC
 ## Now, we will do the same thing but run it as a harmonic
-replace_line('dihedral.mcf', 20 ,'1   1   2   3   4   harmonic    0.000   2.952   -0.567   6.579\n')
-replace_line('dihedral.inp', 1, 'test1di_Harmonic.out\n') 
+replace_line('dihedral.mcf', 20 ,'1   1   2   3   4   harmonic  260.0   114.0 \n')
+replace_line('dihedral.inp', 1, 'test4_harmonic_check1.out\n') 
 replace_line('dihedral.mcf', 15, "1   1   2   3   harmonic 31250.0  113.5\n")
 replace_line('dihedral.mcf', 16, "2   2   3   4   harmonic 31250.0  113.5\n")
    
+#Changing the xyz input file
+# Change position of atom 1
+replace_line('dihedral.xyz', 2, 'C1    -3.044  -1.167 -0.047 \n') 
+# Change position of atom 2
+replace_line('dihedral.xyz', 3, 'C2    -2.530  -0.441  1.211 \n')
+# Change position of atom 3
+replace_line('dihedral.xyz', 4, 'C3    -0.994  -0.387  1.304 \n')
+# Change the position of atom 4 
+replace_line('dihedral.xyz', 5, 'C4    -0.481   0.339  2.562 \n')
+
 
 # Run Cassandra Jobs
 # Allows Cassandra run through Python
@@ -314,13 +324,13 @@ def replace_line(file_name, line_num, text):
 
 #Changing the xyz input file
 # Change position of atom 1
-replace_line('dihedral.xyz', 2, 'C1    -3.266   0.685  0.060 \n') 
+replace_line('dihedral.xyz', 2, 'C1    -3.066  -0.379 -0.053 \n') 
 # Change position of atom 2
-replace_line('dihedral.xyz', 3, 'C2    -2.696   1.400  1.299 \n')
+replace_line('dihedral.xyz', 3, 'C2    -2.553   0.347  1.205 \n')
 # Change position of atom 3
-replace_line('dihedral.xyz', 4, 'C3    -1.157   1.428  1.353 \n')
+replace_line('dihedral.xyz', 4, 'C3    -1.018   0.408  1.310 \n')
 # Change the position of atom 4 
-replace_line('dihedral.xyz', 5, 'C4    -0.618  -0.014  1.374 \n')
+replace_line('dihedral.xyz', 5, 'C4    -0.504   1.136  2.566 \n')
 
 # Change the mcf file
 replace_line('dihedral.mcf', 15, "1   1   2   3   harmonic 31250.0  114.0\n")
@@ -328,7 +338,7 @@ replace_line('dihedral.mcf', 16, "2   2   3   4   harmonic 31250.0  114.0\n")
    
 # Changing the input file:
 # Changes the output name so we can run cassandra under a different name (and save those files too!)
-replace_line('dihedral.inp', 1, 'test2di_Harmonic.out\n') 
+replace_line('dihedral.inp', 1, 'test4_harmonic_check2.out\n') 
 
 # Now, we will run Cassandra again, with the new numbers. 
 # Run Cassandra Jobs - Again!
@@ -343,13 +353,16 @@ if err is not None:
 # Use the function from above (ie. replace_line)
 # Now, we will perform the third subtest, which will test the starting energy at a minimum position, where the two molecules are a distance of (2^(1/6))*sigma apart. This should produce an energy of -1. 
 
-#Changing the xyz input file 
+#Changing the xyz input file
 # Change position of atom 1
-#replace_line('angle.xyz', 2, 'C      5.508   1.006   -0.213 \n') 
+replace_line('dihedral.xyz', 2, 'C1     5.923  -0.508   0.000 \n') 
 # Change position of atom 2
-#replace_line('angle.xyz', 3, 'C      3.970   0.973   -0.272 \n')
+replace_line('dihedral.xyz', 3, 'C2     4.383  -0.508   0.000 \n')
 # Change position of atom 3
-#replace_line('angle.xyz', 4, 'C      3.393   0.261   -1.510 \n')
+replace_line('dihedral.xyz', 4, 'C3     3.744   0.893   0.003 \n')
+# Change the position of atom 4 
+replace_line('dihedral.xyz', 5, 'C4     2.204   0.893   0.002 \n')
+
 
 # Change the mcf file
 replace_line('dihedral.mcf', 15, "1   1   2   3   harmonic 31250.0  114.5\n")
@@ -357,7 +370,7 @@ replace_line('dihedral.mcf', 16, "2   2   3   4   harmonic 31250.0  114.5\n")
    
 # Changing the input file:
 # Changes the output name so we can run cassandra under a different name (and save those files too!)
-replace_line('dihedral.inp', 1, 'test3di_Harmonic.out\n') 
+replace_line('dihedral.inp', 1, 'test4_harmonic_check3.out\n') 
 
 # Cassandra will now be run again, for a third time
 # Run Cassandra Job - Third subtest
@@ -374,7 +387,7 @@ if err is not None:
 # Finding a string - using an if statement in a for loop
 # For the first test
 # shakes opens the desired file in the read format
-shakes = open("test1di_Harmonic.out.log", "r")
+shakes = open("test4_harmonic_check1.out.log", "r")
 
 # The for loop will search line by line in shakes for the words "Total system energy", once found the line will be saved as a variable.
 for line in shakes:
@@ -383,7 +396,7 @@ for line in shakes:
  
 # For the second test
 # The same process is performed her as above, check commenting there if any questions.
-shakes = open("test2di_Harmonic.out.log", "r")
+shakes = open("test4_harmonic_check2.out.log", "r")
 
 for line in shakes:
 	if re.match("(.*)Dihedral angle energy(.*)",line):
@@ -391,7 +404,7 @@ for line in shakes:
   
 # For the third test
 # The same process is followed as in for test 1, check above for commentary. 
-shakes = open("test3di_Harmonic.out.log", "r")
+shakes = open("test4_harmonic_check3.out.log", "r")
 
 for line in shakes:
 	if re.match("(.*)Dihedral angle energy(.*)",line):
@@ -442,9 +455,9 @@ num3 = num3[0]
 
 # This section is a list of all commented out things. This is because if you uncomment this section it will be easier to see why certain checks failed. Uncomment this to see the results from the log files, and the numbers which are being compared in the checks below. 
 # The first four are the lines extracted from the log file. 
-print line1
-print line2
-print line3
+#print line1
+#print line2
+#print line3
 # The next four lines are the number extracted from the lines from the log file.
 #print num1
 #print num2
@@ -453,15 +466,15 @@ print line3
 print bold +  "Checking harmonic..." + normal
 # Now we will compare and tell the user they passed and/or failed the test! 
 # Check 1
-#if num1 == -0.00 and num1 == num2:
-#	c1 = 1
-#	print "Check 1..."
-#else: 
-#	c1 = 0 
-#	print "Check 1 fails"
+if abs(286.8 - num1) <= 1.000: 
+	c1 = 1
+	print "Check 1..."
+else: 
+	c1 = 0 
+	print "Check 1 fails"
 
 #Now for check 2
-if 0.00 - num2 <= 0.001:
+if abs(286 - num2) <= 1.000:
 	c2 = 1
 	print "Check 2..."
 else: 
@@ -469,28 +482,40 @@ else:
 	print "Check 2 fails"
 
 # Now for check three
-#if num3/100 == -1:
-#	c3 = 1
-#	print "Check 3..."
-#else:
-#	c3 =0
-#	print "Check 3 fails"
+if abs(286.5 - num3) <= 1.000:
+	c3 = 1
+	print "Check 3..."
+else:
+	c3 =0
+	print "Check 3 fails"
 
 # Now, we will see if Cassandra passes the entirety of test 1
-#if c1 == 1 and c2 == 1 and c3 == 1:
-#	t2 = 1
-#	print "Pass harmonic..."
-#else:
-#	t2 = 0
-#	print "harmonic fails - Check above."
+if c1 == 1 and c2 == 1 and c3 == 1:
+	t2 = 1
+	print "Pass harmonic..."
+else:
+	t2 = 0
+	print "harmonic fails - Check above."
 
 
 ## CHARMM
-replace_line('dihedral.inp', 1, 'test1di_Charmm.out\n') 
-replace_line('dihedral.mcf', 20, '1   1   2   3   4   CHARMM   0.000   2.952   -0.567   6.579\n')
+replace_line('dihedral.inp', 1, 'test4_CHARMM_check1.out\n') 
+replace_line('dihedral.mcf', 20, '1   1   2   3   4   CHARMM   2.952   -0.567   6.579\n')
 replace_line('dihedral.mcf', 15, "1   1   2   3   harmonic 31250.0  113.5\n")
 replace_line('dihedral.mcf', 16, "2   2   3   4   harmonic 31250.0  113.5\n")
-  
+
+
+#Changing the xyz input file
+# Change position of atom 1
+replace_line('dihedral.xyz', 2, 'C1    -3.044  -1.167 -0.047 \n') 
+# Change position of atom 2
+replace_line('dihedral.xyz', 3, 'C2    -2.530  -0.441  1.211 \n')
+# Change position of atom 3
+replace_line('dihedral.xyz', 4, 'C3    -0.994  -0.387  1.304 \n')
+# Change the position of atom 4 
+replace_line('dihedral.xyz', 5, 'C4    -0.481   0.339  2.562 \n')
+
+ 
 # Run Cassandra Jobs
 # Allows Cassandra run through Python
 # This first subtest runs Cassandra with two molecules in a box of length 100, with the two molecules at a distance of sigma apart. Sigma in this case is 1.0 and epsilon is 120.0. The energy output here should match the Energy output of subtest 2, this is how we will check the accuracy of this test later on in this script.
@@ -517,13 +542,13 @@ def replace_line(file_name, line_num, text):
 
 #Changing the xyz input file
 # Change position of atom 1
-replace_line('dihedral.xyz', 2, 'C1    -3.266   0.685  0.060 \n') 
+replace_line('dihedral.xyz', 2, 'C1    -3.066  -0.379 -0.053 \n') 
 # Change position of atom 2
-replace_line('dihedral.xyz', 3, 'C2    -2.696   1.400  1.299 \n')
+replace_line('dihedral.xyz', 3, 'C2    -2.553   0.347  1.205 \n')
 # Change position of atom 3
-replace_line('dihedral.xyz', 4, 'C3    -1.157   1.428  1.353 \n')
+replace_line('dihedral.xyz', 4, 'C3    -1.018   0.408  1.310 \n')
 # Change the position of atom 4 
-replace_line('dihedral.xyz', 5, 'C4    -0.618  -0.014  1.374 \n')
+replace_line('dihedral.xyz', 5, 'C4    -0.504   1.136  2.566 \n')
 
 # Change the mcf file
 replace_line('dihedral.mcf', 15, "1   1   2   3   harmonic 31250.0  114.0\n")
@@ -531,7 +556,7 @@ replace_line('dihedral.mcf', 16, "2   2   3   4   harmonic 31250.0  114.0\n")
    
 # Changing the input file:
 # Changes the output name so we can run cassandra under a different name (and save those files too!)
-replace_line('dihedral.inp', 1, 'test2di_Charmm.out\n') 
+replace_line('dihedral.inp', 1, 'test4_CHARMM_check2.out\n') 
 
 # Now, we will run Cassandra again, with the new numbers. 
 # Run Cassandra Jobs - Again!
@@ -545,14 +570,15 @@ if err is not None:
 
 # Use the function from above (ie. replace_line)
 # Now, we will perform the third subtest, which will test the starting energy at a minimum position, where the two molecules are a distance of (2^(1/6))*sigma apart. This should produce an energy of -1. 
-
-#Changing the xyz input file 
+#Changing the xyz input file
 # Change position of atom 1
-#replace_line('angle.xyz', 2, 'C      5.508   1.006   -0.213 \n') 
+replace_line('dihedral.xyz', 2, 'C1     5.923  -0.508  0.000 \n') 
 # Change position of atom 2
-#replace_line('angle.xyz', 3, 'C      3.970   0.973   -0.272 \n')
+replace_line('dihedral.xyz', 3, 'C2     4.383  -0.508  0.000 \n')
 # Change position of atom 3
-#replace_line('angle.xyz', 4, 'C      3.393   0.261   -1.510 \n')
+replace_line('dihedral.xyz', 4, 'C3     3.744   0.893  0.003 \n')
+# Change the position of atom 4 
+replace_line('dihedral.xyz', 5, 'C4     2.204   0.893  0.002 \n')
 
 # Change the mcf file
 replace_line('dihedral.mcf', 15, "1   1   2   3   harmonic 31250.0  114.5\n")
@@ -560,7 +586,7 @@ replace_line('dihedral.mcf', 16, "2   2   3   4   harmonic 31250.0  114.5\n")
    
 # Changing the input file:
 # Changes the output name so we can run cassandra under a different name (and save those files too!)
-replace_line('dihedral.inp', 1, 'test3di_Charmm.out\n') 
+replace_line('dihedral.inp', 1, 'test4_CHARMM_check3.out\n') 
 
 # Cassandra will now be run again, for a third time
 # Run Cassandra Job - Third subtest
@@ -577,7 +603,7 @@ if err is not None:
 # Finding a string - using an if statement in a for loop
 # For the first test
 # shakes opens the desired file in the read format
-shakes = open("test1di_Charmm.out.log", "r")
+shakes = open("test4_CHARMM_check1.out.log", "r")
 
 # The for loop will search line by line in shakes for the words "Total system energy", once found the line will be saved as a variable.
 for line in shakes:
@@ -586,7 +612,7 @@ for line in shakes:
  
 # For the second test
 # The same process is performed her as above, check commenting there if any questions.
-shakes = open("test2di_Charmm.out.log", "r")
+shakes = open("test4_CHARMM_check2.out.log", "r")
 
 for line in shakes:
 	if re.match("(.*)Dihedral angle energy(.*)",line):
@@ -594,7 +620,7 @@ for line in shakes:
   
 # For the third test
 # The same process is followed as in for test 1, check above for commentary. 
-shakes = open("test3di_Charmm.out.log", "r")
+shakes = open("test4_CHARMM_check3.out.log", "r")
 
 for line in shakes:
 	if re.match("(.*)Dihedral angle energy(.*)",line):
@@ -645,9 +671,9 @@ num3 = num3[0]
 
 # This section is a list of all commented out things. This is because if you uncomment this section it will be easier to see why certain checks failed. Uncomment this to see the results from the log files, and the numbers which are being compared in the checks below. 
 # The first four are the lines extracted from the log file. 
-print line1
-print line2
-print line3
+#print line1
+#print line2
+#print line3
 # The next four lines are the number extracted from the lines from the log file.
 #print num1
 #print num2
@@ -657,42 +683,42 @@ print line3
 print bold +  "Checking CHARMM..." + normal
 # Now we will compare and tell the user they passed and/or failed the test! 
 # Check 1
-#if num1 == -0.00 and num1 == num2:
-#	c1 = 1
-#	print "Check 1..."
-#else: 
-#	c1 = 0 
-#	print "Check 1 fails"
+if abs(200.8 - num1) <= 1.000:
+	c1 = 1
+	print "Check 1..."
+else: 
+	c1 = 0 
+	print "Check 1 fails"
 
 # Now for check 2
-#if num2 == -0.00 and num2 == num2:
-#	c2 = 1
-#	print "Check 2..."
-#else: 
-#	c2 = 0
-#	print "Check 2 fails"
+if abs(201 - num2) <= 1.00:
+	c2 = 1
+	print "Check 2..."
+else: 
+	c2 = 0
+	print "Check 2 fails"
 
 # Now for check three
-#if num3/100 == -1:
-#	c3 = 1
-#	print "Check 3..."
-#else:
-#	c3 =0
-#	print "Check 3 fails"
+if abs(200.5 - num3) <= 1.00:
+	c3 = 1
+	print "Check 3..."
+else:
+	c3 =0
+	print "Check 3 fails"
 
 # Now, we will see if Cassandra passes the entirety of test 1
-#if c1 == 1 and c2 == 1 and c3 == 1:
-#	t3 = 1
-#	print "Pass CHARMM..."
-#else:
-#	t3 = 0
-#	print "CHARMM Fails - Check above."
+if c1 == 1 and c2 == 1 and c3 == 1:
+	t3 = 1
+	print "Pass CHARMM..."
+else:
+	t3 = 0
+	print "CHARMM Fails - Check above."
 
 # Check the whole test 
-#if t1 == 1 and t2 == 1 and t3 == 1: 
-#	print "Pass Test 4: Dihedral Starting Angle Energy"
-#else: 
-#	print "Test fails - check above"
+if t1 == 1 and t2 == 1 and t3 == 1: 
+	print bold + "Pass Test 4: Dihedral Starting Angle Energy" + normal
+else: 
+	print bold + "Test fails - check above"+ normal
 
 
 

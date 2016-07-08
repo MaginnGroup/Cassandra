@@ -1,0 +1,274 @@
+********************************************************************************
+                ______                                __                        
+               / ____/___ _______________ _____  ____/ /________ _              
+              / /   / __ `/ ___/ ___/ __ `/ __ \/ __  / ___/ __ `/              
+             / /___/ /_/ (__  |__  ) /_/ / / / / /_/ / /  / /_/ /               
+             \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                
+                                                                                
+********************************************************************************
+ 
+Run info
+********************************************************************************
+version: Cassandra 1.2
+inputfile: mie.inp
+name of run: test2_check4.out
+date (mm/dd/yyyy): 07/05/2016
+time: 09:20:34
+machine: crcfe02.crc.nd.edu
+********************************************************************************
+ 
+Verbose log
+********************************************************************************
+Normal output to logfile
+********************************************************************************
+ 
+Simulation type
+********************************************************************************
+NVT_MC              
+********************************************************************************
+ 
+Copy input file
+********************************************************************************
+ # Run_Name
+ test2_check4.out
+ 
+ # Sim_Type
+ NVT_MC
+ 
+ # Nbr_Species
+ 1
+ 
+ # VDW_Style
+ Mie cut 2.5
+ 
+ # Charge_Style
+ NONE
+ 
+ # Intra_Scaling
+ 0.0 0.0 0.0 1.0
+ 
+ # Mixing_Rule
+ LB
+ 
+ # Seed_Info
+ 55001389 1764321284
+ 
+ # Rcutoff_Low
+ 1.0
+ 
+ # Molecule_Files
+ mie.mcf 2
+ 
+ # Box_Info
+ 1
+ CUBIC
+ 100.0
+ 
+ # Temperature_Info
+ 300.0
+ 
+ # Move_Probability_Info
+ 
+ # Prob_Translation
+ 0.79
+ 0.5
+ 
+ # Done_Probability_Info
+ 
+ # Start_Type
+ read_config 2 mie.xyz
+ 
+ # Run_Type
+ Equilibration 100
+ 
+ # Average_Info
+ 1
+ 
+ # Simulation_Length_Info
+ Units Steps
+ Prop_Freq 1
+ Coord_Freq 1
+ Run 0
+ 
+ # Property_Info 1
+ Energy_Total
+ Pressure
+ Volume
+ Nmols
+ Density
+ 
+ # Fragment_Files
+ 
+ # CBMC_Info
+ kappa_ins 12
+ kappa_rot 0
+ kappa_dih 10
+ rcut_cbmc 6.5
+ 
+ END
+********************************************************************************
+ 
+Number of species
+********************************************************************************
+1
+********************************************************************************
+ 
+Box info
+********************************************************************************
+Number of simulation boxes     1
+Box 1 is cubic               
+ Each Side Of :      100.0000     Angstrom
+ Cell basis vector lengths in A,    100.0000     100.0000     100.0000
+ Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+ Distance between box faces   100.0000     100.0000     100.0000
+ Box volume, A^3       1000000.0000
+********************************************************************************
+ 
+Pair style
+********************************************************************************
+VDW style used is:   Mie            in box:  1
+ VDW sum style is:  cut            in box:  1
+ rcut =     2.500Angstrom
+Charge style in box 1 is NONE
+Section "# Pair_Energy" is missing from the input file
+ By default, pair interaction energy arrays will not be stored
+Lorentz-Berthelot mixing rule specified
+********************************************************************************
+ 
+Molecule info
+********************************************************************************
+ Reading molecular connectivity information
+ Species:            1
+ Molecular connectivity file: 
+ mie.mcf                                                                        
+                                          
+   1 atom(s) specified.
+   0 bond(s) specified.
+   0 angle(s) specified.
+   0 dihedral(s) specified.
+   0 improper(s) specified.
+   0 fragment(s) specified.
+   0 fragment bond(s) specified.
+ 
+ Species  Max molecules
+ -------  -------------
+      1              2
+ 
+ Species     1
+ -------------------------------------------------------------------------------
+ Atom parameters read
+ Bond parameters read
+ Angle parameters read
+ Dihedral parameters read
+ Improper parameters read
+ Intra molecule scaling factors for species            1
+  VDW 1-2 scaling factor       0.000
+  VDW 1-3 scaling factor       0.000
+  VDW 1-4 scaling factor       0.000
+  VDW 1-N scaling factor       0.000
+ -------------------------------------------------------------------------------
+********************************************************************************
+ 
+Nonbond tables
+********************************************************************************
+ ********************************************************************************
+ 
+Start type
+********************************************************************************
+Initial configuration for box 1 will be read from file
+ Will read       2  molecules of species   1
+ Will read configuration from file mie.xyz
+********************************************************************************
+ 
+Seed info
+********************************************************************************
+The starting seeds are:     55001389   1764321284
+********************************************************************************
+ 
+Temperature
+********************************************************************************
+Temperature of box 1 is 300.000 K
+********************************************************************************
+ 
+Move probabilities
+********************************************************************************
+Probability for translation                0.790000
+ Maximum displacement width for species  1 in box  1  is      0.50000
+Number of moves is :   1
+ Move probabilities do not sum to 1.0
+ Dividing each probability by     0.790000
+********************************************************************************
+ 
+CBMC info
+********************************************************************************
+Section "# CBMC_Info" not required
+********************************************************************************
+ 
+Simulation length info
+********************************************************************************
+Thermodynamic quantities will be computed every         1 Steps     
+Coordinates will be written every                       1 Steps     
+ movie header file is                  test2_check4.out.H
+ movie_XYZ file is                     test2_check4.out.xyz
+The simulation will be run for                          0 Steps     
+Instantaneous values will be written every              1 Steps     
+********************************************************************************
+ 
+Property info
+********************************************************************************
+Total number of property files to be written is     1   for box 1
+ Maximum number of properties per file is    5
+ Writing the name of the property files and the corresponding property output
+ Property file    1   is  test2_check4.out.prp
+ Properties output in these files are
+ Energy_Total
+ Pressure
+ Volume
+ Nmols
+ Density
+********************************************************************************
+ 
+Minimum distance cutoff
+********************************************************************************
+MC low cutoff distance is   1.000    Angstrom
+********************************************************************************
+ 
+Run type
+********************************************************************************
+ The input run type is Equilibration
+ Update frequency is          100
+********************************************************************************
+ 
+********************************************************************************
+************************ Begin Cassandra simulation ****************************
+********************************************************************************
+ 
+Initial configuration
+********************************************************************************
+ Reading configuration for box           1
+ Reading            2  molecules of species            1
+ Configurations read successfully
+********************************************************************************
+ 
+Compute total energy
+********************************************************************************
+ Starting energy components for box   1
+  Atomic units-Extensive
+ -----------------------------------------------------------
+ Total system energy is                     0.000
+ Intra molecular energy is                  0.000
+ Bond energy is                             0.000
+ Bond angle energy is                       0.000
+ Dihedral angle energy is                   0.000
+ Improper angle energy is                   0.000
+ Intra molecule vdw is                      0.000
+ Intra molecule q is                        0.000
+ Inter molecule vdw is                      0.000
+ Inter molecule q is                        0.000
+ -----------------------------------------------------------
+ 
+********************************************************************************
+ 
+********************************************************************************
+************************ Cassandra simulation complete *************************
+********************************************************************************

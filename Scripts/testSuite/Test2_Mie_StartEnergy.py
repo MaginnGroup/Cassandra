@@ -45,7 +45,7 @@ input_xyz.close()
 # Write info into the file - this will create each section for the .inp file
 # This input file is populated with numbers for an Mie simulation with an arbitrary atom
 # This input decides what the output files will be named, it should be unique so as not to overwrite existing files. 
-input_inp.write("# Run_Name\ntest1mie.out\n!---------------\n\n")
+input_inp.write("# Run_Name\ntest2_check1.out\n!---------------\n\n")
 # This line decides the simulation type. In this case, we are running an NVT Monte Carlo, that is constant mols, volume, and temperature.
 input_inp.write("# Sim_Type\nNVT_MC\n!---------------\n\n")
 # The number of species in the simulation
@@ -119,7 +119,7 @@ replace_line('mie.xyz', 3, 'Mie  49.5  0.0  0.0 \n')
 
 # Changing the input file:
 # Changes the output name so we can run cassandra under a different name (and save those files too!)
-replace_line('mie.inp', 1, 'test2mie.out\n') 
+replace_line('mie.inp', 1, 'test2_check2.out\n') 
 
 # Now, we will run cassandra again, under the new name. So, we will get new output files and then hopefully we will be able to compare the two starting energies and they will match!! (If not, we fail and have to start again)
 # Run Cassandra Jobs - Again!
@@ -139,7 +139,7 @@ replace_line('mie.xyz', 3, 'Mie  1.122462  0.0  0.0 \n')
 
 # Changing the input file:
 # Changes the output name so we can run cassandra under a different name (and save those files too!)
-replace_line('mie.inp', 1, 'test3mie.out\n') 
+replace_line('mie.inp', 1, 'test2_check3.out\n') 
 
 # Run Cassandra Jobs - Again!
 # Allows Cassandra run through Python
@@ -158,7 +158,7 @@ replace_line('mie.xyz', 3, 'Mie 5.0  0.0  0.0 \n')
 
 # Changing the input file:
 # Changes the output name so we can run cassandra under a different name (and save those files too!)
-replace_line('mie.inp', 1, 'test4mie.out\n') 
+replace_line('mie.inp', 1, 'test2_check4.out\n') 
 # For this edit we need to change the VDW_Style section as well. We will change it from a cut_tail 12.0 to a cut 2.5 since the position is 5.0 for the second atom. 
 replace_line('mie.inp', 13, 'Mie cut 2.5\n')
 
@@ -178,28 +178,28 @@ if err is not None:
 # Find a specific line of text and save it. This appears to be impossible. Just kidding. Evidently not impossible 
 # We will do it for each of the four tests
 # The following 4 lines of the code are designed to extract the line of code from the output file, which contain the starting energy for comparison.
-shakes = open('test1mie.out.log', 'r')
+shakes = open('test2_check1.out.log', 'r')
 
 for line in shakes:
 	if re.match("(.*)Total system energy(.*)",line):
 		line1 = line
 
 # For the second test
-shakes = open('test2mie.out.log', 'r')
+shakes = open('test2_check2.out.log', 'r')
 
 for line in shakes:
 	if re.match("(.*)Total system energy(.*)",line):
 		line2 = line		
 
 # For the third test
-shakes = open('test3mie.out.log', 'r')
+shakes = open('test2_check3.out.log', 'r')
 
 for line in shakes:
 	if re.match("(.*)Total system energy(.*)",line):
 		line3 = line
 
 # For the fourth test
-shakes = open('test4mie.out.log', 'r')
+shakes = open('test2_check4.out.log', 'r')
 
 for line in shakes:
 	if re.match("(.*)Total system energy(.*)",line):
@@ -288,6 +288,6 @@ else:
 
 #Now, we will see if Test 2 passes 
 if c1 == 1 and c2 == 1 and c3 == 1 and c4 == 1:
-	print "Pass Test 2: Mie Starting Energy"
+	print bold + "Pass Test 2: Mie Starting Energy" + normal
 else: 
-	print "Test Fails - Check above."
+	print bold + "Test Fails - Check above." + normal
