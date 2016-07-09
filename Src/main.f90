@@ -59,7 +59,6 @@ PROGRAM Main
   !        Fold_Molecule
   !        Compute_System_Total_Energy
   !        Get_Molecules_Species
-  !        Update_Reservoirs
   !        Angle_Distortion
   !        Rigid_Dihedral_Change
   !        NVTMC_Driver
@@ -444,17 +443,6 @@ PROGRAM Main
 
   END DO
   WRITE(logunit,'(A80)') '********************************************************************************'
-
-  ! Populate the reservoir box if necessary
-  DO is = 1, nspecies
-
-    IF(species_list(is)%int_insert == int_igas) THEN
-      first_res_update = .TRUE.
-      CALL Update_Reservoir(is)
-      first_res_update = .FALSE.
-    END IF
-
-  END DO
 
   ! Write initial properties, if needed
   DO ibox = 1, nbr_boxes
