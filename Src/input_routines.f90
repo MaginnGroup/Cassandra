@@ -5485,6 +5485,17 @@ USE Global_Variables, ONLY: cpcollect
         ! the third entry indicates the box for which the current property
         ! file is to be written
         this_box = String_To_Int(line_array(3))
+        IF (this_box < 1 .OR. this_box > nbr_boxes) THEN
+           err_msg = ''
+           err_msg(1) = 'Section "# Property_Info" given with option ' // TRIM(Int_To_String(this_box))
+           IF (nbr_boxes == 1) THEN
+              err_msg(2) = 'Supported options are: 1'
+           ELSE IF (nbr_boxes == 2) THEN
+              err_msg(2) = 'Supported options are: 1 2'
+           END IF
+           CALL Clean_Abort(err_msg, "Get_Property_Info")
+        END IF
+
         nbr_prop_files(this_box) = nbr_prop_files(this_box) + 1
         !--- Now go through the lines following this keyword up to a point where
         !-- a blank, a '!' or a '#' or '# Property_Info' is encountered
