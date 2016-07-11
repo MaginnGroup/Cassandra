@@ -3,8 +3,8 @@ Run info
 version: Cassandra Development Version
 inputfile: nist.inp
 name of run: test6_check2_nist2.out
-date (mm/dd/yyyy): 07/08/2016
-time: 18:06:08
+date (mm/dd/yyyy): 07/11/2016
+time: 14:30:58
 machine: crcfe02.crc.nd.edu
 ********************************************************************************
  
@@ -338,5 +338,5 @@ Writing information for box  1
          0      Hours
          0    Minutes
          0    Seconds
-       168         ms
+       162         ms
 ********************************************************************************
