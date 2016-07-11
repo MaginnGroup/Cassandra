@@ -431,89 +431,85 @@ SUBROUTINE Get_Pair_Style
                  int_vdw_sum_style(ibox) = vdw_charmm
                  ron_charmm(ibox) = String_To_Double(line_array(3))
                  roff_charmm(ibox) = String_To_Double(line_array(4))
-                 WRITE(logunit,'(A,2x,F7.3, A)') ' r_on = ',ron_charmm(ibox), '   Angstrom'
-                 WRITE(logunit,'(A,2x,F7.3,A)') ' r_off = ',roff_charmm(ibox), '   Angstrom'
+
+                 IF (roff_charmm(ibox) > 0.5 * MIN(box_list(ibox)%face_distance(1), &
+                                                   box_list(ibox)%face_distance(2), &
+                                                   box_list(ibox)%face_distance(3)) ) THEN
+                    err_msg = ''
+                    err_msg(1) = 'Initial vdw cutoff is greater than half the minimum box length'
+                    CALL Clean_Abort(err_msg, 'Get_Pair_Style')
+                 END IF
+ 
+                 WRITE(logunit,'(A,2X,F7.3,A)') ' r_on = ', ron_charmm(ibox),  ' Angstrom'
+                 WRITE(logunit,'(A,2X,F7.3,A)') ' r_off = ',roff_charmm(ibox), ' Angstrom'
 
               ELSEIF (vdw_sum_style(ibox) == 'cut_switch') THEN
                  int_vdw_sum_style(ibox) = vdw_cut_switch
                  ron_switch(ibox) = String_To_Double(line_array(3))
                  roff_switch(ibox) = String_To_Double(line_array(4))
-                 WRITE(logunit,'(A,2x,F7.3,A)') ' r_on =', ron_switch(ibox), ' Angstrom'
+
+                 IF (roff_switch(ibox) > 0.5 * MIN(box_list(ibox)%face_distance(1), &
+                                                   box_list(ibox)%face_distance(2), &
+                                                   box_list(ibox)%face_distance(3)) ) THEN
+                    err_msg = ''
+                    err_msg(1) = 'Initial vdw cutoff is greater than half the minimum box length'
+                    CALL Clean_Abort(err_msg, 'Get_Pair_Style')
+                 END IF
+ 
+                 WRITE(logunit,'(A,2x,F7.3,A)') ' r_on =',  ron_switch(ibox),  ' Angstrom'
                  WRITE(logunit,'(A,2x,F7.3,A)') ' r_off =', roff_switch(ibox), ' Angstrom'
 
-              ELSEIF (vdw_sum_style(ibox) == 'cut') THEN
-                 int_vdw_sum_style(ibox) = vdw_cut
+              ELSEIF (vdw_sum_style(ibox)(1:3) == 'cut') THEN
                  rcut_vdw(ibox) = String_To_Double(line_array(3))
-                 IF ( nbr_entries == 4 ) THEN
-                    ! a fourth entry exists indicating whether the cutoff is half of
-                    ! the box length 
-                    
-                    IF (line_array(4) == 'TRUE' .OR. line_array(4) == 'true') THEN
-                       
-                       l_half_len_cutoff(ibox) = .TRUE.
-                       
-                       ! for now assume that the box is cubic
-                       rcut_vdw(ibox) = 0.5_DP * box_list(ibox)%length(1,1)
-                       
-                       WRITE(logunit,*) 'Cutoffs are set to half of the box length'
-                       
-                    END IF
 
+                 IF ( nbr_entries > 3 ) THEN
+                    ! a fourth entry exists indicating whether the cutoff is half of the box length 
+                    IF (line_array(4) == 'TRUE' .OR. line_array(4) == 'true') THEN
+                       l_half_len_cutoff(ibox) = .TRUE.
+                       rcut_vdw(ibox) = 0.5 * MIN(box_list(ibox)%face_distance(1), &
+                                                  box_list(ibox)%face_distance(2), &
+                                                  box_list(ibox)%face_distance(3))
+                       WRITE(logunit,*) 'Cutoffs are set to half of the box length'
+                    END IF
                  END IF
 
-                 WRITE(logunit,'(A,2x,F7.3, A)') ' rcut = ',rcut_vdw(ibox), '   Angstrom'
-
-              ELSEIF (vdw_sum_style(ibox) == 'cut_tail') THEN
-                 int_vdw_sum_style(ibox) = vdw_cut_tail
-                 rcut_vdw(ibox) = String_To_Double(line_array(3))
-                
-                 IF ( nbr_entries == 4 ) THEN
-                    ! a fourth entry exists indicating whether the cutoff is half of
-                    ! the box length 
-                    
-                    IF (line_array(4) == 'TRUE' .OR. line_array(4) == 'true') THEN
-                       
-                       l_half_len_cutoff(ibox) = .TRUE.
-                       
-                       ! for now assume that the box is cubic
-                       rcut_vdw(ibox) = 0.5_DP * box_list(ibox)%length(1,1)
-                       
-                       WRITE(logunit,*) 'Cutoffs are set to half of the box length'
-                       
-                    END IF
-
+                 IF (.NOT. l_half_len_cutoff(ibox) .AND. &
+                     rcut_vdw(ibox) > 0.5 * MIN(box_list(ibox)%face_distance(1), &
+                                                box_list(ibox)%face_distance(2), &
+                                                box_list(ibox)%face_distance(3)) ) THEN
+                    err_msg = ''
+                    err_msg(1) = 'Initial vdw cutoff is greater than half the minimum box length'
+                    CALL Clean_Abort(err_msg, 'Get_Pair_Style')
+                 END IF
+ 
+                 IF (vdw_sum_style(ibox) == 'cut') THEN
+                    int_vdw_sum_style(ibox) = vdw_cut
+                 ELSE IF (vdw_sum_style(ibox) == 'cut_tail') THEN
+                    int_vdw_sum_style(ibox) = vdw_cut_tail
+                    rcut3(ibox) = rcut_vdw(ibox) * rcut_vdw(ibox) * rcut_vdw(ibox)
+                    rcut9(ibox) = rcut3(ibox) * rcut3(ibox) * rcut3(ibox)
+                 ELSE IF (vdw_sum_style(ibox) == 'cut_shift') THEN
+                    int_vdw_sum_style(ibox) = vdw_cut_shift
+                 ELSE
+                    err_msg = ''
+                    err_msg(1) = 'Keyword ' // TRIM(line_array(2)) // ' on line number ' // &
+                                 TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+                    err_msg(2) = 'Supported keywords are: cut, cut_tail, cut_shift, cut_switch, minimum_image, CHARMM'
+                    CALL Clean_Abort(err_msg,'Get_Pair_Style')
                  END IF
 
-                 WRITE(logunit,'(A,2x,F7.3, A)') ' rcut = ',rcut_vdw(ibox), '   Angstrom'
-
-                 rcut3(ibox) = rcut_vdw(ibox) * rcut_vdw(ibox) * rcut_vdw(ibox)
-                 rcut9(ibox) = rcut3(ibox) * rcut3(ibox) * rcut3(ibox)
-
-              ELSEIF (vdw_sum_style(ibox) == 'cut_shift') THEN
-                 int_vdw_sum_style(ibox) = vdw_cut_shift
-                 rcut_vdw(ibox) = String_To_Double(line_array(3))
-                 WRITE(logunit,'(A,2x,F7.3, A)') ' rcut = ',rcut_vdw(ibox), '   Angstrom'
+                 WRITE(logunit,'(A,2x,F7.3, A)') ' rcut = ',rcut_vdw(ibox), ' Angstrom'
 
               ELSEIF (vdw_sum_style(ibox) == 'minimum_image') THEN
                  int_vdw_sum_style(ibox) = vdw_minimum
                  WRITE(logunit,'(A)') ' Minimum image convention used for VDW'
 
-
               ELSE
                  err_msg = ''
-                 err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
+                 err_msg(1) = 'Keyword ' // TRIM(line_array(2)) // ' on line number ' // &
                               TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
-                 err_msg(2) = 'Supported keywords are: cut, cut_tail, cut_shift, cut_shift, minimum_image, CHARMM'
+                 err_msg(2) = 'Supported keywords are: cut, cut_tail, cut_shift, cut_switch, minimum_image, CHARMM'
                  CALL Clean_Abort(err_msg,'Get_Pair_Style')
-              ENDIF
-              IF (rcut_vdw(ibox) > MIN(box_list(ibox)%face_distance(1)/2.0_DP, &
-                   box_list(ibox)%face_distance(2)/2.0_DP, box_list(ibox)%face_distance(3)/2.0_DP)) THEN
-
-                     err_msg = ''
-                     err_msg(1) = 'Initial cutoff greater than minimum box length'
-                     err_msg(2) = 'For box ' // TRIM(Int_To_String(ibox))
-                     CALL Clean_Abort(err_msg,'Get_Pair_Style')
-
               ENDIF
 
            ELSEIF (line_array(1) == 'mie' .OR. line_array(1) == 'Mie') THEN
@@ -523,42 +519,46 @@ SUBROUTINE Get_Pair_Style
               vdw_sum_style(ibox) = line_array(2)
               WRITE(logunit,'(A,2x,A,A,I3)') ' VDW sum style is:',vdw_sum_style(ibox), 'in box:', ibox
 
-              IF (vdw_sum_style(ibox) == 'cut') THEN
-                 int_vdw_sum_style(ibox) = vdw_cut
+              IF (vdw_sum_style(ibox)(1:3) == 'cut') THEN
                  rcut_vdw(ibox) = String_To_Double(line_array(3))
-                 WRITE(logunit,'(A,2x,F7.3, A)') ' rcut = ',rcut_vdw(ibox), 'Angstrom'
 
-              ELSEIF (vdw_sum_style(ibox) == 'cut_shift') THEN
-                 int_vdw_sum_style(ibox) = vdw_cut_shift
-                 rcut_vdw(ibox) = String_To_Double(line_array(3))
-                 WRITE(logunit,'(A,2x,F7.3, A)') ' rcut = ',rcut_vdw(ibox), 'Angstrom'
-
-
-              ELSEIF (vdw_sum_style(ibox) == 'cut_tail') THEN
-                 int_vdw_sum_style(ibox) = vdw_cut_tail
-                 rcut_vdw(ibox) = String_To_Double(line_array(3))
-                
-                 IF ( nbr_entries == 4 ) THEN
-                    ! a fourth entry exists indicating whether the cutoff is half of
-                    ! the box length 
-                    
+                 IF ( nbr_entries > 3 ) THEN
+                    ! a fourth entry exists indicating whether the cutoff is half of the box length 
                     IF (line_array(4) == 'TRUE' .OR. line_array(4) == 'true') THEN
-                       
                        l_half_len_cutoff(ibox) = .TRUE.
-                       
-                       ! for now assume that the box is cubic
-                       rcut_vdw(ibox) = 0.5_DP * box_list(ibox)%length(1,1)
-                       
+                       rcut_vdw(ibox) = 0.5 * MIN(box_list(ibox)%face_distance(1), &
+                                                  box_list(ibox)%face_distance(2), &
+                                                  box_list(ibox)%face_distance(3))
                        WRITE(logunit,*) 'Cutoffs are set to half of the box length'
-                       
                     END IF
-
                  END IF
 
-                 WRITE(logunit,'(A,2x,F7.3, A)') ' rcut = ',rcut_vdw(ibox), '   Angstrom'
+                 IF (.NOT. l_half_len_cutoff(ibox) .AND. &
+                     rcut_vdw(ibox) > 0.5 * MIN(box_list(ibox)%face_distance(1), &
+                                                box_list(ibox)%face_distance(2), &
+                                                box_list(ibox)%face_distance(3)) ) THEN
+                    err_msg = ''
+                    err_msg(1) = 'Initial vdw cutoff is greater than half the minimum box length'
+                    CALL Clean_Abort(err_msg, 'Get_Pair_Style')
+                 END IF
+ 
+                 IF (vdw_sum_style(ibox) == 'cut') THEN
+                    int_vdw_sum_style(ibox) = vdw_cut
+                 ELSE IF (vdw_sum_style(ibox) == 'cut_tail') THEN
+                    int_vdw_sum_style(ibox) = vdw_cut_tail
+                    rcut3(ibox) = rcut_vdw(ibox) * rcut_vdw(ibox) * rcut_vdw(ibox)
+                    !rcut9(ibox) = rcut3(ibox) * rcut3(ibox) * rcut3(ibox)
+                 ELSE IF (vdw_sum_style(ibox) == 'cut_shift') THEN
+                    int_vdw_sum_style(ibox) = vdw_cut_shift
+                 ELSE
+                    err_msg = ''
+                    err_msg(1) = 'Keyword ' // TRIM(line_array(2)) // ' on line number ' // &
+                                 TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+                    err_msg(2) = 'Supported keywords are: cut, cut_tail, cut_shift, minimum_image'
+                    CALL Clean_Abort(err_msg,'Get_Pair_Style')
+                 END IF
 
-                 rcut3(ibox) = rcut_vdw(ibox) * rcut_vdw(ibox) * rcut_vdw(ibox)
-                 !rcut9(ibox) = rcut3(ibox) * rcut3(ibox) * rcut3(ibox)
+                 WRITE(logunit,'(A,2x,F7.3, A)') ' rcut = ',rcut_vdw(ibox), ' Angstrom'
 
               ELSEIF (vdw_sum_style(ibox) == 'minimum_image') THEN
                  int_vdw_sum_style(ibox) = vdw_minimum
@@ -566,7 +566,7 @@ SUBROUTINE Get_Pair_Style
 
               ELSE
                  err_msg = ''
-                 err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
+                 err_msg(1) = 'Keyword ' // TRIM(line_array(2)) // ' on line number ' // &
                               TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
                  err_msg(2) = 'Supported keywords are: cut, cut_tail, cut_shift, minimum_image'
                  CALL Clean_Abort(err_msg,'Get_Pair_Style')
@@ -741,7 +741,10 @@ SUBROUTINE Get_Pair_Style
                     WRITE(logunit,'(A)') ' Minimum image convention used for charge'
                  ENDIF
               ELSE
-                 err_msg(1) = 'charge_sum_style not properly specified'
+                 err_msg = ''
+                 err_msg(1) = 'Keyword ' // TRIM(line_array(2)) // ' on line number ' // &
+                              TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+                 err_msg(2) = 'Supported keywords are: cut, ewald, dsf, minimum_image'
                  CALL Clean_Abort(err_msg,'Get_Pair_Style')
               ENDIF
 
@@ -3566,10 +3569,6 @@ SUBROUTINE Get_Box_Info
               box_list(ibox)%length(2,2) = String_To_Double(line_array(1))
               box_list(ibox)%length(3,3) = String_To_Double(line_array(1))
 
-              box_list(ibox)%hlength(1,1) = 0.5_DP * box_list(ibox)%length(1,1)
-              box_list(ibox)%hlength(2,2) = 0.5_DP * box_list(ibox)%length(2,2)
-              box_list(ibox)%hlength(3,3) = 0.5_DP * box_list(ibox)%length(3,3)
- 
               WRITE (logunit,'(A)') 'Box ' // TRIM(Int_To_String(ibox)) // ' is ' // &
                  box_list(ibox)%box_shape
               WRITE (logunit,'(X,A,T20,F10.4,T35,A)') 'Each Side Of :', box_list(ibox)%length(1,1), 'Angstrom'
@@ -3642,16 +3641,24 @@ SUBROUTINE Get_Box_Info
               CALL Clean_Abort(err_msg, 'Get_Box_Info')
            END IF
 
+           ! Check that contant pressure boxes are cubic
+           IF ((int_sim_type == sim_npt .OR. int_sim_type == sim_gemc .OR. &
+                int_sim_type == sim_gemc_npt) .AND. .NOT. l_cubic(ibox)) THEN
+              err_msg = ''
+              err_msg(1) = 'Volume change moves are only supported for cubic boxes'
+              CALL Clean_Abort(err_msg, 'Get_Box_Info')
+           END IF
+
            ! Compute information on the simulation box and write to log. 
            CALL Compute_Cell_Dimensions(ibox)
 
-           write(logunit,'(X,A,3(f10.4,3x))') 'Cell basis vector lengths in A,  ',&
+           WRITE(logunit,'(X,A,3(f10.4,3x))') 'Cell basis vector lengths in A,  ',&
                 box_list(ibox)%basis_length
-           write(logunit,'(X,A,3(f10.4,3x))') 'Cosine of angles alpha, beta, gamma ',&
+           WRITE(logunit,'(X,A,3(f10.4,3x))') 'Cosine of angles alpha, beta, gamma ',&
                 box_list(ibox)%cos_angle
-           write(logunit,'(X,A,3(f10.4,3x))') 'Distance between box faces ',&
+           WRITE(logunit,'(X,A,3(f10.4,3x))') 'Distance between box faces ',&
                 box_list(ibox)%face_distance
-           write(logunit,'(X,A,f18.4)') 'Box volume, A^3 ', box_list(ibox)%volume
+           WRITE(logunit,'(X,A,f18.4)') 'Box volume, A^3 ', box_list(ibox)%volume
 
            ! Skip 1 line between boxes
            line_nbr = line_nbr + 1
@@ -4485,7 +4492,7 @@ SUBROUTINE Get_Move_Probabilities
               err_msg(3) = '                           Prob_Volume, Prob_Insertion, Prob_Deletion,'
               err_msg(4) = '                           Prob_Swap, Prob_Ring, Prob_Atom_Displacement,'
               err_msg(5) = '                           Prob_Angle, Prob_Dihedral'
-              CALL Clean_Abort(err_msg,'Get_Sim_Type')
+              CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
 
            END IF
 
@@ -4502,8 +4509,7 @@ SUBROUTINE Get_Move_Probabilities
   END DO inputLOOP
 
   IF( int_sim_type == sim_npt .OR. int_sim_type == sim_gemc .OR. &
-      int_sim_type == sim_gemc_npt .OR. & 
-      int_sim_type == sim_gemc_ig) THEN
+      int_sim_type == sim_gemc_npt .OR. int_sim_type == sim_gemc_ig) THEN
 
      IF (prob_volume == 0.0_DP) THEN
         err_msg = ''
