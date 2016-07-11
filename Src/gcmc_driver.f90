@@ -315,17 +315,6 @@ SUBROUTINE GCMC_Driver
         END DO
      END IF
 
-     !*****************************************************************************
-     ! Update reservoirs
-     !*****************************************************************************
-     DO is = 1,nspecies
-
-        IF(species_list(is)%int_insert == int_igas) THEN
-           IF(mod(i_mcstep,n_igas_moves(is)) == 0) CALL Update_Reservoir(is)
-        END IF
-
-     END DO
-     
   END DO
 
   CLOSE(50)

@@ -163,158 +163,119 @@ SUBROUTINE GEMC_NVT_Volume
   
   END IF
 
-  IF ( box_list(box_grw)%int_box_shape == int_cubic ) THEN
-
-     box_list(box_grw)%length(1,1) = (box_list(box_grw)%volume) ** (1.0_DP/3.0_DP)
-     box_list(box_grw)%length(2,2) = box_list(box_grw)%length(1,1)
-     box_list(box_grw)%length(3,3) = box_list(box_grw)%length(2,2)
-
-  ELSE
-
-     err_msg = ''
-     err_msg = 'Noncubic shape encountered for the box'
-     err_msg = Int_To_String(box_grw)
-     CALL Clean_Abort(err_msg, 'GEMC_NVT_Volume')
-
-  END IF
+  ! Assumes box_grw ix cubic
+  box_list(box_grw)%length(1,1) = (box_list(box_grw)%volume) ** (1.0_DP/3.0_DP)
+  box_list(box_grw)%length(2,2) = box_list(box_grw)%length(1,1)
+  box_list(box_grw)%length(3,3) = box_list(box_grw)%length(2,2)
   
-  IF ( box_list(box_shk)%int_box_shape == int_cubic ) THEN
-
-     box_list(box_shk)%length(1,1) = (box_list(box_shk)%volume) ** (1.0_DP/3.0_DP)
-     box_list(box_shk)%length(2,2) = box_list(box_shk)%length(1,1)
-     box_list(box_shk)%length(3,3) = box_list(box_shk)%length(2,2)
-
-  ELSE
-
-     err_msg = ''
-     err_msg = 'Noncubic shape encountered for the box'
-     err_msg = Int_To_String(box_shk)
-     CALL Clean_Abort(err_msg, 'GEMC_NVT_Volume')
-
-  END IF
+  ! Assumes box_shk ix cubic
+  box_list(box_shk)%length(1,1) = (box_list(box_shk)%volume) ** (1.0_DP/3.0_DP)
+  box_list(box_shk)%length(2,2) = box_list(box_shk)%length(1,1)
+  box_list(box_shk)%length(3,3) = box_list(box_shk)%length(2,2)
 
   CALL Compute_Cell_Dimensions(box_grw)
   CALL Compute_Cell_Dimensions(box_shk)
 
   IF ( l_half_len_cutoff(box_grw)) THEN
-     IF ( box_list(box_grw)%int_box_shape == int_cubic ) THEN
 
-        ! store old cutoffs and other associated quantities
+     ! store old cutoffs and other associated quantities
+     rcut_vdw_old_1 = rcut_vdw(box_grw)
+     rcut_coul_old_1 = rcut_coul(box_grw)
+     rcut_vdwsq_old_1 = rcut_vdwsq(box_grw)
+     rcut_coulsq_old_1 = rcut_coulsq(box_grw)
 
-        rcut_vdw_old_1 = rcut_vdw(box_grw)
-        rcut_coul_old_1 = rcut_coul(box_grw)
-        rcut_vdwsq_old_1 = rcut_vdwsq(box_grw)
-        rcut_coulsq_old_1 = rcut_coulsq(box_grw)
+     rcut3_old_1 = rcut3(box_grw)
+     rcut9_old_1 = rcut9(box_grw)
+     rcut_vdw3_old_1 = rcut_vdw3(box_grw)
+     rcut_vdw6_old_1 = rcut_vdw6(box_grw)
 
-        rcut3_old_1 = rcut3(box_grw)
-        rcut9_old_1 = rcut9(box_grw)
-        rcut_vdw3_old_1 = rcut_vdw3(box_grw)
-        rcut_vdw6_old_1 = rcut_vdw6(box_grw)
+     rcut_max_old_1 = rcut_max(box_grw)
+     
+     IF (int_charge_sum_style(box_grw) == charge_ewald) THEN
+!        alpha_ewald_old_1 = alpha_ewald(box_grw)
+        h_ewald_cut_old_1 = h_ewald_cut(box_grw)
+     END IF
 
-        rcut_max_old_1 = rcut_max(box_grw)
-        
-        IF (int_charge_sum_style(box_grw) == charge_ewald) THEN
-           
-!           alpha_ewald_old_1 = alpha_ewald(box_grw)
-           h_ewald_cut_old_1 = h_ewald_cut(box_grw)
+     ! change cutoffs and other associated quantities
+     rcut_vdw(box_grw) = 0.5_DP * box_list(box_grw)%length(1,1)
+     rcut_coul(box_grw) = rcut_vdw(box_grw)
+     rcut_vdwsq(box_grw) = rcut_vdw(box_grw) * rcut_vdw(box_grw)
+     rcut_coulsq(box_grw) = rcut_vdwsq(box_grw)
 
-        END IF
+     rcut_vdw3(box_grw) = rcut_vdwsq(box_grw) * rcut_vdw(box_grw)
+     rcut_vdw6(box_grw) = rcut_vdw3(box_grw) * rcut_vdw3(box_grw)
+     rcut3(box_grw) = rcut_vdw3(box_grw)
+     rcut9(box_grw) = rcut3(box_grw) * rcut_vdw6(box_grw)
 
-        rcut_vdw(box_grw) = 0.5_DP * box_list(box_grw)%length(1,1)
-        rcut_coul(box_grw) = rcut_vdw(box_grw)
-        rcut_vdwsq(box_grw) = rcut_vdw(box_grw) * rcut_vdw(box_grw)
-        rcut_coulsq(box_grw) = rcut_vdwsq(box_grw)
+     rcut_max(box_grw) = rcut_vdw(box_grw)
 
-        rcut_vdw3(box_grw) = rcut_vdwsq(box_grw) * rcut_vdw(box_grw)
-        rcut_vdw6(box_grw) = rcut_vdw3(box_grw) * rcut_vdw3(box_grw)
-        rcut3(box_grw) = rcut_vdw3(box_grw)
-        rcut9(box_grw) = rcut3(box_grw) * rcut_vdw6(box_grw)
-
-        rcut_max(box_grw) = rcut_vdw(box_grw)
-
-        IF (int_charge_sum_style(box_grw) == charge_ewald) THEN
-
-!           alpha_ewald(box_grw) = ewald_p_sqrt(box_grw) / rcut_coul(box_grw)
-           h_ewald_cut(box_grw) = 2.0_DP * ewald_p(box_grw) / rcut_coul(box_grw)
-
-        END IF
-
+     IF (int_charge_sum_style(box_grw) == charge_ewald) THEN
+!        alpha_ewald(box_grw) = ewald_p_sqrt(box_grw) / rcut_coul(box_grw)
+        h_ewald_cut(box_grw) = 2.0_DP * ewald_p(box_grw) / rcut_coul(box_grw)
      END IF
 
   ELSE
 
-     IF ( box_list(box_grw)%int_box_shape == int_cubic ) THEN
-        IF ( 0.5_DP * box_list(box_grw)%length(1,1) < rcut_vdw(box_grw) .OR. &
-             0.5_DP * box_list(box_grw)%length(1,1) < rcut_coul(box_grw) .OR. &
-             0.5_DP * box_list(box_grw)%length(1,1) < roff_charmm(box_grw) .OR. &
-             0.5_DP * box_list(box_grw)%length(1,1) < roff_switch(box_grw) ) THEN
-           err_msg = ''
-           err_msg(1) = 'Cutoff is greater than the half box length'
-           err_msg(2) = Int_to_String(box_grw)
-           CALL Clean_Abort(err_msg,'GEMC_NVT_Volume')
-        END IF
+     IF ( 0.5_DP * box_list(box_grw)%length(1,1) < rcut_vdw(box_grw) .OR. &
+          0.5_DP * box_list(box_grw)%length(1,1) < rcut_coul(box_grw) .OR. &
+          0.5_DP * box_list(box_grw)%length(1,1) < roff_charmm(box_grw) .OR. &
+          0.5_DP * box_list(box_grw)%length(1,1) < roff_switch(box_grw) ) THEN
+        err_msg = ''
+        err_msg(1) = 'Cutoff is greater than the half box length'
+        err_msg(2) = Int_to_String(box_grw)
+        CALL Clean_Abort(err_msg,'GEMC_NVT_Volume')
      END IF
      
   END IF
 
   IF ( l_half_len_cutoff(box_shk)) THEN
-     IF ( box_list(box_shk)%int_box_shape == int_cubic ) THEN
 
-        ! store old cutoffs and other associated quantities
+     ! store old cutoffs and other associated quantities
+     rcut_vdw_old_2 = rcut_vdw(box_shk)
+     rcut_coul_old_2 = rcut_coul(box_shk)
+     rcut_vdwsq_old_2 = rcut_vdwsq(box_shk)
+     rcut_coulsq_old_2 = rcut_coulsq(box_shk)
 
-        rcut_vdw_old_2 = rcut_vdw(box_shk)
-        rcut_coul_old_2 = rcut_coul(box_shk)
-        rcut_vdwsq_old_2 = rcut_vdwsq(box_shk)
-        rcut_coulsq_old_2 = rcut_coulsq(box_shk)
+     rcut3_old_2 = rcut3(box_shk)
+     rcut9_old_2 = rcut9(box_shk)
+     rcut_vdw3_old_2 = rcut_vdw3(box_shk)
+     rcut_vdw6_old_2 = rcut_vdw6(box_shk)
 
-        rcut3_old_2 = rcut3(box_shk)
-        rcut9_old_2 = rcut9(box_shk)
-        rcut_vdw3_old_2 = rcut_vdw3(box_shk)
-        rcut_vdw6_old_2 = rcut_vdw6(box_shk)
-
-        rcut_max_old_2 = rcut_max(box_shk)
-        
-        IF (int_charge_sum_style(box_shk) == charge_ewald) THEN
-           
-!           alpha_ewald_old_2 = alpha_ewald(box_shk)
-           h_ewald_cut_old_2 = h_ewald_cut(box_shk)
-
-        END IF
-
-        rcut_vdw(box_shk) = 0.5_DP * box_list(box_shk)%length(1,1)
-        rcut_coul(box_shk) = rcut_vdw(box_shk)
-        rcut_vdwsq(box_shk) = rcut_vdw(box_shk) * rcut_vdw(box_shk)
-        rcut_coulsq(box_shk) = rcut_vdwsq(box_shk)
-
-        rcut_vdw3(box_shk) = rcut_vdwsq(box_shk) * rcut_vdw(box_shk)
-        rcut_vdw6(box_shk) = rcut_vdw3(box_shk) * rcut_vdw3(box_shk)
-        rcut3(box_shk) = rcut_vdw3(box_shk)
-        rcut9(box_shk) = rcut3(box_shk) * rcut_vdw6(box_shk)
-
-        rcut_max(box_shk) = rcut_vdw(box_shk)
-        
-        IF (int_charge_sum_style(box_shk) == charge_ewald) THEN
-
-!           alpha_ewald(box_shk) = ewald_p_sqrt(box_shk) / rcut_coul(box_shk)
-           h_ewald_cut(box_shk) = 2.0_DP * ewald_p(box_shk) / rcut_coul(box_shk)
-
-        END IF
-
-     END IF
+     rcut_max_old_2 = rcut_max(box_shk)
      
+     IF (int_charge_sum_style(box_shk) == charge_ewald) THEN
+!        alpha_ewald_old_2 = alpha_ewald(box_shk)
+        h_ewald_cut_old_2 = h_ewald_cut(box_shk)
+     END IF
+
+     ! store cutoffs and other associated quantities
+     rcut_vdw(box_shk) = 0.5_DP * box_list(box_shk)%length(1,1)
+     rcut_coul(box_shk) = rcut_vdw(box_shk)
+     rcut_vdwsq(box_shk) = rcut_vdw(box_shk) * rcut_vdw(box_shk)
+     rcut_coulsq(box_shk) = rcut_vdwsq(box_shk)
+
+     rcut_vdw3(box_shk) = rcut_vdwsq(box_shk) * rcut_vdw(box_shk)
+     rcut_vdw6(box_shk) = rcut_vdw3(box_shk) * rcut_vdw3(box_shk)
+     rcut3(box_shk) = rcut_vdw3(box_shk)
+     rcut9(box_shk) = rcut3(box_shk) * rcut_vdw6(box_shk)
+
+     rcut_max(box_shk) = rcut_vdw(box_shk)
+     
+     IF (int_charge_sum_style(box_shk) == charge_ewald) THEN
+!        alpha_ewald(box_shk) = ewald_p_sqrt(box_shk) / rcut_coul(box_shk)
+        h_ewald_cut(box_shk) = 2.0_DP * ewald_p(box_shk) / rcut_coul(box_shk)
+     END IF
 
   ELSE
      
-     IF ( box_list(box_shk)%int_box_shape == int_cubic ) THEN
-        IF ( 0.5_DP * box_list(box_shk)%length(1,1) < rcut_vdw(box_shk) .OR. &
-             0.5_DP * box_list(box_shk)%length(1,1) < rcut_coul(box_shk) .OR. &
-             0.5_DP * box_list(box_shk)%length(1,1) < roff_charmm(box_shk) .OR. &
-             0.5_DP * box_list(box_shk)%length(1,1) < roff_switch(box_shk) ) THEN
-           err_msg = ''
-           err_msg(1) = 'Cutoff is greater than the half box length'
-           err_msg(2) = Int_To_String(box_shk)
-           CALL Clean_Abort(err_msg,'GEMC_NVT_Volume')
-        END IF
+     IF ( 0.5_DP * box_list(box_shk)%length(1,1) < rcut_vdw(box_shk) .OR. &
+          0.5_DP * box_list(box_shk)%length(1,1) < rcut_coul(box_shk) .OR. &
+          0.5_DP * box_list(box_shk)%length(1,1) < roff_charmm(box_shk) .OR. &
+          0.5_DP * box_list(box_shk)%length(1,1) < roff_switch(box_shk) ) THEN
+        err_msg = ''
+        err_msg(1) = 'Cutoff is greater than the half box length'
+        err_msg(2) = Int_To_String(box_shk)
+        CALL Clean_Abort(err_msg,'GEMC_NVT_Volume')
      END IF
      
   END IF
@@ -513,12 +474,9 @@ SUBROUTINE GEMC_NVT_Volume
 
    END IF
 
-   IF (verbose_log) THEN
-     WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8)') i_mcstep, 'volswap_to', box_grw, accept
-   END IF
-
   ! Update the maximum volume modulus of equilibration runs
    IF (MOD(nvolumes(box_grw),nvol_update) == 0 ) THEN
+      WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,F8.5)',ADVANCE='NO') i_mcstep, 'volswap_to' , box_grw, success_ratio
 
       IF ( int_run_type == run_equil) THEN
 
@@ -526,19 +484,18 @@ SUBROUTINE GEMC_NVT_Volume
          ivol_success(box_grw) = 0
          ivol_success(box_shk) = 0
       
-         IF (box_list(box_grw)%int_box_shape == int_cubic ) THEN
-            IF ( success_ratio < 0.0001 ) THEN
-               ! decrease the maximum displacement by 5%
-               
-               box_list(:)%dv_max = 0.1_DP * box_list(:)%dv_max
-               
-            ELSE
-               
-               box_list(:)%dv_max = 2.0_DP*success_ratio * box_list(:)%dv_max
-
-            END IF
+         IF ( success_ratio < 0.0001 ) THEN
+            ! decrease the maximum displacement to 10%
             
+            box_list(:)%dv_max = 0.1_DP * box_list(:)%dv_max
+            
+         ELSE
+            
+            box_list(:)%dv_max = 2.0_DP*success_ratio * box_list(:)%dv_max
+
          END IF
+
+         WRITE(logunit,'(X,F9.0)',ADVANCE='NO') box_list(box_grw)%dv_max
 
       ELSE
 
@@ -546,9 +503,14 @@ SUBROUTINE GEMC_NVT_Volume
          
       END IF
 
-      WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,3X,X,F8.5)') i_mcstep, 'vol_swap', success_ratio
+      WRITE(logunit,*)
       
    END IF
+
+   IF (verbose_log) THEN
+     WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8)') i_mcstep, 'volswap_to', box_grw, accept
+   END IF
+
    
  CONTAINS
    
