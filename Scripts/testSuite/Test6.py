@@ -13,7 +13,7 @@ bold = '\033[1m' #Will make text bold
 normal = '\033[0m' #Will make the next text normal(ie. unbold)
 
 #This prints the starting line.
-print "\n\n"+bold+"Test 6: Nist something Commencing ... " + normal 
+print "\n\n"+bold+"Test 6: NIST Lennard Jones Commencing ... " + normal 
 #Creates(opens if already existent) the file file.inp which will be our input file while running cassandra
 # The input files are all angle. because it deals with the angle test.
 input_inp = open("nist.inp","w")
@@ -101,14 +101,12 @@ xyz = open("nist1.xyz").read() #Reads in the orginal xyz file (used for read_con
 
 
 # Run Cassandra
-print "running"
 #proc = sp.Popen(["/afs/crc.nd.edu/x86_64_linux/c/cassandra/src/Cassandra_V1.2/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
 proc = sp.Popen(["/afs/crc.nd.edu/user/l/lpink/Git/Cassandra/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
 (out, err) = proc.communicate()
 
 if err is not None: 
 	print("Error.Abort. ")
-print "done"
 
 # Next, we will write over specific lines of the input file created above using a function, called replace_line that is created below. 
 # This fucntion takes three inputs: the name of the file where you would like to replace a line, the line number you would like to replace, and the text you want to replace the old text with. 
@@ -154,13 +152,11 @@ xyz = open("nist2.xyz").read() #Reads in the orginal xyz file (used for read_con
 
 
 # Run Cassandra
-print "running 2"
 proc = sp.Popen(["/afs/crc.nd.edu/user/l/lpink/Git/Cassandra/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
 (out, err) = proc.communicate()
 
 if err is not None: 
 	print("Error.Abort. ")
-print "done 2"
 
 # NIST 3
 input_nist3 = open("nist3.xyz","w") #Creates an input xyz file (used for read_config)
@@ -197,14 +193,12 @@ xyz = open("nist3.xyz").read() #Reads in the orginal xyz file (used for read_con
 
 
 # Run Cassandra
-print "running 3"
 #proc = sp.Popen(["/afs/crc.nd.edu/x86_64_linux/c/cassandra/src/Cassandra_V1.2/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
 proc = sp.Popen(["/afs/crc.nd.edu/user/l/lpink/Git/Cassandra/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
 (out, err) = proc.communicate()
 
 if err is not None: 
 	print("Error.Abort. ")
-print "done 3"
 
 # NOW FOR NIST 4
 input_nist4 = open("nist4.xyz","w") #Creates an input xyz file (used for read_config)
@@ -240,14 +234,12 @@ xyz = open("nist4.xyz").read() #Reads in the orginal xyz file (used for read_con
 
 
 # Run Cassandra
-print "running"
 ##proc = sp.Popen(["/afs/crc.nd.edu/x86_64_linux/c/cassandra/src/Cassandra_V1.2/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
 proc = sp.Popen(["/afs/crc.nd.edu/user/l/lpink/Git/Cassandra/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
 (out, err) = proc.communicate()
 
 if err is not None: 
 	print("Error.Abort. ")
-print "done"
 
 
 
@@ -261,14 +253,12 @@ replace_line("nist.inp", 37, "nist.mcf 800\n")
 
 
 # Run Cassandra
-print "running 5"
 #proc = sp.Popen(["/afs/crc.nd.edu/x86_64_linux/c/cassandra/src/Cassandra_V1.2/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
 proc = sp.Popen(["/afs/crc.nd.edu/user/l/lpink/Git/Cassandra/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
 (out, err) = proc.communicate()
 
 if err is not None: 
 	print("Error.Abort. ")
-print "done 5"
 
 # Check 2 - Nist 2. 
 replace_line("nist.inp", 1, "test6_check2_nist2.out\n")
@@ -276,14 +266,12 @@ replace_line("nist.inp", 60, "read_config 200 nist2.xyz\n")
 replace_line("nist.inp", 37, "nist.mcf 200\n")
 
 # Run Cassandra
-print "running 6"
 ##proc = sp.Popen(["/afs/crc.nd.edu/x86_64_linux/c/cassandra/src/Cassandra_V1.2/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
 proc = sp.Popen(["/afs/crc.nd.edu/user/l/lpink/Git/Cassandra/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
 (out, err) = proc.communicate()
 
 if err is not None: 
 	print("Error.Abort. ")
-print "done 6"
 
 # Check 2 - Nist 3. 
 replace_line("nist.inp", 1, "test6_check2_nist3.out\n")
@@ -291,14 +279,12 @@ replace_line("nist.inp", 60, "read_config 400 nist3.xyz\n")
 replace_line("nist.inp", 37, "nist.mcf 400\n")
 
 # Run Cassandra
-print "running 7"
 #proc = sp.Popen(["/afs/crc.nd.edu/x86_64_linux/c/cassandra/src/Cassandra_V1.2/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
 proc = sp.Popen(["/afs/crc.nd.edu/user/l/lpink/Git/Cassandra/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
 (out, err) = proc.communicate()
 
 if err is not None: 
 	print("Error.Abort. ")
-print "done 7"
 
 # Check 2 - Nist 4. 
 replace_line("nist.inp", 1, "test6_check2_nist4.out\n")
@@ -306,13 +292,671 @@ replace_line("nist.inp", 60, "read_config 30 nist4.xyz\n")
 replace_line("nist.inp", 37, "nist.mcf 30\n")
 
 ## Run Cassandra
-print "running 8"
 ##proc = sp.Popen(["/afs/crc.nd.edu/x86_64_linux/c/cassandra/src/Cassandra_V1.2/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
 proc = sp.Popen(["/afs/crc.nd.edu/user/l/lpink/Git/Cassandra/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
 (out, err) = proc.communicate()
 
 if err is not None: 
 	print("Error.Abort. ")
-print "done 8"
+
+# Next, the four starting energies will be found in the output .log file for each test. This line will be extracted and saved in this python script so we can use it for comparison at the very end of the script. 
+# Finding a string - using an if statement in a for loop
+# For the first test
+# shakes opens the desired file in the read format
+shakes = open("test6_check1_nist1.out.log", "r")
+
+# Now we will extract numbers --> CHECK 1 NIST 1
+# The for loop will search line by line in shakes for the words "Total system energy", once found the line will be saved as a variable.
+for line in shakes:
+	if re.match("(.*)Total system energy(.*)",line):
+		line_tot11 = line
+
+# Extract vdw energy
+shakes = open("test6_check1_nist1.out.log", "r")
+for line in shakes:
+	if re.match("(.*)Inter molecule vdw(.*)",line):
+		line_vdw11 = line
+
+#Extract long range correction energy
+shakes = open("test6_check1_nist1.out.log", "r")
+for line in shakes:
+	if re.match("(.*)Long range correction(.*)",line):
+		line_long11 = line
 
 
+#print "1"
+#print line_tot11
+#print line_vdw11
+#print line_long11
+
+# CHECK 1 NIST 2
+shakes = open("test6_check1_nist2.out.log", "r")
+for line in shakes:
+	if re.match("(.*)Total system energy(.*)",line):
+		line_tot12 = line
+
+# Extract vdw energy
+shakes = open("test6_check1_nist2.out.log", "r")
+for line in shakes:
+	if re.match("(.*)Inter molecule vdw(.*)",line):
+		line_vdw12 = line
+
+#Extract long range correction energy
+shakes = open("test6_check1_nist2.out.log", "r")
+for line in shakes:
+	if re.match("(.*)Long range correction(.*)",line):
+		line_long12 = line
+
+
+#print "2"
+#print line_tot12
+#print line_vdw12
+#print line_long12
+
+# CHECK 1 NIST 3
+shakes = open("test6_check1_nist3.out.log", "r")
+for line in shakes:
+	if re.match("(.*)Total system energy(.*)",line):
+		line_tot13 = line
+
+# Extract vdw energy
+shakes = open("test6_check1_nist3.out.log", "r")
+for line in shakes:
+	if re.match("(.*)Inter molecule vdw(.*)",line):
+		line_vdw13 = line
+
+#Extract long range correction energy
+shakes = open("test6_check1_nist3.out.log", "r")
+for line in shakes:
+	if re.match("(.*)Long range correction(.*)",line):
+		line_long13 = line
+
+
+#print "3"
+#print line_tot13
+#print line_vdw13
+#print line_long13
+
+# CHECK 1 NIST 4
+shakes = open("test6_check1_nist4.out.log", "r")
+for line in shakes:
+	if re.match("(.*)Total system energy(.*)",line):
+		line_tot14 = line
+
+# Extract vdw energy
+shakes = open("test6_check1_nist4.out.log", "r")
+for line in shakes:
+	if re.match("(.*)Inter molecule vdw(.*)",line):
+		line_vdw14 = line
+
+#Extract long range correction energy
+shakes = open("test6_check1_nist4.out.log", "r")
+for line in shakes:
+	if re.match("(.*)Long range correction(.*)",line):
+		line_long14 = line
+
+
+#print "4"
+#print line_tot14
+#print line_vdw14
+#print line_long14
+
+# CHECK 2 NIST 1
+shakes = open("test6_check2_nist1.out.log", "r")
+for line in shakes:
+	if re.match("(.*)Total system energy(.*)",line):
+		line_tot21 = line
+
+# Extract vdw energy
+shakes = open("test6_check2_nist1.out.log", "r")
+for line in shakes:
+	if re.match("(.*)Inter molecule vdw(.*)",line):
+		line_vdw21 = line
+
+#Extract long range correction energy
+shakes = open("test6_check2_nist1.out.log", "r")
+for line in shakes:
+	if re.match("(.*)Long range correction(.*)",line):
+		line_long21 = line
+
+
+#print "5"
+#print line_tot21
+#print line_vdw21
+#print line_long21
+
+# CHECK 2 NIST 2
+shakes = open("test6_check2_nist2.out.log", "r")
+for line in shakes:
+	if re.match("(.*)Total system energy(.*)",line):
+		line_tot22 = line
+
+# Extract vdw energy
+shakes = open("test6_check2_nist2.out.log", "r")
+for line in shakes:
+	if re.match("(.*)Inter molecule vdw(.*)",line):
+		line_vdw22 = line
+
+#Extract long range correction energy
+shakes = open("test6_check2_nist2.out.log", "r")
+for line in shakes:
+	if re.match("(.*)Long range correction(.*)",line):
+		line_long22 = line
+
+
+#print "6"
+#print line_tot22
+#print line_vdw22
+#print line_long22
+
+# CHECK 2 NIST 3
+shakes = open("test6_check2_nist3.out.log", "r")
+for line in shakes:
+	if re.match("(.*)Total system energy(.*)",line):
+		line_tot23 = line
+
+# Extract vdw energy
+shakes = open("test6_check2_nist3.out.log", "r")
+for line in shakes:
+	if re.match("(.*)Inter molecule vdw(.*)",line):
+		line_vdw23 = line
+
+#Extract long range correction energy
+shakes = open("test6_check2_nist3.out.log", "r")
+for line in shakes:
+	if re.match("(.*)Long range correction(.*)",line):
+		line_long23 = line
+
+
+#print "7"
+#print line_tot23
+#print line_vdw23
+#print line_long23
+
+# CHECK 2 NIST 4
+shakes = open("test6_check2_nist4.out.log", "r")
+for line in shakes:
+	if re.match("(.*)Total system energy(.*)",line):
+		line_tot24 = line
+
+# Extract vdw energy
+shakes = open("test6_check2_nist4.out.log", "r")
+for line in shakes:
+	if re.match("(.*)Inter molecule vdw(.*)",line):
+		line_vdw24 = line
+
+#Extract long range correction energy
+shakes = open("test6_check2_nist4.out.log", "r")
+for line in shakes:
+	if re.match("(.*)Long range correction(.*)",line):
+		line_long24 = line
+
+
+#print "8"
+#print line_tot24
+#print line_vdw24
+#print line_long24
+
+# NOW WE will extract the number!
+# For check 1 nist 1 total
+num111 = []
+# Use a for loop in order to go through each character in the line independently.
+for t in line_tot11.split():
+	try:
+		num111.append(float(t))
+	except ValueError:
+		pass
+num111 = num111[0]
+
+# for check 1 nist 1 vdw
+num112 = []
+for t in line_vdw11.split():
+	try:
+		num112.append(float(t))
+	except ValueError:
+		pass
+num112 = num112[0]
+
+# for check 1 nist 1 long
+num113 = []
+for t in line_long11.split():
+	try:
+		num113.append(float(t))
+	except ValueError:
+		pass
+num113 = num113[0]
+
+#print num111
+#print num112
+#print num113
+
+# For check 1 nist 2 total
+num121 = []
+# Use a for loop in order to go through each character in the line independently.
+for t in line_tot12.split():
+# Save the number in the line to the variable num1 as a float
+	try:
+		num121.append(float(t))
+# Otherwise, do nothing.
+	except ValueError:
+		pass
+# Extract the only number in the list as a variable.
+num121 = num121[0]
+
+# for check 1 nist 2 vdw
+num122 = []
+# Use a for loop in order to go through each character in the line independently.
+for t in line_vdw12.split():
+# Save the number in the line to the variable num1 as a float
+	try:
+		num122.append(float(t))
+# Otherwise, do nothing.
+	except ValueError:
+		pass
+# Extract the only number in the list as a variable.
+num122 = num122[0]
+
+# for check 1 nist 2 long
+num123 = []
+# Use a for loop in order to go through each character in the line independently.
+for t in line_long12.split():
+# Save the number in the line to the variable num1 as a float
+	try:
+		num123.append(float(t))
+# Otherwise, do nothing.
+	except ValueError:
+		pass
+# Extract the only number in the list as a variable.
+num123 = num123[0]
+
+#print num121
+#print num122
+#print num123
+
+# For check 1 nist 3 total
+num131 = []
+# Use a for loop in order to go through each character in the line independently.
+for t in line_tot13.split():
+	try:
+		num131.append(float(t))
+	except ValueError:
+		pass
+num131 = num131[0]
+
+# for check 1 nist 3 vdw
+num132 = []
+for t in line_vdw13.split():
+	try:
+		num132.append(float(t))
+	except ValueError:
+		pass
+num132 = num132[0]
+
+# for check 1 nist 3 long
+num133 = []
+for t in line_long13.split():
+	try:
+		num133.append(float(t))
+	except ValueError:
+		pass
+num133 = num133[0]
+
+#print num131
+#print num132
+#print num133
+
+# For check 1 nist 4 total
+num141 = []
+# Use a for loop in order to go through each character in the line independently.
+for t in line_tot14.split():
+	try:
+		num141.append(float(t))
+	except ValueError:
+		pass
+num141 = num141[0]
+
+# for check 1 nist 4 vdw
+num142 = []
+for t in line_vdw14.split():
+	try:
+		num142.append(float(t))
+	except ValueError:
+		pass
+num142 = num142[0]
+
+# for check 1 nist 4 long
+num143 = []
+for t in line_long14.split():
+	try:
+		num143.append(float(t))
+	except ValueError:
+		pass
+num143 = num143[0]
+
+#print num141
+#print num142
+#print num143
+
+# For check 2 nist 1 total
+num211 = []
+# Use a for loop in order to go through each character in the line independently.
+for t in line_tot21.split():
+	try:
+		num211.append(float(t))
+	except ValueError:
+		pass
+num211 = num211[0]
+
+# for check 1 nist 1 vdw
+num212 = []
+for t in line_vdw21.split():
+	try:
+		num212.append(float(t))
+	except ValueError:
+		pass
+num212 = num212[0]
+
+# for check 1 nist 1 long
+num213 = []
+for t in line_long21.split():
+	try:
+		num213.append(float(t))
+	except ValueError:
+		pass
+num213 = num213[0]
+
+#print num211
+#print num212
+#print num213
+
+# For check 1 nist 2 total
+num221 = []
+# Use a for loop in order to go through each character in the line independently.
+for t in line_tot22.split():
+# Save the number in the line to the variable num1 as a float
+	try:
+		num221.append(float(t))
+# Otherwise, do nothing.
+	except ValueError:
+		pass
+# Extract the only number in the list as a variable.
+num221 = num221[0]
+
+# for check 1 nist 2 vdw
+num222 = []
+# Use a for loop in order to go through each character in the line independently.
+for t in line_vdw22.split():
+# Save the number in the line to the variable num1 as a float
+	try:
+		num222.append(float(t))
+# Otherwise, do nothing.
+	except ValueError:
+		pass
+# Extract the only number in the list as a variable.
+num222 = num222[0]
+
+# for check 1 nist 2 long
+num223 = []
+# Use a for loop in order to go through each character in the line independently.
+for t in line_long22.split():
+# Save the number in the line to the variable num1 as a float
+	try:
+		num223.append(float(t))
+# Otherwise, do nothing.
+	except ValueError:
+		pass
+# Extract the only number in the list as a variable.
+num223 = num223[0]
+
+#print num221
+#print num222
+#print num223
+
+# For check 1 nist 3 total
+num231 = []
+# Use a for loop in order to go through each character in the line independently.
+for t in line_tot23.split():
+	try:
+		num231.append(float(t))
+	except ValueError:
+		pass
+num231 = num231[0]
+
+# for check 1 nist 3 vdw
+num232 = []
+for t in line_vdw23.split():
+	try:
+		num232.append(float(t))
+	except ValueError:
+		pass
+num232 = num232[0]
+
+# for check 1 nist 3 long
+num233 = []
+for t in line_long23.split():
+	try:
+		num233.append(float(t))
+	except ValueError:
+		pass
+num233 = num233[0]
+
+#print num231
+#print num232
+#print num233
+
+# For check 1 nist 4 total
+num241 = []
+# Use a for loop in order to go through each character in the line independently.
+for t in line_tot24.split():
+	try:
+		num241.append(float(t))
+	except ValueError:
+		pass
+num241 = num241[0]
+
+# for check 1 nist 4 vdw
+num242 = []
+for t in line_vdw24.split():
+	try:
+		num242.append(float(t))
+	except ValueError:
+		pass
+num242 = num242[0]
+
+# for check 1 nist 4 long
+num243 = []
+for t in line_long24.split():
+	try:
+		num243.append(float(t))
+	except ValueError:
+		pass
+num243 = num243[0]
+
+#print num241
+#print num242
+#print num243
+
+# Lastly, we will compare all these numbers and test the Cassandra Code 
+# Check 1
+print "\n"+bold+"Check 1 (Cutoff Radius, 3 sigma): " + normal
+# For NIST 1
+print bold+"Configuration NIST 1: " + normal
+# For Total
+if (num111/100 + 4548.72) < 1:
+	c1 = 1
+	print "Total..."
+else: 
+	c1 = 0 
+	print "Total Fails."
+
+# For vdw
+if (num112/100 + 4351.5) < 4:
+	c2 = 1
+	print "Vdw..."
+else: 
+	c2 = 0 
+	print "Vdw Fails."
+
+#for long
+if (num113/100 + 198.49) < 1:
+	c3 = 1
+	print "Long range..."
+else: 
+	c3 = 0 
+	print "Long Range Fails."
+
+if c1 == 1 and c2 == 1 and c3 == 1:
+	n1 = 1
+	print bold + "NIST 1..." + normal
+else:
+	n1 = 0 
+	print bold + "NIST 1 fails. See above." + normal
+
+# For NIST 2
+
+
+
+# For NIST 3
+print bold+"Configuration NIST 3: " + normal
+# For Total
+if (num131/100 + -1194.59) < 1:
+	c1 = 1
+	print "Total..."
+else: 
+	c1 = 0 
+	print "Total Fails."
+
+# For vdw
+if (num132/100 + 1144.96 ) < 4:
+	c2 = 1
+	print "Vdw..."
+else: 
+	c2 = 0 
+	print "Vdw Fails."
+
+#for long
+if (num133/100 + 49.622) < 1:
+	c3 = 1
+	print "Long range..."
+else: 
+	c3 = 0 
+	print "Long Range Fails."
+
+# pass nist 2 - check 1
+
+if c1 == 1 and c2 == 1 and c3 == 1:
+	n3 = 1
+	print bold + "NIST 3..."+normal
+else:
+	n3 = 0 
+	print bold + "NIST 3 fails. See above." + normal
+
+#NIST 4
+
+
+#check all nist
+if n1 == 1 and n3 == 1:
+	C1 = 1
+	print bold + "Check 1..." + normal
+else:
+	C1 = 0
+	print bold + "check 1 fails. See above." + normal
+
+
+
+
+# CHECK 2
+# Lastly, we will compare all these numbers and test the Cassandra Code 
+# Check 1
+print "\n"+bold+"Check 2 (Cutoff Radius, 4 sigma): " + normal
+# For NIST 1
+print bold+"Configuration NIST 1: " + normal
+# For Total
+if (num211/100 + 4549.95) < 4:
+	c1 = 1
+	print "Total..."
+else: 
+	c1 = 0 
+	print "Total Fails."
+
+# For vdw
+if (num212/100 + 4467.5) < 4:
+	c2 = 1
+	print "Vdw..."
+else: 
+	c2 = 0 
+	print "Vdw Fails."
+
+#for long
+if (num213/100 + 83.769) < 1:
+	c3 = 1
+	print "Long range..."
+else: 
+	c3 = 0 
+	print "Long Range Fails."
+
+if c1 == 1 and c2 == 1 and c3 == 1:
+	n1 = 1
+	print bold + "NIST 1..." + normal
+else:
+	n1 = 0 
+	print bold + "NIST 1 fails. See above." + normal
+
+# For NIST 2
+
+
+
+# For NIST 3
+print bold+"Configuration NIST 3: " + normal
+# For Total
+if (num231/100 + -1194.62) < 1:
+	c1 = 1
+	print "Total..."
+else: 
+	c1 = 0 
+	print "Total Fails."
+
+# For vdw
+if (num232/100 + 1175.4) < 4:
+	c2 = 1
+	print "Vdw..."
+else: 
+	c2 = 0 
+	print "Vdw Fails."
+
+#for long
+if (num233/100 + 20.942) < 1:
+	c3 = 1
+	print "Long range..."
+else: 
+	c3 = 0 
+	print "Long Range Fails."
+
+# pass nist 2 - check 1
+
+if c1 == 1 and c2 == 1 and c3 == 1:
+	n3 = 1
+	print bold + "NIST 3..." + normal
+else:
+	n3 = 0 
+	print bold + "NIST 3 fails. See above." + normal
+
+#NIST 4
+
+
+#check all nist
+if n1 == 1 and n3 == 1:
+	C2 = 1
+	print bold + "Check 2..." + normal
+else:
+	C2 = 0
+	print bold + "check 2 fails. See above." + normal
+
+
+
+# FINAL CHECK: 
+
+if C1 == 1 and C2 == 1: 
+	print bold + "Pass Test 6: NIST Lennard Jones Energy." + normal
+else: 
+	print bold + "Test 6 fails." + normal
