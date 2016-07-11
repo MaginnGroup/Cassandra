@@ -126,7 +126,7 @@ SUBROUTINE GEMC_Particle_Transfer
      DO ibox = 1, nbr_boxes
        DO is = 1, nspecies
          ! Only count swappable species
-         IF ( species_list(is)%insertion == 'CBMC' ) THEN
+         IF ( species_list(is)%int_insert /= int_noinsert ) THEN
            nmols_tot = nmols_tot + nmols(is,ibox)
            nmols_box(ibox) = nmols_box(ibox) + nmols(is,ibox)
          END IF
@@ -202,7 +202,7 @@ SUBROUTINE GEMC_Particle_Transfer
      ! Need cumulative mol fractions for Golden sampling
      x_is = 0.0_DP
      DO is = 1, nspecies
-        IF (species_list(is)%insertion /= 'none') THEN
+        IF (species_list(is)%int_insert /= int_noinsert) THEN
            x_is(is) = REAL(nmols(is,box_out),DP)/REAL(nmols_box(box_out),DP)
         END IF
         IF ( is > 1 ) THEN
