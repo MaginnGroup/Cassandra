@@ -22,3 +22,9 @@ subprocess.call(["python", "Test3_Angle_StartEnergy.py"])
 # Test 4: Dihedral Starting Energy:
 	# This test is designed to... 
 subprocess.call(["python", "Test4_Dihedral_StartEnergy.py"])
+
+# Test 5: Improper Energy:
+
+# Test 6: NIST Lennard Jones Energy:
+	# This test is designed to... 
+subprocess.call(["python", "Test6_NIST_LennardJonesEnergy.py"])

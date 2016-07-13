@@ -3,8 +3,8 @@ Run info
 version: Cassandra Development Version
 inputfile: nist.inp
 name of run: test6_check1_nist2.out
-date (mm/dd/yyyy): 07/11/2016
-time: 14:30:55
+date (mm/dd/yyyy): 07/13/2016
+time: 10:22:25
 machine: crcfe02.crc.nd.edu
 ********************************************************************************
  
@@ -53,7 +53,7 @@ Copy input file
  # Box_Info
  1
  CUBIC
- 35.4
+ 28.32
  
  # Temperature_Info
  300.0
@@ -108,11 +108,11 @@ Box info
 ********************************************************************************
 Number of simulation boxes     1
 Box 1 is cubic               
- Each Side Of :       35.4000     Angstrom
- Cell basis vector lengths in A,     35.4000      35.4000      35.4000
+ Each Side Of :       28.3200     Angstrom
+ Cell basis vector lengths in A,     28.3200      28.3200      28.3200
  Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
- Distance between box faces    35.4000      35.4000      35.4000
- Box volume, A^3         44361.8640
+ Distance between box faces    28.3200      28.3200      28.3200
+ Box volume, A^3         22713.2744
 ********************************************************************************
  
 Pair style
@@ -250,7 +250,7 @@ Compute total energy
  Starting energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                -59966.934
+ Total system energy is                -71423.353
  Intra molecular energy is                  0.000
  Bond energy is                             0.000
  Bond angle energy is                       0.000
@@ -258,8 +258,8 @@ Compute total energy
  Improper angle energy is                   0.000
  Intra molecule vdw is                      0.000
  Intra molecule q is                        0.000
- Inter molecule vdw is                 -58726.379
- Long range correction is               -1240.555
+ Inter molecule vdw is                 -69000.393
+ Long range correction is               -2422.960
  Inter molecule q is                        0.000
  -----------------------------------------------------------
  
@@ -277,7 +277,7 @@ Report ending energy & then re-compute from scratch
  Ending energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                -59632.799
+ Total system energy is                -71096.011
  Intra molecular energy is                  0.000
  Bond energy is                             0.000
  Angle energy is                            0.000
@@ -285,8 +285,8 @@ Report ending energy & then re-compute from scratch
  Improper angle energy is                   0.000
  Intra molecule vdw is                      0.000
  Intra molecule q is                        0.000
- Inter molecule vdw is                 -58392.243
- Long range correction is               -1240.555
+ Inter molecule vdw is                 -68673.051
+ Long range correction is               -2422.960
  Inter molecule q is                        0.000
  -----------------------------------------------------------
  
@@ -294,7 +294,7 @@ Report ending energy & then re-compute from scratch
  Energy components from total energy call for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                -59632.799
+ Total system energy is                -71096.011
  Intra molecular energy is                  0.000
  Bond energy is                             0.000
  Angle energy is                            0.000
@@ -302,8 +302,8 @@ Report ending energy & then re-compute from scratch
  Improper angle energy is                   0.000
  Intra molecule vdw is                      0.000
  Intra molecule q is                        0.000
- Inter molecule vdw is                 -58392.243
- Long range correction is               -1240.555
+ Inter molecule vdw is                 -68673.051
+ Long range correction is               -2422.960
  Inter molecule q is                        0.000
  -----------------------------------------------------------
 ********************************************************************************
@@ -323,6 +323,7 @@ Writing information for box  1
  
  Writing information about subroutine times
 ********************************************************************************
+ Translation time =            0.000999 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -337,5 +338,5 @@ Writing information for box  1
          0      Hours
          0    Minutes
          0    Seconds
-       123         ms
+       135         ms
 ********************************************************************************

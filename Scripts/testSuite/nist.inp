@@ -35,13 +35,13 @@ LB
 !---------------
 
 # Molecule_Files
-nist.mcf 30
+water.mcf 200
 !----------------
 
 # Box_Info
 1
 CUBIC
-35.4
+20
 !---------------
 
 # Temperature_Info
@@ -58,7 +58,7 @@ CUBIC
 !----------------
 
 # Start_Type
-read_config 30 nist4.xyz
+read_config 200 water2.xyz
 !---------------
 
 # Run_Type

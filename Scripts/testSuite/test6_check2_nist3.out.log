@@ -3,8 +3,8 @@ Run info
 version: Cassandra Development Version
 inputfile: nist.inp
 name of run: test6_check2_nist3.out
-date (mm/dd/yyyy): 07/11/2016
-time: 14:30:58
+date (mm/dd/yyyy): 07/13/2016
+time: 10:22:29
 machine: crcfe02.crc.nd.edu
 ********************************************************************************
  
@@ -323,7 +323,7 @@ Writing information for box  1
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.001000 secs.
+ Translation time =            0.000999 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -338,5 +338,5 @@ Writing information for box  1
          0      Hours
          0    Minutes
          0    Seconds
-       580         ms
+       505         ms
 ********************************************************************************

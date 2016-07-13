@@ -1,0 +1,91 @@
+# Run_Name
+test7_water4.out
+!---------------
+
+# Sim_Type
+NVT_MC
+!---------------
+
+# Nbr_Species
+1
+!---------------
+
+# VDW_Style
+LJ cut_tail 10.000
+!---------------
+
+# Charge_Style
+coul ewald 10.0 0.000001
+!---------------
+
+# Mixing_Rule
+LB
+!---------------
+
+# Seed_Info
+21498  489625
+!---------------
+
+# Rcutoff_Low
+0.85
+!---------------
+
+# Molecule_Files
+water.mcf 750
+!----------------
+
+# Box_Info
+1
+CUBIC
+30
+!---------------
+
+# Temperature_Info
+300.0
+!---------------
+
+# Move_Probability_Info
+
+# Prob_Translation
+90
+38.0
+
+# Done_Probability_Info
+!----------------
+
+# Start_Type
+read_config 750 water4.xyz
+!---------------
+
+# Run_Type
+Equilibration 100
+!---------------
+
+# Average_Info
+1
+!---------------(0 = yes, 1 = no)
+
+# Simulation_Length_Info
+Units Steps
+Prop_Freq 1
+Coord_Freq 1
+Run 1
+!---------------
+
+# Property_Info 1
+Energy_Total
+Pressure
+Volume
+Nmols
+Density
+!---------------
+
+# Fragment_Files
+!---------------one line per fragment
+
+# CBMC_Info
+kappa_ins 12
+rcut_cbmc 6.5
+!---------------
+
+END

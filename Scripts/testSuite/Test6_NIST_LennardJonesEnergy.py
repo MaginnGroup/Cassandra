@@ -146,6 +146,7 @@ input_nist2.close()
 replace_line("nist.inp", 1, "test6_check1_nist2.out\n")
 replace_line("nist.inp", 60, "read_config 200 nist2.xyz\n")
 replace_line("nist.inp", 37, "nist.mcf 200\n")
+replace_line("nist.inp", 43, "28.32\n")
 
 # open files for read
 xyz = open("nist2.xyz").read() #Reads in the orginal xyz file (used for read_config)
@@ -186,6 +187,8 @@ input_nist3.close()
 replace_line("nist.inp", 1, "test6_check1_nist3.out\n")
 replace_line("nist.inp", 60, "read_config 400 nist3.xyz\n")
 replace_line("nist.inp", 37, "nist.mcf 400\n")
+replace_line("nist.inp", 43, "35.4\n")
+
 
 
 # open files for read
@@ -228,6 +231,8 @@ input_nist4.close()
 replace_line("nist.inp", 1, "test6_check1_nist4.out\n")
 replace_line("nist.inp", 60, "read_config 30 nist4.xyz\n")
 replace_line("nist.inp", 37, "nist.mcf 30\n")
+replace_line("nist.inp", 43, "28.32\n")
+
 
 # open files for read
 xyz = open("nist4.xyz").read() #Reads in the orginal xyz file (used for read_config)
@@ -249,6 +254,8 @@ replace_line("nist.inp", 1, "test6_check2_nist1.out\n")
 replace_line("nist.inp", 13, "LJ cut_tail 14.16\n")
 replace_line("nist.inp", 60, "read_config 800 nist1.xyz\n")
 replace_line("nist.inp", 37, "nist.mcf 800\n")
+replace_line("nist.inp", 43, "35.4\n")
+
 
 
 
@@ -264,6 +271,8 @@ if err is not None:
 replace_line("nist.inp", 1, "test6_check2_nist2.out\n")
 replace_line("nist.inp", 60, "read_config 200 nist2.xyz\n")
 replace_line("nist.inp", 37, "nist.mcf 200\n")
+replace_line("nist.inp", 43, "28.32\n")
+
 
 # Run Cassandra
 ##proc = sp.Popen(["/afs/crc.nd.edu/x86_64_linux/c/cassandra/src/Cassandra_V1.2/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
@@ -277,6 +286,8 @@ if err is not None:
 replace_line("nist.inp", 1, "test6_check2_nist3.out\n")
 replace_line("nist.inp", 60, "read_config 400 nist3.xyz\n")
 replace_line("nist.inp", 37, "nist.mcf 400\n")
+replace_line("nist.inp", 43, "35.4\n")
+
 
 # Run Cassandra
 #proc = sp.Popen(["/afs/crc.nd.edu/x86_64_linux/c/cassandra/src/Cassandra_V1.2/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
@@ -290,6 +301,8 @@ if err is not None:
 replace_line("nist.inp", 1, "test6_check2_nist4.out\n")
 replace_line("nist.inp", 60, "read_config 30 nist4.xyz\n")
 replace_line("nist.inp", 37, "nist.mcf 30\n")
+replace_line("nist.inp", 43, "28.32\n")
+
 
 ## Run Cassandra
 ##proc = sp.Popen(["/afs/crc.nd.edu/x86_64_linux/c/cassandra/src/Cassandra_V1.2/Src/cassandra.exe " + "nist.inp"], stdout=sp.PIPE, shell=True) 
@@ -813,6 +826,38 @@ else:
 	print bold + "NIST 1 fails. See above." + normal
 
 # For NIST 2
+print bold+"Configuration NIST 2: " + normal
+# For Total
+if (num111/100 + 710.96) < 1:
+	c1 = 1
+	print "Total..."
+else: 
+	c1 = 0 
+	print "Total Fails."
+
+# For vdw
+if (num112/100 + 690.0) < 5:
+	c2 = 1
+	print "Vdw..."
+else: 
+	c2 = 0 
+	print "Vdw Fails."
+
+#for long
+if (num113/100 + 24.230) < 1:
+	c3 = 1
+	print "Long range..."
+else: 
+	c3 = 0 
+	print "Long Range Fails."
+
+if c1 == 1 and c2 == 1 and c3 == 1:
+	n2 = 1
+	print bold + "NIST 2..." + normal
+else:
+	n2 = 0 
+	print bold + "NIST 2 fails. See above." + normal
+
 
 
 
@@ -852,10 +897,44 @@ else:
 	print bold + "NIST 3 fails. See above." + normal
 
 #NIST 4
+print bold+"Configuration NIST 4: " + normal
+# For Total
+if (num131/100 + -17.46) < 1:
+	c1 = 1
+	print "Total..."
+else: 
+	c1 = 0 
+	print "Total Fails."
+
+# For vdw
+if (num132/100 + 16.92 ) < 1:
+	c2 = 1
+	print "Vdw..."
+else: 
+	c2 = 0 
+	print "Vdw Fails."
+
+#for long
+if (num133/100 + 5.4517) < 1:
+	c3 = 1
+	print "Long range..."
+else: 
+	c3 = 0 
+	print "Long Range Fails."
+
+# pass nist 2 - check 1
+
+if c1 == 1 and c2 == 1 and c3 == 1:
+	n4 = 1
+	print bold + "NIST 4..."+normal
+else:
+	n4 = 0 
+	print bold + "NIST 4 fails. See above." + normal
+
 
 
 #check all nist
-if n1 == 1 and n3 == 1:
+if n1 == 1 and n2 == 1 and n3 == 1 and n4 == 1:
 	C1 = 1
 	print bold + "Check 1..." + normal
 else:
@@ -903,6 +982,37 @@ else:
 	print bold + "NIST 1 fails. See above." + normal
 
 # For NIST 2
+print bold+"Configuration NIST 2: " + normal
+# For Total
+if (num111/100 + 711.56) < 1:
+	c1 = 1
+	print "Total..."
+else: 
+	c1 = 0 
+	print "Total Fails."
+
+# For vdw
+if (num112/100 + 704.60) < 5:
+	c2 = 1
+	print "Vdw..."
+else: 
+	c2 = 0 
+	print "Vdw Fails."
+
+#for long
+if (num113/100 + 10.210) < 1:
+	c3 = 1
+	print "Long range..."
+else: 
+	c3 = 0 
+	print "Long Range Fails."
+
+if c1 == 1 and c2 == 1 and c3 == 1:
+	n2 = 1
+	print bold + "NIST 2..." + normal
+else:
+	n2 = 0 
+	print bold + "NIST 2 fails. See above." + normal
 
 
 
@@ -942,10 +1052,44 @@ else:
 	print bold + "NIST 3 fails. See above." + normal
 
 #NIST 4
+print bold+"Configuration NIST 4: " + normal
+# For Total
+if (num131/100 + -17.41) < 1:
+	c1 = 1
+	print "Total..."
+else: 
+	c1 = 0 
+	print "Total Fails."
+
+# For vdw
+if (num132/100 + 17.060 ) < 1:
+	c2 = 1
+	print "Vdw..."
+else: 
+	c2 = 0 
+	print "Vdw Fails."
+
+#for long
+if (num133/100 + 2.3008) < 1:
+	c3 = 1
+	print "Long range..."
+else: 
+	c3 = 0 
+	print "Long Range Fails."
+
+# pass nist 2 - check 1
+
+if c1 == 1 and c2 == 1 and c3 == 1:
+	n4 = 1
+	print bold + "NIST 4..."+normal
+else:
+	n4 = 0 
+	print bold + "NIST 4 fails. See above." + normal
+
 
 
 #check all nist
-if n1 == 1 and n3 == 1:
+if n1 == 1 and n2 == 1 and n3 == 1 and n4 == 1:
 	C2 = 1
 	print bold + "Check 2..." + normal
 else:
