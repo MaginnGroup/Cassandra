@@ -1277,6 +1277,7 @@ SUBROUTINE Get_Molecule_Info
      CALL Clean_Abort(err_msg,'Get_Molecule_Info')
   END IF
   frag_list(:,:)%natoms = 0 
+  frag_list(:,:)%type = 0 
 
   ALLOCATE(fragment_bond_list(MAXVAL(fragment_bonds),nspecies), Stat = AllocateStatus)
   IF (AllocateStatus /= 0 ) THEN
