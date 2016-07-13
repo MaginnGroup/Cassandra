@@ -183,7 +183,7 @@ CONTAINS
 
     ! start with the ideal gas pressure
     pressure(this_box)%computed = SUM(nmols(:,this_box)) * temperature(this_box) &
-                                / box_list(this_box)%volume * p_const
+                                * kboltz / box_list(this_box)%volume
 
     ! add the pressure from the virial
     CALL Compute_System_Total_Force(this_box)
@@ -193,13 +193,13 @@ CONTAINS
     pressure(this_box)%computed = pressure(this_box)%computed &
                                 + ((pressure_tensor(1,1,this_box) &
                                   + pressure_tensor(2,2,this_box) &
-                                  + pressure_tensor(3,3,this_box)) / 3.0_DP) &
-                                * atomic_to_bar
+                                  + pressure_tensor(3,3,this_box)) / 3.0_DP)
     
+    ! add pressure from tail corrections
     IF(int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
        pressure(this_box)%computed = pressure(this_box)%computed &
                                    + virial(this_box)%lrc &
-                                   / box_list(this_box)%volume * atomic_to_bar
+                                   / box_list(this_box)%volume
     END IF
 
   END SUBROUTINE Compute_Pressure
