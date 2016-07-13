@@ -208,9 +208,6 @@ USE Type_Definitions
   REAL(DP), PARAMETER :: tiny_number  = 0.0000001_DP
   REAL(DP), PARAMETER :: small_number = 0.00001_DP
 
-  ! converstion for ideal pressure
-  REAL(DP), PARAMETER :: p_const = 138.06505
-
   ! Upper limit to prevent overflow in exp(-beta*energy)
   REAL(DP), PARAMETER :: max_kBT = 35.0_DP
 

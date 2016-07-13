@@ -1276,8 +1276,8 @@ SUBROUTINE Get_Molecule_Info
      err_msg(1) = 'memory could not be allocated for frag_list array'
      CALL Clean_Abort(err_msg,'Get_Molecule_Info')
   END IF
-  frag_list(:,:)%natoms = 0
-  frag_list(:,:)%type = 0 
+  frag_list(:,:)%natoms = 0 
+  frag_list(:,:)%type = 0
 
   ALLOCATE(fragment_bond_list(MAXVAL(fragment_bonds),nspecies), Stat = AllocateStatus)
   IF (AllocateStatus /= 0 ) THEN
@@ -3117,6 +3117,11 @@ SUBROUTINE Get_Fragment_Coords
   !ALLOCATE(config_read(nfrag_types))
   !config_read(:) = .FALSE.
   nfrag_types = MAXVAL(frag_list(:,:)%type)
+  IF (nfrag_types /= SUM(nfragments(:))) THEN
+     err_msg = ''
+     err_msg(1) = 'Number of fragments is inconsistent'
+     CALL Clean_Abort(err_msg, "Get_Fragment_Coords")
+  END IF
 
 !  ALLOCATE(frag_library(nfrag_types),STAT=Allocatestatus)
 !  IF (Allocatestatus /= 0 ) THEN
