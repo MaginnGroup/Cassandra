@@ -1,5 +1,5 @@
 # Run_Name
-test6_check2_nist4.out
+test7_water4.out
 !---------------
 
 # Sim_Type
@@ -11,37 +11,33 @@ NVT_MC
 !---------------
 
 # VDW_Style
-LJ cut_tail 14.16
+LJ cut_tail 10.000
 !---------------
 
 # Charge_Style
-NONE
+coul ewald 10.0 0.000001
 !---------------
-
-# Intra_Scaling
-0.0 0.0 0.0 1.0
-!---------------vdw, coul lines for each species
 
 # Mixing_Rule
 LB
 !---------------
 
 # Seed_Info
-55001389 1764321284
+21498  489625
 !---------------
 
 # Rcutoff_Low
-0.0
+0.85
 !---------------
 
 # Molecule_Files
-water.mcf 200
+water.mcf 750
 !----------------
 
 # Box_Info
 1
 CUBIC
-20
+30
 !---------------
 
 # Temperature_Info
@@ -51,14 +47,14 @@ CUBIC
 # Move_Probability_Info
 
 # Prob_Translation
-0.79
-0.5
+90
+38.0
 
 # Done_Probability_Info
 !----------------
 
 # Start_Type
-read_config 200 water2.xyz
+read_config 750 water4.xyz
 !---------------
 
 # Run_Type
@@ -89,8 +85,6 @@ Density
 
 # CBMC_Info
 kappa_ins 12
-kappa_rot 0
-kappa_dih 10
 rcut_cbmc 6.5
 !---------------
 
