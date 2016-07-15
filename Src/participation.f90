@@ -1298,6 +1298,17 @@ CONTAINS
                'harmonic', &
                improper_list(this_improper,is)%improper_param(1)/kboltz, &
                improper_list(this_improper,is)%improper_param(2) * (180_DP/PI)
+
+       ELSE IF (improper_list(this_improper,is)%improper_potential_type == 'cvff') THEN
+
+          WRITE(201,'(I5,2X,4(I4,2X),A8,2X,F10.3,2X,F10.5, 2X, F10.5)') i, &
+               first_atom(i), second_atom(i), third_atom(i), fourth_atom(i), &
+               'cvff', &
+               improper_list(this_improper,is)%improper_param(1)/kjmol_to_atomic,
+&
+               improper_list(this_improper,is)%improper_param(2), &
+               improper_list(this_improper,is)%improper_param(3)
+
                
        ELSE IF (improper_list(this_improper,is)%improper_potential_type == 'none') THEN
           
