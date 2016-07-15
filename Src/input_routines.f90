@@ -3917,16 +3917,20 @@ SUBROUTINE Get_Chemical_Potential_Info
         
         DO is = 1,nspecies
 
+           WRITE(logunit,'(A,X,I5)') 'Species', is
            ALLOCATE(species_list(is)%de_broglie(nbr_boxes))
 
+           ! Assume there will be an entry for each species, including non-insertable species
+           ! If there is not an entry, the counter will be back tracked
+           spec_counter = spec_counter + 1
+
            IF(species_list(is)%int_species_type == int_sorbate) THEN
-              spec_counter = spec_counter + 1
+              ! insertable species, there must be an entry for this species
               species_list(is)%chem_potential = String_To_Double(line_array(spec_counter))
 
               ! convert the chemical potential into atomic units
               species_list(is)%chem_potential = species_list(is)%chem_potential / atomic_to_kJmol
 
-              WRITE(logunit,'(A,X,I5)') 'Species', is
               WRITE(logunit,'(X,A,T40,X,F16.9)') 'Chemical potential (internal units):', &
                     species_list(is)%chem_potential
 
@@ -3942,10 +3946,17 @@ SUBROUTINE Get_Chemical_Potential_Info
               END DO
    
            ELSE
-              IF (line_array(spec_counter) == 'none' .OR. line_array(spec_counter) == 'NONE') THEN
-                 spec_counter = spec_counter + 1
-              END IF
+              ! non-insertable species, input file entry is optional
               species_list(is)%chem_potential = 0.0_DP
+              ! if there's an entry, it must be 'none' or 'NONE'
+              IF (line_array(spec_counter) == 'none' .OR. line_array(spec_counter) == 'NONE') THEN
+                 WRITE(logunit,'(X,A)') 'Chemical potential not required.'
+              ELSE
+                 WRITE(logunit,'(X,A)') 'No entry in input file. Chemical potential not required.'
+                 ! the entry is not 'none' or 'NONE', so there is no entry of this species
+                 ! back track the counter so this entry can be assigned to the next species
+                 spec_counter = spec_counter - 1
+              END IF
            END IF
 
         END DO
