@@ -1304,7 +1304,7 @@ CONTAINS
           WRITE(201,'(I5,2X,4(I4,2X),A8,2X,F10.3,2X,F10.5, 2X, F10.5)') i, &
                first_atom(i), second_atom(i), third_atom(i), fourth_atom(i), &
                'cvff', &
-               improper_list(this_improper,is)%improper_param(1)/kjmol_to_atomic,&
+               improper_list(this_improper,is)%improper_param(1)/kjmol_to_atomic, &
                improper_list(this_improper,is)%improper_param(2), &
                improper_list(this_improper,is)%improper_param(3)
 
