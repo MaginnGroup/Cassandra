@@ -494,7 +494,8 @@ SUBROUTINE Get_Pair_Style
                     err_msg = ''
                     err_msg(1) = 'Keyword ' // TRIM(line_array(2)) // ' on line number ' // &
                                  TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
-                    err_msg(2) = 'Supported keywords are: cut, cut_tail, cut_shift, cut_switch, minimum_image, CHARMM'
+                    err_msg(2) = 'Supported keywords are: cut, cut_tail, cut_shift, cut_switch, minimum_image'
+                    err_msg(3) = '                        CHARMM'
                     CALL Clean_Abort(err_msg,'Get_Pair_Style')
                  END IF
 
@@ -508,7 +509,8 @@ SUBROUTINE Get_Pair_Style
                  err_msg = ''
                  err_msg(1) = 'Keyword ' // TRIM(line_array(2)) // ' on line number ' // &
                               TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
-                 err_msg(2) = 'Supported keywords are: cut, cut_tail, cut_shift, cut_switch, minimum_image, CHARMM'
+                 err_msg(2) = 'Supported keywords are: cut, cut_tail, cut_shift, cut_switch, minimum_image'
+                 err_msg(3) = '                        CHARMM'
                  CALL Clean_Abort(err_msg,'Get_Pair_Style')
               ENDIF
 
@@ -4315,7 +4317,7 @@ SUBROUTINE Get_Move_Probabilities
                           CALL Clean_Abort(err_msg,'Get_Move_Probabiltieis')
                        END IF
 
-                    ELSE IF (line_string2(1:15) == 'prob_swap_from_box') THEN
+                    ELSE IF (line_string2(1:18) == 'prob_swap_from_box') THEN
                        l_prob_swap_from_box = .TRUE.
                        ALLOCATE(prob_swap_from_box(nbr_boxes))
                        ALLOCATE(cum_prob_swap_from_box(nbr_boxes))
@@ -4340,7 +4342,7 @@ SUBROUTINE Get_Move_Probabilities
                           CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
                        END IF
 
-                    ELSE IF (line_string2(1:13) == 'prob_swap_to_box') THEN
+                    ELSE IF (line_string2(1:16) == 'prob_swap_to_box') THEN
                        l_prob_swap_to_box = .TRUE.
                        ALLOCATE(prob_swap_to_box(nbr_boxes,nbr_boxes))
                        ALLOCATE(cum_prob_swap_to_box(nbr_boxes,nbr_boxes))
@@ -4388,7 +4390,7 @@ SUBROUTINE Get_Move_Probabilities
                        err_msg = ''
                        err_msg(1) = 'Keyword ' // TRIM(line_string2(1:17)) // ' on line number ' // &
                                     TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
-                       err_msg(2) = 'Supported keywords are: prob_swap_species, prob_swap_to_box'
+                       err_msg(2) = 'Supported keywords are: prob_swap_species, prob_swap_from_box, prob_swap_to_box'
                        CALL Clean_Abort(err_msg,'Get_Start_Type')
                     END IF
 
@@ -4526,7 +4528,7 @@ SUBROUTINE Get_Move_Probabilities
   END DO inputLOOP
 
   IF( int_sim_type == sim_npt .OR. int_sim_type == sim_gemc .OR. &
-      int_sim_type == sim_gemc_npt .OR. int_sim_type == sim_gemc_ig) THEN
+      int_sim_type == sim_gemc_npt) THEN
 
      IF (prob_volume == 0.0_DP) THEN
         err_msg = ''
@@ -4547,8 +4549,7 @@ SUBROUTINE Get_Move_Probabilities
      END IF
   END IF
 
-  IF (int_sim_type == sim_gemc .OR. int_sim_type == sim_gemc_ig .OR. &
-      int_sim_type == sim_gemc_npt) THEN
+  IF (int_sim_type == sim_gemc .OR. int_sim_type == sim_gemc_npt) THEN
 
      IF (prob_swap == 0.0_DP .AND. int_run_type == run_prod) THEN
         err_msg = ''
@@ -4558,24 +4559,31 @@ SUBROUTINE Get_Move_Probabilities
 
      IF (l_prob_swap_from_box .OR. l_prob_swap_to_box) THEN
         ! if either keyword is given, will use both options
-        l_prob_swap_from_box = .TRUE.
-        l_prob_swap_to_box = .TRUE.
 
         ! if prob_swap_from_box was not given (but prob_swap_to_box was)
         ! default to uniform probabilities
-        IF ((cum_prob_swap_from_box(nbr_boxes) - 1.0_DP) > tiny_number) THEN
-          WRITE(logunit,'(X,A)') 'Keyword prob_swap_from_box is missing from input file'
-          WRITE(logunit,'(2X,A)') 'By default, box_out will be selected with uniform probability'
-          DO ibox = 1, nbr_boxes
-            prob_swap_from_box(ibox) = 1.0_DP / REAL(nbr_boxes,DP)
-            cum_prob_swap_from_box(ibox) = SUM(prob_swap_from_box(1:ibox))
-          END DO
+        IF (.NOT. l_prob_swap_from_box) THEN 
+           l_prob_swap_from_box = .TRUE.
+           ALLOCATE(prob_swap_from_box(nbr_boxes))
+           ALLOCATE(cum_prob_swap_from_box(nbr_boxes))
+           WRITE(logunit,'(X,A)') 'Keyword prob_swap_from_box is missing from input file'
+           WRITE(logunit,'(2X,A)') 'By default, box_out will be selected with uniform probability'
+           DO ibox = 1, nbr_boxes
+             prob_swap_from_box(ibox) = 1.0_DP / REAL(nbr_boxes,DP)
+             cum_prob_swap_from_box(ibox) = SUM(prob_swap_from_box(1:ibox))
+           END DO
         END IF
 
         ! if prob_swap_to_box was not given for each box
         ! default to uniform probabilities
+        IF (.NOT. l_prob_swap_to_box) THEN
+           l_prob_swap_to_box = .TRUE.
+           ALLOCATE(prob_swap_to_box(nbr_boxes,nbr_boxes))
+           ALLOCATE(cum_prob_swap_to_box(nbr_boxes,nbr_boxes))
+           cum_prob_swap_to_box = 0.0_DP
+        END IF
         DO ibox = 1, nbr_boxes
-           IF ((cum_prob_swap_to_box(ibox,nbr_boxes) - 1.0_DP) > tiny_number) THEN
+           IF (ABS(cum_prob_swap_to_box(ibox,nbr_boxes) - 1.0_DP) > tiny_number) THEN
               WRITE(logunit,'(X,A)') 'Keyword prob_swap_to_box missing for box ' // TRIM(Int_To_String(ibox))
               WRITE(logunit,'(2X,A)') 'By default, box_in will be selected with uniform probability'
 
