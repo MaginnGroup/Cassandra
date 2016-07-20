@@ -76,15 +76,18 @@ SUBROUTINE GEMC_Particle_Transfer
 
   REAL(DP), ALLOCATABLE :: dx(:), dy(:), dz(:)
 
-  REAL(DP) :: delta_e_out, delta_e_out_pacc, e_bond_out, e_angle_out, e_dihed_out
+  REAL(DP) :: dE_out, dE_out_pacc
+  REAL(DP) :: E_bond_out, E_angle_out, E_dihed_out, E_improper_out
   REAL(DP) :: E_intra_vdw_out, E_intra_qq_out, E_periodic_qq
   REAL(DP) :: E_inter_vdw_out, E_inter_qq_out
-  REAL(DP) :: E_intra_vdw_igas, E_intra_qq_igas
-  REAL(DP) :: E_reciprocal_out, E_self_out, e_lrc_out, e_improper_out
+  REAL(DP) :: E_reciprocal_out, E_self_out, E_lrc_out
+  REAL(DP) :: dE_in, dE_in_pacc
+  REAL(DP) :: E_bond_in, E_angle_in, E_dihed_in, E_improper_in
   REAL(DP) :: E_intra_vdw_in, E_intra_qq_in
   REAL(DP) :: E_inter_vdw_in, E_inter_qq_in
-  REAL(DP) :: E_reciprocal_in, E_self_in, e_lrc_in, E_bond_in, E_improper_in
-  REAL(DP) :: E_angle_in, E_dihed_in, delta_e_in, delta_e_in_pacc, potw, CP_energy
+  REAL(DP) :: E_reciprocal_in, E_self_in, E_lrc_in
+
+  REAL(DP) :: potw, CP_energy
   REAL(DP) :: P_seq, P_bias, P_forward, P_reverse, ln_pacc
   REAL(DP) :: lambda_for_build
   LOGICAL :: inter_overlap, accept_or_reject, cbmc_overlap
@@ -263,7 +266,7 @@ SUBROUTINE GEMC_Particle_Transfer
 
   ! Save the coordinates of 'alive' in 'box_out'
   CALL Save_Old_Cartesian_Coordinates(alive,is)
-  CALL Compute_Molecule_Dihedral_Energy(alive,is,e_dihed_out)
+  CALL Compute_Molecule_Dihedral_Energy(alive,is,E_dihed_out)
 
   ! Save the interaction energies
   IF (l_pair_nrg) CALL Store_Molecule_Pair_Interaction_Arrays(alive,is, &
@@ -290,7 +293,7 @@ SUBROUTINE GEMC_Particle_Transfer
   ! set deletion flag to false and call the CBMC growth routine
   cbmc_overlap = .FALSE.
 
-  delta_e_in = 0.0_DP
+  dE_in = 0.0_DP
 
 
   del_flag = .FALSE.
@@ -344,7 +347,7 @@ SUBROUTINE GEMC_Particle_Transfer
 
   ELSE
 
-    delta_e_in = delta_e_in + E_inter_vdw_in + E_inter_qq_in 
+    dE_in = dE_in + E_inter_vdw_in + E_inter_qq_in 
     
     !*****************************************************************************
     ! Step 5) Calculate the change in box_in's potential energy from inserting
@@ -356,14 +359,14 @@ SUBROUTINE GEMC_Particle_Transfer
     CALL Compute_Molecule_Dihedral_Energy(alive,is,E_dihed_in)
     CALL Compute_Molecule_Improper_Energy(alive,is,E_improper_in)
 
-    delta_e_in = delta_e_in + E_bond_in + E_angle_in + E_dihed_in
+    dE_in = dE_in + E_bond_in + E_angle_in + E_dihed_in + E_improper_in
 
     CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is, &
          E_intra_vdw_in,E_intra_qq_in,E_periodic_qq,intra_overlap)
     E_inter_qq_in = E_inter_qq_in + E_periodic_qq
 
-    ! Already added E_inter to delta_e, so add E_periodic directly
-    delta_e_in = delta_e_in + E_intra_vdw_in + E_intra_qq_in + E_periodic_qq
+    ! Already added E_inter to dE, so add E_periodic directly
+    dE_in = dE_in + E_intra_vdw_in + E_intra_qq_in + E_periodic_qq
 
     call cpu_time(time0)
 
@@ -377,12 +380,11 @@ SUBROUTINE GEMC_Particle_Transfer
             CALL Update_System_Ewald_Reciprocal_Energy(alive,is,box_in, &
                  int_insertion,E_reciprocal_in)
        
-            delta_e_in = delta_e_in + (E_reciprocal_in - energy(box_in)%ewald_reciprocal)
+            dE_in = dE_in + (E_reciprocal_in - energy(box_in)%ewald_reciprocal)
        END IF
        
-       CALL Compute_Molecule_Self_Energy(alive,is,box_in, &
-            E_self_in)
-       delta_e_in = delta_e_in + E_self_in 
+       CALL Compute_Molecule_Self_Energy(alive,is,box_in,E_self_in)
+       dE_in = dE_in + E_self_in 
 
     END IF
 
@@ -397,19 +399,19 @@ SUBROUTINE GEMC_Particle_Transfer
           nint_beads(i_type,box_in) = nint_beads(i_type,box_in) + 1
        END DO
           
-       CALL Compute_LR_Correction(box_in,e_lrc_in)
-       delta_e_in = delta_e_in + e_lrc_in - energy(box_in)%lrc
+       CALL Compute_LR_Correction(box_in,E_lrc_in)
+       dE_in = dE_in + E_lrc_in - energy(box_in)%lrc
 
     END IF
 
     IF(cpcollect) THEN
     
        potw = 1.0_DP
-       CP_energy = delta_e_in
+       CP_energy = dE_in
        
        potw = 1.0_DP / (P_forward * kappa_ins*kappa_rot*kappa_dih &
             ** (nfragments(is)-1)) 
-       CP_energy = delta_e_in - E_angle_in 
+       CP_energy = dE_in - E_angle_in 
      
        chpot(is,box_in) = chpot(is,box_in) &
         + potw * (box_list(box_in)%volume &
@@ -423,7 +425,7 @@ SUBROUTINE GEMC_Particle_Transfer
     !*****************************************************************************
     ! Need to preserve coordinates of 'alive' in box_in.
     ALLOCATE(new_atom_list(natoms(is)))
-    new_atom_list(:) = atom_list(:,alive,is)
+    new_atom_list(:) = atom_list(natoms(is),alive,is)
     new_molecule_list = molecule_list(alive,is)
 
     ! Change the box identity of alive back to box_out
@@ -431,7 +433,7 @@ SUBROUTINE GEMC_Particle_Transfer
     ! Restore the box_out coordinates
     CALL Revert_Old_Cartesian_Coordinates(alive,is)
 
-    delta_e_out = 0.0_DP
+    dE_out = 0.0_DP
 
     call cpu_time(time0)
     ! The fragment order was decided when inserting alive into box_in
@@ -472,13 +474,12 @@ SUBROUTINE GEMC_Particle_Transfer
     ! debug to see if the COM and max_com_distance are identical
 
     ! bonded energies
-    CALL Compute_Molecule_Bond_Energy(alive,is,e_bond_out)
-    CALL Compute_Molecule_Angle_Energy(alive,is,e_angle_out)
-    CALL Compute_Molecule_Dihedral_Energy(alive,is,e_dihed_out)
-    CALL Compute_Molecule_Improper_Energy(alive,is,e_improper_out)
+    CALL Compute_Molecule_Bond_Energy(alive,is,E_bond_out)
+    CALL Compute_Molecule_Angle_Energy(alive,is,E_angle_out)
+    CALL Compute_Molecule_Dihedral_Energy(alive,is,E_dihed_out)
+    CALL Compute_Molecule_Improper_Energy(alive,is,E_improper_out)
 
-    delta_e_out = delta_e_out - e_bond_out - e_angle_out - e_dihed_out &
-                - e_improper_out
+    dE_out = dE_out - E_bond_out - E_angle_out - E_dihed_out - E_improper_out
 
     ! Nonbonded energy  
     CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is, &
@@ -490,7 +491,7 @@ SUBROUTINE GEMC_Particle_Transfer
     END IF
     E_inter_qq_out = E_inter_qq_out + E_periodic_qq
 
-    delta_e_out = delta_e_out - E_intra_vdw_out - E_intra_qq_out &
+    dE_out = dE_out - E_intra_vdw_out - E_intra_qq_out &
                 - E_inter_vdw_out - E_inter_qq_out
 
     IF (int_charge_style(box_out) == charge_coul .AND. has_charge(is)) THEN
@@ -522,13 +523,12 @@ SUBROUTINE GEMC_Particle_Transfer
           CALL Update_System_Ewald_Reciprocal_Energy(alive,is, &
                box_out,int_deletion,E_reciprocal_out)
        
-          delta_e_out = delta_e_out + (E_reciprocal_out - energy(box_out)%ewald_reciprocal)
+          dE_out = dE_out + (E_reciprocal_out - energy(box_out)%ewald_reciprocal)
        
        END IF
        
        CALL Compute_Molecule_Self_Energy(alive,is,box_out,E_self_out)
-
-       delta_e_out = delta_e_out - E_self_out
+       dE_out = dE_out - E_self_out
 
     END IF
 
@@ -540,23 +540,23 @@ SUBROUTINE GEMC_Particle_Transfer
           nint_beads(i_type,box_out) = nint_beads(i_type,box_out) - 1
        END DO
 
-       CALL Compute_LR_correction(box_out,e_lrc_out)
-       delta_e_out = delta_e_out + ( e_lrc_out - energy(box_out)%lrc )
+       CALL Compute_LR_correction(box_out,E_lrc_out)
+       dE_out = dE_out + ( E_lrc_out - energy(box_out)%lrc )
 
     END IF
 
-    delta_e_in_pacc = delta_e_in
-    delta_e_out_pacc = delta_e_out
+    dE_in_pacc = dE_in
+    dE_out_pacc = dE_out
 
-    delta_e_in_pacc  = delta_e_in_pacc  - e_angle_in  - nrg_ring_frag_in
-    delta_e_out_pacc = delta_e_out_pacc + e_angle_out + nrg_ring_frag_out
+    dE_in_pacc  = dE_in_pacc  - E_angle_in  - nrg_ring_frag_in
+    dE_out_pacc = dE_out_pacc + E_angle_out + nrg_ring_frag_out
 
     !*****************************************************************************
     ! Step 7) Accept or reject the move
     !*****************************************************************************
     ! Define ln_pacc that will be used to accept or reject the move.
 
-    ln_pacc = beta(box_in)*delta_e_in_pacc + beta(box_out)*delta_e_out_pacc
+    ln_pacc = beta(box_in)*dE_in_pacc + beta(box_out)*dE_out_pacc
 
     ln_pacc = ln_pacc - DLOG(box_list(box_in)%volume) &
                       + DLOG(box_list(box_out)%volume) &
@@ -617,44 +617,45 @@ SUBROUTINE GEMC_Particle_Transfer
 
        ! Update energies for each box
        ! box_in
-       energy(box_in)%total = energy(box_in)%total + delta_e_in
-       energy(box_in)%intra = energy(box_in)%intra + e_bond_in + e_angle_in &
-                            + e_dihed_in
-       energy(box_in)%bond = energy(box_in)%bond + e_bond_in
-       energy(box_in)%angle = energy(box_in)%angle + e_angle_in
-       energy(box_in)%dihedral = energy(box_in)%dihedral + e_dihed_in
-       energy(box_in)%intra_vdw = energy(box_in)%intra_vdw + e_intra_vdw_in
-       energy(box_in)%intra_q = energy(box_in)%intra_q + e_intra_qq_in
-       energy(box_in)%inter_vdw = energy(box_in)%inter_vdw + e_inter_vdw_in
-       energy(box_in)%inter_q = energy(box_in)%inter_q + e_inter_qq_in
+       energy(box_in)%total = energy(box_in)%total + dE_in
+       energy(box_in)%intra = energy(box_in)%intra + E_bond_in + E_angle_in &
+                            + E_dihed_in + E_improper_in
+       energy(box_in)%bond = energy(box_in)%bond + E_bond_in
+       energy(box_in)%angle = energy(box_in)%angle + E_angle_in
+       energy(box_in)%dihedral = energy(box_in)%dihedral + E_dihed_in
+       energy(box_in)%improper = energy(box_in)%improper + E_improper_in
+       energy(box_in)%intra_vdw = energy(box_in)%intra_vdw + E_intra_vdw_in
+       energy(box_in)%intra_q = energy(box_in)%intra_q + E_intra_qq_in
+       energy(box_in)%inter_vdw = energy(box_in)%inter_vdw + E_inter_vdw_in
+       energy(box_in)%inter_q = energy(box_in)%inter_q + E_inter_qq_in
 
        IF (int_vdw_sum_style(box_in) == vdw_cut_tail) THEN
-          energy(box_in)%lrc = e_lrc_in
+          energy(box_in)%lrc = E_lrc_in
        END IF
 
        ! for box_out
-       energy(box_out)%total = energy(box_out)%total + delta_e_out
-       energy(box_out)%intra = energy(box_out)%intra - e_bond_out - e_angle_out &
-                             - e_dihed_out
-       energy(box_out)%bond = energy(box_out)%bond - e_bond_out
-       energy(box_out)%angle = energy(box_out)%angle - e_angle_out
-       energy(box_out)%dihedral = energy(box_out)%dihedral - e_dihed_out
-       energy(box_out)%intra_vdw = energy(box_out)%intra_vdw - e_intra_vdw_out
-       energy(box_out)%intra_q   = energy(box_out)%intra_q - e_intra_qq_out
-       energy(box_out)%inter_vdw = energy(box_out)%inter_vdw - e_inter_vdw_out
-       energy(box_out)%inter_q   = energy(box_out)%inter_q - e_inter_qq_out
+       energy(box_out)%total = energy(box_out)%total + dE_out
+       energy(box_out)%intra = energy(box_out)%intra - E_bond_out - E_angle_out &
+                             - E_dihed_out - E_improper_out
+       energy(box_out)%bond = energy(box_out)%bond - E_bond_out
+       energy(box_out)%angle = energy(box_out)%angle - E_angle_out
+       energy(box_out)%dihedral = energy(box_out)%dihedral - E_dihed_out
+       energy(box_out)%improper = energy(box_out)%improper - E_improper_out
+       energy(box_out)%intra_vdw = energy(box_out)%intra_vdw - E_intra_vdw_out
+       energy(box_out)%intra_q   = energy(box_out)%intra_q - E_intra_qq_out
+       energy(box_out)%inter_vdw = energy(box_out)%inter_vdw - E_inter_vdw_out
+       energy(box_out)%inter_q   = energy(box_out)%inter_q - E_inter_qq_out
 
        IF (int_vdw_sum_style(box_out) == vdw_cut_tail) THEN
-          energy(box_out)%lrc = e_lrc_out
+          energy(box_out)%lrc = E_lrc_out
        END IF
 
        IF (has_charge(is)) THEN
           IF (int_charge_sum_style(box_in) == charge_ewald) energy(box_in)%ewald_reciprocal = E_reciprocal_in        
           IF (int_charge_sum_style(box_out) == charge_ewald) energy(box_out)%ewald_reciprocal = E_reciprocal_out
           IF (int_charge_style(box_in) == charge_coul) energy(box_in)%self = energy(box_in)%self + E_self_in
-          IF (int_charge_style(box_out) == charge_coul) energy(box_out)%self = energy(box_out)%self + E_self_out
+          IF (int_charge_style(box_out) == charge_coul) energy(box_out)%self = energy(box_out)%self - E_self_out
        END IF
-
 
        ! Increment counter
        nsuccess(is,box_in)%insertion = nsuccess(is,box_in)%insertion + 1

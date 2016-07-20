@@ -1593,7 +1593,7 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
     ELSE IF ( move_flag == int_insertion ) THEN
 
       !$OMP PARALLEL DO DEFAULT(SHARED) &
-      !$OMP PRIVATE(i, ia, hdotr) &
+      !$OMP PRIVATE(i, ia, hdotr, q) &
       !$OMP SCHEDULE(STATIC) &
       !$OMP REDUCTION(+:E_reciprocal) 
 
