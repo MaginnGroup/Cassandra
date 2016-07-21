@@ -411,26 +411,26 @@ PROGRAM Main
      WRITE(logunit,*) ' Atomic units-Extensive'
      WRITE(logunit,'(X,A59)') '-----------------------------------------------------------'
      
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Total system energy is' , energy(ibox)%total
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecular energy is', energy(ibox)%intra
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Bond energy is', energy(ibox)%bond
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Bond angle energy is', energy(ibox)%angle
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Dihedral angle energy is', energy(ibox)%dihedral
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Improper angle energy is', energy(ibox)%improper
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecule vdw is', energy(ibox)%intra_vdw
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecule q is', energy(ibox)%intra_q
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule vdw is', energy(ibox)%inter_vdw
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Total system energy' , energy(ibox)%total
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecular energy', energy(ibox)%intra
+     WRITE(logunit,'(3X,A,T30,F20.3)') 'Bond energy', energy(ibox)%bond
+     WRITE(logunit,'(3X,A,T30,F20.3)') 'Bond angle energy', energy(ibox)%angle
+     WRITE(logunit,'(3X,A,T30,F20.3)') 'Dihedral angle energy', energy(ibox)%dihedral
+     WRITE(logunit,'(3X,A,T30,F20.3)') 'Improper angle energy', energy(ibox)%improper
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecule vdw', energy(ibox)%intra_vdw
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecule q', energy(ibox)%intra_q
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule vdw', energy(ibox)%inter_vdw
      IF (int_vdw_sum_style(ibox) == vdw_cut_tail) &
-        WRITE(logunit,'(X,A,T30,F20.3)') 'Long range correction is', energy(ibox)%lrc
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule q is', energy(ibox)%inter_q
+        WRITE(logunit,'(X,A,T30,F20.3)') 'Long range correction', energy(ibox)%lrc
+     WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule q', energy(ibox)%inter_q
 
      IF (int_charge_sum_style(ibox) == charge_ewald) THEN
-        WRITE(logunit,'(X,A,T30,I20)') 'Number of vectors is', nvecs(ibox)
-        WRITE(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald is', energy(ibox)%ewald_reciprocal
-        WRITE(logunit,'(X,A,T30,F20.3)') 'Self ewald is', energy(ibox)%self
+        WRITE(logunit,'(X,A,T30,I20)') 'Number of vectors', nvecs(ibox)
+        WRITE(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald', energy(ibox)%ewald_reciprocal
+        WRITE(logunit,'(X,A,T30,F20.3)') 'Self ewald', energy(ibox)%self
      END IF
 
-     if (int_charge_sum_style(ibox) == charge_dsf) WRITE(logunit,'(X,A,T30,F20.3)') 'Self DSF is', energy(ibox)%self
+     if (int_charge_sum_style(ibox) == charge_dsf) WRITE(logunit,'(X,A,T30,F20.3)') 'Self DSF', energy(ibox)%self
 
      WRITE(logunit,'(X,A59)') '-----------------------------------------------------------'
      WRITE(logunit,*)
@@ -474,35 +474,7 @@ PROGRAM Main
   WRITE(logunit,'(A80)') '********************************************************************************'
   WRITE(logunit,'(X,A9,X,A10,X,A5,X,A3,X,A3,X,A8,X,A9)') 'Step', 'Move', 'Mol', 'Spc', 'Box', 'Success', 'MaxWidth'
 
-  IF (int_run_type == run_test .AND. n_mcsteps == 1) THEN
-
-     DO
-       CALL Angle_Distortion(ibox)
-       IF(nsuccess(1,1)%angle .NE. 0) EXIT
-     END DO
-     
-     IF(ndihedrals(1) .GT. 0) THEN
-        
-       DO
-         CALL Rigid_Dihedral_Change(ibox)
-         IF(nsuccess(1,1)%dihedral .NE. 0) EXIT
-       END DO
-
-     END IF
-
-     CALL Compute_System_Total_Energy(1,.TRUE.,overlap)
-     WRITE(logunit,'(A,T30,F20.3)')'Intra molecular energy is:', energy(1)%intra
-     WRITE(logunit,'(A,T30,F20.3)')'Intra molecule vdw is:', energy(1)%intra_vdw
-     WRITE(logunit,'(A,T30,F20.3)')'Intra molecule q is:', energy(1)%intra_q
-     
-     OPEN(75,FILE='compare.dat')
-     WRITE(75,'(T20,A,A)') 'Energy for a single', testname
-     WRITE(75,'(A,T30,F20.3)')'Intra molecular energy is:', energy(1)%intra
-     WRITE(75,'(A,T30,F20.3)')'Intra molecule vdw is:', energy(1)%intra_vdw
-     WRITE(75,'(A,T30,F20.3)')'Intra molecule q is:', energy(1)%intra_q
-     CLOSE(75)
-     
-  ELSE IF (int_sim_type == sim_nvt .OR. int_sim_type == sim_nvt_min) THEN
+  IF (int_sim_type == sim_nvt .OR. int_sim_type == sim_nvt_min) THEN
      
      CALL NVTMC_Driver
      
@@ -550,43 +522,34 @@ PROGRAM Main
     WRITE(logunit,*)
 
     ! Write the current components of the energy to log
-    WRITE(logunit,'(X,A32,2X,I2)') 'Ending energy components for box', ibox
+    WRITE(logunit,'(X,A32,2X,I2)') 'Initial energy + deltas for box', ibox
     WRITE(logunit,*) ' Atomic units-Extensive'
     WRITE(logunit,'(X,A59)') &
        '-----------------------------------------------------------'
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Total system energy is' , &
-       energy(ibox)%total
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecular energy is', &
-       energy(ibox)%intra
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Bond energy is', energy(ibox)%bond
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Angle energy is', energy(ibox)%angle
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Dihedral energy is', &
-       energy(ibox)%dihedral
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Improper angle energy is', &
-       energy(ibox)%improper
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecule vdw is', &
-       energy(ibox)%intra_vdw
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecule q is', &
-       energy(ibox)%intra_q
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule vdw is', &
-       energy(ibox)%inter_vdw
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Total system energy' , energy(ibox)%total
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecular energy', energy(ibox)%intra
+    WRITE(logunit,'(3X,A,T30,F20.3)') 'Bond energy', energy(ibox)%bond
+    WRITE(logunit,'(3X,A,T30,F20.3)') 'Angle energy', energy(ibox)%angle
+    WRITE(logunit,'(3X,A,T30,F20.3)') 'Dihedral energy', energy(ibox)%dihedral
+    WRITE(logunit,'(3X,A,T30,F20.3)') 'Improper angle energy', energy(ibox)%improper
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecule vdw', energy(ibox)%intra_vdw
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecule q', energy(ibox)%intra_q
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule vdw', energy(ibox)%inter_vdw
     IF (int_vdw_sum_style(ibox) == vdw_cut_tail) THEN
-      WRITE(logunit,'(X,A,T30,F20.3)') 'Long range correction is', &
-         energy(ibox)%lrc
+      WRITE(logunit,'(X,A,T30,F20.3)') 'Long range correction', energy(ibox)%lrc
     END IF
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule q is', &
-       energy(ibox)%inter_q
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule q', energy(ibox)%inter_q
 
     IF (int_charge_sum_style(ibox) == charge_ewald) THEN
 
-       WRITE(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald is', &
+       WRITE(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald', &
        energy(ibox)%ewald_reciprocal
-        WRITE(logunit,'(X,A,T30,F20.3)') 'Self ewald is', energy(ibox)%self
+       WRITE(logunit,'(X,A,T30,F20.3)') 'Self ewald', energy(ibox)%self
 
     END IF
 
     IF (int_charge_sum_style(ibox) == charge_dsf) THEN
-         WRITE(logunit,'(X,A,T30,F20.3)') 'Self DSF is', energy(ibox)%self
+         WRITE(logunit,'(X,A,T30,F20.3)') 'Self DSF', energy(ibox)%self
     END IF
     
     WRITE(logunit,'(X,A59)') &
@@ -610,44 +573,34 @@ PROGRAM Main
     WRITE(logunit,*)
     WRITE(logunit,*)
     WRITE(logunit,'(X,A48,2X,I2)') &
-       'Energy components from total energy call for box', ibox
+       'Recomputed energy from scratch for box', ibox
     WRITE(logunit,*) ' Atomic units-Extensive'
     WRITE(logunit,'(X,A59)') &
        '-----------------------------------------------------------'
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Total system energy is' , &
-       energy(ibox)%total
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecular energy is', &
-       energy(ibox)%intra
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Bond energy is', energy(ibox)%bond
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Angle energy is', energy(ibox)%angle
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Dihedral energy is', &
-       energy(ibox)%dihedral
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Improper angle energy is', &
-       energy(ibox)%improper
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecule vdw is', &
-       energy(ibox)%intra_vdw
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecule q is', &
-       energy(ibox)%intra_q
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule vdw is', &
-       energy(ibox)%inter_vdw
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Total system energy' , energy(ibox)%total
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecular energy', energy(ibox)%intra
+    WRITE(logunit,'(3X,A,T30,F20.3)') 'Bond energy', energy(ibox)%bond
+    WRITE(logunit,'(3X,A,T30,F20.3)') 'Angle energy', energy(ibox)%angle
+    WRITE(logunit,'(3X,A,T30,F20.3)') 'Dihedral energy', energy(ibox)%dihedral
+    WRITE(logunit,'(3X,A,T30,F20.3)') 'Improper angle energy', energy(ibox)%improper
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecule vdw', energy(ibox)%intra_vdw
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecule q', energy(ibox)%intra_q
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule vdw', energy(ibox)%inter_vdw
     IF (int_vdw_sum_style(ibox) == vdw_cut_tail) THEN
-      WRITE(logunit,'(X,A,T30,F20.3)') 'Long range correction is', &
-         energy(ibox)%lrc
+      WRITE(logunit,'(X,A,T30,F20.3)') 'Long range correction', energy(ibox)%lrc
     END IF
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule q is', &
-       energy(ibox)%inter_q
+    WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule q', energy(ibox)%inter_q
 
 
     IF (int_charge_sum_style(ibox) == charge_ewald) THEN
 
-       WRITE(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald is', &
-       energy(ibox)%ewald_reciprocal
-        WRITE(logunit,'(X,A,T30,F20.3)') 'Self ewald is', energy(ibox)%self
+       WRITE(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald', energy(ibox)%ewald_reciprocal
+       WRITE(logunit,'(X,A,T30,F20.3)') 'Self ewald', energy(ibox)%self
 
     END IF
 
     IF (int_charge_sum_style(ibox) == charge_dsf) THEN
-         WRITE(logunit,'(X,A,T30,F20.3)') 'Self DSF is', energy(ibox)%self
+         WRITE(logunit,'(X,A,T30,F20.3)') 'Self DSF', energy(ibox)%self
     END IF
 
     WRITE(logunit,'(X,A59)') &
