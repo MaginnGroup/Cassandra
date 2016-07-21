@@ -188,55 +188,127 @@ CONTAINS
 
       IF (prop_written == 'Energy_Total') THEN
 
-         IF ( block_average) THEN
-            ac_energy(this_box,iblock)%total = ac_energy(this_box,iblock)%total / data_points_per_block
+         IF (block_average) THEN
             write_buff(ii+1) = ac_energy(this_box,iblock)%total
          ELSE
             write_buff(ii+1) = energy(this_box)%total
          END IF
          write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
 
-
-      ELSE IF (prop_written == 'Temperature') THEN
-
-         write_buff(ii+1) = 1.0_DP/(beta(this_box)*kboltz)
-
-      ELSE IF (prop_written == 'Pressure_Setpoint') THEN
-
-         write_buff(ii+1) = pressure(this_box)%setpoint * atomic_to_bar
-
-      ELSE IF (prop_written == 'Energy_LJ') THEN
-
-         IF ( block_average) THEN
-            ac_energy(this_box,iblock)%inter_vdw = ac_energy(this_box,iblock)%inter_vdw / data_points_per_block
-            ac_energy(this_box,iblock)%intra_vdw = ac_energy(this_box,iblock)%intra_vdw / data_points_per_block
-            write_buff(ii+1) = ac_energy(this_box,iblock)%inter_vdw + ac_energy(this_box,iblock)%intra_vdw
-         ELSE
-            write_buff(ii+1) = energy(this_box)%inter_vdw + energy(this_box)%intra_vdw
-         END IF
-         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
-
-      ELSE IF (prop_written == 'Energy_Elec') THEN
-
-         IF ( block_average) THEN
-            ac_energy(this_box,iblock)%inter_q = ac_energy(this_box,iblock)%inter_q / data_points_per_block
-            ac_energy(this_box,iblock)%intra_q = ac_energy(this_box,iblock)%intra_q / data_points_per_block
-            write_buff(ii+1) = ac_energy(this_box,iblock)%inter_q + ac_energy(this_box,iblock)%intra_q
-         ELSE
-            write_buff(ii+1) = energy(this_box)%inter_q &
-                             + energy(this_box)%intra_q &
-                             + energy(this_box)%ewald_reciprocal &
-                             + energy(this_box)%self
-         END IF
-         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
-
       ELSE IF (prop_written == 'Energy_Intra') THEN
 
          IF (block_average) THEN
-            ac_energy(this_box,iblock)%intra = ac_energy(this_box,iblock)%intra / data_points_per_block
             write_buff(ii+1) = ac_energy(this_box,iblock)%intra
          ELSE
             write_buff(ii+1) = energy(this_box)%intra
+         END IF
+         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
+
+      ELSE IF (prop_written == 'Energy_Inter') THEN
+
+         IF (block_average) THEN
+            write_buff(ii+1) = ac_energy(this_box,iblock)%inter
+         ELSE
+            write_buff(ii+1) = energy(this_box)%inter
+         END IF
+         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
+
+      ELSE IF (prop_written == 'Energy_Bond') THEN
+
+         IF (block_average) THEN
+            write_buff(ii+1) = ac_energy(this_box,iblock)%bond
+         ELSE
+            write_buff(ii+1) = energy(this_box)%bond
+         END IF
+         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
+
+      ELSE IF (prop_written == 'Energy_Angle') THEN
+
+         IF (block_average) THEN
+            write_buff(ii+1) = ac_energy(this_box,iblock)%angle
+         ELSE
+            write_buff(ii+1) = energy(this_box)%angle
+         END IF
+         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
+
+      ELSE IF (prop_written == 'Energy_Dihedral') THEN
+
+         IF (block_average) THEN
+            write_buff(ii+1) = ac_energy(this_box,iblock)%dihed
+         ELSE
+            write_buff(ii+1) = energy(this_box)%dihed
+         END IF
+         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
+
+      ELSE IF (prop_written == 'Energy_Improper') THEN
+
+         IF (block_average) THEN
+            write_buff(ii+1) = ac_energy(this_box,iblock)%improper
+         ELSE
+            write_buff(ii+1) = energy(this_box)%improper
+         END IF
+         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
+
+      ELSE IF (prop_written == 'Energy_IntraVDW') THEN
+
+         IF (block_average) THEN
+            write_buff(ii+1) = ac_energy(this_box,iblock)%intra_vdw
+         ELSE
+            write_buff(ii+1) = energy(this_box)%intra_vdw
+         END IF
+         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
+
+      ELSE IF (prop_written == 'Energy_InterVDW') THEN
+
+         IF (block_average) THEN
+            write_buff(ii+1) = ac_energy(this_box,iblock)%inter_vdw
+         ELSE
+            write_buff(ii+1) = energy(this_box)%inter_vdw
+         END IF
+         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
+
+      ELSE IF (prop_written == 'Energy_IntraQ') THEN
+
+         IF (block_average) THEN
+            write_buff(ii+1) = ac_energy(this_box,iblock)%intra_q
+         ELSE
+            write_buff(ii+1) = energy(this_box)%intra_q
+         END IF
+         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
+
+      ELSE IF (prop_written == 'Energy_InterQ') THEN
+
+         IF ( block_average) THEN
+            write_buff(ii+1) = ac_energy(this_box,iblock)%inter_q
+         ELSE
+            write_buff(ii+1) = energy(this_box)%inter_q
+         END IF
+         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
+
+      ELSE IF (prop_written == 'Energy_LRC') THEN
+
+         IF ( block_average) THEN
+            write_buff(ii+1) = ac_energy(this_box,iblock)%lrc
+         ELSE
+            write_buff(ii+1) = energy(this_box)%lrc
+         END IF
+         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
+
+      ELSE IF (prop_written == 'Energy_Reciprocal') THEN
+
+         IF ( block_average) THEN
+            write_buff(ii+1) = ac_energy(this_box,iblock)%reciprocal
+         ELSE
+            write_buff(ii+1) = energy(this_box)%reciprocal
+         END IF
+         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
+
+      ELSE IF (prop_written == 'Energy_Self') THEN
+
+         IF ( block_average) THEN
+            write_buff(ii+1) = ac_energy(this_box,iblock)%self
+         ELSE
+            write_buff(ii+1) = energy(this_box)%self
          END IF
          write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
 

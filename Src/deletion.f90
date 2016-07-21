@@ -72,14 +72,13 @@ SUBROUTINE Deletion
   INTEGER, ALLOCATABLE :: frag_order(:)
   INTEGER :: k, mcstep
 
-  REAL(DP) :: delta_e, delta_e_pacc
+  REAL(DP) :: dE, dE_intra, dE_inter, dE_frag
   REAL(DP) :: E_bond, E_angle, E_dihedral, E_improper
   REAL(DP) :: E_intra_vdw, E_intra_qq
   REAL(DP) :: E_inter_vdw, E_inter_qq, E_periodic_qq
   REAL(DP) :: E_reciprocal, E_self, E_lrc
-  REAL(DP) :: nrg_ring_frag_tot
+  REAL(DP) :: E_ring_frag
   REAL(DP) :: ln_pacc, P_seq, P_bias, this_lambda
-  REAL(DP) :: E_intra_vdw_igas, E_intra_qq_igas
 
   LOGICAL :: inter_overlap, cbmc_overlap, intra_overlap
   LOGICAL :: accept_or_reject, fh_outside_bounds
@@ -162,8 +161,7 @@ SUBROUTINE Deletion
   !
   ! These steps are implemented in the subroutine Build_Molecule
   
-  IF(species_list(is)%fragment .AND. &
-     (species_list(is)%int_insert .NE. int_igas)) THEN
+  IF(species_list(is)%fragment) THEN
 
      ! Build_Molecule places the first fragment, then calls Fragment_Placement 
      ! to place the additional fragments
@@ -215,7 +213,7 @@ SUBROUTINE Deletion
   !*****************************************************************************
   !
   ! Whether the deletion will be accepted depends on the change in potential
-  ! energy, delta_e. The potential energy will be computed in 5 stages:
+  ! energy, dE. The potential energy will be computed in 5 stages:
   !   4.1) Nonbonded intermolecular energies
   !   4.2) Bonded intramolecular energies
   !   4.3) Nonbonded intramolecular energies
@@ -239,7 +237,7 @@ SUBROUTINE Deletion
              E_inter_vdw,E_inter_qq,inter_overlap)
   END IF
 
-  delta_e = - E_inter_vdw - E_inter_qq
+  dE_inter = - E_inter_vdw - E_inter_qq
 
   ! 4.2) Bonded intramolecular energies
 
@@ -248,7 +246,7 @@ SUBROUTINE Deletion
   CALL Compute_Molecule_Dihedral_Energy(lm,is,E_dihedral)
   CALL Compute_Molecule_Improper_Energy(lm,is,E_improper)
 
-  delta_e = delta_e - E_bond - E_angle - E_dihedral - E_improper  
+  dE_intra = dE_intra - E_bond - E_angle - E_dihedral - E_improper  
   
   ! 4.3) Nonbonded intramolecular energies
 
@@ -256,7 +254,8 @@ SUBROUTINE Deletion
           E_intra_vdw,E_intra_qq,E_periodic_qq,intra_overlap) 
   E_inter_qq = E_inter_qq + E_periodic_qq
 
-  delta_e = delta_e - E_intra_vdw - E_intra_qq - E_periodic_qq
+  dE_intra = dE_intra - E_intra_vdw - E_intra_qq
+  dE_inter = dE_inter - E_periodic_qq
 
   ! 4.4) Ewald energies
 
@@ -268,13 +267,13 @@ SUBROUTINE Deletion
          CALL Update_System_Ewald_Reciprocal_Energy(lm,is,ibox, &
                  int_deletion,E_reciprocal)
 
-         delta_e = delta_e + (E_reciprocal - energy(ibox)%ewald_reciprocal)
+         dE_inter = dE_inter + (E_reciprocal - energy(ibox)%reciprocal)
 
       END IF
 
       CALL Compute_Molecule_Self_Energy(lm,is,ibox,E_self)
 
-      delta_e = delta_e - E_self 
+      dE_inter = dE_inter - E_self 
   END IF
 
   ! 4.5) Long-range energy correction
@@ -290,7 +289,7 @@ SUBROUTINE Deletion
      END DO
 
      CALL Compute_LR_correction(ibox,e_lrc)
-     delta_e = delta_e + ( e_lrc - energy(ibox)%lrc )
+     dE_inter = dE_inter + ( e_lrc - energy(ibox)%lrc )
 
   END IF  
   
@@ -314,21 +313,9 @@ SUBROUTINE Deletion
   ! where the primes (') indicate that additional intensive terms have been
   ! absorbed into the chemical potential.
 
-  IF(species_list(is)%int_insert == int_igas) THEN
-     igas_flag = .TRUE.
-     CALL Compute_Molecule_Nonbond_Intra_Energy(lm,is, &
-             E_intra_vdw_igas,E_intra_qq_igas,E_periodic_qq,intra_overlap)
-     igas_flag = .FALSE. 
-     ln_pacc = beta(ibox) * (delta_e + E_bond + E_angle &
-                                         + E_dihedral + E_improper &
-                                         + E_intra_vdw_igas + E_intra_qq_igas)
-  ELSE
-
-     IF(species_list(is)%fragment) THEN
-        ln_pacc = beta(ibox) * (delta_e + E_angle + nrg_ring_frag_tot)
-     END IF
-
-  END IF
+  dE = dE_intra + dE_inter
+  dE_frag = - E_angle - E_ring_frag
+  ln_pacc = beta(ibox) * (dE - dE_frag)
 
   ! P_seq and P_bias equal 1.0 unless changed by Build_Molecule
   ln_pacc = ln_pacc - DLOG(P_seq * P_bias) &
@@ -343,9 +330,9 @@ SUBROUTINE Deletion
 
   IF (accept) THEN
      ! Update energies
-     energy(ibox)%total = energy(ibox)%total + delta_e
-     energy(ibox)%intra = energy(ibox)%intra - E_bond - E_angle &
-                            - E_dihedral - E_improper
+     energy(ibox)%total = energy(ibox)%total + dE
+     energy(ibox)%intra = energy(ibox)%intra + dE_intra
+     energy(ibox)%inter = energy(ibox)%inter + dE_inter
      energy(ibox)%bond = energy(ibox)%bond - E_bond
      energy(ibox)%angle = energy(ibox)%angle - E_angle
      energy(ibox)%dihedral = energy(ibox)%dihedral - E_dihedral
@@ -360,7 +347,7 @@ SUBROUTINE Deletion
 
          IF ( int_charge_sum_style(ibox) == charge_ewald .AND. &
               has_charge(is)) THEN
-            energy(ibox)%ewald_reciprocal = E_reciprocal
+            energy(ibox)%reciprocal = E_reciprocal
          END IF
 
          energy(ibox)%self = energy(ibox)%self - E_self

@@ -76,15 +76,15 @@ SUBROUTINE Cut_N_Grow
   REAL(DP), ALLOCATABLE :: x_old(:), y_old(:), z_old(:)
   REAL(DP), ALLOCATABLE :: dx(:), dy(:), dz(:)
 
-  REAL(DP) :: rand_no, P_seq, P_forward, P_reverse, E_bond_n, E_angle_n, E_dihed_n
-  REAL(DP) :: E_intra_vdw_n, E_intra_qq_n, E_inter_vdw_n, E_inter_qq_n
+  REAL(DP) :: rand_no, P_seq, P_forward, P_reverse
+  REAL(DP) :: dE, dE_intra, dE_inter, dE_frag
+  REAL(DP) :: E_bond_o, E_angle_o, E_dihed_o, E_improper_o
   REAL(DP) :: E_intra_vdw_o, E_intra_qq_o, E_inter_vdw_o, E_inter_qq_o
-  REAL(DP) :: E_bond_o, E_angle_o, E_dihed_o, delta_e_n, delta_e_o
-  REAL(DP) :: E_improper_n, E_improper_o, E_periodic_qq
-  REAL(DP) :: E_selferf_n, E_selferf_o
-  REAL(DP) :: E_reciprocal_move, ln_pacc, e_prev, delta_intra, phi
-  REAL(DP) :: energy_olde, check_e
-  REAL(DP) :: nrg_ring_frag_forward, nrg_ring_frag_reverse
+  REAL(DP) :: E_bond_n, E_angle_n, E_dihed_n, E_improper_n
+  REAL(DP) :: E_intra_vdw_n, E_intra_qq_n, E_inter_vdw_n, E_inter_qq_n
+  REAL(DP) :: E_reciprocal_n, E_periodic_qq
+  REAL(DP) :: ln_pacc, E_prev, phi
+  REAL(DP) :: E_ring_frag_n, E_ring_frag_o
   REAL(DP) :: lambda_for_cut
 
   LOGICAL ::  cbmc_overlap, accept_or_reject, update_flag, overlap
@@ -103,12 +103,12 @@ SUBROUTINE Cut_N_Grow
 
   LOGICAL :: l_charge
 
-  E_reciprocal_move = 0.0_DP
+  E_reciprocal_n = 0.0_DP
 
   inside_start = .FALSE.
 !  imp_Flag = .FALSE.
-  nrg_ring_frag_forward = 0.0
-  nrg_ring_frag_reverse = 0.0
+  E_ring_frag_n = 0.0
+  E_ring_frag_o = 0.0
 
   ! Let us choose a box to pick the species and molecule to pick from.
 
@@ -216,11 +216,11 @@ SUBROUTINE Cut_N_Grow
 
   ELSE
 
-     nrg_ring_frag_forward = 0.0_DP
+     E_ring_frag_n = 0.0_DP
 
      lambda_for_cut = molecule_list(lm,is)%frac
      CALL Cut_Regrow(lm,is,frag_start,frag_end,frag_order,frag_total,lambda_for_cut, &
-          e_prev,P_seq,P_forward, nrg_ring_frag_forward, cbmc_overlap, del_overlap)
+          E_prev,P_seq,P_forward, E_ring_frag_n, cbmc_overlap, del_overlap)
 
   END IF
 
@@ -266,8 +266,6 @@ SUBROUTINE Cut_N_Grow
   ! We will calculate the intra and intermolecular energy changes and
   ! also dihedral angle energy change.
 
-  E_selferf_n = 0.0_DP
-
   CALL Compute_Molecule_Bond_Energy(lm,is,E_bond_n)
   CALL Compute_Molecule_Angle_Energy(lm,is,E_angle_n)
   CALL Compute_Molecule_Dihedral_Energy(lm,is,E_dihed_n)
@@ -299,8 +297,9 @@ SUBROUTINE Cut_N_Grow
   ! terms cancel out in the acceptance rule. However, they are needed in 
   ! updating energies if the move is accepted
 
-  delta_e_n = E_intra_vdw_n + E_intra_qq_n + E_inter_qq_n + E_inter_vdw_n &
-            + E_dihed_n + E_improper_n - E_selferf_n
+  dE_intra = dE_intra + E_bond_n + E_angle_n + E_dihed_n + E_improper_n &
+                      + E_intra_qq_n + E_intra_vdw_n
+  dE_inter = dE_inter + E_inter_qq_n + E_inter_vdw_n
 
   IF (int_charge_sum_style(ibox)  == charge_ewald .AND.&
       has_charge(is)) THEN
@@ -316,9 +315,8 @@ SUBROUTINE Cut_N_Grow
 
      ! Compute the change in Ewald reciprocal energy due to the move
      CALL Update_System_Ewald_Reciprocal_Energy(lm,is,ibox, &
-          int_intra,E_reciprocal_move)
-     delta_e_n = delta_e_n &
-               + (E_reciprocal_move - energy(ibox)%ewald_reciprocal)
+          int_intra,E_reciprocal_n)
+     dE_inter = dE_inter + (E_reciprocal_n - energy(ibox)%reciprocal)
 
   END IF
 
@@ -345,9 +343,9 @@ SUBROUTINE Cut_N_Grow
   IF (nfragments(is) /= 1) THEN
 
      lambda_for_cut = molecule_list(lm,is)%frac
-     nrg_ring_frag_reverse = 0.0_DP
+     E_ring_frag_o = 0.0_DP
      CALL Cut_Regrow(lm,is,frag_start,frag_end,frag_order,frag_total, &
-          lambda_for_cut, e_prev, P_seq, P_reverse, nrg_ring_frag_reverse, &
+          lambda_for_cut, E_prev, P_seq, P_reverse, E_ring_frag_o, &
           cbmc_overlap, del_overlap)
 
      atom_list(1:natoms(is),lm,is)%exist = .true.
@@ -377,8 +375,6 @@ SUBROUTINE Cut_N_Grow
 
   ! Bonded interactions
 
-     E_selferf_o = 0.0_DP
-
      CALL Compute_Molecule_Bond_Energy(lm,is,E_bond_o)
      CALL Compute_Molecule_Angle_Energy(lm,is,E_angle_o)
      CALL Compute_Molecule_Dihedral_Energy(lm,is,E_dihed_o)
@@ -389,11 +385,14 @@ SUBROUTINE Cut_N_Grow
      IF (.NOT. l_pair_nrg) CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is,E_inter_vdw_o,E_inter_qq_o,cbmc_overlap)
      E_inter_qq_o = E_inter_qq_o + E_periodic_qq
 
-     delta_e_o = E_intra_vdw_o + E_intra_qq_o + E_inter_vdw_o + E_inter_qq_o &
-               + E_dihed_o + E_improper_o - E_selferf_o
+     dE_intra = dE_intra - E_bond_o - E_angle_o - E_dihed_o - E_improper_o &
+                         - E_intra_qq_o - E_intra_vdw_o
+     dE_inter = dE_inter - E_inter_qq_o - E_inter_vdw_o
+     dE = dE_intra + dE_inter
+     ! Need to remove the energy that was used to bias fragment selection
+     dE_frag = E_angle_n - E_angle_o + E_ring_frag_n - E_ring_frag_o
 
-     ln_pacc = beta(ibox) * (delta_e_n - nrg_ring_frag_forward) &
-             - beta(ibox) * (delta_e_o - nrg_ring_frag_reverse) &
+     ln_pacc = beta(ibox) * (dE - dE_frag) &
              + DLOG(P_forward / P_reverse)
      
      accept = accept_or_reject(ln_pacc)
@@ -418,25 +417,21 @@ SUBROUTINE Cut_N_Grow
 
      ! update energies for the boxes
      ! note that we include the change in angle energy for the system
-     energy(ibox)%total = energy(ibox)%total + delta_e_n - delta_e_o &
-          + e_angle_n - e_angle_o
-     energy(ibox)%bond = energy(ibox)%bond + e_bond_n - e_bond_o
-     energy(ibox)%angle = energy(ibox)%angle + e_angle_n - e_angle_o
-     energy(ibox)%dihedral = energy(ibox)%dihedral + e_dihed_n - e_dihed_o
+     energy(ibox)%total = energy(ibox)%total + dE
+     energy(ibox)%intra = energy(ibox)%intra + dE_intra
+     energy(ibox)%inter = energy(ibox)%inter + dE_inter
+     energy(ibox)%bond = energy(ibox)%bond + E_bond_n - E_bond_o
+     energy(ibox)%angle = energy(ibox)%angle + E_angle_n - E_angle_o
+     energy(ibox)%dihedral = energy(ibox)%dihedral + E_dihed_n - E_dihed_o
      energy(ibox)%improper = energy(ibox)%improper + E_improper_n - E_improper_o
-     energy(ibox)%intra = energy(ibox)%intra + e_bond_n - e_bond_o + &
-          e_angle_n - e_angle_o + e_dihed_n - e_dihed_o + E_improper_n - E_improper_o
-     energy(ibox)%intra_vdw = energy(ibox)%intra_vdw + e_intra_vdw_n - e_intra_vdw_o
-     energy(ibox)%intra_q = energy(ibox)%intra_q + e_intra_qq_n - e_intra_qq_o
-     energy(ibox)%inter_vdw = energy(ibox)%inter_vdw + e_inter_vdw_n - &
-                                                               e_inter_vdw_o
-     energy(ibox)%inter_q = energy(ibox)%inter_q + e_inter_qq_n - e_inter_qq_o
+     energy(ibox)%intra_vdw = energy(ibox)%intra_vdw + E_intra_vdw_n - E_intra_vdw_o
+     energy(ibox)%intra_q = energy(ibox)%intra_q + E_intra_qq_n - E_intra_qq_o
+     energy(ibox)%inter_vdw = energy(ibox)%inter_vdw + E_inter_vdw_n - E_inter_vdw_o
+     energy(ibox)%inter_q = energy(ibox)%inter_q + E_inter_qq_n - E_inter_qq_o
 
      IF (int_charge_sum_style(ibox)  == charge_ewald .AND.&
          has_charge(is)) THEN
-        energy(ibox)%ewald_reciprocal = E_reciprocal_move
-        energy(ibox)%self = energy(ibox)%self - & 
-                                      (E_selferf_n - E_selferf_o)
+        energy(ibox)%reciprocal = E_reciprocal_n
      END IF
 
      regrowth_success(frag_total,is) = regrowth_success(frag_total,is) + 1

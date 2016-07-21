@@ -49,13 +49,25 @@ SUBROUTINE Accumulate(ibox)
   !--- energy accumulators
 
   ac_energy(ibox,iblock)%total = ac_energy(ibox,iblock)%total + energy(ibox)%total
-  ac_energy(ibox,iblock)%inter_vdw = ac_energy(ibox,iblock)%inter_vdw + energy(ibox)%inter_vdw
-  ac_energy(ibox,iblock)%inter_q   = ac_energy(ibox,iblock)%inter_q   + energy(ibox)%inter_q
+  ! sub categories
+  ac_energy(ibox,iblock)%intra     = ac_energy(ibox,iblock)%intra + energy(ibox)%intra
+  ac_energy(ibox,iblock)%inter     = ac_energy(ibox,iblock)%inter + energy(ibox)%inter
+  ! individual components
+  ac_energy(ibox,iblock)%bond      = ac_energy(ibox,iblock)%bond      + energy(ibox)%bond
+  ac_energy(ibox,iblock)%angle     = ac_energy(ibox,iblock)%angle     + energy(ibox)%angle
+  ac_energy(ibox,iblock)%dihedral  = ac_energy(ibox,iblock)%dihedral  + energy(ibox)%dihedral
+  ac_energy(ibox,iblock)%improper  = ac_energy(ibox,iblock)%improper  + energy(ibox)%improper
   ac_energy(ibox,iblock)%intra_vdw = ac_energy(ibox,iblock)%intra_vdw + energy(ibox)%intra_vdw
   ac_energy(ibox,iblock)%intra_q   = ac_energy(ibox,iblock)%intra_q   + energy(ibox)%intra_q
-  ac_energy(ibox,iblock)%intra     = ac_energy(ibox,iblock)%intra + energy(ibox)%intra
-  ac_energy(ibox,iblock)%ewald_reciprocal = ac_energy(ibox,iblock)%ewald_reciprocal + energy(ibox)%ewald_reciprocal
-  ac_energy(ibox,iblock)%self = ac_energy(ibox,iblock)%self + energy(ibox)%self
+  ac_energy(ibox,iblock)%inter_vdw = ac_energy(ibox,iblock)%inter_vdw + energy(ibox)%inter_vdw
+  ac_energy(ibox,iblock)%inter_q   = ac_energy(ibox,iblock)%inter_q   + energy(ibox)%inter_q
+  
+  IF (int_charge_sum_style(ibox) == charge_ewald) THEN
+     ac_energy(ibox,iblock)%ewald_reciprocal = ac_energy(ibox,iblock)%ewald_reciprocal + energy(ibox)%ewald_reciprocal
+     ac_energy(ibox,iblock)%self = ac_energy(ibox,iblock)%self + energy(ibox)%self
+  ELSE IF (int_charge_sum_style(ibox) == charge_dsf) THEN
+     ac_energy(ibox,iblock)%self = ac_energy(ibox,iblock)%self + energy(ibox)%self
+  END IF
 
   IF(int_vdw_sum_style(ibox) == vdw_cut_tail) THEN
      ac_energy(ibox,iblock)%lrc = ac_energy(ibox,iblock)%lrc + energy(ibox)%lrc
