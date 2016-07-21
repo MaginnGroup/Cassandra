@@ -4941,25 +4941,49 @@ SUBROUTINE Get_Run_Type
         line_nbr = line_nbr + 1
         CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
         
-        IF (line_array(1) == 'equilibration' .OR. line_array(1) == 'Equilibration') THEN
+        ! Maybe move this to a select case construct?!
+        ! Gets rid of all the comparisons within the if clause
+        SELECT CASE(line_array(1))
+        CASE('equilibration', 'Equilibration')
            run_type = line_array(1)
            int_run_type = run_equil
-
-        ELSE IF (line_array(1) == 'production' .OR. line_array(1) == 'Production') THEN
+        CASE('production', 'Production')
            run_type = line_array(1)
            int_run_type = run_prod
-         
-        ELSE IF (line_array(1) == 'test' .OR. line_array(1) == 'Test') THEN
+        CASE('equilibration_until', 'Equilibration_Until', 'Equilibration_until')
+           run_type = line_array(1)
+           int_run_type = run_equil
+           change_to_production = .true.
+        CASE('test', 'Test')
            run_type = line_array(1)
            int_run_type = run_test
-           
-        ELSE
+        CASE DEFAULT
            err_msg = ''
            err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
                         TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
-           err_msg(2) = 'Supported keywords are: equilibration, production'
+           err_msg(2) = 'Supported keywords are: equilibration, production, equilibration_until'
            CALL Clean_Abort(err_msg,'Get_Run_Type')
-        END IF
+        END SELECT
+
+        !IF (line_array(1) == 'equilibration' .OR. line_array(1) == 'Equilibration') THEN
+        !   run_type = line_array(1)
+        !   int_run_type = run_equil
+
+        !ELSE IF (line_array(1) == 'production' .OR. line_array(1) == 'Production') THEN
+        !   run_type = line_array(1)
+        !   int_run_type = run_prod
+        ! 
+        !ELSE IF (line_array(1) == 'test' .OR. line_array(1) == 'Test') THEN
+        !   run_type = line_array(1)
+        !   int_run_type = run_test
+        !   
+        !ELSE
+        !   err_msg = ''
+        !   err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
+        !                TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+        !   err_msg(2) = 'Supported keywords are: equilibration, production'
+        !   CALL Clean_Abort(err_msg,'Get_Run_Type')
+        !END IF
 
         nupdate = String_To_Int(line_array(2))
         
@@ -4983,6 +5007,12 @@ SUBROUTINE Get_Run_Type
            
         END IF
         
+        ! if runtype is equilibration until a specified cycle, read cycle from next line
+        IF (change_to_production) THEN
+          line_nbr = line_nbr + 1
+          CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
+          nsteps_until_prod = String_To_Int(line_array(1))
+        END IF
         
         EXIT
 
