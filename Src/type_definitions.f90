@@ -461,22 +461,25 @@ MODULE Type_Definitions
     ! This class will have dimensions of nbr_boxes
     ! It is defined to hold various energies of the system.
     ! 
-    ! nonbond_inter_vdw : total intermolecular vdW interactions of molecules in a box
-    ! nonbond_inter_q :   intermolecular charge interactions
-    ! nonbond_intra_vdw : intramolecular nonbonded vdW interactions
-    ! nonbond_intra_q   : intramolecular nonbonded charge interactions
-    ! intra             : bonded intramolecular interactions
-    ! bond              : contribution from bonds
-    ! angle             : contribution from angles
-    ! dihedral          : contribution from dihedrals
-    ! ewald_reciprocal  : reciprocal space component of Ewald summation
-    ! ewald_self        : Ewald self energy component
     ! total             : total energy of the system
+    ! intra             : intramolecular interactions
+    !   bond            : contribution from bonds
+    !   angle           : contribution from angles
+    !   dihedral        : contribution from dihedrals
+    !   improper        : contribution from impropers
+    !   intra_vdw       : intramolecular nonbonded vdW interactions
+    !   intra_q         : intramolecular nonbonded charge interactions
+    ! inter             : intermolecular interactions
+    !   inter_vdw       : total intermolecular vdW interactions of molecules in a box
+    !   lrc             : long range tail correction to vdw energy
+    !   inter_q         : intermolecular charge interactions
+    !   reciprocal      : reciprocal space component of Ewald summation
+    !   self            : Ewald self energy component
 
-    REAL(DP) :: inter_vdw, lrc, inter_q, intra_vdw, intra_q
-    REAL(DP) :: intra, ewald_reciprocal, total
-    REAL(DP) :: bond, angle, dihedral, improper
-    REAL(DP) :: self
+    REAL(DP) :: total
+    REAL(DP) :: intra, inter
+    REAL(DP) :: bond, angle, dihedral, improper, intra_vdw, intra_q
+    REAL(DP) :: inter_vdw, lrc, inter_q, reciprocal, self
  END TYPE Energy_Class
  !------------------------------------------------------------------------------------------------
 
