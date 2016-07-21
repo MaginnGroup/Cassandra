@@ -476,11 +476,10 @@ SUBROUTINE GEMC_NVT_Volume
 
   ! Update the maximum volume modulus of equilibration runs
    IF (MOD(nvolumes(box_grw),nvol_update) == 0 ) THEN
-      WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,F8.5)',ADVANCE='NO') i_mcstep, 'volswap_to' , box_grw, success_ratio
-
       IF ( int_run_type == run_equil) THEN
 
          success_ratio = REAL(ivol_success(box_grw),DP)/REAL(nvol_update,DP)
+      
          ivol_success(box_grw) = 0
          ivol_success(box_shk) = 0
       
@@ -502,6 +501,10 @@ SUBROUTINE GEMC_NVT_Volume
          success_ratio = REAL(nvol_success(box_grw),DP)/REAL(nvolumes(box_grw),DP)
          
       END IF
+         
+      WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,F8.5)',ADVANCE='NO') &
+                             i_mcstep, 'volswap_to' , box_grw, success_ratio
+
 
       WRITE(logunit,*)
       
