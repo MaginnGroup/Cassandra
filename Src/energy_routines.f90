@@ -1529,7 +1529,7 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
       !$OMP PARALLEL DO DEFAULT(SHARED) &
       !$OMP PRIVATE(i,ia,cos_mol_im,sin_mol_im) &
       !$OMP PRIVATE(cos_mol_im_o, sin_mol_im_o) &
-      !$OMP PRIVATE(hdotr) &
+      !$OMP PRIVATE(hdotr, q) &
       !$OMP SCHEDULE(STATIC) &
       !$OMP REDUCTION(+:E_reciprocal)
       DO i = 1, nvecs(ibox)
@@ -1551,13 +1551,12 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
         cos_mol_im_o = cos_mol(i,im_locate)
         sin_mol_im_o = sin_mol(i,im_locate)
 
-        cos_sum(i,ibox) = cos_sum(i,ibox) &
-                        + (cos_mol_im - cos_mol_im_o)
-        sin_sum(i,ibox) = sin_sum(i,ibox) &
-                        + (sin_mol_im - sin_mol_im_o)
+        cos_sum(i,ibox) = cos_sum(i,ibox) + (cos_mol_im - cos_mol_im_o)
+        sin_sum(i,ibox) = sin_sum(i,ibox) + (sin_mol_im - sin_mol_im_o)
 
-        E_reciprocal = E_reciprocal + cn(i,ibox) * (cos_sum(i,ibox) &
-                     * cos_sum(i,ibox) + sin_sum(i,ibox) * sin_sum(i,ibox))
+        E_reciprocal = E_reciprocal + cn(i,ibox) &
+                     * (cos_sum(i,ibox) * cos_sum(i,ibox) &
+                     + sin_sum(i,ibox) * sin_sum(i,ibox))
 
         ! set the molecules cos and sin terms to the one calculated here
         cos_mol(i,im_locate) = cos_mol_im
@@ -1594,7 +1593,7 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
     ELSE IF ( move_flag == int_insertion ) THEN
 
       !$OMP PARALLEL DO DEFAULT(SHARED) &
-      !$OMP PRIVATE(i, ia, hdotr) &
+      !$OMP PRIVATE(i, ia, hdotr, q) &
       !$OMP SCHEDULE(STATIC) &
       !$OMP REDUCTION(+:E_reciprocal) 
 

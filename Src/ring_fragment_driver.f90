@@ -110,7 +110,10 @@ SUBROUTINE Ring_Fragment_Driver
 
      ! Store information with given frequency
      IF (MOD(i_mcstep,nthermo_freq) == 0) THEN
-        WRITE(frag_file_unit,*) temperature(ibox), energy(ibox)%total
+        WRITE(frag_file_unit,*) temperature(ibox), energy(ibox)%dihedral+ &
+             energy(ibox)%intra_vdw + energy(ibox)%intra_q + &
+             energy(ibox)%improper
+!temperature(ibox), energy(ibox)%total
 
         DO ia = 1, natoms(is)
            WRITE(frag_file_unit,*) nonbond_list(ia,is)%element, &
