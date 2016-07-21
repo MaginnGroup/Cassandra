@@ -72,9 +72,11 @@
 
 
 !******************************************************************************
-  WRITE(logunit,*)
-  WRITE(logunit,'(A)') 'Nonbond tables'
-  WRITE(logunit,'(A80)') '********************************************************************************'
+  IF (verbose_log) THEN
+     WRITE(logunit,*)
+     WRITE(logunit,'(A)') 'Nonbond tables'
+     WRITE(logunit,'(A80)') '********************************************************************************'
+  END IF
 
   ALLOCATE(temp_atomtypes(1000), Stat=AllocateStatus)
   IF (AllocateStatus .NE. 0) THEN
@@ -567,7 +569,5 @@
 
      END IF ! mix_rule
   END IF ! nbr_atomtypes > 1
-
-  WRITE(logunit,'(X,A80)') '********************************************************************************'
 
 END SUBROUTINE Create_Nonbond_Table

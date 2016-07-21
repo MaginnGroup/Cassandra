@@ -4280,7 +4280,6 @@ SUBROUTINE Get_Move_Probabilities
                  ! Default
                  l_prob_swap_species = .FALSE.
                  l_prob_swap_from_box = .FALSE.
-                 l_prob_swap_to_box = .FALSE.
 
                  DO 
                     line_nbr = line_nbr + 1
@@ -4290,6 +4289,13 @@ SUBROUTINE Get_Move_Probabilities
                     backspace(inputunit)
 
                     IF (line_string2(1:1) == '!' .OR. TRIM(line_string2) == '') THEN
+                       IF (.NOT. l_prob_swap_from_box) THEN
+                          WRITE(logunit,'(2X,A)') 'By default, box_out will be selected according to its mole fraction'
+                       END IF
+                     
+                       IF (.NOT. l_prob_swap_species) THEN
+                          WRITE(logunit,'(2X,A)') 'By default, species will be selected according to its mole fraction in box_out'
+                       END IF
                        EXIT
                     ELSE IF (line_string2(1:17) == 'prob_swap_species') THEN
                        l_prob_swap_species = .TRUE.
@@ -4342,55 +4348,11 @@ SUBROUTINE Get_Move_Probabilities
                           CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
                        END IF
 
-                    ELSE IF (line_string2(1:16) == 'prob_swap_to_box') THEN
-                       l_prob_swap_to_box = .TRUE.
-                       ALLOCATE(prob_swap_to_box(nbr_boxes,nbr_boxes))
-                       ALLOCATE(cum_prob_swap_to_box(nbr_boxes,nbr_boxes))
-                       prob_swap_to_box = 0.0_DP
-                       cum_prob_swap_to_box = 0.0_DP
-
-                       line_nbr = line_nbr + 1
-                       CALL Parse_String(inputunit,line_nbr,nbr_boxes+2,nbr_entries,line_array,ierr)
-
-                       ! first check that the box number matches up
-                       ibox = String_To_Int(line_array(2))
-
-                       IF (ibox < 1 .OR. ibox > nbr_boxes ) THEN
-                          err_msg = ''
-                          err_msg(1) = 'Option ' // line_array(2) // &
-                                       ' for keyword prob_swap_to_box on line number ' // &
-                                       TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
-                          err_msg(2) = 'Supported options are: 1 ... nbr_boxes'
-                          CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
-                       END IF
-
-                       DO kbox = 1, nbr_boxes
-                          prob_swap_to_box(ibox,kbox) = String_To_Double(line_array(kbox+2))
-                          IF (ibox == kbox .AND. prob_swap_to_box(ibox,ibox) /= 0.0_DP) THEN
-                             err_msg = ''
-                             err_msg(1) = 'Nonzero probability specified for swap from box ' // &
-                                           TRIM(Int_To_String(line_nbr)) // ' to box ' // &
-                                           TRIM(Int_To_String(line_nbr))
-                             CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
-                          END IF
-                          cum_prob_swap_to_box(ibox,kbox) = SUM(prob_swap_to_box(ibox,1:kbox))
-                          WRITE(logunit,'(X,A,X,F5.3)') 'Cumulative swap probabilty from box ' // &
-                               TRIM(Int_To_String(ibox)) // ' to box ' // TRIM(Int_To_String(kbox)) // ' is ', &
-                               cum_prob_swap_to_box(ibox,kbox)
-                       END DO
-
-                       IF (ABS(cum_prob_swap_to_box(ibox,nbr_boxes) - 1.0_DP) > tiny_number) THEN
-                          err_msg = ''
-                          err_msg(1) = 'Swap probabilties on line ' // TRIM(Int_To_String(line_nbr)) // &
-                                       ' of the input file do not sum to 1'
-                          CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
-                       END IF
-
                     ELSE
                        err_msg = ''
                        err_msg(1) = 'Keyword ' // TRIM(line_string2(1:17)) // ' on line number ' // &
                                     TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
-                       err_msg(2) = 'Supported keywords are: prob_swap_species, prob_swap_from_box, prob_swap_to_box'
+                       err_msg(2) = 'Supported keywords are: prob_swap_species, prob_swap_from_box'
                        CALL Clean_Abort(err_msg,'Get_Start_Type')
                     END IF
 
@@ -4557,52 +4519,6 @@ SUBROUTINE Get_Move_Probabilities
         CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
      END IF
 
-     IF (l_prob_swap_from_box .OR. l_prob_swap_to_box) THEN
-        ! if either keyword is given, will use both options
-
-        ! if prob_swap_from_box was not given (but prob_swap_to_box was)
-        ! default to uniform probabilities
-        IF (.NOT. l_prob_swap_from_box) THEN 
-           l_prob_swap_from_box = .TRUE.
-           ALLOCATE(prob_swap_from_box(nbr_boxes))
-           ALLOCATE(cum_prob_swap_from_box(nbr_boxes))
-           WRITE(logunit,'(X,A)') 'Keyword prob_swap_from_box is missing from input file'
-           WRITE(logunit,'(2X,A)') 'By default, box_out will be selected with uniform probability'
-           DO ibox = 1, nbr_boxes
-             prob_swap_from_box(ibox) = 1.0_DP / REAL(nbr_boxes,DP)
-             cum_prob_swap_from_box(ibox) = SUM(prob_swap_from_box(1:ibox))
-           END DO
-        END IF
-
-        ! if prob_swap_to_box was not given for each box
-        ! default to uniform probabilities
-        IF (.NOT. l_prob_swap_to_box) THEN
-           l_prob_swap_to_box = .TRUE.
-           ALLOCATE(prob_swap_to_box(nbr_boxes,nbr_boxes))
-           ALLOCATE(cum_prob_swap_to_box(nbr_boxes,nbr_boxes))
-           cum_prob_swap_to_box = 0.0_DP
-        END IF
-        DO ibox = 1, nbr_boxes
-           IF (ABS(cum_prob_swap_to_box(ibox,nbr_boxes) - 1.0_DP) > tiny_number) THEN
-              WRITE(logunit,'(X,A)') 'Keyword prob_swap_to_box missing for box ' // TRIM(Int_To_String(ibox))
-              WRITE(logunit,'(2X,A)') 'By default, box_in will be selected with uniform probability'
-
-              DO kbox = 1, nbr_boxes
-                 IF (ibox /= kbox) THEN
-                    prob_swap_to_box(ibox,kbox) = 1.0_DP / REAL(nbr_boxes-1,DP)
-                 END IF
-                 cum_prob_swap_to_box(ibox,kbox) = SUM(prob_swap_to_box(ibox,1:kbox))
-              END DO
-           END IF
-        END DO
-     ELSE
-        WRITE(logunit,'(2X,A)') 'By default, box_out will be selected according to its mole fraction'
-        WRITE(logunit,'(2X,A)') 'By default, box_in will be selected with uniform probability'
-     END IF
-   
-     IF (.NOT. l_prob_swap_species) THEN
-        WRITE(logunit,'(2X,A)') 'By default, species will be selected according to its mole fraction in box_out'
-     END IF
   END IF
 
   WRITE(logunit,'(A20,I4)') 'Number of moves is :', num_moves

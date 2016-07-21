@@ -310,7 +310,7 @@ SUBROUTINE Translate
              max_disp(is,ibox) = 0.1_DP*max_disp(is,ibox)
          ELSE
              ! minimum max_disp for this species
-             IF (has_charge(is)) THEN
+             IF (has_charge(is) .AND. int_charge_style(ibox) /= charge_none) THEN
                 rcut_small = MIN(rcut_vdw(ibox),rcut_coul(ibox))
              ELSE
                 rcut_small = rcut_vdw(ibox)
