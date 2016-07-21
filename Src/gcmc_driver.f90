@@ -78,6 +78,11 @@ SUBROUTINE GCMC_Driver
 
      i_mcstep = i_mcstep + 1
 
+     ! Change mode from equilibration to production if specified
+     IF (change_to_production .AND. i_mcstep > nsteps_until_prod) THEN
+       int_run_type = run_prod
+     END IF
+
      !*****************************************************************************
      ! select a move from Golden Sampling scheme
      !*****************************************************************************
