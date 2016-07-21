@@ -88,31 +88,25 @@ PROGRAM Main
 !  !$ include 'omp_lib.h'
 
   INTEGER(4) :: count
-  INTEGER :: i, j, is, im, ia, this_im, ibox, nmol_is, int_phi
-  INTEGER :: alive, t_num
+  INTEGER :: i, j, is, im, ia, lm, ibox
+  INTEGER :: t_num
 
   INTEGER :: nyears, nmonths, ndays, nhours, nmin, nsec, nms
   CHARACTER(120) :: version
   CHARACTER(120) filename1
   CHARACTER(80) :: name
 
-  LOGICAL :: overlap, cbmc_overlap, check_charge
+  LOGICAL :: overlap, check_charge
 
-  REAL(DP) :: attempt_prob, phi
-  REAL(DP) :: E_st_vdw, E_st_qq, W_st_vdw, W_st_qq, e_lrc, w_lrc
   REAL(DP) :: q_box
 
   REAL(DP) :: month_time, day_time, hour_time, min_time, sec_time, ms_time
 
-  TYPE(Energy_Class) :: inrg, e_start
-
   INTEGER :: IARGC
 
-  INTEGER, ALLOCATABLE, DIMENSION(:) :: frag_order
 !********************************************************************************
 ! Code name and version. Change as updates are made.
-  version = 'Cassandra Development Version'
-  e_start%inter_vdw = 0.0_DP
+  version = 'Cassandra Version 1.2 20160720'
 ! Get starting time information (intrinsic function)
   CALL DATE_AND_TIME(date,time,zone,begin_values)
   CALL cpu_time(start_time)
@@ -378,10 +372,10 @@ PROGRAM Main
   DO ibox = 1, nbr_boxes
      DO is = 1, nspecies
         DO im = 1, nmols(is,ibox)
-           this_im = locate(im,is,ibox)
-           CALL Get_COM(this_im,is)
-           CALL Compute_Max_Com_Distance(this_im,is)
-           CALL Fold_Molecule(this_im,is,ibox)
+           lm = locate(im,is,ibox)
+           CALL Get_COM(lm,is)
+           CALL Compute_Max_Com_Distance(lm,is)
+           CALL Fold_Molecule(lm,is,ibox)
         END DO
      END DO
   END DO
