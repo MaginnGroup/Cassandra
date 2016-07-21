@@ -98,6 +98,8 @@ USE Type_Definitions
   INTEGER, PARAMETER :: run_equil = 0
   INTEGER, PARAMETER :: run_prod = 1
   INTEGER, PARAMETER :: run_test = 2
+  LOGICAL :: change_to_production = .false.
+  INTEGER :: nsteps_until_prod
   INTEGER, PARAMETER :: vdw_none = 0
   INTEGER, PARAMETER :: vdw_lj = 1
   INTEGER, PARAMETER :: vdw_cut = 2
