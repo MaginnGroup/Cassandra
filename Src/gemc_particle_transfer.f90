@@ -157,12 +157,6 @@ SUBROUTINE GEMC_Particle_Transfer
      ! If there are no molecules in this box then return
      IF( nmols_box(box_out) == 0 ) RETURN
 
-     ! Choose box_in with uniform probability
-     ! Since the number of boxes is constant, this step does not change P_forward or P_reverse
-     ibox = INT(rranf() * (nbr_boxes-1)) + 1
-     IF (ibox >= box_out) ibox = ibox + 1
-     box_in = ibox
-
      P_forward = P_forward * REAL(nmols_box(box_out),DP)/REAL(nmols_tot,DP)
      P_reverse = P_reverse * REAL(nmols_box(box_in)+1,DP)/REAL(nmols_tot,DP)
 
@@ -176,20 +170,16 @@ SUBROUTINE GEMC_Particle_Transfer
      END DO
      box_out = ibox
 
-     ! choose an acceptor box
-     randno = rranf()
-     DO ibox = 1,nbr_boxes
-        IF (ibox == box_out) CYCLE
-        IF (randno <= cum_prob_swap_to_box(box_out,ibox)) EXIT
-     END DO
-     box_in = ibox
-
-     P_forward = P_forward * prob_swap_from_box(box_out) &
-                           * prob_swap_to_box(box_out,box_in)
-     P_reverse = P_reverse * prob_swap_from_box(box_in) &
-                           * prob_swap_to_box(box_in,box_out)
+     P_forward = P_forward * prob_swap_from_box(box_out)
+     P_reverse = P_reverse * prob_swap_from_box(box_in)
 
   END IF
+
+  ! Choose box_in with uniform probability
+  ! Since the number of boxes is constant, this step does not change P_forward or P_reverse
+  ibox = INT(rranf() * (nbr_boxes-1)) + 1
+  IF (ibox >= box_out) ibox = ibox + 1
+  box_in = ibox
 
   ! increment total number of trials for each of the boxes
   tot_trials(box_out) = tot_trials(box_out) + 1
@@ -425,7 +415,7 @@ SUBROUTINE GEMC_Particle_Transfer
     !*****************************************************************************
     ! Need to preserve coordinates of 'alive' in box_in.
     ALLOCATE(new_atom_list(natoms(is)))
-    new_atom_list(:) = atom_list(natoms(is),alive,is)
+    new_atom_list(:) = atom_list(1:natoms(is),alive,is)
     new_molecule_list = molecule_list(alive,is)
 
     ! Change the box identity of alive back to box_out
@@ -717,7 +707,7 @@ SUBROUTINE GEMC_Particle_Transfer
   IF (ALLOCATED(new_atom_list)) DEALLOCATE(new_atom_list)
 
   IF (verbose_log) THEN
-    WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8)') i_mcstep, 'swap_to' , alive, is, box_in, accept
+    WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I1,A1,I1,X,L8)') i_mcstep, 'swap' , alive, is, box_out, '>', box_in, accept
   END IF
 
 END SUBROUTINE GEMC_Particle_Transfer
