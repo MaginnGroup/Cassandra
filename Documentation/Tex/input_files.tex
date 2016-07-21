@@ -1026,7 +1026,6 @@ This subsection is required for GCMC simulations. \\ \\
 {\it Character(2,1) ... Character(2,n)} \\
 {[}{\it prob\_swap\_species Real(3,1) ... Real(3,n)}] \\
 {[}{\it prob\_swap\_from\_box Real(4,1) ... Real(4,i)}] \\ \\
-%{[}{\it prob\_swap\_to\_box Real(5,1) Real(5,2) ... Real(5,i+1)}] \\ \\
 %
 where $n$ is the number of species and $i$ is the number of boxes.
 {\em Real(1)} is the probability of attempting to transfer a molecule from one box to another. 
@@ -1071,8 +1070,6 @@ prob\_swap\_species 0.9 0.1 0.0 \\
 prob\_swap\_from\_box 0.25 0.75 \\ \\ }
 %
 The probability of selecting a species with insertion method \texttt{none} must be 0. \\ \\
-%
-%The keyword {\tt prob\_swap\_to\_box} can be used for simulations with more than 2 boxes.
 %
 %%%%%%%%%%%%%%%%
 %

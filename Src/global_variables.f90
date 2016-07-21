@@ -456,9 +456,8 @@ USE Type_Definitions
   REAL(DP), DIMENSION(:), ALLOCATABLE :: prob_rot_species
   REAL(DP), DIMENSION(:), ALLOCATABLE :: prob_swap_species, cum_prob_swap_species
   REAL(DP), DIMENSION(:), ALLOCATABLE :: prob_swap_from_box, cum_prob_swap_from_box
-  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: prob_swap_to_box, cum_prob_swap_to_box
 
-  LOGICAL :: l_prob_swap_species, l_prob_swap_from_box, l_prob_swap_to_box
+  LOGICAL :: l_prob_swap_species, l_prob_swap_from_box
 
   LOGICAL :: f_dv, f_vratio
 
