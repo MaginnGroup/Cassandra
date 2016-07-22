@@ -32,7 +32,7 @@ SUBROUTINE NVTMC_Driver
   !        CPU_Time
   !        translate
   !        rotate
-  !        Rigid_Dihedral_Change
+  !        Rotate_Dihedral
   !        Angle_Distortion
   !        Cut_N_Grow
   !        Atom_Displacement
@@ -150,7 +150,7 @@ SUBROUTINE NVTMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
       
-        CALL Rigid_Dihedral_Change
+        CALL Rotate_Dihedral
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -232,6 +232,14 @@ SUBROUTINE NVTMC_Driver
      !*****************************************************************************
      ! check if compute properties this step
      !*****************************************************************************
+     IF (echeck) THEN
+        IF(MOD(i_mcstep,echeck_freq) == 0) THEN
+           DO ibox = 1,nbr_boxes
+              CALL Check_System_Energy(ibox)
+           END DO
+        END IF
+     END IF
+
      write_flag = .FALSE.
      IF(.NOT. timed_run) THEN
         IF (MOD(i_mcstep,nthermo_freq) == 0) write_flag = .TRUE.
@@ -245,7 +253,7 @@ SUBROUTINE NVTMC_Driver
 
      ! Write the information to various files at regular intervals
      IF (write_flag) THEN
-        IF (.NOT. block_average ) THEN
+        IF (.NOT. block_avg ) THEN
            ! write instantaneous properties
            DO ibox = 1, nbr_boxes
               CALL Write_Properties(ibox)

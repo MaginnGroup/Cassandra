@@ -74,12 +74,14 @@ SUBROUTINE Atom_Displacement
 
   INTEGER, DIMENSION(:), ALLOCATABLE :: total_mols, species_id
 
-  REAL(DP) :: rand_no, E_intra_vdw_n, E_inter_vdw_n, E_intra_qq_n, E_inter_qq_n
-  REAL(DP) :: E_inter_vdw_o, E_intra_vdw_o, E_inter_qq_o, E_intra_qq_o
-  REAL(DP) :: e_recip_move,  delta_e, factor
-
-  REAL(DP) :: e_ang_n, e_ang_o, e_dihed_n, e_dihed_o
-  REAL(DP) :: e_improper_n, e_improper_o
+  REAL(DP) :: rand_no
+  REAL(DP) :: dE, dE_intra, dE_inter
+  REAL(DP) :: E_bond_n, E_angle_n, E_dihed_n, E_improper_n
+  REAL(DP) :: E_intra_vdw_n, E_inter_vdw_n, E_intra_qq_n, E_inter_qq_n
+  REAL(DP) :: E_bond_o, E_angle_o, E_dihed_o, E_improper_o
+  REAL(DP) :: E_intra_vdw_o, E_inter_vdw_o, E_intra_qq_o, E_inter_qq_o
+  REAL(DP) :: E_recip_n
+  REAL(DP) :: ln_pacc
 
   REAL(DP), DIMENSION(:), ALLOCATABLE :: x_box, x_species
 
@@ -212,70 +214,61 @@ SUBROUTINE Atom_Displacement
      CALL Revert_Old_Cartesian_Coordinates(lm,is)
      RETURN
   END IF
-  
+  dE_intra = E_intra_vdw_n + E_intra_qq_n
+  dE_inter = E_inter_vdw_n + E_inter_qq_n
 
   ! If here then compute change in energy
 !  write(*,*) 'new'
-  CALL Compute_Molecule_Angle_Energy(lm,is,e_ang_n)
-  CALL Compute_Molecule_Dihedral_Energy(lm,is,e_dihed_n)
-  CALL Compute_Molecule_Improper_Energy(lm,is,e_improper_n)
+  CALL Compute_Molecule_Angle_Energy(lm,is,E_angle_n)
+  CALL Compute_Molecule_Dihedral_Energy(lm,is,E_dihed_n)
+  CALL Compute_Molecule_Improper_Energy(lm,is,E_improper_n)
+  dE_intra = dE_intra + E_angle_n + E_dihed_n + E_improper_n
 
-  e_recip_move = 0.0_DP
   IF (int_charge_sum_style(ibox) == charge_ewald) THEN
      ! compute change in ewald reciprocal energy difference
-
-     CALL Update_System_Ewald_Reciprocal_Energy(lm,is,ibox,int_translation,e_recip_move)
-
+     CALL Update_System_Ewald_Reciprocal_Energy(lm,is,ibox,int_translation,E_recip_n)
+     dE_inter = dE_inter + (E_recip_n - energy(ibox)%reciprocal)
   END IF
   
   ALLOCATE(new_atom_list(natoms(is)))
-  new_atom_list(:) = atom_list(:,lm,is)
+  new_atom_list(:) = atom_list(1:natoms(is),lm,is)
   new_molecule_list = molecule_list(lm,is)
 
   CALL Revert_Old_Cartesian_Coordinates(lm,is)
 
   ! Now compute the energy in old configuration
+  CALL Compute_Molecule_Angle_Energy(lm,is,E_angle_o)
+  CALL Compute_Molecule_Dihedral_Energy(lm,is,E_dihed_o)
+  CALL Compute_Molecule_Improper_Energy(lm,is,E_improper_o)
+  dE_intra = dE_intra - E_angle_o - E_dihed_o - E_improper_o
 
-  CALL Compute_Molecule_Angle_Energy(lm,is,e_ang_o)
-  CALL Compute_Molecule_Dihedral_Energy(lm,is,e_dihed_o)
-  CALL Compute_Molecule_Improper_Energy(lm,is,e_improper_o)
+  CALL Compute_Atom_Nonbond_Energy(iatom,lm,is,&
+       E_intra_vdw_o,E_inter_vdw_o,E_intra_qq_o,E_inter_qq_o,overlap)
+  dE_intra = dE_intra - E_intra_vdw_o - E_intra_qq_o
+  dE_inter = dE_inter - E_inter_vdw_o - E_inter_qq_o
 
-  CALL Compute_Atom_Nonbond_Energy(iatom, lm, is,E_intra_vdw_o, &
-       E_inter_vdw_o, E_intra_qq_o, E_inter_qq_o, overlap)
-  
-  
-  delta_e = E_intra_vdw_n + E_inter_vdw_n + E_intra_qq_n + E_inter_qq_n + E_ang_n + E_dihed_n - &
-            E_intra_vdw_o - E_inter_vdw_o - E_intra_qq_o - E_inter_qq_o - E_ang_o - E_dihed_o
-  delta_e = delta_e + e_improper_n - e_improper_o
-  delta_e = delta_e + (e_recip_move - energy(ibox)%ewald_reciprocal)
+  dE = dE_inter + dE_intra
+  ln_pacc = beta(ibox) * dE
+  accept = accept_or_reject(ln_pacc)
 
-  factor = beta(ibox) * delta_e
-
-
-
-  accept = accept_or_reject(factor)
-!  write(*,*) accept
-!!$  write(*,*) 'delta_e' , delta_e, E_intra_vdw_n, E_intra_vdw_o
-!!$  write(*,*) 'angle', E_ang_n, E_ang_o
-!!$  write(*,*) 'dihedral', E_dihed_n, E_dihed_o
   IF (accept) THEN
      ! update energies and transfer coordinates
      atom_list(:,lm,is) = new_atom_list(:)
      molecule_list(lm,is) = molecule_list(lm,is)
      
-     energy(ibox)%total = energy(ibox)%total + delta_e
-     energy(ibox)%angle = energy(ibox)%angle + E_ang_n - E_ang_o
+     energy(ibox)%total = energy(ibox)%total + dE
+     energy(ibox)%intra = energy(ibox)%intra + dE_intra
+     energy(ibox)%inter = energy(ibox)%inter + dE_inter
+     energy(ibox)%angle = energy(ibox)%angle + E_angle_n - E_angle_o
      energy(ibox)%dihedral = energy(ibox)%dihedral + E_dihed_n - E_dihed_o
-     energy(ibox)%improper = energy(ibox)%improper + e_improper_n - e_improper_o
-     energy(ibox)%intra = energy(ibox)%intra + E_dihed_n - E_dihed_o + &
-                                                       E_ang_n - E_ang_o
+     energy(ibox)%improper = energy(ibox)%improper + E_improper_n - E_improper_o
      energy(ibox)%intra_vdw = energy(ibox)%intra_vdw + E_intra_vdw_n - E_intra_vdw_o
      energy(ibox)%intra_q = energy(ibox)%intra_q + E_intra_qq_n - E_intra_qq_o
      energy(ibox)%inter_vdw = energy(ibox)%inter_vdw + E_inter_vdw_n - E_inter_vdw_o
      energy(ibox)%inter_q = energy(ibox)%inter_q + E_inter_qq_n - E_inter_qq_o
 !     write(*,*) energy
      IF (int_charge_sum_style(ibox) == charge_ewald) THEN
-        energy(ibox)%ewald_reciprocal = energy(ibox)%ewald_reciprocal + e_recip_move
+        energy(ibox)%reciprocal = energy(ibox)%reciprocal + E_recip_n
      END IF
      
      nsuccess(is,ibox)%disp_atom = nsuccess(is,ibox)%disp_atom + 1

@@ -58,7 +58,7 @@ SUBROUTINE Get_COM(alive,is)
   !        insertion
   !        main
   !        read_write_checkpoint
-  !        rigid_dihedral_change
+  !        Rotate_Dihedral
   !        rotate
   !
   ! CALLS
@@ -119,7 +119,7 @@ SUBROUTINE Get_Internal_Coordinates(alive,ispecies)
   !
   !   angle_distortion
   !   cut_n_grow
-  !   rigid_dihedral_change
+  !   Rotate_Dihedral
   !   fragment_driver
   !
   ! CALLS

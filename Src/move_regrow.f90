@@ -297,9 +297,9 @@ SUBROUTINE Cut_N_Grow
   ! terms cancel out in the acceptance rule. However, they are needed in 
   ! updating energies if the move is accepted
 
-  dE_intra = dE_intra + E_bond_n + E_angle_n + E_dihed_n + E_improper_n &
-                      + E_intra_qq_n + E_intra_vdw_n
-  dE_inter = dE_inter + E_inter_qq_n + E_inter_vdw_n
+  dE_intra = E_bond_n + E_angle_n + E_dihed_n + E_improper_n &
+           + E_intra_qq_n + E_intra_vdw_n
+  dE_inter = E_inter_qq_n + E_inter_vdw_n
 
   IF (int_charge_sum_style(ibox)  == charge_ewald .AND.&
       has_charge(is)) THEN

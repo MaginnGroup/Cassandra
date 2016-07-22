@@ -122,7 +122,7 @@ SUBROUTINE Init_Accumulators
   IMPLICIT NONE
 
   ! Initialize accumulators 
-  IF (block_average) THEN
+  IF (block_avg) THEN
      nbr_blocks = (n_mcsteps - initial_mcstep - 1) / block_avg_freq + 1
 
      ALLOCATE(ac_energy(nbr_boxes,nbr_blocks))
@@ -136,12 +136,13 @@ SUBROUTINE Init_Accumulators
 
      ac_energy(:,:)%total = 0.0_DP
      ac_energy(:,:)%intra = 0.0_DP
+     ac_energy(:,:)%inter = 0.0_DP
      ac_energy(:,:)%intra_vdw = 0.0_DP
      ac_energy(:,:)%intra_q = 0.0_DP
      ac_energy(:,:)%inter_vdw = 0.0_DP
      ac_energy(:,:)%lrc = 0.0_DP
      ac_energy(:,:)%inter_q = 0.0_DP
-     ac_energy(:,:)%ewald_reciprocal = 0.0_DP
+     ac_energy(:,:)%reciprocal = 0.0_DP
      ac_energy(:,:)%self = 0.0_DP
 
 !     ac_virial(:,:)%total = 0.0_DP
