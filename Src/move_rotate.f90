@@ -224,7 +224,7 @@ SUBROUTINE Rotate
         !$OMP END PARALLEL WORKSHARE
 
         CALL Update_System_Ewald_Reciprocal_Energy(lm,is,ibox,int_rotation,E_reciprocal_move)
-        dE = E_reciprocal_move - energy(ibox)%ewald_reciprocal
+        dE = E_reciprocal_move - energy(ibox)%reciprocal
 
      END IF
      
@@ -253,7 +253,7 @@ SUBROUTINE Rotate
         energy(ibox)%inter_q   = energy(ibox)%inter_q + E_qq_move - E_qq
 
         IF ( int_charge_sum_style(ibox) == charge_ewald .AND. has_charge(is)) THEN
-           energy(ibox)%ewald_reciprocal = E_reciprocal_move
+           energy(ibox)%reciprocal = E_reciprocal_move
         END IF
 
         nsuccess(is,ibox)%rotation = nsuccess(is,ibox)%rotation + 1

@@ -245,14 +245,14 @@ SUBROUTINE Translate
      IF ( accept ) THEN
 
         ! accept the move and update the global energies
+        energy(ibox)%total = energy(ibox)%total + dE
+        energy(ibox)%inter = energy(ibox)%inter + dE
         energy(ibox)%inter_vdw = energy(ibox)%inter_vdw + E_vdw_move - E_vdw
         energy(ibox)%inter_q   = energy(ibox)%inter_q   + E_qq_move  - E_qq
         
         IF(int_charge_sum_style(ibox) == charge_ewald .AND. has_charge(is)) THEN
            energy(ibox)%reciprocal = E_reciprocal_move
         END IF
-        energy(ibox)%inter = energy(ibox)%inter + dE
-        energy(ibox)%total = energy(ibox)%total + dE
 
         ! update success counter
         nsuccess(is,ibox)%displacement = nsuccess(is,ibox)%displacement + 1
@@ -284,7 +284,7 @@ SUBROUTINE Translate
   END IF
 
   IF (verbose_log) THEN
-    WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8)') i_mcstep, 'translate' , lm, is, ibox, accept
+    WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,3(X,F9.3))') i_mcstep, 'translate' , lm, is, ibox, accept, dx, dy ,dz
   END IF
 
   IF ( MOD(ntrials(is,ibox)%displacement,nupdate) == 0 ) THEN

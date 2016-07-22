@@ -89,7 +89,7 @@ SUBROUTINE Deletion
   ln_pacc = 0.0_DP
   P_seq = 1.0_DP
   P_bias = 1.0_DP
-  nrg_ring_frag_tot = 0.0_DP
+  E_ring_frag = 0.0_DP
   inter_overlap = .FALSE.
   cbmc_overlap = .FALSE.
   intra_overlap = .FALSE.
@@ -169,7 +169,7 @@ SUBROUTINE Deletion
      get_fragorder = .TRUE. !
      ALLOCATE(frag_order(nfragments(is)))
      CALL Build_Molecule(lm,is,ibox,frag_order,this_lambda, &
-             P_seq, P_bias, nrg_ring_frag_tot, cbmc_overlap)
+             P_seq, P_bias, E_ring_frag, cbmc_overlap)
      DEALLOCATE(frag_order)
      
      ! cbmc_overlap will only trip if the molecule being deleted had bad

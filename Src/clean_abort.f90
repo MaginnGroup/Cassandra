@@ -52,7 +52,7 @@ SUBROUTINE Clean_Abort(fail_message,sub_where_failed)
   !   minimum_image_separtion
   !   nvt_mc_ring_fragment
   !   participation
-  !   rigid_dihedral_change
+  !   Rotate_Dihedral
   !   rigid_insertion
   !   volume_change
   !

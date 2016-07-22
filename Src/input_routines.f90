@@ -5205,7 +5205,8 @@ SUBROUTINE Get_Simulation_Length_Info
   n_mcsteps = 0
   n_equilsteps = 0
   l_run = .FALSE.
-  block_average = .FALSE.
+  block_avg = .FALSE.
+  echeck = .FALSE.
 
   DO
      line_nbr = line_nbr + 1
@@ -5340,8 +5341,14 @@ SUBROUTINE Get_Simulation_Length_Info
 
            ELSE IF (line_array(1) == 'block_avg_freq') THEN
 
-              block_average = .TRUE.
+              block_avg = .TRUE.
               block_avg_freq = String_To_Int(line_array(2))
+
+           ELSE IF (line_array(1) == 'energy_freq') THEN
+
+              echeck = .TRUE.
+              echeck_freq = String_To_Int(line_array(2))
+              WRITE(logunit,'(A,I10,X,A)') 'The energy will be recomputed from scratch every ', echeck_freq, sim_length_units
 
            ELSE
 
@@ -5349,6 +5356,7 @@ SUBROUTINE Get_Simulation_Length_Info
               err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
                            TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
               err_msg(2) = 'Supported keywords are: prop_freq, coord_freq, run, steps_per_sweep, block_avg_freq'
+              err_msg(3) = '                        energy_freq'
               CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
 
            END IF
@@ -5384,8 +5392,8 @@ SUBROUTINE Get_Simulation_Length_Info
 
   END IF
 
-  ! Check if block_average or instantaneous values
-  IF (block_average) THEN
+  ! Check if block_avg or instantaneous values
+  IF (block_avg) THEN
      ! check that block_avg_freq is greater than nthermo_freq
      IF (block_avg_freq < nthermo_freq .OR. MOD(block_avg_freq,nthermo_freq) /= 0) THEN
         err_msg = ''
@@ -5405,7 +5413,8 @@ SUBROUTINE Get_Simulation_Length_Info
      n_mcsteps = n_mcsteps * steps_per_sweep
      nthermo_freq = nthermo_freq * steps_per_sweep
      ncoord_freq = ncoord_freq * steps_per_sweep
-     IF (block_average) block_avg_freq = block_avg_freq * steps_per_sweep
+     IF (block_avg) block_avg_freq = block_avg_freq * steps_per_sweep
+     IF (echeck) echeck_freq = echeck_freq * steps_per_sweep
   END IF
   
   WRITE(logunit,'(A80)') '********************************************************************************'
@@ -5913,59 +5922,6 @@ SUBROUTINE Get_File_Info
   WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_File_Info
-
-!******************************************************************************
-SUBROUTINE Get_Energy_Check_Info
-!******************************************************************************
-
-  IMPLICIT NONE
-
-  INTEGER :: ierr, line_nbr, nbr_entries, is, ibox
-  CHARACTER(120) :: line_string, line_array(20)
-
-!******************************************************************************
-  WRITE(logunit,*)
-  WRITE(logunit,'(A)') 'Energy check info'
-  WRITE(logunit,'(A80)') '********************************************************************************'
-
-  REWIND(inputunit)
-
-  ierr = 0
-  line_nbr = 0
-  echeck_flag = .FALSE.
-
-  DO
-     line_nbr = line_nbr + 1
-     CALL Read_String(inputunit,line_string,ierr)
-
-     IF (ierr .NE. 0) THEN
-        err_msg = ''
-        err_msg(1) = "Error getting energy check information."
-        CALL Clean_Abort(err_msg,'Get_Energy_Check_Info')
-     END IF
-
-     IF (line_string(1:13) == '# Echeck_Info') THEN
-
-        echeck_flag = .TRUE.
-
-        line_nbr = line_nbr + 1
-        CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
-
-        iecheck = String_To_Int(line_array(1))
-
-        EXIT
-
-     ELSE IF (line_string(1:3) == 'END') THEN
-
-        EXIT
-
-     END IF
-
-  END DO
-
-  WRITE(logunit,'(A80)') '********************************************************************************'
-
-END SUBROUTINE Get_Energy_Check_Info 
 
 !******************************************************************************
 SUBROUTINE Get_Lattice_File_Info

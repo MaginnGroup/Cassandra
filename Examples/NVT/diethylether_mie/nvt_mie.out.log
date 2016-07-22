@@ -10,10 +10,10 @@
 Run info
 ********************************************************************************
 version: Cassandra Development Version
-inputfile: /afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Examples/NVT/diethylether_mie/nvt_mie.inp
+inputfile: nvt_mie.inp
 name of run: nvt_mie.out
-date (mm/dd/yyyy): 06/24/2016
-time: 12:25:12
+date (mm/dd/yyyy): 07/22/2016
+time: 01:35:12
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -121,7 +121,7 @@ Number of species
 Box info
 ********************************************************************************
 Number of simulation boxes     1
-Box 1 is cubic               
+Box 1 is CUBIC               
  Each Side Of :       34.6658     Angstrom
  Cell basis vector lengths in A,     34.6658      34.6658      34.6658
  Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
@@ -133,7 +133,7 @@ Pair style
 ********************************************************************************
 VDW style used is:   Mie            in box:  1
  VDW sum style is:  cut_tail       in box:  1
- rcut =    14.000   Angstrom
+ rcut =    14.000 Angstrom
 Charge style in box 1 is coul
  Charge sum style is   ewald          in box:  1
  Ewald real space cutoff is  14.000 Angstroms.
@@ -198,10 +198,6 @@ Molecule info
  species1/frag3/frag3.dat
  -------------------------------------------------------------------------------
 ********************************************************************************
- 
-Nonbond tables
-********************************************************************************
- ********************************************************************************
  
 Start type
 ********************************************************************************
@@ -290,23 +286,24 @@ Charge neutrality check
 Compute total energy
 ********************************************************************************
  Starting energy components for box   1
-  Atomic units-Extensive
+  kJ/mol-Extensive
  -----------------------------------------------------------
- Total system energy is                384872.927
- Intra molecular energy is             311806.190
- Bond energy is                             0.000
- Bond angle energy is                  103385.724
- Dihedral angle energy is              208420.466
- Improper angle energy is                   0.000
- Intra molecule vdw is                   5372.740
- Intra molecule q is                        0.000
- Inter molecule vdw is                  91286.976
- Long range correction is              -12457.200
- Inter molecule q is                  1669790.599
- Number of vectors is                        2910
- Reciprocal ewald is                    35983.646
- Self ewald is                       -1716910.024
+ Total system energy                     3848.729
+ Intra molecular energy                  3171.789
+   Bond energy                              0.000
+   Bond angle energy                     1033.857
+   Dihedral angle energy                 2084.205
+   Improper angle energy                    0.000
+   Intra molecule vdw                      53.727
+   Intra molecule q                         0.000
+ Inter molecular energy                   676.940
+   Inter molecule vdw                     912.870
+   Long range correction                 -124.572
+   Inter molecule q                     16697.906
+   Reciprocal ewald                       359.836
+   Self ewald                          -17169.100
  -----------------------------------------------------------
+   Number of reciprocal vectors              2910
  
 ********************************************************************************
  
@@ -325,42 +322,48 @@ Report ending energy & then re-compute from scratch
 ********************************************************************************
  
  
- Ending energy components for box   1
-  Atomic units-Extensive
+ Initial energy + deltas for box 1
+  kJ/mol-Extensive
  -----------------------------------------------------------
- Total system energy is                -85761.001
- Intra molecular energy is             290690.565
- Bond energy is                             0.000
- Angle energy is                       102222.640
- Dihedral energy is                    188467.925
- Improper angle energy is                   0.000
- Intra molecule vdw is                  -4221.322
- Intra molecule q is                        0.000
- Inter molecule vdw is                -341825.624
- Long range correction is              -12457.200
- Inter molecule q is                  1666311.520
- Reciprocal ewald is                    32651.083
- Self ewald is                       -1716910.024
+ Total system energy                     -857.610
+ Intra molecular energy                  2864.692
+   Bond energy                              0.000
+   Bond angle energy                     1022.226
+   Dihedral angle energy                 1884.679
+   Improper angle energy                    0.000
+   Intra molecule vdw                     -42.213
+   Intra molecule q                         0.000
+ Inter molecular energy                 -3722.302
+   Inter molecule vdw                   -3418.256
+   Long range correction                 -124.572
+   Inter molecule q                     16663.115
+   Reciprocal ewald                       326.511
+   Self ewald                          -17169.100
  -----------------------------------------------------------
+   Number of reciprocal vectors              2910
  
  
- Energy components from total energy call for box   1
-  Atomic units-Extensive
+ 
+ Recomputed energy from scratch for box 1
+  kJ/mol-Extensive
  -----------------------------------------------------------
- Total system energy is                -85761.001
- Intra molecular energy is             290690.565
- Bond energy is                             0.000
- Angle energy is                       102222.640
- Dihedral energy is                    188467.925
- Improper angle energy is                   0.000
- Intra molecule vdw is                  -4221.322
- Intra molecule q is                        0.000
- Inter molecule vdw is                -341825.624
- Long range correction is              -12457.200
- Inter molecule q is                  1666311.520
- Reciprocal ewald is                    32651.083
- Self ewald is                       -1716910.024
+ Total system energy                     -857.610
+ Intra molecular energy                  2864.692
+   Bond energy                              0.000
+   Bond angle energy                     1022.226
+   Dihedral angle energy                 1884.679
+   Improper angle energy                    0.000
+   Intra molecule vdw                     -42.213
+   Intra molecule q                         0.000
+ Inter molecular energy                 -3722.302
+   Inter molecule vdw                   -3418.256
+   Long range correction                 -124.572
+   Inter molecule q                     16663.115
+   Reciprocal ewald                       326.511
+   Self ewald                          -17169.100
  -----------------------------------------------------------
+   Number of reciprocal vectors              2910
+ 
 ********************************************************************************
  
  
@@ -390,9 +393,9 @@ Writing information about fragments
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =           24.567264 secs.
- Rotation time =              24.411289 secs.
- Regrowth time =              38.667121 secs.
+ Translation time =            2.719497 secs.
+ Rotation time =               2.667685 secs.
+ Regrowth time =               3.538023 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -405,7 +408,7 @@ Writing information about fragments
          0     Months
          0       Days
          0      Hours
-         2    Minutes
-        26    Seconds
-       666         ms
+         0    Minutes
+        13    Seconds
+       532         ms
 ********************************************************************************

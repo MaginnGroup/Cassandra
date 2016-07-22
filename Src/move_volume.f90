@@ -524,7 +524,7 @@ SUBROUTINE Volume_Change
   END IF
 
   IF (verbose_log) THEN
-    WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8)') i_mcstep, 'volume' , this_box, accept
+     WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8,X,F9.0)') i_mcstep, 'volume' , this_box, accept, delta_volume
   END IF
 
 

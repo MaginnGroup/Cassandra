@@ -420,7 +420,7 @@ USE Type_Definitions
   ! will have dimension of (nspecies,nbr_boxes)
   REAL(DP), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: ac_density, ac_nmols
 
-  LOGICAL :: block_average
+  LOGICAL :: block_avg
 
   ! The following variables are defined for Ewald calculations
 
@@ -542,8 +542,8 @@ USE Type_Definitions
 ! Energy check
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  LOGICAL :: echeck_flag
-  INTEGER :: iecheck
+  LOGICAL :: echeck
+  INTEGER :: echeck_freq
 
 !!!!! Pair energy arrays. These arrays hold interaction energies between pairs of molecules !!!!!
 
@@ -555,7 +555,7 @@ USE Type_Definitions
   REAL(DP), ALLOCATABLE :: cos_mol(:,:) , sin_mol(:,:)
   LOGICAL :: l_pair_nrg
 
-  REAL(DP) pacc, paccbiased, freev
+  REAL(DP) :: freev
   REAL(DP), DIMENSION(:,:), ALLOCATABLE :: chpot, chpotid
 
 

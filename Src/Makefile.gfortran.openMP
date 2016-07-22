@@ -88,17 +88,17 @@ OBJS =  main.o \
   create_nonbond_table.o \
   get_internal_coords.o \
   clean_abort.o \
-  translate.o \
+  move_translate.o \
   random_generators.o \
   save_revert_coordinates.o \
-  rotate.o \
+  move_rotate.o \
   participation.o \
   make_config.o \
   compute_cell_dimensions.o \
-  rigid_dihedral_change.o \
-  angle_distortion.o \
-  volume_change.o \
-  gemc_nvt_volume.o \
+  move_dihedral.o \
+  move_angle.o \
+  move_volume.o \
+  move_vol_swap.o \
   create_intra_exclusion_table.o \
   precalculate.o \
   minimum_image_separation.o \
@@ -107,15 +107,15 @@ OBJS =  main.o \
   initialize.o \
   gcmc_control.o \
   gcmc_driver.o \
-  insertion.o \
-  deletion.o \
+  move_insert.o \
+  move_delete.o \
   accept_or_reject.o \
   gemc_control.o \
   gemc_driver.o \
-  gemc_particle_transfer.o \
-  cut_n_grow.o \
+  move_mol_swap.o \
+  move_regrow.o \
   ring_fragment_driver.o \
-  atom_displacement.o \
+  move_atom.o \
   chempot.o \
   pair_nrg_variables.o \
 

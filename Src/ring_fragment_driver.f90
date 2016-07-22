@@ -168,9 +168,10 @@ SUBROUTINE Flip_Move
   REAL(DP) :: vec1(3), vec2(3), aligner(3,3), hanger(3,3), tempy, tempz
   REAL(DP) :: domega, cosomega, sinomega, a(3), b(3), c(3)
 
-  REAL(DP) :: delta_e, delta_angle, delta_dihed, delta_intra, e_angle_n, e_dihed_n
-  REAL(DP) :: e_improper_n, delta_improper, E_intra_vdw, E_intra_qq, ln_pacc, e_recip
-  REAL(DP) :: E_periodic_qq
+  REAL(DP) :: dE
+  REAL(DP) :: E_bond, E_angle, E_dihed, E_improper
+  REAL(DP) :: E_intra_vdw, E_intra_qq, E_periodic_qq, E_recip
+  REAL(DP) :: ln_pacc
 
   LOGICAL :: accept_or_reject,intra_overlap
 
@@ -195,7 +196,6 @@ SUBROUTINE Flip_Move
         angle_id = angle_part_list(this_atom,is)%which_angle(i)
         
         ! check if other atoms are ring atoms
-
         atom1 = angle_list(angle_id,is)%atom1
         atom2 = angle_list(angle_id,is)%atom3
 
@@ -304,50 +304,49 @@ SUBROUTINE Flip_Move
 
   ! Compute energy changes 
 
-  delta_e = 0.0_DP
-  CALL Compute_Molecule_Angle_Energy(im,is,e_angle_n)
-  CALL Compute_Molecule_Dihedral_Energy(im,is,e_dihed_n)
-  CALL Compute_Molecule_Improper_Energy(im,is,e_improper_n)
+  dE = 0.0_DP
+  CALL Compute_Molecule_Bond_Energy(im,is,E_bond)
+  CALL Compute_Molecule_Angle_Energy(im,is,E_angle)
+  CALL Compute_Molecule_Dihedral_Energy(im,is,E_dihed)
+  CALL Compute_Molecule_Improper_Energy(im,is,E_improper)
 
   ! Note that we will not compute the reciprocal space Ewald in the ring biasing
   ! case, nor will we use the E_periodic_qq
   CALL Compute_Molecule_Nonbond_Intra_Energy(im,is,E_intra_vdw,E_intra_qq, &
        E_periodic_qq,intra_overlap)
 
-
   IF (int_charge_sum_style(ibox) == charge_ewald) THEN
-    ! Compute Ewald reciprocal energy difference
-    CALL Update_System_Ewald_Reciprocal_Energy(im,is,ibox,int_intra,e_recip)
-    delta_e = (e_recip - energy(ibox)%ewald_reciprocal)
+     ! Compute Ewald reciprocal energy difference
+     CALL Update_System_Ewald_Reciprocal_Energy(im,is,ibox,int_intra,E_recip)
+     dE = (E_recip - energy(ibox)%reciprocal)
   END IF
 
   ! Change in energy due to the move
 
-  delta_angle = e_angle_n - energy(ibox)%angle
-  delta_dihed = e_dihed_n - energy(ibox)%dihedral
-  delta_improper = e_improper_n - energy(ibox)%improper
-  delta_intra = e_intra_vdw + e_intra_qq - energy(ibox)%intra_vdw - energy(ibox)%intra_q
+  dE = dE + E_angle - energy(ibox)%angle
+  dE = dE + E_dihed - energy(ibox)%dihedral
+  dE = dE + E_improper - energy(ibox)%improper
+  dE = dE + E_intra_vdw - energy(ibox)%intra_vdw
+  dE = dE + E_intra_qq - energy(ibox)%intra_q
 
-  delta_e = delta_angle + delta_dihed + delta_improper + delta_intra + delta_e
-
-  ln_pacc = beta(ibox) * delta_e
+  ln_pacc = beta(ibox) * dE
 
   accept = accept_or_reject(ln_pacc)
 
   IF (accept) THEN
 
      ! update energies
-     energy(ibox)%total = energy(ibox)%total + delta_e
-     energy(ibox)%intra = energy(ibox)%intra + delta_angle + delta_dihed + delta_improper
-     energy(ibox)%angle = e_angle_n
-     energy(ibox)%dihedral = e_dihed_n
-     energy(ibox)%improper = e_improper_n
+     energy(ibox)%total = energy(ibox)%total + dE
+     energy(ibox)%intra = energy(ibox)%intra + dE
+     energy(ibox)%angle = E_angle
+     energy(ibox)%dihedral = E_dihed
+     energy(ibox)%improper = E_improper
      energy(ibox)%intra_vdw = E_intra_vdw
      energy(ibox)%intra_q = E_intra_qq
      
-     IF(int_charge_sum_style(ibox) == charge_ewald .AND. &
-       has_charge(is)) THEN
-        energy(ibox)%ewald_reciprocal = E_recip
+     IF (int_charge_sum_style(ibox) == charge_ewald .AND. &
+         has_charge(is)) THEN
+        energy(ibox)%reciprocal = E_recip
      END IF
   ELSE
 

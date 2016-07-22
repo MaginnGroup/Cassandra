@@ -89,7 +89,7 @@ SUBROUTINE Insertion
   P_seq = 1.0_DP
   P_bias = 1.0_DP
   this_lambda = 1.0_DP
-  nrg_ring_frag_tot = 0.0_DP
+  E_ring_frag = 0.0_DP
   inter_overlap = .FALSE.
   cbmc_overlap = .FALSE.
   intra_overlap = .FALSE.
@@ -176,7 +176,7 @@ SUBROUTINE Insertion
      get_fragorder = .TRUE.
      ALLOCATE(frag_order(nfragments(is)))
      CALL Build_Molecule(lm,is,ibox,frag_order,this_lambda, &
-             P_seq,P_bias,nrg_ring_frag_tot,cbmc_overlap)
+             P_seq,P_bias,E_ring_frag,cbmc_overlap)
      DEALLOCATE(frag_order)
 
      ! Turn the molecule on
@@ -359,29 +359,16 @@ SUBROUTINE Insertion
   ! There are no overlaps, so we can calculate the change in potential energy.
   !
   ! Already have the change in nonbonded energies
-
   dE_inter = E_inter_vdw + E_inter_qq 
   dE_intra = E_intra_vdw + E_intra_qq
 
   ! 3.4) Bonded intramolecular energies
   ! If the molecule was grown via CBMC, we already have the intramolecular 
   ! bond energies? Otherwise we need to compute them.
-
-  IF(species_list(is)%int_insert == int_random) THEN
-
-     CALL Compute_Molecule_Bond_Energy(lm,is,E_bond)
-     CALL Compute_Molecule_Angle_Energy(lm,is,E_angle)
-     CALL Compute_Molecule_Dihedral_Energy(lm,is,E_dihedral)
-     CALL Compute_Molecule_Improper_Energy(lm,is,E_improper)
-
-  ELSE IF (species_list(is)%int_insert == int_igas) THEN
-
-     E_bond = energy_igas(rand_igas,is)%bond
-     E_angle = energy_igas(rand_igas,is)%angle
-     E_dihedral = energy_igas(rand_igas,is)%dihedral
-     E_improper = energy_igas(rand_igas,is)%improper
-
-  END IF
+  CALL Compute_Molecule_Bond_Energy(lm,is,E_bond)
+  CALL Compute_Molecule_Angle_Energy(lm,is,E_angle)
+  CALL Compute_Molecule_Dihedral_Energy(lm,is,E_dihedral)
+  CALL Compute_Molecule_Improper_Energy(lm,is,E_improper)
 
   dE_intra = dE_intra + E_bond + E_angle + E_dihedral + E_improper
 
@@ -467,7 +454,7 @@ SUBROUTINE Insertion
      ! update the energies
      energy(ibox)%total = energy(ibox)%total + dE
      energy(ibox)%intra = energy(ibox)%intra + dE_intra
-     energy(ibox)%intra = energy(ibox)%inter + dE_inter
+     energy(ibox)%inter = energy(ibox)%inter + dE_inter
      energy(ibox)%bond = energy(ibox)%bond + E_bond
      energy(ibox)%angle = energy(ibox)%angle + E_angle
      energy(ibox)%dihedral = energy(ibox)%dihedral + E_dihedral
