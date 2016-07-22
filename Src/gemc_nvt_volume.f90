@@ -494,24 +494,22 @@ SUBROUTINE GEMC_NVT_Volume
 
          END IF
 
-         WRITE(logunit,'(X,F9.0)',ADVANCE='NO') box_list(box_grw)%dv_max
+         WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,3X,X,F8.5,X,F9.0)') &
+               i_mcstep, 'vol_swap', success_ratio, box_list(box_grw)%dv_max
 
       ELSE
 
          success_ratio = REAL(nvol_success(box_grw),DP)/REAL(nvolumes(box_grw),DP)
+         WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,3X,X,F8.5)') &
+               i_mcstep, 'vol_swap', success_ratio
          
       END IF
          
-      WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,F8.5)',ADVANCE='NO') &
-                             i_mcstep, 'volswap_to' , box_grw, success_ratio
-
-
-      WRITE(logunit,*)
-      
    END IF
 
    IF (verbose_log) THEN
-     WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I1,A1,I1,X,L8)') i_mcstep, 'vol_swap', box_shk, '>', box_grw, accept
+      WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I1,A1,I1,X,L8)') &
+            i_mcstep, 'vol_swap', box_shk, '>', box_grw, accept
    END IF
 
    
