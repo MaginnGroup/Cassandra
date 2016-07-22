@@ -30,23 +30,18 @@
 		"regrowth":0.2,
 		"volume":0.2,
 		"swap":0.2,
-		"insertion":0.2,
-		"deletion":0.2
+		"insertion":0.2
 	},
-	"startType":{
-		"method":"read_config",
-		"molNumber": [500,500],
-		"restartFile": "file.xyz"
-	},
-	"runInfo":{
-		"type": "equilibration",
+	"simInfo":{
+		"startMethod":"read_config",
+		"restartFile": "file.xyz",
+		"simType": "equilibration",
 		"updateThermal": 1000,
 		"updateVolume": 1000,
-		"type": "equilibration",
 		"length": 50000,
+		"units": "steps",
 		"printProp": 50000,
-		"printXYZ": 50000,
-		"units": "steps"
+		"printXYZ": 50000
 	},
 	"properties":[["volume","energy","pressure"],
 	              ["energy","pressure"]],
