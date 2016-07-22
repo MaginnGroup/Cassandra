@@ -6,16 +6,10 @@ from jsonschema import validate
 import numpy as np
 
 
-def validateJsonFile(jsonInput, jsonSchema):
-	jsonData = open(jsonInput,'r')
-	schemaF = open(jsonSchema,'r')
-	jsonInput = json.load(jsonData)
-	jsonSchema = json.load(schemaF)
-	jsonData.close()
-	schemaF.close()
+def validateJsonFile(jsonData, jsonSchema):
 	
 	try:
-	        validate(jsonInput,jsonSchema)
+	        validate(jsonData,jsonSchema)
 	        sys.stdout.write("Json data structure successfully validated.\n")
 	except jsonschema.exceptions.ValidationError as ve:
 	        sys.stderr.write("Json data structure could not be validated.\n")
@@ -41,11 +35,6 @@ def json2input(jsonData, inputFile):
                                str(jsonData["electrostatics"]["parm1"]),"\n\n"]))
 
          
-        inputF.write(''.join(["# Intra_Scaling","\n", \
-                        ' '.join(map(str,jsonData["intraScaling"]["dispersion"])),"\n", \
-                        ' '.join(map(str,jsonData["intraScaling"]["electrostatics"])),"\n\n",]))
-
-
         inputF.write(''.join(["# Mixing_Rule","\n",jsonData["mixingRule"],"\n\n"]))
 
         inputF.write(''.join(["# Seed_Info","\n", \
@@ -98,6 +87,8 @@ def json2input(jsonData, inputFile):
 			inputF.write('\n')
 			inputF.write(' '.join(str(a) for a in vector3))
 			inputF.write('\n\n')
+	
+	inputF.write(''.join(["# Temperature_Info","\n",str(jsonData["temperature"]),"\n\n"]))
 
         inputF.write("# Temperature_Info\n300.0\n!---------------\n\n")
         inputF.write("# Move_Probability_Info\n\n")

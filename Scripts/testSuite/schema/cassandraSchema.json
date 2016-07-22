@@ -335,34 +335,10 @@
 					}
 				},
 			"additionalProperties" : false
-			},
-
-
-
-			"intraScaling":{
-
-				"type":"object",
-				"properties":{
-					"dispersion": {	
-						"type":"array",
-						"items":[
-							{"type":"number"},
-							{"type":"number"},
-							{"type":"number"},
-							{"type":"number"}
-						]
-					},
-					"electrostatics": {	
-						"type":"array",
-						"items":[
-							{"type":"number"},
-							{"type":"number"},
-							{"type":"number"},
-							{"type":"number"}
-						]
-					}
-				}
 			}
+
+
+
 
 	},
 	

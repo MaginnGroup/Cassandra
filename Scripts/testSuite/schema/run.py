@@ -9,16 +9,14 @@ from utilities import *
 
 #ad unique to avoid duplication of keywords
 
-#with open('cassandraSchema.json','r') as f:
-#	cassandraSchema = json.load(f)
-#with open('input.json','r') as f:
-#	inputFile = json.load(f)
-
-validateJsonFile("input.json", "cassandraSchema.json")
 
 
-jsonF = open("input.json",'r')
-jsonData = json.load(jsonF)
+inputFile = open("input.json",'r')
+inputJson = json.load(inputFile)
 
-json2input(jsonData,"input.mcf")
+schemaF = open("cassandraSchema.json")
+schema = json.load(schemaF)
 
+validateJsonFile(inputJson, schema)
+
+json2input(inputJson,"input.mcf")

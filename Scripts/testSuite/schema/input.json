@@ -50,10 +50,6 @@
 	},
 	"properties":[["volume","energy","pressure"],
 	              ["energy","pressure"]],
-	"intraScaling":{
-			"dispersion": [0.0,0.0,0.0,1.0],
-	                "electrostatics": [0.0,0.0,0.0,1.0]
-	},
 
 	"fragmentFiles": ["frag1.dat", "frag2.dat"],
 	"cbmcInfo":{
