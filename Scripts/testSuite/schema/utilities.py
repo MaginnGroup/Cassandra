@@ -90,7 +90,6 @@ def json2input(jsonData, inputFile):
 	
 	inputF.write(''.join(["# Temperature_Info","\n",str(jsonData["temperature"]),"\n\n"]))
 
-        inputF.write("# Temperature_Info\n300.0\n!---------------\n\n")
         inputF.write("# Move_Probability_Info\n\n")
         inputF.write("# Prob_Translation\n1.0\n1.00\n\n")
         inputF.write("# Done_Probability_Info\n!----------------\n\n")

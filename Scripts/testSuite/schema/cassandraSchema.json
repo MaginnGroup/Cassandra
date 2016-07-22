@@ -216,29 +216,6 @@
 
 			},
 
-			"start":{
-				"type":"object",
-				"properties":{
-					"method":{
-						"type":"string",
-						"enum":["read_config","make_config",
-                                                        "checkpoint", "add_to_config"]
-					},
-					"molNumber":{
-						"type":"array",
-						"items":[{
-							"type":"integer",
-							"minimum":0,
-							"exclusiveMinimum": false
-						}],
-						"minItems":1
-					},
-					"restartFile":{
-						"type":"string"
-					}
-				},
-				"additionalProperties": false
-			},
 
 			"properties":{
 
@@ -259,10 +236,10 @@
 				}
 			},
 
-			"runInfo":{
+			"simInfo":{
 				"type":"object",
 				"properties":{
-					"type":{
+					"simType":{
 						"type":"string",
 						"enum":["equilibration","production"]
 					},
@@ -294,11 +271,21 @@
 						"type":"integer",
 						"minimum":0,
 						"exclusiveMinimum": false
+					},
+					"startMethod":{
+						"type":"string",
+						"enum":["read_config","make_config",
+                                                        "checkpoint", "add_to_config"]
+					},
+					"restartFile":{
+						"type":"string"
 					}
 				},
 				"additionalProperties": false,
-				"required":["type","updateThermal","updateVolume", 
-                                            "length", "units", "printProp", "printXYZ"]
+				"required":["simType","updateThermal","updateVolume", 
+                                            "length", "units", "printProp", "printXYZ",
+              				    "startMethod"]
+     
 			},
 
 			"fragmentFiles":{
@@ -345,7 +332,7 @@
 	"required": ["numSpecies", "runName", "simType", "dispersion",
                      "electrostatics", "mixingRule", "seeds", "cutOffLow", 
                      "mcfFiles", "molNumber","box", "temperature",
-                     "probabilities", "startType", "runInfo", "properties", 
+                     "probabilities", "simInfo", "properties", 
                      "fragmentFiles", "cbmcInfo"
 		]
 }
