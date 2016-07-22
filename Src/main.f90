@@ -407,10 +407,9 @@ PROGRAM Main
   
   DO ibox = 1,nbr_boxes
 
-     WRITE(logunit,'(X,A34,2X,I2)') 'Starting energy components for box', ibox
-     WRITE(logunit,*) ' Atomic units-Extensive'
+     WRITE(logunit,'(X,A,X,I1)') 'Starting energy components for box', ibox
+     WRITE(logunit,'(2X,A)') 'Atomic units-Extensive'
      WRITE(logunit,'(X,A59)') '-----------------------------------------------------------'
-     
      WRITE(logunit,'(X,A,T30,F20.3)') 'Total system energy' , energy(ibox)%total
      WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecular energy', energy(ibox)%intra
      WRITE(logunit,'(3X,A,T30,F20.3)') 'Bond energy', energy(ibox)%bond
@@ -423,14 +422,13 @@ PROGRAM Main
      IF (int_vdw_sum_style(ibox) == vdw_cut_tail) &
         WRITE(logunit,'(X,A,T30,F20.3)') 'Long range correction', energy(ibox)%lrc
      WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule q', energy(ibox)%inter_q
-
      IF (int_charge_sum_style(ibox) == charge_ewald) THEN
         WRITE(logunit,'(X,A,T30,I20)') 'Number of vectors', nvecs(ibox)
         WRITE(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald', energy(ibox)%ewald_reciprocal
         WRITE(logunit,'(X,A,T30,F20.3)') 'Self ewald', energy(ibox)%self
+     ELSE IF (int_charge_sum_style(ibox) == charge_dsf) THEN
+        WRITE(logunit,'(X,A,T30,F20.3)') 'Self DSF', energy(ibox)%self
      END IF
-
-     if (int_charge_sum_style(ibox) == charge_dsf) WRITE(logunit,'(X,A,T30,F20.3)') 'Self DSF', energy(ibox)%self
 
      WRITE(logunit,'(X,A59)') '-----------------------------------------------------------'
      WRITE(logunit,*)
@@ -522,10 +520,9 @@ PROGRAM Main
     WRITE(logunit,*)
 
     ! Write the current components of the energy to log
-    WRITE(logunit,'(X,A32,2X,I2)') 'Initial energy + deltas for box', ibox
-    WRITE(logunit,*) ' Atomic units-Extensive'
-    WRITE(logunit,'(X,A59)') &
-       '-----------------------------------------------------------'
+    WRITE(logunit,'(X,A,X,I1)') 'Initial energy + deltas for box', ibox
+    WRITE(logunit,'(2X,A)') 'Atomic units-Extensive'
+    WRITE(logunit,'(X,A59)') '-----------------------------------------------------------'
     WRITE(logunit,'(X,A,T30,F20.3)') 'Total system energy' , energy(ibox)%total
     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecular energy', energy(ibox)%intra
     WRITE(logunit,'(3X,A,T30,F20.3)') 'Bond energy', energy(ibox)%bond
@@ -536,47 +533,34 @@ PROGRAM Main
     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecule q', energy(ibox)%intra_q
     WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule vdw', energy(ibox)%inter_vdw
     IF (int_vdw_sum_style(ibox) == vdw_cut_tail) THEN
-      WRITE(logunit,'(X,A,T30,F20.3)') 'Long range correction', energy(ibox)%lrc
+       WRITE(logunit,'(X,A,T30,F20.3)') 'Long range correction', energy(ibox)%lrc
     END IF
     WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule q', energy(ibox)%inter_q
-
     IF (int_charge_sum_style(ibox) == charge_ewald) THEN
-
-       WRITE(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald', &
-       energy(ibox)%ewald_reciprocal
+       WRITE(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald', energy(ibox)%ewald_reciprocal
        WRITE(logunit,'(X,A,T30,F20.3)') 'Self ewald', energy(ibox)%self
-
+    ELSE IF (int_charge_sum_style(ibox) == charge_dsf) THEN
+       WRITE(logunit,'(X,A,T30,F20.3)') 'Self DSF', energy(ibox)%self
     END IF
-
-    IF (int_charge_sum_style(ibox) == charge_dsf) THEN
-         WRITE(logunit,'(X,A,T30,F20.3)') 'Self DSF', energy(ibox)%self
-    END IF
-    
-    WRITE(logunit,'(X,A59)') &
-       '-----------------------------------------------------------'
+    WRITE(logunit,'(X,A59)') '-----------------------------------------------------------'
 
     ! Write the current total energy to stdout
     WRITE(*,*)
-    WRITE(*,'(X,A)') 'Energy of final configuration, box ' // &
-       TRIM(Int_To_String(ibox))
-    WRITE(*,"(2X,A,T30,F24.12)") 'Initial energy + deltas = ', &
-       energy(ibox)%total
+    WRITE(*,'(X,A)') 'Energy of final configuration, box ' // TRIM(Int_To_String(ibox))
+    WRITE(*,"(2X,A,T30,F24.12)") 'Initial energy + deltas = ', energy(ibox)%total
 
     ! Compute the energies from scratch
     CALL Compute_System_Total_Energy(ibox,.TRUE.,overlap)
 
     ! Write the recomputed total energy to stdout
-    WRITE(*,"(2X,A,T30,F24.12)") 'Energy from scratch = ', &
-       energy(ibox)%total
+    WRITE(*,"(2X,A,T30,F24.12)") 'Energy from scratch = ', energy(ibox)%total
 
     ! Write the recomputed energy components to log
     WRITE(logunit,*)
     WRITE(logunit,*)
-    WRITE(logunit,'(X,A48,2X,I2)') &
-       'Recomputed energy from scratch for box', ibox
-    WRITE(logunit,*) ' Atomic units-Extensive'
-    WRITE(logunit,'(X,A59)') &
-       '-----------------------------------------------------------'
+    WRITE(logunit,'(X,A,X,I1)') 'Recomputed energy from scratch for box', ibox
+    WRITE(logunit,'(2X,A)') 'Atomic units-Extensive'
+    WRITE(logunit,'(X,A59)') '-----------------------------------------------------------'
     WRITE(logunit,'(X,A,T30,F20.3)') 'Total system energy' , energy(ibox)%total
     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecular energy', energy(ibox)%intra
     WRITE(logunit,'(3X,A,T30,F20.3)') 'Bond energy', energy(ibox)%bond
@@ -590,21 +574,13 @@ PROGRAM Main
       WRITE(logunit,'(X,A,T30,F20.3)') 'Long range correction', energy(ibox)%lrc
     END IF
     WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule q', energy(ibox)%inter_q
-
-
     IF (int_charge_sum_style(ibox) == charge_ewald) THEN
-
        WRITE(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald', energy(ibox)%ewald_reciprocal
        WRITE(logunit,'(X,A,T30,F20.3)') 'Self ewald', energy(ibox)%self
-
+    ELSE IF (int_charge_sum_style(ibox) == charge_dsf) THEN
+       WRITE(logunit,'(X,A,T30,F20.3)') 'Self DSF', energy(ibox)%self
     END IF
-
-    IF (int_charge_sum_style(ibox) == charge_dsf) THEN
-         WRITE(logunit,'(X,A,T30,F20.3)') 'Self DSF', energy(ibox)%self
-    END IF
-
-    WRITE(logunit,'(X,A59)') &
-       '-----------------------------------------------------------'
+    WRITE(logunit,'(X,A59)') '-----------------------------------------------------------'
   END DO
   WRITE(logunit,'(A80)') '********************************************************************************'
 

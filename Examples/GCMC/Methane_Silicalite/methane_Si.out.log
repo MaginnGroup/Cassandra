@@ -9,11 +9,11 @@
  
 Run info
 ********************************************************************************
-version: Cassandra Development Version
+version: Cassandra Version 1.2 20160720
 inputfile: methane_Si.inp
 name of run: methane_Si.out
-date (mm/dd/yyyy): 06/23/2016
-time: 11:40:12
+date (mm/dd/yyyy): 07/22/2016
+time: 03:32:40
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -115,7 +115,7 @@ Number of species
 Box info
 ********************************************************************************
 Number of simulation boxes     1
-Box 1 is orthorhombic        
+Box 1 is ORTHORHOMBIC        
  X dimension :        60.2100     Angstrom
  Y dimension :        59.7600     Angstrom
  Z dimension :        40.2600     Angstrom
@@ -129,7 +129,7 @@ Pair style
 ********************************************************************************
 VDW style used is:   LJ             in box:  1
  VDW sum style is:   cut_tail       in box:  1
- rcut =    13.000   Angstrom
+ rcut =    13.000 Angstrom
 Section "# Charge_Style" is missing from the input file
  By default, charge style for box 1 is NONE
 Pair interaction energy array storage enabled
@@ -180,7 +180,7 @@ Molecule info
   VDW 1-2 scaling factor       0.000
   VDW 1-3 scaling factor       0.000
   VDW 1-4 scaling factor       0.000
-  VDW 1-N scaling factor       0.000
+  VDW 1-N scaling factor       1.000
  -------------------------------------------------------------------------------
  
  Species     2
@@ -207,10 +207,6 @@ Molecule info
  species2/frag1/frag1.dat
  -------------------------------------------------------------------------------
 ********************************************************************************
- 
-Nonbond tables
-********************************************************************************
- ********************************************************************************
  
 Start type
 ********************************************************************************
@@ -247,6 +243,8 @@ Number of moves is :   3
  
 Chemical potential
 ********************************************************************************
+Species     1
+ No entry in input file. Chemical potential not required.
 Species     2
  Chemical potential (internal units):    -4000.000000000
  de Broglie wavelength (Angstroms):          0.251657440
@@ -306,20 +304,20 @@ Initial configuration
  
 Compute total energy
 ********************************************************************************
- Starting energy components for box   1
+ Starting energy components for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is               1819798.946
- Intra molecular energy is                  0.000
- Bond energy is                             0.000
- Bond angle energy is                       0.000
- Dihedral angle energy is                   0.000
- Improper angle energy is                   0.000
- Intra molecule vdw is                      0.000
- Intra molecule q is                        0.000
- Inter molecule vdw is                1848051.879
- Long range correction is              -28252.933
- Inter molecule q is                        0.000
+ Total system energy                  1819326.162
+ Intra molecular energy                     0.000
+   Bond energy                              0.000
+   Bond angle energy                        0.000
+   Dihedral angle energy                    0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                      -472.784
+ Intra molecule q                           0.000
+ Inter molecule vdw                   1848051.879
+ Long range correction                 -28252.933
+ Inter molecule q                           0.000
  -----------------------------------------------------------
  
 ********************************************************************************
@@ -335,37 +333,37 @@ Report ending energy & then re-compute from scratch
 ********************************************************************************
  
  
- Ending energy components for box   1
+ Initial energy + deltas for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is               1786219.204
- Intra molecular energy is                  0.000
- Bond energy is                             0.000
- Angle energy is                            0.000
- Dihedral energy is                         0.000
- Improper angle energy is                   0.000
- Intra molecule vdw is                      0.000
- Intra molecule q is                        0.000
- Inter molecule vdw is                1814845.726
- Long range correction is              -28626.522
- Inter molecule q is                        0.000
+ Total system energy                  1785746.420
+ Intra molecular energy                     0.000
+   Bond energy                              0.000
+   Angle energy                             0.000
+   Dihedral energy                          0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                      -472.784
+ Intra molecule q                           0.000
+ Inter molecule vdw                   1814845.726
+ Long range correction                 -28626.522
+ Inter molecule q                           0.000
  -----------------------------------------------------------
  
  
- Energy components from total energy call for box   1
+ Recomputed energy from scratch for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is               1786219.204
- Intra molecular energy is                  0.000
- Bond energy is                             0.000
- Angle energy is                            0.000
- Dihedral energy is                         0.000
- Improper angle energy is                   0.000
- Intra molecule vdw is                      0.000
- Intra molecule q is                        0.000
- Inter molecule vdw is                1814845.726
- Long range correction is              -28626.522
- Inter molecule q is                        0.000
+ Total system energy                  1785746.420
+ Intra molecular energy                     0.000
+   Bond energy                              0.000
+   Angle energy                             0.000
+   Dihedral energy                          0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                      -472.784
+ Intra molecule q                           0.000
+ Inter molecule vdw                   1814845.726
+ Long range correction                 -28626.522
+ Inter molecule q                           0.000
  -----------------------------------------------------------
 ********************************************************************************
  
@@ -393,9 +391,9 @@ Writing information for box  1
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            1.789970 secs.
- Insertion time =              9.033668 secs.
- Deletion time =               8.061293 secs.
+ Translation time =            1.792940 secs.
+ Insertion time =              9.020341 secs.
+ Deletion time =               8.045783 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -410,5 +408,5 @@ Writing information for box  1
          0      Hours
          0    Minutes
         29    Seconds
-       574         ms
+       499         ms
 ********************************************************************************

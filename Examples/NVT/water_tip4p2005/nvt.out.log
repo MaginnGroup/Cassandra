@@ -9,11 +9,11 @@
  
 Run info
 ********************************************************************************
-version: Cassandra Development Version
-inputfile: /afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Examples/NVT/water_tip4p2005/nvt.inp
+version: Cassandra Version 1.2 20160720
+inputfile: nvt.inp
 name of run: nvt.out
-date (mm/dd/yyyy): 06/24/2016
-time: 12:13:09
+date (mm/dd/yyyy): 07/22/2016
+time: 03:30:04
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -115,7 +115,7 @@ Number of species
 Box info
 ********************************************************************************
 Number of simulation boxes     1
-Box 1 is cubic               
+Box 1 is CUBIC               
  Each Side Of :       14.0200     Angstrom
  Cell basis vector lengths in A,     14.0200      14.0200      14.0200
  Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
@@ -127,7 +127,7 @@ Pair style
 ********************************************************************************
 VDW style used is:   LJ             in box:  1
  VDW sum style is:   cut_tail       in box:  1
- rcut =     7.000   Angstrom
+ rcut =     7.000 Angstrom
 Charge style in box 1 is coul
  Charge sum style is   ewald          in box:  1
  Ewald real space cutoff is   7.000 Angstroms.
@@ -186,10 +186,6 @@ Molecule info
  species1/frag1/frag1.dat
  -------------------------------------------------------------------------------
 ********************************************************************************
- 
-Nonbond tables
-********************************************************************************
- ********************************************************************************
  
 Start type
 ********************************************************************************
@@ -277,23 +273,23 @@ Charge neutrality check
  
 Compute total energy
 ********************************************************************************
- Starting energy components for box   1
+ Starting energy components for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is               -396710.055
- Intra molecular energy is                  0.000
- Bond energy is                             0.000
- Bond angle energy is                       0.000
- Dihedral angle energy is                   0.000
- Improper angle energy is                   0.000
- Intra molecule vdw is                      0.000
- Intra molecule q is                        0.000
- Inter molecule vdw is                  65219.028
- Long range correction is               -5512.602
- Inter molecule q is                  6462771.249
- Number of vectors is                        1568
- Reciprocal ewald is                    38927.007
- Self ewald is                       -6958114.737
+ Total system energy                  -396710.055
+ Intra molecular energy                     0.000
+   Bond energy                              0.000
+   Bond angle energy                        0.000
+   Dihedral angle energy                    0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                         0.000
+ Intra molecule q                           0.000
+ Inter molecule vdw                     65219.028
+ Long range correction                  -5512.602
+ Inter molecule q                     6462771.249
+ Number of vectors                           1568
+ Reciprocal ewald                       38927.007
+ Self ewald                          -6958114.737
  -----------------------------------------------------------
  
 ********************************************************************************
@@ -326,41 +322,41 @@ Report ending energy & then re-compute from scratch
 ********************************************************************************
  
  
- Ending energy components for box   1
+ Initial energy + deltas for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is               -403553.013
- Intra molecular energy is                  0.000
- Bond energy is                             0.000
- Angle energy is                            0.000
- Dihedral energy is                         0.000
- Improper angle energy is                   0.000
- Intra molecule vdw is                      0.000
- Intra molecule q is                        0.000
- Inter molecule vdw is                  61028.967
- Long range correction is               -5512.602
- Inter molecule q is                  6461620.373
- Reciprocal ewald is                    37424.985
- Self ewald is                       -6958114.737
+ Total system energy                  -403553.013
+ Intra molecular energy                     0.000
+   Bond energy                              0.000
+   Angle energy                             0.000
+   Dihedral energy                          0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                         0.000
+ Intra molecule q                           0.000
+ Inter molecule vdw                     61028.967
+ Long range correction                  -5512.602
+ Inter molecule q                     6461620.373
+ Reciprocal ewald                       37424.985
+ Self ewald                          -6958114.737
  -----------------------------------------------------------
  
  
- Energy components from total energy call for box   1
+ Recomputed energy from scratch for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is               -403553.013
- Intra molecular energy is                  0.000
- Bond energy is                             0.000
- Angle energy is                            0.000
- Dihedral energy is                         0.000
- Improper angle energy is                   0.000
- Intra molecule vdw is                      0.000
- Intra molecule q is                        0.000
- Inter molecule vdw is                  61028.967
- Long range correction is               -5512.602
- Inter molecule q is                  6461620.373
- Reciprocal ewald is                    37424.985
- Self ewald is                       -6958114.737
+ Total system energy                  -403553.013
+ Intra molecular energy                     0.000
+   Bond energy                              0.000
+   Angle energy                             0.000
+   Dihedral energy                          0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                         0.000
+ Intra molecule q                           0.000
+ Inter molecule vdw                     61028.967
+ Long range correction                  -5512.602
+ Inter molecule q                     6461620.373
+ Reciprocal ewald                       37424.985
+ Self ewald                          -6958114.737
  -----------------------------------------------------------
 ********************************************************************************
  
@@ -380,8 +376,8 @@ Writing information for box  1
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            1.487824 mins.
- Rotation time =               1.510637 mins.
+ Translation time =            7.796831 secs.
+ Rotation time =               8.000684 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -394,7 +390,7 @@ Writing information for box  1
          0     Months
          0       Days
          0      Hours
-         3    Minutes
-         6    Seconds
-       658         ms
+         0    Minutes
+        16    Seconds
+       552         ms
 ********************************************************************************

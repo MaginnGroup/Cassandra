@@ -9,11 +9,11 @@
  
 Run info
 ********************************************************************************
-version: Cassandra Development Version
+version: Cassandra Version 1.2 20160720
 inputfile: nitrogen_Si.inp
 name of run: nitrogen_Si.out
-date (mm/dd/yyyy): 06/23/2016
-time: 11:41:30
+date (mm/dd/yyyy): 07/22/2016
+time: 03:33:24
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -130,7 +130,7 @@ Number of species
 Box info
 ********************************************************************************
 Number of simulation boxes     1
-Box 1 is orthorhombic        
+Box 1 is ORTHORHOMBIC        
  X dimension :        20.0900     Angstrom
  Y dimension :        19.7380     Angstrom
  Z dimension :        13.1420     Angstrom
@@ -144,7 +144,7 @@ Pair style
 ********************************************************************************
 VDW style used is:   LJ             in box:  1
  VDW sum style is:   cut_tail       in box:  1
- rcut =     6.000   Angstrom
+ rcut =     6.000 Angstrom
 Charge style in box 1 is coul
  Charge sum style is   ewald          in box:  1
  Ewald real space cutoff is   6.000 Angstroms.
@@ -233,10 +233,6 @@ Molecule info
  -------------------------------------------------------------------------------
 ********************************************************************************
  
-Nonbond tables
-********************************************************************************
- ********************************************************************************
- 
 Start type
 ********************************************************************************
 Initial configuration for box 1 will add molecules to configuration read from file
@@ -275,6 +271,8 @@ Number of moves is :   4
  
 Chemical potential
 ********************************************************************************
+Species     1
+ No entry in input file. Chemical potential not required.
 Species     2
  Chemical potential (internal units):    -1000.000000000
  de Broglie wavelength (Angstroms):          0.375895159
@@ -343,23 +341,23 @@ Charge neutrality check
  
 Compute total energy
 ********************************************************************************
- Starting energy components for box   1
+ Starting energy components for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is             -35489049.999
- Intra molecular energy is                  0.000
- Bond energy is                             0.000
- Bond angle energy is                       0.000
- Dihedral angle energy is                   0.000
- Improper angle energy is                   0.000
- Intra molecule vdw is                  71898.636
- Intra molecule q is                -28596008.775
- Inter molecule vdw is                   3467.099
- Long range correction is              -14876.196
- Inter molecule q is                 18856223.444
- Number of vectors is                        2634
- Reciprocal ewald is                   595779.907
- Self ewald is                      -26405534.114
+ Total system energy                -35489049.999
+ Intra molecular energy                     0.000
+   Bond energy                              0.000
+   Bond angle energy                        0.000
+   Dihedral angle energy                    0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                     71898.636
+ Intra molecule q                   -28596008.775
+ Inter molecule vdw                      3467.099
+ Long range correction                 -14876.196
+ Inter molecule q                    18856223.444
+ Number of vectors                           2634
+ Reciprocal ewald                      595779.907
+ Self ewald                         -26405534.114
  -----------------------------------------------------------
  
 ********************************************************************************
@@ -375,41 +373,41 @@ Report ending energy & then re-compute from scratch
 ********************************************************************************
  
  
- Ending energy components for box   1
+ Initial energy + deltas for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is             -35510005.271
- Intra molecular energy is                  0.000
- Bond energy is                             0.000
- Angle energy is                            0.000
- Dihedral energy is                         0.000
- Improper angle energy is                   0.000
- Intra molecule vdw is                  71898.636
- Intra molecule q is                -28596008.775
- Inter molecule vdw is                 -17471.023
- Long range correction is              -14075.123
- Inter molecule q is                 18724700.095
- Reciprocal ewald is                   595608.343
- Self ewald is                      -26274657.424
+ Total system energy                -35510005.271
+ Intra molecular energy                     0.000
+   Bond energy                              0.000
+   Angle energy                             0.000
+   Dihedral energy                          0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                     71898.636
+ Intra molecule q                   -28596008.775
+ Inter molecule vdw                    -17471.023
+ Long range correction                 -14075.123
+ Inter molecule q                    18724700.095
+ Reciprocal ewald                      595608.343
+ Self ewald                         -26274657.424
  -----------------------------------------------------------
  
  
- Energy components from total energy call for box   1
+ Recomputed energy from scratch for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is             -35510005.271
- Intra molecular energy is                  0.000
- Bond energy is                             0.000
- Angle energy is                            0.000
- Dihedral energy is                         0.000
- Improper angle energy is                   0.000
- Intra molecule vdw is                  71898.636
- Intra molecule q is                -28596008.775
- Inter molecule vdw is                 -17471.023
- Long range correction is              -14075.123
- Inter molecule q is                 18724700.095
- Reciprocal ewald is                   595608.343
- Self ewald is                      -26274657.424
+ Total system energy                -35510005.271
+ Intra molecular energy                     0.000
+   Bond energy                              0.000
+   Angle energy                             0.000
+   Dihedral energy                          0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                     71898.636
+ Intra molecule q                   -28596008.775
+ Inter molecule vdw                    -17471.023
+ Long range correction                 -14075.123
+ Inter molecule q                    18724700.095
+ Reciprocal ewald                      595608.343
+ Self ewald                         -26274657.424
  -----------------------------------------------------------
 ********************************************************************************
  
@@ -438,10 +436,10 @@ Writing information for box  1
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.816998 secs.
- Rotation time =               0.827116 secs.
- Insertion time =              1.725281 secs.
- Deletion time =               1.917679 secs.
+ Translation time =            0.833243 secs.
+ Rotation time =               0.840811 secs.
+ Insertion time =              1.705608 secs.
+ Deletion time =               1.883832 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -456,5 +454,5 @@ Writing information for box  1
          0      Hours
          0    Minutes
          6    Seconds
-       108         ms
+        84         ms
 ********************************************************************************
