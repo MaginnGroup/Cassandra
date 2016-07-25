@@ -68,7 +68,7 @@ SUBROUTINE Deletion
   INTEGER :: lm                      ! molecule LOCATE
   INTEGER :: is, is_rand, is_counter ! species indices
   INTEGER :: ibox ! attempt to delete a molecule in ibox
-  INTEGER :: kappa_tot, which_anchor
+  INTEGER :: which_anchor
   INTEGER, ALLOCATABLE :: frag_order(:)
   INTEGER :: k, mcstep
 
@@ -162,54 +162,43 @@ SUBROUTINE Deletion
   !
   ! These steps are implemented in the subroutine Build_Molecule
   
-  IF(species_list(is)%fragment .AND. &
-     (species_list(is)%int_insert .NE. int_igas)) THEN
 
-     ! Build_Molecule places the first fragment, then calls Fragment_Placement 
-     ! to place the additional fragments
-     del_flag = .TRUE.      ! Don't change the coordinates of 'lm'
-     get_fragorder = .TRUE. !
-     ALLOCATE(frag_order(nfragments(is)))
-     CALL Build_Molecule(lm,is,ibox,frag_order,this_lambda, &
-             P_seq, P_bias, nrg_ring_frag_tot, cbmc_overlap)
-     DEALLOCATE(frag_order)
-     
-     ! cbmc_overlap will only trip if the molecule being deleted had bad
-     ! contacts
-     IF (cbmc_overlap) THEN
-        err_msg = ""
-        err_msg(1) = "Energy overlap detected in existing configuration"
-        err_msg(2) = "of molecule " // TRIM(Int_To_String(im)) // " of species " // TRIM(Int_To_String(is))
-        CALL Clean_Abort(err_msg, "Deletion")
-     END IF
-
-     ! So far P_bias only includes the probability of choosing the insertion 
-     ! point from the collection of trial coordinates times the probability of 
-     ! choosing each dihedral from the collection of trial dihedrals. We need 
-     ! to include the number of trial coordinates, kappa_ins, and the number of
-     ! of trial dihedrals, kappa_dih, for each dihedral.
-     kappa_tot = 1
-
-     IF (nfragments(is) /=0 ) THEN
-
-        kappa_tot = kappa_tot * kappa_ins
-
-        IF (kappa_rot /= 0) THEN
-           kappa_tot = kappa_tot * kappa_rot
-        END IF
-        
-        IF (kappa_dih /=0 ) THEN
-           DO ifrag = 2, nfragments(is)
-              kappa_tot = kappa_tot * kappa_dih
-           END DO
-        END IF
-     
-     END IF
-     
-     P_bias = P_bias * REAL(kappa_tot , DP)
-
+  ! Build_Molecule places the first fragment, then calls Fragment_Placement 
+  ! to place the additional fragments
+  del_flag = .TRUE.      ! Don't change the coordinates of 'lm'
+  get_fragorder = .TRUE. !
+  ALLOCATE(frag_order(nfragments(is)))
+  CALL Build_Molecule(lm,is,ibox,frag_order,this_lambda, &
+          P_seq, P_bias, nrg_ring_frag_tot, cbmc_overlap)
+  DEALLOCATE(frag_order)
+  
+  ! cbmc_overlap will only trip if the molecule being deleted had bad
+  ! contacts
+  IF (cbmc_overlap) THEN
+     err_msg = ""
+     err_msg(1) = "Energy overlap detected in existing configuration"
+     err_msg(2) = "of molecule " // TRIM(Int_To_String(im)) // " of species " // TRIM(Int_To_String(is))
+     CALL Clean_Abort(err_msg, "Deletion")
   END IF
 
+  ! So far P_bias only includes the probability of choosing the insertion 
+  ! point from the collection of trial coordinates times the probability of 
+  ! choosing each dihedral from the collection of trial dihedrals. We need 
+  ! to include the number of trial coordinates, kappa_ins, and the number of
+  ! of trial dihedrals, kappa_dih, for each dihedral.
+
+  P_bias = P_bias * REAL(kappa_ins,DP)
+
+  IF (kappa_rot /= 0) THEN
+     P_bias = P_bias * REAL(kappa_rot,DP)
+  END IF
+  
+  IF (kappa_dih /=0 ) THEN
+     DO ifrag = 2, nfragments(is)
+        P_bias = P_bias * REAL(kappa_dih,DP)
+     END DO
+  END IF
+  
   !*****************************************************************************
   ! Step 4) Calculate the change in potential energy if the molecule is deleted
   !*****************************************************************************

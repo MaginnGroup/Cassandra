@@ -68,7 +68,7 @@ SUBROUTINE Insertion
   INTEGER :: im                      ! molecule INDEX
   INTEGER :: lm                      ! molecule LOCATE
   INTEGER :: is, is_rand, is_counter ! species indices
-  INTEGER :: kappa_tot, which_anchor
+  INTEGER :: which_anchor
   INTEGER, ALLOCATABLE :: frag_order(:)
   INTEGER :: rand_igas, tot_mols, mcstep
 
@@ -156,141 +156,37 @@ SUBROUTINE Insertion
   !         to-be-inserted molecule
   !*****************************************************************************
   !
-  ! If the molecule:
-  !   * has a fragment library and is not an ideal gas, then the conformation
-  !     will be grown fragment-by-fragment using CBMC. The resulting 
-  !     conformation will be molded to a high probability position.
-  !   * has no fragment library, then there is only one conformation. Position 
-  !     and orientation are random.
-  !   * is an ideal gas, then molecular conformations (not fragment 
-  !     conformations?) were sampled according to their Boltzmann weight. One 
-  !     is chosen at random. Position and orientation are random.
-  
-  IF (species_list(is)%fragment .AND. &
-     (species_list(is)%int_insert .NE. int_igas) ) THEN
+  ! Build_Molecule places the first fragment, then calls Fragment_Placement
+  ! to place the additional fragments 
+  del_flag = .FALSE.     ! Change the coordinates of 'lm'
+  get_fragorder = .TRUE.
+  ALLOCATE(frag_order(nfragments(is)))
+  CALL Build_Molecule(lm,is,ibox,frag_order,this_lambda, &
+          P_seq,P_bias,nrg_ring_frag_tot,cbmc_overlap)
+  DEALLOCATE(frag_order)
 
-     ! Build_Molecule places the first fragment, then calls Fragment_Placement
-     ! to place the additional fragments 
-     del_flag = .FALSE.     ! Change the coordinates of 'lm'
-     get_fragorder = .TRUE.
-     ALLOCATE(frag_order(nfragments(is)))
-     CALL Build_Molecule(lm,is,ibox,frag_order,this_lambda, &
-             P_seq,P_bias,nrg_ring_frag_tot,cbmc_overlap)
-     DEALLOCATE(frag_order)
+  ! Turn the molecule on
+  molecule_list(lm,is)%live = .TRUE.
+  atom_list(:,lm,is)%exist = .TRUE.
 
-     ! Turn the molecule on
-     molecule_list(lm,is)%live = .TRUE.
-     atom_list(:,lm,is)%exist = .TRUE.
+  ! So far P_bias only includes the probability of choosing the insertion 
+  ! point from the collection of trial coordinates times the probability of 
+  ! choosing each dihedral from the collection of trial dihedrals. We need 
+  ! to include the number of trial coordinates, kappa_ins, and the number of
+  ! of trial dihedrals, kappa_dih, for each dihedral.
 
-     ! So far P_bias only includes the probability of choosing the insertion 
-     ! point from the collection of trial coordinates times the probability of 
-     ! choosing each dihedral from the collection of trial dihedrals. We need 
-     ! to include the number of trial coordinates, kappa_ins, and the number of
-     ! of trial dihedrals, kappa_dih, for each dihedral.
-     kappa_tot = 1
+  P_bias = P_bias * REAL(kappa_ins,DP)
 
-     IF (nfragments(is) /= 0 ) THEN
-
-        kappa_tot = kappa_tot * kappa_ins
-
-        IF (kappa_rot /= 0 ) THEN
-           kappa_tot = kappa_tot * kappa_rot
-        END IF
-
-        IF (kappa_dih /= 0 ) THEN
-           DO ifrag = 1, nfragments(is) - 1
-              kappa_tot = kappa_tot * kappa_dih
-           END DO
-        END IF
-
-     END IF
-
-     P_bias = P_bias * REAL(kappa_tot, DP)
-
-  ELSE
- 
-     ! The molecule does not have a fragment libary or is an ideal gas. The 
-     ! position and orientation will be randomized independent of the molecular 
-     ! conformation.
-
-     ! Turn the molecule on
-     atom_list(:,lm,is)%exist = .TRUE.
-     molecule_list(lm,is)%live = .TRUE.
-
-     ! Now we need to grab the molecule's conformation
-
-     IF(species_list(is)%int_insert == int_random) THEN
-     
-        ! A rigid molecule has only one possible conformation
-
-        molecule_list(lm,is)%xcom = species_list(is)%xcom
-        molecule_list(lm,is)%ycom = species_list(is)%ycom
-        molecule_list(lm,is)%zcom = species_list(is)%zcom
-        
-        atom_list(:,lm,is)%rxp = init_list(:,1,is)%rxp
-        atom_list(:,lm,is)%ryp = init_list(:,1,is)%ryp
-        atom_list(:,lm,is)%rzp = init_list(:,1,is)%rzp
-
-
-     ELSE IF(species_list(is)%int_insert == int_igas) THEN
-
-        ! An ideal gas molecule can adopt any conformation independent of its 
-        ! local environment. The conformations are sampled according to their 
-        ! Boltzmann weight. Read one in at random:
-
-        rand_igas = (rranf() * n_igas(is)) + 1
-
-        molecule_list(lm,is)%xcom = molecule_list_igas(rand_igas,is)%xcom
-        molecule_list(lm,is)%ycom = molecule_list_igas(rand_igas,is)%ycom
-        molecule_list(lm,is)%zcom = molecule_list_igas(rand_igas,is)%zcom
-
-        atom_list(:,lm,is)%rxp = atom_list_igas(:,rand_igas,is)%rxp
-        atom_list(:,lm,is)%ryp = atom_list_igas(:,rand_igas,is)%ryp
-        atom_list(:,lm,is)%rzp = atom_list_igas(:,rand_igas,is)%rzp
-
-     END IF   
-
-     ! Randomize the molecule's orientation.
-     
-     CALL Rotate_Molecule_Eulerian(lm,is)
-     
-     ! Randomize the molecule's COM position anywhere in the box.
-
-     IF ( box_list(ibox)%int_box_shape == int_cubic ) THEN
-        
-        molecule_list(lm,is)%xcom = &
-                             (rranf() - 0.5_DP) * box_list(ibox)%length(1,1)
-        molecule_list(lm,is)%ycom = &
-                             (rranf() - 0.5_DP) * box_list(ibox)%length(2,2)
-        molecule_list(lm,is)%zcom = &
-                             (rranf() - 0.5_DP) * box_list(ibox)%length(3,3)
-        
-     END IF
-     
-     ! Move the molecule to the chosen COM position
-
-     IF(species_list(is)%int_insert == int_random) THEN
-     
-        dx = molecule_list(lm,is)%xcom - species_list(is)%xcom
-        dy = molecule_list(lm,is)%ycom - species_list(is)%ycom
-        dz = molecule_list(lm,is)%zcom - species_list(is)%zcom
-
-     ELSE
-
-        dx = molecule_list(lm,is)%xcom &
-           - molecule_list_igas(rand_igas,is)%xcom
-        dy = molecule_list(lm,is)%ycom &
-           - molecule_list_igas(rand_igas,is)%ycom
-        dz = molecule_list(lm,is)%zcom &
-           - molecule_list_igas(rand_igas,is)%zcom
-
-     END IF        
-     
-     atom_list(:,lm,is)%rxp = atom_list(:,lm,is)%rxp + dx
-     atom_list(:,lm,is)%ryp = atom_list(:,lm,is)%ryp + dy
-     atom_list(:,lm,is)%rzp = atom_list(:,lm,is)%rzp + dz
-
+  IF (kappa_rot /= 0 ) THEN
+     P_bias = P_bias * REAL(kappa_rot,DP)
   END IF
+
+  IF (kappa_dih /= 0 ) THEN
+     DO ifrag = 1, nfragments(is) - 1
+        P_bias = P_bias * REAL(kappa_dih,DP)
+     END DO
+  END IF
+
 
   !*****************************************************************************
   ! Step 3) Calculate the change in potential energy if the molecule is inserted
