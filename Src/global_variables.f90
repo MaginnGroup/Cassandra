@@ -208,8 +208,10 @@ USE Type_Definitions
   REAL(DP), PARAMETER :: tiny_number  = 0.0000001_DP
   REAL(DP), PARAMETER :: small_number = 0.00001_DP
 
-  ! Upper limit to prevent overflow in exp(-beta*energy)
-  REAL(DP), PARAMETER :: max_kBT = 35.0_DP
+  ! Upper limit to prevent underflow in exp(-beta*energy)
+  ! DEXP(-708.)= 3.307553003638408E-308
+  ! DEXP(-709.)= 0.000000000000000E+000
+  REAL(DP), PARAMETER :: max_kBT = 708_DP
 
   ! IMSL error bounds
   REAL(DP), PARAMETER :: errabs = 0.0_DP
