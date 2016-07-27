@@ -66,7 +66,7 @@ SUBROUTINE Cut_N_Grow
 
   IMPLICIT NONE
 
-  INTEGER :: ibox, is, total_mols
+  INTEGER :: ibox, is, nmols_tot
   INTEGER :: nfrag_species, im, lm, frag_start, frag_end, frag_total, i
   INTEGER :: dumcount, iatom, int_phi, mcstep
   INTEGER :: nmols_box(nbr_boxes)
@@ -76,7 +76,7 @@ SUBROUTINE Cut_N_Grow
   REAL(DP), ALLOCATABLE :: x_old(:), y_old(:), z_old(:)
   REAL(DP), ALLOCATABLE :: dx(:), dy(:), dz(:)
 
-  REAL(DP) :: rand_no, P_seq, P_forward, P_reverse
+  REAL(DP) :: rand_no, ln_pseq, ln_pfor, ln_prev
   REAL(DP) :: dE, dE_intra, dE_inter, dE_frag
   REAL(DP) :: E_bond_o, E_angle_o, E_dihed_o, E_improper_o
   REAL(DP) :: E_intra_vdw_o, E_intra_qq_o, E_inter_vdw_o, E_inter_qq_o
@@ -109,29 +109,38 @@ SUBROUTINE Cut_N_Grow
 !  imp_Flag = .FALSE.
   E_ring_frag_n = 0.0
   E_ring_frag_o = 0.0
+  accept = .FALSE.
 
   ! Let us choose a box to pick the species and molecule to pick from.
 
   ! Sum the number of regrowable molecules in each box
-  total_mols = 0
+  nmols_tot = 0
   DO ibox = 1, nbr_boxes
      nmols_box(ibox) = 0
      DO is = 1, nspecies
         IF (is == 1 .AND. prob_growth_species(is) > 0.0_DP) THEN
-           total_mols = total_mols + nmols(is,ibox)
+           nmols_tot = nmols_tot + nmols(is,ibox)
            nmols_box(ibox)  = nmols_box(ibox)  + nmols(is,ibox)
         ELSE IF (is > 1) THEN
            IF (prob_growth_species(is) > prob_growth_species(is-1)) THEN
-              total_mols = total_mols + nmols(is,ibox)
+              nmols_tot = nmols_tot + nmols(is,ibox)
               nmols_box(ibox)  = nmols_box(ibox)  + nmols(is,ibox)
            END IF
         END IF
      END DO
      x_box(ibox) = REAL(nmols_box(ibox),DP)
   END DO
-  IF(total_mols == 0) RETURN
+
+  IF (nmols_tot == 0) THEN
+     IF (verbose_log) THEN
+       WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8,X,9X,X,A9)') &
+             i_mcstep, 'regrow' , ibox, .FALSE., 'no mols'
+     END IF
+     RETURN
+  END IF
+
   DO ibox = 1, nbr_boxes
-     x_box(ibox) = x_box(ibox)/REAL(total_mols,DP)
+     x_box(ibox) = x_box(ibox)/REAL(nmols_tot,DP)
      IF (ibox > 1 ) THEN
         x_box(ibox) = x_box(ibox) + x_box(ibox-1)
      END IF
@@ -172,15 +181,30 @@ SUBROUTINE Cut_N_Grow
      IF( rand_no <= x_species(is)) EXIT
   END DO
 
-  ! If the molecule can't be regrown then return
+  ! Error check
   IF ( is == 1 ) THEN
-    IF ( prob_growth_species(is) == 0. ) RETURN
+    IF ( prob_growth_species(is) == 0. ) THEN
+       err_msg = ''
+       err_msg(1) = 'Probability of regrowing molecules of species ' // &
+                    TRIM(Int_To_String(is)) // ' is zero'
+       CALL Clean_Abort(err_msg, 'Cut_N_Grow')
+    END IF
   ELSE IF ( is > 1 ) THEN
-    IF ( prob_growth_species(is) == prob_growth_species(is-1) ) RETURN
+    IF ( prob_growth_species(is) == prob_growth_species(is-1) ) THEN
+       err_msg = ''
+       err_msg(1) = 'Probability of regrowing molecules of species ' // &
+                    TRIM(Int_To_String(is)) // ' is zero'
+       CALL Clean_Abort(err_msg, 'Cut_N_Grow')
+    END IF
   END IF
 
 
-  IF ( nmols(is,ibox) == 0 ) RETURN
+  IF ( nmols(is,ibox) == 0 ) THEN
+     err_msg = ''
+     err_msg(1) = 'No regrowable molecules of species ' // TRIM(Int_To_String(is)) &
+               // ' in box ' // TRIM(Int_To_String(ibox))
+     CALL Clean_Abort(err_msg,'Cut_N_Grow')
+  END IF
 
   ! Select a molecule at random for cutting 
   im = INT ( rranf() * nmols(is,ibox) ) + 1
@@ -203,8 +227,8 @@ SUBROUTINE Cut_N_Grow
   del_flag = .FALSE.
   cbmc_overlap = .FALSE.
   del_overlap = .FALSE.
-  P_seq = 1.0_DP
-  P_forward = 1.0_DP
+  ln_pseq = 0.0_DP
+  ln_pfor = 0.0_DP
 
   ALLOCATE(frag_order(nfragments(is)))
 
@@ -220,7 +244,7 @@ SUBROUTINE Cut_N_Grow
 
      lambda_for_cut = molecule_list(lm,is)%frac
      CALL Cut_Regrow(lm,is,frag_start,frag_end,frag_order,frag_total,lambda_for_cut, &
-          E_prev,P_seq,P_forward, E_ring_frag_n, cbmc_overlap, del_overlap)
+          e_prev,ln_pseq,ln_pfor, E_ring_frag_n, cbmc_overlap, del_overlap)
 
   END IF
 
@@ -257,6 +281,11 @@ SUBROUTINE Cut_N_Grow
      IF (ALLOCATED(cos_mol_old)) DEALLOCATE(cos_mol_old)
      IF (ALLOCATED(sin_mol_old)) DEALLOCATE(sin_mol_old)
      
+     IF (verbose_log) THEN
+       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,A9)') &
+             i_mcstep, 'regrow' , lm, is, ibox, .FALSE., 'overlap'
+     END IF
+
      RETURN
 
   END IF
@@ -288,6 +317,11 @@ SUBROUTINE Cut_N_Grow
      molecule_list(lm,is)%frac = lambda_for_cut
      
      IF (l_pair_nrg) CALL Reset_Molecule_Pair_Interaction_Arrays(lm,is,ibox)
+
+     IF (verbose_log) THEN
+       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,A9)') &
+             i_mcstep, 'regrow' , lm, is, ibox, .FALSE., 'overlap'
+     END IF
 
      RETURN
 
@@ -338,29 +372,31 @@ SUBROUTINE Cut_N_Grow
   del_overlap = .FALSE.
   cbmc_overlap = .FALSE.
 
-  P_reverse = 1.0_DP
+  ln_prev = 0.0_DP
 
   IF (nfragments(is) /= 1) THEN
 
      lambda_for_cut = molecule_list(lm,is)%frac
      E_ring_frag_o = 0.0_DP
      CALL Cut_Regrow(lm,is,frag_start,frag_end,frag_order,frag_total, &
-          lambda_for_cut, E_prev, P_seq, P_reverse, E_ring_frag_o, &
+          lambda_for_cut, e_prev, ln_pseq, ln_prev, E_ring_frag_o, &
           cbmc_overlap, del_overlap)
 
      atom_list(1:natoms(is),lm,is)%exist = .true.
 
      IF (del_overlap .or. cbmc_overlap) THEN
-        
-        ! positions of all the atoms may not have been reset to the old state
-        ! so do this.
-        
-        CALL Revert_Old_Cartesian_Coordinates(lm,is)
-        
-        molecule_list(lm,is)%frac = lambda_for_cut
-
-        accept = .FALSE.
-
+        err_msg = ""
+        err_msg(1) = "Attempted to delete part of molecule " // TRIM(Int_To_String(im)) // &
+                     " of species " // TRIM(Int_To_String(is))
+        IF (nbr_boxes > 1) THEN
+           err_msg(1) = err_msg(1) // " from box " // TRIM(Int_To_String(ibox))
+        END IF
+        err_msg(2) = "but the molecule energy is too high"
+        IF (start_type(ibox) == "make_config" ) THEN
+           err_msg(3) = "Try increasing Rcutoff_Low, increasing the box size, or "
+           err_msg(4) = "decreasing the initial number of molecules"
+        END IF
+        CALL Clean_Abort(err_msg, "Cut_N_Grow")
      END IF
 
   END IF
@@ -393,7 +429,7 @@ SUBROUTINE Cut_N_Grow
      dE_frag = E_angle_n - E_angle_o + E_ring_frag_n - E_ring_frag_o
 
      ln_pacc = beta(ibox) * (dE - dE_frag) &
-             + DLOG(P_forward / P_reverse)
+             + ln_pfor - ln_prev
      
      accept = accept_or_reject(ln_pacc)
 
@@ -467,7 +503,8 @@ SUBROUTINE Cut_N_Grow
   DEALLOCATE(new_atom_list)
 
   IF (verbose_log) THEN
-    WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8)') i_mcstep, 'regrow' , lm, is, ibox, accept
+    WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,F9.3)') &
+          i_mcstep, 'regrow' , lm, is, ibox, accept, ln_pacc
   END IF
 
 END SUBROUTINE Cut_N_Grow

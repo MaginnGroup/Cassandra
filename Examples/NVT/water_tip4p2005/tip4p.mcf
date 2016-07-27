@@ -9,9 +9,9 @@
 # Atom_Info
 4
 1    O_s1    O    15.999    0.00    LJ    93.193    3.159
-2    H_s1    H    1.008    0.5564    LJ    0.       0.
-3    H_s1    H    1.008    0.5564    LJ    0.       0.
-4    M_s1    M    0.000    -1.1128    LJ    0.       0.
+2    H_s1    H    1.008    0.5564    LJ    0.    0.
+3    H_s1    H    1.008    0.5564    LJ    0.    0.
+4    M_s1    M    0.000    -1.1128    LJ    0.    0.
 
 !Bond Format
 !index i j type parameters

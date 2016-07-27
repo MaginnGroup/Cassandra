@@ -153,7 +153,7 @@ SUBROUTINE GEMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        IF(freev .GT. 1 .OR. int_sim_type == sim_gemc_npt) THEN
+        IF(int_sim_type == sim_gemc_npt) THEN
           CALL Volume_Change
         ELSE
           CALL GEMC_NVT_Volume

@@ -198,8 +198,7 @@ PROGRAM Main
      CALL NPTMC_Control
   ELSE IF (int_sim_type == sim_gcmc) THEN
      CALL GCMC_Control
-  ELSE IF (int_sim_type == sim_gemc.OR. int_sim_type == sim_gemc_ig .OR. &
-           int_sim_type == sim_gemc_npt) THEN
+  ELSE IF (int_sim_type == sim_gemc .OR. int_sim_type == sim_gemc_npt) THEN
      CALL GEMC_Control
   ELSE IF (int_sim_type == sim_frag .OR. int_sim_type == sim_ring) THEN
      CALL Fragment_Control
@@ -211,19 +210,9 @@ PROGRAM Main
      err_msg(2) = logfile
      CALL Clean_Abort(err_msg,'Main')
   ENDIF
-
+ 
   ! Determine if it is equilibration or production or test
   CALL Get_Run_Type
-
-  IF (int_run_type == run_test) THEN
-
-     testname = molfile_name(1)
-     IF(testname(:1) == 'c') testname = 'methane'
-     IF(testname(:2) == 'pr') testname = 'propane'
-     IF(testname(:7) == 'pentane') testname = 'pentane'
-     IF(testname(:7) == 'pentano') testname = 'pentanol'
-
-  END IF
 
   ! initialize counters
   CALL Initialize

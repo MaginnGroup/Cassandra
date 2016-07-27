@@ -118,6 +118,7 @@ OBJS =  main.o \
   move_atom.o \
   chempot.o \
   pair_nrg_variables.o \
+  move_ring_flip.o \
 
 
 ####################################################################
