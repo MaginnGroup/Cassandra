@@ -56,7 +56,7 @@ SUBROUTINE Angle_Distortion
   INTEGER :: natoms_to_place, this_atom, i, j, mcstep
 
   INTEGER, DIMENSION(:), ALLOCATABLE :: atoms_to_place_list
-  INTEGER :: total_mols, nmols_box(nbr_boxes)
+  INTEGER :: nmols_tot, nmols_box(nbr_boxes)
 
   REAL(DP) :: x_box(nbr_boxes), x_species(nspecies), ln_pacc
   REAL(DP) :: theta_0, theta_new, delta_theta, prob_0, prob_new
@@ -80,19 +80,34 @@ SUBROUTINE Angle_Distortion
   INTEGER :: position
 
   intra_overlap = .false.
+  accept = .FALSE.
 
   ! Sum the total number of molecules 
-  total_mols = SUM(nmols(:,:))
-  nmols_box(ibox) = SUM(nmols(:,ibox))
+  nmols_tot = 0
+  DO ibox = 1, nbr_boxes
+     nmols_box(ibox) = 0
+     DO is = 1, nspecies
+        IF (nangles(is) > nangles_fixed(is)) THEN
+           nmols_tot = nmols_tot + nmols(is,ibox)
+           nmols_box(ibox) = nmols_box(ibox) + nmols(is,ibox)
+        END IF
+     END Do
+  END DO
 
   ! If there are no molecules then return
-  IF (total_mols == 0) RETURN
+  IF (nmols_tot == 0) THEN
+     IF (verbose_log) THEN
+       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,F9.3)') &
+             i_mcstep, 'angle' , lm, is, ibox, accept, 'no mols'
+     END IF
+     RETURN
+  END IF
 
   ! If needed, choose a box based on its total mol fraction
   IF(nbr_boxes .GT. 1) THEN
 
     DO ibox = 1, nbr_boxes
-       x_box(ibox) = REAL(nmols_box(ibox),DP)/REAL(total_mols,DP)
+       x_box(ibox) = REAL(nmols_box(ibox),DP)/REAL(nmols_tot,DP)
        IF ( ibox > 1 ) THEN
           x_box(ibox) = x_box(ibox) + x_box(ibox-1)
        END IF
@@ -108,12 +123,20 @@ SUBROUTINE Angle_Distortion
 
   END IF
 
-  ! If there are no molecules in this box then return
-  IF( nmols_box(ibox) == 0 ) RETURN
+  ! error check
+  IF( nmols_box(ibox) == 0 ) THEN
+     err_msg = ''
+     err_msg(1) = 'No molecules with harmonic angles in box ' // TRIM(Int_To_String(ibox))
+     CALL Clean_Abort(err_msg, 'Angle_Distortion')
+  END IF
 
   ! Choose species based on the mol fraction, using Golden sampling
   DO is = 1, nspecies
-     x_species(is) = REAL(nmols(is,ibox), DP)/REAL(nmols_box(ibox),DP)
+     IF (nangles(is) > nangles_fixed(is) ) THEN
+        x_species(is) = REAL(nmols(is,ibox), DP)/REAL(nmols_box(ibox),DP)
+     ELSE
+        x_species(is) = 0.0_DP
+     END IF
      IF ( is > 1 ) THEN
         x_species(is) = x_species(is) + x_species(is-1)
      END IF
@@ -123,6 +146,13 @@ SUBROUTINE Angle_Distortion
   DO is = 1, nspecies
      IF( rand_no <= x_species(is)) EXIT
   END DO
+
+  ! error check
+  IF( nangles(is) <= nangles_fixed(is) ) THEN
+     err_msg = ''
+     err_msg(1) = 'Species ' // TRIM(Int_To_String(is)) // ' does not have harmonic angles'
+     CALL Clean_Abort(err_msg, 'Angle_Distortion')
+  END IF
 
   tot_trials(ibox) = tot_trials(ibox) + 1
   
@@ -149,9 +179,15 @@ SUBROUTINE Angle_Distortion
 
   IF (inter_overlap)  THEN
      err_msg = ""
-     err_msg(1) = "Energy overlap detected in existing configuration"
-     err_msg(2) = "of molecule " // TRIM(Int_To_String(lm)) // " of species " // TRIM(Int_To_String(is))
-     CALL Clean_Abort(err_msg, "Translate")
+     err_msg(1) = "Attempted to change an angle of molecule " // TRIM(Int_To_String(im)) // &
+                  " of species " // TRIM(Int_To_String(is))
+     IF (nbr_boxes > 1) err_msg(1) = err_msg(1) // " in box " // TRIM(Int_To_String(ibox))
+     err_msg(2) = "but the molecule energy is too high"
+     IF (start_type(ibox) == "make_config" ) THEN
+        err_msg(3) = "Try increasing Rcutoff_Low, increasing the box size, or "
+        err_msg(4) = "decreasing the initial number of molecules"
+     END IF
+     CALL Clean_Abort(err_msg, "Angle_Distortion")
   END IF
 
   ! Store the old positions of the atoms 
@@ -379,6 +415,10 @@ SUBROUTINE Angle_Distortion
      ! Note that there is no need to reset the sin and cos terms for reciprocal space Ewald
      ! as these energies have not been yet computed.
 
+     IF (verbose_log) THEN
+       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,A9)') &
+             i_mcstep, 'angle' , lm, is, ibox, accept, 'overlap'
+     END IF
   ELSE
 
      CALL Compute_Molecule_Bond_Energy(lm,is,E_bond_move)
@@ -485,12 +525,14 @@ SUBROUTINE Angle_Distortion
         END IF
         
      END IF
+
+     IF (verbose_log) THEN
+       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,F9.3)') &
+             i_mcstep, 'angle' , lm, is, ibox, accept, ln_pacc
+     END IF
+
   END IF
      
   IF(ALLOCATED(atoms_to_place_list)) DEALLOCATE(atoms_to_place_list)
-
-  IF (verbose_log) THEN
-     WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,F9.3)') i_mcstep, 'angle' , lm, is, ibox, accept, delta_theta
-  END IF
 
 END SUBROUTINE Angle_Distortion

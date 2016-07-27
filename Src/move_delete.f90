@@ -68,7 +68,7 @@ SUBROUTINE Deletion
   INTEGER :: lm                      ! molecule LOCATE
   INTEGER :: is, is_rand, is_counter ! species indices
   INTEGER :: ibox ! attempt to delete a molecule in ibox
-  INTEGER :: kappa_tot, which_anchor
+  INTEGER :: which_anchor
   INTEGER, ALLOCATABLE :: frag_order(:)
   INTEGER :: k, mcstep
 
@@ -78,7 +78,7 @@ SUBROUTINE Deletion
   REAL(DP) :: E_inter_vdw, E_inter_qq, E_periodic_qq
   REAL(DP) :: E_reciprocal, E_self, E_lrc
   REAL(DP) :: E_ring_frag
-  REAL(DP) :: ln_pacc, P_seq, P_bias, this_lambda
+  REAL(DP) :: ln_pacc, ln_pseq, ln_pbias, this_lambda
 
   LOGICAL :: inter_overlap, cbmc_overlap, intra_overlap
   LOGICAL :: accept_or_reject, fh_outside_bounds
@@ -87,13 +87,14 @@ SUBROUTINE Deletion
 
   ! Initialize variables
   ln_pacc = 0.0_DP
-  P_seq = 1.0_DP
-  P_bias = 1.0_DP
+  ln_pseq = 0.0_DP
+  ln_pbias = 0.0_DP
   E_ring_frag = 0.0_DP
   inter_overlap = .FALSE.
   cbmc_overlap = .FALSE.
   intra_overlap = .FALSE.
   ibox = 1
+  accept = .FALSE.
   
   !*****************************************************************************
   ! Step 1) Select a species with uniform probability
@@ -121,7 +122,11 @@ SUBROUTINE Deletion
   ! In the given example, now 'is' would equal 4.
 
   ! Cannot delete a molecule if there aren't any in the box
-  IF (nmols(is,ibox) == 0) RETURN
+  IF (nmols(is,ibox) == 0) THEN
+     WRITE(logunit,'(X,I9,X,A10,X,5X,X,I3,X,I3,X,L8,X,9X,X,A9)') &
+           i_mcstep, 'delete' , is, ibox, .FALSE., 'no mols'
+     RETURN
+  END IF
  
 
   ! Now that a deletion will be attempted, we need to do some bookkeeping:
@@ -147,11 +152,11 @@ SUBROUTINE Deletion
   ! Step 3) Calculate the bias probability for the reverse insertion move
   !*****************************************************************************
   !
-  ! The bias probability, P_bias, of the reverse insertion move is required to
-  ! calculate the probability of accepting the deletion. P_bias will be 
+  ! The bias probability, ln_pbias, of the reverse insertion move is required to
+  ! calculate the probability of accepting the deletion. ln_pbias will be 
   ! calculated using the following procedure:
   ! 
-  !   3.1) Select the order to insert fragments, with probability P_seq
+  !   3.1) Select the order to insert fragments, with probability ln_pseq
   !   3.2) Select kappa_ins - 1 trial coordinates, each with uniform probability
   !   3.3) Calculate the probability of the fragment's current COM
   !   3.4) For each additional fragment:
@@ -161,53 +166,49 @@ SUBROUTINE Deletion
   !
   ! These steps are implemented in the subroutine Build_Molecule
   
-  IF(species_list(is)%fragment) THEN
 
-     ! Build_Molecule places the first fragment, then calls Fragment_Placement 
-     ! to place the additional fragments
-     del_flag = .TRUE.      ! Don't change the coordinates of 'lm'
-     get_fragorder = .TRUE. !
-     ALLOCATE(frag_order(nfragments(is)))
-     CALL Build_Molecule(lm,is,ibox,frag_order,this_lambda, &
-             P_seq, P_bias, E_ring_frag, cbmc_overlap)
-     DEALLOCATE(frag_order)
-     
-     ! cbmc_overlap will only trip if the molecule being deleted had bad
-     ! contacts
-     IF (cbmc_overlap) THEN
-        err_msg = ""
-        err_msg(1) = "Energy overlap detected in existing configuration"
-        err_msg(2) = "of molecule " // TRIM(Int_To_String(im)) // " of species " // TRIM(Int_To_String(is))
-        CALL Clean_Abort(err_msg, "Deletion")
+  ! Build_Molecule places the first fragment, then calls Fragment_Placement 
+  ! to place the additional fragments
+  del_flag = .TRUE.      ! Don't change the coordinates of 'lm'
+  get_fragorder = .TRUE. !
+  ALLOCATE(frag_order(nfragments(is)))
+  CALL Build_Molecule(lm,is,ibox,frag_order,this_lambda, &
+          ln_pseq, ln_pbias, E_ring_frag, cbmc_overlap)
+  DEALLOCATE(frag_order)
+  
+  ! cbmc_overlap will only trip if the molecule being deleted had bad contacts
+  IF (cbmc_overlap) THEN
+     err_msg = ""
+     err_msg(1) = "Attempted to delete molecule " // TRIM(Int_To_String(im)) // &
+                  " of species " // TRIM(Int_To_String(is))
+     err_msg(2) = "but the molecule energy is too high"
+     IF (start_type(ibox) == "make_config" ) THEN
+        err_msg(3) = "Try increasing Rcutoff_Low, increasing the box size, or "
+        err_msg(4) = "decreasing the initial number of molecules"
      END IF
-
-     ! So far P_bias only includes the probability of choosing the insertion 
-     ! point from the collection of trial coordinates times the probability of 
-     ! choosing each dihedral from the collection of trial dihedrals. We need 
-     ! to include the number of trial coordinates, kappa_ins, and the number of
-     ! of trial dihedrals, kappa_dih, for each dihedral.
-     kappa_tot = 1
-
-     IF (nfragments(is) /=0 ) THEN
-
-        kappa_tot = kappa_tot * kappa_ins
-
-        IF (kappa_rot /= 0) THEN
-           kappa_tot = kappa_tot * kappa_rot
-        END IF
-        
-        IF (kappa_dih /=0 ) THEN
-           DO ifrag = 2, nfragments(is)
-              kappa_tot = kappa_tot * kappa_dih
-           END DO
-        END IF
-     
-     END IF
-     
-     P_bias = P_bias * REAL(kappa_tot , DP)
-
+     CALL Clean_Abort(err_msg, "Deletion")
   END IF
 
+  ! So far ln_pbias includes 
+  !   * the probability of choosing the insertion 
+  !     point from the collection of trial coordinates 
+  !   * the probability of choosing each dihedral from the collection of trial dihedrals. 
+  ! Now add
+  !   * the probability of the fragment sequence, ln_pseq
+  !   * the number of trial coordinates, kappa_ins
+  !   * the number of trial dihedrals, kappa_dih, for each dihedral.
+
+  ln_pbias = ln_pbias + ln_pseq
+  ln_pbias = ln_pbias + DLOG(REAL(kappa_ins,DP))
+
+  IF (kappa_rot /= 0 ) THEN
+     ln_pbias = ln_pbias + DLOG(REAL(kappa_rot,DP))
+  END IF
+
+  IF (kappa_dih /= 0 ) THEN
+     ln_pbias = ln_pbias + REAL(nfragments(is)-1,DP) * DLOG(REAL(kappa_dih,DP))
+  END IF
+  
   !*****************************************************************************
   ! Step 4) Calculate the change in potential energy if the molecule is deleted
   !*****************************************************************************
@@ -306,25 +307,28 @@ SUBROUTINE Deletion
   ! and passed to accept_or_reject() which executes the metropolis criterion.
   ! The acceptance criterion to delete a molecule that was inserted via CBMC is
   !
-  !                                                          V
-  !    ln_pacc = b(dU_mn + U_frag) + b mu' + Log[-----------------------]
-  !                                              P_seq P_bias N Lambda^3
+  !                                                               V
+  !    ln_pacc = b(dU_mn + U_frag) + b mu' + - ln_pbias + Log[----------]
+  !                                                           N Lambda^3
   !
   ! where the primes (') indicate that additional intensive terms have been
   ! absorbed into the chemical potential.
 
+  ! change in energy, less energy used to bias fragment selection
   dE = dE_intra + dE_inter
   dE_frag = - E_angle - E_ring_frag
   ln_pacc = beta(ibox) * (dE - dE_frag)
 
-  ! P_seq and P_bias equal 1.0 unless changed by Build_Molecule
-  ln_pacc = ln_pacc - DLOG(P_seq * P_bias) &
-                    - DLOG(REAL(nmols(is,ibox),DP)) &
-                    + DLOG(box_list(ibox)%volume)
- 
   ! chemical potential
-  ln_pacc = ln_pacc + beta(ibox) * species_list(is)%chem_potential &
-                       - 3.0_DP*DLOG(species_list(is)%de_broglie(ibox)) 
+  ln_pacc = ln_pacc + beta(ibox) * species_list(is)%chem_potential
+
+  ! CBMC bias probability
+  ln_pacc = ln_pacc - ln_pbias
+
+  ! dimensionless density
+  ln_pacc = ln_pacc + DLOG(box_list(ibox)%volume) &
+                    - DLOG(REAL(nmols(is,ibox),DP)) &
+                    - 3.0_DP*DLOG(species_list(is)%de_broglie(ibox)) 
  
   accept = accept_or_reject(ln_pacc)
 
@@ -400,7 +404,8 @@ SUBROUTINE Deletion
   IF (l_pair_nrg) DEALLOCATE(pair_vdw_temp,pair_qq_temp)
 
   IF (verbose_log) THEN
-    WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8)') i_mcstep, 'delete' , lm, is, ibox, accept
+     WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,F9.3)') &
+           i_mcstep, 'delete' , lm, is, ibox, accept, ln_pacc
   END IF
 
 

@@ -12,8 +12,8 @@ Run info
 version: Cassandra Development Version
 inputfile: npt.inp
 name of run: npt.out
-date (mm/dd/yyyy): 07/22/2016
-time: 01:38:02
+date (mm/dd/yyyy): 07/27/2016
+time: 04:03:51
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -307,19 +307,19 @@ Compute total energy
  Starting energy components for box   1
   kJ/mol-Extensive
  -----------------------------------------------------------
- Total system energy                     1116.992
- Intra molecular energy                   449.274
+ Total system energy                     5022.072
+ Intra molecular energy                   347.454
    Bond energy                              0.000
-   Bond angle energy                      153.084
-   Dihedral angle energy                  305.628
+   Bond angle energy                      116.919
+   Dihedral angle energy                  246.331
    Improper angle energy                    0.000
-   Intra molecule vdw                      -9.438
+   Intra molecule vdw                     -15.796
    Intra molecule q                         0.000
- Inter molecular energy                   667.718
-   Inter molecule vdw                     805.381
+ Inter molecular energy                  4674.618
+   Inter molecule vdw                    4803.812
    Long range correction                 -142.877
-   Inter molecule q                      4223.602
-   Reciprocal ewald                       464.094
+   Inter molecule q                      4218.411
+   Reciprocal ewald                       477.754
    Self ewald                           -4682.482
  -----------------------------------------------------------
    Number of reciprocal vectors              2934
@@ -329,34 +329,35 @@ Compute total energy
 Run simulation
 ********************************************************************************
       Step       Move   Mol Spc Box  Success  MaxWidth
-       866     rotate         1   1  0.54333
-       904  translate         1   1  0.50333
-      1315     volume             1  0.20000
-      1726     rotate         1   1  0.49000
-      1874  translate         1   1  0.53167
-      2178     volume             1  0.25000
-      2720     rotate         1   1  0.49000
-      2738  translate         1   1  0.54000
-      2935     volume             1  0.20000
-      3643     rotate         1   1  0.49500
-      3720  translate         1   1  0.52833
-      3890     volume             1  0.20000
-      4499     rotate         1   1  0.51067
-      4604     volume             1  0.20000
-      4640  translate         1   1  0.53600
-      5323     rotate         1   1  0.50333
-      5570  translate         1   1  0.53056
-      5809     volume             1  0.21667
-      6298     rotate         1   1  0.49476
-      6462  translate         1   1  0.51286
-      7012     volume             1  0.20000
-      7212     rotate         1   1  0.49458
-      7432  translate         1   1  0.51167
-      7786     volume             1  0.18750
-      8078     rotate         1   1  0.50222
-      8317  translate         1   1  0.51444
-      8773     volume             1  0.20000
-      8982     rotate         1   1  0.51033
+       840  translate         1   1  0.50667
+       869     rotate         1   1  0.50667
+       971     volume             1  0.70000
+      1757     rotate         1   1  0.51333
+      1765  translate         1   1  0.50833
+      2042     volume             1  0.40000
+      2477     volume             1  0.30000
+      2664  translate         1   1  0.51333
+      2739     rotate         1   1  0.52444
+      3598  translate         1   1  0.52000
+      3670     rotate         1   1  0.53750
+      3681     volume             1  0.25000
+      4406  translate         1   1  0.52533
+      4483     volume             1  0.24000
+      4671     rotate         1   1  0.52600
+      5331  translate         1   1  0.53778
+      5566     rotate         1   1  0.53056
+      5767     volume             1  0.25000
+      6215  translate         1   1  0.53476
+      6461     volume             1  0.25714
+      6516     rotate         1   1  0.51524
+      7141  translate         1   1  0.53250
+      7337     volume             1  0.22500
+      7422     rotate         1   1  0.52208
+      7909     volume             1  0.21111
+      8012  translate         1   1  0.52852
+      8352     rotate         1   1  0.51704
+      8553     volume             1  0.21000
+      8869  translate         1   1  0.51967
 ********************************************************************************
  
 Report ending energy & then re-compute from scratch
@@ -366,44 +367,44 @@ Report ending energy & then re-compute from scratch
  Initial energy + deltas for box 1
   kJ/mol-Extensive
  -----------------------------------------------------------
- Total system energy                     -346.893
- Intra molecular energy                   301.162
+ Total system energy                     -336.763
+ Intra molecular energy                   264.805
    Bond energy                              0.000
-   Bond angle energy                      148.366
-   Dihedral angle energy                  171.456
+   Bond angle energy                      103.196
+   Dihedral angle energy                  179.611
    Improper angle energy                    0.000
-   Intra molecule vdw                     -18.660
+   Intra molecule vdw                     -18.003
    Intra molecule q                         0.000
- Inter molecular energy                  -648.055
-   Inter molecule vdw                    -444.154
-   Long range correction                 -139.641
-   Inter molecule q                      4215.962
-   Reciprocal ewald                       402.260
+ Inter molecular energy                  -601.568
+   Inter molecule vdw                    -425.776
+   Long range correction                 -131.493
+   Inter molecule q                      4213.817
+   Reciprocal ewald                       424.365
    Self ewald                           -4682.482
  -----------------------------------------------------------
-   Number of reciprocal vectors              3039
+   Number of reciprocal vectors              3215
  
  
  
  Recomputed energy from scratch for box 1
   kJ/mol-Extensive
  -----------------------------------------------------------
- Total system energy                     -346.893
- Intra molecular energy                   301.162
+ Total system energy                     -336.763
+ Intra molecular energy                   264.805
    Bond energy                              0.000
-   Bond angle energy                      148.366
-   Dihedral angle energy                  171.456
+   Bond angle energy                      103.196
+   Dihedral angle energy                  179.611
    Improper angle energy                    0.000
-   Intra molecule vdw                     -18.660
+   Intra molecule vdw                     -18.003
    Intra molecule q                         0.000
- Inter molecular energy                  -648.055
-   Inter molecule vdw                    -444.154
-   Long range correction                 -139.641
-   Inter molecule q                      4215.962
-   Reciprocal ewald                       402.260
+ Inter molecular energy                  -601.568
+   Inter molecule vdw                    -425.776
+   Long range correction                 -131.493
+   Inter molecule q                      4213.817
+   Reciprocal ewald                       424.365
    Self ewald                           -4682.482
  -----------------------------------------------------------
-   Number of reciprocal vectors              3039
+   Number of reciprocal vectors              3215
  
 ********************************************************************************
  
@@ -411,14 +412,14 @@ Report ending energy & then re-compute from scratch
 Writing information for box  1
 ********************************************************************************
                 Move      Trials     Success   % Success
-              Volume          92          18       19.57
+              Volume         109          24       22.02
  
    ---------------------------------------------------------
    Writing information for species  1
  
                 Move      Trials     Success   % Success
-           Translate        2963        1521       51.33
-              Rotate        3038        1550       51.02
+           Translate        3075        1596       51.90
+              Rotate        2932        1518       51.77
    ---------------------------------------------------------
  
 ********************************************************************************
@@ -429,17 +430,17 @@ Writing information about fragments
    ---------------------------------------------------------
    Writing information for species  1
      #_Frags_Regrown      Trials     Success   % Success
-                   1        2016        1731       85.86
-                   2         991         612       61.76
+                   1        2007        1764       87.89
+                   2         977         637       65.20
    ---------------------------------------------------------
 ********************************************************************************
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            2.493626 secs.
- Rotation time =               2.561039 secs.
- Volume change time =          2.194172 secs.
- Regrowth time =               3.814225 secs.
+ Translation time =            3.895371 secs.
+ Rotation time =               3.730535 secs.
+ Volume change time =          3.656847 secs.
+ Regrowth time =               5.595129 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -453,6 +454,6 @@ Writing information about fragments
          0       Days
          0      Hours
          0    Minutes
-        11    Seconds
-       412         ms
+        17    Seconds
+       367         ms
 ********************************************************************************

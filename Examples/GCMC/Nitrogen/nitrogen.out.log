@@ -12,8 +12,8 @@ Run info
 version: Cassandra Development Version
 inputfile: nitrogen.inp
 name of run: nitrogen.out
-date (mm/dd/yyyy): 07/22/2016
-time: 02:00:59
+date (mm/dd/yyyy): 07/27/2016
+time: 04:10:33
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -116,6 +116,7 @@ Copy input file
  # CBMC_Info
  kappa_ins 12
  rcut_cbmc 6.5
+ 
  
  END
 ********************************************************************************
@@ -319,8 +320,8 @@ Compute total energy
 Run simulation
 ********************************************************************************
       Step       Move   Mol Spc Box  Success  MaxWidth
-      2314     rotate         1   1  0.99667   3.14159
-      2585  translate         1   1  0.95000  19.00000
+      2378     rotate         1   1  0.99833   3.14159
+      2500  translate         1   1  0.95500  19.10000
 ********************************************************************************
  
 Report ending energy & then re-compute from scratch
@@ -330,7 +331,7 @@ Report ending energy & then re-compute from scratch
  Initial energy + deltas for box 1
   kJ/mol-Extensive
  -----------------------------------------------------------
- Total system energy                      -42.081
+ Total system energy                      -35.750
  Intra molecular energy                     0.000
    Bond energy                              0.000
    Bond angle energy                        0.000
@@ -338,12 +339,12 @@ Report ending energy & then re-compute from scratch
    Improper angle energy                    0.000
    Intra molecule vdw                       0.000
    Intra molecule q                         0.000
- Inter molecular energy                   -42.081
-   Inter molecule vdw                     -41.211
+ Inter molecular energy                   -35.750
+   Inter molecule vdw                     -34.559
    Long range correction                   -0.009
-   Inter molecule q                     43502.516
-   Reciprocal ewald                         0.035
-   Self ewald                          -43503.412
+   Inter molecule q                     43345.145
+   Reciprocal ewald                         0.033
+   Self ewald                          -43346.360
  -----------------------------------------------------------
    Number of reciprocal vectors              6938
  
@@ -352,7 +353,7 @@ Report ending energy & then re-compute from scratch
  Recomputed energy from scratch for box 1
   kJ/mol-Extensive
  -----------------------------------------------------------
- Total system energy                      -42.081
+ Total system energy                      -35.750
  Intra molecular energy                     0.000
    Bond energy                              0.000
    Bond angle energy                        0.000
@@ -360,12 +361,12 @@ Report ending energy & then re-compute from scratch
    Improper angle energy                    0.000
    Intra molecule vdw                       0.000
    Intra molecule q                         0.000
- Inter molecular energy                   -42.081
-   Inter molecule vdw                     -41.211
+ Inter molecular energy                   -35.750
+   Inter molecule vdw                     -34.559
    Long range correction                   -0.009
-   Inter molecule q                     43502.516
-   Reciprocal ewald                         0.035
-   Self ewald                          -43503.412
+   Inter molecule q                     43345.145
+   Reciprocal ewald                         0.033
+   Self ewald                          -43346.360
  -----------------------------------------------------------
    Number of reciprocal vectors              6938
  
@@ -379,20 +380,20 @@ Writing information for box  1
    Writing information for species  1
  
                 Move      Trials     Success   % Success
-           Translate         938         877       93.50
-              Rotate        1039        1034       99.52
-              Insert        1010         946       93.66
-              Delete        1013         165       16.29
+           Translate         981         920       93.78
+              Rotate        1014        1006       99.21
+              Insert        1015         944       93.00
+              Delete         990         166       16.77
    ---------------------------------------------------------
  
 ********************************************************************************
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            1.713138 secs.
- Rotation time =               1.895467 secs.
- Insertion time =              2.479570 secs.
- Deletion time =               0.774879 secs.
+ Translation time =            1.828170 secs.
+ Rotation time =               1.846702 secs.
+ Insertion time =              2.480064 secs.
+ Deletion time =               0.766406 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -407,5 +408,5 @@ Writing information for box  1
          0      Hours
          0    Minutes
         14    Seconds
-       401         ms
+       368         ms
 ********************************************************************************

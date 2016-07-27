@@ -65,14 +65,16 @@ SUBROUTINE Atom_Displacement
   USE Global_Variables
   USE Random_Generators
   USE Energy_Routines
+  USE IO_Utilities
 
   IMPLICIT NONE
 
 
-  INTEGER :: ibox, total_mols_ibox, nmolecule_species, ndisp_species, is, im
+  INTEGER :: ibox, ndisp_species, is, im
   INTEGER :: lm, this_atom, iatom, ref_atom, nmolecules_species, mcstep
+  INTEGER :: nmols_tot, nmols_box(nbr_boxes)
 
-  INTEGER, DIMENSION(:), ALLOCATABLE :: total_mols, species_id
+  INTEGER, DIMENSION(:), ALLOCATABLE :: species_id
 
   REAL(DP) :: rand_no
   REAL(DP) :: dE, dE_intra, dE_inter
@@ -83,89 +85,92 @@ SUBROUTINE Atom_Displacement
   REAL(DP) :: E_recip_n
   REAL(DP) :: ln_pacc
 
-  REAL(DP), DIMENSION(:), ALLOCATABLE :: x_box, x_species
+  REAL(DP) :: x_box(nbr_boxes), x_species(nspecies)
 
   TYPE(Atom_Class), DIMENSION(:), ALLOCATABLE :: new_atom_list
   TYPE(Molecule_Class) :: new_molecule_list
 
   LOGICAL :: accept_or_reject, overlap, theta_bound
 
-  
+  accept = .FALSE.
+
   ! Figure out total number of molecules in each boxes that
   ! contain molecules with atoms that can be perturbed.
-
-  ALLOCATE(total_mols(nbr_boxes), x_box(nbr_boxes))
-
-  total_mols(:) = 0
-  
+  nmols_tot = 0
   DO ibox = 1, nbr_boxes
-     total_mols_ibox = 0
+     nmols_box = 0
      DO is = 1, nspecies
         IF (species_list(is)%f_atom_disp) THEN
-           total_mols_ibox = total_mols_ibox + nmols(is,ibox)
+           nmols_tot = nmols_tot + nmols(is,ibox)
+           nmols_box(ibox) = nmols_box(ibox) + nmols(is,ibox)
         END IF
      END DO
-     total_mols(ibox) = total_mols_ibox
-     IF (ibox > 1 ) THEN
-        total_mols(ibox) = total_mols(ibox-1) + total_mols(ibox)
+  END DO
+  
+  ! If there are no molecules then return
+  IF (nmols_tot == 0) THEN
+     IF (verbose_log) THEN
+       WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,3X,X,L8,X,9X,X,F9.3)') &
+             i_mcstep, 'atom_disp' , accept, 'no mols'
      END IF
-  END DO
-  
-  IF (total_mols(nbr_boxes) == 0) RETURN
+     RETURN
+  END IF
 
-  ! obtain cumulative mole fractions for each box
-  x_box(:) = REAL(total_mols(:),DP) / REAL(total_mols(nbr_boxes),DP)
-  
-  ! choose a box
+  ! If needed, choose a box based on its total mol fraction
+  IF(nbr_boxes .GT. 1) THEN
 
-  rand_no = rranf()
+    DO ibox = 1, nbr_boxes
+       x_box(ibox) = REAL(nmols_box(ibox),DP)/REAL(nmols_tot,DP)
+       IF ( ibox > 1 ) THEN
+          x_box(ibox) = x_box(ibox) + x_box(ibox-1)
+       END IF
+    END DO
   
-  DO ibox = 1, nbr_boxes
-     IF ( rand_no <= x_box(ibox)) EXIT
-  END DO
+    rand_no = rranf()
+    DO ibox = 1, nbr_boxes
+       IF ( rand_no <= x_box(ibox)) EXIT
+    END DO
+
+  ELSE
+
+    ibox = 1
+
+  END IF
+
+  ! error check
+  IF( nmols_box(ibox) == 0 ) THEN
+     err_msg = ''
+     err_msg(1) = 'No movable atoms in box ' // TRIM(Int_To_String(ibox))
+     CALL Clean_Abort(err_msg, 'Atom_Displacment')
+  END IF
+
 
   ! choose a species
-
-  ! Choose a species, Make sure that the sum is carried out
-  ! only over the species that possess fragments
-
-  ALLOCATE(species_id(nspecies),x_species(nspecies))
-
-  nmolecules_species = 0
-  ndisp_species = 0
-  x_species(:) = 0.0_DP
-
   DO is = 1, nspecies
      IF (species_list(is)%f_atom_disp ) THEN
-        ndisp_species = ndisp_species + 1
-        species_id(ndisp_species) = is
-        nmolecules_species = nmolecules_species + nmols(is,ibox)
-        x_species(ndisp_species) = REAL(nmolecules_species,DP)
+        x_species(is) = REAL(nmols(is,ibox),DP)/REAL(nmols_box(ibox),DP)
+     ELSE
+        x_species(is) = 0.0_DP
+     END IF
+     IF ( is > 1 ) THEN
+        x_species(is) = x_species(is) + x_species(is-1)
      END IF
   END DO
 
-  x_species(:) = x_species(:)  / REAL(nmolecules_species,DP)
-
-  DO is = 2, ndisp_species
-     x_species(is) = x_species(is) + x_species(is-1)
-  END DO
-  
-  ! select a species
-
   rand_no = rranf()
-
-  DO is = 1, ndisp_species
+  DO is = 1, nspecies
      IF (rand_no <= x_species(is)) EXIT
   END DO
 
-  is = species_id(is)
+  ! error check
+  IF ( .NOT. species_list(is)%f_atom_disp ) THEN
+     err_msg = ''
+     err_msg(1) = 'Species ' // TRIM(Int_To_String(is)) // ' has no movable atoms'
+     CALL Clean_Abort(err_msg, 'Atom_Displacement')
+  END IF
 
-  
-  DEALLOCATE(x_box,x_species)
-  DEALLOCATE(total_mols,species_id)
 
   ! pick a molecule of this species and get its index
-
   im = INT( rranf() * REAL(nmols(is,ibox),DP) ) + 1
   ntrials(is,ibox)%disp_atom = ntrials(is,ibox)%disp_atom + 1
   lm = locate(im,is,ibox)
@@ -194,6 +199,10 @@ SUBROUTINE Atom_Displacement
 
   IF (theta_bound) THEN
      CALL Revert_Old_Cartesian_Coordinates(lm,is)
+     IF (verbose_log) THEN
+       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,A)') &
+             i_mcstep, 'atom_disp' , lm, is, ibox, accept, 'theta_bound'
+     END IF
      RETURN
   END IF
 
@@ -212,6 +221,10 @@ SUBROUTINE Atom_Displacement
 
   IF (overlap) THEN
      CALL Revert_Old_Cartesian_Coordinates(lm,is)
+     IF (verbose_log) THEN
+       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,A9)') &
+             i_mcstep, 'atom_disp' , lm, is, ibox, accept, 'overlap'
+     END IF
      RETURN
   END IF
   dE_intra = E_intra_vdw_n + E_intra_qq_n
@@ -249,6 +262,7 @@ SUBROUTINE Atom_Displacement
 
   dE = dE_inter + dE_intra
   ln_pacc = beta(ibox) * dE
+
   accept = accept_or_reject(ln_pacc)
 
   IF (accept) THEN
@@ -285,7 +299,8 @@ SUBROUTINE Atom_Displacement
   END IF
 
   IF (verbose_log) THEN
-    WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8)') i_mcstep, 'atom_disp' , lm, is, ibox, accept
+    WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,F9.3)') &
+          i_mcstep, 'atom_disp' , lm, is, ibox, accept, ln_pacc
   END IF
 
  

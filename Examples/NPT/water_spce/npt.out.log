@@ -12,8 +12,8 @@ Run info
 version: Cassandra Development Version
 inputfile: npt.inp
 name of run: npt.out
-date (mm/dd/yyyy): 07/22/2016
-time: 01:38:57
+date (mm/dd/yyyy): 07/27/2016
+time: 04:04:11
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -320,37 +320,35 @@ Compute total energy
 Run simulation
 ********************************************************************************
       Step       Move   Mol Spc Box  Success  MaxWidth
-      1798  translate         1   1  0.02222
-      1812     rotate         1   1  0.39333
-      1954     volume             1  0.10000
-      3493     volume             1  0.15000
-      3542  translate         1   1  0.02111
-      3692     rotate         1   1  0.39778
-      4824     volume             1  0.23333
-      5355  translate         1   1  0.02296
-      5529     rotate         1   1  0.38630
-      5698     volume             1  0.17500
-      7095  translate         1   1  0.02194
-      7165     volume             1  0.20000
-      7376     rotate         1   1  0.38667
-      8994  translate         1   1  0.02067
-      9092     volume             1  0.20000
-      9122     rotate         1   1  0.38356
-     10796     volume             1  0.20000
-     10851     rotate         1   1  0.38185
-     10899  translate         1   1  0.02222
-     12194     volume             1  0.17500
-     12647     rotate         1   1  0.38016
-     12728  translate         1   1  0.02381
-     13197     volume             1  0.17778
-     14454     rotate         1   1  0.38042
-     14535  translate         1   1  0.02278
-     14656     volume             1  0.18000
-     16075     volume             1  0.20000
-     16246     rotate         1   1  0.38185
-     16381  translate         1   1  0.02272
-     17920     volume             1  0.19167
-     17967     rotate         1   1  0.38244
+       810     volume             1  0.40000
+      1754  translate         1   1  0.02000
+      1870     rotate         1   1  0.40778
+      2999     volume             1  0.40000
+      3612  translate         1   1  0.02500
+      3640     rotate         1   1  0.39167
+      4606     volume             1  0.36667
+      5375  translate         1   1  0.02185
+      5493     rotate         1   1  0.37926
+      6219     volume             1  0.35000
+      7202  translate         1   1  0.02111
+      7290     rotate         1   1  0.38361
+      7966     volume             1  0.34000
+      9006     rotate         1   1  0.38289
+      9112  translate         1   1  0.02200
+      9950     volume             1  0.30000
+     10833     rotate         1   1  0.38222
+     10906  translate         1   1  0.02111
+     12237     volume             1  0.28571
+     12625     rotate         1   1  0.37921
+     12719  translate         1   1  0.02175
+     14427     volume             1  0.30000
+     14439     rotate         1   1  0.38125
+     14521  translate         1   1  0.02194
+     15329     volume             1  0.31111
+     16224     rotate         1   1  0.37827
+     16368  translate         1   1  0.02247
+     17144     volume             1  0.28000
+     18034     rotate         1   1  0.37611
 ********************************************************************************
  
 Report ending energy & then re-compute from scratch
@@ -360,7 +358,7 @@ Report ending energy & then re-compute from scratch
  Initial energy + deltas for box 1
   kJ/mol-Extensive
  -----------------------------------------------------------
- Total system energy                    -3616.598
+ Total system energy                    -3578.069
  Intra molecular energy                     0.000
    Bond energy                              0.000
    Bond angle energy                        0.000
@@ -368,11 +366,11 @@ Report ending energy & then re-compute from scratch
    Improper angle energy                    0.000
    Intra molecule vdw                       0.000
    Intra molecule q                         0.000
- Inter molecular energy                 -3616.598
-   Inter molecule vdw                     744.203
-   Long range correction                  -71.934
-   Inter molecule q                     41857.189
-   Reciprocal ewald                       950.162
+ Inter molecular energy                 -3578.069
+   Inter molecule vdw                     669.936
+   Long range correction                  -71.910
+   Inter molecule q                     41962.439
+   Reciprocal ewald                       957.685
    Self ewald                          -47096.218
  -----------------------------------------------------------
    Number of reciprocal vectors              2518
@@ -382,7 +380,7 @@ Report ending energy & then re-compute from scratch
  Recomputed energy from scratch for box 1
   kJ/mol-Extensive
  -----------------------------------------------------------
- Total system energy                    -3616.598
+ Total system energy                    -3578.069
  Intra molecular energy                     0.000
    Bond energy                              0.000
    Bond angle energy                        0.000
@@ -390,11 +388,11 @@ Report ending energy & then re-compute from scratch
    Improper angle energy                    0.000
    Intra molecule vdw                       0.000
    Intra molecule q                         0.000
- Inter molecular energy                 -3616.598
-   Inter molecule vdw                     744.203
-   Long range correction                  -71.934
-   Inter molecule q                     41857.189
-   Reciprocal ewald                       950.162
+ Inter molecular energy                 -3578.069
+   Inter molecule vdw                     669.936
+   Long range correction                  -71.910
+   Inter molecule q                     41962.439
+   Reciprocal ewald                       957.685
    Self ewald                          -47096.218
  -----------------------------------------------------------
    Number of reciprocal vectors              2518
@@ -405,23 +403,23 @@ Report ending energy & then re-compute from scratch
 Writing information for box  1
 ********************************************************************************
                 Move      Trials     Success   % Success
-              Volume         122          23       18.85
+              Volume         108          28       25.93
  
    ---------------------------------------------------------
    Writing information for species  1
  
                 Move      Trials     Success   % Success
-           Translate        8911         200        2.24
-              Rotate        9067        3466       38.23
+           Translate        8962         204        2.28
+              Rotate        9030        3396       37.61
    ---------------------------------------------------------
  
 ********************************************************************************
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            5.741937 secs.
- Rotation time =               5.986747 secs.
- Volume change time =          5.541899 secs.
+ Translation time =            7.397253 secs.
+ Rotation time =               7.681116 secs.
+ Volume change time =          6.078633 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -435,6 +433,6 @@ Writing information for box  1
          0       Days
          0      Hours
          0    Minutes
-        17    Seconds
-       807         ms
+        21    Seconds
+       852         ms
 ********************************************************************************

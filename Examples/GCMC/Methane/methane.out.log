@@ -12,8 +12,8 @@ Run info
 version: Cassandra Development Version
 inputfile: methane.inp
 name of run: methane.out
-date (mm/dd/yyyy): 07/22/2016
-time: 01:54:20
+date (mm/dd/yyyy): 07/27/2016
+time: 04:09:54
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -285,9 +285,9 @@ Compute total energy
 Run simulation
 ********************************************************************************
       Step       Move   Mol Spc Box  Success  MaxWidth
-      1308  translate         1   1  0.97091  14.00000
-      2582  translate         1   1  0.98000  14.00000
-      3992  translate         1   1  0.98545  14.00000
+      1375  translate         1   1  0.98000  14.00000
+      2680  translate         1   1  0.99273  14.00000
+      3979  translate         1   1  0.98545  14.00000
 ********************************************************************************
  
 Report ending energy & then re-compute from scratch
@@ -297,7 +297,7 @@ Report ending energy & then re-compute from scratch
  Initial energy + deltas for box 1
   kJ/mol-Extensive
  -----------------------------------------------------------
- Total system energy                       -1.293
+ Total system energy                       -0.291
  Intra molecular energy                     0.000
    Bond energy                              0.000
    Bond angle energy                        0.000
@@ -305,9 +305,9 @@ Report ending energy & then re-compute from scratch
    Improper angle energy                    0.000
    Intra molecule vdw                       0.000
    Intra molecule q                         0.000
- Inter molecular energy                    -1.293
-   Inter molecule vdw                      -1.269
-   Long range correction                   -0.024
+ Inter molecular energy                    -0.291
+   Inter molecule vdw                      -0.265
+   Long range correction                   -0.026
    Inter molecule q                         0.000
  -----------------------------------------------------------
  
@@ -316,7 +316,7 @@ Report ending energy & then re-compute from scratch
  Recomputed energy from scratch for box 1
   kJ/mol-Extensive
  -----------------------------------------------------------
- Total system energy                       -1.293
+ Total system energy                       -0.291
  Intra molecular energy                     0.000
    Bond energy                              0.000
    Bond angle energy                        0.000
@@ -324,9 +324,9 @@ Report ending energy & then re-compute from scratch
    Improper angle energy                    0.000
    Intra molecule vdw                       0.000
    Intra molecule q                         0.000
- Inter molecular energy                    -1.293
-   Inter molecule vdw                      -1.269
-   Long range correction                   -0.024
+ Inter molecular energy                    -0.291
+   Inter molecule vdw                      -0.265
+   Long range correction                   -0.026
    Inter molecule q                         0.000
  -----------------------------------------------------------
  
@@ -340,18 +340,18 @@ Writing information for box  1
    Writing information for species  1
  
                 Move      Trials     Success   % Success
-           Translate        1653        1617       97.82
-              Insert        1205        1055       87.55
-              Delete        1142        1106       96.85
+           Translate        1661        1638       98.62
+              Insert        1175        1076       91.57
+              Delete        1164        1125       96.65
    ---------------------------------------------------------
  
 ********************************************************************************
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.024933 secs.
- Insertion time =              0.132540 secs.
- Deletion time =               0.116851 secs.
+ Translation time =            0.012391 secs.
+ Insertion time =              0.067423 secs.
+ Deletion time =               0.060622 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -366,5 +366,5 @@ Writing information for box  1
          0      Hours
          0    Minutes
          0    Seconds
-       312         ms
+       168         ms
 ********************************************************************************

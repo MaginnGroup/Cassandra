@@ -9,11 +9,11 @@
  
 Run info
 ********************************************************************************
-version: Cassandra Development Version
+version: Cassandra Version 1.2 20160720
 inputfile: species1_mcf_gen.inp
 name of run: species1_mcf_gen
-date (mm/dd/yyyy): 06/24/2016
-time: 11:50:42
+date (mm/dd/yyyy): 07/26/2016
+time: 23:07:51
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -63,7 +63,7 @@ Number of species
 Box info
 ********************************************************************************
 Number of simulation boxes     1
-Box 1 is cubic               
+Box 1 is CUBIC               
  Each Side Of :       30.0000     Angstrom
  Cell basis vector lengths in A,     30.0000      30.0000      30.0000
  Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000

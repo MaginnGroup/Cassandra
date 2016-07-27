@@ -64,7 +64,7 @@
     INTEGER, ALLOCATABLE,DIMENSION(:) :: frag_order
 
     REAL(DP) :: rxijp, ryijp, rzijp, rxij, ryij, rzij, rsq, lambda_for_build
-    REAL(DP) :: P_seq, P_bias
+    REAL(DP) :: ln_pseq, ln_pbias
     REAL(DP) :: rand_lambda,lambda_ins,lambda_del
     REAL(DP) :: nrg_ring_frag_tot
 
@@ -113,11 +113,11 @@
                 atom_list(:,alive,is)%exist = .FALSE.
                 cbmc_overlap = .FALSE.
                 get_fragorder = .TRUE.
-                P_seq = 1.0_DP
-                P_bias = 1.0_DP
+                ln_pseq = 0.0_DP
+                ln_pbias = 0.0_DP
                 lambda_for_build = molecule_list(alive,is)%frac
                 CALL Build_Molecule(alive,is,ibox,frag_order, &
-                        lambda_for_build,P_seq,P_bias, &
+                        lambda_for_build,ln_pseq,ln_pbias, &
                         nrg_ring_frag_tot,cbmc_overlap)
                 IF (cbmc_overlap) CYCLE InsertionLOOP
                 atom_list(:,alive,is)%exist = .TRUE.       

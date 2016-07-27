@@ -12,8 +12,8 @@ Run info
 version: Cassandra Development Version
 inputfile: methane_Si.inp
 name of run: methane_Si.out
-date (mm/dd/yyyy): 07/22/2016
-time: 02:09:17
+date (mm/dd/yyyy): 07/27/2016
+time: 04:10:03
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -307,7 +307,7 @@ Compute total energy
  Starting energy components for box   1
   kJ/mol-Extensive
  -----------------------------------------------------------
- Total system energy                    18197.989
+ Total system energy                    21364.665
  Intra molecular energy                     0.000
    Bond energy                              0.000
    Bond angle energy                        0.000
@@ -315,8 +315,8 @@ Compute total energy
    Improper angle energy                    0.000
    Intra molecule vdw                       0.000
    Intra molecule q                         0.000
- Inter molecular energy                 18197.989
-   Inter molecule vdw                   18480.519
+ Inter molecular energy                 21364.665
+   Inter molecule vdw                   21647.194
    Long range correction                 -282.529
    Inter molecule q                         0.000
  -----------------------------------------------------------
@@ -326,8 +326,8 @@ Compute total energy
 Run simulation
 ********************************************************************************
       Step       Move   Mol Spc Box  Success  MaxWidth
-      1554  translate         2   1  0.23333   0.93333
-      3052  translate         2   1  0.53167   0.99244
+      1528  translate         2   1  0.20000   0.80000
+      3015  translate         2   1  0.54833   0.87733
 ********************************************************************************
  
 Report ending energy & then re-compute from scratch
@@ -337,7 +337,7 @@ Report ending energy & then re-compute from scratch
  Initial energy + deltas for box 1
   kJ/mol-Extensive
  -----------------------------------------------------------
- Total system energy                    17862.192
+ Total system energy                    17944.596
  Intra molecular energy                     0.000
    Bond energy                              0.000
    Bond angle energy                        0.000
@@ -345,9 +345,9 @@ Report ending energy & then re-compute from scratch
    Improper angle energy                    0.000
    Intra molecule vdw                       0.000
    Intra molecule q                         0.000
- Inter molecular energy                 17862.192
-   Inter molecule vdw                   18148.457
-   Long range correction                 -286.265
+ Inter molecular energy                 17944.596
+   Inter molecule vdw                   18229.160
+   Long range correction                 -284.564
    Inter molecule q                         0.000
  -----------------------------------------------------------
  
@@ -356,7 +356,7 @@ Report ending energy & then re-compute from scratch
  Recomputed energy from scratch for box 1
   kJ/mol-Extensive
  -----------------------------------------------------------
- Total system energy                    17862.192
+ Total system energy                    17944.596
  Intra molecular energy                     0.000
    Bond energy                              0.000
    Bond angle energy                        0.000
@@ -364,9 +364,9 @@ Report ending energy & then re-compute from scratch
    Improper angle energy                    0.000
    Intra molecule vdw                       0.000
    Intra molecule q                         0.000
- Inter molecular energy                 17862.192
-   Inter molecule vdw                   18148.457
-   Long range correction                 -286.265
+ Inter molecular energy                 17944.596
+   Inter molecule vdw                   18229.160
+   Long range correction                 -284.564
    Inter molecule q                         0.000
  -----------------------------------------------------------
  
@@ -387,18 +387,18 @@ Writing information for box  1
    Writing information for species  2
  
                 Move      Trials     Success   % Success
-           Translate        1601         668       41.72
-              Insert        1204         578       48.01
-              Delete        1195         567       47.45
+           Translate        1582         644       40.71
+              Insert        1216         570       46.88
+              Delete        1202         564       46.92
    ---------------------------------------------------------
  
 ********************************************************************************
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            1.774194 secs.
- Insertion time =              9.037699 secs.
- Deletion time =               8.074298 secs.
+ Translation time =            1.767818 secs.
+ Insertion time =              9.342786 secs.
+ Deletion time =               8.233049 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -413,5 +413,5 @@ Writing information for box  1
          0      Hours
          0    Minutes
         29    Seconds
-       630         ms
+       943         ms
 ********************************************************************************

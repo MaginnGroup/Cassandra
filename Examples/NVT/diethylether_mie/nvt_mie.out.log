@@ -12,8 +12,8 @@ Run info
 version: Cassandra Development Version
 inputfile: nvt_mie.inp
 name of run: nvt_mie.out
-date (mm/dd/yyyy): 07/22/2016
-time: 01:35:12
+date (mm/dd/yyyy): 07/27/2016
+time: 04:04:44
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -288,19 +288,19 @@ Compute total energy
  Starting energy components for box   1
   kJ/mol-Extensive
  -----------------------------------------------------------
- Total system energy                     3848.729
- Intra molecular energy                  3171.789
+ Total system energy                    15554.093
+ Intra molecular energy                  3041.269
    Bond energy                              0.000
-   Bond angle energy                     1033.857
-   Dihedral angle energy                 2084.205
+   Bond angle energy                      958.521
+   Dihedral angle energy                 1989.003
    Improper angle energy                    0.000
-   Intra molecule vdw                      53.727
+   Intra molecule vdw                      93.744
    Intra molecule q                         0.000
- Inter molecular energy                   676.940
-   Inter molecule vdw                     912.870
+ Inter molecular energy                 12512.824
+   Inter molecule vdw                   12714.967
    Long range correction                 -124.572
-   Inter molecule q                     16697.906
-   Reciprocal ewald                       359.836
+   Inter molecule q                     16740.712
+   Reciprocal ewald                       350.817
    Self ewald                          -17169.100
  -----------------------------------------------------------
    Number of reciprocal vectors              2910
@@ -310,12 +310,12 @@ Compute total energy
 Run simulation
 ********************************************************************************
       Step       Move   Mol Spc Box  Success  MaxWidth
-       629     rotate         1   1  0.45000   0.49742
-       702  translate         1   1  0.39545   0.39545
-      1304     rotate         1   1  0.51818   0.52229
-      1336  translate         1   1  0.45909   0.36310
-      1940  translate         1   1  0.49091   0.35650
-      1945     rotate         1   1  0.46818   0.49618
+       609  translate         1   1  0.36364   0.36364
+       730     rotate         1   1  0.51364   0.54978
+      1215  translate         1   1  0.47273   0.34380
+      1373     rotate         1   1  0.37727   0.52229
+      1810  translate         1   1  0.42273   0.29067
+      2085     rotate         1   1  0.45000   0.49618
 ********************************************************************************
  
 Report ending energy & then re-compute from scratch
@@ -325,19 +325,19 @@ Report ending energy & then re-compute from scratch
  Initial energy + deltas for box 1
   kJ/mol-Extensive
  -----------------------------------------------------------
- Total system energy                     -857.610
- Intra molecular energy                  2864.692
+ Total system energy                      -40.654
+ Intra molecular energy                  2827.867
    Bond energy                              0.000
-   Bond angle energy                     1022.226
-   Dihedral angle energy                 1884.679
+   Bond angle energy                      872.726
+   Dihedral angle energy                 1943.820
    Improper angle energy                    0.000
-   Intra molecule vdw                     -42.213
+   Intra molecule vdw                      11.320
    Intra molecule q                         0.000
- Inter molecular energy                 -3722.302
-   Inter molecule vdw                   -3418.256
+ Inter molecular energy                 -2868.520
+   Inter molecule vdw                   -2543.237
    Long range correction                 -124.572
-   Inter molecule q                     16663.115
-   Reciprocal ewald                       326.511
+   Inter molecule q                     16660.286
+   Reciprocal ewald                       308.102
    Self ewald                          -17169.100
  -----------------------------------------------------------
    Number of reciprocal vectors              2910
@@ -347,19 +347,19 @@ Report ending energy & then re-compute from scratch
  Recomputed energy from scratch for box 1
   kJ/mol-Extensive
  -----------------------------------------------------------
- Total system energy                     -857.610
- Intra molecular energy                  2864.692
+ Total system energy                      -40.654
+ Intra molecular energy                  2827.867
    Bond energy                              0.000
-   Bond angle energy                     1022.226
-   Dihedral angle energy                 1884.679
+   Bond angle energy                      872.726
+   Dihedral angle energy                 1943.820
    Improper angle energy                    0.000
-   Intra molecule vdw                     -42.213
+   Intra molecule vdw                      11.320
    Intra molecule q                         0.000
- Inter molecular energy                 -3722.302
-   Inter molecule vdw                   -3418.256
+ Inter molecular energy                 -2868.520
+   Inter molecule vdw                   -2543.237
    Long range correction                 -124.572
-   Inter molecule q                     16663.115
-   Reciprocal ewald                       326.511
+   Inter molecule q                     16660.286
+   Reciprocal ewald                       308.102
    Self ewald                          -17169.100
  -----------------------------------------------------------
    Number of reciprocal vectors              2910
@@ -374,8 +374,8 @@ Writing information for box  1
    Writing information for species  1
  
                 Move      Trials     Success   % Success
-           Translate         751         339       45.14
-              Rotate         749         347       46.33
+           Translate         807         358       44.36
+              Rotate         692         317       45.81
    ---------------------------------------------------------
  
 ********************************************************************************
@@ -386,16 +386,16 @@ Writing information about fragments
    ---------------------------------------------------------
    Writing information for species  1
      #_Frags_Regrown      Trials     Success   % Success
-                   1         475         397       83.58
-                   2         225         136       60.44
+                   1         479         390       81.42
+                   2         222         152       68.47
    ---------------------------------------------------------
 ********************************************************************************
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            2.719497 secs.
- Rotation time =               2.667685 secs.
- Regrowth time =               3.538023 secs.
+ Translation time =            2.868517 secs.
+ Rotation time =               2.470557 secs.
+ Regrowth time =               3.553114 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -410,5 +410,5 @@ Writing information about fragments
          0      Hours
          0    Minutes
         13    Seconds
-       532         ms
+       459         ms
 ********************************************************************************
