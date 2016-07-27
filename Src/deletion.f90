@@ -72,13 +72,13 @@ SUBROUTINE Deletion
   INTEGER, ALLOCATABLE :: frag_order(:)
   INTEGER :: k, mcstep
 
-  REAL(DP) :: delta_e, delta_e_pacc
+  REAL(DP) :: dE, dE_frag
   REAL(DP) :: E_bond, E_angle, E_dihedral, E_improper
   REAL(DP) :: E_intra_vdw, E_intra_qq
   REAL(DP) :: E_inter_vdw, E_inter_qq, E_periodic_qq
   REAL(DP) :: E_reciprocal, E_self, E_lrc
   REAL(DP) :: nrg_ring_frag_tot
-  REAL(DP) :: ln_pacc, P_seq, P_bias, this_lambda
+  REAL(DP) :: ln_pacc, ln_pseq, ln_pbias, this_lambda
   REAL(DP) :: E_intra_vdw_igas, E_intra_qq_igas
 
   LOGICAL :: inter_overlap, cbmc_overlap, intra_overlap
@@ -88,13 +88,14 @@ SUBROUTINE Deletion
 
   ! Initialize variables
   ln_pacc = 0.0_DP
-  P_seq = 1.0_DP
-  P_bias = 1.0_DP
+  ln_pseq = 0.0_DP
+  ln_pbias = 0.0_DP
   nrg_ring_frag_tot = 0.0_DP
   inter_overlap = .FALSE.
   cbmc_overlap = .FALSE.
   intra_overlap = .FALSE.
   ibox = 1
+  accept = .FALSE.
   
   !*****************************************************************************
   ! Step 1) Select a species with uniform probability
@@ -122,7 +123,11 @@ SUBROUTINE Deletion
   ! In the given example, now 'is' would equal 4.
 
   ! Cannot delete a molecule if there aren't any in the box
-  IF (nmols(is,ibox) == 0) RETURN
+  IF (nmols(is,ibox) == 0) THEN
+     WRITE(logunit,'(X,I9,X,A10,X,5X,X,I3,X,I3,X,L8,X,9X,X,A9)') &
+           i_mcstep, 'delete' , is, ibox, .FALSE., 'no mols'
+     RETURN
+  END IF
  
 
   ! Now that a deletion will be attempted, we need to do some bookkeeping:
@@ -148,11 +153,11 @@ SUBROUTINE Deletion
   ! Step 3) Calculate the bias probability for the reverse insertion move
   !*****************************************************************************
   !
-  ! The bias probability, P_bias, of the reverse insertion move is required to
-  ! calculate the probability of accepting the deletion. P_bias will be 
+  ! The bias probability, ln_pbias, of the reverse insertion move is required to
+  ! calculate the probability of accepting the deletion. ln_pbias will be 
   ! calculated using the following procedure:
   ! 
-  !   3.1) Select the order to insert fragments, with probability P_seq
+  !   3.1) Select the order to insert fragments, with probability ln_pseq
   !   3.2) Select kappa_ins - 1 trial coordinates, each with uniform probability
   !   3.3) Calculate the probability of the fragment's current COM
   !   3.4) For each additional fragment:
@@ -169,34 +174,40 @@ SUBROUTINE Deletion
   get_fragorder = .TRUE. !
   ALLOCATE(frag_order(nfragments(is)))
   CALL Build_Molecule(lm,is,ibox,frag_order,this_lambda, &
-          P_seq, P_bias, nrg_ring_frag_tot, cbmc_overlap)
+          ln_pseq, ln_pbias, nrg_ring_frag_tot, cbmc_overlap)
   DEALLOCATE(frag_order)
   
-  ! cbmc_overlap will only trip if the molecule being deleted had bad
-  ! contacts
+  ! cbmc_overlap will only trip if the molecule being deleted had bad contacts
   IF (cbmc_overlap) THEN
      err_msg = ""
-     err_msg(1) = "Energy overlap detected in existing configuration"
-     err_msg(2) = "of molecule " // TRIM(Int_To_String(im)) // " of species " // TRIM(Int_To_String(is))
+     err_msg(1) = "Attempted to delete molecule " // TRIM(Int_To_String(im)) // &
+                  " of species " // TRIM(Int_To_String(is))
+     err_msg(2) = "but the molecule energy is too high"
+     IF (start_type(ibox) == "make_config" ) THEN
+        err_msg(3) = "Try increasing Rcutoff_Low, increasing the box size, or "
+        err_msg(4) = "decreasing the initial number of molecules"
+     END IF
      CALL Clean_Abort(err_msg, "Deletion")
   END IF
 
-  ! So far P_bias only includes the probability of choosing the insertion 
-  ! point from the collection of trial coordinates times the probability of 
-  ! choosing each dihedral from the collection of trial dihedrals. We need 
-  ! to include the number of trial coordinates, kappa_ins, and the number of
-  ! of trial dihedrals, kappa_dih, for each dihedral.
+  ! So far ln_pbias includes 
+  !   * the probability of choosing the insertion 
+  !     point from the collection of trial coordinates 
+  !   * the probability of choosing each dihedral from the collection of trial dihedrals. 
+  ! Now add
+  !   * the probability of the fragment sequence, ln_pseq
+  !   * the number of trial coordinates, kappa_ins
+  !   * the number of trial dihedrals, kappa_dih, for each dihedral.
 
-  P_bias = P_bias * REAL(kappa_ins,DP)
+  ln_pbias = ln_pbias + ln_pseq
+  ln_pbias = ln_pbias + DLOG(REAL(kappa_ins,DP))
 
-  IF (kappa_rot /= 0) THEN
-     P_bias = P_bias * REAL(kappa_rot,DP)
+  IF (kappa_rot /= 0 ) THEN
+     ln_pbias = ln_pbias + DLOG(REAL(kappa_rot,DP))
   END IF
-  
-  IF (kappa_dih /=0 ) THEN
-     DO ifrag = 2, nfragments(is)
-        P_bias = P_bias * REAL(kappa_dih,DP)
-     END DO
+
+  IF (kappa_dih /= 0 ) THEN
+     ln_pbias = ln_pbias + REAL(nfragments(is)-1,DP) * DLOG(REAL(kappa_dih,DP))
   END IF
   
   !*****************************************************************************
@@ -204,7 +215,7 @@ SUBROUTINE Deletion
   !*****************************************************************************
   !
   ! Whether the deletion will be accepted depends on the change in potential
-  ! energy, delta_e. The potential energy will be computed in 5 stages:
+  ! energy, dE. The potential energy will be computed in 5 stages:
   !   4.1) Nonbonded intermolecular energies
   !   4.2) Bonded intramolecular energies
   !   4.3) Nonbonded intramolecular energies
@@ -228,7 +239,7 @@ SUBROUTINE Deletion
              E_inter_vdw,E_inter_qq,inter_overlap)
   END IF
 
-  delta_e = - E_inter_vdw - E_inter_qq
+  dE = - E_inter_vdw - E_inter_qq
 
   ! 4.2) Bonded intramolecular energies
 
@@ -237,7 +248,7 @@ SUBROUTINE Deletion
   CALL Compute_Molecule_Dihedral_Energy(lm,is,E_dihedral)
   CALL Compute_Molecule_Improper_Energy(lm,is,E_improper)
 
-  delta_e = delta_e - E_bond - E_angle - E_dihedral - E_improper  
+  dE = dE - E_bond - E_angle - E_dihedral - E_improper  
   
   ! 4.3) Nonbonded intramolecular energies
 
@@ -245,7 +256,7 @@ SUBROUTINE Deletion
           E_intra_vdw,E_intra_qq,E_periodic_qq,intra_overlap) 
   E_inter_qq = E_inter_qq + E_periodic_qq
 
-  delta_e = delta_e - E_intra_vdw - E_intra_qq - E_periodic_qq
+  dE = dE - E_intra_vdw - E_intra_qq - E_periodic_qq
 
   ! 4.4) Ewald energies
 
@@ -257,13 +268,13 @@ SUBROUTINE Deletion
          CALL Update_System_Ewald_Reciprocal_Energy(lm,is,ibox, &
                  int_deletion,E_reciprocal)
 
-         delta_e = delta_e + (E_reciprocal - energy(ibox)%ewald_reciprocal)
+         dE = dE + (E_reciprocal - energy(ibox)%ewald_reciprocal)
 
       END IF
 
       CALL Compute_Molecule_Self_Energy(lm,is,ibox,E_self)
 
-      delta_e = delta_e - E_self 
+      dE = dE - E_self 
   END IF
 
   ! 4.5) Long-range energy correction
@@ -279,7 +290,7 @@ SUBROUTINE Deletion
      END DO
 
      CALL Compute_LR_correction(ibox,e_lrc)
-     delta_e = delta_e + ( e_lrc - energy(ibox)%lrc )
+     dE = dE + ( e_lrc - energy(ibox)%lrc )
 
   END IF  
   
@@ -296,43 +307,33 @@ SUBROUTINE Deletion
   ! and passed to accept_or_reject() which executes the metropolis criterion.
   ! The acceptance criterion to delete a molecule that was inserted via CBMC is
   !
-  !                                                          V
-  !    ln_pacc = b(dU_mn + U_frag) + b mu' + Log[-----------------------]
-  !                                              P_seq P_bias N Lambda^3
+  !                                                               V
+  !    ln_pacc = b(dU_mn + U_frag) + b mu' + - ln_pbias + Log[----------]
+  !                                                           N Lambda^3
   !
   ! where the primes (') indicate that additional intensive terms have been
   ! absorbed into the chemical potential.
 
-  IF(species_list(is)%int_insert == int_igas) THEN
-     igas_flag = .TRUE.
-     CALL Compute_Molecule_Nonbond_Intra_Energy(lm,is, &
-             E_intra_vdw_igas,E_intra_qq_igas,E_periodic_qq,intra_overlap)
-     igas_flag = .FALSE. 
-     ln_pacc = beta(ibox) * (delta_e + E_bond + E_angle &
-                                         + E_dihedral + E_improper &
-                                         + E_intra_vdw_igas + E_intra_qq_igas)
-  ELSE
+  ! change in energy less energy used to bias fragment selection
+  dE_frag = - E_angle - nrg_ring_frag_tot
+  ln_pacc = beta(ibox) * (dE - dE_frag)
 
-     IF(species_list(is)%fragment) THEN
-        ln_pacc = beta(ibox) * (delta_e + E_angle + nrg_ring_frag_tot)
-     END IF
-
-  END IF
-
-  ! P_seq and P_bias equal 1.0 unless changed by Build_Molecule
-  ln_pacc = ln_pacc - DLOG(P_seq * P_bias) &
-                    - DLOG(REAL(nmols(is,ibox),DP)) &
-                    + DLOG(box_list(ibox)%volume)
- 
   ! chemical potential
-  ln_pacc = ln_pacc + beta(ibox) * species_list(is)%chem_potential &
-                       - 3.0_DP*DLOG(species_list(is)%de_broglie(ibox)) 
+  ln_pacc = ln_pacc + beta(ibox) * species_list(is)%chem_potential
+
+  ! CBMC bias probability
+  ln_pacc = ln_pacc - ln_pbias
+
+  ! dimensionless density
+  ln_pacc = ln_pacc + DLOG(box_list(ibox)%volume) &
+                    - DLOG(REAL(nmols(is,ibox),DP)) &
+                    - 3.0_DP*DLOG(species_list(is)%de_broglie(ibox)) 
  
   accept = accept_or_reject(ln_pacc)
 
   IF (accept) THEN
      ! Update energies
-     energy(ibox)%total = energy(ibox)%total + delta_e
+     energy(ibox)%total = energy(ibox)%total + dE
      energy(ibox)%intra = energy(ibox)%intra - E_bond - E_angle &
                             - E_dihedral - E_improper
      energy(ibox)%bond = energy(ibox)%bond - E_bond
@@ -402,7 +403,8 @@ SUBROUTINE Deletion
   IF (l_pair_nrg) DEALLOCATE(pair_vdw_temp,pair_qq_temp)
 
   IF (verbose_log) THEN
-    WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8)') i_mcstep, 'delete' , lm, is, ibox, accept
+     WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,F9.3)') &
+           i_mcstep, 'delete' , lm, is, ibox, accept, ln_pacc
   END IF
 
 

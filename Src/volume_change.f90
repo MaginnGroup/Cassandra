@@ -129,7 +129,12 @@ SUBROUTINE Volume_Change
   this_volume = box_list(this_box)%volume + delta_volume
   
   ! Reject the move
-  IF (this_volume < 0.0_DP) RETURN
+  IF (this_volume < 0.0_DP) THEN
+     IF (verbose_log) THEN
+       WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8,X,9X,X,A9)') &
+             i_mcstep, 'volume' , this_box, accept, 'neg_volume'
+     END IF
+  END IF
   
   ! store the old configuration of all atoms and COMs of molecules, also
   ! calculate the total number of molecules in the box to be used in
@@ -161,14 +166,6 @@ SUBROUTINE Volume_Change
      END DO
   
   END DO
-  
-  IF (this_box == 3) THEN
-     ! it is the intermediate box that contains ideal gas particles
-     ! Therefore, increase the number of molecules by this amount
-     
-     total_molecules = total_molecules + igas_num
-     
-  END IF
   
   !  call cpu_time(time0)
   
@@ -413,6 +410,11 @@ SUBROUTINE Volume_Change
      ! reject move
      CALL Reset_Coords
      
+     IF (verbose_log) THEN
+       WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8,X,9X,X,A9)') &
+             i_mcstep, 'volume' , this_box, accept, 'overlap'
+     END IF
+
   ELSE 
      
      ! change in the energy of the system 
@@ -488,6 +490,11 @@ SUBROUTINE Volume_Change
 
      END IF
      
+     IF (verbose_log) THEN
+       WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8,X,9X,X,F9.3)') &
+             i_mcstep, 'volume' , this_box, accept, ln_pacc
+     END IF
+
   END IF
 
   ! Update the maximum displaement if there are nupdate_vol attempts
@@ -523,12 +530,6 @@ SUBROUTINE Volume_Change
      WRITE(logunit,*)
 
   END IF
-
-  IF (verbose_log) THEN
-    WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8)') i_mcstep, 'volume' , this_box, accept
-  END IF
-
-
 
   CONTAINS
 

@@ -77,13 +77,14 @@ SUBROUTINE GEMC_NVT_Volume
   REAL(DP) :: h_ewald_cut_old_2, rcut_vdwsq_old_2, rcut_coulsq_old_2, rcut_vdw3_old_2
   REAL(DP) :: rcut_vdw6_old_2, rcut_max_old_2
 
+  accept = .FALSE.
+
   ! Pick the box that will grow with uniform probability
   box_grw = INT(rranf() * nbr_boxes) + 1
   
   ! Pick the box that will shrink with uniform probability
   box_shk = INT(rranf() * (nbr_boxes - 1)) + 1
   IF (box_grw <= box_shk) box_shk = box_shk + 1
-
 
   tot_trials(box_grw) = tot_trials(box_grw) + 1
   tot_trials(box_shk) = tot_trials(box_shk) + 1
@@ -92,17 +93,14 @@ SUBROUTINE GEMC_NVT_Volume
   nvolumes(box_shk) = nvolumes(box_shk) + 1
 
   ! store old cell matrix 
-
   box_list_old_1 = box_list(box_grw)
   box_list_old_2 = box_list(box_shk)
 
   ! Store the old configurations of all atoms and COMs
-
   CALL Save_Cartesian_Coordinates_Box(box_grw)
   CALL Save_Cartesian_Coordinates_Box(box_shk)
 
   ! store the pair interactions
-
   IF (l_pair_nrg) THEN
      ALLOCATE(pair_nrg_vdw_old(SUM(max_molecules),SUM(max_molecules)))
      ALLOCATE(pair_nrg_qq_old(SUM(max_molecules),SUM(max_molecules)))
@@ -114,7 +112,6 @@ SUBROUTINE GEMC_NVT_Volume
   END IF
 
   ! store cos_mol and sin_mol
-
   IF ( int_charge_sum_style(box_grw) == charge_ewald .OR. &
        int_charge_sum_style(box_shk) == charge_ewald ) THEN
      
@@ -374,6 +371,12 @@ SUBROUTINE GEMC_NVT_Volume
   
    IF (overlap) THEN 
       CALL Reset_Coords
+
+      IF (verbose_log) THEN
+         WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I1,A1,I1,X,L8,X,9X,X,A9)') &
+               i_mcstep, 'vol_swap', box_shk, '>', box_grw, accept, 'overlap'
+      END IF
+
    ELSE
       
       CALL Compute_System_Total_Energy(box_grw, .TRUE.,overlap)
@@ -383,6 +386,12 @@ SUBROUTINE GEMC_NVT_Volume
       
       IF (overlap) THEN
          CALL Reset_Coords
+
+         IF (verbose_log) THEN
+            WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I1,A1,I1,X,L8,X,9X,X,A9)') &
+                  i_mcstep, 'vol_swap', box_shk, '>', box_grw, accept, 'overlap'
+         END IF
+
       ELSE
          ! accept or reject the move based on the acceptance rule
          
@@ -470,6 +479,11 @@ SUBROUTINE GEMC_NVT_Volume
 
          END IF
         
+         IF (verbose_log) THEN
+            WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I1,A1,I1,X,L8,X,9X,X,F9.3)') &
+                  i_mcstep, 'vol_swap', box_shk, '>', box_grw, accept, ln_pacc
+         END IF
+
       END IF
 
    END IF
@@ -505,11 +519,6 @@ SUBROUTINE GEMC_NVT_Volume
          
       END IF
          
-   END IF
-
-   IF (verbose_log) THEN
-      WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I1,A1,I1,X,L8)') &
-            i_mcstep, 'vol_swap', box_shk, '>', box_grw, accept
    END IF
 
    

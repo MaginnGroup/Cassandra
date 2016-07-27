@@ -88,7 +88,7 @@ SUBROUTINE GEMC_Particle_Transfer
   REAL(DP) :: E_reciprocal_in, E_self_in, E_lrc_in
 
   REAL(DP) :: potw, CP_energy
-  REAL(DP) :: P_seq, P_bias, P_forward, P_reverse, ln_pacc
+  REAL(DP) :: ln_pseq, ln_pfor, ln_prev, P_forward, P_reverse, ln_pacc
   REAL(DP) :: lambda_for_build
   LOGICAL :: inter_overlap, accept_or_reject, cbmc_overlap
   LOGICAL :: intra_overlap
@@ -113,8 +113,9 @@ SUBROUTINE GEMC_Particle_Transfer
   cbmc_overlap = .false.
   accept = .false.
 
-  P_seq = 1.0_DP
-  P_bias = 1.0_DP
+  ln_pseq = 0.0_DP
+  ln_pfor = 0.0_DP
+  ln_prev = 0.0_DP
   P_forward = 1.0_DP
   P_reverse = 1.0_DP
 
@@ -123,24 +124,28 @@ SUBROUTINE GEMC_Particle_Transfer
   !          a) according to its mole fraction, and box_in with uniform prob (DEFAULT)
   !          b) using probabilities from input file
   !*****************************************************************************
+  ! Sum the number of swappable molecules total & per box
+  nmols_tot = 0 ! sum over species, box
+  nmols_box = 0
+  DO ibox = 1, nbr_boxes
+    DO is = 1, nspecies
+      ! Only count swappable species
+      IF ( species_list(is)%int_insert /= int_noinsert ) THEN
+        nmols_tot = nmols_tot + nmols(is,ibox)
+        nmols_box(ibox) = nmols_box(ibox) + nmols(is,ibox)
+      END IF
+    END DO
+  END DO
+
+  ! error_check
+  IF (nmols_tot == 0) THEN
+     err_msg = ''
+     err_msg(1) = 'No swappable molecules'
+     CALL Clean_Abort(err_msg,'GEMC_Particle_Transfer')
+  END IF
+
   IF (.NOT. l_prob_swap_from_box) THEN
      ! Choose box_out based on its mol fraction
-
-     ! Sum the number of swappable molecules total & per box
-     nmols_tot = 0 ! sum over species, box
-     nmols_box = 0
-     DO ibox = 1, nbr_boxes
-       DO is = 1, nspecies
-         ! Only count swappable species
-         IF ( species_list(is)%int_insert /= int_noinsert ) THEN
-           nmols_tot = nmols_tot + nmols(is,ibox)
-           nmols_box(ibox) = nmols_box(ibox) + nmols(is,ibox)
-         END IF
-       END DO
-     END DO
-
-     ! If there are no molecules then return
-     IF (nmols_tot == 0) RETURN
 
      ! Need cumulative mol fractions for Golden sampling
      DO ibox = 1, nbr_boxes
@@ -154,8 +159,12 @@ SUBROUTINE GEMC_Particle_Transfer
      END DO
      box_out = ibox
 
-     ! If there are no molecules in this box then return
-     IF( nmols_box(box_out) == 0 ) RETURN
+     ! error check
+     IF (nmols_box(box_out) == 0) THEN
+        err_msg = ''
+        err_msg(1) = 'No swappable molecules in box ' // TRIM(Int_To_String(box_out))
+        CALL Clean_Abort(err_msg, 'GEMC_Particle_Transfer')
+     END IF
 
      ! Choose box_in with uniform probability
      ! Since the number of boxes is constant, this step does 
@@ -177,6 +186,16 @@ SUBROUTINE GEMC_Particle_Transfer
      END DO
      box_out = ibox
 
+     ! If there are no molecules in this box then return
+     IF (nmols_box(box_out) == 0) THEN
+        IF (verbose_log) THEN
+          WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I1,A1,X,X,L8,X,9X,X,A9)') &
+                i_mcstep, 'swap' , box_out, '>', accept, 'no mols'
+        END IF
+        RETURN
+     END IF
+
+     ! Need cumulative mol fractions for Golden sampling
      ! Choose box_in with uniform probability
      ! Since the number of boxes is constant, 
      !this step does not change P_forward or P_reverse
@@ -201,20 +220,6 @@ SUBROUTINE GEMC_Particle_Transfer
   !*****************************************************************************
   IF (.NOT. l_prob_swap_species) THEN
 
-     ! IF nmols_box is not defined, then compute it
-     IF (l_prob_swap_from_box) THEN
-        ! Sum the number of swappable molecules total & per box
-        nmols_box = 0
-        DO ibox = 1, nbr_boxes
-          DO is = 1, nspecies
-            ! Only count swappable species
-            IF ( species_list(is)%int_insert /= int_noinsert ) THEN
-              nmols_box(ibox) = nmols_box(ibox) + nmols(is,ibox)
-            END IF
-          END DO
-        END DO
-     END IF
-
      ! Choose a species based on the overall mole fraction.
      ! Need cumulative mol fractions for Golden sampling
      x_is = 0.0_DP
@@ -232,7 +237,22 @@ SUBROUTINE GEMC_Particle_Transfer
      DO is = 1, nspecies
         IF (randno < x_is(is)) EXIT
      END DO
-     
+ 
+     ! error_check    
+     IF (species_list(is)%int_insert == int_noinsert) THEN
+        err_msg = ''
+        err_msg(1) = 'Species ' // TRIM(Int_To_String(is)) // ' is not swappable'
+        CALL Clean_Abort(err_msg,'GEMC_Particle_Transfer')
+     END IF
+ 
+     ! error_check    
+     IF (nmols(is,box_out) == 0) THEN
+        err_msg = ''
+        err_msg(1) = 'No molecules of species ' // TRIM(Int_To_String(is)) // &
+                     ' in box ' // TRIM(Int_To_String(ibox))
+        CALL Clean_Abort(err_msg,'GEMC_Particle_Transfer')
+     END IF
+ 
      P_forward = P_forward * REAL(nmols(is,box_out),DP) / REAL(nmols_box(box_out),DP)
      P_reverse = P_reverse * REAL(nmols(is,box_in)+1,DP) / REAL(nmols_box(box_in)+1,DP)
 
@@ -244,15 +264,26 @@ SUBROUTINE GEMC_Particle_Transfer
         IF (randno <= cum_prob_swap_species(is)) EXIT
      END DO
      
+     ! error check
+     IF (species_list(is)%int_insert == int_noinsert) THEN
+        err_msg = ''
+        err_msg(1) = 'Species ' // TRIM(Int_To_String(is)) // ' is not swappable'
+        CALL Clean_Abort(err_msg,'GEMC_Particle_Transfer')
+     END IF
+ 
+     ! If no molecules, return
+     IF (nmols(is,box_out) == 0) THEN
+        IF (verbose_log) THEN
+          WRITE(logunit,'(X,I9,X,A10,X,5X,X,I3,X,I1,A1,I1,X,L8,X,9X,X,A9)') &
+                i_mcstep, 'swap' , is, box_out, '>', box_in, accept, 'no mols'
+        END IF
+        RETURN
+     END IF
+  
      ! Since prob_swap_species is constant, it will be the same for forward and reverse move
      ! and therefore does not change P_forward / P_reverse
   END IF
 
-  IF (nmols(is,box_out) == 0) THEN
-     IF (cpcollect)  CALL Chempot(box_in)
-     RETURN
-  END IF
-  
   ! Increment counters
   ntrials(is,box_out)%deletion = ntrials(is,box_out)%deletion + 1
   ntrials(is,box_in)%insertion = ntrials(is,box_in)%insertion + 1
@@ -314,12 +345,8 @@ SUBROUTINE GEMC_Particle_Transfer
   ALLOCATE(frag_order(nfragments(is)))
   lambda_for_build = molecule_list(alive,is)%frac
   CALL Build_Molecule(alive,is,box_in,frag_order, &
-          lambda_for_build,P_seq,P_bias,nrg_ring_frag_in, &
+          lambda_for_build,ln_pseq,ln_pfor,nrg_ring_frag_in, &
           cbmc_overlap)
-
-  ! The same order of insertion is used in both the insertion and 
-  ! reverse deletion, so P_seq does not factor into P_forward
-  P_forward = P_forward * P_bias
 
   CALL Get_COM(alive,is)
   CALL Compute_Max_COM_Distance(alive,is)
@@ -357,6 +384,11 @@ SUBROUTINE GEMC_Particle_Transfer
      IF(ALLOCATED(sin_mol_old)) DEALLOCATE(sin_mol_old)
 
      accept = .FALSE.
+
+     IF (verbose_log) THEN
+       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I1,A1,I1,X,L8,X,9X,X,A9)') &
+             i_mcstep, 'swap' , alive, is, box_out, '>', box_in, accept, 'overlap'
+     END IF
 
   ELSE
 
@@ -452,34 +484,28 @@ SUBROUTINE GEMC_Particle_Transfer
     ! The fragment order was decided when inserting alive into box_in
     ! Use the same fragment order to calculate trial insertions into box_out 
     ! 
-    ! So frag_order and P_seq are inputs to the Build_Molecule routine
+    ! So frag_order and ln_pseq are inputs to the Build_Molecule routine
     ! We obtain P_reverse via this call. Note that, cbmc_overlap 
     ! must be false as we are dealing with an existing molecule.
     del_flag = .TRUE. 
     get_fragorder = .FALSE.
 
     CALL Build_Molecule(alive,is,box_out,frag_order, &
-            lambda_for_build,P_seq,P_bias,nrg_ring_frag_out, &
+            lambda_for_build,ln_pseq,ln_prev,nrg_ring_frag_out, &
             cbmc_overlap)
 
-    ! The same order of insertion is used in both the insertion and 
-    ! reverse deletion, so P_seq does not factor into P_reverse
-    P_reverse = P_reverse * P_bias
-       
+  ! cbmc_overlap will only trip if the molecule being deleted had bad contacts
     IF (cbmc_overlap) THEN
-       ! If this flag gets tripped, there is an error in the code
        err_msg = ""
-       err_msg(1) = "Error: existing configuration of " // & 
-          "molecule " // TRIM(Int_To_String(alive))
-       err_msg(2) = "of species " // TRIM(Int_To_String(is)) // &
-          " in box " // TRIM(Int_To_String(box_out)) // &
-          " tripped an overlap error"
-       CALL Clean_Abort(err_msg,'GEMC_Particle_Transfer')
-
-!       atom_list(1:natoms(is),alive,is)%exist = .TRUE.
-!       CALL Revert_Old_Cartesian_Coordinates(alive,is)
-!
-!       molecule_list(alive,is)%frac = 1.0_DP
+       err_msg(1) = "Attempted to delete molecule " // TRIM(Int_To_String(im_out)) // &
+                    " of species " // TRIM(Int_To_String(is)) // &
+                    " from box " // TRIM(Int_To_String(box_out))
+       err_msg(2) = "but the molecule energy is too high"
+       IF (start_type(ibox) == "make_config" ) THEN
+          err_msg(3) = "Try increasing Rcutoff_Low, increasing the box size, or "
+          err_msg(4) = "decreasing the initial number of molecules"
+       END IF
+       CALL Clean_Abort(err_msg, "GEMC_Particle_Transfer")
     END IF
 
     CALL Get_COM(alive,is)
@@ -577,8 +603,9 @@ SUBROUTINE GEMC_Particle_Transfer
                       + DLOG(REAL(nmols(is,box_in), DP))
 
     ! The same order of insertion is used in both the insertion and 
-    ! reverse deletion, so P_seq does not factor into ln_pacc
-    ln_pacc = ln_pacc + DLOG(P_forward / P_reverse)
+    ! reverse deletion, so ln_pseq does not factor into ln_pacc
+    ln_pacc = ln_pacc + ln_pfor - ln_prev &
+                      + DLOG(P_forward / P_reverse)
 
     accept = accept_or_reject(ln_pacc)
 
@@ -725,12 +752,14 @@ SUBROUTINE GEMC_Particle_Transfer
 
     END IF
   
+    IF (verbose_log) THEN
+      WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I1,A1,I1,X,L8,X,9X,X,F9.3)') &
+            i_mcstep, 'swap' , alive, is, box_out, '>', box_in, accept, ln_pacc
+    END IF
+
   END IF 
 
   IF (ALLOCATED(new_atom_list)) DEALLOCATE(new_atom_list)
 
-  IF (verbose_log) THEN
-    WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I1,A1,I1,X,L8)') i_mcstep, 'swap' , alive, is, box_out, '>', box_in, accept
-  END IF
 
 END SUBROUTINE GEMC_Particle_Transfer

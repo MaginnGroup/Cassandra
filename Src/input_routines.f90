@@ -175,9 +175,16 @@ SUBROUTINE Get_Nspecies
   END IF
 
 
-  ALLOCATE( nbonds(nspecies), nangles(nspecies),Stat = AllocateStatus )
+  ALLOCATE( nbonds(nspecies),Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could not be allocated for nbonds or nangles array'
+     write(*,*)'memory could not be allocated for nbonds array'
+     write(*,*)'stopping'
+     STOP
+  END IF
+
+  ALLOCATE( nangles(nspecies), nangles_fixed(nspecies),Stat = AllocateStatus )
+  IF (AllocateStatus /= 0) THEN
+     write(*,*)'memory could not be allocated for nangles or nangles_fixed array'
      write(*,*)'stopping'
      STOP
   END IF
@@ -245,6 +252,7 @@ SUBROUTINE Get_Nspecies
   natoms = 0
   nbonds = 0
   nangles = 0
+  nangles_fixed = 0
   ndihedrals = 0
   nimpropers = 0
   nbr_bond_params = 0
@@ -1830,6 +1838,7 @@ SUBROUTINE Get_Angle_Info(is)
               
               angle_list(iang,is)%angle_param(1) = String_To_Double(line_array(6))
 
+              nangles_fixed(is) = nangles_fixed(is) + 1
               IF (verbose_log) THEN
                       WRITE(logunit,'(A,I6,1x,I6, 1x,I6,A, I4)') & 
                    'Angle fixed between atoms: ',angle_list(iang,is)%atom1, angle_list(iang,is)%atom2, &

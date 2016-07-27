@@ -67,7 +67,7 @@ SUBROUTINE Rotate
   INTEGER  :: ibox   ! box index
   INTEGER  :: is         ! species index
   INTEGER  :: im, lm     ! molecule indices
-  INTEGER  :: total_mols,mcstep ! number of molecules in the system
+  INTEGER  :: nmols_tot,mcstep ! number of molecules in the system
 
   REAL(DP) :: nmols_box(nbr_boxes)
   REAL(DP), ALLOCATABLE :: x_box(:), x_species(:)
@@ -97,20 +97,25 @@ SUBROUTINE Rotate
   accept = .FALSE.
 
   ! Sum the total number of molecules 
-  total_mols = 0 ! sum over species, box
+  nmols_tot = 0 ! sum over species, box
   DO ibox = 1, nbr_boxes
     nmols_box(ibox) = 0
     DO is = 1, nspecies
       ! Only count mobile species
       IF ( max_rot(is,ibox) > 0. ) THEN
-        total_mols = total_mols + nmols(is,ibox)
+        nmols_tot = nmols_tot + nmols(is,ibox)
         nmols_box(ibox) = nmols_box(ibox) + nmols(is,ibox)
       END IF
     END DO
   END DO
 
   ! If there are no molecules then return
-  IF (total_mols == 0) RETURN
+  IF (nmols_tot == 0) THEN
+     IF (verbose_log) THEN
+       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,A9)') &
+             i_mcstep, 'rotate' , lm, is, ibox, accept,'no mols'
+     END IF
+  END IF
 
   ! If needed, choose a box based on its total mol fraction
   IF(nbr_boxes .GT. 1) THEN
@@ -118,7 +123,7 @@ SUBROUTINE Rotate
     ALLOCATE(x_box(nbr_boxes))
 
     DO ibox = 1, nbr_boxes
-       x_box(ibox) = REAL(nmols_box(ibox),DP)/REAL(total_mols,DP)
+       x_box(ibox) = REAL(nmols_box(ibox),DP)/REAL(nmols_tot,DP)
        IF ( ibox > 1 ) THEN
           x_box(ibox) = x_box(ibox) + x_box(ibox-1)
        END IF
@@ -137,8 +142,12 @@ SUBROUTINE Rotate
 
   END IF
 
-  ! If there are no molecules in this box then return
-  IF( nmols_box(ibox) == 0 ) RETURN
+  ! error check
+  IF( nmols_box(ibox) == 0 ) THEN
+     err_msg = ''
+     err_msg(1) = 'No rotatable molecules in box ' // TRIM(Int_To_String(ibox))
+     CALL Clean_Abort(err_msg, "Rotate")
+  END IF
 
   ! Choose species based on the mol fraction, using Golden sampling
   ALLOCATE(x_species(nspecies))
@@ -161,8 +170,13 @@ SUBROUTINE Rotate
 
   DEALLOCATE(x_species)
 
-  ! If the molecule can't move then return
-  IF ( max_rot(is,ibox) == 0. ) RETURN
+  ! error check
+  IF ( max_rot(is,ibox) == 0. ) THEN
+     err_msg = ''
+     err_msg(1) = 'No rotatable molecules of species ' // TRIM(Int_To_String(is)) &
+               // ' in box ' // TRIM(Int_To_String(ibox))
+     CALL Clean_Abort(err_msg, "Rotate")
+  END IF
 
   ! Choose a molecule at random for rotation
   im = INT ( rranf() * nmols(is,ibox) ) + 1
@@ -185,8 +199,14 @@ SUBROUTINE Rotate
 
   IF (inter_overlap)  THEN
      err_msg = ""
-     err_msg(1) = "Energy overlap detected in existing configuration"
-     err_msg(2) = "of molecule " // TRIM(Int_To_String(lm)) // " of species " // TRIM(Int_To_String(is))
+     err_msg(1) = "Attempted to rotate molecule " // TRIM(Int_To_String(im)) // &
+                  " of species " // TRIM(Int_To_String(is))
+     IF (nbr_boxes > 1) err_msg(1) = err_msg(1) // " in box " // TRIM(Int_To_String(ibox))
+     err_msg(2) = "but the molecule energy is too high"
+     IF (start_type(ibox) == "make_config" ) THEN
+        err_msg(3) = "Try increasing Rcutoff_Low, increasing the box size, or "
+        err_msg(4) = "decreasing the initial number of molecules"
+     END IF
      CALL Clean_Abort(err_msg, "Rotate")
   END IF
 
@@ -209,6 +229,11 @@ SUBROUTINE Rotate
      CALL Revert_Old_Cartesian_Coordinates(lm,is)
      IF (l_pair_nrg) CALL Reset_Molecule_Pair_Interaction_Arrays(lm,is,ibox)
      
+     IF (verbose_log) THEN
+       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,A9)') &
+             i_mcstep, 'rotate' , lm, is, ibox, accept,'overlap'
+     END IF
+
   ELSE
 
      delta_e = 0.0_DP
@@ -289,12 +314,13 @@ SUBROUTINE Rotate
 
      ENDIF
 
+     IF (verbose_log) THEN
+       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,F9.3)') &
+             i_mcstep, 'rotate' , lm, is, ibox, accept, ln_pacc
+     END IF
+
   END IF
  
-  IF (verbose_log) THEN
-    WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8)') i_mcstep, 'rotate' , lm, is, ibox, accept
-  END IF
-
   
   IF (MOD(ntrials(is,ibox)%rotation, nupdate) == 0) THEN
 
