@@ -12,8 +12,8 @@ Run info
 version: Cassandra Version 1.2 20160720
 inputfile: nvt.inp
 name of run: nvt.out
-date (mm/dd/yyyy): 07/22/2016
-time: 03:30:20
+date (mm/dd/yyyy): 07/26/2016
+time: 23:09:12
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -294,21 +294,21 @@ Run simulation
       1800     rotate         1   1  0.99333
       3489  translate         1   1  0.97333
       3735     rotate         1   1  0.98722
-      5276  translate         1   1  0.97444
-      5541     rotate         1   1  0.98926
-      7061  translate         1   1  0.97528
-      7328     rotate         1   1  0.98833
-      8894  translate         1   1  0.97711
-      9094     rotate         1   1  0.98933
-     10716  translate         1   1  0.97667
-     10872     rotate         1   1  0.98833
-     12537  translate         1   1  0.97635
-     12671     rotate         1   1  0.98841
-     14336  translate         1   1  0.97625
-     14463     rotate         1   1  0.98819
-     16138  translate         1   1  0.97630
-     16254     rotate         1   1  0.98815
-     17881  translate         1   1  0.97544
+      5278  translate         1   1  0.97407
+      5488     rotate         1   1  0.99000
+      7093  translate         1   1  0.97083
+      7320     rotate         1   1  0.98667
+      8944  translate         1   1  0.96933
+      9041     rotate         1   1  0.98644
+     10659  translate         1   1  0.96630
+     10931     rotate         1   1  0.98556
+     12479  translate         1   1  0.96698
+     12723     rotate         1   1  0.98524
+     14346  translate         1   1  0.96931
+     14453     rotate         1   1  0.98486
+     16096  translate         1   1  0.97000
+     16279     rotate         1   1  0.98568
+     17819  translate         1   1  0.97044
 ********************************************************************************
  
 Report ending energy & then re-compute from scratch
@@ -318,7 +318,7 @@ Report ending energy & then re-compute from scratch
  Initial energy + deltas for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy                    -1985.457
+ Total system energy                       50.562
  Intra molecular energy                     0.000
    Bond energy                              0.000
    Angle energy                             0.000
@@ -326,10 +326,10 @@ Report ending energy & then re-compute from scratch
    Improper angle energy                    0.000
  Intra molecule vdw                         0.000
  Intra molecule q                           0.000
- Inter molecule vdw                       100.955
+ Inter molecule vdw                        -5.779
  Long range correction                     -0.262
- Inter molecule q                      119319.842
- Reciprocal ewald                         433.535
+ Inter molecule q                      121473.557
+ Reciprocal ewald                         422.572
  Self ewald                           -121839.527
  -----------------------------------------------------------
  
@@ -337,7 +337,7 @@ Report ending energy & then re-compute from scratch
  Recomputed energy from scratch for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy                    -1985.457
+ Total system energy                       50.562
  Intra molecular energy                     0.000
    Bond energy                              0.000
    Angle energy                             0.000
@@ -345,10 +345,10 @@ Report ending energy & then re-compute from scratch
    Improper angle energy                    0.000
  Intra molecule vdw                         0.000
  Intra molecule q                           0.000
- Inter molecule vdw                       100.955
+ Inter molecule vdw                        -5.779
  Long range correction                     -0.262
- Inter molecule q                      119319.842
- Reciprocal ewald                         433.535
+ Inter molecule q                      121473.557
+ Reciprocal ewald                         422.572
  Self ewald                           -121839.527
  -----------------------------------------------------------
 ********************************************************************************
@@ -361,16 +361,16 @@ Writing information for box  1
    Writing information for species  1
  
                 Move      Trials     Success   % Success
-           Translate        9065        8843       97.55
-              Rotate        8935        8828       98.80
+           Translate        9087        8821       97.07
+              Rotate        8913        8782       98.53
    ---------------------------------------------------------
  
 ********************************************************************************
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =           25.235411 secs.
- Rotation time =              25.062351 secs.
+ Translation time =           26.401325 secs.
+ Rotation time =              25.909377 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -384,6 +384,6 @@ Writing information for box  1
          0       Days
          0      Hours
          0    Minutes
-        53    Seconds
-        22         ms
+        55    Seconds
+       275         ms
 ********************************************************************************

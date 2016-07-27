@@ -211,7 +211,7 @@ USE Type_Definitions
   ! Upper limit to prevent underflow in exp(-beta*energy)
   ! DEXP(-708.)= 3.307553003638408E-308
   ! DEXP(-709.)= 0.000000000000000E+000
-  REAL(DP), PARAMETER :: max_kBT = 708_DP
+  REAL(DP), PARAMETER :: max_kBT = 708.0_DP
 
   ! IMSL error bounds
   REAL(DP), PARAMETER :: errabs = 0.0_DP
@@ -271,7 +271,7 @@ USE Type_Definitions
   LOGICAL :: first_res_update, igas_flag
   LOGICAL, DIMENSION(:), ALLOCATABLE :: zig_calc
   INTEGER, DIMENSION(:), ALLOCATABLE :: max_molecules, natoms, nmol_start, nring_atoms, nexo_atoms
-  INTEGER, DIMENSION(:), ALLOCATABLE :: nbonds, nangles
+  INTEGER, DIMENSION(:), ALLOCATABLE :: nbonds, nangles, nangles_fixed
   INTEGER, DIMENSION(:), ALLOCATABLE :: ndihedrals, nimpropers
   INTEGER, DIMENSION(:), ALLOCATABLE :: nfragments, fragment_bonds
 
@@ -555,7 +555,7 @@ USE Type_Definitions
   REAL(DP), ALLOCATABLE :: cos_mol(:,:) , sin_mol(:,:)
   LOGICAL :: l_pair_nrg
 
-  REAL(DP) pacc, paccbiased, freev
+  REAL(DP) pacc
   REAL(DP), DIMENSION(:,:), ALLOCATABLE :: chpot, chpotid
 
 

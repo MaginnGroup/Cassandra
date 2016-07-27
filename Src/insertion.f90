@@ -70,29 +70,30 @@ SUBROUTINE Insertion
   INTEGER :: is, is_rand, is_counter ! species indices
   INTEGER :: which_anchor
   INTEGER, ALLOCATABLE :: frag_order(:)
-  INTEGER :: rand_igas, tot_mols, mcstep
+  INTEGER :: tot_mols, mcstep
 
-  REAL(DP) :: dx, dy, dz, delta_e
+  REAL(DP) :: dx, dy, dz, dE, dE_frag
   REAL(DP) :: E_bond, E_angle, E_dihedral, E_improper
   REAL(DP) :: E_intra_vdw, E_intra_qq
   REAL(DP) :: E_inter_vdw, E_inter_qq, E_periodic_qq
   REAL(DP) :: E_reciprocal, E_self, E_lrc
   REAL(DP) :: nrg_ring_frag_tot
-  REAL(DP) :: ln_pacc, P_seq, P_bias, this_lambda
+  REAL(DP) :: ln_pacc, ln_pseq, ln_pbias, this_lambda
 
   LOGICAL :: inter_overlap, cbmc_overlap, intra_overlap
   LOGICAL :: accept_or_reject
 
   ! Initialize variables
   ln_pacc = 0.0_DP
-  P_seq = 1.0_DP
-  P_bias = 1.0_DP
+  ln_pseq = 0.0_DP
+  ln_pbias = 0.0_DP
   this_lambda = 1.0_DP
   nrg_ring_frag_tot = 0.0_DP
   inter_overlap = .FALSE.
   cbmc_overlap = .FALSE.
   intra_overlap = .FALSE.
   ibox = 1
+  accept = .FALSE.
 
   !*****************************************************************************
   ! Step 1) Randomly select a species
@@ -162,38 +163,39 @@ SUBROUTINE Insertion
   get_fragorder = .TRUE.
   ALLOCATE(frag_order(nfragments(is)))
   CALL Build_Molecule(lm,is,ibox,frag_order,this_lambda, &
-          P_seq,P_bias,nrg_ring_frag_tot,cbmc_overlap)
+          ln_pseq,ln_pbias,nrg_ring_frag_tot,cbmc_overlap)
   DEALLOCATE(frag_order)
 
   ! Turn the molecule on
   molecule_list(lm,is)%live = .TRUE.
   atom_list(:,lm,is)%exist = .TRUE.
 
-  ! So far P_bias only includes the probability of choosing the insertion 
-  ! point from the collection of trial coordinates times the probability of 
-  ! choosing each dihedral from the collection of trial dihedrals. We need 
-  ! to include the number of trial coordinates, kappa_ins, and the number of
-  ! of trial dihedrals, kappa_dih, for each dihedral.
+  ! So far ln_pbias includes 
+  !   * the probability of choosing the insertion 
+  !     point from the collection of trial coordinates 
+  !   * the probability of choosing each dihedral from the collection of trial dihedrals. 
+  ! Now add
+  !   * the probability of the fragment sequence, ln_pseq
+  !   * the number of trial coordinates, kappa_ins
+  !   * the number of trial dihedrals, kappa_dih, for each dihedral.
 
-  P_bias = P_bias * REAL(kappa_ins,DP)
+  ln_pbias = ln_pbias + ln_pseq
+  ln_pbias = ln_pbias + DLOG(REAL(kappa_ins,DP))
 
   IF (kappa_rot /= 0 ) THEN
-     P_bias = P_bias * REAL(kappa_rot,DP)
+     ln_pbias = ln_pbias + DLOG(REAL(kappa_rot,DP))
   END IF
 
   IF (kappa_dih /= 0 ) THEN
-     DO ifrag = 1, nfragments(is) - 1
-        P_bias = P_bias * REAL(kappa_dih,DP)
-     END DO
+     ln_pbias = ln_pbias + REAL(nfragments(is)-1,DP) * DLOG(REAL(kappa_dih,DP))
   END IF
-
 
   !*****************************************************************************
   ! Step 3) Calculate the change in potential energy if the molecule is inserted
   !*****************************************************************************
   !
   ! Whether the insertion will be accepted depends on the change in potential
-  ! energy, delta_e. The potential energy will be computed in 5 stages:
+  ! energy, dE. The potential energy will be computed in 5 stages:
   !   3.1) Nonbonded energies
   !   3.2) Reject the move if there is any core overlap
   !   3.3) Bonded intramolecular energies
@@ -245,7 +247,8 @@ SUBROUTINE Insertion
      locate(nmols(is,0),is,0) = lm
      
      IF (verbose_log) THEN
-       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8)') i_mcstep, 'insert' , lm, is, ibox, .FALSE.
+       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,A9)') &
+             i_mcstep, 'insert' , lm, is, ibox, .FALSE., 'overlap'
      END IF
 
      RETURN
@@ -255,30 +258,19 @@ SUBROUTINE Insertion
   !
   ! Already have the change in nonbonded energies
 
-  delta_e = E_inter_vdw + E_inter_qq 
-  delta_e = delta_e + E_intra_vdw + E_intra_qq
+  dE = E_inter_vdw + E_inter_qq 
+  dE = dE + E_intra_vdw + E_intra_qq
 
   ! 3.4) Bonded intramolecular energies
   ! If the molecule was grown via CBMC, we already have the intramolecular 
   ! bond energies? Otherwise we need to compute them.
 
-  IF(species_list(is)%int_insert == int_random) THEN
+  CALL Compute_Molecule_Bond_Energy(lm,is,E_bond)
+  CALL Compute_Molecule_Angle_Energy(lm,is,E_angle)
+  CALL Compute_Molecule_Dihedral_Energy(lm,is,E_dihedral)
+  CALL Compute_Molecule_Improper_Energy(lm,is,E_improper)
 
-     CALL Compute_Molecule_Bond_Energy(lm,is,E_bond)
-     CALL Compute_Molecule_Angle_Energy(lm,is,E_angle)
-     CALL Compute_Molecule_Dihedral_Energy(lm,is,E_dihedral)
-     CALL Compute_Molecule_Improper_Energy(lm,is,E_improper)
-
-  ELSE IF (species_list(is)%int_insert == int_igas) THEN
-
-     E_bond = energy_igas(rand_igas,is)%bond
-     E_angle = energy_igas(rand_igas,is)%angle
-     E_dihedral = energy_igas(rand_igas,is)%dihedral
-     E_improper = energy_igas(rand_igas,is)%improper
-
-  END IF
-
-  delta_e = delta_e + E_bond + E_angle + E_dihedral + E_improper
+  dE = dE + E_bond + E_angle + E_dihedral + E_improper
 
   ! 3.5) Ewald energies
 
@@ -290,13 +282,13 @@ SUBROUTINE Insertion
            CALL Update_System_Ewald_Reciprocal_Energy(lm,is,ibox, &
                    int_insertion,E_reciprocal)
 
-            delta_e = delta_e + (E_reciprocal - energy(ibox)%ewald_reciprocal)
+            dE = dE + (E_reciprocal - energy(ibox)%ewald_reciprocal)
            
         END IF
 
         CALL Compute_Molecule_Self_Energy(lm,is,ibox,E_self)
 
-        delta_e = delta_e + E_self
+        dE = dE + E_self
 
   END IF
 
@@ -313,7 +305,7 @@ SUBROUTINE Insertion
      END DO
 
      CALL Compute_LR_correction(ibox,E_lrc)
-     delta_e = delta_e + E_lrc - energy(ibox)%lrc
+     dE = dE + E_lrc - energy(ibox)%lrc
 
   END IF
 
@@ -330,31 +322,29 @@ SUBROUTINE Insertion
   ! and passed to accept_or_reject() which executes the metropolis criterion.
   ! The acceptance criterion to insert a molecule via CBMC is
   !
-  !                                            P_seq P_bias (N + 1) Lambda^3
-  !    ln_pacc = b(dU_mn-U_frag) - b mu' + Log[-----------------------------]  
-  !                                                         V
+  !                                                       (N + 1) Lambda^3
+  !    ln_pacc = b(dU_mn-U_frag) - b mu' + ln_pbias + Log[-----------------]  
+  !                                                              V
   !
   ! where the primes (') indicate that additional intensive terms have been
   ! absorbed into the chemical potential.
 
   ! Compute the acceptance criterion
 
-  IF(species_list(is)%int_insert == int_igas) THEN 
-     ln_pacc = beta(ibox) * (delta_e - energy_igas(rand_igas,is)%total)
-  ELSEIF (species_list(is)%fragment) THEN
-     ln_pacc = beta(ibox) * (delta_e - E_angle - nrg_ring_frag_tot)
-  ELSE
-     ln_pacc = beta(ibox) * delta_e
-  END IF
-
-  ! P_seq and P_bias equal 1.0 unless changed by Build_Molecule.
-  ln_pacc = ln_pacc + DLOG(P_seq * P_bias) &
-                    + DLOG(REAL(nmols(is,ibox),DP)) &
-                    - DLOG(box_list(ibox)%volume) 
+  ! change in energy less energy used to bias selection of fragments
+  dE_frag = E_angle + nrg_ring_frag_tot
+  ln_pacc = beta(ibox) * (dE - dE_frag)
 
   ! chemical potential
-  ln_pacc = ln_pacc - species_list(is)%chem_potential * beta(ibox) &
-                    + 3.0_DP*DLOG(species_list(is)%de_broglie(ibox))
+  ln_pacc = ln_pacc - species_list(is)%chem_potential * beta(ibox)
+
+  ! bias from CBMC
+  ln_pacc = ln_pacc + ln_pbias
+
+  ! density
+  ln_pacc = ln_pacc + DLOG(REAL(nmols(is,ibox),DP)) &
+                    + 3.0_DP*DLOG(species_list(is)%de_broglie(ibox)) &
+                    - DLOG(box_list(ibox)%volume) 
   
   accept = accept_or_reject(ln_pacc)
   
@@ -364,7 +354,7 @@ SUBROUTINE Insertion
      ! number of molecules already incremented
 
      ! update the energies
-     energy(ibox)%total = energy(ibox)%total + delta_e
+     energy(ibox)%total = energy(ibox)%total + dE
      energy(ibox)%intra = energy(ibox)%intra + E_bond + E_angle &
                             + E_dihedral + E_improper
      energy(ibox)%bond = energy(ibox)%bond + E_bond
@@ -422,7 +412,8 @@ SUBROUTINE Insertion
   END IF
 
   IF (verbose_log) THEN
-    WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8)') i_mcstep, 'insert' , lm, is, ibox, accept
+     WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,F9.3)') &
+           i_mcstep, 'insert' , lm, is, ibox, accept, ln_pacc
   END IF
 
 END SUBROUTINE Insertion

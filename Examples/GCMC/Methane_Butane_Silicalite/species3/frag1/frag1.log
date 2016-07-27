@@ -9,11 +9,11 @@
  
 Run info
 ********************************************************************************
-version: Cassandra Development Version
+version: Cassandra Version 1.2 20160720
 inputfile: frag1.inp
 name of run: frag1
-date (mm/dd/yyyy): 06/23/2016
-time: 11:39:39
+date (mm/dd/yyyy): 07/26/2016
+time: 23:21:11
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -106,7 +106,7 @@ Number of species
 Box info
 ********************************************************************************
 Number of simulation boxes     1
-Box 1 is cubic               
+Box 1 is CUBIC               
  Each Side Of :       50.0000     Angstrom
  Cell basis vector lengths in A,     50.0000      50.0000      50.0000
  Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
@@ -157,9 +157,6 @@ Molecule info
   VDW 1-N scaling factor       1.000
  -------------------------------------------------------------------------------
 ********************************************************************************
- 
-Nonbond tables
-********************************************************************************
 Atom type SI_s1 on line 18 of input file not found. Skipping parameters.
 Atom type SI_s1 on line 19 of input file not found. Skipping parameters.
 Atom type SI_s1 on line 20 of input file not found. Skipping parameters.
@@ -169,7 +166,6 @@ Atom type O_s1 on line 23 of input file not found. Skipping parameters.
 Atom type O_s1 on line 24 of input file not found. Skipping parameters.
 Atom type CH4_s2 on line 25 of input file not found. Skipping parameters.
 Atom type CH4_s2 on line 26 of input file not found. Skipping parameters.
- ********************************************************************************
  
 Start type
 ********************************************************************************
@@ -232,19 +228,19 @@ Initial configuration
  
 Compute total energy
 ********************************************************************************
- Starting energy components for box   1
+ Starting energy components for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                 30100.474
- Intra molecular energy is              30100.474
- Bond energy is                             0.000
- Bond angle energy is                   30100.474
- Dihedral angle energy is                   0.000
- Improper angle energy is                   0.000
- Intra molecule vdw is                      0.000
- Intra molecule q is                        0.000
- Inter molecule vdw is                      0.000
- Inter molecule q is                        0.000
+ Total system energy                    30100.474
+ Intra molecular energy                 30100.474
+   Bond energy                              0.000
+   Bond angle energy                    30100.474
+   Dihedral angle energy                    0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                         0.000
+ Intra molecule q                           0.000
+ Inter molecule vdw                         0.000
+ Inter molecule q                           0.000
  -----------------------------------------------------------
  
 ********************************************************************************
@@ -258,35 +254,35 @@ Report ending energy & then re-compute from scratch
 ********************************************************************************
  
  
- Ending energy components for box   1
+ Initial energy + deltas for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                    21.365
- Intra molecular energy is                 21.365
- Bond energy is                             0.000
- Angle energy is                           21.365
- Dihedral energy is                         0.000
- Improper angle energy is                   0.000
- Intra molecule vdw is                      0.000
- Intra molecule q is                        0.000
- Inter molecule vdw is                      0.000
- Inter molecule q is                        0.000
+ Total system energy                      162.186
+ Intra molecular energy                   162.186
+   Bond energy                              0.000
+   Angle energy                           162.186
+   Dihedral energy                          0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                         0.000
+ Intra molecule q                           0.000
+ Inter molecule vdw                         0.000
+ Inter molecule q                           0.000
  -----------------------------------------------------------
  
  
- Energy components from total energy call for box   1
+ Recomputed energy from scratch for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                    21.365
- Intra molecular energy is                 21.365
- Bond energy is                             0.000
- Angle energy is                           21.365
- Dihedral energy is                         0.000
- Improper angle energy is                   0.000
- Intra molecule vdw is                      0.000
- Intra molecule q is                        0.000
- Inter molecule vdw is                      0.000
- Inter molecule q is                        0.000
+ Total system energy                      162.186
+ Intra molecular energy                   162.186
+   Bond energy                              0.000
+   Angle energy                           162.186
+   Dihedral energy                          0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                         0.000
+ Intra molecule q                           0.000
+ Inter molecule vdw                         0.000
+ Inter molecule q                           0.000
  -----------------------------------------------------------
 ********************************************************************************
  
@@ -298,7 +294,7 @@ Writing information for box  1
    Writing information for species  1
  
                 Move      Trials     Success   % Success
-   Atom Displacement        1100         480       43.64
+   Atom Displacement        1100         523       47.55
    ---------------------------------------------------------
  
 ********************************************************************************
@@ -319,5 +315,5 @@ Writing information for box  1
          0      Hours
          0    Minutes
          0    Seconds
-        25         ms
+        16         ms
 ********************************************************************************

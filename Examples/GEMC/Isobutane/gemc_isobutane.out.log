@@ -12,8 +12,8 @@ Run info
 version: Cassandra Version 1.2 20160720
 inputfile: gemc_isobutane.inp
 name of run: gemc_isobutane.out
-date (mm/dd/yyyy): 07/22/2016
-time: 03:34:13
+date (mm/dd/yyyy): 07/26/2016
+time: 23:10:37
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -366,22 +366,22 @@ Compute total energy
 Run simulation
 ********************************************************************************
       Step       Move   Mol Spc Box  Success  MaxWidth
-       379     rotate         1   1  0.75000   0.54978
-       451  translate         1   1  0.79000   0.23700
-       539  translate         1   2  0.77000  14.00000
-       739     rotate         1   2  0.97000   3.14159
-       760     rotate         1   1  0.67000   0.57727
-       876  translate         1   1  0.76000   0.36024
-      1145     rotate         1   1  0.69000   0.60613
-      1154  translate         1   2  0.76000  14.00000
-      1258  translate         1   1  0.61000   0.43949
-      1393     rotate         1   2  0.94000   3.14159
-      1589     rotate         1   1  0.66000   0.63644
-      1618  translate         1   1  0.48000   0.42191
-      1875  translate         1   2  0.78000  14.00000
-      1996     rotate         1   2  0.93000   3.14159
-      2014     rotate         1   1  0.62000   0.66826
-      2026  translate         1   1  0.49000   0.41347
+       386     rotate         1   1  0.67000   0.54978
+       479  translate         1   1  0.82000   0.24600
+       632  translate         1   2  0.70000  14.00000
+       642     rotate         1   2  0.93000   3.14159
+       807     rotate         1   1  0.62000   0.57727
+       914  translate         1   1  0.71000   0.34932
+      1158  translate         1   2  0.72000  14.00000
+      1205     rotate         1   1  0.72000   0.60613
+      1291     rotate         1   2  0.90000   3.14159
+      1388  translate         1   1  0.57000   0.39822
+      1583     rotate         1   1  0.67000   0.63644
+      1778  translate         1   2  0.72000  14.00000
+      1813  translate         1   1  0.66000   0.52566
+      1905     rotate         1   2  0.95000   3.14159
+      2020     rotate         1   1  0.65000   0.66826
+      2186  translate         1   1  0.37000   0.38899
 ********************************************************************************
  
 Report ending energy & then re-compute from scratch
@@ -391,16 +391,16 @@ Report ending energy & then re-compute from scratch
  Initial energy + deltas for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy                    45913.230
- Intra molecular energy                429114.817
+ Total system energy                    47438.540
+ Intra molecular energy                427734.332
    Bond energy                              0.000
-   Angle energy                        429114.817
+   Angle energy                        427734.332
    Dihedral energy                          0.000
    Improper angle energy                    0.000
  Intra molecule vdw                         0.000
  Intra molecule q                           0.000
- Inter molecule vdw                   -370665.598
- Long range correction                 -12535.988
+ Inter molecule vdw                   -367980.215
+ Long range correction                 -12315.576
  Inter molecule q                           0.000
  -----------------------------------------------------------
  
@@ -408,16 +408,16 @@ Report ending energy & then re-compute from scratch
  Recomputed energy from scratch for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy                    45913.230
- Intra molecular energy                429114.817
+ Total system energy                    47438.540
+ Intra molecular energy                427734.332
    Bond energy                              0.000
-   Angle energy                        429114.817
+   Angle energy                        427734.332
    Dihedral energy                          0.000
    Improper angle energy                    0.000
  Intra molecule vdw                         0.000
  Intra molecule q                           0.000
- Inter molecule vdw                   -370665.598
- Long range correction                 -12535.988
+ Inter molecule vdw                   -367980.215
+ Long range correction                 -12315.576
  Inter molecule q                           0.000
  -----------------------------------------------------------
  
@@ -425,16 +425,16 @@ Report ending energy & then re-compute from scratch
  Initial energy + deltas for box 2
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy                    49614.420
- Intra molecular energy                 60068.537
+ Total system energy                    47351.509
+ Intra molecular energy                 60278.834
    Bond energy                              0.000
-   Angle energy                         60068.537
+   Angle energy                         60278.834
    Dihedral energy                          0.000
    Improper angle energy                    0.000
  Intra molecule vdw                         0.000
  Intra molecule q                           0.000
- Inter molecule vdw                    -10239.266
- Long range correction                   -214.851
+ Inter molecule vdw                    -12706.881
+ Long range correction                   -220.444
  Inter molecule q                           0.000
  -----------------------------------------------------------
  
@@ -442,16 +442,16 @@ Report ending energy & then re-compute from scratch
  Recomputed energy from scratch for box 2
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy                    49614.420
- Intra molecular energy                 60068.537
+ Total system energy                    47351.509
+ Intra molecular energy                 60278.834
    Bond energy                              0.000
-   Angle energy                         60068.537
+   Angle energy                         60278.834
    Dihedral energy                          0.000
    Improper angle energy                    0.000
  Intra molecule vdw                         0.000
  Intra molecule q                           0.000
- Inter molecule vdw                    -10239.266
- Long range correction                   -214.851
+ Inter molecule vdw                    -12706.881
+ Long range correction                   -220.444
  Inter molecule q                           0.000
  -----------------------------------------------------------
 ********************************************************************************
@@ -460,42 +460,42 @@ Report ending energy & then re-compute from scratch
 Writing information for box  1
 ********************************************************************************
                 Move      Trials     Success   % Success
-              Volume          12          11       91.67
+              Volume          11          10       90.91
  
    ---------------------------------------------------------
    Writing information for species  1
  
                 Move      Trials     Success   % Success
-           Translate         545         335       61.47
-              Rotate         537         360       67.04
-              Insert         156           7        4.49
-              Delete         270           2        0.74
+           Translate         503         314       62.43
+              Rotate         539         355       65.86
+              Insert         161           6        3.73
+              Delete         273           3        1.10
    ---------------------------------------------------------
  
 ********************************************************************************
 Writing information for box  2
 ********************************************************************************
                 Move      Trials     Success   % Success
-              Volume          12          11       91.67
+              Volume          11          10       90.91
  
    ---------------------------------------------------------
    Writing information for species  1
  
                 Move      Trials     Success   % Success
-           Translate         348         264       75.86
-              Rotate         332         314       94.58
-              Insert         270           2        0.74
-              Delete         156           7        4.49
+           Translate         365         255       69.86
+              Rotate         348         325       93.39
+              Insert         273           3        1.10
+              Delete         161           6        3.73
    ---------------------------------------------------------
  
 ********************************************************************************
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.190887 secs.
- Rotation time =               0.186981 secs.
- Volume change time =          0.544799 secs.
- Swap time =                   0.412166 secs.
+ Translation time =            0.177301 secs.
+ Rotation time =               0.190169 secs.
+ Volume change time =          0.499070 secs.
+ Swap time =                   0.457689 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -510,5 +510,5 @@ Writing information for box  2
          0      Hours
          0    Minutes
          1    Seconds
-       541         ms
+       531         ms
 ********************************************************************************

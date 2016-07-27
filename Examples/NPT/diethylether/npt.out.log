@@ -12,8 +12,8 @@ Run info
 version: Cassandra Version 1.2 20160720
 inputfile: npt.inp
 name of run: npt.out
-date (mm/dd/yyyy): 07/22/2016
-time: 03:31:35
+date (mm/dd/yyyy): 07/26/2016
+time: 23:07:08
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -307,19 +307,19 @@ Compute total energy
  Starting energy components for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy                   111699.220
- Intra molecular energy                 45871.198
+ Total system energy                   502207.210
+ Intra molecular energy                 36325.028
    Bond energy                              0.000
-   Bond angle energy                    15308.428
-   Dihedral angle energy                30562.770
+   Bond angle energy                    11691.912
+   Dihedral angle energy                24633.116
    Improper angle energy                    0.000
- Intra molecule vdw                      -943.766
+ Intra molecule vdw                     -1579.620
  Intra molecule q                           0.000
- Inter molecule vdw                     80538.080
+ Inter molecule vdw                    480381.168
  Long range correction                 -14287.694
- Inter molecule q                      422360.158
+ Inter molecule q                      421841.113
  Number of vectors                           2934
- Reciprocal ewald                       46409.432
+ Reciprocal ewald                       47775.403
  Self ewald                           -468248.188
  -----------------------------------------------------------
  
@@ -328,34 +328,35 @@ Compute total energy
 Run simulation
 ********************************************************************************
       Step       Move   Mol Spc Box  Success  MaxWidth
-       866     rotate         1   1  0.54333
-       904  translate         1   1  0.50333
-      1315     volume             1  0.20000
-      1726     rotate         1   1  0.49000
-      1874  translate         1   1  0.53167
-      2178     volume             1  0.25000
-      2720     rotate         1   1  0.49000
-      2738  translate         1   1  0.54000
-      2935     volume             1  0.20000
-      3643     rotate         1   1  0.49500
-      3720  translate         1   1  0.52833
-      3890     volume             1  0.20000
-      4499     rotate         1   1  0.51067
-      4604     volume             1  0.20000
-      4640  translate         1   1  0.53600
-      5323     rotate         1   1  0.50333
-      5570  translate         1   1  0.53056
-      5809     volume             1  0.21667
-      6298     rotate         1   1  0.49476
-      6462  translate         1   1  0.51286
-      7012     volume             1  0.20000
-      7212     rotate         1   1  0.49458
-      7432  translate         1   1  0.51167
-      7786     volume             1  0.18750
-      8078     rotate         1   1  0.50222
-      8317  translate         1   1  0.51444
-      8773     volume             1  0.20000
-      8982     rotate         1   1  0.51033
+       840  translate         1   1  0.50667
+       869     rotate         1   1  0.50667
+       971     volume             1  0.70000
+      1757     rotate         1   1  0.51333
+      1765  translate         1   1  0.50833
+      2042     volume             1  0.40000
+      2477     volume             1  0.30000
+      2664  translate         1   1  0.51333
+      2739     rotate         1   1  0.52444
+      3598  translate         1   1  0.52000
+      3670     rotate         1   1  0.53750
+      3681     volume             1  0.25000
+      4406  translate         1   1  0.52533
+      4483     volume             1  0.24000
+      4671     rotate         1   1  0.52600
+      5331  translate         1   1  0.53778
+      5566     rotate         1   1  0.53056
+      5767     volume             1  0.25000
+      6215  translate         1   1  0.53476
+      6461     volume             1  0.25714
+      6516     rotate         1   1  0.51524
+      7141  translate         1   1  0.53250
+      7337     volume             1  0.22500
+      7422     rotate         1   1  0.52208
+      7909     volume             1  0.21111
+      8012  translate         1   1  0.52852
+      8352     rotate         1   1  0.51704
+      8553     volume             1  0.21000
+      8869  translate         1   1  0.51967
 ********************************************************************************
  
 Report ending energy & then re-compute from scratch
@@ -365,18 +366,18 @@ Report ending energy & then re-compute from scratch
  Initial energy + deltas for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy                   -34689.281
- Intra molecular energy                 31982.272
+ Total system energy                   -33676.285
+ Intra molecular energy                 28280.790
    Bond energy                              0.000
-   Angle energy                         14836.623
-   Dihedral energy                      17145.648
+   Angle energy                         10319.649
+   Dihedral energy                      17961.141
    Improper angle energy                    0.000
- Intra molecule vdw                     -1866.037
+ Intra molecule vdw                     -1800.257
  Intra molecule q                           0.000
- Inter molecule vdw                    -44415.433
- Long range correction                 -13964.076
- Inter molecule q                      421596.195
- Reciprocal ewald                       40225.986
+ Inter molecule vdw                    -42577.554
+ Long range correction                 -13149.343
+ Inter molecule q                      421381.748
+ Reciprocal ewald                       42436.518
  Self ewald                           -468248.188
  -----------------------------------------------------------
  
@@ -384,18 +385,18 @@ Report ending energy & then re-compute from scratch
  Recomputed energy from scratch for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy                   -34689.281
- Intra molecular energy                 31982.272
+ Total system energy                   -33676.285
+ Intra molecular energy                 28280.790
    Bond energy                              0.000
-   Angle energy                         14836.623
-   Dihedral energy                      17145.648
+   Angle energy                         10319.649
+   Dihedral energy                      17961.141
    Improper angle energy                    0.000
- Intra molecule vdw                     -1866.037
+ Intra molecule vdw                     -1800.257
  Intra molecule q                           0.000
- Inter molecule vdw                    -44415.433
- Long range correction                 -13964.076
- Inter molecule q                      421596.195
- Reciprocal ewald                       40225.986
+ Inter molecule vdw                    -42577.554
+ Long range correction                 -13149.343
+ Inter molecule q                      421381.748
+ Reciprocal ewald                       42436.518
  Self ewald                           -468248.188
  -----------------------------------------------------------
 ********************************************************************************
@@ -404,14 +405,14 @@ Report ending energy & then re-compute from scratch
 Writing information for box  1
 ********************************************************************************
                 Move      Trials     Success   % Success
-              Volume          92          18       19.57
+              Volume         109          24       22.02
  
    ---------------------------------------------------------
    Writing information for species  1
  
                 Move      Trials     Success   % Success
-           Translate        2963        1521       51.33
-              Rotate        3038        1550       51.02
+           Translate        3075        1596       51.90
+              Rotate        2932        1518       51.77
    ---------------------------------------------------------
  
 ********************************************************************************
@@ -422,17 +423,17 @@ Writing information about fragments
    ---------------------------------------------------------
    Writing information for species  1
      #_Frags_Regrown      Trials     Success   % Success
-                   1        2016        1731       85.86
-                   2         991         612       61.76
+                   1        2007        1764       87.89
+                   2         977         637       65.20
    ---------------------------------------------------------
 ********************************************************************************
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            3.633984 secs.
- Rotation time =               3.734010 secs.
- Volume change time =          2.977027 secs.
- Regrowth time =               5.558736 secs.
+ Translation time =            3.966029 secs.
+ Rotation time =               3.781245 secs.
+ Volume change time =          3.660875 secs.
+ Regrowth time =               5.655086 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -446,6 +447,6 @@ Writing information about fragments
          0       Days
          0      Hours
          0    Minutes
-        16    Seconds
-       385         ms
+        17    Seconds
+       556         ms
 ********************************************************************************

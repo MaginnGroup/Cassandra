@@ -12,8 +12,8 @@ Run info
 version: Cassandra Version 1.2 20160720
 inputfile: methane.inp
 name of run: methane.out
-date (mm/dd/yyyy): 07/22/2016
-time: 03:32:26
+date (mm/dd/yyyy): 07/26/2016
+time: 23:14:08
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -284,9 +284,9 @@ Compute total energy
 Run simulation
 ********************************************************************************
       Step       Move   Mol Spc Box  Success  MaxWidth
-      1308  translate         1   1  0.97091  14.00000
-      2582  translate         1   1  0.98000  14.00000
-      3992  translate         1   1  0.98545  14.00000
+      1375  translate         1   1  0.98000  14.00000
+      2680  translate         1   1  0.99273  14.00000
+      3979  translate         1   1  0.98545  14.00000
 ********************************************************************************
  
 Report ending energy & then re-compute from scratch
@@ -296,7 +296,7 @@ Report ending energy & then re-compute from scratch
  Initial energy + deltas for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy                     -129.341
+ Total system energy                      -29.096
  Intra molecular energy                     0.000
    Bond energy                              0.000
    Angle energy                             0.000
@@ -304,8 +304,8 @@ Report ending energy & then re-compute from scratch
    Improper angle energy                    0.000
  Intra molecule vdw                         0.000
  Intra molecule q                           0.000
- Inter molecule vdw                      -126.912
- Long range correction                     -2.429
+ Inter molecule vdw                       -26.465
+ Long range correction                     -2.631
  Inter molecule q                           0.000
  -----------------------------------------------------------
  
@@ -313,7 +313,7 @@ Report ending energy & then re-compute from scratch
  Recomputed energy from scratch for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy                     -129.341
+ Total system energy                      -29.096
  Intra molecular energy                     0.000
    Bond energy                              0.000
    Angle energy                             0.000
@@ -321,8 +321,8 @@ Report ending energy & then re-compute from scratch
    Improper angle energy                    0.000
  Intra molecule vdw                         0.000
  Intra molecule q                           0.000
- Inter molecule vdw                      -126.912
- Long range correction                     -2.429
+ Inter molecule vdw                       -26.465
+ Long range correction                     -2.631
  Inter molecule q                           0.000
  -----------------------------------------------------------
 ********************************************************************************
@@ -335,18 +335,18 @@ Writing information for box  1
    Writing information for species  1
  
                 Move      Trials     Success   % Success
-           Translate        1653        1617       97.82
-              Insert        1205        1055       87.55
-              Delete        1142        1106       96.85
+           Translate        1661        1638       98.62
+              Insert        1175        1076       91.57
+              Delete        1164        1125       96.65
    ---------------------------------------------------------
  
 ********************************************************************************
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.024774 secs.
- Insertion time =              0.132411 secs.
- Deletion time =               0.115177 secs.
+ Translation time =            0.012492 secs.
+ Insertion time =              0.065347 secs.
+ Deletion time =               0.060918 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -361,5 +361,5 @@ Writing information for box  1
          0      Hours
          0    Minutes
          0    Seconds
-       310         ms
+       166         ms
 ********************************************************************************

@@ -82,7 +82,7 @@ SUBROUTINE Rigid_Dihedral_Change
   INTEGER :: atom1, atom2, atom3, atom4, iatom1, iatom2, iatom3, iatom4
   INTEGER :: natoms_to_place
   INTEGER, DIMENSION(:), ALLOCATABLE :: atoms_to_place_list
-  INTEGER :: total_mols, nmols_box(nbr_boxes)
+  INTEGER :: nmols_tot, nmols_box(nbr_boxes)
 
   REAL(DP) :: x_box(nbr_boxes), x_species(nspecies), ln_pacc
   REAL(DP) :: iatom2_rxp, iatom2_ryp, iatom2_rzp, vec23(3), vec21(3)
@@ -108,20 +108,35 @@ SUBROUTINE Rigid_Dihedral_Change
 
   intra_overlap = .FALSE.
   inter_overlap = .FALSE.
-    
+  accept = .FALSE.    
 
   ! Sum the total number of molecules 
-  total_mols = SUM(nmols(:,:))
+  nmols_tot = 0 ! sum over species, box
+  DO ibox = 1, nbr_boxes
+    nmols_box(ibox) = 0
+    DO is = 1, nspecies
+      ! Only count mobile species
+      IF ( ndihedrals(is) > 0 ) THEN
+        nmols_tot = nmols_tot + nmols(is,ibox)
+        nmols_box(ibox) = nmols_box(ibox) + nmols(is,ibox)
+      END IF
+    END DO
+  END DO
 
   ! If there are no molecules then return
-  IF (total_mols == 0) RETURN
+  IF (nmols_tot == 0) THEN
+     IF (verbose_log) THEN
+       WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8,X,9X,X,F9.3)') &
+             i_mcstep, 'dihed' , ibox, accept, 'no mols'
+     END IF
+     RETURN
+  END IF
 
   ! If needed, choose a box based on its total mol fraction
   IF(nbr_boxes .GT. 1) THEN
 
     DO ibox = 1, nbr_boxes
-  	   nmols_box(ibox) = SUM(nmols(:,ibox))
-       x_box(ibox) = REAL(nmols_box(ibox),DP)/REAL(total_mols,DP)
+       x_box(ibox) = REAL(nmols_box(ibox),DP)/REAL(nmols_tot,DP)
        IF ( ibox > 1 ) THEN
           x_box(ibox) = x_box(ibox) + x_box(ibox-1)
        END IF
@@ -134,16 +149,24 @@ SUBROUTINE Rigid_Dihedral_Change
   ELSE
 
     ibox = 1
-	nmols_box(ibox) = SUM(nmols(:,ibox))
+    nmols_box(ibox) = SUM(nmols(:,ibox))
 
   END IF
 
-  ! If there are no molecules in this box then return
-  IF( nmols_box(ibox) == 0 ) RETURN
+  ! error check
+  IF( nmols_box(ibox) == 0 ) THEN
+     err_msg = ''
+     err_msg(1) = 'No movable molecules in box ' // TRIM(Int_To_String(ibox))
+     CALL Clean_Abort(err_msg, 'Rigid_Dihedral_Change')
+  END IF
 
   ! Choose species based on the mol fraction, using Golden sampling
   DO is = 1, nspecies
-     x_species(is) = REAL(nmols(is,ibox), DP)/REAL(nmols_box(ibox),DP)
+     IF (ndihedrals(is) > 0) THEN
+        x_species(is) = REAL(nmols(is,ibox), DP)/REAL(nmols_box(ibox),DP)
+     ELSE
+        x_species(is) = 0.0_DP
+     END IF
      IF ( is > 1 ) THEN
         x_species(is) = x_species(is) + x_species(is-1)
      END IF
@@ -154,6 +177,14 @@ SUBROUTINE Rigid_Dihedral_Change
   DO is = 1, nspecies
      IF( rand_no <= x_species(is)) EXIT
   END DO
+
+  ! error check
+  IF ( ndihedrals(is) == 0 ) THEN
+     err_msg = ''
+     err_msg(1) = 'Species ' // TRIM(Int_To_String(is)) // ' has no dihedrals'
+     CALL Clean_Abort(err_msg, 'Rigid_Dihedral_Change')
+  END IF
+
   ! Choose one of the molecules at random
   im = INT( rranf() * nmols(is,ibox) ) + 1
   ! Get the index of imth molecule of species is in the box.
@@ -177,29 +208,29 @@ SUBROUTINE Rigid_Dihedral_Change
   ! Compute the nobonded interaction before the move
   CALL Compute_Molecule_Nonbond_Intra_Energy(lm,is,E_intra_vdw,E_intra_qq,E_periodic_qq,intra_overlap)
   IF (l_pair_nrg) THEN
-	CALL Store_Molecule_Pair_Interaction_Arrays(lm,is,ibox,E_inter_vdw,E_inter_qq)
+     CALL Store_Molecule_Pair_Interaction_Arrays(lm,is,ibox,E_inter_vdw,E_inter_qq)
   ELSE 
-	CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is,E_inter_vdw,E_inter_qq,inter_overlap)
+     CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is,E_inter_vdw,E_inter_qq,inter_overlap)
   END IF
-
   E_inter_qq = E_inter_qq + E_periodic_qq
-  ! compute the energy related to the framework
 
   IF (inter_overlap)  THEN
      err_msg = ""
-     err_msg(1) = "Energy overlap detected in existing configuration"
-     err_msg(2) = "of molecule " // TRIM(Int_To_String(lm)) // " of species " // TRIM(Int_To_String(is))
+     err_msg(1) = "Attempted to change a dihedral of molecule " // TRIM(Int_To_String(im)) // &
+                  " of species " // TRIM(Int_To_String(is))
+     IF (nbr_boxes > 1) err_msg(1) = err_msg(1) // " in box " // TRIM(Int_To_String(ibox))
+     err_msg(2) = "but the molecule energy is too high"
+     IF (start_type(ibox) == "make_config" ) THEN
+        err_msg(3) = "Try increasing Rcutoff_Low, increasing the box size, or "
+        err_msg(4) = "decreasing the initial number of molecules"
+     END IF
      CALL Clean_Abort(err_msg, "Rigid_Dihedral_Change")
   END IF
-     
-
 
  ! Select a dihedral at random 
-
   dihedral_to_move = INT( rranf() * ndihedrals(is) ) + 1
 
   ! Determine the atoms that form the dihedral to move
-  
   atom1 = dihedral_list(dihedral_to_move,is)%atom1
   atom2 = dihedral_list(dihedral_to_move,is)%atom2
   atom3 = dihedral_list(dihedral_to_move,is)%atom3
@@ -397,18 +428,18 @@ SUBROUTINE Rigid_Dihedral_Change
 
 
   inter_overlap = .FALSE.
-     CALL Get_COM(lm,is)
-     CALL Compute_Max_COM_Distance(lm,is)
-     
-     CALL Compute_Molecule_Nonbond_Intra_Energy(lm,is,E_intra_vdw_move,E_intra_qq_move,E_periodic_qq,intra_overlap)
+  CALL Get_COM(lm,is)
+  CALL Compute_Max_COM_Distance(lm,is)
+  
+  CALL Compute_Molecule_Nonbond_Intra_Energy(lm,is,E_intra_vdw_move,E_intra_qq_move,E_periodic_qq,intra_overlap)
 
-     IF (intra_overlap) inter_overlap = .TRUE.
+  IF (intra_overlap) inter_overlap = .TRUE.
 
-     IF ( .NOT. inter_overlap) THEN
-        CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is,E_inter_vdw_move,E_inter_qq_move,inter_overlap)
-        E_inter_qq_move = E_inter_qq_move + E_periodic_qq
-     
-     END IF
+  IF ( .NOT. inter_overlap) THEN
+     CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is,E_inter_vdw_move,E_inter_qq_move,inter_overlap)
+     E_inter_qq_move = E_inter_qq_move + E_periodic_qq
+  
+  END IF
      
   IF (inter_overlap) THEN
      
@@ -416,7 +447,12 @@ SUBROUTINE Rigid_Dihedral_Change
 
      CALL Revert_Old_Cartesian_Coordinates(lm,is)
      CALL Revert_Old_Internal_Coordinates(lm,is)
-	 IF (l_pair_nrg) CALL Reset_Molecule_Pair_Interaction_Arrays(lm,is,ibox)
+     IF (l_pair_nrg) CALL Reset_Molecule_Pair_Interaction_Arrays(lm,is,ibox)
+
+     IF (verbose_log) THEN
+       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,A9)') &
+             i_mcstep, 'dihed' , lm, is, ibox, accept, 'overlap'
+     END IF
   ELSE
   
      CALL Compute_Molecule_Bond_Energy(lm,is,E_bond_move)
@@ -481,7 +517,7 @@ SUBROUTINE Rigid_Dihedral_Change
         ! Compute the COM positions
 
         CALL Get_Internal_Coordinates(lm,is)
-		IF (l_pair_nrg) DEALLOCATE(pair_vdw_temp,pair_qq_temp)
+        IF (l_pair_nrg) DEALLOCATE(pair_vdw_temp,pair_qq_temp)
      ELSE 
 
         ! Reject the move and revert the old coordinates
@@ -497,16 +533,17 @@ SUBROUTINE Rigid_Dihedral_Change
            !$OMP END PARALLEL WORKSHARE
 
         END IF
-		IF (l_pair_nrg) CALL Reset_Molecule_Pair_Interaction_Arrays(lm,is,ibox)
+        IF (l_pair_nrg) CALL Reset_Molecule_Pair_Interaction_Arrays(lm,is,ibox)
+     END IF
+
+     IF (verbose_log) THEN
+       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,F9.3)') &
+             i_mcstep, 'dihed' , lm, is, ibox, accept, ln_pacc
      END IF
 
   END IF
 
 !  DEALLOCATE(atoms_to_place_list)
-  IF (verbose_log) THEN
-    WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8)') i_mcstep, 'dihed' , lm, is, ibox, accept
-  END IF
-
 
 END SUBROUTINE Rigid_Dihedral_Change
 

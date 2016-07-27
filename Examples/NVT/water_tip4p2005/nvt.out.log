@@ -12,8 +12,8 @@ Run info
 version: Cassandra Version 1.2 20160720
 inputfile: nvt.inp
 name of run: nvt.out
-date (mm/dd/yyyy): 07/22/2016
-time: 03:30:04
+date (mm/dd/yyyy): 07/26/2016
+time: 23:08:55
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -297,25 +297,25 @@ Compute total energy
 Run simulation
 ********************************************************************************
       Step       Move   Mol Spc Box  Success  MaxWidth
-      1781     rotate         1   1  0.33111
-      1817  translate         1   1  0.01444
-      3557  translate         1   1  0.01222
-      3639     rotate         1   1  0.33611
-      5340  translate         1   1  0.01037
-      5466     rotate         1   1  0.34111
-      7152  translate         1   1  0.00917
-      7253     rotate         1   1  0.34250
-      8970  translate         1   1  0.01000
-      9040     rotate         1   1  0.34178
-     10761  translate         1   1  0.01037
-     10855     rotate         1   1  0.33926
-     12593  translate         1   1  0.01143
-     12603     rotate         1   1  0.34127
-     14394     rotate         1   1  0.33931
-     14413  translate         1   1  0.01181
-     16169     rotate         1   1  0.33901
-     16223  translate         1   1  0.01210
-     17944     rotate         1   1  0.34011
+      1737  translate         1   1  0.01222
+      1880     rotate         1   1  0.35889
+      3554  translate         1   1  0.01000
+      3652     rotate         1   1  0.34444
+      5306  translate         1   1  0.01296
+      5489     rotate         1   1  0.34333
+      7087  translate         1   1  0.01250
+      7295     rotate         1   1  0.33917
+      8975  translate         1   1  0.01289
+      9023     rotate         1   1  0.33422
+     10755  translate         1   1  0.01259
+     10835     rotate         1   1  0.33500
+     12584  translate         1   1  0.01238
+     12610     rotate         1   1  0.33302
+     14353  translate         1   1  0.01319
+     14454     rotate         1   1  0.33583
+     16186  translate         1   1  0.01309
+     16213     rotate         1   1  0.33704
+     17949  translate         1   1  0.01289
 ********************************************************************************
  
 Report ending energy & then re-compute from scratch
@@ -325,7 +325,7 @@ Report ending energy & then re-compute from scratch
  Initial energy + deltas for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy                  -403553.013
+ Total system energy                  -400248.746
  Intra molecular energy                     0.000
    Bond energy                              0.000
    Angle energy                             0.000
@@ -333,10 +333,10 @@ Report ending energy & then re-compute from scratch
    Improper angle energy                    0.000
  Intra molecule vdw                         0.000
  Intra molecule q                           0.000
- Inter molecule vdw                     61028.967
+ Inter molecule vdw                     61187.338
  Long range correction                  -5512.602
- Inter molecule q                     6461620.373
- Reciprocal ewald                       37424.985
+ Inter molecule q                     6464960.938
+ Reciprocal ewald                       37230.316
  Self ewald                          -6958114.737
  -----------------------------------------------------------
  
@@ -344,7 +344,7 @@ Report ending energy & then re-compute from scratch
  Recomputed energy from scratch for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy                  -403553.013
+ Total system energy                  -400248.746
  Intra molecular energy                     0.000
    Bond energy                              0.000
    Angle energy                             0.000
@@ -352,10 +352,10 @@ Report ending energy & then re-compute from scratch
    Improper angle energy                    0.000
  Intra molecule vdw                         0.000
  Intra molecule q                           0.000
- Inter molecule vdw                     61028.967
+ Inter molecule vdw                     61187.338
  Long range correction                  -5512.602
- Inter molecule q                     6461620.373
- Reciprocal ewald                       37424.985
+ Inter molecule q                     6464960.938
+ Reciprocal ewald                       37230.316
  Self ewald                          -6958114.737
  -----------------------------------------------------------
 ********************************************************************************
@@ -368,16 +368,16 @@ Writing information for box  1
    Writing information for species  1
  
                 Move      Trials     Success   % Success
-           Translate        8975         109        1.21
-              Rotate        9025        3073       34.05
+           Translate        9033         116        1.28
+              Rotate        8967        3004       33.50
    ---------------------------------------------------------
  
 ********************************************************************************
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            7.796831 secs.
- Rotation time =               8.000684 secs.
+ Translation time =            7.858603 secs.
+ Rotation time =               7.953537 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -392,5 +392,5 @@ Writing information for box  1
          0      Hours
          0    Minutes
         16    Seconds
-       552         ms
+       571         ms
 ********************************************************************************

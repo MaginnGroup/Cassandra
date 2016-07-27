@@ -9,11 +9,11 @@
  
 Run info
 ********************************************************************************
-version: Cassandra Development Version
+version: Cassandra Version 1.2 20160720
 inputfile: frag2.inp
 name of run: frag2
-date (mm/dd/yyyy): 06/23/2016
-time: 11:38:42
+date (mm/dd/yyyy): 07/26/2016
+time: 23:17:05
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -92,7 +92,7 @@ Number of species
 Box info
 ********************************************************************************
 Number of simulation boxes     1
-Box 1 is cubic               
+Box 1 is CUBIC               
  Each Side Of :       50.0000     Angstrom
  Cell basis vector lengths in A,     50.0000      50.0000      50.0000
  Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
@@ -144,10 +144,6 @@ Molecule info
   VDW 1-N scaling factor       1.000
  -------------------------------------------------------------------------------
 ********************************************************************************
- 
-Nonbond tables
-********************************************************************************
- ********************************************************************************
  
 Start type
 ********************************************************************************
@@ -210,19 +206,19 @@ Initial configuration
  
 Compute total energy
 ********************************************************************************
- Starting energy components for box   1
+ Starting energy components for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                   424.894
- Intra molecular energy is                424.894
- Bond energy is                             0.000
- Bond angle energy is                     424.894
- Dihedral angle energy is                   0.000
- Improper angle energy is                   0.000
- Intra molecule vdw is                      0.000
- Intra molecule q is                        0.000
- Inter molecule vdw is                      0.000
- Inter molecule q is                        0.000
+ Total system energy                      424.894
+ Intra molecular energy                   424.894
+   Bond energy                              0.000
+   Bond angle energy                      424.894
+   Dihedral angle energy                    0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                         0.000
+ Intra molecule q                           0.000
+ Inter molecule vdw                         0.000
+ Inter molecule q                           0.000
  -----------------------------------------------------------
  
 ********************************************************************************
@@ -236,35 +232,35 @@ Report ending energy & then re-compute from scratch
 ********************************************************************************
  
  
- Ending energy components for box   1
+ Initial energy + deltas for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                    23.800
- Intra molecular energy is                 23.800
- Bond energy is                             0.000
- Angle energy is                           23.800
- Dihedral energy is                         0.000
- Improper angle energy is                   0.000
- Intra molecule vdw is                      0.000
- Intra molecule q is                        0.000
- Inter molecule vdw is                      0.000
- Inter molecule q is                        0.000
+ Total system energy                       34.660
+ Intra molecular energy                    34.660
+   Bond energy                              0.000
+   Angle energy                            34.660
+   Dihedral energy                          0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                         0.000
+ Intra molecule q                           0.000
+ Inter molecule vdw                         0.000
+ Inter molecule q                           0.000
  -----------------------------------------------------------
  
  
- Energy components from total energy call for box   1
+ Recomputed energy from scratch for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                    23.800
- Intra molecular energy is                 23.800
- Bond energy is                             0.000
- Angle energy is                           23.800
- Dihedral energy is                         0.000
- Improper angle energy is                   0.000
- Intra molecule vdw is                      0.000
- Intra molecule q is                        0.000
- Inter molecule vdw is                      0.000
- Inter molecule q is                        0.000
+ Total system energy                       34.660
+ Intra molecular energy                    34.660
+   Bond energy                              0.000
+   Angle energy                            34.660
+   Dihedral energy                          0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                         0.000
+ Intra molecule q                           0.000
+ Inter molecule vdw                         0.000
+ Inter molecule q                           0.000
  -----------------------------------------------------------
 ********************************************************************************
  
@@ -276,7 +272,7 @@ Writing information for box  1
    Writing information for species  1
  
                 Move      Trials     Success   % Success
-   Atom Displacement        1100         526       47.82
+   Atom Displacement        1100         587       53.36
    ---------------------------------------------------------
  
 ********************************************************************************
@@ -297,5 +293,5 @@ Writing information for box  1
          0      Hours
          0    Minutes
          0    Seconds
-        14         ms
+        22         ms
 ********************************************************************************

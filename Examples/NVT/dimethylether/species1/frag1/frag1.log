@@ -9,11 +9,11 @@
  
 Run info
 ********************************************************************************
-version: Cassandra Development Version
+version: Cassandra Version 1.2 20160720
 inputfile: frag1.inp
 name of run: frag1
-date (mm/dd/yyyy): 06/24/2016
-time: 11:50:43
+date (mm/dd/yyyy): 07/26/2016
+time: 23:08:16
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -95,7 +95,7 @@ Number of species
 Box info
 ********************************************************************************
 Number of simulation boxes     1
-Box 1 is cubic               
+Box 1 is CUBIC               
  Each Side Of :       50.0000     Angstrom
  Cell basis vector lengths in A,     50.0000      50.0000      50.0000
  Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
@@ -152,10 +152,6 @@ Molecule info
   Coulomb 1-N scaling factor   1.000
  -------------------------------------------------------------------------------
 ********************************************************************************
- 
-Nonbond tables
-********************************************************************************
- ********************************************************************************
  
 Start type
 ********************************************************************************
@@ -225,19 +221,19 @@ Charge neutrality check
  
 Compute total energy
 ********************************************************************************
- Starting energy components for box   1
+ Starting energy components for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                 31006.484
- Intra molecular energy is              31006.484
- Bond energy is                             0.000
- Bond angle energy is                   31006.484
- Dihedral angle energy is                   0.000
- Improper angle energy is                   0.000
- Intra molecule vdw is                      0.000
- Intra molecule q is                        0.000
- Inter molecule vdw is                      0.000
- Inter molecule q is                        0.000
+ Total system energy                    31006.484
+ Intra molecular energy                 31006.484
+   Bond energy                              0.000
+   Bond angle energy                    31006.484
+   Dihedral angle energy                    0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                         0.000
+ Intra molecule q                           0.000
+ Inter molecule vdw                         0.000
+ Inter molecule q                           0.000
  -----------------------------------------------------------
  
 ********************************************************************************
@@ -251,35 +247,35 @@ Report ending energy & then re-compute from scratch
 ********************************************************************************
  
  
- Ending energy components for box   1
+ Initial energy + deltas for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                   100.500
- Intra molecular energy is                100.500
- Bond energy is                             0.000
- Angle energy is                          100.500
- Dihedral energy is                         0.000
- Improper angle energy is                   0.000
- Intra molecule vdw is                      0.000
- Intra molecule q is                        0.000
- Inter molecule vdw is                      0.000
- Inter molecule q is                        0.000
+ Total system energy                      770.422
+ Intra molecular energy                   770.422
+   Bond energy                              0.000
+   Angle energy                           770.422
+   Dihedral energy                          0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                         0.000
+ Intra molecule q                           0.000
+ Inter molecule vdw                         0.000
+ Inter molecule q                           0.000
  -----------------------------------------------------------
  
  
- Energy components from total energy call for box   1
+ Recomputed energy from scratch for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                   100.500
- Intra molecular energy is                100.500
- Bond energy is                             0.000
- Angle energy is                          100.500
- Dihedral energy is                         0.000
- Improper angle energy is                   0.000
- Intra molecule vdw is                      0.000
- Intra molecule q is                        0.000
- Inter molecule vdw is                      0.000
- Inter molecule q is                        0.000
+ Total system energy                      770.422
+ Intra molecular energy                   770.422
+   Bond energy                              0.000
+   Angle energy                           770.422
+   Dihedral energy                          0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                         0.000
+ Intra molecule q                           0.000
+ Inter molecule vdw                         0.000
+ Inter molecule q                           0.000
  -----------------------------------------------------------
 ********************************************************************************
  
@@ -312,5 +308,5 @@ Writing information for box  1
          0      Hours
          0    Minutes
          0    Seconds
-        96         ms
+        22         ms
 ********************************************************************************
