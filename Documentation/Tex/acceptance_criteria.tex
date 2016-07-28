@@ -741,10 +741,10 @@ Volume changes are only attempted on one box at a time.
 The ratio of probabilities between microstates that differ only by the volume of box A is
 
 \begin{align}
-\frac{p_m}{p_n}&= e^{\beta \Delta U^A} + N^A \frac{V^A_m}{V^A_n}
+\frac{p_m}{p_n}&= e^{\beta \Delta U^A} + \left( \frac{V^A_m}{V^A_n} \right)^{N^A}
 \end{align}
 
-similar to Eq. \ref{pNPT_ratio}. 
+similar to Eq. \ref{eq:pNPT_ratio}. 
 As a result, volume moves in GEMC-NPT have the same acceptance criteria as in the NPT ensemble (see Eq. \ref{eq:pAcc_volume}).
 
 \subsection{Volume Exchange Moves} 
@@ -800,14 +800,14 @@ ln_pacc = beta(box_grw) * delta_e_1 + beta(box_shk) * delta_e_2 &
 \label{sec:mol_swap}
 
 In either GEMC-NVT or GEMC-NPT, molecules are swapped between the two boxes to equalize the chemical potential of each species.
-The ratio of probabilities for microstates that differ only by swapping a molecule of species $s$ from box B to box A is
+The ratio of probabilities for microstates that differ only by swapping a molecule of species $s$ from box $out$ to box $in$ is
 
 \begin{equation}
-\frac{p_m}{p_n} = e^{\beta \Delta U^A + \beta \Delta U^B} \frac{d\mathbf{q}_s^B}}{d\mathbf{q}_s^A}
+\frac{p_m}{p_n} = e^{\beta \Delta U^A + \beta \Delta U^B} \frac{d\mathbf{q}_s^{out}}{d\mathbf{q}_s^{in}}
 \label{eq:pGENPT_ratio_mol}
 \end{equation}
 
-where the differential elements $d\mathbf{q}$ will cancel from the acceptance criteria by similar terms in $alpha_{mn}/alpha_{nm}$.
+where the differential elements $d\mathbf{q}$ will cancel from the acceptance criteria by similar terms in $\alpha_{mn}/\alpha_{nm}$.
 The particle swap is not symmetric since each molecule is inserted and deleted using configurational bias.
 The forward probability $\alpha_{mn}$ follows from the steps used to swap a molecule:
 
@@ -835,7 +835,8 @@ If the default probabilities are used at each step, then a swap is attempted for
 The attempt probability of generating configuration $n$
 
 \begin{equation}
-\alpha_{mn} = p_{out,m} p_{spec,m} \frac{1}{N^{out}_{s,m}} p_{seq}\ p_{bias,n}\ \frac{e^{-\beta U^{in}(\mathbf{q}_{frag,n})}d\mathbf{q}}{V^{in}Z_{rot}Z_{frag}\Omega_{dih}}
+\alpha_{mn} = p_{out,m} p_{spec,m} \frac{1}{N^{out}_{s,m}} p_{seq}\ p_{bias,n}\ 
+              \frac{e^{-\beta U^{in}(\mathbf{q}_{frag,n})}d\mathbf{q}_s^{in}}{V^{in}Z_{rot}Z_{frag}\Omega_{dih}}
 \label{eq:alpha_mol_swap}
 \end{equation}
 
@@ -843,7 +844,10 @@ where $p_{bias}$ is defined in Eq. \ref{eq:p_bias}. The reverse probability $\al
 The acceptance rule is
 
 \begin{equation}
-\ln \left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = \ln \left( \frac{p_{out,m}}{p_{out,n}} \frac{p_{spec,m}}{p_{spec,n}} \frac{ p_{bias,n}}{p_{bias,m}} \frac{N^{out}_{s,m}}{N^{in}_{s,n}+1} \frac{V^{out}}{V^{in}} \right) - \beta U^{in}(\mathbf{q}_{frag,n})- \beta U^{out}(\mathbf{q}_{frag,m}) + \beta \Delta U^{out} + \beta \Delta U^{in}
+\ln \left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = 
+           \ln \left( \frac{p_{out,m}}{p_{out,n}} \frac{p_{spec,m}}{p_{spec,n}} \frac{ p_{bias,n}}{p_{bias,m}} 
+                      \frac{N^{in}_{s,n}+1}{N^{out}_{s,m}} \frac{V^{out}}{V^{in}} \right) 
+         - \beta U^{in}(\mathbf{q}_{frag,n}) + \beta U^{out}(\mathbf{q}_{frag,m}) + \beta \Delta U^{out} + \beta \Delta U^{in}
 \label{eq:pAcc_mol_swap}
 \end{equation}
 
