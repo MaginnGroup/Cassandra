@@ -77,11 +77,13 @@
 \contentsline {subsection}{\numberline {7.2.1}Scaling the Volume}{73}{subsection.7.2.1}
 \contentsline {section}{\numberline {7.3}Grand Canonical Monte Carlo}{74}{section.7.3}
 \contentsline {subsection}{\numberline {7.3.1}Inserting a Molecule with \newline Configurational Bias Monte Carlo}{75}{subsection.7.3.1}
-\contentsline {subsection}{\numberline {7.3.2}Deleting a Molecule that was Inserted via \newline Configurational Bias Monte Carlo}{80}{subsection.7.3.2}
+\contentsline {subsection}{\numberline {7.3.2}Deleting a Molecule that was Inserted via \newline Configurational Bias Monte Carlo}{79}{subsection.7.3.2}
 \contentsline {subsection}{\numberline {7.3.3}Regrowing a Molecule with Configurational Bias Monte Carlo}{81}{subsection.7.3.3}
 \contentsline {section}{\numberline {7.4}Gibbs Ensemble Monte Carlo}{83}{section.7.4}
-\contentsline {subsection}{\numberline {7.4.1}Gibbs Ensemble-NVT}{84}{subsection.7.4.1}
-\contentsline {subsection}{\numberline {7.4.2}Gibbs Ensemble-NPT}{87}{subsection.7.4.2}
+\contentsline {subsection}{\numberline {7.4.1}Gibbs Ensemble-NVT}{83}{subsection.7.4.1}
+\contentsline {subsection}{\numberline {7.4.2}Gibbs Ensemble-NPT}{84}{subsection.7.4.2}
+\contentsline {subsection}{\numberline {7.4.3}Volume Exchange Moves}{85}{subsection.7.4.3}
+\contentsline {subsection}{\numberline {7.4.4}Molecule Exchange Moves}{86}{subsection.7.4.4}
 \contentsline {section}{\numberline {7.5}Multicomponent Systems}{88}{section.7.5}
 \contentsline {section}{\numberline {7.6}Appendix}{88}{section.7.6}
 \contentsline {subsection}{\numberline {7.6.1}Inserting a Molecule Randomly}{88}{subsection.7.6.1}
