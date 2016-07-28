@@ -75,6 +75,8 @@
 \BOOKMARK [1][-]{section.7.4}{Gibbs Ensemble Monte Carlo}{chapter.7}
 \BOOKMARK [2][-]{subsection.7.4.1}{Gibbs Ensemble-NVT}{section.7.4}
 \BOOKMARK [2][-]{subsection.7.4.2}{Gibbs Ensemble-NPT}{section.7.4}
+\BOOKMARK [2][-]{subsection.7.4.3}{Volume Exchange Moves}{section.7.4}
+\BOOKMARK [2][-]{subsection.7.4.4}{Molecule Exchange Moves}{section.7.4}
 \BOOKMARK [1][-]{section.7.5}{Multicomponent Systems}{chapter.7}
 \BOOKMARK [1][-]{section.7.6}{Appendix}{chapter.7}
 \BOOKMARK [2][-]{subsection.7.6.1}{Inserting a Molecule Randomly}{section.7.6}

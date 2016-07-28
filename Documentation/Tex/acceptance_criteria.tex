@@ -21,19 +21,19 @@ The logarithm, defined in code as ln\_pacc, is tested in the function accept\_or
 
 \begin{minipage}{\linewidth}
 \begin{lstlisting}[firstnumber=47, caption=accept\_or\_reject.f90]
-  accept = .FALSE.
+  accept_or_reject = .FALSE.
 
   IF (ln_pacc <= 0.0_DP) THEN
 
-     accept = .TRUE.
+     accept_or_reject = .TRUE.
 
   ELSE IF ( ln_pacc < max_kBT) THEN
 
      pacc = DEXP(-ln_pacc)
 
      IF ( rranf() <= pacc ) THEN
-         
-        accept = .TRUE.
+    
+        accept_or_reject = .TRUE.
 
      END IF
 
@@ -51,6 +51,7 @@ The probability of observing microstate $m$ with configuration $\mathbf{q}_m^N$ 
 p_m = \frac{e^{-\beta U\left(\mathbf{q}_m^N\right)}}{Z(N,V,T)}\ d\mathbf{q}^N
 \end{equation}
 where $\beta$ is the inverse temperature $1/k_BT$, $U$ is the potential energy, the differential volume $d\mathbf{q}^N$ is included to make $p_m$ dimensionless and $Z$ is the configurational partition function
+
 \begin{equation}
 \label{eq:configPartitionFn_NVT}
 Z(N,V,T) = \int e^{-\beta U(\mathbf{q}^N)} d\mathbf{q}^N.
@@ -75,10 +76,10 @@ The acceptance probability for a translation move follows from Eq.\ (\ref{eq:pNV
 \ln \left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = \ln \left( \frac{p_m}{p_n} \right) = \beta \Delta U
 \end{equation}
 
-In Cassandra, the translation move is implemented in the subroutine Translate defined in translate.f90. The relevant lines from version 1.1 are quoted below. The variable names in the translate.f90 code are identified with the symbols from Eq.\ (\ref{eq:pAcc_translate}) in Table \ref{table:translate}.
+In Cassandra, the translation move is implemented in the subroutine Translate defined in move\_translate.f90. The relevant lines from version 1.2 are quoted below. The variable names in the move\_translate.f90 code are identified with the symbols from Eq.\ (\ref{eq:pAcc_translate}) in Table \ref{table:translate}.
 
-\begin{lstlisting}[firstnumber=274, caption=translate.f90, label=code:translate]
-ln_pacc = beta(this_box) * delta_e
+\begin{lstlisting}[firstnumber=266, caption=move\_translate.f90, label=code:translate]
+ln_pacc = beta(ibox) * delta_e
 accept = accept_or_reject(ln_pacc)
 \end{lstlisting}
 
@@ -88,7 +89,7 @@ accept = accept_or_reject(ln_pacc)
 \centering
 \begin{tabular}{|c|c|} \hline
  {\bf Symbol} & {\bf Code name} \\ \hline
- $\beta$ & beta(this\_box) \\
+ $\beta$ & beta(ibox) \\
  $\Delta U$ & delta\_e \\
  \hline
 \multicolumn{2}{c}{}
@@ -121,10 +122,10 @@ If the molecule is nonlinear:
 	\item Rotate the molecule around a vector parallel to the selected axis and through its center of mass by $\delta \theta$.
 \end{enumerate}
 
-In either case, the rotation move is symmetric, $\alpha_{mn} = \alpha_{nm}$, and the acceptance criteria is given by Eq.\ (\ref{eq:pAcc_translate}). The rotation move is implemented in subroutine Rotate defined in rotate.f90.
+In either case, the rotation move is symmetric, $\alpha_{mn} = \alpha_{nm}$, and the acceptance criteria is given by Eq.\ (\ref{eq:pAcc_translate}). The rotation move is implemented in subroutine Rotate defined in move\_rotate.f90.
 
-\begin{lstlisting}[firstnumber=261, caption=rotate.f90, label=code:rotate]
-ln_pacc = beta(this_box) * delta_e
+\begin{lstlisting}[firstnumber=268, caption=move\_rotate.f90, label=code:rotate]
+ln_pacc = beta(ibox) * delta_e
 accept = accept_or_reject(ln_pacc)
 \end{lstlisting}
 
@@ -198,11 +199,20 @@ In the isothermal-isobaric ensemble, the number of particles $N$, the pressure $
 \Delta(N,P,T) = \int e^{-\beta P V} Q(N,V,T) dV
 \end{equation}
 
-Note that $Q$ is dimensionless and $\Delta$ has dimensions of volume. The probability of the system having volume $V$ is 
+where $Q$ is dimensionless and $\Delta$ has dimensions of volume. 
+The kinetic contribution to $\Delta$ is independent of the pressure or volume and
+consequently separable from the configurational contribution, $\Delta_Z$
+
+\begin{equation}
+\label{eq:configPartitionFn_NPT}
+\Delta_Z(N,P,T) = \int e^{-\beta P V} Z(N,V,T) dV
+\end{equation}
+
+The probability of the system having volume $V$ is 
 
 \begin{equation}
 \label{eq:pV}
-p(V) = \frac{Q(N,V,T)e^{-\beta P V}}{\Delta(N,P,T)}dV
+p(V) = \frac{Z(N,V,T)e^{-\beta P V}}{\Delta_Z(N,P,T)}dV
 \end{equation}
 
 The probability of observing microstate $m$ with configuration $\mathbf{q}_m^N$ and volume $V_m$ is
@@ -210,10 +220,11 @@ The probability of observing microstate $m$ with configuration $\mathbf{q}_m^N$ 
 \begin{align}
 \label{eq:pNPT}
 p_m &= \frac{e^{-\beta U(\mathbf{q}_m^N)}d\mathbf{q}_m^N}{Z(N,V_m,T)}\ \frac{Q(N,V_m,T) e^{-\beta P V_m} dV}{\Delta(N,P,T)} \nonumber \\
-&= \frac{e^{-\beta U_m - \beta P V_m}}{\Delta(N,P,T)}\ \left(\frac{Q(1,V_m,T)}{Z(1,V_m,T)}\ d\mathbf{q}_m\right)^N dV
+&= \frac{e^{-\beta U_m - \beta P V_m}}{\Delta_Z(N,P,T)}\ d\mathbf{q}_m^N dV
 \end{align}
 
-where the differential volume element $d\mathbf{q}_m^N$ has subscript $m$ becuase it depends on the volume $V_m$. The ratio of microstate probabilities is
+where the differential element $d\mathbf{q}_m^N$ has subscript $m$ becuase it scales with the volume $V_m$.
+The ratio of microstate probabilities is
 
 \begin{equation}
 \label{eq:pNPT_ratio}
@@ -237,9 +248,9 @@ The probability of selecting $\Delta V$ is the same as selecting $-\Delta V$ whi
 \ln \left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = \ln \left( \frac{p_m}{p_n} \right) = \beta \Delta U + \beta P \Delta V + N \ln\left(\frac{V_m}{V_n}\right)
 \end{equation}
 
-The volume scaling move is implemented in subroutine Volume\_Change defined in volume\_change.f90. 
+The volume scaling move is implemented in subroutine Volume\_Change defined in move\_volume.f90. 
 
-\begin{lstlisting}[firstnumber=475, caption=volume\_change.f90, label=code:volume]
+\begin{lstlisting}[firstnumber=424, caption=move\_volume.f90, label=code:volume]
 ln_pacc = beta(this_box) * delta_e &
         + beta(this_box) * pressure(this_box) * delta_volume &
         - total_molecules * DLOG(box_list(this_box)%volume/box_list_old%volume)
@@ -378,6 +389,7 @@ The overall probability $\alpha_{mn}$ of attempting the insertion with the selec
 where $Z_{frag} = \prod_i Z_{frag_i}$ is the configurational partition function over degrees of freedom internal to each fragment, $U(\mathbf{q}_{frag}) = \sum_iU(\mathbf{q}_{frag_i})$ is the summed potential energy of each of the (disconnected) fragments, $\Omega_{dih} = (2\pi)^{N_{frag}-1}$ and $p_{bias}$ is
 
 \begin{equation}
+\label{eq:p_bias}
 p_{bias} = \frac{\kappa_{ins}\ e^{-\beta \Delta U_k^{ins}}}{\sum_k{e^{-\beta \Delta U_k^{ins}}}}\ \left[\prod_{j=1}^{N_{frag}-1}{\frac{\kappa_{dih}\ e^{-\beta \Delta U_k^{dih}}}{\sum_k{e^{-\beta \Delta U_k^{dih}}}}}\right]
 \end{equation}
 
@@ -412,26 +424,24 @@ All of the terms in Eqs.\ (\ref{eq:muShift}) and (\ref{eq:fShift}) are intensive
 
 Note that the term $Z^{IG}/\Omega$ from Macedonia {\em et al} \cite{Macedonia:1999}. would be equivalent to $Z_{int}/\Omega_{frag}\Omega_{dih}$ in the nomenclature used here. The configurational partition function of the disconnected fragments integrates over a Boltzmann factor, $Z_{frag} = \int e^{-\beta U(\mathbf{q}_{frag})} d\mathbf{q}_{frag}$, whereas the term $\Omega_{frag} = \int d\mathbf{q}_{frag}$ does not.
 
-In Cassandra, the insertion move is implemented in the subroutine Insertion in insertion.f90. The relevant lines from version 1.1 are quoted below. The variable names in the insertion.f90 code are identified with symbols in Table \ref{table:cbmcInsert}.
+In Cassandra, the insertion move is implemented in the subroutine Insertion in move\_insert.f90. The relevant lines from version 1.2 are quoted below. The variable names in the move\_insert.f90 code are identified with symbols in Table \ref{table:cbmcInsert}.
 
 \begin{minipage}{\linewidth}
-\begin{lstlisting}[firstnumber=441, caption=insertion.f90]
-  ln_pacc = beta(this_box) * (delta_e - E_angle - nrg_ring_frag_tot)
-\end{lstlisting}
-\begin{lstlisting}[firstnumber=447]
-  ln_pacc = ln_pacc + DLOG(P_seq * P_bias) &
-                    + DLOG(REAL(nmols(is,this_box)+1,DP)) &
-                    - DLOG(box_list(this_box)%volume)
+\begin{lstlisting}[firstnumber=335, caption=move\_insert.f90]
+  ! change in energy less energy used to bias selection of fragments
+  dE_frag = E_angle + nrg_ring_frag_tot
+  ln_pacc = beta(ibox) * (dE - dE_frag)
 
-  IF(lchempot) THEN
-     ! chemical potential is input
-     ln_pacc = ln_pacc - species_list(is)%chem_potential * beta(this_box) &
-               + 3.0_DP*DLOG(species_list(is)%de_broglie(this_box))
-  ELSE   
-     ! fugacity is input
-     ln_pacc = ln_pacc - DLOG(species_list(is)%fugacity) &
-                       - DLOG(beta(this_box)) &
-  END IF 
+  ! chemical potential
+  ln_pacc = ln_pacc - species_list(is)%chem_potential * beta(ibox)
+
+  ! bias from CBMC
+  ln_pacc = ln_pacc + ln_pbias
+
+  ! density
+  ln_pacc = ln_pacc + DLOG(REAL(nmols(is,ibox),DP)) &
+                    + 3.0_DP*DLOG(species_list(is)%de_broglie(ibox)) &
+                    - DLOG(box_list(ibox)%volume)
 
   accept = accept_or_reject(ln_pacc)
 \end{lstlisting}
@@ -446,16 +456,14 @@ will be implemented in a future release.
 \centering
 \begin{tabular}{|c|c|} \hline
  {\bf Symbol} & {\bf Code name} \\ \hline
- $\beta$ & beta(this\_box) \\
- $\Delta U$ & delta\_e \\
- $U(\mathbf{q}_{frag})$ & E\_angle + nrg\_ring\_frag\_tot \\
- $p_{seq}$ & P\_seq \\
- $p_{bias}$ & P\_bias \\
+ $\beta$ & beta(ibox) \\
+ $\Delta U$ & dE \\
+ $U(\mathbf{q}_{frag})$ & dE\_frag \\
+ ln($p_{seq}p_{bias})$ & ln\_pbias \\
  $\mu'$ & species\_list(is)\%chem\_potential \\
  $N$ & nmols(is,this\_box) \\
  $V$ & box\_list(this\_box)\%volume \\
  $\Lambda$ & species\_list(is)\%de\_broglie(this\_box) \\
- $f'$ & species\_list(is)\%fugacity \\
  \hline
 \multicolumn{2}{c}{}
 \end{tabular}
@@ -507,29 +515,26 @@ The acceptance criteria for deleting a molecule inserted via CBMC is
 &= \beta \left[\Delta U + U(\mathbf{q}^{(i)}_{frag,m})\right] + \ln\left( \frac{\beta f' V}{N} \right) - \ln\left( p_{seq}p_{bias} \right)
 \end{align}
 
-In Cassandra, the deletion move is implemented in the subroutine Deletion in deletion.f90. The relevant lines are quoted below. The variable names in deletion.f90 code are identified with symbols in Table \ref{table:cbmcDelete}.
+In Cassandra, the deletion move is implemented in the subroutine Deletion in move\_delete.f90. The relevant lines are quoted below. The variable names in move\_delete.f90 code are identified with symbols in Table \ref{table:cbmcDelete}.
 
 \begin{minipage}{\linewidth}
-\begin{lstlisting}[firstnumber=334, caption=deletion.f90]
-  ln_pacc = beta(this_box) * (delta_e + E_angle + nrg_ring_frag_tot)
-\end{lstlisting}
-\begin{lstlisting}[firstnumber=340]
-  ln_pacc = ln_pacc - DLOG(P_seq * P_bias) &
-                    - DLOG(REAL(nmols(is,this_box),DP)) &
-                    + DLOG(box_list(this_box)%volume)
- 
-  IF(lchempot) THEN
-     ! chemical potential is input
-     ln_pacc = ln_pacc + beta(this_box) * species_list(is)%chem_potential &
-             - 3.0_DP*DLOG(species_list(is)%de_broglie(this_box))
-  ELSE
-     ! fugacity is input
-     ln_pacc = ln_pacc + DLOG(species_list(is)%fugacity) &
-                       + DLOG(beta(this_box)) &
-  END IF
- 
-  accept = accept_or_reject(ln_pacc)
+\begin{lstlisting}[firstnumber=317, caption=move\_delete.f90]
+  ! change in energy less energy used to bias fragment selection
+  dE_frag = - E_angle - nrg_ring_frag_tot
+  ln_pacc = beta(ibox) * (dE - dE_frag)
 
+  ! chemical potential
+  ln_pacc = ln_pacc + beta(ibox) * species_list(is)%chem_potential
+
+  ! CBMC bias probability
+  ln_pacc = ln_pacc - ln_pbias
+
+  ! dimensionless density
+  ln_pacc = ln_pacc + DLOG(box_list(ibox)%volume) &
+                    - DLOG(REAL(nmols(is,ibox),DP)) &
+                    - 3.0_DP*DLOG(species_list(is)%de_broglie(ibox))
+
+  accept = accept_or_reject(ln_pacc)
 \end{lstlisting}
 \end{minipage}
 
@@ -542,16 +547,14 @@ will be implemented in a future release.
 \centering
 \begin{tabular}{|c|c|} \hline
  {\bf Symbol} & {\bf Code name} \\ \hline
- $\beta$ & beta(this\_box) \\
- $\Delta U$ & delta\_e \\
- $U(\mathbf{q}_{frag})$ & E\_angle + nrg\_ring\_frag\_tot \\
- $p_{seq}$ & P\_seq \\
- $p_{bias}$ & P\_bias \\
+ $\beta$ & beta(ibox) \\
+ $\Delta U$ & dE \\
+ $U(\mathbf{q}_{frag})$ & dE\_frag \\
+ $ln(p_{seq}p_{bias})$ & ln\_pbias \\
  $\mu'$ & species\_list(is)\%chem\_potential \\
  $N$ & nmols(is,this\_box) \\
  $V$ & box\_list(this\_box)\%volume \\
  $\Lambda$ & species\_list(is)\%de\_broglie(this\_box) \\
- $f'$ & species\_list(is)\%fugacity \\
  \hline
 \multicolumn{2}{c}{}
 \end{tabular}
@@ -589,13 +592,13 @@ The reverse move is identical except for the potential energy of the deleted fra
 \ln\left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = \beta \left[\left( U(\mathbf{q}^N_n) - U(\mathbf{q}^{(i)}_{del,n})\right) - \left(U(\mathbf{q}^N_m) - U(\mathbf{q}^{(i)}_{del,m})\right)\right] + \ln\left( \frac{p_{forward}}{p_{reverse}} \right)
 \end{equation}
 
-Eq. (\ref{eq:pAcc_cbmcRegrow}) is implemented in subroutine cut\_N\_grow() in file cutNgrow.f90. 
+Eq. (\ref{eq:pAcc_cbmcRegrow}) is implemented in subroutine cut\_N\_grow() in file move\_regrow.f90. 
 
 \begin{minipage}{\linewidth}
-\begin{lstlisting}[firstnumber=392, caption=cutNgrow.f90, label=code:cbmcRegrow]
-  ln_pacc = beta(this_box) * (delta_e_n - nrg_ring_frag_forward) &
-          - beta(this_box) * (delta_e_o - nrg_ring_frag_reverse) &
-          + DLOG(P_forward / P_reverse)
+\begin{lstlisting}[firstnumber=426, caption=move\_regrow.f90, label=code:cbmcRegrow]
+  ln_pacc = beta(ibox) * (delta_e_n - nrg_ring_frag_forward) &
+          - beta(ibox) * (delta_e_o - nrg_ring_frag_reverse) &
+          + ln_pfor - ln_prev
 
   accept = accept_or_reject(ln_pacc)
 \end{lstlisting}
@@ -607,11 +610,11 @@ Eq. (\ref{eq:pAcc_cbmcRegrow}) is implemented in subroutine cut\_N\_grow() in fi
 \centering
 \begin{tabular}{|c|c|} \hline
  {\bf Symbol} & {\bf Code name} \\ \hline
- $\beta$ & beta(this\_box) \\
+ $\beta$ & beta(ibox) \\
  $U(\mathbf{q}^N_n) - U(\mathbf{q}^{(i)}_{del,n})$ & delta\_e\_n - nrg\_ring\_frag\_forward \\
  $U(\mathbf{q}^N_m) - U(\mathbf{q}^{(i)}_{del,m})$ & delta\_e\_o - nrg\_ring\_frag\_reverse \\
- $p_{forward}$ & P\_forward \\
- $p_{reverse}$ & P\_reverse \\
+ $ln(p_{forward})$ & ln\_pfor \\
+ $ln(p_{reverse})$ & ln\_prev \\
  \hline
 \multicolumn{2}{c}{}
 \end{tabular}
@@ -620,65 +623,140 @@ Eq. (\ref{eq:pAcc_cbmcRegrow}) is implemented in subroutine cut\_N\_grow() in fi
 \section{Gibbs Ensemble Monte Carlo} 
 \label{sec:gibbs}
 
-The Gibbs Ensemble Monte Carlo method is a standard technique for studying phase equilibria of pure fluids
-and mixtures. It is oftentimes the method of choice to study vapor-liquid equilibria due to its intuitive 
-physical basis. 
+The Gibbs Ensemble Monte Carlo method is a standard technique for studying phase equilibria of pure fluids and mixtures. 
+It is often used to study vapor-liquid equilibria due to its intuitive physical basis. 
 In Cassandra, the NVT and NPT versions of the Gibbs Ensemble (GEMC-NVT and GEMC-NPT) are implemented. 
-The GEMC-NVT method is suitable for simulating vapor liquid equilibria of pure systems, since
-pure substances require the specification of only one intensive variable 
+The GEMC-NVT method is suitable for simulating vapor liquid equilibria of pure systems, 
+since pure substances require the specification of only one intensive variable 
 (temperature) to completely specify a state of two phases. 
 By contrast, mixtures require the specification of an additional degree of freedom (pressure).
 Thus, in the GEMC-NPT method, the pressure is specified in addition to temperature. \\
 
-In section \ref{sec:gibbs_nvt}, the acceptance rules for the NVT version will be derived and 
-references to their implementation in Cassandra will be
-presented. For information about the implementation of the NPT version, 
-please refer to section \ref{sec:gibbs_npt}
+The partition functions and microstate probabilities 
+are derived for GEMC-NVT and GEMC-NPT 
+in sections \ref{sec:gibbs_nvt} and \ref{sec:gibbs_npt}, 
+respectively.
+In both GEMC-NVT and GEMC-NPT, thermal equilibrium is attained by performing translation, rotation and regrowth moves. 
+The acceptance rules for these moves are identical to those presented
+in sections \ref{sec:translate}, \ref{sec:rotate}, \ref{sec:regrow} and \ref{sec:cbmcRegrow}.
+Pressure equilibrium is achieved by exchanging volume, in the case of GEMC-NVT, and
+independently changing the volume of each box, in the case of GEMC-NPT. 
+The acceptance rule for the exchanging volume in GEMC-NVT is derived and 
+its Cassandra implementation is presented in section \ref{sec:vol_swap}.
+The acceptance rule for swapping a molecule in either GEMC-NVT or GEMC-NPT are derived 
+in section \ref{sec:mol_swap}.
 
 \subsection{Gibbs Ensemble-NVT}
 \label{sec:gibbs_nvt}
 
-In the GEMC-NVT method, the system is comprised by two boxes, one representing a vapor phase 
-(denoted by superscript \textit{v}) and the other representing a liquid phase (denoted by superscript \textit{l}).
-These boxes are in thermal contact with a heat bath that maintains them at constant temperature, thus ensuring
-thermal equilibrium.
-To achieve phase equilibrium, the boxes are allowed to exchange volume and particles under the constraint of constant total volume ($V^t=V^l + V^v$)
-and constant number of particles ($N^t=N^l + N^v$). The partition function of this system is
+In the GEMC-NVT method, there are two boxes A and B.
+To achieve phase equilibrium, the boxes are allowed to exchange volume and particles under the 
+constraint of constant total volume ($V^t=V^A + V^B$) and constant number of particles ($N^t=N^A + N^B$). 
+The partition function is
 
 \begin{equation}
-Q\left(N^t,V^t,T\right) = \frac{1}{\Lambda^{3N^t}N^t!} \sum^{N^t}_{N{^l}} \frac{N^t!}{N^l!N^v!} \int^{V^t}_0  dV^l (V^l)^{N^l} (V^v)^{N^v} \int d \textbf{s}^{N^l} e^{-\beta U\left(\textbf{s}^{N^l}\right)} \int d \textbf{s}^{N^v} e^{-\beta U\left(\textbf{s}^{N^v}\right)}
-\label{eq:gemc_nvt_partition}
+Q_{GE}\left(N^t,V^t,T\right) = \sum^{N^t}_{N{^A}=0} \int^{V^t}_0 dV^A\ Q(N^A,V^A,T)\ Q(N^t-N^A,V^t-V^A,T)
+\label{eq:partitionFn_GENVT}
 \end{equation}
 
-
-Where $\Lambda$ is the de Broglie wavelength, $\textbf{s}^{N^l}$ and $\textbf{s}^{N^v}$ are the scaled coordinates of the atoms in the two phases, $U\left(\textbf{s}^{N^l}\right)$ and $U\left(\textbf{s}^{N^v}\right)$ are the potential energies of the liquid and the vapor box, respectively. The microstate probability distribution is
+where $Q(N,V,T)$ is the canonical partition function given in Eq. \ref{eq:partitionFn_NVT}. 
+Since both boxes are maintained at the same temperature 
+the kinetic contribution of each molecule is independent of the box in which it is located.
+The configurational partition function $Z_{GE}$ is defined by separating the momenta integrals 
+from the configurational integrals, volume integrals and molecular sums
 
 \begin{equation}
-p_m \propto (V^l)^{N^l} (V^v)^{N^v} e^{-\beta U \left(\textbf{s}^{N^l}\right) -\beta U \left(\textbf{s}^{N^v}\right)}
-\label{eq:gemc_nvt_prob_dist}
+Z_{GE}\left(N^t,V^t,T\right) = \sum^{N^t}_{N{^A}=0} \int^{V^t}_0 dV^A\ Z(N^A,V^A,T)\ Z(N^t-N^A,V^t-V^A,T)
+\label{eq:configPartitionFn_GENVT}
 \end{equation}
 
-Note that the particle number factorials are not included in equation \ref{eq:gemc_nvt_prob_dist}, as particles are
-distinguishable in a simulation (see also equation \ref{eq:pMuVT}). \\
-
-In the GEMC-NVT technique, thermal equilibrium is attained by performing translation, rotation and regrowth moves. 
-The acceptance rules for these moves can be extracted from the probability 
-distribution \ref{eq:gemc_nvt_prob_dist}, and their functional form is exactly the same as that presented
-in sections \ref{sec:translate}, \ref{sec:rotate}, \ref{sec:regrow} and \ref{sec:cbmcRegrow}, namely \\
-
+The probability of microstate $m$ in the NVT Gibbs ensemble is
 
 \begin{equation}
-\ln \left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = - \beta \Delta U
+p_m = \frac{e^{-\beta U^A \left(\textbf{q}^{N^A}\right) -\beta U^B \left(\textbf{q}^{N^B}\right)} d\textbf{q}^{N^A} d\textbf{q}^{N^B} dV^A}{Z_{GE}(N^t,V^t,T)}
+\label{eq:pGENVT}
 \end{equation}
 
+Note that the molecule number factorials are not included in equation \ref{eq:pGENVT}, 
+as particles are distinguishable in a simulation (see also equation \ref{eq:pMuVT}). \\
 
-Exchange of volume between the two boxes is carried out to achieve pressure equilibrium. Assuming 
-volume is being transfered from box A to box B, the 
-acceptance rule is also derived from equation \ref{eq:gemc_nvt_prob_dist} and yields
+Comparing two microstates $m$ and $n$ that differ only by a thermal move, the ratio of microstate probabilities is
+\begin{align}
+\label{eq:pGENVT_ratio}
+\frac{p_m}{p_n}&= e^{\beta \Delta U^A + \beta \Delta U^B}
+\end{align}
+
+For two microstates that differ by exchani
+\begin{align}
+\label{eq:pGENVT_ratio}
+\frac{p_m}{p_n} &= \frac{e^{-\beta U\left(\mathbf{q}_m^{N^A}\right) - \beta U\left(\mathbf{q}_m^{N^B}\right)} d\mathbf{q}_m^{N^A} d\mathbf{q}_m^{N^B}}
+                        {e^{-\beta U\left(\mathbf{q}_n^{N^A}\right) - \beta U\left(\mathbf{q}_n^{N^B}\right)} d\mathbf{q}_n^{N^A} d\mathbf{q}_m^{N^B}} \nonumber \\
+&= e^{\beta \Delta U^A + \beta \Delta U^B} \frac{d\mathbf{q}_m^{N^A}}{d\mathbf{q}_n^{N^A}} \frac{d\mathbf{q}_m^{N^B}}{d\mathbf{q}_n^{N^B}}
+\end{align}
+
+The differential elements $d\mathbf{q}$ will cancel from the acceptance criteria when swapping a molecule and 
+
+\subsection{Gibbs Ensemble-NPT} 
+\label{sec:gibbs_npt}
+
+The GEMC-NPT method is only valid for sampling phase equilibria in multicomponent systems. 
+It is similar to GEMC-NVT, except that the volume of each box fluctuates independently.
+Consequently, the total volume of the system is not constant and the 
+pressure must be specified in addition to the temperature.
+This is consistent with the Gibbs phase rule for mixtures, which requires the specification of two intensive
+variables (e.g. pressure and temperature) to fully specify a state with two phases. \\
+
+The partition function is
 
 \begin{equation}
-\ln \left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = - \beta \Delta U^A - \beta \Delta U^B + N^A \ln\left(\frac{V^A_m}{V^A_n}\right) + N^B \ln\left(\frac{V^B_m}{V^B_n}\right)
-\label{eq:gemc_nvt_volume}
+\Delta_{GE}\left(\{N^t\},P,T\right) = \sum^{N^t_1}_{N^A_1=0} ... \sum^{N^t_s}_{N^A_s=0} 
+                                    \ \Delta(\{N^A\},P,T)\ \Delta(\{N^t-N^A\},P,T)
+\label{eq:partitionFn_GENPT}
+\end{equation}
+
+where $\{N\}$ is the number of molecules of each species,
+$\Delta({N},P,T)$ is the multicomponent analog to Eq. \ref{eq:partitionFn_NPT}, and
+there is a separate sum for each species over the number of molecules in box A.
+The kinetic contribution to $\Delta_{GE}$ can be separated giving the configurational partition function
+
+\begin{equation}
+\Delta_{Z,GE}\left({N^t},P,T\right) = \sum^{N^t_1}_{N^A_1=0} ... \sum^{N^t_s}_{N^A_s=0} 
+                                    \ \Delta_Z({N^A},P,T)\ \Delta_Z({N^t-N^A},P,T)
+\label{eq:configPartitionFn_GENPT}
+\end{equation}
+
+where $\Delta_Z({N},P,T)$ is the multicomponent analog to Eq. \ref{eq:configPartitionFn_NPT}.
+The probability of microstate $m$ in this ensemble is
+
+\begin{equation}
+p_m = \frac{e^{-\beta U^A -\beta U^B - \beta P V^A - \beta P V^B} dV^A dV^B}{\Delta_{Z,GE}({N^t},P,T)} 
+      \prod_{s=1}^{N_{species}} \left[ d\mathbf{q}_s^{A} \right]^{N_s^A}
+                                \left[ d\mathbf{q}_s^{B} \right]^{N_s^B}
+\label{eq:pGENPT}
+\end{equation}
+
+The ratio of microstate probabilities is
+
+\begin{equation}
+\frac{p_m}{p_n} = e^{\beta \Delta U^A + \beta \Delta U^B + \beta P \Delta V^A + \beta P \Delta V^B} dV^A dV^B
+                  \prod_{s=1}^{N_{species}} \frac{d\mathbf{q}_{s,m}^{N^A_m}}{d\mathbf{q}_{s,n}^{N^A_n}}
+                   :w
+                         \frac{d\mathbf{q}_{s,m}^{N^B_m}}{d\mathbf{q}_{s,n}^{N^B_n}}
+\label{eq:pGENPT_ratio}
+\end{equation}
+
+\subsection{Volume Exchange Moves} 
+\label{sec:vol_swap}
+
+Volume is exchanged between the two boxes to achieve pressure equilibrium using a symmetric volume move, $\alpha_{mn} = \alpha_{nm}$.
+If box A is shrunk by $\Delta V$, then box B grows by $\Delta V$ and vice versa.
+The scaled center of mass positions of each molecule are held constant, 
+introducing a ratio of volumes into the acceptance criteria similar to Eq. \ref{eq:pAcc_volume}.
+The acceptance rule is derived from equation \ref{eq:pGENVT_ratio} and yields
+
+\begin{equation}
+\ln \left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = \ln \left( \frac{p_m}{p_n} \right) = \beta \Delta U^A + \beta \Delta U^B + N^A \ln\left(\frac{V^A_m}{V^A_n}\right) + N^B \ln\left(\frac{V^B_m}{V^B_n}\right)
+\label{eq:pAcc_vol_swap}
 \end{equation}
 
 \begin{table}
@@ -704,70 +782,70 @@ acceptance rule is also derived from equation \ref{eq:gemc_nvt_prob_dist} and yi
 
 
 
-This acceptance rule is implemented in the file gemc\_nvt\_volume.f90 as follows
+This acceptance rule is implemented in the file move\_vol\_swap.f90 as follows
 
 \begin{minipage}{\linewidth}
-\begin{lstlisting}[firstnumber=475, caption=gemc\_nvt\_volume.f90]
-factor = beta(box1) * delta_e_1 + beta(box2) * delta_e_2 - &
-                 tot_mol_box1 * DLOG( box_list(box1)%volume / box_list_old_1%volume) - &
-                 tot_mol_box2 * DLOG( box_list(box2)%volume / box_list_old_2%volume)
+\begin{lstlisting}[firstnumber=402, caption=move\_vol\_swap.f90]
+ln_pacc = beta(box_grw) * delta_e_1 + beta(box_shk) * delta_e_2 &
+        - REAL(SUM(nmols(:,box_grw)),DP) * DLOG( box_list(box_grw)%volume / box_list_old_1%volume) &
+        - REAL(SUM(nmols(:,box_shk)),DP) * DLOG( box_list(box_shk)%volume / box_list_old_2%volume)
 
 \end{lstlisting}
 \end{minipage}
 
-Finally, exchange of particles is conducted between the two boxes to attain equality of chemical potentials.
-If the particle is transfered from box A into box B, the acceptance rule for this move is
+\subsection{Molecule Exchange Moves} 
+\label{sec:mol_swap}
+
+Finally, molecules are swapped between the two boxes to equalize the chemical potential of each species.
+If a molecule is transferred from box A into box B, the acceptance rule is
 
 \begin{equation}
 \ln \left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = \ln \left( \frac{\alpha_{mn}}{\alpha_{nm}} \right)  \ln \left(\frac{V^B}{V^A}\right) -\beta \Delta U^A - \beta \Delta U^B
 \label{eq:gemc_nvt_transfer}
 \end{equation}
 
-Note that in contrast to the volume move, the particle swap is not a symmetric move, as it might 
-involve configurational biased regrowths. For the case of transfering a molecule from box A into box B, the forward probability $\alpha_{nm}$ is calculated
-as follows
+The particle swap is not symmetric since each molecule is inserted and deleted using configurational bias.
+The forward probability $\alpha_{mn}$ follows from the steps used to swap a molecule:
 
 \begin{enumerate}
-\item Pick box A
-\item Pick a molecule from box A out of the $N^A_n$ possible molecules
-\item Insert molecule in box B using protocol presented in section \ref{sec:cbmcInsert}
+\item Pick a box $out$ with probability $p_{out}$:
+	\begin{enumerate}
+	\item the ratio of molecules in box, $p_{out} = N^{out}/N^t$ (default)
+   \item a fixed probability given in the input file
+	\end{enumerate}
+\item If necessary, pick a species $s$ with probability $p_{spec}$:
+	\begin{enumerate}
+	\item the ratio of molecules of species $s$, $p_{spec} = N^{out}_s/N^{out}$ (default)
+   \item a fixed probability given in the input file
+	\end{enumerate}
+\item Pick a molecule of species $s$ from the box $out$ with uniform probability, $1/N^{out}_s$
+\item Insert molecule in box $in$ using protocol presented in section \ref{sec:cbmcInsert}
 \end{enumerate}
 
-The attempt probability of generating configuration m is
-
-\begin{align}
-\alpha_{nm} &= \frac{1}{2} \frac{1}{N^A_n} p_{seq_{nm}}\ \frac{d\mathbf{q}_{rot}}{Z_{rot}}\ \frac{\kappa_{ins}V^B d\mathbf{s}}{V^B}\ \left[\frac{e^{-\beta \Delta U_k^{ins}}}{\sum_k{e^{-\beta \Delta U_k^{ins}}}}\right]^B\ \times \nonumber \\
-&\ \ \ \left[\prod_{i=1}^{N_{frag}}{\frac{e^{-\beta U(\mathbf{q}_{frag_i})}d\mathbf{q}_{frag_i}}{Z_{frag_i}}}\right]_{nm}\ \left[\prod_{j=1}^{N_{frag}-1}{\frac{\kappa_{dih}d\phi}{2\pi}\ \frac{e^{-\beta \Delta U_k^{dih}}}{\sum_k{e^{-\beta \Delta U_k^{dih}}}}}\right]_{nm} \\
-\label{eq:gemc_nvt_transfer_forward}
-& = \frac{1}{2} \frac{1}{N^A_n} p_{seq_{nm}}\ p_{bias_{nm}}\ \frac{e^{-\beta U(\mathbf{q}_{frag_{nm}})}d\mathbf{q}_{rot}d\mathbf{s}\prod_{i=1}^{N_{frag}}d\mathbf{q}_{frag_{i,nm}}\prod_{j=1}^{N_{frag}-1}d\phi_{nm}}{Z_{rot}Z_{frag}\Omega_{dih}}
-\end{align}
-
-
-Once the new configuration $m$ has been generated, the reverse probability $\alpha_{mn}$ must be calculated. This represents
-the probability of generating the old state n, pretending that the current state is m.
-The procedure is similar as before
-
-\begin{enumerate}
-\item Pick box B
-\item Pick the swapped molecule from box B of the $N^B_n+1$ possible molecules
-\item Insert molecule back in box A using protocol presented in section \ref{sec:cbmcInsert}
-\end{enumerate}
-
-The attempt probability of generating the old configuration n pretending we are in the new configuration m is
+If the default probabilities are used at each step, then a swap is attempted for each molecule with uniform probability
 
 \begin{equation}
-\alpha_{mn} = \frac{1}{2} \frac{1}{N^B_n+1} p_{seq_{mn}}\ p_{bias_{mn}}\ \frac{e^{-\beta U(\mathbf{q}_{frag_{mn}})}d\mathbf{q}_{rot}d\mathbf{s}\prod_{i=1}^{N_{frag}}d\mathbf{q}_{frag_{i,mn}}\prod_{j=1}^{N_{frag}-1}d\phi_{mn}}{Z_{rot}Z_{frag}\Omega_{dih}}
-\label{eq:gemc_nvt_transfer_reverse}
+\frac{N^{out}}{N^t} \frac{N^{out}_s}{N^{out}} \frac{1}{N^{out}_s} = \frac{1}{N^t}
 \end{equation}
 
-The acceptance rule now becomes
+The attempt probability of generating configuration $n$
+
 \begin{equation}
-\ln \left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = \ln \left( \frac{ p_{bias_{mn}}}{p_{bias_{nm}}} \frac{N^A_n}{N^B_n+1} \frac{V^B}{V^A} \right) + \beta U(\mathbf{q}_{frag_{nm}})- \beta U(\mathbf{q}_{frag_{mn}}) -\beta \Delta U^A - \beta \Delta U^B
-\label{eq:gemc_transfer_final}
+\alpha_{mn} = p_{out,m} p_{spec,m} \frac{1}{N^{out}_{s,m}} p_{seq}\ p_{bias,n}\ \frac{e^{-\beta U^{in}(\mathbf{q}_{frag,n})}d\mathbf{q}}{V^{in}Z_{rot}Z_{frag}\Omega_{dih}}
+\label{eq:alpha_mol_swap}
 \end{equation}
 
-Note that the terms $p_{seq}$ cancelled out, as the same fragment regrowth sequence is used in the forward and reverse moves.
-The implementation of the particle swap move is found in the file gemc\_particle\_transfer.f90 as follows
+where $p_{bias}$ is defined in Eq. \ref{eq:p_bias}. The reverse probability $\alpha_{nm}$ is calculated similarly.
+
+If $p_{out}$ and $p_{spec}$ are constant, the acceptance rule is
+
+\begin{equation}
+\ln \left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = \ln \left( \frac{p_{out,m}}{p_{out,n}} \frac{p_{spec,m}}{p_{spec,n}} \frac{ p_{bias,n}}{p_{bias,m}} \frac{N^{out}_{s,m}}{N^{in}_{s,n}+1} \frac{V^{out}}{V^{in}} \right) - \beta U^{in}(\mathbf{q}_{frag,n})- \beta U^{out}(\mathbf{q}_{frag,m}) + \beta \Delta U^{out} + \beta \Delta U^{in}
+\label{eq:pAcc_mol_swap}
+\end{equation}
+
+where $p_{seq}$ does not appear since the same fragment regrowth sequence is used in the forward and reverse moves.
+The molecule swap move is implemented in the file move\_mol\_swap.f90 as follows
 
 \begin{table}
 \caption{Variable symbols and code names for the particle transfer move in the GEMC-NVT method.}
@@ -779,79 +857,54 @@ The implementation of the particle swap move is found in the file gemc\_particle
  $\beta^B$ & beta(box\_in) \\
  $\Delta U^A$ & -delta\_e\_out \\
  $\Delta U^B$ & delta\_e\_in \\
- $U(\mathbf{q}_{frag_{nm}})$ & e\_angle\_in + nrg\_ring\_frag\_in \\
- $U(\mathbf{q}_{frag_{mn}})$ & e\_angle\_out + nrg\_ring\_frag\_out \\
- $V^A_m$ & box\_list(box\_out)\%volume \\
- $V^B_m$ & box\_list(box\_in)\%volume \\
- $p_{bias_{nm}}$ & P\_forward \\
- $p_{bias_{mn}}$ & P\_reverse \\
+ $U^{in}(\mathbf{q}_{frag,n})$ & e\_angle\_in + nrg\_ring\_frag\_in \\
+ $U^{out}(\mathbf{q}_{frag,m})$ & e\_angle\_out + nrg\_ring\_frag\_out \\
+ $V^{out}$ & box\_list(box\_out)\%volume \\
+ $V^{in}$ & box\_list(box\_in)\%volume \\
+ $ln(p_{bias,n})$ & ln\_pfor \\
+ $ln(p_{bias,m})$ & ln\_prev \\
+ $p_{out,m} p_{spec,m}$ & P\_forward \\
+ $p_{out,n} p_{spec,n}$ & P\_reverse \\
  \hline
 \multicolumn{2}{c}{}
 \end{tabular}
 \end{table}
 
 \begin{minipage}{\linewidth}
-\begin{lstlisting}[firstnumber=505, caption=gemc\_particle\_transfer.f90]
+\begin{lstlisting}[firstnumber=587, caption=move\_mol\_swap.f90]
 delta_e_in_pacc = delta_e_in
 delta_e_out_pacc = delta_e_out
-\end{lstlisting}
 
-\begin{lstlisting}[firstnumber=518]
 delta_e_in_pacc = delta_e_in_pacc - e_angle_in - nrg_ring_frag_in
 delta_e_out_pacc = delta_e_out_pacc - e_angle_out - nrg_ring_frag_out
 \end{lstlisting}
 
-
-\begin{lstlisting}[firstnumber=526]
+\begin{lstlisting}[firstnumber=598]
 ln_pacc = beta(box_in)*delta_e_in_pacc - beta(box_out)*delta_e_out_pacc
 
 ln_pacc = ln_pacc - DLOG(box_list(box_in)%volume) &
-                    + DLOG(box_list(box_out)%volume) &
-                    - DLOG(REAL(nmols(this_species,box_out),DP)) &
-                    + DLOG(REAL(nmols(this_species,box_in) + 1, DP))
+                  + DLOG(box_list(box_out)%volume) &
+                  - DLOG(REAL(nmols(is,box_out),DP)) &
+                  + DLOG(REAL(nmols(is,box_in) + 1, DP))
 
-ln_pacc = ln_pacc + DLOG(P_forward / P_reverse)
+ln_pacc = ln_pacc + ln_pfor - ln_prev &
+                  + DLOG(P_forward / P_reverse)
+
 accept = accept_or_reject(ln_pacc)
 \end{lstlisting}
 \end{minipage}
 
 
-\subsection{Gibbs Ensemble-NPT} 
-\label{sec:gibbs_npt}
-
-In the GEMC-NPT method, the system is comprised of two boxes. These boxes are allowed to exchange
-particles to attain equality of chemical potential. In contrast to
-the GEMC-NVT method, the volume of each box is allowed to fluctuate
-independently from the other box. As a result, the total volume of the system is not constant and the 
-pressure must be specified as a simulation parameter in addition to the temperature.
-This is consistent with the Gibbs phase rule for mixtures, which requires the specification of two intensive
-variables (e.g. pressure and temperature) to fully specify a state with two phases. \\
-
-The probability distribution of this ensemble is very similar to its NVT counterpart (see
-equation \ref{eq:gemc_nvt_prob_dist}), 
-
-\begin{equation}
-p_m \propto (V^l)^{N^l} (V^v)^{N^v} e^{-\beta U \left(\textbf{s}^{N^l}\right) -\beta U \left(\textbf{s}^{N^v}\right)
-- \beta P \left(V^l + V^v\right) }
-\label{eq:gemc_npt_prob_dist}
-\end{equation}
-
-Thermal equilibration moves can be derived from the above probability distribution. They involve
-the usual translation, rotation and regrowth moves. The functional form of the acceptance rule
-is the same as those exposed in 
-sections \ref{sec:translate}, \ref{sec:rotate}, \ref{sec:regrow}, \ref{sec:cbmcRegrow}.
-Similarly, particle swap moves are carried out in the same way as it was exposed in section \ref{sec:gibbs_nvt}. 
-Finally, volume moves are carried out by picking one of the boxes and performing a volume change using the protocol
-exposed in section \ref{subsec:scaling_the_volume}. 
-
-
-
-
-
 \section{Multicomponent Systems} 
 
-Excluding section \ref{sec:gibbs_npt}, the acceptance rules for all the Monte Carlo techniques exposed in this chapter
-have been developed for pure component systems. The Monte Carlo moves and acceptance criteria for multicomponent systems are straightforward extensions of the pure component moves. The only modification needed to translate, rotate and regrow molecules is to first select a species. In these moves, a species is selected randomly in proportion to its mole fraction $N_i/N$. When inserting and deleting a molecule, the mole fractions of each species change. In these cases, a species in a multicomponent system is selected instead with uniform probability $1/N_{species}$. In either case, species selection is symmetric for both forward and reverse moves and so cancels from the acceptance criterion.
+Excluding section \ref{sec:gibbs_npt}, the acceptance rules for all the Monte Carlo techniques expressed in this chapter
+have been developed for pure component systems. 
+The Monte Carlo moves and acceptance criteria for multicomponent systems are straightforward extensions of the pure component moves. 
+The only modification needed to translate, rotate and regrow molecules is to first select a species. 
+In these moves, a species is selected randomly in proportion to its mole fraction $N_i/N$. 
+When inserting and deleting a molecule, the mole fractions of each species change. 
+In these cases, a species in a multicomponent system is selected instead with uniform probability $1/N_{species}$. 
+In either case, species selection is symmetric for both forward and reverse moves and so cancels from the acceptance criterion.
 
 %In contrast, a reaction move that changes the number of molecules of several species simultaneously will depend on the chemical potentials of each species. In the multicomponent grand canonical ensemble, the temperature $T$, volume $V$ and set of chemical potentials $\{\mu\} = \mu_1, \ldots, \mu_s$ of each species are held constant. The partition function for a system with $s$ species is
 %
