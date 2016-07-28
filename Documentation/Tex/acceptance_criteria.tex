@@ -680,21 +680,17 @@ p_m = \frac{e^{-\beta U^A \left(\textbf{q}^{N^A}\right) -\beta U^B \left(\textbf
 Note that the molecule number factorials are not included in equation \ref{eq:pGENVT}, 
 as particles are distinguishable in a simulation (see also equation \ref{eq:pMuVT}). \\
 
-Comparing two microstates $m$ and $n$ that differ only by a thermal move, the ratio of microstate probabilities is
+For two microstates $m$ and $n$ that differ only by a thermal move of a molecule in box A, the ratio of microstate probabilities is
+
 \begin{align}
 \label{eq:pGENVT_ratio}
-\frac{p_m}{p_n}&= e^{\beta \Delta U^A + \beta \Delta U^B}
+\frac{p_m}{p_n}&= e^{\beta \Delta U^A}
 \end{align}
 
-For two microstates that differ by exchani
-\begin{align}
-\label{eq:pGENVT_ratio}
-\frac{p_m}{p_n} &= \frac{e^{-\beta U\left(\mathbf{q}_m^{N^A}\right) - \beta U\left(\mathbf{q}_m^{N^B}\right)} d\mathbf{q}_m^{N^A} d\mathbf{q}_m^{N^B}}
-                        {e^{-\beta U\left(\mathbf{q}_n^{N^A}\right) - \beta U\left(\mathbf{q}_n^{N^B}\right)} d\mathbf{q}_n^{N^A} d\mathbf{q}_m^{N^B}} \nonumber \\
-&= e^{\beta \Delta U^A + \beta \Delta U^B} \frac{d\mathbf{q}_m^{N^A}}{d\mathbf{q}_n^{N^A}} \frac{d\mathbf{q}_m^{N^B}}{d\mathbf{q}_n^{N^B}}
-\end{align}
-
-The differential elements $d\mathbf{q}$ will cancel from the acceptance criteria when swapping a molecule and 
+similar to Eq. \ref{eq:pNVT_ratio}. 
+As a result, thermal moves have the same acceptance rule in GEMC-NVT as they do in other ensembles.
+The differential elements $d\mathbf{q}$ will likewise cancel from the acceptance criteria when swapping a molecule between boxes.
+When exchanging volume, however, the differential elements will reduce to a ratio of the old volume to the new, as shown in section \ref{sec:vol_swap}.
 
 \subsection{Gibbs Ensemble-NPT} 
 \label{sec:gibbs_npt}
@@ -735,24 +731,33 @@ p_m = \frac{e^{-\beta U^A -\beta U^B - \beta P V^A - \beta P V^B} dV^A dV^B}{\De
 \label{eq:pGENPT}
 \end{equation}
 
-The ratio of microstate probabilities is
+Similar to GEMC-NVT, the ratio of probabilities between microstates that differ by only a thermal move in box A is
 
-\begin{equation}
-\frac{p_m}{p_n} = e^{\beta \Delta U^A + \beta \Delta U^B + \beta P \Delta V^A + \beta P \Delta V^B} dV^A dV^B
-                  \prod_{s=1}^{N_{species}} \frac{d\mathbf{q}_{s,m}^{N^A_m}}{d\mathbf{q}_{s,n}^{N^A_n}}
-                   :w
-                         \frac{d\mathbf{q}_{s,m}^{N^B_m}}{d\mathbf{q}_{s,n}^{N^B_n}}
-\label{eq:pGENPT_ratio}
-\end{equation}
+\begin{align}
+\frac{p_m}{p_n}&= e^{\beta \Delta U^A}
+\end{align}
+
+Volume changes are only attempted on one box at a time. 
+The ratio of probabilities between microstates that differ only by the volume of box A is
+
+\begin{align}
+\frac{p_m}{p_n}&= e^{\beta \Delta U^A} + N^A \frac{V^A_m}{V^A_n}
+\end{align}
+
+similar to Eq. \ref{pNPT_ratio}. 
+As a result, volume moves in GEMC-NPT have the same acceptance criteria as in the NPT ensemble (see Eq. \ref{eq:pAcc_volume}).
 
 \subsection{Volume Exchange Moves} 
 \label{sec:vol_swap}
 
-Volume is exchanged between the two boxes to achieve pressure equilibrium using a symmetric volume move, $\alpha_{mn} = \alpha_{nm}$.
+In GEMC-NVT, volume is exchanged between the two boxes to achieve pressure equilibrium using a symmetric volume move, $\alpha_{mn} = \alpha_{nm}$.
 If box A is shrunk by $\Delta V$, then box B grows by $\Delta V$ and vice versa.
+$\Delta V$ is chosen from a uniform distribution with probability $1/\delta V_{max}$, 
+where $\delta V_{max}$ is an adjustable parameter.
 The scaled center of mass positions of each molecule are held constant, 
 introducing a ratio of volumes into the acceptance criteria similar to Eq. \ref{eq:pAcc_volume}.
-The acceptance rule is derived from equation \ref{eq:pGENVT_ratio} and yields
+
+The acceptance rule is derived from equation \ref{eq:pGENVT} and yields
 
 \begin{equation}
 \ln \left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = \ln \left( \frac{p_m}{p_n} \right) = \beta \Delta U^A + \beta \Delta U^B + N^A \ln\left(\frac{V^A_m}{V^A_n}\right) + N^B \ln\left(\frac{V^B_m}{V^B_n}\right)
@@ -780,8 +785,6 @@ The acceptance rule is derived from equation \ref{eq:pGENVT_ratio} and yields
 \end{tabular}
 \end{table}
 
-
-
 This acceptance rule is implemented in the file move\_vol\_swap.f90 as follows
 
 \begin{minipage}{\linewidth}
@@ -796,26 +799,27 @@ ln_pacc = beta(box_grw) * delta_e_1 + beta(box_shk) * delta_e_2 &
 \subsection{Molecule Exchange Moves} 
 \label{sec:mol_swap}
 
-Finally, molecules are swapped between the two boxes to equalize the chemical potential of each species.
-If a molecule is transferred from box A into box B, the acceptance rule is
+In either GEMC-NVT or GEMC-NPT, molecules are swapped between the two boxes to equalize the chemical potential of each species.
+The ratio of probabilities for microstates that differ only by swapping a molecule of species $s$ from box B to box A is
 
 \begin{equation}
-\ln \left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = \ln \left( \frac{\alpha_{mn}}{\alpha_{nm}} \right)  \ln \left(\frac{V^B}{V^A}\right) -\beta \Delta U^A - \beta \Delta U^B
-\label{eq:gemc_nvt_transfer}
+\frac{p_m}{p_n} = e^{\beta \Delta U^A + \beta \Delta U^B} \frac{d\mathbf{q}_s^B}}{d\mathbf{q}_s^A}
+\label{eq:pGENPT_ratio_mol}
 \end{equation}
 
+where the differential elements $d\mathbf{q}$ will cancel from the acceptance criteria by similar terms in $alpha_{mn}/alpha_{nm}$.
 The particle swap is not symmetric since each molecule is inserted and deleted using configurational bias.
 The forward probability $\alpha_{mn}$ follows from the steps used to swap a molecule:
 
 \begin{enumerate}
-\item Pick a box $out$ with probability $p_{out}$:
+\item Pick a box $out$ with probability $p_{box}$, where $p_{box}$ is
 	\begin{enumerate}
-	\item the ratio of molecules in box, $p_{out} = N^{out}/N^t$ (default)
+	\item the ratio of molecules in box, $N^{out}/N^t$ (default)
    \item a fixed probability given in the input file
 	\end{enumerate}
-\item If necessary, pick a species $s$ with probability $p_{spec}$:
+\item If necessary, pick a species $s$ with probability $p_{spec}$, where $p_{spec}$ is
 	\begin{enumerate}
-	\item the ratio of molecules of species $s$, $p_{spec} = N^{out}_s/N^{out}$ (default)
+	\item the ratio of molecules of species $s$ in box $out$, $N^{out}_s/N^{out}$ (default)
    \item a fixed probability given in the input file
 	\end{enumerate}
 \item Pick a molecule of species $s$ from the box $out$ with uniform probability, $1/N^{out}_s$
@@ -836,8 +840,7 @@ The attempt probability of generating configuration $n$
 \end{equation}
 
 where $p_{bias}$ is defined in Eq. \ref{eq:p_bias}. The reverse probability $\alpha_{nm}$ is calculated similarly.
-
-If $p_{out}$ and $p_{spec}$ are constant, the acceptance rule is
+The acceptance rule is
 
 \begin{equation}
 \ln \left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) = \ln \left( \frac{p_{out,m}}{p_{out,n}} \frac{p_{spec,m}}{p_{spec,n}} \frac{ p_{bias,n}}{p_{bias,m}} \frac{N^{out}_{s,m}}{N^{in}_{s,n}+1} \frac{V^{out}}{V^{in}} \right) - \beta U^{in}(\mathbf{q}_{frag,n})- \beta U^{out}(\mathbf{q}_{frag,m}) + \beta \Delta U^{out} + \beta \Delta U^{in}
