@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 
 #*******************************************************************************
-# SCRIPT:  Test8_Coul_StartEnergy.py
+# SCRIPT:  Test9_Coul_StartEnergy.py
 # VERSION: 2.0
-# FEATURES: Compute the electrostatic energy between two point charges 
-#           at a range of distances
+# FEATURES: Compute the electrostatic energy of a dipole
 #*******************************************************************************
 
 #*******************************************************************************
@@ -29,22 +28,21 @@ avogadro = 6.02214129 # 10^23, /mol
 charge_factor = elementary_charge**2 * avogadro/(4*np.pi*epsilon_0) * 10000 # kJ A / mol
 
 # Simulation parameters
-nSpecies = 2
-nMols = (1, 1)
-nAtoms = (1, 1)
-atomName = (('C',), ('A',))
-atomCharge = ((1.0,), (-1.0,))
-box = 39
+nSpecies = 1
+nMols = (1,)
+nAtoms = (2,)
+atomName = (('C','A'),)
+atomCharge = ((1.0,-1.0),)
+nBonds = (1,)
+bondParms = (((1,2,"fixed",1.0),),)
+box = 30
 
 # Check parameters
 # params for each simulation
-numChecks = 4 # number of simulations to run
-distList = (1.0,11.0,1.0,11.)
-vdwStyle = ('lj minimum_image', 'lj minimum_image', 'none', 'none')
-chargeStyle = ('coul minimum_image', 'coul minimum_image', 'coul ewald 10. 1e-5', 'coul ewald 10. 1e-5')
+numChecks = 2 # number of simulations to run
+vdwStyle = ('lj minimum_image', 'none')
+chargeStyle = ('coul minimum_image', 'coul ewald 10. 1e-5')
 cassStr = (("Total system energy",),
-           ("Total system energy",),
-           ("Total system energy", "Inter molecule q", "Reciprocal ewald", "Self ewald"),
            ("Total system energy", "Inter molecule q", "Reciprocal ewald", "Self ewald"))
 analyticAnswer = [None] * numChecks #this list will hold the analytic answers
 cassAnswer     = [None] * numChecks #this list will hold cassandra's answers
@@ -60,10 +58,10 @@ normal = '\033[0m' #Will make the next text normal(ie. unbold)
 #*******************************************************************************
 cassDir = "/Users/rmullen2/dev/cassandra/Src/"
 cassExe = "cassandra.dev"
-cassRun = "test8.out"
-inpName = "test8.inp"
-xyzName = "test8.inp.xyz"
-mcfName = ("test8.cation.mcf", 'test8.anion.mcf')
+cassRun = "test9.out"
+inpName = "test9.inp"
+xyzName = "test9.inp.xyz"
+mcfName = ("test9.dipole.mcf",)
 
 
 #*******************************************************************************
@@ -113,16 +111,19 @@ def erf(x):
 #
 
 #This prints the starting line.
-print "\n\n"+bold+"Test 8: Coulombic energy" + normal 
+print "\n\n"+bold+"Test 9: Coulombic energy" + normal 
 
 # Step 1) Write input files
 # 1.1) Write MCF for cation, anion
 for s in range(nSpecies):
 	mcf = open(mcfName[s],"w") #Creates mcf file and allows for edits
 	mcf.write("# Atom_Info\n%d\n" % (nAtoms[s]))
-	for a in range(nAtoms[s]):
-		mcf.write("%d    %s    %s   1.0 %.1f   NONE\n" % (a+1,atomName[s][a],atomName[s][a],atomCharge[s][a]))
-	mcf.write("\n# Bond_Info\n0\n")
+	for i in range(nAtoms[s]):
+		mcf.write("%d    %s    %s   1.0 %.1f   NONE\n" % (i+1,atomName[s][i],atomName[s][i],atomCharge[s][i]))
+	mcf.write("\n# Bond_Info\n%d\n" % (nBonds[s]))
+	for i in range(nBonds[s]):
+		mcf.write("%d    %d    %d    %s    %9.3f\n" % (i+1,bondParms[s][i][0],bondParms[s][i][1],
+                                                       bondParms[s][i][2],bondParms[s][i][3]))
 	mcf.write("\n# Angle_Info\n0\n")
 	mcf.write("\n# Dihedral_Info\n0\n")
 	mcf.write("\n# Improper_Info\n0\n")
@@ -133,15 +134,13 @@ for s in range(nSpecies):
 	mcf.close()
 
 # Loop through checks
-print "%-20s %8s %18s %18s %18s %8s" % ("Property","Distance","Cassandra","Analytic","Relative_Err","Pass")
+print "%-20s %-20s %18s %18s %18s %8s" % ("Property","ChargeStyle","Cassandra","Analytic","Relative_Err","Pass")
 for i in range(numChecks):
-	#variables that change from one check to the next
-	d = distList[i] # atomic separation
 
 	# Step 2) Calculate the correct answer
 	if (chargeStyle[i] == 'coul minimum_image'):
 		# Coulomb's law
-		analyticAnswer[i] = [atomCharge[0][0]*atomCharge[1][0] / d * charge_factor]
+		analyticAnswer[i] = [0.]
 	elif ('ewald' in chargeStyle[i]):
 		# Ewald summation
 		ewald_tol = float(chargeStyle[i].split()[-1])
@@ -152,14 +151,13 @@ for i in range(numChecks):
 
 		analyticAnswer[i] = [0.] * 4
 		# Real
-		if (d < rcut):
-			analyticAnswer[i][1] = atomCharge[0][0] * atomCharge[1][0] * charge_factor * (1 - erf(alpha * d))/d
+		analyticAnswer[i][1] = atomCharge[0][0] * atomCharge[0][1] * charge_factor * (- erf(alpha))
 		# Reciprocal
 		recip = 0.
 		for nx in range(-nmax,nmax):
 			kx = float(nx) / box
-			real2 = (atomCharge[0][0] + atomCharge[1][0] * np.cos(2 * np.pi * kx * d))**2
-			im2 = (atomCharge[1][0] * np.sin(2 * np.pi * kx * d))**2
+			real2 = (atomCharge[0][0] + atomCharge[0][1] * np.cos(2 * np.pi * kx))**2
+			im2 = (atomCharge[0][1] * np.sin(2 * np.pi * kx))**2
 			for ny in range(-nmax,nmax):
 				ky = float(ny) / box
 				for nz in range(-nmax,nmax):
@@ -171,7 +169,7 @@ for i in range(numChecks):
 					recip = recip + prefactor * (real2 + im2)
 		analyticAnswer[i][2] = recip * charge_factor / (2 * np.pi * box**3)
 		# Self
-		analyticAnswer[i][3] = - alpha / np.sqrt(np.pi) * (atomCharge[0][0]**2 + atomCharge[1][0]**2) * charge_factor
+		analyticAnswer[i][3] = - alpha / np.sqrt(np.pi) * (atomCharge[0][0]**2 + atomCharge[0][1]**2) * charge_factor
 		# Total
 		analyticAnswer[i][0] = sum(analyticAnswer[i][1:4])
 
@@ -207,8 +205,8 @@ for i in range(numChecks):
 	# 3.1) Write xyz
 	xyz = open(xyzName,"w")
 	xyz.write("2\n\n") # This is the number of atoms in the simulation 
-	xyz.write("C   0.0  0.0   0.0\n") #Location of atom 1
-	xyz.write("A   %.1f  0.0  0.0\n" % (d)) #Location of atom 2
+	xyz.write(" C  0.0  0.0  0.0\n") #Location of atom 1
+	xyz.write(" A  1.0  0.0  0.0\n") #Location of atom 2
 	xyz.close()
 
 	# 3.2) Run Cassandra Jobs
@@ -232,12 +230,12 @@ for i in range(numChecks):
 	for j in range(nPrp):
 		if (analyticAnswer[i][j] == 0.):
 			passCheck = cassAnswer[i][j] == 0.
-			print "%-20s %8.1f %18.6g %18.6g %18s %8s" % (cassStr[i][j],d,
+			print "%-20s %-20s %18.6g %18.6g %18s %8s" % (cassStr[i][j],chargeStyle[i],
 						cassAnswer[i][j],analyticAnswer[i][j],'',passCheck)
 		else:
 			errorRel = abs(cassAnswer[i][j] - analyticAnswer[i][j])/analyticAnswer[i][j]
 			passCheck = abs(errorRel) <= errorTol
-			print "%-20s %8.1f %18.6g %18.6g %18.6g %8s" % (cassStr[i][j],d,
+			print "%-20s %-20s %18.6g %18.6g %18.6g %8s" % (cassStr[i][j],chargeStyle[i],
 						cassAnswer[i][j],analyticAnswer[i][j],errorRel,passCheck)
 	print ""
 
