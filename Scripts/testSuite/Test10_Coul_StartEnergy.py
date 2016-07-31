@@ -21,8 +21,8 @@ import os, sys
 # VARIABLE DEFINITIONS
 #*******************************************************************************
 # Test description
-test_no = 9
-test_desc = "Coulombic energy of one dipole"
+test_no = 10
+test_desc = "Coulombic energy of two dipoles"
 
 # Physical constants
 # to calculate the analytic answer
@@ -33,12 +33,11 @@ charge_factor = elementary_charge**2 * avogadro/(4*np.pi*epsilon_0) * 10000 # kJ
 
 # Simulation parameters
 nSpecies = 1
-nMols = (1,)
-nAtoms = (2,)
-atomName = (('C','A'),)
-atomCharge = ((1.0,-1.0),)
-nBonds = (1,)
-bondParms = (((1,2,"fixed",1.0),),)
+nMols = (2,) # index = [species]
+atomParms = ((('C','C',1.0,1.0,'NONE'),
+              ('A','A',1.0,-1.0,'NONE'),),) # index = [species][atom][parm]
+bondParms = (((1,2,"fixed",1.0),),) # index = [species][bond][parm]
+atomCoords=((-4.,0.,0.),(-3,0.,0.),(3,0.,0.),(4,0.,0.)) # index = [atom][axis]
 box = 30
 
 # Check parameters
@@ -121,13 +120,14 @@ print "\n\n"+bold+"Test " + str(test_no) +": " + test_desc + normal
 # 1.1) Write MCF for cation, anion
 for s in range(nSpecies):
 	mcf = open(mcfName[s],"w") #Creates mcf file and allows for edits
-	mcf.write("# Atom_Info\n%d\n" % (nAtoms[s]))
-	for i in range(nAtoms[s]):
-		mcf.write("%d    %s    %s   1.0 %.1f   NONE\n" % (i+1,atomName[s][i],atomName[s][i],atomCharge[s][i]))
-	mcf.write("\n# Bond_Info\n%d\n" % (nBonds[s]))
-	for i in range(nBonds[s]):
-		mcf.write("%d    %d    %d    %s    %9.3f\n" % (i+1,bondParms[s][i][0],bondParms[s][i][1],
-                                                       bondParms[s][i][2],bondParms[s][i][3]))
+	nAtoms = len(atomParms[s])
+	mcf.write("# Atom_Info\n%d\n" % (nAtoms))
+	for i in range(nAtoms):
+		mcf.write("%d %s %s %.1f %.3f %s\n" % ((i+1,) + atomParms[s][i]))
+	nBonds = len(bondParms[s])
+	mcf.write("\n# Bond_Info\n%d\n" % (nBonds))
+	for i in range(nBonds):
+		mcf.write("%d %d %d %s %9.3f\n" % ((i+1,) + bondParms[s][i]))
 	mcf.write("\n# Angle_Info\n0\n")
 	mcf.write("\n# Dihedral_Info\n0\n")
 	mcf.write("\n# Improper_Info\n0\n")
@@ -142,9 +142,17 @@ print "%-20s %-20s %18s %18s %18s %8s" % ("Property","ChargeStyle","Cassandra","
 for i in range(numChecks):
 
 	# Step 2) Calculate the correct answer
+	q = (atomParms[0][0][3],atomParms[0][1][3],atomParms[0][0][3],atomParms[0][1][3])
+	x = (atomCoords[0][0],atomCoords[1][0],atomCoords[2][0],atomCoords[3][0])
 	if (chargeStyle[i] == 'coul minimum_image'):
 		# Coulomb's law
-		analyticAnswer[i] = [0.]
+		E12 = 0.
+		E13 = q[0] * q[2] / abs(x[0] - x[2])
+		E14 = q[0] * q[3] / abs(x[0] - x[3])
+		E23 = q[1] * q[2] / abs(x[1] - x[2])
+		E24 = q[1] * q[3] / abs(x[1] - x[3])
+		E34 = 0.
+		analyticAnswer[i] = [(E12+E13+E14+E23+E24+E34)*charge_factor]
 	elif ('ewald' in chargeStyle[i]):
 		# Ewald summation
 		ewald_tol = float(chargeStyle[i].split()[-1])
@@ -155,13 +163,23 @@ for i in range(numChecks):
 
 		analyticAnswer[i] = [0.] * 4
 		# Real
-		analyticAnswer[i][1] = atomCharge[0][0] * atomCharge[0][1] * charge_factor * (- erf(alpha))
+		E12 = q[0] * q[1] / abs(x[0] - x[1]) * (- erf(alpha * abs(x[0] - x[1])))
+		E13 = q[0] * q[2] / abs(x[0] - x[2]) * (1. - erf(alpha * abs(x[0] - x[2])))
+		E14 = q[0] * q[3] / abs(x[0] - x[3]) * (1. - erf(alpha * abs(x[0] - x[3])))
+		E23 = q[1] * q[2] / abs(x[1] - x[2]) * (1. - erf(alpha * abs(x[1] - x[2])))
+		E24 = q[1] * q[3] / abs(x[1] - x[3]) * (1. - erf(alpha * abs(x[1] - x[3])))
+		E34 = q[2] * q[3] / abs(x[2] - x[3]) * (- erf(alpha * abs(x[2] - x[3])))
+		analyticAnswer[i][1] = (E12+E13+E14+E23+E24+E34)*charge_factor
 		# Reciprocal
 		recip = 0.
 		for nx in range(-nmax,nmax):
 			kx = float(nx) / box
-			real2 = (atomCharge[0][0] + atomCharge[0][1] * np.cos(2 * np.pi * kx))**2
-			im2 = (atomCharge[0][1] * np.sin(2 * np.pi * kx))**2
+			real = 0.; im = 0.
+			for j in range(len(q)):
+				real += q[j] * np.cos(2 * np.pi * kx * x[j])
+				im   += q[j] * np.sin(2 * np.pi * kx * x[j])
+			real2 = real**2
+			im2   = im**2
 			for ny in range(-nmax,nmax):
 				ky = float(ny) / box
 				for nz in range(-nmax,nmax):
@@ -173,7 +191,7 @@ for i in range(numChecks):
 					recip = recip + prefactor * (real2 + im2)
 		analyticAnswer[i][2] = recip * charge_factor / (2 * np.pi * box**3)
 		# Self
-		analyticAnswer[i][3] = - alpha / np.sqrt(np.pi) * (atomCharge[0][0]**2 + atomCharge[0][1]**2) * charge_factor
+		analyticAnswer[i][3] = - alpha / np.sqrt(np.pi) * (q[0]**2 + q[1]**2 + q[2]**2 + q[3]**2) * charge_factor
 		# Total
 		analyticAnswer[i][0] = sum(analyticAnswer[i][1:4])
 
@@ -208,9 +226,15 @@ for i in range(numChecks):
 
 	# 3.1) Write xyz
 	xyz = open(xyzName,"w")
-	xyz.write("2\n\n") # This is the number of atoms in the simulation 
-	xyz.write(" C  0.0  0.0  0.0\n") #Location of atom 1
-	xyz.write(" A  1.0  0.0  0.0\n") #Location of atom 2
+	nAtoms = len(atomCoords)
+	xyz.write("%d\n\n" % (nAtoms)) # This is the number of atoms in the simulation 
+	j = 0
+	for s in range(nSpecies):
+		for m in range(nMols[s]):
+			nAtoms = len(atomParms[s])
+			for a in range(nAtoms):
+				xyz.write(" %s %9.3f %9.3f %9.3f\n" % ((atomParms[s][a][0],) + atomCoords[j]))
+				j += 1
 	xyz.close()
 
 	# 3.2) Run Cassandra Jobs
