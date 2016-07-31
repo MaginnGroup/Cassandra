@@ -21,6 +21,10 @@ import os, sys
 #*******************************************************************************
 # VARIABLE DEFINITIONS
 #*******************************************************************************
+# Test description
+test_no = 8
+test_desc = "Coulombic energy of an ion pair"
+
 # Physical constants
 # to calculate the analytic answer
 elementary_charge = 1.602176565 # 10^-19, C
@@ -113,7 +117,7 @@ def erf(x):
 #
 
 #This prints the starting line.
-print "\n\n"+bold+"Test 8: Coulombic energy" + normal 
+print "\n\n"+bold+"Test " + str(test_no) +": " + test_desc + normal
 
 # Step 1) Write input files
 # 1.1) Write MCF for cation, anion
@@ -133,7 +137,7 @@ for s in range(nSpecies):
 	mcf.close()
 
 # Loop through checks
-print "%-20s %8s %18s %18s %18s %8s" % ("Property","Distance","Cassandra","Analytic","Relative_Err","Pass")
+print "%-20s %-20s %8s %18s %18s %18s %8s" % ("Property","ChargeStyle","Distance","Cassandra","Analytic","Relative_Err","Pass")
 for i in range(numChecks):
 	#variables that change from one check to the next
 	d = distList[i] # atomic separation
@@ -232,12 +236,12 @@ for i in range(numChecks):
 	for j in range(nPrp):
 		if (analyticAnswer[i][j] == 0.):
 			passCheck = cassAnswer[i][j] == 0.
-			print "%-20s %8.1f %18.6g %18.6g %18s %8s" % (cassStr[i][j],d,
+			print "%-20s %-20s %8.1f %18.6g %18.6g %18s %8s" % (cassStr[i][j],chargeStyle[i],d,
 						cassAnswer[i][j],analyticAnswer[i][j],'',passCheck)
 		else:
 			errorRel = abs(cassAnswer[i][j] - analyticAnswer[i][j])/analyticAnswer[i][j]
 			passCheck = abs(errorRel) <= errorTol
-			print "%-20s %8.1f %18.6g %18.6g %18.6g %8s" % (cassStr[i][j],d,
+			print "%-20s %-20s %8.1f %18.6g %18.6g %18.6g %8s" % (cassStr[i][j],chargeStyle[i],d,
 						cassAnswer[i][j],analyticAnswer[i][j],errorRel,passCheck)
 	print ""
 
