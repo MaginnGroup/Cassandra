@@ -1,5 +1,5 @@
 # Run_Name
-nist1.out
+test5_improper.out
 !---------------
 
 # Sim_Type
@@ -11,11 +11,11 @@ NVT_MC
 !---------------
 
 # VDW_Style
-LJ cut 10.62
+LJ cut_tail 14.0
 !---------------
 
 # Charge_Style
-NONE
+coul ewald 14.0 0.0000001
 !---------------
 
 # Intra_Scaling
@@ -27,7 +27,7 @@ LB
 !---------------
 
 # Seed_Info
-55001389 1764321284
+1211131639 1211131640
 !---------------
 
 # Rcutoff_Low
@@ -35,30 +35,31 @@ LB
 !---------------
 
 # Molecule_Files
-lj.mcf 2
+improper.mcf 1
 !----------------
 
 # Box_Info
 1
 CUBIC
-100.0
+50.0
 !---------------
 
 # Temperature_Info
-300.0
+510.0
 !---------------
 
 # Move_Probability_Info
 
 # Prob_Translation
-0.79
-0.5
+0.40
+0.50
+14.0
 
 # Done_Probability_Info
 !----------------
 
 # Start_Type
-read_config 2 lj_sample_config_periodic1.xyz
+read_config 1 fail.xyz
 !---------------
 
 # Run_Type
@@ -73,15 +74,15 @@ Equilibration 100
 Units Steps
 Prop_Freq 1
 Coord_Freq 1
-Run 0
+Run 1
 !---------------
 
 # Property_Info 1
 Energy_Total
-Pressure
-Volume
-Nmols
 Density
+Nmols
+Volume
+Pressure
 !---------------
 
 # Fragment_Files
@@ -90,8 +91,11 @@ Density
 # CBMC_Info
 kappa_ins 12
 kappa_rot 0
-kappa_dih 10
-rcut_cbmc 6.5
+kappa_dih 12
+rcut_cbmc 6.5 6.5
 !---------------
+
+# Pair_Energy
+TRUE
 
 END

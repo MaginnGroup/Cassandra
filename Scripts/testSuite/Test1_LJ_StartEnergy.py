@@ -3,6 +3,8 @@
 # This is Test 1 in a series of tests for a testSuite in order to check updates made to the Cassandra program. 
 # Test 1 is an energy test which tests the starting energies for a molecule using the Lennard-Jones equation. This test does not perform any moves in the Cassandra program, it is simply an initial testing of energy. 
 # Test 1 - Checks the starting energy for 4 different scenarios.
+#t 1: This test tests 4 different configurations of two molecules in a box of size 100 Angstroms using the Lennard Jones potential equation. The first configuration is of two atoms a distance of sigma apart. The second is with each of the atoms a distance 0.5*sigma away from the edge of opposite walls. The third test is a test where the two atoms are a distance of 2^(1/6)*sigma apart. The last test is of two atoms that are a distance of 5 angstroms apart which is out of bounds and thus the energy should be zero. 
+#Note: The test uses a search to extract the energies from the log file created when running Cassandra based on the name of the energy. Furthermore, the extracted energies where than compared to the energies calculated by hand using the Lennard Jones equation#.
 # Import Modules
 import subprocess as sp #This module lets us run cassandra from python
 import numpy as np #this module s the package for scientific computing in python
@@ -275,7 +277,7 @@ else:
 	print "Check 1 fails"
 
 # Now for check 2
-if num2 == -0.00 and num2 == num2:
+if num2 == -0.00 and num1 == num2:
 	c2 = 1
 	print "Check 2..."
 else: 

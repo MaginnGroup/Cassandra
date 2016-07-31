@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
-# This is Test 1 in a series of tests for a testSuite in order to check updates made to the Cassandra program. 
-# Test 1 is an energy test which tests the starting energies for a molecule using the Lennard-Jones equation. This test does not perform any moves in the Cassandra program, it is simply an initial testing of energy. 
-# Test 1 - Checks the starting energy for 4 different scenarios.
+#Test 4: This test tests the dihedral angle energy. This tests the OPLS, harmonic, and CHARMM potential of energies. In this case, butane was used. The 3 different angles used are 113.5, 114, 114.5 degrees. The xyz files were obtained by creating a butane molecule in the program Gaussview. Cassandra was tested for the three angles listed above for all three of the different types of dihedrals, leading to a total of 9 different “checks."
+
+#Note: The test uses a search to extract the energies from the log file created when running Cassandra based on the name of the energy. Furthermore, the extracted energies where than compared to the energies calculated by hand. 
+
 # Import Modules
 import subprocess as sp #This module lets us run cassandra from python
 import numpy as np #this module s the package for scientific computing in python
