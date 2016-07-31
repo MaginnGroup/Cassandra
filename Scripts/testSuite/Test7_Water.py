@@ -38,7 +38,7 @@ atomParms = ((('O','O',15.999,-0.84760,'LJ',78.19743111,3.16555789),
 bondParms = (((1,2,'fixed',1.),
               (1,3,'fixed',1.)),) # index = [species][bond][parm]
 angleParms = (((1,2,3,'fixed',109.47),),) # index = [species][angle][parm]
-prpList = ("energy_intervdw", "energy_lrc", "energy_interq", "energy_reciprocal", 
+prpList = ("energy_intervdw", "energy_lrc", "energy_interq", "energy_recip", 
            "energy_self", "energy_total") # index = [property]
 vdwStyle = 'lj cut_tail 10.'
 
@@ -49,6 +49,8 @@ nMols = (100, 200, 300, 750) # index = [check]
 box = (20., 20., 20., 30.)   # index = [check]
 chargeStyle = ('coul ewald 10. 0.000393669','coul ewald 10. 0.000393669',
                'coul ewald 10. 0.000393669','coul ewald 10. 0.0306708') # index = [check]
+chargeStyle = ('coul ewald 10. 1e-5','coul ewald 10. 1e-5',
+               'coul ewald 10. 1e-5','coul ewald 10. 3.05e-2') # index = [check]
 cassAnswer     = [None] * numChecks #this list will hold cassandra's answers
 passCheck      = [None] * numChecks
 errorTol = 1e-5
@@ -198,12 +200,12 @@ for i in range(numChecks):
 		nist = nistAnswer[i][j]*kBoltz
 		if (nist == 0.):
 			passCheck = cassAnswer[i][j] == 0.
-			print "%-25s %18.6g %18.6g %18s %8s" % (cassStr[j],
+			print "%-25s %18.6g %18.6g %18s %8s" % (prpList[j],
 						cassAnswer[i][j],nist,'',passCheck)
 		else:
 			errorRel = abs(cassAnswer[i][j] - nist)/nist
 			passCheck = abs(errorRel) <= errorTol
-			print "%-25s %18.6g %18.6g %18.6g %8s" % (cassStr[j],
+			print "%-25s %18.6g %18.6g %18.6g %8s" % (prpList[j],
 						cassAnswer[i][j],nist,errorRel,passCheck)
 	print ""
 
