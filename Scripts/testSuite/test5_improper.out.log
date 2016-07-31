@@ -1,19 +1,10 @@
-********************************************************************************
-                ______                                __                        
-               / ____/___ _______________ _____  ____/ /________ _              
-              / /   / __ `/ ___/ ___/ __ `/ __ \/ __  / ___/ __ `/              
-             / /___/ /_/ (__  |__  ) /_/ / / / / /_/ / /  / /_/ /               
-             \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                
-                                                                                
-********************************************************************************
- 
 Run info
 ********************************************************************************
-version: Cassandra 1.2
-inputfile: dihedral.inp
-name of run: test4_CHARMM_check2.out
+version: Cassandra Development Version
+inputfile: improper.inp
+name of run: test5_improper.out
 date (mm/dd/yyyy): 07/28/2016
-time: 14:49:52
+time: 14:13:49
 machine: crcfe02.crc.nd.edu
 ********************************************************************************
  
@@ -30,7 +21,7 @@ NVT_MC
 Copy input file
 ********************************************************************************
  # Run_Name
- test4_CHARMM_check2.out
+ test5_improper.out
  
  # Sim_Type
  NVT_MC
@@ -42,7 +33,7 @@ Copy input file
  LJ cut_tail 14.0
  
  # Charge_Style
- NONE
+ coul ewald 14.0 0.0000001
  
  # Intra_Scaling
  0.0 0.0 0.0 1.0
@@ -51,32 +42,33 @@ Copy input file
  LB
  
  # Seed_Info
- 21498 489625
+ 1211131639 1211131640
  
  # Rcutoff_Low
  1.0
  
  # Molecule_Files
- dihedral.mcf 1
+ improper.mcf 1
  
  # Box_Info
  1
  CUBIC
- 100.0
+ 50.0
  
  # Temperature_Info
- 300.0
+ 510.0
  
  # Move_Probability_Info
  
  # Prob_Translation
- 1.0
- 1.00
+ 0.40
+ 0.50
+ 14.0
  
  # Done_Probability_Info
  
  # Start_Type
- read_config 1 dihedral.xyz
+ read_config 1 fail.xyz
  
  # Run_Type
  Equilibration 100
@@ -88,18 +80,25 @@ Copy input file
  Units Steps
  Prop_Freq 1
  Coord_Freq 1
- Run 0
+ Run 1
  
  # Property_Info 1
  Energy_Total
+ Density
+ Nmols
+ Volume
+ Pressure
  
  # Fragment_Files
  
  # CBMC_Info
  kappa_ins 12
  kappa_rot 0
- kappa_dih 10
- rcut_cbmc 6.5
+ kappa_dih 12
+ rcut_cbmc 6.5 6.5
+ 
+ # Pair_Energy
+ TRUE
  
  END
 ********************************************************************************
@@ -113,11 +112,11 @@ Box info
 ********************************************************************************
 Number of simulation boxes     1
 Box 1 is cubic               
- Each Side Of :      100.0000     Angstrom
- Cell basis vector lengths in A,    100.0000     100.0000     100.0000
+ Each Side Of :       50.0000     Angstrom
+ Cell basis vector lengths in A,     50.0000      50.0000      50.0000
  Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
- Distance between box faces   100.0000     100.0000     100.0000
- Box volume, A^3       1000000.0000
+ Distance between box faces    50.0000      50.0000      50.0000
+ Box volume, A^3        125000.0000
 ********************************************************************************
  
 Pair style
@@ -125,9 +124,12 @@ Pair style
 VDW style used is:   LJ             in box:  1
  VDW sum style is:   cut_tail       in box:  1
  rcut =    14.000   Angstrom
-Charge style in box 1 is NONE
-Section "# Pair_Energy" is missing from the input file
- By default, pair interaction energy arrays will not be stored
+Charge style in box 1 is coul
+ Charge sum style is   ewald          in box:  1
+ Ewald real space cutoff is  14.000 Angstroms.
+ Ewald real space parameter is   0.112 inverse Angstroms
+ Ewald reciprocal cutoff is  2.3026 inverse Angstroms
+Pair interaction energy array storage enabled
 Lorentz-Berthelot mixing rule specified
 ********************************************************************************
  
@@ -136,13 +138,13 @@ Molecule info
  Reading molecular connectivity information
  Species:            1
  Molecular connectivity file: 
- dihedral.mcf                                                                   
+ improper.mcf                                                                   
                                           
-   4 atom(s) specified.
-   3 bond(s) specified.
-   2 angle(s) specified.
-   1 dihedral(s) specified.
-   0 improper(s) specified.
+   12 atom(s) specified.
+   12 bond(s) specified.
+   18 angle(s) specified.
+   24 dihedral(s) specified.
+   6 improper(s) specified.
    0 fragment(s) specified.
    0 fragment bond(s) specified.
  
@@ -161,7 +163,11 @@ Molecule info
   VDW 1-2 scaling factor       0.000
   VDW 1-3 scaling factor       0.000
   VDW 1-4 scaling factor       0.000
-  VDW 1-N scaling factor       0.000
+  VDW 1-N scaling factor       1.000
+  Coulomb 1-2 scaling factor   0.000
+  Coulomb 1-3 scaling factor   0.000
+  Coulomb 1-4 scaling factor   0.000
+  Coulomb 1-N scaling factor   1.000
  -------------------------------------------------------------------------------
 ********************************************************************************
  
@@ -173,24 +179,26 @@ Start type
 ********************************************************************************
 Initial configuration for box 1 will be read from file
  Will read       1  molecules of species   1
- Will read configuration from file dihedral.xyz
+ Will read configuration from file fail.xyz
 ********************************************************************************
  
 Seed info
 ********************************************************************************
-The starting seeds are:        21498       489625
+The starting seeds are:   1211131639   1211131640
 ********************************************************************************
  
 Temperature
 ********************************************************************************
-Temperature of box 1 is 300.000 K
+Temperature of box 1 is 510.000 K
 ********************************************************************************
  
 Move probabilities
 ********************************************************************************
-Probability for translation                1.000000
- Maximum displacement width for species  1 in box  1  is      1.00000
+Probability for translation                0.400000
+ Maximum displacement width for species  1 in box  1  is      0.50000
 Number of moves is :   1
+ Move probabilities do not sum to 1.0
+ Dividing each probability by     0.400000
 ********************************************************************************
  
 CBMC info
@@ -200,22 +208,30 @@ Section "# CBMC_Info" not required
  
 Simulation length info
 ********************************************************************************
-Thermodynamic quantities will be computed every         1 Steps     
+Thermodynamic quantities will be written every          1 Steps     
 Coordinates will be written every                       1 Steps     
- movie header file is                  test4_CHARMM_check2.out.H
- movie_XYZ file is                     test4_CHARMM_check2.out.xyz
-The simulation will be run for                          0 Steps     
-Instantaneous values will be written every              1 Steps     
+ movie header file is                  test5_improper.out.H
+ movie_XYZ file is                     test5_improper.out.xyz
+The simulation will be run for                          1 Steps     
+********************************************************************************
+ 
+Average info
+********************************************************************************
+Instantaneous values will be output
 ********************************************************************************
  
 Property info
 ********************************************************************************
 Total number of property files to be written is     1   for box 1
- Maximum number of properties per file is    1
+ Maximum number of properties per file is    5
  Writing the name of the property files and the corresponding property output
- Property file    1   is  test4_CHARMM_check2.out.prp
+ Property file    1   is  test5_improper.out.prp
  Properties output in these files are
  Energy_Total
+ Density
+ Nmols
+ Volume
+ Pressure
 ********************************************************************************
  
 Minimum distance cutoff
@@ -240,26 +256,112 @@ Initial configuration
  Configurations read successfully
 ********************************************************************************
  
+Charge neutrality check
+********************************************************************************
+ Species 1 has charge:                 -0.00000000
+ 
+ Box     1 has charge:                 -0.00000000
+********************************************************************************
+ 
 Compute total energy
 ********************************************************************************
  Starting energy components for box   1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                   201.159
- Intra molecular energy is                201.169
+ Total system energy is                  2453.128
+ Intra molecular energy is               1709.511
  Bond energy is                             0.000
- Bond angle energy is                       0.008
- Dihedral angle energy is                 201.161
- Improper angle energy is                   0.000
- Intra molecule vdw is                      0.000
- Intra molecule q is                        0.000
+ Bond angle energy is                    1224.259
+ Dihedral angle energy is                 356.915
+ Improper angle energy is                 128.338
+ Intra molecule vdw is                    -86.042
+ Intra molecule q is                      829.738
  Inter molecule vdw is                      0.000
- Long range correction is                  -0.010
- Inter molecule q is                        0.000
+ Long range correction is                  -0.078
+ Inter molecule q is                     1388.936
+ Number of vectors is                       13362
+ Reciprocal ewald is                        4.325
+ Self ewald is                          -1393.263
  -----------------------------------------------------------
  
 ********************************************************************************
  
+Run simulation
+********************************************************************************
+      Step       Move   Mol Spc Box  Success  MaxWidth
+********************************************************************************
+ 
+Report ending energy & then re-compute from scratch
+********************************************************************************
+ 
+ 
+ Ending energy components for box   1
+  Atomic units-Extensive
+ -----------------------------------------------------------
+ Total system energy is                  2453.128
+ Intra molecular energy is               1709.511
+ Bond energy is                             0.000
+ Angle energy is                         1224.259
+ Dihedral energy is                       356.915
+ Improper angle energy is                 128.338
+ Intra molecule vdw is                    -86.042
+ Intra molecule q is                      829.738
+ Inter molecule vdw is                      0.000
+ Long range correction is                  -0.078
+ Inter molecule q is                     1388.936
+ Reciprocal ewald is                        4.325
+ Self ewald is                          -1393.263
+ -----------------------------------------------------------
+ 
+ 
+ Energy components from total energy call for box   1
+  Atomic units-Extensive
+ -----------------------------------------------------------
+ Total system energy is                  2453.128
+ Intra molecular energy is               1709.511
+ Bond energy is                             0.000
+ Angle energy is                         1224.259
+ Dihedral energy is                       356.915
+ Improper angle energy is                 128.338
+ Intra molecule vdw is                    -86.042
+ Intra molecule q is                      829.738
+ Inter molecule vdw is                      0.000
+ Long range correction is                  -0.078
+ Inter molecule q is                     1388.936
+ Reciprocal ewald is                        4.325
+ Self ewald is                          -1393.263
+ -----------------------------------------------------------
+********************************************************************************
+ 
+ 
+Writing information for box  1
+********************************************************************************
+ 
+   ---------------------------------------------------------
+   Writing information for species  1
+ 
+                Move      Trials     Success   % Success
+           Translate           1           1      100.00
+   ---------------------------------------------------------
+ 
+********************************************************************************
+ 
+ Writing information about subroutine times
+********************************************************************************
+ Translation time =            0.004308 secs.
+********************************************************************************
+ 
 ********************************************************************************
 ************************ Cassandra simulation complete *************************
+********************************************************************************
+ 
+ Program execution time
+********************************************************************************
+         0      Years
+         0     Months
+         0       Days
+         0      Hours
+         0    Minutes
+         0    Seconds
+        28         ms
 ********************************************************************************

@@ -1,3 +1,7 @@
+#Test 6: This test tests the LJ energy from the NIST website. There are two checks in the test. The 1st check tests with a cut_tail of 3*sigma. While the second check tests a cut of 4*sigma. Each of the two checks goes in more detail checking the total, vdw, and long range energies. It tests these 3 energies for the 4 different configurations from the NIST website which were downloaded and then edited for use in the Cassandra program.
+
+#Note: The test uses a search to extract the energies from the log file created when running Cassandra based on the name of the energy. Furthermore, the extracted energies where than compared to the energies acquired from the NIST website. 
+
 
 # Import modules:
 import subprocess as sp 

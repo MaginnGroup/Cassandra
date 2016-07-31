@@ -1,5 +1,8 @@
 # This is Test 7 in a series of tests for a testSuite in order to check updates made to the Cassandra program. 
-# Test 7 blah blah blah 
+#Test 7: This test tests the charge energy from the NIST website using water spce. This test computes the electrostatic energy. It tests this energy for the 4 different configurations from the NIST website which were downloaded and then edited for use in the Cassandra program.
+
+#Note: The test uses a search to extract the energies from the log file created when running Cassandra based on the name of the energy. Furthermore, the extracted energies where than compared to the energies acquired from the NIST website. Also, the energies from the NIST website corresponds to the following Cassandra energies: Cself = Eself, Creciprical = Efourrier, Cintermoleculeq = Eintra + Ereal, Cinter_mol_vdw = Edisp, Clong_range = Elrc, Cintra = 0.0. Where the energies with C in the front are the Cassandra generated energies and the ones with E in the front are from the NIST website. 
+
 # Import Modules
 import subprocess as sp #This module lets us run cassandra from python
 import numpy as np #this module s the package for scientific computing in python
@@ -258,14 +261,14 @@ for line in shakes:
 	elif re.match("(.*)Self ewald(.*)", line):
 		line_self1 = line
 
-print "Water 1"
-print line_tot1
-print line_intraQ1
-print line_vdw1
-print line_long1
-print line_interQ1
-print line_recip1
-print line_self1
+#print "Water 1"
+#print line_tot1
+#print line_intraQ1
+#print line_vdw1
+#print line_long1
+#print line_interQ1
+#print line_recip1
+#print line_self1
 
 # WATER 2
 shakes = open("test7_water2.out.log", "r")
@@ -285,14 +288,14 @@ for line in shakes:
 	elif re.match("(.*)Self ewald(.*)", line):
 		line_self2 = line
 
-print "Water 2"
-print line_tot2
-print line_intraQ2
-print line_vdw2
-print line_long2
-print line_interQ2
-print line_recip2
-print line_self2
+#print "Water 2"
+#print line_tot2
+#print line_intraQ2
+#print line_vdw2
+#print line_long2
+#print line_interQ2
+#print line_recip2
+#print line_self2
 
 # WATER 3
 shakes = open("test7_water3.out.log", "r")
@@ -312,14 +315,14 @@ for line in shakes:
 	elif re.match("(.*)Self ewald(.*)", line):
 		line_self3 = line
 
-print "Water 3"
-print line_tot3
-print line_intraQ3
-print line_vdw3
-print line_long3
-print line_interQ3
-print line_recip3
-print line_self3
+#print "Water 3"
+#print line_tot3
+#print line_intraQ3
+#print line_vdw3
+#print line_long3
+#print line_interQ3
+#print line_recip3
+#print line_self3
 
 
 # WATER 4
@@ -340,12 +343,613 @@ for line in shakes:
 	elif re.match("(.*)Self ewald(.*)", line):
 		line_self4 = line
 
-print "Water 4"
-print line_tot4
-print line_intraQ4
-print line_vdw4
-print line_long4
-print line_interQ4
-print line_recip4
-print line_self4
+#print "Water 4"
+#print line_tot4
+#print line_intraQ4
+#print line_vdw4
+#print line_long4
+#print line_interQ4
+#print line_recip4
+#print line_self4
 
+# We will now extract the numbers 
+# For water 1 - set empty variables
+num_tot1 = []
+num_intraQ1 = []
+num_vdw1 = []
+num_long1 = []
+num_interQ1 = []
+num_recip1 = []
+num_self1 = []
+
+# For water 2 - set empty variables
+num_tot2 = []
+num_intraQ2 = []
+num_vdw2 = []
+num_long2 = []
+num_interQ2 = []
+num_recip2 = []
+num_self2 = []
+
+# For water 3 - set empty variables
+num_tot3 = []
+num_intraQ3 = []
+num_vdw3 = []
+num_long3 = []
+num_interQ3 = []
+num_recip3 = []
+num_self3 = []
+
+# For water 4 - set empty variables
+num_tot4 = []
+num_intraQ4 = []
+num_vdw4 = []
+num_long4 = []
+num_interQ4 = []
+num_recip4 = []
+num_self4 = []
+
+# WATER 1
+# Use a for loop in order to go through each character in the line independently.
+# For the total (I have yet to figure out how to put this all on big loop like above
+for t in line_tot1.split():
+	try:
+		num_tot1.append(float(t))
+	except ValueError:
+		pass
+num_tot1 = num_tot1[0]
+
+# for IntraQ
+for t in line_intraQ1.split():
+
+	try:
+		num_intraQ1.append(float(t))
+	except ValueError:
+		pass
+num_intraQ1 = num_intraQ1[0]
+
+# for vdw
+for t in line_vdw1.split():
+	try:
+		num_vdw1.append(float(t))
+	except ValueError:
+		pass
+num_vdw1 = num_vdw1[0]
+
+# for long
+for t in line_long1.split():
+	try:
+		num_long1.append(float(t))
+	except ValueError:
+		pass
+num_long1 = num_long1[0]
+
+# for interQ
+for t in line_interQ1.split():
+	try:
+		num_interQ1.append(float(t))
+	except ValueError:
+		pass
+num_interQ1 = num_interQ1[0]
+
+#for recip
+for t in line_recip1.split():
+	try:
+		num_recip1.append(float(t))
+	except ValueError:
+		pass
+num_recip1 = num_recip1[0]
+
+#for self 
+for t in line_self1.split():
+	try:
+		num_self1.append(float(t))
+	except ValueError:
+		pass
+num_self1 = num_self1[0]
+
+#print "Water 1"
+#print num_tot1
+#print num_intraQ1
+#print num_vdw1
+#print num_long1
+#print num_interQ1
+#print num_recip1
+#print num_self1
+
+# WATER 2
+# Use a for loop in order to go through each character in the line independently.
+# For the total (I have yet to figure out how to put this all on big loop like above
+for t in line_tot2.split():
+	try:
+		num_tot2.append(float(t))
+	except ValueError:
+		pass
+num_tot2 = num_tot2[0]
+
+# for IntraQ
+for t in line_intraQ2.split():
+
+	try:
+		num_intraQ2.append(float(t))
+	except ValueError:
+		pass
+num_intraQ2 = num_intraQ2[0]
+
+# for vdw
+for t in line_vdw2.split():
+	try:
+		num_vdw2.append(float(t))
+	except ValueError:
+		pass
+num_vdw2 = num_vdw2[0]
+
+# for long
+for t in line_long2.split():
+	try:
+		num_long2.append(float(t))
+	except ValueError:
+		pass
+num_long2 = num_long2[0]
+
+# for interQ
+for t in line_interQ2.split():
+	try:
+		num_interQ2.append(float(t))
+	except ValueError:
+		pass
+num_interQ2 = num_interQ2[0]
+
+#for recip
+for t in line_recip2.split():
+	try:
+		num_recip2.append(float(t))
+	except ValueError:
+		pass
+num_recip2 = num_recip2[0]
+
+#for self 
+for t in line_self2.split():
+	try:
+		num_self2.append(float(t))
+	except ValueError:
+		pass
+num_self2 = num_self2[0]
+
+#print "Water 2"
+print num_tot2
+#print num_intraQ2
+#print num_vdw2
+#print num_long2
+print num_interQ2
+#print num_recip2
+#print num_self2
+
+# WATER 3
+# Use a for loop in order to go through each character in the line independently.
+# For the total (I have yet to figure out how to put this all on big loop like above
+for t in line_tot3.split():
+	try:
+		num_tot3.append(float(t))
+	except ValueError:
+		pass
+num_tot3 = num_tot3[0]
+
+# for IntraQ
+for t in line_intraQ3.split():
+
+	try:
+		num_intraQ3.append(float(t))
+	except ValueError:
+		pass
+num_intraQ3 = num_intraQ3[0]
+
+# for vdw
+for t in line_vdw3.split():
+	try:
+		num_vdw3.append(float(t))
+	except ValueError:
+		pass
+num_vdw3 = num_vdw3[0]
+
+# for long
+for t in line_long3.split():
+	try:
+		num_long3.append(float(t))
+	except ValueError:
+		pass
+num_long3 = num_long3[0]
+
+# for interQ
+for t in line_interQ3.split():
+	try:
+		num_interQ3.append(float(t))
+	except ValueError:
+		pass
+num_interQ3 = num_interQ3[0]
+
+#for recip
+for t in line_recip3.split():
+	try:
+		num_recip3.append(float(t))
+	except ValueError:
+		pass
+num_recip3 = num_recip3[0]
+
+#for self 
+for t in line_self3.split():
+	try:
+		num_self3.append(float(t))
+	except ValueError:
+		pass
+num_self3 = num_self3[0]
+
+#print "Water 3"
+print num_tot3
+#print num_intraQ3
+#print num_vdw3
+#print num_long3
+print num_interQ3
+#print num_recip3
+#print num_self3
+
+# WATER 4
+# Use a for loop in order to go through each character in the line independently.
+# For the total (I have yet to figure out how to put this all on big loop like above
+for t in line_tot4.split():
+	try:
+		num_tot4.append(float(t))
+	except ValueError:
+		pass
+num_tot4 = num_tot4[0]
+
+# for IntraQ
+for t in line_intraQ4.split():
+	try:
+		num_intraQ4.append(float(t))
+	except ValueError:
+		pass
+num_intraQ4 = num_intraQ4[0]
+
+# for vdw
+for t in line_vdw4.split():
+	try:
+		num_vdw4.append(float(t))
+	except ValueError:
+		pass
+num_vdw4 = num_vdw4[0]
+
+# for long
+for t in line_long4.split():
+	try:
+		num_long4.append(float(t))
+	except ValueError:
+		pass
+num_long4 = num_long4[0]
+
+# for interQ
+for t in line_interQ4.split():
+	try:
+		num_interQ4.append(float(t))
+	except ValueError:
+		pass
+num_interQ4 = num_interQ4[0]
+
+#for recip
+for t in line_recip4.split():
+	try:
+		num_recip4.append(float(t))
+	except ValueError:
+		pass
+num_recip4 = num_recip4[0]
+
+#for self 
+for t in line_self4.split():
+	try:
+		num_self4.append(float(t))
+	except ValueError:
+		pass
+num_self4 = num_self4[0]
+
+#print "Water 4"
+print num_tot4
+#print num_intraQ4
+#print num_vdw4
+#print num_long4
+print num_interQ4
+#print num_recip4
+#print num_self4
+
+# Lastly, we will compare all these numbers and test the Cassandra Code 
+# WATER 1
+print "\n"+bold+"Check 1 ( SPCE Water Configuration 1): " + normal
+# For Total
+if (num_tot1*.01/0.008314 + 4.88604) < 1:
+	c1 = 1
+	print "Total..."
+else: 
+	c1 = 0 
+	print "Total Fails."
+
+# For intraQ
+if num_intraQ1 == 0:
+	c2 = 1
+	print "Intra Q..."
+else: 
+	c2 = 0 
+	print "Intra Q Fails."
+
+
+# For vdw
+if ((num_vdw1*0.01/0.008314)/1000 - 99.5387) < 1:
+	c3 = 1
+	print "Vdw..."
+else: 
+	c3 = 0 
+	print "Vdw Fails."
+
+#for long
+if ((num_long1*0.01/0.008314)/100 + 8.23715) < 1:
+	c4 = 1
+	print "Long range..."
+else: 
+	c4 = 0 
+	print "Long Range Fails."
+
+# For interQ
+if (num_interQ1/100 + 4351.5) < 4:
+	c2 = 1
+	print "Inter Q..."
+else: 
+	c2 = 0
+	print "Inter Q Fails."
+print num_interQ1
+print num_interQ1/((-558889+2809990)*.008314*100)
+
+# For recip
+if ((num_recip1*0.01/0.008314)/100 - 62.7000) < 1:
+	c6 = 1
+	print "Reciprocal..."
+else: 
+	c6 = 0 
+	print "Reciprocal Fails."
+
+
+# For self
+if ((num_self1*0.01/0.008314)/100000 + 28.4469) < 1:
+	c7 = 1
+	print "Self Ewald..."
+else: 
+	c7 = 0 
+	print "Self Ewald Fails."
+
+#For water 1
+if c2 == 1 and c3 == 1 and c4 == 1 and c6 == 1 and c7 == 1:
+	w1 = 1
+	print bold + "Check 1..." + normal
+else:
+	w1 = 0 
+	print bold + "Check 1 fails. See above." + normal
+
+# WATER 2
+print "\n"+bold+"Check 2 ( SPCE Water Configuration 2): " + normal
+# For Total
+if (num_tot1*.01/0.008314 + 2 ) < 1:
+	c1 = 1
+	print "Total..."
+else: 
+	c1 = 0 
+	print "Total Fails."
+
+# For intraQ
+if num_intraQ2 == 0:
+	c2 = 1
+	print "Intra Q..."
+else: 
+	c2 = 0 
+	print "Intra Q Fails."
+
+
+# For vdw
+if ((num_vdw2*0.01/0.008314)/10000 - 19.3712) < 1:
+	c3 = 1
+	print "Vdw..."
+else: 
+	c3 = 0 
+	print "Vdw Fails."
+
+#for long
+if ((num_long2*0.01/0.008314)/100 + 32.9486) < 1:
+	c4 = 1
+	print "Long range..."
+else: 
+	c4 = 0 
+	print "Long Range Fails."
+
+# For interQ
+if (num_interQ2/100 + 4351.5) < 4:
+	c2 = 1
+	print "Inter Q..."
+else: 
+	c2 = 0 
+	print "Inter Q Fails."
+
+print num_interQ2
+print num_interQ2/((-1192950+5619980)*.008314*100)
+
+# For recip
+if ((num_recip2*0.01/0.008314)/100 - 60.349) < 1:
+	c6 = 1
+	print "Reciprocal..."
+else: 
+	c6 = 0 
+	print "Reciprocal Fails."
+
+
+# For self
+if ((num_self2*0.01/0.008314)/100000 + 56.8938) < 1:
+	c7 = 1
+	print "Self Ewald..."
+else: 
+	c7 = 0 
+	print "Self Ewald Fails."
+
+
+#For water 1
+if c2 == 1 and c3 == 1 and c4 == 1 and c6 == 1 and c7 == 1:
+	w2 = 1
+	print bold + "Check 2..." + normal
+else:
+	w2 = 0 
+	print bold + "Check 2 fails. See above." + normal
+
+# WATER 3
+print "\n"+bold+"Check 3 ( SPCE Water Configuration 3): " + normal
+# For Total
+if (num_tot1*.01/0.008314 + 2 ) < 1:
+	c1 = 1
+	print "Total..."
+else: 
+	c1 = 0 
+	print "Total Fails."
+
+# For intraQ
+if num_intraQ3 == 0:
+	c2 = 1
+	print "Intra Q..."
+else: 
+	c2 = 0 
+	print "Intra Q Fails."
+
+
+# For vdw
+if ((num_vdw3*0.01/0.008314)/10000 -35.4344) < 1:
+	c3 = 1
+	print "Vdw..."
+else: 
+	c3 = 0 
+	print "Vdw Fails."
+
+#for long
+if ((num_long3*0.01/0.008314)/100 + 74.1343) < 1:
+	c4 = 1
+	print "Long range..."
+else: 
+	c4 = 0 
+	print "Long Range Fails."
+
+# For interQ
+if (num_interQ3/100 + 4351.5) < 4:
+	c2 = 1
+	print "Inter Q..."
+else: 
+	c2 = 0 
+	print "Inter Q Fails."
+
+print num_interQ3
+print num_interQ3/((-1962970+8429980)*.008314*100)
+
+# For recip
+if ((num_recip3*0.01/0.008314)/100 - 52.4461) < 1:
+	c6 = 1
+	print "Reciprocal..."
+else: 
+	c6 = 0 
+	print "Reciprocal Fails."
+
+
+# For self
+if ((num_self3*0.01/0.008314)/100000 + 85.3407) < 1:
+	c7 = 1
+	print "Self Ewald..."
+else: 
+	c7 = 0 
+	print "Self Ewald Fails."
+
+
+#For water 1
+if c2 == 1 and c3 == 1 and c4 == 1 and c6 == 1 and c7 == 1:
+	w3 = 1
+	print bold + "Check 3..." + normal
+else:
+	w3 = 0 
+	print bold + "Check 3 fails. See above." + normal
+
+# WATER 4
+print "\n"+bold+"Check 4 ( SPCE Water Configuration 4): " + normal
+# For Total
+if (num_tot1*.01/0.008314 + 2 ) < 1:
+	c1 = 1
+	print "Total..."
+else: 
+	c1 = 0 
+	print "Total Fails."
+
+# For intraQ
+if num_intraQ4 == 0:
+	c2 = 1
+	print "Intra Q..."
+else: 
+	c2 = 0 
+	print "Intra Q Fails."
+
+
+# For vdw
+if ((num_vdw4*0.01/0.008314)/10000 - 44.8593) < 1:
+	c3 = 1
+	print "Vdw..."
+else: 
+	c3 = 0 
+	print "Vdw Fails."
+
+#for long
+if ((num_long4*0.01/0.008314)/100 + 13.7286) < 1:
+	c4 = 1
+	print "Long range..."
+else: 
+	c4 = 0 
+	print "Long Range Fails."
+
+# For interQ
+if (num_interQ4/100 + 4351.5) < 4:
+	c2 = 1
+	print "Inter Q..."
+else: 
+	c2 = 0 
+	print "Inter Q Fails."
+
+
+print num_interQ4
+print num_interQ4/((-3572260+14148300)*.008314*100)
+
+# For recip
+if ((num_recip4*0.01/0.008314)/100 - 75.878) < 2:
+	c6 = 1
+	print "Reciprocal..."
+else: 
+	c6 = 0 
+	print "Reciprocal Fails."
+
+
+# For self
+if ((num_self4*0.01/0.008314)/1000000 + 14.1483) < 1:
+	c7 = 1
+	print "Self Ewald..."
+else: 
+	c7 = 0 
+	print "Self Ewald Fails."
+
+
+#For water 4
+if c2 == 1 and c3 == 1 and c4 == 1 and c6 == 1 and c7 == 1:
+	w4 = 1
+	print bold + "Check 4..." + normal
+else:
+	w4 = 0 
+	print bold + "Check 4 fails. See above." + normal
+
+#check all Water
+if w1 == 1 and w2 == 1 and w3 == 1 and w4 == 1:
+	print bold + "Pass Test 7: Charge (Water SPCE) Energy." + normal
+else: 
+	print bold + "Test 7 fails." + normal

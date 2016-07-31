@@ -3,8 +3,8 @@ Run info
 version: Cassandra Development Version
 inputfile: water.inp
 name of run: test7_water4.out
-date (mm/dd/yyyy): 07/13/2016
-time: 15:02:54
+date (mm/dd/yyyy): 07/28/2016
+time: 16:24:18
 machine: crcfe02.crc.nd.edu
 ********************************************************************************
  
@@ -340,7 +340,7 @@ Writing information for box  1
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.001523 secs.
+ Translation time =            0.001533 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -354,6 +354,6 @@ Writing information for box  1
          0       Days
          0      Hours
          0    Minutes
-         1    Seconds
-       683         ms
+         3    Seconds
+       396         ms
 ********************************************************************************
