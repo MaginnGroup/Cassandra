@@ -23,10 +23,10 @@ import os, sys
 #*******************************************************************************
 # NIST answers
 kBoltz = 1.3806488 * 6.02214129 / 1000 # kJ / mol K
-nistAnswer = ((9.95387E+04,-8.23715E+02,-5.58889E+05,6.27009E+03,-2.84469E+06,2.80999E+06,-4.88604E+05),
-              (1.93712E+05,-3.29486E+03,-1.19295E+06,6.03495E+03,-5.68938E+06,5.61998E+06,-1.06590E+06),
-              (3.54344E+05,-7.41343E+03,-1.96297E+06,5.24461E+03,-8.53407E+06,8.42998E+06,-1.71488E+06),
-              (4.48593E+05,-1.37286E+04,-3.57226E+06,7.58785E+03,-1.42235E+07,1.41483E+07,-3.20501E+06))
+nistAnswer = ((9.95387E+04,-8.23715E+02,-5.58889E+05+2.80999E+06,6.27009E+03,-2.84469E+06,-4.88604E+05),
+              (1.93712E+05,-3.29486E+03,-1.19295E+06+5.61998E+06,6.03495E+03,-5.68938E+06,-1.06590E+06),
+              (3.54344E+05,-7.41343E+03,-1.96297E+06+8.42998E+06,5.24461E+03,-8.53407E+06,-1.71488E+06),
+              (4.48593E+05,-1.37286E+04,-3.57226E+06+1.41483E+07,7.58785E+03,-1.42235E+07,-3.20501E+06))
 # index = [check][property]
 
 # Simulation parameters
@@ -38,19 +38,17 @@ atomParms = ((('O','O',15.999,-0.84760,'LJ',78.19743111,3.16555789),
 bondParms = (((1,2,'fixed',1.),
               (1,3,'fixed',1.)),) # index = [species][bond][parm]
 angleParms = (((1,2,3,'fixed',109.47),),) # index = [species][angle][parm]
-nMols = (100, 200, 300, 750) # index = [check]
-box = (20., 20., 20., 30.)   # index = [check]
+prpList = ("energy_intervdw", "energy_lrc", "energy_interq", "energy_reciprocal", 
+           "energy_self", "energy_total") # index = [property]
+vdwStyle = 'lj cut_tail 10.'
 
 # Check parameters
 # params for each simulation
 numChecks = 4 # number of simulations to run
-vdwStyle = 'lj cut_tail 10.'
+nMols = (100, 200, 300, 750) # index = [check]
+box = (20., 20., 20., 30.)   # index = [check]
 chargeStyle = ('coul ewald 10. 0.000393669','coul ewald 10. 0.000393669',
                'coul ewald 10. 0.000393669','coul ewald 10. 0.0306708') # index = [check]
-cassStr = ("Inter molecule vdw", "Long range correction", "Inter molecule q", 
-           "Reciprocal ewald", "Self ewald", "Intra molecule periodic q", 
-           "Total system energy") # index = [property]
-analyticAnswer = [None] * numChecks
 cassAnswer     = [None] * numChecks #this list will hold cassandra's answers
 passCheck      = [None] * numChecks
 errorTol = 1e-5
@@ -63,7 +61,7 @@ normal = '\033[0m' #Will make the next text normal(ie. unbold)
 # FILE MANAGEMENT
 #*******************************************************************************
 cassDir = "/Users/rmullen2/dev/cassandra/Src/"
-cassExe = "cassandra.test"
+cassExe = "cassandra.dev"
 cassRun = "test7.out"
 inpName = "test7.inp"
 xyzName = ("inputFiles/test7.water1.xyz", "inputFiles/test7.water2.xyz",
@@ -146,66 +144,6 @@ for s in range(nSpecies):
 # Loop through checks
 print "%-25s %18s %18s %18s %8s" % ("Property","Cassandra","NIST","Relative_Err","Pass")
 for i in range(numChecks):
-	# Step 2) Calculate analytic answer
-	# Ewald summation
-	rcut = 10.
-	alpha = 5.6 / box[i]
-	nmax2 = 27
-	nmax = 5
-
-	analyticAnswer[i] = [0.] * 7
-	# VDW
-	analyticAnswer[i][0] = 0.
-	# LRC
-	analyticAnswer[i][1] = 0.
-	# Real
-	for j in range(nAtoms):
-		for k in range(j+1,nAtoms):
-			# skip k if jk are in the same molecule
-			if (j%3 == 0 and k - j < 3) or (j%3 == 1 and k - j < 2):
-				continue
-			dx = atomCoords[j][0] - atomCoords[k][0]
-			dy = atomCoords[j][1] - atomCoords[k][1]
-			dz = atomCoords[j][2] - atomCoords[k][2]
-			# need to apply PBCs
-			rjk = dx**2 + dy**2 + dz**2
-			Ejk = q[j%3] * q[k%3] / rjk * (1. - erf(alpha * rjk))
-	analyticAnswer[i][2] = (E12+E13+E14+E23+E24+E34)*charge_factor
-	# Reciprocal
-	recip = 0.
-	for nx in range(-nmax,nmax):
-		kx = float(nx) / box
-		for ny in range(-nmax,nmax):
-			ky = float(ny) / box
-			for nz in range(-nmax,nmax):
-				kz = float(nz) / box
-				n2 = nx**2 + ny**2 + nz**2
-				if (n2 == 0 or n2 > nmax2):
-					continue
-				k2 = kx**2 + ky**2 + kz**2
-				real = 0.; im = 0.
-				for j in range(len(atomCoords)):
-					kr = kx * atomCoords[j][0] + ky * atomCoords[j][1] + kz * atomCoords[j][2]
-					real += q[j%3] * np.cos(2 * np.pi * kr)
-					im   += q[j%3] * np.sin(2 * np.pi * kr)
-				real2 = real**2
-				im2   = im**2
-				prefactor = 1.0/float(k2) * np.exp(-(np.pi/alpha)**2 * float(k2))
-				recip = recip + prefactor * (real2 + im2)
-	analyticAnswer[i][3] = recip * charge_factor / (2 * np.pi * box**3)
-	# Self
-	sumq2 = 0.
-	for j in range(nAtoms):
-		sumq2 += q[j%3]**2
-	analyticAnswer[i][4] = - alpha / np.sqrt(np.pi) * sumq2 * charge_factor
-	# Intra periodic
-	for j in range(0,nAtoms,3):
-		Ej1 = q[0] * q[1] * (- erf(alpha)) #rj1 = 1
-		Ej2 = 
-		E12 =
-	analyticAnswer[i][5] = 
-	# Total
-	analyticAnswer[i][6] = sum(analyticAnswer[i][1:4])
 
 	# Step 2) Run Cassandra to get its answer
 	# 2.1) Write inp file
@@ -231,6 +169,10 @@ for i in range(numChecks):
 	inp.write("# Start_Type\nread_config %d %s\n\n" % (nMols[i],xyzName[i]))
 	inp.write("# Run_Type\nEquilibration 100\n\n")
 	inp.write("# Simulation_Length_Info\nunits steps\nprop_freq 1\ncoord_freq 1\nrun 0\n\n")
+	inp.write("# Property_Info 1\n")
+	for prp in prpList:
+		inp.write("%s\n" % (prp))
+	inp.write("\n")
 	inp.write("END\n")
 	inp.close()
 
@@ -242,14 +184,14 @@ for i in range(numChecks):
 		print("Error.Abort.")
 
 	# 3.3) Read logfile
-	log = open(cassRun + ".log", "r")
+	prpFile = open(cassRun + ".prp", "r")
 	# search line by line in log for the words "Total system energy"
-	nPrp = len(cassStr)
-	cassAnswer[i] = [None] * nPrp
-	for line in log:
-		for j in range(nPrp):
-			if (cassStr[j] in line):
-				cassAnswer[i][j] = float(line.split()[-1])
+	nPrp = len(prpList)
+	prpFile.readline() # header1
+	prpFile.readline() # header2
+	prpFile.readline() # header3
+	cassAnswer[i] = [float(prp) for prp in prpFile.readline().split()[1:]]
+	prpFile.close()
 
 	# Step 4) Compare answers
 	for j in range(nPrp):
