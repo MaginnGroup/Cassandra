@@ -9,11 +9,11 @@
  
 Run info
 ********************************************************************************
-version: Cassandra Version 1.2 20160720
+version: Cassandra Version 1.2 20160727
 inputfile: species1_mcf_gen.inp
 name of run: species1_mcf_gen
-date (mm/dd/yyyy): 07/26/2016
-time: 23:13:40
+date (mm/dd/yyyy): 07/27/2016
+time: 20:28:18
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
