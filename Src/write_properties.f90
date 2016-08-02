@@ -282,7 +282,7 @@ CONTAINS
          END IF
          write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
 
-      ELSE IF (prop_written == 'Energy_Reciprocal') THEN
+      ELSE IF (prop_written == 'Energy_Recip') THEN
          IF (block_avg) THEN
             write_buff(ii+1) = ac_energy(this_box,iblock)%reciprocal
          ELSE
