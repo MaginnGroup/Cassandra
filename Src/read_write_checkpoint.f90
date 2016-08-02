@@ -128,7 +128,8 @@ CONTAINS
                 WRITE(chkptunit,*) nonbond_list(ia,is)%element, &
                      atom_list(ia,this_im,is)%rxp, &
                      atom_list(ia,this_im,is)%ryp, &
-                     atom_list(ia,this_im,is)%rzp, this_box
+                     atom_list(ia,this_im,is)%rzp, &
+                     this_box
              END DO
              
           END DO
@@ -281,8 +282,8 @@ SUBROUTINE Read_Checkpoint
              READ(restartunit,*)nonbond_list(ia,is)%element, &
                   atom_list(ia,im,is)%rxp, &
                   atom_list(ia,im,is)%ryp, &
-                  atom_list(ia,im,is)%rzp 
-             READ(restartunit,*) this_box
+                  atom_list(ia,im,is)%rzp, &
+                  this_box
              ! set exist flags for this atom
              atom_list(ia,im,is)%exist = .TRUE.
           END DO

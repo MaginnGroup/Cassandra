@@ -9,11 +9,11 @@
  
 Run info
 ********************************************************************************
-version: Cassandra Version 1.2 20160720
+version: Cassandra Version 1.2 20160727
 inputfile: frag1.inp
 name of run: frag1
-date (mm/dd/yyyy): 07/26/2016
-time: 23:13:40
+date (mm/dd/yyyy): 07/27/2016
+time: 20:28:18
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -207,11 +207,11 @@ Compute total energy
  Starting energy components for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy                   102848.974
- Intra molecular energy                102848.974
+ Total system energy                    38706.241
+ Intra molecular energy                 38706.241
    Bond energy                              0.000
    Bond angle energy                      346.511
-   Dihedral angle energy               102502.464
+   Dihedral angle energy                38359.731
    Improper angle energy                    0.000
  Intra molecule vdw                         0.000
  Intra molecule q                           0.000
@@ -233,11 +233,11 @@ Report ending energy & then re-compute from scratch
  Initial energy + deltas for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy                    96954.677
- Intra molecular energy                 96954.677
+ Total system energy                    26109.343
+ Intra molecular energy                 26109.343
    Bond energy                              0.000
-   Angle energy                          1646.738
-   Dihedral energy                      95307.938
+   Angle energy                          7750.851
+   Dihedral energy                      18358.493
    Improper angle energy                    0.000
  Intra molecule vdw                         0.000
  Intra molecule q                           0.000
@@ -249,11 +249,11 @@ Report ending energy & then re-compute from scratch
  Recomputed energy from scratch for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy                    96954.677
- Intra molecular energy                 96954.677
+ Total system energy                    26109.343
+ Intra molecular energy                 26109.343
    Bond energy                              0.000
-   Angle energy                          1646.738
-   Dihedral energy                      95307.938
+   Angle energy                          7750.851
+   Dihedral energy                      18358.493
    Improper angle energy                    0.000
  Intra molecule vdw                         0.000
  Intra molecule q                           0.000
@@ -290,5 +290,5 @@ Writing information for box  1
          0      Hours
          0    Minutes
          0    Seconds
-       104         ms
+       102         ms
 ********************************************************************************

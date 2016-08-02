@@ -5594,15 +5594,45 @@ USE Global_Variables, ONLY: cpcollect
               ELSE IF (line_array(1) == 'energy_total' .OR. line_array(1) == 'Energy_Total') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Total'
-              ELSE IF (line_array(1) == 'energy_lj' .OR. line_array(1) == 'Energy_LJ') THEN
+              ELSE IF (line_array(1) == 'energy_inter') THEN
                  nbr_properties = nbr_properties + 1
-                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_LJ'
-              ELSE IF (line_array(1) == 'energy_elec' .OR. line_array(1) == 'Energy_Elec') THEN
-                 nbr_properties = nbr_properties + 1
-                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Elec'
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Inter'
               ELSE IF (line_array(1) == 'energy_intra' .OR. line_array(1) == 'Energy_Intra') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Intra'
+              ELSE IF (line_array(1) == 'energy_bond') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Bond'
+              ELSE IF (line_array(1) == 'energy_angle') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Angle'
+              ELSE IF (line_array(1) == 'energy_dihedral') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Dihedral'
+              ELSE IF (line_array(1) == 'energy_improper') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Improper'
+              ELSE IF (line_array(1) == 'energy_intravdw') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_IntraVDW'
+              ELSE IF (line_array(1) == 'energy_intraq') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_IntraQ'
+              ELSE IF (line_array(1) == 'energy_intervdw') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_InterVDW'
+              ELSE IF (line_array(1) == 'energy_interq') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_InterQ'
+              ELSE IF (line_array(1) == 'energy_lrc') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_LRC'
+              ELSE IF (line_array(1) == 'energy_recip') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Recip'
+              ELSE IF (line_array(1) == 'energy_self') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Self'
               ELSE IF (line_array(1) == 'enthalpy' .OR. line_array(1) == 'Enthalpy') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Enthalpy'
@@ -5620,8 +5650,10 @@ USE Global_Variables, ONLY: cpcollect
                 err_msg(1) = 'Keyword "' // TRIM(line_array(1)) // '" on line ' // &
                              TRIM(Int_To_String(line_nbr)) // ' of input file'
                 err_msg(2) = 'is not a supported property'
-                err_msg(3) = 'Supported keywords are: energy_total, energy_lj, energy_elec, energy_intra,'
-                err_msg(4) = '                        enthalpy, pressure, volume, density, nmols, mass_density'
+                err_msg(3) = 'Supported keywords are: energy_total, energy_intra, energy_inter, energy_bond,'
+                err_msg(4) = '  energy_angle, energy_dihedral, energy_improper, energy_intravdw, energy_intraq'
+                err_msg(5) = '  energy_intervdw, energy_interq, energy_lrc, energy_recip, energy_self,'
+                err_msg(6) = '  enthalpy, pressure, volume, density, nmols, mass_density'
                 CALL Clean_Abort(err_msg,'Get_Property_Info')
               END IF
               
