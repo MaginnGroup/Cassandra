@@ -24,42 +24,19 @@ MODULE Energy_Routines
   ! This modules contains a collection of all the routines involved in computing
   ! energies and associated quantities. 
   ! 
-  ! Compute_Bond_Energy: passed two atom indices, the molecule index and the 
-  !                       species index it returns the energy of the bond
-  !                       between those two atoms, consistent with the potential
-  !                       type. 
-  !                       Currently supports none and harmonic.
-  !
   ! Compute_Molecule_Bond_Energy: passed a molecule and species index, this
   !                       returns the total bond energy associated with that
   !                       molecule 
   !                       Currently supports none and harmonic.
   ! 
-  ! Compute_Angle_Energy: passed indices for three bonded atoms atom1,atom2,
-  !                       atom3 where atom3 is the apex of a the angle, along 
-  !                       with the molecule and species index it returns the 
-  !                       energy associated with that bond angle.
-  !                       Currently supports none and harmonic.
-  !
   ! Compute_Molecule_Angle_Energy: Passed a molecule and species index, it 
   !                       returns the total energy of that molecule due to bond 
   !                       angles.
   !                       Currently supports none and harmonic.
   !
-  ! Compute_Dihedral_Energy: Passed 4 contiguous atoms that form a dihedral and 
-  !                       the molecule and species indices, it returns the 
-  !                       energy of that dihedral.  
-  !                       Currently supports none and OPLS.
-  !
   ! Compute_Molecule_Dihedral_Energy: Passed a molecule and species index, it 
   !                       returns the total dihedral energy of that molecule. 
   !                       Currently supports none and OPLS.
-  !
-  ! Compute_Improper_Energy: Passed the indices of 4 atoms making up an improper
-  !                       angle, along with the species and molecule index, 
-  !                       this returns the energy of that improper. 
-  !                       This has not been tested!!! 
-  !                       Currently supports harmonic.
   !
   ! Compute_Molecule_Improper_Energy: Passed molecule and species indices, this 
   !                       computes the total improper energy of the molecule. 
@@ -207,6 +184,7 @@ MODULE Energy_Routines
   USE Global_Variables
   USE File_Names
   USE Pair_Nrg_Routines
+  USE IO_Utilities
  !$  USE OMP_LIB
 
   IMPLICIT NONE
@@ -215,7 +193,7 @@ CONTAINS
   
   !-----------------------------------------------------------------------------
 
-  SUBROUTINE Compute_Molecule_Bond_Energy(molecule,species,energy)
+  SUBROUTINE Compute_Molecule_Bond_Energy(im,is,energy)
     !---------------------------------------------------------------------------
     ! Given a molecule number and species,this routine computes the total bond energy
     ! of the entire molecule.
@@ -228,26 +206,43 @@ CONTAINS
     ! Revision history:    
 
     ! Passed to
-    INTEGER :: molecule,species
-
-    ! Passed from
-    INTEGER :: ibond
-    REAL(DP) :: length
+    INTEGER :: im,is
 
     ! Returned
     REAL(DP) :: energy
 
+    ! Passed from
+    INTEGER :: ib
+    REAL(DP) :: length
+
     ! Local
-    REAL(DP) :: k,l0,eb
+    REAL(DP) :: k,l0,eb,ltol
+    CHARACTER(7) :: mcf_bond_length, current_bond_length
   !-----------------------------------------------------------------------------
     energy = 0.0_DP
-    DO ibond=1,nbonds(species)
-       IF (bond_list(ibond,species)%int_bond_type == int_none) THEN
+    DO ib=1,nbonds(is)
+       IF (bond_list(ib,is)%int_bond_type == int_none) THEN
+          l0 = bond_list(ib,is)%bond_param(1)
+          ltol = bond_list(ib,is)%bond_param(2)
+          CALL Get_Bond_Length(ib,im,is,length)
+          IF (abs(l0 - length) > ltol) THEN
+             WRITE(mcf_bond_length,'(F7.3)') l0
+             WRITE(current_bond_length,'(F7.3)') length
+             err_msg = ''
+             err_msg(1) = 'Fixed bond is broken between atoms ' &
+                        // TRIM(Int_To_String(bond_list(ib,is)%atom1)) // ' and ' &
+                        // TRIM(Int_To_String(bond_list(ib,is)%atom2)) &
+                        // ' of molecule ' // TRIM(Int_To_String(im)) &
+                        // ' of species ' // TRIM(Int_To_String(is))
+             err_msg(2) = 'Bond length in MCF:  ' // mcf_bond_length
+             err_msg(3) = 'Current bond length: ' // current_bond_length
+             CALL Clean_Abort(err_msg, 'Compute_Molecule_Bond_Energy')
+          END IF
           eb = 0.0_DP
-       ELSEIF (bond_list(ibond,species)%int_bond_type == int_harmonic) THEN
-          k=bond_list(ibond,species)%bond_param(1)
-          l0 = bond_list(ibond,species)%bond_param(2)
-          CALL Get_Bond_Length(ibond,molecule,species,length)
+       ELSEIF (bond_list(ib,is)%int_bond_type == int_harmonic) THEN
+          k=bond_list(ib,is)%bond_param(1)
+          l0 = bond_list(ib,is)%bond_param(2)
+          CALL Get_Bond_Length(ib,im,is,length)
           eb = k*(length-l0)**2
 
           ! Add more potential functions here.
@@ -260,7 +255,7 @@ CONTAINS
   !-----------------------------------------------------------------------------
 
 
-  SUBROUTINE Compute_Molecule_Angle_Energy(molecule,species,energy)
+  SUBROUTINE Compute_Molecule_Angle_Energy(im,is,energy)
     !---------------------------------------------------------------------------
     ! This routine is passed a molecule and species index. It then computes the total
     ! bond angle energy of this molecule.  
@@ -274,24 +269,43 @@ CONTAINS
     !---------------------------------------------------------------------------
     USE Random_Generators
     ! Passed to 
-    INTEGER :: molecule,species
+    INTEGER :: im,is
     
     ! Returns
     REAL(DP) :: energy
     
     ! Local
-    INTEGER :: iangle
-    REAL(DP) :: k,theta0,theta,ea
+    INTEGER :: ia
+    REAL(DP) :: k,theta0,theta,ea,theta_tol
+    CHARACTER (7) :: mcf_angle, current_angle
   !-----------------------------------------------------------------------------
 
     energy = 0.0_DP
-    DO iangle=1,nangles(species)
-       IF (angle_list(iangle,species)%int_angle_type == int_none) THEN
+    DO ia=1,nangles(is)
+       IF (angle_list(ia,is)%int_angle_type == int_none) THEN
+          theta0 = angle_list(ia,is)%angle_param(1) ! in degrees
+          theta_tol = angle_list(ia,is)%angle_param(2) ! in degrees
+          CALL Get_Bond_Angle(ia,im,is,theta)
+          theta = theta * 180.0_DP / PI
+          IF (abs(theta0 - theta) > theta_tol) THEN
+             WRITE(mcf_angle,'(F7.3)') theta0
+             WRITE(current_angle,'(F7.3)') theta
+             err_msg = ''
+             err_msg(1) = 'Fixed angle is broken between atoms ' &
+                        // TRIM(Int_To_String(angle_list(ia,is)%atom1)) // ' and ' &
+                        // TRIM(Int_To_String(angle_list(ia,is)%atom2)) // ' and ' &
+                        // TRIM(Int_To_String(angle_list(ia,is)%atom3)) &
+                        // ' of molecule ' // TRIM(Int_To_String(im)) &
+                        // ' of species ' // TRIM(Int_To_String(is))
+             err_msg(2) = 'Angle in MCF:  ' // mcf_angle
+             err_msg(3) = 'Current angle: ' // current_angle
+             CALL Clean_Abort(err_msg, 'Compute_Molecule_Angle_Energy')
+          END IF
           ea = 0.0_DP
-       ELSEIF (angle_list(iangle,species)%int_angle_type == int_harmonic) THEN
-          k=angle_list(iangle,species)%angle_param(1)
-          theta0 = angle_list(iangle,species)%angle_param(2)
-          CALL Get_Bond_Angle(iangle,molecule,species,theta)
+       ELSEIF (angle_list(ia,is)%int_angle_type == int_harmonic) THEN
+          k=angle_list(ia,is)%angle_param(1)
+          theta0 = angle_list(ia,is)%angle_param(2)
+          CALL Get_Bond_Angle(ia,im,is,theta)
           ea = k*(theta-theta0)**2
           ! Add more potential functions here.
        ENDIF
