@@ -196,35 +196,6 @@ SUBROUTINE Get_Nspecies
      STOP
   END IF
 
-  ALLOCATE(nbr_bond_params(nspecies),Stat = AllocateStatus)
-  IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could not be allocated for nbr_bond_params array'
-     write(*,*)'stopping'
-     STOP
-  END IF
-
-  ALLOCATE(nbr_angle_params(nspecies),Stat = AllocateStatus)
-
-  IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could not be allocated for molfile_name array'
-     write(*,*)'stopping'
-     STOP
-  END IF
-
-  ALLOCATE(nbr_dihedral_params(nspecies),Stat = AllocateStatus)
-  IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could not be allocated for nbr_dihedral_params array'
-     write(*,*)'stopping'
-     STOP
-  END IF
-
-  ALLOCATE(nbr_improper_params(nspecies),Stat = AllocateStatus)
-  IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could not be allocated for nbr_improper_params array'
-     write(*,*)'stopping'
-     STOP
-  END IF
-
   ALLOCATE(nbr_vdw_params(nspecies),Stat = AllocateStatus)
   IF (AllocateStatus /= 0) THEN
      write(*,*)'memory could not be allocated for nbr_vdw_params array'
@@ -255,10 +226,6 @@ SUBROUTINE Get_Nspecies
   nangles_fixed = 0
   ndihedrals = 0
   nimpropers = 0
-  nbr_bond_params = 0
-  nbr_angle_params = 0
-  nbr_dihedral_params = 0
-  nbr_improper_params = 0
   nbr_vdw_params = 0
   nfragments = 0
   fragment_bonds = 0
@@ -1302,9 +1269,6 @@ SUBROUTINE Get_Molecule_Info
      err_msg(1) = 'memorgy could not be alloaced for reservoir files'
   END IF
 
-  ALLOCATE(zig_calc(nspecies))
-  zig_calc(:) = .FALSE.
-
   ! Loop over all species and load information from mfc files into list arrays
   species_list(:)%fragment = .FALSE.
   
@@ -1531,7 +1495,7 @@ SUBROUTINE Get_Atom_Info(is)
 
            ELSEIF (nonbond_list(ia,is)%vdw_type == 'NONE') THEN
               ! Set number of vdw parameters
-              nbr_vdw_params = 0
+              nbr_vdw_params(is) = 0
 
 
               IF (verbose_log) THEN
@@ -1670,29 +1634,49 @@ SUBROUTINE Get_Bond_Info(is)
            bond_list(ib,is)%bond_potential_type = line_array(4)
 
            IF (verbose_log) THEN
-                   WRITE(logunit,'(A,T25,I3,1x,I3)') 'Species and bond number', is,ib
-                   WRITE(logunit,'(A,T25,I3)') ' atom1:',bond_list(ib,is)%atom1
-                   WRITE(logunit,'(A,T25,I3)') ' atom2:',bond_list(ib,is)%atom2
-                   WRITE(logunit,'(A,T25,A)') ' bond type:',bond_list(ib,is)%bond_potential_type
+              WRITE(logunit,'(A,T25,I3,1x,I3)') 'Species and bond number', is,ib
+              WRITE(logunit,'(A,T25,I3)') ' atom1:',bond_list(ib,is)%atom1
+              WRITE(logunit,'(A,T25,I3)') ' atom2:',bond_list(ib,is)%atom2
+              WRITE(logunit,'(A,T25,A)') ' bond type:',bond_list(ib,is)%bond_potential_type
            END IF
 
            ! Load bond potential parameters, specific for each individual type
            IF (bond_list(ib,is)%bond_potential_type == 'fixed') THEN
               bond_list(ib,is)%int_bond_type = int_none    
-              IF (verbose_log) THEN
-                      WRITE(logunit,'(A,I6,1x,I6, A, I4)') & 
-                   'Bond fixed between atoms: ',bond_list(ib,is)%atom1, bond_list(ib,is)%atom2, &
-                   ' in species', is
-              END IF
-              ! Fixed bond length in A
               
               bond_list(ib,is)%bond_param(1) = String_To_Double(line_array(5))
+              IF (nbr_entries == 6) THEN
+                 ! bond length tolerance given in MCF
+                 bond_list(ib,is)%bond_param(2) = String_To_Double(line_array(6))
+              ELSE
+                 ! use default tolerance
+                 bond_list(ib,is)%bond_param(2) = 0.01
+              END IF
         
               IF (verbose_log) THEN
-                      WRITE(logunit,'(A,T25,F10.4)') 'Fixed bond length, in A:',bond_list(ib,is)%bond_param(1)
+                 WRITE(logunit,'(A,T25,F10.4)') 'Fixed bond length, in Ang:',bond_list(ib,is)%bond_param(1)
+                 WRITE(logunit,'(A,T25,F10.4)') 'Fixed bond length tolerance, in Ang:',bond_list(ib,is)%bond_param(2)
               END IF
-              ! Set number of bond parameters
-              nbr_bond_params = 1
+
+           ELSEIF (bond_list(ib,is)%bond_potential_type == 'harmonic') THEN
+              IF (nfragments(is) /= 1) THEN
+                 err_msg = ''
+                 err_msg(1) = 'Harmonic bonds are only supported for single-fragment species'
+                 err_msg(2) = 'Species ' // TRIM(Int_To_String(is)) // ' has ' &
+                            // TRIM(Int_To_String(nfragments(is))) // ' fragments'
+                 CALL Clean_Abort(err_msg,'Get_Bond_Info')
+              END IF
+
+              bond_list(ib,is)%int_bond_type = int_harmonic
+              
+              bond_list(ib,is)%bond_param(1) = String_To_Double(line_array(5))
+              bond_list(ib,is)%bond_param(2) = String_To_Double(line_array(6))
+              IF (verbose_log) THEN
+                 WRITE(logunit,'(A,T25,F10.4)') 'K_bond in K/Ang^2:',bond_list(ib,is)%bond_param(1)
+                 WRITE(logunit,'(A,T25,F10.4)') 'Equilibrium bond length, in Ang:',bond_list(ib,is)%bond_param(2)
+              END IF
+
+              bond_list(ib,is)%bond_param(1) = kboltz * bond_list(ib,is)%bond_param(1)
 
            ELSE
               err_msg = ''
@@ -1808,7 +1792,6 @@ SUBROUTINE Get_Angle_Info(is)
            ! Load angle potential parameters, specific for each individual type
            IF (angle_list(iang,is)%angle_potential_type == 'harmonic') THEN
 
-              IF(species_list(is)%int_species_type == int_sorbate) zig_calc(is) = .TRUE.
               angle_list(iang,is)%int_angle_type = int_harmonic
               ! K_bond/kB in K/A^2 read in
               angle_list(iang,is)%angle_param(1) = String_To_Double(line_array(6))
@@ -1829,8 +1812,6 @@ SUBROUTINE Get_Angle_Info(is)
               ! Convert the nominal bond angle to radians
               angle_list(iang,is)%angle_param(2) = (PI/180.0_DP)*angle_list(iang,is)%angle_param(2)
 
-              ! Set number of angle parameters
-              nbr_angle_params = 2
               species_list(is)%linear = .FALSE.
 
            ELSEIF (angle_list(iang,is)%angle_potential_type == 'fixed') THEN
@@ -1839,16 +1820,20 @@ SUBROUTINE Get_Angle_Info(is)
               angle_list(iang,is)%angle_param(1) = String_To_Double(line_array(6))
 
               nangles_fixed(is) = nangles_fixed(is) + 1
+
+              IF (nbr_entries == 7) THEN
+                 ! angle length tolerance given in MCF
+                 angle_list(iang,is)%angle_param(2) = String_To_Double(line_array(7))
+              ELSE
+                 ! use default tolerance
+                 angle_list(iang,is)%angle_param(2) = 1.0
+              END IF
+        
               IF (verbose_log) THEN
-                      WRITE(logunit,'(A,I6,1x,I6, 1x,I6,A, I4)') & 
-                   'Angle fixed between atoms: ',angle_list(iang,is)%atom1, angle_list(iang,is)%atom2, &
-                   angle_list(iang,is)%atom3,'in species', is
-                      WRITE(logunit,'(A,T25,F10.4)') ' fixed bond angle in degrees:', &
-                   angle_list(iang,is)%angle_param(1)
+                 WRITE(logunit,'(A,T25,F10.4)') 'Fixed angle in degrees:', angle_list(iang,is)%angle_param(1)
+                 WRITE(logunit,'(A,T25,F10.4)') 'Fixed angle tolerance in degrees:', angle_list(iang,is)%angle_param(2)
               END IF
 
-              ! Set number of angle parameter = 1 for the fixed DOF
-              nbr_angle_params = 1
               IF(angle_list(iang,is)%angle_param(1) .NE. 180.0_DP) species_list(is)%linear = .FALSE.
 
            ELSE
@@ -1973,19 +1958,18 @@ SUBROUTINE Get_Dihedral_Info(is)
            dihedral_list(idihed,is)%dihedral_potential_type = line_array(6)
 
            IF (verbose_log) THEN
-                   WRITE(logunit,'(A,T25,I3,1x,I3)') 'Species and dihedral number', is,idihed
-                   WRITE(logunit,'(A,T25,I3)') ' atom1:',dihedral_list(idihed,is)%atom1
-                   WRITE(logunit,'(A,T25,I3)') ' atom2:',dihedral_list(idihed,is)%atom2
-                   WRITE(logunit,'(A,T25,I3)') ' atom3:',dihedral_list(idihed,is)%atom3
-                   WRITE(logunit,'(A,T25,I3)') ' atom4:',dihedral_list(idihed,is)%atom4
-                   WRITE(logunit,'(A,T25,A)') ' dihedral type:', &
+              WRITE(logunit,'(A,T25,I3,1x,I3)') 'Species and dihedral number', is,idihed
+              WRITE(logunit,'(A,T25,I3)') ' atom1:',dihedral_list(idihed,is)%atom1
+              WRITE(logunit,'(A,T25,I3)') ' atom2:',dihedral_list(idihed,is)%atom2
+              WRITE(logunit,'(A,T25,I3)') ' atom3:',dihedral_list(idihed,is)%atom3
+              WRITE(logunit,'(A,T25,I3)') ' atom4:',dihedral_list(idihed,is)%atom4
+              WRITE(logunit,'(A,T25,A)') ' dihedral type:', &
                 dihedral_list(idihed,is)%dihedral_potential_type
            END IF
 
            ! Load dihedral potential parameters, specific for each individual type
            IF (dihedral_list(idihed,is)%dihedral_potential_type == 'OPLS') THEN
 
-              IF(species_list(is)%int_species_type == int_sorbate) zig_calc = .TRUE.
               dihedral_list(idihed,is)%int_dipot_type = int_opls
               !a0, a1, a2, a3 in kJ/mol
               dihedral_list(idihed,is)%dihedral_param(1) = String_To_Double(line_array(7))
@@ -1994,13 +1978,13 @@ SUBROUTINE Get_Dihedral_Info(is)
               dihedral_list(idihed,is)%dihedral_param(4) = String_To_Double(line_array(10))
 
               IF (verbose_log) THEN
-                      WRITE(logunit,'(A,T25,F10.4)') ' a0, kJ/mol:', &
+                 WRITE(logunit,'(A,T25,F10.4)') ' a0, kJ/mol:', &
                    dihedral_list(idihed,is)%dihedral_param(1)
-                      WRITE(logunit,'(A,T25,F10.4)') ' a1, kJ/mol:', &
+                 WRITE(logunit,'(A,T25,F10.4)') ' a1, kJ/mol:', &
                    dihedral_list(idihed,is)%dihedral_param(2)
-                      WRITE(logunit,'(A,T25,F10.4)') ' a2, kJ/mol:', &
+                 WRITE(logunit,'(A,T25,F10.4)') ' a2, kJ/mol:', &
                    dihedral_list(idihed,is)%dihedral_param(3)
-                      WRITE(logunit,'(A,T25,F10.4)') ' a3, kJ/mol:', &
+                 WRITE(logunit,'(A,T25,F10.4)') ' a3, kJ/mol:', &
                    dihedral_list(idihed,is)%dihedral_param(4)
               END IF
 
@@ -2010,12 +1994,8 @@ SUBROUTINE Get_Dihedral_Info(is)
               dihedral_list(idihed,is)%dihedral_param(3) = kjmol_to_atomic* dihedral_list(idihed,is)%dihedral_param(3)
               dihedral_list(idihed,is)%dihedral_param(4) = kjmol_to_atomic* dihedral_list(idihed,is)%dihedral_param(4)
 
-              ! Set number of dihedral parameters
-              nbr_dihedral_params = 4
-
               
            ELSE IF (dihedral_list(idihed,is)%dihedral_potential_type == 'CHARMM') THEN
-              IF(species_list(is)%int_species_type == int_sorbate) zig_calc = .TRUE.
               dihedral_list(idihed,is)%int_dipot_type = int_charmm
               dihedral_list(idihed,is)%dihedral_param(1) = String_To_Double(line_array(7))
               dihedral_list(idihed,is)%dihedral_param(2) = String_To_Double(line_array(8))
@@ -2023,12 +2003,12 @@ SUBROUTINE Get_Dihedral_Info(is)
               !
 
               IF (verbose_log) THEN
-                      WRITE(logunit,'(A,T25,F10.4)') ' a0, kJ/mol:', &
-                           dihedral_list(idihed,is)%dihedral_param(1)
-                      WRITE(logunit,'(A,T25,F10.4)') ' n ', &
-                           dihedral_list(idihed,is)%dihedral_param(2)
-                      WRITE(logunit,'(A,T25,F10.4)') 'delta', &
-                           dihedral_list(idihed,is)%dihedral_param(3)
+                 WRITE(logunit,'(A,T25,F10.4)') ' a0, kJ/mol:', &
+                      dihedral_list(idihed,is)%dihedral_param(1)
+                 WRITE(logunit,'(A,T25,F10.4)') ' n ', &
+                      dihedral_list(idihed,is)%dihedral_param(2)
+                 WRITE(logunit,'(A,T25,F10.4)') 'delta', &
+                      dihedral_list(idihed,is)%dihedral_param(3)
               END IF
               
               
@@ -2037,12 +2017,9 @@ SUBROUTINE Get_Dihedral_Info(is)
               dihedral_list(idihed,is)%dihedral_param(1) = kjmol_to_atomic* dihedral_list(idihed,is)%dihedral_param(1)
               dihedral_list(idihed,is)%dihedral_param(3) = (PI/180.0_DP)* dihedral_list(idihed,is)%dihedral_param(3)
               
-              nbr_dihedral_params = 3
-			  
 !AV: AMBER style for dihedral multiplicity, cf. Zhong et al. JpcB, 115, 10027, 2011.
 !Note that I assumed the maximum # of dihedral multiplicity is 3 and tried to avoide a 2-dimensional arrays.
            ELSE IF (dihedral_list(idihed,is)%dihedral_potential_type == 'AMBER') THEN
-              IF(species_list(is)%int_species_type == int_sorbate) zig_calc = .TRUE.
               dihedral_list(idihed,is)%int_dipot_type = int_amber
               dihedral_list(idihed,is)%dihedral_param(1) = String_To_Double(line_array(7))
               dihedral_list(idihed,is)%dihedral_param(2) = String_To_Double(line_array(8))
@@ -2053,48 +2030,44 @@ SUBROUTINE Get_Dihedral_Info(is)
               dihedral_list(idihed,is)%dihedral_param(7) = String_To_Double(line_array(13))
               dihedral_list(idihed,is)%dihedral_param(8) = String_To_Double(line_array(14))
               dihedral_list(idihed,is)%dihedral_param(9) = String_To_Double(line_array(15))
-			  !AV: commented out b/c 3 terms is usually enough.
-			  !dihedral_list(idihed,is)%dihedral_param(10) = String_To_Double(line_array(16))
-			  !dihedral_list(idihed,is)%dihedral_param(11) = String_To_Double(line_array(17))
-			  !dihedral_list(idihed,is)%dihedral_param(12) = String_To_Double(line_array(18))
-			  
+              !AV: commented out b/c 3 terms is usually enough.
+              !dihedral_list(idihed,is)%dihedral_param(10) = String_To_Double(line_array(16))
+              !dihedral_list(idihed,is)%dihedral_param(11) = String_To_Double(line_array(17))
+              !dihedral_list(idihed,is)%dihedral_param(12) = String_To_Double(line_array(18))
+           
               !
 
               IF (verbose_log) THEN
-                      WRITE(logunit,'(A,T25,F10.4)') ' a01, kJ/mol:', &
+                 WRITE(logunit,'(A,T25,F10.4)') ' a01, kJ/mol:', &
                    dihedral_list(idihed,is)%dihedral_param(1)
-                      WRITE(logunit,'(A,T25,F10.4)') ' n1 ', &
+                 WRITE(logunit,'(A,T25,F10.4)') ' n1 ', &
                    dihedral_list(idihed,is)%dihedral_param(2)
-                      WRITE(logunit,'(A,T25,F10.4)') 'delta1', &
+                 WRITE(logunit,'(A,T25,F10.4)') 'delta1', &
                    dihedral_list(idihed,is)%dihedral_param(3)
-                      WRITE(logunit,'(A,T25,F10.4)') ' a02, kJ/mol:', &
+                 WRITE(logunit,'(A,T25,F10.4)') ' a02, kJ/mol:', &
                    dihedral_list(idihed,is)%dihedral_param(4)
-                      WRITE(logunit,'(A,T25,F10.4)') ' n2 ', &
+                 WRITE(logunit,'(A,T25,F10.4)') ' n2 ', &
                    dihedral_list(idihed,is)%dihedral_param(5)
-                      WRITE(logunit,'(A,T25,F10.4)') 'delta2', &
+                 WRITE(logunit,'(A,T25,F10.4)') 'delta2', &
                    dihedral_list(idihed,is)%dihedral_param(6)
-                      WRITE(logunit,'(A,T25,F10.4)') ' a03, kJ/mol:', &
+                 WRITE(logunit,'(A,T25,F10.4)') ' a03, kJ/mol:', &
                    dihedral_list(idihed,is)%dihedral_param(7)
-                      WRITE(logunit,'(A,T25,F10.4)') ' n3 ', &
+                 WRITE(logunit,'(A,T25,F10.4)') ' n3 ', &
                    dihedral_list(idihed,is)%dihedral_param(8)
-                      WRITE(logunit,'(A,T25,F10.4)') 'delta3', &
+                 WRITE(logunit,'(A,T25,F10.4)') 'delta3', &
                    dihedral_list(idihed,is)%dihedral_param(9)
               END IF
               
               ! Convert to molecular units amu A^2/ps^2 and the delta
               ! parameter to radians
               dihedral_list(idihed,is)%dihedral_param(1) = kjmol_to_atomic* dihedral_list(idihed,is)%dihedral_param(1)
-			  dihedral_list(idihed,is)%dihedral_param(4) = kjmol_to_atomic* dihedral_list(idihed,is)%dihedral_param(4)
-			  dihedral_list(idihed,is)%dihedral_param(7) = kjmol_to_atomic* dihedral_list(idihed,is)%dihedral_param(7)
+              dihedral_list(idihed,is)%dihedral_param(4) = kjmol_to_atomic* dihedral_list(idihed,is)%dihedral_param(4)
+              dihedral_list(idihed,is)%dihedral_param(7) = kjmol_to_atomic* dihedral_list(idihed,is)%dihedral_param(7)
               dihedral_list(idihed,is)%dihedral_param(3) = (PI/180.0_DP)* dihedral_list(idihed,is)%dihedral_param(3)
-			  dihedral_list(idihed,is)%dihedral_param(6) = (PI/180.0_DP)* dihedral_list(idihed,is)%dihedral_param(6)
-			  dihedral_list(idihed,is)%dihedral_param(9) = (PI/180.0_DP)* dihedral_list(idihed,is)%dihedral_param(9)
+              dihedral_list(idihed,is)%dihedral_param(6) = (PI/180.0_DP)* dihedral_list(idihed,is)%dihedral_param(6)
+              dihedral_list(idihed,is)%dihedral_param(9) = (PI/180.0_DP)* dihedral_list(idihed,is)%dihedral_param(9)
               
-              nbr_dihedral_params = 9
-			  
-
            ELSE IF (dihedral_list(idihed,is)%dihedral_potential_type == 'harmonic') THEN
-              IF(species_list(is)%int_species_type == int_sorbate) zig_calc = .TRUE.
               dihedral_list(idihed,is)%int_dipot_type = int_harmonic
               ! d0 read in in units ofin K/radians^2 read in
               dihedral_list(idihed,is)%dihedral_param(1) = String_To_Double(line_array(7))
@@ -2103,9 +2076,9 @@ SUBROUTINE Get_Dihedral_Info(is)
 
 
               IF (verbose_log) THEN
-                      WRITE(logunit,'(A,T25,F10.4)') ' Do_angle in K/rad^2:', &
+                 WRITE(logunit,'(A,T25,F10.4)') ' Do_angle in K/rad^2:', &
                    dihedral_list(idihed,is)%dihedral_param(1)
-                      WRITE(logunit,'(A,T25,F10.4)') ' theta0 in degrees:', &
+                 WRITE(logunit,'(A,T25,F10.4)') ' theta0 in degrees:', &
                    dihedral_list(idihed,is)%dihedral_param(2)
               END IF
               ! Convert force constant to atomic units amu A^2/(rad^2 ps^2) 
@@ -2115,22 +2088,9 @@ SUBROUTINE Get_Dihedral_Info(is)
               ! Convert the nominal bond angle to radians
               dihedral_list(idihed,is)%dihedral_param(2) = (PI/180.0_DP)*dihedral_list(idihed,is)%dihedral_param(2)
 
-              ! Set number of angle parameters
-              nbr_dihedral_params = 2
-
 
            ELSEIF (dihedral_list(idihed,is)%dihedral_potential_type == 'none') THEN
               dihedral_list(idihed,is)%int_dipot_type = int_none
-
-              IF (verbose_log) THEN
-                      WRITE(logunit,'(A,4(I6,1x),A,I4)') & 
-                   'No dihedral potential between atoms: ',&
-                   dihedral_list(idihed,is)%atom1, dihedral_list(idihed,is)%atom2, &
-                   dihedral_list(idihed,is)%atom3, dihedral_list(idihed,is)%atom4, &
-                   'in species', is
-              END IF
-              ! Set number of dihedral parameters
-              nbr_dihedral_params = 0
 
            ELSE
               err_msg = ''
@@ -2255,8 +2215,6 @@ INTEGER, INTENT(IN) :: is
               ! Convert phi0 to radians
               improper_list(iimprop,is)%improper_param(2) = (PI/180.0_DP) * improper_list(iimprop,is)%improper_param(2)
 
-              ! Set number of improper parameters
-              nbr_improper_params = 2
            ELSEIF (improper_list(iimprop,is)%improper_potential_type == 'cvff') THEN
               improper_list(iimprop,is)%int_improp_type = int_cvff
               ! Function: V_imp = K_imp * (1 + d * cos [n * phi])
@@ -2289,8 +2247,6 @@ INTEGER, INTENT(IN) :: is
                    improper_list(iimprop,is)%atom3, improper_list(iimprop,is)%atom4, &
                    'in species', is
               END IF
-              ! Set number of improper parameters
-              nbr_improper_params = 0
 
            ELSE
               err_msg = ''
