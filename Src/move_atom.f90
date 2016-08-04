@@ -108,8 +108,8 @@ SUBROUTINE Atom_Displacement
   ! If there are no molecules then return
   IF (nmols_tot == 0) THEN
      IF (verbose_log) THEN
-       WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,3X,X,L8,X,9X,X,F9.3)') &
-             i_mcstep, 'atom_disp' , accept, 'no mols'
+       WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8,X,9X,X,A9)') &
+             i_mcstep, 'atom_disp' , ibox, accept, 'no mols'
      END IF
      RETURN
   END IF
