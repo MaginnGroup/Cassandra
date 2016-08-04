@@ -149,7 +149,6 @@ SUBROUTINE Rotate_Dihedral
   ELSE
 
     ibox = 1
-    nmols_box(ibox) = SUM(nmols(:,ibox))
 
   END IF
 
