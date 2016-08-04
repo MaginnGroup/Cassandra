@@ -109,7 +109,7 @@ SUBROUTINE Translate
   ! If there are no molecules then return
   IF (nmols_tot == 0) THEN
      IF (verbose_log) THEN
-       WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8,X,9X,X,F9.3)') &
+       WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8,X,9X,X,A9)') &
              i_mcstep, 'translate' , ibox, accept, 'no mols'
      END IF
      RETURN
