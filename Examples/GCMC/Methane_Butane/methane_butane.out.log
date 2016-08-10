@@ -12,8 +12,8 @@ Run info
 version: Cassandra Development Version
 inputfile: methane_butane.inp
 name of run: methane_butane.out
-date (mm/dd/yyyy): 07/27/2016
-time: 04:09:54
+date (mm/dd/yyyy): 08/04/2016
+time: 14:30:58
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -152,9 +152,7 @@ Molecule info
 ********************************************************************************
  Reading molecular connectivity information
  Species:            1
- Molecular connectivity file: 
- CH4.mcf                                                                        
-                                          
+ Molecular connectivity file: CH4.mcf                                                                                                                 
    1 atom(s) specified.
    0 bond(s) specified.
    0 angle(s) specified.
@@ -164,9 +162,7 @@ Molecule info
    0 fragment bond(s) specified.
  Reading molecular connectivity information
  Species:            2
- Molecular connectivity file: 
- C4H10.mcf                                                                      
-                                          
+ Molecular connectivity file: C4H10.mcf                                                                                                               
    4 atom(s) specified.
    3 bond(s) specified.
    2 angle(s) specified.
@@ -327,9 +323,9 @@ Initial configuration
  
 Compute total energy
 ********************************************************************************
- Starting energy components for box   1
-  kJ/mol-Extensive
- -----------------------------------------------------------
+ 
+ Energy components for box 1     kJ/mol-Extensive
+ ---------------------------------------------------------------------
  Total system energy                      410.462
  Intra molecular energy                   434.479
    Bond energy                              0.000
@@ -342,7 +338,7 @@ Compute total energy
    Inter molecule vdw                     -23.040
    Long range correction                   -0.978
    Inter molecule q                         0.000
- -----------------------------------------------------------
+ ---------------------------------------------------------------------
  
 ********************************************************************************
  
@@ -383,45 +379,24 @@ Run simulation
      48744  translate         1   1  0.92667  13.00000
 ********************************************************************************
  
-Report ending energy & then re-compute from scratch
+Energy of final configuration
 ********************************************************************************
  
- 
- Initial energy + deltas for box 1
-  kJ/mol-Extensive
- -----------------------------------------------------------
- Total system energy                      229.464
- Intra molecular energy                   244.793
-   Bond energy                              0.000
-   Bond angle energy                      100.679
-   Dihedral angle energy                  144.115
-   Improper angle energy                    0.000
-   Intra molecule vdw                       0.000
-   Intra molecule q                         0.000
- Inter molecular energy                   -15.329
-   Inter molecule vdw                     -14.854
-   Long range correction                   -0.475
-   Inter molecule q                         0.000
- -----------------------------------------------------------
- 
- 
- 
- Recomputed energy from scratch for box 1
-  kJ/mol-Extensive
- -----------------------------------------------------------
- Total system energy                      229.464
- Intra molecular energy                   244.793
-   Bond energy                              0.000
-   Bond angle energy                      100.679
-   Dihedral angle energy                  144.115
-   Improper angle energy                    0.000
-   Intra molecule vdw                       0.000
-   Intra molecule q                         0.000
- Inter molecular energy                   -15.329
-   Inter molecule vdw                     -14.854
-   Long range correction                   -0.475
-   Inter molecule q                         0.000
- -----------------------------------------------------------
+ Energy components for box 1     kJ/mol-Extensive       Relative_Error
+ ---------------------------------------------------------------------
+ Total system energy                      229.464            0.840E-14
+ Intra molecular energy                   244.793            0.275E-13
+   Bond energy                              0.000            0.000E+00
+   Bond angle energy                      100.679            0.958E-13
+   Dihedral angle energy                  144.115            0.130E-13
+   Improper angle energy                    0.000            0.000E+00
+   Intra molecule vdw                       0.000            0.000E+00
+   Intra molecule q                         0.000            0.000E+00
+ Inter molecular energy                   -15.329           -0.920E-14
+   Inter molecule vdw                     -14.854           -0.796E-14
+   Long range correction                   -0.475            0.000E+00
+   Inter molecule q                         0.000            0.000E+00
+ ---------------------------------------------------------------------
  
 ********************************************************************************
  
@@ -463,11 +438,11 @@ Writing information about fragments
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.140401 secs.
- Rotation time =               0.156801 secs.
- Insertion time =              1.258507 secs.
- Deletion time =               1.172412 secs.
- Regrowth time =               1.386511 secs.
+ Translation time =            0.274316 secs.
+ Rotation time =               0.306345 secs.
+ Insertion time =              2.421130 secs.
+ Deletion time =               2.240489 secs.
+ Regrowth time =               2.673625 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -481,6 +456,6 @@ Writing information about fragments
          0       Days
          0      Hours
          0    Minutes
-         4    Seconds
-       242         ms
+         8    Seconds
+       123         ms
 ********************************************************************************

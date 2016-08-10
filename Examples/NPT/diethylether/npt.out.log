@@ -12,8 +12,8 @@ Run info
 version: Cassandra Development Version
 inputfile: npt.inp
 name of run: npt.out
-date (mm/dd/yyyy): 07/27/2016
-time: 04:03:51
+date (mm/dd/yyyy): 08/04/2016
+time: 14:32:32
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -155,9 +155,7 @@ Molecule info
 ********************************************************************************
  Reading molecular connectivity information
  Species:            1
- Molecular connectivity file: 
- dee.mcf                                                                        
-                                          
+ Molecular connectivity file: dee.mcf                                                                                                                 
    5 atom(s) specified.
    4 bond(s) specified.
    3 angle(s) specified.
@@ -304,9 +302,9 @@ Charge neutrality check
  
 Compute total energy
 ********************************************************************************
- Starting energy components for box   1
-  kJ/mol-Extensive
- -----------------------------------------------------------
+ 
+ Energy components for box 1     kJ/mol-Extensive
+ ---------------------------------------------------------------------
  Total system energy                     5022.072
  Intra molecular energy                   347.454
    Bond energy                              0.000
@@ -321,7 +319,7 @@ Compute total energy
    Inter molecule q                      4218.411
    Reciprocal ewald                       477.754
    Self ewald                           -4682.482
- -----------------------------------------------------------
+ ---------------------------------------------------------------------
    Number of reciprocal vectors              2934
  
 ********************************************************************************
@@ -360,50 +358,26 @@ Run simulation
       8869  translate         1   1  0.51967
 ********************************************************************************
  
-Report ending energy & then re-compute from scratch
+Energy of final configuration
 ********************************************************************************
  
- 
- Initial energy + deltas for box 1
-  kJ/mol-Extensive
- -----------------------------------------------------------
- Total system energy                     -336.763
- Intra molecular energy                   264.805
-   Bond energy                              0.000
-   Bond angle energy                      103.196
-   Dihedral angle energy                  179.611
-   Improper angle energy                    0.000
-   Intra molecule vdw                     -18.003
-   Intra molecule q                         0.000
- Inter molecular energy                  -601.568
-   Inter molecule vdw                    -425.776
-   Long range correction                 -131.493
-   Inter molecule q                      4213.817
-   Reciprocal ewald                       424.365
-   Self ewald                           -4682.482
- -----------------------------------------------------------
-   Number of reciprocal vectors              3215
- 
- 
- 
- Recomputed energy from scratch for box 1
-  kJ/mol-Extensive
- -----------------------------------------------------------
- Total system energy                     -336.763
- Intra molecular energy                   264.805
-   Bond energy                              0.000
-   Bond angle energy                      103.196
-   Dihedral angle energy                  179.611
-   Improper angle energy                    0.000
-   Intra molecule vdw                     -18.003
-   Intra molecule q                         0.000
- Inter molecular energy                  -601.568
-   Inter molecule vdw                    -425.776
-   Long range correction                 -131.493
-   Inter molecule q                      4213.817
-   Reciprocal ewald                       424.365
-   Self ewald                           -4682.482
- -----------------------------------------------------------
+ Energy components for box 1     kJ/mol-Extensive       Relative_Error
+ ---------------------------------------------------------------------
+ Total system energy                     -336.763           -0.151E-14
+ Intra molecular energy                   264.805            0.275E-15
+   Bond energy                              0.000            0.000E+00
+   Bond angle energy                      103.196            0.000E+00
+   Dihedral angle energy                  179.611            0.405E-15
+   Improper angle energy                    0.000            0.000E+00
+   Intra molecule vdw                     -18.003           -0.126E-15
+   Intra molecule q                         0.000            0.000E+00
+ Inter molecular energy                  -601.568           -0.726E-15
+   Inter molecule vdw                    -425.776           -0.171E-15
+   Long range correction                 -131.493            0.000E+00
+   Inter molecule q                      4213.817            0.000E+00
+   Reciprocal ewald                       424.365            0.343E-15
+   Self ewald                           -4682.482            0.000E+00
+ ---------------------------------------------------------------------
    Number of reciprocal vectors              3215
  
 ********************************************************************************
@@ -437,10 +411,10 @@ Writing information about fragments
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            3.895371 secs.
- Rotation time =               3.730535 secs.
- Volume change time =          3.656847 secs.
- Regrowth time =               5.595129 secs.
+ Translation time =            3.973780 secs.
+ Rotation time =               3.812769 secs.
+ Volume change time =          3.671274 secs.
+ Regrowth time =               5.648201 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -455,5 +429,5 @@ Writing information about fragments
          0      Hours
          0    Minutes
         17    Seconds
-       367         ms
+       582         ms
 ********************************************************************************

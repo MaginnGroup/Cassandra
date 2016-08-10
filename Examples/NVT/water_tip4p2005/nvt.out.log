@@ -12,8 +12,8 @@ Run info
 version: Cassandra Development Version
 inputfile: nvt.inp
 name of run: nvt.out
-date (mm/dd/yyyy): 07/27/2016
-time: 04:05:36
+date (mm/dd/yyyy): 08/04/2016
+time: 14:34:17
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -143,9 +143,7 @@ Molecule info
 ********************************************************************************
  Reading molecular connectivity information
  Species:            1
- Molecular connectivity file: 
- tip4p.mcf                                                                      
-                                          
+ Molecular connectivity file: tip4p.mcf                                                                                                               
    4 atom(s) specified.
    3 bond(s) specified.
    3 angle(s) specified.
@@ -273,9 +271,9 @@ Charge neutrality check
  
 Compute total energy
 ********************************************************************************
- Starting energy components for box   1
-  kJ/mol-Extensive
- -----------------------------------------------------------
+ 
+ Energy components for box 1     kJ/mol-Extensive
+ ---------------------------------------------------------------------
  Total system energy                    -3967.101
  Intra molecular energy                     0.000
    Bond energy                              0.000
@@ -290,7 +288,7 @@ Compute total energy
    Inter molecule q                     64627.712
    Reciprocal ewald                       389.270
    Self ewald                          -69581.147
- -----------------------------------------------------------
+ ---------------------------------------------------------------------
    Number of reciprocal vectors              1568
  
 ********************************************************************************
@@ -319,50 +317,26 @@ Run simulation
      17949  translate         1   1  0.01289
 ********************************************************************************
  
-Report ending energy & then re-compute from scratch
+Energy of final configuration
 ********************************************************************************
  
- 
- Initial energy + deltas for box 1
-  kJ/mol-Extensive
- -----------------------------------------------------------
- Total system energy                    -4002.487
- Intra molecular energy                     0.000
-   Bond energy                              0.000
-   Bond angle energy                        0.000
-   Dihedral angle energy                    0.000
-   Improper angle energy                    0.000
-   Intra molecule vdw                       0.000
-   Intra molecule q                         0.000
- Inter molecular energy                 -4002.487
-   Inter molecule vdw                     611.873
-   Long range correction                  -55.126
-   Inter molecule q                     64649.609
-   Reciprocal ewald                       372.303
-   Self ewald                          -69581.147
- -----------------------------------------------------------
-   Number of reciprocal vectors              1568
- 
- 
- 
- Recomputed energy from scratch for box 1
-  kJ/mol-Extensive
- -----------------------------------------------------------
- Total system energy                    -4002.487
- Intra molecular energy                     0.000
-   Bond energy                              0.000
-   Bond angle energy                        0.000
-   Dihedral angle energy                    0.000
-   Improper angle energy                    0.000
-   Intra molecule vdw                       0.000
-   Intra molecule q                         0.000
- Inter molecular energy                 -4002.487
-   Inter molecule vdw                     611.873
-   Long range correction                  -55.126
-   Inter molecule q                     64649.609
-   Reciprocal ewald                       372.303
-   Self ewald                          -69581.147
- -----------------------------------------------------------
+ Energy components for box 1     kJ/mol-Extensive       Relative_Error
+ ---------------------------------------------------------------------
+ Total system energy                    -4002.487           -0.105E-13
+ Intra molecular energy                     0.000            0.000E+00
+   Bond energy                              0.000            0.000E+00
+   Bond angle energy                        0.000            0.000E+00
+   Dihedral angle energy                    0.000            0.000E+00
+   Improper angle energy                    0.000            0.000E+00
+   Intra molecule vdw                       0.000            0.000E+00
+   Intra molecule q                         0.000            0.000E+00
+ Inter molecular energy                 -4002.487           -0.105E-13
+   Inter molecule vdw                     611.873            0.107E-14
+   Long range correction                  -55.126            0.000E+00
+   Inter molecule q                     64649.609            0.000E+00
+   Reciprocal ewald                       372.303            0.195E-15
+   Self ewald                          -69581.147            0.000E+00
+ ---------------------------------------------------------------------
    Number of reciprocal vectors              1568
  
 ********************************************************************************
@@ -383,8 +357,8 @@ Writing information for box  1
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            7.638023 secs.
- Rotation time =               7.767278 secs.
+ Translation time =            7.862927 secs.
+ Rotation time =               7.964343 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -399,5 +373,5 @@ Writing information for box  1
          0      Hours
          0    Minutes
         16    Seconds
-        92         ms
+       548         ms
 ********************************************************************************
