@@ -81,7 +81,7 @@ USE Type_Definitions
   INTEGER, PARAMETER :: sim_gemc_npt = 7
   INTEGER, PARAMETER :: sim_gemc_ig = 8
   INTEGER, PARAMETER :: sim_mcf = 9
-  LOGICAL :: timed_run, openmp_flag, en_flag, verbose_log
+  LOGICAL :: timed_run, openmp_flag, en_flag, verbose_log, input_is_logfile
   CHARACTER(10) :: sim_length_units
   INTEGER :: steps_per_sweep
 
