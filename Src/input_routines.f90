@@ -5757,7 +5757,7 @@ SUBROUTINE Copy_Inputfile
      ! skip the output
 
      IF (line_string(1:1) /= '!') THEN
-        WRITE(logunit,*) TRIM(line_string)
+        WRITE(logunit,'(A80)') line_string
      END IF
      IF (line_string(1:3) == 'END' .OR. line_nbr > 10000 ) EXIT
      
