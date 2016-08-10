@@ -134,6 +134,7 @@ PROGRAM Main
 ! Now read input file and get the run_name
   CALL Get_Run_Name
 
+
 ! Create log file and write out some initial information
   CALL Name_Files(run_name,'.log',logfile)
 
@@ -152,6 +153,8 @@ PROGRAM Main
   WRITE(logunit,'(A80)')'            / /___/ /_/ (__  |__  ) /_/ / / / / /_/ / /  / /_/ /               '
   WRITE(logunit,'(A80)')'            \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                '
   WRITE(logunit,'(A80)')'                                                                               '
+  WRITE(logunit,'(A80)')'********************************************************************************'
+  WRITE(logunit,'(A80)')'**********************************Log File**************************************'
   WRITE(logunit,'(A80)')'********************************************************************************'
 ! Create a checkpoint file to periodically write system information
 

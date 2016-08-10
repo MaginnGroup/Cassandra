@@ -134,7 +134,7 @@ SUBROUTINE Cut_N_Grow
   IF (nmols_tot == 0) THEN
      IF (verbose_log) THEN
        WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8,X,9X,X,A9)') &
-             i_mcstep, 'regrow' , ibox, .FALSE., 'no mols'
+             i_mcstep, 'regrow' , ibox, accept, 'no mols'
      END IF
      RETURN
   END IF
