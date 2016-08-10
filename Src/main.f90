@@ -378,54 +378,8 @@ PROGRAM Main
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Compute total energy'
   WRITE(logunit,'(A80)') '********************************************************************************'
-
-  ! compute total system energy
-  overlap = .FALSE.
-     
-  DO i = 1, nbr_boxes
-       
-     CALL Compute_System_Total_Energy(i,.TRUE.,overlap)
-
-     IF (overlap) THEN
-        ! overlap was detected between two atoms so abort the program
-        err_msg = ''
-        err_msg(1) = 'Overlap detected in the starting structure'
-        err_msg(2) = 'Start type '//start_type(i)
-        CALL Clean_Abort(err_msg,'Main')
-     END IF
-  END DO
-  
-  ! write out the initial energy components to the log file
-  
   DO ibox = 1,nbr_boxes
-
-     WRITE(logunit,'(X,A34,2X,I2)') 'Starting energy components for box', ibox
-     WRITE(logunit,'(2X,A)') 'kJ/mol-Extensive'
-     WRITE(logunit,'(X,A59)') '-----------------------------------------------------------'
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Total system energy', energy(ibox)%total*atomic_to_kjmol
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecular energy', energy(ibox)%intra*atomic_to_kjmol
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Bond energy',energy(ibox)%bond*atomic_to_kjmol
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Bond angle energy',energy(ibox)%angle*atomic_to_kjmol
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Dihedral angle energy', energy(ibox)%dihedral*atomic_to_kjmol
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Improper angle energy', energy(ibox)%improper*atomic_to_kjmol
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Intra molecule vdw', energy(ibox)%intra_vdw*atomic_to_kjmol
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Intra molecule q',energy(ibox)%intra_q*atomic_to_kjmol
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecular energy', energy(ibox)%inter*atomic_to_kjmol
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Inter molecule vdw', energy(ibox)%inter_vdw*atomic_to_kjmol
-     IF (int_vdw_sum_style(ibox) == vdw_cut_tail) &
-        WRITE(logunit,'(3X,A,T30,F20.3)') 'Long range correction', energy(ibox)%lrc*atomic_to_kjmol
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Inter molecule q',energy(ibox)%inter_q*atomic_to_kjmol
-     IF (int_charge_sum_style(ibox) == charge_ewald) THEN
-        WRITE(logunit,'(3X,A,T30,F20.3)') 'Reciprocal ewald',energy(ibox)%reciprocal*atomic_to_kjmol
-        WRITE(logunit,'(3X,A,T30,F20.3)') 'Self ewald',energy(ibox)%self*atomic_to_kjmol
-     ELSE IF (int_charge_sum_style(ibox) == charge_dsf) THEN
-        WRITE(logunit,'(X,A,T30,F20.3)') 'Self DSF',energy(ibox)%self*atomic_to_kjmol
-     END IF
-     WRITE(logunit,'(X,A59)') '-----------------------------------------------------------'
-     IF (int_charge_sum_style(ibox) == charge_ewald) &
-        WRITE(logunit,'(3X,A,T33,I17)') 'Number of reciprocal vectors',nvecs(ibox)
-     WRITE(logunit,*)
-
+     CALL Check_System_Energy(ibox,.FALSE.)
   END DO
   WRITE(logunit,'(A80)') '********************************************************************************'
 
@@ -502,84 +456,10 @@ PROGRAM Main
   END IF
 
   WRITE(logunit,*)
-  WRITE(logunit,'(A)') 'Report ending energy & then re-compute from scratch'
+  WRITE(logunit,'(A)') 'Energy of final configuration'
   WRITE(logunit,'(A80)') '********************************************************************************'
-
-  !***************************************************************************
-  ! Report current energies and compute the energies from scratch
-
   DO ibox = 1, nbr_boxes
-     WRITE(logunit,*)
-     WRITE(logunit,*)
-
-     ! Write the current components of the energy to log
-     WRITE(logunit,'(X,A,X,I1)') 'Initial energy + deltas for box', ibox
-     WRITE(logunit,'(2X,A)') 'kJ/mol-Extensive'
-     WRITE(logunit,'(X,A59)') '-----------------------------------------------------------'
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Total system energy', energy(ibox)%total*atomic_to_kjmol
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecular energy', energy(ibox)%intra*atomic_to_kjmol
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Bond energy',energy(ibox)%bond*atomic_to_kjmol
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Bond angle energy',energy(ibox)%angle*atomic_to_kjmol
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Dihedral angle energy', energy(ibox)%dihedral*atomic_to_kjmol
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Improper angle energy', energy(ibox)%improper*atomic_to_kjmol
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Intra molecule vdw', energy(ibox)%intra_vdw*atomic_to_kjmol
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Intra molecule q',energy(ibox)%intra_q*atomic_to_kjmol
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecular energy', energy(ibox)%inter*atomic_to_kjmol
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Inter molecule vdw', energy(ibox)%inter_vdw*atomic_to_kjmol
-     IF (int_vdw_sum_style(ibox) == vdw_cut_tail) &
-        WRITE(logunit,'(3X,A,T30,F20.3)') 'Long range correction', energy(ibox)%lrc*atomic_to_kjmol
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Inter molecule q',energy(ibox)%inter_q*atomic_to_kjmol
-     IF (int_charge_sum_style(ibox) == charge_ewald) THEN
-        WRITE(logunit,'(3X,A,T30,F20.3)') 'Reciprocal ewald',energy(ibox)%reciprocal*atomic_to_kjmol
-        WRITE(logunit,'(3X,A,T30,F20.3)') 'Self ewald',energy(ibox)%self*atomic_to_kjmol
-     ELSE IF (int_charge_sum_style(ibox) == charge_dsf) THEN
-        WRITE(logunit,'(X,A,T30,F20.3)') 'Self DSF',energy(ibox)%self*atomic_to_kjmol
-     END IF
-     WRITE(logunit,'(X,A59)') '-----------------------------------------------------------'
-     IF (int_charge_sum_style(ibox) == charge_ewald) &
-        WRITE(logunit,'(3X,A,T33,I17)') 'Number of reciprocal vectors',nvecs(ibox)
-     WRITE(logunit,*)
-
-     ! Write the current total energy to stdout
-     WRITE(*,*)
-     WRITE(*,'(X,A)') 'Energy of final configuration, box ' // TRIM(Int_To_String(ibox))
-     WRITE(*,"(2X,A,T30,F24.12)") 'Initial energy + deltas = ', energy(ibox)%total*atomic_to_kjmol
-
-     ! Compute the energies from scratch
-     CALL Compute_System_Total_Energy(ibox,.TRUE.,overlap)
-
-     ! Write the recomputed total energy to stdout
-     WRITE(*,"(2X,A,T30,F24.12)") 'Energy from scratch = ',energy(ibox)%total*atomic_to_kjmol
-
-     ! Write the recomputed energy components to log
-     WRITE(logunit,*)
-     WRITE(logunit,*)
-     WRITE(logunit,'(X,A,X,I1)') 'Recomputed energy from scratch for box', ibox
-     WRITE(logunit,'(2X,A)') 'kJ/mol-Extensive'
-     WRITE(logunit,'(X,A59)') '-----------------------------------------------------------'
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Total system energy', energy(ibox)%total*atomic_to_kjmol
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecular energy', energy(ibox)%intra*atomic_to_kjmol
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Bond energy',energy(ibox)%bond*atomic_to_kjmol
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Bond angle energy',energy(ibox)%angle*atomic_to_kjmol
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Dihedral angle energy', energy(ibox)%dihedral*atomic_to_kjmol
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Improper angle energy', energy(ibox)%improper*atomic_to_kjmol
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Intra molecule vdw', energy(ibox)%intra_vdw*atomic_to_kjmol
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Intra molecule q',energy(ibox)%intra_q*atomic_to_kjmol
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecular energy', energy(ibox)%inter*atomic_to_kjmol
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Inter molecule vdw', energy(ibox)%inter_vdw*atomic_to_kjmol
-     IF (int_vdw_sum_style(ibox) == vdw_cut_tail) &
-        WRITE(logunit,'(3X,A,T30,F20.3)') 'Long range correction', energy(ibox)%lrc*atomic_to_kjmol
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Inter molecule q',energy(ibox)%inter_q*atomic_to_kjmol
-     IF (int_charge_sum_style(ibox) == charge_ewald) THEN
-        WRITE(logunit,'(3X,A,T30,F20.3)') 'Reciprocal ewald',energy(ibox)%reciprocal*atomic_to_kjmol
-        WRITE(logunit,'(3X,A,T30,F20.3)') 'Self ewald',energy(ibox)%self*atomic_to_kjmol
-     ELSE IF (int_charge_sum_style(ibox) == charge_dsf) THEN
-        WRITE(logunit,'(X,A,T30,F20.3)') 'Self DSF',energy(ibox)%self*atomic_to_kjmol
-     END IF
-     WRITE(logunit,'(X,A59)') '-----------------------------------------------------------'
-     IF (int_charge_sum_style(ibox) == charge_ewald) &
-        WRITE(logunit,'(3X,A,T33,I17)') 'Number of reciprocal vectors',nvecs(ibox)
-     WRITE(logunit,*)
+     CALL Check_System_Energy(ibox)
   END DO
   WRITE(logunit,'(A80)') '********************************************************************************'
 

@@ -98,11 +98,11 @@ SUBROUTINE Rotate
 
   ! Sum the total number of molecules 
   nmols_tot = 0 ! sum over species, box
+  nmols_box = 0 ! sum over species
   DO ibox = 1, nbr_boxes
-    nmols_box(ibox) = 0
     DO is = 1, nspecies
       ! Only count mobile species
-      IF ( max_rot(is,ibox) > 0. ) THEN
+      IF ( max_rot(is,ibox) > 0.0_DP ) THEN
         nmols_tot = nmols_tot + nmols(is,ibox)
         nmols_box(ibox) = nmols_box(ibox) + nmols(is,ibox)
       END IF

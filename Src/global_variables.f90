@@ -271,7 +271,6 @@ USE Type_Definitions
   INTEGER :: nspecies, nspec_insert
   INTEGER, DIMENSION(:), ALLOCATABLE :: n_igas, n_igas_update, n_igas_moves, nzovero ! integers for ideal gas reservoir
   LOGICAL :: first_res_update, igas_flag
-  LOGICAL, DIMENSION(:), ALLOCATABLE :: zig_calc
   INTEGER, DIMENSION(:), ALLOCATABLE :: max_molecules, natoms, nmol_start, nring_atoms, nexo_atoms
   INTEGER, DIMENSION(:), ALLOCATABLE :: nbonds, nangles, nangles_fixed
   INTEGER, DIMENSION(:), ALLOCATABLE :: ndihedrals, nimpropers
@@ -302,10 +301,7 @@ USE Type_Definitions
   ! It is set and allocated to size nbr_atomtypes in Create_Nonbond_Table
   CHARACTER(6), DIMENSION(:), ALLOCATABLE :: atom_type_list
 
-  ! Number of parameters required for various potential functions.
-  INTEGER, DIMENSION(:), ALLOCATABLE :: nbr_bond_params, nbr_angle_params 
-  INTEGER, DIMENSION(:), ALLOCATABLE :: nbr_improper_params, nbr_vdw_params
-  INTEGER, DIMENSION(:), ALLOCATABLE :: nbr_dihedral_params
+  INTEGER, DIMENSION(:), ALLOCATABLE :: nbr_vdw_params
 
   ! Information of the position line where starts the coordinates storage of
   ! each fragment type

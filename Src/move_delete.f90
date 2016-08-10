@@ -383,7 +383,6 @@ SUBROUTINE Deletion
      ! Increment counter
      nsuccess(is,ibox)%deletion = nsuccess(is,ibox)%deletion + 1
 
-!     CALL Check_System_Energy(1,randno)
   ELSE
 
      IF ( (int_charge_sum_style(ibox) == charge_ewald) .AND. &
