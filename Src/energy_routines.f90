@@ -194,28 +194,53 @@ CONTAINS
   !-----------------------------------------------------------------------------
 
   SUBROUTINE Compute_Molecule_Bond_Energy(im,is,energy)
-    !---------------------------------------------------------------------------
-    ! Given a molecule number and species,this routine computes the total bond energy
-    ! of the entire molecule.
 
-    ! CALLED By:
-    ! CALLS: Get_Bond_Length
+    !**************************************************************************
+    ! This subroutine computes the total bond energy of a selected molecule
+    ! Currently, the available potential functions are none or harmonic.
+    ! If none, the code will do a check for fixed bond lengths. 
+    !
+    ! As of now, the code can only support fixed bond length simulations. 
+    ! Effectively, this subroutine will act as a check for fixed bond length
+    ! (useful if using a restart configuration from other packages)
+    !
+    ! CALLED BY
+    !
+    !         Compute_System_Total_Energy.
+    !         Angle_Distortion
+    !         Deletion
+    !         Rotate_Dihedral
+    !         Insertion
+    !         GEMC_Particle_Transfer
+    !         Cut_N_Grow
+    !
+    ! CALLS
+    !
+    !         Get_Bond_Length
+    !
+    ! INPUT VARIABLES
+    !
+    !         im[INTEGER]:     LOCATE of the molecule.
+    !         is[INTEGER]:     species type of the molecule.
+    !
+    ! OUTPUT VARIABLES
+    !
+    !         energy[REALDP]: total bond energy of molecule 
+    !
+    ! RAISES
+    !         It will throw an error if bond lenghts do not match 
+    !         the MCF specifications within a tolerance.
+    !
+    !
+    ! DOCUMENTATION LAST UPDATED: 08/10/2016
+    !
+    !**************************************************************************
 
-    ! Written by: E. Maginn
-    ! Date: Mon Nov 26 06:27:24 MST 2007
-    ! Revision history:    
 
-    ! Passed to
     INTEGER :: im,is
-
-    ! Returned
     REAL(DP) :: energy
-
-    ! Passed from
     INTEGER :: ib
     REAL(DP) :: length
-
-    ! Local
     REAL(DP) :: k,l0,eb,ltol
     CHARACTER(7) :: mcf_bond_length, current_bond_length
   !-----------------------------------------------------------------------------
@@ -245,7 +270,6 @@ CONTAINS
           CALL Get_Bond_Length(ib,im,is,length)
           eb = k*(length-l0)**2
 
-          ! Add more potential functions here.
        ENDIF
        energy = energy + eb
     ENDDO
@@ -256,29 +280,36 @@ CONTAINS
 
 
   SUBROUTINE Compute_Molecule_Angle_Energy(im,is,energy)
-    !---------------------------------------------------------------------------
-    ! This routine is passed a molecule and species index. It then computes the total
-    ! bond angle energy of this molecule.  
+    !**************************************************************************
+    ! This subroutine is passed a molecule and species index. It then 
+    ! computes the total bond angle energy of this molecule. 
+    !
+    ! Currently, the available potential functions are none or harmonic.
+    ! If none, the code will do a check for fixed angles.
+    !
+    ! INPUT VARIABLES
+    !
+    !         im[INTEGER]:     LOCATE of the molecule.
+    !         is[INTEGER]:     species type of the molecule.
+    !
+    ! OUTPUT VARIABLES
+    !
+    !         energy[REALDP]:      total bond energy of molecule 
+    !
+    ! RAISES
+    !         It will throw an error if angles do not match 
+    !         the MCF specifications within a tolerance.
+    !
+    !
+    ! DOCUMENTATION LAST UPDATED: 08/10/2016
+    !**************************************************************************
 
-    ! Called by:
-    ! Calls: Get_Bond_Angle
-    
-    ! Written by: E. Maginn
-    ! Date: Mon Nov 26 06:27:24 MST 2007
-    ! Revision history:    
-    !---------------------------------------------------------------------------
     USE Random_Generators
-    ! Passed to 
     INTEGER :: im,is
-    
-    ! Returns
     REAL(DP) :: energy
-    
-    ! Local
     INTEGER :: ia
     REAL(DP) :: k,theta0,theta,ea,theta_tol
     CHARACTER (7) :: mcf_angle, current_angle
-  !-----------------------------------------------------------------------------
 
     energy = 0.0_DP
     DO ia=1,nangles(is)
@@ -316,29 +347,31 @@ CONTAINS
   !-----------------------------------------------------------------------------
 
   SUBROUTINE Compute_Molecule_Dihedral_Energy(molecule,species,energy_dihed)
-   !----------------------------------------------------------------------------
-    ! This routine is passed a molecule and species index. It then computes the total
-    ! dihedral angle energy of this molecule.  
-
-    ! Called by:
-    ! Calls: Get_Dihedral_Angle
-    
-    ! Written by: E. Maginn
-    ! Date: Mon Nov 26 10:01:22 MST 2007
-    ! Revision history:
-    ! AV: Added AMBER dihedral style:  12/8/12
-    !---------------------------------------------------------------------------
+    !**************************************************************************
+    ! This routine is passed a molecule and species index. It then computes 
+    !the total dihedral angle energy of this molecule.  
+    !
+    ! Currently, the available potential functions are OPLS, CHARMM, harmonic,
+    ! and none.
+    !
+    ! INPUT VARIABLES
+    !
+    !         im[INTEGER]:     LOCATE of the molecule.
+    !         is[INTEGER]:     species type of the molecule.
+    !
+    ! OUTPUT VARIABLES
+    !
+    !         energy[REALDP]:      total dihedral energy of molecule 
+    !
+    ! RAISES
+    !
+    ! DOCUMENTATION LAST UPDATED: 08/10/2016
+    !**************************************************************************
   USE Global_Variables  
-    ! Passed to 
     INTEGER :: molecule,species
-    
-    ! Returns
     REAL(DP) :: energy_dihed
-    
-    ! Local
     INTEGER :: idihed, atom1, atom2, atom3, atom4
     REAL(DP) :: a0,a1,a2,a3,a4,a5,a6,a7,a8,edihed,phi,twophi,threephi
-  !-----------------------------------------------------------------------------
 
     energy_dihed = 0.0_DP
     DO idihed=1,ndihedrals(species)
@@ -394,41 +427,6 @@ CONTAINS
           
           edihed = a0 * (1.0_DP + DCOS(a1*phi - a2))
 
-!AV: AMBER dihedral style
-       ELSEIF (dihedral_list(idihed,species)%int_dipot_type == int_amber ) THEN
-
-          atom1 = dihedral_list(idihed,species)%atom1
-          atom2 = dihedral_list(idihed,species)%atom2
-          atom3 = dihedral_list(idihed,species)%atom3
-          atom4 = dihedral_list(idihed,species)%atom4
-
-          IF ( .NOT. atom_list(atom1,molecule,species)%exist) CYCLE
-          IF ( .NOT. atom_list(atom2,molecule,species)%exist) CYCLE
-          IF ( .NOT. atom_list(atom3,molecule,species)%exist) CYCLE
-          IF ( .NOT. atom_list(atom4,molecule,species)%exist) CYCLE
-          
-          a0 = dihedral_list(idihed,species)%dihedral_param(1)
-          a1 = dihedral_list(idihed,species)%dihedral_param(2)
-          a2 = dihedral_list(idihed,species)%dihedral_param(3)
-          a3 = dihedral_list(idihed,species)%dihedral_param(4)
-          a4 = dihedral_list(idihed,species)%dihedral_param(5)
-          a5 = dihedral_list(idihed,species)%dihedral_param(6)
-          a6 = dihedral_list(idihed,species)%dihedral_param(7)
-          a7 = dihedral_list(idihed,species)%dihedral_param(8)
-          a8 = dihedral_list(idihed,species)%dihedral_param(9)
-		  ! AV: I comment this out b/c it is not usually necessary.
-		  !a9 = dihedral_list(idihed,species)%dihedral_param(10)
-		  !a10 = dihedral_list(idihed,species)%dihedral_param(11)
-		  !a11 = dihedral_list(idihed,species)%dihedral_param(12)
-
-          CALL Get_Dihedral_Angle(idihed,molecule,species,phi)
-          
-          edihed = a0 * (1.0_DP + DCOS(a1*phi - a2)) + &
-			a3 * (1.0_DP + DCOS(a4*phi - a5)) + &
-				a6 * (1.0_DP + DCOS(a7*phi - a8)) !+ &
-				!a9 * (1.0_DP + DCOS(a10*phi - a11))
-		  
-		  
        ELSEIF (dihedral_list(idihed,species)%int_dipot_type == int_harmonic ) THEN
 
           atom1 = dihedral_list(idihed,species)%atom1
@@ -461,22 +459,27 @@ CONTAINS
 
 
   SUBROUTINE Compute_Molecule_Improper_Energy(molecule,species,energy)
-  !-----------------------------------------------------------------------------
+    !**************************************************************************
     ! This routine is passed the molecule and species index, and returns the
-    ! total improper energy of that molecule. Only "none" and "harminic" types
+    ! total improper energy of that molecule. Only "none" and "harmonic" types
     ! are supported.
-
-    ! Called by:
-    ! Calls: Get_Improper_Angle
     !
-    ! Written by: E. Maginn
-    ! Date: Mon Nov 26 11:37:40 MST 2007
-    ! Revision history
-  !-----------------------------------------------------------------------------
+    ! INPUT VARIABLES
+    !
+    !         im[INTEGER]:     LOCATE of the molecule.
+    !         is[INTEGER]:     species type of the molecule.
+    !
+    ! OUTPUT VARIABLES
+    !
+    !         energy[REALDP]:      total dihedral energy of molecule 
+    !
+    ! RAISES
+    !
+    ! DOCUMENTATION LAST UPDATED: 08/10/2016
+    !**************************************************************************
     INTEGER :: molecule,species,iimprop
     REAL(DP) :: energy
     REAL(DP) :: eimprop,k,phi0,phi,n_imp,d_imp
-  !-----------------------------------------------------------------------------
     energy = 0.0_DP
     DO iimprop=1,nimpropers(species)
        IF (improper_list(iimprop,species)%int_improp_type == int_none) THEN
@@ -505,45 +508,37 @@ CONTAINS
 
   SUBROUTINE Compute_Atom_Nonbond_Energy(this_atom,this_molecule,this_species, &
        E_intra_vdw,E_inter_vdw,E_intra_qq,E_inter_qq,overlap)
-    !---------------------------------------------------------------------------
+
+    !**************************************************************************
     ! Computes the energy components between one particular atom and ALL others
     ! in its box, accounting for exclusions, scalings and existence. It returns
-    ! two components of energy and the virial for the passed atom. Note that if
-    ! this is 
-    ! used to compute the energy of several atoms, care must be taken to avoid 
-    ! "double counting" the energy. This would most typically be used to compute
-    ! energies for addition of atoms during CBMC growth.
+    ! energy components. 
+    !
     !
     ! Note that the VDW energy (without LRC) is returned as is the real space 
-    ! part of the q-q interactions (for Ewald) or the direct sum 1-1 part for 
-    ! charge_sum_style = cut.
+    ! part of the q-q interactions (for Ewald and DSF). These two contributions
+    ! are categorized into intra or intermolecular energy. 
     !
-    ! If vdw_style == 'NONE' and charge_style == 'NONE' then this routine should
-    ! really not be called. However, after much effort a value of 0 will be 
-    ! returned for the energy!
+    ! INPUT VARIABLES
     !
-    ! CALLED BY:
-    ! Atom_Displacement/Fragment_Growth
+    !         this_atom[INTEGER]:         atom number
+    !         this_molecule[INTEGER]:     LOCATE of the molecule.
+    !         this_species[INTEGER]:      species type of the molecule.
     !
-    ! CALLS: 
-    ! Minimum_Image_Separation
-    ! Clean_Abort
-    ! Compute_AtomPair_Energy
+    ! OUTPUT VARIABLES
     !
-    ! Written by: E. Maginn
-    ! Date: Wed Nov 28 14:23:16 MST 2007
-    ! Revision history:
+    !         E_intra_vdw[REALDP]:        Intramolecular vdw energy of atom
+    !         E_inter_vdw[REALDP]:        Intermolecular vdw energy of atom
+    !         E_intra_qq[REALDP]:         Intramolecular qq energy of atom 
+    !         E_inter_qq[REALDP]:         Intermolecular qq energy of atom 
+    !         Overlap[LOGICAL]:           Flag that gets triggered if atom
+    !                                     has a core overlap with another 
     !
-    ! 01/22/09 (JS) : Modified to separate out intra and intermolecule energy 
-    !                 terms. Also identity of molecules is obtained via locate 
-    !                 array
+    ! RAISES
     !
-    ! 03/11/11 (JS) : Note that the loops for energy calculations are unrolled
-    !                 in this routine (Tom Rosch's code)
-    !                 Need to figure out how to do openMP here so that other
-    !                 routines can be called much the same way as done in 
-    !                 Compute_Molecule_Nonbond_Inter_Energy
-    !---------------------------------------------------------------------------
+    ! DOCUMENTATION LAST UPDATED: 08/10/2016
+    !**************************************************************************
+
 
     INTEGER, INTENT(IN) :: this_atom,this_molecule,this_species
     REAL(DP), INTENT(OUT) :: E_intra_vdw,E_inter_vdw,E_intra_qq,E_inter_qq
