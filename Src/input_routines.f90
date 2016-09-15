@@ -5473,6 +5473,20 @@ USE Global_Variables, ONLY: cpcollect
            ELSE IF (line_array(1) == 'pressure' .OR. line_array(1) == 'Pressure') THEN
               nbr_properties = nbr_properties + 1
               need_pressure = .TRUE.
+
+
+           ELSE IF (line_array(1) == 'pressure_xx' .OR. line_array(1) == 'Pressure_XX') THEN
+              nbr_properties = nbr_properties + 1
+              need_pressure = .TRUE.
+
+           ELSE IF (line_array(1) == 'pressure_yy' .OR. line_array(1) == 'Pressure_YY') THEN
+              nbr_properties = nbr_properties + 1
+              need_pressure = .TRUE.
+
+           ELSE IF (line_array(1) == 'pressure_zz' .OR. line_array(1) == 'Pressure_ZZ') THEN
+              nbr_properties = nbr_properties + 1
+              need_pressure = .TRUE.
+
            ELSE IF (line_array(1) == 'enthalpy' .OR. line_array(1) == 'Enthalpy') THEN
               nbr_properties = nbr_properties + 1
               IF (int_sim_type /= sim_npt .AND. int_sim_type /= sim_gemc_npt) need_pressure = .TRUE.
@@ -5639,6 +5653,15 @@ USE Global_Variables, ONLY: cpcollect
               ELSE IF (line_array(1) == 'pressure' .OR. line_array(1) == 'Pressure') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Pressure'
+              ELSE IF (line_array(1) == 'pressure_xx' .OR. line_array(1) == 'Pressure_XX') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Pressure_XX'
+              ELSE IF (line_array(1) == 'pressure_yy' .OR. line_array(1) == 'Pressure_YY') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Pressure_YY'
+              ELSE IF (line_array(1) == 'pressure_zz' .OR. line_array(1) == 'Pressure_ZZ') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Pressure_ZZ'
               ELSE IF (line_array(1) == 'volume' .OR. line_array(1) == 'Volume') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Volume'
@@ -5653,7 +5676,8 @@ USE Global_Variables, ONLY: cpcollect
                 err_msg(3) = 'Supported keywords are: energy_total, energy_intra, energy_inter, energy_bond,'
                 err_msg(4) = '  energy_angle, energy_dihedral, energy_improper, energy_intravdw, energy_intraq'
                 err_msg(5) = '  energy_intervdw, energy_interq, energy_lrc, energy_recip, energy_self,'
-                err_msg(6) = '  enthalpy, pressure, volume, density, nmols, mass_density'
+                err_msg(6) = '  enthalpy, pressure, pressure_xx, pressure_yy, pressure_zz, &
+				volume, density, nmols, mass_density'
                 CALL Clean_Abort(err_msg,'Get_Property_Info')
               END IF
               
