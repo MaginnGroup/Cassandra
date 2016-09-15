@@ -9,11 +9,11 @@
  
 Run info
 ********************************************************************************
-version: Cassandra Version 1.2 20160727
+version: Cassandra Development Version
 inputfile: species1_mcf_gen.inp
 name of run: species1_mcf_gen
-date (mm/dd/yyyy): 07/27/2016
-time: 20:28:18
+date (mm/dd/yyyy): 08/04/2016
+time: 15:21:39
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -88,9 +88,7 @@ Molecule info
 ********************************************************************************
  Reading molecular connectivity information
  Species:            1
- Molecular connectivity file: 
- ../../cyclohexane.mcf                                                          
-                                          
+ Molecular connectivity file: ../../cyclohexane.mcf                                                                                                   
    6 atom(s) specified.
    6 bond(s) specified.
    6 angle(s) specified.

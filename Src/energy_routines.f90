@@ -194,28 +194,53 @@ CONTAINS
   !-----------------------------------------------------------------------------
 
   SUBROUTINE Compute_Molecule_Bond_Energy(im,is,energy)
-    !---------------------------------------------------------------------------
-    ! Given a molecule number and species,this routine computes the total bond energy
-    ! of the entire molecule.
 
-    ! CALLED By:
-    ! CALLS: Get_Bond_Length
+    !**************************************************************************
+    ! This subroutine computes the total bond energy of a selected molecule
+    ! Currently, the available potential functions are none or harmonic.
+    ! If none, the code will do a check for fixed bond lengths. 
+    !
+    ! As of now, the code can only support fixed bond length simulations. 
+    ! Effectively, this subroutine will act as a check for fixed bond length
+    ! (useful if using a restart configuration from other packages)
+    !
+    ! CALLED BY
+    !
+    !         Compute_System_Total_Energy.
+    !         Angle_Distortion
+    !         Deletion
+    !         Rotate_Dihedral
+    !         Insertion
+    !         GEMC_Particle_Transfer
+    !         Cut_N_Grow
+    !
+    ! CALLS
+    !
+    !         Get_Bond_Length
+    !
+    ! INPUT VARIABLES
+    !
+    !         im[INTEGER]:     LOCATE of the molecule.
+    !         is[INTEGER]:     species type of the molecule.
+    !
+    ! OUTPUT VARIABLES
+    !
+    !         energy[REALDP]: total bond energy of molecule 
+    !
+    ! RAISES
+    !         It will throw an error if bond lenghts do not match 
+    !         the MCF specifications within a tolerance.
+    !
+    !
+    ! DOCUMENTATION LAST UPDATED: 08/10/2016
+    !
+    !**************************************************************************
 
-    ! Written by: E. Maginn
-    ! Date: Mon Nov 26 06:27:24 MST 2007
-    ! Revision history:    
 
-    ! Passed to
     INTEGER :: im,is
-
-    ! Returned
     REAL(DP) :: energy
-
-    ! Passed from
     INTEGER :: ib
     REAL(DP) :: length
-
-    ! Local
     REAL(DP) :: k,l0,eb,ltol
     CHARACTER(7) :: mcf_bond_length, current_bond_length
   !-----------------------------------------------------------------------------
@@ -245,7 +270,6 @@ CONTAINS
           CALL Get_Bond_Length(ib,im,is,length)
           eb = k*(length-l0)**2
 
-          ! Add more potential functions here.
        ENDIF
        energy = energy + eb
     ENDDO
@@ -256,29 +280,36 @@ CONTAINS
 
 
   SUBROUTINE Compute_Molecule_Angle_Energy(im,is,energy)
-    !---------------------------------------------------------------------------
-    ! This routine is passed a molecule and species index. It then computes the total
-    ! bond angle energy of this molecule.  
+    !**************************************************************************
+    ! This subroutine is passed a molecule and species index. It then 
+    ! computes the total bond angle energy of this molecule. 
+    !
+    ! Currently, the available potential functions are none or harmonic.
+    ! If none, the code will do a check for fixed angles.
+    !
+    ! INPUT VARIABLES
+    !
+    !         im[INTEGER]:     LOCATE of the molecule.
+    !         is[INTEGER]:     species type of the molecule.
+    !
+    ! OUTPUT VARIABLES
+    !
+    !         energy[REALDP]:      total bond energy of molecule 
+    !
+    ! RAISES
+    !         It will throw an error if angles do not match 
+    !         the MCF specifications within a tolerance.
+    !
+    !
+    ! DOCUMENTATION LAST UPDATED: 08/10/2016
+    !**************************************************************************
 
-    ! Called by:
-    ! Calls: Get_Bond_Angle
-    
-    ! Written by: E. Maginn
-    ! Date: Mon Nov 26 06:27:24 MST 2007
-    ! Revision history:    
-    !---------------------------------------------------------------------------
     USE Random_Generators
-    ! Passed to 
     INTEGER :: im,is
-    
-    ! Returns
     REAL(DP) :: energy
-    
-    ! Local
     INTEGER :: ia
     REAL(DP) :: k,theta0,theta,ea,theta_tol
     CHARACTER (7) :: mcf_angle, current_angle
-  !-----------------------------------------------------------------------------
 
     energy = 0.0_DP
     DO ia=1,nangles(is)
@@ -316,29 +347,31 @@ CONTAINS
   !-----------------------------------------------------------------------------
 
   SUBROUTINE Compute_Molecule_Dihedral_Energy(molecule,species,energy_dihed)
-   !----------------------------------------------------------------------------
-    ! This routine is passed a molecule and species index. It then computes the total
-    ! dihedral angle energy of this molecule.  
-
-    ! Called by:
-    ! Calls: Get_Dihedral_Angle
-    
-    ! Written by: E. Maginn
-    ! Date: Mon Nov 26 10:01:22 MST 2007
-    ! Revision history:
-    ! AV: Added AMBER dihedral style:  12/8/12
-    !---------------------------------------------------------------------------
+    !**************************************************************************
+    ! This routine is passed a molecule and species index. It then computes 
+    !the total dihedral angle energy of this molecule.  
+    !
+    ! Currently, the available potential functions are OPLS, CHARMM, harmonic,
+    ! and none.
+    !
+    ! INPUT VARIABLES
+    !
+    !         im[INTEGER]:     LOCATE of the molecule.
+    !         is[INTEGER]:     species type of the molecule.
+    !
+    ! OUTPUT VARIABLES
+    !
+    !         energy[REALDP]:      total dihedral energy of molecule 
+    !
+    ! RAISES
+    !
+    ! DOCUMENTATION LAST UPDATED: 08/10/2016
+    !**************************************************************************
   USE Global_Variables  
-    ! Passed to 
     INTEGER :: molecule,species
-    
-    ! Returns
     REAL(DP) :: energy_dihed
-    
-    ! Local
     INTEGER :: idihed, atom1, atom2, atom3, atom4
     REAL(DP) :: a0,a1,a2,a3,a4,a5,a6,a7,a8,edihed,phi,twophi,threephi
-  !-----------------------------------------------------------------------------
 
     energy_dihed = 0.0_DP
     DO idihed=1,ndihedrals(species)
@@ -394,41 +427,6 @@ CONTAINS
           
           edihed = a0 * (1.0_DP + DCOS(a1*phi - a2))
 
-!AV: AMBER dihedral style
-       ELSEIF (dihedral_list(idihed,species)%int_dipot_type == int_amber ) THEN
-
-          atom1 = dihedral_list(idihed,species)%atom1
-          atom2 = dihedral_list(idihed,species)%atom2
-          atom3 = dihedral_list(idihed,species)%atom3
-          atom4 = dihedral_list(idihed,species)%atom4
-
-          IF ( .NOT. atom_list(atom1,molecule,species)%exist) CYCLE
-          IF ( .NOT. atom_list(atom2,molecule,species)%exist) CYCLE
-          IF ( .NOT. atom_list(atom3,molecule,species)%exist) CYCLE
-          IF ( .NOT. atom_list(atom4,molecule,species)%exist) CYCLE
-          
-          a0 = dihedral_list(idihed,species)%dihedral_param(1)
-          a1 = dihedral_list(idihed,species)%dihedral_param(2)
-          a2 = dihedral_list(idihed,species)%dihedral_param(3)
-          a3 = dihedral_list(idihed,species)%dihedral_param(4)
-          a4 = dihedral_list(idihed,species)%dihedral_param(5)
-          a5 = dihedral_list(idihed,species)%dihedral_param(6)
-          a6 = dihedral_list(idihed,species)%dihedral_param(7)
-          a7 = dihedral_list(idihed,species)%dihedral_param(8)
-          a8 = dihedral_list(idihed,species)%dihedral_param(9)
-		  ! AV: I comment this out b/c it is not usually necessary.
-		  !a9 = dihedral_list(idihed,species)%dihedral_param(10)
-		  !a10 = dihedral_list(idihed,species)%dihedral_param(11)
-		  !a11 = dihedral_list(idihed,species)%dihedral_param(12)
-
-          CALL Get_Dihedral_Angle(idihed,molecule,species,phi)
-          
-          edihed = a0 * (1.0_DP + DCOS(a1*phi - a2)) + &
-			a3 * (1.0_DP + DCOS(a4*phi - a5)) + &
-				a6 * (1.0_DP + DCOS(a7*phi - a8)) !+ &
-				!a9 * (1.0_DP + DCOS(a10*phi - a11))
-		  
-		  
        ELSEIF (dihedral_list(idihed,species)%int_dipot_type == int_harmonic ) THEN
 
           atom1 = dihedral_list(idihed,species)%atom1
@@ -461,22 +459,27 @@ CONTAINS
 
 
   SUBROUTINE Compute_Molecule_Improper_Energy(molecule,species,energy)
-  !-----------------------------------------------------------------------------
+    !**************************************************************************
     ! This routine is passed the molecule and species index, and returns the
-    ! total improper energy of that molecule. Only "none" and "harminic" types
+    ! total improper energy of that molecule. Only "none" and "harmonic" types
     ! are supported.
-
-    ! Called by:
-    ! Calls: Get_Improper_Angle
     !
-    ! Written by: E. Maginn
-    ! Date: Mon Nov 26 11:37:40 MST 2007
-    ! Revision history
-  !-----------------------------------------------------------------------------
+    ! INPUT VARIABLES
+    !
+    !         im[INTEGER]:     LOCATE of the molecule.
+    !         is[INTEGER]:     species type of the molecule.
+    !
+    ! OUTPUT VARIABLES
+    !
+    !         energy[REALDP]:      total dihedral energy of molecule 
+    !
+    ! RAISES
+    !
+    ! DOCUMENTATION LAST UPDATED: 08/10/2016
+    !**************************************************************************
     INTEGER :: molecule,species,iimprop
     REAL(DP) :: energy
     REAL(DP) :: eimprop,k,phi0,phi,n_imp,d_imp
-  !-----------------------------------------------------------------------------
     energy = 0.0_DP
     DO iimprop=1,nimpropers(species)
        IF (improper_list(iimprop,species)%int_improp_type == int_none) THEN
@@ -505,45 +508,37 @@ CONTAINS
 
   SUBROUTINE Compute_Atom_Nonbond_Energy(this_atom,this_molecule,this_species, &
        E_intra_vdw,E_inter_vdw,E_intra_qq,E_inter_qq,overlap)
-    !---------------------------------------------------------------------------
+
+    !**************************************************************************
     ! Computes the energy components between one particular atom and ALL others
     ! in its box, accounting for exclusions, scalings and existence. It returns
-    ! two components of energy and the virial for the passed atom. Note that if
-    ! this is 
-    ! used to compute the energy of several atoms, care must be taken to avoid 
-    ! "double counting" the energy. This would most typically be used to compute
-    ! energies for addition of atoms during CBMC growth.
+    ! energy components. 
+    !
     !
     ! Note that the VDW energy (without LRC) is returned as is the real space 
-    ! part of the q-q interactions (for Ewald) or the direct sum 1-1 part for 
-    ! charge_sum_style = cut.
+    ! part of the q-q interactions (for Ewald and DSF). These two contributions
+    ! are categorized into intra or intermolecular energy. 
     !
-    ! If vdw_style == 'NONE' and charge_style == 'NONE' then this routine should
-    ! really not be called. However, after much effort a value of 0 will be 
-    ! returned for the energy!
+    ! INPUT VARIABLES
     !
-    ! CALLED BY:
-    ! Atom_Displacement/Fragment_Growth
+    !         this_atom[INTEGER]:         atom number
+    !         this_molecule[INTEGER]:     LOCATE of the molecule.
+    !         this_species[INTEGER]:      species type of the molecule.
     !
-    ! CALLS: 
-    ! Minimum_Image_Separation
-    ! Clean_Abort
-    ! Compute_AtomPair_Energy
+    ! OUTPUT VARIABLES
     !
-    ! Written by: E. Maginn
-    ! Date: Wed Nov 28 14:23:16 MST 2007
-    ! Revision history:
+    !         E_intra_vdw[REALDP]:        Intramolecular vdw energy of atom
+    !         E_inter_vdw[REALDP]:        Intermolecular vdw energy of atom
+    !         E_intra_qq[REALDP]:         Intramolecular qq energy of atom 
+    !         E_inter_qq[REALDP]:         Intermolecular qq energy of atom 
+    !         Overlap[LOGICAL]:           Flag that gets triggered if atom
+    !                                     has a core overlap with another 
     !
-    ! 01/22/09 (JS) : Modified to separate out intra and intermolecule energy 
-    !                 terms. Also identity of molecules is obtained via locate 
-    !                 array
+    ! RAISES
     !
-    ! 03/11/11 (JS) : Note that the loops for energy calculations are unrolled
-    !                 in this routine (Tom Rosch's code)
-    !                 Need to figure out how to do openMP here so that other
-    !                 routines can be called much the same way as done in 
-    !                 Compute_Molecule_Nonbond_Inter_Energy
-    !---------------------------------------------------------------------------
+    ! DOCUMENTATION LAST UPDATED: 08/10/2016
+    !**************************************************************************
+
 
     INTEGER, INTENT(IN) :: this_atom,this_molecule,this_species
     REAL(DP), INTENT(OUT) :: E_intra_vdw,E_inter_vdw,E_intra_qq,E_inter_qq
@@ -2984,179 +2979,202 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
   !-----------------------------------------------------------------------------
 
-  SUBROUTINE Check_System_Energy(ibox)
+  SUBROUTINE Check_System_Energy(ibox,check_inp)
 
      USE Global_Variables
      USE IO_Utilities
 
      INTEGER, INTENT(IN) :: ibox
+     LOGICAL, OPTIONAL :: check_inp
 
-     CHARACTER(20) :: str_check, str_energy
-     LOGICAL :: inter_overlap
+     LOGICAL :: overlap, check
 
      TYPE(Energy_Class) :: e_check
      TYPE(Energy_Class) :: e_diff 
 
-     e_check%total = energy(ibox)%total
-     e_check%intra = energy(ibox)%intra
-     e_check%inter = energy(ibox)%inter
-     e_check%bond = energy(ibox)%bond
-     e_check%angle = energy(ibox)%angle
-     e_check%dihedral = energy(ibox)%dihedral
-     e_check%improper = energy(ibox)%improper
-     e_check%intra_vdw = energy(ibox)%intra_vdw
-     e_check%intra_q = energy(ibox)%intra_q
-     e_check%inter_vdw = energy(ibox)%inter_vdw
-     e_check%inter_q = energy(ibox)%inter_q
-     e_check%lrc = energy(ibox)%lrc
-     e_check%reciprocal = energy(ibox)%reciprocal
-     e_check%self = energy(ibox)%self
-
-     CALL Compute_System_Total_Energy(ibox,.TRUE.,inter_overlap)
-
-     e_diff%total = ABS(energy(ibox)%total - e_check%total)
-     e_diff%intra = ABS(energy(ibox)%intra - e_check%intra)
-     e_diff%inter = ABS(energy(ibox)%inter - e_check%inter)
-     e_diff%bond = ABS(energy(ibox)%bond - e_check%bond)
-     e_diff%angle = ABS(energy(ibox)%angle - e_check%angle)
-     e_diff%dihedral = ABS(energy(ibox)%dihedral - e_check%dihedral)
-     e_diff%improper = ABS(energy(ibox)%improper - e_check%improper)
-     e_diff%intra_vdw = ABS(energy(ibox)%intra_vdw - e_check%intra_vdw)
-     e_diff%intra_q = ABS(energy(ibox)%intra_q - e_check%intra_q)
-     e_diff%inter_vdw = ABS(energy(ibox)%inter_vdw - e_check%inter_vdw)
-     e_diff%inter_q = ABS(energy(ibox)%inter_q - e_check%inter_q)
-     e_diff%lrc = ABS(energy(ibox)%lrc - e_check%lrc)
-     e_diff%reciprocal = ABS(energy(ibox)%reciprocal - e_check%reciprocal)
-     e_diff%self = ABS(energy(ibox)%self - e_check%self)
-
-     IF(e_diff%total .GT. tiny_number) THEN
-        err_msg = ''
-        err_msg(1) = 'Total energy does not match, box: ' // TRIM(Int_To_String(ibox))
-        WRITE(str_check,'(F20.5)') e_check%total*atomic_to_kjmol
-        WRITE(str_energy,'(F20.5)') energy(ibox)%total*atomic_to_kjmol
-        err_msg(2) = 'Initial + deltas ' // str_check
-        err_msg(3) = 'Recomputed       ' // str_energy
-        CALL Clean_Abort(err_msg,"Check_System_Energy")
-     ELSE IF(e_diff%intra .GT. tiny_number) THEN
-        err_msg = ''
-        err_msg(1) = 'Intra energy does not match, box: ' // TRIM(Int_To_String(ibox))
-        WRITE(str_check,'(F20.5)') e_check%intra*atomic_to_kjmol
-        WRITE(str_energy,'(F20.5)') energy(ibox)%intra*atomic_to_kjmol
-        err_msg(2) = 'Initial + deltas ' // str_check
-        err_msg(3) = 'Recomputed       ' // str_energy
-        CALL Clean_Abort(err_msg,"Check_System_Energy")
-     ELSE IF(e_diff%inter .GT. tiny_number) THEN
-        err_msg = ''
-        err_msg(1) = 'Inter energy does not match, box: ' // TRIM(Int_To_String(ibox))
-        WRITE(str_check,'(F20.5)') e_check%inter*atomic_to_kjmol
-        WRITE(str_energy,'(F20.5)') energy(ibox)%inter*atomic_to_kjmol
-        err_msg(2) = 'Initial + deltas ' // str_check
-        err_msg(3) = 'Recomputed       ' // str_energy
-        CALL Clean_Abort(err_msg,"Check_System_Energy")
-     ELSE IF(e_diff%bond .GT. tiny_number) THEN
-        err_msg = ''
-        err_msg(1) = 'Bond energy does not match, box: ' // TRIM(Int_To_String(ibox))
-        WRITE(str_check,'(F20.5)') e_check%bond*atomic_to_kjmol
-        WRITE(str_energy,'(F20.5)') energy(ibox)%bond*atomic_to_kjmol
-        err_msg(2) = 'Initial + deltas ' // str_check
-        err_msg(3) = 'Recomputed       ' // str_energy
-        CALL Clean_Abort(err_msg,"Check_System_Energy")
-     ELSE IF(e_diff%angle .GT. tiny_number) THEN
-        err_msg = ''
-        err_msg(1) = 'Angle energy does not match, box: ' // TRIM(Int_To_String(ibox))
-        WRITE(str_check,'(F20.5)') e_check%angle*atomic_to_kjmol
-        WRITE(str_energy,'(F20.5)') energy(ibox)%angle*atomic_to_kjmol
-        err_msg(2) = 'Initial + deltas ' // str_check
-        err_msg(3) = 'Recomputed       ' // str_energy
-        CALL Clean_Abort(err_msg,"Check_System_Energy")
-     ELSE IF(e_diff%dihedral .GT. tiny_number) THEN
-        err_msg = ''
-        err_msg(1) = 'Dihedral energy does not match, box: ' // TRIM(Int_To_String(ibox))
-        WRITE(str_check,'(F20.5)') e_check%dihedral*atomic_to_kjmol
-        WRITE(str_energy,'(F20.5)') energy(ibox)%dihedral*atomic_to_kjmol
-        err_msg(2) = 'Initial + deltas ' // str_check
-        err_msg(3) = 'Recomputed       ' // str_energy
-        CALL Clean_Abort(err_msg,"Check_System_Energy")
-     ELSE IF(e_diff%improper .GT. tiny_number) THEN
-        err_msg = ''
-        err_msg(1) = 'Improper energy does not match, box: ' // TRIM(Int_To_String(ibox))
-        WRITE(str_check,'(F20.5)') e_check%improper*atomic_to_kjmol
-        WRITE(str_energy,'(F20.5)') energy(ibox)%improper*atomic_to_kjmol
-        err_msg(2) = 'Initial + deltas ' // str_check
-        err_msg(3) = 'Recomputed       ' // str_energy
-        CALL Clean_Abort(err_msg,"Check_System_Energy")
-     ELSE IF(e_diff%intra_vdw .GT. tiny_number) THEN
-        err_msg = ''
-        err_msg(1) = 'Intra_VDW energy does not match, box: ' // TRIM(Int_To_String(ibox))
-        WRITE(str_check,'(F20.5)') e_check%intra_vdw*atomic_to_kjmol
-        WRITE(str_energy,'(F20.5)') energy(ibox)%intra_vdw*atomic_to_kjmol
-        err_msg(2) = 'Initial + deltas ' // str_check
-        err_msg(3) = 'Recomputed       ' // str_energy
-        CALL Clean_Abort(err_msg,"Check_System_Energy")
-     ELSE IF(e_diff%intra_q .GT. tiny_number) THEN
-        err_msg = ''
-        err_msg(1) = 'Intra_Q energy does not match, box: ' // TRIM(Int_To_String(ibox))
-        WRITE(str_check,'(F20.5)') e_check%intra_q*atomic_to_kjmol
-        WRITE(str_energy,'(F20.5)') energy(ibox)%intra_q*atomic_to_kjmol
-        err_msg(2) = 'Initial + deltas ' // str_check
-        err_msg(3) = 'Recomputed       ' // str_energy
-        CALL Clean_Abort(err_msg,"Check_System_Energy")
-     ELSE IF(e_diff%inter_vdw .GT. tiny_number) THEN
-        err_msg = ''
-        err_msg(1) = 'Inter_VDW energy does not match, box: ' // TRIM(Int_To_String(ibox))
-        WRITE(str_check,'(F20.5)') e_check%inter_vdw*atomic_to_kjmol
-        WRITE(str_energy,'(F20.5)') energy(ibox)%inter_vdw*atomic_to_kjmol
-        err_msg(2) = 'Initial + deltas ' // str_check
-        err_msg(3) = 'Recomputed       ' // str_energy
-        CALL Clean_Abort(err_msg,"Check_System_Energy")
-     ELSE IF(e_diff%inter_q .GT. tiny_number) THEN
-        err_msg = ''
-        err_msg(1) = 'Inter_Q energy does not match, box: ' // TRIM(Int_To_String(ibox))
-        WRITE(str_check,'(F20.5)') e_check%inter_q*atomic_to_kjmol
-        WRITE(str_energy,'(F20.5)') energy(ibox)%inter_q*atomic_to_kjmol
-        err_msg(2) = 'Initial + deltas ' // str_check
-        err_msg(3) = 'Recomputed       ' // str_energy
-        CALL Clean_Abort(err_msg,"Check_System_Energy")
-     ELSE IF(e_diff%lrc .GT. tiny_number) THEN
-        err_msg = ''
-        err_msg(1) = 'LRC energy does not match, box: ' // TRIM(Int_To_String(ibox))
-        WRITE(str_check,'(F20.5)') e_check%lrc*atomic_to_kjmol
-        WRITE(str_energy,'(F20.5)') energy(ibox)%lrc*atomic_to_kjmol
-        err_msg(2) = 'Initial + deltas ' // str_check
-        err_msg(3) = 'Recomputed       ' // str_energy
-        CALL Clean_Abort(err_msg,"Check_System_Energy")
-     ELSE IF(e_diff%reciprocal .GT. tiny_number) THEN
-        err_msg = ''
-        err_msg(1) = 'Reciprocal energy does not match, box: ' // TRIM(Int_To_String(ibox))
-        WRITE(str_check,'(F20.5)') e_check%reciprocal*atomic_to_kjmol
-        WRITE(str_energy,'(F20.5)') energy(ibox)%reciprocal*atomic_to_kjmol
-        err_msg(2) = 'Initial + deltas ' // str_check
-        err_msg(3) = 'Recomputed       ' // str_energy
-        CALL Clean_Abort(err_msg,"Check_System_Energy")
-     ELSE IF(e_diff%self .GT. tiny_number) THEN
-        err_msg = ''
-        err_msg(1) = 'Self energy does not match, box: ' // TRIM(Int_To_String(ibox))
-        WRITE(str_check,'(F20.5)') e_check%self*atomic_to_kjmol
-        WRITE(str_energy,'(F20.5)') energy(ibox)%self*atomic_to_kjmol
-        err_msg(2) = 'Initial + deltas ' // str_check
-        err_msg(3) = 'Recomputed       ' // str_energy
-        CALL Clean_Abort(err_msg,"Check_System_Energy")
+     IF (present(check_inp)) THEN
+        check = check_inp
+     ELSE
+        check = .TRUE.
      END IF
 
-     energy(ibox)%total = e_check%total
-     energy(ibox)%intra = e_check%intra
-     energy(ibox)%inter = e_check%inter
-     energy(ibox)%bond = e_check%bond
-     energy(ibox)%angle = e_check%angle
-     energy(ibox)%dihedral = e_check%dihedral
-     energy(ibox)%improper = e_check%improper
-     energy(ibox)%intra_vdw = e_check%intra_vdw
-     energy(ibox)%intra_q = e_check%intra_q
-     energy(ibox)%inter_vdw = e_check%inter_vdw
-     energy(ibox)%inter_q = e_check%inter_q
-     energy(ibox)%lrc = e_check%lrc
-     energy(ibox)%reciprocal = e_check%reciprocal
-     energy(ibox)%self = e_check%self
+     IF (check) THEN
+        e_check%total = energy(ibox)%total
+        e_check%intra = energy(ibox)%intra
+        e_check%inter = energy(ibox)%inter
+        e_check%bond = energy(ibox)%bond
+        e_check%angle = energy(ibox)%angle
+        e_check%dihedral = energy(ibox)%dihedral
+        e_check%improper = energy(ibox)%improper
+        e_check%intra_vdw = energy(ibox)%intra_vdw
+        e_check%intra_q = energy(ibox)%intra_q
+        e_check%inter_vdw = energy(ibox)%inter_vdw
+        e_check%inter_q = energy(ibox)%inter_q
+        e_check%lrc = energy(ibox)%lrc
+        e_check%reciprocal = energy(ibox)%reciprocal
+        e_check%self = energy(ibox)%self
+        e_diff%total = 0.0_DP
+        e_diff%intra = 0.0_DP
+        e_diff%inter = 0.0_DP
+        e_diff%bond = 0.0_DP
+        e_diff%angle = 0.0_DP
+        e_diff%dihedral = 0.0_DP
+        e_diff%improper = 0.0_DP
+        e_diff%intra_vdw = 0.0_DP
+        e_diff%intra_q = 0.0_DP
+        e_diff%inter_vdw = 0.0_DP
+        e_diff%inter_q = 0.0_DP
+        e_diff%lrc = 0.0_DP
+        e_diff%reciprocal = 0.0_DP
+        e_diff%self = 0.0_DP
+     END IF
+
+     CALL Compute_System_Total_Energy(ibox,.TRUE.,overlap)
+
+     IF (overlap) THEN
+        ! overlap was detected between two atoms so abort the program
+        err_msg = ''
+        err_msg(1) = 'Atomic overlap in the configuration'
+        CALL Clean_Abort(err_msg,'Check_System_Energy')
+     END IF
+
+     ! Compare recomputed energies to original
+     IF (check) THEN
+        e_diff%total = ABS(energy(ibox)%total - e_check%total)
+        IF (ABS(energy(ibox)%total) > tiny_number) THEN
+           e_diff%total = e_diff%total / energy(ibox)%total
+        END IF
+        e_diff%intra = ABS(energy(ibox)%intra - e_check%intra)
+        IF (ABS(energy(ibox)%intra) > tiny_number) THEN
+           e_diff%intra = e_diff%intra / energy(ibox)%intra
+        END IF
+        e_diff%inter = ABS(energy(ibox)%inter - e_check%inter)
+        IF (ABS(energy(ibox)%inter) > tiny_number) THEN
+           e_diff%inter = e_diff%inter / energy(ibox)%inter
+        END IF
+        e_diff%bond = ABS(energy(ibox)%bond - e_check%bond)
+        IF (ABS(energy(ibox)%bond) > tiny_number) THEN
+           e_diff%bond = e_diff%bond / energy(ibox)%bond
+        END IF
+        e_diff%angle = ABS(energy(ibox)%angle - e_check%angle)
+        IF (ABS(energy(ibox)%angle) > tiny_number) THEN
+           e_diff%angle = e_diff%angle / energy(ibox)%angle
+        END IF
+        e_diff%dihedral = ABS(energy(ibox)%dihedral - e_check%dihedral)
+        IF (ABS(energy(ibox)%dihedral) > tiny_number) THEN
+           e_diff%dihedral = e_diff%dihedral / energy(ibox)%dihedral
+        END IF
+        e_diff%improper = ABS(energy(ibox)%improper - e_check%improper)
+        IF (ABS(energy(ibox)%improper) > tiny_number) THEN
+           e_diff%improper = e_diff%improper / energy(ibox)%improper
+        END IF
+        e_diff%intra_vdw = ABS(energy(ibox)%intra_vdw - e_check%intra_vdw)
+        IF (ABS(energy(ibox)%intra_vdw) > tiny_number) THEN
+           e_diff%intra_vdw = e_diff%intra_vdw / energy(ibox)%intra_vdw
+        END IF
+        e_diff%intra_q = ABS(energy(ibox)%intra_q - e_check%intra_q)
+        IF (ABS(energy(ibox)%intra_q) > tiny_number) THEN
+           e_diff%intra_q = e_diff%intra_q / energy(ibox)%intra_q
+        END IF
+        e_diff%inter_vdw = ABS(energy(ibox)%inter_vdw - e_check%inter_vdw)
+        IF (ABS(energy(ibox)%inter_vdw) > tiny_number) THEN
+           e_diff%inter_vdw = e_diff%inter_vdw / energy(ibox)%inter_vdw
+        END IF
+        e_diff%inter_q = ABS(energy(ibox)%inter_q - e_check%inter_q)
+        IF (ABS(energy(ibox)%inter_q) > tiny_number) THEN
+           e_diff%inter_q = e_diff%inter_q / energy(ibox)%inter_q
+        END IF
+        e_diff%lrc = ABS(energy(ibox)%lrc - e_check%lrc)
+        IF (ABS(energy(ibox)%lrc) > tiny_number) THEN
+           e_diff%lrc = e_diff%lrc / energy(ibox)%lrc
+        END IF
+        e_diff%reciprocal = ABS(energy(ibox)%reciprocal - e_check%reciprocal)
+        IF (ABS(energy(ibox)%reciprocal) > tiny_number) THEN
+           e_diff%reciprocal = e_diff%reciprocal / energy(ibox)%reciprocal
+        END IF
+        e_diff%self = ABS(energy(ibox)%self - e_check%self)
+        IF (ABS(energy(ibox)%self) > tiny_number) THEN
+           e_diff%self = e_diff%self / energy(ibox)%self
+        END IF
+     END IF
+
+     ! Write the recomputed energy components to log
+     WRITE(logunit,*)
+     WRITE(logunit,'(X,A,X,I1,T30,A20)',ADVANCE='NO') 'Energy components for box', ibox, 'kJ/mol-Extensive'
+     IF (check) WRITE(logunit,'(X,A20)',ADVANCE='NO') 'Relative_Error'
+     WRITE(logunit,*)
+     WRITE(logunit,'(X,A)') '---------------------------------------------------------------------'
+     WRITE(logunit,'(X,A,T30,F20.3)',ADVANCE='NO') 'Total system energy', energy(ibox)%total*atomic_to_kjmol
+     IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%total
+     WRITE(logunit,*)
+     WRITE(logunit,'(X,A,T30,F20.3)',ADVANCE='NO') 'Intra molecular energy', energy(ibox)%intra*atomic_to_kjmol
+     IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%intra
+     WRITE(logunit,*)
+     WRITE(logunit,'(3X,A,T30,F20.3)',ADVANCE='NO') 'Bond energy',energy(ibox)%bond*atomic_to_kjmol
+     IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%bond
+     WRITE(logunit,*)
+     WRITE(logunit,'(3X,A,T30,F20.3)',ADVANCE='NO') 'Bond angle energy',energy(ibox)%angle*atomic_to_kjmol
+     IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%angle
+     WRITE(logunit,*)
+     WRITE(logunit,'(3X,A,T30,F20.3)',ADVANCE='NO') 'Dihedral angle energy', energy(ibox)%dihedral*atomic_to_kjmol
+     IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%dihedral
+     WRITE(logunit,*)
+     WRITE(logunit,'(3X,A,T30,F20.3)',ADVANCE='NO') 'Improper angle energy', energy(ibox)%improper*atomic_to_kjmol
+     IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%improper
+     WRITE(logunit,*)
+     WRITE(logunit,'(3X,A,T30,F20.3)',ADVANCE='NO') 'Intra molecule vdw', energy(ibox)%intra_vdw*atomic_to_kjmol
+     IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%intra_vdw
+     WRITE(logunit,*)
+     WRITE(logunit,'(3X,A,T30,F20.3)',ADVANCE='NO') 'Intra molecule q',energy(ibox)%intra_q*atomic_to_kjmol
+     IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%intra_q
+     WRITE(logunit,*)
+     WRITE(logunit,'(X,A,T30,F20.3)',ADVANCE='NO') 'Inter molecular energy', energy(ibox)%inter*atomic_to_kjmol
+     IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%inter
+     WRITE(logunit,*)
+     WRITE(logunit,'(3X,A,T30,F20.3)',ADVANCE='NO') 'Inter molecule vdw', energy(ibox)%inter_vdw*atomic_to_kjmol
+     IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%inter_vdw
+     WRITE(logunit,*)
+     IF (int_vdw_sum_style(ibox) == vdw_cut_tail) THEN
+        WRITE(logunit,'(3X,A,T30,F20.3)',ADVANCE='NO') 'Long range correction', energy(ibox)%lrc*atomic_to_kjmol
+        IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%lrc
+        WRITE(logunit,*)
+     END IF
+     WRITE(logunit,'(3X,A,T30,F20.3)',ADVANCE='NO') 'Inter molecule q',energy(ibox)%inter_q*atomic_to_kjmol
+     IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%inter_q
+     WRITE(logunit,*)
+     IF (int_charge_sum_style(ibox) == charge_ewald) THEN
+        WRITE(logunit,'(3X,A,T30,F20.3)',ADVANCE='NO') 'Reciprocal ewald',energy(ibox)%reciprocal*atomic_to_kjmol
+        IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%reciprocal
+        WRITE(logunit,*)
+        WRITE(logunit,'(3X,A,T30,F20.3)',ADVANCE='NO') 'Self ewald',energy(ibox)%self*atomic_to_kjmol
+        IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%self
+        WRITE(logunit,*)
+     ELSE IF (int_charge_sum_style(ibox) == charge_dsf) THEN
+        WRITE(logunit,'(X,A,T30,F20.3)',ADVANCE='NO') 'Self DSF',energy(ibox)%self*atomic_to_kjmol
+        IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%self
+        WRITE(logunit,*)
+     END IF
+     WRITE(logunit,'(X,A)') '---------------------------------------------------------------------'
+     IF (int_charge_sum_style(ibox) == charge_ewald) &
+        WRITE(logunit,'(3X,A,T33,I17)') 'Number of reciprocal vectors',nvecs(ibox)
+     WRITE(logunit,*)
+
+     IF (check) THEN
+        energy(ibox)%total = e_check%total
+        energy(ibox)%intra = e_check%intra
+        energy(ibox)%inter = e_check%inter
+        energy(ibox)%bond = e_check%bond
+        energy(ibox)%angle = e_check%angle
+        energy(ibox)%dihedral = e_check%dihedral
+        energy(ibox)%improper = e_check%improper
+        energy(ibox)%intra_vdw = e_check%intra_vdw
+        energy(ibox)%intra_q = e_check%intra_q
+        energy(ibox)%inter_vdw = e_check%inter_vdw
+        energy(ibox)%inter_q = e_check%inter_q
+        energy(ibox)%lrc = e_check%lrc
+        energy(ibox)%reciprocal = e_check%reciprocal
+        energy(ibox)%self = e_check%self
+     END IF
 
   END SUBROUTINE Check_System_Energy
 
