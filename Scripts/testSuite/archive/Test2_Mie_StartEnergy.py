@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 
 # This is Test 2 in a series of tests in order to check the functionality of Cassandra. 
+#Test 2: This test tests 4 different configurations of two molecules in a box of size 100 Angstroms using the Mie potential equation. The first configuration is of two atoms a distance of sigma apart. The second is with each of the atoms a distance of 0.5*sigma away from the edge of opposite walls. The third test is a test where the two atoms are a distance of 2^(1/6)*sigma apart. The last test is of two atoms that are a distance of 5 angstroms apart which is out of bounds and thus the energy should be zero. 
+#Note: The test uses a search to extract the energies from the log file created when running Cassandra based on the name of the energy. Furthermore, the extracted energies where than compared to the energies calculated by hand using the Mie potential equation. The exponents 14 and 6 were used.
+
+
 # Test 2 - Checks the starting energy for 4 different scenarios for the Mie potential
 # Import Modules
 import subprocess as sp #This module lets us run cassandra from python

@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
-# This is Test 1 in a series of tests for a testSuite in order to check updates made to the Cassandra program. 
-# Test 1 is an energy test which tests the starting energies for a molecule using the Lennard-Jones equation. This test does not perform any moves in the Cassandra program, it is simply an initial testing of energy. 
-# Test 1 - Checks the starting energy for 4 different scenarios.
-# Import Modules
+#Test 3: This test tests the angle energy. This tests the harmonic potential of energies. In this case, propane was used. The 3 different angles used are 113.5, 114, 114.5 degrees. The xyz files were obtained by creating a propane molecule in the program Gaussview. Cassandra was tested for the three angles listed above. 
+
+#Note: The test uses a search to extract the energies from the log file created when running Cassandra based on the name of the energy. Furthermore, the extracted energies where than compared to the energies calculated by hand. 
+
+#Import Modules
 import subprocess as sp #This module lets us run cassandra from python
 import numpy as np #this module s the package for scientific computing in python
 import random #This allows us to run random numbers
@@ -233,9 +234,9 @@ num3 = num3[0]
 #print line2
 #print line3
 # The next four lines are the number extracted from the lines from the log file.
-#print num1
-#print num2
-#print num3
+print num1
+print num2
+print num3
 
 # Plot these numbers
 x = [113.5, 114, 114.5]
@@ -245,8 +246,9 @@ pyplot.plot(x,y)
 pyplot.savefig('angle.png')
 
 # Now we will compare and tell the user they passed and/or failed the test! 
+# This oene may have problems
 # Check 1
-if abs(0.025 - num1) <= 0.05:
+if abs(0.005 - num1) <= 0.001:
 	c1 = 1
 	print "Check 1..."
 else: 
