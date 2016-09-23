@@ -3,8 +3,7 @@
 #*******************************************************************************
 # SCRIPT:  Test7_Water.py
 # VERSION: 2.0
-# FEATURES: Compute the electrostatic energy between two point charges 
-#           at a range of distances
+# FEATURES: Water box, electrostatic energy
 #*******************************************************************************
 
 #*******************************************************************************
