@@ -1,10 +1,19 @@
+********************************************************************************
+                ______                                __                        
+               / ____/___ _______________ _____  ____/ /________ _              
+              / /   / __ `/ ___/ ___/ __ `/ __ \/ __  / ___/ __ `/              
+             / /___/ /_/ (__  |__  ) /_/ / / / / /_/ / /  / /_/ /               
+             \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                
+                                                                                
+********************************************************************************
+ 
 Run info
 ********************************************************************************
-version: Cassandra Development Version
+version: Cassandra Version 1.2 20160720
 inputfile: nitrogen_Si.inp
 name of run: nitrogen_Si.out
-date (mm/dd/yyyy): 06/15/2016
-time: 15:46:14
+date (mm/dd/yyyy): 07/26/2016
+time: 23:16:41
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -35,12 +44,6 @@ Copy input file
  
  # Charge_Style
  coul ewald 6.0 1E-5
- 
- # Intra_Scaling
- 0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  1.0
- 0.0  0.0  0.0  1.0
  
  # Mixing_Rule
  lb
@@ -127,7 +130,7 @@ Number of species
 Box info
 ********************************************************************************
 Number of simulation boxes     1
-Box 1 is orthorhombic        
+Box 1 is ORTHORHOMBIC        
  X dimension :        20.0900     Angstrom
  Y dimension :        19.7380     Angstrom
  Z dimension :        13.1420     Angstrom
@@ -141,7 +144,7 @@ Pair style
 ********************************************************************************
 VDW style used is:   LJ             in box:  1
  VDW sum style is:   cut_tail       in box:  1
- rcut =     6.000   Angstrom
+ rcut =     6.000 Angstrom
 Charge style in box 1 is coul
  Charge sum style is   ewald          in box:  1
  Ewald real space cutoff is   6.000 Angstroms.
@@ -230,10 +233,6 @@ Molecule info
  -------------------------------------------------------------------------------
 ********************************************************************************
  
-Nonbond tables
-********************************************************************************
- ********************************************************************************
- 
 Start type
 ********************************************************************************
 Initial configuration for box 1 will add molecules to configuration read from file
@@ -273,8 +272,7 @@ Number of moves is :   4
 Chemical potential
 ********************************************************************************
 Species     1
- Chemical potential (internal units):        0.000000000
- de Broglie wavelength (Angstroms):          0.026196476
+ No entry in input file. Chemical potential not required.
 Species     2
  Chemical potential (internal units):    -1000.000000000
  de Broglie wavelength (Angstroms):          0.375895159
@@ -282,17 +280,12 @@ Species     2
  
 Simulation length info
 ********************************************************************************
-Thermodynamic quantities will be written every        400 Steps     
+Thermodynamic quantities will be computed every       400 Steps     
 Coordinates will be written every                    4000 Steps     
  movie header file is                  nitrogen_Si.out.H
  movie_XYZ file is                     nitrogen_Si.out.xyz
 The simulation will be run for                       4000 Steps     
-********************************************************************************
- 
-Average info
-********************************************************************************
-Section "# Average_Info" is missing from the input file
- By default, instantaneous values will be output
+Instantaneous values will be written every            400 Steps     
 ********************************************************************************
  
 Property info
@@ -348,23 +341,23 @@ Charge neutrality check
  
 Compute total energy
 ********************************************************************************
- Starting energy components for box   1
+ Starting energy components for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is             -35488453.854
- Intra molecular energy is                  0.000
- Bond energy is                             0.000
- Bond angle energy is                       0.000
- Dihedral angle energy is                   0.000
- Improper angle energy is                   0.000
- Intra molecule vdw is                  71898.636
- Intra molecule q is                -28596008.775
- Inter molecule vdw is                   3891.298
- Long range correction is              -14876.196
- Inter molecule q is                 18856507.727
- Number of vectors is                        2634
- Reciprocal ewald is                   595667.570
- Self ewald is                      -26405534.114
+ Total system energy                -35308130.819
+ Intra molecular energy                     0.000
+   Bond energy                              0.000
+   Bond angle energy                        0.000
+   Dihedral angle energy                    0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                     71900.502
+ Intra molecule q                   -28596040.415
+ Inter molecule vdw                    183821.107
+ Long range correction                 -14876.196
+ Inter molecule q                    18857985.102
+ Number of vectors                           2634
+ Reciprocal ewald                      594613.194
+ Self ewald                         -26405534.114
  -----------------------------------------------------------
  
 ********************************************************************************
@@ -372,49 +365,49 @@ Compute total energy
 Run simulation
 ********************************************************************************
       Step       Move   Mol Spc Box  Success  MaxWidth
-      2349  translate         2   1  0.05167   0.20667
-      2466     rotate         2   1  0.23333   2.98451
+      2426     rotate         2   1  0.27000   2.98451
+      2536  translate         2   1  0.04000   0.16000
 ********************************************************************************
  
 Report ending energy & then re-compute from scratch
 ********************************************************************************
  
  
- Ending energy components for box   1
+ Initial energy + deltas for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is             -35514980.377
- Intra molecular energy is                  0.000
- Bond energy is                             0.000
- Angle energy is                            0.000
- Dihedral energy is                         0.000
- Improper angle energy is                   0.000
- Intra molecule vdw is                  71898.636
- Intra molecule q is                -28596008.775
- Inter molecule vdw is                 -21084.506
- Long range correction is              -14876.196
- Inter molecule q is                 18854646.546
- Reciprocal ewald is                   595978.032
- Self ewald is                      -26405534.114
+ Total system energy                -35514726.378
+ Intra molecular energy                     0.000
+   Bond energy                              0.000
+   Angle energy                             0.000
+   Dihedral energy                          0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                     71900.502
+ Intra molecule q                   -28596040.415
+ Inter molecule vdw                    -21160.587
+ Long range correction                 -14876.196
+ Inter molecule q                    18855155.435
+ Reciprocal ewald                      595828.996
+ Self ewald                         -26405534.114
  -----------------------------------------------------------
  
  
- Energy components from total energy call for box   1
+ Recomputed energy from scratch for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is             -35514980.377
- Intra molecular energy is                  0.000
- Bond energy is                             0.000
- Angle energy is                            0.000
- Dihedral energy is                         0.000
- Improper angle energy is                   0.000
- Intra molecule vdw is                  71898.636
- Intra molecule q is                -28596008.775
- Inter molecule vdw is                 -21084.506
- Long range correction is              -14876.196
- Inter molecule q is                 18854646.546
- Reciprocal ewald is                   595978.032
- Self ewald is                      -26405534.114
+ Total system energy                -35514726.378
+ Intra molecular energy                     0.000
+   Bond energy                              0.000
+   Angle energy                             0.000
+   Dihedral energy                          0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                     71900.502
+ Intra molecule q                   -28596040.415
+ Inter molecule vdw                    -21160.587
+ Long range correction                 -14876.196
+ Inter molecule q                    18855155.435
+ Reciprocal ewald                      595828.996
+ Self ewald                         -26405534.114
  -----------------------------------------------------------
 ********************************************************************************
  
@@ -433,20 +426,20 @@ Writing information for box  1
    Writing information for species  2
  
                 Move      Trials     Success   % Success
-           Translate        1037         313       30.18
-              Rotate         950         209       22.00
-              Insert         990          16        1.62
-              Delete        1023          16        1.56
+           Translate         966         287       29.71
+              Rotate         968         265       27.38
+              Insert        1061          17        1.60
+              Delete        1005          17        1.69
    ---------------------------------------------------------
  
 ********************************************************************************
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.869740 secs.
- Rotation time =               0.815313 secs.
- Insertion time =              1.815788 secs.
- Deletion time =               1.883736 secs.
+ Translation time =            0.825516 secs.
+ Rotation time =               0.849027 secs.
+ Insertion time =              2.257834 secs.
+ Deletion time =               1.927188 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -461,5 +454,5 @@ Writing information for box  1
          0      Hours
          0    Minutes
          6    Seconds
-       165         ms
+       567         ms
 ********************************************************************************

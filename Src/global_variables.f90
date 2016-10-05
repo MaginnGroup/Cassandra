@@ -208,11 +208,10 @@ USE Type_Definitions
   REAL(DP), PARAMETER :: tiny_number  = 0.0000001_DP
   REAL(DP), PARAMETER :: small_number = 0.00001_DP
 
-  ! converstion for ideal pressure
-  REAL(DP), PARAMETER :: p_const = 138.06505
-
-  ! Upper limit to prevent overflow in exp(-beta*energy)
-  REAL(DP), PARAMETER :: max_kBT = 35.0_DP
+  ! Upper limit to prevent underflow in exp(-beta*energy)
+  ! DEXP(-708.)= 3.307553003638408E-308
+  ! DEXP(-709.)= 0.000000000000000E+000
+  REAL(DP), PARAMETER :: max_kBT = 708.0_DP
 
   ! IMSL error bounds
   REAL(DP), PARAMETER :: errabs = 0.0_DP
@@ -272,7 +271,7 @@ USE Type_Definitions
   LOGICAL :: first_res_update, igas_flag
   LOGICAL, DIMENSION(:), ALLOCATABLE :: zig_calc
   INTEGER, DIMENSION(:), ALLOCATABLE :: max_molecules, natoms, nmol_start, nring_atoms, nexo_atoms
-  INTEGER, DIMENSION(:), ALLOCATABLE :: nbonds, nangles
+  INTEGER, DIMENSION(:), ALLOCATABLE :: nbonds, nangles, nangles_fixed
   INTEGER, DIMENSION(:), ALLOCATABLE :: ndihedrals, nimpropers
   INTEGER, DIMENSION(:), ALLOCATABLE :: nfragments, fragment_bonds
 
@@ -408,7 +407,8 @@ USE Type_Definitions
   !**********************************************************************************************************
   ! Will have dimension of nbr_boxes
   TYPE(Energy_Class), DIMENSION(:), ALLOCATABLE, TARGET :: energy, virial
-  TYPE(Energy_Class), DIMENSION(:), ALLOCATABLE, TARGET :: ac_energy, ac_virial
+  TYPE(Energy_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: ac_energy
+!  TYPE(Energy_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: ac_virial
   
   ! Will have dimension (MAXVAL(max_molecules))
   TYPE(Energy_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: energy_igas
@@ -416,9 +416,9 @@ USE Type_Definitions
   ! Accumulators for thermodynamic averages,
 
   ! will have dimensions of nbr_boxes
-  REAL(DP), DIMENSION(:),ALLOCATABLE,TARGET :: ac_volume, ac_enthalpy, ac_pressure, ac_mass_density
+  REAL(DP), DIMENSION(:,:),ALLOCATABLE,TARGET :: ac_volume, ac_enthalpy, ac_pressure, ac_mass_density
   ! will have dimension of (nspecies,nbr_boxes)
-  REAL(DP), DIMENSION(:,:), ALLOCATABLE, TARGET :: ac_density, ac_nmols
+  REAL(DP), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: ac_density, ac_nmols
 
   LOGICAL :: block_average
 
@@ -457,9 +457,9 @@ USE Type_Definitions
   REAL(DP) :: prob_deletion, prob_swap, prob_regrowth, prob_ring, prob_atom_displacement
   REAL(DP), DIMENSION(:), ALLOCATABLE :: prob_rot_species
   REAL(DP), DIMENSION(:), ALLOCATABLE :: prob_swap_species, cum_prob_swap_species
-  REAL(DP), ALLOCATABLE :: prob_swap_to_box(:,:), cum_prob_swap_to_box(:,:)
+  REAL(DP), DIMENSION(:), ALLOCATABLE :: prob_swap_from_box, cum_prob_swap_from_box
 
-  LOGICAL :: l_prob_swap_species, l_prob_swap_to_box
+  LOGICAL :: l_prob_swap_species, l_prob_swap_from_box
 
   LOGICAL :: f_dv, f_vratio
 
@@ -475,9 +475,10 @@ USE Type_Definitions
 
   ! Timing information
   ! Initial, current and final number of steps
-  INTEGER :: i_mcstep, initial_mcstep, n_mcsteps, n_equilsteps
+  INTEGER :: i_mcstep, initial_mcstep, n_mcsteps, n_equilsteps, iblock
   ! Information on the output of data
-  INTEGER :: nthermo_freq, ncoord_freq
+  INTEGER :: nthermo_freq, ncoord_freq, block_avg_freq, nbr_blocks
+  REAL(DP) :: data_points_per_block
  
   INTEGER,DIMENSION(:),ALLOCATABLE :: nbr_prop_files
 
@@ -554,7 +555,7 @@ USE Type_Definitions
   REAL(DP), ALLOCATABLE :: cos_mol(:,:) , sin_mol(:,:)
   LOGICAL :: l_pair_nrg
 
-  REAL(DP) pacc, paccbiased, freev
+  REAL(DP) pacc
   REAL(DP), DIMENSION(:,:), ALLOCATABLE :: chpot, chpotid
 
 

@@ -51,7 +51,7 @@ MODULE Input_Routines
 CONTAINS
 
 !******************************************************************************
-SUBROUTINE Get_Runname
+SUBROUTINE Get_Run_Name
 !******************************************************************************
 !
 ! This routine opens the input file and determines the name of the run.
@@ -94,13 +94,13 @@ SUBROUTINE Get_Runname
 
         err_msg = ''
         err_msg(1) = 'Section "# Run_Name" is missing from the input file and is required'
-        CALL Clean_Abort(err_msg,'Get_Runname')
+        CALL Clean_Abort(err_msg,'Get_Run_Name')
 
      ENDIF
 
   ENDDO
 
-END SUBROUTINE Get_Runname
+END SUBROUTINE Get_Run_Name
 
 !******************************************************************************
 SUBROUTINE Get_Nspecies
@@ -175,9 +175,16 @@ SUBROUTINE Get_Nspecies
   END IF
 
 
-  ALLOCATE( nbonds(nspecies), nangles(nspecies),Stat = AllocateStatus )
+  ALLOCATE( nbonds(nspecies),Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could not be allocated for nbonds or nangles array'
+     write(*,*)'memory could not be allocated for nbonds array'
+     write(*,*)'stopping'
+     STOP
+  END IF
+
+  ALLOCATE( nangles(nspecies), nangles_fixed(nspecies),Stat = AllocateStatus )
+  IF (AllocateStatus /= 0) THEN
+     write(*,*)'memory could not be allocated for nangles or nangles_fixed array'
      write(*,*)'stopping'
      STOP
   END IF
@@ -245,6 +252,7 @@ SUBROUTINE Get_Nspecies
   natoms = 0
   nbonds = 0
   nangles = 0
+  nangles_fixed = 0
   ndihedrals = 0
   nimpropers = 0
   nbr_bond_params = 0
@@ -316,10 +324,12 @@ SUBROUTINE Get_Sim_Type
         ELSEIF(line_array(1) == 'gcmc' .OR. line_array(1) == 'GCMC') THEN
            sim_type = 'GCMC'
            int_sim_type = sim_gcmc
-        ELSEIF(line_array(1) == 'fragment' .OR. line_array(1) == 'NVT_MC_Fragment') THEN
+        ELSEIF(line_array(1) == 'fragment' .OR. &
+               line_array(1) == 'nvt_mc_fragment' .OR. line_array(1) == 'NVT_MC_Fragment') THEN
            sim_type = 'NVT_MC_Fragment'
            int_sim_type = sim_frag
-        ELSEIF(line_array(1) == 'ring_fragment' .OR. line_array(1) == 'NVT_MC_Ring_Fragment') THEN
+        ELSEIF(line_array(1) == 'ring_fragment' .OR. &
+               line_array(1) == 'nvt_mc_ring_fragment' .OR. line_array(1) == 'NVT_MC_Ring_Fragment') THEN
            sim_type = 'NVT_MC_Ring_Fragment'
            int_sim_type = sim_ring
         ELSEIF(line_array(1) == 'mcf_gen' .OR. line_array(1) == 'MCF_Gen') THEN
@@ -429,89 +439,87 @@ SUBROUTINE Get_Pair_Style
                  int_vdw_sum_style(ibox) = vdw_charmm
                  ron_charmm(ibox) = String_To_Double(line_array(3))
                  roff_charmm(ibox) = String_To_Double(line_array(4))
-                 WRITE(logunit,'(A,2x,F7.3, A)') ' r_on = ',ron_charmm(ibox), '   Angstrom'
-                 WRITE(logunit,'(A,2x,F7.3,A)') ' r_off = ',roff_charmm(ibox), '   Angstrom'
+
+                 IF (roff_charmm(ibox) > 0.5 * MIN(box_list(ibox)%face_distance(1), &
+                                                   box_list(ibox)%face_distance(2), &
+                                                   box_list(ibox)%face_distance(3)) ) THEN
+                    err_msg = ''
+                    err_msg(1) = 'Initial vdw cutoff is greater than half the minimum box length'
+                    CALL Clean_Abort(err_msg, 'Get_Pair_Style')
+                 END IF
+ 
+                 WRITE(logunit,'(A,2X,F7.3,A)') ' r_on = ', ron_charmm(ibox),  ' Angstrom'
+                 WRITE(logunit,'(A,2X,F7.3,A)') ' r_off = ',roff_charmm(ibox), ' Angstrom'
 
               ELSEIF (vdw_sum_style(ibox) == 'cut_switch') THEN
                  int_vdw_sum_style(ibox) = vdw_cut_switch
                  ron_switch(ibox) = String_To_Double(line_array(3))
                  roff_switch(ibox) = String_To_Double(line_array(4))
-                 WRITE(logunit,'(A,2x,F7.3,A)') ' r_on =', ron_switch(ibox), ' Angstrom'
+
+                 IF (roff_switch(ibox) > 0.5 * MIN(box_list(ibox)%face_distance(1), &
+                                                   box_list(ibox)%face_distance(2), &
+                                                   box_list(ibox)%face_distance(3)) ) THEN
+                    err_msg = ''
+                    err_msg(1) = 'Initial vdw cutoff is greater than half the minimum box length'
+                    CALL Clean_Abort(err_msg, 'Get_Pair_Style')
+                 END IF
+ 
+                 WRITE(logunit,'(A,2x,F7.3,A)') ' r_on =',  ron_switch(ibox),  ' Angstrom'
                  WRITE(logunit,'(A,2x,F7.3,A)') ' r_off =', roff_switch(ibox), ' Angstrom'
 
-              ELSEIF (vdw_sum_style(ibox) == 'cut') THEN
-                 int_vdw_sum_style(ibox) = vdw_cut
+              ELSEIF (vdw_sum_style(ibox)(1:3) == 'cut') THEN
                  rcut_vdw(ibox) = String_To_Double(line_array(3))
-                 IF ( nbr_entries == 4 ) THEN
-                    ! a fourth entry exists indicating whether the cutoff is half of
-                    ! the box length 
-                    
-                    IF (line_array(4) == 'TRUE' .OR. line_array(4) == 'true') THEN
-                       
-                       l_half_len_cutoff(ibox) = .TRUE.
-                       
-                       ! for now assume that the box is cubic
-                       rcut_vdw(ibox) = 0.5_DP * box_list(ibox)%length(1,1)
-                       
-                       WRITE(logunit,*) 'Cutoffs are set to half of the box length'
-                       
-                    END IF
 
+                 IF ( nbr_entries > 3 ) THEN
+                    ! a fourth entry exists indicating whether the cutoff is half of the box length 
+                    IF (line_array(4) == 'TRUE' .OR. line_array(4) == 'true') THEN
+                       l_half_len_cutoff(ibox) = .TRUE.
+                       rcut_vdw(ibox) = 0.5 * MIN(box_list(ibox)%face_distance(1), &
+                                                  box_list(ibox)%face_distance(2), &
+                                                  box_list(ibox)%face_distance(3))
+                       WRITE(logunit,*) 'Cutoffs are set to half of the box length'
+                    END IF
                  END IF
 
-                 WRITE(logunit,'(A,2x,F7.3, A)') ' rcut = ',rcut_vdw(ibox), '   Angstrom'
-
-              ELSEIF (vdw_sum_style(ibox) == 'cut_tail') THEN
-                 int_vdw_sum_style(ibox) = vdw_cut_tail
-                 rcut_vdw(ibox) = String_To_Double(line_array(3))
-                
-                 IF ( nbr_entries == 4 ) THEN
-                    ! a fourth entry exists indicating whether the cutoff is half of
-                    ! the box length 
-                    
-                    IF (line_array(4) == 'TRUE' .OR. line_array(4) == 'true') THEN
-                       
-                       l_half_len_cutoff(ibox) = .TRUE.
-                       
-                       ! for now assume that the box is cubic
-                       rcut_vdw(ibox) = 0.5_DP * box_list(ibox)%length(1,1)
-                       
-                       WRITE(logunit,*) 'Cutoffs are set to half of the box length'
-                       
-                    END IF
-
+                 IF (.NOT. l_half_len_cutoff(ibox) .AND. &
+                     rcut_vdw(ibox) > 0.5 * MIN(box_list(ibox)%face_distance(1), &
+                                                box_list(ibox)%face_distance(2), &
+                                                box_list(ibox)%face_distance(3)) ) THEN
+                    err_msg = ''
+                    err_msg(1) = 'Initial vdw cutoff is greater than half the minimum box length'
+                    CALL Clean_Abort(err_msg, 'Get_Pair_Style')
+                 END IF
+ 
+                 IF (vdw_sum_style(ibox) == 'cut') THEN
+                    int_vdw_sum_style(ibox) = vdw_cut
+                 ELSE IF (vdw_sum_style(ibox) == 'cut_tail') THEN
+                    int_vdw_sum_style(ibox) = vdw_cut_tail
+                    rcut3(ibox) = rcut_vdw(ibox) * rcut_vdw(ibox) * rcut_vdw(ibox)
+                    rcut9(ibox) = rcut3(ibox) * rcut3(ibox) * rcut3(ibox)
+                 ELSE IF (vdw_sum_style(ibox) == 'cut_shift') THEN
+                    int_vdw_sum_style(ibox) = vdw_cut_shift
+                 ELSE
+                    err_msg = ''
+                    err_msg(1) = 'Keyword ' // TRIM(line_array(2)) // ' on line number ' // &
+                                 TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+                    err_msg(2) = 'Supported keywords are: cut, cut_tail, cut_shift, cut_switch, minimum_image'
+                    err_msg(3) = '                        CHARMM'
+                    CALL Clean_Abort(err_msg,'Get_Pair_Style')
                  END IF
 
-                 WRITE(logunit,'(A,2x,F7.3, A)') ' rcut = ',rcut_vdw(ibox), '   Angstrom'
-
-                 rcut3(ibox) = rcut_vdw(ibox) * rcut_vdw(ibox) * rcut_vdw(ibox)
-                 rcut9(ibox) = rcut3(ibox) * rcut3(ibox) * rcut3(ibox)
-
-              ELSEIF (vdw_sum_style(ibox) == 'cut_shift') THEN
-                 int_vdw_sum_style(ibox) = vdw_cut_shift
-                 rcut_vdw(ibox) = String_To_Double(line_array(3))
-                 WRITE(logunit,'(A,2x,F7.3, A)') ' rcut = ',rcut_vdw(ibox), '   Angstrom'
+                 WRITE(logunit,'(A,2x,F7.3, A)') ' rcut = ',rcut_vdw(ibox), ' Angstrom'
 
               ELSEIF (vdw_sum_style(ibox) == 'minimum_image') THEN
                  int_vdw_sum_style(ibox) = vdw_minimum
                  WRITE(logunit,'(A)') ' Minimum image convention used for VDW'
 
-
               ELSE
                  err_msg = ''
-                 err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
+                 err_msg(1) = 'Keyword ' // TRIM(line_array(2)) // ' on line number ' // &
                               TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
-                 err_msg(2) = 'Supported keywords are: cut, cut_tail, cut_shift, cut_shift, minimum_image, CHARMM'
+                 err_msg(2) = 'Supported keywords are: cut, cut_tail, cut_shift, cut_switch, minimum_image'
+                 err_msg(3) = '                        CHARMM'
                  CALL Clean_Abort(err_msg,'Get_Pair_Style')
-              ENDIF
-              IF (rcut_vdw(ibox) > MIN(box_list(ibox)%face_distance(1)/2.0_DP, &
-                   box_list(ibox)%face_distance(2)/2.0_DP, box_list(ibox)%face_distance(3)/2.0_DP)) THEN
-
-                     err_msg = ''
-                     err_msg(1) = 'Initial cutoff greater than minimum box length'
-                     err_msg(2) = 'For box ' // TRIM(Int_To_String(ibox))
-                     CALL Clean_Abort(err_msg,'Get_Pair_Style')
-
               ENDIF
 
            ELSEIF (line_array(1) == 'mie' .OR. line_array(1) == 'Mie') THEN
@@ -521,42 +529,46 @@ SUBROUTINE Get_Pair_Style
               vdw_sum_style(ibox) = line_array(2)
               WRITE(logunit,'(A,2x,A,A,I3)') ' VDW sum style is:',vdw_sum_style(ibox), 'in box:', ibox
 
-              IF (vdw_sum_style(ibox) == 'cut') THEN
-                 int_vdw_sum_style(ibox) = vdw_cut
+              IF (vdw_sum_style(ibox)(1:3) == 'cut') THEN
                  rcut_vdw(ibox) = String_To_Double(line_array(3))
-                 WRITE(logunit,'(A,2x,F7.3, A)') ' rcut = ',rcut_vdw(ibox), 'Angstrom'
 
-              ELSEIF (vdw_sum_style(ibox) == 'cut_shift') THEN
-                 int_vdw_sum_style(ibox) = vdw_cut_shift
-                 rcut_vdw(ibox) = String_To_Double(line_array(3))
-                 WRITE(logunit,'(A,2x,F7.3, A)') ' rcut = ',rcut_vdw(ibox), 'Angstrom'
-
-
-              ELSEIF (vdw_sum_style(ibox) == 'cut_tail') THEN
-                 int_vdw_sum_style(ibox) = vdw_cut_tail
-                 rcut_vdw(ibox) = String_To_Double(line_array(3))
-                
-                 IF ( nbr_entries == 4 ) THEN
-                    ! a fourth entry exists indicating whether the cutoff is half of
-                    ! the box length 
-                    
+                 IF ( nbr_entries > 3 ) THEN
+                    ! a fourth entry exists indicating whether the cutoff is half of the box length 
                     IF (line_array(4) == 'TRUE' .OR. line_array(4) == 'true') THEN
-                       
                        l_half_len_cutoff(ibox) = .TRUE.
-                       
-                       ! for now assume that the box is cubic
-                       rcut_vdw(ibox) = 0.5_DP * box_list(ibox)%length(1,1)
-                       
+                       rcut_vdw(ibox) = 0.5 * MIN(box_list(ibox)%face_distance(1), &
+                                                  box_list(ibox)%face_distance(2), &
+                                                  box_list(ibox)%face_distance(3))
                        WRITE(logunit,*) 'Cutoffs are set to half of the box length'
-                       
                     END IF
-
                  END IF
 
-                 WRITE(logunit,'(A,2x,F7.3, A)') ' rcut = ',rcut_vdw(ibox), '   Angstrom'
+                 IF (.NOT. l_half_len_cutoff(ibox) .AND. &
+                     rcut_vdw(ibox) > 0.5 * MIN(box_list(ibox)%face_distance(1), &
+                                                box_list(ibox)%face_distance(2), &
+                                                box_list(ibox)%face_distance(3)) ) THEN
+                    err_msg = ''
+                    err_msg(1) = 'Initial vdw cutoff is greater than half the minimum box length'
+                    CALL Clean_Abort(err_msg, 'Get_Pair_Style')
+                 END IF
+ 
+                 IF (vdw_sum_style(ibox) == 'cut') THEN
+                    int_vdw_sum_style(ibox) = vdw_cut
+                 ELSE IF (vdw_sum_style(ibox) == 'cut_tail') THEN
+                    int_vdw_sum_style(ibox) = vdw_cut_tail
+                    rcut3(ibox) = rcut_vdw(ibox) * rcut_vdw(ibox) * rcut_vdw(ibox)
+                    !rcut9(ibox) = rcut3(ibox) * rcut3(ibox) * rcut3(ibox)
+                 ELSE IF (vdw_sum_style(ibox) == 'cut_shift') THEN
+                    int_vdw_sum_style(ibox) = vdw_cut_shift
+                 ELSE
+                    err_msg = ''
+                    err_msg(1) = 'Keyword ' // TRIM(line_array(2)) // ' on line number ' // &
+                                 TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+                    err_msg(2) = 'Supported keywords are: cut, cut_tail, cut_shift, minimum_image'
+                    CALL Clean_Abort(err_msg,'Get_Pair_Style')
+                 END IF
 
-                 rcut3(ibox) = rcut_vdw(ibox) * rcut_vdw(ibox) * rcut_vdw(ibox)
-                 !rcut9(ibox) = rcut3(ibox) * rcut3(ibox) * rcut3(ibox)
+                 WRITE(logunit,'(A,2x,F7.3, A)') ' rcut = ',rcut_vdw(ibox), ' Angstrom'
 
               ELSEIF (vdw_sum_style(ibox) == 'minimum_image') THEN
                  int_vdw_sum_style(ibox) = vdw_minimum
@@ -564,7 +576,7 @@ SUBROUTINE Get_Pair_Style
 
               ELSE
                  err_msg = ''
-                 err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
+                 err_msg(1) = 'Keyword ' // TRIM(line_array(2)) // ' on line number ' // &
                               TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
                  err_msg(2) = 'Supported keywords are: cut, cut_tail, cut_shift, minimum_image'
                  CALL Clean_Abort(err_msg,'Get_Pair_Style')
@@ -739,7 +751,10 @@ SUBROUTINE Get_Pair_Style
                     WRITE(logunit,'(A)') ' Minimum image convention used for charge'
                  ENDIF
               ELSE
-                 err_msg(1) = 'charge_sum_style not properly specified'
+                 err_msg = ''
+                 err_msg(1) = 'Keyword ' // TRIM(line_array(2)) // ' on line number ' // &
+                              TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+                 err_msg(2) = 'Supported keywords are: cut, ewald, dsf, minimum_image'
                  CALL Clean_Abort(err_msg,'Get_Pair_Style')
               ENDIF
 
@@ -1271,6 +1286,8 @@ SUBROUTINE Get_Molecule_Info
      err_msg(1) = 'memory could not be allocated for frag_list array'
      CALL Clean_Abort(err_msg,'Get_Molecule_Info')
   END IF
+  frag_list(:,:)%natoms = 0 
+  frag_list(:,:)%type = 0
 
   ALLOCATE(fragment_bond_list(MAXVAL(fragment_bonds),nspecies), Stat = AllocateStatus)
   IF (AllocateStatus /= 0 ) THEN
@@ -1821,6 +1838,7 @@ SUBROUTINE Get_Angle_Info(is)
               
               angle_list(iang,is)%angle_param(1) = String_To_Double(line_array(6))
 
+              nangles_fixed(is) = nangles_fixed(is) + 1
               IF (verbose_log) THEN
                       WRITE(logunit,'(A,I6,1x,I6, 1x,I6,A, I4)') & 
                    'Angle fixed between atoms: ',angle_list(iang,is)%atom1, angle_list(iang,is)%atom2, &
@@ -2458,7 +2476,6 @@ SUBROUTINE Get_Fragment_Info(is)
         ! Now read in the information for each of the fragments, number of atoms
         ! in the fragment, anchor and atom ids
   
-      
         DO ifrag = 1, nfragments(is)
            
            ! We will first determine number of atoms in the current fragment and then
@@ -3111,6 +3128,11 @@ SUBROUTINE Get_Fragment_Coords
   !ALLOCATE(config_read(nfrag_types))
   !config_read(:) = .FALSE.
   nfrag_types = MAXVAL(frag_list(:,:)%type)
+  IF (nfrag_types /= SUM(nfragments(:))) THEN
+     err_msg = ''
+     err_msg(1) = 'Number of fragments is inconsistent'
+     CALL Clean_Abort(err_msg, "Get_Fragment_Coords")
+  END IF
 
 !  ALLOCATE(frag_library(nfrag_types),STAT=Allocatestatus)
 !  IF (Allocatestatus /= 0 ) THEN
@@ -3500,11 +3522,33 @@ SUBROUTINE Get_Box_Info
         ! Number of boxes
         nbr_boxes = String_To_Int(line_array(1))
 
-        IF ( int_sim_type == sim_gemc_ig .AND. nbr_boxes < 3 ) THEN
-           err_msg = ''
-           err_msg(1) = 'GEMC simulation with intermediate box is specified'
-           err_msg(2) = ' Number of boxes less than 3'
-           CALL Clean_Abort(err_msg,'Get_Box_Info')
+        IF ( int_sim_type == sim_gemc .OR. int_sim_type == sim_gemc_npt) THEN
+           IF (nbr_boxes /= 2 ) THEN
+              err_msg = ''
+              err_msg(1) = 'Option ' // TRIM(line_array(1)) // &
+                           ' on line number ' // &
+                           TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+              err_msg(2) = 'Supported options are: 2'
+              CALL Clean_Abort(err_msg,'Get_Box_Info')
+           END IF
+        ELSE IF ( int_sim_type == sim_gemc_ig ) THEN
+           IF (nbr_boxes < 3 ) THEN
+              err_msg = ''
+              err_msg(1) = 'Option ' // TRIM(line_array(1)) // &
+                           ' on line number ' // &
+                           TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+              err_msg(2) = 'Supported options are: 3'
+              CALL Clean_Abort(err_msg,'Get_Box_Info')
+           END IF
+        ELSE
+           IF (nbr_boxes /= 1) THEN
+              err_msg = ''
+              err_msg(1) = 'Option ' // TRIM(line_array(1)) // &
+                           ' on line number ' // &
+                           TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+              err_msg(2) = 'Supported options are: 1'
+              CALL Clean_Abort(err_msg,'Get_Box_Info')
+           END IF
         END IF
 
         WRITE(logunit,'(A,T30,I3)') 'Number of simulation boxes ',nbr_boxes
@@ -3532,7 +3576,7 @@ SUBROUTINE Get_Box_Info
            CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
 
            IF (line_array(1) == 'cubic' .OR.  line_array(1)== 'CUBIC') THEN
-              box_list(ibox)%box_shape = 'cubic'
+              box_list(ibox)%box_shape = 'CUBIC'
               box_list(ibox)%int_box_shape = int_cubic
               l_cubic(ibox) = .TRUE.
               ! Read in the x,y,z box edge lengths in A
@@ -3542,10 +3586,6 @@ SUBROUTINE Get_Box_Info
               box_list(ibox)%length(2,2) = String_To_Double(line_array(1))
               box_list(ibox)%length(3,3) = String_To_Double(line_array(1))
 
-              box_list(ibox)%hlength(1,1) = 0.5_DP * box_list(ibox)%length(1,1)
-              box_list(ibox)%hlength(2,2) = 0.5_DP * box_list(ibox)%length(2,2)
-              box_list(ibox)%hlength(3,3) = 0.5_DP * box_list(ibox)%length(3,3)
- 
               WRITE (logunit,'(A)') 'Box ' // TRIM(Int_To_String(ibox)) // ' is ' // &
                  box_list(ibox)%box_shape
               WRITE (logunit,'(X,A,T20,F10.4,T35,A)') 'Each Side Of :', box_list(ibox)%length(1,1), 'Angstrom'
@@ -3560,7 +3600,7 @@ SUBROUTINE Get_Box_Info
 
            ELSEIF (line_array(1) == 'orthogonal' .OR. line_array(1) == 'ORTHOGONAL' .OR. &
                    line_array(1) == 'orthorhombic' .OR. line_array(1) == 'ORTHORHOMBIC') THEN
-              box_list(ibox)%box_shape = 'orthorhombic'
+              box_list(ibox)%box_shape = 'ORTHORHOMBIC'
               box_list(ibox)%int_box_shape = int_ortho
               line_nbr = line_nbr + 1
               CALL Parse_String(inputunit,line_nbr,3,nbr_entries,line_array,ierr)
@@ -3584,7 +3624,7 @@ SUBROUTINE Get_Box_Info
 
            ELSEIF (line_array(1) == 'cell_matrix' .OR. line_array(1) == 'CELL_MATRIX' .OR. &
                    line_array(1) == 'triclinic' .OR. line_array(1) == 'TRICLINIC') THEN
-              box_list(ibox)%box_shape = 'triclinic'
+              box_list(ibox)%box_shape = 'TRICLINIC'
               box_list(ibox)%int_box_shape = int_cell
               line_nbr = line_nbr + 1
               CALL Parse_String(inputunit,line_nbr,3,nbr_entries,line_array,ierr)
@@ -3618,16 +3658,24 @@ SUBROUTINE Get_Box_Info
               CALL Clean_Abort(err_msg, 'Get_Box_Info')
            END IF
 
+           ! Check that contant pressure boxes are cubic
+           IF ((int_sim_type == sim_npt .OR. int_sim_type == sim_gemc .OR. &
+                int_sim_type == sim_gemc_npt) .AND. .NOT. l_cubic(ibox)) THEN
+              err_msg = ''
+              err_msg(1) = 'Volume change moves are only supported for cubic boxes'
+              CALL Clean_Abort(err_msg, 'Get_Box_Info')
+           END IF
+
            ! Compute information on the simulation box and write to log. 
            CALL Compute_Cell_Dimensions(ibox)
 
-           write(logunit,'(X,A,3(f10.4,3x))') 'Cell basis vector lengths in A,  ',&
+           WRITE(logunit,'(X,A,3(f10.4,3x))') 'Cell basis vector lengths in A,  ',&
                 box_list(ibox)%basis_length
-           write(logunit,'(X,A,3(f10.4,3x))') 'Cosine of angles alpha, beta, gamma ',&
+           WRITE(logunit,'(X,A,3(f10.4,3x))') 'Cosine of angles alpha, beta, gamma ',&
                 box_list(ibox)%cos_angle
-           write(logunit,'(X,A,3(f10.4,3x))') 'Distance between box faces ',&
+           WRITE(logunit,'(X,A,3(f10.4,3x))') 'Distance between box faces ',&
                 box_list(ibox)%face_distance
-           write(logunit,'(X,A,f18.4)') 'Box volume, A^3 ', box_list(ibox)%volume
+           WRITE(logunit,'(X,A,f18.4)') 'Box volume, A^3 ', box_list(ibox)%volume
 
            ! Skip 1 line between boxes
            line_nbr = line_nbr + 1
@@ -3880,35 +3928,48 @@ SUBROUTINE Get_Chemical_Potential_Info
         
         DO is = 1,nspecies
 
+           WRITE(logunit,'(A,X,I5)') 'Species', is
            ALLOCATE(species_list(is)%de_broglie(nbr_boxes))
 
+           ! Assume there will be an entry for each species, including non-insertable species
+           ! If there is not an entry, the counter will be back tracked
+           spec_counter = spec_counter + 1
+
            IF(species_list(is)%int_species_type == int_sorbate) THEN
-              spec_counter = spec_counter + 1
+              ! insertable species, there must be an entry for this species
               species_list(is)%chem_potential = String_To_Double(line_array(spec_counter))
+
+              ! convert the chemical potential into atomic units
+              species_list(is)%chem_potential = species_list(is)%chem_potential / atomic_to_kJmol
+
+              WRITE(logunit,'(X,A,T40,X,F16.9)') 'Chemical potential (internal units):', &
+                    species_list(is)%chem_potential
+
+              ! Now compute the de Broglie wavelength for this species in each box
+              DO ibox = 1, nbr_boxes
+
+                 species_list(is)%de_broglie(ibox) = &
+                      h_plank  * DSQRT( beta(ibox)/(twopi * species_list(is)%molecular_weight))
+
+                 WRITE(logunit,'(X,A,T40,X,F16.9)') &
+                       'de Broglie wavelength (Angstroms):', species_list(is)%de_broglie(ibox)
+
+              END DO
+   
            ELSE
+              ! non-insertable species, input file entry is optional
               species_list(is)%chem_potential = 0.0_DP
+              ! if there's an entry, it must be 'none' or 'NONE'
+              IF (line_array(spec_counter) == 'none' .OR. line_array(spec_counter) == 'NONE') THEN
+                 WRITE(logunit,'(X,A)') 'Chemical potential not required.'
+              ELSE
+                 WRITE(logunit,'(X,A)') 'No entry in input file. Chemical potential not required.'
+                 ! the entry is not 'none' or 'NONE', so there is no entry of this species
+                 ! back track the counter so this entry can be assigned to the next species
+                 spec_counter = spec_counter - 1
+              END IF
            END IF
 
-           ! convert the chemical potential into atomic units
-
-           species_list(is)%chem_potential = species_list(is)%chem_potential / atomic_to_kJmol
-
-           WRITE(logunit,'(A,X,I5)') 'Species', is
-           WRITE(logunit,'(X,A,T40,X,F16.9)') 'Chemical potential (internal units):', &
-                 species_list(is)%chem_potential
-
-           ! Now compute the de Broglie wavelength for this species in each box
-
-           DO ibox = 1, nbr_boxes
-
-              species_list(is)%de_broglie(ibox) = &
-                   h_plank  * DSQRT( beta(ibox)/(twopi * species_list(is)%molecular_weight))
-
-              WRITE(logunit,'(X,A,T40,X,F16.9)') &
-                    'de Broglie wavelength (Angstroms):', species_list(is)%de_broglie(ibox)
-
-           END DO
-   
         END DO
 
         WRITE(logunit,'(A80)') '********************************************************************************'
@@ -3944,9 +4005,7 @@ SUBROUTINE Get_Move_Probabilities
   CHARACTER(120) :: line_string, line_array(30), line_string2
   CHARACTER(4) :: Symbol
 
-  REAL(DP) :: total_mass, this_mass, prob_box_swap
-
-  LOGICAL :: l_prob_box_swap
+  REAL(DP) :: total_mass, this_mass
 
 !******************************************************************************
   WRITE(logunit,*)
@@ -4229,7 +4288,7 @@ SUBROUTINE Get_Move_Probabilities
 
                  ! Default
                  l_prob_swap_species = .FALSE.
-                 l_prob_swap_to_box = .FALSE.
+                 l_prob_swap_from_box = .FALSE.
 
                  DO 
                     line_nbr = line_nbr + 1
@@ -4239,8 +4298,15 @@ SUBROUTINE Get_Move_Probabilities
                     backspace(inputunit)
 
                     IF (line_string2(1:1) == '!' .OR. TRIM(line_string2) == '') THEN
+                       IF (.NOT. l_prob_swap_from_box) THEN
+                          WRITE(logunit,'(2X,A)') 'By default, box_out will be selected according to its mole fraction'
+                       END IF
+                     
+                       IF (.NOT. l_prob_swap_species) THEN
+                          WRITE(logunit,'(2X,A)') 'By default, species will be selected according to its mole fraction in box_out'
+                       END IF
                        EXIT
-                    ELSE IF (line_string2(1:17) == 'prob_species_swap') THEN
+                    ELSE IF (line_string2(1:17) == 'prob_swap_species') THEN
                        l_prob_swap_species = .TRUE.
                        ALLOCATE(prob_swap_species(nspecies))
                        ALLOCATE(cum_prob_swap_species(nspecies))
@@ -4266,43 +4332,25 @@ SUBROUTINE Get_Move_Probabilities
                           CALL Clean_Abort(err_msg,'Get_Move_Probabiltieis')
                        END IF
 
-                    ELSE IF (line_string2(1:13) == 'prob_box_swap') THEN
-                       l_prob_swap_to_box = .TRUE.
-                       ALLOCATE(prob_swap_to_box(nbr_boxes,nbr_boxes))
-                       ALLOCATE(cum_prob_swap_to_box(nbr_boxes,nbr_boxes))
-                       prob_swap_to_box = 0.0_DP
-                       cum_prob_swap_to_box = 0.0_DP
+                    ELSE IF (line_string2(1:18) == 'prob_swap_from_box') THEN
+                       l_prob_swap_from_box = .TRUE.
+                       ALLOCATE(prob_swap_from_box(nbr_boxes))
+                       ALLOCATE(cum_prob_swap_from_box(nbr_boxes))
+                       prob_swap_from_box = 0.0_DP
+                       cum_prob_swap_from_box = 0.0_DP
 
                        line_nbr = line_nbr + 1
-                       CALL Parse_String(inputunit,line_nbr,nbr_boxes + 2,nbr_entries,line_array,ierr)
+                       CALL Parse_String(inputunit,line_nbr,nbr_boxes+1,nbr_entries,line_array,ierr)
 
-                       ! first check that the box number matches up
-                       ibox = String_To_Int(line_array(2))
-
-                       IF (ibox < 1 .OR. ibox > nbr_boxes ) THEN
-                          err_msg = ''
-                          err_msg(1) = 'Option ' // line_array(2) // ' for keyword prob_box_swap on line number ' // &
-                                       TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
-                          err_msg(2) = 'Supported options are: 1 ... nbr_boxes'
-                          CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
-                       END IF
-
-                       DO kbox = 1, nbr_boxes
-                          prob_swap_to_box(ibox,kbox) = String_To_Double(line_array(kbox+2))
-                          IF (ibox == kbox .AND. prob_swap_to_box(ibox,ibox) /= 0.0_DP) THEN
-                             err_msg = ''
-                             err_msg(1) = 'Nonzero probability specified for swap from box ' // &
-                                           TRIM(Int_To_String(line_nbr)) // ' to box ' // &
-                                           TRIM(Int_To_String(line_nbr))
-                             CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
-                          END IF
-                          cum_prob_swap_to_box(ibox,kbox) = SUM(prob_swap_to_box(ibox,1:kbox))
+                       DO ibox = 1, nbr_boxes
+                          prob_swap_from_box(ibox) = String_To_Double(line_array(ibox+1))
+                          cum_prob_swap_from_box(ibox) = SUM(prob_swap_from_box(1:ibox))
                           WRITE(logunit,'(X,A,X,F5.3)') 'Cumulative swap probabilty from box ' // &
-                               TRIM(Int_To_String(ibox)) // ' to box ' // TRIM(Int_To_String(kbox)) // ' is ', &
-                               cum_prob_swap_to_box(ibox,kbox)
+                               TRIM(Int_To_String(ibox)) // ' is ', &
+                               cum_prob_swap_from_box(ibox)
                        END DO
 
-                       IF (ABS(cum_prob_swap_to_box(ibox,nbr_boxes) - 1.0_DP) > tiny_number) THEN
+                       IF (ABS(cum_prob_swap_from_box(nbr_boxes) - 1.0_DP) > tiny_number) THEN
                           err_msg = ''
                           err_msg(1) = 'Swap probabilties on line ' // TRIM(Int_To_String(line_nbr)) // &
                                        ' of the input file do not sum to 1'
@@ -4313,7 +4361,7 @@ SUBROUTINE Get_Move_Probabilities
                        err_msg = ''
                        err_msg(1) = 'Keyword ' // TRIM(line_string2(1:17)) // ' on line number ' // &
                                     TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
-                       err_msg(2) = 'Supported keywords are: prob_swap_species, prob_swap_to_box'
+                       err_msg(2) = 'Supported keywords are: prob_swap_species, prob_swap_from_box'
                        CALL Clean_Abort(err_msg,'Get_Start_Type')
                     END IF
 
@@ -4432,8 +4480,9 @@ SUBROUTINE Get_Move_Probabilities
                            ' of the input file is not supported'
               err_msg(2) = 'Supported subsections are: Prob_Translation, Prob_Rotation, Prob_Regrowth,'
               err_msg(3) = '                           Prob_Volume, Prob_Insertion, Prob_Deletion,'
-              err_msg(4) = '                           Prob_Swap, Prob_Ring, Prob_Atom_Displacement'
-              CALL Clean_Abort(err_msg,'Get_Sim_Type')
+              err_msg(4) = '                           Prob_Swap, Prob_Ring, Prob_Atom_Displacement,'
+              err_msg(5) = '                           Prob_Angle, Prob_Dihedral'
+              CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
 
            END IF
 
@@ -4450,8 +4499,7 @@ SUBROUTINE Get_Move_Probabilities
   END DO inputLOOP
 
   IF( int_sim_type == sim_npt .OR. int_sim_type == sim_gemc .OR. &
-      int_sim_type == sim_gemc_npt .OR. & 
-      int_sim_type == sim_gemc_ig) THEN
+      int_sim_type == sim_gemc_npt) THEN
 
      IF (prob_volume == 0.0_DP) THEN
         err_msg = ''
@@ -4472,8 +4520,7 @@ SUBROUTINE Get_Move_Probabilities
      END IF
   END IF
 
-  IF (int_sim_type == sim_gemc .OR. int_sim_type == sim_gemc_ig .OR. &
-      int_sim_type == sim_gemc_npt) THEN
+  IF (int_sim_type == sim_gemc .OR. int_sim_type == sim_gemc_npt) THEN
 
      IF (prob_swap == 0.0_DP .AND. int_run_type == run_prod) THEN
         err_msg = ''
@@ -4481,33 +4528,6 @@ SUBROUTINE Get_Move_Probabilities
         CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
      END IF
 
-
-     IF (l_prob_swap_to_box) THEN
-        DO ibox = 1, nbr_boxes
-           IF ((cum_prob_swap_to_box(ibox,nbr_boxes) - 1.0_DP) > tiny_number) THEN
-              ! keyword prob_swap_to_box was not given for every box
-              ! by default, use uniform probability
-              DO kbox = 1, nbr_boxes
-                 IF (ibox /= kbox) THEN
-                    prob_swap_to_box(ibox,kbox) = 1.0_DP / REAL(nbr_boxes,DP)
-                 END IF
-                 cum_prob_swap_to_box(ibox,kbox) = SUM(prob_swap_to_box(ibox,1:kbox))
-              END DO
-
-              WRITE(logunit,'(X,A)') 'Keyword prob_swap_to_box missing for box ' // TRIM(Int_To_String(ibox))
-              WRITE(logunit,'(2X,A)') 'By default, box_in will be selected with uniform probability'
-           END IF
-        END DO
-     ELSE
-        WRITE(logunit,'(X,A)') 'Keyword prob_swap_to_box is missing from input file'
-        WRITE(logunit,'(2X,A)') 'By default, box_out will be selected according to its mole fraction'
-        WRITE(logunit,'(2X,A)') 'By default, box_in will be selected with uniform probability'
-     END IF
-   
-     IF (.NOT. l_prob_swap_species) THEN
-        WRITE(logunit,'(X,A)') 'Keyword prob_swap_species is missing from input file'
-        WRITE(logunit,'(2X,A)') 'By default, species will be selected according to its mole fraction'
-     END IF
   END IF
 
   WRITE(logunit,'(A20,I4)') 'Number of moves is :', num_moves
@@ -5164,6 +5184,7 @@ SUBROUTINE Get_Simulation_Length_Info
   n_mcsteps = 0
   n_equilsteps = 0
   l_run = .FALSE.
+  block_average = .FALSE.
 
   DO
      line_nbr = line_nbr + 1
@@ -5192,7 +5213,7 @@ SUBROUTINE Get_Simulation_Length_Info
               sim_length_units = 'Sweeps'
            ELSE
               err_msg = ''
-              err_msg(1) = 'Option ' // line_array(2) // ' for keyword units on line number ' // &
+              err_msg(1) = 'Option ' // TRIM(line_array(2)) // ' for keyword units on line number ' // &
                            TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
               err_msg(2) = 'Supported options are: steps, sweeps, minutes'
               CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
@@ -5215,12 +5236,32 @@ SUBROUTINE Get_Simulation_Length_Info
            IF (line_array(1) == 'prop_freq' .OR. line_array(1) == 'Prop_Freq') THEN
 
               nthermo_freq = String_To_Int(line_array(2))
-              WRITE(logunit,'(A,T50,I8,X,A)') 'Thermodynamic quantities will be written every', &
+
+              ! check that nthermo_freq is positive
+              IF (nthermo_freq <= 0) THEN
+                 err_msg = ''
+                 err_msg(1) = 'Option ' // TRIM(line_array(2)) // ' for keyword prop_freq on line number ' // &
+                              TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+                 err_msg(2) = 'Supported options are: any positive integer'
+                 CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
+              END IF
+
+              WRITE(logunit,'(A,T50,I8,X,A)') 'Thermodynamic quantities will be computed every', &
                  nthermo_freq, sim_length_units
 
            ELSE IF (line_array(1) == 'coord_freq' .OR. line_array(1) == 'Coord_Freq') THEN
            
               ncoord_freq = String_To_Int(line_array(2))
+
+              ! check that ncoord_freq is positive
+              IF (ncoord_freq <= 0) THEN
+                 err_msg = ''
+                 err_msg(1) = 'Option ' // TRIM(line_array(2)) // ' for keyword coord_freq on line number ' // &
+                              TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+                 err_msg(2) = 'Supported options are: any positive integer'
+                 CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
+              END IF
+
               WRITE(logunit,'(A,T50,I8,X,A)') 'Coordinates will be written every', ncoord_freq, sim_length_units
 
               IF (nbr_boxes == 1) THEN
@@ -5256,14 +5297,37 @@ SUBROUTINE Get_Simulation_Length_Info
               
            ELSE IF (line_array(1) == 'steps_per_sweep' .OR. line_array(1) == 'Steps_Per_Sweep') THEN
 
+              IF (nbr_entries /= 2) THEN
+                 err_msg = ''
+                 err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
+                              TRIM(Int_To_String(line_nbr)) // ' of the input file is given with ' // &
+                              TRIM(Int_To_String(nbr_entries-1)) // ' options'
+                 err_msg(2) = 'Required number of options: 1'
+                 CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
+              END IF
+
               steps_per_sweep = String_To_Int(line_array(2))
+
+              ! check that steps_per_sweep is positive
+              IF (steps_per_sweep <= 0) THEN
+                 err_msg = ''
+                 err_msg(1) = 'Option ' // TRIM(line_array(2)) // ' for keyword steps_per_sweep on line number ' // &
+                              TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+                 err_msg(2) = 'Supported options are: any positive integer'
+                 CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
+              END IF
+
+           ELSE IF (line_array(1) == 'block_avg_freq') THEN
+
+              block_average = .TRUE.
+              block_avg_freq = String_To_Int(line_array(2))
 
            ELSE
 
               err_msg = ''
               err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
                            TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
-              err_msg(2) = 'Supported keywords are: prop_freq, coord_freq, run, steps_per_sweep'
+              err_msg(2) = 'Supported keywords are: prop_freq, coord_freq, run, steps_per_sweep, block_avg_freq'
               CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
 
            END IF
@@ -5299,81 +5363,33 @@ SUBROUTINE Get_Simulation_Length_Info
 
   END IF
 
+  ! Check if block_average or instantaneous values
+  IF (block_average) THEN
+     ! check that block_avg_freq is greater than nthermo_freq
+     IF (block_avg_freq < nthermo_freq .OR. MOD(block_avg_freq,nthermo_freq) /= 0) THEN
+        err_msg = ''
+        err_msg(1) = 'Option ' // TRIM(Int_To_String(block_avg_freq)) // ' for keyword block_avg_freq is not supported'
+        err_msg(2) = 'Supported options are: any positive multiple of prop_freq'
+        CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
+     END IF
+
+     WRITE(logunit,'(A,T50,I8,X,A)') 'Block averages will be written every', block_avg_freq, sim_length_units
+     data_points_per_block = REAL(block_avg_freq / nthermo_freq,DP)
+  ELSE
+     WRITE(logunit,'(A,T50,I8,X,A)') 'Instantaneous values will be written every', nthermo_freq, sim_length_units
+  END IF
+
   IF (sim_length_units == 'Sweeps') THEN
+     WRITE(logunit,'(A,T50,I8,A)' ) 'A sweep is defined as ', steps_per_sweep, ' steps'
      n_mcsteps = n_mcsteps * steps_per_sweep
      nthermo_freq = nthermo_freq * steps_per_sweep
      ncoord_freq = ncoord_freq * steps_per_sweep
-     WRITE(logunit,'(A,T50,I8,A)' ) 'A sweep is defined as ', steps_per_sweep, ' steps'
+     IF (block_average) block_avg_freq = block_avg_freq * steps_per_sweep
   END IF
   
   WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_Simulation_Length_Info
-
-!******************************************************************************
-SUBROUTINE Get_Average_Info
-!******************************************************************************
-! The subroutine reads in information as to average properties or block properties will be computed
-!******************************************************************************
-
-  CHARACTER(120) :: line_string, line_array(20)
-
-  INTEGER :: ierr, line_nbr, nbr_entries
-
-!******************************************************************************
-  WRITE(logunit,*)
-  WRITE(logunit,'(A)') 'Average info'
-  WRITE(logunit,'(A80)') '********************************************************************************'
-
-  REWIND(inputunit)
-  line_nbr = 0
-  ierr = 0
-
-  DO
-     line_nbr = line_nbr + 1
-     CALL Read_String(inputunit,line_string,ierr)
-     IF (ierr /= 0 ) THEN
-        err_msg = ''
-        err_msg(1) = 'Error encountered while reading input on average'
-        CALL Clean_Abort(err_msg,'Get_Average_Info')
-     END IF
-
-     IF (line_string(1:14) == '# Average_Info' ) THEN
-        ! section on averages found
-        line_nbr = line_nbr + 1
-        CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
-        
-        IF (line_array(1) == 'block' .OR. line_array(1) == '0' ) THEN
-           block_average = .TRUE.
-           WRITE(logunit,'(A)') 'Block averages will be output'
-        ELSE IF (line_array(1) == 'none' .OR. line_array(1) == 'NONE' .OR. line_array(1) == '1') THEN
-           block_average = .FALSE.
-           WRITE(logunit,'(A)') 'Instantaneous values will be output'
-        ELSE
-           err_msg = ''
-           err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
-                        TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
-           err_msg(2) = 'Supported keywords are: block, none'
-           CALL Clean_Abort(err_msg,'Get_Sim_Type')
-        END IF
-        
-        EXIT
-     
-     ELSE IF ( line_string(1:3) == 'END' .OR. line_nbr > 10000 ) THEN
-
-        WRITE(logunit,'(A)') 'Section "# Average_Info" is missing from the input file'
-        WRITE(logunit,'(X,A)') 'By default, instantaneous values will be output'
-
-        EXIT
-        
-     END IF
-       
-
-  END DO
-
-  WRITE(logunit,'(A80)') '********************************************************************************'
-
-END SUBROUTINE Get_Average_Info
 
 !******************************************************************************
 SUBROUTINE Get_Property_Info
@@ -5425,6 +5441,17 @@ USE Global_Variables, ONLY: cpcollect
         ! the third entry indicates the box for which the current property
         ! file is to be written
         this_box = String_To_Int(line_array(3))
+        IF (this_box < 1 .OR. this_box > nbr_boxes) THEN
+           err_msg = ''
+           err_msg(1) = 'Section "# Property_Info" given with option ' // TRIM(Int_To_String(this_box))
+           IF (nbr_boxes == 1) THEN
+              err_msg(2) = 'Supported options are: 1'
+           ELSE IF (nbr_boxes == 2) THEN
+              err_msg(2) = 'Supported options are: 1 2'
+           END IF
+           CALL Clean_Abort(err_msg, "Get_Property_Info")
+        END IF
+
         nbr_prop_files(this_box) = nbr_prop_files(this_box) + 1
         !--- Now go through the lines following this keyword up to a point where
         !-- a blank, a '!' or a '#' or '# Property_Info' is encountered
@@ -5444,13 +5471,16 @@ USE Global_Variables, ONLY: cpcollect
                     line_array(1) == 'density' .OR. line_array(1) == 'Density') THEN
               ! there are as many properties to be written as there are species
               nbr_properties = nbr_properties + nspecies
-           ELSE IF (line_array(1) == 'chemical_potential' .OR. line_array(1) == 'Chemical_Potential') THEN
-              nbr_properties = nbr_properties + nspecies
-              cpcollect = .TRUE. 
-           ELSE IF (line_array(1) == 'pressure' .OR. line_array(1) == 'Pressure' .OR. &
-                    line_array(1) == 'enthalpy' .OR. line_array(1) == 'Enthalpy') THEN
+! chem_pot routines need testing
+!           ELSE IF (line_array(1) == 'chemical_potential' .OR. line_array(1) == 'Chemical_Potential') THEN
+!              nbr_properties = nbr_properties + nspecies
+!              cpcollect = .TRUE. 
+           ELSE IF (line_array(1) == 'pressure' .OR. line_array(1) == 'Pressure') THEN
               nbr_properties = nbr_properties + 1
               need_pressure = .TRUE.
+           ELSE IF (line_array(1) == 'enthalpy' .OR. line_array(1) == 'Enthalpy') THEN
+              nbr_properties = nbr_properties + 1
+              IF (int_sim_type /= sim_npt .AND. int_sim_type /= sim_gemc_npt) need_pressure = .TRUE.
            ELSE
               ! this is a property for the system
               nbr_properties = nbr_properties + 1
@@ -5555,16 +5585,17 @@ USE Global_Variables, ONLY: cpcollect
                        prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Density_' // TRIM(Int_To_String(is))
                     END DO
                  END IF
-              ELSE IF ( line_array(1) == 'chemical_potential' .OR. line_array(1) == 'Chemical_Potential') THEN
-                 IF (nspecies == 1) THEN
-                    nbr_properties = nbr_properties + 1
-                    prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Chemical_Potential'
-                 ELSE
-                    DO is = 1, nspecies
-                       nbr_properties = nbr_properties + 1
-                       prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Chemical_Potential_' // TRIM(Int_To_String(is))
-                    END DO
-                 END IF
+! chem_pot routines need testing
+!              ELSE IF ( line_array(1) == 'chemical_potential' .OR. line_array(1) == 'Chemical_Potential') THEN
+!                 IF (nspecies == 1) THEN
+!                    nbr_properties = nbr_properties + 1
+!                    prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Chemical_Potential'
+!                 ELSE
+!                    DO is = 1, nspecies
+!                       nbr_properties = nbr_properties + 1
+!                       prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Chemical_Potential_' // TRIM(Int_To_String(is))
+!                    END DO
+!                 END IF
               ELSE IF (line_array(1) == 'energy_total' .OR. line_array(1) == 'Energy_Total') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Total'
@@ -5594,6 +5625,8 @@ USE Global_Variables, ONLY: cpcollect
                 err_msg(1) = 'Keyword "' // TRIM(line_array(1)) // '" on line ' // &
                              TRIM(Int_To_String(line_nbr)) // ' of input file'
                 err_msg(2) = 'is not a supported property'
+                err_msg(3) = 'Supported keywords are: energy_total, energy_lj, energy_elec, energy_intra,'
+                err_msg(4) = '                        enthalpy, pressure, volume, density, nmols, mass_density'
                 CALL Clean_Abort(err_msg,'Get_Property_Info')
               END IF
               
@@ -5679,7 +5712,7 @@ USE Global_Variables, ONLY: cpcollect
      W_tensor_elec(:,:,:) = 0.0_DP
      pressure_tensor(:,:,:) = 0.0_DP
      pressure(:)%computed = 0.0_DP
-     pressure(:)%last_calc = 0
+     pressure(:)%last_calc = -1
   END IF
 
   WRITE(logunit,'(A80)') '********************************************************************************'
