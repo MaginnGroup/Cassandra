@@ -8,14 +8,10 @@ NVT_MC_Fragment
 1
 
 # VDW_Style
-LJ minimum_image
+lj minimum_image
 
 # Rcutoff_Low
 0.0
-
-# Mixing_Rule
-LB
-
 
 # Charge_Style
 coul minimum_image

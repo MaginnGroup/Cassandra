@@ -672,7 +672,7 @@ CONTAINS
   !-----------------------------------------------------------------------------
 
   SUBROUTINE Compute_Molecule_Nonbond_Intra_Energy(im,is, &
-    E_intra_vdw,E_intra_qq,E_inter_qq,intra_overlap,E_self)
+    E_intra_vdw,E_intra_qq,E_inter_qq,intra_overlap)
     !---------------------------------------------------------------------------
     ! The subroutine calculates the intramolecular LJ potential energy and 
     ! electrostatic energy of an entire molecule. The routine is based off the 
@@ -703,7 +703,6 @@ CONTAINS
     REAL(DP) :: rxij, ryij, rzij, rijsq
     REAL(DP) :: E_intra_vdw_old, E_intra_qq_old
     REAL(DP) :: Eij_intra_vdw, Eij_intra_qq, Eij_inter_vdw, Eij_inter_qq
-    REAL(DP), OPTIONAL :: E_self
     
     LOGICAL :: get_vdw, get_qq, intra_overlap
 
@@ -712,7 +711,6 @@ CONTAINS
     E_inter_qq = 0.0_DP
     E_intra_vdw_old = 0.0_DP
     E_intra_qq_old = 0.0_DP
-    IF(PRESENT(E_self)) E_self = 0.0_DP
     
     ! loop over all the atoms in a molecule
 
@@ -1531,7 +1529,7 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
       !$OMP PARALLEL DO DEFAULT(SHARED) &
       !$OMP PRIVATE(i,ia,cos_mol_im,sin_mol_im) &
       !$OMP PRIVATE(cos_mol_im_o, sin_mol_im_o) &
-      !$OMP PRIVATE(hdotr) &
+      !$OMP PRIVATE(hdotr, q) &
       !$OMP SCHEDULE(STATIC) &
       !$OMP REDUCTION(+:E_reciprocal)
       DO i = 1, nvecs(ibox)
@@ -1553,13 +1551,12 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
         cos_mol_im_o = cos_mol(i,im_locate)
         sin_mol_im_o = sin_mol(i,im_locate)
 
-        cos_sum(i,ibox) = cos_sum(i,ibox) &
-                        + (cos_mol_im - cos_mol_im_o)
-        sin_sum(i,ibox) = sin_sum(i,ibox) &
-                        + (sin_mol_im - sin_mol_im_o)
+        cos_sum(i,ibox) = cos_sum(i,ibox) + (cos_mol_im - cos_mol_im_o)
+        sin_sum(i,ibox) = sin_sum(i,ibox) + (sin_mol_im - sin_mol_im_o)
 
-        E_reciprocal = E_reciprocal + cn(i,ibox) * (cos_sum(i,ibox) &
-                     * cos_sum(i,ibox) + sin_sum(i,ibox) * sin_sum(i,ibox))
+        E_reciprocal = E_reciprocal + cn(i,ibox) &
+                     * (cos_sum(i,ibox) * cos_sum(i,ibox) &
+                     + sin_sum(i,ibox) * sin_sum(i,ibox))
 
         ! set the molecules cos and sin terms to the one calculated here
         cos_mol(i,im_locate) = cos_mol_im
@@ -1596,7 +1593,7 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
     ELSE IF ( move_flag == int_insertion ) THEN
 
       !$OMP PARALLEL DO DEFAULT(SHARED) &
-      !$OMP PRIVATE(i, ia, hdotr) &
+      !$OMP PRIVATE(i, ia, hdotr, q) &
       !$OMP SCHEDULE(STATIC) &
       !$OMP REDUCTION(+:E_reciprocal) 
 
@@ -1759,7 +1756,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     REAL(DP) :: vlj_pair, vqq_pair, e_lrc
     REAL(DP) :: rcom, rx, ry, rz
     REAL(DP) :: E_inter_vdw, E_inter_qq
-    REAL(DP) :: v_selfrf, v_molecule_selfrf
+    REAL(DP) :: v_molecule_selfrf
     REAL(DP) :: rijsq
     REAL(DP) :: v_bond, v_angle, v_dihedral, v_intra, v_improper
     REAL(DP) :: v_intra_vdw, v_intra_qq, v_inter_qq
@@ -1791,7 +1788,6 @@ END SUBROUTINE Compute_Molecule_Self_Energy
        energy(this_box)%improper = 0.0_DP
        energy(this_box)%intra_vdw = 0.0_DP
        energy(this_box)%intra_q = 0.0_DP
-       energy(this_box)%erf_self = 0.0_DP
        energy(this_box)%self = 0.0_DP
 
        DO is = 1, nspecies
@@ -1803,12 +1799,11 @@ END SUBROUTINE Compute_Molecule_Self_Energy
           v_intra_vdw= 0.0_DP
           v_intra_qq = 0.0_DP
           v_inter_qq = 0.0_DP
-          v_selfrf = 0.0_DP
           !$OMP PARALLEL DO DEFAULT(SHARED) &
           !$OMP SCHEDULE(DYNAMIC) &
           !$OMP PRIVATE(im, this_im, v_molecule_bond, v_molecule_angle, v_molecule_dihedral) &
           !$OMP PRIVATE(v_molecule_improper,vlj_molecule_intra,vqq_molecule_intra, vqq_molecule_inter, intra_overlap) &
-          !$OMP REDUCTION(+:v_intra,v_bond, v_angle, v_dihedral,v_improper, v_intra_vdw, v_intra_qq, v_inter_qq, v_selfrf)  
+          !$OMP REDUCTION(+:v_intra,v_bond, v_angle, v_dihedral,v_improper, v_intra_vdw, v_intra_qq, v_inter_qq)  
           imLoop:DO im = 1, nmols(is,this_box)
              
              this_im = locate(im,is,this_box)
@@ -1822,15 +1817,9 @@ END SUBROUTINE Compute_Molecule_Self_Energy
              CALL Compute_Molecule_Improper_Energy(this_im,is,v_molecule_improper)
 
              intra_overlap = .FALSE.
-             IF (int_charge_sum_style(this_box) == charge_ewald) THEN
-                CALL Compute_Molecule_Nonbond_Intra_Energy(this_im,is, &
-                     vlj_molecule_intra,vqq_molecule_intra,vqq_molecule_inter, &
-                     intra_overlap,v_molecule_selfrf)
-             ELSE
-                CALL Compute_Molecule_Nonbond_Intra_Energy(this_im,is, &
+             CALL Compute_Molecule_Nonbond_Intra_Energy(this_im,is, &
                      vlj_molecule_intra,vqq_molecule_intra,vqq_molecule_inter, &
                      intra_overlap)
-             END IF
 
              IF (intra_overlap) THEN
                 SHARED_OVERLAP = .TRUE.
@@ -1845,9 +1834,6 @@ END SUBROUTINE Compute_Molecule_Self_Energy
              v_intra_vdw = v_intra_vdw + vlj_molecule_intra 
              v_intra_qq = v_intra_qq + vqq_molecule_intra
              v_inter_qq = v_inter_qq + vqq_molecule_inter
-             IF (int_charge_sum_style(this_box) == charge_ewald) THEN
-                v_selfrf  = v_selfrf + v_molecule_selfrf
-             END IF
 
           END DO imLoop
           !$OMP END PARALLEL DO
@@ -1864,9 +1850,6 @@ END SUBROUTINE Compute_Molecule_Self_Energy
           energy(this_box)%intra_vdw = energy(this_box)%intra_vdw + v_intra_vdw
           energy(this_box)%intra_q   = energy(this_box)%intra_q   + v_intra_qq
           energy(this_box)%inter_q = energy(this_box)%inter_q + v_inter_qq
-          IF (int_charge_sum_style(this_box) == charge_ewald) THEN
-             energy(this_box)%erf_self = energy(this_box)%erf_self + v_selfrf
-          END IF
        END DO
 
     END IF
@@ -2566,7 +2549,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
        jtype = nonbond_list(ja,js)%atom_type_number
        
        VDW_calc: &
-       IF (get_vdw) THEN
+       IF (get_vdw .AND. itype /= 0 .AND. jtype /=0) THEN
 
          IF (int_vdw_style(ibox) == vdw_lj) THEN
            ! For now, assume all interactions are the same. 
@@ -2603,8 +2586,8 @@ END SUBROUTINE Compute_Molecule_Self_Energy
          ELSE IF (int_vdw_style(ibox) == vdw_mie) THEN
            eps = vdw_param1_table(itype,jtype)
            sig = vdw_param2_table(itype,jtype)
-           mie_n = vdw_param3_table(ia,ja) ! repulsive exponent
-           mie_m = vdw_param4_table(ia,ja) ! dispersive exponent
+           mie_n = vdw_param3_table(itype,jtype) ! repulsive exponent
+           mie_m = vdw_param4_table(itype,jtype) ! dispersive exponent
            rij = SQRT(rijsq)
 
            mie_coeff = mie_n/(mie_n-mie_m)*(mie_n/mie_m)**(mie_m/(mie_n-mie_m))

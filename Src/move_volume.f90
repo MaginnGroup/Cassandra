@@ -20,7 +20,10 @@
 !*******************************************************************************
 
 
+!*******************************************************************************
 SUBROUTINE Volume_Change
+!*******************************************************************************
+
   !*****************************************************************************
   ! The subroutine performs a volume perturbation move. Presently, the routine
   ! is set up to perform volume changes in cubic simulation box. Extension
@@ -31,6 +34,7 @@ SUBROUTINE Volume_Change
   ! Called by
   !
   !   NPTMC_Driver
+  !   GEMC_Driver
   !
   ! Calls
   !
@@ -56,7 +60,7 @@ SUBROUTINE Volume_Change
   ! Compute the change in energy due to this move and accept the move
   ! with standard metropolis criterion.
   !*****************************************************************************
-
+  
   USE Type_Definitions
   USE Global_Variables
   USE File_Names
@@ -64,82 +68,87 @@ SUBROUTINE Volume_Change
   USE Energy_Routines
   USE IO_Utilities
   
-
+  
   IMPLICIT NONE
-
-!  !$ include 'omp_lib.h'
-
+  
+  !  !$ include 'omp_lib.h'
+  
   INTEGER :: is, im, alive, this_box, i, total_molecules, nvecs_old, ibox
   INTEGER :: nvecs_max, k, iatom, mcstep
-
+  
   INTEGER :: ia
-
+  
   REAL(DP) :: random_displacement, s(3), delta_volume, ln_pacc, delta_e, success_ratio
   REAL(DP) :: this_volume
   REAL(DP), DIMENSION(maxk) :: hx_old, hy_old, hz_old, Cn_old
-
+  
   REAL(DP) :: dx, dy, dz, rijsq
   REAL(DP) :: E_vol_vdw, E_vol_qq, e_lrc
   REAL(DP) :: E_tot, E_vdw, E_lrc_old
   REAL(DP) :: pres_id
   REAL(DP) :: W_vol_vdw, W_vol_qq
-
+  
   LOGICAL :: overlap, xz_change, accept_or_reject
-
+  
   TYPE(Box_Class) :: box_list_old
-
+  
   TYPE(Energy_Class) :: energy_old, virial_old
-
+  
   REAL(DP), ALLOCATABLE :: pair_nrg_vdw_old(:,:), pair_nrg_qq_old(:,:)
-
+  
   INTEGER, ALLOCATABLE :: my_species_id(:), my_locate_id(:), my_position_id(:)
   INTEGER :: position, my_box
-
+  
   REAL(DP), ALLOCATABLE :: cos_mol_old(:,:), sin_mol_old(:,:)
-
+  
   REAL(DP) :: rcut_vdw_old, rcut_coul_old, rcut3_old, rcut9_old, alpha_ewald_old
   REAL(DP) :: h_ewald_cut_old, rcut_vdwsq_old, rcut_coulsq_old, rcut_vdw3_old
   REAL(DP) :: rcut_vdw6_old, rcut_max_old
-
+  
   REAL(DP) :: time1,time0
- 
+  
   CHARACTER(7) :: box_str, cutoff_str
   ! Framework related stuff
   REAL(DP) :: pore_width_old, ratio_width, area, half_pore_width_old
-
-
+  
+  
   ! Done with that section
   accept = .FALSE.
-
+  
   ! Randomly choose a box for volume perturbation
   this_box = INT ( rranf() * nbr_boxes ) + 1
-
+  
   ! increase the total number of trials for this box
   tot_trials(this_box) = tot_trials(this_box) + 1
   
   ! increment the number of volume moves for this box
   nvolumes(this_box) = nvolumes(this_box) + 1
-
+  
   ! Perform a random walk in dv_max
   delta_volume = (1.0_DP - 2.0_DP * rranf()) * box_list(this_box)%dv_max
   this_volume = box_list(this_box)%volume + delta_volume
   
   ! Reject the move
-  IF (this_volume < 0.0_DP) RETURN
-
+  IF (this_volume < 0.0_DP) THEN
+     IF (verbose_log) THEN
+       WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8,X,9X,X,A9)') &
+             i_mcstep, 'volume' , this_box, accept, 'neg_volume'
+     END IF
+  END IF
+  
   ! store the old configuration of all atoms and COMs of molecules, also
   ! calculate the total number of molecules in the box to be used in
   ! the acceptance rule
   total_molecules = 0
-
+  
   DO is = 1, nspecies
      
      DO im = 1, nmols(is,this_box)
         
         alive = locate(im,is,this_box)
-
+  
         IF (molecule_list(alive,is)%live) THEN
-
+  
            IF (molecule_list(alive,is)%which_box == this_box ) THEN
               
               total_molecules = total_molecules + 1
@@ -150,22 +159,13 @@ SUBROUTINE Volume_Change
               
               CALL Save_Old_Cartesian_Coordinates(alive,is)
               
-              
            END IF
-           
+            
         END IF
-
+  
      END DO
-
+  
   END DO
-
-  IF (this_box == 3) THEN
-     ! it is the intermediate box that contains ideal gas particles
-     ! Therefore, increase the number of molecules by this amount
-     
-     total_molecules = total_molecules + igas_num
-     
-  END IF
   
   !  call cpu_time(time0)
   
@@ -180,132 +180,99 @@ SUBROUTINE Volume_Change
      !!$OMP END PARALLEL WORKSHARE
      
   END IF
-
+  
   IF (int_charge_sum_style(this_box) == charge_ewald) THEN
      
      ! store the cos_mol and sin_mol arrays
-
+  
      ALLOCATE(cos_mol_old(MAXVAL(nvecs),SUM(max_molecules)), Stat = AllocateStatus)
-
+  
      IF (AllocateStatus /=0 ) THEN
         err_msg = ''
         err_msg(1) = 'cos_mol_old cannot be allocated'
         err_msg(2) = 'in Volume_Change'
         CALL Clean_Abort(err_msg,'Volume_Change')
      END IF
-
+  
      ALLOCATE(sin_mol_old(MAXVAL(nvecs),SUM(max_molecules)), Stat = AllocateStatus)
-
+  
      IF (AllocateStatus /=0 ) THEN
         err_msg = ''
         err_msg(1) = 'sin_mol_old cannot be allocated'
         err_msg(2) = 'in Volume_Change'
         CALL Clean_Abort(err_msg,'Volume_Change')
      END IF
-
+  
      
      cos_mol_old(:,:) = cos_mol(:,:)
      sin_mol_old(:,:) = sin_mol(:,:)
-
-  END IF
-
-  ! Store the box_list matrix
-  box_list_old = box_list(this_box)
-
-  ! Change the box size
-  IF ( box_list(this_box)%int_box_shape == int_cubic ) THEN
-
-     box_list(this_box)%length(1,1) = this_volume ** (1.0_DP/3.0_DP)
-     box_list(this_box)%length(2,2) = box_list(this_box)%length(1,1)
-     box_list(this_box)%length(3,3) = box_list(this_box)%length(2,2)
-
-  END IF
-
-  ! compute the new components of box_list(this_box)
-  CALL Compute_Cell_Dimensions(this_box)
-
-  IF ( l_half_len_cutoff(this_box)) THEN
-     IF ( box_list(this_box)%int_box_shape == int_cubic ) THEN
-        
-        ! store old cutoffs and other associated quantities
-        
-        rcut_vdw_old = rcut_vdw(this_box)
-        rcut_coul_old = rcut_coul(this_box)
-        rcut_vdwsq_old = rcut_vdwsq(this_box)
-        rcut_coulsq_old = rcut_coulsq(this_box)
-        
-        rcut3_old = rcut3(this_box)
-        rcut9_old = rcut9(this_box)
-        rcut_vdw3_old = rcut_vdw3(this_box)
-        rcut_vdw6_old = rcut_vdw6(this_box)
-        
-        rcut_max_old = rcut_max(this_box)
-        
-        IF( int_charge_sum_style(this_box) == charge_ewald ) THEN
-           
-           ! alpha_ewald_old = alpha_ewald(this_box)
-           h_ewald_cut_old = h_ewald_cut(this_box)
-           
-        END IF
-        
-        rcut_vdw(this_box) = 0.49_DP * box_list(this_box)%length(1,1)
-        rcut_coul(this_box) = rcut_vdw(this_box)
-        rcut_vdwsq(this_box) = rcut_vdw(this_box) * rcut_vdw(this_box)
-        rcut_coulsq(this_box) = rcut_vdwsq(this_box)
-        
-        rcut_vdw3(this_box) = rcut_vdwsq(this_box) * rcut_vdw(this_box)
-        rcut_vdw6(this_box) = rcut_vdw3(this_box) * rcut_vdw3(this_box)
-        rcut3(this_box) = rcut_vdw3(this_box)
-        rcut9(this_box) = rcut3(this_box) * rcut_vdw6(this_box)
-        
-        rcut_max(this_box) = rcut_vdw(this_box)
-        
-        IF ( int_charge_sum_style(this_box) == charge_ewald) THEN
-           
-!           alpha_ewald(this_box) = ewald_p_sqrt(this_box) / rcut_coul(this_box)
-           h_ewald_cut(this_box) = 2.0_DP * ewald_p(this_box) / rcut_coul(this_box)
-           
-        END IF
-        
-     END IF
-     
-  ELSE
-     
-     
-     IF ( box_list(this_box)%int_box_shape == int_cubic) THEN
-        IF ( 0.5 * box_list(this_box)%length(1,1) < rcut_vdw(this_box) ) THEN
-           WRITE(cutoff_str,'(F7.3)') rcut_vdw(this_box)
-           WRITE(box_str,'(F7.3)') 0.5*box_list(this_box)%length(1,1)
-           err_msg = ''
-           err_msg(1) = 'VDW cutoff =' // cutoff_str // ' is greater than the'
-           err_msg(2) = 'half box length of box ' // TRIM(Int_To_String(this_box)) // ' = ' // box_str
-           CALL Clean_Abort(err_msg,'Volume_Change')
-        ELSE IF ( 0.5 * box_list(this_box)%length(1,1) < rcut_coul(this_box) ) THEN
-           WRITE(cutoff_str,'(F7.3)') rcut_coul(this_box)
-           WRITE(box_str,'(F7.3)') 0.5*box_list(this_box)%length(1,1)
-           err_msg = ''
-           err_msg(1) = 'Coulomb cutoff =' // cutoff_str // ' is greater than the'
-           err_msg(2) = 'half box length of box ' // TRIM(Int_To_String(this_box)) // ' = ' // box_str
-           CALL Clean_Abort(err_msg,'Volume_Change')
-        ELSE IF ( 0.5 * box_list(this_box)%length(1,1) < roff_charmm(this_box) ) THEN
-           WRITE(cutoff_str,'(F7.3)') roff_charmm(this_box)
-           WRITE(box_str,'(F7.3)') 0.5*box_list(this_box)%length(1,1)
-           err_msg = ''
-           err_msg(1) = 'Charmm cutoff =' // cutoff_str // ' is greater than the'
-           err_msg(2) = 'half box length of box ' // TRIM(Int_To_String(this_box)) // ' = ' // box_str
-           CALL Clean_Abort(err_msg,'Volume_Change')
-        ELSE IF ( 0.5 * box_list(this_box)%length(1,1) < roff_switch(this_box) ) THEN
-           WRITE(cutoff_str,'(F7.3)') roff_switch(this_box)
-           WRITE(box_str,'(F7.3)') 0.5*box_list(this_box)%length(1,1)
-           err_msg = ''
-           err_msg(1) = 'Switch cutoff =' // cutoff_str // ' is greater than the'
-           err_msg(2) = 'half box length of box ' // TRIM(Int_To_String(this_box)) // ' = ' // box_str
-           CALL Clean_Abort(err_msg,'Volume_Change')
-        END IF
-     END IF
-     
+  
   END IF
   
+  ! Store the box_list matrix
+  box_list_old = box_list(this_box)
+  
+  ! Change the box size
+  ! Assume box is cubic
+  box_list(this_box)%length(1,1) = this_volume ** (1.0_DP/3.0_DP)
+  box_list(this_box)%length(2,2) = box_list(this_box)%length(1,1)
+  box_list(this_box)%length(3,3) = box_list(this_box)%length(2,2)
+  
+  ! compute the new components of box_list(this_box)
+  CALL Compute_Cell_Dimensions(this_box)
+  
+  IF ( l_half_len_cutoff(this_box)) THEN
+        
+     ! store old cutoffs and other associated quantities
+     rcut_vdw_old = rcut_vdw(this_box)
+     rcut_coul_old = rcut_coul(this_box)
+     rcut_vdwsq_old = rcut_vdwsq(this_box)
+     rcut_coulsq_old = rcut_coulsq(this_box)
+     
+     rcut3_old = rcut3(this_box)
+     rcut9_old = rcut9(this_box)
+     rcut_vdw3_old = rcut_vdw3(this_box)
+     rcut_vdw6_old = rcut_vdw6(this_box)
+     
+     rcut_max_old = rcut_max(this_box)
+     
+     IF( int_charge_sum_style(this_box) == charge_ewald ) THEN
+        ! alpha_ewald_old = alpha_ewald(this_box)
+        h_ewald_cut_old = h_ewald_cut(this_box)
+     END IF
+  
+     ! change cutoffs and other associated quantities
+     rcut_vdw(this_box) = 0.5_DP * box_list(this_box)%length(1,1)
+     rcut_coul(this_box) = rcut_vdw(this_box)
+     rcut_vdwsq(this_box) = rcut_vdw(this_box) * rcut_vdw(this_box)
+     rcut_coulsq(this_box) = rcut_vdwsq(this_box)
+     
+     rcut_vdw3(this_box) = rcut_vdwsq(this_box) * rcut_vdw(this_box)
+     rcut_vdw6(this_box) = rcut_vdw3(this_box) * rcut_vdw3(this_box)
+     rcut3(this_box) = rcut_vdw3(this_box)
+     rcut9(this_box) = rcut3(this_box) * rcut_vdw6(this_box)
+  
+     rcut_max(this_box) = rcut_vdw(this_box)
+  
+     IF ( int_charge_sum_style(this_box) == charge_ewald) THEN
+        ! alpha_ewald(this_box) = ewald_p_sqrt(this_box) / rcut_coul(this_box)
+        h_ewald_cut(this_box) = 2.0_DP * ewald_p(this_box) / rcut_coul(this_box)
+     END IF
+  
+  ELSE
+  
+     ! Assumes box is cubic
+     IF ( 0.5_DP * box_list(this_box)%length(1,1) < rcut_vdw(this_box) .OR. &
+          0.5_DP * box_list(this_box)%length(1,1) < rcut_coul(this_box) .OR. &
+          0.5_DP * box_list(this_box)%length(1,1) < roff_charmm(this_box) .OR. &
+          0.5_DP * box_list(this_box)%length(1,1) < roff_switch(this_box) ) THEN
+        err_msg = ''
+        err_msg(1) = 'Cutoff is greater than the half box length'
+        IF (nbr_boxes > 1) err_msg(2) = 'of box ' // TRIM(Int_To_String(this_box))
+        CALL Clean_Abort(err_msg,'Volume_Change')
+     END IF
+  END IF
+     
   delta_volume = box_list(this_box)%volume - box_list_old%volume
   
   ! we scale the coordinates of the COM of each of the molecules based on
@@ -398,7 +365,7 @@ SUBROUTINE Volume_Change
      IF (ALLOCATED(cos_mol)) DEALLOCATE(cos_mol)
      IF (ALLOCATED(sin_mol)) DEALLOCATE(sin_mol)
 
-     ALLOCATE(cos_sum(nvecs(this_box),nbr_boxes), Stat = AllocateStatus)
+     ALLOCATE(cos_sum(MAXVAL(nvecs),nbr_boxes), Stat = AllocateStatus)
      
      IF (Allocatestatus /= 0) THEN
         err_msg = ''
@@ -408,7 +375,7 @@ SUBROUTINE Volume_Change
      END IF
      
 
-     ALLOCATE(sin_sum(nvecs(this_box),nbr_boxes), Stat = AllocateStatus)
+     ALLOCATE(sin_sum(MAXVAL(nvecs),nbr_boxes), Stat = AllocateStatus)
 
      IF (Allocatestatus /= 0) THEN
         err_msg = ''
@@ -417,7 +384,7 @@ SUBROUTINE Volume_Change
         CALL Clean_Abort(err_msg,'Volume_Change')
      END IF
 
-     ALLOCATE(cos_mol(nvecs(this_box),SUM(max_molecules)), Stat = AllocateStatus)
+     ALLOCATE(cos_mol(MAXVAL(nvecs),SUM(max_molecules)), Stat = AllocateStatus)
 
      IF (Allocatestatus /= 0) THEN
         err_msg = ''
@@ -426,7 +393,7 @@ SUBROUTINE Volume_Change
         CALL Clean_Abort(err_msg,'Volume_Change')
      END IF
 
-     ALLOCATE(sin_mol(nvecs(this_box),SUM(max_molecules)), Stat = AllocateStatus)
+     ALLOCATE(sin_mol(MAXVAL(nvecs),SUM(max_molecules)), Stat = AllocateStatus)
 
      IF (Allocatestatus /= 0) THEN
         err_msg = ''
@@ -443,6 +410,11 @@ SUBROUTINE Volume_Change
      ! reject move
      CALL Reset_Coords
      
+     IF (verbose_log) THEN
+       WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8,X,9X,X,A9)') &
+             i_mcstep, 'volume' , this_box, accept, 'overlap'
+     END IF
+
   ELSE 
      
      ! change in the energy of the system 
@@ -453,7 +425,6 @@ SUBROUTINE Volume_Change
              + beta(this_box) * pressure(this_box)%setpoint * delta_volume &
              - total_molecules * DLOG(box_list(this_box)%volume/box_list_old%volume)
      accept = accept_or_reject(ln_pacc)
-
      
      IF ( accept ) THEN
 
@@ -519,6 +490,11 @@ SUBROUTINE Volume_Change
 
      END IF
      
+     IF (verbose_log) THEN
+       WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8,X,9X,X,F9.3)') &
+             i_mcstep, 'volume' , this_box, accept, ln_pacc
+     END IF
+
   END IF
 
   ! Update the maximum displaement if there are nupdate_vol attempts
@@ -540,16 +516,13 @@ SUBROUTINE Volume_Change
         ! If the current success_ratio is too low, dv_max will be decreased.
         ! Otherwise, dv_max will be increased. 
       
-        IF (box_list(this_box)%box_shape == 'cubic') THEN
-           
-           IF ( success_ratio < 0.0001 ) THEN
-              box_list(this_box)%dv_max = 0.1_DP * box_list(this_box)%dv_max
-           ELSE
-              box_list(this_box)%dv_max = 2.0_DP * success_ratio * box_list(this_box)%dv_max
-           END IF
-           WRITE(logunit,'(X,F9.0)',ADVANCE='NO') box_list(this_box)%dv_max
-
+        ! Assumes box is cubic, dv_max is scalar
+        IF ( success_ratio < 0.0001 ) THEN
+           box_list(this_box)%dv_max = 0.1_DP * box_list(this_box)%dv_max
+        ELSE
+           box_list(this_box)%dv_max = 2.0_DP * success_ratio * box_list(this_box)%dv_max
         END IF
+        WRITE(logunit,'(X,F9.0)',ADVANCE='NO') box_list(this_box)%dv_max
         
         ivol_success(this_box) = 0
      END IF
@@ -557,12 +530,6 @@ SUBROUTINE Volume_Change
      WRITE(logunit,*)
 
   END IF
-
-  IF (verbose_log) THEN
-    WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8)') i_mcstep, 'volume' , this_box, accept
-  END IF
-
-
 
   CONTAINS
 
@@ -618,7 +585,7 @@ SUBROUTINE Volume_Change
          
          IF( int_charge_sum_style(this_box) == charge_ewald ) THEN
             
-            !           alpha_ewald(this_box) = alpha_ewald_old
+           !           alpha_ewald(this_box) = alpha_ewald_old
            h_ewald_cut(this_box) = h_ewald_cut_old
            
         END IF

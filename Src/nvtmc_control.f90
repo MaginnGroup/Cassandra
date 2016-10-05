@@ -111,8 +111,6 @@ SUBROUTINE NVTMC_Control
 
   CALL Get_Simulation_Length_Info
 
-  CALL Get_Average_Info
-
   CALL Get_Property_Info
 
   CALL Get_Rcutoff_Low

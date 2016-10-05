@@ -58,15 +58,15 @@ SUBROUTINE Chempot(this_box,is)
   REAL(DP) :: delta_e, E_reciprocal_move, E_self_move, E_lrc
   REAL(DP) :: prefact, CP_energy, nrg_ring_frag_tot
 
-  REAL(DP) :: P_seq, P_bias, this_lambda, nrg_ring_frag_out
+  REAL(DP) :: ln_pseq, ln_pbias, this_lambda, nrg_ring_frag_out
 
   LOGICAL :: inter_overlap ,cbmc_overlap, intra_overlap
 
   delta_e = 0.0_DP
   prefact = 1.0_DP
   nrg_ring_frag_tot = 0.0_DP
-  P_seq = 1.0_DP
-  P_bias = 1.0_DP
+  ln_pseq = 0.0_DP
+  ln_pbias = 0.0_DP
 
   ntrials(is,this_box)%cpcalc = ntrials(is,this_box)%cpcalc + 1
  
@@ -91,7 +91,7 @@ SUBROUTINE Chempot(this_box,is)
      anchor_dummy = 0
      ALLOCATE(frag_order(nfragments(is)))
      CALL Build_Molecule(alive,is,this_box,frag_order,this_lambda, &
-             P_seq,P_seq,nrg_ring_frag_out,cbmc_overlap)
+             ln_pseq,ln_pbias,nrg_ring_frag_out,cbmc_overlap)
      DEALLOCATE(frag_order)
 
   ELSE
@@ -189,7 +189,7 @@ SUBROUTINE Chempot(this_box,is)
 
   CP_energy = delta_e 
 
-  IF(int_sim_type == sim_npt .OR. (int_sim_type == sim_gemc .AND. freev .GT. 1)) THEN
+  IF(int_sim_type == sim_npt) THEN
     prefact = box_list(this_box)%volume / REAL(nmols(is,this_box) + 1, DP)
   END IF
 
