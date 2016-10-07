@@ -49,13 +49,25 @@ SUBROUTINE Accumulate(ibox)
   !--- energy accumulators
 
   ac_energy(ibox,iblock)%total = ac_energy(ibox,iblock)%total + energy(ibox)%total
-  ac_energy(ibox,iblock)%inter_vdw = ac_energy(ibox,iblock)%inter_vdw + energy(ibox)%inter_vdw
-  ac_energy(ibox,iblock)%inter_q   = ac_energy(ibox,iblock)%inter_q   + energy(ibox)%inter_q
+  ! sub categories
+  ac_energy(ibox,iblock)%intra     = ac_energy(ibox,iblock)%intra + energy(ibox)%intra
+  ac_energy(ibox,iblock)%inter     = ac_energy(ibox,iblock)%inter + energy(ibox)%inter
+  ! individual components
+  ac_energy(ibox,iblock)%bond      = ac_energy(ibox,iblock)%bond      + energy(ibox)%bond
+  ac_energy(ibox,iblock)%angle     = ac_energy(ibox,iblock)%angle     + energy(ibox)%angle
+  ac_energy(ibox,iblock)%dihedral  = ac_energy(ibox,iblock)%dihedral  + energy(ibox)%dihedral
+  ac_energy(ibox,iblock)%improper  = ac_energy(ibox,iblock)%improper  + energy(ibox)%improper
   ac_energy(ibox,iblock)%intra_vdw = ac_energy(ibox,iblock)%intra_vdw + energy(ibox)%intra_vdw
   ac_energy(ibox,iblock)%intra_q   = ac_energy(ibox,iblock)%intra_q   + energy(ibox)%intra_q
-  ac_energy(ibox,iblock)%intra     = ac_energy(ibox,iblock)%intra + energy(ibox)%intra
-  ac_energy(ibox,iblock)%ewald_reciprocal = ac_energy(ibox,iblock)%ewald_reciprocal + energy(ibox)%ewald_reciprocal
-  ac_energy(ibox,iblock)%self = ac_energy(ibox,iblock)%self + energy(ibox)%self
+  ac_energy(ibox,iblock)%inter_vdw = ac_energy(ibox,iblock)%inter_vdw + energy(ibox)%inter_vdw
+  ac_energy(ibox,iblock)%inter_q   = ac_energy(ibox,iblock)%inter_q   + energy(ibox)%inter_q
+  
+  IF (int_charge_sum_style(ibox) == charge_ewald) THEN
+     ac_energy(ibox,iblock)%reciprocal = ac_energy(ibox,iblock)%reciprocal + energy(ibox)%reciprocal
+     ac_energy(ibox,iblock)%self = ac_energy(ibox,iblock)%self + energy(ibox)%self
+  ELSE IF (int_charge_sum_style(ibox) == charge_dsf) THEN
+     ac_energy(ibox,iblock)%self = ac_energy(ibox,iblock)%self + energy(ibox)%self
+  END IF
 
   IF(int_vdw_sum_style(ibox) == vdw_cut_tail) THEN
      ac_energy(ibox,iblock)%lrc = ac_energy(ibox,iblock)%lrc + energy(ibox)%lrc
@@ -68,7 +80,7 @@ SUBROUTINE Accumulate(ibox)
 !  ac_virial(ibox,iblock)%inter_q   = ac_virial(ibox,iblock)%inter_q + virial(ibox)%inter_q
 !  ac_virial(ibox,iblock)%intra_vdw = ac_virial(ibox,iblock)%intra_vdw + virial(ibox)%intra_vdw
 !  ac_virial(ibox,iblock)%intra_q   = ac_virial(ibox,iblock)%intra_q + virial(ibox)%intra_q
-!  ac_virial(ibox,iblock)%ewald_reciprocal = ac_virial(ibox,iblock)%ewald_reciprocal + virial(ibox)%ewald_reciprocal
+!  ac_virial(ibox,iblock)%reciprocal = ac_virial(ibox,iblock)%reciprocal + virial(ibox)%reciprocal
 
   !--- thermodynamic accumulators
   ac_volume(ibox,iblock) = ac_volume(ibox,iblock) + box_list(ibox)%volume
@@ -103,4 +115,28 @@ SUBROUTINE Accumulate(ibox)
   mass_density = mass_density / box_list(ibox)%volume
   ac_mass_density(ibox,iblock) = ac_mass_density(ibox,iblock) + mass_density
 
+  IF (MOD(i_mcstep,block_avg_freq) == 0) THEN
+     ac_energy(ibox,iblock)%total      = ac_energy(ibox,iblock)%total      / data_points_per_block
+     ac_energy(ibox,iblock)%intra      = ac_energy(ibox,iblock)%intra      / data_points_per_block
+     ac_energy(ibox,iblock)%inter      = ac_energy(ibox,iblock)%inter      / data_points_per_block
+     ac_energy(ibox,iblock)%bond       = ac_energy(ibox,iblock)%bond       / data_points_per_block
+     ac_energy(ibox,iblock)%angle      = ac_energy(ibox,iblock)%angle      / data_points_per_block
+     ac_energy(ibox,iblock)%dihedral   = ac_energy(ibox,iblock)%dihedral   / data_points_per_block
+     ac_energy(ibox,iblock)%improper   = ac_energy(ibox,iblock)%improper   / data_points_per_block
+     ac_energy(ibox,iblock)%intra_vdw  = ac_energy(ibox,iblock)%intra_vdw  / data_points_per_block
+     ac_energy(ibox,iblock)%intra_q    = ac_energy(ibox,iblock)%intra_q    / data_points_per_block
+     ac_energy(ibox,iblock)%inter_vdw  = ac_energy(ibox,iblock)%inter_vdw  / data_points_per_block
+     ac_energy(ibox,iblock)%inter_q    = ac_energy(ibox,iblock)%inter_q    / data_points_per_block
+     ac_energy(ibox,iblock)%reciprocal = ac_energy(ibox,iblock)%reciprocal / data_points_per_block
+     ac_energy(ibox,iblock)%self       = ac_energy(ibox,iblock)%self       / data_points_per_block
+     ac_energy(ibox,iblock)%lrc        = ac_energy(ibox,iblock)%lrc        / data_points_per_block
+     ac_volume(ibox,iblock)            = ac_volume(ibox,iblock)            / data_points_per_block
+     ac_pressure(ibox,iblock)          = ac_pressure(ibox,iblock)          / data_points_per_block
+     ac_enthalpy(ibox,iblock)          = ac_enthalpy(ibox,iblock)          / data_points_per_block
+     ac_mass_density(ibox,iblock)      = ac_mass_density(ibox,iblock)      / data_points_per_block
+     DO is = 1, nspecies
+        ac_density(is,ibox,iblock)     = ac_density(is,ibox,iblock)        / data_points_per_block
+        ac_nmols(is,ibox,iblock)       = ac_nmols(is,ibox,iblock)          / data_points_per_block
+     END DO
+  END IF 
 END SUBROUTINE Accumulate

@@ -81,7 +81,7 @@ USE Type_Definitions
   INTEGER, PARAMETER :: sim_gemc_npt = 7
   INTEGER, PARAMETER :: sim_gemc_ig = 8
   INTEGER, PARAMETER :: sim_mcf = 9
-  LOGICAL :: timed_run, openmp_flag, en_flag, verbose_log
+  LOGICAL :: timed_run, openmp_flag, en_flag, verbose_log, input_is_logfile
   CHARACTER(10) :: sim_length_units
   INTEGER :: steps_per_sweep
 
@@ -98,6 +98,8 @@ USE Type_Definitions
   INTEGER, PARAMETER :: run_equil = 0
   INTEGER, PARAMETER :: run_prod = 1
   INTEGER, PARAMETER :: run_test = 2
+  LOGICAL :: change_to_production = .false.
+  INTEGER :: nsteps_until_prod
   INTEGER, PARAMETER :: vdw_none = 0
   INTEGER, PARAMETER :: vdw_lj = 1
   INTEGER, PARAMETER :: vdw_cut = 2
@@ -269,7 +271,6 @@ USE Type_Definitions
   INTEGER :: nspecies, nspec_insert
   INTEGER, DIMENSION(:), ALLOCATABLE :: n_igas, n_igas_update, n_igas_moves, nzovero ! integers for ideal gas reservoir
   LOGICAL :: first_res_update, igas_flag
-  LOGICAL, DIMENSION(:), ALLOCATABLE :: zig_calc
   INTEGER, DIMENSION(:), ALLOCATABLE :: max_molecules, natoms, nmol_start, nring_atoms, nexo_atoms
   INTEGER, DIMENSION(:), ALLOCATABLE :: nbonds, nangles, nangles_fixed
   INTEGER, DIMENSION(:), ALLOCATABLE :: ndihedrals, nimpropers
@@ -300,10 +301,7 @@ USE Type_Definitions
   ! It is set and allocated to size nbr_atomtypes in Create_Nonbond_Table
   CHARACTER(6), DIMENSION(:), ALLOCATABLE :: atom_type_list
 
-  ! Number of parameters required for various potential functions.
-  INTEGER, DIMENSION(:), ALLOCATABLE :: nbr_bond_params, nbr_angle_params 
-  INTEGER, DIMENSION(:), ALLOCATABLE :: nbr_improper_params, nbr_vdw_params
-  INTEGER, DIMENSION(:), ALLOCATABLE :: nbr_dihedral_params
+  INTEGER, DIMENSION(:), ALLOCATABLE :: nbr_vdw_params
 
   ! Information of the position line where starts the coordinates storage of
   ! each fragment type
@@ -420,7 +418,7 @@ USE Type_Definitions
   ! will have dimension of (nspecies,nbr_boxes)
   REAL(DP), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: ac_density, ac_nmols
 
-  LOGICAL :: block_average
+  LOGICAL :: block_avg
 
   ! The following variables are defined for Ewald calculations
 
@@ -542,8 +540,8 @@ USE Type_Definitions
 ! Energy check
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  LOGICAL :: echeck_flag
-  INTEGER :: iecheck
+  LOGICAL :: echeck
+  INTEGER :: echeck_freq
 
 !!!!! Pair energy arrays. These arrays hold interaction energies between pairs of molecules !!!!!
 

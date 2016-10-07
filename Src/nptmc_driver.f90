@@ -33,7 +33,7 @@ SUBROUTINE NPTMC_Driver
   !        CPU_Time
   !        translate
   !        rotate
-  !        Rigid_Dihedral_Change
+  !        Rotate_Dihedral
   !        Volume_Change
   !        Angle_Distortion
   !        Cut_N_Grow
@@ -128,6 +128,11 @@ SUBROUTINE NPTMC_Driver
 
      i_mcstep = i_mcstep + 1
 
+     ! Change mode from equilibration to production if specified
+     IF (change_to_production .AND. i_mcstep > nsteps_until_prod) THEN
+       int_run_type = run_prod
+     END IF
+
      !*****************************************************************************
      ! select a move from Golden Sampling scheme
      !*****************************************************************************
@@ -178,7 +183,7 @@ SUBROUTINE NPTMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Rigid_Dihedral_Change
+        CALL Rotate_Dihedral
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -262,14 +267,6 @@ SUBROUTINE NPTMC_Driver
 
      END IF
 
-     IF(echeck_flag) THEN
-        IF(MOD(i_mcstep,iecheck) == 0) THEN
-           DO ibox = 1,nbr_boxes
-              CALL Check_System_Energy(ibox,rand_no)
-           END DO
-        END IF
-     END IF
-
      IF ( cpcollect ) THEN
         DO is = 1,nspecies
            CALL Chempot(1, is)
@@ -292,6 +289,14 @@ SUBROUTINE NPTMC_Driver
      !*****************************************************************************
      ! check if compute properties this step
      !*****************************************************************************
+     IF (echeck) THEN
+        IF(MOD(i_mcstep,echeck_freq) == 0) THEN
+           DO ibox = 1,nbr_boxes
+              CALL Check_System_Energy(ibox)
+           END DO
+        END IF
+     END IF
+
      write_flag = .FALSE.
      IF(.NOT. timed_run) THEN
         IF (MOD(i_mcstep,nthermo_freq) == 0) write_flag = .TRUE.
@@ -305,7 +310,7 @@ SUBROUTINE NPTMC_Driver
 
      ! Write the information to various files at regular intervals
      IF (write_flag) THEN
-        IF (.NOT. block_average ) THEN
+        IF (.NOT. block_avg ) THEN
            ! write instantaneous properties
            DO ibox = 1, nbr_boxes
               CALL Write_Properties(ibox)

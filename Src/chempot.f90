@@ -168,7 +168,7 @@ SUBROUTINE Chempot(this_box,is)
           CALL Update_System_Ewald_Reciprocal_Energy(alive,is,this_box, &
                int_insertion,E_reciprocal_move)
 
-          delta_e = delta_e + (E_reciprocal_move-energy(this_box)%ewald_reciprocal)
+          delta_e = delta_e + (E_reciprocal_move-energy(this_box)%reciprocal)
 
        END IF
        CALL Compute_Molecule_Self_Energy(alive,is,this_box,E_self_move)
