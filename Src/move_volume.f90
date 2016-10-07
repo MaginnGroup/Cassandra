@@ -78,15 +78,14 @@ SUBROUTINE Volume_Change
   
   INTEGER :: ia
   
-  REAL(DP) :: random_displacement, s(3), delta_volume, ln_pacc, delta_e, success_ratio
+  REAL(DP) :: random_displacement, s(3), delta_volume, ln_pacc, success_ratio
   REAL(DP) :: this_volume
   REAL(DP), DIMENSION(maxk) :: hx_old, hy_old, hz_old, Cn_old
   
+  REAL(DP) :: dE
+
   REAL(DP) :: dx, dy, dz, rijsq
-  REAL(DP) :: E_vol_vdw, E_vol_qq, e_lrc
-  REAL(DP) :: E_tot, E_vdw, E_lrc_old
   REAL(DP) :: pres_id
-  REAL(DP) :: W_vol_vdw, W_vol_qq
   
   LOGICAL :: overlap, xz_change, accept_or_reject
   
@@ -418,10 +417,10 @@ SUBROUTINE Volume_Change
   ELSE 
      
      ! change in the energy of the system 
-     delta_e = energy(this_box)%total - energy_old%total
+     dE = energy(this_box)%total - energy_old%total
      
      ! based on the energy, calculate the acceptance ratio
-     ln_pacc = beta(this_box) * delta_e &
+     ln_pacc = beta(this_box) * dE &
              + beta(this_box) * pressure(this_box)%setpoint * delta_volume &
              - total_molecules * DLOG(box_list(this_box)%volume/box_list_old%volume)
      accept = accept_or_reject(ln_pacc)

@@ -9,11 +9,11 @@
  
 Run info
 ********************************************************************************
-version: Cassandra Version 1.2 20160720
+version: Cassandra Development Version
 inputfile: nvt.inp
 name of run: nvt.out
-date (mm/dd/yyyy): 07/26/2016
-time: 23:07:51
+date (mm/dd/yyyy): 08/04/2016
+time: 14:33:14
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -138,9 +138,7 @@ Molecule info
 ********************************************************************************
  Reading molecular connectivity information
  Species:            1
- Molecular connectivity file: 
- dmh.mcf                                                                        
-                                          
+ Molecular connectivity file: dmh.mcf                                                                                                                 
    8 atom(s) specified.
    7 bond(s) specified.
    9 angle(s) specified.
@@ -267,21 +265,22 @@ Initial configuration
  
 Compute total energy
 ********************************************************************************
- Starting energy components for box 1
-  Atomic units-Extensive
- -----------------------------------------------------------
- Total system energy                   284975.394
- Intra molecular energy                266333.528
+ 
+ Energy components for box 1     kJ/mol-Extensive
+ ---------------------------------------------------------------------
+ Total system energy                     2849.754
+ Intra molecular energy                  2902.104
    Bond energy                              0.000
-   Bond angle energy                   166767.401
-   Dihedral angle energy                99566.127
+   Bond angle energy                     1667.674
+   Dihedral angle energy                  995.661
    Improper angle energy                    0.000
- Intra molecule vdw                     23876.825
- Intra molecule q                           0.000
- Inter molecule vdw                     -4912.028
- Long range correction                   -322.931
- Inter molecule q                           0.000
- -----------------------------------------------------------
+   Intra molecule vdw                     238.768
+   Intra molecule q                         0.000
+ Inter molecular energy                   -52.350
+   Inter molecule vdw                     -49.120
+   Long range correction                   -3.229
+   Inter molecule q                         0.000
+ ---------------------------------------------------------------------
  
 ********************************************************************************
  
@@ -308,42 +307,25 @@ Run simulation
      27176     rotate         1   1  0.85500   3.14159
 ********************************************************************************
  
-Report ending energy & then re-compute from scratch
+Energy of final configuration
 ********************************************************************************
  
+ Energy components for box 1     kJ/mol-Extensive       Relative_Error
+ ---------------------------------------------------------------------
+ Total system energy                     1843.312            0.126E-14
+ Intra molecular energy                  2030.188            0.344E-14
+   Bond energy                              0.000            0.000E+00
+   Bond angle energy                     1444.695            0.342E-14
+   Dihedral angle energy                  802.243            0.417E-14
+   Improper angle energy                    0.000            0.000E+00
+   Intra molecule vdw                    -216.750           -0.109E-13
+   Intra molecule q                         0.000            0.000E+00
+ Inter molecular energy                  -186.876           -0.195E-15
+   Inter molecule vdw                    -183.646           -0.396E-14
+   Long range correction                   -3.229            0.000E+00
+   Inter molecule q                         0.000            0.000E+00
+ ---------------------------------------------------------------------
  
- Initial energy + deltas for box 1
-  Atomic units-Extensive
- -----------------------------------------------------------
- Total system energy                   184331.243
- Intra molecular energy                224693.757
-   Bond energy                              0.000
-   Angle energy                        144469.496
-   Dihedral energy                      80224.261
-   Improper angle energy                    0.000
- Intra molecule vdw                    -21674.953
- Intra molecule q                           0.000
- Inter molecule vdw                    -18364.630
- Long range correction                   -322.931
- Inter molecule q                           0.000
- -----------------------------------------------------------
- 
- 
- Recomputed energy from scratch for box 1
-  Atomic units-Extensive
- -----------------------------------------------------------
- Total system energy                   184331.243
- Intra molecular energy                224693.757
-   Bond energy                              0.000
-   Angle energy                        144469.496
-   Dihedral energy                      80224.261
-   Improper angle energy                    0.000
- Intra molecule vdw                    -21674.953
- Intra molecule q                           0.000
- Inter molecule vdw                    -18364.630
- Long range correction                   -322.931
- Inter molecule q                           0.000
- -----------------------------------------------------------
 ********************************************************************************
  
  
@@ -374,9 +356,9 @@ Writing information about fragments
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.901800 secs.
- Rotation time =               0.959674 secs.
- Regrowth time =               8.285842 secs.
+ Translation time =            0.906211 secs.
+ Rotation time =               0.961238 secs.
+ Regrowth time =               8.204734 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -391,5 +373,5 @@ Writing information about fragments
          0      Hours
          0    Minutes
         10    Seconds
-       763         ms
+       623         ms
 ********************************************************************************

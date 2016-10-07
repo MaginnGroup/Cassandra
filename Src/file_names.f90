@@ -50,7 +50,7 @@ MODULE File_Names
   !   precalculate
   !   random_generators
   !   read_write_checkpoint
-  !   rigid_dihedral_change
+  !   Rotate_Dihedral
   !   rotate
   !   volume_change
   !   write_properties

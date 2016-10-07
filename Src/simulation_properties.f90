@@ -41,7 +41,7 @@ MODULE Simulation_Properties
   !   bond_stretching_move
   !   deletion
   !   read_write_checkpoint
-  !   rigid_dihedral_change
+  !   Rotate_Dihedral
   !   rotate
   !   translate
   !   write_properties

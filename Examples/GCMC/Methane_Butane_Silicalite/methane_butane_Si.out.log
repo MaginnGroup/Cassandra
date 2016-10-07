@@ -9,11 +9,11 @@
  
 Run info
 ********************************************************************************
-version: Cassandra Version 1.2 20160720
+version: Cassandra Development Version
 inputfile: methane_butane_Si.inp
 name of run: methane_butane_Si.out
-date (mm/dd/yyyy): 07/26/2016
-time: 23:21:11
+date (mm/dd/yyyy): 08/04/2016
+time: 14:31:06
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -167,9 +167,7 @@ Molecule info
 ********************************************************************************
  Reading molecular connectivity information
  Species:            1
- Molecular connectivity file: 
- unitcell.mcf                                                                   
-                                          
+ Molecular connectivity file: unitcell.mcf                                                                                                            
    288 atom(s) specified.
    0 bond(s) specified.
    0 angle(s) specified.
@@ -179,9 +177,7 @@ Molecule info
    0 fragment bond(s) specified.
  Reading molecular connectivity information
  Species:            2
- Molecular connectivity file: 
- CH4.mcf                                                                        
-                                          
+ Molecular connectivity file: CH4.mcf                                                                                                                 
    1 atom(s) specified.
    0 bond(s) specified.
    0 angle(s) specified.
@@ -191,9 +187,7 @@ Molecule info
    0 fragment bond(s) specified.
  Reading molecular connectivity information
  Species:            3
- Molecular connectivity file: 
- C4H10.mcf                                                                      
-                                          
+ Molecular connectivity file: C4H10.mcf                                                                                                               
    4 atom(s) specified.
    3 bond(s) specified.
    2 angle(s) specified.
@@ -386,21 +380,22 @@ Initial configuration
  
 Compute total energy
 ********************************************************************************
- Starting energy components for box 1
-  Atomic units-Extensive
- -----------------------------------------------------------
- Total system energy                      832.566
- Intra molecular energy                   858.445
+ 
+ Energy components for box 1     kJ/mol-Extensive
+ ---------------------------------------------------------------------
+ Total system energy                        8.326
+ Intra molecular energy                     8.584
    Bond energy                              0.000
-   Bond angle energy                      431.805
-   Dihedral angle energy                  426.640
+   Bond angle energy                        4.318
+   Dihedral angle energy                    4.266
    Improper angle energy                    0.000
- Intra molecule vdw                         0.000
- Intra molecule q                           0.000
- Inter molecule vdw                        -7.852
- Long range correction                    -18.027
- Inter molecule q                           0.000
- -----------------------------------------------------------
+   Intra molecule vdw                       0.000
+   Intra molecule q                         0.000
+ Inter molecular energy                    -0.259
+   Inter molecule vdw                      -0.079
+   Long range correction                   -0.180
+   Inter molecule q                         0.000
+ ---------------------------------------------------------------------
  
 ********************************************************************************
  
@@ -414,42 +409,25 @@ Run simulation
       8829     rotate         3   1  0.67833   3.14159
 ********************************************************************************
  
-Report ending energy & then re-compute from scratch
+Energy of final configuration
 ********************************************************************************
  
+ Energy components for box 1     kJ/mol-Extensive       Relative_Error
+ ---------------------------------------------------------------------
+ Total system energy                      -24.729           -0.967E-13
+ Intra molecular energy                    66.229            0.376E-13
+   Bond energy                              0.000            0.000E+00
+   Bond angle energy                       29.445            0.550E-13
+   Dihedral angle energy                   36.783            0.227E-13
+   Improper angle energy                    0.000            0.000E+00
+   Intra molecule vdw                       0.000            0.000E+00
+   Intra molecule q                         0.000            0.000E+00
+ Inter molecular energy                   -90.958           -0.360E-14
+   Inter molecule vdw                     -89.974           -0.303E-14
+   Long range correction                   -0.984            0.000E+00
+   Inter molecule q                         0.000            0.000E+00
+ ---------------------------------------------------------------------
  
- Initial energy + deltas for box 1
-  Atomic units-Extensive
- -----------------------------------------------------------
- Total system energy                    -2472.914
- Intra molecular energy                  6622.888
-   Bond energy                              0.000
-   Angle energy                          2944.544
-   Dihedral energy                       3678.344
-   Improper angle energy                    0.000
- Intra molecule vdw                         0.000
- Intra molecule q                           0.000
- Inter molecule vdw                     -8997.421
- Long range correction                    -98.380
- Inter molecule q                           0.000
- -----------------------------------------------------------
- 
- 
- Recomputed energy from scratch for box 1
-  Atomic units-Extensive
- -----------------------------------------------------------
- Total system energy                    -2472.914
- Intra molecular energy                  6622.888
-   Bond energy                              0.000
-   Angle energy                          2944.544
-   Dihedral energy                       3678.344
-   Improper angle energy                    0.000
- Intra molecule vdw                         0.000
- Intra molecule q                           0.000
- Inter molecule vdw                     -8997.421
- Long range correction                    -98.380
- Inter molecule q                           0.000
- -----------------------------------------------------------
 ********************************************************************************
  
  
@@ -497,11 +475,11 @@ Writing information about fragments
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.139467 secs.
- Rotation time =               0.214088 secs.
- Insertion time =              0.542895 secs.
- Deletion time =               0.602700 secs.
- Regrowth time =               0.859841 secs.
+ Translation time =            0.270619 secs.
+ Rotation time =               0.414176 secs.
+ Insertion time =              1.051736 secs.
+ Deletion time =               1.146287 secs.
+ Regrowth time =               1.673427 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -515,6 +493,6 @@ Writing information about fragments
          0       Days
          0      Hours
          0    Minutes
-         2    Seconds
-       443         ms
+         4    Seconds
+       719         ms
 ********************************************************************************

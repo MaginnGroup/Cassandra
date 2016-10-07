@@ -73,8 +73,8 @@ SUBROUTINE Rotate
   REAL(DP), ALLOCATABLE :: x_box(:), x_species(:)
   REAL(DP) :: randno
   REAL(DP), DIMENSION(:), ALLOCATABLE :: dx, dy, dz
-  REAL(DP) :: delta_e, ln_pacc, success_ratio
-  REAL(DP) :: E_vdw, E_qq, E_vdw_move, E_qq_move, E_reciprocal_move
+  REAL(DP) :: ln_pacc, success_ratio
+  REAL(DP) :: dE, E_vdw, E_qq, E_vdw_move, E_qq_move, E_reciprocal_move
 
   LOGICAL :: inter_overlap, overlap, accept_or_reject
 
@@ -98,11 +98,11 @@ SUBROUTINE Rotate
 
   ! Sum the total number of molecules 
   nmols_tot = 0 ! sum over species, box
+  nmols_box = 0 ! sum over species
   DO ibox = 1, nbr_boxes
-    nmols_box(ibox) = 0
     DO is = 1, nspecies
       ! Only count mobile species
-      IF ( max_rot(is,ibox) > 0. ) THEN
+      IF ( max_rot(is,ibox) > 0.0_DP ) THEN
         nmols_tot = nmols_tot + nmols(is,ibox)
         nmols_box(ibox) = nmols_box(ibox) + nmols(is,ibox)
       END IF
@@ -237,7 +237,7 @@ SUBROUTINE Rotate
 
   ELSE
 
-     delta_e = 0.0_DP
+     dE = 0.0_DP
 
      IF ((int_charge_sum_style(ibox) == charge_ewald) .AND. (has_charge(is))) THEN
         
@@ -250,35 +250,36 @@ SUBROUTINE Rotate
         !$OMP END PARALLEL WORKSHARE
 
         CALL Update_System_Ewald_Reciprocal_Energy(lm,is,ibox,int_rotation,E_reciprocal_move)
-        delta_e = E_reciprocal_move - energy(ibox)%ewald_reciprocal
+        dE = E_reciprocal_move - energy(ibox)%reciprocal
 
      END IF
      
-     delta_e = E_vdw_move - E_vdw + E_qq_move - E_qq + delta_e
+     dE = dE + E_vdw_move - E_vdw + E_qq_move - E_qq
      ! note that the difference in framework energy will be zero if 
      ! the simulation does not have a solid support, framework, wall etc.
 
      IF (int_sim_type == sim_nvt_min) THEN
         ! Accept only the moves that lower energy
-        IF ( delta_e <= 0.0_DP) THEN
+        IF ( dE <= 0.0_DP) THEN
            accept = .TRUE.
         END IF
         
      ELSE
 
-        ln_pacc = beta(ibox) * delta_e
+        ln_pacc = beta(ibox) * dE
         accept = accept_or_reject(ln_pacc)
 
      END IF
      
      IF ( accept ) THEN
 
-        energy(ibox)%total = energy(ibox)%total + delta_e
+        energy(ibox)%inter = energy(ibox)%inter + dE
+        energy(ibox)%total = energy(ibox)%total + dE
         energy(ibox)%inter_vdw = energy(ibox)%inter_vdw + E_vdw_move - E_vdw
         energy(ibox)%inter_q   = energy(ibox)%inter_q + E_qq_move - E_qq
 
         IF ( int_charge_sum_style(ibox) == charge_ewald .AND. has_charge(is)) THEN
-           energy(ibox)%ewald_reciprocal = E_reciprocal_move
+           energy(ibox)%reciprocal = E_reciprocal_move
         END IF
 
         nsuccess(is,ibox)%rotation = nsuccess(is,ibox)%rotation + 1

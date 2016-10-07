@@ -57,7 +57,7 @@ FC = ifort
 LIBS = 
 INCS = 
 #
-F90FLAGS = -c -O3 -openmp
+F90FLAGS = -c -O3 -no-wrap-margin -openmp
 #F90FLAGS = -c -g -check all -traceback -openmp
 LINKFLAGS = -openmp
 
@@ -119,7 +119,7 @@ OBJS =	main.o \
 	move_atom.o \
 	chempot.o \
 	pair_nrg_variables.o \
-  move_ring_flip.o \
+   move_ring_flip.o \
 
 
 ####################################################################

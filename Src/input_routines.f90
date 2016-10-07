@@ -70,6 +70,7 @@ SUBROUTINE Get_Run_Name
 
   ierr = 0
   line_nbr = 0
+  input_is_logfile = .FALSE.
 
   DO
      line_nbr = line_nbr + 1
@@ -81,13 +82,16 @@ SUBROUTINE Get_Run_Name
         CALL Clean_Abort(err_msg,'Read_inputfile')
      END IF
 
+     IF (line_string(35:42)=='Log File') THEN
+        input_is_logfile = .TRUE.
+     END IF
+   
      IF (line_string(1:10) == '# Run_Name') THEN
         line_nbr = line_nbr + 1
         CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
 
 ! Assign the first entry on the line to the name of the run
         run_name = line_array(1)
-
         EXIT
 
      ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
@@ -100,6 +104,10 @@ SUBROUTINE Get_Run_Name
 
   ENDDO
 
+  IF (input_is_logfile) THEN
+     run_name = TRIM(run_name) // "_logfile_"
+  END IF
+ 
 END SUBROUTINE Get_Run_Name
 
 !******************************************************************************
@@ -196,35 +204,6 @@ SUBROUTINE Get_Nspecies
      STOP
   END IF
 
-  ALLOCATE(nbr_bond_params(nspecies),Stat = AllocateStatus)
-  IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could not be allocated for nbr_bond_params array'
-     write(*,*)'stopping'
-     STOP
-  END IF
-
-  ALLOCATE(nbr_angle_params(nspecies),Stat = AllocateStatus)
-
-  IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could not be allocated for molfile_name array'
-     write(*,*)'stopping'
-     STOP
-  END IF
-
-  ALLOCATE(nbr_dihedral_params(nspecies),Stat = AllocateStatus)
-  IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could not be allocated for nbr_dihedral_params array'
-     write(*,*)'stopping'
-     STOP
-  END IF
-
-  ALLOCATE(nbr_improper_params(nspecies),Stat = AllocateStatus)
-  IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could not be allocated for nbr_improper_params array'
-     write(*,*)'stopping'
-     STOP
-  END IF
-
   ALLOCATE(nbr_vdw_params(nspecies),Stat = AllocateStatus)
   IF (AllocateStatus /= 0) THEN
      write(*,*)'memory could not be allocated for nbr_vdw_params array'
@@ -255,10 +234,6 @@ SUBROUTINE Get_Nspecies
   nangles_fixed = 0
   ndihedrals = 0
   nimpropers = 0
-  nbr_bond_params = 0
-  nbr_angle_params = 0
-  nbr_dihedral_params = 0
-  nbr_improper_params = 0
   nbr_vdw_params = 0
   nfragments = 0
   fragment_bonds = 0
@@ -949,7 +924,7 @@ END SUBROUTINE Get_Mixing_Rules
 !******************************************************************************
 SUBROUTINE Get_Molecule_Info
 !******************************************************************************
-! This routine opens the input file and reads connectivity information for
+! This subroutine opens the input file and reads connectivity information for
 ! each molecule. It determines the number of atoms, bonds, angles, dihedrals
 ! and impropers in each molecule. It the allocates associated arrays amd populates 
 ! most of the atom_class, bond_class, angle_class
@@ -1302,9 +1277,6 @@ SUBROUTINE Get_Molecule_Info
      err_msg(1) = 'memorgy could not be alloaced for reservoir files'
   END IF
 
-  ALLOCATE(zig_calc(nspecies))
-  zig_calc(:) = .FALSE.
-
   ! Loop over all species and load information from mfc files into list arrays
   species_list(:)%fragment = .FALSE.
   
@@ -1531,7 +1503,7 @@ SUBROUTINE Get_Atom_Info(is)
 
            ELSEIF (nonbond_list(ia,is)%vdw_type == 'NONE') THEN
               ! Set number of vdw parameters
-              nbr_vdw_params = 0
+              nbr_vdw_params(is) = 0
 
 
               IF (verbose_log) THEN
@@ -1670,29 +1642,49 @@ SUBROUTINE Get_Bond_Info(is)
            bond_list(ib,is)%bond_potential_type = line_array(4)
 
            IF (verbose_log) THEN
-                   WRITE(logunit,'(A,T25,I3,1x,I3)') 'Species and bond number', is,ib
-                   WRITE(logunit,'(A,T25,I3)') ' atom1:',bond_list(ib,is)%atom1
-                   WRITE(logunit,'(A,T25,I3)') ' atom2:',bond_list(ib,is)%atom2
-                   WRITE(logunit,'(A,T25,A)') ' bond type:',bond_list(ib,is)%bond_potential_type
+              WRITE(logunit,'(A,T25,I3,1x,I3)') 'Species and bond number', is,ib
+              WRITE(logunit,'(A,T25,I3)') ' atom1:',bond_list(ib,is)%atom1
+              WRITE(logunit,'(A,T25,I3)') ' atom2:',bond_list(ib,is)%atom2
+              WRITE(logunit,'(A,T25,A)') ' bond type:',bond_list(ib,is)%bond_potential_type
            END IF
 
            ! Load bond potential parameters, specific for each individual type
            IF (bond_list(ib,is)%bond_potential_type == 'fixed') THEN
               bond_list(ib,is)%int_bond_type = int_none    
-              IF (verbose_log) THEN
-                      WRITE(logunit,'(A,I6,1x,I6, A, I4)') & 
-                   'Bond fixed between atoms: ',bond_list(ib,is)%atom1, bond_list(ib,is)%atom2, &
-                   ' in species', is
-              END IF
-              ! Fixed bond length in A
               
               bond_list(ib,is)%bond_param(1) = String_To_Double(line_array(5))
+              IF (nbr_entries == 6) THEN
+                 ! bond length tolerance given in MCF
+                 bond_list(ib,is)%bond_param(2) = String_To_Double(line_array(6))
+              ELSE
+                 ! use default tolerance
+                 bond_list(ib,is)%bond_param(2) = 0.01
+              END IF
         
               IF (verbose_log) THEN
-                      WRITE(logunit,'(A,T25,F10.4)') 'Fixed bond length, in A:',bond_list(ib,is)%bond_param(1)
+                 WRITE(logunit,'(A,T25,F10.4)') 'Fixed bond length, in Ang:',bond_list(ib,is)%bond_param(1)
+                 WRITE(logunit,'(A,T25,F10.4)') 'Fixed bond length tolerance, in Ang:',bond_list(ib,is)%bond_param(2)
               END IF
-              ! Set number of bond parameters
-              nbr_bond_params = 1
+
+           ELSEIF (bond_list(ib,is)%bond_potential_type == 'harmonic') THEN
+              IF (nfragments(is) /= 1) THEN
+                 err_msg = ''
+                 err_msg(1) = 'Harmonic bonds are only supported for single-fragment species'
+                 err_msg(2) = 'Species ' // TRIM(Int_To_String(is)) // ' has ' &
+                            // TRIM(Int_To_String(nfragments(is))) // ' fragments'
+                 CALL Clean_Abort(err_msg,'Get_Bond_Info')
+              END IF
+
+              bond_list(ib,is)%int_bond_type = int_harmonic
+              
+              bond_list(ib,is)%bond_param(1) = String_To_Double(line_array(5))
+              bond_list(ib,is)%bond_param(2) = String_To_Double(line_array(6))
+              IF (verbose_log) THEN
+                 WRITE(logunit,'(A,T25,F10.4)') 'K_bond in K/Ang^2:',bond_list(ib,is)%bond_param(1)
+                 WRITE(logunit,'(A,T25,F10.4)') 'Equilibrium bond length, in Ang:',bond_list(ib,is)%bond_param(2)
+              END IF
+
+              bond_list(ib,is)%bond_param(1) = kboltz * bond_list(ib,is)%bond_param(1)
 
            ELSE
               err_msg = ''
@@ -1808,7 +1800,6 @@ SUBROUTINE Get_Angle_Info(is)
            ! Load angle potential parameters, specific for each individual type
            IF (angle_list(iang,is)%angle_potential_type == 'harmonic') THEN
 
-              IF(species_list(is)%int_species_type == int_sorbate) zig_calc(is) = .TRUE.
               angle_list(iang,is)%int_angle_type = int_harmonic
               ! K_bond/kB in K/A^2 read in
               angle_list(iang,is)%angle_param(1) = String_To_Double(line_array(6))
@@ -1829,8 +1820,6 @@ SUBROUTINE Get_Angle_Info(is)
               ! Convert the nominal bond angle to radians
               angle_list(iang,is)%angle_param(2) = (PI/180.0_DP)*angle_list(iang,is)%angle_param(2)
 
-              ! Set number of angle parameters
-              nbr_angle_params = 2
               species_list(is)%linear = .FALSE.
 
            ELSEIF (angle_list(iang,is)%angle_potential_type == 'fixed') THEN
@@ -1839,16 +1828,20 @@ SUBROUTINE Get_Angle_Info(is)
               angle_list(iang,is)%angle_param(1) = String_To_Double(line_array(6))
 
               nangles_fixed(is) = nangles_fixed(is) + 1
+
+              IF (nbr_entries == 7) THEN
+                 ! angle length tolerance given in MCF
+                 angle_list(iang,is)%angle_param(2) = String_To_Double(line_array(7))
+              ELSE
+                 ! use default tolerance
+                 angle_list(iang,is)%angle_param(2) = 1.0
+              END IF
+        
               IF (verbose_log) THEN
-                      WRITE(logunit,'(A,I6,1x,I6, 1x,I6,A, I4)') & 
-                   'Angle fixed between atoms: ',angle_list(iang,is)%atom1, angle_list(iang,is)%atom2, &
-                   angle_list(iang,is)%atom3,'in species', is
-                      WRITE(logunit,'(A,T25,F10.4)') ' fixed bond angle in degrees:', &
-                   angle_list(iang,is)%angle_param(1)
+                 WRITE(logunit,'(A,T25,F10.4)') 'Fixed angle in degrees:', angle_list(iang,is)%angle_param(1)
+                 WRITE(logunit,'(A,T25,F10.4)') 'Fixed angle tolerance in degrees:', angle_list(iang,is)%angle_param(2)
               END IF
 
-              ! Set number of angle parameter = 1 for the fixed DOF
-              nbr_angle_params = 1
               IF(angle_list(iang,is)%angle_param(1) .NE. 180.0_DP) species_list(is)%linear = .FALSE.
 
            ELSE
@@ -1973,19 +1966,18 @@ SUBROUTINE Get_Dihedral_Info(is)
            dihedral_list(idihed,is)%dihedral_potential_type = line_array(6)
 
            IF (verbose_log) THEN
-                   WRITE(logunit,'(A,T25,I3,1x,I3)') 'Species and dihedral number', is,idihed
-                   WRITE(logunit,'(A,T25,I3)') ' atom1:',dihedral_list(idihed,is)%atom1
-                   WRITE(logunit,'(A,T25,I3)') ' atom2:',dihedral_list(idihed,is)%atom2
-                   WRITE(logunit,'(A,T25,I3)') ' atom3:',dihedral_list(idihed,is)%atom3
-                   WRITE(logunit,'(A,T25,I3)') ' atom4:',dihedral_list(idihed,is)%atom4
-                   WRITE(logunit,'(A,T25,A)') ' dihedral type:', &
+              WRITE(logunit,'(A,T25,I3,1x,I3)') 'Species and dihedral number', is,idihed
+              WRITE(logunit,'(A,T25,I3)') ' atom1:',dihedral_list(idihed,is)%atom1
+              WRITE(logunit,'(A,T25,I3)') ' atom2:',dihedral_list(idihed,is)%atom2
+              WRITE(logunit,'(A,T25,I3)') ' atom3:',dihedral_list(idihed,is)%atom3
+              WRITE(logunit,'(A,T25,I3)') ' atom4:',dihedral_list(idihed,is)%atom4
+              WRITE(logunit,'(A,T25,A)') ' dihedral type:', &
                 dihedral_list(idihed,is)%dihedral_potential_type
            END IF
 
            ! Load dihedral potential parameters, specific for each individual type
            IF (dihedral_list(idihed,is)%dihedral_potential_type == 'OPLS') THEN
 
-              IF(species_list(is)%int_species_type == int_sorbate) zig_calc = .TRUE.
               dihedral_list(idihed,is)%int_dipot_type = int_opls
               !a0, a1, a2, a3 in kJ/mol
               dihedral_list(idihed,is)%dihedral_param(1) = String_To_Double(line_array(7))
@@ -1994,13 +1986,13 @@ SUBROUTINE Get_Dihedral_Info(is)
               dihedral_list(idihed,is)%dihedral_param(4) = String_To_Double(line_array(10))
 
               IF (verbose_log) THEN
-                      WRITE(logunit,'(A,T25,F10.4)') ' a0, kJ/mol:', &
+                 WRITE(logunit,'(A,T25,F10.4)') ' a0, kJ/mol:', &
                    dihedral_list(idihed,is)%dihedral_param(1)
-                      WRITE(logunit,'(A,T25,F10.4)') ' a1, kJ/mol:', &
+                 WRITE(logunit,'(A,T25,F10.4)') ' a1, kJ/mol:', &
                    dihedral_list(idihed,is)%dihedral_param(2)
-                      WRITE(logunit,'(A,T25,F10.4)') ' a2, kJ/mol:', &
+                 WRITE(logunit,'(A,T25,F10.4)') ' a2, kJ/mol:', &
                    dihedral_list(idihed,is)%dihedral_param(3)
-                      WRITE(logunit,'(A,T25,F10.4)') ' a3, kJ/mol:', &
+                 WRITE(logunit,'(A,T25,F10.4)') ' a3, kJ/mol:', &
                    dihedral_list(idihed,is)%dihedral_param(4)
               END IF
 
@@ -2010,12 +2002,8 @@ SUBROUTINE Get_Dihedral_Info(is)
               dihedral_list(idihed,is)%dihedral_param(3) = kjmol_to_atomic* dihedral_list(idihed,is)%dihedral_param(3)
               dihedral_list(idihed,is)%dihedral_param(4) = kjmol_to_atomic* dihedral_list(idihed,is)%dihedral_param(4)
 
-              ! Set number of dihedral parameters
-              nbr_dihedral_params = 4
-
               
            ELSE IF (dihedral_list(idihed,is)%dihedral_potential_type == 'CHARMM') THEN
-              IF(species_list(is)%int_species_type == int_sorbate) zig_calc = .TRUE.
               dihedral_list(idihed,is)%int_dipot_type = int_charmm
               dihedral_list(idihed,is)%dihedral_param(1) = String_To_Double(line_array(7))
               dihedral_list(idihed,is)%dihedral_param(2) = String_To_Double(line_array(8))
@@ -2023,12 +2011,12 @@ SUBROUTINE Get_Dihedral_Info(is)
               !
 
               IF (verbose_log) THEN
-                      WRITE(logunit,'(A,T25,F10.4)') ' a0, kJ/mol:', &
-                           dihedral_list(idihed,is)%dihedral_param(1)
-                      WRITE(logunit,'(A,T25,F10.4)') ' n ', &
-                           dihedral_list(idihed,is)%dihedral_param(2)
-                      WRITE(logunit,'(A,T25,F10.4)') 'delta', &
-                           dihedral_list(idihed,is)%dihedral_param(3)
+                 WRITE(logunit,'(A,T25,F10.4)') ' a0, kJ/mol:', &
+                      dihedral_list(idihed,is)%dihedral_param(1)
+                 WRITE(logunit,'(A,T25,F10.4)') ' n ', &
+                      dihedral_list(idihed,is)%dihedral_param(2)
+                 WRITE(logunit,'(A,T25,F10.4)') 'delta', &
+                      dihedral_list(idihed,is)%dihedral_param(3)
               END IF
               
               
@@ -2037,12 +2025,9 @@ SUBROUTINE Get_Dihedral_Info(is)
               dihedral_list(idihed,is)%dihedral_param(1) = kjmol_to_atomic* dihedral_list(idihed,is)%dihedral_param(1)
               dihedral_list(idihed,is)%dihedral_param(3) = (PI/180.0_DP)* dihedral_list(idihed,is)%dihedral_param(3)
               
-              nbr_dihedral_params = 3
-			  
 !AV: AMBER style for dihedral multiplicity, cf. Zhong et al. JpcB, 115, 10027, 2011.
 !Note that I assumed the maximum # of dihedral multiplicity is 3 and tried to avoide a 2-dimensional arrays.
            ELSE IF (dihedral_list(idihed,is)%dihedral_potential_type == 'AMBER') THEN
-              IF(species_list(is)%int_species_type == int_sorbate) zig_calc = .TRUE.
               dihedral_list(idihed,is)%int_dipot_type = int_amber
               dihedral_list(idihed,is)%dihedral_param(1) = String_To_Double(line_array(7))
               dihedral_list(idihed,is)%dihedral_param(2) = String_To_Double(line_array(8))
@@ -2053,48 +2038,44 @@ SUBROUTINE Get_Dihedral_Info(is)
               dihedral_list(idihed,is)%dihedral_param(7) = String_To_Double(line_array(13))
               dihedral_list(idihed,is)%dihedral_param(8) = String_To_Double(line_array(14))
               dihedral_list(idihed,is)%dihedral_param(9) = String_To_Double(line_array(15))
-			  !AV: commented out b/c 3 terms is usually enough.
-			  !dihedral_list(idihed,is)%dihedral_param(10) = String_To_Double(line_array(16))
-			  !dihedral_list(idihed,is)%dihedral_param(11) = String_To_Double(line_array(17))
-			  !dihedral_list(idihed,is)%dihedral_param(12) = String_To_Double(line_array(18))
-			  
+              !AV: commented out b/c 3 terms is usually enough.
+              !dihedral_list(idihed,is)%dihedral_param(10) = String_To_Double(line_array(16))
+              !dihedral_list(idihed,is)%dihedral_param(11) = String_To_Double(line_array(17))
+              !dihedral_list(idihed,is)%dihedral_param(12) = String_To_Double(line_array(18))
+           
               !
 
               IF (verbose_log) THEN
-                      WRITE(logunit,'(A,T25,F10.4)') ' a01, kJ/mol:', &
+                 WRITE(logunit,'(A,T25,F10.4)') ' a01, kJ/mol:', &
                    dihedral_list(idihed,is)%dihedral_param(1)
-                      WRITE(logunit,'(A,T25,F10.4)') ' n1 ', &
+                 WRITE(logunit,'(A,T25,F10.4)') ' n1 ', &
                    dihedral_list(idihed,is)%dihedral_param(2)
-                      WRITE(logunit,'(A,T25,F10.4)') 'delta1', &
+                 WRITE(logunit,'(A,T25,F10.4)') 'delta1', &
                    dihedral_list(idihed,is)%dihedral_param(3)
-                      WRITE(logunit,'(A,T25,F10.4)') ' a02, kJ/mol:', &
+                 WRITE(logunit,'(A,T25,F10.4)') ' a02, kJ/mol:', &
                    dihedral_list(idihed,is)%dihedral_param(4)
-                      WRITE(logunit,'(A,T25,F10.4)') ' n2 ', &
+                 WRITE(logunit,'(A,T25,F10.4)') ' n2 ', &
                    dihedral_list(idihed,is)%dihedral_param(5)
-                      WRITE(logunit,'(A,T25,F10.4)') 'delta2', &
+                 WRITE(logunit,'(A,T25,F10.4)') 'delta2', &
                    dihedral_list(idihed,is)%dihedral_param(6)
-                      WRITE(logunit,'(A,T25,F10.4)') ' a03, kJ/mol:', &
+                 WRITE(logunit,'(A,T25,F10.4)') ' a03, kJ/mol:', &
                    dihedral_list(idihed,is)%dihedral_param(7)
-                      WRITE(logunit,'(A,T25,F10.4)') ' n3 ', &
+                 WRITE(logunit,'(A,T25,F10.4)') ' n3 ', &
                    dihedral_list(idihed,is)%dihedral_param(8)
-                      WRITE(logunit,'(A,T25,F10.4)') 'delta3', &
+                 WRITE(logunit,'(A,T25,F10.4)') 'delta3', &
                    dihedral_list(idihed,is)%dihedral_param(9)
               END IF
               
               ! Convert to molecular units amu A^2/ps^2 and the delta
               ! parameter to radians
               dihedral_list(idihed,is)%dihedral_param(1) = kjmol_to_atomic* dihedral_list(idihed,is)%dihedral_param(1)
-			  dihedral_list(idihed,is)%dihedral_param(4) = kjmol_to_atomic* dihedral_list(idihed,is)%dihedral_param(4)
-			  dihedral_list(idihed,is)%dihedral_param(7) = kjmol_to_atomic* dihedral_list(idihed,is)%dihedral_param(7)
+              dihedral_list(idihed,is)%dihedral_param(4) = kjmol_to_atomic* dihedral_list(idihed,is)%dihedral_param(4)
+              dihedral_list(idihed,is)%dihedral_param(7) = kjmol_to_atomic* dihedral_list(idihed,is)%dihedral_param(7)
               dihedral_list(idihed,is)%dihedral_param(3) = (PI/180.0_DP)* dihedral_list(idihed,is)%dihedral_param(3)
-			  dihedral_list(idihed,is)%dihedral_param(6) = (PI/180.0_DP)* dihedral_list(idihed,is)%dihedral_param(6)
-			  dihedral_list(idihed,is)%dihedral_param(9) = (PI/180.0_DP)* dihedral_list(idihed,is)%dihedral_param(9)
+              dihedral_list(idihed,is)%dihedral_param(6) = (PI/180.0_DP)* dihedral_list(idihed,is)%dihedral_param(6)
+              dihedral_list(idihed,is)%dihedral_param(9) = (PI/180.0_DP)* dihedral_list(idihed,is)%dihedral_param(9)
               
-              nbr_dihedral_params = 9
-			  
-
            ELSE IF (dihedral_list(idihed,is)%dihedral_potential_type == 'harmonic') THEN
-              IF(species_list(is)%int_species_type == int_sorbate) zig_calc = .TRUE.
               dihedral_list(idihed,is)%int_dipot_type = int_harmonic
               ! d0 read in in units ofin K/radians^2 read in
               dihedral_list(idihed,is)%dihedral_param(1) = String_To_Double(line_array(7))
@@ -2103,9 +2084,9 @@ SUBROUTINE Get_Dihedral_Info(is)
 
 
               IF (verbose_log) THEN
-                      WRITE(logunit,'(A,T25,F10.4)') ' Do_angle in K/rad^2:', &
+                 WRITE(logunit,'(A,T25,F10.4)') ' Do_angle in K/rad^2:', &
                    dihedral_list(idihed,is)%dihedral_param(1)
-                      WRITE(logunit,'(A,T25,F10.4)') ' theta0 in degrees:', &
+                 WRITE(logunit,'(A,T25,F10.4)') ' theta0 in degrees:', &
                    dihedral_list(idihed,is)%dihedral_param(2)
               END IF
               ! Convert force constant to atomic units amu A^2/(rad^2 ps^2) 
@@ -2115,22 +2096,9 @@ SUBROUTINE Get_Dihedral_Info(is)
               ! Convert the nominal bond angle to radians
               dihedral_list(idihed,is)%dihedral_param(2) = (PI/180.0_DP)*dihedral_list(idihed,is)%dihedral_param(2)
 
-              ! Set number of angle parameters
-              nbr_dihedral_params = 2
-
 
            ELSEIF (dihedral_list(idihed,is)%dihedral_potential_type == 'none') THEN
               dihedral_list(idihed,is)%int_dipot_type = int_none
-
-              IF (verbose_log) THEN
-                      WRITE(logunit,'(A,4(I6,1x),A,I4)') & 
-                   'No dihedral potential between atoms: ',&
-                   dihedral_list(idihed,is)%atom1, dihedral_list(idihed,is)%atom2, &
-                   dihedral_list(idihed,is)%atom3, dihedral_list(idihed,is)%atom4, &
-                   'in species', is
-              END IF
-              ! Set number of dihedral parameters
-              nbr_dihedral_params = 0
 
            ELSE
               err_msg = ''
@@ -2255,8 +2223,6 @@ INTEGER, INTENT(IN) :: is
               ! Convert phi0 to radians
               improper_list(iimprop,is)%improper_param(2) = (PI/180.0_DP) * improper_list(iimprop,is)%improper_param(2)
 
-              ! Set number of improper parameters
-              nbr_improper_params = 2
            ELSEIF (improper_list(iimprop,is)%improper_potential_type == 'cvff') THEN
               improper_list(iimprop,is)%int_improp_type = int_cvff
               ! Function: V_imp = K_imp * (1 + d * cos [n * phi])
@@ -2289,8 +2255,6 @@ INTEGER, INTENT(IN) :: is
                    improper_list(iimprop,is)%atom3, improper_list(iimprop,is)%atom4, &
                    'in species', is
               END IF
-              ! Set number of improper parameters
-              nbr_improper_params = 0
 
            ELSE
               err_msg = ''
@@ -4874,25 +4838,49 @@ SUBROUTINE Get_Run_Type
         line_nbr = line_nbr + 1
         CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
         
-        IF (line_array(1) == 'equilibration' .OR. line_array(1) == 'Equilibration') THEN
+        ! Maybe move this to a select case construct?!
+        ! Gets rid of all the comparisons within the if clause
+        SELECT CASE(line_array(1))
+        CASE('equilibration', 'Equilibration')
            run_type = line_array(1)
            int_run_type = run_equil
-
-        ELSE IF (line_array(1) == 'production' .OR. line_array(1) == 'Production') THEN
+        CASE('production', 'Production')
            run_type = line_array(1)
            int_run_type = run_prod
-         
-        ELSE IF (line_array(1) == 'test' .OR. line_array(1) == 'Test') THEN
+        CASE('equilibration_until', 'Equilibration_Until', 'Equilibration_until')
+           run_type = line_array(1)
+           int_run_type = run_equil
+           change_to_production = .true.
+        CASE('test', 'Test')
            run_type = line_array(1)
            int_run_type = run_test
-           
-        ELSE
+        CASE DEFAULT
            err_msg = ''
            err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
                         TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
-           err_msg(2) = 'Supported keywords are: equilibration, production'
+           err_msg(2) = 'Supported keywords are: equilibration, production, equilibration_until'
            CALL Clean_Abort(err_msg,'Get_Run_Type')
-        END IF
+        END SELECT
+
+        !IF (line_array(1) == 'equilibration' .OR. line_array(1) == 'Equilibration') THEN
+        !   run_type = line_array(1)
+        !   int_run_type = run_equil
+
+        !ELSE IF (line_array(1) == 'production' .OR. line_array(1) == 'Production') THEN
+        !   run_type = line_array(1)
+        !   int_run_type = run_prod
+        ! 
+        !ELSE IF (line_array(1) == 'test' .OR. line_array(1) == 'Test') THEN
+        !   run_type = line_array(1)
+        !   int_run_type = run_test
+        !   
+        !ELSE
+        !   err_msg = ''
+        !   err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
+        !                TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+        !   err_msg(2) = 'Supported keywords are: equilibration, production'
+        !   CALL Clean_Abort(err_msg,'Get_Run_Type')
+        !END IF
 
         nupdate = String_To_Int(line_array(2))
         
@@ -4916,6 +4904,12 @@ SUBROUTINE Get_Run_Type
            
         END IF
         
+        ! if runtype is equilibration until a specified cycle, read cycle from next line
+        IF (change_to_production) THEN
+          line_nbr = line_nbr + 1
+          CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
+          nsteps_until_prod = String_To_Int(line_array(1))
+        END IF
         
         EXIT
 
@@ -5184,7 +5178,8 @@ SUBROUTINE Get_Simulation_Length_Info
   n_mcsteps = 0
   n_equilsteps = 0
   l_run = .FALSE.
-  block_average = .FALSE.
+  block_avg = .FALSE.
+  echeck = .FALSE.
 
   DO
      line_nbr = line_nbr + 1
@@ -5319,8 +5314,14 @@ SUBROUTINE Get_Simulation_Length_Info
 
            ELSE IF (line_array(1) == 'block_avg_freq') THEN
 
-              block_average = .TRUE.
+              block_avg = .TRUE.
               block_avg_freq = String_To_Int(line_array(2))
+
+           ELSE IF (line_array(1) == 'energy_freq') THEN
+
+              echeck = .TRUE.
+              echeck_freq = String_To_Int(line_array(2))
+              WRITE(logunit,'(A,I10,X,A)') 'The energy will be recomputed from scratch every ', echeck_freq, sim_length_units
 
            ELSE
 
@@ -5328,6 +5329,7 @@ SUBROUTINE Get_Simulation_Length_Info
               err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
                            TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
               err_msg(2) = 'Supported keywords are: prop_freq, coord_freq, run, steps_per_sweep, block_avg_freq'
+              err_msg(3) = '                        energy_freq'
               CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
 
            END IF
@@ -5363,8 +5365,8 @@ SUBROUTINE Get_Simulation_Length_Info
 
   END IF
 
-  ! Check if block_average or instantaneous values
-  IF (block_average) THEN
+  ! Check if block_avg or instantaneous values
+  IF (block_avg) THEN
      ! check that block_avg_freq is greater than nthermo_freq
      IF (block_avg_freq < nthermo_freq .OR. MOD(block_avg_freq,nthermo_freq) /= 0) THEN
         err_msg = ''
@@ -5384,7 +5386,8 @@ SUBROUTINE Get_Simulation_Length_Info
      n_mcsteps = n_mcsteps * steps_per_sweep
      nthermo_freq = nthermo_freq * steps_per_sweep
      ncoord_freq = ncoord_freq * steps_per_sweep
-     IF (block_average) block_avg_freq = block_avg_freq * steps_per_sweep
+     IF (block_avg) block_avg_freq = block_avg_freq * steps_per_sweep
+     IF (echeck) echeck_freq = echeck_freq * steps_per_sweep
   END IF
   
   WRITE(logunit,'(A80)') '********************************************************************************'
@@ -5478,6 +5481,20 @@ USE Global_Variables, ONLY: cpcollect
            ELSE IF (line_array(1) == 'pressure' .OR. line_array(1) == 'Pressure') THEN
               nbr_properties = nbr_properties + 1
               need_pressure = .TRUE.
+
+
+           ELSE IF (line_array(1) == 'pressure_xx' .OR. line_array(1) == 'Pressure_XX') THEN
+              nbr_properties = nbr_properties + 1
+              need_pressure = .TRUE.
+
+           ELSE IF (line_array(1) == 'pressure_yy' .OR. line_array(1) == 'Pressure_YY') THEN
+              nbr_properties = nbr_properties + 1
+              need_pressure = .TRUE.
+
+           ELSE IF (line_array(1) == 'pressure_zz' .OR. line_array(1) == 'Pressure_ZZ') THEN
+              nbr_properties = nbr_properties + 1
+              need_pressure = .TRUE.
+
            ELSE IF (line_array(1) == 'enthalpy' .OR. line_array(1) == 'Enthalpy') THEN
               nbr_properties = nbr_properties + 1
               IF (int_sim_type /= sim_npt .AND. int_sim_type /= sim_gemc_npt) need_pressure = .TRUE.
@@ -5599,21 +5616,60 @@ USE Global_Variables, ONLY: cpcollect
               ELSE IF (line_array(1) == 'energy_total' .OR. line_array(1) == 'Energy_Total') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Total'
-              ELSE IF (line_array(1) == 'energy_lj' .OR. line_array(1) == 'Energy_LJ') THEN
+              ELSE IF (line_array(1) == 'energy_inter') THEN
                  nbr_properties = nbr_properties + 1
-                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_LJ'
-              ELSE IF (line_array(1) == 'energy_elec' .OR. line_array(1) == 'Energy_Elec') THEN
-                 nbr_properties = nbr_properties + 1
-                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Elec'
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Inter'
               ELSE IF (line_array(1) == 'energy_intra' .OR. line_array(1) == 'Energy_Intra') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Intra'
+              ELSE IF (line_array(1) == 'energy_bond') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Bond'
+              ELSE IF (line_array(1) == 'energy_angle') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Angle'
+              ELSE IF (line_array(1) == 'energy_dihedral') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Dihedral'
+              ELSE IF (line_array(1) == 'energy_improper') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Improper'
+              ELSE IF (line_array(1) == 'energy_intravdw') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_IntraVDW'
+              ELSE IF (line_array(1) == 'energy_intraq') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_IntraQ'
+              ELSE IF (line_array(1) == 'energy_intervdw') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_InterVDW'
+              ELSE IF (line_array(1) == 'energy_interq') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_InterQ'
+              ELSE IF (line_array(1) == 'energy_lrc') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_LRC'
+              ELSE IF (line_array(1) == 'energy_recip') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Recip'
+              ELSE IF (line_array(1) == 'energy_self') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Self'
               ELSE IF (line_array(1) == 'enthalpy' .OR. line_array(1) == 'Enthalpy') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Enthalpy'
               ELSE IF (line_array(1) == 'pressure' .OR. line_array(1) == 'Pressure') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Pressure'
+              ELSE IF (line_array(1) == 'pressure_xx' .OR. line_array(1) == 'Pressure_XX') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Pressure_XX'
+              ELSE IF (line_array(1) == 'pressure_yy' .OR. line_array(1) == 'Pressure_YY') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Pressure_YY'
+              ELSE IF (line_array(1) == 'pressure_zz' .OR. line_array(1) == 'Pressure_ZZ') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Pressure_ZZ'
               ELSE IF (line_array(1) == 'volume' .OR. line_array(1) == 'Volume') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Volume'
@@ -5625,8 +5681,11 @@ USE Global_Variables, ONLY: cpcollect
                 err_msg(1) = 'Keyword "' // TRIM(line_array(1)) // '" on line ' // &
                              TRIM(Int_To_String(line_nbr)) // ' of input file'
                 err_msg(2) = 'is not a supported property'
-                err_msg(3) = 'Supported keywords are: energy_total, energy_lj, energy_elec, energy_intra,'
-                err_msg(4) = '                        enthalpy, pressure, volume, density, nmols, mass_density'
+                err_msg(3) = 'Supported keywords are: energy_total, energy_intra, energy_inter, energy_bond,'
+                err_msg(4) = '  energy_angle, energy_dihedral, energy_improper, energy_intravdw, energy_intraq'
+                err_msg(5) = '  energy_intervdw, energy_interq, energy_lrc, energy_recip, energy_self,'
+                err_msg(6) = '  enthalpy, pressure, pressure_xx, pressure_yy, pressure_zz, &
+				volume, density, nmols, mass_density'
                 CALL Clean_Abort(err_msg,'Get_Property_Info')
               END IF
               
@@ -5731,8 +5790,9 @@ SUBROUTINE Copy_Inputfile
 !
 !******************************************************************************
 
-  INTEGER :: ierr, line_nbr
+  INTEGER :: ierr, line_nbr, line_inputfile_start
   CHARACTER(120) :: line_string
+  LOGICAL :: input_startcopy
   
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Copy input file'
@@ -5743,27 +5803,63 @@ SUBROUTINE Copy_Inputfile
   ierr = 0
   line_nbr = 0
 
-  DO
-     line_nbr = line_nbr + 1
-     CALL Read_String(inputunit,line_string,ierr)
+  IF (input_is_logfile .EQV. .FALSE.) THEN
 
-     IF ( ierr /= 0 ) THEN
-        err_msg = ''
-        err_msg(1) = 'Error while reading inputfile'
-        CALL Clean_Abort(err_msg,'Copy_Inputfile')
-     END IF
+      DO
+         line_nbr = line_nbr + 1
+         CALL Read_String(inputunit,line_string,ierr)
+    
+         IF ( ierr /= 0 ) THEN
+            err_msg = ''
+            err_msg(1) = 'Error while reading inputfile'
+            CALL Clean_Abort(err_msg,'Copy_Inputfile')
+         END IF
+    
+         ! Read the first character of the line_string, if it is a comment then
+         ! skip the output
+    
+         IF (line_string(1:1) /= '!') THEN
+            WRITE(logunit,'(A80)') line_string
+         END IF
+         IF (line_string(1:3) == 'END' .OR. line_nbr > 10000 ) EXIT
+         
+    
+      END DO
 
-     ! Read the first character of the line_string, if it is a comment then
-     ! skip the output
+  ELSE
+      
+      line_inputfile_start = 0
+      DO
+         line_nbr = line_nbr + 1
+         CALL Read_String(inputunit,line_string,ierr)
+    
+         IF ( ierr /= 0 ) THEN
+            err_msg = ''
+            err_msg(1) = 'Error while reading inputfile'
+            CALL Clean_Abort(err_msg,'Copy_Inputfile')
+         END IF
+    
+         ! Read the first character of the line_string, if it is a comment then
+         ! skip the output
+    
+         IF (line_string(1:15) == 'Copy input file') THEN
+            line_inputfile_start = line_nbr+2
+         END IF
 
-     IF (line_string(1:1) /= '!') THEN
-        WRITE(logunit,*) TRIM(line_string)
-     END IF
-     IF (line_string(1:3) == 'END' .OR. line_nbr > 10000 ) EXIT
-     
+         IF (line_nbr .GT. line_inputfile_start .AND. &
+             line_inputfile_start /= 0) THEN            
+            IF (line_string(1:1) /= '!') THEN
+               WRITE(logunit,'(A80)') line_string
+            END IF
+         END IF
 
-  END DO
+         IF (line_string(1:3) == 'END' .OR. line_nbr > 10000 ) EXIT
+         
+    
+      END DO
 
+  END IF
+    
   WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Copy_Inputfile
@@ -5892,59 +5988,6 @@ SUBROUTINE Get_File_Info
   WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_File_Info
-
-!******************************************************************************
-SUBROUTINE Get_Energy_Check_Info
-!******************************************************************************
-
-  IMPLICIT NONE
-
-  INTEGER :: ierr, line_nbr, nbr_entries, is, ibox
-  CHARACTER(120) :: line_string, line_array(20)
-
-!******************************************************************************
-  WRITE(logunit,*)
-  WRITE(logunit,'(A)') 'Energy check info'
-  WRITE(logunit,'(A80)') '********************************************************************************'
-
-  REWIND(inputunit)
-
-  ierr = 0
-  line_nbr = 0
-  echeck_flag = .FALSE.
-
-  DO
-     line_nbr = line_nbr + 1
-     CALL Read_String(inputunit,line_string,ierr)
-
-     IF (ierr .NE. 0) THEN
-        err_msg = ''
-        err_msg(1) = "Error getting energy check information."
-        CALL Clean_Abort(err_msg,'Get_Energy_Check_Info')
-     END IF
-
-     IF (line_string(1:13) == '# Echeck_Info') THEN
-
-        echeck_flag = .TRUE.
-
-        line_nbr = line_nbr + 1
-        CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
-
-        iecheck = String_To_Int(line_array(1))
-
-        EXIT
-
-     ELSE IF (line_string(1:3) == 'END') THEN
-
-        EXIT
-
-     END IF
-
-  END DO
-
-  WRITE(logunit,'(A80)') '********************************************************************************'
-
-END SUBROUTINE Get_Energy_Check_Info 
 
 !******************************************************************************
 SUBROUTINE Get_Lattice_File_Info
