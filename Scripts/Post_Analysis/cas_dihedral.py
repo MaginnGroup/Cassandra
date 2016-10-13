@@ -233,11 +233,4 @@ for i in range(len(bins)):
 outfilew.close()
 
 
-##PLOT RESULTS INTO FIGURE
-##plt.figure(1)
-##plt.plot(distance,rdf)
-##plt.savefig(outfile[:-4]+'.png')
-
-
-
 

@@ -255,7 +255,6 @@ rdf = cas_palib.cas_rdf(xyzfile,
 
 distance = np.arange(0,binwidth*nbins,binwidth)
 
-#print len(distance), len(rdf)
 
 outfmt = '%12.4f%12.4f\n'
 soutfmt = '%12.4f'
@@ -268,11 +267,4 @@ for i in range(len(distance)):
 	outfilew.write(outfmt%(distance[i],rdf[i]))
 	print soutfmt%distance[i],soutfmt%rdf[i]
 outfilew.close()
-#PLOT RESULTS INTO FIGURE
-#plt.figure(1)
-#plt.plot(distance,rdf)
-#plt.savefig(outfile[:-4]+'.png')
-
-
-
 

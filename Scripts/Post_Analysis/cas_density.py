@@ -219,8 +219,4 @@ elif atom_flag ==True:
 print np.average(density)
 
 
-#PLOT RESULTS INTO FIGURE
-#plt.figure(1)
-#plt.plot(Lzw,density)
-#plt.savefig(outfile[:-4]+'.png')
 

@@ -210,10 +210,8 @@ angle = cas_palib.cas_angle(xyzfile,
 						natoms, nmolecules,
 						angle)
 
-#
 bins = np.arange(0,binwidth*(nslices+1),binwidth)
-#
-#
+
 outfmt = '%12.4f%12.4f\n'
 soutfmt = '%12.4f'
 if (outfile == 'angle.xvg'):
