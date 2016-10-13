@@ -565,6 +565,9 @@ MODULE Type_Definitions
     ! Computed pressure, kNT/V + virial
     REAL(DP) :: computed
 
+	! Ideal Pressure
+	REAL(DP) :: ideal
+
     ! last calculation
     INTEGER :: last_calc
 
