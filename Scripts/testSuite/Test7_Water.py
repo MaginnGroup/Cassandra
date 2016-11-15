@@ -36,7 +36,7 @@ atomParms = ((('O','O',15.999,-0.84760,'LJ',78.19743111,3.16555789),
               ('H','H',1.008,0.42380,'LJ',0.,0.)),) # index = [species][atom][parm]
 bondParms = (((1,2,'fixed',1.),
               (1,3,'fixed',1.)),) # index = [species][bond][parm]
-angleParms = (((1,2,3,'fixed',109.47),),) # index = [species][angle][parm]
+angleParms = (((2,1,3,'fixed',109.47),),) # index = [species][angle][parm]
 prpList = ("energy_intervdw", "energy_lrc", "energy_interq", "energy_recip", 
            "energy_self", "energy_total") # index = [property]
 vdwStyle = 'lj cut_tail 10.'
