@@ -1,0 +1,1096 @@
+
+
+gemc_cyclohexane.inp cyclohexane.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0mcyclohexane.mcf
+[1m    Species 1 has 1 fragments[0m
+[1mMolecules with rings found. These are:[0m
+[1mSpecies 1 has 1 rings.[0m
+
+
+[1mCreating input MCF generation file for species 1 [0m
+[1mRunning Cassandra to generate MCF files[0m
+ Finished generating fragments
+ Exiting
+ 
+ Begin Cassandra simulation
+ 
+ Number of ring trials                    10000
+ Number of successful ring trials          4567
+ Number of exoring trials                     0
+ Number of successful exoring trials          0
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =        96954.676750932573
+  Energy from scratch =            96954.676750932471
+ 
+ Cassandra simulation complete
+[1mGenerating RING FRAGMENT library species 1 fragment 1[0m
+[1mRemoving temporary input file[0m
+[1mFinished[0m
+
+
+gemc_diethylether.inp diethylether.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0mdiethylether.mcf
+[1m    Species 1 has 3 fragments[0m
+
+
+[1mCreating input MCF generation file for species 1 [0m
+[1mRunning Cassandra to generate MCF files[0m
+ Finished generating fragments
+ Exiting
+ 
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       600
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =           86.396984644196
+  Energy from scratch =               86.396984644196
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       630
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =          201.332169577554
+  Energy from scratch =              201.332169577555
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       659
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =            4.119658255375
+  Energy from scratch =                4.119658255374
+ 
+ Cassandra simulation complete
+[1mGenerating fragment library species 1 fragment 1[0m
+[1mGenerating fragment library species 1 fragment 2[0m
+[1mGenerating fragment library species 1 fragment 3[0m
+[1mRemoving temporary input file[0m
+[1mFinished[0m
+
+
+gemc_isobutane.inp isobutane.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0misobutane.mcf
+[1m    Species 1 has 1 fragments[0m
+
+
+[1mCreating input MCF generation file for species 1 [0m
+[1mRunning Cassandra to generate MCF files[0m
+ Finished generating fragments
+ Exiting
+ 
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       439
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =          322.912885584546
+  Energy from scratch =              322.912885584546
+ 
+ Cassandra simulation complete
+[1mGenerating fragment library species 1 fragment 1[0m
+[1mRemoving temporary input file[0m
+[1mFinished[0m
+
+
+gemc_methane.inp methane.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0mmethane.mcf
+[1m    Species 1 has 1 fragments[0m
+
+
+[1mMCF generation file not created for species 1[0m
+[1mFragment configuration will be taken from PDB file.[0m
+[1mRemoving temporary input file[0m
+[1mFinished[0m
+
+
+gemc_dimethylhexane.inp dimethylhexane.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0mdimethylhexane.mcf
+[1m    Species 1 has 4 fragments[0m
+
+
+[1mCreating input MCF generation file for species 1 [0m
+[1mRunning Cassandra to generate MCF files[0m
+ Finished generating fragments
+ Exiting
+ 
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       289
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =          500.245441289059
+  Energy from scratch =              500.245441289059
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       605
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =           29.528529648633
+  Energy from scratch =               29.528529648633
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       592
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =           23.931166124905
+  Energy from scratch =               23.931166124905
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       586
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =           60.980561527381
+  Energy from scratch =               60.980561527381
+ 
+ Cassandra simulation complete
+[1mGenerating fragment library species 1 fragment 1[0m
+[1mGenerating fragment library species 1 fragment 2[0m
+[1mGenerating fragment library species 1 fragment 3[0m
+[1mGenerating fragment library species 1 fragment 4[0m
+[1mRemoving temporary input file[0m
+[1mFinished[0m
+
+
+npt.inp dee.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0mdee.mcf
+[1m    Species 1 has 3 fragments[0m
+
+
+[1mCreating input MCF generation file for species 1 [0m
+[1mRunning Cassandra to generate MCF files[0m
+ Finished generating fragments
+ Exiting
+ 
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       600
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =           86.396984644196
+  Energy from scratch =               86.396984644196
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       630
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =          201.332169577554
+  Energy from scratch =              201.332169577555
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       659
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =            4.119658255375
+  Energy from scratch =                4.119658255374
+ 
+ Cassandra simulation complete
+[1mGenerating fragment library species 1 fragment 1[0m
+[1mGenerating fragment library species 1 fragment 2[0m
+[1mGenerating fragment library species 1 fragment 3[0m
+[1mRemoving temporary input file[0m
+[1mFinished[0m
+
+
+equil.inp pentane.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0mpentane.mcf
+[1m    Species 1 has 3 fragments[0m
+
+
+[1mCreating input MCF generation file for species 1 [0m
+[1mRunning Cassandra to generate MCF files[0m
+ Finished generating fragments
+ Exiting
+ 
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       594
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =           53.508634585177
+  Energy from scratch =               53.508634585176
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       592
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =           11.691612122494
+  Energy from scratch =               11.691612122494
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       531
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =          229.225434354126
+  Energy from scratch =              229.225434354126
+ 
+ Cassandra simulation complete
+[1mGenerating fragment library species 1 fragment 1[0m
+[1mGenerating fragment library species 1 fragment 2[0m
+[1mGenerating fragment library species 1 fragment 3[0m
+[1mRemoving temporary input file[0m
+[1mFinished[0m
+
+
+npt.inp spce.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0mspce.mcf
+[1m    Species 1 has 1 fragments[0m
+
+
+[1mCreating input MCF generation file for species 1 [0m
+[1mRunning Cassandra to generate MCF files[0m
+ Finished generating fragments
+ Exiting
+ 
+[1mRemoving temporary input file[0m
+[1mFinished[0m
+
+
+nvt.inp dmh.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0mdmh.mcf
+[1m    Species 1 has 4 fragments[0m
+
+
+[1mCreating input MCF generation file for species 1 [0m
+[1mRunning Cassandra to generate MCF files[0m
+ Finished generating fragments
+ Exiting
+ 
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       337
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =          638.643180952628
+  Energy from scratch =              638.643180952628
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       650
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =            1.270292036904
+  Energy from scratch =                1.270292036904
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       568
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =          279.365364527830
+  Energy from scratch =              279.365364527830
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       684
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =          845.327623029010
+  Energy from scratch =              845.327623029010
+ 
+ Cassandra simulation complete
+[1mGenerating fragment library species 1 fragment 1[0m
+[1mGenerating fragment library species 1 fragment 2[0m
+[1mGenerating fragment library species 1 fragment 3[0m
+[1mGenerating fragment library species 1 fragment 4[0m
+[1mRemoving temporary input file[0m
+[1mFinished[0m
+
+
+nvt.inp dme.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0mdme.mcf
+[1m    Species 1 has 1 fragments[0m
+
+
+[1mCreating input MCF generation file for species 1 [0m
+[1mRunning Cassandra to generate MCF files[0m
+ Finished generating fragments
+ Exiting
+ 
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       567
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =          100.499661978074
+  Energy from scratch =              100.499661978074
+ 
+ Cassandra simulation complete
+[1mGenerating fragment library species 1 fragment 1[0m
+[1mRemoving temporary input file[0m
+[1mFinished[0m
+
+
+nvt.inp spc.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0mspc.mcf
+[1m    Species 1 has 1 fragments[0m
+
+
+[1mCreating input MCF generation file for species 1 [0m
+[1mRunning Cassandra to generate MCF files[0m
+ Finished generating fragments
+ Exiting
+ 
+[1mRemoving temporary input file[0m
+[1mFinished[0m
+
+
+nvt.inp tip4p.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0mtip4p.mcf
+[1m    Species 1 has 1 fragments[0m
+
+
+[1mCreating input MCF generation file for species 1 [0m
+[1mRunning Cassandra to generate MCF files[0m
+ Finished generating fragments
+ Exiting
+ 
+[1mRemoving temporary input file[0m
+[1mFinished[0m
+
+
+nvt.inp tip5p.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0mtip5p.mcf
+[1m    Species 1 has 1 fragments[0m
+
+
+[1mCreating input MCF generation file for species 1 [0m
+[1mRunning Cassandra to generate MCF files[0m
+ Finished generating fragments
+ Exiting
+ 
+[1mRemoving temporary input file[0m
+[1mFinished[0m
+
+
+nvt_mie.inp dee.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0mdee.mcf
+[1m    Species 1 has 3 fragments[0m
+
+
+[1mCreating input MCF generation file for species 1 [0m
+[1mRunning Cassandra to generate MCF files[0m
+ Finished generating fragments
+ Exiting
+ 
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       600
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =           86.396984644196
+  Energy from scratch =               86.396984644196
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       630
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =          201.332169577554
+  Energy from scratch =              201.332169577555
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       659
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =            4.119658255375
+  Energy from scratch =                4.119658255374
+ 
+ Cassandra simulation complete
+[1mGenerating fragment library species 1 fragment 1[0m
+[1mGenerating fragment library species 1 fragment 2[0m
+[1mGenerating fragment library species 1 fragment 3[0m
+[1mRemoving temporary input file[0m
+[1mFinished[0m
+
+
+gemc_cyclohexane.inp cyclohexane.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0mcyclohexane.mcf
+[1m    Species 1 has 1 fragments[0m
+[1mMolecules with rings found. These are:[0m
+[1mSpecies 1 has 1 rings.[0m
+
+
+[1mCreating input MCF generation file for species 1 [0m
+[1mRunning Cassandra to generate MCF files[0m
+ Finished generating fragments
+ Exiting
+ 
+ Begin Cassandra simulation
+ 
+ Number of ring trials                    10000
+ Number of successful ring trials          4567
+ Number of exoring trials                     0
+ Number of successful exoring trials          0
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =        96954.676750932573
+  Energy from scratch =            96954.676750932471
+ 
+ Cassandra simulation complete
+[1mGenerating RING FRAGMENT library species 1 fragment 1[0m
+[1mRemoving temporary input file[0m
+[1mFinished[0m
+
+
+gemc_diethylether.inp diethylether.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0mdiethylether.mcf
+[1m    Species 1 has 3 fragments[0m
+
+
+[1mCreating input MCF generation file for species 1 [0m
+[1mRunning Cassandra to generate MCF files[0m
+ Finished generating fragments
+ Exiting
+ 
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       600
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =           86.396984644196
+  Energy from scratch =               86.396984644196
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       630
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =          201.332169577554
+  Energy from scratch =              201.332169577555
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       659
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =            4.119658255375
+  Energy from scratch =                4.119658255374
+ 
+ Cassandra simulation complete
+[1mGenerating fragment library species 1 fragment 1[0m
+[1mGenerating fragment library species 1 fragment 2[0m
+[1mGenerating fragment library species 1 fragment 3[0m
+[1mRemoving temporary input file[0m
+[1mFinished[0m
+
+
+gemc_isobutane.inp isobutane.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0misobutane.mcf
+[1m    Species 1 has 1 fragments[0m
+
+
+[1mCreating input MCF generation file for species 1 [0m
+[1mRunning Cassandra to generate MCF files[0m
+ Finished generating fragments
+ Exiting
+ 
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       439
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =          322.912885584546
+  Energy from scratch =              322.912885584546
+ 
+ Cassandra simulation complete
+[1mGenerating fragment library species 1 fragment 1[0m
+[1mRemoving temporary input file[0m
+[1mFinished[0m
+
+
+gemc_methane.inp methane.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0mmethane.mcf
+[1m    Species 1 has 1 fragments[0m
+
+
+[1mMCF generation file not created for species 1[0m
+[1mFragment configuration will be taken from PDB file.[0m
+[1mRemoving temporary input file[0m
+[1mFinished[0m
+
+
+gemc_dimethylhexane.inp dimethylhexane.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0mdimethylhexane.mcf
+[1m    Species 1 has 4 fragments[0m
+
+
+[1mCreating input MCF generation file for species 1 [0m
+[1mRunning Cassandra to generate MCF files[0m
+ Finished generating fragments
+ Exiting
+ 
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       289
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =          500.245441289059
+  Energy from scratch =              500.245441289059
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       605
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =           29.528529648633
+  Energy from scratch =               29.528529648633
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       592
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =           23.931166124905
+  Energy from scratch =               23.931166124905
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       586
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =           60.980561527381
+  Energy from scratch =               60.980561527381
+ 
+ Cassandra simulation complete
+[1mGenerating fragment library species 1 fragment 1[0m
+[1mGenerating fragment library species 1 fragment 2[0m
+[1mGenerating fragment library species 1 fragment 3[0m
+[1mGenerating fragment library species 1 fragment 4[0m
+[1mRemoving temporary input file[0m
+[1mFinished[0m
+
+
+npt.inp dee.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0mdee.mcf
+[1m    Species 1 has 3 fragments[0m
+
+
+[1mCreating input MCF generation file for species 1 [0m
+[1mRunning Cassandra to generate MCF files[0m
+ Finished generating fragments
+ Exiting
+ 
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       600
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =           86.396984644196
+  Energy from scratch =               86.396984644196
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       630
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =          201.332169577554
+  Energy from scratch =              201.332169577555
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       659
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =            4.119658255375
+  Energy from scratch =                4.119658255374
+ 
+ Cassandra simulation complete
+[1mGenerating fragment library species 1 fragment 1[0m
+[1mGenerating fragment library species 1 fragment 2[0m
+[1mGenerating fragment library species 1 fragment 3[0m
+[1mRemoving temporary input file[0m
+[1mFinished[0m
+
+
+equil.inp pentane.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0mpentane.mcf
+[1m    Species 1 has 3 fragments[0m
+
+
+[1mCreating input MCF generation file for species 1 [0m
+[1mRunning Cassandra to generate MCF files[0m
+ Finished generating fragments
+ Exiting
+ 
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       594
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =           53.508634585177
+  Energy from scratch =               53.508634585176
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       592
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =           11.691612122494
+  Energy from scratch =               11.691612122494
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       531
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =          229.225434354126
+  Energy from scratch =              229.225434354126
+ 
+ Cassandra simulation complete
+[1mGenerating fragment library species 1 fragment 1[0m
+[1mGenerating fragment library species 1 fragment 2[0m
+[1mGenerating fragment library species 1 fragment 3[0m
+[1mRemoving temporary input file[0m
+[1mFinished[0m
+
+
+npt.inp spce.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0mspce.mcf
+[1m    Species 1 has 1 fragments[0m
+
+
+[1mCreating input MCF generation file for species 1 [0m
+[1mRunning Cassandra to generate MCF files[0m
+ Finished generating fragments
+ Exiting
+ 
+[1mRemoving temporary input file[0m
+[1mFinished[0m
+
+
+nvt.inp dmh.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0mdmh.mcf
+[1m    Species 1 has 4 fragments[0m
+
+
+[1mCreating input MCF generation file for species 1 [0m
+[1mRunning Cassandra to generate MCF files[0m
+ Finished generating fragments
+ Exiting
+ 
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       337
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =          638.643180952628
+  Energy from scratch =              638.643180952628
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       650
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =            1.270292036904
+  Energy from scratch =                1.270292036904
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       568
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =          279.365364527830
+  Energy from scratch =              279.365364527830
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       684
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =          845.327623029010
+  Energy from scratch =              845.327623029010
+ 
+ Cassandra simulation complete
+[1mGenerating fragment library species 1 fragment 1[0m
+[1mGenerating fragment library species 1 fragment 2[0m
+[1mGenerating fragment library species 1 fragment 3[0m
+[1mGenerating fragment library species 1 fragment 4[0m
+[1mRemoving temporary input file[0m
+[1mFinished[0m
+
+
+nvt.inp dme.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0mdme.mcf
+[1m    Species 1 has 1 fragments[0m
+
+
+[1mCreating input MCF generation file for species 1 [0m
+[1mRunning Cassandra to generate MCF files[0m
+ Finished generating fragments
+ Exiting
+ 
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       567
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =          100.499661978074
+  Energy from scratch =              100.499661978074
+ 
+ Cassandra simulation complete
+[1mGenerating fragment library species 1 fragment 1[0m
+[1mRemoving temporary input file[0m
+[1mFinished[0m
+
+
+nvt.inp spc.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0mspc.mcf
+[1m    Species 1 has 1 fragments[0m
+
+
+[1mCreating input MCF generation file for species 1 [0m
+[1mRunning Cassandra to generate MCF files[0m
+ Finished generating fragments
+ Exiting
+ 
+[1mRemoving temporary input file[0m
+[1mFinished[0m
+
+
+nvt.inp tip4p.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0mtip4p.mcf
+[1m    Species 1 has 1 fragments[0m
+
+
+[1mCreating input MCF generation file for species 1 [0m
+[1mRunning Cassandra to generate MCF files[0m
+ Finished generating fragments
+ Exiting
+ 
+[1mRemoving temporary input file[0m
+[1mFinished[0m
+
+
+nvt.inp tip5p.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0mtip5p.mcf
+[1m    Species 1 has 1 fragments[0m
+
+
+[1mCreating input MCF generation file for species 1 [0m
+[1mRunning Cassandra to generate MCF files[0m
+ Finished generating fragments
+ Exiting
+ 
+[1mRemoving temporary input file[0m
+[1mFinished[0m
+
+
+nvt_mie.inp dee.pdb
+
+[1m
+********************** Cassandra Setup *********************
+[0m
+[1mCassandra location: [0m/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe
+[1mScanning input file[0m
+[1m  Number of species found: [0m1
+[1m  The MCF file number 1 is: [0mdee.mcf
+[1m    Species 1 has 3 fragments[0m
+
+
+[1mCreating input MCF generation file for species 1 [0m
+[1mRunning Cassandra to generate MCF files[0m
+ Finished generating fragments
+ Exiting
+ 
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       600
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =           86.396984644196
+  Energy from scratch =               86.396984644196
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       630
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =          201.332169577554
+  Energy from scratch =              201.332169577555
+ 
+ Cassandra simulation complete
+ Begin Cassandra simulation
+ 
+         Number of Trial moves      1100
+                Accepted moves       659
+ 
+ Energy of final configuration, box 1
+  Initial energy + deltas =            4.119658255375
+  Energy from scratch =                4.119658255374
+ 
+ Cassandra simulation complete
+[1mGenerating fragment library species 1 fragment 1[0m
+[1mGenerating fragment library species 1 fragment 2[0m
+[1mGenerating fragment library species 1 fragment 3[0m
+[1mRemoving temporary input file[0m
+[1mFinished[0m

@@ -94,7 +94,6 @@ SUBROUTINE GCMC_Control
   ! Determine the frequency with which information will be output 
   CALL Get_Simulation_Length_Info
 
-  CALL Get_Average_Info
   ! Properties to be output
   CALL Get_Property_Info
 

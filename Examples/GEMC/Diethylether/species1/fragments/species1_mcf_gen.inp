@@ -8,14 +8,10 @@ MCF_Gen
 1
 
 # VDW_Style
-LJ minimum_image
+lj minimum_image
 
 # Rcutoff_Low
 1.0
-
-# Mixing_Rule
-LB
-
 
 # Charge_Style
 coul minimum_image

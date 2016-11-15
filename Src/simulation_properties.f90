@@ -60,96 +60,6 @@ MODULE Simulation_Properties
 
 CONTAINS
 
-  !*****************************************************************************
-  SUBROUTINE Get_Nmolecules_Species(this_box,this_species,nmolecules_species)
-  !******************************************************************************
-    
-  !*******************************************************************************
-  ! The subroutine outputs total number of molecules of a given species in this_box
-  !********************************************************************************
-    
-    IMPLICIT NONE
-    
-
-    
-    INTEGER :: this_box, this_species, nmolecules_species
-
-    INTEGER :: i, alive
-    
-    
-    nmolecules_species = 0
-
-    DO i = 1, nmols(this_species,this_box)
-       
-       alive = locate(i,this_species,this_box)
-       
-       IF ( molecule_list(alive,this_species)%live ) THEN
-          nmolecules_species = nmolecules_species + 1
-       END IF
-       
-    END DO
-    
-  END SUBROUTINE Get_Nmolecules_Species
-  !***********************************************************************************
-
-  !***********************************************************************************
-  SUBROUTINE Get_Index_Molecule(this_box,this_species,im,alive)
-  !***********************************************************************************
-  !*************************************************************************************
-  ! The subroutine calculates the index of the molecule such that it is im^{th} molecule
-  ! of this_species in this_box
-  !*************************************************************************************
-
-    IMPLICIT NONE
-
-    INTEGER :: this_box, this_species, im, alive
-
-    INTEGER :: i, nmolecules_this_species
-
-    nmolecules_this_species = 0
-
-    DO i = 1, nmols(this_species,this_box)
-
-       alive = locate(i,this_species,this_box)
-       
-       IF ( .NOT. molecule_list(alive,this_species)%live ) CYCLE
-
-       nmolecules_this_species = nmolecules_this_species + 1
-
-       IF ( nmolecules_this_species == im ) EXIT 
-
-    END DO
-
-
-  END SUBROUTINE Get_Index_Molecule
-  !*************************************************************************************
-
-  !*************************************************************************************
-  SUBROUTINE Get_Position_Molecule(this_box,is,im,position)
-
-    IMPLICIT NONE
-
-    INTEGER :: this_box,is,im,position
-    INTEGER ::  i, nmolecules_this_species, alive
-
-    nmolecules_this_species = 0
-
-    DO i = 1,nmols(is,this_box)
-       
-       alive = locate(i,is,this_box)
-
-       IF (.NOT. molecule_list(alive,is)%live) CYCLE
-       
-       nmolecules_this_species = nmolecules_this_species + 1
-       
-       IF ( nmolecules_this_species == im ) EXIT   
-
-    END DO
-
-    position = i
-
-  END SUBROUTINE Get_Position_Molecule 
-
  !****************************************************************************
   SUBROUTINE Get_Index_Integer_Molecule(this_box,this_species,im,alive)
 
@@ -229,7 +139,8 @@ CONTAINS
              DO ia = 1, natoms(is)
                 
                 ia_type = nonbond_list(ia,is)%atom_type_number
-                nint_beads(ia_type,this_box) = nint_beads(ia_type,this_box) + 1
+                IF (ia_type /= 0 ) nint_beads(ia_type,this_box) = &
+                                   nint_beads(ia_type,this_box) + 1
              END DO
             
           END IF
@@ -272,7 +183,7 @@ CONTAINS
 
     ! start with the ideal gas pressure
     pressure(this_box)%computed = SUM(nmols(:,this_box)) * temperature(this_box) &
-                                / box_list(this_box)%volume * p_const
+                                * kboltz / box_list(this_box)%volume
 
     ! add the pressure from the virial
     CALL Compute_System_Total_Force(this_box)
@@ -282,13 +193,13 @@ CONTAINS
     pressure(this_box)%computed = pressure(this_box)%computed &
                                 + ((pressure_tensor(1,1,this_box) &
                                   + pressure_tensor(2,2,this_box) &
-                                  + pressure_tensor(3,3,this_box)) / 3.0_DP) &
-                                * atomic_to_bar
+                                  + pressure_tensor(3,3,this_box)) / 3.0_DP)
     
+    ! add pressure from tail corrections
     IF(int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
        pressure(this_box)%computed = pressure(this_box)%computed &
                                    + virial(this_box)%lrc &
-                                   / box_list(this_box)%volume * atomic_to_bar
+                                   / box_list(this_box)%volume
     END IF
 
   END SUBROUTINE Compute_Pressure

@@ -44,14 +44,11 @@ SUBROUTINE GCMC_Driver
 !  !$ include 'omp_lib.h'
 
   INTEGER :: i, ibox, is 
-  INTEGER :: ioldN,  delta_n  ! old molecule number and change in molecule number
 
   REAL(DP) :: rand_no
-  REAL(DP) :: time_start, now_time
+  REAL(DP) :: time_start, now_time, thermo_time, coord_time, block_avg_time
 
-  LOGICAL :: overlap, complete
-
-  LOGICAL, DIMENSION(:), ALLOCATABLE :: next_write, next_rdf_write
+  LOGICAL :: overlap, complete, write_flag
 
   ! The total number of trial move array may not have been set if this
   ! is a fresh run i.e. start_type == make_config. Otherwise this array
@@ -59,12 +56,11 @@ SUBROUTINE GCMC_Driver
   IF(.NOT. ALLOCATED(ntrials)) ALLOCATE(ntrials(nspecies,nbr_boxes))
   IF(.NOT. ALLOCATED(tot_trials)) ALLOCATE(tot_trials(nbr_boxes))
 
-  ALLOCATE(next_write(nbr_boxes))
-  ALLOCATE(next_rdf_write(nbr_boxes))
-  next_write(:) = .false.
-  next_rdf_write(:) = .false.
   complete = .FALSE.
   openmp_flag = .FALSE.
+  thermo_time = 0.0
+  coord_time = 0.0
+  block_avg_time = 0.0
 
 !$ openmp_flag = .TRUE.
 
@@ -82,11 +78,11 @@ SUBROUTINE GCMC_Driver
 
      i_mcstep = i_mcstep + 1
 
-     ! We will select a move from Golden Sampling scheme
+     !*****************************************************************************
+     ! select a move from Golden Sampling scheme
+     !*****************************************************************************
   
      rand_no = rranf()
-     ioldN = nmols(1,1)  ! store beginning molecule number 
-     delta_n = 0
  
      IF (rand_no <= cut_trans) THEN
 
@@ -247,74 +243,78 @@ SUBROUTINE GCMC_Driver
         IF(now_time .GT. n_mcsteps) complete = .TRUE.
      END IF
 
-     next_write(:) = .TRUE.
-     next_rdf_write(:) = .TRUE.
-     ! write properties
-     IF ( .NOT. block_average ) THEN
-
-        ! instantaneous values are to be printed   
-
-        IF ( MOD(i_mcstep,nthermo_freq) == 0) THEN
-
-           DO ibox = 1, nbr_boxes
-           
-              CALL Write_Properties(ibox)
-              CALL Reset(ibox)
-              
-           END DO
-           
-        END IF
-        
-        IF ( MOD(i_mcstep,ncoord_freq) == 0 ) THEN
-           
-           DO ibox = 1, nbr_boxes
-              
-              CALL Write_Coords(ibox)
-              
-           END DO
-           
-        END IF
-        
+     !*****************************************************************************
+     ! check if compute properties this step
+     !*****************************************************************************
+     write_flag = .FALSE.
+     IF(.NOT. timed_run) THEN
+        IF (MOD(i_mcstep,nthermo_freq) == 0) write_flag = .TRUE.
      ELSE
-        
-        DO ibox = 1, nbr_boxes
-           
-           CALL Accumulate(ibox)
-
-           IF (tot_trials(ibox) /= 0) THEN
-              IF(MOD(tot_trials(ibox),nthermo_freq) == 0) THEN
-                 IF (next_write(ibox)) THEN
-                    CALL Write_Properties(ibox)
-                    CALL Reset(ibox)
-                    next_write(ibox) = .false.
-                 END IF
-              END IF
-              
-              IF (MOD(tot_trials(ibox), ncoord_freq) == 0) THEN
-                 IF (next_rdf_write(ibox)) THEN
-                    CALL Write_Coords(ibox)
-                    next_rdf_write(ibox) = .false.
-                 END IF
-              END IF
-              
-           END IF
-           
-        END DO
-     
-     END IF
-
-     IF(MOD(i_mcstep,ncoord_freq) == 0) THEN
-        CALL Write_Checkpoint
-     END IF
-
-     DO is = 1,nspecies
-
-        IF(species_list(is)%int_insert == int_igas) THEN
-           IF(mod(i_mcstep,n_igas_moves(is)) == 0) CALL Update_Reservoir(is)
+        now_time = now_time - thermo_time
+        IF(now_time .GT. nthermo_freq) THEN
+           thermo_time = thermo_time + nthermo_freq
+           write_flag = .TRUE.
         END IF
+     END IF
 
-     END DO
-     
+     ! Write the information to various files at regular intervals
+     IF (write_flag) THEN
+        IF (.NOT. block_average ) THEN
+           ! write instantaneous properties
+           DO ibox = 1, nbr_boxes
+              CALL Write_Properties(ibox)
+           END DO
+        ELSE
+           ! block averages
+
+           ! Accumulate averages
+           DO ibox = 1, nbr_boxes
+              CALL Accumulate(ibox)
+           END DO
+              
+           ! Check if write block avgs this step
+           write_flag = .FALSE.
+           IF(.NOT. timed_run) THEN
+              IF (MOD(i_mcstep,block_avg_freq) == 0) write_flag = .TRUE.
+           ELSE
+              now_time = now_time - block_avg_time
+              IF(now_time .GT. block_avg_freq) THEN
+                 block_avg_time = block_avg_time + block_avg_freq
+                 write_flag = .TRUE.
+              END IF
+           END IF
+
+           ! Write block avgs
+           DO ibox = 1, nbr_boxes
+              IF(write_flag) THEN
+                 CALL Write_Properties(ibox)
+              END IF
+           END DO
+              
+        END IF
+     END IF
+
+     !*****************************************************************************
+     ! Check if write coords this step
+     !*****************************************************************************
+     write_flag = .FALSE.
+     IF (.NOT. timed_run) THEN
+        IF ( MOD(i_mcstep,ncoord_freq) == 0) write_flag = .TRUE.
+     ELSE
+        now_time = now_time - coord_time
+        IF(now_time .GT. ncoord_freq) THEN
+           coord_time = coord_time + nthermo_freq
+           write_flag = .TRUE.
+        END IF
+     END IF
+
+     IF (write_flag) THEN
+        CALL Write_Checkpoint
+        DO ibox = 1, nbr_boxes
+           CALL Write_Coords(ibox)
+        END DO
+     END IF
+
   END DO
 
   CLOSE(50)

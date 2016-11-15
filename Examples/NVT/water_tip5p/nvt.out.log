@@ -1,10 +1,19 @@
+********************************************************************************
+                ______                                __                        
+               / ____/___ _______________ _____  ____/ /________ _              
+              / /   / __ `/ ___/ ___/ __ `/ __ \/ __  / ___/ __ `/              
+             / /___/ /_/ (__  |__  ) /_/ / / / / /_/ / /  / /_/ /               
+             \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                
+                                                                                
+********************************************************************************
+ 
 Run info
 ********************************************************************************
-version: Cassandra Development Version
+version: Cassandra Version 1.2 20160720
 inputfile: nvt.inp
 name of run: nvt.out
-date (mm/dd/yyyy): 06/15/2016
-time: 14:04:29
+date (mm/dd/yyyy): 07/26/2016
+time: 23:09:12
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -35,10 +44,6 @@ Copy input file
  
  # Charge_Style
  coul ewald 50.0 0.000001
- 
- # Intra_Scaling
- 0.0 0.0 0.0 1.0
- 0.0 0.0 0.0 1.0
  
  # Mixing_Rule
  lb
@@ -106,7 +111,7 @@ Number of species
 Box info
 ********************************************************************************
 Number of simulation boxes     1
-Box 1 is cubic               
+Box 1 is CUBIC               
  Each Side Of :      180.0000     Angstrom
  Cell basis vector lengths in A,    180.0000     180.0000     180.0000
  Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
@@ -118,7 +123,7 @@ Pair style
 ********************************************************************************
 VDW style used is:   LJ             in box:  1
  VDW sum style is:   cut_tail       in box:  1
- rcut =    14.000   Angstrom
+ rcut =    14.000 Angstrom
 Charge style in box 1 is coul
  Charge sum style is   ewald          in box:  1
  Ewald real space cutoff is  50.000 Angstroms.
@@ -212,18 +217,13 @@ Kappa for first fragment insertion          12
  
 Simulation length info
 ********************************************************************************
-Thermodynamic quantities will be written every         10 Sweeps    
+Thermodynamic quantities will be computed every        10 Sweeps    
 Coordinates will be written every                      10 Sweeps    
  movie header file is                  nvt.out.H
  movie_XYZ file is                     nvt.out.xyz
 The simulation will be run for                        100 Sweeps    
+Instantaneous values will be written every             10 Sweeps    
 A sweep is defined as                                 180 steps
-********************************************************************************
- 
-Average info
-********************************************************************************
-Section "# Average_Info" is missing from the input file
- By default, instantaneous values will be output
 ********************************************************************************
  
 Property info
@@ -266,23 +266,23 @@ Charge neutrality check
  
 Compute total energy
 ********************************************************************************
- Starting energy components for box   1
+ Starting energy components for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                   473.336
- Intra molecular energy is                  0.000
- Bond energy is                             0.000
- Bond angle energy is                       0.000
- Dihedral angle energy is                   0.000
- Improper angle energy is                   0.000
- Intra molecule vdw is                      0.000
- Intra molecule q is                        0.000
- Inter molecule vdw is                    -18.636
- Long range correction is                  -0.262
- Inter molecule q is                   121892.377
- Number of vectors is                        8727
- Reciprocal ewald is                      439.383
- Self ewald is                        -121839.527
+ Total system energy                      159.838
+ Intra molecular energy                     0.000
+   Bond energy                              0.000
+   Bond angle energy                        0.000
+   Dihedral angle energy                    0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                         0.000
+ Intra molecule q                           0.000
+ Inter molecule vdw                        -5.439
+ Long range correction                     -0.262
+ Inter molecule q                      121573.480
+ Number of vectors                           8727
+ Reciprocal ewald                         431.586
+ Self ewald                           -121839.527
  -----------------------------------------------------------
  
 ********************************************************************************
@@ -290,66 +290,66 @@ Compute total energy
 Run simulation
 ********************************************************************************
       Step       Move   Mol Spc Box  Success  MaxWidth
-      1741     rotate         1   1  0.99222
-      1856  translate         1   1  0.99000
-      3563     rotate         1   1  0.99222
-      3643  translate         1   1  0.98667
-      5297     rotate         1   1  0.99148
-      5500  translate         1   1  0.98148
-      7095     rotate         1   1  0.99056
-      7290  translate         1   1  0.98139
-      8955     rotate         1   1  0.98889
-      9051  translate         1   1  0.97911
-     10791     rotate         1   1  0.98556
-     10813  translate         1   1  0.97278
-     12586     rotate         1   1  0.98111
-     12604  translate         1   1  0.97000
-     14368     rotate         1   1  0.97958
-     14428  translate         1   1  0.96639
-     16170     rotate         1   1  0.97790
-     16227  translate         1   1  0.96444
-     17945     rotate         1   1  0.97767
+      1799  translate         1   1  0.98111
+      1800     rotate         1   1  0.99333
+      3489  translate         1   1  0.97333
+      3735     rotate         1   1  0.98722
+      5278  translate         1   1  0.97407
+      5488     rotate         1   1  0.99000
+      7093  translate         1   1  0.97083
+      7320     rotate         1   1  0.98667
+      8944  translate         1   1  0.96933
+      9041     rotate         1   1  0.98644
+     10659  translate         1   1  0.96630
+     10931     rotate         1   1  0.98556
+     12479  translate         1   1  0.96698
+     12723     rotate         1   1  0.98524
+     14346  translate         1   1  0.96931
+     14453     rotate         1   1  0.98486
+     16096  translate         1   1  0.97000
+     16279     rotate         1   1  0.98568
+     17819  translate         1   1  0.97044
 ********************************************************************************
  
 Report ending energy & then re-compute from scratch
 ********************************************************************************
  
  
- Ending energy components for box   1
+ Initial energy + deltas for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                  -998.833
- Intra molecular energy is                  0.000
- Bond energy is                             0.000
- Angle energy is                            0.000
- Dihedral energy is                         0.000
- Improper angle energy is                   0.000
- Intra molecule vdw is                      0.000
- Intra molecule q is                        0.000
- Inter molecule vdw is                    -49.813
- Long range correction is                  -0.262
- Inter molecule q is                   120436.369
- Reciprocal ewald is                      454.400
- Self ewald is                        -121839.527
+ Total system energy                       50.562
+ Intra molecular energy                     0.000
+   Bond energy                              0.000
+   Angle energy                             0.000
+   Dihedral energy                          0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                         0.000
+ Intra molecule q                           0.000
+ Inter molecule vdw                        -5.779
+ Long range correction                     -0.262
+ Inter molecule q                      121473.557
+ Reciprocal ewald                         422.572
+ Self ewald                           -121839.527
  -----------------------------------------------------------
  
  
- Energy components from total energy call for box   1
+ Recomputed energy from scratch for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                  -998.833
- Intra molecular energy is                  0.000
- Bond energy is                             0.000
- Angle energy is                            0.000
- Dihedral energy is                         0.000
- Improper angle energy is                   0.000
- Intra molecule vdw is                      0.000
- Intra molecule q is                        0.000
- Inter molecule vdw is                    -49.813
- Long range correction is                  -0.262
- Inter molecule q is                   120436.369
- Reciprocal ewald is                      454.400
- Self ewald is                        -121839.527
+ Total system energy                       50.562
+ Intra molecular energy                     0.000
+   Bond energy                              0.000
+   Angle energy                             0.000
+   Dihedral energy                          0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                         0.000
+ Intra molecule q                           0.000
+ Inter molecule vdw                        -5.779
+ Long range correction                     -0.262
+ Inter molecule q                      121473.557
+ Reciprocal ewald                         422.572
+ Self ewald                           -121839.527
  -----------------------------------------------------------
 ********************************************************************************
  
@@ -361,16 +361,16 @@ Writing information for box  1
    Writing information for species  1
  
                 Move      Trials     Success   % Success
-           Translate        8980        8663       96.47
-              Rotate        9020        8818       97.76
+           Translate        9087        8821       97.07
+              Rotate        8913        8782       98.53
    ---------------------------------------------------------
  
 ********************************************************************************
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =           20.693799 secs.
- Rotation time =              21.016322 secs.
+ Translation time =           26.401325 secs.
+ Rotation time =              25.909377 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -384,6 +384,6 @@ Writing information for box  1
          0       Days
          0      Hours
          0    Minutes
-        43    Seconds
-       955         ms
+        55    Seconds
+       275         ms
 ********************************************************************************

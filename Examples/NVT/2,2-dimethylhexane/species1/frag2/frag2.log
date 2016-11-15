@@ -1,10 +1,19 @@
+********************************************************************************
+                ______                                __                        
+               / ____/___ _______________ _____  ____/ /________ _              
+              / /   / __ `/ ___/ ___/ __ `/ __ \/ __  / ___/ __ `/              
+             / /___/ /_/ (__  |__  ) /_/ / / / / /_/ / /  / /_/ /               
+             \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                
+                                                                                
+********************************************************************************
+ 
 Run info
 ********************************************************************************
-version: Cassandra Development Version
+version: Cassandra Version 1.2 20160720
 inputfile: frag2.inp
 name of run: frag2
-date (mm/dd/yyyy): 06/15/2016
-time: 14:08:31
+date (mm/dd/yyyy): 07/26/2016
+time: 23:07:51
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -83,7 +92,7 @@ Number of species
 Box info
 ********************************************************************************
 Number of simulation boxes     1
-Box 1 is cubic               
+Box 1 is CUBIC               
  Each Side Of :       50.0000     Angstrom
  Cell basis vector lengths in A,     50.0000      50.0000      50.0000
  Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
@@ -163,12 +172,13 @@ Number of moves is :   1
  
 Simulation length info
 ********************************************************************************
-Thermodynamic quantities will be written every         10 Steps     
+Thermodynamic quantities will be computed every        10 Steps     
 Coordinates will be written every                      90 Steps     
  movie header file is                  frag2.H
  movie_XYZ file is                     frag2.xyz
 The simulation will be run for                       1100 Steps     
 Number of equilibrium steps       100
+Instantaneous values will be written every             10 Steps     
 ********************************************************************************
  
 File info
@@ -196,19 +206,19 @@ Initial configuration
  
 Compute total energy
 ********************************************************************************
- Starting energy components for box   1
+ Starting energy components for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                   267.937
- Intra molecular energy is                267.937
- Bond energy is                             0.000
- Bond angle energy is                     267.937
- Dihedral angle energy is                   0.000
- Improper angle energy is                   0.000
- Intra molecule vdw is                      0.000
- Intra molecule q is                        0.000
- Inter molecule vdw is                      0.000
- Inter molecule q is                        0.000
+ Total system energy                      267.937
+ Intra molecular energy                   267.937
+   Bond energy                              0.000
+   Bond angle energy                      267.937
+   Dihedral angle energy                    0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                         0.000
+ Intra molecule q                           0.000
+ Inter molecule vdw                         0.000
+ Inter molecule q                           0.000
  -----------------------------------------------------------
  
 ********************************************************************************
@@ -222,35 +232,35 @@ Report ending energy & then re-compute from scratch
 ********************************************************************************
  
  
- Ending energy components for box   1
+ Initial energy + deltas for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                     1.270
- Intra molecular energy is                  1.270
- Bond energy is                             0.000
- Angle energy is                            1.270
- Dihedral energy is                         0.000
- Improper angle energy is                   0.000
- Intra molecule vdw is                      0.000
- Intra molecule q is                        0.000
- Inter molecule vdw is                      0.000
- Inter molecule q is                        0.000
+ Total system energy                       95.893
+ Intra molecular energy                    95.893
+   Bond energy                              0.000
+   Angle energy                            95.893
+   Dihedral energy                          0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                         0.000
+ Intra molecule q                           0.000
+ Inter molecule vdw                         0.000
+ Inter molecule q                           0.000
  -----------------------------------------------------------
  
  
- Energy components from total energy call for box   1
+ Recomputed energy from scratch for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                     1.270
- Intra molecular energy is                  1.270
- Bond energy is                             0.000
- Angle energy is                            1.270
- Dihedral energy is                         0.000
- Improper angle energy is                   0.000
- Intra molecule vdw is                      0.000
- Intra molecule q is                        0.000
- Inter molecule vdw is                      0.000
- Inter molecule q is                        0.000
+ Total system energy                       95.893
+ Intra molecular energy                    95.893
+   Bond energy                              0.000
+   Angle energy                            95.893
+   Dihedral energy                          0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                         0.000
+ Intra molecule q                           0.000
+ Inter molecule vdw                         0.000
+ Inter molecule q                           0.000
  -----------------------------------------------------------
 ********************************************************************************
  
@@ -262,7 +272,7 @@ Writing information for box  1
    Writing information for species  1
  
                 Move      Trials     Success   % Success
-   Atom Displacement        1100         650       59.09
+   Atom Displacement        1100         551       50.09
    ---------------------------------------------------------
  
 ********************************************************************************
@@ -283,5 +293,5 @@ Writing information for box  1
          0      Hours
          0    Minutes
          0    Seconds
-        24         ms
+        22         ms
 ********************************************************************************
