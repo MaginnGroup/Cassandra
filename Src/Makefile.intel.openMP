@@ -57,9 +57,9 @@ FC = ifort
 LIBS = 
 INCS = 
 #
-F90FLAGS = -c -O3 -no-wrap-margin -openmp
-#F90FLAGS = -c -g -check all -traceback -openmp
-LINKFLAGS = -openmp
+F90FLAGS = -c -O3 -no-wrap-margin -qopenmp
+#F90FLAGS = -c -g -check all -traceback -qopenmp
+LINKFLAGS = -qopenmp
 
 
 ####################################################################
