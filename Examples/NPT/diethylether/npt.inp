@@ -76,7 +76,7 @@ cubic
 !-----------------------------------------each molecule moves per volume change
 
 # Start_Type
-checkpoint npt.inp.chk
+make_config 30
 !--------make_config: one line for each species and one entry/line for each box
 !------------------------------------------------------------read_old: filename
 !----------------------------------------------------------checkpoint: filename

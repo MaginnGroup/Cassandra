@@ -19,7 +19,7 @@
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*******************************************************************************
 
-SUBROUTINE Accumulate(this_box)
+SUBROUTINE Accumulate(ibox)
 
 !*******************************************************************************
 !
@@ -40,61 +40,67 @@ SUBROUTINE Accumulate(this_box)
 
   IMPLICIT NONE
 
-  INTEGER :: is, this_box, nmolecules_is
+  INTEGER :: is, ibox, nmolecules_is
   REAL(DP) :: mass_density
+  
+  ! want 1 ... block_avg_freq to give iblock = 1
+  iblock = (i_mcstep - initial_mcstep - 1) / block_avg_freq + 1
 
   !--- energy accumulators
 
-  ac_energy(this_box)%total = ac_energy(this_box)%total + energy(this_box)%total
-  ac_energy(this_box)%inter_vdw = ac_energy(this_box)%inter_vdw + energy(this_box)%inter_vdw
-  ac_energy(this_box)%inter_q   = ac_energy(this_box)%inter_q   + energy(this_box)%inter_q
-  ac_energy(this_box)%intra_vdw = ac_energy(this_box)%intra_vdw + energy(this_box)%intra_vdw
-  ac_energy(this_box)%intra_q   = ac_energy(this_box)%intra_q   + energy(this_box)%intra_q
-  ac_energy(this_box)%intra     = ac_energy(this_box)%intra + energy(this_box)%intra
-  ac_energy(this_box)%ewald_reciprocal = ac_energy(this_box)%ewald_reciprocal + energy(this_box)%ewald_reciprocal
-  ac_energy(this_box)%self = ac_energy(this_box)%self + energy(this_box)%self
+  ac_energy(ibox,iblock)%total = ac_energy(ibox,iblock)%total + energy(ibox)%total
+  ac_energy(ibox,iblock)%inter_vdw = ac_energy(ibox,iblock)%inter_vdw + energy(ibox)%inter_vdw
+  ac_energy(ibox,iblock)%inter_q   = ac_energy(ibox,iblock)%inter_q   + energy(ibox)%inter_q
+  ac_energy(ibox,iblock)%intra_vdw = ac_energy(ibox,iblock)%intra_vdw + energy(ibox)%intra_vdw
+  ac_energy(ibox,iblock)%intra_q   = ac_energy(ibox,iblock)%intra_q   + energy(ibox)%intra_q
+  ac_energy(ibox,iblock)%intra     = ac_energy(ibox,iblock)%intra + energy(ibox)%intra
+  ac_energy(ibox,iblock)%ewald_reciprocal = ac_energy(ibox,iblock)%ewald_reciprocal + energy(ibox)%ewald_reciprocal
+  ac_energy(ibox,iblock)%self = ac_energy(ibox,iblock)%self + energy(ibox)%self
 
-  IF(int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
-     ac_energy(this_box)%lrc = ac_energy(this_box)%lrc + energy(this_box)%lrc
+  IF(int_vdw_sum_style(ibox) == vdw_cut_tail) THEN
+     ac_energy(ibox,iblock)%lrc = ac_energy(ibox,iblock)%lrc + energy(ibox)%lrc
   END IF
 
   !--- virial accumulators
 
-  ac_virial(this_box)%total = ac_virial(this_box)%total + virial(this_box)%total
-  ac_virial(this_box)%inter_vdw = ac_virial(this_box)%inter_vdw + virial(this_box)%inter_vdw
-  ac_virial(this_box)%inter_q   = ac_virial(this_box)%inter_q + virial(this_box)%inter_q
-  ac_virial(this_box)%intra_vdw = ac_virial(this_box)%intra_vdw + virial(this_box)%intra_vdw
-  ac_virial(this_box)%intra_q   = ac_virial(this_box)%intra_q + virial(this_box)%intra_q
-  ac_virial(this_box)%ewald_reciprocal = ac_virial(this_box)%ewald_reciprocal + virial(this_box)%ewald_reciprocal
+!  ac_virial(ibox,iblock)%total = ac_virial(ibox,iblock)%total + virial(ibox)%total
+!  ac_virial(ibox,iblock)%inter_vdw = ac_virial(ibox,iblock)%inter_vdw + virial(ibox)%inter_vdw
+!  ac_virial(ibox,iblock)%inter_q   = ac_virial(ibox,iblock)%inter_q + virial(ibox)%inter_q
+!  ac_virial(ibox,iblock)%intra_vdw = ac_virial(ibox,iblock)%intra_vdw + virial(ibox)%intra_vdw
+!  ac_virial(ibox,iblock)%intra_q   = ac_virial(ibox,iblock)%intra_q + virial(ibox)%intra_q
+!  ac_virial(ibox,iblock)%ewald_reciprocal = ac_virial(ibox,iblock)%ewald_reciprocal + virial(ibox)%ewald_reciprocal
 
   !--- thermodynamic accumulators
-  ac_volume(this_box) = ac_volume(this_box) + box_list(this_box)%volume
+  ac_volume(ibox,iblock) = ac_volume(ibox,iblock) + box_list(ibox)%volume
   IF (need_pressure) THEN
-     IF (pressure(this_box)%last_calc /= i_mcstep) THEN
-        pressure(this_box)%last_calc = i_mcstep
-        CALL Compute_Pressure(this_box)
+     IF (pressure(ibox)%last_calc /= i_mcstep) THEN
+        pressure(ibox)%last_calc = i_mcstep
+        CALL Compute_Pressure(ibox)
      END IF
-     ac_pressure(this_box) = ac_pressure(this_box) + pressure(this_box)%computed
-     ac_enthalpy(this_box) = ac_enthalpy(this_box) &
-                           + energy(this_box)%total + pressure(this_box)%computed * box_list(this_box)%volume
+     ac_pressure(ibox,iblock) = ac_pressure(ibox,iblock) + pressure(ibox)%computed
+     IF (int_sim_type /= sim_npt .AND. int_sim_type /= sim_gemc_npt) THEN
+        ac_enthalpy(ibox,iblock) = ac_enthalpy(ibox,iblock) &
+                          + energy(ibox)%total + pressure(ibox)%computed * box_list(ibox)%volume
+     END IF
+  END IF
+  IF (int_sim_type == sim_npt .OR. int_sim_type == sim_gemc_npt) THEN
+     ac_enthalpy(ibox,iblock) = ac_enthalpy(ibox,iblock) &
+                       + energy(ibox)%total + pressure(ibox)%setpoint * box_list(ibox)%volume
   END IF
 
   !--- particle density
   
   DO is = 1, nspecies
-     ac_density(is,this_box) = ac_density(is,this_box) + REAL(nmols(is,this_box),DP) / box_list(this_box)%volume
-     ac_nmols(is,this_box) = ac_nmols(is,this_box) + REAL(nmols(is,this_box),DP)
+     ac_density(is,ibox,iblock) = ac_density(is,ibox,iblock) + REAL(nmols(is,ibox),DP) / box_list(ibox)%volume
+     ac_nmols(is,ibox,iblock) = ac_nmols(is,ibox,iblock) + REAL(nmols(is,ibox),DP)
   END DO
 
   mass_density = 0.0_DP
   DO is = 1, nspecies
      mass_density = mass_density &
-                  + REAL(nmols(is,this_box),DP) * species_list(is)%molecular_weight
+                  + REAL(nmols(is,ibox),DP) * species_list(is)%molecular_weight
   END DO
-  mass_density = mass_density / box_list(this_box)%volume
-  ac_mass_density(this_box) = ac_mass_density(this_box) + mass_density
+  mass_density = mass_density / box_list(ibox)%volume
+  ac_mass_density(ibox,iblock) = ac_mass_density(ibox,iblock) + mass_density
 
 END SUBROUTINE Accumulate
-
-
-

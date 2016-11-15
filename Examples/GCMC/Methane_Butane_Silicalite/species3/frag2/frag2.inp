@@ -15,16 +15,16 @@ lj minimum_image
 
 # Mixing_Rule
 custom
-SI O     0.00   0.0
-SI CH4    0.00   0.0
-SI CH3    0.00   0.0
-SI CH2    0.00   0.0
-O  CH4   96.50   3.6
-O  CH3   80.00   3.6
-O  CH2   58.00   3.6
-CH4 CH3  120.49   3.75
-CH4 CH2   83.40   3.83
-CH3 CH2   67.90   3.85
+SI_s1 O_s1     0.00   0.0
+SI_s1 CH4_s2    0.00   0.0
+SI_s1 CH3_s3    0.00   0.0
+SI_s1 CH2_s3    0.00   0.0
+O_s1  CH4_s2   96.50   3.6
+O_s1  CH3_s3   80.00   3.6
+O_s1  CH2_s3   58.00   3.6
+CH4_s2 CH3_s3  120.49   3.75
+CH4_s2 CH2_s3   83.40   3.83
+CH3_s3 CH2_s3   67.90   3.85
 !----------------
 
 
