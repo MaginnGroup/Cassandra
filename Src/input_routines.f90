@@ -70,6 +70,7 @@ SUBROUTINE Get_Run_Name
 
   ierr = 0
   line_nbr = 0
+  input_is_logfile = .FALSE.
 
   DO
      line_nbr = line_nbr + 1
@@ -81,13 +82,16 @@ SUBROUTINE Get_Run_Name
         CALL Clean_Abort(err_msg,'Read_inputfile')
      END IF
 
+     IF (line_string(35:42)=='Log File') THEN
+        input_is_logfile = .TRUE.
+     END IF
+   
      IF (line_string(1:10) == '# Run_Name') THEN
         line_nbr = line_nbr + 1
         CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
 
 ! Assign the first entry on the line to the name of the run
         run_name = line_array(1)
-
         EXIT
 
      ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
@@ -100,6 +104,10 @@ SUBROUTINE Get_Run_Name
 
   ENDDO
 
+  IF (input_is_logfile) THEN
+     run_name = TRIM(run_name) // "_logfile_"
+  END IF
+ 
 END SUBROUTINE Get_Run_Name
 
 !******************************************************************************
@@ -5473,6 +5481,20 @@ USE Global_Variables, ONLY: cpcollect
            ELSE IF (line_array(1) == 'pressure' .OR. line_array(1) == 'Pressure') THEN
               nbr_properties = nbr_properties + 1
               need_pressure = .TRUE.
+
+
+           ELSE IF (line_array(1) == 'pressure_xx' .OR. line_array(1) == 'Pressure_XX') THEN
+              nbr_properties = nbr_properties + 1
+              need_pressure = .TRUE.
+
+           ELSE IF (line_array(1) == 'pressure_yy' .OR. line_array(1) == 'Pressure_YY') THEN
+              nbr_properties = nbr_properties + 1
+              need_pressure = .TRUE.
+
+           ELSE IF (line_array(1) == 'pressure_zz' .OR. line_array(1) == 'Pressure_ZZ') THEN
+              nbr_properties = nbr_properties + 1
+              need_pressure = .TRUE.
+
            ELSE IF (line_array(1) == 'enthalpy' .OR. line_array(1) == 'Enthalpy') THEN
               nbr_properties = nbr_properties + 1
               IF (int_sim_type /= sim_npt .AND. int_sim_type /= sim_gemc_npt) need_pressure = .TRUE.
@@ -5639,6 +5661,15 @@ USE Global_Variables, ONLY: cpcollect
               ELSE IF (line_array(1) == 'pressure' .OR. line_array(1) == 'Pressure') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Pressure'
+              ELSE IF (line_array(1) == 'pressure_xx' .OR. line_array(1) == 'Pressure_XX') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Pressure_XX'
+              ELSE IF (line_array(1) == 'pressure_yy' .OR. line_array(1) == 'Pressure_YY') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Pressure_YY'
+              ELSE IF (line_array(1) == 'pressure_zz' .OR. line_array(1) == 'Pressure_ZZ') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Pressure_ZZ'
               ELSE IF (line_array(1) == 'volume' .OR. line_array(1) == 'Volume') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Volume'
@@ -5653,7 +5684,8 @@ USE Global_Variables, ONLY: cpcollect
                 err_msg(3) = 'Supported keywords are: energy_total, energy_intra, energy_inter, energy_bond,'
                 err_msg(4) = '  energy_angle, energy_dihedral, energy_improper, energy_intravdw, energy_intraq'
                 err_msg(5) = '  energy_intervdw, energy_interq, energy_lrc, energy_recip, energy_self,'
-                err_msg(6) = '  enthalpy, pressure, volume, density, nmols, mass_density'
+                err_msg(6) = '  enthalpy, pressure, pressure_xx, pressure_yy, pressure_zz, &
+				volume, density, nmols, mass_density'
                 CALL Clean_Abort(err_msg,'Get_Property_Info')
               END IF
               
@@ -5758,8 +5790,9 @@ SUBROUTINE Copy_Inputfile
 !
 !******************************************************************************
 
-  INTEGER :: ierr, line_nbr
+  INTEGER :: ierr, line_nbr, line_inputfile_start
   CHARACTER(120) :: line_string
+  LOGICAL :: input_startcopy
   
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Copy input file'
@@ -5770,27 +5803,63 @@ SUBROUTINE Copy_Inputfile
   ierr = 0
   line_nbr = 0
 
-  DO
-     line_nbr = line_nbr + 1
-     CALL Read_String(inputunit,line_string,ierr)
+  IF (input_is_logfile .EQV. .FALSE.) THEN
 
-     IF ( ierr /= 0 ) THEN
-        err_msg = ''
-        err_msg(1) = 'Error while reading inputfile'
-        CALL Clean_Abort(err_msg,'Copy_Inputfile')
-     END IF
+      DO
+         line_nbr = line_nbr + 1
+         CALL Read_String(inputunit,line_string,ierr)
+    
+         IF ( ierr /= 0 ) THEN
+            err_msg = ''
+            err_msg(1) = 'Error while reading inputfile'
+            CALL Clean_Abort(err_msg,'Copy_Inputfile')
+         END IF
+    
+         ! Read the first character of the line_string, if it is a comment then
+         ! skip the output
+    
+         IF (line_string(1:1) /= '!') THEN
+            WRITE(logunit,'(A80)') line_string
+         END IF
+         IF (line_string(1:3) == 'END' .OR. line_nbr > 10000 ) EXIT
+         
+    
+      END DO
 
-     ! Read the first character of the line_string, if it is a comment then
-     ! skip the output
+  ELSE
+      
+      line_inputfile_start = 0
+      DO
+         line_nbr = line_nbr + 1
+         CALL Read_String(inputunit,line_string,ierr)
+    
+         IF ( ierr /= 0 ) THEN
+            err_msg = ''
+            err_msg(1) = 'Error while reading inputfile'
+            CALL Clean_Abort(err_msg,'Copy_Inputfile')
+         END IF
+    
+         ! Read the first character of the line_string, if it is a comment then
+         ! skip the output
+    
+         IF (line_string(1:15) == 'Copy input file') THEN
+            line_inputfile_start = line_nbr+2
+         END IF
 
-     IF (line_string(1:1) /= '!') THEN
-        WRITE(logunit,*) TRIM(line_string)
-     END IF
-     IF (line_string(1:3) == 'END' .OR. line_nbr > 10000 ) EXIT
-     
+         IF (line_nbr .GT. line_inputfile_start .AND. &
+             line_inputfile_start /= 0) THEN            
+            IF (line_string(1:1) /= '!') THEN
+               WRITE(logunit,'(A80)') line_string
+            END IF
+         END IF
 
-  END DO
+         IF (line_string(1:3) == 'END' .OR. line_nbr > 10000 ) EXIT
+         
+    
+      END DO
 
+  END IF
+    
   WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Copy_Inputfile
