@@ -1,4 +1,4 @@
-!********************************************************************************
+!sure(this_box)n/********************************************************************************
 !   Cassandra - An open source atomistic Monte Carlo software package
 !   developed at the University of Notre Dame.
 !   http://cassandra.nd.edu
@@ -182,7 +182,7 @@ CONTAINS
     INTEGER :: this_box
 
     ! start with the ideal gas pressure
-    pressure(this_box)%computed = SUM(nmols(:,this_box)) * temperature(this_box) &
+    pressure(this_box)%ideal = SUM(nmols(:,this_box)) * temperature(this_box) &
                                 * kboltz / box_list(this_box)%volume
 
     ! add the pressure from the virial
@@ -190,14 +190,14 @@ CONTAINS
 
     pressure_tensor(:,:,this_box) = W_tensor_total(:,:,this_box) &
                                   / box_list(this_box)%volume
-    pressure(this_box)%computed = pressure(this_box)%computed &
+    pressure(this_box)%computed = pressure(this_box)%ideal &
                                 + ((pressure_tensor(1,1,this_box) &
                                   + pressure_tensor(2,2,this_box) &
                                   + pressure_tensor(3,3,this_box)) / 3.0_DP)
     
     ! add pressure from tail corrections
     IF(int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
-       pressure(this_box)%computed = pressure(this_box)%computed &
+       pressure(this_box)%computed = pressure(this_box)%ideal &
                                    + virial(this_box)%lrc &
                                    / box_list(this_box)%volume
     END IF
