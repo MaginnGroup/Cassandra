@@ -1217,10 +1217,10 @@ returns:
 								c3 = float(data[8])
 								c4 = float(data[9])
 								c5 = float(data[10])
-								a0 = c0 + c2 / 2. + c4/ 2.
-								a1 = c1 + 3. * c3 / 4.
-								a2 = c2 / 2. + c4 / 2.
-								a3 = c3 / 4.
+								a0 = c0 + c1 + c2 + c3
+								a1 = - c1 - 3. * c3 / 4.
+								a2 = - c2 / 2.
+								a3 = - c3 / 4.
 								if not c4 == 0. and not c5 == 0.:
 									raise Error('Can only convert Ryckaert-Bellemans dihedrals ' + 
 															'to OPLS if c4==0 and c5==0.\n')
