@@ -9,11 +9,11 @@
  
 Run info
 ********************************************************************************
-version: Cassandra Version 1.2 20160720
+version: Cassandra Development Version
 inputfile: nvt.inp
 name of run: nvt.out
-date (mm/dd/yyyy): 07/26/2016
-time: 23:08:41
+date (mm/dd/yyyy): 08/04/2016
+time: 14:34:03
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -136,9 +136,7 @@ Molecule info
 ********************************************************************************
  Reading molecular connectivity information
  Species:            1
- Molecular connectivity file: 
- spc.mcf                                                                        
-                                          
+ Molecular connectivity file: spc.mcf                                                                                                                 
    3 atom(s) specified.
    2 bond(s) specified.
    1 angle(s) specified.
@@ -273,24 +271,25 @@ Charge neutrality check
  
 Compute total energy
 ********************************************************************************
- Starting energy components for box 1
-  Atomic units-Extensive
- -----------------------------------------------------------
- Total system energy                  -363087.380
+ 
+ Energy components for box 1     kJ/mol-Extensive
+ ---------------------------------------------------------------------
+ Total system energy                    -3630.874
  Intra molecular energy                     0.000
    Bond energy                              0.000
    Bond angle energy                        0.000
    Dihedral angle energy                    0.000
    Improper angle energy                    0.000
- Intra molecule vdw                         0.000
- Intra molecule q                           0.000
- Inter molecule vdw                     66667.483
- Long range correction                  -4687.873
- Inter molecule q                     3321988.633
- Number of vectors                           1568
- Reciprocal ewald                       31145.359
- Self ewald                          -3778200.983
- -----------------------------------------------------------
+   Intra molecule vdw                       0.000
+   Intra molecule q                         0.000
+ Inter molecular energy                 -3630.874
+   Inter molecule vdw                     666.675
+   Long range correction                  -46.879
+   Inter molecule q                     33219.886
+   Reciprocal ewald                       311.454
+   Self ewald                          -37782.010
+ ---------------------------------------------------------------------
+   Number of reciprocal vectors              1568
  
 ********************************************************************************
  
@@ -319,46 +318,28 @@ Run simulation
      17275  translate         1   1  0.49333   0.15881
 ********************************************************************************
  
-Report ending energy & then re-compute from scratch
+Energy of final configuration
 ********************************************************************************
  
+ Energy components for box 1     kJ/mol-Extensive       Relative_Error
+ ---------------------------------------------------------------------
+ Total system energy                    -3592.474           -0.648E-14
+ Intra molecular energy                     0.000            0.000E+00
+   Bond energy                              0.000            0.000E+00
+   Bond angle energy                        0.000            0.000E+00
+   Dihedral angle energy                    0.000            0.000E+00
+   Improper angle energy                    0.000            0.000E+00
+   Intra molecule vdw                       0.000            0.000E+00
+   Intra molecule q                         0.000            0.000E+00
+ Inter molecular energy                 -3592.474           -0.648E-14
+   Inter molecule vdw                     677.186            0.838E-14
+   Long range correction                  -46.879            0.000E+00
+   Inter molecule q                     33256.637            0.252E-14
+   Reciprocal ewald                       302.591            0.120E-14
+   Self ewald                          -37782.010            0.000E+00
+ ---------------------------------------------------------------------
+   Number of reciprocal vectors              1568
  
- Initial energy + deltas for box 1
-  Atomic units-Extensive
- -----------------------------------------------------------
- Total system energy                  -359247.404
- Intra molecular energy                     0.000
-   Bond energy                              0.000
-   Angle energy                             0.000
-   Dihedral energy                          0.000
-   Improper angle energy                    0.000
- Intra molecule vdw                         0.000
- Intra molecule q                           0.000
- Inter molecule vdw                     67718.633
- Long range correction                  -4687.873
- Inter molecule q                     3325663.719
- Reciprocal ewald                       30259.100
- Self ewald                          -3778200.983
- -----------------------------------------------------------
- 
- 
- Recomputed energy from scratch for box 1
-  Atomic units-Extensive
- -----------------------------------------------------------
- Total system energy                  -359247.404
- Intra molecular energy                     0.000
-   Bond energy                              0.000
-   Angle energy                             0.000
-   Dihedral energy                          0.000
-   Improper angle energy                    0.000
- Intra molecule vdw                         0.000
- Intra molecule q                           0.000
- Inter molecule vdw                     67718.633
- Long range correction                  -4687.873
- Inter molecule q                     3325663.719
- Reciprocal ewald                       30259.100
- Self ewald                          -3778200.983
- -----------------------------------------------------------
 ********************************************************************************
  
  
@@ -377,8 +358,8 @@ Writing information for box  1
  
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            6.408532 secs.
- Rotation time =               6.452303 secs.
+ Translation time =            6.454702 secs.
+ Rotation time =               6.528269 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -393,5 +374,5 @@ Writing information for box  1
          0      Hours
          0    Minutes
         13    Seconds
-       430         ms
+       535         ms
 ********************************************************************************

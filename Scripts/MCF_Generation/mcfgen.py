@@ -1022,6 +1022,7 @@ returns:
 			scaling_1_4['charge'] = float(line.split()[1])
 		elif 'nonbonded' in line:
 			index = ff.readline().strip() #atomType
+			atomParms[index]['bondtype'] = index # for compatibility with gromacs
 			sigma = float(ff.readline().split()[1])
 			epsilon = float(ff.readline().split()[1])
 			if vdwType == 'Mie':
@@ -1131,7 +1132,7 @@ returns:
 			section = line.strip() #store the section header
 			line = ff.readline()
 			while line and not line.isspace(): #section ends with a blank line
-				if not line.startswith(';'):
+				if not line.startswith(';') and not line.startswith('#'):
 					data = line.split()
 					if 'default' in section:
 						# Look for function type 1, to make sure this is Lennard-Jones
@@ -1150,84 +1151,89 @@ returns:
 							atomParms[index] = {}
 						atomParms[index]['charge'] = data[6] #store as string
 					elif 'atomtypes' in section:
-						if data[-3] != 'A':
-							raise Error('ptype is not A. Cassandra only supports point ' + 
-													'particles.')
-						index = data[0].upper() #atomType
+						base=0 if data[1].isdigit() else 1
+						index = data[0] #atomType
+						if data[4+base] != 'A' and data[4+base] != 'D':
+							raise Error('ptype is not A or D. Cassandra only supports point ' + 
+													'particles.\n')
 						if index not in atomParms:
 							atomParms[index] = {}
-						atomParms[index]['mass'] = float(data[2])
-						atomParms[index]['charge'] = data[3] #store as string
+						atomParms[index]['bondtype'] = data[0+base]
+						atomParms[index]['mass'] = float(data[2+base])
+						atomParms[index]['charge'] = data[3+base] #store as string
 						if comboRule == '1':
-							C6 = float(data[-2])
-							C12 = float(data[-1])
+							C6 = float(data[5+base])
+							C12 = float(data[6+base])
 							sigma = ((C12 / C6)**(1/6.)) * 10
 							epsilon = C6**2 / 4 / C12 / Rg
 						elif comboRule == '2' or comboRule == '3':
-							sigma = float(data[-2]) * 10
-							epsilon = float(data[-1]) / Rg
+							sigma = float(data[5+base]) * 10
+							epsilon = float(data[6+base]) / Rg
 						atomParms[index]['vdw'] = (vdwType, epsilon, sigma)
 					# Look for bondParms
 					elif 'bond' in section:
 						if 'type' in section:
-							index = (data[0].upper(), data[1].upper()) #atomTypes
+							index = (data[0], data[1]) #atomTypes
 						else:
 							index = (int(data[0]), int(data[1])) #atomNumbers
 						if not any([data[2]=='1', data[2]=='2', data[2]=='3', 
 							          data[2]=='4']):
 							raise Error('Cassandra only supports fixed bonds at this time.')
-						b0 = float(data[3]) * 10
-						bondParms[index] = ('fixed', b0)
+						if len(data) > 3:
+							b0 = float(data[3]) * 10
+							bondParms[index] = ('fixed', b0)
 					# Look for angleParms
 					elif 'angle' in section:
 						if 'type' in section:
-							index = (data[0].upper(), data[1].upper(), data[2].upper())
+							index = (data[0], data[1], data[2])
 						else:
 							index = (int(data[0]), int(data[1]), int(data[2]))
 						if data[3]!='1':
 							raise Error('Cassandra supports fixed or harmonic angles.')
-						theta = float(data[4])
-						ktheta = float(data[5]) / 2. / Rg
-						angleParms[index] = ('harmonic', ktheta, theta)
+						if len(data) > 4:
+							theta = float(data[4])
+							ktheta = float(data[5]) / 2. / Rg
+							angleParms[index] = ('harmonic', ktheta, theta)
 					# Look for dihedralParms
 					elif 'dihedral' in section:
 						if 'type' in section:
-							index = (data[0].upper(), data[1].upper(), data[2].upper(), 
-							         data[3].upper())
+							index = (data[0], data[1], data[2], data[3])
 						else:
 							index = (int(data[0]), int(data[1]), int(data[2]), int(data[3]))
-						if data[4]=='1' or data[4]=='4' or data[4]=='9': #CHARMM
-							delta = float(data[5])
-							a0 = float(data[6])
-							a1 = float(data[7])
-							dihedralParms[index] = ('CHARMM', a0, a1, delta)
-						elif data[4] == '2': #harmonic
-							phi = float(data[5])
-							kphi = float(data[6]) / 2. / Rg
-							dihedralParms[index] = ('harmonic', kphi, phi)
-						elif data[4] == '3': #Ryckaert-Bellemans
-							c0 = float(data[5])
-							c1 = float(data[6])
-							c2 = float(data[7])
-							c3 = float(data[8])
-							c4 = float(data[9])
-							a0 = c0 + c2 / 2. + c4/ 2.
-							a1 = c1 + 3. * c3 / 4.
-							a2 = c2 / 2. + c4 / 2.
-							a3 = c3 / 4.
-							if not c4 == 0. and c5 == 0.:
-								raise Error('Can only convert Ryckaert-Bellemans dihedrals ' + 
-								            'to OPLS if c4==0 and c5==0.\n')
-							dihedralParms[index] = ('OPLS', a0, a1, a2, a3)
-						elif data[4] == '5': #OPLS
-							a0 = 0.
-							a1 = float(data[5]) / 2.
-							a2 = float(data[6]) / 2.
-							a3 = float(data[7]) / 2.
-							dihedralParms[index] = ('OPLS', a0, a1, a2, a3)
-						else:
-							raise Error('Cassandra supports OPLS, CHARMM and harmonic ' + 
-													'dihedrals.')
+						if len(data) > 5:
+							if data[4]=='1' or data[4]=='4' or data[4]=='9': #CHARMM
+								delta = float(data[5])
+								a0 = float(data[6])
+								a1 = float(data[7])
+								dihedralParms[index] = ('CHARMM', a0, a1, delta)
+							elif data[4] == '2': #harmonic
+								phi = float(data[5])
+								kphi = float(data[6]) / 2. / Rg
+								dihedralParms[index] = ('harmonic', kphi, phi)
+							elif data[4] == '3': #Ryckaert-Bellemans
+								c0 = float(data[5])
+								c1 = float(data[6])
+								c2 = float(data[7])
+								c3 = float(data[8])
+								c4 = float(data[9])
+								c5 = float(data[10])
+								a0 = c0 + c1 + c2 + c3
+								a1 = - c1 - 3. * c3 / 4.
+								a2 = - c2 / 2.
+								a3 = - c3 / 4.
+								if not c4 == 0. and not c5 == 0.:
+									raise Error('Can only convert Ryckaert-Bellemans dihedrals ' + 
+															'to OPLS if c4==0 and c5==0.\n')
+								dihedralParms[index] = ('OPLS', a0, a1, a2, a3)
+							elif data[4] == '5': #OPLS
+								a0 = 0.
+								a1 = float(data[5]) / 2.
+								a2 = float(data[6]) / 2.
+								a3 = float(data[7]) / 2.
+								dihedralParms[index] = ('OPLS', a0, a1, a2, a3)
+#							else:
+#								raise Error('Cassandra supports OPLS, CHARMM and harmonic ' + 
+#														'dihedrals.\n' + line)
 				line = ff.readline()
 		line = ff.readline()
 
@@ -1255,7 +1261,7 @@ returns:
 
 	# Check that we have all the parms we need
 	for i in atomList:
-		for parm in ['vdw', 'charge', 'element', 'mass']:
+		for parm in ['vdw', 'charge', 'element', 'mass', 'bondtype']:
 			if parm not in atomParms[i]:
 				iType = atomParms[i]['type']
 				if parm in atomParms[iType]:
@@ -1266,7 +1272,7 @@ returns:
 		ij = tuple([int(i) for i in bond.split()])
 		ji = ij[::-1]
 		if ij not in bondParms and ji not in bondParms:
-			ijType = tuple([atomParms[i]['type'] for i in ij])
+			ijType = tuple([atomParms[i]['bondtype'] for i in ij])
 			jiType = ijType[::-1]
 			if ijType in bondParms:
 				bondParms[ij] = bondParms[ijType]
@@ -1278,7 +1284,7 @@ returns:
 		ijk = tuple([int(i) for i in angle.split()])
 		kji = ijk[::-1]
 		if ijk not in angleParms and kji not in angleParms:
-			ijkType = tuple([atomParms[i]['type'] for i in ijk])
+			ijkType = tuple([atomParms[i]['bondtype'] for i in ijk])
 			kjiType = ijkType[::-1]
 			if ijkType in angleParms:
 				angleParms[ijk] = angleParms[ijkType]
@@ -1290,12 +1296,18 @@ returns:
 		ijkl = tuple([int(i) for i in dihedral.split()])
 		lkji = ijkl[::-1]
 		if ijkl not in dihedralParms and lkji not in dihedralParms:
-			ijklType = tuple([atomParms[i]['type']for i in ijkl])
+			ijklType = tuple([atomParms[i]['bondtype']for i in ijkl])
 			lkjiType = ijklType[::-1]
+			jkDefault = tuple(['X', ijklType[1], ijklType[2], 'X'])
+			kjDefault = tuple(['X', lkjiType[1], lkjiType[2], 'X'])
 			if ijklType in dihedralParms:
 				dihedralParms[ijkl] = dihedralParms[ijklType]
 			elif lkjiType in dihedralParms:
 				dihedralParms[ijkl] = dihedralParms[lkjiType]
+			elif jkDefault in dihedralParms:
+				dihedralParms[ijkl] = dihedralParms[jkDefault]
+			elif kjDefault in dihedralParms:
+				dihedralParms[ijkl] = dihedralParms[kjDefault]
 			else:
 				raise Error('Dihedral parms for atoms ' + dihedral + ' not found.')	
 			

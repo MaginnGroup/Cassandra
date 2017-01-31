@@ -1,3 +1,5 @@
+#!add path to python here
+
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
@@ -69,9 +71,9 @@ y_axis = int(raw_input())+stride
 
 #determine output units
 output_options = ['Energy_Total','Enthalpy','Energy_Intra','Energy_Elec','Energy_LJ','Chemical_Potential',
-				'Nmols','Subensemble','Volume','Pressure','Temperature','Density']
+				'Nmols','Subensemble','Volume','Pressure','Pressure_XX', 'Pressure_YY', 'Pressure_ZZ', 'Temperature','Density']
 output_unit = ['(kJ/mol)-Ext','(kJ/mol)-Ext','(kJ/mol)-Ext','(kJ/mol)-Ext','(kJ/mol)-Ext','(kJ/mol)',
-				 ' ',' ','(A^3)','(bar)','(K)','(kg/m^3)']
+				 ' ',' ','(A^3)','(bar)','(bar)','(bar)','(bar)','(K)','(kg/m^3)']
 for i, option in enumerate(output_options):
 	if data_label[y_axis] == option:
 		output_ndx = i
@@ -83,7 +85,7 @@ print '\n'+'Output:', data_label[y_axis], output_unit[output_ndx],'\n'
 file1.close()
 
 #if output is Density, convert value to kg/m^3
-if data_label[y_axis]=="Density":
+if "Density" in data_label[y_axis]:
     print 'Input Molecular Weight (kg/mol) (i.e. 0.01802 for water):'
     MW = raw_input()
     conv_y = float(MW)/6.0221413E23*1E30

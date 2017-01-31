@@ -54,7 +54,7 @@ SUBROUTINE Save_Old_Cartesian_Coordinates(im,is)
 !
 ! translate.f90
 ! rotate.f90
-! rigid_dihedral_change.f90
+! Rotate_Dihedral.f90
 ! angle_distortion_change.f90
 ! bond_stretching_move.f90
 !
@@ -99,7 +99,7 @@ SUBROUTINE Save_Old_Internal_Coordinates(im,is)
 !
 ! The routine gets called by 
 !
-! rigid_dihedral_change
+! Rotate_Dihedral
 ! angle_distortion_change
 ! bond_stretching_move
 
@@ -186,7 +186,7 @@ SUBROUTINE Revert_Old_Cartesian_Coordinates(im,is)
 !
 ! translation
 ! rotation
-! rigid_dihedral_change
+! Rotate_Dihedral
 ! angle_distortion_change
 ! bond_stretching_move
 !
@@ -231,7 +231,7 @@ SUBROUTINE Revert_Old_Internal_Coordinates(im,is)
 ! 
 ! Called by
 !
-! rigid_dihedral_change
+! Rotate_Dihedral
 ! angle_distortion_change
 ! bond_stretching_move
 !

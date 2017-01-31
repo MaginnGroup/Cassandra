@@ -223,7 +223,7 @@ SUBROUTINE Flip_Move
   IF (int_charge_sum_style(ibox) == charge_ewald) THEN
     ! Compute Ewald reciprocal energy difference
     CALL Update_System_Ewald_Reciprocal_Energy(im,is,ibox,int_intra,e_recip)
-    delta_e = (e_recip - energy(ibox)%ewald_reciprocal)
+    delta_e = (e_recip - energy(ibox)%reciprocal)
   END IF
 
   ! Change in energy due to the move
@@ -252,7 +252,7 @@ SUBROUTINE Flip_Move
      
      IF(int_charge_sum_style(ibox) == charge_ewald .AND. &
        has_charge(is)) THEN
-        energy(ibox)%ewald_reciprocal = E_recip
+        energy(ibox)%reciprocal = E_recip
      END IF
   ELSE
 

@@ -79,7 +79,7 @@ CONTAINS
     CHARACTER*120, ALLOCATABLE :: prop_unit(:)
 
     ! Header line 1
-    IF (block_average) THEN
+    IF (block_avg) THEN
        WRITE(this_unit,'(A)') '# Block averages'
     ELSE
        WRITE(this_unit,'(A)') '# Instantaneous properties'
@@ -118,6 +118,19 @@ CONTAINS
        ELSE IF (prop_to_write == 'Pressure') THEN
           
           prop_unit(ii) = '(bar)'
+
+       ELSE IF (prop_to_write == 'Pressure_XX') THEN
+    
+          prop_unit(ii) = '(bar)'
+
+       ELSE IF (prop_to_write == 'Pressure_YY') THEN
+    
+          prop_unit(ii) = '(bar)'
+
+       ELSE IF (prop_to_write == 'Pressure_ZZ') THEN
+    
+          prop_unit(ii) = '(bar)'
+
 
        ELSE IF (prop_to_write == 'Volume') THEN
 
@@ -187,87 +200,180 @@ CONTAINS
       prop_written = prop_output(ii,file_number,this_box)
 
       IF (prop_written == 'Energy_Total') THEN
-
-         IF ( block_average) THEN
-            ac_energy(this_box,iblock)%total = ac_energy(this_box,iblock)%total / data_points_per_block
+         IF (block_avg) THEN
             write_buff(ii+1) = ac_energy(this_box,iblock)%total
          ELSE
             write_buff(ii+1) = energy(this_box)%total
          END IF
          write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
 
-
-      ELSE IF (prop_written == 'Temperature') THEN
-
-         write_buff(ii+1) = 1.0_DP/(beta(this_box)*kboltz)
-
-      ELSE IF (prop_written == 'Pressure_Setpoint') THEN
-
-         write_buff(ii+1) = pressure(this_box)%setpoint * atomic_to_bar
-
-      ELSE IF (prop_written == 'Energy_LJ') THEN
-
-         IF ( block_average) THEN
-            ac_energy(this_box,iblock)%inter_vdw = ac_energy(this_box,iblock)%inter_vdw / data_points_per_block
-            ac_energy(this_box,iblock)%intra_vdw = ac_energy(this_box,iblock)%intra_vdw / data_points_per_block
-            write_buff(ii+1) = ac_energy(this_box,iblock)%inter_vdw + ac_energy(this_box,iblock)%intra_vdw
-         ELSE
-            write_buff(ii+1) = energy(this_box)%inter_vdw + energy(this_box)%intra_vdw
-         END IF
-         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
-
-      ELSE IF (prop_written == 'Energy_Elec') THEN
-
-         IF ( block_average) THEN
-            ac_energy(this_box,iblock)%inter_q = ac_energy(this_box,iblock)%inter_q / data_points_per_block
-            ac_energy(this_box,iblock)%intra_q = ac_energy(this_box,iblock)%intra_q / data_points_per_block
-            write_buff(ii+1) = ac_energy(this_box,iblock)%inter_q + ac_energy(this_box,iblock)%intra_q
-         ELSE
-            write_buff(ii+1) = energy(this_box)%inter_q &
-                             + energy(this_box)%intra_q &
-                             + energy(this_box)%ewald_reciprocal &
-                             + energy(this_box)%self
-         END IF
-         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
-
       ELSE IF (prop_written == 'Energy_Intra') THEN
-
-         IF (block_average) THEN
-            ac_energy(this_box,iblock)%intra = ac_energy(this_box,iblock)%intra / data_points_per_block
+         IF (block_avg) THEN
             write_buff(ii+1) = ac_energy(this_box,iblock)%intra
          ELSE
             write_buff(ii+1) = energy(this_box)%intra
          END IF
          write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
 
-      ELSE IF (prop_written == 'Pressure') THEN
+      ELSE IF (prop_written == 'Energy_Inter') THEN
+         IF (block_avg) THEN
+            write_buff(ii+1) = ac_energy(this_box,iblock)%inter
+         ELSE
+            write_buff(ii+1) = energy(this_box)%inter
+         END IF
+         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
 
-         IF (block_average) THEN
-            ac_pressure(this_box,iblock) = ac_pressure(this_box,iblock) / data_points_per_block
+      ELSE IF (prop_written == 'Energy_Bond') THEN
+         IF (block_avg) THEN
+            write_buff(ii+1) = ac_energy(this_box,iblock)%bond
+         ELSE
+            write_buff(ii+1) = energy(this_box)%bond
+         END IF
+         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
+
+      ELSE IF (prop_written == 'Energy_Angle') THEN
+         IF (block_avg) THEN
+            write_buff(ii+1) = ac_energy(this_box,iblock)%angle
+         ELSE
+            write_buff(ii+1) = energy(this_box)%angle
+         END IF
+         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
+
+      ELSE IF (prop_written == 'Energy_Dihedral') THEN
+         IF (block_avg) THEN
+            write_buff(ii+1) = ac_energy(this_box,iblock)%dihedral
+         ELSE
+            write_buff(ii+1) = energy(this_box)%dihedral
+         END IF
+         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
+
+      ELSE IF (prop_written == 'Energy_Improper') THEN
+         IF (block_avg) THEN
+            write_buff(ii+1) = ac_energy(this_box,iblock)%improper
+         ELSE
+            write_buff(ii+1) = energy(this_box)%improper
+         END IF
+         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
+
+      ELSE IF (prop_written == 'Energy_IntraVDW') THEN
+         IF (block_avg) THEN
+            write_buff(ii+1) = ac_energy(this_box,iblock)%intra_vdw
+         ELSE
+            write_buff(ii+1) = energy(this_box)%intra_vdw
+         END IF
+         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
+
+      ELSE IF (prop_written == 'Energy_InterVDW') THEN
+         IF (block_avg) THEN
+            write_buff(ii+1) = ac_energy(this_box,iblock)%inter_vdw
+         ELSE
+            write_buff(ii+1) = energy(this_box)%inter_vdw
+         END IF
+         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
+
+      ELSE IF (prop_written == 'Energy_IntraQ') THEN
+         IF (block_avg) THEN
+            write_buff(ii+1) = ac_energy(this_box,iblock)%intra_q
+         ELSE
+            write_buff(ii+1) = energy(this_box)%intra_q
+         END IF
+         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
+
+      ELSE IF (prop_written == 'Energy_InterQ') THEN
+         IF (block_avg) THEN
+            write_buff(ii+1) = ac_energy(this_box,iblock)%inter_q
+         ELSE
+            write_buff(ii+1) = energy(this_box)%inter_q
+         END IF
+         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
+
+      ELSE IF (prop_written == 'Energy_LRC') THEN
+         IF (block_avg) THEN
+            write_buff(ii+1) = ac_energy(this_box,iblock)%lrc
+         ELSE
+            write_buff(ii+1) = energy(this_box)%lrc
+         END IF
+         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
+
+      ELSE IF (prop_written == 'Energy_Recip') THEN
+         IF (block_avg) THEN
+            write_buff(ii+1) = ac_energy(this_box,iblock)%reciprocal
+         ELSE
+            write_buff(ii+1) = energy(this_box)%reciprocal
+         END IF
+         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
+
+      ELSE IF (prop_written == 'Energy_Self') THEN
+         IF (block_avg) THEN
+            write_buff(ii+1) = ac_energy(this_box,iblock)%self
+         ELSE
+            write_buff(ii+1) = energy(this_box)%self
+         END IF
+         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
+
+      ELSE IF (prop_written == 'Pressure') THEN
+         IF (block_avg) THEN
             write_buff(ii+1) = ac_pressure(this_box,iblock)
          ELSE
             IF (pressure(this_box)%last_calc /= i_mcstep) THEN
                pressure(this_box)%last_calc = i_mcstep
                CALL Compute_Pressure(this_box)
             END IF
-
             write_buff(ii+1) = pressure(this_box)%computed
          END IF
          write_buff(ii+1) = write_buff(ii+1) * atomic_to_bar
 
+
+      ELSE IF (prop_written == 'Pressure_XX') THEN
+
+         IF (pressure(this_box)%last_calc /= i_mcstep) THEN
+            pressure(this_box)%last_calc = i_mcstep
+            CALL Compute_Pressure(this_box)
+         END IF
+
+         pressure(this_box)%computed = pressure(this_box)%ideal &
+                            + Pressure_tensor(1,1,this_box) &
+                            * atomic_to_bar
+
+         write_buff(ii+1) = pressure(this_box)%computed
+
+      ELSE IF (prop_written == 'Pressure_YY') THEN
+
+         IF (pressure(this_box)%last_calc /= i_mcstep) THEN
+            pressure(this_box)%last_calc = i_mcstep
+            CALL Compute_Pressure(this_box)
+         END IF
+
+         pressure(this_box)%computed = pressure(this_box)%ideal &
+                            + Pressure_tensor(2,2,this_box) &
+                            * atomic_to_bar
+
+         write_buff(ii+1) = pressure(this_box)%computed
+
+
+      ELSE IF (prop_written == 'Pressure_ZZ') THEN
+
+         IF (pressure(this_box)%last_calc /= i_mcstep) THEN
+            pressure(this_box)%last_calc = i_mcstep
+            CALL Compute_Pressure(this_box)
+         END IF
+
+         pressure(this_box)%computed = pressure(this_box)%ideal &
+                            + Pressure_tensor(3,3,this_box) &
+                            * atomic_to_bar
+
+         write_buff(ii+1) = pressure(this_box)%computed
+
+
       ELSE IF (prop_written == 'Volume') THEN
-         
-         IF (block_average) THEN
-            ac_volume(this_box,iblock) = ac_volume(this_box,iblock) / data_points_per_block
+         IF (block_avg) THEN
             write_buff(ii+1) = ac_volume(this_box,iblock)
          ELSE
             write_buff(ii+1) = box_list(this_box)%volume
          END IF
 
       ELSE IF (prop_written == 'Enthalpy') THEN
-
-         IF (block_average) THEN
-            ac_enthalpy(this_box,iblock) = ac_enthalpy(this_box,iblock) / data_points_per_block
+         IF (block_avg) THEN
             write_buff(ii+1) = ac_enthalpy(this_box,iblock)
          ELSE
             IF (int_sim_type == sim_npt .OR. int_sim_type == sim_gemc_npt) THEN
@@ -277,16 +383,13 @@ CONTAINS
                   pressure(this_box)%last_calc = i_mcstep
                   CALL Compute_Pressure(this_box)
                END IF
-
                write_buff(ii+1) = energy(this_box)%total + pressure(this_box)%computed * box_list(this_box)%volume
             END IF
          END IF
          write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
 
       ELSE IF (prop_written(1:5) == 'Nmols') THEN
-
-         IF (block_average) THEN
-            ac_nmols(is,this_box,iblock) = ac_nmols(is,this_box,iblock) / data_points_per_block
+         IF (block_avg) THEN
             write_buff(ii+1) = ac_nmols(is,this_box,iblock)
          ELSE
             write_buff(ii+1) = nmols(is,this_box)
@@ -299,9 +402,7 @@ CONTAINS
          
 
       ELSE IF (prop_written(1:7) == 'Density') THEN
-
-         IF (block_average) THEN
-            ac_density(is_dens,this_box,iblock) = ac_density(is_dens,this_box,iblock) / data_points_per_block
+         IF (block_avg) THEN
             write_buff(ii+1) = ac_density(is_dens,this_box,iblock)
          ELSE
             write_buff(ii+1) = REAL(nmols(is_dens,this_box),DP) / box_list(this_box)%volume
@@ -315,8 +416,7 @@ CONTAINS
          is_cp = is_cp + 1
          
       ELSE IF (prop_written == "Mass_Density") THEN
-         IF (block_average) THEN
-            ac_mass_density(this_box,iblock) = ac_mass_density(this_box,iblock) / data_points_per_block
+         IF (block_avg) THEN
             write_buff(ii+1) = ac_mass_density(this_box,iblock)
          ELSE
             mass_density = 0.0_DP
