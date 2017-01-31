@@ -72,14 +72,13 @@ SUBROUTINE Deletion
   INTEGER, ALLOCATABLE :: frag_order(:)
   INTEGER :: k, mcstep
 
-  REAL(DP) :: dE, dE_frag
+  REAL(DP) :: dE, dE_intra, dE_inter, dE_frag
   REAL(DP) :: E_bond, E_angle, E_dihedral, E_improper
   REAL(DP) :: E_intra_vdw, E_intra_qq
   REAL(DP) :: E_inter_vdw, E_inter_qq, E_periodic_qq
   REAL(DP) :: E_reciprocal, E_self, E_lrc
-  REAL(DP) :: nrg_ring_frag_tot
+  REAL(DP) :: E_ring_frag
   REAL(DP) :: ln_pacc, ln_pseq, ln_pbias, this_lambda
-  REAL(DP) :: E_intra_vdw_igas, E_intra_qq_igas
 
   LOGICAL :: inter_overlap, cbmc_overlap, intra_overlap
   LOGICAL :: accept_or_reject, fh_outside_bounds
@@ -90,7 +89,7 @@ SUBROUTINE Deletion
   ln_pacc = 0.0_DP
   ln_pseq = 0.0_DP
   ln_pbias = 0.0_DP
-  nrg_ring_frag_tot = 0.0_DP
+  E_ring_frag = 0.0_DP
   inter_overlap = .FALSE.
   cbmc_overlap = .FALSE.
   intra_overlap = .FALSE.
@@ -174,7 +173,7 @@ SUBROUTINE Deletion
   get_fragorder = .TRUE. !
   ALLOCATE(frag_order(nfragments(is)))
   CALL Build_Molecule(lm,is,ibox,frag_order,this_lambda, &
-          ln_pseq, ln_pbias, nrg_ring_frag_tot, cbmc_overlap)
+          ln_pseq, ln_pbias, E_ring_frag, cbmc_overlap)
   DEALLOCATE(frag_order)
   
   ! cbmc_overlap will only trip if the molecule being deleted had bad contacts
@@ -239,7 +238,7 @@ SUBROUTINE Deletion
              E_inter_vdw,E_inter_qq,inter_overlap)
   END IF
 
-  dE = - E_inter_vdw - E_inter_qq
+  dE_inter = - E_inter_vdw - E_inter_qq
 
   ! 4.2) Bonded intramolecular energies
 
@@ -248,7 +247,7 @@ SUBROUTINE Deletion
   CALL Compute_Molecule_Dihedral_Energy(lm,is,E_dihedral)
   CALL Compute_Molecule_Improper_Energy(lm,is,E_improper)
 
-  dE = dE - E_bond - E_angle - E_dihedral - E_improper  
+  dE_intra = - E_bond - E_angle - E_dihedral - E_improper  
   
   ! 4.3) Nonbonded intramolecular energies
 
@@ -256,7 +255,8 @@ SUBROUTINE Deletion
           E_intra_vdw,E_intra_qq,E_periodic_qq,intra_overlap) 
   E_inter_qq = E_inter_qq + E_periodic_qq
 
-  dE = dE - E_intra_vdw - E_intra_qq - E_periodic_qq
+  dE_intra = dE_intra - E_intra_vdw - E_intra_qq
+  dE_inter = dE_inter - E_periodic_qq
 
   ! 4.4) Ewald energies
 
@@ -268,13 +268,13 @@ SUBROUTINE Deletion
          CALL Update_System_Ewald_Reciprocal_Energy(lm,is,ibox, &
                  int_deletion,E_reciprocal)
 
-         dE = dE + (E_reciprocal - energy(ibox)%ewald_reciprocal)
+         dE_inter = dE_inter + (E_reciprocal - energy(ibox)%reciprocal)
 
       END IF
 
       CALL Compute_Molecule_Self_Energy(lm,is,ibox,E_self)
 
-      dE = dE - E_self 
+      dE_inter = dE_inter - E_self 
   END IF
 
   ! 4.5) Long-range energy correction
@@ -290,7 +290,7 @@ SUBROUTINE Deletion
      END DO
 
      CALL Compute_LR_correction(ibox,e_lrc)
-     dE = dE + ( e_lrc - energy(ibox)%lrc )
+     dE_inter = dE_inter + ( e_lrc - energy(ibox)%lrc )
 
   END IF  
   
@@ -314,8 +314,9 @@ SUBROUTINE Deletion
   ! where the primes (') indicate that additional intensive terms have been
   ! absorbed into the chemical potential.
 
-  ! change in energy less energy used to bias fragment selection
-  dE_frag = - E_angle - nrg_ring_frag_tot
+  ! change in energy, less energy used to bias fragment selection
+  dE = dE_intra + dE_inter
+  dE_frag = - E_angle - E_ring_frag
   ln_pacc = beta(ibox) * (dE - dE_frag)
 
   ! chemical potential
@@ -334,8 +335,8 @@ SUBROUTINE Deletion
   IF (accept) THEN
      ! Update energies
      energy(ibox)%total = energy(ibox)%total + dE
-     energy(ibox)%intra = energy(ibox)%intra - E_bond - E_angle &
-                            - E_dihedral - E_improper
+     energy(ibox)%intra = energy(ibox)%intra + dE_intra
+     energy(ibox)%inter = energy(ibox)%inter + dE_inter
      energy(ibox)%bond = energy(ibox)%bond - E_bond
      energy(ibox)%angle = energy(ibox)%angle - E_angle
      energy(ibox)%dihedral = energy(ibox)%dihedral - E_dihedral
@@ -350,7 +351,7 @@ SUBROUTINE Deletion
 
          IF ( int_charge_sum_style(ibox) == charge_ewald .AND. &
               has_charge(is)) THEN
-            energy(ibox)%ewald_reciprocal = E_reciprocal
+            energy(ibox)%reciprocal = E_reciprocal
          END IF
 
          energy(ibox)%self = energy(ibox)%self - E_self
@@ -382,7 +383,6 @@ SUBROUTINE Deletion
      ! Increment counter
      nsuccess(is,ibox)%deletion = nsuccess(is,ibox)%deletion + 1
 
-!     CALL Check_System_Energy(1,randno)
   ELSE
 
      IF ( (int_charge_sum_style(ibox) == charge_ewald) .AND. &

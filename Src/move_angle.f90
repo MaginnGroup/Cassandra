@@ -65,14 +65,14 @@ SUBROUTINE Angle_Distortion
   REAL(DP) :: tempx, tempy, tempz, cos_dtheta, sin_dtheta
   REAL(DP) :: rand_no, p_acc
   
+  REAL(DP) :: dE, dE_inter, dE_intra
   REAL(DP) :: E_bond, E_angle, E_dihedral, E_improper, E_intra_vdw, E_intra_qq
   REAL(DP) :: E_inter_vdw, E_inter_qq, E_periodic_qq
   REAL(DP) :: E_bond_move, E_angle_move, E_dihedral_move, E_improper_move, E_intra_vdw_move
   REAL(DP) :: E_intra_qq_move, E_inter_vdw_move, E_inter_qq_move
   REAL(DP) :: E_reciprocal_move
-  REAL(DP) :: delta_e
 
-  LOGICAL ::  inter_overlap,intra_overlap, accept_or_reject
+  LOGICAL ::  inter_overlap, intra_overlap, accept_or_reject
 
   ! Pair Energy variables
 
@@ -193,24 +193,20 @@ SUBROUTINE Angle_Distortion
   ! Store the old positions of the atoms 
   CALL Save_Old_Cartesian_Coordinates(lm,is)
   CALL Save_Old_Internal_Coordinates(lm,is)
-
   
   ! determine the atoms that define the angle
   atom1 = angle_list(angle_to_move,is)%atom1
   atom2 = angle_list(angle_to_move,is)%atom2
   atom3 = angle_list(angle_to_move,is)%atom3
 
-
   ! We first determine the angle before the move and also the probability of observing this
   ! angle. 
-
   theta_0 = internal_coord_list(angle_to_move,im,is)%bond_angle_radians
   ! obtain the probability associated with this angle
 
   CALL Get_Theta_Prob(angle_to_move,is,theta_0,prob_0)
 
   CALL Pick_Angle(angle_to_move,is,theta_new,prob_new)
-  
   ! Next step is to determine the position of atom_to_move such that bond lengths
   ! are not perturbed. We will implement the algorithm in which bond angle distortion
   ! is performed in the plane of three atoms atom1,atom2 and atom3 that define the angle
@@ -333,7 +329,6 @@ SUBROUTINE Angle_Distortion
   END DO
 
   ! Now we will rotate the bond formed by iatom2-iatom1 by theta_new - theta_0
-
   delta_theta = theta_new - theta_0
 
   ! This rotation takes place about z axis. If the new angle is greater than the old
@@ -426,12 +421,30 @@ SUBROUTINE Angle_Distortion
      END IF
   ELSE
 
-     delta_e = 0.0_DP
-
      CALL Compute_Molecule_Bond_Energy(lm,is,E_bond_move)
      CALL Compute_Molecule_Angle_Energy(lm,is,E_angle_move)
      CALL Compute_Molecule_Dihedral_Energy(lm,is,E_dihedral_move)
      CALL Compute_Molecule_Improper_Energy(lm,is,E_improper_move)
+     
+     IF (ABS(E_bond - E_bond_move) .GT. tiny_number) THEN
+        err_msg = ''
+        err_msg(1) = 'Bond energy changed after bending angle'
+        CALL Clean_Abort(err_msg,"Angle_Distortion")
+     END IF
+
+     IF (ABS(E_dihedral - E_dihedral_move) .GT. tiny_number) THEN
+        err_msg = ''
+        err_msg(1) = 'Dihedral energy changed after bending angle'
+        CALL Clean_Abort(err_msg,"Angle_Distortion")
+     END IF
+
+     ! energy difference
+     dE_intra = (E_angle_move - E_angle) &
+              + (E_improper_move - E_improper) &
+              + (E_intra_vdw_move - E_intra_vdw) &
+              + (E_intra_qq_move - E_intra_qq)
+     dE_inter = (E_inter_vdw_move - E_inter_vdw) &
+              + (E_inter_qq_move - E_inter_qq)
 
      IF ( int_charge_sum_style(ibox) == charge_ewald .and. has_charge(is)) THEN
         
@@ -443,53 +456,34 @@ SUBROUTINE Angle_Distortion
         
         CALL Update_System_Ewald_Reciprocal_Energy(lm,is,ibox, &
              int_intra,E_reciprocal_move)
-        delta_e = (E_reciprocal_move - energy(ibox)%ewald_reciprocal)
+        dE_inter = dE_inter + (E_reciprocal_move - energy(ibox)%reciprocal)
             
      END IF
      
-     ! energy difference
-
-     delta_e = (E_bond_move - E_bond) &
-             + (E_angle_move - E_angle) &
-             + (E_dihedral_move - E_dihedral) &
-             + (E_improper_move - E_improper) &
-             + (E_intra_vdw_move - E_intra_vdw) &
-             + (E_intra_qq_move - E_intra_qq) &
-             + (E_inter_vdw_move - E_inter_vdw) &
-             + (E_inter_qq_move - E_inter_qq) + delta_e
-
+     dE = dE_intra + dE_inter
      IF ( int_sim_type == sim_nvt_min ) THEN
-        IF ( delta_e <= 0.0_DP ) THEN
+        IF ( dE <= 0.0_DP ) THEN
            accept = .TRUE.
-        ELSE
-           accept = .FALSE.
         END IF
-        
      ELSE
-
-        ln_pacc = beta(ibox) * delta_e
+        ln_pacc = beta(ibox) * dE
         accept = accept_or_reject(ln_pacc)
-
      END IF
   
      IF ( accept ) THEN
-        !     write(*,*) 'accepted', theta_new
+        ! write(*,*) 'accepted', theta_new
         ! accept the move and update the energies
-        energy(ibox)%intra = energy(ibox)%intra + E_bond_move - E_bond + E_angle_move - E_angle + &
-             E_dihedral_move - E_dihedral + E_improper_move - E_improper
-        energy(ibox)%bond = energy(ibox)%bond + E_bond_move - E_bond
+        energy(ibox)%total = energy(ibox)%total + dE
+        energy(ibox)%intra = energy(ibox)%intra + dE_intra
+        energy(ibox)%inter = energy(ibox)%inter + dE_inter
         energy(ibox)%angle = energy(ibox)%angle + E_angle_move - E_angle
-        energy(ibox)%dihedral = energy(ibox)%dihedral + E_dihedral_move - E_dihedral
         energy(ibox)%intra_vdw = energy(ibox)%intra_vdw + E_intra_vdw_move - E_intra_vdw
-        energy(ibox)%intra_q   = energy(ibox)%intra_q   + E_intra_qq_move - E_intra_qq
+        energy(ibox)%intra_q   = energy(ibox)%intra_q   + E_intra_qq_move  - E_intra_qq
         energy(ibox)%inter_vdw = energy(ibox)%inter_vdw + E_inter_vdw_move - E_inter_vdw
-        energy(ibox)%inter_q   = energy(ibox)%inter_q   + E_inter_qq_move - E_inter_qq
-
+        energy(ibox)%inter_q   = energy(ibox)%inter_q   + E_inter_qq_move  - E_inter_qq
         IF (int_charge_sum_style(ibox) == charge_ewald) THEN
-           energy(ibox)%ewald_reciprocal = E_reciprocal_move
+           energy(ibox)%reciprocal = E_reciprocal_move
         END IF
-
-        energy(ibox)%total = energy(ibox)%total + delta_e
 
         nsuccess(is,ibox)%angle = nsuccess(is,ibox)%angle + 1
 

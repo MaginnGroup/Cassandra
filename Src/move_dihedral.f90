@@ -20,7 +20,7 @@
 !********************************************************************************
 
 !********************************************************************************
-SUBROUTINE Rigid_Dihedral_Change
+SUBROUTINE Rotate_Dihedral
 !********************************************************************************
 
 !********************************************************************************
@@ -89,12 +89,12 @@ SUBROUTINE Rigid_Dihedral_Change
   REAL(DP) :: perp_vec1(3), perp_vec2(3), aligner(3,3), hanger(3,3)
   REAL(DP) :: phi_trial, cosphi, sinphi, tempx, tempy, tempz
 
-  REAL(DP) :: E_bond, E_angle, E_dihedral, E_improper, E_intra_vdw, E_intra_qq, E_inter_vdw, E_inter_qq, E_periodic_qq
-  REAL(DP) :: E_bond_move, E_angle_move, E_dihedral_move, E_improper_move, E_intra_vdw_move
-  REAL(DP) :: E_intra_qq_move, W_intra_vdw, W_intra_qq, W_inter_vdw, W_inter_qq
-  REAL(DP) :: W_intra_vdw_move, W_intra_qq_move, W_inter_vdw_move, W_inter_qq_move
-  REAL(DP) :: E_reciprocal_move, E_inter_vdw_move, E_inter_qq_move, delta_e, p_acc
-  REAL(DP) :: rand_no, W_reciprocal_move
+  REAL(DP) :: dE, dE_intra, dE_inter
+  REAL(DP) :: E_bond, E_angle, E_dihedral, E_improper, E_intra_vdw, E_intra_qq
+  REAL(DP) :: E_inter_vdw, E_inter_qq, E_periodic_qq
+  REAL(DP) :: E_bond_move, E_angle_move, E_dihedral_move, E_improper_move, E_intra_vdw_move, E_intra_qq_move
+  REAL(DP) :: E_inter_vdw_move, E_inter_qq_move, E_reciprocal_move
+  REAL(DP) :: rand_no
 
   REAL(DP), DIMENSION(3,3) :: tvdm, tcdm, qw_di
 
@@ -193,11 +193,9 @@ SUBROUTINE Rigid_Dihedral_Change
   ntrials(is,ibox)%dihedral = ntrials(is,ibox)%dihedral + 1
 
   ! Store old positions and internal cooridinates
-
   CALL Save_Old_Cartesian_Coordinates(lm,is)
   CALL Save_Old_Internal_Coordinates(lm,is)
 
-  
   ! Compute the bonded interactions before the move
   CALL Compute_Molecule_Bond_Energy(lm,is,E_bond)
   CALL Compute_Molecule_Angle_Energy(lm,is,E_angle)
@@ -240,7 +238,7 @@ SUBROUTINE Rigid_Dihedral_Change
   IF (AllocateStatus /=0) THEN
      err_msg =''
      err_msg(1) = 'Memory could not be allocated to atoms_to_place_list'
-     CALL Clean_Abort(err_msg,'Rigid_Dihedral_Change')
+     CALL Clean_Abort(err_msg,'Rotate_Dihedral')
   END IF
   atoms_to_place_list = 0
   ! Choose one of the ends to move at random and relable the atoms
@@ -337,7 +335,6 @@ SUBROUTINE Rigid_Dihedral_Change
   ! apply this transformation only to the atoms that are presently
   ! involved in the dihedral and that will move as a result of the
   ! change in dihedral
-
   DO j = 1, natoms_to_place
      
      this_atom = atoms_to_place_list(j)
@@ -357,17 +354,13 @@ SUBROUTINE Rigid_Dihedral_Change
 
   !-- at this point iatom1, iatom2, iatom3 must be in xy plane. Now we will apply a rotation
   !-- around the axis atom2-atom3. Choose a dihedral angle randomly from a phi-max
-
-
   phi_trial = 2.0_DP * PI * rranf()
  
   !!!phi_trial = ( 2.0_DP * rranf() - 1.0_DP) * species_list(is)%max_torsion
- 
   cosphi = DCOS(phi_trial)
   sinphi = DSIN(phi_trial)
 
   ! Rotate the vectors of the atoms that move due to dihedral angle change by phi_trial
-
   DO j = 1, natoms_to_place
 
      this_atom = atoms_to_place_list(j)
@@ -417,15 +410,10 @@ SUBROUTINE Rigid_Dihedral_Change
   atom_list(:,lm,is)%ryp = atom_list(:,lm,is)%ryp + iatom2_ryp
   atom_list(:,lm,is)%rzp = atom_list(:,lm,is)%rzp + iatom2_rzp
 
-  delta_e = 0.0_DP
   ! Now compute the energy of this molecule in the new conformation. First compute the intramolecular
   ! nonbonded interactions so that if an overlap is detected, the move can be immediately rejected.
 
   ! Update the COM and distance of the atom farthest from COM
-
-  ! Check to make sure that the molecule has not moved out of the slit pore
-
-
   inter_overlap = .FALSE.
   CALL Get_COM(lm,is)
   CALL Compute_Max_COM_Distance(lm,is)
@@ -434,14 +422,12 @@ SUBROUTINE Rigid_Dihedral_Change
 
   IF (intra_overlap) inter_overlap = .TRUE.
 
-  IF ( .NOT. inter_overlap) THEN
+  IF (.NOT. inter_overlap) THEN
      CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is,E_inter_vdw_move,E_inter_qq_move,inter_overlap)
      E_inter_qq_move = E_inter_qq_move + E_periodic_qq
-  
   END IF
      
   IF (inter_overlap) THEN
-     
      ! Reject the move, reset the old cartesian and internal coordinates
 
      CALL Revert_Old_Cartesian_Coordinates(lm,is)
@@ -459,68 +445,68 @@ SUBROUTINE Rigid_Dihedral_Change
      CALL Compute_Molecule_Dihedral_Energy(lm,is,E_dihedral_move)
      CALL Compute_Molecule_Improper_Energy(lm,is,E_improper_move)
 
+     IF (ABS(E_bond - E_bond_move) .GT. tiny_number) THEN
+        err_msg = ''
+        err_msg(1) = 'Bond energy changed after rotating dihedral'
+        CALL Clean_Abort(err_msg,"Rotate_Dihedral")
+     END IF
+
+     IF (ABS(E_angle - E_angle_move) .GT. tiny_number) THEN
+        err_msg = ''
+        err_msg(1) = 'Angle energy changed after rotating dihedral'
+        CALL Clean_Abort(err_msg,"Rotate_Dihedral")
+     END IF
+
+     ! energy difference
+     dE_intra = (E_dihedral_move - E_dihedral) &
+              + (E_improper_move - E_improper) &
+              + (E_intra_vdw_move - E_intra_vdw) &
+              + (E_intra_qq_move - E_intra_qq)
+     dE_inter = (E_inter_vdw_move - E_inter_vdw) &
+              + (E_inter_qq_move - E_inter_qq)
 
      IF (int_charge_sum_style(ibox) == charge_ewald) THEN
         CALL Update_System_Ewald_Reciprocal_Energy(lm,is,ibox, &
              int_intra,E_reciprocal_move)
-        delta_e = E_reciprocal_move - energy(ibox)%ewald_reciprocal
-
-        
+        dE_inter = dE_inter + E_reciprocal_move - energy(ibox)%reciprocal
      END IF
 
-     ! energy difference
-
-     delta_e = delta_e + (E_bond_move - E_bond) + (E_angle_move - E_angle) &
-             + (E_dihedral_move - E_dihedral) + (E_improper_move - E_improper) &
-             + (E_intra_vdw_move - E_intra_vdw) &
-             + (E_intra_qq_move - E_intra_qq) &
-             + (E_inter_vdw_move - E_inter_vdw) &
-             + (E_inter_qq_move - E_inter_qq)
-
+     dE = dE_intra + dE_inter
+ 
      IF ( int_sim_type == sim_nvt_min) THEN
-        IF ( delta_e <= 0.0_DP ) THEN
-           p_acc = 1.0_DP
-        ELSE
-           p_acc = 0.0_DP
+        IF ( dE <= 0.0_DP ) THEN
+           accept = .TRUE.
         END IF
-
      ELSE
-        
-        ln_pacc = beta(ibox) * delta_e
+        ln_pacc = beta(ibox) * dE
         accept = accept_or_reject(ln_pacc)
-
      END IF
 
      IF ( accept ) THEN
         ! accept the move and update the energies
-        energy(ibox)%intra = energy(ibox)%intra + E_bond_move - E_bond + E_angle_move - E_angle + &
-             E_dihedral_move - E_dihedral + E_improper_move - E_improper
-        energy(ibox)%bond = energy(ibox)%bond + E_bond_move - E_bond
-        energy(ibox)%angle = energy(ibox)%angle + E_angle_move - E_angle
-        energy(ibox)%dihedral = energy(ibox)%dihedral + E_dihedral_move - E_dihedral
+        energy(ibox)%total = energy(ibox)%total + dE
+        energy(ibox)%intra = energy(ibox)%intra + dE_intra
+        energy(ibox)%inter = energy(ibox)%inter + dE_inter
+        energy(ibox)%dihedral  = energy(ibox)%dihedral  + E_dihedral_move  - E_dihedral
+        energy(ibox)%improper  = energy(ibox)%improper  + E_improper_move  - E_improper
         energy(ibox)%intra_vdw = energy(ibox)%intra_vdw + E_intra_vdw_move - E_intra_vdw
-        energy(ibox)%intra_q   = energy(ibox)%intra_q   + E_intra_qq_move - E_intra_qq
+        energy(ibox)%intra_q   = energy(ibox)%intra_q   + E_intra_qq_move  - E_intra_qq
         energy(ibox)%inter_vdw = energy(ibox)%inter_vdw + E_inter_vdw_move - E_inter_vdw
-        energy(ibox)%inter_q   = energy(ibox)%inter_q   + E_inter_qq_move - E_inter_qq
+        energy(ibox)%inter_q   = energy(ibox)%inter_q   + E_inter_qq_move  - E_inter_qq
 
         IF (int_charge_sum_style(ibox) == charge_ewald) THEN
-           energy(ibox)%ewald_reciprocal = E_reciprocal_move
+           energy(ibox)%reciprocal = E_reciprocal_move
         END IF
 
-        energy(ibox)%total = energy(ibox)%total + delta_e
-
         ! update success counter
-
         nsuccess(is,ibox)%dihedral = nsuccess(is,ibox)%dihedral + 1
 
         ! Compute the COM positions
-
         CALL Get_Internal_Coordinates(lm,is)
         IF (l_pair_nrg) DEALLOCATE(pair_vdw_temp,pair_qq_temp)
      ELSE 
 
         ! Reject the move and revert the old coordinates
-
         CALL Revert_Old_Cartesian_Coordinates(lm,is)
         CALL Revert_Old_Internal_Coordinates(lm,is)
 
@@ -539,11 +525,11 @@ SUBROUTINE Rigid_Dihedral_Change
        WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,F9.3)') &
              i_mcstep, 'dihed' , lm, is, ibox, accept, ln_pacc
      END IF
-
+  
   END IF
 
 !  DEALLOCATE(atoms_to_place_list)
 
-END SUBROUTINE Rigid_Dihedral_Change
+END SUBROUTINE Rotate_Dihedral
 
   

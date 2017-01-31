@@ -60,7 +60,7 @@ PROGRAM Main
   !        Compute_System_Total_Energy
   !        Get_Molecules_Species
   !        Angle_Distortion
-  !        Rigid_Dihedral_Change
+  !        Rotate_Dihedral
   !        NVTMC_Driver
   !        NPTMC_Driver
   !        GCMC_Driver
@@ -106,7 +106,7 @@ PROGRAM Main
 
 !********************************************************************************
 ! Code name and version. Change as updates are made.
-  version = 'Cassandra Version 1.2 20160804'
+  version = 'Cassandra Development Version'
 ! Get starting time information (intrinsic function)
   CALL DATE_AND_TIME(date,time,zone,begin_values)
   CALL cpu_time(start_time)
@@ -134,6 +134,7 @@ PROGRAM Main
 ! Now read input file and get the run_name
   CALL Get_Run_Name
 
+
 ! Create log file and write out some initial information
   CALL Name_Files(run_name,'.log',logfile)
 
@@ -152,6 +153,8 @@ PROGRAM Main
   WRITE(logunit,'(A80)')'            / /___/ /_/ (__  |__  ) /_/ / / / / /_/ / /  / /_/ /               '
   WRITE(logunit,'(A80)')'            \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                '
   WRITE(logunit,'(A80)')'                                                                               '
+  WRITE(logunit,'(A80)')'********************************************************************************'
+  WRITE(logunit,'(A80)')'**********************************Log File**************************************'
   WRITE(logunit,'(A80)')'********************************************************************************'
 ! Create a checkpoint file to periodically write system information
 
@@ -375,66 +378,21 @@ PROGRAM Main
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Compute total energy'
   WRITE(logunit,'(A80)') '********************************************************************************'
-
-  ! compute total system energy
-  overlap = .FALSE.
-     
-  DO i = 1, nbr_boxes
-       
-     CALL Compute_System_Total_Energy(i,.TRUE.,overlap)
-
-     IF (overlap) THEN
-        ! overlap was detected between two atoms so abort the program
-        err_msg = ''
-        err_msg(1) = 'Overlap detected in the starting structure'
-        err_msg(2) = 'Start type '//start_type(i)
-        CALL Clean_Abort(err_msg,'Main')
-     END IF
-  END DO
-  
-  ! write out the initial energy components to the log file
-  
   DO ibox = 1,nbr_boxes
-
-     WRITE(logunit,'(X,A,X,I1)') 'Starting energy components for box', ibox
-     WRITE(logunit,'(2X,A)') 'Atomic units-Extensive'
-     WRITE(logunit,'(X,A59)') '-----------------------------------------------------------'
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Total system energy' , energy(ibox)%total
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecular energy', energy(ibox)%intra
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Bond energy', energy(ibox)%bond
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Bond angle energy', energy(ibox)%angle
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Dihedral angle energy', energy(ibox)%dihedral
-     WRITE(logunit,'(3X,A,T30,F20.3)') 'Improper angle energy', energy(ibox)%improper
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecule vdw', energy(ibox)%intra_vdw
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecule q', energy(ibox)%intra_q
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule vdw', energy(ibox)%inter_vdw
-     IF (int_vdw_sum_style(ibox) == vdw_cut_tail) &
-        WRITE(logunit,'(X,A,T30,F20.3)') 'Long range correction', energy(ibox)%lrc
-     WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule q', energy(ibox)%inter_q
-     IF (int_charge_sum_style(ibox) == charge_ewald) THEN
-        WRITE(logunit,'(X,A,T30,I20)') 'Number of vectors', nvecs(ibox)
-        WRITE(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald', energy(ibox)%ewald_reciprocal
-        WRITE(logunit,'(X,A,T30,F20.3)') 'Self ewald', energy(ibox)%self
-     ELSE IF (int_charge_sum_style(ibox) == charge_dsf) THEN
-        WRITE(logunit,'(X,A,T30,F20.3)') 'Self DSF', energy(ibox)%self
-     END IF
-
-     WRITE(logunit,'(X,A59)') '-----------------------------------------------------------'
-     WRITE(logunit,*)
-
+     CALL Check_System_Energy(ibox,.FALSE.)
   END DO
   WRITE(logunit,'(A80)') '********************************************************************************'
 
   ! Write initial properties, if needed
   DO ibox = 1, nbr_boxes
     IF (start_type(ibox) == 'make_config' .OR. n_mcsteps <= initial_mcstep) THEN
-      IF (block_average) THEN
+      IF (block_avg) THEN
          ! need to write instantaneous props for this first step
-         block_average = .FALSE.
+         block_avg = .FALSE.
          CALL Write_Properties(ibox)
-         block_average = .TRUE.
+         block_avg = .TRUE.
          ! need to rewrite the header next call so additional props will be
-         ! labeled as block_averages
+         ! labeled as block_avgs
          first_open(:,ibox) = .TRUE.
       ELSE
          CALL Write_Properties(ibox)
@@ -491,85 +449,17 @@ PROGRAM Main
   WRITE(logunit,'(A80)') '********************************************************************************'
 
   ! write error of the mean
-  IF (block_average) THEN
+  IF (block_avg) THEN
      DO ibox = 1, nbr_boxes
         CALL Write_Mean_Error(ibox)
      END DO
   END IF
 
   WRITE(logunit,*)
-  WRITE(logunit,'(A)') 'Report ending energy & then re-compute from scratch'
+  WRITE(logunit,'(A)') 'Energy of final configuration'
   WRITE(logunit,'(A80)') '********************************************************************************'
-
-  !***************************************************************************
-  ! Report current energies and compute the energies from scratch
-
   DO ibox = 1, nbr_boxes
-    WRITE(logunit,*)
-    WRITE(logunit,*)
-
-    ! Write the current components of the energy to log
-    WRITE(logunit,'(X,A,X,I1)') 'Initial energy + deltas for box', ibox
-    WRITE(logunit,'(2X,A)') 'Atomic units-Extensive'
-    WRITE(logunit,'(X,A59)') '-----------------------------------------------------------'
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Total system energy' , energy(ibox)%total
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecular energy', energy(ibox)%intra
-    WRITE(logunit,'(3X,A,T30,F20.3)') 'Bond energy', energy(ibox)%bond
-    WRITE(logunit,'(3X,A,T30,F20.3)') 'Angle energy', energy(ibox)%angle
-    WRITE(logunit,'(3X,A,T30,F20.3)') 'Dihedral energy', energy(ibox)%dihedral
-    WRITE(logunit,'(3X,A,T30,F20.3)') 'Improper angle energy', energy(ibox)%improper
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecule vdw', energy(ibox)%intra_vdw
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecule q', energy(ibox)%intra_q
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule vdw', energy(ibox)%inter_vdw
-    IF (int_vdw_sum_style(ibox) == vdw_cut_tail) THEN
-       WRITE(logunit,'(X,A,T30,F20.3)') 'Long range correction', energy(ibox)%lrc
-    END IF
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule q', energy(ibox)%inter_q
-    IF (int_charge_sum_style(ibox) == charge_ewald) THEN
-       WRITE(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald', energy(ibox)%ewald_reciprocal
-       WRITE(logunit,'(X,A,T30,F20.3)') 'Self ewald', energy(ibox)%self
-    ELSE IF (int_charge_sum_style(ibox) == charge_dsf) THEN
-       WRITE(logunit,'(X,A,T30,F20.3)') 'Self DSF', energy(ibox)%self
-    END IF
-    WRITE(logunit,'(X,A59)') '-----------------------------------------------------------'
-
-    ! Write the current total energy to stdout
-    WRITE(*,*)
-    WRITE(*,'(X,A)') 'Energy of final configuration, box ' // TRIM(Int_To_String(ibox))
-    WRITE(*,"(2X,A,T30,F24.12)") 'Initial energy + deltas = ', energy(ibox)%total
-
-    ! Compute the energies from scratch
-    CALL Compute_System_Total_Energy(ibox,.TRUE.,overlap)
-
-    ! Write the recomputed total energy to stdout
-    WRITE(*,"(2X,A,T30,F24.12)") 'Energy from scratch = ', energy(ibox)%total
-
-    ! Write the recomputed energy components to log
-    WRITE(logunit,*)
-    WRITE(logunit,*)
-    WRITE(logunit,'(X,A,X,I1)') 'Recomputed energy from scratch for box', ibox
-    WRITE(logunit,'(2X,A)') 'Atomic units-Extensive'
-    WRITE(logunit,'(X,A59)') '-----------------------------------------------------------'
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Total system energy' , energy(ibox)%total
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecular energy', energy(ibox)%intra
-    WRITE(logunit,'(3X,A,T30,F20.3)') 'Bond energy', energy(ibox)%bond
-    WRITE(logunit,'(3X,A,T30,F20.3)') 'Angle energy', energy(ibox)%angle
-    WRITE(logunit,'(3X,A,T30,F20.3)') 'Dihedral energy', energy(ibox)%dihedral
-    WRITE(logunit,'(3X,A,T30,F20.3)') 'Improper angle energy', energy(ibox)%improper
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecule vdw', energy(ibox)%intra_vdw
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Intra molecule q', energy(ibox)%intra_q
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule vdw', energy(ibox)%inter_vdw
-    IF (int_vdw_sum_style(ibox) == vdw_cut_tail) THEN
-      WRITE(logunit,'(X,A,T30,F20.3)') 'Long range correction', energy(ibox)%lrc
-    END IF
-    WRITE(logunit,'(X,A,T30,F20.3)') 'Inter molecule q', energy(ibox)%inter_q
-    IF (int_charge_sum_style(ibox) == charge_ewald) THEN
-       WRITE(logunit,'(X,A,T30,F20.3)') 'Reciprocal ewald', energy(ibox)%ewald_reciprocal
-       WRITE(logunit,'(X,A,T30,F20.3)') 'Self ewald', energy(ibox)%self
-    ELSE IF (int_charge_sum_style(ibox) == charge_dsf) THEN
-       WRITE(logunit,'(X,A,T30,F20.3)') 'Self DSF', energy(ibox)%self
-    END IF
-    WRITE(logunit,'(X,A59)') '-----------------------------------------------------------'
+     CALL Check_System_Energy(ibox)
   END DO
   WRITE(logunit,'(A80)') '********************************************************************************'
 

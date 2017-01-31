@@ -50,32 +50,32 @@ SUBROUTINE GEMC_NVT_Volume
   ! Local variables
 
   INTEGER :: box_grw, box_shk
-  INTEGER :: ibox, nvecs_old_1, nvecs_old_2, nvecs_max
+  INTEGER :: ibox, nvecs_grw, nvecs_shk, nvecs_max
   INTEGER :: is, im, lm
 
-  REAL(DP) :: delta_volume, ln_pacc, delta_e_1, delta_e_2
+  REAL(DP) :: delta_volume, ln_pacc, dE_grw, dE_shk
   REAL(DP) :: success_ratio
-  REAL(DP), DIMENSION(maxk) :: hx_old_1, hy_old_1, hz_old_1, Cn_old_1
-  REAL(DP), DIMENSION(maxk) :: hx_old_2, hy_old_2, hz_old_2, Cn_old_2  
+  REAL(DP), DIMENSION(maxk) :: hx_grw, hy_grw, hz_grw, Cn_grw
+  REAL(DP), DIMENSION(maxk) :: hx_shk, hy_shk, hz_shk, Cn_shk  
   REAL(DP) :: v_ratio_o, v_total, vol_factor
 
   LOGICAL :: overlap, accept_or_reject
 
-  TYPE(Box_Class) :: box_list_old_1, box_list_old_2
-  TYPE(Energy_Class) :: energy_old_1, energy_old_2
+  TYPE(Box_Class) :: box_list_grw, box_list_shk
+  TYPE(Energy_Class) :: energy_grw, energy_shk
 
   INTEGER :: position
 
   REAL(DP), ALLOCATABLE :: pair_nrg_vdw_old(:,:), pair_nrg_qq_old(:,:)
   REAL(DP), ALLOCATABLE :: cos_mol_old(:,:), sin_mol_old(:,:)
 
-  REAL(DP) :: rcut_vdw_old_1, rcut_coul_old_1, rcut3_old_1, rcut9_old_1, alpha_ewald_old_1
-  REAL(DP) :: h_ewald_cut_old_1, rcut_vdwsq_old_1, rcut_coulsq_old_1, rcut_vdw3_old_1
-  REAL(DP) :: rcut_vdw6_old_1, rcut_max_old_1
+  REAL(DP) :: rcut_vdw_grw, rcut_coul_grw, rcut3_grw, rcut9_grw, alpha_ewald_grw
+  REAL(DP) :: h_ewald_cut_grw, rcut_vdwsq_grw, rcut_coulsq_grw, rcut_vdw3_grw
+  REAL(DP) :: rcut_vdw6_grw, rcut_max_grw
 
-  REAL(DP) :: rcut_vdw_old_2, rcut_coul_old_2, rcut3_old_2, rcut9_old_2, alpha_ewald_old_2
-  REAL(DP) :: h_ewald_cut_old_2, rcut_vdwsq_old_2, rcut_coulsq_old_2, rcut_vdw3_old_2
-  REAL(DP) :: rcut_vdw6_old_2, rcut_max_old_2
+  REAL(DP) :: rcut_vdw_shk, rcut_coul_shk, rcut3_shk, rcut9_shk, alpha_ewald_shk
+  REAL(DP) :: h_ewald_cut_shk, rcut_vdwsq_shk, rcut_coulsq_shk, rcut_vdw3_shk
+  REAL(DP) :: rcut_vdw6_shk, rcut_max_shk
 
   accept = .FALSE.
 
@@ -93,8 +93,9 @@ SUBROUTINE GEMC_NVT_Volume
   nvolumes(box_shk) = nvolumes(box_shk) + 1
 
   ! store old cell matrix 
-  box_list_old_1 = box_list(box_grw)
-  box_list_old_2 = box_list(box_shk)
+
+  box_list_grw = box_list(box_grw)
+  box_list_shk = box_list(box_shk)
 
   ! Store the old configurations of all atoms and COMs
   CALL Save_Cartesian_Coordinates_Box(box_grw)
@@ -176,21 +177,21 @@ SUBROUTINE GEMC_NVT_Volume
   IF ( l_half_len_cutoff(box_grw)) THEN
 
      ! store old cutoffs and other associated quantities
-     rcut_vdw_old_1 = rcut_vdw(box_grw)
-     rcut_coul_old_1 = rcut_coul(box_grw)
-     rcut_vdwsq_old_1 = rcut_vdwsq(box_grw)
-     rcut_coulsq_old_1 = rcut_coulsq(box_grw)
+     rcut_vdw_grw = rcut_vdw(box_grw)
+     rcut_coul_grw = rcut_coul(box_grw)
+     rcut_vdwsq_grw = rcut_vdwsq(box_grw)
+     rcut_coulsq_grw = rcut_coulsq(box_grw)
 
-     rcut3_old_1 = rcut3(box_grw)
-     rcut9_old_1 = rcut9(box_grw)
-     rcut_vdw3_old_1 = rcut_vdw3(box_grw)
-     rcut_vdw6_old_1 = rcut_vdw6(box_grw)
+     rcut3_grw = rcut3(box_grw)
+     rcut9_grw = rcut9(box_grw)
+     rcut_vdw3_grw = rcut_vdw3(box_grw)
+     rcut_vdw6_grw = rcut_vdw6(box_grw)
 
-     rcut_max_old_1 = rcut_max(box_grw)
+     rcut_max_grw = rcut_max(box_grw)
      
      IF (int_charge_sum_style(box_grw) == charge_ewald) THEN
-!        alpha_ewald_old_1 = alpha_ewald(box_grw)
-        h_ewald_cut_old_1 = h_ewald_cut(box_grw)
+!        alpha_ewald_grw = alpha_ewald(box_grw)
+        h_ewald_cut_grw = h_ewald_cut(box_grw)
      END IF
 
      ! change cutoffs and other associated quantities
@@ -228,21 +229,21 @@ SUBROUTINE GEMC_NVT_Volume
   IF ( l_half_len_cutoff(box_shk)) THEN
 
      ! store old cutoffs and other associated quantities
-     rcut_vdw_old_2 = rcut_vdw(box_shk)
-     rcut_coul_old_2 = rcut_coul(box_shk)
-     rcut_vdwsq_old_2 = rcut_vdwsq(box_shk)
-     rcut_coulsq_old_2 = rcut_coulsq(box_shk)
+     rcut_vdw_shk = rcut_vdw(box_shk)
+     rcut_coul_shk = rcut_coul(box_shk)
+     rcut_vdwsq_shk = rcut_vdwsq(box_shk)
+     rcut_coulsq_shk = rcut_coulsq(box_shk)
 
-     rcut3_old_2 = rcut3(box_shk)
-     rcut9_old_2 = rcut9(box_shk)
-     rcut_vdw3_old_2 = rcut_vdw3(box_shk)
-     rcut_vdw6_old_2 = rcut_vdw6(box_shk)
+     rcut3_shk = rcut3(box_shk)
+     rcut9_shk = rcut9(box_shk)
+     rcut_vdw3_shk = rcut_vdw3(box_shk)
+     rcut_vdw6_shk = rcut_vdw6(box_shk)
 
-     rcut_max_old_2 = rcut_max(box_shk)
+     rcut_max_shk = rcut_max(box_shk)
      
      IF (int_charge_sum_style(box_shk) == charge_ewald) THEN
-!        alpha_ewald_old_2 = alpha_ewald(box_shk)
-        h_ewald_cut_old_2 = h_ewald_cut(box_shk)
+!        alpha_ewald_shk = alpha_ewald(box_shk)
+        h_ewald_cut_shk = h_ewald_cut(box_shk)
      END IF
 
      ! store cutoffs and other associated quantities
@@ -280,13 +281,13 @@ SUBROUTINE GEMC_NVT_Volume
 
   ! Rescale the COM and all atomic positions
 
-  CALL Scale_COM_Cartesian(box_grw,box_list_old_1)
-  CALL Scale_COM_Cartesian(box_shk,box_list_old_2)
+  CALL Scale_COM_Cartesian(box_grw,box_list_grw)
+  CALL Scale_COM_Cartesian(box_shk,box_list_shk)
 
   ! Now let us compute the energy change due to the combined move
 
-  energy_old_1 = energy(box_grw)
-  energy_old_2 = energy(box_shk)
+  energy_grw = energy(box_grw)
+  energy_shk = energy(box_shk)
 
   IF ( int_charge_sum_style(box_grw) == charge_ewald) THEN
      ! Then we need to determine if the number of k vectors change due to this volume move
@@ -295,23 +296,23 @@ SUBROUTINE GEMC_NVT_Volume
 
      ! store old terms 
 
-     nvecs_old_1 = nvecs(box_grw)
-     nvecs_old_2 = nvecs(box_shk)
+     nvecs_grw = nvecs(box_grw)
+     nvecs_shk = nvecs(box_shk)
      nvecs_max = MAXVAL(nvecs)
 
      !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED) 
      cos_sum_old(:,:) = cos_sum(:,:)
      sin_sum_old(:,:) = sin_sum(:,:)
 
-     hx_old_1(:) = hx(:,box_grw)
-     hy_old_1(:) = hy(:,box_grw)
-     hz_old_1(:) = hz(:,box_grw)
-     Cn_old_1(:) = Cn(:,box_grw)
+     hx_grw(:) = hx(:,box_grw)
+     hy_grw(:) = hy(:,box_grw)
+     hz_grw(:) = hz(:,box_grw)
+     Cn_grw(:) = Cn(:,box_grw)
 
-     hx_old_2(:) = hx(:,box_shk)
-     hy_old_2(:) = hy(:,box_shk)
-     hz_old_2(:) = hz(:,box_shk)
-     Cn_old_2(:) = Cn(:,box_shk)
+     hx_shk(:) = hx(:,box_shk)
+     hy_shk(:) = hy(:,box_shk)
+     hz_shk(:) = hz(:,box_shk)
+     Cn_shk(:) = Cn(:,box_shk)
 
      !!$OMP END PARALLEL WORKSHARE
 
@@ -395,19 +396,19 @@ SUBROUTINE GEMC_NVT_Volume
       ELSE
          ! accept or reject the move based on the acceptance rule
          
-         delta_e_1 = energy(box_grw)%total - energy_old_1%total
-         delta_e_2 = energy(box_shk)%total - energy_old_2%total
+         dE_grw = energy(box_grw)%total - energy_grw%total
+         dE_shk = energy(box_shk)%total - energy_shk%total
          
          IF (f_dv) THEN
-            ln_pacc = beta(box_grw) * delta_e_1 + beta(box_shk) * delta_e_2 &
-                    - REAL(SUM(nmols(:,box_grw)),DP) * DLOG( box_list(box_grw)%volume / box_list_old_1%volume) &
-                    - REAL(SUM(nmols(:,box_shk)),DP) * DLOG( box_list(box_shk)%volume / box_list_old_2%volume)
+            ln_pacc = beta(box_grw) * dE_grw + beta(box_shk) * dE_shk &
+                    - REAL(SUM(nmols(:,box_grw)),DP) * DLOG( box_list(box_grw)%volume / box_list_grw%volume) &
+                    - REAL(SUM(nmols(:,box_shk)),DP) * DLOG( box_list(box_shk)%volume / box_list_shk%volume)
             
          ELSE IF(f_vratio) THEN
             
-            ln_pacc = beta(box_grw) * delta_e_1 + beta(box_shk) * delta_e_2 &
-                    - REAL(SUM(nmols(:,box_grw))+1,DP) * DLOG( box_list(box_grw)%volume / box_list_old_1%volume) &
-                    - REAL(SUM(nmols(:,box_shk))+1,DP) * DLOG( box_list(box_shk)%volume / box_list_old_2%volume)
+            ln_pacc = beta(box_grw) * dE_grw + beta(box_shk) * dE_shk &
+                    - REAL(SUM(nmols(:,box_grw))+1,DP) * DLOG( box_list(box_grw)%volume / box_list_grw%volume) &
+                    - REAL(SUM(nmols(:,box_shk))+1,DP) * DLOG( box_list(box_shk)%volume / box_list_shk%volume)
             
          END IF
 
@@ -518,7 +519,7 @@ SUBROUTINE GEMC_NVT_Volume
                i_mcstep, 'vol_swap', success_ratio
          
       END IF
-         
+
    END IF
 
    
@@ -533,11 +534,11 @@ SUBROUTINE GEMC_NVT_Volume
      
      ! box list and energy 
      
-     box_list(box_grw) = box_list_old_1
-     box_list(box_shk) = box_list_old_2
+     box_list(box_grw) = box_list_grw
+     box_list(box_shk) = box_list_shk
      
-     energy(box_grw) = energy_old_1
-     energy(box_shk) = energy_old_2
+     energy(box_grw) = energy_grw
+     energy(box_shk) = energy_shk
 
      IF (l_pair_nrg) THEN
         
@@ -551,22 +552,22 @@ SUBROUTINE GEMC_NVT_Volume
 
      IF (l_half_len_cutoff(box_grw)) THEN
         
-        rcut_vdw(box_grw) = rcut_vdw_old_1
-        rcut_coul(box_grw) = rcut_coul_old_1
-        rcut_vdwsq(box_grw) = rcut_vdwsq_old_1
-        rcut_coulsq(box_grw) = rcut_coulsq_old_1
+        rcut_vdw(box_grw) = rcut_vdw_grw
+        rcut_coul(box_grw) = rcut_coul_grw
+        rcut_vdwsq(box_grw) = rcut_vdwsq_grw
+        rcut_coulsq(box_grw) = rcut_coulsq_grw
         
-        rcut3(box_grw) = rcut3_old_1
-        rcut9(box_grw) = rcut9_old_1
-        rcut_vdw3(box_grw) = rcut_vdw3_old_1
-        rcut_vdw6(box_grw) = rcut_vdw6_old_1
+        rcut3(box_grw) = rcut3_grw
+        rcut9(box_grw) = rcut9_grw
+        rcut_vdw3(box_grw) = rcut_vdw3_grw
+        rcut_vdw6(box_grw) = rcut_vdw6_grw
         
-        rcut_max(box_grw) = rcut_max_old_1
+        rcut_max(box_grw) = rcut_max_grw
         
         IF( int_charge_sum_style(box_grw) == charge_ewald ) THEN
            
-           !           alpha_ewald(box_grw) = alpha_ewald_old_1
-           h_ewald_cut(box_grw) = h_ewald_cut_old_1
+           !           alpha_ewald(box_grw) = alpha_ewald_grw
+           h_ewald_cut(box_grw) = h_ewald_cut_grw
            
         END IF
         
@@ -575,22 +576,22 @@ SUBROUTINE GEMC_NVT_Volume
 
      IF (l_half_len_cutoff(box_shk)) THEN
         
-        rcut_vdw(box_shk) = rcut_vdw_old_2
-        rcut_coul(box_shk) = rcut_coul_old_2
-        rcut_vdwsq(box_shk) = rcut_vdwsq_old_2
-        rcut_coulsq(box_shk) = rcut_coulsq_old_2
+        rcut_vdw(box_shk) = rcut_vdw_shk
+        rcut_coul(box_shk) = rcut_coul_shk
+        rcut_vdwsq(box_shk) = rcut_vdwsq_shk
+        rcut_coulsq(box_shk) = rcut_coulsq_shk
         
-        rcut3(box_shk) = rcut3_old_2
-        rcut9(box_shk) = rcut9_old_2
-        rcut_vdw3(box_shk) = rcut_vdw3_old_2
-        rcut_vdw6(box_shk) = rcut_vdw6_old_2
+        rcut3(box_shk) = rcut3_shk
+        rcut9(box_shk) = rcut9_shk
+        rcut_vdw3(box_shk) = rcut_vdw3_shk
+        rcut_vdw6(box_shk) = rcut_vdw6_shk
         
-        rcut_max(box_shk) = rcut_max_old_2
+        rcut_max(box_shk) = rcut_max_shk
 
         IF( int_charge_sum_style(box_shk) == charge_ewald ) THEN
            
-!           alpha_ewald(box_shk) = alpha_ewald_old_2
-           h_ewald_cut(box_shk) = h_ewald_cut_old_2
+!           alpha_ewald(box_shk) = alpha_ewald_shk
+           h_ewald_cut(box_shk) = h_ewald_cut_shk
            
         END IF
         
@@ -599,8 +600,8 @@ SUBROUTINE GEMC_NVT_Volume
      
      IF (int_charge_sum_style(box_grw) == charge_ewald) THEN
         
-       nvecs(box_grw) = nvecs_old_1
-       nvecs(box_shk) = nvecs_old_2
+       nvecs(box_grw) = nvecs_grw
+       nvecs(box_shk) = nvecs_shk
        
        DEALLOCATE(cos_sum,sin_sum)
        DEALLOCATE(cos_mol,sin_mol)
@@ -643,15 +644,15 @@ SUBROUTINE GEMC_NVT_Volume
        cos_mol(1:SIZE(cos_mol_old,1),:) = cos_mol_old(:,:)
        sin_mol(1:SIZE(sin_mol_old,1),:) = sin_mol_old(:,:)
        
-       hx(:,box_grw) = hx_old_1(:)
-       hy(:,box_grw) = hy_old_1(:)
-       hz(:,box_grw) = hz_old_1(:)
-       Cn(:,box_grw) = Cn_old_1(:)
+       hx(:,box_grw) = hx_grw(:)
+       hy(:,box_grw) = hy_grw(:)
+       hz(:,box_grw) = hz_grw(:)
+       Cn(:,box_grw) = Cn_grw(:)
        
-       hx(:,box_shk) = hx_old_2(:)
-       hy(:,box_shk) = hy_old_2(:)
-       hz(:,box_shk) = hz_old_2(:)
-       Cn(:,box_shk) = Cn_old_2(:)
+       hx(:,box_shk) = hx_shk(:)
+       hy(:,box_shk) = hy_shk(:)
+       hz(:,box_shk) = hz_shk(:)
+       Cn(:,box_shk) = Cn_shk(:)
 
        !!$OMP END PARALLEL WORKSHARE
        
