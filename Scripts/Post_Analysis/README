@@ -1,14 +1,15 @@
 Currently working on adding to the library and improving the capabilities of the scripts.
 
+
+REQUIREMENTS: f2py, matplotlib, numpy
+
 Addtional tools in progress:
 	cas_cluster - Stillinger custer analysis
-	cas_combine_boxes - creates 1 xyz file for visualization 
-
+	cas_combine_boxes - creates single xyz file from GEMC xyz files. 
+		(Creating this since there are some issues with topotools.)
 
 To install:
 	>> ./install.sh
-
-REQUIREMENTS: f2py, matplotlib, numpy
 
 
 
