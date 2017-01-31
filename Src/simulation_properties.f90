@@ -197,7 +197,7 @@ CONTAINS
     
     ! add pressure from tail corrections
     IF(int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
-       pressure(this_box)%computed = pressure(this_box)%ideal &
+       pressure(this_box)%computed = pressure(this_box)%computed &
                                    + virial(this_box)%lrc &
                                    / box_list(this_box)%volume
     END IF
