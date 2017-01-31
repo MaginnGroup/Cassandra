@@ -58,7 +58,7 @@
   IMPLICIT NONE
 
   LOGICAL :: repeat_type
-  CHARACTER(6), DIMENSION(:), ALLOCATABLE :: temp_atomtypes ! same dimension as atom_name
+  CHARACTER(8), DIMENSION(:), ALLOCATABLE :: temp_atomtypes ! same dimension as atom_name
   INTEGER :: ii, is, ia, itype, jtype, iset,jset,k,itype_1,itype_2
   REAL(DP) :: eps_i, eps_j, sig_i, sig_j
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: vdw_param_set
@@ -150,7 +150,7 @@
      WRITE(logunit,'(A)') &
           ' There are '//TRIM(Int_To_String(nbr_atomtypes))//' different atom types in the system '
      DO ii = 1, nbr_atomtypes
-        WRITE(logunit,'(3x,I3,2x,A6)') ii, temp_atomtypes(ii)
+        WRITE(logunit,'(3x,I3,2x,A8)') ii, temp_atomtypes(ii)
      ENDDO
 
      WRITE(logunit,*)
@@ -158,12 +158,12 @@
      DO is=1,nspecies
         WRITE(logunit,*)
         WRITE(logunit,'(A,T25,I3,3x,A)') 'species number and name:',is, molfile_name(is)
-        WRITE(logunit,*) 'Name      number'
-        WRITE(logunit,*) '------    ------'
+        WRITE(logunit,*) 'Name        number'
+        WRITE(logunit,*) '--------    ------'
 
         IF (natoms(is) < 100) THEN
           DO ia = 1, natoms(is)
-             WRITE(logunit,'(A6,T10,I4)') nonbond_list(ia,is)%atom_name, &
+             WRITE(logunit,'(X,A8,T12,I4)') nonbond_list(ia,is)%atom_name, &
                   nonbond_list(ia,is)%atom_type_number
           ENDDO
         ELSE
@@ -224,12 +224,12 @@
 
   ! Write header for logfile output. Specific for the vdw style
      IF (int_vdw_style(1) == vdw_lj) THEN
-        WRITE(logunit,'(X,A6,5X,A6,2X,A12,X,A12)') 'Atom 1','Atom 2', 'epsilon', 'sigma'
-        WRITE(logunit,'(X,6X,5X,6X,2X,A12,X,A12)') 'amu A^2/ps^2', 'Ang'
+        WRITE(logunit,'(X,A8,5X,A8,2X,A12,X,A12)') 'Atom 1','Atom 2', 'epsilon', 'sigma'
+        WRITE(logunit,'(X,8X,5X,8X,2X,A12,X,A12)') 'amu A^2/ps^2', 'Ang'
      ELSEIF (int_vdw_style(1) == vdw_mie) THEN
-        WRITE(logunit,'(X,A6,5X,A6,2X,A12,X,A12,X,A12,X,A12)') 'Atom 1','Atom 2', 'epsilon', 'sigma', &
+        WRITE(logunit,'(X,A8,5X,A8,2X,A12,X,A12,X,A12,X,A12)') 'Atom 1','Atom 2', 'epsilon', 'sigma', &
               'rep-expt', 'disp-expt'
-        WRITE(logunit,'(X,6X,5X,6X,2X,A12,X,A12)') 'amu A^2/ps^2', 'Ang'
+        WRITE(logunit,'(X,8X,5X,8X,2X,A12,X,A12)') 'amu A^2/ps^2', 'Ang'
      ENDIF
      WRITE(logunit,'(X,A79)') '-------------------------------------------------------------------------------'
   END IF
@@ -259,7 +259,7 @@
 
                  ! Report parameters to logfile.
                  IF (verbose_log) THEN
-                   WRITE(logunit,'(X,A6,5X,A6,2X,F12.4,X,F12.4)') &
+                   WRITE(logunit,'(X,A8,5X,A8,2X,F12.4,X,F12.4)') &
                         atom_type_list(itype), atom_type_list(itype), &
                         vdw_param1_table(itype,itype), &
                         vdw_param2_table(itype,itype)
@@ -293,7 +293,7 @@
 
                  ! Report parameters to logfile.
                  IF (verbose_log) THEN
-                   WRITE(logunit,'(X,A6,5X,A6,2X,F12.4,X,F12.4,X,F12.4,X,F12.4)') &
+                   WRITE(logunit,'(X,A8,5X,A8,2X,F12.4,X,F12.4,X,F12.4,X,F12.4)') &
                         atom_type_list(itype), atom_type_list(itype), &
                         vdw_param1_table(itype,itype), vdw_param2_table(itype,itype), &
                         vdw_param3_table(itype,itype), vdw_param4_table(itype,itype)
@@ -351,7 +351,7 @@
 
                  ! Report parameters to logfile.
                  IF (verbose_log) THEN
-                   WRITE(logunit,'(X,A6,5X,A6,2X,F12.4,X,F12.4)') &
+                   WRITE(logunit,'(X,A8,5X,A8,2X,F12.4,X,F12.4)') &
                         atom_type_list(itype), atom_type_list(jtype), &
                         vdw_param1_table(itype,jtype), vdw_param2_table(itype,jtype)
                  ENDIF
@@ -401,7 +401,7 @@
 
                     ! Report parameters to logfile.
                     IF (verbose_log) THEN
-                      WRITE(logunit,'(X,A6,5X,A6,2X,F12.4,X,F12.4,X,F12.4,X,F12.4)') &
+                      WRITE(logunit,'(X,A8,5X,A8,2X,F12.4,X,F12.4,X,F12.4,X,F12.4)') &
                            atom_type_list(itype), atom_type_list(jtype), &
                            vdw_param1_table(itype,jtype), vdw_param2_table(itype,jtype), &
                            vdw_param3_table(itype,jtype), vdw_param4_table(itype,jtype)
@@ -493,7 +493,7 @@
                   !Sigma
                   vdw_param2_table(itype,jtype) = String_To_Double(line_array(4))
                   IF (verbose_log) THEN
-                    WRITE(logunit,'(X,A6,5X,A6,2(X,F12.4))') &
+                    WRITE(logunit,'(X,A8,5X,A8,2(X,F12.4))') &
                          atom_type_list(itype), atom_type_list(jtype), &
                          vdw_param1_table(itype,jtype), &
                          vdw_param2_table(itype,jtype)
@@ -516,7 +516,7 @@
                   !Dispersive exponent
                   vdw_param4_table(itype,jtype) = String_To_Double(line_array(6))
                   IF (verbose_log) THEN
-                    WRITE(logunit,'(X,A6,5X,A6,4(X,F12.4))') &
+                    WRITE(logunit,'(X,A8,5X,A8,4(X,F12.4))') &
                          atom_type_list(itype), atom_type_list(jtype), &
                          vdw_param1_table(itype,jtype), &
                          vdw_param2_table(itype,jtype), &
