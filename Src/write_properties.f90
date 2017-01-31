@@ -331,11 +331,9 @@ CONTAINS
             CALL Compute_Pressure(this_box)
          END IF
 
-         pressure(this_box)%computed = pressure(this_box)%ideal &
-                            + Pressure_tensor(1,1,this_box) &
-                            * atomic_to_bar
-
-         write_buff(ii+1) = pressure(this_box)%computed
+         write_buff(ii+1) = (pressure(this_box)%ideal &
+                          + pressure_tensor(1,1,this_box) )&
+                          * atomic_to_bar
 
       ELSE IF (prop_written == 'Pressure_YY') THEN
 
@@ -344,12 +342,9 @@ CONTAINS
             CALL Compute_Pressure(this_box)
          END IF
 
-         pressure(this_box)%computed = pressure(this_box)%ideal &
-                            + Pressure_tensor(2,2,this_box) &
-                            * atomic_to_bar
-
-         write_buff(ii+1) = pressure(this_box)%computed
-
+         write_buff(ii+1) = (pressure(this_box)%ideal &
+                          + pressure_tensor(2,2,this_box) )&
+                          * atomic_to_bar
 
       ELSE IF (prop_written == 'Pressure_ZZ') THEN
 
@@ -358,12 +353,9 @@ CONTAINS
             CALL Compute_Pressure(this_box)
          END IF
 
-         pressure(this_box)%computed = pressure(this_box)%ideal &
-                            + Pressure_tensor(3,3,this_box) &
-                            * atomic_to_bar
-
-         write_buff(ii+1) = pressure(this_box)%computed
-
+         write_buff(ii+1) = (pressure(this_box)%ideal &
+                          + pressure_tensor(3,3,this_box) )&
+                          * atomic_to_bar
 
       ELSE IF (prop_written == 'Volume') THEN
          IF (block_avg) THEN
