@@ -97,7 +97,7 @@ END FUNCTION rranf
   ! Identical guts to rranf, but only return the seed.
   ! NOTE: randomization of sign bit is explicitly tossed out.
   INTEGER FUNCTION rranint()
-      USE Run_Variables, ONLY : iseed
+      USE Global_Variables, ONLY : iseed
 
       ! LOCAL
       INTEGER :: ib, ia, ibc, ida, isum, iff, ie, ix, iy, ix2, ix1
@@ -177,7 +177,7 @@ END FUNCTION rranf
     !----------------------------------------------------------------------------
 
     USE Type_Definitions, ONLY : DP
-    USE Run_Variables, ONLY : iseed, twoPI
+    USE Global_Variables, ONLY : iseed, twoPI
 
     IMPLICIT NONE
 

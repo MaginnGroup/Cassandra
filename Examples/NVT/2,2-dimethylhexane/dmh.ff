@@ -11,8 +11,11 @@ begin atom-atomtype
 7 C3
 8 C3
 end atom-atomtype
-
+ 
+vdwtype LJ
 dihedraltype OPLS
+scaling_1_4_vdw 0.
+scaling_1_4_charge 0. 
 
 nonbonded
 C3

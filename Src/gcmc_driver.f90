@@ -33,7 +33,7 @@ SUBROUTINE GCMC_Driver
   !   12/10/13 : Beta Release
 !*******************************************************************************
 
-  USE Run_Variables
+  USE Global_Variables
   USE Random_Generators
   USE File_Names
   USE Energy_Routines
@@ -43,15 +43,12 @@ SUBROUTINE GCMC_Driver
 
 !  !$ include 'omp_lib.h'
 
-  INTEGER :: i, this_box, ibox, is, which_step
-  INTEGER :: ioldN,  delta_n  ! old molecule number and change in molecule number
+  INTEGER :: i, ibox, is 
 
   REAL(DP) :: rand_no
-  REAL(DP) :: time_start, now_time
+  REAL(DP) :: time_start, now_time, thermo_time, coord_time, block_avg_time
 
-  LOGICAL :: overlap, complete
-
-  LOGICAL, DIMENSION(:), ALLOCATABLE :: next_write, next_rdf_write
+  LOGICAL :: overlap, complete, write_flag
 
   ! The total number of trial move array may not have been set if this
   ! is a fresh run i.e. start_type == make_config. Otherwise this array
@@ -59,13 +56,15 @@ SUBROUTINE GCMC_Driver
   IF(.NOT. ALLOCATED(ntrials)) ALLOCATE(ntrials(nspecies,nbr_boxes))
   IF(.NOT. ALLOCATED(tot_trials)) ALLOCATE(tot_trials(nbr_boxes))
 
-  ALLOCATE(next_write(nbr_boxes))
-  ALLOCATE(next_rdf_write(nbr_boxes))
-  next_write(:) = .false.
-  next_rdf_write(:) = .false.
   complete = .FALSE.
- 
-  this_box = 1
+  openmp_flag = .FALSE.
+  thermo_time = 0.0
+  coord_time = 0.0
+  block_avg_time = 0.0
+
+!$ openmp_flag = .TRUE.
+
+  WRITE(*,*) 'openmp_flag = ', openmp_flag
 
   IF(.NOT. openmp_flag) THEN
      CALL cpu_time(time_start)
@@ -73,18 +72,17 @@ SUBROUTINE GCMC_Driver
 !$  time_start = omp_get_wtime()
   END IF
 
-  i = 0
+  i_mcstep = initial_mcstep
 
   DO WHILE (.NOT. complete)
 
-     i = i + 1
+     i_mcstep = i_mcstep + 1
 
-     ! We will select a move from Golden Sampling scheme
+     !*****************************************************************************
+     ! select a move from Golden Sampling scheme
+     !*****************************************************************************
   
-     which_step = i
      rand_no = rranf()
-     ioldN = nmols(1,1)  ! store beginning molecule number 
-     delta_n = 0
  
      IF (rand_no <= cut_trans) THEN
 
@@ -94,7 +92,7 @@ SUBROUTINE GCMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Translate(this_box)
+        CALL Translate
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -112,7 +110,7 @@ SUBROUTINE GCMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Rotate(this_box)
+        CALL Rotate
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -130,7 +128,7 @@ SUBROUTINE GCMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Rigid_Dihedral_Change(this_box)
+        CALL Rigid_Dihedral_Change
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -148,7 +146,7 @@ SUBROUTINE GCMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Angle_Distortion(this_box)
+        CALL Angle_Distortion
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -166,7 +164,7 @@ SUBROUTINE GCMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
       
-        CALL Insertion(this_box)
+        CALL Insertion
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -184,7 +182,7 @@ SUBROUTINE GCMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Deletion(this_box)
+        CALL Deletion
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -202,7 +200,7 @@ SUBROUTINE GCMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL cut_N_grow(this_box)
+        CALL Cut_N_Grow
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -220,7 +218,7 @@ SUBROUTINE GCMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        CALL Atom_Displacement(this_box)
+        CALL Atom_Displacement
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
@@ -231,11 +229,6 @@ SUBROUTINE GCMC_Driver
         movetime(imove_atom_displacement) = movetime(imove_atom_displacement) + time_e - time_s
 
      END IF
-     
-     CALL Accumulate(this_box)
-     
-     next_write(this_box) = .true.
-     next_rdf_write(this_box) = .true.
 
      IF(.NOT. openmp_flag) THEN
         CALL cpu_time(now_time)
@@ -245,163 +238,86 @@ SUBROUTINE GCMC_Driver
 
      now_time = ((now_time - time_start) / 60.0_DP) 
      IF(.NOT. timed_run) THEN
-        IF(i == n_mcsteps) complete = .TRUE.
+        IF(i_mcstep == n_mcsteps) complete = .TRUE.
      ELSE
         IF(now_time .GT. n_mcsteps) complete = .TRUE.
      END IF
 
-
-     IF ( .NOT. block_average ) THEN
-
-        ! instantaneous values are to be printed   
-
-        IF ( MOD(i,nthermo_freq) == 0) THEN
-
-           DO ibox = 1, nbr_boxes
-           
-              CALL Write_Properties(i,ibox)
-              CALL Reset(ibox)
-              
-           END DO
-           
-        END IF
-        
-        IF ( MOD(i,ncoord_freq) == 0 ) THEN
-           
-           DO ibox = 1, nbr_boxes
-              
-              CALL Write_Coords(ibox)
-              
-           END DO
-           
-        END IF
-        
+     !*****************************************************************************
+     ! check if compute properties this step
+     !*****************************************************************************
+     write_flag = .FALSE.
+     IF(.NOT. timed_run) THEN
+        IF (MOD(i_mcstep,nthermo_freq) == 0) write_flag = .TRUE.
      ELSE
-        
-        DO ibox = 1, nbr_boxes
-           
-           IF (tot_trials(ibox) /= 0) THEN
-              IF(MOD(tot_trials(ibox),nthermo_freq) == 0) THEN
-                 IF (next_write(ibox)) THEN
-                    CALL Write_Properties(tot_trials(ibox),ibox)
-                    CALL Reset(ibox)
-                    next_write(ibox) = .false.
-                 END IF
-              END IF
-              
-              IF (MOD(tot_trials(ibox), ncoord_freq) == 0) THEN
-                 IF (next_rdf_write(ibox)) THEN
-                    CALL Write_Coords(ibox)
-                    next_rdf_write(ibox) = .false.
-                 END IF
-              END IF
-              
-           END IF
-           
-        END DO
-     
-     END IF
-
-     IF(MOD(i,ncoord_freq) == 0) THEN
-        CALL Write_Checkpoint(i)
-     END IF
-
-     DO is = 1,nspecies
-
-        IF(species_list(is)%int_insert == int_igas) THEN
-           IF(mod(i,n_igas_moves(is)) == 0) CALL Update_Reservoir(is)
+        now_time = now_time - thermo_time
+        IF(now_time .GT. nthermo_freq) THEN
+           thermo_time = thermo_time + nthermo_freq
+           write_flag = .TRUE.
         END IF
+     END IF
 
-     END DO
-     
+     ! Write the information to various files at regular intervals
+     IF (write_flag) THEN
+        IF (.NOT. block_average ) THEN
+           ! write instantaneous properties
+           DO ibox = 1, nbr_boxes
+              CALL Write_Properties(ibox)
+           END DO
+        ELSE
+           ! block averages
+
+           ! Accumulate averages
+           DO ibox = 1, nbr_boxes
+              CALL Accumulate(ibox)
+           END DO
+              
+           ! Check if write block avgs this step
+           write_flag = .FALSE.
+           IF(.NOT. timed_run) THEN
+              IF (MOD(i_mcstep,block_avg_freq) == 0) write_flag = .TRUE.
+           ELSE
+              now_time = now_time - block_avg_time
+              IF(now_time .GT. block_avg_freq) THEN
+                 block_avg_time = block_avg_time + block_avg_freq
+                 write_flag = .TRUE.
+              END IF
+           END IF
+
+           ! Write block avgs
+           DO ibox = 1, nbr_boxes
+              IF(write_flag) THEN
+                 CALL Write_Properties(ibox)
+              END IF
+           END DO
+              
+        END IF
+     END IF
+
+     !*****************************************************************************
+     ! Check if write coords this step
+     !*****************************************************************************
+     write_flag = .FALSE.
+     IF (.NOT. timed_run) THEN
+        IF ( MOD(i_mcstep,ncoord_freq) == 0) write_flag = .TRUE.
+     ELSE
+        now_time = now_time - coord_time
+        IF(now_time .GT. ncoord_freq) THEN
+           coord_time = coord_time + nthermo_freq
+           write_flag = .TRUE.
+        END IF
+     END IF
+
+     IF (write_flag) THEN
+        CALL Write_Checkpoint
+        DO ibox = 1, nbr_boxes
+           CALL Write_Coords(ibox)
+        END DO
+     END IF
+
   END DO
 
   CLOSE(50)
 
-  ! let us check if at the end of the simulation, the energies are properly updated
-
-!  write(logunit,*) '*********** Ending simulation *****************'
-!  write(logunit,*)
-!  write(logunit,*)
-!  write(logunit,*) '***** Insertion efficiency *****************'
-!  DO ibox = 1, nbr_boxes
-!     DO is = 1, nspecies
-!        write(logunit,'(A40,2X,I2,2X,A2,2X,I10)') 'Total number of insertions for species', is , 'is', ntrials(is,this_box)%insertion
-!        write(logunit,'(A22,2X)') 'Successful insertions', nsuccess(is,this_box)%insertion
-!     END DO
-!     write(logunit,*)
-!  END DO
-!
-!  write(logunit,*) '***** Deletion efficiency *****************'
-!  DO ibox = 1, nbr_boxes
-!     DO is = 1, nspecies
-!        write(logunit,*) 'Total number of deletions for species', is , 'is', ntrials(is,this_box)%deletion
-!        write(logunit,*) 'Successful deletions', nsuccess(is,this_box)%deletion
-!     END DO
-!     write(logunit,*)
-!  END DO
-!  
-!
-!    ! Display the components of the energy.
-!  WRITE(logunit,*) '*****************************************'
-!  WRITE(logunit,'(A36,2X,I2)') ' Starting energy components for box', this_box
-!  WRITE(logunit,*) ' Atomic units-Extensive'
-!  WRITE(logunit,*) '*****************************************'
-!  WRITE(logunit,*)
-!
-!  write(logunit,'(A,T30,F20.3)') 'Total system energy is' , energy(this_box)%total
-!  write(logunit,'(A,T30,F20.3)') 'Intra molecular energy is', energy(this_box)%intra
-!  write(logunit,'(A,T30,F20.3)') 'Bond energy is', energy(this_box)%bond
-!  write(logunit,'(A,T30,F20.3)') 'Angle energy is', energy(this_box)%angle
-!  write(logunit,'(A,T30,F20.3)') 'Dihedral enregy is', energy(this_box)%dihedral
-!  WRITE(logunit,'(A,T30,F20.3)') 'Improper angle energy is', energy(this_box)%improper
-!  write(logunit,'(A,T30,F20.3)') 'Intra nonbond vdw is', energy(this_box)%intra_vdw
-!  write(logunit,'(A,T30,F20.3)') 'Intra nonbond elec is', energy(this_box)%intra_q
-!  write(logunit,'(A,T30,F20.3)') 'Inter molecule vdw is', energy(this_box)%inter_vdw
-!  write(logunit,'(A,T30,F20.3)') 'Long range correction is', energy(this_box)%lrc
-!  write(logunit,'(A,T30,F20.3)') 'Inter molecule q is', energy(this_box)%inter_q
-!  write(logunit,'(A,T30,F20.3)') 'Reciprocal ewald is', energy(this_box)%ewald_reciprocal
-!  write(logunit,'(A,T30,F20.3)') 'Self ewald is', energy(this_box)%ewald_self
-!  
-!  write(logunit,*) '**************************************************'
-!
-!
-!  CALL Compute_Total_System_Energy(this_box,.TRUE.,overlap)
-!
-!    ! Display the components of the energy.
-!  write(logunit,*)
-!  write(logunit,*)
-!  WRITE(logunit,*) '*****************************************'
-!  write(logunit,'(A52,2X,I2)') 'Components of energy from total energy call for box', this_box
-!  WRITE(logunit,*) 'Atomic units-Extensive'
-!  WRITE(logunit,*) '*****************************************'
-!  WRITE(logunit,*)
-!
-!  write(logunit,'(A,T30,F20.3)') 'Total system energy is' , energy(this_box)%total
-!  write(logunit,'(A,T30,F20.3)') 'Intra molecular energy is', energy(this_box)%intra
-!  write(logunit,'(A,T30,F20.3)') 'Bond energy is', energy(this_box)%bond
-!  write(logunit,'(A,T30,F20.3)') 'Angle energy is', energy(this_box)%angle
-!  write(logunit,'(A,T30,F20.3)') 'Dihedral enregy is', energy(this_box)%dihedral
-!  WRITE(logunit,'(A,T30,F20.3)') 'Improper angle energy is', energy(this_box)%improper
-!  write(logunit,'(A,T30,F20.3)') 'Intra nonbond vdw is', energy(this_box)%intra_vdw
-!  write(logunit,'(A,T30,F20.3)') 'Intra nonbond elec is', energy(this_box)%intra_q
-!  write(logunit,'(A,T30,F20.3)') 'Inter molecule vdw is', energy(this_box)%inter_vdw
-!  write(logunit,'(A,T30,F20.3)') 'Long range correction is', energy(this_box)%lrc
-!  write(logunit,'(A,T30,F20.3)') 'Inter molecule q is', energy(this_box)%inter_q
-!  write(logunit,'(A,T30,F20.3)') 'Reciprocal ewald is', energy(this_box)%ewald_reciprocal
-!  write(logunit,'(A,T30,F20.3)') 'Self ewald is', energy(this_box)%ewald_self
-
-  IF(int_run_style == run_test) THEN
-
-    OPEN(75,FILE='compare.dat',POSITION='APPEND')
-    WRITE(75,"(T20,A,A)") testname, 'in the gcmc ensemble'
-    WRITE(75,"(A,F24.12)") 'The total system energy is:', energy(1)%total
-    WRITE(75,"(A,I10)") 'The total number of molecules is:', nmols(1,1)
-    WRITE(75,*)
-    CLOSE(75)
-
-  END IF
-
-!  CALL Write_Trials_Success
 
   END SUBROUTINE GCMC_Driver

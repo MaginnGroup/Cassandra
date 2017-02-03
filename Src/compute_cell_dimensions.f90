@@ -41,7 +41,7 @@ SUBROUTINE Compute_Cell_Dimensions(box_nbr)
   !    12/10/13 : Beta Release
   !********************************************************************************
   USE Type_Definitions
-  USE Run_Variables
+  USE Global_Variables
   USE IO_Utilities
 
   IMPLICIT NONE

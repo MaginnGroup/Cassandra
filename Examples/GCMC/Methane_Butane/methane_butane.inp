@@ -1,11 +1,11 @@
 ! This is the input file for a GCMC simulation of a mixture of CH4 and C4H10 at 300.0 K.
 
 # Run_Name
-methane_butane
+methane_butane.out
 !--------------
 
 # Sim_Type
-GCMC
+gcmc
 !---------------
 
 # Nbr_Species
@@ -13,28 +13,11 @@ GCMC
 !----------------
 
 # VDW_Style
-LJ cut_tail 13.0
-!----------------
-
-# Charge_Style
-NONE
-NONE
-!----------------
-
-# Intra_Scaling
-0.0  0.0  0.0  1.0
-0.0  0.0  0.0  1.0
-0.0  0.0  0.0  1.0
-0.0  0.0  0.0  1.0
-!------------------
-
-# Mixing_Rule
-LB
+lj cut_tail 13.0
 !----------------
 
 # Seed_Info
 45879702104 5976323210
-
 !-------------------
 
 # Rcutoff_Low
@@ -42,7 +25,7 @@ LB
 !----------------
 
 # Pair_Energy
-TRUE
+true
 !-----------
 
 # Molecule_Files
@@ -52,8 +35,8 @@ C4H10.mcf 300
 
 # Box_Info
 1
-CUBIC
-100.0  100.0 100.0
+cubic
+100.0
 !-------------------------
 
 # Temperature_Info
@@ -80,10 +63,7 @@ CUBIC
 
 # Prob_Insertion
 0.20
-insertion method
-reservoir
-insertion method
-reservoir
+cbmc cbmc
 
 # Prob_Deletion
 0.20
@@ -92,34 +72,25 @@ reservoir
 !----------------------
 
 # Start_Type
-make_config
-10
-90
-
+make_config 10 90
 !------------------
 
 # Run_Type
-Equilibration   600  
+equilibration   600  
 !------------------
 
-# Average_Info
-1
-!-------------
-
 # Simulation_Length_Info
-Units      Steps
-Prop_Freq    500
-Coord_Freq   25000
-MCsteps      50000
-# Done_Simulation_Length_Info
+units      steps
+prop_freq    500
+coord_freq   25000
+run          50000
 !----------------------------
 
 # Property_Info 1 
-Energy_Total
-Nmols
-Volume
-Pressure
-
+energy_total
+nmols
+pressure
+mass_density
 !----------------
 
 # Fragment_Files
@@ -130,10 +101,8 @@ species2/frag2/frag2.dat  3
 
 # CBMC_Info
 kappa_ins 12
-kappa_rot  0 
 kappa_dih 10
 rcut_cbmc 6.5 
 !------------
-
 
 END

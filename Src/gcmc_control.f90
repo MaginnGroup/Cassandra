@@ -34,7 +34,7 @@ SUBROUTINE GCMC_Control
   !
 !*******************************************************************************
   USE IO_Utilities
-  USE Run_Variables
+  USE Global_Variables
   USE Type_Definitions
   USE File_Names
   USE Input_Routines
@@ -53,12 +53,10 @@ SUBROUTINE GCMC_Control
 
 !*******************************************************************************
 
-  CALL Get_Verbosity_Info  
   CALL Copy_Inputfile
 
   ! How many species to simulate?
   CALL Get_Nspecies
-  WRITE(logunit,'(a30,1x,I5,/)') 'Number of species simulated: ',nspecies
 
   ! Load box shape, number of boxes and box type. Compute various properties of the box
   ! including the volume
@@ -72,14 +70,14 @@ SUBROUTINE GCMC_Control
   ! must be called before this routine.  
   CALL Get_Molecule_Info
 
-  ! Determine how intramoleclar scaling of vdw and coul interactions handled.
-  CALL Get_Intra_Scaling
-
   ! Determine the number and identity of unique atom types, and create a vdw interaction table.
   CALL Create_Nonbond_Table
 
   ! Create the intramolecular nonbond scaling arrays.
   CALL Create_Intra_Exclusion_Table
+
+  ! Start_Type
+  CALL Get_Start_Type
 
   ! Seed info
   CALL Get_Seed_Info
@@ -90,18 +88,12 @@ SUBROUTINE GCMC_Control
   ! Read in the probabilities for all the moves
   CALL Get_Move_Probabilities
 
-  ! Get the information on fugacities
-  CALL Get_Fugacity_Info
+  ! Get the chemical potential
+  CALL Get_Chemical_Potential_Info
     
-  ! Get the product of z/omega for each of fragments
-  IF (lfugacity) THEN
-          CALL Get_Zig_By_Omega
-  END IF 
-
   ! Determine the frequency with which information will be output 
   CALL Get_Simulation_Length_Info
 
-  CALL Average_Info
   ! Properties to be output
   CALL Get_Property_Info
 
@@ -135,11 +127,5 @@ SUBROUTINE GCMC_Control
   CALL Get_Dihedral_Atoms_To_Place  
 
   CALL Get_CBMC_Info
-
-  DO i=1, 1
-  IF (int_vdw_sum_style(i) == vdw_mie .OR. int_vdw_sum_style(i) == vdw_mie_cut_shift) THEN
-      CALL Get_Mie_Nonbond
-  END IF
-  END DO
 
 END SUBROUTINE GCMC_Control

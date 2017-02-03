@@ -1,23 +1,34 @@
-************** Beginning Cassandra simulation **************
-Version Cassandra 1.1                                                                                                           
-
-inputfile frag3.inp                                                                                                               
-
+********************************************************************************
+                ______                                __                        
+               / ____/___ _______________ _____  ____/ /________ _              
+              / /   / __ `/ ___/ ___/ __ `/ __ \/ __  / ___/ __ `/              
+             / /___/ /_/ (__  |__  ) /_/ / / / / /_/ / /  / /_/ /               
+             \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                
+                                                                                
+********************************************************************************
+ 
+Run info
+********************************************************************************
+version: Cassandra Version 1.2 20160720
+inputfile: frag3.inp
 name of run: frag3
-
-  Month      Day      Year
-     09       30      2015
- 
- Time:  17:28:19
- 
+date (mm/dd/yyyy): 07/26/2016
+time: 23:10:17
 machine: maginnfe.crc.nd.edu
-
-
-Simulation type: NVT_MC_Fragment     
-
- Verbosity output to logfile set to  F
+********************************************************************************
  
- **** Copying Inputfile ****** 
+Verbose log
+********************************************************************************
+Normal output to logfile
+********************************************************************************
+ 
+Simulation type
+********************************************************************************
+NVT_MC_Fragment     
+********************************************************************************
+ 
+Copy input file
+********************************************************************************
  # Run_Name
  frag3
  
@@ -28,19 +39,13 @@ Simulation type: NVT_MC_Fragment
  1
  
  # VDW_Style
- NONE
+ lj minimum_image
  
  # Rcutoff_Low
  0.0
  
- # Mixing_Rule
- LB
- 
  # Charge_Style
- NONE
- 
- # Intra_Scaling
- 0.0 0.0 0.0 1.0
+ coul minimum_image
  
  # Molecule_Files
  ../fragments/frag_3_1.mcf 1
@@ -48,7 +53,7 @@ Simulation type: NVT_MC_Fragment
  # Box_Info
  1
  CUBIC
- 20.0 20.0 20.0
+ 50.0 50.0 50.0
  
  # Temperature_Info
  343.15
@@ -64,52 +69,56 @@ Simulation type: NVT_MC_Fragment
  # Done_Probability_Info
  
  # Start_Type
- read_old
- ../fragments/frag_3_1.xyz 1
+ read_config 1 ../fragments/frag_3_1.xyz 1
  
  # Run_Type
  Production 1000 10
  
  # Simulation_Length_Info
  Units  Steps
- Prop_Freq  10
- Coord_Freq   90
- MCsteps      1100
- NequilSteps  100
- # Done_Simulation_Length_Info
+ prop_freq  10
+ coord_freq   90
+ run          1100
+ nequilsteps  100
  
  # File_Info
  frag3.dat
  
  END
+********************************************************************************
  
- **** Finished writing input file *******
- Number Of Species Simulated:      1
-
- *** Simulation box data ***
-number of simulation boxes     1
+Number of species
+********************************************************************************
+1
+********************************************************************************
  
-Box number      1       Box Shape:      Cubic 
-Each Side Of :        20.0000     Angstrom
+Box info
+********************************************************************************
+Number of simulation boxes     1
+Box 1 is CUBIC               
+ Each Side Of :       50.0000     Angstrom
+ Cell basis vector lengths in A,     50.0000      50.0000      50.0000
+ Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+ Distance between box faces    50.0000      50.0000      50.0000
+ Box volume, A^3        125000.0000
+********************************************************************************
  
-Cell basis vector lengths in A,     20.0000      20.0000      20.0000
-Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
-Distance between box faces    20.0000      20.0000      20.0000
-Box volume, A^3          8000.0000
+Pair style
+********************************************************************************
+VDW style used is:   LJ             in box:  1
+ VDW sum style is:   minimum_image  in box:  1
+ Minimum image convention used for VDW
+Charge style in box 1 is coul
+ Charge sum style is   minimum_image  in box:  1
+ Minimum image convention used for charge
+Section "# Pair_Energy" is missing from the input file
+ By default, pair interaction energy arrays will not be stored
+Section "# Mixing_Rule" is missing from the input file
+ By default, using Lorentz-Berthelot
+********************************************************************************
  
- *** Finished loading box information ***
- 
-   VDW style used is:   NONE           in box:  1
- 
-   Charge style used is:   NONE           in box:  1
- Charge style properly input
- 
-Lorentz-Berthelot mixing rule specified
- 
- Pair interaction energy arrays will not be stored
- Energy calculations will be done in a standard way
- 
- 
+Molecule info
+********************************************************************************
  Reading molecular connectivity information
  Species:            1
  Molecular connectivity file: 
@@ -121,185 +130,183 @@ Lorentz-Berthelot mixing rule specified
    0 dihedral(s) specified.
    0 improper(s) specified.
  
-Species  Nbr molecules
--------  -------------
-     1              1
+ Species  Max molecules
+ -------  -------------
+      1              1
  
-L_Coul_CBMC not given for species    1
- Defaulting to  T
+ Species     1
+ -------------------------------------------------------------------------------
+ Atom parameters read
+ Bond parameters read
+ Angle parameters read
+ Dihedral parameters read
+ Improper parameters read
+ Intra molecule scaling factors for species            1
+  VDW 1-2 scaling factor       0.000
+  VDW 1-3 scaling factor       0.000
+  VDW 1-4 scaling factor       0.000
+  VDW 1-N scaling factor       1.000
+  Coulomb 1-2 scaling factor   0.000
+  Coulomb 1-3 scaling factor   0.000
+  Coulomb 1-4 scaling factor   0.000
+  Coulomb 1-N scaling factor   1.000
+ -------------------------------------------------------------------------------
+********************************************************************************
  
- *** Completed assigning atom info ***
+Start type
+********************************************************************************
+Initial configuration for box 1 will be read from file
+ Will read       1  molecules of species   1
+ Will read configuration from file ../fragments/frag_3_1.xyz
+********************************************************************************
  
- *** Completed assigning bond info ***
+Seed info
+********************************************************************************
+The starting seeds are:    706111630     70611631
+********************************************************************************
  
+Temperature
+********************************************************************************
+Temperature of box 1 is 343.150 K
+********************************************************************************
  
- *** Completed assigning angle info ***
- 
- *** Completed assigning dihedral info ***
- 
- *** Completed assigning improper info ***
- 
- intramolecular scaling factors explicitly set
-Intra molecule scaling factors for species             1
-VDW 1-2 scaling factor         0.000
-VDW 1-3 scaling factor         0.000
-VDW 1-4 scaling factor         0.000
-VDW 1-N scaling factor         0.000
-Coulomb 1-2 scaling factor     0.000
-Coulomb 1-3 scaling factor     0.000
-Coulomb 1-4 scaling factor     0.000
-Coulomb 1-N scaling factor     0.000
- 
- 
- *** Completed assigning intramolecular scaling factors ***
- 
- 
- ***** Reading seed info *********
- 
- The starting seed s1 is:    153587801
- 
- ****** Finished loading the seed ********
- 
- **** Simulation temperature information ****
-  Temperature assigned to box     1  is  343.150    K
- 
- *** Finished loading information for temperature ****
- 
- 
- ********* Move Probability Info******
-    Translation probability is   1.000000
- 
- 
+Move probabilities
+********************************************************************************
+Probability for translation                1.000000
  Maximum width in cosine of polar angle is  0.200000000000000     
  Maximum width (degrees) in azimuthal angle is   10.0000000000000     
- ***** Finished reading the move probability info *****
 Number of moves is :   1
+********************************************************************************
  
- 
-Thermodynamic quantities will written at every         10 MC steps.
- 
-Coordinates will be written at every                   90 MC steps.
- 
-movie header file for box    1 is      frag3.box1.H
-movie_XYZ file for box       1 is      frag3.box1.xyz
- 
-The simulation will be run for                         1100 MC steps.
- 
+Simulation length info
+********************************************************************************
+Thermodynamic quantities will be computed every        10 Steps     
+Coordinates will be written every                      90 Steps     
+ movie header file is                  frag3.H
+ movie_XYZ file is                     frag3.xyz
+The simulation will be run for                       1100 Steps     
 Number of equilibrium steps       100
+Instantaneous values will be written every             10 Steps     
+********************************************************************************
  
- *** Finished Reading Simulation Length Info ******* 
+File info
+********************************************************************************
      Configuration file for species    1   is
                           frag3.dat
+********************************************************************************
  
- ******Initial Coordinate Info **********
- 
- Configurations will be read from old files
- 
-Starting configuration for box           1 is
- ../fragments/frag_3_1.xyz                                                      
-                                          
- 
- *****Finished reading initial coordinate info *****
- 
- ****** Reading Run_Type Information ******
- 
+Run type
+********************************************************************************
  The input run type is Production
  Update frequency is         1000
+********************************************************************************
  
- ******* Finished reading run type information ******
-starting type read_old                                                                                                                
-
+********************************************************************************
+************************ Begin Cassandra simulation ****************************
+********************************************************************************
+ 
+Initial configuration
+********************************************************************************
+ Reading configuration for box           1
+ Reading            1  molecules of species            1
  Configurations read successfully
- ***************** Charge Neutrality Check *****************
- Species           1    has charge               -0.25000000
- Box               1    has charge               -0.25000000
+********************************************************************************
  
- ***************** Charge Neutrality Check *****************
- ***********************************************************
-   Starting energy components for box   1
-  Atomic units-Extensive
+Charge neutrality check
+********************************************************************************
+ Species 1 has charge:                 -0.25000000
  
- Total system energy is                 16543.918
- Intra molecular energy is              16543.918
- Bond energy is                             0.000
- Bond angle energy is                   16543.918
- Dihedral angle energy is                   0.000
- Improper angle energy is                   0.000
- Intra nonbond vdw is                       0.000
- Intra nonbond elec is                      0.000
- Inter molecule vdw is                      0.000
- Inter molecule q is                        0.000
- Reciprocal ewald is                        0.000
- Self ewald is                              0.000
- ***********************************************************
+ Box     1 has charge:                 -0.25000000
+********************************************************************************
  
- Zig by omega will be printed. This is required in GCMC acceptance rule if fugac
- ity is used.
-Z/Omega                     0.4049506616
-******************** END OF SIMULATION ********************
- 
- 
- ***********************************************************
- Ending energy components for box   1
+Compute total energy
+********************************************************************************
+ Starting energy components for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                 16543.918
- Intra molecular energy is              16543.918
- Bond energy is                             0.000
- Angle energy is                        16543.918
- Dihedral energy is                         0.000
- Improper angle energy is                   0.000
- Intra nonbond vdw is                       0.000
- Intra nonbond elec is                      0.000
- Inter molecule vdw is                      0.000
- Inter molecule q is                        0.000
- Reciprocal ewald is                        0.000
- Self ewald is                              0.000
- ***********************************************************
+ Total system energy                    16543.918
+ Intra molecular energy                 16543.918
+   Bond energy                              0.000
+   Bond angle energy                    16543.918
+   Dihedral angle energy                    0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                         0.000
+ Intra molecule q                           0.000
+ Inter molecule vdw                         0.000
+ Inter molecule q                           0.000
+ -----------------------------------------------------------
+ 
+********************************************************************************
+ 
+Run simulation
+********************************************************************************
+      Step       Move   Mol Spc Box  Success  MaxWidth
+********************************************************************************
+ 
+Report ending energy & then re-compute from scratch
+********************************************************************************
  
  
- ***********************************************************
- Energy components from total energy call for box   1
+ Initial energy + deltas for box 1
   Atomic units-Extensive
  -----------------------------------------------------------
- Total system energy is                     3.680
- Intra molecular energy is                  3.680
- Bond energy is                             0.000
- Angle energy is                            3.680
- Dihedral energy is                         0.000
- Improper angle energy is                   0.000
- Intra nonbond vdw is                       0.000
- Intra nonbond elec is                      0.000
- Inter molecule vdw is                      0.000
- Inter molecule q is                        0.000
- Reciprocal ewald is                        0.000
- Self ewald is                              0.000
- ***********************************************************
+ Total system energy                      159.417
+ Intra molecular energy                   159.417
+   Bond energy                              0.000
+   Angle energy                           159.417
+   Dihedral energy                          0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                         0.000
+ Intra molecule q                           0.000
+ Inter molecule vdw                         0.000
+ Inter molecule q                           0.000
+ -----------------------------------------------------------
  
  
- Writing information for box  1
- ***********************************************************
+ Recomputed energy from scratch for box 1
+  Atomic units-Extensive
+ -----------------------------------------------------------
+ Total system energy                      159.417
+ Intra molecular energy                   159.417
+   Bond energy                              0.000
+   Angle energy                           159.417
+   Dihedral energy                          0.000
+   Improper angle energy                    0.000
+ Intra molecule vdw                         0.000
+ Intra molecule q                           0.000
+ Inter molecule vdw                         0.000
+ Inter molecule q                           0.000
+ -----------------------------------------------------------
+********************************************************************************
  
  
- ***********************************************************
- Writing information for species  1
+Writing information for box  1
+********************************************************************************
+ 
+   ---------------------------------------------------------
+   Writing information for species  1
  
                 Move      Trials     Success   % Success
- ***********************************************************
+   Atom Displacement        1100         630       57.27
+   ---------------------------------------------------------
  
+********************************************************************************
  
  Writing information about subroutine times
+********************************************************************************
+********************************************************************************
  
- ***********************************************************
- 
- ***********************************************************
- 
+********************************************************************************
+************************ Cassandra simulation complete *************************
+********************************************************************************
  
  Program execution time
+********************************************************************************
          0      Years
          0     Months
          0       Days
          0      Hours
          0    Minutes
          0    Seconds
-        15         ms
+        21         ms
+********************************************************************************

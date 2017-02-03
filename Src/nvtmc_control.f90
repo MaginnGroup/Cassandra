@@ -52,12 +52,11 @@ SUBROUTINE NVTMC_Control
   !        Get_Angles_Atoms_To_Place   
   !        Angle_Distribution
   !        Get_Dihedral_Atoms_To_Place  
-  !        Get_Mie_Nonbond
   !
   ! 08/07/13  : Created beta version
 !*******************************************************************************
   USE IO_Utilities
-  USE Run_Variables
+  USE Global_Variables
   USE Type_Definitions
   USE File_Names
   USE Input_Routines
@@ -76,13 +75,10 @@ SUBROUTINE NVTMC_Control
 
 !*******************************************************************************
   ! Copy the input file to the logfile
-
-  CALL Get_Verbosity_Info  
   CALL Copy_Inputfile
 
   ! How many species to simulate?
   CALL Get_Nspecies
-  WRITE(logunit,'(a30,1x,I5,/)') 'Number of species simulated: ',nspecies
 
   ! Load box shape, number of boxes and box type. Compute various properties of the box
   ! including the volume
@@ -96,16 +92,14 @@ SUBROUTINE NVTMC_Control
   ! must be called before this routine.  
   CALL Get_Molecule_Info
 
+  ! Determine the number and identity of unique atom types, and create a vdw interaction table.
+  CALL Create_Nonbond_Table
 
-     ! Determine how intramoleclar scaling of vdw and coul interactions handled.
-     CALL Get_Intra_Scaling
+  ! Create the intramolecular nonbond scaling arrays.
+  CALL Create_Intra_Exclusion_Table
 
-     ! Determine the number and identity of unique atom types, and create a vdw interaction table.
-     CALL Create_Nonbond_Table
 
-     ! Create the intramolecular nonbond scaling arrays.
-     CALL Create_Intra_Exclusion_Table
-
+  CALL Get_Start_Type
 
   CALL Get_Seed_Info
 
@@ -116,8 +110,6 @@ SUBROUTINE NVTMC_Control
   CALL Get_CBMC_Info
 
   CALL Get_Simulation_Length_Info
-
-  CALL Average_Info
 
   CALL Get_Property_Info
 
@@ -144,11 +136,5 @@ SUBROUTINE NVTMC_Control
 
   ! Dihedral moves
   CALL Get_Dihedral_Atoms_To_Place
-
-  DO i=1,1
-  IF (int_vdw_sum_style(i) == vdw_mie .OR. int_vdw_sum_style(i) == vdw_mie_cut_shift) THEN
-      CALL Get_Mie_Nonbond
-  END IF
-  END DO
 
 END SUBROUTINE NVTMC_Control

@@ -38,7 +38,7 @@ MODULE Type_Definitions
   !      nvtmc_control
   !      participation
   !      random_generators ONLY : DP
-  !      run_variables
+  !      global_variables
   !      translate
   !
   ! Revision history:
@@ -68,7 +68,7 @@ MODULE Type_Definitions
   INTEGER, PARAMETER :: nregions = 1000
   
   ! Define some classes to hold variables associated with different objects
-  ! in the simulation. These will be converted to lists in run_variables for speed.
+  ! in the simulation. These will be converted to lists in global_variables for speed.
 
   !****************************************************************************
   TYPE Species_Class
@@ -79,10 +79,10 @@ MODULE Type_Definitions
      REAL(DP) :: molecular_weight, total_charge
 
      ! simulation specific information
-     CHARACTER(20) :: species_type, insertion, insert_style
+     CHARACTER(20) :: species_type, insertion
 
      ! State point dependent information
-     REAL(DP) :: fugacity, chem_potential, zig_by_omega, activity
+     REAL(DP) :: chem_potential, activity
      REAL(DP) :: max_lambda, max_torsion
      REAL(DP), ALLOCATABLE :: de_broglie(:)
 
@@ -109,7 +109,7 @@ MODULE Type_Definitions
      ! NR: Adding to have an option not to include 
      ! Coul interaction during biased growth
      LOGICAL :: L_Coul_CBMC 
-     ! N.B. natoms, nmolecules, etc. are in a separate arrays
+     ! N.B. natoms, max_molecules, etc. are in a separate arrays
      ! NR: for insertion style
      LOGICAL :: lcom 
 
@@ -122,7 +122,7 @@ MODULE Type_Definitions
   !****************************************************************************
   TYPE Molecule_Class
 
-     ! The molecule list will have dimensions (nmolecules,nspecies)
+     ! The molecule list will have dimensions (max_molecules,nspecies)
 
      ! What kind of molecule is this? normal, fractional, fixed, etc. 
      ! Note that the following integers will be defined for the type
@@ -141,11 +141,10 @@ MODULE Type_Definitions
      ! com and euler angles refer to the x,y and z com coordinates
      ! and 1, 2 and 3 euler angles of the molecule. The suffix
      ! old denotes old coordinates.
-     ! cfc_lambda is the scaling parameter for the atom used in CFC moves. 
-     ! If there is no CFC, lambda = 1.0_DP
+     ! frac is the fractional scaling parameter for the molecule
      REAL(DP)  :: xcom, ycom, zcom, euler1, euler2, euler3
      REAL(DP)  :: xcom_old, ycom_old, zcom_old, euler1_old,euler2_old,euler3_old
-     REAL(DP)  :: cfc_lambda
+     REAL(DP)  :: frac
      ! This variable records the maximum distance of any psuedo atom from its
      ! COM. This is used to speed up energy calculations.
 
@@ -162,7 +161,7 @@ MODULE Type_Definitions
   TYPE Internal_Coord_Class
 
      ! The internal coordinate list will have dimensions 
-     ! (MAXVAL(nbonds), MAXVAL(nmolecules), MAXVAL(nspecies))
+     ! (MAXVAL(nbonds), MAXVAL(max_molecules), MAXVAL(nspecies))
 
      REAL(DP) :: bond_length_angstrom
      REAL(DP) :: bond_angle_degrees, bond_angle_radians
@@ -194,7 +193,7 @@ MODULE Type_Definitions
      ! in the system. For example, if we are growing a molecule, some atoms may
      ! not yet have been placed, and so exist = 'false'.
 
-     ! atom_list has dimensions (natoms, nmolecules, nspecies)
+     ! atom_list has dimensions (natoms, max_molecules, nspecies)
      
      REAL(DP) :: rxp, ryp, rzp
      REAL(DP) :: rxp_nls, ryp_nls, rzp_nls  ! The starting positions for the neighbor list
@@ -218,7 +217,7 @@ MODULE Type_Definitions
 
      ! nonbond list has dimensions (MAXVAL(natoms), nspecies)
 
-     CHARACTER(20) :: vdw_potential_type
+     CHARACTER(20) :: vdw_type
      REAL(DP), DIMENSION(max_nonbond_params) :: vdw_param
 
      CHARACTER(2) :: element
@@ -475,9 +474,9 @@ MODULE Type_Definitions
     ! total             : total energy of the system
 
     REAL(DP) :: inter_vdw, lrc, inter_q, intra_vdw, intra_q
-    REAL(DP) :: intra, ewald_reciprocal, ewald_self, total
-    REAL(DP) :: bond, angle, dihedral, improper, erf_self
- 
+    REAL(DP) :: intra, ewald_reciprocal, total
+    REAL(DP) :: bond, angle, dihedral, improper
+    REAL(DP) :: self
  END TYPE Energy_Class
  !------------------------------------------------------------------------------------------------
 
@@ -515,12 +514,15 @@ MODULE Type_Definitions
     ! nconfig : total number of conformations in each fragment
     ! Total number of anchors and id of the anchors are stored in 'nanchors' 
     ! and 'anchor' array
+    ! prob_ins : probability of inserting this fragment first
+    ! cum_prob_ins : cumulative probablility of inserting this fragment first
     INTEGER :: natoms, nconnect, nanchors, type, nconfig
     INTEGER, DIMENSION(:), ALLOCATABLE :: anchor
     INTEGER, DIMENSION(:), ALLOCATABLE :: atoms
     INTEGER, DIMENSION(:), ALLOCATABLE :: frag_connect
     LOGICAL:: ring
     REAL(DP)::rcut_vdwsq, rcut_coulsq,alpha_ewald
+    REAL(DP) :: prob_ins, cum_prob_ins
 
  END TYPE Frag_Class
 !-------------------------------------------------------------------------------------------------
@@ -529,7 +531,11 @@ MODULE Type_Definitions
     ! This class holds the information on the fragments involved in a fragment bond
     ! The type has dimensions of (MAXVAL(fragment_bonds), nspecies)
 
-    INTEGER :: fragment1,fragment2
+    ! frag_id of the two fragments connected via this bond
+    INTEGER :: fragment1, fragment2
+    ! probability of deleting fragment1 if this bond is cut
+    ! don't need to store prob_del2, since it must be 1.O_DP - prob_del1
+    REAL(DP) :: prob_del1
 
  END TYPE Fragment_Bond_Class
 
@@ -539,11 +545,28 @@ MODULE Type_Definitions
     REAL(DP) :: rxp, ryp, rzp
  END TYPE Library_Coords_Class
 
-
+!-------------------------------------------------------------------------------------------------
 
  TYPE Energy_Fragment_Class
     REAL(DP), DIMENSION(:), ALLOCATABLE :: this_config_energy
  END TYPE Energy_Fragment_Class
 
+!-------------------------------------------------------------------------------------------------
+
+ TYPE Pressure_Class
+    ! This class holds the pressure for each box
+
+    ! Setpoint pressure, provided for constant pressure simulations
+    REAL(DP) :: setpoint
+
+    ! Computed pressure, kNT/V + virial
+    REAL(DP) :: computed
+
+    ! last calculation
+    INTEGER :: last_calc
+
+ END TYPE Pressure_Class
+
+!-------------------------------------------------------------------------------------------------
 
 END MODULE Type_Definitions

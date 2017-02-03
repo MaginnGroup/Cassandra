@@ -23,20 +23,19 @@
 
 #*******************************************************************************
 #
-# Cassandra script for generating fragment libraries automatically
+# Script for generating fragment libraries automatically
 #
 # This script sets up a Cassandra simulation.
 #
-# Files required before running:
-#	Master input file
-#	PDB files for each species
-#	MCF files for each species
+# Required files:
+#	  Cassandra input file
+#	  PDB files for each species
+#	  MCF files for each species
 #
 # Fragment libraries are located in:
-# 
-# /species?/frag?/frag?.dat
+#   species?/frag?/frag?.dat
 #
-# Where ? stands for the species id (i.e. species1, species2 ...)
+# where ? stands for the species id (i.e. species1, species2 ...)
 #
 # Note that the script overwrites the section of the input file where needed 
 # (i.e. # Frag_Info) with the aforementioned folder locations. 
@@ -61,7 +60,7 @@ Creates a library of fragment conformations (e.g. frag1.dat) in the following di
   species?/frag?/frag?.inp
                  frag?.dat
 
-EXAMPLES
+EXAMPLES:
 To generate a fragment library of a water molecule:
 
     > library_setup.py /home/applications/cassandra.exe nvt.inp water.pdb
@@ -75,22 +74,28 @@ To generate fragment libraries for a mixture of propane and butane:
     > library_setup.py cassandra.exe nvt.inp c3.pdb c4.pdb
 """)
 parser.add_argument('cassandra_path', 
-								help="""path to the cassandra executable""")
+                help="path to the cassandra executable")
 parser.add_argument('input_file', 
-								help="""Parameters for the individual fragment MC runs are """ +
-										 """taken from INPUTFILE. The fragment .mcf files are """ +
-										 """generated from the molecular .mcf files given in """ +
-										 """INPUTFILE. The fragment library files (e.g. """ +
-										 """species1/frag1/frag1.dat) will be added to the """ +
-										 """# Frag_Info section of INPUTFILE.""")
+                help="Parameters for the individual fragment MC runs are " +
+                     "taken from INPUTFILE. The fragment .mcf files are " +
+                     "generated from the molecular .mcf files given in " +
+                     "INPUTFILE. The fragment library files (e.g. " +
+                     "species1/frag1/frag1.dat) will be added to the " +
+                     "# Frag_Info section of INPUTFILE.")
 parser.add_argument('config_files', nargs='+',
-								help="""CONFIGFILES must be in either .pdb or .cml format. """ +
-										 """A .pdb file can be generated using Gaussview, """ +
-										 """while .cml files can be generated using Avogadro. """ +
-										 """CONFIGFILES provide the starting configuration for """ +
-										 """each fragment that has a ring. If the molecule is """ +
-										 """rigid, the coordinates are simply transferred from """ +
-										 """CONFIGFILE to the fragment library file.""")
+                help="CONFIGFILES must be in either .pdb or .cml format. " +
+                     "A .pdb file can be generated using Gaussview, " +
+                     "while .cml files can be generated using Avogadro. " +
+                     "CONFIGFILES provide the starting configuration for " +
+                     "each fragment that has a ring. If the molecule is " +
+                     "rigid, the coordinates are simply transferred from " +
+                     "CONFIGFILE to the fragment library file.")
+parser.add_argument('--nConfigs', '-n', type=int, default=100000,
+                help="number of configurations to write to the fragment " +
+                     "library")
+parser.add_argument('--noFlags', action='store_true',
+                help="Suppresses the _s? flags that are appended to each " +
+                     "atom type by default in the .mcf")
 
 args = parser.parse_args()
 
@@ -248,14 +253,10 @@ input_file = os.path.abspath(args.input_file)
 bold = '\033[1m'
 normal = '\033[0m'
 gcmc_flag = 0
-chempot_flag = 0
-fugacity_flag = 0
-zbyomega = 1
 
-print bold+"\n*********Cassandra setup*********\n"
-
-print "Cassandra location: "+normal+cassandra_path
-print bold+"Scanning input file..."
+print bold+"\n********************** Cassandra Setup *********************\n"+normal
+print bold+"Cassandra location: "+normal+cassandra_path
+print bold+"Scanning input file"+normal
 
 #Locate line number for the following keywords:
 # Nbr_Species
@@ -266,6 +267,11 @@ print bold+"Scanning input file..."
 
 in_file = open(input_file,'r')
 keyword_line = []
+
+# initialize optional keywords
+intra_scaling_line = None
+charge_style_line = None
+mixing_rule_line = None
 
 for line_number,line in enumerate(in_file):
 	if not line.strip():
@@ -278,46 +284,88 @@ for line_number,line in enumerate(in_file):
 			molec_files_line = line_number+1
 		elif line_parse[1] == "Start_Type":
 			start_type_line = line_number+1
-                elif line_parse[1] == "Fragment_Files":
+		elif line_parse[1] == "Fragment_Files":
 			frag_files_line = line_number+1
 		elif line_parse[1] == "Temperature_Info":
 			temp_line = line_number+1
 		elif line_parse[1] == "Sim_Type":
-			sim_type_line = line_number + 1
+			sim_type_line = line_number+1
+		elif line_parse[1] == "VDW_Style":
+			vdw_style_line = line_number+1
 		elif line_parse[1] == "Charge_Style":
 			charge_style_line = line_number+1
 		elif line_parse[1] == "Box_Info":
 			box_info_line = line_number+1
-		elif line_parse[1] == "Chemical_Potential_Info":
-			chempot_flag = 1
-		elif line_parse[1] == "Fugacity_Info":
-			fugacity_flag = 1
+		elif line_parse[1] == "Intra_Scaling":
+			intra_scaling_line = line_number+1
+		elif line_parse[1] == "Mixing_Rule":
+			mixing_rule_line = line_number+1
 
 in_file.close()
 
 #Obtain Nbr_Boxes
 nbr_boxes = int(linecache.getline(input_file, box_info_line+1))
 
-#Obtain Charge_Style info
-charge_style = []
-for i in xrange(0,nbr_boxes):
-	charge_style.append(linecache.getline(input_file, charge_style_line+1+i))
+#Obtain VDW_Style and Charge_Style info
+if nbr_boxes == 1:
+	vdw_style = linecache.getline(input_file, vdw_style_line+1).split()[0]
+	if charge_style_line:
+		charge_style = linecache.getline(input_file, charge_style_line+1).split()[0]
+else:
+	vdw_style = []
+	charge_style = []
+	for i in xrange(1,nbr_boxes+1):
+		vdw_style.append(linecache.getline(input_file, vdw_style_line+i).split()[0])
+		if charge_style_line:
+			charge_style.append(linecache.getline(input_file, charge_style_line+i).split()[0])
+	if vdw_style[1] != vdw_style[0]:
+		vdw_style = raw_input("VDW_Style for boxes don't match. " +
+		                      "Enter the VDW_Style to use (" + vdw_style[0] + "/" + 
+		                      vdw_style[i-1] + "):")
+	else:
+		vdw_style = vdw_style[0]
+	if vdw_style != 'LJ' and vdw_style != 'lj' and \
+	   vdw_style != 'Mie' and vdw_style != 'mie':
+		print "Only 'LJ' and 'Mie' VDW_Styles are supported"
+		quit()
+	if charge_style_line:
+		if charge_style[1] != charge_style[0]:
+			charge_style = raw_input("Charge_Style for boxes don't match. " +
+										 "Enter the Charge_Style to use (" + charge_style[0] + "/" + 
+										 charge_style[i-1] + "):")
+		else:
+			charge_style = charge_style[0]
 
 #Obtain simulation type
 sim_type = linecache.getline(input_file,sim_type_line+1)
-if "GCMC" in sim_type:
-	gcmc_flag = 1
-	if chempot_flag == 1 and fugacity_flag == 1:
-		print bold + "Aborting. Both Chemical potential and Fugacity were " + \
-		             "specified within a GCMC simulation. Select only one of these."
-		sys.exit()
-
-	if fugacity_flag == 1:
-		print bold+"Grand Canonical simulation found. Will look for Zig/Omega in log files."+normal
 
 #Obtain number of species
 nbr_species = int(linecache.getline(input_file,nbr_species_line+1))
-print bold+"Number of species found: " + normal + str(nbr_species)
+print bold+"  Number of species found: " + normal + str(nbr_species)
+
+#Intra_Scaling
+vdw_scaling = []
+charge_scaling = []
+for i in xrange(1,nbr_species+1):
+	if intra_scaling_line:
+		if charge_style_line and charge_style == 'coul':
+			vdw_scaling.append(linecache.getline(input_file,intra_scaling_line+2*i-1))
+			charge_scaling.append(linecache.getline(input_file,intra_scaling_line+2*i))
+		else:
+			vdw_scaling.append(linecache.getline(input_file,intra_scaling_line+i))
+
+#Mixing_Rule
+if mixing_rule_line:
+	mixing_rule = linecache.getline(input_file,mixing_rule_line+1)
+	if mixing_rule.strip() == "custom":
+		i = 1
+		while True:
+			if linecache.getline(input_file,mixing_rule_line+1+i).strip() and \
+			   linecache.getline(input_file,mixing_rule_line+1+i)[1] != '!':
+				mixing_rule = mixing_rule + linecache.getline(input_file,mixing_rule_line+1+i)
+				i += 1
+			else:
+				break
 
 #Open PDB Files. Is there any files without the CONECT keyword (e.g. zeolite)? If so, 
 #tag it. This species will be assumed to be comprised of rigid fragment.
@@ -338,7 +386,7 @@ for this_species,each_pdb in enumerate(pdb_files):
 mcf_files = []
 for i in xrange(0,nbr_species):
 	mcf_files.append(linecache.getline(input_file,molec_files_line+i+1).split()[0])
-	print bold+"The MCF file number " + str(i+1) + " is: " + normal + mcf_files[i]
+	print bold+"  The MCF file number " + str(i+1) + " is: " + normal + mcf_files[i]
 
 #Open the MCF files to record where atom, bond and fragment info is
 line_where_atom_info = []
@@ -370,7 +418,11 @@ for i in xrange(0, nbr_species):
 	for j in xrange(0,nbr_atoms[i]):
 		atom_type = linecache.getline(mcf_files[i],
 		                              line_where_atom_info[i]+2+j).split()[1]
-		if atom_type[-3:] != '_s' + str(i+1):
+		#remove old '_s?' flags if present
+		if atom_type[-3:-1] == '_s':
+			atom_type = atom_type[:-3]
+		#add '_s?" flags to atom_types, unless --noFlags given
+		if not args.noFlags:
 			atom_type = atom_type + '_s' + str(i+1)
 		atom_type_list[i][j] = atom_type
 		atom_in_ring = linecache.getline(mcf_files[i],
@@ -382,11 +434,11 @@ for i in xrange(0, nbr_species):
 
 #Find how many fragments there are and get a list of them.
 nbr_fragments = []
-fragment_list=[]
+fragment_list = []
 for i in xrange(0, nbr_species):
 	nbr_fragments.append(int(linecache.getline(mcf_files[i],
 	                            line_where_fragment_info[i]+1).split()[0]))
-	print bold+"Species "+str(i+1)+" has "+str(nbr_fragments[i])+ " fragments"
+	print bold+"    Species "+str(i+1)+" has "+str(nbr_fragments[i])+ " fragments" + normal
 	temp_list=[]
 	for j in xrange(0,nbr_fragments[i]):
 		temp_list.append(linecache.getline(mcf_files[i],
@@ -414,9 +466,9 @@ for i,species in enumerate(fragment_list):
 	temp_exoring = []
 
 if any([any(has_ring) for has_ring in fragment_has_ring]):
-	print bold+"Molecules with rings found. These are:"
+	print bold+"Molecules with rings found. These are:" + normal
 	for i,species in enumerate(fragment_has_ring):
-		print "Species "+str(i+1)+" has "+str(sum(species))+ " rings."
+		print bold+"Species "+str(i+1)+" has "+str(sum(species))+ " rings."+normal
 
 #We know what fragments are ring for each species. Copy only those config_files 
 #for the species that have rings
@@ -482,8 +534,11 @@ for i in xrange(0, nbr_species):
 for i in xrange(0, nbr_species):
 
 	if i in pdb_without_conect:
-		print "\n\n" + bold + "MCF generation file not created for species 1."
-		print "Fragment configuration will be taken from PDB file."
+		print "\n\n" + bold + "MCF generation file not created for species "+str(i+1)+normal
+		if nbr_fragments[i] == 0:
+			print bold+"No fragment configuration needed."+normal
+		else:
+			print bold+"Fragment configuration will be taken from PDB file."+normal
 		continue
 
 	if nbr_atoms[i] >= 3:
@@ -491,27 +546,36 @@ for i in xrange(0, nbr_species):
 			if str(i) in element[0]:
 				os.system("cp "+element[1]+" species"+str(i+1)+"/fragments/molecule.pdb")
 
-		print "\n\n"+bold+"Creating input MCF generation file for species "+str(i+1) +"..."+normal
+		print "\n\n"+bold+"Creating input MCF generation file for species "+str(i+1)+" "+normal
 		input_mcf_gen = open("species"+str(i+1)+"/fragments/species"+str(i+1)+"_mcf_gen.inp",'w')
 		input_mcf_gen.write("# Run_Name\nspecies"+str(i+1)+"_mcf_gen")
 		input_mcf_gen.write("\n\n")
 		input_mcf_gen.write("# Sim_Type\nMCF_Gen\n\n")
 		input_mcf_gen.write("# Nbr_Species\n1\n\n")
-		input_mcf_gen.write("# VDW_Style\nLJ cut_tail 12.0\n\n")
+		input_mcf_gen.write("# VDW_Style\n"+vdw_style+" minimum_image\n\n")
 		input_mcf_gen.write("# Rcutoff_Low\n1.0\n\n")
-		input_mcf_gen.write("# Mixing_Rule\nLB\n\n")
-		input_mcf_gen.write("# Charge_Style\ncoul Ewald 12.0 0.000001\n\n")
-		input_mcf_gen.write("# Intra_Scaling\n0.0 0.0 0.0 1.0\n0.0 0.0 0.0 1.0\n\n")
+		if mixing_rule_line:
+			input_mcf_gen.write("# Mixing_Rule\n"+mixing_rule+"\n\n")
+		if charge_style_line:
+			if charge_style == 'coul':
+				input_mcf_gen.write("# Charge_Style\n"+charge_style+" minimum_image\n\n")
+				if intra_scaling_line:
+					input_mcf_gen.write("# Intra_Scaling\n"+
+													 vdw_scaling[i]+charge_scaling[i]+"\n")
+			else:
+				input_mcf_gen.write("# Charge_Style\n"+charge_style+"\n\n")
+				if intra_scaling_line:
+					input_mcf_gen.write("# Intra_Scaling\n"+vdw_scaling[i]+"\n")
 		input_mcf_gen.write("# Molecule_Files\n../../"+mcf_files[i]+" 50\n\n")
 		input_mcf_gen.write("# Box_Info\n1\nCUBIC\n30.0 30.0 30.0\n\nEND")
-		print "Done..."
 		input_mcf_gen.close()
-		print "Running Cassandra to generate MCF files..."+normal
+
+		print bold+"Running Cassandra to generate MCF files"+normal
+		sys.stdout.flush()
 		os.chdir('./species'+str(i+1)+'/fragments/')
 		subprocess.call([cassandra_path,'species'+str(i+1)+'_mcf_gen.inp'])
 		os.chdir('../../')
 
-print bold+"Done..."
 
 #Test if fragment and/or ring is rigid
 fragment_is_rigid = [] # Boolean entry for each i,j
@@ -604,27 +668,26 @@ for i in xrange(0, nbr_species):
 				input_frag.write("# Run_Name\nfrag"+str(j+1)+"\n\n")
 				input_frag.write("# Sim_Type\nNVT_MC_Ring_Fragment\n\n")
 				input_frag.write("# Nbr_Species\n1\n\n")
-				input_frag.write("# VDW_Style\nLJ cut 14.0\n\n")
-				input_frag.write("# Mixing_Rule\nLB\n\n")
+				input_frag.write("# VDW_Style\n"+vdw_style+" minimum_image\n\n")
+				if mixing_rule_line:
+					input_frag.write("# Mixing_Rule\n"+mixing_rule+"\n\n")
 				input_frag.write("# Rcutoff_Low\n1.0\n\n")
-
-				for index,box_charge_style in enumerate(charge_style):
-					if 'NONE' not in box_charge_style:
-						input_frag.write("# Charge_Style\n"+charge_style[index]+"\n")
-						break
+				if charge_style_line:
+					if charge_style == 'coul':
+						input_frag.write("# Charge_Style\n"+charge_style+" minimum_image\n\n")
+						if intra_scaling_line:
+							input_frag.write("# Intra_Scaling\n"+
+															 vdw_scaling[i]+charge_scaling[i]+"\n")
 					else:
-						if index+1 == nbr_boxes:
-							input_frag.write("# Charge_Style\nNONE\n\n")
-							break
-
-				input_frag.write("# Intra_Scaling\n0.0 0.0 0.0 1.0\n0.0 0.0 0.0 1.0"+
-					               "\n\n")
+						input_frag.write("# Charge_Style\n"+charge_style+"\n\n")	
+						if intra_scaling_line:
+							input_frag.write("# Intra_Scaling\n"+vdw_scaling[i]+"\n")
 				input_frag.write("# Box_Info\n1\nCUBIC\n50.0 50.0 50.0\n\n")
 				input_frag.write("# Temperature_Info\n"+str(temperature)+"\n\n")
 				input_frag.write("# Seed_Info\n706111630 70611631\n\n")
 				input_frag.write("# Molecule_Files\n../fragments/frag_"+str(j+1)+
 					               "_1.mcf 1\n\n")
-				input_frag.write("# Start_Type\nread_old\n../fragments/frag_"+str(j+1)+
+				input_frag.write("# Start_Type\nread_config 1 ../fragments/frag_"+str(j+1)+
 					               "_1.xyz 1\n\n")
 				if j in ring_with_exoatoms[i]:
 					if j in ring_is_rigid[i]:
@@ -641,20 +704,14 @@ for i in xrange(0, nbr_species):
 													 "# Done_Probability_Info\n\n")
 				input_frag.write("# Run_Type\nProduction 1000 10\n\n")
 				input_frag.write("# Simulation_Length_Info\nUnits    Steps\n"+
-					               "Prop_Freq  100\nCoord_Freq   5000\n"+
-					               "MCsteps      1000000\n# Done_Simulation_Length_Info\n\n")
+					               "prop_freq  100\ncoord_freq   5000\n"+
+					               "run          "+str(100*args.nConfigs)+"\n\n")
 				input_frag.write("# Property_Info 1\nEnergy_Total\n\n")
 				input_frag.write("# File_Info\nfrag"+str(j+1)+".dat\n\n")
 				input_frag.write("END")
 				input_frag.close()
 				os.chdir('./species'+str(i+1)+'/frag'+str(j+1)+'/')
 				subprocess.call([cassandra_path,'frag'+str(j+1)+'.inp'])
-				if gcmc_flag == 1:
-					logfile = open('frag'+str(j+1)+'.log','r')
-					for line in logfile:
-						if 'Z/Omega' in line:
-							zbyomega = zbyomega * float(line.split()[1])
-					logfile.close()
 				os.chdir('../../')
 			else:
 				print bold+"Generating fragment library species "+str(i+1)+\
@@ -664,38 +721,40 @@ for i in xrange(0, nbr_species):
 				input_frag.write("# Run_Name\nfrag"+str(j+1)+"\n\n")
 				input_frag.write("# Sim_Type\nNVT_MC_Fragment\n\n")
 				input_frag.write("# Nbr_Species\n1\n\n")
-				input_frag.write("# VDW_Style\nNONE\n\n")
+				input_frag.write("# VDW_Style\n"+vdw_style+" minimum_image\n\n")
 				input_frag.write("# Rcutoff_Low\n0.0\n\n")
-				input_frag.write("# Mixing_Rule\nLB\n\n")
-				input_frag.write("# Charge_Style\nNONE\n\n")
-				input_frag.write("# Intra_Scaling\n0.0 0.0 0.0 1.0\n\n")
+				if mixing_rule_line:
+					input_frag.write("# Mixing_Rule\n"+mixing_rule+"\n\n")
+				if charge_style_line:
+					if charge_style == 'coul':
+						input_frag.write("# Charge_Style\n"+charge_style+" minimum_image\n\n")
+						if intra_scaling_line:
+							input_frag.write("# Intra_Scaling\n"+
+															 vdw_scaling[i]+charge_scaling[i]+"\n")
+					else:
+						input_frag.write("# Charge_Style\n"+charge_style+"\n\n")
+						if intra_scaling_line:
+							input_frag.write("# Intra_Scaling\n"+vdw_scaling[i]+"\n")
 				input_frag.write("# Molecule_Files\n../fragments/frag_"+str(j+1)+
 												 "_1.mcf 1\n\n")
-				input_frag.write("# Box_Info\n1\nCUBIC\n20.0 20.0 20.0\n\n")
+				input_frag.write("# Box_Info\n1\nCUBIC\n50.0 50.0 50.0\n\n")
 				input_frag.write("# Temperature_Info\n"+str(temperature)+"\n\n")
 				input_frag.write("# Seed_Info\n706111630 70611631\n\n")
 				input_frag.write("# Move_Probability_Info\n# Prob_Translation\n1.0\n"+
 												 "0.2 10.0\n1.0\n# Done_Probability_Info\n\n")
-				input_frag.write("# Start_Type\nread_old\n../fragments/frag_"+str(j+1)+
+				input_frag.write("# Start_Type\nread_config 1 ../fragments/frag_"+str(j+1)+
 												 "_1.xyz 1\n\n")
 				input_frag.write("# Run_Type\nProduction 1000 10\n\n")
 				input_frag.write("# Simulation_Length_Info\nUnits  Steps\n"+
-												 "Prop_Freq  10\nCoord_Freq   90\n"+
-												 "MCsteps      1100000\nNequilSteps  100000\n"+
-												 "# Done_Simulation_Length_Info\n\n")
+				                 "prop_freq  10\ncoord_freq   90\n"+
+				                 "run          "+str(11*args.nConfigs)+"\n"+
+				                 "nequilsteps  "+str(args.nConfigs)+"\n\n")
 				input_frag.write("# File_Info\nfrag"+str(j+1)+".dat\n\n")
 				input_frag.write("END")
 				input_frag.close()
 #				raw_input("here"+str(i)+str(j))
 				os.chdir('./species'+str(i+1)+'/frag'+str(j+1)+'/')
 				subprocess.call([cassandra_path,'frag'+str(j+1)+'.inp'])
-				if gcmc_flag == 1:
-					logfile = open('frag'+str(j+1)+'.log','r')
-					if fugacity_flag == 1:
-						for line in logfile:
-							if 'Z/Omega' in line:
-								zbyomega = zbyomega * float(line.split()[1])
-						logfile.close()
 				os.chdir('../../')
 
 
@@ -717,9 +776,6 @@ for line_number in xrange(1,total_lines+1):
 				               ".dat  " + str(total_frag_counter)+"\n")
 		new_file.write('!------------------------------------------------------' + 
 	 	               '---one line per fragment\n\n')
-		if gcmc_flag == 1 and fugacity_flag == 1:
-			new_file.write("\n# Zig_By_Omega_Info\n")
-			new_file.write(str(zbyomega)+"\n")
 		omit = True
 	elif not omit:
 		new_file.write(linecache.getline(input_file,line_number))
@@ -732,6 +788,6 @@ for line_number in xrange(1,total_lines+1):
 in_file.close()
 new_file.close()
 
-print bold+"Removing temporary input file"
+print bold+"Removing temporary input file"+normal
 os.system("rm "+ input_file+"; mv "+input_file+"temp "+input_file)
-print "Finished"+normal
+print bold+"Finished"+normal
