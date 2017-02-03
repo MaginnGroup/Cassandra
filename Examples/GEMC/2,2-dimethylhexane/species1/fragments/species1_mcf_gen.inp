@@ -8,20 +8,14 @@ MCF_Gen
 1
 
 # VDW_Style
-LJ cut_tail 12.0
+lj minimum_image
 
 # Rcutoff_Low
 1.0
 
 # Mixing_Rule
-LB
+lb
 
-# Charge_Style
-coul Ewald 12.0 0.000001
-
-# Intra_Scaling
-0.0 0.0 0.0 1.0
-0.0 0.0 0.0 1.0
 
 # Molecule_Files
 ../../dimethylhexane.mcf 50

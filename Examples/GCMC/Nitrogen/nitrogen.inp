@@ -1,11 +1,11 @@
 ! This is the input file for a short GCMC simulation of Ntrogen in the gas phase at 77.0 K.
 
 # Run_Name
-nitrogen
+nitrogen.out
 !--------------
 
 # Sim_Type
-GCMC
+gcmc
 !---------------
 
 # Nbr_Species
@@ -13,25 +13,15 @@ GCMC
 !----------------
 
 # VDW_Style
-LJ cut_tail 50.0
+lj cut_tail 50.0
 !----------------
 
 # Charge_Style
-coul Ewald 50.0 1E-5
-!----------------
-
-# Intra_Scaling
-0.0  0.0  0.0  1.0
-0.0  0.0  0.0  1.0
-!------------------
-
-# Mixing_Rule
-LB
+coul ewald 50.0 1E-5
 !----------------
 
 # Seed_Info
 5735292573 42175410622
-
 !-------------------
 
 # Rcutoff_Low
@@ -48,8 +38,8 @@ N23S.mcf 1000
 
 # Box_Info
 1
-CUBIC
-200.0  200.0 200.0
+cubic
+200.0
 !-------------------------
 
 # Temperature_Info
@@ -71,11 +61,9 @@ CUBIC
 0.25
 180.0
 
-
 # Prob_Insertion
 0.25
-insertion method
-reservoir
+cbmc
 
 # Prob_Deletion
 0.25
@@ -84,13 +72,11 @@ reservoir
 !----------------------
 
 # Start_Type
-make_config
-50
-
+make_config 50
 !------------------
 
 # Run_Type
-Equilibration   600  
+equilibration   600  
 !------------------
 
 # Average_Info
@@ -98,18 +84,18 @@ Equilibration   600
 !-------------
 
 # Simulation_Length_Info
-Units      Steps
-Prop_Freq    400
-Coord_Freq   4000
-MCsteps      4000
-# Done_Simulation_Length_Info
+units      steps
+prop_freq    400
+coord_freq   4000
+run          4000
 !----------------------------
 
 # Property_Info 1 
-Energy_Total
-Nmols
-Density
-Pressure
+energy_total
+nmols
+density
+pressure
+mass_density
 !----------------
 
 # Fragment_Files
@@ -118,8 +104,6 @@ species1/frag1/frag1.dat  1
 
 # CBMC_Info
 kappa_ins 12
-kappa_rot  0 
-kappa_dih 10
 rcut_cbmc 6.5 
 !------------
 

@@ -34,7 +34,7 @@
 ! coordinates of the molecule if the attempted move is rejected.
 !
 ! Note that in all the routines input 'im' is the linked number for the input
-! molecule i.e. im = locate(molecule #,species #)
+! molecule i.e. im = locate(molecule #,species #,box #)
 !
 ! Written by Jindal Shah
 ! 
@@ -61,7 +61,7 @@ SUBROUTINE Save_Old_Cartesian_Coordinates(im,is)
 !********************************************************************************
 
   USE Type_Definitions
-  USE Run_Variables
+  USE Global_Variables
 
   IMPLICIT NONE
 
@@ -109,7 +109,7 @@ SUBROUTINE Save_Old_Internal_Coordinates(im,is)
 !
 !********************************************************************************
   USE Type_Definitions
-  USE Run_Variables
+  USE Global_Variables
 
   IMPLICIT NONE
 
@@ -193,7 +193,7 @@ SUBROUTINE Revert_Old_Cartesian_Coordinates(im,is)
 !*******************************************************************************
 
   USE Type_Definitions
-  USE Run_Variables
+  USE Global_Variables
 
   IMPLICIT NONE
 
@@ -238,7 +238,7 @@ SUBROUTINE Revert_Old_Internal_Coordinates(im,is)
 !**********************************************************************************
 
   USE Type_Definitions
-  USE Run_Variables
+  USE Global_Variables
 
   IMPLICIT NONE
 

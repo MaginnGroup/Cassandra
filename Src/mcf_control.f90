@@ -40,7 +40,7 @@ SUBROUTINE MCF_Control
   !
   !*******************************************************************************
   USE IO_Utilities
-  USE Run_Variables
+  USE Global_Variables
   USE Type_Definitions
   USE Input_Routines
   USE Atoms_To_Place
@@ -57,13 +57,11 @@ SUBROUTINE MCF_Control
 !*******************************************************************************
   ! Copy the input file to the logfile
 
-  CALL Get_Verbosity_Info  
   CALL Copy_Inputfile
 
 
   ! How many species to simulate?
   CALL Get_Nspecies
-  WRITE(logunit,'(a30,1x,I5,/)') 'Number of species simulated: ',nspecies
 
   CALL Get_Box_Info
 
@@ -78,7 +76,7 @@ SUBROUTINE MCF_Control
 
 
   WRITE(*,*) 'Finished generating fragments'
-  WRITE(*,*) 'Exiting....'
+  WRITE(*,*) 'Exiting'
   WRITE(*,*)
   WRITE(logunit,*)
   WRITE(logunit,*) 'Finished generating fragments'

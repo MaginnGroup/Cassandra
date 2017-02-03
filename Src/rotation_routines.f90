@@ -31,7 +31,7 @@ MODULE Rotation_Routines
   !
   !*******************************************************************************
 
-  USE Run_Variables
+  USE Global_Variables
   USE Random_Generators
 
   IMPLICIT NONE

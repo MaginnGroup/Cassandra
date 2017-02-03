@@ -31,7 +31,7 @@ MODULE IO_Utilities
   !   chempot
   !   compute_cell_dimensions
   !   create_nonbond_table
-  !   cutNgrow
+  !   cut_n_grow
   !   fragment_growth
   !   gcmc_control
   !   gemc_control
@@ -44,8 +44,8 @@ MODULE IO_Utilities
   !   mcf_control
   !   nptmc_control
   !   nvtmc_control
-  !   nvt_mc_fragment_control
-  !   nvt_mc_ring_fragment
+  !   fragment_control
+  !   ring_fragment_driver
   !   participation
   !   volume_change
   !
@@ -53,7 +53,7 @@ MODULE IO_Utilities
   !
   !    12/10/13  : Beta version
   !********************************************************************************
-  USE Run_Variables
+  USE Global_Variables
 
   IMPLICIT NONE
 
@@ -137,8 +137,10 @@ CONTAINS
     ! Test to see if the minimum number of entries was read in      
     IF (nbr_entries < min_entries) THEN
        err_msg = ""
-       err_msg(1) = 'Expected at least '// TRIM(Int_To_String(min_entries))//&
-            ' input(s) on line '//TRIM(Int_To_String(line_nbr))//' of input file.'
+       err_msg(1) = 'Error attempting to parse line ' // &
+                    TRIM(Int_To_String(line_nbr)) // ' of input file: '
+       err_msg(2) = TRIM(string)
+       err_msg(3) = 'into at least ' // TRIM(Int_To_String(min_entries)) // ' entries'
        CALL Clean_Abort(err_msg,'Parse_String')
     END IF
       
@@ -471,17 +473,9 @@ SUBROUTINE Check_String(string_in,ierr)
   ncharacters = LEN_TRIM(string_in)
   strln = LEN(string_in)
 
-  IF (.NOT.((string_in(1:1) >= 'A' .AND. (string_in(1:1) <= 'Z')) .OR. &
-      (string_in(1:1) >= 'a' .AND. (string_in(1:1) <= 'z')) .OR. &
-      (string_in(1:1) == '.' .OR. string_in(1:1) == '_' .OR. string_in(1:1) == '/' .OR. string_in(1:1) == '~'))) THEN
-     ierr = 1
-     RETURN
-  END IF
-
-
   ! Now check for the rest of the characters
 
-  DO i = 2, ncharacters
+  DO i = 1, ncharacters
      IF ( .NOT. ((string_in(i:i) >=  'A' .AND. (string_in(i:i) <= 'Z')) .OR. &
           (string_in(i:i) >= 'a' .AND. (string_in(i:i) <= 'z')) .OR. &
           (string_in(i:i) >= '0' .AND. (string_in(i:i) <= '9')) .OR. &

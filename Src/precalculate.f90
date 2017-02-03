@@ -19,13 +19,13 @@
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !********************************************************************************
 
-SUBROUTINE precalculate
+SUBROUTINE Precalculate
 !*******************************************************************************  
     ! Revision history:
     !
     ! 12/10/13  : Beta version 
 !********************************************************************************    
-    USE Run_variables
+    USE Global_Variables
     USE File_Names
     USE Energy_Routines
     IMPLICIT NONE
@@ -99,4 +99,5 @@ SUBROUTINE precalculate
 
     ALLOCATE(energy(nbr_boxes),virial(nbr_boxes))
 
+ 
   END SUBROUTINE precalculate

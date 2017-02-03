@@ -56,7 +56,7 @@ SUBROUTINE NPTMC_Control
   ! 08/07/13 : Created beta version
 !*******************************************************************************
   USE IO_Utilities
-  USE Run_Variables
+  USE Global_Variables
   USE Type_Definitions
   USE File_Names
   USE Input_Routines
@@ -75,12 +75,10 @@ SUBROUTINE NPTMC_Control
 
 !*******************************************************************************
 
-  CALL Get_Verbosity_Info  
   CALL Copy_Inputfile
 
   ! How many species to simulate?
   CALL Get_Nspecies
-  WRITE(logunit,'(a30,1x,I5,/)') 'Number of species simulated: ',nspecies
 
   ! Load box shape, number of boxes and box type. Compute various properties of the box
   ! including the volume
@@ -94,14 +92,14 @@ SUBROUTINE NPTMC_Control
   ! must be called before this routine.  
   CALL Get_Molecule_Info
 
-  ! Determine how intramoleclar scaling of vdw and coul interactions handled.
-  CALL Get_Intra_Scaling
-
   ! Determine the number and identity of unique atom types, and create a vdw interaction table.
   CALL Create_Nonbond_Table
 
   ! Create the intramolecular nonbond scaling arrays.
   CALL Create_Intra_Exclusion_Table
+
+  ! Start_Type
+  CALL Get_Start_Type
 
   ! Seed info
   CALL Get_Seed_Info
@@ -121,10 +119,6 @@ SUBROUTINE NPTMC_Control
 
   ! Properties to be output
   CALL Get_Property_Info
-
-  ! Average information
-  CALL Average_Info	
-
 
   CALL Get_Rcutoff_Low
 
@@ -153,11 +147,4 @@ SUBROUTINE NPTMC_Control
   ! angles exist
   CALL Get_Dihedral_Atoms_To_Place  
 
-  ! Determine whether mie potentials are used
-  DO i=1,1
-  IF (int_vdw_sum_style(i) == vdw_mie .OR. int_vdw_sum_style(i) == vdw_mie_cut_shift) THEN
-      CALL Get_Mie_Nonbond
-  END IF
-  END DO
-  
 END SUBROUTINE NPTMC_Control
