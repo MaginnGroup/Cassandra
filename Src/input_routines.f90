@@ -1,4 +1,4 @@
-!********************************************************************************
+!*****************************************************************************
 !   Cassandra - An open source atomistic Monte Carlo software package
 !   developed at the University of Notre Dame.
 !   http://cassandra.nd.edu
@@ -17,12 +17,12 @@
 !
 !   You should have received a copy of the GNU General Public License
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-!*******************************************************************************
+!*****************************************************************************
 
 MODULE Input_Routines
 
   !***************************************************************************
-  ! This module contains a collection of subroutines used to obtain information from
+  ! This module contains a collection of subroutines used to read
   ! the input file for all the different types of simulations
   !
   ! Called by
@@ -33,45 +33,39 @@ MODULE Input_Routines
   !    mcf_control
   !    nptmc_control
   !    nvtmc_control
-  !    nvt_mc_fragment_control
+  !    fragment_control
   !
   ! Revision history
   !
   !    12/10/13  : Beta version
   !***************************************************************************
 
-  USE Run_Variables
+  USE Global_Variables
   USE IO_Utilities
   USE File_Names
   USE Type_Definitions
-  USE Random_Generators, ONLY : s1
 
 
   IMPLICIT NONE
 
 CONTAINS
 
-!********************************************************************************
-SUBROUTINE Get_Runname
-!********************************************************************************
+!******************************************************************************
+SUBROUTINE Get_Run_Name
+!******************************************************************************
+!
 ! This routine opens the input file and determines the name of the run.
-! Input file name format is 
-! # Key_Word
-! Variables associated with Key_Word
-
-! The routine searches for the keyword "# Run_Name" and then reads the necessary 
-! information underneath the key word. Spaces, blank lines and ! characters are 
-! ignored.
-!********************************************************************************
+!
+!******************************************************************************
 
   INTEGER :: ierr,line_nbr,nbr_entries
   CHARACTER(120) :: line_string, line_array(20)
 
   
-!********************************************************************************
+!******************************************************************************
 ! Determine the name of the run from input file.
 ! All output files will have this name.
-!********************************************************************************
+!******************************************************************************
   REWIND(inputunit)
 
   ierr = 0
@@ -79,51 +73,51 @@ SUBROUTINE Get_Runname
 
   DO
      line_nbr = line_nbr + 1
-
      CALL Read_String(inputunit,line_string,ierr)
 
      IF (ierr .NE. 0) THEN
-        err_msg = ""
+        err_msg = ''
         err_msg(1) = "Error reading name of run."
         CALL Clean_Abort(err_msg,'Read_inputfile')
      END IF
 
      IF (line_string(1:10) == '# Run_Name') THEN
         line_nbr = line_nbr + 1
-        
         CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
 
 ! Assign the first entry on the line to the name of the run
         run_name = line_array(1)
+
         EXIT
 
      ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
 
-! No name specified so abort
-        err_msg = ""
-        err_msg(1) = 'No run name specified in inputfile'
-        CALL Clean_Abort(err_msg,'Get_Runname')
-
-        EXIT
+        err_msg = ''
+        err_msg(1) = 'Section "# Run_Name" is missing from the input file and is required'
+        CALL Clean_Abort(err_msg,'Get_Run_Name')
 
      ENDIF
 
   ENDDO
 
-END SUBROUTINE Get_Runname
+END SUBROUTINE Get_Run_Name
 
-!*************************************************************************************
+!******************************************************************************
 SUBROUTINE Get_Nspecies
-!*************************************************************************************
+!******************************************************************************
 !
 ! This routine reads in the number of species to be simulated form the input file.
 ! It then allocates all arrays that depend only on nspecies
 ! 
-!*************************************************************************************
+!******************************************************************************
 
   INTEGER :: ierr,line_nbr,nbr_entries, i
   CHARACTER(120) :: line_string, line_array(20)
-!*************************************************************************************
+!******************************************************************************
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'Number of species'
+  WRITE(logunit,'(A80)') '********************************************************************************'
+
   REWIND(inputunit)
 
 ! determine the number of species to be simulated
@@ -132,33 +126,29 @@ SUBROUTINE Get_Nspecies
 
   DO
      line_nbr = line_nbr + 1
-
      CALL Read_String(inputunit,line_string,ierr)
 
      IF (ierr .NE. 0) THEN
-        err_msg = ""
+        err_msg = ''
         err_msg(1) = "Error reading number of species."
         CALL Clean_Abort(err_msg,'Get_Nspecies')
      END IF
 
      IF (line_string(1:13) == '# Nbr_Species') THEN
         line_nbr = line_nbr + 1
-        
         CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
 
 ! Assign the first entry on the line to the number of species.
         nspecies = String_To_Int(line_array(1))
+        WRITE(logunit,'(A)') TRIM(Int_To_String(nspecies))
 
         EXIT
 
      ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
 
-! No name specified so abort
-        err_msg = ""
-        err_msg(1) = 'Number of species not specified with keyword # Nbr_Species'
+        err_msg = ''
+        err_msg(1) = 'Section "# Nbr_Species" is missing from the input file and is required'
         CALL Clean_Abort(err_msg,'Get_Nspecies')
-
-        EXIT
 
      ENDIF
 
@@ -166,42 +156,49 @@ SUBROUTINE Get_Nspecies
 
   ALLOCATE( molfile_name(nspecies),Stat = AllocateStatus )
   IF (AllocateStatus /= 0 ) THEN
-     write(*,*)'memory could no tbe allocated for molfile_name array'
+     write(*,*)'memory could not be allocated for molfile_name array'
      write(*,*)'stopping'
      STOP
   END IF
-  ALLOCATE( nmolecules(nspecies), natoms(nspecies), Stat = AllocateStatus )
+  ALLOCATE( max_molecules(nspecies), natoms(nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0 ) THEN
-     write(*,*)'memory could no tbe allocated for nmolecules or natoms array'
+     write(*,*)'memory could not be allocated for max_molecules or natoms array'
      write(*,*)'stopping'
      STOP
   END IF
 
   ALLOCATE (nring_atoms(nspecies), nexo_atoms(nspecies), Stat = AllocateStatus)
   IF (AllocateStatus /= 0 ) THEN
-     write(*,*)'memory could no tbe allocated for nmolecules or natoms array'
+     write(*,*)'memory could not be allocated for max_molecules or natoms array'
      write(*,*)'stopping'
      STOP
   END IF
 
 
-  ALLOCATE( nbonds(nspecies), nangles(nspecies),Stat = AllocateStatus )
+  ALLOCATE( nbonds(nspecies),Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for nbonds or nangles array'
+     write(*,*)'memory could not be allocated for nbonds array'
+     write(*,*)'stopping'
+     STOP
+  END IF
+
+  ALLOCATE( nangles(nspecies), nangles_fixed(nspecies),Stat = AllocateStatus )
+  IF (AllocateStatus /= 0) THEN
+     write(*,*)'memory could not be allocated for nangles or nangles_fixed array'
      write(*,*)'stopping'
      STOP
   END IF
 
   ALLOCATE( ndihedrals(nspecies), nimpropers(nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for ndihedrals or nimpropers array'
+     write(*,*)'memory could not be allocated for ndihedrals or nimpropers array'
      write(*,*)'stopping'
      STOP
   END IF
 
   ALLOCATE(nbr_bond_params(nspecies),Stat = AllocateStatus)
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for nbr_bond_params array'
+     write(*,*)'memory could not be allocated for nbr_bond_params array'
      write(*,*)'stopping'
      STOP
   END IF
@@ -209,28 +206,28 @@ SUBROUTINE Get_Nspecies
   ALLOCATE(nbr_angle_params(nspecies),Stat = AllocateStatus)
 
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for molfile_name array'
+     write(*,*)'memory could not be allocated for molfile_name array'
      write(*,*)'stopping'
      STOP
   END IF
 
   ALLOCATE(nbr_dihedral_params(nspecies),Stat = AllocateStatus)
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for nbr_dihedral_params array'
+     write(*,*)'memory could not be allocated for nbr_dihedral_params array'
      write(*,*)'stopping'
      STOP
   END IF
 
   ALLOCATE(nbr_improper_params(nspecies),Stat = AllocateStatus)
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for nbr_improper_params array'
+     write(*,*)'memory could not be allocated for nbr_improper_params array'
      write(*,*)'stopping'
      STOP
   END IF
 
   ALLOCATE(nbr_vdw_params(nspecies),Stat = AllocateStatus)
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for nbr_vdw_params array'
+     write(*,*)'memory could not be allocated for nbr_vdw_params array'
      write(*,*)'stopping'
      STOP
   END IF
@@ -251,10 +248,11 @@ SUBROUTINE Get_Nspecies
 
 ! Initialize everything
   molfile_name = ''
-  nmolecules = 0
+  max_molecules = 0
   natoms = 0
   nbonds = 0
   nangles = 0
+  nangles_fixed = 0
   ndihedrals = 0
   nimpropers = 0
   nbr_bond_params = 0
@@ -265,33 +263,27 @@ SUBROUTINE Get_Nspecies
   nfragments = 0
   fragment_bonds = 0
 
+  WRITE(logunit,'(A80)') '********************************************************************************'
+
 END SUBROUTINE Get_Nspecies
-!********************************************************************************
 
-
-!********************************************************************************
+!******************************************************************************
 SUBROUTINE Get_Sim_Type
-!********************************************************************************
+!******************************************************************************
 ! This routine opens the input file and determines the type of simulation.
 !
-! Allowed simulation types:
-! NVT_MC: canonical ensmeble Monte Carlo
-! GCMC: grand canonical ensemble Monte Carlo
-! HMC: hybrid Monte Carlo
-! Others to be added...
-
-! Input file name format is 
-! # Key_Word
-! Variables associated with Key_Word
-
-! The routine searches for the keyword "# Sim_Type" and then reads the necessary 
-! information underneath the key word. Spaces, blank lines and ! characters are 
+! The routine searches for the section "# Sim_Type" and then reads the necessary 
+! information underneath the section name. Spaces, blank lines and ! characters are 
 ! ignored.
-!********************************************************************************
+!******************************************************************************
   INTEGER :: ierr,line_nbr,nbr_entries
   CHARACTER(120) :: line_string, line_array(20)
 
-!********************************************************************************
+!******************************************************************************
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'Simulation type'
+  WRITE(logunit,'(A80)') '********************************************************************************'
+
   REWIND(inputunit)
 
   ierr = 0
@@ -299,95 +291,104 @@ SUBROUTINE Get_Sim_Type
 
   DO
      line_nbr = line_nbr + 1
-
      CALL Read_String(inputunit,line_string,ierr)
 
      IF (ierr .NE. 0) THEN
-        err_msg = ""
+        err_msg = ''
         err_msg(1) = "Error reading simulation type."
         CALL Clean_Abort(err_msg,'Get_Sim_Type')
      END IF
 
      IF (line_string(1:10) == '# Sim_Type') THEN
+
         line_nbr = line_nbr + 1
-         
         CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
 
-! Assign the first entry on the line to simulation type
-        sim_type = line_array(1)
-
-        line_nbr = line_nbr + 1
-   
-        IF(sim_type == 'GCMC') THEN
-
+        IF(line_array(1) == 'nvt' .OR. line_array(1) == 'NVT' .OR. &
+           line_array(1) == 'nvt_mc' .OR. line_array(1) == 'NVT_MC') THEN
+           sim_type = 'NVT_MC'
+           int_sim_type = sim_nvt
+        ELSEIF(line_array(1) == 'nvt_min' .OR. line_array(1) == 'NVT_MIN') THEN
+           sim_type = 'NVT_MIN'
+           int_sim_type = sim_nvt_min
+        ELSEIF(line_array(1) == 'npt_mc' .OR. line_array(1) == 'NPT_MC' .OR. &
+               line_array(1) == 'npt' .OR. line_array(1) == 'NPT') THEN
+           sim_type = 'NPT_MC'
+           int_sim_type = sim_npt
+        ELSEIF(line_array(1) == 'gemc' .OR. line_array(1) == 'GEMC') THEN
+           sim_type = 'GEMC'
+           int_sim_type = sim_gemc
+        ELSEIF(line_array(1) == 'gemc_npt' .OR. line_array(1) == 'GEMC_NPT') THEN
+           sim_type = 'GEMC_NPT'
+           int_sim_type = sim_gemc_npt
+        ELSEIF(line_array(1) == 'gcmc' .OR. line_array(1) == 'GCMC') THEN
+           sim_type = 'GCMC'
            int_sim_type = sim_gcmc
-     !     CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
-           !     tmmc_update = String_To_Int(line_array(1))
-     !     tmmc_input = line_array(2)
-           
+        ELSEIF(line_array(1) == 'fragment' .OR. &
+               line_array(1) == 'nvt_mc_fragment' .OR. line_array(1) == 'NVT_MC_Fragment') THEN
+           sim_type = 'NVT_MC_Fragment'
+           int_sim_type = sim_frag
+        ELSEIF(line_array(1) == 'ring_fragment' .OR. &
+               line_array(1) == 'nvt_mc_ring_fragment' .OR. line_array(1) == 'NVT_MC_Ring_Fragment') THEN
+           sim_type = 'NVT_MC_Ring_Fragment'
+           int_sim_type = sim_ring
+        ELSEIF(line_array(1) == 'mcf_gen' .OR. line_array(1) == 'MCF_Gen') THEN
+           sim_type = 'MCF_Gen'
+           int_sim_type = sim_mcf
+        ELSE
+           err_msg = ''
+           err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
+                        TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+           err_msg(2) = 'Supported keywords are: nvt_mc, npt_mc, gemc, gemc_npt, gcmc,'
+           err_msg(3) = '                        nvt_mc_fragment, nvt_mc_ring_fragment, mcf_gen'
+           CALL Clean_Abort(err_msg,'Get_Sim_Type')
         END IF
+
+        WRITE(logunit,'(A)') sim_type
 
         EXIT
 
      ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
 
-! No sim type specified so abort
-        err_msg = ""
-        err_msg(1) = 'No simulation start type  specified in inputfile'
+        err_msg = ''
+        err_msg(1) = 'Section "# Sim_Type" is missing from the input file and is required'
         CALL Clean_Abort(err_msg,'Get_Sim_Type')
-
-        EXIT
 
      ENDIF
 
   ENDDO
 
-  IF(sim_type == 'NVT_MC') THEN
-     int_sim_type = sim_nvt
-  ELSEIF(sim_type == 'NVT_MIN') THEN
-     int_sim_type = sim_nvt_min
-  ELSEIF(sim_type == 'NPT_MC') THEN
-     int_sim_type = sim_npt
-  ELSEIF(sim_type == 'GEMC') THEN
-     int_sim_type = sim_gemc
-  ELSEIF(sim_type == 'GEMC_NPT') THEN
-     int_sim_type = sim_gemc_npt
-  ELSEIF(sim_type == 'NVT_MC_Fragment') THEN
-     int_sim_type = sim_frag
-  ELSEIF(sim_type == 'NVT_MC_Ring_Fragment') THEN
-     int_sim_type = sim_ring
-  ELSEIF(sim_type == 'MCF_Gen') THEN
-     int_sim_type = sim_mcf
-  END IF
   
+  WRITE(logunit,'(A80)') '********************************************************************************'
+
 END SUBROUTINE Get_Sim_Type
 
-
-
-!********************************************************************************
+!******************************************************************************
 SUBROUTINE Get_Pair_Style
-!********************************************************************************
+!******************************************************************************
 ! This routine opens the input file and determines the type of vdw and charge 
 ! interaction models to use.
 
-! The routine searches for the keywords "# VDW_Style", "# Charge_Style", and
-! "# Neighbor_Style then reads the necessary information underneath the key word. 
+! The routine searches for the sections "# VDW_Style", "# Charge_Style", and
+! then reads the necessary information in the section
 ! Spaces, blank lines and ! characters are ignored.
 !
 ! 09/08/10 (JS) : The pair style also reads in if '# Pair_Energy' is true or false.
 !                 This will alert the code if pair interaction energy arrays
 !                 need to be stored. 
-!********************************************************************************
+!******************************************************************************
   INTEGER :: ierr,line_nbr,nbr_entries, iassign, ibox, k
   CHARACTER(120) :: line_string, line_array(20)
 
   REAL(DP), ALLOCATABLE :: ewald_tol(:)
 
-!********************************************************************************
-  REWIND(inputunit)
+!******************************************************************************
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'Pair style'
+  WRITE(logunit,'(A80)') '********************************************************************************'
+
 
   ierr = 0
-  line_nbr = 0
   iassign = 0
   roff_charmm(:) = 0.0_DP
   roff_switch(:) = 0.0_DP
@@ -401,329 +402,497 @@ SUBROUTINE Get_Pair_Style
   ALLOCATE(l_half_len_cutoff(nbr_boxes))
   l_half_len_cutoff = .FALSE.
 
+  ! vdw style
+  line_nbr = 0
+  REWIND(inputunit)
   DO
      line_nbr = line_nbr + 1
-
      CALL Read_String(inputunit,line_string,ierr)
 
      IF (ierr .NE. 0) THEN
-        err_msg = ""
-        err_msg(1) = "Error reading pairstyle."
-        CALL Clean_Abort(err_msg,'Get_Pairstyle')
+        err_msg = ''
+        err_msg(1) = "Error reading pairstyle"
+        CALL Clean_Abort(err_msg,'Get_Pair_Style')
      END IF
 
      IF (line_string(1:11) == '# VDW_Style') THEN
         DO ibox = 1,nbr_boxes
-           line_nbr = line_nbr + 1
         
            ! Read the type of VDW model, the cutoff method, and the parameters associated 
            ! with this cutoff method. Minimum of 3 values must be listed. 
 
+           line_nbr = line_nbr + 1
            CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
 
            ! Assign the first entry on the line to the name of the potential, then next to the 
            ! way it will be summed / truncated, and the remaining to parameters associated with
            ! the sum method
-           vdw_style(ibox) = line_array(1)
-           WRITE(logunit,'(A,2x,A,A,I3)') '   VDW style used is: ',vdw_style(ibox), 'in box:', ibox
 
-           IF (vdw_style(ibox) /= 'NONE') THEN
+           IF (line_array(1) == 'lj' .OR. line_array(1) == 'LJ') THEN
+              vdw_style(ibox) = 'LJ'
               int_vdw_style(ibox) = vdw_lj
+              WRITE(logunit,'(A,2x,A,A,I3)') 'VDW style used is: ',vdw_style(ibox), 'in box:', ibox
               vdw_sum_style(ibox) = line_array(2)
-              WRITE(logunit,'(A,2x,A,A,I3)') '   VDW sum style is: ',vdw_sum_style(ibox), 'in box:', ibox
+              WRITE(logunit,'(A,2x,A,A,I3)') ' VDW sum style is: ',vdw_sum_style(ibox), 'in box:', ibox
 
-              IF (vdw_sum_style(ibox) == 'CHARMM') THEN
+              IF (vdw_sum_style(ibox) == 'CHARMM' .OR. vdw_sum_style(ibox) == 'charmm') THEN
                  int_vdw_sum_style(ibox) = vdw_charmm
                  ron_charmm(ibox) = String_To_Double(line_array(3))
                  roff_charmm(ibox) = String_To_Double(line_array(4))
-                 WRITE(logunit,'(A,2x,F7.3, A)') '    r_on = ',ron_charmm(ibox), '   Angstrom'
-                 WRITE(logunit,'(A,2x,F7.3,A)') '    r_off = ',roff_charmm(ibox), '   Angstrom'
+
+                 IF (roff_charmm(ibox) > 0.5 * MIN(box_list(ibox)%face_distance(1), &
+                                                   box_list(ibox)%face_distance(2), &
+                                                   box_list(ibox)%face_distance(3)) ) THEN
+                    err_msg = ''
+                    err_msg(1) = 'Initial vdw cutoff is greater than half the minimum box length'
+                    CALL Clean_Abort(err_msg, 'Get_Pair_Style')
+                 END IF
+ 
+                 WRITE(logunit,'(A,2X,F7.3,A)') ' r_on = ', ron_charmm(ibox),  ' Angstrom'
+                 WRITE(logunit,'(A,2X,F7.3,A)') ' r_off = ',roff_charmm(ibox), ' Angstrom'
 
               ELSEIF (vdw_sum_style(ibox) == 'cut_switch') THEN
                  int_vdw_sum_style(ibox) = vdw_cut_switch
                  ron_switch(ibox) = String_To_Double(line_array(3))
                  roff_switch(ibox) = String_To_Double(line_array(4))
-                 WRITE(logunit,'(A,2x,F7.3,A)') '   r_on =', ron_switch(ibox), ' Angstrom'
-                 WRITE(logunit,'(A,2x,F7.3,A)') '  r_off =', roff_switch(ibox), ' Angstrom'
 
-              ELSEIF (vdw_sum_style(ibox) == 'cut') THEN
-                 int_vdw_sum_style(ibox) = vdw_cut
+                 IF (roff_switch(ibox) > 0.5 * MIN(box_list(ibox)%face_distance(1), &
+                                                   box_list(ibox)%face_distance(2), &
+                                                   box_list(ibox)%face_distance(3)) ) THEN
+                    err_msg = ''
+                    err_msg(1) = 'Initial vdw cutoff is greater than half the minimum box length'
+                    CALL Clean_Abort(err_msg, 'Get_Pair_Style')
+                 END IF
+ 
+                 WRITE(logunit,'(A,2x,F7.3,A)') ' r_on =',  ron_switch(ibox),  ' Angstrom'
+                 WRITE(logunit,'(A,2x,F7.3,A)') ' r_off =', roff_switch(ibox), ' Angstrom'
+
+              ELSEIF (vdw_sum_style(ibox)(1:3) == 'cut') THEN
                  rcut_vdw(ibox) = String_To_Double(line_array(3))
-                 IF ( nbr_entries == 4 ) THEN
-                    ! a fourth entry exists indicating whether the cutoff is half of
-                    ! the box length 
-                    
-                    IF (line_array(4) == 'TRUE' .OR. line_array(4) == 'true') THEN
-                       
-                       l_half_len_cutoff(ibox) = .TRUE.
-                       
-                       ! for now assume that the box is cubic
-                       rcut_vdw(ibox) = 0.5_DP * box_list(ibox)%length(1,1)
-                       
-                       WRITE(logunit,*)
-                       WRITE(logunit,'(A,2x,I5)') 'For box ', ibox
-                       WRITE(logunit,*) 'Cutoffs are set to half of the box length'
-                       
-                    END IF
 
+                 IF ( nbr_entries > 3 ) THEN
+                    ! a fourth entry exists indicating whether the cutoff is half of the box length 
+                    IF (line_array(4) == 'TRUE' .OR. line_array(4) == 'true') THEN
+                       l_half_len_cutoff(ibox) = .TRUE.
+                       rcut_vdw(ibox) = 0.5 * MIN(box_list(ibox)%face_distance(1), &
+                                                  box_list(ibox)%face_distance(2), &
+                                                  box_list(ibox)%face_distance(3))
+                       WRITE(logunit,*) 'Cutoffs are set to half of the box length'
+                    END IF
                  END IF
 
-                 WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_vdw(ibox), '   Angstrom'
-
-              ELSEIF (vdw_sum_style(ibox) == 'cut_tail') THEN
-                 int_vdw_sum_style(ibox) = vdw_cut_tail
-                 rcut_vdw(ibox) = String_To_Double(line_array(3))
-                
-                 IF ( nbr_entries == 4 ) THEN
-                    ! a fourth entry exists indicating whether the cutoff is half of
-                    ! the box length 
-                    
-                    IF (line_array(4) == 'TRUE' .OR. line_array(4) == 'true') THEN
-                       
-                       l_half_len_cutoff(ibox) = .TRUE.
-                       
-                       ! for now assume that the box is cubic
-                       rcut_vdw(ibox) = 0.5_DP * box_list(ibox)%length(1,1)
-                       
-                       WRITE(logunit,*)
-                       WRITE(logunit,'(A,2x,I5)') 'For box ', ibox
-                       WRITE(logunit,*) 'Cutoffs are set to half of the box length'
-                       
-                    END IF
-
+                 IF (.NOT. l_half_len_cutoff(ibox) .AND. &
+                     rcut_vdw(ibox) > 0.5 * MIN(box_list(ibox)%face_distance(1), &
+                                                box_list(ibox)%face_distance(2), &
+                                                box_list(ibox)%face_distance(3)) ) THEN
+                    err_msg = ''
+                    err_msg(1) = 'Initial vdw cutoff is greater than half the minimum box length'
+                    CALL Clean_Abort(err_msg, 'Get_Pair_Style')
+                 END IF
+ 
+                 IF (vdw_sum_style(ibox) == 'cut') THEN
+                    int_vdw_sum_style(ibox) = vdw_cut
+                 ELSE IF (vdw_sum_style(ibox) == 'cut_tail') THEN
+                    int_vdw_sum_style(ibox) = vdw_cut_tail
+                    rcut3(ibox) = rcut_vdw(ibox) * rcut_vdw(ibox) * rcut_vdw(ibox)
+                    rcut9(ibox) = rcut3(ibox) * rcut3(ibox) * rcut3(ibox)
+                 ELSE IF (vdw_sum_style(ibox) == 'cut_shift') THEN
+                    int_vdw_sum_style(ibox) = vdw_cut_shift
+                 ELSE
+                    err_msg = ''
+                    err_msg(1) = 'Keyword ' // TRIM(line_array(2)) // ' on line number ' // &
+                                 TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+                    err_msg(2) = 'Supported keywords are: cut, cut_tail, cut_shift, cut_switch, minimum_image'
+                    err_msg(3) = '                        CHARMM'
+                    CALL Clean_Abort(err_msg,'Get_Pair_Style')
                  END IF
 
-                 WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_vdw(ibox), '   Angstrom'
-
-                 rcut3(ibox) = rcut_vdw(ibox) * rcut_vdw(ibox) * rcut_vdw(ibox)
-                 rcut9(ibox) = rcut3(ibox) * rcut3(ibox) * rcut3(ibox)
-
-              ELSEIF (vdw_sum_style(ibox) == 'cut_shift') THEN
-                 int_vdw_sum_style(ibox) = vdw_cut_shift
-                 rcut_vdw(ibox) = String_To_Double(line_array(3))
-                 WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_vdw(ibox), '   Angstrom'
+                 WRITE(logunit,'(A,2x,F7.3, A)') ' rcut = ',rcut_vdw(ibox), ' Angstrom'
 
               ELSEIF (vdw_sum_style(ibox) == 'minimum_image') THEN
                  int_vdw_sum_style(ibox) = vdw_minimum
-                 WRITE(logunit,'(A)') 'Minimum image convention used for VDW'
-
-              ELSEIF (vdw_sum_style(ibox) == 'mie') THEN
-                 int_vdw_sum_style(ibox) = vdw_mie
-		 rcut_vdw(ibox) = String_To_Double(line_array(3))
-                 WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_vdw(ibox), '   Angstrom'
-                 WRITE(logunit,'(A)') 'Mie potential used for VDW'
-
-              ELSEIF (vdw_sum_style(ibox) == 'mie_cut_shift') THEN 
-                 int_vdw_sum_style(ibox) = vdw_mie_cut_shift
-                 rcut_vdw(ibox) = String_To_Double(line_array(3))
-                 WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_vdw(ibox), 'Angstrom'
-                 WRITE(logunit,'(A)') 'Mie cut shift potential used for VDW'
+                 WRITE(logunit,'(A)') ' Minimum image convention used for VDW'
 
               ELSE
-                 err_msg(1) = 'Improper specification of vdw_sum_style'
-                 CALL Clean_Abort(err_msg,'Get_Pairstyle')
+                 err_msg = ''
+                 err_msg(1) = 'Keyword ' // TRIM(line_array(2)) // ' on line number ' // &
+                              TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+                 err_msg(2) = 'Supported keywords are: cut, cut_tail, cut_shift, cut_switch, minimum_image'
+                 err_msg(3) = '                        CHARMM'
+                 CALL Clean_Abort(err_msg,'Get_Pair_Style')
               ENDIF
-              IF (rcut_vdw(ibox) > MIN(box_list(ibox)%face_distance(1)/2.0_DP, &
-                   box_list(ibox)%face_distance(2)/2.0_DP, box_list(ibox)%face_distance(3)/2.0_DP)) THEN
 
-                     err_msg = ""
-                     err_msg(1) = 'Initial cutoff greater than minimum box length'
-                     err_msg(2) = 'For box'
-                     err_msg(3) = Int_To_String(ibox)
-                     CALL Clean_Abort(err_msg,'Get_Pairstyle')
+           ELSEIF (line_array(1) == 'mie' .OR. line_array(1) == 'Mie') THEN
+              vdw_style(ibox) = 'Mie'
+              int_vdw_style(ibox) = vdw_mie
+              WRITE(logunit,'(A,2x,A,A,I3)') 'VDW style used is: ',vdw_style(ibox), 'in box:', ibox
+              vdw_sum_style(ibox) = line_array(2)
+              WRITE(logunit,'(A,2x,A,A,I3)') ' VDW sum style is:',vdw_sum_style(ibox), 'in box:', ibox
 
-    	      ENDIF
+              IF (vdw_sum_style(ibox)(1:3) == 'cut') THEN
+                 rcut_vdw(ibox) = String_To_Double(line_array(3))
 
+                 IF ( nbr_entries > 3 ) THEN
+                    ! a fourth entry exists indicating whether the cutoff is half of the box length 
+                    IF (line_array(4) == 'TRUE' .OR. line_array(4) == 'true') THEN
+                       l_half_len_cutoff(ibox) = .TRUE.
+                       rcut_vdw(ibox) = 0.5 * MIN(box_list(ibox)%face_distance(1), &
+                                                  box_list(ibox)%face_distance(2), &
+                                                  box_list(ibox)%face_distance(3))
+                       WRITE(logunit,*) 'Cutoffs are set to half of the box length'
+                    END IF
+                 END IF
 
-
-           ELSE
+                 IF (.NOT. l_half_len_cutoff(ibox) .AND. &
+                     rcut_vdw(ibox) > 0.5 * MIN(box_list(ibox)%face_distance(1), &
+                                                box_list(ibox)%face_distance(2), &
+                                                box_list(ibox)%face_distance(3)) ) THEN
+                    err_msg = ''
+                    err_msg(1) = 'Initial vdw cutoff is greater than half the minimum box length'
+                    CALL Clean_Abort(err_msg, 'Get_Pair_Style')
+                 END IF
  
+                 IF (vdw_sum_style(ibox) == 'cut') THEN
+                    int_vdw_sum_style(ibox) = vdw_cut
+                 ELSE IF (vdw_sum_style(ibox) == 'cut_tail') THEN
+                    int_vdw_sum_style(ibox) = vdw_cut_tail
+                    rcut3(ibox) = rcut_vdw(ibox) * rcut_vdw(ibox) * rcut_vdw(ibox)
+                    !rcut9(ibox) = rcut3(ibox) * rcut3(ibox) * rcut3(ibox)
+                 ELSE IF (vdw_sum_style(ibox) == 'cut_shift') THEN
+                    int_vdw_sum_style(ibox) = vdw_cut_shift
+                 ELSE
+                    err_msg = ''
+                    err_msg(1) = 'Keyword ' // TRIM(line_array(2)) // ' on line number ' // &
+                                 TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+                    err_msg(2) = 'Supported keywords are: cut, cut_tail, cut_shift, minimum_image'
+                    CALL Clean_Abort(err_msg,'Get_Pair_Style')
+                 END IF
+
+                 WRITE(logunit,'(A,2x,F7.3, A)') ' rcut = ',rcut_vdw(ibox), ' Angstrom'
+
+              ELSEIF (vdw_sum_style(ibox) == 'minimum_image') THEN
+                 int_vdw_sum_style(ibox) = vdw_minimum
+                 WRITE(logunit,'(A)') ' Minimum image convention used for VDW'
+
+              ELSE
+                 err_msg = ''
+                 err_msg(1) = 'Keyword ' // TRIM(line_array(2)) // ' on line number ' // &
+                              TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+                 err_msg(2) = 'Supported keywords are: cut, cut_tail, cut_shift, minimum_image'
+                 CALL Clean_Abort(err_msg,'Get_Pair_Style')
+              END IF
+
+           ELSE IF (line_array(1) == 'NONE' .OR. line_array(1) == 'none') THEN
+              vdw_style(ibox) = 'NONE'
               int_vdw_style(ibox) = vdw_none
 
+           ELSE
+              err_msg = ''
+              err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
+                           TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+              err_msg(2) = 'Supported keywords are: lj, mie, none'
+              CALL Clean_Abort(err_msg,'Get_Pair_Style')
            ENDIF
 
-           WRITE(logunit,*)
-           iassign = iassign + 1
-           ! Test if both vdw and coulomb stuff read OK. If so, done.
-           IF (iassign == 2*nbr_boxes) EXIT
-
         END DO
+     
+        EXIT
 
-     ELSEIF (line_string(1:14) == '# Charge_Style') THEN
+     ELSE IF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
+
+        err_msg = ''
+        err_msg(1) = 'Section "# VDW_Style" is missing from the input file and is required'
+        CALL Clean_Abort(err_msg,'Get_Pair_Style')
+
+     ENDIF
+
+  END DO
+
+  ! charge style
+  line_nbr = 0
+  REWIND(inputunit)
+  DO
+     line_nbr = line_nbr + 1
+     CALL Read_String(inputunit,line_string,ierr)
+
+     IF (ierr .NE. 0) THEN
+        err_msg = ''
+        err_msg(1) = "Error reading pairstyle"
+        CALL Clean_Abort(err_msg,'Get_Pair_Style')
+     END IF
+
+     IF (line_string(1:14) == '# Charge_Style') THEN
         
         DO ibox = 1,nbr_boxes
 
-           line_nbr = line_nbr + 1
-        
            ! Read the charge summation style. Three parameters must be specified
            ! First indicates type of the cutoff method and subsequent lines indicate the parameters.
 
+           line_nbr = line_nbr + 1
            CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
 
            ! Assign the first entry on the line to the name of the way charged interactions are treated
            ! then next is the way the charges are summed. Following that are the parameters associated
            ! with this particular method of summing charges. 
-           charge_style(ibox) = line_array(1)
-           WRITE(logunit,'(A,2x,A,A,I3)') '   Charge style used is: ',charge_style(ibox), 'in box:', ibox
 
-           IF (charge_style(ibox) /= 'NONE') THEN
-                 int_charge_style(ibox) = charge_coul
+           IF (line_array(1) == 'coul' .OR. line_array(1) == 'Coul') THEN
+              charge_style(ibox) = 'coul'
+              int_charge_style(ibox) = charge_coul
+              WRITE(logunit,'(A)') 'Charge style in box ' // TRIM(Int_To_String(ibox)) // ' is ' // &
+                 TRIM(charge_style(ibox))
 
-                 charge_sum_style(ibox) = line_array(2)
-                 WRITE(logunit,'(A,2x,A,A,I3)') '    Charge sum style is ',charge_sum_style(ibox), 'in box:', ibox
+              charge_sum_style(ibox) = line_array(2)
+              WRITE(logunit,'(A,2x,A,A,I3)') ' Charge sum style is ',charge_sum_style(ibox), 'in box:', ibox
 
-                 IF (charge_sum_style(ibox) == 'cut') THEN
-                    int_charge_sum_style(ibox) = charge_cut
+              IF (charge_sum_style(ibox) == 'cut') THEN
+                 int_charge_sum_style(ibox) = charge_cut
+                 rcut_coul(ibox) = String_To_Double(line_array(3))
+
+                 IF (l_half_len_cutoff(ibox)) THEN
+                    rcut_coul(ibox) = rcut_vdw(ibox)
+                 ELSE
                     rcut_coul(ibox) = String_To_Double(line_array(3))
+                 END IF
 
-                    IF (l_half_len_cutoff(ibox)) THEN
-                       rcut_coul(ibox) = rcut_vdw(ibox)
-                    ELSE
-                       rcut_coul(ibox) = String_To_Double(line_array(3))
-                    END IF
+                 WRITE(logunit,'(A,2x,F7.3, A)') ' rcut = ',rcut_coul(ibox), '   Angstrom'
 
-                    WRITE(logunit,'(A,2x,F7.3, A)') '    rcut = ',rcut_coul(ibox), '   Angstrom'
+              ELSEIF (charge_sum_style(ibox) == 'Ewald' .OR. &
+                      charge_sum_style(ibox) == 'ewald') THEN
+                 int_charge_sum_style(ibox) = charge_ewald
+                 rcut_coul(ibox) = String_To_Double(line_array(3))
 
-                 ELSEIF (charge_sum_style(ibox) == 'Ewald') THEN
-                    int_charge_sum_style(ibox) = charge_ewald
+                 IF (l_half_len_cutoff(ibox)) THEN
+                    rcut_coul(ibox) = rcut_vdw(ibox)
+                 ELSE
                     rcut_coul(ibox) = String_To_Double(line_array(3))
+                 END IF
 
-                    IF (l_half_len_cutoff(ibox)) THEN
-                       rcut_coul(ibox) = rcut_vdw(ibox)
-                    ELSE
-                       rcut_coul(ibox) = String_To_Double(line_array(3))
-                    END IF
+                 IF (ibox == 1) THEN
+                    ALLOCATE(ewald_tol(nbr_boxes), ewald_p_sqrt(nbr_boxes))
+                    ALLOCATE(ewald_p(nbr_boxes))
+                    ALLOCATE(alpha_ewald(nbr_boxes) , h_ewald_cut(nbr_boxes) )
+                    ALLOCATE(alphal_ewald(nbr_boxes) )
+                 
+                 END IF
 
-                    IF (ibox == 1) THEN
-                       ALLOCATE(ewald_tol(nbr_boxes), ewald_p_sqrt(nbr_boxes))
-                       ALLOCATE(ewald_p(nbr_boxes))
-                       ALLOCATE(alpha_ewald(nbr_boxes) , h_ewald_cut(nbr_boxes) )
-                       ALLOCATE(alphal_ewald(nbr_boxes) )
-                    END IF
+                 ewald_tol(ibox) = String_To_Double(line_array(4))
 
-                    ewald_tol(ibox) = String_To_Double(line_array(4))
+                 DO k = 1, ibox - 1
 
-                    DO k = 1, ibox - 1
-
-                       IF ( ABS(ewald_tol(ibox) - ewald_tol(k)) > 1.0D-10 ) THEN
-                          err_msg(1) = "Ewald accuracy is set differently for"
-                          err_msg(2) = "Box "//Int_To_String(ibox)
-                          err_msg(3) = "and box "//Int_To_String(k)
-                          CALL Clean_Abort(err_msg,'Get_Pair_Style')
-                       END IF
-
-                    END DO
-
-                    IF(ewald_tol(ibox) .GT. 1.0_DP) THEN
-                       err_msg(1) = "Ewald tolerance too low for box"//Int_To_String(ibox)
+                    IF ( ABS(ewald_tol(ibox) - ewald_tol(k)) > 1.0D-10 ) THEN
+                       err_msg(1) = "Ewald accuracy is set differently for"
+                       err_msg(2) = "Box "//Int_To_String(ibox)
+                       err_msg(3) = "and box "//Int_To_String(k)
                        CALL Clean_Abort(err_msg,'Get_Pair_Style')
                     END IF
 
-                    ewald_p(ibox) = -DLOG(ewald_tol(ibox))
-                    ewald_p_sqrt(ibox) = DSQRT(ewald_p(ibox))
-                    
-                    alpha_ewald(ibox) = ewald_p_sqrt(ibox) / rcut_coul(ibox)
-                    
-                    h_ewald_cut(ibox) = 2.0_DP * ewald_p(ibox) / rcut_coul(ibox)
+                 END DO
 
-                                        
+                 IF(ewald_tol(ibox) .GT. 1.0_DP) THEN
+                    err_msg(1) = "Ewald tolerance too low for box"//Int_To_String(ibox)
+                    CALL Clean_Abort(err_msg,'Get_Pair_Style')
+                 END IF
 
-                    WRITE(logunit,'(X,A,F7.3,A)') '   Ewald real space cutoff is ', &
-                       rcut_coul(ibox), ' Angstroms.'
-                    WRITE(logunit, '(X,A,F7.3,A)') ' Ewald real space parameter is ', &
-                         alpha_ewald(ibox), ' inverse Angstroms'
-                    WRITE(logunit,'(X,A,F7.4,A)') '   Ewald reciprocal cutoff is ', &
-                         h_ewald_cut(ibox), ' inverse Angstroms'
- 
-               
-                 ELSEIF (charge_sum_style(ibox) == 'minimum_image') THEN
-                    int_charge_sum_style(ibox) = charge_minimum
-                    IF (int_vdw_sum_style(ibox) /= vdw_minimum .AND. int_vdw_style(ibox) /= vdw_none) THEN
-                       err_msg=""
-                       err_msg(1) = 'Minimum image requires both vdw and q-q to be so-specified'
-                       CALL Clean_Abort(err_msg,'Get_Pairstyle')
-                    ELSE
-                       WRITE(logunit,'(A)') 'Minimum image convention used for VDW'
-                    ENDIF
+                 ewald_p(ibox) = -DLOG(ewald_tol(ibox))
+                 ewald_p_sqrt(ibox) = DSQRT(ewald_p(ibox))
+                 
+                 alpha_ewald(ibox) = ewald_p_sqrt(ibox) / rcut_coul(ibox)
+                 
+                 h_ewald_cut(ibox) = 2.0_DP * ewald_p(ibox) / rcut_coul(ibox)
+
+                                     
+
+                 WRITE(logunit,'(X,A,F7.3,A)') 'Ewald real space cutoff is ', &
+                    rcut_coul(ibox), ' Angstroms.'
+                 WRITE(logunit, '(X,A,F7.3,A)') 'Ewald real space parameter is ', &
+                      alpha_ewald(ibox), ' inverse Angstroms'
+                 WRITE(logunit,'(X,A,F7.4,A)') 'Ewald reciprocal cutoff is ', &
+                      h_ewald_cut(ibox), ' inverse Angstroms'
+
+
+
+              ELSEIF (charge_sum_style(ibox) == 'dsf' .OR. charge_sum_style(ibox) == 'DSF') THEN
+                 IF (ibox == 1) THEN
+                    ALLOCATE(dsf_factor1(nbr_boxes))
+                    ALLOCATE(dsf_factor2(nbr_boxes))
+                    ALLOCATE(alpha_dsf(nbr_boxes))
+                 END IF
+
+                 int_charge_sum_style(ibox) = charge_dsf
+                 rcut_coul(ibox) = String_To_Double(line_array(3))
+
+                 IF (nbr_entries == 4) THEN
+                         alpha_dsf(ibox) = String_To_Double(line_array(4))
+                         WRITE(logunit,*) 'Damping alpha was specified to ',alpha_dsf(ibox)
                  ELSE
-                    err_msg(1) = 'charge_sum_style not properly specified'
-                    CALL Clean_Abort(err_msg,'Get_Pairstyle')
+                         alpha_dsf(ibox) = 0.425_DP - rcut_coul(ibox)*0.02_DP
+                         IF (alpha_dsf(ibox) < 0.0) THEN
+                             alpha_dsf(ibox) = 3.3930702_DP/rcut_coul(ibox)
+                         END IF
+
+                         WRITE(logunit,*) 'No damping alpha was specified. &
+                                           Assume depends linearly with rcut. &
+                                           Alpha set to ',alpha_dsf(ibox)
+
+                 END IF
+ 
+                 dsf_factor1(ibox) = erfc(alpha_dsf(ibox)*rcut_coul(ibox))/rcut_coul(ibox) 
+                 dsf_factor2(ibox) = dsf_factor1(ibox)/rcut_coul(ibox) + &
+                       2.0_DP*alpha_dsf(ibox)*DEXP(-alpha_dsf(ibox)*alpha_dsf(ibox)*&
+                       rcut_coul(ibox)*rcut_coul(ibox)) / (rootPI * rcut_coul(ibox))
+                              
+              ELSEIF (charge_sum_style(ibox) == 'minimum_image') THEN
+                 int_charge_sum_style(ibox) = charge_minimum
+                 IF (int_vdw_sum_style(ibox) /= vdw_minimum .AND. int_vdw_style(ibox) /= vdw_none) THEN
+                    err_msg=""
+                    err_msg(1) = 'Minimum image requires both vdw and q-q to be so-specified'
+                    CALL Clean_Abort(err_msg,'Get_Pair_Style')
+                 ELSE
+                    WRITE(logunit,'(A)') ' Minimum image convention used for charge'
                  ENDIF
+              ELSE
+                 err_msg = ''
+                 err_msg(1) = 'Keyword ' // TRIM(line_array(2)) // ' on line number ' // &
+                              TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+                 err_msg(2) = 'Supported keywords are: cut, ewald, dsf, minimum_image'
+                 CALL Clean_Abort(err_msg,'Get_Pair_Style')
+              ENDIF
 
-                 IF (rcut_coul(ibox) > MIN(box_list(ibox)%face_distance(1)/2.0_DP, &
-                   box_list(ibox)%face_distance(2)/2.0_DP, box_list(ibox)%face_distance(3)/2.0_DP)) THEN
+              IF (rcut_coul(ibox) > MIN(box_list(ibox)%face_distance(1)/2.0_DP, &
+                box_list(ibox)%face_distance(2)/2.0_DP, box_list(ibox)%face_distance(3)/2.0_DP)) THEN
 
-                     err_msg = ""
-                     err_msg(1) = 'Initial cutoff greater than minimum box length'
-                     err_msg(2) = 'For box'
-                     err_msg(3) = Int_To_String(ibox)
-                     CALL Clean_Abort(err_msg,'Get_Pairstyle')
+                  err_msg = ''
+                  err_msg(1) = 'Initial cutoff greater than minimum box length'
+                  err_msg(2) = 'For box' // TRIM(Int_To_String(ibox))
+                  CALL Clean_Abort(err_msg,'Get_Pair_Style')
 
-                 ENDIF
+              ENDIF
 
+           ELSE IF (line_array(1) == 'none' .OR. line_array(1) == 'NONE') THEN
+
+              charge_style(ibox) = 'NONE'
+              int_charge_style(ibox) = charge_none
+              int_charge_sum_style(ibox) = charge_none
+              WRITE(logunit,'(A)') 'Charge style in box ' // TRIM(Int_To_String(ibox)) // ' is ' // &
+                 TRIM(charge_style(ibox))
 
            ELSE
-
-              int_charge_style(ibox) = charge_none
+           
+              err_msg = ''
+              err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
+                           TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+              err_msg(2) = 'Supported keywords are: coul, none'
+              CALL Clean_Abort(err_msg,'Get_Pair_Style')
 
            ENDIF
-
-           WRITE(logunit,*) 'Charge style properly input'
-           WRITE(logunit,*)                 
-           iassign = iassign + 1
-           ! Test if both vdw and coulomb stuff read OK. If so, done.
 
         END DO
 
         IF(ALLOCATED(ewald_tol)) DEALLOCATE(ewald_tol)
+  
+        EXIT
 
-    ELSE IF (line_string(1:13) == '# Pair_Energy') THEN
+     ELSE IF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
+
+        WRITE(logunit,'(A)') 'Section "# Charge_Style" is missing from the input file'
+        DO ibox = 1, nbr_boxes
+          charge_style(ibox) = 'NONE'
+          int_charge_style(ibox) = charge_none
+          int_charge_sum_style(ibox) = charge_none
+          WRITE(logunit,'(X,A)') 'By default, charge style for box ' // TRIM(Int_To_String(ibox)) // ' is ' // &
+             TRIM(charge_style(ibox))
+        END DO
+
+        EXIT
+
+     ENDIF
+
+  END DO
+
+  ! pair energy
+  line_nbr = 0
+  REWIND(inputunit)
+  DO
+     line_nbr = line_nbr + 1
+     CALL Read_String(inputunit,line_string,ierr)
+
+     IF (ierr .NE. 0) THEN
+        err_msg = ''
+        err_msg(1) = "Error reading pairstyle"
+        CALL Clean_Abort(err_msg,'Get_Pair_Style')
+     END IF
+
+     IF (line_string(1:13) == '# Pair_Energy') THEN
         line_nbr = line_nbr + 1
         CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
 
-        WRITE(logunit,*)
         IF (line_array(1) == 'TRUE' .OR. line_array(1) == 'true') THEN
            l_pair_nrg = .TRUE.
-           WRITE(logunit,*) 'Pair interaction energy array storage enabled'
+           WRITE(logunit,'(A)') 'Pair interaction energy array storage enabled'
+        ELSE IF (line_array(1) == 'FALSE' .OR. line_array(1) == 'false') THEN
+           WRITE(logunit,'(A)') 'Pair interaction energy arrays will not be stored'
+        ELSE
+           err_msg = ''
+           err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
+                        TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+           err_msg(2) = 'Supported keywords are: true, false'
+           CALL Clean_Abort(err_msg,'Get_Pair_Style')
         END IF
-        WRITE(logunit,*)
 
-     ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
-        IF (iassign == 2*nbr_boxes) EXIT
+        EXIT
 
-! No pairstyle specified so abort
-        err_msg = ""
-        err_msg(1) = 'No simulation start type  specified in inputfile'
-        CALL Clean_Abort(err_msg,'Get_Pairstyle')
+     ELSE IF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
+
+        WRITE(logunit,'(A)') 'Section "# Pair_Energy" is missing from the input file'
+        WRITE(logunit,'(X,A)') 'By default, pair interaction energy arrays will not be stored'
+  
+        EXIT
+
      ENDIF
-     
-  ENDDO
+
+  END DO
 
   !Now determine the mixing rule to use
    CALL Get_Mixing_Rules
 
-  IF (.NOT. l_pair_nrg) THEN
-     WRITE(logunit,*)
-     WRITE(logunit,*) 'Pair interaction energy arrays will not be stored'
-     WRITE(logunit,*) 'Energy calculations will be done in a standard way'
-     WRITE(logunit,*)
-  END IF
-  
+  WRITE(logunit,'(A80)') '********************************************************************************'
+
+CONTAINS
+
+  FUNCTION erfc(x)
+    !*************************************************************************
+    !
+    ! Calculate the complementary error function for  a number
+    !
+    !*************************************************************************
+
+    REAL(DP) :: erfc
+    REAL(DP), PARAMETER :: A1 = 0.254829592_DP, A2 = -0.284496736_DP
+    REAL(DP), PARAMETER :: A3 = 1.421413741_DP, A4 = -1.453152027_DP
+    REAL(DP), PARAMETER :: A5 = 1.061405429_DP, P = 0.3275911_DP
+    REAL(DP) :: T, x, xsq, TP
+
+    T = 1.0_DP / (1.0_DP + P*x)
+    xsq = x*x
+
+    TP = T * (A1 + T * (A2 + T * (A3 + T * (A4 + T * A5))))
+
+    erfc = TP * EXP(-xsq)
+
+  END FUNCTION erfc
 END SUBROUTINE Get_Pair_Style
 
-
-
-!********************************************************************************
+!******************************************************************************
 SUBROUTINE Get_Mixing_Rules
-!********************************************************************************
-! The routine searches for the keyword "# Mixing_Rules" and then reads the necessary 
-! information underneath the key word. Spaces, blank lines and ! characters are 
+!******************************************************************************
+! The routine searches for the section "# Mixing_Rules" and then reads the necessary 
+! information. Spaces, blank lines and ! characters are 
 ! ignored. If no mixing rule is specified, Lorentz-Berthelot is used as default.
-!********************************************************************************
+!******************************************************************************
   INTEGER :: ierr,line_nbr,nbr_entries
   CHARACTER(120) :: line_string, line_array(20)
 
-!********************************************************************************
+!******************************************************************************
   REWIND(inputunit)
 
   ierr = 0
@@ -731,34 +900,33 @@ SUBROUTINE Get_Mixing_Rules
 
   DO
      line_nbr = line_nbr + 1
-
      CALL Read_String(inputunit,line_string,ierr)
 
      IF (ierr .NE. 0) THEN
-        err_msg = ""
-        err_msg(1) = "Error reading mixinf rules."
+        err_msg = ''
+        err_msg(1) = "Error reading mixing rules."
         CALL Clean_Abort(err_msg,'Get_Mixing_Rules')
      END IF
 
      IF (line_string(1:13) == '# Mixing_Rule') THEN
         line_nbr = line_nbr + 1
-        
         CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
 
 ! Assign the first entry on the line to the mixing rule
-        mix_rule= line_array(1)
+        mix_rule = line_array(1)
         
-        IF (mix_rule == 'LB') THEN
+        IF (mix_rule == 'lb' .OR. mix_rule == 'LB') THEN
+           mix_rule = 'LB'
            WRITE(logunit,'(A)') 'Lorentz-Berthelot mixing rule specified'
         ELSEIF (mix_rule == 'geometric') THEN
            WRITE(logunit,'(A)') 'Geometric mixing rule specified'
         ELSEIF (mix_rule == 'custom') THEN
            WRITE(logunit,'(A)') 'Custom mixing rule specified'
         ELSE
-           err_msg(1) = 'Mixing rule not supported'
-           err_msg(2) = mix_rule
-           err_msg(3) = 'Available options are'
-           err_msg(4) = 'LB or geometric'
+           err_msg = ''
+           err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
+                        TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+           err_msg(2) = 'Supported keywords are: lb, geometric, custom'
            CALL Clean_Abort(err_msg,'Get_Mixing_Rules')
         ENDIF
 
@@ -766,7 +934,8 @@ SUBROUTINE Get_Mixing_Rules
 
      ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
 
-        WRITE(logunit,*) 'No mixing rule specified. Using Lorentz-Berthelot'
+        WRITE(logunit,'(A)') 'Section "# Mixing_Rule" is missing from the input file'
+        WRITE(logunit,'(X,A)') 'By default, using Lorentz-Berthelot'
         mix_rule = 'LB'
 
         EXIT
@@ -777,45 +946,51 @@ SUBROUTINE Get_Mixing_Rules
 
 END SUBROUTINE Get_Mixing_Rules
 
-!********************************************************************************
+!******************************************************************************
 SUBROUTINE Get_Molecule_Info
-!********************************************************************************
+!******************************************************************************
 ! This routine opens the input file and reads connectivity information for
 ! each molecule. It determines the number of atoms, bonds, angles, dihedrals
 ! and impropers in each molecule. It the allocates associated arrays amd populates 
 ! most of the atom_class, bond_class, angle_class
 ! dihedral_class, improper_class and nonbond_class fields. 
 !
-! The routine searches for the keyword "# Molecule_Files" and then 
+! The routine searches for the section "# Molecule_Files" and then 
 ! for each species, it reads the name of the molecular connectivity file, opens
 ! that file and loads necessary information. Only the homegrown molecular 
 ! connectivity file format is supported.
-!********************************************************************************
+!******************************************************************************
 
-  INTEGER :: ierr,line_nbr,nbr_entries, i, openstatus, is, max_index
+  INTEGER :: ierr,line_nbr,nbr_entries, i, openstatus, is, max_index, input_line_nbr
   INTEGER :: mcf_index(5), dummy
-  CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(120) :: line_string, line_array(20), source_dir
+  LOGICAL :: l_source_dir
 
-!********************************************************************************
+!******************************************************************************
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'Molecule info'
+  WRITE(logunit,'(A80)') '********************************************************************************'
+
 ! determine the type of molecule input and connectivity
-  REWIND(inputunit)
+
+  l_source_dir = .FALSE.
 
   ierr = 0
   line_nbr = 0
+  REWIND(inputunit)
   
   input_file_loop:DO
-     line_nbr = line_nbr + 1
 
+     line_nbr = line_nbr + 1
      CALL Read_String(inputunit,line_string,ierr)
 
      IF (ierr .NE. 0) THEN
-        err_msg = ""
+        err_msg = ''
         err_msg(1) = "Error reading molecular info."
         CALL Clean_Abort(err_msg,'Get_Molecule_Info')
      END IF
 
      molecule_file_string:IF (line_string(1:16) == '# Molecule_Files') THEN
-        line_nbr = line_nbr + 1
 
         ! next lines must contain the molecule file names of each species in order and
         ! the number of molecules. If this is an open system simulation (i.e. GCMC)
@@ -823,231 +998,257 @@ SUBROUTINE Get_Molecule_Info
         ! array will be allocated. We also determine the maximum number of molecules
         ! of a given species and use this to allocate arrays
 
+        ! Read first line and check for 'directory' keyword
+        line_nbr = line_nbr + 1
+        CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
+
+        IF (ierr .NE. 0) THEN
+           err_msg = ''
+           err_msg(1) = "Error reading molecular connectivity file info."
+           CALL Clean_Abort(err_msg,'Get_Molecule_File_Type')
+        END IF
+
+        IF (line_array(1) == 'directory') THEN
+           source_dir = line_array(2)
+           l_source_dir = .TRUE.
+        ELSE
+           line_nbr = line_nbr - 1
+           backspace(inputunit)
+        END IF
+ 
+        species_loop:DO i=1,nspecies
+
+           line_nbr = line_nbr + 1           
+           CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
+
+           IF (ierr .NE. 0) THEN
+              err_msg = ''
+              err_msg(1) = "Error reading molecular connectivity file."
+              err_msg(2) = "check that number of species and number of files match"
+              CALL Clean_Abort(err_msg,'Get_Molecule_File_Type')
+           END IF
+
+           ! assign the name of the molecular connectivity file, max number
+           ! of molecules, and starting number of molecules for this species
+
+           IF (l_source_dir) THEN
+             molfile_name(i) = TRIM(source_dir) // TRIM(line_array(1))
+           ELSE
+             molfile_name(i) = line_array(1)
+           END IF
+           max_molecules(i) = String_To_Int(line_array(2))
         
+           WRITE(logunit,*) 'Reading molecular connectivity information'
+           WRITE(logunit,*) 'Species: ',i
+           WRITE(logunit,*) 'Molecular connectivity file: ',molfile_name(i)
 
-           species_loop:DO i=1,nspecies
+           ! Open the file and determine how many atoms, bonds, angles, dihedrals and impropers
+           ! this molecule has
+           OPEN(UNIT=molfile_unit,FILE=molfile_name(i),STATUS="OLD",IOSTAT=openstatus,ACTION="READ")
 
-              
-                 CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
+           IF (openstatus .NE. 0) THEN
+              err_msg = ''
+              err_msg(1) = "Unable to open molecular connectivity file."
+              CALL Clean_Abort(err_msg,'Get_Molecule_Info')
+           ENDIF
 
+           input_line_nbr = line_nbr
+           REWIND(molfile_unit)
+           ierr = 0
+           line_nbr = 0
+           mcf_index = 0
 
-              IF (ierr .NE. 0) THEN
-                 err_msg = ""
-                 err_msg(1) = "Error reading molecular connectivity file."
-                 err_msg(2) = "check that number of species and number of files match"
-                 CALL Clean_Abort(err_msg,'Get_Molecule_File_Type')
-              END IF
+           mcf_read_loop:DO 
+              line_nbr = line_nbr + 1
+              CALL Read_String(molfile_unit,line_string,ierr)
 
-              ! assign the name of the molecular connectivity file, max number
-              ! of molecules, and starting number of molecules for this species
+              IF (ierr == 0) THEN
 
-              molfile_name(i) = line_array(1)
-              nmolecules(i) = String_To_Int(line_array(2))
-          
-              WRITE(logunit,*)
-              WRITE(logunit,*) 'Reading molecular connectivity information'
-              WRITE(logunit,*) 'Species: ',i
-              WRITE(logunit,*) 'Molecular connectivity file: ',molfile_name(i)
+                 IF (line_string(1:11) == '# Atom_Info') THEN
+                    line_nbr = line_nbr + 1
+                    CALL Read_String(molfile_unit,line_string,ierr)
+                    natoms(i) = String_To_Int(line_string)
+                    WRITE(logunit,*) '  ', &
+                         TRIM(Int_To_String(natoms(i))), ' atom(s) specified.'
 
-              ! Open the file and determine how many atoms, bonds, angles, dihedrals and impropers
-              ! this molecule has
-              OPEN(UNIT=molfile_unit,FILE=molfile_name(i),STATUS="OLD",IOSTAT=openstatus,ACTION="READ")
+                    mcf_index(1) = 1
 
-              IF (openstatus .NE. 0) THEN
-                 err_msg = ""
-                 err_msg(1) = "Unable to open molecular connectivity file."
-                 CALL Clean_Abort(err_msg,'Get_Molecule_Info')
-              ENDIF
+                 ELSEIF (line_string(1:11) == '# Bond_Info') THEN
+                    line_nbr = line_nbr + 1
+                    CALL Read_String(molfile_unit,line_string,ierr)
+                    nbonds(i) = String_To_Int(line_string)
+                    WRITE(logunit,*) '  ', &
+                         TRIM(Int_To_String(nbonds(i))), ' bond(s) specified.'
+                    mcf_index(2) = 1
 
-              REWIND(molfile_unit)
+                 ELSEIF (line_string(1:12) == '# Angle_Info') THEN
+                    line_nbr = line_nbr + 1
+                    CALL Read_String(molfile_unit,line_string,ierr)
+                    nangles(i) = String_To_Int(line_string)
+                    WRITE(logunit,*) '  ', &
+                         TRIM(Int_To_String(nangles(i))), ' angle(s) specified.'
+                    mcf_index(3) = 1
 
-              mcf_index = 0
+                 ELSEIF (line_string(1:15) == '# Dihedral_Info') THEN
+                    line_nbr = line_nbr + 1
+                    CALL Read_String(molfile_unit,line_string,ierr)
+                    ndihedrals(i) = String_To_Int(line_string)
+                    WRITE(logunit,*) '  ', &
+                         TRIM(Int_To_String(ndihedrals(i))), ' dihedral(s) specified.'
+                    mcf_index(4) = 1
 
-              mcf_read_loop:DO 
-                 CALL Read_String(molfile_unit,line_string,ierr)
+                 ELSEIF (line_string(1:15) == '# Improper_Info') THEN
+                    line_nbr = line_nbr + 1
+                    CALL Read_String(molfile_unit,line_string,ierr)
+                    nimpropers(i) = String_To_Int(line_string)
+                    WRITE(logunit,*) '  ', &
+                         TRIM(Int_To_String(nimpropers(i))), ' improper(s) specified.'
+                    mcf_index(5) = 1
 
-                 IF (ierr == 0) THEN
+                 ELSEIF (line_string(1:15) == '# Fragment_Info') THEN
+                    line_nbr = line_nbr + 1
+                    CALL Read_String(molfile_unit,line_string,ierr)
+                    nfragments(i) = String_To_Int(line_string)
+                    WRITE(logunit,*) '  ', &
+                         TRIM(Int_To_String(nfragments(i))), ' fragment(s) specified.'
 
-                    IF (line_string(1:11) == '# Atom_Info') THEN
-                       CALL Read_String(molfile_unit,line_string,ierr)
-                       natoms(i) = String_To_Int(line_string)
-                       WRITE(logunit,*) '  ', &
-                            TRIM(Int_To_String(natoms(i))), ' atom(s) specified.'
+                 ELSEIF (line_string(1:23) == '# Fragment_Connectivity') THEN
+                    line_nbr = line_nbr + 1
+                    CALL Read_String(molfile_unit,line_string,ierr)
+                    fragment_bonds(i) = String_To_Int(line_string)
+                    WRITE(logunit,*) '  ', &
+                         TRIM(Int_to_String(fragment_bonds(i))), ' fragment bond(s) specified.'
 
-                       mcf_index(1) = 1
-
-                    ELSEIF (line_string(1:11) == '# Bond_Info') THEN
-                       CALL Read_String(molfile_unit,line_string,ierr)
-                       nbonds(i) = String_To_Int(line_string)
-                       WRITE(logunit,*) '  ', &
-                            TRIM(Int_To_String(nbonds(i))), ' bond(s) specified.'
-                       mcf_index(2) = 1
-
-                    ELSEIF (line_string(1:12) == '# Angle_Info') THEN
-                       CALL Read_String(molfile_unit,line_string,ierr)
-                       nangles(i) = String_To_Int(line_string)
-                       WRITE(logunit,*) '  ', &
-                            TRIM(Int_To_String(nangles(i))), ' angle(s) specified.'
-                       mcf_index(3) = 1
-
-                    ELSEIF (line_string(1:15) == '# Dihedral_Info') THEN
-                       CALL Read_String(molfile_unit,line_string,ierr)
-                       ndihedrals(i) = String_To_Int(line_string)
-                       WRITE(logunit,*) '  ', &
-                            TRIM(Int_To_String(ndihedrals(i))), ' dihedral(s) specified.'
-                       mcf_index(4) = 1
-
-                    ELSEIF (line_string(1:15) == '# Improper_Info') THEN
-                       CALL Read_String(molfile_unit,line_string,ierr)
-                       nimpropers(i) = String_To_Int(line_string)
-                       WRITE(logunit,*) '  ', &
-                            TRIM(Int_To_String(nimpropers(i))), ' improper(s) specified.'
-                       mcf_index(5) = 1
-
-                    ELSEIF (line_string(1:15) == '# Fragment_Info') THEN
-                       CALL Read_String(molfile_unit,line_string,ierr)
-                       nfragments(i) = String_To_Int(line_string)
-                       WRITE(logunit,*) '  ', &
-                            TRIM(Int_To_String(nfragments(i))), ' fragments specified.'
-
-                    ELSEIF (line_string(1:23) == '# Fragment_Connectivity') THEN
-                       CALL Read_String(molfile_unit,line_string,ierr)
-                       fragment_bonds(i) = String_To_Int(line_string)
-                       WRITE(logunit,*) '  ', &
-                            TRIM(Int_to_String(fragment_bonds(i))), '  fragment bonds specified.'
-
-                    END IF
-
-                 ELSE
-                    ! Make sure everything has been specified
-                    IF (SUM(mcf_index) .NE. 5) THEN
-                       err_msg = ""
-                       err_msg(1) =  'Error! In mcf file '
-                       err_msg(2) = molfile_name(i)
-
-                       IF (mcf_index(1) .NE. 1) err_msg(3) = '   natoms  field not present'
-                       IF (mcf_index(2) .NE. 1) err_msg(4) = '   nbonds  field not present'
-                       IF (mcf_index(3) .NE. 1) err_msg(5) = '   nangles  field not present'
-                       IF (mcf_index(4) .NE. 1) err_msg(6) = '   ndihedrals  field not present'
-                       IF (mcf_index(5) .NE. 1) err_msg(7) = '   nimpropers  field not present'
-                       CALL Clean_Abort(err_msg,'Get_Init_Params')
-                    END IF
-                    ! Everything properly specified
-                    EXIT  !Exit when EOF reached
                  END IF
 
-              END DO mcf_read_loop
+              ELSE
+                 ! Make sure everything has been specified
+                 IF (SUM(mcf_index) .NE. 5) THEN
+                    err_msg = ''
+                    err_msg(1) =  'Error! In mcf file '
+                    err_msg(2) = molfile_name(i)
 
-              CLOSE(molfile_unit)
+                    IF (mcf_index(1) .NE. 1) err_msg(3) = '   natoms  field not present'
+                    IF (mcf_index(2) .NE. 1) err_msg(4) = '   nbonds  field not present'
+                    IF (mcf_index(3) .NE. 1) err_msg(5) = '   nangles  field not present'
+                    IF (mcf_index(4) .NE. 1) err_msg(6) = '   ndihedrals  field not present'
+                    IF (mcf_index(5) .NE. 1) err_msg(7) = '   nimpropers  field not present'
+                    CALL Clean_Abort(err_msg,'Get_Init_Params')
+                 END IF
+                 ! Everything properly specified
+                 EXIT  !Exit when EOF reached
+              END IF
 
-           ENDDO species_loop
+           END DO mcf_read_loop
 
-           EXIT
+           CLOSE(molfile_unit)
 
-     ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
+           line_nbr = input_line_nbr
 
-! No connectivity file specified so abort
-        err_msg = ""
-        err_msg(1) = 'Molecular connectivity files improperly specified'
-        CALL Clean_Abort(err_msg,'Get_Molecule_File_Type')
+        ENDDO species_loop
 
         EXIT
 
-     ENDIF molecule_file_string
+     ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
 
+        err_msg = ''
+        err_msg(1) = 'Section "# Molecule_Files" is missing from the input file and is required'
+        CALL Clean_Abort(err_msg,'Get_Molecule_File_Type')
+
+     ENDIF molecule_file_string
 
   ENDDO input_file_loop
 
   WRITE(logunit,*)
-  WRITE(logunit,'(A7,2x,A13)') 'Species', 'Nbr molecules'
-  WRITE(logunit,'(A7,2x,A13)') '-------', '-------------'
+  WRITE(logunit,'(X,A7,2x,A13)') 'Species', 'Max molecules'
+  WRITE(logunit,'(X,A7,2x,A13)') '-------', '-------------'
   DO i=1,nspecies
-     WRITE(logunit,'(I6,2x,I13)') i,nmolecules(i) 
+     WRITE(logunit,'(X,I6,2x,I13)') i,max_molecules(i) 
   ENDDO
-  WRITE(logunit,*)
 
-  ! Allocate arrays that depend on nmolecules, natoms, and nspecies
+
+  ! Allocate arrays that depend on max_molecules, natoms, and nspecies
   ! N.B.: MAXVAL instrinsic function selects the largest value from an array
 
-  ALLOCATE( atom_list(MAXVAL(natoms), MAXVAL(nmolecules), nspecies), Stat = AllocateStatus )
+  ALLOCATE( atom_list(MAXVAL(natoms), MAXVAL(max_molecules), nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for atom_list array'
+     write(*,*)'memory could not be allocated for atom_list array'
      write(*,*)'stopping'
      STOP
   END IF
 
   ALLOCATE( nonbond_list(MAXVAL(natoms), nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for nonbond_list array'
+     write(*,*)'memory could not be allocated for nonbond_list array'
      write(*,*)'stopping'
      STOP
   END IF
 
   ALLOCATE( ring_atom_ids(MAXVAL(natoms), nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for ring_atom_ids array'
+     write(*,*)'memory could not be allocated for ring_atom_ids array'
      write(*,*)'stopping'
      STOP
   END IF
   
   ALLOCATE( exo_atom_ids(MAXVAL(natoms), nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for exo_atom_ids array'
+     write(*,*)'memory could not be allocated for exo_atom_ids array'
      write(*,*)'stopping'
      STOP
   END IF
 
   ALLOCATE( bond_list(MAXVAL(nbonds), nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for bond_list array'
+     write(*,*)'memory could not be allocated for bond_list array'
      write(*,*)'stopping'
      STOP
   END IF
 
   ALLOCATE( angle_list(MAXVAL(nangles), nspecies),Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for angle_list array'
+     write(*,*)'memory could not be allocated for angle_list array'
      write(*,*)'stopping'
      STOP
   END IF
 
   ALLOCATE( dihedral_list(MAXVAL(ndihedrals), nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for dihedral_list array'
+     write(*,*)'memory could not be allocated for dihedral_list array'
      write(*,*)'stopping'
      STOP
   END IF
 
   ALLOCATE( improper_list(MAXVAL(nimpropers), nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for improper_list array'
+     write(*,*)'memory could not be allocated for improper_list array'
      write(*,*)'stopping'
      STOP
   END IF
 
-  ALLOCATE( molecule_list(MAXVAL(nmolecules), nspecies), Stat = AllocateStatus )
+  ALLOCATE( molecule_list(MAXVAL(max_molecules), nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for molecule_list array'
+     write(*,*)'memory could not be allocated for molecule_list array'
      write(*,*)'stopping'
      STOP
   END IF
 
-  ALLOCATE( locate(MAXVAL(nmolecules),nspecies), Stat = AllocateStatus )
+  ALLOCATE( locate(MAXVAL(max_molecules),nspecies,0:nbr_boxes), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for locate array'
+     write(*,*)'memory could not be allocated for locate array'
      write(*,*)'stopping'
      STOP
   END IF
 
   IF (l_pair_nrg) THEN
-     ALLOCATE( pair_nrg_vdw(SUM(nmolecules),SUM(nmolecules)), Stat = AllocateStatus)
+     ALLOCATE( pair_nrg_vdw(SUM(max_molecules),SUM(max_molecules)), Stat = AllocateStatus)
      IF (AllocateStatus /= 0 ) THEN
         write(*,*) 'memmory could not be allocated for pair_nrg_vdw array'
         write(*,*) 'aborting'
         STOP
      END IF
      
-     ALLOCATE( pair_nrg_qq(SUM(nmolecules),SUM(nmolecules)), Stat = AllocateStatus)
+     ALLOCATE( pair_nrg_qq(SUM(max_molecules),SUM(max_molecules)), Stat = AllocateStatus)
      IF (AllocateStatus /= 0 ) THEN
         write(*,*) 'memmory could not be allocated for pair_nrg_qq array'
         write(*,*) 'aborting'
@@ -1057,16 +1258,16 @@ SUBROUTINE Get_Molecule_Info
 
   ALLOCATE( species_list(nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for species_list array'
+     write(*,*)'memory could not be allocated for species_list array'
      write(*,*)'stopping'
      STOP
   END IF
 
   max_index = MAX(MAXVAL(nbonds),MAXVAL(nangles),MAXVAL(ndihedrals),MAXVAL(nimpropers))
 
-  ALLOCATE( internal_coord_list(max_index, MAXVAL(nmolecules), nspecies), Stat = AllocateStatus )
+  ALLOCATE( internal_coord_list(max_index, MAXVAL(max_molecules), nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could no tbe allocated for internal_coord_list array'
+     write(*,*)'memory could not be allocated for internal_coord_list array'
      write(*,*)'stopping'
      STOP
   END IF
@@ -1074,7 +1275,7 @@ SUBROUTINE Get_Molecule_Info
   ALLOCATE(internal_coord_list_old(max_index), Stat = AllocateStatus)
   IF (AllocateStatus /= 0) THEN
      err_msg = ''
-     err_msg(1) = 'memory could no tbe allocated for internal_coord_list_old array'
+     err_msg(1) = 'memory could not be allocated for internal_coord_list_old array'
      CALL Clean_Abort(err_msg,'Get_Molecule_Info')
   END IF 
  
@@ -1085,6 +1286,8 @@ SUBROUTINE Get_Molecule_Info
      err_msg(1) = 'memory could not be allocated for frag_list array'
      CALL Clean_Abort(err_msg,'Get_Molecule_Info')
   END IF
+  frag_list(:,:)%natoms = 0 
+  frag_list(:,:)%type = 0
 
   ALLOCATE(fragment_bond_list(MAXVAL(fragment_bonds),nspecies), Stat = AllocateStatus)
   IF (AllocateStatus /= 0 ) THEN
@@ -1107,26 +1310,26 @@ SUBROUTINE Get_Molecule_Info
   
   DO is=1,nspecies
 
+        WRITE(logunit,*)
+        WRITE(logunit,'(X,A8,I5)') 'Species ', is
+        WRITE(logunit,'(X,A79)') '-------------------------------------------------------------------------------'
+
         OPEN(UNIT=molfile_unit,FILE=molfile_name(is),STATUS="OLD",IOSTAT=openstatus,ACTION="READ")
         IF (openstatus .NE. 0) THEN
-           err_msg = ""
+           err_msg = ''
            err_msg(1) = "Unable to open molecular connectivity file."
            err_msg(2) = molfile_name(is)
            CALL Clean_Abort(err_msg,'Get_Molecule_Info')
         ENDIF
 
-        CALL Get_L_Coul_CBMC(is)
-        ! skip the insertion style for a fragment generation
-        IF ( .NOT. (int_sim_type == sim_frag .OR. int_sim_type == sim_ring )) THEN
-           CALL Get_Insertion_Style(is)
-        END IF
         CALL Get_Atom_Info(is)
         CALL Get_Bond_Info(is)
         CALL Get_Angle_Info(is)
         CALL Get_Dihedral_Info(is)
         CALL Get_Improper_Info(is)
+        CALL Get_Intra_Scaling(is)
   
-        IF(nfragments(is) /= 0  ) THEN
+        IF (nfragments(is) /= 0) THEN
            species_list(is)%fragment = .TRUE.
            CALL Get_Fragment_Info(is)
            IF (int_sim_type /= sim_mcf) THEN
@@ -1138,6 +1341,7 @@ SUBROUTINE Get_Molecule_Info
         END IF
 
         CLOSE(unit=molfile_unit)
+        WRITE(logunit,'(X,A79)') '-------------------------------------------------------------------------------'
 
  ENDDO
 
@@ -1156,233 +1360,23 @@ SUBROUTINE Get_Molecule_Info
      END IF
   END DO
 
+  WRITE(logunit,'(A80)') '********************************************************************************'
+ 
 END SUBROUTINE Get_Molecule_Info
-!********************************************************************************
 
-!****************************************************************************
-
-!********************************************************************************
-SUBROUTINE Get_L_Coul_CBMC(is)
-!********************************************************************************
-! This routine opens the molfile and determines the whether to
-! include Coulombic interactions duing the biased growth
-! Input file name format is 
-! # Key_Word
-! Variables associated with Key_Word
-! Added by NR 01-05-2010
-!********************************************************************************
-
-  INTEGER, INTENT(IN) :: is
-
-  INTEGER :: ierr,line_nbr,nbr_entries
-  CHARACTER(120) :: line_string, line_array(20)
-
-  REWIND(molfile_unit)
-
-  ierr = 0
-  line_nbr = 0
-
-  DO
-     line_nbr = line_nbr + 1
-
-     CALL Read_String(molfile_unit,line_string,ierr)
-
-     IF (ierr .NE. 0) THEN
-        err_msg = ""
-        err_msg(1) = "Error reading species type."
-        CALL Clean_Abort(err_msg,'Get_L_Coul_CBMC')
-     END IF
-
-     IF (line_string(1:14) == '# L_Coul_CBMC') THEN
-        line_nbr = line_nbr + 1
-
-        CALL Parse_String(molfile_unit,line_nbr,1,nbr_entries,line_array,ierr)
-
-! Assign the first entry on the line to the type of species
-        species_list(is)%L_Coul_CBMC = String_To_Logical(line_array(1))
-        WRITE(logunit,'(A,I4, 2x,L4 )') 'L_Coul_CBMC given for species ',is, &
-             species_list(is)%L_Coul_CBMC
-
-        EXIT
-
-     ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
-
-! L_Coul_CBMC not specified. Default is true
-        species_list(is)%L_Coul_CBMC = .true.
-        WRITE(logunit,'(A,I4)') 'L_Coul_CBMC not given for species ',is
-        WRITE(logunit,*) 'Defaulting to ', species_list(is)%L_Coul_CBMC
-
-        EXIT
-
-     ENDIF
-
-  ENDDO
-
-  WRITE(logunit,*)
-
-END SUBROUTINE Get_L_Coul_CBMC
-
-!********************************************************************************
-SUBROUTINE Get_Species_Type(is)
-!********************************************************************************
-! This routine opens the molfile and determines the type of species.
-! Input file name format is 
-! # Key_Word
-! Variables associated with Key_Word
-!********************************************************************************
-
-  INTEGER, INTENT(IN) :: is
-
-  INTEGER :: ierr,line_nbr,nbr_entries, is_1
-  CHARACTER(120) :: line_string, line_array(20)
-
-  REWIND(molfile_unit)
-
-  ierr = 0
-  line_nbr = 0
-
-  DO
-     line_nbr = line_nbr + 1
-
-     CALL Read_String(molfile_unit,line_string,ierr)
-
-     IF (ierr .NE. 0) THEN
-        err_msg = ""
-        err_msg(1) = "Error reading species type."
-        CALL Clean_Abort(err_msg,'Get_Species_Type')
-     END IF
-
-     IF (line_string(1:14) == '# Species_Type') THEN
-        line_nbr = line_nbr + 1
-        
-        CALL Parse_String(molfile_unit,line_nbr,1,nbr_entries,line_array,ierr)
-
-! Assign the first entry on the line to the type of species
-        species_list(is)%species_type = line_array(1)
-        IF(species_list(is)%species_type == 'SORBATE') THEN 
-           species_list(is)%int_species_type = int_sorbate
-        ELSE
-           species_list(is)%int_species_type = int_solvent
-        END IF
-        WRITE(logunit,'(A,I4, 2x, A)') 'Species type given for species ',is, &
-             species_list(is)%species_type
-  
-        EXIT
-
-     ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
-
-! No species type specified. Default to normal
-        species_list(is)%species_type = 'normal'
-        WRITE(logunit,'(A,I4)') 'No species type given for species ',is
-        WRITE(logunit,*) 'Defaulting to normal'
-        WRITE(logunit,*) 'assigned to type ',species_list(is)%species_type
-
-        EXIT
-
-     ENDIF
-
-  ENDDO
-
-
-END SUBROUTINE Get_Species_Type
-
-!********************************************************************************
-SUBROUTINE Get_Insertion_Style(is)
-!********************************************************************************
-! This routine opens the molfile and determines the type of species.
-! Input file name format is 
-! # Key_Word
-! Variables associated with Key_Word
-!********************************************************************************
-
-  INTEGER, INTENT(IN) :: is
-
-  INTEGER :: ierr,line_nbr,nbr_entries, is_1
-  CHARACTER(120) :: line_string, line_array(30)
-
-  REWIND(molfile_unit)
-
-  ierr = 0
-  line_nbr = 0
-
-! These are default choices
-
-  species_list(is)%lcom = .false.
-  species_list(is)%insert_style = "NONE"
-
-  DO
-     line_nbr = line_nbr + 1
-
-     CALL Read_String(molfile_unit,line_string,ierr)
-
-     IF (ierr .NE. 0) THEN
-        err_msg = ""
-        err_msg(1) = "Error reading insertion style."
-        CALL Clean_Abort(err_msg,'Get_Insertion_Style')
-     END IF
-
-     IF (line_string(1:24) == '# 1st_Fragment_Ins_Style') THEN
-        line_nbr = line_nbr + 1
-        
-        CALL Parse_String(molfile_unit,line_nbr,1,nbr_entries,line_array,ierr)
-
-! Assign the first entry on the line to the type of species
-        species_list(is)%insert_style = line_array(1)
-        IF((species_list(is)%insert_style == 'COM').or.(species_list(is)%insert_style == 'com')) THEN 
-           species_list(is)%lcom = .true.
-        ELSE IF((species_list(is)%insert_style == 'BEAD').or.(species_list(is)%insert_style == 'bead')) THEN
-           species_list(is)%lcom = .false.
-        ELSE
-            WRITE(logunit,'(A,I4)') 'Insertion Style not provided for species', is
-            err_msg = ""
-            err_msg(1) = "The input for Insertion Style Not understood by the program"
-            err_msg(2) = "The possible options are : COM or BEAD"
-            CALL Clean_Abort(err_msg,'Get_Insertion_Style')
-        END IF
-        WRITE(logunit,'(A,I4, 2x, A)') 'Insertion style given for species ',is, &
-             species_list(is)%insert_style
-  
-        EXIT
-
-     ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
-
-        ! 1st Fragment style is not specified. For now, default it to 
-        ! COM
-
-        species_list(is)%insert_style = 'COM'
-        species_list(is)%lcom = .true.
-
-        WRITE(logunit,'(A48,2X,I3)') '1st_Fragment_Ins_Style not specified for species', is
-        WRITE(logunit,'(A)') 'using default of "COM" for this species.'
-        
-
-!        WRITE(logunit,'(A,I4)') 'Insertion Style not given for species ',is
-!        err_msg = ""
-!        err_msg(1) = "Please include '# 1St_Fragment_Ins_Style' in the mcf file"
-!        err_msg(2) = "Possible options are: COM or BEAD"
-!        CALL Clean_Abort(err_msg, 'Get_Insertion_Style')
-
-        EXIT
-
-     ENDIF
-
-  ENDDO
-
-
-END SUBROUTINE Get_Insertion_Style 
-
-!********************************************************************************
+!******************************************************************************
 SUBROUTINE Get_Atom_Info(is)
-!********************************************************************************
+!******************************************************************************
 ! This routine opens the molfile and loads information into the nonbond_list
 ! for species is.
-!********************************************************************************
+!******************************************************************************
 
   INTEGER, INTENT(IN) :: is
 
   INTEGER :: ierr,line_nbr,nbr_entries, ia
   CHARACTER(120) :: line_string, line_array(20)
 
+!******************************************************************************
   REWIND(molfile_unit)
 
   ierr = 0
@@ -1401,22 +1395,20 @@ SUBROUTINE Get_Atom_Info(is)
 
   DO
      line_nbr = line_nbr + 1
-
      CALL Read_String(molfile_unit,line_string,ierr)
 
      IF (ierr /= 0) THEN
-        err_msg = ""
+        err_msg = ''
         err_msg(1) = "Error reading atom info."
         CALL Clean_Abort(err_msg,'Get_Atom_Info')
      END IF
 
      IF (line_string(1:11) == '# Atom_Info') THEN
         line_nbr = line_nbr + 1
-        
         CALL Parse_String(molfile_unit,line_nbr,1,nbr_entries,line_array,ierr)
         ! Make sure the number of atoms is still the same. It should not have changed!
         IF (String_To_Int(line_array(1)) /= natoms(is)) THEN
-           err_msg = ""
+           err_msg = ''
            err_msg(1) = 'natoms is inconsistent'
            CALL Clean_Abort(err_msg,'Get_Atom_Info')
         ENDIF
@@ -1426,18 +1418,19 @@ SUBROUTINE Get_Atom_Info(is)
         DO ia = 1,natoms(is)
            ! Now read the entries on the next lines. There must be at least 8 for 
            ! each atom.
-           CALL Parse_String(molfile_unit,line_nbr,8,nbr_entries,line_array,ierr)
+           line_nbr = line_nbr + 1
+           CALL Parse_String(molfile_unit,line_nbr,6,nbr_entries,line_array,ierr)
 
            ! Test for problems readin file
            IF (ierr /= 0) THEN
-              err_msg = ""
+              err_msg = ''
               err_msg(1) = "Error reading atom info."
               CALL Clean_Abort(err_msg,'Get_Atom_Info')
            END IF
 
            ! Test to make sure atoms are listed 1,2,3,... in mcf file           
            IF (String_To_Int(line_array(1)) /= ia) THEN
-              err_msg = ""
+              err_msg = ''
               err_msg(1) = 'atoms must be listed sequentially'
               CALL Clean_Abort(err_msg,'Get_Atom_Info')
            ENDIF
@@ -1448,94 +1441,139 @@ SUBROUTINE Get_Atom_Info(is)
            nonbond_list(ia,is)%mass = String_To_Double(line_array(4))
            nonbond_list(ia,is)%charge = String_To_Double(line_array(5))
            IF(nonbond_list(ia,is)%charge .NE. 0.0_DP) has_charge(is) = .TRUE. 
-           nonbond_list(ia,is)%vdw_potential_type = line_array(6)
-	   
+           nonbond_list(ia,is)%vdw_type = line_array(6)
 
-           species_list(is)%molecular_weight = species_list(is)%molecular_weight + &
-                nonbond_list(ia,is)%mass
+           species_list(is)%molecular_weight = species_list(is)%molecular_weight &
+                                             + nonbond_list(ia,is)%mass
 
-           ! For now, force all atoms to have the same vdw pair style that was
-           ! specified in the input file.  We can relax this restriction later.
-           IF (nonbond_list(ia,is)%vdw_potential_type /= vdw_style(1)) THEN
-              err_msg = ""
-              err_msg(1) = 'vdw_potential type does not equal specified vdw_style'
+           species_list(is)%total_charge = species_list(is)%total_charge &
+                                         + nonbond_list(ia,is)%charge
+
+           ! Cannot mix "LJ" and "Mie" types
+           IF (nonbond_list(ia,is)%vdw_type /= "NONE" .AND. &
+               nonbond_list(ia,is)%vdw_type /= vdw_style(1)) THEN
+              err_msg = ''
+              err_msg(1) = 'Cannot have an atom of vdw type ' // TRIM(nonbond_list(ia,is)%vdw_type) // &
+                           ' in a box of vdw type ' // TRIM(vdw_style(1))
               CALL Clean_Abort(err_msg,'Get_Atom_Info')
            ENDIF
 
-           IF (verbose_log) THEN
-                   WRITE(logunit,'(A,T25,I3,1x,I5)') 'Species and atom number', is,ia
-                   WRITE(logunit,'(A,T25,A)') ' atom name:',nonbond_list(ia,is)%atom_name
-                   WRITE(logunit,'(A,T25,A)') ' element:',nonbond_list(ia,is)%element
-                   WRITE(logunit,'(A,T25,F10.4)') ' mass:',nonbond_list(ia,is)%mass
-                   WRITE(logunit,'(A,T25,F10.4)') ' charge:',nonbond_list(ia,is)%charge
-                   WRITE(logunit,'(A,T25,A)') ' vdw type:',nonbond_list(ia,is)%vdw_potential_type
+           IF (verbose_log .AND. natoms(is) < 100) THEN
+              WRITE(logunit,'(X,A,T25,I3,1x,I5)') 'Species and atom number', is,ia
+              WRITE(logunit,'(X,A,T25,A)') ' atom name:',nonbond_list(ia,is)%atom_name
+              WRITE(logunit,'(X,A,T25,A)') ' element:',nonbond_list(ia,is)%element
+              WRITE(logunit,'(X,A,T25,F10.4)') ' mass:',nonbond_list(ia,is)%mass
+              WRITE(logunit,'(X,A,T25,F10.4)') ' charge:',nonbond_list(ia,is)%charge
+              WRITE(logunit,'(X,A,T25,A)') ' vdw type:',nonbond_list(ia,is)%vdw_type
            END IF
 
            ! Load vdw parameters, specific for each individual type
-           IF (nonbond_list(ia,is)%vdw_potential_type == 'LJ') THEN
+           IF (nonbond_list(ia,is)%vdw_type == 'LJ' .OR. nonbond_list(ia,is)%vdw_type == 'lj') THEN
+              nonbond_list(ia,is)%vdw_type = 'LJ'
+              ! Set number of vdw parameters
+              nbr_vdw_params(is) = 2
+              
+              IF (nbr_entries < 6 + nbr_vdw_params(is)) THEN
+                 err_msg = ''
+                 err_msg(1) = 'VDW potential type "LJ" requires 2 parameters'
+                 CALL Clean_Abort(err_msg,'Get_Atom_Info')
+              ENDIF
+
               ! epsilon/kB in K read in
               nonbond_list(ia,is)%vdw_param(1) = String_To_Double(line_array(7))
               ! sigma = Angstrom
               nonbond_list(ia,is)%vdw_param(2) = String_To_Double(line_array(8))
 
-              IF (verbose_log) THEN
-                      WRITE(logunit,'(A,T25,F10.4)') ' Epsilon / kB in K:', &
-                           nonbond_list(ia,is)%vdw_param(1)
-                      WRITE(logunit,'(A,T25,F10.4)') ' Sigma in A:', &
-                           nonbond_list(ia,is)%vdw_param(2)
+              IF (verbose_log .AND. natoms(is) < 100) THEN
+                 WRITE(logunit,'(X,A,T25,F10.4)') ' Epsilon / kB in K:', &
+                      nonbond_list(ia,is)%vdw_param(1)
+                 WRITE(logunit,'(X,A,T25,F10.4)') ' Sigma in A:', &
+                      nonbond_list(ia,is)%vdw_param(2)
               END IF
 
               ! Convert epsilon to atomic units amu A^2/ps^2
               nonbond_list(ia,is)%vdw_param(1) = kboltz* nonbond_list(ia,is)%vdw_param(1) 
+
+           ELSEIF (nonbond_list(ia,is)%vdw_type == 'Mie' .OR. nonbond_list(is,is)%vdw_type == 'mie') THEN
+              nonbond_list(ia,is)%vdw_type = 'Mie'
               ! Set number of vdw parameters
-              nbr_vdw_params = 2
+              nbr_vdw_params(is) = 4
 
-           ELSEIF (nonbond_list(ia,is)%vdw_potential_type == 'NONE') THEN
+              IF (nbr_entries < 6 + nbr_vdw_params(is)) THEN
+                 err_msg = ''
+                 err_msg(1) = 'VDW potential type "Mie" requires 4 parameters'
+                 CALL Clean_Abort(err_msg,'Get_Atom_Info')
+              ENDIF
 
-              IF (verbose_log) THEN
+              ! epsilon/kB in K read in
+              nonbond_list(ia,is)%vdw_param(1) = String_To_Double(line_array(7))
+              ! sigma = Angstrom
+              nonbond_list(ia,is)%vdw_param(2) = String_To_Double(line_array(8))
+              ! repulsive exponent
+              nonbond_list(ia,is)%vdw_param(3) = String_To_Double(line_array(9))
+              ! dispersive exponent
+              nonbond_list(ia,is)%vdw_param(4) = String_To_Double(line_array(10))
 
-                      WRITE(logunit,'(A,I6,1x,I6)') & 
-                           'No VDW potential assigned to atom, species: ',ia,is
 
+              IF (verbose_log .AND. natoms(is) < 100) THEN
+                 WRITE(logunit,'(X,A,T25,F10.4)') ' Epsilon / kB in K:', &
+                      nonbond_list(ia,is)%vdw_param(1)
+                 WRITE(logunit,'(X,A,T25,F10.4)') ' Sigma in A:', &
+                      nonbond_list(ia,is)%vdw_param(2)
+                 WRITE(logunit,'(X,A,T25,F10.4)') ' Repulsive exponent:', &
+                      nonbond_list(ia,is)%vdw_param(3)
+                 WRITE(logunit,'(X,A,T25,F10.4)') ' Dispersive exponent:', &
+                      nonbond_list(ia,is)%vdw_param(4)
               END IF
 
+              ! Convert epsilon to atomic units amu A^2/ps^2
+              nonbond_list(ia,is)%vdw_param(1) = kboltz* nonbond_list(ia,is)%vdw_param(1) 
+
+           ELSEIF (nonbond_list(ia,is)%vdw_type == 'NONE') THEN
               ! Set number of vdw parameters
               nbr_vdw_params = 0
 
+
+              IF (verbose_log) THEN
+
+                 WRITE(logunit,'(X,A,I6,1x,I6)') & 
+                      'No VDW potential assigned to atom, species: ',ia,is
+
+              END IF
+
            ELSE
-              err_msg = ""
+              err_msg = ''
               err_msg(1) = 'vdw_potential type improperly specified in mcf file'
               CALL Clean_Abort(err_msg,'Get_Atom_Info')
            ENDIF
 
-           ! there may be a card for ring atoms
+           ! the last entry is 'ring' for ring atoms
            nonbond_list(ia,is)%ring_atom = .FALSE.
-           IF (nbr_entries == 9) THEN
-              ! this atom is a ring atom
-              IF (line_array(9) == 'ring') THEN
-                 nring_atoms(is) = nring_atoms(is) + 1
-                 ring_atom_ids(nring_atoms(is),is) = ia
-                 nonbond_list(ia,is)%ring_atom = .TRUE.
-                 IF (verbose_log) THEN
-                         WRITE(logunit,*) ia ,' is a ring atom'
-                 END IF
-              END IF
+           IF (line_array(nbr_entries) == 'ring') THEN
+              nring_atoms(is) = nring_atoms(is) + 1
+              ring_atom_ids(nring_atoms(is),is) = ia
+              nonbond_list(ia,is)%ring_atom = .TRUE.
+              IF (verbose_log) WRITE(logunit,*) ia ,' is a ring atom'
            ELSE
               ! this is an not a ring atom
               nexo_atoms(is) = nexo_atoms(is) + 1
               exo_atom_ids(nexo_atoms(is),is) = ia
            END IF
               
-           IF (verbose_log) WRITE(logunit,*)
-
         ENDDO
+
+        IF (species_list(is)%molecular_weight < tiny_number) THEN
+           err_msg = ''
+           err_msg(1) = "Species " // TRIM(Int_To_String(is)) // " has a mass of zero"
+           CALL Clean_Abort(err_msg,'Get_Atom_Info')
+        END IF
               
         EXIT
 
      ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
 
         ! Problem reading Atom_Info
-        err_msg = ""
+        err_msg = ''
         err_msg(1) = 'Trouble locating # Atom_Info keyword'
         CALL Clean_Abort(err_msg,'Get_Atom_Info')
 
@@ -1545,27 +1583,22 @@ SUBROUTINE Get_Atom_Info(is)
 
   ENDDO
 
-  IF (verbose_log .EQV. .FALSE.) THEN
-        WRITE(logfile, '(A,I2)') 'Dispersion-Repulsion parameters were properly read for species ', is
-  END IF
-
 
   IF (verbose_log) THEN
-          WRITE(logunit,'(A, T40, I4,A, T45, I4)') 'Total number of ring atoms in species', is, ' is', nring_atoms(is)
-          WRITE(logunit,'(A, T40, I4,A, T45, I4)') 'Total number of exo atoms in species', is, ' is', nexo_atoms(is)
-          WRITE(logunit,*) 'Atom ids for ring atoms', ring_atom_ids(1:nring_atoms(is),is)
-          WRITE(logunit,*) 'Atom ids for exo atoms', exo_atom_ids(1:nexo_atoms(is),is)
+     WRITE(logunit,'(X, A, T40, I4,A, T45, I4)') 'Total number of ring atoms in species', is, ' is', nring_atoms(is)
+     WRITE(logunit,'(X, A, T40, I4,A, T45, I4)') 'Total number of exo atoms in species', is, ' is', nexo_atoms(is)
+     WRITE(logunit,*) 'Atom ids for ring atoms', ring_atom_ids(1:nring_atoms(is),is)
+     WRITE(logunit,*) 'Atom ids for exo atoms', exo_atom_ids(1:nexo_atoms(is),is)
+  ELSE
+     WRITE(logunit, '(X,A)') 'Atom parameters read'
   END IF
-
-  WRITE(logunit,*) '*** Completed assigning atom info ***'
-  WRITE(logunit,*)
 
 END SUBROUTINE Get_Atom_Info
 
 
-!********************************************************************************
+!******************************************************************************
 SUBROUTINE Get_Bond_Info(is)
-!********************************************************************************
+!******************************************************************************
   ! This routine opens the molfile and loads information into the bond_list
   ! for species is.
   ! Written by: E. Maginn
@@ -1573,13 +1606,14 @@ SUBROUTINE Get_Bond_Info(is)
   ! Revision history:
   ! Mon Nov 26 06:35:20 MST 2007: Added section that sets fixed bond lengths and
   !                               reads in fixed bond parameter.
-!********************************************************************************
+!******************************************************************************
 
   INTEGER, INTENT(IN) :: is
 
   INTEGER :: ierr,line_nbr,nbr_entries, ib
   CHARACTER(120) :: line_string, line_array(20)
 
+!******************************************************************************
   REWIND(molfile_unit)
 
   ierr = 0
@@ -1587,23 +1621,20 @@ SUBROUTINE Get_Bond_Info(is)
 
   DO
      line_nbr = line_nbr + 1
-
      CALL Read_String(molfile_unit,line_string,ierr)
 
      IF (ierr /= 0) THEN
-        err_msg = ""
-        err_msg(1) = "Error reading atom info."
+        err_msg = ''
+        err_msg(1) = "Error reading mcf"
         CALL Clean_Abort(err_msg,'Get_Bond_Info')
      END IF
 
      IF (line_string(1:11) == '# Bond_Info') THEN
         line_nbr = line_nbr + 1
-        
-        line_array = ""
         CALL Parse_String(molfile_unit,line_nbr,1,nbr_entries,line_array,ierr)
         ! Make sure the number of bonds is still the same. It should not have changed!
         IF (String_To_Int(line_array(1)) /= nbonds(is)) THEN
-           err_msg = ""
+           err_msg = ''
            err_msg(1) = 'nbonds is inconsistent'
            CALL Clean_Abort(err_msg,'Get_Bond_Info')
         ENDIF
@@ -1616,19 +1647,19 @@ SUBROUTINE Get_Bond_Info(is)
         DO ib = 1,nbonds(is)
            ! Now read the entries on the next lines. There must be at least 4 for 
            ! each bond.
-           line_array = ""
+           line_nbr = line_nbr + 1
            CALL Parse_String(molfile_unit,line_nbr,4,nbr_entries,line_array,ierr)
 
            ! Test for problems readin file
            IF (ierr /= 0) THEN
-              err_msg = ""
-              err_msg(1) = "Error reading bond info."
+              err_msg = ''
+              err_msg(1) = "Error reading mcf file"
               CALL Clean_Abort(err_msg,'Get_Bond_Info')
            END IF
 
            ! Test to make sure bonds are listed 1,2,3,... in mcf file           
            IF (String_To_Int(line_array(1)) /= ib) THEN
-              err_msg = ""
+              err_msg = ''
               err_msg(1) = 'bonds must be listed sequentially'
               CALL Clean_Abort(err_msg,'Get_Bond_Info')
            ENDIF
@@ -1664,12 +1695,10 @@ SUBROUTINE Get_Bond_Info(is)
               nbr_bond_params = 1
 
            ELSE
-              err_msg = ""
+              err_msg = ''
               err_msg(1) = 'bond_potential type improperly specified in mcf file'
               CALL Clean_Abort(err_msg,'Get_Bond_Info')
            ENDIF
-
-           IF (verbose_log) WRITE(logunit,*)
 
         ENDDO
               
@@ -1677,25 +1706,23 @@ SUBROUTINE Get_Bond_Info(is)
 
      ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
 
-        ! Problem reading Bond_Info
-        err_msg = ""
-        err_msg(1) = 'Trouble locating # Bond_Info keyword'
+        err_msg = ''
+        err_msg(1) = 'Section "# Bond_Info" is missing from the mcf file and is required'
         CALL Clean_Abort(err_msg,'Get_Bond_Info')
-
-        EXIT
 
      ENDIF
 
   ENDDO
 
-  WRITE(logunit,*) '*** Completed assigning bond info ***'
-  WRITE(logunit,*)
+  IF (.NOT. verbose_log) THEN
+    WRITE(logunit, '(X,A)') 'Bond parameters read'
+  END IF
 
 END SUBROUTINE Get_Bond_Info
 
-!********************************************************************************
+!******************************************************************************
 SUBROUTINE Get_Angle_Info(is)
-!********************************************************************************
+!******************************************************************************
   ! This routine opens the molfile and loads information into the angle_list
   ! for species is.
   
@@ -1704,13 +1731,14 @@ SUBROUTINE Get_Angle_Info(is)
   ! Revision history:
   ! Mon Nov 26 06:35:20 MST 2007: Added section that sets fixed bond angles and
   !                               reads in fixed angle parameter.
-!********************************************************************************
+!******************************************************************************
 
   INTEGER, INTENT(IN) :: is
 
   INTEGER :: ierr,line_nbr,nbr_entries, iang, nangles_linear
   CHARACTER(120) :: line_string, line_array(20)
 
+!******************************************************************************
   REWIND(molfile_unit)
 
   ierr = 0
@@ -1718,23 +1746,22 @@ SUBROUTINE Get_Angle_Info(is)
 
   DO
      line_nbr = line_nbr + 1
-
      CALL Read_String(molfile_unit,line_string,ierr)
 
      IF (ierr /= 0) THEN
-        err_msg = ""
+        err_msg = ''
         err_msg(1) = "Error reading angle info."
         CALL Clean_Abort(err_msg,'Get_Angle_Info')
      END IF
 
      IF (line_string(1:12) == '# Angle_Info') THEN
-        line_nbr = line_nbr + 1
         species_list(is)%linear = .FALSE. 
-        line_array = ""
+
+        line_nbr = line_nbr + 1
         CALL Parse_String(molfile_unit,line_nbr,1,nbr_entries,line_array,ierr)
         ! Make sure the number of angles is still the same. It should not have changed!
         IF (String_To_Int(line_array(1)) /= nangles(is)) THEN
-           err_msg = ""
+           err_msg = ''
            err_msg(1) = 'nangles is inconsistent'
            CALL Clean_Abort(err_msg,'Get_Angle_Info')
         ENDIF
@@ -1747,19 +1774,19 @@ SUBROUTINE Get_Angle_Info(is)
         DO iang = 1,nangles(is)
            ! Now read the entries on the next lines. There must be at least 5 for 
            ! each angle.
-           line_array = ""
+           line_nbr = line_nbr + 1
            CALL Parse_String(molfile_unit,line_nbr,5,nbr_entries,line_array,ierr)
 
            ! Test for problems readin file
            IF (ierr /= 0) THEN
-              err_msg = ""
+              err_msg = ''
               err_msg(1) = "Error reading angle info."
               CALL Clean_Abort(err_msg,'Get_Angle_Info')
            END IF
 
            ! Test to make sure angles are listed 1,2,3,... in mcf file           
            IF (String_To_Int(line_array(1)) /= iang) THEN
-              err_msg = ""
+              err_msg = ''
               err_msg(1) = 'angles must be listed sequentially'
               CALL Clean_Abort(err_msg,'Get_Angle_Info')
            ENDIF
@@ -1811,6 +1838,7 @@ SUBROUTINE Get_Angle_Info(is)
               
               angle_list(iang,is)%angle_param(1) = String_To_Double(line_array(6))
 
+              nangles_fixed(is) = nangles_fixed(is) + 1
               IF (verbose_log) THEN
                       WRITE(logunit,'(A,I6,1x,I6, 1x,I6,A, I4)') & 
                    'Angle fixed between atoms: ',angle_list(iang,is)%atom1, angle_list(iang,is)%atom2, &
@@ -1824,12 +1852,10 @@ SUBROUTINE Get_Angle_Info(is)
               IF(angle_list(iang,is)%angle_param(1) .NE. 180.0_DP) species_list(is)%linear = .FALSE.
 
            ELSE
-              err_msg = ""
+              err_msg = ''
               err_msg(1) = 'angle_potential type improperly specified in mcf file'
               CALL Clean_Abort(err_msg,'Get_Angle_Info')
            ENDIF
-
-           IF (verbose_log) WRITE(logunit,*)
 
         ENDDO
               
@@ -1837,19 +1863,14 @@ SUBROUTINE Get_Angle_Info(is)
 
      ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
 
-        ! Problem reading Angle_Info
-        err_msg = ""
-        err_msg(1) = 'Trouble locating # Angle_Info keyword'
+        err_msg = ''
+        err_msg(1) = 'Section "# Angle_Info" is missing from the mcf file and is required'
         CALL Clean_Abort(err_msg,'Get_Angle_Info')
-
-        EXIT
 
      ENDIF
 
   ENDDO
 
-  IF (verbose_log) WRITE(logunit,*)
-  
   ! Now loop over all the angles and the species is linear if
   ! 1. All angles are fixed and the nominal value for each of
   ! the angles is 180.0_DP
@@ -1867,33 +1888,31 @@ SUBROUTINE Get_Angle_Info(is)
   IF (nangles_linear == nangles(is)) species_list(is)%linear = .TRUE.
 
   IF (verbose_log) THEN
-          IF(species_list(is)%linear) THEN
-             WRITE(logunit,'(A,2x,I3,2x,A)') 'Molecule',is,'is defined to be linear'
-          ELSE
-             WRITE(logunit,'(A,2x,I3,2x,A)') 'Molecule',is,'is NOT defined to be linear'
-          END IF
+     IF(species_list(is)%linear) THEN
+        WRITE(logunit,'(X,A,X,I3,X,A)') 'Species',is,'is linear'
+     ELSE
+        WRITE(logunit,'(X,A,X,I3,X,A)') 'Species',is,'is NOT linear'
+     END IF
+  ELSE
+    WRITE(logunit, '(X,A)') 'Angle parameters read'
   END IF
-  WRITE(logunit,*)
-  WRITE(logunit,*) '*** Completed assigning angle info ***'
-  WRITE(logunit,*)
 
 END SUBROUTINE Get_Angle_Info
 
-
-
-!********************************************************************************
+!******************************************************************************
 SUBROUTINE Get_Dihedral_Info(is)
-!********************************************************************************
+!******************************************************************************
 ! This routine opens the molfile and loads information into the dihedral_list
 ! for species is.
 ! Modified by Dr. Amir Vahid on 12/8/2012 to include for multiple dihedrals
-!********************************************************************************
+!******************************************************************************
 
   INTEGER, INTENT(IN) :: is
 
   INTEGER :: ierr,line_nbr,nbr_entries, idihed
   CHARACTER(120) :: line_string, line_array(20)
 
+!******************************************************************************
   REWIND(molfile_unit)
 
   ierr = 0
@@ -1902,23 +1921,20 @@ SUBROUTINE Get_Dihedral_Info(is)
 
   DO
      line_nbr = line_nbr + 1
-
      CALL Read_String(molfile_unit,line_string,ierr)
 
      IF (ierr /= 0) THEN
-        err_msg = ""
+        err_msg = ''
         err_msg(1) = "Error reading dihedral info."
         CALL Clean_Abort(err_msg,'Get_Dihedral_Info')
      END IF
 
      IF (line_string(1:15) == '# Dihedral_Info') THEN
         line_nbr = line_nbr + 1
-        
-        line_array = ""
         CALL Parse_String(molfile_unit,line_nbr,1,nbr_entries,line_array,ierr)
         ! Make sure the number of angles is still the same. It should not have changed!
         IF (String_To_Int(line_array(1)) /= ndihedrals(is)) THEN
-           err_msg = ""
+           err_msg = ''
            err_msg(1) = 'ndihedrals is inconsistent'
            CALL Clean_Abort(err_msg,'Get_Dihedral_Info')
         ENDIF
@@ -1931,19 +1947,19 @@ SUBROUTINE Get_Dihedral_Info(is)
         DO idihed = 1,ndihedrals(is)
            ! Now read the entries on the next lines. There must be at least 6 for 
            ! each dihedral.
-           line_array = ""
+           line_nbr = line_nbr + 1
            CALL Parse_String(molfile_unit,line_nbr,6,nbr_entries,line_array,ierr)
 
            ! Test for problems readin file
            IF (ierr /= 0) THEN
-              err_msg = ""
+              err_msg = ''
               err_msg(1) = "Error reading dihedral info."
               CALL Clean_Abort(err_msg,'Get_Dihedral_Info')
            END IF
 
            ! Test to make sure angles are listed 1,2,3,... in mcf file           
            IF (String_To_Int(line_array(1)) /= idihed) THEN
-              err_msg = ""
+              err_msg = ''
               err_msg(1) = 'dihedrals must be listed sequentially'
               CALL Clean_Abort(err_msg,'Get_Dihedral_Info')
            ENDIF
@@ -2117,12 +2133,10 @@ SUBROUTINE Get_Dihedral_Info(is)
               nbr_dihedral_params = 0
 
            ELSE
-              err_msg = ""
+              err_msg = ''
               err_msg(1) = 'dihedral_potential type improperly specified in mcf file'
               CALL Clean_Abort(err_msg,'Get_Dihedral_Info')
            ENDIF
-
-           IF (verbose_log) WRITE(logunit,*)
 
         ENDDO
               
@@ -2130,57 +2144,51 @@ SUBROUTINE Get_Dihedral_Info(is)
 
      ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
 
-        ! Problem reading Dihedral_Info
-        err_msg = ""
-        err_msg(1) = 'Troube locating # Dihedral_Info keyword'
+        err_msg = ''
+        err_msg(1) = 'Section "# Dihedral_Info" is missing from the mcf file and is required'
         CALL Clean_Abort(err_msg,'Get_Dihedral_Info')
-
-        EXIT
 
      ENDIF
 
   ENDDO
 
-  WRITE(logunit,*) '*** Completed assigning dihedral info ***'
-  WRITE(logunit,*)
+  IF (.NOT. verbose_log) THEN
+    WRITE(logunit, '(X,A)') 'Dihedral parameters read'
+  END IF
 
 END SUBROUTINE Get_Dihedral_Info
-!********************************************************************************
 
-!********************************************************************************
+!******************************************************************************
 SUBROUTINE Get_Improper_Info(is)
-!********************************************************************************
+!******************************************************************************
 
 INTEGER, INTENT(IN) :: is
 
   INTEGER :: ierr,line_nbr,nbr_entries, iimprop
   CHARACTER(120) :: line_string, line_array(20)
 
+!******************************************************************************
   REWIND(molfile_unit)
 
   ierr = 0
   line_nbr = 0
-!********************************************************************************
 
- DO
+  DO
      line_nbr = line_nbr + 1
-
      CALL Read_String(molfile_unit,line_string,ierr)
 
      IF (ierr /= 0) THEN
-        err_msg = ""
+        err_msg = ''
         err_msg(1) = "Error reading improper info."
         CALL Clean_Abort(err_msg,'Get_Improper_Info')
      END IF
 
      IF (line_string(1:15) == '# Improper_Info') THEN
         line_nbr = line_nbr + 1
-        
-        line_array = ""
         CALL Parse_String(molfile_unit,line_nbr,1,nbr_entries,line_array,ierr)
         ! Make sure the number of dihedrals is still the same. It should not have changed!
         IF (String_To_Int(line_array(1)) /= nimpropers(is)) THEN
-           err_msg = ""
+           err_msg = ''
            err_msg(1) = 'nimpropers is inconsistent'
            CALL Clean_Abort(err_msg,'Get_Imprper_Info')
         ENDIF
@@ -2193,19 +2201,19 @@ INTEGER, INTENT(IN) :: is
         DO iimprop = 1,nimpropers(is)
            ! Now read the entries on the next lines. There must be at least 6 for 
            ! each improper.
-           line_array = ""
+           line_nbr = line_nbr + 1
            CALL Parse_String(molfile_unit,line_nbr,6,nbr_entries,line_array,ierr)
 
            ! Test for problems readin file
            IF (ierr /= 0) THEN
-              err_msg = ""
+              err_msg = ''
               err_msg(1) = "Error reading improper info."
               CALL Clean_Abort(err_msg,'Get_Improper_Info')
            END IF
 
            ! Test to make sure angles are listed 1,2,3,... in mcf file           
            IF (String_To_Int(line_array(1)) /= iimprop) THEN
-              err_msg = ""
+              err_msg = ''
               err_msg(1) = 'impropers must be listed sequentially'
               CALL Clean_Abort(err_msg,'Get_Improper_Info')
            ENDIF
@@ -2285,12 +2293,10 @@ INTEGER, INTENT(IN) :: is
               nbr_improper_params = 0
 
            ELSE
-              err_msg = ""
+              err_msg = ''
               err_msg(1) = 'improper_potential type improperly specified in mcf file'
               CALL Clean_Abort(err_msg,'Get_Improper_Info')
            ENDIF
-
-           WRITE(logunit,*)
 
         ENDDO
               
@@ -2298,34 +2304,30 @@ INTEGER, INTENT(IN) :: is
 
      ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
 
-        ! Problem reading Improper_Info
-        err_msg = ""
-        err_msg(1) = 'Troube locating # Improper_Info keyword'
+        err_msg = ''
+        err_msg(1) = 'Section "# Improper_Info" is missing from the mcf file and is required'
         CALL Clean_Abort(err_msg,'Get_Improper_Info')
-
-        EXIT
 
      ENDIF
 
   ENDDO
 
-  WRITE(logunit,*) '*** Completed assigning improper info ***'
-  WRITE(logunit,*)
-
-
+  IF (.NOT. verbose_log) THEN
+    WRITE(logunit, '(X,A)') 'Improper parameters read'
+  END IF
 
 END SUBROUTINE Get_Improper_Info
-!
-!*******************************************************************************
+
+!******************************************************************************
 SUBROUTINE Get_Fragment_Anchor_Info(is)
-!*******************************************************************************
+!******************************************************************************
 !
 ! This routine determines number of anchors in a fragment. Note that a
 ! ring fragment may have more than one anchor
 !
 ! Written by Jindal Shah on 04/16/09
 ! 
-!*******************************************************************************
+!******************************************************************************
 
   INTEGER, INTENT(IN) :: is
 
@@ -2333,6 +2335,10 @@ SUBROUTINE Get_Fragment_Anchor_Info(is)
 
   CHARACTER(120) :: line_String,line_array(20)
 
+!******************************************************************************
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'Fragment anchors'
+  WRITE(logunit,'(A80)') '********************************************************************************'
 
   line_nbr = 0
   ierr = 0
@@ -2343,7 +2349,7 @@ SUBROUTINE Get_Fragment_Anchor_Info(is)
      line_nbr = line_nbr + 1
      CALL Read_String(molfile_unit,line_string,ierr)
      IF ( ierr /= 0 ) THEN
-        err_msg = ""
+        err_msg = ''
         err_msg(1) = 'Error encountered while reading Anchor Info'
         CALL Clean_Abort(err_msg,'Get_Fragment_Anchor_Info')
      END IF
@@ -2354,7 +2360,6 @@ SUBROUTINE Get_Fragment_Anchor_Info(is)
         DO i = 1, nfragments(is)
 
            line_nbr = line_nbr + 1
-           
            CALL Parse_String(molfile_unit,line_nbr,2,nbr_entries,line_array,ierr)
            ! write(*,*) i, String_To_Int(line_array(1))
            IF ( String_To_Int(line_array(1)) /= i ) THEN
@@ -2374,8 +2379,10 @@ SUBROUTINE Get_Fragment_Anchor_Info(is)
 
            min_entries = 2 + frag_list(i,is)%nanchors
 
+           line_nbr = line_nbr - 1
            backspace(molfile_unit)
 
+           line_nbr = line_nbr + 1
            CALL Parse_String(molfile_unit,line_nbr,min_entries,nbr_entries,line_array,ierr)
 
            DO ianchor = 1, frag_list(i,is)%nanchors
@@ -2386,9 +2393,8 @@ SUBROUTINE Get_Fragment_Anchor_Info(is)
 
            ! output information to the log file.
            IF (verbose_log) THEN
-                   WRITE(logunit,*)
-                   WRITE(logunit,*) 'Number of anchors for fragment ', i, '  is', frag_list(i,is)%nanchors
-                   WRITE(logunit,*) 'Anchor ids are', frag_list(i,is)%anchor(:)
+              WRITE(logunit,*) 'Number of anchors for fragment ', i, '  is', frag_list(i,is)%nanchors
+              WRITE(logunit,*) 'Anchor ids are', frag_list(i,is)%anchor(:)
            END IF
 
         END DO
@@ -2405,16 +2411,16 @@ SUBROUTINE Get_Fragment_Anchor_Info(is)
 
   END DO
 
-  WRITE(logunit,*)
-  WRITE(logunit,*) '***** Finished loading Anchor Info **********'
-
+  IF (.NOT. verbose_log) THEN
+    WRITE(logunit, '(A,I2)') 'Parameters properly read for species ', is
+  END IF
+  WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_Fragment_Anchor_Info
-!*******************************************************************************
 
-!********************************************************************************
+!******************************************************************************
 SUBROUTINE Get_Fragment_Info(is)
-!********************************************************************************
+!******************************************************************************
 ! The subroutine goes through the molecular connectivity file and determines
 ! total number of atoms in a fragment, their atomic ids, number of connections
 ! that a fragment makes and corresponding fragment ids to which the fragment is 
@@ -2428,15 +2434,16 @@ SUBROUTINE Get_Fragment_Info(is)
 ! frag_list(ifrag,is)%nanchors
 ! frag_list(ifrag,is)%anchor(1:nanchors)
 !
-!**********************************************************************************
+!******************************************************************************
 
   INTEGER :: is, line_nbr, ierr, nbr_entries, ifrag, min_entries, iatom
   INTEGER :: nanchors, iatoms, jatoms, ibonds, iatoms_bond
   INTEGER :: i_atom, j_atom, atom1, atom2
   INTEGER, ALLOCATABLE :: anchor_id(:)
   CHARACTER(120) :: line_string, line_array(20)
-  CHARACTER(50000) :: line_array_zeo(10000)
+  !CHARACTER(50000) :: line_array_zeo(10000)
 
+!******************************************************************************
   line_nbr = 0
   ierr = 0
   REWIND(molfile_unit)
@@ -2469,28 +2476,29 @@ SUBROUTINE Get_Fragment_Info(is)
         ! Now read in the information for each of the fragments, number of atoms
         ! in the fragment, anchor and atom ids
   
-      
         DO ifrag = 1, nfragments(is)
            
-           line_nbr = line_nbr + 1
            ! We will first determine number of atoms in the current fragment and then
            ! allocate the array frag_list(i,j)%atoms and also read in the anchor
-           CALL Parse_String_Zeolite_Frag(molfile_unit,line_nbr, 2, nbr_entries, line_array_zeo,ierr)
+           line_nbr = line_nbr + 1
+           CALL Parse_String(molfile_unit,line_nbr, 2, nbr_entries, line_array,ierr)
            
-           IF ( ifrag /= String_To_Int(line_array_zeo(1))) THEN
+           IF ( ifrag /= String_To_Int(line_array(1))) THEN
               err_msg = ''
               err_msg = 'Fragments must be listed sequentially'
               CALL Clean_Abort(err_msg,'Get_Fragment_Info')
            END IF
 
-           frag_list(ifrag,is)%natoms = String_To_Int(line_array_zeo(2))
+           frag_list(ifrag,is)%natoms = String_To_Int(line_array(2))
 
            ! read in the identity of atoms
+           line_nbr = line_nbr - 1
            backspace(molfile_unit)
            
            min_entries = 2 + frag_list(ifrag,is)%natoms
 
-           CALL Parse_String_Zeolite_Frag(molfile_unit,line_nbr,min_entries,nbr_entries,line_array_zeo,ierr)
+           line_nbr = line_nbr + 1
+           CALL Parse_String(molfile_unit,line_nbr,min_entries,nbr_entries,line_array,ierr)
 
 
            IF (ierr /= 0) THEN
@@ -2503,15 +2511,14 @@ SUBROUTINE Get_Fragment_Info(is)
            ALLOCATE(frag_list(ifrag,is)%atoms(frag_list(ifrag,is)%natoms))
 
            DO iatom = 1, frag_list(ifrag,is)%natoms
-              frag_list(ifrag,is)%atoms(iatom) = String_To_Int(line_array_zeo(iatom+2))
+              frag_list(ifrag,is)%atoms(iatom) = String_To_Int(line_array(iatom+2))
            END DO
           
-           WRITE(logunit,*)
-           WRITE(logunit,'(A38,1x,I4,A4,I4)') 'Total number of atoms in the fragment ', ifrag, 'is', &
+           WRITE(logunit,'(X,A34,1x,I4,A4,I4)') 'Total number of atoms in fragment ', ifrag, 'is', &
                 frag_list(ifrag,is)%natoms
            IF (verbose_log) THEN
-                   WRITE(logunit,'(A27)') 'Identity of these atoms are:'
-                   WRITE(logunit,*)  frag_list(ifrag,is)%atoms
+              WRITE(logunit,'(X,A27)') 'Identity of these atoms are:'
+              WRITE(logunit,*)  frag_list(ifrag,is)%atoms
            END IF
           
 
@@ -2520,22 +2527,22 @@ SUBROUTINE Get_Fragment_Info(is)
         EXIT
 
      ELSE IF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
-        
-        ! Problem reading Improper_Info
-        err_msg = ""
-        err_msg(1) = 'Trouble locating # Fragment_Info keyword'
+
+        err_msg = ''
+        err_msg(1) = 'Section "# Fragment_Info" is missing from the mcf file and is required'
         CALL Clean_Abort(err_msg,'Get_Fragment_Info')
-        
-        EXIT
-             
+
      END IF
 
   END DO
 
-  WRITE(logunit,*) 
-  WRITE(logunit,*) '******* Finished loading fragment info ********'
-  WRITE(logunit,*)
-  IF (verbose_log) WRITE(logunit,*) '******* Generating anchor info ****************'
+  IF (.NOT. verbose_log) THEN
+    WRITE(logunit, '(X,A)') 'Fragment info read'
+  END IF
+
+  IF (verbose_log) THEN
+    WRITE(logunit,'(X,A)') 'Generating anchor info'
+  END IF
 
 !  IF (nfragments(is) == 1) THEN
 
@@ -2609,145 +2616,82 @@ SUBROUTINE Get_Fragment_Info(is)
 !  END IF
 
   ! Output info
-
   frag_list(:,:)%ring = .FALSE.
 
   DO ifrag = 1,nfragments(is)
      IF (verbose_log) THEN
-             WRITE(logunit,*)
-             WRITE(logunit,'(A32,1x,I4,A4,I4)') 'Number of anchors for fragment ', ifrag, 'is', &
-                  frag_list(ifrag,is)%nanchors
-             WRITE(logunit,'(A13,1x,I4)') 'Anchor id is:', frag_list(ifrag,is)%anchor(:)
+        WRITE(logunit,'(A32,1x,I4,A4,I4)') 'Number of anchors for fragment ', ifrag, 'is', &
+             frag_list(ifrag,is)%nanchors
+        WRITE(logunit,'(X,A13,1x,I4)') 'Anchor id is:', frag_list(ifrag,is)%anchor(:)
      END IF
 
      IF (frag_list(ifrag,is)%nanchors > 1) THEN
         frag_list(ifrag,is)%ring = .TRUE.
         IF (verbose_log) THEN
-                WRITE(logunit,*)
-                WRITE(logunit,*) Int_To_String(ifrag)// ' is a ring fragment'
+           WRITE(logunit,*) Int_To_String(ifrag)// ' is a ring fragment'
         END IF
      END IF
            
   END DO
   
+  ! Compute weighted probability of inserting this fragment
+  DO ifrag = 1, nfragments(is)
+     frag_list(ifrag,is)%prob_ins = REAL(frag_list(ifrag,is)%natoms,DP) / REAL(SUM(frag_list(:,is)%natoms),DP)
+     IF (ifrag == 1) THEN
+       frag_list(ifrag,is)%cum_prob_ins = frag_list(ifrag,is)%prob_ins
+     ELSE
+       frag_list(ifrag,is)%cum_prob_ins = REAL(SUM(frag_list(1:ifrag,is)%natoms),DP) / REAL(SUM(frag_list(:,is)%natoms),DP)
+     END IF
+     IF (verbose_log) THEN
+        WRITE(logunit,'(X,A,X,F5.3)') 'Probability of inserting fragment ' // TRIM(Int_To_String(ifrag)) // &
+              ' first is ', frag_list(ifrag,is)%prob_ins
+     END IF
+  END DO
+  IF (verbose_log) THEN
+     WRITE(logunit,'(X,A,3X,F5.3)') 'Sum of probabilities of inserting fragments', &
+          frag_list(nfragments(is),is)%cum_prob_ins
+  END IF
+
 END SUBROUTINE Get_Fragment_Info
 
-
-!********************************************************************************
-SUBROUTINE Get_Fragment_Connect_Info(is)
-!********************************************************************************
-! The subroutine goes through the molecular connectivity file and obtains
-! information on fragment connections. It assigns the total number of connections
-! for a fragment and fragmet ids of these connections. The end result is
-!
-! frag_list(ifrag,is)%nconnect 
-! frag_list(ifrag,is)%(1:nconnect) get assigned
-!
-! Written by Jindal Shah on 07/11/08
-!
-!
-!
-!**********************************************************************************
-
-  INTEGER, INTENT(IN):: is
-  INTEGER :: ierr, line_nbr, nbr_entries, ifrag, min_entries, i
-  CHARACTER(120) :: line_string, line_array(20)
-
-  REWIND(molfile_unit)
-  ierr = 0
-  line_nbr = 0
-
-  DO
-     line_nbr = line_nbr + 1
-     CALL Read_String(molfile_unit,line_string,ierr)
-     IF ( ierr /=0 ) THEN
-        err_msg = ''
-        err_msg(1) = 'Error reading mol file'
-        CALL Clean_Abort(err_msg,'Get_Fragment_Connect_Info')
-     END IF
-     
-     IF (line_string(1:15) == '# Fragment_Bond') THEN
-
-        DO ifrag = 1, nfragments(is)
-           
-           line_nbr = line_nbr + 1
-           CALL Parse_String(molfile_unit,line_nbr,2,nbr_entries,line_array,ierr)
-           
-           IF (String_To_Int(line_array(1)) /= ifrag) THEN
-              err_msg = ''
-              err_msg(1) = 'Fragment must be listed sequentially'
-              CALL Clean_Abort(err_msg,'Get_Fragment_Connect_Info')
-           END IF
-           
-           ! The second entry represents number of fragments connected to ifrag
-           frag_list(ifrag,is)%nconnect = String_To_Int(line_array(2))
-
-           ALLOCATE(frag_list(ifrag,is)%frag_connect(frag_list(ifrag,is)%nconnect))
-
-           min_entries = 2 + frag_list(ifrag,is)%nconnect
-           
-           backspace(molfile_unit)
-
-           ! Assign ids of all the fragments connected to ifrag
-           CALL Parse_String(molfile_unit,line_nbr,min_entries,nbr_entries,line_array,ierr)
-
-           DO i = 1, frag_list(ifrag,is)%nconnect
-              frag_list(ifrag,is)%frag_connect(i) = String_To_Int(line_array(2+i))
-           END DO
-
-           IF (verbose_log) THEN
-                   WRITE(logunit,*) 
-                   WRITE(logunit,'(A33,1X,I4,A4,I4)') 'Number of connections of fragment', ifrag, 'is', &
-                        frag_list(ifrag,is)%nconnect
-                   WRITE(logunit,'(A20)') 'These fragments are:'
-                   WRITE(logunit,*) frag_list(ifrag,is)%frag_connect
-           END IF
-
-
-        END DO
-
-        EXIT
-
-     ELSE IF(line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
-        
-        ! Problem reading Improper_Info
-        err_msg = ""
-        err_msg(1) = 'Trouble locating # Fragment_Bond keyword'
-        CALL Clean_Abort(err_msg,'Get_Fragment_Connect_Info')
-        
-        EXIT
-             
-     END IF
-     
-
-  END DO
-
-  WRITE(logunit,*) 
-  WRITE(logunit,*) '**** Finished loading fragment connectivity *******'
-
-END SUBROUTINE Get_Fragment_Connect_Info
-!********************************************************************************
-
+!******************************************************************************
 SUBROUTINE Get_Fragment_Connectivity_Info(is)
-  !******************************************************************************
-  ! This subroutine obtains the information of bonds between various fragments
-  ! 
-  ! Written by Jindal Shah on 05/25/08
-  ! This routine is very similar to Get_Bond_Info
-  !
-  ! The routine was modified on 08/12/11 to automatically calculate
-  ! 
-  ! frag_list(ifrag,is)%nconnect
-  ! frag_list(ifrag,is)%frag_connect(1:nconnect)
-  !******************************************************************************
+!******************************************************************************
+! This subroutine obtains the information of bonds between various fragments
+! 
+! Written by Jindal Shah on 05/25/08
+! This routine is very similar to Get_Bond_Info
+!
+! The routine was modified on 08/12/11 to automatically calculate
+! 
+! frag_list(ifrag,is)%nconnect
+! frag_list(ifrag,is)%frag_connect(1:nconnect)
+!******************************************************************************
+
+  USE Fragment_Growth, ONLY : Fragment_Order
 
   INTEGER, INTENT(IN) :: is
 
-  INTEGER :: ierr, line_nbr, ifrag, nbr_entries, j, ifrag_connect, frag1, frag2
+  INTEGER :: ierr, line_nbr, ifrag, nbr_entries, i, j, ifrag_connect, frag1, frag2
   INTEGER, ALLOCATABLE :: temp_frag(:)
 
   CHARACTER(120) :: line_string,line_array(20)
 
+  ! Variables for determing prob_del1
+  INTEGER :: natoms_del_with_frag1, natoms_del_with_frag2
+  INTEGER :: frag_order(nfragments(is)) ! a sequence of adding fragments
+  INTEGER :: frag_total   ! number of non-zero entries in frag_order
+  INTEGER :: live(nfragments(is)) ! marks if a fragment has been placed in frag_order
+  REAL(DP) :: P_dummy ! dummy variable needed for Fragment_Order
+
+
+!******************************************************************************
+  IF (verbose_log) THEN
+    WRITE(logunit,*)
+    WRITE(logunit,'(X,A)') 'Fragment connectivity info'
+    WRITE(logunit,'(X,A)') '-------------------------------------------------------------------------------'
+  END IF
+
   ierr = 0
   line_nbr = 0
 
@@ -2755,7 +2699,6 @@ SUBROUTINE Get_Fragment_Connectivity_Info(is)
 
   DO
      line_nbr = line_nbr + 1
-
      CALL Read_String(molfile_unit, line_string, ierr)
 
      IF (ierr /= 0) THEN
@@ -2767,13 +2710,12 @@ SUBROUTINE Get_Fragment_Connectivity_Info(is)
      IF (line_string(1:23) == '# Fragment_Connectivity') THEN
         ! Encountered the part where fragment bond information is specified
         line_nbr = line_nbr + 1
-
         CALL Parse_String(molfile_unit,line_nbr,1,nbr_entries,line_array,ierr)
 
         ! Make sure the number of fragment connections is still the same.
 
         IF (String_To_Int(line_array(1)) /= fragment_bonds(is)) THEN
-           err_msg = ""
+           err_msg = ''
            err_msg(1) = 'Fragment bonds is inconsistent for species ' // TRIM(Int_To_String(is))
            CALL Clean_Abort(err_msg,'Get_Fragment_Connectivity')
         END IF
@@ -2782,11 +2724,10 @@ SUBROUTINE Get_Fragment_Connectivity_Info(is)
 
         DO ifrag = 1, fragment_bonds(is)
            line_nbr = line_nbr + 1
-           line_array = ""
            CALL Parse_String(molfile_unit,line_nbr,3,nbr_entries,line_array,ierr)
            
            IF (ierr /= 0 ) THEN
-              err_msg = ""
+              err_msg = ''
               err_msg(1) = 'Error reading Fragment_Connectivity information'
               CALL Clean_Abort(err_msg,'Get_Fragment_Connectivity_Info')
            END IF
@@ -2794,7 +2735,7 @@ SUBROUTINE Get_Fragment_Connectivity_Info(is)
            ! Test to make sure that fragment bonds are listed as 1, 2, 3 .... in mcf file
 
            IF (String_To_Int(line_array(1)) /= ifrag) THEN
-              err_msg = ""
+              err_msg = ''
               err_msg(1) = 'Fragment bonds must be listed sequentially'
               CALL Clean_Abort(err_msg,'Get_Fragment_Connectivity')
            END IF
@@ -2817,10 +2758,8 @@ SUBROUTINE Get_Fragment_Connectivity_Info(is)
 
      ELSE IF (line_string(1:3) == 'END' .OR. line_nbr > 10000 ) THEN
 
-        ! problem reading Fragment Bond Connectivity
-
         err_msg = ''
-        err_msg(1) = 'Section on Fragment_Connectivity is missing'
+        err_msg(1) = 'Section "# Fragment_Connectivity" is missing from the mcf file and is required'
         CALL Clean_Abort(err_msg,'Get_Fragment_Connectivity_Info')
         
      END IF
@@ -2840,13 +2779,13 @@ SUBROUTINE Get_Fragment_Connectivity_Info(is)
 
   ALLOCATE(temp_frag(nfragments(is)))
 
-
   DO ifrag = 1, nfragments(is)
 
+     ! Loop over number of fragment bonds, and 
+     ! count how many fragments are connected to ifrag, and
+     ! store the identity of fragments connect to ifrag
      ifrag_connect = 0
-
      temp_frag(:) = 0
-
      DO j = 1, fragment_bonds(is)
 
         frag1 = fragment_bond_list(j,is)%fragment1
@@ -2863,8 +2802,7 @@ SUBROUTINE Get_Fragment_Connectivity_Info(is)
 
      END DO
 
-     ! Now populate the frag_list array
-
+     ! Now populate the frag_connect array
      frag_list(ifrag,is)%nconnect = ifrag_connect
 
      IF (ifrag_connect /=0 ) THEN
@@ -2880,37 +2818,138 @@ SUBROUTINE Get_Fragment_Connectivity_Info(is)
      END IF
 
      IF (verbose_log) THEN
-             WRITE(logunit,*) 
-             WRITE(logunit,'(A34,1X,I4,A4,I4)') 'Number of connections of fragment', ifrag, 'is', &
-                  frag_list(ifrag,is)%nconnect
-             WRITE(logunit,'(A21)') 'These fragments are:'
-             WRITE(logunit,*) frag_list(ifrag,is)%frag_connect
+        WRITE(logunit,'(A34,1X,I4,A4,I4)') 'Number of connections of fragment', ifrag, 'is', &
+             frag_list(ifrag,is)%nconnect
+        WRITE(logunit,'(A21)') 'These fragments are:'
+        WRITE(logunit,*) frag_list(ifrag,is)%frag_connect
      END IF
 
   END DO
 
   DEALLOCATE(temp_frag)
   
+  ! Compute the weighted probability of deleting fragment1 if fragment bond j is randomly cut
+  ! The probability of deleting fragment1 is:
+  !
+  !       natoms_del_with_frag2 / (natoms_del_with_frag1 + natoms_del_with_frag2)
+  !
+  ! Example:
+  !   pentane has 5 ua atoms and three fragments 1-2-3, 2-3-4, 3-4-5
+  ! 
+  !   if the bond shared by fragments 1 and 2 is cut (between atoms 2-3), then
+  !    * if fragment 1 is deleted, atom 1 will be deleted
+  !    * if fragment 2 is deleted, atoms 4 and 5 will be deleted
+  ! 
+  !   therefore, prob_del1 = 2 / 3
+
+  DO j = 1, fragment_bonds(is)
+     frag1 = fragment_bond_list(j,is)%fragment1
+     frag2 = fragment_bond_list(j,is)%fragment2
+
+     ! To find natoms_del_with_frag1, 
+     ! we need a sequence of fragments connected to frag1 to loop over
+     ! Fragment_Order will return one such sequence
+
+     ! Technically, we should mark all fragments connected to frag2 as live
+     ! (except for frag1) and then all fragments connected to those
+     ! fragments as live, until we come to a terminal fragment. However,  
+     ! Fragment_Order will only add dead fragments connected to frag1 to 
+     ! frag_order, so we can get away here with only marking frag2 as live
+     live(:) = 0
+     live(frag2) = 1
+
+     ! frag_order starts with frag1
+     frag_order(:) = 0
+     frag_order(1) = frag1
+     frag_total = 1
+     live(frag1) = 1 ! frag1 is now live b/c it is in frag_order
+     P_dummy = 0.0_DP ! don't care about the probability of the particular sequence we get here
+     
+     CALL Fragment_Order(frag1,is,frag_total,frag_order,live,P_dummy)
+
+     ! Find the number of atoms that would be deleted with frag1
+     natoms_del_with_frag1 = 0
+     DO i = 1, frag_total
+        ifrag = frag_order(i)
+        natoms_del_with_frag1 = natoms_del_with_frag1 + frag_list(ifrag,is)%natoms - 2
+     END DO
+
+     ! We need a sequence of fragments connected to frag2 to loop over
+     ! Fragment_Order will return one such sequence
+
+     ! Technically, we should mark all fragments connected to frag2 as live
+     ! (except for frag2) and then all fragments connected to those
+     ! fragments as live, until we come to a terminal fragment. However,  
+     ! Fragment_Order will only add dead fragments connected to frag2 to 
+     ! frag_order, so we can get away here with only marking frag1 as live
+     live(:) = 0
+     live(frag1) = 1
+
+     ! frag_order starts with frag2
+     frag_order(:) = 0
+     frag_order(1) = frag2
+     frag_total = 1
+     live(frag2) = 1 ! frag2 is now live b/c it is in frag_order
+     P_dummy = 0.0_DP ! don't care about the probability of the particular sequence we get here
+     
+     CALL Fragment_Order(frag2,is,frag_total,frag_order,live,P_dummy)
+
+     ! Find the number of atoms that would be deleted with frag2
+     natoms_del_with_frag2 = 0
+     DO i = 1, frag_total
+        ifrag = frag_order(i)
+        natoms_del_with_frag2 = natoms_del_with_frag2 + frag_list(ifrag,is)%natoms - 2
+     END DO
+   
+     IF (natoms_del_with_frag1 + natoms_del_with_frag2 + 2 == natoms(is)) THEN
+        ! the smaller portion of the molecule should have a higher prob of being deleted
+        ! so if frag2 is bigger, frag1 should be deleted more often
+        fragment_bond_list(j,is)%prob_del1 = REAL(natoms_del_with_frag2,DP) &
+                                           / REAL(natoms_del_with_frag1 + natoms_del_with_frag2,DP)
+     ELSE
+        err_msg = ''
+        err_msg(1) = 'Number of atoms in species ' // TRIM(Int_To_String(is)) // ' is ' // &
+                     TRIM(Int_To_String(natoms(is)))
+        err_msg(2) = 'Number of atoms deleted with frag ' // TRIM(Int_To_String(frag1)) // ' is ' // &
+                     TRIM(Int_To_String(natoms_del_with_frag1))
+        err_msg(3) = 'Number of atoms deleted with frag ' // TRIM(Int_To_String(frag2)) // ' is ' // &
+                     TRIM(Int_To_String(natoms_del_with_frag2))
+        CALL Clean_Abort(err_msg, 'Get_Fragment_Connectivity_Info')
+     END IF
+
+     IF (verbose_log) THEN
+        WRITE(logunit,'(X,A,X,F5.3)') 'If bond between fragments ' // TRIM(Int_To_String(frag1)) // ' and ' // &
+             TRIM(Int_To_String(frag2)) // ' is cut, probability of deleting ' // TRIM(Int_To_String(frag1)) // &
+             ' is ', fragment_bond_list(j,is)%prob_del1
+     END IF
+  END DO
+   
+
+  IF (verbose_log) THEN
+    WRITE(logunit,'(X,A)') '-------------------------------------------------------------------------------'
+  END IF
  
 END SUBROUTINE Get_Fragment_Connectivity_Info
+
 !******************************************************************************
-
-
 SUBROUTINE Get_Fragment_File_Info(is)
-!*******************************************************************************
+!******************************************************************************
 ! This routine reads in the names of files where reservoir libraries are stored
 !
 ! Written by Jindal Shah on 09/22/08
 !
-!********************************************************************************
+!******************************************************************************
 
   INTEGER :: ierr, line_nbr, i, j, ifrag, nbr_entries, is
   REAL(DP) :: vdw_cutoff, coul_cutoff
-  CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(120) :: line_string, line_array(20), source_dir
   CHARACTER(4) :: ring_flag
+  LOGICAL :: l_source_dir
   
+!******************************************************************************
   REWIND(inputunit)
 
+  l_source_dir = .FALSE.
   ierr = 0
   line_nbr = 0
 
@@ -2922,9 +2961,7 @@ SUBROUTINE Get_Fragment_File_Info(is)
   frag_list(:,:)%alpha_ewald = 0.0_DP
 
   DO
-
      line_nbr = line_nbr + 1
-     
      CALL Read_String(inputunit,line_string,ierr)
 
      IF (line_string(1: ) == '# Fragment_Files' ) THEN
@@ -2932,11 +2969,28 @@ SUBROUTINE Get_Fragment_File_Info(is)
         ! on each line of input we have name of the file corresponding to 
         ! various fragments
 
-        ! skip the first few  lines for the reservoir file for other species
+        ! Read the first line and check for 'directory' keyword
+        line_nbr = line_nbr + 1
+        CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
 
+        IF (ierr .NE. 0) THEN
+           err_msg = ''
+           err_msg(1) = "Error reading molecular connectivity file."
+           CALL Clean_Abort(err_msg,'Get_Molecule_File_Type')
+        END IF
+
+        IF (line_array(1) == 'directory') THEN
+           source_dir = line_array(2)
+           l_source_dir = .TRUE.
+        ELSE
+           line_nbr = line_nbr - 1
+           backspace(inputunit)
+        END IF
+
+        ! skip the first few  lines for the reservoir file for other species
         DO i = 1, is - 1
-           line_nbr = line_nbr + nfragments(i)
            DO j = 1, nfragments(i)
+              line_nbr = line_nbr + nfragments(i)
               CALL Read_String(inputunit,line_string,ierr)
            END DO
         END DO
@@ -2944,20 +2998,22 @@ SUBROUTINE Get_Fragment_File_Info(is)
         DO ifrag = 1, nfragments(is)
 
            line_nbr = line_nbr + 1
-
            CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
 
-           res_file(ifrag,is) = TRIM(line_array(1))
-           ! assign a fragmet type 
+           IF (l_source_dir) THEN
+             res_file(ifrag,is) = TRIM(source_dir) // TRIM(line_array(1))
+           ELSE
+             res_file(ifrag,is) = TRIM(line_array(1))
+           END IF
+           ! assign a fragment type 
            frag_list(ifrag,is)%type = String_To_Int(line_array(2))
 
-           WRITE(logunit,*) 'Fragment file for fragment ', TRIM(Int_To_String(ifrag)), ' is'
-           WRITE(logunit,*) res_file(ifrag,is)
-           IF (verbose_log) WRITE(logunit,*) 'Fragment type', frag_list(ifrag,is)%type
+           WRITE(logunit,'(X,A)') 'Fragment file for fragment ' // TRIM(Int_To_String(frag_list(ifrag,is)%type)) // &
+                 ' is ' // TRIM(res_file(ifrag,is))
 
            IF (nbr_entries > 2 .AND. nbr_entries /= 6) THEN
 
-              err_msg = ""
+              err_msg = ''
               err_msg(1) = 'More than two entries found for'
               err_msg(2) = 'fragment '//Int_To_String(ifrag)
               err_msg(3) = 'species '//Int_To_String(is)
@@ -2989,7 +3045,7 @@ SUBROUTINE Get_Fragment_File_Info(is)
 
               IF ( ring_flag /= "ring") THEN
 
-                 err_msg = ""
+                 err_msg = ''
                  err_msg(1) = "Cannot determine whether it's a ring fragment"
                  err_msg(2) = 'fragment '//Int_To_String(ifrag)
                  err_msg(3) = 'species '//Int_to_string(is)
@@ -3005,16 +3061,12 @@ SUBROUTINE Get_Fragment_File_Info(is)
                  frag_list(ifrag,is)%alpha_ewald = String_To_Double(line_array(6))
 
                  IF (verbose_log) THEN
-                         WRITE(logunit,*)
-                         WRITE(logunit,*) 'Fragment ',TRIM(Int_To_String(ifrag)), ' of species ', TRIM(Int_To_String(is))
-                         WRITE(logunit,*) 'is a ring fragment.'
-                         WRITE(logunit,*)
-                         WRITE(logunit,*) 'Parameters used for generating the fragment conformations'
-                         WRITE(logunit,*)
-                         WRITE(logunit,*) 'VDW cutoff', vdw_cutoff
-                         WRITE(logunit,*) 'Ewald cutoff', coul_cutoff
-                         WRITE(logunit,*) 'Ewald alpha parameter', frag_list(ifrag,is)%alpha_ewald
-                         WRITE(logunit,*)
+                    WRITE(logunit,*) 'Fragment ',TRIM(Int_To_String(ifrag)), ' of species ', TRIM(Int_To_String(is)), &
+                                     'is a ring fragment.'
+                    WRITE(logunit,*) 'Parameters used for generating the fragment conformations:'
+                    WRITE(logunit,*) 'VDW cutoff', vdw_cutoff
+                    WRITE(logunit,*) 'Ewald cutoff', coul_cutoff
+                    WRITE(logunit,*) 'Ewald alpha parameter', frag_list(ifrag,is)%alpha_ewald
                  END IF
 
               END IF
@@ -3028,7 +3080,7 @@ SUBROUTINE Get_Fragment_File_Info(is)
      ELSE IF (line_string(1:3) == 'END' .OR. line_nbr > 10000) THEN
 
         err_msg = ''
-        err_msg(1) = 'Fragment file info section is missing' 
+        err_msg(1) = 'Section "# Fragment_Files" is missing from the input file and is required'
         CALL Clean_Abort(err_msg,'Get_Fragment_File_Info')
 
      END IF
@@ -3036,20 +3088,21 @@ SUBROUTINE Get_Fragment_File_Info(is)
 
   END DO
 
-
 END SUBROUTINE Get_Fragment_File_Info
-!**********************************************************************************
+
+!******************************************************************************
 SUBROUTINE Get_Fragment_Coords
-  ! This subroutine loads in x,y,z coordinates of the fragments by fragment type
-  ! 
-  ! Called by:
-  !
-  ! Get_Molecule_Info
-  !
-  ! First written by Jindal Shah on 03/03/09
-  !
-  !
-  !*********************************************************************************
+!******************************************************************************
+! This subroutine loads in x,y,z coordinates of the fragments by fragment type
+! 
+! Called by:
+!
+! Get_Molecule_Info
+!
+! First written by Jindal Shah on 03/03/09
+!
+!
+!******************************************************************************
 
   INTEGER :: nfrag_types, this_fragment, is, ifrag, ifrag_type, this_config
   INTEGER :: iconfig, ia, this_atom, ntcoords,  nl, nfl, aux
@@ -3063,6 +3116,11 @@ SUBROUTINE Get_Fragment_Coords
   INTEGER, DIMENSION (:), ALLOCATABLE :: frag_library
   LOGICAL, ALLOCATABLE :: config_read(:)
 
+!******************************************************************************
+  WRITE(logunit,*)
+  WRITE(logunit,'(X,A)') 'Fragment coord info'
+  WRITE(logunit,'(X,A79)') '-------------------------------------------------------------------------------'
+
   ! Allocate arrays for frag_coords
   
   ! Determine maximum number of configurations
@@ -3070,6 +3128,11 @@ SUBROUTINE Get_Fragment_Coords
   !ALLOCATE(config_read(nfrag_types))
   !config_read(:) = .FALSE.
   nfrag_types = MAXVAL(frag_list(:,:)%type)
+  IF (nfrag_types /= SUM(nfragments(:))) THEN
+     err_msg = ''
+     err_msg(1) = 'Number of fragments is inconsistent'
+     CALL Clean_Abort(err_msg, "Get_Fragment_Coords")
+  END IF
 
 !  ALLOCATE(frag_library(nfrag_types),STAT=Allocatestatus)
 !  IF (Allocatestatus /= 0 ) THEN
@@ -3150,9 +3213,7 @@ SUBROUTINE Get_Fragment_Coords
         END IF
     END DO
 
-     WRITE(logunit,*)
-     WRITE(logunit,*) 'library_coords array successfully allocated'
-     WRITE(logunit,*)
+    WRITE(logunit,*) 'library_coords array successfully allocated'
 
 
    !Get the start line positions of the fragments to allocate in the frag_postion_library
@@ -3188,6 +3249,7 @@ SUBROUTINE Get_Fragment_Coords
   DO is = 1, nspecies
      IF(nfragments(is) /=0 ) THEN
         
+        WRITE(logunit,*) 'Finished loading fragment coordinates from'
         DO ifrag = 1, nfragments(is)
            
            ifrag_type = frag_list(ifrag,is)%type
@@ -3217,10 +3279,7 @@ SUBROUTINE Get_Fragment_Coords
               END DO
            END DO
 
-           WRITE(logunit,*)
-           WRITE(logunit,*) 'Finished loading fragment coordinates from'
-           WRITE(logunit,*) res_file(ifrag,is)
-           WRITE(logunit,*)
+           WRITE(logunit,*) TRIM(res_file(ifrag,is))
            
       !     config_read(ifrag_type) = .TRUE.
            
@@ -3234,51 +3293,128 @@ SUBROUTINE Get_Fragment_Coords
   
 !DEALLOCATE(config_read)
 
+  WRITE(logunit,'(X,A79)') '-------------------------------------------------------------------------------'
 
 END SUBROUTINE Get_Fragment_Coords
-!********************************************************************************
 
-SUBROUTINE Get_Intra_Scaling
-!********************************************************************************
-  INTEGER :: ierr,line_nbr,nbr_entries, iimprop, is
+!******************************************************************************
+SUBROUTINE Get_Intra_Scaling(is)
+!******************************************************************************
+  INTEGER :: ierr,line_nbr,nbr_entries, iimprop, is, i
   CHARACTER(120) :: line_string, line_array(20)
-  LOGICAL :: intrascaling_set
+  LOGICAL :: l_intra_scaling_mcf
 
-!********************************************************************************
-  REWIND(inputunit)
+!******************************************************************************
+
+  IF (.NOT. ALLOCATED(scale_1_2_vdw)) ALLOCATE(scale_1_2_vdw(nspecies))
+  IF (.NOT. ALLOCATED(scale_1_3_vdw)) ALLOCATE(scale_1_3_vdw(nspecies))
+  IF (.NOT. ALLOCATED(scale_1_4_vdw)) ALLOCATE(scale_1_4_vdw(nspecies))
+  IF (.NOT. ALLOCATED(scale_1_N_vdw)) ALLOCATE(scale_1_N_vdw(nspecies))
+  IF (.NOT. ALLOCATED(scale_1_2_charge)) ALLOCATE(scale_1_2_charge(nspecies))
+  IF (.NOT. ALLOCATED(scale_1_3_charge)) ALLOCATE(scale_1_3_charge(nspecies))
+  IF (.NOT. ALLOCATED(scale_1_4_charge)) ALLOCATE(scale_1_4_charge(nspecies))
+  IF (.NOT. ALLOCATED(scale_1_N_charge)) ALLOCATE(scale_1_N_charge(nspecies))
 
   ierr = 0
   line_nbr = 0
-  intrascaling_set = .false.
-  ALLOCATE(scale_1_2_vdw(nspecies));ALLOCATE(scale_1_3_vdw(nspecies))
-  ALLOCATE(scale_1_4_vdw(nspecies));ALLOCATE(scale_1_N_vdw(nspecies))
-  ALLOCATE(scale_1_2_charge(nspecies));ALLOCATE(scale_1_3_charge(nspecies))
-  ALLOCATE(scale_1_4_charge(nspecies));ALLOCATE(scale_1_N_charge(nspecies))
+  REWIND(molfile_unit)
 
- DO
+  DO
      line_nbr = line_nbr + 1
-
-     CALL Read_String(inputunit,line_string,ierr)
+     CALL Read_String(molfile_unit,line_string,ierr)
 
      IF (ierr /= 0) THEN
-        err_msg = ""
-        err_msg(1) = "Error reading ibtrascaling info."
+        err_msg = ''
+        err_msg(1) = "Error reading mcf"
         CALL Clean_Abort(err_msg,'Get_Intra_Scaling')
      END IF
 
      IF (line_string(1:15) == '# Intra_Scaling') THEN
+        l_intra_scaling_mcf = .TRUE.
+
+        ! Read vdw scaling which is listed first
         line_nbr = line_nbr + 1
-        DO is = 1, nspecies
+        CALL Parse_String(molfile_unit,line_nbr,4,nbr_entries,line_array,ierr)
+        
+        ! Test for problems reading file
+        IF (ierr /= 0) THEN
+           err_msg = ''
+           err_msg(1) = "Error reading mcf"
+           CALL Clean_Abort(err_msg,'Get_Intra_Scaling')
+        END IF
+        
+        ! Assign the vdw scaling
+        scale_1_2_vdw(is) = String_To_Double(line_array(1))
+        scale_1_3_vdw(is) = String_To_Double(line_array(2))
+        scale_1_4_vdw(is) = String_To_Double(line_array(3))
+        scale_1_N_vdw(is) = String_To_Double(line_array(4))
+
+        ! Read coul scaling which is listed second
+        line_nbr = line_nbr + 1
+        CALL Parse_String(molfile_unit,line_nbr,4,nbr_entries,line_array,ierr)
+        
+        ! Test for problems reading file
+        IF (ierr /= 0) THEN
+           err_msg = ''
+           err_msg(1) = "Error reading mcf"
+           CALL Clean_Abort(err_msg,'Get_Intra_Scaling')
+        END IF
+        
+        scale_1_2_charge(is) = String_To_Double(line_array(1))
+        scale_1_3_charge(is) = String_To_Double(line_array(2))
+        scale_1_4_charge(is) = String_To_Double(line_array(3))
+        scale_1_N_charge(is) = String_To_Double(line_array(4))
+
+        EXIT
+
+     ELSE IF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
+
+        l_intra_scaling_mcf = .FALSE.
+        WRITE(logunit,'(X,A)') 'Section "# Intra_Scaling" missing from mcf, will look in input file'
+      
+        EXIT
+
+     END IF
+  END DO
+
+
+  IF (.NOT. l_intra_scaling_mcf) THEN
+
+     ierr = 0
+     line_nbr = 0
+     REWIND(inputunit)
+     DO
+        line_nbr = line_nbr + 1
+        CALL Read_String(inputunit,line_string,ierr)
+
+        IF (ierr /= 0) THEN
+           err_msg = ''
+           err_msg(1) = "Error reading input file"
+           CALL Clean_Abort(err_msg,'Get_Intra_Scaling')
+        END IF
+
+        IF (line_string(1:15) == '# Intra_Scaling') THEN
+           DO i = 1, is-1
+              IF (int_vdw_style(1) /= vdw_none) THEN
+                 line_nbr = line_nbr + 1
+                 CALL Read_String(inputunit,line_string,ierr)
+              END IF
+              IF (int_charge_style(1) /= charge_none) THEN
+                 line_nbr = line_nbr + 1
+                 CALL Read_String(inputunit,line_string,ierr)
+              END IF
+           END DO
+
            IF (int_vdw_style(1) /= vdw_none) THEN
               ! Read vdw scaling which is listed first
-              line_array = ""
+              line_nbr = line_nbr + 1
               CALL Parse_String(inputunit,line_nbr,4,nbr_entries,line_array,ierr)
            
               ! Test for problems reading file
               IF (ierr /= 0) THEN
-                 err_msg = ""
-                 err_msg(1) = "Error reading Intra_Scaling info."
-                 CALL Clean_Abort(err_msg,'Get_Intra_Scaling_Info')
+                 err_msg = ''
+                 err_msg(1) = "Error reading input file"
+                 CALL Clean_Abort(err_msg,'Get_Intra_Scaling')
               END IF
               
               ! Assign the vdw scaling
@@ -3290,82 +3426,79 @@ SUBROUTINE Get_Intra_Scaling
 
            IF (int_charge_style(1) /= charge_none) THEN
               ! Read coul scaling which is listed second
-              line_array = ""
+              line_nbr = line_nbr + 1
               CALL Parse_String(inputunit,line_nbr,4,nbr_entries,line_array,ierr)
               
               scale_1_2_charge(is) = String_To_Double(line_array(1))
               scale_1_3_charge(is) = String_To_Double(line_array(2))
               scale_1_4_charge(is) = String_To_Double(line_array(3))
               scale_1_N_charge(is) = String_To_Double(line_array(4))
+           ELSE
+              scale_1_2_charge(:) = 0.0
+              scale_1_3_charge(:) = 0.0
+              scale_1_4_charge(:) = 0.0
+              scale_1_N_charge(:) = 0.0
            ENDIF
-        END DO
-        intrascaling_set = .true.
-        ! exit the loop
 
-        EXIT
+           EXIT
 
-     ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
+        ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
 
-        ! No intrascaling set explicitly - use default.
-        
-        scale_1_2_vdw(:) = 0.0
-        scale_1_3_vdw(:) = 0.0
-        scale_1_4_vdw(:) = 0.5
-        scale_1_N_vdw(:) = 1.0
+           ! No intrascaling set explicitly - use default.
+           WRITE(logunit,'(X,A)') 'Section "# Intra_Scaling" is missing from the input file'
+           WRITE(logunit,'(2X,A)') 'By default, 1-4 interactions are scaled by 0.5 for all species'
+           
+           scale_1_2_vdw(:) = 0.0
+           scale_1_3_vdw(:) = 0.0
+           scale_1_4_vdw(:) = 0.5
+           scale_1_N_vdw(:) = 1.0
 
-        scale_1_2_charge(:) = 0.0
-        scale_1_3_charge(:) = 0.0
-        scale_1_4_charge(:) = 0.5
-        scale_1_N_charge(:) = 1.0
+           scale_1_2_charge(:) = 0.0
+           scale_1_3_charge(:) = 0.0
+           scale_1_4_charge(:) = 0.5
+           scale_1_N_charge(:) = 1.0
 
-        EXIT
+           EXIT
 
-     ENDIF
+        ENDIF
 
-  ENDDO
-  ! Report to logfile what scaling is used.
-  IF (intrascaling_set) THEN
-     WRITE(logunit,*) 'intramolecular scaling factors explicitly set'
-  ELSE
-     WRITE(logunit,*) 'Using default intramolecular scaling factors, if required'
-  ENDIF
+     ENDDO
 
-  DO is = 1, nspecies
-     WRITE(logunit,'(A,T50,I7)') 'Intra molecule scaling factors for species', is 
-     WRITE(logunit,'(A,T30,f7.3)') 'VDW 1-2 scaling factor', scale_1_2_vdw(is)
-     WRITE(logunit,'(A,T30,f7.3)') 'VDW 1-3 scaling factor', scale_1_3_vdw(is)
-     WRITE(logunit,'(A,T30,f7.3)') 'VDW 1-4 scaling factor', scale_1_4_vdw(is) 
-     WRITE(logunit,'(A,T30,f7.3)') 'VDW 1-N scaling factor', scale_1_N_vdw(is) 
+  END IF
 
-     WRITE(logunit,'(A,T30,f7.3)') 'Coulomb 1-2 scaling factor', scale_1_2_charge(is) 
-     WRITE(logunit,'(A,T30,f7.3)') 'Coulomb 1-3 scaling factor', scale_1_3_charge(is) 
-     WRITE(logunit,'(A,T30,f7.3)') 'Coulomb 1-4 scaling factor', scale_1_4_charge(is) 
-     WRITE(logunit,'(A,T30,f7.3)') 'Coulomb 1-N scaling factor', scale_1_N_charge(is)
-     WRITE(logunit,*) 
-  END DO
+  WRITE(logunit,'(X,A,T50,I7)') 'Intra molecule scaling factors for species', is 
+  WRITE(logunit,'(2X,A,T30,f7.3)') 'VDW 1-2 scaling factor', scale_1_2_vdw(is)
+  WRITE(logunit,'(2X,A,T30,f7.3)') 'VDW 1-3 scaling factor', scale_1_3_vdw(is)
+  WRITE(logunit,'(2X,A,T30,f7.3)') 'VDW 1-4 scaling factor', scale_1_4_vdw(is) 
+  WRITE(logunit,'(2X,A,T30,f7.3)') 'VDW 1-N scaling factor', scale_1_N_vdw(is) 
 
-  WRITE(logunit,*)
-  WRITE(logunit,*) '*** Completed assigning intramolecular scaling factors ***'
-  WRITE(logunit,*)
+  IF (int_charge_style(1) /= charge_none) THEN
+    WRITE(logunit,'(2X,A,T30,f7.3)') 'Coulomb 1-2 scaling factor', scale_1_2_charge(is) 
+    WRITE(logunit,'(2X,A,T30,f7.3)') 'Coulomb 1-3 scaling factor', scale_1_3_charge(is) 
+    WRITE(logunit,'(2X,A,T30,f7.3)') 'Coulomb 1-4 scaling factor', scale_1_4_charge(is) 
+    WRITE(logunit,'(2X,A,T30,f7.3)') 'Coulomb 1-N scaling factor', scale_1_N_charge(is)
+  END IF 
 
 
 END SUBROUTINE Get_Intra_Scaling
-!********************************************************************************
 
-
-!********************************************************************************
+!******************************************************************************
 SUBROUTINE Get_Box_Info
-!********************************************************************************
-  ! This routine determines the number of boxes, the dimensions of the boxes and 
-  ! box types.
-  !
-  ! Allowed box types:
-  ! CUBIC, ORTHOGONAL, CELL_MATRIX
-!********************************************************************************
+!******************************************************************************
+! This routine determines the number of boxes, the dimensions of the boxes and 
+! box types.
+!
+! Allowed box types:
+!   cubic, orthogonal, cell_metrix
+!******************************************************************************
   INTEGER :: ierr,line_nbr,nbr_entries,ibox, is
   CHARACTER(120) :: line_string, line_array(20)
 
-!********************************************************************************
+!******************************************************************************
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'Box info'
+  WRITE(logunit,'(A80)') '********************************************************************************'
+
   REWIND(inputunit)
 
   ierr = 0
@@ -3373,45 +3506,64 @@ SUBROUTINE Get_Box_Info
  
   DO
      line_nbr = line_nbr + 1
-
      CALL Read_String(inputunit,line_string,ierr)
 
      IF (ierr .NE. 0) THEN
-        err_msg = ""
+        err_msg = ''
         err_msg(1) = "Error reading box info."
         CALL Clean_Abort(err_msg,'Get_Box_Info')
      END IF
 
      IF (line_string(1:10) == '# Box_Info') THEN
+
         line_nbr = line_nbr + 1
-        
         CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
 
         ! Number of boxes
         nbr_boxes = String_To_Int(line_array(1))
 
-        IF ( int_sim_type == sim_gemc_ig .AND. nbr_boxes < 3 ) THEN
-           err_msg = ''
-           err_msg(1) = 'GEMC simulation with intermediate box is specified'
-           err_msg(2) = ' Number of boxes less than 3'
-           CALL Clean_Abort(err_msg,'Get_Box_Info')
+        IF ( int_sim_type == sim_gemc .OR. int_sim_type == sim_gemc_npt) THEN
+           IF (nbr_boxes /= 2 ) THEN
+              err_msg = ''
+              err_msg(1) = 'Option ' // TRIM(line_array(1)) // &
+                           ' on line number ' // &
+                           TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+              err_msg(2) = 'Supported options are: 2'
+              CALL Clean_Abort(err_msg,'Get_Box_Info')
+           END IF
+        ELSE IF ( int_sim_type == sim_gemc_ig ) THEN
+           IF (nbr_boxes < 3 ) THEN
+              err_msg = ''
+              err_msg(1) = 'Option ' // TRIM(line_array(1)) // &
+                           ' on line number ' // &
+                           TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+              err_msg(2) = 'Supported options are: 3'
+              CALL Clean_Abort(err_msg,'Get_Box_Info')
+           END IF
+        ELSE
+           IF (nbr_boxes /= 1) THEN
+              err_msg = ''
+              err_msg(1) = 'Option ' // TRIM(line_array(1)) // &
+                           ' on line number ' // &
+                           TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+              err_msg(2) = 'Supported options are: 1'
+              CALL Clean_Abort(err_msg,'Get_Box_Info')
+           END IF
         END IF
 
-        WRITE(logunit,*) '*** Simulation box data ***'
-        WRITE(logunit,'(A,T30,I3)') 'number of simulation boxes ',nbr_boxes
-        WRITE(logunit,*)
+        WRITE(logunit,'(A,T30,I3)') 'Number of simulation boxes ',nbr_boxes
 
         ! Allocate arrays associated with the box variables
         ALLOCATE(box_list(nbr_boxes), STAT=AllocateStatus)
         IF (AllocateStatus /= 0) THEN
-           write(*,*)'memory could no tbe allocated for box_list array'
+           write(*,*)'memory could not be allocated for box_list array'
            write(*,*)'stopping'
            STOP
         END IF
 
         ALLOCATE(l_cubic(nbr_boxes), STAT=AllocateStatus)
         IF (AllocateStatus /= 0) THEN
-           write(*,*)'memory could no tbe allocated for l_cubic array'
+           write(*,*)'memory could not be allocated for l_cubic array'
            write(*,*)'stopping'
            STOP
         END IF
@@ -3420,27 +3572,23 @@ SUBROUTINE Get_Box_Info
 
         DO ibox = 1,nbr_boxes
            ! Get box type
-           CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
            line_nbr = line_nbr + 1
-           box_list(ibox)%box_shape = line_array(1)
+           CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
 
-           IF (box_list(ibox)%box_shape == 'CUBIC') THEN
+           IF (line_array(1) == 'cubic' .OR.  line_array(1)== 'CUBIC') THEN
+              box_list(ibox)%box_shape = 'CUBIC'
               box_list(ibox)%int_box_shape = int_cubic
               l_cubic(ibox) = .TRUE.
               ! Read in the x,y,z box edge lengths in A
-              CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
               line_nbr = line_nbr + 1
+              CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
               box_list(ibox)%length(1,1) = String_To_Double(line_array(1))
               box_list(ibox)%length(2,2) = String_To_Double(line_array(1))
               box_list(ibox)%length(3,3) = String_To_Double(line_array(1))
 
-              box_list(ibox)%hlength(1,1) = 0.5_DP * box_list(ibox)%length(1,1)
-              box_list(ibox)%hlength(2,2) = 0.5_DP * box_list(ibox)%length(2,2)
-              box_list(ibox)%hlength(3,3) = 0.5_DP * box_list(ibox)%length(3,3)
-
-              WRITE (logunit,'(A,T15,I3,T25,A,T40,A)') 'Box number ',ibox,'Box Shape: ', ' Cubic '
-              WRITE (logunit,'(A,T20,F10.4,T35,A)') 'Each Side Of :', box_list(ibox)%length(1,1), 'Angstrom'
-              WRITE(logunit,*)
+              WRITE (logunit,'(A)') 'Box ' // TRIM(Int_To_String(ibox)) // ' is ' // &
+                 box_list(ibox)%box_shape
+              WRITE (logunit,'(X,A,T20,F10.4,T35,A)') 'Each Side Of :', box_list(ibox)%length(1,1), 'Angstrom'
               
               ! Set off-diagonal components to zero
               box_list(ibox)%length(1,2) = 0.0
@@ -3450,10 +3598,12 @@ SUBROUTINE Get_Box_Info
               box_list(ibox)%length(3,1) = 0.0
               box_list(ibox)%length(3,2) = 0.0
 
-           ELSEIF (box_list(ibox)%box_shape == 'ORTHOGONAL') THEN
+           ELSEIF (line_array(1) == 'orthogonal' .OR. line_array(1) == 'ORTHOGONAL' .OR. &
+                   line_array(1) == 'orthorhombic' .OR. line_array(1) == 'ORTHORHOMBIC') THEN
+              box_list(ibox)%box_shape = 'ORTHORHOMBIC'
               box_list(ibox)%int_box_shape = int_ortho
-              CALL Parse_String(inputunit,line_nbr,3,nbr_entries,line_array,ierr)
               line_nbr = line_nbr + 1
+              CALL Parse_String(inputunit,line_nbr,3,nbr_entries,line_array,ierr)
               box_list(ibox)%length(1,1) = String_To_Double(line_array(1))
               box_list(ibox)%length(2,2) = String_To_Double(line_array(2))
               box_list(ibox)%length(3,3) = String_To_Double(line_array(3))
@@ -3466,58 +3616,66 @@ SUBROUTINE Get_Box_Info
               box_list(ibox)%length(3,1) = 0.0
               box_list(ibox)%length(3,2) = 0.0
 
-              WRITE (logunit,'(A,T15,I3,T25,A,T40,A)') 'Box number ',ibox,'Box Shape: ', ' Orthorhombic '
-              WRITE (logunit,'(A,T20,F10.4,T35,A)') 'X dimension :', box_list(ibox)%length(1,1), 'Angstrom'
-              WRITE (logunit,'(A,T20,F10.4,T35,A)') 'Y dimension :', box_list(ibox)%length(2,2), 'Angstrom'
-              WRITE (logunit,'(A,T20,F10.4,T35,A)') 'Z dimension :', box_list(ibox)%length(3,3), 'Angstrom'
-              WRITE(logunit,*)
+              WRITE (logunit,'(A)') 'Box ' // TRIM(Int_To_String(ibox)) // ' is ' // &
+                 box_list(ibox)%box_shape
+              WRITE (logunit,'(X,A,T20,F10.4,T35,A)') 'X dimension :', box_list(ibox)%length(1,1), 'Angstrom'
+              WRITE (logunit,'(X,A,T20,F10.4,T35,A)') 'Y dimension :', box_list(ibox)%length(2,2), 'Angstrom'
+              WRITE (logunit,'(X,A,T20,F10.4,T35,A)') 'Z dimension :', box_list(ibox)%length(3,3), 'Angstrom'
 
-           ELSEIF (box_list(ibox)%box_shape == 'CELL_MATRIX') THEN
+           ELSEIF (line_array(1) == 'cell_matrix' .OR. line_array(1) == 'CELL_MATRIX' .OR. &
+                   line_array(1) == 'triclinic' .OR. line_array(1) == 'TRICLINIC') THEN
+              box_list(ibox)%box_shape = 'TRICLINIC'
               box_list(ibox)%int_box_shape = int_cell
-              CALL Parse_String(inputunit,line_nbr,3,nbr_entries,line_array,ierr)
               line_nbr = line_nbr + 1
+              CALL Parse_String(inputunit,line_nbr,3,nbr_entries,line_array,ierr)
               box_list(ibox)%length(1,1) = String_To_Double(line_array(1))
               box_list(ibox)%length(1,2) = String_To_Double(line_array(2))
               box_list(ibox)%length(1,3) = String_To_Double(line_array(3))
 
-              CALL Parse_String(inputunit,line_nbr,3,nbr_entries,line_array,ierr)
               line_nbr = line_nbr + 1
+              CALL Parse_String(inputunit,line_nbr,3,nbr_entries,line_array,ierr)
               box_list(ibox)%length(2,1) = String_To_Double(line_array(1))
               box_list(ibox)%length(2,2) = String_To_Double(line_array(2))
               box_list(ibox)%length(2,3) = String_To_Double(line_array(3))
 
-              CALL Parse_String(inputunit,line_nbr,3,nbr_entries,line_array,ierr)
               line_nbr = line_nbr + 1
+              CALL Parse_String(inputunit,line_nbr,3,nbr_entries,line_array,ierr)
               box_list(ibox)%length(3,1) = String_To_Double(line_array(1))
               box_list(ibox)%length(3,2) = String_To_Double(line_array(2))
               box_list(ibox)%length(3,3) = String_To_Double(line_array(3))
 
-              WRITE (logunit,'(A,T15,I3,T25,A,T40,A)') 'Box number ',ibox,'Box Shape : ', ' CELL_MATRIX '
-              WRITE (logunit,'(T5,f10.4,T20,f10.4,T30,f10.4)') box_list(ibox)%length(1,1:3)
-              WRITE (logunit,'(T5,f10.4,T20,f10.4,T30,f10.4)') box_list(ibox)%length(2,1:3)
-              WRITE (logunit,'(T5,f10.4,T20,f10.4,T30,f10.4)') box_list(ibox)%length(3,1:3)
-              WRITE(logunit,*)
+              WRITE (logunit,'(A)') 'Box ' // TRIM(Int_To_String(ibox)) // ' is ' // &
+                 box_list(ibox)%box_shape
+              WRITE (logunit,'(X,T5,f10.4,T20,f10.4,T30,f10.4)') box_list(ibox)%length(1,1:3)
+              WRITE (logunit,'(X,T5,f10.4,T20,f10.4,T30,f10.4)') box_list(ibox)%length(2,1:3)
+              WRITE (logunit,'(X,T5,f10.4,T20,f10.4,T30,f10.4)') box_list(ibox)%length(3,1:3)
 
            ELSE
-              err_msg = ""
-              err_msg(1) = 'Box type not properly specified as'
-              err_msg(2) = box_list(ibox)%box_shape
-              err_msg(3) = 'Must be a CUBIC, ORTHOGONAL, CELL_MATRIX'
+              err_msg = ''
+              err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
+                           TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+              err_msg(2) = 'Supported keywords are: cubic, orthogonal, cell_matrix'
               CALL Clean_Abort(err_msg, 'Get_Box_Info')
+           END IF
 
+           ! Check that contant pressure boxes are cubic
+           IF ((int_sim_type == sim_npt .OR. int_sim_type == sim_gemc .OR. &
+                int_sim_type == sim_gemc_npt) .AND. .NOT. l_cubic(ibox)) THEN
+              err_msg = ''
+              err_msg(1) = 'Volume change moves are only supported for cubic boxes'
+              CALL Clean_Abort(err_msg, 'Get_Box_Info')
            END IF
 
            ! Compute information on the simulation box and write to log. 
            CALL Compute_Cell_Dimensions(ibox)
 
-           write(logunit,'(A,3(f10.4,3x))') 'Cell basis vector lengths in A,  ',&
+           WRITE(logunit,'(X,A,3(f10.4,3x))') 'Cell basis vector lengths in A,  ',&
                 box_list(ibox)%basis_length
-           write(logunit,'(A,3(f10.4,3x))') 'Cosine of angles alpha, beta, gamma ',&
+           WRITE(logunit,'(X,A,3(f10.4,3x))') 'Cosine of angles alpha, beta, gamma ',&
                 box_list(ibox)%cos_angle
-           write(logunit,'(A,3(f10.4,3x))') 'Distance between box faces ',&
+           WRITE(logunit,'(X,A,3(f10.4,3x))') 'Distance between box faces ',&
                 box_list(ibox)%face_distance
-           write(logunit,'(A,f18.4)') 'Box volume, A^3 ', box_list(ibox)%volume
-           write(logunit,*)
+           WRITE(logunit,'(X,A,f18.4)') 'Box volume, A^3 ', box_list(ibox)%volume
 
            ! Skip 1 line between boxes
            line_nbr = line_nbr + 1
@@ -3529,23 +3687,17 @@ SUBROUTINE Get_Box_Info
 
      ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
 
-        ! No box info specified
-        err_msg = ""
-        err_msg(1) = 'No box info specified in input file'
+        err_msg = ''
+        err_msg(1) = 'Section "# Box_Info" is missing from the input file and is required'
         CALL Clean_Abort(err_msg,'Get_Box_Info')
-
-        EXIT
 
      ENDIF
 
   ENDDO !  End overall read do
 
-  WRITE(logunit,*) '*** Finished loading box information ***'
-  WRITE(logunit,*)
-
   ! Allocate memory for total number of mols of each species in a given box
 
-  ALLOCATE(nmols(nspecies,nbr_boxes),Stat=Allocatestatus)
+  ALLOCATE(nmols(nspecies,0:nbr_boxes),Stat=Allocatestatus)
   IF (Allocatestatus /=0) THEN
      err_msg = ''
      err_msg(1) = 'Memory could not be allocated for nmols'
@@ -3569,41 +3721,32 @@ SUBROUTINE Get_Box_Info
   ALLOCATE(rcut_coulsq(nbr_boxes))
   ALLOCATE(rcut9(nbr_boxes) , rcut3(nbr_boxes))
 
-  ALLOCATE(W_tensor_charge(3,3,nbr_boxes) , W_tensor_recip(3,3,nbr_boxes))
-  ALLOCATE(W_tensor_vdw(3,3,nbr_boxes) , W_tensor_total(3,3,nbr_boxes))
-  ALLOCATE(W_tensor_elec(3,3,nbr_boxes), Pressure_tensor(3,3,nbr_boxes))
-
-  ALLOCATE(P_inst(nbr_boxes),P_ideal(nbr_boxes))
-
-  W_tensor_charge(:,:,:) = 0.0_DP
-  W_tensor_recip(:,:,:) = 0.0_DP
-  W_tensor_vdw(:,:,:) = 0.0_DP
-  W_tensor_total(:,:,:) = 0.0_DP
-  W_tensor_elec(:,:,:) = 0.0_DP
-  Pressure_tensor(:,:,:) = 0.0_DP
-
-  P_inst(:) = 0.0_DP
-  P_ideal(:) = 0.0_DP
-
   ALLOCATE(rcut_vdw3(nbr_boxes), rcut_vdw6(nbr_boxes))
+
+  WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_Box_Info
 
-! Obtain the participation matrix
-
+!******************************************************************************
 SUBROUTINE Get_Temperature_Info
-  ! This routine obtains temperature for all the boxes in the simulation. Make sure Get_Box_Info routine
-  ! is first called before calling this routine as it requies the information on number of boxes
-
+!******************************************************************************
+! This routine obtains temperature for all the boxes in the simulation. Make sure Get_Box_Info routine
+! is first called before calling this routine as it requies the information on number of boxes
+!******************************************************************************
   IMPLICIT NONE
 
   INTEGER :: ierr, line_nbr, i, nbr_entries
   CHARACTER(120) :: line_string, line_array(20)
 
+!******************************************************************************
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'Temperature'
+  WRITE(logunit,'(A80)') '********************************************************************************'
+
   ! Check to make sure that we have read in number of boxes if not then abort
 
   IF ( .NOT. ALLOCATED(box_list) ) THEN
-     err_msg = ""
+     err_msg = ''
      err_msg(1) = 'Number of boxes has not been read yet'
      CALL Clean_Abort(err_msg,'Get_Temperature')
   END IF
@@ -3616,40 +3759,36 @@ SUBROUTINE Get_Temperature_Info
   ierr = 0
   line_nbr = 0
 
-  write(logunit,*)
-  write(logunit,*) '**** Simulation temperature information ****'
-
   outer: DO
      line_nbr = line_nbr + 1
-
      CALL Read_String(inputunit,line_string,ierr)
 
      IF ( ierr /= 0 ) THEN
-        err_msg = ""
+        err_msg = ''
         err_msg(1) = 'Error reading temperature'
         CALL Clean_Abort(err_msg,'Get_Temperature')
      END IF
 
      IF(line_string(1:18) == '# Temperature_Info') THEN
 
-        line_nbr = line_nbr + 1
-        
-        CALL Parse_String(inputunit,line_nbr,nbr_boxes,nbr_entries,line_array,ierr)
-        
-        IF ( ierr /= 0 ) THEN
-           err_msg = ""
-           err_msg(1) = 'Error while reading temperature info'
-           CALL Clean_Abort(err_msg,'Get_Temperature_Info')
-        END IF
-        
         DO i = 1, nbr_boxes
-           temperature(i) = String_To_Double(line_array(i))
+
+           ! temperature is specified for each box on a separate line
+           line_nbr = line_nbr + 1
+           CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
+           
+           IF ( ierr /= 0 ) THEN
+              err_msg = ''
+              err_msg(1) = 'Error while reading temperature info'
+              CALL Clean_Abort(err_msg,'Get_Temperature_Info')
+           END IF
+        
+           temperature(i) = String_To_Double(line_array(1))
            ! compute inverse temperature
-              beta(i) = 1.0_DP / (kboltz * temperature(i))
+           beta(i) = 1.0_DP / (kboltz * temperature(i))
            ! write to the logunit that temperature is specified for box
            
-           write(logunit,'(A30,2X,i3,2x,A2,2X,F7.3,2X,A3)')'Temperature assigned to box ', i, 'is', temperature(i), ' K'
-           write(logunit,*)
+           WRITE(logunit,'(A,X,I1,X,A,X,F7.3,X,A)') 'Temperature of box', i, 'is', temperature(i), 'K'
            
         END DO
 
@@ -3657,29 +3796,33 @@ SUBROUTINE Get_Temperature_Info
 
      ELSE IF (line_string(1:3) == 'END' .OR. line_nbr > 10000 ) THEN
 
-        err_msg = ""
-        err_msg(1) = 'No temperature info specified in the input file'
+        err_msg = ''
+        err_msg(1) = 'Section "# Temperature_Info" is missing from the input file and is required'
         CALL Clean_Abort(err_msg,'Get_Temperature_Info')
-        
-        EXIT outer
-        
+
      END IF
      
   END DO outer
 
-  write(logunit,*) '*** Finished loading information for temperature ****'
-  write(logunit,*)
+  WRITE(logunit,'(A80)') '********************************************************************************'
   
 END SUBROUTINE Get_Temperature_Info
-!------------------------------------------------------------------------------------------------------
 
+!******************************************************************************
 SUBROUTINE Get_Pressure_Info
-  ! This subroutine goes through the input file and obtains information on
-  ! pressure of simulation boxes. At present, the subroutine is designed such
-  ! that only different pressure can be specified.
+!******************************************************************************
+! This subroutine goes through the input file and obtains information on
+! pressure of simulation boxes. At present, the subroutine is designed such
+! that only different pressure can be specified.
+!******************************************************************************
 
   INTEGER :: ierr, line_nbr, nbr_entries, i
   CHARACTER(120) :: line_string, line_array(20)
+
+!******************************************************************************
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'Pressure'
+  WRITE(logunit,'(A80)') '********************************************************************************'
 
   REWIND(inputunit)
 
@@ -3687,16 +3830,12 @@ SUBROUTINE Get_Pressure_Info
   line_nbr = 0
 
   IF ( .NOT. ALLOCATED(box_list)) THEN
-     err_msg = ""
-     err_msg = 'Box information has not yet been obtained'
+     err_msg = ''
+     err_msg = 'Box information has not been read'
      CALL Clean_Abort(err_msg,'Get_Pressure_Info')
   END IF
 
-  ALLOCATE(pressure(nbr_boxes))
-
-  WRITE(logunit,*) 
-  WRITE(logunit,*) '************* Reading pressure Info ***********'
-  
+  IF (.NOT. ALLOCATED(pressure)) ALLOCATE(pressure(nbr_boxes))
 
   DO
      line_nbr = line_nbr + 1
@@ -3709,26 +3848,24 @@ SUBROUTINE Get_Pressure_Info
 
      IF (line_string(1:15) == '# Pressure_Info') THEN
 
-        ! pressure is specified for each of the boxes on the same line.
-        line_nbr = line_nbr + 1
-        CALL Parse_String(inputunit,line_nbr,nbr_boxes,nbr_entries,line_array,ierr)
-
-        IF ( ierr /= 0 ) THEN
-           err_msg = ''
-           err_msg = 'Error while reading pressure info in the input file'
-           CALL Clean_Abort(err_msg,'Get_Pressure_Info')
-        END IF
-
-        ! assign the pressures
-
         DO i = 1, nbr_boxes
-           pressure(i) = String_To_Double(line_array(i))
+           ! pressure is specified for each of the boxes on a separate line
+           line_nbr = line_nbr + 1
+           CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
+
+           IF ( ierr /= 0 ) THEN
+              err_msg = ''
+              err_msg = 'Error while reading pressure info in the input file'
+              CALL Clean_Abort(err_msg,'Get_Pressure_Info')
+           END IF
+
+           ! assign the pressures
+           pressure(i)%setpoint = String_To_Double(line_array(1))
+           WRITE(logunit,'(A,X,I1,X,A,X,F9.3,X,A)',ADVANCE='NO') 'Pressure of box', i, 'is', pressure(i)%setpoint,  'bar'
+
            ! convert pressure into atomic units
-           pressure(i) = pressure(i)/atomic_to_bar
-           
-           WRITE(logunit,*)
-           WRITE(logunit,*) 'Pressure of box', i, ' is ', pressure(i),  ' amu / (A ps^2). '
-           
+           pressure(i)%setpoint = pressure(i)%setpoint / atomic_to_bar
+           WRITE(logunit,'(X,A,X,E13.6,X,A)') '=', pressure(i)%setpoint,  'amu / (A ps^2)'
 
         END DO
 
@@ -3736,140 +3873,130 @@ SUBROUTINE Get_Pressure_Info
         
 
      ELSE IF (line_string(1:3) == 'END' .OR. line_nbr > 10000 ) THEN
+
         err_msg = ''
-        err_msg(1) = 'Pressure required but not specified in the input file'
+        err_msg(1) = 'Section "# Pressure_Info" is missing from the input file and is required'
         CALL Clean_Abort(err_msg,'Get_Pressure_Info')
-        
+
      END IF
 
   END DO
 
-  WRITE(logunit,*)
-  WRITE(logunit,*) '********* Finished reading pressure info ********'
+  WRITE(logunit,'(A80)') '********************************************************************************'
   
   
 END SUBROUTINE Get_Pressure_Info
-!---------------------------------------------------------------------------------------------------------
 
-SUBROUTINE Get_Fugacity_Info
-  ! this code goes through the input file and obtains information about fugacities of species
-  ! for GCMC move.
+!******************************************************************************
+SUBROUTINE Get_Chemical_Potential_Info
+!******************************************************************************
+! this code goes through the input file and obtains information about fugacities of species
+! for GCMC move.
+!******************************************************************************
 
   IMPLICIT NONE
 
-  INTEGER :: line_nbr, nbr_entries, ierr, i, spec_counter, j
+  INTEGER :: line_nbr, nbr_entries, ierr, is, spec_counter, ibox
   CHARACTER(120) :: line_string, line_array(20)
 
+!******************************************************************************
   REWIND(inputunit)
 
   ierr = 0
   line_nbr = 0
   spec_counter = 0
 
- ! initialize fugacities
-
-  species_list(:)%fugacity = 0.0_DP
   species_list(:)%chem_potential = 0.0_DP
-  species_list(:)%activity = 0.0_DP
-  lchempot = .FALSE.
-  lfugacity = .FALSE.
 
   inputLOOP: DO
      line_nbr = line_nbr  + 1
      CALL Read_String(inputunit,line_string,ierr)
      IF ( ierr /= 0 ) THEN
         err_msg = ''
-        err_msg(1) = 'Error while reading Fugacity Info'
-        CALL Clean_Abort(err_msg,'Get_Fugacity_Info')
+        err_msg(1) = 'Error while reading input file'
+        CALL Clean_Abort(err_msg,'Get_Chemical_Potential_Info')
      END IF
     
      
-     IF (line_string(1:15) == '# Fugacity_Info' ) THEN
-        ! we found a section that contains the information on fugacity of all the species
-        lfugacity = .TRUE.
-        line_nbr = line_nbr + 1
+     IF (line_string(1:25) == '# Chemical_Potential_Info'  ) THEN
         WRITE(logunit,*)
-        WRITE(logunit,*) '*********** Fugacity Info ***************'
-        CALL Parse_String(inputunit,line_nbr,nspec_insert,nbr_entries,line_array,ierr)
-        
-        DO i = 1,nspecies
-
-           IF(species_list(i)%int_species_type == int_sorbate) THEN
-              spec_counter = spec_counter + 1
-              species_list(i)%fugacity = String_To_Double(line_array(spec_counter))
-              species_list(i)%fugacity = species_list(i)%fugacity / atomic_to_bar
-           ELSE
-              species_list(i)%fugacity = 0.0_DP
-           END IF
-
-           WRITE(logunit,*)
-           WRITE(logunit,'(A,T25,I3,A,T35,E16.9,A)')'Fugacity of species', i, ' is', species_list(i)%fugacity, ' amu /(A ps^2)'
-        END DO
-        
-        EXIT
-
-     ELSE IF (line_string(1:25) == '# Chemical_Potential_Info'  ) THEN
+        WRITE(logunit,'(A)') 'Chemical potential'
+        WRITE(logunit,'(A80)') '********************************************************************************'
         ! we found a section that contains the information on Chemical Potential of all the species
         line_nbr = line_nbr + 1
-        lchempot = .TRUE.
-        WRITE(logunit,*)
-        WRITE(logunit,*) '*********** Chemical potential Info ***************'
         CALL Parse_String(inputunit,line_nbr,nspec_insert,nbr_entries,line_array,ierr)
         
-        DO i = 1,nspecies
+        DO is = 1,nspecies
 
-           ALLOCATE(species_list(i)%de_broglie(nbr_boxes))
+           WRITE(logunit,'(A,X,I5)') 'Species', is
+           ALLOCATE(species_list(is)%de_broglie(nbr_boxes))
 
-           IF(species_list(i)%int_species_type == int_sorbate) THEN
-              spec_counter = spec_counter + 1
-              species_list(i)%chem_potential = String_To_Double(line_array(spec_counter))
+           ! Assume there will be an entry for each species, including non-insertable species
+           ! If there is not an entry, the counter will be back tracked
+           spec_counter = spec_counter + 1
+
+           IF(species_list(is)%int_species_type == int_sorbate) THEN
+              ! insertable species, there must be an entry for this species
+              species_list(is)%chem_potential = String_To_Double(line_array(spec_counter))
+
+              ! convert the chemical potential into atomic units
+              species_list(is)%chem_potential = species_list(is)%chem_potential / atomic_to_kJmol
+
+              WRITE(logunit,'(X,A,T40,X,F16.9)') 'Chemical potential (internal units):', &
+                    species_list(is)%chem_potential
+
+              ! Now compute the de Broglie wavelength for this species in each box
+              DO ibox = 1, nbr_boxes
+
+                 species_list(is)%de_broglie(ibox) = &
+                      h_plank  * DSQRT( beta(ibox)/(twopi * species_list(is)%molecular_weight))
+
+                 WRITE(logunit,'(X,A,T40,X,F16.9)') &
+                       'de Broglie wavelength (Angstroms):', species_list(is)%de_broglie(ibox)
+
+              END DO
+   
            ELSE
-              species_list(i)%chem_potential = 0.0_DP
+              ! non-insertable species, input file entry is optional
+              species_list(is)%chem_potential = 0.0_DP
+              ! if there's an entry, it must be 'none' or 'NONE'
+              IF (line_array(spec_counter) == 'none' .OR. line_array(spec_counter) == 'NONE') THEN
+                 WRITE(logunit,'(X,A)') 'Chemical potential not required.'
+              ELSE
+                 WRITE(logunit,'(X,A)') 'No entry in input file. Chemical potential not required.'
+                 ! the entry is not 'none' or 'NONE', so there is no entry of this species
+                 ! back track the counter so this entry can be assigned to the next species
+                 spec_counter = spec_counter - 1
+              END IF
            END IF
 
-           ! convert the chemical potential into atomic units
-
-           species_list(i)%chem_potential = species_list(i)%chem_potential / atomic_to_kJmol
-
-           WRITE(logunit,*)
-           WRITE(logunit,'(A,T25,I3,A,T35,E16.9,A)')'Chemical Potential of species', i, &
-                ' is', species_list(i)%chem_potential, 'in atomic units'
-
-           ! Now compute the de Broglie wavelength for this species in each box
-
-           DO j = 1, nbr_boxes
-
-              species_list(i)%de_broglie(j) = &
-                   h_plank  * DSQRT( beta(j)/(twopi * species_list(i)%molecular_weight))
-
-              WRITE(logunit,'(A,T35,I3,T40,A,T48,I5,T55,A)') 'de Broglie wavelength of species', i, 'in box ', j, ' is'
-              WRITE(logunit,'(F14.10,2x,A)') species_list(i)%de_broglie(j), ' Angstrom'
-
-           END DO
-   
         END DO
+
+        WRITE(logunit,'(A80)') '********************************************************************************'
         
         EXIT
 
      ELSE IF (line_string(1:3) == 'END' .OR. line_nbr > 10000 ) THEN
+
         err_msg = ''
-        err_msg(1) = 'Activity_Info section is missing from the input file'
-        CALL Clean_Abort(err_msg,'Get_Fugacity_Info')
+        err_msg(1) = 'Section "# Chemical_Potential_Info" is missing from the input file and is required'
+        CALL Clean_Abort(err_msg,'Get_Chemical_Potential_Info')
+
      END IF
      
   END DO inputLOOP
   
-  WRITE(logunit,*)
-  WRITE(logunit,*) '******* Finished reading chemical potential info ***********'
 
-END SUBROUTINE Get_Fugacity_Info
+END SUBROUTINE Get_Chemical_Potential_Info
 
-
+!******************************************************************************
 SUBROUTINE Get_Move_Probabilities
-  ! This routine goes through the input file and obtains probabilities for each of the
-  ! moves to be performed. At the end of the routine a check is made to ensure that
-  ! all probabilities add upto 1.0_DP
-  !
+!******************************************************************************
+! This routine goes through the input file and obtains probabilities for each of the
+! moves to be performed. At the end of the routine a check is made to ensure that
+! all probabilities add up to 1.0_DP
+!
+!******************************************************************************
 
   IMPLICIT NONE
 
@@ -3878,10 +4005,12 @@ SUBROUTINE Get_Move_Probabilities
   CHARACTER(120) :: line_string, line_array(30), line_string2
   CHARACTER(4) :: Symbol
 
-  REAL(DP) :: total_mass, this_mass, prob_box_swap
+  REAL(DP) :: total_mass, this_mass
 
-  LOGICAL :: l_prob_box_swap
-
+!******************************************************************************
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'Move probabilities'
+  WRITE(logunit,'(A80)') '********************************************************************************'
 
   ierr = 0
   line_nbr = 0
@@ -3916,11 +4045,10 @@ SUBROUTINE Get_Move_Probabilities
 
   inputLOOP: DO
      line_nbr = line_nbr + 1
-
      CALL Read_String(inputunit,line_string,ierr)
 
      IF (ierr /=0) THEN
-        err_msg = ""
+        err_msg = ''
         err_msg(1) = 'Error while reading Move Probabilities'
         CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
      END IF
@@ -3929,22 +4057,19 @@ SUBROUTINE Get_Move_Probabilities
         ! we entered a section of the input file where all the move probabilties
         ! are identified. We will read each line and then compare against possible
         ! move types that are defined.
-        WRITE(logunit,*)
-        WRITE(logunit,*)'********* Move Probability Info******'
         sectionLOOP: DO
            line_nbr = line_nbr + 1
            CALL Read_String(inputunit,line_string,ierr)
            IF(line_string(1:18) == '# Prob_Translation') THEN
               num_moves = num_moves + 1
               ! we found specification of translation routine
-              ! parse this line to figure out what the move proability is. This line
-              ! contains three fields #, Move_Translation and the third field is probability.
+              ! parse this line to figure out what the move proability is.
               line_nbr = line_nbr + 1            
               CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
               prob_trans = String_To_Double(line_array(1))
 
-              WRITE(logunit,'(A30,2X,F9.6)') 'Translation probability is', prob_trans
-              WRITE(logunit,*)
+              WRITE(logunit,'(A,T40,F12.6)') &
+                   'Probability for translation', prob_trans
 
               IF (int_sim_type == sim_ring .OR. int_sim_type == sim_frag) THEN
                  ! the second line contains information on delta_cos_max and delta_phi_max
@@ -3954,7 +4079,6 @@ SUBROUTINE Get_Move_Probabilities
                  delta_cos_max = String_To_Double(line_array(1))
                  delta_phi_max = String_To_Double(line_array(2))
 
-                 WRITE(logunit,*)
                  WRITE(logunit,*) 'Maximum width in cosine of polar angle is', delta_cos_max
                  WRITE(logunit,*) 'Maximum width (degrees) in azimuthal angle is', delta_phi_max
 
@@ -3970,9 +4094,8 @@ SUBROUTINE Get_Move_Probabilities
                     ! assign the maximum displacement widths to each of the species
                     DO i = 1, nspecies
                        max_disp(i,j) = String_To_Double(line_array(i))
-                       WRITE(logunit,'(A,T40,I3,A,T50,I3,T55,A,T60,F10.5)') 'Maximum displacement width for species', & 
+                       WRITE(logunit,'(X,A,T40,I3,A,T50,I3,T55,A,T60,F10.5)') 'Maximum displacement width for species', & 
                             i, ' in box', j, 'is', max_disp(i,j)
-                       WRITE(logunit,*)
                     END DO
                  END DO
 
@@ -3985,8 +4108,8 @@ SUBROUTINE Get_Move_Probabilities
               CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
               prob_rot = String_To_Double(line_array(1))
 
-              WRITE(logunit,'(A30,2X,F9.6)') 'Rotation probability is', prob_rot
-              WRITE(logunit,*)
+              WRITE(logunit,'(A,T40,F12.6)') &
+                   'Probability for rotation', prob_rot
 
               DO j = 1, nbr_boxes
                  ! get maximum rotational width for each of the species
@@ -3997,9 +4120,8 @@ SUBROUTINE Get_Move_Probabilities
                     max_rot(i,j) = String_To_Double(line_array(i))
                     ! Note that input is in degrees. Convert the displacement to radians
                     max_rot(i,j) = max_rot(i,j) * PI / 180.0_DP
-                    WRITE(logunit,'(A,T40,I3,A,T50,I3,T55,A,T60,F10.4,T70,A)') 'The rotational width for the species', &
+                    WRITE(logunit,'(X,A,T40,I3,A,T50,I3,T55,A,T60,F10.4,T70,A)') 'The rotational width for the species', &
                          i, ' in box', j, ' is', max_rot(i,j), ' radians'
-                    WRITE(logunit,*)
                  END DO
               END DO
 
@@ -4010,7 +4132,8 @@ SUBROUTINE Get_Move_Probabilities
               CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
               prob_torsion = String_To_Double(line_array(1))
 
-              WRITE(logunit,'(A,T40,F10.4)') 'Dihedral move probability is', prob_torsion
+              WRITE(logunit,'(A,T40,F12.6)') &
+                   'Probability for dihedral move', prob_torsion
 
               ! Get species dependent maximum displacements
 
@@ -4019,10 +4142,9 @@ SUBROUTINE Get_Move_Probabilities
               DO i = 1, nspecies
                  species_list(i)%max_torsion = String_To_Double(line_array(i))
                  species_list(i)%max_torsion = species_list(i)%max_torsion * PI / 180.0_DP
-                 WRITE(logunit,'(A,T40,I3,A,T55,F10.4,T70,A)')'The dihedral move width for the species', i, ' is', &
+                 WRITE(logunit,'(X,A,T40,I3,A,T55,F10.4,T70,A)')'The dihedral move width for the species', i, ' is', &
                       species_list(i)%max_torsion, ' radians'
               END DO
-              WRITE(logunit,*)
 
            ELSE IF (line_string(1:12) == '# Prob_Angle') THEN
               num_moves = num_moves + 1
@@ -4031,8 +4153,8 @@ SUBROUTINE Get_Move_Probabilities
               CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
               prob_angle = String_To_Double(line_array(1))
 
-              WRITE(logunit,*)
-              WRITE(logunit,'(A,T40,F10.4)') 'Angle move probability is', prob_angle
+              WRITE(logunit,'(A,T40,F12.6)') &
+                   'Probability for angle move', prob_angle
 
            ELSE IF (line_string(1:13) == '# Prob_Volume') THEN
               num_moves = num_moves + 1
@@ -4047,8 +4169,8 @@ SUBROUTINE Get_Move_Probabilities
 
               prob_volume = String_To_Double(line_array(1))
 
-              WRITE(logunit,*)
-              WRITE(logunit,'(A40,2X,F9.6)') 'Probability for volume move is ', prob_volume
+              WRITE(logunit,'(A,T40,F12.6)') &
+                   'Probability for volume move', prob_volume
 
               ! Now read in information for each of the boxes for maximum displacement
               IF (int_sim_type == sim_gemc) THEN 
@@ -4058,24 +4180,21 @@ SUBROUTINE Get_Move_Probabilities
 
                  box_list(:)%dv_max = String_To_Double(line_array(1))
 
-                 WRITE(logunit,*) 
-                 WRITE(logunit,*) 'Maximum volume displacement for box in GEMC_NVT simulation is'
-                 WRITE(logunit,"(F10.3)") box_list(1)%dv_max
+                 WRITE(logunit,'(X,A,X,F10.3)') &
+                       'Maximum volume displacement is', box_list(1)%dv_max
 
               ELSE
 
                  DO ibox = 1,nbr_boxes
-
-                    WRITE(logunit,*)
-                    WRITE(logunit,*) 'Writing maximum volume displacement elements for box', ibox
-                    WRITE(logunit,*)                 
 
                     line_nbr = line_nbr + 1
                     CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
 
                     box_list(ibox)%dv_max = String_To_Double(line_array(1))
 
-                    WRITE(logunit,'((F24.3,2X,A))') box_list(ibox)%dv_max, ' A^3'
+                    WRITE(logunit,'(X,A,X,I2,X,A,X,F10.3,X,A)') &
+                         'Maximum volume displacement for box', ibox, 'is', &
+                         box_list(ibox)%dv_max, ' A^3'
 
 
                  END DO
@@ -4097,14 +4216,13 @@ SUBROUTINE Get_Move_Probabilities
 
               IF (f_dv) THEN
 
-                 WRITE(logunit,*) 
                  WRITE(logunit,*) 'Volume moves will be performed in actual volumes'
               ELSE IF (f_vratio) THEN
-                 WRITE(logunit,*)
                  WRITE(logunit,*) 'Volume moves will be performed in logarithm of ratio of volumes'
               END IF
 
-           ELSE IF (line_string(1:16) == '# Prob_Insertion' .OR. line_string(1:11) == '# Prob_Swap') THEN
+           ELSE IF (line_string(1:16) == '# Prob_Insertion' .OR. &
+                    line_string(1:11) == '# Prob_Swap') THEN
               ! we found information for insertion move probability or swap move probability
               line_nbr = line_nbr + 1
               CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
@@ -4112,266 +4230,144 @@ SUBROUTINE Get_Move_Probabilities
               IF (line_string(1:16) == '# Prob_Insertion') THEN
                  num_moves = num_moves + 1
                  prob_insertion = String_To_Double(line_array(1))
-                 WRITE(logunit,*)
-                 WRITE(logunit,'(A,T40,F10.4)') 'Probability for insertion move is', prob_insertion
+                 WRITE(logunit,'(A,T40,F12.6)') &
+                      'Probability for insertion', prob_insertion
               ELSE IF (line_string(1:11) == '# Prob_Swap') THEN
                  num_moves = num_moves + 1
                  prob_swap = String_To_Double(line_array(1))
-                 WRITE(logunit,*)
-                 WRITE(logunit,'(A40,2X,F9.6)') 'Probability for particle swap is', prob_swap
+                 WRITE(logunit,'(A,T40,F12.6)') &
+                      'Probability for particle swap', prob_swap
               END IF
 
-              ! Assign the second argument as type of insertion to sorbate species
-              ! also determine the number of insertable species at this point
+              ! the next line lists 'none' or 'cbmc' for each species
+              line_nbr = line_nbr + 1
+              CALL Parse_String(inputunit,line_nbr,nspecies,nbr_entries,line_array,ierr)
 
               nspec_insert = 0
               DO is = 1, nspecies
 
-                 ! Also read in the file from which the configuration will be read
-                 line_nbr = line_nbr + 1
-                 CALL Read_String(inputunit,line_string2,ierr)
+                 IF(line_array(is) == 'CBMC' .OR. line_array(is) == 'cbmc') THEN
+                    IF (nfragments(is) == 0) THEN
+                       err_msg = ''
+                       err_msg(1) = 'Insertion method for species ' // TRIM(Int_To_String(is)) // &
+                                    ' must be "none" since species has zero fragments'
+                       CALL Clean_Abort(err_msg,'Get_Move_Probabiltieis')
+                    END IF
 
-                 IF(line_string2(1:17) .NE. 'insertion method') THEN
-                    err_msg(1) = "Expecting : insertion method"
-                    err_msg(2) = "But found :"
-                    err_msg(3) = line_string2
-                    err_msg(4) = 'in '//TRIM(inputfile)
-                    CALL Clean_Abort(err_msg,'Prob_Insertion')
-                 END IF
-
-                 line_nbr = line_nbr + 1
-                 CALL Read_String(inputunit,line_string2,ierr)
-
-                 IF(line_string2(1:4) == 'IGAS') THEN
-                    species_list(is)%insertion = 'IGAS'
-                    species_list(is)%int_insert = int_igas
                     nspec_insert = nspec_insert + 1
-                    
-                    IF(.NOT. ALLOCATED(n_igas)) ALLOCATE(n_igas(nspecies))
-                    IF(.NOT. ALLOCATED(n_igas_update)) ALLOCATE(n_igas_update(nspecies))
-                    IF(.NOT. ALLOCATED(n_igas_moves)) ALLOCATE(n_igas_moves(nspecies))
-                    IF(.NOT. ALLOCATED(nzovero)) ALLOCATE(nzovero(nspecies))
-                    
-                    line_nbr = line_nbr + 1
-                    CALL Read_String(inputunit,line_string2,ierr)
+                    species_list(is)%insertion = 'CBMC'
 
-                    WRITE(logunit,*)
-                    WRITE(logunit,*) 'Ideal gas configurations will be used for insertion for species ', TRIM(Int_To_String(is))
-
-                    IF(line_string2(1:24) .NE. 'Number of igas particles') THEN
-                       err_msg(1) = "Expection : Number of igas particles"
-                       err_msg(2) = "But found :"
-                       err_msg(3) = line_string2
-                       CALL Clean_Abort(err_msg,'Prob_Insertion')
-                    END IF
-
-                    line_nbr = line_nbr + 1
-                    CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
-                    n_igas(is) = String_To_Int(line_array(1))
-
-                    WRITE(logunit,*) 'Number of ideal gas particles in reservoir is',n_igas
-
-                    line_nbr = line_nbr + 1
-                    CALL Read_String(inputunit,line_string2,ierr)
-
-                    IF(line_string2(1:15) .NE. 'Nupdate, Nmoves') THEN          
-                       err_msg(1) = "Expection : Nupdate, Nmoves, Nzbyomega"
-                       err_msg(2) = "But found :"
-                       err_msg(3) = line_string2
-                       CALL Clean_Abort(err_msg,'Prob_Insertion')
-                    END IF
-
-                    line_nbr = line_nbr + 1
-                    CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
-                    n_igas_update(is) = String_To_Int(line_array(1))
-                    n_igas_moves(is) = String_To_Int(line_array(2))
-                    nzovero(is) = String_To_Int(line_array(3))
-
-                    WRITE(logunit,*)
-                    WRITE(logunit,*) 'Ideal gas reservoir will be updated every', n_igas_update, 'moves.'
-                    WRITE(logunit,*) 'Each molecule will undergo',n_igas_moves, 'Monte Carlo moves.'
-                    WRITE(logunit,*)
-
-                    line_nbr = line_nbr + 1
-                    CALL Read_String(inputunit,line_string2,ierr)
-
-                    IF(line_string2(1:15) .NE. 'configuration f') THEN          
-                       err_msg(1) = "Expection : configuration file"        
-                       err_msg(2) = "But found :"
-                       err_msg(3) = line_string2
-                       CALL Clean_Abort(err_msg,'Prob_Insertion')
-                    END IF
-
-                    line_nbr = line_nbr + 1
-                    CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
-                    sorbate_file(is) = line_array(1)
-                    
-                 ELSE IF(line_string2(1:6) == 'RANDOM') THEN
-                    species_list(is)%insertion = 'RANDOM'
-                    nspec_insert = nspec_insert + 1
-
-                    WRITE(logunit,*)
-                    WRITE(logunit,*) ' Random insertion will be carried out for species ', TRIM(Int_To_String(is))
-                    species_list(is)%int_insert = int_random
-
-                    line_nbr = line_nbr + 1
-                    CALL Read_String(inputunit,line_string2,ierr)
-
-                    IF(line_string2(1:18) .NE. 'configuration file') THEN
-                       err_msg(1) = "Expection : configuration file"      
-                       err_msg(2) = "But found :"
-                       err_msg(3) = line_string2
-                       CALL Clean_Abort(err_msg,'Prob_Insertion')
-                    END IF
-
-                    line_nbr = line_nbr + 1
-                    CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
-                    sorbate_file(is) = line_array(1)
-
-                    WRITE(logunit,*) 'Initial configuration is found in the file', TRIM(sorbate_file(is))
-                    WRITE(logunit,*)
-
-                    OPEN(unit=sorbate_unit,file=sorbate_file(is),status='old')
-                    ! the file is in xyz format
-
-                    ! obtain COM of the input geometry as well
-                    total_mass = 0.0_DP
-
-                    species_list(is)%xcom = 0.0_DP
-                    species_list(is)%ycom = 0.0_DP
-                    species_list(is)%zcom = 0.0_DP
-
-
-                    DO j = 1, natoms(is)
-                       READ(sorbate_unit,*) symbol, init_list(j,1,is)%rxp, init_list(j,1,is)%ryp, init_list(j,1,is)%rzp
-
-                       this_mass = nonbond_list(j,is)%mass
-                       total_mass = total_mass + this_mass
-
-                       species_list(is)%xcom = species_list(is)%xcom + this_mass * &
-                            init_list(j,1,is)%rxp
-                       species_list(is)%ycom = species_list(is)%ycom + this_mass * &
-                            init_list(j,1,is)%ryp
-                       species_list(is)%zcom = species_list(is)%zcom + this_mass * &
-                            init_list(j,1,is)%rzp
-
-                    END DO
-
-                    species_list(is)%xcom = species_list(is)%xcom / total_mass
-                    species_list(is)%ycom = species_list(is)%ycom / total_mass
-                    species_list(is)%zcom = species_list(is)%zcom / total_mass
-
-                    CLOSE(UNIT=sorbate_unit)
-
-                 ELSE IF(line_string2(1:9 ) == 'reservoir ') THEN
-                    nspec_insert = nspec_insert + 1
-                    species_list(is)%insertion = 'RANDOM'
-
-                    WRITE(logunit,*) 
-                    WRITE(logunit,'(A,2X,A)') 'Insertion will be carried out for species ', TRIM(Int_To_String(is))
-                    WRITE(logunit,*) 'using the reservoir sampling'
+                    WRITE(logunit,'(X,A,X,A,X,A)') 'Species', TRIM(Int_To_String(is)), 'will be inserted using CBMC'
                     species_list(is)%int_insert = int_random
                     species_list(is)%species_type = 'SORBATE'
                     species_list(is)%int_species_type = int_sorbate
 
-                 ELSE IF(line_string2(1:4) == 'none') THEN
-                    ! it's a species that does not get exchanged with
-                    ! reservoir in the case of a GCMC simulation or
-                    ! swapped in a GEMC simulation
+                 ELSE IF(line_array(is) == 'NONE' .OR. line_array(is) == 'none') THEN
+                    ! species is not inserted
 
                     species_list(is)%insertion = 'NONE'
                     species_list(is)%int_insert = int_noinsert
                     species_list(is)%species_type ='NON_EXCHANGE'
                     species_list(is)%int_species_type = int_solvent
 
-                    WRITE(logunit,'(A50,2X,A3)') 'No insertion/swap will be carried out for species', &
-                         TRIM(Int_To_String(is))
-                 END IF
-
-              END DO
-
-              WRITE(logunit,*) 
-              WRITE(logunit,"(A39,2X,I3)") 'Total number of exchangeable species is', nspec_insert
-              WRITE(logunit,*)
-
-              ! Check if individual swap species are defined for species
-              l_mol_frac_swap = .TRUE.
-
-              line_nbr = line_nbr + 1
-
-              CALL Read_String(inputunit, line_string2,ierr)
-              IF (line_string2(1:19) == '# Prob_Species_Swap') THEN
-                 l_mol_frac_swap = .FALSE.
-                 ! read the next line where probabilties are specified
-
-                 ALLOCATE(prob_swap_species(nspecies))
-
-                 line_nbr = line_nbr + 1
-                 CALL Parse_String(inputunit,line_nbr,nspecies,nbr_entries,line_array,ierr)
-
-                 DO is = 1, nspecies
-                    prob_swap_species(is) = String_To_Double(line_array(is))
-
-                    WRITE(logunit,'(A35,I4,2X,A2,2X,F10.6)') 'Cumulative probabilty of swap for species', is, 'is', &
-                         prob_swap_species(is)                  
-                 END DO
-
-                 IF (ABS(prob_swap_species(nspecies) -1.0_DP) > 0.000001_DP) THEN
+                    WRITE(logunit,'(X,A,X,A,X,A)') 'Species', TRIM(Int_To_String(is)), 'will not be inserted'
+                 ELSE 
                     err_msg =''
-                    err_msg(1) = 'Individual species swap probabilties do not add up to 1'
+                    err_msg(1) = 'Insertion method for species ' // TRIM(Int_To_String(is)) // &
+                                 ' is "' // line_array(1) // '"'
+                    err_msg(2) = 'The only supported options are "cbmc" and "none".'
                     CALL Clean_Abort(err_msg,'Get_Move_Probabiltieis')
                  END IF
 
-              ELSE
+              END DO
 
-                 line_nbr = line_nbr -1
-                 backspace(inputunit)
+              WRITE(logunit,"(X,A,2X,I3)") 'Number of insertable species is', nspec_insert
+
+              ! Check for additional keywords in section # Prob_Swap
+              IF (line_string(1:11) == '# Prob_Swap') THEN
+
+                 ! Default
+                 l_prob_swap_species = .FALSE.
+                 l_prob_swap_from_box = .FALSE.
+
+                 DO 
+                    line_nbr = line_nbr + 1
+                    CALL Read_String(inputunit,line_string2,ierr)
+                    ! back up so we can read this line again with Parse_String if needed
+                    line_nbr = line_nbr - 1
+                    backspace(inputunit)
+
+                    IF (line_string2(1:1) == '!' .OR. TRIM(line_string2) == '') THEN
+                       IF (.NOT. l_prob_swap_from_box) THEN
+                          WRITE(logunit,'(2X,A)') 'By default, box_out will be selected according to its mole fraction'
+                       END IF
+                     
+                       IF (.NOT. l_prob_swap_species) THEN
+                          WRITE(logunit,'(2X,A)') 'By default, species will be selected according to its mole fraction in box_out'
+                       END IF
+                       EXIT
+                    ELSE IF (line_string2(1:17) == 'prob_swap_species') THEN
+                       l_prob_swap_species = .TRUE.
+                       ALLOCATE(prob_swap_species(nspecies))
+                       ALLOCATE(cum_prob_swap_species(nspecies))
+                       prob_swap_species = 0.0_DP
+                       cum_prob_swap_species = 0.0_DP
+
+                       ! read the line again where probabilties are specified
+                       line_nbr = line_nbr + 1
+                       CALL Parse_String(inputunit,line_nbr,nspecies+1,nbr_entries,line_array,ierr)
+
+                       DO is = 1, nspecies
+                          prob_swap_species(is) = String_To_Double(line_array(is+1))
+                          cum_prob_swap_species(is) = SUM(prob_swap_species(1:is))
+
+                          WRITE(logunit,'(X,A,X,F5.3)') 'Cumulative swap probabilty for species ' // &
+                               TRIM(Int_To_String(is)) // ' is ', cum_prob_swap_species(is)                  
+                       END DO
+
+                       IF (ABS(cum_prob_swap_species(nspecies) - 1.0_DP) > tiny_number) THEN
+                          err_msg =''
+                          err_msg(1) = 'Swap probabilties on line ' // TRIM(Int_To_String(line_nbr)) // &
+                                       ' of the input file do not sum to 1'
+                          CALL Clean_Abort(err_msg,'Get_Move_Probabiltieis')
+                       END IF
+
+                    ELSE IF (line_string2(1:18) == 'prob_swap_from_box') THEN
+                       l_prob_swap_from_box = .TRUE.
+                       ALLOCATE(prob_swap_from_box(nbr_boxes))
+                       ALLOCATE(cum_prob_swap_from_box(nbr_boxes))
+                       prob_swap_from_box = 0.0_DP
+                       cum_prob_swap_from_box = 0.0_DP
+
+                       line_nbr = line_nbr + 1
+                       CALL Parse_String(inputunit,line_nbr,nbr_boxes+1,nbr_entries,line_array,ierr)
+
+                       DO ibox = 1, nbr_boxes
+                          prob_swap_from_box(ibox) = String_To_Double(line_array(ibox+1))
+                          cum_prob_swap_from_box(ibox) = SUM(prob_swap_from_box(1:ibox))
+                          WRITE(logunit,'(X,A,X,F5.3)') 'Cumulative swap probabilty from box ' // &
+                               TRIM(Int_To_String(ibox)) // ' is ', &
+                               cum_prob_swap_from_box(ibox)
+                       END DO
+
+                       IF (ABS(cum_prob_swap_from_box(nbr_boxes) - 1.0_DP) > tiny_number) THEN
+                          err_msg = ''
+                          err_msg(1) = 'Swap probabilties on line ' // TRIM(Int_To_String(line_nbr)) // &
+                                       ' of the input file do not sum to 1'
+                          CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
+                       END IF
+
+                    ELSE
+                       err_msg = ''
+                       err_msg(1) = 'Keyword ' // TRIM(line_string2(1:17)) // ' on line number ' // &
+                                    TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+                       err_msg(2) = 'Supported keywords are: prob_swap_species, prob_swap_from_box'
+                       CALL Clean_Abort(err_msg,'Get_Start_Type')
+                    END IF
+
+                 END DO
 
               END IF
-
-              DO is = 1,nspecies
-
-                 IF(species_list(is)%insertion == 'IGAS') THEN
-
-                    ALLOCATE( molecule_list_igas(MAXVAL(nmolecules), nspecies), Stat = AllocateStatus )
-                    IF (AllocateStatus /= 0) THEN
-                       write(*,*)'memory could no tbe allocated for molecule_list_igas array'
-                       write(*,*)'stopping'
-                       STOP
-                    END IF
-
-                    ALLOCATE( atom_list_igas(MAXVAL(natoms), MAXVAL(nmolecules), nspecies), Stat = AllocateStatus )
-                    IF (AllocateStatus /= 0) THEN
-                       write(*,*)'memory could no tbe allocated for atom_list_igas array'
-                       write(*,*)'stopping'
-                       STOP
-                    END IF
-
-                    ALLOCATE( energy_igas(MAXVAL(nmolecules), nspecies), Stat = AllocateStatus )
-                    IF (AllocateStatus /= 0) THEN
-                       write(*,*)'memory could no tbe allocated for energy_igas array'
-                       write(*,*)'stopping'
-                       STOP
-                    END IF
-
-                    molecule_list_igas(:,:)%xcom = 0.0_DP
-                    molecule_list_igas(:,:)%ycom = 0.0_DP
-                    molecule_list_igas(:,:)%zcom = 0.0_DP
-                    atom_list_igas(:,:,:)%rxp = 0.0_DP
-                    atom_list_igas(:,:,:)%ryp = 0.0_DP
-                    atom_list_igas(:,:,:)%rzp = 0.0_DP
-
-                    DEALLOCATE(molecule_list)
-                    DEALLOCATE(atom_list)
-
-                    ALLOCATE(molecule_list(MAXVAL(nmolecules)+1, nspecies))
-                    ALLOCATE(atom_list(MAXVAL(natoms),MAXVAL(nmolecules)+1, nspecies))
-
-                 END IF
-
-                 EXIT
-
-              END DO
 
            ELSE IF (line_string(1:15) == '# Prob_Deletion') THEN
               num_moves = num_moves + 1
@@ -4381,31 +4377,20 @@ SUBROUTINE Get_Move_Probabilities
 
               prob_deletion = String_To_Double(line_array(1))
 
-              WRITE(logunit,*)
-              WRITE(logunit,'(A,T40,F10.4)') 'Probability for deletion move is', prob_deletion
-
-!!$           ELSE IF (line_string(1:11) == '# Prob_Swap') THEN
-!!$              ! we found information on the particle swap probability
-!!$              line_nbr = line_nbr + 1
-!!$              CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
-!!$              
-!!$              prob_swap = String_To_Double(line_array(1))
-!!$
-!!$              WRITE(logunit,*)
-!!$              WRITE(logunit,'(A,T40,F10.4)')'Probability for particle swap is', prob_swap
-
+              WRITE(logunit,'(A,T40,F12.6)') &
+                   'Probability for deletion', prob_deletion
 
            ELSE IF (line_string(1:15 ) == '# Prob_Regrowth') THEN
               ALLOCATE(prob_growth_species(nspecies))
               num_moves = num_moves + 1
-              ! Probability for regroth of molecule is specified
+              ! Probability for regrowth of molecule is specified
               line_nbr = line_nbr + 1
               CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
 
               prob_regrowth = String_To_Double(line_array(1))
 
-              WRITE(logunit,*)
-              WRITE(logunit,'(A30,2X,F9.6)')' Probability for regrowth is', prob_regrowth
+              WRITE(logunit,'(A,T40,F12.6)') &
+                   'Probability for regrowth', prob_regrowth
 
               ! On the next line read the species probability
               line_nbr = line_nbr + 1
@@ -4413,13 +4398,19 @@ SUBROUTINE Get_Move_Probabilities
 
               DO is = 1,nspecies
                  prob_growth_species(is) = String_To_Double(line_array(is))
+                 IF (nfragments(is) == 0 .AND. prob_growth_species(is) > tiny_number) THEN
+                    err_msg = ''
+                    err_msg(1) = 'Regrowth probability for species ' // TRIM(Int_To_String(is)) // &
+                                 ' must be zero since species has zero fragments' 
+                    CALL Clean_Abort(err_msg, 'Get_Move_Probabilities')
+                 END IF
                  IF (is > 1) THEN
                     prob_growth_species(is) = prob_growth_species(is) + &
                          prob_growth_species(is-1)
                  END IF
 
-                 WRITE(logunit,*)
-                 WRITE(logunit,'(A50,2X,I3,2X,A2,2X,F9.6)')'Cumulative probability for regrowth of species ',is, 'is ',&
+                 WRITE(logunit,'(X,A,2X,I3,2X,A2,2X,F9.6)') &
+                      'Cumulative probability for regrowth of species ',is, 'is ',&
                       prob_growth_species(is) 
               END DO
 
@@ -4445,9 +4436,8 @@ SUBROUTINE Get_Move_Probabilities
 
               omega_max = omega_max * PI/180.0_DP
 
-              WRITE(logunit,*)
-              WRITE(logunit,*) 'Ring sampling enabled'
-              WRITE(logunit,*) 'Probability of moving ring atoms', prob_ring
+              WRITE(logunit,'(A,T40,F12.6)') &
+                   'Probability for ring moves', prob_ring
               WRITE(logunit,*) 'Maximum flip angle in radians', omega_max
 
            ELSE IF (line_string(1:24) == '# Prob_Atom_Displacement') THEN
@@ -4458,20 +4448,17 @@ SUBROUTINE Get_Move_Probabilities
 
               prob_atom_displacement = String_To_Double(line_array(1))
 
-              WRITE(logunit,*)
-              WRITE(logunit,*) 'Atom displacement enabled'
-              WRITE(logunit,*) 'Probability of this move', prob_atom_displacement
+              WRITE(logunit,'(A,T40,F12.6)') &
+                   'Probability for atom displacment', prob_atom_displacement
 
               ! on next line read in the information about delta_cos_max and
               ! delta_phi_max
               line_nbr = line_nbr + 1
-
               CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
 
               delta_cos_max = String_To_Double(line_array(1))
               delta_phi_max = String_To_Double(line_array(2))
 
-              WRITE(logunit,*)
               WRITE(logunit,*) 'Maximum width in cosine of polar angle is', delta_cos_max
               WRITE(logunit,*) 'Maximum width (degrees) in azimuthal angle is', delta_phi_max
 
@@ -4485,198 +4472,69 @@ SUBROUTINE Get_Move_Probabilities
 
               EXIT inputLOOP
 
+           ELSE IF (line_string(1:1) == '#') THEN
+
+              err_msg = ''
+              err_msg(1) = 'Subsection ' // TRIM(line_string) // ' on line number ' // &
+                           TRIM(Int_To_String(line_nbr)) // & 
+                           ' of the input file is not supported'
+              err_msg(2) = 'Supported subsections are: Prob_Translation, Prob_Rotation, Prob_Regrowth,'
+              err_msg(3) = '                           Prob_Volume, Prob_Insertion, Prob_Deletion,'
+              err_msg(4) = '                           Prob_Swap, Prob_Ring, Prob_Atom_Displacement,'
+              err_msg(5) = '                           Prob_Angle, Prob_Dihedral'
+              CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
+
            END IF
 
         END DO sectionLOOP
 
      ELSE IF ( line_string(1:3) == 'END' .OR. line_nbr > 10000 ) THEN
 
-        err_msg = ""
-        err_msg(1) = 'Move probabilities info not specified in the input'
+        err_msg = ''
+        err_msg(1) = 'Section "# Move_Probability_Info" is missing from the input file and is required'
         CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
 
      END IF
 
-     ! We finished the probability section
-
-     ! Check to make sure that prob_volume is specified for an NPT simulation
-
   END DO inputLOOP
 
-  IF (int_sim_type == sim_gemc .OR. int_sim_type == sim_gemc_ig .OR. &
-       int_sim_type == sim_gemc_npt) THEN
-     ! we will determine whether the individual probabilties are defined
-     ! for transfer between the boxes
-     l_prob_box_swap = .false.
-     ALLOCATE(prob_swap_boxes(nbr_boxes,nbr_boxes))
-
-     REWIND(inputunit)
-     line_nbr = 0
-
-     mainLoop:DO
-        line_nbr = line_nbr + 1
-        CALL Read_String(inputunit,line_string,ierr)
-
-        IF (line_string(1:15) == '# Prob_Box_Swap') THEN
-           l_prob_box_swap = .TRUE.
-           ! we found a section specifying the probabilities of transfer
-           ! between boxes
-
-           prob_swap_boxes(:,:) = 0.0_DP
-
-           boxLoop:DO ibox = 1, nbr_boxes
-              line_nbr = line_nbr + 1
-              CALL Parse_String(inputunit,line_nbr,nbr_boxes + 1, nbr_entries,line_array,ierr)
-
-              ! first check that the box number matches up
-
-              this_box = String_To_Int(line_array(1))
-
-              IF (this_box /= ibox ) THEN
-                 err_msg = ''
-                 err_msg(1) = 'Box ids do not match up in # Prob_Box_Swap section'
-                 CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
-              END IF
-
-              DO kbox = 1, nbr_boxes
-                 prob_swap_boxes(ibox,kbox) = String_To_Double(line_array(kbox+1))
-                 IF (ibox == kbox ) THEN
-
-                    IF (prob_swap_boxes(ibox,kbox) /= 0.0_DP) THEN
-                       err_msg = ''
-                       err_msg(1) = 'Nonzero probability specified for transfer in the same box for box'                               
-                       err_msg(2) = 'Intra box swap not yet implemented'
-                       err_msg(3) = 'Box id '//Int_To_String(kbox)
-                       CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
-                    END IF
-                 END IF
-
-              END DO
-
-              ! Now from these relative probabilities, obtain cumulative
-              ! probabilities
-
-              DO kbox = 1, nbr_boxes
-
-                 IF (kbox > 1 ) THEN
-                    prob_swap_boxes(ibox,kbox) = prob_swap_boxes(ibox,kbox) + &
-                         prob_swap_boxes(ibox,kbox-1)
-                 END IF
-
-              END DO
-
-              IF (ABS(prob_swap_boxes(ibox,nbr_boxes)-1.0_DP) > 0.000001_DP) THEN
-                 err_msg = ''
-                 err_msg(1) = 'Probabilities of box transfer do not add up to 1'
-                 err_msg(2) = 'Box id'//Int_To_String(ibox)
-                 CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
-              END IF
-
-
-           END DO boxLoop
-
-           EXIT
-
-        ELSE IF ( line_string(1:3) == 'END' .OR. line_nbr > 10000 ) THEN
-
-           WRITE(logunit,*)
-           WRITE(logunit,*) 'Probabilties of swap for individual boxes not specified'
-           WRITE(logunit,*) 'Defaulting to uniform probabilities'
-
-           EXIT
-
-        END IF
-
-     END DO mainLoop
-
-     IF (.NOT. l_prob_box_swap) THEN
-
-        prob_box_swap = 1.0_DP/REAL(nbr_boxes-1,DP)
-        prob_swap_boxes(:,:) = prob_box_swap
-
-        DO ibox = 1, nbr_boxes
-
-           DO kbox = 2, nbr_boxes - 1
-              prob_swap_boxes(ibox,kbox) = prob_swap_boxes(ibox,kbox-1) + &
-                   prob_swap_boxes(ibox,kbox)
-           END DO
-
-           prob_swap_boxes(ibox,ibox) = 0.0_DP           
-           prob_swap_boxes(ibox,nbr_boxes) = 1.0_DP
-
-        END DO
-
-     END IF
-
-
-    IF (verbose_log) THEN
-     ! log the probabilties of choosing a pair of box
-             WRITE(logunit,*)
-             WRITE(logunit,*) '******** Box pair selection probabilities *********'
-             WRITE(logunit,*)
-
-             DO ibox = 1, nbr_boxes
-
-                DO kbox = 1, nbr_boxes
-
-                   WRITE(logunit,'(I3,2X,I3,2X,F10.6)') ibox, kbox, prob_swap_boxes(ibox,kbox)
-
-                END DO
-
-             END DO
-    END IF
-
-
-  END IF
-
   IF( int_sim_type == sim_npt .OR. int_sim_type == sim_gemc .OR. &
-       int_sim_type == sim_gemc_npt .OR. & 
-       int_sim_type == sim_gemc_ig) THEN
+      int_sim_type == sim_gemc_npt) THEN
 
      IF (prob_volume == 0.0_DP) THEN
         err_msg = ''
-        err_msg(1) = 'Volume probability is not specified for'
-        err_msg(2) = TRIM(sim_type)//' ensemble'
-        CALL Clean_Abort(err_msg,'Get_Pressure_Info')
+        err_msg(1) = 'Prob_Volume cannot be zero in a ' // TRIM(sim_type) // ' simulation'
+        CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
      END IF
   END IF
 
   IF ( int_sim_type == sim_gcmc) THEN
-     IF ( (prob_insertion == 0.0_DP) .OR. (prob_deletion == 0.0_DP)) THEN
+     IF ( prob_insertion == 0.0_DP .OR. prob_deletion == 0.0_DP) THEN
         err_msg = ''
-        err_msg(1) = 'Either probability of insertion or deletion is not specified'
+        err_msg(1) = 'Prob_Insertion and Prob_Deletion cannot be zero in a GCMC simulation'
+        CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
+     ELSE IF (ABS(prob_insertion - prob_deletion) > tiny_number) THEN
+        err_msg = ''
+        err_msg(1) = 'Prob_Insertion and Prob_Deletion must be equal in a GCMC simulation'
+        CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
+     END IF
+  END IF
+
+  IF (int_sim_type == sim_gemc .OR. int_sim_type == sim_gemc_npt) THEN
+
+     IF (prob_swap == 0.0_DP .AND. int_run_type == run_prod) THEN
+        err_msg = ''
+        err_msg(1) = 'Prob_Swap cannot be zero in a production run of a ' // TRIM(sim_type) // ' simulation'
         CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
      END IF
 
-  ELSE IF (int_sim_type == sim_gemc .OR. int_sim_type == sim_gemc_ig .OR. &
-       int_sim_type == sim_gemc_npt) THEN
-
-
-     IF ( (prob_swap == 0.0_DP) .OR. (prob_volume == 0.0_DP)) THEN
-        WRITE(logunit,*)
-        WRITE(logunit,*) '**** WARNING *****      '
-        WRITE(logunit,*)
-        WRITE(logunit,*) 'prob_swap and prob_vol are zero for GEMC simulation'
-        WRITE(logunit,*) 'If it is production run make sure they are non-zero' 
-        WRITE(logunit,*)  
-        WRITE(logunit,*) '**** WARNING *****      ' 
-        WRITE(logunit,*)
-        !        err_msg = ''
-        !        err_msg(1) = 'GEMC ensemble specified'
-        !        err_msg(2) = 'Either probability for volume move or particle swap is not specified'
-        !        CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
-     END IF
-
-
   END IF
 
-  WRITE(logunit,*) '***** Finished reading the move probability info *****'
   WRITE(logunit,'(A20,I4)') 'Number of moves is :', num_moves
-  WRITE(logunit,*)
 
   movetime(:) = 0.0_DP
-  ! For the cumulative probability
 
+  ! cumulative probability
   cut_trans = prob_trans
   cut_rot = cut_trans + prob_rot
   cut_torsion = cut_rot + prob_torsion
@@ -4689,38 +4547,90 @@ SUBROUTINE Get_Move_Probabilities
   cut_ring = cut_regrowth + prob_ring
   cut_atom_displacement = cut_ring + prob_atom_displacement
 
+  steps_per_sweep = INT(cut_atom_displacement)
+  IF (steps_per_sweep == 0) steps_per_sweep = 1
 
   IF (ABS(cut_atom_displacement-1.0_DP) > tiny_number ) THEN
 
-     err_msg = ""
-     err_msg(1) = 'Probabilities do not add upto 1.0'
-     CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
+     WRITE (logunit,*) 'Move probabilities do not sum to 1.0'
+     WRITE (logunit,'(X,A,F12.6)') 'Dividing each probability by ', cut_atom_displacement
+     cut_trans = cut_trans / cut_atom_displacement
+     cut_rot = cut_rot / cut_atom_displacement
+     cut_torsion = cut_torsion / cut_atom_displacement
+     cut_volume = cut_volume / cut_atom_displacement
+     cut_angle = cut_angle / cut_atom_displacement
+     cut_insertion = cut_insertion / cut_atom_displacement
+     cut_deletion = cut_deletion / cut_atom_displacement
+     cut_swap = cut_swap / cut_atom_displacement
+     cut_regrowth = cut_regrowth / cut_atom_displacement
+     cut_ring = cut_ring / cut_atom_displacement
+     cut_atom_displacement = cut_atom_displacement / cut_atom_displacement
 
   END IF
 
+  WRITE(logunit,'(A80)') '********************************************************************************'
+
 END SUBROUTINE Get_Move_Probabilities
 
-
- 
-!*****************************************************************************************
-
+!******************************************************************************
 SUBROUTINE Get_Start_Type
-  ! This subroutine will read in the initial coordinates from an input file.
-  ! There are three options to start a run
-  ! 'make_config' --- will attempt to generate an initial configuration by random insertion
-  !               --- molecules
-  ! 'read_old' --- read from an exisiting file
-  ! 'checkpoint'  --- read from a crash file
+!******************************************************************************
+! This subroutine will read in the initial coordinates from an input file.
+! There are three options to start a run
+! 'make_config'   --- will attempt to generate an initial configuration by
+!                     randomly inserting molecules
+! 'read_config'   --- read from an exisiting file
+! 'add_to_config' --- read from an exisiting file and then insert additional molecules
+! 'checkpoint'    --- read from a crash file
+!******************************************************************************
 
-  INTEGER :: ierr, line_nbr, nbr_entries, i,j, ibox
+  INTEGER :: ierr, line_nbr, nbr_entries, i,j, ibox, is
   CHARACTER(120) :: line_string, line_array(20)
   CHARACTER(1) :: first_character
   CHARACTER(4) :: symbol
 
   REAL(DP) :: total_mass, this_mass
+
+!******************************************************************************
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'Start type'
+  WRITE(logunit,'(A80)') '********************************************************************************'
+
+  ALLOCATE(start_type(nbr_boxes),Stat=Allocatestatus)
+  IF (Allocatestatus /= 0) THEN
+    err_msg = ''
+    err_msg(1) = 'Memory could not be allocated for start_type'
+    CALL Clean_Abort(err_msg, 'Get_Start_Type')
+  END IF
   
+  ALLOCATE(old_config_file(nbr_boxes),Stat=Allocatestatus)
+  IF (Allocatestatus /= 0) THEN
+    err_msg = ''
+    err_msg(1) = 'Memory could not be allocated for old_config_file'
+    CALL Clean_Abort(err_msg, 'Get_Start_Type')
+  END IF
+
+  ALLOCATE(nmols_to_read(nspecies,nbr_boxes),Stat=Allocatestatus)
+  IF (Allocatestatus /= 0) THEN
+    err_msg = ''
+    err_msg(1) = 'Memory could not be allocated for nmols_to_read'
+    CALL Clean_Abort(err_msg, 'Get_Start_Type')
+  END IF
+
+  ALLOCATE(nmols_to_make(nspecies,nbr_boxes),Stat=Allocatestatus)
+  IF (Allocatestatus /= 0) THEN
+    err_msg = ''
+    err_msg(1) = 'Memory could not be allocated for nmols_to_make'
+    CALL Clean_Abort(err_msg, 'Get_Start_Type')
+  END IF
+
   ierr = 0
   line_nbr = 0
+  ibox = 0
+  nmols_to_make = 0
+  nmols_to_read = 0
+  nmols = 0
+  molecule_list(:,:)%live = .FALSE.
 
   REWIND(inputunit)
 
@@ -4728,201 +4638,223 @@ SUBROUTINE Get_Start_Type
   
   inputLOOP:DO
      line_nbr = line_nbr + 1
-
      CALL Read_String(inputunit,line_string,ierr)
      IF ( ierr /= 0 ) THEN
-        err_msg = ""
-        err_msg(1) = "Error encoutered while reading initial coordinate information"
-        CALL Clean_Abort(err_msg,'Get_Initial_coordinates_Info')
+        err_msg = ''
+        err_msg(1) = "Error while reading input file"
+        CALL Clean_Abort(err_msg,'Get_Start_Type')
      END IF
 
      IF(line_string(1:12) == '# Start_Type') THEN
         ! we entered the section of input file that contains information on
         ! initial coordinates
-        WRITE(logunit,*) 
-        WRITE(logunit,*) '******Initial Coordinate Info **********'
         Start_Type_LOOP: DO 
            line_nbr = line_nbr + 1
            CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
+           ibox = ibox + 1
            IF (line_array(1) == 'make_config') THEN
+              start_type(ibox) = 'make_config'
 
-              start_type = 'make_config'
-              ALLOCATE(nmol_actual(nspecies,nbr_boxes),Stat = AllocateStatus)
-              IF (AllocateStatus /= 0 ) THEN
-                 write(*,*)'memory could no tbe allocated for nmol_actual array'
-                 write(*,*)'stopping'
-                 STOP
+              WRITE(logunit,'(A)') 'Initial configuration for box ' // &
+                 TRIM(Int_To_String(ibox)) // ' will be made'
+              
+              ! check number of entries
+              IF (nbr_entries < nspecies + 1) THEN
+                 err_msg = ''
+                 err_msg(1) = 'Simulation has ' // &
+                    TRIM(Int_To_String(nspecies)) // ' species'
+                 err_msg(2) = 'Input file lists number of molecules for ' // &
+                    TRIM(Int_To_String(nbr_entries-1)) // ' species'
+                 CALL Clean_Abort(err_msg, 'Get_Start_Type')
               END IF
-              WRITE(logunit,*)
-              WRITE(logunit,*) 'Initial configuration will be generated'
-              
-              ! read in the initial geometry to generate initial configuration
-              ! for each of the species
-              
-              ! Allocate memory for each of the file names
-              ALLOCATE(init_geomfile(nspecies))
-            
-              DO i = 1, nspecies
-                 line_nbr = line_nbr + 1
-                 CALL Parse_String(inputunit,line_nbr,nbr_boxes,nbr_entries,line_array,ierr)
-                 ! Check the string for alphanumeric characters
-!!$                 CALL Check_String(line_array(1),ierr)
-!!$                 
-!!$                 IF (ierr /= 0) THEN
-!!$                    err_msg = ""
-!!$                    err_msg(1) = 'An error in the input line ' // TRIM(Int_to_String(line_nbr)) &
-!!$                         // ' of input file.'
-!!$                    CALL Clean_Abort(err_msg,'Get_Initial_Coordinates_Info')
-!!$                 END IF
 
-!!$                 init_geomfile(i) = line_array(1)
-!!$
-!!$                 WRITE(logunit,*) 
-!!$                 WRITE(logunit,'(A,T50,I3,A)') 'The initial geometry file for species ', i , ' is'
-!!$                 WRITE(logunit,*) ADJUSTL(init_geomfile(i))
+              ! Read nmols_to_make
+              DO is = 1, nspecies
+                 nmols_to_make(is,ibox) = String_To_Int(line_array(is+1))
 
-                 ! assign actual number of molecules of this species in each box
-                 
-                 DO ibox = 1, nbr_boxes
-                    nmol_actual(i,ibox) = String_To_Int(line_array(ibox))
-                    WRITE(logunit,'(A41,2x,I2,2X,A7,2X,I2,2X,A2,2X,I6)') 'Starting number of molecules of species', i, ' in box ', ibox, 'is',  nmol_actual(i,ibox)
-                 END DO
- 
-                 species_list(i)%nmoltotal = SUM(nmol_actual(i,:))
-
-                 IF (species_list(i)%nmoltotal > nmolecules(i)) THEN
+                 ! check that inserting species have fragments
+                 IF (nfragments(is) == 0 .AND. nmols_to_make(is,ibox) /= 0) THEN
                     err_msg = ''
-                    err_msg(1) = 'Actual number of molecules of species' // INT_To_String(i) // 'is'
-                    err_msg(2) = 'greater than maximum allowed'
-                    CALL Clean_Abort(err_msg,'Get_Initial_Coordinates_Info')
+                    err_msg(1) = 'Cannot insert molecules of species ' // TRIM(Int_To_String(is)) // &
+                              ' since species has zero fragments'
+                    CALL Clean_Abort(err_msg, 'Get_Start_Type')
                  END IF
 
-                 WRITE(logunit,*) 
-                 WRITE(logunit,'(A36,2X,I2,2X,A21,2X,I6)') 'Total number of molecules of species ', i , ' present initially is', species_list(i)%nmoltotal
-
-!!$                 ! --- open the geometry file and read in the coordinates 
-!!$                 OPEN(unit=init_geomunit,file=init_geomfile(i),status='old')
-!!$                 ! the file is in xyz format
-!!$
-!!$                 ! obtain COM of the input geometry as well
-!!$                 total_mass = 0.0_DP
-!!$                 
-!!$                 species_list(i)%xcom = 0.0_DP
-!!$                 species_list(i)%ycom = 0.0_DP
-!!$                 species_list(i)%zcom = 0.0_DP
-!!$                 
-!!$
-!!$                 DO j = 1, natoms(i)
-!!$                    READ(init_geomunit,*) symbol, init_list(j,1,i)%rxp, init_list(j,1,i)%ryp, init_list(j,1,i)%rzp
-!!$                    
-!!$                    this_mass = nonbond_list(j,i)%mass
-!!$                    total_mass = total_mass + this_mass
-!!$                    
-!!$                    species_list(i)%xcom = species_list(i)%xcom + this_mass * &
-!!$                         init_list(j,1,i)%rxp
-!!$                    species_list(i)%ycom = species_list(i)%ycom + this_mass * &
-!!$                         init_list(j,1,i)%ryp
-!!$                    species_list(i)%zcom = species_list(i)%zcom + this_mass * &
-!!$                         init_list(j,1,i)%rzp
-!!$                    
-!!$                 END DO
-!!$                 
-!!$                 CLOSE(UNIT=init_geomunit)
-!!$
-!!$                 species_list(i)%xcom = species_list(i)%xcom / total_mass
-!!$                 species_list(i)%ycom = species_list(i)%ycom / total_mass
-!!$                 species_list(i)%zcom = species_list(i)%zcom / total_mass
-                 
+                 WRITE(logunit,'(X,A11,2X,I6,2X,A20,2X,I2)') 'Will insert', &
+                    nmols_to_make(is,ibox), 'molecules of species', is
               END DO
+ 
+           ELSE IF (line_array(1) == 'read_config') THEN
+              start_type(ibox) = 'read_config'
+
+              WRITE(logunit,'(A)') 'Initial configuration for box ' // &
+                 TRIM(Int_To_String(ibox)) // ' will be read from file'
               
-              EXIT inputLOOP
-
-           ELSE IF (line_array(1) == 'read_old') THEN
-              ! in this case we will read in the information of coordinates for
-              ! all the boxes so that there must be nbr_boxes lines following the
-              ! keyword.
-              ALLOCATE(old_config_file(nbr_boxes))
-              
-              start_type = 'read_old'
-
-              WRITE(logunit,*)
-              WRITE(logunit,*) 'Configurations will be read from old files'
-              DO i = 1,nbr_boxes
-                 line_nbr = line_nbr + 1
-                 CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
-                 ! Make sure that the characters of the string are alphanumeric with
-                 ! a possibility of a . (dot). The first character must be an alphabet
-                 CALL Check_String(line_array(1),ierr)
-                 IF (ierr /= 0 ) THEN
-                    err_msg = ""
-                    err_msg(1) = 'An error in the input line ' // TRIM(Int_to_String(line_nbr)) &
-                         // ' of input file.'
-                    CALL Clean_Abort(err_msg,'Get_Initial_Coordinates_Info')
-                 END IF
-
-                 WRITE(logunit,*)
-                 WRITE(logunit,'(A,T40,I3,A,T50)')'Starting configuration for box ', i, ' is'
-                 WRITE(logunit,*) ADJUSTL(line_array(1))
-                 old_config_file(i) = TRIM(ADJUSTL(line_array(1)))
-                 
+              ! Check number of entries
+              IF (nbr_entries < nspecies+2) THEN
+                 err_msg = ''
+                 err_msg(1) = 'Simulation has ' // &
+                    TRIM(Int_To_String(nspecies)) // ' species'
+                 err_msg(2) = 'Input file lists number of molecules for ' // &
+                    TRIM(Int_To_String(nbr_entries-2)) // ' species'
+                 CALL Clean_Abort(err_msg,'Get_Start_Type')
+              END IF
+ 
+              ! Read nmols_to_read
+              DO is = 1, nspecies
+                 nmols_to_read(is,ibox) = String_To_Int(line_array(is+1))
+                 WRITE(logunit,'(X,A9,2X,I6,2X,A20,2X,I2)') 'Will read', &
+                    nmols_to_read(is,ibox), 'molecules of species', is
               END DO
-              EXIT inputLOOP
-           ELSE IF (line_array(1) == 'checkpoint') THEN
 
-              start_type = 'checkpoint'
-
-              WRITE(logunit,*)
-              WRITE(logunit,*) 'Starting configuration will be obtained from check point files'
-              
-              line_nbr = line_nbr + 1
-              CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
-              ! Make sure that the characters of the string are alphanumeric with
-              ! a possibility of a . (dot). or _ (dash). The first character must be an alphabet
-              CALL Check_String(line_array(1),ierr)
+              ! Make sure that the characters of the string are alphanumeric
+              ! with a possibility of a . (dot).
+              ! The first character must be an alphabet
+              CALL Check_String(line_array(2+nspecies),ierr)
               IF (ierr /= 0 ) THEN
-                 err_msg = ""
+                 err_msg = ''
+                 err_msg(1) = 'An error in the input line ' // &
+                      TRIM(Int_to_String(line_nbr)) // ' of input file.'
+                 CALL Clean_Abort(err_msg,'Get_Start_Type')
+              END IF
+              old_config_file(ibox) = TRIM(ADJUSTL(line_array(2+nspecies)))
+
+              WRITE(logunit,'(X,A33,X,A)') &
+                 'Will read configuration from file', TRIM(old_config_file(ibox))
+                 
+           ELSE IF (line_array(1) == 'add_to_config') THEN
+              start_type(ibox) = 'add_to_config'
+
+              WRITE(logunit,'(A)') 'Initial configuration for box ' // &
+                 TRIM(Int_To_String(ibox)) // ' will add molecules to ' // &
+                 'configuration read from file'
+              
+              ! Read nmols_to_read
+              DO is = 1, nspecies
+                 nmols_to_read(is,ibox) = String_To_Int(line_array(is+1))
+                 WRITE(logunit,'(X,A9,2X,I6,2X,A20,2X,I2)') 'Will read', &
+                    nmols_to_read(is,ibox), 'molecules of species', is
+              END DO
+
+              ! Make sure that the characters of the string are alphanumeric
+              ! with a possibility of a . (dot).
+              ! The first character must be an alphabet
+              CALL Check_String(line_array(2+nspecies),ierr)
+              IF (ierr /= 0 ) THEN
+                 err_msg = ''
+                 err_msg(1) = 'An error in the input line ' // &
+                      TRIM(Int_to_String(line_nbr)) // ' of input file.'
+                 CALL Clean_Abort(err_msg,'Get_Start_Type')
+              END IF
+              old_config_file(ibox) = TRIM(ADJUSTL(line_array(2+nspecies)))
+
+              WRITE(logunit,'(X,A33,X,A)') &
+                 'Will read configuration from file', TRIM(old_config_file(ibox))
+                 
+              ! Read nmols_to_make
+              DO is = 1, nspecies
+                 ! assign initial number of molecules to add in each box
+                 nmols_to_make(is,ibox) = &
+                    String_To_Int(line_array(2+nspecies+is))
+
+                 ! check that inserting species have fragments
+                 IF (nfragments(is) == 0 .AND. nmols_to_make(is,ibox) /= 0) THEN
+                    err_msg = ''
+                    err_msg = 'Cannot insert molecules of species ' // TRIM(Int_To_String(is)) // &
+                              ' since species has zero fragments'
+                    CALL Clean_Abort(err_msg, 'Get_Start_Type')
+                 END IF
+
+                 WRITE(logunit,'(X,A11,2X,I6,2X,A20,2X,I2)') 'Will insert', &
+                    nmols_to_make(is,ibox), 'molecules of species', is
+              END DO
+
+           ELSE IF (line_array(1) == 'checkpoint') THEN
+              start_type(1) = 'checkpoint'
+
+              WRITE(logunit,'(A)') 'Starting configuration will be read from checkpoint file'
+              
+              ! Make sure that the characters of the string are alphanumeric with
+              ! a possibility of a . (dot). or _ (dash).
+              ! The first character must be a letter from the alphabet
+              CALL Check_String(line_array(2),ierr)
+              IF (ierr /= 0 ) THEN
+                 err_msg = ''
                  err_msg(1) = 'An error in the input line ' // TRIM(Int_to_String(line_nbr)) &
                       // ' of input file.'
-                 CALL Clean_Abort(err_msg,'Get_Initial_Coordinates_Info')
+                 CALL Clean_Abort(err_msg,'Get_Start_Type')
+              END IF
+              IF (ibox /= 1) THEN
+                 err_msg = ''
+                 err_msg(1) = 'checkpoint must be the first start type option'
+                 CALL Clean_Abort(err_msg, 'Get_Start_Type')
               END IF
               
-              restart_file = line_array(1)
-              WRITE(logunit,*)
-              WRITE(logunit,*)'Starting configuration is '
-              WRITE(logunit,*) ADJUSTL(line_array(1))
+              restart_file = line_array(2)
+              WRITE(logunit,*) TRIM(restart_file)
               
-              
-              
-           
-              EXIT inputLOOP
-
+              ibox = nbr_boxes
+           ELSE
+              err_msg = ''
+              err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
+                           TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+              err_msg(2) = 'Supported keywords are: make_config, read_config, add_to_config, checkpoint'
+              CALL Clean_Abort(err_msg,'Get_Start_Type')
            END IF
+           IF (ibox == nbr_boxes) EXIT inputLOOP
                        
         END DO Start_Type_LOOP
+
+     ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
+
+        err_msg = ''
+        err_msg(1) = 'Section "# Start_Type" is missing from the input file and is required'
+        CALL Clean_Abort(err_msg,'Get_Start_Type')
+
      END IF
      
   END DO InputLOOP
-  WRITE(logunit,*) 
-  WRITE(logunit,*) '*****Finished reading initial coordinate info *****'
+
+  DO is = 1, nspecies  
+     species_list(is)%nmoltotal = SUM(nmols_to_read(is,:)) &
+                                + SUM(nmols_to_make(is,:))
+
+     IF (species_list(is)%nmoltotal > max_molecules(is)) THEN
+        err_msg = ''
+        err_msg(1) = 'Initial number of molecules of species ' // &
+                     TRIM(Int_To_String(is)) // ' is ' // &
+                     TRIM(Int_To_String(species_list(is)%nmoltotal))
+        err_msg(2) = 'Maximum number of molecules is ' // &
+                     TRIM(Int_To_String(max_molecules(is)))
+        CALL Clean_Abort(err_msg,'Get_Initial_Coordinates_Info')
+     END IF
+  END DO
+
+  WRITE(logunit,'(A80)') '********************************************************************************'
+
 END SUBROUTINE Get_Start_Type
 
 
-!**************************************************************************************
+!******************************************************************************
 SUBROUTINE Get_Run_Type
-  ! The subroutine determines whether the run is equilibration or production
-  ! During an equilibration run, widths of translation and rotational moves
-  ! along with dihedral and angles will be changed to achieve a 50% acceptance.
-  !*********************************************************************************
-
-USE Energy_Routines
-USE Rotation_Routines
-USE Random_Generators
+!******************************************************************************
+! The subroutine determines whether the run is equilibration or production
+! During an equilibration run, widths of translation and rotational moves
+! along with dihedral and angles will be changed to achieve a 50% acceptance.
+!******************************************************************************
 
   IMPLICIT NONE
 
   INTEGER :: ierr, line_nbr, nbr_entries,i, ia 
   CHARACTER(120) :: line_string,line_array(20)
   LOGICAL :: overlap
+
+!******************************************************************************
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'Run type'
+  WRITE(logunit,'(A80)') '********************************************************************************'
+
+  REWIND(inputunit)
 
   ierr = 0
   line_nbr = 0
@@ -4931,60 +4863,54 @@ USE Random_Generators
      line_nbr = line_nbr + 1
      CALL Read_String(inputunit,line_string,ierr)
      IF (ierr /=0 ) THEN
-        err_msg = ""
-        err_msg(1) = 'Error while reading input file'
+        err_msg = ''
+        err_msg(1) = 'Error while reading line ' // &
+           TRIM(Int_To_String(line_nbr)) // ' of input file'
         CALL Clean_Abort(err_msg,'Get_Run_Type')
      END IF
      
      IF (line_string(1:10) == '# Run_Type') THEN
         
-        WRITE(logunit,*)
-        WRITE(logunit,*) '****** Reading Run_Type Information ******'
-
-        
         line_nbr = line_nbr + 1
         CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
         
-        IF (line_array(1) == 'Equilibration' ) THEN
-           run_style = line_array(1)
-           int_run_style = run_equil
+        IF (line_array(1) == 'equilibration' .OR. line_array(1) == 'Equilibration') THEN
+           run_type = line_array(1)
+           int_run_type = run_equil
 
-        ELSE IF (line_array(1) == 'Production') THEN
-           run_style = line_array(1)
-           int_run_style = run_prod
+        ELSE IF (line_array(1) == 'production' .OR. line_array(1) == 'Production') THEN
+           run_type = line_array(1)
+           int_run_type = run_prod
          
-        ELSE IF (line_array(1) == 'Test') THEN
-           run_style = line_array(1)
-           int_run_style = run_test
+        ELSE IF (line_array(1) == 'test' .OR. line_array(1) == 'Test') THEN
+           run_type = line_array(1)
+           int_run_type = run_test
            
         ELSE
-  
-           WRITE(logunit,*)
-           err_msg = ""
-           err_msg(1) = 'Run_Type not supported'
+           err_msg = ''
+           err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
+                        TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+           err_msg(2) = 'Supported keywords are: equilibration, production'
            CALL Clean_Abort(err_msg,'Get_Run_Type')
-
         END IF
 
         nupdate = String_To_Int(line_array(2))
         
-        WRITE(logunit,*)
         WRITE(logunit,*) 'The input run type is ', TRIM(line_array(1))
         WRITE(logunit,*) 'Update frequency is ', nupdate
 
-    IF (int_sim_type == sim_npt .OR. int_sim_type == sim_gemc .OR. &
-         int_sim_type == sim_gemc_npt .OR. &
-         int_sim_type == sim_gemc_ig) THEN
+        IF (int_sim_type == sim_npt .OR. int_sim_type == sim_gemc .OR. &
+            int_sim_type == sim_gemc_npt .OR. &
+            int_sim_type == sim_gemc_ig) THEN
            
            IF (nbr_entries /= 3) THEN
-              err_msg = ""
+              err_msg = ''
               err_msg(1) = 'Equilibration specified without the volume update'
               CALL Clean_Abort(err_msg,'Get_Run_Type')
            END IF
            
            nvol_update = String_To_Int(line_array(3))
            
-           WRITE(logunit,*) 
            WRITE(logunit,*) 'Update frequency for adjusting maximum volume displacement is'
            WRITE(logunit,*) nvol_update
            
@@ -4994,164 +4920,201 @@ USE Random_Generators
         EXIT
 
      ELSE IF (line_string(1:3) == 'END' .OR. line_nbr > 10000 ) THEN
-        
-        err_msg = ""
-        err_msg(1) = 'Run_Type not specified in the input file.'
+
+        err_msg = ''
+        err_msg(1) = 'Section "# Run_Type" is missing from the input file and is required'
         CALL Clean_Abort(err_msg,'Get_Run_Type')
         
      END IF
 
   END DO
   
-  WRITE(logunit,*)
-  WRITE(logunit,*) '******* Finished reading run type information ******'
+  WRITE(logunit,'(A80)') '********************************************************************************'
+
 END SUBROUTINE Get_Run_Type
 
-!*****************************************************************************************
-
+!******************************************************************************
 SUBROUTINE Get_CBMC_Info
-  ! The subroutine reads in the information on the starting seed for the simulation
+!******************************************************************************
+! The subroutine reads in the information on the starting seed for the simulation
+!******************************************************************************
 
-  INTEGER :: ierr, line_nbr, nbr_entries,ibox
+  INTEGER :: ibox, is
+  INTEGER :: ierr, line_nbr, nbr_entries
   CHARACTER(120) :: line_string,line_array(30)
+  LOGICAL :: need_kappa_ins, need_kappa_dih
+
+!******************************************************************************
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'CBMC info'
+  WRITE(logunit,'(A80)') '********************************************************************************'
 
   REWIND(inputunit)
   ierr = 0
   line_nbr = 0
 
-  IF (MAXVAL(nfragments) == 0) RETURN
+  kappa_ins = 0
+  kappa_rot = 0
+  kappa_dih = 0
+  need_kappa_ins = .FALSE.
+  need_kappa_dih = .FALSE.
 
-  DO
-     line_nbr = line_nbr + 1
-     CALL Read_String(inputunit,line_string,ierr)
-     IF(ierr /= 0) THEN
-        err_msg = ''
-        err_msg(1) = 'Error while reading the Get_CBMC_Info'
-        call clean_abort(err_msg,'Get_CBMC_Info')
-     end if
-
-     if(line_string(1:11) == '# CBMC_Info') then
-        write(logunit,*)
-        write(logunit,*) '***** reading CBMC info *********'
-        line_nbr = line_nbr + 1
-        call parse_string(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
-        kappa_ins = string_to_int(line_array(2))
-        line_nbr = line_nbr + 1
-        call parse_string(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
-        kappa_rot = string_to_int(line_array(2))
-        kappa_rot = 0
-        line_nbr = line_nbr + 1
-        call parse_string(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
-        kappa_dih = string_to_int(line_array(2))
-
-        write(logunit,*)
-        write(logunit,*) 'Writing out CBMC_Info'
-        write(logunit,'(a,t35,2i12)') 'kappa for first bead insertion ', kappa_ins
-        write(logunit,'(a,t35,2i12)') 'Orientational bias not supported. Kappa for rotations is set to ', kappa_rot
-        write(logunit,'(a,t35,2i12)') 'kappa for dihedral selection ', kappa_dih
-        write(logunit,*)
-
-        line_nbr = line_nbr + 1 
-
-        call parse_string(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
-
-        DO ibox = 1, nbr_boxes
-           rcut_CBMC(ibox) = String_To_Double(line_array(ibox+1))
-           write(logunit,'(a,t35,i8,f12.2)') 'Smaller cutoff for CBMC for box ',ibox, rcut_CBMC(ibox)
-        END DO
-        write(logunit,*) '****** finished loading CBMC_Info ********'
-        exit
-
-     else if(line_string(1:3) == 'end' .or. line_nbr > 10000 ) then
-        err_msg = ''
-        err_msg(1) = 'CBMC_Info not specified'
-        call clean_abort(err_msg,'Get_CBMC_Info')
-     end if
-  end do
-end subroutine get_cbmc_info
-!*****************************************************************************************
-SUBROUTINE Get_Zig_By_Omega
-!*************************************
-! This subroutine is called when chemical potential is used in a GCMC simulation. It goes
-! through the input file and looks for the keyword '# Zig_By_Omega_Info'. For all the
-! species that exchange with the reserovir are included. Zig_By_Omega will be set to
-! zero for rest of the species
-!
-! Written by Jindal Shah on 10/28/13
-!*************************************
-
-  INTEGER :: ierr, line_nbr, nbr_entries, i, spec_counter
-  CHARACTER(120) :: line_string, line_array(20)
-
-  REWIND(inputunit)
-
-  ierr = 0
-  line_nbr = 0
-  spec_counter = 0
-
-  DO
-     line_nbr = line_nbr + 1
-     CALL Read_String(inputunit,line_string,ierr)
-     
-     IF (ierr /= 0 ) THEN
-        err_msg = ''
-        err_msg(1) = 'An error occurred while reading inputfile'
-        err_msg(2) = inputfile
-        CALL Clean_Abort(err_msg,'Get_Zig_By_Omega')
-
-     END IF
-
-     IF (line_string(1:19) == '# Zig_By_Omega_Info') THEN
-
-        WRITE(logunit,*)
-        WRITE(logunit,*) '***** Reading Zig_By_Omega Info ***'
-        line_nbr = line_nbr + 1
-        CALL Parse_String(inputunit,line_nbr,nspec_insert,nbr_entries,line_array,ierr)
-        
-        DO i = 1, nspecies
-           IF (species_list(i)%int_species_type == int_sorbate) THEN
-              spec_counter = spec_counter + 1
-              species_list(i)%zig_by_omega = String_To_Double(line_array(spec_counter))
-           ELSE
-              species_list(i)%zig_by_omega = 0.0_DP
-           END IF
-
-           WRITE(logunit,*)
-           WRITE(logunit,*) 'Zig / Omega for species ', i, ' is ', species_list(i)%zig_by_omega
-
-        END DO
-
-        EXIT
-
-     ELSE IF (line_string(1:3) == 'END' .OR. line_nbr > 10000) THEN
-        
-        err_msg = ''
-        err_msg(1) = 'Zig_By_Omega_Info section is missing from the input fiel'
-        err_msg(2) = inputfile
-
-        CALL Clean_Abort(err_msg,'Get_Zig_By_Omega')
-
-     END IF
-
+  DO is = 1, nspecies
+     species_list(is)%l_coul_cbmc = .TRUE.
   END DO
 
-END SUBROUTINE Get_Zig_By_Omega
-!*****************************************************************************************
+  ! Are CBMC parameters needed?
+  DO ibox = 1, nbr_boxes
+    IF (start_type(ibox) == 'make_config' .OR. start_type(ibox) == 'add_to_config') THEN
+       need_kappa_ins = .TRUE.
+       DO is = 1, nspecies
+          IF (nfragments(is) > 1 .AND. nmols_to_make(is,ibox) > 0) THEN
+             need_kappa_dih = .TRUE.
+          END IF
+       END DO
+    END IF
+  END DO
 
+  IF (int_sim_type == sim_gcmc .OR. int_sim_type == sim_gemc .OR. int_sim_type == sim_gemc_npt) THEN
+     need_kappa_ins = .TRUE.
+     DO is = 1, nspecies
+        IF (nfragments(is) > 1 .AND. species_list(is)%insertion == 'CBMC') THEN
+           need_kappa_dih = .TRUE.
+        END IF
+     END DO
+  END IF
+
+  IF (prob_regrowth > tiny_number) THEN
+     DO is = 1, nspecies
+        IF (nfragments(is) > 1 .AND. prob_growth_species(is) > tiny_number) THEN
+           need_kappa_dih = .TRUE.
+        END IF
+     END DO
+  END IF
+
+  ! Look for CBMC parameters
+  IF (need_kappa_ins .OR. need_kappa_dih) THEN
+      
+     DO
+        line_nbr = line_nbr + 1
+        CALL Read_String(inputunit,line_string,ierr)
+        IF(ierr /= 0) THEN
+           err_msg = ''
+           err_msg(1) = 'Error while reading the Get_CBMC_Info'
+           CALL clean_abort(err_msg,'Get_CBMC_Info')
+        END IF
+
+        IF (line_string(1:11) == '# CBMC_Info') THEN
+           DO 
+              line_nbr = line_nbr + 1
+              CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
+
+              IF (nbr_entries < 2 .OR. line_array(1)(1:1) == '!') THEN
+                 EXIT
+              END IF
+
+              IF (line_array(1) == 'kappa_ins' .OR. line_array(1) == 'Kappa_Ins') THEN
+                 kappa_ins = String_To_Int(line_array(2))
+                 WRITE(logunit,'(A,T35,I12)') 'Kappa for first fragment insertion ', kappa_ins
+              ELSE IF (line_array(1) == 'kappa_rot' .OR. line_array(1) == 'Kappa_Rot') THEN
+                 kappa_rot = String_To_Int(line_array(2))
+                 WRITE(logunit,'(X,A)') 'Orientational bias not supported. Kappa set to zero'
+                 kappa_rot = 0
+              ELSE IF (line_array(1) == 'kappa_dih' .OR. line_array(1) == 'Kappa_Dih') THEN
+                 kappa_dih = String_To_Int(line_array(2))
+                 WRITE(logunit,'(A,T35,I12)') 'Kappa for dihedral selection ', kappa_dih
+              ELSE IF (line_array(1) == 'rcut_cbmc' .OR. line_array(1) == 'Rcut_CBMC') THEN
+                 DO ibox = 1, nbr_boxes
+                    rcut_CBMC(ibox) = String_To_Double(line_array(ibox+1))
+                    WRITE(logunit,'(X,A,F12.2)') 'Cutoff for CBMC for box '// TRIM(Int_To_String(ibox)) // &
+                       ' is ', rcut_CBMC(ibox)
+                 END DO
+              ELSE IF (line_array(1) == 'l_coul_cbmc' .OR. line_array(1) == 'L_Coul_CBMC') THEN
+                 DO is = 1, nspecies
+                    IF (line_array(is+1) == 'true' .OR. line_array(is+1) == 'TRUE') THEN
+                       species_list(is)%l_coul_cbmc = .TRUE.
+                    ELSE IF (line_array(is+1) == 'false' .OR. line_array(is+1) == 'FALSE') THEN
+                       species_list(is)%l_coul_cbmc = .FALSE.
+                    ELSE
+                       err_msg = ''
+                       err_msg(1) = 'Keyword ' // line_array(is+1) // ' on line number ' // &
+                                    TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+                       err_msg(2) = 'Supported keywords are: true, false'
+                       CALL Clean_Abort(err_msg,'Get_CBMC_Info')
+                    END IF
+                 END DO
+              ELSE
+                 err_msg = ''
+                 err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
+                              TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+                 err_msg(2) = 'Supported keywords are: kappa_ins, kappa_dih, rcut_cbmc, l_coul_cbmc'
+                 CALL Clean_Abort(err_msg,'Get_CBMC_Info')
+              END IF
+
+           END DO
+
+           ! kappa_dih must be positive
+           IF (need_kappa_dih .AND. kappa_dih <= 0) THEN
+              err_msg = ''
+              err_msg(1) = 'kappa_dih must be positive'
+              CALL clean_abort(err_msg,'Get_CBMC_Info')
+           END IF
+
+           ! kappa_ins must be positive
+           IF (need_kappa_ins .AND. kappa_ins <= 0) THEN
+              err_msg = ''
+              err_msg(1) = 'kappa_ins must be positive'
+              CALL clean_abort(err_msg,'Get_CBMC_Info')
+           END IF
+
+           ! rcut_cbmc must be positive
+           DO ibox = 1, nbr_boxes
+             IF (rcut_CBMC(ibox) <= 0.0_DP) THEN
+                err_msg = ''
+                err_msg(1) = 'rcut_cbmc must be positive'
+                CALL clean_abort(err_msg,'Get_CBMC_Info')
+             END IF
+           END DO
+
+           EXIT
+
+        ELSE IF(line_string(1:3) == 'END' .or. line_nbr > 10000 ) THEN
+        
+           err_msg = ''
+           err_msg(1) = 'Section "# CBMC_Info" is missing from the input file and is required'
+           CALL clean_abort(err_msg,'Get_CBMC_Info')
+
+        END IF
+     END DO
+  ELSE
+     WRITE(logunit,'(A)') 'Section "# CBMC_Info" not required'
+  END IF
+
+  WRITE(logunit,'(A80)') '********************************************************************************'
+
+END SUBROUTINE Get_CBMC_Info
+
+!******************************************************************************
 SUBROUTINE Get_Seed_Info
-  ! The subroutine reads in the information on the starting seed for the simulation
+!******************************************************************************
+! The subroutine reads in the information on the starting seed for the simulation
+!******************************************************************************
 
   INTEGER :: ierr, line_nbr, nbr_entries
   CHARACTER(120) :: line_string,line_array(20)
 
+!******************************************************************************
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'Seed info'
+  WRITE(logunit,'(A80)') '********************************************************************************'
+
   REWIND(inputunit)
   ierr = 0
   line_nbr = 0
 
   DO
 
-     IF (start_type == 'checkpoint') THEN
-        WRITE(logunit,*) 
+     IF (start_type(1) == 'checkpoint') THEN
         WRITE(logunit,*) 'Seed will be read from a checkpoint file'
         EXIT
      END IF
@@ -5165,47 +5128,52 @@ SUBROUTINE Get_Seed_Info
 
      IF(line_string(1:6) == '# Seed') THEN
 
-        WRITE(logunit,*)
-        WRITE(logunit,*) '***** Reading seed info *********'
-        line_nbr = line_nbr + 1
-
         IF (int_sim_type == sim_mcf ) THEN 
      
+           line_nbr = line_nbr + 1
            CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
            
            iseed = String_To_Int(line_array(1))
 
         ELSE
            
+           line_nbr = line_nbr + 1
            CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)        
            iseed1 = String_To_Int(line_array(1))
            iseed3 = String_To_Int(line_array(2))
 
         END IF
-        WRITE(logunit,*)
-        WRITE(logunit,'(A25,1X,I12)') 'The starting seed s1 is:', s1
-        WRITE(logunit,*)
-        WRITE(logunit,*) '****** Finished loading the seed ********'
+        WRITE(logunit,'(A,X,I12,X,I12)') 'The starting seeds are:', iseed1, iseed3
 
         EXIT
         
      ELSE IF(line_string(1:3) == 'END' .OR. line_nbr > 10000 ) THEN
 
         err_msg = ''
-        err_msg(1) = 'Seed not specified'
-        CALL Clean_Abort(err_msg,'Get_Seed_Info')
+        err_msg(1) = 'Section "# Seed_Info" is missing from the input file and is required'
+        CALL clean_abort(err_msg,'Get_Seed_Info')
 
      END IF        
 
   END DO
-END SUBROUTINE Get_Seed_Info
-!*********************************************************************************************
 
+  WRITE(logunit,'(A80)') '********************************************************************************'
+
+END SUBROUTINE Get_Seed_Info
+
+!******************************************************************************
 SUBROUTINE Get_Simulation_Length_Info
+!******************************************************************************
 
   INTEGER :: ierr, line_nbr, nbr_entries, ibox
   CHARACTER(120) :: line_string, line_array(20),movie_header_file, &
                      movie_xyz_file
+  LOGICAL :: l_run
+
+!******************************************************************************
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'Simulation length info'
+  WRITE(logunit,'(A80)') '********************************************************************************'
 
   REWIND(inputunit)
 
@@ -5215,13 +5183,15 @@ SUBROUTINE Get_Simulation_Length_Info
   ncoord_freq = 0
   n_mcsteps = 0
   n_equilsteps = 0
+  l_run = .FALSE.
+  block_average = .FALSE.
 
   DO
      line_nbr = line_nbr + 1
      CALL Read_String(inputunit,line_string,ierr)
      
      IF ( ierr /= 0 ) THEN
-        err_msg = ""
+        err_msg = ''
         err_msg(1) = "Error encoutered while reading simulation length information"
         CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
      END IF
@@ -5230,107 +5200,136 @@ SUBROUTINE Get_Simulation_Length_Info
         ! We found a section that contains frequency info. We will read in the frequency information
         line_nbr = line_nbr + 1
         CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
-        IF (line_array(1) == 'Units') THEN
+        IF (line_array(1) == 'units' .OR. line_array(1) == 'Units') THEN
 
-           IF (line_array(2) == 'Minutes') THEN
+           IF (line_array(2) == 'minutes' .OR. line_array(2) == 'Minutes') THEN
               timed_run = .TRUE.
-           ELSE
+              sim_length_units = 'Minutes'
+           ELSE IF (line_array(2) == 'steps' .OR. line_array(2) == 'Steps') THEN
               timed_run = .FALSE.
+              sim_length_units = 'Steps'
+           ELSE IF (line_array(2) == 'sweeps' .OR. line_array(2) == 'Sweeps') THEN
+              timed_run = .FALSE.
+              sim_length_units = 'Sweeps'
+           ELSE
+              err_msg = ''
+              err_msg(1) = 'Option ' // TRIM(line_array(2)) // ' for keyword units on line number ' // &
+                           TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+              err_msg(2) = 'Supported options are: steps, sweeps, minutes'
+              CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
            END IF
 
         ELSE  
-           err_msg = ""
-           err_msg(1) = 'A keyword is missing in the input file.'
-           err_msg(2) = 'In section Simulation Length Info.'
-           err_msg(2) = 'Keyword Units is missing.'
+           err_msg = ''
+           err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
+                        TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+           err_msg(2) = 'Supported keywords are: units'
            CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
         END IF
 
         FreqLOOP: DO
            line_nbr = line_nbr + 1
-           CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
-           IF(timed_run) THEN
+           CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
+           IF (nbr_entries < 2 .OR. line_array(1)(1:1) == '!') THEN
+              EXIT FreqLOOP
+           END IF
+           IF (line_array(1) == 'prop_freq' .OR. line_array(1) == 'Prop_Freq') THEN
 
-              IF (line_array(1) == 'Prop_Freq') THEN
- 
-                 nthermo_freq = String_To_Int(line_array(2))
+              nthermo_freq = String_To_Int(line_array(2))
 
-                 WRITE(logunit,*) 
-                 WRITE(logunit,'(A,T50,I8,A)') 'Thermodynamic quantities will written at every', nthermo_freq, ' minutes.'
-
-              ELSE IF (line_array(1) == 'Coord_Freq') THEN
-              
-                 ncoord_freq = String_To_Int(line_array(2))
-
-                 WRITE(logunit,*)
-                 WRITE(logunit,'(A,T50,I8,A)') 'Coordinates will be written at every', ncoord_freq, ' minutes.'
-
-              ELSE IF (line_array(1) == 'Total_Time') THEN
-
-                 n_mcsteps = String_To_Int(line_array(2))
-
-                 WRITE(logunit,*) 
-                 WRITE(logunit,'(A32,2X,I12,2X,A10)' ) 'The simulation will be run for ', n_mcsteps, ' minutes.'
-
-              ELSE IF (line_array(2) == 'Done_Simulation_Length_Info') THEN
-              
-                 WRITE(logunit,*)
-                 WRITE(logunit,*)'*** Finished Reading Simulation Length Info *******'
-              
-                 EXIT FreqLOOP
-
+              ! check that nthermo_freq is positive
+              IF (nthermo_freq <= 0) THEN
+                 err_msg = ''
+                 err_msg(1) = 'Option ' // TRIM(line_array(2)) // ' for keyword prop_freq on line number ' // &
+                              TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+                 err_msg(2) = 'Supported options are: any positive integer'
+                 CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
               END IF
 
-           ELSE
+              WRITE(logunit,'(A,T50,I8,X,A)') 'Thermodynamic quantities will be computed every', &
+                 nthermo_freq, sim_length_units
 
-              IF (line_array(1) == 'Prop_Freq') THEN
+           ELSE IF (line_array(1) == 'coord_freq' .OR. line_array(1) == 'Coord_Freq') THEN
+           
+              ncoord_freq = String_To_Int(line_array(2))
 
-                 nthermo_freq = String_To_Int(line_array(2))
-              
-                 WRITE(logunit,*) 
-                 WRITE(logunit,'(A,T50,I8,A)') 'Thermodynamic quantities will written at every', nthermo_freq, ' MC steps.'
+              ! check that ncoord_freq is positive
+              IF (ncoord_freq <= 0) THEN
+                 err_msg = ''
+                 err_msg(1) = 'Option ' // TRIM(line_array(2)) // ' for keyword coord_freq on line number ' // &
+                              TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+                 err_msg(2) = 'Supported options are: any positive integer'
+                 CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
+              END IF
 
-              ELSE IF (line_array(1) == 'Coord_Freq') THEN
-              
-                 ncoord_freq = String_To_Int(line_array(2))
+              WRITE(logunit,'(A,T50,I8,X,A)') 'Coordinates will be written every', ncoord_freq, sim_length_units
 
-                 WRITE(logunit,*)
-                 WRITE(logunit,'(A,T50,I8,A)') 'Coordinates will be written at every', ncoord_freq, ' MC steps.'
-                 WRITE(logunit,*)
-
+              IF (nbr_boxes == 1) THEN
+                 ibox = 1
+                 movie_header_file = TRIM(run_name) // '.H'
+                 movie_xyz_file =    TRIM(run_name) // '.xyz'
+                 WRITE(logunit,'(X,A,T40,A)') 'movie header file is', TRIM(movie_header_file)
+                 WRITE(logunit,'(X,A,T40,A)') 'movie_XYZ file is', TRIM(movie_xyz_file)
+                 OPEN(unit=movie_header_unit+ibox,file=movie_header_file)
+                 OPEN(unit=movie_xyz_unit+ibox,file=movie_xyz_file)
+              ELSE
                  DO ibox = 1, nbr_boxes
                     movie_header_file = TRIM(run_name) // '.box' // TRIM(Int_To_String(ibox)) // '.H'
                     movie_xyz_file =    TRIM(run_name) // '.box' // TRIM(Int_To_String(ibox)) // '.xyz'
-                    WRITE(logunit,'(A,T30,I1,A,T40,A)') 'movie header file for box ', ibox ,' is', TRIM(movie_header_file)
-                    WRITE(logunit,'(A,T30,I1,A,T40,A)') 'movie_XYZ file for box ', ibox ,' is', TRIM(movie_xyz_file)
+                    WRITE(logunit,'(X,A,T30,I1,A,T40,A)') 'movie header file for box ', ibox ,' is', TRIM(movie_header_file)
+                    WRITE(logunit,'(X,A,T30,I1,A,T40,A)') 'movie_XYZ file for box ', ibox ,' is', TRIM(movie_xyz_file)
                     OPEN(unit=movie_header_unit+ibox,file=movie_header_file)
                     OPEN(unit=movie_xyz_unit+ibox,file=movie_xyz_file)
                  END DO
+              ENDIF
 
-              ELSE IF (line_array(1) == 'MCsteps') THEN
+           ELSE IF (line_array(1) == 'run' .OR. line_array(1) == 'Run') THEN
 
-                 n_mcsteps = String_To_Int(line_array(2))
-                 WRITE(logunit,*) 
-                 WRITE(logunit,'(A,T50,I10,A)' ) 'The simulation will be run for ', n_mcsteps, ' MC steps.'
+              l_run = .TRUE.
+              n_mcsteps = String_To_Int(line_array(2))
+              WRITE(logunit,'(A,T48,I10,X,A)' ) 'The simulation will be run for ', n_mcsteps, sim_length_units
 
-                 ! # of equilibrium steps will be used only for the fragment generation
-                 
-              ELSE IF (line_array(1) == 'NequilSteps') THEN
-                 
-                 n_equilsteps = String_To_Int(line_array(2))
-                 WRITE(logunit,*) 
-                 WRITE(logunit, '(A,I10)') 'Number of equilibrium steps', n_equilsteps
-                 
-
-              ELSE IF (line_array(2) == 'Done_Simulation_Length_Info') THEN
+           ELSE IF (line_array(1) == 'nequilsteps' .OR. line_array(1) == 'NequilSteps') THEN
               
-                 WRITE(logunit,*)
-                 WRITE(logunit,*)'*** Finished Reading Simulation Length Info ******* '
+              ! # of equilibrium steps will be used only for the fragment generation
+              n_equilsteps = String_To_Int(line_array(2))
+              WRITE(logunit, '(A,I10)') 'Number of equilibrium steps', n_equilsteps
               
-                 EXIT FreqLOOP
+           ELSE IF (line_array(1) == 'steps_per_sweep' .OR. line_array(1) == 'Steps_Per_Sweep') THEN
 
+              IF (nbr_entries /= 2) THEN
+                 err_msg = ''
+                 err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
+                              TRIM(Int_To_String(line_nbr)) // ' of the input file is given with ' // &
+                              TRIM(Int_To_String(nbr_entries-1)) // ' options'
+                 err_msg(2) = 'Required number of options: 1'
+                 CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
               END IF
-  
+
+              steps_per_sweep = String_To_Int(line_array(2))
+
+              ! check that steps_per_sweep is positive
+              IF (steps_per_sweep <= 0) THEN
+                 err_msg = ''
+                 err_msg(1) = 'Option ' // TRIM(line_array(2)) // ' for keyword steps_per_sweep on line number ' // &
+                              TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+                 err_msg(2) = 'Supported options are: any positive integer'
+                 CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
+              END IF
+
+           ELSE IF (line_array(1) == 'block_avg_freq') THEN
+
+              block_average = .TRUE.
+              block_avg_freq = String_To_Int(line_array(2))
+
+           ELSE
+
+              err_msg = ''
+              err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
+                           TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+              err_msg(2) = 'Supported keywords are: prop_freq, coord_freq, run, steps_per_sweep, block_avg_freq'
+              CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
+
            END IF
 
         END DO FreqLOOP
@@ -5339,8 +5338,8 @@ SUBROUTINE Get_Simulation_Length_Info
               
      ELSE IF (line_string(1:3) == 'END' .OR. line_nbr > 10000 ) THEN
               
-        err_msg = ""
-        err_msg(1) = 'Simulation length information not specified in the input file'
+        err_msg = ''
+        err_msg(1) = 'Section "# Simulation_Length_Info" is missing from the input file and is required'
         CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
 
      END IF
@@ -5348,94 +5347,61 @@ SUBROUTINE Get_Simulation_Length_Info
   END DO
 
   ! Check to make sure that all the quantities are defined in the input file
+  IF (.NOT. l_run) THEN
+     err_msg = ''
+     err_msg(1) = 'Keyword "run" is missing from Section "# Simulation_Length_Info"'
+     CALL Clean_Abort(err_msg,'Get_Simulaton_Length_Info')
+  END IF
 
   IF (n_mcsteps < 0 .OR. ncoord_freq <= 0 .OR. nthermo_freq <= 0) THEN
   
-     err_msg = ""
+     err_msg = ''
      err_msg(1) = 'At least one of the keywords is missing in the input file.'
-
-     IF(timed_run) THEN
-        err_msg(2) = 'Check for Coord_Freq, Prop_Freq and Stop.'
-     ELSE
-        err_msg(2) = 'Check for Coord_Freq, Prop_Freq, and MCsteps'
-     END IF
+     err_msg(2) = 'Check for coord_freq, prop_freq and run.'
 
      CALL Clean_Abort(err_msg,'Get_Simulaton_Length_Info')
 
   END IF
+
+  ! Check if block_average or instantaneous values
+  IF (block_average) THEN
+     ! check that block_avg_freq is greater than nthermo_freq
+     IF (block_avg_freq < nthermo_freq .OR. MOD(block_avg_freq,nthermo_freq) /= 0) THEN
+        err_msg = ''
+        err_msg(1) = 'Option ' // TRIM(Int_To_String(block_avg_freq)) // ' for keyword block_avg_freq is not supported'
+        err_msg(2) = 'Supported options are: any positive multiple of prop_freq'
+        CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
+     END IF
+
+     WRITE(logunit,'(A,T50,I8,X,A)') 'Block averages will be written every', block_avg_freq, sim_length_units
+     data_points_per_block = REAL(block_avg_freq / nthermo_freq,DP)
+  ELSE
+     WRITE(logunit,'(A,T50,I8,X,A)') 'Instantaneous values will be written every', nthermo_freq, sim_length_units
+  END IF
+
+  IF (sim_length_units == 'Sweeps') THEN
+     WRITE(logunit,'(A,T50,I8,A)' ) 'A sweep is defined as ', steps_per_sweep, ' steps'
+     n_mcsteps = n_mcsteps * steps_per_sweep
+     nthermo_freq = nthermo_freq * steps_per_sweep
+     ncoord_freq = ncoord_freq * steps_per_sweep
+     IF (block_average) block_avg_freq = block_avg_freq * steps_per_sweep
+  END IF
   
+  WRITE(logunit,'(A80)') '********************************************************************************'
+
 END SUBROUTINE Get_Simulation_Length_Info
-!*****************************************************************************************************
 
-!*****************************************************************************************************
-! The subroutine reads in information as to average properties or block properties will be computed
-!*****************************************************************************************************
-SUBROUTINE Average_Info
-
-  CHARACTER(120) :: line_string, line_array(20)
-
-  INTEGER :: ierr, line_nbr, this_average, nbr_entries
-
-  REWIND(inputunit)
-  line_nbr = 0
-  ierr = 0
-
-  DO
-     line_nbr = line_nbr + 1
-     CALL Read_String(inputunit,line_string,ierr)
-     IF (ierr /= 0 ) THEN
-        err_msg = ''
-        err_msg(1) = 'Error encountered while reading input on average'
-        CALL Clean_Abort(err_msg,'Average_Info')
-     END IF
-
-     IF (line_string(1:14) == '# Average_Info' ) THEN
-        ! section on averages found
-        line_nbr = line_nbr + 1
-        CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
-        this_average = String_To_Int(line_array(1))
-        
-        WRITE(logunit,*) 
-        WRITE(logunit,*) '*********** Average Information ***************'
-        WRITE(logunit,*)
-
-        IF (this_average == 0 ) THEN
-           block_average = .TRUE.
-           WRITE(logunit,*) 'Block averages will be output'
-          
-        ELSE
-           block_average = .FALSE.
-           WRITE(logunit,*) 'Instantaneous values will be output'
-        END IF
-        
-        WRITE(logunit,*) 
-        WRITE(logunit,*) '*********** Ending Average Section ************'
-
-        EXIT
-     
-     ELSE IF ( line_string(1:3) == 'END' .OR. line_nbr > 10000 ) THEN
-
-        err_msg = ''
-        err_msg(1) = 'Average information is missing'
-        CALL Clean_Abort(err_msg,'Average_Info')
-        
-     END IF
-       
-
-  END DO
-
-END SUBROUTINE Average_Info
-
+!******************************************************************************
 SUBROUTINE Get_Property_Info
-  !***************************************************************************************************
-  ! The subroutine obtains the information on what properties need to be written for output and
-  ! how many files will be used for the output. The property section in the input file is identified
-  ! with '# Property_Info'. The number of times this keyword is found indicates total number of
-  ! of files that will be written. Following the keyword are the keywords for property output that
-  ! will be written in respective files.
-  !***************************************************************************************************
+!******************************************************************************
+! The subroutine obtains the information on what properties need to be written for output and
+! how many files will be used for the output. The property section in the input file is identified
+! with '# Property_Info'. The number of times this keyword is found indicates total number of
+! of files that will be written. Following the keyword are the keywords for property output that
+! will be written in respective files.
+!******************************************************************************
 
-USE Run_Variables, ONLY: cpcollect
+USE Global_Variables, ONLY: cpcollect
 
   INTEGER :: ierr, line_nbr, nbr_properties, max_properties, nbr_entries
   INTEGER :: i, j, this_box, ibox, is, average_id, ifrac
@@ -5443,6 +5409,11 @@ USE Run_Variables, ONLY: cpcollect
   CHARACTER(12) :: extension
   CHARACTER(9) :: extension1
   CHARACTER(17) :: extension2
+
+!******************************************************************************
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'Property info'
+  WRITE(logunit,'(A80)') '********************************************************************************'
 
   REWIND(inputunit)
 
@@ -5453,12 +5424,13 @@ USE Run_Variables, ONLY: cpcollect
   nbr_prop_files(:) = 0
   max_properties = 0
   cpcollect = .FALSE.
+  need_pressure = .FALSE.
 
   DO
      line_nbr = line_nbr + 1
      CALL Read_String(inputunit,line_string,ierr)
      IF ( ierr /= 0 ) THEN
-        err_msg = ""
+        err_msg = ''
         err_msg(1) = "Error encoutered while reading property information"
         CALL Clean_Abort(err_msg,'Get_Property_Info')
      END IF
@@ -5469,40 +5441,60 @@ USE Run_Variables, ONLY: cpcollect
         ! the third entry indicates the box for which the current property
         ! file is to be written
         this_box = String_To_Int(line_array(3))
+        IF (this_box < 1 .OR. this_box > nbr_boxes) THEN
+           err_msg = ''
+           err_msg(1) = 'Section "# Property_Info" given with option ' // TRIM(Int_To_String(this_box))
+           IF (nbr_boxes == 1) THEN
+              err_msg(2) = 'Supported options are: 1'
+           ELSE IF (nbr_boxes == 2) THEN
+              err_msg(2) = 'Supported options are: 1 2'
+           END IF
+           CALL Clean_Abort(err_msg, "Get_Property_Info")
+        END IF
+
         nbr_prop_files(this_box) = nbr_prop_files(this_box) + 1
-        !--- Now go through the lines following this keyword upto a point where
-        !-- a blank is encountered or a '#' or '# Property_Info'
+        !--- Now go through the lines following this keyword up to a point where
+        !-- a blank, a '!' or a '#' or '# Property_Info' is encountered
         nbr_properties = 0
         innerLOOP: DO
            line_nbr = line_nbr + 1
            CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
 
-           IF (nbr_entries == 0) EXIT innerLOOP
-           IF (line_array(1) == '#' .AND. line_array(2) == 'Property_Info') THEN
+           IF (nbr_entries == 0 .OR. line_array(1)(1:1) == '!') THEN
+              EXIT innerLOOP
+           ELSE IF (line_array(1) == '#' .AND. line_array(2) == 'Property_Info') THEN
               ! we encountered a line with another property file
+              line_nbr = line_nbr - 1
               backspace(inputunit)
               EXIT innerLOOP
+           ELSE IF (line_array(1) == 'nmols' .OR. line_array(1) == 'Nmols' .OR. &
+                    line_array(1) == 'density' .OR. line_array(1) == 'Density') THEN
+              ! there are as many properties to be written as there are species
+              nbr_properties = nbr_properties + nspecies
+! chem_pot routines need testing
+!           ELSE IF (line_array(1) == 'chemical_potential' .OR. line_array(1) == 'Chemical_Potential') THEN
+!              nbr_properties = nbr_properties + nspecies
+!              cpcollect = .TRUE. 
+           ELSE IF (line_array(1) == 'pressure' .OR. line_array(1) == 'Pressure') THEN
+              nbr_properties = nbr_properties + 1
+              need_pressure = .TRUE.
+           ELSE IF (line_array(1) == 'enthalpy' .OR. line_array(1) == 'Enthalpy') THEN
+              nbr_properties = nbr_properties + 1
+              IF (int_sim_type /= sim_npt .AND. int_sim_type /= sim_gemc_npt) need_pressure = .TRUE.
            ELSE
-              ! We encountered a property
-              IF (line_array(1) == 'Nmols' .OR. line_array(1) == 'Density') THEN
-                 ! there are as many properties to be written as there are species
-                 nbr_properties = nbr_properties + nspecies
-              ELSE IF (line_array(1) == 'Chemical_Potential') THEN
-                 nbr_properties = nbr_properties + nspecies
-                 cpcollect = .TRUE. 
-
-              ELSE
-                 ! this is a property for the system
-                 nbr_properties = nbr_properties + 1
-              END IF
-              
-              max_properties = MAX(nbr_properties,max_properties)
+              ! this is a property for the system
+              nbr_properties = nbr_properties + 1
            END IF
+           
+           max_properties = MAX(nbr_properties,max_properties)
            
         END DO innerLOOP
 
      ELSE IF( (line_string(1:3) == 'END' .OR. line_nbr > 10000)) THEN
+
+        !scanned entire input file for sections # Property_Info
         EXIT
+
      END IF
     
   END DO
@@ -5540,7 +5532,7 @@ USE Run_Variables, ONLY: cpcollect
      
      
      IF ( ierr /= 0 ) THEN
-        err_msg = ""
+        err_msg = ''
         err_msg(1) = "Error encoutered while reading property information"
         CALL Clean_Abort(err_msg,'Get_Property_Info')
      END IF
@@ -5565,6 +5557,7 @@ USE Run_Variables, ONLY: cpcollect
            END IF
            IF (line_array(1) == "#" .AND. line_array(2) ==  "Property_Info") THEN
               ! Information on another file is given
+              line_nbr = line_nbr - 1
               backspace(inputunit)
               ! Store the number of properties to be written for this file
               prop_per_file(nbr_prop_files(this_box),this_box) = nbr_properties
@@ -5572,16 +5565,69 @@ USE Run_Variables, ONLY: cpcollect
            ELSE
               ! we are reading a property for this file
               
-              IF ( line_array(1) == 'Nmols' .OR. line_array(1) == 'Density' .OR. &
-                   line_array(1) == 'Chemical_Potential') THEN
-                 DO is = 1, nspecies
+              IF ( line_array(1) == 'nmols' .OR. line_array(1) == 'Nmols') THEN
+                 IF (nspecies == 1) THEN
                     nbr_properties = nbr_properties + 1
-                    prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = line_array(1) 
-                 END DO
-
-              ELSE
+                    prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Nmols'
+                 ELSE
+                   DO is = 1, nspecies
+                      nbr_properties = nbr_properties + 1
+                      prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Nmols_' // TRIM(Int_To_String(is))
+                   END DO
+                 END IF
+              ELSE IF ( line_array(1) == 'density' .OR. line_array(1) == 'Density') THEN
+                 IF (nspecies == 1) THEN
+                    nbr_properties = nbr_properties + 1
+                    prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Density'
+                 ELSE
+                    DO is = 1, nspecies
+                       nbr_properties = nbr_properties + 1
+                       prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Density_' // TRIM(Int_To_String(is))
+                    END DO
+                 END IF
+! chem_pot routines need testing
+!              ELSE IF ( line_array(1) == 'chemical_potential' .OR. line_array(1) == 'Chemical_Potential') THEN
+!                 IF (nspecies == 1) THEN
+!                    nbr_properties = nbr_properties + 1
+!                    prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Chemical_Potential'
+!                 ELSE
+!                    DO is = 1, nspecies
+!                       nbr_properties = nbr_properties + 1
+!                       prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Chemical_Potential_' // TRIM(Int_To_String(is))
+!                    END DO
+!                 END IF
+              ELSE IF (line_array(1) == 'energy_total' .OR. line_array(1) == 'Energy_Total') THEN
                  nbr_properties = nbr_properties + 1
-                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = line_array(1) 
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Total'
+              ELSE IF (line_array(1) == 'energy_lj' .OR. line_array(1) == 'Energy_LJ') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_LJ'
+              ELSE IF (line_array(1) == 'energy_elec' .OR. line_array(1) == 'Energy_Elec') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Elec'
+              ELSE IF (line_array(1) == 'energy_intra' .OR. line_array(1) == 'Energy_Intra') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Intra'
+              ELSE IF (line_array(1) == 'enthalpy' .OR. line_array(1) == 'Enthalpy') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Enthalpy'
+              ELSE IF (line_array(1) == 'pressure' .OR. line_array(1) == 'Pressure') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Pressure'
+              ELSE IF (line_array(1) == 'volume' .OR. line_array(1) == 'Volume') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Volume'
+              ELSE IF (line_array(1) == 'mass_density' .OR. line_array(1) == 'Mass_Density') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Mass_Density'
+              ELSE
+                err_msg = ''
+                err_msg(1) = 'Keyword "' // TRIM(line_array(1)) // '" on line ' // &
+                             TRIM(Int_To_String(line_nbr)) // ' of input file'
+                err_msg(2) = 'is not a supported property'
+                err_msg(3) = 'Supported keywords are: energy_total, energy_lj, energy_elec, energy_intra,'
+                err_msg(4) = '                        enthalpy, pressure, volume, density, nmols, mass_density'
+                CALL Clean_Abort(err_msg,'Get_Property_Info')
               END IF
               
            END IF
@@ -5595,39 +5641,48 @@ USE Run_Variables, ONLY: cpcollect
 
   END DO
  ! Name the files for output
-  DO ibox = 1, nbr_boxes
-     DO i = 1, nbr_prop_files(ibox)
-        extension = '.box' // TRIM(Int_To_String(ibox)) // '.prp' // TRIM(Int_To_String(i))
+  IF (nbr_boxes == 1) THEN
+     ibox = 1
+     IF (nbr_prop_files(ibox) == 1) THEN
+        i = 1
+        extension = '.prp'
         CALL Name_Files(run_name,extension,prop_files(i,ibox))
-     END DO
-  END DO           
+     ELSE
+        DO i = 1, nbr_prop_files(ibox)
+           extension = '.prp' // TRIM(Int_To_String(i))
+           CALL Name_Files(run_name,extension,prop_files(i,ibox))
+        END DO
+     END IF
+  ELSE
+     DO ibox = 1, nbr_boxes
+        IF (nbr_prop_files(ibox) == 1) THEN
+           i = 1
+           extension = '.box' // TRIM(Int_To_String(ibox)) // '.prp'
+           CALL Name_Files(run_name,extension,prop_files(i,ibox))
+        ELSE
+           DO i = 1, nbr_prop_files(ibox)
+              extension = '.box' // TRIM(Int_To_String(ibox)) // '.prp' // TRIM(Int_To_String(i))
+              CALL Name_Files(run_name,extension,prop_files(i,ibox))
+           END DO
+        END IF
+     END DO           
+  END IF
 
   DO ibox = 1, nbr_boxes
      IF ( nbr_prop_files(ibox) /= 0) THEN
-        WRITE(logunit,*)
-        WRITE(logunit,*) '**** Writing property output information *****'
-        WRITE(logunit,*)
         WRITE(logunit,'(A48,2X,I3,2X,A8,I2)') 'Total number of property files to be written is ',  &
              nbr_prop_files(ibox), ' for box ', ibox
         WRITE(logunit,'(A42,2X,I2)') 'Maximum number of properties per file is ', max_properties
 
         WRITE(logunit,*) 'Writing the name of the property files and the corresponding property output'
         DO i = 1, nbr_prop_files(ibox)
-           WRITE(logunit,*)
            WRITE(logunit,'(A15,2x,I2,2X,A3,2X,A)') 'Property file ', i, ' is ', TRIM(prop_files(i,ibox))
            WRITE(logunit,*) 'Properties output in these files are'
-           WRITE(logunit,*)
            DO j = 1, prop_per_file(i,ibox)
               WRITE(logunit,*) TRIM(prop_output(j,i,ibox))
-              
            END DO
         END DO
-        
-        WRITE(logunit,*) 
-        WRITE(logunit,*) '***** Finished writing property information ******'
-        
      ELSE
-        WRITE(logunit,*)
         WRITE(logunit,*) 'No property output files will be generated for box ', ibox
      END IF
   END DO
@@ -5638,18 +5693,35 @@ USE Run_Variables, ONLY: cpcollect
      DEALLOCATE(molecule_list)
      DEALLOCATE(atom_list)
 
-     ALLOCATE(locate(MAXVAL(nmolecules)+1,nspecies))
-     ALLOCATE(molecule_list(MAXVAL(nmolecules)+1,nspecies))
-     ALLOCATE(atom_list(MAXVAL(natoms),MAXVAL(nmolecules)+1,nspecies))
+     ALLOCATE(locate(MAXVAL(max_molecules)+1,nspecies,0:nbr_boxes))
+     ALLOCATE(molecule_list(MAXVAL(max_molecules)+1,nspecies))
+     ALLOCATE(atom_list(MAXVAL(natoms),MAXVAL(max_molecules)+1,nspecies))
 
   END IF
+  
+  IF (need_pressure) THEN
+     ALLOCATE(W_tensor_charge(3,3,nbr_boxes) , W_tensor_recip(3,3,nbr_boxes))
+     ALLOCATE(W_tensor_vdw(3,3,nbr_boxes) , W_tensor_total(3,3,nbr_boxes))
+     ALLOCATE(W_tensor_elec(3,3,nbr_boxes), pressure_tensor(3,3,nbr_boxes))
+     IF (.NOT. ALLOCATED(pressure)) ALLOCATE(pressure(nbr_boxes))
+
+     W_tensor_charge(:,:,:) = 0.0_DP
+     W_tensor_recip(:,:,:) = 0.0_DP
+     W_tensor_vdw(:,:,:) = 0.0_DP
+     W_tensor_total(:,:,:) = 0.0_DP
+     W_tensor_elec(:,:,:) = 0.0_DP
+     pressure_tensor(:,:,:) = 0.0_DP
+     pressure(:)%computed = 0.0_DP
+     pressure(:)%last_calc = -1
+  END IF
+
+  WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_Property_Info
-!**********************************************************************************************
 
+!******************************************************************************
 SUBROUTINE Copy_Inputfile
-
-!**********************************************************************************************
+!******************************************************************************
 !
 ! The subroutine copies the inputfile to the logfile. Thus one can easily rerun the simulation
 ! Only the information that is needed to repeat the simulations will be written. The comments
@@ -5657,20 +5729,20 @@ SUBROUTINE Copy_Inputfile
 !
 ! Written by Jindal Shah on 02/22/08
 !
-!***********************************************************************************************
+!******************************************************************************
 
   INTEGER :: ierr, line_nbr
   CHARACTER(120) :: line_string
   
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'Copy input file'
+  WRITE(logunit,'(A80)') '********************************************************************************'
 
   REWIND(inputunit)
   
   ierr = 0
   line_nbr = 0
 
-  WRITE(logunit,*) 
-  WRITE(logunit,*) '**** Copying Inputfile ****** '
-  
   DO
      line_nbr = line_nbr + 1
      CALL Read_String(inputunit,line_string,ierr)
@@ -5692,25 +5764,29 @@ SUBROUTINE Copy_Inputfile
 
   END DO
 
-  WRITE(logunit,*) 
-  WRITE(logunit,*) '**** Finished writing input file *******'
+  WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Copy_Inputfile
-  
 
+!******************************************************************************
 SUBROUTINE Get_Rcutoff_Low
-  !**********************************************************************************************
-  !
-  ! The subroutine reads in the cutoff distance below which the probability of finding two atoms
-  ! in a simulation is vanishingly low. It is used in the energy routines to quickly reject moves
-  ! that bring two atoms closer than this distance.
-  !
-  ! Written by Jindal Shah on 02/25/08
-  !
-  !**********************************************************************************************
+!******************************************************************************
+!
+! The subroutine reads in the cutoff distance below which the probability of finding two atoms
+! in a simulation is vanishingly low. It is used in the energy routines to quickly reject moves
+! that bring two atoms closer than this distance.
+!
+! Written by Jindal Shah on 02/25/08
+!
+!******************************************************************************
 
   INTEGER :: ierr, line_nbr, nbr_entries
   CHARACTER(120) :: line_string, line_array(20)
+
+!******************************************************************************
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'Minimum distance cutoff'
+  WRITE(logunit,'(A80)') '********************************************************************************'
 
   REWIND(inputunit)
   ierr = 0
@@ -5734,9 +5810,7 @@ SUBROUTINE Get_Rcutoff_Low
         CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
         rcut_low = String_To_Double(line_array(1))
         
-        WRITE(logunit,*) 
         WRITE(logunit,'(A25,2X,F6.3,2X,A10)') 'MC low cutoff distance is ', rcut_low, ' Angstrom'
-        WRITE(logunit,*)
 
         EXIT
 
@@ -5748,19 +5822,21 @@ SUBROUTINE Get_Rcutoff_Low
 
      END IF
      
-
   END DO
-END SUBROUTINE Get_Rcutoff_Low
-!----------------------------------------------------------------------------------------
 
+  WRITE(logunit,'(A80)') '********************************************************************************'
+
+END SUBROUTINE Get_Rcutoff_Low
+
+!******************************************************************************
 SUBROUTINE Get_File_Info
-  !---------------------------------------------------------------------------------------
-  ! This subroutine reads in the file information for generation of fragment library
-  ! It will then be used to store information on the fragment configurations
-  !
-  ! Written by Jindal Shah on 09/10/08
-  !
-  !---------------------------------------------------------------------------------------
+!******************************************************************************
+! This subroutine reads in the file information for generation of fragment library
+! It will then be used to store information on the fragment configurations
+!
+! Written by Jindal Shah on 09/10/08
+!
+!******************************************************************************
 
   USE File_Names
 
@@ -5768,6 +5844,11 @@ SUBROUTINE Get_File_Info
 
   CHARACTER(120) :: line_array(20), line_string
   
+!******************************************************************************
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'File info'
+  WRITE(logunit,'(A80)') '********************************************************************************'
+
   ierr = 0
   REWIND(inputunit)
   line_nbr = 0
@@ -5784,7 +5865,7 @@ SUBROUTINE Get_File_Info
         CALL Clean_Abort(err_msg,'Get_File_Info')
      END IF
 
-     ! Read the input file upto # File_Info
+     ! Read the input file up to # File_Info
 
      IF (line_string(1:11) == '# File_Info') THEN
         ! parse the string to read in the files for each species
@@ -5808,30 +5889,36 @@ SUBROUTINE Get_File_Info
      
   END DO
 
+  WRITE(logunit,'(A80)') '********************************************************************************'
+
 END SUBROUTINE Get_File_Info
 
-
+!******************************************************************************
 SUBROUTINE Get_Energy_Check_Info
+!******************************************************************************
 
   IMPLICIT NONE
 
   INTEGER :: ierr, line_nbr, nbr_entries, is, ibox
   CHARACTER(120) :: line_string, line_array(20)
 
+!******************************************************************************
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'Energy check info'
+  WRITE(logunit,'(A80)') '********************************************************************************'
+
   REWIND(inputunit)
 
-! determine the number of species to be simulated
   ierr = 0
   line_nbr = 0
   echeck_flag = .FALSE.
 
   DO
      line_nbr = line_nbr + 1
-
      CALL Read_String(inputunit,line_string,ierr)
 
      IF (ierr .NE. 0) THEN
-        err_msg = ""
+        err_msg = ''
         err_msg(1) = "Error getting energy check information."
         CALL Clean_Abort(err_msg,'Get_Energy_Check_Info')
      END IF
@@ -5839,8 +5926,8 @@ SUBROUTINE Get_Energy_Check_Info
      IF (line_string(1:13) == '# Echeck_Info') THEN
 
         echeck_flag = .TRUE.
-        line_nbr = line_nbr + 1
 
+        line_nbr = line_nbr + 1
         CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
 
         iecheck = String_To_Int(line_array(1))
@@ -5855,93 +5942,30 @@ SUBROUTINE Get_Energy_Check_Info
 
   END DO
 
-  END SUBROUTINE Get_Energy_Check_Info 
+  WRITE(logunit,'(A80)') '********************************************************************************'
 
-SUBROUTINE Get_Mie_Nonbond
-  !---------------------------------------------------------------------------------------
-  ! This subroutine reads in the file information for nonbond Mie potential exponents
-  ! for each species type.
-  !
-  ! Written by Brian Yoo and Eliseo Rimoldi on 02/28/15
-  !
-  !---------------------------------------------------------------------------------------
+END SUBROUTINE Get_Energy_Check_Info 
 
-  USE File_Names
-
-  INTEGER :: ierr, nbr_entries, line_nbr, is, Mk, Mi, Mj
-  CHARACTER(120) :: line_array(20), line_string
-  ierr = 0
-  REWIND(inputunit)
-  line_nbr = 0
-  Mk = 1
-
-  ALLOCATE(mie_nlist(nspecies*(nspecies+1)/2))
-  ALLOCATE(mie_mlist(nspecies*(nspecies+1)/2))
-  ALLOCATE(mie_Matrix(nspecies, nspecies))
-
-  DO
-     line_nbr = line_nbr + 1
-     CALL Read_String(inputunit,line_string,ierr)
-
-     IF ( ierr /= 0 ) THEN
-        err_msg = ''
-        err_msg(1) = 'Error reading input file'
-        CALL Clean_Abort(err_msg,'Get_Mie_Nonbond')
-     END IF
-
-     ! Read the input file up to # Mie_Nonbond
-
-     IF (line_string(1:13) == '# Mie_Nonbond') THEN
-        ! create symmetric matrix for index of species (e.g. for 3 species it will create
-	! the following matrix [1,2,3;2,4,5;3,5,6]; This matrix is used to identify
-	! the specified mie_n and mie_m exponents for a given species type.
-        DO Mi = 1, nspecies
-           DO Mj = Mi, nspecies
-              mie_Matrix(Mi,Mj) = Mk
-              mie_Matrix(Mj,Mi) = Mk
-              Mk = Mk + 1
-           END DO
-        END DO
-
-        ! parse the string to read in the files for each species
-        DO is = 1, nspecies*nspecies
-           line_nbr = line_nbr + 1
-           CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
-           mie_nlist(mie_Matrix(String_To_Int(line_array(1)),String_To_Int(line_array(2)))) = String_To_Double(line_array(3))
-           mie_mlist(mie_Matrix(String_To_Int(line_array(1)),String_To_Int(line_array(2)))) = String_To_Double(line_array(4))
-
-           WRITE(logunit,*) 'Mie exponent for ', line_array(1), 'and', line_array(2),  ' is', line_array(3), 'and', line_array(4)
-
-        END DO
-
-        EXIT
-
-     ELSE IF (line_nbr > 10000 .OR. line_string(1:3) == 'END') THEN
-        err_msg = ''
-        err_msg(1) = 'Mie potentials not specified'
-        CALL Clean_Abort(err_msg,'Get_Mie_Nonbond')
-
-     END IF
-
-  END DO
-
-END SUBROUTINE Get_Mie_Nonbond
-
-
+!******************************************************************************
 SUBROUTINE Get_Lattice_File_Info
-    !-----------------------------------------------------------------
-    !
-    ! This soubroutine gets the name of the xyz file containing lattice
-    ! coordinates
-    !
-    ! First written by Jindal Shah on 10/10/12
-    !
-    !-------------------------------------------------------------------
+!******************************************************************************
+!
+! This soubroutine gets the name of the xyz file containing lattice
+! coordinates
+!
+! First written by Jindal Shah on 10/10/12
+!
+!******************************************************************************
 
     IMPLICIT NONE
 
     INTEGER :: line_nbr, ierr, nbr_entries
     CHARACTER*120 :: line_string, line_array(20)
+
+!******************************************************************************
+    WRITE(logunit,*)
+    WRITE(logunit,'(A)') 'Lattice file'
+    WRITE(logunit,'(A80)') '********************************************************************************'
 
     REWIND(inputunit)
 
@@ -5960,9 +5984,6 @@ SUBROUTINE Get_Lattice_File_Info
 
        IF (line_string(1:19) == '# Lattice_File_Info') THEN
           ! we found the section on Lattice File Info
-          WRITE(logunit,*)
-          WRITE(logunit,*) '***** Found section on lattice file info ****'
-          WRITE(logunit,*) 
 
           line_nbr = line_nbr + 1
           CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
@@ -5989,37 +6010,43 @@ SUBROUTINE Get_Lattice_File_Info
 
     END DO
     
-
+    WRITE(logunit,'(A80)') '********************************************************************************'
     
 END SUBROUTINE Get_Lattice_File_Info
 
-
+!******************************************************************************
 SUBROUTINE Get_Lattice_Coordinates
-
-    !-- This subroutine obtains coordinates of the unit cell of the input
-    !-- lattice.
-    !
-    !-- The coordinate file contains the following information
-    !
-    !--- first line reserved for comment
-    !
-    !-- second, third and fourth lines describe the cell matrix
-    !
-    !-- fifth line is for comment
-    !-- sixth line onwards, the coordinates are specified in x,y and z. The first
-    !-- column contains atomic id
-    !
-    !   First written by Jindal Shah on 10/10/12.
-    !
-    !-------------------------------------------------------------------
+!******************************************************************************
+!-- This subroutine obtains coordinates of the unit cell of the input
+!-- lattice.
+!
+!-- The coordinate file contains the following information
+!
+!--- first line reserved for comment
+!
+!-- second, third and fourth lines describe the cell matrix
+!
+!-- fifth line is for comment
+!-- sixth line onwards, the coordinates are specified in x,y and z. The first
+!-- column contains atomic id
+!
+!   First written by Jindal Shah on 10/10/12.
+!
+!******************************************************************************
 
     IMPLICIT NONE
 
     INTEGER :: is, iatom
     CHARACTER*4 :: symbol
+!******************************************************************************
+
     ! Since this routine is called in the case of potential map generation
     ! and we do not call Box_Info during the map generation, set the 
     ! number of boxes to 1
+
+    WRITE(logunit,*)
+    WRITE(logunit,'(A)') 'Lattice coordinates'
+    WRITE(logunit,'(A80)') '********************************************************************************'
 
     nbr_boxes = 1
 
@@ -6076,14 +6103,13 @@ SUBROUTINE Get_Lattice_Coordinates
 
     CLOSE(UNIT=lattice_file_unit)
 
-    WRITE(logunit,*) 'Finished reading the lattice coordinates'
+    WRITE(logunit,'(A80)') '********************************************************************************'
     
 END SUBROUTINE Get_Lattice_Coordinates
 
-
-!********************************************************************************
+!******************************************************************************
 SUBROUTINE Get_Verbosity_Info
-!********************************************************************************
+!******************************************************************************
 ! This routine opens the input file and determines the verbosity of messages
 ! output to the log file.
 !
@@ -6092,10 +6118,15 @@ SUBROUTINE Get_Verbosity_Info
 !
 ! The routine searches for the keyword "# Verbose_Logfile" and then reads the necessary 
 ! information underneath the key word.
-!********************************************************************************
+!******************************************************************************
 
   INTEGER :: ierr,line_nbr,nbr_entries
   CHARACTER(120) :: line_string, line_array(20)
+
+!******************************************************************************
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'Verbose log'
+  WRITE(logunit,'(A80)') '********************************************************************************'
 
   verbose_log = .FALSE.
   
@@ -6106,28 +6137,27 @@ SUBROUTINE Get_Verbosity_Info
 
   DO
      line_nbr = line_nbr + 1
-
      CALL Read_String(inputunit,line_string,ierr)
 
      IF (ierr .NE. 0) THEN
         EXIT
      END IF
 
-     IF (line_string(1:17) == '# Verbose_Logfile') THEN
+     IF (line_string(1:13) == '# Verbose_Log') THEN
         line_nbr = line_nbr + 1
-        
         CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
-        IF (line_array(1) == 'TRUE' .OR. line_array(1) == '.TRUE.' &
-                .OR. line_array(1) == 'true' .OR. line_array(1) == '.true.') THEN
-                verbose_log = .TRUE.
-        ELSE IF (line_array(1) == 'FALSE' .OR. line_array(1) == '.FALSE.' &
-                .OR. line_array(1) == 'false' .OR. line_array(1) == '.false.') THEN
-                verbose_log = .FALSE.
+        IF (line_array(1) == 'TRUE' .OR. line_array(1) == '.TRUE.' .OR. &
+            line_array(1) == 'true' .OR. line_array(1) == '.true.') THEN
+           verbose_log = .TRUE.
+        ELSE IF (line_array(1) == 'FALSE' .OR. line_array(1) == '.FALSE.' .OR. &
+                 line_array(1) == 'false' .OR. line_array(1) == '.false.') THEN
+           verbose_log = .FALSE.
         ELSE
-
-                err_msg = ""
-                err_msg(1) = "Error reading verbosity for logfile"
-                CALL Clean_Abort(err_msg,'Get_Verbosity_Info')
+           err_msg = ''
+           err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
+                        TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+           err_msg(2) = 'Supported keywords are: true, false'
+           CALL Clean_Abort(err_msg,'Get_Verbosity_Info')
         END IF
 
         EXIT
@@ -6136,7 +6166,12 @@ SUBROUTINE Get_Verbosity_Info
 
   ENDDO
 
-  WRITE(logunit,*) 'Verbosity output to logfile set to ', verbose_log
+  IF (verbose_log) THEN
+     WRITE(logunit,'(A)') 'Verbose output to logfile'
+  ELSE
+     WRITE(logunit,'(A)') 'Normal output to logfile'
+  END IF
+  WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_Verbosity_Info
 

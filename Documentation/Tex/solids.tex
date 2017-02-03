@@ -26,7 +26,7 @@ The input file should be completed as described in Section \ref{sec:Input_File},
 	\item Under the keyword \texttt{\# Prob\_Rotation}, the rotation width for the solid is 0.
 	\item Under the keyword \texttt{\# Prob\_Regrowth}, the regrowth probability for the solid is 0.
 	\item The volume dimensions under the keyword \texttt{\# Box\_Info} must match the crystal dimensions.
-	\item Under the keyword \texttt{\# Start\_Type}, the \texttt{read\_old} option must be used.
+	\item Under the keyword \texttt{\# Start\_Type}, the \texttt{read\_config} or \texttt{add\_to\_config} options must be used.
 \end{itemize}
 
 GCMC simulations require the following additional parameters:
@@ -68,24 +68,12 @@ A PDB configuration file for a zeolite can be created in the following ways, amo
 \section{Molecular connectivity file}\label{sec:solid_mcf}
 Since the solid structure will be rigid, no bond distances, angle parameters or dihedral parameters are needed in the MCF.
 The PDB file for the rigid solid does not list CONECT information, so the \texttt{mcfgen.py} script will not include bond, 
-angle, or dihedral sections in the force field template (*.ff) or MCF. The entire solid will be listed as a single fragment. 
+angle, or dihedral sections in the force field template (*.ff) or MCF. The number of fragments will be zero. 
 Only nonbonded parameters are needed.
 
 \section{Fragment library files}\label{sec:fragment file}
-The \texttt{library\_setup.py} script will transfer the atomic coordinates 
-from the PDB file to the required fragment library file (*.dat). 
-The *.dat will list a single conformation.
+The \texttt{library\_setup.py} script will not create a fragment library since the MCF lists zero fragments.
 
 \section{Configuration xyz file}\label{sec:solid_xyz}
-A simulation is initiated from an xyz file using the \texttt{read\_old} option. 
-For an NVT simulation, the xyz file must list the atomic coordinates for 
-the solid framework or surface and any fluid-phase molecules. 
-A GCMC simulation, on the other hand, can be initiated from an empty solid and molecules 
-of insertable species will be inserted as the simulation proceeds. Section \ref{sec:Start_Type}
-details that the \texttt{read\_old} option reads a single header line from the xyz file that lists the number of 
-molecules of each species. For example, an xyz file that lists only the atoms of a zeolite (species 1) and 
-no molecules of methane (species 2) would have the following header line:
-
-\texttt{
-\ \ \ \ 1\ \ \ \ \ 0
-}
+A simulation is initiated from an xyz file using the \texttt{read\_config} or \texttt{add\_to\_config} options. 
+Section \ref{sec:Start_Type} details the \texttt{read\_config} and \texttt{add\_to\_config} options.

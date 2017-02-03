@@ -2,14 +2,15 @@
 !Molecular connectivity file for N23S.pdb
 !*******************************************************************************
 !Atom Format
-!index type element mass charge type parameters
-!type="LJ", parms=epsilon sigma
+!index type element mass charge vdw_type parameters
+!vdw_type="LJ", parms=epsilon sigma
+!vdw_type="Mie", parms=epsilon sigma repulsion_exponent dispersion_exponent
 
 # Atom_Info
 3
-1    N1_s1    N    14.007    -0.405    LJ    36.400    3.320
-2    D2_s1    D    0.000    -0.81    LJ    0.000    0.000
-3    N3_s1    N    14.007    -0.405    LJ    36.400    3.320
+1    N_s1    N    14.007    -0.405    LJ    36.400    3.320
+2    D_s1    D    0.000    0.81    LJ    0.    0.
+3    N_s1    N    14.007    -0.405    LJ    36.400    3.320
 
 !Bond Format
 !index i j type parameters
@@ -34,6 +35,14 @@
 
 # Improper_Info
 0
+
+!Intra Scaling
+!vdw_scaling    1-2 1-3 1-4 1-N
+!charge_scaling 1-2 1-3 1-4 1-N
+
+# Intra_Scaling
+0. 0. 0.0000 1.
+0. 0. 0.0000 1.
 
 !Fragment Format
 !index number_of_atoms_in_fragment branch_point other_atoms

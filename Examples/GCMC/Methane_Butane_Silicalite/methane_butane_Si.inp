@@ -2,11 +2,11 @@
 ! For details see the file README 
 
 # Run_Name
-methane_butane_Si
+methane_butane_Si.out
 !--------------
 
 # Sim_Type
-GCMC
+gcmc
 !---------------
 
 # Nbr_Species
@@ -14,81 +14,25 @@ GCMC
 !----------------
 
 # VDW_Style
-LJ cut_tail 13.0
+lj cut_tail 13.0
 !----------------
-
-# Charge_Style
-NONE
-
-!----------------
-
-# Intra_Scaling
-0.0  0.0  0.0  0.0
-0.0  0.0  0.0  0.0
-0.0  0.0  0.0  0.0
-0.0  0.0  0.0  0.0
-0.0  0.0  0.0  1.0
-0.0  0.0  0.0  1.0
-!------------------
 
 # Mixing_Rule
 custom
-SI SI      0.00   0.0
-SI O       0.00   0.0
-SI CH4     0.00   0.0
-SI CH3     0.00   0.0
-SI CH2     0.00   0.0
-SI CH2     0.00   0.0
-SI CH3     0.00   0.0
-O   SI     0.00   0.0
-O  O       0.00   0.0
-O  CH4    96.50   3.6
-O  CH3    80.00   3.6
-O  CH2    58.00   3.6
-O  CH2    58.00   3.6
-O  CH3    80.00   3.6
-CH4 SI     0.00   0.0
-CH4 O     96.50   3.6
-CH4 CH4  148.00   3.73
-CH4 CH3  120.49   3.75
-CH4 CH2   83.40   3.83
-CH4 CH2   83.40   3.83
-CH4 CH3  120.49   3.75
-CH3 SI     0.00   0.0
-CH3 O     80.00   3.6
-CH3 CH4  120.49   3.75
-CH3 CH3   98.10   3.77
-CH3 CH2   67.90   3.85
-CH3 CH2   67.90   3.85
-CH3 CH3   98.10   3.77
-CH2 SI     0.00   0.0
-CH2 O     58.00   3.6
-CH2 CH4   83.40   3.83
-CH2 CH3   67.90   3.85
-CH2 CH2   47.0    3.93
-CH2 CH2   47.0    3.93
-CH2 CH3   67.90   3.85
-CH2 SI     0.00   0.0
-CH2 O     58.00   3.6
-CH2 CH4   83.40   3.83
-CH2 CH3   67.90   3.85
-CH2 CH2   47.0    3.93
-CH2 CH2   47.0    3.93
-CH2 CH3   67.90   3.85
-CH3 SI     0.00   0.0
-CH3 O     58.00   3.6
-CH3 CH4   83.40   3.83
-CH3 CH3   67.90   3.85
-CH3 CH2   47.0    3.93
-CH3 CH2   47.0    3.93
-CH3 CH3   67.90   3.85
-
-
+SI_s1 O_s1     0.00   0.0
+SI_s1 CH4_s2    0.00   0.0
+SI_s1 CH3_s3    0.00   0.0
+SI_s1 CH2_s3    0.00   0.0
+O_s1  CH4_s2   96.50   3.6
+O_s1  CH3_s3   80.00   3.6
+O_s1  CH2_s3   58.00   3.6
+CH4_s2 CH3_s3  120.49   3.75
+CH4_s2 CH2_s3   83.40   3.83
+CH3_s3 CH2_s3   67.90   3.85
 !----------------
 
 # Seed_Info
 23854675077543  9309223567521
-
 !-------------------
 
 # Rcutoff_Low
@@ -96,19 +40,19 @@ CH3 CH3   67.90   3.85
 !----------------
 
 # Pair_Energy
-TRUE
+true
 !-----------
 
 # Molecule_Files
-Si27uc.mcf 1
+unitcell.mcf 1
 CH4.mcf 500
 C4H10.mcf 500
 !------------------------
 
 # Box_Info
 1
-ORTHOGONAL
-60.21  59.76 40.26
+orthogonal
+20.070   19.920   13.420
 !-------------------------
 
 # Temperature_Info
@@ -116,8 +60,7 @@ ORTHOGONAL
 !------------------
 
 # Chemical_Potential_Info
--35.41  -37.0
-
+-35.41  25.0
 !------------------------
 
 # Move_Probability_Info
@@ -136,13 +79,7 @@ ORTHOGONAL
 
 # Prob_Insertion
 0.2
-insertion method
-none
-insertion method
-reservoir
-insertion method
-reservoir
-
+none cbmc cbmc
 
 # Prob_Deletion
 0.2
@@ -151,49 +88,37 @@ reservoir
 !----------------------
 
 # Start_Type
-read_old
-Si27uc.xyz
+add_to_config 1 0 0 unitcell.xyz 0 4 2
 !------------------
 
 # Run_Type
-Equilibration   600  
+equilibration   600  
 !------------------
 
-# Average_Info
-1
-!-------------
-
 # Simulation_Length_Info
-Units      Steps
-Prop_Freq    400
-Coord_Freq   10000
-MCsteps      10000
-# Done_Simulation_Length_Info
+units        steps
+prop_freq    400
+coord_freq   10000
+run          10000
 !----------------------------
 
 # Property_Info 1 
-Energy_Total
-Nmols
-Volume
-Pressure
-
+energy_total
+nmols
+volume
+pressure
 !----------------
 
 # Fragment_Files
-species1/frag1/frag1.dat  1
-species2/frag1/frag1.dat  2
-species3/frag1/frag1.dat  3
-species3/frag2/frag2.dat  4
+species2/frag1/frag1.dat  1
+species3/frag1/frag1.dat  2
+species3/frag2/frag2.dat  3
 !---------------------------------------------------------one line per fragment
 
 # CBMC_Info
 kappa_ins 12
-kappa_rot 0
 kappa_dih 10
 rcut_cbmc 6.5
 !------------
 
-
 END
-
-

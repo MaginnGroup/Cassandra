@@ -8,7 +8,7 @@ MCF_Gen
 1
 
 # VDW_Style
-LJ cut_tail 12.0
+LJ minimum_image
 
 # Rcutoff_Low
 1.0
@@ -16,12 +16,6 @@ LJ cut_tail 12.0
 # Mixing_Rule
 LB
 
-# Charge_Style
-coul Ewald 12.0 0.000001
-
-# Intra_Scaling
-0.0 0.0 0.0 1.0
-0.0 0.0 0.0 1.0
 
 # Molecule_Files
 ../../isobutane.mcf 50

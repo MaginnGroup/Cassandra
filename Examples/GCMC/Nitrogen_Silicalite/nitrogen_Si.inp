@@ -1,11 +1,11 @@
 ! This is the input file for a short GCMC simulation of N2 in Silicalite at 77.0 K.
 
 # Run_Name
-nitrogen_Si
+nitrogen_Si.out
 !--------------
 
 # Sim_Type
-GCMC
+gcmc
 !---------------
 
 # Nbr_Species
@@ -13,27 +13,19 @@ GCMC
 !----------------
 
 # VDW_Style
-LJ cut_tail 6.0
+lj cut_tail 6.0
 !----------------
 
 # Charge_Style
-coul Ewald 6.0 1E-5
+coul ewald 6.0 1E-5
 !----------------
 
-# Intra_Scaling
-0.0  0.0  0.0  0.0
-0.0  0.0  0.0  0.0
-0.0  0.0  0.0  1.0
-0.0  0.0  0.0  1.0
-!------------------
-
 # Mixing_Rule
-LB
+lb
 !----------------
 
 # Seed_Info
 6752865750 4278117321
-
 !-------------------
 
 # Rcutoff_Low
@@ -41,7 +33,7 @@ LB
 !----------------
 
 # Pair_Energy
-TRUE
+true
 !-----------
 
 # Molecule_Files
@@ -51,7 +43,7 @@ N23S.mcf 100
 
 # Box_Info
 1
-ORTHOGONAL
+orthogonal
 20.09  19.738 13.142
 !-------------------------
 
@@ -77,10 +69,7 @@ ORTHOGONAL
 
 # Prob_Insertion
 0.25
-insertion method
-none
-insertion method
-reservoir
+none cbmc
 
 # Prob_Deletion
 0.25
@@ -89,44 +78,33 @@ reservoir
 !----------------------
 
 # Start_Type
-read_old
-MFI.xyz
-
+add_to_config 1 0 MFI.xyz 0 20
 !------------------
 
 # Run_Type
-Equilibration   600  
+equilibration   600  
 !------------------
 
-# Average_Info
-1
-!-------------
-
 # Simulation_Length_Info
-Units      Steps
-Prop_Freq    400
-Coord_Freq   4000
-MCsteps      4000
-# Done_Simulation_Length_Info
+units        steps
+prop_freq    400
+coord_freq   4000
+run          4000
 !----------------------------
 
 
 # Property_Info 1 
-Energy_Total
-Nmols
-Pressure
-
+energy_total
+nmols
+pressure
 !----------------
 
 # Fragment_Files
-species1/frag1/frag1.dat  1
-species2/frag1/frag1.dat  2
+species2/frag1/frag1.dat  1
 !---------------------------------------------------------one line per fragment
 
 # CBMC_Info
 kappa_ins 12
-kappa_rot 0 
-kappa_dih 10
 rcut_cbmc 6.5 
 !------------
 

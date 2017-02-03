@@ -33,7 +33,7 @@ SUBROUTINE GEMC_Control
   !   12/10/13 : Beta Release
 !*******************************************************************************
   USE IO_Utilities
-  USE Run_Variables
+  USE Global_Variables
   USE Type_Definitions
   USE File_Names
   USE Input_Routines
@@ -46,13 +46,10 @@ SUBROUTINE GEMC_Control
   INTEGER ::  i
 !*******************************************************************************
 
-  CALL Get_Verbosity_Info  
   CALL Copy_Inputfile
 
   ! How many species to simulate?
   CALL Get_Nspecies
-
-  WRITE(logunit,'(a30,1x,I5,/)') 'Number of species simulated: ',nspecies
 
   ! Load box shape, number of boxes and box type. Compute various properties of the box
   ! including the volume
@@ -75,14 +72,14 @@ SUBROUTINE GEMC_Control
 
   !END IF
 
-  ! Determine how intramoleclar scaling of vdw and coul interactions handled.
-  CALL Get_Intra_Scaling
-
   ! Determine the number and identity of unique atom types, and create a vdw interaction table.
   CALL Create_Nonbond_Table
 
   ! Create the intramolecular nonbond scaling arrays.
   CALL Create_Intra_Exclusion_Table
+
+  ! Start_Type
+  CALL Get_Start_Type
 
   ! Seed info
   CALL Get_Seed_Info
@@ -104,13 +101,8 @@ SUBROUTINE GEMC_Control
   ! Determine the frequency with which information will be output 
   CALL Get_Simulation_Length_Info
 
-  CALL Average_Info
-
   ! Properties to be output
   CALL Get_Property_Info
-
-  ! Get information on the averages
-  CALL Average_Info
 
   CALL Get_Rcutoff_Low
 
@@ -140,11 +132,5 @@ SUBROUTINE GEMC_Control
   ! Determine what dihedral angles a given atom participates and how many such
   ! angles exist
   CALL Get_Dihedral_Atoms_To_Place  
-
-  DO i=1,1
-  IF (int_vdw_sum_style(i) == vdw_mie .OR. int_vdw_sum_style(i) == vdw_mie_cut_shift) THEN
-      CALL Get_Mie_Nonbond
-  END IF
-  END DO
 
 END SUBROUTINE GEMC_Control

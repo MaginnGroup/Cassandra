@@ -189,7 +189,7 @@ The factor $f$ takes the following values:
 	\begin{cases}
 	
 		1.0 \, \, \, &  r_ {ij}  \le r_{on} \\
-		\frac { (r_{off}^2 - r_{ij}^2) (r_{off}^2 - r_{on}^2 + 2r_{ij}^2)} {\left ( r_{off}^2 - r_{on}^2 \right )^3}  \, \, \,  & r_{on} \textless r_{ij} \textless r_{off}\\
+		\frac { (r_{off}^2 - r_{ij}^2)^2 (r_{off}^2 - 3r_{on}^2 + 2r_{ij}^2)} {\left ( r_{off}^2 - r_{on}^2 \right )^3}  \, \, \,  & r_{on} \textless r_{ij} \textless r_{off}\\
 		0.0 \, \, \, & r_{ij} \ge r_{off} 
 		
 	\end{cases}
@@ -266,7 +266,7 @@ Electrostatic interactions are given by  Coulomb's law
 where $q_i$ and $q_j$ are the partial charges set by the user, which are
 placed on atomic positions given by $r_i$ and $r_j$. In a simulation,
 the electrostatic interactions are calculated using either an Ewald
-summation or a direct summation using the minimum image convention. Note that 
+summation, the Damped Shifted Force method \cite{Fennell:2006}, or a direct summation using the minimum image convention. Note that 
 the total energy that is printed out in the property file is extensive. 
 Consequently, to obtain intensive energies, the printed energies must divided by 
 the total number of molecules in the system. 

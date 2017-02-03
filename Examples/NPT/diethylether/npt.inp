@@ -5,7 +5,7 @@ npt.out
 !------------------------------------------------------------------------------
 
 # Sim_Type
-NPT_MC
+npt_mc
 !------------------------------------------------------------------------------
 
 # Nbr_Species
@@ -13,17 +13,12 @@ NPT_MC
 !------------------------------------------------------------------------------
 
 # VDW_Style
-LJ cut_tail 14.0
+lj cut_tail 7.0
 !------------------------------------------------------------------------------
 
 # Charge_Style
-coul Ewald 14.0 0.000001
+coul ewald 7.0 0.000001
 !------------------------------------------------------------------------------
-
-# Intra_Scaling
-0.0 0.0 0.0 1.0
-0.0 0.0 0.0 1.0
-!----------------------------------------------vdw, coul lines for each species
 
 # Mixing_Rule
 LB
@@ -38,13 +33,13 @@ LB
 !------------------------------------------------------------------------------
 
 # Molecule_Files
-dee.mcf 220
+dee.mcf 30
 !----------------------------------------------------------one line per species
 
 # Box_Info
 1
-CUBIC
-34.2101610953864
+cubic
+17.5
 !-------------------------------------------------------line 1: number of boxes
 !--------------------------------------------------------------line 2: box type
 !--------------------------------------------------------------line 3: box size
@@ -61,19 +56,19 @@ CUBIC
 # Move_Probability_Info
 
 # Prob_Translation
-0.331825
+30
 0.38134
 
 # Prob_Rotation
-0.331825
+30
 29.807
 
 # Prob_Regrowth
-0.331825
+30
 1.0
 
 # Prob_Volume
-0.004525
+1
 949.18
 
 # Done_Probability_Info
@@ -81,34 +76,27 @@ CUBIC
 !-----------------------------------------each molecule moves per volume change
 
 # Start_Type
-read_old
-npt.inp.xyz
+make_config 30
 !--------make_config: one line for each species and one entry/line for each box
 !------------------------------------------------------------read_old: filename
 !----------------------------------------------------------checkpoint: filename
 
 # Run_Type
-Production   7333 100
-!---------------------------Production: report success ratio every 100 sweeps
-
-
-# Average_Info
-1
-!------------------------------------------------------------ 0 == yes, 1 == no
+production   300 10
+!---------------------------Production: report success ratio every 10 sweeps
 
 # Simulation_Length_Info
-Units        Steps
-Prop_Freq    2210
-Coord_Freq   2210
-MCsteps      22100
-# Done_Simulation_Length_Info
-!------------------ 221 moves = 1 sweep; output every 10 sweeps; run 100 sweeps
+units        sweeps
+prop_freq    10
+coord_freq   10
+run          100
+!------------------  91 moves = 1 sweep; output every 10 sweeps; run 100 sweeps
 
 # Property_Info 1 
-Energy_Total
-Pressure
-Volume
-Density
+energy_total
+pressure
+volume
+density
 !------------------------------------------------------------------------------
 
 # Fragment_Files
@@ -119,7 +107,6 @@ species1/frag3/frag3.dat  3
 
 # CBMC_Info
 kappa_ins 12
-kappa_rot 0
 kappa_dih 10
 rcut_cbmc 6.5 
 !------------------------------------------------------------------------------

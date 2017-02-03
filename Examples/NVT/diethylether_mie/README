@@ -4,18 +4,24 @@ and volume V=(34.7 Ang)^3 using the Mie potential. Note the change in the
 van der Waals potential type to "Mie" rather than "LJ" in both the mcf file
 and the input file.
 
+UPDATES V1.2: 'LJ' in the .mcf and .inp file needs to be replaced with 'Mie' 
+after fragment libraries and mcf files have been generated.
+
+Cassandra now supports 'cut', 'cut_shift', and 'cut_tail' cut off options for
+the Mie Potential.
+
 I. FILES REQUIRED TO RUN THE SIMULATION
 
-dme.pdb
+dee.pdb
     This file was created in Gaussview.
 
-dme.ff
+dee.ff
     An empty template was created with the following command
 
-    > $CASSANDRA_DIR/Scripts/MCF_Generation/mcfgen.py dme.pdb --ffTemplate
+    > $CASSANDRA_DIR/Scripts/MCF_Generation/mcfgen.py dee.pdb --ffTemplate
 
     Parameters from the TRAPPE forcefield were manually typed into the blank 
-    template. TRAPPE parameters for dme are available in the following 
+    template. TRAPPE parameters for dee are available in the following 
     publication:
 
       J.M. Stubbs, J.J. Potoff, and J.I. Siepmann,
@@ -23,19 +29,16 @@ dme.ff
 			for ethers, glycols, ketones and aldehydes
       J. Phys. Chem. B, 108, 17596-17605 (2004).
 
-dme.mcf
+dee.mcf
     This file was generated with the following command:
 
-    > $CASSANDRA_DIR/Scripts/MCF_Generation/mcfgen.py dme.pdb
+    > $CASSANDRA_DIR/Scripts/MCF_Generation/mcfgen.py dee.pdb
 
-    Note that this command requires the file dme.ff in the same directory.
-    Also note that 'LJ' must be replaced with 'Mie' if using the mcfgen.py script
-    for the Mie potential.
+    Note that this command requires the file dee.ff in the same directory.
 
-nvt_mie.inp
+nvt_mie.inp 
     This input file uses the make_config option.
     
-    The Mie potential supports three cut off options: cut, cut shift, and cut tail
     The three types of molecule moves--translation, rotation, and regrowth--
     are equally probable.
 
@@ -49,7 +52,10 @@ nvt_mie.inp
 species1/
     This directory was created with the following command:
 
-    > $CASSANDRA_DIR/Scripts/Frag_Library_Setup/library_setup.py $CASSANDRA_DIR/cassandra.exe nvt_mie.inp dme.pdb
+    > $CASSANDRA_DIR/Scripts/Frag_Library_Setup/library_setup.py $CASSANDRA_DIR/cassandra.exe nvt.inp dee.pdb
+
+update
+    replace 'LJ' in .mcf and .inp files with 'Mie'.
 
 II. RUNNING THE SIMULATION
 
@@ -60,5 +66,5 @@ The simulation can be run with the following command:
 
 III. OUTPUT FILES
 
-All output files are named nvt_mie.out.* as defined in the input file. Please 
+All output files are named nvt_mie.out.* , as defined in the input file. Please 
 see the Cassandra manual for more information on each output file type.
