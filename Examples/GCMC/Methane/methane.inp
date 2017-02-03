@@ -4,11 +4,11 @@
 ! Reference for density values of methane: B. A. Younglove and J. F. Ely, J. Phys. Chem. Ref. Data, vol 16, No4, 1987
 
 # Run_Name
-methane
+methane.out
 !--------------
 
 # Sim_Type
-GCMC
+gcmc
 !---------------
 
 # Nbr_Species
@@ -16,20 +16,7 @@ GCMC
 !----------------
 
 # VDW_Style
-LJ cut_tail 14.0
-!----------------
-
-# Charge_Style
-NONE
-!----------------
-
-# Intra_Scaling
-0.0 0.0 0.0 1.0
-0.0 0.0 0.0 1.0
-!------------------
-
-# Mixing_Rule
-LB
+lj cut_tail 14.0
 !----------------
 
 # Seed_Info
@@ -41,7 +28,7 @@ LB
 !----------------
 
 # Pair_Energy
-TRUE
+true
 !-----------
 
 # Molecule_Files
@@ -50,8 +37,8 @@ CH4.mcf 500
 
 # Box_Info
 1
-CUBIC
-100.0  100.0  100.0
+cubic
+100.0
 !-------------------------
 
 # Temperature_Info
@@ -70,8 +57,7 @@ CUBIC
 
 # Prob_Insertion
 0.3
-insertion method
-reservoir 
+cbmc
 
 # Prob_Deletion
 0.3
@@ -80,31 +66,24 @@ reservoir
 !----------------------
 
 # Start_Type
-make_config
-100
+make_config 100
 !------------------
 
 # Run_Type
-Equilibration   550
+equilibration   550
 !------------------
 
-# Average_Info
-1
-!-------------
-
 # Simulation_Length_Info
-Units      Steps
-Prop_Freq    400
-Coord_Freq   4000
-MCsteps      4000
-# Done_Simulation_Length_Info
+units      steps
+prop_freq    400
+coord_freq   4000
+run          4000
 !----------------------------
 
 # Property_Info 1 
-Energy_Total
-Nmols
-Volume
-
+energy_total
+nmols
+volume
 !----------------
 
 # Fragment_Files
@@ -113,10 +92,7 @@ species1/frag1/frag1.dat  1
 
 # CBMC_Info
 kappa_ins 12
-kappa_rot  0 
-kappa_dih 12
 rcut_cbmc 6.5 
 !------------
-
 
 END

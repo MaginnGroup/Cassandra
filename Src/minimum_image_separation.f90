@@ -42,7 +42,7 @@ SUBROUTINE Minimum_Image_Separation(ibox,rxijp,ryijp,rzijp,rxij,ryij,rzij)
   !
   ! 
   !---------------------------------------------------------------------------------------------- 
-  USE Run_Variables
+  USE Global_Variables
   USE Type_Definitions
 
   IMPLICIT NONE
@@ -128,7 +128,7 @@ END SUBROUTINE Minimum_Image_Separation
 
 SUBROUTINE Apply_PBC_Anint(ibox,rxijp,ryijp,rzijp,rxij,ryij,rzij)
 
-  USE Run_Variables
+  USE Global_Variables
   USE Type_Definitions
 
   IMPLICIT NONE
@@ -176,7 +176,7 @@ END SUBROUTINE Apply_PBC_Anint
 
 SUBROUTINE Fold_Molecule(alive,is,this_box)
 
-  USE Run_Variables
+  USE Global_Variables
   USE Type_Definitions
 
   IMPLICIT NONE
@@ -418,7 +418,7 @@ END SUBROUTINE
 
 
 SUBROUTINE Cartesian_To_Fractional(rx,ry,rz,sx,sy,sz,ibox)
-USE Run_Variables
+USE Global_Variables
 USE Type_Definitions
 REAL(DP), INTENT(IN) :: rx,ry,rz
 REAL(DP), INTENT(OUT) :: sx,sy,sz
@@ -440,7 +440,7 @@ END SUBROUTINE
 
 
 SUBROUTINE Fractional_To_Cartesian(sx,sy,sz,rx,ry,rz,ibox)
-USE Run_Variables
+USE Global_Variables
 USE Type_Definitions
 REAL(DP), INTENT(OUT) :: rx,ry,rz
 REAL(DP), INTENT(IN) :: sx,sy,sz

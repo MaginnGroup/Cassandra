@@ -61,6 +61,7 @@ SUBROUTINE Clean_Abort(fail_message,sub_where_failed)
   !   12/10/13 : Beta Release
   !***********************************************************************
   USE File_Names
+  USE IO_Utilities
 
   IMPLICIT NONE
 
@@ -84,8 +85,9 @@ SUBROUTINE Clean_Abort(fail_message,sub_where_failed)
      END IF
   END DO
 
-  WRITE(*,'(3A)') 'This error occurred in subroutine ',&
-       TRIM(sub_where_failed), '.'
+  WRITE(*,'(5A)') 'This error occurred in subroutine ',&
+       TRIM(sub_where_failed), ' on step ', &
+       TRIM(Int_To_String(i_mcstep)), '.'
   WRITE(*,'(A)') 'Fatal Error. Stopping program.'
   
   
@@ -104,8 +106,9 @@ SUBROUTINE Clean_Abort(fail_message,sub_where_failed)
            WRITE(logunit,'(A)') TRIM(fail_message(ii))
         END IF
      END DO
-     WRITE(logunit,'(3A)') 'This error occurred in subroutine ',&
-          TRIM(sub_where_failed), '.'
+     WRITE(logunit,'(5A)') 'This error occurred in subroutine ',&
+          TRIM(sub_where_failed), ' on step ', &
+          TRIM(Int_To_String(i_mcstep)), '.'
      WRITE(logunit,'(A)') 'Fatal Error. Stopping program.'
      CLOSE(logunit)
   END IF

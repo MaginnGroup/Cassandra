@@ -1,59 +1,60 @@
 \chapter{Utilities}
 
-\section{Input File GUI} 
-\label{sec:GUI}
-This script provides a graphical user interface (GUI) with which the user 
-may create input files for use in simulations.  The GUI is written 
-in Python and uses the wxWidgets for Python module, which may be found at
-http://wxpython.org/download.php. The GUI was written using 
-Python 2.7.6 and wxPython 3.0.1.1.
-
-Upon installing the wxPython bundle compatible with your version of 
-Python, the GUI may be launched by opening
-the terminal, navigating to the /Scripts/Input\_File\_Generation/
-which contains the GUI script, and executing the following command:  \\ \\
+%\section{Input File GUI} 
+%\label{sec:GUI}
+%This script provides a graphical user interface (GUI) with which the user 
+%may create input files for use in simulations.  The GUI is written 
+%in Python and uses the wxWidgets for Python module, which may be found at
+%http://wxpython.org/download.php. The GUI was written using 
+%Python 2.7.6 and wxPython 3.0.1.1.
 %
-\texttt{> python InputFileGUI.py}
+%Upon installing the wxPython bundle compatible with your version of 
+%Python, the GUI may be launched by opening
+%the terminal, navigating to the /Scripts/Input\_File\_Generation/
+%which contains the GUI script, and executing the following command:  \\ \\
+%%
+%\texttt{> python InputFileGUI\_v1\_2.py}
+%%
 %
+%The GUI will launch to display the screen shown in Figure \ref{fig:GUIscreenshot}
+%
+%\begin{figure}[h]
+% \centering
+% \includegraphics[width=\textwidth]{GUI_screenshot.eps}
+% \caption{Cassandra Input File Graphical User Interface}
+% \label{fig:GUIscreenshot}
+%\end{figure}
+%
+%Complete all prompts as instructed on all panels of the GUI. 
+%Once all information has been provided, return to the Basic Information-Page 1 
+%section and click on ``Create Input File'' to create the input file. Note that if no 
+%value is entered for a required prompt, the GUI will inform the user 
+%via a KeyError message in the terminal.
+%
+%If a given parameter is to be input at a later point in time, 
+%enter ``?'' and subsequently use a text editor to enter the 
+%desired value in the input file manually.  
+%
+%If creating multiple input files, it is strongly encouraged to exit the GUI
+%and restart from the terminal each time a file is created, otherwise, data from the 
+%previous file may leak to the next file.
+%
+%A set of executable files are provided that do not require the installation
+%of the wxPython module. These executables are available for Unix-like systems.
+%In order to run these, the user must change the access permissions of the executable through the
+%command \\ \\
+%
+%\texttt{> chmod +x InputFileGUI\_v1\_2\_UNIX.exe}. 
+%
+%Then, the user can execute the GUI by typing \\ \\
+%\texttt{> ./InputFileGUI\_v1\_2\_UNIX.exe}. 
 
-The GUI will launch to display the screen shown in Figure \ref{fig:GUIscreenshot}
-
-\begin{figure}[h]
- \centering
- \includegraphics[width=\textwidth]{GUI_screenshot.eps}
- \caption{Cassandra Input File Graphical User Interface}
- \label{fig:GUIscreenshot}
-\end{figure}
-
-Complete all prompts as instructed on all panels of the GUI. 
-Once all information has been provided, return to the Basic Information-Page 1 
-section and click on ``Create Input File'' to create the input file. Note that if no 
-value is entered for a required prompt, the GUI will inform the user 
-via a KeyError message in the terminal.
-
-If a given parameter is to be input at a later point in time, 
-enter ``?'' and subsequently use a text editor to enter the 
-desired value in the input file manually.  
-
-If creating multiple input files, it is strongly encouraged to exit the GUI
-and restart from the terminal each time a file is created, otherwise, data from the 
-previous file may leak to the next file.
-
-A set of executable files are provided that do not require the installation
-of the wxPython module. These executables are available for Unix-like systems.
-In order to run these, the user must change the access permissions of the executable through the
-command \\ \\
-
-\texttt{> chmod +x InputFileGUI\_v1\_1\_UNIX.exe}. 
-
-Then, the user can execute the GUI by typing \\ \\
-\texttt{> ./InputFileGUI\_v1\_1\_UNIX.exe}. 
-\section{Generate an MCF file}
+\section{Generate a Molecular Connectivity File}
 \label{sec:mcfgen}
 
-The script \texttt{mcf\_gen.py} is a tool that aims to ease the setup of MCF files from scratch (see section \ref{sec:MCF_File} to learn more
-about MCF files), as the generation of these files by hand can be error prone. 
-In this section, a pentane MCF file will be generated to demonstrate the use of this tool.
+The script \texttt{mcf\_gen.py} is a tool that aims to ease the setup of molecular connectivity files from scratch (see section \ref{sec:MCF_File} to learn more
+about MCFs), as the generation of these files by hand can be error prone. 
+In this section, a pentane MCF will be generated to demonstrate the use of this tool.
 The Transferable Potentials for Phase Equilibria (TraPPE) force field will be used to represent the pentane molecular interactions. 
 This force field involves a pairwise-additive 12-6 Lennard-Jones potential to represent the dispersion-repulsion interactions. Additionally, bond angles and dihedral angles are represented through
 harmonic and OPLS functional forms, respectively. Bond lengths are kept constant. The force field mathematical
@@ -207,11 +208,11 @@ filled .ff file, run: \\
 Check the file newly created pentane.mcf for any possible errors. This example can be found in the directory 
 /Scripts/MCF\_Generation/PDB/
 
-Note that if an MCF file for a rigid solid is being created, this last step must include the --solid flag, as
+Note that if an MCF for a rigid solid is being created, this last step must include the --solid flag, as
 
 \texttt{> python mcfgen.py zeolite.pdb --solid} \\
 
-\section{Generate library of fragment configurations}
+\section{Generate Library of Fragment Configurations}
 \label{sec:libgen}
 
 The goal of the script \texttt{library\_setup.py} is to automate the generation of fragment libraries.

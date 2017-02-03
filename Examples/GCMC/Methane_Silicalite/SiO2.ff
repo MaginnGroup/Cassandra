@@ -1,0 +1,34 @@
+atomtypes
+2
+
+begin atom-atomtype
+1 SI
+2 O
+3 O
+end atom-atomtype
+
+vdwtype LJ
+dihedraltype none
+
+nonbonded
+SI
+Sigma 0.0
+Epsilon 0.0
+atom_type_charge 0.0
+
+nonbonded
+O
+Sigma 2.698
+Epsilon 120.1
+atom_type_charge 0.0
+
+charge
+1 
+
+charge
+2 
+
+charge
+3 
+
+end

@@ -33,7 +33,7 @@ FUNCTION accept_or_reject(ln_pacc)
   !*********************************************************************
 
   USE Type_Definitions, ONLY : DP
-  USE Run_Variables, ONLY : max_kBT
+  USE Global_Variables, ONLY : max_kBT
   USE Random_Generators
 
   IMPLICIT NONE

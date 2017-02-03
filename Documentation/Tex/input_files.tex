@@ -2,16 +2,26 @@
 \label{ch:input_files}
 
 \section{Simulation Input File} \label{sec:Input_File}
-This is a required file that is given as an argument to the Cassandra
-executable. This file can be generated manually, but you can use the input files in the Examples 
-directory as a guide. Alternatively, this file can be generated using the graphical user interface 
-for input file generation as explained in section \ref{sec:GUI}.
-The input file contains a number of keywords that define simulation parameters
-and thermodynamic state point for the simulation. A keyword is identified
-by a `\#' while comments follow a `!'. Note that the order of the keywords in the input
-file is immaterial, but the format of the arguments of the keyword are
-important and are explained below, along with a complete listing of
-all keywords. 
+This is a required file that is given as an argument to the Cassandra executable. 
+Example input files for each ensemble are provided in the Examples directory that can be
+modified for new simulations.
+%Alternatively, input files can be generated using the graphical user interface as 
+%explained in section \ref{sec:GUI}.
+The input file is divided into sections. 
+Each section begins with a section header that starts with a '\#', 
+e.g. {\tt\# Run\_Name}, and ends with a blank line.
+Section {\tt\# Move\_Probability\_Info} is an exception and terminates with
+{\tt\# Done\_Move\_Probability\_Info}, because subsections
+e.g. {\tt\# Prob\_Translation} are separated by blank lines.
+Comment lines begin with `!' and are ignored. 
+Sections in the input file can be listed in any order, 
+but the order and format of keywords and parameters given in each section 
+are important unless otherwise noted below.
+Previously, some keywords were capitalized, e.g. {\tt CUBIC}, 
+some contained an initial capital, e.g. {\tt Units}, 
+and some were all lowercase, e.g. {\tt kappa\_ins}.
+New in version 1.2, all keywords are supported in lowercase text; 
+each word in a section header must still begin with an initial capital.
 %
 %%%%%%%%%%%%%%%%
 %
@@ -20,7 +30,7 @@ all keywords.
 %%%%%%%%%%%%%%%%
 \subsection{Run Name}\label{sec:Run_Name}
 {\bf \# Run\_Name}\\
-{\it Character*120} \\ \\
+{\it Character} \\ \\
 %
 The run name is specified on the next line following the keyword. This name is used as a prefix for all the files
 produced by the simulation. For example,\\ \\
@@ -41,27 +51,30 @@ Cassandra will then use \texttt{dee.out} as prefix for all output files created.
 \subsection{Simulation Type}\label{sec:Sim_Type}
 
 {\bf \# Sim\_Type} \\
-{\it Character*120} \\ \\
+{\it Character} \\ \\
 %
-Sets the ensemble (and thus the suite of moves) of a Cassandra simulation. Currently the following ensembles are supported: \\
+Sets the ensemble (and thus the suite of moves) of a Cassandra simulation. 
+The following ensembles are supported: \\
 \begin{itemize}
-\item NVT\_MC (Canonical ensemble)
-\item NVT\_MIN (Canonical ensemble in which minimization is carried out)
-\item NPT\_MC (Isothermal-isobaric ensemble)
-\item GCMC    (Grand canonical ensemble)
-\item GEMC (Gibbs ensemble)
-\item NVT\_MC\_Fragment (Canonical ensemble simulation of a non-ring fragment)
-\item NVT\_MC\_Ring\_Fragment (Canonical ensemble simulation of a ring fragment)
+\item nvt or nvt\_mc (canonical ensemble)
+\item npt or npt\_mc (isothermal-isobaric ensemble)
+\item gcmc (grand canonical ensemble)
+\item gemc (Gibbs ensemble)
+\item gemc\_npt (Multi-species Gibbs ensemble)
+\item nvt\_min (canonical ensemble, only moves which lower the energy are accepted)
+\item fragment or nvt\_mc\_fragment (canonical ensemble simulation of a fragment)
+\item ring\_fragment or nvt\_mc\_ring\_fragment (canonical ensemble simulation of a ring fragment)
 \end{itemize} 
-Note that NVT\_MC\_Fragment and  NVT\_MC\_Ring\_Fragment are used only
-for the fragment generation and are not used in the normal
-simulation. For example, \\ \\
+Simulation types {\tt fragment} and  {\tt ring\_fragment} are 
+used only for generating a fragment library.
+For example, \\ \\
 \texttt{
 \# Sim\_Type \\
-NPT\_MC \\ \\
+npt \\ \\
 }
 %
-will run an NPT MC simulation.
+will run a Monte Carlo simulation in the isothermal-isobaric ensemble in which the number of 
+molecules of each species $N$, the pressure $P$ and temperature $T$ are held constant.
 %
 %%%%%%%%%%%%%%%%
 %
@@ -88,58 +101,57 @@ species, use the following: \\  \\
 %%%%%%%%%%%%%%%%
 \subsection{VDW Style}\label{sec:VDW_Style}
 {\bf \# VDW\_Style} \\
-{\it Character(i,1)  Character(i,2) Real(i,3) Real(i,4)/Logical(i,4)} \\ \\
+{\it Character(i,1)} [{\it Character(i,2) Real(i,3) Real(i,4)/Logical(i,4)}] \\ \\
 %
 This keyword specifies the functional form of repulsion dispersion
-interactions to be used and if tail corrections are added for the box
-\emph{i}. One line is required for each box. 
-The options for {\it Character(i,1)} are ``LJ'' for a Lennard-Jones
-12-6 potential or ``None'' if you wish to turn off all
-repulsion-dispersion interactions. {\it Character(i,2)} and {\it Real(i,3)}
- are specified only if {\it Character(i,1)} is set to ``LJ''. {\it Character(i,2)}
- describes the truncation scheme used for the Lennard-Jones potential.
-Options are ``cut'', ``cut\_tail'', ``cut\_switch'',
-``cut\_shift", ``mie'', and ``mie\_cut\_shift". Refer to Chapter~\ref{Chapter:Force Field} for the
-functional forms.
- The other parameters
-\emph{Real(i,3)} and \emph{Real(i,4)/Logical(i,4)} depend on the
+interactions to be used and if tail corrections are added for box $i$. 
+One line is required for each box. 
+{\it Character(i,1)} specifies the van der Waals model and can be 
+\texttt{lj} for a Lennard-Jones 12-6 potential,
+\texttt{mie} for a Mie potential, 
+or \texttt{none} to turn off all repulsion-dispersion interactions. 
+{\it Character(i,2)} and {\it Real(i,3)} are required for \texttt{lj} or \texttt{mie}. 
+{\it Character(i,2)} specifies how the Lennard-Jones potential is truncated.
+Options are \texttt{cut}, \texttt{cut\_tail}, \texttt{cut\_switch}, or \texttt{cut\_shift}. 
+Refer to Chapter~\ref{Chapter:Force Field} for the functional forms.
+The other parameters \emph{Real(i,3)} and \emph{Real(i,4)/Logical(i,4)} depend on the
 selection of \emph{Character(i,2)} as described below:
 %
 \begin{itemize}
-\item \textbf{cut}: This option cuts the  potential  off at the  distance
-specified by (\emph{Real(i,3)}). The fourth parameter is omitted. \\ \\
+\item \textbf{cut}: This option cuts the  potential at the distance
+specified by \emph{Real(i,3)}. The fourth parameter is omitted. \\ \\
 %
 For example, to simulate one box with a 14 \AA\ cutoff specify the following:
 \\ \\
 \texttt{
 \# VDW\_Style \\
-LJ cut 14.0 } \\ \\
+lj cut 14.0 } \\ \\
 %
 Similarly, for a two box simulations such as used in the Gibbs
 ensemble where both boxes have a 14 \AA\ cutoff, use the
 following: \\ \\
 \texttt{
 \# VDW\_Style \\
-LJ cut 14.0 \\
-LJ cut 14.0 } \\ \\
+lj cut 14.0 \\
+lj cut 14.0 } \\ \\
 %
 \item \textbf{cut\_tail}: This options cuts the potential off at a distance
-corresponding to (\emph{Real(i,3)}) and applies analytic tail
+corresponding to \emph{Real(i,3)} and applies analytic tail
 corrections to the energy and pressure. An optional fourth argument
-(\emph{Logical(i,4)}) can be set 
-to 'TRUE' or 'true', in which case \emph{Real(i,3)} is ignored and the cutoff
+\emph{Logical(i,4)} can be set 
+to 'true', in which case \emph{Real(i,3)} is ignored and the cutoff
 distance is always set to half of the simulation box length. The
 cutoff will change during the course of the simulation when attempting
 volume moves.  This option is provided to enable reproduction of
 literature simulations that use a cut off distance of half the
-simulation box length, but its use is highly discouraged. \\ \\ 
+simulation box length, but its use is discouraged. \\ \\ 
 %
 For example, to simulate one box with a 14 \AA\ cutoff using tail
 corrections, specify the following:
 \\ \\
 \texttt{
 \# VDW\_Style \\
-LJ cut\_tail 14.0 } \\ \\
+lj cut\_tail 14.0 } \\ \\
 %
 For a two box simulation where the first box has a 14 \AA\ cutoff and
 the second one has a 20 \AA\ cutoff, use the
@@ -147,8 +159,8 @@ following:
 \\ \\
 \texttt{
 \# VDW\_Style \\
-LJ cut\_tail 14.0 \\ 
-LJ cut\_tail 20.0 } \\ \\
+lj cut\_tail 14.0 \\ 
+lj cut\_tail 20.0 } \\ \\
 %
 \item \textbf{cut\_switch}: This option cuts the potential off and smoothly
 brings the potential to zero using a spline. The potential is cutoff
@@ -162,10 +174,10 @@ specified as follows:
 \\ \\
 \texttt{
 \# VDW\_Style \\
-LJ cut\_switch 12.0 14.0} \\ \\
+lj cut\_switch 12.0 14.0} \\ \\
 %
 In this case, the Lennard-Jones potential would end at 12.0 \AA\ and
-be smoothly taken to zero at 14.0 \AA. Obviously, $r_{on} < r_{off}$ or \emph{Real(i,3)} $<$ \emph{Real(i,4)}.
+be smoothly taken to zero at 14.0 \AA. $r_{on} < r_{off}$ or \emph{Real(i,3)} $<$ \emph{Real(i,4)}.
 %
 \\ \\
 \item \textbf{cut\_shift}: This option cuts the potential off at a distance
@@ -179,32 +191,8 @@ boxes have a 10.5 \AA\ cutoff, use the following:
 \\ \\
 \texttt{
 \# VDW\_Style \\
-LJ cut\_shift 10.5 \\
-LJ cut\_shift 10.5 } \\ \\
-%
-\item \textbf{mie}: This option cuts the potential off at a distance
-specified by \emph{Real(i,3)}. It must be used with the keyword ``\# Mie\_Nonbond'' (see section~\ref{sec:Mie_Nonbond}) which specifies exponents $n$ and $m$ for each species. The fourth parameter
-\emph{Real(i,4)/Logical(i,4)} is omitted. The functional form of this
-potential is given in eq~\ref{Eq:mie}. \\ \\
-%
-For example, a one box simulation using the mie option can be specified as follows: \\ \\
-%
-\texttt{
-\# VDW\_Style \\
-LJ mie 14 } \\ \\
-%
-\item \textbf{mie\_cut\_shift}: This option cuts the potential off at a distance
-specified by \emph{Real(i,3)} and shifts the entire potential so that
-at this distance the potential is zero. It must be used with the keyword ``\# Mie\_Nonbond'' (see section~\ref{sec:Mie_Nonbond}) which specifies exponents $n$ and $m$ for each species. The fourth parameter
-\emph{Real(i,4)/Logical(i,4)} is omitted. The functional form of this
-potential is given in eq~\ref{Eq:mie_cut_shift}. \\ \\ 
-%
-A two box simulation using the mie\_cut\_shift option with a 14 \AA\ cutoff can be specified as follows:
-\\ \\
-\texttt{
-\# VDW\_Style \\
-LJ mie\_cut\_shift 14 \\
-LJ mie\_cut\_shift 14 } \\ 
+lj cut\_shift 10.5 \\
+lj cut\_shift 10.5 } \\ \\
 %
 \end{itemize}
 {\bf Note: For all options, cutoff distances must be less than or
@@ -216,15 +204,32 @@ LJ mie\_cut\_shift 14 } \\
 %%%%%%%%%%%%%%%%
 \subsection{Charge Style}\label{sec:Charge_Style}
 {\bf \# Charge\_Style} \\
-{\it Character(i,1) Character(i,2) Real(i,3) Real(i,4)} \\ \\
+{\it Character(i,1)} [{\it Character(i,2) Real(i,3) Real(i,4)}] \\ \\
 %
 Cassandra allows the use of fixed partial charges on atomic centers
-using a Coulomb potential of the form given in Eq~\ref{Eq:Coulomb}. To
-specify this option for box {\em i}, set {\it Character(i,1)} to
-``coul''. For this option,
-{\it Character(i,2)} can be set to either ``Ewald'' if you want to use
-an Ewald sum to compute Coulombic interactions or it can be set to
-``cut'', in which case the Coulombic interactions will be cut off and
+using a Coulomb potential of the form given in Eq~\ref{Eq:Coulomb}. 
+If this section is missing from the input file, 
+the electrostatic energy of the simulation will not be computed. 
+If you do not wish to use a Coulomb potential for box {\em i},
+set {\it Character(i,1)} to \texttt{none}. If \texttt{none} is
+selected for {\it Character(i,1)} then {\it Character(i,2)}, 
+{\it  Real(i,3)} and {\it Real(i,4)} are omitted.  
+\\ \\
+For example, \\ \\
+\texttt{
+\# Charge\_Style \\
+none} 
+\\ \\
+should be used if you have no partial charges and are simulating a single box 
+(or the section can just be omitted). 
+
+To compute the electrostatic energy for box {\em i}, 
+this section must be included and {\it Character(i,1)} set to \texttt{coul}.
+For this option,
+{\it Character(i,2)} can be set to \texttt{ewald} if you want to use
+an Ewald sum to compute Coulombic interactions, \texttt{dsf} if you want to use
+the Damped Shifted Force method by Fennell \textit{et al.}\cite{Fennell:2006}, or it can be set to
+\texttt{cut}, in which case the Coulombic interactions will be cut off and
 the long range interactions ignored. For the Ewald option, 
 {\it Real(i,3)} is the real space cutoff distance and {\it Real(i,4)}
 specifies the accuracy of the Ewald summation. A reasonable value for
@@ -237,7 +242,7 @@ For example,
 \\ \\
 \texttt{
 \# Charge\_Style \\
-coul Ewald 12.0 1E-5}\\ \\
+coul ewald 12.0 1E-5}\\ \\
 will use the Ewald sum for a single box. The real space cutoff will be
 12 \AA\ and the accuracy will be $10^{-5}$. If you have two boxes,
 like in a Gibbs ensemble calculation, then you could use the
@@ -245,130 +250,38 @@ following:
 \\ \\
 \texttt{
 \# Charge\_Style \\
-coul Ewald 12.0 1E-5\\
-coul Ewald 30.0 1E-5}
+coul ewald 12.0 1E-5\\
+coul ewald 30.0 1E-5}
 \\ \\ 
 This will use an Ewald sum for both boxes. In the first box, the real
 space cutoff will be 12 \AA\ while in the second box a larger cutoff
 of 30 \AA\ will be used. {\bf Note: When performing Gibbs ensemble
-  simulations of vapor-liquid equilibria, the vapor box is often much
-  larger than the liquid box. In this case, you will want to use a
-  longer real space cutoff for the larger vapor box to avoid using too
-  many reciprocal space vectors.} Also note that the real space
+simulations of vapor-liquid equilibria, the vapor box is often much
+larger than the liquid box. In this case, you will want to use a
+longer real space cutoff for the larger vapor box to avoid using too
+many reciprocal space vectors.} Also note that the real space
 cutoffs must always be less than or equal to half of the shortest edge
-length of a simulation box. \\ \\
-%
-If you do not wish to use a Coulomb potential (for example, your model
-has no partial charges), you still must specify \# Charge\_Style. In
-this case, set {\it Character(i,1)} to ``NONE''. If ``NONE'' is
-selected for {\it Character(i,1)} then {\it Character(i,2)}, 
-{\it  Real(i,3)} and {\it Real(i,4)} are omitted.  
+length of a simulation box. \\ 
+
+If you wish to use the Damped Shifted Force method, the entry {\it Real(i,3)}
+is the electrostatic energy cutoff distance and {\it Real(i,4)} is an optional
+entry to specify the damping parameter. If not specified, Cassandra will
+set this value algorithmically from the cutoff radius. For example, 
 \\ \\
-For example, \\ \\
 \texttt{
 \# Charge\_Style \\
-NONE} 
-\\ \\
-should be used if you have no partial charges and are simulating a
-single box. A two box simulation with no partial charges would be
-specified as \\ \\
-\texttt{
-\# Charge\_Style \\
-NONE \\
-NONE}
-\\ \\
+coul dsf 12.0 0.20}\\ 
+
+will use the Damped Shifted Force method for a single box. The electrostatic
+energy cutoff will be set to 12 \AA\ and the damping parameter will be set
+to 0.20, which is a reasonable value for
+typical liquid phase simulations. \\  \\
 %
 {\bf{Note}}: If the cutoff in VDW\_Style is set to half of the
 simulation box length, any cutoff distance specified in the
 Charge\_Style section will default to the half of the simulation box
 length. In the case of Ewald summation, however, the accuracy will be
 the same as {\it Real(i,4)}. 
-%%%%%%%%%%%%%%%%
-%
-% Intra_Scaling
-%
-%%%%%%%%%%%%%%%%
-\subsection{Intramolecular Scaling}\label{sec:Intra_Scaling}
-{\bf \# Intra\_Scaling} \\
-{\it Real(i,1) Real(i,2) Real(i,3) Real(i,4)} \\ 
-{\it Real(i,5) Real(i,6) Real(i,7) Real(i,8)} \\ \\
-%
-This keyword sets the intramolecular scaling for 1-2, 1-3, 1-4 and 1-N
-interactions within a given species. 1-2 means interactions between a
-given atom 1 and another atom 2 directly bonded to it, 1-3 means
-interactions between atom 1 and other atoms 3 separated from atom 1 by
-exactly two bonds, etc. The first line corresponds to the
-VDW scaling: {\it Real(i,1) Real(i,2) Real(i,3) Real(i,4)} apply to
-1-2, 1-3, 1-4 and 1-N interactions, where N corresponds to all atoms
-separated from atom 1 by more than three bonds. 
-The second line corresponds to the Coulomb scaling: 
-{\it Real(i,5)  Real(i,6) Real(i,7) Real(i,8)} apply to 1-2, 1-3, 1-4
-and 1-N interactions. These lines are repeated for
-each species in the simulation. Note that intramolecular scaling
-applies to all the boxes in the simulation. \\ \\
-%
-For example, \\ \\
-\texttt{
-\# Intra\_Scaling \\
-0.0 0.0 0.5 1.0 \\
-0.0 0.0 0.5 1.0}
-\\ \\
-would turn off 1-2 and 1-3 interactions, would scale the VDW and
-Coulombic interactions for 1-4 atoms by 50\% and would use full
-interactions for all other atom pairs in the species. \\ \\
-%
-If you had two species in the simulation and wanted the same
-intramolecular scaling as above, you would specify \\ \\
-\texttt{
-\# Intra\_Scaling \\
-0.0 0.0 0.5 1.0 \\
-0.0 0.0 0.5 1.0 \\
-0.0 0.0 0.5 1.0 \\
-0.0 0.0 0.5 1.0}
-\\ \\
-In the absence
-of the \# Intra\_Scaling keyword, default values of 0.0, 0.0, 0.5 and 1.0 will be used
-for 1-2, 1-3, 1-4 and 1-N  for VDW and Coulomb interactions for all
-the species in the simulation.  If \# Charge\_Scaling is set to
-``NONE'', you must still specify the Intra\_Scaling for Coulombic
-interactions, but no interactions will be computed. \
-%%%%%%%%%%%%%%%%
-%
-% Mie Nonbond
-%
-%%%%%%%%%%%%%%%%
-\subsection{Mie Nonbond}\label{sec:Mie_Nonbond}
-{\bf \# Mie\_Nonbond} \\
-{\it Int(i,1) Int(j,2) Real(i,j,3) Real(i,j,4)} * ($N$ species * $N$ species) lines \\ 
-
-This keyword should only be used if VDW\_Style is set to ``LJ mie'' or ``LJ mie\_cut\_shift''.
-\textit{Int(i,1)} and \textit{Int(j,2)} specify the index for each species pair combination.  \textit{Real(i,j,3)} and \textit{Real(i,j,4)} are the corresponding $n$ and $m$ exponents, respectively. 
-
-For example, a system with two species interacting with a LJ potential can be specified as follows:\\ \\
-\texttt{
-\# Mie\_Nonbond \\
-1 1 12 6 \\
-1 2 12 6 \\
-2 1 12 6 \\
-2 2 12 6
-}
-
-\textbf{Note that this keyword sensitive to the correct species pair ordering. Also note that exponents for species pairs $i$ and $j$, along with $j$ and $i$, are both specified. For N species in a system, (N * N) lines should be specified.}
-
-
-Likewise, for a system including three species, with species 1 interacting with $n$ = 9 and $m$ = 6 only with itself and all other pair combinations with $n$ = 12 and $m$ = 4, the following lines can be specified: \\ \\
-\texttt{
-\# Mie\_Nonbond \\
-1 1 \ 9 6 \\
-1 2 12 4 \\
-1 3 12 4 \\
-2 1 12 4 \\
-2 2 12 4 \\
-2 3 12 4 \\
-3 1 12 4 \\
-3 2 12 4 \\
-3 3 12 4
-}
 %
 %%%%%%%%%%%%%%%%
 %
@@ -379,31 +292,35 @@ Likewise, for a system including three species, with species 1 interacting with 
 {\bf \# Mixing\_Rule} \\
 {\it Character} \\ \\
 %
-Sets the method by which Lennard-Jones interactions between unlike atoms are
-calculated. Acceptable options are ``LB''  for Lorentz-Berthelot,
-``geometric'', for geometric mixing rule and ``custom'' for allowing the user to provide specific values. 
-If this keyword is missing, ``LB'' is used as default. \\
+Sets the method by which van der Waals interactions between unlike atoms are calculated. 
+Acceptable options are \texttt{lb} for Lorentz-Berthelot,
+\texttt{geometric} for geometric mixing rule 
+and \texttt{custom} for allowing the user to provide specific values. 
+To use either \texttt{lb} or \texttt{geometric} keywords with the Mie potential, 
+all atomtypes must have the same repulsive and dispersive exponents.
+If this section is missing, \texttt{lb} is used as default. \\
 
-To illustrate the use of the ``custom'' option, consider a mixture of methane (species 1) and butane (species 2) united atom
-models. Methane has a single atomtype, CH4. Butane has two atomtypes: atoms 1 and 4 are type CH3, atoms 2 and 3 are type CH2.
+To illustrate the use of the \texttt{custom} option, consider a mixture of methane (species 1) 
+and butane (species 2) united atom models using a Lennard-Jones potential. 
+Methane has a single atomtype, CH4. 
+Butane has two atomtypes: pseudoatoms 1 and 4 are type CH3, pseudoatoms 2 and 3 are type CH2.
 The cross interaction table is as follows:
 
 \texttt{
 {\bf \# Mixing\_Rule} \\
 custom\\
-CH4  CH4  148.00   3.73\\
 CH4  CH3  120.49   3.75\\
 CH4  CH2   82.51   3.83\\
-CH3  CH4  120.49   3.75\\
-CH3  CH3   98.00   3.93\\
 CH3  CH2   67.14   3.85\\
-CH2  CH4   82.51   3.83\\
-CH2  CH3   67.14   3.85\\
-CH2  CH2   46.00   3.93
 }
 \\ \\
-The order in which atom types are listed must be consistent with the species order in the input file and the atomtype order within each MCF.
-Note that the units of the first parameter (energy parameter) are K, whereas the second parameter (collision diameter) are \AA.
+The order in which atom types are listed is unimportant, 
+but the atom types must match exactly the types given in each MCF.
+The Lennard-Jones potential requires two parameters: 
+an energy parameter with units K, and a collision diameter with units \AA.
+The Mie potential requires four parameters: 
+an energy parameter with units K, a collision diameter with units \AA,
+a repulsive exponent, and a dispersive exponent.
 
 %%%%%%%%%%%%%%%%
 %
@@ -414,26 +331,26 @@ Note that the units of the first parameter (energy parameter) are K, whereas the
 {\bf \# Seed\_Info} \\ 
 {\it Integer(1) Integer(2)} \\ \\
 %
-Inputs for the starting random number seeds for the simulation. Note
-that Cassandra uses a random  number generator proposed by L'Ecuyer
-\cite{random_gen:1999}, which takes five  
-seeds to calculate a random number, out of which three are 
-defined internally while two {\it Integer(1)} and {\it Integer(2)} are
-supplied by the user. {\bf When a `checkpoint' file is used to restart a
+Inputs for the starting random number seeds for the simulation. 
+Cassandra uses a random  number generator proposed by L'Ecuyer \cite{random_gen:1999}, 
+which takes five seeds to calculate a random number, 
+out of which three are defined internally while two {\it Integer(1)} and 
+{\it Integer(2)} are supplied by the user. 
+{\bf When a `checkpoint' file is used to restart a
 simulation (see \# Start\_Type below), the user supplied seeds will be
-overwritten by those present in the checkpoint file. If \# Start\_Type
-is set to `read\_old', then the seeds specified in the input file are
-used}.  \\ \\
+overwritten by those present in the checkpoint file. 
+If \# Start\_Type is set to `read\_config', 
+then the seeds specified in the input file are used}.  \\ \\
 As an example, \\ \\ 
 \texttt{
 \# Seed\_Info \\
 1244432 8263662
 } \\ \\
-is an acceptable way of specifying the seeds. Note that two independent
-simulations can be run using the same input information if different
-seeds are used. If two simulations having exactly the same input
-information and the same seeds are run, the results will be
-identical. 
+is an acceptable way of specifying the seeds. 
+Note that two independent simulations can be run using the same input 
+information if different seeds are used. 
+If two simulations having exactly the same input
+information and the same seeds are run, the results will be identical. 
 %
 %%%%%%%%%%%%%%%%
 %
@@ -442,10 +359,11 @@ identical.
 %%%%%%%%%%%%%%%%
 \subsection{Minimum Cutoff}\label{sec:Rcutoff_Low}
 {\bf \# Rcutoff\_Low} \\
-{\it Real(1)} \\ \\
+{\it Real} \\ \\
 %
-Sets the minimum  distance {\it Real(1)} in \AA\ such that any MC move bringing two sites closer
-than this distance will be immediately rejected. It avoids numerical
+Sets the minimum allowable distance in \AA\ between two atoms. 
+Any MC move bringing two sites closer than this distance will be immediately rejected. 
+It avoids numerical 
 problems associated with random moves that happen to place atoms very
 close to one another such that they will have unphysically strong repulsion or
 attraction. This distance must be less than the intramolecular
@@ -463,13 +381,14 @@ sites, a shorter value may be required.
 %%%%%%%%%%%%%%%%
 \subsection{Pair Energy Storage}\label{sec:Pair_Energy}
 {\bf \# Pair\_Energy} \\
-{\it Logical(1)} \\ \\
+{\it Logical} \\ \\
 %
 Cassandra can use a time saving feature in which the energies between
 molecules are stored and used during energy evaluations after a move,
-thereby saving a loop over all molecules. This requires more memory,
-but it can be faster. The default is to not use 
-this feature. If you wish to use this, set {\it Logical(1)} to `TRUE' or `true'. 
+thereby saving a loop over all molecules. 
+This requires more memory, but it can be faster. 
+The default is to not use this feature. 
+If you wish to use this, set {\it Logical} to `true'. 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % State point related information
@@ -484,12 +403,11 @@ this feature. If you wish to use this, set {\it Logical(1)} to `TRUE' or `true'.
 {\bf \# Molecule\_Files} \\
 {\it Character(i,1) Integer(i,2)}  \\ \\
 %
-This specifies the name of the molecular connectivity file (*.mcf) and
-the maximum total number of molecules of a given species specified by this MCF
-file. A separate line is required for each species present in the
-simulation.  {\it Character(i,1)} is the name of the MCF file for
-species {\it i}. {\it Integer(i,2)} denotes the maximum number of
-molecules expected for the species.  \\ \\
+This specifies the name of the molecular connectivity file (MCF) and
+the maximum total number of molecules of a given species specified by this MCF.
+A separate line is required for each species present in the simulation. 
+{\it Character(i,1)} is the name of the MCF for species {\it i}. 
+{\it Integer(i,2)} is the maximum number of molecules expected for the species.  \\ \\
 %{\it Integer(i,3)} is
 %optional argument that is required in a CFC simulation and indicates
 %number of fractional particles of the species in the simulation. For
@@ -501,11 +419,13 @@ For example \\ \\
 butane.mcf 100 \\
 hexane.mcf 20\\
 octane.mcf 5} \\ \\
-specifies that there are three different species, and the MCF files
+specifies that there are three different species, and the MCFs
 state the names of the files where information on the three species
-can be found. Species 1 is butane, species 2 is hexane and species 3
-is octane. There can be a maximum of 100 butane molecules, 20 hexane
-molecules and 5 octane molecules in the total system. The maximum
+can be found. 
+Species 1 is butane, species 2 is hexane and species 3 is octane. 
+There can be a maximum of 100 butane molecules, 20 hexane molecules 
+and 5 octane molecules in the total system. 
+The maximum
 number of molecules specified here will be used to allocate memory for
 each species, so do not use larger numbers than are needed. 
 %%%%%%%%%%%%%%%%
@@ -516,65 +436,59 @@ each species, so do not use larger numbers than are needed.
 \subsection{Simulation Box}\label{sec:Box_Info}
 {\bf \# Box\_Info} \\
 {\it Integer(1)} \\
-{\it Character(i,1)}  \\
-{\it Real(i,j)} \\ \\
-This keyword sets parameters for the simulation boxes. 
-{\it   Integer(1)} specifies the total number of boxes in the
-simulation. For now, Gibbs ensemble simulations must have two boxes. 
-{\it Character(i,1)} is the shape of the {\it i$^{th}$} simulation
-box. The allowed keywords are ``CUBIC'', ``ORTHOGONAL'', and ``CELL\_MATRIX''.
+{\it Character(i)}  \\
+{\it Real(i,1)} [{\it Real(i,2) Real(i,3)}] \\ \\
+This section sets parameters for the simulation boxes. 
+{\it Integer(1)} specifies the total number of boxes in the simulation. 
+Gibbs ensemble simulations must have two boxes. 
+{\it Character(i)} is the shape of the $i$th simulation box. 
+The supported keywords are \texttt{cubic}, \texttt{orthogonal}, and \texttt{cell\_matrix}. \\ \\
 %
-If {\it Character(i,1)} is ``CUBIC'', \emph{Real(i,j)} is the length 
-of the box edges for a cubic box in \AA. 
+If {\it Character(i)} is \texttt{cubic}, \emph{Real(i,1)} is the length of the box edges in \AA. 
 Information for additional boxes is provided in an analogous fashion
-and is separated from the previous box by a blank line. For a two box
-simulation, box information is given as: \\ \\ 
+and is separated from the previous box by a blank line. 
+For a two box simulation, box information is given as: \\ \\ 
 %
 \texttt{
 \# Box\_Info \\
  2 \\
- CUBIC \\
+ cubic \\
  30.0  \\
  \\
- CUBIC \\
- 60.0}
-\\ \\
-This will construct two cubic boxes. The first will be 30 X 30 X 30
-cubic \AA\ and the second will be 60 X 60 X 60 cubic \AA.
-
-If {\it Character(i,1)} is ``ORTHOGONAL'', \emph{Real(i,j)} are the three
-dimensions that define the simulation box. For example, 
-
-\texttt{
-\# Box\_Info \\
- 1 \\
- ORTHOGONAL \\
- 30.0 35.0 40.0}
-\\ \\
-
-This will create a simulation box with dimension 30.0 X 35.0 X 40.0 cubic \AA. \\
-
-Finally, if the simulation box is non-orthogonal, set {\it Character(i,1)} to
-''CELL\_MATRIX``. In this case, \emph{Real(i,j)} are
-the three basis vectors that define the simulation box. For example, 
-
-\texttt{
-\# Box\_Info \\
- 1 \\
- CELL\_MATRIX \\
- 30.0 0.00 0.00\\
- 0.00 35.0 0.00\\
- 0.00 2.00 40.0}
-\\ \\
-
-This will define a simulation box whose vectors are defined as 
-(30.0, 0.00, 0.00), (0.00, 35.0, 2.00) and (0.00, 0.00, 40.00).
-
-Please note that the ORTHOGONAL and CELL\_MATRIX boxes are
-compatible only with simulations using constant volume ensembles (i.e. 
-NVT or GCMC).
+ cubic \\
+ 60.0} \\ \\
 %
-%If it's ``SLIT\_PORE'' geometry then it is assumed
+This will construct a 30 x 30 x 30 \AA\ cube and the second a 60 x 60 x 60 \AA\ cube.
+
+The options orthogonal and cell\_matrix are only supported for constant volume simulations 
+(i.e. NVT or GCMC) which only have 1 box. 
+If {\it Character(1)} is \texttt{orthogonal}, \emph{Real(1,1) Real(1,2) Real(1,3)} are the length, 
+width and height that define the simulation box. For example, \\ \\
+%
+\texttt{
+\# Box\_Info \\
+ 1 \\
+ orthogonal \\
+ 30.0 35.0 40.0} \\ \\
+%
+This will create a simulation box with dimensions 30.0 x 35.0 x 40.0 \AA. \\ \\
+%
+A non-orthogonal box is created by setting {\it Character(1)} to \texttt{cell\_matrix}. 
+In this case, three basis vectors are needed to define the simulation box.
+Each vector is entered as a column of a 3x3 matrix.  
+For example, \\ \\
+%
+\texttt{
+\# Box\_Info \\
+ 1 \\
+ cell\_matrix \\
+ 30 ~0 ~0\\
+\hspace*{0.5em}0 35 ~0\\
+\hspace*{0.5em}0 ~2 40} \\ \\
+%
+defines a simulation box with basis vectors (30, 0, 0), (0, 35, 2) and (0, 0, 40).
+%
+%If it's \texttt{SLIT\_PORE} geometry then it is assumed
 %that the periodicity is in the xy plane while the slit pore width is
 %along the z direction. In this case {\it
 %  Real(i,3) Real(i,4)} provide box dimensions in the x and y
@@ -595,10 +509,16 @@ NVT or GCMC).
 %%%%%%%%%%%%%%%%
 \subsection{Temperature}\label{sec:Temperature_Info}
 {\bf \# Temperature\_Info} \\ 
-{\it Real(1) Real(2) .... } \\ \\
+{\it Real(i)} \\ \\
 %
-The temperature setpoint in Kelvin {\it Real(1) Real(2) ... } for simulation
-boxes 1, 2, ... .
+{\it Real(i)} is the temperature in Kelvin for box $i$. 
+For GEMC, the temperature of box 2 will be read from a second line: \\ \\
+%
+\texttt{
+\# Temperature\_Info \\
+ 300.0 \\
+ 300.0} \\ \\
+%
 %%%%%%%%%%%%%%%%
 %
 % Pressure_Info
@@ -606,11 +526,17 @@ boxes 1, 2, ... .
 %%%%%%%%%%%%%%%%
 \subsection{Pressure}\label{sec:Pressure_Info}
 {\bf \# Pressure\_Info} \\
-{\it Real(1) Real(2) ... } \\
+{\it Real(i)} \\ \\
 %
-The pressure setpoint in bar {\it Real(1) Real(2) ...} for simulation
-boxes 1, 2, ... . If the simulation type does not require an
-input pressure (e.g., NVT), this command will be ignored.  
+{\it Real(i)} is the pressure setpoint in bar for box $i$.
+For GEMC, the pressure of box 2 will be read from a second line: \\ \\
+%
+\texttt{
+\# Pressure\_Info \\
+ 1.0 \\
+ 1.0} \\ \\
+%
+If the simulation type does not require an input pressure (e.g., NVT), this section will be ignored.  
 %%%%%%%%%%%%%%%%%%
 %
 %  Chemical_Potential_Info
@@ -618,15 +544,29 @@ input pressure (e.g., NVT), this command will be ignored.
 %%%%%%%%%%%%%%%%%%
 \subsection{Chemical Potential}\label{sec:Chemical_Potential}
 {\bf \# Chemical\_Potential\_Info} \\
-{\it Real(1) Real(2) ....} \\ \\
+{\it Real(1) ... Real(n)} \\ \\
 %
-The chemical potential setpoint (shifted by a species-specific constant) 
-in kJ/mol of each insertable species. 
-Each chemical potential will be assigned in the order species appear in 
-the \texttt{Molecule\_Files} section. 
-This keyword is only used for grand canonical simulations.
-See Eq. (\ref{eq:muShift}) for more information.
-
+where {\it n} is the number of insertable species and {\it Real(i)} is the 
+chemical potential setpoint (shifted by a species-specific constant) of 
+insertable species {\it i} in kJ/mol. Each chemical potential will be assigned 
+in the order species appear in the \texttt{Molecule\_Files} section. 
+For species with insertion method {\tt none}, 
+the chemical potential can be listed as {\tt none} or omitted.
+This section is only read for grand canonical simulations.
+See Eq. (\ref{eq:muShift}) for more information. 
+For example, the adsorption of methane (species 2) in a zeolite (species 1) 
+can be computed by inserting methane molecules into a box with a zeolite crystal. 
+In this example, only one chemical potential (for methane) is required 
+and the following are equivalent: \\ \\
+%
+\texttt{
+\# Chemical\_Potential\_Info \\
+ -35.0} \\ \\
+%
+\texttt{
+\# Chemical\_Potential\_Info \\
+ none -35.0} \\ \\
+%
 %%%%%%%%%%%%%%%%
 %
 % Neighbor_Style
@@ -637,11 +577,11 @@ See Eq. (\ref{eq:muShift}) for more information.
 %{\it Character(1) Real(2) or Integer(2)} \\ \\
 %
 %Sets the option for neighbor list in a simulation. {\it Character(1) } sets the type of Neighbor style
-%to be used in the simulation. Acceptable choices are ``verlet'' or ``linked\_cell''. If ``verlet'' then
-%only {\it Real(2)} specifying the thickness of the skin is required. If ``verlet'' and $r_{cut} + r_{skin}$ is
+%to be used in the simulation. Acceptable choices are \texttt{verlet} or \texttt{linked\_cell}. If \texttt{verlet} then
+%only {\it Real(2)} specifying the thickness of the skin is required. If \texttt{verlet} and $r_{cut} + r_{skin}$ is
 %greater than the half box length then an error is generated. \\ \\
 %
-%For ``linked\_cell'', only {\it Integer(2)} is required. This sets the simulation box for which a linked-cell
+%For \texttt{linked\_cell}, only {\it Integer(2)} is required. This sets the simulation box for which a linked-cell
 %list will be generated. At present, generation of only one linked-cell is supported. With this option, if $3*r_{cut}$
 %then an error will be produced. \\ \\
 %
@@ -662,10 +602,10 @@ See Eq. (\ref{eq:muShift}) for more information.
 %{\bf P0 K0 reaction box} \\
 %{\it Real(3) Real(4) Integer(5)} \\
 %%
-%This section provides information if reactions need to be ``carried out'' in 
+%This section provides information if reactions need to be \texttt{carried out} in 
 %the simulation. {\it Integer(1)} denotes the total number of reactions. The
-%{\bf reaction method} is specified as {\it Character(2)} as either a ``CFC''
-%or an ``INTEGER'' reaction. If ``INTEGER'' is specified as the reaction method, then
+%{\bf reaction method} is specified as {\it Character(2)} as either a \texttt{CFC}
+%or an \texttt{INTEGER} reaction. If \texttt{INTEGER} is specified as the reaction method, then
 %the line ``{\it replacement matrix}'' is required followed by the matrix ``{\it Integer(i,j)}''
 %are required. This matrix provides information whether products are to be inserted
 %in the whole created by the reactants. For example, in the reaction {\it A + B $\rightarrow$ C},
@@ -676,7 +616,7 @@ See Eq. (\ref{eq:muShift}) for more information.
 %1 0 0 \\ \\
 %%
 %{\it Integer(i)} sets the stochiometric number of each species in a given reaction.
-%For the above example, the ``stochiometry'' section would look like: \\ \\
+%For the above example, the \texttt{stochiometry} section would look like: \\ \\
 %%
 %-1 \\
 %-1 \\
@@ -700,7 +640,7 @@ See Eq. (\ref{eq:muShift}) for more information.
 %{\it Integer(1) Integer(2)} \\ \\
 %%
 %This section is necessary while performing a CFC MC move. 
-%For each ``sorbate' species, {\it Integer(i)} defines total number of bins and 
+%For each \texttt{sorbate' species, {\it Integer(i)} defines total number of bins and 
 %{\it Real(i,j)} is the weight of each bin. There must be {\it Integer(i)} entries on
 %this line. The weights, for a given sorbate, are specified on separate lines for each box. Note that, in the beginning of a simulation, all the weights may be set to zero and a Wang-Landau scheme may be utilized to refine the 
 %weights as the simulation proceeds. The Wang-Landau implementation is controlled by two parameters: {\em Integer(1) Integer(2)}. {\em Integer(1)} specifies the number of Wang-Landau updates to be carried out in the simulation 
@@ -713,14 +653,18 @@ See Eq. (\ref{eq:muShift}) for more information.
 %
 %%%%%%%%%%%%%%%%
 \subsection{Move Probabilities}\label{sec:Move_Probabilities}
-{\bf \# Move\_Probabilities} 
-%
+{\bf\# Move\_Probability\_Info \\
+{[}subsections] \\
+\# Done\_Probability\_Info} \\
+
 This section specifies the probabilities associated with different types of
-MC moves to be performed during the course of simulation. Please ensure that
-the move probabilities add up to 1.0. An error will be generated if this is
-not the case. All the headers are optional but an error will be produced if
-a move is required (for example, volume fluctuations in an NPT simulation) and
-the move is not specified. 
+MC moves to be performed during the simulation. 
+The section begins with the header {\tt \# Move\_Probability\_Info} 
+and is terminated by the footer {\tt \# Done\_Probability\_Info}.
+All the move probability subsections must be between the section header and footer.
+ 
+If the move probabilities do not sum to 1.0, 
+then the probability of each move will be divided by the total.
 %
 %%%%%%%%%%%%%%%%
 %
@@ -750,30 +694,31 @@ the move is not specified.
 \subsubsection{Translation}
 {\bf \# Prob\_Translation}\\
 {\it Real(1)} \\
-{\it Real(i,j) } *One line required for each box, and one value required for each species on each line. \\ \\
+{\it Real(i,1) ... Real(i,n) } *One line required for each box $i$ \\ \\
 %
-{\it Real(1)} is the probability of performing a center of mass translation move. For each box $i$, the 
-maximum displacement of species $j$ is specified by {\it Real(i,j)}.  \\ \\
+where $n$ is the number of species. 
+{\it Real(1)} is the probability of performing a center of mass translation move.
+{\it Real(i,j)} is the maximum displacement in \AA\ of species $j$ in box $i$.
+This subsection is optional in all ensembles. \\ \\
 %
-For example, if you have two species and two boxes, you would specify
+For example, if you have three species and two boxes, you could specify
 the translation probability as \\ \\
 \texttt{
 { \# Prob\_Translation} \\
  0.25 \\
-2.0 2.5\\
-10.0 11.0} 
+2.0 2.5 1.0\\
+12.0 12.0 12.0} 
 \\ \\
 This will tell Cassandra to attempt center of mass translations 25\%
 of the total moves. For box 1, the maximum displacement will be 2.0 \AA\ for
-species 1 and 2.5 \AA\ for species 2. For box 2, the maximum
-displacement for species 1 will be 10.0 \AA\ and it will be 11.0
-\AA\ for species 2. Note that attempted moves will occur with equal
-probability for a give box, but attempts for a species are
-proportional to their mole fraction in the box. \\
-
-For a simulation that involves solid frameworks, set the
-maximum displacement associated to the solid species to zero to improve computational efficiency.
-
+species 1, 2.5 \AA\ for species 2, and 1.0 \AA\ for species 3. 
+For box 2, the maximum displacement for all species is 12.0 \AA . \\ \\
+%
+For a simulation that involves solid frameworks, 
+set the maximum displacement of the solid species to zero.
+Every molecule in the simulation with a maximum displacement greater than zero 
+has an equal chance of being moved.
+%
 %When fragment
 %simulation is carried out, the specification of the move is given by \\ \\
 %
@@ -818,81 +763,98 @@ maximum displacement associated to the solid species to zero to improve computat
 \subsubsection{Rotation}
 {\bf \# Prob\_Rotation}\\
 {\it Real(1)} \\
-{\it Real(i,j) } *One line required for each box, and one value required for each species on each line. \\ \\
+{\it Real(i,1) ... Real(i,n)} *One line required for each box $i$ \\ \\
 %
+where $n$ is the number of species.
 The probability of performing a rotation move is specified by 
-{\it Real(1)} while {\it Real(i,j)} denotes the maximum roational width
-for  species $j$ in  box $i$ in degrees. If you are only
-simulating spherical molecules (such as Lennard-Jones particles), then
-do not use this keyword. If you are simulating a multi-species system
-where some of the species have rotational degrees of freedom and some
-species are spheres, then specify an appropriate value of 
-{\it  Real(i,j)} for the species having rotational degrees of freedom, and
-set {\it Real(i,j)} equal to zero for the spherical species. Linear
-molecules are a special case, where rotation is handled in Eulerian
-space. If you have a linear molecule such as carbon monoxide, specify
-any non-zero value for {\it Real(i,j)}. Cassandra will properly sample
-the rotational degrees of freedom but will not use the value set by
-{\it Real(i,j)}. Note that spherical molecules are not considered when
-choosing which species to perform a rotational move on.
-\\ \\
-For example, if you are simulating two species in two boxes and if the first species has rotational degrees
-of freedom while the second is spherical, you would specify
-the rotational probability as \\ \\
+{\it Real(1)} while {\it Real(i,j)} denotes the maximum rotation
+for species $j$ in box $i$ in degrees about the x, y or z-axis.
+The axis will be chosen with uniform probability.
+This subsection is optional for all ensembles. \\ \\
+%
+For example, if you are simulating a single species in two boxes, 
+you could specify the rotational probability as \\ \\
 \texttt{
 { \# Prob\_Rotation} \\
  0.25 \\
-30.0 0.0\\
-180.0 0.0} \\
-\\ 
+30.0\\
+180.0} \\ \\ 
 %
-This will tell Cassandra to perform rotational moves 25\% of the total moves. For box 1,
-the maximum rotational width will be 30\degree\ for species 1 and 0.0\degree\
-for species 2. For box 2, the maximum rotational width will be 180\degree\ for
-species 1 and 0.0\degree\ for species 2. Note that, since the maximum rotational
- width of species 2 is set to 0\degree\ in both boxes, no rotational moves will be
- attempted on species 2. \\ \\
-For a single box simulation with three species such that the first species has rotational degree of freedom, the second is a linear molecule and the third species is spherical, you would specify \\ \\
+Twenty-five percent of the attempted moves will be rotations.
+Molecules in box 1 will be rotated a maximum of 30\degree\ around the x, y, or z-axis.
+Molecules in box 2 will be rotated a maximum of 180\degree\ around the x, y, or z-axis. \\ \\
+%
+If all species are point particles (such as single-site Lennard-Jones particles), 
+this section should be omitted.
+For a multi-species system, 
+set {\it Real(i,j)} to zero for point particles and solid frameworks. \\ \\
+%
+Linear molecules are a special case. 
+A molecule is identified as linear if all angles in the MCF are fixed at 180\degree .
+If a linear molecule were aligned with the axis of rotation, 
+then the molecular orientation would not be changed.
+Therefore, linear molecules are rotated by choosing a random unit vector with uniform probability 
+without regard to the molecule's current orientation or the maximum rotation.
+As with non-linear molecules, if {\it Real(i,j)} is zero, no molecules of species $j$ will be rotated. \\ \\
+%
+For a single box simulation of a non-linear molecule (species 1), a linear molecule (species 2), 
+and a point particle (species 3), you could specify \\ \\
 %
 \texttt{
 {\# Prob\_Rotation} \\
  0.25 \\
-30.0 10.0 0.0}
-\\ \\
-This will tell Cassandra to attempt rotational move 25\% of the total moves. 
-The maximum rotational width for species 1 is 30\degree\ and that for species 2
- is 10.0\degree. Since the species 2 is a linear molecule, its rotation will
- be attempted in Eulerian angles and Cassandra will not use this value. 
-Since the rotational width is set equal to 0\degree\ for species 3, no rotational moves will be attempted for this species.  \\
-
-For a simulation that involves solid frameworks, set the
-maximum rotational width associated to the solid species to zero to improve computational efficiency.
-%%%%%%%%%%%%%%%%
+30.0 10.0 0.0} \\ \\
 %
-% Dihedral move
-%
-%%%%%%%%%%%%%%%%
-%
-%\subsubsection{Dihedral}
-%{\bf \# Prob\_Dihedral}\\
-%{\it Real(1)} \\
-%{\it Real(j,2) } *One line required for each box. \\ \\
-%
-%The probability of performing a dihedral move is specified by {\it Real(1)} while
-%{\it Real(j,2)} denoted maximum width for a dihedral angle displaceemnt. The width
-%is given in degrees. This move is used only for linear molecules. The use of fragment-based approach is recommended for all types (linear and branched) of  molecules.
+Molecules of species 1 will be rotated a maximum of 30\degree\ around the x, y or z-axis,
+molecules of species 2 will be rotated by choosing a random unit vector, and
+the point particles will not be rotated.
 %
 %%%%%%%%%%%%%%%%
 %
 % Angle perturbation
 %
 %%%%%%%%%%%%%%%%
-%\subsubsection{Angle}
-%{\bf \# Prob\_Angle}\\
-%{\it Real(1)} \\ \\
-%%
-%The probability of performing an angle perturbation move. This move is used only for linear molecules. The use of fragment-based approach is highly recommended for all types (linear and branched) of molecules. 
+\subsubsection{Angle}
+{\bf \# Prob\_Angle} \\
+{\it Real(1)} \\ 
+A molecule will be selected at random and its angle will be perturbed based on its Boltzmann weighted distribution.
+The probability of attempting this move is the only required input. It is specified by {\it Real(1)}. Note that this move is rarely needed since the fragment libraries should already provide efficient sampling of angles. This move, however, may improve sampling of angles for large molecules in the case where parts of its fragments are rarely regrown by a regrowth move. 
+
 %
+\texttt{
+\# Prob\_Angle \\
+0.3 \\
+} \\
+%
+This will tell Cassandra to attempt angle moves 30\% of the total moves for all molecules containing angles within a given box.
+
+%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%
+%
+% Dihedral move
+%
+%%%%%%%%%%%%%%%%
+\subsubsection{Dihedral}
+{\bf \# Prob\_Dihedral} \\
+{\it Real(1)} \\ 
+{\it Real(1) ... Real(n)} \\
+
+The probability of performing a dihedral move is specified by {\it Real(1)} while
+{\it Real(n)} denotes the maximum width of a dihedral angle displacement for each species. The maximum width is given in degrees. Note that this move is rarely needed since the regrowth moves should already provide efficient sampling of dihedrals. This move, however, may improve sampling of dihedrals for large molecules in the case where the parts of its fragments are rarely regrown (albeit a small maximum width is provided).\\ \\
+%
+\texttt{
+\# Prob\_Dihedral \\
+0.3 \\
+20 0.0 \\
+}\\
+%
+This will tell Cassandra to attempt dihedral moves 30\% of the total moves for all molecules containing dihedrals within a given box.
+The maximum dihedral width will be 20\degree\ for species 1 and 0.0\degree\
+for species 2. Since the maximum dihedral
+width of species 2 is set to 0.0\degree\ in both boxes, no dihedral moves will be
+attempted on species 2. Note that a single max dihedral width is provided, even if species 1 may contain many dihedrals. This is also true
+for simulations with more than one box. Also note that the same max dihedral width is used for systems containing  more than one box.
+
 %
 %%%%%%%%%%%%%%%%
 %
@@ -902,32 +864,33 @@ maximum rotational width associated to the solid species to zero to improve comp
 \subsubsection{Regrowth}
 {\bf \# Prob\_Regrowth} \\
 {\it Real(1)} \\ 
-{\it Real(i,2)}* One for each species \\ \\
+{\it Real(2,1) ... Real(2,n)} \\ \\
 %
+where $n$ is the number of species.
 A regrowth move consists of deleting part of the molecule randomly and
-then regrowing the deleted part via a configurational bias algorithm.
+then regrowing the deleted part via configurational bias algorithm.
 This can result in relatively substantial conformational changes for
 the molecule, but the cost of this move is higher than that of a
 simple translation or rotation. The probability of attempting a
-regrowth move is specified by {\it Real(1)} while {\it Real(i,2)}
-specifies the relative probability of performing this move on species
-$i$. For monatomic species, {\it Real(i,2)} is set to zero. Note that
-the user needs to ensure that the relative probabilities add 
-up to 1 otherwise Cassandra will display an error and quit. \\ \\
-% 
-For example, if you are simulating three species of which the first
-species is monatomic, you would specify the following: \\ \\ 
+regrowth move is specified by {\it Real(1)} while {\it Real(2,i)}
+specifies the relative probability of performing this move on species $i$. 
+The relative probabilities must sum to 1 otherwise Cassandra will quit with an error. 
+This subsection is optional for all ensembles. \\ \\
+%
+For example, if simulating 70 molecules of species 1 and 30 molecules of species 2, 
+you could specify the following: \\ \\ 
 %
 \texttt{
 \# Prob\_Regrowth \\
 0.3 \\
-0.0 0.7 0.3 } \\ \\
+0.7 0.3 } \\ \\
 %
-This will tell Cassandra to attempt regrowth move 30\% of the total moves. The relative probabilities of
-performing regrowth moves on species 1, 2 and 3 are 0.0, 0.7 and 0.3 respectively.  \\
-
-For a simulation that involves rigid molecules or solid frameworks, set the
-regrowth probability associated to the rigid molecule or solid species to zero to improve computational efficiency.
+Thirty percent of the attempted moves will be regrowth moves.
+Seventy percent of the regrowth moves will be attempted on a molecule of species 1
+and the balance of regrowth moves on a molecule of species 2. \\ \\
+%
+{\it Real(2,i)} should be set to zero for monatomic, linear, or rigid species, including solid frameworks.
+% 
 %%%%%%%%%%%%%%%%
 %
 % Volume displacement
@@ -936,27 +899,18 @@ regrowth probability associated to the rigid molecule or solid species to zero t
 \subsubsection{Volume}
 {\bf \# Prob\_Volume} \\
 {\it Real(1)} \\ 
-{\it Real(2,i)} * One line required for each box except for
-GEMC-NVT\\ \\
+{\it Real(2)} \\
+{[}{\it Real(3)}] \\ \\
 %{\it Integer(1)} *Optional \\ \\
 %
-Sets the probability of volume displacement moves. This flag is
-required for NPT, GEMC-NPT and GEMC-NVT simulations. Do not specify
-for any other simulation type. {\it Real(1)} is the relative probability of
-attempting a box volume change. Note that volume changes are bold and
-expensive moves and should be attempted infrequently. This probability
-should normally not exceed 0.05 and values from 0.01-0.03 are
-typical. {\it Real(2,i)} specifies the maximum volume displacement in
-\AA$^3$ for box {\em i}. If you are simulating a two box system, a
-value of {\it Real(2,i)} is required for each box on separate
-lines. Note that the exception to this is for a GEMC-NVT simulation,
-where there are two boxes but the volume moves are coupled. In this
-case, only a single value of {\it Real(2,i)} is specified. The default
-is to change the box volume by random amounts up to the maximum value
-specified by {\it Real(2,i)}. 
-%{\it Integer(1)} is an
-%optional argument available only for GEMC-NVT simulations. If this
-%flag is set to 1, volume changes are peformed in $\ln V$ instead of $V$. \\ \\
+{\it Real(1)} is the relative probability of attempting a box volume change. 
+Since volume changes are computationally expensive, this probability should 
+normally not exceed 0.05 and values from 0.01-0.03 are typical. 
+{\it Real(2)} is the maximum volume displacement in \AA$^3$ for box 1.
+{\it Real(3)} is the maximum volume displacement in \AA$^3$ for box 2, 
+and is only required for GEMC-NPT simulations.
+The attempted change in box volume is selected from a uniform distribution. 
+This subsection is required for NPT, GEMC-NPT and GEMC-NVT simulations. 
 %
 For example, if you are simulating a liquid with a single box in the NPT ensemble,
 you would specify the following: \\ \\ 
@@ -991,10 +945,10 @@ changed by random amounts ranging from
 -5000 \AA $^3$ to +5000 \AA $^3$. As with all move probabilities, you
 can experiment with making 
 larger or smaller moves. Note that if the \# Run\_Type is set
-to 'Equilibration', Cassandra will attempt to optimize the magnitude of
+to {\tt equilibration}, Cassandra will attempt to optimize the magnitude of
 the volume change to achieve about 50\% acceptance rates. 
 
-Please note that the volume perturbation move is only supported for cubic boxes. 
+The volume perturbation move is only supported for cubic boxes. 
 %If you wish to perform a GEMC-NVT simulation, you might specify the
 %following: \\ \\
 %                                                                                                                                           
@@ -1006,6 +960,11 @@ Please note that the volume perturbation move is only supported for cubic boxes.
 %                
 %This would change each box by a maximum of $\pm$300 \AA $^3$ but
 %instead of uniformly, it will change the volume on $\ln V$.
+
+
+
+
+
 %%%%%%%%%%%%%%%%
 %
 % Insertion
@@ -1014,127 +973,119 @@ Please note that the volume perturbation move is only supported for cubic boxes.
 \subsubsection{Insertion and Deletion Moves}
 {\bf \# Prob\_Insertion} \\
 {\it Real(1)} \\
-{\it Character(i,1)} \\
-{\it Character(i,2)} \\ \\
+{\it Character(2,1) ... Character(2,n)} \\ \\
 %
-This flag is set only for GCMC simulations. {\it Real(1)} sets the
-probability of attempting insetion moves. If there is more than one
-species, each is chosen for an insertion attempt with equal
-probability. {\it Character(i,1)} and {\it Character(i,2)} control the
-manner with which the insertions are carried out for each species {\em
-  i}. Right now, Cassandra
-only uses one insertion method (a reservoir sampling approach). Later versions
-will have other options. So for now, the only option is to set {\it
-  Character(i,1)} equal to `insertion method'. If the species can be
-inserted or deleted, set {\it Character(i,2)} equal to `reservoir'. If
-the species is `non-volatile' and should not be inserted or deleted
-or should stay in its original box, then set {\it Character(i,2)} equal
-  to `none'. Then whichever box that species starts in, it will remain
-  there for the whole simulation. You must repeat these flags for each species
-{\em i}.  For example, if you are performing a GCMC
-simulation with two species that can be inserted, you might specify
-the following \\ \\ 
-%                                                                                                                                           
+where $n$ is the number of species. 
+{\it Real(1)} sets the probability of attempting insetion moves. 
+{\it Character(2,i)} is the insertion method and can be either \texttt{cbmc} or \texttt{none}. 
+If \texttt{cbmc}, species $i$ will be inserted by assembling its 
+fragments using configurational bias Monte Carlo.
+If \texttt{none}, species $i$ will not be inserted or deleted.
+This subsection is required for GCMC simulations. \\ \\
+%
+If there is more than one insertable species, each is chosen for an insertion attempt with equal probability. 
+For example, if you are performing a GCMC simulation with two species that can 
+be inserted, you might specify the following \\ \\ 
+%
 \texttt{
 \# Prob\_Insertion \\
 0.1 \\
-insertion method \\
-reservoir \\
-insertion method \\
-reservoir} \\ \\ 
+cbmc cbmc} \\ \\ 
 %
 This will tell Cassandra to attempt insertions 10\% of the total moves and
-both species will be inserted using
-the reservoir insertion method.  \\ \\
-%                                                                                                                                           
+both species will be inserted using CBMC.
+If only species 1 is to be inserted or deleted, use \\ \\
+%
 \texttt{
 \# Prob\_Insertion \\
 0.1 \\
-insertion method \\
-reservoir \\
-insertion method \\
-none} \\ \\ 
+cbmc none} \\ \\ 
 %
-This will tell Cassandra to attempt insertions 10\% of the total moves. Only
-species 1 will be inserted, while species 2 will not get inserted. \\ \\
 %%%%%%%%%%%%%%%%
 %
 % Deletion
 %
 %%%%%%%%%%%%%%%
 {\bf \# Prob\_Deletion} \\
-{\it Real (1)} \\ \\
+{\it Real(1)} \\ \\
 %
-Sets the relative probability of deletion during the course of a
-simulation. Each exchangeable species is randomly chosen and a
-deletion move is attempted on a randomly chosen molecule 
-of this species. If a species has an insertion method `none', no
-attempt is made to delete it. You must specify the same deletion
-probability as the insertion probability to satisfy microscopic
-reversibility. If you fail to do this, Cassandra will give an error
-and quit.  \\ \\
+{\it Real(1)} is the probability of attempting to delete a molecule during a simulation, 
+and must match the insertion probability to satisfy microscopic reversibility.
+The molecule to delete is selected by first choosing a species with uniform probability, 
+and then choosing a molecule of that species with uniform probability.
+If a species has the insertion method \texttt{none}, no attempt is made to delete it. 
+This subsection is required for GCMC simulations. \\ \\
 %
+%%%%%%%%%%%%%%%%
+%
+% Swap
+%
+%%%%%%%%%%%%%%%
 {\bf \# Prob\_Swap}\\
-{\it
-Real(1) \\ 
-Character(i,1) \\
-Character(i,2) \\ \\}
+{\it Real(1)} \\ 
+{\it Character(2,1) ... Character(2,n)} \\
+{[}{\it prob\_swap\_species Real(3,1) ... Real(3,n)}] \\
+{[}{\it prob\_swap\_from\_box Real(4,1) ... Real(4,i)}] \\ \\
 %
-This keyword is set only for a GEMC simulation to enable transfer of species between two boxes. {\em Real(1)} sets the relative probability of attempting transfer of a molecule from one box to
-the other. During the swap, the donor and receiving boxes are chosen randomly. The species chosen for transfer is selected according to its overall mole fraction which is calculated only for
-the species that can be exchanged between boxes. Thus, species that are ``non-volatile" are not included while computing the mole fractions. A molecule is then chosen randomly for transfer. \\ \\
+where $n$ is the number of species and $i$ is the number of boxes.
+{\em Real(1)} is the probability of attempting to transfer a molecule from one box to another. 
+Similar to the \texttt{\# Prob\_Insertion} subsection, 
+{\em Character(2,i)} is the insertion method and can be \texttt{cbmc} or \texttt{none}. 
+If \texttt{cbmc}, species $i$ will be inserted by assembling its 
+fragments using configurational bias Monte Carlo.
+If \texttt{none}, species $i$ will not be transferred between boxes.
+This subsection is required for a GEMC simulation. \\ \\
 %
-Similar to the \texttt{\# Prob\_Insertion} section, {\em Character(i,1)} and {\em Character(i,2)} describe the manner in which the swap is carried out for each species $i$. 
-At present, the only option is to set {\em Character(i,1)} equal to `insertion method'.  If the species can be swapped, set {\em Character(i,2)} equal to `reservoir'. If the species is not to be
-transferred between boxes, then set {\em Character(i,2)} to `none'. Then whichever box that species starts in, it will remain in that box for the whole simulation. These flags are to be repeated
-for each species $i$.  For example, while performing a GEMC simulation for three species the first two of which are exchanged
-while the third is not, you might specify the following: \\ \\
+For example, while performing a GEMC simulation for three species the first two of which are exchanged
+while the third is not, specify the following: \\ \\
 %
 \texttt{ \# Prob\_Swap\\
 0.1 \\ 
-insertion method \\
-reservoir \\
-insertion method \\
-reservoir \\
-insertion method \\
-none \\ \\
+cbmc cbmc none \\ \\
 }
 %
-This will tell Cassandra to attempt swap moves 10\% of the total moves. Attempts will be made to transfer species 1 and 2 between available boxes while molecules of species 3 will remain
-in the boxes they are present in at the start of the simulation. \\ \\
+This will tell Cassandra to attempt swap moves 10\% of the total moves. 
+Attempts will be made to transfer species 1 and 2 between available boxes while molecules 
+of species 3 will remain in the boxes they are present in at the start of the simulation. \\ \\
 %
+By default, a molecule is chosen for the attempted swap with uniform probability 
+(amongst swappable molecules).
+As a result, if one species has a much higher mole fraction in the system 
+(e.g. if calculating methane solubility in liquid water),
+then most attempted swaps will be of the more abundant species.
+This behavior can be changed by using the optional keywords 
+{\tt prob\_swap\_species} and {\tt prob\_swap\_from\_box}. \\ \\
 %
-%%****** Optional section for Prob\_Swap \\
-%%{\bf \#  Prob\_Swap\_Species} \\
-%{\it Real(i,1)} \\ \\
-%%
-%{\it Real(1)} set the relative probability of attempting a particle
-%insertion or a swap. The two lines 'insertion method' and 'reservoir' are to be repeated
-%for each of the species that are inserted or swapped during the course of a simulation. \\ \\
-%%
-%An optional section while setting the relative probability of swap move may be included
-%immediately following the {\bf \# Prob\_Swap} section as shown above. This section is used
-%to specify user-defined cumulative probabilities for swapping of each species and is used to override
-%the selection of species based on mole fraction of swappable species in the code. For example, for a GEMC simulation involving three species out of which the first species is not swapped, the second is swapped with 0.1 
-%probability and the third with 0.9, the section will be input as:\\ \\
+The keyword \texttt{prob\_swap\_species} must be given with $n$ options: 
+{\it Real(3,j)} is the probability of selecting species $j$.
+The keyword {\tt prob\_swap\_from\_box} must be given with $i$ options:
+{\it Real(4,j)} is the probability of selecting a molecule from box $j$.
+For example, to select a molecule of species 1 for 90\% of attempted swaps and 
+to select box 2 as the donor box for 75\% of attempted swaps, use: \\ \\
 %
-%{\bf \#  Prob\_Swap\_Species} \\
-%{\it 0.0 0.1 1.0} \\ \\
-%%
-%When this section is not included in the input file, the default behavior is controlled by the `Species\_Type' in the mcf file. If `\# Species\_Type' is declared as 'SORBATE', then the species is included in the computation of mole 
-%fraction.
-%%
+\texttt{ \# Prob\_Swap\\
+0.1 \\ 
+cbmc cbmc none \\
+prob\_swap\_species 0.9 0.1 0.0 \\
+prob\_swap\_from\_box 0.25 0.75 \\ \\ }
 %
+The probability of selecting a species with insertion method \texttt{none} must be 0. \\ \\
+%
+%%%%%%%%%%%%%%%%
+%
+% Swap
+%
+%%%%%%%%%%%%%%%
 {\bf Flip Move}\\ \\
 {\bf \# Prob\_Ring} \\
 {\it Real(1) Real(2)} \\ \\
 %
-This keyword is used when flip moves are to be attempted to sample bond angles and 
+This subsection is used when flip moves are to be attempted to sample bond angles and 
 dihedral angles in a ring fragment. 
 For more details on this move see Ref. \cite{Shah:2011}. 
-Note that this keyword is used only in input files
+Note that this subsection is used only in input files
 that generate configuration libraries of ring moieties. The input file of the 
-actual simulation would involve the ``\# Prob\_Regrowth'' keyword.
+actual simulation would involve the \texttt{\# Prob\_Regrowth} keyword.
 The relative probability of attempting a flip move is 
 specified by {\it Real(1)} while the maximum angular displacement 
 in degrees for the move is given by {\it Real(2)}. 
@@ -1218,7 +1169,7 @@ move is 20\degree~specify the following: \\ \\
 %{\it Real(1)} is the relative probability of performing a lambda move on the fractional
 %particle in the system. {\it Character(i,1)} is the file from which to obtain configuration
 %for species $i$ when a lambda move results in an insertion. {\it Character(i,2)} sets the 
-%insertion method for the new fractional molecule in the system. Currently, only ``RANDOM''
+%insertion method for the new fractional molecule in the system. Currently, only \texttt{RANDOM}
 %is supported. {\it Real(i,3)} is the maximum change in lambda for species $i$. \\ \\
 %%
 %%%%%%%%%%%%%%%%
@@ -1233,8 +1184,6 @@ move is 20\degree~specify the following: \\ \\
 %This section specifies the relative probability of exchange between two boxes $i$ and $j$.
 %For each box $i$, on the same line are specified probabilities for choosing a pair of boxes
 %$i$ and $j$. \\ \\
-{\bf \# Done\_Probability\_Info} \\
-This is a required keyword that marks the end of the section for specifying move probabilities. It must occur after \# Move\_Probability and all the move probabilities must be specified between these two keywords. Once Cassandra reads \# Done\_Probability\_info, it checks to make sure the probabilities sum to unity. If not, an error will be given.
 %
 %%%%%%%%%%%%%%%%
 %
@@ -1245,91 +1194,119 @@ This is a required keyword that marks the end of the section for specifying move
 {\bf \# Start\_Type} \\
 {\it Character(1) } \\ \\
 %
-This keyword specifies whether Cassandra generates an initial configuration or uses a previously generated configuration
-to start a simulation. {\it Character(1)} takes one of the three options: `make\_config', `checkpoint' or `read\_old'. 
+This section specifies whether Cassandra generates an initial configuration or 
+uses a previously generated configuration to start a simulation. 
+{\it Character(1)} can be one of four keywords:
+{\tt make\_config}, {\tt read\_config}, {\tt add\_to\_config}, or {\tt checkpoint}.
 %
 \begin{itemize} 
-\item \textbf{`make\_config'} this keyword is used to generate an initial state using a configurational biased scheme. 
-With this option, additional information is required on the number of molecules of each species in every box and is specified as follows: \\ \\
-%
+\item \textbf{`make\_config'} will generate an initial configuration using a configurational biased scheme. 
+The number of molecules of each species is specified as follows: \\ \\
 %
 {\bf \# Start\_Type} \\
-{\it make\_config} \\
-{\it Integer(j,k)} * One line for each species and one entry on each line for each box\\ \\
-% 
- where {\it Integer(j,k)} represents the number of molecules of species $j$ in box $k$. Thus, for example, to generate an initial configuration
- for two species in two boxes such that the numbers of molecules of species 1 in box 1 and 2 are 100 and 50 respectively and those for
- species 2 are 75 and 25 respectively, the input file must contain the following: \\ \\
- %
+{\it make\_config Integer(1) ... Integer(n)} \\ \\
+%
+where {\it n} is the number of species and {\it Integer(i)} is the number of molecules of species $i$ to insert into the box. 
+This keyword can be repeated for each box. 
+For example, to generate an initial configuration with 100 molecules of species 1 and 75 molecules of species 2 \\ \\
+%
  \texttt{
  \# Start\_Type \\
- make\_config \\
- 100 50 \\
- 75 25 \\}
- %
+ make\_config 100 75 \\} \\
 %
+If the simulation also has a second box with 25 molecules of species 2 only \\ \\
+%
+ \texttt{
+ \# Start\_Type \\
+ make\_config 100 75\\
+ make\_config \ \ 0 25\\}
+%
+\item {\textbf{`read\_config'}} will use the coordinates from an .xyz file.
+For example, a configuration generated at one temperature may be used to initiate a simulation at another temperature. 
+After {\tt read\_config} the number of molecules of each species must be given, followed by the .xyz filename: \\ \\
+%
+{\bf \# Start\_Type} \\
+{\it read\_config Integer(1) ... Integer(n) Character(1)}\\ \\
+%
+where {\it n} is the number of species, {\it Integer(i)} is the number of molecules 
+of species $i$ to read from file {\it Character(1)}.
+This keyword can be repeated for each box. 
+For example, to start a simulation using a configuration of 50 molecules each of species 1 and 2: \\ \\
+%
+\texttt{
+\# Start\_Type \\
+read\_config 50 50 liquid.xyz \\} \\
+%
+If the simulation also has a second box with 10 molecules of species 1 and 90 molecules of species 2: \\ \\ 
+%
+\texttt{
+\# Start\_Type \\
+read\_config 50 50 liquid.xyz \\
+read\_config 10 90 vapor.xyz \\} \\
+%
+The .xyz files must have the following format:\\ \\
+%
+\texttt{
+ <number of atoms>\\
+ comment line\\
+ <element> <x> <y> <z>\\
+ ...\\
+} \\
+%
+The utility \texttt{read\_config.py} is provided to speed up the restart of simulations using the {\tt read\_config} option.
+This tool extracts the last configuration from a previous run, as well as relevant information from the checkpoint file 
+such as maximum displacements for angles or translations. It then creates new input and xyz files that can readily be
+used to restart a simulation using the {\tt read\_config} option. This script is located in \texttt{Scripts/Read\_Config}. 
+For more information, refer to the README file located in the same directory.
+
+\item {\textbf{`add\_to\_config'}} will read the coordinates from an .xyz file, but then insert additional molecules.
+After {\tt add\_to\_config} specify the number of molecules of each species to be read, followed by the .xyz filename, 
+followed by the number of molecules of each species to be added: \\ \\
+%
+{\bf \# Start\_Type} \\
+{\it add\_to\_config Integer(1) ... Integer(n) Character(1) Integer(n+1) ... Integer(2n)}\\ \\
+%
+where {\it n} is the number of species, {\it Integer(1)} through {\it Integer(n)} are the number of molecules of each
+species to read from file {\it Character(1)}, and {\it Integer(n+1)} through {\it Integer(2n)} are the number of molecules
+of each species to add to the configuration.
+This keyword can be repeated for each box.
+For example, to start a simulation by reading in a zeolite (speces 1) configuration and adding 30 molecules of methane (species 2): \\ \\
+%
+\texttt{
+\# Start\_Type \\
+add\_to\_config  1  0 MFI.xyz 0 30 \\} \\
+%
+where the file \texttt{MFI.xyz} contains the coordinates of a unit cell of MFI silicalite.
 
 \item \textbf{`checkpoint'} this keyword is used to restart a simulation from a checkpoint file.
 During the course of a simulation, Cassandra periodically generates a checkpoint file (*.chk)
  containing information about the total number of translation, rotation and volume moves along with the random number seeds and 
-the coordinates of all the molecules and their box number at the time the file is written. Cassandra provides
+the coordinates of each molecule and its box number at the time the file is written. Cassandra provides
 the capability of restarting from this state point in the event that a simulation crashes or 
 running a production simulation from an equilibrated configuration. For this
-purpose, in addition to the `checkpoint' keyword, additional information in the form of the name of 
-the checkpoint file {\it Character(2)} is required in the following format: \\ \\
+purpose, in addition to the {\tt checkpoint} keyword, additional information in the form of the name of 
+the checkpoint file {\it Character(1)} is required in the following format: \\ \\
 %
 {\bf \# Start\_Type} \\
-{\it checkpoint} \\
-{\it Character(2)} \\ \\
+{\it checkpoint Character(1)} \\ \\
 %
 For example, to continue simulations from a checkpoint file `methane\_vle\_T148.chk', you might specify: \\ \\
 %
 \texttt{
 \# Start\_Type \\
-checkpoint \\
-methane\_vle\_T148.chk \\ }
+checkpoint methane\_vle\_T148.chk \\ } \\
 %
+Note that when a {\tt checkpoint} file is used to restart a simulation, the seeds for random number generation supplied by the user
+will be overwritten by those present in the checkpoint file. By contrast, if \# Start\_Type is set to {\tt read\_config}, 
+then the seeds specified in the input file are used.  \\ \\
 %
-%
-\item {\textbf{`read\_old'}} Cassandra also provides a `read\_old' option to make use of just the coordinates of molecules to start a simulation. 
-For example, a configuration generated at a lower temperature may be used to jump start a simulation at a higher temperature. 
-When the `read\_old' option is used, additional information in the form of the file names {\it Character(k,3)} is required as
-shown below: \\ \\
-%
-{\bf \# Start\_Type} \\
-{\it read\_old}\\
-{\it Character(k,3)} * One line for each box \\ \\
-%
-For example, to start a GEMC simulation simulation using the configurations of the two boxes, you might specify: \\ \\
+\end{itemize}
+Unless starting from a checkpoint file, input files for a multi-box simulation must have one line for each box in the \texttt{Start\_Type} section. Each line can start with a different keyword. For example, a GEMC simulation of a water(1)-methane(2) mixture can begin from an equilibrated water box and a new vapor box: \\ \\
 %
 \texttt{
 \# Start\_Type \\
-read\_old \\
-box1.readold \\ 
-box2.readold \\ \\}
-%
-This will tell Cassandra to use the configurations of the two boxes stored in \texttt{box1.readold} and \texttt{box2.readold} to start a simulation. 
-The files \texttt{box1.readold} and \texttt{box2.readold} differ from a typical xyz file in that the first line is the total number of molecules
-of each species. For example, the first four lines of an xyz file for a mixture of 50 methane (species 1) molecules and 30 butane (species 2) molecules are\\
-
-\texttt{
- \ \ \ \ 50 \ \ \ \ 30\\
- C    35.3216621555828        23.4086639841907       -21.2699226066799\\
- C   -5.99142900112297        20.1953876924176        36.9060179722412\\
- C   -12.2050779845648        28.5047573713517        19.4255817882403\\
-}
-
-The utility \texttt{read\_old.py} is provided to speed up the restart of simulations using the `read\_old' option.
-This tool extracts the last configuration from a previous run, as well as relevant information from the checkpoint file 
-such as maximum displacements for angles or translations. It then creates new input and xyz files that can readily be
-used to restart a simulation using the `read\_old' option. This script is located in \texttt{Scripts/Read\_Old}. For more information, refer to
-the README file located in the same directory.
-\end{itemize}
-
-Note that when a `checkpoint' file is used to restart a simulation, the seeds for random number generation supplied by the user
-will be overwritten by those present in the checkpoint file. By contrast, if \# Start\_Type is set to `read\_old', 
-then the seeds specified in the input file are used.  \\ \\
-
+read\_config 100 \ \ 0 water.xyz \\
+make\_config \ 50 \ 50 \\}
 %
 %%%%%%%%%%%%%%%%
 %
@@ -1338,27 +1315,28 @@ then the seeds specified in the input file are used.  \\ \\
 %%%%%%%%%%%%%%%%
 \subsection{Run Type}\label{sec:Run_Type}
 {\bf \# Run\_Type} \\
-{\it Character(1)} {\it Integer(1)} {\it Integer(2)} \\ \\
+{\it Character(1)} {\it Integer(1)} [{\it Integer(2)}] \\ \\
 %
-This keyword is used to specify whether a given simulation is an equilibration or a production run.
-For an equilibration run, the maximum translational, rotational and volume widths (for an NPT or a GEMC
+This section is used to specify whether a given simulation is an equilibration or a production run.
+For an equilibration run, the maximum translational, rotational, torsional and volume widths (for an NPT or a GEMC
 simulation) are adjusted to achieve 50\% acceptance rates. During a production run, the maximum
 displacement width for different moves are held constant. \\ \\
 %
 Depending on the type of the simulation,
-{\it Character(1)} can be set to either ``Equilibration" or ``Production".  For an \texttt{Equilibration} run, {\it Integer(1)} denotes
+{\it Character(1)} can be set to either \texttt{equilibration} or \texttt{production}.  
+For an \texttt{equilibration} run, {\it Integer(1)} denotes
 the number of MC steps performed for a given thermal move before the corresponding maximum
 displacement width is updated. {\it Integer(2)} is the number of MC volume moves after which the volume
 displacement width is updated. This number is optional if no volume moves are performed during a simulation (for example in an NVT or
-a GCMC simulation). When the run type is set to \texttt{Production}, the MC moves refer to the frequency at which the acceptance
+a GCMC simulation). When the run type is set to \texttt{production}, the MC moves refer to the frequency at which the acceptance
 ratios for various moves will be computed and output to the log file. These acceptance rates should be checked to make sure proper sampling is achieved. \\ \\
 %
-For an NPT equilibration run in which the widths of the thermal move are to be updated after 100 MC moves and
-maximum volume displacements after 10 volume moves, specify the following: \\ \\
+For an NPT equilibration run in which the widths of the thermal move are to be updated after 1000 MC moves and
+maximum volume displacements after 100 volume moves, specify the following: \\ \\
 %
 \texttt{
 \# Run\_Type \\
-Equilibration 100 10 \\ \\}
+equilibration 100 10 \\ \\}
 %
 % 
 For an NVT production run in which the acceptance ratios of various thermal moves are printed to the log file after
@@ -1366,7 +1344,7 @@ every 250 MC steps of a given thermal move, use the following: \\ \\
 %
 \texttt{
 \# Run\_Type \\
-Production 250}
+production 250}
 %
 %%%%%%%%%%%%%%%%
 %
@@ -1375,82 +1353,80 @@ Production 250}
 %%%%%%%%%%%%%%%%
 \subsection{Simulation Length}\label{sec:Simulation_Length_Info}
 {\bf \# Simulation\_Length\_Info} \\
-{\it Units  Character(1)} \\
-{\it Prop\_Freq} {\it Integer(2)} \\
-{\it Coord\_Freq} {\it Integer(3)} \\
-{\it MCsteps} or {\em Stop} {\it Integer(4)} \\ 
-{\bf \# Done\_Simulation\_Length\_Info} \\ \\
+{\it units  Character(1)} \\
+{\it prop\_freq  Integer(2)} \\
+{\it coord\_freq  Integer(3)} \\
+{\it run  Integer(4)} \\ 
+{[}{\it steps\_per\_sweep  Integer(5)}] \\
+{[}{\it block\_averages  Integer(6)}] \\ \\
 %
-This section specifies the frequency at which thermodynamic properties and coordinates are output
-to a file. {\it Character(1)} determines the method by which the simulation is terminated and
-data is output. If {\it Character(1)} is to `Minutes', then the simulation stops after the specified 
-time in minutes. The format for this option is given below: \\ \\
+This section specifies the frequency at which thermodynamic properties and coordinates are output to a file. 
+The \texttt{units} keyword determines the method by which the simulation is terminated and data is output. 
+{\it Character(1)} can be {\tt minutes}, {\tt steps}, or {\tt sweeps}. 
+Thermodynamic quantities are output every {\it Integer(2)} units,
+coordinates are written to the disk every {\it Integer(3)} units and 
+the simulation will stop after {\it Integer(4)} units. \\ \\
 %
-{\bf Units    Minutes} \\
-Prop\_Freq       {\it Integer(2) }\\
-Coord\_Freq        {\it Integer(3)} \\
-Stop                  {\it Integer(4)} \\ \\
-%
-With this option, thermodynamic quantities are output every {\it Integer(2)} minutes, 
-coordinates are written to the disk every {\it Integer(3)} minutes and the total simulation
-time is specified in minutes by {\it Integer(4)}. For example, to run a simulation for 60 minutes
-such that thermodynamic quantities are written every minute and the coordinates are output
-every 10 minutes, use the following: \\ \\
+If {\it Character(1)} is {\tt minutes}, then the simulation runs for a specified time.
+For example, to run a simulation for 60 minutes with thermodynamic properties written every minute and 
+coordinates output every 10 minutes, use: \\ \\
 %
 \texttt{
 \# Simulation\_Length\_Info \\
-Units    Minutes \\
-Prop\_Freq    1 \\
-Coord\_Freq       10 \\
-Stop                 60 \\ 
-\# Done\_Simulation\_Length\_Info \\ \\}
+units         minutes \\
+prop\_freq    1 \\
+coord\_freq   10 \\
+run           60 \\} \\
 %
-Similar to \texttt{\# Move\_Probabilities} section, the end of the simulation length section 
-always includes the \\ \texttt{\#~Done\_Simulation\_Length\_Info} line. \\ \\
-%
-Simulations can also be run for a given number of MC steps. To enable this feature, 
-{\it Character(1)} is set to `Steps'. Additional information is required and is given in the
-following format: \\ \\
-%
-{\bf Units    Steps} \\
-Prop\_Freq       {\it Integer(2) }\\
-Coord\_Freq         {\it Integer(3)} \\
-MCsteps                  {\it Integer(4)} \\ \\
-%
-With this option, thermodynamic quantities are output every {\it Integer(2)} MC steps,
-coordinates are written at a frequency of {\it Integer(3)} MC steps and the simulation
-terminates after {\it Integer(4)} steps. Note that an MC step is defined as a single MC move, regardless of type and independent of system size.\\ \\
-%
-To run a simulation of 50,000 steps such that thermodynamic quantities are printed
-every 100 MC steps and coordinates are output every 10,000 steps, use the following: \\ \\
+If {\it Character(1)} is {\tt steps}, the simulation runs for a specified number of MC steps.
+An MC step is defined as a single MC move, regardless of type and independent of system size. 
+To run a simulation of 50,000 steps such that thermodynamic quantities are printed every 100 MC steps and 
+coordinates are output every 10,000 steps, use: \\ \\
 %
 \texttt{
 \# Simulation\_Length\_Info \\
-Units           Steps \\
-Prop\_Freq      100 \\
-Coord\_Freq     10000 \\
-MCsteps         50000 \\
-\# Done\_Simulation\_Length\_Info}
+units           steps \\
+prop\_freq      100 \\
+coord\_freq     10000 \\
+run             50000 \\ } \\
 %
+If {\it Character(1)} is {\tt sweeps}, the simulation runs for a specified number of MC sweeps. 
+The number of MC steps per sweep can be defined using the optional keyword \\ \\
 %
-%%%%%%%%%%%%%%%%
+steps\_per\_sweep {\it Integer(5)} \\ \\
 %
-% Average_Info
-%
-%%%%%%%%%%%%%%%%
-\subsection{Average}\label{sec:Average_Info}
-{\bf \# Average\_Info} \\
-{\it Integer(1)} \\ \\
-%
-This section specifies how thermodynamic quantities are output. At present, Cassandra
-writes instantaneous values of thermodynamic quantities at a frequency given by
-either {\it Prop\_Freq} in the \texttt{\# Simulation\_Length\_Info} section. {\it Integer(1)}
-is set to 1 for this purpose. Later versions of Cassandra will have the ability to output block
-averages as well. Thus, you will specify the following section in your input file: \\ \\
+The default \texttt{steps\_per\_sweep} value is the sum of the weights of each move type. 
+A sweep is typically defined as the number of MC moves needed for every move to be attempted for every molecule.
+For example, in a water box of 100 molecules in the NPT ensemble, a sweep would be 201 moves---100 translations,
+100 rotations and 1 volume change.
+To run a simulation of 1,000 sweeps with thermodynamic quantities are printed every 100 sweeps
+and coordinates are output every 100 sweeps, use the following: \\ \\
 %
 \texttt{
-\# Average\_Info \\ 
-1}
+\# Simulation\_Length\_Info \\
+units             sweeps \\
+prop\_freq        100 \\
+coord\_freq       100 \\
+run               1000 \\
+steps\_per\_sweep 201 \\} \\
+%
+The optional keyword {\tt block\_avg\_freq} switches the thermodynamic output from instantaneous values
+to block average values, where {\it Integer(6)} is the number of units per block.  
+The number of blocks is given by {\it Integer(4)}/{\it Integer(6)} 
+and the number of data points per block is {\it Integer(6)}/{\it Integer(2)}.
+For example, during a run of 1,000,000 steps, with properties computed every 100 steps and 
+averaged every 100,000 steps, specify
+%
+\texttt{
+\# Simulation\_Length\_Info \\
+units             steps \\
+run               1000000 \\
+block\_avg\_freq  100000 \\
+prop\_freq        100 \\
+coord\_freq       100 \\} \\
+%
+This simulation will output 10 averages, and each average will be computed from 1000 data points.
+%
 %%%%%%%%%%%%%%%%
 %
 % Property_Info
@@ -1458,46 +1434,51 @@ averages as well. Thus, you will specify the following section in your input fil
 %%%%%%%%%%%%%%%%
 \subsection{Property Output}\label{sec:Property_Info}
 {\bf \# Property\_Info} {\it Integer(i)} \\
-{\it Character(i,j) * One line for each property} \\ \\
+{\it Character(j) *One line for each property $j$} \\ \\
 %
-This section provides information on the properties that are output. More than one section is
-allowed for multiple boxes. In this case, each section is separated by a blank line. {\it 
-Integer(i)} is the identity of the box for which the properties are desired. {\it Character(i,j)}
-is the property that is to be output. Each property is specified on a separate line. At present,
-the acceptable entries include: \\ \\
+This section provides information on the properties that are output. 
+More than one section is allowed for multiple boxes. 
+In this case, each section is separated by a blank line. 
+{\it Integer(i)} is the identity of the box for which the properties are desired. 
+{\it Character(i,j)} is the property that is to be output. 
+Each property is specified on a separate line. 
+The supported keywords are: \\ \\
 %
-\texttt{Energy\_Total}: Total energy of the system (Extensive) in kJ/mol \\
-\texttt{Energy\_LJ}: Lennard-Jones energy of the sytem in kJ/mol \\
-\texttt{Energy\_Elec}: Electrostatic energy of the sytem in kJ/mol \\
-\texttt{Energy\_Intra}: Total intramolecular energy of the system including bonded and non-bonded 
+\texttt{energy\_total}: Total energy of the system (extensive) in kJ/mol \\
+\texttt{energy\_lj}: Lennard-Jones energy of the sytem in kJ/mol \\
+\texttt{energy\_elec}: Electrostatic energy of the sytem in kJ/mol \\
+\texttt{energy\_intra}: Total intramolecular energy of the system including bonded and non-bonded 
 interactions in kJ/mol \\
-\texttt{Enthalpy}: Enthalpy of the system (Extensive) kJ/mol \\
-\texttt{Pressure}: Pressure of the system in bar \\
-\texttt{Volume}: Volume of the system in \AA$^3$ \\
-\texttt{Nmols}: Number of molecules of a species \\
-\texttt{Density}: Density of a species in \#/\AA$^3$ \\ \\
+\texttt{enthalpy}: Enthalpy of the system (extensive) kJ/mol. 
+The enthalpy is computed using the pressure setpoint for isobaric simulations and 
+the computed pressure for all other ensembles. \\
+\texttt{pressure}: Pressure of the system in bar \\
+\texttt{volume}: Volume of the system in \AA$^3$ \\
+\texttt{nmols}: Number of molecules of each species \\
+\texttt{density}: Density of each species in \#/\AA$^3$ \\
+\texttt{mass\_density}: Density of the system in kg/m$^3$ \\ \\
 %
 For example, if you would like total energy, volume and pressure of a one box system to be written, you may 
 specify the following: \\ \\
 %
 \texttt{
 \# Property\_Info 1 \\
-Energy\_Total \\ 
-Volume \\ 
-Pressure \\ \\}
+energy\_total \\ 
+volume \\ 
+pressure \\ \\}
 %
 For a GEMC-NVT simulation, total energy and density of all the species in box 1 and total energy, density of
 all the species in box 2 along with the pressure may be output using the following format: \\ \\
 %
 \texttt{
 \# Property\_Info 1 \\
-Energy\_Total \\
-Density \\ \\
+energy\_total \\
+density \\ \\
 %
 \# Property\_Info 2 \\
-Energy\_Total \\
-Density \\ 
-Pressure }
+energy\_total \\
+density \\ 
+pressure }
 %
 %%%%%%%%%%%%%%%%
 %
@@ -1506,10 +1487,10 @@ Pressure }
 %%%%%%%%%%%%%%%%
 \subsection{Fragment Files}\label{sec:Fragment_Files}
 {\bf \# Fragment\_Files} \\
-{\it Character(i,j)} {\it Integer(i,j)} * One line for each fragment $i$ in species $j$ \\ \\
+{\it Character(i)} {\it Integer(i)} *One line for each fragment $i$ \\ \\
 %
-In this section, information about the fragment library is specified. {\it Character(i,j)} gives
-the location of the fragment library of fragment $i$ in species $j$; {\it Integer(i,j)} is the
+In this section, information about the fragment library is specified. {\it Character(i)} gives
+the location of the fragment library of fragment $i$; {\it Integer(i)} is the
 corresponding integer id specifying the type of the fragment. This section is automatically
 generated by library\_setup.py. However, if there is a need to change this section, follow the example
 given below. \\ \\
@@ -1538,14 +1519,14 @@ fragment library frag\_1\_2.dat for these fragments.
 
 \subsection{Verbosity in log file}\label{sec:Verbose_Logfile}
 {\bf \# Verbose\_Logfile} \\
-{\it Logical(1)} \\ \\
+{\it Logical} \\ \\
 %
-This optional keyword is used to control the level of detail about the simulation
-setup that is output to the log file. Controling this can be useful for development
-purposes. This keyword is optional. If this keyword is not found,
-the value Logical(1) is set to FALSE by default. Allowed values for Logical(1) are
-TRUE or FALSE.
-
+This optional section is used to control the level of detail about the simulation
+setup that is output to the log file. 
+Controlling this can be useful for development purposes. 
+If this section is missing, {\it Logical} is set to {\tt false} by default. 
+Supported options for {\it Logical} are {\tt true} or {\tt false}. \\ \\
+%
 %%%%%%%%%%%%%%%%
 %
 % File_Info
@@ -1553,10 +1534,10 @@ TRUE or FALSE.
 %%%%%%%%%%%%%%%%
 \subsection{File Info}\label{sec:File_Info}
 {\bf \# File\_Info } \\
-{\it Character(1)} \\ \\
+{\it Character} \\ \\
 %
 This section is used only while generating a fragment library. Cassandra will use the filename
-specified in {\it Character(1)} to store different conformations of the fragment being simulated. Once again, this
+specified in {\it Character} to store different conformations of the fragment being simulated. Once again, this
 section is automatically handled by library\_setup.py. However, if the user wishes to modify this part, 
 use the following template: \\ \\
 %
@@ -1574,30 +1555,42 @@ This will tell Cassandra to store the fragment library in the file named \texttt
 \subsection{CBMC parameters}\label{sec:CBMC_Info}
 {\bf \# CBMC\_Info} \\
 {\bf kappa\_ins} {\it Integer(1)} \\
-{\bf kappa\_rot} {\it Integer(2)} \\
-{\bf kappa\_dih} {\it Integer(3)} \\
-{\bf rcut\_cbmc} {\it Real(i,4)} * Number of entries equal to number of simulation boxes\\ \\
+{\bf kappa\_dih} {\it Integer(2)} \\
+{\bf rcut\_cbmc} {\it Real(3,1)} [{\it Real(3,2)}] \\ \\
 %
-Cassandra utilizes a configurational bias methodology based on reservoir sampling \cite{Shah:2011}.
+Cassandra utilizes a configurational bias methodology based on sampling a library of fragment conformations \cite{Shah:2011}.
 This section sets a number of parameters required for biased insertion/deletion (refer to the sections
 \# Prob\_Insertion, \# Prob\_Deletion and \# Prob\_Swap) and configurational
-regrowth (\# Prob\_Regrowth section) of molecules. For a biased insertion, a fragment is chosen at random and given
-a random orientation. A number of trial positions are generated for the center-of-mass of the fragment.
-One of the trial positions is then selected randomly based on the Boltzmann weight of the energy of
-the trial position. The number of trial insertion positions is given by {\it Integer(1)}. \\ \\
+regrowth (\# Prob\_Regrowth section) of molecules. 
+This section is only required if molecules are regrown, inserted and/or deleted. \\ \\
 %
-Once a trial position for the insertion is chosen, rotational bias may be applied by generating a number
-of trial orientations. {\it Integer(2)} specifies the number of such trial orientations. This feature will be
-implemented in later versions of Cassandra and any value for {\it Integer(2)}, at present, is ignored.
-To avoid any confusion, {\it Integer(2)} is set to 0. \\ \\
+Keyword {\tt kappa\_ins} is required
+if the section {\tt \# Start\_Type} is given with keyword {\tt make\_config} or {\tt add\_to\_config}, or
+if the section {\tt \# Sim\_Type} is {\tt gcmc}, {\tt gemc} or {\tt gemc\_npt}.
+For a biased insertion, a fragment is chosen to insert first in proportion to the number of atoms in fragment.
+For example, to insert a united-atom molecule of ethylbenzene, 
+the ring fragment has 7 pseudoatoms while the other has 3.
+The ring fragment will be inserted first with a probability of 0.7.
+By contrast, to insert a united-atom molecule of dodecane, 
+all ten fragments have 3 pseudoatoms and so one is chosen with uniform probability.
+After choosing a Boltzmann-distributed conformation and an orientation with uniform probability,
+{\it Integer(1)} trial positions are generated for the center-of-mass of the fragment.
+One of the trial positions is then selected randomly based on the Boltzmann weight of the energy of the trial position. \\ \\
 %
-After the biased placement of the first fragment, additional fragments directly bonded to the first fragment
-are placed. Each of these fragments undergoes a number of trial orientations with  respect
-to the fragment to which it is added. {\it Integer(3)} controls the number of such orientations that are
-generated. \\ \\
+%Once a trial position for the insertion is chosen, rotational bias may be applied by generating a number
+%of trial orientations. {\it Integer(2)} specifies the number of such trial orientations. This feature will be
+%implemented in later versions of Cassandra and any value for {\it Integer(2)}, at present, is ignored.
+%To avoid any confusion, {\it Integer(2)} is set to 0. \\ \\
 %
-For all the trials, energy of the partially grown molecule with itself and surrounding molecules is to be calculated. For this purpose, a short
-cutoff is used. {\it Real(i,4)} specifies the cutoff distance in \AA\ for each of the boxes in a simulation. A short cutoff is fast, but might miss some overlaps. You can experiment with this value to optimize it for your system.\\ \\
+Keyword {\tt kappa\_dih} is required 
+if any species composed of multiple fragments is inserted/deleted or regrown.
+Additional fragments are added to the growing molecule
+using {\it Integer(2)} trial dihedral angles that connect the new fragment to the existing part of molecule. \\ \\
+%
+Keyword {\tt rcut\_cbmc} is required if section {\tt \# CBMC\_Info} is required.
+For all the trials, energy of the partially grown molecule with itself and surrounding molecules is to be calculated. 
+For this purpose, a short cutoff is used. {\it Real(4,i)} specifies the cutoff distance in \AA\ for box $i$. 
+A short cutoff is fast, but might miss some overlaps. You can experiment with this value to optimize it for your system.\\ \\
 %
 For a GEMC simulation in which 12 candidate positions are generated for biased insertion/deletion, 10 trials for
 biased dihedral angle selection and the cutoff for biasing energy calculation is set to 5.0 \AA\ in box 1 and 6.5 \AA\
@@ -1606,7 +1599,6 @@ in box 2, this section would look like: \\ \\
 \texttt{
 \# CBMC\_Info \\
 kappa\_ins   12 \\
-kappa\_rot     0 \\
 kappa\_dih   10 \\
 rcut\_cbmc   5.0 6.5}
 %
@@ -1668,19 +1660,19 @@ rcut\_cbmc   5.0 6.5}
 %summation is enabled. See \autoref{sec:Box_Info}.
 
 %\newpage
-%\section{read\_old}
+%\section{read\_config}
 %
-%A 'read\_old' file is used to restart a simulation from an equilibrated structure or to continue a run from a previous simulation.
-%This file is required for each box when the ``Start\_Type'' is set as 'read\_old' in the input control file.
+%A 'read\_config' file is used to restart a simulation from an equilibrated structure or to continue a run from a previous simulation.
+%This file is required for each box when the \texttt{Start\_Type} is set as 'read\_config' in the input control file.
 %On the first line of the file are specified total number of molecules of each species in a given box.
 %From the second line onwards, the x, y and z coordinates are specified for molecules of each species.
 %Usually, this file is obtained from a checkpoint file or the last configuration stored in a movie xyz file. 
-%A sample 'read\_old' file is shown below.
+%A sample 'read\_config' file is shown below.
 %
 %\newpage
 %\section{Checkpoint file}
-%A checkpoint file is similar to 'read\_old' file and is used to restart a simulation from an equilibrated structure or
-%to continue a run from previous simulation. A key difference between the checkpoint and read\_old file is that
+%A checkpoint file is similar to 'read\_config' file and is used to restart a simulation from an equilibrated structure or
+%to continue a run from previous simulation. A key difference between the checkpoint and read\_config file is that
 %thermodynamic averages and MC step are not initialized to zero. The checkpoint file produced by a previous simulation
 %can be directly used to start another simulation. No separate files for multiple boxes are necessary. A checkpoint file
 %contains various information about the state of the system. \\ \\
@@ -1714,21 +1706,6 @@ rcut\_cbmc   5.0 6.5}
 %fractional) along with the scaling parameter is displayed. For a CFC Reactive Monte Carlo simulation, molecule type, index of the fraction and reaction number are output.
 %\end{itemize}
 %\newpage
-\section{MCF File}\label{sec:MCF_File}
-%
-A Molecular Connectivity File (MCF) defines the information related to bonds, angles, dihedrals, impropers
-fragments and non bonded interactions for a given species. One MCF file is required for each species present in
-the system. The information contained in this file involves the force field parameters, atoms
-participating in each of the interactions and the functional form used in each potential contribution.
-The keywords are preceeded by a `\#' and comments follow a `!'. Similarly to the input file, the order
-of the keywords is not important. A complete list of the keywords is provided below. \\ \\
-%
-{\bf Note that parameters for all of the following keywords must be separated by spaces only. 
-Do not use the tab character. \\ \\
-%
-Note that MCF files are generated by the script mcfgen.py automatically. The following description is provided for
-the users who wish to modify the MCF file or build the MCF file on their own.} \\ \\ 
-
 %
 %%%%%%%%%%%%%%%%
 %
@@ -1744,7 +1721,7 @@ the users who wish to modify the MCF file or build the MCF file on their own.} \
 %The keyword sets if, during biased insertion/deletion or regrowth,
 %Coulombic energy is to be used. Acceptable values for {\it Logical(1)}
 %are '.true.', '.TRUE.', '.false' or '.FALSE.'. If the keyword is not
-%specified in the MCF file, the default value is '.TRUE.' \\ \\
+%specified in the MCF, the default value is '.TRUE.' \\ \\
 %
 %For example, to turn off the Coulombic energy calculations during biasing,
 %you would specify the following: \\ \\
@@ -1781,20 +1758,35 @@ the users who wish to modify the MCF file or build the MCF file on their own.} \
 %{\bf \# 1st\_Fragment\_Ins\_Style} \\
 %{\it Character(1)} \\ \\
 %
-%This keyword is a required keyword in MCF file. It sets whether the
+%This keyword is a required keyword in MCF. It sets whether the
 %first fragment is placed based on its center-of-mass or using an atom
 %of a fragment. Acceptable keywords are 'COM', 'com', 'BEAD' and
 %'bead'. For non-ring fragments, COM-based insertion is preferred while
 %for ring fragments it may be advantageous to place an atom via 'BEAD'
 %or 'bead' option before the entire ring is placed. The `BEAD' or `bead' option
 %will be made available in later versions of Cassandra. Thus, this section 
-%appears in the MCF file as follows: \\ \\
+%appears in the MCF as follows: \\ \\
 %
 %\texttt{
 %\# 1st\_Fragment\_Ins\_Style \\
 %COM}
 %
 %Make sure that if the insertion style is set to 'BEAD' or 'bead', the variable kappa\_rot is set to a non-zero number in CBMC\_Info so that rotational bias is carried out while placing the fragment. \\ \\
+
+\section{Molecular Connectivity File}\label{sec:MCF_File}
+%
+A Molecular Connectivity File (MCF) defines the information related to bonds, angles, dihedrals, impropers
+fragments and non bonded interactions for a given species. One MCF is required for each species present in
+the system. The information contained in this file involves the force field parameters, atoms
+participating in each of the interactions and the functional form used in each potential contribution.
+The keywords are preceeded by a `\#' and comments follow a `!'. Similarly to the input file, the order
+of the keywords is not important. A complete list of the keywords is provided below. \\ \\
+%
+{\bf Note that parameters for all of the following keywords must be separated by spaces only. 
+Do not use the tab character. \\ \\
+%
+Note that MCFs are generated by the script mcfgen.py automatically. The following description is provided for
+the users who wish to modify the MCF or manually write the MCF.} \\ \\ 
 %
 %%%%%%%%%%%%%%%%
 %
@@ -1807,10 +1799,10 @@ the users who wish to modify the MCF file or build the MCF file on their own.} \
 {\bf \# Atom\_Info} \\
 {\it Integer(1)} \\
 {\it Integer(2)   Character(3)*6  Character(4)*2   Real(5)   Real(6)
-  Character(7)*20     Real(8)    Real(9)  Character(10)} \\ \\
+  Character(7)*20     Optional\_Parms  Character(fin)} \\ \\
 %
 This keyword specifies the information for non-bonded interactions. 
-It is a required keyword in the MCF file. If not specified, the code will abort. The inputs are specified below: 
+It is a required keyword in the MCF. If not specified, the code will abort. The inputs are specified below: 
 %
 %\noindent
 \begin{itemize} 
@@ -1831,21 +1823,41 @@ mass of the entire pseudoatom.
 %
 \item {\it Real(6)}: Charge on the atom.
 %
-%\it Character(7)*20
-\item {\it Character(7)}: Specifies functional form for VDW interactions to be used in the simulation. This
-must match what is given for \texttt{\# VDW\_Style}  (subsection \ref{sec:VDW_Style}) in the input file.  
-At present only 'LJ' style is permitted.
+\item {\it Character(7)}: The functional form for van der Waals (vdW) interactions.
+Options are "LJ" for Lennard-Jones, "Mie" for the Mie potential, 
+or "NONE" if the atom type does not have vdW interactions.
+"LJ" and "Mie" cannot be used in the same simulation.
+This must match what is given for \texttt{\# VDW\_Style}  
+(subsection \ref{sec:VDW_Style}) in the input file.  
+
+\item {\it Character(fin)}: The final entry on the line is 'ring' only if the atom is part 
+of a ring fragment. 
+Note that a ring fragment is defined as 
+those atoms that belong to the ring (e.g. in cyclohexane, all the six carbons) 
+and any atom directly bonded to these ring atoms (e.g. in cyclohexane, all the hydrogens).  
+In other words, all of the ring and exoring atoms are given the ring flag. 
+For atoms that are not part of rings, leave this field blank. 
+\end{itemize} 
+Additional parameters are required for LJ and Mie potentials. For LJ,
 %
+\begin{itemize} 
+\item {\it Real(8)}: The energy parameter in K.
+%
+\item {\it Real(9)}: Collision diameter ($\sigma$)  in \AA.
+\end{itemize} 
+%
+For Mie,
+
+\begin{itemize} 
 \item {\it Real(8)}: The energy parameter in K.
 %
 \item {\it Real(9)}: Collision diameter ($\sigma$)  in \AA.
 %
-\item {\it Character(10)}: Set to `ring' only if a given atom is part of a
-ring fragment. Note that a ring fragment is defined as those atoms that belong to the ring
-(e.g. in cyclohexane, all the six carbons) and any atom directly bonded to these ring atoms
-(e.g. in cyclohexane, all the hydrogens).  In other words, all of the ring and exoring atoms are given the ring
-flag. For atoms that are not part of rings, leave this field blank. 
+\item {\it Real(10)}: The repulsive exponent.
+%
+\item {\it Real(11)}: The dispersive exponent.
 \end{itemize} 
+%
 %
 {\bf Note that for species with a single fragment, the branch point atom
  is listed as the first atom.} \\ \\
@@ -1855,22 +1867,23 @@ For example, for a united atom pentane model: \\ \\
 \texttt{
 \# Atom\_Info\\
 5\\
-1    C1\_s1    C    15.0107    0.0    LJ    98.0    3.75\\
-2    C2\_s1    C    14.0107    0.0    LJ    46.0    3.95\\
-3    C3\_s1    C    14.0107    0.0    LJ    46.0    3.95\\
-4    C4\_s1    C    14.0107    0.0    LJ    46.0    3.95\\
-5    C5\_s1    C    15.0107    0.0    LJ    98.0    3.75\\
+1    CH3\_s1    C    15.0107    0.0    LJ    98.0    3.75\\
+2    CH2\_s1    C    14.0107    0.0    LJ    46.0    3.95\\
+3    CH2\_s1    C    14.0107    0.0    LJ    46.0    3.95\\
+4    CH2\_s1    C    14.0107    0.0    LJ    46.0    3.95\\
+5    CH3\_s1    C    15.0107    0.0    LJ    98.0    3.75\\
 } \\ 
 %
 The number below the keyword \texttt{\# Atom\_Info} specifies a species with 5 interaction sites, consistent with a united atom pentane model. 
 The first column specifies the atom ID of each of the pseudo atoms.
 The second and third columns provide the atom type and atom name, respectively.
 The fourth column represents the atomic mass of each pseudoatom. Note that the mass of
-C1\_s1 is 15.0107 for this united atom model, as it involves a carbon and three hydrogen atoms. 
+CH3\_s1 is 15.0107 for this united atom model, as it involves a carbon and three hydrogen atoms. 
 The same applies for all other interaction sites.
 The fifth column contains the partial charges placed on each of these pseudoatoms.
-The sixth, seventh and eighth columns contain the repulsion-dispersion functional form, the energy parameter
-and the collision diameter respectively. In this case, the usual Lennard-Jones functional form is used. 
+The sixth, seventh and eighth columns contain the repulsion-dispersion functional form, 
+the energy parameter and the collision diameter respectively. 
+In this case, the usual Lennard-Jones functional form is used. 
 Note that none of these atoms used the flag `ring', as no rings
 are present in this molecule. \\ \\
 %
@@ -1879,30 +1892,37 @@ For a molecule containing rings, for example cyclohexane: \\ \\
 \texttt{
 \# Atom\_Info \\
 6\\
-1    C1\_s1    C    14.0107    0.0    LJ    52.5    3.91 ring\\
-2    C2\_s1    C    14.0107    0.0    LJ    52.5    3.91 ring\\
-3    C3\_s1    C    14.0107    0.0    LJ    52.5    3.91 ring\\
-4    C4\_s1    C    14.0107    0.0    LJ    52.5    3.91 ring\\
-5    C5\_s1    C    14.0107    0.0    LJ    52.5    3.91 ring\\
-6    C6\_s1    C    14.0107    0.0    LJ    52.5    3.91 ring\\
+1    CH\_s1    C    13.0107    0.0    LJ    52.5    3.91 ring\\
+2    CH\_s1    C    13.0107    0.0    LJ    52.5    3.91 ring\\
+3    CH\_s1    C    13.0107    0.0    LJ    52.5    3.91 ring\\
+4    CH\_s1    C    13.0107    0.0    LJ    52.5    3.91 ring\\
+5    CH\_s1    C    13.0107    0.0    LJ    52.5    3.91 ring\\
+6    CH\_s1    C    13.0107    0.0    LJ    52.5    3.91 ring\\
 }
 \\
 %
 Note the flag `ring' was appended as the last column for this cyclic molecule. \\ \\
 %
-Finally, for the SPC/E water model:  \\ \\
+For the SPC/E water model:  \\ \\
 %
 \texttt{
 \# Atom\_Info\\
 3\\
 1    O1\_s1    O    16.00     -0.8476    LJ    78.20   3.1656\\
-2    H2\_s1    H    1.000      0.4238    LJ    0.0 0.0\\
-3    H3\_s1    H    1.000      0.4238    LJ    0.0 0.0\\
+2    H2\_s1    H    1.000      0.4238    NONE\\
+3    H3\_s1    H    1.000      0.4238    NONE\\
 } \\ 
 %
-This is a molecule with a single fragment. Therefore, the branch point atom
-must be specified as the first atom in the list. In this case, oxygen is the 
-branch point and thus its atom ID is 1.
+This is a molecule with a single fragment, so the branch point atom is the first atom in the list.
+
+For a single-site model of CO2 using the Mie potential:
+\\
+\texttt{
+\# Atom\_Info\\
+1\\
+1    CO2       C    44.00      0.0       Mie  361.69   3.741   23.0   6.66\\
+} \\
+where the last two parameters are the repulsive and dispersive exponents, respectively.
 
 \subsection{Bond Info}\label{sec:Get_Bond_Info}
 %
@@ -1911,8 +1931,8 @@ branch point and thus its atom ID is 1.
 {\it Integer(i,2) Integer(i,3) Integer(i,4) Character(i,5) Real(i,6) Real(i,7)} \\
 \\
 This section provides information on the number of bonds in a molecule
-and atoms involved in each bond along with its type.  It is a required keyword in the MCF file. If not specified, the code
-will abort. The inputs are specified below: \\ 
+and atoms involved in each bond along with its type.  It is a required keyword in the MCF. 
+If not specified, the code will abort. The inputs are specified below: \\ 
 %
 \begin{itemize}
 
@@ -1955,7 +1975,7 @@ In the above example, two bonds are specified whose fixed length is set to 1.0 \
   Character(i,6) Real(i,7) Real(i,8)} \\ \\
 %
 The section lists the information on the angles in the species. 
-It is a required keyword in the MCF file. If not specified, the code
+It is a required keyword in the MCF. If not specified, the code
 will abort. \\ 
 %
 \begin{itemize}
@@ -2009,8 +2029,8 @@ force constant.
 {\it Integer(i,2) Integer(i,3) Integer(i,4) Integer(i,5) Integer(i,6)
   Character(i,7) Real(i,8) Real(i,9) Real(i,10) Real(i,11)} \\ \\
 %
-This section of the MCF file lists the number of dihedral angles and 
-associated information for a given species. It is a required keyword in the MCF file. 
+This section of the MCF lists the number of dihedral angles and 
+associated information for a given species. It is a required keyword in the MCF. 
 If not specified, the code
 will abort.  
 
@@ -2049,6 +2069,36 @@ the dihedrals are specified as follows:\\ \\
 In this model two dihedral angles are specified by atoms 1,2,3,4 and 2,3,4,5. 
 This model uses an OPLS functional form and thus four parameters are provided
 after the OPLS flag.
+%
+\subsection{Intramolecular Scaling}\label{sec:Intra_Scaling}
+{\bf \# Intra\_Scaling} \\
+{\it Real(i,1) Real(i,2) Real(i,3) Real(i,4)} \\ 
+{\it Real(i,5) Real(i,6) Real(i,7) Real(i,8)} \\ \\
+%
+This section sets the intramolecular scaling for 1-2, 1-3, 1-4 and 1-N
+interactions within a given species. 1-2 means interactions between 
+atom 1 and another atom 2 directly bonded to it, 1-3 means
+interactions between atom 1 and other atoms 3 separated from atom 1 by
+exactly two bonds, etc. The first line corresponds to the
+VDW scaling: {\it Real(i,1) Real(i,2) Real(i,3) Real(i,4)} apply to
+1-2, 1-3, 1-4 and 1-N interactions, where N corresponds to all atoms
+separated from atom 1 by more than three bonds. 
+The second line corresponds to the Coulomb scaling: 
+{\it Real(i,5)  Real(i,6) Real(i,7) Real(i,8)} apply to 1-2, 1-3, 1-4 and 1-N interactions. 
+Note that intramolecular scaling applies to all the boxes in the simulation. \\ \\
+%
+For example, \\ \\
+\texttt{
+\# Intra\_Scaling \\
+0.0 0.0 0.5 1.0 \\
+0.0 0.0 0.5 1.0}
+\\ \\
+would turn off 1-2 and 1-3 interactions, would scale the VDW and
+Coulombic interactions for 1-4 atoms by 50\% and would use full
+interactions for all other atom pairs in the species. \\ \\
+%
+If the \# Intra\_Scaling section is missing from the MCF, 
+it will be looked for in the input file. \\ \\
 %
 \subsection{Fragment Info}\label{sec:Get_Fragment_Info}
 %

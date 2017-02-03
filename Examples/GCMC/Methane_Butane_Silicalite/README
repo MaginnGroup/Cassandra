@@ -29,7 +29,7 @@ CH4.mcf and C4H10.mcf
 
 I.2. For the Adsorbent: Silicalite
 I.2.1. PDB file 
-Si27uc.pdb
+unitcell.pdb
 
   The pdb file for the unit cell was taken from the following reference:
      D. H. Olson, G. T. Kokotailo, S. L. Lawton and W. M. Meier
@@ -39,10 +39,10 @@ Si27uc.pdb
 Then VMD was used to create the supercell (3x3x3).
 
 I.2.2. ff File
-Si27uc.ff
+unitcell.ff
 An empty template was created with the following command
 
-    > $CASSANDRA_DIR/Scripts/MCF_Generation/mcfgen.py Si27uc.pdb --ffTemplate
+    > $CASSANDRA_DIR/Scripts/MCF_Generation/mcfgen.py unitcell.pdb --ffTemplate
 
     Parameters were manually typed into the blank template. All parameters were set like zero, since
     we used the custom mixing rules in order to provide the Lennard-Jones parameter proposed by: 
@@ -51,15 +51,15 @@ An empty template was created with the following command
     AiChE Journal, vol 44, No 8, 1756-1764
 
 I.2.3 MCF file
-Si27uc.mcf
+unitcell.mcf
 This file was generated with the following command:
 
-    > $CASSANDRA_DIR/Scripts/MCF_Generation/mcfgen.py Si27uc.pdb
+    > $CASSANDRA_DIR/Scripts/MCF_Generation/mcfgen.py unitcell.pdb
 
-    Note that this command requires the file Si27uc.ff in the same directory.
+    Note that this command requires the file unitcell.ff in the same directory.
 
 I.2.4. XYZ file
-Si27uc.xyz
+unitcell.xyz
 We used this file to start a simulation from an empty zeolite. In that case we use the #Start_Type read_old
 This file was crated in two Steps:
 
@@ -69,11 +69,11 @@ Step 1)- Using the Software VMD
        J. Molec. Graphics 1996, 14.1, 33-38
 
 with the following commands:
-> vmd Si27uc.pdb
+> vmd unitcell.pdb
 > set all [atomselect top all]
-> $all writexyz SI27uc.xyz
+> $all writexyz unitcell.xyz
 
-Step 2)- we modifify the Si27uc.xyz generated in VMD changing the first line. 
+Step 2)- we modifify the unitcell.xyz generated in VMD changing the first line. 
 The first line must have the number of molecules of the zeolite (1) and the number of molecules of both adsorbates (0  0)
 
 I.3 Input File
@@ -107,42 +107,30 @@ Dimensions of the box = dimensions of your "supercell" (here we used 3x3x3. Then
 
 # Mixing_Rule
   In this example we used the values proposed by Du et al (1998).(complete reference in I.2.2)
-  Note that the order of the species is (1=Silicalite, 2=methane and 3=butane)
-  Then if you take a look in the mcf file of this components you are going to see that, by the order of apperance,
-  there is 2 atoms types in the  Silicalite (Si and O); 1 atom type in the methane (CH4) and 2 atoms types in butane (CH3 and CH2). 
-  Therefore, the custom parameters for the Lennard-Jones interactions  need to entered in that order:
+  There are 2 atoms types in the  Silicalite (SI_s1 and O_s1); 1 atom type in the methane (C4_s2) and 2 atoms types in butane (C3_s3 and C2_s3). 
+  Parameters for each pair of atom types must be entered:
      
-   SI SI      0.00   0.0
-   SI O       0.00   0.0
-   SI CH4     0.00   0.0
-   SI CH3     0.00   0.0
-   SI CH2     0.00   0.0
-   O   SI     0.00   0.0
-   O  O       0.00   0.0
-   O  CH4    96.50   3.6
-   O  CH3    80.00   3.6
-   O  CH2    58.00   3.6
-   CH4 SI     0.00   0.0
-   CH4 O     96.50   3.6
-   CH4 CH4  148.00   3.73
-   CH4 CH3  120.49   3.75
-   CH4 CH2   83.40   3.83
-   CH3 SI     0.00   0.0
-   CH3 O     80.00   3.6
-   CH3 CH4  120.49   3.75
-   CH3 CH3   98.10   3.77
-   CH3 CH2   67.90   3.85
-   CH2 SI     0.00   0.0
-   CH2 O     58.00   3.6
-   CH2 CH4   83.40   3.83
-   CH2 CH3   67.90   3.85
-   CH2 CH2   47.0    3.93
+   SI_s1 SI_s1    0.00   0.0
+   SI_s1 O_s1     0.00   0.0
+   SI_s1 C4_s2    0.00   0.0
+   SI_s1 C3_s3    0.00   0.0
+   SI_s1 C2_s3    0.00   0.0
+   O_s1  O_s1     0.00   0.0
+   O_s1  C4_s2   96.50   3.6
+   O_s1  C3_s3   80.00   3.6
+   O_s1  C2_s3   58.00   3.6
+   C4_s2 C4_s2  148.00   3.73
+   C4_s2 C3_s3  120.49   3.75
+   C4_s2 C2_s3   83.40   3.83
+   C3_s3 C3_s3   98.10   3.77
+   C3_s3 C2_s3   67.90   3.85
+   C2_s3 C2_s3   47.0    3.93
 
 I.4 Fragment info files
 species1/  species2/ ans species3/
     These directories were created with the following command:
 
-    > $CASSANDRA_DIR/Scripts/Frag_Library_Setup/library_setup.py $CASSANDRA_DIR/cassandra.exe methane_butane_Si.inp Si27uc.pdb 
+    > $CASSANDRA_DIR/Scripts/Frag_Library_Setup/library_setup.py $CASSANDRA_DIR/cassandra.exe methane_butane_Si.inp unitcell.pdb 
         CH4.pdb C4H10.pdb
     
      Note that like butane has two fragments the directory species3/ presents 2 directories: frag1/ and frag2/
@@ -156,9 +144,7 @@ The simulation can be run with the following command:
 
 III. OUTPUT FILES
 
-All output files present the same name atributed in #Run_Name = methane_butane_Si.*  
-We did not provided the LOG file for this example, since due to the size of the supercell (7776 atoms) the
-file is too big (around 3 GB). When you run your simulation be sure to have enough space.
+All output files present the same name atributed in # Run_Name = methane_butane_Si.out.*  
 
 Please see the Cassandra manual for more information on each output file type.
 

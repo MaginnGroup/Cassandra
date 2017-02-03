@@ -50,24 +50,23 @@ SUBROUTINE Get_COM(alive,is)
   !
   !        angle_distortion
   !        atom_displacement
-  !        cutNgrow
+  !        cut_n_grow
   !        deletion
   !        fragment_growth
   !        gemc_particle_transfer
-  !        grow_molecules
+  !        make_config
   !        insertion
   !        main
   !        read_write_checkpoint
   !        rigid_dihedral_change
   !        rotate
-  !        zig_by_omega
   !
   ! CALLS
   !
   !        None
   !***********************************************************************
   USE Type_Definitions
-  USE Run_Variables
+  USE Global_Variables
   IMPLICIT NONE
   
   INTEGER, INTENT(IN) :: alive,is
@@ -119,9 +118,9 @@ SUBROUTINE Get_Internal_Coordinates(alive,ispecies)
   ! CALLED BY
   !
   !   angle_distortion
-  !   cutNgrow
+  !   cut_n_grow
   !   rigid_dihedral_change
-  !   nvt_mc_fragment_driver
+  !   fragment_driver
   !
   ! CALLS
   !
@@ -134,7 +133,7 @@ SUBROUTINE Get_Internal_Coordinates(alive,ispecies)
   !***********************************************************************
   
   USE Type_Definitions
-  USE Run_Variables
+  USE Global_Variables
   
   IMPLICIT NONE
   
@@ -217,7 +216,7 @@ SUBROUTINE Compute_Max_Com_Distance(alive,is)
   !
   !*****************************************************************************
 
-  USE Run_Variables
+  USE Global_Variables
 
   IMPLICIT NONE
 

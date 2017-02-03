@@ -1,4 +1,4 @@
-!********************************************************************************
+!*********************************************************************************
 !   Cassandra - An open source atomistic Monte Carlo software package
 !   developed at the University of Notre Dame.
 !   http://cassandra.nd.edu
@@ -17,7 +17,8 @@
 !
 !   You should have received a copy of the GNU General Public License
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-!*******************************************************************************
+!*********************************************************************************
+
 
 This file describes the layout of the Cassandra distribution directory along 
 with instruction on how to compile the code, run examples and set up your first
@@ -28,7 +29,6 @@ the following subdirectories:
 
 Documentation
 Examples 
-MCF
 Scripts
 Src
 
@@ -42,10 +42,8 @@ The following directories are included in the distribution:
 
 Documentation
 ------------
-Contains the documentation for the code, including a user guide
-(user_guide.pdf) and a tutorial on how to generate molecular
-connectivity files or MCFs (MCF_tutorial.pdf). You can find most
-answers to your questions in these documents. 
+Contains the documentation for the code, user_guide.pdf.
+You can find most answers to your questions here. 
 
 Examples
 --------
@@ -62,21 +60,11 @@ overwrite the output files. You may wish to copy input and mcf files
 to a clean directory and work with them there, and then see if you can
 match the results contained in the original example directory.
 
-MCF
----
-Cassandra makes use of molecular connectivity file (*.mcf) for each of the
-species present in the simulation. This directory contains several examples
-of mcf files. Users are encouraged to submit their mcf files to the authors
-for distribution to the Cassandra community. The mcf file can also be 
-included as a supplementary information to your publication as it contains
-information about the force field.
-
 Scripts
 -------
 The Cassandra distribution includes a number of python scripts that help in the setup
 of a simulation. The use of these scripts is described in the README
-files in the Scripts directory. Additional information may be found in
-the MCF_tutorial.pdf file, located in the Documentation directory.  
+files in the Scripts directory.
 
 Src
 ---
