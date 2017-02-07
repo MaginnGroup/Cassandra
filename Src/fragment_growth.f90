@@ -1198,9 +1198,8 @@ SUBROUTINE Cut_Regrow(this_im,is,frag_live,frag_dead,frag_order,frag_total, &
   CALL Fragment_Placement(this_box,this_im,is,frag_start,frag_total, &
        frag_order,frag_placed,this_lambda,E_total,ln_pbias,nrg_ring_frag_tot, &
        cbmc_overlap,del_overlap)
-
   cbmc_flag = .FALSE.
-  
+   
 
 END SUBROUTINE Cut_Regrow
 
@@ -1847,7 +1846,6 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
               
            CALL Compute_Atom_Nonbond_Energy(atom_id(j),this_im,is, &
                 E_intra_vdw,E_inter_vdw,E_intra_qq,E_inter_qq,overlap)
-              
            IF (overlap) THEN
               ! if it is the last trial, the atom exist flag may not be
               ! properly set to true
@@ -1891,7 +1889,6 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
            IF ( nrg_kBT >= max_kBT) THEN
               ! the energy is too high, set the weight to zero
               weight(ii) = 0.0_DP
-              overlap_trial(ii) = .TRUE.
            ELSE
               weight(ii) = DEXP(-nrg_kBT)
            END IF

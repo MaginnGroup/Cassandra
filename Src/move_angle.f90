@@ -63,7 +63,7 @@ SUBROUTINE Angle_Distortion
   REAL(DP) :: iatom2_rxp, iatom2_ryp, iatom2_rzp, vec21(3), vec23(3)
   REAL(DP) :: perp_vec1(3), perp_vec2(3), aligner(3,3), hanger(3,3)
   REAL(DP) :: tempx, tempy, tempz, cos_dtheta, sin_dtheta
-  REAL(DP) :: rand_no, p_acc,rand
+  REAL(DP) :: rand_no, p_acc
   
   REAL(DP) :: E_bond, E_angle, E_dihedral, E_improper, E_intra_vdw, E_intra_qq
   REAL(DP) :: E_inter_vdw, E_inter_qq, E_periodic_qq
@@ -143,14 +143,13 @@ SUBROUTINE Angle_Distortion
   END DO
 
   rand_no = rranf()
-
   DO is = 1, nspecies
      IF ( nangles(is) == 0 ) CYCLE
      angle_to_move = INT ( rranf() * nangles(is) ) + 1 
      IF ( angle_list(angle_to_move,is)%angle_potential_type == 'fixed') CYCLE
      IF ( rand_no <= x_species(is) ) EXIT
-         
   END DO
+
   ! error check
   IF( nangles(is) <= nangles_fixed(is) ) THEN
      err_msg = ''
@@ -168,6 +167,10 @@ SUBROUTINE Angle_Distortion
   ntrials(is,ibox)%angle = ntrials(is,ibox)%angle + 1
 
 
+  ! Store the old positions of the atoms 
+  CALL Save_Old_Cartesian_Coordinates(lm,is)
+  CALL Save_Old_Internal_Coordinates(lm,is)
+
   ! Compute the energy of the molecule before the move
   CALL Compute_Molecule_Bond_Energy(lm,is,E_bond)
   CALL Compute_Molecule_Angle_Energy(lm,is,E_angle)
@@ -184,7 +187,7 @@ SUBROUTINE Angle_Distortion
 
   IF (inter_overlap)  THEN
      err_msg = ""
-     err_msg(1) = "Attempted to change an angle of molecule " // TRIM(Int_To_String(im)) // &
+     err_msg(1) = "Attempted to change an angle of molecule " // TRIM(Int_To_String(lm)) // &
                   " of species " // TRIM(Int_To_String(is))
      IF (nbr_boxes > 1) err_msg(1) = err_msg(1) // " in box " // TRIM(Int_To_String(ibox))
      err_msg(2) = "but the molecule energy is too high"
@@ -196,9 +199,6 @@ SUBROUTINE Angle_Distortion
   END IF
 
 !  CALL Get_Internal_Coordinates(lm,is)
-  ! Store the old positions of the atoms 
-  CALL Save_Old_Cartesian_Coordinates(lm,is)
-  CALL Save_Old_Internal_Coordinates(lm,is)
 
   
   ! determine the atoms that define the angle
@@ -228,9 +228,9 @@ SUBROUTINE Angle_Distortion
   ALLOCATE(atoms_to_place_list(MAXVAL(natoms)))
   atoms_to_place_list = 0
 
-  rand = rranf()
+  rand_no = rranf()
 
-  IF ( rand < 0.5_DP ) THEN
+  IF ( rand_no < 0.5_DP ) THEN
 
      ! atom1 is moving
 
@@ -405,6 +405,8 @@ SUBROUTINE Angle_Distortion
   atom_list(:,lm,is)%ryp = atom_list(:,lm,is)%ryp + iatom2_ryp
   atom_list(:,lm,is)%rzp = atom_list(:,lm,is)%rzp + iatom2_rzp
 
+  delta_e = 0.0_DP
+
   ! Calculate the energies after the move. First compute intramolecular and intermolecular
   ! nonbonded interactions so that the move can be immediately rejected if an overlap is detected.
   ! Since COM cutoff has been enabled. Compute the new COM of the molecule. Note that if the 
@@ -414,9 +416,14 @@ SUBROUTINE Angle_Distortion
   CALL Compute_Max_COM_Distance(lm,is)
 
   CALL Compute_Molecule_Nonbond_Intra_Energy(lm,is,E_intra_vdw_move,E_intra_qq_move,E_periodic_qq,intra_overlap)
+  !IF (intra_overlap) inter_overlap = .TRUE.
+
+
+  IF (.NOT. inter_overlap) THEN
   CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is,E_inter_vdw_move,E_inter_qq_move,inter_overlap)
   E_inter_qq_move = E_inter_qq_move + E_periodic_qq
 
+  END IF
 
   IF (inter_overlap) THEN
      
@@ -432,7 +439,6 @@ SUBROUTINE Angle_Distortion
      END IF
   ELSE
 
-     delta_e = 0.0_DP
 
      CALL Compute_Molecule_Bond_Energy(lm,is,E_bond_move)
      CALL Compute_Molecule_Angle_Energy(lm,is,E_angle_move)
@@ -472,12 +478,12 @@ SUBROUTINE Angle_Distortion
         END IF
         
      ELSE
-
         ln_pacc = beta(ibox) * delta_e + DLOG(prob_new/prob_0)
+		
         accept = accept_or_reject(ln_pacc)
 
      END IF
-  
+ 	 
      IF ( accept ) THEN
         !     write(*,*) 'accepted', theta_new
         ! accept the move and update the energies
