@@ -52,7 +52,7 @@ C4H10.mcf 500
 # Box_Info
 1
 orthogonal
-60.21  59.76 40.26
+20.070   19.920   13.420
 !-------------------------
 
 # Temperature_Info
@@ -60,7 +60,7 @@ orthogonal
 !------------------
 
 # Chemical_Potential_Info
--35.41  -37.0
+-35.41  25.0
 !------------------------
 
 # Move_Probability_Info

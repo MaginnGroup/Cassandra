@@ -352,6 +352,7 @@ SUBROUTINE Insertion
      ! accept the insertion
 
      ! number of molecules already incremented
+     CALL Get_Internal_Coordinates(lm,is)
 
      ! update the energies
      energy(ibox)%total = energy(ibox)%total + dE
