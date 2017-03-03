@@ -78,6 +78,7 @@ SUBROUTINE Volume_Change
   
   INTEGER :: ia
   
+  REAL(DP) :: x_box(nbr_boxes), randno
   REAL(DP) :: random_displacement, s(3), delta_volume, ln_pacc, success_ratio
   REAL(DP) :: this_volume
   REAL(DP), DIMENSION(maxk) :: hx_old, hy_old, hz_old, Cn_old
@@ -113,9 +114,28 @@ SUBROUTINE Volume_Change
   
   ! Done with that section
   accept = .FALSE.
+  x_box(:) = 0.0_DP
   
   ! Randomly choose a box for volume perturbation
-  this_box = INT ( rranf() * nbr_boxes ) + 1
+  IF(nbr_boxes .GT. 1) THEN
+     DO ibox = 1, nbr_boxes
+        IF (box_list(ibox)%dv_max > 0.0_DP) THEN
+           x_box(ibox) = 1.0_DP
+        END IF
+        IF ( ibox > 1 ) THEN
+           x_box(ibox) = x_box(ibox) + x_box(ibox-1)
+        END IF
+     END DO
+  
+     randno = rranf()
+     DO ibox = 1, nbr_boxes
+        x_box(ibox) = x_box(ibox) / x_box(nbr_boxes)
+        IF ( randno <= x_box(ibox)) EXIT
+     END DO
+     this_box = ibox
+  ELSE
+     this_box = 1
+  END IF
   
   ! increase the total number of trials for this box
   tot_trials(this_box) = tot_trials(this_box) + 1
