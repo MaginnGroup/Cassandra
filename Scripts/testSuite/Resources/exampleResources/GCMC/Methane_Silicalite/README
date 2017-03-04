@@ -1,0 +1,105 @@
+This directory contains all the information needed to run a short simulation of 
+adsorption of methane (from the gas phase) in Silicalite at T=300K and P=0.3bar. 
+The chemical potential was computed from a previous GCMC simulation gas phase methane.
+
+I. FILES REQUIRED TO RUN THE SIMULATION
+
+I.1.  For the adsorbate: methane
+CH4.pdb 
+    created in Gaussview
+    The United_Atoms Model was used
+
+CH4.ff 
+    An empty template was created with the following command
+
+    > $CASSANDRA_DIR/Scripts/MCF_Generation/mcfgen.py CH4.pdb --ffTemplate
+
+    Parameters were manually typed into the blank template.
+    The parameters used were those from Force field - TraPPE available in
+    Martin and Siepmann, J. Phys. Chem. B, 102, 2569-2577 (1998)
+
+CH4.mcf 
+    This file was generated with the following command:
+
+    > $CASSANDRA_DIR/Scripts/MCF_Generation/mcfgen.py CH4.pdb
+
+    Note that this command requires the CH4.ff  must be in the same directory.
+
+
+I.2. For the adsorbent: Silicalite
+SiO2.pdb
+    Silicalite is composed of Si and O in a 1:2 ratio. We will use this basic 
+    building block of silicalite to define a "molecule" and tell Cassandra that our
+    3x3x3 supercall (7776 atoms total) is composed of 2592 "molecules" of SiO2. Alternatively,
+    you could define a molecule as having all 7776 atoms and tell Cassandra that you
+    only have 1 molecule.
+
+SiO2.ff
+    An empty template was created with the following command
+
+    > $CASSANDRA_DIR/Scripts/MCF_Generation/mcfgen.py SiO2.pdb --ffTemplate
+
+    Parameters were manually typed into the blank template.
+    The parameters used for the Si and O atoms  are available in the following reference:
+
+    Edward J. Maginn, Alexis T. Bell, and Doros N. Theodorou
+    Transport Diffusivity of Methane in Silicalite from Equilibrium and Nonequilibrium Simulations
+    J. Phys. Chem. 1993, 97, 4173-4181
+
+SiO2.mcf
+    This file was generated with the following command:
+
+    > $CASSANDRA_DIR/Scripts/MCF_Generation/mcfgen.py SiO2.pdb
+
+    Note that this command requires the file SiO2.ff in the same directory.
+
+Si27ucEM.xyz
+    A 3x3x3 supercell of silicalite has 7776 atoms.
+    Atoms in this file are listed in the order Si, O, O, Si, O, O, ... to match
+    the definition of a "molecule" given in the MCF.
+    The simulation is initiated from this configuration using the add_to_config keyword.
+
+    The pdb file for the unit cell was taken from the following reference:
+    D. H. Olson, G. T. Kokotailo, S. L. Lawton and W. M. Meier
+    Crystal Structure and Structure-Related Properties of ZSM-5 
+    The Journal of Physical Chemistry, Vol. 85, No. 15, 1981
+
+methane_Si.inp
+    You need to prepare the input file for running a short simulation in order 
+    to generate the fragment files for methane. H
+
+    # Box_Info
+    number of boxes = 1 
+    Box geometry = solid geometry (MFI has orthorhombic geometry then the box is ORTHOGONAL)
+    dimensions of the box = dimensions of your supercell, x=60.21 y=59.76 and z=40.26
+    
+    # Chemical_Potential_Info
+    This keyword "Chemical_Potential_Info" sets the chemical potential of the 
+    insertable species in the order in which they appear in the # Molecule_Files
+    The chemical potentials will be set arbitrarily to zero for species that 
+    cannot be swapped or exchanged with a reservoir. 
+
+    Therefore you need to enter just the chemical potential of the adsorbate. 
+    A proper value wich agrees with the pressure in the fluid phase is 
+    previously got from an independent GCMC simulation for the fluid phase
+
+    Now you are ready to generate the fragment library for methane.
+    These directory was created with the following command:
+
+    > $CASSANDRA_DIR/Scripts/Frag_Library_Setup/library_setup.py $CASSANDRA_DIR/cassandra.exe methane_Si.inp SiO2.pdb CH4.pdb
+
+II. RUNNING THE SIMULATION
+
+The simulation can be run with the following command:
+
+> $CASSANDRA_DIR/Src/cassandra.exe methane_Si.inp
+
+III. OUTPUT FILES
+
+All output files are named methane_Si.*, as defined in the input file. 
+We did not provided the LOG file for this example, since due to the size of the supercell (7776 atoms) the 
+file is too big (around 3 GB). When you run your simulation be sure to have enough space.
+
+Please see the Cassandra manual for more information on each output file type.
+
+

@@ -1,0 +1,141 @@
+# Run_Name
+gemc_diethylether.out
+!------------------------------------------------------------------------------
+
+# Sim_Type
+GEMC
+!------------------------------------------------------------------------------
+
+# Nbr_Species
+1
+!------------------------------------------------------------------------------
+
+# VDW_Style
+lj cut_tail 12.0
+lj cut_tail 60.0
+!------------------------------------------------------------------------------
+
+# Rcutoff_Low
+1.0
+!------------------------------------------------------------------------------
+
+# Charge_Style
+coul ewald 12.0 0.000001 
+coul ewald 60.0 0.000001
+!------------------------------------------------------------------------------
+
+# Molecule_Files
+diethylether.mcf   300
+!----------------------------------------------------------one line per species
+
+# Box_Info
+2
+cubic
+35.00
+
+cubic
+142.0
+!-------------------------------------------------------line 1: number of boxes
+!--------------------------------------------------------------line 2: box type
+!--------------------------------------------------------------line 3: box size
+!--------------------------------------------------------------repeat for second box
+
+# Temperature_Info
+343.15 
+343.15
+!----------------------------------------------------------one temperature per box
+
+# Seed_Info
+200  24000
+!------------------------------------------------------------------------------
+
+# Move_Probability_Info
+
+# Prob_Translation
+0.30
+0.5
+14.0
+
+# Prob_Rotation
+0.30
+30.0
+180.0
+
+# Prob_Regrowth
+0.30  
+1.0
+
+# Prob_Volume
+0.005
+100.0
+100.0
+
+# Prob_Swap
+0.095
+cbmc
+
+# Done_Probability_Info
+
+!---------------------one line for each box and one entry/line for each species
+!-----------------------------------------each molecule moves per volume change
+
+# CBMC_Info
+kappa_ins 12
+kappa_dih 12
+rcut_cbmc 6.5  6.5
+!------------------------------------------------------------------------------
+
+# Start_Type
+read_config 220 Init_Config/liq.initial
+read_config  80 Init_Config/vap.initial
+!--------make_config: one line for each species and one entry/line for each box
+!------------------------------------------------------------read_old: filename
+!----------------------------------------------------------checkpoint: filename
+
+
+# Run_Type
+equilibration 100 50
+!-------------------------Equilibration: update maximum widths every 100 steps/update maximum
+!-------------------------volume displacement every 100 steps
+
+
+# Average_Info ( 0 == yes, 1 = No)
+1
+
+!------------------------------------------------------------ 0 == yes, 1 == no
+
+# Simulation_Length_Info
+units       steps
+prop_freq   100
+coord_freq  2200
+run         2200
+!------------------ simulation length every 2200 steps, XYZ output every 2200 steps, property
+!---------------------------------------output every 100 steps
+
+# Property_Info 1 
+energy_total
+density
+nmols
+volume
+pressure
+!------------------------------------------------------------------------------
+
+# Property_Info 2
+energy_total
+density
+nmols
+volume
+pressure
+!------------------------------------------------------------------------------
+
+# Fragment_Files
+species1/frag1/frag1.dat  1
+species1/frag2/frag2.dat  2
+species1/frag3/frag3.dat  3
+!---------------------------------------------------------one line per fragment
+
+# Pair_Energy
+true
+!------------------------------------------------------------------------------
+
+END

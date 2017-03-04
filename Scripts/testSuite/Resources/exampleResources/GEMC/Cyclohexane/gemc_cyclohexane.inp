@@ -1,0 +1,127 @@
+! This is the input file for a simulation of cyclohexane
+
+# Run_Name
+gemc_cyclohexane.out
+!------------------------------------------------------------------------------
+
+# Sim_Type
+gemc
+!------------------------------------------------------------------------------
+
+# Nbr_Species
+1
+!------------------------------------------------------------------------------
+
+# VDW_Style
+lj   cut_tail   14.00
+lj   cut_tail   30.00
+!------------------------------------------------------------------------------
+
+# Rcutoff_Low
+1.0
+!------------------------------------------------------------------------------
+
+# Molecule_Files
+cyclohexane.mcf 300
+!----------------------------------------------------------one line per species
+
+# Box_Info
+2
+cubic
+38.0
+
+cubic
+81.81
+!-------------------------------------------------------line 1: number of boxes
+!--------------------------------------------------------------line 2: box type
+!--------------------------------------------------------------line 3: box size
+!--------------------------------------------------------------repeat for second box
+
+# Temperature_Info
+403.0
+403.0
+!----------------------------------------------------------one temperature per box
+
+# Move_Probability_Info
+
+# Prob_Translation 
+0.30
+0.50
+14.0
+
+# Prob_Rotation
+0.30
+30.0
+180.0
+
+# Prob_Regrowth
+0.30
+1.0
+
+# Prob_Volume
+0.005
+200.0
+
+# Prob_Swap
+0.095
+cbmc
+
+# Done_Probability_Info
+!---------------------one line for each box and one entry/line for each species
+!-----------------------------------------each molecule moves per volume change
+
+# Start_Type
+make_config 250
+make_config 50
+!--------make_config: one line for each species and one entry/line for each box
+!------------------------------------------------------------read_old: filename
+!----------------------------------------------------------checkpoint: filename
+
+# Run_Type
+equilibration 100 100
+!-------------------------Equilibration: update maximum widths every 100 steps/update maximum
+!-------------------------volume displacement every 100 steps
+
+
+# Simulation_Length_Info
+units       steps
+prop_freq   100
+coord_freq  2200
+run         2200
+!------------------ simulation length every 2200 steps, XYZ output every 2200 steps, property
+!---------------------------------------output every 100 steps
+
+# Seed
+1216131725 1216131726
+!------------------------------------------------------------------------------
+
+# Property_Info 1
+Energy_Total
+Density
+Nmols
+Volume
+Pressure
+!------------------------------------------------------------------------------
+
+# Property_Info 2
+Energy_Total
+Density
+Nmols
+Volume
+Pressure
+!------------------------------------------------------------------------------
+
+# CBMC_Info
+kappa_ins 12
+rcut_cbmc 6.5  6.5
+!------------------------------------------------------------------------------
+
+# Pair_Energy
+TRUE
+!------------------------------------------------------------------------------
+
+# Fragment_Files
+species1/frag1/frag1.dat  1
+!---------------------------------------------------------one line per fragment
+
+END
