@@ -3740,6 +3740,10 @@ SUBROUTINE Get_Box_Info
                  CALL Clean_Abort(err_msg,'Get_Box_Info')
               END IF
 
+              ! Read next line
+              line_nbr = line_nbr + 1
+              CALL Read_String(inputunit,line_string,ierr)
+
            END IF
 
         ENDDO ! End loop over nbr_boxes
