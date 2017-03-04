@@ -299,7 +299,7 @@ USE Type_Definitions
 
   ! array containing name of each atom type with idex = atomtype number.
   ! It is set and allocated to size nbr_atomtypes in Create_Nonbond_Table
-  CHARACTER(6), DIMENSION(:), ALLOCATABLE :: atom_type_list
+  CHARACTER(8), DIMENSION(:), ALLOCATABLE :: atom_type_list
 
   INTEGER, DIMENSION(:), ALLOCATABLE :: nbr_vdw_params
 

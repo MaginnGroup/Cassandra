@@ -119,6 +119,19 @@ CONTAINS
           
           prop_unit(ii) = '(bar)'
 
+       ELSE IF (prop_to_write == 'Pressure_XX') THEN
+    
+          prop_unit(ii) = '(bar)'
+
+       ELSE IF (prop_to_write == 'Pressure_YY') THEN
+    
+          prop_unit(ii) = '(bar)'
+
+       ELSE IF (prop_to_write == 'Pressure_ZZ') THEN
+    
+          prop_unit(ii) = '(bar)'
+
+
        ELSE IF (prop_to_write == 'Volume') THEN
 
           prop_unit(ii) = '(A^3)'
@@ -309,6 +322,40 @@ CONTAINS
             write_buff(ii+1) = pressure(this_box)%computed
          END IF
          write_buff(ii+1) = write_buff(ii+1) * atomic_to_bar
+
+
+      ELSE IF (prop_written == 'Pressure_XX') THEN
+
+         IF (pressure(this_box)%last_calc /= i_mcstep) THEN
+            pressure(this_box)%last_calc = i_mcstep
+            CALL Compute_Pressure(this_box)
+         END IF
+
+         write_buff(ii+1) = (pressure(this_box)%ideal &
+                          + pressure_tensor(1,1,this_box) )&
+                          * atomic_to_bar
+
+      ELSE IF (prop_written == 'Pressure_YY') THEN
+
+         IF (pressure(this_box)%last_calc /= i_mcstep) THEN
+            pressure(this_box)%last_calc = i_mcstep
+            CALL Compute_Pressure(this_box)
+         END IF
+
+         write_buff(ii+1) = (pressure(this_box)%ideal &
+                          + pressure_tensor(2,2,this_box) )&
+                          * atomic_to_bar
+
+      ELSE IF (prop_written == 'Pressure_ZZ') THEN
+
+         IF (pressure(this_box)%last_calc /= i_mcstep) THEN
+            pressure(this_box)%last_calc = i_mcstep
+            CALL Compute_Pressure(this_box)
+         END IF
+
+         write_buff(ii+1) = (pressure(this_box)%ideal &
+                          + pressure_tensor(3,3,this_box) )&
+                          * atomic_to_bar
 
       ELSE IF (prop_written == 'Volume') THEN
          IF (block_avg) THEN

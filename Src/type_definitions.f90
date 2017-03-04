@@ -221,7 +221,7 @@ MODULE Type_Definitions
      REAL(DP), DIMENSION(max_nonbond_params) :: vdw_param
 
      CHARACTER(2) :: element
-     CHARACTER(6) :: atom_name
+     CHARACTER(8) :: atom_name
 
      REAL(DP) :: mass, charge
      INTEGER :: atom_type_number
@@ -564,6 +564,9 @@ MODULE Type_Definitions
 
     ! Computed pressure, kNT/V + virial
     REAL(DP) :: computed
+
+	! Ideal Pressure
+	REAL(DP) :: ideal
 
     ! last calculation
     INTEGER :: last_calc
