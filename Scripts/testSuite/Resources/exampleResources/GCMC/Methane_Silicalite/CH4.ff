@@ -1,0 +1,20 @@
+atomtypes
+1
+
+begin atom-atomtype
+1 CH4
+end atom-atomtype
+
+vdwtype LJ
+dihedraltype none
+
+nonbonded
+CH4
+Sigma 3.73
+Epsilon 148.
+atom_type_charge 0.
+
+charge
+1 
+
+end
