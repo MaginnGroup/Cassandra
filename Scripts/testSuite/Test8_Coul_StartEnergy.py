@@ -13,10 +13,37 @@
 import subprocess as sp #This module lets us run cassandra from python
 import numpy as np #this module s the package for scientific computing in python
 import os, sys
+import argparse
 
 #*******************************************************************************
 # ARGUMENT PARSE
 #*******************************************************************************
+
+parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description=
+"""DESCRIPTION:
+Runs the given test using the Cassandra executable specified.
+
+EXAMPLES:
+To run a test using a Cassandra executable inside of Cassandra/Src/:
+
+	> python Test#_Description.py cassandra.exe
+	> python Test#_Description.py cassandra_gfortran.exe
+
+To run a test using a Cassandra executable elsewhere:
+
+	> python Test#_Description.py /home/applications/cassandra.exe --absPath
+	> python Test#_Description.py /home/applications/cassandra.exe -a
+
+
+""")
+parser.add_argument('cassandra_exe', 
+                help="Cassandra executable [file name if inside Src/ directory or path with " +
+                "indicated --absPath flag]")
+parser.add_argument('--absPath','-a', action='store_true',
+                help="Signals that the Cassandra executable is given as a path instead of " +
+                "given as is in the Src driectory.")
+
+args = parser.parse_args()
 
 #*******************************************************************************
 # VARIABLE DEFINITIONS
@@ -46,6 +73,7 @@ numChecks = 4 # number of simulations to run
 distList = (1.0,11.0,1.0,11.)
 vdwStyle = ('lj minimum_image', 'lj minimum_image', 'none', 'none')
 chargeStyle = ('coul minimum_image', 'coul minimum_image', 'coul ewald 10. 1e-5', 'coul ewald 10. 1e-5')
+title = ("1.0 dist [LJ/coul min]", "11.0 dist [LJ/coul min]","1.0 dist [none/coul ewald]","11.0 dist [none/coul ewald]")
 cassStr = (("Total system energy",),
            ("Total system energy",),
            ("Total system energy", "Inter molecule q", "Reciprocal ewald", "Self ewald"),
@@ -62,8 +90,13 @@ normal = '\033[0m' #Will make the next text normal(ie. unbold)
 #*******************************************************************************
 # FILE MANAGEMENT
 #*******************************************************************************
-cassDir = "/Users/rmullen2/dev/cassandra/Src/"
-cassExe = "cassandra.dev"
+testSuiteFolder = os.getcwd()
+MainDir 	= testSuiteFolder[0:len(testSuiteFolder)-len('Scripts/testSuite')]
+cassDir 	= MainDir + "Src/"
+resourceDir = MainDir + "Scripts/testSuite/Resources/"
+cassExe     = args.cassandra_exe
+if args.absPath:
+	cassDir = ""
 cassRun = "test8.out"
 inpName = "test8.inp"
 xyzName = "test8.inp.xyz"
@@ -73,36 +106,11 @@ mcfName = ("test8.cation.mcf", 'test8.anion.mcf')
 #*******************************************************************************
 # FUNCTION DEFINITIONS
 #*******************************************************************************
-# This functon writes over specific lines of the input file created above using a function, called replace_line that is created below. 
-# This function takes three inputs: the name of the file where you would like to replace a line, the line number you would like to replace, and the text you want to replace the old text with. 
-def replace_line(file_name, line_num, text):
-	lines = open(file_name, 'r').readlines()
-	lines[line_num] = text
-	out = open(file_name, 'w')
-	out.writelines(lines)
-	out.close() # Closes the file so that the program doesn't explode. 
 
-# Error function
-def erf(x):
-	# constants
-	a1 =  0.254829592
-	a2 = -0.284496736
-	a3 =  1.421413741
-	a4 = -1.453152027
-	a5 =  1.061405429
-	p  =  0.3275911
+from testSuiteFunctions import replace_line
 
-	# Save the sign of x
-	sign = 1
-	if x < 0:
-		sign = -1
-	x = abs(x)
+from testSuiteFunctions import erf
 
-	# A & S 7.1.26
-	t = 1.0/(1.0 + p*x)
-	y = 1.0 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t*np.exp(-x*x)
-
-	return sign*y
 #*******************************************************************************
 # MAIN PROGRAM BEGINS HERE
 #*******************************************************************************
@@ -118,6 +126,8 @@ def erf(x):
 
 #This prints the starting line.
 print "\n\n"+bold+"Test " + str(test_no) +": " + test_desc + normal
+
+FailCount = 0; 
 
 # Step 1) Write input files
 # 1.1) Write MCF for cation, anion
@@ -137,7 +147,7 @@ for s in range(nSpecies):
 	mcf.close()
 
 # Loop through checks
-print "%-20s %-20s %8s %18s %18s %18s %8s" % ("Property","ChargeStyle","Distance","Cassandra","Analytic","Relative_Err","Pass")
+print "%-30s %-20s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","Analytic","Relative_Err","Pass")
 for i in range(numChecks):
 	#variables that change from one check to the next
 	d = distList[i] # atomic separation
@@ -236,14 +246,47 @@ for i in range(numChecks):
 	for j in range(nPrp):
 		if (analyticAnswer[i][j] == 0.):
 			passCheck = cassAnswer[i][j] == 0.
-			print "%-20s %-20s %8.1f %18.6g %18.6g %18s %8s" % (cassStr[i][j],chargeStyle[i],d,
+			if passCheck == 0:
+				FailCount = FailCount+1;
+				failureOutString = MainDir+ 'Scripts/testSuite/failureLog/test' + str(test_no) + '_check' + str(i+1)
+				os.system('mkdir -p ' + failureOutString)
+				os.system('cp ' + inpName + ' ' + failureOutString )
+				os.system('cp ' + xyzName + ' ' + failureOutString )
+				os.system('cp ' + ' '.join(mcfName) + ' ' + failureOutString )
+				os.system('cp ' + cassRun + '*' + ' ' + failureOutString )
+			if (j == 0):
+				print "%-30s %-20s %18.6g %18.6g %18s %8s" % (title[i],cassStr[i][j],
 						cassAnswer[i][j],analyticAnswer[i][j],'',passCheck)
+			else: 
+				print "%-30s %-21s %17.6g %18.6g %18s %8s" % ('',cassStr[i][j],
+						cassAnswer[i][j],analyticAnswer[i][j],'',passCheck)
+
 		else:
 			errorRel = abs(cassAnswer[i][j] - analyticAnswer[i][j])/analyticAnswer[i][j]
 			passCheck = abs(errorRel) <= errorTol
-			print "%-20s %-20s %8.1f %18.6g %18.6g %18.6g %8s" % (cassStr[i][j],chargeStyle[i],d,
+			if passCheck == 0:
+				FailCount = FailCount+1;
+				failureOutString = MainDir+ 'Scripts/testSuite/failureLog/test' + str(test_no) + '_check' + str(i+1)
+				os.system('mkdir -p ' + failureOutString)
+				os.system('cp ' + inpName + ' ' + failureOutString )
+				os.system('cp ' + xyzName + ' ' + failureOutString )
+				os.system('cp ' + ' '.join(mcfName) + ' ' + failureOutString )
+				os.system('cp ' + cassRun + '*' + ' ' + failureOutString )
+			if (j == 0):
+				print "%-30s %-20s %18.6g %18.6g %18.6g %8s" % (title[i],cassStr[i][j],
 						cassAnswer[i][j],analyticAnswer[i][j],errorRel,passCheck)
-	print ""
+			else: 
+				print "%-30s %-21s %17.6g %18.6g %18.6g %8s" % ('',cassStr[i][j],
+						cassAnswer[i][j],analyticAnswer[i][j],errorRel,passCheck)
+
+if (FailCount != 0):
+	PassState = "False"
+else:
+	PassState = "True"
+
+LastTest = open(MainDir+ 'Scripts/testSuite/testOutput/LastTest.txt',"w")
+LastTest.write(PassState)
+LastTest.close()
 
 # Clean up scratch files
 os.system('rm ' + inpName)

@@ -247,7 +247,7 @@ SUBROUTINE Deletion
   CALL Compute_Molecule_Dihedral_Energy(lm,is,E_dihedral)
   CALL Compute_Molecule_Improper_Energy(lm,is,E_improper)
 
-  dE_intra = dE_intra - E_bond - E_angle - E_dihedral - E_improper  
+  dE_intra = - E_bond - E_angle - E_dihedral - E_improper  
   
   ! 4.3) Nonbonded intramolecular energies
 

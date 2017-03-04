@@ -12,10 +12,37 @@
 import subprocess as sp #This module lets us run cassandra from python
 import numpy as np #this module s the package for scientific computing in python
 import os, sys
+import argparse
 
 #*******************************************************************************
 # ARGUMENT PARSE
 #*******************************************************************************
+
+parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description=
+"""DESCRIPTION:
+Runs the given test using the Cassandra executable specified.
+
+EXAMPLES:
+To run a test using a Cassandra executable inside of Cassandra/Src/:
+
+	> python Test#_Description.py cassandra.exe
+	> python Test#_Description.py cassandra_gfortran.exe
+
+To run a test using a Cassandra executable elsewhere:
+
+	> python Test#_Description.py /home/applications/cassandra.exe --absPath
+	> python Test#_Description.py /home/applications/cassandra.exe -a
+
+
+""")
+parser.add_argument('cassandra_exe', 
+                help="Cassandra executable [file name if inside Src/ directory or path with " +
+                "indicated --absPath flag]")
+parser.add_argument('--absPath','-a', action='store_true',
+                help="Signals that the Cassandra executable is given as a path instead of " +
+                "given as is in the Src driectory.")
+
+args = parser.parse_args()
 
 #*******************************************************************************
 # VARIABLE DEFINITIONS
@@ -28,6 +55,9 @@ nistAnswer = ((9.95387E+04,-8.23715E+02,-5.58889E+05+2.80999E+06,6.27009E+03,-2.
               (4.48593E+05,-1.37286E+04,-3.57226E+06+1.41483E+07,7.58785E+03,-1.42235E+07,-3.20501E+06))
 # index = [check][property]
 
+test_no = 7
+test_desc = "Water Energy"
+
 # Simulation parameters
 nSpecies = 1
 nAtoms = (3,) # index = [species]
@@ -36,9 +66,8 @@ atomParms = ((('O','O',15.999,-0.84760,'LJ',78.19743111,3.16555789),
               ('H','H',1.008,0.42380,'LJ',0.,0.)),) # index = [species][atom][parm]
 bondParms = (((1,2,'fixed',1.),
               (1,3,'fixed',1.)),) # index = [species][bond][parm]
-angleParms = (((1,2,3,'fixed',109.47),),) # index = [species][angle][parm]
-prpList = ("energy_intervdw", "energy_lrc", "energy_interq", "energy_recip", 
-           "energy_self", "energy_total") # index = [property]
+angleParms = (((2,1,3,'fixed',109.47),),) # index = [species][angle][parm]
+cassStr = (("Inter molecule vdw","Long range correction","Inter molecule q","Reciprocal ewald","Self ewald","Total system energy"),) * 4 # one tuple for each check
 vdwStyle = 'lj cut_tail 10.'
 
 # Check parameters
@@ -46,13 +75,14 @@ vdwStyle = 'lj cut_tail 10.'
 numChecks = 4 # number of simulations to run
 nMols = (100, 200, 300, 750) # index = [check]
 box = (20., 20., 20., 30.)   # index = [check]
+title = ('100 molecules','200 molecules', '300 molecules','750 molecules',)
 chargeStyle = ('coul ewald 10. 0.000393669','coul ewald 10. 0.000393669',
                'coul ewald 10. 0.000393669','coul ewald 10. 0.0306708') # index = [check]
-chargeStyle = ('coul ewald 10. 1e-5','coul ewald 10. 1e-5',
-               'coul ewald 10. 1e-5','coul ewald 10. 3.05e-2') # index = [check]
+#chargeStyle = ('coul ewald 10. 1e-5','coul ewald 10. 1e-5',
+ #              'coul ewald 10. 1e-5','coul ewald 10. 3.05e-2') # index = [check]
 cassAnswer     = [None] * numChecks #this list will hold cassandra's answers
 passCheck      = [None] * numChecks
-errorTol = 1e-5
+errorTol = (1e-5,5e-5,1e-5,8e-2, 1e-5, 5e-4)
 
 # Formatting variables
 bold = '\033[1m' #Will make text bold
@@ -61,48 +91,26 @@ normal = '\033[0m' #Will make the next text normal(ie. unbold)
 #*******************************************************************************
 # FILE MANAGEMENT
 #*******************************************************************************
-cassDir = "/Users/rmullen2/dev/cassandra/Src/"
-cassExe = "cassandra.dev"
-cassRun = "test7.out"
-inpName = "test7.inp"
-xyzName = ("inputFiles/test7.water1.xyz", "inputFiles/test7.water2.xyz",
-           "inputFiles/test7.water3.xyz", "inputFiles/test7.water4.xyz") # index = [check]
-mcfName = ("test7.water.mcf",) # index = [species]
-
+testSuiteFolder = os.getcwd()
+MainDir 	= testSuiteFolder[0:len(testSuiteFolder)-len('Scripts/testSuite')]
+cassDir 	= MainDir + "Src/"
+resourceDir = MainDir + "Scripts/testSuite/Resources"
+cassExe     = args.cassandra_exe
+if args.absPath:
+	cassDir = ""
+cassRun 	= "test7.out"
+inpName 	= "test7.inp"
+xyzName = (resourceDir+"/inputFiles/test7.water1.xyz", resourceDir+"/inputFiles/test7.water2.xyz",
+           resourceDir+"/inputFiles/test7.water3.xyz", resourceDir+"/inputFiles/test7.water4.xyz") # index = [check]
+mcfName 	= ("test7.water.mcf",) # one string per species
 
 #*******************************************************************************
 # FUNCTION DEFINITIONS
 #*******************************************************************************
-# This functon writes over specific lines of the input file created above using a function, called replace_line that is created below. 
-# This function takes three inputs: the name of the file where you would like to replace a line, the line number you would like to replace, and the text you want to replace the old text with. 
-def replace_line(file_name, line_num, text):
-	lines = open(file_name, 'r').readlines()
-	lines[line_num] = text
-	out = open(file_name, 'w')
-	out.writelines(lines)
-	out.close() # Closes the file so that the program doesn't explode. 
 
-# Error function
-def erf(x):
-	# constants
-	a1 =  0.254829592
-	a2 = -0.284496736
-	a3 =  1.421413741
-	a4 = -1.453152027
-	a5 =  1.061405429
-	p  =  0.3275911
+from testSuiteFunctions import replace_line
 
-	# Save the sign of x
-	sign = 1
-	if x < 0:
-		sign = -1
-	x = abs(x)
-
-	# A & S 7.1.26
-	t = 1.0/(1.0 + p*x)
-	y = 1.0 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t*np.exp(-x*x)
-
-	return sign*y
+from testSuiteFunctions import erf
 #*******************************************************************************
 # MAIN PROGRAM BEGINS HERE
 #*******************************************************************************
@@ -116,7 +124,10 @@ def erf(x):
 #
 
 #This prints the starting line.
-print "\n\n"+bold+"Test 7: Energy of water configs" + normal 
+print "\n\n"+bold+"Test 7: Energy of Water Configurations" + normal 
+
+
+FailCount = 0; 
 
 # Step 1) Write input files
 # 1.1) Write MCF for cation, anion
@@ -138,12 +149,12 @@ for s in range(nSpecies):
 	mcf.write("\n# Improper_Info\n0\n")
 	mcf.write("\n# Fragment_Info\n0\n")
 	mcf.write("\n# Fragment_Connectivity\n0\n")
-	mcf.write("\n# Intra_Scaling\n0. 0. 0. 0.\n0. 0. 0. 0.\n")
+	mcf.write("\n# Intra_Scaling\n0. 0. 0. 1.0\n0. 0. 0. 1.0\n")
 	mcf.write("\nEND\n")
 	mcf.close()
 
 # Loop through checks
-print "%-25s %18s %18s %18s %8s" % ("Property","Cassandra","NIST","Relative_Err","Pass")
+print "%-30s %-20s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","Analytic","Relative_Err","Pass")
 for i in range(numChecks):
 
 	# Step 2) Run Cassandra to get its answer
@@ -160,20 +171,16 @@ for i in range(numChecks):
 	inp.write("# VDW_Style\n%s\n\n" % (vdwStyle))
 	inp.write("# Charge_Style\n%s\n\n" % (chargeStyle[i]))
 	inp.write("# Seed_Info\n1 2\n\n")
-	inp.write("# Rcutoff_Low\n0.1\n\n")
+	inp.write("# Rcutoff_Low\n0.850\n\n")
 	inp.write("# Molecule_Files\n%s\n" % (mcfStr))
 	inp.write("# Box_Info\n1\ncubic\n%.1f\n\n" % (box[i]))
-	inp.write("# Temperature_Info\n1.0\n\n")
+	inp.write("# Temperature_Info\n300.0\n\n")
 	inp.write("# Move_Probability_Info\n\n")
 	inp.write("# Prob_Translation\n1.0\n0.0 0.0\n\n")
 	inp.write("# Done_Probability_Info\n\n")
 	inp.write("# Start_Type\nread_config %d %s\n\n" % (nMols[i],xyzName[i]))
 	inp.write("# Run_Type\nEquilibration 100\n\n")
 	inp.write("# Simulation_Length_Info\nunits steps\nprop_freq 1\ncoord_freq 1\nrun 0\n\n")
-	inp.write("# Property_Info 1\n")
-	for prp in prpList:
-		inp.write("%s\n" % (prp))
-	inp.write("\n")
 	inp.write("END\n")
 	inp.close()
 
@@ -185,28 +192,62 @@ for i in range(numChecks):
 		print("Error.Abort.")
 
 	# 3.3) Read logfile
-	prpFile = open(cassRun + ".prp", "r")
+	log = open(cassRun + ".log", "r")
 	# search line by line in log for the words "Total system energy"
-	nPrp = len(prpList)
-	prpFile.readline() # header1
-	prpFile.readline() # header2
-	prpFile.readline() # header3
-	cassAnswer[i] = [float(prp) for prp in prpFile.readline().split()[1:]]
-	prpFile.close()
+	nPrp = len(cassStr[i])
+	cassAnswer[i] = [None] * nPrp
+	for line in log:
+		for j in range(nPrp):
+			if (cassStr[i][j] in line):
+				cassAnswer[i][j] = float(line.split()[-1])
 
 	# Step 4) Compare answers
 	for j in range(nPrp):
 		nist = nistAnswer[i][j]*kBoltz
 		if (nist == 0.):
 			passCheck = cassAnswer[i][j] == 0.
-			print "%-25s %18.6g %18.6g %18s %8s" % (prpList[j],
+			if passCheck == 0:
+				FailCount = FailCount+1;
+				failureOutString = MainDir+ 'Scripts/testSuite/failureLog/test' + str(test_no) + '_check' + str(i+1)
+				os.system('mkdir -p ' + failureOutString)
+				os.system('cp ' + inpName + ' ' + failureOutString )
+				os.system('cp ' + xyzName[i] + ' ' + failureOutString )
+				os.system('cp ' + ' '.join(mcfName) + ' ' + failureOutString )
+				os.system('cp ' + cassRun + '*' + ' ' + failureOutString )
+			if (j == 0):
+				print "%-30s %-20s %18.6g %18.6g %18s %8s" % (title[i],cassStr[i][j],
 						cassAnswer[i][j],nist,'',passCheck)
+			else: 
+				print "%-30s %-21s %17.6g %18.6g %18s %8s" % ('',cassStr[i][j],
+						cassAnswer[i][j],nist,'',passCheck)
+
 		else:
 			errorRel = abs(cassAnswer[i][j] - nist)/nist
-			passCheck = abs(errorRel) <= errorTol
-			print "%-25s %18.6g %18.6g %18.6g %8s" % (prpList[j],
+			passCheck = abs(errorRel) <= errorTol[j]
+			if passCheck == 0:
+				FailCount = FailCount+1;
+				failureOutString = MainDir+ 'Scripts/testSuite/failureLog/test' + str(test_no) + '_check' + str(i+1)
+				os.system('mkdir -p ' + failureOutString)
+				os.system('cp ' + inpName + ' ' + failureOutString )
+				os.system('cp ' + xyzName[i] + ' ' + failureOutString )
+				os.system('cp ' + ' '.join(mcfName) + ' ' + failureOutString )
+				os.system('cp ' + cassRun + '*' + ' ' + failureOutString )
+			if (j == 0):
+				print "%-30s %-20s %18.6g %18.6g %18.6g %8s" % (title[i],cassStr[i][j],
 						cassAnswer[i][j],nist,errorRel,passCheck)
-	print ""
+			else: 
+				print "%-30s %-21s %17.6g %18.6g %18.6g %8s" % ('',cassStr[i][j],
+						cassAnswer[i][j],nist,errorRel,passCheck)
+
+if (FailCount != 0):
+	PassState = "False"
+else:
+	PassState = "True"
+
+LastTest = open(MainDir+ 'Scripts/testSuite/testOutput/LastTest.txt',"w")
+LastTest.write(PassState)
+LastTest.close()
+
 
 # Clean up scratch files
 os.system('rm ' + inpName)
