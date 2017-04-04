@@ -399,8 +399,6 @@ SUBROUTINE Angle_Distortion
   atom_list(:,lm,is)%ryp = atom_list(:,lm,is)%ryp + iatom2_ryp
   atom_list(:,lm,is)%rzp = atom_list(:,lm,is)%rzp + iatom2_rzp
 
-  delta_e = 0.0_DP
-
   ! Calculate the energies after the move. First compute intramolecular and intermolecular
   ! nonbonded interactions so that the move can be immediately rejected if an overlap is detected.
   ! Since COM cutoff has been enabled. Compute the new COM of the molecule. Note that if the 
