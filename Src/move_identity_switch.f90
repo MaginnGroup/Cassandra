@@ -208,8 +208,8 @@ SUBROUTINE IDENTITY_EXCHANGE
   CALL Save_Old_Cartesian_Coordiantes(j_alive,js)
 
   !Needed?
-  CALL Compute_Molecule_Dihedral_Energy(alive,is,E_dihed_i)
-  CALL Compute_Molecule_Dihedral_Energy(alive,js,E_dihed_j)
+  CALL Compute_Molecule_Dihedral_Energy(i_alive,is,E_dihed_i)
+  CALL Compute_Molecule_Dihedral_Energy(j_alive,js,E_dihed_j)
 
   ! Save the coordinates of 'alive' in 'box'
   !CALL Compute_Molecule_Dihedral_Energy(alive,is,E_dihed_out)
@@ -246,19 +246,119 @@ SUBROUTINE IDENTITY_EXCHANGE
      !$OMP END PARALLEL WORKSHARE
   END IF
 
-  ! Switch the box identity of alive
-  !molecule_list(alive,is)%which_box = box_in
-  !nmols(is,box_in) = nmols(is,box_in) + 1
-  !im_in = nmols(is,box_in) ! INDEX of alive in box_in
-  !locate(im_in,is,box_in) = alive ! link INDEX to LOCATE
+  !No need to switch box for the molecules, only one box
 
-  ! set deletion flag to false and call the CBMC growth routine
-  !remove cbmc for now
-  !cbmc_overlap = .FALSE.
+  !Might be more useful later
+  !implement as a simultaneous translation
+  !d_comx = molecule_list(j_alive,js)%xcom - molecule_list(i_alive,is)%xcom
+  !d_comy = molecule_list(j_alive,js)%ycom - molecule_list(i_alive,is)%ycom
+  !d_comz = molecule_list(j_alive,js)%zcom - molecule_list(i_alive,is)%zcom
+
+  !Translate COMs
+  !molecule_list(i_alive,is)%xcom = molecule_list(i_alive,is)%xcom + dcomx
+  !molecule_list(i_alive,is)%ycom = molecule_list(i_alive,is)%ycom + dcomy
+  !molecule_list(i_alive,is)%zcom = molecule_list(i_alive,is)%zcom + dcomz
+
+  !molecule_list(j_alive,js)%xcom = molecule_list(j_alive,js)%xcom - dcomx
+  !molecule_list(j_alive,js)%ycom = molecule_list(j_alive,js)%ycom - dcomy
+  !molecule_list(j_alive,js)%zcom = molecule_list(j_alive,js)%zcom - dcomz
+
+  !Translate Individual Atoms
+  !atom_list(:,i_alive,is)%rxp = atom_list(:,i_alive,is)%rxp + dcomx
+  !atom_list(:,i_alive,is)%ryp = atom_list(:,i_alive,is)%ryp + dcomy
+  !atom_list(:,i_alive,is)%rzp = atom_list(:,i_alive,is)%rzp + dcomz
+
+  !atom_list(:,j_alive,js)%rxp = atom_list(:,j_alive,js)%rxp - dcomx
+  !atom_list(:,j_alive,js)%ryp = atom_list(:,j_alive,js)%ryp - dcomy
+  !atom_list(:,j_alive,js)%rzp = atom_list(:,j_alive,js)%rzp - dcomz
+
+  !Save COMs and COM to atom differences
+  xcom_i = molecule_list(i_alive,is)%xcom
+  ycom_i = molecule_list(i_alive,is)%ycom
+  zcom_i = molecule_list(i_alive,is)%zcom
+
+  dx_xcom_i = xcom_i - atom_list(:,i_alive,is)%rxp
+  dy_ycom_i = ycom_i - atom_list(:,i_alive,is)%ryp
+  dz_zcom_i = zcom_i - atom_list(:,i_alive,is)%rzp
+
+  dx_xcom_j =  molecule_list(j_alive,js)%xcom - atom_list(:,j_alive,js)%rxp
+  dy_ycom_j =  molecule_list(j_alive,js)%xcom - atom_list(:,j_alive,js)%ryp
+  dz_zcom_j =  molecule_list(j_alive,js)%xcom - atom_list(:,j_alive,js)%rzp
+
+  !Switch first molecule
+  molecule_list(i_alive,is)%xcom = molecule_list(j_alive,js)%xcom
+  molecule_list(i_alive,is)%ycom = molecule_list(j_alive,js)%ycom
+  molecule_list(i_alive,is)%zcom = molecule_list(j_alive,js)%zcom
+  atom_list(:,i_alive,is)%rxp = atom_list(:,i_alive,is)%com - dx_xcom_i
+  atom_list(:,i_alive,is)%ryp = atom_list(:,i_alive,is)%com - dy_ycom_i
+  atom_list(:,i_alive,is)%rzp = atom_list(:,i_alive,is)%com - dz_zcom_i
+
+  !Switch second molecule
+  molecule_list(j_alive,js)%xcom = xcom_i
+  molecule_list(j_alive,js)%ycom = ycom_i
+  molecule_list(j_alive,js)%zcom = zcom_i
+  atom_list(:,i_alive,is)%rxp = xcom_i - dx_xcom_j
+  atom_list(:,i_alive,is)%ryp = ycom_i - dy_ycom_j
+  atom_list(:,i_alive,is)%rzp = zcom_i - dz_zcom_j
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  !Note
+
+
+
+
+
+
 
   dE_in = 0.0_DP
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+!______________________-__________________________________________________________
   !del_flag = .FALSE.
   !get_fragorder = .TRUE.
   !ALLOCATE(frag_order(nfragments(is)))
@@ -277,26 +377,20 @@ SUBROUTINE IDENTITY_EXCHANGE
   !If outside of the box, fold back into the box
   CALL Fold_Molecule(i_alive,is,box)
 
+ CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is, &
+             E_inter_vdw_i,E_inter_qq_i,inter_overlap_i)
+
+
   CALL Get_COM(j_alive, js)
   CALL Compute_Max_COM_Distance(j_alive, js)
   CALL Fold_Molecule(j_alive, js, box)
 
-  ! Build_Molecule returns cbmc_overlap == .TRUE. both in case of a core
-  ! overlap and also when the weight of all trials is zero.
+  CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is, &
+             E_inter_vdw_in,E_inter_qq_in,inter_overlap)
 
-  !Need this?
-  !IF (.NOT. cbmc_overlap) THEN
-  !      CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is, &
-  !           E_inter_vdw_in,E_inter_qq_in,inter_overlap)
-  !END IF
-
-  IF (inter_overlap .OR. cbmc_overlap) THEN
+  IF (inter_overlap) THEN
      ! reject the swap
 
-     ! restore the box identity
-     molecule_list(alive,is)%which_box = box
-     locate(im_in,is,box) = 0 ! reset LOCATE
-     nmols(is,box) = nmols(is,box) - 1
      ! restore the box coordinates
      CALL Revert_Old_Cartesian_Coordinates(alive,is)
 
@@ -321,18 +415,20 @@ SUBROUTINE IDENTITY_EXCHANGE
      END IF
 
   ELSE
-
-    dE_in = dE_in + E_inter_vdw_in + E_inter_qq_in
+      !may be accepted
+      !Where are these set?
+      dE = dE + E_inter_vdw + E_inter_qq
+  END IF
 
     !*****************************************************************************
     ! Step 5) Calculate the change in box_in's potential energy from inserting
     !         alive
     !*****************************************************************************
     ! If here then no overlap was detected. Calculate the rest of the energies
-    CALL Compute_Molecule_Bond_Energy(alive,is,E_bond_in)
-    CALL Compute_Molecule_Angle_Energy(alive,is,E_angle_in)
-    CALL Compute_Molecule_Dihedral_Energy(alive,is,E_dihed_in)
-    CALL Compute_Molecule_Improper_Energy(alive,is,E_improper_in)
+    CALL Compute_Molecule_Bond_Energy(alive,is,E_bond)
+    CALL Compute_Molecule_Angle_Energy(alive,is,E_angle)
+    CALL Compute_Molecule_Dihedral_Energy(alive,is,E_dihed)
+    CALL Compute_Molecule_Improper_Energy(alive,is,E_improper)
 
     dE_in = dE_in + E_bond_in + E_angle_in + E_dihed_in + E_improper_in
 
