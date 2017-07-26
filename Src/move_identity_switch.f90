@@ -134,19 +134,38 @@ SUBROUTINE IDENTITY_EXCHANGE
 
 
   !similar variables to move_mol_swap
-  ibox = x_box(1)
 
   !*****************************************************************************
-  ! Step 1) Select a species 'is':
+  ! Step 1) Select a box
+  !*****************************************************************************
+  ! If needed, choose a box based on its total mol fraction
+  IF(nbr_boxes .GT. 1) THEN
+
+    DO box = 1, nbr_boxes
+       x_box(box) = REAL(nmols_box(box),DP)/REAL(nmols_tot,DP)
+       IF (box > 1 ) THEN
+          x_box(box) = x_box(box) + x_box(box-1)
+       END IF
+    END DO
+
+    randno = rranf()
+    DO box = 1, nbr_boxes
+       IF ( randno <= x_box(box)) EXIT
+    END DO
+  ELSE
+    box = 1
+  END IF
+
+  !*****************************************************************************
+  ! Step 2) Select a species 'is':
   !      -> Right now just done randomly!
   !*****************************************************************************
-
   ! Sum the number of swappable molecules total & per box
   nmols_tot = 0 ! sum over species, box
   DO is = 1, nspecies
     ! Only count swappable species
     IF ( species_list(is)%int_insert /= int_noinsert ) THEN
-      nmols_tot = nmols_tot + nmols(is,ibox)
+      nmols_tot = nmols_tot + nmols(is,box)
     END IF
   END DO
 
@@ -170,7 +189,7 @@ SUBROUTINE IDENTITY_EXCHANGE
   END IF
 
   !*****************************************************************************
-  ! Step 2) Select a molecule 'alive' from species 'is' with uniform probability
+  ! Step 3) Select a molecule 'alive' from species 'is' with uniform probability
   !*****************************************************************************
   ! pick a molecule INDEX at random
   im = INT(rranf() * nmols(is,box)) + 1
@@ -179,7 +198,7 @@ SUBROUTINE IDENTITY_EXCHANGE
   i_alive = locate(im, is, box)
 
   !*****************************************************************************
-  ! Step 3) Select a species 'js':
+  ! Step 4) Select a species 'js':
   !      -> Right now just done randomly!
   !*****************************************************************************
 
@@ -191,25 +210,52 @@ SUBROUTINE IDENTITY_EXCHANGE
   END IF
 
   !*****************************************************************************
-  ! Step 4) Select a molecule 'alive' from species 'js' with uniform probability
+  ! Step 5) Select a molecule 'alive' from species 'js' with uniform probability
   !*****************************************************************************
   jm = INT(rranf() * nmols(js,box)) + 1
 
   j_alive = locate(jm, js, box)
 
   !*****************************************************************************
-  ! Step 5) Calculate the change in box_in's potential energy from inserting
+  ! Step 6) Calculate the change in box_in's potential energy from inserting
   !
   !*****************************************************************************
-  ! Save the coordinates of both 'alive' molecules
-  ! box?
+  !update trials
+  tot_trials(box) = tot_trials(box) + 1
+  ! obtain the energy of the molecule before the move.  Note that due to
+  ! this move, the interatomic energies such as vdw and electrostatics will
+  ! change. Also the ewald_reciprocal energy will change but there will
+  ! be no change in intramolecular energies.
+  IF (l_pair_nrg) THEN
+    CALL Store_Molecule_Pair_Interaction_Arrays(lm,is,ibox,E_vdw,E_qq)
+  ELSE
+    CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is,E_vdw,E_qq,inter_overlap)
+  END IF
 
-  CALL Save_Old_Cartesian_Coordinates(i_alive,is)
-  CALL Save_Old_Cartesian_Coordiantes(j_alive,js)
+  IF (inter_overlap)  THEN
+     err_msg = ""
+     err_msg(1) = "Attempted to move molecule " // TRIM(Int_To_String(im)) // &
+                  " of species " // TRIM(Int_To_String(is))
+     IF (nbr_boxes > 1) err_msg(1) = err_msg(1) // " in box " // TRIM(Int_To_String(ibox))
+     err_msg(2) = "but the molecule energy is too high"
+     IF (start_type(ibox) == "make_config" ) THEN
+        err_msg(3) = "Try increasing Rcutoff_Low, increasing the box size, or "
+        err_msg(4) = "decreasing the initial number of molecules"
+     END IF
+     CALL Clean_Abort(err_msg, "Translate")
+  END IF
+
+
+  !TODO:Add equivalent
+  !ntrials(is,ibox)%displacement = ntrials(is,ibox)%displacement + 1
+  ! Save the coordinates of both 'alive' molecules
+
+  !CALL Save_Old_Cartesian_Coordinates(i_alive,is)
+  !CALL Save_Old_Cartesian_Coordiantes(j_alive,js)
 
   !Needed?
-  CALL Compute_Molecule_Dihedral_Energy(i_alive,is,E_dihed_i)
-  CALL Compute_Molecule_Dihedral_Energy(j_alive,js,E_dihed_j)
+  !CALL Compute_Molecule_Dihedral_Energy(i_alive,is,E_dihed_i)
+  !CALL Compute_Molecule_Dihedral_Energy(j_alive,js,E_dihed_j)
 
   ! Save the coordinates of 'alive' in 'box'
   !CALL Compute_Molecule_Dihedral_Energy(alive,is,E_dihed_out)
@@ -217,60 +263,34 @@ SUBROUTINE IDENTITY_EXCHANGE
   !REAL(DP) :: energy_dihed
 
   ! Save the interaction energies
-  IF (l_pair_nrg)
-    CALL Store_Molecule_Pair_Interaction_Arrays(i_alive,is, &
-       box, E_inter_vdw_out, E_inter_qq_out)
-    CALL Store_Molecule_Pair_Interaction_Arrays(j_alive,js, &
-       box, E_inter_vdw_out, E_inter_qq_out)
-  END IF
+  !IF (l_pair_nrg)
+  !  CALL Store_Molecule_Pair_Interaction_Arrays(i_alive,is, &
+  !     box, E_inter_vdw_out, E_inter_qq_out)
+  !  CALL Store_Molecule_Pair_Interaction_Arrays(j_alive,js, &
+  !     box, E_inter_vdw_out, E_inter_qq_out)
+  !END IF
   ! Save the k-vectors
-  IF (int_charge_sum_style(box)  == charge_ewald .AND.&
-      has_charge(is)) THEN
-     ALLOCATE(cos_mol_old(nvecs(box)), sin_mol_old(nvecs(box)))
-     CALL Get_Position_Alive(i_alive,is,position)
+  !IF (int_charge_sum_style(box)  == charge_ewald .AND.&
+  !    has_charge(is)) THEN
+  !   ALLOCATE(cos_mol_old(nvecs(box)), sin_mol_old(nvecs(box)))
+  !   CALL Get_Position_Alive(i_alive,is,position)
 
-     !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-     cos_mol_old(:) = cos_mol(1:nvecs(box),position)
-     sin_mol_old(:) = sin_mol(1:nvecs(box),position)
-     !$OMP END PARALLEL WORKSHARE
-  END IF
+  !   !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+  !   cos_mol_old(:) = cos_mol(1:nvecs(box),position)
+  !   sin_mol_old(:) = sin_mol(1:nvecs(box),position)
+  !   !$OMP END PARALLEL WORKSHARE
+  !END IF
 
-  IF (int_charge_sum_style(box)  == charge_ewald .AND.&
-      has_charge(js)) THEN
-     ALLOCATE(cos_mol_old(nvecs(box)), sin_mol_old(nvecs(box)))
-     CALL Get_Position_Alive(j_alive,js,position)
+  !IF (int_charge_sum_style(box)  == charge_ewald .AND.&
+  !    has_charge(js)) THEN
+  !   ALLOCATE(cos_mol_old(nvecs(box)), sin_mol_old(nvecs(box)))
+  !   CALL Get_Position_Alive(j_alive,js,position)
 
-     !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-     cos_mol_old(:) = cos_mol(1:nvecs(box),position)
-     sin_mol_old(:) = sin_mol(1:nvecs(box),position)
-     !$OMP END PARALLEL WORKSHARE
-  END IF
-
-  !No need to switch box for the molecules, only one box
-
-  !Might be more useful later
-  !implement as a simultaneous translation
-  !d_comx = molecule_list(j_alive,js)%xcom - molecule_list(i_alive,is)%xcom
-  !d_comy = molecule_list(j_alive,js)%ycom - molecule_list(i_alive,is)%ycom
-  !d_comz = molecule_list(j_alive,js)%zcom - molecule_list(i_alive,is)%zcom
-
-  !Translate COMs
-  !molecule_list(i_alive,is)%xcom = molecule_list(i_alive,is)%xcom + dcomx
-  !molecule_list(i_alive,is)%ycom = molecule_list(i_alive,is)%ycom + dcomy
-  !molecule_list(i_alive,is)%zcom = molecule_list(i_alive,is)%zcom + dcomz
-
-  !molecule_list(j_alive,js)%xcom = molecule_list(j_alive,js)%xcom - dcomx
-  !molecule_list(j_alive,js)%ycom = molecule_list(j_alive,js)%ycom - dcomy
-  !molecule_list(j_alive,js)%zcom = molecule_list(j_alive,js)%zcom - dcomz
-
-  !Translate Individual Atoms
-  !atom_list(:,i_alive,is)%rxp = atom_list(:,i_alive,is)%rxp + dcomx
-  !atom_list(:,i_alive,is)%ryp = atom_list(:,i_alive,is)%ryp + dcomy
-  !atom_list(:,i_alive,is)%rzp = atom_list(:,i_alive,is)%rzp + dcomz
-
-  !atom_list(:,j_alive,js)%rxp = atom_list(:,j_alive,js)%rxp - dcomx
-  !atom_list(:,j_alive,js)%ryp = atom_list(:,j_alive,js)%ryp - dcomy
-  !atom_list(:,j_alive,js)%rzp = atom_list(:,j_alive,js)%rzp - dcomz
+  !   !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+  !   cos_mol_old(:) = cos_mol(1:nvecs(box),position)
+  !   sin_mol_old(:) = sin_mol(1:nvecs(box),position)
+  !   !$OMP END PARALLEL WORKSHARE
+  !END IF
 
   !Save COMs and COM to atom differences
   xcom_i = molecule_list(i_alive,is)%xcom
@@ -301,224 +321,193 @@ SUBROUTINE IDENTITY_EXCHANGE
   atom_list(:,i_alive,is)%ryp = ycom_i - dy_ycom_j
   atom_list(:,i_alive,is)%rzp = zcom_i - dz_zcom_j
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  !Note
-
-
-
-
-
-
-
-  dE_in = 0.0_DP
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-!______________________-__________________________________________________________
-  !del_flag = .FALSE.
-  !get_fragorder = .TRUE.
-  !ALLOCATE(frag_order(nfragments(is)))
-  !lambda_for_build = molecule_list(alive,is)%frac
-  !CALL Build_Molecule(alive,is,box_in,frag_order, &
-  !        lambda_for_build,ln_pseq,ln_pfor,nrg_ring_frag_in, &
-  !        cbmc_overlap)
-
-  !gets com of a molecule, stored in molecule_list(alive,is)%xcom, %ycom, %zcom
-  CALL Get_COM(i_alive,is)
-
-  !gets distance between is' COM and farthest away molecule
-  !stored in molecule_list(alive,is)%max_dcom
-  CALL Compute_Max_COM_Distance(i_alive,is)
-
-  !If outside of the box, fold back into the box
-  CALL Fold_Molecule(i_alive,is,box)
-
- CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is, &
-             E_inter_vdw_i,E_inter_qq_i,inter_overlap_i)
-
-
-  CALL Get_COM(j_alive, js)
-  CALL Compute_Max_COM_Distance(j_alive, js)
-  CALL Fold_Molecule(j_alive, js, box)
-
-  CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is, &
-             E_inter_vdw_in,E_inter_qq_in,inter_overlap)
-
-  IF (inter_overlap) THEN
-     ! reject the swap
-
-     ! restore the box coordinates
-     CALL Revert_Old_Cartesian_Coordinates(alive,is)
-
-     ! All atoms will not exist if inter_overlap was tripped before the
-     ! last fragment was placed in Build_Molecule.
-     ! Set exist to TRUE for all atoms and reset frac to 1
-     atom_list(:,alive,is)%exist = .TRUE.
-     molecule_list(alive,is)%frac = 1.0_DP
-
-     IF (l_pair_nrg) THEN
-        CALL Reset_Molecule_Pair_Interaction_Arrays(alive,is,box)
+!__________________________________________________!
+ ! Sum the total number of molecules
+  ! If there are no molecules then return
+  ! If needed, choose a box based on its total mol fraction
+  ! error check
+  ! Choose species based on the mol fraction, using Golden sampling
+  ! error check
+  ! Choose a molecule at random for displacement
+  ! Get the LOCATE of imth molecule of species is in ibox
+  ! update the trial counters
+
+  ! obtain the energy of the molecule before the move.  Note that due to
+  ! this move, the interatomic energies such as vdw and electrostatics will
+  ! change. Also the ewald_reciprocal energy will change but there will
+  ! be no change in intramolecular energies.
+  IF (l_pair_nrg) THEN
+    CALL Store_Molecule_Pair_Interaction_Arrays(lm,is,ibox,E_vdw,E_qq)
+  ELSE
+    CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is,E_vdw,E_qq,inter_overlap)
+  END IF
+
+  IF (inter_overlap)  THEN
+     err_msg = ""
+     err_msg(1) = "Attempted to move molecule " // TRIM(Int_To_String(im)) // &
+                  " of species " // TRIM(Int_To_String(is))
+     IF (nbr_boxes > 1) err_msg(1) = err_msg(1) // " in box " // TRIM(Int_To_String(ibox))
+     err_msg(2) = "but the molecule energy is too high"
+     IF (start_type(ibox) == "make_config" ) THEN
+        err_msg(3) = "Try increasing Rcutoff_Low, increasing the box size, or "
+        err_msg(4) = "decreasing the initial number of molecules"
      END IF
+     CALL Clean_Abort(err_msg, "Translate")
+  END IF
 
-     IF(ALLOCATED(cos_mol_old)) DEALLOCATE(cos_mol_old)
-     IF(ALLOCATED(sin_mol_old)) DEALLOCATE(sin_mol_old)
+  ! Store the old positions of the atoms
+  CALL Save_Old_Cartesian_Coordinates(lm,is)
 
-     accept = .FALSE.
+  ! Generate a random displacement vector. Note that the current formalism will
+  ! work for cubic shaped boxes. However, it is easy to extend for nonorthorhombic
+  ! boxes where displacements along the basis vectors.
+  dx = ( 2.0_DP * rranf() - 1.0_DP) * max_disp(is,ibox)
+  dy = ( 2.0_DP * rranf() - 1.0_DP) * max_disp(is,ibox)
+  dz = ( 2.0_DP * rranf() - 1.0_DP) * max_disp(is,ibox)
+
+  ! Move atoms by the above vector dx,dy,dz and also update the COM
+  atom_list(:,lm,is)%rxp = atom_list(:,lm,is)%rxp + dx
+  atom_list(:,lm,is)%ryp = atom_list(:,lm,is)%ryp + dy
+  atom_list(:,lm,is)%rzp = atom_list(:,lm,is)%rzp + dz
+
+  molecule_list(lm,is)%xcom = molecule_list(lm,is)%xcom + dx
+  molecule_list(lm,is)%ycom = molecule_list(lm,is)%ycom + dy
+  molecule_list(lm,is)%zcom = molecule_list(lm,is)%zcom + dz
+
+
+  !**************************************************************************
+  CALL Fold_Molecule(lm,is,ibox)
+
+  CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is,E_vdw_move,E_qq_move,inter_overlap)
+  ! If an overlap is detected, immediately reject the move
+  IF (inter_overlap) THEN ! Move is rejected
+
+     CALL Revert_Old_Cartesian_Coordinates(lm,is)
+     IF (l_pair_nrg) CALL Reset_Molecule_Pair_Interaction_Arrays(lm,is,ibox)
 
      IF (verbose_log) THEN
-       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I1,A1,I1,X,L8,X,9X,X,A9)') &
-             i_mcstep, 'swap' , alive, is, box, '>', box, accept, 'overlap'
+       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,A9)') &
+             i_mcstep, 'translate' , lm, is, ibox, accept, 'overlap'
      END IF
 
   ELSE
-      !may be accepted
-      !Where are these set?
-      dE = dE + E_inter_vdw + E_inter_qq
+
+     dE = 0.0_DP
+
+     IF ((int_charge_sum_style(ibox) == charge_ewald) .AND. (has_charge(is))) THEN
+
+        ALLOCATE(cos_mol_old(nvecs(ibox)),sin_mol_old(nvecs(ibox)))
+        CALL Get_Position_Alive(lm,is,position)
+
+        !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+        cos_mol_old(:) = cos_mol(1:nvecs(ibox),position)
+        sin_mol_old(:) = sin_mol(1:nvecs(ibox),position)
+        !$OMP END PARALLEL WORKSHARE
+
+        CALL Update_System_Ewald_Reciprocal_Energy(lm,is,ibox,int_translation,E_reciprocal_move)
+        dE = E_reciprocal_move - energy(ibox)%reciprocal
+
+     END IF
+
+     ! Compute the difference in old and new energy
+     dE = dE + ( E_vdw_move - E_vdw ) + ( E_qq_move - E_qq )
+
+     IF (int_sim_type == sim_nvt_min) THEN
+        IF (dE  <= 0.0_DP) THEN
+           accept = .TRUE.
+        END IF
+     ELSE
+
+         ln_pacc = beta(ibox) * dE
+         accept = accept_or_reject(ln_pacc)
+
+     END IF
+
+     IF ( accept ) THEN
+
+        ! accept the move and update the global energies
+        energy(ibox)%total = energy(ibox)%total + dE
+        energy(ibox)%inter = energy(ibox)%inter + dE
+        energy(ibox)%inter_vdw = energy(ibox)%inter_vdw + E_vdw_move - E_vdw
+        energy(ibox)%inter_q   = energy(ibox)%inter_q   + E_qq_move  - E_qq
+
+        IF(int_charge_sum_style(ibox) == charge_ewald .AND. has_charge(is)) THEN
+           energy(ibox)%reciprocal = E_reciprocal_move
+        END IF
+
+        ! update success counter
+        nsuccess(is,ibox)%displacement = nsuccess(is,ibox)%displacement + 1
+        nequil_success(is,ibox)%displacement = nequil_success(is,ibox)%displacement + 1
+
+        IF (l_pair_nrg) DEALLOCATE(pair_vdw_temp,pair_qq_temp)
+        IF (ALLOCATED(cos_mol_old)) DEALLOCATE(cos_mol_old)
+        IF (ALLOCATED(sin_mol_old)) DEALLOCATE(sin_mol_old)
+
+     ELSE
+
+        ! Revert to the old coordinates of atoms and com of the molecule
+        CALL Revert_Old_Cartesian_Coordinates(lm,is)
+
+        IF ((int_charge_sum_style(ibox) == charge_ewald) .AND. (has_charge(is))) THEN
+           ! Also reset the old cos_sum and sin_sum for reciprocal space vectors. Note
+           ! that old vectors were set while difference in ewald reciprocal energy was computed.
+           !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+           cos_sum(:,ibox) = cos_sum_old(:,ibox)
+           sin_sum(:,ibox) = sin_sum_old(:,ibox)
+           cos_mol(1:nvecs(ibox),position) =cos_mol_old(:)
+           sin_mol(1:nvecs(ibox),position) =sin_mol_old(:)
+           !$OMP END PARALLEL WORKSHARE
+           DEALLOCATE(cos_mol_old,sin_mol_old)
+        END IF
+        IF (l_pair_nrg)  CALL Reset_Molecule_Pair_Interaction_Arrays(lm,is,ibox)
+     ENDIF
+
+     IF (verbose_log) THEN
+       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,F9.3)') &
+             i_mcstep, 'translate' , lm, is, ibox, accept, ln_pacc
+     END IF
+
   END IF
 
-    !*****************************************************************************
-    ! Step 5) Calculate the change in box_in's potential energy from inserting
-    !         alive
-    !*****************************************************************************
-    ! If here then no overlap was detected. Calculate the rest of the energies
-    CALL Compute_Molecule_Bond_Energy(alive,is,E_bond)
-    CALL Compute_Molecule_Angle_Energy(alive,is,E_angle)
-    CALL Compute_Molecule_Dihedral_Energy(alive,is,E_dihed)
-    CALL Compute_Molecule_Improper_Energy(alive,is,E_improper)
+  IF ( MOD(ntrials(is,ibox)%displacement,nupdate) == 0 ) THEN
+     IF ( int_run_type == run_equil ) THEN
+        success_ratio = REAL(nequil_success(is,ibox)%displacement,DP)/REAL(nupdate,DP)
+     ELSE
+        success_ratio = REAL(nsuccess(is,ibox)%displacement,DP)/REAL(ntrials(is,ibox)%displacement,DP)
+     END IF
 
-    dE_in = dE_in + E_bond_in + E_angle_in + E_dihed_in + E_improper_in
+     WRITE(logunit,'(X,I9,X,A10,X,5X,X,I3,X,I3,X,F8.5)',ADVANCE='NO') &
+           i_mcstep, 'translate', is, ibox, success_ratio
 
-    CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is, &
-         E_intra_vdw_in,E_intra_qq_in,E_periodic_qq,intra_overlap)
-    E_inter_qq_in = E_inter_qq_in + E_periodic_qq
+     !nsuccess(is,ibox)%displacement = 0
 
-    ! Already added E_inter to dE, so add E_periodic directly
-    dE_in = dE_in + E_intra_vdw_in + E_intra_qq_in + E_periodic_qq
+     IF ( int_run_type == run_equil ) THEN
 
-    call cpu_time(time0)
+        ! check if the acceptace is close to 0.5
 
-    IF (int_charge_style(box_in) == charge_coul .AND. has_charge(is)) THEN
+         nequil_success(is,ibox)%displacement = 0
 
-       IF (int_charge_sum_style(box_in) == charge_ewald) THEN
+         IF  ( success_ratio < 0.00005 ) THEN
+             max_disp(is,ibox) = 0.1_DP*max_disp(is,ibox)
+         ELSE
+             ! minimum max_disp for this species
+             IF (has_charge(is) .AND. int_charge_style(ibox) /= charge_none) THEN
+                rcut_small = MIN(rcut_vdw(ibox),rcut_coul(ibox))
+             ELSE
+                rcut_small = rcut_vdw(ibox)
+             END IF
+             max_disp(is,ibox) = MIN(rcut_small,2.0_DP*success_ratio*max_disp(is,ibox))
+         END IF
 
-            ! Note that this call will change cos_mol, sin_mol of alive and this
-            ! will have to be restored below while computing the energy of box_out
-            ! without molecule alive.
-            CALL Update_System_Ewald_Reciprocal_Energy(alive,is,box_in, &
-                 int_insertion,E_reciprocal_in)
+         WRITE(logunit,'(X,F9.5)',ADVANCE='NO') max_disp(is,ibox)
 
-            dE_in = dE_in + (E_reciprocal_in - energy(box_in)%ewald_reciprocal)
-       END IF
+     END IF
 
-       CALL Compute_Molecule_Self_Energy(alive,is,box_in,E_self_in)
-       dE_in = dE_in + E_self_in
+     WRITE(logunit,*)
 
-    END IF
+  END IF
 
-    call cpu_time(time1)
-    copy_time = copy_time + time1-time0
-
-    IF (int_vdw_sum_style(box_in) == vdw_cut_tail) THEN
-       nbeads_in(:) = nint_beads(:,box_in)
-
-       DO i = 1, natoms(is)
-          i_type = nonbond_list(i,is)%atom_type_number
-          nint_beads(i_type,box_in) = nint_beads(i_type,box_in) + 1
-       END DO
-
-       CALL Compute_LR_Correction(box_in,E_lrc_in)
-       dE_in = dE_in + E_lrc_in - energy(box_in)%lrc
-
-    END IF
-
-    IF(cpcollect) THEN
-
-       potw = 1.0_DP
-       CP_energy = dE_in
-
-       potw = 1.0_DP / (P_forward * kappa_ins*kappa_rot*kappa_dih &
-            ** (nfragments(is)-1))
-       CP_energy = dE_in - E_angle_in
-
-       chpot(is,box_in) = chpot(is,box_in) &
-        + potw * (box_list(box_in)%volume &
-        / (REAL(nmols(is,box_in)))) * DEXP(-beta(box_in) * CP_energy)
-
-    END IF
-
-
-
-
-
-
-
-
-
-     !P_forward = P_forward * REAL(nmols(is,box_out),DP) / REAL(nmols_box(box_out),DP)
-     !P_reverse = P_reverse * REAL(nmols(is,box_in)+1,DP) / REAL(nmols_box(box_in)+1,DP)
-
-  !ELSE
-    !
-
-  !END IF
-
-  ! Increment counters
-  ntrials(is,box_out)%deletion = ntrials(is,box_out)%deletion + 1
-  ntrials(is,box)%insertion = ntrials(is,box)%insertion + 1
-  ntrials(is,box)%cpcalc = ntrials(is,box)%cpcalc + 1
-
-
-
-
-
-
-
+END SUBROUTINE Translate
 
 END SUBROUTINE IDENTITY_EXCHANGE
-
-
 
