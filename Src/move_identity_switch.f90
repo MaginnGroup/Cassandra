@@ -1,31 +1,3 @@
-
-    !List of parameters I'll need to figure out
-    !x_box, or the box
-    !
-
-
-    !local variables
-
-    !variables to find elsewhere:
-    !SPECIES_LIST()
-
-    !No need to choose a box, the box is implicit
-
-
-    !Step 1) Select a box
-
-    !Step 2) Select a species 'is' that exists in that box:
-
-    !Step 3) Select a molecule from that species in that box
-
-    !Step 3) Select a second box:
-
-    !Step 4) Select a second species that exists in that box
-
-    !Step 7) Select a second molecule from that species in that box
-
-    !a) according to its mole fraction in the one box
-
 !*******************************************************************************
 !   Cassandra - An open source atomistic Monte Carlo software package
 !   developed at the University of Notre Dame.
@@ -51,7 +23,7 @@ SUBROUTINE IDENTITY_EXCHANGE
 
   !*****************************************************************************
   !
-  ! This subroutine performs particle swaps in a GEMC ensemble.
+  ! This subroutine performs
   !
   !*****************************************************************************
 
@@ -128,12 +100,6 @@ SUBROUTINE IDENTITY_EXCHANGE
   ln_prev = 0.0_DP
   P_forward = 1.0_DP
   P_reverse = 1.0_DP
-
-  tot_trials(box) = tot_trials(box) + 1
-  !tot_trials(box_in) = tot_trials(box_in) + 1
-
-
-  !similar variables to move_mol_swap
 
   !*****************************************************************************
   ! Step 1) Select a box
@@ -228,9 +194,10 @@ SUBROUTINE IDENTITY_EXCHANGE
   ! this move, the interatomic energies such as vdw and electrostatics will
   ! change. Also the ewald_reciprocal energy will change but there will
   ! be no change in intramolecular energies.
+
   IF (l_pair_nrg) THEN
-    CALL Store_Molecule_Pair_Interaction_Arrays(i_alive,is,box,E_vdw,E_qq)
-    CALL Store_Molecule_Pair_Interaction_Arrays(j_alive,js,box,E_vdw,E_qq)
+    CALL Store_Molecule_Pair_Interaction_Arrays(dum1, dum2, dum3, E_vdw_dum, E_qq_dum, 2, &
+         (/i_alive, j_alive/), (/is, js/), (/box, box/), E_vdw, E_qq)
   ELSE
     CALL Compute_Molecule_Nonbond_Inter_Energy(i_alive,is,E_vdw,E_qq,inter_overlap_i)
     if (inter_overlap_i)
@@ -267,16 +234,16 @@ SUBROUTINE IDENTITY_EXCHANGE
   dz_zcom_i = zcom_i - atom_list(:,i_alive,is)%rzp
 
   dx_xcom_j =  molecule_list(j_alive,js)%xcom - atom_list(:,j_alive,js)%rxp
-  dy_ycom_j =  molecule_list(j_alive,js)%xcom - atom_list(:,j_alive,js)%ryp
-  dz_zcom_j =  molecule_list(j_alive,js)%xcom - atom_list(:,j_alive,js)%rzp
+  dy_ycom_j =  molecule_list(j_alive,js)%ycom - atom_list(:,j_alive,js)%ryp
+  dz_zcom_j =  molecule_list(j_alive,js)%zcom - atom_list(:,j_alive,js)%rzp
 
   !Switch first molecule
   molecule_list(i_alive,is)%xcom = molecule_list(j_alive,js)%xcom
   molecule_list(i_alive,is)%ycom = molecule_list(j_alive,js)%ycom
   molecule_list(i_alive,is)%zcom = molecule_list(j_alive,js)%zcom
-  atom_list(:,i_alive,is)%rxp = atom_list(:,i_alive,is)%com - dx_xcom_i
-  atom_list(:,i_alive,is)%ryp = atom_list(:,i_alive,is)%com - dy_ycom_i
-  atom_list(:,i_alive,is)%rzp = atom_list(:,i_alive,is)%com - dz_zcom_i
+  atom_list(:,i_alive,is)%rxp = atom_list(:,i_alive,is)%xcom - dx_xcom_i
+  atom_list(:,i_alive,is)%ryp = atom_list(:,i_alive,is)%ycom - dy_ycom_i
+  atom_list(:,i_alive,is)%rzp = atom_list(:,i_alive,is)%zcom - dz_zcom_i
 
   !Switch second molecule
   molecule_list(j_alive,js)%xcom = xcom_i
@@ -292,23 +259,40 @@ SUBROUTINE IDENTITY_EXCHANGE
   !
   !*****************************************************************************
 
-  CALL Fold_Molecule(i_alive, is, box)
-  CALL Fold_Molecule(j_alive, js, box)
+  !TODO: Not necessary until doing regrowth stuff
+  !CALL Fold_Molecule(i_alive, is, box)
+  !CALL Fold_Molecule(j_alive, js, box)
 
   CALL Compute_Molecule_Nonbond_Inter_Energy(i_alive,is,E_vdw,E_qq,inter_overlap_i)
   CALL Compute_Molecule_Nonbond_Inter_Energy(j_alive,js,E_vdw,E_qq,inter_overlap_j)
 
   IF (inter_overlap_i .OR. inter_overlap_j)
     CALL Revert_Old_Cartesian_Coordinates(i_alive, is)
+    CALL Revert_Old_Cartesian_Coordiantes(j_alive, js)
 
-    IF (l_pair_nrg) CALL Reset_Molecule_Pair_Interaction_Arrays(i_alive,is,box)
+    IF (l_pair_nrg) THEN
+       CALL Reset_Molecule_Pair_Interaction_Arrays(i_alive,is,box)
+       CALL Reset_Molecule_Pair_Interaction_Arrays(j_alive,js,box)
+    END IF
 
     IF (verbose_log) THEN
       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,A9)') &
             i_mcstep, 'identity switch' , i_alive, is, box, accept, 'overlap'
     END IF
   ELSE !no overlap
-      dE = 0.0_DP
+     dE = 0.0_DP
+
+     IF (int_charge_sum_style(box) == charge_ewald) THEN
+        IF (has_charge(is)) THEN
+            ALLOCATE(cos_mol_old_i(nvecs(box)), sin_mol_old_i(nvecs(box)))
+            CALL Get_Position_Alive(
+        ELSE IF (has_charge(js)) THEN
+        END IF
+         !IF(has_charge(is) .AND. has_charge(js)) THEN
+         !ELSE IF (has_charge(is))
+         !ELSE IF (has_charge(js))
+         !END IF
+     END IF
 
      !get help here!
      IF ((int_charge_sum_style(box) == charge_ewald) .AND. (has_charge(is))) THEN
