@@ -43,6 +43,7 @@ SUBROUTINE IDENTITY_EXCHANGE
   !added
   INTEGER :: box
   INTEGER :: i_alive, j_alive
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE, TARGET :: cos_sum_old_idsw, sin_sum_old_idsw
   !end added
 
   INTEGER :: is, ibox, im_in, im_out, alive, which_anchor
@@ -83,9 +84,10 @@ SUBROUTINE IDENTITY_EXCHANGE
 
  ! Variables added for l_pair_nrg and reciprocal k vector storage
 
-  INTEGER :: position
+  INTEGER :: position_i, position_j
 
-  REAL(DP), ALLOCATABLE :: cos_mol_old(:), sin_mol_old(:), cos_mol_new(:), sin_mol_new(:)
+  REAL(DP), ALLOCATABLE :: cos_mol_old_i(:), sin_mol_old_i(:), cos_mol_old_j(:), sin_mol_old_j(:)
+  REAL(DP), ALLOCATABLE :: cos_mol_new_i(:), sin_mol_new_i(:), cos_mol_new_i(:), sin_mol_new_j(:)
   REAL(DP) :: time0, time1, randno
 
   LOGICAL :: l_charge_in, l_charge_out
@@ -136,7 +138,7 @@ SUBROUTINE IDENTITY_EXCHANGE
   END DO
 
   ! check to make sure there are swappable molecules
-  IF (nmols_tot == 0) THEN
+  IF (nmols_tot < 2) THEN
      err_msg = ''
      err_msg(1) = 'No swappable molecules'
      CALL Clean_Abort(err_msg,'Identity_Switch_Move')
@@ -148,11 +150,11 @@ SUBROUTINE IDENTITY_EXCHANGE
 
   !TODO: ONLY ERROR OUT IF SWAP ISN'T POSSIBLE
   ! check to make sure the selected species is swappable
-  IF (species_list(is)%int_insert == int_noinsert) THEN
-    err_msg = ''
-    err_msg(1) = 'Species ' // TRIM(Int_To_String(is)) // ' is not swappable'
-    CALL Clean_Abort(err_msg,'Identity_Switch_Move')
-  END IF
+  !IF (species_list(is)%int_insert == int_noinsert) THEN
+  !  err_msg = ''
+  !  err_msg(1) = 'Species ' // TRIM(Int_To_String(is)) // ' is not swappable'
+  !  CALL Clean_Abort(err_msg,'Identity_Switch_Move')
+  !END IF
 
   !*****************************************************************************
   ! Step 3) Select a molecule 'alive' from species 'is' with uniform probability
@@ -177,6 +179,7 @@ SUBROUTINE IDENTITY_EXCHANGE
 
   !*****************************************************************************
   ! Step 5) Select a molecule 'alive' from species 'js' with uniform probability
+        !TODO: FIX cos_sum restoration
   !*****************************************************************************
   jm = INT(rranf() * nmols(js,box)) + 1
 
@@ -188,6 +191,10 @@ SUBROUTINE IDENTITY_EXCHANGE
   !*****************************************************************************
   !update trials
   tot_trials(box) = tot_trials(box) + 1
+  ntrials(is,box)%switch = ntrials(is,box)%switch + 1
+  ntrials(js,box)%switch = ntrials(js,box)%switch + 1
+
+
   !TODO: UPDATE OTHER TRIALS TOO
 
   ! obtain the energy of the molecule before the move.  Note that due to
@@ -263,8 +270,8 @@ SUBROUTINE IDENTITY_EXCHANGE
   !CALL Fold_Molecule(i_alive, is, box)
   !CALL Fold_Molecule(j_alive, js, box)
 
-  CALL Compute_Molecule_Nonbond_Inter_Energy(i_alive,is,E_vdw,E_qq,inter_overlap_i)
-  CALL Compute_Molecule_Nonbond_Inter_Energy(j_alive,js,E_vdw,E_qq,inter_overlap_j)
+  CALL Compute_Molecule_Nonbond_Inter_Energy(i_alive,is,E_vdw_move,E_qq_move,inter_overlap_i)
+  CALL Compute_Molecule_Nonbond_Inter_Energy(j_alive,js,E_vdw_move,E_qq_move,inter_overlap_j)
 
   IF (inter_overlap_i .OR. inter_overlap_j)
     CALL Revert_Old_Cartesian_Coordinates(i_alive, is)
@@ -282,57 +289,50 @@ SUBROUTINE IDENTITY_EXCHANGE
   ELSE !no overlap
      dE = 0.0_DP
 
-     IF (int_charge_sum_style(box) == charge_ewald) THEN
+     IF ((int_charge_sum_style(box) == charge_ewald) && (has_charge(is) .OR. has_charge(js))) THEN
+        !Update_System_Ewald_Reciprocal_Energy will do this, but it might override it!
+        !TODO:Eventually rewrite Update_System_Ewald_Reciprocal_Energy!
+
+        ALLOCATE(cos_sum_old_idsw, sin_sum_old_idsw)
+        !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+        cos_sum_old_idsw(1:nvecs(box),box) = cos_sum(1:nvecs(box),box)
+        sin_sum_old_idsw(1:nvecs(box),box) = sin_sum(1:nvecs(box),box)
+        !$OMP END PARALLEL WORKSHARE
+
         IF (has_charge(is)) THEN
-            ALLOCATE(cos_mol_old_i(nvecs(box)), sin_mol_old_i(nvecs(box)))
-            CALL Get_Position_Alive(
-        ELSE IF (has_charge(js)) THEN
+           ALLOCATE(cos_mol_old_i(nvecs(box)), sin_mol_old_i(nvecs(box)))
+           CALL Get_Position_Alive(i_alive, is, position_i)
+
+           !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+           cos_mol_old_i(:) = cos_mol(1:nvecs(box),position_i)
+           sin_mol_old_i(:) = sin_mol(1:nvecs(box),position_i)
+           !$OMP END PARALLEL WORKSHARE
+
+           CALL Update_System_Ewald_Reciprocal_Energy(i_alive,is,box,int_translation,E_reciprocal_move)
+           dE = E_reciprocal_move + dE
         END IF
-         !IF(has_charge(is) .AND. has_charge(js)) THEN
-         !ELSE IF (has_charge(is))
-         !ELSE IF (has_charge(js))
-         !END IF
-     END IF
+        IF (has_charge(js)) THEN
+           ALLOCATE(cos_mol_old_j(nvecs(box)), sin_mol_old_j(nvecs(box)))
+           CALL Get_Position_Alive(j_alive, js, position_j)
 
-     !get help here!
-     IF ((int_charge_sum_style(box) == charge_ewald) .AND. (has_charge(is))) THEN
+           !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+           cos_mol_old_j(:) = cos_mol(1:nvecs(box),position_j)
+           sin_mol_old_j(:) = sin_mol(1:nvecs(box),position_j)
+          !$OMP END PARALLEL WORKSHARE
 
-        ALLOCATE(cos_mol_old(nvecs(box)),sin_mol_old(nvecs(box)))
-        CALL Get_Position_Alive(i_alive,is,position)
-
-        !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-        cos_mol_old(:) = cos_mol(1:nvecs(box),position)
-        sin_mol_old(:) = sin_mol(1:nvecs(box),position)
-        !$OMP END PARALLEL WORKSHARE
-
-        !TODO: int_translation?
-        CALL Update_System_Ewald_Reciprocal_Energy(i_alive,is,box,int_translation,E_reciprocal_move)
-        dE = E_reciprocal_move - energy(box)%reciprocal + dE
-     END IF
-
-     IF ((int_charge_sum_style(box) == charge_ewald) .AND. (has_charge(js))) THEN
-        ALLOCATE(cos_mol_old(nvecs(box)),sin_mol_old(nvecs(box)))
-        CALL Get_Position_Alive(j_alive,js,position)
-
-        !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-        cos_mol_old(:) = cos_mol(1:nvecs(box),position)
-        sin_mol_old(:) = sin_mol(1:nvecs(box),position)
-        !$OMP END PARALLEL WORKSHARE
-
-        !TODO: int_translation?
-        CALL Update_System_Ewald_Reciprocal_Energy(j_alive,js,box,int_translation,E_reciprocal_move)
-        dE = E_reciprocal_move - energy(box)%reciprocal + dE
+           CALL Update_System_Ewald_Reciprocal_Energy(j_alive,js,box,int_translation,E_reciprocal_move)
+           dE = E_reciprocal_move + dE
+        END IF
+        dE = dE - energy(box)%reciprocal
      END IF
 
      !compute difference in old and new energy
      dE = dE + (E_vdw_move - E_vdw) + (E_qq_move - E_qq)
 
-     !TODO, find out what this does!
      IF (int_sim_type == sim_nvt_min) THEN
         IF (dE  <= 0.0_DP) THEN
            accept = .TRUE.
         END IF
-
      ELSE
          ln_pacc = beta(box) * dE
          accept = accept_or_reject(ln_pacc)
@@ -345,42 +345,77 @@ SUBROUTINE IDENTITY_EXCHANGE
         energy(box)%inter_vdw = energy(box)%inter_vdw + E_vdw_move - E_vdw
         energy(box)%inter_q   = energy(box)%inter_q   + E_qq_move  - E_qq
 
-        !TODO: HELP WITH EWALD
-        IF(int_charge_sum_style(box) == charge_ewald .AND. has_charge(is)) THEN
+        IF(int_charge_sum_style(box) == charge_ewald .AND. (has_charge(is) .OR. has_charge(js))) THEN
            energy(box)%reciprocal = E_reciprocal_move
         END IF
 
         !TODO: update success counter
-        !nsuccess(is,box)%displacement = nsuccess(is,box)%displacement + 1
-        !nequil_success(is,ibox)%displacement = nequil_success(is,ibox)%displacement + 1
+        nsuccess(is,box)%switch = nsuccess(is,box)%switch + 1
+        nsuccess(js,box)%switch = nsuccess(js,box)%switch + 1
+        nequil_success(is,box)%switch = nequil_success(is,box)%switch + 1
+        nequil_success(js,box)%switch = nequil_success(js,box)%switch + 1
 
         IF (l_pair_nrg) DEALLOCATE(pair_vdw_temp,pair_qq_temp)
-        IF (ALLOCATED(cos_mol_old)) DEALLOCATE(cos_mol_old)
-        IF (ALLOCATED(sin_mol_old)) DEALLOCATE(sin_mol_old)
+        IF (ALLOCATED(cos_mol_old_i)) DEALLOCATE(cos_mol_old_i)
+        IF (ALLOCATED(sin_mol_old_i)) DEALLOCATE(sin_mol_old_i)
+        IF (ALLOCATED(sin_mol_old_j)) DEALLOCATE(sin_mol_old_j)
+        IF (ALLOCATED(sin_mol_old_j)) DEALLOCATE(sin_mol_old_j)
      ELSE
         ! Revert to the old coordinates of atoms and com of the molecule
-        CALL Revert_Old_Cartesian_Coordinates(lm,is)
+        CALL Revert_Old_Cartesian_Coordinates(i_alive,is)
+        CALL Revert_Old_Cartesian_Coordinates(j_alive,js)
 
-        IF ((int_charge_sum_style(ibox) == charge_ewald) .AND. (has_charge(is))) THEN
-           ! Also reset the old cos_sum and sin_sum for reciprocal space vectors. Note
-           ! that old vectors were set while difference in ewald reciprocal energy was computed.
+        IF ((int_charge_sum_style(box) == charge_ewald) && (has_charge(is) .OR. has_charge(js))) THEN
            !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-           cos_sum(:,ibox) = cos_sum_old(:,ibox)
-           sin_sum(:,ibox) = sin_sum_old(:,ibox)
-           cos_mol(1:nvecs(ibox),position) =cos_mol_old(:)
-           sin_mol(1:nvecs(ibox),position) =sin_mol_old(:)
+           cos_sum(1:nvecs(box), box) = cos_sum_old_idsw(1:nvecs(box),box)
+           sin_sum(1:nvecs(box), box) = sin_sum_old_idsw(1:nvecs(box),box)
            !$OMP END PARALLEL WORKSHARE
-           DEALLOCATE(cos_mol_old,sin_mol_old)
+
+           DEALLOCATE(cos_sum_old_idsw, sin_sum_old_idsw)
+           IF (has_charge(is)) THEN
+              !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+              cos_mol(1:nvecs(box),position_i) = cos_mol_old_i(:)
+              sin_mol(1:nvecs(box),position_i) = sin_mol_old_i(:)
+              !$OMP END PARALLEL WORKSHARE
+              DEALLOCATE(cos_mol_old_i, sin_mol_old_i)
+           END IF
+           IF (has_charge(js)) THEN
+              !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+              cos_mol(1:nvecs(box),position_j) = cos_mol_old_j(:)
+              sin_mol(1:nvecs(box),position_j) = sin_mol_old_j(:)
+              !$OMP END PARALLEL WORKSHARE
+              DEALLOCATE(cos_mol_old_j, sin_mol_old_j)
+           END IF
+        IF (l_pair_nrg) THEN
+            CALL Reset_Molecule_Pair_Interaction_Arrays(i_alive,is,box)
+            CALL Reset_Molecule_Pair_Interaction_Arrays(j_alive,js,box)
         END IF
-        IF (l_pair_nrg)  CALL Reset_Molecule_Pair_Interaction_Arrays(lm,is,ibox)
      ENDIF
 
      IF (verbose_log) THEN
        WRITE(logunit,'(X,I15,X,A10,X,X,I5,X,I3,X,I3,X,L8,X,9X,X,F9.3)') &
              i_mcstep, 'identity switch' , i_alive, is, js, box, accept, ln_pacc
      END IF
-  END IF !end of no overlap case
+  END IF
 
   !removed logging stuff, take another look!
+  IF ( MOD(ntrials(is,ibox)%switch,nupdate) == 0 ) THEN
+     IF ( int_run_type == run_equil ) THEN
+        success_ratio_i = REAL(nequil_success(is,box)%displacement,DP)/REAL(nupdate,DP)
+        success_ratio_j = REAL(nequil_success(js,box)%displacement,DP)/REAL(nupdate,DP)
+     ELSE
+        success_ratio_i = REAL(nsuccess(js,box)%switch,DP)/REAL(ntrials(js,box)%switch,DP)
+        success_ratio_j = REAL(nsuccess(js,box)%switch,DP)/REAL(ntrials(js,box)%switch,DP)
+     END IF
+
+     WRITE(logunit,'(X,I15,X,A10,X,5X,X,I3,X,I3,X,F8.5)',ADVANCE='NO') &
+           i_mcstep, 'identity switch', is, box, success_ratio_i
+
+     WRITE(logunit,'(X,I15,X,A10,X,5X,X,I3,X,I3,X,F8.5)',ADVANCE='NO') &
+           i_mcstep, 'identity switch', js, box, success_ratio_j
+     !TODO: No need to change displacement like translation, but do we need to change rcut?
+     END IF
+     WRITE(logunit,*)
+  END IF
 END SUBROUTINE IDENTITY_EXCHANGE
 

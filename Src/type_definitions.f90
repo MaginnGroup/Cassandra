@@ -66,14 +66,14 @@ MODULE Type_Definitions
 
   ! Place a limit on the number of angle evaluations for probability calculations
   INTEGER, PARAMETER :: nregions = 1000
-  
+
   ! Define some classes to hold variables associated with different objects
   ! in the simulation. These will be converted to lists in global_variables for speed.
 
   !****************************************************************************
   TYPE Species_Class
 
-     ! Basic information of this particular species. 
+     ! Basic information of this particular species.
      ! Species list will have dimensions (nspecies)
 
      REAL(DP) :: molecular_weight, total_charge
@@ -96,7 +96,7 @@ MODULE Type_Definitions
      ! disp_atom_id : list containing atom ids of ndisp_atoms
      ! disp_atom_ref : list containing reference atoms about which disp_atom_id is moved
      ! f_atom_disp : logical flag that is true if a species contains atoms to be displaced
-     !              
+     !
 
      INTEGER :: ndisp_atoms
      INTEGER :: nmoltotal
@@ -106,12 +106,12 @@ MODULE Type_Definitions
 
      LOGICAL :: fragment
      LOGICAL :: linear
-     ! NR: Adding to have an option not to include 
+     ! NR: Adding to have an option not to include
      ! Coul interaction during biased growth
-     LOGICAL :: L_Coul_CBMC 
+     LOGICAL :: L_Coul_CBMC
      ! N.B. natoms, max_molecules, etc. are in a separate arrays
      ! NR: for insertion style
-     LOGICAL :: lcom 
+     LOGICAL :: lcom
 
   END TYPE Species_Class
   !****************************************************************************
@@ -124,20 +124,20 @@ MODULE Type_Definitions
 
      ! The molecule list will have dimensions (max_molecules,nspecies)
 
-     ! What kind of molecule is this? normal, fractional, fixed, etc. 
+     ! What kind of molecule is this? normal, fractional, fixed, etc.
      ! Note that the following integers will be defined for the type
      ! int_normal = 0
      ! int_fractional = 1
      ! int_fixed = 2
-     INTEGER :: molecule_type 
+     INTEGER :: molecule_type
      INTEGER :: rx_num
-     
+
      ! for open system and multi-box simulations (GEMC, parallel tempering)
      LOGICAL :: live
      LOGICAL :: inside
      INTEGER :: which_box
 
-     ! also include com information for each of the molecules. 
+     ! also include com information for each of the molecules.
      ! com and euler angles refer to the x,y and z com coordinates
      ! and 1, 2 and 3 euler angles of the molecule. The suffix
      ! old denotes old coordinates.
@@ -149,7 +149,7 @@ MODULE Type_Definitions
      ! COM. This is used to speed up energy calculations.
 
      REAL(DP) :: max_dcom, max_dcom_old
-    
+
 
 
   END TYPE Molecule_Class
@@ -160,19 +160,19 @@ MODULE Type_Definitions
   !****************************************************************************
   TYPE Internal_Coord_Class
 
-     ! The internal coordinate list will have dimensions 
+     ! The internal coordinate list will have dimensions
      ! (MAXVAL(nbonds), MAXVAL(max_molecules), MAXVAL(nspecies))
 
      REAL(DP) :: bond_length_angstrom
      REAL(DP) :: bond_angle_degrees, bond_angle_radians
      REAL(DP) :: dihedral_angle_degrees, dihedral_angle_radians
      REAL(DP) :: improper_angle_degrees, improper_angle_radians
-     
+
   END TYPE Internal_Coord_Class
   !****************************************************************************
 
   TYPE Internal_Coord_Class_Old
-     
+
      ! The internal_coord_list_old will have dimension of (MAXVAL(nbonds))
      ! The type is identical to Internal_Coord_Class and is used to store
      ! the old internal coordinates of a molecule during the move.
@@ -181,20 +181,20 @@ MODULE Type_Definitions
      REAL(DP) :: bond_angle_degrees, bond_angle_radians
      REAL(DP) :: dihedral_angle_degrees, dihedral_angle_radians
      REAL(DP) :: improper_angle_degrees, improper_angle_radians
-     
+
   END TYPE Internal_Coord_Class_Old
 
   !****************************************************************************
-  TYPE Atom_Class    
+  TYPE Atom_Class
 
-     ! Information for each atom in system. Defines the location of the atom.  
-     ! The p variables (rxp,rxyp,rzp) denote parent coordinates     
+     ! Information for each atom in system. Defines the location of the atom.
+     ! The p variables (rxp,rxyp,rzp) denote parent coordinates
      ! exists here is used to signify if the particular atom exists yet or not
      ! in the system. For example, if we are growing a molecule, some atoms may
      ! not yet have been placed, and so exist = 'false'.
 
      ! atom_list has dimensions (natoms, max_molecules, nspecies)
-     
+
      REAL(DP) :: rxp, ryp, rzp
      REAL(DP) :: rxp_nls, ryp_nls, rzp_nls  ! The starting positions for the neighbor list
      REAL(DP) :: rxp_old, ryp_old, rzp_old
@@ -208,12 +208,12 @@ MODULE Type_Definitions
   !****************************************************************************
   TYPE Nonbond_Class
 
-     ! Information on non-bonded interactions stored here. The type of vdw interaction 
-     ! associated with a given atom is stored, along with its mass, charge 
+     ! Information on non-bonded interactions stored here. The type of vdw interaction
+     ! associated with a given atom is stored, along with its mass, charge
      ! and vdw parameters.  Store an element and atom name. A global type number
-     ! is assigned to each atom of the same name. 
-     
-     ! We also include here whether this atom is a ring atom 
+     ! is assigned to each atom of the same name.
+
+     ! We also include here whether this atom is a ring atom
 
      ! nonbond list has dimensions (MAXVAL(natoms), nspecies)
 
@@ -271,7 +271,7 @@ MODULE Type_Definitions
 
      ! Describes a standard dihedral: the four atoms are held with atom numbers
      ! defined sequentially (1-2-3-4) along dihedral angle, and parameters for the
-     ! potential are held in an array. 
+     ! potential are held in an array.
 
      INTEGER :: atom1, atom2, atom3, atom4
      REAL(DP), DIMENSION(max_dihedral_params) :: dihedral_param
@@ -288,21 +288,21 @@ MODULE Type_Definitions
 
      ! improper list has dimensions (MAXVAL(nimpropers), nspecies)
 
-     ! Describes an improper dihedral: atom 1 is the central atom, and atoms 2 
+     ! Describes an improper dihedral: atom 1 is the central atom, and atoms 2
      ! through 4 are attached to atom 1, parameters are stored in an array
-     
+
      INTEGER :: atom1, atom2, atom3, atom4
      REAL(DP), DIMENSION(max_improper_params) :: improper_param
      CHARACTER(20) :: improper_potential_type
      INTEGER :: int_improp_type
-     
+
   END TYPE Improper_Class
   !****************************************************************************
 
 
   !****************************************************************************
   TYPE Bond_Atoms_To_Place_Class
-     
+
      ! bond_atoms_to_place_list has dimensions of (MAXVAL(nbonds),nspecies)
      ! it is designed to hold the number of atoms and the identity of these
      ! atoms to be regrown due to a bond length move.
@@ -311,10 +311,10 @@ MODULE Type_Definitions
      INTEGER :: atom2_natoms
      INTEGER, DIMENSION(:), ALLOCATABLE :: atom1
      INTEGER, DIMENSION(:), ALLOCATABLE :: atom2
-     
+
   END TYPE Bond_Atoms_To_Place_Class
-  
-  
+
+
 
   !****************************************************************************
   TYPE Angle_Atoms_To_Place_Class
@@ -365,7 +365,7 @@ MODULE Type_Definitions
      INTEGER :: nbonds
      INTEGER, DIMENSION(:), ALLOCATABLE :: atom
      INTEGER, DIMENSION(:), ALLOCATABLE :: bond_num
-     
+
   END TYPE Bond_Participation_Class
   !****************************************************************************
 
@@ -402,11 +402,11 @@ MODULE Type_Definitions
  TYPE Box_Class
 
   ! Define a class that hold information on a box. length hold the box
-  ! cell matrix, and length_inv its inverse in A and A^(-1). 
+  ! cell matrix, and length_inv its inverse in A and A^(-1).
   ! basis_length is hte computed basis vector lengths
-  ! cos_angle and angle are the vectors cos(alpha), cos(beta) and cos(gamma) 
+  ! cos_angle and angle are the vectors cos(alpha), cos(beta) and cos(gamma)
   ! and alpha, beta, gamma.
-  ! Face_distance is the distance in A between the faces of the box. 
+  ! Face_distance is the distance in A between the faces of the box.
   ! box_list has dimensions of the number of boxes.
 
     CHARACTER(20) :: box_shape
@@ -429,13 +429,13 @@ MODULE Type_Definitions
     ! Will have dimension of (MAXVAL(nangles),nspecies)
     ! this class is used to hold the probabilty of observing a bond angle
     ! region for a given bond angle. There are three elements of this
-    ! class. 
+    ! class.
     ! prob : holds the probability of a given region. It is a vector of length
     !        nregions
     ! theta : holds the midpoint angle of a given region. It is a vector of
     !         length nregions
     ! nregions : number of regions for which there is a nonzero probability
-    
+
     INTEGER :: nregions
     REAL(DP), DIMENSION(nregions) :: prob
     REAL(DP), DIMENSION(nregions) :: theta
@@ -447,9 +447,9 @@ MODULE Type_Definitions
 
     ! Will have dimentions of (MAXVAL(nbonds),nspecies)
     ! The class is used to store the probability of observing a bond length region
-    ! for a given bond length. There are three elements of this class 
+    ! for a given bond length. There are three elements of this class
     !
-    ! prob : holds the probability of a given region. 
+    ! prob : holds the probability of a given region.
     ! length : bond length corresponding to the mid point of a region
     ! nregions : number of regions for which there is a nonzero probability
     ! delta_r : resolution of the probability distribution
@@ -468,7 +468,7 @@ MODULE Type_Definitions
 
     ! This class will have dimensions of nbr_boxes
     ! It is defined to hold various energies of the system.
-    ! 
+    !
     ! total             : total energy of the system
     ! intra             : intramolecular interactions
     !   bond            : contribution from bonds
@@ -494,7 +494,7 @@ MODULE Type_Definitions
  TYPE MC_Moves_Class
     ! This class holds the information about number of trial MC moves attempted for
     ! each of the species in every box. The type has dimensions of (nspecies,nbr_boxes)
-    
+
     ! displacement : COM translation move
     ! rotation : rotation around COM
     ! angle : angle distortion
@@ -505,8 +505,8 @@ MODULE Type_Definitions
     ! disp_atom : atom displacement move
     ! cpcalc : calculation of chemical potential
     ! cluster : move a cluster of molecules
-    
-    INTEGER :: displacement, rotation, angle, bond, dihedral, insertion, deletion, cluster
+
+    INTEGER :: displacement, rotation, angle, bond, dihedral, insertion, deletion, switch, cluster
     INTEGER :: disp_atom, cpcalc, displacement_e, rotation_e
 
  END TYPE MC_Moves_Class
@@ -523,7 +523,7 @@ MODULE Type_Definitions
     ! anchor : atom id with respect to which atoms in the fragment are located.
     ! type : fragment type (1, 2 etc)
     ! nconfig : total number of conformations in each fragment
-    ! Total number of anchors and id of the anchors are stored in 'nanchors' 
+    ! Total number of anchors and id of the anchors are stored in 'nanchors'
     ! and 'anchor' array
     ! prob_ins : probability of inserting this fragment first
     ! cum_prob_ins : cumulative probablility of inserting this fragment first
