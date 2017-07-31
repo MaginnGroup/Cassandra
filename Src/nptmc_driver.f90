@@ -22,8 +22,8 @@
 !********************************************************************************
 SUBROUTINE NPTMC_Driver
   !******************************************************************************
-  ! The subroutine performs NPT MC moves. 
-  ! 
+  ! The subroutine performs NPT MC moves.
+  !
   ! CALLED BY
   !
   !        main
@@ -71,7 +71,7 @@ SUBROUTINE NPTMC_Driver
   LOGICAL :: write_flag, complete
 
   TYPE(Energy_Class) :: energy_old
- 
+
   ! The total number of trial move array may not have been set if this
   ! is a fresh run i.e. start_type == make_config. Otherwise this array
   ! is set in read_checkpoint subroutine in the module Read_Write_Checkpoint
@@ -101,6 +101,7 @@ SUBROUTINE NPTMC_Driver
      nsuccess(:,ibox)%angle = 0
      nsuccess(:,ibox)%insertion = 0
      nsuccess(:,ibox)%deletion = 0
+     nsuccess(:,ibox)%switch = 0
      nsuccess(:,ibox)%disp_atom = 0
      ntrials(:,ibox)%displacement = 0
      ntrials(:,ibox)%rotation = 0
@@ -108,6 +109,7 @@ SUBROUTINE NPTMC_Driver
      ntrials(:,ibox)%angle = 0
      ntrials(:,ibox)%insertion = 0
      ntrials(:,ibox)%deletion = 0
+     ntrials(:,ibox)%switch = 0
      ntrials(:,ibox)%disp_atom = 0
      ntrials(:,ibox)%cpcalc = 0
      tot_trials(ibox) = 0
@@ -136,11 +138,11 @@ SUBROUTINE NPTMC_Driver
      !*****************************************************************************
      ! select a move from Golden Sampling scheme
      !*****************************************************************************
-  
+
      rand_no = rranf()
 
      IF (rand_no <= cut_trans) THEN
- 
+
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
         ELSE
@@ -148,7 +150,7 @@ SUBROUTINE NPTMC_Driver
         END IF
 
         CALL Translate
-        
+
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
         ELSE
@@ -248,7 +250,7 @@ SUBROUTINE NPTMC_Driver
         movetime(imove_regrowth) = movetime(imove_regrowth) + time_e - time_s
 
      ELSE IF (rand_no <= cut_atom_displacement) THEN
-        
+
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
         ELSE
@@ -279,7 +281,7 @@ SUBROUTINE NPTMC_Driver
 !$      now_time = omp_get_wtime()
      END IF
 
-     now_time = ((now_time - time_start) / 60.0_DP) 
+     now_time = ((now_time - time_start) / 60.0_DP)
      IF(.NOT. timed_run) THEN
         IF(i_mcstep == n_mcsteps) complete = .TRUE.
      ELSE
@@ -322,7 +324,7 @@ SUBROUTINE NPTMC_Driver
            DO ibox = 1, nbr_boxes
               CALL Accumulate(ibox)
            END DO
-              
+
            ! Check if write block avgs this step
            write_flag = .FALSE.
            IF(.NOT. timed_run) THEN
@@ -341,7 +343,7 @@ SUBROUTINE NPTMC_Driver
                  CALL Write_Properties(ibox)
               END IF
            END DO
-              
+
         END IF
      END IF
 
@@ -368,6 +370,6 @@ SUBROUTINE NPTMC_Driver
 
   END DO
 
- 
+
 END SUBROUTINE NPTMC_Driver
-  
+
