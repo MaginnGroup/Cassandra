@@ -34,6 +34,7 @@ SUBROUTINE IDENTITY_EXCHANGE
   USE IO_Utilities
   USE Fragment_Growth
   USE Pair_Nrg_Routines
+  USE Type_Definitions
 
   IMPLICIT NONE
 
@@ -49,21 +50,21 @@ SUBROUTINE IDENTITY_EXCHANGE
   REAL(DP) :: dE, E_vdw, E_qq, E_vdw_move, E_qq_move, E_reciprocal_move
   REAL(DP) :: E_qq_dum, E_vdw_dum
   INTEGER :: dum1, dum2, dum3
-  REAL(DP) :: E_reciprocal_move
   LOGICAL :: inter_overlap_i, inter_overlap_j
+  REAL(DP), DIMENSION(:), ALLOCATABLE :: box_nrg_vdw_temp, box_nrg_qq_temp
 
   !variables for peforming the switch
   REAL(DP) :: xcom_i, ycom_i, zcom_i
-  REAL(DP) :: dx_xcom_i, dy_ycom_i, dz_zcom_i
-  REAL(DP) :: dx_xcom_j, dy_ycom_j, dz_zcom_j
+  REAL(DP), DIMENSION(:), ALLOCATABLE :: dx_xcom_i, dy_ycom_i, dz_zcom_i
+  REAL(DP), DIMENSION(:), ALLOCATABLE :: dx_xcom_j, dy_ycom_j, dz_zcom_j
 
   ! Initialize variables from insert
   INTEGER  :: nmols_tot ! number of molecules in the system
   INTEGER  :: nmols_box(nbr_boxes)
 
   !acceptance variables
-  REAL(DP) :: ln_pacc, success_ratio
-  LOGICAL :: accept, accept_or_reject
+  REAL(DP) :: ln_pacc, success_ratio_i, success_ratio_j
+  LOGICAL :: accept_or_reject
 
  ! Variables added for l_pair_nrg and reciprocal k vector storage
   REAL(DP), ALLOCATABLE :: cos_mol_old_i(:), sin_mol_old_i(:), cos_mol_old_j(:), sin_mol_old_j(:)
@@ -151,7 +152,7 @@ SUBROUTINE IDENTITY_EXCHANGE
   js = INT(rranf() * (nspecies - 1)) + 1
 
   !avoid choosing same species as before
-  IF (js >= is)
+  IF (js >= is) THEN
     js = js + 1
   END IF
 
@@ -177,14 +178,17 @@ SUBROUTINE IDENTITY_EXCHANGE
   ! be no change in intramolecular energies.
 
   IF (l_pair_nrg) THEN
+    ALLOCATE(box_nrg_vdw_temp(2), box_nrg_qq_temp(2))
     CALL Store_Molecule_Pair_Interaction_Arrays(dum1, dum2, dum3, E_vdw_dum, E_qq_dum, 2, &
-         (/i_alive, j_alive/), (/is, js/), (/box, box/), E_vdw, E_qq)
+         (/i_alive, j_alive/), (/is, js/), (/box, box/), box_nrg_vdw_temp, box_nrg_qq_temp)
+    E_vdw = box_nrg_vdw_temp(1)
+    E_qq = box_nrg_vdw_temp(1)
+    DEALLOCATE(box_nrg_vdw_temp, box_nrg_qq_temp)
   ELSE
     CALL Compute_Molecule_Nonbond_Inter_Energy(i_alive,is,E_vdw,E_qq,inter_overlap_i)
-    if (inter_overlap_i)
-        EXIT
+    IF (.NOT. inter_overlap_i) THEN
+       CALL Compute_Molecule_Nonbond_Inter_Energy(j_alive,js,E_vdw,E_qq,inter_overlap_j)
     END IF
-    CALL Compute_Molecule_Nonbond_Inter_Energy(j_alive,js,E_vdw,E_qq,inter_overlap_j)
   END IF
 
   IF (inter_overlap_i .OR. inter_overlap_j)  THEN
@@ -198,7 +202,7 @@ SUBROUTINE IDENTITY_EXCHANGE
         err_msg(3) = "Try increasing Rcutoff_Low, increasing the box size, or "
         err_msg(4) = "decreasing the initial number of molecules"
      END IF
-     CALL Clean_Abort(err_msg, "Translate")
+     CALL Clean_Abort(err_msg, "Identity Switch")
   END IF
 
   CALL Save_Old_Cartesian_Coordinates(i_alive,is)
@@ -210,6 +214,8 @@ SUBROUTINE IDENTITY_EXCHANGE
   ycom_i = molecule_list(i_alive,is)%ycom
   zcom_i = molecule_list(i_alive,is)%zcom
 
+  ALLOCATE(dx_xcom_i(natoms(is)), dy_ycom_i(natoms(is)), dz_zcom_i(natoms(is)))
+  ALLOCATE(dx_xcom_j(natoms(js)), dy_ycom_j(natoms(js)), dz_zcom_j(natoms(js)))
   dx_xcom_i = xcom_i - atom_list(:,i_alive,is)%rxp
   dy_ycom_i = ycom_i - atom_list(:,i_alive,is)%ryp
   dz_zcom_i = zcom_i - atom_list(:,i_alive,is)%rzp
@@ -222,9 +228,9 @@ SUBROUTINE IDENTITY_EXCHANGE
   molecule_list(i_alive,is)%xcom = molecule_list(j_alive,js)%xcom
   molecule_list(i_alive,is)%ycom = molecule_list(j_alive,js)%ycom
   molecule_list(i_alive,is)%zcom = molecule_list(j_alive,js)%zcom
-  atom_list(:,i_alive,is)%rxp = atom_list(:,i_alive,is)%xcom - dx_xcom_i
-  atom_list(:,i_alive,is)%ryp = atom_list(:,i_alive,is)%ycom - dy_ycom_i
-  atom_list(:,i_alive,is)%rzp = atom_list(:,i_alive,is)%zcom - dz_zcom_i
+  atom_list(:,i_alive,is)%rxp = molecule_list(i_alive,is)%xcom - dx_xcom_i
+  atom_list(:,i_alive,is)%ryp = molecule_list(i_alive,is)%ycom - dy_ycom_i
+  atom_list(:,i_alive,is)%rzp = molecule_list(i_alive,is)%zcom - dz_zcom_i
 
   !Switch second molecule
   molecule_list(j_alive,js)%xcom = xcom_i
@@ -233,6 +239,8 @@ SUBROUTINE IDENTITY_EXCHANGE
   atom_list(:,i_alive,is)%rxp = xcom_i - dx_xcom_j
   atom_list(:,i_alive,is)%ryp = ycom_i - dy_ycom_j
   atom_list(:,i_alive,is)%rzp = zcom_i - dz_zcom_j
+  DEALLOCATE(dx_xcom_i, dy_ycom_i, dz_zcom_i)
+  DEALLOCATE(dx_xcom_j, dy_ycom_j, dz_zcom_j)
 
   !****************************************************************************!
   !*****************************************************************************
@@ -247,9 +255,9 @@ SUBROUTINE IDENTITY_EXCHANGE
   CALL Compute_Molecule_Nonbond_Inter_Energy(i_alive,is,E_vdw_move,E_qq_move,inter_overlap_i)
   CALL Compute_Molecule_Nonbond_Inter_Energy(j_alive,js,E_vdw_move,E_qq_move,inter_overlap_j)
 
-  IF (inter_overlap_i .OR. inter_overlap_j)
+  IF (inter_overlap_i .OR. inter_overlap_j) THEN
     CALL Revert_Old_Cartesian_Coordinates(i_alive, is)
-    CALL Revert_Old_Cartesian_Coordiantes(j_alive, js)
+    CALL Revert_Old_Cartesian_Coordinates(j_alive, js)
 
     IF (l_pair_nrg) THEN
        CALL Reset_Molecule_Pair_Interaction_Arrays(i_alive,is,box)
@@ -263,11 +271,11 @@ SUBROUTINE IDENTITY_EXCHANGE
   ELSE !no overlap
      dE = 0.0_DP
 
-     IF ((int_charge_sum_style(box) == charge_ewald) && (has_charge(is) .OR. has_charge(js))) THEN
+     IF ((int_charge_sum_style(box) == charge_ewald) .AND. (has_charge(is) .OR. has_charge(js))) THEN
         !TODO:Eventually rewrite Update_System_Ewald_Reciprocal_Energy!
 
         !Update_System_Ewald_Reciprocal_Energy will do this, but it might override it!
-        ALLOCATE(cos_sum_old_idsw, sin_sum_old_idsw)
+        ALLOCATE(cos_sum_old_idsw(nvecs(box),nbr_boxes), sin_sum_old_idsw(nvecs(box),nbr_boxes))
         !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
         cos_sum_old_idsw(1:nvecs(box),box) = cos_sum(1:nvecs(box),box)
         sin_sum_old_idsw(1:nvecs(box),box) = sin_sum(1:nvecs(box),box)
@@ -339,7 +347,7 @@ SUBROUTINE IDENTITY_EXCHANGE
         CALL Revert_Old_Cartesian_Coordinates(i_alive,is)
         CALL Revert_Old_Cartesian_Coordinates(j_alive,js)
 
-        IF ((int_charge_sum_style(box) == charge_ewald) && (has_charge(is) .OR. has_charge(js))) THEN
+        IF ((int_charge_sum_style(box) == charge_ewald) .AND. (has_charge(is) .OR. has_charge(js))) THEN
            !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
            cos_sum(1:nvecs(box), box) = cos_sum_old_idsw(1:nvecs(box),box)
            sin_sum(1:nvecs(box), box) = sin_sum_old_idsw(1:nvecs(box),box)
