@@ -27,7 +27,6 @@ SUBROUTINE IDENTITY_EXCHANGE
   !
   !*****************************************************************************
 
-  !*Unchanged!
   USE Global_Variables
   USE Random_Generators
   USE Simulation_Properties
@@ -35,73 +34,53 @@ SUBROUTINE IDENTITY_EXCHANGE
   USE IO_Utilities
   USE Fragment_Growth
   USE Pair_Nrg_Routines
-  !*/Unchanged!
 
   IMPLICIT NONE
 
-  INTEGER :: box_in, box_out, i, k, i_type
-  !added
-  INTEGER :: box
-  INTEGER :: i_alive, j_alive
-  REAL(DP), DIMENSION(:,:), ALLOCATABLE, TARGET :: cos_sum_old_idsw, sin_sum_old_idsw
-  !end added
+  !variables for selecting the box, and individual molecules
+  INTEGER  :: box
+  INTEGER  :: is, js            ! species index
+  INTEGER  :: im, jm            ! molecule index
+  INTEGER  :: i_alive, j_alive  ! molecule locate
+  REAL(DP) :: x_box(nbr_boxes)
+  REAL(DP) :: randno
 
-  INTEGER :: is, ibox, im_in, im_out, alive, which_anchor
-  INTEGER :: rand_igas, locate_in
-  INTEGER :: nmols_tot, nmols_box(nbr_boxes)
-  REAL(DP) :: x_box(nbr_boxes), x_is(nspecies)
+  !variables for calculating change in energy from move
+  REAL(DP) :: dE, E_vdw, E_qq, E_vdw_move, E_qq_move, E_reciprocal_move
+  REAL(DP) :: E_qq_dum, E_vdw_dum
+  INTEGER :: dum1, dum2, dum3
+  REAL(DP) :: E_reciprocal_move
+  LOGICAL :: inter_overlap_i, inter_overlap_j
 
-  !new
-  INTEGER :: js
-  !end new
+  !variables for peforming the switch
+  REAL(DP) :: xcom_i, ycom_i, zcom_i
+  REAL(DP) :: dx_xcom_i, dy_ycom_i, dz_zcom_i
+  REAL(DP) :: dx_xcom_j, dy_ycom_j, dz_zcom_j
 
-  INTEGER, ALLOCATABLE :: frag_order(:)
+  ! Initialize variables from insert
+  INTEGER  :: nmols_tot ! number of molecules in the system
+  INTEGER  :: nmols_box(nbr_boxes)
 
-  REAL(DP), ALLOCATABLE :: dx(:), dy(:), dz(:)
-
-  REAL(DP) :: dE_out, dE_out_pacc
-  REAL(DP) :: E_bond_out, E_angle_out, E_dihed_out, E_improper_out
-  REAL(DP) :: E_intra_vdw_out, E_intra_qq_out, E_periodic_qq
-  REAL(DP) :: E_inter_vdw_out, E_inter_qq_out
-  REAL(DP) :: E_reciprocal_out, E_self_out, E_lrc_out
-  REAL(DP) :: dE_in, dE_in_pacc
-  REAL(DP) :: E_bond_in, E_angle_in, E_dihed_in, E_improper_in
-  REAL(DP) :: E_intra_vdw_in, E_intra_qq_in
-  REAL(DP) :: E_inter_vdw_in, E_inter_qq_in
-  REAL(DP) :: E_reciprocal_in, E_self_in, E_lrc_in
-
-  REAL(DP) :: potw, CP_energy
-  REAL(DP) :: ln_pseq, ln_pfor, ln_prev, P_forward, P_reverse, ln_pacc
-  REAL(DP) :: lambda_for_build
-  LOGICAL :: inter_overlap, accept_or_reject, cbmc_overlap
-  LOGICAL :: intra_overlap
- ! ring biasing variables
-
-  REAL(DP) :: nrg_ring_frag_in, nrg_ring_frag_out
-
-  TYPE(atom_class), ALLOCATABLE :: new_atom_list(:)
-  TYPE(molecule_class) :: new_molecule_list
+  !acceptance variables
+  REAL(DP) :: ln_pacc, success_ratio
+  LOGICAL :: accept, accept_or_reject
 
  ! Variables added for l_pair_nrg and reciprocal k vector storage
-
+  REAL(DP), ALLOCATABLE :: cos_mol_old_i(:), sin_mol_old_i(:), cos_mol_old_j(:), sin_mol_old_j(:)
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE, TARGET :: cos_sum_old_idsw, sin_sum_old_idsw
   INTEGER :: position_i, position_j
 
-  REAL(DP), ALLOCATABLE :: cos_mol_old_i(:), sin_mol_old_i(:), cos_mol_old_j(:), sin_mol_old_j(:)
-  REAL(DP), ALLOCATABLE :: cos_mol_new_i(:), sin_mol_new_i(:), cos_mol_new_i(:), sin_mol_new_j(:)
-  REAL(DP) :: time0, time1, randno
+  E_vdw_move = 0.0_DP
+  E_qq_move = 0.0_DP
+  E_vdw = 0.0_DP
+  E_qq = 0.0_DP
+  E_reciprocal_move = 0.0_DP
+  inter_overlap_i = .FALSE.
+  inter_overlap_j = .FALSE.
+  accept = .FALSE.
+  box = 1
 
-  LOGICAL :: l_charge_in, l_charge_out
 
-  potw = 1.0_DP
-  inter_overlap = .false.
-  cbmc_overlap = .false.
-  accept = .false.
-
-  ln_pseq = 0.0_DP
-  ln_pfor = 0.0_DP
-  ln_prev = 0.0_DP
-  P_forward = 1.0_DP
-  P_reverse = 1.0_DP
 
   !*****************************************************************************
   ! Step 1) Select a box
@@ -120,9 +99,8 @@ SUBROUTINE IDENTITY_EXCHANGE
     DO box = 1, nbr_boxes
        IF ( randno <= x_box(box)) EXIT
     END DO
-  ELSE
-    box = 1
   END IF
+  !box defaults to 1 otherwise
 
   !*****************************************************************************
   ! Step 2) Select a species 'is':
@@ -179,7 +157,6 @@ SUBROUTINE IDENTITY_EXCHANGE
 
   !*****************************************************************************
   ! Step 5) Select a molecule 'alive' from species 'js' with uniform probability
-        !TODO: FIX cos_sum restoration
   !*****************************************************************************
   jm = INT(rranf() * nmols(js,box)) + 1
 
@@ -193,9 +170,6 @@ SUBROUTINE IDENTITY_EXCHANGE
   tot_trials(box) = tot_trials(box) + 1
   ntrials(is,box)%switch = ntrials(is,box)%switch + 1
   ntrials(js,box)%switch = ntrials(js,box)%switch + 1
-
-
-  !TODO: UPDATE OTHER TRIALS TOO
 
   ! obtain the energy of the molecule before the move.  Note that due to
   ! this move, the interatomic energies such as vdw and electrostatics will
@@ -216,11 +190,11 @@ SUBROUTINE IDENTITY_EXCHANGE
   IF (inter_overlap_i .OR. inter_overlap_j)  THEN
      err_msg = ""
 
-     err_msg(1) = "Attempted to move molecule " // TRIM(Int_To_String(i_alive)) // &
-                  " of species " // TRIM(Int_To_String(is)) // "NOT RIGHT ABOUT SPECIS RIGHT NOW"
+     err_msg(1) = "Attempted to move molecule " // TRIM(Int_To_String(im)) // &
+                  " of species " // TRIM(Int_To_String(is)) // "NOT RIGHT ABOUT SPECIES RIGHT NOW"
      IF (nbr_boxes > 1) err_msg(1) = err_msg(1) // " in box " // TRIM(Int_To_String(box))
      err_msg(2) = "but the molecule energy is too high"
-     IF (start_type(ibox) == "make_config" ) THEN
+     IF (start_type(box) == "make_config" ) THEN
         err_msg(3) = "Try increasing Rcutoff_Low, increasing the box size, or "
         err_msg(4) = "decreasing the initial number of molecules"
      END IF
@@ -283,16 +257,16 @@ SUBROUTINE IDENTITY_EXCHANGE
     END IF
 
     IF (verbose_log) THEN
-      WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,A9)') &
+      WRITE(logunit,'(X,I9,X,A16,X,I5,X,I3,X,I3,X,L8,X,9X,X,A9)') &
             i_mcstep, 'identity switch' , i_alive, is, box, accept, 'overlap'
     END IF
   ELSE !no overlap
      dE = 0.0_DP
 
      IF ((int_charge_sum_style(box) == charge_ewald) && (has_charge(is) .OR. has_charge(js))) THEN
-        !Update_System_Ewald_Reciprocal_Energy will do this, but it might override it!
         !TODO:Eventually rewrite Update_System_Ewald_Reciprocal_Energy!
 
+        !Update_System_Ewald_Reciprocal_Energy will do this, but it might override it!
         ALLOCATE(cos_sum_old_idsw, sin_sum_old_idsw)
         !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
         cos_sum_old_idsw(1:nvecs(box),box) = cos_sum(1:nvecs(box),box)
@@ -393,13 +367,13 @@ SUBROUTINE IDENTITY_EXCHANGE
      ENDIF
 
      IF (verbose_log) THEN
-       WRITE(logunit,'(X,I15,X,A10,X,X,I5,X,I3,X,I3,X,L8,X,9X,X,F9.3)') &
+       WRITE(logunit,'(X,I9,X,A16,X,X,I5,X,I3,X,I3,X,L8,X,9X,X,F9.3)') &
              i_mcstep, 'identity switch' , i_alive, is, js, box, accept, ln_pacc
      END IF
   END IF
 
   !removed logging stuff, take another look!
-  IF ( MOD(ntrials(is,ibox)%switch,nupdate) == 0 ) THEN
+  IF ( MOD(ntrials(is,box)%switch,nupdate) == 0 ) THEN
      IF ( int_run_type == run_equil ) THEN
         success_ratio_i = REAL(nequil_success(is,box)%displacement,DP)/REAL(nupdate,DP)
         success_ratio_j = REAL(nequil_success(js,box)%displacement,DP)/REAL(nupdate,DP)
@@ -408,10 +382,10 @@ SUBROUTINE IDENTITY_EXCHANGE
         success_ratio_j = REAL(nsuccess(js,box)%switch,DP)/REAL(ntrials(js,box)%switch,DP)
      END IF
 
-     WRITE(logunit,'(X,I15,X,A10,X,5X,X,I3,X,I3,X,F8.5)',ADVANCE='NO') &
+     WRITE(logunit,'(X,I9,X,A16,X,5X,X,I3,X,I3,X,F8.5)',ADVANCE='NO') &
            i_mcstep, 'identity switch', is, box, success_ratio_i
 
-     WRITE(logunit,'(X,I15,X,A10,X,5X,X,I3,X,I3,X,F8.5)',ADVANCE='NO') &
+     WRITE(logunit,'(X,I9,X,A16,X,5X,X,I3,X,I3,X,F8.5)',ADVANCE='NO') &
            i_mcstep, 'identity switch', js, box, success_ratio_j
      !TODO: No need to change displacement like translation, but do we need to change rcut?
      END IF
