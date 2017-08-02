@@ -22,8 +22,8 @@
 SUBROUTINE GCMC_Driver
   !****************************************************************************
   !
-  ! The subroutine performs GEMC moves. 
-  ! 
+  ! The subroutine performs GEMC moves.
+  !
   ! Called by
   !
   !   main.f90
@@ -43,7 +43,7 @@ SUBROUTINE GCMC_Driver
 
 !  !$ include 'omp_lib.h'
 
-  INTEGER :: i, ibox, is 
+  INTEGER :: i, ibox, is
 
   REAL(DP) :: rand_no
   REAL(DP) :: time_start, now_time, thermo_time, coord_time, block_avg_time
@@ -86,9 +86,9 @@ SUBROUTINE GCMC_Driver
      !*****************************************************************************
      ! select a move from Golden Sampling scheme
      !*****************************************************************************
-  
+
      rand_no = rranf()
- 
+
      IF (rand_no <= cut_trans) THEN
 
         IF(.NOT. openmp_flag) THEN
@@ -108,7 +108,7 @@ SUBROUTINE GCMC_Driver
         movetime(imove_trans) = movetime(imove_trans) + time_e - time_s
 
      ELSE IF ( rand_no < cut_rot) THEN
- 
+
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
         ELSE
@@ -126,7 +126,7 @@ SUBROUTINE GCMC_Driver
         movetime(imove_rot) = movetime(imove_rot) + time_e - time_s
 
      ELSE IF (rand_no < cut_torsion) THEN
- 
+
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
         ELSE
@@ -144,7 +144,7 @@ SUBROUTINE GCMC_Driver
         movetime(imove_dihedral) = movetime(imove_dihedral) + time_e - time_s
 
      ELSE IF (rand_no < cut_angle) THEN
- 
+
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
         ELSE
@@ -162,13 +162,13 @@ SUBROUTINE GCMC_Driver
         movetime(imove_angle) = movetime(imove_angle) + time_e - time_s
 
     ELSE IF (rand_no < cut_insertion) THEN
- 
+
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
         ELSE
 !$        time_s = omp_get_wtime()
         END IF
-      
+
         CALL Insertion
 
         IF(.NOT. openmp_flag) THEN
@@ -180,7 +180,7 @@ SUBROUTINE GCMC_Driver
         movetime(imove_insert) = movetime(imove_insert) + time_e - time_s
 
      ELSE IF (rand_no < cut_deletion) THEN
- 
+
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
         ELSE
@@ -198,7 +198,7 @@ SUBROUTINE GCMC_Driver
         movetime(imove_delete) = movetime(imove_delete) + time_e - time_s
 
      ELSE IF ( rand_no < cut_regrowth) THEN
-        
+
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
         ELSE
@@ -241,7 +241,7 @@ SUBROUTINE GCMC_Driver
 !$      now_time = omp_get_wtime()
      END IF
 
-     now_time = ((now_time - time_start) / 60.0_DP) 
+     now_time = ((now_time - time_start) / 60.0_DP)
      IF(.NOT. timed_run) THEN
         IF(i_mcstep == n_mcsteps) complete = .TRUE.
      ELSE
@@ -284,7 +284,7 @@ SUBROUTINE GCMC_Driver
            DO ibox = 1, nbr_boxes
               CALL Accumulate(ibox)
            END DO
-              
+
            ! Check if write block avgs this step
            write_flag = .FALSE.
            IF(.NOT. timed_run) THEN
@@ -303,7 +303,7 @@ SUBROUTINE GCMC_Driver
                  CALL Write_Properties(ibox)
               END IF
            END DO
-              
+
         END IF
      END IF
 
