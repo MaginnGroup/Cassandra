@@ -19,7 +19,7 @@
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*******************************************************************************
 
-SUBROUTINE IDENTITY_EXCHANGE
+SUBROUTINE Identity_Switch
 
   !*****************************************************************************
   !
@@ -82,6 +82,7 @@ SUBROUTINE IDENTITY_EXCHANGE
   box = 1
 
 
+  !write (*, *) "Made it into identity switch! Exiting"
 
   !*****************************************************************************
   ! Step 1) Select a box
@@ -102,6 +103,10 @@ SUBROUTINE IDENTITY_EXCHANGE
     END DO
   END IF
   !box defaults to 1 otherwise
+
+  !write (*, *) "Step 1:"
+  !write (*, *) "Selected box"
+  !write (*, *) box
 
   !*****************************************************************************
   ! Step 2) Select a species 'is':
@@ -126,6 +131,10 @@ SUBROUTINE IDENTITY_EXCHANGE
   !check this
   is = INT(rranf() * nspecies) + 1
 
+  !write (*, *) "Step 2:"
+  !write (*, *) "Selected species:"
+  !write (*, *) is
+
 
   !TODO: ONLY ERROR OUT IF SWAP ISN'T POSSIBLE
   ! check to make sure the selected species is swappable
@@ -144,6 +153,11 @@ SUBROUTINE IDENTITY_EXCHANGE
   ! Obtain the LOCATE of this molecule
   i_alive = locate(im, is, box)
 
+  !write (*, *) "Step 3:"
+  !write (*, *) "Selected atom:"
+  !write (*, *) im
+  !write (*, *) i_alive
+
   !*****************************************************************************
   ! Step 4) Select a species 'js':
   !      -> Right now just done randomly!
@@ -156,12 +170,21 @@ SUBROUTINE IDENTITY_EXCHANGE
     js = js + 1
   END IF
 
+  !write (*, *) "Step 4:"
+  !write (*, *) "Selected species:"
+  !write (*, *) js
+
   !*****************************************************************************
   ! Step 5) Select a molecule 'alive' from species 'js' with uniform probability
   !*****************************************************************************
   jm = INT(rranf() * nmols(js,box)) + 1
 
   j_alive = locate(jm, js, box)
+
+  !write (*, *) "Step 4:"
+  !write (*, *) "Selected atom:"
+  !write (*, *) jm
+  !write (*, *) j_alive
 
   !*****************************************************************************
   ! Step 6) Calculate the change in box_in's potential energy from inserting
@@ -171,6 +194,8 @@ SUBROUTINE IDENTITY_EXCHANGE
   tot_trials(box) = tot_trials(box) + 1
   ntrials(is,box)%switch = ntrials(is,box)%switch + 1
   ntrials(js,box)%switch = ntrials(js,box)%switch + 1
+
+  !write (*, *) "Marker 1"
 
   ! obtain the energy of the molecule before the move.  Note that due to
   ! this move, the interatomic energies such as vdw and electrostatics will
@@ -191,6 +216,8 @@ SUBROUTINE IDENTITY_EXCHANGE
     END IF
   END IF
 
+  !write (*, *) "Marker 2"
+
   IF (inter_overlap_i .OR. inter_overlap_j)  THEN
      err_msg = ""
 
@@ -205,11 +232,28 @@ SUBROUTINE IDENTITY_EXCHANGE
      CALL Clean_Abort(err_msg, "Identity Switch")
   END IF
 
+  !write (*, *) "Marker 3"
+
   CALL Save_Old_Cartesian_Coordinates(i_alive,is)
   CALL Save_Old_Cartesian_Coordinates(j_alive,js)
 
+
   !******************************Actual*Switch*********************************!
   !Save COMs and COM to atom differences
+  !write (*, *) "!************************!"
+  !write (*, *) "Molecule i_alive COM (x, y, z):"
+  !write (*, "(F30.25, F30.25, F30.25)") molecule_list(i_alive,is)%xcom, molecule_list(i_alive,is)%ycom, molecule_list(i_alive,is)%zcom
+  !write (*, *) "Molecule i_alive Atom 1 coords (x,y,z):"
+  !write (*, "(F30.25, F30.25, F30.25)") atom_list(1, i_alive,is)%rxp, atom_list(1, i_alive,is)%ryp, atom_list(1, i_alive,is)%rzp
+
+  !write (*, *) "Molecule j_alive COM (x, y, z):"
+  !write (*, "(F30.25, F30.25, F30.25)") molecule_list(j_alive,js)%xcom, molecule_list(j_alive,js)%ycom, molecule_list(j_alive,js)%zcom
+  !write (*, *) "Molecule j_alive Atom 1 coords (x,y,z):"
+  !write (*, "(F30.25, F30.25, F30.25)") atom_list(1, j_alive,js)%rxp, atom_list(1, j_alive,js)%ryp, atom_list(1, j_alive,js)%rzp
+
+  !write (*, *) molecule_list(i_alive, is)%ycom
+  !write (*, "(F30.25)") molecule_list(i_alive, is)%ycom
+
   xcom_i = molecule_list(i_alive,is)%xcom
   ycom_i = molecule_list(i_alive,is)%ycom
   zcom_i = molecule_list(i_alive,is)%zcom
@@ -228,6 +272,11 @@ SUBROUTINE IDENTITY_EXCHANGE
   molecule_list(i_alive,is)%xcom = molecule_list(j_alive,js)%xcom
   molecule_list(i_alive,is)%ycom = molecule_list(j_alive,js)%ycom
   molecule_list(i_alive,is)%zcom = molecule_list(j_alive,js)%zcom
+  !write (*, *) "About to do atom_list for first molecule"
+  !write (*, *) "First molecule_list xcoms"
+  !write (*, "(F30.25, F30.25, F30.25)") molecule_list(i_alive,is)%xcom, molecule_list(i_alive,is)%ycom, molecule_list(i_alive,is)%zcom
+  !write (*, *) "Now for dx_xcom_is"
+  !write (*, "(F30.25, F30.25, F30.25)") dx_xcom_i(1), dy_ycom_i(1), dz_zcom_i(1)
   atom_list(:,i_alive,is)%rxp = molecule_list(i_alive,is)%xcom - dx_xcom_i
   atom_list(:,i_alive,is)%ryp = molecule_list(i_alive,is)%ycom - dy_ycom_i
   atom_list(:,i_alive,is)%rzp = molecule_list(i_alive,is)%zcom - dz_zcom_i
@@ -236,12 +285,26 @@ SUBROUTINE IDENTITY_EXCHANGE
   molecule_list(j_alive,js)%xcom = xcom_i
   molecule_list(j_alive,js)%ycom = ycom_i
   molecule_list(j_alive,js)%zcom = zcom_i
-  atom_list(:,i_alive,is)%rxp = xcom_i - dx_xcom_j
-  atom_list(:,i_alive,is)%ryp = ycom_i - dy_ycom_j
-  atom_list(:,i_alive,is)%rzp = zcom_i - dz_zcom_j
+  atom_list(:,j_alive,js)%rxp = xcom_i - dx_xcom_j
+  atom_list(:,j_alive,js)%ryp = ycom_i - dy_ycom_j
+  atom_list(:,j_alive,js)%rzp = zcom_i - dz_zcom_j
   DEALLOCATE(dx_xcom_i, dy_ycom_i, dz_zcom_i)
   DEALLOCATE(dx_xcom_j, dy_ycom_j, dz_zcom_j)
 
+
+  !write (*, *) "!************************!"
+  !write (*, *) "Molecule i_alive COM (x, y, z):"
+  !write (*, "(F30.25, F30.25, F30.25)") molecule_list(i_alive,is)%xcom, molecule_list(i_alive,is)%ycom, molecule_list(i_alive,is)%zcom
+  !write (*, *) "Molecule i_alive Atom 1 coords (x,y,z):"
+  !write (*, "(F30.25, F30.25, F30.25)") atom_list(1, i_alive,is)%rxp, atom_list(1, i_alive,is)%ryp, atom_list(1, i_alive,is)%rzp
+
+  !write (*, *) "Molecule j_alive COM (x, y, z):"
+  !write (*, "(F30.25, F30.25, F30.25)") molecule_list(j_alive,js)%xcom, molecule_list(j_alive,js)%ycom, molecule_list(j_alive,js)%zcom
+  !write (*, *) "Molecule j_alive Atom 1 coords (x,y,z):"
+  !write (*, "(F30.25, F30.25, F30.25)") atom_list(1, j_alive,js)%rxp, atom_list(1, j_alive,js)%ryp, atom_list(1, j_alive,js)%rzp
+
+  !write (*, *) "!************************!"
+  !write (*, *) "Finished step 6"
   !****************************************************************************!
   !*****************************************************************************
   ! Step 7) Calculate the change in box_in's potential energy from inserting
@@ -252,10 +315,13 @@ SUBROUTINE IDENTITY_EXCHANGE
   !CALL Fold_Molecule(i_alive, is, box)
   !CALL Fold_Molecule(j_alive, js, box)
 
+  write(*,*) "Computing Nonbond Inter Energy"
   CALL Compute_Molecule_Nonbond_Inter_Energy(i_alive,is,E_vdw_move,E_qq_move,inter_overlap_i)
   CALL Compute_Molecule_Nonbond_Inter_Energy(j_alive,js,E_vdw_move,E_qq_move,inter_overlap_j)
+  write (*,*) "Done computing Nonbond Inter Energy"
 
   IF (inter_overlap_i .OR. inter_overlap_j) THEN
+    !write (*, *) "Overlap found!"
     CALL Revert_Old_Cartesian_Coordinates(i_alive, is)
     CALL Revert_Old_Cartesian_Coordinates(j_alive, js)
 
@@ -269,9 +335,11 @@ SUBROUTINE IDENTITY_EXCHANGE
             i_mcstep, 'identity switch' , i_alive, is, box, accept, 'overlap'
     END IF
   ELSE !no overlap
+     !write (*, *) "No overlap found!"
      dE = 0.0_DP
 
      IF ((int_charge_sum_style(box) == charge_ewald) .AND. (has_charge(is) .OR. has_charge(js))) THEN
+         !write (*, *) "Doing ewald stuff!"
         !TODO:Eventually rewrite Update_System_Ewald_Reciprocal_Energy!
 
         !Update_System_Ewald_Reciprocal_Energy will do this, but it might override it!
@@ -307,21 +375,35 @@ SUBROUTINE IDENTITY_EXCHANGE
         END IF
         dE = dE - energy(box)%reciprocal
      END IF
+     !write (*, *) "Done with big if statement"
+
 
      !compute difference in old and new energy
      dE = dE + (E_vdw_move - E_vdw) + (E_qq_move - E_qq)
 
+     write (*,*) "Moment of truth... dE is.... duh duh duh duh!"
+     write (*,*) dE
+     write (*,*) "How were the other stuff?"
+     write (*,*) E_vdw_move
+     write (*,*) E_vdw
+     write (*,*) E_qq_move
+     write (*,*) E_qq
+
+
      IF (int_sim_type == sim_nvt_min) THEN
         IF (dE  <= 0.0_DP) THEN
+           !write (*, *) "Accepted!"
            accept = .TRUE.
         END IF
      ELSE
          ln_pacc = beta(box) * dE
          accept = accept_or_reject(ln_pacc)
+         !write (*,*) accept
      END IF
 
      IF (accept) THEN
         !accept the move and update global energies
+        write (*,*) energy(box)%total
         energy(box)%total = energy(box)%total + dE
         energy(box)%inter = energy(box)%inter + dE
         energy(box)%inter_vdw = energy(box)%inter_vdw + E_vdw_move - E_vdw
@@ -399,5 +481,5 @@ SUBROUTINE IDENTITY_EXCHANGE
      END IF
      WRITE(logunit,*)
   END IF
-END SUBROUTINE IDENTITY_EXCHANGE
+END SUBROUTINE Identity_Switch
 

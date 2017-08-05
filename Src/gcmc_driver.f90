@@ -88,8 +88,28 @@ SUBROUTINE GCMC_Driver
      !*****************************************************************************
 
      rand_no = rranf()
+     !FOR TESTING, always do identity switch
+     cut_idswitch = 1
 
-     IF (rand_no <= cut_trans) THEN
+     IF (rand_no <= cut_idswitch) THEN
+
+        IF(.NOT. openmp_flag) THEN
+           CALL cpu_time(time_s)
+        ELSE
+!$        time_s = omp_get_wtime()
+        END IF
+
+        WRITE (*, *) "Calling Identity Switch"
+        CALL Identity_Switch
+        WRITE (*, *) "Exited Identity Switch"
+
+        IF(.NOT. openmp_flag) THEN
+           CALL cpu_time(time_e)
+        ELSE
+!$         time_e = omp_get_wtime()
+        END IF
+
+     ELSE IF (rand_no <= cut_trans) THEN
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
