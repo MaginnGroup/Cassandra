@@ -22,8 +22,8 @@
 
 SUBROUTINE NVTMC_Driver
   !******************************************************************************
-  ! The subroutine performs NVT MC moves. 
-  ! 
+  ! The subroutine performs NVT MC moves.
+  !
   ! CALLED BY
   !
   !        main
@@ -71,7 +71,7 @@ SUBROUTINE NVTMC_Driver
   ! is set in read_checkpoint subroutine in the module Read_Write_Checkpoint
   IF(.NOT. ALLOCATED(ntrials)) ALLOCATE(ntrials(nspecies,nbr_boxes))
   IF(.NOT. ALLOCATED(tot_trials)) ALLOCATE(tot_trials(nbr_boxes))
-  
+
   thermo_time = 0.0
   coord_time = 0.0
   block_avg_time = 0.0
@@ -103,11 +103,31 @@ SUBROUTINE NVTMC_Driver
      !*****************************************************************************
      ! select a move from Golden Sampling scheme
      !*****************************************************************************
- 
+
      rand_no = rranf()
-    
-     IF (rand_no <= cut_trans) THEN
- 
+     !FOR TESTING, always do identity switch
+     cut_idswitch = 1
+
+     IF (rand_no <= cut_idswitch) THEN
+
+        IF(.NOT. openmp_flag) THEN
+           CALL cpu_time(time_s)
+        ELSE
+!$        time_s = omp_get_wtime()
+        END IF
+
+        !WRITE (*, *) "Calling Identity Switch"
+        CALL Identity_Switch
+        !WRITE (*, *) "Exited Identity Switch"
+
+        IF(.NOT. openmp_flag) THEN
+           CALL cpu_time(time_e)
+        ELSE
+!$         time_e = omp_get_wtime()
+        END IF
+
+     ELSE IF (rand_no <= cut_trans) THEN
+
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
         ELSE
@@ -125,13 +145,13 @@ SUBROUTINE NVTMC_Driver
         movetime(imove_trans) = movetime(imove_trans) + time_e - time_s
 
      ELSE IF ( rand_no <= cut_rot) THEN
- 
+
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
         ELSE
 !$        time_s = omp_get_wtime()
         END IF
-       
+
         CALL Rotate
 
         IF(.NOT. openmp_flag) THEN
@@ -143,13 +163,13 @@ SUBROUTINE NVTMC_Driver
         movetime(imove_rot) = movetime(imove_rot) + time_e - time_s
 
      ELSE IF (rand_no <= cut_torsion) THEN
- 
+
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
         ELSE
 !$        time_s = omp_get_wtime()
         END IF
-      
+
         CALL Rotate_Dihedral
 
         IF(.NOT. openmp_flag) THEN
@@ -161,7 +181,7 @@ SUBROUTINE NVTMC_Driver
         movetime(imove_dihedral) = movetime(imove_dihedral) + time_e - time_s
 
      ELSE IF (rand_no <= cut_angle) THEN
- 
+
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
         ELSE
@@ -179,13 +199,13 @@ SUBROUTINE NVTMC_Driver
         movetime(imove_angle) = movetime(imove_angle) + time_e - time_s
 
      ELSE IF (rand_no <= cut_regrowth) THEN
- 
+
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
         ELSE
 !$        time_s = omp_get_wtime()
         END IF
-        
+
         CALL Cut_N_Grow
 
         IF(.NOT. openmp_flag) THEN
@@ -222,7 +242,7 @@ SUBROUTINE NVTMC_Driver
 !$      now_time = omp_get_wtime()
      END IF
 
-     now_time = ((now_time - time_start) / 60.0_DP) 
+     now_time = ((now_time - time_start) / 60.0_DP)
      IF(.NOT. timed_run) THEN
         IF(i_mcstep == n_mcsteps) complete = .TRUE.
      ELSE
@@ -265,7 +285,7 @@ SUBROUTINE NVTMC_Driver
            DO ibox = 1, nbr_boxes
               CALL Accumulate(ibox)
            END DO
-              
+
            ! Check if write block avgs this step
            write_flag = .FALSE.
            IF(.NOT. timed_run) THEN
@@ -284,7 +304,7 @@ SUBROUTINE NVTMC_Driver
                  CALL Write_Properties(ibox)
               END IF
            END DO
-              
+
         END IF
      END IF
 
@@ -311,5 +331,5 @@ SUBROUTINE NVTMC_Driver
 
   END DO
 
-     
+
 END SUBROUTINE NVTMC_Driver
