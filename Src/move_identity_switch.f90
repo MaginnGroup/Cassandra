@@ -50,7 +50,7 @@ SUBROUTINE Identity_Switch
   REAL(DP) :: dE, E_vdw, E_qq, E_vdw_move, E_qq_move, E_reciprocal_move
   REAL(DP) :: E_qq_dum, E_vdw_dum
   INTEGER :: dum1, dum2, dum3
-  LOGICAL :: inter_overlap_i, inter_overlap_j
+  LOGICAL :: inter_overlap
   REAL(DP), DIMENSION(:), ALLOCATABLE :: box_nrg_vdw_temp, box_nrg_qq_temp
 
   !variables for peforming the switch
@@ -76,8 +76,7 @@ SUBROUTINE Identity_Switch
   E_vdw = 0.0_DP
   E_qq = 0.0_DP
   E_reciprocal_move = 0.0_DP
-  inter_overlap_i = .FALSE.
-  inter_overlap_j = .FALSE.
+  inter_overlap = .FALSE.
   accept = .FALSE.
   box = 1
 
@@ -210,15 +209,11 @@ SUBROUTINE Identity_Switch
     E_qq = box_nrg_vdw_temp(1)
     DEALLOCATE(box_nrg_vdw_temp, box_nrg_qq_temp)
   ELSE
-    CALL Compute_Molecule_Nonbond_Inter_Energy(i_alive,is,E_vdw,E_qq,inter_overlap_i)
-    IF (.NOT. inter_overlap_i) THEN
-       CALL Compute_Molecule_Nonbond_Inter_Energy(j_alive,js,E_vdw,E_qq,inter_overlap_j)
-    END IF
+     CALL Compute_MoleculeCollection_Nonbond_Inter_Energy(2, (/i_alive, j_alive/), (/is, js/), &
+          E_vdw, E_qq, inter_overlap)
   END IF
 
-  !write (*, *) "Marker 2"
-
-  IF (inter_overlap_i .OR. inter_overlap_j)  THEN
+  IF (inter_overlap)  THEN
      err_msg = ""
 
      err_msg(1) = "Attempted to move molecule " // TRIM(Int_To_String(im)) // &
@@ -315,12 +310,12 @@ SUBROUTINE Identity_Switch
   !CALL Fold_Molecule(i_alive, is, box)
   !CALL Fold_Molecule(j_alive, js, box)
 
-  write(*,*) "Computing Nonbond Inter Energy"
-  CALL Compute_Molecule_Nonbond_Inter_Energy(i_alive,is,E_vdw_move,E_qq_move,inter_overlap_i)
-  CALL Compute_Molecule_Nonbond_Inter_Energy(j_alive,js,E_vdw_move,E_qq_move,inter_overlap_j)
+  write(*,*) "Computing Nonbond Inter Energy WITH COLLECTION"
+  CALL Compute_MoleculeCollection_Nonbond_Inter_Energy(2, (/i_alive, j_alive/), (/is, js/), &
+      E_vdw_move, E_qq_move, inter_overlap)
   write (*,*) "Done computing Nonbond Inter Energy"
 
-  IF (inter_overlap_i .OR. inter_overlap_j) THEN
+  IF (inter_overlap) THEN
     !write (*, *) "Overlap found!"
     CALL Revert_Old_Cartesian_Coordinates(i_alive, is)
     CALL Revert_Old_Cartesian_Coordinates(j_alive, js)
