@@ -183,7 +183,7 @@ SUBROUTINE Fold_Molecule(alive,is,this_box)
 
   INTEGER, INTENT(IN) :: alive, is, this_box
 
-  REAL(DP) :: dx, dy, dz
+  REAL(DP) :: dx, dy, dz, xcom_old, ycom_old, zcom_old
 
   REAL(DP) :: thisx,thisy,thisz, thisiax,thisiay,thisiaz, fraciax,fraciay,fraciaz
   REAL(DP) :: frac_comx, frac_comy, frac_comz, displacement
@@ -241,15 +241,25 @@ SUBROUTINE Fold_Molecule(alive,is,this_box)
      IF(frac_comx .GT. 0.5) THEN
 
 !        CALL Fold_Molecule_In_Fractional_Coords(alive,is,this_box)  
-     displacement = molecule_list(alive,is)%xcom
-     frac_comx = frac_comx-1.0_DP
-     CALL Fractional_To_Cartesian(frac_comx, frac_comy, frac_comz, thisx, thisy, thisz,this_box)
-     molecule_list(alive,is)%xcom = thisx
-     molecule_list(alive,is)%ycom = thisy
-     molecule_list(alive,is)%zcom = thisz
+        ! store old COM coordinates for displacement
+        xcom_old = molecule_list(alive,is)%xcom
+        ycom_old = molecule_list(alive,is)%ycom
+        zcom_old = molecule_list(alive,is)%zcom
 
-     displacement = displacement - molecule_list(alive,is)%xcom
-     atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp - displacement
+        frac_comx = frac_comx-1.0_DP
+        CALL Fractional_To_Cartesian(frac_comx, frac_comy, frac_comz, thisx, thisy, thisz,this_box)
+        ! update COM
+        molecule_list(alive,is)%xcom = thisx
+        molecule_list(alive,is)%ycom = thisy
+        molecule_list(alive,is)%zcom = thisz
+
+        ! move atomic coordinates
+        atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp + &
+             molecule_list(alive,is)%xcom - xcom_old
+        atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp + &
+             molecule_list(alive,is)%ycom - ycom_old
+        atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp + &
+             molecule_list(alive,is)%zcom - zcom_old
 
 !     DO i = 1, natoms(is)
 !        thisiax=atom_list(i,alive,is)%rxp
@@ -267,16 +277,24 @@ SUBROUTINE Fold_Molecule(alive,is,this_box)
      ELSE IF(frac_comx .LT. -0.5) THEN
 
 !        CALL Fold_Molecule_In_Fractional_Coords(alive,is, this_box)
-     displacement = molecule_list(alive,is)%xcom
+        frac_comx = frac_comx+1.0_DP
 
-     frac_comx = frac_comx+1.0_DP
-     CALL Fractional_To_Cartesian(frac_comx, frac_comy, frac_comz, thisx, thisy, thisz,this_box)
-     molecule_list(alive,is)%xcom = thisx
-     molecule_list(alive,is)%ycom = thisy
-     molecule_list(alive,is)%zcom = thisz
+        xcom_old = molecule_list(alive,is)%xcom
+        ycom_old = molecule_list(alive,is)%ycom
+        zcom_old = molecule_list(alive,is)%zcom
 
-     displacement = molecule_list(alive,is)%xcom - displacement
-     atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp + displacement
+        CALL Fractional_To_Cartesian(frac_comx, frac_comy, frac_comz, thisx, thisy, thisz,this_box)
+        
+        molecule_list(alive,is)%xcom = thisx
+        molecule_list(alive,is)%ycom = thisy
+        molecule_list(alive,is)%zcom = thisz
+
+        atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp + &
+             molecule_list(alive,is)%xcom - xcom_old
+        atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp + &
+             molecule_list(alive,is)%ycom - ycom_old
+        atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp + &
+             molecule_list(alive,is)%zcom - zcom_old
 
 
 !     DO i = 1, natoms(is)
@@ -298,14 +316,22 @@ SUBROUTINE Fold_Molecule(alive,is,this_box)
      IF(frac_comy .GT. 0.5) THEN
         
 !        CALL Fold_Molecule_In_Fractional_Coords(alive,is,this_box)  
+        xcom_old = molecule_list(alive,is)%xcom
+        ycom_old = molecule_list(alive,is)%ycom
+        zcom_old = molecule_list(alive,is)%zcom
 
-     displacement = molecule_list(alive,is)%ycom
-
-     frac_comy = frac_comy-1.0_DP
-     CALL Fractional_To_Cartesian(frac_comx, frac_comy, frac_comz, thisx, thisy, thisz,this_box)
-     molecule_list(alive,is)%xcom = thisx
-     molecule_list(alive,is)%ycom = thisy
-     molecule_list(alive,is)%zcom = thisz
+        frac_comy = frac_comy-1.0_DP
+        CALL Fractional_To_Cartesian(frac_comx, frac_comy, frac_comz, thisx, thisy, thisz,this_box)
+        molecule_list(alive,is)%xcom = thisx
+        molecule_list(alive,is)%ycom = thisy
+        molecule_list(alive,is)%zcom = thisz
+        
+        atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp + &
+             molecule_list(alive,is)%xcom - xcom_old
+        atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp + &
+             molecule_list(alive,is)%ycom - ycom_old
+        atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp + &
+             molecule_list(alive,is)%zcom - zcom_old
 
      displacement = displacement - molecule_list(alive,is)%ycom
      atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp - displacement
@@ -324,15 +350,22 @@ SUBROUTINE Fold_Molecule(alive,is,this_box)
 
      ELSE IF(frac_comy .LT. -0.5) THEN
 !        CALL Fold_Molecu  le_In_Fractional_Coords(alive,is,this_box)  
-     displacement = molecule_list(alive,is)%ycom
-     frac_comy = frac_comy+1.0_DP
-     CALL Fractional_To_Cartesian(frac_comx, frac_comy, frac_comz, thisx, thisy, thisz,this_box)
-     molecule_list(alive,is)%xcom = thisx
-     molecule_list(alive,is)%ycom = thisy
-     molecule_list(alive,is)%zcom = thisz
+        xcom_old = molecule_list(alive,is)%xcom
+        ycom_old = molecule_list(alive,is)%ycom
+        zcom_old = molecule_list(alive,is)%zcom
+        frac_comy = frac_comy+1.0_DP
+        
+        CALL Fractional_To_Cartesian(frac_comx, frac_comy, frac_comz, thisx, thisy, thisz,this_box)
+        molecule_list(alive,is)%xcom = thisx
+        molecule_list(alive,is)%ycom = thisy
+        molecule_list(alive,is)%zcom = thisz
 
-     displacement = molecule_list(alive,is)%ycom - displacement
-     atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp + displacement
+        atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp + &
+             molecule_list(alive,is)%xcom - xcom_old
+        atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp + &
+             molecule_list(alive,is)%ycom - ycom_old
+        atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp + &
+             molecule_list(alive,is)%zcom - zcom_old
 
 !     DO i = 1, natoms(is)
 !        thisiax=atom_list(i,alive,is)%rxp
@@ -352,16 +385,22 @@ SUBROUTINE Fold_Molecule(alive,is,this_box)
      IF(frac_comz .GT. 0.5) THEN
 
 !        CALL Fold_Molecule_In_Fractional_Coords(alive,is,this_box)  
-     displacement = molecule_list(alive,is)%zcom
-     frac_comz = frac_comz-1.0_DP
-     CALL Fractional_To_Cartesian(frac_comx, frac_comy, frac_comz, thisx, thisy, thisz,this_box)
-     molecule_list(alive,is)%xcom = thisx
-     molecule_list(alive,is)%ycom = thisy
-     molecule_list(alive,is)%zcom = thisz
-
-     displacement = displacement - molecule_list(alive,is)%zcom
-     atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp - displacement
-
+        xcom_old = molecule_list(alive,is)%xcom
+        ycom_old = molecule_list(alive,is)%ycom
+        zcom_old = molecule_list(alive,is)%zcom
+    
+        frac_comz = frac_comz-1.0_DP
+        CALL Fractional_To_Cartesian(frac_comx, frac_comy, frac_comz, thisx, thisy, thisz,this_box)
+        molecule_list(alive,is)%xcom = thisx
+        molecule_list(alive,is)%ycom = thisy
+        molecule_list(alive,is)%zcom = thisz
+        
+        atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp + &
+             molecule_list(alive,is)%xcom - xcom_old
+        atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp + &
+             molecule_list(alive,is)%ycom - ycom_old
+        atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp + &
+             molecule_list(alive,is)%zcom - zcom_old
 
 !     DO i = 1, natoms(is)
 !        thisiax=atom_list(i,alive,is)%rxp
@@ -378,14 +417,24 @@ SUBROUTINE Fold_Molecule(alive,is,this_box)
      ELSE IF(frac_comz .LT. -0.5) THEN
 
 !        CALL Fold_Molecule_In_Fractional_Coords(alive,is,this_box)  
-     displacement = molecule_list(alive,is)%zcom
-     frac_comz = frac_comz+1.0_DP
-     CALL Fractional_To_Cartesian(frac_comx, frac_comy, frac_comz, thisx, thisy, thisz,this_box)
-     molecule_list(alive,is)%xcom = thisx
-     molecule_list(alive,is)%ycom = thisy
-     molecule_list(alive,is)%zcom = thisz
-     displacement = molecule_list(alive,is)%zcom - displacement
-     atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp + displacement
+        xcom_old = molecule_list(alive,is)%xcom
+        ycom_old = molecule_list(alive,is)%ycom
+        zcom_old = molecule_list(alive,is)%zcom
+
+        frac_comz = frac_comz+1.0_DP
+
+        CALL Fractional_To_Cartesian(frac_comx, frac_comy, frac_comz, thisx, thisy, thisz,this_box)
+        molecule_list(alive,is)%xcom = thisx
+        molecule_list(alive,is)%ycom = thisy
+        molecule_list(alive,is)%zcom = thisz
+
+        atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp + &
+             molecule_list(alive,is)%xcom - xcom_old
+        atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp + &
+             molecule_list(alive,is)%ycom - ycom_old
+        atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp + &
+             molecule_list(alive,is)%zcom - zcom_old
+
 
 
 !     DO i = 1, natoms(is)
