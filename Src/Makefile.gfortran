@@ -59,7 +59,7 @@ EXEC_NAME = cassandra_gfortran.exe
 FC = gfortran
 LIBS = 
 INCS = 
-F90FLAGS = -c -ffree-line-length-none
+F90FLAGS = -c -ffree-line-length-none -O3
 LINKFLAGS = 
 
 ####################################################################

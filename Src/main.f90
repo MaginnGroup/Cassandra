@@ -106,7 +106,7 @@ PROGRAM Main
 
 !********************************************************************************
 ! Code name and version. Change as updates are made.
-  version = 'Cassandra Version 1.2 20160804'
+  version = 'Cassandra Version 1.2 20170927'
 ! Get starting time information (intrinsic function)
   CALL DATE_AND_TIME(date,time,zone,begin_values)
   CALL cpu_time(start_time)
@@ -134,9 +134,6 @@ PROGRAM Main
 ! Now read input file and get the run_name
   CALL Get_Run_Name
 
-! Create log file and write out some initial information
-  CALL Name_Files(run_name,'.log',logfile)
-
   OPEN(unit=logunit,file=logfile,IOSTAT=openstatus)
   IF (openstatus .NE. 0) THEN
      err_msg = ""
@@ -153,17 +150,14 @@ PROGRAM Main
   WRITE(logunit,'(A80)')'            \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                '
   WRITE(logunit,'(A80)')'                                                                               '
   WRITE(logunit,'(A80)')'********************************************************************************'
-! Create a checkpoint file to periodically write system information
 
-  CALL Name_Files(run_name,'.chk',checkpointfile)
-  
-  OPEN(unit=chkptunit,file=checkpointfile,IOSTAT=openstatus)
-  IF (openstatus .NE. 0) THEN
-     err_msg = ""
-     err_msg(1) = 'Unable to open checkpointfile'
-     err_msg(2) = logfile
-     CALL Clean_Abort(err_msg,'Read_Checkpointfile')
-  ENDIF
+  WRITE(logunit,*)
+  WRITE(logunit,'(A73)')'For any published work that uses Cassandra, cite the following reference:'
+  WRITE(logunit,'(4X,A56)')'Shah JK, Marin‐Rimoldi E, Mullen RG, Keene BP, Khan S,'
+  WRITE(logunit,'(4X,A59)')'Paluch AS, Rai N, Romanielo LL, Rosch TW, Yoo B, Maginn EJ.'
+  WRITE(logunit,'(4X,A71)')'Cassandra: An open source Monte Carlo package for molecular simulation.'
+  WRITE(logunit,'(4X,A58)')'Journal of Computational Chemistry. 2017, 38, 1727–1739.'
+  WRITE(logunit,'(4X,A35)')'http://dx.doi.org/10.1002/jcc.24807'
 
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Run info'
