@@ -372,7 +372,7 @@ SUBROUTINE Write_Coords(this_box)
   
   USE Global_Variables
   USE Simulation_Properties
-  USE File_Names, ONLY : movie_header_unit,movie_xyz_unit 
+  USE File_Names
 
   IMPLICIT NONE
 
@@ -382,11 +382,17 @@ SUBROUTINE Write_Coords(this_box)
   
   INTEGER :: ii, jj, is, nmolecules_is, im, this_im, ia 
   INTEGER :: M_XYZ_unit,MH_unit,Num_Atoms
+  LOGICAL :: lopen
 
   ! Write the information about volume
 
   MH_unit = movie_header_unit + this_box
   M_XYZ_unit = movie_xyz_unit + this_box
+
+  INQUIRE(unit=MH_unit,opened=lopen)
+  IF (.NOT. lopen) OPEN(unit=MH_unit,file=movie_header_file(this_box))
+  INQUIRE(unit=M_XYZ_unit,opened=lopen)
+  IF (.NOT. lopen) OPEN(unit=M_XYZ_unit,file=movie_xyz_file(this_box))
 
   Num_Atoms = 0
 

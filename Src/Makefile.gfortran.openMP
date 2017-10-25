@@ -57,7 +57,7 @@ FC = gfortran
 LIBS = 
 INCS = 
 #
-F90FLAGS = -c -ffree-line-length-none -fopenmp
+F90FLAGS = -c -ffree-line-length-none -fopenmp -O3
 LINKFLAGS =  -fopenmp
 
 
