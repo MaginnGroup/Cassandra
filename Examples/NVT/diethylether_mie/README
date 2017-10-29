@@ -1,7 +1,8 @@
 This directory contains all the files needed to run a short simulation of 
 liquid-phase diethylether (dee) with N=220 molecules at temperature T=343K 
-and volume V=(34.7 Ang)^3 using the mie and mie_cut_shift options. Both
-mie and mie_cut_shift option input files are provided.
+and volume V=(34.7 Ang)^3 using the Mie potential. Note the change in the
+van der Waals potential type to "Mie" rather than "LJ" in both the mcf file
+and the input file.
 
 UPDATES V1.2: 'LJ' in the .mcf and .inp file needs to be replaced with 'Mie' 
 after fragment libraries and mcf files have been generated.

@@ -486,6 +486,9 @@ SUBROUTINE Get_Pair_Style
 
               ELSEIF (vdw_sum_style(ibox) == 'minimum_image') THEN
                  int_vdw_sum_style(ibox) = vdw_minimum
+                 rcut_vdw(ibox) = 0.5_DP * MIN(box_list(ibox)%face_distance(1), &
+                                               box_list(ibox)%face_distance(2), &
+                                               box_list(ibox)%face_distance(3))
                  WRITE(logunit,'(A)') ' Minimum image convention used for VDW'
 
               ELSE
@@ -547,6 +550,9 @@ SUBROUTINE Get_Pair_Style
 
               ELSEIF (vdw_sum_style(ibox) == 'minimum_image') THEN
                  int_vdw_sum_style(ibox) = vdw_minimum
+                 rcut_vdw(ibox) = 0.5_DP * MIN(box_list(ibox)%face_distance(1), &
+                                               box_list(ibox)%face_distance(2), &
+                                               box_list(ibox)%face_distance(3))
                  WRITE(logunit,'(A)') ' Minimum image convention used for VDW'
 
               ELSE
@@ -718,6 +724,9 @@ SUBROUTINE Get_Pair_Style
                               
               ELSEIF (charge_sum_style(ibox) == 'minimum_image') THEN
                  int_charge_sum_style(ibox) = charge_minimum
+                 rcut_coul(ibox) = 0.5_DP * MIN(box_list(ibox)%face_distance(1), &
+                                                box_list(ibox)%face_distance(2), &
+                                                box_list(ibox)%face_distance(3))
                  IF (int_vdw_sum_style(ibox) /= vdw_minimum .AND. int_vdw_style(ibox) /= vdw_none) THEN
                     err_msg=""
                     err_msg(1) = 'Minimum image requires both vdw and q-q to be so-specified'
@@ -3457,6 +3466,7 @@ SUBROUTINE Get_Box_Info
 !******************************************************************************
   INTEGER :: ierr,line_nbr,nbr_entries,ibox, is
   CHARACTER(120) :: line_string, line_array(20)
+  REAL(DP) :: radius, zmax, zmin
 
 !******************************************************************************
   WRITE(logunit,*)
@@ -3623,8 +3633,8 @@ SUBROUTINE Get_Box_Info
            END IF
 
            ! Check that contant pressure boxes are cubic
-           IF ((int_sim_type == sim_npt .OR. int_sim_type == sim_gemc .OR. &
-                int_sim_type == sim_gemc_npt) .AND. .NOT. l_cubic(ibox)) THEN
+           IF ((int_sim_type == sim_npt .OR. int_sim_type == sim_gemc) .AND. &
+               .NOT. l_cubic(ibox)) THEN
               err_msg = ''
               err_msg(1) = 'Volume change moves are only supported for cubic boxes'
               CALL Clean_Abort(err_msg, 'Get_Box_Info')
@@ -3641,9 +3651,100 @@ SUBROUTINE Get_Box_Info
                 box_list(ibox)%face_distance
            WRITE(logunit,'(X,A,f18.4)') 'Box volume, A^3 ', box_list(ibox)%volume
 
-           ! Skip 1 line between boxes
+           ! Read next line
            line_nbr = line_nbr + 1
            CALL Read_String(inputunit,line_string,ierr)
+
+           IF ((box_list(ibox)%int_box_shape == int_cubic .OR. box_list(ibox)%int_box_shape == int_ortho) .AND. &
+               line_string(1:11) == 'inner_shape') THEN
+              BACKSPACE(inputunit)
+              CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
+              WRITE(logunit,'(X,A,X,A)') 'Inner shape: ', TRIM(line_array(2))
+              
+              IF (line_array(2) == "none") THEN
+                 box_list(ibox)%int_inner_shape = int_none
+              ELSE IF (line_array(2) == "sphere") THEN
+                 box_list(ibox)%int_inner_shape = int_sphere
+                 radius = String_To_Double(line_array(3))
+                 IF (radius < 0.0_DP .OR. radius > MIN(box_list(ibox)%length(1,1), &
+                     box_list(ibox)%length(2,2),box_list(ibox)%length(3,3))/2.0_DP) THEN
+                    err_msg = ''
+                    err_msg(1) = 'Parameter ' // TRIM(line_array(3)) // ' on line number ' // &
+                                 TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+                    err_msg(2) = 'Supported parameters are: 0 < radius < half box length'
+                    CALL Clean_Abort(err_msg,'Get_Box_Info')
+                 END IF
+                 box_list(ibox)%inner_radius = radius
+                 box_list(ibox)%inner_radius2 = radius*radius
+                 box_list(ibox)%inner_volume = 4*PI/3*radius**3
+                 WRITE(logunit,'(X,A,X,F18.4)') 'Sphere radius, A ', box_list(ibox)%inner_radius
+                 WRITE(logunit,'(X,A,X,F18.4)') 'Sphere volume, A^3 ', box_list(ibox)%inner_volume
+              ELSE IF (line_array(2) == "cylinder") THEN
+                 box_list(ibox)%int_inner_shape = int_cylinder
+                 radius = String_To_Double(line_array(3))
+                 IF (radius < 0.0_DP .OR. radius > MIN(box_list(ibox)%length(1,1), &
+                     box_list(ibox)%length(2,2))/2.0_DP) THEN
+                    err_msg = ''
+                    err_msg(1) = 'Parameter ' // TRIM(line_array(3)) // ' on line number ' // &
+                                 TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+                    err_msg(2) = 'Supported parameters are: 0 < radius < half box length'
+                    CALL Clean_Abort(err_msg,'Get_Box_Info')
+                 END IF
+                 zmax = box_list(ibox)%length(3,3)
+                 box_list(ibox)%inner_radius = radius
+                 box_list(ibox)%inner_radius2 = radius*radius
+                 box_list(ibox)%inner_volume = PI*radius**2*zmax
+                 WRITE(logunit,'(X,A,X,F18.4)') 'Cylinder radius, A ', box_list(ibox)%inner_radius
+                 WRITE(logunit,'(X,A,X,F18.4)') 'Cylinder height, A ', zmax
+                 WRITE(logunit,'(X,A,X,F18.4)') 'Inner volume, A^3 ', box_list(ibox)%inner_volume
+              ELSE IF (line_array(2) == "slitpore") THEN
+                 box_list(ibox)%int_inner_shape = int_slitpore
+                 zmax = String_To_Double(line_array(3))
+                 IF (zmax < 0.0_DP .OR. zmax > box_list(ibox)%length(3,3)/2.0_DP) THEN
+                    err_msg = ''
+                    err_msg(1) = 'Parameter ' // TRIM(line_array(3)) // ' on line number ' // &
+                                 TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+                    err_msg(2) = 'Supported parameters are: 0 < zmax < half box length'
+                    CALL Clean_Abort(err_msg,'Get_Box_Info')
+                 END IF
+                 box_list(ibox)%inner_zmax = zmax
+                 box_list(ibox)%inner_volume = box_list(ibox)%length(1,1)*box_list(ibox)%length(2,2)*zmax*2.0_DP
+                 WRITE(logunit,'(X,A,X,F18.4)') 'Slit pore x_width, A ', box_list(ibox)%length(1,1)
+                 WRITE(logunit,'(X,A,X,F18.4)') 'Slit pore y_width, A ', box_list(ibox)%length(2,2)
+                 WRITE(logunit,'(X,A,X,F18.4)') 'Slit pore height, A ', 2.0_DP*zmax
+                 WRITE(logunit,'(X,A,X,F18.4)') 'Inner volume, A^3 ', box_list(ibox)%inner_volume
+              ELSE IF (line_array(2) == "interface") THEN
+                 box_list(ibox)%int_inner_shape = int_interface
+                 zmin = String_To_Double(line_array(3))
+                 zmax = String_To_Double(line_array(4))
+                 IF (zmin < 0.0_DP .OR. zmin > zmax .OR. zmax > box_list(ibox)%length(3,3)/2.0_DP) THEN
+                    err_msg = ''
+                    err_msg(1) = 'Parameter ' // TRIM(line_array(3)) // ' on line number ' // &
+                                 TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+                    err_msg(2) = 'Supported parameters are: 0 < zmin < zmax < half box length'
+                    CALL Clean_Abort(err_msg,'Get_Box_Info')
+                 END IF
+                 box_list(ibox)%inner_zmax = zmax
+                 box_list(ibox)%inner_zmin = zmin
+                 box_list(ibox)%inner_volume = box_list(ibox)%length(1,1)*box_list(ibox)%length(2,2)*(zmax-zmin)*2.0_DP
+                 WRITE(logunit,'(X,A,X,F18.4)') 'Interface x_width, A ', box_list(ibox)%length(1,1)
+                 WRITE(logunit,'(X,A,X,F18.4)') 'Interface y_width, A ', box_list(ibox)%length(2,2)
+                 WRITE(logunit,'(X,A,X,F18.4)') 'Outside of interface, z = +/-', zmax
+                 WRITE(logunit,'(X,A,X,F18.4)') 'Inside of interface, z = +/-', zmin
+                 WRITE(logunit,'(X,A,X,F18.4)') 'Inner volume, A^3 ', box_list(ibox)%inner_volume
+              ELSE
+                 err_msg = ''
+                 err_msg(1) = 'Keyword ' // TRIM(line_array(2)) // ' on line number ' // &
+                              TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+                 err_msg(2) = 'Supported keywords are: none, sphere, cylinder, slitpore, interface'
+                 CALL Clean_Abort(err_msg,'Get_Box_Info')
+              END IF
+
+              ! Read next line
+              line_nbr = line_nbr + 1
+              CALL Read_String(inputunit,line_string,ierr)
+
+           END IF
 
         ENDDO ! End loop over nbr_boxes
 
@@ -4137,7 +4238,7 @@ SUBROUTINE Get_Move_Probabilities
                    'Probability for volume move', prob_volume
 
               ! Now read in information for each of the boxes for maximum displacement
-              IF (int_sim_type == sim_gemc) THEN 
+              IF (int_sim_type == sim_gemc .OR. int_sim_type == sim_npt) THEN 
                  ! only one maximum volume width is specified
                  line_nbr = line_nbr + 1
                  CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
@@ -4148,13 +4249,19 @@ SUBROUTINE Get_Move_Probabilities
                        'Maximum volume displacement is', box_list(1)%dv_max
 
               ELSE
-
+                 ! gemc_npt, separate dv_max for each box
                  DO ibox = 1,nbr_boxes
 
                     line_nbr = line_nbr + 1
                     CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
 
                     box_list(ibox)%dv_max = String_To_Double(line_array(1))
+
+                    IF (box_list(ibox)%dv_max > 0.0_DP .AND. .NOT. l_cubic(ibox)) THEN
+                       err_msg = ''
+                       err_msg(1) = 'Volume change moves are only supported for cubic boxes'
+                       CALL Clean_Abort(err_msg,'Get_Move_Probabiltieis')
+                    END IF
 
                     WRITE(logunit,'(X,A,X,I2,X,A,X,F10.3,X,A)') &
                          'Maximum volume displacement for box', ibox, 'is', &
@@ -4203,7 +4310,7 @@ SUBROUTINE Get_Move_Probabilities
                       'Probability for particle swap', prob_swap
               END IF
 
-              ! the next line lists 'none' or 'cbmc' for each species
+              ! the next line lists 'none' or 'cbmc' or 'inner' for each species
               line_nbr = line_nbr + 1
               CALL Parse_String(inputunit,line_nbr,nspecies,nbr_entries,line_array,ierr)
 
@@ -4222,6 +4329,22 @@ SUBROUTINE Get_Move_Probabilities
                     species_list(is)%insertion = 'CBMC'
 
                     WRITE(logunit,'(X,A,X,A,X,A)') 'Species', TRIM(Int_To_String(is)), 'will be inserted using CBMC'
+                    species_list(is)%int_insert = int_random
+                    species_list(is)%species_type = 'SORBATE'
+                    species_list(is)%int_species_type = int_sorbate
+
+                 ELSE IF(line_array(is) == 'INNER' .OR. line_array(is) == 'inner') THEN
+                    IF (nfragments(is) == 0) THEN
+                       err_msg = ''
+                       err_msg(1) = 'Insertion method for species ' // TRIM(Int_To_String(is)) // &
+                                    ' must be "none" since species has zero fragments'
+                       CALL Clean_Abort(err_msg,'Get_Move_Probabiltieis')
+                    END IF
+
+                    nspec_insert = nspec_insert + 1
+                    species_list(is)%insertion = 'INNER'
+
+                    WRITE(logunit,'(X,A,X,A,X,A)') 'Species', TRIM(Int_To_String(is)), 'will be inserted into the inner region'
                     species_list(is)%int_insert = int_random
                     species_list(is)%species_type = 'SORBATE'
                     species_list(is)%int_species_type = int_sorbate
@@ -4540,12 +4663,15 @@ END SUBROUTINE Get_Move_Probabilities
 SUBROUTINE Get_Start_Type
 !******************************************************************************
 ! This subroutine will read in the initial coordinates from an input file.
-! There are three options to start a run
+! There are four options to start a run
 ! 'make_config'   --- will attempt to generate an initial configuration by
 !                     randomly inserting molecules
 ! 'read_config'   --- read from an exisiting file
 ! 'add_to_config' --- read from an exisiting file and then insert additional molecules
 ! 'checkpoint'    --- read from a crash file
+!
+! Additional info
+! 'insertion'     --- either 'inner' or 'cbmc' for each species
 !******************************************************************************
 
   INTEGER :: ierr, line_nbr, nbr_entries, i,j, ibox, is
@@ -4778,6 +4904,28 @@ SUBROUTINE Get_Start_Type
      END IF
      
   END DO InputLOOP
+
+  ! Check for 'insertion' keyword
+  line_nbr = line_nbr + 1
+  CALL Read_String(inputunit,line_string,ierr)
+  IF (line_string(1:9) == 'insertion') THEN
+     BACKSPACE(inputunit)
+     CALL Parse_String(inputunit,line_nbr,nspecies+1,nbr_entries,line_array,ierr)
+     DO is = 1, nspecies
+        IF (line_array(is+1) == 'INNER' .OR. line_array(is+1) == 'inner') THEN
+           species_list(is)%insertion = "INNER"
+        ELSE IF (line_array(is+1) == 'CBMC' .OR. line_array(is+1) == 'cbmc') THEN
+           species_list(is)%insertion = "CBMC"
+        ELSE IF (line_array(is+1) == 'NONE' .OR. line_array(is+1) == 'none') THEN
+           species_list(is)%insertion = "NONE"
+        ELSE
+           err_msg(1) = 'Option ' // TRIM(line_array(1)) // ' on line number ' // &
+                        TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+           err_msg(2) = 'Supported options are: none, cbmc, inner'
+           CALL Clean_Abort(err_msg,'Get_Start_Type')
+        END IF
+     END DO
+  END IF
 
   DO is = 1, nspecies  
      species_list(is)%nmoltotal = SUM(nmols_to_read(is,:)) &
@@ -5481,6 +5629,20 @@ USE Global_Variables, ONLY: cpcollect
            ELSE IF (line_array(1) == 'pressure' .OR. line_array(1) == 'Pressure') THEN
               nbr_properties = nbr_properties + 1
               need_pressure = .TRUE.
+
+
+           ELSE IF (line_array(1) == 'pressure_xx' .OR. line_array(1) == 'Pressure_XX') THEN
+              nbr_properties = nbr_properties + 1
+              need_pressure = .TRUE.
+
+           ELSE IF (line_array(1) == 'pressure_yy' .OR. line_array(1) == 'Pressure_YY') THEN
+              nbr_properties = nbr_properties + 1
+              need_pressure = .TRUE.
+
+           ELSE IF (line_array(1) == 'pressure_zz' .OR. line_array(1) == 'Pressure_ZZ') THEN
+              nbr_properties = nbr_properties + 1
+              need_pressure = .TRUE.
+
            ELSE IF (line_array(1) == 'enthalpy' .OR. line_array(1) == 'Enthalpy') THEN
               nbr_properties = nbr_properties + 1
               IF (int_sim_type /= sim_npt .AND. int_sim_type /= sim_gemc_npt) need_pressure = .TRUE.
@@ -5647,6 +5809,15 @@ USE Global_Variables, ONLY: cpcollect
               ELSE IF (line_array(1) == 'pressure' .OR. line_array(1) == 'Pressure') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Pressure'
+              ELSE IF (line_array(1) == 'pressure_xx' .OR. line_array(1) == 'Pressure_XX') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Pressure_XX'
+              ELSE IF (line_array(1) == 'pressure_yy' .OR. line_array(1) == 'Pressure_YY') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Pressure_YY'
+              ELSE IF (line_array(1) == 'pressure_zz' .OR. line_array(1) == 'Pressure_ZZ') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Pressure_ZZ'
               ELSE IF (line_array(1) == 'volume' .OR. line_array(1) == 'Volume') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Volume'
@@ -5661,7 +5832,8 @@ USE Global_Variables, ONLY: cpcollect
                 err_msg(3) = 'Supported keywords are: energy_total, energy_intra, energy_inter, energy_bond,'
                 err_msg(4) = '  energy_angle, energy_dihedral, energy_improper, energy_intravdw, energy_intraq'
                 err_msg(5) = '  energy_intervdw, energy_interq, energy_lrc, energy_recip, energy_self,'
-                err_msg(6) = '  enthalpy, pressure, volume, density, nmols, mass_density'
+                err_msg(6) = '  enthalpy, pressure, pressure_xx, pressure_yy, pressure_zz, &
+				volume, density, nmols, mass_density'
                 CALL Clean_Abort(err_msg,'Get_Property_Info')
               END IF
               

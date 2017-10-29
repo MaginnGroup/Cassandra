@@ -343,8 +343,12 @@ SUBROUTINE Insertion
 
   ! density
   ln_pacc = ln_pacc + DLOG(REAL(nmols(is,ibox),DP)) &
-                    + 3.0_DP*DLOG(species_list(is)%de_broglie(ibox)) &
-                    - DLOG(box_list(ibox)%volume) 
+                    + 3.0_DP*DLOG(species_list(is)%de_broglie(ibox))
+  IF (box_list(ibox)%int_inner_shape == int_none .OR. species_list(is)%insertion == "CBMC") THEN
+     ln_pacc = ln_pacc - DLOG(box_list(ibox)%volume)
+  ELSE
+     ln_pacc = ln_pacc - DLOG(box_list(ibox)%inner_volume)
+  END IF
   
   accept = accept_or_reject(ln_pacc)
   
@@ -352,6 +356,7 @@ SUBROUTINE Insertion
      ! accept the insertion
 
      ! number of molecules already incremented
+     CALL Get_Internal_Coordinates(lm,is)
 
      ! update the energies
      energy(ibox)%total = energy(ibox)%total + dE

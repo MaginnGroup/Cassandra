@@ -221,7 +221,7 @@ MODULE Type_Definitions
      REAL(DP), DIMENSION(max_nonbond_params) :: vdw_param
 
      CHARACTER(2) :: element
-     CHARACTER(6) :: atom_name
+     CHARACTER(8) :: atom_name
 
      REAL(DP) :: mass, charge
      INTEGER :: atom_type_number
@@ -397,6 +397,9 @@ MODULE Type_Definitions
 
   END TYPE Dihedral_Participation_Class
 
+  !****************************************************************************
+
+ TYPE Box_Class
 
   ! Define a class that hold information on a box. length hold the box
   ! cell matrix, and length_inv its inverse in A and A^(-1). 
@@ -406,12 +409,17 @@ MODULE Type_Definitions
   ! Face_distance is the distance in A between the faces of the box. 
   ! box_list has dimensions of the number of boxes.
 
- TYPE Box_Class
     CHARACTER(20) :: box_shape
     INTEGER :: int_box_shape
     REAL(DP), DIMENSION(3,3) :: length, length_inv, max_delta, hlength
     REAL(DP), DIMENSION(3) :: basis_length, cos_angle, angle, face_distance
     REAL(DP) :: volume, dv_max
+
+  ! Inner shape is used to define a limited region into which molecules can be
+  ! inserted
+    INTEGER :: int_inner_shape
+    REAL(DP) :: inner_volume, inner_radius, inner_radius2, inner_zmax, inner_zmin
+
  END TYPE Box_Class
 
   !****************************************************************************
@@ -564,6 +572,9 @@ MODULE Type_Definitions
 
     ! Computed pressure, kNT/V + virial
     REAL(DP) :: computed
+
+	! Ideal Pressure
+	REAL(DP) :: ideal
 
     ! last calculation
     INTEGER :: last_calc
