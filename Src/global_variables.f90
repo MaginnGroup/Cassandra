@@ -155,6 +155,13 @@ USE Type_Definitions
   INTEGER, PARAMETER :: int_ortho = 1
   INTEGER, PARAMETER :: int_cell = 2
 
+  ! Is insertion/deletion limited to an inner region in the box?
+  ! int_none = 0, defined elsewhere
+  INTEGER, PARAMETER :: int_sphere = 1
+  INTEGER, PARAMETER :: int_cylinder = 2
+  INTEGER, PARAMETER :: int_slitpore = 3
+  INTEGER, PARAMETER :: int_interface = 4
+
 ! Atom placement variables
 
   ! Univ vectors pointing to 6,18,26, and 50 uniform points.
@@ -299,7 +306,7 @@ USE Type_Definitions
 
   ! array containing name of each atom type with idex = atomtype number.
   ! It is set and allocated to size nbr_atomtypes in Create_Nonbond_Table
-  CHARACTER(6), DIMENSION(:), ALLOCATABLE :: atom_type_list
+  CHARACTER(8), DIMENSION(:), ALLOCATABLE :: atom_type_list
 
   INTEGER, DIMENSION(:), ALLOCATABLE :: nbr_vdw_params
 
