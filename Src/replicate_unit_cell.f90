@@ -225,16 +225,15 @@ SUBROUTINE Generate_Grid
 
   ! Determine number of grids in each of the directions
 
-  na_grid = INT(box_list(1)%basis_length(1)/grid_spacing) + 1
-  nb_grid = INT(box_list(1)%basis_length(2)/grid_spacing) + 1
-  nc_grid = INT(box_list(1)%basis_length(3)/grid_spacing) + 1
+  na_grid = NINT(box_list(1)%basis_length(1)/grid_spacing) + 1
+  nb_grid = NINT(box_list(1)%basis_length(2)/grid_spacing) + 1
+  nc_grid = NINT(box_list(1)%basis_length(3)/grid_spacing) + 1
 
   ! Recalculate the grid spacing in each of the directions in fractional coordinates
 
   a_spacing = 1.0_DP/REAL(na_grid,DP)
   b_spacing = 1.0_DP/REAL(nb_grid,DP)
   c_spacing = 1.0_DP/REAL(nc_grid,DP)
-  
 
   
 !!$  IF (l_slit_pore(1)) THEN

@@ -57,8 +57,12 @@ SUBROUTINE Potential_Map_Control
   ! associated parameters and the vdw mixing rule.
   CALL Get_Pair_Style
 
-  ! Check the distance between the faces to ensure that the cutoff is adequate.
+  ! Read in the size of the grid spacing
 
+  CALL Get_Grid_Spacing
+
+  CALL Generate_Grid
+  stop
   
 
   ! Load molecular conectivity and force field paramters. Note that Get_Nspecies 

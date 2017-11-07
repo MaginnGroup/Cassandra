@@ -6240,7 +6240,7 @@ SUBROUTINE Get_Grid_Spacing
           grid_spacing = String_To_Double(line_array(1))
 
           WRITE(logunit,*) 'The grid spacing specified in the input file is'
-          WRITE(logunit,'(F10.6,2X,A20)') grid_spacing, 'Angstrom.'
+          WRITE(logunit,'(F6.4,X,A10)') grid_spacing, 'Angstrom.'
           WRITE(logunit,*) 
 
           EXIT
