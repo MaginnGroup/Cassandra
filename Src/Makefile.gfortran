@@ -59,7 +59,7 @@ EXEC_NAME = cassandra_gfortran.exe
 FC = gfortran
 LIBS = 
 INCS = 
-F90FLAGS = -c -ffree-line-length-none -O3
+F90FLAGS = -c -ffree-line-length-none 
 LINKFLAGS = 
 
 ####################################################################
@@ -67,6 +67,7 @@ OBJS =  main.o \
   file_names.o \
   type_definitions.o \
   global_variables.o \
+  potential_map_variables.o \
   io_utilities.o \
   atoms_to_place.o \
   simulation_properties.o \
@@ -85,6 +86,7 @@ OBJS =  main.o \
   fragment_driver.o \
   nptmc_control.o \
   mcf_control.o \
+  potential_map_control.o \
   nptmc_driver.o \
   create_nonbond_table.o \
   get_internal_coords.o \
@@ -120,6 +122,7 @@ OBJS =  main.o \
   chempot.o \
   pair_nrg_variables.o \
   move_ring_flip.o \
+  replicate_unit_cell.o \
 
 
 ####################################################################
