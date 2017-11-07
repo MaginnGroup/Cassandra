@@ -44,6 +44,7 @@ MODULE Input_Routines
   USE IO_Utilities
   USE File_Names
   USE Type_Definitions
+  USE Potential_Map_Variables
 
 
   IMPLICIT NONE
@@ -341,12 +342,16 @@ SUBROUTINE Get_Sim_Type
         ELSEIF(line_array(1) == 'mcf_gen' .OR. line_array(1) == 'MCF_Gen') THEN
            sim_type = 'MCF_Gen'
            int_sim_type = sim_mcf
+        ELSEIF(line_array(1) == 'potential_map' .OR. line_array(1) == 'Potential_Map') THEN
+           sim_type = 'Potential_Map'
+           int_sim_type = sim_pot_map
         ELSE
            err_msg = ''
            err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
                         TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
            err_msg(2) = 'Supported keywords are: nvt_mc, npt_mc, gemc, gemc_npt, gcmc,'
            err_msg(3) = '                        nvt_mc_fragment, nvt_mc_ring_fragment, mcf_gen'
+           err_msg(4) = '                                potential_map'
            CALL Clean_Abort(err_msg,'Get_Sim_Type')
         END IF
 
@@ -3687,6 +3692,7 @@ SUBROUTINE Get_Box_Info
            line_nbr = line_nbr + 1
            CALL Read_String(inputunit,line_string,ierr)
 
+                 
         ENDDO ! End loop over nbr_boxes
 
         EXIT ! We found box info so we are done
@@ -3698,8 +3704,11 @@ SUBROUTINE Get_Box_Info
         CALL Clean_Abort(err_msg,'Get_Box_Info')
 
      ENDIF
-
+     
   ENDDO !  End overall read do
+
+ 
+     
 
   ! Allocate memory for total number of mols of each species in a given box
 
@@ -6177,5 +6186,79 @@ SUBROUTINE Get_Verbosity_Info
   WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_Verbosity_Info
+
+!******************************************************************************
+SUBROUTINE Get_Grid_Spacing
+!******************************************************************************
+  ! This routine opens the input file and determines the grid spacing for potential
+  ! map generation. The information is output to the log file.
+  !
+  ! # Grid_Spacing
+  ! 0.2
+  !
+  ! The grid spacing is specified in Angstrom.
+  ! The routine searches for the keyword "# Grid_Spacing" and then reads the necessary 
+  ! information underneath the keyword.
+!******************************************************************************
+ 
+    IMPLICIT NONE
+
+    INTEGER :: ierr, line_nbr, nbr_entries
+    CHARACTER*120 :: line_string, line_array(20)
+
+    REWIND(inputunit)
+    ierr = 0
+    line_nbr = 0
+
+    DO
+
+       line_nbr = line_nbr + 1
+       
+       CALL Read_String(inputunit,line_string,ierr)
+       
+       IF (ierr /= 0 ) THEN
+          err_msg = ''
+          err_msg(1) = 'Error reading grid spacing in the input file'
+          err_msg(2) = 'Check # Grid_Spacing section'
+          err_msg(3) = 'aborting'
+          CALL Clean_Abort(err_msg,'Get_Grid_Spacing')
+       END IF
+
+       IF (line_string(1:14) == '# Grid_Spacing') THEN
+
+          ! We found a section on grid spacing, read
+          ! the value of the grid spacing from the next line
+
+          WRITE(logunit,*)
+          WRITE(logunit,*) 'Section on grid spacing found'
+          WRITE(logunit,*)
+
+          line_nbr = line_nbr + 1
+
+          CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
+          
+          grid_spacing = String_To_Double(line_array(1))
+
+          WRITE(logunit,*) 'The grid spacing specified in the input file is'
+          WRITE(logunit,'(F10.6,2X,A20)') grid_spacing, 'Angstrom.'
+          WRITE(logunit,*) 
+
+          EXIT
+
+       ELSE IF (line_nbr > 20000 .OR. line_string(1:3) == 'END') THEN
+
+          ! The section is missing. Report the error
+
+          err_msg = ''
+          err_msg(1) = '# Grid_Spacing section missing in the input file'
+          err_msg(2) = inputfile
+          CALL Clean_Abort(err_msg,'Get_Grid_Spacing')
+
+       END IF
+          
+       
+    END DO
+
+  END SUBROUTINE Get_Grid_Spacing
 
 END MODULE Input_Routines
