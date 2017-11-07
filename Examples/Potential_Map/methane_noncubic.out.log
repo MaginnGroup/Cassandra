@@ -17,10 +17,10 @@ For any published work that uses Cassandra, cite the following reference:
 Run info
 ********************************************************************************
 version: Cassandra Version 1.2 20170927
-inputfile: gemc_methane.inp
-name of run: gemc_methane.out
+inputfile: methane_noncubic.inp
+name of run: methane_noncubic.out
 date (mm/dd/yyyy): 11/07/2017
-time: 17:01:31
+time: 16:55:30
 machine: himalaya.attlocal.net
 ********************************************************************************
 
@@ -37,7 +37,7 @@ Potential_Map
 Copy input file
 ********************************************************************************
  # Run_Name
- gemc_methane.out
+ methane_noncubic.out
  
  # Sim_Type
  potential_map
@@ -59,8 +59,10 @@ Copy input file
  
  # Box_Info
  1
- cubic
- 40.0
+ CELL_MATRIX
+ 22.6274     -23.1404     0.0
+ 22.6274      27.5776     0.0
+  0.0000       0.0000    40.0
  
  # Grid_Spacing
  0.2
@@ -132,12 +134,14 @@ Number of species
 Box info
 ********************************************************************************
 Number of simulation boxes     1
-Box 1 is CUBIC               
- Each Side Of :       40.0000     Angstrom
- Cell basis vector lengths in A,     40.0000      40.0000      40.0000
- Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
- Distance between box faces    40.0000      40.0000      40.0000
- Box volume, A^3         64000.0000
+Box 1 is TRICLINIC           
+       22.6274       -23.1404    0.0000
+       22.6274        27.5776    0.0000
+        0.0000         0.0000   40.0000
+ Cell basis vector lengths in A,     32.0000      36.0000      40.0000
+ Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0872
+ Distance between box faces    31.8782      35.8630      40.0000
+ Box volume, A^3         45904.6589
 ********************************************************************************
 
 Pair style
@@ -157,15 +161,15 @@ Lorentz-Berthelot mixing rule specified
 0.2000  Angstrom.
 
 
-             Actual grid spacing in a direction is0.19900498
-            Actual grid spacing in b  direction is0.19900498
+             Actual grid spacing in a direction is0.19875761
+            Actual grid spacing in b  direction is0.19889519
              Actual grid spacing in c direction is0.19900498
 
  Finished generation of the grid points
 
- Number of grid points in a direction 201
+ Number of grid points in a direction 161
 
- Number of grid points in b direction 201
+ Number of grid points in b direction 181
 
  Number of grid points in c direction 201
 
