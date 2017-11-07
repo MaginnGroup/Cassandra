@@ -19,8 +19,8 @@ Run info
 version: Cassandra Version 1.2 20170927
 inputfile: gemc_methane.inp
 name of run: gemc_methane.out
-date (mm/dd/yyyy): 11/05/2017
-time: 11:06:55
+date (mm/dd/yyyy): 11/07/2017
+time: 16:31:17
 machine: himalaya.attlocal.net
 ********************************************************************************
 
@@ -60,8 +60,7 @@ Copy input file
  # Box_Info
  1
  cubic
- 27.0
- 
+ 40.0
  
  # Temperature_Info
  175.0
@@ -131,19 +130,26 @@ Box info
 ********************************************************************************
 Number of simulation boxes     1
 Box 1 is CUBIC               
- Each Side Of :       27.0000     Angstrom
- Cell basis vector lengths in A,     27.0000      27.0000      27.0000
+ Each Side Of :       40.0000     Angstrom
+ Cell basis vector lengths in A,     40.0000      40.0000      40.0000
  Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
- Distance between box faces    27.0000      27.0000      27.0000
- Box volume, A^3         19683.0000
+ Distance between box faces    40.0000      40.0000      40.0000
+ Box volume, A^3         64000.0000
 ********************************************************************************
 
 Pair style
 ********************************************************************************
 VDW style used is:   LJ             in box:  1
  VDW sum style is:   cut_tail       in box:  1
+ rcut =    14.000 Angstrom
+Section "# Charge_Style" is missing from the input file
+ By default, charge style for box 1 is NONE
+Pair interaction energy array storage enabled
+Lorentz-Berthelot mixing rule specified
+********************************************************************************
 
 ************ERROR************
-Initial vdw cutoff is greater than half the minimum box length
-This error occurred in subroutine Get_Pair_Style on step 0.
+# Grid_Spacing section missing in the input file
+gemc_methane.inp
+This error occurred in subroutine Get_Grid_Spacing on step 0.
 Fatal Error. Stopping program.
