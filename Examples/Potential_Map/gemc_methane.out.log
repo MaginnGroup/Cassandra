@@ -1,0 +1,149 @@
+********************************************************************************
+                ______                                __                        
+               / ____/___ _______________ _____  ____/ /________ _              
+              / /   / __ `/ ___/ ___/ __ `/ __ \/ __  / ___/ __ `/              
+             / /___/ /_/ (__  |__  ) /_/ / / / / /_/ / /  / /_/ /               
+             \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                
+                                                                                
+********************************************************************************
+
+For any published work that uses Cassandra, cite the following reference:
+    Shah JK, Marin‐Rimoldi E, Mullen RG, Keene BP, Khan S,
+    Paluch AS, Rai N, Romanielo LL, Rosch TW, Yoo B, Maginn EJ.
+    Cassandra: An open source Monte Carlo package for molecular simulation.
+    Journal of Computational Chemistry. 2017, 38, 1727–1739.
+    http://dx.doi.org/10.1002/jcc.24807
+
+Run info
+********************************************************************************
+version: Cassandra Version 1.2 20170927
+inputfile: gemc_methane.inp
+name of run: gemc_methane.out
+date (mm/dd/yyyy): 11/05/2017
+time: 11:06:55
+machine: himalaya.attlocal.net
+********************************************************************************
+
+Verbose log
+********************************************************************************
+Normal output to logfile
+********************************************************************************
+
+Simulation type
+********************************************************************************
+Potential_Map       
+********************************************************************************
+
+Copy input file
+********************************************************************************
+ # Run_Name
+ gemc_methane.out
+ 
+ # Sim_Type
+ potential_map
+ 
+ # Nbr_Species
+ 1
+ 
+ # VDW_Style
+ LJ   cut_tail   14.00
+ 
+ # Rcutoff_Low
+ 1.0
+ 
+ # Mixing_Rule
+ LB
+ 
+ # Molecule_Files
+ methane.mcf 500
+ 
+ # Box_Info
+ 1
+ cubic
+ 27.0
+ 
+ 
+ # Temperature_Info
+ 175.0
+ 
+ # Move_Probability_Info
+ 
+ # Prob_Translation
+ 0.85
+ 0.15
+ 1.0
+ 
+ # Prob_Volume
+ 0.03
+ 200.0
+ 
+ # Prob_Swap
+ 0.12
+ cbmc
+ 
+ # Done_Probability_Info
+ 
+ # Start_Type
+ make_config 400
+ 
+ # Run_Type
+ Equilibration 100 100
+ 
+ # Simulation_Length_Info
+ Units       Steps
+ Prop_Freq   100
+ Coord_Freq  2200
+ Run         2200
+ 
+ # Seed
+ 1211131639 1211131640
+ 
+ # Property_Info 1
+ Density
+ Nmols
+ Volume
+ Pressure
+ 
+ 
+ 
+ # Fragment_Files
+ species1/frag1/frag1.dat  1
+ 
+ # CBMC_Info
+ kappa_ins 12
+ rcut_cbmc 6.5 6.5
+ 
+ # Average_Info
+ 1
+ 
+ # Pair_Energy
+ TRUE
+ 
+ END
+********************************************************************************
+
+Number of species
+********************************************************************************
+1
+********************************************************************************
+
+Box info
+********************************************************************************
+Number of simulation boxes     1
+Box 1 is CUBIC               
+ Each Side Of :       27.0000     Angstrom
+ Cell basis vector lengths in A,     27.0000      27.0000      27.0000
+ Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+ Distance between box faces    27.0000      27.0000      27.0000
+ Box volume, A^3         19683.0000
+********************************************************************************
+
+Pair style
+********************************************************************************
+VDW style used is:   LJ             in box:  1
+ VDW sum style is:   cut_tail       in box:  1
+
+************ERROR************
+Initial vdw cutoff is greater than half the minimum box length
+This error occurred in subroutine Get_Pair_Style on step 0.
+Fatal Error. Stopping program.

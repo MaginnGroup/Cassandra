@@ -198,6 +198,8 @@ PROGRAM Main
      CALL Fragment_Control
   ELSE IF (int_sim_type == sim_mcf) THEN
      CALL MCF_Control
+  ELSE IF (int_sim_type == sim_pot_map) THEN
+     CALL Potential_Map_Control
   ELSE
      err_msg = ""
      err_msg(1) = 'Sim_Type unknown'

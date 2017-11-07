@@ -560,10 +560,6 @@ USE Type_Definitions
   REAL(DP), DIMENSION(:,:), ALLOCATABLE :: chpot, chpotid
 
 
-!!!! Zeolite variables
-REAL(DP), ALLOCATABLE, DIMENSION(:) :: x_lat, y_lat, z_lat
-INTEGER :: n_lat_atoms
-
 !!! Pair_Nrg_Variables
 REAL(DP), ALLOCATABLE :: pair_vdw_temp(:), pair_qq_temp(:)
 
