@@ -67,12 +67,9 @@ atomParms = ((('O','O',15.999,-0.84760,'LJ',78.19743111,3.16555789),
 bondParms = (((1,2,'fixed',1.),
               (1,3,'fixed',1.)),) # index = [species][bond][parm]
 angleParms = (((2,1,3,'fixed',109.47),),) # index = [species][angle][parm]
-<<<<<<< HEAD
 cassStr = (("Inter molecule vdw","Long range correction","Inter molecule q","Reciprocal ewald","Self ewald","Total system energy"),) * 4 # one tuple for each check
-=======
 prpList = ("energy_intervdw", "energy_lrc", "energy_interq", "energy_recip", 
            "energy_self", "energy_total") # index = [property]
->>>>>>> eb244d34d04f9ed46a04b8231e1cd87fbf0f267f
 vdwStyle = 'lj cut_tail 10.'
 
 # Check parameters
