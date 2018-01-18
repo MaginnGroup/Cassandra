@@ -15,8 +15,8 @@ version: Cassandra Development Version
 inputfile: equil.inp
 name of run: equil.out
 date (mm/dd/yyyy): 01/18/2018
-time: 14:32:04
-machine: Matthews-MBP
+time: 16:06:41
+machine: Matthews-MacBook-Pro.local
 ********************************************************************************
 
 Verbose log
@@ -389,10 +389,10 @@ Writing information about fragments
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.138377 secs.
- Rotation time =               0.141353 secs.
- Volume change time =          0.051648 secs.
- Regrowth time =               1.319024 secs.
+ Translation time =            0.129316 secs.
+ Rotation time =               0.132422 secs.
+ Volume change time =          0.047892 secs.
+ Regrowth time =               1.232922 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -407,5 +407,5 @@ Writing information about fragments
          0      Hours
          0    Minutes
          1    Seconds
-       723         ms
+       613         ms
 ********************************************************************************
