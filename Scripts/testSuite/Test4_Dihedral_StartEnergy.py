@@ -116,7 +116,7 @@ nChecks = 12 # number of simulations to run
 dihedToCheck = [None] * 4
 dihedToCheck = (0.0,60.0,120.0,180.0)
 typeToCheck = [None] * 3
-typeToCheck = ('OLPS ', 'Harmonic ', 'CHARMM ')
+typeToCheck = ('OPLS ', 'Harmonic ', 'CHARMM ')
 title = (typeToCheck[0] + str(dihedToCheck[0])+ " degrees", typeToCheck[0] + str(dihedToCheck[1])+ " degrees", typeToCheck[0] + str(dihedToCheck[2])+ " degrees",typeToCheck[0] + str(dihedToCheck[3])+ " degrees",
 	typeToCheck[1] + str(dihedToCheck[0])+ " degrees",typeToCheck[1] + str(dihedToCheck[1])+ " degrees",typeToCheck[1] + str(dihedToCheck[2])+ " degrees",typeToCheck[1] + str(dihedToCheck[3])+ " degrees",
 	typeToCheck[2] + str(dihedToCheck[0])+ " degrees",typeToCheck[2] + str(dihedToCheck[1])+ " degrees",typeToCheck[2] + str(dihedToCheck[2])+ " degrees",typeToCheck[2] + str(dihedToCheck[3])+ " degrees")
