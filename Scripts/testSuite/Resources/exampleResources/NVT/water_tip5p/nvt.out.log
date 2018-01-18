@@ -14,9 +14,9 @@ Run info
 version: Cassandra Development Version
 inputfile: nvt.inp
 name of run: nvt.out
-date (mm/dd/yyyy): 02/28/2017
-time: 12:09:48
-machine: matthews-mbp.dhcp.nd.edu
+date (mm/dd/yyyy): 01/18/2018
+time: 14:33:38
+machine: Matthews-MBP
 ********************************************************************************
 
 Verbose log
@@ -308,65 +308,3 @@ Run simulation
      14346  translate         1   1  0.96931
      14453     rotate         1   1  0.98486
      16096  translate         1   1  0.97000
-     16279     rotate         1   1  0.98568
-     17819  translate         1   1  0.97044
-********************************************************************************
-
-Energy of final configuration
-********************************************************************************
-
- Energy components for box 1     kJ/mol-Extensive       Relative_Error
- ---------------------------------------------------------------------
- Total system energy                        0.506            0.422E-11
- Intra molecular energy                     0.000            0.000E+00
-   Bond energy                              0.000            0.000E+00
-   Bond angle energy                        0.000            0.000E+00
-   Dihedral angle energy                    0.000            0.000E+00
-   Improper angle energy                    0.000            0.000E+00
-   Intra molecule vdw                       0.000            0.000E+00
-   Intra molecule q                         0.000            0.000E+00
- Inter molecular energy                     0.506            0.422E-11
-   Inter molecule vdw                      -0.058           -0.117E-13
-   Long range correction                   -0.003           -0.000E+00
-   Inter molecule q                      1214.736            0.132E-14
-   Reciprocal ewald                         4.226            0.807E-15
-   Self ewald                           -1218.395           -0.000E+00
- ---------------------------------------------------------------------
-   Number of reciprocal vectors              8727
-
-********************************************************************************
-
-
-Writing information for box  1
-********************************************************************************
-
-   ---------------------------------------------------------
-   Writing information for species  1
-
-                Move      Trials     Success   % Success
-           Translate        9087        8821       97.07
-              Rotate        8913        8782       98.53
-   ---------------------------------------------------------
-
-********************************************************************************
-
- Writing information about subroutine times
-********************************************************************************
- Translation time =           29.699431 secs.
- Rotation time =              29.127934 secs.
-********************************************************************************
-
-********************************************************************************
-************************ Cassandra simulation complete *************************
-********************************************************************************
-
- Program execution time
-********************************************************************************
-         0      Years
-         0     Months
-         0       Days
-         0      Hours
-         1    Minutes
-         3    Seconds
-       779         ms
-********************************************************************************

@@ -63,7 +63,7 @@ SUBROUTINE Angle_Distortion
   REAL(DP) :: iatom2_rxp, iatom2_ryp, iatom2_rzp, vec21(3), vec23(3)
   REAL(DP) :: perp_vec1(3), perp_vec2(3), aligner(3,3), hanger(3,3)
   REAL(DP) :: tempx, tempy, tempz, cos_dtheta, sin_dtheta
-  REAL(DP) :: rand_no, p_acc
+  REAL(DP) :: rand_no, p_acc,rand
   
   REAL(DP) :: dE, dE_inter, dE_intra
   REAL(DP) :: E_bond, E_angle, E_dihedral, E_improper, E_intra_vdw, E_intra_qq
@@ -143,10 +143,18 @@ SUBROUTINE Angle_Distortion
   END DO
 
   rand_no = rranf()
-  DO is = 1, nspecies
-     IF( rand_no <= x_species(is)) EXIT
-  END DO
 
+  DO is = 1, nspecies
+<<<<<<< HEAD
+     IF( rand_no <= x_species(is)) EXIT
+=======
+     IF ( nangles(is) == 0 ) CYCLE
+     angle_to_move = INT ( rranf() * nangles(is) ) + 1 
+     IF ( angle_list(angle_to_move,is)%angle_potential_type == 'fixed') CYCLE
+     IF ( rand_no <= x_species(is) ) EXIT
+         
+>>>>>>> parent of b9c2ebd... cleaned up move_angle | fixed bug with max_kBT triggerred causing overlap to get flagged
+  END DO
   ! error check
   IF( nangles(is) <= nangles_fixed(is) ) THEN
      err_msg = ''
@@ -161,7 +169,10 @@ SUBROUTINE Angle_Distortion
   ! Get the index of imth molecule of species is in the box.
   lm = locate(im,is,ibox)
 
+<<<<<<< HEAD
   ntrials(is,ibox)%angle = ntrials(is,ibox)%angle + 1
+=======
+>>>>>>> parent of b9c2ebd... cleaned up move_angle | fixed bug with max_kBT triggerred causing overlap to get flagged
 
   ! Compute the energy of the molecule before the move
   CALL Compute_Molecule_Bond_Energy(lm,is,E_bond)
@@ -190,9 +201,17 @@ SUBROUTINE Angle_Distortion
      CALL Clean_Abort(err_msg, "Angle_Distortion")
   END IF
 
+<<<<<<< HEAD
   ! Store the old positions of the atoms 
   CALL Save_Old_Cartesian_Coordinates(lm,is)
   CALL Save_Old_Internal_Coordinates(lm,is)
+=======
+!  CALL Get_Internal_Coordinates(lm,is)
+  ! Store the old positions of the atoms 
+  CALL Save_Old_Cartesian_Coordinates(lm,is)
+  CALL Save_Old_Internal_Coordinates(lm,is)
+
+>>>>>>> parent of b9c2ebd... cleaned up move_angle | fixed bug with max_kBT triggerred causing overlap to get flagged
   
   ! determine the atoms that define the angle
   atom1 = angle_list(angle_to_move,is)%atom1
@@ -218,9 +237,9 @@ SUBROUTINE Angle_Distortion
   ALLOCATE(atoms_to_place_list(MAXVAL(natoms)))
   atoms_to_place_list = 0
 
-  rand_no = rranf()
+  rand = rranf()
 
-  IF ( rand_no < 0.5_DP ) THEN
+  IF ( rand < 0.5_DP ) THEN
 
      ! atom1 is moving
 
@@ -421,6 +440,11 @@ SUBROUTINE Angle_Distortion
      END IF
   ELSE
 
+<<<<<<< HEAD
+=======
+     delta_e = 0.0_DP
+
+>>>>>>> parent of b9c2ebd... cleaned up move_angle | fixed bug with max_kBT triggerred causing overlap to get flagged
      CALL Compute_Molecule_Bond_Energy(lm,is,E_bond_move)
      CALL Compute_Molecule_Angle_Energy(lm,is,E_angle_move)
      CALL Compute_Molecule_Dihedral_Energy(lm,is,E_dihedral_move)
@@ -466,7 +490,12 @@ SUBROUTINE Angle_Distortion
            accept = .TRUE.
         END IF
      ELSE
+<<<<<<< HEAD
         ln_pacc = beta(ibox) * dE
+=======
+
+        ln_pacc = beta(ibox) * delta_e + DLOG(prob_new/prob_0)
+>>>>>>> parent of b9c2ebd... cleaned up move_angle | fixed bug with max_kBT triggerred causing overlap to get flagged
         accept = accept_or_reject(ln_pacc)
      END IF
   
