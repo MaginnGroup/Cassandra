@@ -14,9 +14,9 @@ Run info
 version: Cassandra Development Version
 inputfile: npt.inp
 name of run: npt.out
-date (mm/dd/yyyy): 01/18/2018
-time: 16:06:21
-machine: Matthews-MacBook-Pro.local
+date (mm/dd/yyyy): 01/21/2018
+time: 16:52:25
+machine: Matthews-MBP
 ********************************************************************************
 
 Verbose log
@@ -413,10 +413,10 @@ Writing information about fragments
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            4.590935 secs.
- Rotation time =               4.368027 secs.
- Volume change time =          4.551923 secs.
- Regrowth time =               5.741770 secs.
+ Translation time =            4.640478 secs.
+ Rotation time =               4.431849 secs.
+ Volume change time =          4.673138 secs.
+ Regrowth time =               5.809355 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -430,6 +430,6 @@ Writing information about fragments
          0       Days
          0      Hours
          0    Minutes
-        19    Seconds
-       952         ms
+        20    Seconds
+       242         ms
 ********************************************************************************

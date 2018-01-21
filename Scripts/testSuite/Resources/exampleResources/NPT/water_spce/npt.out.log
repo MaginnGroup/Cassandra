@@ -14,9 +14,9 @@ Run info
 version: Cassandra Development Version
 inputfile: npt.inp
 name of run: npt.out
-date (mm/dd/yyyy): 01/18/2018
-time: 16:06:43
-machine: Matthews-MacBook-Pro.local
+date (mm/dd/yyyy): 01/21/2018
+time: 16:52:48
+machine: Matthews-MBP
 ********************************************************************************
 
 Verbose log
@@ -393,9 +393,9 @@ Writing information for box  1
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            6.908879 secs.
- Rotation time =               7.156124 secs.
- Volume change time =          6.444832 secs.
+ Translation time =            6.985453 secs.
+ Rotation time =               7.289850 secs.
+ Volume change time =          6.571503 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -410,5 +410,5 @@ Writing information for box  1
          0      Hours
          0    Minutes
         21    Seconds
-       374         ms
+       735         ms
 ********************************************************************************

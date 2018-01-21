@@ -14,9 +14,9 @@ Run info
 version: Cassandra Development Version
 inputfile: nvt.inp
 name of run: nvt.out
-date (mm/dd/yyyy): 01/18/2018
-time: 16:07:45
-machine: Matthews-MacBook-Pro.local
+date (mm/dd/yyyy): 01/21/2018
+time: 16:53:53
+machine: Matthews-MBP
 ********************************************************************************
 
 Verbose log
@@ -360,8 +360,8 @@ Writing information for box  1
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            5.352935 secs.
- Rotation time =               5.354867 secs.
+ Translation time =            5.750929 secs.
+ Rotation time =               5.782736 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -375,6 +375,6 @@ Writing information for box  1
          0       Days
          0      Hours
          0    Minutes
-        11    Seconds
-       300         ms
+        12    Seconds
+       170         ms
 ********************************************************************************
