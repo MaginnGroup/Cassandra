@@ -14,8 +14,8 @@ Run info
 version: Cassandra Development Version
 inputfile: equil.inp
 name of run: equil.out
-date (mm/dd/yyyy): 01/21/2018
-time: 16:52:46
+date (mm/dd/yyyy): 01/27/2018
+time: 17:12:09
 machine: Matthews-MBP
 ********************************************************************************
 
@@ -389,10 +389,10 @@ Writing information about fragments
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.134033 secs.
- Rotation time =               0.139596 secs.
- Volume change time =          0.050395 secs.
- Regrowth time =               1.240499 secs.
+ Translation time =            0.132212 secs.
+ Rotation time =               0.136573 secs.
+ Volume change time =          0.048990 secs.
+ Regrowth time =               1.272179 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -407,5 +407,5 @@ Writing information about fragments
          0      Hours
          0    Minutes
          1    Seconds
-       640         ms
+       660         ms
 ********************************************************************************

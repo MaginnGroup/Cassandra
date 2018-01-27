@@ -178,6 +178,7 @@ passCheck      = [None] * nChecks # list to hold if cassandra passed each check
 errorRel       = [None] * nChecks # list to hold err0r each check
 cassSum 	   = 0
 cassStr = (("Improper angle energy",),) * nChecks # one tuple for each check
+cassPrint = (("Improper angle energy [kJ/mol-Ext]",),) * nChecks # one tuple for each check
 errorTol = 1e-4 # Error Percent Tolerated
 FailOut="n"
 
@@ -238,7 +239,7 @@ with open(resourceDir+'testConfigurations/distance.txt') as distancelist:
     distances = distancelist.readlines()
 
 # Loop through checks
-print "%-30s %-20s %18s %18s %18s %8s" % ("Passes","Failures","Pass Percent","Average Energy","Average Error","Pass")
+print "%-30s %-35s %18s %18s %18s %8s" % ("Passes","Failures","Pass Percent","Average Energy","Average Error","Pass")
 
 for i in range(nChecks):
 
@@ -385,7 +386,7 @@ LastTest.close()
 averageError = round((float(sum(errorRel)) / nChecks),10)
 averageEnergy = round(((cassSum) / nChecks),4)
 
-print "%-30s %-20s %18s %18s %18s %8s" % (str(PassCount),str(FailCount),'%'+str(PassCount*100/(PassCount+FailCount)),str(averageEnergy),str(averageError),PassState)
+print "%-30s %-35s %18s %18s %18s %8s" % (str(PassCount),str(FailCount),'%'+str(PassCount*100/(PassCount+FailCount)),str(averageEnergy),str(averageError),PassState)
 #*******************************************************************************
 # DATA OUTPUT
 #*******************************************************************************

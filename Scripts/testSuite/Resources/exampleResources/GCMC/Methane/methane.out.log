@@ -14,8 +14,8 @@ Run info
 version: Cassandra Development Version
 inputfile: methane.inp
 name of run: methane.out
-date (mm/dd/yyyy): 01/21/2018
-time: 16:56:10
+date (mm/dd/yyyy): 01/27/2018
+time: 17:15:43
 machine: Matthews-MBP
 ********************************************************************************
 
@@ -328,9 +328,9 @@ Writing information for box  1
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.015539 secs.
- Insertion time =              0.079117 secs.
- Deletion time =               0.073756 secs.
+ Translation time =            0.015528 secs.
+ Insertion time =              0.078433 secs.
+ Deletion time =               0.072549 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -345,5 +345,5 @@ Writing information for box  1
          0      Hours
          0    Minutes
          0    Seconds
-       187         ms
+       184         ms
 ********************************************************************************

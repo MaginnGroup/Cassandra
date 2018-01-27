@@ -14,8 +14,8 @@ Run info
 version: Cassandra Development Version
 inputfile: npt.inp
 name of run: npt.out
-date (mm/dd/yyyy): 01/21/2018
-time: 16:52:48
+date (mm/dd/yyyy): 01/27/2018
+time: 17:12:11
 machine: Matthews-MBP
 ********************************************************************************
 
@@ -393,9 +393,9 @@ Writing information for box  1
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            6.985453 secs.
- Rotation time =               7.289850 secs.
- Volume change time =          6.571503 secs.
+ Translation time =            7.221740 secs.
+ Rotation time =               7.489556 secs.
+ Volume change time =          6.696016 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -409,6 +409,6 @@ Writing information for box  1
          0       Days
          0      Hours
          0    Minutes
-        21    Seconds
-       735         ms
+        22    Seconds
+       337         ms
 ********************************************************************************

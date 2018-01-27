@@ -14,8 +14,8 @@ Run info
 version: Cassandra Development Version
 inputfile: gemc_diethylether.inp
 name of run: gemc_diethylether.out
-date (mm/dd/yyyy): 01/21/2018
-time: 16:55:37
+date (mm/dd/yyyy): 01/27/2018
+time: 17:15:08
 machine: Matthews-MBP
 ********************************************************************************
 
@@ -514,11 +514,11 @@ Writing information about fragments
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            1.281724 secs.
- Rotation time =               1.224762 secs.
- Volume change time =          7.301262 secs.
- Swap time =                   0.639198 secs.
- Regrowth time =               1.690603 secs.
+ Translation time =            1.374375 secs.
+ Rotation time =               1.334487 secs.
+ Volume change time =          7.923014 secs.
+ Swap time =                   0.702924 secs.
+ Regrowth time =               1.875761 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -532,6 +532,6 @@ Writing information about fragments
          0       Days
          0      Hours
          0    Minutes
-        27    Seconds
-       605         ms
+        29    Seconds
+       919         ms
 ********************************************************************************

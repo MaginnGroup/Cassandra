@@ -85,6 +85,7 @@ analyticAnswer = [None] * nChecks # list to hold analytic answers
 cassAnswer     = [None] * nChecks # list to hold cassandra's answers
 passCheck      = [None] * nChecks # list to hold if cassandra passed each check
 cassStr = (("Total system energy","Inter molecule vdw","Long range correction"),) * nChecks # one tuple for each check
+cassPrint = (("Total system energy [kJ/mol-Ext]","Inter molecule vdw [kJ/mol-Ext]","Long range correction [kJ/mol-Ext]"),) * nChecks # one tuple for each check
 errorTol = .01
 
 # Number of moelcules changing
@@ -155,7 +156,7 @@ analyticAnswer[6] = (-711.56, -704.60 , -10.210, )
 analyticAnswer[7] = (-17.41 , -17.060 , -.23008 , )
 
 # Loop through checks
-print "%-30s %-20s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","Analytic","Relative_Err","Pass")
+print "%-30s %-35s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","NIST","Relative_Err","Pass")
 for i in range(nChecks):
 
 	# Step 2) Write input files
@@ -237,10 +238,10 @@ for i in range(nChecks):
 				os.system('cp ' + ' '.join(mcfName) + ' ' + failureOutString )
 				os.system('cp ' + cassRun + '*' + ' ' + failureOutString )
 			if (j == 0):
-				print "%-30s %-20s %18.6g %18.6g %18s %8s" % (title[i],cassStr[i][j],
+				print "%-30s %-35s %18.6g %18.6g %18s %8s" % (title[i],cassPrint[i][j],
 						cassAnswer[i][j],analyticAnswer[i][j],'',passCheck)
 			else: 
-				print "%-30s %-21s %17.6g %18.6g %18s %8s" % ('',cassStr[i][j],
+				print "%-30s %-36s %17.6g %18.6g %18s %8s" % ('',cassPrint[i][j],
 						cassAnswer[i][j],analyticAnswer[i][j],'',passCheck)
 
 		else:
@@ -255,10 +256,10 @@ for i in range(nChecks):
 				os.system('cp ' + ' '.join(mcfName) + ' ' + failureOutString )
 				os.system('cp ' + cassRun + '*' + ' ' + failureOutString )
 			if (j == 0):
-				print "%-30s %-20s %18.6g %18.6g %18.6g %8s" % (title[i],cassStr[i][j],
+				print "%-30s %-35s %18.6g %18.6g %18.6g %8s" % (title[i],cassPrint[i][j],
 						cassAnswer[i][j],analyticAnswer[i][j],errorRel,passCheck)
 			else: 
-				print "%-30s %-21s %17.6g %18.6g %18.6g %8s" % ('',cassStr[i][j],
+				print "%-30s %-36s %17.6g %18.6g %18.6g %8s" % ('',cassPrint[i][j],
 						cassAnswer[i][j],analyticAnswer[i][j],errorRel,passCheck)
 
 if (FailCount != 0):

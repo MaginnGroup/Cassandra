@@ -133,6 +133,7 @@ analyticAnswer = [None] * nChecks # list to hold analytic answers
 cassAnswer     = [None] * nChecks # list to hold cassandra's answers
 passCheck      = [None] * nChecks # list to hold if cassandra passed each check
 cassStr = (("Bond angle energy",),) * nChecks # one tuple for each check
+cassPrint = (("Bond angle energy [kJ/mol-Ext]",),) * nChecks # one tuple for each check
 errorTol = 1e-5
 
 # the atomic coordinates are stored in set of nested lists
@@ -200,7 +201,7 @@ analyticAnswer[0] = (AngleEnergyHarmonic(31250,114.0,anglesToCheck[0]),)
 analyticAnswer[1] = (AngleEnergyHarmonic(31250,114.0,anglesToCheck[1]),)
 analyticAnswer[2] = (AngleEnergyHarmonic(31250,114.0,anglesToCheck[2]),)
 
-print "%-30s %-20s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","Analytic","Relative_Err","Pass")
+print "%-30s %-35s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","Analytic","Relative_Err","Pass")
 for i in range(nChecks):
 	#variables that change from one check to the next
 	atomCoords = atomCoordsByCheck[i] # atom coords
@@ -302,7 +303,7 @@ for i in range(nChecks):
 				os.system('cp ' + xyzName + ' ' + failureOutString )
 				os.system('cp ' + ' '.join(mcfName) + ' ' + failureOutString )
 				os.system('cp ' + cassRun + '*' + ' ' + failureOutString )
-			print "%-30s %-20s %18.6g %18.6g %18s %8s" % (title[i],cassStr[i][j],
+			print "%-30s %-35s %18.6g %18.6g %18s %8s" % (title[i],cassPrint[i][j],
 						cassAnswer[i][j],analyticAnswer[i][j],'',passCheck)
 		else:
 			errorRel = abs(cassAnswer[i][j] - analyticAnswer[i][j])/analyticAnswer[i][j]
@@ -315,7 +316,7 @@ for i in range(nChecks):
 				os.system('cp ' + xyzName + ' ' + failureOutString )
 				os.system('cp ' + ' '.join(mcfName) + ' ' + failureOutString )
 				os.system('cp ' + cassRun + '*' + ' ' + failureOutString )
-			print "%-30s %-20s %18.6g %18.6g %18.6g %8s" % (title[i],cassStr[i][j],
+			print "%-30s %-35s %18.6g %18.6g %18.6g %8s" % (title[i],cassPrint[i][j],
 						cassAnswer[i][j],analyticAnswer[i][j],errorRel,passCheck)
 
 

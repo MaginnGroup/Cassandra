@@ -90,6 +90,7 @@ analyticAnswer = [None] * nChecks # list to hold analytic answers
 cassAnswer     = [None] * nChecks # list to hold cassandra's answers
 passCheck      = [None] * nChecks # list to hold if cassandra passed each check
 cassStr = (("Total system energy",),) * nChecks # one tuple for each check
+cassPrint = (("Total system energy [kJ/mol-Ext]",),) * nChecks # one tuple for each check
 errorTol = 1e-5
 
 # the atomic coordinates are stored in set of nested lists
@@ -162,7 +163,7 @@ analyticAnswer[1] = (Mie(1.,1.,1.,14.,6.),)
 analyticAnswer[2] = ( round(Mie(2.**(1./6.),1.,1.,14.,6.),3 ) ,)
 analyticAnswer[3] = (0,)
 
-print "%-30s %-20s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","Analytic","Relative_Err","Pass")
+print "%-30s %-35s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","Analytic","Relative_Err","Pass")
 for i in range(nChecks):
 	#variables that change from one check to the next
 	atomCoords = atomCoordsByCheck[i] # atom coords
@@ -257,8 +258,9 @@ for i in range(nChecks):
 				os.system('cp ' + xyzName + ' ' + failureOutString )
 				os.system('cp ' + ' '.join(mcfName) + ' ' + failureOutString )
 				os.system('cp ' + cassRun + '*' + ' ' + failureOutString )
-			print "%-30s %-20s %18.6g %18.6g %18s %8s" % (title[i],cassStr[i][j],
+			print "%-30s %-35s %18.6g %18.6g %18s %8s" % (title[i],cassPrint[i][j],
 						cassAnswer[i][j],analyticAnswer[i][j],'',passCheck)
+
 		else:
 			errorRel = abs(cassAnswer[i][j] - analyticAnswer[i][j])/analyticAnswer[i][j]
 			passCheck = abs(errorRel) <= errorTol
@@ -270,7 +272,7 @@ for i in range(nChecks):
 				os.system('cp ' + xyzName + ' ' + failureOutString )
 				os.system('cp ' + ' '.join(mcfName) + ' ' + failureOutString )
 				os.system('cp ' + cassRun + '*' + ' ' + failureOutString )
-			print "%-30s %-20s %18.6g %18.6g %18.6g %8s" % (title[i],cassStr[i][j],
+			print "%-30s %-35s %18.6g %18.6g %18.6g %8s" % (title[i],cassPrint[i][j],
 						cassAnswer[i][j],analyticAnswer[i][j],errorRel,passCheck)
 
 
