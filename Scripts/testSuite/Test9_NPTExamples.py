@@ -60,9 +60,13 @@ analyticAnswer = [None] * nChecks # list to hold analytic answers
 cassAnswer     = [None] * nChecks # list to hold cassandra's answers
 passCheck      = [None] * nChecks # list to hold if cassandra passed each check
 cassStr = [None]* nChecks
+cassPrint = [None]* nChecks
 cassStr[0] = (("Energy_Total","Pressure","Volume","Density"),)
 cassStr[1] = (("Energy_Total","Pressure","Volume","Density", "Mass_Density"),)
 cassStr[2] = (("Energy_Total","Pressure","Volume","Density", "Mass_Density"),)
+cassPrint[0] = (("Energy_Total [kJ/mol-Ext]","Pressure [bar]","Volume [A^3]","Density [molec/A^3]"),)
+cassPrint[1] = (("Energy_Total [kJ/mol-Ext]","Pressure [bar]","Volume [A^3]","Density [molec/A^3]", "Mass_Density [kg/m^3]"),)
+cassPrint[2] = (("Energy_Total [kJ/mol-Ext]","Pressure [bar]","Volume [A^3]","Density [molec/A^3]", "Mass_Density [kg/m^3]"),)
 endStep = (100,100,100)
 errorTol = 5e-4
 
@@ -108,7 +112,7 @@ print "\n\n"+bold+"Test " + str(test_no) +": " + test_desc + normal
 FailCount = 0; # Counting number of failed tests
 
 # Loop through checks
-print "%-30s %-20s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","Accepted","Relative_Err","Pass")
+print "%-30s %-35s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","Accepted","Relative_Err","Pass")
 
 for i in range(nChecks):
 
@@ -169,10 +173,10 @@ for i in range(nChecks):
 			if passCheck == 0:
 				FailCount = FailCount+1;
 			if (j == 0):
-				print "%-30s %-20s %18.6g %18.6g %18s %8s" % (title[i],cassStr[i][0][j],
+				print "%-30s %-35s %18.6g %18.6g %18s %8s" % (title[i],cassPrint[i][0][j],
 						cassAnswer[i][j],analyticAnswer[i][j],'',passCheck)
 			else: 
-				print "%-30s %-21s %17.6g %18.6g %18s %8s" % ('',cassStr[i][0][j],
+				print "%-30s %-36s %17.6g %18.6g %18s %8s" % ('',cassPrint[i][0][j],
 						cassAnswer[i][j],analyticAnswer[i][j],'',passCheck)
 
 		else:
@@ -181,11 +185,13 @@ for i in range(nChecks):
 			if passCheck ==0:
 				FailCount = FailCount+1;
 			if (j == 0):
-				print "%-30s %-20s %18.6g %18.6g %18.6g %8s" % (title[i],cassStr[i][0][j],
+				print "%-30s %-35s %18.6g %18.6g %18.6g %8s" % (title[i],cassPrint[i][0][j],
 						cassAnswer[i][j],analyticAnswer[i][j],errorRel,passCheck)
 			else: 
-				print "%-30s %-21s %17.6g %18.6g %18.6g %8s" % ('',cassStr[i][0][j],
+				print "%-30s %-36s %17.6g %18.6g %18.6g %8s" % ('',cassPrint[i][0][j],
 						cassAnswer[i][j],analyticAnswer[i][j],errorRel,passCheck)
+
+	os.system('rm '+ cassRun[i] + ".prp")
 
 if (FailCount != 0):
 	PassState = "False"

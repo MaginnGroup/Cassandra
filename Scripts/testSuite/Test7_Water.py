@@ -68,6 +68,9 @@ bondParms = (((1,2,'fixed',1.),
               (1,3,'fixed',1.)),) # index = [species][bond][parm]
 angleParms = (((2,1,3,'fixed',109.47),),) # index = [species][angle][parm]
 cassStr = (("Inter molecule vdw","Long range correction","Inter molecule q","Reciprocal ewald","Self ewald","Total system energy"),) * 4 # one tuple for each check
+
+cassPrint = (("Inter molecule vdw [kJ/mol-Ext]","Long range correction [kJ/mol-Ext]","Inter molecule q [kJ/mol-Ext]","Reciprocal ewald [kJ/mol-Ext]","Self ewald [kJ/mol-Ext]","Total system energy [kJ/mol-Ext]"),) * 4 # one tuple for each check
+
 prpList = ("energy_intervdw", "energy_lrc", "energy_interq", "energy_recip", 
            "energy_self", "energy_total") # index = [property]
 vdwStyle = 'lj cut_tail 10.'
@@ -156,7 +159,7 @@ for s in range(nSpecies):
 	mcf.close()
 
 # Loop through checks
-print "%-30s %-20s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","Analytic","Relative_Err","Pass")
+print "%-30s %-35s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","NIST","Relative_Err","Pass")
 for i in range(numChecks):
 
 	# Step 2) Run Cassandra to get its answer
@@ -217,10 +220,10 @@ for i in range(numChecks):
 				os.system('cp ' + ' '.join(mcfName) + ' ' + failureOutString )
 				os.system('cp ' + cassRun + '*' + ' ' + failureOutString )
 			if (j == 0):
-				print "%-30s %-20s %18.6g %18.6g %18s %8s" % (title[i],cassStr[i][j],
+				print "%-30s %-35s %18.6g %18.6g %18s %8s" % (title[i],cassPrint[i][j],
 						cassAnswer[i][j],nist,'',passCheck)
 			else: 
-				print "%-30s %-21s %17.6g %18.6g %18s %8s" % ('',cassStr[i][j],
+				print "%-30s %-36s %17.6g %18.6g %18s %8s" % ('',cassPrint[i][j],
 						cassAnswer[i][j],nist,'',passCheck)
 
 		else:
@@ -235,10 +238,10 @@ for i in range(numChecks):
 				os.system('cp ' + ' '.join(mcfName) + ' ' + failureOutString )
 				os.system('cp ' + cassRun + '*' + ' ' + failureOutString )
 			if (j == 0):
-				print "%-30s %-20s %18.6g %18.6g %18.6g %8s" % (title[i],cassStr[i][j],
+				print "%-30s %-35s %18.6g %18.6g %18.6g %8s" % (title[i],cassPrint[i][j],
 						cassAnswer[i][j],nist,errorRel,passCheck)
 			else: 
-				print "%-30s %-21s %17.6g %18.6g %18.6g %8s" % ('',cassStr[i][j],
+				print "%-30s %-36s %17.6g %18.6g %18.6g %8s" % ('',cassPrint[i][j],
 						cassAnswer[i][j],nist,errorRel,passCheck)
 
 if (FailCount != 0):

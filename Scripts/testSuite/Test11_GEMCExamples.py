@@ -61,11 +61,18 @@ analyticAnswer = [None] * nChecks # list to hold analytic answers
 cassAnswer     = [None] * nChecks # list to hold cassandra's answers
 passCheck      = [None] * nChecks # list to hold if cassandra passed each check
 cassStr = [None]* nChecks
+cassPrint = [None]* nChecks
 cassStr[0] = (("Energy_Total","Density","Nmols","Volume","Mass_Density"),)
 cassStr[1] = (("Energy_Total","Density","Nmols","Volume","Pressure"),)
 cassStr[2] = (("Energy_Total","Density","Nmols","Volume","Pressure"),)
 cassStr[3] = (("Energy_Total","Density","Nmols","Volume"),)
 cassStr[4] = (("Density","Nmols","Volume","Pressure"),)
+
+cassPrint[0] = (("Energy_Total [kJ/mol-Ext]","Density [molec/A^3]","Nmols","Volume [A^3]","Mass_Density [kg/m^3]"),)
+cassPrint[1] = (("Energy_Total [kJ/mol-Ext]","Density [molec/A^3]","Nmols","Volume [A^3]","Pressure [bar]"),)
+cassPrint[2] = (("Energy_Total [kJ/mol-Ext]","Density [molec/A^3]","Nmols","Volume [A^3]","Pressure [bar]"),)
+cassPrint[3] = (("Energy_Total [kJ/mol-Ext]","Density [molec/A^3]","Nmols","Volume [A^3]"),)
+cassPrint[4] = (("Density [molec/A^3]","Nmols","Volume [A^3]","Pressure"),)
 
 endStep = (2200,2200,2200,2200,2200)
 errorTol = 5e-4
@@ -120,7 +127,7 @@ FailCount = 0; # Counting number of failed tests
 
 
 # Loop through checks
-print "%-30s %-20s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","Accepted","Relative_Err","Pass")
+print "%-30s %-35s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","Accepted","Relative_Err","Pass")
 
 for i in range(nChecks):
 
@@ -200,10 +207,10 @@ for i in range(nChecks):
 				if passCheck ==0:
 					FailCount = FailCount+1;
 				if (j == 0):
-					print "%-30s %-20s %18.6g %18.6g %18s %8s" % (title[i]+" Box "+str(b+1),cassStr[i][0][j],
+					print "%-30s %-35s %18.6g %18.6g %18s %8s" % (title[i]+" Box "+str(b+1),cassPrint[i][0][j],
 							cassAnswer[i][b][j],analyticAnswer[i][b][j],'',passCheck)
 				else: 
-					print "%-30s %-21s %17.6g %18.6g %18s %8s" % ('',cassStr[i][0][j],
+					print "%-30s %-36s %17.6g %18.6g %18s %8s" % ('',cassPrint[i][0][j],
 							cassAnswer[i][b][j],analyticAnswer[i][b][j],'',passCheck)
 
 			else:
@@ -212,10 +219,10 @@ for i in range(nChecks):
 				if passCheck ==0:
 					FailCount = FailCount+1;
 				if (j == 0):
-					print "%-30s %-20s %18.6g %18.6g %18.6g %8s" % (title[i]+" Box "+str(b+1),cassStr[i][0][j],
+					print "%-30s %-35s %18.6g %18.6g %18.6g %8s" % (title[i]+" Box "+str(b+1),cassPrint[i][0][j],
 							cassAnswer[i][b][j],analyticAnswer[i][b][j],errorRel,passCheck)
 				else: 
-					print "%-30s %-21s %17.6g %18.6g %18.6g %8s" % ('',cassStr[i][0][j],
+					print "%-30s %-36s %17.6g %18.6g %18.6g %8s" % ('',cassPrint[i][0][j],
 							cassAnswer[i][b][j],analyticAnswer[i][b][j],errorRel,passCheck)
 
 if (FailCount != 0):
@@ -234,11 +241,9 @@ LastTest.close()
 #*******************************************************************************
 # CLEAN UP SCRATCH FILES
 #*******************************************************************************
-#os.system('rm ' + inpName)
-#os.system('rm ' + xyzName)
-#os.system('rm ' + ' '.join(mcfName))
-#os.system('rm ' + cassRun + '*')
-
+for i in range(nChecks):
+	os.system('rm '+ cassRun[i] + ".box1.prp")
+	os.system('rm '+ cassRun[i] + ".box2.prp")
 
 
 

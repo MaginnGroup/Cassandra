@@ -124,6 +124,7 @@ analyticAnswer = [None] * nChecks # list to hold analytic answers
 cassAnswer     = [None] * nChecks # list to hold cassandra's answers
 passCheck      = [None] * nChecks # list to hold if cassandra passed each check
 cassStr = (("Dihedral angle energy",),) * nChecks # one tuple for each check
+cassPrint = (("Dihedral angle energy [kJ/mol-Ext]",),) * nChecks # one tuple for each check
 errorTol = 5e-4
 
 # Initialize
@@ -260,7 +261,7 @@ analyticAnswer[10] = (DihedEnergyCHARMM(2.952, 1.0, 0.0, dihedToCheck[2])+DihedE
 analyticAnswer[11] = (DihedEnergyCHARMM(2.952, 1.0, 0.0, dihedToCheck[3])+DihedEnergyCHARMM(-0.567, 2.0, 180.0, dihedToCheck[3])+DihedEnergyCHARMM(6.579, 3.0, 0.0, dihedToCheck[3]),)
 
 # Loop through checks
-print "%-30s %-20s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","Analytic","Relative_Err","Pass")
+print "%-30s %-35s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","Analytic","Relative_Err","Pass")
 for i in range(nChecks):
 	#variables that change from one check to the next
 	atomCoords = atomCoordsByCheck[i] # atom coords
@@ -385,7 +386,7 @@ for i in range(nChecks):
 				os.system('cp ' + xyzName + ' ' + failureOutString )
 				os.system('cp ' + ' '.join(mcfName) + ' ' + failureOutString )
 				os.system('cp ' + cassRun + '*' + ' ' + failureOutString )
-			print "%-30s %-21s %17.6g %18.6g %18s %8s" % (title[i],cassStr[i][j],
+			print "%-30s %-36s %17.6g %18.6g %18s %8s" % (title[i],cassPrint[i][j],
 						cassAnswer[i][j],analyticAnswer[i][j],'',passCheck)
 
 		else:
@@ -399,7 +400,7 @@ for i in range(nChecks):
 				os.system('cp ' + xyzName + ' ' + failureOutString )
 				os.system('cp ' + ' '.join(mcfName) + ' ' + failureOutString )
 				os.system('cp ' + cassRun + '*' + ' ' + failureOutString )
-			print "%-30s %-21s %17.6g %18.6g %18.6g %8s" % (title[i],cassStr[i][j],
+			print "%-30s %-36s %17.6g %18.6g %18.6g %8s" % (title[i],cassPrint[i][j],
 						cassAnswer[i][j],analyticAnswer[i][j],errorRel,passCheck)
 
 

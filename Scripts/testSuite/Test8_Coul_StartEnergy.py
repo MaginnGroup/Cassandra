@@ -78,6 +78,10 @@ cassStr = (("Total system energy",),
            ("Total system energy",),
            ("Total system energy", "Inter molecule q", "Reciprocal ewald", "Self ewald"),
            ("Total system energy", "Inter molecule q", "Reciprocal ewald", "Self ewald"))
+cassPrint = (("Total system energy [kJ/mol-Ext]",),
+           ("Total system energy [kJ/mol-Ext]",),
+           ("Total system energy [kJ/mol-Ext]", "Inter molecule q [kJ/mol-Ext]", "Reciprocal ewald [kJ/mol-Ext]", "Self ewald [kJ/mol-Ext]"),
+           ("Total system energy [kJ/mol-Ext]", "Inter molecule q [kJ/mol-Ext]", "Reciprocal ewald [kJ/mol-Ext]", "Self ewald [kJ/mol-Ext]"))
 analyticAnswer = [None] * numChecks #this list will hold the analytic answers
 cassAnswer     = [None] * numChecks #this list will hold cassandra's answers
 passCheck      = [None] * numChecks
@@ -147,7 +151,7 @@ for s in range(nSpecies):
 	mcf.close()
 
 # Loop through checks
-print "%-30s %-20s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","Analytic","Relative_Err","Pass")
+print "%-30s %-35s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","Analytic","Relative_Err","Pass")
 for i in range(numChecks):
 	#variables that change from one check to the next
 	d = distList[i] # atomic separation
@@ -255,10 +259,10 @@ for i in range(numChecks):
 				os.system('cp ' + ' '.join(mcfName) + ' ' + failureOutString )
 				os.system('cp ' + cassRun + '*' + ' ' + failureOutString )
 			if (j == 0):
-				print "%-30s %-20s %18.6g %18.6g %18s %8s" % (title[i],cassStr[i][j],
+				print "%-30s %-35s %18.6g %18.6g %18s %8s" % (title[i],cassStr[i][j],
 						cassAnswer[i][j],analyticAnswer[i][j],'',passCheck)
 			else: 
-				print "%-30s %-21s %17.6g %18.6g %18s %8s" % ('',cassStr[i][j],
+				print "%-30s %-36s %17.6g %18.6g %18s %8s" % ('',cassPrint[i][j],
 						cassAnswer[i][j],analyticAnswer[i][j],'',passCheck)
 
 		else:
@@ -273,10 +277,10 @@ for i in range(numChecks):
 				os.system('cp ' + ' '.join(mcfName) + ' ' + failureOutString )
 				os.system('cp ' + cassRun + '*' + ' ' + failureOutString )
 			if (j == 0):
-				print "%-30s %-20s %18.6g %18.6g %18.6g %8s" % (title[i],cassStr[i][j],
+				print "%-30s %-35s %18.6g %18.6g %18.6g %8s" % (title[i],cassPrint[i][j],
 						cassAnswer[i][j],analyticAnswer[i][j],errorRel,passCheck)
 			else: 
-				print "%-30s %-21s %17.6g %18.6g %18.6g %8s" % ('',cassStr[i][j],
+				print "%-30s %-36s %17.6g %18.6g %18.6g %8s" % ('',cassPrint[i][j],
 						cassAnswer[i][j],analyticAnswer[i][j],errorRel,passCheck)
 
 if (FailCount != 0):
