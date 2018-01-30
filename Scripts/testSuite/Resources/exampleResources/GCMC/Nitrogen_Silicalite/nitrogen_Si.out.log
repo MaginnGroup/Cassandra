@@ -14,9 +14,9 @@ Run info
 version: Cassandra Development Version
 inputfile: nitrogen_Si.inp
 name of run: nitrogen_Si.out
-date (mm/dd/yyyy): 01/27/2018
-time: 17:16:36
-machine: Matthews-MBP
+date (mm/dd/yyyy): 01/30/2018
+time: 00:37:34
+machine: matthews-mbp.dhcp.nd.edu
 ********************************************************************************
 
 Verbose log
@@ -417,10 +417,10 @@ Writing information for box  1
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.749549 secs.
- Rotation time =               0.755894 secs.
- Insertion time =              1.524864 secs.
- Deletion time =               1.265603 secs.
+ Translation time =            0.738131 secs.
+ Rotation time =               0.756584 secs.
+ Insertion time =              1.506883 secs.
+ Deletion time =               1.247278 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -435,5 +435,5 @@ Writing information for box  1
          0      Hours
          0    Minutes
          5    Seconds
-       427         ms
+       386         ms
 ********************************************************************************

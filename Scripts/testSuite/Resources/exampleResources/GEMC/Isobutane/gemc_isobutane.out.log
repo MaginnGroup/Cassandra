@@ -14,9 +14,9 @@ Run info
 version: Cassandra Development Version
 inputfile: gemc_isobutane.inp
 name of run: gemc_isobutane.out
-date (mm/dd/yyyy): 01/27/2018
-time: 17:15:39
-machine: Matthews-MBP
+date (mm/dd/yyyy): 01/30/2018
+time: 00:36:38
+machine: matthews-mbp.dhcp.nd.edu
 ********************************************************************************
 
 Verbose log
@@ -460,10 +460,10 @@ Writing information for box  2
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.135797 secs.
- Rotation time =               0.141873 secs.
- Volume change time =          0.331348 secs.
- Swap time =                   0.341211 secs.
+ Translation time =            0.160056 secs.
+ Rotation time =               0.168543 secs.
+ Volume change time =          0.386710 secs.
+ Swap time =                   0.406089 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -478,5 +478,5 @@ Writing information for box  2
          0      Hours
          0    Minutes
          1    Seconds
-        52         ms
+       229         ms
 ********************************************************************************

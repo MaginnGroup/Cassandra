@@ -14,9 +14,9 @@ Run info
 version: Cassandra Development Version
 inputfile: nvt.inp
 name of run: nvt.out
-date (mm/dd/yyyy): 01/27/2018
-time: 17:12:54
-machine: Matthews-MBP
+date (mm/dd/yyyy): 01/30/2018
+time: 00:34:08
+machine: matthews-mbp.dhcp.nd.edu
 ********************************************************************************
 
 Verbose log
@@ -367,9 +367,9 @@ Writing information about fragments
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            7.445963 secs.
- Rotation time =               7.340489 secs.
- Regrowth time =               7.589597 secs.
+ Translation time =            6.794058 secs.
+ Rotation time =               6.711572 secs.
+ Regrowth time =               6.909098 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -383,6 +383,6 @@ Writing information about fragments
          0       Days
          0      Hours
          0    Minutes
-        23    Seconds
-       123         ms
+        21    Seconds
+       112         ms
 ********************************************************************************
