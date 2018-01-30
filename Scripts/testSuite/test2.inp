@@ -1,0 +1,69 @@
+# Run_Name
+test2.out
+
+# Sim_Type
+nvt
+
+# Nbr_Species
+1
+
+# VDW_Style
+Mie cut_tail 7.0
+
+# Charge_Style
+none
+
+# Seed_Info
+1 2
+
+# Rcutoff_Low
+1.0
+
+# Molecule_Files
+test2.mcf 2
+
+# Box_Info
+1
+cubic
+100.0
+
+# Temperature_Info
+300.0
+
+# Move_Probability_Info
+
+# Prob_Translation
+1.0
+0.0 0.0
+
+# Done_Probability_Info
+
+# Start_Type
+read_config 2 test2.inp.xyz
+
+# Run_Type
+Equilibration 100
+
+# Simulation_Length_Info
+units steps
+prop_freq 1
+coord_freq 1
+run 0
+
+# Property_Info 1
+Energy_Total
+Pressure
+Volume
+Nmols
+Density
+!---------------
+
+# Fragment_Files
+
+# CBMC_Info
+kappa_ins 12
+kappa_rot 0
+kappa_dih 10
+rcut_cbmc 6.5
+
+END

@@ -15,8 +15,8 @@ version: Cassandra Development Version
 inputfile: nvt.inp
 name of run: nvt.out
 date (mm/dd/yyyy): 01/30/2018
-time: 00:34:08
-machine: matthews-mbp.dhcp.nd.edu
+time: 14:51:23
+machine: Matthews-MBP
 ********************************************************************************
 
 Verbose log
@@ -306,83 +306,3 @@ Run simulation
      13210  translate         1   1  0.23250
      13248     rotate         1   1  0.62750
      16397  translate         1   1  0.23782
-     16735     rotate         1   1  0.62945
-     19740  translate         1   1  0.24015
-     19960     rotate         1   1  0.62939
-     22983  translate         1   1  0.24532
-     23288     rotate         1   1  0.63377
-     26284  translate         1   1  0.24398
-     26712     rotate         1   1  0.63205
-     29621  translate         1   1  0.24475
-     29978     rotate         1   1  0.63384
-********************************************************************************
-
-Energy of final configuration
-********************************************************************************
-
- Energy components for box 1     kJ/mol-Extensive       Relative_Error
- ---------------------------------------------------------------------
- Total system energy                    -1257.028           -0.220E-14
- Intra molecular energy                   134.082            0.136E-13
-   Bond energy                              0.000            0.000E+00
-   Bond angle energy                      134.082            0.113E-13
-   Dihedral angle energy                    0.000            0.000E+00
-   Improper angle energy                    0.000            0.000E+00
-   Intra molecule vdw                       0.000            0.000E+00
-   Intra molecule q                         0.000            0.000E+00
- Inter molecular energy                 -1391.110           -0.230E-14
-   Inter molecule vdw                    -992.277           -0.220E-14
-   Long range correction                  -43.114           -0.000E+00
-   Inter molecule q                      8613.387            0.676E-15
-   Reciprocal ewald                       135.720            0.000E+00
-   Self ewald                           -9104.826           -0.000E+00
- ---------------------------------------------------------------------
-   Number of reciprocal vectors              1568
-
-********************************************************************************
-
-
-Writing information for box  1
-********************************************************************************
-
-   ---------------------------------------------------------
-   Writing information for species  1
-
-                Move      Trials     Success   % Success
-           Translate       10995        2694       24.50
-              Rotate       10922        6928       63.43
-   ---------------------------------------------------------
-
-********************************************************************************
-
-Writing information about fragments
-********************************************************************************
-
-   ---------------------------------------------------------
-   Writing information for species  1
-     #_Frags_Regrown      Trials     Success   % Success
-                   1       11083        1332       12.02
-   ---------------------------------------------------------
-********************************************************************************
-
- Writing information about subroutine times
-********************************************************************************
- Translation time =            6.794058 secs.
- Rotation time =               6.711572 secs.
- Regrowth time =               6.909098 secs.
-********************************************************************************
-
-********************************************************************************
-************************ Cassandra simulation complete *************************
-********************************************************************************
-
- Program execution time
-********************************************************************************
-         0      Years
-         0     Months
-         0       Days
-         0      Hours
-         0    Minutes
-        21    Seconds
-       112         ms
-********************************************************************************

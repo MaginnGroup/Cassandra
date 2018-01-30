@@ -1,0 +1,36 @@
+# Atom_Info
+4
+1 CH3_1 C3 15.034 0. LJ 98.000 3.750
+2 CH2_2 C2 14.027 0. LJ 46.000 3.950
+3 CH2_3 C2 14.027 0. LJ 46.000 3.950
+4 CH3_4 C3 15.034 0. LJ 98.000 3.750
+
+# Bond_Info
+3
+1 1 2 fixed 1.540 
+2 2 3 fixed 1.540 
+3 3 4 fixed 1.540 
+
+# Angle_Info
+2
+1 1 2 3 harmonic 31250.0 114.00 
+2 2 3 4 harmonic 31250.0 114.00 
+
+# Dihedral_Info
+1
+1 1 2 3 4 OPLS 0.000 2.952 -0.567 6.579 
+
+# Improper_Info
+0
+
+# Fragment_Info
+0
+
+# Fragment_Connectivity
+0
+
+# Intra_Scaling
+0. 0. 0. 0.
+0. 0. 0. 0.
+
+END

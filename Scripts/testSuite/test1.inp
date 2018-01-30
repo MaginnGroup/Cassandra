@@ -1,0 +1,53 @@
+# Run_Name
+test1.out
+
+# Sim_Type
+nvt
+
+# Nbr_Species
+1
+
+# VDW_Style
+lj minimum_image
+
+# Charge_Style
+none
+
+# Seed_Info
+1 2
+
+# Rcutoff_Low
+0.1
+
+# Molecule_Files
+test1.mcf 2
+
+# Box_Info
+1
+cubic
+100.0
+
+# Temperature_Info
+1.0
+
+# Move_Probability_Info
+
+# Prob_Translation
+1.0
+0.0 0.0
+
+# Done_Probability_Info
+
+# Start_Type
+read_config 2 test1.inp.xyz
+
+# Run_Type
+Equilibration 100
+
+# Simulation_Length_Info
+units steps
+prop_freq 1
+coord_freq 1
+run 0
+
+END
