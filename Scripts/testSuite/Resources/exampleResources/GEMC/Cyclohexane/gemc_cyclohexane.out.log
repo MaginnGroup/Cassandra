@@ -15,8 +15,8 @@ version: Cassandra Development Version
 inputfile: gemc_cyclohexane.inp
 name of run: gemc_cyclohexane.out
 date (mm/dd/yyyy): 01/30/2018
-time: 00:36:06
-machine: matthews-mbp.dhcp.nd.edu
+time: 15:00:03
+machine: Matthews-MBP
 ********************************************************************************
 
 Verbose log
@@ -458,11 +458,11 @@ Writing information about fragments
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.179842 secs.
- Rotation time =               0.172213 secs.
- Volume change time =          0.533650 secs.
- Swap time =                   0.185097 secs.
- Regrowth time =               0.179844 secs.
+ Translation time =            0.220799 secs.
+ Rotation time =               0.219272 secs.
+ Volume change time =          0.637636 secs.
+ Swap time =                   0.224949 secs.
+ Regrowth time =               0.224572 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -476,6 +476,6 @@ Writing information about fragments
          0       Days
          0      Hours
          0    Minutes
-         2    Seconds
-       719         ms
+         3    Seconds
+       320         ms
 ********************************************************************************

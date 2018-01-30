@@ -15,8 +15,8 @@ version: Cassandra Development Version
 inputfile: methane_Si.inp
 name of run: methane_Si.out
 date (mm/dd/yyyy): 01/30/2018
-time: 00:36:53
-machine: matthews-mbp.dhcp.nd.edu
+time: 15:01:14
+machine: Matthews-MBP
 ********************************************************************************
 
 Verbose log
@@ -373,9 +373,9 @@ Writing information for box  1
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            1.572060 secs.
- Insertion time =              6.528565 secs.
- Deletion time =               5.487512 secs.
+ Translation time =            1.755482 secs.
+ Insertion time =              7.416391 secs.
+ Deletion time =               6.231366 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -389,6 +389,6 @@ Writing information for box  1
          0       Days
          0      Hours
          0    Minutes
-        21    Seconds
-       323         ms
+        22    Seconds
+       645         ms
 ********************************************************************************

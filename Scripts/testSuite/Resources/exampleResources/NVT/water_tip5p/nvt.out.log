@@ -15,8 +15,8 @@ version: Cassandra Development Version
 inputfile: nvt.inp
 name of run: nvt.out
 date (mm/dd/yyyy): 01/30/2018
-time: 00:34:58
-machine: matthews-mbp.dhcp.nd.edu
+time: 14:58:07
+machine: Matthews-MBP
 ********************************************************************************
 
 Verbose log
@@ -352,8 +352,8 @@ Writing information for box  1
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =           29.597903 secs.
- Rotation time =              29.013644 secs.
+ Translation time =           31.275187 secs.
+ Rotation time =              30.707457 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -367,6 +367,6 @@ Writing information for box  1
          0       Days
          0      Hours
          1    Minutes
-         3    Seconds
-       489         ms
+         7    Seconds
+       208         ms
 ********************************************************************************
