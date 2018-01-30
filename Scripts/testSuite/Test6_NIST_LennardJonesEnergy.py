@@ -127,6 +127,15 @@ xyzfileByCheck[4] = xyzfileByCheck[0]
 xyzfileByCheck[5] = xyzfileByCheck[1]
 xyzfileByCheck[6] = xyzfileByCheck[2]
 xyzfileByCheck[7] = xyzfileByCheck[3]
+xyzSimplefileByCheck= [None] * nChecks
+xyzSimplefileByCheck[0] = "nist1.xyz"
+xyzSimplefileByCheck[1] = "nist3.xyz"
+xyzSimplefileByCheck[2] = "nist2.xyz" 
+xyzSimplefileByCheck[3] = "nist4.xyz"
+xyzSimplefileByCheck[4] = xyzSimplefileByCheck[0]
+xyzSimplefileByCheck[5] = xyzSimplefileByCheck[1]
+xyzSimplefileByCheck[6] = xyzSimplefileByCheck[2]
+xyzSimplefileByCheck[7] = xyzSimplefileByCheck[3]
 
 #*******************************************************************************
 # FUNCTION DEFINITIONS
@@ -160,6 +169,9 @@ print "%-30s %-35s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","NIST"
 for i in range(nChecks):
 
 	# Step 2) Write input files
+	# Pull in resource xyz file
+	os.system('cp '+xyzfileByCheck[i]+' ' +xyzSimplefileByCheck[i])
+	
 	# 2.1) Write MCF
 	for s in range(nSpecies):
 		mcf = open(mcfName[s],"w") #Creates mcf file and allows for edits
@@ -202,7 +214,7 @@ for i in range(nChecks):
 	inp.write("# Move_Probability_Info\n\n")
 	inp.write("# Prob_Translation\n1.0\n0.79 0.5\n\n")
 	inp.write("# Done_Probability_Info\n\n")
-	inp.write("# Start_Type\nread_config %s %s\n\n" % (' '.join(str(x) for x in nMolsByCheck[i]),xyzfileByCheck[i]))
+	inp.write("# Start_Type\nread_config %s %s\n\n" % (' '.join(str(x) for x in nMolsByCheck[i]),xyzSimplefileByCheck[i]))
 	inp.write("# Run_Type\nEquilibration 100\n\n")
 	inp.write("# Average_Infor\n1\n\n")
 	inp.write("# Simulation_Length_Info\nunits steps\nprop_freq 1\ncoord_freq 1\nrun 0\n\n")
@@ -215,6 +227,7 @@ for i in range(nChecks):
 	if err is not None:
 		print("Error.Abort.")
 
+	os.system('rm '+xyzSimplefileByCheck[i])
 
 	# 3.3) Read logfile
 	log = open(cassRun + ".log", "r")

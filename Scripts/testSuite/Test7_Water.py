@@ -107,6 +107,8 @@ cassRun 	= "test7.out"
 inpName 	= "test7.inp"
 xyzName = (resourceDir+"/inputFiles/test7.water1.xyz", resourceDir+"/inputFiles/test7.water2.xyz",
            resourceDir+"/inputFiles/test7.water3.xyz", resourceDir+"/inputFiles/test7.water4.xyz") # index = [check]
+xyzSimpleName = ("test7.water1.xyz", "test7.water2.xyz",
+           "test7.water3.xyz", "test7.water4.xyz") # index = [check]
 mcfName 	= ("test7.water.mcf",) # one string per species
 
 #*******************************************************************************
@@ -163,6 +165,9 @@ print "%-30s %-35s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","NIST"
 for i in range(numChecks):
 
 	# Step 2) Run Cassandra to get its answer
+	# Pull in resource xyz file
+	os.system('cp '+xyzName[i]+' ' +xyzSimpleName[i])
+
 	# 2.1) Write inp file
 
 	# Combine file names and nmols
@@ -183,7 +188,7 @@ for i in range(numChecks):
 	inp.write("# Move_Probability_Info\n\n")
 	inp.write("# Prob_Translation\n1.0\n0.0 0.0\n\n")
 	inp.write("# Done_Probability_Info\n\n")
-	inp.write("# Start_Type\nread_config %d %s\n\n" % (nMols[i],xyzName[i]))
+	inp.write("# Start_Type\nread_config %d %s\n\n" % (nMols[i],xyzSimpleName[i]))
 	inp.write("# Run_Type\nEquilibration 100\n\n")
 	inp.write("# Simulation_Length_Info\nunits steps\nprop_freq 1\ncoord_freq 1\nrun 0\n\n")
 	inp.write("END\n")
@@ -195,6 +200,8 @@ for i in range(numChecks):
 
 	if err is not None:
 		print("Error.Abort.")
+
+	os.system('rm '+xyzSimpleName[i])
 
 	# 3.3) Read logfile
 	log = open(cassRun + ".log", "r")
