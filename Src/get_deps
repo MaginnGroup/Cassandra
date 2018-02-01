@@ -1,0 +1,20 @@
+#!/bin/bash
+
+
+if [ -e dep.mk ]; then
+ rm dep.mk
+fi
+
+for program_file in `ls *.f90`
+do
+  if [ -e dep.mk ]; then
+    echo $program_file":" `awk '$1 ~ /^[Uu][Ss][Ee]$/ {print tolower($2)".o"}' $program_file` | sed -e 's/.f90/.o/' -e 's/[,;]//g' >> dep.mk
+  else
+    echo $program_file":" `awk '$1 ~ /^[Uu][Ss][Ee]$/ {print tolower($2)".o"}' $program_file` | sed -e 's/.f90/.o/'  -e 's/[,;]//g' > dep.mk
+  fi
+done
+
+sed -ibkp s/\ netcdf.o/\ / dep.mk
+sed -ibkp s/omp_lib.o// dep.mk
+rm dep.mkbkp
+
