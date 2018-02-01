@@ -14,9 +14,9 @@ Run info
 version: Cassandra Development Version
 inputfile: methane_butane_Si.inp
 name of run: methane_butane_Si.out
-date (mm/dd/yyyy): 01/30/2018
-time: 15:01:10
-machine: Matthews-MBP
+date (mm/dd/yyyy): 02/01/2018
+time: 16:50:25
+machine: Matthews-MacBook-Pro.local
 ********************************************************************************
 
 Verbose log
@@ -477,11 +477,11 @@ Writing information about fragments
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.168081 secs.
- Rotation time =               0.264585 secs.
- Insertion time =              0.698626 secs.
- Deletion time =               0.748422 secs.
- Regrowth time =               1.139724 secs.
+ Translation time =            0.158322 secs.
+ Rotation time =               0.246472 secs.
+ Insertion time =              0.666533 secs.
+ Deletion time =               0.719469 secs.
+ Regrowth time =               1.095922 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -495,6 +495,6 @@ Writing information about fragments
          0       Days
          0      Hours
          0    Minutes
-         3    Seconds
-       133         ms
+         2    Seconds
+       991         ms
 ********************************************************************************
