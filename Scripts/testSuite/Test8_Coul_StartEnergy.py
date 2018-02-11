@@ -21,27 +21,23 @@ import argparse
 
 parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description=
 """DESCRIPTION:
-Runs the given test using the Cassandra executable specified.
+Runs the test suite using the Cassandra executable specified, including path.
 
 EXAMPLES:
-To run a test using a Cassandra executable inside of Cassandra/Src/:
+To run the test suite using a Cassandra executable inside of Cassandra/Src/:
 
-	> python Test#_Description.py cassandra.exe
-	> python Test#_Description.py cassandra_gfortran.exe
+	> python testSuite.py ../../Src/cassandra.exe
+	> python testSuite.py ../../Src/cassandra_gfortran.exe
 
 To run a test using a Cassandra executable elsewhere:
 
-	> python Test#_Description.py /home/applications/cassandra.exe --absPath
-	> python Test#_Description.py /home/applications/cassandra.exe -a
-
+	> python Test#_Description.py /home/applications/cassandra.exe 
+	> python Test#_Description.py /home/applications/cassandra_gfortran.exe
 
 """)
 parser.add_argument('cassandra_exe', 
-                help="Cassandra executable [file name if inside Src/ directory or path with " +
-                "indicated --absPath flag]")
-parser.add_argument('--absPath','-a', action='store_true',
-                help="Signals that the Cassandra executable is given as a path instead of " +
-                "given as is in the Src driectory.")
+                help="Cassandra executable, including path. To call an executable in the same"+
+                "Cassandra package's Src folder, utilize ../../Src/cassandra.exe as the executable path.")
 
 args = parser.parse_args()
 
@@ -96,11 +92,8 @@ normal = '\033[0m' #Will make the next text normal(ie. unbold)
 #*******************************************************************************
 testSuiteFolder = os.getcwd()
 MainDir 	= testSuiteFolder[0:len(testSuiteFolder)-len('Scripts/testSuite')]
-cassDir 	= MainDir + "Src/"
 resourceDir = MainDir + "Scripts/testSuite/Resources/"
 cassExe     = args.cassandra_exe
-if args.absPath:
-	cassDir = ""
 cassRun = "test8.out"
 inpName = "test8.inp"
 xyzName = "test8.inp.xyz"
@@ -230,7 +223,7 @@ for i in range(numChecks):
 	xyz.close()
 
 	# 3.2) Run Cassandra Jobs
-	proc = sp.Popen([cassDir + cassExe + " " + inpName], stdout=sp.PIPE, shell=True)
+	proc = sp.Popen([cassExe + " " + inpName], stdout=sp.PIPE, shell=True)
 	(out, err) = proc.communicate()
 
 	if err is not None:

@@ -14,8 +14,8 @@ Run info
 version: Cassandra Development Version
 inputfile: npt.inp
 name of run: npt.out
-date (mm/dd/yyyy): 02/01/2018
-time: 16:19:58
+date (mm/dd/yyyy): 02/02/2018
+time: 20:40:00
 machine: matthews-mbp.dhcp.nd.edu
 ********************************************************************************
 
@@ -413,10 +413,10 @@ Writing information about fragments
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            4.485003 secs.
- Rotation time =               4.293213 secs.
- Volume change time =          4.470461 secs.
- Regrowth time =               5.645842 secs.
+ Translation time =            4.566931 secs.
+ Rotation time =               4.376625 secs.
+ Volume change time =          4.543488 secs.
+ Regrowth time =               5.708380 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -431,5 +431,5 @@ Writing information about fragments
          0      Hours
          0    Minutes
         19    Seconds
-       562         ms
+       863         ms
 ********************************************************************************

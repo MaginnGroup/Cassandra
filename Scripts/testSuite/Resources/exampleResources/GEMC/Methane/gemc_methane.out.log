@@ -14,8 +14,8 @@ Run info
 version: Cassandra Development Version
 inputfile: gemc_methane.inp
 name of run: gemc_methane.out
-date (mm/dd/yyyy): 02/01/2018
-time: 16:23:29
+date (mm/dd/yyyy): 02/02/2018
+time: 20:16:15
 machine: matthews-mbp.dhcp.nd.edu
 ********************************************************************************
 
@@ -438,9 +438,9 @@ Writing information for box  2
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.112426 secs.
- Volume change time =          1.074851 secs.
- Swap time =                   0.141556 secs.
+ Translation time =            0.118621 secs.
+ Volume change time =          1.099904 secs.
+ Swap time =                   0.147435 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -455,5 +455,5 @@ Writing information for box  2
          0      Hours
          0    Minutes
          1    Seconds
-       772         ms
+       832         ms
 ********************************************************************************

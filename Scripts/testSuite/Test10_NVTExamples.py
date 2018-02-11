@@ -22,27 +22,23 @@ import argparse
 
 parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description=
 """DESCRIPTION:
-Runs the given test using the Cassandra executable specified.
+Runs the test suite using the Cassandra executable specified, including path.
 
 EXAMPLES:
-To run a test using a Cassandra executable inside of Cassandra/Src/:
+To run the test suite using a Cassandra executable inside of Cassandra/Src/:
 
-	> python Test#_Description.py cassandra.exe
-	> python Test#_Description.py cassandra_gfortran.exe
+	> python testSuite.py ../../Src/cassandra.exe
+	> python testSuite.py ../../Src/cassandra_gfortran.exe
 
 To run a test using a Cassandra executable elsewhere:
 
-	> python Test#_Description.py /home/applications/cassandra.exe --absPath
-	> python Test#_Description.py /home/applications/cassandra.exe -a
-
+	> python Test#_Description.py /home/applications/cassandra.exe 
+	> python Test#_Description.py /home/applications/cassandra_gfortran.exe
 
 """)
 parser.add_argument('cassandra_exe', 
-                help="Cassandra executable [file name if inside Src/ directory or path with " +
-                "indicated --absPath flag]")
-parser.add_argument('--absPath','-a', action='store_true',
-                help="Signals that the Cassandra executable is given as a path instead of " +
-                "given as is in the Src driectory.")
+                help="Cassandra executable, including path. To call an executable in the same"+
+                "Cassandra package's Src folder, utilize ../../Src/cassandra.exe as the executable path.")
 
 args = parser.parse_args()
 
@@ -86,20 +82,24 @@ normal = '\033[0m' #Will make the next text normal(ie. unbold)
 #*******************************************************************************
 testSuiteFolder = os.getcwd()
 MainDir 	= testSuiteFolder[0:len(testSuiteFolder)-len('Scripts/testSuite')]
-cassDir 	= MainDir + "Src/"
 resourceDir = MainDir + "Scripts/testSuite/Resources/"
 cassExe     = args.cassandra_exe
-if args.absPath:
-	cassDir = ""
 resFolder	= (resourceDir+"exampleResources/NVT/2,2-dimethylhexane/",
 		resourceDir+"exampleResources/NVT/diethylether_mie/",
 		resourceDir+"exampleResources/NVT/dimethylether/",
 		resourceDir+"exampleResources/NVT/water_spc/",
 		resourceDir+"exampleResources/NVT/water_tip4p2005/",
 		resourceDir+"exampleResources/NVT/water_tip5p/")
-cassRun 	= (resFolder[0]+"nvt.out",resFolder[1]+"nvt_mie.out",resFolder[2]+"nvt.out",
-		resFolder[3]+"nvt.out",resFolder[4]+"nvt.out",resFolder[5]+"nvt.out")
+cassRun 	= ("nvt.out","nvt_mie.out","nvt.out","nvt.out","nvt.out","nvt.out")
 inpName 	= ("nvt.inp","nvt_mie.inp","nvt.inp","nvt.inp","nvt.inp","nvt.inp")
+mcfRun 	= ("dmh.mcf","dee.mcf","dme.mcf","spc.mcf","tip4p.mcf","tip5p.mcf")
+species = ([1],[1],[1],[1],[1],[1])
+xyzFlag 	= (0,0,1,0,1,0)
+xyzName 	=('','','nvt.inp.xyz','','nvt.inp.xyz','')
+chkFlag 	= (1,0,0,1,0,0)
+chkName 	=('nvt.inp.chk','','','nvt.inp.chk','','')
+
+
 resultFolder= (resourceDir+"exampleResults/NVT/2,2-dimethylhexane/",
 		resourceDir+"exampleResults/NVT/diethylether_mie/",
 		resourceDir+"exampleResults/NVT/dimethylether/",
@@ -137,16 +137,19 @@ for i in range(nChecks):
 	# 2.1) Write - only required to write on first check - mcf does not change
 	# Step 3) Run Cassandra to get its answer
 
-	# Change directory to the resource folder to run using given files
-	os.chdir(resFolder[i])
-	proc = sp.Popen([cassDir + cassExe + " " + inpName[i]], stdout=sp.PIPE, shell=True)
+	os.system('cp '+resFolder[i]+inpName[i]+' '+inpName[i])
+	os.system('cp '+resFolder[i]+mcfRun[i]+' '+mcfRun[i])
+	for iSpec, jSpec in enumerate(species[i]):
+		os.system('cp -r '+resFolder[i]+'species'+str(jSpec) + ' species'+str(jSpec))
+	if xyzFlag[i]:
+		os.system('cp '+resFolder[i]+xyzName[i]+' '+xyzName[i])
+	if chkFlag[i]:
+		os.system('cp '+resFolder[i]+chkName[i]+' '+chkName[i])
+
+	proc = sp.Popen([cassExe + " " + inpName[i]], stdout=sp.PIPE, shell=True)
 	(out, err) = proc.communicate()
-	
 	if err is not None:
 		print("Error.Abort.")
-
-	# Change directory back to test suite
-	os.chdir(MainDir+"Scripts/testSuite/")
 
 	nPrp = len(cassStr[i][0])
 
@@ -208,7 +211,15 @@ for i in range(nChecks):
 				print "%-30s %-36s %17.6g %18.6g %18.6g %8s" % ('',cassPrint[i][0][j],
 						cassAnswer[i][j],analyticAnswer[i][j],errorRel,passCheck)
 
-	os.system('rm '+ cassRun[i] + ".prp")
+	os.system('rm '+inpName[i])
+	os.system('rm '+mcfRun[i])
+	for iSpec, jSpec in enumerate(species[i]):
+		os.system('rm -r species'+str(jSpec))
+	os.system('rm '+ cassRun[i]+ "*")
+	if xyzFlag[i]:
+		os.system('rm '+xyzName[i])
+	if chkFlag[i]:
+		os.system('rm '+chkName[i])
 
 if (FailCount != 0):
 	PassState = "False"
