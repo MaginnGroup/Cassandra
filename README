@@ -20,7 +20,7 @@
 !*********************************************************************************
 
 
-This ile describes the layout of the Cassandra distribution directory along 
+This file describes the layout of the Cassandra distribution directory along 
 with instruction on how to compile the code, run examples and set up your first
 Cassandra simulation.
 
