@@ -6,108 +6,110 @@
              \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                
                                                                                 
 ********************************************************************************
- 
+**********************************Log File**************************************
+********************************************************************************
+
 Run info
 ********************************************************************************
 version: Cassandra Development Version
 inputfile: nvt.inp
 name of run: nvt.out
-date (mm/dd/yyyy): 08/04/2016
-time: 14:34:33
-machine: maginnfe.crc.nd.edu
+date (mm/dd/yyyy): 02/19/2018
+time: 18:49:00
+machine: Matthews-MBP.attlocal.net
 ********************************************************************************
- 
+
 Verbose log
 ********************************************************************************
 Normal output to logfile
 ********************************************************************************
- 
+
 Simulation type
 ********************************************************************************
 NVT_MC              
 ********************************************************************************
- 
+
 Copy input file
 ********************************************************************************
- 
- # Run_Name
- nvt.out
- 
- # Sim_Type
- nvt_mc
- 
- # Nbr_Species
- 1
- 
- # VDW_Style
- lj cut_tail 14.0
- 
- # Charge_Style
- coul ewald 50.0 0.000001
- 
- # Mixing_Rule
- lb
- 
- # Seed_Info
- 62704503 80297575
- 
- # Rcutoff_Low
- 0.85
- 
- # Molecule_Files
- tip5p.mcf 90
- 
- # Box_Info
- 1
- cubic
- 180.
- 
- # Temperature_Info
- 500.0
- 
- # Move_Probability_Info
- 
- # Prob_Translation
- 90
- 40.00
- 
- # Prob_Rotation
- 90
- 180.0
- 
- # Done_Probability_Info
- 
- # Start_Type
- make_config 90
- 
- # Run_Type
- production   900
- 
- # Simulation_Length_Info
- units        sweeps
- prop_freq    10
- coord_freq   10
- run          100
- 
- # Property_Info 1
- energy_total
- pressure
- 
- # Fragment_Files
- species1/frag1/frag1.dat  1
- 
- # CBMC_Info
- kappa_ins 12
- rcut_cbmc 6.5
- 
- END
+                                                                                
+# Run_Name                                                                      
+nvt.out                                                                         
+                                                                                
+# Sim_Type                                                                      
+nvt_mc                                                                          
+                                                                                
+# Nbr_Species                                                                   
+1                                                                               
+                                                                                
+# VDW_Style                                                                     
+lj cut_tail 14.0                                                                
+                                                                                
+# Charge_Style                                                                  
+coul ewald 50.0 0.000001                                                        
+                                                                                
+# Mixing_Rule                                                                   
+lb                                                                              
+                                                                                
+# Seed_Info                                                                     
+62704503 80297575                                                               
+                                                                                
+# Rcutoff_Low                                                                   
+0.85                                                                            
+                                                                                
+# Molecule_Files                                                                
+tip5p.mcf 90                                                                    
+                                                                                
+# Box_Info                                                                      
+1                                                                               
+cubic                                                                           
+180.                                                                            
+                                                                                
+# Temperature_Info                                                              
+500.0                                                                           
+                                                                                
+# Move_Probability_Info                                                         
+                                                                                
+# Prob_Translation                                                              
+90                                                                              
+40.00                                                                           
+                                                                                
+# Prob_Rotation                                                                 
+90                                                                              
+180.0                                                                           
+                                                                                
+# Done_Probability_Info                                                         
+                                                                                
+# Start_Type                                                                    
+make_config 90                                                                  
+                                                                                
+# Run_Type                                                                      
+production   900                                                                
+                                                                                
+# Simulation_Length_Info                                                        
+units        sweeps                                                             
+prop_freq    10                                                                 
+coord_freq   10                                                                 
+run          100                                                                
+                                                                                
+# Property_Info 1                                                               
+energy_total                                                                    
+pressure                                                                        
+                                                                                
+# Fragment_Files                                                                
+species1/frag1/frag1.dat  1                                                     
+                                                                                
+# CBMC_Info                                                                     
+kappa_ins 12                                                                    
+rcut_cbmc 6.5                                                                   
+                                                                                
+END                                                                             
 ********************************************************************************
- 
+
 Number of species
 ********************************************************************************
 1
 ********************************************************************************
- 
+
 Box info
 ********************************************************************************
 Number of simulation boxes     1
@@ -118,7 +120,7 @@ Box 1 is CUBIC
  Distance between box faces   180.0000     180.0000     180.0000
  Box volume, A^3       5832000.0000
 ********************************************************************************
- 
+
 Pair style
 ********************************************************************************
 VDW style used is:   LJ             in box:  1
@@ -133,7 +135,7 @@ Section "# Pair_Energy" is missing from the input file
  By default, pair interaction energy arrays will not be stored
 Lorentz-Berthelot mixing rule specified
 ********************************************************************************
- 
+
 Molecule info
 ********************************************************************************
  Reading molecular connectivity information
@@ -146,11 +148,11 @@ Molecule info
    0 improper(s) specified.
    1 fragment(s) specified.
    0 fragment bond(s) specified.
- 
+
  Species  Max molecules
  -------  -------------
       1             90
- 
+
  Species     1
  -------------------------------------------------------------------------------
  Atom parameters read
@@ -171,7 +173,7 @@ Molecule info
  Fragment info read
  Fragment file for fragment 1 is species1/frag1/frag1.dat
  -------------------------------------------------------------------------------
- 
+
  Fragment coord info
  -------------------------------------------------------------------------------
  library_coords array successfully allocated
@@ -179,23 +181,23 @@ Molecule info
  species1/frag1/frag1.dat
  -------------------------------------------------------------------------------
 ********************************************************************************
- 
+
 Start type
 ********************************************************************************
 Initial configuration for box 1 will be made
  Will insert      90  molecules of species   1
 ********************************************************************************
- 
+
 Seed info
 ********************************************************************************
 The starting seeds are:     62704503     80297575
 ********************************************************************************
- 
+
 Temperature
 ********************************************************************************
 Temperature of box 1 is 500.000 K
 ********************************************************************************
- 
+
 Move probabilities
 ********************************************************************************
 Probability for translation               90.000000
@@ -206,13 +208,13 @@ Number of moves is :   2
  Move probabilities do not sum to 1.0
  Dividing each probability by   180.000000
 ********************************************************************************
- 
+
 CBMC info
 ********************************************************************************
 Kappa for first fragment insertion          12
  Cutoff for CBMC for box 1 is         6.50
 ********************************************************************************
- 
+
 Simulation length info
 ********************************************************************************
 Thermodynamic quantities will be computed every        10 Sweeps    
@@ -223,7 +225,7 @@ The simulation will be run for                        100 Sweeps
 Instantaneous values will be written every             10 Sweeps    
 A sweep is defined as                                 180 steps
 ********************************************************************************
- 
+
 Property info
 ********************************************************************************
 Total number of property files to be written is     1   for box 1
@@ -234,37 +236,37 @@ Total number of property files to be written is     1   for box 1
  Energy_Total
  Pressure
 ********************************************************************************
- 
+
 Minimum distance cutoff
 ********************************************************************************
 MC low cutoff distance is   0.850    Angstrom
 ********************************************************************************
- 
+
 Run type
 ********************************************************************************
  The input run type is production
  Update frequency is          900
 ********************************************************************************
- 
+
 ********************************************************************************
 ************************ Begin Cassandra simulation ****************************
 ********************************************************************************
- 
+
 Initial configuration
 ********************************************************************************
  Inserting           90 molecules of species            1
 ********************************************************************************
- 
+
 Charge neutrality check
 ********************************************************************************
  Species 1 has charge:                  0.00000000
- 
+
  Box     1 has charge:                  0.00000000
 ********************************************************************************
- 
+
 Compute total energy
 ********************************************************************************
- 
+
  Energy components for box 1     kJ/mol-Extensive
  ---------------------------------------------------------------------
  Total system energy                        1.598
@@ -283,9 +285,9 @@ Compute total energy
    Self ewald                           -1218.395
  ---------------------------------------------------------------------
    Number of reciprocal vectors              8727
- 
+
 ********************************************************************************
- 
+
 Run simulation
 ********************************************************************************
       Step       Move   Mol Spc Box  Success  MaxWidth
@@ -309,13 +311,13 @@ Run simulation
      16279     rotate         1   1  0.98568
      17819  translate         1   1  0.97044
 ********************************************************************************
- 
+
 Energy of final configuration
 ********************************************************************************
- 
+
  Energy components for box 1     kJ/mol-Extensive       Relative_Error
  ---------------------------------------------------------------------
- Total system energy                        0.506            0.272E-11
+ Total system energy                        0.506            0.422E-11
  Intra molecular energy                     0.000            0.000E+00
    Bond energy                              0.000            0.000E+00
    Bond angle energy                        0.000            0.000E+00
@@ -323,48 +325,48 @@ Energy of final configuration
    Improper angle energy                    0.000            0.000E+00
    Intra molecule vdw                       0.000            0.000E+00
    Intra molecule q                         0.000            0.000E+00
- Inter molecular energy                     0.506            0.272E-11
-   Inter molecule vdw                      -0.058           -0.447E-13
-   Long range correction                   -0.003            0.000E+00
-   Inter molecule q                      1214.736            0.180E-14
-   Reciprocal ewald                         4.226            0.108E-14
-   Self ewald                           -1218.395            0.000E+00
+ Inter molecular energy                     0.506            0.422E-11
+   Inter molecule vdw                      -0.058           -0.117E-13
+   Long range correction                   -0.003           -0.000E+00
+   Inter molecule q                      1214.736            0.132E-14
+   Reciprocal ewald                         4.226            0.807E-15
+   Self ewald                           -1218.395           -0.000E+00
  ---------------------------------------------------------------------
    Number of reciprocal vectors              8727
- 
+
 ********************************************************************************
- 
- 
+
+
 Writing information for box  1
 ********************************************************************************
- 
+
    ---------------------------------------------------------
    Writing information for species  1
- 
+
                 Move      Trials     Success   % Success
            Translate        9087        8821       97.07
               Rotate        8913        8782       98.53
    ---------------------------------------------------------
- 
+
 ********************************************************************************
- 
+
  Writing information about subroutine times
 ********************************************************************************
- Translation time =           26.635733 secs.
- Rotation time =              26.103627 secs.
+ Translation time =           28.249496 secs.
+ Rotation time =              27.693825 secs.
 ********************************************************************************
- 
+
 ********************************************************************************
 ************************ Cassandra simulation complete *************************
 ********************************************************************************
- 
+
  Program execution time
 ********************************************************************************
          0      Years
          0     Months
          0       Days
          0      Hours
-         0    Minutes
-        55    Seconds
-       668         ms
+         1    Minutes
+         0    Seconds
+       548         ms
 ********************************************************************************
