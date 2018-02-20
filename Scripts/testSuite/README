@@ -36,30 +36,29 @@ As of 1/21/2018, the Test Suite contains the following tests:
 - RUNNING TEST SUITE ----------------------------------------
 -------------------------------------------------------------
 
-usage: testSuite.py [-h] [--absPath] cassandra_exe
+usage: testSuite.py [-h] cassandra_exe
 
 DESCRIPTION:
-Runs the test suite using the Cassandra executable specified.
+Runs the test suite using the Cassandra executable specified, including path.
 
 EXAMPLES:
 To run the test suite using a Cassandra executable inside of Cassandra/Src/:
 
-	> python testSuite.py cassandra.exe
-	> python testSuite.py cassandra_gfortran.exe
+	> python testSuite.py ../../Src/cassandra.exe
+	> python testSuite.py ../../Src/cassandra_gfortran.exe
 
-To run the test suite using a Cassandra executable elsewhere:
+To run a test using a Cassandra executable elsewhere:
 
-	> python testSuite.py /home/applications/cassandra.exe --absPath
-	> python testSuite.py /home/applications/cassandra.exe -a
+	> python Test#_Description.py /home/applications/cassandra.exe 
+	> python Test#_Description.py /home/applications/cassandra_gfortran.exe
 
 positional arguments:
-  cassandra_exe  Cassandra executable [file name if inside Src/ directory or
-                 path with indicated --absPath flag]
+  cassandra_exe  Cassandra executable, including path. To call an executable
+                 in the sameCassandra package's Src folder, utilize
+                 ../../Src/cassandra.exe as the executable path.
 
 optional arguments:
   -h, --help     show this help message and exit
-  --absPath, -a  Signals that the Cassandra executable is given as a path
-                 instead of given as is in the Src driectory.
 
 -------------------------------------------------------------
 - ADDING ADDITIONAL TESTS -----------------------------------
@@ -67,7 +66,7 @@ optional arguments:
 
 To add a new test, you must include specific lines within your test module, and change lines within testSuite.py:
 
-1.) Create a test that utilizes runs of Cassandra and compares to accepted, analytical, or reported values.
+1.) Create a test that utilizes runs of Cassandra and compares to accepted, analytical, or reported values. Ensure that all files that are used in the simulation are copied or generated within the testSuite directory to utilize the ability to call a relative path to the Cassandra executable (../../Src/cassandra.exe).
 
 To allow the new test to communicate with the shell script, testSuite.py, be sure to add the following segment to the end of the code:
 
