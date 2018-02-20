@@ -592,10 +592,20 @@ SUBROUTINE GEMC_Particle_Transfer
 
     ln_pacc = beta(box_in)*(dE_in - dE_frag_in) + beta(box_out)*(dE_out - dE_frag_out)
 
-    ln_pacc = ln_pacc - DLOG(box_list(box_in)%volume) &
-                      + DLOG(box_list(box_out)%volume) &
-                      - DLOG(REAL(nmols(is,box_out),DP)) &
+    ln_pacc = ln_pacc - DLOG(REAL(nmols(is,box_out),DP)) &
                       + DLOG(REAL(nmols(is,box_in), DP))
+
+    IF (box_list(box_in)%int_inner_shape == int_none .OR. species_list(is)%insertion == "CBMC") THEN
+       ln_pacc = ln_pacc - DLOG(box_list(box_in)%volume)
+    ELSE
+       ln_pacc = ln_pacc - DLOG(box_list(box_in)%inner_volume)
+    END IF
+
+    IF (box_list(box_out)%int_inner_shape == int_none .OR. species_list(is)%insertion == "CBMC") THEN
+       ln_pacc = ln_pacc + DLOG(box_list(box_out)%volume)
+    ELSE
+       ln_pacc = ln_pacc + DLOG(box_list(box_out)%inner_volume)
+    END IF
 
     ! The same order of insertion is used in both the insertion and 
     ! reverse deletion, so ln_pseq does not factor into ln_pacc
