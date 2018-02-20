@@ -157,6 +157,9 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   LOGICAL :: framework_overlap
   REAL(DP) :: E_framework
 
+  ! Inner-volume variables
+  REAL(DP) :: radius, radius2, theta, phi
+
 !  ! DEBUGging variables
 !  INTEGER :: M_XYZ_unit
 
@@ -373,9 +376,10 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
         
         ELSE
 
-        
            ! Select a random trial coordinate
-           IF (box_list(this_box)%int_box_shape == int_cubic) THEN
+           IF (box_list(this_box)%int_box_shape == int_cubic .OR. &
+               box_list(this_box)%int_box_shape == int_ortho) THEN
+              
               x_anchor = (0.5_DP - rranf()) * box_list(this_box)%length(1,1)
               y_anchor = (0.5_DP - rranf()) * box_list(this_box)%length(2,2)
               z_anchor = (0.5_DP - rranf()) * box_list(this_box)%length(3,3)
@@ -402,7 +406,41 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                        box_list(this_box)%length(3,2)*y_anchor +   &
                        box_list(this_box)%length(3,3)*z_anchor
 
+           END IF
 
+           IF (species_list(is)%insertion == 'INNER' .AND. box_list(this_box)%int_inner_shape /= int_none) THEN
+              IF (box_list(this_box)%int_inner_shape == int_sphere) THEN
+                 radius2 = x_anchor**2 + y_anchor**2 + z_anchor**2
+                 IF (radius2 > box_list(this_box)%inner_radius2) THEN
+                    theta = 2.0_DP*PI*rranf()
+                    phi = ACOS(2.0_DP*rranf()-1.0_DP)
+                    radius = (rranf())**(1.0_DP/3.0_DP) * box_list(this_box)%inner_radius
+                    x_anchor = radius * COS(theta) * SIN(phi)
+                    y_anchor = radius * SIN(theta) * SIN(phi)
+                    z_anchor = radius * COS(phi)
+                 END IF
+              ELSE IF (box_list(this_box)%int_inner_shape == int_cylinder) THEN
+                 radius2 = x_anchor**2 + y_anchor**2
+                 IF (radius2 > box_list(this_box)%inner_radius2) THEN
+                    theta = 2.0_DP*PI*rranf()
+                    radius = SQRT(rranf()) * box_list(this_box)%inner_radius
+                    x_anchor = radius * COS(theta)
+                    y_anchor = radius * SIN(theta)
+                 END IF
+              ELSE IF (box_list(this_box)%int_inner_shape == int_slitpore) THEN
+                 IF (ABS(z_anchor) > box_list(this_box)%inner_zmax) THEN
+                    z_anchor = (0.5_DP - rranf()) * box_list(this_box)%inner_zmax
+                 END IF
+              ELSE IF (box_list(this_box)%int_inner_shape == int_interface) THEN
+                 IF (ABS(z_anchor) > box_list(this_box)%inner_zmax .OR. &
+                     ABS(z_anchor) < box_list(this_box)%inner_zmin) THEN
+                    z_anchor = rranf() * (box_list(this_box)%inner_zmax - box_list(this_box)%inner_zmin)
+                    z_anchor = z_anchor + box_list(this_box)%inner_zmin
+                    IF (rranf() > 0.5_DP) THEN
+                       z_anchor = - z_anchor 
+                    END IF
+                 END IF
+              END IF
            END IF
 
         END IF
@@ -1198,9 +1236,8 @@ SUBROUTINE Cut_Regrow(this_im,is,frag_live,frag_dead,frag_order,frag_total, &
   CALL Fragment_Placement(this_box,this_im,is,frag_start,frag_total, &
        frag_order,frag_placed,this_lambda,E_total,ln_pbias,nrg_ring_frag_tot, &
        cbmc_overlap,del_overlap)
-
   cbmc_flag = .FALSE.
-  
+   
 
 END SUBROUTINE Cut_Regrow
 
@@ -1847,7 +1884,6 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
               
            CALL Compute_Atom_Nonbond_Energy(atom_id(j),this_im,is, &
                 E_intra_vdw,E_inter_vdw,E_intra_qq,E_inter_qq,overlap)
-              
            IF (overlap) THEN
               ! if it is the last trial, the atom exist flag may not be
               ! properly set to true
@@ -1891,7 +1927,6 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
            IF ( nrg_kBT >= max_kBT) THEN
               ! the energy is too high, set the weight to zero
               weight(ii) = 0.0_DP
-              overlap_trial(ii) = .TRUE.
            ELSE
               weight(ii) = DEXP(-nrg_kBT)
            END IF
