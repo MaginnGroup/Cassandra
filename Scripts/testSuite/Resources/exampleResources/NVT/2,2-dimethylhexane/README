@@ -1,0 +1,65 @@
+This directory contains all the files needed to run a short simulation of 
+gas-phase 2,2-dimethylhexane (dmh) with N=150 molecules at temperature T=450K 
+and volume V=(111.9 Ang)^3
+
+I. FILES REQUIRED TO RUN THE SIMULATION
+
+dmh.pdb
+    This file was created in Gaussview.
+
+dmh.ff
+    An empty template was created with the following command
+
+    > $CASSANDRA_DIR/Scripts/MCF_Generation/mcfgen.py dmh.pdb --ffTemplate
+
+    Parameters from the TRAPPE forcefield were manually typed into the blank 
+    template. TRAPPE parameters for dmh are available in the following 
+    publication:
+
+      M.G. Martin, and J.I. Siepmann,
+      Transferable potentials for phase equilibria. 1. United-atom description 
+      of n-alkanes
+      J. Phys. Chem. B, 102, 2569-2577 (1998).
+
+dmh.mcf
+    This file was generated with the following command:
+
+    > $CASSANDRA_DIR/Scripts/MCF_Generation/mcfgen.py dmh.pdb
+
+    Note that this command requires the file dmh.ff in the same directory.
+
+nvt.inp
+    This input file uses the checkpoint option. It reads the volume, maximum
+		displacement for translations, maximum theta for rotations and molecule 
+		coordinates from the nvt.inp.chk file.
+
+    The three types of molecule moves--translation, rotation, and regrowth--
+    are equally probable.
+
+    Thermodynamic properties are output every 10 sweeps = 1500 moves, for a
+		total of 1000 sweeps.
+
+nvt.inp.chk
+    This checkpoint file was created by running 50k sweeps in the NPT ensemble,
+		at N=150 molecules, P=5.63bar, and T=450K. The NVT volume was set to the 
+		average volume from the last 25k sweeps of the NPT run. The center-of-mass 
+		of each molecule was scaled appropriately.
+
+species1/
+    This directory was created with the following command:
+
+    > $CASSANDRA_DIR/Scripts/Frag_Library_Setup/library_setup.py $CASSANDRA_DIR/cassandra.exe nvt.inp dmh.pdb
+
+II. RUNNING THE SIMULATION
+
+The simulation can be run with the following command:
+
+> $CASSANDRA_DIR/Src/cassandra.exe nvt.inp
+
+III. OUTPUT FILES
+
+All output files are named nvt.out.* , as defined in the input file. Please 
+see the Cassandra manual for more information on each output file type.
+
+Averages were taken over the last 500 sweeps (50 data points). 
+The average pressure is 5.48 bar.

@@ -1,0 +1,112 @@
+! This is the input file for a short GCMC simulation of N2 in Silicalite at 77.0 K.
+
+# Run_Name
+nitrogen_Si.out
+!--------------
+
+# Sim_Type
+gcmc
+!---------------
+
+# Nbr_Species
+2
+!----------------
+
+# VDW_Style
+lj cut_tail 6.0
+!----------------
+
+# Charge_Style
+coul ewald 6.0 1E-5
+!----------------
+
+# Mixing_Rule
+lb
+!----------------
+
+# Seed_Info
+6752865750 4278117321
+!-------------------
+
+# Rcutoff_Low
+1.0
+!----------------
+
+# Pair_Energy
+true
+!-----------
+
+# Molecule_Files
+MFI.mcf 1
+N23S.mcf 100
+!------------------------
+
+# Box_Info
+1
+orthogonal
+20.09  19.738 13.142
+!-------------------------
+
+# Temperature_Info
+77.0 
+!------------------
+
+# Chemical_Potential_Info
+-10.0
+!------------------------
+
+
+# Move_Probability_Info
+
+# Prob_Translation
+0.25
+0.0  2.0
+
+# Prob_Rotation
+0.25
+0.0  180
+
+
+# Prob_Insertion
+0.25
+none cbmc
+
+# Prob_Deletion
+0.25
+
+# Done_Probability_Info
+!----------------------
+
+# Start_Type
+add_to_config 1 0 MFI.xyz 0 20
+!------------------
+
+# Run_Type
+equilibration   600  
+!------------------
+
+# Simulation_Length_Info
+units        steps
+prop_freq    400
+coord_freq   4000
+run          4000
+!----------------------------
+
+
+# Property_Info 1 
+energy_total
+nmols
+pressure
+!----------------
+
+# Fragment_Files
+species2/frag1/frag1.dat  1
+!---------------------------------------------------------one line per fragment
+
+# CBMC_Info
+kappa_ins 12
+rcut_cbmc 6.5 
+!------------
+
+
+END

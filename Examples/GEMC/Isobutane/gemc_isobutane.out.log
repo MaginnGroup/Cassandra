@@ -6,141 +6,143 @@
              \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                
                                                                                 
 ********************************************************************************
- 
+**********************************Log File**************************************
+********************************************************************************
+
 Run info
 ********************************************************************************
 version: Cassandra Development Version
 inputfile: gemc_isobutane.inp
 name of run: gemc_isobutane.out
-date (mm/dd/yyyy): 08/04/2016
-time: 14:32:27
-machine: maginnfe.crc.nd.edu
+date (mm/dd/yyyy): 02/19/2018
+time: 18:43:48
+machine: Matthews-MBP.attlocal.net
 ********************************************************************************
- 
+
 Verbose log
 ********************************************************************************
 Normal output to logfile
 ********************************************************************************
- 
+
 Simulation type
 ********************************************************************************
 GEMC                
 ********************************************************************************
- 
+
 Copy input file
 ********************************************************************************
- # Run_Name
- gemc_isobutane.out
- 
- 
- # Sim_Type
- GEMC
- 
- 
- # Nbr_Species
- 1
- 
- 
- # VDW_Style
- LJ   cut_tail   14.00
- LJ   cut_tail   14.00
- 
- # Mixing_Rule
- LB
- 
- # Seed
- 1216131145 1216131146
- 
- # Rcutoff_Low
- 1.0
- 
- # Pair_Energy
- TRUE
- 
- # Molecule_Files
- isobutane.mcf 400
- 
- # Box_Info
- 2
- cubic
- 35.3700
- 
- cubic
- 100.8100
- 
- # Temperature_Info
- 304.00
- 304.00
- 
- # Move_Probability_Info
- 
- # Prob_Translation
- 0.40
- 0.15
- 14.0
- 
- # Prob_Rotation
- 0.40
- 30.0
- 180.0
- 
- # Prob_Volume
- 0.005
- 200.0
- 200.0
- 
- # Prob_Swap
- 0.195
- cbmc
- 
- # Done_Probability_Info
- 
- # Start_Type
- read_config 240 Init_Config/nvt_liq.xyz
- read_config 160 Init_Config/nvt_vap.xyz
- 
- # Run_Type
- Equilibration 100 100
- 
- 
- # Average_Info
- 1
- 
- # Simulation_Length_Info
- Units       Steps
- Prop_Freq   100
- Coord_Freq  2200
- Run         2200
- 
- # Property_Info 1
- Energy_Total
- Density
- Nmols
- Volume
- 
- # Property_Info 2
- Energy_Total
- Density
- Nmols
- Volume
- 
- # Fragment_Files
- species1/frag1/frag1.dat  1
- 
- # CBMC_Info
- kappa_ins 12
- kappa_rot 0
- kappa_dih 12
- rcut_cbmc 6.5  6.5
- 
- END
+# Run_Name                                                                      
+gemc_isobutane.out                                                              
+                                                                                
+                                                                                
+# Sim_Type                                                                      
+GEMC                                                                            
+                                                                                
+                                                                                
+# Nbr_Species                                                                   
+1                                                                               
+                                                                                
+                                                                                
+# VDW_Style                                                                     
+LJ   cut_tail   14.00                                                           
+LJ   cut_tail   14.00                                                           
+                                                                                
+# Mixing_Rule                                                                   
+LB                                                                              
+                                                                                
+# Seed                                                                          
+1216131145 1216131146                                                           
+                                                                                
+# Rcutoff_Low                                                                   
+1.0                                                                             
+                                                                                
+# Pair_Energy                                                                   
+TRUE                                                                            
+                                                                                
+# Molecule_Files                                                                
+isobutane.mcf 400                                                               
+                                                                                
+# Box_Info                                                                      
+2                                                                               
+cubic                                                                           
+35.3700                                                                         
+                                                                                
+cubic                                                                           
+100.8100                                                                        
+                                                                                
+# Temperature_Info                                                              
+304.00                                                                          
+304.00                                                                          
+                                                                                
+# Move_Probability_Info                                                         
+                                                                                
+# Prob_Translation                                                              
+0.40                                                                            
+0.15                                                                            
+14.0                                                                            
+                                                                                
+# Prob_Rotation                                                                 
+0.40                                                                            
+30.0                                                                            
+180.0                                                                           
+                                                                                
+# Prob_Volume                                                                   
+0.005                                                                           
+200.0                                                                           
+200.0                                                                           
+                                                                                
+# Prob_Swap                                                                     
+0.195                                                                           
+cbmc                                                                            
+                                                                                
+# Done_Probability_Info                                                         
+                                                                                
+# Start_Type                                                                    
+read_config 240 Init_Config/nvt_liq.xyz                                         
+read_config 160 Init_Config/nvt_vap.xyz                                         
+                                                                                
+# Run_Type                                                                      
+Equilibration 100 100                                                           
+                                                                                
+                                                                                
+# Average_Info                                                                  
+1                                                                               
+                                                                                
+# Simulation_Length_Info                                                        
+Units       Steps                                                               
+Prop_Freq   100                                                                 
+Coord_Freq  2200                                                                
+Run         2200                                                                
+                                                                                
+# Property_Info 1                                                               
+Energy_Total                                                                    
+Density                                                                         
+Nmols                                                                           
+Volume                                                                          
+                                                                                
+# Property_Info 2                                                               
+Energy_Total                                                                    
+Density                                                                         
+Nmols                                                                           
+Volume                                                                          
+                                                                                
+# Fragment_Files                                                                
+species1/frag1/frag1.dat  1                                                     
+                                                                                
+# CBMC_Info                                                                     
+kappa_ins 12                                                                    
+kappa_rot 0                                                                     
+kappa_dih 12                                                                    
+rcut_cbmc 6.5  6.5                                                              
+                                                                                
+END                                                                             
 ********************************************************************************
- 
+
 Number of species
 ********************************************************************************
 1
 ********************************************************************************
- 
+
 Box info
 ********************************************************************************
 Number of simulation boxes     2
@@ -157,7 +159,7 @@ Box 2 is CUBIC
  Distance between box faces   100.8100     100.8100     100.8100
  Box volume, A^3       1024497.3614
 ********************************************************************************
- 
+
 Pair style
 ********************************************************************************
 VDW style used is:   LJ             in box:  1
@@ -172,7 +174,7 @@ Section "# Charge_Style" is missing from the input file
 Pair interaction energy array storage enabled
 Lorentz-Berthelot mixing rule specified
 ********************************************************************************
- 
+
 Molecule info
 ********************************************************************************
  Reading molecular connectivity information
@@ -185,11 +187,11 @@ Molecule info
    0 improper(s) specified.
    1 fragment(s) specified.
    0 fragment bond(s) specified.
- 
+
  Species  Max molecules
  -------  -------------
       1            400
- 
+
  Species     1
  -------------------------------------------------------------------------------
  Atom parameters read
@@ -206,7 +208,7 @@ Molecule info
  Fragment info read
  Fragment file for fragment 1 is species1/frag1/frag1.dat
  -------------------------------------------------------------------------------
- 
+
  Fragment coord info
  -------------------------------------------------------------------------------
  library_coords array successfully allocated
@@ -214,7 +216,7 @@ Molecule info
  species1/frag1/frag1.dat
  -------------------------------------------------------------------------------
 ********************************************************************************
- 
+
 Start type
 ********************************************************************************
 Initial configuration for box 1 will be read from file
@@ -224,18 +226,18 @@ Initial configuration for box 2 will be read from file
  Will read     160  molecules of species   1
  Will read configuration from file Init_Config/nvt_vap.xyz
 ********************************************************************************
- 
+
 Seed info
 ********************************************************************************
 The starting seeds are:   1216131145   1216131146
 ********************************************************************************
- 
+
 Temperature
 ********************************************************************************
 Temperature of box 1 is 304.000 K
 Temperature of box 2 is 304.000 K
 ********************************************************************************
- 
+
 Move probabilities
 ********************************************************************************
 Probability for translation                0.400000
@@ -254,7 +256,7 @@ Probability for particle swap              0.195000
   By default, species will be selected according to its mole fraction in box_out
 Number of moves is :   4
 ********************************************************************************
- 
+
 CBMC info
 ********************************************************************************
 Kappa for first fragment insertion          12
@@ -263,7 +265,7 @@ Kappa for dihedral selection                12
  Cutoff for CBMC for box 1 is         6.50
  Cutoff for CBMC for box 2 is         6.50
 ********************************************************************************
- 
+
 Simulation length info
 ********************************************************************************
 Thermodynamic quantities will be computed every       100 Steps     
@@ -275,7 +277,7 @@ Coordinates will be written every                    2200 Steps
 The simulation will be run for                       2200 Steps     
 Instantaneous values will be written every            100 Steps     
 ********************************************************************************
- 
+
 Property info
 ********************************************************************************
 Total number of property files to be written is     1   for box 1
@@ -297,12 +299,12 @@ Total number of property files to be written is     1   for box 2
  Nmols
  Volume
 ********************************************************************************
- 
+
 Minimum distance cutoff
 ********************************************************************************
 MC low cutoff distance is   1.000    Angstrom
 ********************************************************************************
- 
+
 Run type
 ********************************************************************************
  The input run type is Equilibration
@@ -310,11 +312,11 @@ Run type
  Update frequency for adjusting maximum volume displacement is
          100
 ********************************************************************************
- 
+
 ********************************************************************************
 ************************ Begin Cassandra simulation ****************************
 ********************************************************************************
- 
+
 Initial configuration
 ********************************************************************************
  Reading configuration for box           1
@@ -324,10 +326,10 @@ Initial configuration
  Reading          160  molecules of species            1
  Configurations read successfully
 ********************************************************************************
- 
+
 Compute total energy
 ********************************************************************************
- 
+
  Energy components for box 1     kJ/mol-Extensive
  ---------------------------------------------------------------------
  Total system energy                      520.105
@@ -343,8 +345,8 @@ Compute total energy
    Long range correction                 -119.304
    Inter molecule q                         0.000
  ---------------------------------------------------------------------
- 
- 
+
+
  Energy components for box 2     kJ/mol-Extensive
  ---------------------------------------------------------------------
  Total system energy                      505.597
@@ -360,9 +362,9 @@ Compute total energy
    Long range correction                   -2.290
    Inter molecule q                         0.000
  ---------------------------------------------------------------------
- 
+
 ********************************************************************************
- 
+
 Run simulation
 ********************************************************************************
       Step       Move   Mol Spc Box  Success  MaxWidth
@@ -383,91 +385,91 @@ Run simulation
       2020     rotate         1   1  0.65000   0.66826
       2186  translate         1   1  0.37000   0.38899
 ********************************************************************************
- 
+
 Energy of final configuration
 ********************************************************************************
- 
+
  Energy components for box 1     kJ/mol-Extensive       Relative_Error
  ---------------------------------------------------------------------
- Total system energy                      474.385            0.736E-14
- Intra molecular energy                  4277.343            0.000E+00
+ Total system energy                      474.385            0.828E-14
+ Intra molecular energy                  4277.343            0.136E-15
    Bond energy                              0.000            0.000E+00
-   Bond angle energy                     4277.343            0.000E+00
+   Bond angle energy                     4277.343            0.136E-15
    Dihedral angle energy                    0.000            0.000E+00
    Improper angle energy                    0.000            0.000E+00
    Intra molecule vdw                       0.000            0.000E+00
    Intra molecule q                         0.000            0.000E+00
- Inter molecular energy                 -3802.958           -0.138E-14
-   Inter molecule vdw                   -3679.802           -0.142E-14
-   Long range correction                 -123.156            0.000E+00
+ Inter molecular energy                 -3802.958           -0.153E-14
+   Inter molecule vdw                   -3679.802           -0.111E-14
+   Long range correction                 -123.156           -0.000E+00
    Inter molecule q                         0.000            0.000E+00
  ---------------------------------------------------------------------
- 
- 
+
+
  Energy components for box 2     kJ/mol-Extensive       Relative_Error
  ---------------------------------------------------------------------
- Total system energy                      473.515            0.108E-14
- Intra molecular energy                   602.788            0.121E-15
+ Total system energy                      473.515            0.230E-14
+ Intra molecular energy                   602.788            0.145E-14
    Bond energy                              0.000            0.000E+00
-   Bond angle energy                      602.788            0.121E-15
+   Bond angle energy                      602.788            0.145E-14
    Dihedral angle energy                    0.000            0.000E+00
    Improper angle energy                    0.000            0.000E+00
    Intra molecule vdw                       0.000            0.000E+00
    Intra molecule q                         0.000            0.000E+00
- Inter molecular energy                  -129.273           -0.563E-15
-   Inter molecule vdw                    -127.069           -0.573E-15
-   Long range correction                   -2.204            0.000E+00
+ Inter molecular energy                  -129.273           -0.422E-15
+   Inter molecule vdw                    -127.069           -0.143E-15
+   Long range correction                   -2.204           -0.000E+00
    Inter molecule q                         0.000            0.000E+00
  ---------------------------------------------------------------------
- 
+
 ********************************************************************************
- 
- 
+
+
 Writing information for box  1
 ********************************************************************************
                 Move      Trials     Success   % Success
               Volume          11          10       90.91
- 
+
    ---------------------------------------------------------
    Writing information for species  1
- 
+
                 Move      Trials     Success   % Success
            Translate         503         314       62.43
               Rotate         539         355       65.86
               Insert         161           6        3.73
               Delete         273           3        1.10
    ---------------------------------------------------------
- 
+
 ********************************************************************************
 Writing information for box  2
 ********************************************************************************
                 Move      Trials     Success   % Success
               Volume          11          10       90.91
- 
+
    ---------------------------------------------------------
    Writing information for species  1
- 
+
                 Move      Trials     Success   % Success
            Translate         365         255       69.86
               Rotate         348         325       93.39
               Insert         273           3        1.10
               Delete         161           6        3.73
    ---------------------------------------------------------
- 
+
 ********************************************************************************
- 
+
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.175733 secs.
- Rotation time =               0.189832 secs.
- Volume change time =          0.501804 secs.
- Swap time =                   0.461904 secs.
+ Translation time =            0.116485 secs.
+ Rotation time =               0.126555 secs.
+ Volume change time =          0.303086 secs.
+ Swap time =                   0.302494 secs.
 ********************************************************************************
- 
+
 ********************************************************************************
 ************************ Cassandra simulation complete *************************
 ********************************************************************************
- 
+
  Program execution time
 ********************************************************************************
          0      Years
@@ -475,6 +477,6 @@ Writing information for box  2
          0       Days
          0      Hours
          0    Minutes
-         1    Seconds
-       524         ms
+         0    Seconds
+       935         ms
 ********************************************************************************
