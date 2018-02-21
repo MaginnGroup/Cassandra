@@ -1,0 +1,98 @@
+! This is the input file for a short simulation of 2,2-dimethylhexane
+
+# Run_Name
+nvt.out
+!------------------------------------------------------------------------------
+
+# Sim_Type
+nvt_mc
+!------------------------------------------------------------------------------
+
+# Nbr_Species
+1
+!------------------------------------------------------------------------------
+
+# VDW_Style
+lj cut_tail 14.
+!------------------------------------------------------------------------------
+
+# Seed_Info
+19619 763630450
+!------------------------------------------------------------------------------
+
+# Rcutoff_Low
+2.0
+!------------------------------------------------------------------------------
+
+# Molecule_Files
+dmh.mcf 100
+!----------------------------------------------------------one line per species
+
+# Box_Info
+1
+cubic
+100.
+!-------------------------------------------------------line 1: number of boxes
+!--------------------------------------------------------------line 2: box type
+!--------------------------------------------------------------line 3: box size
+
+# Temperature_Info
+450.0
+!------------------------------------------------------------------------------
+
+# Move_Probability_Info
+
+# Prob_Translation
+100
+20.0
+
+# Prob_Rotation
+100
+180.0
+
+# Prob_Regrowth
+100
+1.0
+
+# Done_Probability_Info
+!---------------------one line for each box and one entry/line for each species
+!-----------------------------------------each molecule moves per volume change
+
+# Start_Type
+make_config 100
+!---------------------------------------make_config: one entry for each species
+!-----------------------------read_config: one entry for each species, filename
+!--------add_to_config: read_config arguments followed by make_config arguments
+!----------------------------------------------------------checkpoint: filename
+
+# Run_Type
+equilibration 1000
+!-----------------------------Equilibration: adjust success ratio every n steps
+!--------------------------------Production: report success ratio every n steps
+
+# Simulation_Length_Info
+units        sweeps
+prop_freq    10
+coord_freq   10
+run          100
+!------------------ 300 moves = 1 sweep; output every 10 sweeps; run 100 sweeps
+
+# Property_Info 1 
+energy_total
+pressure
+!------------------------------------------------------------------------------
+
+# Fragment_Files
+species1/frag1/frag1.dat  1
+species1/frag2/frag2.dat  2
+species1/frag3/frag3.dat  3
+species1/frag4/frag4.dat  4
+!---------------------------------------------------------one line per fragment
+
+# CBMC_Info
+kappa_ins 12
+kappa_dih 10
+rcut_cbmc 6.5 
+!------------------------------------------------------------------------------
+
+END
