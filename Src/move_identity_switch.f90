@@ -43,6 +43,7 @@ SUBROUTINE Identity_Switch
   INTEGER  :: is, js            ! species index
   INTEGER  :: im, jm            ! molecule index
   INTEGER  :: i_alive, j_alive  ! molecule locate
+  INTEGER  :: randint
   REAL(DP) :: x_box(nbr_boxes)
   REAL(DP) :: randno
 
@@ -81,8 +82,31 @@ SUBROUTINE Identity_Switch
   box = 1
 
 
-  !write (*, *) "Made it into identity switch! Exiting"
 
+  !If the User has specified a limited set of species to switch, then we choose among
+  !those species at random.
+  IF (.NOT. default_switch) THEN
+    randint = INT(rranf() * 2 * num_groups) + 1
+
+    !Determine species
+    is = swap_list(randint, 1)
+    js = swap_list(randint, 2)
+
+    !For right now, just work with one box
+    box = 1
+
+    ! pick a molecule INDEX at random
+    im = INT(rranf() * nmols(is,box)) + 1
+
+    ! Obtain the LOCATE of this molecule
+    i_alive = locate(im, is, box)
+
+    jm = INT(rranf() * nmols(js,box)) + 1
+
+    j_alive = locate(jm, js, box)
+
+  !Choose species at random from all options
+  ELSE
   !*****************************************************************************
   ! Step 1) Select a box
   !*****************************************************************************
@@ -184,6 +208,9 @@ SUBROUTINE Identity_Switch
   !write (*, *) "Selected atom:"
   !write (*, *) jm
   !write (*, *) j_alive
+
+  !Done with default case
+  END IF
 
   !*****************************************************************************
   ! Step 6) Calculate the change in box_in's potential energy from inserting
@@ -310,10 +337,10 @@ SUBROUTINE Identity_Switch
   !CALL Fold_Molecule(i_alive, is, box)
   !CALL Fold_Molecule(j_alive, js, box)
 
-  write(*,*) "Computing Nonbond Inter Energy WITH COLLECTION"
+  !write(*,*) "Computing Nonbond Inter Energy WITH COLLECTION"
   CALL Compute_MoleculeCollection_Nonbond_Inter_Energy(2, (/i_alive, j_alive/), (/is, js/), &
       E_vdw_move, E_qq_move, inter_overlap)
-  write (*,*) "Done computing Nonbond Inter Energy"
+  !write (*,*) "Done computing Nonbond Inter Energy"
 
   IF (inter_overlap) THEN
     !write (*, *) "Overlap found!"
@@ -376,13 +403,13 @@ SUBROUTINE Identity_Switch
      !compute difference in old and new energy
      dE = dE + (E_vdw_move - E_vdw) + (E_qq_move - E_qq)
 
-     write (*,*) "Moment of truth... dE is.... duh duh duh duh!"
-     write (*,*) dE
-     write (*,*) "How were the other stuff?"
-     write (*,*) E_vdw_move
-     write (*,*) E_vdw
-     write (*,*) E_qq_move
-     write (*,*) E_qq
+     !write (*,*) "Moment of truth... dE is.... duh duh duh duh!"
+     !write (*,*) dE
+     !write (*,*) "How were the other stuff?"
+     !write (*,*) E_vdw_move
+     !write (*,*) E_vdw
+     !write (*,*) E_qq_move
+     !write (*,*) E_qq
 
 
      IF (int_sim_type == sim_nvt_min) THEN
@@ -398,7 +425,7 @@ SUBROUTINE Identity_Switch
 
      IF (accept) THEN
         !accept the move and update global energies
-        write (*,*) energy(box)%total
+        !write (*,*) energy(box)%total
         energy(box)%total = energy(box)%total + dE
         energy(box)%inter = energy(box)%inter + dE
         energy(box)%inter_vdw = energy(box)%inter_vdw + E_vdw_move - E_vdw

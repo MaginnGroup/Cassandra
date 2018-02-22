@@ -141,9 +141,9 @@ SUBROUTINE NPTMC_Driver
 
      rand_no = rranf()
      !FOR TESTING, always do identity switch
-     cut_idswitch = 1
+     cut_identity_switch = 1
 
-     IF (rand_no <= cut_idswitch) THEN
+     IF (rand_no <= cut_identity_switch) THEN
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)

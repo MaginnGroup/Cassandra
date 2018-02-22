@@ -61,7 +61,7 @@ SUBROUTINE NVTMC_Driver
 
   INTEGER :: i, j, ibox, ireac, is, im
 
-  REAL(DP) :: rand_no
+  REAL(DP) :: rand_no, rand_no_2
   REAL(DP) :: time_start, now_time, thermo_time, coord_time, block_avg_time
 
   LOGICAL :: overlap, write_flag, complete
@@ -104,29 +104,15 @@ SUBROUTINE NVTMC_Driver
      ! select a move from Golden Sampling scheme
      !*****************************************************************************
 
+
+!     rand_no_2 = rranf()
+!     IF (rand_no_2 <= 0.05) THEN
+!        CALL Identity_Switch
+!     ELSE
+
      rand_no = rranf()
-     !FOR TESTING, always do identity switch
-     cut_idswitch = 1
-
-     IF (rand_no <= cut_idswitch) THEN
-
-        IF(.NOT. openmp_flag) THEN
-           CALL cpu_time(time_s)
-        ELSE
-!$        time_s = omp_get_wtime()
-        END IF
-
-        !WRITE (*, *) "Calling Identity Switch"
-        CALL Identity_Switch
-        !WRITE (*, *) "Exited Identity Switch"
-
-        IF(.NOT. openmp_flag) THEN
-           CALL cpu_time(time_e)
-        ELSE
-!$         time_e = omp_get_wtime()
-        END IF
-
-     ELSE IF (rand_no <= cut_trans) THEN
+     !cut_identity_switch = 1
+     IF (rand_no <= cut_trans) THEN
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
@@ -215,6 +201,25 @@ SUBROUTINE NVTMC_Driver
         END IF
 
         movetime(imove_regrowth) = movetime(imove_regrowth) + time_e - time_s
+
+     ELSE IF (rand_no <= cut_identity_switch) THEN
+
+        IF(.NOT. openmp_flag) THEN
+           CALL cpu_time(time_s)
+        ELSE
+!$        time_s = omp_get_wtime()
+        END IF
+
+        write (*,*) "Called Identity Switch"
+        CALL Identity_Switch
+
+        IF(.NOT. openmp_flag) THEN
+           CALL cpu_time(time_e)
+        ELSE
+!$         time_e = omp_get_wtime()
+        END IF
+
+        movetime(imove_identity_switch) = movetime(imove_identity_switch) + time_e - time_s
 
      ELSE IF (rand_no <= cut_atom_displacement) THEN
 
