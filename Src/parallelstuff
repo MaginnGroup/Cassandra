@@ -1,0 +1,151 @@
+chempot.f90:     !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+chempot.f90:     !$OMP END PARALLEL WORKSHARE
+energy_routines.f90: !$  USE OMP_LIB
+energy_routines.f90:       !$OMP PARALLEL DO DEFAULT(SHARED) &
+energy_routines.f90:       !$OMP PRIVATE(imolecule,this_locate,locate_2,get_interaction) &
+energy_routines.f90:       !$OMP PRIVATE(rx,ry,rz,rcom,Eij_vdw,Eij_qq) &
+energy_routines.f90:       !$OMP SCHEDULE(DYNAMIC) &
+energy_routines.f90:       !$OMP REDUCTION(+:E_inter_vdw,E_inter_qq) & 
+energy_routines.f90:       !$OMP REDUCTION(.OR.:my_overlap)  
+energy_routines.f90:       !$OMP END PARALLEL DO
+energy_routines.f90:         !$OMP PARALLEL DO DEFAULT(SHARED) &
+energy_routines.f90:         !$OMP PRIVATE(im2,lm2,locate_2,get_interaction) &
+energy_routines.f90:         !$OMP PRIVATE(rx,ry,rz,rcom,E12_vdw,E12_qq) &
+energy_routines.f90:         !$OMP SCHEDULE(DYNAMIC) &
+energy_routines.f90:         !$OMP REDUCTION(+:E_inter_vdw,E_inter_qq) & 
+energy_routines.f90:         !$OMP REDUCTION(.OR.:my_overlap)  
+energy_routines.f90:         !$OMP END PARALLEL DO
+energy_routines.f90:    !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+energy_routines.f90:    !$OMP END PARALLEL WORKSHARE
+energy_routines.f90:      !$OMP PARALLEL DO DEFAULT(SHARED) &
+energy_routines.f90:      !$OMP PRIVATE(i,ia,cos_mol_im,sin_mol_im) &
+energy_routines.f90:      !$OMP PRIVATE(cos_mol_im_o, sin_mol_im_o) &
+energy_routines.f90:      !$OMP PRIVATE(hdotr, q) &
+energy_routines.f90:      !$OMP SCHEDULE(STATIC) &
+energy_routines.f90:      !$OMP REDUCTION(+:E_reciprocal)
+energy_routines.f90:      !$OMP END PARALLEL DO
+energy_routines.f90:      !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+energy_routines.f90:      !$OMP END PARALLEL WORKSHARE
+energy_routines.f90:      !$OMP PARALLEL DO DEFAULT(SHARED) &
+energy_routines.f90:      !$OMP PRIVATE(i) &
+energy_routines.f90:      !$OMP SCHEDULE(STATIC) &
+energy_routines.f90:      !$OMP REDUCTION(+:E_reciprocal)
+energy_routines.f90:      !$OMP END PARALLEL DO
+energy_routines.f90:      !$OMP PARALLEL DO DEFAULT(SHARED) &
+energy_routines.f90:      !$OMP PRIVATE(i, ia, hdotr, q) &
+energy_routines.f90:      !$OMP SCHEDULE(STATIC) &
+energy_routines.f90:      !$OMP REDUCTION(+:E_reciprocal)
+energy_routines.f90:      !$OMP END PARALLEL DO
+energy_routines.f90:          !$OMP PARALLEL DO DEFAULT(SHARED) &
+energy_routines.f90:          !$OMP SCHEDULE(DYNAMIC) &
+energy_routines.f90:          !$OMP PRIVATE(im, this_im, v_mol_bond, v_mol_angle, v_mol_dihedral) &
+energy_routines.f90:          !$OMP PRIVATE(v_mol_improper,v_mol_intra_vdw,v_mol_intra_qq, v_mol_inter_qq, intra_overlap) &
+energy_routines.f90:          !$OMP REDUCTION(+:v_intra,v_bond, v_angle, v_dihedral,v_improper, v_intra_vdw, v_intra_qq, v_inter_qq)  
+energy_routines.f90:          !$OMP END PARALLEL DO
+energy_routines.f90:          !$OMP PARALLEL DO DEFAULT(SHARED) &
+energy_routines.f90:          !$OMP SCHEDULE(DYNAMIC) &
+energy_routines.f90:          !$OMP PRIVATE(im_2, this_im_2, locate_2, get_interaction) &
+energy_routines.f90:          !$OMP PRIVATE(rcom, rx, ry, rz, vlj_pair, vqq_pair) &
+energy_routines.f90:          !$OMP PRIVATE(my_overlap) &
+energy_routines.f90:          !$OMP REDUCTION(+: E_inter_vdw, E_inter_qq) 
+energy_routines.f90:          !$OMP END PARALLEL DO
+energy_routines.f90:             !$OMP PARALLEL DO DEFAULT(SHARED) &
+energy_routines.f90:             !$OMP SCHEDULE(DYNAMIC) &
+energy_routines.f90:             !$OMP PRIVATE(im_2, this_im_2, locate_2, get_interaction) &
+energy_routines.f90:             !$OMP PRIVATE(rcom, rx, ry, rz, vlj_pair, vqq_pair) &
+energy_routines.f90:             !$OMP PRIVATE(my_overlap) &
+energy_routines.f90:             !$OMP REDUCTION(+: E_inter_vdw, E_inter_qq) 
+energy_routines.f90:             !$OMP END PARALLEL DO 
+energy_routines.f90:         !$OMP PARALLEL DO DEFAULT(SHARED) &
+energy_routines.f90:         !$OMP SCHEDULE(DYNAMIC) &
+energy_routines.f90:         !$OMP PRIVATE(im_2, this_im_2, get_interaction) &
+energy_routines.f90:         !$OMP PRIVATE(rcom, rx, ry, rz, tv_pair, tc_pair) &
+energy_routines.f90:         !$OMP REDUCTION(+:w_inter_vdw, w_inter_charge)
+energy_routines.f90:         !$OMP END PARALLEL DO 
+energy_routines.f90:            !$OMP PARALLEL DO DEFAULT(SHARED) &
+energy_routines.f90:            !$OMP SCHEDULE(DYNAMIC) &
+energy_routines.f90:            !$OMP PRIVATE(im_2, this_im_2, get_interaction) &
+energy_routines.f90:            !$OMP PRIVATE(rcom, rx, ry, rz, tv_pair, tc_pair) &
+energy_routines.f90:            !$OMP REDUCTION(+:w_inter_vdw,w_inter_charge)
+energy_routines.f90:    !$OMP PARALLEL DO DEFAULT(SHARED) &
+energy_routines.f90:    !$OMP SCHEDULE(STATIC) &
+energy_routines.f90:    !$OMP PRIVATE(i, un, qwxy, qwxz, qwyz) &
+energy_routines.f90:    !$OMP REDUCTION(+:qw)
+energy_routines.f90:    !$OMP END PARALLEL DO
+energy_routines.f90:             !$OMP PARALLEL DO DEFAULT(SHARED) &
+energy_routines.f90:             !$OMP SCHEDULE(STATIC) &
+energy_routines.f90:             !$OMP PRIVATE(i,arg,factor) &
+energy_routines.f90:             !$OMP REDUCTION(+:recip_11, recip_21, recip_31) &
+energy_routines.f90:             !$OMP REDUCTION(+:recip_22, recip_23, recip_33) 
+energy_routines.f90:             !$OMP END PARALLEL DO
+energy_routines.f90:    !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+energy_routines.f90:    !$OMP END PARALLEL WORKSHARE
+energy_routines.f90:          !$OMP PARALLEL DO DEFAULT(SHARED) &
+energy_routines.f90:          !$OMP PRIVATE(i,ia,hdotr,charge) &
+energy_routines.f90:          !$OMP SCHEDULE(STATIC)
+energy_routines.f90:          !$OMP END PARALLEL DO
+energy_routines.f90:    !$OMP PARALLEL DO DEFAULT(SHARED) &
+energy_routines.f90:    !$OMP PRIVATE(i,  un)  &
+energy_routines.f90:    !$OMP SCHEDULE(STATIC) &
+energy_routines.f90:    !$OMP REDUCTION(+:E_reciprocal)
+energy_routines.f90:    !$OMP END PARALLEL DO
+main.f90:!$OMP PARALLEL
+main.f90:!$OMP END PARALLEL
+move_angle.f90:           !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+move_angle.f90:           !$OMP END PARALLEL WORKSHARE
+move_dihedral.f90:           !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+move_dihedral.f90:           !$OMP END PARALLEL WORKSHARE
+move_identity_switch.f90:        !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+move_identity_switch.f90:        !$OMP END PARALLEL WORKSHARE
+move_identity_switch.f90:           !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+move_identity_switch.f90:           !$OMP END PARALLEL WORKSHARE
+move_identity_switch.f90:           !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+move_identity_switch.f90:          !$OMP END PARALLEL WORKSHARE
+move_identity_switch.f90:           !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+move_identity_switch.f90:           !$OMP END PARALLEL WORKSHARE
+move_identity_switch.f90:              !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+move_identity_switch.f90:              !$OMP END PARALLEL WORKSHARE
+move_identity_switch.f90:              !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+move_identity_switch.f90:              !$OMP END PARALLEL WORKSHARE
+move_mol_swap.f90:     !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+move_mol_swap.f90:     !$OMP END PARALLEL WORKSHARE
+move_mol_swap.f90:          !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+move_mol_swap.f90:          !$OMP END PARALLEL WORKSHARE
+move_mol_swap.f90:          !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+move_mol_swap.f90:          !$OMP END PARALLEL WORKSHARE
+move_mol_swap.f90:              !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+move_mol_swap.f90:              !$OMP END PARALLEL WORKSHARE
+move_mol_swap.f90:              !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+move_mol_swap.f90:              !$OMP END PARALLEL WORKSHARE
+move_regrow.f90:     !$OMP PARALLEL WORKSHARE  DEFAULT(SHARED)
+move_regrow.f90:     !$OMP END PARALLEL WORKSHARE
+move_regrow.f90:        !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+move_regrow.f90:        !$OMP END PARALLEL WORKSHARE
+move_rotate.f90:        !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+move_rotate.f90:        !$OMP END PARALLEL WORKSHARE
+move_rotate.f90:           !$OMP PARALLEL WORKSHARE DEFAULT(SHARED) 
+move_rotate.f90:           !$OMP END PARALLEL WORKSHARE
+move_translate.f90:        !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+move_translate.f90:        !$OMP END PARALLEL WORKSHARE
+move_translate.f90:           !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)           
+move_translate.f90:           !$OMP END PARALLEL WORKSHARE
+move_vol_swap.f90:     !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+move_vol_swap.f90:     !!$OMP END PARALLEL WORKSHARE
+move_vol_swap.f90:     !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+move_vol_swap.f90:     !!$OMP END PARALLEL WORKSHARE
+move_vol_swap.f90:     !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED) 
+move_vol_swap.f90:     !!$OMP END PARALLEL WORKSHARE
+move_vol_swap.f90:                        !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+move_vol_swap.f90:                        !!$OMP END PARALLEL WORKSHARE
+move_vol_swap.f90:        !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+move_vol_swap.f90:        !!$OMP END PARALLEL WORKSHARE
+move_vol_swap.f90:       !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+move_vol_swap.f90:       !!$OMP END PARALLEL WORKSHARE
+move_volume.f90:     !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+move_volume.f90:     !!$OMP END PARALLEL WORKSHARE
+move_volume.f90:     !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED) 
+move_volume.f90:     !!$OMP END PARALLEL WORKSHARE
+move_volume.f90:                 !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+move_volume.f90:                 !!$OMP END PARALLEL WORKSHARE
+move_volume.f90:         !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED) 
+move_volume.f90:         !!$OMP END PARALLEL WORKSHARE

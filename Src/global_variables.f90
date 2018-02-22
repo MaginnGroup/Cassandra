@@ -459,10 +459,15 @@ USE Type_Definitions
 
   ! individual move probability
   REAL(DP) :: prob_trans, prob_rot, prob_torsion, prob_volume, prob_angle, prob_insertion
-  REAL(DP) :: prob_deletion, prob_swap, prob_regrowth, prob_ring, prob_atom_displacement
+  REAL(DP) :: prob_deletion, prob_swap, prob_regrowth, prob_ring, prob_atom_displacement, prob_identity_switch
   REAL(DP), DIMENSION(:), ALLOCATABLE :: prob_rot_species
   REAL(DP), DIMENSION(:), ALLOCATABLE :: prob_swap_species, cum_prob_swap_species
   REAL(DP), DIMENSION(:), ALLOCATABLE :: prob_swap_from_box, cum_prob_swap_from_box
+
+  !Switching groups for identity switch
+  INTEGER :: num_groups
+  INTEGER, DIMENSION(:, :), ALLOCATABLE :: swap_list
+  LOGICAL :: default_switch
 
   LOGICAL :: l_prob_swap_species, l_prob_swap_from_box
 
@@ -473,7 +478,7 @@ USE Type_Definitions
   REAL(DP), DIMENSION(:), ALLOCATABLE::prob_growth_species ! dimension nspecies
   REAL(DP), DIMENSION(:,:), ALLOCATABLE :: max_disp, max_rot
 
-  REAL(DP) :: cut_trans, cut_rot, cut_torsion, cut_volume, cut_angle, cut_insertion, cut_deletion, cut_idswitch
+  REAL(DP) :: cut_trans, cut_rot, cut_torsion, cut_volume, cut_angle, cut_insertion, cut_deletion, cut_identity_switch
   REAL(DP) :: cut_swap, cut_regrowth, cut_ring, cut_atom_displacement, cut_lambda
 
   !*********************************************************************************************************
@@ -527,7 +532,8 @@ USE Type_Definitions
   INTEGER, PARAMETER :: imove_delete = 7
   INTEGER, PARAMETER :: imove_regrowth = 8
   INTEGER, PARAMETER :: imove_check = 9
-  INTEGER, PARAMETER :: imove_atom_displacement = 10
+  INTEGER, PARAMETER :: imove_identity_switch = 10
+  INTEGER, PARAMETER :: imove_atom_displacement = 11
 
 
   REAL(DP) :: time_s, time_e
