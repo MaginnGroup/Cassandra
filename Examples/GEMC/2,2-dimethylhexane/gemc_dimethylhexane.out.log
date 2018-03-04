@@ -12,11 +12,11 @@
 Run info
 ********************************************************************************
 version: Cassandra Development Version
-inputfile: gemc_dimethylhexane.inp
+inputfile: /Users/matthewhowenstine/Cassandra/Examples/GEMC/2,2-dimethylhexane/gemc_dimethylhexane.inp
 name of run: gemc_dimethylhexane.out
-date (mm/dd/yyyy): 02/19/2018
-time: 18:39:16
-machine: Matthews-MBP.attlocal.net
+date (mm/dd/yyyy): 03/03/2018
+time: 20:41:03
+machine: Matthews-MacBook-Pro.local
 ********************************************************************************
 
 Verbose log
@@ -392,16 +392,16 @@ Energy of final configuration
 
  Energy components for box 1     kJ/mol-Extensive       Relative_Error
  ---------------------------------------------------------------------
- Total system energy                    41588.918            0.448E-15
- Intra molecular energy                  4356.210            0.120E-14
+ Total system energy                    41588.918            0.112E-14
+ Intra molecular energy                  4356.210            0.534E-15
    Bond energy                              0.000            0.000E+00
-   Bond angle energy                     1721.592            0.676E-15
-   Dihedral angle energy                 1646.932            0.353E-15
+   Bond angle energy                     1721.592            0.507E-15
+   Dihedral angle energy                 1646.932            0.177E-15
    Improper angle energy                    0.000            0.000E+00
-   Intra molecule vdw                     987.687            0.103E-14
+   Intra molecule vdw                     987.687            0.589E-15
    Intra molecule q                         0.000            0.000E+00
- Inter molecular energy                 37232.707            0.375E-15
-   Inter molecule vdw                   37339.605            0.998E-15
+ Inter molecular energy                 37232.707            0.125E-15
+   Inter molecule vdw                   37339.605            0.748E-15
    Long range correction                 -106.898           -0.000E+00
    Inter molecule q                         0.000            0.000E+00
  ---------------------------------------------------------------------
@@ -409,16 +409,16 @@ Energy of final configuration
 
  Energy components for box 2     kJ/mol-Extensive       Relative_Error
  ---------------------------------------------------------------------
- Total system energy                     2967.903            0.392E-15
- Intra molecular energy                  2996.224            0.194E-15
+ Total system energy                     2967.903            0.118E-14
+ Intra molecular energy                  2996.224            0.117E-14
    Bond energy                              0.000            0.000E+00
-   Bond angle energy                     2120.072            0.110E-14
-   Dihedral angle energy                 1046.562            0.125E-14
+   Bond angle energy                     2120.072            0.549E-15
+   Dihedral angle energy                 1046.562            0.417E-15
    Improper angle energy                    0.000            0.000E+00
-   Intra molecule vdw                    -170.409           -0.491E-14
+   Intra molecule vdw                    -170.409           -0.363E-14
    Intra molecule q                         0.000            0.000E+00
- Inter molecular energy                   -28.321           -0.161E-15
-   Inter molecule vdw                     -27.176           -0.335E-15
+ Inter molecular energy                   -28.321           -0.321E-15
+   Inter molecule vdw                     -27.176           -0.167E-15
    Long range correction                   -1.145           -0.000E+00
    Inter molecule q                         0.000            0.000E+00
  ---------------------------------------------------------------------
@@ -473,11 +473,11 @@ Writing information about fragments
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.209197 secs.
- Rotation time =               0.201887 secs.
- Volume change time =          0.120007 secs.
- Swap time =                   0.617760 secs.
- Regrowth time =               0.947549 secs.
+ Translation time =            0.235948 secs.
+ Rotation time =               0.230615 secs.
+ Volume change time =          0.126080 secs.
+ Swap time =                   0.690421 secs.
+ Regrowth time =               1.050613 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -492,5 +492,5 @@ Writing information about fragments
          0      Hours
          0    Minutes
          2    Seconds
-       600         ms
+       874         ms
 ********************************************************************************

@@ -12,11 +12,11 @@
 Run info
 ********************************************************************************
 version: Cassandra Development Version
-inputfile: npt.inp
+inputfile: /Users/matthewhowenstine/Cassandra/Examples/NPT/water_spce/npt.inp
 name of run: npt.out
-date (mm/dd/yyyy): 02/19/2018
-time: 18:45:53
-machine: Matthews-MBP.attlocal.net
+date (mm/dd/yyyy): 03/03/2018
+time: 20:42:07
+machine: Matthews-MacBook-Pro.local
 ********************************************************************************
 
 Verbose log
@@ -393,9 +393,9 @@ Writing information for box  1
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            6.675958 secs.
- Rotation time =               6.809029 secs.
- Volume change time =          6.144683 secs.
+ Translation time =            7.584293 secs.
+ Rotation time =               7.767790 secs.
+ Volume change time =          7.018440 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -409,6 +409,6 @@ Writing information for box  1
          0       Days
          0      Hours
          0    Minutes
-        20    Seconds
-       459         ms
+        23    Seconds
+       296         ms
 ********************************************************************************

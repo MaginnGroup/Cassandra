@@ -12,11 +12,11 @@
 Run info
 ********************************************************************************
 version: Cassandra Development Version
-inputfile: nvt.inp
+inputfile: /Users/matthewhowenstine/Cassandra/Examples/NVT/water_spc/nvt.inp
 name of run: nvt.out
-date (mm/dd/yyyy): 02/19/2018
-time: 18:47:55
-machine: Matthews-MBP.attlocal.net
+date (mm/dd/yyyy): 03/03/2018
+time: 20:43:17
+machine: Matthews-MacBook-Pro.local
 ********************************************************************************
 
 Verbose log
@@ -360,8 +360,8 @@ Writing information for box  1
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            5.201553 secs.
- Rotation time =               5.234359 secs.
+ Translation time =            5.906656 secs.
+ Rotation time =               5.943141 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -375,6 +375,6 @@ Writing information for box  1
          0       Days
          0      Hours
          0    Minutes
-        11    Seconds
-         6         ms
+        12    Seconds
+       491         ms
 ********************************************************************************

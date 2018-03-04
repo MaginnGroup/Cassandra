@@ -4,6 +4,10 @@
 methane_butane.out
 !--------------
 
+# Verbose_Log
+true
+!--------------
+
 # Sim_Type
 gcmc
 !---------------

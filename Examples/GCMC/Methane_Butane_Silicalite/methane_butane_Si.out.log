@@ -12,11 +12,11 @@
 Run info
 ********************************************************************************
 version: Cassandra Development Version
-inputfile: methane_butane_Si.inp
+inputfile: /Users/matthewhowenstine/Cassandra/Examples/GCMC/Methane_Butane_Silicalite/methane_butane_Si.inp
 name of run: methane_butane_Si.out
-date (mm/dd/yyyy): 02/19/2018
-time: 18:36:39
-machine: Matthews-MBP.attlocal.net
+date (mm/dd/yyyy): 03/03/2018
+time: 20:40:11
+machine: Matthews-MacBook-Pro.local
 ********************************************************************************
 
 Verbose log
@@ -477,11 +477,11 @@ Writing information about fragments
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.141841 secs.
- Rotation time =               0.222703 secs.
- Insertion time =              0.598678 secs.
- Deletion time =               0.637738 secs.
- Regrowth time =               0.975598 secs.
+ Translation time =            0.168059 secs.
+ Rotation time =               0.263750 secs.
+ Insertion time =              0.707926 secs.
+ Deletion time =               0.744244 secs.
+ Regrowth time =               1.148217 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -495,6 +495,6 @@ Writing information about fragments
          0       Days
          0      Hours
          0    Minutes
-         2    Seconds
-       670         ms
+         3    Seconds
+       140         ms
 ********************************************************************************

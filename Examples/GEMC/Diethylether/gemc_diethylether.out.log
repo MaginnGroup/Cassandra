@@ -12,11 +12,11 @@
 Run info
 ********************************************************************************
 version: Cassandra Development Version
-inputfile: gemc_diethylether.inp
+inputfile: /Users/matthewhowenstine/Cassandra/Examples/GEMC/Diethylether/gemc_diethylether.inp
 name of run: gemc_diethylether.out
-date (mm/dd/yyyy): 02/19/2018
-time: 18:43:07
-machine: Matthews-MBP.attlocal.net
+date (mm/dd/yyyy): 03/03/2018
+time: 20:41:09
+machine: Matthews-MacBook-Pro.local
 ********************************************************************************
 
 Verbose log
@@ -428,18 +428,18 @@ Energy of final configuration
 
  Energy components for box 1     kJ/mol-Extensive       Relative_Error
  ---------------------------------------------------------------------
- Total system energy                    -2372.240           -0.724E-14
- Intra molecular energy                  1986.392            0.440E-15
+ Total system energy                    -2372.240           -0.503E-14
+ Intra molecular energy                  1986.392            0.000E+00
    Bond energy                              0.000            0.000E+00
-   Bond angle energy                      983.759            0.444E-15
-   Dihedral angle energy                 1137.195            0.256E-15
+   Bond angle energy                      983.759            0.296E-15
+   Dihedral angle energy                 1137.195            0.128E-15
    Improper angle energy                    0.000            0.000E+00
    Intra molecule vdw                    -134.562           -0.000E+00
    Intra molecule q                         0.000            0.000E+00
- Inter molecular energy                 -4358.633           -0.387E-14
-   Inter molecule vdw                   -3739.765           -0.000E+00
+ Inter molecular energy                 -4358.633           -0.254E-14
+   Inter molecule vdw                   -3739.765           -0.125E-14
    Long range correction                 -189.170           -0.000E+00
-   Inter molecule q                     19020.749            0.979E-15
+   Inter molecule q                     19020.749            0.122E-14
    Reciprocal ewald                       398.073            0.183E-15
    Self ewald                          -19848.520           -0.000E+00
  ---------------------------------------------------------------------
@@ -448,19 +448,19 @@ Energy of final configuration
 
  Energy components for box 2     kJ/mol-Extensive       Relative_Error
  ---------------------------------------------------------------------
- Total system energy                      765.629            0.950E-15
- Intra molecular energy                   783.433            0.000E+00
+ Total system energy                      765.629            0.190E-14
+ Intra molecular energy                   783.433            0.371E-15
    Bond energy                              0.000            0.000E+00
-   Bond angle energy                      375.289            0.388E-15
+   Bond angle energy                      375.289            0.194E-15
    Dihedral angle energy                  459.258            0.158E-15
    Improper angle energy                    0.000            0.000E+00
-   Intra molecule vdw                     -51.114           -0.534E-15
+   Intra molecule vdw                     -51.114           -0.178E-15
    Intra molecule q                         0.000            0.000E+00
- Inter molecular energy                   -17.804           -0.400E-13
-   Inter molecule vdw                     -17.349           -0.655E-15
+ Inter molecular energy                   -17.804           -0.660E-13
+   Inter molecule vdw                     -17.349           -0.393E-15
    Long range correction                   -0.003           -0.000E+00
-   Inter molecule q                      1491.019            0.390E-15
-   Reciprocal ewald                         1.721            0.000E+00
+   Inter molecule q                      1491.019            0.781E-15
+   Reciprocal ewald                         1.721            0.165E-15
    Self ewald                           -1493.191           -0.000E+00
  ---------------------------------------------------------------------
    Number of reciprocal vectors              2534
@@ -514,11 +514,11 @@ Writing information about fragments
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            1.124320 secs.
- Rotation time =               1.154012 secs.
- Volume change time =          6.704416 secs.
- Swap time =                   0.616690 secs.
- Regrowth time =               1.645782 secs.
+ Translation time =            1.279519 secs.
+ Rotation time =               1.322021 secs.
+ Volume change time =          7.906406 secs.
+ Swap time =                   0.745063 secs.
+ Regrowth time =               1.916650 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -532,6 +532,6 @@ Writing information about fragments
          0       Days
          0      Hours
          0    Minutes
-        25    Seconds
-       493         ms
+        29    Seconds
+       498         ms
 ********************************************************************************

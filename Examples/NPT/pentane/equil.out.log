@@ -12,11 +12,11 @@
 Run info
 ********************************************************************************
 version: Cassandra Development Version
-inputfile: equil.inp
+inputfile: /Users/matthewhowenstine/Cassandra/Examples/NPT/pentane/equil.inp
 name of run: equil.out
-date (mm/dd/yyyy): 02/19/2018
-time: 18:45:39
-machine: Matthews-MBP.attlocal.net
+date (mm/dd/yyyy): 03/03/2018
+time: 20:42:05
+machine: Matthews-MacBook-Pro.local
 ********************************************************************************
 
 Verbose log
@@ -346,16 +346,16 @@ Energy of final configuration
 
  Energy components for box 1     kJ/mol-Extensive       Relative_Error
  ---------------------------------------------------------------------
- Total system energy                      514.762            0.353E-14
- Intra molecular energy                   554.600            0.236E-14
+ Total system energy                      514.762            0.127E-14
+ Intra molecular energy                   554.600            0.184E-14
    Bond energy                              0.000            0.000E+00
-   Bond angle energy                      236.578            0.661E-14
-   Dihedral angle energy                  353.610            0.412E-15
+   Bond angle energy                      236.578            0.923E-15
+   Dihedral angle energy                  353.610            0.206E-15
    Improper angle energy                    0.000            0.000E+00
-   Intra molecule vdw                     -35.588           -0.128E-15
+   Intra molecule vdw                     -35.588           -0.383E-15
    Intra molecule q                         0.000            0.000E+00
- Inter molecular energy                   -39.837           -0.000E+00
-   Inter molecule vdw                     -39.195           -0.128E-14
+ Inter molecular energy                   -39.837           -0.114E-15
+   Inter molecule vdw                     -39.195           -0.928E-15
    Long range correction                   -0.643           -0.000E+00
    Inter molecule q                         0.000            0.000E+00
  ---------------------------------------------------------------------
@@ -391,10 +391,10 @@ Writing information about fragments
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.128495 secs.
- Rotation time =               0.133124 secs.
- Volume change time =          0.052200 secs.
- Regrowth time =               1.131867 secs.
+ Translation time =            0.150994 secs.
+ Rotation time =               0.156617 secs.
+ Volume change time =          0.059250 secs.
+ Regrowth time =               1.323951 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -409,5 +409,5 @@ Writing information about fragments
          0      Hours
          0    Minutes
          1    Seconds
-       513         ms
+       763         ms
 ********************************************************************************

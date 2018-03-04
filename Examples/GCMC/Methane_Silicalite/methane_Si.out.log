@@ -12,11 +12,11 @@
 Run info
 ********************************************************************************
 version: Cassandra Development Version
-inputfile: methane_Si.inp
+inputfile: /Users/matthewhowenstine/Cassandra/Examples/GCMC/Methane_Silicalite/methane_Si.inp
 name of run: methane_Si.out
-date (mm/dd/yyyy): 02/19/2018
-time: 18:37:16
-machine: Matthews-MBP.attlocal.net
+date (mm/dd/yyyy): 03/03/2018
+time: 20:40:14
+machine: Matthews-MacBook-Pro.local
 ********************************************************************************
 
 Verbose log
@@ -373,9 +373,9 @@ Writing information for box  1
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            1.170851 secs.
- Insertion time =              5.488976 secs.
- Deletion time =               4.767129 secs.
+ Translation time =            1.629504 secs.
+ Insertion time =              6.712558 secs.
+ Deletion time =               5.696863 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -389,6 +389,6 @@ Writing information for box  1
          0       Days
          0      Hours
          0    Minutes
-        17    Seconds
-       832         ms
+        21    Seconds
+       563         ms
 ********************************************************************************

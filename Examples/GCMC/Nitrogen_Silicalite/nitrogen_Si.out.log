@@ -12,11 +12,11 @@
 Run info
 ********************************************************************************
 version: Cassandra Development Version
-inputfile: nitrogen_Si.inp
+inputfile: /Users/matthewhowenstine/Cassandra/Examples/GCMC/Nitrogen_Silicalite/nitrogen_Si.inp
 name of run: nitrogen_Si.out
-date (mm/dd/yyyy): 02/19/2018
-time: 18:38:42
-machine: Matthews-MBP.attlocal.net
+date (mm/dd/yyyy): 03/03/2018
+time: 20:40:57
+machine: Matthews-MacBook-Pro.local
 ********************************************************************************
 
 Verbose log
@@ -417,10 +417,10 @@ Writing information for box  1
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.703313 secs.
- Rotation time =               0.716177 secs.
- Insertion time =              1.436280 secs.
- Deletion time =               1.187011 secs.
+ Translation time =            0.774177 secs.
+ Rotation time =               0.790007 secs.
+ Insertion time =              1.645716 secs.
+ Deletion time =               1.361363 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -435,5 +435,5 @@ Writing information for box  1
          0      Hours
          0    Minutes
          5    Seconds
-       165         ms
+       707         ms
 ********************************************************************************
