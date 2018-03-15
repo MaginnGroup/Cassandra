@@ -437,7 +437,8 @@ each species, so do not use larger numbers than are needed.
 {\bf \# Box\_Info} \\
 {\it Integer(1)} \\
 {\it Character(i)}  \\
-{\it Real(i,1)} [{\it Real(i,2) Real(i,3)}] \\ \\
+{\it Real(i,1)} [{\it Real(i,2) Real(i,3)}] \\
+{[}{\tt restricted\_insertion} {\it Character(1) Real(1) [Real(2)]}] \\ \\
 This section sets parameters for the simulation boxes. 
 {\it Integer(1)} specifies the total number of boxes in the simulation. 
 Gibbs ensemble simulations must have two boxes. 
@@ -487,10 +488,42 @@ For example, \\ \\
 \hspace*{0.5em}0 ~2 40} \\ \\
 %
 defines a simulation box with basis vectors (30, 0, 0), (0, 35, 2) and (0, 0, 40).
+
+The optional keyword \texttt{restricted\_insertion} is used to define a region inside the simulation box 
+in which molecules will be inserted at start-up via \texttt{make\_config} or \texttt{add\_to\_config}
+or throughout the simulation via grand canonical insertion moves or Gibbs ensemble swap moves. 
+\texttt{restricted\_insertion} takes one of several options: 
+\texttt{sphere}, \texttt{cylinder}, \texttt{slitpore}, \texttt{interface}.
+Each option requires additional parameters, as follows.
+
+\begin{itemize}
+	\item \texttt{sphere} $R$, 
+	where $R$ is the radius of a sphere centered at the origin
+	\item \texttt{cylinder} $R$, 
+	where $R$ is the radius of a cylinder centered on the z-axis
+	\item \texttt{slitpore} $z_{max}$, 
+	where $z_{max}$ is half the height of a rectangular prism centered on the {\it xy}-plane
+	\item \texttt{interface} $z_{min}$ $z_{max}$, 
+	defines two rectangular prisms that span the box in the {\it x} and {\it y} directions. 
+	One box has bounds $z_{min} < z < z_{max}$ and the other has bounds $-z_{max} < z < -z_{min}$.
+\end{itemize}
+
+For example, to make a spherical droplet with a radius of 5 \AA\ in cubic box 100 \AA\
+
+\texttt{
+\# Box\_Info \\
+	1 \\
+	cubic \\
+	100 \\
+	restricted\_insertion sphere 5.0} \\
+
+In addition, the insertion method for each species must be identified in the 
+\texttt{Start\_Type} or \texttt{Move\_Probability\_Info} sections.
+
 %
 %If it's \texttt{SLIT\_PORE} geometry then it is assumed
 %that the periodicity is in the xy plane while the slit pore width is
-%along the z direction. In this case {\it
+%along the z  In this case {\it
 %  Real(i,3) Real(i,4)} provide box dimensions in the x and y
 %directions respectively. {\it Real(i,5)} is the pore width if there
 %Ewald summation is not enabled. If the simulation uses Ewald summation
@@ -977,10 +1010,14 @@ The volume perturbation move is only supported for cubic boxes.
 %
 where $n$ is the number of species. 
 {\it Real(1)} sets the probability of attempting insetion moves. 
-{\it Character(2,i)} is the insertion method and can be either \texttt{cbmc} or \texttt{none}. 
+{\it Character(2,i)} is the insertion method and can be either 
+\texttt{cbmc}, \texttt{none}, or \texttt{restricted}.
 If \texttt{cbmc}, species $i$ will be inserted by assembling its 
 fragments using configurational bias Monte Carlo.
 If \texttt{none}, species $i$ will not be inserted or deleted.
+If \texttt{restricted}, species $i$ will be assembled using CBMC
+with the first fragment inserted into the region defined by 
+the \texttt{restricted\_insertion} keyword in the \texttt{Box\_Info} section.
 This subsection is required for GCMC simulations. \\ \\
 %
 If there is more than one insertable species, each is chosen for an insertion attempt with equal probability. 
@@ -1024,16 +1061,20 @@ This subsection is required for GCMC simulations. \\ \\
 {\bf \# Prob\_Swap}\\
 {\it Real(1)} \\ 
 {\it Character(2,1) ... Character(2,n)} \\
-{[}{\it prob\_swap\_species Real(3,1) ... Real(3,n)}] \\
-{[}{\it prob\_swap\_from\_box Real(4,1) ... Real(4,i)}] \\ \\
+{[}{\tt prob\_swap\_species} {\it Real(3,1) ... Real(3,n)}] \\
+{[}{\tt prob\_swap\_from\_box} {\it Real(4,1) ... Real(4,i)}] \\ \\
 %
 where $n$ is the number of species and $i$ is the number of boxes.
 {\em Real(1)} is the probability of attempting to transfer a molecule from one box to another. 
 Similar to the \texttt{\# Prob\_Insertion} subsection, 
-{\em Character(2,i)} is the insertion method and can be \texttt{cbmc} or \texttt{none}. 
+{\em Character(2,i)} is the insertion method and can be 
+\texttt{cbmc}, \texttt{none}, or \texttt{restricted}.
 If \texttt{cbmc}, species $i$ will be inserted by assembling its 
 fragments using configurational bias Monte Carlo.
 If \texttt{none}, species $i$ will not be transferred between boxes.
+If \texttt{restricted}, species $i$ will be assembled using CBMC
+with the first fragment inserted into the region defined by 
+the \texttt{restricted\_insertion} keyword in the \texttt{Box\_Info} section.
 This subsection is required for a GEMC simulation. \\ \\
 %
 For example, while performing a GEMC simulation for three species the first two of which are exchanged
@@ -1192,11 +1233,13 @@ move is 20\degree~specify the following: \\ \\
 %%%%%%%%%%%%%%%%
 \subsection{Start Type}\label{sec:Start_Type}
 {\bf \# Start\_Type} \\
-{\it Character(1) } \\ \\
+{\it Character(1) } \\
+{[}{\it Character(2) }] \\
+{[}{\tt insertion\_method} {\it Character(3,1) ... Character(3,n)}] \\ \\
 %
 This section specifies whether Cassandra generates an initial configuration or 
 uses a previously generated configuration to start a simulation. 
-{\it Character(1)} can be one of four keywords:
+{\it Character(1)} [{\it Character(2)}] can be one of four keywords:
 {\tt make\_config}, {\tt read\_config}, {\tt add\_to\_config}, or {\tt checkpoint}.
 %
 \begin{itemize} 
@@ -1204,7 +1247,7 @@ uses a previously generated configuration to start a simulation.
 The number of molecules of each species is specified as follows: \\ \\
 %
 {\bf \# Start\_Type} \\
-{\it make\_config Integer(1) ... Integer(n)} \\ \\
+{\tt make\_config} {\it Integer(1) ... Integer(n)} \\ \\
 %
 where {\it n} is the number of species and {\it Integer(i)} is the number of molecules of species $i$ to insert into the box. 
 This keyword can be repeated for each box. 
@@ -1226,7 +1269,7 @@ For example, a configuration generated at one temperature may be used to initiat
 After {\tt read\_config} the number of molecules of each species must be given, followed by the .xyz filename: \\ \\
 %
 {\bf \# Start\_Type} \\
-{\it read\_config Integer(1) ... Integer(n) Character(1)}\\ \\
+{\tt read\_config} {\it Integer(1) ... Integer(n) Character(1)}\\ \\
 %
 where {\it n} is the number of species, {\it Integer(i)} is the number of molecules 
 of species $i$ to read from file {\it Character(1)}.
@@ -1264,7 +1307,7 @@ After {\tt add\_to\_config} specify the number of molecules of each species to b
 followed by the number of molecules of each species to be added: \\ \\
 %
 {\bf \# Start\_Type} \\
-{\it add\_to\_config Integer(1) ... Integer(n) Character(1) Integer(n+1) ... Integer(2n)}\\ \\
+{\tt add\_to\_config} {\it Integer(1) ... Integer(n) Character(1) Integer(n+1) ... Integer(2n)}\\ \\
 %
 where {\it n} is the number of species, {\it Integer(1)} through {\it Integer(n)} are the number of molecules of each
 species to read from file {\it Character(1)}, and {\it Integer(n+1)} through {\it Integer(2n)} are the number of molecules
@@ -1288,7 +1331,7 @@ purpose, in addition to the {\tt checkpoint} keyword, additional information in 
 the checkpoint file {\it Character(1)} is required in the following format: \\ \\
 %
 {\bf \# Start\_Type} \\
-{\it checkpoint Character(1)} \\ \\
+{\tt checkpoint} {\it Character(1)} \\ \\
 %
 For example, to continue simulations from a checkpoint file `methane\_vle\_T148.chk', you might specify: \\ \\
 %
@@ -1307,6 +1350,17 @@ Unless starting from a checkpoint file, input files for a multi-box simulation m
 \# Start\_Type \\
 read\_config 100 \ \ 0 water.xyz \\
 make\_config \ 50 \ 50 \\}
+
+The keyword {\tt insertion\_method} is optional and is only meaningful if used in conjunction
+with the keyword {\tt restricted\_insertion} in the {\tt Box\_Info} section and
+either the {\tt make\_config} or {\tt add\_to\_config} keywords in this section.
+{\it Character(3,i)} is the insertion method for species $i$ and can be one of the following options:
+{\tt cbmc}, {\tt none}, or {\tt restricted}.
+If {\tt cbmc}, species $i$ will be assembled using configurational bias Monte Carlo.
+If {\tt none}, species $i$ will not be inserted.
+If \texttt{restricted}, species $i$ will be assembled using CBMC
+with the first fragment inserted into the region defined by 
+the \texttt{restricted\_insertion} keyword in the \texttt{Box\_Info} section.
 %
 %%%%%%%%%%%%%%%%
 %
@@ -1353,12 +1407,12 @@ production 250}
 %%%%%%%%%%%%%%%%
 \subsection{Simulation Length}\label{sec:Simulation_Length_Info}
 {\bf \# Simulation\_Length\_Info} \\
-{\it units  Character(1)} \\
-{\it prop\_freq  Integer(2)} \\
-{\it coord\_freq  Integer(3)} \\
-{\it run  Integer(4)} \\ 
-{[}{\it steps\_per\_sweep  Integer(5)}] \\
-{[}{\it block\_averages  Integer(6)}] \\ \\
+{\tt units} {\it Character(1)} \\
+{\tt prop\_freq} {\it Integer(2)} \\
+{\tt coord\_freq} {\it Integer(3)} \\
+{\tt run} {\it Integer(4)} \\ 
+{[}{\tt steps\_per\_sweep} {\it Integer(5)}] \\
+{[}{\tt block\_averages} {\it Integer(6)}] \\ \\
 %
 This section specifies the frequency at which thermodynamic properties and coordinates are output to a file. 
 The \texttt{units} keyword determines the method by which the simulation is terminated and data is output. 
@@ -1554,9 +1608,9 @@ This will tell Cassandra to store the fragment library in the file named \texttt
 %%%%%%%%%%%%%%%%
 \subsection{CBMC parameters}\label{sec:CBMC_Info}
 {\bf \# CBMC\_Info} \\
-{\bf kappa\_ins} {\it Integer(1)} \\
-{\bf kappa\_dih} {\it Integer(2)} \\
-{\bf rcut\_cbmc} {\it Real(3,1)} [{\it Real(3,2)}] \\ \\
+{\tt kappa\_ins} {\it Integer(1)} \\
+{\tt kappa\_dih} {\it Integer(2)} \\
+{\tt rcut\_cbmc} {\it Real(3,1)} [{\it Real(3,2)}] \\ \\
 %
 Cassandra utilizes a configurational bias methodology based on sampling a library of fragment conformations \cite{Shah:2011}.
 This section sets a number of parameters required for biased insertion/deletion (refer to the sections
