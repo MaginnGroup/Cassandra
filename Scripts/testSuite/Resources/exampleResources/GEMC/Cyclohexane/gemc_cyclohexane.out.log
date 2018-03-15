@@ -1,0 +1,481 @@
+********************************************************************************
+                ______                                __                        
+               / ____/___ _______________ _____  ____/ /________ _              
+              / /   / __ `/ ___/ ___/ __ `/ __ \/ __  / ___/ __ `/              
+             / /___/ /_/ (__  |__  ) /_/ / / / / /_/ / /  / /_/ /               
+             \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                
+                                                                                
+********************************************************************************
+**********************************Log File**************************************
+********************************************************************************
+
+Run info
+********************************************************************************
+version: Cassandra Development Version
+inputfile: gemc_cyclohexane.inp
+name of run: gemc_cyclohexane.out
+date (mm/dd/yyyy): 02/02/2018
+time: 20:15:44
+machine: matthews-mbp.dhcp.nd.edu
+********************************************************************************
+
+Verbose log
+********************************************************************************
+Normal output to logfile
+********************************************************************************
+
+Simulation type
+********************************************************************************
+GEMC                
+********************************************************************************
+
+Copy input file
+********************************************************************************
+                                                                                
+# Run_Name                                                                      
+gemc_cyclohexane.out                                                            
+                                                                                
+# Sim_Type                                                                      
+gemc                                                                            
+                                                                                
+# Nbr_Species                                                                   
+1                                                                               
+                                                                                
+# VDW_Style                                                                     
+lj   cut_tail   14.00                                                           
+lj   cut_tail   30.00                                                           
+                                                                                
+# Rcutoff_Low                                                                   
+1.0                                                                             
+                                                                                
+# Molecule_Files                                                                
+cyclohexane.mcf 300                                                             
+                                                                                
+# Box_Info                                                                      
+2                                                                               
+cubic                                                                           
+38.0                                                                            
+                                                                                
+cubic                                                                           
+81.81                                                                           
+                                                                                
+# Temperature_Info                                                              
+403.0                                                                           
+403.0                                                                           
+                                                                                
+# Move_Probability_Info                                                         
+                                                                                
+# Prob_Translation                                                              
+0.30                                                                            
+0.50                                                                            
+14.0                                                                            
+                                                                                
+# Prob_Rotation                                                                 
+0.30                                                                            
+30.0                                                                            
+180.0                                                                           
+                                                                                
+# Prob_Regrowth                                                                 
+0.30                                                                            
+1.0                                                                             
+                                                                                
+# Prob_Volume                                                                   
+0.005                                                                           
+200.0                                                                           
+                                                                                
+# Prob_Swap                                                                     
+0.095                                                                           
+cbmc                                                                            
+                                                                                
+# Done_Probability_Info                                                         
+                                                                                
+# Start_Type                                                                    
+make_config 250                                                                 
+make_config 50                                                                  
+                                                                                
+# Run_Type                                                                      
+equilibration 100 100                                                           
+                                                                                
+                                                                                
+# Simulation_Length_Info                                                        
+units       steps                                                               
+prop_freq   100                                                                 
+coord_freq  2200                                                                
+run         2200                                                                
+                                                                                
+# Seed                                                                          
+1216131725 1216131726                                                           
+                                                                                
+# Property_Info 1                                                               
+Energy_Total                                                                    
+Density                                                                         
+Nmols                                                                           
+Volume                                                                          
+Pressure                                                                        
+                                                                                
+# Property_Info 2                                                               
+Energy_Total                                                                    
+Density                                                                         
+Nmols                                                                           
+Volume                                                                          
+Pressure                                                                        
+                                                                                
+# CBMC_Info                                                                     
+kappa_ins 12                                                                    
+rcut_cbmc 6.5  6.5                                                              
+                                                                                
+# Pair_Energy                                                                   
+TRUE                                                                            
+                                                                                
+# Fragment_Files                                                                
+species1/frag1/frag1.dat  1                                                     
+                                                                                
+END                                                                             
+********************************************************************************
+
+Number of species
+********************************************************************************
+1
+********************************************************************************
+
+Box info
+********************************************************************************
+Number of simulation boxes     2
+Box 1 is CUBIC               
+ Each Side Of :       38.0000     Angstrom
+ Cell basis vector lengths in A,     38.0000      38.0000      38.0000
+ Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+ Distance between box faces    38.0000      38.0000      38.0000
+ Box volume, A^3         54872.0000
+Box 2 is CUBIC               
+ Each Side Of :       81.8100     Angstrom
+ Cell basis vector lengths in A,     81.8100      81.8100      81.8100
+ Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+ Distance between box faces    81.8100      81.8100      81.8100
+ Box volume, A^3        547544.1937
+********************************************************************************
+
+Pair style
+********************************************************************************
+VDW style used is:   LJ             in box:  1
+ VDW sum style is:   cut_tail       in box:  1
+ rcut =    14.000 Angstrom
+VDW style used is:   LJ             in box:  2
+ VDW sum style is:   cut_tail       in box:  2
+ rcut =    30.000 Angstrom
+Section "# Charge_Style" is missing from the input file
+ By default, charge style for box 1 is NONE
+ By default, charge style for box 2 is NONE
+Pair interaction energy array storage enabled
+Section "# Mixing_Rule" is missing from the input file
+ By default, using Lorentz-Berthelot
+********************************************************************************
+
+Molecule info
+********************************************************************************
+ Reading molecular connectivity information
+ Species:            1
+ Molecular connectivity file: cyclohexane.mcf                                                                                                         
+   6 atom(s) specified.
+   6 bond(s) specified.
+   6 angle(s) specified.
+   6 dihedral(s) specified.
+   1 fragment(s) specified.
+   0 improper(s) specified.
+   1 fragment(s) specified.
+   0 fragment bond(s) specified.
+
+ Species  Max molecules
+ -------  -------------
+      1            300
+
+ Species     1
+ -------------------------------------------------------------------------------
+ Atom parameters read
+ Bond parameters read
+ Angle parameters read
+ Dihedral parameters read
+ Improper parameters read
+ Intra molecule scaling factors for species            1
+  VDW 1-2 scaling factor       0.000
+  VDW 1-3 scaling factor       0.000
+  VDW 1-4 scaling factor       0.000
+  VDW 1-N scaling factor       1.000
+ Total number of atoms in fragment     1  is   6
+ Fragment info read
+ Fragment file for fragment 1 is species1/frag1/frag1.dat
+ -------------------------------------------------------------------------------
+
+ Fragment coord info
+ -------------------------------------------------------------------------------
+ library_coords array successfully allocated
+ Finished loading fragment coordinates from
+ species1/frag1/frag1.dat
+ -------------------------------------------------------------------------------
+********************************************************************************
+
+Start type
+********************************************************************************
+Initial configuration for box 1 will be made
+ Will insert     250  molecules of species   1
+Initial configuration for box 2 will be made
+ Will insert      50  molecules of species   1
+********************************************************************************
+
+Seed info
+********************************************************************************
+The starting seeds are:   1216131725   1216131726
+********************************************************************************
+
+Temperature
+********************************************************************************
+Temperature of box 1 is 403.000 K
+Temperature of box 2 is 403.000 K
+********************************************************************************
+
+Move probabilities
+********************************************************************************
+Probability for translation                0.300000
+ Maximum displacement width for species  1 in box  1  is      0.50000
+ Maximum displacement width for species  1 in box  2  is     14.00000
+Probability for rotation                   0.300000
+ The rotational width for the species    1 in box  1   is      0.5236 radians
+ The rotational width for the species    1 in box  2   is      3.1416 radians
+Probability for regrowth                   0.300000
+ Cumulative probability for regrowth of species     1  is   1.000000
+Probability for volume move                0.005000
+ Maximum volume displacement is    200.000
+ Volume moves will be performed in actual volumes
+Probability for particle swap              0.095000
+ Species 1 will be inserted using CBMC
+ Number of insertable species is    1
+  By default, box_out will be selected according to its mole fraction
+  By default, species will be selected according to its mole fraction in box_out
+Number of moves is :   5
+********************************************************************************
+
+CBMC info
+********************************************************************************
+Kappa for first fragment insertion          12
+ Cutoff for CBMC for box 1 is         6.50
+ Cutoff for CBMC for box 2 is         6.50
+********************************************************************************
+
+Simulation length info
+********************************************************************************
+Thermodynamic quantities will be computed every       100 Steps     
+Coordinates will be written every                    2200 Steps     
+ movie header file for box   1 is      gemc_cyclohexane.out.box1.H
+ movie_XYZ file for box      1 is      gemc_cyclohexane.out.box1.xyz
+ movie header file for box   2 is      gemc_cyclohexane.out.box2.H
+ movie_XYZ file for box      2 is      gemc_cyclohexane.out.box2.xyz
+The simulation will be run for                       2200 Steps     
+Instantaneous values will be written every            100 Steps     
+********************************************************************************
+
+Property info
+********************************************************************************
+Total number of property files to be written is     1   for box 1
+ Maximum number of properties per file is    5
+ Writing the name of the property files and the corresponding property output
+ Property file    1   is  gemc_cyclohexane.out.box1.prp
+ Properties output in these files are
+ Energy_Total
+ Density
+ Nmols
+ Volume
+ Pressure
+Total number of property files to be written is     1   for box 2
+ Maximum number of properties per file is    5
+ Writing the name of the property files and the corresponding property output
+ Property file    1   is  gemc_cyclohexane.out.box2.prp
+ Properties output in these files are
+ Energy_Total
+ Density
+ Nmols
+ Volume
+ Pressure
+********************************************************************************
+
+Minimum distance cutoff
+********************************************************************************
+MC low cutoff distance is   1.000    Angstrom
+********************************************************************************
+
+Run type
+********************************************************************************
+ The input run type is equilibration
+ Update frequency is          100
+ Update frequency for adjusting maximum volume displacement is
+         100
+********************************************************************************
+
+********************************************************************************
+************************ Begin Cassandra simulation ****************************
+********************************************************************************
+
+Initial configuration
+********************************************************************************
+ Inserting          250 molecules of species            1
+ Inserting           50 molecules of species            1
+********************************************************************************
+
+Compute total energy
+********************************************************************************
+
+ Energy components for box 1     kJ/mol-Extensive
+ ---------------------------------------------------------------------
+ Total system energy                    95572.143
+ Intra molecular energy                 66683.879
+   Bond energy                              0.000
+   Bond angle energy                    23189.689
+   Dihedral angle energy                43494.190
+   Improper angle energy                    0.000
+   Intra molecule vdw                       0.000
+   Intra molecule q                         0.000
+ Inter molecular energy                 28888.264
+   Inter molecule vdw                   29083.497
+   Long range correction                 -195.232
+   Inter molecule q                         0.000
+ ---------------------------------------------------------------------
+
+
+ Energy components for box 2     kJ/mol-Extensive
+ ---------------------------------------------------------------------
+ Total system energy                    13286.965
+ Intra molecular energy                 13307.849
+   Bond energy                              0.000
+   Bond angle energy                     4829.823
+   Dihedral angle energy                 8478.026
+   Improper angle energy                    0.000
+   Intra molecule vdw                       0.000
+   Intra molecule q                         0.000
+ Inter molecular energy                   -20.884
+   Inter molecule vdw                     -20.804
+   Long range correction                   -0.080
+   Inter molecule q                         0.000
+ ---------------------------------------------------------------------
+
+********************************************************************************
+
+Run simulation
+********************************************************************************
+      Step       Move   Mol Spc Box  Success  MaxWidth
+       400  translate         1   1  0.46000   0.46000
+       448     rotate         1   1  0.61000   0.54978
+       805  translate         1   1  0.47000   0.43240
+       987     rotate         1   1  0.66000   0.57727
+      1196  translate         1   1  0.51000   0.44105
+      1222     rotate         1   2  0.96000   3.14159
+      1375  translate         1   2  0.71000  19.88000
+      1471     rotate         1   1  0.63000   0.60613
+      1719  translate         1   1  0.52000   0.45869
+      1934     rotate         1   1  0.73000   0.63644
+      2196     rotate         1   2  0.95000   3.14159
+********************************************************************************
+
+Energy of final configuration
+********************************************************************************
+
+ Energy components for box 1     kJ/mol-Extensive       Relative_Error
+ ---------------------------------------------------------------------
+ Total system energy                    47707.236            0.000E+00
+ Intra molecular energy                 49905.740            0.187E-15
+   Bond energy                              0.000            0.000E+00
+   Bond angle energy                    19308.305            0.121E-15
+   Dihedral angle energy                30597.435            0.152E-15
+   Improper angle energy                    0.000            0.000E+00
+   Intra molecule vdw                       0.000            0.000E+00
+   Intra molecule q                         0.000            0.000E+00
+ Inter molecular energy                 -2198.505           -0.132E-15
+   Inter molecule vdw                   -2089.669           -0.279E-15
+   Long range correction                 -108.836           -0.000E+00
+   Inter molecule q                         0.000            0.000E+00
+ ---------------------------------------------------------------------
+
+
+ Energy components for box 2     kJ/mol-Extensive       Relative_Error
+ ---------------------------------------------------------------------
+ Total system energy                    29845.591            0.156E-15
+ Intra molecular energy                 29999.773            0.155E-15
+   Bond energy                              0.000            0.000E+00
+   Bond angle energy                    11848.015            0.000E+00
+   Dihedral angle energy                18151.758            0.128E-15
+   Improper angle energy                    0.000            0.000E+00
+   Intra molecule vdw                       0.000            0.000E+00
+   Intra molecule q                         0.000            0.000E+00
+ Inter molecular energy                  -154.182           -0.354E-15
+   Inter molecule vdw                    -153.776           -0.355E-15
+   Long range correction                   -0.406           -0.000E+00
+   Inter molecule q                         0.000            0.000E+00
+ ---------------------------------------------------------------------
+
+********************************************************************************
+
+
+Writing information for box  1
+********************************************************************************
+                Move      Trials     Success   % Success
+              Volume          14           5       35.71
+
+   ---------------------------------------------------------
+   Writing information for species  1
+
+                Move      Trials     Success   % Success
+           Translate         479         240       50.10
+              Rotate         459         302       65.80
+              Insert          52           9       17.31
+              Delete         151          72       47.68
+   ---------------------------------------------------------
+
+********************************************************************************
+Writing information for box  2
+********************************************************************************
+                Move      Trials     Success   % Success
+              Volume          14           5       35.71
+
+   ---------------------------------------------------------
+   Writing information for species  1
+
+                Move      Trials     Success   % Success
+           Translate         195         129       66.15
+              Rotate         201         192       95.52
+              Insert         151          72       47.68
+              Delete          52           9       17.31
+   ---------------------------------------------------------
+
+********************************************************************************
+
+Writing information about fragments
+********************************************************************************
+
+   ---------------------------------------------------------
+   Writing information for species  1
+     #_Frags_Regrown      Trials     Success   % Success
+                   1         649         228       35.13
+   ---------------------------------------------------------
+********************************************************************************
+
+ Writing information about subroutine times
+********************************************************************************
+ Translation time =            0.167714 secs.
+ Rotation time =               0.158360 secs.
+ Volume change time =          0.515056 secs.
+ Swap time =                   0.173022 secs.
+ Regrowth time =               0.168735 secs.
+********************************************************************************
+
+********************************************************************************
+************************ Cassandra simulation complete *************************
+********************************************************************************
+
+ Program execution time
+********************************************************************************
+         0      Years
+         0     Months
+         0       Days
+         0      Hours
+         0    Minutes
+         2    Seconds
+       604         ms
+********************************************************************************

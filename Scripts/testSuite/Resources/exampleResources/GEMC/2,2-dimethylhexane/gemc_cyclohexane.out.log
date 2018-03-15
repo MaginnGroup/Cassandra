@@ -1,0 +1,183 @@
+********************************************************************************
+                ______                                __                        
+               / ____/___ _______________ _____  ____/ /________ _              
+              / /   / __ `/ ___/ ___/ __ `/ __ \/ __  / ___/ __ `/              
+             / /___/ /_/ (__  |__  ) /_/ / / / / /_/ / /  / /_/ /               
+             \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                
+                                                                                
+********************************************************************************
+**********************************Log File**************************************
+********************************************************************************
+
+Run info
+********************************************************************************
+version: Cassandra Development Version
+inputfile: /Users/matthewhowenstine/Cassandra/Scripts/testSuite/Resources/exampleResources/GEMC/Cyclohexane/gemc_cyclohexane.inp
+name of run: gemc_cyclohexane.out
+date (mm/dd/yyyy): 01/08/2017
+time: 19:58:11
+machine: Matthews-MBP.attlocal.net
+********************************************************************************
+
+Verbose log
+********************************************************************************
+Normal output to logfile
+********************************************************************************
+
+Simulation type
+********************************************************************************
+GEMC                
+********************************************************************************
+
+Copy input file
+********************************************************************************
+                                                                                
+# Run_Name                                                                      
+gemc_cyclohexane.out                                                            
+                                                                                
+# Sim_Type                                                                      
+gemc                                                                            
+                                                                                
+# Nbr_Species                                                                   
+1                                                                               
+                                                                                
+# VDW_Style                                                                     
+lj   cut_tail   14.00                                                           
+lj   cut_tail   30.00                                                           
+                                                                                
+# Rcutoff_Low                                                                   
+1.0                                                                             
+                                                                                
+# Molecule_Files                                                                
+cyclohexane.mcf 300                                                             
+                                                                                
+# Box_Info                                                                      
+2                                                                               
+cubic                                                                           
+38.0                                                                            
+                                                                                
+cubic                                                                           
+81.81                                                                           
+                                                                                
+# Temperature_Info                                                              
+403.0                                                                           
+403.0                                                                           
+                                                                                
+# Move_Probability_Info                                                         
+                                                                                
+# Prob_Translation                                                              
+0.30                                                                            
+0.50                                                                            
+14.0                                                                            
+                                                                                
+# Prob_Rotation                                                                 
+0.30                                                                            
+30.0                                                                            
+180.0                                                                           
+                                                                                
+# Prob_Regrowth                                                                 
+0.30                                                                            
+1.0                                                                             
+                                                                                
+# Prob_Volume                                                                   
+0.005                                                                           
+200.0                                                                           
+                                                                                
+# Prob_Swap                                                                     
+0.095                                                                           
+cbmc                                                                            
+                                                                                
+# Done_Probability_Info                                                         
+                                                                                
+# Start_Type                                                                    
+make_config 250                                                                 
+make_config 50                                                                  
+                                                                                
+# Run_Type                                                                      
+equilibration 100 100                                                           
+                                                                                
+                                                                                
+# Simulation_Length_Info                                                        
+units       steps                                                               
+prop_freq   100                                                                 
+coord_freq  2200                                                                
+run         2200                                                                
+                                                                                
+# Seed                                                                          
+1216131725 1216131726                                                           
+                                                                                
+# Property_Info 1                                                               
+Energy_Total                                                                    
+Density                                                                         
+Nmols                                                                           
+Volume                                                                          
+Pressure                                                                        
+                                                                                
+# Property_Info 2                                                               
+Energy_Total                                                                    
+Density                                                                         
+Nmols                                                                           
+Volume                                                                          
+Pressure                                                                        
+                                                                                
+# CBMC_Info                                                                     
+kappa_ins 12                                                                    
+rcut_cbmc 6.5  6.5                                                              
+                                                                                
+# Pair_Energy                                                                   
+TRUE                                                                            
+                                                                                
+# Fragment_Files                                                                
+species1/frag1/frag1.dat  1                                                     
+                                                                                
+END                                                                             
+********************************************************************************
+
+Number of species
+********************************************************************************
+1
+********************************************************************************
+
+Box info
+********************************************************************************
+Number of simulation boxes     2
+Box 1 is CUBIC               
+ Each Side Of :       38.0000     Angstrom
+ Cell basis vector lengths in A,     38.0000      38.0000      38.0000
+ Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+ Distance between box faces    38.0000      38.0000      38.0000
+ Box volume, A^3         54872.0000
+Box 2 is CUBIC               
+ Each Side Of :       81.8100     Angstrom
+ Cell basis vector lengths in A,     81.8100      81.8100      81.8100
+ Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+ Distance between box faces    81.8100      81.8100      81.8100
+ Box volume, A^3        547544.1937
+********************************************************************************
+
+Pair style
+********************************************************************************
+VDW style used is:   LJ             in box:  1
+ VDW sum style is:   cut_tail       in box:  1
+ rcut =    14.000 Angstrom
+VDW style used is:   LJ             in box:  2
+ VDW sum style is:   cut_tail       in box:  2
+ rcut =    30.000 Angstrom
+Section "# Charge_Style" is missing from the input file
+ By default, charge style for box 1 is NONE
+ By default, charge style for box 2 is NONE
+Pair interaction energy array storage enabled
+Section "# Mixing_Rule" is missing from the input file
+ By default, using Lorentz-Berthelot
+********************************************************************************
+
+Molecule info
+********************************************************************************
+ Reading molecular connectivity information
+ Species:            1
+ Molecular connectivity file: cyclohexane.mcf                                                                                                         
+
+************ERROR************
+Unable to open molecular connectivity file.
+This error occurred in subroutine Get_Molecule_Info on step 0.
+Fatal Error. Stopping program.
