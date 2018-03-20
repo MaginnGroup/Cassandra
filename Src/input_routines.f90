@@ -5847,8 +5847,8 @@ USE Global_Variables, ONLY: cpcollect
                 err_msg(3) = 'Supported keywords are: energy_total, energy_intra, energy_inter, energy_bond,'
                 err_msg(4) = '  energy_angle, energy_dihedral, energy_improper, energy_intravdw, energy_intraq'
                 err_msg(5) = '  energy_intervdw, energy_interq, energy_lrc, energy_recip, energy_self,'
-                err_msg(6) = '  enthalpy, pressure, pressure_xx, pressure_yy, pressure_zz, &
-				volume, density, nmols, mass_density'
+                err_msg(6) = '  enthalpy, pressure, pressure_xx, pressure_yy, pressure_zz, ' &
+                             'volume, density, nmols, mass_density'
                 CALL Clean_Abort(err_msg,'Get_Property_Info')
               END IF
               
