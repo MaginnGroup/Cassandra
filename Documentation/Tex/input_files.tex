@@ -1497,9 +1497,16 @@ In this case, each section is separated by a blank line.
 {\it Character(i,j)} is the property that is to be output. 
 Each property is specified on a separate line. 
 
-All energies are output in kJ/mol and are extensive, i.e.,
+All energies are in kJ/mol and are extensive, i.e.
 if the numbers of molecules in a simulation are doubled, the magnitude of the energy will also double.
-To get intensive energies of a single species simulation, divide the output energies by the number of molecules.
+The kJ unit of energy is the right order of magnitude for molar quantities, $\mathcal{O}(10^{23})$ molecules.
+Cassandra is designed for simulations of $\mathcal{O}(100-1000)$ molecules,
+which will have much smaller internal energies, $\mathcal{O}(10^{-21})$ kJ.
+Rather than report energies in zeptojoules or eV, we have opted to multiply the energies by Avogadro's number.
+Or, equivalently, you can interpret the output energies as the energy for a mole of simulation boxes.
+To get extensive energies in kJ, divide the output energies by Avogadro's number.
+To get intensive energies in kJ/mol, divide the output energies by the number of molecules 
+(only strictly valid for single species simulations).
 The following components of the energy can be output:
 
 \texttt{energy\_total}: total energy of the system, the sum of \texttt{energy\_intra} and \texttt{energy\_inter} \\
