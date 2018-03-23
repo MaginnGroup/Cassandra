@@ -1488,7 +1488,7 @@ This simulation will output 10 averages, and each average will be computed from 
 %%%%%%%%%%%%%%%%
 \subsection{Property Output}\label{sec:Property_Info}
 {\bf \# Property\_Info} {\it Integer(i)} \\
-{\it Character(j) *One line for each property $j$} \\ \\
+{\it Character(i,j) *One line for each property $j$} \\ \\
 %
 This section provides information on the properties that are output. 
 More than one section is allowed for multiple boxes. 
@@ -1496,21 +1496,52 @@ In this case, each section is separated by a blank line.
 {\it Integer(i)} is the identity of the box for which the properties are desired. 
 {\it Character(i,j)} is the property that is to be output. 
 Each property is specified on a separate line. 
-The supported keywords are: \\ \\
-%
-\texttt{energy\_total}: Total energy of the system (extensive) in kJ/mol \\
-\texttt{energy\_lj}: Lennard-Jones energy of the sytem in kJ/mol \\
-\texttt{energy\_elec}: Electrostatic energy of the sytem in kJ/mol \\
-\texttt{energy\_intra}: Total intramolecular energy of the system including bonded and non-bonded 
-interactions in kJ/mol \\
-\texttt{enthalpy}: Enthalpy of the system (extensive) kJ/mol. 
+
+All energies are in kJ/mol and are extensive, i.e.
+if the numbers of molecules in a simulation are doubled, the magnitude of the energy will also double.
+The kJ unit of energy is the right order of magnitude for molar quantities, $\mathcal{O}(10^{23})$ molecules.
+Cassandra is designed for simulations of $\mathcal{O}(100-1000)$ molecules,
+which will have much smaller internal energies, $\mathcal{O}(10^{-21})$ kJ.
+Rather than report energies in zeptojoules or eV, we have opted to multiply the energies by Avogadro's number.
+Or, equivalently, you can interpret the output energies as the energy for a mole of simulation boxes.
+To get extensive energies in kJ, divide the output energies by Avogadro's number.
+To get intensive energies in kJ/mol, divide the output energies by the number of molecules 
+(only strictly valid for single species simulations).
+The following components of the energy can be output:
+
+\texttt{energy\_total}: total energy of the system, the sum of \texttt{energy\_intra} and \texttt{energy\_inter} \\
+\texttt{energy\_intra}: intramolecular energy, the sum of the following terms
+\begin{itemize}
+\item \texttt{energy\_bond}: bond energy
+\item \texttt{energy\_angle}: angle energy
+\item \texttt{energy\_dihedral}: dihedral energy
+\item \texttt{energy\_improper}: improper energy
+\item \texttt{energy\_intravdw}: intramolecular van der Waals energy
+\item \texttt{energy\_intraq}: intramolecular electrostatic energy. 
+In the case of Ewald and DSF methods, this is the real-space intramolecular electrostatic energy.
+\end{itemize}
+\texttt{energy\_inter}: intermolecular energy, the sum of the following terms
+\begin{itemize}
+\item \texttt{energy\_intervdw}: intermolecular van der Waals energy
+\item \texttt{energy\_lrc}: long range tail correction for the truncated van der Waals energy
+\item \texttt{energy\_interq}: intermolecular electrostatic energy. 
+In the case of Ewald and DSF methods, this is the real-space intermolecular electrostatic energy.
+\item \texttt{energy\_recip}: electrostatic reciprocal energy, for Ewald and DSF methods
+\item \texttt{energy\_self}: electrostatic self energy, for Ewald method
+\end{itemize}
+
+Additional supported keywords are: \\ \\
+\texttt{enthalpy}: enthalpy of the system, in kJ/mol (extensive). 
 The enthalpy is computed using the pressure setpoint for isobaric simulations and 
 the computed pressure for all other ensembles. \\
-\texttt{pressure}: Pressure of the system in bar \\
-\texttt{volume}: Volume of the system in \AA$^3$ \\
-\texttt{nmols}: Number of molecules of each species \\
-\texttt{density}: Density of each species in \#/\AA$^3$ \\
-\texttt{mass\_density}: Density of the system in kg/m$^3$ \\ \\
+\texttt{pressure}: pressure of the system, in bar \\
+\texttt{pressure\_xx}: the xx-component of the pressure tensor, in bar \\
+\texttt{pressure\_yy}: the yy-component of the pressure tensor, in bar \\
+\texttt{pressure\_zz}: the zz-component of the pressure tensor, in bar \\
+\texttt{volume}: volume of the system, in \AA$^3$ \\
+\texttt{nmols}: number of molecules of each species \\
+\texttt{density}: number density of each species, in \#/\AA$^3$ \\
+\texttt{mass\_density}: density of the system, in kg/m$^3$ \\ \\
 %
 For example, if you would like total energy, volume and pressure of a one box system to be written, you may 
 specify the following: \\ \\
