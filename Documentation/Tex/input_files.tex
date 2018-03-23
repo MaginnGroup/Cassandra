@@ -1235,7 +1235,7 @@ move is 20\degree~specify the following: \\ \\
 {\bf \# Start\_Type} \\
 {\it Character(1) } \\
 {[}{\it Character(2) }] \\
-{[}{\tt insertion\_method} {\it Character(3,1) ... Character(3,n)}] \\ \\
+{[}{\tt insertion} {\it Character(3,1) ... Character(3,n)}] \\ \\
 %
 This section specifies whether Cassandra generates an initial configuration or 
 uses a previously generated configuration to start a simulation. 
@@ -1351,7 +1351,7 @@ Unless starting from a checkpoint file, input files for a multi-box simulation m
 read\_config 100 \ \ 0 water.xyz \\
 make\_config \ 50 \ 50 \\}
 
-The keyword {\tt insertion\_method} is optional and is only meaningful if used in conjunction
+The keyword {\tt insertion} is optional and is only meaningful if used in conjunction
 with the keyword {\tt restricted\_insertion} in the {\tt Box\_Info} section and
 either the {\tt make\_config} or {\tt add\_to\_config} keywords in this section.
 {\it Character(3,i)} is the insertion method for species $i$ and can be one of the following options:
@@ -1361,6 +1361,7 @@ If {\tt none}, species $i$ will not be inserted.
 If \texttt{restricted}, species $i$ will be assembled using CBMC
 with the first fragment inserted into the region defined by 
 the \texttt{restricted\_insertion} keyword in the \texttt{Box\_Info} section.
+
 %
 %%%%%%%%%%%%%%%%
 %

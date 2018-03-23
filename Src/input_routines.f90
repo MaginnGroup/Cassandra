@@ -3506,7 +3506,7 @@ SUBROUTINE Get_Box_Info
               CALL Clean_Abort(err_msg,'Get_Box_Info')
            END IF
         ELSE IF ( int_sim_type == sim_gemc_ig ) THEN
-           IF (nbr_boxes < 3 ) THEN
+           IF (nbr_boxes /= 3 ) THEN
               err_msg = ''
               err_msg(1) = 'Option ' // TRIM(line_array(1)) // &
                            ' on line number ' // &
@@ -5491,8 +5491,8 @@ SUBROUTINE Get_Simulation_Length_Info
               err_msg = ''
               err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
                            TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
-              err_msg(2) = 'Supported keywords are: prop_freq, coord_freq, run, steps_per_sweep, block_avg_freq'
-              err_msg(3) = '                        energy_freq'
+              err_msg(2) = 'Supported keywords are: prop_freq, coord_freq, run, steps_per_sweep,'
+              err_msg(3) = '                        block_avg_freq, energy_freq'
               CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
 
            END IF
@@ -5847,8 +5847,8 @@ USE Global_Variables, ONLY: cpcollect
                 err_msg(3) = 'Supported keywords are: energy_total, energy_intra, energy_inter, energy_bond,'
                 err_msg(4) = '  energy_angle, energy_dihedral, energy_improper, energy_intravdw, energy_intraq'
                 err_msg(5) = '  energy_intervdw, energy_interq, energy_lrc, energy_recip, energy_self,'
-                err_msg(6) = '  enthalpy, pressure, pressure_xx, pressure_yy, pressure_zz, ' &
-                             'volume, density, nmols, mass_density'
+                err_msg(6) = '  enthalpy, pressure, pressure_xx, pressure_yy, pressure_zz, volume, density,'
+                err_msg(7) = '  nmols, mass_density'
                 CALL Clean_Abort(err_msg,'Get_Property_Info')
               END IF
               
