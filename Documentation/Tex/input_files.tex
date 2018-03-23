@@ -1241,9 +1241,26 @@ This section specifies whether Cassandra generates an initial configuration or
 uses a previously generated configuration to start a simulation. 
 {\it Character(1)} [{\it Character(2)}] can be one of four keywords:
 {\tt make\_config}, {\tt read\_config}, {\tt add\_to\_config}, or {\tt checkpoint}.
+
+{\tt make\_config} and {\tt add\_to\_config} are options to construct an initial configuration 
+by inserting a specified number of molecules of each species.
+Each molecule is inserted using configuration bias Monte Carlo, 
+using {\tt kappa\_ins} trial locations for the first fragment and 
+{\tt kappa\_dih} trial rotations for each additional fragment.
+Trial locations and rotations that place two atoms closer than {\tt Rcutoff\_Low} \AA\ have zero weight.
+Otherwise the weight of the trial location is computed as discussed in section \ref{sec:cbmcInsert} and 
+one trial is selected proportionate to its weight.
+If all trial locations have zero weight, the insertion is rejected and re-attempted.
+This process does not utilize a chemical potential 
+nor does it compute the change in energy from inserting the fully assembled molecule.
+As a result, these routines will allow the user to insert more molecules than
+are thermodynamically reasonable at finite temperature or finite chemical potentials.
+This can be particularly problematic for deleting molecules in GCMC and GEMC simulations.
+When computing the reverse probability for inserting that molecule back into the location it's being deleted from,
+if the reverse move is more than 708 $k_BT$ uphill, then the acceptance probability blows up. \\
 %
 \begin{itemize} 
-\item \textbf{`make\_config'} will generate an initial configuration using a configurational biased scheme. 
+\item \textbf{make\_config} will generate an initial configuration using a configurational biased scheme. 
 The number of molecules of each species is specified as follows: \\ \\
 %
 {\bf \# Start\_Type} \\
@@ -1264,7 +1281,9 @@ If the simulation also has a second box with 25 molecules of species 2 only \\ \
  make\_config 100 75\\
  make\_config \ \ 0 25\\}
 %
-\item {\textbf{`read\_config'}} will use the coordinates from an .xyz file.
+Please note the caution regarding {\tt make\_config} at the end of this section. \\
+%
+\item {\textbf{read\_config}} will use the coordinates from an .xyz file.
 For example, a configuration generated at one temperature may be used to initiate a simulation at another temperature. 
 After {\tt read\_config} the number of molecules of each species must be given, followed by the .xyz filename: \\ \\
 %
@@ -1302,7 +1321,7 @@ The .xyz files must have the following format:\\ \\
 %used to restart a simulation using the {\tt read\_config} option. This script is located in \texttt{Scripts/Read\_Config}. 
 %For more information, refer to the README file located in the same directory.
 
-\item {\textbf{`add\_to\_config'}} will read the coordinates from an .xyz file, but then insert additional molecules.
+\item {\textbf{add\_to\_config}} will read the coordinates from an .xyz file, but then insert additional molecules.
 After {\tt add\_to\_config} specify the number of molecules of each species to be read, followed by the .xyz filename, 
 followed by the number of molecules of each species to be added: \\ \\
 %
@@ -1319,9 +1338,11 @@ For example, to start a simulation by reading in a zeolite (speces 1) configurat
 \# Start\_Type \\
 add\_to\_config  1  0 MFI.xyz 0 30 \\} \\
 %
-where the file \texttt{MFI.xyz} contains the coordinates of a unit cell of MFI silicalite.
-
-\item \textbf{`checkpoint'} this keyword is used to restart a simulation from a checkpoint file.
+where the file \texttt{MFI.xyz} contains the coordinates of a unit cell of MFI silicalite. \\
+%
+Please note the caution regarding {\tt add\_to\_config} at the end of this section. \\
+%
+\item \textbf{checkpoint} this keyword is used to restart a simulation from a checkpoint file.
 During the course of a simulation, Cassandra periodically generates a checkpoint file (*.chk)
  containing information about the total number of translation, rotation and volume moves along with the random number seeds and 
 the coordinates of each molecule and its box number at the time the file is written. Cassandra provides
@@ -1360,7 +1381,7 @@ If {\tt cbmc}, species $i$ will be assembled using configurational bias Monte Ca
 If {\tt none}, species $i$ will not be inserted.
 If \texttt{restricted}, species $i$ will be assembled using CBMC
 with the first fragment inserted into the region defined by 
-the \texttt{restricted\_insertion} keyword in the \texttt{Box\_Info} section.
+the \texttt{restricted\_insertion} keyword in the \texttt{Box\_Info} section. \\
 %
 %%%%%%%%%%%%%%%%
 %
