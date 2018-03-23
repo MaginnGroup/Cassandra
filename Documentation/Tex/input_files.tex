@@ -1235,7 +1235,7 @@ move is 20\degree~specify the following: \\ \\
 {\bf \# Start\_Type} \\
 {\it Character(1) } \\
 {[}{\it Character(2) }] \\
-{[}{\tt insertion\_method} {\it Character(3,1) ... Character(3,n)}] \\ \\
+{[}{\tt insertion} {\it Character(3,1) ... Character(3,n)}] \\ \\
 %
 This section specifies whether Cassandra generates an initial configuration or 
 uses a previously generated configuration to start a simulation. 
@@ -1372,7 +1372,7 @@ Unless starting from a checkpoint file, input files for a multi-box simulation m
 read\_config 100 \ \ 0 water.xyz \\
 make\_config \ 50 \ 50 \\}
 
-The keyword {\tt insertion\_method} is optional and is only meaningful if used in conjunction
+The keyword {\tt insertion} is optional and is only meaningful if used in conjunction
 with the keyword {\tt restricted\_insertion} in the {\tt Box\_Info} section and
 either the {\tt make\_config} or {\tt add\_to\_config} keywords in this section.
 {\it Character(3,i)} is the insertion method for species $i$ and can be one of the following options:
@@ -1695,7 +1695,7 @@ using {\it Integer(2)} trial dihedral angles that connect the new fragment to th
 %
 Keyword {\tt rcut\_cbmc} is required if section {\tt \# CBMC\_Info} is required.
 For all the trials, energy of the partially grown molecule with itself and surrounding molecules is to be calculated. 
-For this purpose, a short cutoff is used. {\it Real(4,i)} specifies the cutoff distance in \AA\ for box $i$. 
+For this purpose, a short cutoff is used. {\it Real(3,i)} specifies the cutoff distance in \AA\ for box $i$. 
 A short cutoff is fast, but might miss some overlaps. You can experiment with this value to optimize it for your system.\\ \\
 %
 For a GEMC simulation in which 12 candidate positions are generated for biased insertion/deletion, 10 trials for

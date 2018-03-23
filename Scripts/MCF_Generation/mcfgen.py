@@ -127,19 +127,21 @@ NOTES:
   3) Improper definitions are not currently read from Gromacs forcefield files.
 """)
 parser.add_argument('configFile', 
-								help="""CONFIGFILE must be in either .pdb or .cml format. """ + 
-										 """A .pdb file can be generated using Gaussview, """ +
-										 """while .cml files can be generated using Avogadro.""")
+                    help="""CONFIGFILE must be in either .pdb or .cml format. """ + 
+                         """A .pdb file can be generated using Gaussview, """ +
+                         """while .cml files can be generated using Avogadro.""")
 parser.add_argument('--ffTemplate', '-t', action='store_true',
-								help="""Generate a blank force field file template.""")
+                    help="""Generate a blank force field file template.""")
 parser.add_argument('--ffFile', '-f',  
-								help="""The default FFFILE is molecule.ff, a custom format """ +
-										 """for this script. Alternatively, the forcefile """ +
-										 """parms can be supplied in GROMACS format (.itp).""")
+                    help="""The default FFFILE is molecule.ff, a custom format """ +
+                         """for this script. Alternatively, the forcefile """ +
+                         """parms can be supplied in GROMACS format (.itp).""")
 parser.add_argument('--mcfFile', '-m', 
-								help="""The default MCFFILE is molecule.mcf.""")
+                    help="""The default MCFFILE is molecule.mcf.""")
 parser.add_argument('--massDefault', '-d', type=float,
-                help="""Provide a default mass for unknown elements.""")
+                    help="""Provide a default mass for unknown elements.""")
+parser.add_argument('--verbose', '-v', action='store_true',
+                    help="""Print an atom-by-atom summary of the topology scan""")
 
 args = parser.parse_args()
 
@@ -364,83 +366,12 @@ def cml_to_pdb(infilename):
 
 	filePdb.close()
 
-def lookup(atomlook):
-	tempfile = open ('temporary.temp', 'r')
-	for line in tempfile:
-		linestring = line.split()
-		if linestring[0]==atomlook:
-			line=line.split()
-			return line
-	tempfile.close()
 
-def initialize(infilename):
-
-	#This function will set the starting atom for the subsequent ring scan
-	#It can handle the following special cases:
-	#1) Argon: If no CONECT keyword is found, it will automatically assume it's argon.
-        #2) Cyclic UA model: In this case, a 'ghost' molecule will be used as a starting point.
-
-
-	global cyclic_ua_atom
-	conect_found = False
-	atom =''
-	ifile = open(infilename, 'r')
-	tempfile = open('temporary.temp', 'w')
-	for line in ifile:
-		linestring = line.split()
-		if not line.strip():
-			continue
-		if linestring[0]=='CONECT':
-			conect_found = True
-			tempfile.write(line[6:len(line)])
-			numconnect=len(linestring)-2
-			if numconnect==1:
-				atom=linestring[1]
-				cyclic_ua_atom = False
-	ifile.close()
-
-	if conect_found == False: #This means that this is Argon
-		atom = ''
-		cyclic_ua_atom = False
-		tempfile.close()
-		return atom
-
-	if cyclic_ua_atom == True and atom == '' : 
-	#This means molecule has at least one cyclic united atom model
-		tempfile.close()
-		atom = '0'
-
-		#Rewrite tempfile to include a dummy atom 0
-
-		tempfile2=open('temporary.temp2','w')
-		tempfile1=open('temporary.temp','r')
-		for line in tempfile1:
-			this_line_new = line.split()
-			if this_line_new[0] == '1':
-				this_line_new.append('0')
-			for each_atom in this_line_new:
-				tempfile2.write(each_atom+'  ')
-			tempfile2.write('\n')
-		tempfile2.write('0 1')
-
-		tempfile2.close()
-		tempfile1.close()
-		os.system('mv temporary.temp2 temporary.temp')
-
-	return atom
-
-
-def isRing(scannedList, atom):
-	for i in xrange(0,len(scannedList)):
-		if scannedList[i] == atom:
-			return True
-
-
-def cleanGenList(branchList):
-	for i in xrange(0,len(genScannedList)):
-		if genScannedList[i] == branchList[0]:
-			for j in xrange(0,len(branchList)):
-				del(genScannedList[-1])
+def removeTempFromMaster(tempList,masterList):
+	for i in xrange(0,len(masterList)):
+		if masterList[i] == tempList[0]:
+			for j in xrange(0,len(tempList)):
+				del(masterList[-1])
 			return
 
 
@@ -454,190 +385,189 @@ def isolateRing(theList):
 	for index, item in enumerate(theList):
 		if item == repeatedAtom[0]:
 			location.append(index)
-	ringList.append(theList[location[0]:location[1]])
-	#logfile.write("The ring list is: " + str(ringList) + "\n")
-	cleanGenList(ringList[-1])
+
+	# loop over atoms in ring and verify that each is bonded to 2 other ring atoms
+	ring = theList[location[0]:location[1]]
+	for atom in ring:
+		nBonds = len([val for val in ring if val in atomConnect[atom]])
+		if nBonds < 2: # exo-ring atom
+			ring.remove(atom)
+			
+	ringList.append(ring)
+	removeTempFromMaster(ringList[-1],wRingList)
 	
 		
-def isAlreadyInRing(atom):
-	for row in ringList:
-		for i in range(0,len(row)):
-			if row[i]==atom:
-				return True
+def ringID(iRecursion):
+	"""arguments:
+	iRecursion, integer = how many times this functino has called itself
+returns:
+	endType, string = reason why branch search terminated
+	branchList, list = list of atoms scanned so far
+"""
+	iRecursion += 1
+
+	# This function does a recursive scan on the molecule, 
+	# utilizing the following lists:
 	
-def bondID():
+	# ringList, nested list - each entry is a list of atom indices in a ring
+	# scannedList, list of tuples - should have one entry for each atom in the order it is evaluated
+	# wRingList, list - working ringList, list of possible ring atoms
+	# wBranchList, list - reset with every ringID() call
+	# branchList, list - returned by ringID()
 
-	#This function will populate the variable "bondList"
+	wBranchList=[]
+	while True:
+		newAtom, oldAtom = scannedList[-1]
+		newConnect = atomConnect[newAtom] # list of atoms bonded to newAtom
+		nBonds=len(newConnect)
 
-	tempfile = open('temporary.temp','r')
-	oldatom=[]
-	for line in tempfile:
-		atomlist1=line.split()
-		newAtom=atomlist1[0]
-		for i in range(1, len(atomlist1)):
-			if atomlist1[i] in oldatom:
-				continue
-			bondList.append(atomlist1[0] + " " + atomlist1[i])
-			oldatom.append(newAtom)
-	tempfile.close()
+		# on recursive calls to ringID(), will hit two atoms twice for each ring
 
-
-def scan(newAtom,oldLine,scanning):
-
-        #This function does a recursive scan on the molecule. The main product of this function
-	#is the list ringList, which contains atoms that form a ring.
-
-	scannedList=[]
-	#branchalreadyscanned=[0]
-	while 1==1:
-
-
-		#logfile.write("Atom " + newAtom + "\n")
-
-		if isAlreadyInRing(newAtom)==True:
-			#logfile.write("Atom " + newAtom + " was already included in a ring\n\n")
+		# if repeat atom has already been IDd as a ring atom, 
+		# terminate this recursive search and continue with the next atom
+		isAlreadyInRing = any([newAtom in ring for ring in ringList])
+		if isAlreadyInRing:
+			if args.verbose:
+				print "%4d %-15s" % (newAtom, "already IDd as a ring atom, abort")
 			break
 
-		if isRing(genScannedList, newAtom)==True:
-			#logfile.write("A ring was found because atom " + newAtom + 
-			#              " was already scanned\n\n")
-			genScannedList.append(newAtom)
+		# if repeat atom has not been flagged as a ring atom, flag it now
+		# ring will be added to ringList by calling isolateRing below
+		isRing = newAtom in wRingList
+		if isRing:
+			if args.verbose:
+				print "%4d %-15s" % (newAtom, "repeat atom, must be a ring atom")
+			wRingList.append(newAtom)
+			if iRecursion == 1: # on deeper recursion, isolateRing will be called after exiting
+					isolateRing(wRingList)
 			return "EndRing", scannedList
 
-		scannedList.append(newAtom)
-		genScannedList.append(newAtom)
-		newLine=lookup(newAtom)
-		totalBondedAtoms=len(newLine)-1
+		wRingList.append(newAtom)
+		wBranchList.append(newAtom)
 
-		if totalBondedAtoms>2:  #branch point?
+		# the number of bonds determines the topology type of this atom: 
+		# terminal, linear, branch
+		if nBonds==1: # terminal
+			if args.verbose:
+				print "%4d %-40s" % (newAtom, "terminal")
 
-			#logfile.write("A branch point was found in atom " + newAtom + "\n")
-			for j in xrange(1,totalBondedAtoms+1):
-				if newLine[j]==oldLine[0]: 
-				#or newLine[j]==branchalreadyscanned[0]: 
-				#If old atom in list is scanned
+			if len(scannedList) > 1: # only bonded atom is oldAtom
+				return "EndPoint", wBranchList
+			else: # started at a terminal atom, continue onto the next
+				scannedList.append((newConnect[0],newAtom))
+
+		elif nBonds==2: # linear
+			if args.verbose: 
+				print "%4d %-40s" % (newAtom, "linear")
+
+			# one bonded atom is oldAtom
+			# need to select the other atom
+			for i in xrange(nBonds):
+
+				if newConnect[i]==oldAtom: # skip oldAtom
 					continue
-				newAtom=newLine[j]
-				endType, branchList = scan(newAtom, newLine, True)
-				#branchalreadyscanned=lookup(newAtom)
+
+				scannedList.append((newConnect[i],newAtom))
+				break # for loop, and continue next iteration of while loop
+
+		elif nBonds > 2: # branch
+			if args.verbose:
+				print "%4d %-40s" % (newAtom, "branch")
+
+			# loop over each atom newAtom is bonded to
+			# and call ringID() recursively
+			for j in xrange(nBonds):
+				
+				if newConnect[j]==oldAtom: # skip oldAtom
+					continue
+
+				# recursive call to ringID()
+				scannedList.append((newConnect[j],newAtom))
+				endType, branchList = ringID(iRecursion)
+
+				# ringID() ends when an endpoint or repeat atom is found
 				if endType=="EndPoint":
-					cleanGenList(branchList)
+					removeTempFromMaster(branchList,wRingList)
 				if endType=="EndRing":
-					isolateRing(genScannedList)
-				#if endType=="EndScan":
-			break
-	
-		for i in xrange(1,totalBondedAtoms+1):
+					isolateRing(wRingList)
 
-			if scanning==True and totalBondedAtoms==1:
-				#logfile.write("End point found at " + newAtom + "\n")
-				return "EndPoint", scannedList
+			break # while loop, and return
 
-			if scanning==False and totalBondedAtoms==1: #Initial step
-				scanning = True
-
-			if len(oldLine)==0:
-				newAtom=newLine[i]
-				oldLine=newLine
-				continue
-
-			if newLine[i]==oldLine[0]: #If old atom in list is scanned
-				continue
-	
-			newAtom=newLine[i]
-			oldLine=newLine
-			break
-
-	return "EndScan", scannedList
+	return "EndScan", wBranchList
 
 
 def fragID():
 
 	#This function will populate the variable "fragList"
 
+	# add exo-ring atoms to rings to make ring fragments
 	adjacentatoms=[]
-	tempfile=open('temporary.temp','r')
-	for eachring in ringList:
-		for eachatom in eachring:
-			vector=lookup(eachatom)
-			if len(vector)>3:
-				adjacentatoms.append(list(set(vector)-set(eachring)))
+	for ring in ringList:
+		for atom in ring:
+			nBonds = len(atomConnect[atom])
+			if nBonds > 2:
+				adjacentatoms.append(list(set(atomConnect[atom])-set(ring)))
 
 		adjacentatoms1=filter(None,adjacentatoms)
 		adjacentatoms = [x for sublist in adjacentatoms1 for x in sublist]
-		fragList.append(eachring+adjacentatoms)
+		fragList.append(ring+adjacentatoms)
 		adjacentatoms=[]
 
-	for line in tempfile:
-		inaring=False
-		linestring=line.split()
-		if len(linestring)>2:
-			anchoratom=linestring[0]
+	# find normal fragments
+	for atom in atomList:
+		inRing=False
+		nBonds = len(atomConnect[atom])
+		if nBonds > 1:
+			anchoratom = atom
 		else:
 			continue
 
-		for row in ringList:
-			if anchoratom in set(row):
-				inaring=True
+		for ring in ringList:
+			if anchoratom in set(ring):
+				inRing = True
 
-		if inaring==True:
+		if inRing==True:
 			continue
 		else:
-			fragList.append(linestring)
-
-	tempfile.close()
+			fragList.append([atom] + atomConnect[atom])
 
 def angleID():
 
 	#This function will populate the list angleList
 
-	tempfile=open('temporary.temp','r')
-	for line in tempfile:
-		atomlist=line.split()
-		if len(atomlist)<3:
+	for atom in atomList:
+		nBonds = len(atomConnect[atom])
+		nAtomsInFrag = nBonds + 1
+		if nAtomsInFrag < 3:
 			continue
-		apex=atomlist[0]
-		del(atomlist[0])
-		for i in range(0,len(atomlist)-1):
-			for j in range(i+1,len(atomlist)):
-				angleList.append(atomlist[i] + " " + apex + " " + atomlist[j])
-
-	removedoublecounting("angles")
-
-
+		apex=atom
+		for atom1 in atomConnect[atom]:
+			for atom2 in atomConnect[atom]:
+				if atom1 == atom2:
+					continue
+				ijk = (atom1, apex, atom2)
+				kji = ijk[::-1]
+				if ijk not in angleList and kji not in angleList:
+					angleList.append(ijk)
 
 	
 def dihedralID():
 
 	#This function populates the variable dihedralList
 
-	tempfile=open('temporary.temp','r')
-
-	for line in tempfile:
-		atomlist1=line.split()
-		atom1=atomlist1[0]
-		for i in range(1,len(atomlist1)):
-			atomlist2=lookup(atomlist1[i])
-			atom2=atomlist2[0]
-			if atom2==atom1:
-				continue
-			for j in range(1,len(atomlist2)):
-				atomlist3=lookup(atomlist2[j])
-				atom3=atomlist3[0]
-				if atom3==atom2 or atom3==atom1:
+	for atom1 in atomList:
+		for atom2 in atomConnect[atom1]:
+			for atom3 in atomConnect[atom2]:
+				if atom1 == atom3:
 					continue
-				for k in range(1,len(atomlist3)):
-					atomlist4=lookup(atomlist3[k])
-					atom4=atomlist4[0]
-					if atom4==atom3 or atom4==atom2 or atom4==atom1:
+				for atom4 in atomConnect[atom3]:
+					if atom1 == atom4 or atom2 == atom4:
 						continue
-					dihedralList.append(atom1 + " " +atom2 + " " +atom3 + " " +atom4)
+					ijkl = (atom1,atom2,atom3,atom4)
+					lkji = ijkl[::-1]
+					if ijkl not in dihedralList and lkji not in dihedralList:
+						dihedralList.append(ijkl)
 
-	removedoublecounting("dihedrals")
-	
-				
-
-		
 
 def fragInfo(mcfFile):
 	"""arguments:
@@ -691,74 +621,14 @@ returns:
 
 
 
-
-def removedoublecounting(thingtoclean):
-
-	if thingtoclean=="dihedrals":
-		linesrepeated=[]
-		cleanlist=[]
-		for index,row in enumerate(dihedralList):
-			set1=set(row.split())
-			for i in range(index+1, len(dihedralList)):
-				set2=set(dihedralList[i].split())
-				if set1==set2:
-					linesrepeated.append(i)
-	
-		for index,row in enumerate(dihedralList):
-			if index in linesrepeated:
-				continue
-			cleanlist.append(row)
-
-		del(dihedralList[0:len(dihedralList)])	
-		for i in range(0,len(cleanlist)):
-			dihedralList.append(cleanlist[i])
-
-	if thingtoclean=="angles":
-		linesrepeated=[]
-		cleanlist=[]
-		for index,row in enumerate(angleList):
-			set1=set(row.split())
-			for i in range(index+1, len(angleList)):
-				set2=set(angleList[i].split())
-				if set1==set2:
-					linesrepeated.append(i)
-	
-		for index,row in enumerate(angleList):
-			if index in linesrepeated:
-				continue
-			cleanlist.append(row)
-
-		del(angleList[0:len(angleList)])	
-		for i in range(0,len(cleanlist)):
-			angleList.append(cleanlist[i])
-
-	if thingtoclean=="fragConn":
-		linesrepeated=[]
-		cleanlist=[]
-		for index,row in enumerate(fragConn):
-			set1=set(row.split())
-			for i in range(index+1, len(fragConn)):
-				set2=set(fragConn[i].split())
-				if set1==set2:
-					linesrepeated.append(i)
-	
-		for index,row in enumerate(fragConn):
-			if index in linesrepeated:
-				continue
-			cleanlist.append(row)
-		
-		del(fragConn[0:len(fragConn)])	
-		for i in range(0,len(cleanlist)):
-			fragConn.append(cleanlist[i])
-
 def fragConnectivity():
 
 	#This function will populate the list fragConn
 	group=[]
 	j=0
 
-	if cyclic_ua_atom == True and len(ringList)==0:
-		fragConn.append("0")
+	if ((cyclic_ua_atom == True and len(ringList)==0) or 
+			len(fragList) < 2):
 		return
 
 	for index1, row in enumerate(fragList):
@@ -774,18 +644,16 @@ def fragConnectivity():
 					a=set(group)
 					b=set(otherrow)
 					if a<=b and index1!=index2:
-						fragConn.append(str(index1+1) + spacing + str(index2+1))
+						fragConn.append((index1+1, index2+1))
 				group=[]
 
-	removedoublecounting("fragConn")
-			
-			
+
 def fragConnectivityInfo(mcfFile):
 	mcf=open(mcfFile,'a')
 	mcf.write('\n\n# Fragment_Connectivity\n')
 	mcf.write(str(len(fragConn))+'\n')
 	for index, row in enumerate(fragConn):
-		mcf.write(str(index+1) + spacing + row)
+		mcf.write(str(index+1) + spacing + spacing.join([str(x) for x in row]))
 		mcf.write('\n')
 	mcf.write('\n\nEND\n')
 	mcf.close()
@@ -846,7 +714,7 @@ def ffFileGeneration(infilename,outfilename):
 	# Write bond entries
 	bondTypesWritten = []
 	for bond in bondList:
-		ij = tuple([int(i) for i in bond.split()])
+		ij = bond
 		ji = ij[::-1]
 		ijType = tuple([atomParms[i]['type'] for i in ij])
 		jiType = ijType[::-1]
@@ -860,7 +728,7 @@ def ffFileGeneration(infilename,outfilename):
   # Write angle entries
 	angleTypesWritten = []
 	for angle in angleList:
-		ijk = tuple([int(i) for i in angle.split()])
+		ijk = angle
 		kji = ijk[::-1]
 		ijkType = tuple([atomParms[i]['type'] for i in ijk])
 		kjiType = ijkType[::-1]
@@ -875,7 +743,7 @@ def ffFileGeneration(infilename,outfilename):
 	if dihedralType != "none":
 		dihedTypesWritten = []
 		for dihed in dihedralList:
-			ijkl = tuple([int(i) for i in dihed.split()])
+			ijkl = dihed
 			lkji = ijkl[::-1]
 			ijklType = tuple([atomParms[i]['type'] for i in ijkl])
 			lkjiType = ijklType[::-1]
@@ -914,11 +782,12 @@ def readPdb(pdbFile):
 returns:
 	atomList, list of ints = atom numbers from pdb file
 	atomParms, dict = atom parameters: name, type, element, mass
+	atomConnect, dict = list of atoms bonded to key
 """
 	# initialize variables
 	atomList = []
 	atomParms = {}
-	bondList = []
+	atomConnect = {}
 	numAtomTypes = 0
 	repeatedIndex = False
 	pdb = open(pdbFile,'r')
@@ -972,13 +841,20 @@ returns:
 				            "connectivity.")
 			else:
 				lineList = line.split()
-				i = lineList[1] # will match to the PDB index, not the PDB line number
+				i = int(lineList[1]) # will match to the PDB index, not the PDB line number
+				# bondList
 				for j in lineList[2:]:
 					if not any([True for bond in bondList if bond[0]==int(j)]):
 						bondList.append((int(i), int(j)))
+        # atomConnect
+				atomConnect[i] = [int(j) for j in lineList[2:]]
+				if len(lineList) == 3: # end point atom
+					atomConnect['startRingID'] = (i,0)
 
+	if 'startRingID' not in atomConnect:
+		atomConnect['startRingID'] = (atomList[0],0)
 	pdb.close()
-	return atomList, atomParms, numAtomTypes
+	return atomList, atomParms, atomConnect, bondList, numAtomTypes
 
 class Error(Exception):
 
@@ -1151,24 +1027,27 @@ returns:
 							atomParms[index] = {}
 						atomParms[index]['charge'] = data[6] #store as string
 					elif 'atomtypes' in section:
-						base=0 if data[1].isdigit() else 1
+						base = None
+						for i in range(len(data)):
+							if data[i] == 'A' or data[i] == 'D':
+								base=i
+								break
+						if base is None:
+							raise Error('ptype is not A or D. Cassandra only supports point particles.\n')
 						index = data[0] #atomType
-						if data[4+base] != 'A' and data[4+base] != 'D':
-							raise Error('ptype is not A or D. Cassandra only supports point ' + 
-													'particles.\n')
 						if index not in atomParms:
 							atomParms[index] = {}
-						atomParms[index]['bondtype'] = data[0+base]
-						atomParms[index]['mass'] = float(data[2+base])
-						atomParms[index]['charge'] = data[3+base] #store as string
+						atomParms[index]['bondtype'] = data[0] if data[1].isdigit else data[1]
+						atomParms[index]['mass'] = float(data[base-2])
+						atomParms[index]['charge'] = data[base-1] #store as string
 						if comboRule == '1':
-							C6 = float(data[5+base])
-							C12 = float(data[6+base])
+							C6 = float(data[base+1])
+							C12 = float(data[base+2])
 							sigma = ((C12 / C6)**(1/6.)) * 10
 							epsilon = C6**2 / 4 / C12 / Rg
 						elif comboRule == '2' or comboRule == '3':
-							sigma = float(data[5+base]) * 10
-							epsilon = float(data[6+base]) / Rg
+							sigma = float(data[base+1]) * 10
+							epsilon = float(data[base+2]) / Rg
 						atomParms[index]['vdw'] = (vdwType, epsilon, sigma)
 					# Look for bondParms
 					elif 'bond' in section:
@@ -1269,7 +1148,7 @@ returns:
 				else:
 					raise Error(parm + ' parms for atom ' + str(i) + ' not found.')
 	for bond in bondList:
-		ij = tuple([int(i) for i in bond.split()])
+		ij = bond
 		ji = ij[::-1]
 		if ij not in bondParms and ji not in bondParms:
 			ijType = tuple([atomParms[i]['bondtype'] for i in ij])
@@ -1281,7 +1160,7 @@ returns:
 			else:
 				raise Error('Bond parms for atoms ' + bond + ' not found.')
 	for angle in angleList:
-		ijk = tuple([int(i) for i in angle.split()])
+		ijk = angle
 		kji = ijk[::-1]
 		if ijk not in angleParms and kji not in angleParms:
 			ijkType = tuple([atomParms[i]['bondtype'] for i in ijk])
@@ -1293,7 +1172,7 @@ returns:
 			else:
 				raise Error('Angle parms for atoms ' + angle + ' not found.')
 	for dihedral in dihedralList:
-		ijkl = tuple([int(i) for i in dihedral.split()])
+		ijkl = dihedral
 		lkji = ijkl[::-1]
 		if ijkl not in dihedralParms and lkji not in dihedralParms:
 			ijklType = tuple([atomParms[i]['bondtype']for i in ijkl])
@@ -1359,7 +1238,7 @@ returns:
 		for i in range(1,len(atomParms[pdbIndex]['vdw'])):
 			mcf.write('  %8.3f' % atomParms[pdbIndex]['vdw'][i])
 		for ring in ringList:
-			if str(pdbIndex) in ring: mcf.write('  ring')
+			if pdbIndex in ring: mcf.write('  ring')
 		mcf.write('\n')
 	
 	if bondList:
@@ -1370,7 +1249,7 @@ returns:
 	mcf.write(str(len(bondList)) + '\n')
 	nBond = 0
 	for bond in bondList:
-		ij = tuple([int(i) for i in bond.split()]) #pdb indices
+		ij = bond
 		if ij not in bondParms: ij = ij[::-1]
 		ijMcf = tuple([atomList.index(i)+1 for i in ij]) #mcf indices
 		nBond = nBond + 1
@@ -1388,7 +1267,7 @@ returns:
 	mcf.write(str(len(angleList)) + '\n')
 	nAngle = 0
 	for angle in angleList:
-		ijk = tuple([int(i) for i in angle.split()]) #pdb indices
+		ijk = angle
 		if ijk not in angleParms: ijk = ijk[::-1]
 		ijkMcf = tuple([atomList.index(i)+1 for i in ijk]) #mcf indices
 		nAngle = nAngle + 1
@@ -1411,7 +1290,7 @@ returns:
 	mcf.write(str(len(dihedralList)) + '\n')
 	nDihedral = 0
 	for dihedral in dihedralList:
-		ijkl = tuple([int(i) for i in dihedral.split()]) #pdb indices
+		ijkl = dihedral
 		if ijkl not in dihedralParms: ijkl = ijkl[::-1]
 		ijklMcf = tuple([atomList.index(i)+1 for i in ijkl]) #mcf indices
 		nDihedral = nDihedral + 1
@@ -1485,9 +1364,9 @@ else:
 #*******************************************************************************
 # MAIN PROGRAM BEGINS HERE
 #*******************************************************************************
-#INITIALIZE LISTS AND VARIABLES
-genScannedList=[]
+# initialize lists
 ringList=[]
+wRingList=[]
 fragList=[]
 angleList=[]
 dihedralList=[]
@@ -1498,64 +1377,49 @@ dihedralList_atomType = []
 spacing="    "
 fragConn=[]
 listofnames=[]
-cyclic_ua_atom = True
+cyclic_ua_atom = False
 
-#RING SCAN
-#Initialize returns the intial atom
-#to start the ring scan
-#If molecule is argon, it initial atom is empty
-initialatom=initialize(configFile)
-if initialatom == '':
-	tempfile = open('temporary.temp','w')
-	tempfile.write('1')
-	tempfile.close()
-	initialatom = '1'
-	
-scan_result = scan(initialatom,[],False)
-if cyclic_ua_atom==True:
-	#Clean "ghost atom" from temporary_file
-	tempfile2=open('temporary.temp2','w')
-	tempfile1=open('temporary.temp','r')
-	for line in tempfile1:
-		this_line_new = line.split()
-		if this_line_new[-1] == '0':		
-			for each_atom in this_line_new[0:-1]:
-				tempfile2.write(each_atom+"  ")
-			tempfile2.write("\n")
-		elif '0 1' in line:
-			continue
-		else:
-			tempfile2.write(line)
-	tempfile2.close()
-	tempfile1.close()
-	os.system('mv temporary.temp2 temporary.temp')
+# read configFile
+print "Reading Modified PDB File..."
+atomList, atomParms, atomConnect, bondList, numAtomTypes = readPdb(configFile)
 
-#IDENTIFY BONDS, FRAGMENTS, ANGLES, DIHEDRALS
-bondID()
-fragID()
-angleID()
-dihedralID()
-fragConnectivity()
+# ring scan
+if len(bondList) > 1:
+	if args.verbose:
+		print "%-5s%-40s" % ('Atom', 'Comment')
+		print "---- -----------------------------------"
+	scannedList = [atomConnect['startRingID']]
+	scan_result = ringID(0)
+	if args.verbose:
+		print "---- -----------------------------------"
 
-#PRESENT SCAN SUMMARY TO USER
+# print summary
 print "\n\n*********Generation of Topology File*********\n"
-print "Summary: "
-print "There are " + str(len(bondList)) + " bonds identified." 
+print "Summary"
+print "---- -----------------------------------"
+print "%4d %-40s" % (len(bondList), "bonds")
 
 if cyclic_ua_atom == True and len(scan_result[1]) > 2:
 	print "Cyclic united atom molecule with no branches"
 else:
-	print "There are " + str(len(ringList)) + " rings identified. These rings are: "
+	comment = "rings"
+	if len(ringList) > 0 and args.verbose:
+		comment += ":"
+		for ring in ringList:
+			comment += ' [' + ",".join([str(i) for i in ring]) + ']'
+	print "%4d %-40s" % (len(ringList), comment)
 
-	for row in ringList:
-		print row
+# id angles, dihedrals, fragments
+angleID()
+print "%4d %-40s" % (len(angleList), "angles")
+dihedralID()
+print "%4d %-40s" % (len(dihedralList), "dihedrals")
+fragID()
+print "%4d %-40s" % (len(fragList), "fragments")
+fragConnectivity()
+print "---- -----------------------------------"
 
-	print "There are " + str(len(fragList)) + " fragments identified"
-print "There are " + str(len(angleList)) + " angles identified"
-print "There are " + str(len(dihedralList)) + " dihedrals identified"
 
-print "Reading Modified PDB File..."
-atomList, atomParms, numAtomTypes = readPdb(configFile)
 if ffTemplate:
 	#GENERATE BLANK FORCEFIELD TEMPLATE
 	if os.path.isfile(ffFile) and not os.path.isfile(ffFile + '.BAK'):
@@ -1587,6 +1451,5 @@ else:
 	         atomList, bondList, angleList, dihedralList, ringList,
 	         atomParms, bondParms, angleParms, dihedralParms, improperParms, scaling_1_4)
 
-os.system("rm temporary.temp")
 if infilename_type == 'cml':
 	os.system("rm " + configFile)
