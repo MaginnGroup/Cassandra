@@ -1475,7 +1475,7 @@ SUBROUTINE Get_Atom_Info(is)
               ! Convert epsilon to atomic units amu A^2/ps^2
               nonbond_list(ia,is)%vdw_param(1) = kboltz* nonbond_list(ia,is)%vdw_param(1) 
 
-           ELSEIF (nonbond_list(ia,is)%vdw_type == 'Mie' .OR. nonbond_list(is,is)%vdw_type == 'mie') THEN
+           ELSEIF (nonbond_list(ia,is)%vdw_type == 'Mie' .OR. nonbond_list(ia,is)%vdw_type == 'mie') THEN
               nonbond_list(ia,is)%vdw_type = 'Mie'
               ! Set number of vdw parameters
               nbr_vdw_params(is) = 4
