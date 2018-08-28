@@ -28,10 +28,10 @@ To run the test suite using a Cassandra executable inside of Cassandra/Src/:
 	> python testSuite.py ../../Src/cassandra.exe
 	> python testSuite.py ../../Src/cassandra_gfortran.exe
 
-To run a test using a Cassandra executable elsewhere:
+To run the test suite using a Cassandra executable elsewhere:
 
-	> python Test#_Description.py /home/applications/cassandra.exe 
-	> python Test#_Description.py /home/applications/cassandra_gfortran.exe
+	> python testSuite.py /home/applications/cassandra.exe 
+	> python testSuite.py /home/applications/cassandra_gfortran.exe
 
 """)
 parser.add_argument('cassandra_exe', 
