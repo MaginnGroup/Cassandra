@@ -1,27 +1,54 @@
 import os, subprocess, sys
+import argparse
 bold = '\033[1m'
 normal = '\033[0m'
 
+#*******************************************************************************
+# ARGUMENT PARSE
+#*******************************************************************************
+
+parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description=
+"""DESCRIPTION:
+Runs all examples using the Cassandra executable specified, including path. 
+Also cleans all previous results, and the fragment libraries of all non-GCMC 
+examples.
+
+Note: It is neccessary to speficy an *EXACT* path. The use of ../ to specify 
+a relative path will prohibit the script from running properly. 
+
+EXAMPLES:
+To run the examples using a Cassandra executable elsewhere:
+
+	> python run_examples.py /home/applications/cassandra.exe 
+	> python run_examples.py /home/applications/cassandra_gfortran.exe
+
+""")
+parser.add_argument('cassandra_exe', 
+                help="Cassandra executable, including path. To call an executable in the same"+
+                "Cassandra package's Src folder, utilize ../Src/cassandra.exe as the executable path.")
+
+args = parser.parse_args()
+
 #############Settings##############
-examples_dir = '/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Examples'
-cassandra = '/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Src/cassandra.exe'
-fraggen = '/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Scripts/Frag_Library_Setup/library_setup.py'
-libgenfile = open('/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Examples/libgenout.dat','a')
-cassoutfile = open('/afs/crc.nd.edu/user/e/emarinri/Git/Cassandra/Examples/sim.out','a')
+examples_dir = os.getcwd()
+cassandra = args.cassandra_exe
+fraggen = examples_dir[0:-9]+'/Scripts/Frag_Library_Setup/library_setup.py'
+libgenfile = open('libgenout.dat','a')
+cassoutfile = open('sim.out','a')
 ###################################
 
 for root, dirs, files in os.walk(examples_dir):
 	for thisfile in files:
-		if thisfile.endswith('.out.chk') or \
+		if (thisfile.endswith('.out.chk') or \
                    thisfile.endswith('.log') or \
                    thisfile.endswith('.BAK') or \
                    '.box' in thisfile or \
-                   '.out' in thisfile:
+                   '.out' in thisfile):
 			subprocess.call(['rm',root+'/'+thisfile])
 
 	try:
-		
-		if 'species' in root:
+		if 'species' in root and \
+                   'GCMC' not in root:
 			subprocess.call(['rm','-r',root])
 	except:
 		pass
@@ -58,7 +85,6 @@ libgenfile.close()
 for root, dirs, files in os.walk(examples_dir):
 	for thisfile in files:
 		if thisfile.endswith('inp') and \
-                'GCMC' not in root and \
                 'species' not in thisfile and \
                 'frag' not in thisfile:
 			os.chdir(root)
@@ -70,4 +96,5 @@ for root, dirs, files in os.walk(examples_dir):
 			stdoutvalue = thisprocess.communicate()[0]
 			cassoutfile.write(stdoutvalue)
 			os.chdir(examples_dir)
+
 cassoutfile.close()

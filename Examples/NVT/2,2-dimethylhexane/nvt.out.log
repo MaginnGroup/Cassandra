@@ -12,11 +12,11 @@
 Run info
 ********************************************************************************
 version: Cassandra Development Version
-inputfile: nvt.inp
+inputfile: /Users/matthewhowenstine/Cassandra/Examples/NVT/2,2-dimethylhexane/nvt.inp
 name of run: nvt.out
-date (mm/dd/yyyy): 02/19/2018
-time: 18:46:35
-machine: Matthews-MBP.attlocal.net
+date (mm/dd/yyyy): 03/03/2018
+time: 20:42:32
+machine: Matthews-MacBook-Pro.local
 ********************************************************************************
 
 Verbose log
@@ -314,16 +314,16 @@ Energy of final configuration
 
  Energy components for box 1     kJ/mol-Extensive       Relative_Error
  ---------------------------------------------------------------------
- Total system energy                     1843.312            0.229E-13
- Intra molecular energy                  2030.188            0.214E-13
+ Total system energy                     1843.312            0.174E-14
+ Intra molecular energy                  2030.188            0.244E-14
    Bond energy                              0.000            0.000E+00
-   Bond angle energy                     1444.695            0.264E-13
-   Dihedral angle energy                  802.243            0.544E-14
+   Bond angle energy                     1444.695            0.806E-15
+   Dihedral angle energy                  802.243            0.780E-14
    Improper angle energy                    0.000            0.000E+00
-   Intra molecule vdw                    -216.750           -0.198E-13
+   Intra molecule vdw                    -216.750           -0.604E-14
    Intra molecule q                         0.000            0.000E+00
- Inter molecular energy                  -186.876           -0.973E-15
-   Inter molecule vdw                    -183.646           -0.832E-14
+ Inter molecular energy                  -186.876           -0.584E-14
+   Inter molecule vdw                    -183.646           -0.277E-14
    Long range correction                   -3.229           -0.000E+00
    Inter molecule q                         0.000            0.000E+00
  ---------------------------------------------------------------------
@@ -358,9 +358,9 @@ Writing information about fragments
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.615913 secs.
- Rotation time =               0.640757 secs.
- Regrowth time =               5.493677 secs.
+ Translation time =            0.709182 secs.
+ Rotation time =               0.741421 secs.
+ Regrowth time =               6.328604 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -374,6 +374,6 @@ Writing information about fragments
          0       Days
          0      Hours
          0    Minutes
-         6    Seconds
-       936         ms
+         7    Seconds
+       979         ms
 ********************************************************************************

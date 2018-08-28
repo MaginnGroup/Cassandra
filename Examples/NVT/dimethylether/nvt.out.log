@@ -12,11 +12,11 @@
 Run info
 ********************************************************************************
 version: Cassandra Development Version
-inputfile: nvt.inp
+inputfile: /Users/matthewhowenstine/Cassandra/Examples/NVT/dimethylether/nvt.inp
 name of run: nvt.out
-date (mm/dd/yyyy): 02/19/2018
-time: 18:47:15
-machine: Matthews-MBP.attlocal.net
+date (mm/dd/yyyy): 03/03/2018
+time: 20:42:53
+machine: Matthews-MacBook-Pro.local
 ********************************************************************************
 
 Verbose log
@@ -322,19 +322,19 @@ Energy of final configuration
 
  Energy components for box 1     kJ/mol-Extensive       Relative_Error
  ---------------------------------------------------------------------
- Total system energy                    -1257.028           -0.220E-14
- Intra molecular energy                   134.082            0.136E-13
+ Total system energy                    -1257.028           -0.822E-14
+ Intra molecular energy                   134.082            0.705E-14
    Bond energy                              0.000            0.000E+00
-   Bond angle energy                      134.082            0.113E-13
+   Bond angle energy                      134.082            0.231E-14
    Dihedral angle energy                    0.000            0.000E+00
    Improper angle energy                    0.000            0.000E+00
    Intra molecule vdw                       0.000            0.000E+00
    Intra molecule q                         0.000            0.000E+00
- Inter molecular energy                 -1391.110           -0.230E-14
-   Inter molecule vdw                    -992.277           -0.220E-14
+ Inter molecular energy                 -1391.110           -0.628E-15
+   Inter molecule vdw                    -992.277           -0.293E-15
    Long range correction                  -43.114           -0.000E+00
-   Inter molecule q                      8613.387            0.676E-15
-   Reciprocal ewald                       135.720            0.000E+00
+   Inter molecule q                      8613.387            0.946E-14
+   Reciprocal ewald                       135.720            0.268E-15
    Self ewald                           -9104.826           -0.000E+00
  ---------------------------------------------------------------------
    Number of reciprocal vectors              1568
@@ -367,9 +367,9 @@ Writing information about fragments
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            6.586901 secs.
- Rotation time =               6.520978 secs.
- Regrowth time =               6.693701 secs.
+ Translation time =            7.470712 secs.
+ Rotation time =               7.417253 secs.
+ Regrowth time =               7.663256 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -383,6 +383,6 @@ Writing information about fragments
          0       Days
          0      Hours
          0    Minutes
-        20    Seconds
-       470         ms
+        23    Seconds
+       320         ms
 ********************************************************************************

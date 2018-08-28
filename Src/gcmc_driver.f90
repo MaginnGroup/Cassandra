@@ -107,7 +107,7 @@ SUBROUTINE GCMC_Driver
 
         movetime(imove_trans) = movetime(imove_trans) + time_e - time_s
 
-     ELSE IF ( rand_no < cut_rot) THEN
+     ELSE IF ( rand_no <= cut_rot) THEN
  
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
@@ -125,7 +125,7 @@ SUBROUTINE GCMC_Driver
 
         movetime(imove_rot) = movetime(imove_rot) + time_e - time_s
 
-     ELSE IF (rand_no < cut_torsion) THEN
+     ELSE IF (rand_no <= cut_torsion) THEN
  
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
@@ -143,7 +143,7 @@ SUBROUTINE GCMC_Driver
 
         movetime(imove_dihedral) = movetime(imove_dihedral) + time_e - time_s
 
-     ELSE IF (rand_no < cut_angle) THEN
+     ELSE IF (rand_no <= cut_angle) THEN
  
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
@@ -161,7 +161,7 @@ SUBROUTINE GCMC_Driver
 
         movetime(imove_angle) = movetime(imove_angle) + time_e - time_s
 
-    ELSE IF (rand_no < cut_insertion) THEN
+    ELSE IF (rand_no <= cut_insertion) THEN
  
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
@@ -179,7 +179,7 @@ SUBROUTINE GCMC_Driver
 
         movetime(imove_insert) = movetime(imove_insert) + time_e - time_s
 
-     ELSE IF (rand_no < cut_deletion) THEN
+     ELSE IF (rand_no <= cut_deletion) THEN
  
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
@@ -197,7 +197,7 @@ SUBROUTINE GCMC_Driver
 
         movetime(imove_delete) = movetime(imove_delete) + time_e - time_s
 
-     ELSE IF ( rand_no < cut_regrowth) THEN
+     ELSE IF ( rand_no <= cut_regrowth) THEN
         
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)

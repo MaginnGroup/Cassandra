@@ -12,11 +12,11 @@
 Run info
 ********************************************************************************
 version: Cassandra Development Version
-inputfile: gemc_isobutane.inp
+inputfile: /Users/matthewhowenstine/Cassandra/Examples/GEMC/Isobutane/gemc_isobutane.inp
 name of run: gemc_isobutane.out
-date (mm/dd/yyyy): 02/19/2018
-time: 18:43:48
-machine: Matthews-MBP.attlocal.net
+date (mm/dd/yyyy): 03/03/2018
+time: 20:41:40
+machine: Matthews-MacBook-Pro.local
 ********************************************************************************
 
 Verbose log
@@ -391,7 +391,7 @@ Energy of final configuration
 
  Energy components for box 1     kJ/mol-Extensive       Relative_Error
  ---------------------------------------------------------------------
- Total system energy                      474.385            0.828E-14
+ Total system energy                      474.385            0.905E-14
  Intra molecular energy                  4277.343            0.136E-15
    Bond energy                              0.000            0.000E+00
    Bond angle energy                     4277.343            0.136E-15
@@ -409,15 +409,15 @@ Energy of final configuration
  Energy components for box 2     kJ/mol-Extensive       Relative_Error
  ---------------------------------------------------------------------
  Total system energy                      473.515            0.230E-14
- Intra molecular energy                   602.788            0.145E-14
+ Intra molecular energy                   602.788            0.157E-14
    Bond energy                              0.000            0.000E+00
-   Bond angle energy                      602.788            0.145E-14
+   Bond angle energy                      602.788            0.157E-14
    Dihedral angle energy                    0.000            0.000E+00
    Improper angle energy                    0.000            0.000E+00
    Intra molecule vdw                       0.000            0.000E+00
    Intra molecule q                         0.000            0.000E+00
  Inter molecular energy                  -129.273           -0.422E-15
-   Inter molecule vdw                    -127.069           -0.143E-15
+   Inter molecule vdw                    -127.069           -0.000E+00
    Long range correction                   -2.204           -0.000E+00
    Inter molecule q                         0.000            0.000E+00
  ---------------------------------------------------------------------
@@ -460,10 +460,10 @@ Writing information for box  2
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.116485 secs.
- Rotation time =               0.126555 secs.
- Volume change time =          0.303086 secs.
- Swap time =                   0.302494 secs.
+ Translation time =            0.138131 secs.
+ Rotation time =               0.147587 secs.
+ Volume change time =          0.350508 secs.
+ Swap time =                   0.360785 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -477,6 +477,6 @@ Writing information for box  2
          0       Days
          0      Hours
          0    Minutes
-         0    Seconds
-       935         ms
+         1    Seconds
+        91         ms
 ********************************************************************************
