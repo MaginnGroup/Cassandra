@@ -12,7 +12,7 @@
 2. [Features](#features)
 3. [How to Get and Compile Cassandra](#obtaining)
 4. [Getting Started](#starting)
-5. [Documentation]
+5. [Documentation](https://cassandra.nd.edu/index.php/documentation)
 6. [Forum](https://cassandra.nd.edu/index.php/community)
 7. [Contribute]
 8. [Citation](#citation)
@@ -24,7 +24,7 @@
 
 ## <a name="features"></a> Features
 
-The following moves are supported in version 1.2:
+The following features are supported in version 1.2:
 
 1. Ensembles
     - Canonical
@@ -40,11 +40,11 @@ The following moves are supported in version 1.2:
     - Molecule regrowth
     - Molecule insertion
     - Molecule deletion
-    - Molecule Swap
+    - Molecule swap
     - Dihedral change
     - Angle change
     - Atom displacement
-    - Ring Flip
+    - Ring flip
 
 3. Potentials
     - LJ and Mie
@@ -56,7 +56,7 @@ The following moves are supported in version 1.2:
 
 4. Other
     - Cut-off schemes: cut, cut and shift, cut and switch, standard long-tail correction
-    - Ewald or damped shifted force method for electrostatics
+    - Electorstatics: Ewald or damped shifted force methods
 
 ## <a name="obtaining"></a> How to Get and Compile Cassandra
 
@@ -82,7 +82,7 @@ The following table provides examples of the commands you need to use to compile
 |  Debug     |   ```make -f Makefile```    | ```make -f Makefile.gfortran```   |
 |  OpenMP    |   ```make -f Makefile.intel.openMP```     |   ```make -f Makefile.gfortran.openMP```    |
 
-Each of these commands will produce an executable with the name specified in the relevant Makefile in the field EXEC_NAME.
+Each of these commands will produce an executable with the name specified in the field EXEC NAME in the relevant Makefile.
 
 You can take these Makefiles as templates
 creating your own customized Makefile. Depending on the architecture
@@ -106,7 +106,7 @@ NVT, NPT, grand canonical and Gibbs ensembles for a number of systems molecules 
 of conformational complexity (LJ particles, branch points, ring moieties) and
 those requiring computation of electrostatic interactions are included.
 
-**Documentation**. Chapter 3 of the documentation provides an overview of the files and workflow to setup a Cassandra simulation.
+**Documentation**. Chapter 3 of the [documentation](https://cassandra.nd.edu/index.php/documentation/) provides an overview of the files and workflow to setup a Cassandra simulation. Additionally, the [workshop materials](https://cassandra.nd.edu/index.php/documentation) contain more examples and slides that have been used for teaching.
 
 ## <a name="citation"></a> Citation
 
