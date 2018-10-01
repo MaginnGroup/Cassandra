@@ -18,7 +18,7 @@
 !   You should have received a copy of the GNU General Public License
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*********************************************************************************
-test
+
 
 This file describes the layout of the Cassandra distribution directory along 
 with instruction on how to compile the code, run examples and set up your first
