@@ -6,6 +6,7 @@
 
 ![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
+[![Chat on Slack](https://img.shields.io/badge/chat-on_slack-green.svg?longCache=true&style=flat&logo=slack)](https://join.slack.com/t/cassandra-nd/shared_invite/enQtNDU0NDIyMDc5ODEyLWE5Yzc1YmQ3MzdhNWVmYTkyNjY0YWQ3ZDJmMjQ5ZTliYTc3MTNlZTg2MzgxOTdjY2Y1ZTNiMjVhMmE4NGEzYWM)
 
 ## Contents
 1. [Overview](#overview)
