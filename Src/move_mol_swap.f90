@@ -497,7 +497,7 @@ SUBROUTINE GEMC_Particle_Transfer
                     " of species " // TRIM(Int_To_String(is)) // &
                     " from box " // TRIM(Int_To_String(box_out))
        err_msg(2) = "but the molecule energy is too high"
-       IF (start_type(ibox) == "make_config" ) THEN
+       IF (start_type(ibox) == "make_config" .OR. start_type(ibox) == 'add_to_config') THEN
           err_msg(3) = "Try increasing Rcutoff_Low, increasing the box size, or "
           err_msg(4) = "decreasing the initial number of molecules"
        END IF

@@ -1,0 +1,97 @@
+
+This script allows the user to run a series of tests to compare simulation properties to A.) analytical solutions, B.) NIST reported values, and C.) previous "accepted" versions of Cassandra.
+
+-------------------------------------------------------------
+- TEST LIST -------------------------------------------------
+-------------------------------------------------------------
+
+As of 1/21/2018, the Test Suite contains the following tests:
+
+1.) Test1_LJ_StartEnergy.py
+	Comparing the energy of a two atom system to analytical LJ potential solutions
+2.) Test2_Mie_StartEnergy.py
+	Comparing the energy of a two atom system to analytical MIE potential solutions
+3.) Test3_Angle_StartEnergy.py
+	Comparing the energy of a molecule to analytical Harmonic angle solutions
+4.) Test4_Dihedral_StartEnergy.py
+	Comparing the energy of a molecule to analytical OPLS, Harmonic, and CHARMM dihedral angle solutions
+5.) Test5_ImproperEnergy.py
+	Comparing the energy of a molecule to accepted Improper angle results
+6.) Test6_NIST_LennardJonesEnergy.py
+	Compare the energy of a box of molecules to NIST reported values
+7.) Test7_Water.py
+	Compare the properties of a box of water molecules to NIST reported values
+8.) Test8_Coul_StartEnergy.py
+	Compare the energy between point charges to analytical electrostatic solutions
+9.) Test9_NPTExamples.py
+	Compare the properties of a short NPT simulation to a previous accepted version of Cassandra
+10.) Test10_NVTExamples.py
+	Compare the properties of a short NVT simulation to a previous accepted version of Cassandra
+11.) Test11_GEMCExamples.py
+	Compare the properties of a short GEMC simulation to a previous accepted version of Cassandra
+12.) Test12_GCMCExamples.py
+	Compare the properties of a short GCMC simulation to a previous accepted version of Cassandra
+
+-------------------------------------------------------------
+- RUNNING TEST SUITE ----------------------------------------
+-------------------------------------------------------------
+
+usage: testSuite.py [-h] cassandra_exe
+
+DESCRIPTION:
+Runs the test suite using the Cassandra executable specified, including path.
+
+EXAMPLES:
+To run the test suite using a Cassandra executable inside of Cassandra/Src/:
+
+	> python testSuite.py ../../Src/cassandra.exe
+	> python testSuite.py ../../Src/cassandra_gfortran.exe
+
+To run a test using a Cassandra executable elsewhere:
+
+	> python Test#_Description.py /home/applications/cassandra.exe 
+	> python Test#_Description.py /home/applications/cassandra_gfortran.exe
+
+positional arguments:
+  cassandra_exe  Cassandra executable, including path. To call an executable
+                 in the sameCassandra package's Src folder, utilize
+                 ../../Src/cassandra.exe as the executable path.
+
+optional arguments:
+  -h, --help     show this help message and exit
+
+-------------------------------------------------------------
+- ADDING ADDITIONAL TESTS -----------------------------------
+-------------------------------------------------------------
+
+To add a new test, you must include specific lines within your test module, and change lines within testSuite.py:
+
+1.) Create a test that utilizes runs of Cassandra and compares to accepted, analytical, or reported values. Ensure that all files that are used in the simulation are copied or generated within the testSuite directory to utilize the ability to call a relative path to the Cassandra executable (../../Src/cassandra.exe).
+
+To allow the new test to communicate with the shell script, testSuite.py, be sure to add the following segment to the end of the code:
+
+"
+	if (FailCount != 0):
+		PassState = "False"
+	else:
+		PassState = "True"
+		
+	LastTest = open(MainDir+ 'Scripts/testSuite/testOutput/LastTest.txt',"w")
+	LastTest.write(PassState)
+	LastTest.close()
+"
+
+Where FailCount is a numeric counter that is intialized at 0 in the beginning of the test, and is properly incremented if the simulation values differ, within an accepted tolerance, from the accepted, analytical, or reported values. 
+
+2.) Add the new test script filename to the "tests" variable list within testSuite.py
+
+Specifically, add the respective filename of the python script to the end of this list in the testSuite.py code:
+
+"
+	tests=("Test1_LJ_StartEnergy.py", "Test2_Mie_StartEnergy.py", "Test3_Angle_StartEnergy.py", 
+	"Test4_Dihedral_StartEnergy.py", "Test5_ImproperEnergy.py","Test6_NIST_LennardJonesEnergy.py",
+	"Test7_Water.py","Test8_Coul_StartEnergy.py", "Test9_NPTExamples.py",
+	"Test10_NVTExamples.py", "Test11_GEMCExamples.py", "Test12_GCMCExamples.py")
+"
+
+Make sure that the new test script is located in the root foler, testSuite of the Scripts directory, where the other test scripts are located.

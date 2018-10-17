@@ -1,0 +1,98 @@
+!  This is the input file for a short GCMC simulation of methane in gas phase at 300.0 K. 
+!  As result you are going to have an relation between chemical potential versus pressure. 
+! The results accuracy  can be tested comparing the values of density obtained in simulation against experimental values 
+! Reference for density values of methane: B. A. Younglove and J. F. Ely, J. Phys. Chem. Ref. Data, vol 16, No4, 1987
+
+# Run_Name
+methane.out
+!--------------
+
+# Sim_Type
+gcmc
+!---------------
+
+# Nbr_Species
+1
+!----------------
+
+# VDW_Style
+lj cut_tail 14.0
+!----------------
+
+# Seed_Info
+1219130951 1219130952
+!-------------------
+
+# Rcutoff_Low
+1.0
+!----------------
+
+# Pair_Energy
+true
+!-----------
+
+# Molecule_Files
+CH4.mcf 500
+!------------------------
+
+# Box_Info
+1
+cubic
+100.0
+!-------------------------
+
+# Temperature_Info
+300.0 
+!------------------
+
+# Chemical_Potential_Info
+-35.0
+!------------------------
+
+# Move_Probability_Info
+
+# Prob_Translation
+0.4
+10.0
+
+# Prob_Insertion
+0.3
+cbmc
+
+# Prob_Deletion
+0.3
+
+# Done_Probability_Info
+!----------------------
+
+# Start_Type
+make_config 100
+!------------------
+
+# Run_Type
+equilibration   550
+!------------------
+
+# Simulation_Length_Info
+units      steps
+prop_freq    400
+coord_freq   4000
+run          4000
+!----------------------------
+
+# Property_Info 1 
+energy_total
+nmols
+volume
+!----------------
+
+# Fragment_Files
+species1/frag1/frag1.dat  1
+!---------------------------------------------------------one line per fragment
+
+# CBMC_Info
+kappa_ins 12
+rcut_cbmc 6.5 
+!------------
+
+END

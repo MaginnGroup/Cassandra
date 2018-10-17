@@ -173,7 +173,7 @@ CONTAINS
 
    USE Simulation_Properties
    
-   INTEGER :: file_number, ii, is, is_dens, is_cp, is_lambda, total_frac
+   INTEGER :: file_number, ii, is, is_nmols, is_dens, is_cp, total_frac
    REAL(DP) :: mass_density
    REAL(DP),DIMENSION(:), ALLOCATABLE :: write_buff
    CHARACTER(FILENAME_LEN) :: prop_written
@@ -191,9 +191,9 @@ CONTAINS
 
    ii = 1
    is = 1
+   is_nmols = 1
    is_dens = 1
    is_cp = 1
-   is_lambda = 1
 
    DO WHILE ( ii <= prop_per_file(file_number,this_box))
 
@@ -382,15 +382,15 @@ CONTAINS
 
       ELSE IF (prop_written(1:5) == 'Nmols') THEN
          IF (block_avg) THEN
-            write_buff(ii+1) = ac_nmols(is,this_box,iblock)
+            write_buff(ii+1) = ac_nmols(is_nmols,this_box,iblock)
          ELSE
-            write_buff(ii+1) = nmols(is,this_box)
+            write_buff(ii+1) = nmols(is_nmols,this_box)
          END IF
 
          ! increment the species index by 1 so that if there is
          ! another species and if nmols is to be output for that
          ! species, we will have correct index
-         is = is + 1
+         is_nmols = is_nmols + 1
          
 
       ELSE IF (prop_written(1:7) == 'Density') THEN
