@@ -1,0 +1,45 @@
+!*******************************************************************************
+!Molecular connectivity file for CH4.pdb
+!*******************************************************************************
+!Atom Format
+!index type element mass charge vdw_type parameters
+!vdw_type="LJ", parms=epsilon sigma
+!vdw_type="Mie", parms=epsilon sigma repulsion_exponent dispersion_exponent
+
+# Atom_Info
+1
+1    CH4_s2    C4    16.042    0.    LJ    148.000    3.730
+
+# Bond_Info
+0
+
+# Angle_Info
+0
+
+# Dihedral_Info
+0
+
+# Improper_Info
+0
+
+!Intra Scaling
+!vdw_scaling    1-2 1-3 1-4 1-N
+!charge_scaling 1-2 1-3 1-4 1-N
+
+# Intra_Scaling
+0. 0. 0.0000 1.
+0. 0. 0.0000 1.
+
+!Fragment Format
+!index number_of_atoms_in_fragment branch_point other_atoms
+
+# Fragment_Info
+1
+1 1 1
+
+
+# Fragment_Connectivity
+0
+
+
+END

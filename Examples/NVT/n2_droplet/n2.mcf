@@ -1,0 +1,59 @@
+!*******************************************************************************
+!Molecular connectivity file for n2.pdb
+!*******************************************************************************
+!Atom Format
+!index type element mass charge vdw_type parameters
+!vdw_type="LJ", parms=epsilon sigma
+!vdw_type="Mie", parms=epsilon sigma repulsion_exponent dispersion_exponent
+
+# Atom_Info
+3
+1     N       N    14.007  -0.482  LJ    36.000     3.310
+2     M       M     0.000   0.964  LJ     0.000     0.000
+3     N       N    14.007  -0.482  LJ    36.000     3.310
+
+!Bond Format
+!index i j type parameters
+!type="fixed", parms=bondLength
+
+# Bond_Info
+2
+1     1     2     fixed     0.550
+2     2     3     fixed     0.550
+
+!Angle Format
+!index i j k type parameters
+!type="fixed", parms=equilibrium_angle
+!type="harmonic", parms=force_constant equilibrium_angle
+
+# Angle_Info
+1
+1     1     2     3     fixed       180.00
+
+# Dihedral_Info
+0
+
+# Improper_Info
+0
+
+!Intra Scaling
+!vdw_scaling    1-2 1-3 1-4 1-N
+!charge_scaling 1-2 1-3 1-4 1-N
+
+# Intra_Scaling
+0. 0. 0.0000 1.
+0. 0. 0.0000 1.
+
+!Fragment Format
+!index number_of_atoms_in_fragment branch_point other_atoms
+
+# Fragment_Info
+1
+1    3    2    1    3
+
+
+# Fragment_Connectivity
+0
+
+
+END
