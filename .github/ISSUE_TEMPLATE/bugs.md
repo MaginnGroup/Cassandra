@@ -1,28 +1,17 @@
-## Expected Behavior
-<!--- Tell us what should happen -->
+## Expected behavior
 
-## Current Behavior
-<!--- Tell us what happens instead of the expected behavior -->
+## Current behavior
 
-## Steps to Reproduce
-<!--- Provide a link to a live example, or an unambiguous set of steps to -->
-<!--- reproduce this bug. Include code to reproduce, if relevant -->
+## Steps to reproduce
 1.
 2.
 3.
 4.
 
-## Context
-<!--- How has this issue affected you? What are you trying to accomplish? -->
-<!--- Providing context helps us come up with a solution that is most useful in the real world -->
+## Context (what are you trying to accomplish?)
 
-<!--- Provide a general summary of the issue in the Title above -->
-
-## Possible Solution
+## Possible solution (optional)
 <!--- Not obligatory, but suggest a fix/reason for the bug, -->
 
-## Possible Implementation
-<!--- Not obligatory, but suggest an idea for implementing addition or change -->
-
-## Further information, files or links
+## Further information, files or links (optional)
 <!--- Put any additional information here, attach relevant text or image files and URLs to external sites, publicatons , etc
