@@ -15,3 +15,6 @@ A clear and concise description of any alternative solutions or features you've 
 
 ## Additional context
 Add any other context or screenshots about the feature request here.
+
+## Further information, files or links (optional)
+Any additional information here, attach relevant text or image files and URLs to external sites, publications , etc
