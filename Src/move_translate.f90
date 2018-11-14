@@ -75,9 +75,10 @@ SUBROUTINE Translate
   REAL(DP) :: dx, dy, dz
   REAL(DP) :: delta_e, ln_pacc, success_ratio
   REAL(DP) :: E_vdw, E_qq, E_vdw_move, E_qq_move, E_reciprocal_move
+  REAL(DP) :: E_vdw_framework, E_qq_framework,  E_vdw_move_framework,  E_qq_move_framework
   REAL(DP) :: rcut_small
 
-  LOGICAL :: inter_overlap, overlap, accept_or_reject
+  LOGICAL :: inter_overlap, overlap, accept_or_reject, f_overlap, f_move_overlap
 
   ! Pair_Energy arrays and Ewald implementation
   INTEGER :: position
@@ -90,6 +91,15 @@ SUBROUTINE Translate
   E_vdw = 0.0_DP
   E_qq = 0.0_DP
   E_reciprocal_move = 0.0_DP
+  ! Framework related variablew
+
+  E_vdw_move_framework = 0.0_DP
+  E_qq_move_framework = 0.0_DP
+  E_vdw_framework = 0.0_DP
+  E_qq_framework = 0.0_DP
+
+  f_overlap = .FALSE.
+  f_move_overlap = .FALSE.
   inter_overlap = .FALSE.
   accept = .FALSE.
 
@@ -187,6 +197,11 @@ SUBROUTINE Translate
     CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is,E_vdw,E_qq,inter_overlap)
   END IF
 
+  ! framework energy
+  IF (box_list(ibox)%lattice) THEN
+     CALL Compute_Molecule_Framework_Energy(lm,is,E_vdw_framework,E_qq_framework,f_overlap)
+  END IF
+  
   IF (inter_overlap)  THEN
      err_msg = ""
      err_msg(1) = "Attempted to move molecule " // TRIM(Int_To_String(im)) // &
@@ -224,8 +239,13 @@ SUBROUTINE Translate
   CALL Fold_Molecule(lm,is,ibox)
   
   CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is,E_vdw_move,E_qq_move,inter_overlap)
+
+  IF (box_list(ibox)%lattice) THEN
+     CALL Compute_Molecule_Framework_Energy(lm,is,E_vdw_move_framework,E_qq_move_framework, &
+          f_move_overlap)
+  END IF
   ! If an overlap is detected, immediately reject the move
-  IF (inter_overlap) THEN ! Move is rejected
+  IF (inter_overlap .OR. f_move_overlap) THEN ! Move is rejected
     
      CALL Revert_Old_Cartesian_Coordinates(lm,is)
      IF (l_pair_nrg) CALL Reset_Molecule_Pair_Interaction_Arrays(lm,is,ibox)
@@ -256,7 +276,7 @@ SUBROUTINE Translate
      
      ! Compute the difference in old and new energy
      delta_e = ( E_vdw_move - E_vdw ) + ( E_qq_move - E_qq ) + delta_e
-
+     delta_e = ( E_vdw_move_framework - E_vdw_framework) + (E_qq_move_framework - E_qq_framework) + delta_e
      IF (int_sim_type == sim_nvt_min) THEN
         IF (delta_e  <= 0.0_DP) THEN
            accept = .TRUE.
@@ -273,6 +293,9 @@ SUBROUTINE Translate
         ! accept the move and update the global energies
         energy(ibox)%inter_vdw = energy(ibox)%inter_vdw + E_vdw_move - E_vdw
         energy(ibox)%inter_q   = energy(ibox)%inter_q   + E_qq_move - E_qq
+
+        energy(ibox)%framework_vdw = energy(ibox)%framework_vdw + E_vdw_move_framework - E_vdw_framework
+        energy(ibox)%framework_qq = energy(ibox)%framework_qq + E_qq_move_framework - E_qq_framework
         
         IF(int_charge_sum_style(ibox) == charge_ewald .AND. has_charge(is)) THEN
            energy(ibox)%ewald_reciprocal = E_reciprocal_move
