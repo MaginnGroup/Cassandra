@@ -157,5 +157,13 @@ CHARACTER(FILENAME_LEN),DIMENSION(:),ALLOCATABLE :: movie_xyz_file
 INTEGER :: lattice_file_unit = 170
 CHARACTER(FILENAME_LEN) :: lattice_file
 
+INTEGER :: map_output_unit = 180
+CHARACTER(FILENAME_LEN), DIMENSION(:), ALLOCATABLE :: map_output_file
+!
+INTEGER :: map_input_unit = 190
+CHARACTER(FILENAME_LEN), DIMENSION(:), ALLOCATABLE :: map_input_file
+!
+INTEGER :: charge_map_unit = 210
+CHARACTER(FILENAME_LEN) :: charge_map_file
 
 END MODULE File_Names
