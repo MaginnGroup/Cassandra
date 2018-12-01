@@ -101,7 +101,7 @@ PROGRAM Main
   REAL(DP) :: q_box
 
   REAL(DP) :: month_time, day_time, hour_time, min_time, sec_time, ms_time
-
+  INTEGER :: this_im
   INTEGER :: IARGC
 
 !********************************************************************************
@@ -415,9 +415,12 @@ PROGRAM Main
         WRITE(logunit,'(X,A,T30,F20.3)') 'Self DSF', energy(ibox)%self
      END IF
 
+     IF (box_list(ibox)%lattice) THEN
+        WRITE(logunit,'(X,A,T30,F20.3)') 'Famework vdwF', energy(ibox)%framework_vdw
+     END IF
+        
      WRITE(logunit,'(X,A59)') '-----------------------------------------------------------'
      WRITE(logunit,*)
-
   END DO
   WRITE(logunit,'(A80)') '********************************************************************************'
 
@@ -457,6 +460,11 @@ PROGRAM Main
   WRITE(logunit,'(A80)') '********************************************************************************'
   WRITE(logunit,'(X,A9,X,A10,X,A5,X,A3,X,A3,X,A8,X,A9)') 'Step', 'Move', 'Mol', 'Spc', 'Box', 'Success', 'MaxWidth'
 
+!  DO i = 1, 1000
+!     CALL Test_hermite_Insertion
+!  END DO
+!  stop
+  
   IF (int_sim_type == sim_nvt .OR. int_sim_type == sim_nvt_min) THEN
      
      CALL NVTMC_Driver
@@ -564,6 +572,10 @@ PROGRAM Main
        WRITE(logunit,'(X,A,T30,F20.3)') 'Self ewald', energy(ibox)%self
     ELSE IF (int_charge_sum_style(ibox) == charge_dsf) THEN
        WRITE(logunit,'(X,A,T30,F20.3)') 'Self DSF', energy(ibox)%self
+    END IF
+
+    IF (box_list(ibox)%lattice) THEN
+       WRITE(logunit,'(X,A,T30,F20.3)') 'Framework vdw', energy(ibox)%framework_vdw
     END IF
     WRITE(logunit,'(X,A59)') '-----------------------------------------------------------'
   END DO
