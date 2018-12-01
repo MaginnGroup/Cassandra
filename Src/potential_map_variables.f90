@@ -56,20 +56,26 @@ USE Type_Definitions
 
   REAL(DP), ALLOCATABLE, DIMENSION(:) :: a_grid, b_grid, c_grid
   REAL(DP) :: a_spacing, b_spacing, c_spacing
+  REAL(DP), ALLOCATABLE, DIMENSION(:) :: xgrid, ygrid, zgrid
   REAL(DP), ALLOCATABLE, DIMENSION(:,:) :: zeo_LJ12_table, zeo_LJ6_table
   REAL(DP), ALLOCATABLE, DIMENSION(:,:,:) :: grid_pot, grid_potx, grid_poty, grid_potz
   REAL(DP), ALLOCATABLE, DIMENSION(:,:,:) :: grid_potxy, grid_potxz, grid_potyz, grid_potxyz
+  REAL(DP), ALLOCATABLE, DIMENSION(:,:,:) :: grid_potq, grid_potqx, grid_potqy, grid_potqz
+  REAL(DP), ALLOCATABLE, DIMENSION(:,:,:) :: grid_potqxy, grid_potqxz, grid_potqyz, grid_potqxyz
  
   REAL(DP), ALLOCATABLE, DIMENSION(:) :: lattice_pot, lattice_potx, lattice_poty, lattice_potz
   REAL(DP), ALLOCATABLE, DIMENSION(:) :: lattice_potxy, lattice_potyz, lattice_potxz, lattice_potxyz
 
   ! electrostatic stuff
 
-  REAL(DP) :: lowest_charge
   REAL(DP), ALLOCATABLE, DIMENSION(:) :: charge_super_lat
   REAL(DP), ALLOCATABLE, DIMENSION(:) :: lattice_q_pot, lattice_q_potx, lattice_q_poty, lattice_q_potz
   REAL(DP), ALLOCATABLE, DIMENSION(:) :: lattice_q_potxy, lattice_q_potyz, lattice_q_potxz
   REAL(DP), ALLOCATABLE, DIMENSION(:) :: lattice_q_potxyz, q_grid_pointer
+
+  ! grid stuff
+  INTEGER, ALLOCATABLE, DIMENSION(:,:,:) :: grid_q_pointer
+  INTEGER :: grid_q_count
   
   ! flag to identify if a species has charge so that the molecules of this species will
   ! use electrostatic map for calculations

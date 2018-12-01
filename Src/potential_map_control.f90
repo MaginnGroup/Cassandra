@@ -38,10 +38,11 @@ SUBROUTINE Potential_Map_Control
   USE Atoms_To_Place
   USE Angle_Dist_Pick
   USE Energy_Routines
+  USE Read_Write_Checkpoint
 
   IMPLICIT NONE
 
-  INTEGER ::  i
+  INTEGER ::  i, ibox
 !*******************************************************************************
 
   CALL Copy_Inputfile
@@ -57,29 +58,45 @@ SUBROUTINE Potential_Map_Control
   ! associated parameters and the vdw mixing rule.
   CALL Get_Pair_Style
 
+  ! Get information regarding number of molecules
+
+  CALL Get_Molecule_Info
+
+  CALL Create_Nonbond_Table
+
+  CALL Create_Intra_Exclusion_Table
+
   ! Read in the size of the grid spacing
 
+  CALL Get_Start_Type
+  
   CALL Get_Grid_Spacing
 
   CALL Generate_Grid
-  stop
-  
+
+ 
+  ! Now read the configuration from the input file for the zeolite
+    ibox = 1
 
   ! Load molecular conectivity and force field paramters. Note that Get_Nspecies 
   ! must be called before this routine.  
-  CALL Get_Molecule_Info
 
   ! Determine the number and identity of unique atom types, and create a vdw interaction table.
-  CALL Create_Nonbond_Table
 
   ! Obtain the temperature of the simulation
   CALL Get_Temperature_Info
 
-
   CALL Get_Rcutoff_Low
 
   CALL Precalculate
+  CALL Read_Config(ibox)
 
+  CALL Replicate_Unit_Cell
+
+  CALL Generate_Neighbor_List
+
+  CALL Zeolite_Potential_Evaluation
+  stop
   ! Obtain the information about lattice file
   CALL Get_Lattice_File_Info
 
