@@ -57,7 +57,7 @@ SUBROUTINE Compute_Cell_Dimensions(box_nbr)
        SQRT( box_list(box_nbr)%length(1,1)*box_list(box_nbr)%length(1,1) + &
        box_list(box_nbr)%length(2,1)*box_list(box_nbr)%length(2,1) + &
        box_list(box_nbr)%length(3,1)*box_list(box_nbr)%length(3,1) )
- 
+
   box_list(box_nbr)%basis_length(2) = &
        SQRT( box_list(box_nbr)%length(1,2)*box_list(box_nbr)%length(1,2) + &
        box_list(box_nbr)%length(2,2)*box_list(box_nbr)%length(2,2) + &
