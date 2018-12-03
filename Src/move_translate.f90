@@ -245,6 +245,7 @@ SUBROUTINE Translate
           f_move_overlap)
   END IF
   ! If an overlap is detected, immediately reject the move
+!  write(*,*) 'overlap', inter_overlap, f_move_overlap
   IF (inter_overlap .OR. f_move_overlap) THEN ! Move is rejected
     
      CALL Revert_Old_Cartesian_Coordinates(lm,is)
@@ -287,7 +288,7 @@ SUBROUTINE Translate
          accept = accept_or_reject(ln_pacc)
 
      END IF
-
+ !    write(*,*) i_mcstep, accept, E_vdw_framework, E_vdw_move_framework
      IF ( accept ) THEN
 
         ! accept the move and update the global energies

@@ -75,17 +75,15 @@ SUBROUTINE Rotate
   REAL(DP), DIMENSION(:), ALLOCATABLE :: dx, dy, dz
   REAL(DP) :: delta_e, ln_pacc, success_ratio
   REAL(DP) :: E_vdw, E_qq, E_vdw_move, E_qq_move, E_reciprocal_move
+  REAL(DP) :: E_vdw_framework, E_qq_framework,  E_vdw_move_framework,  E_qq_move_framework
 
-  LOGICAL :: inter_overlap, overlap, accept_or_reject
+  LOGICAL :: inter_overlap, overlap, accept_or_reject, f_overlap, f_move_overlap
 
   ! Pair_Energy arrays and Ewald implementation
   INTEGER :: position
   REAL(DP), ALLOCATABLE :: cos_mol_old(:), sin_mol_old(:)
 
-  ! Framework energy related variables
-  REAL(DP) :: E_framework, E_framework_move, E_correction_move
-  LOGICAL :: framework_overlap
-
+  
 ! Done with that section
 
   E_vdw_move = 0.0_DP
@@ -93,6 +91,16 @@ SUBROUTINE Rotate
   E_vdw = 0.0_DP
   E_qq = 0.0_DP
   E_reciprocal_move = 0.0_DP
+  
+  ! Framework related variable
+
+  E_vdw_move_framework = 0.0_DP
+  E_qq_move_framework = 0.0_DP
+  E_vdw_framework = 0.0_DP
+  E_qq_framework = 0.0_DP
+
+  f_overlap = .FALSE.
+  f_move_overlap = .FALSE.
   inter_overlap = .FALSE.
   accept = .FALSE.
 
@@ -198,6 +206,11 @@ SUBROUTINE Rotate
     CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is,E_vdw,E_qq,inter_overlap)
   END IF
 
+  ! framework energy
+  IF (box_list(ibox)%lattice) THEN
+     CALL Compute_Molecule_Framework_Energy(lm,is,E_vdw_framework,E_qq_framework,f_overlap)
+  END IF
+  
   IF (inter_overlap)  THEN
      err_msg = ""
      err_msg(1) = "Attempted to rotate molecule " // TRIM(Int_To_String(im)) // &
@@ -224,8 +237,13 @@ SUBROUTINE Rotate
   ! Now compute the energy of the molecule after the rotation. 
   CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is,E_vdw_move,E_qq_move,inter_overlap)
 
+  IF (box_list(ibox)%lattice) THEN
+     CALL Compute_Molecule_Framework_Energy(lm,is,E_vdw_move_framework,E_qq_move_framework, &
+          f_move_overlap)
+  END IF
+  
   ! If an overlap is detected, immediately reject the move
-  IF (inter_overlap) THEN
+  IF (inter_overlap .OR. f_move_overlap) THEN
      
      CALL Revert_Old_Cartesian_Coordinates(lm,is)
      IF (l_pair_nrg) CALL Reset_Molecule_Pair_Interaction_Arrays(lm,is,ibox)
@@ -255,6 +273,7 @@ SUBROUTINE Rotate
      END IF
      
      delta_e = E_vdw_move - E_vdw + E_qq_move - E_qq + delta_e
+     delta_e = ( E_vdw_move_framework - E_vdw_framework) + (E_qq_move_framework - E_qq_framework) + delta_e
      ! note that the difference in framework energy will be zero if 
      ! the simulation does not have a solid support, framework, wall etc.
 
@@ -281,6 +300,12 @@ SUBROUTINE Rotate
            energy(ibox)%ewald_reciprocal = E_reciprocal_move
         END IF
 
+        IF (box_list(ibox)%lattice) THEN
+           energy(ibox)%framework_vdw = energy(ibox)%framework_vdw &
+                + E_vdw_move_framework - E_vdw_framework
+           energy(ibox)%framework_qq = energy(ibox)%framework_qq &
+                + E_qq_move_framework - E_qq_framework
+        END IF
         nsuccess(is,ibox)%rotation = nsuccess(is,ibox)%rotation + 1
         nequil_success(is,ibox)%rotation = nequil_success(is,ibox)%rotation + 1
         

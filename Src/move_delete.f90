@@ -86,6 +86,10 @@ SUBROUTINE Deletion
 
   INTEGER :: old_subensemble
 
+  ! Framework related stuff
+  REAL(DP) :: E_framework_vdw, E_framework_qq
+  LOGICAL :: f_overlap
+
   ! Initialize variables
   ln_pacc = 0.0_DP
   ln_pseq = 0.0_DP
@@ -239,7 +243,16 @@ SUBROUTINE Deletion
              E_inter_vdw,E_inter_qq,inter_overlap)
   END IF
 
+  E_framework_vdw = 0.0_DP
+  E_framework_qq = 0.0_DP
+  f_overlap = .FALSE.
+  IF (box_list(ibox)%lattice) THEN
+     CALL Compute_Molecule_Framework_Energy(lm,is,E_framework_vdw, &
+          E_framework_qq, f_overlap)
+  END IF
+  
   dE = - E_inter_vdw - E_inter_qq
+  dE = dE - E_framework_vdw - E_framework_qq
 
   ! 4.2) Bonded intramolecular energies
 
@@ -362,6 +375,11 @@ SUBROUTINE Deletion
         energy(ibox)%lrc = E_lrc
      END IF
 
+     IF (box_list(ibox)%lattice) THEN
+        energy(ibox)%framework_vdw = energy(ibox)%framework_vdw - E_framework_vdw
+        energy(ibox)%framework_qq = energy(ibox)%framework_qq - E_framework_qq
+     END IF
+     
      ! remove the deleted LOCATE from ibox's list
      IF (im < nmols(is,ibox)) THEN
         DO k = im + 1, nmols(is,ibox)

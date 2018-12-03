@@ -83,6 +83,10 @@ SUBROUTINE Insertion
   LOGICAL :: inter_overlap, cbmc_overlap, intra_overlap
   LOGICAL :: accept_or_reject
 
+  ! framework related stuff
+  REAL(DP) :: E_framework_vdw, E_framework_qq
+  LOGICAL :: f_overlap
+  
   ! Initialize variables
   ln_pacc = 0.0_DP
   ln_pseq = 0.0_DP
@@ -224,8 +228,19 @@ SUBROUTINE Insertion
     ! Calculate the potential energy interaction between the inserted molecule
     ! and the rest of the system
     CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is, &
-            E_inter_vdw,E_inter_qq,inter_overlap)
+         E_inter_vdw,E_inter_qq,inter_overlap)
 
+    ! Calculate the potential energy interaction between the inserted molecule
+    ! and the framework
+
+    E_framework_vdw = 0.0_DP
+    E_framework_qq = 0.0_DP
+    f_overlap = .FALSE.
+    IF (box_list(ibox)%lattice) THEN
+       CALL Compute_Molecule_Framework_Energy(lm,is,E_framework_vdw,E_framework_qq, &
+            f_overlap)
+    END IF
+    
     ! Calculate the nonbonded energy interaction within the inserted molecule
     CALL Compute_Molecule_Nonbond_Intra_Energy(lm,is, &
             E_intra_vdw,E_intra_qq,E_periodic_qq,intra_overlap)
@@ -234,7 +249,7 @@ SUBROUTINE Insertion
   END IF
 
   ! 3.3) Reject the move if there is any core overlap
-  IF (cbmc_overlap .OR. inter_overlap .OR. intra_overlap) THEN
+  IF (cbmc_overlap .OR. inter_overlap .OR. intra_overlap .OR. f_overlap) THEN
      ! reject the insertion 
      locate(nmols(is,ibox),is,ibox) = 0
      nmols(is,ibox) = nmols(is,ibox) - 1
@@ -260,6 +275,7 @@ SUBROUTINE Insertion
 
   dE = E_inter_vdw + E_inter_qq 
   dE = dE + E_intra_vdw + E_intra_qq
+  dE = dE + E_framework_vdw + E_framework_qq
 
   ! 3.4) Bonded intramolecular energies
   ! If the molecule was grown via CBMC, we already have the intramolecular 
@@ -382,6 +398,12 @@ SUBROUTINE Insertion
         energy(ibox)%lrc = E_lrc
      END IF
 
+     IF (box_list(ibox)%lattice) THEN
+        energy(ibox)%framework_vdw = energy(ibox)%framework_vdw + E_framework_vdw
+        energy(ibox)%framework_qq = energy(ibox)%framework_qq + E_framework_qq
+     END IF
+
+     
      ! Increment counter
      nsuccess(is,ibox)%insertion = nsuccess(is,ibox)%insertion + 1
 

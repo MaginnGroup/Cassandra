@@ -100,7 +100,10 @@ SUBROUTINE Cut_N_Grow
 !  REAL(DP), ALLOCATABLE :: pair_vdw_temp(:), pair_qq_temp(:)
   REAL(DP), ALLOCATABLE :: cos_mol_old(:), sin_mol_old(:)
 
-  LOGICAL :: l_charge
+  ! Framework related stuff
+  REAL(DP) :: E_vdw_framework, E_qq_framework,  E_vdw_move_framework,  E_qq_move_framework
+
+  LOGICAL :: l_charge, f_overlap, f_move_overlap
 
   E_reciprocal_move = 0.0_DP
 
@@ -110,6 +113,15 @@ SUBROUTINE Cut_N_Grow
   nrg_ring_frag_reverse = 0.0
   accept = .FALSE.
 
+  ! Framework related variablew
+
+  E_vdw_move_framework = 0.0_DP
+  E_qq_move_framework = 0.0_DP
+  E_vdw_framework = 0.0_DP
+  E_qq_framework = 0.0_DP
+
+  f_overlap = .FALSE.
+  f_move_overlap = .FALSE.
   ! Let us choose a box to pick the species and molecule to pick from.
 
   ! Sum the number of regrowable molecules in each box
@@ -263,7 +275,13 @@ SUBROUTINE Cut_N_Grow
 
   CALL Fold_Molecule(lm,is,ibox)
 
-  IF (cbmc_overlap) THEN
+  ! Compute the framework related energy of the molecule
+  IF(box_list(ibox)%lattice) THEN
+     CALL Compute_Molecule_Framework_Energy(lm,is,E_vdw_move_framework, &
+          E_qq_move_framework,f_move_overlap)
+  END IF
+  
+  IF (cbmc_overlap .OR. f_move_overlap) THEN
      CALL Revert_Old_Cartesian_Coordinates(lm,is)
      ! It may so happen that only part of the molecule was grown, so make
      ! all the atoms lm and set the frac values
@@ -301,6 +319,7 @@ SUBROUTINE Cut_N_Grow
   CALL Compute_Molecule_Nonbond_Intra_Energy(lm,is,E_intra_vdw_n, &
        E_intra_qq_n,E_periodic_qq,intra_overlap)
 
+ 
   CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is,E_inter_vdw_n, &
        E_inter_qq_n,cbmc_overlap)
   E_inter_qq_n = E_inter_qq_n + E_periodic_qq
@@ -333,6 +352,9 @@ SUBROUTINE Cut_N_Grow
   delta_e_n = E_intra_vdw_n + E_intra_qq_n + E_inter_qq_n + E_inter_vdw_n &
             + E_dihed_n + E_improper_n
 
+  ! Update this energy with the framework energy
+  delta_e_n = delta_e_n + E_vdw_move_framework + E_qq_move_framework
+  
   IF (int_charge_sum_style(ibox)  == charge_ewald .AND.&
       has_charge(is)) THEN
      ! store cos_mol and sin_mol arrays
@@ -420,8 +442,14 @@ SUBROUTINE Cut_N_Grow
      IF (.NOT. l_pair_nrg) CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is,E_inter_vdw_o,E_inter_qq_o,cbmc_overlap)
      E_inter_qq_o = E_inter_qq_o + E_periodic_qq
 
+     IF (box_list(ibox)%lattice) THEN
+        ! calculate the framework energy
+        CALL Compute_Molecule_Framework_Energy(lm,is,E_vdw_framework, E_qq_framework, &
+             f_overlap)
+     END IF
      delta_e_o = E_intra_vdw_o + E_intra_qq_o + E_inter_vdw_o + E_inter_qq_o &
-               + E_dihed_o + E_improper_o
+          + E_dihed_o + E_improper_o
+     delta_e_o = delta_e_o + E_vdw_framework + E_qq_framework
 
      ln_pacc = beta(ibox) * (delta_e_n - nrg_ring_frag_forward) &
              - beta(ibox) * (delta_e_o - nrg_ring_frag_reverse) &
