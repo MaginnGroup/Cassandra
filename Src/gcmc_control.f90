@@ -41,6 +41,7 @@ SUBROUTINE GCMC_Control
   USE Atoms_To_Place
   USE Angle_Dist_Pick
   USE Energy_Routines
+  USE Potential_Map_Variables
 
   IMPLICIT NONE
 
@@ -128,4 +129,8 @@ SUBROUTINE GCMC_Control
 
   CALL Get_CBMC_Info
 
+   IF (box_list(1)%lattice) THEN
+
+     CALL Get_Lattice_Map_Files
+  END IF
 END SUBROUTINE GCMC_Control

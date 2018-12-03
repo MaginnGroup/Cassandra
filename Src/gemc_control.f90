@@ -131,6 +131,12 @@ SUBROUTINE GEMC_Control
   
   ! Determine what dihedral angles a given atom participates and how many such
   ! angles exist
-  CALL Get_Dihedral_Atoms_To_Place  
+  CALL Get_Dihedral_Atoms_To_Place
+
+  ! Load maps
+
+  IF (box_list(1)%lattice) THEN
+     CALL Get_Lattice_Map_Files
+  END IF
 
 END SUBROUTINE GEMC_Control
