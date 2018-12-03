@@ -839,8 +839,9 @@ CONTAINS
           locate_1 = SUM(max_molecules(1:is-1)) + im
        END IF
     END IF
-
     speciesLoop: DO ispecies = 1, nspecies
+
+       IF (box_list(this_box)%lattice .AND. ispecies == 1) CYCLE
        
        !$OMP PARALLEL DO DEFAULT(SHARED) &
        !$OMP PRIVATE(imolecule,this_locate,locate_2,get_interaction) &
@@ -875,7 +876,6 @@ CONTAINS
           ! Determine if any atoms of these two molecules will interact
           CALL Check_MoleculePair_Cutoff(im,is,this_locate,ispecies,get_interaction, &
                rcom,rx,ry,rz) 
-
           IF (.NOT. get_interaction) CYCLE moleculeLOOP       
           
           CALL Compute_MoleculePair_Energy(im,is,this_locate,ispecies, &
@@ -898,6 +898,161 @@ CONTAINS
     
   END SUBROUTINE Compute_Molecule_Nonbond_Inter_Energy
   !-----------------------------------------------------------------------------
+  SUBROUTINE Compute_Molecule_Framework_Energy(im,is,E_framework,E_q_framework,overlap)
+    ! This subroutine calculates the energy of the molecule with solid
+    ! framework. At present the energy is computed with structureless graphitic
+    ! wall for which the Steele 10-4-3 potential is adopted.
+    !
+    ! At present it is assumed that there is only one box with slit pore geometry.
+    ! Note that this is the reason there is no information on the identity of the box.
+    ! Also pore_width is also assumed to be box independent.
+    !
+    ! First written by Jindal Shah on 08/26/11
+    ! 
+    ! 03/04/13 (JS) : Modified the code so as to allow for the calculation of energy
+    !                 due to zeolite
+    !
+    !----------------------------------------------------------------------------------------
+
+    INTEGER, INTENT(IN) :: im, is
+    REAL(DP), INTENT(OUT) :: E_framework
+    REAL(DP) :: E_q_framework
+    LOGICAL :: overlap
+    
+    INTEGER :: iatom, itype, this_box
+    REAL(DP) :: z1, z2, prefact, sig, sig_z1, sig_z1_2, sig_z1_4, sig_z1_10
+    REAL(DP) :: sig_z1_del, sig_z1_del3, sig_z2, sig_z2_2, sig_z2_4, sig_z2_10
+    REAL(DP) :: sig_z2_del, sig_z2_del3, E_wall_1, E_wall_2, z1_sq, z2_sq
+
+    ! zeolite stuff
+    INTEGER :: type_iatom
+    REAL(DP) :: x_iatom, y_iatom, z_iatom, e_iatom, e_q_iatom
+
+    LOGICAL :: q_overlap
+
+    E_framework = 0.0_DP
+    E_q_framework = 0.0_DP
+    overlap = .FALSE.
+
+    this_box = molecule_list(im,is)%which_box
+    ! if this is a slit pore simulation, check to ensure that the atoms
+    ! have not crossed the pore boundaries
+
+!   IF (l_slit_pore(this_box)) CALL Check_Molecule_Position_Slit_Pore(im,is,overlap)
+!    IF (overlap) RETURN
+
+!!$    IF (l_steele_pot) THEN
+!!$
+!!$       DO iatom = 1, natoms(is)
+!!$          
+!!$          IF ( .NOT. atom_list(iatom,im,is)%exist) CYCLE
+!!$          
+!!$          ! distance from the bottom wall located in the xy plane
+!!$          
+!!$          z1 = atom_list(iatom,im,is)%rzp
+!!$          
+!!$          ! translate z1 such that it is between (0,pore_width)
+!!$          
+!!$          z1 = z1 + half_pore_width
+!!$          
+          ! distance from the upper wall
+          
+!!$          z2 = pore_width - z1
+          
+!!$          z1_sq = z1 * z1
+!!$          
+!!$          IF (z1_sq < rcut_lowsq) THEN
+!!$             overlap = .TRUE.
+!!$             RETURN
+!!$          END IF
+!!$          
+!!$          z2_sq = z2 * z2
+!!$          
+!!$          IF (z2_sq < rcut_lowsq) THEN
+!!$             overlap = .TRUE.          
+!!$             RETURN
+!!$          END IF
+!!$          
+!!$          ! obtain the atom type
+!!$          
+!!$          itype = nonbond_list(iatom,is)%atom_type_number
+!!$          
+!!$          prefact = pre_steele(itype)
+!!$          sig = sigma_steele(itype)
+!!$          
+!!$          ! First wall
+!!$          
+!!$          sig_z1 = sig / z1
+!!$          sig_z1_2 = sig_z1 * sig_z1
+!!$          sig_z1_4 = sig_z1_2 * sig_z1_2
+!!$          sig_z1_10 = sig_z1_4 * sig_z1_4 * sig_z1_2
+!!$          
+!!$          sig_z1_del = sig / (z1 + delta_constant)
+!!$          sig_z1_del3 = sig_z1_del * sig_z1_del * sig_z1_del
+!!$          
+!!$          E_wall_1 = prefact * (0.4_DP * sig_z1_10 - sig_z1_4 - sig_delta(itype) * sig_z1_del3)
+!!$          
+!!$          ! similarly calculate the contribution from the second wall.
+!!$          
+!!$          
+!!$          sig_z2 = sig / z2
+!!$          sig_z2_2 = sig_z2 * sig_z2
+!!$          sig_z2_4 = sig_z2_2 * sig_z2_2
+!!$          sig_z2_10 = sig_z2_4 * sig_z2_4 * sig_z2_2
+!!$          
+!!$          sig_z2_del = sig / (z2 + delta_constant)
+!!$          sig_z2_del3 = sig_z2_del * sig_z2_del * sig_z2_del
+!!$          
+!!$          E_wall_2 = prefact * (0.4_DP * sig_z2_10 - sig_z2_4 - sig_delta(itype) * sig_z2_del3)
+!!$          
+!!$          E_framework = E_wall_1 + E_wall_2 + E_framework
+!!$          
+!!$       END DO
+
+    IF (box_list(this_box)%lattice) THEN
+       
+       ! compute the energy of the molecules using the tabulated potentials
+       q_overlap = .FALSE.
+       E_q_framework = 0.0_DP
+       
+       DO iatom = 1, natoms(is)
+          
+          IF (.NOT. atom_list(iatom,im,is)%exist) CYCLE
+          
+          ! atomic coordinates
+          
+          x_iatom = atom_list(iatom,im,is)%rxp 
+          y_iatom = atom_list(iatom,im,is)%ryp 
+          z_iatom = atom_list(iatom,im,is)%rzp 
+
+          ! compute the energy of this atom using Hermite interpolation
+
+          type_iatom = nonbond_list(iatom,is)%atom_type_number
+          CALL Hermite(this_box,x_iatom,y_iatom,z_iatom,type_iatom,e_iatom,overlap)
+
+        !  write(*,*) i_mcstep, im, iatom, e_iatom
+
+          E_framework = E_framework + e_iatom
+          ! calculate the electrostatic energy of this atom, if the species
+          ! carries a charge
+          
+!!$          IF (l_elec_map(is)) THEN
+!!$             CALL Hermite_Q(this_box,x_iatom,y_iatom,z_iatom,iatom,is,e_q_iatom,q_overlap)
+!!$             IF (q_overlap) THEN
+!!$                overlap = .TRUE.
+!!$                RETURN
+!!$             END IF
+!!$             E_q_framework = E_q_framework + e_q_iatom
+!!$          END IF
+
+          IF (overlap) RETURN
+          
+       END DO
+       
+    END IF
+    
+  END SUBROUTINE Compute_Molecule_Framework_Energy
+!**************************************************************************
 
   SUBROUTINE Compute_MoleculePair_Energy(im,is,jm,js,this_box, &
     vlj_pair,vqq_pair,overlap)
@@ -1759,16 +1914,18 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     REAL(DP) :: v_molecule_selfrf
     REAL(DP) :: rijsq
     REAL(DP) :: v_bond, v_angle, v_dihedral, v_intra, v_improper
-    REAL(DP) :: v_intra_vdw, v_intra_qq, v_inter_qq
+    REAL(DP) :: v_intra_vdw, v_intra_qq, v_inter_qq, E_framework_vdw, E_framework_qq
+    REAL(DP) :: E_framework_molecule_vdw, E_framework_molecule_qq
     
     LOGICAL :: get_interaction,intra_overlap
 
     INTEGER :: locate_1, locate_2
-    LOGICAL :: l_pair_store, my_overlap, shared_overlap
+    LOGICAL :: l_pair_store, my_overlap, shared_overlap, f_overlap
 
     my_overlap = .FALSE.
     shared_overlap = .FALSE.
     overlap = .FALSE.
+    f_overlap = .FALSE.
 
     ! Initialize the energies
 
@@ -1777,6 +1934,8 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     energy(this_box)%inter_q = 0.0_DP
     energy(this_box)%ewald_reciprocal = 0.0_DP
     energy(this_box)%lrc = 0.0_DP
+    energy(this_box)%framework_vdw = 0.0_DP
+    energy(this_box)%framework_qq = 0.0_DP
     ! Compute the intramolecular energy of the system if the flag is set.
 
     IF (intra_flag) THEN
@@ -1799,11 +1958,15 @@ END SUBROUTINE Compute_Molecule_Self_Energy
           v_intra_vdw= 0.0_DP
           v_intra_qq = 0.0_DP
           v_inter_qq = 0.0_DP
+          E_framework_vdw = 0.0_DP
+          E_framework_qq = 0.0_DP
           !$OMP PARALLEL DO DEFAULT(SHARED) &
           !$OMP SCHEDULE(DYNAMIC) &
           !$OMP PRIVATE(im, this_im, v_molecule_bond, v_molecule_angle, v_molecule_dihedral) &
+          !$OMP PRIVATE(E_framework_molecule_vdw, E_framework_molecule_qq,f_overlap) &
           !$OMP PRIVATE(v_molecule_improper,vlj_molecule_intra,vqq_molecule_intra, vqq_molecule_inter, intra_overlap) &
-          !$OMP REDUCTION(+:v_intra,v_bond, v_angle, v_dihedral,v_improper, v_intra_vdw, v_intra_qq, v_inter_qq)  
+          !$OMP REDUCTION(+:v_intra,v_bond, v_angle, v_dihedral,v_improper, v_intra_vdw, v_intra_qq, v_inter_qq)
+          !$OMP REDUCTION(+:,E_framework_vdw, E_framework_qq)
           imLoop:DO im = 1, nmols(is,this_box)
              
              this_im = locate(im,is,this_box)
@@ -1820,6 +1983,19 @@ END SUBROUTINE Compute_Molecule_Self_Energy
              CALL Compute_Molecule_Nonbond_Intra_Energy(this_im,is, &
                      vlj_molecule_intra,vqq_molecule_intra,vqq_molecule_inter, &
                      intra_overlap)
+
+             ! If this is box 1, then it is possible that it is a framework
+             
+             IF (this_box == 1 .AND. is /= 1) THEN
+                IF (box_list(this_box)%lattice) THEN
+                   !write(*,*) 'this_im', this_im, is
+                   ! framework energy needs to be calculated
+                   CALL Compute_Molecule_Framework_Energy(this_im, is, E_framework_molecule_vdw, E_framework_molecule_qq, f_overlap)
+                   E_framework_vdw = E_framework_vdw + E_framework_molecule_vdw
+                   E_framework_qq = E_framework_qq +  E_framework_molecule_qq
+                END IF
+             END IF 
+ 
 
              IF (intra_overlap) THEN
                 SHARED_OVERLAP = .TRUE.
@@ -1850,6 +2026,8 @@ END SUBROUTINE Compute_Molecule_Self_Energy
           energy(this_box)%intra_vdw = energy(this_box)%intra_vdw + v_intra_vdw
           energy(this_box)%intra_q   = energy(this_box)%intra_q   + v_intra_qq
           energy(this_box)%inter_q = energy(this_box)%inter_q + v_inter_qq
+          energy(this_box)%framework_vdw = energy(this_box)%framework_vdw + E_framework_vdw
+          energy(this_box)%framework_qq = energy(this_box)%framework_qq + E_framework_qq
        END DO
 
     END IF
@@ -1861,7 +2039,8 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
     energy(this_box)%total = energy(this_box)%total + energy(this_box)%intra &
                            + energy(this_box)%intra_vdw &
-                           + energy(this_box)%intra_q
+                           + energy(this_box)%intra_q + energy(this_box)%framework_vdw &
+                           + energy(this_box)%framework_qq
     
     ! Calculate the total intermolecular energy of the system. The calculation 
     ! is divided into two parts. The first part computes the interaction between
@@ -1880,7 +2059,10 @@ END SUBROUTINE Compute_Molecule_Self_Energy
       
           E_inter_vdw = 0.0_DP
           E_inter_qq  = 0.0_DP
-          
+
+          E_framework_vdw = 0.0_DP
+          E_framework_qq = 0.0_DP
+         
           !$OMP PARALLEL DO DEFAULT(SHARED) &
           !$OMP SCHEDULE(DYNAMIC) &
           !$OMP PRIVATE(im_2, this_im_2, locate_2, get_interaction) &
@@ -1933,7 +2115,8 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
           energy(this_box)%inter_vdw = energy(this_box)%inter_vdw + E_inter_vdw
           energy(this_box)%inter_q = energy(this_box)%inter_q + E_inter_qq
-          
+          energy(this_box)%framework_vdw = energy(this_box)%framework_vdw + E_framework_vdw
+          energy(this_box)%framework_qq = energy(this_box)%framework_qq + E_framework_qq
        END DO imLOOP1
     END DO
     
@@ -1945,6 +2128,8 @@ END SUBROUTINE Compute_Molecule_Self_Energy
           IF (.NOT. molecule_list(this_im_1,is_1)%live) CYCLE imLOOP3
           
           IF (l_pair_store) CALL Get_Position_Alive(this_im_1,is_1,locate_1)
+
+          IF(box_list(this_box)%lattice .AND. is_1 == 1) CYCLE
           
           DO is_2 = is_1 + 1, nspecies
              E_inter_vdw = 0.0_DP
@@ -1991,11 +2176,13 @@ END SUBROUTINE Compute_Molecule_Self_Energy
                 IF (my_overlap) THEN
                    SHARED_OVERLAP = .true.
                 END IF
+
                 
                 E_inter_vdw  = E_inter_vdw + vlj_pair
                 E_inter_qq   = E_inter_qq  + vqq_pair                
              
              END DO imLOOP4
+
              !$OMP END PARALLEL DO 
              IF (SHARED_OVERLAP) THEN
                 overlap = .true.
