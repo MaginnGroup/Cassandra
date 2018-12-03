@@ -59,7 +59,7 @@ EXEC_NAME = cassandra_gfortran.exe
 FC = gfortran
 LIBS = 
 INCS = 
-F90FLAGS = -c -ffree-line-length-none 
+F90FLAGS = -g -c -ffree-line-length-none -fbacktrace -ffpe-trap=zero
 LINKFLAGS = 
 
 ####################################################################
@@ -78,6 +78,7 @@ OBJS =  main.o \
   read_write_checkpoint.o \
   rotation_routines.o \
   fragment_growth.o \
+  hermite_routines.o \
   volume.o \
   pair_nrg_routines.o \
   nvtmc_control.o \
@@ -123,7 +124,12 @@ OBJS =  main.o \
   pair_nrg_variables.o \
   move_ring_flip.o \
   replicate_unit_cell.o \
+  zeo_pot_evaluation.o \
+  hermite.o \
+  test_hermite_insertion.o \
+  
 
+  
 
 ####################################################################
 
