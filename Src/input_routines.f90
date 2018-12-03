@@ -973,7 +973,7 @@ SUBROUTINE Get_Molecule_Info
 !******************************************************************************
 
   INTEGER :: ierr,line_nbr,nbr_entries, i, openstatus, is, max_index, input_line_nbr
-  INTEGER :: mcf_index(5), dummy
+  INTEGER :: mcf_index(5), dummy, j
   CHARACTER(120) :: line_string, line_array(20), source_dir
   LOGICAL :: l_source_dir
 
@@ -1182,6 +1182,7 @@ SUBROUTINE Get_Molecule_Info
   ! N.B.: MAXVAL instrinsic function selects the largest value from an array
 
   ALLOCATE( atom_list(MAXVAL(natoms), MAXVAL(max_molecules), nspecies), Stat = AllocateStatus )
+
   IF (AllocateStatus /= 0) THEN
      write(*,*)'memory could not be allocated for atom_list array'
      write(*,*)'stopping'
@@ -1189,6 +1190,7 @@ SUBROUTINE Get_Molecule_Info
   END IF
 
   ALLOCATE( nonbond_list(MAXVAL(natoms), nspecies), Stat = AllocateStatus )
+
   IF (AllocateStatus /= 0) THEN
      write(*,*)'memory could not be allocated for nonbond_list array'
      write(*,*)'stopping'
@@ -1339,15 +1341,17 @@ SUBROUTINE Get_Molecule_Info
         CALL Get_Dihedral_Info(is)
         CALL Get_Improper_Info(is)
         CALL Get_Intra_Scaling(is)
-  
-        IF (nfragments(is) /= 0) THEN
-           species_list(is)%fragment = .TRUE.
-           CALL Get_Fragment_Info(is)
-           IF (int_sim_type /= sim_mcf) THEN
-              CALL Get_Fragment_File_Info(is)
-           END IF
-           IF (nfragments(is) > 1 .AND. int_sim_type /= sim_mcf) THEN
-              CALL Get_Fragment_Connectivity_Info(is)
+
+        IF (int_sim_type /= sim_pot_map) THEN
+           IF (nfragments(is) /= 0) THEN
+              species_list(is)%fragment = .TRUE.
+              CALL Get_Fragment_Info(is)
+              IF (int_sim_type /= sim_mcf) THEN
+                 CALL Get_Fragment_File_Info(is)
+              END IF
+              IF (nfragments(is) > 1 .AND. int_sim_type /= sim_mcf) THEN
+                 CALL Get_Fragment_Connectivity_Info(is)
+              END IF
            END IF
         END IF
 
@@ -3580,6 +3584,7 @@ SUBROUTINE Get_Box_Info
         END IF
 
         l_cubic(:) = .FALSE.
+        box_list(:)%lattice = .FALSE.
 
         DO ibox = 1,nbr_boxes
            ! Get box type
@@ -3660,6 +3665,43 @@ SUBROUTINE Get_Box_Info
               WRITE (logunit,'(X,T5,f10.4,T20,f10.4,T30,f10.4)') box_list(ibox)%length(1,1:3)
               WRITE (logunit,'(X,T5,f10.4,T20,f10.4,T30,f10.4)') box_list(ibox)%length(2,1:3)
               WRITE (logunit,'(X,T5,f10.4,T20,f10.4,T30,f10.4)') box_list(ibox)%length(3,1:3)
+              
+           ELSEIF (line_array(1) == 'LATTICE' .OR. line_array(1) == 'lattice') THEN
+
+              ! The lattice can be defined only for one box and this has to be box 1
+
+              IF (ibox /= 1) THEN
+                 err_msg = ''
+                 err_msg(1) = 'The box '//Int_To_String(ibox)
+                 err_msg(2) = 'is declared a lattice box'
+                 err_msg(3) = 'Only the first box can be a lattice.'
+                 err_msg(4) = 'Check the Box_Info section in the input file.'
+                 CALL Clean_Abort('Get_Box_Info', err_msg)
+              END IF
+              
+              box_list(ibox)%int_box_shape = int_lattice
+              box_list(ibox)%lattice = .TRUE.
+
+              CALL Parse_String(inputunit,line_nbr,3,nbr_entries,line_array,ierr)
+              line_nbr = line_nbr + 1
+              box_list(ibox)%length(1,1) = String_To_Double(line_array(1))
+              box_list(ibox)%length(1,2) = String_To_Double(line_array(2))
+              box_list(ibox)%length(1,3) = String_To_Double(line_array(3))
+
+              CALL Parse_String(inputunit,line_nbr,3,nbr_entries,line_array,ierr)
+              line_nbr = line_nbr + 1
+              box_list(ibox)%length(2,1) = String_To_Double(line_array(1))
+              box_list(ibox)%length(2,2) = String_To_Double(line_array(2))
+              box_list(ibox)%length(2,3) = String_To_Double(line_array(3))
+
+              CALL Parse_String(inputunit,line_nbr,3,nbr_entries,line_array,ierr)
+              line_nbr = line_nbr + 1
+              box_list(ibox)%length(3,1) = String_To_Double(line_array(1))
+              box_list(ibox)%length(3,2) = String_To_Double(line_array(2))
+              box_list(ibox)%length(3,3) = String_To_Double(line_array(3))
+
+              WRITE (logunit,'(A,T15,I3,T25,A,T40,A)') 'Box number ',ibox,'Box Shape : ', &
+                   'LATTICE'
 
            ELSE
               err_msg = ''
@@ -3686,6 +3728,9 @@ SUBROUTINE Get_Box_Info
                 box_list(ibox)%cos_angle
            WRITE(logunit,'(X,A,3(f10.4,3x))') 'Distance between box faces ',&
                 box_list(ibox)%face_distance
+
+           ! Check to make sure the face distances are 
+           
            WRITE(logunit,'(X,A,f18.4)') 'Box volume, A^3 ', box_list(ibox)%volume
 
            ! Skip 1 line between boxes
@@ -4625,6 +4670,7 @@ SUBROUTINE Get_Start_Type
     CALL Clean_Abort(err_msg, 'Get_Start_Type')
   END IF
 
+   
   ALLOCATE(nmols_to_read(nspecies,nbr_boxes),Stat=Allocatestatus)
   IF (Allocatestatus /= 0) THEN
     err_msg = ''
@@ -4667,6 +4713,18 @@ SUBROUTINE Get_Start_Type
            line_nbr = line_nbr + 1
            CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
            ibox = ibox + 1
+
+           IF (ibox == 1 .AND. int_sim_type == sim_pot_map) THEN
+
+              IF (line_array(1) /= 'add_to_config') THEN
+                 err_msg = ''
+                 err_msg(1) = 'Potential map calculation selected for which the'
+                 err_msg(2) = 'Start_Type must be set to add_to_config.'
+                 err_msg(3) = 'Start_Type set to: '// TRIM(line_array(1))
+                 CALL Clean_Abort(err_msg,'Get_Start_Type')
+              END IF
+           END IF
+                 
            IF (line_array(1) == 'make_config') THEN
               start_type(ibox) = 'make_config'
 
@@ -4740,9 +4798,30 @@ SUBROUTINE Get_Start_Type
            ELSE IF (line_array(1) == 'add_to_config') THEN
               start_type(ibox) = 'add_to_config'
 
+              ! make sure that the number of entries on this line is
+              ! 2 * nspecies + 2. add_config, nspecies field for nmols_to_read,
+              ! one field for old_config_file, nspecies fields for nmols_to_make
+               IF (nbr_entries < 2*nspecies + 2) THEN
+                  err_msg = ''
+                  err_msg(1) = '******** '
+                  err_msg(2) = 'Start_Type has been declared as ' // start_type(ibox) // &
+                       'for ' // TRIM(Int_To_String(ibox))
+                  err_msg(3) = 'The information for Start_Type contains '// &
+                       TRIM(Int_To_String(nbr_entries)) // ' entries instead of '// &
+                       TRIM(Int_To_String((2*nspecies + 2)))
+                  err_msg(4) = 'Specify the number of mols in the configuration file for all the species'
+                  err_msg(5) = 'Followed by the name of the configuration file.'
+                  err_msg(6) = 'And the number of molecules to be added for each of the species'
+                  err_msg(7) = 'Include 0 for no molecules'
+                  err_msg(8) = '********** '
+                  CALL Clean_Abort(err_msg, 'Get_Start_Type')
+              END IF
+
               WRITE(logunit,'(A)') 'Initial configuration for box ' // &
                  TRIM(Int_To_String(ibox)) // ' will add molecules to ' // &
                  'configuration read from file'
+            
+              
               
               ! Read nmols_to_read
               DO is = 1, nspecies
@@ -4769,6 +4848,7 @@ SUBROUTINE Get_Start_Type
               ! Read nmols_to_make
               DO is = 1, nspecies
                  ! assign initial number of molecules to add in each box
+
                  nmols_to_make(is,ibox) = &
                     String_To_Int(line_array(2+nspecies+is))
 
@@ -6260,5 +6340,845 @@ SUBROUTINE Get_Grid_Spacing
     END DO
 
   END SUBROUTINE Get_Grid_Spacing
+  !*************************************************************************
+  ! SUBROUTINE Get_Lattice_MAP_Files
+  !
+  !
+  !
+  !
+  !
+  !*************************************************************************
+    SUBROUTINE Get_Lattice_MAP_Files
+    !-----------------------------------------------------------------
+    !
+    !
+    ! This subroutine reads in the potential map files generated for
+    ! a lattice. A check is provided that the number of files
+    ! matches the number of unique sorbate atom types
+    !
+    !-----------------------------------------------------------------
+
+    IMPLICIT NONE
+
+    INTEGER :: ierr, line_nbr, ispecies, iatom, itype, nzeo_pot_atomtypes, nbr_entries, is
+    CHARACTER :: this_potential_type*6, line_string*120, line_array(20)*120 
+    INTEGER, ALLOCATABLE, DIMENSION(:) :: sorb_original_atomtypes
+    CHARACTER, ALLOCATABLE, DIMENSION(:) :: sorb_atom_name*6
+    LOGICAL, ALLOCATABLE, DIMENSION(:) :: l_compute
+
+    ! Anticipating that we might have electrostatic map, we allocate
+    ! memory for the flag indicating if map is to be used for computing
+    ! electrostatic energy of a molecule of a given species
+
+    ALLOCATE(l_elec_map(nspecies))
+
+    l_elec_map = .FALSE.
+
+    REWIND(inputunit)
+    ierr = 0
+    line_nbr = 0
+
+    ! obtain number of unique atom types
+
+    nzeo_pot_atomtypes = 0
+
+    ALLOCATE(l_compute(nbr_atomtypes))
+    ALLOCATE(sorbate_atomtypes(nbr_atomtypes))
+    ALLOCATE(sorb_atom_name(nbr_atomtypes))
+    ALLOCATE(sorb_original_atomtypes(nbr_atomtypes))
+
+    l_compute(:) = .FALSE.
+    sorbate_atomtypes = 0
+
+    n_sorb_atomtypes = 0
+
+    ! Note that the first species is always zeolite species
+    DO ispecies = 2, nspecies
+
+       DO iatom = 1, natoms(ispecies)
+          
+          itype = nonbond_list(iatom,ispecies)%atom_type_number
+          
+          IF (.NOT. l_compute(itype) ) THEN
+             
+             nzeo_pot_atomtypes = nzeo_pot_atomtypes + 1
+             n_sorb_atomtypes = n_sorb_atomtypes + 1
+             sorbate_atomtypes(itype) = nzeo_pot_atomtypes
+             sorb_original_atomtypes(nzeo_pot_atomtypes) = itype
+             sorb_atom_name(itype) = TRIM(nonbond_list(iatom,ispecies)%atom_name)
+             l_compute(itype) = .TRUE.
+
+          END IF
+
+       END DO
+
+    END DO
+
+    DEALLOCATE(l_compute)
+
+    ALLOCATE(map_input_file(nzeo_pot_atomtypes))
+
+    WRITE(logunit,*)
+    WRITE(logunit,*) 'Number of unique sorbate types for which the map will be read is'
+    WRITE(logunit,*) Int_To_String(nzeo_pot_atomtypes)
+    WRITE(logunit,*)
+
+    DO
+       line_nbr = line_nbr + 1
+       CALL Read_String(inputunit,line_string,ierr)
+
+       IF (ierr /= 0 ) THEN
+          err_msg = ''
+          err_msg(1) = 'Error reading map input files in the input file'
+          err_msg(2) = 'Check # Lattice_MAP_Files'
+          err_msg(3) = 'aborting'
+          CALL Clean_Abort(err_msg,'Get_Lattice_MAP_Files')
+       END IF
+
+
+       IF (line_string(1:19) == '# Lattice_Map_Files' .OR. &
+            line_string(1:19) == '# lattice_map_files') THEN
+
+          ! We found a section on lattice map files. Read 
+          ! all the input files. Make sure that the number of
+          ! files is identical to the number of unique sorbate
+          ! types
+
+          WRITE(logunit,*)
+          WRITE(logunit,*) 'Section on Lattice_MAP_Files found'
+          WRITE(logunit,*)
+
+          DO itype = 1, nzeo_pot_atomtypes
+
+             line_nbr = line_nbr + 1
+
+             CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
+             map_input_file(itype) = line_array(1)
+             this_potential_type = TRIM(line_array(2))
+
+             IF (TRIM(this_potential_type) /= sorb_atom_name(sorb_original_atomtypes(itype))) THEN
+                err_msg = ''
+                err_msg(1) = 'Potential type mismatch while loading zeolite map'
+                err_msg(2) = 'While loading '//Int_To_String(itype)
+                err_msg(3) = 'found the atom name '//TRIM(this_potential_type)
+                err_msg(4) = 'expecting '//sorb_atom_name(sorb_original_atomtypes(itype))
+                err_msg(5) = 'check simulation input file'
+                CALL Clean_Abort(err_msg,'Get_Lattice_MAP_Files')
+             END IF
+
+             WRITE(logunit,*) 
+             WRITE(logunit,*) 'The input map file for the atom type '//TRIM(this_potential_type)//' is'
+             WRITE(logunit,*) TRIM(map_input_file(itype))
+
+          END DO
+
+          ! now check to see if there is a map file for electrostatics
+          line_nbr = line_nbr + 1
+
+          CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
+
+          IF ( nbr_entries == 0 ) THEN
+             ! there is no map file associated with electrostatic interactions
+
+             charge_map_file = ''
+             WRITE(logunit,*)
+             WRITE(logunit,*) 'No electrostatic map files is provided'
+             WRITE(logunit,*)
+
+          ELSE IF (nbr_entries < 2 ) THEN
+             
+             err_msg = ''
+             err_msg(1) = 'It appears that the electrostatic map file is present'
+             err_msg(2) = 'However, either the name of the file or the information'
+             err_msg(3) = 'on the charge for which the map was calculated is missing.'
+             err_msg(4) = 'Check the last line of the Lattice_MAP_Files section in'
+             err_msg(5) = inputfile
+             CALL Clean_Abort(err_msg,'Get_Lattice_MAP_Files')
+             
+          ELSE
+             
+             charge_map_file = line_array(1)
+          !   lowest_charge = String_To_Double(line_array(2))
+             
+             WRITE(logunit,*)
+             WRITE(logunit,*) 'The map file for the charge charge interaction is'
+             WRITE(logunit,*) charge_map_file
+             
+             WRITE(logunit,*)
+             WRITE(logunit,*) 'The electrostatic map file was created with'
+!             WRITE(logunit,*) lowest_charge
+             WRITE(logunit,*)
+
+             ! At this point also determine if electrostatic interaction
+             ! is to be computed from the map for each of the species
+             
+             DO is = 1, nspecies
+                
+                IF (has_charge(is)) THEN
+                   
+                   l_elec_map(is) = .TRUE.
+                   
+                   WRITE(logunit,*)
+                   WRITE(logunit,'(A32,2X,I3,2X,A)') 'Electrostatic energy for species', is, &
+                        ' will be calculated from the map'
+                   WRITE(logunit,*)
+                   
+                END IF
+                
+             END DO
+             
+          END IF
+
+
+          EXIT
+          
+       ELSE IF (line_nbr > 20000 .OR. line_string(1:3) == 'END') THEN
+          
+          ! The section is missing. Report the error
+          
+          err_msg = ''
+          err_msg(1) = '# Lattice_MAP_Files section missing in the input file'
+          err_msg(2) = inputfile
+          CALL Clean_Abort(err_msg,'Get_Lattice_MAP_Files')
+          
+       END IF
+
+
+    END DO
+
+    ! Also obtain the 
+
+    ! Now load the potential maps, derivatives and grid pointers
+
+    CALL Get_Lattice_Potential_Grid_Pointer
+
+  END SUBROUTINE Get_Lattice_MAP_Files
+  !*******************************************************************
+  ! This subroutine loads the grid pointer for each of the atomtypes
+  !
+  !
+  !
+  !*******************************************************************
+ SUBROUTINE Get_Lattice_Potential_Grid_Pointer
+
+   IMPLICIT NONE
+
+    INTEGER :: itype, nx_grid_this, ny_grid_this, nz_grid_this, this_unit
+    INTEGER :: nx_grid_prev, ny_grid_prev, nz_grid_prev, igrid, id_grid, offset
+    INTEGER :: total_grids, x_offset, y_offset, ix, iy, iz, ix_this, iy_this
+    INTEGER :: iz_this, overall_offset
+
+    INTEGER :: nxgrid_q, nygrid_q, nzgrid_q, n_q_grids, n_superlat_atoms_this, i
+    
+    REAL(DP) :: pot_grid, potx_grid, poty_grid, potz_grid
+    REAL(DP) :: potxy_grid, potxz_grid, potyz_grid, potxyz_grid
+
+    ! turn on the flag that it's a zeolite potential simulation
+
+    l_zeolite_pot = .TRUE.
+    
+    ! also set the box_list()%lattice true for box 1. 
+
+    box_list(1)%lattice = .TRUE.
+
+    ! corresponds to the number of grids to be saved for each sorbate atom type
+    ALLOCATE(n_sorb_grids(n_sorb_atomtypes)) 
+    n_sorb_grids = 0
+
+    ! First read in the number of grid points in each of the directions
+
+    DO itype = 1, n_sorb_atomtypes
+       
+       this_unit = map_input_unit + itype
+
+       OPEN(UNIT=this_unit, file=map_input_file(itype),FORM='UNFORMATTED')
+
+       READ(this_unit) nx_grid_this, ny_grid_this, nz_grid_this, n_sorb_grids(itype)
+
+       IF (itype == 1) THEN
+
+          nx_grid_prev = nx_grid_this
+          ny_grid_prev = ny_grid_this
+          nz_grid_prev = nz_grid_this
+
+       ELSE
+
+          ! check if the grids match those obtained in the first map file
+
+          IF (nx_grid_this /= nx_grid_prev) THEN
+
+             err_msg = ''
+             err_msg(1) = 'Number of grids in x-direction in the file'
+             err_msg(2) = map_input_file(itype)
+             err_msg(3) ='does not match those found in the map file'
+             err_msg(4) = map_input_file(1)
+             CALL Clean_Abort(err_msg,'Get_Lattice_Potential_Grid_Pointer')
+
+          ELSE IF ( ny_grid_this /= ny_grid_prev) THEN
+
+             err_msg = ''
+             err_msg(1) = 'Number of grids in y-direction in the file'
+             err_msg(2) = map_input_file(itype)
+             err_msg(3) ='does not match those found in the map file'
+             err_msg(4) = map_input_file(1)
+             CALL Clean_Abort(err_msg,'Get_Lattice_Potential_Grid_Pointer')
+
+          ELSE IF (nz_grid_this /= nz_grid_prev) THEN
+             
+             err_msg = ''
+             err_msg(1) = 'Number of grids in z-direction in the file'
+             err_msg(2) = map_input_file(itype)
+             err_msg(3) ='does not match those found in the map file'
+             err_msg(4) = map_input_file(1)
+             CALL Clean_Abort(err_msg,'Get_Lattice_Potential_Grid_Pointer')
+
+          END IF
+
+       END IF
+       
+    END DO
+
+    ! Allocate potential arrays 
+
+    total_sorb_grids = SUM(n_sorb_grids)
+
+    ! xyz derivative
+
+    ALLOCATE(lattice_pot(total_sorb_grids), STAT = AllocateStatus)
+
+    IF (AllocateStatus /= 0 ) THEN
+
+       err_msg = ''
+       err_msg(1) = 'Memory could not be allocate for the potential map'
+       CALL Clean_Abort(err_msg,'Get_Lattice_Potential_Grid_Pointer')
+
+    END IF
+
+    ALLOCATE(lattice_potx(total_sorb_grids), STAT = AllocateStatus)
+
+    IF (AllocateStatus /= 0 ) THEN
+
+       err_msg = ''
+       err_msg(1) = 'Memory could not be allocate for the x potential derivative map'
+       CALL Clean_Abort(err_msg,'Get_Lattice_Potential_Grid_Pointer')
+
+    END IF
+
+    ALLOCATE(lattice_poty(total_sorb_grids), STAT = AllocateStatus)
+
+    IF (AllocateStatus /= 0 ) THEN
+
+       err_msg = ''
+       err_msg(1) = 'Memory could not be allocate for the y potential derivative map'
+       CALL Clean_Abort(err_msg,'Get_Lattice_Potential_Grid_Pointer')
+
+    END IF
+
+    ALLOCATE(lattice_potz(total_sorb_grids), STAT = AllocateStatus)
+
+    IF (AllocateStatus /= 0 ) THEN
+
+       err_msg = ''
+       err_msg(1) = 'Memory could not be allocate for the z potential derivative map'
+       CALL Clean_Abort(err_msg,'Get_Lattice_Potential_Grid_Pointer')
+
+    END IF
+
+    ! xy, yz and xz derivative
+
+    ALLOCATE(lattice_potxy(total_sorb_grids), STAT = AllocateStatus)
+
+    IF (AllocateStatus /= 0 ) THEN
+
+       err_msg = ''
+       err_msg(1) = 'Memory could not be allocate for the xy potential derivative map'
+       CALL Clean_Abort(err_msg,'Get_Lattice_Potential_Grid_Pointer')
+
+    END IF
+
+    ALLOCATE(lattice_potyz(total_sorb_grids), STAT = AllocateStatus)
+
+    IF (AllocateStatus /= 0 ) THEN
+
+       err_msg = ''
+       err_msg(1) = 'Memory could not be allocate for the yz potential derivative map'
+       CALL Clean_Abort(err_msg,'Get_Lattice_Potential_Grid_Pointer')
+
+    END IF
+
+    ALLOCATE(lattice_potxz(total_sorb_grids), STAT = AllocateStatus)
+
+    IF (AllocateStatus /= 0 ) THEN
+
+       err_msg = ''
+       err_msg(1) = 'Memory could not be allocate for the xz potential derivative map'
+       CALL Clean_Abort(err_msg,'Get_Lattice_Potential_Grid_Pointer')
+
+    END IF
+
+    ! xyz derivative
+
+    ALLOCATE(lattice_potxyz(total_sorb_grids), STAT = AllocateStatus)
+
+    IF (AllocateStatus /= 0 ) THEN
+
+       err_msg = ''
+       err_msg(1) = 'Memory could not be allocate for the xyz potential derivative map'
+       CALL Clean_Abort(err_msg,'Get_Lattice_Potential_Grid_Pointer')
+
+    END IF
+
+    ! Now read values and of the potentials for storage
+
+    DO itype = 1, n_sorb_atomtypes
+
+       ! format is the grid pointer id and the potential or any of the derivatives
+       
+       IF (itype == 1) THEN
+          
+          offset = 0
+
+       ELSE
+
+          offset = SUM(n_sorb_grids(1:itype-1))
+
+       END IF
+
+       ! potential first
+
+       this_unit = map_input_unit + itype
+
+       DO igrid = 1, n_sorb_grids(itype)
+
+          READ(this_unit) id_grid, pot_grid
+
+          IF (pot_grid < -10000.0) THEN
+             write(*,*) itype, igrid, pot_grid
+          END IF
+
+          lattice_pot(offset+id_grid) = pot_grid
+
+       END DO
+
+       ! x,y,z derivative
+
+       READ(this_unit)
+
+       DO igrid = 1, n_sorb_grids(itype)
+
+          READ(this_unit) id_grid, potx_grid
+
+          lattice_potx(offset+id_grid) = potx_grid
+
+       END DO
+       
+       READ(this_unit)
+       
+       DO igrid = 1, n_sorb_grids(itype)
+          
+          READ(this_unit) id_grid, poty_grid
+          
+          lattice_poty(offset+id_grid) = poty_grid
+
+       END DO
+       
+       READ(this_unit)
+       
+       DO igrid = 1, n_sorb_grids(itype)
+          
+          READ(this_unit) id_grid, potz_grid
+          
+          lattice_potz(offset+id_grid) = potz_grid
+          
+       END DO
+
+       ! xy, yz and xz derivatives
+
+       READ(this_unit)
+       
+       DO igrid = 1, n_sorb_grids(itype)
+          
+          READ(this_unit) id_grid, potxy_grid
+          
+          lattice_potxy(offset+id_grid) = potxy_grid
+
+       END DO
+       
+       READ(this_unit)
+       
+       DO igrid = 1, n_sorb_grids(itype)
+          
+          READ(this_unit) id_grid, potyz_grid
+          
+          lattice_potyz(offset+id_grid) = potyz_grid
+          
+       END DO
+       
+       READ(this_unit)
+
+       DO igrid = 1, n_sorb_grids(itype)
+          
+          READ(this_unit) id_grid, potxz_grid
+
+          lattice_potxz(offset+id_grid) = potxz_grid
+
+       END DO
+
+       ! xyz derivative
+
+       READ(this_unit)
+
+       DO igrid = 1, n_sorb_grids(itype)
+
+          READ(this_unit) id_grid, potxyz_grid
+
+          lattice_potxyz(offset+id_grid) = potxyz_grid
+
+       END DO
+
+       WRITE(logunit,*)
+       WRITE(logunit,*) 'Finished loading potential and derivatives from'
+       WRITE(logunit,*) map_input_file(itype)
+       WRITE(logunit,*)
+
+    END DO ! itype
+
+    ! Calculate the number of grid points
+
+    ! set the grids in x, y and z direction
+    na_grid = nx_grid_this
+    nb_grid = ny_grid_this
+    nc_grid = nz_grid_this
+
+    a_spacing = 1.0_DP/REAL(na_grid,DP)
+    b_spacing = 1.0_DP/REAL(nb_grid,DP)
+    c_spacing = 1.0_DP/REAL(nc_grid,DP)
+    CALL Allocate_Grid_Locations
+
+
+    ! Allocate the g
+    ! obtain the length of the grid in each direction
+
+!!$    IF (int_sim_type == sim_pot_map) THEN
+!!$       xstep = box_list(1)%basis_length(1)/REAL(nxgrid,DP)
+!!$       ystep = box_list(1)%basis_length(2)/REAL(nygrid,DP)
+!!$       
+!!$       IF (l_slit_pore(1)) THEN
+!!$          zstep = pore_width/REAL(nzgrid,DP)
+!!$       ELSE
+!!$          zstep = box_list(1)%basis_length(3)/REAL(nzgrid,DP)
+!!$       END IF
+!!$       
+!!$    END IF
+!!$    ! read in the grid pointer
+
+    total_grids = na_grid * nb_grid * nc_grid * n_sorb_atomtypes
+    
+    ALLOCATE(sorb_grid_pointer(total_grids), STAT = AllocateStatus)
+    write(logunit,*) 'size of the grid pointer', size(sorb_grid_pointer)
+
+    IF (AllocateStatus /= 0) THEN
+
+       err_msg(1) = 'Memory could not be allocated for storing the grid pointer'
+       CALL Clean_Abort(err_msg, 'Get_Lattice_Potential_Grid_Pointer')
+
+    END IF
+
+    DO itype = 1, n_sorb_atomtypes
+
+       this_unit = map_input_unit + itype
+
+       offset = na_grid * nb_grid * nc_grid * (itype-1)
+
+       READ(this_unit)
+
+       DO ix = 1, na_grid
+
+          x_offset = (ix - 1) * nb_grid * nc_grid
+
+          DO iy = 1, nb_grid
+
+             y_offset =  (iy - 1) * nc_grid
+
+             DO iz = 1, nc_grid
+
+                READ(this_unit) ix_this, iy_this, iz_this, id_grid
+
+                overall_offset = offset + x_offset + y_offset + iz
+
+                sorb_grid_pointer(overall_offset) = id_grid
+
+             END DO
+
+          END DO
+
+       END DO
+    
+       CLOSE(this_unit)
+
+       WRITE(logunit,*)
+       WRITE(logunit,*) 'Finished loading grid pointer from '
+       WRITE(logunit,*) map_input_file(itype)
+       WRITE(logunit,*)
+
+    END DO
+    
+    !----------------------------------------------------------------------
+    !
+    ! This part of the code deals with loading electrostatic potential
+    ! map if present along with its grid pointer
+    !
+    !-----------------------------------------------------------------------
+
+    ! Load the electrostatic energy and its derivatives if the map
+    ! file for charge-charge interaction was read earlier
+
+    IF ( charge_map_file /= '') THEN
+
+       ! The map file exists
+
+       OPEN(unit=charge_map_unit,file = charge_map_file, FORM='UNFORMATTED')
+
+       ! Read the number of grid points in x, y and z directions along with total
+       ! number of low energy points
+
+       READ(charge_map_unit) nxgrid_q, nygrid_q, nzgrid_q, n_q_grids
+
+       ! Allocate space for arrays that hold energy and its derivatives at
+       ! these n_q_grids points.
+
+       ! energy
+       ALLOCATE(lattice_q_pot(n_q_grids), STAT=AllocateStatus)
+
+       IF (AllocateStatus /= 0 ) THEN
+
+          err_msg = ''
+          err_msg(1) = 'Space could not be allocated to hold electrostatic energy'
+          CALL Clean_Abort(err_msg, 'Get_Grid_Potential_Grid_Pointer')
+
+       END IF
+
+       ! energy - x derivative
+       ALLOCATE(lattice_q_potx(n_q_grids), STAT=AllocateStatus)
+    
+       IF (AllocateStatus /= 0 ) THEN
+
+          err_msg = ''
+          err_msg(1) = 'Space could not be allocated to hold electrostatic energy'
+          err_msg(2) = 'x derivative'
+          CALL Clean_Abort(err_msg, 'Get_Lattice_Potential_Lattice_Pointer')
+
+       END IF
+
+       ! energy - y derivative
+       ALLOCATE(lattice_q_poty(n_q_grids), STAT=AllocateStatus)
+
+       IF (AllocateStatus /= 0 ) THEN
+
+          err_msg = ''
+          err_msg(1) = 'Space could not be allocated to hold electrostatic energy'
+          err_msg(2) = 'y derivative'
+          CALL Clean_Abort(err_msg, 'Get_Lattice_Potential_Grid_Pointer')
+
+       END IF
+
+       ! energy - z derivative
+       ALLOCATE(lattice_q_potz(n_q_grids), STAT=AllocateStatus)
+
+       IF (AllocateStatus /= 0 ) THEN
+
+          err_msg = ''
+          err_msg(1) = 'Space could not be allocated to hold electrostatic energy'
+          err_msg(2) = 'z derivative'
+          CALL Clean_Abort(err_msg, 'Get_Lattice_Potential_Grid_Pointer')
+
+       END IF
+
+       ! energy - xy derivative
+       ALLOCATE(lattice_q_potxy(n_q_grids), STAT=AllocateStatus)
+
+       IF (AllocateStatus /= 0 ) THEN
+
+          err_msg = ''
+          err_msg(1) = 'Space could not be allocated to hold electrostatic energy'
+          err_msg(2) = 'xy derivative'
+          CALL Clean_Abort(err_msg, 'Get_Lattice_Potential_Grid_Pointer')
+
+       END IF
+
+       ! energy - yz derivative
+       ALLOCATE(lattice_q_potyz(n_q_grids), STAT=AllocateStatus)
+
+       IF (AllocateStatus /= 0 ) THEN
+
+          err_msg = ''
+          err_msg(1) = 'Space could not be allocated to hold electrostatic energy'
+          err_msg(2) = 'yz derivative'
+          CALL Clean_Abort(err_msg, 'Get_Lattice_Potential_Grid_Pointer')
+
+       END IF
+
+       ! energy - xz derivative
+       ALLOCATE(lattice_q_potxz(n_q_grids), STAT=AllocateStatus)
+
+       IF (AllocateStatus /= 0 ) THEN
+
+          err_msg = ''
+          err_msg(1) = 'Space could not be allocated to hold electrostatic energy'
+          err_msg(2) = 'xz derivative'
+          CALL Clean_Abort(err_msg, 'Get_Lattice_Potential_Grid_Pointer')
+
+       END IF
+
+
+       ! energy - xyz derivative
+       ALLOCATE(lattice_q_potxyz(n_q_grids), STAT=AllocateStatus)
+
+       IF (AllocateStatus /= 0 ) THEN
+
+          err_msg = ''
+          err_msg(1) = 'Space could not be allocated to hold electrostatic energy'
+          err_msg(2) = 'y derivative'
+          CALL Clean_Abort(err_msg, 'Get_Lattice_Potential_Grid_Pointer')
+
+       END IF
+
+       ! Now start filling up these arrays
+
+       ! energy 
+
+       DO igrid = 1, n_q_grids
+          
+          READ(charge_map_unit) id_grid, pot_grid
+          lattice_q_pot(id_grid) = pot_grid
+
+       END DO
+       
+       READ(charge_map_unit)
+
+       ! energy - x derivative
+       DO igrid = 1, n_q_grids
+          READ(charge_map_unit) id_grid, potx_grid
+          lattice_q_potx(id_grid) = potx_grid
+       END DO
+
+       READ(charge_map_unit)
+
+       ! energy - y derivative
+       DO igrid = 1, n_q_grids
+          READ(charge_map_unit) id_grid, poty_grid
+          lattice_q_poty(id_grid) = poty_grid
+       END DO
+
+       READ(charge_map_unit)
+
+       ! energy - z derivative
+       DO igrid = 1, n_q_grids
+          READ(charge_map_unit) id_grid, potz_grid
+          lattice_q_potz(id_grid) = potz_grid
+       END DO
+
+       READ(charge_map_unit)
+       
+       ! energy - xy derivative
+       DO igrid = 1, n_q_grids
+          READ(charge_map_unit) id_grid, potxy_grid
+          lattice_q_potxy(id_grid) = potxy_grid
+       END DO
+
+       READ(charge_map_unit)
+
+       ! energy - yz derivative
+       DO igrid = 1, n_q_grids
+          READ(charge_map_unit) id_grid, potyz_grid
+          lattice_q_potyz(id_grid) = potyz_grid
+       END DO
+
+
+       READ(charge_map_unit)
+
+       ! energy - xz derivative
+       DO igrid = 1, n_q_grids
+          READ(charge_map_unit) id_grid, potxz_grid
+          lattice_q_potxz(id_grid) = potxz_grid
+       END DO
+
+       READ(charge_map_unit)
+
+       ! energy - xyz derivative
+       DO igrid = 1, n_q_grids
+          READ(charge_map_unit) id_grid, potxyz_grid
+          lattice_q_potxyz(id_grid) = potxyz_grid
+       END DO
+
+       READ(charge_map_unit)
+
+       !--------------------------------------------------------------------
+       !
+       ! now read the grid pointer
+       !
+       ALLOCATE(q_grid_pointer(nxgrid_q*nygrid_q*nzgrid_q), STAT=AllocateStatus)
+
+       IF (AllocateStatus /=0 ) THEN
+
+          err_msg = ''
+          err_msg(1) = 'Error allocating space for q_grid_pointer'
+          CALL Clean_Abort(err_msg,'Get_Lattice_Potential_Grid_Pointer')
+          
+       END IF
+
+       DO ix = 1, nxgrid_q
+
+          x_offset = (ix-1) * nzgrid_q * nygrid_q
+
+          DO iy = 1, nygrid_q
+
+             y_offset = (iy-1) * nzgrid_q
+
+             DO iz = 1, nzgrid_q
+
+                READ(charge_map_unit) ix_this, iy_this, iz_this, id_grid
+
+!!$                IF (ix == 11 .AND. iy == 11 .AND. iz == 11 ) THEN
+!!$                   write(*,*) ix_this, iy_this, iz_this, id_grid
+!!$                   stop
+!                END IF
+                q_grid_pointer(x_offset+y_offset+iz) = id_grid
+
+             END DO
+          
+          END DO
+
+       END DO
+
+       ! Read in the information about number of super lattice atoms and charge
+       ! of these atoms
+
+       READ(charge_map_unit) n_superlat_atoms_this
+       IF ( .NOT. ALLOCATED(charge_super_lat)) THEN
+          
+          ALLOCATE(charge_super_lat(n_superlat_atoms_this),Stat = AllocateStatus)
+          IF (AllocateStatus /= 0 ) THEN
+             
+             err_msg = ''
+             err_msg(1) = 'Error allocating space for charge_super_lat'
+             CALL Clean_Abort(err_msg,'Get_Lattice_Potential_Grid_Pointer')
+             
+          END IF
+       END IF
+       
+       READ(charge_map_unit) charge_super_lat
+  
+       CLOSE(charge_map_unit)
+
+       WRITE(logunit,*)
+       WRITE(logunit,*)'FInished loading charge grid pointer'
+       WRITE(logunit,*) 
+       
+    END IF
+       
+
+  END SUBROUTINE Get_Lattice_Potential_Grid_Pointer
+!
 
 END MODULE Input_Routines
