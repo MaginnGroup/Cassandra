@@ -153,6 +153,7 @@ USE Type_Definitions
   INTEGER, PARAMETER :: int_cubic = 0
   INTEGER, PARAMETER :: int_ortho = 1
   INTEGER, PARAMETER :: int_cell = 2
+  INTEGER, PARAMETER :: int_lattice = 3
 
 ! Atom placement variables
 

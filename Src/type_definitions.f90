@@ -412,6 +412,7 @@ MODULE Type_Definitions
     REAL(DP), DIMENSION(3,3) :: length, length_inv, max_delta, hlength
     REAL(DP), DIMENSION(3) :: basis_length, cos_angle, angle, face_distance
     REAL(DP) :: volume, dv_max
+    LOGICAL :: lattice
  END TYPE Box_Class
 
   !****************************************************************************
@@ -471,12 +472,15 @@ MODULE Type_Definitions
     ! dihedral          : contribution from dihedrals
     ! ewald_reciprocal  : reciprocal space component of Ewald summation
     ! ewald_self        : Ewald self energy component
+    ! framework_vdw     : vdW energy due to framework
+    ! framework_qq      : electrostatic energy due to framework
     ! total             : total energy of the system
 
     REAL(DP) :: inter_vdw, lrc, inter_q, intra_vdw, intra_q
     REAL(DP) :: intra, ewald_reciprocal, total
     REAL(DP) :: bond, angle, dihedral, improper
     REAL(DP) :: self
+    REAL(DP) :: framework_vdw, framework_qq
  END TYPE Energy_Class
  !------------------------------------------------------------------------------------------------
 
