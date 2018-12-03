@@ -137,4 +137,8 @@ SUBROUTINE NVTMC_Control
   ! Dihedral moves
   CALL Get_Dihedral_Atoms_To_Place
 
+  IF (box_list(1)%lattice) THEN
+     CALL Get_Lattice_Map_Files
+  END IF
+  
 END SUBROUTINE NVTMC_Control
