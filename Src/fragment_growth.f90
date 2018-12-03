@@ -157,6 +157,10 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   LOGICAL :: framework_overlap
   REAL(DP) :: E_framework
 
+  ! Framework variables
+  REAL(DP) :: E_framework_vdw, E_framework_qq
+  LOGICAL :: f_overlap
+
 !  ! DEBUGging variables
 !  INTEGER :: M_XYZ_unit
 
@@ -388,6 +392,11 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
               y_anchor = 0.5_DP - rranf()
               z_anchor = 0.5_DP - rranf()
 
+              !              x_anchor = 0.30985974_DP
+              !x_anchor =  0.34_DP
+              !y_anchor = 0.007042253521126765_DP
+              !z_anchor = 0.007042253521126765_DP
+
               !transform back to cartesian
 
               x_anchor = box_list(this_box)%length(1,1)*x_anchor + &
@@ -441,10 +450,21 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
         ! interaction energy of the growing molecule within a small distance
         overlap = .FALSE.
         CALL Compute_Molecule_Nonbond_Inter_Energy(this_im,is,&
-                E_inter_vdw,E_inter_qq,overlap)
+             E_inter_vdw,E_inter_qq,overlap)
+
+        ! compute the framework energy if this box is designated as a lattice
+        E_framework_vdw = 0.0_DP
+        E_framework_qq = 0.0_DP
+        f_overlap = .FALSE.
+        IF (box_list(this_box)%lattice) THEN
+           CALL Compute_Molecule_Framework_Energy(this_im,is,E_framework_vdw, &
+                E_framework_qq, f_overlap)
+           nrg(itrial) = nrg(itrial) + E_framework_vdw + E_framework_qq
+        END IF
+        
         nrg(itrial) = nrg(itrial) + E_inter_vdw + E_inter_qq 
 
-        IF (overlap) THEN
+        IF (overlap .OR. f_overlap) THEN
            ! atoms are too close, set the weight to zero
            weight(itrial) = 0.0_DP
            overlap_trial(itrial) = .TRUE.
@@ -666,7 +686,9 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
   LOGICAL :: del_overlap
   TYPE(Atom_Class) :: rtrial(MAXVAL(natoms),0:MAX(kappa_ins,kappa_rot,kappa_dih))
 
-
+  ! Framework variables
+  REAL(DP) :: E_framework_vdw, E_framework_qq
+  LOGICAL :: f_overlap
 
   weight(:)=0.0_DP
   cbmc_flag = .TRUE.
@@ -756,17 +778,27 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
      CALL Compute_Max_COM_Distance(this_im,is)
 
      CALL Compute_Molecule_Nonbond_Inter_Energy(this_im,is,E_inter_vdw,E_inter_qq,overlap)
-
+     ! compute the framework energy if this box is designated as a lattice
+     E_framework_vdw = 0.0_DP
+     E_framework_qq = 0.0_DP
+     f_overlap = .FALSE.
+     IF (box_list(this_box)%lattice) THEN
+        CALL Compute_Molecule_Framework_Energy(this_im,is,E_framework_vdw, &
+             E_framework_qq, f_overlap)
+        nrg(itrial) = nrg(itrial) + E_framework_vdw + E_framework_qq
+     END IF
+       
 
 !    WRITE(8,*) del_flag,this_box, itrial, this_im,E_inter_vdw,  E_inter_qq,overlap
 
   ! compute weight for itrial 
 
-     IF (overlap) THEN
+     IF (overlap .OR. f_overlap) THEN
          ! the energy is too high, set the weight to zero
          weight(itrial) = 0.0_DP
      ELSE
-         nrg_kBT = beta(this_box) * (E_inter_vdw + E_inter_qq )
+        nrg_kBT = beta(this_box) * (E_inter_vdw + E_inter_qq + E_framework_vdw &
+             + E_framework_qq)
 
 !         nrg_kBT = beta(this_box) * (E_inter_vdw )
 !!$        ! compute the weight of this trial for the reverse move and first
@@ -923,18 +955,28 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
     overlap = .FALSE.
        
        CALL Compute_Molecule_Nonbond_Inter_Energy(this_im,is,E_inter_vdw,E_inter_qq,overlap)
-
+       ! compute the framework energy if this box is designated as a lattice
+       E_framework_vdw = 0.0_DP
+       E_framework_qq = 0.0_DP
+       f_overlap = .FALSE.
+       IF (box_list(this_box)%lattice) THEN
+          CALL Compute_Molecule_Framework_Energy(this_im,is,E_framework_vdw, &
+               E_framework_qq, f_overlap)
+          nrg(itrial) = nrg(itrial) + E_framework_vdw + E_framework_qq
+       END IF
+       
 
 !     atom_list(first_atom,this_im,is)%exist = .true.
 
 !     Write(8,*) 'First fragment attempt vdw qq',itrial, E_inter_vdw, E_inter_qq,this_box,del_flag,overlap
 
  ! compute weight for itrial 
-     IF (overlap) THEN
+     IF (overlap .OR. f_overlap) THEN
          ! the energy is too high, set the weight to zero
          weight(itrial) = 0.0_DP
      ELSE
-         nrg_kBT = beta(this_box) * (E_inter_vdw + E_inter_qq )
+        nrg_kBT = beta(this_box) * (E_inter_vdw + E_inter_qq + E_framework_vdw &
+             + E_framework_qq)
 !         nrg_kBT = beta(this_box) * (E_inter_vdw )
 !!$        ! compute the weight of this trial for the reverse move and first
 !!$        ! trial. The following IF-ELSE construct ensures that the weight
