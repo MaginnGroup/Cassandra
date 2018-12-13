@@ -106,14 +106,14 @@ PROGRAM Main
 
 !********************************************************************************
 ! Code name and version. Change as updates are made.
-  version = 'Cassandra Development Version'
+  version = 'Cassandra Version 1.2 20181213'
 ! Get starting time information (intrinsic function)
   CALL DATE_AND_TIME(date,time,zone,begin_values)
   CALL cpu_time(start_time)
- 
+
 !Get the input file name as a command line parameter
   count = IARGC()
-  IF (count < 1) THEN 
+  IF (count < 1) THEN
      err_msg = ""
      err_msg(1) = "Please specify input file &
           &name as command line argument."
@@ -134,10 +134,6 @@ PROGRAM Main
 ! Now read input file and get the run_name
   CALL Get_Run_Name
 
-
-! Create log file and write out some initial information
-  CALL Name_Files(run_name,'.log',logfile)
-
   OPEN(unit=logunit,file=logfile,IOSTAT=openstatus)
   IF (openstatus .NE. 0) THEN
      err_msg = ""
@@ -154,19 +150,13 @@ PROGRAM Main
   WRITE(logunit,'(A80)')'            \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                '
   WRITE(logunit,'(A80)')'                                                                               '
   WRITE(logunit,'(A80)')'********************************************************************************'
-  WRITE(logunit,'(A80)')'**********************************Log File**************************************'
-  WRITE(logunit,'(A80)')'********************************************************************************'
-! Create a checkpoint file to periodically write system information
-
-  CALL Name_Files(run_name,'.chk',checkpointfile)
-  
-  OPEN(unit=chkptunit,file=checkpointfile,IOSTAT=openstatus)
-  IF (openstatus .NE. 0) THEN
-     err_msg = ""
-     err_msg(1) = 'Unable to open checkpointfile'
-     err_msg(2) = logfile
-     CALL Clean_Abort(err_msg,'Read_Checkpointfile')
-  ENDIF
+  WRITE(logunit,*)
+  WRITE(logunit,'(A73)')'For any published work that uses Cassandra, cite the following reference:'
+  WRITE(logunit,'(4X,A56)')'Shah JK, Marin‐Rimoldi E, Mullen RG, Keene BP, Khan S,'
+  WRITE(logunit,'(4X,A59)')'Paluch AS, Rai N, Romanielo LL, Rosch TW, Yoo B, Maginn EJ.'
+  WRITE(logunit,'(4X,A71)')'Cassandra: An open source Monte Carlo package for molecular simulation.'
+  WRITE(logunit,'(4X,A58)')'Journal of Computational Chemistry. 2017, 38, 1727–1739.'
+  WRITE(logunit,'(4X,A35)')'http://dx.doi.org/10.1002/jcc.24807'
 
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Run info'
@@ -187,9 +177,9 @@ PROGRAM Main
   WRITE(logunit,'(A80)') '********************************************************************************'
 
   ! Standard level of output to logfile, or verbose output
-  CALL Get_Verbosity_Info  
+  CALL Get_Verbosity_Info
 
-! Determine the simulation type, and then read in all the necessary information 
+! Determine the simulation type, and then read in all the necessary information
 ! from the input file for starting up that type of simulation
   CALL Get_Sim_Type
 
@@ -213,7 +203,7 @@ PROGRAM Main
      err_msg(2) = logfile
      CALL Clean_Abort(err_msg,'Main')
   ENDIF
- 
+
   ! Determine if it is equilibration or production or test
   CALL Get_Run_Type
 
@@ -232,7 +222,7 @@ PROGRAM Main
   cbmc_flag = .FALSE.
 
   WRITE(*,*) 'Begin Cassandra simulation'
-  WRITE(*,*) 
+  WRITE(*,*)
 
   WRITE(logunit,*)
   WRITE(logunit,'(A80)') '********************************************************************************'
@@ -259,19 +249,19 @@ PROGRAM Main
        CALL Read_Config(ibox)
        CALL Make_Config(ibox)
        initial_mcstep = 0
-       
+
     ELSEIF (start_type(ibox) == 'checkpoint') THEN
-       ! Restart from checkpoint. Shall we verify match between stuff in cpt 
+       ! Restart from checkpoint. Shall we verify match between stuff in cpt
        ! and stuff input, or override with cpt info?
        CALL Read_Checkpoint
        ! Read in info for all boxes, so exit loop
        EXIT
-       
+
     ENDIF
   END DO
   WRITE(logunit,'(A80)') '********************************************************************************'
 
-  ! Add LOCATE for any unplaced molecules in array under BOX==0, 
+  ! Add LOCATE for any unplaced molecules in array under BOX==0,
   ! in reverse order
   DO is = 1, nspecies
     DO im = max_molecules(is), SUM(nmols(is,1:nbr_boxes)) + 1, -1
@@ -317,23 +307,23 @@ PROGRAM Main
 
   ! Ewald stuff
   IF ( int_charge_sum_style(1) == charge_ewald) THEN
-     
+
      ALLOCATE(hx(maxk,nbr_boxes),hy(maxk,nbr_boxes),hz(maxk,nbr_boxes), &
           hsq(maxk,nbr_boxes), Cn(maxk,nbr_boxes),Stat=AllocateStatus)
      ALLOCATE(nvecs(nbr_boxes))
-     
+
      IF (AllocateStatus /=0) THEN
         err_msg = ""
         err_msg(1) = "Memory Could not be allocated for reciprocal vectors"
         CALL Clean_Abort(err_msg,'precalculate')
      END IF
-     
+
      DO ibox = 1, nbr_boxes
         CALL  Ewald_Reciprocal_Lattice_Vector_Setup(ibox)
      END DO
-     
+
      ! Here we can allocate the memory for cos_sum, sin_sum etc
-     
+
      ALLOCATE(cos_sum(MAXVAL(nvecs),nbr_boxes))
      ALLOCATE(sin_sum(MAXVAL(nvecs),nbr_boxes))
      ALLOCATE(cos_sum_old(MAXVAL(nvecs),nbr_boxes))
@@ -345,7 +335,7 @@ PROGRAM Main
      ! initialize these vectors
      cos_mol(:,:) = 0.0_DP
      sin_mol(:,:) = 0.0_DP
- 
+
   END IF
 
   ! Compute total number of beads in each box
@@ -420,11 +410,11 @@ PROGRAM Main
   WRITE(logunit,'(X,A9,X,A10,X,A5,X,A3,X,A3,X,A8,X,A9)') 'Step', 'Move', 'Mol', 'Spc', 'Box', 'Success', 'MaxWidth'
 
   IF (int_sim_type == sim_nvt .OR. int_sim_type == sim_nvt_min) THEN
-     
+
      CALL NVTMC_Driver
-     
+
   ELSE IF (int_sim_type == sim_npt) THEN
-     
+
      CALL NPTMC_Driver
 
   ELSE IF (int_sim_type == sim_gcmc) THEN
@@ -434,7 +424,7 @@ PROGRAM Main
   ELSE IF (int_sim_type == sim_gemc .OR. &
            int_sim_type == sim_gemc_ig .OR. &
            int_sim_type == sim_gemc_npt) THEN
-     
+
      CALL GEMC_Driver
 
   ELSE IF (int_sim_type == sim_frag) THEN
@@ -529,5 +519,5 @@ PROGRAM Main
   WRITE(logunit,'(I10,1X,a10)') nsec,'Seconds'
   WRITE(logunit,'(I10,1x,a10)') nms,'ms'
   WRITE(logunit,'(A80)') '********************************************************************************'
-  
+
 END PROGRAM Main

@@ -43,7 +43,7 @@
 
 CASS_DIR =  .
 BIN_DIR = $(CASS_DIR)
-EXEC_NAME = cassandra_gfortran.exe 
+EXEC_NAME = cassandra_gfortran.exe
 
 ####################################################################
 ##  Known Machine Types                                            #
@@ -57,10 +57,10 @@ EXEC_NAME = cassandra_gfortran.exe
 
 
 FC = gfortran
-LIBS = 
-INCS = 
-F90FLAGS = -c -ffree-line-length-none -fcheck=all
-LINKFLAGS = 
+LIBS =
+INCS =
+F90FLAGS = -c -ffree-line-length-none -fcheck=all -O3
+LINKFLAGS =
 
 ####################################################################
 OBJS =  main.o \
