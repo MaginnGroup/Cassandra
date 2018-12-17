@@ -583,4 +583,20 @@ MODULE Type_Definitions
 
 !-------------------------------------------------------------------------------------------------
 
+  TYPE Rotation_Class
+     !This class holds info in order to calculate a rotational bias
+
+     REAL(DP) :: angle1
+     REAL(DP) :: angle2
+     REAL(DP) :: angle3
+
+     ! flag when overlap triggered, avoid further computations with energy
+     LOGICAL :: overlap
+
+     !variables to calculate weights for golden sampling
+     REAL(DP) :: dE
+     REAL(DP) :: exp_dE
+     REAL(DP) :: exp_dE_ratio
+  END TYPE Rotation_Class
+
 END MODULE Type_Definitions

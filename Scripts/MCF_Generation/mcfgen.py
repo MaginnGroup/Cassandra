@@ -26,7 +26,7 @@
 # NEW FEATURES: read GROMACS forcefield files (.itp or .top)
 #
 # VERSION: 1.0
-# ORIGINAL FEATURES: generate a molecular connectivity file (.mcf) from a 
+# ORIGINAL FEATURES: generate a molecular connectivity file (.mcf) from a
 #   configuration file (.pdb or .cml) and a custom forcefield file (.ff)
 #*******************************************************************************
 
@@ -49,10 +49,10 @@ To generate a .mcf from forcefield parameters in the literature:
 
   1) Run
        > python mcfgen.py molecule.pdb --ffTemplate
-     to generate an intermediate file molecule.ff. 
+     to generate an intermediate file molecule.ff.
   2) Fill out molecule.ff with the parameters found in the literature.
   3) Run
-       > python mcfgen.py molecule.pdb  
+       > python mcfgen.py molecule.pdb
 
 To generate a .mcf from a GROMACS forcefield file
 
@@ -61,26 +61,26 @@ To generate a .mcf from a GROMACS forcefield file
 
 NOTES:
   1) The Protein Data Bank format (.pdb) defines a fixed 80-character format for
-     HETATM and ATOM records. Entries are not necessarily separated by white 
-     space. The following information is read from each HETATM/ATOM record in 
+     HETATM and ATOM records. Entries are not necessarily separated by white
+     space. The following information is read from each HETATM/ATOM record in
      the supplied .pdb file:
 
-     COLUMNS        DATA TYPE       CONTENTS                            
+     COLUMNS        DATA TYPE       CONTENTS
      ---------------------------------------------------------------------------
       7 - 11        Integer(5)      Atom serial number.
 
      31 - 38        Real(8.3)       Orthogonal coordinates for X in Angstroms.
-     
+
      39 - 46        Real(8.3)       Orthogonal coordinates for Y in Angstroms.
-     
+
      47 - 54        Real(8.3)       Orthogonal coordinates for Z in Angstroms.
 
-     77 - 78        RString(2)      Element symbol, right-justified.      
+     77 - 78        RString(2)      Element symbol, right-justified.
      ---------------------------------------------------------------------------
 
      The element name is used to look up the atomic mass. If the element field
      is blank or contains an unknown element, the user will be prompted for the
-     atomic mass, unless the --massDefault option is used, in which case the 
+     atomic mass, unless the --massDefault option is used, in which case the
      unknown element will given a mass of MASSDEFAULT.
 
      In addition to the standard element symbols, the following pseudo-atoms
@@ -93,7 +93,7 @@ NOTES:
      Methanediyl, -CH2-  C2          14.0265
      Methanetriyl, -CH<  C1          13.0186
      ---------------------------------------------------------------------------
-    
+
      The atom type for each HETATM/ATOM record is taken from the last white-
      space separated column. This may be the element name, or the user may need
      to append the atom type to the end of the record.
@@ -104,39 +104,39 @@ NOTES:
      zero fragments cannot be inserted, deleted or regrown in Cassandra. CONECT
      records have the following format:
 
-     COLUMNS         DATA TYPE        CONTENTS  
+     COLUMNS         DATA TYPE        CONTENTS
      ---------------------------------------------------------------------------
       7 - 11         Integer(5)       Atom serial number
-     
+
      12 - 16         Integer(5)       Serial number of bonded atom
-     
+
      17 - 21         Integer(5)       Serial number of bonded atom
-     
+
      22 - 26         Integer(5)       Serial number of bonded atom
-     
+
      27 - 31         Integer(5)       Serial number of bonded atom
      ---------------------------------------------------------------------------
 
      If the atom is bonded to more than 4 other atoms, the pattern is continued.
      The CONECT record is parsed as white-space separated data.
 
-  2) This script does not currently support multiple dihedrals for the same 4 
+  2) This script does not currently support multiple dihedrals for the same 4
      atoms. If mulitple parameters are given for the same dihedral sequence,
      only the last parameters will be used.
 
   3) Improper definitions are not currently read from Gromacs forcefield files.
 """)
-parser.add_argument('configFile', 
-								help="""CONFIGFILE must be in either .pdb or .cml format. """ + 
+parser.add_argument('configFile',
+								help="""CONFIGFILE must be in either .pdb or .cml format. """ +
 										 """A .pdb file can be generated using Gaussview, """ +
 										 """while .cml files can be generated using Avogadro.""")
 parser.add_argument('--ffTemplate', '-t', action='store_true',
 								help="""Generate a blank force field file template.""")
-parser.add_argument('--ffFile', '-f',  
+parser.add_argument('--ffFile', '-f',
 								help="""The default FFFILE is molecule.ff, a custom format """ +
 										 """for this script. Alternatively, the forcefile """ +
 										 """parms can be supplied in GROMACS format (.itp).""")
-parser.add_argument('--mcfFile', '-m', 
+parser.add_argument('--mcfFile', '-m',
 								help="""The default MCFFILE is molecule.mcf.""")
 parser.add_argument('--massDefault', '-d', type=float,
                 help="""Provide a default mass for unknown elements.""")
@@ -148,7 +148,7 @@ args = parser.parse_args()
 #*******************************************************************************
 Rg = 0.008314 #universal gas constant, kJ/mol
 periodicTable={'H': 1.0079,
-'He': 4.0026, 
+'He': 4.0026,
 'Li': 6.941,
 'Be': 9.0122,
 'B': 10.811,
@@ -293,7 +293,7 @@ def cml_to_pdb(infilename):
 	for i in xrange(cml_start_atom+1, cml_end_atom):
 		cml_atom_info.append(re.findall('"([^"]*)"',
 		                     linecache.getline(infilename, i)))
-			
+
 	for i in xrange(cml_start_bonds+1, cml_end_bonds):
 		cml_bond_info.append(re.findall('"([^"]*)"',
 		                     linecache.getline(infilename, i))[0].split())
@@ -308,9 +308,9 @@ def cml_to_pdb(infilename):
 		atomElement = line[1]
 		atomName = atomElement + str(atomNumber)
 		atomType = line[5]
-		filePdb.write(pdbFormat % (recordName, atomNumber, atomName, '',  
+		filePdb.write(pdbFormat % (recordName, atomNumber, atomName, '',
 									atomElement, atomType))
-		
+
 	cml_aux_vector1 = []
 	cml_aux_vector2 = []
 	cml_aux_vector3 = []
@@ -325,8 +325,8 @@ def cml_to_pdb(infilename):
 		cml_aux_vector2.append([cml_current_atom, cml_aux_vector1])
 		cml_aux_vector1=[]
 
-	#cml_aux_vector2 = [atom, [lines in cml_bond_info]]		
-	
+	#cml_aux_vector2 = [atom, [lines in cml_bond_info]]
+
 	for line in cml_aux_vector2:
 		for x in line[1]:
 			index=cml_bond_info[x].index(line[0])
@@ -340,13 +340,13 @@ def cml_to_pdb(infilename):
 
 	#cml_aux_vector3 = [atom1 atom2]
 
-				
+
 	for line in cml_aux_vector4:
 		for subline in line[1]:
 			cml_match0=re.match(r"([a-z]+)([0-9]+)", subline, re.I)
 			if cml_match0:
 				cml_aux_vector5.append(cml_match0.groups()[-1])
-		
+
 		cml_match = re.match(r"([a-z]+)([0-9]+)", line[0], re.I)
 		if cml_match:
 			cml_split = cml_match.groups()
@@ -405,7 +405,7 @@ def initialize(infilename):
 		tempfile.close()
 		return atom
 
-	if cyclic_ua_atom == True and atom == '' : 
+	if cyclic_ua_atom == True and atom == '' :
 	#This means molecule has at least one cyclic united atom model
 		tempfile.close()
 		atom = '0'
@@ -457,14 +457,14 @@ def isolateRing(theList):
 	ringList.append(theList[location[0]:location[1]])
 	#logfile.write("The ring list is: " + str(ringList) + "\n")
 	cleanGenList(ringList[-1])
-	
-		
+
+
 def isAlreadyInRing(atom):
 	for row in ringList:
 		for i in range(0,len(row)):
 			if row[i]==atom:
 				return True
-	
+
 def bondID():
 
 	#This function will populate the variable "bondList"
@@ -499,7 +499,7 @@ def scan(newAtom,oldLine,scanning):
 			break
 
 		if isRing(genScannedList, newAtom)==True:
-			#logfile.write("A ring was found because atom " + newAtom + 
+			#logfile.write("A ring was found because atom " + newAtom +
 			#              " was already scanned\n\n")
 			genScannedList.append(newAtom)
 			return "EndRing", scannedList
@@ -513,8 +513,8 @@ def scan(newAtom,oldLine,scanning):
 
 			#logfile.write("A branch point was found in atom " + newAtom + "\n")
 			for j in xrange(1,totalBondedAtoms+1):
-				if newLine[j]==oldLine[0]: 
-				#or newLine[j]==branchalreadyscanned[0]: 
+				if newLine[j]==oldLine[0]:
+				#or newLine[j]==branchalreadyscanned[0]:
 				#If old atom in list is scanned
 					continue
 				newAtom=newLine[j]
@@ -526,7 +526,7 @@ def scan(newAtom,oldLine,scanning):
 					isolateRing(genScannedList)
 				#if endType=="EndScan":
 			break
-	
+
 		for i in xrange(1,totalBondedAtoms+1):
 
 			if scanning==True and totalBondedAtoms==1:
@@ -543,7 +543,7 @@ def scan(newAtom,oldLine,scanning):
 
 			if newLine[i]==oldLine[0]: #If old atom in list is scanned
 				continue
-	
+
 			newAtom=newLine[i]
 			oldLine=newLine
 			break
@@ -606,7 +606,7 @@ def angleID():
 
 
 
-	
+
 def dihedralID():
 
 	#This function populates the variable dihedralList
@@ -634,10 +634,10 @@ def dihedralID():
 					dihedralList.append(atom1 + " " +atom2 + " " +atom3 + " " +atom4)
 
 	removedoublecounting("dihedrals")
-	
-				
 
-		
+
+
+
 
 def fragInfo(mcfFile):
 	"""arguments:
@@ -652,7 +652,7 @@ returns:
 
 	global fragList
 
-	if cyclic_ua_atom == True and len(ringList)==0: 
+	if cyclic_ua_atom == True and len(ringList)==0:
 	#This means if there is only one cyclic united atom molecule
 		fragList=[]
 		fragList.append([str(i) for i in atomList])
@@ -703,13 +703,13 @@ def removedoublecounting(thingtoclean):
 				set2=set(dihedralList[i].split())
 				if set1==set2:
 					linesrepeated.append(i)
-	
+
 		for index,row in enumerate(dihedralList):
 			if index in linesrepeated:
 				continue
 			cleanlist.append(row)
 
-		del(dihedralList[0:len(dihedralList)])	
+		del(dihedralList[0:len(dihedralList)])
 		for i in range(0,len(cleanlist)):
 			dihedralList.append(cleanlist[i])
 
@@ -722,13 +722,13 @@ def removedoublecounting(thingtoclean):
 				set2=set(angleList[i].split())
 				if set1==set2:
 					linesrepeated.append(i)
-	
+
 		for index,row in enumerate(angleList):
 			if index in linesrepeated:
 				continue
 			cleanlist.append(row)
 
-		del(angleList[0:len(angleList)])	
+		del(angleList[0:len(angleList)])
 		for i in range(0,len(cleanlist)):
 			angleList.append(cleanlist[i])
 
@@ -741,13 +741,13 @@ def removedoublecounting(thingtoclean):
 				set2=set(fragConn[i].split())
 				if set1==set2:
 					linesrepeated.append(i)
-	
+
 		for index,row in enumerate(fragConn):
 			if index in linesrepeated:
 				continue
 			cleanlist.append(row)
-		
-		del(fragConn[0:len(fragConn)])	
+
+		del(fragConn[0:len(fragConn)])
 		for i in range(0,len(cleanlist)):
 			fragConn.append(cleanlist[i])
 
@@ -778,8 +778,8 @@ def fragConnectivity():
 				group=[]
 
 	removedoublecounting("fragConn")
-			
-			
+
+
 def fragConnectivityInfo(mcfFile):
 	mcf=open(mcfFile,'a')
 	mcf.write('\n\n# Fragment_Connectivity\n')
@@ -799,10 +799,10 @@ def ffFileGeneration(infilename,outfilename):
 
 	global dihedralType
 	if len(dihedralList) > 0:
-		dihedralType = raw_input("Enter the dihedral functional form " + 
+		dihedralType = raw_input("Enter the dihedral functional form " +
 		                         "(CHARMM/OPLS/harmonic/none): ")
 	else:
-		dihedralType = "NONE" 
+		dihedralType = "NONE"
 		#This is just a default. It will not affect molecules with no dihedrals.
 
 	#Identify different types of angles and dihedrals based on atom types
@@ -870,7 +870,7 @@ def ffFileGeneration(infilename,outfilename):
 			ff.write(ijkType[0] + " " + ijkType[1] + " " +ijkType[2] + "\n")
 			ff.write("Angle \n")
 			ff.write("Constant \n\n")
-	
+
 	# Write dihedral entries
 	if dihedralType != "none":
 		dihedTypesWritten = []
@@ -883,7 +883,7 @@ def ffFileGeneration(infilename,outfilename):
 			   lkjiType not in dihedTypesWritten:
 				dihedTypesWritten.append(ijklType)
 				ff.write("dihedrals\n")
-				ff.write(ijklType[0] + " " + ijklType[1] + " " +ijklType[2] + " " + 
+				ff.write(ijklType[0] + " " + ijklType[1] + " " +ijklType[2] + " " +
 				         ijklType[3] + "\n")
 
 				if dihedralType == "CHARMM":
@@ -927,8 +927,8 @@ returns:
 		# read atom info
 		this_line = line.split()
 		if line[0:6]=='HETATM' or line[0:4]=='ATOM':
-			i = int(line[6:11].strip()) 
-			# Store the atomIndex in a list so we can write the correct number 
+			i = int(line[6:11].strip())
+			# Store the atomIndex in a list so we can write the correct number
 			# of atoms to the MCF
 			atomList.append(i)
 			# Store the atom type by index
@@ -957,7 +957,7 @@ returns:
 						if args.massDefault or args.massDefault==0:
 							atomParms[iType]['mass'] = args.massDefault
 						else:
-							iMass= raw_input("Atom type " + iType + " is of unknown element " 
+							iMass= raw_input("Atom type " + iType + " is of unknown element "
 							  + iElement + ". Enter the mass for this atom type: ")
 							atomParms[iType]['mass']=float(iMass)
 			elif 'element' in atomParms[iType] and \
@@ -991,12 +991,12 @@ def readNative(ffFile, atomParms):
 	atomParms, dict = i: {name:, type:, element:, mass:}
 returns:
 	atomParms, dict = i: {name:, type:, element:, mass:, vdw:}
-	bondParms, dict = (i,j): (type, length)	
+	bondParms, dict = (i,j): (type, length)
 	angleParms, dict = (i,j,k): (type, [ktheta,] angle)
 	dihedralParms, dict = (i,j,k,l): (type, parms)
 	improperParms, dict = (i,j,k,l): (type, kpsi, angle)
 """
-	
+
 	bondParms = {}
 	angleParms = {}
 	dihedralParms = {}
@@ -1025,6 +1025,7 @@ returns:
 			atomParms[index]['bondtype'] = index # for compatibility with gromacs
 			sigma = float(ff.readline().split()[1])
 			epsilon = float(ff.readline().split()[1])
+                        vdwType = 'LJ'
 			if vdwType == 'Mie':
 				repulsive_exponent = float(ff.readline().split()[1])
 				dispersive_exponent = float(ff.readline().split()[1])
@@ -1033,7 +1034,7 @@ returns:
 			except:
 				atom_type_charge = 'None'
 
-			if index not in atomParms: 
+			if index not in atomParms:
 				atomParms[index] = {}
 			if vdwType == 'LJ':
 				atomParms[index]['vdw'] = (vdwType, epsilon, sigma)
@@ -1087,9 +1088,9 @@ returns:
 			index = int(data[0]) #atomNumber
 			if len(data)>1:
 				atomParms[index]['charge'] = data[1] #store as string
-				
+
 			# else, if the information will be provided by atom type and corrected by checkParms(), do nothing
-				
+
 		line = ff.readline()
 
 	return atomParms, bondParms, angleParms, dihedralParms, improperParms, scaling_1_4
@@ -1099,7 +1100,7 @@ def readGromacs(ffFile, atomParms, bondParms, angleParms, dihedralParms, scaling
 	"""arguments:
 	ffFile, string = filename of the forcefield file
 	atomParms, dict = i: {name:, type:, element:, mass:}
-	bondParms, dict = (i,j): (type, length)	
+	bondParms, dict = (i,j): (type, length)
 	angleParms, dict = (i,j,k): (type, [ktheta,] angle)
 	dihedralParms, dict = (i,j,k,l): (type, parms)
 optional arguments:
@@ -1107,7 +1108,7 @@ optional arguments:
 	comboRule, string = identifies the LJ parameters provided
 returns:
 	atomParms, dict = i: {name:, type:, element:, mass:, vdw:}
-	bondParms, dict = (i,j): (type, length)	
+	bondParms, dict = (i,j): (type, length)
 	angleParms, dict = (i,j,k): (type, [ktheta,] angle)
 	dihedralParms, dict = (i,j,k,l): (type, parms)
 """
@@ -1139,7 +1140,7 @@ returns:
 						if data[0] == '1':
 							vdwType = 'LJ'
 						else:
-							raise Error('Nonbonded forcefield is not LJ. Cassandra only ' + 
+							raise Error('Nonbonded forcefield is not LJ. Cassandra only ' +
 													'supports LJ interactions at this time.')
 						comboRule = data[1]
 						scaling_1_4['vdw'] = float(data[3])
@@ -1154,7 +1155,7 @@ returns:
 						base=0 if data[1].isdigit() else 1
 						index = data[0] #atomType
 						if data[4+base] != 'A' and data[4+base] != 'D':
-							raise Error('ptype is not A or D. Cassandra only supports point ' + 
+							raise Error('ptype is not A or D. Cassandra only supports point ' +
 													'particles.\n')
 						if index not in atomParms:
 							atomParms[index] = {}
@@ -1176,7 +1177,7 @@ returns:
 							index = (data[0], data[1]) #atomTypes
 						else:
 							index = (int(data[0]), int(data[1])) #atomNumbers
-						if not any([data[2]=='1', data[2]=='2', data[2]=='3', 
+						if not any([data[2]=='1', data[2]=='2', data[2]=='3',
 							          data[2]=='4']):
 							raise Error('Cassandra only supports fixed bonds at this time.')
 						if len(data) > 3:
@@ -1222,7 +1223,7 @@ returns:
 								a2 = - c2 / 2.
 								a3 = - c3 / 4.
 								if not c4 == 0. and not c5 == 0.:
-									raise Error('Can only convert Ryckaert-Bellemans dihedrals ' + 
+									raise Error('Can only convert Ryckaert-Bellemans dihedrals ' +
 															'to OPLS if c4==0 and c5==0.\n')
 								dihedralParms[index] = ('OPLS', a0, a1, a2, a3)
 							elif data[4] == '5': #OPLS
@@ -1232,7 +1233,7 @@ returns:
 								a3 = float(data[7]) / 2.
 								dihedralParms[index] = ('OPLS', a0, a1, a2, a3)
 #							else:
-#								raise Error('Cassandra supports OPLS, CHARMM and harmonic ' + 
+#								raise Error('Cassandra supports OPLS, CHARMM and harmonic ' +
 #														'dihedrals.\n' + line)
 				line = ff.readline()
 		line = ff.readline()
@@ -1241,7 +1242,7 @@ returns:
 
 	return atomParms, bondParms, angleParms, dihedralParms, scaling_1_4
 
-def checkParms(atomList, bondList, angleList, dihedralList, 
+def checkParms(atomList, bondList, angleList, dihedralList,
                atomParms, bondParms, angleParms, dihedralParms):
 	"""arguments:
 	atomList, list =
@@ -1309,43 +1310,43 @@ returns:
 			elif kjDefault in dihedralParms:
 				dihedralParms[ijkl] = dihedralParms[kjDefault]
 			else:
-				raise Error('Dihedral parms for atoms ' + dihedral + ' not found.')	
-			
+				raise Error('Dihedral parms for atoms ' + dihedral + ' not found.')
+
 	return atomParms, bondParms, angleParms, dihedralParms
 #	print "Revised atomParms."
 #	print atomParms
 
-def writeMcf(configFile, mcfFile, 
+def writeMcf(configFile, mcfFile,
              atomList, bondList, angleList, dihedralList, ringList,
              atomParms, bondParms, angleParms, dihedralParms, improperParms, scaling_1_4):
 	"""arguments:
 	configFile, string = configuration file
 	mcfFile, string = molecular connectivity file
-	atomList, list = 
-	bondList, list = 
-	angleList, list = 
-	dihedralList, list = 
-	ringList, list = 
-	atomParms, dict = 
-	bondParms, dict = 
-	angleParms, dict = 
+	atomList, list =
+	bondList, list =
+	angleList, list =
+	dihedralList, list =
+	ringList, list =
+	atomParms, dict =
+	bondParms, dict =
+	angleParms, dict =
 	dihedralParms, dict =
-	improperParms, dict = 
+	improperParms, dict =
 returns:
 	none
 """
 
-	mcf = open(mcfFile, 'w')	
+	mcf = open(mcfFile, 'w')
 
-	mcf.write('!***************************************' + 
+	mcf.write('!***************************************' +
 	          '****************************************\n')
 	mcf.write('!Molecular connectivity file for ' + configFile + '\n')
-	mcf.write('!***************************************' + 
+	mcf.write('!***************************************' +
 	          '****************************************\n')
 
 	mcf.write('!Atom Format\n')
-	mcf.write('!index type element mass charge vdw_type parameters\n' + 
-	          '!vdw_type="LJ", parms=epsilon sigma\n' + 
+	mcf.write('!index type element mass charge vdw_type parameters\n' +
+	          '!vdw_type="LJ", parms=epsilon sigma\n' +
             '!vdw_type="Mie", parms=epsilon sigma repulsion_exponent dispersion_exponent\n')
 	mcf.write('\n# Atom_Info\n')
 	mcf.write(str(len(atomList))+'\n')
@@ -1361,10 +1362,10 @@ returns:
 		for ring in ringList:
 			if str(pdbIndex) in ring: mcf.write('  ring')
 		mcf.write('\n')
-	
+
 	if bondList:
 		mcf.write('\n!Bond Format\n')
-		mcf.write('!index i j type parameters\n' + 
+		mcf.write('!index i j type parameters\n' +
 							'!type="fixed", parms=bondLength\n')
 	mcf.write('\n# Bond_Info\n')
 	mcf.write(str(len(bondList)) + '\n')
@@ -1382,7 +1383,7 @@ returns:
 	if angleList:
 		mcf.write('\n!Angle Format\n')
 		mcf.write('!index i j k type parameters\n' +
-							'!type="fixed", parms=equilibrium_angle\n' + 
+							'!type="fixed", parms=equilibrium_angle\n' +
 							'!type="harmonic", parms=force_constant equilibrium_angle\n')
 	mcf.write('\n# Angle_Info\n')
 	mcf.write(str(len(angleList)) + '\n')
@@ -1402,10 +1403,10 @@ returns:
 
 	if dihedralList:
 		mcf.write('\n!Dihedral Format\n')
-		mcf.write('!index i j k l type parameters\n' + 
-							'!type="none"\n' + 
-							'!type="CHARMM", parms=a0 a1 delta\n' + 
-							'!type="OPLS", parms=c0 c1 c2 c3\n' + 
+		mcf.write('!index i j k l type parameters\n' +
+							'!type="none"\n' +
+							'!type="CHARMM", parms=a0 a1 delta\n' +
+							'!type="OPLS", parms=c0 c1 c2 c3\n' +
 							'!type="harmonic", parms=force_constant equilibrium_dihedral\n')
 	mcf.write('\n# Dihedral_Info\n')
 	mcf.write(str(len(dihedralList)) + '\n')
@@ -1476,6 +1477,8 @@ else:
 	ffFile = basename + '.ff'
 	ffFileType = 'native'
 
+ffFileType = 'native'
+
 if args.mcfFile:
 	mcfFile = args.mcfFile
 else:
@@ -1510,7 +1513,7 @@ if initialatom == '':
 	tempfile.write('1')
 	tempfile.close()
 	initialatom = '1'
-	
+
 scan_result = scan(initialatom,[],False)
 if cyclic_ua_atom==True:
 	#Clean "ghost atom" from temporary_file
@@ -1518,7 +1521,7 @@ if cyclic_ua_atom==True:
 	tempfile1=open('temporary.temp','r')
 	for line in tempfile1:
 		this_line_new = line.split()
-		if this_line_new[-1] == '0':		
+		if this_line_new[-1] == '0':
 			for each_atom in this_line_new[0:-1]:
 				tempfile2.write(each_atom+"  ")
 			tempfile2.write("\n")
@@ -1540,7 +1543,7 @@ fragConnectivity()
 #PRESENT SCAN SUMMARY TO USER
 print "\n\n*********Generation of Topology File*********\n"
 print "Summary: "
-print "There are " + str(len(bondList)) + " bonds identified." 
+print "There are " + str(len(bondList)) + " bonds identified."
 
 if cyclic_ua_atom == True and len(scan_result[1]) > 2:
 	print "Cyclic united atom molecule with no branches"
@@ -1574,7 +1577,7 @@ else:
 		atomParms, bondParms, angleParms, dihedralParms, scaling_1_4 = \
 			readGromacs(ffFile, atomParms, {}, {}, {}, {})
 		improperParms = {}
-	
+
 	# Check parms
 	# The *Parms dictionaries may contain entries with atomType indices.
 	# We need to make sure all the atomNumber indices are populated.
@@ -1583,7 +1586,7 @@ else:
 		           atomParms, bondParms, angleParms, dihedralParms)
 
 	# Got all the parms we need? write Mcf.
-	writeMcf(configFile, mcfFile, 
+	writeMcf(configFile, mcfFile,
 	         atomList, bondList, angleList, dihedralList, ringList,
 	         atomParms, bondParms, angleParms, dihedralParms, improperParms, scaling_1_4)
 

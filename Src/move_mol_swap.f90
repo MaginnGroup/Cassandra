@@ -35,7 +35,7 @@ SUBROUTINE GEMC_Particle_Transfer
   ! Revision history
   !
   !   12/10/13 : Beta Release
-  !   10/10/15 : Updated to use locate(im,is,ibox)   
+  !   10/10/15 : Updated to use locate(im,is,ibox)
   !
   ! DESCRIPTION: This subrouting performs the following steps:
   !
@@ -105,7 +105,7 @@ SUBROUTINE GEMC_Particle_Transfer
 
   REAL(DP), ALLOCATABLE :: cos_mol_old(:), sin_mol_old(:), cos_mol_new(:), sin_mol_new(:)
   REAL(DP) :: time0, time1, randno
-  
+
   LOGICAL :: l_charge_in, l_charge_out
 
   potw = 1.0_DP
@@ -167,7 +167,7 @@ SUBROUTINE GEMC_Particle_Transfer
      END IF
 
      ! Choose box_in with uniform probability
-     ! Since the number of boxes is constant, this step does 
+     ! Since the number of boxes is constant, this step does
      ! not change P_forward or P_reverse
      ibox = INT(rranf() * (nbr_boxes-1)) + 1
      IF (ibox >= box_out) ibox = ibox + 1
@@ -197,7 +197,7 @@ SUBROUTINE GEMC_Particle_Transfer
 
      ! Need cumulative mol fractions for Golden sampling
      ! Choose box_in with uniform probability
-     ! Since the number of boxes is constant, 
+     ! Since the number of boxes is constant,
      !this step does not change P_forward or P_reverse
      ibox = INT(rranf() * (nbr_boxes-1)) + 1
      IF (ibox >= box_out) ibox = ibox + 1
@@ -231,46 +231,46 @@ SUBROUTINE GEMC_Particle_Transfer
            x_is(is) = x_is(is) + x_is(is-1)
         END IF
      END DO
- 
+
      ! Ready to choose is
      randno = rranf()
      DO is = 1, nspecies
         IF (randno < x_is(is)) EXIT
      END DO
- 
-     ! error_check    
+
+     ! error_check
      IF (species_list(is)%int_insert == int_noinsert) THEN
         err_msg = ''
         err_msg(1) = 'Species ' // TRIM(Int_To_String(is)) // ' is not swappable'
         CALL Clean_Abort(err_msg,'GEMC_Particle_Transfer')
      END IF
- 
-     ! error_check    
+
+     ! error_check
      IF (nmols(is,box_out) == 0) THEN
         err_msg = ''
         err_msg(1) = 'No molecules of species ' // TRIM(Int_To_String(is)) // &
                      ' in box ' // TRIM(Int_To_String(ibox))
         CALL Clean_Abort(err_msg,'GEMC_Particle_Transfer')
      END IF
- 
+
      P_forward = P_forward * REAL(nmols(is,box_out),DP) / REAL(nmols_box(box_out),DP)
      P_reverse = P_reverse * REAL(nmols(is,box_in)+1,DP) / REAL(nmols_box(box_in)+1,DP)
 
   ELSE
-     
+
      ! pick the species based on specified probability
      randno = rranf()
      DO is = 1, nspecies
         IF (randno <= cum_prob_swap_species(is)) EXIT
      END DO
-     
+
      ! error check
      IF (species_list(is)%int_insert == int_noinsert) THEN
         err_msg = ''
         err_msg(1) = 'Species ' // TRIM(Int_To_String(is)) // ' is not swappable'
         CALL Clean_Abort(err_msg,'GEMC_Particle_Transfer')
      END IF
- 
+
      ! If no molecules, return
      IF (nmols(is,box_out) == 0) THEN
         IF (verbose_log) THEN
@@ -279,7 +279,7 @@ SUBROUTINE GEMC_Particle_Transfer
         END IF
         RETURN
      END IF
-  
+
      ! Since prob_swap_species is constant, it will be the same for forward and reverse move
      ! and therefore does not change P_forward / P_reverse
   END IF
@@ -295,7 +295,7 @@ SUBROUTINE GEMC_Particle_Transfer
   ! pick a molecule INDEX at random to delete
   im_out = INT(rranf() * nmols(is,box_out)) + 1
   ! the probability of picking im_out will be accounted for when computing ln_pacc
-  
+
   ! Obtain the LOCATE of this molecule
   alive = locate(im_out,is,box_out)
 
@@ -315,13 +315,13 @@ SUBROUTINE GEMC_Particle_Transfer
   ! Save the interaction energies
   IF (l_pair_nrg) CALL Store_Molecule_Pair_Interaction_Arrays(alive,is, &
        box_out, E_inter_vdw_out, E_inter_qq_out)
-  
+
   ! Save the k-vectors
   IF (int_charge_sum_style(box_in)  == charge_ewald .AND.&
       has_charge(is)) THEN
      ALLOCATE(cos_mol_old(nvecs(box_out)), sin_mol_old(nvecs(box_out)))
      CALL Get_Position_Alive(alive,is,position)
-     
+
      !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
      cos_mol_old(:) = cos_mol(1:nvecs(box_out),position)
      sin_mol_old(:) = sin_mol(1:nvecs(box_out),position)
@@ -367,8 +367,8 @@ SUBROUTINE GEMC_Particle_Transfer
      ! restore the box_out coordinates
      CALL Revert_Old_Cartesian_Coordinates(alive,is)
 
-     ! All atoms will not exist if inter_overlap was tripped before the 
-     ! last fragment was placed in Build_Molecule. 
+     ! All atoms will not exist if inter_overlap was tripped before the
+     ! last fragment was placed in Build_Molecule.
      ! Set exist to TRUE for all atoms and reset frac to 1
      atom_list(:,alive,is)%exist = .TRUE.
      molecule_list(alive,is)%frac = 1.0_DP
@@ -389,8 +389,8 @@ SUBROUTINE GEMC_Particle_Transfer
 
   ELSE
 
-    dE_inter_in = E_inter_vdw_in + E_inter_qq_in 
-    
+    dE_inter_in = E_inter_vdw_in + E_inter_qq_in
+
     !*****************************************************************************
     ! Step 5) Calculate the change in box_in's potential energy from inserting
     !         alive
@@ -414,20 +414,20 @@ SUBROUTINE GEMC_Particle_Transfer
     call cpu_time(time0)
 
     IF (int_charge_style(box_in) == charge_coul .AND. has_charge(is)) THEN
-       
+
        IF (int_charge_sum_style(box_in) == charge_ewald) THEN
 
             ! Note that this call will change cos_mol, sin_mol of alive and this
             ! will have to be restored below while computing the energy of box_out
-            ! without molecule alive. 
+            ! without molecule alive.
             CALL Update_System_Ewald_Reciprocal_Energy(alive,is,box_in, &
                  int_insertion,E_reciprocal_in)
-       
+
             dE_inter_in = dE_inter_in + (E_reciprocal_in - energy(box_in)%reciprocal)
        END IF
-       
+
        CALL Compute_Molecule_Self_Energy(alive,is,box_in,E_self_in)
-       dE_inter_in = dE_inter_in + E_self_in 
+       dE_inter_in = dE_inter_in + E_self_in
 
     END IF
 
@@ -441,7 +441,7 @@ SUBROUTINE GEMC_Particle_Transfer
           i_type = nonbond_list(i,is)%atom_type_number
           nint_beads(i_type,box_in) = nint_beads(i_type,box_in) + 1
        END DO
-          
+
        CALL Compute_LR_Correction(box_in,E_lrc_in)
        dE_inter_in = dE_inter_in + E_lrc_in - energy(box_in)%lrc
 
@@ -451,11 +451,11 @@ SUBROUTINE GEMC_Particle_Transfer
     dE_frag_in = E_angle_in + E_ring_frag_in
 
     IF(cpcollect) THEN
-    
+
        potw = 1.0_DP / (P_forward * kappa_ins*kappa_rot*kappa_dih &
-            ** (nfragments(is)-1)) 
+            ** (nfragments(is)-1))
        CP_energy = dE_in - dE_frag_in
-     
+
        chpot(is,box_in) = chpot(is,box_in) &
         + potw * (box_list(box_in)%volume &
         / (REAL(nmols(is,box_in)))) * DEXP(-beta(box_in) * CP_energy)
@@ -478,12 +478,12 @@ SUBROUTINE GEMC_Particle_Transfer
 
     call cpu_time(time0)
     ! The fragment order was decided when inserting alive into box_in
-    ! Use the same fragment order to calculate trial insertions into box_out 
-    ! 
+    ! Use the same fragment order to calculate trial insertions into box_out
+    !
     ! So frag_order and ln_pseq are inputs to the Build_Molecule routine
-    ! We obtain P_reverse via this call. Note that, cbmc_overlap 
+    ! We obtain P_reverse via this call. Note that, cbmc_overlap
     ! must be false as we are dealing with an existing molecule.
-    del_flag = .TRUE. 
+    del_flag = .TRUE.
     get_fragorder = .FALSE.
 
     CALL Build_Molecule(alive,is,box_out,frag_order, &
@@ -516,7 +516,7 @@ SUBROUTINE GEMC_Particle_Transfer
 
     dE_intra_out = - E_bond_out - E_angle_out - E_dihed_out - E_improper_out
 
-    ! Nonbonded energy  
+    ! Nonbonded energy
     CALL Compute_Molecule_Nonbond_Intra_Energy(alive,is, &
          E_intra_vdw_out,E_intra_qq_out,E_periodic_qq,intra_overlap)
 
@@ -536,12 +536,12 @@ SUBROUTINE GEMC_Particle_Transfer
           ! but restoring will destroy the newly computed vector so now here allocate
           ! cos_mol_new
           ! sin_mol_new vectors so that if the move is accepted we can restore these
-       
+
           call cpu_time(time0)
-       
+
           ALLOCATE(cos_mol_new(nvecs(box_in)))
           ALLOCATE(sin_mol_new(nvecs(box_in)))
-       
+
           !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
           cos_mol_new(:) = cos_mol(1:nvecs(box_in),position)
           sin_mol_new(:) = sin_mol(1:nvecs(box_in),position)
@@ -550,24 +550,24 @@ SUBROUTINE GEMC_Particle_Transfer
           cos_mol(1:nvecs(box_out),position) = cos_mol_old(1:nvecs(box_out))
           sin_mol(1:nvecs(box_out),position) = sin_mol_old(1:nvecs(box_out))
           !$OMP END PARALLEL WORKSHARE
-       
+
           call cpu_time(time1)
-       
+
          ! copy_time = copy_time + time1-time0
-       
+
           CALL Update_System_Ewald_Reciprocal_Energy(alive,is, &
                box_out,int_deletion,E_reciprocal_out)
-       
+
           dE_inter_out = dE_inter_out + (E_reciprocal_out - energy(box_out)%reciprocal)
-       
+
        END IF
-       
+
        CALL Compute_Molecule_Self_Energy(alive,is,box_out,E_self_out)
        dE_inter_out = dE_inter_out - E_self_out
 
     END IF
 
-    
+
     IF (int_vdw_sum_style(box_out) == vdw_cut_tail) THEN
        nbeads_out(:) = nint_beads(:,box_out)
        DO i = 1, natoms(is)
@@ -607,7 +607,7 @@ SUBROUTINE GEMC_Particle_Transfer
        ln_pacc = ln_pacc + DLOG(box_list(box_out)%inner_volume)
     END IF
 
-    ! The same order of insertion is used in both the insertion and 
+    ! The same order of insertion is used in both the insertion and
     ! reverse deletion, so ln_pseq does not factor into ln_pacc
     ln_pacc = ln_pacc + ln_pfor - ln_prev &
                       + DLOG(P_forward / P_reverse)
@@ -616,7 +616,7 @@ SUBROUTINE GEMC_Particle_Transfer
 
     IF (accept) THEN
        ! accept the swap
-       
+
        ! already updated the number of molecules in box_in
 
        ! remove the deleted molecule from box_out locate
@@ -644,9 +644,9 @@ SUBROUTINE GEMC_Particle_Transfer
           cos_mol(1:nvecs(box_in),position) = cos_mol_new(:)
           sin_mol(1:nvecs(box_in),position) = sin_mol_new(:)
           !$OMP END PARALLEL WORKSHARE
-          
+
           DEALLOCATE(cos_mol_new,sin_mol_new)
-          
+
           call cpu_time(time1)
 !          copy_time = copy_time + time1-time0
        END IF
@@ -696,7 +696,7 @@ SUBROUTINE GEMC_Particle_Transfer
        END IF
 
        IF (has_charge(is)) THEN
-          IF (int_charge_sum_style(box_in) == charge_ewald) energy(box_in)%reciprocal = E_reciprocal_in        
+          IF (int_charge_sum_style(box_in) == charge_ewald) energy(box_in)%reciprocal = E_reciprocal_in
           IF (int_charge_sum_style(box_out) == charge_ewald) energy(box_out)%reciprocal = E_reciprocal_out
           IF (int_charge_style(box_in) == charge_coul) energy(box_in)%self = energy(box_in)%self + E_self_in
           IF (int_charge_style(box_out) == charge_coul) energy(box_out)%self = energy(box_out)%self - E_self_out
@@ -707,7 +707,7 @@ SUBROUTINE GEMC_Particle_Transfer
        nsuccess(is,box_out)%deletion = nsuccess(is,box_out)%deletion + 1
 
     ELSE
-       ! reject the swap. 
+       ! reject the swap.
 
        ! Atomic coordinates have not changed as we used the original coordinate
        ! in box_out to calculate removal energies
@@ -724,19 +724,19 @@ SUBROUTINE GEMC_Particle_Transfer
               cos_sum(1:nvecs(box_in),box_in) = cos_sum_old(1:nvecs(box_in),box_in)
               sin_sum(1:nvecs(box_in),box_in) = sin_sum_old(1:nvecs(box_in),box_in)
               !$OMP END PARALLEL WORKSHARE
-      
+
               DEALLOCATE(cos_mol_new,sin_mol_new)
            END IF
-      
+
            IF (int_charge_sum_style(box_out) == charge_ewald) THEN
               !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
               cos_sum(1:nvecs(box_out),box_out) = cos_sum_old(1:nvecs(box_out),box_out)
               sin_sum(1:nvecs(box_out),box_out) = sin_sum_old(1:nvecs(box_out),box_out)
-              
+
               cos_mol(1:nvecs(box_out),position) = cos_mol_old(:)
               sin_mol(1:nvecs(box_out),position) = sin_mol_old(:)
               !$OMP END PARALLEL WORKSHARE
-      
+
               DEALLOCATE(cos_mol_old)
               DEALLOCATE(sin_mol_old)
            END IF
@@ -756,13 +756,13 @@ SUBROUTINE GEMC_Particle_Transfer
 
 
     END IF
-  
+
     IF (verbose_log) THEN
       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I1,A1,I1,X,L8,X,9X,X,F9.3)') &
             i_mcstep, 'swap' , alive, is, box_out, '>', box_in, accept, ln_pacc
     END IF
 
-  END IF 
+  END IF
 
   IF (ALLOCATED(new_atom_list)) DEALLOCATE(new_atom_list)
 

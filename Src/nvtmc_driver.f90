@@ -210,7 +210,6 @@ SUBROUTINE NVTMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        write (*,*) "Called Identity Switch"
         CALL Identity_Switch
 
         IF(.NOT. openmp_flag) THEN

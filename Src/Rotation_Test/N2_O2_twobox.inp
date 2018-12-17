@@ -1,0 +1,94 @@
+# Run_Name
+twoargon2.out
+!------------------------------------------------------------------------------
+
+# Sim_Type
+GEMC
+!------------------------------------------------------------------------------
+
+# Nbr_Species
+2
+!------------------------------------------------------------------------------
+
+# VDW_Style
+LJ   cut   14.00
+LJ   cut   14.00
+!------------------------------------------------------------------------------
+
+# Rcutoff_Low!!!!
+1.0
+!------------------------------------------------------------------------------
+
+# Mixing_Rule
+geometric
+!------------------------------------------------------------------------------
+
+# Molecule_Files
+Nitrogen.mcf 2
+Oxygen.mcf 2
+!----------------------------------------------------------one line per species
+
+# Box_Info
+2
+cubic
+28.00
+
+cubic
+28.00
+
+# Temperature_Info
+175.0
+175.0
+!----------------------------------------------------------one temperature per box
+
+# Move_Probability_Info
+
+# Prob_Volume
+0.03
+200.0
+
+# Prob_Identity_Switch
+0.97
+1
+1 2
+
+
+# Done_Probability_Info
+
+# Start_Type
+make_config 1 1
+make_config 1 1
+!--------make_config: one line for each species and one entry/line for each box
+!------------------------------------------------------------read_old: filename
+!----------------------------------------------------------checkpoint: filename
+
+# Run_Type
+Equilibration 100 100
+
+# Simulation_Length_Info
+Units       Steps
+Prop_Freq   1
+Coord_Freq  1
+Run         1
+
+# Seed
+1217132345 12181326696
+!------------------------------------------------------------------------------
+
+# Property_Info 1
+energy_total
+
+# Fragment_Files
+species1/frag1/frag1.dat  1
+species2/frag1/frag1.dat  2
+!---------------------------------------------------------one line per fragment
+
+# CBMC_Info
+kappa_ins 12
+kappa_dih 10
+rcut_cbmc 6.5 6.5
+
+# Pair_Energy
+false
+
+END
