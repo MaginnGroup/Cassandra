@@ -1,0 +1,128 @@
+ Begin Cassandra simulation
+
+ openmp_flag =  F
+ species i is:
+           2
+ species j is:
+           1
+ box_i is
+           1
+ box_j is
+           1
+ FINISHED STEP 6
+ im is:
+         124
+ jm is:
+         175
+ STEP 8
+ ROTATION:
+           1
+ ENERGY:
+  -729.04441992297814     
+ ENERGY*beta:
+  -5.0105023071165418     
+ exp(-ENERGY*beta)
+   149.98005327939936     
+ adjusted weight
+   149.98005327939936     
+ ROTATION:
+           2
+ ENERGY:
+  -816.82545779523184     
+ ENERGY*beta:
+  -5.6137948922603638     
+ exp(-ENERGY*beta)
+   274.18276025321455     
+ adjusted weight
+   424.16281353261388     
+ ROTATION:
+           3
+ ENERGY:
+   48.035521307452463     
+ ENERGY*beta:
+  0.33013364310498927     
+ exp(-ENERGY*beta)
+  0.71882766065181514     
+ adjusted weight
+   424.88164119326569     
+ ROTATION:
+           4
+ ENERGY:
+  -821.57312610745453     
+ ENERGY*beta:
+  -5.6464241839492422     
+ exp(-ENERGY*beta)
+   283.27670721366133     
+ adjusted weight
+   708.15834840692696     
+ ROTATION:
+           5
+ ENERGY:
+  -444.61098688950290     
+ ENERGY*beta:
+  -3.0556771503917015     
+ exp(-ENERGY*beta)
+   21.235560327405569     
+ adjusted weight
+   729.39390873433251     
+ Random number
+   255.02647458429067     
+ Selected rotation:
+           2
+ ROTATION:
+           1
+ ENERGY:
+   4615.8986564621600     
+ ENERGY*beta:
+   31.723678606665992     
+ exp(-ENERGY*beta)
+   1.6694808256506424E-014
+ adjusted weight
+   1.6694808256506424E-014
+ ROTATION:
+           2
+ ENERGY:
+   14142.541010364881     
+ ENERGY*beta:
+   97.197416816399027     
+ exp(-ENERGY*beta)
+   6.1333566792861553E-043
+ adjusted weight
+   1.6694808256506424E-014
+ ROTATION:
+           3
+ ENERGY:
+   15990.101281129477     
+ ENERGY*beta:
+   109.89514105133779     
+ exp(-ENERGY*beta)
+   1.8756277668563500E-048
+ adjusted weight
+   1.6694808256506424E-014
+ ROTATION:
+           4
+ ENERGY:
+   18484.847356161412     
+ ENERGY*beta:
+   127.04077802903804     
+ exp(-ENERGY*beta)
+   6.7126055132308920E-056
+ adjusted weight
+   1.6694808256506424E-014
+ ROTATION:
+           5
+ ENERGY:
+   23147.406587867146     
+ ENERGY*beta:
+   159.08514068940548     
+ exp(-ENERGY*beta)
+   8.1320725736391327E-070
+ adjusted weight
+   1.6694808256506424E-014
+ Random number
+   5.2832167368743190E-015
+ Selected rotation:
+           1
+ STEP 9
+
+ Cassandra simulation complete

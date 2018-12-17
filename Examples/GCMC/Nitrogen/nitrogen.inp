@@ -43,7 +43,7 @@ cubic
 !-------------------------
 
 # Temperature_Info
-77.0 
+77.0
 !------------------
 
 # Chemical_Potential_Info
@@ -62,11 +62,14 @@ cubic
 180.0
 
 # Prob_Insertion
-0.25
+0.22
 cbmc
 
 # Prob_Deletion
-0.25
+0.22
+
+# Prob_Identity_Switch
+0.06
 
 # Done_Probability_Info
 !----------------------
@@ -76,7 +79,7 @@ make_config 50
 !------------------
 
 # Run_Type
-equilibration   600  
+equilibration   600
 !------------------
 
 # Average_Info
@@ -90,7 +93,7 @@ coord_freq   4000
 run          4000
 !----------------------------
 
-# Property_Info 1 
+# Property_Info 1
 energy_total
 nmols
 density
@@ -104,7 +107,7 @@ species1/frag1/frag1.dat  1
 
 # CBMC_Info
 kappa_ins 12
-rcut_cbmc 6.5 
+rcut_cbmc 6.5
 !------------
 
 

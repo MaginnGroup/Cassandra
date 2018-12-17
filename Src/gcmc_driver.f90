@@ -243,6 +243,7 @@ SUBROUTINE GCMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
+        WRITE (*,*) "AM INDEED HERE"
         CALL Atom_Displacement
 
         IF(.NOT. openmp_flag) THEN

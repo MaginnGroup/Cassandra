@@ -33,7 +33,7 @@ LB
 !------------------------------------------------------------------------------
 
 # Molecule_Files
-spce.mcf 90
+spce.mcf 2
 !----------------------------------------------------------one line per species
 
 # Box_Info
@@ -71,7 +71,7 @@ cubic
 !-----------------------------------------each molecule moves per volume change
 
 # Start_Type
-read_config 90 npt.inp.xyz
+read_config 2 npt.inp.xyz
 !--------make_config: one line for each species and one entry/line for each box
 !------------------------------------------------------------read_old: filename
 !----------------------------------------------------------checkpoint: filename
@@ -93,7 +93,7 @@ coord_freq   10
 run          100
 !------------------ 181 moves = 1 sweep; output every 10 sweeps; run 100 sweeps
 
-# Property_Info 1 
+# Property_Info 1
 Energy_Total
 Pressure
 Volume
@@ -101,13 +101,9 @@ Density
 mass_density
 !------------------------------------------------------------------------------
 
-# Fragment_Files
-species1/frag1/frag1.dat  1
-!---------------------------------------------------------one line per fragment
-
 # CBMC_Info
 kappa_ins 12
-rcut_cbmc 6.5 
+rcut_cbmc 6.5
 !------------------------------------------------------------------------------
 
 END

@@ -40,7 +40,7 @@ cubic
 !--------------------------------------------------------------repeat for second box
 
 # Temperature_Info
-175.0 
+175.0
 175.0
 !----------------------------------------------------------one temperature per box
 
@@ -67,7 +67,7 @@ cbmc
 make_config 400
 make_config 100
 !--------make_config: one line for each species and one entry/line for each box
-!------------------------------------------------------------read_old: filename
+!-----------------------------------------------------------read_old: filename
 !----------------------------------------------------------checkpoint: filename
 
 # Run_Type
