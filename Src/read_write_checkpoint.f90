@@ -611,9 +611,6 @@ SUBROUTINE Write_Trials_Success
               nsuccess(is,ibox)%switch, &
               100.0*dble(nsuccess(is,ibox)%switch)/dble(ntrials(is,ibox)%switch)
 
-           WRITE(*,*) nsuccess(is,ibox)%switch
-           WRITE (*,*) ntrials(is,ibox)%switch
-
         END IF
 
         ! atom displacement
