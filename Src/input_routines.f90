@@ -3661,11 +3661,7 @@ SUBROUTINE Get_Box_Info
                line_string(1:20) == 'restricted_insertion') THEN
               BACKSPACE(inputunit)
               CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
-<<<<<<< HEAD
-              WRITE(logunit,'(X,A,X,A)') 'Inner shape: ', TRIM(line_array(2))
-=======
               WRITE(logunit,'(X,A,X,A)') 'Insertions restricted to shape: ', TRIM(line_array(2))
->>>>>>> fe4f01c1597153b9852752030ea8f6f4f43992f4
 
               IF (line_array(2) == "none") THEN
                  box_list(ibox)%int_inner_shape = int_none
@@ -4567,11 +4563,12 @@ SUBROUTINE Get_Move_Probabilities
               line_nbr = line_nbr + 1
               CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
               prob_identity_switch = String_To_Double(line_array(1))
+              rotations = String_To_Int(line_array(2))
 
               !non default
-              IF (nbr_entries >= 2) THEN
+              IF (nbr_entries >= 3) THEN
                  default_switch = .FALSE.
-                 num_groups = String_To_Int(line_array(2))
+                 num_groups = String_To_Int(line_array(3))
                  ALLOCATE(swap_list(2*num_groups, 2))
 
                  DO i = 1, num_groups

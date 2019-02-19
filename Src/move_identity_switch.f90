@@ -61,7 +61,7 @@ SUBROUTINE Identity_Switch
    REAL(DP) :: P_bias_rot_i, P_bias_rot_j
    LOGICAL :: rot_overlap_i, rot_overlap_j
    REAL(DP) :: P_bias
-   INTEGER :: rotations, im_in, jm_in
+   INTEGER :: im_in, jm_in
 
    E_vdw_move = 0.0_DP
    E_qq_move = 0.0_DP
@@ -71,8 +71,6 @@ SUBROUTINE Identity_Switch
    inter_overlap = .FALSE.
    accept = .FALSE.
    box = 1
-   !TODO: remove
-   rotations = 5
 
    P_bias_rot_i = 1
    P_bias_rot_j = 1
