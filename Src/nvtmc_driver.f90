@@ -104,14 +104,7 @@ SUBROUTINE NVTMC_Driver
      ! select a move from Golden Sampling scheme
      !*****************************************************************************
 
-
-!     rand_no_2 = rranf()
-!     IF (rand_no_2 <= 0.05) THEN
-!        CALL Identity_Switch
-!     ELSE
-
      rand_no = rranf()
-     !cut_identity_switch = 1
      IF (rand_no <= cut_trans) THEN
 
         IF(.NOT. openmp_flag) THEN

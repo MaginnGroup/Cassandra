@@ -77,11 +77,6 @@ SUBROUTINE GEMC_Driver
   END IF
 
   DO WHILE (.NOT. complete)
-     !TODO:remove debug here
-
-     WRITE (*,*) "STEP"
-     WRITE (*,*) i_mcstep
-
      i_mcstep = i_mcstep + 1
 
      ! Change mode from equilibration to production if specified
@@ -96,7 +91,6 @@ SUBROUTINE GEMC_Driver
      rand_no = rranf()
 
      IF (rand_no <= cut_trans) THEN
-        WRITE (*,*) "CHOSE TRANSLATION"
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
@@ -151,7 +145,6 @@ SUBROUTINE GEMC_Driver
         movetime(imove_dihedral) = movetime(imove_dihedral) + time_e - time_s
 
      ELSE IF (rand_no <= cut_volume) THEN
-        WRITE (*,*) "CHOSE VOLUME"
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
@@ -192,7 +185,6 @@ SUBROUTINE GEMC_Driver
         movetime(imove_angle) = movetime(imove_angle) + time_e - time_s
 
      ELSE IF ( rand_no <= cut_swap) THEN
-        WRITE (*,*) "CHOSE SWAP"
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
@@ -229,7 +221,6 @@ SUBROUTINE GEMC_Driver
         movetime(imove_regrowth) = movetime(imove_regrowth) + time_e - time_s
 
      ELSE IF (rand_no <= cut_identity_switch) THEN
-        WRITE (*,*) "CHOSE IDENTITY SWITCH"
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)

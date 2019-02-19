@@ -604,6 +604,18 @@ SUBROUTINE Write_Trials_Success
 
         END IF
 
+        ! identity switch
+
+        IF (ntrials(is,ibox)%switch /= 0) THEN
+           WRITE(logunit,11) 'Identity Switch', ntrials(is,ibox)%switch, &
+              nsuccess(is,ibox)%switch, &
+              100.0*dble(nsuccess(is,ibox)%switch)/dble(ntrials(is,ibox)%switch)
+
+           WRITE(*,*) nsuccess(is,ibox)%switch
+           WRITE (*,*) ntrials(is,ibox)%switch
+
+        END IF
+
         ! atom displacement
 
         IF (ntrials(is,ibox)%disp_atom /= 0 ) THEN
@@ -613,6 +625,7 @@ SUBROUTINE Write_Trials_Success
                 100.0*dble(nsuccess(is,ibox)%disp_atom)/dble(ntrials(is,ibox)%disp_atom)
 
         END IF
+
         WRITE(logunit,'(3X,A57)') '---------------------------------------------------------'
 
         WRITE(logunit,*)

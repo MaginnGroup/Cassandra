@@ -235,6 +235,25 @@ SUBROUTINE GCMC_Driver
 
         movetime(imove_regrowth) = movetime(imove_regrowth) + time_e - time_s
 
+     ELSE IF (rand_no <= cut_identity_switch) THEN
+
+        IF(.NOT. openmp_flag) THEN
+           CALL cpu_time(time_s)
+        ELSE
+!$        time_s = omp_get_wtime()
+        END IF
+
+        CALL Identity_Switch
+
+        IF(.NOT. openmp_flag) THEN
+           CALL cpu_time(time_e)
+        ELSE
+!$         time_e = omp_get_wtime()
+        END IF
+
+        movetime(imove_identity_switch) = movetime(imove_identity_switch) + time_e - time_s
+
+
      ELSE IF (rand_no <= cut_atom_displacement) THEN
 
         IF(.NOT. openmp_flag) THEN
@@ -243,7 +262,6 @@ SUBROUTINE GCMC_Driver
 !$        time_s = omp_get_wtime()
         END IF
 
-        WRITE (*,*) "AM INDEED HERE"
         CALL Atom_Displacement
 
         IF(.NOT. openmp_flag) THEN
