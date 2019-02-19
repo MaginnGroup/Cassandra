@@ -1131,21 +1131,28 @@ The probability of selecting a species with insertion method \texttt{none} must 
 %
 %
 For example: \\ \\
-{\bf \# Prob\_Identity\_Switch}\\
-{\it 0.05 0} \\
-Will attempt identity switch moves for 10\% of all moves. No trial rotations will be performed. An identity switch of pair of molecules (not from the same species) is equally likely to be proposed.\\
-
-
-{\bf \# Prob\_Identity\_Switch}\\
-{\it 0.05 5 2}\\
-{\it 1 2} \\
-{\it 2 3} \\
-
-Will attempt identity switch moves for 5\% of all moves. 5 trial rotations will be attempted for Rosenbluth sampling. Molecules of species 1 will only be switched with molecules of species 2, and likewise with Moleclues of species 3 and molecules of species 2. This may be advantageous if species 1 is small, species 3 is large, and species 2 is medium in size.\\
-
-
-
-
+\# Prob\_Identity\_Switch \\
+0.05 0 \\ \\
+%
+Will attempt identity switch moves for 10\% of all moves. No trial rotations
+will be performed. An identity switch of pair of molecules (not from the same
+species) is equally likely to be proposed.\\ \\
+%
+%
+\# Prob\_Identity\_Switch \\
+0.05 5 2 \\
+1 2 \\
+2 3 \\ \\
+%
+Will attempt identity switch moves for 5\% of all moves. 5 trial rotations will
+be attempted for Rosenbluth sampling. Molecules of species 1 will only be
+switched with molecules of species 2, and likewise with Moleclues of species 3
+and molecules of species 2. This may be advantageous if species 1 is small,
+species 3 is large, and species 2 is medium in size.\\ \\
+%
+%
+%
+%
 %
 %%%%%%%%%%%%%%%%
 %
