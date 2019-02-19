@@ -408,7 +408,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
 
            END IF
 
-           IF (species_list(is)%insertion == 'INNER' .AND. box_list(this_box)%int_inner_shape /= int_none) THEN
+           IF (species_list(is)%insertion == 'RESTRICTED' .AND. box_list(this_box)%int_inner_shape /= int_none) THEN
               IF (box_list(this_box)%int_inner_shape == int_sphere) THEN
                  radius2 = x_anchor**2 + y_anchor**2 + z_anchor**2
                  IF (radius2 > box_list(this_box)%inner_radius2) THEN

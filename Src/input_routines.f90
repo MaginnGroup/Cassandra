@@ -104,9 +104,11 @@ SUBROUTINE Get_Run_Name
 
   ENDDO
 
-  IF (input_is_logfile) THEN
-     run_name = TRIM(run_name) // "_logfile_"
-  END IF
+  ! Create log file and write out some initial information
+  CALL Name_Files(run_name,'.log',logfile)
+  ! Create a checkpoint file to periodically write system information
+  CALL Name_Files(run_name,'.chk',checkpointfile)
+
 
 END SUBROUTINE Get_Run_Name
 
@@ -1475,7 +1477,7 @@ SUBROUTINE Get_Atom_Info(is)
               ! Convert epsilon to atomic units amu A^2/ps^2
               nonbond_list(ia,is)%vdw_param(1) = kboltz* nonbond_list(ia,is)%vdw_param(1)
 
-           ELSEIF (nonbond_list(ia,is)%vdw_type == 'Mie' .OR. nonbond_list(is,is)%vdw_type == 'mie') THEN
+           ELSEIF (nonbond_list(ia,is)%vdw_type == 'Mie' .OR. nonbond_list(ia,is)%vdw_type == 'mie') THEN
               nonbond_list(ia,is)%vdw_type = 'Mie'
               ! Set number of vdw parameters
               nbr_vdw_params(is) = 4
@@ -3506,7 +3508,7 @@ SUBROUTINE Get_Box_Info
               CALL Clean_Abort(err_msg,'Get_Box_Info')
            END IF
         ELSE IF ( int_sim_type == sim_gemc_ig ) THEN
-           IF (nbr_boxes < 3 ) THEN
+           IF (nbr_boxes /= 3 ) THEN
               err_msg = ''
               err_msg(1) = 'Option ' // TRIM(line_array(1)) // &
                            ' on line number ' // &
@@ -3656,10 +3658,14 @@ SUBROUTINE Get_Box_Info
            CALL Read_String(inputunit,line_string,ierr)
 
            IF ((box_list(ibox)%int_box_shape == int_cubic .OR. box_list(ibox)%int_box_shape == int_ortho) .AND. &
-               line_string(1:11) == 'inner_shape') THEN
+               line_string(1:20) == 'restricted_insertion') THEN
               BACKSPACE(inputunit)
               CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
+<<<<<<< HEAD
               WRITE(logunit,'(X,A,X,A)') 'Inner shape: ', TRIM(line_array(2))
+=======
+              WRITE(logunit,'(X,A,X,A)') 'Insertions restricted to shape: ', TRIM(line_array(2))
+>>>>>>> fe4f01c1597153b9852752030ea8f6f4f43992f4
 
               IF (line_array(2) == "none") THEN
                  box_list(ibox)%int_inner_shape = int_none
@@ -3696,7 +3702,7 @@ SUBROUTINE Get_Box_Info
                  box_list(ibox)%inner_volume = PI*radius**2*zmax
                  WRITE(logunit,'(X,A,X,F18.4)') 'Cylinder radius, A ', box_list(ibox)%inner_radius
                  WRITE(logunit,'(X,A,X,F18.4)') 'Cylinder height, A ', zmax
-                 WRITE(logunit,'(X,A,X,F18.4)') 'Inner volume, A^3 ', box_list(ibox)%inner_volume
+                 WRITE(logunit,'(X,A,X,F18.4)') 'Cylinder volume, A^3 ', box_list(ibox)%inner_volume
               ELSE IF (line_array(2) == "slitpore") THEN
                  box_list(ibox)%int_inner_shape = int_slitpore
                  zmax = String_To_Double(line_array(3))
@@ -3712,7 +3718,7 @@ SUBROUTINE Get_Box_Info
                  WRITE(logunit,'(X,A,X,F18.4)') 'Slit pore x_width, A ', box_list(ibox)%length(1,1)
                  WRITE(logunit,'(X,A,X,F18.4)') 'Slit pore y_width, A ', box_list(ibox)%length(2,2)
                  WRITE(logunit,'(X,A,X,F18.4)') 'Slit pore height, A ', 2.0_DP*zmax
-                 WRITE(logunit,'(X,A,X,F18.4)') 'Inner volume, A^3 ', box_list(ibox)%inner_volume
+                 WRITE(logunit,'(X,A,X,F18.4)') 'Slit pore volume, A^3 ', box_list(ibox)%inner_volume
               ELSE IF (line_array(2) == "interface") THEN
                  box_list(ibox)%int_inner_shape = int_interface
                  zmin = String_To_Double(line_array(3))
@@ -3731,7 +3737,7 @@ SUBROUTINE Get_Box_Info
                  WRITE(logunit,'(X,A,X,F18.4)') 'Interface y_width, A ', box_list(ibox)%length(2,2)
                  WRITE(logunit,'(X,A,X,F18.4)') 'Outside of interface, z = +/-', zmax
                  WRITE(logunit,'(X,A,X,F18.4)') 'Inside of interface, z = +/-', zmin
-                 WRITE(logunit,'(X,A,X,F18.4)') 'Inner volume, A^3 ', box_list(ibox)%inner_volume
+                 WRITE(logunit,'(X,A,X,F18.4)') 'Interface volume, A^3 ', box_list(ibox)%inner_volume
               ELSE
                  err_msg = ''
                  err_msg(1) = 'Keyword ' // TRIM(line_array(2)) // ' on line number ' // &
@@ -4312,7 +4318,7 @@ SUBROUTINE Get_Move_Probabilities
                       'Probability for particle swap', prob_swap
               END IF
 
-              ! the next line lists 'none' or 'cbmc' or 'inner' for each species
+              ! the next line lists 'none' or 'cbmc' or 'restricted' for each species
               line_nbr = line_nbr + 1
               CALL Parse_String(inputunit,line_nbr,nspecies,nbr_entries,line_array,ierr)
 
@@ -4335,7 +4341,7 @@ SUBROUTINE Get_Move_Probabilities
                     species_list(is)%species_type = 'SORBATE'
                     species_list(is)%int_species_type = int_sorbate
 
-                 ELSE IF(line_array(is) == 'INNER' .OR. line_array(is) == 'inner') THEN
+                 ELSE IF(line_array(is) == 'RESTRICTED' .OR. line_array(is) == 'restricted') THEN
                     IF (nfragments(is) == 0) THEN
                        err_msg = ''
                        err_msg(1) = 'Insertion method for species ' // TRIM(Int_To_String(is)) // &
@@ -4344,9 +4350,9 @@ SUBROUTINE Get_Move_Probabilities
                     END IF
 
                     nspec_insert = nspec_insert + 1
-                    species_list(is)%insertion = 'INNER'
+                    species_list(is)%insertion = 'RESTRICTED'
 
-                    WRITE(logunit,'(X,A,X,A,X,A)') 'Species', TRIM(Int_To_String(is)), 'will be inserted into the inner region'
+                    WRITE(logunit,'(X,A,X,A,X,A)') 'Species', TRIM(Int_To_String(is)), 'insertion will be restricted'
                     species_list(is)%int_insert = int_random
                     species_list(is)%species_type = 'SORBATE'
                     species_list(is)%int_species_type = int_sorbate
@@ -4712,6 +4718,21 @@ SUBROUTINE Get_Move_Probabilities
 
   END IF
 
+  IF (verbose_log) THEN
+     WRITE(logunit,'(A)') 'Cumulative probabilities'
+     WRITE(logunit,'(X,A12,X,F8.6)') 'Translation:', cut_trans
+     WRITE(logunit,'(X,A12,X,F8.6)') 'Rotation:', cut_rot
+     WRITE(logunit,'(X,A12,X,F8.6)') 'Torsion:', cut_torsion
+     WRITE(logunit,'(X,A12,X,F8.6)') 'Volume:', cut_volume
+     WRITE(logunit,'(X,A12,X,F8.6)') 'Angle:', cut_angle
+     WRITE(logunit,'(X,A12,X,F8.6)') 'Insertion:', cut_insertion
+     WRITE(logunit,'(X,A12,X,F8.6)') 'Deletion:', cut_deletion
+     WRITE(logunit,'(X,A12,X,F8.6)') 'Swap:', cut_swap
+     WRITE(logunit,'(X,A12,X,F8.6)') 'Regrowth:', cut_regrowth
+     WRITE(logunit,'(X,A12,X,F8.6)') 'Ring:', cut_ring
+     WRITE(logunit,'(X,A12,X,F8.6)') 'Atom:', cut_atom_displacement
+  END IF
+
   WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_Move_Probabilities
@@ -4728,7 +4749,7 @@ SUBROUTINE Get_Start_Type
 ! 'checkpoint'    --- read from a crash file
 !
 ! Additional info
-! 'insertion'     --- either 'inner' or 'cbmc' for each species
+! 'insertion'     --- either 'none' or 'cbmc' or 'restricted' for each species
 !******************************************************************************
 
   INTEGER :: ierr, line_nbr, nbr_entries, i,j, ibox, is
@@ -4969,8 +4990,8 @@ SUBROUTINE Get_Start_Type
      BACKSPACE(inputunit)
      CALL Parse_String(inputunit,line_nbr,nspecies+1,nbr_entries,line_array,ierr)
      DO is = 1, nspecies
-        IF (line_array(is+1) == 'INNER' .OR. line_array(is+1) == 'inner') THEN
-           species_list(is)%insertion = "INNER"
+        IF (line_array(is+1) == 'RESTRICTED' .OR. line_array(is+1) == 'restricted') THEN
+           species_list(is)%insertion = "RESTRICTED"
         ELSE IF (line_array(is+1) == 'CBMC' .OR. line_array(is+1) == 'cbmc') THEN
            species_list(is)%insertion = "CBMC"
         ELSE IF (line_array(is+1) == 'NONE' .OR. line_array(is+1) == 'none') THEN
@@ -4978,7 +4999,7 @@ SUBROUTINE Get_Start_Type
         ELSE
            err_msg(1) = 'Option ' // TRIM(line_array(1)) // ' on line number ' // &
                         TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
-           err_msg(2) = 'Supported options are: none, cbmc, inner'
+           err_msg(2) = 'Supported options are: none, cbmc, restricted'
            CALL Clean_Abort(err_msg,'Get_Start_Type')
         END IF
      END DO
@@ -5365,8 +5386,7 @@ SUBROUTINE Get_Simulation_Length_Info
 !******************************************************************************
 
   INTEGER :: ierr, line_nbr, nbr_entries, ibox
-  CHARACTER(120) :: line_string, line_array(20),movie_header_file, &
-                     movie_xyz_file
+  CHARACTER(120) :: line_string, line_array(20)
   LOGICAL :: l_run
 
 !******************************************************************************
@@ -5464,22 +5484,20 @@ SUBROUTINE Get_Simulation_Length_Info
 
               WRITE(logunit,'(A,T50,I8,X,A)') 'Coordinates will be written every', ncoord_freq, sim_length_units
 
+              ALLOCATE(movie_header_file(nbr_boxes))
+              ALLOCATE(movie_xyz_file(nbr_boxes))
               IF (nbr_boxes == 1) THEN
                  ibox = 1
-                 movie_header_file = TRIM(run_name) // '.H'
-                 movie_xyz_file =    TRIM(run_name) // '.xyz'
-                 WRITE(logunit,'(X,A,T40,A)') 'movie header file is', TRIM(movie_header_file)
-                 WRITE(logunit,'(X,A,T40,A)') 'movie_XYZ file is', TRIM(movie_xyz_file)
-                 OPEN(unit=movie_header_unit+ibox,file=movie_header_file)
-                 OPEN(unit=movie_xyz_unit+ibox,file=movie_xyz_file)
+                 movie_header_file(ibox) = TRIM(run_name) // '.H'
+                 movie_xyz_file(ibox) =    TRIM(run_name) // '.xyz'
+                 WRITE(logunit,'(X,A,T40,A)') 'movie header file is', TRIM(movie_header_file(ibox))
+                 WRITE(logunit,'(X,A,T40,A)') 'movie_XYZ file is', TRIM(movie_xyz_file(ibox))
               ELSE
                  DO ibox = 1, nbr_boxes
-                    movie_header_file = TRIM(run_name) // '.box' // TRIM(Int_To_String(ibox)) // '.H'
-                    movie_xyz_file =    TRIM(run_name) // '.box' // TRIM(Int_To_String(ibox)) // '.xyz'
-                    WRITE(logunit,'(X,A,T30,I1,A,T40,A)') 'movie header file for box ', ibox ,' is', TRIM(movie_header_file)
-                    WRITE(logunit,'(X,A,T30,I1,A,T40,A)') 'movie_XYZ file for box ', ibox ,' is', TRIM(movie_xyz_file)
-                    OPEN(unit=movie_header_unit+ibox,file=movie_header_file)
-                    OPEN(unit=movie_xyz_unit+ibox,file=movie_xyz_file)
+                    movie_header_file(ibox) = TRIM(run_name) // '.box' // TRIM(Int_To_String(ibox)) // '.H'
+                    movie_xyz_file(ibox) =    TRIM(run_name) // '.box' // TRIM(Int_To_String(ibox)) // '.xyz'
+                    WRITE(logunit,'(X,A,T30,I1,A,T40,A)') 'movie header file for box ', ibox ,' is', TRIM(movie_header_file(ibox))
+                    WRITE(logunit,'(X,A,T30,I1,A,T40,A)') 'movie_XYZ file for box ', ibox ,' is', TRIM(movie_xyz_file(ibox))
                  END DO
               ENDIF
 
@@ -5533,8 +5551,8 @@ SUBROUTINE Get_Simulation_Length_Info
               err_msg = ''
               err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
                            TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
-              err_msg(2) = 'Supported keywords are: prop_freq, coord_freq, run, steps_per_sweep, block_avg_freq'
-              err_msg(3) = '                        energy_freq'
+              err_msg(2) = 'Supported keywords are: prop_freq, coord_freq, run, steps_per_sweep,'
+              err_msg(3) = '                        block_avg_freq, energy_freq'
               CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
 
            END IF
@@ -5889,8 +5907,8 @@ USE Global_Variables, ONLY: cpcollect
                 err_msg(3) = 'Supported keywords are: energy_total, energy_intra, energy_inter, energy_bond,'
                 err_msg(4) = '  energy_angle, energy_dihedral, energy_improper, energy_intravdw, energy_intraq'
                 err_msg(5) = '  energy_intervdw, energy_interq, energy_lrc, energy_recip, energy_self,'
-                err_msg(6) = '  enthalpy, pressure, pressure_xx, pressure_yy, pressure_zz, &
-				volume, density, nmols, mass_density'
+                err_msg(6) = '  enthalpy, pressure, pressure_xx, pressure_yy, pressure_zz, volume, density,'
+                err_msg(7) = '  nmols, mass_density'
                 CALL Clean_Abort(err_msg,'Get_Property_Info')
               END IF
 

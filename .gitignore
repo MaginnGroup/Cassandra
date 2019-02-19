@@ -5,3 +5,8 @@ Src/dep.mkbkp
 Src/*.exe
 *~
 .*.swp
+
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?

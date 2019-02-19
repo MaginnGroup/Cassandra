@@ -127,8 +127,13 @@ SUBROUTINE GCMC_Driver
 
         movetime(imove_trans) = movetime(imove_trans) + time_e - time_s
 
+<<<<<<< HEAD
      ELSE IF ( rand_no < cut_rot) THEN
 
+=======
+     ELSE IF ( rand_no <= cut_rot) THEN
+
+>>>>>>> fe4f01c1597153b9852752030ea8f6f4f43992f4
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
         ELSE
@@ -145,8 +150,13 @@ SUBROUTINE GCMC_Driver
 
         movetime(imove_rot) = movetime(imove_rot) + time_e - time_s
 
+<<<<<<< HEAD
      ELSE IF (rand_no < cut_torsion) THEN
 
+=======
+     ELSE IF (rand_no <= cut_torsion) THEN
+
+>>>>>>> fe4f01c1597153b9852752030ea8f6f4f43992f4
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
         ELSE
@@ -163,8 +173,13 @@ SUBROUTINE GCMC_Driver
 
         movetime(imove_dihedral) = movetime(imove_dihedral) + time_e - time_s
 
+<<<<<<< HEAD
      ELSE IF (rand_no < cut_angle) THEN
 
+=======
+     ELSE IF (rand_no <= cut_angle) THEN
+
+>>>>>>> fe4f01c1597153b9852752030ea8f6f4f43992f4
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
         ELSE
@@ -181,8 +196,13 @@ SUBROUTINE GCMC_Driver
 
         movetime(imove_angle) = movetime(imove_angle) + time_e - time_s
 
+<<<<<<< HEAD
     ELSE IF (rand_no < cut_insertion) THEN
 
+=======
+    ELSE IF (rand_no <= cut_insertion) THEN
+
+>>>>>>> fe4f01c1597153b9852752030ea8f6f4f43992f4
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
         ELSE
@@ -199,8 +219,13 @@ SUBROUTINE GCMC_Driver
 
         movetime(imove_insert) = movetime(imove_insert) + time_e - time_s
 
+<<<<<<< HEAD
      ELSE IF (rand_no < cut_deletion) THEN
 
+=======
+     ELSE IF (rand_no <= cut_deletion) THEN
+
+>>>>>>> fe4f01c1597153b9852752030ea8f6f4f43992f4
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
         ELSE
@@ -217,7 +242,7 @@ SUBROUTINE GCMC_Driver
 
         movetime(imove_delete) = movetime(imove_delete) + time_e - time_s
 
-     ELSE IF ( rand_no < cut_regrowth) THEN
+     ELSE IF ( rand_no <= cut_regrowth) THEN
 
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
