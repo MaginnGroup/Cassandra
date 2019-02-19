@@ -468,6 +468,7 @@ USE Type_Definitions
   INTEGER :: num_groups
   INTEGER, DIMENSION(:, :), ALLOCATABLE :: swap_list
   LOGICAL :: default_switch
+  INTEGER :: rotations
 
   LOGICAL :: l_prob_swap_species, l_prob_swap_from_box
 
