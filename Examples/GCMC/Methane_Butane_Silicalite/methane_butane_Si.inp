@@ -1,0 +1,124 @@
+! This is the input file for a short GCMC simulation of CH4 + C4H10 in Silicalite at 300K
+! For details see the file README 
+
+# Run_Name
+methane_butane_Si.out
+!--------------
+
+# Sim_Type
+gcmc
+!---------------
+
+# Nbr_Species
+3
+!----------------
+
+# VDW_Style
+lj cut_tail 13.0
+!----------------
+
+# Mixing_Rule
+custom
+SI_s1 O_s1     0.00   0.0
+SI_s1 CH4_s2    0.00   0.0
+SI_s1 CH3_s3    0.00   0.0
+SI_s1 CH2_s3    0.00   0.0
+O_s1  CH4_s2   96.50   3.6
+O_s1  CH3_s3   80.00   3.6
+O_s1  CH2_s3   58.00   3.6
+CH4_s2 CH3_s3  120.49   3.75
+CH4_s2 CH2_s3   83.40   3.83
+CH3_s3 CH2_s3   67.90   3.85
+!----------------
+
+# Seed_Info
+23854675077543  9309223567521
+!-------------------
+
+# Rcutoff_Low
+1.0
+!----------------
+
+# Pair_Energy
+true
+!-----------
+
+# Molecule_Files
+unitcell.mcf 1
+CH4.mcf 500
+C4H10.mcf 500
+!------------------------
+
+# Box_Info
+1
+orthogonal
+20.070   19.920   13.420
+!-------------------------
+
+# Temperature_Info
+300.0 
+!------------------
+
+# Chemical_Potential_Info
+-35.41  25.0
+!------------------------
+
+# Move_Probability_Info
+
+# Prob_Translation
+0.2
+0.0  2.0  2.0  
+
+# Prob_Rotation
+0.2
+0.0  0.0 180.0 
+
+# Prob_Regrowth
+0.2
+0.0  0.0  1  
+
+# Prob_Insertion
+0.2
+none cbmc cbmc
+
+# Prob_Deletion
+0.2
+
+# Done_Probability_Info
+!----------------------
+
+# Start_Type
+add_to_config 1 0 0 unitcell.xyz 0 4 2
+!------------------
+
+# Run_Type
+equilibration   600  
+!------------------
+
+# Simulation_Length_Info
+units        steps
+prop_freq    400
+coord_freq   10000
+run          10000
+!----------------------------
+
+# Property_Info 1 
+energy_total
+nmols
+volume
+pressure
+!----------------
+
+# Fragment_Files
+species2/frag1/frag1.dat  1
+species3/frag1/frag1.dat  2
+species3/frag2/frag2.dat  3
+!---------------------------------------------------------one line per fragment
+
+# CBMC_Info
+kappa_ins 12
+kappa_dih 10
+rcut_cbmc 6.5
+!------------
+
+END

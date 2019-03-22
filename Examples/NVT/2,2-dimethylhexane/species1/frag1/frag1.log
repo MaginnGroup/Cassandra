@@ -1,0 +1,282 @@
+********************************************************************************
+                ______                                __                        
+               / ____/___ _______________ _____  ____/ /________ _              
+              / /   / __ `/ ___/ ___/ __ `/ __ \/ __  / ___/ __ `/              
+             / /___/ /_/ (__  |__  ) /_/ / / / / /_/ / /  / /_/ /               
+             \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                
+                                                                                
+********************************************************************************
+**********************************Log File**************************************
+********************************************************************************
+
+Run info
+********************************************************************************
+version: Cassandra Development Version
+inputfile: frag1.inp
+name of run: frag1
+date (mm/dd/yyyy): 03/03/2018
+time: 20:40:03
+machine: Matthews-MacBook-Pro.local
+********************************************************************************
+
+Verbose log
+********************************************************************************
+Normal output to logfile
+********************************************************************************
+
+Simulation type
+********************************************************************************
+NVT_MC_Fragment     
+********************************************************************************
+
+Copy input file
+********************************************************************************
+# Run_Name                                                                      
+frag1                                                                           
+                                                                                
+# Sim_Type                                                                      
+NVT_MC_Fragment                                                                 
+                                                                                
+# Nbr_Species                                                                   
+1                                                                               
+                                                                                
+# VDW_Style                                                                     
+lj minimum_image                                                                
+                                                                                
+# Rcutoff_Low                                                                   
+0.0                                                                             
+                                                                                
+# Molecule_Files                                                                
+../fragments/frag_1_1.mcf 1                                                     
+                                                                                
+# Box_Info                                                                      
+1                                                                               
+CUBIC                                                                           
+50.0 50.0 50.0                                                                  
+                                                                                
+# Temperature_Info                                                              
+450.0                                                                           
+                                                                                
+# Seed_Info                                                                     
+706111630 70611631                                                              
+                                                                                
+# Move_Probability_Info                                                         
+# Prob_Translation                                                              
+1.0                                                                             
+0.2 10.0                                                                        
+1.0                                                                             
+# Done_Probability_Info                                                         
+                                                                                
+# Start_Type                                                                    
+read_config 1 ../fragments/frag_1_1.xyz 1                                       
+                                                                                
+# Run_Type                                                                      
+Production 1000 10                                                              
+                                                                                
+# Simulation_Length_Info                                                        
+Units  Steps                                                                    
+prop_freq  10                                                                   
+coord_freq   90                                                                 
+run          1100                                                               
+nequilsteps  100                                                                
+                                                                                
+# File_Info                                                                     
+frag1.dat                                                                       
+                                                                                
+END                                                                             
+********************************************************************************
+
+Number of species
+********************************************************************************
+1
+********************************************************************************
+
+Box info
+********************************************************************************
+Number of simulation boxes     1
+Box 1 is CUBIC               
+ Each Side Of :       50.0000     Angstrom
+ Cell basis vector lengths in A,     50.0000      50.0000      50.0000
+ Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+ Distance between box faces    50.0000      50.0000      50.0000
+ Box volume, A^3        125000.0000
+********************************************************************************
+
+Pair style
+********************************************************************************
+VDW style used is:   LJ             in box:  1
+ VDW sum style is:   minimum_image  in box:  1
+ Minimum image convention used for VDW
+Section "# Charge_Style" is missing from the input file
+ By default, charge style for box 1 is NONE
+Section "# Pair_Energy" is missing from the input file
+ By default, pair interaction energy arrays will not be stored
+Section "# Mixing_Rule" is missing from the input file
+ By default, using Lorentz-Berthelot
+********************************************************************************
+
+Molecule info
+********************************************************************************
+ Reading molecular connectivity information
+ Species:            1
+ Molecular connectivity file: ../fragments/frag_1_1.mcf                                                                                               
+   5 atom(s) specified.
+   4 bond(s) specified.
+   6 angle(s) specified.
+   0 dihedral(s) specified.
+   0 improper(s) specified.
+
+ Species  Max molecules
+ -------  -------------
+      1              1
+
+ Species     1
+ -------------------------------------------------------------------------------
+ Atom parameters read
+ Bond parameters read
+ Angle parameters read
+ Dihedral parameters read
+ Improper parameters read
+ Intra molecule scaling factors for species            1
+  VDW 1-2 scaling factor       0.000
+  VDW 1-3 scaling factor       0.000
+  VDW 1-4 scaling factor       0.000
+  VDW 1-N scaling factor       1.000
+ -------------------------------------------------------------------------------
+********************************************************************************
+
+Start type
+********************************************************************************
+Initial configuration for box 1 will be read from file
+ Will read       1  molecules of species   1
+ Will read configuration from file ../fragments/frag_1_1.xyz
+********************************************************************************
+
+Seed info
+********************************************************************************
+The starting seeds are:    706111630     70611631
+********************************************************************************
+
+Temperature
+********************************************************************************
+Temperature of box 1 is 450.000 K
+********************************************************************************
+
+Move probabilities
+********************************************************************************
+Probability for translation                1.000000
+ Maximum width in cosine of polar angle is  0.20000000000000001     
+ Maximum width (degrees) in azimuthal angle is   10.000000000000000     
+Number of moves is :   1
+********************************************************************************
+
+Simulation length info
+********************************************************************************
+Thermodynamic quantities will be computed every        10 Steps     
+Coordinates will be written every                      90 Steps     
+ movie header file is                  frag1.H
+ movie_XYZ file is                     frag1.xyz
+The simulation will be run for                       1100 Steps     
+Number of equilibrium steps       100
+Instantaneous values will be written every             10 Steps     
+********************************************************************************
+
+File info
+********************************************************************************
+     Configuration file for species    1   is
+                          frag1.dat
+********************************************************************************
+
+Run type
+********************************************************************************
+ The input run type is Production
+ Update frequency is         1000
+********************************************************************************
+
+********************************************************************************
+************************ Begin Cassandra simulation ****************************
+********************************************************************************
+
+Initial configuration
+********************************************************************************
+ Reading configuration for box           1
+ Reading            1  molecules of species            1
+ Configurations read successfully
+********************************************************************************
+
+Compute total energy
+********************************************************************************
+
+ Energy components for box 1     kJ/mol-Extensive
+ ---------------------------------------------------------------------
+ Total system energy                     1587.802
+ Intra molecular energy                  1587.802
+   Bond energy                              0.000
+   Bond angle energy                     1587.802
+   Dihedral angle energy                    0.000
+   Improper angle energy                    0.000
+   Intra molecule vdw                       0.000
+   Intra molecule q                         0.000
+ Inter molecular energy                     0.000
+   Inter molecule vdw                       0.000
+   Inter molecule q                         0.000
+ ---------------------------------------------------------------------
+
+********************************************************************************
+
+Run simulation
+********************************************************************************
+      Step       Move   Mol Spc Box  Success  MaxWidth
+********************************************************************************
+
+Energy of final configuration
+********************************************************************************
+
+ Energy components for box 1     kJ/mol-Extensive       Relative_Error
+ ---------------------------------------------------------------------
+ Total system energy                        2.612            0.218E-14
+ Intra molecular energy                     2.612            0.218E-14
+   Bond energy                              0.000            0.000E+00
+   Bond angle energy                        2.612            0.112E-12
+   Dihedral angle energy                    0.000            0.000E+00
+   Improper angle energy                    0.000            0.000E+00
+   Intra molecule vdw                       0.000            0.000E+00
+   Intra molecule q                         0.000            0.000E+00
+ Inter molecular energy                     0.000            0.000E+00
+   Inter molecule vdw                       0.000            0.000E+00
+   Inter molecule q                         0.000            0.000E+00
+ ---------------------------------------------------------------------
+
+********************************************************************************
+
+
+Writing information for box  1
+********************************************************************************
+
+   ---------------------------------------------------------
+   Writing information for species  1
+
+                Move      Trials     Success   % Success
+   Atom Displacement        1100         306       27.82
+   ---------------------------------------------------------
+
+********************************************************************************
+
+ Writing information about subroutine times
+********************************************************************************
+********************************************************************************
+
+********************************************************************************
+************************ Cassandra simulation complete *************************
+********************************************************************************
+
+ Program execution time
+********************************************************************************
+         0      Years
+         0     Months
+         0       Days
+         0      Hours
+         0    Minutes
+         0    Seconds
+         8         ms
+********************************************************************************
