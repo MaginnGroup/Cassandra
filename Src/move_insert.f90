@@ -22,7 +22,7 @@
 SUBROUTINE Insertion
 
   !*****************************************************************************
-  !
+  ! 
   ! PURPOSE: attempt to insert a molecule via configurational bias monte carlo
   !
   ! Called by
@@ -35,11 +35,11 @@ SUBROUTINE Insertion
   !   Version 1.1
   !     04/21/15  Corrected acceptance criteria
   !     05/01/15  Documented this code
-  !
+  !   
   ! DESCRIPTION: This subroutine performs the following steps:
   !
   ! Step 1) Select a species with uniform probability
-  ! Step 2) Choose a position, orientation and conformation for the
+  ! Step 2) Choose a position, orientation and conformation for the 
   !         to-be-inserted molecule
   ! Step 3) Calculate the change in potential energy if the molecule is inserted
   ! Step 4) Accept or reject the move
@@ -101,7 +101,7 @@ SUBROUTINE Insertion
   !*****************************************************************************
   !
   ! All species may not be insertable. For example, in a simulation of dilute
-  ! water (species 3) and CO2 (species 4) in an ionic liquid (species 1 and 2),
+  ! water (species 3) and CO2 (species 4) in an ionic liquid (species 1 and 2), 
   ! the number of ionic liquid molecules may be fixed and only the numbers of
   ! water and CO2 allowed to fluctuate. First, choose a random integer between 1
   ! and the number of insertable species, nspec_insert:
@@ -111,14 +111,14 @@ SUBROUTINE Insertion
   ! is_rand == 2 a CO2 molecule will be inserted. CO2 corresponds to 'is' == 4.
   is_counter = 0
   DO is = 1, nspecies
-     IF(species_list(is)%int_species_type == int_sorbate) THEN
+     IF(species_list(is)%int_species_type == int_sorbate) THEN 
         is_counter = is_counter + 1
      END IF
      IF(is_counter == is_rand) EXIT ! exit the loop when 'is' has been found
   END DO
   ! In the given example, now 'is' would equal 4.
 
-  ! Each species has a maximum allowable number of molecules specified in the
+  ! Each species has a maximum allowable number of molecules specified in the 
   ! input file. The number of molecules currently in the system is
   tot_mols = SUM(nmols(is,1:nbr_boxes)) ! summed over the number of boxes
 
@@ -126,7 +126,7 @@ SUBROUTINE Insertion
   IF (tot_mols == max_molecules(is)) THEN
      err_msg = ""
      err_msg(1) = 'Number of molecule exceeds limit of ' // &
-                  Int_To_String(tot_mols)
+                  Int_To_String(tot_mols) 
      err_msg(2) = 'Increase molecule number limit in input file '
      CALL Clean_Abort(err_msg,'Insertion')
      ! exit if we are attempting an insertion above the maximum allowable
@@ -152,14 +152,14 @@ SUBROUTINE Insertion
   molecule_list(lm,is)%molecule_type = int_normal
 
   ! With the bookkeeping completed, we are ready to attempt the insertion
-
+  
   !*****************************************************************************
-  ! Step 2) Choose a position, orientation and conformation for the
+  ! Step 2) Choose a position, orientation and conformation for the 
   !         to-be-inserted molecule
   !*****************************************************************************
   !
   ! Build_Molecule places the first fragment, then calls Fragment_Placement
-  ! to place the additional fragments
+  ! to place the additional fragments 
   del_flag = .FALSE.     ! Change the coordinates of 'lm'
   get_fragorder = .TRUE.
   ALLOCATE(frag_order(nfragments(is)))
@@ -171,10 +171,10 @@ SUBROUTINE Insertion
   molecule_list(lm,is)%live = .TRUE.
   atom_list(:,lm,is)%exist = .TRUE.
 
-  ! So far ln_pbias includes
-  !   * the probability of choosing the insertion
-  !     point from the collection of trial coordinates
-  !   * the probability of choosing each dihedral from the collection of trial dihedrals.
+  ! So far ln_pbias includes 
+  !   * the probability of choosing the insertion 
+  !     point from the collection of trial coordinates 
+  !   * the probability of choosing each dihedral from the collection of trial dihedrals. 
   ! Now add
   !   * the probability of the fragment sequence, ln_pseq
   !   * the number of trial coordinates, kappa_ins
@@ -202,12 +202,12 @@ SUBROUTINE Insertion
   !   3.3) Bonded intramolecular energies
   !   3.4) Ewald energies
   !   3.5) Long-range energy correction
-  !
+  ! 
   ! 3.1) Nonbonded energies
-  ! If the inserted molecule overlaps cores with any other molecule in
-  ! the system, the move will be rejected. If the inserted molecule was grown
+  ! If the inserted molecule overlaps cores with any other molecule in  
+  ! the system, the move will be rejected. If the inserted molecule was grown 
   ! via CBMC and all attempted configurations overlapped cores, the cbmc_overlap
-  ! flag equals .TRUE. If the molecule was inserted randomly, we still need to
+  ! flag equals .TRUE. If the molecule was inserted randomly, we still need to 
   ! detect core overlaps.
 
   IF (.NOT. cbmc_overlap) THEN
@@ -231,12 +231,12 @@ SUBROUTINE Insertion
     CALL Compute_Molecule_Nonbond_Intra_Energy(lm,is, &
             E_intra_vdw,E_intra_qq,E_periodic_qq,intra_overlap)
     E_inter_qq = E_inter_qq + E_periodic_qq
-
+ 
   END IF
 
   ! 3.3) Reject the move if there is any core overlap
   IF (cbmc_overlap .OR. inter_overlap .OR. intra_overlap) THEN
-     ! reject the insertion
+     ! reject the insertion 
      locate(nmols(is,ibox),is,ibox) = 0
      nmols(is,ibox) = nmols(is,ibox) - 1
      molecule_list(lm,is)%live = .FALSE.
@@ -246,7 +246,7 @@ SUBROUTINE Insertion
      ! move locate to the list of unused locates
      nmols(is,0) = nmols(is,0) + 1
      locate(nmols(is,0),is,0) = lm
-
+     
      IF (verbose_log) THEN
        WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,A9)') &
              i_mcstep, 'insert' , lm, is, ibox, .FALSE., 'overlap'
@@ -258,11 +258,11 @@ SUBROUTINE Insertion
   ! There are no overlaps, so we can calculate the change in potential energy.
   !
   ! Already have the change in nonbonded energies
-  dE_inter = E_inter_vdw + E_inter_qq
+  dE_inter = E_inter_vdw + E_inter_qq 
   dE_intra = E_intra_vdw + E_intra_qq
 
   ! 3.4) Bonded intramolecular energies
-  ! If the molecule was grown via CBMC, we already have the intramolecular
+  ! If the molecule was grown via CBMC, we already have the intramolecular 
   ! bond energies? Otherwise we need to compute them.
   CALL Compute_Molecule_Bond_Energy(lm,is,E_bond)
   CALL Compute_Molecule_Angle_Energy(lm,is,E_angle)
@@ -277,12 +277,12 @@ SUBROUTINE Insertion
 
         IF ( (int_charge_sum_style(ibox) == charge_ewald) .AND. &
              has_charge(is) ) THEN
-
+       
            CALL Update_System_Ewald_Reciprocal_Energy(lm,is,ibox, &
                    int_insertion,E_reciprocal)
 
             dE_inter = dE_inter + (E_reciprocal - energy(ibox)%reciprocal)
-
+           
         END IF
 
         CALL Compute_Molecule_Self_Energy(lm,is,ibox,E_self)
@@ -314,7 +314,7 @@ SUBROUTINE Insertion
   !
   ! The following quantity is calculated
   !
-  !                  p_m a_mn
+  !                  p_m a_mn 
   !    ln_pacc = Log[--------]
   !                  p_n a_nm
   !
@@ -322,7 +322,7 @@ SUBROUTINE Insertion
   ! The acceptance criterion to insert a molecule via CBMC is
   !
   !                                                       (N + 1) Lambda^3
-  !    ln_pacc = b(dU_mn-U_frag) - b mu' + ln_pbias + Log[-----------------]
+  !    ln_pacc = b(dU_mn-U_frag) - b mu' + ln_pbias + Log[-----------------]  
   !                                                              V
   !
   ! where the primes (') indicate that additional intensive terms have been
@@ -349,9 +349,9 @@ SUBROUTINE Insertion
   ELSE
      ln_pacc = ln_pacc - DLOG(box_list(ibox)%inner_volume)
   END IF
-
+  
   accept = accept_or_reject(ln_pacc)
-
+  
   IF (accept) THEN
      ! accept the insertion
 
@@ -390,7 +390,7 @@ SUBROUTINE Insertion
      nsuccess(is,ibox)%insertion = nsuccess(is,ibox)%insertion + 1
 
   ELSE
-     ! reject the insertion
+     ! reject the insertion 
      locate(nmols(is,ibox),is,ibox) = 0
      nmols(is,ibox) = nmols(is,ibox) - 1
      molecule_list(lm,is)%live = .FALSE.
@@ -400,7 +400,7 @@ SUBROUTINE Insertion
      ! move locate to the list of unused locates
      nmols(is,0) = nmols(is,0) + 1
      locate(nmols(is,0),is,0) = lm
-
+     
      IF ( int_charge_sum_style(ibox) == charge_ewald .AND. &
           has_charge(is) ) THEN
         ! Restore cos_sum and sin_sum. Note that these were changed when the
