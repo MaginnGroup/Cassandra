@@ -24,19 +24,19 @@ SUBROUTINE Translate
 !*******************************************************************************
 
   !*****************************************************************************
-  ! This subroutine performs a COM translation move for a randomly chosen
+  ! This subroutine performs a COM translation move for a randomly chosen 
   ! molecule.
   !
-  !
-  ! CALLED BY
+  ! 
+  ! CALLED BY 
   !
   !        gcmc_driver
   !        gemc_driver
   !        nptmc_driver
   !        nvtmc_driver
-  !
+  ! 
   ! CALLS
-  !
+  !     
   !        Get_Index_Molecule
   !        Store_Molecule_Pair_Interaction_Arrays
   !        Compute_Molecule_Nonbond_Inter_Energy
@@ -93,7 +93,7 @@ SUBROUTINE Translate
   inter_overlap = .FALSE.
   accept = .FALSE.
 
-  ! Sum the total number of molecules
+  ! Sum the total number of molecules 
   nmols_tot = 0 ! sum over species, box
   DO ibox = 1, nbr_boxes
     nmols_box(ibox) = 0
@@ -124,7 +124,7 @@ SUBROUTINE Translate
           x_box(ibox) = x_box(ibox) + x_box(ibox-1)
        END IF
     END DO
-
+  
     randno = rranf()
     DO ibox = 1, nbr_boxes
        IF ( randno <= x_box(ibox)) EXIT
@@ -205,7 +205,7 @@ SUBROUTINE Translate
 
   ! Generate a random displacement vector. Note that the current formalism will
   ! work for cubic shaped boxes. However, it is easy to extend for nonorthorhombic
-  ! boxes where displacements along the basis vectors.
+  ! boxes where displacements along the basis vectors. 
   dx = ( 2.0_DP * rranf() - 1.0_DP) * max_disp(is,ibox)
   dy = ( 2.0_DP * rranf() - 1.0_DP) * max_disp(is,ibox)
   dz = ( 2.0_DP * rranf() - 1.0_DP) * max_disp(is,ibox)
@@ -222,11 +222,11 @@ SUBROUTINE Translate
 
   !**************************************************************************
   CALL Fold_Molecule(lm,is,ibox)
-
+  
   CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is,E_vdw_move,E_qq_move,inter_overlap)
   ! If an overlap is detected, immediately reject the move
   IF (inter_overlap) THEN ! Move is rejected
-
+    
      CALL Revert_Old_Cartesian_Coordinates(lm,is)
      IF (l_pair_nrg) CALL Reset_Molecule_Pair_Interaction_Arrays(lm,is,ibox)
 
@@ -243,7 +243,7 @@ SUBROUTINE Translate
 
         ALLOCATE(cos_mol_old(nvecs(ibox)),sin_mol_old(nvecs(ibox)))
         CALL Get_Position_Alive(lm,is,position)
-
+        
         !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
         cos_mol_old(:) = cos_mol(1:nvecs(ibox),position)
         sin_mol_old(:) = sin_mol(1:nvecs(ibox),position)
@@ -251,9 +251,9 @@ SUBROUTINE Translate
 
         CALL Update_System_Ewald_Reciprocal_Energy(lm,is,ibox,int_translation,E_reciprocal_move)
         dE = E_reciprocal_move - energy(ibox)%reciprocal
-
+        
      END IF
-
+     
      ! Compute the difference in old and new energy
      dE = dE + ( E_vdw_move - E_vdw ) + ( E_qq_move - E_qq )
 
@@ -275,7 +275,7 @@ SUBROUTINE Translate
         energy(ibox)%inter = energy(ibox)%inter + dE
         energy(ibox)%inter_vdw = energy(ibox)%inter_vdw + E_vdw_move - E_vdw
         energy(ibox)%inter_q   = energy(ibox)%inter_q   + E_qq_move  - E_qq
-
+        
         IF(int_charge_sum_style(ibox) == charge_ewald .AND. has_charge(is)) THEN
            energy(ibox)%reciprocal = E_reciprocal_move
         END IF
@@ -291,12 +291,12 @@ SUBROUTINE Translate
      ELSE
 
         ! Revert to the old coordinates of atoms and com of the molecule
-        CALL Revert_Old_Cartesian_Coordinates(lm,is)
+        CALL Revert_Old_Cartesian_Coordinates(lm,is) 
 
         IF ((int_charge_sum_style(ibox) == charge_ewald) .AND. (has_charge(is))) THEN
            ! Also reset the old cos_sum and sin_sum for reciprocal space vectors. Note
            ! that old vectors were set while difference in ewald reciprocal energy was computed.
-           !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+           !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)           
            cos_sum(:,ibox) = cos_sum_old(:,ibox)
            sin_sum(:,ibox) = sin_sum_old(:,ibox)
            cos_mol(1:nvecs(ibox),position) =cos_mol_old(:)
@@ -306,7 +306,7 @@ SUBROUTINE Translate
         END IF
         IF (l_pair_nrg)  CALL Reset_Molecule_Pair_Interaction_Arrays(lm,is,ibox)
      ENDIF
-
+     
      IF (verbose_log) THEN
        WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,F9.3)') &
              i_mcstep, 'translate' , lm, is, ibox, accept, ln_pacc
@@ -315,7 +315,7 @@ SUBROUTINE Translate
   END IF
 
   IF ( MOD(ntrials(is,ibox)%displacement,nupdate) == 0 ) THEN
-     IF ( int_run_type == run_equil ) THEN
+     IF ( int_run_type == run_equil ) THEN 
         success_ratio = REAL(nequil_success(is,ibox)%displacement,DP)/REAL(nupdate,DP)
      ELSE
         success_ratio = REAL(nsuccess(is,ibox)%displacement,DP)/REAL(ntrials(is,ibox)%displacement,DP)
@@ -345,7 +345,7 @@ SUBROUTINE Translate
          END IF
 
          WRITE(logunit,'(X,F9.5)',ADVANCE='NO') max_disp(is,ibox)
-
+        
      END IF
 
      WRITE(logunit,*)
