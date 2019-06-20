@@ -15,7 +15,7 @@
 4. [Getting Started](#starting)
 5. [Documentation](https://cassandra.nd.edu/index.php/documentation)
 6. [Forum](https://cassandra.nd.edu/index.php/community)
-7. [Contribute] (#contributing)
+7. [Contribute](#contributing)
 8. [Citation](#citation)
 
 
@@ -69,8 +69,8 @@ https://github.com/MaginnGroup/Cassandra.git
 ```
 
 The ```/Src/``` directory contains the Makefiles that you can use to compile the code. Makefiles contain the compilation options and set of directives used to automate the build. At present, Makefiles for the
-Intel Fortran Compiler (12.1), gfortran i4.4.7 20120313 (Red Hat 4.4.7-4) and
-Portland group compiler (PGI) (14.6) are included in the distribution.
+Intel Fortran Compiler, gfortran and
+Portland group compiler (PGI) are included in the distribution.
 
 To compile Cassandra, first remove any object files using the 'clean' command
 
@@ -94,33 +94,33 @@ edited. You can also modify the optimization options to
 improve the speed of the code or operate in debug mode.
 
 Before running the openMP enabled executable, the environment variable
-OMP_NUM_THREADS will have to be set to the number of cores you want to
-run the simulation on. For example, for 12-core simulation, the
+OMP_NUM_THREADS will have to be set to the number of threads you want to
+run the simulation on. For example, for 12-thread simulation, the
 following command is used in tcsh.
 
 ```> setenv OMP_NUM_THREADS 12```
 
 ## <a name="started"></a> Getting Started
 
-**Examples**. This directory contains examples of short Cassandra simulations in
+**/Examples**. This directory contains examples of short Cassandra simulations in
 NVT, NPT, grand canonical and Gibbs ensembles for a number of systems molecules with varying degrees
 of conformational complexity (LJ particles, branch points, ring moieties) and
 those requiring computation of electrostatic interactions are included.
 
-**Documentation**. Chapter 3 of the [documentation](https://cassandra.nd.edu/index.php/documentation/) provides an overview of the files and workflow to setup a Cassandra simulation. Additionally, the [workshop materials](https://cassandra.nd.edu/index.php/documentation) contain more examples and slides that have been used for teaching.
+**/Documentation**. Chapter 3 of the [documentation](https://cassandra.nd.edu/index.php/documentation/) provides an overview of the files and workflow to setup a Cassandra simulation. Additionally, the [workshop materials](https://cassandra.nd.edu/index.php/documentation) contain more examples and slides that have been used for teaching.
 
 ## <a name="contributing"></a> Contributing
 
 Depending on whether you are a user or a developer, you can contribute to Cassandra in the following ways:
 
 1. **User**
-    - Ask usage questions and participating in discussions using the forum (https://cassandra.nd.edu/index.php/community).
-    - Request new features using the forum (https://cassandra.nd.edu/index.php/community).
-    - Reporting bugs using GitHub issues (preferred) or forum (https://cassandra.nd.edu/index.php/community).
+    - Ask usage questions and participating in discussions using the [forum](https://cassandra.nd.edu/index.php/community).
+    - Request new features using the [forum](https://cassandra.nd.edu/index.php/community).
+    - Reporting bugs using GitHub issues (preferred) or [forum](https://cassandra.nd.edu/index.php/community).
 
 2. **Developer**
-    - Contribute code or documentation using GitHub pull request workflow. See a primer on Cassandra Software Development on GitHub. See CONTRIBUTING.md for more details on the contributing process.
-    - Ask development questions (i.e. you are trying to fix a bug or contribute with a new feature) using Slack (https://cassandra-nd.slack.com/messages/general/). 
+    - Contribute code or documentation using GitHub pull request workflow. See a primer on Cassandra Software Development on GitHub. See [CONTRIBUTING](https://github.com/MaginnGroup/Cassandra/blob/develop/CONTRIBUTING.md) for more details on the contributing process.
+    - Ask development questions (i.e. you are trying to fix a bug or contribute with a new feature) using [Slack](https://cassandra-nd.slack.com/messages/general/). 
 
 ## <a name="citation"></a> Citation
 
