@@ -33,7 +33,7 @@ You can contribute to the development of Cassandra by:
 Version control using Git and GitHub
 ====================================
 
-Cassandra bleeding-edge version is hosted on GitHub. We prefer to receive contributions 
+We prefer to receive contributions 
 in the form of GitHub pull requests. Please send pull requests against the
 master branch of the [authoritative repository](https://github.com/MaginnGroup/Cassandra/).
 
@@ -43,7 +43,7 @@ sources:
 
 1. Cassandra GitHub contribution process.
 1. [Numpy's source contribution process](https://docs.scipy.org/doc/numpy/dev/gitwash/index.html).
-1. [How to contribute to an open source project con 
+1. [How to contribute to an open source project 
 Github videos](https://egghead.io/series/how-to-contribute-to-an-open-source-project-on-github).
 1. [MolSSI's introduction to software development best practices](https://molssi-education.github.io/CMS-Python-DevOps/) chapter 2 and 4.
 
