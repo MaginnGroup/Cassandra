@@ -15,7 +15,7 @@
 4. [Getting Started](#starting)
 5. [Documentation](https://cassandra.nd.edu/index.php/documentation)
 6. [Forum](https://cassandra.nd.edu/index.php/community)
-7. [Contribute]
+7. [Contribute] (#contributing)
 8. [Citation](#citation)
 
 
@@ -108,6 +108,19 @@ of conformational complexity (LJ particles, branch points, ring moieties) and
 those requiring computation of electrostatic interactions are included.
 
 **Documentation**. Chapter 3 of the [documentation](https://cassandra.nd.edu/index.php/documentation/) provides an overview of the files and workflow to setup a Cassandra simulation. Additionally, the [workshop materials](https://cassandra.nd.edu/index.php/documentation) contain more examples and slides that have been used for teaching.
+
+## <a name="contributing"></a> Contributing
+
+Depending on whether you are a user or a developer, you can contribute to Cassandra in the following ways:
+
+1. **User**
+    - Ask usage questions and participating in discussions using the forum (https://cassandra.nd.edu/index.php/community).
+    - Request new features using the forum (https://cassandra.nd.edu/index.php/community).
+    - Reporting bugs using GitHub issues (preferred) or forum (https://cassandra.nd.edu/index.php/community).
+
+2. **Developer**
+    - Contribute code or documentation using GitHub pull request workflow. See a primer on Cassandra Software Development on GitHub. See CONTRIBUTING.md for more details on the contributing process.
+    - Ask development questions (i.e. you are trying to fix a bug or contribute with a new feature) using Slack (https://cassandra-nd.slack.com/messages/general/). 
 
 ## <a name="citation"></a> Citation
 
