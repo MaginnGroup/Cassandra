@@ -28,15 +28,15 @@ MODULE Read_Write_Checkpoint
   ! in the reading subroutine. This will be the case when additional information
   ! is written for various ensembles.
   !
-  ! Revision History: 
-  ! 12/10/13  :: Beta version 
+  ! Revision History:
+  ! 12/10/13  :: Beta version
   !**************************************************************************
   USE Global_Variables
   USE File_Names
   USE Simulation_Properties
   USE Random_Generators, ONLY : s1,s2,s3,s4,s5, rranf
   USE IO_Utilities
-  
+
   IMPLICIT NONE
 
 CONTAINS
@@ -45,7 +45,7 @@ CONTAINS
 
     INTEGER :: ibox, is, ii, jj, im, this_im, ia, nmolecules_is, this_box
     INTEGER :: total_molecules_is, this_unit, position
-    
+
     LOGICAL :: lopen
     REAL(DP) :: this_lambda = 1.0_DP
 
@@ -69,7 +69,7 @@ CONTAINS
           WRITE(chkptunit,'(E24.15)',ADVANCE='NO') max_disp(is,ibox)
           WRITE(chkptunit,'(E24.15)',ADVANCE='NO') max_rot(is,ibox)
           WRITE(chkptunit,'(E24.15)') species_list(is)%max_torsion
-          
+
        END DO
 
        IF ( int_sim_type == sim_npt .OR. int_sim_type == sim_gemc .OR. &
@@ -77,11 +77,11 @@ CONTAINS
           WRITE(chkptunit,*) nvol_success(ibox), nvolumes(ibox)
        END IF
     END DO
-    
+
     WRITE(chkptunit,*) '********** # of MC steps *********'
     WRITE(chkptunit,*) i_mcstep
     WRITE(chkptunit,*) '******** Box info ***********'
-    
+
     DO ibox = 1, nbr_boxes
        WRITE(chkptunit,*) tot_trials(ibox)
        WRITE(chkptunit,*) box_list(ibox)%volume
@@ -89,7 +89,7 @@ CONTAINS
        DO ii = 1, 3
           WRITE(chkptunit,'(3(F10.4,1X))') (box_list(ibox)%length(ii,jj), jj=1,3)
        END DO
-       
+
        !--- inverse length
        DO ii = 1, 3
           WRITE(chkptunit,'(3(E12.5,1X))') (box_list(ibox)%length_inv(ii,jj), jj=1,3)
@@ -99,27 +99,27 @@ CONTAINS
             int_sim_type == sim_gemc_npt )  THEN
 
          WRITE(chkptunit,*) box_list(ibox)%dv_max
-          
+
        END IF
-       
+
     END DO
 
     WRITE(chkptunit,*) '**** SEEDS *******'
     WRITE(chkptunit,*) s1,s2,s3,s4,s5
-    
+
     WRITE(chkptunit,*) '******* Info for total number of molecules'
     ! write number of molecules of each of the species
     DO is = 1, nspecies
        WRITE(chkptunit,*) is, SUM(nmols(is,1:nbr_boxes))
     END DO
-    
-    
+
+
     WRITE(chkptunit,*) '******* Writing coordinates for all the boxes'
-    
+
     DO is = 1, nspecies
        DO ibox = 1, nbr_boxes
           DO im = 1, nmols(is,ibox)
-             
+
              this_im = locate(im,is,ibox)
              this_box = molecule_list(this_im,is)%which_box
 
@@ -131,13 +131,13 @@ CONTAINS
                      atom_list(ia,this_im,is)%rzp, &
                      this_box
              END DO
-             
+
           END DO
        END DO
     END DO
 
     CLOSE(unit=chkptunit)
-    
+
   END SUBROUTINE Write_Checkpoint
 
 !*******************************************************************************
@@ -164,7 +164,7 @@ SUBROUTINE Read_Checkpoint
     ALLOCATE(n_int(nspecies))
     IF(.NOT. ALLOCATED(ntrials)) ALLOCATE(ntrials(nspecies,nbr_boxes))
     IF(.NOT. ALLOCATED(tot_trials)) ALLOCATE(tot_trials(nbr_boxes))
-    
+
     INQUIRE(file=restart_file,opened=lopen)
     IF (lopen) INQUIRE(file=restart_file, number = this_unit)
     IF (lopen) CLOSE(unit=this_unit)
@@ -174,7 +174,7 @@ SUBROUTINE Read_Checkpoint
     ! each of the species in all the boxes
     nmols(:,:) = 0
     n_int(:) = 0
-    
+
     READ(restartunit,*)
 
     DO ibox = 1, nbr_boxes
@@ -182,9 +182,9 @@ SUBROUTINE Read_Checkpoint
 
        DO is = 1, nspecies
           WRITE(logunit,'(X,A)') 'Reading move parameters for species ' // TRIM(Int_To_String(is))
-          
+
           ! read information only if start_type == checkpoint
-          
+
           READ(restartunit,'(5(I10,1x))') this_species, &
                ntrials(is,ibox)%displacement, &
                ntrials(is,ibox)%rotation, &
@@ -211,7 +211,7 @@ SUBROUTINE Read_Checkpoint
           END IF
 
        END DO
-       
+
        IF ( int_sim_type == sim_npt .OR. int_sim_type == sim_gemc .OR. &
             int_sim_type == sim_gemc_npt ) THEN
 
@@ -220,41 +220,41 @@ SUBROUTINE Read_Checkpoint
        END IF
     END DO
     WRITE(logunit,*) 'Species move info read successfully'
-    
+
     READ(restartunit,*)
     READ(restartunit,*) initial_mcstep
-    READ(restartunit,*) 
+    READ(restartunit,*)
     WRITE(logunit,*) 'Initial MC step is ' // TRIM(Int_To_String(initial_mcstep))
-    
+
     DO ibox = 1, nbr_boxes
        WRITE(logunit,'(X,A)') 'Reading info for box ' // TRIM(Int_To_String(ibox))
 
        READ(restartunit,*) tot_trials(ibox)
        READ(restartunit,*) box_list(ibox)%volume
        READ(restartunit,*) box_list(ibox)%box_shape
-       
+
        DO ii = 1, 3
           READ(restartunit,*) (box_list(ibox)%length(ii,jj), jj=1,3)
        END DO
-       
+
        !--- inverse length
        DO ii = 1, 3
           READ(restartunit,*) (box_list(ibox)%length_inv(ii,jj), jj=1,3)
        END DO
 
        CALL Compute_Cell_Dimensions(ibox)
-                    
+
        IF ( int_sim_type == sim_npt .OR. int_sim_type == sim_gemc .OR. &
             int_sim_type == sim_gemc_npt ) THEN
-          
+
           READ(restartunit,*) box_list(ibox)%dv_max
           WRITE(logunit,'(2X,A,T24,F9.0)') 'max volume change', box_list(ibox)%dv_max
 
        END IF
-       
+
     END DO
     WRITE(logunit,*) 'Box info read successfully'
-    
+
     READ(restartunit,*)
     READ(restartunit,*) s1,s2,s3,s4,s5
     WRITE(logunit,*) 'Seed info read successfully'
@@ -265,13 +265,13 @@ SUBROUTINE Read_Checkpoint
        READ(restartunit,*) this_species, sp_nmoltotal(is)
     END DO
     WRITE(logunit,*) 'Number of molecules read successfully'
-    
+
     READ(restartunit,*)
-    
+
     DO is = 1, nspecies
 
        DO im = 1, sp_nmoltotal(is)
-          
+
           ! provide a linked number to this molecule
           molecule_list(im,is)%live = .TRUE.
 
@@ -292,7 +292,7 @@ SUBROUTINE Read_Checkpoint
           molecule_list(im,is)%which_box = this_box
           nmols(is,this_box) = nmols(is,this_box) + 1
           locate(nmols(is,this_box),is,this_box) = SUM(nmols(is,1:nbr_boxes))
-                
+
           molecule_list(im,is)%frac = this_lambda
 
        END DO
@@ -310,11 +310,11 @@ SUBROUTINE Read_Checkpoint
        END IF
     END DO
 
-       
+
     CALL Get_Internal_Coords
-    
+
     ! Calculate COM and distance of the atom farthest to the COM.
-    
+
     DO ibox = 1, nbr_boxes
        DO is = 1, nspecies
           DO im = 1, nmols(is,ibox)
@@ -323,17 +323,17 @@ SUBROUTINE Read_Checkpoint
              ! Now let us ensure that the molecular COM is inside the central simulation box
              !
              CALL Get_COM(this_im,is)
-             
+
              xcom_old = molecule_list(this_im,is)%xcom
              ycom_old = molecule_list(this_im,is)%ycom
              zcom_old = molecule_list(this_im,is)%zcom
-             
+
              ! Apply PBC
 
              this_box = molecule_list(this_im,is)%which_box
 
              IF (l_cubic(this_box)) THEN
-                
+
                 CALL Apply_PBC_Anint(this_box,xcom_old,ycom_old,zcom_old, &
                      xcom_new, ycom_new, zcom_new)
 
@@ -342,37 +342,37 @@ SUBROUTINE Read_Checkpoint
 !!$                        atom_list(1,this_im,is)%rzp
 !!$                END IF
 !!$                write(*,*) 'cubic'
-                
+
              ELSE
-                
+
                 CALL Minimum_Image_Separation(this_box,xcom_old,ycom_old,zcom_old, &
                      xcom_new, ycom_new, zcom_new)
 
 !                write(*,*) 'minimum'
-                
+
              END IF
-             
+
              ! COM in the central simulation box
-             
+
              molecule_list(this_im,is)%xcom = xcom_new
              molecule_list(this_im,is)%ycom = ycom_new
              molecule_list(this_im,is)%zcom = zcom_new
-             
+
              ! displace atomic coordinates
-             
+
              atom_list(1:natoms(is),this_im,is)%rxp = atom_list(1:natoms(is),this_im,is)%rxp + &
                   xcom_new - xcom_old
              atom_list(1:natoms(is),this_im,is)%ryp = atom_list(1:natoms(is),this_im,is)%ryp + &
                   ycom_new - ycom_old
              atom_list(1:natoms(is),this_im,is)%rzp = atom_list(1:natoms(is),this_im,is)%rzp + &
                   zcom_new - zcom_old
-             
+
              CALL Compute_Max_Com_Distance(this_im,is)
           END DO
        END DO
     END DO
-    
-    
+
+
     DO ibox = 1, nbr_boxes
        IF(int_vdw_sum_style(ibox) == vdw_cut_tail) CALL Compute_Beads(ibox)
     END DO
@@ -382,44 +382,44 @@ SUBROUTINE Read_Checkpoint
   END SUBROUTINE Read_Checkpoint
 
 !*******************************************************************************
-  
+
   SUBROUTINE Read_Config(ibox)
     !***************************************************************************
-    ! The subroutine reads in a configuration to start a new simulation run. 
+    ! The subroutine reads in a configuration to start a new simulation run.
     ! The format of the input
     ! file is identical to the checkpoint file in terms of atomic coordinates.
     !
     !
     !****************************************************************************
-    
+
     IMPLICIT NONE
-    
+
     ! Input
     INTEGER :: ibox
 
     ! Local
     INTEGER :: is, im, ia, nstart, nend, this_im, mols_this, nfrac_global, i, alive, j, this_rxnum
     INTEGER :: alive_new, counter, m, i_lambda, locate_base
-    
+
     REAL(DP) :: this_lambda
     REAL(DP) :: E_recip, E_self, E_intra
     REAL(DP) :: E_old, xcom_old, ycom_old, zcom_old
     REAL(DP) :: xcom_new, ycom_new, zcom_new
     LOGICAL :: overlap
-    
+
     Type(Energy_Class) :: inrg
 
     WRITE(logunit,*) 'Reading configuration for box', ibox
-  
+
     OPEN(unit = old_config_unit,file=old_config_file(ibox))
 
     ! *.xyz format has two header lines
     READ(old_config_unit,*)
     READ(old_config_unit,*)
-    
+
     ! Read in the coordinates of the molecules
     DO is = 1, nspecies
-       
+
        WRITE(logunit,*) 'Reading ', nmols_to_read(is,ibox), &
           ' molecules of species ', is
 
@@ -432,23 +432,23 @@ SUBROUTINE Read_Checkpoint
           this_im = locate(im,is,ibox)
           molecule_list(this_im,is)%live = .TRUE.
           this_lambda = 1.0_DP
-          ! By default all the molecules are normal 
+          ! By default all the molecules are normal
           molecule_list(this_im,is)%molecule_type = int_normal
-          
+
           DO ia = 1, natoms(is)
-             
+
              READ(old_config_unit,*)nonbond_list(ia,is)%element, &
                   atom_list(ia,this_im,is)%rxp, &
                   atom_list(ia,this_im,is)%ryp, &
                   atom_list(ia,this_im,is)%rzp
              ! set the frac and exist flags for this atom
              molecule_list(this_im,is)%frac = this_lambda
-             atom_list(ia,this_im,is)%exist = .TRUE.                
-             
+             atom_list(ia,this_im,is)%exist = .TRUE.
+
           END DO
 
           ! assign the molecule the box id
-          
+
           molecule_list(this_im,is)%which_box = ibox
      ! Now let us ensure that the molecular COM is inside the central simulation box
        !
@@ -486,13 +486,13 @@ SUBROUTINE Read_Checkpoint
                atom_list(1:natoms(is),this_im,is)%rzp + zcom_new - zcom_old
 
           nmols(is,ibox) = nmols(is,ibox) + 1
-          
+
        END DO
-       
+
     END DO
 
     CLOSE(unit = old_config_unit)
-       
+
     CALL Get_Internal_Coords
 
     ! Calculate COM and distance of the atom farthest to the COM.
@@ -538,17 +538,17 @@ SUBROUTINE Write_Trials_Success
      END IF
 
      DO is = 1, nspecies
-        
-        WRITE(logunit,*) 
+
+        WRITE(logunit,*)
         WRITE(logunit,'(3X,A57)') '---------------------------------------------------------'
         WRITE(logunit,'(3X,A31,X,I2)') 'Writing information for species', is
         WRITE(logunit,*)
         WRITE(logunit,'(A20,2X,A10,2X,A10,2X,A10)') 'Move', 'Trials', 'Success', '% Success'
-        
+
         ! translation
 
         IF (ntrials(is,ibox)%displacement /= 0 ) THEN
-        
+
            WRITE(logunit,11) 'Translate', ntrials(is,ibox)%displacement, &
                 nsuccess(is,ibox)%displacement, &
                 100.0*dble(nsuccess(is,ibox)%displacement)/dble(ntrials(is,ibox)%displacement)
@@ -557,7 +557,7 @@ SUBROUTINE Write_Trials_Success
         ! rotation
 
         IF (ntrials(is,ibox)%rotation /= 0 ) THEN
-                                   
+
            WRITE(logunit,11) 'Rotate',  ntrials(is,ibox)%rotation, &
                 nsuccess(is,ibox)%rotation, &
                 100.0*dble(nsuccess(is,ibox)%rotation)/dble(ntrials(is,ibox)%rotation)
@@ -588,7 +588,7 @@ SUBROUTINE Write_Trials_Success
         ! insertion
 
         IF (ntrials(is,ibox)%insertion /= 0 ) THEN
-           
+
            WRITE(logunit,11) 'Insert',  ntrials(is,ibox)%insertion, &
                 nsuccess(is,ibox)%insertion, &
                 100.0*dble(nsuccess(is,ibox)%insertion)/dble(ntrials(is,ibox)%insertion)
@@ -597,29 +597,39 @@ SUBROUTINE Write_Trials_Success
         ! deletion
 
         IF (ntrials(is,ibox)%deletion /= 0 ) THEN
-           
+
            WRITE(logunit,11) 'Delete', ntrials(is,ibox)%deletion, &
                 nsuccess(is,ibox)%deletion, &
                 100.0*dble(nsuccess(is,ibox)%deletion)/dble(ntrials(is,ibox)%deletion)
 
         END IF
 
+        ! identity switch
+
+        IF (ntrials(is,ibox)%switch /= 0) THEN
+           WRITE(logunit,11) 'Identity Switch', ntrials(is,ibox)%switch, &
+              nsuccess(is,ibox)%switch, &
+              100.0*dble(nsuccess(is,ibox)%switch)/dble(ntrials(is,ibox)%switch)
+
+        END IF
+
         ! atom displacement
 
         IF (ntrials(is,ibox)%disp_atom /= 0 ) THEN
-           
+
            WRITE(logunit,11) 'Atom Displacement', ntrials(is,ibox)%disp_atom, &
                 nsuccess(is,ibox)%disp_atom, &
                 100.0*dble(nsuccess(is,ibox)%disp_atom)/dble(ntrials(is,ibox)%disp_atom)
 
         END IF
+
         WRITE(logunit,'(3X,A57)') '---------------------------------------------------------'
 
         WRITE(logunit,*)
       END DO
 
       WRITE(logunit,'(A80)') '********************************************************************************'
-        
+
    END DO
 
 11 FORMAT(A20,2x,I10,2x,I10,2x,f10.2)
@@ -631,18 +641,18 @@ SUBROUTINE Write_Trials_Success
         WRITE(logunit,*)
         WRITE(logunit,'(A)') 'Writing information about fragments'
         WRITE(logunit,'(A80)') '********************************************************************************'
-     
+
         DO is = 1, nspecies
-           
+
            IF (SUM(regrowth_trials(:,is)) .GT. 0) THEN
- 
+
               WRITE(logunit,*)
               WRITE(logunit,'(3X,A57)') '---------------------------------------------------------'
               WRITE(logunit,'(3X,A31,X,I2)') 'Writing information for species', is
               WRITE(logunit,'(A20,2x,A10,2x,A10,2X,A10)') '#_Frags_Regrown', 'Trials', 'Success', '% Success'
 
               DO ifrag = 1, nfragments(is)
-                 
+
                  IF (regrowth_trials(ifrag,is) /= 0 ) THEN
                     WRITE(logunit,12) ifrag,regrowth_trials(ifrag,is), &
                          regrowth_success(ifrag,is), &
@@ -651,7 +661,7 @@ SUBROUTINE Write_Trials_Success
               END DO
               WRITE(logunit,'(3X,A57)') '---------------------------------------------------------'
            END IF
-        
+
         END DO
         WRITE(logunit,'(A80)') '********************************************************************************'
 
@@ -671,13 +681,13 @@ WRITE(logunit,'(A80)') '********************************************************
 
 IF(movetime(imove_trans) .GT. 0.0_DP ) THEN
 
-   IF(movetime(imove_trans) .LT. 60.0_DP ) THEN 
+   IF(movetime(imove_trans) .LT. 60.0_DP ) THEN
         WRITE(logunit,'(1X,A,T25,F15.6,A)') &
        'Translation time = ', movetime(imove_trans), ' secs.'
    ELSE IF(movetime(imove_trans) .LT. 3600.0_DP ) THEN
         WRITE(logunit,'(1X,A,T25,F15.6,A)') &
        'Translation time = ', movetime(imove_trans) / 60.0_DP , ' mins.'
-   ELSE 
+   ELSE
         WRITE(logunit,'(1X,A,T25,F15.6,A)') &
        'Translation time = ', movetime(imove_trans) / 3600.0_DP , ' hrs.'
    END IF
@@ -692,7 +702,7 @@ IF(movetime(imove_rot) .GT. 0.0_DP ) THEN
    ELSE IF(movetime(imove_rot) .LT. 3600.0_DP ) THEN
         WRITE(logunit,'(1X,A,T25,F15.6,A)') &
        'Rotation time = ', movetime(imove_rot) / 60.0_DP , ' mins.'
-   ELSE 
+   ELSE
         WRITE(logunit,'(1X,A,T25,F15.6,A)') &
        'Rotation time = ', movetime(imove_rot) / 3600.0_DP , ' hrs.'
    END IF
@@ -707,7 +717,7 @@ IF(movetime(imove_dihedral) .GT. 0.0_DP ) THEN
    ELSE IF(movetime(imove_dihedral) .LT. 3600.0_DP ) THEN
         WRITE(logunit,'(1X,A,T25,F15.6,A)') &
        'Dihedral time = ', movetime(imove_dihedral) / 60.0_DP , ' mins.'
-   ELSE 
+   ELSE
         WRITE(logunit,'(1X,A,T25,F15.6,A)') &
        'Dihedral time = ', movetime(imove_dihedral) / 3600.0_DP , ' hrs.'
    END IF
@@ -722,7 +732,7 @@ IF(movetime(imove_angle) .GT. 0.0_DP ) THEN
    ELSE IF(movetime(imove_angle) .LT. 3600.0_DP ) THEN
         WRITE(logunit,'(1X,A,T25,F15.6,A)') &
        'Angle change time = ', movetime(imove_angle) / 60.0_DP , ' mins.'
-   ELSE 
+   ELSE
         WRITE(logunit,'(1X,A,T25,F15.6,A)') &
        'Angle change time = ', movetime(imove_angle) / 3600.0_DP , ' hrs.'
    END IF
@@ -737,7 +747,7 @@ IF(movetime(imove_volume) .GT. 0.0_DP ) THEN
    ELSE IF(movetime(imove_volume) .LT. 3600.0_DP ) THEN
         WRITE(logunit,'(1X,A,T25,F15.6,A)') &
        'Volume change time = ', movetime(imove_volume) / 60.0_DP , ' mins.'
-   ELSE 
+   ELSE
         WRITE(logunit,'(1X,A,T25,F15.6,A)') &
        'Volume change time = ', movetime(imove_volume) / 3600.0_DP , ' hrs.'
    END IF
@@ -752,7 +762,7 @@ IF(movetime(imove_insert) .GT. 0.0_DP ) THEN
    ELSE IF(movetime(imove_insert) .LT. 3600.0_DP ) THEN
         WRITE(logunit,'(1X,A,T25,F15.6,A)') &
        'Insertion time = ', movetime(imove_insert) / 60.0_DP , ' mins.'
-   ELSE 
+   ELSE
         WRITE(logunit,'(1X,A,T25,F15.6,A)') &
        'Insertion time = ', movetime(imove_insert) / 3600.0_DP , ' hrs.'
    END IF
@@ -767,7 +777,7 @@ IF(movetime(imove_swap) .GT. 0.0_DP ) THEN
    ELSE IF(movetime(imove_swap) .LT. 3600.0_DP ) THEN
         WRITE(logunit,'(1X,A,T25,F15.6,A)') &
        'Swap time = ', movetime(imove_swap) / 60.0_DP , ' mins.'
-   ELSE 
+   ELSE
         WRITE(logunit,'(1X,A,T25,F15.6,A)') &
        'Swap time = ', movetime(imove_swap) / 3600.0_DP , ' hrs.'
    END IF
@@ -782,7 +792,7 @@ IF(movetime(imove_delete) .GT. 0.0_DP ) THEN
    ELSE IF(movetime(imove_delete) .LT. 3600.0_DP ) THEN
         WRITE(logunit,'(1X,A,T25,F15.6,A)') &
        'Deletion time = ', movetime(imove_delete) / 60.0_DP , ' mins.'
-   ELSE 
+   ELSE
         WRITE(logunit,'(1X,A,T25,F15.6,A)') &
        'Deletion time = ', movetime(imove_delete) / 3600.0_DP , ' hrs.'
    END IF
@@ -795,9 +805,21 @@ IF(movetime(imove_regrowth) .GT. 0.0_DP ) THEN
    IF(movetime(imove_regrowth) .LT. 60.0_DP ) THEN
         WRITE(logunit,'(1X,A,T25,F15.6,A)') &
        'Regrowth time = ', movetime(imove_regrowth), ' secs.'
-   ELSE 
+   ELSE
         WRITE(logunit,'(1X,A,T25,F15.6,A)') &
        'Regrowth time = ', movetime(imove_regrowth) / 3600.0_DP , ' hrs.'
+   END IF
+
+END IF
+
+IF(movetime(imove_identity_switch) .GT. 0.0_DP ) THEN
+
+   IF(movetime(imove_identity_switch) .LT. 60.0_DP ) THEN
+        WRITE(logunit,'(1X,A,T25,F15.6,A)') &
+       'Regrowth time = ', movetime(imove_identity_switch), ' secs.'
+   ELSE
+        WRITE(logunit,'(1X,A,T25,F15.6,A)') &
+       'Regrowth time = ', movetime(imove_identity_switch) / 3600.0_DP , ' hrs.'
    END IF
 
 END IF
