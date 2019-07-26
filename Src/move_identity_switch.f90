@@ -51,7 +51,7 @@ SUBROUTINE Identity_Switch
    REAL(DP) :: dE_lrc, dE_lrc_i, dE_lrc_j
    REAL(DP), ALLOCATABLE :: cos_mol_old_i(:), sin_mol_old_i(:), cos_mol_old_j(:), sin_mol_old_j(:)
    REAL(DP), DIMENSION(:,:), ALLOCATABLE, TARGET :: cos_sum_old_idsw, sin_sum_old_idsw
-   INTEGER :: position_i, position_j
+   INTEGER :: position_i, position_j, locate_1, locate_2
 
    !acceptance variables
    REAL(DP) :: ln_pacc, success_ratio_i, success_ratio_j
@@ -206,6 +206,11 @@ SUBROUTINE Identity_Switch
             (/lm_i, lm_j/), (/is, js/), (/box_i, box_j/), box_nrg_vdw_temp, box_nrg_qq_temp)
          E_vdw = box_nrg_vdw_temp(1)
          E_qq = box_nrg_vdw_temp(1)
+         ! subtract off the energy of interaction between lm_i and lm_j
+         CALL Get_Position_Alive(lm_i, is, locate_1)
+         CALL Get_Position_Alive(lm_j, js, locate_2)
+         E_vdw = E_vdw - pair_nrg_vdw(locate_1,locate_2)
+         E_qq = E_qq - pair_nrg_qq(locate_1,locate_2)
          DEALLOCATE(box_nrg_vdw_temp, box_nrg_qq_temp)
       ELSE
          CALL Compute_MoleculeCollection_Nonbond_Inter_Energy(2, (/lm_i, lm_j/), (/is, js/), &
