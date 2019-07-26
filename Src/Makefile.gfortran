@@ -120,6 +120,7 @@ OBJS =  main.o \
   chempot.o \
   pair_nrg_variables.o \
   move_ring_flip.o \
+  move_identity_switch.o \
 
 
 ####################################################################

@@ -22,7 +22,7 @@
 !********************************************************************************
 MODULE Global_Variables
 !********************************************************************************
- 
+
   ! Written by: Ed Maginn
   ! Sept., 2007
 
@@ -68,7 +68,7 @@ USE Type_Definitions
   INTEGER, DIMENSION(8) :: values, begin_values,end_values
 
   ! Type of simulation to run:
-  ! Choices: NVT_MC 
+  ! Choices: NVT_MC
   CHARACTER(20) :: sim_type
   INTEGER :: int_sim_type
   INTEGER, PARAMETER :: sim_nvt = 0
@@ -87,7 +87,7 @@ USE Type_Definitions
 
   ! The starting seed for the random generator
   ! Note iseed is used for generating points on random sphere for MCF_Gen sim type.
- INTEGER (KIND=8) :: iseed, iseed1, iseed3 
+ INTEGER (KIND=8) :: iseed, iseed1, iseed3
 
   ! Variables associated with the nonbond potential
   CHARACTER(15) :: mix_rule, run_type
@@ -117,7 +117,7 @@ USE Type_Definitions
   INTEGER, PARAMETER :: charge_minimum = 4
   INTEGER, PARAMETER :: charge_dsf = 5
 
-  REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_cbmc 
+  REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_cbmc
   REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_vdw, rcut_coul, ron_charmm, roff_charmm, rcut_max
   REAL(DP), DIMENSION(:), ALLOCATABLE :: ron_switch, roff_switch, roff_switch_sq, switch_factor1
   REAL(DP), DIMENSION(:), ALLOCATABLE :: switch_factor2, ron_switch_sq
@@ -136,8 +136,8 @@ USE Type_Definitions
   REAL(DP), DIMENSION(:), ALLOCATABLE :: alpha_ewald, h_ewald_cut
   REAL(DP), DIMENSION(:), ALLOCATABLE :: alphal_ewald
   REAL(DP), DIMENSION(:), ALLOCATABLE :: ewald_p_sqrt, ewald_p
-  
- 
+
+
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: nint_beads
 
   ! Intramolecular exclusion variables (1-2, 1-3, 1-4 exclusions/scaling)
@@ -149,7 +149,7 @@ USE Type_Definitions
   REAL(DP), DIMENSION(:,:,:), ALLOCATABLE :: vdw_intra_scale, charge_intra_scale
   LOGICAL, DIMENSION(:,:,:), ALLOCATABLE :: l_bonded
 
-  ! How many simulation boxes we have. 
+  ! How many simulation boxes we have.
   INTEGER :: nbr_boxes
   INTEGER, PARAMETER :: int_cubic = 0
   INTEGER, PARAMETER :: int_ortho = 1
@@ -170,7 +170,7 @@ USE Type_Definitions
   ! Imsl
 
   INTEGER, PARAMETER :: irule = 3
-  
+
  !***************************************************************
   !Conversion factors and constants
 
@@ -201,7 +201,7 @@ USE Type_Definitions
   !Factor to conver atomic energy to K
   REAL(DP), PARAMETER :: atomic_to_K = 1.2027221933_DP
 
-  !Factor to convert kJ/mol to atomic energy (amu A^2/ ps^2) 
+  !Factor to convert kJ/mol to atomic energy (amu A^2/ ps^2)
   REAL(DP), PARAMETER :: kjmol_to_atomic = 100.0_DP
 
   !Factor to convert energy in (eV) to atomic energy (amu A^2/ps^2)
@@ -231,14 +231,14 @@ USE Type_Definitions
   INTEGER :: kappa_ins, kappa_rot, kappa_dih
 
   ! Parameters identifying move in Ewald calculations
-  
+
   INTEGER, PARAMETER :: int_insertion = 0
   INTEGER, PARAMETER :: int_deletion = 1
   INTEGER, PARAMETER :: int_translation = 2
   INTEGER, PARAMETER :: int_rotation = 3
   INTEGER, PARAMETER :: int_intra = 4
 
-  ! Parameter for species type 
+  ! Parameter for species type
 
   INTEGER, PARAMETER :: int_sorbate = 0
   INTEGER, PARAMETER :: int_solvent = 1
@@ -255,7 +255,7 @@ USE Type_Definitions
   INTEGER, PARAMETER :: int_charmm = 2
   INTEGER, PARAMETER :: int_harmonic = 3
   INTEGER, PARAMETER :: int_cvff = 4
-  INTEGER, PARAMETER :: int_amber = 5  
+  INTEGER, PARAMETER :: int_amber = 5
 
   ! Define integers for molecule type
   INTEGER, PARAMETER :: int_noexist = -1
@@ -265,15 +265,15 @@ USE Type_Definitions
 
   !**********************************************************************************
   ! thermodynamic state point variables
- 
+
   REAL(DP),DIMENSION(:),ALLOCATABLE,TARGET :: temperature, beta
   TYPE(Pressure_Class), DIMENSION(:), ALLOCATABLE, TARGET :: pressure
   LOGICAL :: need_pressure
-  
+
   ! **********************************************************************************
   ! system size integers used in memory allocation.
-  ! Number of species, molecules, atoms, bonds, angles, dihedrals and impropers should 
-  ! be kept as independent arrays  
+  ! Number of species, molecules, atoms, bonds, angles, dihedrals and impropers should
+  ! be kept as independent arrays
 
   INTEGER :: nspecies, nspec_insert
   INTEGER, DIMENSION(:), ALLOCATABLE :: n_igas, n_igas_update, n_igas_moves, nzovero ! integers for ideal gas reservoir
@@ -290,7 +290,7 @@ USE Type_Definitions
 
   ! array to hold ring atom ids and exo atom ids for a fragment
   ! will have (MAXVAL(natoms), nspecies) dimensions
-  
+
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: ring_atom_ids, exo_atom_ids
 
   ! force field parameter numbers - set in Input_Routines.
@@ -316,13 +316,13 @@ USE Type_Definitions
    INTEGER, DIMENSION(:), ALLOCATABLE :: frag_position_library
 
   ! **********************************************************************************
-  ! Basic data structures are in the form of arrays. Derived from 
+  ! Basic data structures are in the form of arrays. Derived from
 
   ! type classes defined in Type_Definitions.
 
   ! Array with dimension (nspecies)
   TYPE(Species_Class), DIMENSION(:), ALLOCATABLE, TARGET :: species_list
-    
+
   ! Array with dimensions (max_molecules,nspecies)
   TYPE(Molecule_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: molecule_list
   TYPE(Molecule_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: molecule_list_igas
@@ -341,16 +341,16 @@ USE Type_Definitions
 
   ! Array with dimensions (natoms, nspecies)
   TYPE(Nonbond_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: nonbond_list
-  
+
   ! Array with dimensions (nbonds, nspecies)
   TYPE(Bond_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: bond_list
-  
+
   ! Array with dimensions (nangles, nspecies)
   TYPE(Angle_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: angle_list
-  
+
   ! Array with dimensions (ndihedrals, nspecies)
   TYPE(Dihedral_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: dihedral_list
-  
+
   ! Array with dimensions (nimpropers, nspecies)
   TYPE(Improper_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: improper_list
 
@@ -368,7 +368,7 @@ USE Type_Definitions
 
   ! Array with dimension (nangles, nspecies)
   TYPE(Angle_Atoms_To_Place_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: angle_atoms_to_place_list
-  
+
   ! Array with dimension (ndihedrals, nspecies)
 
   TYPE(Dihedral_Atoms_To_Place_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: dihedral_atoms_to_place_list
@@ -389,7 +389,7 @@ USE Type_Definitions
   ! Array for storing the energy of each configuration of each fragment
   ! nrg_frag has dimension (number of fragment )
   TYPE(Energy_Fragment_Class), DIMENSION(:), ALLOCATABLE, TARGET :: nrg_frag
-  
+
 
 
 
@@ -400,7 +400,7 @@ USE Type_Definitions
   INTEGER, DIMENSION(:,:,:), ALLOCATABLE, TARGET :: locate
 
   ! Array with angle probability info with dimension (MAXVAL(nangles),nspecies)
-  
+
   TYPE(Angle_Probability_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: ang_prob
 
   ! Array with bond probability info with dimension (MAXVAL(nbonds),nspecies)
@@ -414,7 +414,7 @@ USE Type_Definitions
   TYPE(Energy_Class), DIMENSION(:), ALLOCATABLE, TARGET :: energy, virial
   TYPE(Energy_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: ac_energy
 !  TYPE(Energy_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: ac_virial
-  
+
   ! Will have dimension (MAXVAL(max_molecules))
   TYPE(Energy_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: energy_igas
 
@@ -433,7 +433,7 @@ USE Type_Definitions
   INTEGER, DIMENSION(:), ALLOCATABLE, TARGET :: nvecs
 
   INTEGER, PARAMETER  :: maxk = 100000
-  
+
   ! Dimensions of (maxk, nbr_boxes)
   REAL(DP), DIMENSION(:,:), ALLOCATABLE, TARGET :: hx, hy, hz, hsq, Cn
 
@@ -454,15 +454,21 @@ USE Type_Definitions
 
 
   ! Will have dimension of nbr_boxes
-  INTEGER, DIMENSION(:), ALLOCATABLE, TARGET :: nvolumes, nvol_success, ivol_success, tot_trials 
+  INTEGER, DIMENSION(:), ALLOCATABLE, TARGET :: nvolumes, nvol_success, ivol_success, tot_trials
   INTEGER :: nvol_update
 
   ! individual move probability
   REAL(DP) :: prob_trans, prob_rot, prob_torsion, prob_volume, prob_angle, prob_insertion
-  REAL(DP) :: prob_deletion, prob_swap, prob_regrowth, prob_ring, prob_atom_displacement
+  REAL(DP) :: prob_deletion, prob_swap, prob_regrowth, prob_ring, prob_atom_displacement, prob_identity_switch
   REAL(DP), DIMENSION(:), ALLOCATABLE :: prob_rot_species
   REAL(DP), DIMENSION(:), ALLOCATABLE :: prob_swap_species, cum_prob_swap_species
   REAL(DP), DIMENSION(:), ALLOCATABLE :: prob_swap_from_box, cum_prob_swap_from_box
+
+  !Switching groups for identity switch
+  INTEGER :: num_groups
+  INTEGER, DIMENSION(:, :), ALLOCATABLE :: swap_list
+  LOGICAL :: default_switch
+  INTEGER :: rotations
 
   LOGICAL :: l_prob_swap_species, l_prob_swap_from_box
 
@@ -473,9 +479,9 @@ USE Type_Definitions
   REAL(DP), DIMENSION(:), ALLOCATABLE::prob_growth_species ! dimension nspecies
   REAL(DP), DIMENSION(:,:), ALLOCATABLE :: max_disp, max_rot
 
-  REAL(DP) :: cut_trans, cut_rot, cut_torsion, cut_volume, cut_angle, cut_insertion, cut_deletion
+  REAL(DP) :: cut_trans, cut_rot, cut_torsion, cut_volume, cut_angle, cut_insertion, cut_deletion, cut_identity_switch
   REAL(DP) :: cut_swap, cut_regrowth, cut_ring, cut_atom_displacement, cut_lambda
- 
+
   !*********************************************************************************************************
 
   ! Timing information
@@ -484,11 +490,11 @@ USE Type_Definitions
   ! Information on the output of data
   INTEGER :: nthermo_freq, ncoord_freq, block_avg_freq, nbr_blocks
   REAL(DP) :: data_points_per_block
- 
+
   INTEGER,DIMENSION(:),ALLOCATABLE :: nbr_prop_files
 
   ! Number of properties per file, will have dimension of nbr_prop_files
-  
+
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: prop_per_file
   LOGICAL, DIMENSION(:,:), ALLOCATABLE :: first_open
 
@@ -527,7 +533,8 @@ USE Type_Definitions
   INTEGER, PARAMETER :: imove_delete = 7
   INTEGER, PARAMETER :: imove_regrowth = 8
   INTEGER, PARAMETER :: imove_check = 9
-  INTEGER, PARAMETER :: imove_atom_displacement = 10
+  INTEGER, PARAMETER :: imove_identity_switch = 10
+  INTEGER, PARAMETER :: imove_atom_displacement = 11
 
 
   REAL(DP) :: time_s, time_e
@@ -574,6 +581,6 @@ REAL(DP), ALLOCATABLE :: pair_vdw_temp(:), pair_qq_temp(:)
 !!!! DSF variables
 REAL(DP), ALLOCATABLE, DIMENSION(:) :: alpha_dsf
 REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
-  
+
 END MODULE Global_Variables
 

@@ -32,7 +32,7 @@
 ##
 ##   1. make                  Build the Cassandra executable
 ##   2. make clean            Delete object and executable files
-##                            Note you will get a warning upon compilaton 
+##                            Note you will get a warning upon compilaton
 ##                            after invoking make clean, but disregard
 
 ###################################################################
@@ -44,29 +44,29 @@
 
 CASS_DIR =  .
 BIN_DIR = $(CASS_DIR)
-EXEC_NAME = cassandra.exe 
+EXEC_NAME = cassandra.exe
 
 ####################################################################
 ##  Known Machine Types;                                           #
 ####################################################################
 
 ##
-##  Machine:  
-##  CPU Type: 
-##  Compiler: 
+##  Machine:
+##  CPU Type:
+##  Compiler:
 ##
 
 ## Name of compiler and compilation options
 FC = ifort
-LIBS = 
-INCS = 
+LIBS =
+INCS =
 #
 #F90FLAGS = -c  -ffree-line-length-none
 F90FLAGS = -c -g -no-wrap-margin -check all -traceback #-warn unused #-openmp
 #F90FLAGS = -c -openmp
 #F90FLAGS = -p -c -O3
 #F90FLAGS = -c -O3 -openmp
-#OPTFLAGS = 
+#OPTFLAGS =
 #LINKFLAGS = -openmp
 #LINKFLAGS = -p
 
@@ -128,6 +128,7 @@ OBJS =  main.o \
   chempot.o \
   pair_nrg_variables.o \
   move_ring_flip.o \
+  move_identity_switch.o \
 
 
 ####################################################################

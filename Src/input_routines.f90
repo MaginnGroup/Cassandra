@@ -4067,10 +4067,11 @@ SUBROUTINE Get_Move_Probabilities
 
   IMPLICIT NONE
 
-  INTEGER :: ierr, nbr_entries, line_nbr,i, j, ibox, is, vol_int
-  INTEGER ::  kbox, this_box
+  INTEGER :: ierr, nbr_entries, line_nbr, i, j, ibox, is, vol_int
+  INTEGER ::  kbox, this_box, first_species, second_species
   CHARACTER(120) :: line_string, line_array(30), line_string2
   CHARACTER(4) :: Symbol
+  !INTEGER, DIMENSION(:,:), ALLOCATABLE :: swap_list
 
   REAL(DP) :: total_mass, this_mass
 
@@ -4099,6 +4100,7 @@ SUBROUTINE Get_Move_Probabilities
   prob_regrowth = 0.0_DP
   prob_ring = 0.0_DP  ! sampling of ring atoms using flip move
   prob_atom_displacement = 0.0_DP ! sampling of atoms using atom displacement routine
+  prob_identity_switch = 0.0_DP
 
   ALLOCATE(sorbate_file(nspecies))
   ALLOCATE(init_list(MAXVAL(natoms),1,nspecies))
@@ -4555,6 +4557,60 @@ SUBROUTINE Get_Move_Probabilities
 
               delta_phi_max = delta_phi_max * PI/180.0_DP
 
+           ELSE IF (line_string(1:22) == '# Prob_Identity_Switch') THEN
+              num_moves = num_moves + 1
+
+              line_nbr = line_nbr + 1
+              CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
+              prob_identity_switch = String_To_Double(line_array(1))
+              rotations = String_To_Int(line_array(2))
+
+              !non default
+              IF (nbr_entries >= 3) THEN
+                 default_switch = .FALSE.
+                 num_groups = String_To_Int(line_array(3))
+                 ALLOCATE(swap_list(2*num_groups, 2))
+
+                 DO i = 1, num_groups
+                    line_nbr = line_nbr + 1
+                    CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
+                    first_species = String_To_Int(line_array(1))
+                    second_species = String_To_Int(line_array(2))
+                    IF (first_species > nspecies) THEN
+                          err_msg = ''
+                          err_msg(1) = 'Species ' // TRIM(Int_To_String(first_species)) // ' on line ' // &
+                                       TRIM(Int_To_String(line_nbr)) // ' is not a valid species index. There are only ' // &
+                                       TRIM(Int_To_String(nspecies)) // ' species.'
+                          CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
+                    END IF
+                    IF (second_species > nspecies) THEN
+                          err_msg = ''
+                          err_msg(1) = 'Species ' // TRIM(Int_To_String(second_species)) // ' on line ' // &
+                                       TRIM(Int_To_String(line_nbr)) // ' is not a valid species index. There are only ' // &
+                                       TRIM(Int_To_String(nspecies)) // ' species.'
+                          CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
+                    END IF
+
+                    swap_list(2*i - 1, 1) = first_species
+                    swap_list(2*i - 1, 2) = second_species
+
+                    swap_list(2*i, 1) = second_species
+                    swap_list(2*i, 2) = first_species
+
+                 END DO
+              ELSE
+                  default_switch = .TRUE.
+              END IF
+
+!SUBROUTINE Parse_String(file_number,line_nbr,min_entries,nbr_entries,line_array,ierr)
+!********************************************************************************
+! This routine reads one line from the file file_number. It reads the total number
+! of entries on the line and places the entries in the character array line_array
+! in consecutive order. It skips leading blanks, and determines if an entry is
+! different by detecting a space between entries. It also tests to see if the
+! minimum number of entries specified was met or not. If not, and error is returned.
+!********************************************************************************
+
            ELSE IF (line_string(1:23) == '# Done_Probability_Info') THEN
 
               ! finished the section
@@ -4634,7 +4690,8 @@ SUBROUTINE Get_Move_Probabilities
   cut_swap = cut_deletion + prob_swap
   cut_regrowth = cut_swap + prob_regrowth
   cut_ring = cut_regrowth + prob_ring
-  cut_atom_displacement = cut_ring + prob_atom_displacement
+  cut_identity_switch = cut_ring + prob_identity_switch
+  cut_atom_displacement = cut_identity_switch + prob_atom_displacement
 
   steps_per_sweep = INT(cut_atom_displacement)
   IF (steps_per_sweep == 0) steps_per_sweep = 1
@@ -4653,6 +4710,7 @@ SUBROUTINE Get_Move_Probabilities
      cut_swap = cut_swap / cut_atom_displacement
      cut_regrowth = cut_regrowth / cut_atom_displacement
      cut_ring = cut_ring / cut_atom_displacement
+     cut_identity_switch = cut_identity_switch / cut_atom_displacement
      cut_atom_displacement = cut_atom_displacement / cut_atom_displacement
 
   END IF
