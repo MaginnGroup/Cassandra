@@ -30,7 +30,7 @@ SUBROUTINE Identity_Switch
    REAL(DP) :: E_vdw, E_qq, E_vdw_i, E_qq_i, E_vdw_j, E_qq_j
    REAL(DP), DIMENSION(:), ALLOCATABLE :: box_nrg_vdw_temp, box_nrg_qq_temp
    LOGICAL :: inter_overlap
-   INTEGER :: dum1, dum2, dum3
+   INTEGER :: dum1, dum2, dum3, position_i, position_j
    REAL(DP) :: E_qq_dum, E_vdw_dum
 
    !Variables for step 8
@@ -51,7 +51,7 @@ SUBROUTINE Identity_Switch
    REAL(DP) :: dE_lrc, dE_lrc_i, dE_lrc_j
    REAL(DP), ALLOCATABLE :: cos_mol_old_i(:), sin_mol_old_i(:), cos_mol_old_j(:), sin_mol_old_j(:)
    REAL(DP), DIMENSION(:,:), ALLOCATABLE, TARGET :: cos_sum_old_idsw, sin_sum_old_idsw
-   INTEGER :: position_i, position_j
+
 
    !acceptance variables
    REAL(DP) :: ln_pacc, success_ratio_i, success_ratio_j
@@ -206,6 +206,13 @@ SUBROUTINE Identity_Switch
             (/lm_i, lm_j/), (/is, js/), (/box_i, box_j/), box_nrg_vdw_temp, box_nrg_qq_temp)
          E_vdw = box_nrg_vdw_temp(1)
          E_qq = box_nrg_vdw_temp(1)
+         ! remove double counting from vdw and qq energies
+         ! obtain the position of these molecules to reference vdw and qq pair energy arrays
+         CALL Get_Position_Alive(lm_i, is, position_i)
+         CALL Get_Position_Alive(lm_j, js, position_j)
+         ! substract off the energy 
+         E_vdw = E_vdw - pair_nrg_vdw(position_i,position_j)
+         E_qq = E_qq - pair_nrg_qq(position_i,position_j)
          DEALLOCATE(box_nrg_vdw_temp, box_nrg_qq_temp)
       ELSE
          CALL Compute_MoleculeCollection_Nonbond_Inter_Energy(2, (/lm_i, lm_j/), (/is, js/), &
