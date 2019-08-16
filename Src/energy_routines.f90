@@ -965,7 +965,7 @@ CONTAINS
       IF (l_pair_store) CALL Get_Position_Alive(lm,is,locate_1)
 
       ! loop over other molecules in the collection
-      DO im2 = im+1, n_list
+      im2loop: DO im2 = im+1, n_list
         lm2 = lm_list(im2)
         is2 = is_list(im2)
 
@@ -995,7 +995,7 @@ CONTAINS
         E_inter_vdw = E_inter_vdw + E12_vdw
         E_inter_qq  = E_inter_qq + E12_qq
 
-      END DO
+     END DO im2loop 
 
       ! loop over molecules not in the collection
       speciesLoop: DO is2 = 1, nspecies
