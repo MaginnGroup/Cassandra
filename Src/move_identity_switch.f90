@@ -96,8 +96,6 @@ SUBROUTINE Identity_Switch
    rot_overlap_i = .FALSE.
    rot_overlap_j = .FALSE.
 
-
-
    !*****************************************************************************
    ! Steps 1 and 2) Select species i and j
    !*****************************************************************************
@@ -138,7 +136,6 @@ SUBROUTINE Identity_Switch
      END IF
    END IF
 
-
    !*****************************************************************************
    ! Step 3 and 4) Select a box for species i and a box for species j
    !*****************************************************************************
@@ -174,12 +171,6 @@ SUBROUTINE Identity_Switch
      box_i = 1
      box_j = 1
    END IF
-
-   !WRITE (*,*) "box_i is"
-   !WRITE (*,*) box_i
-   !WRITE (*,*) "box_j is"
-   !WRITE (*,*) box_j
-
 
    !*****************************************************************************
    ! Step 5) Select a molecule 'alive' from species 'is' with uniform probability
@@ -247,8 +238,9 @@ SUBROUTINE Identity_Switch
             (/lm_i, lm_j/), (/is, js/), (/box_i, box_j/), box_nrg_vdw_temp, box_nrg_qq_temp)
          E_vdw_i = box_nrg_vdw_temp(1)
          E_vdw_j = box_nrg_vdw_temp(2)
-         E_qq_i = box_nrg_vdw_temp(1)
-         E_qq_j = box_nrg_vdw_temp(2)
+         E_qq_i = box_nrg_qq_temp(1)
+         E_qq_j = box_nrg_qq_temp(2)
+      
          DEALLOCATE(box_nrg_vdw_temp, box_nrg_qq_temp)
       ELSE
          CALL Compute_Molecule_Nonbond_Inter_Energy(lm_i,is,E_vdw_i,E_qq_i,inter_overlap)
