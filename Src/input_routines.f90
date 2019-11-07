@@ -1419,8 +1419,24 @@ SUBROUTINE Get_Atom_Info(is)
            ENDIF
 
            ! Assign appropriate values to list elements
-           nonbond_list(ia,is)%atom_name = line_array(2)
-           nonbond_list(ia,is)%element = line_array(3)
+           ! Error checking for length of atom_name and element name
+           IF ( LEN_TRIM(line_array(2)) .GT. 20 ) THEN
+             err_msg = ''
+             err_msg(1) = 'Atom name ' // TRIM(line_array(2)) // ' greater than '
+             err_msg(2) = 'max allowed length of 20 characters.'
+             CALL Clean_Abort(err_msg,'Get_Atom_Info')
+           ELSE
+             nonbond_list(ia,is)%atom_name = line_array(2)
+           ENDIF
+
+           IF ( LEN_TRIM(line_array(3)) .GT. 6 ) THEN
+             err_msg = ''
+             err_msg(1) = 'Element name ' // TRIM(line_array(3)) // ' greater than '
+             err_msg(2) = 'max allowed length of 6 characters.'
+             CALL Clean_Abort(err_msg,'Get_Atom_Info')
+           ELSE
+             nonbond_list(ia,is)%element = line_array(3)
+           ENDIF
            nonbond_list(ia,is)%mass = String_To_Double(line_array(4))
            nonbond_list(ia,is)%charge = String_To_Double(line_array(5))
            IF(nonbond_list(ia,is)%charge .NE. 0.0_DP) has_charge(is) = .TRUE.
