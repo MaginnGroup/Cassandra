@@ -1978,13 +1978,12 @@ or "NONE" if the atom type does not have vdW interactions.
 This must match what is given for \texttt{\# VDW\_Style}
 (subsection \ref{sec:VDW_Style}) in the input file.
 
-\item {\it Character(fin)}: The final entry on the line is 'ring' only if the atom is part
-of a ring fragment.
-Note that a ring fragment is defined as
-those atoms that belong to the ring (e.g. in cyclohexane, all the six carbons)
-and any atom directly bonded to these ring atoms (e.g. in cyclohexane, all the hydrogens).
-In other words, all of the ring and exoring atoms are given the ring flag.
-For atoms that are not part of rings, leave this field blank.
+\item {\it Character(fin)}: The final entry on the line is `ring' only if the atom is part
+of a ring. For atoms that are not part of rings, leave this field blank. Note that the ring
+fragments contain all ring atoms (e.g., in cyclohexane, all six carbons),
+and any atoms bonded directly to the ring (e.g., in cyclohexane, all the hydrogens).
+However, the `ring' entry is ONLY appended for those atoms that belong to the ring 
+(e.g., for cyclohexane, only the carbon atoms would have `ring' appended).
 \end{itemize}
 Additional parameters are required for LJ and Mie potentials. For LJ,
 %
