@@ -518,12 +518,14 @@ SUBROUTINE Participation
 
                  ! Check to see if this atom is a ring fragment, if so append, 'ring' at the end
 
-                    
-                 WRITE(201,'(I5,2X,2(A8,2X),2(F11.7,2X),A6,2X)',ADVANCE='NO') i, &
+                 WRITE(201,'(I5,2X,A20,2X,A6,2X,2(F11.7,2X),A6,2X)',ADVANCE='NO') i, &
                       nonbond_list(this_atom,is)%atom_name, nonbond_list(this_atom,is)%element, &
                       nonbond_list(this_atom,is)%mass, nonbond_list(this_atom,is)%charge, &
                       nonbond_list(this_atom,is)%vdw_type
                  DO j = 1, nbr_vdw_params(is)
+                   ! RSD TODO: Looks like we are always assuming the first vdw param is energy
+                   ! and all other do not need to be scaled by kboltz. Valid for LJ and Mie.
+                   ! Other (and future) potentials perhaps not.
                    IF (j == 1) THEN
                      WRITE(201,'(F11.7,2X)',ADVANCE='NO') nonbond_list(ia,is)%vdw_param(j)/kboltz
                    ELSE
@@ -541,7 +543,7 @@ SUBROUTINE Participation
            ELSE
               
               WRITE(201,*) bondpart_list(ia,is)%nbonds + 1
-              WRITE(201,'(I5,2X,2(A8,2X),2(F11.7,2X),A6,2X)',ADVANCE='NO') anchor_atom, &
+              WRITE(201,'(I5,2X,A20,2X,A6,2X,2(F11.7,2X),A6,2X)',ADVANCE='NO') anchor_atom, &
                         nonbond_list(ia,is)%atom_name, &
                         nonbond_list(ia,is)%element, &
                         nonbond_list(ia,is)%mass, &
@@ -574,7 +576,7 @@ SUBROUTINE Participation
                  
                  this_atom = frag_list(ifrag,is)%atoms(i)
                  
-                 WRITE(201,'(I5,2X,2(A8,2X),2(F11.7,2X),A6,2X)',ADVANCE='NO') i, &
+                 WRITE(201,'(I5,2X,A20,2X,A6,2X,2(F11.7,2X),A6,2X)',ADVANCE='NO') i, &
                                 nonbond_list(this_atom,is)%atom_name, &
                                 nonbond_list(this_atom,is)%element, &
                                 nonbond_list(this_atom,is)%mass, &
