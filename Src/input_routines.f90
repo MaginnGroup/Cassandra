@@ -5132,7 +5132,8 @@ SUBROUTINE Get_Run_Type
 
            IF (nbr_entries /= 3) THEN
               err_msg = ''
-              err_msg(1) = 'Equilibration specified without the volume update'
+              err_msg(1) = 'Frequency to print/update the volume displacement'
+              err_msg(2) = 'must be specified for simulations with volume moves'
               CALL Clean_Abort(err_msg,'Get_Run_Type')
            END IF
 
