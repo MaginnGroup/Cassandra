@@ -53,11 +53,14 @@ import shutil
 
 def main():
 
-    global CASSANDRA
-    CASSANDRA = detect_cassandra_binary()
-
+    # Parse command line args
     args = parse_args()
 
+    # Attempt to auto-detect casssandra executable
+    global CASSANDRA
+    CASSANDRA = detect_cassandra_executable()
+
+    # Error checking
     if args.cassandra_path is not None \
             and CASSANDRA is not None:
         if os.path.abspath(args.cassandra_path) != CASSANDRA:
@@ -76,12 +79,11 @@ def main():
                 "where cassandra.exe is located to your PATH or "
                 "specify the executable with the -c flag.")
 
+    # Check that specified input (inp) and config (pdb/cml) files exist
     input_file = os.path.abspath(args.input_file)
-
     if not os.path.isfile(input_file):
         raise ValueError("The specified input file {} does "
                 "not exist.".format(input_file))
-
     for config in args.config_files:
         if not os.path.isfile(config):
             raise ValueError("The specified config file {} does "
@@ -151,7 +153,7 @@ def main():
     frag_rigid_status, frag_rigid_ring_status = id_rigid_fragments(
                                                 nbr_species,nbr_fragments,
                                                 rigid_species,nbr_atoms)
-
+    # Run the fragment library simulations
     run_fraglib_simulation(inp_data,
                            keyword_line,
                            nbr_species,
@@ -164,9 +166,10 @@ def main():
                            pdb_files,
                            args.nConfigs)
 
+    # Update the .inp file with the fragment locations
     update_fraglib_location(input_file,nbr_species,nbr_fragments,keyword_line)
 
-    output = (color.BOLD + "Finished" + color.END)
+    output = (color.BOLD + "\nFinished\n" + color.END)
     print(output)
 
 #############################################################################
@@ -473,7 +476,8 @@ def parse_mcf_keywords(mcf_files):
     for key,val in mcf_keyword_line.items():
         if len(val) != len(mcf_files):
             raise ValueError("Not all MCF files have the required "
-                "keywords: {}".format(keywords))
+                    "keywords: {}\nOnly found the following keywords: "
+                    "{}".format(keywords,mcf_keyword_line.keys()))
 
     return mcf_keyword_line
 
@@ -559,9 +563,9 @@ def id_ring_fragments(fragment_list,ring_atoms):
         print(output)
         for ispecies,sp_frag_ring_status in enumerate(frag_ring_status):
             output = ( color.BOLD +
-                       "Species " + str(ispecies+1) + "has " +
-                       sum([status != False for status in sp_frag_ring_status]) +
-                       " rings." + color.END
+                       "Species " + str(ispecies+1) + " has " +
+                       str(sum([status != False for status in sp_frag_ring_status])) +
+                       " ring(s)." + color.END
                      )
             print(output)
 
@@ -871,7 +875,7 @@ def create_fragment_mcf_files(keyword_line,inp_data,nbr_atoms,nbr_fragments,
             if sum([ status != False
                      for status in frag_ring_status[ispecies]]) > 0:
                 pdb_search_name = os.path.splitext(os.path.basename(
-                                                   mcf_file)) + '.pdb'
+                                                   mcf_file))[0] + '.pdb'
                 found_pdb = False
                 for pdb_path in pdb_files:
                     pdb_name = os.path.basename(pdb_path)
@@ -934,15 +938,15 @@ def write_input_fraglib(ispecies, jfrag, ring_status, inp_data,
         sim_type = "NVT_MC_Ring_Fragment"
         if ring_status == 'rigid_exo':
             move_probability_info = ( "# Prob_Atom_Displacement\n" +
-                                      "1.0\n0.2 10.0\n" )
+                                      "1.0\n0.2 10.0" )
         elif ring_status == 'exo':
             move_probability_info = ( "# Prob_Ring\n" +
-                                      "0.5\n35.0\n\n" +
+                                      "0.5 35.0\n\n" +
                                       "# Prob_Atom_Displacement\n" +
-                                      "0.5\n0.2 10.0\n" )
+                                      "0.5\n0.2 10.0" )
         elif ring_status == 'no_exo':
             move_probability_info = ( "# Prob_Ring\n" +
-                                      "1.0\n35.0\n" )
+                                      "1.0 35.0" )
     else:
         output = ( color.BOLD +
                    "Generating fragment library species " +
@@ -953,7 +957,7 @@ def write_input_fraglib(ispecies, jfrag, ring_status, inp_data,
 
         sim_type = "NVT_MC_Fragment"
         move_probability_info = ( "# Prob_Translation\n" +
-                                  "1.0\n0.2 10.0\n" )
+                                  "1.0\n0.2 10.0" )
 
 
     inp_content = file_templates.inp_base_content.format(
@@ -1098,7 +1102,7 @@ def parse_args():
 
     return args
 
-def detect_cassandra_binary():
+def detect_cassandra_executable():
 
     cassandra_exec_names = [ 'cassandra.exe',
                              'cassandra_gfortran.exe',
@@ -1157,7 +1161,6 @@ class file_templates:
 1
 CUBIC
 50.0 50.0 50.0
-
 """
 
     inp_lib_content = """
@@ -1171,7 +1174,9 @@ CUBIC
 {start_type}
 
 # Move_Probability_Info
+
 {move_prob_info}
+
 # Done_Probability_Info
 
 # Run_Type
