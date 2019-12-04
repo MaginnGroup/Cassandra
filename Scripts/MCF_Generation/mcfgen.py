@@ -42,7 +42,7 @@ def main():
 
     # Check the input files
     configFile, configFileType, basename = check_config_file(args.configFile)
-    mcfFile = check_mcf_file(args.mcfFile, basename)
+    mcfFile = check_mcf_file(args.mcfFile, basename, args.ffTemplate)
     ffFile, ffFileType = check_ff_file(args.ffFile, basename, args.ffTemplate)
 
     # Always start by reading PDB file
@@ -1030,29 +1030,30 @@ def check_config_file(configFile):
 
     return configFile, configFileType, basename
 
-def check_mcf_file(mcfFile,basename):
+def check_mcf_file(mcfFile,basename,ffTemplate):
 
     if mcfFile is None:
         mcfFile = basename + '.mcf'
 
-    if os.path.isfile(mcfFile):
-        overwrite = input('MCF file {} already exists. Would you like '
-                          'to overwrite the existing file?'
-                          '(y/n):'.format(mcfFile))
-        if overwrite.lower() == 'n' or overwrite.lower() == 'no':
-            exit()
-        elif overwrite.lower() == 'y' or overwrite.lower() == 'yes':
-            bak_ctr = 1
-            while os.path.isfile(mcfFile + '.bak' + str(bak_ctr)):
-                bak_ctr += 1
-                if bak_ctr > 100:
-                    raise ValueError('There seems to be a problem.')
-            print('Just in case we are creating a backup of '
-                  '{} at {}\n'.format(mcfFile, mcfFile +
-                  '.bak' + str(bak_ctr)))
-            os.system('mv ' + mcfFile + ' ' + mcfFile + '.bak' + str(bak_ctr))
-        else:
-            raise ValueError('Invalid selection.')
+    if not ffTemplate:
+        if os.path.isfile(mcfFile):
+            overwrite = input('MCF file {} already exists. Would you like '
+                              'to overwrite the existing file?'
+                              '(y/n):'.format(mcfFile))
+            if overwrite.lower() == 'n' or overwrite.lower() == 'no':
+                exit()
+            elif overwrite.lower() == 'y' or overwrite.lower() == 'yes':
+                bak_ctr = 1
+                while os.path.isfile(mcfFile + '.bak' + str(bak_ctr)):
+                    bak_ctr += 1
+                    if bak_ctr > 100:
+                        raise ValueError('There seems to be a problem.')
+                print('Just in case we are creating a backup of '
+                      '{} at {}\n'.format(mcfFile, mcfFile +
+                      '.bak' + str(bak_ctr)))
+                os.system('mv ' + mcfFile + ' ' + mcfFile + '.bak' + str(bak_ctr))
+            else:
+                raise ValueError('Invalid selection.')
 
     return mcfFile
 
