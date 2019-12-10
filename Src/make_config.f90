@@ -202,7 +202,10 @@
     
     ! Here the configuration for this box has been generated
     ! Let's write this out
-    CALL Write_Coords(ibox)
+    IF (int_coord_style .EQ. 1) THEN
+      CALL Write_Coords_XYZ(ibox)
+    ENDIF
+
     overlap = .FALSE.
 
     IF(int_vdw_sum_style(ibox) == vdw_cut_tail) CALL Compute_Beads(ibox)

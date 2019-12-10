@@ -152,6 +152,8 @@ INTEGER :: movie_header_unit = 150
 CHARACTER(FILENAME_LEN),DIMENSION(:),ALLOCATABLE :: movie_header_file
 INTEGER :: movie_xyz_unit = 160
 CHARACTER(FILENAME_LEN),DIMENSION(:),ALLOCATABLE :: movie_xyz_file
+INTEGER :: movie_custom_unit = 165
+CHARACTER(FILENAME_LEN) :: movie_custom_file
 
 ! Variables associated with zeolite unit cell file
 INTEGER :: lattice_file_unit = 170
