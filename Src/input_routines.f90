@@ -5186,6 +5186,7 @@ SUBROUTINE Get_Simulation_Length_Info
   line_nbr = 0
   nthermo_freq = 0
   ncoord_freq = 0
+  int_coord_style = 0
   n_mcsteps = 0
   n_equilsteps = 0
   l_run = .FALSE.
@@ -5255,7 +5256,16 @@ SUBROUTINE Get_Simulation_Length_Info
                  nthermo_freq, sim_length_units
 
            ELSE IF (line_array(1) == 'coord_freq' .OR. line_array(1) == 'Coord_Freq') THEN
-           
+
+              IF (int_coord_style > 0) THEN
+                 err_msg = ''
+                 err_msg(1) = 'coord_freq and custom_coord_freq have been specified. Line: ' // &
+                              TRIM(Int_To_String(line_nbr)) // ' of the input file.'
+                 err_msg(2) = 'You may only specify one of the two options'
+                 CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
+              ENDIF
+
+              int_coord_style = 1
               ncoord_freq = String_To_Int(line_array(2))
 
               ! check that ncoord_freq is positive
@@ -5267,7 +5277,7 @@ SUBROUTINE Get_Simulation_Length_Info
                  CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
               END IF
 
-              WRITE(logunit,'(A,T50,I8,X,A)') 'Coordinates will be written every', ncoord_freq, sim_length_units
+              WRITE(logunit,'(A,T50,I8,X,A)') 'Coordinates will be written to file every', ncoord_freq, sim_length_units
 
               ALLOCATE(movie_header_file(nbr_boxes))
               ALLOCATE(movie_xyz_file(nbr_boxes))
@@ -5286,6 +5296,43 @@ SUBROUTINE Get_Simulation_Length_Info
                  END DO
               ENDIF
 
+           ELSE IF (line_array(1) == 'custom_coord_freq' .OR. line_array(1) == 'Custom_Coord_Freq') THEN
+
+              IF (int_coord_style > 0) THEN
+                 err_msg = ''
+                 err_msg(1) = 'coord_freq and custom_coord_freq have been specified. Line: ' // &
+                              TRIM(Int_To_String(line_nbr)) // ' of the input file.'
+                 err_msg(2) = 'You may only specify one of the two options'
+                 CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
+              ENDIF
+
+              int_coord_style = 2
+              ncoord_freq = String_To_Int(line_array(2))
+              ! check that ncoord_freq is positive
+              IF (ncoord_freq <= 0) THEN
+                 err_msg = ''
+                 err_msg(1) = 'Option ' // TRIM(line_array(2)) // ' for keyword custom_coord_freq on line number ' // &
+                              TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+                 err_msg(2) = 'Supported options are: any positive integer'
+                 CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
+              END IF
+
+              WRITE(logunit,'(A,T50,I8,X,A)') 'Coordinates will be written to file every', ncoord_freq, sim_length_units
+
+              ALLOCATE(movie_header_file(nbr_boxes))
+              movie_custom_file =  TRIM(run_name) // '.crd'
+              WRITE(logunit,'(X,A,T40,A)') 'movie file is', TRIM(movie_custom_file)
+              IF (nbr_boxes == 1) THEN
+                 ibox = 1
+                 movie_header_file(ibox) = TRIM(run_name) // '.H'
+                 WRITE(logunit,'(X,A,T40,A)') 'movie header file is', TRIM(movie_header_file(ibox))
+              ELSE
+                 DO ibox = 1, nbr_boxes
+                    movie_header_file(ibox) = TRIM(run_name) // '.box' // TRIM(Int_To_String(ibox)) // '.H'
+                    WRITE(logunit,'(X,A,T30,I1,A,T40,A)') 'movie header file for box ', ibox ,' is', TRIM(movie_header_file(ibox))
+                 END DO
+              ENDIF
+
            ELSE IF (line_array(1) == 'run' .OR. line_array(1) == 'Run') THEN
 
               l_run = .TRUE.
@@ -5293,11 +5340,11 @@ SUBROUTINE Get_Simulation_Length_Info
               WRITE(logunit,'(A,T48,I10,X,A)' ) 'The simulation will be run for ', n_mcsteps, sim_length_units
 
            ELSE IF (line_array(1) == 'nequilsteps' .OR. line_array(1) == 'NequilSteps') THEN
-              
+
               ! # of equilibrium steps will be used only for the fragment generation
               n_equilsteps = String_To_Int(line_array(2))
               WRITE(logunit, '(A,I10)') 'Number of equilibrium steps', n_equilsteps
-              
+
            ELSE IF (line_array(1) == 'steps_per_sweep' .OR. line_array(1) == 'Steps_Per_Sweep') THEN
 
               IF (nbr_entries /= 2) THEN
@@ -5330,23 +5377,23 @@ SUBROUTINE Get_Simulation_Length_Info
               err_msg = ''
               err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
                            TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
-              err_msg(2) = 'Supported keywords are: prop_freq, coord_freq, run, steps_per_sweep, block_avg_freq'
+              err_msg(2) = 'Supported keywords are: prop_freq, coord_freq, custom_coord_freq, run, steps_per_sweep, block_avg_freq'
               CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
 
            END IF
 
         END DO FreqLOOP
-        
+
         EXIT
-              
+
      ELSE IF (line_string(1:3) == 'END' .OR. line_nbr > 10000 ) THEN
-              
+
         err_msg = ''
         err_msg(1) = 'Section "# Simulation_Length_Info" is missing from the input file and is required'
         CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
 
      END IF
-           
+
   END DO
 
   ! Check to make sure that all the quantities are defined in the input file
@@ -5357,7 +5404,7 @@ SUBROUTINE Get_Simulation_Length_Info
   END IF
 
   IF (n_mcsteps < 0 .OR. ncoord_freq <= 0 .OR. nthermo_freq <= 0) THEN
-  
+
      err_msg = ''
      err_msg(1) = 'At least one of the keywords is missing in the input file.'
      err_msg(2) = 'Check for coord_freq, prop_freq and run.'
