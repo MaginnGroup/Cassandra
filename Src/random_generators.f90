@@ -30,14 +30,17 @@ MODULE random_generators
 ! The code is a modified version of the Fortran 90 version of the original C implementation
 ! of the L'Ecuyer Randomb number generator
 ! Modified by Andrew Paluch, 1 March 2009.
+USE ISO_FORTRAN_ENV
+USE Type_Definitions, ONLY : DP
 IMPLICIT NONE
 ! The intrinsic function "selected_real_kind" takes two arguments. The first is the number 
 ! of digits of precision desired, and the second is the largest magnitude of the exponent of 10.
 INTEGER, PARAMETER:: da = SELECTED_REAL_KIND(14, 60)
 ! s1, s2, s3, s4, and s5 are the seeds to the random number generator, and are given default
 ! values in cast the seeds are not initialized by the user
-INTEGER (KIND=8), SAVE  :: s1 = 153587801, s2 = -759022222, s3 = 1288503317, &
-                           s4 = -1718083407, s5 = -123456789
+INTEGER (KIND=INT64), SAVE  :: s1 = 153587801, s2 = -759022222, s3 = 1288503317, &
+                            s4 = -1718083407, s5 = -123456789
+
 
 CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -53,11 +56,11 @@ SUBROUTINE init_seeds(i1, i3)
 ! as the default values
 
 IMPLICIT NONE
-INTEGER (KIND=8), INTENT(IN) :: i1, i3
+INTEGER (KIND=INT64), INTENT(IN) :: i1, i3
 s1 = i1
 s3 = i3
-IF (IAND(s1,      -2) == 0) s1 = i1 - 8388607
-IF (IAND(s3,   -4096) == 0) s3 = i3 - 8388607
+IF (IAND(s1,      -2_INT64) == 0) s1 = i1 - 8388607_INT64
+IF (IAND(s3,   -4096_INT64) == 0) s3 = i3 - 8388607_INT64
 RETURN
 END SUBROUTINE init_seeds
 
@@ -66,25 +69,24 @@ END SUBROUTINE init_seeds
 FUNCTION rranf()
 
 ! Returns a random number over the interval 0 to 1.
-USE Type_Definitions, ONLY : DP
 USE File_Names, ONLY : logunit
 
 IMPLICIT NONE
 
 REAL(DP) :: rranf
 
-INTEGER (KIND=8) :: b
+INTEGER (KIND=INT64) :: b
 
-b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
-s1 = IEOR( ISHFT( IAND(s1,-2), 10), b)
+b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53_INT64)
+s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
 b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
-s2 = IEOR( ISHFT( IAND(s2,-512), 5), b)
+s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
 b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
-s3 = IEOR( ISHFT( IAND(s3,-4096), 29), b)
+s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
 b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
-s4 = IEOR( ISHFT( IAND(s4,-131072), 23), b)
+s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
 b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
-s5 = IEOR( ISHFT( IAND(s5,-8388608), 8), b)
+s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
 
 ! pconst is the reciprocal of (2^64 - 1)
 rranf = IEOR( IEOR( IEOR( IEOR(s1,s2), s3), s4), s5) *5.4210108624275221E-20_DP + 0.5_DP
