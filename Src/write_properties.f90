@@ -404,7 +404,7 @@ SUBROUTINE Write_Coords_XYZ(this_box)
 
   WRITE(MH_unit,*)
   WRITE(MH_unit,*) nspecies
-  
+
   !-- Number of molecules of each of the species
   DO is = 1, nspecies
      WRITE(MH_unit,*) is,nmols(is,this_box)
@@ -484,6 +484,7 @@ SUBROUTINE Write_Coords_Custom
   INQUIRE(unit=movie_custom_unit,opened=lopen)
   IF (.NOT. lopen) OPEN(unit=movie_custom_unit,file=movie_custom_file)
 
+  WRITE(movie_custom_unit, '(A10)' ) '#ITERATION'
   WRITE(movie_custom_unit,'(I0)') i_mcstep
   DO ibox = 1, nbr_boxes
     DO is = 1, nspecies
@@ -491,33 +492,31 @@ SUBROUTINE Write_Coords_Custom
     END DO
     WRITE(movie_custom_unit,*)
   END DO
+  DO ibox = 1, nbr_boxes
+     WRITE(movie_custom_unit,*) box_list(ibox)%volume
+    ! The cell matrix
+    DO ii = 1, 3
+       WRITE(movie_custom_unit,*)(box_list(ibox)%length(ii,jj), jj=1,3)
+    END DO
+  END DO
 
   mol_id_base = 0
   DO is = 1, nspecies
-    DO ibox = 1, nbr_boxes
-      DO im = 1, nmols(is,ibox)
-        this_im = locate(im,is,ibox)
-        ! Sanity checks. If we got here this molecule
-        ! should be alive and in box ibox
-        IF (.NOT. molecule_list(this_im,is)%live) THEN
-          err_msg = ''
-          err_msg(1) = 'Located molecule that is not alive'
-          CALL Clean_Abort(err_msg,'Write_Coords_Custom')
-        ENDIF
-        IF (.NOT. molecule_list(this_im,is)%which_box == ibox) THEN
-          err_msg = ''
-          err_msg(1) = 'Box ID of molecule list does not match locate'
-          CALL Clean_Abort(err_msg,'Write_Coords_Custom')
-        ENDIF
+    DO this_im = 1, max_molecules(is)
+      ! If molecule is not alive we designate as box 0
+      IF (.NOT. molecule_list(this_im,is)%live) THEN
+        ibox = 0
+      ELSE
+        ibox = molecule_list(this_im,is)%which_box
+      ENDIF
 
-        WRITE(movie_custom_unit,'(I0,1X,I0)') this_im+mol_id_base, ibox
-        DO ia = 1, natoms(is)
-          WRITE(movie_custom_unit,'(A,2X,4F12.5)') nonbond_list(ia,is)%element, &
-                                          atom_list(ia,this_im,is)%rxp, &
-                                          atom_list(ia,this_im,is)%ryp, &
-                                          atom_list(ia,this_im,is)%rzp, &
-                                          nonbond_list(ia,is)%charge
-        END DO
+      WRITE(movie_custom_unit,'(I0,1X,I0)') this_im+mol_id_base, ibox
+      DO ia = 1, natoms(is)
+        WRITE(movie_custom_unit,'(A,2X,4F12.5)') nonbond_list(ia,is)%element, &
+                                        atom_list(ia,this_im,is)%rxp, &
+                                        atom_list(ia,this_im,is)%ryp, &
+                                        atom_list(ia,this_im,is)%rzp, &
+                                        nonbond_list(ia,is)%charge
       END DO
     END DO
     mol_id_base = mol_id_base + max_molecules(is)
