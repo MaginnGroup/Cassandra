@@ -447,7 +447,7 @@ CONTAINS
  
 END SUBROUTINE Write_Properties
 !*******************************************************************************
-SUBROUTINE Write_Coords(this_box)
+SUBROUTINE Write_Coords_XYZ(this_box)
   !*****************************************************************************
   ! The subroutine writes coordinates of simulation box for later analyis of
   ! RDFs. It gets called by driver routines.
@@ -496,7 +496,7 @@ SUBROUTINE Write_Coords(this_box)
 
   WRITE(MH_unit,*)
   WRITE(MH_unit,*) nspecies
-  
+
   !-- Number of molecules of each of the species
   DO is = 1, nspecies
      WRITE(MH_unit,*) is,nmols(is,this_box)
@@ -520,7 +520,102 @@ SUBROUTINE Write_Coords(this_box)
      END DO
   END DO
 
-END SUBROUTINE Write_Coords
+END SUBROUTINE Write_Coords_XYZ
+
+SUBROUTINE Write_Coords_Custom
+  !*****************************************************************************
+  ! Writes a custom coordinate output format for a given box
+  !
+  !
+  ! CALLED BY
+  !
+  !        gcmc_driver
+  !        gemc_driver
+  !        nptmc_driver
+  !        nvtmc_driver
+  !
+  ! CREATED
+  !
+  !     06 Dec 2019
+  !     Ryan DeFever
+  !*****************************************************************************
+
+  USE Global_Variables
+  USE Simulation_Properties
+  USE File_Names
+
+  IMPLICIT NONE
+
+ !******************************************************************************
+
+  INTEGER :: ii, jj, ibox, is, im, this_im, ia
+  INTEGER :: mol_id_base, box_id
+  INTEGER :: MH_unit
+  LOGICAL :: lopen
+
+  ! Write the volume and box dims for each box
+  DO ibox = 1, nbr_boxes
+    MH_unit = movie_header_unit + ibox
+    INQUIRE(unit=MH_unit,opened=lopen)
+    IF (.NOT. lopen) OPEN(unit=MH_unit,file=movie_header_file(ibox))
+    WRITE(MH_unit,*) box_list(ibox)%volume
+    ! The cell matrix
+    DO ii = 1, 3
+       WRITE(MH_unit,*)(box_list(ibox)%length(ii,jj), jj=1,3)
+    END DO
+
+    WRITE(MH_unit,*)
+    WRITE(MH_unit,*) nspecies
+
+    !-- Number of molecules of each of the species
+    DO is = 1, nspecies
+       WRITE(MH_unit,*) is,nmols(is,ibox)
+    END DO
+  END DO
+
+  INQUIRE(unit=movie_custom_unit,opened=lopen)
+  IF (.NOT. lopen) OPEN(unit=movie_custom_unit,file=movie_custom_file)
+
+  WRITE(movie_custom_unit, '(A10)' ) '#ITERATION'
+  WRITE(movie_custom_unit,'(I0)') i_mcstep
+  DO ibox = 1, nbr_boxes
+    DO is = 1, nspecies
+      WRITE(movie_custom_unit,'(I0,1X)',ADVANCE='NO') nmols(is,ibox)
+    END DO
+    WRITE(movie_custom_unit,*)
+  END DO
+  DO ibox = 1, nbr_boxes
+     WRITE(movie_custom_unit,*) box_list(ibox)%volume
+    ! The cell matrix
+    DO ii = 1, 3
+       WRITE(movie_custom_unit,*)(box_list(ibox)%length(ii,jj), jj=1,3)
+    END DO
+  END DO
+
+  mol_id_base = 0
+  DO is = 1, nspecies
+    DO this_im = 1, max_molecules(is)
+      ! If molecule is not alive we designate as box 0
+      IF (.NOT. molecule_list(this_im,is)%live) THEN
+        ibox = 0
+      ELSE
+        ibox = molecule_list(this_im,is)%which_box
+      ENDIF
+
+      WRITE(movie_custom_unit,'(I0,1X,I0)') this_im+mol_id_base, ibox
+      DO ia = 1, natoms(is)
+        WRITE(movie_custom_unit,'(A,2X,4F12.5)') nonbond_list(ia,is)%element, &
+                                        atom_list(ia,this_im,is)%rxp, &
+                                        atom_list(ia,this_im,is)%ryp, &
+                                        atom_list(ia,this_im,is)%rzp, &
+                                        nonbond_list(ia,is)%charge
+      END DO
+    END DO
+    mol_id_base = mol_id_base + max_molecules(is)
+  END DO
+
+END SUBROUTINE Write_Coords_Custom
+
 
 SUBROUTINE Write_Mean_Error(ibox)
   ! The subroutine will write desired properties to the property files. It is
