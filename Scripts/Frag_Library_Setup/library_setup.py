@@ -57,27 +57,36 @@ def main():
     args = parse_args()
 
     # Attempt to auto-detect casssandra executable
-    global CASSANDRA
-    CASSANDRA = detect_cassandra_executable()
+    global cassandra_exe
+    detected_exe = detect_cassandra_executable()
+    provided_exe = args.cassandra_path
+    cassandra_exe = None
 
     # Error checking
-    if args.cassandra_path is not None \
-            and CASSANDRA is not None:
-        if os.path.abspath(args.cassandra_path) != CASSANDRA:
-            output = (color.BOLD +
-                      "Your specified version: " + color.END +
-                      "{}\n".format(os.path.abspath(args.cassandra_path)) +
-                      "These two files differ. We are using the user " +
-                      "specified version at {}".format(
-                        os.path.abspath(args.cassandra_path)))
-            print(output)
-            CASSANDRA = os.path.abspath(args.cassandra_path)
+    if provided_exe is not None:
 
-    if CASSANDRA is None:
-        raise ValueError("Cassandra was not autodetected and not "
-                "specified with the -c option. Please add the location "
-                "where cassandra.exe is located to your PATH or "
-                "specify the executable with the -c flag.")
+        if detected_exe is not None:
+
+            if os.path.abspath(provided_exe) != detected_exe:
+                output = (color.BOLD +
+                          "Your specified version: " + color.END +
+                          "{}\n".format(os.path.abspath(provided_exe)) +
+                          "These two files differ. We are using the user " +
+                          "specified version at {}".format(
+                            os.path.abspath(provided_exe)))
+                print(output)
+                cassandra_exe = os.path.abspath(provided_exe)
+
+        else:
+                cassandra_exe = os.path.abspath(provided_exe)
+
+    else:
+
+        if detected_exe is None:
+            raise ValueError("Cassandra was not autodetected and not "
+                    "specified with the -c option. Please add the location "
+                    "where cassandra.exe is located to your PATH or "
+                    "specify the executable with the -c flag.")
 
     # Check that specified input (inp) and config (pdb/cml) files exist
     input_file = os.path.abspath(args.input_file)
@@ -93,7 +102,7 @@ def main():
 
     output = ( color.BOLD +
                "\n******************* Cassandra Setup *******************\n"
-               "Cassandra location: " + color.END + CASSANDRA +
+               "Cassandra location: " + color.END + cassandra_exe +
                "\n" + color.BOLD +
                "Scanning input file\n" + color.END
              )
@@ -187,7 +196,7 @@ def run_fraglib_simulation(inp_data,
                            pdb_files,
                            n_requested_configs):
 
-    global CASSANDRA
+    global cassandra_exe
 
     # Here we go...
     for ispecies in range(nbr_species):
@@ -226,7 +235,7 @@ def run_fraglib_simulation(inp_data,
                         keyword_line, n_requested_configs)
 
                 os.chdir('./species'+str(ispecies+1)+'/frag'+str(jfrag+1)+'/')
-                subprocess.call([CASSANDRA,'frag'+str(jfrag+1)+'.inp'])
+                subprocess.call([cassandra_exe,'frag'+str(jfrag+1)+'.inp'])
                 os.chdir('../../')
 
 def update_fraglib_location(input_file,nbr_species,nbr_fragments,keyword_line):
@@ -838,7 +847,7 @@ def create_fragment_mcf_files(keyword_line,inp_data,nbr_atoms,nbr_fragments,
     """Create MCF files for each fragment
     """
 
-    global CASSANDRA
+    global cassandra_exe
     nbr_species = inp_data['nbr_species']
 
     for ispecies in range(nbr_species):
@@ -898,7 +907,7 @@ def create_fragment_mcf_files(keyword_line,inp_data,nbr_atoms,nbr_fragments,
 
             # Now we can actually call Cassandra (only to generate an MCF)
             os.chdir('./species'+str(ispecies+1)+'/fragments/')
-            subprocess.call([CASSANDRA,'species'+str(ispecies+1)+'_mcf_gen.inp'])
+            subprocess.call([cassandra_exe,'species'+str(ispecies+1)+'_mcf_gen.inp'])
             os.chdir('../../')
 
 
