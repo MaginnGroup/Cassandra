@@ -490,7 +490,7 @@ USE Type_Definitions
   ! Information on the output of data
   INTEGER :: nthermo_freq, ncoord_freq, block_avg_freq, nbr_blocks
   REAL(DP) :: data_points_per_block
-
+  INTEGER :: int_coord_style ! 1 = xyz, 2 = custom
   INTEGER,DIMENSION(:),ALLOCATABLE :: nbr_prop_files
 
   ! Number of properties per file, will have dimension of nbr_prop_files

@@ -342,9 +342,17 @@ SUBROUTINE GCMC_Driver
 
      IF (write_flag) THEN
         CALL Write_Checkpoint
-        DO ibox = 1, nbr_boxes
-           CALL Write_Coords(ibox)
-        END DO
+        IF (int_coord_style .EQ. 1) THEN
+          DO ibox = 1, nbr_boxes
+            CALL Write_Coords_XYZ(ibox)
+          END DO
+        ELSE IF (int_coord_style .EQ. 2) THEN
+          CALL Write_Coords_Custom
+        ELSE
+          err_msg = ''
+          err_msg(1) = 'Invalid coordinate style'
+          CALL Clean_Abort(err_msg,'GCMC_Driver')
+        END IF
      END IF
 
   END DO
