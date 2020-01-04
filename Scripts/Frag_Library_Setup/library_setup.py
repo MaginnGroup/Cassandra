@@ -51,14 +51,13 @@ import re
 import math
 import random
 import shutil
-
+    
 def main():
 
     # Parse command line args
     args = parse_args()
 
     # Attempt to auto-detect casssandra executable
-    global cassandra_exe
     detected_exe = detect_cassandra_executable()
     provided_exe = args.cassandra_path
     cassandra_exe = None
@@ -154,7 +153,7 @@ def main():
     create_directory_structure(nbr_species,nbr_fragments,rigid_species)
 
     # Calls to Cassandra to generate fragment MCF files
-    create_fragment_mcf_files(keyword_line,inp_data,nbr_atoms,nbr_fragments,
+    create_fragment_mcf_files(cassandra_exe, keyword_line,inp_data,nbr_atoms,nbr_fragments,
                               rigid_species,frag_ring_status,
                               mcf_files,pdb_files)
 
@@ -164,7 +163,8 @@ def main():
                                                 nbr_species,nbr_fragments,
                                                 rigid_species,nbr_atoms)
     # Run the fragment library simulations
-    run_fraglib_simulation(inp_data,
+    run_fraglib_simulation(cassandra_exe, 
+                           inp_data,
                            keyword_line,
                            nbr_species,
                            nbr_fragments,
@@ -185,7 +185,7 @@ def main():
 #############################################################################
 #############################################################################
 
-def run_fraglib_simulation(inp_data,
+def run_fraglib_simulation(cassandra_exe, inp_data,
                            keyword_line,
                            nbr_species,
                            nbr_fragments,
@@ -196,8 +196,6 @@ def run_fraglib_simulation(inp_data,
                            atom_types,
                            pdb_files,
                            n_requested_configs):
-
-    global cassandra_exe
 
     # Here we go...
     for ispecies in range(nbr_species):
@@ -842,13 +840,12 @@ def cml_to_pdb(infilename):
     filepdb.close()
     return os.path.splitext(infilename)[0]+'.pdb'
 
-def create_fragment_mcf_files(keyword_line,inp_data,nbr_atoms,nbr_fragments,
+def create_fragment_mcf_files(cassandra_exe,keyword_line,inp_data,nbr_atoms,nbr_fragments,
                               rigid_species,frag_ring_status,
                               mcf_files,pdb_files):
     """Create MCF files for each fragment
     """
 
-    global cassandra_exe
     nbr_species = inp_data['nbr_species']
 
     for ispecies in range(nbr_species):
