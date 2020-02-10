@@ -113,6 +113,8 @@ def main():
             write_mcf_impropers(mcf, atom_list, improper_parms)
             write_mcf_fragments(mcf, atom_list, frag_list, frag_conn)
             write_mcf_intra_scaling(mcf, scaling_1_4)
+            # That's all, folks!
+            mcf.write('\n\nEND\n')
 
     # Clean up PDB file if input was CML
     if configFileType == 'cml':
