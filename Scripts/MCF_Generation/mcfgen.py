@@ -591,7 +591,7 @@ def read_gromacs_ff_wrapper(ffFile, atom_parms, atomtype_parms):
                             angle_parms, dihedral_parms, vdw_style,
                             comb_rule)
 
-    return atom_parms, atomtype_parms, bond_parms, angle_parms, dihedral_parms
+    return atom_parms, atomtype_parms, bond_parms, angle_parms, dihedral_parms, scaling_1_4
 
 def _gmx_read_ff(ffFile, atom_parms, atomtype_parms, bond_parms,
                     angle_parms, dihedral_parms, vdw_style, comb_rule):
@@ -652,6 +652,7 @@ returns:
                                     'not LJ. Cassandra only supports LJ '
                                     'interactions at this time.')
                             comb_rule = data[1]
+                            scaling_1_4 = {}
                             scaling_1_4['vdw'] = float(data[3])
                             scaling_1_4['charge'] = float(data[4])
                         # Look for atom_parms
