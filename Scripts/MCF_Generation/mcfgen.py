@@ -33,6 +33,7 @@ import sys
 import os
 import argparse
 import linecache
+import warnings
 import networkx as nx
 import re
 
@@ -424,12 +425,12 @@ def read_pdb(pdb_file):
     with open(pdb_file) as pdb:
 
         for line in pdb:
-            this_line = line.strip().split()
-            # Read atom info
-            if line[0:6]=='HETATM' or line[0:4]=='ATOM':
+            line_items = line.strip().split()
+            if line[0:6] == 'HETATM' or line[0:4] == 'ATOM':
+                # Read atom info if line[0:6]=='HETATM' or line[0:4]=='ATOM':
                 # Extract pdb index and atom type (custom)
                 idx = int(line[6:11].strip())
-                atype = this_line[-1]
+                atype = line_items[-1]
                 atom_list.append(idx)
                 molecule_graph.add_node(idx)
                 # Check if this index already exists. Add if not
@@ -443,7 +444,6 @@ def read_pdb(pdb_file):
                                 "with different atom types: atom {} "
                                 "cannot have types {} and {}".format(
                                 idx, atom_parms[idx]['type'], atype))
-
                 # Extract the element
                 element = line[76:78].strip().title()
                 if not element: # element is blank
@@ -463,8 +463,8 @@ def read_pdb(pdb_file):
                 if repeatedIndex:
                     raise ValueError("PDB contains a repeated index. "
                         "Cannot determine bond connectivity.")
-                idx = this_line[1]
-                for jdx in this_line[2:]:
+                idx = line_items[1]
+                for jdx in line_items[2:]:
                     molecule_graph.add_edge(int(idx),int(jdx))
 
     return atom_list, atom_parms, atomtype_parms, molecule_graph
@@ -857,7 +857,7 @@ def write_mcf_bonds(mcf, atom_list, bond_list, bond_parms):
     """
 
     header = ( '\n!Bond Format\n'
-               '!index i j type parameters\n' 
+               '!index i j type parameters\n'
                '!type="fixed", parms=bondLength\n'
                '\n# Bond_Info\n'
              )
@@ -923,7 +923,7 @@ def write_mcf_dihedrals(mcf, atom_list, dihedral_list, dihedral_parms):
         ijkl = tuple([atom_list.index(idx)+1 for idx in dihedral])
         mcf.write('{:<4d}'.format(ctr+1))
         mcf.write('  {:<4d}  {:<4d}  {:<4d}  {:<4d}'.format(ijkl[0],ijkl[1],
-                                                            ijkl[1],ijkl[2]))
+                                                            ijkl[2],ijkl[3]))
         if dihedral_parms[dihedral][0] == 'CHARMM':
             mcf.write('  {:<8s}  {:8.3f}  {:8.1f}  {:8.1f}'.format(
                                                 dihedral_parms[dihedral][0],
