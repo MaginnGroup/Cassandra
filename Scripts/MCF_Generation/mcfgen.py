@@ -1111,6 +1111,7 @@ def check_type_configfile(infilename):
     return 'pdb'
 
 def cml_to_pdb(infilename):
+    basename = os.path.splitext(os.path.basename(infilename))[0]
     file = open(infilename,'r')
     cml_atom_info=[]
     cml_bond_info=[]
@@ -1124,11 +1125,11 @@ def cml_to_pdb(infilename):
         if '</atomArray>' in line:
             cml_end_atom = line_nbr + 1
 
-    for i in xrange(cml_start_atom+1, cml_end_atom):
+    for i in range(cml_start_atom+1, cml_end_atom):
         cml_atom_info.append(re.findall('"([^"]*)"',
                              linecache.getline(infilename, i)))
 
-    for i in xrange(cml_start_bonds+1, cml_end_bonds):
+    for i in range(cml_start_bonds+1, cml_end_bonds):
         cml_bond_info.append(re.findall('"([^"]*)"',
                              linecache.getline(infilename, i))[0].split())
 
