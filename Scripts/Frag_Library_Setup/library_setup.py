@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 
 #*******************************************************************************
 #   Cassandra - An open source atomistic Monte Carlo software package
@@ -57,27 +58,31 @@ def main():
     args = parse_args()
 
     # Attempt to auto-detect casssandra executable
-    global CASSANDRA
-    CASSANDRA = detect_cassandra_executable()
+    detected_exe = detect_cassandra_executable()
+    provided_exe = args.cassandra_path
 
     # Error checking
-    if args.cassandra_path is not None \
-            and CASSANDRA is not None:
-        if os.path.abspath(args.cassandra_path) != CASSANDRA:
-            output = (color.BOLD +
-                      "Your specified version: " + color.END +
-                      "{}\n".format(os.path.abspath(args.cassandra_path)) +
-                      "These two files differ. We are using the user " +
-                      "specified version at {}".format(
-                        os.path.abspath(args.cassandra_path)))
-            print(output)
-            CASSANDRA = os.path.abspath(args.cassandra_path)
-
-    if CASSANDRA is None:
+    if provided_exe is None and detected_exe is None:
         raise ValueError("Cassandra was not autodetected and not "
                 "specified with the -c option. Please add the location "
                 "where cassandra.exe is located to your PATH or "
                 "specify the executable with the -c flag.")
+
+    if provided_exe is not None:
+        cassandra_exe = provided_exe
+        if detected_exe is not None and detected_exe != provided_exe:
+            output = (color.BOLD +
+                  "Specified Cassandra executable: " + color.END +
+                  "{}\n".format(os.path.abspath(provided_exe)) +
+                  color.BOLD +
+                  "Detected Cassandra executable: " + color.END +
+                  "{}\n".format(os.path.abspath(detected_exe)) +
+                  "These two files differ. We are using the user " +
+                  "specified version at {}".format(
+                    os.path.abspath(provided_exe)))
+            print(output)
+    else:
+        cassandra_exe = detected_exe
 
     # Check that specified input (inp) and config (pdb/cml) files exist
     input_file = os.path.abspath(args.input_file)
@@ -93,7 +98,7 @@ def main():
 
     output = ( color.BOLD +
                "\n******************* Cassandra Setup *******************\n"
-               "Cassandra location: " + color.END + CASSANDRA +
+               "Cassandra location: " + color.END + cassandra_exe +
                "\n" + color.BOLD +
                "Scanning input file\n" + color.END
              )
@@ -107,7 +112,7 @@ def main():
     keyword_line = parse_input_keywords(input_file)
 
     # Extract some data from the input file
-    inp_data = parse_input_file(input_file,keyword_line)
+    inp_data = parse_input_file(input_file, keyword_line)
     mcf_files = inp_data['mcf_files']
     nbr_species = inp_data['nbr_species']
 
@@ -119,16 +124,16 @@ def main():
     mcf_keyword_line = parse_mcf_keywords(mcf_files)
 
     # Parse atom info section of each mcf file
-    atom_types, ring_atoms = parse_mcf_atom_info(mcf_files,mcf_keyword_line,
+    atom_types, ring_atoms = parse_mcf_atom_info(mcf_files, mcf_keyword_line,
                                                  args.noFlags)
     nbr_atoms = [len(sp_atom_types) for sp_atom_types in atom_types]
 
     # Parse fragment info section of each mcf file
-    fragment_list = parse_mcf_fragment_info(mcf_files,mcf_keyword_line)
+    fragment_list = parse_mcf_fragment_info(mcf_files, mcf_keyword_line)
     nbr_fragments = [len(sp_frag_list) for sp_frag_list in fragment_list]
 
     # Append 's_idx' to the atom types of the mcf files
-    append_speciesidx(mcf_files,atom_types,mcf_keyword_line)
+    append_speciesidx(mcf_files, atom_types, mcf_keyword_line)
 
     # Find species that are fixed...assuming fixed if pdb does not
     # have CONECT records --> need to find a better way of doing this
@@ -138,23 +143,24 @@ def main():
     #################################################################
 
     # Identify ring fragments
-    frag_ring_status = id_ring_fragments(fragment_list,ring_atoms)
+    frag_ring_status = id_ring_fragments(fragment_list, ring_atoms)
 
     # Let the fun begin. Create folder structure
-    create_directory_structure(nbr_species,nbr_fragments,rigid_species)
+    create_directory_structure(nbr_species, nbr_fragments, rigid_species)
 
     # Calls to Cassandra to generate fragment MCF files
-    create_fragment_mcf_files(keyword_line,inp_data,nbr_atoms,nbr_fragments,
-                              rigid_species,frag_ring_status,
-                              mcf_files,pdb_files)
+    create_fragment_mcf_files(cassandra_exe, keyword_line, inp_data, nbr_atoms,
+                              nbr_fragments, rigid_species, frag_ring_status,
+                              mcf_files, pdb_files)
 
     # Identify information about rigid fragments
     # This function requires fragment MCF files to be generated
     frag_rigid_status, frag_rigid_ring_status = id_rigid_fragments(
-                                                nbr_species,nbr_fragments,
-                                                rigid_species,nbr_atoms)
+                                                nbr_species, nbr_fragments,
+                                                rigid_species, nbr_atoms)
     # Run the fragment library simulations
-    run_fraglib_simulation(inp_data,
+    run_fraglib_simulation(cassandra_exe,
+                           inp_data,
                            keyword_line,
                            nbr_species,
                            nbr_fragments,
@@ -164,10 +170,12 @@ def main():
                            frag_rigid_ring_status,
                            atom_types,
                            pdb_files,
-                           args.nConfigs)
+                           args.nConfigs,
+                           args.seed1,
+                           args.seed2)
 
     # Update the .inp file with the fragment locations
-    update_fraglib_location(input_file,nbr_species,nbr_fragments,keyword_line)
+    update_fraglib_location(input_file, nbr_species, nbr_fragments, keyword_line)
 
     output = (color.BOLD + "\nFinished\n" + color.END)
     print(output)
@@ -175,7 +183,8 @@ def main():
 #############################################################################
 #############################################################################
 
-def run_fraglib_simulation(inp_data,
+def run_fraglib_simulation(cassandra_exe,
+                           inp_data,
                            keyword_line,
                            nbr_species,
                            nbr_fragments,
@@ -185,9 +194,9 @@ def run_fraglib_simulation(inp_data,
                            frag_rigid_ring_status,
                            atom_types,
                            pdb_files,
-                           n_requested_configs):
-
-    global CASSANDRA
+                           n_requested_configs,
+                           seed1,
+                           seed2):
 
     # Here we go...
     for ispecies in range(nbr_species):
@@ -223,20 +232,20 @@ def run_fraglib_simulation(inp_data,
                     ring_status = None
 
                 write_input_fraglib(ispecies, jfrag, ring_status, inp_data,
-                        keyword_line, n_requested_configs)
+                        keyword_line, n_requested_configs, seed1, seed2)
 
                 os.chdir('./species'+str(ispecies+1)+'/frag'+str(jfrag+1)+'/')
-                subprocess.call([CASSANDRA,'frag'+str(jfrag+1)+'.inp'])
+                subprocess.call([cassandra_exe,'frag'+str(jfrag+1)+'.inp'])
                 os.chdir('../../')
 
-def update_fraglib_location(input_file,nbr_species,nbr_fragments,keyword_line):
+def update_fraglib_location(input_file, nbr_species, nbr_fragments, keyword_line):
     with open(input_file) as inp_file:
         total_lines = len(inp_file.readlines())
     omit = False
     with open('temp.inp', 'w') as new_inp:
-        for line_number in range(1,total_lines+1):
+        for line_number in range(1, total_lines+1):
             if line_number == keyword_line['Fragment_Files']:
-                new_inp.write(getline(input_file,line_number))
+                new_inp.write(getline(input_file, line_number))
                 omit = True
                 total_frag_count = 0
                 for ispecies in range(nbr_species):
@@ -251,11 +260,11 @@ def update_fraglib_location(input_file,nbr_species,nbr_fragments,keyword_line):
                 new_inp.write(output)
 
             if line_number > keyword_line['Fragment_Files']:
-                if getline(input_file,line_number)[0] == '#' or \
-                    'END' in getline(input_file,line_number):
+                if getline(input_file, line_number)[0] == '#' or \
+                    'END' in getline(input_file, line_number):
                         omit = False
             if not omit:
-                new_inp.write(getline(input_file,line_number))
+                new_inp.write(getline(input_file, line_number))
 
     os.system("mv temp.inp "+input_file)
 
@@ -325,20 +334,20 @@ def parse_molecule_filenames(input_file,keyword_line,nbr_species):
 
     return mcf_files
 
-def parse_input_file(input_file,keyword_line):
+def parse_input_file(input_file, keyword_line):
 
     # Extract some info from input (.inp) file
-    nbr_boxes = int(getline(input_file,keyword_line['Box_Info']+1))
-    sim_type = getline(input_file,keyword_line['Sim_Type']+1).strip()
-    nbr_species = int(getline(input_file,keyword_line['Nbr_Species']+1))
-    rcutoff_low = float(getline(input_file,keyword_line['Rcutoff_Low']+1))
+    nbr_boxes = int(getline(input_file, keyword_line['Box_Info']+1))
+    sim_type = getline(input_file, keyword_line['Sim_Type']+1).strip()
+    nbr_species = int(getline(input_file, keyword_line['Nbr_Species']+1))
+    rcutoff_low = float(getline(input_file, keyword_line['Rcutoff_Low']+1))
 
     # Extract more info from input file (>1 line so move to fxns)
-    mcf_files = parse_molecule_filenames(input_file,keyword_line,nbr_species)
-    temperature = parse_temperature(input_file,keyword_line,nbr_boxes)
-    vdw_style = parse_vdw_style(input_file,keyword_line,nbr_boxes)
-    charge_style = parse_charge_style(input_file,keyword_line,nbr_boxes)
-    mixing_rule = parse_mixing_rule(input_file,keyword_line)
+    mcf_files = parse_molecule_filenames(input_file, keyword_line, nbr_species)
+    temperature = parse_temperature(input_file, keyword_line, nbr_boxes)
+    vdw_style = parse_vdw_style(input_file, keyword_line, nbr_boxes)
+    charge_style = parse_charge_style(input_file, keyword_line, nbr_boxes)
+    mixing_rule = parse_mixing_rule(input_file, keyword_line)
     vdw_scaling, charge_scaling = parse_intra_scaling(input_file,
                                                       keyword_line,
                                                       nbr_species,
@@ -363,10 +372,10 @@ def parse_input_file(input_file,keyword_line):
 
     return inp_data
 
-def parse_temperature(input_file,keyword_line,nbr_boxes):
+def parse_temperature(input_file, keyword_line, nbr_boxes):
     """Parse the input file and extract the temperature"""
     temperature_list = []
-    for i in range(1,nbr_boxes+1):
+    for i in range(1, nbr_boxes+1):
         try:
             temperature_list.append(float(getline(input_file,
                                 keyword_line['Temperature_Info']+i).strip()))
@@ -379,11 +388,11 @@ def parse_temperature(input_file,keyword_line,nbr_boxes):
 
     return temperature_list[0]
 
-def parse_vdw_style(input_file,keyword_line,nbr_boxes):
+def parse_vdw_style(input_file, keyword_line, nbr_boxes):
     """Parse the input file and return the VDW style"""
 
     vdw_style = []
-    for i in range(1,nbr_boxes+1):
+    for i in range(1, nbr_boxes+1):
         vdw_style.append(getline(input_file,
                          keyword_line['VDW_Style']+i).split()[0])
         if vdw_style[i-1] != vdw_style[0]:
@@ -397,14 +406,14 @@ def parse_vdw_style(input_file,keyword_line,nbr_boxes):
 
     return vdw_style
 
-def parse_charge_style(input_file,keyword_line,nbr_boxes):
+def parse_charge_style(input_file, keyword_line, nbr_boxes):
     """Parse the input file and return the charge style"""
 
     if keyword_line['Charge_Style'] is None:
         return None
 
     charge_style = []
-    for i in range(1,nbr_boxes+1):
+    for i in range(1, nbr_boxes+1):
         charge_style.append(getline(intput_file,
                             keyword_line['Charge_Style']+i).split()[0])
         if charge_style[i-1] != charge_style[0]:
@@ -423,19 +432,19 @@ def parse_mixing_rule(input_file,keyword_line):
     if mixing_line is None:
         return None
     else:
-        mixing_rule = getline(input_file,mixing_line+1)
+        mixing_rule = getline(input_file, mixing_line+1)
         if mixing_rule.strip() == "custom":
             i = 1
             while True:
-                if getline(input_file,mixing_line+1+i).strip() and \
-                   getline(input_file,mixing_line+1+i)[1] != '!':
-                    mixing_rule += getline(input_file,mixing_line+1+i)
+                if getline(input_file, mixing_line+1+i).strip() and \
+                   getline(input_file, mixing_line+1+i)[1] != '!':
+                    mixing_rule += getline(input_file, mixing_line+1+i)
                     i += 1
                 else:
                     break
     return mixing_rule
 
-def parse_intra_scaling(input_file,keyword_line,nbr_species,charge_style):
+def parse_intra_scaling(input_file, keyword_line, nbr_species, charge_style):
     """Parse the input file and return the VDW and charge intra scaling"""
 
     if keyword_line['Intra_Scaling'] is None:
@@ -443,7 +452,7 @@ def parse_intra_scaling(input_file,keyword_line,nbr_species,charge_style):
 
     vdw_scaling = []
     charge_scaling = []
-    for i in range(1,nbr_species+1):
+    for i in range(1, nbr_species+1):
         if keyword_line['Intra_Scaling']:
             if charge_style.lower() == 'coul':
                 vdw_scaling.append(getline(input_file,
@@ -473,27 +482,27 @@ def parse_mcf_keywords(mcf_files):
                 except IndexError:
                     continue
 
-    for key,val in mcf_keyword_line.items():
+    for key, val in mcf_keyword_line.items():
         if len(val) != len(mcf_files):
             raise ValueError("Not all MCF files have the required "
                     "keywords: {}\nOnly found the following keywords: "
-                    "{}".format(keywords,mcf_keyword_line.keys()))
+                    "{}".format(keywords, mcf_keyword_line.keys()))
 
     return mcf_keyword_line
 
-def parse_mcf_atom_info(mcf_files,mcf_keyword_line,noflags):
+def parse_mcf_atom_info(mcf_files, mcf_keyword_line, noflags):
     """Parse all MCF files and return list of atom types and ring atoms."""
 
     atom_line = mcf_keyword_line['Atom_Info']
     atom_types = []
     ring_atoms = []
 
-    for ispecies,mcf_file in enumerate(mcf_files):
-        nbr_atoms = int(getline(mcf_file,atom_line[ispecies]+1).split()[0])
+    for ispecies, mcf_file in enumerate(mcf_files):
+        nbr_atoms = int(getline(mcf_file, atom_line[ispecies]+1).split()[0])
         atom_types.append([])
         ring_atoms.append([])
-        for atidx in range(0,nbr_atoms):
-            line = getline(mcf_file,atom_line[ispecies]+2+atidx).split()
+        for atidx in range(0, nbr_atoms):
+            line = getline(mcf_file, atom_line[ispecies]+2+atidx).split()
             atom_type = line[1]
             #remove old '_s?' flags if present
             if atom_type[-3:-1] == '_s':
@@ -508,15 +517,15 @@ def parse_mcf_atom_info(mcf_files,mcf_keyword_line,noflags):
 
     return atom_types, ring_atoms
 
-def parse_mcf_fragment_info(mcf_files,mcf_keyword_line):
+def parse_mcf_fragment_info(mcf_files, mcf_keyword_line):
     """Parse all MCF files and return list of fragments for each species"""
 
     frag_line = mcf_keyword_line['Fragment_Info']
 
     fragment_list = []
-    for ispecies,mcf_file in enumerate(mcf_files):
+    for ispecies, mcf_file in enumerate(mcf_files):
         fragment_list.append([])
-        nbr_fragments = int(getline(mcf_file,frag_line[ispecies]+1).split()[0])
+        nbr_fragments = int(getline(mcf_file, frag_line[ispecies]+1).split()[0])
         output = ( color.BOLD +
                    "    Species "+ str(ispecies+1) + " has " +
                    str(nbr_fragments) + " fragments" + color.END
@@ -528,7 +537,7 @@ def parse_mcf_fragment_info(mcf_files,mcf_keyword_line):
 
     return fragment_list
 
-def id_ring_fragments(fragment_list,ring_atoms):
+def id_ring_fragments(fragment_list, ring_atoms):
     """Identify the ring status of each fragment as 'exo' 'ring' or False.
 
     'exo' indicates a fragment with ring and exoring atoms
@@ -543,9 +552,9 @@ def id_ring_fragments(fragment_list,ring_atoms):
     presence or absence of exoring atoms.
     """
     frag_ring_status = []
-    for ispecies,sp_frag_list in enumerate(fragment_list):
+    for ispecies, sp_frag_list in enumerate(fragment_list):
         frag_ring_status.append([])
-        for j,fragment in enumerate(sp_frag_list):
+        for j, fragment in enumerate(sp_frag_list):
             intersection = set.intersection(set(fragment),
                                             set(ring_atoms[ispecies]))
             if len(intersection) > 2 and len(fragment) > len(intersection):
@@ -561,7 +570,7 @@ def id_ring_fragments(fragment_list,ring_atoms):
                    color.END
                  )
         print(output)
-        for ispecies,sp_frag_ring_status in enumerate(frag_ring_status):
+        for ispecies, sp_frag_ring_status in enumerate(frag_ring_status):
             output = ( color.BOLD +
                        "Species " + str(ispecies+1) + " has " +
                        str(sum([status != False for status in sp_frag_ring_status])) +
@@ -571,7 +580,7 @@ def id_ring_fragments(fragment_list,ring_atoms):
 
     return frag_ring_status
 
-def id_rigid_fragments(nbr_species,nbr_fragments,rigid_species,nbr_atoms):
+def id_rigid_fragments(nbr_species, nbr_fragments, rigid_species, nbr_atoms):
     """Identify fragments that are rigid and fragments that have rigid rings.
 
     frag_rigid_status : list
@@ -609,8 +618,8 @@ def id_rigid_fragments(nbr_species,nbr_fragments,rigid_species,nbr_atoms):
                 with open(filen) as frag_mcf:
                     for line in frag_mcf:
                         mcf_info.append(line.strip().split())
-                for idx,line in enumerate(mcf_info):
-                    try: 
+                for idx, line in enumerate(mcf_info):
+                    try:
                         if line[0] == "#" and line[1] == "Atom_Info":
                             atom_section_idx = idx
                         if line[0] == "#" and line[1] == "Angle_Info":
@@ -654,28 +663,28 @@ def id_rigid_fragments(nbr_species,nbr_fragments,rigid_species,nbr_atoms):
 
     return frag_rigid_status, frag_rigid_ring_status
 
-def append_speciesidx(mcf_files,atom_types,mcf_keyword_line):
+def append_speciesidx(mcf_files, atom_types, mcf_keyword_line):
 
     atom_line = mcf_keyword_line['Atom_Info']
-    
-    for ispecies,mcf_file in enumerate(mcf_files):
+
+    for ispecies, mcf_file in enumerate(mcf_files):
         nbr_atoms = len(atom_types[ispecies])
         with open(mcf_file) as mcf:
             total_lines = len(mcf.readlines())
-        with open('temp.mcf','w') as new_mcf:
+        with open('temp.mcf', 'w') as new_mcf:
             atidx = 0
-            for line_number in range(1,total_lines+1):
+            for line_number in range(1, total_lines+1):
                 if line_number > atom_line[ispecies]+1 and \
                    line_number <= atom_line[ispecies]+1 + nbr_atoms:
-                    line = getline(mcf_file,line_number).split()
+                    line = getline(mcf_file, line_number).split()
                     line[1] = atom_types[ispecies][atidx]
                     atidx+=1
                     new_mcf.write('    '.join(line)+'\n')
                 else:
-                    new_mcf.write(getline(mcf_file,line_number))
+                    new_mcf.write(getline(mcf_file, line_number))
         os.system("mv temp.mcf "+mcf_file)
 
-def create_directory_structure(nbr_species,nbr_fragments,rigid_species):
+def create_directory_structure(nbr_species, nbr_fragments, rigid_species):
     """Setup the directory structure for the fragment library
 
     Create N number of folders, where N is the number of species
@@ -708,7 +717,7 @@ def get_pdb_files(config_files):
     Converts any cml files to pdb files as required.
     """
     pdb_files = []
-    for index,each_file in enumerate(config_files):
+    for index, each_file in enumerate(config_files):
         if check_type_infilename(each_file)=='cml':
             pdb_file = cml_to_pdb(each_file)
         else:
@@ -724,7 +733,7 @@ def check_pdb_conect(pdb_files):
     """
 
     rigid_species = []
-    for this_species,each_pdb in enumerate(pdb_files):
+    for this_species, each_pdb in enumerate(pdb_files):
         with open(each_pdb) as pdb:
             conect_found = False
             for line in pdb:
@@ -760,22 +769,22 @@ def cml_to_pdb(infilename):
 
     cml_atom_info=[]
     for i in xrange(cml_start_atom+1, cml_end_atom):
-        cml_atom_info.append(re.findall('"([^"]*)"',getline(infilename, i)))
+        cml_atom_info.append(re.findall('"([^"]*)"', getline(infilename, i)))
 
     cml_bond_info=[]
     for i in xrange(cml_start_bonds+1, cml_end_bonds):
-        cml_bond_info.append(re.findall('"([^"]*)"',getline(infilename, i))[0].split())
+        cml_bond_info.append(re.findall('"([^"]*)"', getline(infilename, i))[0].split())
 
     temp=[]
     coordinates=[]
-    for i,line in enumerate(cml_atom_info):
-        for j,element in enumerate(line):
+    for i, line in enumerate(cml_atom_info):
+        for j, element in enumerate(line):
             if is_number(cml_atom_info[i][j]):
                 temp.append(float(cml_atom_info[i][j]))
         coordinates.append(temp)
         temp=[]
 
-    filepdb = open(os.path.splitext(infilename)[0]+'.pdb','w')
+    filepdb = open(os.path.splitext(infilename)[0]+'.pdb', 'w')
 
     for line_nbr, line in enumerate(cml_atom_info):
         filepdb.write(
@@ -832,13 +841,12 @@ def cml_to_pdb(infilename):
     filepdb.close()
     return os.path.splitext(infilename)[0]+'.pdb'
 
-def create_fragment_mcf_files(keyword_line,inp_data,nbr_atoms,nbr_fragments,
-                              rigid_species,frag_ring_status,
-                              mcf_files,pdb_files):
+def create_fragment_mcf_files(cassandra_exe, keyword_line, inp_data, nbr_atoms,
+                              nbr_fragments, rigid_species, frag_ring_status,
+                              mcf_files, pdb_files):
     """Create MCF files for each fragment
     """
 
-    global CASSANDRA
     nbr_species = inp_data['nbr_species']
 
     for ispecies in range(nbr_species):
@@ -869,7 +877,7 @@ def create_fragment_mcf_files(keyword_line,inp_data,nbr_atoms,nbr_fragments,
             print(output)
 
             # Write a cassandra input file
-            write_input_mcfgen(ispecies,keyword_line,inp_data,mcf_file)
+            write_input_mcfgen(ispecies, keyword_line, inp_data, mcf_file)
 
             # If ring fragment we also need to copy the pdb file here
             if sum([ status != False
@@ -898,11 +906,11 @@ def create_fragment_mcf_files(keyword_line,inp_data,nbr_atoms,nbr_fragments,
 
             # Now we can actually call Cassandra (only to generate an MCF)
             os.chdir('./species'+str(ispecies+1)+'/fragments/')
-            subprocess.call([CASSANDRA,'species'+str(ispecies+1)+'_mcf_gen.inp'])
+            subprocess.call([cassandra_exe, 'species'+str(ispecies+1)+'_mcf_gen.inp'])
             os.chdir('../../')
 
 
-def write_input_mcfgen(ispecies,keyword_line,inp_data,mcf_file):
+def write_input_mcfgen(ispecies, keyword_line, inp_data, mcf_file):
 
     filename = ('./species' + str(ispecies+1) + '/fragments/' +
                 'species' + str(ispecies+1) + '_mcf_gen.inp' )
@@ -916,15 +924,15 @@ def write_input_mcfgen(ispecies,keyword_line,inp_data,mcf_file):
                               rcutoff_low = 0.001)
                               #rcutoff_low = inp_data['rcutoff_low'])
 
-    inp_content += add_inp_optional(keyword_line,inp_data,ispecies)
+    inp_content += add_inp_optional(keyword_line, inp_data, ispecies)
 
     inp_content += "END"
 
-    with open(filename,'w') as finp:
+    with open(filename, 'w') as finp:
         finp.write(inp_content)
 
 def write_input_fraglib(ispecies, jfrag, ring_status, inp_data,
-        keyword_line, n_requested_configs):
+        keyword_line, n_requested_configs, seed1, seed2):
 
     if ring_status is not None:
 
@@ -956,7 +964,7 @@ def write_input_fraglib(ispecies, jfrag, ring_status, inp_data,
         print(output)
 
         sim_type = "NVT_MC_Fragment"
-        move_probability_info = ( "# Prob_Translation\n" +
+        move_probability_info = ( "# Prob_Atom_Displacement\n" +
                                   "1.0\n0.2 10.0" )
 
 
@@ -966,21 +974,25 @@ def write_input_fraglib(ispecies, jfrag, ring_status, inp_data,
                               mcf_file = ( "../fragments/frag_" +
                                            str(jfrag+1) + "_1.mcf" ),
                               vdw_style = inp_data['vdw_style'],
-                              rcutoff_low = 0.001)
-                              #rcutoff_low = inp_data['rcutoff_low'])
+                              rcutoff_low = 0.0)
+
+    if seed1 is None:
+        seed1 = random.randint(1,1000000)
+    if seed2 is None:
+        seed2 = random.randint(1,1000000)
 
     inp_content += file_templates.inp_lib_content.format(
                               temperature = inp_data['temperature'],
-                              seed1 = random.randint(1,1000000),
-                              seed2 = random.randint(1,1000000),
+                              seed1 = seed1,
+                              seed2 = seed2,
                               start_type = ("read_config 1 ../fragments/" +
                                             "frag_" + str(jfrag+1) +
                                             "_1.xyz"),
                               move_prob_info = move_probability_info,
-                              nsteps = 100 * n_requested_configs,
+                              nsteps = 100 * n_requested_configs + 100000,
                               out_frag_name = "frag" + str(jfrag+1) + ".dat")
 
-    inp_content += add_inp_optional(keyword_line,inp_data,ispecies)
+    inp_content += add_inp_optional(keyword_line, inp_data, ispecies)
 
     inp_content += "END"
 
@@ -988,11 +1000,11 @@ def write_input_fraglib(ispecies, jfrag, ring_status, inp_data,
                  "/frag" + str(jfrag+1) + ".inp"
                )
 
-    with open(filename,'w') as finp:
+    with open(filename, 'w') as finp:
         finp.write(inp_content)
 
 
-def add_inp_optional(keyword_line,inp_data,ispecies):
+def add_inp_optional(keyword_line, inp_data, ispecies):
 
     inp_content = ""
 
@@ -1094,6 +1106,10 @@ def parse_args():
     parser.add_argument('--nConfigs', '-n', type=int, default=100000,
                     help="number of configurations to write to the fragment " +
                          "library")
+    parser.add_argument('--seed1', '-s1', type=int, default=None,
+                    help="Specify seed1 (else a random one will be selected)")
+    parser.add_argument('--seed2', '-s2', type=int, default=None,
+                    help="Specify seed2 (else a random one will be selected)")
     parser.add_argument('--noFlags', action='store_true',
                     help="Suppresses the _s? flags that are appended to each " +
                          "atom type by default in the .mcf")
@@ -1118,7 +1134,7 @@ def detect_cassandra_executable():
 
     if cassandra is not None:
         output = ( color.BOLD +
-                   "\n\nDetected Cassandra at: " +
+                   "\n\nAutodetected Cassandra at: " +
                    color.END + "{}".format(cassandra)
                  )
         print(output)
@@ -1187,6 +1203,7 @@ Units         Steps
 prop_freq     100
 coord_freq    5000
 run           {nsteps}
+nequilsteps   100000
 
 # Property_Info
 Energy_Total
