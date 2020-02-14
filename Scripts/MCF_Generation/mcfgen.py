@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #****************************************************************************
 #   Cassandra - An open source atomistic Monte Carlo software package
 #   developed at the University of Notre Dame.
@@ -21,11 +22,14 @@
 
 #****************************************************************************
 # SCRIPT: mcfgen.py
+# VERSION: 2.0
+# NEW FEATURES: Migrate to Python 3.x
+#
 # VERSION: 1.1
 # NEW FEATURES: read GROMACS forcefield files (.itp or .top)
 #
 # VERSION: 1.0
-# ORIGINAL FEATURES: generate a molecular connectivity file (.mcf) from a 
+# ORIGINAL FEATURES: generate a molecular connectivity file (.mcf) from a
 #   configuration file (.pdb or .cml) and a custom forcefield file (.ff)
 #****************************************************************************
 
@@ -119,6 +123,7 @@ def main():
     # Clean up PDB file if input was CML
     if configFileType == 'cml':
         os.system("rm " + configFile)
+
 
 #****************************************************************************
 #                          END OF MAIN FUNCTION
