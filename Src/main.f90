@@ -158,15 +158,13 @@ PROGRAM Main
   WRITE(logunit,'(A80)')'********************************************************************************'
 ! Create a checkpoint file to periodically write system information
 
-  CALL Name_Files(run_name,'.chk',checkpointfile)
-  
-  OPEN(unit=chkptunit,file=checkpointfile,IOSTAT=openstatus)
-  IF (openstatus .NE. 0) THEN
-     err_msg = ""
-     err_msg(1) = 'Unable to open checkpointfile'
-     err_msg(2) = logfile
-     CALL Clean_Abort(err_msg,'Read_Checkpointfile')
-  ENDIF
+  WRITE(logunit,*)
+  WRITE(logunit,'(A73)')'For any published work that uses Cassandra, cite the following reference:'
+  WRITE(logunit,'(4X,A56)')'Shah JK, Marin‐Rimoldi E, Mullen RG, Keene BP, Khan S,'
+  WRITE(logunit,'(4X,A59)')'Paluch AS, Rai N, Romanielo LL, Rosch TW, Yoo B, Maginn EJ.'
+  WRITE(logunit,'(4X,A71)')'Cassandra: An open source Monte Carlo package for molecular simulation.'
+  WRITE(logunit,'(4X,A58)')'Journal of Computational Chemistry. 2017, 38, 1727–1739.'
+  WRITE(logunit,'(4X,A35)')'http://dx.doi.org/10.1002/jcc.24807'
 
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Run info'

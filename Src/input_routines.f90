@@ -5323,8 +5323,7 @@ SUBROUTINE Get_Simulation_Length_Info
 !******************************************************************************
 
   INTEGER :: ierr, line_nbr, nbr_entries, ibox
-  CHARACTER(120) :: line_string, line_array(20),movie_header_file, &
-                     movie_xyz_file
+  CHARACTER(120) :: line_string, line_array(20)
   LOGICAL :: l_run
 
 !******************************************************************************
@@ -5422,22 +5421,20 @@ SUBROUTINE Get_Simulation_Length_Info
 
               WRITE(logunit,'(A,T50,I8,X,A)') 'Coordinates will be written every', ncoord_freq, sim_length_units
 
+              ALLOCATE(movie_header_file(nbr_boxes))
+              ALLOCATE(movie_xyz_file(nbr_boxes))
               IF (nbr_boxes == 1) THEN
                  ibox = 1
-                 movie_header_file = TRIM(run_name) // '.H'
-                 movie_xyz_file =    TRIM(run_name) // '.xyz'
-                 WRITE(logunit,'(X,A,T40,A)') 'movie header file is', TRIM(movie_header_file)
-                 WRITE(logunit,'(X,A,T40,A)') 'movie_XYZ file is', TRIM(movie_xyz_file)
-                 OPEN(unit=movie_header_unit+ibox,file=movie_header_file)
-                 OPEN(unit=movie_xyz_unit+ibox,file=movie_xyz_file)
+                 movie_header_file(ibox) = TRIM(run_name) // '.H'
+                 movie_xyz_file(ibox) =    TRIM(run_name) // '.xyz'
+                 WRITE(logunit,'(X,A,T40,A)') 'movie header file is', TRIM(movie_header_file(ibox))
+                 WRITE(logunit,'(X,A,T40,A)') 'movie_XYZ file is', TRIM(movie_xyz_file(ibox))
               ELSE
                  DO ibox = 1, nbr_boxes
-                    movie_header_file = TRIM(run_name) // '.box' // TRIM(Int_To_String(ibox)) // '.H'
-                    movie_xyz_file =    TRIM(run_name) // '.box' // TRIM(Int_To_String(ibox)) // '.xyz'
-                    WRITE(logunit,'(X,A,T30,I1,A,T40,A)') 'movie header file for box ', ibox ,' is', TRIM(movie_header_file)
-                    WRITE(logunit,'(X,A,T30,I1,A,T40,A)') 'movie_XYZ file for box ', ibox ,' is', TRIM(movie_xyz_file)
-                    OPEN(unit=movie_header_unit+ibox,file=movie_header_file)
-                    OPEN(unit=movie_xyz_unit+ibox,file=movie_xyz_file)
+                    movie_header_file(ibox) = TRIM(run_name) // '.box' // TRIM(Int_To_String(ibox)) // '.H'
+                    movie_xyz_file(ibox) =    TRIM(run_name) // '.box' // TRIM(Int_To_String(ibox)) // '.xyz'
+                    WRITE(logunit,'(X,A,T30,I1,A,T40,A)') 'movie header file for box ', ibox ,' is', TRIM(movie_header_file(ibox))
+                    WRITE(logunit,'(X,A,T30,I1,A,T40,A)') 'movie_XYZ file for box ', ibox ,' is', TRIM(movie_xyz_file(ibox))
                  END DO
               ENDIF
 
