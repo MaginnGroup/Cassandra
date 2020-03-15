@@ -58,7 +58,7 @@
   IMPLICIT NONE
 
   LOGICAL :: repeat_type
-  CHARACTER(8), DIMENSION(:), ALLOCATABLE :: temp_atomtypes ! same dimension as atom_name
+  CHARACTER(20), DIMENSION(:), ALLOCATABLE :: temp_atomtypes ! same dimension as atom_name
   INTEGER :: ii, is, ia, itype, jtype, iset,jset,k,itype_1,itype_2
   REAL(DP) :: eps_i, eps_j, sig_i, sig_j
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: vdw_param_set
@@ -150,7 +150,7 @@
      WRITE(logunit,'(A)') &
           ' There are '//TRIM(Int_To_String(nbr_atomtypes))//' different atom types in the system '
      DO ii = 1, nbr_atomtypes
-        WRITE(logunit,'(3x,I3,2x,A8)') ii, temp_atomtypes(ii)
+        WRITE(logunit,'(3x,I3,2x,A20)') ii, temp_atomtypes(ii)
      ENDDO
 
      WRITE(logunit,*)
@@ -163,7 +163,7 @@
 
         IF (natoms(is) < 100) THEN
           DO ia = 1, natoms(is)
-             WRITE(logunit,'(X,A8,T12,I4)') nonbond_list(ia,is)%atom_name, &
+             WRITE(logunit,'(X,A20,T12,I4)') nonbond_list(ia,is)%atom_name, &
                   nonbond_list(ia,is)%atom_type_number
           ENDDO
         ELSE

@@ -29,7 +29,7 @@
 ##
 ##   1. make                  Build the Cassandra executable
 ##   2. make clean            Delete object and executable files and dependencies file
-##                            Note you will get a warning upon compilaton 
+##                            Note you will get a warning upon compilaton
 ##			      after invoking make clean, but disregard
 ###################################################################
 ##  Master Directory Locations; Change as Needed for Local Site  ##
@@ -40,7 +40,7 @@
 
 CASS_DIR =  .
 BIN_DIR = $(CASS_DIR)
-EXEC_NAME = cassandra_intel_openMP.exe 
+EXEC_NAME = cassandra_intel_openMP.exe
 
 ####################################################################
 ##  Known Machine Types
@@ -54,12 +54,12 @@ EXEC_NAME = cassandra_intel_openMP.exe
 
 ## Compilation command
 FC = ifort
-LIBS = 
-INCS = 
+LIBS =
+INCS =
 #
-F90FLAGS = -c -O3 -no-wrap-margin -openmp
-#F90FLAGS = -c -g -check all -traceback -openmp
-LINKFLAGS = -openmp
+F90FLAGS = -c -O3 -no-wrap-margin -qopenmp
+#F90FLAGS = -c -g -check all -traceback -qopenmp
+LINKFLAGS = -qopenmp
 
 
 ####################################################################
@@ -119,7 +119,8 @@ OBJS =	main.o \
 	move_atom.o \
 	chempot.o \
 	pair_nrg_variables.o \
-   move_ring_flip.o \
+        move_ring_flip.o \
+        move_identity_switch.o \
 
 
 ####################################################################

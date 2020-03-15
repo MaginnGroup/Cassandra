@@ -45,7 +45,7 @@ SUBROUTINE Initialize
   ! 08/06/13 (JS) : Created beta version
   !*********************************************************************
   USE Global_Variables
- 
+
   IMPLICIT NONE
 
   ALLOCATE(nsuccess(nspecies,nbr_boxes))
@@ -70,6 +70,7 @@ SUBROUTINE Initialize
   nsuccess(:,:)%angle = 0
   nsuccess(:,:)%insertion = 0
   nsuccess(:,:)%deletion = 0
+  nsuccess(:,:)%switch = 0
   nsuccess(:,:)%disp_atom = 0
 
   ! define success counters for equilibration runs
@@ -77,10 +78,10 @@ SUBROUTINE Initialize
   nequil_success(:,:)%displacement = 0
   nequil_success(:,:)%rotation = 0
 !  nvol_equil_success(:) = 0
- 
+
   IF ( .NOT. ALLOCATED(ntrials)) ALLOCATE(ntrials(nspecies,nbr_boxes))
   IF ( .NOT. ALLOCATED(tot_trials)) ALLOCATE(tot_trials(nbr_boxes))
- 
+
   ntrials(:,:)%displacement = 0
   ntrials(:,:)%rotation = 0
   ntrials(:,:)%dihedral = 0
@@ -89,7 +90,7 @@ SUBROUTINE Initialize
   ntrials(:,:)%deletion = 0
   ntrials(:,:)%disp_atom = 0
   ntrials(:,:)%cpcalc = 0
- 
+
   IF ( SUM(nfragments) > 0 ) THEN
      IF ( .NOT. ALLOCATED(regrowth_trials))ALLOCATE(regrowth_trials(MAXVAL(nfragments),nspecies))
      IF ( .NOT. ALLOCATED(regrowth_success)) ALLOCATE(regrowth_success(MAXVAL(nfragments),nspecies))
@@ -99,7 +100,7 @@ SUBROUTINE Initialize
 
 
   tot_trials(:) = 0
- 
+
   igas_flag = .FALSE.
 
 END SUBROUTINE Initialize
@@ -118,10 +119,10 @@ SUBROUTINE Init_Accumulators
   ! 06/22/16 (RGM) : Created beta version
   !*********************************************************************
   USE Global_Variables
- 
+
   IMPLICIT NONE
 
-  ! Initialize accumulators 
+  ! Initialize accumulators
   IF (block_avg) THEN
      nbr_blocks = (n_mcsteps - initial_mcstep - 1) / block_avg_freq + 1
 
