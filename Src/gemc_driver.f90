@@ -23,7 +23,7 @@ SUBROUTINE GEMC_Driver
 
   !***************************************************************************
   ! The subroutine performs GEMC Simulations
-  ! 
+  !
   ! Called by
   !
   !   main.f90
@@ -77,7 +77,6 @@ SUBROUTINE GEMC_Driver
   END IF
 
   DO WHILE (.NOT. complete)
-
      i_mcstep = i_mcstep + 1
 
      ! Change mode from equilibration to production if specified
@@ -92,15 +91,15 @@ SUBROUTINE GEMC_Driver
      rand_no = rranf()
 
      IF (rand_no <= cut_trans) THEN
- 
+
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
         ELSE
 !$        time_s = omp_get_wtime()
         END IF
-        
+
         CALL Translate
-        
+
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_e)
         ELSE
@@ -108,9 +107,9 @@ SUBROUTINE GEMC_Driver
         END IF
 
         movetime(imove_trans) = movetime(imove_trans) + time_e - time_s
- 
+
      ELSE IF ( rand_no <= cut_rot) THEN
- 
+
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
         ELSE
@@ -128,13 +127,13 @@ SUBROUTINE GEMC_Driver
         movetime(imove_rot) = movetime(imove_rot) + time_e - time_s
 
      ELSE IF (rand_no <= cut_torsion) THEN
- 
+
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
         ELSE
 !$        time_s = omp_get_wtime()
         END IF
-        
+
         CALL Rotate_Dihedral
 
         IF(.NOT. openmp_flag) THEN
@@ -146,7 +145,7 @@ SUBROUTINE GEMC_Driver
         movetime(imove_dihedral) = movetime(imove_dihedral) + time_e - time_s
 
      ELSE IF (rand_no <= cut_volume) THEN
- 
+
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
         ELSE
@@ -166,15 +165,15 @@ SUBROUTINE GEMC_Driver
         END IF
 
         movetime(imove_volume) = movetime(imove_volume) + time_e - time_s
-        
+
      ELSE IF (rand_no <= cut_angle) THEN
- 
+
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
         ELSE
 !$        time_s = omp_get_wtime()
         END IF
-        
+
         CALL Angle_Distortion
 
         IF(.NOT. openmp_flag) THEN
@@ -184,15 +183,15 @@ SUBROUTINE GEMC_Driver
         END IF
 
         movetime(imove_angle) = movetime(imove_angle) + time_e - time_s
-                
+
      ELSE IF ( rand_no <= cut_swap) THEN
- 
+
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
         ELSE
 !$        time_s = omp_get_wtime()
         END IF
-        
+
         CALL GEMC_Particle_Transfer
 
         IF(.NOT. openmp_flag) THEN
@@ -204,7 +203,7 @@ SUBROUTINE GEMC_Driver
         movetime(imove_swap) = movetime(imove_swap) + time_e - time_s
 
      ELSE IF ( rand_no <= cut_regrowth) THEN
- 
+
         IF(.NOT. openmp_flag) THEN
            CALL cpu_time(time_s)
         ELSE
@@ -220,6 +219,25 @@ SUBROUTINE GEMC_Driver
         END IF
 
         movetime(imove_regrowth) = movetime(imove_regrowth) + time_e - time_s
+
+     ELSE IF (rand_no <= cut_identity_switch) THEN
+
+        IF(.NOT. openmp_flag) THEN
+           CALL cpu_time(time_s)
+        ELSE
+!$        time_s = omp_get_wtime()
+        END IF
+
+        CALL Identity_Switch
+
+        IF(.NOT. openmp_flag) THEN
+           CALL cpu_time(time_e)
+        ELSE
+!$         time_e = omp_get_wtime()
+        END IF
+
+        movetime(imove_identity_switch) = movetime(imove_identity_switch) + time_e - time_s
+
 
     ELSE IF (rand_no <= cut_atom_displacement) THEN
 
@@ -247,7 +265,7 @@ SUBROUTINE GEMC_Driver
 !$      now_time = omp_get_wtime()
      END IF
 
-     now_time = ((now_time - time_start) / 60.0_DP) 
+     now_time = ((now_time - time_start) / 60.0_DP)
      IF(.NOT. timed_run) THEN
         IF(i_mcstep == n_mcsteps) complete = .TRUE.
      ELSE
@@ -290,7 +308,7 @@ SUBROUTINE GEMC_Driver
            DO ibox = 1, nbr_boxes
               CALL Accumulate(ibox)
            END DO
-              
+
            ! Check if write block avgs this step
            write_flag = .FALSE.
            IF(.NOT. timed_run) THEN
@@ -309,7 +327,7 @@ SUBROUTINE GEMC_Driver
                  CALL Write_Properties(ibox)
               END IF
            END DO
-              
+
         END IF
      END IF
 
@@ -329,12 +347,20 @@ SUBROUTINE GEMC_Driver
 
      IF (write_flag) THEN
         CALL Write_Checkpoint
-        DO ibox = 1, nbr_boxes
-           CALL Write_Coords(ibox)
-        END DO
+        IF (int_coord_style .EQ. 1) THEN
+          DO ibox = 1, nbr_boxes
+            CALL Write_Coords_XYZ(ibox)
+          END DO
+        ELSE IF (int_coord_style .EQ. 2) THEN
+          CALL Write_Coords_Custom
+        ELSE
+          err_msg = ''
+          err_msg(1) = 'Invalid coordinate style'
+          CALL Clean_Abort(err_msg,'GEMC_Driver')
+        END IF
      END IF
 
   END DO
-  
+
 
 END SUBROUTINE GEMC_Driver

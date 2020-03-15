@@ -16,5 +16,6 @@ done
 
 sed -ibkp s/\ netcdf.o/\ / dep.mk
 sed -ibkp s/omp_lib.o// dep.mk
+sed -ibkp s/iso_fortran_env.o// dep.mk
 rm dep.mkbkp
 
