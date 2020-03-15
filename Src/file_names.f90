@@ -149,7 +149,9 @@ CHARACTER(FILENAME_LEN), DIMENSION(:,:), ALLOCATABLE :: res_file
 ! Added by NR-2008
 !Variables associated with the movie file
 INTEGER :: movie_header_unit = 150
+CHARACTER(FILENAME_LEN),DIMENSION(:),ALLOCATABLE :: movie_header_file
 INTEGER :: movie_xyz_unit = 160
+CHARACTER(FILENAME_LEN),DIMENSION(:),ALLOCATABLE :: movie_xyz_file
 
 ! Variables associated with zeolite unit cell file
 INTEGER :: lattice_file_unit = 170
