@@ -143,7 +143,7 @@ def main():
         warnings.showwarning("\n\nSupport for Python2 is deprecated in "
             "Cassandra and will be removed in a future release. Please "
             "consider switching to Python3.\n\n", DeprecationWarning,
-            'testSuite.py', 130)
+            'mcfgen.py', 142)
 
 #****************************************************************************
 #                          END OF MAIN FUNCTION
