@@ -192,6 +192,13 @@ def main():
     output = (color.BOLD + "\nFinished\n" + color.END)
     print(output)
 
+    # Python 2.x deprecation warning
+    if (sys.version_info < (3,0)):
+        warnings.showwarning("\n\nSupport for Python2 is deprecated in "
+            "Cassandra and will be removed in a future release. Please "
+            "consider switching to Python3.\n\n", DeprecationWarning,
+            'library_setup.py', 196)
+
 #############################################################################
 #############################################################################
 
