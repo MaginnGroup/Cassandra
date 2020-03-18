@@ -107,7 +107,10 @@ SUBROUTINE Get_Run_Name
   IF (input_is_logfile) THEN
      run_name = TRIM(run_name) // "_logfile_"
   END IF
- 
+
+  ! Get the checkpoint filename
+  CALL Name_Files(run_name,'.chk',checkpointfile)
+
 END SUBROUTINE Get_Run_Name
 
 !******************************************************************************
