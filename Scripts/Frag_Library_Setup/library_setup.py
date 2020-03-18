@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 #*******************************************************************************
 #   Cassandra - An open source atomistic Monte Carlo software package
@@ -41,6 +41,18 @@
 # (i.e. # Frag_Info) with the aforementioned folder locations.
 #
 #*******************************************************************************
+
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
+from builtins import open
+from builtins import range
+from builtins import str
+from builtins import int
+from builtins import object
+from future import standard_library
+standard_library.install_aliases()
 
 import sys
 import os
@@ -1141,7 +1153,7 @@ def detect_cassandra_executable():
 
     return cassandra
 
-class color:
+class color(object):
     PURPLE = '\033[95m'
     CYAN = '\033[96m'
     DARKCYAN = '\033[36m'
@@ -1153,7 +1165,7 @@ class color:
     UNDERLINE = '\033[4m'
     END = '\033[0m'
 
-class file_templates:
+class file_templates(object):
     inp_base_content = """
 # Run_Name
 {run_name}
