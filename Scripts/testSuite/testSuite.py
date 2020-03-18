@@ -75,8 +75,8 @@ for i,j in enumerate(tests):
 print(" ")
 print("---------------------------------------------------------------------------------------------------------------------")
 print(" ")
-print("Passed: " + str(Passed))
-print("Failed: " + str(len(tests)-Passed))
+print(("Passed: " + str(Passed)))
+print(("Failed: " + str(len(tests)-Passed)))
 
 if Passed ==0:
 

@@ -121,13 +121,13 @@ fileResultName  = (resultFolder[0]+"gemc_dimethylhexane.out",resultFolder[1]+"ge
 #
 
 #This prints the starting line.
-print "\n\n"+bold+"Test " + str(test_no) +": " + test_desc + normal
+print("\n\n"+bold+"Test " + str(test_no) +": " + test_desc + normal)
 
 FailCount = 0; # Counting number of failed tests
 
 
 # Loop through checks
-print "%-30s %-35s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","Accepted","Relative_Err","Pass")
+print("%-30s %-35s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","Accepted","Relative_Err","Pass"))
 
 for i in range(nChecks):
 
@@ -213,11 +213,11 @@ for i in range(nChecks):
 				if passCheck ==0:
 					FailCount = FailCount+1;
 				if (j == 0):
-					print "%-30s %-35s %18.6g %18.6g %18s %8s" % (title[i]+" Box "+str(b+1),cassPrint[i][0][j],
-							cassAnswer[i][b][j],analyticAnswer[i][b][j],'',passCheck)
+					print("%-30s %-35s %18.6g %18.6g %18s %8s" % (title[i]+" Box "+str(b+1),cassPrint[i][0][j],
+							cassAnswer[i][b][j],analyticAnswer[i][b][j],'',passCheck))
 				else: 
-					print "%-30s %-36s %17.6g %18.6g %18s %8s" % ('',cassPrint[i][0][j],
-							cassAnswer[i][b][j],analyticAnswer[i][b][j],'',passCheck)
+					print("%-30s %-36s %17.6g %18.6g %18s %8s" % ('',cassPrint[i][0][j],
+							cassAnswer[i][b][j],analyticAnswer[i][b][j],'',passCheck))
 
 			else:
 				errorRel = abs(cassAnswer[i][b][j] - analyticAnswer[i][b][j])/analyticAnswer[i][b][j]
@@ -225,11 +225,11 @@ for i in range(nChecks):
 				if passCheck ==0:
 					FailCount = FailCount+1;
 				if (j == 0):
-					print "%-30s %-35s %18.6g %18.6g %18.6g %8s" % (title[i]+" Box "+str(b+1),cassPrint[i][0][j],
-							cassAnswer[i][b][j],analyticAnswer[i][b][j],errorRel,passCheck)
+					print("%-30s %-35s %18.6g %18.6g %18.6g %8s" % (title[i]+" Box "+str(b+1),cassPrint[i][0][j],
+							cassAnswer[i][b][j],analyticAnswer[i][b][j],errorRel,passCheck))
 				else: 
-					print "%-30s %-36s %17.6g %18.6g %18.6g %8s" % ('',cassPrint[i][0][j],
-							cassAnswer[i][b][j],analyticAnswer[i][b][j],errorRel,passCheck)
+					print("%-30s %-36s %17.6g %18.6g %18.6g %8s" % ('',cassPrint[i][0][j],
+							cassAnswer[i][b][j],analyticAnswer[i][b][j],errorRel,passCheck))
 
 	os.system('rm '+inpName[i])
 	os.system('rm '+mcfRun[i])
