@@ -8,6 +8,7 @@
 #*******************************************************************************
 # IMPORT MODULES
 #*******************************************************************************
+from __future__ import print_function
 import subprocess
 import os,sys
 from testSuiteFunctions import checkLastTest

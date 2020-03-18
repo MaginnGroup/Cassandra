@@ -8,6 +8,7 @@
 #*******************************************************************************
 # IMPORT MODULES
 #*******************************************************************************
+from __future__ import print_function
 import subprocess as sp #This module lets us run cassandra from python
 import numpy as np #this module's the package for scientific computing in python
 import random #This allows us to run random numbers
