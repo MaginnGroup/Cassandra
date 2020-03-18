@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #****************************************************************************
 #   Cassandra - An open source atomistic Monte Carlo software package
 #   developed at the University of Notre Dame.
@@ -32,13 +33,27 @@
 #   configuration file (.pdb or .cml) and a custom forcefield file (.ff)
 #****************************************************************************
 
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from builtins import filter
+from builtins import open
+from builtins import input
+from builtins import str
+from builtins import range
+from builtins import int
+from future import standard_library
+standard_library.install_aliases()
+
 import sys
 import os
 import argparse
 import linecache
 import warnings
-import networkx as nx
 import re
+
+import networkx as nx
 
 def main():
 
@@ -123,6 +138,12 @@ def main():
     if configFileType == 'cml':
         os.system("rm " + configFile)
 
+    # Python 2.x deprecation warning
+    if (sys.version_info < (3,0)):
+        warnings.showwarning("\n\nSupport for Python2 is deprecated in "
+            "Cassandra and will be removed in a future release. Please "
+            "consider switching to Python3.\n\n", DeprecationWarning,
+            'testSuite.py', 130)
 
 #****************************************************************************
 #                          END OF MAIN FUNCTION
