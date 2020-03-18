@@ -14,6 +14,7 @@ import subprocess
 import os,sys
 from testSuiteFunctions import checkLastTest
 import argparse
+import warnings
 
 #*******************************************************************************
 # ARGUMENT PARSE
@@ -92,4 +93,10 @@ if Passed ==0:
 	os.system('rm *.chk')
 	os.system('rm *.mcf')
 
+# Python2 deprecation warning
+if (sys.version_info < (3,0)):
+    warnings.showwarning("\nSupport for Python2 is deprecated in "
+        "Cassandra and will be removed in a future release. Please "
+        "consider switching to Python3.", DeprecationWarning,
+        'testSuite.py', 59)
 
