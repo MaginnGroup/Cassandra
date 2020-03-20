@@ -98,5 +98,5 @@ if (sys.version_info < (3,0)):
     warnings.showwarning("\nSupport for Python2 is deprecated in "
         "Cassandra and will be removed in a future release. Please "
         "consider switching to Python3.", DeprecationWarning,
-        'testSuite.py', 59)
+        'testSuite.py', 97)
 
