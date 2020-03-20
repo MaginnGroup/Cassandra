@@ -5,7 +5,7 @@ methane_butane.out
 !--------------
 
 # Verbose_Log
-true
+false
 !--------------
 
 # Sim_Type

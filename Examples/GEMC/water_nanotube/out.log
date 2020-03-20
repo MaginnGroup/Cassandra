@@ -9,14 +9,21 @@
 **********************************Log File**************************************
 ********************************************************************************
 
+For any published work that uses Cassandra, cite the following reference:
+    Shah JK, Marin‐Rimoldi E, Mullen RG, Keene BP, Khan S,
+    Paluch AS, Rai N, Romanielo LL, Rosch TW, Yoo B, Maginn EJ.
+    Cassandra: An open source Monte Carlo package for molecular simulation.
+    Journal of Computational Chemistry. 2017, 38, 1727–1739.
+    http://dx.doi.org/10.1002/jcc.24807
+
 Run info
 ********************************************************************************
 version: Cassandra Development Version
 inputfile: inp
 name of run: out
-date (mm/dd/yyyy): 03/15/2018
-time: 13:45:17
-machine: guests-MacBook-Air.local
+date (mm/dd/yyyy): 03/20/2020
+time: 13:53:57
+machine: Ryans-MBP.attlocal.net
 ********************************************************************************
 
 Verbose log
@@ -112,7 +119,7 @@ production  300000  1000
 # Simulation_Length_Info                                                        
 units         sweeps                                                            
 prop_freq     2                                                                 
-coord_freq    2                                                                 
+coord_freq    20                                                                
 run           200                                                               
                                                                                 
 # Property_Info 1                                                               
@@ -330,7 +337,7 @@ Kappa for first fragment insertion          10
 Simulation length info
 ********************************************************************************
 Thermodynamic quantities will be computed every         2 Sweeps    
-Coordinates will be written every                       2 Sweeps    
+Coordinates will be written to file every              20 Sweeps    
  movie header file for box   1 is      out.box1.H
  movie_XYZ file for box      1 is      out.box1.xyz
  movie header file for box   2 is      out.box2.H
@@ -472,7 +479,7 @@ Energy of final configuration
 
  Energy components for box 2     kJ/mol-Extensive       Relative_Error
  ---------------------------------------------------------------------
- Total system energy                      -65.526           -0.168E-13
+ Total system energy                      -65.526           -0.443E-13
  Intra molecular energy                     0.000            0.000E+00
    Bond energy                              0.000            0.000E+00
    Bond angle energy                        0.000            0.000E+00
@@ -480,11 +487,11 @@ Energy of final configuration
    Improper angle energy                    0.000            0.000E+00
    Intra molecule vdw                       0.000            0.000E+00
    Intra molecule q                         0.000            0.000E+00
- Inter molecular energy                   -65.526           -0.168E-13
-   Inter molecule vdw                      30.647            0.742E-15
+ Inter molecular energy                   -65.526           -0.443E-13
+   Inter molecule vdw                      30.647            0.445E-15
    Long range correction                   -0.000           -0.000E+00
-   Inter molecule q                      3231.291            0.000E+00
-   Reciprocal ewald                         2.470            0.230E-15
+   Inter molecule q                      3231.291            0.360E-15
+   Reciprocal ewald                         2.470            0.000E+00
    Self ewald                           -3329.934           -0.000E+00
  ---------------------------------------------------------------------
    Number of reciprocal vectors              2910
@@ -539,10 +546,10 @@ Writing information for box  2
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =           53.964267 secs.
- Rotation time =              54.471094 secs.
- Volume change time =         37.711431 secs.
- Swap time =                   2.028855 mins.
+ Translation time =           31.945020 secs.
+ Rotation time =              32.559825 secs.
+ Volume change time =         21.162446 secs.
+ Swap time =                   1.135201 mins.
 ********************************************************************************
 
 ********************************************************************************
@@ -555,7 +562,7 @@ Writing information for box  2
          0     Months
          0       Days
          0      Hours
-         4    Minutes
+         2    Minutes
         40    Seconds
-       404         ms
+       705         ms
 ********************************************************************************
