@@ -39,3 +39,9 @@
 *.exe
 *.out
 *.app
+
+# Python
+__pycache__
+
+# Test suite
+failureLog

@@ -77,14 +77,14 @@ read_config   0 720 slitpore.xyz
 !------------------------------------------------------------------------------
 
 # Run_Type
-production  300000  1000
+production  30000  1000
 !-----------------------------------report acceptance criteria every 100 sweeps
 
 # Simulation_Length_Info
 units         steps
 prop_freq     10
-coord_freq    10
-run           10000
+coord_freq    500
+run           2000
 !-------------------------------------- output every 100 sweeps; run 50k sweeps
 
 # Property_Info 1 

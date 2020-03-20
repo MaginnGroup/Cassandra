@@ -94,7 +94,7 @@ production  300000  1000
 # Simulation_Length_Info
 units         sweeps
 prop_freq     2
-coord_freq    2
+coord_freq    20
 run           200
 !-------------------------------------- output every 100 sweeps; run 50k sweeps
 
