@@ -9,6 +9,7 @@
 #*******************************************************************************
 # IMPORT MODULES
 #*******************************************************************************
+from __future__ import print_function
 import subprocess as sp #This module lets us run cassandra from python
 import numpy as np #this module's the package for scientific computing in python
 import random #This allows us to run random numbers
@@ -213,7 +214,7 @@ outputName  = MainDir + "Scripts/testSuite/testOutput/test5Results.txt"
 #
 
 #This prints the starting line.
-print "\n\n"+bold+"Test " + str(test_no) +": " + test_desc + normal
+print("\n\n"+bold+"Test " + str(test_no) +": " + test_desc + normal)
 
 FailCount = 0; # Counting number of failed tests
 PassCount = 0; # Counting number of passed tests
@@ -232,7 +233,7 @@ with open(resourceDir+'testConfigurations/distance.txt') as distancelist:
     distances = distancelist.readlines()
 
 # Loop through checks
-print "%-30s %-35s %18s %18s %18s %8s" % ("Passes","Failures","Pass Percent","Average Energy","Average Error","Pass")
+print("%-30s %-35s %18s %18s %18s %8s" % ("Passes","Failures","Pass Percent","Average Energy","Average Error","Pass"))
 
 for i in range(nChecks):
 
@@ -379,7 +380,7 @@ LastTest.close()
 averageError = round((float(sum(errorRel)) / nChecks),10)
 averageEnergy = round(((cassSum) / nChecks),4)
 
-print "%-30s %-35s %18s %18s %18s %8s" % (str(PassCount),str(FailCount),'%'+str(PassCount*100/(PassCount+FailCount)),str(averageEnergy),str(averageError),PassState)
+print("%-30s %-35s %18s %18s %18s %8s" % (str(PassCount),str(FailCount),'%'+str(PassCount*100/(PassCount+FailCount)),str(averageEnergy),str(averageError),PassState))
 #*******************************************************************************
 # DATA OUTPUT
 #*******************************************************************************

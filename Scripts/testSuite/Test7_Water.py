@@ -9,6 +9,7 @@
 #*******************************************************************************
 # IMPORT MODULES
 #*******************************************************************************
+from __future__ import print_function
 import subprocess as sp #This module lets us run cassandra from python
 import numpy as np #this module s the package for scientific computing in python
 import os, sys
@@ -124,7 +125,7 @@ from testSuiteFunctions import erf
 #
 
 #This prints the starting line.
-print "\n\n"+bold+"Test 7: Energy of Water Configurations" + normal 
+print("\n\n"+bold+"Test 7: Energy of Water Configurations" + normal) 
 
 
 FailCount = 0; 
@@ -154,7 +155,7 @@ for s in range(nSpecies):
 	mcf.close()
 
 # Loop through checks
-print "%-30s %-35s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","NIST","Relative_Err","Pass")
+print("%-30s %-35s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","NIST","Relative_Err","Pass"))
 for i in range(numChecks):
 
 	# Step 2) Run Cassandra to get its answer
@@ -220,11 +221,11 @@ for i in range(numChecks):
 				os.system('cp ' + ' '.join(mcfName) + ' ' + failureOutString )
 				os.system('cp ' + cassRun + '*' + ' ' + failureOutString )
 			if (j == 0):
-				print "%-30s %-35s %18.6g %18.6g %18s %8s" % (title[i],cassPrint[i][j],
-						cassAnswer[i][j],nist,'',passCheck)
+				print("%-30s %-35s %18.6g %18.6g %18s %8s" % (title[i],cassPrint[i][j],
+						cassAnswer[i][j],nist,'',passCheck))
 			else: 
-				print "%-30s %-36s %17.6g %18.6g %18s %8s" % ('',cassPrint[i][j],
-						cassAnswer[i][j],nist,'',passCheck)
+				print("%-30s %-36s %17.6g %18.6g %18s %8s" % ('',cassPrint[i][j],
+						cassAnswer[i][j],nist,'',passCheck))
 
 		else:
 			errorRel = abs(cassAnswer[i][j] - nist)/nist
@@ -238,11 +239,11 @@ for i in range(numChecks):
 				os.system('cp ' + ' '.join(mcfName) + ' ' + failureOutString )
 				os.system('cp ' + cassRun + '*' + ' ' + failureOutString )
 			if (j == 0):
-				print "%-30s %-35s %18.6g %18.6g %18.6g %8s" % (title[i],cassPrint[i][j],
-						cassAnswer[i][j],nist,errorRel,passCheck)
+				print("%-30s %-35s %18.6g %18.6g %18.6g %8s" % (title[i],cassPrint[i][j],
+						cassAnswer[i][j],nist,errorRel,passCheck))
 			else: 
-				print "%-30s %-36s %17.6g %18.6g %18.6g %8s" % ('',cassPrint[i][j],
-						cassAnswer[i][j],nist,errorRel,passCheck)
+				print("%-30s %-36s %17.6g %18.6g %18.6g %8s" % ('',cassPrint[i][j],
+						cassAnswer[i][j],nist,errorRel,passCheck))
 
 if (FailCount != 0):
 	PassState = "False"

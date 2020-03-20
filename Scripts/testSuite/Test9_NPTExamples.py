@@ -8,6 +8,7 @@
 #*******************************************************************************
 # IMPORT MODULES
 #*******************************************************************************
+from __future__ import print_function
 import subprocess as sp #This module lets us run cassandra from python
 import numpy as np #this module's the package for scientific computing in python
 import random #This allows us to run random numbers
@@ -106,12 +107,12 @@ prpResName  = (resultFolder[0]+"npt.out.prp",resultFolder[1]+"equil.out.prp",res
 #
 
 #This prints the starting line.
-print "\n\n"+bold+"Test " + str(test_no) +": " + test_desc + normal
+print("\n\n"+bold+"Test " + str(test_no) +": " + test_desc + normal)
 
 FailCount = 0; # Counting number of failed tests
 
 # Loop through checks
-print "%-30s %-35s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","Accepted","Relative_Err","Pass")
+print("%-30s %-35s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","Accepted","Relative_Err","Pass"))
 
 for i in range(nChecks):
 
@@ -173,11 +174,11 @@ for i in range(nChecks):
 			if passCheck == 0:
 				FailCount = FailCount+1;
 			if (j == 0):
-				print "%-30s %-35s %18.6g %18.6g %18s %8s" % (title[i],cassPrint[i][0][j],
-						cassAnswer[i][j],analyticAnswer[i][j],'',passCheck)
+				print("%-30s %-35s %18.6g %18.6g %18s %8s" % (title[i],cassPrint[i][0][j],
+						cassAnswer[i][j],analyticAnswer[i][j],'',passCheck))
 			else: 
-				print "%-30s %-36s %17.6g %18.6g %18s %8s" % ('',cassPrint[i][0][j],
-						cassAnswer[i][j],analyticAnswer[i][j],'',passCheck)
+				print("%-30s %-36s %17.6g %18.6g %18s %8s" % ('',cassPrint[i][0][j],
+						cassAnswer[i][j],analyticAnswer[i][j],'',passCheck))
 
 		else:
 			errorRel = abs(cassAnswer[i][j] - analyticAnswer[i][j])/analyticAnswer[i][j]
@@ -185,11 +186,11 @@ for i in range(nChecks):
 			if passCheck ==0:
 				FailCount = FailCount+1;
 			if (j == 0):
-				print "%-30s %-35s %18.6g %18.6g %18.6g %8s" % (title[i],cassPrint[i][0][j],
-						cassAnswer[i][j],analyticAnswer[i][j],errorRel,passCheck)
+				print("%-30s %-35s %18.6g %18.6g %18.6g %8s" % (title[i],cassPrint[i][0][j],
+						cassAnswer[i][j],analyticAnswer[i][j],errorRel,passCheck))
 			else: 
-				print "%-30s %-36s %17.6g %18.6g %18.6g %8s" % ('',cassPrint[i][0][j],
-						cassAnswer[i][j],analyticAnswer[i][j],errorRel,passCheck)
+				print("%-30s %-36s %17.6g %18.6g %18.6g %8s" % ('',cassPrint[i][0][j],
+						cassAnswer[i][j],analyticAnswer[i][j],errorRel,passCheck))
 
 	os.system('rm '+inpName[i])
 	os.system('rm '+mcfRun[i])
