@@ -9,14 +9,21 @@
 **********************************Log File**************************************
 ********************************************************************************
 
+For any published work that uses Cassandra, cite the following reference:
+    Shah JK, Marin‐Rimoldi E, Mullen RG, Keene BP, Khan S,
+    Paluch AS, Rai N, Romanielo LL, Rosch TW, Yoo B, Maginn EJ.
+    Cassandra: An open source Monte Carlo package for molecular simulation.
+    Journal of Computational Chemistry. 2017, 38, 1727–1739.
+    http://dx.doi.org/10.1002/jcc.24807
+
 Run info
 ********************************************************************************
 version: Cassandra Development Version
 inputfile: inp
 name of run: out
-date (mm/dd/yyyy): 03/15/2018
-time: 13:19:56
-machine: guests-MacBook-Air.local
+date (mm/dd/yyyy): 03/20/2020
+time: 13:37:37
+machine: Ryans-MBP.attlocal.net
 ********************************************************************************
 
 Verbose log
@@ -83,7 +90,7 @@ production   50000 100
 # Simulation_Length_Info                                                        
 units        sweeps                                                             
 prop_freq    10                                                                 
-coord_freq   10                                                                 
+coord_freq   200                                                                
 run          2000                                                               
                                                                                 
 # Property_Info 1                                                               
@@ -219,7 +226,7 @@ Kappa for first fragment insertion          12
 Simulation length info
 ********************************************************************************
 Thermodynamic quantities will be computed every        10 Sweeps    
-Coordinates will be written every                      10 Sweeps    
+Coordinates will be written to file every             200 Sweeps    
  movie header file is                  out.H
  movie_XYZ file is                     out.xyz
 The simulation will be run for                       2000 Sweeps    
@@ -301,7 +308,7 @@ Energy of final configuration
 
  Energy components for box 1     kJ/mol-Extensive       Relative_Error
  ---------------------------------------------------------------------
- Total system energy                     -362.686           -0.197E-13
+ Total system energy                     -362.686           -0.142E-13
  Intra molecular energy                     0.000            0.000E+00
    Bond energy                              0.000            0.000E+00
    Bond angle energy                        0.000            0.000E+00
@@ -309,9 +316,9 @@ Energy of final configuration
    Improper angle energy                    0.000            0.000E+00
    Intra molecule vdw                       0.000            0.000E+00
    Intra molecule q                         0.000            0.000E+00
- Inter molecular energy                  -362.686           -0.197E-13
-   Inter molecule vdw                    -342.974           -0.870E-14
-   Inter molecule q                       -19.712           -0.923E-14
+ Inter molecular energy                  -362.686           -0.142E-13
+   Inter molecule vdw                    -342.974           -0.382E-14
+   Inter molecule q                       -19.712           -0.807E-15
  ---------------------------------------------------------------------
 
 ********************************************************************************
@@ -332,8 +339,8 @@ Writing information for box  1
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =           51.276544 secs.
- Rotation time =              52.010785 secs.
+ Translation time =           34.783907 secs.
+ Rotation time =              35.252364 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -347,6 +354,6 @@ Writing information for box  1
          0       Days
          0      Hours
          1    Minutes
-        44    Seconds
-       501         ms
+        10    Seconds
+       630         ms
 ********************************************************************************
