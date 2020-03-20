@@ -17,6 +17,7 @@
 #*******************************************************************************
 # IMPORT MODULES
 #*******************************************************************************
+from __future__ import print_function
 import subprocess as sp #This module lets us run cassandra from python
 import numpy as np #This module s the package for scientific computing in python
 import random #This allows us to run random numbers
@@ -145,7 +146,7 @@ from testSuiteFunctions import Mie
 #
 
 #This prints the starting line.
-print "\n\n"+bold+"Test " + str(test_no) +": " + test_desc + normal
+print("\n\n"+bold+"Test " + str(test_no) +": " + test_desc + normal)
 
 FailCount = 0; # Counting number of failed tests
 
@@ -156,7 +157,7 @@ analyticAnswer[1] = (Mie(1.,1.,1.,14.,6.),)
 analyticAnswer[2] = ( round(Mie(2.**(1./6.),1.,1.,14.,6.),3 ) ,)
 analyticAnswer[3] = (0,)
 
-print "%-30s %-35s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","Analytic","Relative_Err","Pass")
+print("%-30s %-35s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","Analytic","Relative_Err","Pass"))
 for i in range(nChecks):
 	#variables that change from one check to the next
 	atomCoords = atomCoordsByCheck[i] # atom coords
@@ -251,8 +252,8 @@ for i in range(nChecks):
 				os.system('cp ' + xyzName + ' ' + failureOutString )
 				os.system('cp ' + ' '.join(mcfName) + ' ' + failureOutString )
 				os.system('cp ' + cassRun + '*' + ' ' + failureOutString )
-			print "%-30s %-35s %18.6g %18.6g %18s %8s" % (title[i],cassPrint[i][j],
-						cassAnswer[i][j],analyticAnswer[i][j],'',passCheck)
+			print("%-30s %-35s %18.6g %18.6g %18s %8s" % (title[i],cassPrint[i][j],
+						cassAnswer[i][j],analyticAnswer[i][j],'',passCheck))
 
 		else:
 			errorRel = abs(cassAnswer[i][j] - analyticAnswer[i][j])/analyticAnswer[i][j]
@@ -265,8 +266,8 @@ for i in range(nChecks):
 				os.system('cp ' + xyzName + ' ' + failureOutString )
 				os.system('cp ' + ' '.join(mcfName) + ' ' + failureOutString )
 				os.system('cp ' + cassRun + '*' + ' ' + failureOutString )
-			print "%-30s %-35s %18.6g %18.6g %18.6g %8s" % (title[i],cassPrint[i][j],
-						cassAnswer[i][j],analyticAnswer[i][j],errorRel,passCheck)
+			print("%-30s %-35s %18.6g %18.6g %18.6g %8s" % (title[i],cassPrint[i][j],
+						cassAnswer[i][j],analyticAnswer[i][j],errorRel,passCheck))
 
 
 if (FailCount != 0):

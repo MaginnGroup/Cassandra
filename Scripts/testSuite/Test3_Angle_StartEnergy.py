@@ -12,7 +12,7 @@
 #*******************************************************************************
 # IMPORT MODULES
 #*******************************************************************************
-
+from __future__ import print_function
 import subprocess as sp #This module lets us run cassandra from python
 import numpy as np #this module s the package for scientific computing in python
 import random #This allows us to run random numbers
@@ -185,7 +185,7 @@ mcfName 	= ("test3.mcf",) # one string per species
 #
 
 #This prints the starting line.
-print "\n\n"+bold+"Test " + str(test_no) +": " + test_desc + normal
+print("\n\n"+bold+"Test " + str(test_no) +": " + test_desc + normal)
 
 FailCount = 0; 
 
@@ -194,7 +194,7 @@ analyticAnswer[0] = (AngleEnergyHarmonic(31250,114.0,anglesToCheck[0]),)
 analyticAnswer[1] = (AngleEnergyHarmonic(31250,114.0,anglesToCheck[1]),)
 analyticAnswer[2] = (AngleEnergyHarmonic(31250,114.0,anglesToCheck[2]),)
 
-print "%-30s %-35s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","Analytic","Relative_Err","Pass")
+print("%-30s %-35s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","Analytic","Relative_Err","Pass"))
 for i in range(nChecks):
 	#variables that change from one check to the next
 	atomCoords = atomCoordsByCheck[i] # atom coords
@@ -296,8 +296,8 @@ for i in range(nChecks):
 				os.system('cp ' + xyzName + ' ' + failureOutString )
 				os.system('cp ' + ' '.join(mcfName) + ' ' + failureOutString )
 				os.system('cp ' + cassRun + '*' + ' ' + failureOutString )
-			print "%-30s %-35s %18.6g %18.6g %18s %8s" % (title[i],cassPrint[i][j],
-						cassAnswer[i][j],analyticAnswer[i][j],'',passCheck)
+			print("%-30s %-35s %18.6g %18.6g %18s %8s" % (title[i],cassPrint[i][j],
+						cassAnswer[i][j],analyticAnswer[i][j],'',passCheck))
 		else:
 			errorRel = abs(cassAnswer[i][j] - analyticAnswer[i][j])/analyticAnswer[i][j]
 			passCheck = abs(errorRel) <= errorTol
@@ -309,8 +309,8 @@ for i in range(nChecks):
 				os.system('cp ' + xyzName + ' ' + failureOutString )
 				os.system('cp ' + ' '.join(mcfName) + ' ' + failureOutString )
 				os.system('cp ' + cassRun + '*' + ' ' + failureOutString )
-			print "%-30s %-35s %18.6g %18.6g %18.6g %8s" % (title[i],cassPrint[i][j],
-						cassAnswer[i][j],analyticAnswer[i][j],errorRel,passCheck)
+			print("%-30s %-35s %18.6g %18.6g %18.6g %8s" % (title[i],cassPrint[i][j],
+						cassAnswer[i][j],analyticAnswer[i][j],errorRel,passCheck))
 
 
 if (FailCount != 0):

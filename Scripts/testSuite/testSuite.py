@@ -9,10 +9,12 @@
 #*******************************************************************************
 # IMPORT MODULES
 #*******************************************************************************
+from __future__ import print_function
 import subprocess
 import os,sys
 from testSuiteFunctions import checkLastTest
 import argparse
+import warnings
 
 #*******************************************************************************
 # ARGUMENT PARSE
@@ -75,8 +77,8 @@ for i,j in enumerate(tests):
 print(" ")
 print("---------------------------------------------------------------------------------------------------------------------")
 print(" ")
-print("Passed: " + str(Passed))
-print("Failed: " + str(len(tests)-Passed))
+print(("Passed: " + str(Passed)))
+print(("Failed: " + str(len(tests)-Passed)))
 
 if Passed ==0:
 
@@ -91,4 +93,10 @@ if Passed ==0:
 	os.system('rm *.chk')
 	os.system('rm *.mcf')
 
+# Python2 deprecation warning
+if (sys.version_info < (3,0)):
+    warnings.showwarning("\nSupport for Python2 is deprecated in "
+        "Cassandra and will be removed in a future release. Please "
+        "consider switching to Python3.", DeprecationWarning,
+        'testSuite.py', 97)
 

@@ -10,6 +10,7 @@
 #*******************************************************************************
 # IMPORT MODULES
 #*******************************************************************************
+from __future__ import print_function
 import subprocess as sp #This module lets us run cassandra from python
 import numpy as np #this module's the package for scientific computing in python
 import random #This allows us to run random numbers
@@ -143,7 +144,7 @@ xyzSimplefileByCheck[7] = xyzSimplefileByCheck[3]
 #
 
 #This prints the starting line.
-print "\n\n"+bold+"Test " + str(test_no) +": " + test_desc + normal
+print("\n\n"+bold+"Test " + str(test_no) +": " + test_desc + normal)
 
 FailCount = 0; 
 
@@ -157,7 +158,7 @@ analyticAnswer[6] = (-711.56, -704.60 , -10.210, )
 analyticAnswer[7] = (-17.41 , -17.060 , -.23008 , )
 
 # Loop through checks
-print "%-30s %-35s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","NIST","Relative_Err","Pass")
+print("%-30s %-35s %18s %18s %18s %8s" % ("Title", "Property","Cassandra","NIST","Relative_Err","Pass"))
 for i in range(nChecks):
 
 	# Step 2) Write input files
@@ -243,11 +244,11 @@ for i in range(nChecks):
 				os.system('cp ' + ' '.join(mcfName) + ' ' + failureOutString )
 				os.system('cp ' + cassRun + '*' + ' ' + failureOutString )
 			if (j == 0):
-				print "%-30s %-35s %18.6g %18.6g %18s %8s" % (title[i],cassPrint[i][j],
-						cassAnswer[i][j],analyticAnswer[i][j],'',passCheck)
+				print("%-30s %-35s %18.6g %18.6g %18s %8s" % (title[i],cassPrint[i][j],
+						cassAnswer[i][j],analyticAnswer[i][j],'',passCheck))
 			else: 
-				print "%-30s %-36s %17.6g %18.6g %18s %8s" % ('',cassPrint[i][j],
-						cassAnswer[i][j],analyticAnswer[i][j],'',passCheck)
+				print("%-30s %-36s %17.6g %18.6g %18s %8s" % ('',cassPrint[i][j],
+						cassAnswer[i][j],analyticAnswer[i][j],'',passCheck))
 
 		else:
 			errorRel = abs(cassAnswer[i][j] - analyticAnswer[i][j])/analyticAnswer[i][j]
@@ -261,11 +262,11 @@ for i in range(nChecks):
 				os.system('cp ' + ' '.join(mcfName) + ' ' + failureOutString )
 				os.system('cp ' + cassRun + '*' + ' ' + failureOutString )
 			if (j == 0):
-				print "%-30s %-35s %18.6g %18.6g %18.6g %8s" % (title[i],cassPrint[i][j],
-						cassAnswer[i][j],analyticAnswer[i][j],errorRel,passCheck)
+				print("%-30s %-35s %18.6g %18.6g %18.6g %8s" % (title[i],cassPrint[i][j],
+						cassAnswer[i][j],analyticAnswer[i][j],errorRel,passCheck))
 			else: 
-				print "%-30s %-36s %17.6g %18.6g %18.6g %8s" % ('',cassPrint[i][j],
-						cassAnswer[i][j],analyticAnswer[i][j],errorRel,passCheck)
+				print("%-30s %-36s %17.6g %18.6g %18.6g %8s" % ('',cassPrint[i][j],
+						cassAnswer[i][j],analyticAnswer[i][j],errorRel,passCheck))
 
 if (FailCount != 0):
 	PassState = "False"

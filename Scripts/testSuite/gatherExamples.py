@@ -8,6 +8,7 @@
 #*******************************************************************************
 # IMPORT MODULES
 #*******************************************************************************
+from __future__ import print_function
 import subprocess
 import os,sys
 from testSuiteFunctions import checkLastTest
@@ -44,7 +45,7 @@ print("\n- Copying .prp example results...\n")
 for root, dirs, files in os.walk(args.example_folder, topdown=False):
 	for name in files:
    		if name.split(".")[-1]=="prp":
-			print(os.path.join(root, name))
+			print((os.path.join(root, name)))
 			os.system("cp "+ os.path.join(root, name)+ " " +"Resources/exampleResults/"+root.split("/")[-2]+"/"+root.split("/")[-1]+"/"+name)
 
 
