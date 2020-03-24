@@ -124,7 +124,7 @@ jobs:
         echo GFORTRAN VERSION:
         gfortran --version
       displayName: Display gfortran version
-      condition: eq( name, 'macOS-gcc-8' )
+      #condition: eq( name, 'macOS-gcc-8' )
 
     - bash: |
         source activate test-environment
