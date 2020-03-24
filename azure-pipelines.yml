@@ -35,6 +35,10 @@ jobs:
   pool:
     vmImage: $(imageName)
 
+  variables:
+  - name: OMP_NUM_THREADS
+    value: 8
+
   steps:
 
     - bash: echo $SYSTEM_JOBDISPLAYNAME
@@ -125,8 +129,5 @@ jobs:
         cd Scripts/testSuite/
         python testSuite.py ../../bin/cassandra.exe
       displayName: Run Tests
-      variables:
-      - name: OMP_NUM_THREADS
-        value: 8
 
 
