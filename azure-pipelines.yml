@@ -70,13 +70,13 @@ jobs:
       condition: eq( variables['Agent.OS'], 'Darwin' ) # Need to expand
 
     - bash: |
-        git clone https://github.com/MaginnGroup/Cassandra.git
-        cd Cassandra/Src
+        #git clone https://github.com/MaginnGroup/Cassandra.git
+        cd Src
         make -f Makefile.gfortran
         mkdir ../bin
         cp cassandra_gfortran.exe ../bin/cassandra.exe
         cp ../Scripts/Frag_Library_Setup/library_setup.py ../bin/.
-        cd ../../
+        cd ../
       displayName: Build Cassandra Linux
       condition: eq( variables['Agent.OS'], 'Linux' )
 
@@ -92,6 +92,14 @@ jobs:
       condition: eq( variables['Agent.OS'], 'Darwin' )
 
     - bash: |
+        conda config --set always_yes yes --set changeps1 no
+        conda config --add channels conda-forge
+        conda update -c defaults conda
+        conda update --all
+        conda create -n test-environment python=$(python.version) --file requirements-py.txt
+      displayName: Create a new bleeding test environment
+
+    - bash: |
         echo Working directory:
         pwd
         echo ls:
@@ -100,11 +108,11 @@ jobs:
         echo "$PATH"
         echo CASSANDRA:
         which cassandra.exe
-        which python
       displayName: Check cassandra install
 
     - bash: |
-        cd Cassandra/Scripts/testSuite/
+        source activate test-environment
+        cd Scripts/testSuite/
         python testSuite.py ../../bin/cassandra.exe
       displayName: Run Tests
 
