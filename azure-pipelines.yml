@@ -39,7 +39,7 @@ jobs:
     - bash: echo "##vso[task.prependpath]$CONDA/bin"
       displayName: Add Conda to path
 
-    - bash : echo "##vso[task.prependpath]$(Build.SourcesDirectory)/Cassandra/bin"
+    - bash : echo "##vso[task.prependpath]$(Build.SourcesDirectory)/bin"
       displayName: Add Cassandra to path
 
     # On Hosted macOS, the agent user doesn't have ownership of Miniconda's installation directory/
