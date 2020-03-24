@@ -19,27 +19,18 @@ jobs:
 - job: TestSuite
   strategy:
     matrix:
-      #Ubuntu-gfortran:
-      #  imageName: 'ubuntu-18.04'
-      #  python.version: 3.7
       Ubuntu-gcc-8:
         imageName: 'ubuntu-18.04'
         python.version: 3.7
-      Ubuntu-gcc-9:
-        imageName: 'ubuntu-18.04'
-        python.version: 3.7
-     # Ubuntu-openMP:
-     #imageName: 'ubuntu-18.04'
-     #python.version: 3.7
-     #macOS-gcc-latest:
-        #imageName: 'macOS-10.14'
-        #python.version: 3.7
-      #macOS-gcc-8:
-        #imageName: 'macOS-10.14'
-        #python.version: 3.7
-      #macOS-gcc-openMP-latest:
-        #imageName: 'macOS-10.14'
-        #python.version: 3.7
+        #      Ubuntu-gcc-9:
+        #        imageName: 'ubuntu-18.04'
+        #        python.version: 3.7
+        #      Ubuntu-openMP:
+        #        imageName: 'ubuntu-18.04'
+        #        python.version: 3.7
+        #      macOS-gcc-latest:
+        #        imageName: 'macOS-10.14'
+        #        python.version: 3.7
 
   pool:
     vmImage: $(imageName)
