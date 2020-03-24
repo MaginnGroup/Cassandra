@@ -22,16 +22,16 @@ jobs:
       #Ubuntu-gfortran:
       #  imageName: 'ubuntu-18.04'
       #  python.version: 3.7
-      #Ubuntu-gcc-default:
-      #  imageName: 'ubuntu-18.04'
-      #  python.version: 3.7
+      Ubuntu-gcc-8:
+        imageName: 'ubuntu-18.04'
+        python.version: 3.7
       Ubuntu-gcc-9:
         imageName: 'ubuntu-18.04'
         python.version: 3.7
-     # Ubuntu-openMP-gcc-9:
+     # Ubuntu-openMP:
      #imageName: 'ubuntu-18.04'
      #python.version: 3.7
-      #macOS-gcc-latest:
+     #macOS-gcc-latest:
         #imageName: 'macOS-10.14'
         #python.version: 3.7
       #macOS-gcc-8:
@@ -62,55 +62,41 @@ jobs:
       condition: eq( variables['Agent.OS'], 'Darwin' )
 
     - bash: |
-        sudo apt-get update
-        sudo apt-get install gfortran
-        gfortran --version
-      displayName: Install default gfortran Linux
-      condition: and( eq( variables['Agent.OS'], 'Linux' ), endsWith(variables['System.JobDisplayName'], 'default') )
-
-    - bash: |
-        #sudo apt-get update
-        #sudo apt install software-properties-common
-        #sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-        #sudo apt install g++-9
-        gfortran-9 --version
-      displayName: Install gfortran Linux
-      condition: and( eq( variables['Agent.OS'], 'Linux' ), endsWith(variables['System.JobDisplayName'], 'gcc-9') )
-
-    - bash: |
-        brew install gcc@8
-        brew upgrade gcc@8
-        gfortran-8 --version
-      displayName: Install gcc-8 macOS
-      condition: and( eq( variables['Agent.OS'], 'Darwin' ), endsWith(variables['System.JobDisplayName'], 'gcc-8'))
-
-    - bash: |
         brew install gcc
         brew upgrade gcc
         gfortran --version
       displayName: Install gcc-latest macOS
-      condition: and( eq( variables['Agent.OS'], 'Darwin' ), endsWith(variables['System.JobDisplayName'], 'latest'))
+      condition: eq( variables['Agent.OS'], 'Darwin' )
 
     - bash: |
         cd Src
-        make -f Makefile.gfortran
-        mkdir ../bin
-        cp cassandra_gfortran.exe ../bin/cassandra.exe
-        cp ../Scripts/Frag_Library_Setup/library_setup.py ../bin/.
-        cd ../
-      displayName: Build Linux
-      condition: eq( variables['Agent.OS'], 'Linux' )
-
-    - bash: |
-        git clone https://github.com/MaginnGroup/Cassandra.git
-        cd Cassandra/Src
         make -f Makefile.gfortran FC=gfortran-8
         mkdir ../bin
         cp cassandra_gfortran.exe ../bin/cassandra.exe
         cp ../Scripts/Frag_Library_Setup/library_setup.py ../bin/.
-        cd ../../
-      displayName: Build macOS gfortran-8
-      condition: and( eq( variables['Agent.OS'], 'Darwin' ), endsWith(variables['System.JobDisplayName'], 'gcc-8'))
+        cd ../
+      displayName: Build Linux gcc-8
+      condition: and( eq( variables['Agent.OS'], 'Linux' ), endsWith( variables['System.JobDisplayName'], 'gcc-8'))
+
+    - bash: |
+        cd Src
+        make -f Makefile.gfortran FC=gfortran-9
+        mkdir ../bin
+        cp cassandra_gfortran.exe ../bin/cassandra.exe
+        cp ../Scripts/Frag_Library_Setup/library_setup.py ../bin/.
+        cd ../
+      displayName: Build Linux gcc-9
+      condition: and( eq( variables['Agent.OS'], 'Linux' ), endsWith( variables['System.JobDisplayName'], 'gcc-9'))
+
+    - bash: |
+        cd Src
+        make -f Makefile.gfortran.openMP FC=gfortran-9
+        mkdir ../bin
+        cp cassandra_gfortran.exe ../bin/cassandra.exe
+        cp ../Scripts/Frag_Library_Setup/library_setup.py ../bin/.
+        cd ../
+      displayName: Build Linux openMP
+      condition: and( eq( variables['Agent.OS'], 'Linux' ), endsWith( variables['System.JobDisplayName'], 'openMP'))
 
     - bash: |
         git clone https://github.com/MaginnGroup/Cassandra.git
@@ -121,18 +107,7 @@ jobs:
         cp ../Scripts/Frag_Library_Setup/library_setup.py ../bin/.
         cd ../../
       displayName: Build macOS gfortran-latest
-      condition: and( eq( variables['Agent.OS'], 'Darwin' ), endsWith(variables['System.JobDisplayName'], 'gcc-latest'))
-
-    - bash: |
-        git clone https://github.com/MaginnGroup/Cassandra.git
-        cd Cassandra/Src
-        make -f Makefile.gfortran.openMP
-        mkdir ../bin
-        cp cassandra_gfortran.exe ../bin/cassandra.exe
-        cp ../Scripts/Frag_Library_Setup/library_setup.py ../bin/.
-        cd ../../
-      displayName: Build macOS openMP
-      condition: and( eq( variables['Agent.OS'], 'Darwin' ), endsWith(variables['System.JobDisplayName'], 'openMP-latest'))
+      condition: eq( variables['Agent.OS'], 'Darwin' )
 
     - bash: |
         conda config --set always_yes yes --set changeps1 no
