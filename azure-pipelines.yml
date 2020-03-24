@@ -108,23 +108,14 @@ jobs:
         echo "$PATH"
         echo CASSANDRA:
         which cassandra.exe
-        echo GFORTRAN VERSION:
-        gfortran --version
       displayName: Check cassandra install
 
     - bash: |
-        echo Working directory:
-        pwd
-        echo ls:
-        ls
-        echo PATH:
-        echo "$PATH"
-        echo CASSANDRA:
-        which cassandra.exe
+        version=`which gfortran-8`
+        if [ $? -eq 1 ]; then version=`which gfortran`; fi
         echo GFORTRAN VERSION:
-        gfortran --version
+        echo $version
       displayName: Display gfortran version
-      #condition: eq( name, 'macOS-gcc-8' )
 
     - bash: |
         source activate test-environment
