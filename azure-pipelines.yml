@@ -22,15 +22,24 @@ jobs:
       #Ubuntu-gfortran:
       #  imageName: 'ubuntu-18.04'
       #  python.version: 3.7
-      macOS-gcc-8:
-        imageName: 'macOS-10.14'
+      #Ubuntu-gcc-default:
+      #  imageName: 'ubuntu-18.04'
+      #  python.version: 3.7
+      Ubuntu-gcc-9:
+        imageName: 'ubuntu-18.04'
         python.version: 3.7
-      macOS-gcc-latest:
-        imageName: 'macOS-10.14'
-        python.version: 3.7
-      macOS-gcc-openMP-latest:
-        imageName: 'macOS-10.14'
-        python.version: 3.7
+     # Ubuntu-openMP-gcc-9:
+     #imageName: 'ubuntu-18.04'
+     #python.version: 3.7
+      #macOS-gcc-latest:
+        #imageName: 'macOS-10.14'
+        #python.version: 3.7
+      #macOS-gcc-8:
+        #imageName: 'macOS-10.14'
+        #python.version: 3.7
+      #macOS-gcc-openMP-latest:
+        #imageName: 'macOS-10.14'
+        #python.version: 3.7
 
   pool:
     vmImage: $(imageName)
@@ -56,8 +65,17 @@ jobs:
         sudo apt-get update
         sudo apt-get install gfortran
         gfortran --version
+      displayName: Install default gfortran Linux
+      condition: and( eq( variables['Agent.OS'], 'Linux' ), endsWith(variables['System.JobDisplayName'], 'default') )
+
+    - bash: |
+        sudo apt-get update
+        sudo apt install software-properties-common
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+        sudo apt install g++-9
+        gfortran --version
       displayName: Install gfortran Linux
-      condition: eq( variables['Agent.OS'], 'Linux' )
+      condition: and( eq( variables['Agent.OS'], 'Linux' ), endsWith(variables['System.JobDisplayName'], 'gcc-9') )
 
     - bash: |
         brew install gcc@8
