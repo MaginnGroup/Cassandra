@@ -93,10 +93,17 @@ if Passed ==0:
 	os.system('rm *.chk')
 	os.system('rm *.mcf')
 
+
 # Python2 deprecation warning
 if (sys.version_info < (3,0)):
     warnings.showwarning("\nSupport for Python2 is deprecated in "
         "Cassandra and will be removed in a future release. Please "
         "consider switching to Python3.", DeprecationWarning,
         'testSuite.py', 97)
+
+# Exit codes to signal pass/fail for AZP
+if len(tests) - Passsed > 0:
+    exit(1)
+else:
+    exit(0)
 

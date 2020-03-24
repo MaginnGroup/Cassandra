@@ -22,6 +22,8 @@ jobs:
       Ubuntu-gfortan:
         imageName: 'ubuntu-18.04'
         python.version: 3.7
+        variables:
+          GCC8 : ${{ false }}
         #      macOS-gcc-8:
         #imageName: 'macOS-10.14'
         #python.version: 3.7
@@ -70,7 +72,6 @@ jobs:
       condition: eq( variables['Agent.OS'], 'Darwin' ) # Need to expand
 
     - bash: |
-        #git clone https://github.com/MaginnGroup/Cassandra.git
         cd Src
         make -f Makefile.gfortran
         mkdir ../bin
@@ -108,7 +109,23 @@ jobs:
         echo "$PATH"
         echo CASSANDRA:
         which cassandra.exe
+        echo GFORTRAN VERSION:
+        gfortran --version
       displayName: Check cassandra install
+
+    - bash: |
+        echo Working directory:
+        pwd
+        echo ls:
+        ls
+        echo PATH:
+        echo "$PATH"
+        echo CASSANDRA:
+        which cassandra.exe
+        echo GFORTRAN VERSION:
+        gfortran --version
+      displayName: Display gfortran version
+      condition: variables['GCC8'] 
 
     - bash: |
         source activate test-environment
