@@ -19,15 +19,15 @@ jobs:
 - job: TestSuite
   strategy:
     matrix:
-      Ubuntu-gcc-8:
+            #      Ubuntu-gcc-8:
+            #        imageName: 'ubuntu-18.04'
+            #        python.version: 3.7
+            #      Ubuntu-gcc-9:
+            #        imageName: 'ubuntu-18.04'
+            #        python.version: 3.7
+      Ubuntu-openMP:
         imageName: 'ubuntu-18.04'
         python.version: 3.7
-        #      Ubuntu-gcc-9:
-        #        imageName: 'ubuntu-18.04'
-        #        python.version: 3.7
-        #      Ubuntu-openMP:
-        #        imageName: 'ubuntu-18.04'
-        #        python.version: 3.7
         #      macOS-gcc-latest:
         #        imageName: 'macOS-10.14'
         #        python.version: 3.7
@@ -83,7 +83,7 @@ jobs:
         cd Src
         make -f Makefile.gfortran.openMP FC=gfortran-9
         mkdir ../bin
-        cp cassandra_gfortran.exe ../bin/cassandra.exe
+        cp cassandra_gfortran_openMP.exe ../bin/cassandra.exe
         cp ../Scripts/Frag_Library_Setup/library_setup.py ../bin/.
         cd ../
       displayName: Build Linux openMP
@@ -120,9 +120,13 @@ jobs:
       displayName: Check cassandra install
 
     - bash: |
+        echo $OMP_NUM_THREADS
         source activate test-environment
         cd Scripts/testSuite/
         python testSuite.py ../../bin/cassandra.exe
       displayName: Run Tests
+      variables:
+      - name: OMP_NUM_THREADS
+        value: 8
 
 
