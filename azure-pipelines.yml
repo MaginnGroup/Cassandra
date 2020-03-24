@@ -22,27 +22,36 @@ jobs:
       Ubuntu-gcc-8:
         imageName: 'ubuntu-18.04'
         python.version: 3.7
+        gfortran.version: 'gfortran-8'
+        makefile.name: 'Makefile.gfortran'
+        exec.name: 'cassandra_gfortran.exe'
+        omp.num.threads: 1
       Ubuntu-gcc-9:
         imageName: 'ubuntu-18.04'
         python.version: 3.7
+        gfortran.version: 'gfortran-9'
+        makefile.name: 'Makefile.gfortran'
+        exec.name: 'cassandra_gfortran.exe'
+        omp.num.threads: 1
       Ubuntu-openMP:
         imageName: 'ubuntu-18.04'
         python.version: 3.7
-      macOS-gcc-latest:
+        gfortran.version: 'gfortran-9'
+        makefile.name: 'Makefile.gfortran.openMP'
+        exec.name: 'cassandra_gfortran_openMP.exe'
+        omp.num.threads: 8
+      macOS-gcc-9:
         imageName: 'macOS-10.15'
         python.version: 3.7
+        gfortran.version: 'gfortran-9'
+        makefile.name: 'Makefile.gfortran'
+        exec.name: 'cassandra_gfortran.exe'
+        omp.num.threads: 1
 
   pool:
     vmImage: $(imageName)
 
-  variables:
-  - name: OMP_NUM_THREADS
-    value: 8
-
   steps:
-
-    - bash: echo $SYSTEM_JOBDISPLAYNAME
-      displayName: Check variable
 
     - bash: echo "##vso[task.prependpath]$CONDA/bin"
       displayName: Add Conda to path
@@ -57,51 +66,20 @@ jobs:
       condition: eq( variables['Agent.OS'], 'Darwin' )
 
     - bash: |
-        brew install gcc
-        brew upgrade gcc
-        gfortran --version
+        brew install gcc@9
+        brew upgrade gcc@9
+        gfortran-9 --version
       displayName: Install gcc-latest macOS
       condition: eq( variables['Agent.OS'], 'Darwin' )
 
     - bash: |
         cd Src
-        make -f Makefile.gfortran FC=gfortran-8
+        make -f ${MAKEFILE_NAME} FC=${GFORTRAN_VERSION}
         mkdir ../bin
-        cp cassandra_gfortran.exe ../bin/cassandra.exe
+        cp ${EXEC_NAME} ../bin/cassandra.exe
         cp ../Scripts/Frag_Library_Setup/library_setup.py ../bin/.
         cd ../
-      displayName: Build Linux gcc-8
-      condition: and( eq( variables['Agent.OS'], 'Linux' ), endsWith( variables['System.JobDisplayName'], 'gcc-8'))
-
-    - bash: |
-        cd Src
-        make -f Makefile.gfortran FC=gfortran-9
-        mkdir ../bin
-        cp cassandra_gfortran.exe ../bin/cassandra.exe
-        cp ../Scripts/Frag_Library_Setup/library_setup.py ../bin/.
-        cd ../
-      displayName: Build Linux gcc-9
-      condition: and( eq( variables['Agent.OS'], 'Linux' ), endsWith( variables['System.JobDisplayName'], 'gcc-9'))
-
-    - bash: |
-        cd Src
-        make -f Makefile.gfortran.openMP FC=gfortran-9
-        mkdir ../bin
-        cp cassandra_gfortran_openMP.exe ../bin/cassandra.exe
-        cp ../Scripts/Frag_Library_Setup/library_setup.py ../bin/.
-        cd ../
-      displayName: Build Linux openMP
-      condition: and( eq( variables['Agent.OS'], 'Linux' ), endsWith( variables['System.JobDisplayName'], 'openMP'))
-
-    - bash: |
-        cd Src
-        make -f Makefile.gfortran
-        mkdir ../bin
-        cp cassandra_gfortran.exe ../bin/cassandra.exe
-        cp ../Scripts/Frag_Library_Setup/library_setup.py ../bin/.
-        cd ../
-      displayName: Build macOS gfortran-latest
-      condition: eq( variables['Agent.OS'], 'Darwin' )
+      displayName: Build Cassandra
 
     - bash: |
         conda config --set always_yes yes --set changeps1 no
