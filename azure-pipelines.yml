@@ -1,0 +1,111 @@
+
+trigger:
+- master
+
+pr:
+  autoCancel: true
+  branches:
+    include:
+      - master
+
+schedules:
+- cron: "0 0 * * *"
+  displayName: Daily midnight build for master
+  branches:
+    include:
+      - master
+
+jobs:
+- job: Test Suite
+  strategy:
+    matrix:
+      Ubuntu-gfortan:
+        imageName: 'ubuntu-18.04'
+        python.version: 3.7
+        #      macOS-gcc-8:
+        #imageName: 'macOS-10.14'
+        #python.version: 3.7
+        #macOS-gcc-lastest:
+        #imageName: 'macOS-10.14'
+        #python.version: 3.7
+        #macOS-gcc-lastest-openMP:
+        #imageName: 'macOS-10.14'
+        #python.version: 3.7
+
+  pool:
+    vmImage: $(imageName)
+
+  steps:
+    - bash: echo "##vso[task.prependpath]$CONDA/bin"
+      displayName: Add Conda to path
+
+    - bash : echo "##vso[task.prependpath]$(Build.SourcesDirectory)/Cassandra/bin"
+      displayName: Add Cassandra to path
+
+    # On Hosted macOS, the agent user doesn't have ownership of Miniconda's installation directory/
+    # We need to take ownership if we want to update conda or install packages globally
+    - bash: sudo chown -R $USER $CONDA
+      displayName: Take ownership of conda installation
+      condition: eq( variables['Agent.OS'], 'Darwin' )
+
+    - bash: |
+        sudo apt-get update
+        sudo apt-get install gfortran
+        gfortran --version
+      displayName: Install gfortran Linux
+      condition: eq( variables['Agent.OS'], 'Linux' )
+
+    - bash: |
+        brew install gcc@8
+        brew upgrade gcc@8
+        gfortran-8 --version
+      displayName: Install gfortran macOS
+      condition: eq( variables['Agent.OS'], 'Darwin' )
+
+    - bash: |
+        brew install gcc
+        brew upgrade gcc
+        gfortran --version
+      displayName: Install gfortran macOS
+      condition: eq( variables['Agent.OS'], 'Darwin' ) # Need to expand
+
+    - bash: |
+        git clone https://github.com/MaginnGroup/Cassandra.git
+        cd Cassandra/Src
+        make -f Makefile.gfortran
+        mkdir ../bin
+        cp cassandra_gfortran.exe ../bin/cassandra.exe
+        cp ../Scripts/Frag_Library_Setup/library_setup.py ../bin/.
+        cd ../../
+      displayName: Build Cassandra Linux
+      condition: eq( variables['Agent.OS'], 'Linux' )
+
+    - bash: |
+        git clone https://github.com/MaginnGroup/Cassandra.git
+        cd Cassandra/Src
+        make -f Makefile.gfortran FC=gfortran-8
+        mkdir ../bin
+        cp cassandra_gfortran.exe ../bin/cassandra.exe
+        cp ../Scripts/Frag_Library_Setup/library_setup.py ../bin/.
+        cd ../../
+      displayName: Build Cassandra macOS
+      condition: eq( variables['Agent.OS'], 'Darwin' )
+
+    - bash: |
+        echo Working directory:
+        pwd
+        echo ls:
+        ls
+        echo PATH:
+        echo "$PATH"
+        echo CASSANDRA:
+        which cassandra.exe
+        which python
+      displayName: Check cassandra install
+
+    - bash: |
+        cd Cassandra/Scripts/testSuite/
+        python testSuite.py ../../bin/cassandra.exe
+      displayName: Run Tests
+
+
