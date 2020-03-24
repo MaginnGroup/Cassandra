@@ -19,27 +19,35 @@ jobs:
 - job: TestSuite
   strategy:
     matrix:
-      Ubuntu-gfortan:
+      Ubuntu-gcc-8:
         imageName: 'ubuntu-18.04'
         python.version: 3.7
-        #      macOS-gcc-8:
-        #imageName: 'macOS-10.14'
-        #python.version: 3.7
-        #macOS-gcc-lastest:
-        #imageName: 'macOS-10.14'
-        #python.version: 3.7
-        #macOS-gcc-lastest-openMP:
-        #imageName: 'macOS-10.14'
-        #python.version: 3.7
+      Ubuntu-gcc-9:
+        imageName: 'ubuntu-18.04'
+        python.version: 3.7
+      Ubuntu-openMP:
+        imageName: 'ubuntu-18.04'
+        python.version: 3.7
+      macOS-gcc-latest:
+        imageName: 'macOS-10.15'
+        python.version: 3.7
 
   pool:
     vmImage: $(imageName)
 
+  variables:
+  - name: OMP_NUM_THREADS
+    value: 8
+
   steps:
+
+    - bash: echo $SYSTEM_JOBDISPLAYNAME
+      displayName: Check variable
+
     - bash: echo "##vso[task.prependpath]$CONDA/bin"
       displayName: Add Conda to path
 
-    - bash : echo "##vso[task.prependpath]$(Build.SourcesDirectory)/Cassandra/bin"
+    - bash : echo "##vso[task.prependpath]$(Build.SourcesDirectory)/bin"
       displayName: Add Cassandra to path
 
     # On Hosted macOS, the agent user doesn't have ownership of Miniconda's installation directory/
@@ -49,46 +57,50 @@ jobs:
       condition: eq( variables['Agent.OS'], 'Darwin' )
 
     - bash: |
-        sudo apt-get update
-        sudo apt-get install gfortran
-        gfortran --version
-      displayName: Install gfortran Linux
-      condition: eq( variables['Agent.OS'], 'Linux' )
-
-    - bash: |
-        brew install gcc@8
-        brew upgrade gcc@8
-        gfortran-8 --version
-      displayName: Install gfortran macOS
-      condition: eq( variables['Agent.OS'], 'Darwin' )
-
-    - bash: |
         brew install gcc
         brew upgrade gcc
         gfortran --version
-      displayName: Install gfortran macOS
-      condition: eq( variables['Agent.OS'], 'Darwin' ) # Need to expand
+      displayName: Install gcc-latest macOS
+      condition: eq( variables['Agent.OS'], 'Darwin' )
 
     - bash: |
-        #git clone https://github.com/MaginnGroup/Cassandra.git
+        cd Src
+        make -f Makefile.gfortran FC=gfortran-8
+        mkdir ../bin
+        cp cassandra_gfortran.exe ../bin/cassandra.exe
+        cp ../Scripts/Frag_Library_Setup/library_setup.py ../bin/.
+        cd ../
+      displayName: Build Linux gcc-8
+      condition: and( eq( variables['Agent.OS'], 'Linux' ), endsWith( variables['System.JobDisplayName'], 'gcc-8'))
+
+    - bash: |
+        cd Src
+        make -f Makefile.gfortran FC=gfortran-9
+        mkdir ../bin
+        cp cassandra_gfortran.exe ../bin/cassandra.exe
+        cp ../Scripts/Frag_Library_Setup/library_setup.py ../bin/.
+        cd ../
+      displayName: Build Linux gcc-9
+      condition: and( eq( variables['Agent.OS'], 'Linux' ), endsWith( variables['System.JobDisplayName'], 'gcc-9'))
+
+    - bash: |
+        cd Src
+        make -f Makefile.gfortran.openMP FC=gfortran-9
+        mkdir ../bin
+        cp cassandra_gfortran_openMP.exe ../bin/cassandra.exe
+        cp ../Scripts/Frag_Library_Setup/library_setup.py ../bin/.
+        cd ../
+      displayName: Build Linux openMP
+      condition: and( eq( variables['Agent.OS'], 'Linux' ), endsWith( variables['System.JobDisplayName'], 'openMP'))
+
+    - bash: |
         cd Src
         make -f Makefile.gfortran
         mkdir ../bin
         cp cassandra_gfortran.exe ../bin/cassandra.exe
         cp ../Scripts/Frag_Library_Setup/library_setup.py ../bin/.
         cd ../
-      displayName: Build Cassandra Linux
-      condition: eq( variables['Agent.OS'], 'Linux' )
-
-    - bash: |
-        git clone https://github.com/MaginnGroup/Cassandra.git
-        cd Cassandra/Src
-        make -f Makefile.gfortran FC=gfortran-8
-        mkdir ../bin
-        cp cassandra_gfortran.exe ../bin/cassandra.exe
-        cp ../Scripts/Frag_Library_Setup/library_setup.py ../bin/.
-        cd ../../
-      displayName: Build Cassandra macOS
+      displayName: Build macOS gfortran-latest
       condition: eq( variables['Agent.OS'], 'Darwin' )
 
     - bash: |
@@ -111,6 +123,7 @@ jobs:
       displayName: Check cassandra install
 
     - bash: |
+        echo $OMP_NUM_THREADS
         source activate test-environment
         cd Scripts/testSuite/
         python testSuite.py ../../bin/cassandra.exe
