@@ -102,7 +102,7 @@ if (sys.version_info < (3,0)):
         'testSuite.py', 97)
 
 # Exit codes to signal pass/fail for AZP
-if len(tests) - Passsed > 0:
+if len(tests) - Passed > 0:
     exit(1)
 else:
     exit(0)
