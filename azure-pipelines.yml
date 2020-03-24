@@ -22,8 +22,7 @@ jobs:
       Ubuntu-gfortan:
         imageName: 'ubuntu-18.04'
         python.version: 3.7
-        variables:
-          GCC8 : ${{ false }}
+        variables: { GCC8: false }
         #      macOS-gcc-8:
         #imageName: 'macOS-10.14'
         #python.version: 3.7
@@ -125,7 +124,7 @@ jobs:
         echo GFORTRAN VERSION:
         gfortran --version
       displayName: Display gfortran version
-      condition: variables['GCC8'] 
+      condition: eq( variables['GCC8'], 'false' )
 
     - bash: |
         source activate test-environment
