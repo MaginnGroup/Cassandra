@@ -56,7 +56,7 @@ cassExe     = args.cassandra_exe
 #*******************************************************************************
 
 Passed = 0 # Total Passed
-
+exit(1)
 # Clear the current test output by running the check function with overwrite value as true:
 checkLastTest(1,TestOutput)
 
