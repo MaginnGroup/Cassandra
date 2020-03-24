@@ -80,7 +80,6 @@ jobs:
         cp ../Scripts/Frag_Library_Setup/library_setup.py ../bin/.
         cd ../
       displayName: Build Cassandra
-      condition: eq( variables['Agent.OS'], 'Linux' )
 
     - bash: |
         conda config --set always_yes yes --set changeps1 no
