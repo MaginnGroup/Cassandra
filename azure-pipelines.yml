@@ -19,9 +19,9 @@ jobs:
 - job: TestSuite
   strategy:
     matrix:
-      Ubuntu-gfortran:
-        imageName: 'ubuntu-18.04'
-        python.version: 3.7
+      #Ubuntu-gfortran:
+      #  imageName: 'ubuntu-18.04'
+      #  python.version: 3.7
       macOS-gcc-8:
         imageName: 'macOS-10.14'
         python.version: 3.7
@@ -63,14 +63,14 @@ jobs:
         brew install gcc@8
         brew upgrade gcc@8
         gfortran-8 --version
-      displayName: Install gfortran macOS
+      displayName: Install gcc-8 macOS
       condition: and( eq( variables['Agent.OS'], 'Darwin' ), endsWith(variables['System.JobDisplayName'], 'gcc-8'))
 
     - bash: |
         brew install gcc
         brew upgrade gcc
         gfortran --version
-      displayName: Install gfortran macOS
+      displayName: Install gcc-latest macOS
       condition: and( eq( variables['Agent.OS'], 'Darwin' ), endsWith(variables['System.JobDisplayName'], 'latest'))
 
     - bash: |
