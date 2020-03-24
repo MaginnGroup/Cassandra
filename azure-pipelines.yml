@@ -22,15 +22,17 @@ jobs:
       Ubuntu-gcc-8:
         imageName: 'ubuntu-18.04'
         python.version: 3.7
-      Ubuntu-gcc-9:
-        imageName: 'ubuntu-18.04'
-        python.version: 3.7
-      Ubuntu-openMP:
-        imageName: 'ubuntu-18.04'
-        python.version: 3.7
-      macOS-gcc-latest:
-        imageName: 'macOS-10.15'
-        python.version: 3.7
+        gfortran.version: 'gfortran-8'
+        #      Ubuntu-gcc-9:
+        #        imageName: 'ubuntu-18.04'
+        #        python.version: 3.7
+        #        gfortran.version: 'gfortran-9'
+        #      Ubuntu-openMP:
+        #        imageName: 'ubuntu-18.04'
+        #        python.version: 3.7
+        #      macOS-gcc-latest:
+        #        imageName: 'macOS-10.15'
+        #        python.version: 3.7
 
   pool:
     vmImage: $(imageName)
@@ -65,13 +67,14 @@ jobs:
 
     - bash: |
         cd Src
-        make -f Makefile.gfortran FC=gfortran-8
+        make -f Makefile.gfortran FC=${GFORTRAN_VERSION}
         mkdir ../bin
         cp cassandra_gfortran.exe ../bin/cassandra.exe
         cp ../Scripts/Frag_Library_Setup/library_setup.py ../bin/.
         cd ../
       displayName: Build Linux gcc-8
-      condition: and( eq( variables['Agent.OS'], 'Linux' ), endsWith( variables['System.JobDisplayName'], 'gcc-8'))
+      condition: eq( variables['Agent.OS'], 'Linux' )
+      #condition: and( eq( variables['Agent.OS'], 'Linux' ), endsWith( variables['System.JobDisplayName'], 'gcc-8'))
 
     - bash: |
         cd Src
