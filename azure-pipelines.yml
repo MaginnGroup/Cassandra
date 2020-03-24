@@ -69,11 +69,11 @@ jobs:
       condition: and( eq( variables['Agent.OS'], 'Linux' ), endsWith(variables['System.JobDisplayName'], 'default') )
 
     - bash: |
-        sudo apt-get update
-        sudo apt install software-properties-common
-        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-        sudo apt install g++-9
-        gfortran --version
+        #sudo apt-get update
+        #sudo apt install software-properties-common
+        #sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+        #sudo apt install g++-9
+        gfortran-9 --version
       displayName: Install gfortran Linux
       condition: and( eq( variables['Agent.OS'], 'Linux' ), endsWith(variables['System.JobDisplayName'], 'gcc-9') )
 
