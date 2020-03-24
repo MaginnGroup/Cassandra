@@ -16,7 +16,7 @@ schedules:
       - master
 
 jobs:
-- job: Test Suite
+- job: TestSuite
   strategy:
     matrix:
       Ubuntu-gfortan:
