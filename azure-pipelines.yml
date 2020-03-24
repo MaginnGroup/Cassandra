@@ -94,13 +94,12 @@ jobs:
       condition: and( eq( variables['Agent.OS'], 'Linux' ), endsWith( variables['System.JobDisplayName'], 'openMP'))
 
     - bash: |
-        git clone https://github.com/MaginnGroup/Cassandra.git
-        cd Cassandra/Src
+        cd Src
         make -f Makefile.gfortran
         mkdir ../bin
         cp cassandra_gfortran.exe ../bin/cassandra.exe
         cp ../Scripts/Frag_Library_Setup/library_setup.py ../bin/.
-        cd ../../
+        cd ../
       displayName: Build macOS gfortran-latest
       condition: eq( variables['Agent.OS'], 'Darwin' )
 
