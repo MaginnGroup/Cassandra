@@ -19,10 +19,9 @@ jobs:
 - job: TestSuite
   strategy:
     matrix:
-      Ubuntu-gfortan:
+      Ubuntu-gfortran:
         imageName: 'ubuntu-18.04'
         python.version: 3.7
-        #variables: { GCC8: false }
         #      macOS-gcc-8:
         #imageName: 'macOS-10.14'
         #python.version: 3.7
@@ -37,6 +36,10 @@ jobs:
     vmImage: $(imageName)
 
   steps:
+
+    - bash: echo $SYSTEM_JOBDISPLAYNAME
+      displayName: Check variable
+
     - bash: echo "##vso[task.prependpath]$CONDA/bin"
       displayName: Add Conda to path
 
@@ -88,7 +91,7 @@ jobs:
         cp cassandra_gfortran.exe ../bin/cassandra.exe
         cp ../Scripts/Frag_Library_Setup/library_setup.py ../bin/.
         cd ../../
-      displayName: Build Cassandra macOS
+      displayName: Build Cassandra gfortran-8
       condition: eq( variables['Agent.OS'], 'Darwin' )
 
     - bash: |
@@ -109,13 +112,6 @@ jobs:
         echo CASSANDRA:
         which cassandra.exe
       displayName: Check cassandra install
-
-    - bash: |
-        version=`which gfortran-8`
-        if [ $? -eq 1 ]; then version=`which gfortran`; fi
-        echo GFORTRAN VERSION:
-        echo $version
-      displayName: Display gfortran version
 
     - bash: |
         source activate test-environment
