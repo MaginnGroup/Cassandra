@@ -5,6 +5,7 @@
 </a>
 
 ![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)
+[![Build Status](https://dev.azure.com/MaginnGroup/Cassandra/_apis/build/status/MaginnGroup.Cassandra?branchName=master)](https://dev.azure.com/MaginnGroup/Cassandra/_build/latest?definitionId=2&branchName=master)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 [![Chat on Slack](https://img.shields.io/badge/chat-on_slack-green.svg?longCache=true&style=flat&logo=slack)](https://join.slack.com/t/cassandra-nd/shared_invite/enQtNDU0NDIyMDc5ODEyLWE5Yzc1YmQ3MzdhNWVmYTkyNjY0YWQ3ZDJmMjQ5ZTliYTc3MTNlZTg2MzgxOTdjY2Y1ZTNiMjVhMmE4NGEzYWM)
 
@@ -96,9 +97,13 @@ improve the speed of the code or operate in debug mode.
 Before running the openMP enabled executable, the environment variable
 OMP_NUM_THREADS will have to be set to the number of threads you want to
 run the simulation on. For example, for 12-thread simulation, the
-following command is used in tcsh.
+following command is used in tcsh:
 
 ```> setenv OMP_NUM_THREADS 12```
+
+or alternatively in bash:
+
+```> export OMP_NUM_THREADS=12```
 
 ## <a name="started"></a> Getting Started
 
@@ -119,7 +124,7 @@ Depending on whether you are a user or a developer, you can contribute to Cassan
     - Reporting bugs using GitHub issues (preferred) or [forum](https://cassandra.nd.edu/index.php/community).
 
 2. **Developer**
-    - Contribute code or documentation using GitHub pull request workflow. See a primer on Cassandra Software Development on GitHub. See [CONTRIBUTING](https://github.com/MaginnGroup/Cassandra/blob/develop/CONTRIBUTING.md) for more details on the contributing process.
+    - Contribute code or documentation using GitHub pull request workflow. See a primer on Cassandra Software Development on GitHub. See [CONTRIBUTING](https://github.com/MaginnGroup/Cassandra/blob/master/CONTRIBUTING.md) for more details on the contributing process.
     - Ask development questions (i.e. you are trying to fix a bug or contribute with a new feature) using [Slack](https://cassandra-nd.slack.com/messages/general/). 
 
 ## <a name="citation"></a> Citation
