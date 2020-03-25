@@ -45,7 +45,12 @@
 #*******************************************************************************
 # IMPORT MODULES
 #*******************************************************************************
+from __future__ import print_function
+from builtins import input
+from builtins import str
+from builtins import range
 import sys, math, subprocess, os, linecache, argparse, re
+import warnings
 
 #*******************************************************************************
 # ARGUMENT PARSE
@@ -131,10 +136,10 @@ def cml_to_pdb(infilename):
 		if '</atomArray>' in line:
 			cml_end_atom = line_nbr + 1
 
-	for i in xrange(cml_start_atom+1, cml_end_atom):
+	for i in range(cml_start_atom+1, cml_end_atom):
 		cml_atom_info.append(re.findall('"([^"]*)"',linecache.getline(infilename, i)))
 			
-	for i in xrange(cml_start_bonds+1, cml_end_bonds):
+	for i in range(cml_start_bonds+1, cml_end_bonds):
 		cml_bond_info.append(re.findall('"([^"]*)"',linecache.getline(infilename, i))[0].split())
 
 	temp=[]
@@ -254,9 +259,9 @@ bold = '\033[1m'
 normal = '\033[0m'
 gcmc_flag = 0
 
-print bold+"\n********************** Cassandra Setup *********************\n"+normal
-print bold+"Cassandra location: "+normal+cassandra_path
-print bold+"Scanning input file"+normal
+print(bold+"\n********************** Cassandra Setup *********************\n"+normal)
+print(bold+"Cassandra location: "+normal+cassandra_path)
+print(bold+"Scanning input file"+normal)
 
 #Locate line number for the following keywords:
 # Nbr_Species
@@ -314,23 +319,23 @@ if nbr_boxes == 1:
 else:
 	vdw_style = []
 	charge_style = []
-	for i in xrange(1,nbr_boxes+1):
+	for i in range(1,nbr_boxes+1):
 		vdw_style.append(linecache.getline(input_file, vdw_style_line+i).split()[0])
 		if charge_style_line:
 			charge_style.append(linecache.getline(input_file, charge_style_line+i).split()[0])
 	if vdw_style[1] != vdw_style[0]:
-		vdw_style = raw_input("VDW_Style for boxes don't match. " +
+		vdw_style = input("VDW_Style for boxes don't match. " +
 		                      "Enter the VDW_Style to use (" + vdw_style[0] + "/" + 
 		                      vdw_style[i-1] + "):")
 	else:
 		vdw_style = vdw_style[0]
 	if vdw_style != 'LJ' and vdw_style != 'lj' and \
 	   vdw_style != 'Mie' and vdw_style != 'mie':
-		print "Only 'LJ' and 'Mie' VDW_Styles are supported"
+		print("Only 'LJ' and 'Mie' VDW_Styles are supported")
 		quit()
 	if charge_style_line:
 		if charge_style[1] != charge_style[0]:
-			charge_style = raw_input("Charge_Style for boxes don't match. " +
+			charge_style = input("Charge_Style for boxes don't match. " +
 										 "Enter the Charge_Style to use (" + charge_style[0] + "/" + 
 										 charge_style[i-1] + "):")
 		else:
@@ -341,12 +346,12 @@ sim_type = linecache.getline(input_file,sim_type_line+1)
 
 #Obtain number of species
 nbr_species = int(linecache.getline(input_file,nbr_species_line+1))
-print bold+"  Number of species found: " + normal + str(nbr_species)
+print(bold+"  Number of species found: " + normal + str(nbr_species))
 
 #Intra_Scaling
 vdw_scaling = []
 charge_scaling = []
-for i in xrange(1,nbr_species+1):
+for i in range(1,nbr_species+1):
 	if intra_scaling_line:
 		if charge_style_line and charge_style == 'coul':
 			vdw_scaling.append(linecache.getline(input_file,intra_scaling_line+2*i-1))
@@ -384,15 +389,15 @@ for this_species,each_pdb in enumerate(pdb_files):
 
 #Look for MCF files
 mcf_files = []
-for i in xrange(0,nbr_species):
+for i in range(0,nbr_species):
 	mcf_files.append(linecache.getline(input_file,molec_files_line+i+1).split()[0])
-	print bold+"  The MCF file number " + str(i+1) + " is: " + normal + mcf_files[i]
+	print(bold+"  The MCF file number " + str(i+1) + " is: " + normal + mcf_files[i])
 
 #Open the MCF files to record where atom, bond and fragment info is
 line_where_atom_info = []
 line_where_bond_info = []
 line_where_fragment_info = []
-for i in xrange(0,len(mcf_files)):
+for i in range(0,len(mcf_files)):
 	current_mcf = open(mcf_files[i],'r')
 	for line_number_mcf, line_mcf in enumerate(current_mcf):
 		if not line_mcf.strip():
@@ -411,11 +416,11 @@ atom_type_list = [0]*nbr_species
 which_atoms_are_ring = []
 temp_list = []
 nbr_atoms = []
-for i in xrange(0, nbr_species):
+for i in range(0, nbr_species):
 	nbr_atoms.append(int(linecache.getline(mcf_files[i],
 	                     line_where_atom_info[i]+1).split()[0]))
 	atom_type_list[i] = [0]*nbr_atoms[i]
-	for j in xrange(0,nbr_atoms[i]):
+	for j in range(0,nbr_atoms[i]):
 		atom_type = linecache.getline(mcf_files[i],
 		                              line_where_atom_info[i]+2+j).split()[1]
 		#remove old '_s?' flags if present
@@ -435,12 +440,12 @@ for i in xrange(0, nbr_species):
 #Find how many fragments there are and get a list of them.
 nbr_fragments = []
 fragment_list = []
-for i in xrange(0, nbr_species):
+for i in range(0, nbr_species):
 	nbr_fragments.append(int(linecache.getline(mcf_files[i],
 	                            line_where_fragment_info[i]+1).split()[0]))
-	print bold+"    Species "+str(i+1)+" has "+str(nbr_fragments[i])+ " fragments" + normal
+	print(bold+"    Species "+str(i+1)+" has "+str(nbr_fragments[i])+ " fragments" + normal)
 	temp_list=[]
-	for j in xrange(0,nbr_fragments[i]):
+	for j in range(0,nbr_fragments[i]):
 		temp_list.append(linecache.getline(mcf_files[i],
 		                 line_where_fragment_info[i]+2+j).split()[2:])
 	fragment_list.append(temp_list)
@@ -466,9 +471,9 @@ for i,species in enumerate(fragment_list):
 	temp_exoring = []
 
 if any([any(has_ring) for has_ring in fragment_has_ring]):
-	print bold+"Molecules with rings found. These are:" + normal
+	print(bold+"Molecules with rings found. These are:" + normal)
 	for i,species in enumerate(fragment_has_ring):
-		print bold+"Species "+str(i+1)+" has "+str(sum(species))+ " rings."+normal
+		print(bold+"Species "+str(i+1)+" has "+str(sum(species))+ " rings."+normal)
 
 #We know what fragments are ring for each species. Copy only those config_files 
 #for the species that have rings
@@ -489,16 +494,16 @@ for ispecies,has_ring in enumerate(fragment_has_ring):
 temperature = float(linecache.getline(input_file,temp_line+1).split()[0])
 
 #Rewrite the MCF files to append an '_s1' to the atom type
-for i in xrange(0,len(mcf_files)):
+for i in range(0,len(mcf_files)):
 	current_mcf = open(mcf_files[i],'r')
 	new_mcf_file = open(mcf_files[i]+"temp",'w')
 	total_lines = len(current_mcf.readlines())
 	current_mcf.close()
 	stride = 0
-	for line_number in xrange(1,total_lines+1):
+	for line_number in range(1,total_lines+1):
 		if line_number + stride > line_where_atom_info[i]+1 and \
 		   line_number + stride <= line_where_atom_info[i]+1 + nbr_atoms[i]:
-			for j in xrange(0,nbr_atoms[i]):
+			for j in range(0,nbr_atoms[i]):
 				this_line = linecache.getline(mcf_files[i],line_number+j+stride).split()
 				this_line[1] = atom_type_list[i][j]
 				new_mcf_file.write('    '.join(this_line)+'\n')
@@ -522,23 +527,23 @@ for i in xrange(0,len(mcf_files)):
 #/species?/fragments
 #/species?/frag?
 
-for i in xrange(0, nbr_species):
+for i in range(0, nbr_species):
 
-	for j in xrange(0,nbr_fragments[i]):
+	for j in range(0,nbr_fragments[i]):
 		os.system("mkdir -p species"+str(i+1)+"/frag"+str(j+1))
 
 	if i not in pdb_without_conect: 
 		os.system("mkdir -p species"+str(i+1)+"/fragments/")
 
 #Now, create input files for fragment MCF generation
-for i in xrange(0, nbr_species):
+for i in range(0, nbr_species):
 
 	if i in pdb_without_conect:
-		print "\n\n" + bold + "MCF generation file not created for species "+str(i+1)+normal
+		print("\n\n" + bold + "MCF generation file not created for species "+str(i+1)+normal)
 		if nbr_fragments[i] == 0:
-			print bold+"No fragment configuration needed."+normal
+			print(bold+"No fragment configuration needed."+normal)
 		else:
-			print bold+"Fragment configuration will be taken from PDB file."+normal
+			print(bold+"Fragment configuration will be taken from PDB file."+normal)
 		continue
 
 	if nbr_atoms[i] >= 3:
@@ -546,7 +551,7 @@ for i in xrange(0, nbr_species):
 			if str(i) in element[0]:
 				os.system("cp "+element[1]+" species"+str(i+1)+"/fragments/molecule.pdb")
 
-		print "\n\n"+bold+"Creating input MCF generation file for species "+str(i+1)+" "+normal
+		print("\n\n"+bold+"Creating input MCF generation file for species "+str(i+1)+" "+normal)
 		input_mcf_gen = open("species"+str(i+1)+"/fragments/species"+str(i+1)+"_mcf_gen.inp",'w')
 		input_mcf_gen.write("# Run_Name\nspecies"+str(i+1)+"_mcf_gen")
 		input_mcf_gen.write("\n\n")
@@ -570,7 +575,7 @@ for i in xrange(0, nbr_species):
 		input_mcf_gen.write("# Box_Info\n1\nCUBIC\n30.0 30.0 30.0\n\nEND")
 		input_mcf_gen.close()
 
-		print bold+"Running Cassandra to generate MCF files"+normal
+		print(bold+"Running Cassandra to generate MCF files"+normal)
 		sys.stdout.flush()
 		os.chdir('./species'+str(i+1)+'/fragments/')
 		subprocess.call([cassandra_path,'species'+str(i+1)+'_mcf_gen.inp'])
@@ -580,7 +585,7 @@ for i in xrange(0, nbr_species):
 #Test if fragment and/or ring is rigid
 fragment_is_rigid = [] # Boolean entry for each i,j
 ring_is_rigid = [] # frag_id's for each frag that has a rigid ring
-for i in xrange(0, nbr_species):
+for i in range(0, nbr_species):
 
 	if nbr_atoms[i] < 3:
 
@@ -595,7 +600,7 @@ for i in xrange(0, nbr_species):
 	else:
 		temp_rigid = []
 		temp_ring_rigid = []
-		for j in xrange(0,nbr_fragments[i]):
+		for j in range(0,nbr_fragments[i]):
 			#Read mcf to see how many angles are fixed
 			frag_atoms_are_ring = []
 			angle_parms = {}
@@ -606,14 +611,14 @@ for i in xrange(0, nbr_species):
 			while line:
 				if "# Atom_Info" in line:
 					nbr_frag_atoms = int(frag_mcf.readline().split()[0])
-					for k in xrange(0,nbr_frag_atoms):
+					for k in range(0,nbr_frag_atoms):
 						line = frag_mcf.readline()
 						atom_ID = int(line.split()[0])
 						if line.split()[-1] == 'ring':
 							frag_atoms_are_ring.append(atom_ID)
 				elif "# Angle_Info" in line:
 					nbr_angles = int(frag_mcf.readline().split()[0])
-					for k in xrange(0,nbr_angles):
+					for k in range(0,nbr_angles):
 						line = frag_mcf.readline()
 						angle_ID = tuple([int(x) for x in line.split()[1:4]])
 						angle_type = line.split()[4]
@@ -629,7 +634,7 @@ for i in xrange(0, nbr_species):
 				if temp_rigid[j]:
 					#If the whole frag is rigid, the ring must be rigid
 					temp_ring_rigid.append(j)
-				elif any([angle_type == 'fixed' for angle_type in angle_parms.values()]):
+				elif any([angle_type == 'fixed' for angle_type in list(angle_parms.values())]):
 					#Must have some 'fixed' angles to have a rigid ring
 					nbr_ring_angles_fixed = 0
 					for angle_ID in angle_parms:
@@ -644,8 +649,8 @@ for i in xrange(0, nbr_species):
 
 #Create input file for each fragment of each species
 
-for i in xrange(0, nbr_species):
-	for j in xrange(0,nbr_fragments[i]):
+for i in range(0, nbr_species):
+	for j in range(0,nbr_fragments[i]):
 		if fragment_is_rigid[i][j]:
 			#Read PDB
 			atom_coords = read_pdb(pdb_files[i])
@@ -661,8 +666,8 @@ for i in xrange(0, nbr_species):
 			output_frag.close()
 		else:
 			if fragment_has_ring[i][j]:
-				print bold+"Generating RING FRAGMENT library species "+str(i+1)+\
-									 " fragment "+str(j+1)+normal
+				print(bold+"Generating RING FRAGMENT library species "+str(i+1)+\
+									 " fragment "+str(j+1)+normal)
 				input_frag = open("species"+str(i+1)+"/frag"+str(j+1)+"/frag"+str(j+1)+
 													".inp",'w')
 				input_frag.write("# Run_Name\nfrag"+str(j+1)+"\n\n")
@@ -714,8 +719,8 @@ for i in xrange(0, nbr_species):
 				subprocess.call([cassandra_path,'frag'+str(j+1)+'.inp'])
 				os.chdir('../../')
 			else:
-				print bold+"Generating fragment library species "+str(i+1)+\
-					         " fragment " + str(j+1)+normal
+				print(bold+"Generating fragment library species "+str(i+1)+\
+					         " fragment " + str(j+1)+normal)
 				input_frag = open("species"+str(i+1)+"/frag"+str(j+1)+"/frag"+str(j+1)+
 					                ".inp",'w')
 				input_frag.write("# Run_Name\nfrag"+str(j+1)+"\n\n")
@@ -764,13 +769,13 @@ new_file = open(input_file+"temp",'w')
 total_lines = len(in_file.readlines())
 in_file.close()
 omit = False
-for line_number in xrange(1,total_lines+1):
+for line_number in range(1,total_lines+1):
 	
 	if line_number == frag_files_line:
 		new_file.write("# Fragment_Files\n")
 		total_frag_counter = 0
-		for i in xrange(0, nbr_species):
-			for j in xrange(0,nbr_fragments[i]):
+		for i in range(0, nbr_species):
+			for j in range(0,nbr_fragments[i]):
 				total_frag_counter += 1
 				new_file.write("species"+str(i+1)+"/frag"+str(j+1)+"/frag"+str(j+1)+
 				               ".dat  " + str(total_frag_counter)+"\n")
@@ -788,6 +793,13 @@ for line_number in xrange(1,total_lines+1):
 in_file.close()
 new_file.close()
 
-print bold+"Removing temporary input file"+normal
+print(bold+"Removing temporary input file"+normal)
 os.system("rm "+ input_file+"; mv "+input_file+"temp "+input_file)
-print bold+"Finished"+normal
+print(bold+"Finished"+normal)
+
+# Python 2.x deprecation warning
+if (sys.version_info < (3,0)):
+    warnings.showwarning("\n\nSupport for Python2 is deprecated in "
+        "Cassandra and will be removed in a future release. Please "
+        "consider switching to Python3.\n\n", DeprecationWarning,
+        'library_setup.py', 801)

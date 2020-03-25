@@ -1,5 +1,12 @@
 \chapter{Utilities}
 
+All Python utility scripts require the \texttt{future} package
+and \texttt{numpy} package, as listed in \texttt{requirements-py.txt}.
+Both packages are available via \texttt{pip} or \texttt{conda}.
+
+Please note that \texttt{python2} support is deprecated and may be removed
+in a future release.
+
 %\section{Input File GUI} 
 %\label{sec:GUI}
 %This script provides a graphical user interface (GUI) with which the user 
@@ -52,7 +59,7 @@
 \section{Generate a Molecular Connectivity File}
 \label{sec:mcfgen}
 
-The script \texttt{mcf\_gen.py} is a tool that aims to ease the setup of molecular connectivity files from scratch (see section \ref{sec:MCF_File} to learn more
+The script \texttt{mcfgen.py} is a tool that aims to ease the setup of molecular connectivity files from scratch (see section \ref{sec:MCF_File} to learn more
 about MCFs), as the generation of these files by hand can be error prone. 
 In this section, a pentane MCF will be generated to demonstrate the use of this tool.
 The Transferable Potentials for Phase Equilibria (TraPPE) force field will be used to represent the pentane molecular interactions. 

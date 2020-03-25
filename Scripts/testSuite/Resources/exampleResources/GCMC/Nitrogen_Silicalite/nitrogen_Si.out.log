@@ -1,0 +1,439 @@
+********************************************************************************
+                ______                                __                        
+               / ____/___ _______________ _____  ____/ /________ _              
+              / /   / __ `/ ___/ ___/ __ `/ __ \/ __  / ___/ __ `/              
+             / /___/ /_/ (__  |__  ) /_/ / / / / /_/ / /  / /_/ /               
+             \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                
+                                                                                
+********************************************************************************
+**********************************Log File**************************************
+********************************************************************************
+
+Run info
+********************************************************************************
+version: Cassandra Development Version
+inputfile: nitrogen_Si.inp
+name of run: nitrogen_Si.out
+date (mm/dd/yyyy): 02/01/2018
+time: 16:51:07
+machine: Matthews-MacBook-Pro.local
+********************************************************************************
+
+Verbose log
+********************************************************************************
+Normal output to logfile
+********************************************************************************
+
+Simulation type
+********************************************************************************
+GCMC                
+********************************************************************************
+
+Copy input file
+********************************************************************************
+                                                                                
+# Run_Name                                                                      
+nitrogen_Si.out                                                                 
+                                                                                
+# Sim_Type                                                                      
+gcmc                                                                            
+                                                                                
+# Nbr_Species                                                                   
+2                                                                               
+                                                                                
+# VDW_Style                                                                     
+lj cut_tail 6.0                                                                 
+                                                                                
+# Charge_Style                                                                  
+coul ewald 6.0 1E-5                                                             
+                                                                                
+# Mixing_Rule                                                                   
+lb                                                                              
+                                                                                
+# Seed_Info                                                                     
+6752865750 4278117321                                                           
+                                                                                
+# Rcutoff_Low                                                                   
+1.0                                                                             
+                                                                                
+# Pair_Energy                                                                   
+true                                                                            
+                                                                                
+# Molecule_Files                                                                
+MFI.mcf 1                                                                       
+N23S.mcf 100                                                                    
+                                                                                
+# Box_Info                                                                      
+1                                                                               
+orthogonal                                                                      
+20.09  19.738 13.142                                                            
+                                                                                
+# Temperature_Info                                                              
+77.0                                                                            
+                                                                                
+# Chemical_Potential_Info                                                       
+-10.0                                                                           
+                                                                                
+                                                                                
+# Move_Probability_Info                                                         
+                                                                                
+# Prob_Translation                                                              
+0.25                                                                            
+0.0  2.0                                                                        
+                                                                                
+# Prob_Rotation                                                                 
+0.25                                                                            
+0.0  180                                                                        
+                                                                                
+                                                                                
+# Prob_Insertion                                                                
+0.25                                                                            
+none cbmc                                                                       
+                                                                                
+# Prob_Deletion                                                                 
+0.25                                                                            
+                                                                                
+# Done_Probability_Info                                                         
+                                                                                
+# Start_Type                                                                    
+add_to_config 1 0 MFI.xyz 0 20                                                  
+                                                                                
+# Run_Type                                                                      
+equilibration   600                                                             
+                                                                                
+# Simulation_Length_Info                                                        
+units        steps                                                              
+prop_freq    400                                                                
+coord_freq   4000                                                               
+run          4000                                                               
+                                                                                
+                                                                                
+# Property_Info 1                                                               
+energy_total                                                                    
+nmols                                                                           
+pressure                                                                        
+                                                                                
+# Fragment_Files                                                                
+species2/frag1/frag1.dat  1                                                     
+                                                                                
+# CBMC_Info                                                                     
+kappa_ins 12                                                                    
+rcut_cbmc 6.5                                                                   
+                                                                                
+                                                                                
+END                                                                             
+********************************************************************************
+
+Number of species
+********************************************************************************
+2
+********************************************************************************
+
+Box info
+********************************************************************************
+Number of simulation boxes     1
+Box 1 is ORTHORHOMBIC        
+ X dimension :        20.0900     Angstrom
+ Y dimension :        19.7380     Angstrom
+ Z dimension :        13.1420     Angstrom
+ Cell basis vector lengths in A,     20.0900      19.7380      13.1420
+ Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+ Distance between box faces    20.0900      19.7380      13.1420
+ Box volume, A^3          5211.2816
+********************************************************************************
+
+Pair style
+********************************************************************************
+VDW style used is:   LJ             in box:  1
+ VDW sum style is:   cut_tail       in box:  1
+ rcut =     6.000 Angstrom
+Charge style in box 1 is coul
+ Charge sum style is   ewald          in box:  1
+ Ewald real space cutoff is   6.000 Angstroms.
+ Ewald real space parameter is   0.566 inverse Angstroms
+ Ewald reciprocal cutoff is  3.8376 inverse Angstroms
+Pair interaction energy array storage enabled
+Lorentz-Berthelot mixing rule specified
+********************************************************************************
+
+Molecule info
+********************************************************************************
+ Reading molecular connectivity information
+ Species:            1
+ Molecular connectivity file: MFI.mcf                                                                                                                 
+   288 atom(s) specified.
+   0 bond(s) specified.
+   0 angle(s) specified.
+   0 dihedral(s) specified.
+   0 improper(s) specified.
+   0 fragment(s) specified.
+   0 fragment bond(s) specified.
+ Reading molecular connectivity information
+ Species:            2
+ Molecular connectivity file: N23S.mcf                                                                                                                
+   3 atom(s) specified.
+   2 bond(s) specified.
+   1 angle(s) specified.
+   0 dihedral(s) specified.
+   0 improper(s) specified.
+   1 fragment(s) specified.
+   0 fragment bond(s) specified.
+
+ Species  Max molecules
+ -------  -------------
+      1              1
+      2            100
+
+ Species     1
+ -------------------------------------------------------------------------------
+ Atom parameters read
+ Bond parameters read
+ Angle parameters read
+ Dihedral parameters read
+ Improper parameters read
+ Intra molecule scaling factors for species            1
+  VDW 1-2 scaling factor       0.000
+  VDW 1-3 scaling factor       0.000
+  VDW 1-4 scaling factor       0.000
+  VDW 1-N scaling factor       1.000
+  Coulomb 1-2 scaling factor   0.000
+  Coulomb 1-3 scaling factor   0.000
+  Coulomb 1-4 scaling factor   0.000
+  Coulomb 1-N scaling factor   1.000
+ -------------------------------------------------------------------------------
+
+ Species     2
+ -------------------------------------------------------------------------------
+ Atom parameters read
+ Bond parameters read
+ Angle parameters read
+ Dihedral parameters read
+ Improper parameters read
+ Intra molecule scaling factors for species            2
+  VDW 1-2 scaling factor       0.000
+  VDW 1-3 scaling factor       0.000
+  VDW 1-4 scaling factor       0.000
+  VDW 1-N scaling factor       1.000
+  Coulomb 1-2 scaling factor   0.000
+  Coulomb 1-3 scaling factor   0.000
+  Coulomb 1-4 scaling factor   0.000
+  Coulomb 1-N scaling factor   1.000
+ Total number of atoms in fragment     1  is   3
+ Fragment info read
+ Fragment file for fragment 1 is species2/frag1/frag1.dat
+ -------------------------------------------------------------------------------
+
+ Fragment coord info
+ -------------------------------------------------------------------------------
+ library_coords array successfully allocated
+ Finished loading fragment coordinates from
+ species2/frag1/frag1.dat
+ -------------------------------------------------------------------------------
+********************************************************************************
+
+Start type
+********************************************************************************
+Initial configuration for box 1 will add molecules to configuration read from file
+ Will read       1  molecules of species   1
+ Will read       0  molecules of species   2
+ Will read configuration from file MFI.xyz
+ Will insert       0  molecules of species   1
+ Will insert      20  molecules of species   2
+********************************************************************************
+
+Seed info
+********************************************************************************
+The starting seeds are:  -1837068842    -16849975
+********************************************************************************
+
+Temperature
+********************************************************************************
+Temperature of box 1 is  77.000 K
+********************************************************************************
+
+Move probabilities
+********************************************************************************
+Probability for translation                0.250000
+ Maximum displacement width for species  1 in box  1  is      0.00000
+ Maximum displacement width for species  2 in box  1  is      2.00000
+Probability for rotation                   0.250000
+ The rotational width for the species    1 in box  1   is      0.0000 radians
+ The rotational width for the species    2 in box  1   is      3.1416 radians
+Probability for insertion                  0.250000
+ Species 1 will not be inserted
+ Species 2 will be inserted using CBMC
+ Number of insertable species is    1
+Probability for deletion                   0.250000
+Number of moves is :   4
+********************************************************************************
+
+Chemical potential
+********************************************************************************
+Species     1
+ No entry in input file. Chemical potential not required.
+Species     2
+ Chemical potential (internal units):    -1000.000000000
+ de Broglie wavelength (Angstroms):          0.375895159
+********************************************************************************
+
+Simulation length info
+********************************************************************************
+Thermodynamic quantities will be computed every       400 Steps     
+Coordinates will be written every                    4000 Steps     
+ movie header file is                  nitrogen_Si.out.H
+ movie_XYZ file is                     nitrogen_Si.out.xyz
+The simulation will be run for                       4000 Steps     
+Instantaneous values will be written every            400 Steps     
+********************************************************************************
+
+Property info
+********************************************************************************
+Total number of property files to be written is     1   for box 1
+ Maximum number of properties per file is    4
+ Writing the name of the property files and the corresponding property output
+ Property file    1   is  nitrogen_Si.out.prp
+ Properties output in these files are
+ Energy_Total
+ Nmols_1
+ Nmols_2
+ Pressure
+********************************************************************************
+
+Minimum distance cutoff
+********************************************************************************
+MC low cutoff distance is   1.000    Angstrom
+********************************************************************************
+
+CBMC info
+********************************************************************************
+Kappa for first fragment insertion          12
+ Cutoff for CBMC for box 1 is         6.50
+********************************************************************************
+
+Run type
+********************************************************************************
+ The input run type is equilibration
+ Update frequency is          600
+********************************************************************************
+
+********************************************************************************
+************************ Begin Cassandra simulation ****************************
+********************************************************************************
+
+Initial configuration
+********************************************************************************
+ Reading configuration for box           1
+ Reading            1  molecules of species            1
+ Reading            0  molecules of species            2
+ Configurations read successfully
+ Inserting           20 molecules of species            2
+********************************************************************************
+
+Charge neutrality check
+********************************************************************************
+ Species 1 has charge:                  0.00000000
+ Species 2 has charge:                  0.00000000
+
+ Box     1 has charge:                  0.00000000
+********************************************************************************
+
+Compute total energy
+********************************************************************************
+
+ Energy components for box 1     kJ/mol-Extensive
+ ---------------------------------------------------------------------
+ Total system energy                  -353081.308
+ Intra molecular energy               -285241.399
+   Bond energy                              0.000
+   Bond angle energy                        0.000
+   Dihedral angle energy                    0.000
+   Improper angle energy                    0.000
+   Intra molecule vdw                     719.005
+   Intra molecule q                   -285960.404
+ Inter molecular energy                -67839.909
+   Inter molecule vdw                    1838.211
+   Long range correction                 -148.762
+   Inter molecule q                    188579.851
+   Reciprocal ewald                      5946.132
+   Self ewald                         -264055.341
+ ---------------------------------------------------------------------
+   Number of reciprocal vectors              2634
+
+********************************************************************************
+
+Run simulation
+********************************************************************************
+      Step       Move   Mol Spc Box  Success  MaxWidth
+      2426     rotate         2   1  0.27000   2.98451
+      2536  translate         2   1  0.04000   0.16000
+********************************************************************************
+
+Energy of final configuration
+********************************************************************************
+
+ Energy components for box 1     kJ/mol-Extensive       Relative_Error
+ ---------------------------------------------------------------------
+ Total system energy                  -355147.264           -0.000E+00
+ Intra molecular energy               -285241.399           -0.000E+00
+   Bond energy                              0.000            0.000E+00
+   Bond angle energy                        0.000            0.000E+00
+   Dihedral angle energy                    0.000            0.000E+00
+   Improper angle energy                    0.000            0.000E+00
+   Intra molecule vdw                     719.005            0.000E+00
+   Intra molecule q                   -285960.404           -0.000E+00
+ Inter molecular energy                -69905.865           -0.133E-15
+   Inter molecule vdw                    -211.606           -0.258E-14
+   Long range correction                 -148.762           -0.000E+00
+   Inter molecule q                    188551.554            0.296E-14
+   Reciprocal ewald                      5958.290            0.000E+00
+   Self ewald                         -264055.341           -0.000E+00
+ ---------------------------------------------------------------------
+   Number of reciprocal vectors              2634
+
+********************************************************************************
+
+
+Writing information for box  1
+********************************************************************************
+
+   ---------------------------------------------------------
+   Writing information for species  1
+
+                Move      Trials     Success   % Success
+   ---------------------------------------------------------
+
+
+   ---------------------------------------------------------
+   Writing information for species  2
+
+                Move      Trials     Success   % Success
+           Translate         966         287       29.71
+              Rotate         968         265       27.38
+              Insert        1061          17        1.60
+              Delete        1005          17        1.69
+   ---------------------------------------------------------
+
+********************************************************************************
+
+ Writing information about subroutine times
+********************************************************************************
+ Translation time =            0.723769 secs.
+ Rotation time =               0.739607 secs.
+ Insertion time =              1.513614 secs.
+ Deletion time =               1.241339 secs.
+********************************************************************************
+
+********************************************************************************
+************************ Cassandra simulation complete *************************
+********************************************************************************
+
+ Program execution time
+********************************************************************************
+         0      Years
+         0     Months
+         0       Days
+         0      Hours
+         0    Minutes
+         5    Seconds
+       331         ms
+********************************************************************************

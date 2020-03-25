@@ -33,7 +33,14 @@
 #*******************************************************************************
 # IMPORT MODULES
 #*******************************************************************************
+from __future__ import division
+from __future__ import print_function
+from builtins import str
+from builtins import input
+from builtins import range
+from past.utils import old_div
 import sys, os, argparse, linecache, re
+import warnings
 
 #*******************************************************************************
 # ARGUMENT PARSE
@@ -292,11 +299,11 @@ def cml_to_pdb(infilename):
 		if '</atomArray>' in line:
 			cml_end_atom = line_nbr + 1
 
-	for i in xrange(cml_start_atom+1, cml_end_atom):
+	for i in range(cml_start_atom+1, cml_end_atom):
 		cml_atom_info.append(re.findall('"([^"]*)"',
 		                     linecache.getline(infilename, i)))
 			
-	for i in xrange(cml_start_bonds+1, cml_end_bonds):
+	for i in range(cml_start_bonds+1, cml_end_bonds):
 		cml_bond_info.append(re.findall('"([^"]*)"',
 		                     linecache.getline(infilename, i))[0].split())
 
@@ -368,9 +375,9 @@ def cml_to_pdb(infilename):
 
 
 def removeTempFromMaster(tempList,masterList):
-	for i in xrange(0,len(masterList)):
+	for i in range(0,len(masterList)):
 		if masterList[i] == tempList[0]:
-			for j in xrange(0,len(tempList)):
+			for j in range(0,len(tempList)):
 				del(masterList[-1])
 			return
 
@@ -428,7 +435,7 @@ returns:
 		isAlreadyInRing = any([newAtom in ring for ring in ringList])
 		if isAlreadyInRing:
 			if args.verbose:
-				print "%4d %-15s" % (newAtom, "already IDd as a ring atom, abort")
+				print("%4d %-15s" % (newAtom, "already IDd as a ring atom, abort"))
 			break
 
 		# if repeat atom has not been flagged as a ring atom, flag it now
@@ -436,7 +443,7 @@ returns:
 		isRing = newAtom in wRingList
 		if isRing:
 			if args.verbose:
-				print "%4d %-15s" % (newAtom, "repeat atom, must be a ring atom")
+				print("%4d %-15s" % (newAtom, "repeat atom, must be a ring atom"))
 			wRingList.append(newAtom)
 			if iRecursion == 1: # on deeper recursion, isolateRing will be called after exiting
 					isolateRing(wRingList)
@@ -449,7 +456,7 @@ returns:
 		# terminal, linear, branch
 		if nBonds==1: # terminal
 			if args.verbose:
-				print "%4d %-40s" % (newAtom, "terminal")
+				print("%4d %-40s" % (newAtom, "terminal"))
 
 			if len(scannedList) > 1: # only bonded atom is oldAtom
 				return "EndPoint", wBranchList
@@ -458,11 +465,11 @@ returns:
 
 		elif nBonds==2: # linear
 			if args.verbose: 
-				print "%4d %-40s" % (newAtom, "linear")
+				print("%4d %-40s" % (newAtom, "linear"))
 
 			# one bonded atom is oldAtom
 			# need to select the other atom
-			for i in xrange(nBonds):
+			for i in range(nBonds):
 
 				if newConnect[i]==oldAtom: # skip oldAtom
 					continue
@@ -472,11 +479,11 @@ returns:
 
 		elif nBonds > 2: # branch
 			if args.verbose:
-				print "%4d %-40s" % (newAtom, "branch")
+				print("%4d %-40s" % (newAtom, "branch"))
 
 			# loop over each atom newAtom is bonded to
 			# and call ringID() recursively
-			for j in xrange(nBonds):
+			for j in range(nBonds):
 				
 				if newConnect[j]==oldAtom: # skip oldAtom
 					continue
@@ -508,7 +515,7 @@ def fragID():
 			if nBonds > 2:
 				adjacentatoms.append(list(set(atomConnect[atom])-set(ring)))
 
-		adjacentatoms1=filter(None,adjacentatoms)
+		adjacentatoms1=[_f for _f in adjacentatoms if _f]
 		adjacentatoms = [x for sublist in adjacentatoms1 for x in sublist]
 		fragList.append(ring+adjacentatoms)
 		adjacentatoms=[]
@@ -660,14 +667,14 @@ def fragConnectivityInfo(mcfFile):
 
 def ffFileGeneration(infilename,outfilename):
 
-	print "\n\n*********Force field template file generation*********\n"
+	print("\n\n*********Force field template file generation*********\n")
 
 	global vdwType
-	vdwType = raw_input("Enter the VDW type (LJ/Mie):")
+	vdwType = input("Enter the VDW type (LJ/Mie):")
 
 	global dihedralType
 	if len(dihedralList) > 0:
-		dihedralType = raw_input("Enter the dihedral functional form " + 
+		dihedralType = input("Enter the dihedral functional form " + 
 		                         "(CHARMM/OPLS/harmonic/none): ")
 	else:
 		dihedralType = "NONE" 
@@ -826,7 +833,7 @@ returns:
 						if args.massDefault or args.massDefault==0:
 							atomParms[iType]['mass'] = args.massDefault
 						else:
-							iMass= raw_input("Atom type " + iType + " is of unknown element " 
+							iMass= input("Atom type " + iType + " is of unknown element " 
 							  + iElement + ". Enter the mass for this atom type: ")
 							atomParms[iType]['mass']=float(iMass)
 			elif 'element' in atomParms[iType] and \
@@ -1002,8 +1009,8 @@ returns:
 				includeFile, atomParms, bondParms, angleParms, dihedralParms, scaling_1_4,
 				vdwType, comboRule)
 			else:
-				print 'WARNING: Topology file ' + includeFile + ' not found. ' + \
-				      'Continuing without reading file.'
+				print('WARNING: Topology file ' + includeFile + ' not found. ' + \
+				      'Continuing without reading file.')
 		elif line.startswith('['):
 			section = line.strip() #store the section header
 			line = ff.readline()
@@ -1043,8 +1050,8 @@ returns:
 						if comboRule == '1':
 							C6 = float(data[base+1])
 							C12 = float(data[base+2])
-							sigma = ((C12 / C6)**(1/6.)) * 10
-							epsilon = C6**2 / 4 / C12 / Rg
+							sigma = ((old_div(C12, C6))**(1/6.)) * 10
+							epsilon = old_div(old_div(old_div(C6**2, 4), C12), Rg)
 						elif comboRule == '2' or comboRule == '3':
 							sigma = float(data[base+1]) * 10
 							epsilon = float(data[base+2]) / Rg
@@ -1380,44 +1387,44 @@ listofnames=[]
 cyclic_ua_atom = False
 
 # read configFile
-print "Reading Modified PDB File..."
+print("Reading Modified PDB File...")
 atomList, atomParms, atomConnect, bondList, numAtomTypes = readPdb(configFile)
 
 # ring scan
 if len(bondList) > 1:
 	if args.verbose:
-		print "%-5s%-40s" % ('Atom', 'Comment')
-		print "---- -----------------------------------"
+		print("%-5s%-40s" % ('Atom', 'Comment'))
+		print("---- -----------------------------------")
 	scannedList = [atomConnect['startRingID']]
 	scan_result = ringID(0)
 	if args.verbose:
-		print "---- -----------------------------------"
+		print("---- -----------------------------------")
 
 # print summary
-print "\n\n*********Generation of Topology File*********\n"
-print "Summary"
-print "---- -----------------------------------"
-print "%4d %-40s" % (len(bondList), "bonds")
+print("\n\n*********Generation of Topology File*********\n")
+print("Summary")
+print("---- -----------------------------------")
+print("%4d %-40s" % (len(bondList), "bonds"))
 
 if cyclic_ua_atom == True and len(scan_result[1]) > 2:
-	print "Cyclic united atom molecule with no branches"
+	print("Cyclic united atom molecule with no branches")
 else:
 	comment = "rings"
 	if len(ringList) > 0 and args.verbose:
 		comment += ":"
 		for ring in ringList:
 			comment += ' [' + ",".join([str(i) for i in ring]) + ']'
-	print "%4d %-40s" % (len(ringList), comment)
+	print("%4d %-40s" % (len(ringList), comment))
 
 # id angles, dihedrals, fragments
 angleID()
-print "%4d %-40s" % (len(angleList), "angles")
+print("%4d %-40s" % (len(angleList), "angles"))
 dihedralID()
-print "%4d %-40s" % (len(dihedralList), "dihedrals")
+print("%4d %-40s" % (len(dihedralList), "dihedrals"))
 fragID()
-print "%4d %-40s" % (len(fragList), "fragments")
+print("%4d %-40s" % (len(fragList), "fragments"))
 fragConnectivity()
-print "---- -----------------------------------"
+print("---- -----------------------------------")
 
 
 if ffTemplate:
@@ -1425,7 +1432,7 @@ if ffTemplate:
 	if os.path.isfile(ffFile) and not os.path.isfile(ffFile + '.BAK'):
 		os.system('mv ' + ffFile + ' ' + ffFile + '.BAK')
 	ffFileGeneration(configFile,ffFile)
-	print 'Finished'
+	print('Finished')
 else:
 	# GENERATE MCF FILE
 	# Read parms
@@ -1453,3 +1460,10 @@ else:
 
 if infilename_type == 'cml':
 	os.system("rm " + configFile)
+
+# Python 2.x deprecation warning
+if (sys.version_info < (3,0)):
+    warnings.showwarning("\n\nSupport for Python2 is deprecated in "
+        "Cassandra and will be removed in a future release. Please "
+        "consider switching to Python3.\n\n", DeprecationWarning,
+        'library_setup.py', 1465)
