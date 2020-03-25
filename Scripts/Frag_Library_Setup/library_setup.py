@@ -50,6 +50,7 @@ from builtins import input
 from builtins import str
 from builtins import range
 import sys, math, subprocess, os, linecache, argparse, re
+import warnings
 
 #*******************************************************************************
 # ARGUMENT PARSE
@@ -795,3 +796,10 @@ new_file.close()
 print(bold+"Removing temporary input file"+normal)
 os.system("rm "+ input_file+"; mv "+input_file+"temp "+input_file)
 print(bold+"Finished"+normal)
+
+# Python 2.x deprecation warning
+if (sys.version_info < (3,0)):
+    warnings.showwarning("\n\nSupport for Python2 is deprecated in "
+        "Cassandra and will be removed in a future release. Please "
+        "consider switching to Python3.\n\n", DeprecationWarning,
+        'library_setup.py', 801)
