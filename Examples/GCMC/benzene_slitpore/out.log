@@ -1,0 +1,2637 @@
+********************************************************************************
+                ______                                __                        
+               / ____/___ _______________ _____  ____/ /________ _              
+              / /   / __ `/ ___/ ___/ __ `/ __ \/ __  / ___/ __ `/              
+             / /___/ /_/ (__  |__  ) /_/ / / / / /_/ / /  / /_/ /               
+             \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                
+                                                                                
+********************************************************************************
+**********************************Log File**************************************
+********************************************************************************
+
+For any published work that uses Cassandra, cite the following reference:
+    Shah JK, Marin‐Rimoldi E, Mullen RG, Keene BP, Khan S,
+    Paluch AS, Rai N, Romanielo LL, Rosch TW, Yoo B, Maginn EJ.
+    Cassandra: An open source Monte Carlo package for molecular simulation.
+    Journal of Computational Chemistry. 2017, 38, 1727–1739.
+    http://dx.doi.org/10.1002/jcc.24807
+
+Run info
+********************************************************************************
+version: Cassandra Development Version
+inputfile: inp
+name of run: out
+date (mm/dd/yyyy): 03/20/2020
+time: 13:33:59
+machine: Ryans-MBP.attlocal.net
+********************************************************************************
+
+Verbose log
+********************************************************************************
+Verbose output to logfile
+********************************************************************************
+
+Simulation type
+********************************************************************************
+GCMC                
+********************************************************************************
+
+Copy input file
+********************************************************************************
+# Run_Name                                                                      
+out                                                                             
+                                                                                
+# Verbose_Log                                                                   
+true                                                                            
+                                                                                
+# Sim_Type                                                                      
+gcmc                                                                            
+                                                                                
+# Nbr_Species                                                                   
+2                                                                               
+                                                                                
+# Molecule_Files                                                                
+benzene.mcf   100                                                               
+slitpore.mcf  720                                                               
+                                                                                
+# Fragment_Files                                                                
+benzene.frag 1                                                                  
+                                                                                
+# Box_Info                                                                      
+1                                                                               
+orthogonal                                                                      
+22.294 21.270 20.250                                                            
+restricted_insertion slitpore 3.125                                             
+                                                                                
+# VDW_Style                                                                     
+lj cut 10.                                                                      
+                                                                                
+# Charge_Style                                                                  
+none                                                                            
+                                                                                
+# Mixing_Rule                                                                   
+custom                                                                          
+C  CH 30.656  3.648                                                             
+                                                                                
+                                                                                
+# Temperature_Info                                                              
+300.                                                                            
+                                                                                
+# Chemical_Potential_Info                                                       
+-65.                                                                            
+                                                                                
+# Move_Probability_Info                                                         
+                                                                                
+# Prob_Translation                                                              
+0.4                                                                             
+0.2 0.                                                                          
+                                                                                
+# Prob_Rotation                                                                 
+0.4                                                                             
+20. 0.                                                                          
+                                                                                
+# Prob_Insertion                                                                
+0.1                                                                             
+restricted none                                                                 
+                                                                                
+# Prob_Deletion                                                                 
+0.1                                                                             
+                                                                                
+# Done_Probability_Info                                                         
+                                                                                
+# Start_Type                                                                    
+read_config   0 720 slitpore.xyz                                                
+                                                                                
+# Run_Type                                                                      
+production  30000  1000                                                         
+                                                                                
+# Simulation_Length_Info                                                        
+units         steps                                                             
+prop_freq     10                                                                
+coord_freq    500                                                               
+run           2000                                                              
+                                                                                
+# Property_Info 1                                                               
+energy_total                                                                    
+nmols                                                                           
+                                                                                
+# CBMC_Info                                                                     
+kappa_ins 10                                                                    
+rcut_cbmc 6.5                                                                   
+                                                                                
+# Rcutoff_Low                                                                   
+1.0                                                                             
+                                                                                
+# Seed_Info                                                                     
+9903094 50929357                                                                
+                                                                                
+END                                                                             
+********************************************************************************
+
+Number of species
+********************************************************************************
+2
+********************************************************************************
+
+Box info
+********************************************************************************
+Number of simulation boxes     1
+Box 1 is ORTHORHOMBIC        
+ X dimension :        22.2940     Angstrom
+ Y dimension :        21.2700     Angstrom
+ Z dimension :        20.2500     Angstrom
+ Cell basis vector lengths in A,     22.2940      21.2700      20.2500
+ Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+ Distance between box faces    22.2940      21.2700      20.2500
+ Box volume, A^3          9602.4159
+ Insertions restricted to shape:  slitpore
+ Slit pore x_width, A             22.2940
+ Slit pore y_width, A             21.2700
+ Slit pore height, A              6.2500
+ Slit pore volume, A^3           2963.7086
+********************************************************************************
+
+Pair style
+********************************************************************************
+VDW style used is:   LJ             in box:  1
+ VDW sum style is:   cut            in box:  1
+ rcut =    10.000 Angstrom
+Charge style in box 1 is NONE
+Section "# Pair_Energy" is missing from the input file
+ By default, pair interaction energy arrays will not be stored
+Custom mixing rule specified
+********************************************************************************
+
+Molecule info
+********************************************************************************
+ Reading molecular connectivity information
+ Species:            1
+ Molecular connectivity file: benzene.mcf                                                                                                             
+   6 atom(s) specified.
+   6 bond(s) specified.
+   6 angle(s) specified.
+   0 dihedral(s) specified.
+   0 improper(s) specified.
+   1 fragment(s) specified.
+   0 fragment bond(s) specified.
+ Reading molecular connectivity information
+ Species:            2
+ Molecular connectivity file: slitpore.mcf                                                                                                            
+   1 atom(s) specified.
+   0 bond(s) specified.
+   0 angle(s) specified.
+   0 dihedral(s) specified.
+   0 improper(s) specified.
+   0 fragment(s) specified.
+   0 fragment bond(s) specified.
+
+ Species  Max molecules
+ -------  -------------
+      1            100
+      2            720
+
+ Species     1
+ -------------------------------------------------------------------------------
+ Species and atom number  1     1
+  atom name:            CH                  
+  element:              C1    
+  mass:                    13.0190
+  charge:                   0.0000
+  vdw type:             LJ                  
+  Epsilon / kB in K:       50.5000
+  Sigma in A:               3.6950
+           1  is a ring atom
+ Species and atom number  1     2
+  atom name:            CH                  
+  element:              C1    
+  mass:                    13.0190
+  charge:                   0.0000
+  vdw type:             LJ                  
+  Epsilon / kB in K:       50.5000
+  Sigma in A:               3.6950
+           2  is a ring atom
+ Species and atom number  1     3
+  atom name:            CH                  
+  element:              C1    
+  mass:                    13.0190
+  charge:                   0.0000
+  vdw type:             LJ                  
+  Epsilon / kB in K:       50.5000
+  Sigma in A:               3.6950
+           3  is a ring atom
+ Species and atom number  1     4
+  atom name:            CH                  
+  element:              C1    
+  mass:                    13.0190
+  charge:                   0.0000
+  vdw type:             LJ                  
+  Epsilon / kB in K:       50.5000
+  Sigma in A:               3.6950
+           4  is a ring atom
+ Species and atom number  1     5
+  atom name:            CH                  
+  element:              C1    
+  mass:                    13.0190
+  charge:                   0.0000
+  vdw type:             LJ                  
+  Epsilon / kB in K:       50.5000
+  Sigma in A:               3.6950
+           5  is a ring atom
+ Species and atom number  1     6
+  atom name:            CH                  
+  element:              C1    
+  mass:                    13.0190
+  charge:                   0.0000
+  vdw type:             LJ                  
+  Epsilon / kB in K:       50.5000
+  Sigma in A:               3.6950
+           6  is a ring atom
+ Total number of ring atoms in species    1    6
+ Total number of exo atoms in species     1    0
+ Atom ids for ring atoms           1           2           3           4           5           6
+ Atom ids for exo atoms
+Species and bond number   1   1
+ atom1:                   1
+ atom2:                   6
+ bond type:             fixed               
+Fixed bond length, in An    1.4000
+Fixed bond length tolera    0.0100g:
+Species and bond number   1   2
+ atom1:                   1
+ atom2:                   2
+ bond type:             fixed               
+Fixed bond length, in An    1.4000
+Fixed bond length tolera    0.0100g:
+Species and bond number   1   3
+ atom1:                   2
+ atom2:                   3
+ bond type:             fixed               
+Fixed bond length, in An    1.4000
+Fixed bond length tolera    0.0100g:
+Species and bond number   1   4
+ atom1:                   3
+ atom2:                   4
+ bond type:             fixed               
+Fixed bond length, in An    1.4000
+Fixed bond length tolera    0.0100g:
+Species and bond number   1   5
+ atom1:                   4
+ atom2:                   5
+ bond type:             fixed               
+Fixed bond length, in An    1.4000
+Fixed bond length tolera    0.0100g:
+Species and bond number   1   6
+ atom1:                   5
+ atom2:                   6
+ bond type:             fixed               
+Fixed bond length, in An    1.4000
+Fixed bond length tolera    0.0100g:
+Species and angle number  1   1
+ atom1:                   6
+ atom2:                   1
+ atom3:                   2
+ angle type:            fixed               
+Fixed angle in degrees:   120.0000
+Fixed angle tolerance in    1.0000
+Species and angle number  1   2
+ atom1:                   1
+ atom2:                   2
+ atom3:                   3
+ angle type:            fixed               
+Fixed angle in degrees:   120.0000
+Fixed angle tolerance in    1.0000
+Species and angle number  1   3
+ atom1:                   2
+ atom2:                   3
+ atom3:                   4
+ angle type:            fixed               
+Fixed angle in degrees:   120.0000
+Fixed angle tolerance in    1.0000
+Species and angle number  1   4
+ atom1:                   3
+ atom2:                   4
+ atom3:                   5
+ angle type:            fixed               
+Fixed angle in degrees:   120.0000
+Fixed angle tolerance in    1.0000
+Species and angle number  1   5
+ atom1:                   4
+ atom2:                   5
+ atom3:                   6
+ angle type:            fixed               
+Fixed angle in degrees:   120.0000
+Fixed angle tolerance in    1.0000
+Species and angle number  1   6
+ atom1:                   5
+ atom2:                   6
+ atom3:                   1
+ angle type:            fixed               
+Fixed angle in degrees:   120.0000
+Fixed angle tolerance in    1.0000
+ Species   1 is NOT linear
+ No dihedrals in species            1
+ No impropers in species            1
+ Intra molecule scaling factors for species            1
+  VDW 1-2 scaling factor       0.000
+  VDW 1-3 scaling factor       0.000
+  VDW 1-4 scaling factor       0.000
+  VDW 1-N scaling factor       0.000
+ Total number of atoms in fragment     1  is   6
+ Identity of these atoms are
+           1           6           5           4           3           2
+ Generating anchor info
+ Number of anchors for fragment     1  is   6
+ Anchor id is:    1
+                 5
+                 3
+             
+ 1                                        is a ring fragment
+ Probability of inserting fragment 1 first is  1.000
+ Sum of probabilities of inserting fragments   1.000
+ Fragment file for fragment 1 is benzene.frag
+ -------------------------------------------------------------------------------
+
+ Species     2
+ -------------------------------------------------------------------------------
+ Species and atom number  2     1
+  atom name:            C                   
+  element:              C     
+  mass:                    12.0110
+  charge:                   0.0000
+  vdw type:             LJ                  
+  Epsilon / kB in K:        0.0000
+  Sigma in A:               3.6020
+ Total number of ring atoms in species    2    0
+ Total number of exo atoms in species     2    1
+ Atom ids for ring atoms
+ Atom ids for exo atoms           1
+ No bonds in species            2
+ No angles in species            2
+ Species   2 is linear
+ No dihedrals in species            2
+ No impropers in species            2
+ Intra molecule scaling factors for species            2
+  VDW 1-2 scaling factor       0.000
+  VDW 1-3 scaling factor       0.000
+  VDW 1-4 scaling factor       0.000
+  VDW 1-N scaling factor       1.000
+ -------------------------------------------------------------------------------
+
+ Fragment coord info
+ -------------------------------------------------------------------------------
+ library_coords array successfully allocated
+ Finished loading fragment coordinates from
+ benzene.frag
+ -------------------------------------------------------------------------------
+********************************************************************************
+
+Nonbond tables
+********************************************************************************
+ There are 2 different atom types in the system 
+     1  CH                  
+     2  C                   
+
+
+species number and name:  1   benzene.mcf                                                                                                             
+ Name        number
+ --------    ------
+ CH           1      
+ CH           1      
+ CH           1      
+ CH           1      
+ CH           1      
+ CH           1      
+
+species number and name:  2   slitpore.mcf                                                                                                            
+ Name        number
+ --------    ------
+ C            2      
+
+ Creating VDW interaction table
+   Atom 1       Atom 2       epsilon        sigma
+                        amu A^2/ps^2          Ang
+ -------------------------------------------------------------------------------
+ CH           CH             41.9881       3.6950
+ C            C               0.0000       3.6020
+ -------------------------------------------------------------------------------
+ Mixing rule used is:   custom         
+ -------------------------------------------------------------------------------
+ C            CH            25.4888       3.6480
+
+ Creating exclusion table
+ -------------------------------------------------------------------------------
+    species     atom1     atom2 vdw_scale
+          1         1         2     0.000
+          1         1         3     0.000
+          1         1         4     0.000
+          1         1         5     0.000
+          1         1         6     0.000
+          1         2         3     0.000
+          1         2         4     0.000
+          1         2         5     0.000
+          1         2         6     0.000
+          1         3         4     0.000
+          1         3         5     0.000
+          1         3         6     0.000
+          1         4         5     0.000
+          1         4         6     0.000
+          1         5         6     0.000
+ -------------------------------------------------------------------------------
+********************************************************************************
+
+Start type
+********************************************************************************
+Initial configuration for box 1 will be read from file
+ Will read       0  molecules of species   1
+ Will read     720  molecules of species   2
+ Will read configuration from file slitpore.xyz
+********************************************************************************
+
+Seed info
+********************************************************************************
+The starting seeds are:      9903094     50929357
+********************************************************************************
+
+Temperature
+********************************************************************************
+Temperature of box 1 is 300.000 K
+********************************************************************************
+
+Move probabilities
+********************************************************************************
+Probability for translation                0.400000
+ Maximum displacement width for species  1 in box  1  is      0.20000
+ Maximum displacement width for species  2 in box  1  is      0.00000
+Probability for rotation                   0.400000
+ The rotational width for the species    1 in box  1   is      0.3491 radians
+ The rotational width for the species    2 in box  1   is      0.0000 radians
+Probability for insertion                  0.100000
+ Species 1 insertion will be restricted
+ Species 2 will not be inserted
+ Number of insertable species is    1
+Probability for deletion                   0.100000
+Number of moves is :   4
+Cumulative probabilities
+ Translation: 0.400000
+    Rotation: 0.800000
+     Torsion: 0.800000
+      Volume: 0.800000
+       Angle: 0.800000
+   Insertion: 0.900000
+    Deletion: 1.000000
+        Swap: 1.000000
+    Regrowth: 1.000000
+        Ring: 1.000000
+        Atom: 1.000000
+********************************************************************************
+
+Chemical potential
+********************************************************************************
+Species     1
+ Chemical potential (internal units):    -6500.000000000
+ de Broglie wavelength (Angstroms):          0.114044564
+Species     2
+ No entry in input file. Chemical potential not required.
+********************************************************************************
+
+Simulation length info
+********************************************************************************
+Thermodynamic quantities will be computed every        10 Steps     
+Coordinates will be written to file every             500 Steps     
+ movie header file is                  out.H
+ movie_XYZ file is                     out.xyz
+The simulation will be run for                       2000 Steps     
+Instantaneous values will be written every             10 Steps     
+********************************************************************************
+
+Property info
+********************************************************************************
+Total number of property files to be written is     1   for box 1
+ Maximum number of properties per file is    3
+ Writing the name of the property files and the corresponding property output
+ Property file    1   is  out.prp
+ Properties output in these files are
+ Energy_Total
+ Nmols_1
+ Nmols_2
+********************************************************************************
+
+Minimum distance cutoff
+********************************************************************************
+MC low cutoff distance is   1.000    Angstrom
+********************************************************************************
+
+CBMC info
+********************************************************************************
+Kappa for first fragment insertion          10
+ Cutoff for CBMC for box 1 is         6.50
+********************************************************************************
+
+Run type
+********************************************************************************
+ The input run type is production
+ Update frequency is        30000
+********************************************************************************
+
+********************************************************************************
+************************ Begin Cassandra simulation ****************************
+********************************************************************************
+
+Initial configuration
+********************************************************************************
+ Reading configuration for box           1
+ Reading            0  molecules of species            1
+ Reading          720  molecules of species            2
+ Configurations read successfully
+********************************************************************************
+
+Compute total energy
+********************************************************************************
+
+ Energy components for box 1     kJ/mol-Extensive
+ ---------------------------------------------------------------------
+ Total system energy                        0.000
+ Intra molecular energy                     0.000
+   Bond energy                              0.000
+   Bond angle energy                        0.000
+   Dihedral angle energy                    0.000
+   Improper angle energy                    0.000
+   Intra molecule vdw                       0.000
+   Intra molecule q                         0.000
+ Inter molecular energy                     0.000
+   Inter molecule vdw                       0.000
+   Inter molecule q                         0.000
+ ---------------------------------------------------------------------
+
+********************************************************************************
+
+Run simulation
+********************************************************************************
+      Step       Move   Mol Spc Box  Success  MaxWidth
+         1     rotate             2        F             no mols
+         2     rotate             2        F             no mols
+         3  translate             2        F             no mols
+         4  translate             2        F             no mols
+         5  translate             2        F             no mols
+         6     rotate             2        F             no mols
+         7     delete         1   1        F             no mols
+         8     delete         1   1        F             no mols
+         9     rotate             2        F             no mols
+        10     rotate             2        F             no mols
+        11  translate             2        F             no mols
+        12  translate             2        F             no mols
+        13     rotate             2        F             no mols
+        14  translate             2        F             no mols
+        15  translate             2        F             no mols
+        16  translate             2        F             no mols
+        17     rotate             2        F             no mols
+        18     delete         1   1        F             no mols
+        19     rotate             2        F             no mols
+        20  translate             2        F             no mols
+        21  translate             2        F             no mols
+        22  translate             2        F             no mols
+        23     rotate             2        F             no mols
+        24     rotate             2        F             no mols
+        25  translate             2        F             no mols
+        26     rotate             2        F             no mols
+        27     rotate             2        F             no mols
+        28     rotate             2        F             no mols
+        29     rotate             2        F             no mols
+        30     insert     1   1   1        T              -0.675
+        31     delete     1   1   1        F               0.786
+        32     rotate     1   1   1        T              -0.032
+        33     insert     2   1   1        T               2.063
+        34  translate     1   1   1        T              -0.444
+        35     rotate     1   1   1        T              -0.047
+        36  translate     2   1   1        F               0.593
+        37     rotate     1   1   1        T              -0.086
+        38     rotate     1   1   1        T               0.036
+        39     delete     2   1   1        F               1.444
+        40  translate     1   1   1        T               0.571
+        41  translate     1   1   1        T              -0.576
+        42  translate     1   1   1        T              -0.103
+        43  translate     1   1   1        T               0.152
+        44     rotate     1   1   1        F               0.029
+        45     insert     3   1   1        F               1.495
+        46  translate     2   1   1        F               1.923
+        47     delete     1   1   1        F               1.317
+        48  translate     1   1   1        F               0.478
+        49  translate     2   1   1        T               1.310
+        50     rotate     2   1   1        T              -0.019
+        51  translate     2   1   1        T              -0.659
+        52  translate     2   1   1        T              -0.842
+        53     delete     2   1   1        T               0.947
+        54  translate     1   1   1        T               0.344
+        55  translate     1   1   1        T              -0.599
+        56     rotate     1   1   1        T               0.022
+        57     insert     2   1   1        T               0.170
+        58  translate     1   1   1        T              -0.089
+        59  translate     2   1   1        T               0.017
+        60     rotate     1   1   1        T               0.013
+        61     rotate     2   1   1        T              -0.010
+        62  translate     2   1   1        T              -0.113
+        63     rotate     2   1   1        T               0.017
+        64  translate     1   1   1        T              -0.046
+        65     insert     3   1   1        T               0.607
+        66     insert     4   1   1        T              -0.100
+        67  translate     2   1   1        T               0.254
+        68  translate     1   1   1        T               0.032
+        69     rotate     3   1   1        T              -0.045
+        70     rotate     4   1   1        T               0.016
+        71     rotate     3   1   1        T              -0.008
+        72  translate     3   1   1        T               0.006
+        73     insert     5   1   1        F               2.691
+        74     rotate     3   1   1        T               0.030
+        75  translate     2   1   1        F               0.406
+        76     rotate     1   1   1        T               0.087
+        77     rotate     3   1   1        T              -0.009
+        78     rotate     3   1   1        T               0.012
+        79     rotate     2   1   1        T              -0.090
+        80     rotate     2   1   1        T               0.078
+        81     rotate     2   1   1        T              -0.017
+        82  translate     1   1   1        T              -0.119
+        83     rotate     1   1   1        T              -0.003
+        84     rotate     3   1   1        T              -0.006
+        85     rotate     4   1   1        T               0.149
+        86  translate     4   1   1        T              -0.071
+        87  translate     3   1   1        T              -0.013
+        88     rotate     3   1   1        T               0.017
+        89     rotate     1   1   1        T              -0.039
+        90     rotate     1   1   1        T              -0.010
+        91  translate     4   1   1        T               0.036
+        92  translate     3   1   1        T              -0.090
+        93     rotate     2   1   1        T               0.000
+        94  translate     3   1   1        T               0.050
+        95  translate     1   1   1        F               0.045
+        96     rotate     3   1   1        T               0.007
+        97  translate     1   1   1        T               0.077
+        98  translate     2   1   1        T               0.129
+        99     rotate     4   1   1        T               0.151
+       100     insert     5   1   1        T               0.839
+       101     rotate     1   1   1        T               0.032
+       102  translate     2   1   1        T              -0.271
+       103  translate     3   1   1        T               0.032
+       104  translate     2   1   1        T               0.099
+       105  translate     2   1   1        F               0.458
+       106     insert     6   1   1        T              -0.589
+       107     rotate     3   1   1        T               0.005
+       108  translate     2   1   1        T              -0.038
+       109     delete     6   1   1        F               1.772
+       110     delete     3   1   1        F               1.630
+       111     rotate     4   1   1        T              -0.027
+       112     rotate     5   1   1        T               0.018
+       113  translate     2   1   1        F               0.281
+       114     rotate     3   1   1        T               0.381
+       115  translate     4   1   1        T              -0.123
+       116     delete     4   1   1        T               1.260
+       117     delete     6   1   1        F               1.811
+       118     insert     4   1   1        F               9.591
+       119  translate     1   1   1        T               0.188
+       120     delete     6   1   1        F               1.647
+       121  translate     5   1   1        T              -0.852
+       122     insert     4   1   1        T              -0.461
+       123  translate     3   1   1        T               0.101
+       124     rotate     5   1   1        T               0.009
+       125  translate     5   1   1        F               1.242
+       126     rotate     1   1   1        T              -0.243
+       127     rotate     2   1   1        T              -0.039
+       128  translate     3   1   1        F               0.848
+       129     rotate     5   1   1        T              -0.007
+       130  translate     3   1   1        F               1.404
+       131     insert     7   1   1        F               3.759
+       132     rotate     4   1   1        T               0.228
+       133  translate     6   1   1        T              -0.705
+       134     rotate     3   1   1        T              -0.372
+       135     rotate     6   1   1        T              -0.020
+       136  translate     3   1   1        F               0.763
+       137     rotate     5   1   1        T              -0.091
+       138     rotate     6   1   1        T              -0.050
+       139     rotate     1   1   1        T              -0.023
+       140  translate     6   1   1        T              -0.160
+       141     rotate     3   1   1        T               0.004
+       142  translate     3   1   1        F               0.824
+       143     rotate     5   1   1        T              -0.552
+       144     insert     7   1   1        F               1.326
+       145     rotate     3   1   1        T               0.178
+       146  translate     1   1   1        F               0.085
+       147  translate     2   1   1        T              -0.223
+       148  translate     2   1   1        T               0.155
+       149     rotate     2   1   1        T              -0.060
+       150     rotate     3   1   1        T              -0.098
+       151     rotate     5   1   1        T              -0.047
+       152  translate     1   1   1        T              -0.112
+       153  translate     5   1   1        T              -0.045
+       154  translate     3   1   1        T               0.545
+       155  translate     6   1   1        T               0.567
+       156     rotate     1   1   1        T               0.115
+       157  translate     6   1   1        T               0.557
+       158     insert     7   1   1        F               3.892
+       159  translate     3   1   1        T              -0.605
+       160  translate     6   1   1        T               1.153
+       161     rotate     5   1   1        F               0.481
+       162     rotate     2   1   1        T              -0.011
+       163  translate     6   1   1        T              -0.059
+       164  translate     3   1   1        T              -0.163
+       165     rotate     4   1   1        T              -0.004
+       166     rotate     3   1   1        T               0.137
+       167  translate     5   1   1        T              -0.015
+       168  translate     3   1   1        F               0.913
+       169  translate     2   1   1        T               0.098
+       170     delete     4   1   1        T               0.552
+       171  translate     6   1   1        F               2.038
+       172     rotate     6   1   1        F               1.648
+       173  translate     1   1   1        F               0.183
+       174     rotate     1   1   1        T               0.034
+       175  translate     1   1   1        T               0.740
+       176  translate     2   1   1        T               0.094
+       177  translate     6   1   1        T              -0.791
+       178  translate     1   1   1        T               0.874
+       179  translate     6   1   1        F               0.930
+       180  translate     2   1   1        T              -0.071
+       181     delete     3   1   1        T               1.219
+       182  translate     6   1   1        T              -0.167
+       183     insert     3   1   1        T               0.236
+       184     rotate     3   1   1        T              -0.352
+       185  translate     6   1   1        T              -0.221
+       186     rotate     3   1   1        T               0.534
+       187     rotate     6   1   1        T               0.102
+       188  translate     2   1   1        T              -0.123
+       189     insert     4   1   1        F               1.436
+       190     rotate     2   1   1        T               0.006
+       191  translate     1   1   1        T              -1.126
+       192     insert     4   1   1        F               1.520
+       193     rotate     6   1   1        T              -0.754
+       194     delete     1   1   1        F               2.281
+       195     insert     4   1   1        F               8.785
+       196     rotate     2   1   1        T               0.003
+       197     rotate     2   1   1        T              -0.004
+       198  translate     3   1   1        F               0.402
+       199     insert     4   1   1        F              13.792
+       200     rotate     1   1   1        T               0.004
+       201  translate     5   1   1        T               0.650
+       202     rotate     3   1   1        T              -0.480
+       203     delete     5   1   1        T               0.824
+       204     rotate     3   1   1        T              -0.031
+       205  translate     1   1   1        T              -0.555
+       206  translate     3   1   1        T              -0.599
+       207  translate     6   1   1        F               0.404
+       208  translate     2   1   1        T               0.144
+       209     rotate     1   1   1        T              -0.096
+       210     rotate     2   1   1        T               0.005
+       211  translate     3   1   1        T               0.120
+       212  translate     1   1   1        T               0.117
+       213  translate     3   1   1        T               0.318
+       214  translate     3   1   1        T              -0.381
+       215  translate     1   1   1        T              -0.029
+       216     delete     2   1   1        F               0.803
+       217  translate     2   1   1        T              -0.024
+       218     rotate     6   1   1        T              -0.061
+       219  translate     2   1   1        T               0.039
+       220     rotate     3   1   1        T              -0.017
+       221     rotate     6   1   1        T              -0.019
+       222  translate     3   1   1        F               0.579
+       223     rotate     1   1   1        T              -0.112
+       224     rotate     3   1   1        T               0.008
+       225  translate     2   1   1        T              -0.025
+       226  translate     6   1   1        T               0.168
+       227     rotate     6   1   1        T               0.031
+       228     rotate     3   1   1        T               0.007
+       229  translate     1   1   1        T               0.221
+       230     insert     5   1   1        T              -0.347
+       231  translate     2   1   1        T               0.124
+       232     rotate     5   1   1        T              -0.036
+       233     rotate     5   1   1        T               0.011
+       234  translate     2   1   1        T               0.059
+       235  translate     6   1   1        T               0.011
+       236     rotate     1   1   1        T               0.037
+       237     rotate     3   1   1        T              -0.033
+       238     delete     6   1   1        F               0.642
+       239  translate     6   1   1        T               0.284
+       240  translate     1   1   1        T              -0.596
+       241     rotate     2   1   1        T              -0.005
+       242     rotate     1   1   1        T               0.088
+       243     rotate     2   1   1        T              -0.015
+       244     insert     4   1   1        T               0.048
+       245  translate     5   1   1        T               0.090
+       246     delete     5   1   1        F               2.313
+       247  translate     5   1   1        T              -0.089
+       248  translate     1   1   1        T               0.033
+       249  translate     1   1   1        T              -0.192
+       250  translate     6   1   1        T               0.190
+       251     rotate     1   1   1        T               0.023
+       252     rotate     6   1   1        T               0.069
+       253  translate     1   1   1        T              -0.084
+       254  translate     6   1   1        T              -0.093
+       255     rotate     3   1   1        T              -0.012
+       256     rotate     5   1   1        T               0.060
+       257  translate     5   1   1        T               0.055
+       258     delete     2   1   1        F               1.435
+       259     rotate     5   1   1        T              -0.009
+       260     rotate     1   1   1        T              -0.096
+       261     delete     2   1   1        T               0.255
+       262  translate     1   1   1        T              -0.101
+       263  translate     5   1   1        F               0.236
+       264  translate     1   1   1        T               0.432
+       265     rotate     5   1   1        T              -0.031
+       266     insert     2   1   1        F              10.987
+       267     rotate     5   1   1        T              -0.038
+       268     insert     2   1   1        F               2.863
+       269  translate     1   1   1        T              -0.157
+       270     rotate     3   1   1        T              -0.039
+       271  translate     3   1   1        T               0.481
+       272  translate     5   1   1        T               0.181
+       273     delete     4   1   1        T               0.040
+       274  translate     1   1   1        T               0.528
+       275  translate     5   1   1        T              -0.016
+       276     insert     4   1   1        T              -2.528
+       277     rotate     3   1   1        T               0.191
+       278     insert     2   1   1        F               1.885
+       279  translate     3   1   1        T               1.064
+       280     delete     4   1   1        F               3.149
+       281     rotate     1   1   1        T               0.050
+       282     rotate     3   1   1        T               0.213
+       283  translate     3   1   1        T              -0.483
+       284     rotate     4   1   1        T              -0.002
+       285     insert     2   1   1        F               4.315
+       286  translate     5   1   1        T               0.174
+       287     rotate     1   1   1        T              -0.046
+       288     rotate     6   1   1        T              -0.044
+       289     rotate     1   1   1        T               0.012
+       290  translate     4   1   1        T              -0.562
+       291  translate     6   1   1        T              -0.102
+       292  translate     5   1   1        T              -0.108
+       293  translate     4   1   1        T               0.871
+       294  translate     1   1   1        T              -0.009
+       295     delete     1   1   1        T               1.335
+       296  translate     5   1   1        T               0.041
+       297     delete     3   1   1        F               1.713
+       298  translate     4   1   1        T               1.268
+       299  translate     4   1   1        T              -1.252
+       300     rotate     6   1   1        T               0.020
+       301     rotate     3   1   1        T              -0.659
+       302     rotate     4   1   1        T               0.008
+       303     rotate     5   1   1        T               0.005
+       304     insert     1   1   1        F               4.020
+       305     rotate     3   1   1        T               0.099
+       306     rotate     5   1   1        T              -0.156
+       307     insert     1   1   1        F               1.523
+       308     rotate     5   1   1        T              -0.051
+       309     delete     5   1   1        F               3.377
+       310     rotate     5   1   1        T               0.045
+       311  translate     4   1   1        F               2.530
+       312  translate     3   1   1        F               1.394
+       313     insert     1   1   1        F               0.712
+       314     rotate     4   1   1        T              -0.043
+       315     rotate     6   1   1        T              -0.005
+       316     rotate     5   1   1        T              -0.009
+       317     rotate     4   1   1        T               0.014
+       318     rotate     5   1   1        T              -0.044
+       319     rotate     3   1   1        T              -0.092
+       320  translate     6   1   1        T               0.119
+       321     insert     1   1   1        F               1.494
+       322     insert     1   1   1        F               2.372
+       323  translate     3   1   1        T              -0.487
+       324  translate     5   1   1        T              -0.197
+       325     rotate     3   1   1        T              -0.132
+       326     delete     6   1   1        T              -0.261
+       327  translate     4   1   1        T               0.580
+       328     rotate     5   1   1        T               0.151
+       329     rotate     3   1   1        T              -0.036
+       330     delete     3   1   1        F               3.180
+       331  translate     4   1   1        T              -0.625
+       332     delete     4   1   1        F               3.263
+       333  translate     5   1   1        T               0.075
+       334     rotate     5   1   1        T               0.001
+       335  translate     4   1   1        T               2.063
+       336     rotate     5   1   1        T              -0.004
+       337  translate     5   1   1        T              -0.159
+       338  translate     4   1   1        T               2.023
+       339  translate     4   1   1        F               5.193
+       340     insert     6   1   1        F               2.284
+       341     rotate     5   1   1        T               0.011
+       342     rotate     5   1   1        T               0.017
+       343  translate     4   1   1        F               1.116
+       344     rotate     3   1   1        T               0.002
+       345     delete     3   1   1        F               2.703
+       346     delete     4   1   1        T              -0.487
+       347  translate     3   1   1        T              -0.214
+       348  translate     5   1   1        T               0.020
+       349     rotate     3   1   1        T               0.016
+       350     rotate     3   1   1        T               0.262
+       351     rotate     3   1   1        F               1.228
+       352  translate     5   1   1        T              -0.186
+       353     rotate     3   1   1        T              -0.055
+       354  translate     3   1   1        T               0.100
+       355  translate     5   1   1        T               0.098
+       356  translate     5   1   1        T              -0.086
+       357     rotate     5   1   1        T               0.026
+       358  translate     3   1   1        T               0.125
+       359     rotate     3   1   1        T               0.194
+       360     delete     5   1   1        F               1.619
+       361  translate     5   1   1        T               0.037
+       362     rotate     3   1   1        T               0.034
+       363  translate     3   1   1        F               0.856
+       364     rotate     5   1   1        T              -0.058
+       365     rotate     5   1   1        T               0.014
+       366  translate     3   1   1        F               1.131
+       367  translate     5   1   1        T               0.083
+       368     delete     5   1   1        T               1.376
+       369  translate     3   1   1        T              -0.033
+       370     rotate     3   1   1        T              -0.115
+       371     rotate     3   1   1        T               0.011
+       372     rotate     3   1   1        T               0.002
+       373     rotate     3   1   1        T              -0.000
+       374  translate     3   1   1        T              -0.200
+       375     rotate     3   1   1        T              -0.004
+       376  translate     3   1   1        F               0.274
+       377     rotate     3   1   1        T              -0.003
+       378  translate     3   1   1        T               0.151
+       379     rotate     3   1   1        T              -0.002
+       380  translate     3   1   1        F               0.415
+       381     rotate     3   1   1        T               0.001
+       382     rotate     3   1   1        T              -0.093
+       383     rotate     3   1   1        T              -0.008
+       384     rotate     3   1   1        F               0.019
+       385     insert     5   1   1        T              -0.620
+       386     insert     4   1   1        F               4.139
+       387  translate     5   1   1        T               0.261
+       388  translate     5   1   1        T              -0.013
+       389  translate     3   1   1        T              -0.162
+       390  translate     3   1   1        T               0.012
+       391  translate     5   1   1        T              -0.183
+       392     rotate     5   1   1        T               0.003
+       393     rotate     5   1   1        T               0.078
+       394     rotate     5   1   1        T               0.182
+       395     rotate     3   1   1        T              -0.069
+       396  translate     3   1   1        T               0.590
+       397     insert     4   1   1        T              -0.382
+       398  translate     5   1   1        T              -0.134
+       399     insert     6   1   1        T               0.262
+       400     rotate     6   1   1        T               0.042
+       401  translate     6   1   1        F               0.281
+       402     rotate     4   1   1        T               0.066
+       403     rotate     5   1   1        T               0.025
+       404     insert     1   1   1        T              -0.385
+       405  translate     3   1   1        F               1.928
+       406     rotate     5   1   1        F               0.272
+       407  translate     4   1   1        T              -0.283
+       408  translate     4   1   1        T               0.007
+       409  translate     1   1   1        T               0.599
+       410  translate     6   1   1        T              -0.009
+       411     rotate     5   1   1        T               0.016
+       412     insert     2   1   1        F               1.886
+       413     rotate     1   1   1        T               0.008
+       414  translate     5   1   1        T               0.394
+       415  translate     5   1   1        T               0.537
+       416     delete     4   1   1        F               1.975
+       417     rotate     6   1   1        T               0.026
+       418     rotate     6   1   1        T               0.020
+       419  translate     3   1   1        T              -0.931
+       420     insert     2   1   1        F               2.111
+       421     insert     2   1   1        F               9.717
+       422     insert     2   1   1        T               0.688
+       423     rotate     5   1   1        T              -0.241
+       424     delete     6   1   1        F               1.122
+       425     rotate     4   1   1        T              -0.041
+       426     rotate     4   1   1        T              -0.002
+       427     rotate     1   1   1        T              -0.016
+       428  translate     6   1   1        T              -0.005
+       429     rotate     1   1   1        T               0.011
+       430  translate     2   1   1        T              -0.117
+       431     insert     7   1   1        F               2.378
+       432  translate     6   1   1        T              -0.006
+       433  translate     6   1   1        T               0.712
+       434     rotate     3   1   1        T              -0.323
+       435  translate     4   1   1        T              -0.044
+       436  translate     1   1   1        T               0.263
+       437     delete     4   1   1        F               1.989
+       438  translate     3   1   1        T               0.317
+       439  translate     4   1   1        T              -0.086
+       440     rotate     1   1   1        T              -0.002
+       441  translate     5   1   1        T              -0.008
+       442     rotate     5   1   1        T              -0.076
+       443  translate     6   1   1        T              -0.646
+       444     rotate     2   1   1        T               0.076
+       445     delete     2   1   1        T               0.035
+       446  translate     5   1   1        T               0.157
+       447     rotate     4   1   1        T              -0.025
+       448     insert     2   1   1        T              -0.424
+       449     delete     5   1   1        F               1.858
+       450  translate     3   1   1        T               0.005
+       451  translate     5   1   1        T               0.730
+       452     delete     6   1   1        T               0.450
+       453  translate     5   1   1        T              -0.073
+       454  translate     2   1   1        T               0.144
+       455  translate     1   1   1        T              -0.653
+       456  translate     2   1   1        T              -0.003
+       457     rotate     4   1   1        T               0.028
+       458     delete     4   1   1        F               2.356
+       459     insert     6   1   1        F               1.302
+       460  translate     3   1   1        F               2.215
+       461  translate     2   1   1        T               0.184
+       462     rotate     2   1   1        T              -0.121
+       463  translate     5   1   1        F               2.805
+       464  translate     4   1   1        T              -0.083
+       465  translate     1   1   1        T               0.076
+       466     rotate     3   1   1        F               1.809
+       467     delete     4   1   1        F               2.536
+       468     rotate     3   1   1        T              -0.359
+       469     delete     3   1   1        F               4.264
+       470     delete     1   1   1        F               0.994
+       471     rotate     5   1   1        T               0.007
+       472  translate     2   1   1        T              -0.174
+       473     rotate     4   1   1        T               0.092
+       474  translate     3   1   1        T               0.899
+       475  translate     4   1   1        T               0.114
+       476     rotate     5   1   1        T              -0.777
+       477     rotate     5   1   1        T               0.209
+       478  translate     5   1   1        T              -0.553
+       479     delete     1   1   1        F               1.389
+       480     rotate     1   1   1        T               0.027
+       481  translate     5   1   1        F               2.701
+       482     rotate     5   1   1        T              -0.332
+       483  translate     5   1   1        T              -0.242
+       484  translate     2   1   1        T               0.274
+       485     rotate     5   1   1        T               0.065
+       486     rotate     1   1   1        T               0.017
+       487     rotate     3   1   1        T               0.770
+       488  translate     1   1   1        T              -0.503
+       489     rotate     2   1   1        T               0.127
+       490     rotate     1   1   1        F               0.488
+       491     insert     6   1   1        F             177.509
+       492  translate     1   1   1        F               0.337
+       493     rotate     2   1   1        T              -0.012
+       494  translate     2   1   1        T               0.204
+       495     insert     6   1   1        T               0.354
+       496     rotate     4   1   1        T              -0.022
+       497  translate     5   1   1        T               0.974
+       498     rotate     2   1   1        T              -0.012
+       499  translate     6   1   1        T               1.556
+       500     rotate     5   1   1        F               0.410
+       501  translate     1   1   1        F               0.105
+       502  translate     3   1   1        T              -1.877
+       503  translate     2   1   1        T               0.135
+       504     rotate     5   1   1        T              -0.214
+       505     rotate     5   1   1        F               0.078
+       506     rotate     6   1   1        T               0.316
+       507  translate     3   1   1        F               5.210
+       508     delete     3   1   1        F               2.897
+       509  translate     2   1   1        T               0.201
+       510  translate     6   1   1        T              -0.499
+       511     delete     6   1   1        T              -0.770
+       512     rotate     4   1   1        T               0.002
+       513  translate     5   1   1        T              -0.112
+       514     rotate     3   1   1        F               0.061
+       515     delete     2   1   1        F               1.634
+       516     delete     5   1   1        F               1.975
+       517  translate     1   1   1        T               0.050
+       518     insert     6   1   1        T               1.321
+       519  translate     4   1   1        T               0.506
+       520     rotate     1   1   1        T               0.047
+       521     rotate     1   1   1        T              -0.026
+       522     rotate     2   1   1        T              -0.607
+       523     insert     7   1   1        T               0.103
+       524     insert     8   1   1        F             269.219
+       525  translate     1   1   1        F               0.519
+       526  translate     2   1   1        T              -0.009
+       527  translate     3   1   1        F               1.576
+       528     rotate     7   1   1        T              -0.019
+       529     rotate     6   1   1        T               0.014
+       530     insert     8   1   1        F               6.957
+       531  translate     6   1   1        T              -0.134
+       532     rotate     1   1   1        T               0.052
+       533  translate     6   1   1        T               0.235
+       534  translate     4   1   1        T              -0.068
+       535  translate     5   1   1        T              -0.377
+       536     delete     2   1   1        F               1.786
+       537     rotate     4   1   1        T              -0.097
+       538  translate     3   1   1        T               0.670
+       539     rotate     7   1   1        T              -0.062
+       540  translate     3   1   1        F               1.585
+       541  translate     6   1   1        T               0.036
+       542     rotate     6   1   1        T              -0.001
+       543     rotate     3   1   1        T              -0.005
+       544     delete     4   1   1        T               1.578
+       545     rotate     2   1   1        T              -0.035
+       546     rotate     2   1   1        T              -0.149
+       547     insert     4   1   1        F               1.114
+       548     insert     4   1   1        T              -0.082
+       549  translate     5   1   1        T              -0.293
+       550     rotate     1   1   1        T              -0.305
+       551     delete     5   1   1        F               1.525
+       552     delete     2   1   1        F               2.284
+       553     insert     8   1   1        F               1.899
+       554     rotate     5   1   1        T              -0.053
+       555     rotate     1   1   1        T               0.870
+       556  translate     5   1   1        F               1.228
+       557  translate     4   1   1        T              -0.405
+       558  translate     3   1   1        F               1.826
+       559  translate     6   1   1        T              -0.101
+       560     insert     8   1   1        T               0.378
+       561     insert     9   1   1        F               2.290
+       562  translate     5   1   1        T               0.844
+       563  translate     1   1   1        T              -0.138
+       564  translate     7   1   1        T               0.072
+       565     insert     9   1   1        F              14.130
+       566  translate     3   1   1        F               1.148
+       567     rotate     5   1   1        T              -0.279
+       568     rotate     5   1   1        T               0.049
+       569     rotate     5   1   1        T              -0.111
+       570     insert     9   1   1        F              13.436
+       571     insert     9   1   1        F               9.002
+       572  translate     3   1   1        T               0.002
+       573     insert     9   1   1        F               3.908
+       574  translate     6   1   1        T              -0.115
+       575     delete     5   1   1        T               1.813
+       576  translate     4   1   1        T               0.075
+       577     rotate     8   1   1        T               0.644
+       578     insert     5   1   1        F               6.848
+       579     insert     5   1   1        T               0.824
+       580     delete     4   1   1        F               3.762
+       581  translate     7   1   1        T               0.253
+       582     rotate     3   1   1        T               1.616
+       583     rotate     6   1   1        T               0.013
+       584  translate     2   1   1        T              -0.243
+       585     rotate     2   1   1        T              -0.396
+       586  translate     2   1   1        T              -0.181
+       587     insert     9   1   1        T               0.198
+       588  translate     7   1   1        T               0.670
+       589     rotate     3   1   1        T              -0.013
+       590     rotate     1   1   1        T              -0.009
+       591     rotate     3   1   1        F               2.150
+       592     rotate     4   1   1        T              -0.793
+       593     insert    10   1   1        F              80.741
+       594     rotate     7   1   1        T              -0.037
+       595  translate     3   1   1        F               0.803
+       596  translate     2   1   1        T               0.229
+       597  translate     4   1   1        F               0.048
+       598     delete     6   1   1        F               0.328
+       599     insert    10   1   1        F             333.343
+       600     rotate     8   1   1        T              -1.247
+       601     rotate     1   1   1        T               0.005
+       602  translate     3   1   1        T              -0.293
+       603  translate     3   1   1        T              -0.563
+       604     insert    10   1   1        T              -1.216
+       605     rotate     8   1   1        F               0.926
+       606  translate     8   1   1        T               0.155
+       607  translate     5   1   1        F               2.229
+       608     rotate     9   1   1        T               0.035
+       609     rotate     3   1   1        T               0.029
+       610  translate     7   1   1        T               1.981
+       611     insert    11   1   1        F             286.600
+       612  translate     4   1   1        T              -0.256
+       613     rotate     7   1   1        T              -0.050
+       614  translate     3   1   1        T              -0.022
+       615  translate    10   1   1        F               0.985
+       616     rotate     9   1   1        T              -0.002
+       617     rotate     9   1   1        T              -0.055
+       618  translate    10   1   1        T              -0.965
+       619  translate     9   1   1        T              -0.134
+       620     rotate     9   1   1        T               0.017
+       621  translate     8   1   1        T              -0.112
+       622  translate     3   1   1        F               0.861
+       623  translate     7   1   1        T              -1.436
+       624  translate     2   1   1        T              -0.042
+       625     rotate     6   1   1        T              -0.098
+       626  translate     2   1   1        T               0.051
+       627     rotate     4   1   1        T               0.018
+       628  translate     8   1   1        F               1.229
+       629  translate    10   1   1        T              -0.555
+       630     rotate     3   1   1        T              -0.388
+       631  translate     6   1   1        T               0.035
+       632     rotate     5   1   1        T               0.025
+       633     rotate     3   1   1        T              -0.051
+       634     rotate     6   1   1        T              -0.031
+       635     rotate     1   1   1        T              -0.376
+       636  translate    10   1   1        T              -0.143
+       637  translate     5   1   1        T              -0.623
+       638  translate    10   1   1        T               0.293
+       639     rotate     7   1   1        T               0.063
+       640     delete     3   1   1        F               5.233
+       641  translate     6   1   1        T               0.132
+       642  translate     9   1   1        T               0.199
+       643  translate     5   1   1        T              -0.135
+       644     insert    11   1   1        F             overlap
+       645  translate    10   1   1        F               0.281
+       646     rotate     2   1   1        T              -0.266
+       647     rotate     6   1   1        T              -0.011
+       648     rotate     8   1   1        T              -0.687
+       649  translate    10   1   1        F               0.499
+       650  translate     9   1   1        T              -0.092
+       651  translate     9   1   1        T               0.281
+       652  translate     8   1   1        F               0.450
+       653  translate     3   1   1        T               0.547
+       654     rotate     8   1   1        T              -0.055
+       655     rotate     4   1   1        T               0.243
+       656  translate     7   1   1        T              -0.685
+       657  translate     5   1   1        T               0.118
+       658     rotate     6   1   1        T               0.028
+       659  translate     6   1   1        T              -0.119
+       660  translate     3   1   1        T              -0.228
+       661  translate     3   1   1        T               0.092
+       662     rotate     5   1   1        F               4.764
+       663  translate     5   1   1        F               0.699
+       664     rotate     2   1   1        T               0.458
+       665  translate     7   1   1        T               0.136
+       666  translate     9   1   1        T               0.671
+       667     rotate     4   1   1        T               0.058
+       668     rotate     2   1   1        T              -0.676
+       669     insert    11   1   1        F             140.448
+       670     rotate     7   1   1        T              -0.065
+       671     rotate     7   1   1        T              -0.109
+       672     rotate     4   1   1        F               0.487
+       673  translate     6   1   1        T               0.009
+       674  translate    10   1   1        F               0.157
+       675     rotate     7   1   1        T               0.072
+       676  translate     6   1   1        T               0.085
+       677  translate     2   1   1        T              -0.027
+       678     rotate     9   1   1        T               0.302
+       679     rotate     9   1   1        T              -0.033
+       680     rotate     5   1   1        T              -0.463
+       681  translate     2   1   1        T               0.403
+       682  translate     9   1   1        T              -0.444
+       683  translate     4   1   1        F               1.300
+       684  translate     9   1   1        F               1.345
+       685  translate     6   1   1        T               0.071
+       686     rotate    10   1   1        T               0.089
+       687     rotate     8   1   1        T               0.150
+       688     rotate     7   1   1        T              -0.089
+       689     delete     6   1   1        T               0.291
+       690     rotate     7   1   1        T               0.067
+       691     rotate     7   1   1        T               0.070
+       692  translate    10   1   1        T               0.167
+       693  translate     8   1   1        T              -0.350
+       694     delete     3   1   1        F               4.621
+       695     rotate    10   1   1        F               0.243
+       696     insert     6   1   1        F              69.652
+       697     delete     9   1   1        T              -0.144
+       698     delete    10   1   1        F               2.339
+       699  translate     5   1   1        T               0.498
+       700     insert     9   1   1        F              15.571
+       701     insert     9   1   1        T              -1.132
+       702     delete     8   1   1        F               1.683
+       703     delete     7   1   1        F               0.584
+       704  translate     9   1   1        T              -0.382
+       705     rotate     5   1   1        T               0.070
+       706     rotate     4   1   1        T               0.229
+       707  translate     2   1   1        F               1.686
+       708     rotate     9   1   1        T              -0.005
+       709  translate     9   1   1        T              -0.285
+       710  translate     8   1   1        F               0.499
+       711     delete     2   1   1        F               3.789
+       712  translate     2   1   1        T              -0.040
+       713  translate     3   1   1        F               0.954
+       714  translate     3   1   1        F               1.222
+       715     rotate     2   1   1        T               0.360
+       716     rotate     3   1   1        F               1.207
+       717     rotate    10   1   1        T               0.169
+       718  translate     2   1   1        T              -0.046
+       719     delete     4   1   1        F               4.394
+       720     rotate     3   1   1        T              -0.369
+       721     rotate     3   1   1        F               0.293
+       722     rotate     3   1   1        T              -0.311
+       723  translate     8   1   1        T              -0.207
+       724  translate     1   1   1        T               0.229
+       725  translate    10   1   1        F               0.985
+       726  translate     8   1   1        T              -0.069
+       727  translate    10   1   1        T              -0.576
+       728     rotate     2   1   1        T              -0.147
+       729     insert     6   1   1        T              -0.583
+       730  translate     9   1   1        T               0.425
+       731  translate     5   1   1        T               0.760
+       732  translate     6   1   1        T              -0.354
+       733     delete     3   1   1        F               5.442
+       734  translate     1   1   1        F               1.639
+       735     rotate     9   1   1        T              -0.003
+       736  translate     4   1   1        T               0.111
+       737  translate     2   1   1        T              -0.084
+       738  translate     5   1   1        T               0.623
+       739     insert    11   1   1        F              72.245
+       740     insert    11   1   1        F              23.231
+       741  translate     9   1   1        T              -0.110
+       742     rotate     5   1   1        F               2.489
+       743     rotate     6   1   1        T              -0.122
+       744  translate     5   1   1        T              -1.561
+       745     rotate     8   1   1        T               0.167
+       746  translate     7   1   1        T               1.650
+       747     rotate     1   1   1        T              -0.269
+       748  translate     7   1   1        T               2.273
+       749     rotate     7   1   1        T              -0.000
+       750     delete     1   1   1        T               1.106
+       751     rotate    10   1   1        T              -0.015
+       752     rotate     9   1   1        T               0.008
+       753  translate    10   1   1        T               0.095
+       754     rotate    10   1   1        T              -0.085
+       755     delete     3   1   1        F               5.418
+       756     rotate    10   1   1        T               0.028
+       757  translate     2   1   1        T              -0.031
+       758  translate     8   1   1        F               0.287
+       759  translate     6   1   1        T              -0.247
+       760  translate     5   1   1        T               1.297
+       761     delete     7   1   1        T              -2.625
+       762  translate     3   1   1        T               0.667
+       763     rotate     5   1   1        T              -0.290
+       764     rotate     8   1   1        T              -0.078
+       765     insert     7   1   1        F              31.420
+       766  translate     6   1   1        T              -0.136
+       767  translate     2   1   1        T               0.136
+       768     delete    10   1   1        T               1.254
+       769  translate     8   1   1        T               0.275
+       770     insert    10   1   1        F              40.848
+       771     delete     6   1   1        F               2.157
+       772  translate     2   1   1        T               0.035
+       773     delete     8   1   1        F               2.216
+       774  translate     6   1   1        T              -0.018
+       775     rotate     8   1   1        T              -0.455
+       776  translate     2   1   1        T               0.006
+       777     delete     9   1   1        T               1.825
+       778  translate     8   1   1        T               0.158
+       779     rotate     5   1   1        T               0.054
+       780     insert     9   1   1        F              28.844
+       781  translate     3   1   1        T               0.124
+       782     insert     9   1   1        T              -0.653
+       783     insert    10   1   1        F               1.634
+       784  translate     4   1   1        T               0.464
+       785  translate     6   1   1        T               0.036
+       786  translate     9   1   1        T              -0.064
+       787     insert    10   1   1        T               0.077
+       788  translate     3   1   1        T              -0.493
+       789  translate     4   1   1        T              -0.464
+       790     rotate     6   1   1        T               0.009
+       791  translate     8   1   1        T              -0.211
+       792  translate    10   1   1        T              -0.136
+       793  translate     2   1   1        T               0.213
+       794     rotate     4   1   1        T              -0.176
+       795  translate     2   1   1        T               0.254
+       796     rotate     5   1   1        T               0.100
+       797     rotate    10   1   1        T              -0.039
+       798     rotate     4   1   1        T               0.284
+       799     delete     2   1   1        F               4.106
+       800     rotate     2   1   1        T              -0.332
+       801     rotate     9   1   1        T               0.125
+       802  translate     5   1   1        F               0.591
+       803  translate     9   1   1        T               0.513
+       804     delete     5   1   1        F               2.144
+       805     delete     4   1   1        F               4.958
+       806     rotate     4   1   1        T               0.104
+       807     rotate     9   1   1        F               0.054
+       808  translate     3   1   1        F               2.381
+       809     rotate     5   1   1        F               0.036
+       810     rotate     3   1   1        F               0.500
+       811  translate     9   1   1        T               0.180
+       812     rotate     2   1   1        T              -0.231
+       813     delete     6   1   1        F               2.194
+       814  translate     3   1   1        T              -0.716
+       815     delete     8   1   1        F               1.821
+       816  translate     2   1   1        T              -0.300
+       817     insert     7   1   1        T              -1.891
+       818     rotate     2   1   1        T               0.086
+       819     rotate     3   1   1        T               0.334
+       820     rotate     9   1   1        T              -0.575
+       821  translate     3   1   1        F               0.782
+       822     delete     5   1   1        F               3.945
+       823     rotate     9   1   1        T              -0.122
+       824     rotate     9   1   1        T               0.086
+       825  translate    10   1   1        T              -0.464
+       826     insert     1   1   1        F              18.187
+       827     rotate     7   1   1        T              -0.014
+       828     rotate     7   1   1        T              -0.022
+       829  translate     4   1   1        T               0.511
+       830     rotate    10   1   1        T               0.125
+       831  translate     7   1   1        F               1.752
+       832     rotate     7   1   1        T               0.203
+       833     rotate     5   1   1        T               0.419
+       834     rotate     9   1   1        T              -0.155
+       835     rotate     6   1   1        T              -0.000
+       836  translate     5   1   1        T               0.227
+       837  translate     8   1   1        T               0.114
+       838  translate     5   1   1        T              -1.512
+       839     rotate     6   1   1        T              -0.015
+       840     delete     3   1   1        F               5.196
+       841  translate     7   1   1        T              -0.841
+       842  translate     4   1   1        T              -0.738
+       843  translate     7   1   1        T               0.125
+       844     rotate     7   1   1        T               0.065
+       845  translate     3   1   1        T              -0.838
+       846     delete     5   1   1        F               5.094
+       847     rotate     8   1   1        T              -0.065
+       848     rotate     6   1   1        T               0.160
+       849     rotate     3   1   1        T               0.155
+       850  translate     2   1   1        T              -0.314
+       851     rotate     2   1   1        T               0.542
+       852     delete     6   1   1        F               2.080
+       853  translate     7   1   1        F               2.442
+       854     rotate     2   1   1        T              -0.524
+       855  translate     3   1   1        T              -0.099
+       856     delete     4   1   1        F               5.198
+       857  translate     6   1   1        T               0.575
+       858     insert     1   1   1        F              45.088
+       859  translate     4   1   1        T              -0.245
+       860     rotate     9   1   1        F               1.966
+       861  translate     9   1   1        T               0.141
+       862     delete     6   1   1        F               1.666
+       863     delete     9   1   1        F               5.118
+       864     rotate     5   1   1        F               0.261
+       865     insert     1   1   1        T               0.125
+       866  translate     4   1   1        T              -0.167
+       867     insert    11   1   1        F              44.096
+       868     insert    11   1   1        F              28.339
+       869     rotate     4   1   1        T               0.039
+       870  translate     7   1   1        T              -0.359
+       871     insert    11   1   1        F             overlap
+       872  translate     3   1   1        T              -0.212
+       873  translate     8   1   1        T               0.185
+       874     insert    11   1   1        F             overlap
+       875     rotate     6   1   1        T               0.001
+       876  translate     1   1   1        T               0.292
+       877  translate     8   1   1        T               0.048
+       878     rotate     7   1   1        T               0.075
+       879  translate     5   1   1        F               0.761
+       880     rotate     5   1   1        T               0.045
+       881     rotate     8   1   1        T              -0.109
+       882  translate     6   1   1        T              -0.274
+       883     insert    11   1   1        F              23.741
+       884     rotate     4   1   1        T              -0.158
+       885     insert    11   1   1        F             401.721
+       886     rotate    10   1   1        T               0.305
+       887     rotate     4   1   1        T              -0.004
+       888  translate     9   1   1        F               2.200
+       889  translate     7   1   1        T              -0.274
+       890     delete     5   1   1        F               4.788
+       891  translate     9   1   1        T               2.256
+       892     rotate     5   1   1        T               0.072
+       893  translate     7   1   1        T              -0.071
+       894     rotate     2   1   1        T               0.025
+       895     rotate     4   1   1        T               0.006
+       896     delete     9   1   1        F               3.985
+       897     delete     2   1   1        F               4.527
+       898  translate    10   1   1        T              -0.230
+       899  translate     5   1   1        F               1.777
+       900     delete     8   1   1        F               1.179
+       901     rotate     9   1   1        F               1.246
+       902     rotate     8   1   1        T               0.048
+       903     rotate     2   1   1        T              -0.024
+       904  translate     7   1   1        T              -0.112
+       905     insert    11   1   1        F              72.444
+       906  translate     8   1   1        T              -0.060
+       907  translate     8   1   1        T               0.042
+       908  translate     5   1   1        T               0.139
+       909     insert    11   1   1        F              38.362
+       910  translate     3   1   1        T              -0.096
+       911     insert    11   1   1        F             overlap
+       912     rotate     5   1   1        T               0.036
+       913     rotate     8   1   1        T               0.005
+       914  translate     8   1   1        T               0.011
+       915  translate     2   1   1        T              -0.085
+       916     insert    11   1   1        F             495.429
+       917  translate     8   1   1        F               0.276
+       918     rotate     2   1   1        T               0.046
+       919     delete     6   1   1        F               1.964
+       920  translate     5   1   1        T               0.022
+       921     delete     1   1   1        F               0.592
+       922     delete     3   1   1        F               6.189
+       923     delete     3   1   1        F               6.189
+       924     rotate     7   1   1        T              -0.086
+       925  translate    10   1   1        T               0.229
+       926  translate     5   1   1        F               1.640
+       927     delete    10   1   1        F               2.721
+       928  translate     5   1   1        T               1.366
+       929     delete     5   1   1        F               3.266
+       930     delete     9   1   1        F               4.132
+       931     rotate     3   1   1        T               0.311
+       932  translate     5   1   1        F               1.252
+       933     rotate     5   1   1        T               0.077
+       934     rotate     5   1   1        T               0.585
+       935  translate     6   1   1        F               1.180
+       936     rotate     9   1   1        T               0.474
+       937     delete    10   1   1        T               2.809
+       938  translate     3   1   1        T               0.824
+       939     rotate     7   1   1        T              -0.021
+       940     delete     6   1   1        F               1.905
+       941  translate     2   1   1        T               0.012
+       942     delete     5   1   1        F               1.261
+       943     rotate     2   1   1        F               0.141
+       944  translate     4   1   1        F               0.704
+       945  translate     1   1   1        T              -0.025
+       946     rotate     9   1   1        T               0.002
+       947     rotate     2   1   1        T              -0.017
+       948     rotate     1   1   1        F               2.294
+       949     rotate     1   1   1        T              -0.007
+       950  translate     5   1   1        F               3.254
+       951  translate     7   1   1        T               0.287
+       952  translate     1   1   1        F               0.420
+       953     rotate     5   1   1        T               0.116
+       954  translate     5   1   1        F               0.928
+       955  translate     9   1   1        T              -1.585
+       956     rotate     4   1   1        T              -0.163
+       957  translate     6   1   1        F               0.790
+       958  translate     9   1   1        T              -1.364
+       959     rotate     5   1   1        T              -0.734
+       960     rotate     3   1   1        T               0.088
+       961  translate     4   1   1        F               0.362
+       962     rotate     9   1   1        T              -0.531
+       963     rotate     5   1   1        F               0.962
+       964     delete     6   1   1        F               1.346
+       965     rotate     3   1   1        F               0.516
+       966  translate     5   1   1        F               1.706
+       967  translate     8   1   1        F               0.290
+       968  translate     7   1   1        T               0.708
+       969  translate     4   1   1        T              -0.051
+       970  translate     3   1   1        T               1.292
+       971     rotate     3   1   1        T              -0.391
+       972  translate     5   1   1        F               3.278
+       973     delete     2   1   1        F               4.389
+       974     insert    10   1   1        F              63.414
+       975  translate     5   1   1        T              -1.507
+       976     insert    10   1   1        F               1.328
+       977  translate     8   1   1        T               0.415
+       978     rotate     4   1   1        T               0.055
+       979     rotate     6   1   1        T               0.033
+       980     rotate     3   1   1        T              -0.465
+       981     delete     1   1   1        T               0.601
+       982  translate     4   1   1        T               0.559
+       983  translate     9   1   1        T               0.195
+       984     rotate     8   1   1        T               0.035
+       985  translate     2   1   1        F               0.734
+       986  translate     3   1   1        F               3.619
+       987  translate     4   1   1        F               1.698
+       988  translate     8   1   1        T               0.312
+       989     insert     1   1   1        F               2.257
+       990  translate     3   1   1        F               2.587
+       991     delete     6   1   1        F               2.137
+       992     delete     9   1   1        F               4.170
+       993     rotate     3   1   1        T              -0.196
+       994     rotate     9   1   1        T               0.189
+       995     rotate     5   1   1        T               0.252
+       996  translate     3   1   1        T              -0.548
+       997  translate     2   1   1        T               0.527
+       998  translate     6   1   1        T               0.356
+       999     rotate     5   1   1        T               0.026
+      1000     delete     5   1   1        F               3.265
+      1001     delete     6   1   1        F               0.534
+      1002     rotate     5   1   1        T               0.036
+      1003     rotate     4   1   1        F               3.031
+      1004     rotate     5   1   1        T              -0.195
+      1005  translate     4   1   1        F               1.246
+      1006  translate     8   1   1        T               0.079
+      1007     rotate     8   1   1        T              -0.308
+      1008     rotate     3   1   1        T               0.132
+      1009     rotate     2   1   1        T              -0.172
+      1010  translate     2   1   1        T               0.177
+      1011  translate     6   1   1        T              -0.048
+      1012  translate     9   1   1        T              -0.140
+      1013     rotate     3   1   1        F               0.400
+      1014     rotate     9   1   1        T              -0.240
+      1015  translate     9   1   1        T               0.147
+      1016     insert     1   1   1        F               2.486
+      1017  translate     6   1   1        T              -0.120
+      1018     delete     5   1   1        F               3.196
+      1019     rotate     6   1   1        T               0.030
+      1020     rotate     2   1   1        T               0.153
+      1021  translate     8   1   1        F               0.707
+      1022  translate     8   1   1        T              -0.043
+      1023  translate     4   1   1        T               2.033
+      1024  translate     4   1   1        T               0.483
+      1025  translate     3   1   1        T              -0.033
+      1026     insert     1   1   1        F               3.929
+      1027     insert     1   1   1        F               0.700
+      1028     rotate     9   1   1        T              -0.080
+      1029  translate     2   1   1        T              -0.247
+      1030     insert     1   1   1        F              11.587
+      1031  translate     7   1   1        T              -0.205
+      1032     delete     7   1   1        F               1.919
+      1033     rotate     5   1   1        T              -0.067
+      1034     rotate     4   1   1        T              -0.109
+      1035     rotate     2   1   1        T              -0.023
+      1036     rotate     2   1   1        T              -0.090
+      1037  translate     3   1   1        T              -0.235
+      1038  translate     5   1   1        T              -0.466
+      1039     rotate     5   1   1        T               0.190
+      1040  translate     5   1   1        T              -0.695
+      1041     rotate     6   1   1        T               0.007
+      1042     rotate     8   1   1        T              -0.529
+      1043     rotate     2   1   1        T               0.187
+      1044  translate     3   1   1        T              -0.065
+      1045     rotate     7   1   1        T               0.074
+      1046  translate     2   1   1        T               1.085
+      1047     insert     1   1   1        F               2.713
+      1048     insert     1   1   1        F             overlap
+      1049     rotate     9   1   1        T              -0.008
+      1050  translate     9   1   1        T              -0.192
+      1051  translate     4   1   1        T              -1.904
+      1052     rotate     5   1   1        F               0.281
+      1053  translate     5   1   1        T              -0.367
+      1054     insert     1   1   1        F               2.460
+      1055     rotate     6   1   1        T              -0.394
+      1056     rotate     4   1   1        T               0.182
+      1057     delete     7   1   1        F               1.987
+      1058  translate     2   1   1        F               3.168
+      1059     rotate     5   1   1        T              -0.118
+      1060  translate     5   1   1        T               0.073
+      1061     rotate     2   1   1        T              -0.933
+      1062     rotate     5   1   1        T              -0.001
+      1063     rotate     5   1   1        F               0.319
+      1064     delete     9   1   1        F               4.961
+      1065     insert     1   1   1        F              35.255
+      1066     insert     1   1   1        F              66.406
+      1067  translate     8   1   1        T               0.018
+      1068     rotate     2   1   1        T              -0.001
+      1069  translate     6   1   1        T               0.196
+      1070  translate     7   1   1        F               2.016
+      1071     rotate     4   1   1        T               0.802
+      1072  translate     5   1   1        T              -0.214
+      1073     rotate     8   1   1        T               0.016
+      1074     rotate     3   1   1        T               0.422
+      1075     rotate     5   1   1        T              -0.025
+      1076     rotate     4   1   1        F               9.420
+      1077     rotate     4   1   1        T              -0.454
+      1078  translate     7   1   1        T              -0.494
+      1079     delete     9   1   1        F               4.859
+      1080  translate     2   1   1        T              -0.640
+      1081     rotate     4   1   1        F               6.444
+      1082     rotate     9   1   1        T               0.074
+      1083  translate     2   1   1        T               0.051
+      1084     rotate     2   1   1        T               0.005
+      1085  translate     7   1   1        T              -0.291
+      1086     rotate     5   1   1        T              -0.010
+      1087     delete     7   1   1        F               2.759
+      1088     insert     1   1   1        F              25.089
+      1089  translate     2   1   1        T              -0.041
+      1090     rotate     3   1   1        T              -1.015
+      1091     rotate     3   1   1        F               0.308
+      1092     insert     1   1   1        F               2.867
+      1093  translate     8   1   1        T               0.117
+      1094  translate     2   1   1        T              -0.088
+      1095     rotate     7   1   1        T               0.195
+      1096     rotate     3   1   1        T              -0.087
+      1097     rotate     9   1   1        T              -0.143
+      1098     rotate     5   1   1        T               0.007
+      1099     rotate     5   1   1        T               0.078
+      1100     rotate     5   1   1        T              -0.015
+      1101     rotate     7   1   1        T               0.010
+      1102     delete     2   1   1        F               5.309
+      1103     rotate     8   1   1        T              -0.026
+      1104     delete     3   1   1        F               6.848
+      1105     rotate     6   1   1        T               0.007
+      1106  translate     3   1   1        T               1.016
+      1107     insert     1   1   1        F             152.711
+      1108     rotate     9   1   1        T              -0.010
+      1109     rotate     5   1   1        T              -0.023
+      1110     rotate     4   1   1        T              -0.086
+      1111     rotate     7   1   1        T              -0.020
+      1112  translate     2   1   1        T               0.507
+      1113     rotate     2   1   1        T              -0.001
+      1114     rotate     8   1   1        T               0.172
+      1115     insert     1   1   1        T               0.077
+      1116     insert    10   1   1        F             436.328
+      1117  translate     2   1   1        T               0.791
+      1118  translate     4   1   1        F               1.995
+      1119  translate     9   1   1        T               0.433
+      1120  translate     6   1   1        T              -0.023
+      1121  translate     3   1   1        F               1.548
+      1122     rotate     4   1   1        T              -0.418
+      1123  translate     5   1   1        T               0.247
+      1124     rotate     5   1   1        T               0.011
+      1125  translate     1   1   1        T              -0.095
+      1126  translate     3   1   1        T              -0.358
+      1127     rotate     7   1   1        F               0.044
+      1128  translate     6   1   1        T               0.221
+      1129  translate     6   1   1        T               0.229
+      1130  translate     4   1   1        F               3.027
+      1131  translate     7   1   1        T               0.048
+      1132  translate     1   1   1        T               0.162
+      1133  translate     6   1   1        T               0.119
+      1134     delete     3   1   1        F               6.846
+      1135  translate     2   1   1        T               2.354
+      1136  translate     4   1   1        T               0.660
+      1137     rotate     1   1   1        T               0.109
+      1138     rotate     2   1   1        T              -0.056
+      1139     rotate     3   1   1        F               1.470
+      1140     rotate     7   1   1        T               0.015
+      1141  translate     3   1   1        T               0.866
+      1142     rotate     1   1   1        T              -0.063
+      1143  translate     8   1   1        T              -0.455
+      1144     insert    10   1   1        F               7.089
+      1145     rotate     2   1   1        T               0.067
+      1146     delete     2   1   1        F               1.110
+      1147     rotate     9   1   1        T               0.400
+      1148     rotate     4   1   1        T               0.027
+      1149     rotate     1   1   1        T               0.044
+      1150     rotate     2   1   1        T              -0.106
+      1151     rotate     4   1   1        T               0.360
+      1152     rotate     6   1   1        T              -0.059
+      1153     delete     4   1   1        F               4.123
+      1154     insert    10   1   1        T              -3.180
+      1155  translate     4   1   1        T              -1.102
+      1156  translate     8   1   1        T               0.652
+      1157  translate     7   1   1        T              -0.033
+      1158     delete     8   1   1        F               1.646
+      1159  translate     9   1   1        T              -0.765
+      1160     insert    11   1   1        F               3.389
+      1161     rotate     3   1   1        T              -0.053
+      1162  translate    10   1   1        T               0.447
+      1163     insert    11   1   1        F              38.209
+      1164     delete    10   1   1        F               4.110
+      1165  translate     6   1   1        T              -0.136
+      1166     rotate     6   1   1        T              -0.014
+      1167     insert    11   1   1        F             overlap
+      1168     delete     4   1   1        F               6.218
+      1169     rotate     6   1   1        T              -0.037
+      1170     rotate     9   1   1        T              -0.268
+      1171     delete     7   1   1        F               4.032
+      1172  translate     1   1   1        F               0.351
+      1173     rotate     3   1   1        T              -0.028
+      1174     delete     6   1   1        F               2.794
+      1175     rotate     2   1   1        T              -1.393
+      1176     insert    11   1   1        F               4.676
+      1177     rotate     5   1   1        T               0.060
+      1178  translate     3   1   1        F               1.721
+      1179  translate     6   1   1        T              -0.180
+      1180     rotate    10   1   1        T              -0.024
+      1181  translate     2   1   1        T              -1.750
+      1182     rotate     3   1   1        T               0.815
+      1183  translate     8   1   1        T              -0.020
+      1184  translate     8   1   1        T              -0.598
+      1185     delete     6   1   1        F               2.801
+      1186     rotate     9   1   1        T               0.017
+      1187     rotate     8   1   1        T              -0.010
+      1188  translate     5   1   1        T              -0.202
+      1189  translate    10   1   1        T              -0.015
+      1190     rotate     3   1   1        F               2.508
+      1191     insert    11   1   1        F              40.943
+      1192     rotate    10   1   1        T               0.015
+      1193  translate     7   1   1        T              -0.121
+      1194  translate    10   1   1        T               0.886
+      1195  translate    10   1   1        F               2.625
+      1196     insert    11   1   1        F              80.453
+      1197     delete     4   1   1        F               6.803
+      1198     rotate     7   1   1        T               0.129
+      1199     rotate     7   1   1        T              -0.016
+      1200     rotate     8   1   1        T              -0.352
+      1201  translate     6   1   1        T              -0.028
+      1202  translate     1   1   1        T              -0.029
+      1203     rotate     4   1   1        F               2.459
+      1204     rotate     6   1   1        T              -0.135
+      1205     rotate     4   1   1        T              -0.223
+      1206  translate     5   1   1        T               0.287
+      1207     rotate     5   1   1        T               0.033
+      1208     rotate     4   1   1        F               0.096
+      1209     rotate     5   1   1        T              -0.100
+      1210     rotate     1   1   1        T              -0.071
+      1211     rotate     3   1   1        T              -0.164
+      1212  translate     5   1   1        T              -0.051
+      1213     delete     7   1   1        F               4.834
+      1214  translate     8   1   1        T              -0.243
+      1215  translate     3   1   1        T               0.220
+      1216     delete     1   1   1        F               2.035
+      1217  translate     3   1   1        F               2.784
+      1218     rotate     1   1   1        T               0.461
+      1219     rotate     6   1   1        T              -0.120
+      1220     rotate     6   1   1        T               0.058
+      1221  translate     4   1   1        F               1.246
+      1222     rotate     4   1   1        T               0.149
+      1223  translate     2   1   1        T              -0.128
+      1224     rotate     2   1   1        T               0.174
+      1225     rotate     1   1   1        T               0.878
+      1226     rotate     2   1   1        T              -0.153
+      1227  translate     3   1   1        T               0.374
+      1228  translate     3   1   1        T              -0.219
+      1229  translate     8   1   1        T              -0.012
+      1230     rotate     5   1   1        T               0.006
+      1231     rotate    10   1   1        T               0.264
+      1232  translate     2   1   1        F               0.947
+      1233     rotate     3   1   1        T              -0.364
+      1234  translate     4   1   1        F               1.705
+      1235     delete     9   1   1        F               5.702
+      1236  translate    10   1   1        F               3.808
+      1237  translate     2   1   1        T              -0.160
+      1238     rotate     6   1   1        F               0.747
+      1239     rotate    10   1   1        T               1.447
+      1240  translate     6   1   1        T               0.077
+      1241  translate     2   1   1        T              -0.223
+      1242     delete     5   1   1        F               3.635
+      1243     insert    11   1   1        F              75.791
+      1244     rotate    10   1   1        F               3.012
+      1245  translate     9   1   1        T              -0.280
+      1246     rotate     1   1   1        T               0.101
+      1247  translate    10   1   1        T              -0.186
+      1248     rotate     8   1   1        T              -0.022
+      1249     rotate     5   1   1        T              -0.074
+      1250     rotate     5   1   1        T               0.008
+      1251  translate     8   1   1        T               0.050
+      1252  translate     2   1   1        T               0.073
+      1253  translate     1   1   1        F               0.331
+      1254     delete     6   1   1        F               3.195
+      1255     delete     3   1   1        F               4.725
+      1256  translate     2   1   1        T              -0.190
+      1257     rotate     2   1   1        T              -0.229
+      1258     insert    11   1   1        F               1.820
+      1259     rotate     3   1   1        T               0.015
+      1260  translate     5   1   1        T              -0.178
+      1261     rotate     9   1   1        T               0.076
+      1262     insert    11   1   1        F              90.374
+      1263     insert    11   1   1        F              46.540
+      1264  translate     9   1   1        T              -0.297
+      1265     rotate     4   1   1        T              -0.026
+      1266  translate     4   1   1        F               0.957
+      1267     delete     8   1   1        F               1.938
+      1268     rotate     3   1   1        T               0.092
+      1269  translate     7   1   1        F               0.463
+      1270     rotate     4   1   1        T               0.712
+      1271     rotate     5   1   1        T               0.063
+      1272     rotate     7   1   1        T               0.018
+      1273  translate     2   1   1        T               0.109
+      1274     delete     2   1   1        F               4.243
+      1275     insert    11   1   1        F              10.590
+      1276  translate     3   1   1        T              -0.927
+      1277  translate     9   1   1        T               0.414
+      1278     rotate     6   1   1        T               0.068
+      1279     rotate     5   1   1        T               0.059
+      1280  translate     6   1   1        T               0.885
+      1281  translate     7   1   1        F               0.192
+      1282  translate    10   1   1        F               3.731
+      1283  translate     9   1   1        T              -0.661
+      1284  translate     7   1   1        T               0.785
+      1285     delete    10   1   1        T               0.249
+      1286     insert    10   1   1        F               0.450
+      1287     delete     3   1   1        F               5.978
+      1288     rotate     1   1   1        T              -0.001
+      1289     delete     8   1   1        F               1.123
+      1290     rotate     6   1   1        T              -0.164
+      1291  translate     6   1   1        T               0.234
+      1292  translate     4   1   1        F               1.329
+      1293     insert    10   1   1        T               0.342
+      1294     rotate     1   1   1        T               0.022
+      1295  translate     2   1   1        T              -0.188
+      1296  translate     6   1   1        T              -0.647
+      1297     delete     7   1   1        F               4.321
+      1298     rotate     9   1   1        T              -0.039
+      1299     rotate    10   1   1        T              -0.049
+      1300     rotate     7   1   1        T               0.376
+      1301  translate     4   1   1        T              -0.664
+      1302     rotate     6   1   1        T              -0.061
+      1303     insert    11   1   1        F              94.792
+      1304     rotate    10   1   1        T              -0.005
+      1305  translate    10   1   1        T               0.118
+      1306  translate     8   1   1        T               0.658
+      1307     rotate     3   1   1        T               0.045
+      1308  translate     1   1   1        T              -0.068
+      1309     rotate     6   1   1        T               0.080
+      1310     delete     6   1   1        F               2.026
+      1311  translate     2   1   1        T              -0.246
+      1312  translate     9   1   1        T               0.355
+      1313     rotate     7   1   1        T              -0.456
+      1314  translate     9   1   1        T              -0.172
+      1315     rotate     9   1   1        T               0.031
+      1316     rotate     2   1   1        T               0.189
+      1317     rotate     5   1   1        T              -0.001
+      1318     delete    10   1   1        T               0.705
+      1319     rotate     9   1   1        T               0.257
+      1320     rotate     5   1   1        T              -0.035
+      1321  translate     1   1   1        T              -0.431
+      1322     insert    10   1   1        T               1.030
+      1323     rotate     9   1   1        T               0.197
+      1324  translate     4   1   1        F               0.455
+      1325  translate     6   1   1        T               0.786
+      1326     rotate     2   1   1        T              -0.712
+      1327  translate     1   1   1        T               0.054
+      1328     rotate     1   1   1        T               0.008
+      1329     delete     9   1   1        F               3.687
+      1330  translate     6   1   1        F               1.190
+      1331  translate     9   1   1        T              -0.263
+      1332  translate     4   1   1        T               1.309
+      1333  translate     8   1   1        F               0.604
+      1334     rotate     1   1   1        T               0.044
+      1335  translate     7   1   1        T               0.732
+      1336     insert    11   1   1        F              30.143
+      1337     rotate     3   1   1        T               0.007
+      1338     delete     3   1   1        F               5.565
+      1339     rotate     4   1   1        F               1.282
+      1340     insert    11   1   1        F             overlap
+      1341  translate     4   1   1        F               2.933
+      1342  translate    10   1   1        T               0.376
+      1343     delete    10   1   1        F               1.073
+      1344  translate     8   1   1        T               0.670
+      1345  translate     1   1   1        T               0.058
+      1346     rotate     5   1   1        T               0.059
+      1347     insert    11   1   1        F             134.116
+      1348     rotate     6   1   1        T              -0.161
+      1349     rotate    10   1   1        T               0.069
+      1350  translate     4   1   1        T               2.030
+      1351     rotate     6   1   1        T              -0.020
+      1352  translate     8   1   1        T              -1.836
+      1353     rotate     8   1   1        T               0.582
+      1354  translate     6   1   1        T              -0.073
+      1355  translate    10   1   1        T              -0.206
+      1356  translate     7   1   1        F               0.406
+      1357  translate     8   1   1        T              -0.758
+      1358  translate    10   1   1        T               0.158
+      1359     insert    11   1   1        F             175.305
+      1360     delete     3   1   1        F               5.449
+      1361     rotate     9   1   1        T              -0.317
+      1362     rotate     4   1   1        T              -0.896
+      1363     rotate     8   1   1        T               0.043
+      1364  translate     5   1   1        T              -0.003
+      1365  translate    10   1   1        T               0.079
+      1366     delete     6   1   1        F               3.371
+      1367  translate     4   1   1        T               0.975
+      1368  translate     9   1   1        T              -0.095
+      1369     rotate     9   1   1        F               0.977
+      1370  translate    10   1   1        F               0.476
+      1371  translate     2   1   1        T              -0.092
+      1372     rotate     1   1   1        T              -0.016
+      1373  translate    10   1   1        T              -0.256
+      1374     rotate     2   1   1        T               0.020
+      1375  translate     4   1   1        F               3.316
+      1376     rotate     3   1   1        F               1.128
+      1377     rotate     9   1   1        T               0.578
+      1378     rotate     1   1   1        T               0.011
+      1379     rotate    10   1   1        T               0.005
+      1380     rotate     1   1   1        T               0.000
+      1381     rotate     1   1   1        T              -0.077
+      1382  translate     9   1   1        F               2.595
+      1383     rotate     1   1   1        T               0.028
+      1384     rotate     5   1   1        T              -0.071
+      1385     rotate     7   1   1        F               1.561
+      1386     rotate     2   1   1        T              -0.264
+      1387     rotate     7   1   1        F               4.072
+      1388     insert    11   1   1        F              72.836
+      1389     rotate     5   1   1        T               0.287
+      1390     rotate     3   1   1        T               0.154
+      1391     insert    11   1   1        F             280.178
+      1392     insert    11   1   1        F              22.593
+      1393     rotate     9   1   1        T              -0.495
+      1394  translate    10   1   1        F               1.763
+      1395  translate     5   1   1        T              -0.204
+      1396  translate     2   1   1        T               1.404
+      1397     rotate     2   1   1        T              -0.017
+      1398  translate     4   1   1        T               0.233
+      1399  translate     2   1   1        F               1.722
+      1400     insert    11   1   1        F              13.993
+      1401  translate     8   1   1        T              -0.857
+      1402     insert    11   1   1        T               0.535
+      1403     insert    12   1   1        F              17.888
+      1404     delete     9   1   1        F               4.508
+      1405     rotate     2   1   1        F               0.764
+      1406  translate    10   1   1        T               0.168
+      1407     delete    10   1   1        T               1.027
+      1408     rotate     1   1   1        T               0.054
+      1409     rotate    11   1   1        F               2.751
+      1410  translate     7   1   1        T               0.342
+      1411  translate     2   1   1        F               1.395
+      1412     delete     1   1   1        T              -0.073
+      1413     rotate     6   1   1        T              -0.003
+      1414     insert     1   1   1        F             overlap
+      1415  translate     2   1   1        T              -1.506
+      1416  translate    11   1   1        F               2.938
+      1417     rotate     6   1   1        T              -0.047
+      1418     insert     1   1   1        F             152.595
+      1419     delete     9   1   1        F               4.446
+      1420     delete     6   1   1        F               3.440
+      1421     rotate     4   1   1        F               0.933
+      1422  translate     5   1   1        F               0.218
+      1423  translate     6   1   1        T               0.686
+      1424     rotate     3   1   1        T              -0.165
+      1425     rotate     9   1   1        T               0.051
+      1426     rotate     5   1   1        T              -0.009
+      1427     rotate    11   1   1        T              -0.560
+      1428     delete     2   1   1        F               4.967
+      1429  translate     5   1   1        T               0.281
+      1430     insert     1   1   1        F             190.648
+      1431  translate     3   1   1        T              -0.518
+      1432  translate     8   1   1        T              -0.216
+      1433     rotate     4   1   1        F               0.926
+      1434     rotate     8   1   1        T              -0.242
+      1435     rotate     9   1   1        T               0.412
+      1436  translate     7   1   1        T              -1.142
+      1437     rotate     8   1   1        T              -0.224
+      1438     rotate     4   1   1        T               0.025
+      1439  translate     9   1   1        T               0.083
+      1440     rotate     7   1   1        T              -0.027
+      1441  translate     2   1   1        T               0.487
+      1442  translate     9   1   1        T              -0.318
+      1443     rotate     2   1   1        T              -0.324
+      1444  translate     9   1   1        T               0.114
+      1445  translate     2   1   1        T               0.030
+      1446     insert     1   1   1        F              16.115
+      1447     rotate     3   1   1        T              -0.124
+      1448     insert     1   1   1        F               1.670
+      1449     rotate     3   1   1        T              -0.526
+      1450  translate     2   1   1        T               1.274
+      1451     rotate     2   1   1        F               2.046
+      1452     rotate     6   1   1        T               0.104
+      1453  translate     3   1   1        T              -0.025
+      1454  translate     5   1   1        T              -1.012
+      1455     delete     5   1   1        F               4.104
+      1456     rotate     5   1   1        T              -0.457
+      1457  translate     2   1   1        T              -0.557
+      1458     rotate     5   1   1        T               0.118
+      1459  translate     5   1   1        T              -0.224
+      1460     rotate     7   1   1        T              -0.005
+      1461     rotate     5   1   1        T              -0.557
+      1462  translate     9   1   1        T              -0.019
+      1463     delete     2   1   1        F               5.746
+      1464  translate     9   1   1        F               0.842
+      1465     delete     9   1   1        F               5.531
+      1466     rotate     8   1   1        T               1.196
+      1467     rotate     7   1   1        T              -0.015
+      1468  translate     5   1   1        T               0.317
+      1469     insert     1   1   1        F               3.561
+      1470     insert     1   1   1        F             196.359
+      1471  translate     9   1   1        T               0.160
+      1472     rotate     6   1   1        T               0.009
+      1473  translate     2   1   1        T               0.021
+      1474  translate     6   1   1        T               0.852
+      1475     insert     1   1   1        F               7.615
+      1476  translate     8   1   1        T              -0.456
+      1477  translate     5   1   1        T              -0.005
+      1478     insert     1   1   1        F               7.076
+      1479  translate     6   1   1        T               0.202
+      1480  translate     7   1   1        F               2.218
+      1481     rotate     4   1   1        T              -0.203
+      1482     delete     7   1   1        F               4.265
+      1483     insert     1   1   1        F               0.762
+      1484  translate     6   1   1        F               4.793
+      1485     delete     6   1   1        F               1.544
+      1486  translate     4   1   1        T              -0.506
+      1487     rotate    11   1   1        T              -0.408
+      1488     rotate    11   1   1        T               0.166
+      1489     insert     1   1   1        F             overlap
+      1490  translate    11   1   1        F               1.020
+      1491  translate     2   1   1        T               0.014
+      1492     insert     1   1   1        F             overlap
+      1493  translate     5   1   1        T               0.051
+      1494     rotate     9   1   1        T              -0.303
+      1495     rotate     8   1   1        T               0.044
+      1496  translate    11   1   1        T              -0.126
+      1497     rotate     6   1   1        T              -0.012
+      1498     insert     1   1   1        F               0.773
+      1499  translate     7   1   1        T               0.053
+      1500     delete     3   1   1        F               6.673
+      1501     rotate     8   1   1        T               0.011
+      1502     rotate     5   1   1        T               0.347
+      1503     delete    11   1   1        T               0.316
+      1504     rotate     2   1   1        T               0.035
+      1505     rotate     4   1   1        T               0.228
+      1506  translate     5   1   1        T               0.750
+      1507     rotate     8   1   1        T               0.858
+      1508     delete     7   1   1        F               3.481
+      1509     rotate     2   1   1        T              -0.168
+      1510     rotate     7   1   1        T               0.123
+      1511     rotate     2   1   1        T              -0.027
+      1512     rotate     7   1   1        T               0.120
+      1513  translate     7   1   1        T              -0.030
+      1514  translate     4   1   1        T              -1.762
+      1515     rotate     9   1   1        F               4.824
+      1516     insert    11   1   1        F             207.884
+      1517     rotate     5   1   1        T              -0.439
+      1518  translate     6   1   1        F               1.827
+      1519     rotate     3   1   1        T              -0.059
+      1520  translate     2   1   1        T               0.390
+      1521     rotate     5   1   1        F               0.811
+      1522  translate     7   1   1        T               0.013
+      1523  translate     2   1   1        F               2.174
+      1524     rotate     6   1   1        T               0.014
+      1525     delete     8   1   1        F               0.373
+      1526  translate     3   1   1        T               0.075
+      1527  translate     6   1   1        T              -1.050
+      1528     delete     9   1   1        F               4.863
+      1529     rotate     3   1   1        T              -0.114
+      1530     rotate     3   1   1        F               0.364
+      1531     rotate     9   1   1        T               0.017
+      1532  translate     9   1   1        T               0.189
+      1533  translate     4   1   1        T              -0.301
+      1534  translate     6   1   1        T              -0.393
+      1535     delete     7   1   1        F               3.301
+      1536     rotate     5   1   1        F               2.656
+      1537     rotate     4   1   1        T              -0.232
+      1538     rotate     8   1   1        T              -0.068
+      1539     rotate     9   1   1        F               0.067
+      1540     rotate     3   1   1        T               0.954
+      1541  translate     7   1   1        F               0.912
+      1542  translate     5   1   1        T              -0.493
+      1543  translate     2   1   1        T               0.236
+      1544     rotate     2   1   1        F               2.924
+      1545     rotate     7   1   1        F               1.062
+      1546     delete     6   1   1        F               3.037
+      1547     rotate     9   1   1        T              -0.070
+      1548     rotate     3   1   1        T              -0.785
+      1549  translate     6   1   1        T              -0.521
+      1550  translate     3   1   1        T              -0.111
+      1551     rotate     4   1   1        F               1.425
+      1552  translate     8   1   1        T              -0.130
+      1553     insert    11   1   1        F               1.653
+      1554  translate     3   1   1        T              -0.160
+      1555     rotate     2   1   1        T               0.398
+      1556     rotate     5   1   1        T              -0.530
+      1557     insert    11   1   1        F               1.924
+      1558  translate     6   1   1        F               0.903
+      1559  translate     2   1   1        T               0.111
+      1560     rotate     4   1   1        T               0.116
+      1561     rotate     8   1   1        T              -0.047
+      1562  translate     3   1   1        F               0.929
+      1563     rotate     3   1   1        T              -0.056
+      1564     insert    11   1   1        F               2.306
+      1565  translate     9   1   1        T               0.351
+      1566     rotate     9   1   1        T              -0.150
+      1567  translate     8   1   1        T               0.010
+      1568     rotate     4   1   1        F               0.287
+      1569     delete     6   1   1        F               2.991
+      1570     rotate     3   1   1        T              -0.232
+      1571     rotate     3   1   1        T               0.004
+      1572     rotate     8   1   1        T               0.059
+      1573     insert    11   1   1        F               1.171
+      1574  translate     7   1   1        F               0.929
+      1575  translate     4   1   1        T              -0.412
+      1576  translate     5   1   1        T              -0.202
+      1577     rotate     3   1   1        T              -0.050
+      1578  translate     9   1   1        F               0.377
+      1579     rotate     6   1   1        T              -0.006
+      1580  translate     6   1   1        T              -0.122
+      1581     rotate     3   1   1        T               0.105
+      1582     insert    11   1   1        F               4.300
+      1583     rotate     3   1   1        T               0.073
+      1584     rotate     4   1   1        T               1.351
+      1585     rotate     9   1   1        T               0.881
+      1586     rotate     8   1   1        T              -0.106
+      1587     rotate     4   1   1        F               3.200
+      1588  translate     4   1   1        T              -0.279
+      1589     insert    11   1   1        F               0.833
+      1590  translate     6   1   1        T              -0.185
+      1591  translate     8   1   1        T               0.307
+      1592     rotate     9   1   1        T               0.116
+      1593  translate     7   1   1        T               0.061
+      1594  translate     4   1   1        T               0.935
+      1595     rotate     7   1   1        F               0.125
+      1596     rotate     9   1   1        T              -0.144
+      1597  translate     8   1   1        T              -0.775
+      1598     insert    11   1   1        F               5.132
+      1599     rotate     8   1   1        T               0.356
+      1600     rotate     6   1   1        T              -0.007
+      1601  translate     5   1   1        T               0.511
+      1602     delete     4   1   1        F               4.606
+      1603  translate     4   1   1        T               0.400
+      1604  translate     4   1   1        F               2.027
+      1605  translate     7   1   1        T              -0.029
+      1606  translate     7   1   1        T               0.010
+      1607     insert    11   1   1        F               1.727
+      1608  translate     6   1   1        T               0.089
+      1609     rotate     3   1   1        T              -0.005
+      1610     delete     7   1   1        F               3.631
+      1611     rotate     8   1   1        T              -0.007
+      1612     rotate     6   1   1        T               0.055
+      1613     insert    11   1   1        F              23.685
+      1614     rotate     6   1   1        T               0.033
+      1615  translate     8   1   1        T              -1.492
+      1616     rotate     8   1   1        T              -0.229
+      1617     insert    11   1   1        T               0.903
+      1618     rotate     4   1   1        F               1.600
+      1619  translate     3   1   1        T               0.142
+      1620     rotate     4   1   1        T               0.662
+      1621     rotate     5   1   1        T               0.077
+      1622     rotate    11   1   1        T               0.011
+      1623  translate     5   1   1        T               1.351
+      1624  translate     6   1   1        T               0.041
+      1625     insert     1   1   1        F             248.247
+      1626     rotate     9   1   1        T              -0.022
+      1627     rotate     3   1   1        T              -0.021
+      1628  translate     8   1   1        T               0.477
+      1629  translate     9   1   1        F               2.206
+      1630     insert     1   1   1        T               0.382
+      1631  translate     2   1   1        F               0.522
+      1632  translate     7   1   1        F               0.623
+      1633     rotate     4   1   1        T              -0.661
+      1634  translate     9   1   1        F               3.632
+      1635  translate     3   1   1        T               0.020
+      1636     delete     6   1   1        F               2.981
+      1637     rotate     8   1   1        T              -0.587
+      1638  translate     5   1   1        F               2.796
+      1639     insert    10   1   1        F              60.047
+      1640     rotate    11   1   1        T               0.183
+      1641     delete     7   1   1        F               4.525
+      1642  translate     8   1   1        T              -0.251
+      1643     rotate     1   1   1        T              -0.460
+      1644     insert    10   1   1        F             269.572
+      1645  translate     6   1   1        T              -0.057
+      1646  translate     6   1   1        T              -0.111
+      1647     rotate     1   1   1        F               0.176
+      1648  translate     3   1   1        T              -0.213
+      1649     insert    10   1   1        T               0.255
+      1650     rotate     3   1   1        T               0.205
+      1651     rotate     7   1   1        T               0.382
+      1652  translate     2   1   1        T               0.779
+      1653     rotate     5   1   1        T               0.048
+      1654     delete     7   1   1        F               4.442
+      1655  translate     3   1   1        T              -0.227
+      1656  translate     5   1   1        T              -0.624
+      1657     rotate     4   1   1        T              -0.117
+      1658  translate     8   1   1        T               0.129
+      1659     insert    12   1   1        F             519.071
+      1660     rotate    10   1   1        T              -0.073
+      1661     rotate     8   1   1        T              -0.052
+      1662  translate     8   1   1        T              -0.031
+      1663  translate     8   1   1        T               0.099
+      1664     rotate    10   1   1        T               0.220
+      1665  translate     2   1   1        T              -0.080
+      1666  translate     7   1   1        T              -0.007
+      1667     rotate     3   1   1        T               1.119
+      1668     rotate     3   1   1        T               0.010
+      1669     rotate     3   1   1        T              -1.070
+      1670     rotate     5   1   1        T              -0.047
+      1671     rotate     2   1   1        T               0.046
+      1672     rotate     8   1   1        T               0.031
+      1673     insert    12   1   1        F               3.785
+      1674  translate     7   1   1        T              -0.191
+      1675  translate    11   1   1        T              -0.534
+      1676  translate     1   1   1        F               0.306
+      1677     delete     5   1   1        F               3.951
+      1678  translate     2   1   1        T              -0.763
+      1679  translate     4   1   1        T               0.089
+      1680  translate     3   1   1        F               0.101
+      1681  translate     6   1   1        F               1.809
+      1682  translate     2   1   1        T               0.318
+      1683  translate     8   1   1        T               0.203
+      1684     rotate    10   1   1        T               0.017
+      1685     insert    12   1   1        F             222.970
+      1686     delete     6   1   1        F               4.228
+      1687     rotate     5   1   1        T               0.008
+      1688     rotate     7   1   1        T               0.136
+      1689  translate     4   1   1        T               0.252
+      1690  translate     1   1   1        T               0.491
+      1691     rotate     5   1   1        T               0.104
+      1692     rotate     1   1   1        T              -0.042
+      1693     insert    12   1   1        F             197.000
+      1694     rotate    11   1   1        T              -0.186
+      1695  translate     1   1   1        T              -0.464
+      1696     delete     9   1   1        F               2.401
+      1697     rotate     9   1   1        T              -0.100
+      1698     rotate     6   1   1        T               0.059
+      1699     delete     9   1   1        F               2.734
+      1700     delete     8   1   1        T               1.497
+      1701     insert     8   1   1        F             overlap
+      1702     insert     8   1   1        F               7.453
+      1703     rotate     7   1   1        T               0.462
+      1704     delete    11   1   1        F               1.689
+      1705  translate    11   1   1        T               0.211
+      1706     rotate     3   1   1        T               0.067
+      1707     insert     8   1   1        F              65.760
+      1708     rotate     2   1   1        T              -0.028
+      1709  translate     3   1   1        T              -0.030
+      1710  translate     2   1   1        F               0.572
+      1711  translate     6   1   1        T              -0.049
+      1712  translate     7   1   1        T              -0.685
+      1713  translate     4   1   1        T              -0.234
+      1714     rotate     2   1   1        T               0.116
+      1715  translate     5   1   1        T              -0.492
+      1716     delete    11   1   1        F               1.536
+      1717  translate     2   1   1        T              -0.563
+      1718     rotate     6   1   1        T               0.047
+      1719  translate     9   1   1        T               0.415
+      1720     rotate     6   1   1        T               0.380
+      1721  translate    11   1   1        T              -0.243
+      1722     rotate     4   1   1        T              -0.306
+      1723     rotate    10   1   1        T              -0.027
+      1724     rotate     5   1   1        T               0.036
+      1725     rotate     1   1   1        T               0.010
+      1726     rotate     9   1   1        F               0.653
+      1727     rotate     3   1   1        T               0.040
+      1728     rotate    11   1   1        T              -0.122
+      1729  translate     4   1   1        F               0.122
+      1730  translate     9   1   1        T              -0.059
+      1731  translate     9   1   1        T              -0.667
+      1732  translate     5   1   1        T              -0.808
+      1733     delete    10   1   1        F               1.312
+      1734     insert     8   1   1        F              44.652
+      1735  translate     4   1   1        T               0.570
+      1736     rotate    10   1   1        T              -0.054
+      1737     rotate     7   1   1        T              -1.009
+      1738  translate    10   1   1        T               0.274
+      1739     delete     7   1   1        F               5.155
+      1740  translate    10   1   1        T               0.039
+      1741     rotate     7   1   1        T              -0.025
+      1742     rotate     3   1   1        T               0.022
+      1743     rotate     4   1   1        T               0.040
+      1744  translate     5   1   1        T               0.256
+      1745     rotate     5   1   1        T               0.062
+      1746     insert     8   1   1        F              36.781
+      1747     rotate     7   1   1        F               1.336
+      1748  translate     1   1   1        T              -0.331
+      1749  translate     2   1   1        T               0.599
+      1750  translate     1   1   1        T               0.185
+      1751  translate    10   1   1        T              -0.090
+      1752     delete     2   1   1        F               6.903
+      1753     insert     8   1   1        F              10.801
+      1754  translate     2   1   1        T               0.943
+      1755     delete     2   1   1        F               5.959
+      1756     delete    11   1   1        F               1.741
+      1757     rotate     9   1   1        T               0.088
+      1758  translate     6   1   1        T               0.065
+      1759  translate     9   1   1        T              -0.143
+      1760  translate     2   1   1        T              -0.281
+      1761  translate     6   1   1        T               0.839
+      1762     delete    11   1   1        F               2.200
+      1763  translate     3   1   1        F               1.169
+      1764  translate     9   1   1        F               0.372
+      1765     insert     8   1   1        F              72.648
+      1766  translate     6   1   1        F               2.328
+      1767     delete    11   1   1        F               3.229
+      1768  translate     2   1   1        F               0.675
+      1769     rotate     6   1   1        F               0.599
+      1770  translate     2   1   1        T              -0.329
+      1771  translate     5   1   1        T              -0.117
+      1772     delete     2   1   1        F               5.800
+      1773     rotate     4   1   1        T              -0.015
+      1774     rotate     9   1   1        T               0.033
+      1775     rotate     3   1   1        T               0.789
+      1776     rotate     4   1   1        T              -0.055
+      1777     delete    11   1   1        F               1.638
+      1778  translate     3   1   1        F               3.588
+      1779  translate     1   1   1        T              -0.132
+      1780  translate     4   1   1        T              -0.466
+      1781     delete     5   1   1        F               4.919
+      1782  translate     6   1   1        F               2.226
+      1783  translate     3   1   1        F               3.735
+      1784  translate    11   1   1        F               0.069
+      1785  translate    10   1   1        T              -0.385
+      1786     rotate     1   1   1        T              -0.052
+      1787     insert     8   1   1        F             339.617
+      1788     rotate     5   1   1        T               0.109
+      1789  translate     3   1   1        T              -1.588
+      1790     delete     4   1   1        F               3.678
+      1791  translate     3   1   1        T               0.083
+      1792  translate     2   1   1        T              -0.943
+      1793     rotate     3   1   1        T               0.197
+      1794  translate     1   1   1        T               0.144
+      1795  translate    11   1   1        T              -0.043
+      1796     delete     3   1   1        F               7.277
+      1797     rotate     6   1   1        T              -0.374
+      1798  translate     4   1   1        F               0.208
+      1799     rotate     6   1   1        T               0.206
+      1800  translate    11   1   1        T               0.075
+      1801     delete     2   1   1        F               6.987
+      1802  translate     4   1   1        T               0.217
+      1803  translate     3   1   1        T               0.119
+      1804     rotate     7   1   1        T               0.193
+      1805     rotate     6   1   1        T               0.113
+      1806  translate     7   1   1        T              -0.225
+      1807  translate     7   1   1        T               0.314
+      1808     rotate    11   1   1        T              -0.298
+      1809     rotate    11   1   1        T               0.057
+      1810  translate     2   1   1        T              -0.436
+      1811     insert     8   1   1        T              -0.964
+      1812     rotate    11   1   1        T              -0.008
+      1813  translate     3   1   1        F               3.404
+      1814  translate     8   1   1        F               0.288
+      1815     rotate     9   1   1        T              -0.000
+      1816     insert    12   1   1        T              -5.924
+      1817     rotate     1   1   1        T               0.008
+      1818     rotate     2   1   1        T              -1.156
+      1819  translate     9   1   1        T               0.210
+      1820  translate    12   1   1        F               1.258
+      1821     rotate     7   1   1        T              -0.129
+      1822  translate     3   1   1        T              -0.440
+      1823  translate     2   1   1        T               0.578
+      1824     rotate     2   1   1        T               0.239
+      1825     rotate     8   1   1        T               0.003
+      1826     delete     1   1   1        F               4.719
+      1827     rotate     9   1   1        F               0.178
+      1828  translate    11   1   1        T              -0.047
+      1829     rotate    10   1   1        T               0.045
+      1830     rotate     1   1   1        T               0.100
+      1831     delete    11   1   1        F               3.630
+      1832     rotate     9   1   1        T               0.029
+      1833     rotate     4   1   1        T              -0.045
+      1834     rotate     3   1   1        T               0.030
+      1835     delete     4   1   1        F               5.302
+      1836     insert    13   1   1        F             overlap
+      1837  translate     2   1   1        T               0.128
+      1838     rotate     9   1   1        T               0.007
+      1839     insert    13   1   1        F               2.779
+      1840  translate     6   1   1        T              -0.498
+      1841     insert    13   1   1        F             127.235
+      1842     delete    12   1   1        F               7.582
+      1843  translate    12   1   1        T              -0.248
+      1844  translate    12   1   1        T               1.861
+      1845     insert    13   1   1        F             overlap
+      1846     rotate     6   1   1        T              -0.096
+      1847     insert    13   1   1        F             329.615
+      1848     rotate     1   1   1        T              -0.120
+      1849     rotate    10   1   1        T              -0.055
+      1850     delete     8   1   1        F               2.905
+      1851     rotate     7   1   1        F               0.162
+      1852  translate     5   1   1        F               0.454
+      1853     rotate     3   1   1        T               0.167
+      1854     rotate     8   1   1        T               0.290
+      1855  translate     2   1   1        T               0.751
+      1856  translate     3   1   1        T               0.226
+      1857     rotate     6   1   1        T              -0.003
+      1858  translate     5   1   1        T              -0.372
+      1859  translate    12   1   1        T              -1.242
+      1860     rotate     5   1   1        T               0.018
+      1861     rotate     3   1   1        F               0.236
+      1862     delete    11   1   1        F               3.649
+      1863     rotate    10   1   1        T              -0.084
+      1864     rotate     3   1   1        F               1.826
+      1865  translate     8   1   1        T              -0.351
+      1866     rotate     1   1   1        T              -0.241
+      1867     rotate     9   1   1        T              -0.002
+      1868     rotate    10   1   1        T               0.019
+      1869  translate    11   1   1        T              -0.222
+      1870     insert    13   1   1        F             131.032
+      1871  translate     2   1   1        T              -1.035
+      1872  translate     3   1   1        F               0.805
+      1873     rotate     8   1   1        T               0.009
+      1874  translate     6   1   1        F               0.218
+      1875  translate     3   1   1        T               0.025
+      1876  translate    12   1   1        F               2.203
+      1877  translate    10   1   1        T              -0.141
+      1878     rotate    12   1   1        T              -0.883
+      1879     delete     7   1   1        F               6.254
+      1880     rotate     3   1   1        T               0.086
+      1881     rotate     6   1   1        F               1.033
+      1882     rotate     9   1   1        F               0.759
+      1883     rotate    12   1   1        T               0.515
+      1884     insert    13   1   1        F             overlap
+      1885  translate     2   1   1        T              -0.037
+      1886     rotate    10   1   1        T              -0.012
+      1887  translate     9   1   1        T               0.035
+      1888     rotate    11   1   1        T               0.066
+      1889  translate     3   1   1        T              -0.262
+      1890     delete     4   1   1        F               5.736
+      1891     rotate     2   1   1        T               0.134
+      1892  translate     7   1   1        T              -0.023
+      1893  translate     3   1   1        T               0.629
+      1894     rotate     1   1   1        F               0.149
+      1895     rotate     9   1   1        T               0.029
+      1896     rotate     7   1   1        T               0.469
+      1897  translate     5   1   1        F               0.507
+      1898  translate     3   1   1        F               0.210
+      1899  translate     5   1   1        F               1.265
+      1900     rotate     4   1   1        T              -0.018
+      1901  translate     8   1   1        T               0.260
+      1902  translate     2   1   1        F               0.350
+      1903  translate    11   1   1        T               0.076
+      1904  translate     1   1   1        T              -0.054
+      1905  translate     6   1   1        T               0.416
+      1906  translate     2   1   1        T               0.539
+      1907  translate    11   1   1        T               0.187
+      1908     insert    13   1   1        F             overlap
+      1909     delete     2   1   1        F               8.313
+      1910  translate     5   1   1        T               0.304
+      1911  translate     5   1   1        F               0.877
+      1912     delete    10   1   1        F               1.432
+      1913     insert    13   1   1        F              42.356
+      1914     rotate    10   1   1        T              -0.006
+      1915     delete     5   1   1        F               7.574
+      1916  translate     5   1   1        F               1.804
+      1917  translate     2   1   1        F               1.560
+      1918  translate     9   1   1        T               0.021
+      1919  translate    12   1   1        T               0.250
+      1920  translate    11   1   1        T              -0.018
+      1921     delete     3   1   1        F               7.943
+      1922     rotate     5   1   1        T              -0.138
+      1923  translate     8   1   1        T               1.119
+      1924  translate    10   1   1        T               0.144
+      1925     insert    13   1   1        F             149.569
+      1926     rotate     5   1   1        T               0.128
+      1927     rotate     4   1   1        T              -0.172
+      1928     rotate     5   1   1        T               0.000
+      1929  translate     4   1   1        T              -0.142
+      1930     rotate     1   1   1        T               0.065
+      1931     rotate     4   1   1        F               2.076
+      1932  translate     8   1   1        F               3.710
+      1933     insert    13   1   1        F             overlap
+      1934     rotate     8   1   1        T               0.045
+      1935     delete    10   1   1        F               1.337
+      1936     rotate     7   1   1        T               0.062
+      1937     rotate     9   1   1        T               0.063
+      1938     rotate     7   1   1        T              -0.103
+      1939     rotate     2   1   1        T              -0.312
+      1940     rotate     1   1   1        T               0.174
+      1941  translate     3   1   1        T               0.857
+      1942  translate     2   1   1        T               0.881
+      1943     rotate    10   1   1        T               1.215
+      1944     insert    13   1   1        F             overlap
+      1945     rotate     7   1   1        T              -0.046
+      1946     rotate     7   1   1        T               0.336
+      1947     rotate     1   1   1        T              -0.248
+      1948     rotate     1   1   1        T              -0.080
+      1949     rotate     7   1   1        T               0.380
+      1950  translate     7   1   1        F               1.273
+      1951  translate     3   1   1        F               1.704
+      1952     delete     4   1   1        F               5.651
+      1953     rotate     1   1   1        T              -0.013
+      1954  translate    11   1   1        T               0.376
+      1955     rotate    10   1   1        T              -0.013
+      1956  translate     3   1   1        F               0.310
+      1957  translate     6   1   1        T               0.055
+      1958  translate    12   1   1        T              -0.374
+      1959     insert    13   1   1        F             277.183
+      1960     delete    10   1   1        F               0.104
+      1961  translate     9   1   1        F               0.370
+      1962     rotate    10   1   1        T               0.091
+      1963     insert    13   1   1        F             overlap
+      1964  translate    10   1   1        T               0.400
+      1965     rotate     3   1   1        F               0.666
+      1966  translate     4   1   1        T              -0.352
+      1967  translate     8   1   1        T              -1.393
+      1968  translate     2   1   1        T              -0.143
+      1969  translate     4   1   1        F               0.657
+      1970     rotate     2   1   1        T               1.588
+      1971     rotate     2   1   1        T              -1.780
+      1972     rotate    10   1   1        T               0.725
+      1973  translate     3   1   1        T               0.642
+      1974     rotate    10   1   1        T              -0.078
+      1975     rotate    12   1   1        T              -0.109
+      1976  translate     3   1   1        F               1.683
+      1977     delete    12   1   1        F               7.693
+      1978     rotate     6   1   1        T               0.082
+      1979     rotate     1   1   1        T               0.005
+      1980  translate    12   1   1        T               0.098
+      1981  translate    11   1   1        F               1.998
+      1982  translate     5   1   1        T               0.510
+      1983     rotate     2   1   1        F               0.738
+      1984     rotate     2   1   1        T               0.026
+      1985     rotate     1   1   1        T               0.622
+      1986     rotate     1   1   1        F               1.757
+      1987     rotate     1   1   1        T               1.699
+      1988     rotate     8   1   1        T               0.027
+      1989  translate     6   1   1        F               1.863
+      1990     rotate     3   1   1        T              -0.203
+      1991     rotate     7   1   1        T               0.104
+      1992     insert    13   1   1        T               1.210
+      1993     rotate     3   1   1        F               0.558
+      1994  translate     1   1   1        T              -1.629
+      1995  translate     4   1   1        T               0.404
+      1996  translate     9   1   1        T              -0.011
+      1997     rotate    11   1   1        T              -0.357
+      1998  translate     5   1   1        T               0.287
+      1999  translate    10   1   1        F               4.186
+      2000     rotate     2   1   1        T              -0.795
+********************************************************************************
+
+Energy of final configuration
+********************************************************************************
+
+ Energy components for box 1     kJ/mol-Extensive       Relative_Error
+ ---------------------------------------------------------------------
+ Total system energy                     -522.876           -0.835E-15
+ Intra molecular energy                     0.000            0.000E+00
+   Bond energy                              0.000            0.000E+00
+   Bond angle energy                        0.000            0.000E+00
+   Dihedral angle energy                    0.000            0.000E+00
+   Improper angle energy                    0.000            0.000E+00
+   Intra molecule vdw                       0.000            0.000E+00
+   Intra molecule q                         0.000            0.000E+00
+ Inter molecular energy                  -522.876           -0.835E-15
+   Inter molecule vdw                    -522.876           -0.167E-14
+   Inter molecule q                         0.000            0.000E+00
+ ---------------------------------------------------------------------
+
+********************************************************************************
+
+
+Writing information for box  1
+********************************************************************************
+
+   ---------------------------------------------------------
+   Writing information for species  1
+
+                Move      Trials     Success   % Success
+           Translate         813         636       78.23
+              Rotate         763         682       89.38
+              Insert         196          43       21.94
+              Delete         199          30       15.08
+   ---------------------------------------------------------
+
+
+   ---------------------------------------------------------
+   Writing information for species  2
+
+                Move      Trials     Success   % Success
+   ---------------------------------------------------------
+
+********************************************************************************
+
+ Writing information about subroutine times
+********************************************************************************
+ Translation time =            0.833347 secs.
+ Rotation time =               0.785714 secs.
+ Insertion time =              0.361187 secs.
+ Deletion time =               0.387644 secs.
+********************************************************************************
+
+********************************************************************************
+************************ Cassandra simulation complete *************************
+********************************************************************************
+
+ Program execution time
+********************************************************************************
+         0      Years
+         0     Months
+         0       Days
+         0      Hours
+         0    Minutes
+         2    Seconds
+       517         ms
+********************************************************************************
