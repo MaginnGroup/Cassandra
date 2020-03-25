@@ -40,6 +40,7 @@ from builtins import input
 from builtins import range
 from past.utils import old_div
 import sys, os, argparse, linecache, re
+import warnings
 
 #*******************************************************************************
 # ARGUMENT PARSE
@@ -1459,3 +1460,10 @@ else:
 
 if infilename_type == 'cml':
 	os.system("rm " + configFile)
+
+# Python 2.x deprecation warning
+if (sys.version_info < (3,0)):
+    warnings.showwarning("\n\nSupport for Python2 is deprecated in "
+        "Cassandra and will be removed in a future release. Please "
+        "consider switching to Python3.\n\n", DeprecationWarning,
+        'library_setup.py', 1465)
