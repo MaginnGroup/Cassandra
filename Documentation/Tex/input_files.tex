@@ -1117,38 +1117,38 @@ The probability of selecting a species with insertion method \texttt{none} must 
 % Identity Switch
 %
 %%%%%%%%%%%%%%%%
-{\bf \# Prob\_Identity\_Switch}\\
-{\it Real(1) \it Character(1) Character(2)}\\
-{\it Character(3,1) Character(3,2)} \\
-...\\
-{\it Character(n+3,1) Character(n+3,2)}\\ \\
-%
-\textit{Real(1)} is the probability of attempting to interchange or switch the species identity of two randomly selected molecules (from different starting species). \\ \\
-%
-\textit{Character(1)} specifies the number of trial rotations (around the center of mass) among which one is chosen proportional to its Boltzmann weight (Rosenbluth sampling). This process occurs for both molecules involved in an identity switch. If omitted no rotations are attempted.\\ \\
-%
-\textit{Integer(3,1) and Integer(3,2)} are optional and represent a species index pair. The number of species index pairs is entered as \textit{Character(2)}. \textit{Character(2)} can be omitted if these index pairs are also omitted. One of these species index pairs will be selected with uniform probability. The first molecule to be switched will be selected with uniform probability among all molecules of the first species in the selected pair, and likewise with the second molecule to be switched with the second species in the pair. If omitted, any combination of species may be selected.\\ \\
-%
-%
-For example: \\ \\
-\# Prob\_Identity\_Switch \\
-0.05 0 \\ \\
-%
-Will attempt identity switch moves for 10\% of all moves. No trial rotations
-will be performed. An identity switch of pair of molecules (not from the same
-species) is equally likely to be proposed.\\ \\
-%
-%
-\# Prob\_Identity\_Switch \\
-0.05 5 2 \\
-1 2 \\
-2 3 \\ \\
-%
-Will attempt identity switch moves for 5\% of all moves. 5 trial rotations will
-be attempted for Rosenbluth sampling. Molecules of species 1 will only be
-switched with molecules of species 2, and likewise with Moleclues of species 3
-and molecules of species 2. This may be advantageous if species 1 is small,
-species 3 is large, and species 2 is medium in size.\\ \\
+%{\bf \# Prob\_Identity\_Switch}\\
+%{\it Real(1) \it Character(1) Character(2)}\\
+%{\it Character(3,1) Character(3,2)} \\
+%...\\
+%{\it Character(n+3,1) Character(n+3,2)}\\ \\
+%%
+%\textit{Real(1)} is the probability of attempting to interchange or switch the species identity of two randomly selected molecules (from different starting species). \\ \\
+%%
+%\textit{Character(1)} specifies the number of trial rotations (around the center of mass) among which one is chosen proportional to its Boltzmann weight (Rosenbluth sampling). This process occurs for both molecules involved in an identity switch. If omitted no rotations are attempted.\\ \\
+%%
+%\textit{Integer(3,1) and Integer(3,2)} are optional and represent a species index pair. The number of species index pairs is entered as \textit{Character(2)}. \textit{Character(2)} can be omitted if these index pairs are also omitted. One of these species index pairs will be selected with uniform probability. The first molecule to be switched will be selected with uniform probability among all molecules of the first species in the selected pair, and likewise with the second molecule to be switched with the second species in the pair. If omitted, any combination of species may be selected.\\ \\
+%%
+%%
+%For example: \\ \\
+%\# Prob\_Identity\_Switch \\
+%0.05 0 \\ \\
+%%
+%Will attempt identity switch moves for 10\% of all moves. No trial rotations
+%will be performed. An identity switch of pair of molecules (not from the same
+%species) is equally likely to be proposed.\\ \\
+%%
+%%
+%\# Prob\_Identity\_Switch \\
+%0.05 5 2 \\
+%1 2 \\
+%2 3 \\ \\
+%%
+%Will attempt identity switch moves for 5\% of all moves. 5 trial rotations will
+%be attempted for Rosenbluth sampling. Molecules of species 1 will only be
+%switched with molecules of species 2, and likewise with Moleclues of species 3
+%and molecules of species 2. This may be advantageous if species 1 is small,
+%species 3 is large, and species 2 is medium in size.\\ \\
 %
 %
 %
@@ -1946,7 +1946,7 @@ the users who wish to modify the MCF or manually write the MCF.} \\ \\
 %
 {\bf \# Atom\_Info} \\
 {\it Integer(1)} \\
-{\it Integer(2)   Character(3)*6  Character(4)*2   Real(5)   Real(6)
+{\it Integer(2)   Character(3)*20  Character(4)*6   Real(5)   Real(6)
   Character(7)*20     Optional\_Parms  Character(fin)} \\ \\
 %
 This keyword specifies the information for non-bonded interactions.
@@ -1960,11 +1960,11 @@ It is a required keyword in the MCF. If not specified, the code will abort. The 
 %
 \item {\it Integer(2)}: Atom index.
 %
-\item {\it Character(3)*6}: Atom type up to 6 characters. This string of characters should be
+\item {\it Character(3)*20}: Atom type up to 20 characters. This string of characters should be
 unique for each interaction site in the system, i.e. do not use the same atom type
 for two atoms in the same (or different) species unless the (pseudo)atoms have the same atom types.
 %
-\item {\it Character(4)*2}: Atom element name up to 2 characters.
+\item {\it Character(4)*6}: Atom element name up to 6 characters.
 %
 \item {\it Real(5)}: Mass of the atom in amu. Note that for united atom models, this would be the
 mass of the entire pseudoatom.
@@ -2075,7 +2075,7 @@ where the last two parameters are the repulsive and dispersive exponents, respec
 %
 {\bf \# Bond\_Info} \\
 {\it Integer(1)} \\
-{\it Integer(i,2) Integer(i,3) Integer(i,4) Character(i,5) Real(i,6) Real(i,7)} \\
+{\it Integer(i,2) Integer(i,3) Integer(i,4) Character(i,5) Real(i,6) Optional\_Parms Real(i,7)} \\
 \\
 This section provides information on the number of bonds in a molecule
 and atoms involved in each bond along with its type.  It is a required keyword in the MCF.
@@ -2095,6 +2095,8 @@ the bond.
 \item {\it Character(i,5)}: Type of the bond. At present only
 `fixed' is  permitted.
 \item {\it Real(i,6)}: Specifies the bond length for a particular bond in \AA.
+\item {\it Real(i,7), Optional}: Specify the allowable deviation from
+the bond length. Default value is 0.01 \AA.
 
 \end{itemize}
 %
