@@ -1452,22 +1452,22 @@ SUBROUTINE Get_Atom_Info(is)
            ! Check valid VDW types
            SELECT CASE (nonbond_list(ia,is)%vdw_type)
 
-              CASE ("NONE" .OR. "None" .OR. "none")
+              CASE ("NONE", "None", "none")
                  nonbond_list(ia,is)%vdw_type = "NONE"
                  nbr_vdw_params(is) = 0
 
-              CASE ("LJ" .OR. "Lj" .OR. "lj")
+              CASE ("LJ", "Lj", "lj")
                  nonbond_list(ia,is)%vdw_type = "LJ"
                  nbr_vdw_params(is) = 2
 
-              CASE ("MIE" .OR. "Mie" .OR. "mie")
+              CASE ("MIE", "Mie", "mie")
                  nonbond_list(ia,is)%vdw_type = "MIE"
                  nbr_vdw_params(is) = 4
 
               CASE DEFAULT
                  err_msg = ''
                  err_msg(1) = 'Invalid vdw type ' // TRIM(nonbond_list(ia,is)%vdw_type)
-                 err_msg(2) = 'on line ' // TRIM(line_nbr) // 'of MCF file'
+                 err_msg(2) = 'on line number ' // TRIM(Int_To_String(line_nbr)) // ' of MCF file'
                  CALL Clean_Abort(err_msg, 'Get_Atom_Info')
 
            END SELECT
@@ -1476,7 +1476,7 @@ SUBROUTINE Get_Atom_Info(is)
            IF (nbr_entries < 6 + nbr_vdw_params(is)) THEN
               err_msg = ''
               err_msg(1) = 'VDW potential type ' // TRIM(nonbond_list(ia,is)%vdw_type)
-              err_msg(2) = 'requires ' // TRIM(nbr_vdw_params(is)) //  ' parameters'
+              err_msg(2) = 'requires ' // TRIM(Int_To_String(nbr_vdw_params(is))) //  ' parameters'
               CALL Clean_Abort(err_msg,'Get_Atom_Info')
            ENDIF
 
