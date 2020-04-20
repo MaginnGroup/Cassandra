@@ -266,7 +266,7 @@
                  ENDIF
 
                  vdw_param_set(itype,itype) = 1
-              ELSE IF (nonbond_list(ia,is)%vdw_type == 'Mie') THEN
+              ELSE IF (nonbond_list(ia,is)%vdw_type == 'MIE') THEN
                  ! epsilon
                  IF (nonbond_list(ia,is)%vdw_param(1) <= tiny_number) THEN
                     vdw_param1_table(itype,itype) = 0.0_DP

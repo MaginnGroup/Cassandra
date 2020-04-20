@@ -406,7 +406,7 @@ SUBROUTINE Get_Pair_Style
            ! way it will be summed / truncated, and the remaining to parameters associated with
            ! the sum method
 
-           IF (line_array(1) == 'lj' .OR. line_array(1) == 'LJ') THEN
+           IF ( line_array(1) == 'LJ' .OR. line_array(1) == 'Lj' .OR. line_array(1) == 'lj' ) THEN
               vdw_style(ibox) = 'LJ'
               int_vdw_style(ibox) = vdw_lj
               WRITE(logunit,'(A,2x,A,A,I3)') 'VDW style used is: ',vdw_style(ibox), 'in box:', ibox
@@ -503,8 +503,8 @@ SUBROUTINE Get_Pair_Style
                  CALL Clean_Abort(err_msg,'Get_Pair_Style')
               ENDIF
 
-           ELSEIF (line_array(1) == 'mie' .OR. line_array(1) == 'Mie') THEN
-              vdw_style(ibox) = 'Mie'
+           ELSEIF ( line_array(1) == 'MIE' .OR. line_array(1) == 'Mie' .OR. line_array(1) == 'mie' ) THEN
+              vdw_style(ibox) = 'MIE'
               int_vdw_style(ibox) = vdw_mie
               WRITE(logunit,'(A,2x,A,A,I3)') 'VDW style used is: ',vdw_style(ibox), 'in box:', ibox
               vdw_sum_style(ibox) = line_array(2)
