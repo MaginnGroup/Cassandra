@@ -1400,10 +1400,10 @@ SUBROUTINE Get_Atom_Info(is)
         species_list(is)%molecular_weight = 0.0_DP
 
         DO ia = 1,natoms(is)
-           ! Now read the entries on the next lines. There must be at least 8 for
-           ! each atom.
+           ! Now read the entries on the next lines.
+           ! There must be at least 8 for each atom.
            line_nbr = line_nbr + 1
-           CALL Parse_String(molfile_unit,line_nbr,6,nbr_entries,line_array,ierr)
+           CALL Parse_String(molfile_unit,line_nbr,8,nbr_entries,line_array,ierr)
 
            ! Test for problems readin file
            IF (ierr /= 0) THEN
