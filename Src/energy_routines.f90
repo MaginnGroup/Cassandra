@@ -2389,7 +2389,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
    ELSE
       err_msg = ""
-      err_msg(1) = 'vdw_style must be NONE of LJ or Mie'
+      err_msg(1) = 'vdw_style must be NONE, LJ or Mie'
       CALL Clean_Abort(err_msg,'Compute_Atom_Nonbond_Energy')
 
    ENDIF VDW_Test2
