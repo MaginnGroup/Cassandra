@@ -1192,12 +1192,12 @@ CONTAINS
     ! Local
     ! LJ potential
     INTEGER :: itype, jtype
-    REAL(DP) :: eps, sig, Eij_vdw
+    REAL(DP) :: rij, rcut_vdw
+    REAL(DP) :: eps, sig, Eij_vdw, dEij_dr
     REAL(DP) :: SigByR2, SigByR6, SigByR12
     REAL(DP) :: SigByR2_shift, SigByR6_shift, SigByR12_shift
     REAL(DP) :: roffsq_rijsq, roffsq_rijsq_sq, factor2, fscale
     ! Mie potential
-    REAL(DP) :: rij, rij_shift, rcut_vdw
     REAL(DP) :: mie_coeff, mie_n, mie_m
     REAL(DP) :: SigByR, SigByRn, SigByRm
     REAL(DP) :: SigByR_shift, SigByRn_shift, SigByRm_shift
@@ -1268,6 +1268,24 @@ CONTAINS
                    ELSE IF (int_vdw_sum_style(ibox) == vdw_charmm) THEN
                          ! use the form for modified LJ potential
                          Eij_vdw = eps * (SigByR12 - 2.0_DP * SigByR6)
+                   ELSE IF (int_vdw_sum_style(ibox) == vdw_cut_force_shift) THEN
+                         ! apply the shifted-force LJ potential
+                         ! u_sf(r) = u_lj(r) - u_lj(rc) - (r-rc)*du_lj/dr(rc)
+                         SigByR2_shift = sig**2/rcut_vdwsq(ibox)
+                         SigByR6_shift = SigByR2_shift * SigByR2_shift * SigByR2_shift
+                         SigByR12_shift = SigByR6_shift * SigByR6_shift
+
+                         Eij_vdw = Eij_vdw &
+                                 - 4.0_DP * eps * (SigByR12_shift - SigByR6_shift)
+
+                         rij = SQRT(rijsq)
+                         rcut_vdw = SQRT(rcut_vdwsq(ibox))
+
+                         dEij_dr = - 24.0_DP * eps * ( 2.0_DP * SigByR12_shift / rcut_vdw &
+                                                      - SigByR6_shift / rcut_vdw )
+
+                         Eij_vdw = Eij_vdw - (rij - rcut_vdw) * dEij_dr
+
                    END IF
 
               ELSE IF (int_vdw_style(ibox) == vdw_mie) THEN
