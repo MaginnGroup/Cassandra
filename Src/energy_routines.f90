@@ -2362,7 +2362,8 @@ END SUBROUTINE Compute_Molecule_Self_Energy
             get_vdw = .FALSE.
          ENDIF
       ELSEIF (int_vdw_sum_style(this_box) == vdw_cut .OR. int_vdw_sum_style(this_box) &
-           == vdw_cut_shift .OR. int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
+              == vdw_cut_shift .OR. int_vdw_sum_style(this_box) == vdw_cut_tail &
+              .OR. int_vdw_sum_style(this_box) == vdw_cut_force_shift ) THEN
 
          IF (rijsq <= rcut_vdwsq(this_box)) THEN
             get_vdw = .TRUE.
@@ -2752,6 +2753,16 @@ END SUBROUTINE Compute_Molecule_Self_Energy
            ELSEIF (int_vdw_sum_style(ibox) == vdw_charmm) THEN
              ! Use the CHARMM LJ potential
              Wij_vdw = (12.0_DP * eps) * (SigByR12 - SigByR6)
+           ELSEIF (int_vdw_sum_style(ibox) == vdw_cut_force_shift) THEN
+             ! shifted-force lj potential
+             ! u_sf(r) = u_lj(r) - u_lj(rc) - (r-rc)*du_lj/dr(rc)
+             SigByR2_shift = sig**2/rcut_vdwsq(ibox)
+             SigByR6_shift = SigByR2_shift * SigByR2_shift * SigByR2_shift
+             SigByR12_shift = SigByR6_shift * SigByR6_shift
+
+             Wij_vdw = (24.0_DP * eps) * (2.0_DP*SigByR12 - SigByR6)
+             Wij_vdw = Wij_vdw - &
+                       (24.0_DP * eps) * (2.0_DP*SigByR12_shift - SigByR6_shift)
            END IF
          ELSE IF (int_vdw_style(ibox) == vdw_mie) THEN
            eps = vdw_param1_table(itype,jtype)
