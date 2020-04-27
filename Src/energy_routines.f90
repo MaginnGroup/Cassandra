@@ -1274,17 +1274,25 @@ CONTAINS
                          SigByR2_shift = sig**2/rcut_vdwsq(ibox)
                          SigByR6_shift = SigByR2_shift * SigByR2_shift * SigByR2_shift
                          SigByR12_shift = SigByR6_shift * SigByR6_shift
-
+                         WRITE(*,*) "U_lj: ", Eij_vdw
                          Eij_vdw = Eij_vdw &
                                  - 4.0_DP * eps * (SigByR12_shift - SigByR6_shift)
 
+                         WRITE(*,*) "U_lj_potshift: ", Eij_vdw
                          rij = SQRT(rijsq)
                          rcut_vdw = SQRT(rcut_vdwsq(ibox))
+                         WRITE(*,*) "rij: ", rij 
+                         WRITE(*,*) "rcut: ", rcut_vdw
+                         WRITE(*,*) "eps: ", eps
+                         WRITE(*,*) "sig:", sig
+                         WRITE(*,*) "SigbyR12: ", SigByR12
+                         WRITE(*,*) "SigbyR6: ", SigByR6
 
                          dEij_dr = - 24.0_DP * eps * ( 2.0_DP * SigByR12_shift / rcut_vdw &
                                                       - SigByR6_shift / rcut_vdw )
 
                          Eij_vdw = Eij_vdw - (rij - rcut_vdw) * dEij_dr
+                         WRITE(*,*) "U_lj_forceshift: ", Eij_vdw
 
                    END IF
 
