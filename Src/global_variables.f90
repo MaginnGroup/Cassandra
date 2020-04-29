@@ -108,7 +108,7 @@ USE Type_Definitions
   INTEGER, PARAMETER :: vdw_minimum = 5
   INTEGER, PARAMETER :: vdw_charmm = 6
   INTEGER, PARAMETER :: vdw_cut_switch = 7
-  INTEGER, PARAMETER :: vdw_cut_force_shift = 8
+  INTEGER, PARAMETER :: vdw_cut_shift_force = 8
   INTEGER, PARAMETER :: vdw_mie = 9
 
   INTEGER, PARAMETER :: charge_none = 0
