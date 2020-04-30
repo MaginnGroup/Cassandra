@@ -476,6 +476,8 @@ SUBROUTINE Get_Pair_Style
                     rcut9(ibox) = rcut3(ibox) * rcut3(ibox) * rcut3(ibox)
                  ELSE IF (vdw_sum_style(ibox) == 'cut_shift') THEN
                     int_vdw_sum_style(ibox) = vdw_cut_shift
+                 ELSE IF (vdw_sum_style(ibox) == 'cut_shift-force') THEN
+                    int_vdw_sum_style(ibox) = vdw_cut_shift_force
                  ELSE
                     err_msg = ''
                     err_msg(1) = 'Keyword ' // TRIM(line_array(2)) // ' on line number ' // &

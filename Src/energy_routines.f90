@@ -1192,12 +1192,12 @@ CONTAINS
     ! Local
     ! LJ potential
     INTEGER :: itype, jtype
-    REAL(DP) :: eps, sig, Eij_vdw
+    REAL(DP) :: rij, rcut_vdw
+    REAL(DP) :: eps, sig, Eij_vdw, dEij_dr
     REAL(DP) :: SigByR2, SigByR6, SigByR12
     REAL(DP) :: SigByR2_shift, SigByR6_shift, SigByR12_shift
     REAL(DP) :: roffsq_rijsq, roffsq_rijsq_sq, factor2, fscale
     ! Mie potential
-    REAL(DP) :: rij, rij_shift, rcut_vdw
     REAL(DP) :: mie_coeff, mie_n, mie_m
     REAL(DP) :: SigByR, SigByRn, SigByRm
     REAL(DP) :: SigByR_shift, SigByRn_shift, SigByRm_shift
@@ -1268,6 +1268,24 @@ CONTAINS
                    ELSE IF (int_vdw_sum_style(ibox) == vdw_charmm) THEN
                          ! use the form for modified LJ potential
                          Eij_vdw = eps * (SigByR12 - 2.0_DP * SigByR6)
+                   ELSE IF (int_vdw_sum_style(ibox) == vdw_cut_shift_force) THEN
+                         ! apply the shifted-force LJ potential
+                         ! u_sf(r) = u_lj(r) - u_lj(rc) - (r-rc)*du_lj/dr(rc)
+                         SigByR2_shift = sig**2/rcut_vdwsq(ibox)
+                         SigByR6_shift = SigByR2_shift * SigByR2_shift * SigByR2_shift
+                         SigByR12_shift = SigByR6_shift * SigByR6_shift
+
+                         Eij_vdw = Eij_vdw &
+                                 - 4.0_DP * eps * (SigByR12_shift - SigByR6_shift)
+
+                         rij = SQRT(rijsq)
+                         rcut_vdw = SQRT(rcut_vdwsq(ibox))
+
+                         dEij_dr = - 24.0_DP * eps * ( 2.0_DP * SigByR12_shift / rcut_vdw &
+                                                      - SigByR6_shift / rcut_vdw )
+
+                         Eij_vdw = Eij_vdw - (rij - rcut_vdw) * dEij_dr
+
                    END IF
 
               ELSE IF (int_vdw_style(ibox) == vdw_mie) THEN
@@ -2344,7 +2362,8 @@ END SUBROUTINE Compute_Molecule_Self_Energy
             get_vdw = .FALSE.
          ENDIF
       ELSEIF (int_vdw_sum_style(this_box) == vdw_cut .OR. int_vdw_sum_style(this_box) &
-           == vdw_cut_shift .OR. int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
+              == vdw_cut_shift .OR. int_vdw_sum_style(this_box) == vdw_cut_tail &
+              .OR. int_vdw_sum_style(this_box) == vdw_cut_shift_force ) THEN
 
          IF (rijsq <= rcut_vdwsq(this_box)) THEN
             get_vdw = .TRUE.
@@ -2678,6 +2697,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     ! LJ potential
     INTEGER :: itype, jtype
     REAL(DP) :: eps, sig, Eij_vdw
+    REAL(DP) :: rij, rcut_vdw
     REAL(DP) :: SigByR2,SigByR6,SigByR12
     REAL(DP) :: SigByR2_shift,SigByR6_shift,SigByR12_shift
     REAL(DP) :: roffsq_rijsq, roffsq_rijsq_sq, factor2, fscale
@@ -2685,7 +2705,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     REAL(DP) :: SigByR, SigByRn, SigByRm, mie_coeff, mie_n, mie_m
     ! Coulomb potential
     REAL(DP) :: qi, qj, erfc_val, prefactor
-    REAL(DP) :: rij, ewald_constant, exp_const
+    REAL(DP) :: ewald_constant, exp_const
 
     Wij_vdw = 0.0_DP
     Wij_qq = 0.0_DP
@@ -2734,6 +2754,19 @@ END SUBROUTINE Compute_Molecule_Self_Energy
            ELSEIF (int_vdw_sum_style(ibox) == vdw_charmm) THEN
              ! Use the CHARMM LJ potential
              Wij_vdw = (12.0_DP * eps) * (SigByR12 - SigByR6)
+           ELSEIF (int_vdw_sum_style(ibox) == vdw_cut_shift_force) THEN
+             ! shifted-force lj potential
+             ! u_sf(r) = u_lj(r) - u_lj(rc) - (r-rc)*du_lj/dr(rc)
+             SigByR2_shift = sig**2/rcut_vdwsq(ibox)
+             SigByR6_shift = SigByR2_shift * SigByR2_shift * SigByR2_shift
+             SigByR12_shift = SigByR6_shift * SigByR6_shift
+             rij = SQRT(rijsq)
+             rcut_vdw = SQRT(rcut_vdwsq(ibox))
+
+             Wij_vdw = Wij_vdw &
+                       - rij * (24.0_DP * eps) &
+                       * (2.0_DP * SigByR12_shift / rcut_vdw &
+                       - SigByR6_shift / rcut_vdw)
            END IF
          ELSE IF (int_vdw_style(ibox) == vdw_mie) THEN
            eps = vdw_param1_table(itype,jtype)
