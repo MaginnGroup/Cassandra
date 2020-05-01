@@ -108,31 +108,32 @@ CONTAINS
 ! Read the string from the file
     CALL Read_String(file_number,string,ierr)
     
-    IF (string(1:1) .NE. ' ') THEN
+    IF (string(1:1) .NE. '!') THEN
+       IF (string(1:1) .NE. ' ') THEN
+          ! first character is an entry, so advance counter
+          nbr_entries = nbr_entries + 1
+       END IF
 
-       ! first character is an entry, so advance counter
-       nbr_entries = nbr_entries + 1
-    ENDIF
+       space_start = .FALSE. 
 
-    space_start = .FALSE. 
-
-    ! Recall: LEN_TRIM() is length of string, not counting trailing blanks
-    DO i=1,LEN_TRIM(string) 
-        IF (string(i:i) .EQ. ' ') THEN
-          IF (.NOT. space_start) space_start = .TRUE.
-          ! This means a new set of spaces has been found
-       ELSE
-          IF (space_start) THEN
-             nbr_entries = nbr_entries + 1
-             line_position = 1
+       ! Recall: LEN_TRIM() is length of string, not counting trailing blanks
+       DO i=1,LEN_TRIM(string) 
+          IF (string(i:i) .EQ. '!') THEN
+             EXIT
+          ELSE IF (string(i:i) .EQ. ' ') THEN
+             IF (.NOT. space_start) space_start = .TRUE.
+             ! This means a new set of spaces has been found
+          ELSE
+             IF (space_start) THEN
+                nbr_entries = nbr_entries + 1
+                line_position = 1
+             ENDIF
+             space_start = .FALSE.
+             line_array(nbr_entries)(line_position:line_position) = string(i:i)
+             line_position = line_position + 1
           ENDIF
-          space_start = .FALSE.
-          line_array(nbr_entries)(line_position:line_position) = &
-               string(i:i)
-          line_position = line_position + 1
-       ENDIF
-       
-    ENDDO
+       ENDDO
+    END IF
 
     ! Test to see if the minimum number of entries was read in      
     IF (nbr_entries < min_entries) THEN
@@ -176,31 +177,34 @@ CONTAINS
       
 ! Read the string from the file
     CALL Read_String_Zeo(file_number,string,ierr)
-    IF (string(1:1) .NE. ' ') THEN
 
-       ! first character is an entry, so advance counter
-       nbr_entries = nbr_entries + 1
-    ENDIF
-
-    space_start = .FALSE. 
-
-    ! Recall: LEN_TRIM() is length of string, not counting trailing blanks
-    DO i=1,LEN_TRIM(string) 
-       IF (string(i:i) .EQ. ' ') THEN
-          IF (.NOT. space_start) space_start = .TRUE.
-          ! This means a new set of spaces has been found
-       ELSE
-          IF (space_start) THEN
-             nbr_entries = nbr_entries + 1
-             line_position = 1
-          ENDIF
-          space_start = .FALSE.
-          line_array_zeo(nbr_entries)(line_position:line_position) = &
-               string(i:i)
-          line_position = line_position + 1
+    IF (string(1:1) .NE. '!') THEN
+       IF (string(1:1) .NE. ' ') THEN
+          ! first character is an entry, so advance counter
+          nbr_entries = nbr_entries + 1
        ENDIF
-       
-    ENDDO
+
+       space_start = .FALSE. 
+
+       ! Recall: LEN_TRIM() is length of string, not counting trailing blanks
+       DO i=1,LEN_TRIM(string) 
+          IF (string(i:i) .EQ. '!') THEN
+             EXIT
+          ELSE IF (string(i:i) .EQ. ' ') THEN
+             IF (.NOT. space_start) space_start = .TRUE.
+             ! This means a new set of spaces has been found
+          ELSE
+             IF (space_start) THEN
+                nbr_entries = nbr_entries + 1
+                line_position = 1
+             ENDIF
+             space_start = .FALSE.
+             line_array_zeo(nbr_entries)(line_position:line_position) = &
+                  string(i:i)
+             line_position = line_position + 1
+          ENDIF
+       ENDDO
+    END IF
 
     ! Test to see if the minimum number of entries was read in      
     IF (nbr_entries < min_entries) THEN
