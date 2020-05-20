@@ -88,6 +88,7 @@ SUBROUTINE Initialize
   ntrials(:,:)%angle = 0
   ntrials(:,:)%insertion = 0
   ntrials(:,:)%deletion = 0
+  ntrials(:,:)%switch = 0
   ntrials(:,:)%disp_atom = 0
   ntrials(:,:)%cpcalc = 0
 
