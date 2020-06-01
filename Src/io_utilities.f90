@@ -86,7 +86,7 @@ CONTAINS
 ! different by detecting a space between entries. It also tests to see if the 
 ! minimum number of entries specified was met or not. If not, and error is returned.
 !********************************************************************************
-    CHARACTER(120), INTENT(OUT) :: line_array(20)
+    CHARACTER(120), INTENT(OUT) :: line_array(60)
     INTEGER, INTENT(IN) :: file_number,min_entries,line_nbr
     INTEGER, INTENT(OUT) :: nbr_entries
     INTEGER, INTENT(INOUT) :: ierr
@@ -107,7 +107,10 @@ CONTAINS
       
 ! Read the string from the file
     CALL Read_String(file_number,string,ierr)
-    
+
+    WRITE(*,*) string
+    WRITE(*,*) LEN_TRIM(string)
+
     IF (string(1:1) .NE. '!') THEN
        IF (string(1:1) .NE. ' ') THEN
           ! first character is an entry, so advance counter
