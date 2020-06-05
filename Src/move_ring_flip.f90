@@ -85,12 +85,18 @@ SUBROUTINE Flip_Move
 
   ! save the orignal coordinates
   Call Save_Old_Cartesian_Coordinates(im,is)
-  
-  ! Choose a ring atom to flip
-  atom_num = INT ( rranf() * nring_atoms(is)) + 1
 
-  ! obtain id 
-  this_atom = ring_atom_ids(atom_num,is)
+  ! This do loop is safe b/c ring_fragment_driver
+  ! confirms that not all ring_atoms are multiring_atoms
+  DO WHILE (.TRUE.)
+    ! Choose a ring atom to flip
+    atom_num = INT ( rranf() * nring_atoms(is)) + 1
+    ! obtain id
+    this_atom = ring_atom_ids(atom_num,is)
+    IF (nonbond_list(this_atom, is)%multiring_atom .EQV. .FALSE.) THEN
+       EXIT
+    ENDIF
+  END DO
 
   ! Figure out the bond angle that contains this_atom at the apex
   DO i = 1, angle_part_list(this_atom,is)%nangles
