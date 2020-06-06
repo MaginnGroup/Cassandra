@@ -249,8 +249,6 @@ CONTAINS
        IF (bond_list(ib,is)%int_bond_type == int_none) THEN
           l0 = bond_list(ib,is)%bond_param(1)
           ltol = bond_list(ib,is)%bond_param(2)
-          WRITE(*,*) ltol
-          WRITE(*,*) l0
           CALL Get_Bond_Length(ib,im,is,length)
           IF (abs(l0 - length) > ltol) THEN
              WRITE(mcf_bond_length,'(F7.3)') l0

@@ -63,15 +63,15 @@ CONTAINS
   SUBROUTINE Read_String(file_number,string,ierr)
 !********************************************************************************
 ! This routine just reads a single string from a file with unit number
-! equal to file_number and returns that 120 character string. It returns
+! equal to file_number and returns that 360 character string. It returns
 ! ierr .ne. 0 if it couldn't read the file.
 !********************************************************************************
     INTEGER, INTENT(IN) :: file_number
     INTEGER, INTENT(OUT) :: ierr
-    CHARACTER(120), INTENT(OUT) :: string
+    CHARACTER(360), INTENT(OUT) :: string
 !********************************************************************************
 
-    READ(file_number,'(A120)',IOSTAT=ierr) string
+    READ(file_number,'(A360)',IOSTAT=ierr) string
     IF (ierr .NE. 0) RETURN
 
   END SUBROUTINE Read_String
@@ -86,12 +86,12 @@ CONTAINS
 ! different by detecting a space between entries. It also tests to see if the 
 ! minimum number of entries specified was met or not. If not, and error is returned.
 !********************************************************************************
-    CHARACTER(120), INTENT(OUT) :: line_array(60)
+    CHARACTER(360), INTENT(OUT) :: line_array(60)
     INTEGER, INTENT(IN) :: file_number,min_entries,line_nbr
     INTEGER, INTENT(OUT) :: nbr_entries
     INTEGER, INTENT(INOUT) :: ierr
     
-    CHARACTER(120) :: string
+    CHARACTER(360) :: string
     INTEGER :: line_position,i
     LOGICAL :: space_start
 !********************************************************************************
@@ -107,9 +107,6 @@ CONTAINS
       
 ! Read the string from the file
     CALL Read_String(file_number,string,ierr)
-
-    WRITE(*,*) string
-    WRITE(*,*) LEN_TRIM(string)
 
     IF (string(1:1) .NE. '!') THEN
        IF (string(1:1) .NE. ' ') THEN
