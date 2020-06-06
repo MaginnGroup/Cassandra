@@ -80,8 +80,8 @@ SUBROUTINE Participation
 
   REAL(DP) :: x_this, y_this, z_this, this_l
 
-  CHARACTER(120) :: file_name, car_file, xyz_file, frag_name
-  CHARACTER(360) :: line_string
+  CHARACTER(FILENAME_LEN) :: file_name, car_file, xyz_file, frag_name
+  CHARACTER(STRING_LEN) :: line_string
 
   
 

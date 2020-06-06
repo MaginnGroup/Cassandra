@@ -54,8 +54,11 @@ MODULE IO_Utilities
   !    12/10/13  : Beta version
   !********************************************************************************
   USE Global_Variables
+  USE File_Names
 
   IMPLICIT NONE
+
+  INTEGER, PARAMETER :: STRING_LEN = 360
 
 CONTAINS
 
@@ -68,7 +71,7 @@ CONTAINS
 !********************************************************************************
     INTEGER, INTENT(IN) :: file_number
     INTEGER, INTENT(OUT) :: ierr
-    CHARACTER(360), INTENT(OUT) :: string
+    CHARACTER(STRING_LEN), INTENT(OUT) :: string
 !********************************************************************************
 
     READ(file_number,'(A360)',IOSTAT=ierr) string
@@ -86,12 +89,12 @@ CONTAINS
 ! different by detecting a space between entries. It also tests to see if the 
 ! minimum number of entries specified was met or not. If not, and error is returned.
 !********************************************************************************
-    CHARACTER(360), INTENT(OUT) :: line_array(60)
+    CHARACTER(STRING_LEN), INTENT(OUT) :: line_array(60)
     INTEGER, INTENT(IN) :: file_number,min_entries,line_nbr
     INTEGER, INTENT(OUT) :: nbr_entries
     INTEGER, INTENT(INOUT) :: ierr
     
-    CHARACTER(360) :: string
+    CHARACTER(STRING_LEN) :: string
     INTEGER :: line_position,i
     LOGICAL :: space_start
 !********************************************************************************
@@ -244,7 +247,7 @@ END SUBROUTINE Read_String_Zeo
       IMPLICIT NONE
 
       INTEGER :: prefix_length
-      CHARACTER(120) :: prefix,new_name
+      CHARACTER(FILENAME_LEN) :: prefix, new_name
       CHARACTER(*) :: suffix
 
       prefix_length = LEN_TRIM(prefix)
