@@ -223,7 +223,7 @@ MODULE Type_Definitions
      REAL(DP), DIMENSION(max_nonbond_params) :: vdw_param
 
      CHARACTER(6) :: element
-     CHARACTER(20) :: atom_name
+     CHARACTER(23) :: atom_name
 
      REAL(DP) :: mass, charge
      INTEGER :: atom_type_number
