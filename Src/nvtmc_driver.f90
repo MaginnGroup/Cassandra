@@ -234,7 +234,7 @@ SUBROUTINE NVTMC_Driver
      END IF
 
      ! do widom insertions, if applicable to this simulation and step
-     IF widom_flag CALL Widom_Subdriver(i_mcstep)
+     IF (widom_flag) CALL Widom_Subdriver(i_mcstep)
 
      IF(.NOT. openmp_flag) THEN
         CALL cpu_time(now_time)
