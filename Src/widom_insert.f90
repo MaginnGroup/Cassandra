@@ -65,6 +65,7 @@ SUBROUTINE Widom_Insert(ibox,is,widom_sum)
   INTEGER, ALLOCATABLE :: frag_order(:)
   INTEGER :: tot_mols, mcstep
 
+  INTEGER :: i_widom
   INTEGER :: insertions_in_step
 
   REAL(DP) :: dx, dy, dz
