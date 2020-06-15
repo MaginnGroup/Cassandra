@@ -223,8 +223,17 @@ SUBROUTINE Get_Nspecies
 
   ALLOCATE(fragment_bonds(nspecies), Stat = AllocateStatus)
   IF (AllocateStatus /= 0 ) THEN
-     write(*,*) 'memroy could not be allocated for fragment_bonds array'
+     write(*,*) 'memory could not be allocated for fragment_bonds array'
      write(*,*) 'stopping'
+     STOP
+  END IF
+
+
+  ! this was moved here from Get_Molecule_Info so Get_Widom_Info can use species_list
+  ALLOCATE( species_list(nspecies), Stat = AllocateStatus )
+  IF (AllocateStatus /= 0) THEN
+     write(*,*)'memory could not be allocated for species_list array'
+     write(*,*)'stopping'
      STOP
   END IF
 
@@ -1155,6 +1164,9 @@ SUBROUTINE Get_Molecule_Info
      WRITE(logunit,'(X,I6,2x,I13)') i,max_molecules(i)
   ENDDO
 
+  ! account for test particle in max_molecules for the purposes of array allocation and locate assignment
+  ! the number of molecules of each species in a simulation at the end of a step is still capped at max_molecules - tp_correction
+  max_molecules = max_molecules + tp_correction
 
   ! Allocate arrays that depend on max_molecules, natoms, and nspecies
   ! N.B.: MAXVAL instrinsic function selects the largest value from an array
@@ -1245,12 +1257,14 @@ SUBROUTINE Get_Molecule_Info
      END IF
   END IF
 
-  ALLOCATE( species_list(nspecies), Stat = AllocateStatus )
-  IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could not be allocated for species_list array'
-     write(*,*)'stopping'
-     STOP
-  END IF
+  ! This was moved to Get_Nspecies because Get_Widom_Info uses species_list and comes before this subroutine - RWS
+  
+  !ALLOCATE( species_list(nspecies), Stat = AllocateStatus )
+  !IF (AllocateStatus /= 0) THEN
+  !   write(*,*)'memory could not be allocated for species_list array'
+  !   write(*,*)'stopping'
+  !   STOP
+  !END IF
 
   max_index = MAX(MAXVAL(nbonds),MAXVAL(nangles),MAXVAL(ndihedrals),MAXVAL(nimpropers))
 
@@ -5176,6 +5190,121 @@ SUBROUTINE Get_Run_Type
   WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_Run_Type
+
+
+SUBROUTINE Get_Widom_Info
+
+
+
+
+
+        INTEGER :: is, ibox
+        INTEGER :: line_nbr
+        INTEGER :: ierr
+        INTEGER :: nbr_entries, i_entry
+        INTEGER :: i_unit
+
+        CHARACTER(120) :: line_string,line_array(30)
+        CHARACTER(14) :: extension
+
+
+
+        line_nbr = 0
+        widom_flag = .FALSE.
+        is = 0
+        ibox = 0
+        i_unit = 0
+
+        ALLOCATE(tp_correction(nspecies))
+        tp_correction(:) = 0
+
+
+        REWIND(inputunit)
+
+
+        DO
+                line_nbr = line_nbr + 1
+                CALL Read_String(inputunit,line_string,ierr)
+                IF(ierr /= 0) THEN
+                   err_msg = ''
+                   err_msg(1) = 'Error while reading input file in Get_Widom_Info'
+                   CALL clean_abort(err_msg,'Get_Widom_Info')
+                END IF
+
+                IF(line_string(1:3) == 'END' .or. line_nbr > 10000 ) RETURN
+                IF (line_string(1:17) == '# Widom_Insertion') THEN
+                        DO
+                                line_nbr = line_nbr + 1
+                                CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
+                                IF(ierr /= 0) THEN
+                                   err_msg = ''
+                                   err_msg(1) = 'Error while reading input file in Get_Widom_Info'
+                                   CALL clean_abort(err_msg,'Get_Widom_Info')
+                                END IF
+                                IF (.NOT. (line_array(1)(1:1) == '!')) EXIT
+                        END DO
+                        IF (line_array(1) == 'FALSE' .OR. line_array(1) == 'false' .OR. line_array(1) == 'False') RETURN
+                        IF(.NOT. (line_array(1) == 'TRUE' .OR. line_array(1) == 'true' .OR. line_array(1) == 'True')) THEN
+                                line_nbr = line_nbr - 1
+                        END IF
+                        widom_flag = .TRUE.
+                        ntrials(:,:)%widom = 0
+                        ALLOCATE(wprop_file_unit(nspecies,nbr_boxes))
+                        ALLOCATE(wprop_filenames(nspecies,nbr_boxes))
+                        ALLOCATE(first_open_wprop(nspecies,nbr_boxes))
+                        first_open_wprop(:,:) = .TRUE.
+
+
+                        DO is = 1,nspecies
+                                ALLOCATE(species_list(is)%test_particle(1:nbr_boxes))
+                                species_list(is)%test_particle(:) = .FALSE.
+                        END DO
+                        EXIT
+                END IF
+        END DO
+        is = 0
+
+        DO
+                line_nbr = line_nbr + 1
+                CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
+                IF(ierr /= 0) THEN
+                   err_msg = ''
+                   err_msg(1) = 'Error while reading input file in Get_Widom_Info'
+                   CALL clean_abort(err_msg,'Get_Widom_Info')
+                END IF
+                IF (nbr_entries == 0) RETURN
+                IF (line_array(1)(1:1) == '!') CYCLE
+                is = is + 1
+                ibox = 0
+                DO i_entry = 1,nbr_entries
+                        IF (line_array(i_entry) == 'none') THEN
+                                ibox = ibox + 1
+                        ELSE IF (line_arr1ay(i_entry) == 'cbmc') THEN
+                                ibox = ibox + 1
+                                species_list(is)%test_particle(ibox) = .TRUE.
+                                species_list(is)%widom_sum(ibox) = 0.0_DP
+                                species_list(is)%insertions_in_step(ibox) = StringToInt(line_array(i_entry+1))
+                                species_list(is)%widom_interval(ibox) = StringToInt(line_array(i_entry+2))
+                                tp_correction(is) = 1
+                                
+                                
+                                i_unit = i_unit + 1
+                                wprop_file_unit(is,ibox) = wprop_file_unit_base + i_unit
+
+                                extension = '.box' // TRIM(Int_To_String(ibox)) // '.wprp' // TRIM(Int_To_String(is))
+                                CALL Name_Files(run_name,extension,wprop_filenames(is,ibox))
+
+
+                        END IF
+                        IF (ibox == nbr_boxes) EXIT
+                END DO
+                IF (is == nspecies) RETURN
+
+        END DO
+        RETURN
+
+END SUBROUTINE Get_Widom_Info
+
 
 !******************************************************************************
 SUBROUTINE Get_CBMC_Info

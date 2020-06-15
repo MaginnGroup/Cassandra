@@ -88,6 +88,9 @@ SUBROUTINE NVTMC_Control
   ! associated parameters and the vdw mixing rule.
   CALL Get_Pair_Style
 
+  ! Determine whether widom insertions are done and get relevant details if they are
+  CALL Get_Widom_Info
+
   ! Load molecular conectivity and force field paramters. Note that Get_Nspecies 
   ! must be called before this routine.  
   CALL Get_Molecule_Info

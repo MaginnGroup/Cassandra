@@ -287,11 +287,16 @@ SUBROUTINE NPTMC_Driver
 
      END IF
 
-     IF ( cpcollect ) THEN
-        DO is = 1,nspecies
-           CALL Chempot(1, is)
-        END DO
-     END IF
+     !IF ( cpcollect ) THEN
+     !   DO is = 1,nspecies
+     !      CALL Chempot(1, is)
+     !   END DO
+     !END IF
+
+
+     ! do widom insertions, if applicable to this simulation and step
+     IF widom_flag CALL Widom_Subdriver(i_mcstep)
+
 
      IF(.NOT. openmp_flag) THEN
         CALL cpu_time(now_time)

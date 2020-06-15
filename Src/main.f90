@@ -214,6 +214,7 @@ PROGRAM Main
   ! Determine if it is equilibration or production or test
   CALL Get_Run_Type
 
+
   ! initialize counters
   CALL Initialize
 
@@ -471,15 +472,17 @@ PROGRAM Main
 !$OMP END PARALLEL
 
 
-  IF(cpcollect) THEN
+  IF(widom_flag) THEN
     DO is = 1,nspecies
       DO ibox = 1, nbr_boxes
-        IF(ntrials(is,ibox)%cpcalc > 0) THEN
-          WRITE(logunit,'(A,I2,A,I2,A,F24.12)') 'Chemical potential for species', &
-            is,'in box',ibox,'is',chpot(is,ibox) / ntrials(is,i)%cpcalc
-          WRITE(logunit,'(A,I2,A,I2,A,F24.12)') &
-            'Ideal Chemical potential for species',is,'in box',i, 'is', &
-            chpotid(is,i) / ntrials(is,i)%cpcalc
+        IF(ntrials(is,ibox)%widom > 0) THEN
+          WRITE(logunit,'(A,I2,A,I2,A,F24.12,A)') 'Shifted Chemical potential for species', &
+            is,'in box',ibox,'is', &
+            -kboltz*temperature(ibox)*atomic_to_kJmol*DLOG(species_list(is)%widom_sum(ibox) / ntrials(is,ibox)%widom), &
+            'kJ/mol'
+          !WRITE(logunit,'(A,I2,A,I2,A,F24.12)') &
+          !  'Ideal Chemical potential for species',is,'in box',i, 'is', &
+          !  chpotid(is,i) / ntrials(is,i)%cpcalc
         END IF
       END DO
     END DO

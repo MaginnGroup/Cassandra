@@ -583,5 +583,13 @@ REAL(DP), ALLOCATABLE :: pair_vdw_temp(:), pair_qq_temp(:)
 REAL(DP), ALLOCATABLE, DIMENSION(:) :: alpha_dsf
 REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
 
+  !!!!!!!!!
+  !Widom insertions
+  !!!!!!!!!
+  LOGICAL :: widom_flag
+  INTEGER, DIMENSION(:), ALLOCATABLE :: tp_correction
+  
+
+
 END MODULE Global_Variables
 

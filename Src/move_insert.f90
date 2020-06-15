@@ -123,7 +123,7 @@ SUBROUTINE Insertion
   tot_mols = SUM(nmols(is,1:nbr_boxes)) ! summed over the number of boxes
 
   ! Check that tot_mols is less than the maximum allowable, max_molecules(is)
-  IF (tot_mols == max_molecules(is)) THEN
+  IF (tot_mols == (max_molecules(is) - tp_correction(is))) THEN
      err_msg = ""
      err_msg(1) = 'Number of molecule exceeds limit of ' // &
                   Int_To_String(tot_mols) 
