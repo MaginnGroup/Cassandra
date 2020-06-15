@@ -18,7 +18,7 @@
 !   You should have received a copy of the GNU General Public License
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*******************************************************************************
-SUBROUTINE Write_Widom_Properties(is,this_box,i_mcstep,widom_avg)
+SUBROUTINE Write_Widom_Properties(is,this_box,widom_avg)
   !
   ! CALLED BY
   !
@@ -36,7 +36,6 @@ SUBROUTINE Write_Widom_Properties(is,this_box,i_mcstep,widom_avg)
   IMPLICIT NONE
 
   INTEGER :: this_box, this_unit, is
-  INTEGER :: i_mcstep
 
   REAL(DP) :: widom_avg
 

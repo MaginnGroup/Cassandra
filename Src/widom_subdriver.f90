@@ -19,7 +19,7 @@
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*******************************************************************************
 
-SUBROUTINE Widom_Subdriver(i_mcstep)
+SUBROUTINE Widom_Subdriver
 
   !*****************************************************************************
   ! 
@@ -48,7 +48,6 @@ SUBROUTINE Widom_Subdriver(i_mcstep)
   IMPLICIT NONE
 
   ! Arguments
-  INTEGER :: i_mcstep
 
   ! Local declarations
   INTEGER :: is, ibox
@@ -74,7 +73,7 @@ SUBROUTINE Widom_Subdriver(i_mcstep)
 
 
                 widom_avg = widom_sum / species_list(is)%insertions_in_step(ibox)
-                CALL Write_Widom_Properties(ibox,is,i_mcstep,widom_avg)
+                CALL Write_Widom_Properties(ibox,is,widom_avg)
 
 
 
