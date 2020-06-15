@@ -5283,8 +5283,8 @@ SUBROUTINE Get_Widom_Info
                                 ibox = ibox + 1
                                 species_list(is)%test_particle(ibox) = .TRUE.
                                 species_list(is)%widom_sum(ibox) = 0.0_DP
-                                species_list(is)%insertions_in_step(ibox) = StringToInt(line_array(i_entry+1))
-                                species_list(is)%widom_interval(ibox) = StringToInt(line_array(i_entry+2))
+                                species_list(is)%insertions_in_step(ibox) = String_To_Int(line_array(i_entry+1))
+                                species_list(is)%widom_interval(ibox) = String_To_Int(line_array(i_entry+2))
                                 tp_correction(is) = 1
                                 
                                 
