@@ -5279,7 +5279,7 @@ SUBROUTINE Get_Widom_Info
                 DO i_entry = 1,nbr_entries
                         IF (line_array(i_entry) == 'none') THEN
                                 ibox = ibox + 1
-                        ELSE IF (line_arr1ay(i_entry) == 'cbmc') THEN
+                        ELSE IF (line_array(i_entry) == 'cbmc') THEN
                                 ibox = ibox + 1
                                 species_list(is)%test_particle(ibox) = .TRUE.
                                 species_list(is)%widom_sum(ibox) = 0.0_DP
