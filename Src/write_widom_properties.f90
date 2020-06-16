@@ -46,7 +46,7 @@ SUBROUTINE Write_Widom_Properties(is,this_box,widom_avg)
      
   IF (first_open_wprop(is,this_box)) THEN
         
-     OPEN(unit=this_unit,file=prop_files(is,this_box))
+     OPEN(unit=this_unit,file=wprop_filenames(is,this_box))
         
      ! write the header information that indicates the properties contained
      ! in the file
