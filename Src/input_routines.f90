@@ -5258,6 +5258,9 @@ SUBROUTINE Get_Widom_Info
 
                         DO is = 1,nspecies
                                 ALLOCATE(species_list(is)%test_particle(1:nbr_boxes))
+                                ALLOCATE(species_list(is)%widom_sum(1:nbr_boxes))
+                                ALLOCATE(species_list(is)%insertions_in_step(1:nbr_boxes))
+                                ALLOCATE(species_list(is)%widom_interval(1:nbr_boxes))
                                 species_list(is)%test_particle(:) = .FALSE.
                         END DO
                         EXIT
