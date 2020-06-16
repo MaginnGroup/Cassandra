@@ -5248,6 +5248,7 @@ SUBROUTINE Get_Widom_Info
                                 line_nbr = line_nbr - 1
                         END IF
                         widom_flag = .TRUE.
+                        IF(.NOT. ALLOCATED(ntrials)) ALLOCATE(ntrials(nspecies,nbr_boxes))
                         ntrials(:,:)%widom = 0
                         ALLOCATE(wprop_file_unit(nspecies,nbr_boxes))
                         ALLOCATE(wprop_filenames(nspecies,nbr_boxes))
