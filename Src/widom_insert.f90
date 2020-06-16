@@ -19,7 +19,7 @@
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*******************************************************************************
 
-SUBROUTINE Widom_Insert(ibox,is,widom_sum)
+SUBROUTINE Widom_Insert(is,ibox,widom_sum)
 
   !*****************************************************************************
   ! 

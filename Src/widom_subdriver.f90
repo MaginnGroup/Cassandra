@@ -68,12 +68,12 @@ SUBROUTINE Widom_Subdriver
                 ! move on to next box if the step number isn't divisible by the widom_interval for this species.
                 ! these are separate IF statements because we don't want to divide by zero
                 IF (MOD(i_mcstep,species_list(is)%widom_interval(ibox)) .NE. 0) CYCLE
-                CALL Widom_Insert(ibox,is,widom_sum)
+                CALL Widom_Insert(is,ibox,widom_sum)
                 species_list(is)%widom_sum(ibox) = species_list(is)%widom_sum(ibox) + widom_sum
 
 
                 widom_avg = widom_sum / species_list(is)%insertions_in_step(ibox)
-                CALL Write_Widom_Properties(ibox,is,widom_avg)
+                CALL Write_Widom_Properties(is,ibox,widom_avg)
 
 
 
