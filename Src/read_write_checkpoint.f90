@@ -824,6 +824,21 @@ IF(movetime(imove_identity_switch) .GT. 0.0_DP ) THEN
 
 END IF
 
+
+IF(movetime(imove_widom) .GT. 0.0_DP ) THEN
+
+   IF(movetime(imove_widom) .LT. 60.0_DP ) THEN
+        WRITE(logunit,'(1X,A,T25,F15.6,A)') &
+       'Widom time = ', movetime(imove_widom), ' secs.'
+   ELSE
+        WRITE(logunit,'(1X,A,T25,F15.6,A)') &
+       'Widom time = ', movetime(imove_widom) / 3600.0_DP , ' hrs.'
+   END IF
+
+END IF
+
+
+
 WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Write_Subroutine_Times

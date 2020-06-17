@@ -536,6 +536,7 @@ USE Type_Definitions
   INTEGER, PARAMETER :: imove_check = 9
   INTEGER, PARAMETER :: imove_identity_switch = 10
   INTEGER, PARAMETER :: imove_atom_displacement = 11
+  INTEGER, PARAMETER :: imove_widom = 12
 
 
   REAL(DP) :: time_s, time_e
