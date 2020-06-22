@@ -3842,7 +3842,7 @@ SUBROUTINE Get_Temperature_Info
 !******************************************************************************
   IMPLICIT NONE
 
-  INTEGER :: ierr, line_nbr, i, nbr_entries
+  INTEGER :: ierr, line_nbr, i, nbr_entries, is
   CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
 !******************************************************************************
@@ -3862,6 +3862,11 @@ SUBROUTINE Get_Temperature_Info
 
   ALLOCATE(temperature(nbr_boxes))
   ALLOCATE(beta(nbr_boxes))
+  IF(widom_flag) THEN
+        DO is = 1, nspecies
+           IF(.NOT. ALLOCATED(species_list(is)%de_broglie)) ALLOCATE(species_list(is)%de_broglie(nbr_boxes))
+        END DO
+  END IF
 
   ierr = 0
   line_nbr = 0
@@ -3893,6 +3898,19 @@ SUBROUTINE Get_Temperature_Info
            temperature(i) = String_To_Double(line_array(1))
            ! compute inverse temperature
            beta(i) = 1.0_DP / (kboltz * temperature(i))
+
+
+           ! compute de Broglie wavelength in Angstroms if Widom insertions are done
+           IF (widom_flag) THEN
+                   DO is = 1, nspecies
+                        IF (species_list(is)%test_particle(i)) THEN
+                           species_list(is)%de_broglie(i) = &
+                                h_plank  * DSQRT( beta(i)/(twopi * species_list(is)%molecular_weight))
+                   END DO
+           END IF
+
+
+
            ! write to the logunit that temperature is specified for box
 
            WRITE(logunit,'(A,X,I1,X,A,X,F7.3,X,A)') 'Temperature of box', i, 'is', temperature(i), 'K'
@@ -4036,7 +4054,7 @@ SUBROUTINE Get_Chemical_Potential_Info
         DO is = 1,nspecies
 
            WRITE(logunit,'(A,X,I5)') 'Species', is
-           ALLOCATE(species_list(is)%de_broglie(nbr_boxes))
+           IF (.NOT. ALLOCATED(species_list(is)%de_broglie)) ALLOCATE(species_list(is)%de_broglie(nbr_boxes))
 
            ! Assume there will be an entry for each species, including non-insertable species
            ! If there is not an entry, the counter will be back tracked
@@ -5290,8 +5308,6 @@ SUBROUTINE Get_Widom_Info
                                 species_list(is)%insertions_in_step(ibox) = String_To_Int(line_array(i_entry+1))
                                 species_list(is)%widom_interval(ibox) = String_To_Int(line_array(i_entry+2))
                                 tp_correction(is) = 1
-                                
-                                
                                 i_unit = i_unit + 1
                                 wprop_file_unit(is,ibox) = wprop_file_unit_base + i_unit
 
