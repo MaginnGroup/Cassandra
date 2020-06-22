@@ -3906,6 +3906,7 @@ SUBROUTINE Get_Temperature_Info
                         IF (species_list(is)%test_particle(i)) THEN
                            species_list(is)%de_broglie(i) = &
                                 h_plank  * DSQRT( beta(i)/(twopi * species_list(is)%molecular_weight))
+                        END IF
                    END DO
            END IF
 
