@@ -5213,10 +5213,6 @@ END SUBROUTINE Get_Run_Type
 
 SUBROUTINE Get_Widom_Info
 
-
-
-
-
         INTEGER :: is, ibox
         INTEGER :: line_nbr
         INTEGER :: ierr
@@ -5225,8 +5221,6 @@ SUBROUTINE Get_Widom_Info
 
         CHARACTER(120) :: line_string,line_array(30)
         CHARACTER(14) :: extension
-
-
 
         line_nbr = 0
         widom_flag = .FALSE.
@@ -5237,9 +5231,7 @@ SUBROUTINE Get_Widom_Info
         ALLOCATE(tp_correction(nspecies))
         tp_correction(:) = 0
 
-
         REWIND(inputunit)
-
 
         DO
                 line_nbr = line_nbr + 1
@@ -5273,8 +5265,6 @@ SUBROUTINE Get_Widom_Info
                         ALLOCATE(wprop_filenames(nspecies,nbr_boxes))
                         ALLOCATE(first_open_wprop(nspecies,nbr_boxes))
                         first_open_wprop(:,:) = .TRUE.
-
-
                         DO is = 1,nspecies
                                 ALLOCATE(species_list(is)%test_particle(1:nbr_boxes))
                                 ALLOCATE(species_list(is)%widom_sum(1:nbr_boxes))
@@ -5286,7 +5276,6 @@ SUBROUTINE Get_Widom_Info
                 END IF
         END DO
         is = 0
-
         DO
                 line_nbr = line_nbr + 1
                 CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
@@ -5311,16 +5300,12 @@ SUBROUTINE Get_Widom_Info
                                 tp_correction(is) = 1
                                 i_unit = i_unit + 1
                                 wprop_file_unit(is,ibox) = wprop_file_unit_base + i_unit
-
                                 extension = '.box' // TRIM(Int_To_String(ibox)) // '.wprp' // TRIM(Int_To_String(is))
                                 CALL Name_Files(run_name,extension,wprop_filenames(is,ibox))
-
-
                         END IF
                         IF (ibox == nbr_boxes) EXIT
                 END DO
                 IF (is == nspecies) RETURN
-
         END DO
         RETURN
 
@@ -5369,10 +5354,10 @@ SUBROUTINE Get_CBMC_Info
     END IF
   END DO
 
-  IF (int_sim_type == sim_gcmc .OR. int_sim_type == sim_gemc .OR. int_sim_type == sim_gemc_npt) THEN
+  IF (int_sim_type == sim_gcmc .OR. int_sim_type == sim_gemc .OR. int_sim_type == sim_gemc_npt .OR. widom_flag) THEN
      need_kappa_ins = .TRUE.
      DO is = 1, nspecies
-        IF (nfragments(is) > 1 .AND. species_list(is)%insertion == 'CBMC') THEN
+        IF (nfragments(is) > 1 .AND. (species_list(is)%insertion == 'CBMC' .OR. tp_correction(is) .NE. 0)) THEN
            need_kappa_dih = .TRUE.
         END IF
      END DO
