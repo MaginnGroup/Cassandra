@@ -406,7 +406,7 @@ SUBROUTINE Get_Pair_Style
            ! way it will be summed / truncated, and the remaining to parameters associated with
            ! the sum method
 
-           IF (line_array(1) == 'lj' .OR. line_array(1) == 'LJ') THEN
+           IF ( line_array(1) == 'LJ' .OR. line_array(1) == 'Lj' .OR. line_array(1) == 'lj' ) THEN
               vdw_style(ibox) = 'LJ'
               int_vdw_style(ibox) = vdw_lj
               WRITE(logunit,'(A,2x,A,A,I3)') 'VDW style used is: ',vdw_style(ibox), 'in box:', ibox
@@ -505,8 +505,8 @@ SUBROUTINE Get_Pair_Style
                  CALL Clean_Abort(err_msg,'Get_Pair_Style')
               ENDIF
 
-           ELSEIF (line_array(1) == 'mie' .OR. line_array(1) == 'Mie') THEN
-              vdw_style(ibox) = 'Mie'
+           ELSEIF ( line_array(1) == 'MIE' .OR. line_array(1) == 'Mie' .OR. line_array(1) == 'mie' ) THEN
+              vdw_style(ibox) = 'MIE'
               int_vdw_style(ibox) = vdw_mie
               WRITE(logunit,'(A,2x,A,A,I3)') 'VDW style used is: ',vdw_style(ibox), 'in box:', ibox
               vdw_sum_style(ibox) = line_array(2)
@@ -1402,8 +1402,8 @@ SUBROUTINE Get_Atom_Info(is)
         species_list(is)%molecular_weight = 0.0_DP
 
         DO ia = 1,natoms(is)
-           ! Now read the entries on the next lines. There must be at least 8 for
-           ! each atom.
+           ! Now read the entries on the next lines.
+           ! There must be at least 6 for each atom.
            line_nbr = line_nbr + 1
            CALL Parse_String(molfile_unit,line_nbr,6,nbr_entries,line_array,ierr)
 
@@ -1451,7 +1451,38 @@ SUBROUTINE Get_Atom_Info(is)
            species_list(is)%total_charge = species_list(is)%total_charge &
                                          + nonbond_list(ia,is)%charge
 
-           ! Cannot mix "LJ" and "Mie" types
+           ! Check valid VDW types
+           SELECT CASE (nonbond_list(ia,is)%vdw_type)
+
+              CASE ("NONE", "None", "none")
+                 nonbond_list(ia,is)%vdw_type = "NONE"
+                 nbr_vdw_params(is) = 0
+
+              CASE ("LJ", "Lj", "lj")
+                 nonbond_list(ia,is)%vdw_type = "LJ"
+                 nbr_vdw_params(is) = 2
+
+              CASE ("MIE", "Mie", "mie")
+                 nonbond_list(ia,is)%vdw_type = "MIE"
+                 nbr_vdw_params(is) = 4
+
+              CASE DEFAULT
+                 err_msg = ''
+                 err_msg(1) = 'Invalid vdw type ' // TRIM(nonbond_list(ia,is)%vdw_type)
+                 err_msg(2) = 'on line number ' // TRIM(Int_To_String(line_nbr)) // ' of MCF file'
+                 CALL Clean_Abort(err_msg, 'Get_Atom_Info')
+
+           END SELECT
+
+           ! Check for correct number of entries for VDW type
+           IF (nbr_entries < 6 + nbr_vdw_params(is)) THEN
+              err_msg = ''
+              err_msg(1) = 'VDW potential type ' // TRIM(nonbond_list(ia,is)%vdw_type)
+              err_msg(2) = 'requires ' // TRIM(Int_To_String(nbr_vdw_params(is))) //  ' parameters'
+              CALL Clean_Abort(err_msg,'Get_Atom_Info')
+           ENDIF
+
+           ! Cannot mix "LJ" and "MIE" types
            IF (nonbond_list(ia,is)%vdw_type /= "NONE" .AND. &
                nonbond_list(ia,is)%vdw_type /= vdw_style(1)) THEN
               err_msg = ''
@@ -1470,84 +1501,60 @@ SUBROUTINE Get_Atom_Info(is)
            END IF
 
            ! Load vdw parameters, specific for each individual type
-           IF (nonbond_list(ia,is)%vdw_type == 'LJ' .OR. nonbond_list(ia,is)%vdw_type == 'lj') THEN
-              nonbond_list(ia,is)%vdw_type = 'LJ'
-              ! Set number of vdw parameters
-              nbr_vdw_params(is) = 2
+           SELECT CASE (nonbond_list(ia,is)%vdw_type)
 
-              IF (nbr_entries < 6 + nbr_vdw_params(is)) THEN
+              CASE ("NONE")
+                 IF (verbose_log) THEN
+                    WRITE(logunit,'(X,A,I6,1x,I6)') &
+                          'No VDW potential assigned to atom, species: ',ia,is
+                 END IF
+
+              CASE ("LJ")
+                 ! epsilon/kB in K read in
+                 nonbond_list(ia,is)%vdw_param(1) = String_To_Double(line_array(7))
+                 ! sigma = Angstrom
+                  nonbond_list(ia,is)%vdw_param(2) = String_To_Double(line_array(8))
+
+                 IF (verbose_log .AND. natoms(is) < 100) THEN
+                    WRITE(logunit,'(X,A,T25,F10.4)') ' Epsilon / kB in K:', &
+                         nonbond_list(ia,is)%vdw_param(1)
+                    WRITE(logunit,'(X,A,T25,F10.4)') ' Sigma in A:', &
+                         nonbond_list(ia,is)%vdw_param(2)
+                 END IF
+
+                 ! Convert epsilon to atomic units amu A^2/ps^2
+                 nonbond_list(ia,is)%vdw_param(1) = kboltz* nonbond_list(ia,is)%vdw_param(1)
+
+              CASE ("MIE")
+                 ! epsilon/kB in K read in
+                 nonbond_list(ia,is)%vdw_param(1) = String_To_Double(line_array(7))
+                 ! sigma = Angstrom
+                 nonbond_list(ia,is)%vdw_param(2) = String_To_Double(line_array(8))
+                 ! repulsive exponent
+                 nonbond_list(ia,is)%vdw_param(3) = String_To_Double(line_array(9))
+                 ! dispersive exponent
+                 nonbond_list(ia,is)%vdw_param(4) = String_To_Double(line_array(10))
+
+                 IF (verbose_log .AND. natoms(is) < 100) THEN
+                    WRITE(logunit,'(X,A,T25,F10.4)') ' Epsilon / kB in K:', &
+                         nonbond_list(ia,is)%vdw_param(1)
+                    WRITE(logunit,'(X,A,T25,F10.4)') ' Sigma in A:', &
+                         nonbond_list(ia,is)%vdw_param(2)
+                    WRITE(logunit,'(X,A,T25,F10.4)') ' Repulsive exponent:', &
+                         nonbond_list(ia,is)%vdw_param(3)
+                    WRITE(logunit,'(X,A,T25,F10.4)') ' Dispersive exponent:', &
+                         nonbond_list(ia,is)%vdw_param(4)
+                 END IF
+
+                 ! Convert epsilon to atomic units amu A^2/ps^2
+                 nonbond_list(ia,is)%vdw_param(1) = kboltz* nonbond_list(ia,is)%vdw_param(1)
+
+              CASE DEFAULT
                  err_msg = ''
-                 err_msg(1) = 'VDW potential type "LJ" requires 2 parameters'
-                 CALL Clean_Abort(err_msg,'Get_Atom_Info')
-              ENDIF
+                 err_msg(1) = 'Error parsing vdw type ' // TRIM(nonbond_list(ia,is)%vdw_type)
+                 CALL Clean_Abort(err_msg, 'Get_Atom_Info')
 
-              ! epsilon/kB in K read in
-              nonbond_list(ia,is)%vdw_param(1) = String_To_Double(line_array(7))
-              ! sigma = Angstrom
-              nonbond_list(ia,is)%vdw_param(2) = String_To_Double(line_array(8))
-
-              IF (verbose_log .AND. natoms(is) < 100) THEN
-                 WRITE(logunit,'(X,A,T25,F10.4)') ' Epsilon / kB in K:', &
-                      nonbond_list(ia,is)%vdw_param(1)
-                 WRITE(logunit,'(X,A,T25,F10.4)') ' Sigma in A:', &
-                      nonbond_list(ia,is)%vdw_param(2)
-              END IF
-
-              ! Convert epsilon to atomic units amu A^2/ps^2
-              nonbond_list(ia,is)%vdw_param(1) = kboltz* nonbond_list(ia,is)%vdw_param(1)
-
-           ELSEIF (nonbond_list(ia,is)%vdw_type == 'Mie' .OR. nonbond_list(ia,is)%vdw_type == 'mie') THEN
-              nonbond_list(ia,is)%vdw_type = 'Mie'
-              ! Set number of vdw parameters
-              nbr_vdw_params(is) = 4
-
-              IF (nbr_entries < 6 + nbr_vdw_params(is)) THEN
-                 err_msg = ''
-                 err_msg(1) = 'VDW potential type "Mie" requires 4 parameters'
-                 CALL Clean_Abort(err_msg,'Get_Atom_Info')
-              ENDIF
-
-              ! epsilon/kB in K read in
-              nonbond_list(ia,is)%vdw_param(1) = String_To_Double(line_array(7))
-              ! sigma = Angstrom
-              nonbond_list(ia,is)%vdw_param(2) = String_To_Double(line_array(8))
-              ! repulsive exponent
-              nonbond_list(ia,is)%vdw_param(3) = String_To_Double(line_array(9))
-              ! dispersive exponent
-              nonbond_list(ia,is)%vdw_param(4) = String_To_Double(line_array(10))
-
-
-              IF (verbose_log .AND. natoms(is) < 100) THEN
-                 WRITE(logunit,'(X,A,T25,F10.4)') ' Epsilon / kB in K:', &
-                      nonbond_list(ia,is)%vdw_param(1)
-                 WRITE(logunit,'(X,A,T25,F10.4)') ' Sigma in A:', &
-                      nonbond_list(ia,is)%vdw_param(2)
-                 WRITE(logunit,'(X,A,T25,F10.4)') ' Repulsive exponent:', &
-                      nonbond_list(ia,is)%vdw_param(3)
-                 WRITE(logunit,'(X,A,T25,F10.4)') ' Dispersive exponent:', &
-                      nonbond_list(ia,is)%vdw_param(4)
-              END IF
-
-              ! Convert epsilon to atomic units amu A^2/ps^2
-              nonbond_list(ia,is)%vdw_param(1) = kboltz* nonbond_list(ia,is)%vdw_param(1)
-
-           ELSEIF (nonbond_list(ia,is)%vdw_type == 'NONE') THEN
-              ! Set number of vdw parameters
-              nbr_vdw_params(is) = 0
-
-
-              IF (verbose_log) THEN
-
-                 WRITE(logunit,'(X,A,I6,1x,I6)') &
-                      'No VDW potential assigned to atom, species: ',ia,is
-
-              END IF
-
-           ELSE
-              err_msg = ''
-              err_msg(1) = 'vdw_potential type improperly specified in mcf file'
-              CALL Clean_Abort(err_msg,'Get_Atom_Info')
-           ENDIF
+           END SELECT
 
            ! the last entry is 'ring' for ring atoms
            nonbond_list(ia,is)%ring_atom = .FALSE.
