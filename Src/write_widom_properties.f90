@@ -61,7 +61,7 @@ SUBROUTINE Write_Widom_Properties(is,this_box,widom_avg)
         
   !CALL Write_Properties_Buffer(i)
   !widom_avg = widom_sum / species_list(is)%insertions_in_step(this_box)
-  WRITE(this_unit,'(I12,10X,D25.17)') i_mcstep, widom_avg
+  WRITE(this_unit,'(I12,10X,E25.17)') i_mcstep, widom_avg
      
 
 
