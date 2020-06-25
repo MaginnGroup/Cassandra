@@ -70,7 +70,7 @@
 
     LOGICAL :: overlap, cbmc_overlap
 
-    CHARACTER*120 :: init_config_file, init_config_file1
+    CHARACTER(FILENAME_LEN) :: init_config_file, init_config_file1
 !*******************************************************************************
     ! Place molecules in the box using CB growth.
 

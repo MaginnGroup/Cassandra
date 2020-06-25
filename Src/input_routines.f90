@@ -59,7 +59,7 @@ SUBROUTINE Get_Run_Name
 !******************************************************************************
 
   INTEGER :: ierr,line_nbr,nbr_entries
-  CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
 
 !******************************************************************************
@@ -123,7 +123,7 @@ SUBROUTINE Get_Nspecies
 !******************************************************************************
 
   INTEGER :: ierr,line_nbr,nbr_entries, i
-  CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(STRING_LEN) :: line_string, line_array(60)
 !******************************************************************************
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Number of species'
@@ -255,7 +255,7 @@ SUBROUTINE Get_Sim_Type
 ! ignored.
 !******************************************************************************
   INTEGER :: ierr,line_nbr,nbr_entries
-  CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
 !******************************************************************************
   WRITE(logunit,*)
@@ -356,7 +356,7 @@ SUBROUTINE Get_Pair_Style
 !                 need to be stored.
 !******************************************************************************
   INTEGER :: ierr,line_nbr,nbr_entries, iassign, ibox, k
-  CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
   REAL(DP), ALLOCATABLE :: ewald_tol(:)
 
@@ -879,7 +879,7 @@ SUBROUTINE Get_Mixing_Rules
 ! ignored. If no mixing rule is specified, Lorentz-Berthelot is used as default.
 !******************************************************************************
   INTEGER :: ierr,line_nbr,nbr_entries
-  CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
 !******************************************************************************
   REWIND(inputunit)
@@ -952,7 +952,7 @@ SUBROUTINE Get_Molecule_Info
 
   INTEGER :: ierr,line_nbr,nbr_entries, i, openstatus, is, max_index, input_line_nbr
   INTEGER :: mcf_index(5), dummy
-  CHARACTER(120) :: line_string, line_array(20), source_dir
+  CHARACTER(STRING_LEN) :: line_string, line_array(60), source_dir
   LOGICAL :: l_source_dir
 
 !******************************************************************************
@@ -1360,7 +1360,7 @@ SUBROUTINE Get_Atom_Info(is)
   INTEGER, INTENT(IN) :: is
 
   INTEGER :: ierr,line_nbr,nbr_entries, ia
-  CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
 !******************************************************************************
   REWIND(molfile_unit)
@@ -1620,7 +1620,7 @@ SUBROUTINE Get_Bond_Info(is)
   INTEGER, INTENT(IN) :: is
 
   INTEGER :: ierr,line_nbr,nbr_entries, ib
-  CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
 !******************************************************************************
   REWIND(molfile_unit)
@@ -1765,7 +1765,7 @@ SUBROUTINE Get_Angle_Info(is)
   INTEGER, INTENT(IN) :: is
 
   INTEGER :: ierr,line_nbr,nbr_entries, iang, nangles_linear
-  CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
 !******************************************************************************
   REWIND(molfile_unit)
@@ -1940,7 +1940,7 @@ SUBROUTINE Get_Dihedral_Info(is)
   INTEGER, INTENT(IN) :: is
 
   INTEGER :: ierr,line_nbr,nbr_entries, idihed
-  CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
 !******************************************************************************
   REWIND(molfile_unit)
@@ -2170,7 +2170,7 @@ SUBROUTINE Get_Improper_Info(is)
 INTEGER, INTENT(IN) :: is
 
   INTEGER :: ierr,line_nbr,nbr_entries, iimprop
-  CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
 !******************************************************************************
   REWIND(molfile_unit)
@@ -2334,7 +2334,7 @@ SUBROUTINE Get_Fragment_Anchor_Info(is)
 
   INTEGER :: i, line_nbr, ierr, min_entries, nbr_entries, ianchor
 
-  CHARACTER(120) :: line_String,line_array(20)
+  CHARACTER(STRING_LEN) :: line_String,line_array(60)
 
 !******************************************************************************
   WRITE(logunit,*)
@@ -2441,7 +2441,7 @@ SUBROUTINE Get_Fragment_Info(is)
   INTEGER :: nanchors, iatoms, jatoms, ibonds, iatoms_bond
   INTEGER :: i_atom, j_atom, atom1, atom2
   INTEGER, ALLOCATABLE :: anchor_id(:)
-  CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(STRING_LEN) :: line_string, line_array(60)
   !CHARACTER(50000) :: line_array_zeo(10000)
 
 !******************************************************************************
@@ -2676,7 +2676,7 @@ SUBROUTINE Get_Fragment_Connectivity_Info(is)
   INTEGER :: ierr, line_nbr, ifrag, nbr_entries, i, j, ifrag_connect, frag1, frag2
   INTEGER, ALLOCATABLE :: temp_frag(:)
 
-  CHARACTER(120) :: line_string,line_array(20)
+  CHARACTER(STRING_LEN) :: line_string,line_array(60)
 
   ! Variables for determing prob_del1
   INTEGER :: natoms_del_with_frag1, natoms_del_with_frag2
@@ -2943,7 +2943,7 @@ SUBROUTINE Get_Fragment_File_Info(is)
 
   INTEGER :: ierr, line_nbr, i, j, ifrag, nbr_entries, is
   REAL(DP) :: vdw_cutoff, coul_cutoff
-  CHARACTER(120) :: line_string, line_array(20), source_dir
+  CHARACTER(STRING_LEN) :: line_string, line_array(60), source_dir
   CHARACTER(4) :: ring_flag
   LOGICAL :: l_source_dir
 
@@ -3302,7 +3302,7 @@ END SUBROUTINE Get_Fragment_Coords
 SUBROUTINE Get_Intra_Scaling(is)
 !******************************************************************************
   INTEGER :: ierr,line_nbr,nbr_entries, iimprop, is, i
-  CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(STRING_LEN) :: line_string, line_array(60)
   LOGICAL :: l_intra_scaling_mcf
 
 !******************************************************************************
@@ -3493,7 +3493,7 @@ SUBROUTINE Get_Box_Info
 !   cubic, orthogonal, cell_metrix
 !******************************************************************************
   INTEGER :: ierr,line_nbr,nbr_entries,ibox, is
-  CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(STRING_LEN) :: line_string, line_array(60)
   REAL(DP) :: radius, zmax, zmin
 
 !******************************************************************************
@@ -3829,7 +3829,7 @@ SUBROUTINE Get_Temperature_Info
   IMPLICIT NONE
 
   INTEGER :: ierr, line_nbr, i, nbr_entries
-  CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
 !******************************************************************************
   WRITE(logunit,*)
@@ -3910,7 +3910,7 @@ SUBROUTINE Get_Pressure_Info
 !******************************************************************************
 
   INTEGER :: ierr, line_nbr, nbr_entries, i
-  CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
 !******************************************************************************
   WRITE(logunit,*)
@@ -3990,7 +3990,7 @@ SUBROUTINE Get_Chemical_Potential_Info
   IMPLICIT NONE
 
   INTEGER :: line_nbr, nbr_entries, ierr, is, spec_counter, ibox
-  CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
 !******************************************************************************
   REWIND(inputunit)
@@ -4095,7 +4095,7 @@ SUBROUTINE Get_Move_Probabilities
 
   INTEGER :: ierr, nbr_entries, line_nbr, i, j, ibox, is, vol_int
   INTEGER ::  kbox, this_box, first_species, second_species
-  CHARACTER(120) :: line_string, line_array(30), line_string2
+  CHARACTER(STRING_LEN) :: line_string, line_array(60), line_string2
   CHARACTER(4) :: Symbol
   !INTEGER, DIMENSION(:,:), ALLOCATABLE :: swap_list
 
@@ -4776,7 +4776,7 @@ SUBROUTINE Get_Start_Type
 !******************************************************************************
 
   INTEGER :: ierr, line_nbr, nbr_entries, i,j, ibox, is
-  CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(STRING_LEN) :: line_string, line_array(60)
   CHARACTER(1) :: first_character
   CHARACTER(4) :: symbol
 
@@ -5059,7 +5059,7 @@ SUBROUTINE Get_Run_Type
   IMPLICIT NONE
 
   INTEGER :: ierr, line_nbr, nbr_entries,i, ia
-  CHARACTER(120) :: line_string,line_array(20)
+  CHARACTER(STRING_LEN) :: line_string,line_array(60)
   LOGICAL :: overlap
 
 !******************************************************************************
@@ -5185,7 +5185,7 @@ SUBROUTINE Get_CBMC_Info
 
   INTEGER :: ibox, is
   INTEGER :: ierr, line_nbr, nbr_entries
-  CHARACTER(120) :: line_string,line_array(30)
+  CHARACTER(STRING_LEN) :: line_string,line_array(60)
   LOGICAL :: need_kappa_ins, need_kappa_dih
 
 !******************************************************************************
@@ -5345,7 +5345,7 @@ SUBROUTINE Get_Seed_Info
 !******************************************************************************
 
   INTEGER :: ierr, line_nbr, nbr_entries
-  CHARACTER(120) :: line_string,line_array(20)
+  CHARACTER(STRING_LEN) :: line_string,line_array(60)
 
 !******************************************************************************
   WRITE(logunit,*)
@@ -5410,7 +5410,7 @@ SUBROUTINE Get_Simulation_Length_Info
 !******************************************************************************
 
   INTEGER :: ierr, line_nbr, nbr_entries, ibox
-  CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(STRING_LEN) :: line_string, line_array(60)
   LOGICAL :: l_run
 
 !******************************************************************************
@@ -5701,7 +5701,7 @@ USE Global_Variables, ONLY: cpcollect
 
   INTEGER :: ierr, line_nbr, nbr_properties, max_properties, nbr_entries
   INTEGER :: i, j, this_box, ibox, is, average_id, ifrac
-  CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(STRING_LEN) :: line_string, line_array(60)
   CHARACTER(12) :: extension
   CHARACTER(9) :: extension1
   CHARACTER(17) :: extension2
@@ -6084,7 +6084,7 @@ SUBROUTINE Copy_Inputfile
 !******************************************************************************
 
   INTEGER :: ierr, line_nbr, line_inputfile_start
-  CHARACTER(120) :: line_string
+  CHARACTER(STRING_LEN) :: line_string
   LOGICAL :: input_startcopy
 
   WRITE(logunit,*)
@@ -6170,7 +6170,7 @@ SUBROUTINE Get_Rcutoff_Low
 !******************************************************************************
 
   INTEGER :: ierr, line_nbr, nbr_entries
-  CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
 !******************************************************************************
   WRITE(logunit,*)
@@ -6231,7 +6231,7 @@ SUBROUTINE Get_File_Info
 
   INTEGER :: ierr, nbr_entries, line_nbr, is
 
-  CHARACTER(120) :: line_array(20), line_string
+  CHARACTER(STRING_LEN) :: line_array(60), line_string
 
 !******************************************************************************
   WRITE(logunit,*)
@@ -6296,7 +6296,7 @@ SUBROUTINE Get_Lattice_File_Info
     IMPLICIT NONE
 
     INTEGER :: line_nbr, ierr, nbr_entries
-    CHARACTER*120 :: line_string, line_array(20)
+    CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
 !******************************************************************************
     WRITE(logunit,*)
@@ -6457,7 +6457,7 @@ SUBROUTINE Get_Verbosity_Info
 !******************************************************************************
 
   INTEGER :: ierr,line_nbr,nbr_entries
-  CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
 !******************************************************************************
   WRITE(logunit,*)
