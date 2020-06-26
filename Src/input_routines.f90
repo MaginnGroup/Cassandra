@@ -237,6 +237,14 @@ SUBROUTINE Get_Nspecies
      STOP
   END IF
 
+  ALLOCATE( tp_correction(nspecies), Stat = AllocateStatus )
+  IF (AllocateStatus /= 0) THEN
+     write(*,*)'memory could not be allocated for tp_correction array'
+     write(*,*)'stopping'
+     STOP
+  END IF
+
+
 ! Initialize everything
   molfile_name = ''
   max_molecules = 0
@@ -249,6 +257,7 @@ SUBROUTINE Get_Nspecies
   nbr_vdw_params = 0
   nfragments = 0
   fragment_bonds = 0
+  tp_correction = 0
 
   WRITE(logunit,'(A80)') '********************************************************************************'
 
@@ -5228,8 +5237,6 @@ SUBROUTINE Get_Widom_Info
         ibox = 0
         i_unit = 0
 
-        ALLOCATE(tp_correction(nspecies))
-        tp_correction(:) = 0
 
         REWIND(inputunit)
 
