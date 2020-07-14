@@ -45,7 +45,7 @@ SUBROUTINE GCMC_Control
   IMPLICIT NONE
 
   INTEGER :: ierr,line_nbr,nbr_entries, i,j, ii,this_mol
-  CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(STRING_LEN) :: line_string, line_array(60)
   REAL(DP) :: e_total_bond, e_total_angle, e_total_intra_nb, e_total_inter_nb
   REAL(DP) ::  E_bond, E_angle, E_dihedral, E_improper
   REAL(DP) :: E_intra_vdw, E_intra_qq, E_inter_vdw, E_inter_qq, W_intra_vdw, W_intra_qq

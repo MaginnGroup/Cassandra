@@ -80,8 +80,8 @@ SUBROUTINE Participation
 
   REAL(DP) :: x_this, y_this, z_this, this_l
 
-  CHARACTER(120) :: file_name, car_file, xyz_file, frag_name
-  CHARACTER(120) :: line_string
+  CHARACTER(FILENAME_LEN) :: file_name, car_file, xyz_file, frag_name
+  CHARACTER(STRING_LEN) :: line_string
 
   
 
@@ -665,7 +665,8 @@ SUBROUTINE Participation
                  ELSE IF (bond_list(this_bond,is)%int_bond_type == int_none) THEN
                     ! it is a fixed bond
                     
-                    WRITE(201,102) i-1, anchor_atom, i, "fixed", bond_list(this_bond,is)%bond_param(1)
+                    WRITE(201,102) i-1, anchor_atom, i, "fixed", bond_list(this_bond,is)%bond_param(1), &
+                                    bond_list(this_bond,is)%bond_param(2)
                     
                     ! for a fixed bond length system, generate points of this atom on a unit sphere
                     
@@ -825,7 +826,7 @@ SUBROUTINE Participation
 
 100  FORMAT(I5,2X,A4,2X,A4,F11.7,2X,F11.7,2X,A5,2X,F11.7, 2X, F11.7)
 101  FORMAT(I5,2X,I5,2X,I5,2X,A9,2X,F10.3,2X,F8.5)
-102  FORMAT(I5,2X,I5,2X,I5,2X,A9,2X,F8.5)
+102  FORMAT(I5,2X,I5,2X,I5,2X,A9,2X,F8.5,2X,F8.5)
 103  FORMAT(I5,2X,I5,2X,I5,2X,I5,2X,A9,2X,F10.3,2X,F10.5)
 104  FORMAT(I5,2X,I5,2X,I5,2X,I5,2X,A9,2X,F10.5)
 105  FORMAT(A,2X,I5,2X,A2,2X,6(I3,2X))
@@ -920,8 +921,9 @@ CONTAINS
                bond_list(this_bond,is)%bond_param(2)
 
        ELSE IF (bond_list(this_bond,is)%int_bond_type == int_none) THEN
-          WRITE(201,'(I5,2X,I5,2X,I5,2X,A9,2X,F8.5)') i, &
-               atom1(i), atom2(i), "fixed", bond_list(this_bond,is)%bond_param(1)
+          WRITE(201,'(I5,2X,I5,2X,I5,2X,A9,2X,F8.5,2X,F8.5)') i, &
+               atom1(i), atom2(i), "fixed", bond_list(this_bond,is)%bond_param(1), &
+               bond_list(this_bond,is)%bond_param(2)
 
        END IF
 

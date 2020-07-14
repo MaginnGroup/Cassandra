@@ -68,7 +68,7 @@
   !custom mixing rules
   INTEGER :: ierr,line_nbr,nbr_entries, is_1, is_2, ia_1, ia_2, itype_custom, jtype_custom
   INTEGER ::  i_type1, i_type2
-  CHARACTER(120) :: line_string, line_array(20)
+  CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
 
 !******************************************************************************
@@ -266,7 +266,7 @@
                  ENDIF
 
                  vdw_param_set(itype,itype) = 1
-              ELSE IF (nonbond_list(ia,is)%vdw_type == 'Mie') THEN
+              ELSE IF (nonbond_list(ia,is)%vdw_type == 'MIE') THEN
                  ! epsilon
                  IF (nonbond_list(ia,is)%vdw_param(1) <= tiny_number) THEN
                     vdw_param1_table(itype,itype) = 0.0_DP

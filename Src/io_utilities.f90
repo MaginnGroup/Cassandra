@@ -54,8 +54,11 @@ MODULE IO_Utilities
   !    12/10/13  : Beta version
   !********************************************************************************
   USE Global_Variables
+  USE File_Names
 
   IMPLICIT NONE
+
+  INTEGER, PARAMETER :: STRING_LEN = 360
 
 CONTAINS
 
@@ -63,15 +66,15 @@ CONTAINS
   SUBROUTINE Read_String(file_number,string,ierr)
 !********************************************************************************
 ! This routine just reads a single string from a file with unit number
-! equal to file_number and returns that 120 character string. It returns
+! equal to file_number and returns that 360 character string. It returns
 ! ierr .ne. 0 if it couldn't read the file.
 !********************************************************************************
     INTEGER, INTENT(IN) :: file_number
     INTEGER, INTENT(OUT) :: ierr
-    CHARACTER(120), INTENT(OUT) :: string
+    CHARACTER(STRING_LEN), INTENT(OUT) :: string
 !********************************************************************************
 
-    READ(file_number,'(A120)',IOSTAT=ierr) string
+    READ(file_number,'(A360)',IOSTAT=ierr) string
     IF (ierr .NE. 0) RETURN
 
   END SUBROUTINE Read_String
@@ -86,12 +89,12 @@ CONTAINS
 ! different by detecting a space between entries. It also tests to see if the 
 ! minimum number of entries specified was met or not. If not, and error is returned.
 !********************************************************************************
-    CHARACTER(120), INTENT(OUT) :: line_array(20)
+    CHARACTER(STRING_LEN), INTENT(OUT) :: line_array(60)
     INTEGER, INTENT(IN) :: file_number,min_entries,line_nbr
     INTEGER, INTENT(OUT) :: nbr_entries
     INTEGER, INTENT(INOUT) :: ierr
     
-    CHARACTER(120) :: string
+    CHARACTER(STRING_LEN) :: string
     INTEGER :: line_position,i
     LOGICAL :: space_start
 !********************************************************************************
@@ -107,7 +110,7 @@ CONTAINS
       
 ! Read the string from the file
     CALL Read_String(file_number,string,ierr)
-    
+
     IF (string(1:1) .NE. '!') THEN
        IF (string(1:1) .NE. ' ') THEN
           ! first character is an entry, so advance counter
@@ -244,7 +247,7 @@ END SUBROUTINE Read_String_Zeo
       IMPLICIT NONE
 
       INTEGER :: prefix_length
-      CHARACTER(120) :: prefix,new_name
+      CHARACTER(FILENAME_LEN) :: prefix, new_name
       CHARACTER(*) :: suffix
 
       prefix_length = LEN_TRIM(prefix)
