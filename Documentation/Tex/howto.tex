@@ -82,7 +82,13 @@ that the ring group contains all the ring atoms and those directly
 bonded to the ring atoms. For each fragment identified, Cassandra runs
 a pre\textendash simulation in the gas phase to sample the intramolecular degrees
 of freedom. A library of a large number of these conformations are
-stored for use in an actual simulation. \\ \\
+stored for use in an actual simulation. \emph{Note that intramolecular
+degrees of freedom may not be properly sampled in fused-ring systems. We
+highly encourage anyone simulating such systems to compare the internal
+angle and dihedral distributions in the fragment library with a 
+constrained bond length molecular dynamics simulation of the relevant fragment
+in vacuum.}\\ \\
+
 %
 %
 The gas phase library generation has been automated with the script \texttt{library\_setup.py} located in the \texttt{Scripts/Frag\_Library\_Setup}
