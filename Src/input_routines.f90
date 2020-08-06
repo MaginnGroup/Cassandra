@@ -5335,7 +5335,7 @@ SUBROUTINE Log_Widom_Info
                 DO ibox = 1, nbr_boxes
                         IF (.NOT. species_list(is)%test_particle(ibox)) CYCLE
 
-                        linetext = 'Species ' // TRIM(Int_To_String(is) // ' will have ' // &
+                        linetext = 'Species ' // TRIM(Int_To_String(is)) // ' will have ' // &
                                 TRIM(Int_To_String(species_list(is)%insertions_in_step(ibox))) // &
                                 ' Widom insertions every ' // &
                                 TRIM(Int_To_String(species_list(is)%widom_interval(ibox)))
