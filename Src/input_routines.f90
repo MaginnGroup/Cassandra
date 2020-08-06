@@ -5323,11 +5323,11 @@ SUBROUTINE Get_Widom_Info
 END SUBROUTINE Get_Widom_Info
 
 SUBROUTINE Log_Widom_Info
-        IF (.NOT. widom_flag) RETURN
         
         INTEGER :: ibox, is
         CHARACTER(120) :: linetext
         
+        IF (.NOT. widom_flag) RETURN
         WRITE(logunit,*)
         WRITE(logunit,'(A)') 'Widom insertion info'
         WRITE(logunit,'(A80)') '********************************************************************************'
