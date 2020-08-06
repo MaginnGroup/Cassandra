@@ -114,6 +114,9 @@ SUBROUTINE NVTMC_Control
 
   CALL Get_Simulation_Length_Info
 
+  ! Write Widom insertion info to log file, which requires units from Get_Simulation_Length_Info
+  CALL Log_Widom_Info
+
   CALL Get_Property_Info
 
   CALL Get_Rcutoff_Low

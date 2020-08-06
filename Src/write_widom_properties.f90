@@ -39,31 +39,30 @@ SUBROUTINE Write_Widom_Properties(is,this_box,widom_avg)
 
   REAL(DP) :: widom_avg
 
+  LOGICAL :: is_sweeps
 
+  is_sweeps = (sim_length_units == 'Sweeps')
      
   !-- check to see whether the file is open or not
   this_unit = wprop_file_unit(is,this_box)
      
   IF (first_open_wprop(is,this_box)) THEN
-        
      OPEN(unit=this_unit,file=wprop_filenames(is,this_box))
-        
      ! write the header information that indicates the properties contained
      ! in the file
      !CALL Write_Widom_Header(i)
-     WRITE(this_unit,'(A12,10X,A25)') 'Step_#', 'Average widom_var in step'
-
-
-
+     IF (is_sweeps) THEN
+             WRITE(this_unit,'(A16,10X,A30)') 'Sweep_#', 'Average widom_var for sweep'
+     ELSE
+             WRITE(this_unit,'(A16,10X,A30)') 'Step_#', 'Average widom_var for step'
+     END IF
      first_open_wprop(is,this_box) = .FALSE.
-
   END IF
-        
   !CALL Write_Properties_Buffer(i)
   !widom_avg = widom_sum / species_list(is)%insertions_in_step(this_box)
-  WRITE(this_unit,'(I12,10X,E25.17)') i_mcstep, widom_avg
-     
-
-
- 
+  IF (is_sweeps) THEN
+          WRITE(this_unit,'(I16,10X,E30.22)') i_mcstep/steps_per_sweep, widom_avg
+  ELSE
+          WRITE(this_unit,'(I16,10X,E30.22)') i_mcstep, widom_avg
+  END IF
 END SUBROUTINE Write_Widom_Properties

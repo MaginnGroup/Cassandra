@@ -121,6 +121,9 @@ SUBROUTINE NPTMC_Control
   ! Determine the frequency with which information will be output 
   CALL Get_Simulation_Length_Info
 
+  ! Write Widom insertion info to log file, which requires units from Get_Simulation_Length_Info
+  CALL Log_Widom_Info
+
   ! Properties to be output
   CALL Get_Property_Info
 

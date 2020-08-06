@@ -5229,7 +5229,7 @@ SUBROUTINE Get_Widom_Info
         INTEGER :: i_unit
 
         CHARACTER(120) :: line_string,line_array(30)
-        CHARACTER(14) :: extension
+        CHARACTER(20) :: extension
 
         line_nbr = 0
         widom_flag = .FALSE.
@@ -5307,7 +5307,11 @@ SUBROUTINE Get_Widom_Info
                                 tp_correction(is) = 1
                                 i_unit = i_unit + 1
                                 wprop_file_unit(is,ibox) = wprop_file_unit_base + i_unit
-                                extension = '.box' // TRIM(Int_To_String(ibox)) // '.wprp' // TRIM(Int_To_String(is))
+                                IF (nbr_boxes == 1) THEN
+                                        extension = '.spec' // TRIM(Int_To_String(is)) // '.wprp'
+                                ELSE
+                                        extension = '.spec' // TRIM(Int_To_String(is)) // '.box' // TRIM(Int_To_String(ibox)) // '.wprp'
+                                END IF
                                 CALL Name_Files(run_name,extension,wprop_filenames(is,ibox))
                         END IF
                         IF (ibox == nbr_boxes) EXIT
@@ -5317,6 +5321,36 @@ SUBROUTINE Get_Widom_Info
         RETURN
 
 END SUBROUTINE Get_Widom_Info
+
+SUBROUTINE Log_Widom_Info
+        IF (.NOT. widom_flag) RETURN
+        
+        INTEGER :: ibox, is
+        CHARACTER(120) :: linetext
+        
+        WRITE(logunit,*)
+        WRITE(logunit,'(A)') 'Widom insertion info'
+        WRITE(logunit,'(A80)') '********************************************************************************'
+        DO is = 1, nspecies
+                DO ibox = 1, nbr_boxes
+                        IF (.NOT. species_list(is)%test_particle(ibox)) CYCLE
+
+                        linetext = 'Species ' // TRIM(Int_To_String(is) // ' will have ' // &
+                                TRIM(Int_To_String(species_list(is)%insertions_in_step(ibox))) // &
+                                ' Widom insertions every ' // &
+                                TRIM(Int_To_String(species_list(is)%widom_interval(ibox)))
+                        IF (sim_length_units == 'Sweeps') THEN
+                                species_list(is)%widom_interval(ibox) = species_list(is)%widom_interval(ibox) * steps_per_sweep
+                                linetext = TRIM(linetext) // ' MC sweeps'
+                        ELSE
+                                linetext = TRIM(linetext) // ' MC steps'
+                        END IF
+                        IF (nbr_boxes .NE. 1) linetext = TRIM(linetext) // ' in box ' // TRIM(Int_To_String(ibox))
+                        WRITE(logunit,*) TRIM(linetext)
+                END DO
+        END DO
+        WRITE(logunit,'(A80)') '********************************************************************************'
+END SUBROUTINE Log_Widom_Info
 
 
 !******************************************************************************
