@@ -129,6 +129,9 @@ OBJS =  main.o \
   pair_nrg_variables.o \
   move_ring_flip.o \
   move_identity_switch.o \
+  widom_subdriver.o \
+  widom_insert.o \
+  write_widom_properties.o \
 
 
 ####################################################################
