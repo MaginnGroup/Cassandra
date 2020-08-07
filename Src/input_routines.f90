@@ -5347,6 +5347,8 @@ SUBROUTINE Log_Widom_Info
                         END IF
                         IF (nbr_boxes .NE. 1) linetext = TRIM(linetext) // ' in box ' // TRIM(Int_To_String(ibox))
                         WRITE(logunit,*) TRIM(linetext)
+                        WRITE(logunit,'(10X,A,3X,F16.9)') &
+                              'with de Broglie wavelength (Angstroms):', species_list(is)%de_broglie(ibox)
                 END DO
         END DO
         WRITE(logunit,'(A80)') '********************************************************************************'
