@@ -5228,7 +5228,7 @@ SUBROUTINE Get_Widom_Info
         INTEGER :: nbr_entries, i_entry
         INTEGER :: i_unit
 
-        CHARACTER(120) :: line_string,line_array(30)
+        CHARACTER(STRING_LEN) :: line_string,line_array(60)
         CHARACTER(20) :: extension
 
         line_nbr = 0
