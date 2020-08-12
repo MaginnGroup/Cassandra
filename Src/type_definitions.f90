@@ -228,7 +228,7 @@ MODULE Type_Definitions
      REAL(DP) :: mass, charge
      INTEGER :: atom_type_number
 
-     LOGICAL :: ring_atom
+     LOGICAL :: ring_atom, multiring_atom
 
   END TYPE Nonbond_Class
   !****************************************************************************

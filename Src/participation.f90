@@ -527,9 +527,9 @@ SUBROUTINE Participation
                    ! and all other do not need to be scaled by kboltz. Valid for LJ and Mie.
                    ! Other (and future) potentials perhaps not.
                    IF (j == 1) THEN
-                     WRITE(201,'(F11.7,2X)',ADVANCE='NO') nonbond_list(ia,is)%vdw_param(j)/kboltz
+                     WRITE(201,'(F11.7,2X)',ADVANCE='NO') nonbond_list(this_atom,is)%vdw_param(j)/kboltz
                    ELSE
-                     WRITE(201,'(F11.7,2X)',ADVANCE='NO') nonbond_list(ia,is)%vdw_param(j)
+                     WRITE(201,'(F11.7,2X)',ADVANCE='NO') nonbond_list(this_atom,is)%vdw_param(j)
                    END IF
                  END DO
                  IF (nonbond_list(this_atom,is)%ring_atom) THEN
