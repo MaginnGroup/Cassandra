@@ -22,7 +22,26 @@ Cassandra is capable of simulating systems in the following ensembles: \\
 \end{itemize}
 
 \section{Distribution}
-Cassandra is distributed as a tar file \texttt{cassandra.tar}. You can unpack the distribution by running the command \\ \\
+Cassandra is distributed through \texttt{conda-forge} and a source code tarball. Installation
+through \href{https://docs.conda.io/en/latest/miniconda.html}{conda} is easiest: \\ \\
+%
+\texttt{> conda create --name cassandra -c conda-forge cassandra} \\
+%
+
+The previous command creates a new conda environment (named ``cassandra''),
+and installs \texttt{cassandra} from the \texttt{conda-forge} channel channel.
+You can verify that the installation completed by activating the environment: \\ \\
+%
+\texttt{> conda activate cassandra} \\ \\
+%
+and then checking that \texttt{cassandra.exe} is on your \texttt{PATH}: \\ \\
+%
+\texttt{> which cassandra.exe} \\ \\
+%
+should find the executable. \texttt{mcfgen.py} and \texttt{library\_setup.py}
+will also be on your \texttt{PATH} when the \texttt{cassandra} conda environment
+is activated. If you choose to instead install from source,
+you can unpack the distribution by running the command \\ \\
 %
 \texttt{> tar -xzf Cassandra\_V1.2.tar.gz} \\ \\
 %

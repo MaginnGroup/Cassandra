@@ -103,14 +103,14 @@ Cassandra parallelizes reasonably up to 8-12 threads.
 
 The source code tarball for the latest release is available through our [releases
 page](https://github.com/maginngroup/cassandra/releases/latest) Alternatively,
-you can use GitHub to get a copy of the bleeding edge version:
+you can clone the GitHub repository to get the bleeding edge version:
 
 ```
 > git clone
 https://github.com/MaginnGroup/Cassandra.git
 ```
 
-The ```/Src/``` directory contains the Makefiles that you can use to compile the code.
+In either case, the ```/Src/``` directory contains the Makefiles that you can use to compile the code.
 Makefiles contain the compilation options and set of directives used to automate the build.
 At present, Makefiles for the Intel Fortran Compiler, gfortran and
 Portland group compiler (PGI) are included in the distribution.
