@@ -12,9 +12,9 @@
 ## Contents
 1. [Overview](#overview)
 2. [Features](#features)
-3. [How to Get and Compile Cassandra](#obtaining)
+3. [Installation](#installation)
 4. [Getting Started](#starting)
-5. [Documentation](https://cassandra.nd.edu/index.php/documentation)
+5. [Documentation](https://github.com/MaginnGroup/Cassandra/releases/latest/download/user_guide.pdf)
 6. [Forum](https://cassandra.nd.edu/index.php/community)
 7. [Contribute](#contributing)
 8. [Citation](#citation)
@@ -23,6 +23,9 @@
 ## <a name="overview"></a>Overview
 
 [Cassandra](https://cassandra.nd.edu/) is an open source Monte Carlo package developed in the [Maginn group](http://sites.nd.edu/maginn-group/) at the [University of Notre Dame](http://www.nd.edu) to perform atomistic simulations of molecules composed of rings, chains, or both. Cassandra is suited to compute the thermodynamic properties of fluids and phase equilibria. It handles a standard "Class I"-type force field having fixed bond lengths. Cassandra uses OpenMP parallelization and comes with a number of scripts, utilities and examples to help with simulation setup. It is released under the GNU General Public License.
+
+A Python interface to Cassandra is under development as well. Further details are
+available [here](https://mosdef-cassandra.readthedocs.io/en/latest/).
 
 ## <a name="features"></a> Features
 
@@ -60,17 +63,56 @@ The following features are supported in version 1.2:
     - Cut-off schemes: cut, cut and shift, cut and switch, standard long-tail correction
     - Electorstatics: Ewald or damped shifted force methods
 
-## <a name="obtaining"></a> How to Get and Compile Cassandra
+## <a name="installation"></a> Installation
 
-You can get a free copy of Cassandra by [downloading the tarball](https://cassandra.nd.edu/index.php/download). Alternatively, you can use GitHub to get a copy of the bleeding edge version:
+We offer the option to install from source or through `conda-forge`.
+The simplest way to get Cassandra is through `conda-forge`.
+
+### Installation with conda
+
+If you already have [conda](https://docs.conda.io/en/latest/miniconda.html)
+installed, you can install Cassandra into a new `conda` environment
+with the following command:
+
+```
+> conda create --name cassandra -c conda-forge cassandra
+```
+
+Once you activate the environment, Cassandra should be accesible on your `PATH`.
+You can test with the following:
+
+```
+> conda activate cassandra
+> which cassandra.exe
+> which library_setup.py
+> which mcfgen.py
+```
+
+If the installation was successful, you should see the location of each of
+those files. The `conda-forge` installation uses `gfortran` with
+OPENMP parallelization. The number of parallel threads can be controlled
+by setting the `OMP_NUM_THREADS` environment variable. For example, in `bash`:
+
+```
+export OMP_NUM_THREADS=4
+```
+
+Cassandra parallelizes reasonably up to 8-12 threads.
+
+### Installation from source
+
+The source code tarball for the latest release is available through our [releases
+page](https://github.com/maginngroup/cassandra/releases/latest). Alternatively,
+you can clone the GitHub repository to get the bleeding edge version:
 
 ```
 > git clone
 https://github.com/MaginnGroup/Cassandra.git
 ```
 
-The ```/Src/``` directory contains the Makefiles that you can use to compile the code. Makefiles contain the compilation options and set of directives used to automate the build. At present, Makefiles for the
-Intel Fortran Compiler, gfortran and
+In either case, the ```/Src/``` directory contains the Makefiles that you can use to compile the code.
+Makefiles contain the compilation options and set of directives used to automate the build.
+At present, Makefiles for the Intel Fortran Compiler, gfortran and
 Portland group compiler (PGI) are included in the distribution.
 
 To compile Cassandra, first remove any object files using the 'clean' command
@@ -112,7 +154,7 @@ NVT, NPT, grand canonical and Gibbs ensembles for a number of systems molecules 
 of conformational complexity (LJ particles, branch points, ring moieties) and
 those requiring computation of electrostatic interactions are included.
 
-**/Documentation**. Chapter 3 of the [documentation](https://cassandra.nd.edu/index.php/documentation/) provides an overview of the files and workflow to setup a Cassandra simulation. Additionally, the [workshop materials](https://cassandra.nd.edu/index.php/documentation) contain more examples and slides that have been used for teaching.
+**/Documentation**. Chapter 3 of the [documentation](https://github.com/MaginnGroup/Cassandra/releases/latest/download/user_guide.pdf) provides an overview of the files and workflow to setup a Cassandra simulation. Additionally, the [workshop materials](https://cassandra.nd.edu/index.php/documentation) contain more examples and slides that have been used for teaching.
 
 ## <a name="contributing"></a> Contributing
 
