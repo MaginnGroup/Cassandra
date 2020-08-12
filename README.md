@@ -102,7 +102,7 @@ Cassandra parallelizes reasonably up to 8-12 threads.
 ### Installation from source
 
 The source code tarball for the latest release is available through our [releases
-page](https://github.com/maginngroup/cassandra/releases/latest) Alternatively,
+page](https://github.com/maginngroup/cassandra/releases/latest). Alternatively,
 you can clone the GitHub repository to get the bleeding edge version:
 
 ```
