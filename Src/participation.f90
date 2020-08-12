@@ -233,7 +233,7 @@ SUBROUTINE Participation
           WRITE(logunit,*)
           WRITE(logunit,*) 'For species', is
           WRITE(logunit,*) ' Number of atoms that can be displaced', species_list(is)%ndisp_atoms
-          WRITE(logunit,'(2(A20,2x))') 'Atom ID', 'Reference Atom ID'
+          WRITE(logunit,'(2(A23,2x))') 'Atom ID', 'Reference Atom ID'
           DO iatom = 1, species_list(is)%ndisp_atoms
              WRITE(logunit,'(2(I20,2x))') species_list(is)%disp_atom_id(iatom), &
                   species_list(is)%disp_atom_ref(iatom)
@@ -518,7 +518,7 @@ SUBROUTINE Participation
 
                  ! Check to see if this atom is a ring fragment, if so append, 'ring' at the end
 
-                 WRITE(201,'(I5,2X,A20,2X,A6,2X,2(F11.7,2X),A6,2X)',ADVANCE='NO') i, &
+                 WRITE(201,'(I5,2X,A23,2X,A6,2X,2(F11.7,2X),A6,2X)',ADVANCE='NO') i, &
                       nonbond_list(this_atom,is)%atom_name, nonbond_list(this_atom,is)%element, &
                       nonbond_list(this_atom,is)%mass, nonbond_list(this_atom,is)%charge, &
                       nonbond_list(this_atom,is)%vdw_type
@@ -543,7 +543,7 @@ SUBROUTINE Participation
            ELSE
               
               WRITE(201,*) bondpart_list(ia,is)%nbonds + 1
-              WRITE(201,'(I5,2X,A20,2X,A6,2X,2(F11.7,2X),A6,2X)',ADVANCE='NO') anchor_atom, &
+              WRITE(201,'(I5,2X,A23,2X,A6,2X,2(F11.7,2X),A6,2X)',ADVANCE='NO') anchor_atom, &
                         nonbond_list(ia,is)%atom_name, &
                         nonbond_list(ia,is)%element, &
                         nonbond_list(ia,is)%mass, &
@@ -576,7 +576,7 @@ SUBROUTINE Participation
                  
                  this_atom = frag_list(ifrag,is)%atoms(i)
                  
-                 WRITE(201,'(I5,2X,A20,2X,A6,2X,2(F11.7,2X),A6,2X)',ADVANCE='NO') i, &
+                 WRITE(201,'(I5,2X,A23,2X,A6,2X,2(F11.7,2X),A6,2X)',ADVANCE='NO') i, &
                                 nonbond_list(this_atom,is)%atom_name, &
                                 nonbond_list(this_atom,is)%element, &
                                 nonbond_list(this_atom,is)%mass, &
