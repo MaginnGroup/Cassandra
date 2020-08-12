@@ -194,6 +194,21 @@ boxes have a 10.5 \AA\ cutoff, use the following:
 lj cut\_shift 10.5 \\
 lj cut\_shift 10.5 } \\ \\
 %
+\\ \\
+\item \textbf{cut\_shift-force}: This option cuts the potential off at a distance
+specified by \emph{Real(i,3)}. The derivative of the potential is shifted
+to zero at the cutoff. The result is that both the potential and derivative
+of the potential smoothly go to zero at the cutoff. The fourth
+parameter \emph{Real(i,4)/Logical(i,4)} is omitted. The functional
+form of this potential is given in eq~\ref{Eq:shift-force}. \\ \\
+To perform a two box simulation with a cut\_shift-force option in which both
+boxes have a 10.5 \AA\ cutoff, use the following:
+\\ \\
+\texttt{
+\# VDW\_Style \\
+lj cut\_shift-force 10.5 \\
+lj cut\_shift-force 10.5 } \\ \\
+%
 \end{itemize}
 {\bf Note: For all options, cutoff distances must be less than or
   equal to the shortest edge length of a simulation box}.
