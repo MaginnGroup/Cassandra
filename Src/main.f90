@@ -106,7 +106,7 @@ PROGRAM Main
 
 !********************************************************************************
 ! Code name and version. Change as updates are made.
-  version = 'Cassandra Version 1.2.2 20200326'
+  version = 'Cassandra Version 1.2.2'
 ! Get starting time information (intrinsic function)
   CALL DATE_AND_TIME(date,time,zone,begin_values)
   CALL cpu_time(start_time)
