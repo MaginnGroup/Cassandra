@@ -146,6 +146,7 @@ The repulsion-dispersion interactions can take one of the following forms:
 
 \begin{equation}
  {\cal V}(r_{ij})= 4 \epsilon_{ij} \left [  \left ( \frac {\sigma_{ij}} { r_{ij} }\right )^{12} - \left ( \frac {\sigma_{ij}} { r_{ij} }\right )^{6}\ \right ]
+\label{eqn:LJ}
 \end{equation}
 where $\epsilon_{ij}$ and $\sigma_{ij}$ are the energy and size
 parameters set by the user. For unlike interactions, different
@@ -201,6 +202,18 @@ potential at a distance of $r_{on}$. Both of these parameters must be
 specified by the user. For unlike interactions, different 
 combining rules can be used, as described elsewhere.
 
+%%%%%%%%%%%%%%
+% Shifted force LJ potential
+%%%%%%%%%%%%%%%
+
+\item Shifted force LJ potential:
+
+\begin{equation}
+    {\cal V}_{SF}(r_{ij})= {\cal V}_{LJ}(r_{ij}) - {\cal V}_{LJ}(r_{cut}) - (r_{ij} - r_{cut}) \frac{d {\cal V}(r_{ij})_{LJ}}{d r_{ij}} \Bigr|_{r_{cut}}
+ \label{Eq:shift-force}
+\end{equation}
+where ${\cal V}_{LJ}$ is the standard Lennard-Jones potential (Eqn. \ref{eqn:LJ}) and $r_{cut}$ is the cutoff distance.
+The energy and force both smoothly go to zero at $r_{cut}$.
 
 %%%%%%%%%%%%%%
 % Mie potential
