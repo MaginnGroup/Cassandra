@@ -1002,7 +1002,7 @@ The volume perturbation move is only supported for cubic boxes.
 %
 % Insertion
 %
-%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%% 
 \subsubsection{Insertion and Deletion Moves}
 {\bf \# Prob\_Insertion} \\
 {\it Real(1)} \\
@@ -1018,6 +1018,11 @@ If \texttt{none}, species $i$ will not be inserted or deleted.
 If \texttt{restricted}, species $i$ will be assembled using CBMC
 with the first fragment inserted into the region defined by
 the \texttt{restricted\_insertion} keyword in the \texttt{Box\_Info} section.
+\textbf{Note that restricted insertions should only be used if the
+relevant molecules cannot escape the restricted region during
+the simulation. If this condition is not met the acceptance criteria
+for molecule deletion will be incorrect and the ensemble will not be
+properly sampled.}
 This subsection is required for GCMC simulations. \\ \\
 %
 If there is more than one insertable species, each is chosen for an insertion attempt with equal probability.
