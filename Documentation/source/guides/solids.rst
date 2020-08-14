@@ -61,13 +61,15 @@ A PDB configuration file for a zeolite can be created in the following
 ways, among others:
 
 -  Manually, with atomic coordinates from the literature. For example,
-   the atomic coordinates of silicalite are published in Ref.
+   the atomic coordinates of silicalite are published
+   `here <https://doi.org/10.1021/j150615a020>`_.
    :raw-latex:`\cite{Meier:1981}`.
 
 -  From a Crystallographic Information File (CIF), which can be
-   downloaded from the Database of Zeolite Structures
-   (http://www.iza-structure.org/databases/). From the home page, click
-   on the menu "Framework Type" and select your zeolite. The website
+   downloaded from the
+   `Database of Zeolite Structures <http://www.iza-structure.org/databases>`_.
+   From the home page, click
+   on the menu "All codes" and select your zeolite. The website
    will display structural information about the zeolite and will have a
    link to download a CIF. The CIF contains information about the
    zeolite structure such as cell parameters, space groups, T and O atom

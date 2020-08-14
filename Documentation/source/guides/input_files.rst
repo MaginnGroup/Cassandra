@@ -224,16 +224,16 @@ To compute the electrostatic energy for box *i*, this section must be
 included and *Character(i,1)* set to ``coul``. For this option,
 *Character(i,2)* can be set to ``ewald`` if you want to use an Ewald
 sum to compute Coulombic interactions, ``dsf`` if you want to use the
-Damped Shifted Force method by Fennell *et
-al.*\ :raw-latex:`\cite{Fennell:2006}`, or it can be set to ``cut``,
+`Damped Shifted Force method <https://doi.org/10.1063/1.2206581>`_
+by Fennell *et al.*, or it can be set to ``cut``,
 in which case the Coulombic interactions will be cut off and the long
 range interactions ignored. For the Ewald option, *Real(i,3)* is the
 real space cutoff distance and *Real(i,4)* specifies the accuracy of
 the Ewald summation. A reasonable value for the accuracy is
 :math:`10^{-5}`. Note that the number of reciprocal vectors for the
 Ewald summation is determined in the code based on the accuracy
-parameter. For more details, see the paper by Fincham
-:raw-latex:`\cite{Fincham:1994}`.
+parameter. For more details, see the
+`paper by Fincham <https://doi.org/10.1080/08927029408022180>`_.
 
 For example,
 
@@ -334,9 +334,10 @@ Starting Seed
 | *Integer(1) Integer(2)*
 
 Inputs for the starting random number seeds for the simulation.  Cassandra uses
-a random number generator proposed by L’Ecuyer
-:raw-latex:`\cite{random_gen:1999}`, which takes five seeds to calculate a
-random number, out of which three are defined internally while two *Integer(1)*
+a random number generator
+`proposed by L’Ecuyer <https://doi.org/10.1090/S0025-5718-99-01039-X>`_,
+which takes five seeds to calculate a random number, out of which
+three are defined internally while two *Integer(1)*
 and *Integer(2)* are supplied by the user.
 
 As an example,
@@ -910,7 +911,8 @@ Ring Flip Move
 
 This subsection is used when flip moves are to be attempted to sample bond
 angles and dihedral angles in a ring fragment. For more details on this move
-see Ref. :raw-latex:`\cite{Shah:2011}`. The relative probability of attempting
+see `Shah and Maginn <https://doi.org/10.1063/1.3644939>`_.
+The relative probability of attempting
 a flip move is specified by *Real(1)* while the maximum angular displacement in
 degrees for the move is given by *Real(2)*. For example, if the flip is to be
 attempted 30% of the time and the maximum angular displacement for the move is
@@ -1323,9 +1325,9 @@ CBMC parameters
 | ``kappa_dih`` *Integer(2)*
 | ``rcut_cbmc`` *Real(3,1)* [*Real(3,2)*]
 
-Cassandra utilizes a configurational bias methodology based on sampling a
-library of fragment conformations :raw-latex:`\cite{Shah:2011}`. This section
-sets a number of parameters required for biased insertion/deletion (refer to
+Cassandra utilizes a configurational bias methodology based on
+`sampling a library of fragment conformations <https://doi.org/10.1063/1.3644939>`_.
+This section sets a number of parameters required for biased insertion/deletion (refer to
 the sections ``# Prob_Insertion``, ``# Prob_Deletion`` and ``# Prob_Swap`` and
 configurational regrowth (``# Prob_Regrowth``).
 

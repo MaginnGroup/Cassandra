@@ -33,29 +33,21 @@ computed
    \label{eq:metropolis_2}
    \Pi_{mn} = \exp\left\{-\max\left[0, \ln\left(\frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n}\right)\right]\right\}
 
- The logarithm, defined in code as ln_pacc, is tested in the function
-accept_or_reject() which is defined in file accept_or_reject.f90. If
-ln_pacc is greater than 0 and less than a maximum numerical value,
+The logarithm, defined in code as ``ln_pacc``, is tested in the function
+``accept_or_reject()`` which is defined in file ``accept_or_reject.f90``.
+If ``ln_pacc`` is greater than 0 and less than a maximum numerical value,
 :math:`\Pi_{mn}` is computed and compared to a random number.
 
 ::
 
      accept_or_reject = .FALSE.
-
      IF (ln_pacc <= 0.0_DP) THEN
-
         accept_or_reject = .TRUE.
-
      ELSE IF ( ln_pacc < max_kBT) THEN
-
         pacc = DEXP(-ln_pacc)
-
         IF ( rranf() <= pacc ) THEN
-
            accept_or_reject = .TRUE.
-
         END IF
-
      END IF
 
 .. _sec:NVT:
@@ -725,8 +717,9 @@ converge to the same average density regardless of the simulation volume
 correspond to the converged density will not match tabulated values of
 :math:`\mu` or :math:`f` computed from experimental data.
 
-Note that the term :math:`Z^{IG}/\Omega` from Macedonia et al
-:raw-latex:`\cite{Macedonia:1999}`. would be equivalent to
+Note that the term :math:`Z^{IG}/\Omega` from
+`Macedonia *et al* <https://doi.org/10.1080/00268979909483082>`_.
+would be equivalent to
 :math:`Z_{int}/\Omega_{frag}\Omega_{dih}` in the nomenclature used here.
 The configurational partition function of the disconnected fragments
 integrates over a Boltzmann factor,

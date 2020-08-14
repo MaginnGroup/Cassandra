@@ -258,9 +258,10 @@ Electrostatic interactions are given by Coulomb’s law
 where :math:`q_i` and :math:`q_j` are the partial charges set by the
 user, which are placed on atomic positions given by :math:`r_i` and
 :math:`r_j`. In a simulation, the electrostatic interactions are
-calculated using either an Ewald summation, the Damped Shifted Force
-method :raw-latex:`\cite{Fennell:2006}`, or a direct summation using the
-minimum image convention. Note that the total energy that is printed out
+calculated using either an Ewald summation, the
+`Damped Shifted Force <https://doi.org/10.1063/1.2206581>`_,
+or a direct summation using the minimum image convention.
+Note that the total energy that is printed out
 in the property file is extensive. Consequently, to obtain intensive
 energies, the printed energies must divided by the total number of
 molecules in the system.
