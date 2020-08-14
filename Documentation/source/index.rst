@@ -1,7 +1,9 @@
 Cassandra Monte Carlo Software
 ==============================
 
-.. include:: welcome.rst
+.. only:: html
+
+    .. include:: welcome.rst
 
 
 .. toctree::

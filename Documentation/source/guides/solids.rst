@@ -63,7 +63,6 @@ ways, among others:
 -  Manually, with atomic coordinates from the literature. For example,
    the atomic coordinates of silicalite are published
    `here <https://doi.org/10.1021/j150615a020>`_.
-   :raw-latex:`\cite{Meier:1981}`.
 
 -  From a Crystallographic Information File (CIF), which can be
    downloaded from the
