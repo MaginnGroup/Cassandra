@@ -26,6 +26,15 @@
     University of Notre Dame. It is designed to perform atomistic simulations
     of molecules composed of rings, chains, or both.
 
+    .. warning::
+
+        ReadTheDocs documentation for Cassandra is currently under
+        construction. The `PDF reference manual
+        <https://github.com/MaginnGroup/Cassandra/releases/latest/download/user_guide.pdf>`_
+        is still considered the authoritative source during our transition to
+        ReadTheDocs. This message will be removed once the transition to
+        ReadTheDocs is complete.
+
     Resources
     ~~~~~~~~~
 
@@ -49,8 +58,7 @@
     Citation
     ~~~~~~~~
 
-    Please cite **Cassandra** if you use this software as part of your research.
-    See :doc:`here <reference/citing>` for details.
+    Please :doc:`cite our publication <reference/citing>` if you use this software as part of your research.
 
     Installation
     ~~~~~~~~~~~~
