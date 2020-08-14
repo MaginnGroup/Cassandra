@@ -30,7 +30,7 @@ files can be downloaded from the internet (e.g., `<https://www.rcsb.org>`_).
 In this example, a pentane PDB file using the program Gaussview v5.08 was
 generated as shown below.
 
-.. code-block::
+::
 
     REMARK   1 File created by GaussView 5.0.8
     ATOM      1  C1  PENL    1       2.142   1.395  -8.932  1.00  0.00          C
@@ -47,7 +47,7 @@ generated as shown below.
 
 Append a column containing the atom types:
 
-.. code-block::
+::
 
     REMARK   1 File created by GaussView 5.0.8
     ATOM      1  C1  PENL    1       2.142   1.395  -8.932  1.00  0.00          C3  CH3
@@ -65,7 +65,7 @@ Append a column containing the atom types:
 Avogadro v1.1.1 can also be used to generate CML files. Below is an
 example of a CML file generated using Avogadro.
 
-.. code-block::
+::
 
     <molecule>
      <atomArray>
@@ -86,7 +86,7 @@ example of a CML file generated using Avogadro.
 Modify the pentane united atom CML file. Note that the atom type is
 appended as a last column between quotation marks.
 
-.. code-block::
+::
 
     <molecule>
      <atomArray>
@@ -113,7 +113,7 @@ In the terminal, run the following command:
 This command will create an .ff file. The first three sections of the FF file
 are displayed next. Do not modify these.
 
-.. code-block::
+::
 
     atomtypes
     2
@@ -133,7 +133,7 @@ The force field parameters for non-bonded (not shown), bonds, angle, dihedral
 corresponding keyword. For example, the angle type CH3 CH2 CH2 has an angle of
 114.0. This value must be placed next to the “Angle” keyword.
 
-.. code-block::
+::
 
     bonds
     CH2 CH2
