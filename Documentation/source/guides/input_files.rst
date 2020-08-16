@@ -423,10 +423,11 @@ each species, so do not use larger numbers than are needed.
 Simulation Box
 ~~~~~~~~~~~~~~
 
-| ``# Box\_Info``
+| ``# Box_Info``
 | *Integer(1)*
 | *Character(i)*
 | *Real(i,1)* [*Real(i,2) Real(i,3)*]
+| [``restricted_insertion`` *Character(1)* *Real(1)* [*Real(2)*]]
 
 This section sets parameters for the simulation boxes. *Integer(1)*
 specifies the total number of boxes in the simulation. Gibbs ensemble
@@ -441,7 +442,8 @@ line. For a two box simulation, box information is given as:
 
 .. code-block:: none
 
-    # Box_Info 2
+    # Box_Info
+    2
     cubic
     30.0
 
@@ -459,7 +461,8 @@ example,
 
 .. code-block:: none
 
-    # Box_Info 1
+    # Box_Info
+    1
     orthogonal
     30.0 35.0 40.0
 
@@ -473,7 +476,8 @@ matrix. For example,
 
 .. code-block:: none
 
-    # Box_Info 1
+    # Box_Info
+    1
     cell_matrix
     30  0  0
     0  35  0
@@ -481,6 +485,37 @@ matrix. For example,
 
 defines a simulation box with basis vectors (30, 0, 0), (0, 35, 2) and
 (0, 0, 40).
+
+The optional keyword ``restricted_insertion`` is used to define a region
+inside the simulation box in which molecules will be inserted at start-up
+via ``make_config`` or ``add_to_config`` or throughout the simulation via
+grand canonical insertion moves or Gibbs ensemble swap moves.
+If ``restricted_insertion`` is specified, *Character(1)* takes one of
+several options: ``sphere``, ``cylinder``, ``slitpore``, or ``interface``.
+Each option requires additional parameters, as follows:
+
+-	| ``sphere r``, where ``r`` is the radius of a sphere centered at the origin
+-	| ``cylinder r``, where ``r`` is the radius of a cylinder centered on the z-axis
+-	| ``slitpore z_max``, where ``z_max`` is half the height of a rectangular prism
+    centered on the *xy*-plane
+-   | ``interface z_min z_max``, which defines two rectangular prisms that span
+    the box in the *x* and *y* directions. One box has bounds ``z_min < z < z_max``
+    and the other has bounds ``-z_max < z < -z_min``.
+
+For example, to make a spherical droplet with a radius of 5 Å in cubic box
+with 100 Å side lengths:
+
+.. code-block:: none
+   
+    # Box_Info
+    1
+    cubic
+    100
+    restricted_insertion sphere 5.0
+
+In addition, the insertion method for each species must be identified in the
+``Start_Type`` or ``Move_Probability_Info`` sections.
+
 
 Temperature
 ~~~~~~~~~~~
@@ -518,7 +553,7 @@ this section will be ignored.
 Chemical Potential
 ~~~~~~~~~~~~~~~~~~
 
-| ``# Chemical\_Potential\_Info``
+| ``# Chemical_Potential_Info``
 | *Real(1) ... Real(n)*
 
 where *n* is the number of insertable species and *Real(i)* is the
@@ -653,7 +688,7 @@ unit vector, and the point particles will not be rotated.
 Angle
 ^^^^^
 
-| ``# Prob\_Angle``
+| ``# Prob_Angle``
 | *Real(1)*
 
 A molecule will be selected at random and its angle will be perturbed based on
@@ -814,10 +849,21 @@ Insertion and Deletion Moves
 
 where :math:`n` is the number of species. *Real(1)* sets the probability of
 attempting insetion moves. *Character(2,i)* is the insertion method and can be
-either ``cbmc`` or ``none``. If ``cbmc``, species :math:`i` will be inserted by
-assembling its fragments using configurational bias Monte Carlo. If ``none``,
-species :math:`i` will not be inserted or deleted. This subsection is required
-for GCMC simulations.
+either ``cbmc``, ``none``, or ``restricted``. If ``cbmc``, species :math:`i`
+will be inserted by assembling its fragments using configurational bias
+Monte Carlo. If ``none``, species :math:`i` will not be inserted or deleted.
+If ``restricted``, species :math:`i` will be assembled using CBMC with the
+first fragment inserted into the region defined by the ``restricted_insertion``
+keyword in the ``# Box_Info`` section. This subsection is required for
+GCMC simulations.
+
+.. warning::
+
+    Restricted insertions should only be used if the
+    relevant molecules cannot escape the restricted region during
+    the simulation. If this condition is not met the acceptance criteria
+    for molecule deletion will be incorrect and the ensemble will not be
+    properly sampled.
 
 If there is more than one insertable species, each is chosen for an insertion
 attempt with equal probability. For example, if you are performing a GCMC
@@ -860,11 +906,21 @@ is made to delete it. This subsection is required for GCMC simulations.
 where :math:`n` is the number of species and :math:`i` is the number of boxes.
 *Real(1)* is the probability of attempting to transfer a molecule from one box
 to another. Similar to the ``# Prob_Insertion`` subsection, *Character(2,i)* is
-the insertion method and can be ``cbmc`` or ``none``. If ``cbmc``, species
+the insertion method and can be ``cbmc``, ``none``, or ``restricted``. If ``cbmc``, species
 :math:`i` will be inserted by assembling its fragments using configurational
 bias Monte Carlo. If ``none``, species :math:`i` will not be transferred
-between boxes.  This subsection is required for a GEMC simulation.
+between boxes. If ``restricted``, species :math:`i` will be assembled using CBMC with the
+first fragment inserted into the region defined by the ``restricted_insertion``
+keyword in the ``# Box_Info`` section. This subsection is required for
+GEMC simulations.
 
+.. warning::
+
+    Restricted insertions should only be used if the
+    relevant molecules cannot escape the restricted region during
+    the simulation. If this condition is not met the acceptance criteria
+    for molecule deletion will be incorrect and the ensemble will not be
+    properly sampled.
 
 For example, while performing a GEMC simulation for three species the first two
 of which are exchanged while the third is not, specify the following:
@@ -906,7 +962,7 @@ The probability of selecting a species with insertion method ``none`` must be 0.
 
 Ring Flip Move
 ^^^^^^^^^^^^^^
-| ``# Prob\_Ring``
+| ``# Prob_Ring``
 | *Real(1) Real(2)*
 
 This subsection is used when flip moves are to be attempted to sample bond
@@ -935,13 +991,53 @@ Start Type
 ~~~~~~~~~~
 
 | ``# Start_Type``
-| *Character(1) [options]*
+| *Character(1)*
+| [*Character(2)*]
+| [``insertion`` *Character(3,1)*, *Character(3,2)*, *Character(3,n)*]
 
 This section specifies whether Cassandra generates an initial
 configuration or uses a previously generated configuration to start a
-simulation. *Character(1)* can be one of four keywords: ``make_config``
-``read_config``, ``add_to_config``, or ``checkpoint``. The specifications
-for *[options]* depends on *Character(1)* as described below:
+simulation. *Character(1)* [*Character(2)*] can be one of four keywords:
+``make_config``, ``read_config``, ``add_to_config``, or ``checkpoint``.
+
+The keyword ``insertion`` is optional and is only meaningful if used in conjunction
+with the keyword ``restricted_insertion`` in the ``Box_Info`` section and
+either the ``make_config`` or ``add_to_config`` keywords in this section.
+*Character(3,i)* is the insertion method for species :math:`i` and can be
+one of the following options: ``cbmc``, ``none``, or ``restricted``.
+If ``cbmc``, species :math:`i` will be assembled using configurational
+bias Monte Carlo. If ``none``, species :math:`i` will not be inserted.
+If ``restricted``, species :math:`i` will be assembled using CBMC
+with the first fragment inserted into the region defined by
+the ``restricted_insertion`` keyword in the ``Box_Info`` section.
+
+``make_config`` and ``add_to_config`` are options to construct an
+initial configuration by inserting a specified number of molecules
+of each species. Each molecule is inserted using configuration bias
+Monte Carlo, using ``kappa_ins`` trial locations for the first fragment
+and ``kappa_dih`` trial rotations for each additional fragment. Trial
+locations and rotations that place two atoms closer than ``Rcutoff_Low``
+have zero weight. Otherwise the weight of the trial location is computed as
+discussed in :ref:`sec:cbmcInsert` and one trial is selected proportionate
+to its weight. If all trial locations have zero weight, the insertion is
+rejected and re-attempted. 
+
+.. warning::
+
+    If the specified initial density is too high the code may get stuck
+    attempting to generate an initial configuration.
+
+.. warning::
+
+    The ``make_config`` and ``add_to_config`` options do not utilize a chemical
+    potential or compute the change in energy from inserting the fully assembled
+    molecule. As a result, these routines will allow the user to insert more
+    molecules than are thermodynamically reasonable at finite temperature or
+    finite chemical potentials. This can become problematic when deleting
+    molecules in GCMC and GEMC simulations. If the energy required to insert
+    a molecule back into the location it's being deleted from is greater than
+    +708 *kT*, Cassandra will abort with a "Attempted to delete molecule...but the
+    molecule energy is too high" error message.
 
 
 -  | ``make_config`` will generate an initial configuration using a
@@ -1060,12 +1156,13 @@ for *[options]* depends on *Character(1)* as described below:
         in the input file are used.
 
 .. note::
+    
     Unless starting from a checkpoint file, input files for a multi-box
     simulation must have one line for each box in the ``Start_Type``
     section. Each line can start with a different keyword. For example, a
     GEMC simulation of a water(1)-methane(2) mixture can begin from an
     equilibrated water box and a new vapor box:
-    .. code-block::
+    ::
 
         # Start_Type
         read_config 100 0 water.xyz
@@ -1091,9 +1188,10 @@ corresponding maximum displacement width is updated. *Integer(2)* is the number
 of MC volume moves after which the volume displacement width is updated. This
 number is optional if no volume moves are performed during a simulation (for
 example in an NVT or a GCMC simulation). When the run type is set to
-``production``, the MC moves refer to the frequency at which the acceptance
-ratios for various moves will be computed and output to the log file. These
-acceptance rates should be checked to make sure proper sampling is achieved.
+``production``, *Integer(1)* and *Integer(2)* refer to the frequency
+at which the acceptance ratios for thermal and volume moves will be
+output to the log file. These acceptance rates should be checked to make
+sure proper sampling is achieved.
 
 For an NPT equilibration run in which the widths of the thermal move are to be
 updated after 1000 MC moves and maximum volume displacements after 100 volume
@@ -1102,7 +1200,7 @@ moves, specify the following:
 .. code-block:: none
 
     # Run_Type
-    equilibration 100 10
+    equilibration 1000 100
 
 For an NVT production run in which the acceptance ratios of various thermal
 moves are printed to the log file after every 250 MC steps of a given thermal

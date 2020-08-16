@@ -8,13 +8,15 @@
 [![Build Status](https://dev.azure.com/MaginnGroup/Cassandra/_apis/build/status/MaginnGroup.Cassandra?branchName=master)](https://dev.azure.com/MaginnGroup/Cassandra/_build/latest?definitionId=2&branchName=master)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 [![Chat on Slack](https://img.shields.io/badge/chat-on_slack-green.svg?longCache=true&style=flat&logo=slack)](https://join.slack.com/t/cassandra-nd/shared_invite/enQtNDU0NDIyMDc5ODEyLWE5Yzc1YmQ3MzdhNWVmYTkyNjY0YWQ3ZDJmMjQ5ZTliYTc3MTNlZTg2MzgxOTdjY2Y1ZTNiMjVhMmE4NGEzYWM)
+[![Documentation Status](https://readthedocs.org/projects/cassandra-mc/badge/?version=latest)](https://cassandra-mc.readthedocs.io/en/latest/?badge=latest)
+
 
 ## Contents
 1. [Overview](#overview)
 2. [Features](#features)
 3. [Installation](#installation)
 4. [Getting Started](#starting)
-5. [Documentation](https://github.com/MaginnGroup/Cassandra/releases/latest/download/user_guide.pdf)
+5. [Documentation](https://cassandra-mc.readthedocs.io/)
 6. [Forum](https://cassandra.nd.edu/index.php/community)
 7. [Contribute](#contributing)
 8. [Citation](#citation)
