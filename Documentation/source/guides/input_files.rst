@@ -423,7 +423,7 @@ each species, so do not use larger numbers than are needed.
 Simulation Box
 ~~~~~~~~~~~~~~
 
-| ``# Box\_Info``
+| ``# Box_Info``
 | *Integer(1)*
 | *Character(i)*
 | *Real(i,1)* [*Real(i,2) Real(i,3)*]
@@ -518,7 +518,7 @@ this section will be ignored.
 Chemical Potential
 ~~~~~~~~~~~~~~~~~~
 
-| ``# Chemical\_Potential\_Info``
+| ``# Chemical_Potential_Info``
 | *Real(1) ... Real(n)*
 
 where *n* is the number of insertable species and *Real(i)* is the
@@ -653,7 +653,7 @@ unit vector, and the point particles will not be rotated.
 Angle
 ^^^^^
 
-| ``# Prob\_Angle``
+| ``# Prob_Angle``
 | *Real(1)*
 
 A molecule will be selected at random and its angle will be perturbed based on
@@ -906,7 +906,7 @@ The probability of selecting a species with insertion method ``none`` must be 0.
 
 Ring Flip Move
 ^^^^^^^^^^^^^^
-| ``# Prob\_Ring``
+| ``# Prob_Ring``
 | *Real(1) Real(2)*
 
 This subsection is used when flip moves are to be attempted to sample bond
@@ -1091,9 +1091,10 @@ corresponding maximum displacement width is updated. *Integer(2)* is the number
 of MC volume moves after which the volume displacement width is updated. This
 number is optional if no volume moves are performed during a simulation (for
 example in an NVT or a GCMC simulation). When the run type is set to
-``production``, the MC moves refer to the frequency at which the acceptance
-ratios for various moves will be computed and output to the log file. These
-acceptance rates should be checked to make sure proper sampling is achieved.
+``production``, *Integer(1)* and *Integer(2)* refer to the frequency
+at which the acceptance ratios for thermal and volume moves will be
+output to the log file. These acceptance rates should be checked to make
+sure proper sampling is achieved.
 
 For an NPT equilibration run in which the widths of the thermal move are to be
 updated after 1000 MC moves and maximum volume displacements after 100 volume
@@ -1102,7 +1103,7 @@ moves, specify the following:
 .. code-block:: none
 
     # Run_Type
-    equilibration 100 10
+    equilibration 1000 100
 
 For an NVT production run in which the acceptance ratios of various thermal
 moves are printed to the log file after every 250 MC steps of a given thermal
