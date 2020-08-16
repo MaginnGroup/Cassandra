@@ -427,6 +427,7 @@ Simulation Box
 | *Integer(1)*
 | *Character(i)*
 | *Real(i,1)* [*Real(i,2) Real(i,3)*]
+| [``restricted_insertion`` *Character(1)* *Real(1)* [*Real(2)*]]
 
 This section sets parameters for the simulation boxes. *Integer(1)*
 specifies the total number of boxes in the simulation. Gibbs ensemble
@@ -441,7 +442,8 @@ line. For a two box simulation, box information is given as:
 
 .. code-block:: none
 
-    # Box_Info 2
+    # Box_Info
+    2
     cubic
     30.0
 
@@ -459,7 +461,8 @@ example,
 
 .. code-block:: none
 
-    # Box_Info 1
+    # Box_Info
+    1
     orthogonal
     30.0 35.0 40.0
 
@@ -473,7 +476,8 @@ matrix. For example,
 
 .. code-block:: none
 
-    # Box_Info 1
+    # Box_Info
+    1
     cell_matrix
     30  0  0
     0  35  0
@@ -481,6 +485,37 @@ matrix. For example,
 
 defines a simulation box with basis vectors (30, 0, 0), (0, 35, 2) and
 (0, 0, 40).
+
+The optional keyword ``restricted_insertion`` is used to define a region
+inside the simulation box in which molecules will be inserted at start-up
+via ``make_config`` or ``add_to_config`` or throughout the simulation via
+grand canonical insertion moves or Gibbs ensemble swap moves.
+If ``restricted_insertion`` is specified, *Character(1)* takes one of
+several options: ``sphere``, ``cylinder``, ``slitpore``, or ``interface``.
+Each option requires additional parameters, as follows:
+
+-	| ``sphere r``, where ``r`` is the radius of a sphere centered at the origin
+-	| ``cylinder r``, where ``r`` is the radius of a cylinder centered on the z-axis
+-	| ``slitpore z_max``, where ``z_max`` is half the height of a rectangular prism
+    centered on the *xy*-plane
+-   | ``interface z_min z_max``, which defines two rectangular prisms that span
+    the box in the *x* and *y* directions. One box has bounds ``z_min < z < z_max``
+    and the other has bounds ``-z_max < z < -z_min``.
+
+For example, to make a spherical droplet with a radius of 5 Å in cubic box
+with 100 Å side lengths:
+
+.. code-block:: none
+   
+    # Box_Info
+    1
+    cubic
+    100
+    restricted_insertion sphere 5.0
+
+In addition, the insertion method for each species must be identified in the
+``Start_Type`` or ``Move_Probability_Info`` sections.
+
 
 Temperature
 ~~~~~~~~~~~
