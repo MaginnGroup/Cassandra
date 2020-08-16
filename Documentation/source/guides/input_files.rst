@@ -849,10 +849,21 @@ Insertion and Deletion Moves
 
 where :math:`n` is the number of species. *Real(1)* sets the probability of
 attempting insetion moves. *Character(2,i)* is the insertion method and can be
-either ``cbmc`` or ``none``. If ``cbmc``, species :math:`i` will be inserted by
-assembling its fragments using configurational bias Monte Carlo. If ``none``,
-species :math:`i` will not be inserted or deleted. This subsection is required
-for GCMC simulations.
+either ``cbmc``, ``none``, or ``restricted``. If ``cbmc``, species :math:`i`
+will be inserted by assembling its fragments using configurational bias
+Monte Carlo. If ``none``, species :math:`i` will not be inserted or deleted.
+If ``restricted``, species :math:`i` will be assembled using CBMC with the
+first fragment inserted into the region defined by the ``restricted_insertion``
+keyword in the ``# Box_Info`` section. This subsection is required for
+GCMC simulations.
+
+.. warning::
+
+    Restricted insertions should only be used if the
+    relevant molecules cannot escape the restricted region during
+    the simulation. If this condition is not met the acceptance criteria
+    for molecule deletion will be incorrect and the ensemble will not be
+    properly sampled.
 
 If there is more than one insertable species, each is chosen for an insertion
 attempt with equal probability. For example, if you are performing a GCMC
@@ -895,11 +906,21 @@ is made to delete it. This subsection is required for GCMC simulations.
 where :math:`n` is the number of species and :math:`i` is the number of boxes.
 *Real(1)* is the probability of attempting to transfer a molecule from one box
 to another. Similar to the ``# Prob_Insertion`` subsection, *Character(2,i)* is
-the insertion method and can be ``cbmc`` or ``none``. If ``cbmc``, species
+the insertion method and can be ``cbmc``, ``none``, or ``restricted``. If ``cbmc``, species
 :math:`i` will be inserted by assembling its fragments using configurational
 bias Monte Carlo. If ``none``, species :math:`i` will not be transferred
-between boxes.  This subsection is required for a GEMC simulation.
+between boxes. If ``restricted``, species :math:`i` will be assembled using CBMC with the
+first fragment inserted into the region defined by the ``restricted_insertion``
+keyword in the ``# Box_Info`` section. This subsection is required for
+GEMC simulations.
 
+.. warning::
+
+    Restricted insertions should only be used if the
+    relevant molecules cannot escape the restricted region during
+    the simulation. If this condition is not met the acceptance criteria
+    for molecule deletion will be incorrect and the ensemble will not be
+    properly sampled.
 
 For example, while performing a GEMC simulation for three species the first two
 of which are exchanged while the third is not, specify the following:
@@ -970,13 +991,53 @@ Start Type
 ~~~~~~~~~~
 
 | ``# Start_Type``
-| *Character(1) [options]*
+| *Character(1)*
+| [*Character(2)*]
+| [``insertion`` *Character(3,1)*, *Character(3,2)*, *Character(3,n)*]
 
 This section specifies whether Cassandra generates an initial
 configuration or uses a previously generated configuration to start a
-simulation. *Character(1)* can be one of four keywords: ``make_config``
-``read_config``, ``add_to_config``, or ``checkpoint``. The specifications
-for *[options]* depends on *Character(1)* as described below:
+simulation. *Character(1)* [*Character(2)*] can be one of four keywords:
+``make_config``, ``read_config``, ``add_to_config``, or ``checkpoint``.
+
+The keyword ``insertion`` is optional and is only meaningful if used in conjunction
+with the keyword ``restricted_insertion`` in the ``Box_Info`` section and
+either the ``make_config`` or ``add_to_config`` keywords in this section.
+*Character(3,i)* is the insertion method for species :math:`i` and can be
+one of the following options: ``cbmc``, ``none``, or ``restricted``.
+If ``cbmc``, species :math:`i` will be assembled using configurational
+bias Monte Carlo. If ``none``, species :math:`i` will not be inserted.
+If ``restricted``, species :math:`i` will be assembled using CBMC
+with the first fragment inserted into the region defined by
+the ``restricted_insertion`` keyword in the ``Box_Info`` section.
+
+``make_config`` and ``add_to_config`` are options to construct an
+initial configuration by inserting a specified number of molecules
+of each species. Each molecule is inserted using configuration bias
+Monte Carlo, using ``kappa_ins`` trial locations for the first fragment
+and ``kappa_dih`` trial rotations for each additional fragment. Trial
+locations and rotations that place two atoms closer than ``Rcutoff_Low``
+have zero weight. Otherwise the weight of the trial location is computed as
+discussed in :ref:`sec:cbmcInsert` and one trial is selected proportionate
+to its weight. If all trial locations have zero weight, the insertion is
+rejected and re-attempted. 
+
+.. warning::
+
+    If the specified initial density is too high the code may get stuck
+    attempting to generate an initial configuration.
+
+.. warning::
+
+    The ``make_config`` and ``add_to_config`` options do not utilize a chemical
+    potential or compute the change in energy from inserting the fully assembled
+    molecule. As a result, these routines will allow the user to insert more
+    molecules than are thermodynamically reasonable at finite temperature or
+    finite chemical potentials. This can become problematic when deleting
+    molecules in GCMC and GEMC simulations. If the energy required to insert
+    a molecule back into the location it's being deleted from is greater than
+    +708 *kT*, Cassandra will abort with a "Attempted to delete molecule...but the
+    molecule energy is too high" error message.
 
 
 -  | ``make_config`` will generate an initial configuration using a
@@ -1095,12 +1156,13 @@ for *[options]* depends on *Character(1)* as described below:
         in the input file are used.
 
 .. note::
+    
     Unless starting from a checkpoint file, input files for a multi-box
     simulation must have one line for each box in the ``Start_Type``
     section. Each line can start with a different keyword. For example, a
     GEMC simulation of a water(1)-methane(2) mixture can begin from an
     equilibrated water box and a new vapor box:
-    .. code-block::
+    ::
 
         # Start_Type
         read_config 100 0 water.xyz
