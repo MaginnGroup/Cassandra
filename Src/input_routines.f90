@@ -5222,6 +5222,10 @@ END SUBROUTINE Get_Run_Type
 
 SUBROUTINE Get_Widom_Info
 
+        ! This subroutine determines from the input file whether Widom insertions are desired
+        ! and reads in the relevant information from the # Widom_Insertion section of the input
+        ! file if it is present.
+
         INTEGER :: is, ibox
         INTEGER :: line_nbr
         INTEGER :: ierr
@@ -5323,7 +5327,10 @@ SUBROUTINE Get_Widom_Info
 END SUBROUTINE Get_Widom_Info
 
 SUBROUTINE Log_Widom_Info
-        
+        ! This subroutine writes relevant information about the settings for the Widom insertions
+        ! to the log file if Widom insertions are enabled, and also adjusts the widom_interval
+        ! values according to the simulation length units.
+
         INTEGER :: ibox, is
         CHARACTER(120) :: linetext
         

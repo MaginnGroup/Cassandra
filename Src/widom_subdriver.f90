@@ -23,20 +23,19 @@ SUBROUTINE Widom_Subdriver
 
   !*****************************************************************************
   ! 
-  ! PURPOSE: 
+  ! PURPOSE: This subroutine checks which species and box combinations should
+  !          have Widom insertions in the current step, calls Widom_Insert to 
+  !          execute Widom insertions for those species and box combinations,
+  !          and calls Write_Widom_Properties to write the results to Widom 
+  !          property files.
   !
   ! Called by
   !
-  !    
+  !   nvtmc_driver
+  !   nptmc_driver
+  !   gcmc_driver
+  !   gemc_driver 
   !
-  ! Revision history
-  !
-  !   
-  !   
-  !   
-  ! DESCRIPTION: This subroutine performs the following steps:
-  !
-  ! 
   !*****************************************************************************
 
   USE Global_Variables
@@ -47,19 +46,11 @@ SUBROUTINE Widom_Subdriver
 
   IMPLICIT NONE
 
-  ! Arguments
 
   ! Local declarations
   INTEGER :: is, ibox
-
-  
   REAL(DP) :: widom_sum, widom_avg
-
-
-
-
   ! Loop over all species
-
   DO is = 1, nspecies
         ! Loop over all boxes
         DO ibox = 1, nbr_boxes
@@ -70,30 +61,9 @@ SUBROUTINE Widom_Subdriver
                 IF (MOD(i_mcstep,species_list(is)%widom_interval(ibox)) .NE. 0) CYCLE
                 CALL Widom_Insert(is,ibox,widom_sum)
                 species_list(is)%widom_sum(ibox) = species_list(is)%widom_sum(ibox) + widom_sum
-
-
                 widom_avg = widom_sum / species_list(is)%insertions_in_step(ibox)
                 CALL Write_Widom_Properties(is,ibox,widom_avg)
-
-
-
         END DO
-
-
-
-
   END DO
-
-
-
-
-
-
-
-
-
-
-
-
 END SUBROUTINE Widom_Subdriver
 !*******************************************************************************

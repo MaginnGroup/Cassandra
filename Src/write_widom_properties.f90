@@ -24,9 +24,6 @@ SUBROUTINE Write_Widom_Properties(is,this_box,widom_avg)
   !
   !     Widom_Subdriver
   !
-  ! CALLS
-  !
-  !   None
   !
 !*******************************************************************************
 
