@@ -1580,7 +1580,9 @@ SUBROUTINE Get_Atom_Info(is)
            END SELECT
 
            ! the last entry is 'ring' for ring atoms
+           ! multiring atoms are ID'd in ring_fragment_driver.f90
            nonbond_list(ia,is)%ring_atom = .FALSE.
+           nonbond_list(ia,is)%multiring_atom = .FALSE.
            IF (line_array(nbr_entries) == 'ring') THEN
               nring_atoms(is) = nring_atoms(is) + 1
               ring_atom_ids(nring_atoms(is),is) = ia

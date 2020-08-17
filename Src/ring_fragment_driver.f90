@@ -51,7 +51,7 @@ SUBROUTINE Ring_Fragment_Driver
   !        main
   !
   ! CALLS
-  !
+  !        ID_Multiring_Atoms
   !        Flip_Move
   !        Atom_Displacement
   !
@@ -63,17 +63,20 @@ SUBROUTINE Ring_Fragment_Driver
   
   IMPLICIT NONE
 
-  INTEGER :: is, im, ibox, i, ia, nring_success, nexoring_success
+  INTEGER :: is, im, ibox, ia, nring_success, nexoring_success
   INTEGER :: nexoring_trials, nring_trials
 
   REAL(DP) :: rand_no 
-
-  LOGICAL :: overlap
 
   ! Fragment routine is only called with 1 box, species, and molecule
   is = 1
   im = 1
   ibox = 1
+
+  ! ID atoms that belong to more than 1 ring
+  IF (cut_ring >= 0.0) THEN
+     CALL ID_Multiring_Atoms(is)
+  ENDIF
 
   nring_success = 0
   nexoring_success = 0
@@ -133,4 +136,63 @@ SUBROUTINE Ring_Fragment_Driver
   WRITE(*,'(X,A,T40,I8)') 'Number of successful exoring trials', nexoring_success
 
 END SUBROUTINE Ring_Fragment_Driver
+
+SUBROUTINE ID_Multiring_Atoms(is)
+  !*****************************************************************************
+  !
+  ! CALLED BY
+  !
+  !        Ring_Fragment_Driver
+  !
+  ! CALLS
+  !
+  !*****************************************************************************
+
+  USE Global_Variables
+  
+  IMPLICIT NONE
+
+  INTEGER, INTENT(IN) :: is
+  INTEGER :: i, j, atom1, atom2, this_atom, angle_id
+  INTEGER :: nmultiring_atoms, atom_ring_count
+
+  ! If trying ring flip moves, identify the ring atoms that
+  ! belong to multiple rings. They cannot be used for flip
+  ! moves. Also ensure >0 atoms can be used for the flip move.
+  nmultiring_atoms = 0
+  DO i = 1, nring_atoms(is)
+     this_atom = ring_atom_ids(i, is)
+     ! Count the number of rings this_atom belongs to
+     atom_ring_count = 0
+     ! Loop over all angles
+     DO j = 1, angle_part_list(this_atom, is)%nangles
+        IF (angle_part_list(this_atom, is)%position(j) == 2 ) THEN
+           ! this_atom is at the apex
+           angle_id = angle_part_list(this_atom, is)%which_angle(j)
+           ! check if other atoms in the angle are ring atoms
+           atom1 = angle_list(angle_id, is)%atom1
+           atom2 = angle_list(angle_id, is)%atom3
+           IF (nonbond_list(atom1, is)%ring_atom .AND. nonbond_list(atom2, is)%ring_atom) THEN
+              ! If yes, increment counter
+              atom_ring_count = atom_ring_count + 1
+           ENDIF
+        ENDIF
+     ENDDO
+     IF (atom_ring_count > 1) THEN
+        nonbond_list(this_atom, is)%multiring_atom = .TRUE.
+        nmultiring_atoms = nmultiring_atoms + 1
+     ENDIF
+  ENDDO
+  ! Check that at least 1 atom can be used for a flip move
+  IF (nmultiring_atoms > 0) THEN
+     WRITE(*,*) "Found", nmultiring_atoms, "multiring atoms"
+  ENDIF
+  IF (nmultiring_atoms == nring_atoms(is)) THEN
+     err_msg = ''
+     err_msg(1) = 'All ring atoms belong to multiple rings.'
+     err_msg(2) = 'No flip moves can be performed'
+     CALL Clean_Abort(err_msg,'ID_Multiring_Atoms')
+  ENDIF
+
+END SUBROUTINE ID_Multiring_Atoms
 !*******************************************************************************

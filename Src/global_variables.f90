@@ -87,7 +87,7 @@ USE Type_Definitions
 
   ! The starting seed for the random generator
   ! Note iseed is used for generating points on random sphere for MCF_Gen sim type.
- INTEGER (KIND=8) :: iseed, iseed1, iseed3
+  INTEGER (KIND=8) :: iseed, iseed1, iseed3
 
   ! Variables associated with the nonbond potential
   CHARACTER(15) :: mix_rule, run_type
@@ -307,7 +307,7 @@ USE Type_Definitions
 
   ! array containing name of each atom type with idex = atomtype number.
   ! It is set and allocated to size nbr_atomtypes in Create_Nonbond_Table
-  CHARACTER(8), DIMENSION(:), ALLOCATABLE :: atom_type_list
+  CHARACTER(23), DIMENSION(:), ALLOCATABLE :: atom_type_list
 
   INTEGER, DIMENSION(:), ALLOCATABLE :: nbr_vdw_params
 
