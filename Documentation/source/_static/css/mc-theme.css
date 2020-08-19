@@ -1,0 +1,31 @@
+/* Sidebar header (and topbar for mobile) */
+.wy-side-nav-search, .wy-nav-top {
+  background: #3a4958;
+  border-bottom: 2px solid #da4b3b;
+}
+
+/* Sidebar navigation */
+.wy-nav-side {
+  background: #4e4e56;
+}
+
+/* Sidebar section headers */
+.wy-menu-vertical p.caption {
+  color: #38b1cb;
+}
+
+/* Sidebar button colors */
+.wy-menu-vertical a {
+  color: #fcfcfc;
+}
+
+.wy-menu-vertical a:hover {
+  /*background-color: #006ea0; */
+  background-color: #2f97ad;
+  color: #fcfcfc;
+}
+
+.wy-menu-vertical a:active {
+  background-color: #0081b3;
+  color: #fcfcfc;
+}

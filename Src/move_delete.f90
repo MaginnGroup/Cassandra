@@ -326,9 +326,14 @@ SUBROUTINE Deletion
   ln_pacc = ln_pacc - ln_pbias
 
   ! dimensionless density
-  ln_pacc = ln_pacc + DLOG(box_list(ibox)%volume) &
-                    - DLOG(REAL(nmols(is,ibox),DP)) &
+  ln_pacc = ln_pacc - DLOG(REAL(nmols(is,ibox),DP)) &
                     - 3.0_DP*DLOG(species_list(is)%de_broglie(ibox)) 
+
+  IF (box_list(ibox)%int_inner_shape == int_none .OR. species_list(is)%insertion == "CBMC") THEN
+     ln_pacc = ln_pacc + DLOG(box_list(ibox)%volume)
+  ELSE
+     ln_pacc = ln_pacc + DLOG(box_list(ibox)%inner_volume)
+  END IF
  
   accept = accept_or_reject(ln_pacc)
 
