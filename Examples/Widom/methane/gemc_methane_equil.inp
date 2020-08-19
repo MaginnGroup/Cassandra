@@ -1,0 +1,125 @@
+# Run_Name
+gemc_methane_equil.out
+!------------------------------------------------------------------------------
+
+# Sim_Type
+GEMC
+!------------------------------------------------------------------------------
+
+# Nbr_Species
+1
+!------------------------------------------------------------------------------
+
+# VDW_Style
+LJ   cut_tail   14.00
+LJ   cut_tail   14.00
+!------------------------------------------------------------------------------
+
+# Rcutoff_Low
+1.0
+!------------------------------------------------------------------------------
+
+# Mixing_Rule
+LB
+!------------------------------------------------------------------------------
+
+# Molecule_Files
+methane.mcf 500
+!----------------------------------------------------------one line per species
+
+# Box_Info
+2
+cubic
+33.00
+
+cubic
+37.50
+!-------------------------------------------------------line 1: number of boxes
+!--------------------------------------------------------------line 2: box type
+!--------------------------------------------------------------line 3: box size
+!--------------------------------------------------------------repeat for second box
+
+# Temperature_Info
+175.0 
+175.0
+!----------------------------------------------------------one temperature per box
+
+# Move_Probability_Info
+
+# Prob_Translation
+0.85
+0.15
+1.0
+
+# Prob_Volume
+0.03
+200.0
+
+# Prob_Swap
+0.12
+cbmc
+
+# Done_Probability_Info
+!---------------------one line for each box and one entry/line for each species
+!-----------------------------------------each molecule moves per volume change
+
+# Start_Type
+make_config 400
+make_config 100
+!--------make_config: one line for each species and one entry/line for each box
+!------------------------------------------------------------read_old: filename
+!----------------------------------------------------------checkpoint: filename
+
+# Run_Type
+Equilibration 10000 10000
+!-------------------------Equilibration: update maximum widths every 10000 steps/update maximum
+!-------------------------volume displacement every 10000 steps
+
+# Simulation_Length_Info
+Units       Steps
+Prop_Freq   2000
+Coord_Freq  2200000
+Run         2200000
+!------------------ simulation length every 2200000 steps, XYZ output every 2200000 steps, property
+!---------------------------------------output every 1000 steps
+
+# Widom_Insertion
+false
+cbmc 10000 2200 cbmc 10000 2200
+
+# Seed
+7338378580   8226958363
+!------------------------------------------------------------------------------
+
+# Property_Info 1
+Density
+Nmols
+Volume
+Pressure
+!------------------------------------------------------------------------------
+
+# Property_Info 2
+Density
+Nmols
+Volume
+Pressure
+!------------------------------------------------------------------------------
+
+
+# Fragment_Files
+species1/frag1/frag1.dat  1
+!---------------------------------------------------------one line per fragment
+
+# CBMC_Info
+kappa_ins 12
+rcut_cbmc 6.5 6.5
+!------------------------------------------------------------------------------
+
+# Average_Info
+1
+
+# Pair_Energy
+TRUE
+!------------------------------------------------------------------------------
+
+END
