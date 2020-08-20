@@ -507,8 +507,7 @@ def fragID():
 
 	#This function will populate the variable "fragList"
 
-	if len(atomConnect) == 1:
-		fragList = []
+	if len(bondList) == 0:
 		return
 
 	# add exo-ring atoms to rings to make ring fragments
@@ -546,8 +545,7 @@ def angleID():
 
 	#This function will populate the list angleList
 
-	if len(atomConnect) == 1:
-		angleList = []
+	if len(bondList) == 0:
 		return
 
 	for atom in atomList:
@@ -570,8 +568,7 @@ def dihedralID():
 
 	#This function populates the variable dihedralList
 
-	if len(atomConnect) == 1:
-		dihedralList = []
+	if len(bondList) == 0:
 		return
 
 	for atom1 in atomList:
