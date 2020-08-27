@@ -6,6 +6,7 @@ begin atom-atomtype
 2 CH3
 end atom-atomtype
 
+vdwtype LJ
 dihedraltype none
 
 nonbonded
