@@ -41,6 +41,7 @@ from builtins import input
 from builtins import str
 from builtins import range
 from past.utils import old_div
+import warnings
 import sys, os, argparse, linecache, re
 
 #*******************************************************************************
@@ -300,11 +301,11 @@ def cml_to_pdb(infilename):
 
 	for i in range(cml_start_atom+1, cml_end_atom):
 		cml_atom_info.append(re.findall('"([^"]*)"',
-		                     linecache.getline(infilename, i)))
+				     linecache.getline(infilename, i)))
 			
 	for i in range(cml_start_bonds+1, cml_end_bonds):
 		cml_bond_info.append(re.findall('"([^"]*)"',
-		                     linecache.getline(infilename, i))[0].split())
+				     linecache.getline(infilename, i))[0].split())
 
 
 	filePdb = open(basename+'.pdb','w')
@@ -808,7 +809,7 @@ def ffFileGeneration(infilename,outfilename):
 	global dihedralType
 	if len(dihedralList) > 0:
 		dihedralType = input("Enter the dihedral functional form " + 
-		                         "(CHARMM/OPLS/harmonic/none): ")
+					 "(CHARMM/OPLS/harmonic/none): ")
 	else:
 		dihedralType = "NONE" 
 		#This is just a default. It will not affect molecules with no dihedrals.
@@ -892,7 +893,7 @@ def ffFileGeneration(infilename,outfilename):
 				dihedTypesWritten.append(ijklType)
 				ff.write("dihedrals\n")
 				ff.write(ijklType[0] + " " + ijklType[1] + " " +ijklType[2] + " " + 
-				         ijklType[3] + "\n")
+					 ijklType[3] + "\n")
 
 				if dihedralType == "CHARMM":
 					ff.write("K \n")
@@ -977,7 +978,7 @@ returns:
 		if "CONECT" in this_line:
 			if repeatedIndex:
 				raise Error("PDB contains a repeated index. Cannot determine bond " +
-				            "connectivity.")
+					    "connectivity.")
 			else:
 				lineList = line.split()
 				i = lineList[1] # will match to the PDB index, not the PDB line number
@@ -1182,7 +1183,7 @@ returns:
 						else:
 							index = (int(data[0]), int(data[1])) #atomNumbers
 						if not any([data[2]=='1', data[2]=='2', data[2]=='3', 
-							          data[2]=='4']):
+								  data[2]=='4']):
 							raise Error('Cassandra only supports fixed bonds at this time.')
 						b0 = float(data[3]) * 10
 						bondParms[index] = ('fixed', b0)
@@ -1201,7 +1202,7 @@ returns:
 					elif 'dihedral' in section:
 						if 'type' in section:
 							index = (data[0].upper(), data[1].upper(), data[2].upper(), 
-							         data[3].upper())
+								 data[3].upper())
 						else:
 							index = (int(data[0]), int(data[1]), int(data[2]), int(data[3]))
 						if data[4]=='1' or data[4]=='4' or data[4]=='9': #CHARMM
@@ -1225,7 +1226,7 @@ returns:
 							a3 = c3 / 4.
 							if not c4 == 0. and c5 == 0.:
 								raise Error('Can only convert Ryckaert-Bellemans dihedrals ' + 
-								            'to OPLS if c4==0 and c5==0.\n')
+									    'to OPLS if c4==0 and c5==0.\n')
 							dihedralParms[index] = ('OPLS', a0, a1, a2, a3)
 						elif data[4] == '5': #OPLS
 							a0 = 0.
@@ -1334,14 +1335,14 @@ returns:
 	mcf = open(mcfFile, 'w')	
 
 	mcf.write('!***************************************' + 
-	          '****************************************\n')
+		  '****************************************\n')
 	mcf.write('!Molecular connectivity file for ' + configFile + '\n')
 	mcf.write('!***************************************' + 
-	          '****************************************\n')
+		  '****************************************\n')
 
 	mcf.write('!Atom Format\n')
 	mcf.write('!index type element mass charge vdw_type parameters\n' + 
-	          '!vdw_type="LJ", parms=epsilon sigma\n' + 
+		  '!vdw_type="LJ", parms=epsilon sigma\n' + 
             '!vdw_type="Mie", parms=epsilon sigma repulsion_exponent dispersion_exponent\n')
 	mcf.write('\n# Atom_Info\n')
 	mcf.write(str(len(atomList))+'\n')
@@ -1576,12 +1577,12 @@ else:
 	# We need to make sure all the atomNumber indices are populated.
 	atomParms, bondParms, angleParms, dihedralParms = \
 		checkParms(atomList,  bondList,  angleList,  dihedralList,
-		           atomParms, bondParms, angleParms, dihedralParms)
+			   atomParms, bondParms, angleParms, dihedralParms)
 
 	# Got all the parms we need? write Mcf.
 	writeMcf(configFile, mcfFile, 
-	         atomList, bondList, angleList, dihedralList, ringList,
-	         atomParms, bondParms, angleParms, dihedralParms, improperParms, scaling_1_4)
+		 atomList, bondList, angleList, dihedralList, ringList,
+		 atomParms, bondParms, angleParms, dihedralParms, improperParms, scaling_1_4)
 
 os.system("rm temporary.temp")
 if infilename_type == 'cml':
@@ -1592,4 +1593,4 @@ if (sys.version_info < (3,0)):
     warnings.showwarning("\n\nSupport for Python2 is deprecated in "
         "Cassandra and will be removed in a future release. Please "
         "consider switching to Python3.\n\n", DeprecationWarning,
-        'mcfgen.py', 1591)
+        'mcfgen.py', 1592)
