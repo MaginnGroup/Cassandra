@@ -10,7 +10,10 @@ begin atom-atomtype
 6 CH2
 end atom-atomtype
 
+vdwtype LJ
 dihedraltype OPLS
+scaling_1_4_vdw 0.0
+scaling_1_4_charge 0.0
 
 nonbonded
 CH2

@@ -1,18 +1,19 @@
 !*******************************************************************************
-!Molecular connectivity file for benzene_ua.cml.pdb
+!Molecular connectivity file for benzene_ua.pdb
 !*******************************************************************************
 !Atom Format
-!index type element mass charge type parameters
-!type="LJ", parms=epsilon sigma
+!index type element mass charge vdw_type parameters
+!vdw_type="LJ", parms=epsilon sigma
+!vdw_type="Mie", parms=epsilon sigma repulsion_exponent dispersion_exponent
 
 # Atom_Info
 6
-1     C1      C    12.011  0.0  LJ    50.500     3.695  ring
-2     C2      C    12.011  0.0  LJ    50.500     3.695  ring
-3     C3      C    12.011  0.0  LJ    50.500     3.695  ring
-4     C4      C    12.011  0.0  LJ    50.500     3.695  ring
-5     C5      C    12.011  0.0  LJ    50.500     3.695  ring
-6     C6      C    12.011  0.0  LJ    50.500     3.695  ring
+1     CH2     C    12.011  0.0  LJ    50.500     3.695  ring
+2     CH2     C    12.011  0.0  LJ    50.500     3.695  ring
+3     CH2     C    12.011  0.0  LJ    50.500     3.695  ring
+4     CH2     C    12.011  0.0  LJ    50.500     3.695  ring
+5     CH2     C    12.011  0.0  LJ    50.500     3.695  ring
+6     CH2     C    12.011  0.0  LJ    50.500     3.695  ring
 
 !Bond Format
 !index i j type parameters
@@ -59,6 +60,14 @@
 
 # Improper_Info
 0
+
+!Intra Scaling
+!vdw_scaling    1-2 1-3 1-4 1-N
+!charge_scaling 1-2 1-3 1-4 1-N
+
+# Intra_Scaling
+0. 0. 0.0000 1.
+0. 0. 0.0000 1.
 
 !Fragment Format
 !index number_of_atoms_in_fragment branch_point other_atoms

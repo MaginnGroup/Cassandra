@@ -5,12 +5,13 @@ begin atom-atomtype
 1 Argon_type
 end atom-atomtype
 
+vdwtype LJ
 dihedraltype none
 
 nonbonded
 Argon_type
 Sigma 3.40
-Epsilon  120.0
+Epsilon 120.0
 atom_type_charge 
 
 charge
