@@ -22,6 +22,8 @@
 
 #*******************************************************************************
 # SCRIPT: mcfgen.py
+# VERSION: 2.0
+# NEW FEATURES: support python2 and python3
 # VERSION: 1.1
 # NEW FEATURES: read GROMACS forcefield files (.itp or .top)
 #
@@ -33,6 +35,12 @@
 #*******************************************************************************
 # IMPORT MODULES
 #*******************************************************************************
+from __future__ import division
+from __future__ import print_function
+from builtins import input
+from builtins import str
+from builtins import range
+from past.utils import old_div
 import sys, os, argparse, linecache, re
 
 #*******************************************************************************
@@ -290,11 +298,11 @@ def cml_to_pdb(infilename):
 		if '</atomArray>' in line:
 			cml_end_atom = line_nbr + 1
 
-	for i in xrange(cml_start_atom+1, cml_end_atom):
+	for i in range(cml_start_atom+1, cml_end_atom):
 		cml_atom_info.append(re.findall('"([^"]*)"',
 		                     linecache.getline(infilename, i)))
 			
-	for i in xrange(cml_start_bonds+1, cml_end_bonds):
+	for i in range(cml_start_bonds+1, cml_end_bonds):
 		cml_bond_info.append(re.findall('"([^"]*)"',
 		                     linecache.getline(infilename, i))[0].split())
 
@@ -431,15 +439,15 @@ def initialize(infilename):
 
 
 def isRing(scannedList, atom):
-	for i in xrange(0,len(scannedList)):
+	for i in range(0,len(scannedList)):
 		if scannedList[i] == atom:
 			return True
 
 
 def cleanGenList(branchList):
-	for i in xrange(0,len(genScannedList)):
+	for i in range(0,len(genScannedList)):
 		if genScannedList[i] == branchList[0]:
-			for j in xrange(0,len(branchList)):
+			for j in range(0,len(branchList)):
 				del(genScannedList[-1])
 			return
 
@@ -512,7 +520,7 @@ def scan(newAtom,oldLine,scanning):
 		if totalBondedAtoms>2:  #branch point?
 
 			#logfile.write("A branch point was found in atom " + newAtom + "\n")
-			for j in xrange(1,totalBondedAtoms+1):
+			for j in range(1,totalBondedAtoms+1):
 				if newLine[j]==oldLine[0]: 
 				#or newLine[j]==branchalreadyscanned[0]: 
 				#If old atom in list is scanned
@@ -527,7 +535,7 @@ def scan(newAtom,oldLine,scanning):
 				#if endType=="EndScan":
 			break
 	
-		for i in xrange(1,totalBondedAtoms+1):
+		for i in range(1,totalBondedAtoms+1):
 
 			if scanning==True and totalBondedAtoms==1:
 				#logfile.write("End point found at " + newAtom + "\n")
@@ -563,7 +571,7 @@ def fragID():
 			if len(vector)>3:
 				adjacentatoms.append(list(set(vector)-set(eachring)))
 
-		adjacentatoms1=filter(None,adjacentatoms)
+		adjacentatoms1=[_f for _f in adjacentatoms if _f]
 		adjacentatoms = [x for sublist in adjacentatoms1 for x in sublist]
 		fragList.append(eachring+adjacentatoms)
 		adjacentatoms=[]
@@ -792,14 +800,14 @@ def fragConnectivityInfo(mcfFile):
 
 def ffFileGeneration(infilename,outfilename):
 
-	print "\n\n*********Force field template file generation*********\n"
+	print("\n\n*********Force field template file generation*********\n")
 
 	global vdwType
-	vdwType = raw_input("Enter the VDW type (LJ/Mie):")
+	vdwType = input("Enter the VDW type (LJ/Mie):")
 
 	global dihedralType
 	if len(dihedralList) > 0:
-		dihedralType = raw_input("Enter the dihedral functional form " + 
+		dihedralType = input("Enter the dihedral functional form " + 
 		                         "(CHARMM/OPLS/harmonic/none): ")
 	else:
 		dihedralType = "NONE" 
@@ -957,7 +965,7 @@ returns:
 						if args.massDefault or args.massDefault==0:
 							atomParms[iType]['mass'] = args.massDefault
 						else:
-							iMass= raw_input("Atom type " + iType + " is of unknown element " 
+							iMass= input("Atom type " + iType + " is of unknown element " 
 							  + iElement + ". Enter the mass for this atom type: ")
 							atomParms[iType]['mass']=float(iMass)
 			elif 'element' in atomParms[iType] and \
@@ -1125,8 +1133,8 @@ returns:
 				includeFile, atomParms, bondParms, angleParms, dihedralParms, scaling_1_4,
 				vdwType, comboRule)
 			else:
-				print 'WARNING: Topology file ' + includeFile + ' not found. ' + \
-				      'Continuing without reading file.'
+				print('WARNING: Topology file ' + includeFile + ' not found. ' + \
+				      'Continuing without reading file.')
 		elif line.startswith('['):
 			section = line.strip() #store the section header
 			line = ff.readline()
@@ -1161,8 +1169,8 @@ returns:
 						if comboRule == '1':
 							C6 = float(data[-2])
 							C12 = float(data[-1])
-							sigma = ((C12 / C6)**(1/6.)) * 10
-							epsilon = C6**2 / 4 / C12 / Rg
+							sigma = ((old_div(C12, C6))**(1/6.)) * 10
+							epsilon = old_div(old_div(old_div(C6**2, 4), C12), Rg)
 						elif comboRule == '2' or comboRule == '3':
 							sigma = float(data[-2]) * 10
 							epsilon = float(data[-1]) / Rg
@@ -1526,30 +1534,30 @@ dihedralID()
 fragConnectivity()
 
 #PRESENT SCAN SUMMARY TO USER
-print "\n\n*********Generation of Topology File*********\n"
-print "Summary: "
-print "There are " + str(len(bondList)) + " bonds identified." 
+print("\n\n*********Generation of Topology File*********\n")
+print("Summary: ")
+print("There are " + str(len(bondList)) + " bonds identified.") 
 
 if cyclic_ua_atom == True and len(scan_result[1]) > 2:
-	print "Cyclic united atom molecule with no branches"
+	print("Cyclic united atom molecule with no branches")
 else:
-	print "There are " + str(len(ringList)) + " rings identified. These rings are: "
+	print("There are " + str(len(ringList)) + " rings identified. These rings are: ")
 
 	for row in ringList:
-		print row
+		print(row)
 
-	print "There are " + str(len(fragList)) + " fragments identified"
-print "There are " + str(len(angleList)) + " angles identified"
-print "There are " + str(len(dihedralList)) + " dihedrals identified"
+	print("There are " + str(len(fragList)) + " fragments identified")
+print("There are " + str(len(angleList)) + " angles identified")
+print("There are " + str(len(dihedralList)) + " dihedrals identified")
 
-print "Reading Modified PDB File..."
+print("Reading Modified PDB File...")
 atomList, atomParms, numAtomTypes = readPdb(configFile)
 if ffTemplate:
 	#GENERATE BLANK FORCEFIELD TEMPLATE
 	if os.path.isfile(ffFile) and not os.path.isfile(ffFile + '.BAK'):
 		os.system('mv ' + ffFile + ' ' + ffFile + '.BAK')
 	ffFileGeneration(configFile,ffFile)
-	print 'Finished'
+	print('Finished')
 else:
 	# GENERATE MCF FILE
 	# Read parms
@@ -1578,3 +1586,10 @@ else:
 os.system("rm temporary.temp")
 if infilename_type == 'cml':
 	os.system("rm " + configFile)
+
+# Python 2.x deprecation warning
+if (sys.version_info < (3,0)):
+    warnings.showwarning("\n\nSupport for Python2 is deprecated in "
+        "Cassandra and will be removed in a future release. Please "
+        "consider switching to Python3.\n\n", DeprecationWarning,
+        'mcfgen.py', 1591)
