@@ -5297,7 +5297,7 @@ SUBROUTINE Get_Widom_Info
                    err_msg(1) = 'Error while reading input file in Get_Widom_Info'
                    CALL clean_abort(err_msg,'Get_Widom_Info')
                 END IF
-                IF (nbr_entries == 0) RETURN
+                IF (nbr_entries == 0) EXIT
                 IF (line_array(1)(1:1) == '!') CYCLE
                 is = is + 1
                 ibox = 0
@@ -5322,8 +5322,13 @@ SUBROUTINE Get_Widom_Info
                         END IF
                         IF (ibox == nbr_boxes) EXIT
                 END DO
-                IF (is == nspecies) RETURN
+                IF (is == nspecies) EXIT
         END DO
+        IF(ALL(tp_correction .EQ. 0)) THEN
+                err_msg = ''
+                err_msg(1) = 'Error:  Widom insertions are enabled but no species were designated for Widom insertions'
+                CALL clean_abort(err_msg,'Get_Widom_Info')
+        END IF
         RETURN
 
 END SUBROUTINE Get_Widom_Info
