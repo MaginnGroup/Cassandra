@@ -249,12 +249,14 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
                      sin_sum(:,ibox) = sin_sum_old(:,ibox)
                   END IF
 
-                  IF ( int_vdw_sum_style(ibox) == vdw_cut_tail ) THEN
-                     ! Restore the total number of bead types
-                     nint_beads(:,ibox) = nbeads_in(:)
-                  END IF
           END IF
   END DO
+
+
+  IF ( int_vdw_sum_style(ibox) == vdw_cut_tail ) THEN
+     ! Restore the total number of bead types
+     nint_beads(:,ibox) = nbeads_in(:)
+  END IF
 
   ! remove test molecule
   nmols(is,ibox) = nmols(is,ibox)-1
