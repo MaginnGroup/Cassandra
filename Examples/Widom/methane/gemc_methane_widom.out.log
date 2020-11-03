@@ -1,0 +1,672 @@
+********************************************************************************
+                ______                                __                        
+               / ____/___ _______________ _____  ____/ /________ _              
+              / /   / __ `/ ___/ ___/ __ `/ __ \/ __  / ___/ __ `/              
+             / /___/ /_/ (__  |__  ) /_/ / / / / /_/ / /  / /_/ /               
+             \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                
+                                                                                
+********************************************************************************
+**********************************Log File**************************************
+********************************************************************************
+
+For any published work that uses Cassandra, cite the following reference:
+    Shah JK, Marin‐Rimoldi E, Mullen RG, Keene BP, Khan S,
+    Paluch AS, Rai N, Romanielo LL, Rosch TW, Yoo B, Maginn EJ.
+    Cassandra: An open source Monte Carlo package for molecular simulation.
+    Journal of Computational Chemistry. 2017, 38, 1727–1739.
+    http://dx.doi.org/10.1002/jcc.24807
+
+Run info
+********************************************************************************
+version: Cassandra Version 1.2.2 20200326
+inputfile: gemc_methane_widom.inp
+name of run: gemc_methane_widom.out
+date (mm/dd/yyyy): 08/19/2020
+time: 13:37:25
+machine: Hyron
+********************************************************************************
+
+Verbose log
+********************************************************************************
+Normal output to logfile
+********************************************************************************
+
+Simulation type
+********************************************************************************
+GEMC                
+********************************************************************************
+
+Copy input file
+********************************************************************************
+# Run_Name                                                                      
+gemc_methane_widom.out                                                          
+                                                                                
+# Sim_Type                                                                      
+GEMC                                                                            
+                                                                                
+# Nbr_Species                                                                   
+1                                                                               
+                                                                                
+# VDW_Style                                                                     
+LJ   cut_tail   14.00                                                           
+LJ   cut_tail   14.00                                                           
+                                                                                
+# Rcutoff_Low                                                                   
+1.0                                                                             
+                                                                                
+# Mixing_Rule                                                                   
+LB                                                                              
+                                                                                
+# Molecule_Files                                                                
+methane.mcf 500                                                                 
+                                                                                
+# Box_Info                                                                      
+2                                                                               
+cubic                                                                           
+33.00                                                                           
+                                                                                
+cubic                                                                           
+37.50                                                                           
+                                                                                
+# Temperature_Info                                                              
+175.0                                                                           
+175.0                                                                           
+                                                                                
+# Move_Probability_Info                                                         
+                                                                                
+# Prob_Translation                                                              
+0.85                                                                            
+0.15                                                                            
+1.0                                                                             
+                                                                                
+# Prob_Volume                                                                   
+0.03                                                                            
+200.0                                                                           
+                                                                                
+# Prob_Swap                                                                     
+0.12                                                                            
+cbmc                                                                            
+                                                                                
+# Done_Probability_Info                                                         
+                                                                                
+# Start_Type                                                                    
+checkpoint gemc_methane_equil.out.chk                                           
+                                                                                
+# Run_Type                                                                      
+production 10000 10000                                                          
+                                                                                
+# Simulation_Length_Info                                                        
+Units       Steps                                                               
+Prop_Freq   2200                                                                
+Coord_Freq  4400000                                                             
+Run         4400000                                                             
+                                                                                
+# Widom_Insertion                                                               
+true                                                                            
+cbmc 10000 2200 cbmc 10000 2200                                                 
+                                                                                
+# Seed                                                                          
+7338378580   8226958363                                                         
+                                                                                
+# Property_Info 1                                                               
+Density                                                                         
+Nmols                                                                           
+Volume                                                                          
+Pressure                                                                        
+                                                                                
+# Property_Info 2                                                               
+Density                                                                         
+Nmols                                                                           
+Volume                                                                          
+Pressure                                                                        
+                                                                                
+                                                                                
+# Fragment_Files                                                                
+species1/frag1/frag1.dat  1                                                     
+                                                                                
+# CBMC_Info                                                                     
+kappa_ins 12                                                                    
+rcut_cbmc 6.5 6.5                                                               
+                                                                                
+# Average_Info                                                                  
+1                                                                               
+                                                                                
+# Pair_Energy                                                                   
+TRUE                                                                            
+                                                                                
+END                                                                             
+********************************************************************************
+
+Number of species
+********************************************************************************
+1
+********************************************************************************
+
+Box info
+********************************************************************************
+Number of simulation boxes     2
+Box 1 is CUBIC               
+ Each Side Of :       33.0000     Angstrom
+ Cell basis vector lengths in A,     33.0000      33.0000      33.0000
+ Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+ Distance between box faces    33.0000      33.0000      33.0000
+ Box volume, A^3         35937.0000
+Box 2 is CUBIC               
+ Each Side Of :       37.5000     Angstrom
+ Cell basis vector lengths in A,     37.5000      37.5000      37.5000
+ Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+ Distance between box faces    37.5000      37.5000      37.5000
+ Box volume, A^3         52734.3750
+********************************************************************************
+
+Pair style
+********************************************************************************
+VDW style used is:   LJ             in box:  1
+ VDW sum style is:   cut_tail       in box:  1
+ rcut =    14.000 Angstrom
+VDW style used is:   LJ             in box:  2
+ VDW sum style is:   cut_tail       in box:  2
+ rcut =    14.000 Angstrom
+Section "# Charge_Style" is missing from the input file
+ By default, charge style for box 1 is NONE
+ By default, charge style for box 2 is NONE
+Pair interaction energy array storage enabled
+Lorentz-Berthelot mixing rule specified
+********************************************************************************
+
+Molecule info
+********************************************************************************
+ Reading molecular connectivity information
+ Species:            1
+ Molecular connectivity file: methane.mcf                                                                                                             
+   1 atom(s) specified.
+   0 bond(s) specified.
+   0 angle(s) specified.
+   0 dihedral(s) specified.
+   0 improper(s) specified.
+   1 fragment(s) specified.
+   0 fragment bond(s) specified.
+
+ Species  Max molecules
+ -------  -------------
+      1            500
+
+ Species     1
+ -------------------------------------------------------------------------------
+ Atom parameters read
+ Bond parameters read
+ Angle parameters read
+ Dihedral parameters read
+ Improper parameters read
+ Intra molecule scaling factors for species            1
+  VDW 1-2 scaling factor       0.000
+  VDW 1-3 scaling factor       0.000
+  VDW 1-4 scaling factor       0.000
+  VDW 1-N scaling factor       1.000
+ Total number of atoms in fragment     1  is   1
+ Fragment info read
+ Fragment file for fragment 1 is species1/frag1/frag1.dat
+ -------------------------------------------------------------------------------
+
+ Fragment coord info
+ -------------------------------------------------------------------------------
+ library_coords array successfully allocated
+ Finished loading fragment coordinates from
+ species1/frag1/frag1.dat
+ -------------------------------------------------------------------------------
+********************************************************************************
+
+Start type
+********************************************************************************
+Starting configuration will be read from checkpoint file
+ gemc_methane_equil.out.chk
+********************************************************************************
+
+Seed info
+********************************************************************************
+ Seed will be read from a checkpoint file
+********************************************************************************
+
+Temperature
+********************************************************************************
+Temperature of box 1 is 175.000 K
+Temperature of box 2 is 175.000 K
+********************************************************************************
+
+Move probabilities
+********************************************************************************
+Probability for translation                0.850000
+ Maximum displacement width for species  1 in box  1  is      0.15000
+ Maximum displacement width for species  1 in box  2  is      1.00000
+Probability for volume move                0.030000
+ Maximum volume displacement is    200.000
+ Volume moves will be performed in actual volumes
+Probability for particle swap              0.120000
+ Species 1 will be inserted using CBMC
+ Number of insertable species is    1
+  By default, box_out will be selected according to its mole fraction
+  By default, species will be selected according to its mole fraction in box_out
+Number of moves is :   3
+********************************************************************************
+
+CBMC info
+********************************************************************************
+Kappa for first fragment insertion          12
+ Cutoff for CBMC for box 1 is         6.50
+ Cutoff for CBMC for box 2 is         6.50
+********************************************************************************
+
+Simulation length info
+********************************************************************************
+Thermodynamic quantities will be computed every      2200 Steps     
+Coordinates will be written to file every         4400000 Steps     
+ movie header file for box   1 is      gemc_methane_widom.out.box1.H
+ movie_XYZ file for box      1 is      gemc_methane_widom.out.box1.xyz
+ movie header file for box   2 is      gemc_methane_widom.out.box2.H
+ movie_XYZ file for box      2 is      gemc_methane_widom.out.box2.xyz
+The simulation will be run for                    4400000 Steps     
+Instantaneous values will be written every           2200 Steps     
+********************************************************************************
+
+Widom insertion info
+********************************************************************************
+ Species 1 will have 10000 Widom insertions every 2200 MC steps in box 1
+          with de Broglie wavelength (Angstroms):        0.329496933
+ Species 1 will have 10000 Widom insertions every 2200 MC steps in box 2
+          with de Broglie wavelength (Angstroms):        0.329496933
+********************************************************************************
+
+Property info
+********************************************************************************
+Total number of property files to be written is     1   for box 1
+ Maximum number of properties per file is    4
+ Writing the name of the property files and the corresponding property output
+ Property file    1   is  gemc_methane_widom.out.box1.prp
+ Properties output in these files are
+ Density
+ Nmols
+ Volume
+ Pressure
+Total number of property files to be written is     1   for box 2
+ Maximum number of properties per file is    4
+ Writing the name of the property files and the corresponding property output
+ Property file    1   is  gemc_methane_widom.out.box2.prp
+ Properties output in these files are
+ Density
+ Nmols
+ Volume
+ Pressure
+********************************************************************************
+
+Minimum distance cutoff
+********************************************************************************
+MC low cutoff distance is   1.000    Angstrom
+********************************************************************************
+
+Run type
+********************************************************************************
+ The input run type is production
+ Update frequency is        10000
+ Update frequency for adjusting maximum volume displacement is
+       10000
+********************************************************************************
+
+********************************************************************************
+************************ Begin Cassandra simulation ****************************
+********************************************************************************
+
+Initial configuration
+********************************************************************************
+ Reading move parameters for box 1
+ Reading move parameters for species 1
+  max displacement       0.61958
+ Reading move parameters for box 2
+ Reading move parameters for species 1
+  max displacement      10.56785
+ Species move info read successfully
+ Initial MC step is 2200000
+ Reading info for box 1
+  max volume change        1204.
+ Reading info for box 2
+  max volume change        1204.
+ Box info read successfully
+ Seed info read successfully
+ Number of molecules read successfully
+ Configuration read successfully
+********************************************************************************
+
+Compute total energy
+********************************************************************************
+
+ Energy components for box 1     kJ/mol-Extensive
+ ---------------------------------------------------------------------
+ Total system energy                    -1817.889
+ Intra molecular energy                     0.000
+   Bond energy                              0.000
+   Bond angle energy                        0.000
+   Dihedral angle energy                    0.000
+   Improper angle energy                    0.000
+   Intra molecule vdw                       0.000
+   Intra molecule q                         0.000
+ Inter molecular energy                 -1817.889
+   Inter molecule vdw                   -1775.797
+   Long range correction                  -42.093
+   Inter molecule q                         0.000
+ ---------------------------------------------------------------------
+
+
+ Energy components for box 2     kJ/mol-Extensive
+ ---------------------------------------------------------------------
+ Total system energy                     -141.817
+ Intra molecular energy                     0.000
+   Bond energy                              0.000
+   Bond angle energy                        0.000
+   Dihedral angle energy                    0.000
+   Improper angle energy                    0.000
+   Intra molecule vdw                       0.000
+   Intra molecule q                         0.000
+ Inter molecular energy                  -141.817
+   Inter molecule vdw                    -139.468
+   Long range correction                   -2.349
+   Inter molecule q                         0.000
+ ---------------------------------------------------------------------
+
+********************************************************************************
+
+Run simulation
+********************************************************************************
+      Step       Move   Mol Spc Box  Success  MaxWidth
+   2205177  translate         1   1  0.50585
+   2219540  translate         1   1  0.50584
+   2234104  translate         1   1  0.50576
+   2242152  translate         1   2  0.53890
+   2248659  translate         1   1  0.50565
+   2263043  translate         1   1  0.50562
+   2277398  translate         1   1  0.50552
+   2291729  translate         1   1  0.50540
+   2305958  translate         1   1  0.50531
+   2306798  translate         1   2  0.53724
+   2320329  translate         1   1  0.50526
+   2323626   vol_swap                0.65906
+   2334592  translate         1   1  0.50511
+   2348914  translate         1   1  0.50498
+   2363422  translate         1   1  0.50489
+   2371816  translate         1   2  0.53534
+   2377937  translate         1   1  0.50472
+   2392416  translate         1   1  0.50467
+   2407041  translate         1   1  0.50457
+   2421725  translate         1   1  0.50448
+   2431812  translate         1   2  0.53293
+   2436362  translate         1   1  0.50445
+   2451830  translate         1   1  0.50434
+   2467087  translate         1   1  0.50426
+   2482134  translate         1   1  0.50411
+   2484131  translate         1   2  0.52977
+   2496921  translate         1   1  0.50396
+   2511723  translate         1   1  0.50388
+   2526631  translate         1   1  0.50382
+   2541296  translate         1   1  0.50373
+   2542701  translate         1   2  0.52691
+   2556264  translate         1   1  0.50358
+   2571200  translate         1   1  0.50357
+   2586308  translate         1   1  0.50353
+   2598485  translate         1   2  0.52381
+   2600832  translate         1   1  0.50346
+   2615282  translate         1   1  0.50329
+   2630373  translate         1   1  0.50313
+   2645734  translate         1   1  0.50303
+   2652567  translate         1   2  0.52145
+   2655159   vol_swap                0.63386
+   2660721  translate         1   1  0.50289
+   2676031  translate         1   1  0.50271
+   2691839  translate         1   1  0.50263
+   2701615  translate         1   2  0.51857
+   2707217  translate         1   1  0.50256
+   2722558  translate         1   1  0.50252
+   2737766  translate         1   1  0.50243
+   2753132  translate         1   1  0.50242
+   2753143  translate         1   2  0.51592
+   2768609  translate         1   1  0.50231
+   2784146  translate         1   1  0.50220
+   2799048  translate         1   1  0.50210
+   2805290  translate         1   2  0.51313
+   2813765  translate         1   1  0.50204
+   2828259  translate         1   1  0.50192
+   2843271  translate         1   1  0.50179
+   2858446  translate         1   1  0.50169
+   2861752  translate         1   2  0.51164
+   2873436  translate         1   1  0.50164
+   2888938  translate         1   1  0.50162
+   2904454  translate         1   1  0.50154
+   2911969  translate         1   2  0.50934
+   2919357  translate         1   1  0.50152
+   2933635  translate         1   1  0.50143
+   2948052  translate         1   1  0.50145
+   2962576  translate         1   1  0.50152
+   2976546  translate         1   1  0.50143
+   2977706  translate         1   2  0.50822
+   2990657  translate         1   1  0.50144
+   2992591   vol_swap                0.61521
+   3004980  translate         1   1  0.50144
+   3018879  translate         1   1  0.50132
+   3033271  translate         1   1  0.50132
+   3045953  translate         1   2  0.50743
+   3047752  translate         1   1  0.50125
+   3061934  translate         1   1  0.50113
+   3076251  translate         1   1  0.50124
+   3090040  translate         1   1  0.50123
+   3103475  translate         1   1  0.50131
+   3117081  translate         1   1  0.50139
+   3125736  translate         1   2  0.50747
+   3130251  translate         1   1  0.50147
+   3143574  translate         1   1  0.50153
+   3157019  translate         1   1  0.50169
+   3170644  translate         1   1  0.50180
+   3184009  translate         1   1  0.50191
+   3197534  translate         1   1  0.50200
+   3211344  translate         1   1  0.50200
+   3216553  translate         1   2  0.50782
+   3225408  translate         1   1  0.50198
+   3239659  translate         1   1  0.50203
+   3253736  translate         1   1  0.50193
+   3267968  translate         1   1  0.50184
+   3282052  translate         1   1  0.50175
+   3286361  translate         1   2  0.50724
+   3296084  translate         1   1  0.50176
+   3310294  translate         1   1  0.50179
+   3323370   vol_swap                0.60367
+   3324917  translate         1   1  0.50180
+   3339116  translate         1   1  0.50177
+   3352769  translate         1   2  0.50611
+   3353462  translate         1   1  0.50179
+   3367960  translate         1   1  0.50180
+   3382079  translate         1   1  0.50175
+   3395849  translate         1   1  0.50176
+   3409548  translate         1   1  0.50178
+   3423656  translate         1   1  0.50178
+   3425022  translate         1   2  0.50560
+   3437683  translate         1   1  0.50181
+   3451433  translate         1   1  0.50179
+   3465737  translate         1   1  0.50177
+   3480444  translate         1   1  0.50192
+   3493840  translate         1   2  0.50476
+   3494653  translate         1   1  0.50192
+   3508929  translate         1   1  0.50192
+   3523512  translate         1   1  0.50186
+   3537981  translate         1   1  0.50188
+   3552830  translate         1   1  0.50194
+   3556903  translate         1   2  0.50388
+   3567337  translate         1   1  0.50193
+   3581841  translate         1   1  0.50200
+   3595944  translate         1   1  0.50203
+   3610111  translate         1   1  0.50203
+   3623998  translate         1   2  0.50349
+   3624198  translate         1   1  0.50201
+   3638540  translate         1   1  0.50210
+   3652464  translate         1   1  0.50214
+   3660896   vol_swap                0.59336
+   3666195  translate         1   1  0.50220
+   3680597  translate         1   1  0.50222
+   3693453  translate         1   2  0.50279
+   3695108  translate         1   1  0.50237
+   3709080  translate         1   1  0.50233
+   3722771  translate         1   1  0.50223
+   3736733  translate         1   1  0.50225
+   3750353  translate         1   1  0.50224
+   3763999  translate         1   1  0.50224
+   3773769  translate         1   2  0.50309
+   3777911  translate         1   1  0.50226
+   3792295  translate         1   1  0.50227
+   3806692  translate         1   1  0.50223
+   3821065  translate         1   1  0.50208
+   3835804  translate         1   1  0.50201
+   3836745  translate         1   2  0.50255
+   3850887  translate         1   1  0.50198
+   3866170  translate         1   1  0.50189
+   3881411  translate         1   1  0.50189
+   3888545  translate         1   2  0.50085
+   3896888  translate         1   1  0.50191
+   3912053  translate         1   1  0.50190
+   3926661  translate         1   1  0.50180
+   3941004  translate         1   1  0.50173
+   3947914  translate         1   2  0.49962
+   3954907  translate         1   1  0.50165
+   3968672  translate         1   1  0.50153
+   3982276  translate         1   1  0.50150
+   3995771   vol_swap                0.58395
+   3996539  translate         1   1  0.50153
+   4011162  translate         1   1  0.50158
+   4018271  translate         1   2  0.49905
+   4025347  translate         1   1  0.50165
+   4039603  translate         1   1  0.50174
+   4053944  translate         1   1  0.50177
+   4068546  translate         1   1  0.50176
+   4082217  translate         1   2  0.49843
+   4083231  translate         1   1  0.50168
+   4098122  translate         1   1  0.50163
+   4113606  translate         1   1  0.50157
+   4129240  translate         1   1  0.50148
+   4131793  translate         1   2  0.49694
+   4145033  translate         1   1  0.50138
+   4160621  translate         1   1  0.50130
+   4176013  translate         1   1  0.50123
+   4180414  translate         1   2  0.49524
+   4191629  translate         1   1  0.50119
+   4207594  translate         1   1  0.50116
+   4223110  translate         1   1  0.50108
+   4226829  translate         1   2  0.49373
+   4238664  translate         1   1  0.50102
+   4253880  translate         1   1  0.50100
+   4268923  translate         1   1  0.50100
+   4279894  translate         1   2  0.49270
+   4283418  translate         1   1  0.50099
+   4297927  translate         1   1  0.50096
+   4313037  translate         1   1  0.50091
+   4327643  translate         1   1  0.50090
+   4337766   vol_swap                0.57488
+   4339084  translate         1   2  0.49202
+   4342191  translate         1   1  0.50085
+   4356560  translate         1   1  0.50077
+   4370644  translate         1   1  0.50076
+   4384968  translate         1   1  0.50080
+   4399702  translate         1   1  0.50073
+********************************************************************************
+
+Energy of final configuration
+********************************************************************************
+
+ Energy components for box 1     kJ/mol-Extensive       Relative_Error
+ ---------------------------------------------------------------------
+ Total system energy                    -2070.438           -0.281E-15
+ Intra molecular energy                     0.000            0.000E+00
+   Bond energy                              0.000            0.000E+00
+   Bond angle energy                        0.000            0.000E+00
+   Dihedral angle energy                    0.000            0.000E+00
+   Improper angle energy                    0.000            0.000E+00
+   Intra molecule vdw                       0.000            0.000E+00
+   Intra molecule q                         0.000            0.000E+00
+ Inter molecular energy                 -2070.438           -0.281E-15
+   Inter molecule vdw                   -2022.682           -0.288E-15
+   Long range correction                  -47.757           -0.000E+00
+   Inter molecule q                         0.000            0.000E+00
+ ---------------------------------------------------------------------
+
+
+ Energy components for box 2     kJ/mol-Extensive       Relative_Error
+ ---------------------------------------------------------------------
+ Total system energy                      -73.513           -0.000E+00
+ Intra molecular energy                     0.000            0.000E+00
+   Bond energy                              0.000            0.000E+00
+   Bond angle energy                        0.000            0.000E+00
+   Dihedral angle energy                    0.000            0.000E+00
+   Improper angle energy                    0.000            0.000E+00
+   Intra molecule vdw                       0.000            0.000E+00
+   Intra molecule q                         0.000            0.000E+00
+ Inter molecular energy                   -73.513           -0.000E+00
+   Inter molecule vdw                     -71.910           -0.000E+00
+   Long range correction                   -1.603           -0.000E+00
+   Inter molecule q                         0.000            0.000E+00
+ ---------------------------------------------------------------------
+
+********************************************************************************
+
+
+Writing information for box  1
+********************************************************************************
+                Move      Trials     Success   % Success
+              Volume      131904       75595       57.31
+
+   ---------------------------------------------------------
+   Writing information for species  1
+
+                Move      Trials     Success   % Success
+           Translate     3070202     1537325       50.07
+              Insert       50293       16020       31.85
+              Delete      214001       16002        7.48
+   ---------------------------------------------------------
+
+********************************************************************************
+Writing information for box  2
+********************************************************************************
+                Move      Trials     Success   % Success
+              Volume      131904       75595       57.31
+
+   ---------------------------------------------------------
+   Writing information for species  1
+
+                Move      Trials     Success   % Success
+           Translate      669474      329086       49.16
+              Insert      214001       16002        7.48
+              Delete       50293       16020       31.85
+   ---------------------------------------------------------
+
+********************************************************************************
+
+Shifted chemical potentials from Widom insertions
+********************************************************************************
+Shifted chemical potential for species 1 in box 1 is        -15.097942069270 kJ/mol
+Shifted chemical potential for species 1 in box 2 is        -15.055331573231 kJ/mol
+********************************************************************************
+
+ Writing information about subroutine times
+********************************************************************************
+ Translation time =            1.793490 mins.
+ Volume change time =         16.710156 mins.
+ Swap time =                   1.884375 mins.
+ Widom time =                  1.239436 hrs.
+********************************************************************************
+
+********************************************************************************
+************************ Cassandra simulation complete *************************
+********************************************************************************
+
+ Program execution time
+********************************************************************************
+         0      Years
+         0     Months
+         0       Days
+         1      Hours
+        35    Minutes
+         4    Seconds
+       203         ms
+********************************************************************************

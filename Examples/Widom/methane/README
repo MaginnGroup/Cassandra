@@ -1,0 +1,62 @@
+This directory contains all the files needed to run a Gibbs Ensemble
+simulation of methane at temperature T=175K with the
+chemical potential of the two boxes calculated with Widom insertions.
+This example is nearly identical to the Methane example in the GEMC
+directory, but it was lengthened and a production run with
+Widom insertions was added.
+
+I. FILES REQUIRED TO RUN THE SIMULATION
+
+methane.pdb
+    created in Gaussview. Alternatively, this file can be created by hand, Avogadro
+    or obtained online.
+
+methane.ff  -- Note that  this file is not included as it is not necessary now
+               that methane.mcf has already been generated and included.
+    An empty template was created with the following command
+
+    > $CASSANDRA_DIR/Scripts/MCF_Generation/mcfgen.py methane.pdb --ffTemplate
+
+    Parameters from the TRAPPE forcefield were manually typed into the blank 
+    template. TRAPPE parameters for methane are available in the following 
+    publication:
+
+      M.G. Martin, and J.I. Siepmann,
+      Transferable potentials for phase equilibria. 1. United-atom description 
+      of n-alkanes
+      J. Phys. Chem. B, 102, 2569-2577 (1998).
+
+methane.mcf
+    This file was generated with the following command:
+
+    > $CASSANDRA_DIR/Scripts/MCF_Generation/mcfgen.py methane.pdb
+
+    Note that this command requires the file methane.ff in the same directory.
+
+gemc_methane_equil.inp
+    The initial density for the liquid and vapor phases were chosen to be close
+    to the final density reported by Martin et al.
+
+gemc_methane_widom.inp
+    This is the input file for the production run, which features Widom insertions
+    and starts from the checkpoint file of the equilibration run.
+
+species1/
+    This directory was created with the following command:
+
+    > $CASSANDRA_DIR/Scripts/Frag_Library_Setup/library_setup.py $CASSANDRA_DIR/cassandra.exe gemc_methane_equil.inp methane.pdb
+
+II. RUNNING THE SIMULATION
+
+The simulations can be run with the following commands:
+
+> $CASSANDRA_DIR/Src/cassandra.exe gemc_methane_equil.inp
+
+then
+
+> $CASSANDRA_DIR/Src/cassandra.exe gemc_methane_widom.inp
+
+III. OUTPUT FILES
+
+All output files are named gemc_methane_equil.* or gemc_methane_widom.*, as defined in the input files. Please 
+see the Cassandra manual for more information on each output file type.

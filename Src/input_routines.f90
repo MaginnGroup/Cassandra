@@ -223,10 +223,27 @@ SUBROUTINE Get_Nspecies
 
   ALLOCATE(fragment_bonds(nspecies), Stat = AllocateStatus)
   IF (AllocateStatus /= 0 ) THEN
-     write(*,*) 'memroy could not be allocated for fragment_bonds array'
+     write(*,*) 'memory could not be allocated for fragment_bonds array'
      write(*,*) 'stopping'
      STOP
   END IF
+
+
+  ! this was moved here from Get_Molecule_Info so Get_Widom_Info can use species_list
+  ALLOCATE( species_list(nspecies), Stat = AllocateStatus )
+  IF (AllocateStatus /= 0) THEN
+     write(*,*)'memory could not be allocated for species_list array'
+     write(*,*)'stopping'
+     STOP
+  END IF
+
+  ALLOCATE( tp_correction(nspecies), Stat = AllocateStatus )
+  IF (AllocateStatus /= 0) THEN
+     write(*,*)'memory could not be allocated for tp_correction array'
+     write(*,*)'stopping'
+     STOP
+  END IF
+
 
 ! Initialize everything
   molfile_name = ''
@@ -240,6 +257,7 @@ SUBROUTINE Get_Nspecies
   nbr_vdw_params = 0
   nfragments = 0
   fragment_bonds = 0
+  tp_correction = 0
 
   WRITE(logunit,'(A80)') '********************************************************************************'
 
@@ -1155,6 +1173,9 @@ SUBROUTINE Get_Molecule_Info
      WRITE(logunit,'(X,I6,2x,I13)') i,max_molecules(i)
   ENDDO
 
+  ! account for test particle in max_molecules for the purposes of array allocation and locate assignment
+  ! the number of molecules of each species in a simulation at the end of a step is still capped at max_molecules - tp_correction
+  max_molecules = max_molecules + tp_correction
 
   ! Allocate arrays that depend on max_molecules, natoms, and nspecies
   ! N.B.: MAXVAL instrinsic function selects the largest value from an array
@@ -1245,12 +1266,14 @@ SUBROUTINE Get_Molecule_Info
      END IF
   END IF
 
-  ALLOCATE( species_list(nspecies), Stat = AllocateStatus )
-  IF (AllocateStatus /= 0) THEN
-     write(*,*)'memory could not be allocated for species_list array'
-     write(*,*)'stopping'
-     STOP
-  END IF
+  ! This was moved to Get_Nspecies because Get_Widom_Info uses species_list and comes before this subroutine - RWS
+  
+  !ALLOCATE( species_list(nspecies), Stat = AllocateStatus )
+  !IF (AllocateStatus /= 0) THEN
+  !   write(*,*)'memory could not be allocated for species_list array'
+  !   write(*,*)'stopping'
+  !   STOP
+  !END IF
 
   max_index = MAX(MAXVAL(nbonds),MAXVAL(nangles),MAXVAL(ndihedrals),MAXVAL(nimpropers))
 
@@ -3830,7 +3853,7 @@ SUBROUTINE Get_Temperature_Info
 !******************************************************************************
   IMPLICIT NONE
 
-  INTEGER :: ierr, line_nbr, i, nbr_entries
+  INTEGER :: ierr, line_nbr, i, nbr_entries, is
   CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
 !******************************************************************************
@@ -3850,6 +3873,11 @@ SUBROUTINE Get_Temperature_Info
 
   ALLOCATE(temperature(nbr_boxes))
   ALLOCATE(beta(nbr_boxes))
+  IF(widom_flag) THEN
+        DO is = 1, nspecies
+           IF(.NOT. ALLOCATED(species_list(is)%de_broglie)) ALLOCATE(species_list(is)%de_broglie(nbr_boxes))
+        END DO
+  END IF
 
   ierr = 0
   line_nbr = 0
@@ -3881,6 +3909,20 @@ SUBROUTINE Get_Temperature_Info
            temperature(i) = String_To_Double(line_array(1))
            ! compute inverse temperature
            beta(i) = 1.0_DP / (kboltz * temperature(i))
+
+
+           ! compute de Broglie wavelength in Angstroms if Widom insertions are done
+           IF (widom_flag) THEN
+                   DO is = 1, nspecies
+                        IF (species_list(is)%test_particle(i)) THEN
+                           species_list(is)%de_broglie(i) = &
+                                h_plank  * DSQRT( beta(i)/(twopi * species_list(is)%molecular_weight))
+                        END IF
+                   END DO
+           END IF
+
+
+
            ! write to the logunit that temperature is specified for box
 
            WRITE(logunit,'(A,X,I1,X,A,X,F7.3,X,A)') 'Temperature of box', i, 'is', temperature(i), 'K'
@@ -4024,7 +4066,7 @@ SUBROUTINE Get_Chemical_Potential_Info
         DO is = 1,nspecies
 
            WRITE(logunit,'(A,X,I5)') 'Species', is
-           ALLOCATE(species_list(is)%de_broglie(nbr_boxes))
+           IF (.NOT. ALLOCATED(species_list(is)%de_broglie)) ALLOCATE(species_list(is)%de_broglie(nbr_boxes))
 
            ! Assume there will be an entry for each species, including non-insertable species
            ! If there is not an entry, the counter will be back tracked
@@ -5179,6 +5221,154 @@ SUBROUTINE Get_Run_Type
 
 END SUBROUTINE Get_Run_Type
 
+
+SUBROUTINE Get_Widom_Info
+
+        ! This subroutine determines from the input file whether Widom insertions are desired
+        ! and reads in the relevant information from the # Widom_Insertion section of the input
+        ! file if it is present.
+
+        INTEGER :: is, ibox
+        INTEGER :: line_nbr
+        INTEGER :: ierr
+        INTEGER :: nbr_entries, i_entry
+        INTEGER :: i_unit
+
+        CHARACTER(STRING_LEN) :: line_string,line_array(60)
+        CHARACTER(20) :: extension
+
+        line_nbr = 0
+        widom_flag = .FALSE.
+        is = 0
+        ibox = 0
+        i_unit = 0
+
+
+        REWIND(inputunit)
+
+        DO
+                line_nbr = line_nbr + 1
+                CALL Read_String(inputunit,line_string,ierr)
+                IF(ierr /= 0) THEN
+                   err_msg = ''
+                   err_msg(1) = 'Error while reading input file in Get_Widom_Info'
+                   CALL clean_abort(err_msg,'Get_Widom_Info')
+                END IF
+
+                IF(line_string(1:3) == 'END' .or. line_nbr > 10000 ) RETURN
+                IF (line_string(1:17) == '# Widom_Insertion') THEN
+                        DO
+                                line_nbr = line_nbr + 1
+                                CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
+                                IF(ierr /= 0) THEN
+                                   err_msg = ''
+                                   err_msg(1) = 'Error while reading input file in Get_Widom_Info'
+                                   CALL clean_abort(err_msg,'Get_Widom_Info')
+                                END IF
+                                IF (.NOT. (line_array(1)(1:1) == '!')) EXIT
+                        END DO
+                        IF (line_array(1) == 'FALSE' .OR. line_array(1) == 'false' .OR. line_array(1) == 'False') RETURN
+                        IF(.NOT. (line_array(1) == 'TRUE' .OR. line_array(1) == 'true' .OR. line_array(1) == 'True')) THEN
+                                line_nbr = line_nbr - 1
+                        END IF
+                        widom_flag = .TRUE.
+                        IF(.NOT. ALLOCATED(ntrials)) ALLOCATE(ntrials(nspecies,nbr_boxes))
+                        ntrials(:,:)%widom = 0
+                        ALLOCATE(wprop_file_unit(nspecies,nbr_boxes))
+                        ALLOCATE(wprop_filenames(nspecies,nbr_boxes))
+                        ALLOCATE(first_open_wprop(nspecies,nbr_boxes))
+                        first_open_wprop(:,:) = .TRUE.
+                        DO is = 1,nspecies
+                                ALLOCATE(species_list(is)%test_particle(1:nbr_boxes))
+                                ALLOCATE(species_list(is)%widom_sum(1:nbr_boxes))
+                                ALLOCATE(species_list(is)%insertions_in_step(1:nbr_boxes))
+                                ALLOCATE(species_list(is)%widom_interval(1:nbr_boxes))
+                                species_list(is)%test_particle(:) = .FALSE.
+                        END DO
+                        EXIT
+                END IF
+        END DO
+        is = 0
+        DO
+                line_nbr = line_nbr + 1
+                CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
+                IF(ierr /= 0) THEN
+                   err_msg = ''
+                   err_msg(1) = 'Error while reading input file in Get_Widom_Info'
+                   CALL clean_abort(err_msg,'Get_Widom_Info')
+                END IF
+                IF (nbr_entries == 0) EXIT
+                IF (line_array(1)(1:1) == '!') CYCLE
+                is = is + 1
+                ibox = 0
+                DO i_entry = 1,nbr_entries
+                        IF (line_array(i_entry) == 'none') THEN
+                                ibox = ibox + 1
+                        ELSE IF (line_array(i_entry) == 'cbmc') THEN
+                                ibox = ibox + 1
+                                species_list(is)%test_particle(ibox) = .TRUE.
+                                species_list(is)%widom_sum(ibox) = 0.0_DP
+                                species_list(is)%insertions_in_step(ibox) = String_To_Int(line_array(i_entry+1))
+                                species_list(is)%widom_interval(ibox) = String_To_Int(line_array(i_entry+2))
+                                tp_correction(is) = 1
+                                i_unit = i_unit + 1
+                                wprop_file_unit(is,ibox) = wprop_file_unit_base + i_unit
+                                IF (nbr_boxes == 1) THEN
+                                        extension = '.spec' // TRIM(Int_To_String(is)) // '.wprp'
+                                ELSE
+                                        extension = '.spec' // TRIM(Int_To_String(is)) // '.box' // TRIM(Int_To_String(ibox)) // '.wprp'
+                                END IF
+                                CALL Name_Files(run_name,extension,wprop_filenames(is,ibox))
+                        END IF
+                        IF (ibox == nbr_boxes) EXIT
+                END DO
+                IF (is == nspecies) EXIT
+        END DO
+        IF(ALL(tp_correction .EQ. 0)) THEN
+                err_msg = ''
+                err_msg(1) = 'Error:  Widom insertions are enabled but no species were designated for Widom insertions'
+                CALL clean_abort(err_msg,'Get_Widom_Info')
+        END IF
+        RETURN
+
+END SUBROUTINE Get_Widom_Info
+
+SUBROUTINE Log_Widom_Info
+        ! This subroutine writes relevant information about the settings for the Widom insertions
+        ! to the log file if Widom insertions are enabled, and also adjusts the widom_interval
+        ! values according to the simulation length units.
+
+        INTEGER :: ibox, is
+        CHARACTER(120) :: linetext
+        
+        IF (.NOT. widom_flag) RETURN
+        WRITE(logunit,*)
+        WRITE(logunit,'(A)') 'Widom insertion info'
+        WRITE(logunit,'(A80)') '********************************************************************************'
+        DO is = 1, nspecies
+                DO ibox = 1, nbr_boxes
+                        IF (.NOT. species_list(is)%test_particle(ibox)) CYCLE
+
+                        linetext = 'Species ' // TRIM(Int_To_String(is)) // ' will have ' // &
+                                TRIM(Int_To_String(species_list(is)%insertions_in_step(ibox))) // &
+                                ' Widom insertions every ' // &
+                                TRIM(Int_To_String(species_list(is)%widom_interval(ibox)))
+                        IF (sim_length_units == 'Sweeps') THEN
+                                species_list(is)%widom_interval(ibox) = species_list(is)%widom_interval(ibox) * steps_per_sweep
+                                linetext = TRIM(linetext) // ' MC sweeps'
+                        ELSE
+                                linetext = TRIM(linetext) // ' MC steps'
+                        END IF
+                        IF (nbr_boxes .NE. 1) linetext = TRIM(linetext) // ' in box ' // TRIM(Int_To_String(ibox))
+                        WRITE(logunit,*) TRIM(linetext)
+                        WRITE(logunit,'(10X,A,3X,F16.9)') &
+                              'with de Broglie wavelength (Angstroms):', species_list(is)%de_broglie(ibox)
+                END DO
+        END DO
+        WRITE(logunit,'(A80)') '********************************************************************************'
+END SUBROUTINE Log_Widom_Info
+
+
 !******************************************************************************
 SUBROUTINE Get_CBMC_Info
 !******************************************************************************
@@ -5221,10 +5411,10 @@ SUBROUTINE Get_CBMC_Info
     END IF
   END DO
 
-  IF (int_sim_type == sim_gcmc .OR. int_sim_type == sim_gemc .OR. int_sim_type == sim_gemc_npt) THEN
+  IF (int_sim_type == sim_gcmc .OR. int_sim_type == sim_gemc .OR. int_sim_type == sim_gemc_npt .OR. widom_flag) THEN
      need_kappa_ins = .TRUE.
      DO is = 1, nspecies
-        IF (nfragments(is) > 1 .AND. species_list(is)%insertion == 'CBMC') THEN
+        IF (nfragments(is) > 1 .AND. (species_list(is)%insertion == 'CBMC' .OR. tp_correction(is) .NE. 0)) THEN
            need_kappa_dih = .TRUE.
         END IF
      END DO

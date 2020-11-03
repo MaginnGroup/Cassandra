@@ -233,6 +233,29 @@ SUBROUTINE NVTMC_Driver
 
      END IF
 
+     ! do widom insertions, if applicable to this simulation and step
+     IF (widom_flag) THEN
+
+        IF(.NOT. openmp_flag) THEN
+           CALL cpu_time(time_s)
+        ELSE
+!$        time_s = omp_get_wtime()
+        END IF
+
+        CALL Widom_Subdriver
+
+        IF(.NOT. openmp_flag) THEN
+           CALL cpu_time(time_e)
+        ELSE
+!$         time_e = omp_get_wtime()
+        END IF
+
+        movetime(imove_widom) = movetime(imove_widom) + time_e - time_s
+
+     END IF
+
+
+
      IF(.NOT. openmp_flag) THEN
         CALL cpu_time(now_time)
      ELSE
@@ -245,6 +268,7 @@ SUBROUTINE NVTMC_Driver
      ELSE
         IF(now_time .GT. n_mcsteps) complete = .TRUE.
      END IF
+
 
      !*****************************************************************************
      ! check if compute properties this step

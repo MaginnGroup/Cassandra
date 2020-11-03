@@ -216,6 +216,7 @@ to find information about the keywords \textit{checkpoint} and \textit{read\_con
 %Once the MCF and CAR files are generated, an additional step of generating the conformational library for each of the unique fragments is carried out. Two fragments are considered identical if they contain same number of atoms; all the bond lengths are identical; the nominal values of all the bond angles are the same and so are the force constants.  For the library generation, an NVT Monte Carlo simulation is carried out with a single molecule in the gas phase. The '\# Sim\_Type' for such simulations are 'NVT\_MC\_Fragment' or 'NVT\_MC\_Ring\_Fragment' depending on whether a given fragment has cyclic fragments. Sample input files are provided for the user. In the non-ring fragment library generation, atom sampling algorithm is carried out to populate the fragment library. For ring fragment, flip move is performed in addition to the atom sampling for the library generation. Details of the algorithm can be found in Shah and Maginn~\cite{Shah:2011}.
 
 \section{Cassandra Output Files}
+\label{sec:output_files}
 
 Cassandra generates several output files which can be used for later analysis. All have as a prefix the Run\_Name specified in the input file. See Chapter \ref{sec:Input_File} for details. The type of output is specified by the file name suffix. The following are generated:
 
@@ -236,5 +237,8 @@ so it may be a better starting configuration than if you used other methods.
 
 
 \item{{\bf Property file}} (*.prp\# or *.box\#.prp\#): This file lists the instantaneous thermodynamic and state properties for each box. Note that you can have more than one property file (hence the\# after `prp') and more than one box (also why there is a \# after `box'). The user specifies which properties are to be written and in what order, and these are then reproduced in this file. The file is written to every Prop\_Freq steps. A header is written to the first two lines to designate what each property is. You may use this file to compute thermodynamic averages.
+
+\item {\bf Widom property file} (*.spec\#.wprp or *.spec\#.box\#.wprp): This file lists the average \texttt{widom\_var} (defined in Equation \ref{eq:widom_var}) for each system configuration (step) in which Widom insertions are performed for a given species and a given box.  The species number is the \# in .spec\# in the file extension. For a multi-box system, the box number is the \# in .box\#.  The first column contains the number of MC steps or sweeps that have been completed when the Widom insertions are performed and the second column contains the average \texttt{widom\_var} for that step.
+
 
 \end{itemize}

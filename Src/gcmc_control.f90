@@ -66,6 +66,9 @@ SUBROUTINE GCMC_Control
   ! associated parameters and the vdw mixing rule.
   CALL Get_Pair_Style
 
+  ! Determine whether widom insertions are done and get relevant details if they are
+  CALL Get_Widom_Info
+
   ! Load molecular conectivity and force field paramters. Note that Get_Nspecies 
   ! must be called before this routine.  
   CALL Get_Molecule_Info
@@ -93,6 +96,9 @@ SUBROUTINE GCMC_Control
     
   ! Determine the frequency with which information will be output 
   CALL Get_Simulation_Length_Info
+
+  ! Write Widom insertion info to log file, which requires units from Get_Simulation_Length_Info
+  CALL Log_Widom_Info
 
   ! Properties to be output
   CALL Get_Property_Info

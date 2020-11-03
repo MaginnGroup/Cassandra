@@ -287,10 +287,32 @@ SUBROUTINE NPTMC_Driver
 
      END IF
 
-     IF ( cpcollect ) THEN
-        DO is = 1,nspecies
-           CALL Chempot(1, is)
-        END DO
+     !IF ( cpcollect ) THEN
+     !   DO is = 1,nspecies
+     !      CALL Chempot(1, is)
+     !   END DO
+     !END IF
+
+
+     ! do widom insertions, if applicable to this simulation and step
+     IF (widom_flag) THEN
+
+        IF(.NOT. openmp_flag) THEN
+           CALL cpu_time(time_s)
+        ELSE
+!$        time_s = omp_get_wtime()
+        END IF
+
+        CALL Widom_Subdriver
+
+        IF(.NOT. openmp_flag) THEN
+           CALL cpu_time(time_e)
+        ELSE
+!$         time_e = omp_get_wtime()
+        END IF
+
+        movetime(imove_widom) = movetime(imove_widom) + time_e - time_s
+
      END IF
 
      IF(.NOT. openmp_flag) THEN

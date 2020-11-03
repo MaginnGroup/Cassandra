@@ -159,5 +159,11 @@ CHARACTER(FILENAME_LEN) :: movie_custom_file
 INTEGER :: lattice_file_unit = 170
 CHARACTER(FILENAME_LEN) :: lattice_file
 
+! Variables associated with widom property files
+INTEGER :: wprop_file_unit_base = 180
+INTEGER, DIMENSION(:,:), ALLOCATABLE :: wprop_file_unit
+CHARACTER(FILENAME_LEN), DIMENSION(:,:), ALLOCATABLE :: wprop_filenames
+LOGICAL, DIMENSION(:,:), ALLOCATABLE :: first_open_wprop
+
 
 END MODULE File_Names

@@ -536,6 +536,7 @@ USE Type_Definitions
   INTEGER, PARAMETER :: imove_check = 9
   INTEGER, PARAMETER :: imove_identity_switch = 10
   INTEGER, PARAMETER :: imove_atom_displacement = 11
+  INTEGER, PARAMETER :: imove_widom = 12
 
 
   REAL(DP) :: time_s, time_e
@@ -582,6 +583,14 @@ REAL(DP), ALLOCATABLE :: pair_vdw_temp(:), pair_qq_temp(:)
 !!!! DSF variables
 REAL(DP), ALLOCATABLE, DIMENSION(:) :: alpha_dsf
 REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
+
+  !!!!!!!!!
+  !Widom insertions
+  !!!!!!!!!
+  LOGICAL :: widom_flag
+  INTEGER, DIMENSION(:), ALLOCATABLE :: tp_correction
+  
+
 
 END MODULE Global_Variables
 

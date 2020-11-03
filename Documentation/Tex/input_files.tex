@@ -1566,6 +1566,39 @@ This simulation will output 10 averages, and each average will be computed from 
 %
 %%%%%%%%%%%%%%%%
 %
+% Widom_Insertion
+%
+%%%%%%%%%%%%%%%%
+\subsection{Widom Insertion}\label{sec:Widom_Info}
+{\bf \# Widom\_Insertion} \\
+{[}{\it Logical}] \\
+{\it Character(i,j,1)} [{\it Integer(i,j,2)} {\it Integer(i,j,3)}] {\it *One entry for each box j} \\
+{\it *One line for each species i} \\ \\
+%
+This section specifies which species will be used for Widom insertions and how many times, how often, in which boxes they will have Widom insertions.  If the section is omitted, no Widom insertions will be performed.  Otherwise, if {\it Logical} is \texttt{true} or omitted, Widom insertions are enabled.  If {\it Logical} is \texttt{false}, Widom insertions are disabled and the rest of the section is ignored.  \\ \\
+%
+{\it Character(i,j,1)} specifies whether there are Widom insertions of species {\it i} in box {\it j}.  {\it Character(i,j,1)} is \texttt{none} if species {\it i} has no Widom insertions in box {\it j}, in which case {\it Integer(i,j,2)} and {\it Integer(i,j,3)} are ignored and may be omitted.  If {\it Character(i,j,1)} is \texttt{cbmc}, then species {\it i} has {\it Integer(i,j,2)} Widom insertions every {\it Integer(i,j,3)} MC steps (or MC sweeps if sweeps are the units defined in section \ref{sec:Simulation_Length_Info}) in box {\it j}.  Units of time are not supported for {\it Integer(i,j,3)}, and if they are specified as the units, {\it Integer(i,j,3)} will still be in units of MC steps. \\ \\
+%
+For example, for a simulation simulation with one box and two species, in which species 1 is to be inserted 5000 times every 1000 steps and species 2 is to be inserted 7000 times every 400 steps, this section could be written as follows:\\ \\
+\texttt{
+\# Widom\_Insertion \\
+true \\
+cbmc 5000 1000 \\
+cbmc 7000 400 \\} \\
+%
+For a simulation with two boxes and two species, for which the simulation length units are sweeps, where species 1 will have 300 Widom insertions every 50 sweeps in box 2 but none in box 1 and species 2 will have 7000 widom insertions every 350 sweeps in box 1 and 200 Widom insertions every 30 sweeps in box 2, this section could be written as follows: \\ \\
+\texttt{
+\# Widom\_Insertion \\
+none cbmc 300 50 \\
+cbmc 7000 350 cbmc 200 30 \\} \\
+
+
+
+
+
+%
+%%%%%%%%%%%%%%%%
+%
 % Property_Info
 %
 %%%%%%%%%%%%%%%%

@@ -115,6 +115,12 @@ MODULE Type_Definitions
      ! NR: for insertion style
      LOGICAL :: lcom
 
+
+     !!!Widom insertions
+     LOGICAL, DIMENSION(:), ALLOCATABLE :: test_particle
+     INTEGER, DIMENSION(:), ALLOCATABLE :: insertions_in_step, widom_interval
+     REAL(DP), DIMENSION(:), ALLOCATABLE :: widom_sum
+
   END TYPE Species_Class
   !****************************************************************************
 
@@ -510,6 +516,10 @@ MODULE Type_Definitions
 
     INTEGER :: displacement, rotation, angle, bond, dihedral, insertion, deletion, switch, cluster
     INTEGER :: disp_atom, cpcalc, displacement_e, rotation_e
+
+    ! widom insertions technically aren't mc moves but it's convenient to count them in ntrials
+    INTEGER :: widom
+
 
  END TYPE MC_Moves_Class
  !-------------------------------------------------------------------------------------------------
