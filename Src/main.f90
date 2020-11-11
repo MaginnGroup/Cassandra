@@ -204,6 +204,8 @@ PROGRAM Main
      CALL Fragment_Control
   ELSE IF (int_sim_type == sim_mcf) THEN
      CALL MCF_Control
+  ELSE IF (int_sim_type == sim_pregen) THEN
+     CALL Pregen_Control
   ELSE
      err_msg = ""
      err_msg(1) = 'Sim_Type unknown'
@@ -212,7 +214,7 @@ PROGRAM Main
   ENDIF
 
   ! Determine if it is equilibration or production or test
-  CALL Get_Run_Type
+  IF (int_sim_type .NE. sim_pregen) CALL Get_Run_Type
 
 
   ! initialize counters
@@ -242,7 +244,10 @@ PROGRAM Main
   WRITE(logunit,'(A80)') '********************************************************************************'
 
   DO ibox = 1, nbr_boxes
-    IF (start_type(ibox) == 'make_config') THEN
+  IF (start_type(ibox) == 'none') THEN
+            WRITE(logunit,'(A)') 'No initial configuration needed'
+            EXIT
+    ELSEIF (start_type(ibox) == 'make_config') THEN
        ! Insert molecules using CBMC
        CALL Make_Config(ibox)
        initial_mcstep = 0

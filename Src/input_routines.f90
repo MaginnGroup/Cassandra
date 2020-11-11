@@ -331,6 +331,10 @@ SUBROUTINE Get_Sim_Type
         ELSEIF(line_array(1) == 'mcf_gen' .OR. line_array(1) == 'MCF_Gen') THEN
            sim_type = 'MCF_Gen'
            int_sim_type = sim_mcf
+        ELSEIF(line_array(1) == 'pregen' .OR. line_array(1) == 'PREGEN' .OR. &
+               line_array(1) == 'pregen_mc' .OR. line_array(1) == 'PREGEN_MC') THEN
+           sim_type = 'pregen'
+           int_sim_type = sim_pregen
         ELSE
            err_msg = ''
            err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
@@ -4178,6 +4182,8 @@ SUBROUTINE Get_Move_Probabilities
   ALLOCATE(max_rot(nspecies,nbr_boxes))
   ALLOCATE(prob_rot_species(nspecies))
 
+  IF (int_sim_type == sim_pregen) RETURN
+
   REWIND(inputunit)
 
   ! start reading the input file
@@ -5368,6 +5374,149 @@ SUBROUTINE Log_Widom_Info
         WRITE(logunit,'(A80)') '********************************************************************************'
 END SUBROUTINE Log_Widom_Info
 
+!******************************************************************************
+SUBROUTINE Get_Pregen_Info
+        ! This subroutine reads the names of the xyz and H files containing pregenerated trajectories
+        ! and opens them
+
+        INTEGER :: ibox, is, xyz_pos, H_pos, line_pos
+        INTEGER :: ierr, line_nbr, nbr_entries, req_entries
+        CHARACTER(STRING_LEN) :: line_string,line_array(60)
+        
+
+        ALLOCATE(pregen_H_unit(nbr_boxes))
+        ALLOCATE(pregen_H_filenames(nbr_boxes))
+        ALLOCATE(pregen_xyz_unit(nbr_boxes))
+        ALLOCATE(pregen_xyz_filenames(nbr_boxes))
+
+        H_pos = 0
+        xyz_pos = 0
+        line_pos = 0
+
+        has_H = .FALSE.
+
+        DO ibox = 1, nbr_boxes
+                pregen_H_unit(ibox) = pregen_H_unit_base + ibox
+                pregen_xyz_unit(ibox) = pregen_xyz_unit_base + ibox
+        END DO
+
+        WRITE(logunit,*)
+        WRITE(logunit,'(A)') 'Pregenerated trajectory info'
+        WRITE(logunit,'(A80)') '********************************************************************************'
+        !
+        REWIND(inputunit)
+        ierr = 0
+        line_nbr = 0
+        
+        DO
+                line_nbr = line_nbr + 1
+                CALL Read_String(inputunit,line_string,ierr)
+                IF(ierr /= 0) THEN
+                        err_msg = ''
+                        err_msg(1) = 'Error while reading # Pregen_Info'
+                        CALL clean_abort(err_msg,'Get_Pregen_Info')
+                END IF
+                IF (line_string(1:13) == '# Pregen_Info') THEN
+                        line_nbr = line_nbr + 1
+                        CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
+                        req_entries = nbr_entries ! minimum number of entries in subsequent lines
+                        DO line_pos = 1, nbr_entries
+                                SELECT CASE line_array(line_pos)
+                                        CASE ('H','h','.H','.h')
+                                                IF (H_pos == 0)
+                                                        H_pos = line_pos
+                                                        has_H = .TRUE.
+                                                ELSE
+                                                        err_msg = ''
+                                                        err_msg(1) = 'File type H was listed more than once'
+                                                        CALL clean_abort(err_msg,'Get_Pregen_Info')
+                                                END IF
+                                        CASE ('xyz','XYZ','.xyz','.XYZ')
+                                                IF (xyz_pos == 0)
+                                                        xyz_pos = line_pos
+                                                ELSE
+                                                        err_msg = ''
+                                                        err_msg(1) = 'File type xyz was listed more than once'
+                                                        CALL clean_abort(err_msg,'Get_Pregen_Info')
+                                                END IF
+                                        CASE DEFAULT
+                                                err_msg = ''
+                                                err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
+                                                        TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+                                                err_msg(2) = 'Supported keywords are: xyz, H'
+                                END SELECT
+                        END DO
+                        IF (xyz_pos == 0) THEN
+                                err_msg = ''
+                                err_msg(1) = 'Keyword xyz must be included on line number ' // &
+                                        TRIM(Int_To_String(line_nbr))
+                                CALL clean_abort(err_msg,'Get_Pregen_Info')
+                        ELSE IF (has_H) THEN
+                                box_list(ibox)%box_shape = 'TRICLINIC'
+                                box_list(ibox)%int_box_shape = int_cell
+                                IF (nbr_boxes == 1)
+                                        WRITE(logunit,*) 'Box shapes and sizes will be replaced by those read from the pregenerated H file'
+                                ELSE
+                                        WRITE(logunit,*) 'Box shapes and sizes will be replaced by those read from the pregenerated H files'
+                                END IF
+                        END IF
+                        DO ibox = 1, nbr_boxes
+                                line_nbr = line_nbr + 1
+                                CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
+                                IF(ierr /= 0) THEN
+                                        err_msg = ''
+                                        err_msg(1) = 'Error while reading # Pregen_Info'
+                                        CALL clean_abort(err_msg,'Get_Pregen_Info')
+                                END IF
+                                IF(req_entries /= nbr_entries) THEN
+                                        err_msg = ''
+                                        err_msg(1) = 'Line ' // TRIM(Int_To_String(line_nbr)) // &
+                                                ' of the input file must contain exactly ' // &
+                                                TRIM(Int_To_String(req_entries)) // ' entries'
+                                        CALL clean_abort(err_msg,'Get_Pregen_Info')
+                                END IF
+                                pregen_xyz_filenames(ibox) = line_array(xyz_pos)
+                                OPEN(unit=pregen_xyz_unit(ibox),file=pregen_xyz_filenames(ibox),STATUS='OLD',IOSTAT=ierr)
+                                IF(ierr /= 0) THEN
+                                        err_msg = ''
+                                        err_msg(1) = 'Error while opening pregenerated xyz file ' // &
+                                                TRIM(pregen_xyz_filenames(ibox)) // &
+                                                ' given as entry  ' // TRIM(Int_To_String(xyz_pos)) // ' on line number ' // &
+                                                TRIM(Int_To_String(line_nbr)) // ' of the input file'
+                                        err_msg(2) = 'Verify that xyz file ' // TRIM(pregen_xyz_filenames(ibox)) // 'exists'
+                                        CALL clean_abort(err_msg,'Get_Pregen_Info')
+                                END IF
+                                IF (has_H) THEN
+                                        pregen_H_filenames(ibox) = line_array(H_pos)
+                                        OPEN(unit=pregen_H_unit(ibox),file=pregen_H_filenames(ibox),STATUS='OLD',IOSTAT=ierr)
+                                        IF(ierr /= 0) THEN
+                                                err_msg = ''
+                                                err_msg(1) = 'Error while opening pregenerated H file ' // &
+                                                        TRIM(pregen_H_filenames(ibox)) // &
+                                                        ' given as entry  ' // TRIM(Int_To_String(H_pos)) // ' on line number ' // &
+                                                        TRIM(Int_To_String(line_nbr)) // ' of the input file'
+                                                err_msg(2) = 'Verify that H file ' // TRIM(pregen_H_filenames(ibox)) // 'exists'
+                                                CALL clean_abort(err_msg,'Get_Pregen_Info')
+                                        END IF
+                                        WRITE(logunit,*) 'Reading pregenerated trajectory for box ', ibox, &
+                                                ' from xyz file ', TRIM(pregen_xyz_filename(ibox)), &
+                                                ' and H file ', TRIM(pregen_H_filename(ibox))
+                                ELSE
+                                        WRITE(logunit,*) 'Reading pregenerated trajectory for box ', ibox, &
+                                                ' from xyz file ', TRIM(pregen_xyz_filename(ibox))
+                                END IF
+
+                        END DO
+                        WRITE(logunit,'(A80)') '********************************************************************************'
+                        RETURN
+                ELSE IF(line_string(1:3) == 'END' .or. line_nbr > 10000 ) THEN
+                        err_msg = ''
+                        err_msg(1) = 'Section # Pregen_Info is missing from the input file and is required'
+                        CALL clean_abort(err_msg,'Get_Pregen_Info')
+                END IF
+        END DO
+END SUBROUTINE Get_Pregen_Info
+
 
 !******************************************************************************
 SUBROUTINE Get_CBMC_Info
@@ -6028,6 +6177,8 @@ USE Global_Variables, ONLY: cpcollect
   line_nbr = 0
   nbr_prop_files = 0
 
+  need_energy = .FALSE.
+
   DO
      line_nbr = line_nbr + 1
      CALL Read_String(inputunit,line_string,ierr)
@@ -6101,48 +6252,63 @@ USE Global_Variables, ONLY: cpcollect
               ELSE IF (line_array(1) == 'energy_total' .OR. line_array(1) == 'Energy_Total') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Total'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'energy_inter') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Inter'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'energy_intra' .OR. line_array(1) == 'Energy_Intra') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Intra'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'energy_bond') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Bond'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'energy_angle') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Angle'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'energy_dihedral') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Dihedral'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'energy_improper') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Improper'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'energy_intravdw') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_IntraVDW'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'energy_intraq') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_IntraQ'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'energy_intervdw') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_InterVDW'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'energy_interq') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_InterQ'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'energy_lrc') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_LRC'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'energy_recip') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Recip'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'energy_self') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Self'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'enthalpy' .OR. line_array(1) == 'Enthalpy') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Enthalpy'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'pressure' .OR. line_array(1) == 'Pressure') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Pressure'
