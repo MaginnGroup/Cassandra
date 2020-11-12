@@ -838,8 +838,12 @@ SUBROUTINE Get_Pair_Style
         CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
 
         IF (line_array(1) == 'TRUE' .OR. line_array(1) == 'true') THEN
-           l_pair_nrg = .TRUE.
-           WRITE(logunit,'(A)') 'Pair interaction energy array storage enabled'
+           IF (int_sim_type == sim_pregen) THEN
+                   WRITE(logunit,'(A)') 'Pair interaction energy array storage is not supported for pregenerated trajectories'
+           ELSE
+                   l_pair_nrg = .TRUE.
+                   WRITE(logunit,'(A)') 'Pair interaction energy array storage enabled'
+           END IF
         ELSE IF (line_array(1) == 'FALSE' .OR. line_array(1) == 'false') THEN
            WRITE(logunit,'(A)') 'Pair interaction energy arrays will not be stored'
         ELSE

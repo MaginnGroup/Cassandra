@@ -76,6 +76,12 @@ SUBROUTINE Load_Next_Frame(end_reached)
                         nmols_to_read(is_H,ibox) = nmols_H
                 END DO
 
+                IF (l_half_len_cutoff(ibox)) THEN
+                        rcut_vdw(ibox) = 0.5 * MIN(box_list(ibox)%face_distance(1), &
+                                                   box_list(ibox)%face_distance(2), &
+                                                   box_list(ibox)%face_distance(3))
+                        IF (int_charge_sum_style(ibox) /= charge_none) rcut_coul(ibox) = rcut_vdw(ibox)
+                END IF
 
         END SUBROUTINE Read_H_frame
 
