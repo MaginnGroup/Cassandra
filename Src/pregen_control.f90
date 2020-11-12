@@ -30,6 +30,7 @@ SUBROUTINE Pregen_Control
 
         ! Determine the type of VDW and charge interaction model to use, along with
         ! associated parameters and the vdw mixing rule.
+        CALL Get_Pair_Style
 
         ! Determine whether widom insertions are done and get relevant details if they are
         CALL Get_Widom_Info
