@@ -15,7 +15,7 @@ SUBROUTINE Load_Next_Frame(end_reached)
         IMPLICIT NONE
         
         INTEGER, DIMENSION(nbr_boxes) :: nspecies_thisframe
-        INTEGER :: ibox
+        INTEGER :: ibox, is, im
         LOGICAL :: end_reached
 
         end_reached = .FALSE.
@@ -82,10 +82,11 @@ SUBROUTINE Load_Next_Frame(end_reached)
         SUBROUTINE Read_xyz_frame
 
 
-                INTEGER :: is, ia, im, this_im, locate_base, this_unit
+                INTEGER :: is, ia, im, this_im, locate_base, this_unit, io
 
                 REAL(DP) :: xcom_old, ycom_old, zcom_old
                 REAL(DP) :: xcom_new, ycom_new, zcom_new
+                REAL(DP) :: this_lambda
                 LOGICAL :: overlap
 
                 this_unit = pregen_xyz_unit(ibox)

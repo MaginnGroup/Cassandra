@@ -183,7 +183,7 @@ SUBROUTINE Pregen_Driver
      IF (write_flag) THEN
         IF (need_energy .AND. (int_sim_type == sim_pregen)) THEN
            DO ibox = 1, nbr_boxes
-              CALL Compute_Sytem_Total_Energy(ibox,.TRUE.,overlap)
+              CALL Compute_System_Total_Energy(ibox,.TRUE.,overlap)
               IF (overlap) THEN
                  err_msg = ''
                  err_msg(1) = 'Atomic overlap in the configuration'

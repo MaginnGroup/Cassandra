@@ -5421,9 +5421,9 @@ SUBROUTINE Get_Pregen_Info
                         CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
                         req_entries = nbr_entries ! minimum number of entries in subsequent lines
                         DO line_pos = 1, nbr_entries
-                                SELECT CASE line_array(line_pos)
+                                SELECT CASE (line_array(line_pos))
                                         CASE ('H','h','.H','.h')
-                                                IF (H_pos == 0)
+                                                IF (H_pos == 0) THEN
                                                         H_pos = line_pos
                                                         has_H = .TRUE.
                                                 ELSE
@@ -5432,7 +5432,7 @@ SUBROUTINE Get_Pregen_Info
                                                         CALL clean_abort(err_msg,'Get_Pregen_Info')
                                                 END IF
                                         CASE ('xyz','XYZ','.xyz','.XYZ')
-                                                IF (xyz_pos == 0)
+                                                IF (xyz_pos == 0) THEN
                                                         xyz_pos = line_pos
                                                 ELSE
                                                         err_msg = ''
@@ -5454,7 +5454,7 @@ SUBROUTINE Get_Pregen_Info
                         ELSE IF (has_H) THEN
                                 box_list(ibox)%box_shape = 'TRICLINIC'
                                 box_list(ibox)%int_box_shape = int_cell
-                                IF (nbr_boxes == 1)
+                                IF (nbr_boxes == 1) THEN
                                         WRITE(logunit,*) 'Box shapes and sizes will be replaced by those read from the pregenerated H file'
                                 ELSE
                                         WRITE(logunit,*) 'Box shapes and sizes will be replaced by those read from the pregenerated H files'
@@ -5499,11 +5499,11 @@ SUBROUTINE Get_Pregen_Info
                                                 CALL clean_abort(err_msg,'Get_Pregen_Info')
                                         END IF
                                         WRITE(logunit,*) 'Reading pregenerated trajectory for box ', ibox, &
-                                                ' from xyz file ', TRIM(pregen_xyz_filename(ibox)), &
-                                                ' and H file ', TRIM(pregen_H_filename(ibox))
+                                                ' from xyz file ', TRIM(pregen_xyz_filenames(ibox)), &
+                                                ' and H file ', TRIM(pregen_H_filenames(ibox))
                                 ELSE
                                         WRITE(logunit,*) 'Reading pregenerated trajectory for box ', ibox, &
-                                                ' from xyz file ', TRIM(pregen_xyz_filename(ibox))
+                                                ' from xyz file ', TRIM(pregen_xyz_filenames(ibox))
                                 END IF
 
                         END DO
