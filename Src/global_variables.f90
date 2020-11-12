@@ -592,7 +592,7 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   INTEGER, DIMENSION(:), ALLOCATABLE :: tp_correction
 
   ! Pregenerated trajectory
-  LOGICAL :: has_H ! Does the simulation use H file(s)?
+  !LOGICAL :: has_H ! Does the simulation use H file(s)?
   LOGICAL :: need_energy
   
 

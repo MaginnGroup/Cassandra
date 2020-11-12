@@ -4150,9 +4150,11 @@ SUBROUTINE Get_Move_Probabilities
   REAL(DP) :: total_mass, this_mass
 
 !******************************************************************************
-  WRITE(logunit,*)
-  WRITE(logunit,'(A)') 'Move probabilities'
-  WRITE(logunit,'(A80)') '********************************************************************************'
+  IF (int_sim_type /= sim_pregen) THEN
+          WRITE(logunit,*)
+          WRITE(logunit,'(A)') 'Move probabilities'
+          WRITE(logunit,'(A80)') '********************************************************************************'
+  END IF
 
   ierr = 0
   line_nbr = 0
@@ -5389,11 +5391,12 @@ SUBROUTINE Get_Pregen_Info
         ALLOCATE(pregen_xyz_unit(nbr_boxes))
         ALLOCATE(pregen_xyz_filenames(nbr_boxes))
 
-        H_pos = 0
-        xyz_pos = 0
-        line_pos = 0
+        H_pos = 1
+        xyz_pos = 2
 
-        has_H = .FALSE.
+        req_entries = 2
+
+        !has_H = .FALSE.
 
         DO ibox = 1, nbr_boxes
                 pregen_H_unit(ibox) = pregen_H_unit_base + ibox
@@ -5417,49 +5420,49 @@ SUBROUTINE Get_Pregen_Info
                         CALL clean_abort(err_msg,'Get_Pregen_Info')
                 END IF
                 IF (line_string(1:13) == '# Pregen_Info') THEN
-                        line_nbr = line_nbr + 1
-                        CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
-                        req_entries = nbr_entries ! minimum number of entries in subsequent lines
-                        DO line_pos = 1, nbr_entries
-                                SELECT CASE (line_array(line_pos))
-                                        CASE ('H','h','.H','.h')
-                                                IF (H_pos == 0) THEN
-                                                        H_pos = line_pos
-                                                        has_H = .TRUE.
-                                                ELSE
-                                                        err_msg = ''
-                                                        err_msg(1) = 'File type H was listed more than once'
-                                                        CALL clean_abort(err_msg,'Get_Pregen_Info')
-                                                END IF
-                                        CASE ('xyz','XYZ','.xyz','.XYZ')
-                                                IF (xyz_pos == 0) THEN
-                                                        xyz_pos = line_pos
-                                                ELSE
-                                                        err_msg = ''
-                                                        err_msg(1) = 'File type xyz was listed more than once'
-                                                        CALL clean_abort(err_msg,'Get_Pregen_Info')
-                                                END IF
-                                        CASE DEFAULT
-                                                err_msg = ''
-                                                err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
-                                                        TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
-                                                err_msg(2) = 'Supported keywords are: xyz, H'
-                                END SELECT
-                        END DO
-                        IF (xyz_pos == 0) THEN
-                                err_msg = ''
-                                err_msg(1) = 'Keyword xyz must be included on line number ' // &
-                                        TRIM(Int_To_String(line_nbr))
-                                CALL clean_abort(err_msg,'Get_Pregen_Info')
-                        ELSE IF (has_H) THEN
-                                box_list(ibox)%box_shape = 'TRICLINIC'
-                                box_list(ibox)%int_box_shape = int_cell
-                                IF (nbr_boxes == 1) THEN
-                                        WRITE(logunit,*) 'Box shapes and sizes will be replaced by those read from the pregenerated H file'
-                                ELSE
-                                        WRITE(logunit,*) 'Box shapes and sizes will be replaced by those read from the pregenerated H files'
-                                END IF
+!                        line_nbr = line_nbr + 1
+!                        CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
+!                        req_entries = nbr_entries ! minimum number of entries in subsequent lines
+!                        DO line_pos = 1, nbr_entries
+!                                SELECT CASE (line_array(line_pos))
+!                                        CASE ('H','h','.H','.h')
+!                                                IF (H_pos == 0) THEN
+!                                                        H_pos = line_pos
+!                                                        has_H = .TRUE.
+!                                                ELSE
+!                                                        err_msg = ''
+!                                                        err_msg(1) = 'File type H was listed more than once'
+!                                                        CALL clean_abort(err_msg,'Get_Pregen_Info')
+!                                                END IF
+!                                        CASE ('xyz','XYZ','.xyz','.XYZ')
+!                                                IF (xyz_pos == 0) THEN
+!                                                        xyz_pos = line_pos
+!                                                ELSE
+!                                                        err_msg = ''
+!                                                        err_msg(1) = 'File type xyz was listed more than once'
+!                                                        CALL clean_abort(err_msg,'Get_Pregen_Info')
+!                                                END IF
+!                                        CASE DEFAULT
+!                                                err_msg = ''
+!                                                err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
+!                                                        TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+!                                                err_msg(2) = 'Supported keywords are: xyz, H'
+!                                END SELECT
+!                        END DO
+!                        IF (xyz_pos == 0) THEN
+!                                err_msg = ''
+!                                err_msg(1) = 'Keyword xyz must be included on line number ' // &
+!                                        TRIM(Int_To_String(line_nbr))
+!                                CALL clean_abort(err_msg,'Get_Pregen_Info')
+!                        ELSE IF (has_H) THEN
+                        box_list(:)%box_shape = 'TRICLINIC'
+                        box_list(:)%int_box_shape = int_cell
+                        IF (nbr_boxes == 1) THEN
+                                WRITE(logunit,*) 'Box shapes and sizes will be replaced by those read from the pregenerated H file'
+                        ELSE
+                                WRITE(logunit,*) 'Box shapes and sizes will be replaced by those read from the pregenerated H files'
                         END IF
+!                        END IF
                         DO ibox = 1, nbr_boxes
                                 line_nbr = line_nbr + 1
                                 CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
@@ -5486,25 +5489,25 @@ SUBROUTINE Get_Pregen_Info
                                         err_msg(2) = 'Verify that xyz file ' // TRIM(pregen_xyz_filenames(ibox)) // 'exists'
                                         CALL clean_abort(err_msg,'Get_Pregen_Info')
                                 END IF
-                                IF (has_H) THEN
-                                        pregen_H_filenames(ibox) = line_array(H_pos)
-                                        OPEN(unit=pregen_H_unit(ibox),file=pregen_H_filenames(ibox),STATUS='OLD',IOSTAT=ierr)
-                                        IF(ierr /= 0) THEN
-                                                err_msg = ''
-                                                err_msg(1) = 'Error while opening pregenerated H file ' // &
-                                                        TRIM(pregen_H_filenames(ibox)) // &
-                                                        ' given as entry  ' // TRIM(Int_To_String(H_pos)) // ' on line number ' // &
-                                                        TRIM(Int_To_String(line_nbr)) // ' of the input file'
-                                                err_msg(2) = 'Verify that H file ' // TRIM(pregen_H_filenames(ibox)) // 'exists'
-                                                CALL clean_abort(err_msg,'Get_Pregen_Info')
-                                        END IF
-                                        WRITE(logunit,*) 'Reading pregenerated trajectory for box ', ibox, &
-                                                ' from xyz file ', TRIM(pregen_xyz_filenames(ibox)), &
-                                                ' and H file ', TRIM(pregen_H_filenames(ibox))
-                                ELSE
-                                        WRITE(logunit,*) 'Reading pregenerated trajectory for box ', ibox, &
-                                                ' from xyz file ', TRIM(pregen_xyz_filenames(ibox))
+!                                IF (has_H) THEN
+                                pregen_H_filenames(ibox) = line_array(H_pos)
+                                OPEN(unit=pregen_H_unit(ibox),file=pregen_H_filenames(ibox),STATUS='OLD',IOSTAT=ierr)
+                                IF(ierr /= 0) THEN
+                                        err_msg = ''
+                                        err_msg(1) = 'Error while opening pregenerated H file ' // &
+                                                TRIM(pregen_H_filenames(ibox)) // &
+                                                ' given as entry  ' // TRIM(Int_To_String(H_pos)) // ' on line number ' // &
+                                                TRIM(Int_To_String(line_nbr)) // ' of the input file'
+                                        err_msg(2) = 'Verify that H file ' // TRIM(pregen_H_filenames(ibox)) // 'exists'
+                                        CALL clean_abort(err_msg,'Get_Pregen_Info')
                                 END IF
+                                WRITE(logunit,*) 'Reading pregenerated trajectory for box ', ibox, &
+                                        ' from xyz file ', TRIM(pregen_xyz_filenames(ibox)), &
+                                        ' and H file ', TRIM(pregen_H_filenames(ibox))
+!                                ELSE
+!                                        WRITE(logunit,*) 'Reading pregenerated trajectory for box ', ibox, &
+!                                                ' from xyz file ', TRIM(pregen_xyz_filenames(ibox))
+!                                END IF
 
                         END DO
                         WRITE(logunit,'(A80)') '********************************************************************************'

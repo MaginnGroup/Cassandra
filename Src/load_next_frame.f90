@@ -29,7 +29,7 @@ SUBROUTINE Load_Next_Frame(end_reached)
         molecule_list(:,:)%which_box = 0
 
         DO ibox = 1, nbr_boxes
-                IF (has_H) CALL Read_H_frame
+                CALL Read_H_frame
                 CALL Read_xyz_frame
         END DO
 
