@@ -45,8 +45,8 @@ SUBROUTINE Pregen_Control
         ! Create the intramolecular nonbond scaling arrays.
         CALL Create_Intra_Exclusion_Table
 
-        ! No starting configuration
-        start_type = 'none'
+        ! No starting configuration but calling Get_Start_Type for allocation
+        CALL Get_Start_Type
 
         ! Seed info
         CALL Get_Seed_Info

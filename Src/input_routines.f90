@@ -4535,7 +4535,7 @@ SUBROUTINE Get_Move_Probabilities
                        err_msg(1) = 'Keyword ' // TRIM(line_string2(1:17)) // ' on line number ' // &
                                     TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
                        err_msg(2) = 'Supported keywords are: prob_swap_species, prob_swap_from_box'
-                       CALL Clean_Abort(err_msg,'Get_Start_Type')
+                       CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
                     END IF
 
                  END DO
@@ -4839,9 +4839,11 @@ SUBROUTINE Get_Start_Type
   REAL(DP) :: total_mass, this_mass
 
 !******************************************************************************
-  WRITE(logunit,*)
-  WRITE(logunit,'(A)') 'Start type'
-  WRITE(logunit,'(A80)') '********************************************************************************'
+  IF (int_sim_type /= sim_pregen) THEN
+          WRITE(logunit,*)
+          WRITE(logunit,'(A)') 'Start type'
+          WRITE(logunit,'(A80)') '********************************************************************************'
+  END IF
 
   ALLOCATE(start_type(nbr_boxes),Stat=Allocatestatus)
   IF (Allocatestatus /= 0) THEN
@@ -4878,6 +4880,11 @@ SUBROUTINE Get_Start_Type
   nmols_to_read = 0
   nmols = 0
   molecule_list(:,:)%live = .FALSE.
+
+  IF (int_sim_type = sim_pregen) THEN
+          start_type = 'NONE'
+          RETURN
+  END IF
 
   REWIND(inputunit)
 
