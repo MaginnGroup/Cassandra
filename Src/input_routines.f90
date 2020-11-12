@@ -3576,7 +3576,7 @@ SUBROUTINE Get_Box_Info
               CALL Clean_Abort(err_msg,'Get_Box_Info')
            END IF
         ELSE
-           IF (nbr_boxes /= 1) THEN
+           IF ((nbr_boxes /= 1) .AND. (int_sim_type /= sim_pregen) ) THEN
               err_msg = ''
               err_msg(1) = 'Option ' // TRIM(line_array(1)) // &
                            ' on line number ' // &
