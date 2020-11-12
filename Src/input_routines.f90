@@ -4881,7 +4881,7 @@ SUBROUTINE Get_Start_Type
   nmols = 0
   molecule_list(:,:)%live = .FALSE.
 
-  IF (int_sim_type = sim_pregen) THEN
+  IF (int_sim_type == sim_pregen) THEN
           start_type = 'NONE'
           RETURN
   END IF
