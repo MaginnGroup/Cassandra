@@ -448,6 +448,8 @@ PROGRAM Main
 
      CALL Ring_Fragment_Driver
 
+  ELSE IF (int_sim_type == sim_pregen) THEN
+     CALL Pregen_Driver
   END IF
   WRITE(logunit,'(A80)') '********************************************************************************'
 
