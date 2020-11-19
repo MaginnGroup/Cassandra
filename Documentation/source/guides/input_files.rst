@@ -1298,27 +1298,60 @@ Property Output
 ~~~~~~~~~~~~~~~
 
 | ``# Property_Info`` *Integer(i)*
-| *Character(j) \*One line for each property :math:`j`*
+| *Character(j)* \*One line for each property :math:`j`
 
 This section provides information on the properties that are output.
 More than one section is allowed for multiple boxes. In this case,
 each section is separated by a blank line. *Integer(i)* is the
 identity of the box for which the properties are desired.
 *Character(i,j)* is the property that is to be output. Each property
-is specified on a separate line. The supported keywords are:
+is specified on a separate line. 
 
-* ``energy_total``: Total energy of the system (extensive) in kJ/mol
-* ``energy_lj``: Lennard-Jones energy of the sytem in kJ/mol
-* ``energy_elec``: Electrostatic energy of the sytem in kJ/mol
-* ``energy_intra``: Total intramolecular energy of the system including
-  bonded and non-bonded interactions in kJ/mol
-* ``enthalpy``: Enthalpy of the system (extensive) kJ/mol. The enthalpy
+All energies are in kJ/mol and are extensive, i.e. if the numbers
+of molecules in a simulation are doubled, the magnitude of the energy
+will also double. The kJ unit of energy is the right order of
+magnitude for molar quantities, :math:`\mathcal{O}(10^{23})` molecules. Cassandra
+is designed for simulations of :math:`\mathcal{O}(100 − 1000)` molecules, which will
+have much smaller internal energies, :math:`\mathcal{O}(10^{-21})` kJ. Rather than report
+energies in zeptojoules or eV, we have opted to multiply the energies
+by Avogadro’s number. Or, equivalently, you can interpret the output
+energies as the energy for a mole of simulation boxes. To get extensive
+energies in kJ, divide the output energies by Avogadro’s number.
+To get intensive energies in kJ/mol, divide the output energies by
+the number of molecules (only strictly valid for single species
+simulations). The following components of the energy can be output:
+
+
+* ``energy_total``: total energy of the system, the sum of ``energy_intra`` and ``energy_inter``
+* ``energy_intra``: intramolecular energy, the sum of the following terms:
+
+  * ``energy_bond``: bond energy
+  * ``energy_angle``: angle energy
+  * ``energy_dihedral``: dihedral energy
+  * ``energy_improper``: improper energy
+  * ``energy_intravdw``: intramolecular van der Waals energy
+  * ``energy_intraq``: intramolecular electrostatic energy. In the case of Ewald and DSF methods, this is the real-space intramolecular electrostatic energy.
+
+* ``energy_inter``: intermolecular energy, sum of the following terms:
+
+  * ``energy_intervdw``: intermolecular van der Waals energy
+  * ``energy_lrc``: long range tail correction for the truncated van der Waals energy
+  * ``energy_interq``: intermolecular electrostatic energy. In the case of Ewald and DSF methods, this is the real-space intermolecular electrostatic energy.
+  * ``energy_recip``: electrostatic reciprocal energy, for Ewald and DSF methods
+  * ``energy_self``: electrostatic self energy, for Ewald method
+
+Additional supported keywords are:
+
+* ``enthalpy``: Enthalpy of the system, in kJ/mol (extensive). The enthalpy
   is computed using the pressure setpoint for isobaric simulations and
   the computed pressure for all other ensembles.
-* ``pressure``: Pressure of the system in bar
+* ``pressure``: Pressure of the system, in bar
+* ``pressure_xx``: the xx-component of the pressure tensor, in bar
+* ``pressure_yy``: the yy-component of the pressure tensor, in bar
+* ``pressure_zz``: the zz-component of the pressure tensor, in bar
 * ``volume``: Volume of the system in Å\ :sup:`3`
 * ``nmols``: Number of molecules of each species
-* ``density``: Density of each species in #/Å\ :sup:`3`
+* ``density``: Density of each species in Å\ :sup:`3`
 * ``mass_density``: Density of the system in kg/m\ :sup:`3`
 
 For example, if you would like total energy, volume and pressure of a one box
