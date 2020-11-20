@@ -94,7 +94,7 @@ SUBROUTINE Load_Next_Frame(end_reached)
 
                 REAL(DP) :: xcom_old, ycom_old, zcom_old
                 REAL(DP) :: xcom_new, ycom_new, zcom_new
-                REAL(DP) :: this_lambda, energy_lrc
+                REAL(DP) :: this_lambda, e_lrc
                 LOGICAL :: overlap
 
                 this_unit = pregen_xyz_unit(ibox)
