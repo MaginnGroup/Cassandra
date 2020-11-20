@@ -20,7 +20,6 @@ SUBROUTINE Load_Next_Frame(end_reached)
 
         end_reached = .FALSE.
 
-
         nmols = 0
         locate = 0
         molecule_list(:,:)%live = .FALSE.
@@ -28,10 +27,13 @@ SUBROUTINE Load_Next_Frame(end_reached)
         molecule_list(:,:)%molecule_type = int_none
         molecule_list(:,:)%which_box = 0
 
+
         DO ibox = 1, nbr_boxes
                 CALL Read_H_frame
                 CALL Read_xyz_frame
         END DO
+
+        IF (end_reached) RETURN
 
         
         DO is = 1, nspecies
@@ -92,7 +94,7 @@ SUBROUTINE Load_Next_Frame(end_reached)
 
                 REAL(DP) :: xcom_old, ycom_old, zcom_old
                 REAL(DP) :: xcom_new, ycom_new, zcom_new
-                REAL(DP) :: this_lambda
+                REAL(DP) :: this_lambda, energy_lrc
                 LOGICAL :: overlap
 
                 this_unit = pregen_xyz_unit(ibox)
@@ -171,7 +173,11 @@ SUBROUTINE Load_Next_Frame(end_reached)
                         END DO
                 END DO
 
-                IF (int_vdw_sum_style(ibox) == vdw_cut_tail) CALL Compute_Beads(ibox)
+                IF (int_vdw_sum_style(ibox) == vdw_cut_tail) THEN 
+                        CALL Compute_Beads(ibox)
+                        CALL Compute_LR_Correction(ibox,e_lrc)
+                        energy(this_box)%lrc = e_lrc
+                END IF
 
 
         END SUBROUTINE Read_xyz_frame
