@@ -176,7 +176,7 @@ SUBROUTINE Load_Next_Frame(end_reached)
                 IF (int_vdw_sum_style(ibox) == vdw_cut_tail) THEN 
                         CALL Compute_Beads(ibox)
                         CALL Compute_LR_Correction(ibox,e_lrc)
-                        energy(this_box)%lrc = e_lrc
+                        energy(ibox)%lrc = e_lrc
                 END IF
 
 
