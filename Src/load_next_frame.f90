@@ -33,9 +33,6 @@ SUBROUTINE Load_Next_Frame(end_reached)
                 CALL Read_xyz_frame
         END DO
 
-        IF (end_reached) RETURN
-
-        
         DO is = 1, nspecies
                 DO im = max_molecules(is), SUM(nmols(is,1:nbr_boxes)) + 1, -1
                         nmols(is,0) = nmols(is,0) + 1
@@ -83,6 +80,19 @@ SUBROUTINE Load_Next_Frame(end_reached)
                                                    box_list(ibox)%face_distance(2), &
                                                    box_list(ibox)%face_distance(3))
                         IF (int_charge_sum_style(ibox) /= charge_none) rcut_coul(ibox) = rcut_vdw(ibox)
+                        rcut_vdwsq(ibox) = rcut_vdw(ibox) * rcut_vdw(ibox)
+                        rcut_coulsq(ibox) = rcut_vdwsq(ibox)
+
+                        rcut_vdw3(ibox) = rcut_vdwsq(ibox) * rcut_vdw(ibox)
+                        rcut_vdw6(ibox) = rcut_vdw3(ibox) * rcut_vdw3(ibox)
+                        rcut3(ibox) = rcut_vdw3(ibox)
+                        rcut9(ibox) = rcut3(ibox) * rcut_vdw6(ibox)
+
+                        rcut_max(ibox) = rcut_vdw(ibox)
+                        IF ( int_charge_sum_style(ibox) == charge_ewald) THEN
+                                ! alpha_ewald(ibox) = ewald_p_sqrt(ibox) / rcut_coul(ibox)
+                                h_ewald_cut(ibox) = 2.0_DP * ewald_p(ibox) / rcut_coul(ibox)
+                        END IF
                 END IF
 
         END SUBROUTINE Read_H_frame
