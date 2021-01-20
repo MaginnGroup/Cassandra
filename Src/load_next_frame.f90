@@ -11,6 +11,7 @@ SUBROUTINE Load_Next_Frame(end_reached)
         USE File_Names
         USE Simulation_Properties
         USE IO_Utilities
+        USE Energy_Routines
 
         IMPLICIT NONE
         
@@ -92,6 +93,7 @@ SUBROUTINE Load_Next_Frame(end_reached)
                         IF ( int_charge_sum_style(ibox) == charge_ewald) THEN
                                 ! alpha_ewald(ibox) = ewald_p_sqrt(ibox) / rcut_coul(ibox)
                                 h_ewald_cut(ibox) = 2.0_DP * ewald_p(ibox) / rcut_coul(ibox)
+                                CALL Ewald_Reciprocal_Lattice_Vector_Setup(ibox)
                         END IF
                 END IF
 
@@ -187,6 +189,10 @@ SUBROUTINE Load_Next_Frame(end_reached)
                         CALL Compute_Beads(ibox)
                         CALL Compute_LR_Correction(ibox,e_lrc)
                         energy(ibox)%lrc = e_lrc
+                END IF
+                
+                IF (int_charge_sum_style(ibox) == charge_ewald) THEN
+                        CALL Compute_System_Ewald_Reciprocal_Energy(ibox)
                 END IF
 
 
