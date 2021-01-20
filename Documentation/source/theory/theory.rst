@@ -1177,22 +1177,22 @@ for each molecule with uniform probability
 The attempt probability of generating configuration :math:`n`
 
 .. math::
+   :label: eq:alpha_mol_swap
 
    \alpha_{mn} = p_{out,m} p_{spec,m} \frac{1}{N^{out}_{s,m}} p_{seq}\ p_{bias,n}\
                  \frac{e^{-\beta U^{in}(\mathbf{q}_{frag,n})}d\mathbf{q}_s^{in}}{V^{in}Z_{rot}Z_{frag}\Omega_{dih}}
-   :label: eq:alpha_mol_swap
 
 where :math:`p_{bias}` is defined in Eq. :eq:`eq:p_bias`.  The
 reverse probability :math:`\alpha_{nm}` is calculated similarly. The acceptance
 rule is
 
 .. math::
+   :label: eq:pAcc_mol_swap
 
    \ln \left( \frac{\alpha_{mn}}{\alpha_{nm}} \frac{p_m}{p_n} \right) =
               \ln \left( \frac{p_{out,m}}{p_{out,n}} \frac{p_{spec,m}}{p_{spec,n}} \frac{ p_{bias,n}}{p_{bias,m}}
                          \frac{N^{in}_{s,n}+1}{N^{out}_{s,m}} \frac{V^{out}}{V^{in}} \right)
             - \beta U^{in}(\mathbf{q}_{frag,n}) + \beta U^{out}(\mathbf{q}_{frag,m}) + \beta \Delta U^{out} + \beta \Delta U^{in}
-   :label: eq:pAcc_mol_swap
 
 where :math:`p_{seq}` does not appear since the same fragment regrowth sequence
 is used in the forward and reverse moves. The molecule swap move is implemented
@@ -1266,6 +1266,139 @@ in a multicomponent system is selected instead with uniform probability
 :math:`1/N_{species}`. In either case, species selection is symmetric for both
 forward and reverse moves and so cancels from the acceptance criterion.
 
+
+.. _sec:widom_insert:
+
+CBMC Widom Insertion Method
+---------------------------
+
+The Widom insertion method, also known as the test particle insertion method, 
+can be used to calculate the shifted chemical potential of a species during a 
+simulation.  From shifted chemical potentials, excess chemical potentials and 
+Henry's constants can be calculated.
+
+The chemical potential :math:`\mu` of a given species :math:`a` in the NVT ensemble is 
+defined in Eq. :eq:`eq:mu_nvt`, where :math:`F` is the Helmholtz free energy.
+
+.. math:: 
+        :label: eq:mu_nvt
+
+        \mu_a = {\left(\frac{\partial F}{\partial N_a}\right)}_{V,T,N_{b \neq a}}
+
+For the sake of simpler notation, the following derivation is for a pure component 
+system, but it can be easily extended to multicomponent systems.
+
+The Helmholtz free energy is defined in Eq. :eq:`eq:Helmholtz`.
+
+.. math::
+        :label: eq:Helmholtz
+
+        F(N,V,T) = -k_B T \ln{Q(N,V,T)}
+
+Approximating Eq. :eq:`eq:mu_nvt` with the addition of a single molecule 
+and substituting Eq. :eq:`eq:Helmholtz` yields Eq. :eq:`eq:mu_approx`.
+
+.. math::
+        :label: eq:mu_approx
+
+        \mu \approx F(N+1,V,T) - F(N,V,T) = -k_B T \ln{\left(\frac{Q(N+1,V,T)}{Q(N,V,T)}\right)}
+
+Eq. :eq:`eq:mu_approx` can be combined with Eq. :eq:`eq:partition_fxn_nvt` 
+to obtain Eq. :eq:`eq:mu_combination1`.
+
+.. math::
+        :label: eq:mu_combination1
+
+        -\beta \mu = \ln{\left( \frac{Q(1,V,T) Z(N+1,V,T)}{(N+1) Z(1,V,T) Z(N,V,T)} \right)}
+
+The configurational partition function :math:`Z(N,V,T)` is defined in Eq. 
+:eq:`eq:Z_NVT`, which leads to :eq:`eq:Z_insertion`, where 
+:math:`\Delta U = U(\mathbf{q}^{N+1}) - U(\mathbf{q}^N)` is the change in potential energy 
+of inserting the molecule, :math:`{\langle ... \rangle}_N` denotes NVT ensemble averaging 
+over configurational space of the system of :math:`N` particles, and :math:`\mathbf{q}_{N+1}` 
+denotes the generalized coordinates of only the inserted molecule.
+
+.. math::
+        :label: eq:Z_NVT
+
+        Z(N,V,T) = \int e^{-\beta U(\mathbf{q}^N)} d\mathbf{q}^N
+
+.. math::
+        :label: eq:Z_insertion
+
+        frac{Z(N+1,V,T)}{Z(N,V,T)} =
+            \frac{\int \left(\int e^{-\beta \Delta U}d\mathbf{q}_{N+1}\right) e^{-\beta U(\mathbf{q}^N)} d\mathbf{q}^N}{\int e^{-\beta U(\mathbf{q}^N)} d\mathbf{q}^N} =
+                \left\langle{\int e^{-\beta \Delta U} d\mathbf{q}_{N+1}}\right\rangle_N
+
+The final integral in Eq. :eq:`eq:Z_insertion` can be estimated by CBMC 
+importance sampling with test molecules inserted as described in :ref:`sec:cbmcInsert`.  
+This is demonstrated in Eq. :eq:`eq:Z_insertion_integral`, where 
+:math:`n_{IPC}` is the number of Widom insertions into the configuration of :math:`N` molecules.  
+The overall probability :math:`\alpha_{mn}` of attempting the insertion with a given position, 
+orientation, and conformation is defined by Eq. :eq:`eq:alpha_cbmcinsert`.
+
+.. math::
+        :label: eq:Z_insertion_integral
+
+        \int e^{-\beta \Delta U} d\mathbf{q}_{N+1} =
+            \frac{1}{n_{IPC}} \sum_{i=1}^{n_{IPC}} {\left( {\frac{ e^{-\beta \Delta U}}{\alpha_{mn}} }\right)}_i
+
+When combined with Eq. :eq:`eq:Z_insertion_integral`, Eq. :eq:`eq:Z_insertion` 
+can be further transformed into a single arithmetic average 
+(denoted by :math:`\langle ... \rangle` without a subscript) as in 
+Eq. :eq:`eq:Z_insertion_doublesum`, 
+where :math:`n_{IPC}` is the same for each N-molecule system configuration :math:`j` 
+on which Widom insertions are performed, :math:`n_{confs}` is the total number of these 
+system configurations, and :math:`n_{ins}=n_{IPC} n_{confs}` is the total number of Widom insertions.
+
+.. math::
+        :label: eq:Z_insertion_doublesum
+
+        \left\langle{\int e^{-\beta \Delta U} d\mathbf{q}_{N+1}}\right\rangle_N &= 
+            \frac{1}{n_{confs} n_{IPC}} \sum_{j=1}^{n_{confs}} 
+                \sum_{i=1}^{n_{IPC}} {\left( {\frac{ e^{-\beta \Delta U}}{\alpha_{mn}} }\right)}_{i,j}
+                    = \frac{1}{n_{ins}} \sum_{k=1}^{n_{ins}} {\left( {\frac{ e^{-\beta \Delta U}}{\alpha_{mn}} }\right)}_k \\
+        &= V Z_{rot} Z_{frag} \Omega_{dih} \left\langle 
+            \frac{\exp{(-\beta({\Delta}U-U_{frag} (\mathbf{q}_{frag,n}^{(N+1)} )))}}{p_{seq} p_{bias}}
+                \right\rangle
+
+Combining Eqs. :eq:`eq:Z_insertion`, :eq:`eq:Z_insertion_doublesum`, :eq:`eq:partition_fxn_1vt`, 
+and :eq:`eq:config_partition_fxn_1vt` with Eq. :eq:`eq:mu_combination1` yields 
+Eq. :eq:`eq:mu_general` for the chemical potential :math:`\mu`.
+
+.. math::
+        :label: eq:mu_general
+
+        \mu = -k_B T \ln{\left\langle \frac{V\Lambda^{-3}  \exp{(-\beta({\Delta}U-U (\mathbf{q}_{frag,n}^{(N+1)} )))}}{p_{seq} p_{bias} (N+1)} \right\rangle}
+            - k_B T \ln\left( Q_{rot+int} \frac{Z_{frag}\Omega_{dih}}{Z_{int}} \right)
+
+The chemical potential :math:`\mu` cannot always be calculated in this way for relatively complex molecules, 
+so the shifted chemical potential :math:`\mu'` defined in Eq. :eq:`eq:muShift` is calculated instead 
+as in Eq. :eq:`eq:muShift_widom`, where ``widom_var`` is a code variable defined in Eq. :eq:`eq:widom_var`.
+
+.. math::
+        :label: eq:muShift_widom
+
+        \mu' = -k_B T \ln{\left\langle \texttt{widom_var} \right\rangle}
+
+.. math::
+        :label: eq:widom_var
+
+        \texttt{widom_var} = \frac{V\Lambda^{-3}}{N+1} \exp{\left[-\beta({\Delta}U-U (\mathbf{q}_{frag,n}^{(N+1)} )) - \ln{(p_{seq} p_{bias})}\right]}
+
+Unlike GCMC insertions, Widom insertions are never accepted and therefore do not have acceptance criteria.  
+The test molecule is only inserted for the sampling of ``widom_var`` and is then always removed.  
+While the derivation is different for other ensembles, the Widom insertion procedure and 
+Eqs. :eq:`eq:mu_general`, :eq:`eq:muShift_widom`, and :eq:`eq:widom_var` apply to all ensembles 
+in Cassandra.  The identification of code variable names with symbols for ``widom_insert.f90`` is 
+the same as in :numref:`table:cbmc_insert` for ``move_insert.f90``, except for :math:`\mu'`, which 
+is only calculated and written to the log file upon completion of the simulation.  As described in 
+:ref:`sec:output_files`, the average ``widom_var`` values for each system configuration (step) in which 
+Widom insertions are performed are written to Widom property files.  The final value of :math:`\mu` 
+in kJ/mol for each test particle species in each box is written to the log file after the simulation is completed.
+
+
+
 .. _sec:appendix:
 
 Appendix
@@ -1321,7 +1454,10 @@ easily estimated. Substituting Eq. :eq:`eq:partition_fxn_1vt`
 into Eq. :eq:`eq:pacc_random_insert_mu` and absorbing :math:`Q_{rot+int}` into a
 shifted chemical potential :math:`\mu'`
 
-.. math:: \mu' = \mu - k_BT\ln(Q_{rot+int})
+.. math::
+        :label: eq:muShift
+
+        \mu' = \mu - k_BT\ln(Q_{rot+int})
 
 gives the acceptance criteria for inserting a molecule
 
