@@ -5466,12 +5466,12 @@ SUBROUTINE Get_Pregen_Info
 !                                        TRIM(Int_To_String(line_nbr))
 !                                CALL clean_abort(err_msg,'Get_Pregen_Info')
 !                        ELSE IF (has_H) THEN
-                        box_list(:)%box_shape = 'TRICLINIC'
-                        box_list(:)%int_box_shape = int_cell
+                        !box_list(:)%box_shape = 'TRICLINIC'
+                        !box_list(:)%int_box_shape = int_cell
                         IF (nbr_boxes == 1) THEN
-                                WRITE(logunit,*) 'Box shapes and sizes will be replaced by those read from the pregenerated H file'
+                                WRITE(logunit,*) 'Box size will be replaced by those read from the pregenerated H file'
                         ELSE
-                                WRITE(logunit,*) 'Box shapes and sizes will be replaced by those read from the pregenerated H files'
+                                WRITE(logunit,*) 'Box sizes will be replaced by those read from the pregenerated H files'
                         END IF
 !                        END IF
                         DO ibox = 1, nbr_boxes

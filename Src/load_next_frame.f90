@@ -49,8 +49,11 @@ SUBROUTINE Load_Next_Frame(end_reached)
                 INTEGER :: nmols_H
                 INTEGER :: i, io
 
+                LOGICAL :: l_size_change
+
 
                 REAL(DP) :: frame_volume
+                REAL(DP), DIMENSION(3,3) :: this_length
 
 
                 READ(pregen_H_unit(ibox),*,IOSTAT=io)
@@ -58,16 +61,23 @@ SUBROUTINE Load_Next_Frame(end_reached)
                         end_reached = .TRUE.
                         RETURN
                 END IF
-                READ(pregen_H_unit(ibox),*)box_list(ibox)%length(1,1), &
-                        box_list(ibox)%length(1,2), &
-                        box_list(ibox)%length(1,3)
-                READ(pregen_H_unit(ibox),*)box_list(ibox)%length(2,1), &
-                        box_list(ibox)%length(2,2), &
-                        box_list(ibox)%length(2,3)
-                READ(pregen_H_unit(ibox),*)box_list(ibox)%length(3,1), &
-                        box_list(ibox)%length(3,2), &
-                        box_list(ibox)%length(3,3)
-                CALL Compute_Cell_Dimensions(ibox)
+                READ(pregen_H_unit(ibox),*)this_length(1,1), &
+                        this_length(1,2), &
+                        this_length(1,3)
+                READ(pregen_H_unit(ibox),*)this_length(2,1), &
+                        this_length(2,2), &
+                        this_length(2,3)
+                READ(pregen_H_unit(ibox),*)this_length(3,1), &
+                        this_length(3,2), &
+                        this_length(3,3)
+
+                l_size_change = (.NOT. ALL(box_list(ibox)%length .EQ. this_length))
+
+                IF (l_size_change) THEN
+                        box_list(ibox)%length = this_length
+                        CALL Compute_Cell_Dimensions(ibox)
+                END IF
+
 
                 READ(pregen_H_unit(ibox),*)
                 READ(pregen_H_unit(ibox),*)nspecies_thisframe(ibox)
@@ -76,13 +86,15 @@ SUBROUTINE Load_Next_Frame(end_reached)
                         nmols_to_read(is_H,ibox) = nmols_H
                 END DO
 
-                IF (l_half_len_cutoff(ibox)) THEN
+                IF (l_size_change .AND. l_half_len_cutoff(ibox)) THEN
                         rcut_vdw(ibox) = 0.5 * MIN(box_list(ibox)%face_distance(1), &
                                                    box_list(ibox)%face_distance(2), &
                                                    box_list(ibox)%face_distance(3))
-                        IF (int_charge_sum_style(ibox) /= charge_none) rcut_coul(ibox) = rcut_vdw(ibox)
                         rcut_vdwsq(ibox) = rcut_vdw(ibox) * rcut_vdw(ibox)
-                        rcut_coulsq(ibox) = rcut_vdwsq(ibox)
+                        IF (int_charge_sum_style(ibox) /= charge_none) THEN
+                                rcut_coul(ibox) = rcut_vdw(ibox)
+                                rcut_coulsq(ibox) = rcut_vdwsq(ibox)
+                        END IF
 
                         rcut_vdw3(ibox) = rcut_vdwsq(ibox) * rcut_vdw(ibox)
                         rcut_vdw6(ibox) = rcut_vdw3(ibox) * rcut_vdw3(ibox)
@@ -93,9 +105,9 @@ SUBROUTINE Load_Next_Frame(end_reached)
                         IF ( int_charge_sum_style(ibox) == charge_ewald) THEN
                                 ! alpha_ewald(ibox) = ewald_p_sqrt(ibox) / rcut_coul(ibox)
                                 h_ewald_cut(ibox) = 2.0_DP * ewald_p(ibox) / rcut_coul(ibox)
-                                CALL Ewald_Reciprocal_Lattice_Vector_Setup(ibox)
                         END IF
                 END IF
+                IF (l_size_change .AND. int_charge_sum_style(ibox) == charge_ewald) CALL Ewald_Reciprocal_Lattice_Vector_Setup(ibox)
 
         END SUBROUTINE Read_H_frame
 
