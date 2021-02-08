@@ -204,7 +204,7 @@ MODULE Type_Definitions
      ! atom_list has dimensions (natoms, max_molecules, nspecies)
 
      REAL(DP) :: rxp, ryp, rzp
-     REAL(DP) :: rxp_nls, ryp_nls, rzp_nls  ! The starting positions for the neighbor list
+     REAL(DP) :: rxp_init, ryp_init, rzp_init  ! The starting positions
      REAL(DP) :: rxp_old, ryp_old, rzp_old
      LOGICAL :: exist
 
