@@ -116,6 +116,8 @@ SUBROUTINE Load_Next_Frame(end_reached)
 
                 INTEGER :: is, ia, im, this_im, locate_base, this_unit, io
 
+                CHARACTER(6) :: this_element
+
                 REAL(DP) :: xcom_old, ycom_old, zcom_old
                 REAL(DP) :: xcom_new, ycom_new, zcom_new
                 REAL(DP) :: this_lambda, e_lrc
@@ -143,7 +145,7 @@ SUBROUTINE Load_Next_Frame(end_reached)
                                 molecule_list(this_im,is)%molecule_type = int_normal
 
                                 DO ia = 1, natoms(is)
-                                        READ(this_unit,*)nonbond_list(ia,is)%element, &
+                                        READ(this_unit,*)this_element, &
                                                 atom_list(ia,this_im,is)%rxp, &
                                                 atom_list(ia,this_im,is)%ryp, &
                                                 atom_list(ia,this_im,is)%rzp
