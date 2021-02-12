@@ -135,6 +135,7 @@ SUBROUTINE Init_Accumulators
      ALLOCATE(ac_pressure(nbr_boxes,nbr_blocks))
      ALLOCATE(ac_enthalpy(nbr_boxes,nbr_blocks))
      ALLOCATE(ac_mass_density(nbr_boxes,nbr_blocks))
+     ALLOCATE(ac_energy_HMA(nbr_boxes,nbr_blocks))
 
      ac_energy(:,:)%total = 0.0_DP
      ac_energy(:,:)%intra = 0.0_DP
@@ -163,6 +164,7 @@ SUBROUTINE Init_Accumulators
      ac_pressure = 0.0_DP
      ac_enthalpy = 0.0_DP
      ac_mass_density = 0.0_DP
+     ac_energy_HMA = 0.0_DP
   END IF
 
 END SUBROUTINE Init_Accumulators

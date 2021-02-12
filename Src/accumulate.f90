@@ -115,6 +115,14 @@ SUBROUTINE Accumulate(ibox)
   mass_density = mass_density / box_list(ibox)%volume
   ac_mass_density(ibox,iblock) = ac_mass_density(ibox,iblock) + mass_density
 
+  IF (need_energy_HMA) THEN
+     IF (energy_HMA(ibox)%last_calc /= i_mcstep) THEN
+        energy_HMA(ibox)%last_calc = i_mcstep
+        CALL Compute_HMA(ibox)
+     END IF
+     ac_energy_HMA(ibox,iblock) = ac_energy_HMA(ibox,iblock) + energy_HMA(ibox)%total
+  END IF
+
   IF (MOD(i_mcstep,block_avg_freq) == 0) THEN
      ac_energy(ibox,iblock)%total      = ac_energy(ibox,iblock)%total      / data_points_per_block
      ac_energy(ibox,iblock)%intra      = ac_energy(ibox,iblock)%intra      / data_points_per_block
@@ -138,5 +146,6 @@ SUBROUTINE Accumulate(ibox)
         ac_density(is,ibox,iblock)     = ac_density(is,ibox,iblock)        / data_points_per_block
         ac_nmols(is,ibox,iblock)       = ac_nmols(is,ibox,iblock)          / data_points_per_block
      END DO
+     ac_energy_HMA(ibox,iblock)        = ac_energy_HMA(ibox,iblock)        / data_points_per_block
   END IF 
 END SUBROUTINE Accumulate

@@ -5913,6 +5913,7 @@ USE Global_Variables, ONLY: cpcollect
   max_properties = 0
   cpcollect = .FALSE.
   need_pressure = .FALSE.
+  need_energy_HMA = .FALSE.
 
   DO
      line_nbr = line_nbr + 1
@@ -5983,6 +5984,10 @@ USE Global_Variables, ONLY: cpcollect
            ELSE IF (line_array(1) == 'enthalpy' .OR. line_array(1) == 'Enthalpy') THEN
               nbr_properties = nbr_properties + 1
               IF (int_sim_type /= sim_npt .AND. int_sim_type /= sim_gemc_npt) need_pressure = .TRUE.
+           ELSE IF (line_array(1) == 'energy_HMA' .OR. line_array(1) == 'Energy_HMA') THEN
+              nbr_properties = nbr_properties + 1
+              need_energy_HMA = .TRUE.
+
            ELSE
               ! this is a property for the system
               nbr_properties = nbr_properties + 1
@@ -6161,6 +6166,9 @@ USE Global_Variables, ONLY: cpcollect
               ELSE IF (line_array(1) == 'mass_density' .OR. line_array(1) == 'Mass_Density') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Mass_Density'
+              ELSE IF (line_array(1) == 'energy_HMA' .OR. line_array(1) == 'Energy_HMA') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_HMA'
               ELSE
                 err_msg = ''
                 err_msg(1) = 'Keyword "' // TRIM(line_array(1)) // '" on line ' // &
@@ -6257,6 +6265,19 @@ USE Global_Variables, ONLY: cpcollect
      pressure_tensor(:,:,:) = 0.0_DP
      pressure(:)%computed = 0.0_DP
      pressure(:)%last_calc = -1
+  END IF
+
+  IF (need_energy_HMA) THEN
+     ALLOCATE(energy_HMA(nbr_boxes))
+     IF (.NOT. ALLOCATED(W_tensor_charge)) ALLOCATE(W_tensor_charge(3,3,nbr_boxes) , W_tensor_recip(3,3,nbr_boxes))
+     IF (.NOT. ALLOCATED(W_tensor_vdw)) ALLOCATE(W_tensor_vdw(3,3,nbr_boxes) , W_tensor_total(3,3,nbr_boxes))
+     IF (.NOT. ALLOCATED(W_tensor_elec)) ALLOCATE(W_tensor_elec(3,3,nbr_boxes), pressure_tensor(3,3,nbr_boxes))
+     IF (.NOT. ALLOCATED(pressure)) ALLOCATE(pressure(nbr_boxes))
+
+     energy_HMA(nbr_boxes)%lattice = 0.0_DP
+     energy_HMA(nbr_boxes)%harmonic = 0.0_DP
+     energy_HMA(nbr_boxes)%anharmonic = 0.0_DP
+     energy_HMA(nbr_boxes)%total = 0.0_DP
   END IF
 
   WRITE(logunit,'(A80)') '********************************************************************************'

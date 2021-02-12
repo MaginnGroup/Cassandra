@@ -206,6 +206,48 @@ CONTAINS
 
 !  !****************************************************************************
 
+  SUBROUTINE Compute_HMA(this_box)
+    !***************************************************************************
+    !
+    ! This subroutine calculates the pressure of the the box
+    !
+    ! CALLED BY:
+    !       Write_Properties
+    !
+    ! CALLS :
+    !       Compute_System_Total_Force
+    !
+    ! Written by Andrew Schultz on 02/10/21
+    !
+    !***************************************************************************
+
+    IMPLICIT NONE
+
+    INTEGER :: this_box
+
+    REAL(DP) :: dxp, dyp, dzp
+    REAL(DP) :: dx, dy, dz
+    REAL(DP) :: Fdr
+
+    INTEGER :: is, mol_is, im, ia
+
+    energy_HMA(this_box)%harmonic = 1.5_DP / beta(this_box) &
+                                    * (SUM(nmols(:,this_box))-1)
+
+    ! compute Fdr
+    CALL Compute_System_Total_Force(this_box)
+
+    energy_HMA(this_box)%anharmonic = 0.5_DP * energy_HMA(this_box)%sum_Fdr &
+                                    + energy(this_box)%total &
+                                    - energy_HMA(this_box)%lattice
+    energy_HMA(this_box)%total = 0.5_DP * energy_HMA(this_box)%sum_Fdr &
+                               + energy(this_box)%total &
+                               + energy_HMA(this_box)%harmonic
+
+  END SUBROUTINE Compute_HMA
+
+!  !****************************************************************************
+
 END MODULE Simulation_Properties
 
 

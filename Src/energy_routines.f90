@@ -2481,6 +2481,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
    W_tensor_charge(:,:,this_box) = 0.0_DP
    W_tensor_recip(:,:,this_box) = 0.0_DP
    W_tensor_elec(:,:,this_box) =  0.0_DP
+   energy_HMA(this_box)%sum_Fdr = 0.0_DP
 
    DO is = 1, nspecies
       imLOOP1: DO im_1 = 1, nmols(is,this_box)
@@ -2685,7 +2686,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     ! Called by: Compute_System_Total_Force
   !-----------------------------------------------------------------------------
     ! Passed to
-    REAL(DP) :: rxij,ryij,rzij,rijsq
+    REAL(DP) :: rijsq
     INTEGER :: is,im,ia,js,jm,ja
     LOGICAL :: get_vdw,get_qq
 
@@ -2706,6 +2707,11 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     ! Coulomb potential
     REAL(DP) :: qi, qj, erfc_val, prefactor
     REAL(DP) :: ewald_constant, exp_const
+    ! HMA
+    REAL(DP) :: dr_dot_product
+    REAL(DP) :: drixp, driyp, drizp, drix, driy, driz
+    REAL(DP) :: drjxp, drjyp, drjzp, drjx, drjy, drjz
+    REAL(DP) :: rxijp, ryijp, rzijp, rxij, ryij, rzij
 
     Wij_vdw = 0.0_DP
     Wij_qq = 0.0_DP
@@ -2817,6 +2823,34 @@ END SUBROUTINE Compute_Molecule_Self_Energy
        ENDIF qq_calc
 
     ENDIF ExistCheck
+
+    HMA_calc: IF (need_energy_HMA) THEN
+       drixp = atom_list(ia,im,is)%rxp - atom_list(ia,im,is)%rxp_init
+       driyp = atom_list(ia,im,is)%ryp - atom_list(ia,im,is)%ryp_init
+       drizp = atom_list(ia,im,is)%rzp - atom_list(ia,im,is)%rzp_init
+       CALL Minimum_Image_Separation(ibox,drixp,driyp,drizp, &
+                  drix,driy,driz)
+
+       drjxp = atom_list(ja,jm,js)%rxp - atom_list(ja,jm,js)%rxp_init
+       drjyp = atom_list(ja,jm,js)%ryp - atom_list(ja,jm,js)%ryp_init
+       drjzp = atom_list(ja,jm,js)%rzp - atom_list(ja,jm,js)%rzp_init
+       CALL Minimum_Image_Separation(ibox,drjxp,drjyp,drjzp, &
+                  drjx,drjy,drjz)
+
+       rxijp = atom_list(ia,im,is)%rxp - atom_list(ja,jm,js)%rxp
+       ryijp = atom_list(ia,im,is)%ryp - atom_list(ja,jm,js)%ryp
+       rzijp = atom_list(ia,im,is)%rzp - atom_list(ja,jm,js)%rzp
+
+       ! Now get the minimum image separation
+       CALL Minimum_Image_Separation(ibox,rxijp,ryijp,rzijp, &
+                  rxij,ryij,rzij)
+
+       dr_dot_product = rxij*(drix-drjx) &
+                      + ryij*(driy-drjy) &
+                      + rzij*(driz-drjz)
+       energy_HMA(ibox)%sum_Fdr = energy_HMA(ibox)%sum_Fdr &
+                                + (Wij_qq+Wij_vdw) * dr_dot_product / rijsq
+    ENDIF HMA_calc
 !------------------------------------------------------------------------------
   CONTAINS
 

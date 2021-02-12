@@ -378,6 +378,9 @@ PROGRAM Main
   WRITE(logunit,'(A80)') '********************************************************************************'
   DO ibox = 1,nbr_boxes
      CALL Check_System_Energy(ibox,.FALSE.)
+     IF (need_energy_HMA) THEN
+        energy_HMA(ibox)%lattice = energy(ibox)%total
+      END IF
   END DO
   WRITE(logunit,'(A80)') '********************************************************************************'
 

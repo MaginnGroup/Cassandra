@@ -148,6 +148,10 @@ CONTAINS
 
           prop_unit(ii) = '(kJ/mol)'
 
+       ELSE IF (prop_to_write(1:10) == 'Energy_HMA') THEN
+
+          prop_unit(ii) = '(kJ/mol)-Ext'
+
        END IF
 
        WRITE(this_unit,'(A16,2X)',ADVANCE='NO') (TRIM(prop_unit(ii)))
@@ -418,6 +422,18 @@ CONTAINS
             write_buff(ii+1) = mass_density / box_list(this_box)%volume
          END IF
          write_buff(ii+1) = write_buff(ii+1) * atomic_to_kgm3
+
+      ELSE IF (prop_written == 'Energy_HMA') THEN
+         IF (block_avg) THEN
+            write_buff(ii+1) = ac_energy_HMA(this_box,iblock)
+         ELSE
+            IF (energy_HMA(this_box)%last_calc /= i_mcstep) THEN
+               energy_HMA(this_box)%last_calc = i_mcstep
+               CALL Compute_HMA(this_box)
+            END IF
+            write_buff(ii+1) = energy_HMA(this_box)%total
+         END IF
+         write_buff(ii+1) = write_buff(ii+1) * atomic_to_kJmol
       END IF
       
       ! At the end increment property counter by 1
@@ -784,6 +800,15 @@ SUBROUTINE Write_Mean_Error(ibox)
             END DO
             write_mean(ii+1) = write_mean(ii+1) * atomic_to_kgm3
             write_err(ii+1)  = sqrt(write_err(ii+1) / nbr_blocks) * atomic_to_kgm3
+
+         ELSE IF (prop_written == 'Energy_HMA') THEN
+
+            write_mean(ii+1) = SUM(ac_energy_HMA(ibox,:)) / nbr_blocks
+            DO iblock = 1, nbr_blocks
+               write_err(ii+1) = write_err(ii+1) + (ac_energy_HMA(ibox,iblock) - write_mean(ii+1))**2
+            END DO
+            write_mean(ii+1) = write_mean(ii+1) * atomic_to_kJmol
+            write_err(ii+1)  = sqrt(write_err(ii+1) / nbr_blocks) * atomic_to_kJmol
 
          END IF
          

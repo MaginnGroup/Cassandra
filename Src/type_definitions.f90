@@ -595,6 +595,31 @@ MODULE Type_Definitions
 
 !-------------------------------------------------------------------------------------------------
 
+ TYPE Energy_HMA_Class
+    ! This class holds the HMA energy values for each box
+
+    ! Lattice energy -- energy at the beginning of the simulation
+    REAL(DP) :: lattice
+
+    ! Harmonic energy: (3/2) (N-1) kT
+    REAL(DP) :: harmonic
+
+    ! Anharmonic energy (from HMA)
+    REAL(DP) :: anharmonic
+
+    ! Total energy (from HMA): U_lat + H_harm + U_anh
+    REAL(DP) :: total
+
+    ! Sum of Fi dot dri over all atoms
+    REAL(DP) :: sum_Fdr
+
+    ! last calculation
+    INTEGER :: last_calc
+
+ END TYPE Energy_HMA_Class
+
+!-------------------------------------------------------------------------------------------------
+
   TYPE Rotation_Class
      !This class holds info in order to calculate a rotational bias
 
