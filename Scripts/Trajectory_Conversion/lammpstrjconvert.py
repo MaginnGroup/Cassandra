@@ -103,6 +103,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('fname')
     parser.add_argument('nmols', nargs='+', type=int)
-    lammpstrjconvert(lammpstrjFilename=fname, n_list=nmols)
+    args = parser.parse_args()
+    lammpstrjconvert(lammpstrjFilename=args.fname, n_list=args.nmols)
 
 
