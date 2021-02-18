@@ -75,7 +75,7 @@ def lammpstrjconvert(lammpstrjFilename,n_list):
             c = [xz,yz,zz]
             lmat = np.array([a,b,c]).T
             volume = np.inner(a,np.cross(b,c))
-            box_center = np.sum(lmat,axis=2)*0.5+np.array([xlo,ylo,zlo]).T
+            box_center = np.sum(lmat,axis=1)*0.5+np.array([xlo,ylo,zlo]).T
             df[['x','y','z']] -= box_center.T # boxes always have origin at (0,0,0) in Cassandra, but not always in lammps
             nspecies = len(n_list)
             Hfile.write('{:^26.17g}\n'.format(volume))
