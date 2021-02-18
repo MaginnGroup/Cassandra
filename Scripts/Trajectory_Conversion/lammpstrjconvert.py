@@ -18,6 +18,7 @@ def lammpstrjconvert(lammpstrjFilename,n_list):
         eofreached = False
         
         def findheading(tgt,lineadvance=True):
+            eof_flag = False
             tgt_hit = False
             while not(tgt_hit):
                 if lineadvance:
@@ -27,20 +28,21 @@ def lammpstrjconvert(lammpstrjFilename,n_list):
                 if len(tgt) <= len(thislinestr):
                     tgt_hit = (thislinestr[0:len(tgt)] == tgt)
                 elif len(thislinestr) == 0:
-                    eofreached = True
+                    eof_flag = True
                     tgt_hit = True
+            return eof_flag
         
         
-        findheading("ITEM: TIMESTEP")
+        eofreached = findheading("ITEM: TIMESTEP")
         
         while not(eofreached):
             xy = 0.0
             xz = 0.0
             yz = 0.0
             timestep = int(ltfile.readline().strip())
-            findheading("ITEM: NUMBER OF ATOMS")
+            eofreached = findheading("ITEM: NUMBER OF ATOMS")
             n_atoms = int(ltfile.readline().strip())
-            findheading("ITEM: BOX BOUNDS",False)
+            eofreached = findheading("ITEM: BOX BOUNDS",False)
             boxbounds_list = ltfile.readline().strip().split()
             extent_x_str = ltfile.readline().strip().split()
             extent_y_str = ltfile.readline().strip().split()
@@ -63,7 +65,7 @@ def lammpstrjconvert(lammpstrjFilename,n_list):
             xx = xhi-xlo
             yy = yhi-ylo
             zz = zhi-zlo
-            findheading("ITEM: ATOMS ",False)
+            eofreached = findheading("ITEM: ATOMS ",False)
             df_buffer = io.StringIO()
             for i in range(n_atoms+1):
                 df_buffer.write(ltfile.readline())
@@ -91,7 +93,7 @@ def lammpstrjconvert(lammpstrjFilename,n_list):
             xyzfile.write(' TIMESTEP: {:>11d}\n'.format(timestep))
             df["element"] = "X"
             df[['element','x','y','z']].sort_index(axis=1).to_csv(xyzfile, sep=' ', header=False, index=False, line_terminator='\n')
-            findheading("ITEM: TIMESTEP")
+            eofreached = findheading("ITEM: TIMESTEP")
 
 
 
