@@ -6,9 +6,7 @@ import numpy as np
 import pandas as pd
 
 
-def lammmpstrjconvert(lammpstrjFilename,n_list): 
-
-
+def lammpstrjconvert(lammpstrjFilename,n_list): 
     lfnlen = len(lammpstrjFilename)
 
     if lammpstrjFilename.find(".lammpstrj") == (lfnlen-10):
