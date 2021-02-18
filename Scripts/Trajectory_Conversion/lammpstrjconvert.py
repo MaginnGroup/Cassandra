@@ -16,7 +16,7 @@ def lammmpstrjconvert(lammpstrjFilename,n_list):
     else:
         namebase = lammpstrjFilename
     
-    with ltfile as open(lammpstrjFilename), Hfile as open(namebase+".H",'w'), xyzfile as open(namebase+".xyz",'w'):
+    with open(lammpstrjFilename) as ltfile, open(namebase+".H",'w') as Hfile, open(namebase+".xyz",'w') as xyzfile:
         eofreached = False
         
         def findheading(tgt,lineadvance=True):
