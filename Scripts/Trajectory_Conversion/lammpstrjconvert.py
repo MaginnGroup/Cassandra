@@ -28,6 +28,7 @@ def lammpstrjconvert(lammpstrjFilename,n_list):
                     tgt_hit = (thislinestr[0:len(tgt)] == tgt)
                 elif len(thislinestr) == 0:
                     eofreached = True
+                    tgt_hit = True
         
         
         findheading("ITEM: TIMESTEP")
@@ -71,7 +72,7 @@ def lammpstrjconvert(lammpstrjFilename,n_list):
             df_buffer.close()
             df = df.sort_values(by='id',ignore_index=True)
             a = [xx,0,0]
-            b = [xx,yy,0]
+            b = [xy,yy,0]
             c = [xz,yz,zz]
             lmat = np.array([a,b,c]).T
             volume = np.inner(a,np.cross(b,c))
@@ -91,8 +92,6 @@ def lammpstrjconvert(lammpstrjFilename,n_list):
             df["element"] = "X"
             df[['element','x','y','z']].sort_index(axis=1).to_csv(xyzfile, sep=' ', header=False, index=False, line_terminator='\n')
             findheading("ITEM: TIMESTEP")
-            if not eofreached:
-                xyzfile.write('\n')
 
 
 
