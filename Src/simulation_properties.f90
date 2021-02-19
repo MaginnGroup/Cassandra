@@ -227,12 +227,15 @@ CONTAINS
 
     REAL(DP) :: dxp, dyp, dzp
     REAL(DP) :: dx, dy, dz
-    REAL(DP) :: Fdr
+    Real(DP) :: fV
 
     INTEGER :: is, mol_is, im, ia
+    INTEGER :: this_nmols
+
+    this_nmols = SUM(nmols(:,this_box))
 
     energy_HMA(this_box)%harmonic = 1.5_DP / beta(this_box) &
-                                    * (SUM(nmols(:,this_box))-1)
+                                    * (this_nmols-1)
 
     ! compute Fdr
     CALL Compute_System_Total_Force(this_box)
@@ -243,6 +246,14 @@ CONTAINS
     energy_HMA(this_box)%total = 0.5_DP * energy_HMA(this_box)%sum_Fdr &
                                + energy(this_box)%total &
                                + energy_HMA(this_box)%harmonic
+
+    fV = (beta(this_box)*pressure_HMA(this_box)%harmonic - this_nmols / box_list(this_box)%volume) &
+       / (3*(this_nmols)-1)
+
+    pressure_HMA(this_box)%anharmonic = pressure(this_box)%computed - pressure(this_box)%ideal &
+                                      - pressure_HMA(this_box)%lattice + fV * energy_HMA(this_box)%sum_Fdr
+    pressure_HMA(this_box)%total = pressure_HMA(this_box)%harmonic + pressure(this_box)%computed &
+                                 - pressure(this_box)%ideal + fV * energy_HMA(this_box)%sum_Fdr
 
   END SUBROUTINE Compute_HMA
 

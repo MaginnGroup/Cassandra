@@ -620,6 +620,28 @@ MODULE Type_Definitions
 
 !-------------------------------------------------------------------------------------------------
 
+ TYPE Pressure_HMA_Class
+    ! This class holds the HMA energy values for each box
+
+    ! Lattice pressure -- non-ideal pressure at the beginning of the simulation
+    REAL(DP) :: lattice
+
+    ! Harmonic pressure: read from input file
+    REAL(DP) :: harmonic
+
+    ! Anharmonic pressure (from HMA)
+    REAL(DP) :: anharmonic
+
+    ! Total pressure (from HMA): P_lat + P_harm + P_anh
+    REAL(DP) :: total
+
+    ! last calculation
+    INTEGER :: last_calc
+
+ END TYPE Pressure_HMA_Class
+
+!-------------------------------------------------------------------------------------------------
+
   TYPE Rotation_Class
      !This class holds info in order to calculate a rotational bias
 

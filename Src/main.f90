@@ -378,8 +378,10 @@ PROGRAM Main
   WRITE(logunit,'(A80)') '********************************************************************************'
   DO ibox = 1,nbr_boxes
      CALL Check_System_Energy(ibox,.FALSE.)
-     IF (need_energy_HMA) THEN
+     IF (need_HMA) THEN
+        CALL Compute_Pressure(ibox)
         energy_HMA(ibox)%lattice = energy(ibox)%total
+        pressure_HMA(ibox)%lattice = pressure(ibox)%computed - pressure(ibox)%ideal
       END IF
   END DO
   WRITE(logunit,'(A80)') '********************************************************************************'

@@ -2824,7 +2824,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
     ENDIF ExistCheck
 
-    HMA_calc: IF (need_energy_HMA) THEN
+    HMA_calc: IF (need_HMA) THEN
        drixp = atom_list(ia,im,is)%rxp - atom_list(ia,im,is)%rxp_init
        driyp = atom_list(ia,im,is)%ryp - atom_list(ia,im,is)%ryp_init
        drizp = atom_list(ia,im,is)%rzp - atom_list(ia,im,is)%rzp_init
