@@ -6005,9 +6005,10 @@ USE Global_Variables, ONLY: cpcollect
               need_HMA = .TRUE.
 
               IF (line_array(1) == 'pressure_HMA' .OR. line_array(1) == 'pressure_HMA') THEN
+                 need_pressure = .TRUE.
                  ! harmonic pressure is the second value on the line
                  pressure_HMA(this_box)%harmonic = String_To_Double(line_array(2))
-                 WRITE(logunit,'(A,X,F9.3,X,A)',ADVANCE='NO') 'HMA harmonic pressure of box', this_box, ' is', pressure_HMA(this_box)%harmonic,  'bar'
+                 WRITE(logunit,'(A,X,I1,X,A,X,F9.3,X,A)',ADVANCE='NO') 'HMA harmonic pressure of box', this_box, 'is', pressure_HMA(this_box)%harmonic,  'bar'
 
                  ! convert pressure into atomic units
                  pressure_HMA(this_box)%harmonic = pressure_HMA(this_box)%harmonic / atomic_to_bar
