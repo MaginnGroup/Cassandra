@@ -5984,6 +5984,37 @@ USE Global_Variables, ONLY: cpcollect
               nbr_properties = nbr_properties + 1
               IF (int_sim_type /= sim_npt .AND. int_sim_type /= sim_gemc_npt) need_pressure = .TRUE.
 
+           ELSE IF (line_array(1) == 'energy_HMA' .OR. line_array(1) == 'Energy_HMA' .OR. &
+                    line_array(1) == 'pressure_HMA' .OR. line_array(1) == 'Pressure_HMA') THEN
+
+              IF (.NOT. need_HMA) THEN
+                 ALLOCATE(energy_HMA(nbr_boxes))
+                 ALLOCATE(pressure_HMA(nbr_boxes))
+
+                 energy_HMA(:)%lattice = 0.0_DP
+                 energy_HMA(:)%harmonic = 0.0_DP
+                 energy_HMA(:)%anharmonic = 0.0_DP
+                 energy_HMA(:)%total = 0.0_DP
+
+                 pressure_HMA(:)%lattice = 0.0_DP
+                 pressure_HMA(:)%harmonic = 0.0_DP
+                 pressure_HMA(:)%anharmonic = 0.0_DP
+                 pressure_HMA(:)%total = 0.0_DP
+              END IF
+
+              need_HMA = .TRUE.
+
+              IF (line_array(1) == 'pressure_HMA' .OR. line_array(1) == 'pressure_HMA') THEN
+                 ! harmonic pressure is the second value on the line
+                 pressure_HMA(this_box)%harmonic = String_To_Double(line_array(2))
+                 WRITE(logunit,'(A,X,F9.3,X,A)',ADVANCE='NO') 'HMA harmonic pressure of box', this_box, ' is', pressure_HMA(this_box)%harmonic,  'bar'
+
+                 ! convert pressure into atomic units
+                 pressure_HMA(this_box)%harmonic = pressure_HMA(this_box)%harmonic / atomic_to_bar
+                 WRITE(logunit,'(X,A,X,E13.6,X,A)') '=', pressure_HMA(this_box)%harmonic,  'amu / (A ps^2)'
+              END IF
+
+              nbr_properties = nbr_properties + 1
            ELSE
               ! this is a property for the system
               nbr_properties = nbr_properties + 1
@@ -6163,15 +6194,11 @@ USE Global_Variables, ONLY: cpcollect
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Mass_Density'
               ELSE IF (line_array(1) == 'energy_HMA' .OR. line_array(1) == 'Energy_HMA') THEN
-                 IF (need_HMA) THEN
-                    nbr_properties = nbr_properties + 1
-                    prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_HMA'
-                  END IF
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_HMA'
               ELSE IF (line_array(1) == 'pressure_HMA' .OR. line_array(1) == 'Pressure_HMA') THEN
-                 IF (need_HMA) THEN
-                    nbr_properties = nbr_properties + 1
-                    prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Pressure_HMA'
-                 END IF
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Pressure_HMA'
               ELSE
                 err_msg = ''
                 err_msg(1) = 'Keyword "' // TRIM(line_array(1)) // '" on line ' // &
@@ -6713,105 +6740,4 @@ SUBROUTINE Get_Verbosity_Info
   WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_Verbosity_Info
-
-
-!******************************************************************************
-SUBROUTINE Get_HMA_Info
-!******************************************************************************
-! This routine opens the input file and determines if HMA properties will be
-! computed and (optionally) the harmonic pressure.
-!
-! # HMA
-! TRUE
-! harmonic_pressure 9
-!
-! The routine searches for the keyword "# HMA" and then reads the necessary
-! information underneath the key word.
-!******************************************************************************
-
-  INTEGER :: ierr,line_nbr,nbr_entries
-  CHARACTER(STRING_LEN) :: line_string, line_array(60)
-
-!******************************************************************************
-  WRITE(logunit,*)
-  WRITE(logunit,'(A)') 'HMA'
-  WRITE(logunit,'(A80)') '********************************************************************************'
-
-  need_HMA = .FALSE.
-
-  REWIND(inputunit)
-
-  ierr = 0
-  line_nbr = 0
-
-  DO
-     line_nbr = line_nbr + 1
-     CALL Read_String(inputunit,line_string,ierr)
-
-     IF (ierr .NE. 0) THEN
-        EXIT
-     END IF
-
-     IF (line_string(1:13) == '# HMA') THEN
-        line_nbr = line_nbr + 1
-        CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
-        IF (line_array(1) == 'TRUE' .OR. line_array(1) == '.TRUE.' .OR. &
-            line_array(1) == 'true' .OR. line_array(1) == '.true.') THEN
-           need_HMA = .TRUE.
-
-           ALLOCATE(energy_HMA(nbr_boxes))
-           ALLOCATE(pressure_HMA(nbr_boxes))
-
-           energy_HMA(:)%lattice = 0.0_DP
-           energy_HMA(:)%harmonic = 0.0_DP
-           energy_HMA(:)%anharmonic = 0.0_DP
-           energy_HMA(:)%total = 0.0_DP
-
-           pressure_HMA(:)%lattice = 0.0_DP
-           pressure_HMA(:)%harmonic = 0.0_DP
-           pressure_HMA(:)%anharmonic = 0.0_DP
-           pressure_HMA(:)%total = 0.0_DP
-
-        ELSE IF (line_array(1) == 'FALSE' .OR. line_array(1) == '.FALSE.' .OR. &
-                 line_array(1) == 'false' .OR. line_array(1) == '.false.') THEN
-           need_HMA = .FALSE.
-           EXIT
-        ELSE
-           err_msg = ''
-           err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
-                        TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
-           err_msg(2) = 'Supported keywords are: true, false'
-           CALL Clean_Abort(err_msg,'Get_Verbosity_Info')
-        END IF
-
-        line_nbr = line_nbr + 1
-        CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
-
-        IF (nbr_entries == 0 .OR. line_array(1)(1:1) == '!') THEN
-           EXIT
-        END IF
-
-        IF (line_array(1) == 'harmonic_pressure' .OR. line_array(1) == 'Harmonic_Pressure') THEN
-           ! assign the pressures
-           pressure_HMA(:)%harmonic = String_To_Double(line_array(2))
-           WRITE(logunit,'(A,X,F9.3,X,A)',ADVANCE='NO') 'HMA harmonic pressure is', pressure_HMA(1)%harmonic,  'bar'
-
-           ! convert pressure into atomic units
-           pressure_HMA(:)%harmonic = pressure_HMA(:)%harmonic / atomic_to_bar
-           WRITE(logunit,'(X,A,X,E13.6,X,A)') '=', pressure_HMA(1)%harmonic,  'amu / (A ps^2)'
-        END IF
-
-        EXIT
-     ENDIF
-
-  ENDDO
-
-  IF (need_HMA) THEN
-     WRITE(logunit,'(A)') 'HMA enabled'
-  ELSE
-     WRITE(logunit,'(A)') 'HMA not enabled'
-  END IF
-  WRITE(logunit,'(A80)') '********************************************************************************'
-
-END SUBROUTINE Get_HMA_Info
 END MODULE Input_Routines
