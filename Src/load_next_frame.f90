@@ -165,8 +165,8 @@ SUBROUTINE Load_Next_Frame(end_reached)
                                 zcom_old = molecule_list(this_im,is)%zcom
 
                                 ! Apply PBC
-                                CALL Minimum_Image_Separation(ibox,xcom_old,ycom_old,zcom_old, &
-                                        xcom_new, ycom_new, zcom_new)
+                                CALL Apply_PBC_Anint(ibox,xcom_old,ycom_old,zcom_old, &
+                                                          xcom_new, ycom_new, zcom_new)
 
                                 ! COM in the central simulation box
                                 molecule_list(this_im,is)%xcom = xcom_new
