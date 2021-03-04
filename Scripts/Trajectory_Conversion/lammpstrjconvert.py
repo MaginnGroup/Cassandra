@@ -72,14 +72,15 @@ def lammpstrjconvert(lammpstrjFilename,n_list):
             df_buffer.seek(0)
             df = pd.read_csv(df_buffer,delim_whitespace=True)
             df_buffer.close()
-            df = df.sort_values(by='id',ignore_index=True)
+            df["element"] = "X"
+            df = df.sort_values(by='id',ignore_index=True).sort_index(axis=1)
             a = [xx,0,0]
             b = [xy,yy,0]
             c = [xz,yz,zz]
             lmat = np.array([a,b,c]).T
             volume = np.inner(a,np.cross(b,c))
             box_center = np.sum(lmat,axis=1)*0.5+np.array([xlo,ylo,zlo]).T
-            df[['x','y','z']] -= box_center.T # boxes always have origin at (0,0,0) in Cassandra, but not always in lammps
+            df[['xu','yu','zu']] -= box_center.T # boxes always have origin at (0,0,0) in Cassandra, but not always in lammps
             nspecies = len(n_list)
             Hfile.write('{:^26.17g}\n'.format(volume))
             Hfile.write('{:^26.17g}{:^26.17g}{:^26.17g}\n'.format(lmat[0,0],lmat[0,1],lmat[0,2]))
@@ -91,8 +92,7 @@ def lammpstrjconvert(lammpstrjFilename,n_list):
             # write xyz file
             xyzfile.write('{:>12d}\n'.format(n_atoms))
             xyzfile.write(' TIMESTEP: {:>11d}\n'.format(timestep))
-            df["element"] = "X"
-            df[['element','x','y','z']].sort_index(axis=1).to_csv(xyzfile, sep=' ', header=False, index=False, line_terminator='\n')
+            df[['element','xu','yu','zu']].to_csv(xyzfile, sep=' ', header=False, index=False, line_terminator='\n')
             eofreached = findheading("ITEM: TIMESTEP")
 
 
