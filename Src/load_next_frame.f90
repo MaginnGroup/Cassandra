@@ -115,6 +115,10 @@ SUBROUTINE Load_Next_Frame(end_reached)
                         IF (MAXVAL(nvecs) > nvecsmax_old) THEN
                                 IF (ALLOCATED(cos_sum)) DEALLOCATE(cos_sum)
                                 IF (ALLOCATED(sin_sum)) DEALLOCATE(sin_sum)
+                                IF (ALLOCATED(cos_sum_old)) DEALLOCATE(cos_sum_old)
+                                IF (ALLOCATED(sin_sum_old)) DEALLOCATE(sin_sum_old)
+                                IF (ALLOCATED(cos_sum_start)) DEALLOCATE(cos_sum_start)
+                                IF (ALLOCATED(sin_sum_start)) DEALLOCATE(sin_sum_start)
                                 IF (ALLOCATED(cos_mol)) DEALLOCATE(cos_mol)
                                 IF (ALLOCATED(sin_mol)) DEALLOCATE(sin_mol)
                                 ALLOCATE(cos_sum(MAXVAL(nvecs),nbr_boxes), Stat = AllocateStatus)
@@ -139,6 +143,30 @@ SUBROUTINE Load_Next_Frame(end_reached)
                                 IF (AllocateStatus /= 0) THEN
                                         err_msg = ''
                                         err_msg(1) = 'Memory could not be allocated for sin_mol'
+                                        CALL Clean_Abort(err_msg,'Read_H_frame')
+                                END IF
+                                ALLOCATE(cos_sum_old(SIZE(cos_sum,1),nbr_boxes), Stat = AllocateStatus)
+                                IF (AllocateStatus /= 0) THEN
+                                        err_msg = ''
+                                        err_msg(1) = 'Memory could not be allocated for cos_mol_old'
+                                        CALL Clean_Abort(err_msg,'Read_H_frame')
+                                END IF
+                                ALLOCATE(sin_sum_old(SIZE(sin_sum,1),nbr_boxes), Stat = AllocateStatus)
+                                IF (AllocateStatus /= 0) THEN
+                                        err_msg = ''
+                                        err_msg(1) = 'Memory could not be allocated for sin_mol_old'
+                                        CALL Clean_Abort(err_msg,'Read_H_frame')
+                                END IF
+                                ALLOCATE(cos_sum_start(SIZE(cos_sum,1),nbr_boxes), Stat = AllocateStatus)
+                                IF (AllocateStatus /= 0) THEN
+                                        err_msg = ''
+                                        err_msg(1) = 'Memory could not be allocated for cos_mol_start'
+                                        CALL Clean_Abort(err_msg,'Read_H_frame')
+                                END IF
+                                ALLOCATE(sin_sum_start(SIZE(sin_sum,1),nbr_boxes), Stat = AllocateStatus)
+                                IF (AllocateStatus /= 0) THEN
+                                        err_msg = ''
+                                        err_msg(1) = 'Memory could not be allocated for sin_mol_start'
                                         CALL Clean_Abort(err_msg,'Read_H_frame')
                                 END IF
 
