@@ -145,10 +145,10 @@ SUBROUTINE Apply_PBC_Anint(ibox,rxijp,ryijp,rzijp,rxij,ryij,rzij)
           REAL(ANINT( rxijp / box_list(ibox)%length(1,1)), DP)
 
      ryij = ryijp - box_list(ibox)%length(2,2)* &
-          REAL(ANINT( rxijp / box_list(ibox)%length(2,2)), DP)
+          REAL(ANINT( ryijp / box_list(ibox)%length(2,2)), DP)
 
      rzij = rzijp - box_list(ibox)%length(3,3)* &
-          REAL(ANINT( rxijp / box_list(ibox)%length(3,3)), DP)
+          REAL(ANINT( rzijp / box_list(ibox)%length(3,3)), DP)
 
   ELSE
      
