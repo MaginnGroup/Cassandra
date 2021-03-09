@@ -1211,6 +1211,8 @@ move, use the following:
     # Run_Type
     production 250
 
+.. _sec:Simulation_Length_Info:
+
 Simulation Length
 ~~~~~~~~~~~~~~~~~
 
@@ -1293,6 +1295,57 @@ steps and averaged every 100,000 steps, specify:
 
 This simulation will output 10 averages, and each average will be computed from
 1000 data points.
+
+.. _sec:Widom_Info:
+
+Widom Insertion
+~~~~~~~~~~~~~~~
+
+| ``# Widom_Insertion``
+| [*Logical*]
+| *Character(i,j,1)* [*Integer(i,j,2) Integer(i,j,3)*] \*One entry for each box j
+| *\*One line for each species i*
+
+This section specifies which species will be used for Widom insertions and 
+how many times, how often, and in which boxes they will have Widom insertions.  
+If the section is omitted, no Widom insertions will be performed.  
+Otherwise, if *Logical* is ``true`` or omitted, Widom insertions are enabled.  
+If *Logical* is ``false``, Widom insertions are disabled and the rest of the section is ignored.
+
+*Character(i,j,i)* specifies whether there are Widom insertions of species *i* 
+in box *j*.  *Character(i,j,1)* is ``none`` if species *i* has no 
+Widom insertions in box *j*, in which case *Integer(i,j,2)* and 
+*Integer(i,j,3)* are ignored and may be omitted.  If *Character(i,j,1)* is 
+``cbmc``, then species *i* has *Integer(i,j,2)* Widom insertions every 
+*Integer(i,j,3)* MC steps (or MC sweeps if sweeps are the units defined in 
+section ``# Simulation_Length_Info`` as described in 
+:ref:`sec:Simulation_Length_Info`) in box *j*.  Units of time are not 
+supported for *Integer(i,j,3)*, and if they are specified as the units, 
+*Integer(i,j,3)* will still be in units of MC steps.
+
+For example, for a simulation with one box and two species, in which species 1 is to be inserted 
+5000 times every 1000 steps and species 2 is to be inserted 7000 times every 400 steps, 
+this section could be written as follows:
+
+.. code-block:: none
+
+        # Widom_Insertion
+        true
+        cbmc 5000 1000
+        cbmc 7000 400
+
+For a simulation with two boxes and two species, for which the simulation length units 
+are sweeps, where species 1 will have 300 Widom insertions every 50 sweeps in box 2 
+but none in box 1 and species 2 will have 7000 Widom insertions every 350 sweeps in box 1 
+and 200 Widom insertions every 30 sweeps in box 2, this section could be written as follows:
+
+.. code-block:: none
+
+        # Widom_Insertion
+        none cbmc 300 50
+        cbmc 7000 350 cbmc 200 30
+
+
 
 Property Output
 ~~~~~~~~~~~~~~~

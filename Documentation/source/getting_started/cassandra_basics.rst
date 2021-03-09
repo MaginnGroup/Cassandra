@@ -121,6 +121,8 @@ Cassandra) or a configuration file obtained from xyz files generated from a
 previous simulation. Please refer to :ref:`sec:start_type` to find
 information about the keywords ``checkpoint`` and ``read_config``.
 
+.. _sec:output_files:
+
 Cassandra Output Files
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -187,4 +189,14 @@ file name suffix. The following are generated:
   in this file. The file is written to every ``Prop_Freq`` steps. A header is
   written to the first two lines to designate what each property is. You may use
   this file to compute thermodynamic averages.
+
+* **Widom property file** (``*.spec#.wprp`` or ``*.spec#.box#.wprp``):  This 
+  file lists the average ``widom_var`` (defined in Eq. :ref:`eq:widom_var` 
+  in :ref:`sec:widom_insert`) for each system configuration (step) in which 
+  Widom insertions are performed for a given species and a given box.  The 
+  species number is the ``#`` in ``.spec#`` in the file extension.  For a 
+  multi-box system, the box number is the ``#`` in ``.box#``.  The first 
+  column contains the number of MC steps or sweeps that have been completed 
+  when the Widom insertions are performed and the second column contains the 
+  average ``widom_var`` for that step.
 
