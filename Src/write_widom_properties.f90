@@ -57,7 +57,7 @@ SUBROUTINE Write_Widom_Properties(is,this_box,widom_avg)
   END IF
   !CALL Write_Properties_Buffer(i)
   !widom_avg = widom_sum / species_list(is)%insertions_in_step(this_box)
-  IF (widom_avg < 1.0e-99) widom_avg = 0.0_DP
+  IF (widom_avg < 1.0e-99_DP) widom_avg = 0.0_DP
   IF (is_sweeps) THEN
           WRITE(this_unit,'(I16,10X,E30.16)') i_mcstep/steps_per_sweep, widom_avg
   ELSE
