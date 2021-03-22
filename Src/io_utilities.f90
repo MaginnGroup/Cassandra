@@ -313,9 +313,9 @@ END SUBROUTINE Read_String_Zeo
   !left
   DO
      ndigits = ndigits + 1
-     curr_digit = MOD(chop_int,10)
+     curr_digit = MOD(chop_int, 10)
      int64_to_string(41-ndigits:41-ndigits) = ACHAR(curr_digit+48)
-     chop_int = INT(chop_int / 10.0d0)
+     chop_int = INT(chop_int / 10.0_REAL128, KIND=INT64)
      IF (chop_int == 0) EXIT
   END DO
   
