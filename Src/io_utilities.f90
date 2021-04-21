@@ -60,6 +60,11 @@ MODULE IO_Utilities
 
   INTEGER, PARAMETER :: STRING_LEN = 360
 
+  INTERFACE Int_To_String
+    MODULE PROCEDURE Int64_To_String
+    MODULE PROCEDURE Int32_To_String
+  END INTERFACE
+
 CONTAINS
 
 !********************************************************************************
@@ -258,7 +263,21 @@ END SUBROUTINE Read_String_Zeo
 
 
 !****************************************************************************
-    FUNCTION Int_To_String(int_in)
+    FUNCTION Int32_To_String(int_in)
+!****************************************************************************
+      IMPLICIT NONE
+
+      INTEGER(KIND=INT32), INTENT(IN) :: int_in
+      CHARACTER(40) :: int32_to_string
+      INTEGER(KIND=INT64) :: int_64_in
+
+      int_64_in = INT(int_in, INT64)
+      int32_to_string = Int64_To_String(int_64_in)
+
+    END FUNCTION Int32_To_String
+
+!****************************************************************************
+    FUNCTION Int64_To_String(int_in)
 !****************************************************************************
       IMPLICIT NONE
   !**************************************************************************
@@ -267,16 +286,17 @@ END SUBROUTINE Read_String_Zeo
   ! and returns the character equivalent
   !                                                                         *
   !**************************************************************************
-  CHARACTER(40) :: int_to_string
+  INTEGER(KIND=INT64), INTENT(IN) :: int_in
+  CHARACTER(40) :: int64_to_string
   LOGICAL :: is_negative
-  INTEGER :: int_in, chop_int, ndigits, curr_digit
-  
-  int_to_string = ""
+  INTEGER(KIND=INT64) :: chop_int, ndigits, curr_digit
+
+  int64_to_string = ""
   ndigits = 0
   
   !Check to see if integer is zero
   IF (int_in == 0) THEN
-     int_to_string(1:1) = "0"
+     int64_to_string(1:1) = "0"
      RETURN
   END IF
   
@@ -293,18 +313,18 @@ END SUBROUTINE Read_String_Zeo
   !left
   DO
      ndigits = ndigits + 1
-     curr_digit = MOD(chop_int,10)
-     int_to_string(41-ndigits:41-ndigits) = ACHAR(curr_digit+48)
-     chop_int = INT(chop_int / 10.0d0)
+     curr_digit = MOD(chop_int, 10)
+     int64_to_string(41-ndigits:41-ndigits) = ACHAR(curr_digit+48)
+     chop_int = INT(chop_int / 10.0_REAL128, KIND=INT64)
      IF (chop_int == 0) EXIT
   END DO
   
-  IF (is_negative) int_to_string(40-ndigits:40-ndigits) = "-"
+  IF (is_negative) int64_to_string(40-ndigits:40-ndigits) = "-"
   
   !Left justify string
-  int_to_string = ADJUSTL(int_to_string)
+  int64_to_string = ADJUSTL(int64_to_string)
   
-END FUNCTION Int_To_String
+END FUNCTION Int64_To_String
 
 
 !****************************************************************************

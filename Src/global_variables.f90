@@ -49,6 +49,7 @@ MODULE Global_Variables
   ! 03/17/15 (JS) : lactivity defined for GCMC simulations
 !*********************************************************************************
 
+USE ISO_FORTRAN_ENV
 USE Type_Definitions
 
   SAVE
@@ -84,7 +85,7 @@ USE Type_Definitions
   INTEGER, PARAMETER :: sim_pregen = 10
   LOGICAL :: timed_run, openmp_flag, en_flag, verbose_log, input_is_logfile
   CHARACTER(10) :: sim_length_units
-  INTEGER :: steps_per_sweep
+  INTEGER (KIND=INT64):: steps_per_sweep
 
   ! The starting seed for the random generator
   ! Note iseed is used for generating points on random sphere for MCF_Gen sim type.
@@ -100,7 +101,7 @@ USE Type_Definitions
   INTEGER, PARAMETER :: run_prod = 1
   INTEGER, PARAMETER :: run_test = 2
   LOGICAL :: change_to_production = .false.
-  INTEGER :: nsteps_until_prod
+  INTEGER (KIND=INT64):: nsteps_until_prod
   INTEGER, PARAMETER :: vdw_none = 0
   INTEGER, PARAMETER :: vdw_lj = 1
   INTEGER, PARAMETER :: vdw_cut = 2
@@ -488,7 +489,7 @@ USE Type_Definitions
 
   ! Timing information
   ! Initial, current and final number of steps
-  INTEGER :: i_mcstep, initial_mcstep, n_mcsteps, n_equilsteps, iblock
+  INTEGER (KIND=INT64) :: i_mcstep, initial_mcstep, n_mcsteps, n_equilsteps, iblock
   ! Information on the output of data
   INTEGER :: nthermo_freq, ncoord_freq, block_avg_freq, nbr_blocks
   REAL(DP) :: data_points_per_block
