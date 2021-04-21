@@ -118,7 +118,7 @@ MODULE Type_Definitions
 
      !!!Widom insertions
      LOGICAL, DIMENSION(:), ALLOCATABLE :: test_particle
-     INTEGER, DIMENSION(:), ALLOCATABLE :: insertions_in_step, widom_interval
+     INTEGER (KIND=INT64), DIMENSION(:), ALLOCATABLE :: insertions_in_step, widom_interval
      REAL(DP), DIMENSION(:), ALLOCATABLE :: widom_sum
 
   END TYPE Species_Class
