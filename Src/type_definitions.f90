@@ -514,11 +514,11 @@ MODULE Type_Definitions
     ! cpcalc : calculation of chemical potential
     ! cluster : move a cluster of molecules
 
-    INTEGER :: displacement, rotation, angle, bond, dihedral, insertion, deletion, switch, cluster
-    INTEGER :: disp_atom, cpcalc, displacement_e, rotation_e
+    INTEGER (KIND=INT64) :: displacement, rotation, angle, bond, dihedral, insertion, deletion, switch, cluster
+    INTEGER (KIND=INT64) :: disp_atom, cpcalc, displacement_e, rotation_e
 
     ! widom insertions technically aren't mc moves but it's convenient to count them in ntrials
-    INTEGER :: widom
+    INTEGER (KIND=INT64) :: widom
 
 
  END TYPE MC_Moves_Class
