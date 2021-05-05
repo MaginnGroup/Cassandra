@@ -5579,7 +5579,7 @@ SUBROUTINE Get_Seed_Info
            iseed3 = String_To_Int(line_array(2))
 
         END IF
-        WRITE(logunit,'(A,X,I12,X,I12)') 'The starting seeds are:', iseed1, iseed3
+        WRITE(logunit,'(A,X,I19,X,I19)') 'The starting seeds are:', iseed1, iseed3
 
         EXIT
 
@@ -5683,7 +5683,7 @@ SUBROUTINE Get_Simulation_Length_Info
                  CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
               END IF
 
-              WRITE(logunit,'(A,T50,I8,X,A)') 'Thermodynamic quantities will be computed every', &
+              WRITE(logunit,'(A,T50,I19,X,A)') 'Thermodynamic quantities will be computed every', &
                  nthermo_freq, sim_length_units
 
            ELSE IF (line_array(1) == 'coord_freq' .OR. line_array(1) == 'Coord_Freq') THEN
@@ -5708,7 +5708,7 @@ SUBROUTINE Get_Simulation_Length_Info
                  CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
               END IF
 
-              WRITE(logunit,'(A,T50,I8,X,A)') 'Coordinates will be written to file every', ncoord_freq, sim_length_units
+              WRITE(logunit,'(A,T50,I19,X,A)') 'Coordinates will be written to file every', ncoord_freq, sim_length_units
 
               ALLOCATE(movie_header_file(nbr_boxes))
               ALLOCATE(movie_xyz_file(nbr_boxes))
@@ -5748,7 +5748,7 @@ SUBROUTINE Get_Simulation_Length_Info
                  CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
               END IF
 
-              WRITE(logunit,'(A,T50,I8,X,A)') 'Coordinates will be written to file every', ncoord_freq, sim_length_units
+              WRITE(logunit,'(A,T50,I19,X,A)') 'Coordinates will be written to file every', ncoord_freq, sim_length_units
 
               ALLOCATE(movie_header_file(nbr_boxes))
               movie_custom_file =  TRIM(run_name) // '.crd'
@@ -5768,13 +5768,13 @@ SUBROUTINE Get_Simulation_Length_Info
 
               l_run = .TRUE.
               n_mcsteps = String_To_Int(line_array(2))
-              WRITE(logunit,'(A,T48,I10,X,A)' ) 'The simulation will be run for ', n_mcsteps, sim_length_units
+              WRITE(logunit,'(A,T48,I19,X,A)' ) 'The simulation will be run for ', n_mcsteps, sim_length_units
 
            ELSE IF (line_array(1) == 'nequilsteps' .OR. line_array(1) == 'NequilSteps') THEN
 
               ! # of equilibrium steps will be used only for the fragment generation
               n_equilsteps = String_To_Int(line_array(2))
-              WRITE(logunit, '(A,I10)') 'Number of equilibrium steps', n_equilsteps
+              WRITE(logunit, '(A,I19)') 'Number of equilibrium steps', n_equilsteps
 
            ELSE IF (line_array(1) == 'steps_per_sweep' .OR. line_array(1) == 'Steps_Per_Sweep') THEN
 
@@ -5807,7 +5807,7 @@ SUBROUTINE Get_Simulation_Length_Info
 
               echeck = .TRUE.
               echeck_freq = String_To_Int(line_array(2))
-              WRITE(logunit,'(A,I10,X,A)') 'The energy will be recomputed from scratch every ', echeck_freq, sim_length_units
+              WRITE(logunit,'(A,I19,X,A)') 'The energy will be recomputed from scratch every ', echeck_freq, sim_length_units
 
            ELSE
 
@@ -5860,14 +5860,14 @@ SUBROUTINE Get_Simulation_Length_Info
         CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
      END IF
 
-     WRITE(logunit,'(A,T50,I8,X,A)') 'Block averages will be written every', block_avg_freq, sim_length_units
+     WRITE(logunit,'(A,T50,I19,X,A)') 'Block averages will be written every', block_avg_freq, sim_length_units
      data_points_per_block = REAL(block_avg_freq / nthermo_freq,DP)
   ELSE
-     WRITE(logunit,'(A,T50,I8,X,A)') 'Instantaneous values will be written every', nthermo_freq, sim_length_units
+     WRITE(logunit,'(A,T50,I19,X,A)') 'Instantaneous values will be written every', nthermo_freq, sim_length_units
   END IF
 
   IF (sim_length_units == 'Sweeps') THEN
-     WRITE(logunit,'(A,T50,I8,A)' ) 'A sweep is defined as ', steps_per_sweep, ' steps'
+     WRITE(logunit,'(A,T50,I19,A)' ) 'A sweep is defined as ', steps_per_sweep, ' steps'
      n_mcsteps = n_mcsteps * steps_per_sweep
      nthermo_freq = nthermo_freq * steps_per_sweep
      ncoord_freq = ncoord_freq * steps_per_sweep

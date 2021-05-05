@@ -112,7 +112,7 @@ SUBROUTINE Rotate
   ! If there are no molecules then return
   IF (nmols_tot == 0) THEN
      IF (verbose_log) THEN
-       WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8,X,9X,X,A9)') &
+       WRITE(logunit,'(X,I19,X,A10,X,5X,X,3X,X,I3,X,L8,X,9X,X,A9)') &
              i_mcstep, 'rotate' , ibox, accept,'no mols'
      END IF
      RETURN
@@ -231,7 +231,7 @@ SUBROUTINE Rotate
      IF (l_pair_nrg) CALL Reset_Molecule_Pair_Interaction_Arrays(lm,is,ibox)
      
      IF (verbose_log) THEN
-       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,A9)') &
+       WRITE(logunit,'(X,I19,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,A9)') &
              i_mcstep, 'rotate' , lm, is, ibox, accept,'overlap'
      END IF
 
@@ -317,7 +317,7 @@ SUBROUTINE Rotate
      ENDIF
 
      IF (verbose_log) THEN
-       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,F9.3)') &
+       WRITE(logunit,'(X,I19,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,F9.3)') &
              i_mcstep, 'rotate' , lm, is, ibox, accept, ln_pacc
      END IF
 
@@ -332,7 +332,7 @@ SUBROUTINE Rotate
         success_ratio = REAL(nsuccess(is,ibox)%rotation,DP)/REAL(ntrials(is,ibox)%rotation,DP)
      END IF
  
-     WRITE(logunit,'(X,I9,X,A10,X,5X,X,I3,X,I3,X,F8.5)',ADVANCE='NO') &
+     WRITE(logunit,'(X,I19,X,A10,X,5X,X,I3,X,I3,X,F8.5)',ADVANCE='NO') &
            i_mcstep, 'rotate', is, ibox, success_ratio
 
      IF (int_run_type == run_equil) THEN   

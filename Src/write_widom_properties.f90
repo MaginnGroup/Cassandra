@@ -49,17 +49,17 @@ SUBROUTINE Write_Widom_Properties(is,this_box,widom_avg)
      ! in the file
      !CALL Write_Widom_Header(i)
      IF (is_sweeps) THEN
-             WRITE(this_unit,'(A16,10X,A30)') 'Sweep_#', 'Average widom_var for sweep'
+             WRITE(this_unit,'(A19,7X,A30)') 'Sweep_#', 'Average widom_var for sweep'
      ELSE
-             WRITE(this_unit,'(A16,10X,A30)') 'Step_#', 'Average widom_var for step'
+             WRITE(this_unit,'(A19,7X,A30)') 'Step_#', 'Average widom_var for step'
      END IF
      first_open_wprop(is,this_box) = .FALSE.
   END IF
   !CALL Write_Properties_Buffer(i)
   !widom_avg = widom_sum / species_list(is)%insertions_in_step(this_box)
   IF (is_sweeps) THEN
-          WRITE(this_unit,'(I16,10X,E30.22)') i_mcstep/steps_per_sweep, widom_avg
+          WRITE(this_unit,'(I19,7X,E30.22)') i_mcstep/steps_per_sweep, widom_avg
   ELSE
-          WRITE(this_unit,'(I16,10X,E30.22)') i_mcstep, widom_avg
+          WRITE(this_unit,'(I19,7X,E30.22)') i_mcstep, widom_avg
   END IF
 END SUBROUTINE Write_Widom_Properties
