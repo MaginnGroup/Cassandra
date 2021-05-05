@@ -490,7 +490,7 @@ USE Type_Definitions
   ! Initial, current and final number of steps
   INTEGER (KIND=INT64) :: i_mcstep, initial_mcstep, n_mcsteps, n_equilsteps, iblock
   ! Information on the output of data
-  INTEGER :: nthermo_freq, ncoord_freq, block_avg_freq, nbr_blocks
+  INTEGER (KIND=INT64) :: nthermo_freq, ncoord_freq, block_avg_freq, nbr_blocks
   REAL(DP) :: data_points_per_block
   INTEGER :: int_coord_style ! 1 = xyz, 2 = custom
   INTEGER,DIMENSION(:),ALLOCATABLE :: nbr_prop_files
@@ -558,7 +558,7 @@ USE Type_Definitions
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   LOGICAL :: echeck
-  INTEGER :: echeck_freq
+  INTEGER (KIND=INT64):: echeck_freq
 
 !!!!! Pair energy arrays. These arrays hold interaction energies between pairs of molecules !!!!!
 
