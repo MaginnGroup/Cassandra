@@ -9,11 +9,12 @@ pr:
       - master
 
 schedules:
-- cron: "0 0 * * *"
-  displayName: Daily midnight build for master
+- cron: "0 4 * * 1"
+  displayName: Sunday midnight build for master
   branches:
     include:
       - master
+  always: true
 
 jobs:
 - job: TestSuite
