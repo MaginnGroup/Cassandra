@@ -9,18 +9,19 @@ pr:
       - master
 
 schedules:
-- cron: "0 0 * * *"
-  displayName: Daily midnight build for master
+- cron: "0 4 * * 1"
+  displayName: Sunday midnight build for master
   branches:
     include:
       - master
+  always: true
 
 jobs:
 - job: TestSuite
   strategy:
     matrix:
       Ubuntu-gcc-8:
-        imageName: 'ubuntu-18.04'
+        imageName: 'ubuntu-latest'
         python.version: 3.7
         gfortran.version: 'gfortran-8'
         makefile.name: 'Makefile.gfortran'
@@ -33,15 +34,15 @@ jobs:
         makefile.name: 'Makefile.gfortran'
         exec.name: 'cassandra_gfortran.exe'
         omp.num.threads: 1
-      Ubuntu-openMP:
-        imageName: 'ubuntu-18.04'
+      Ubuntu-gcc-10-openMP:
+        imageName: 'ubuntu-latest'
         python.version: 3.7
-        gfortran.version: 'gfortran-9'
+        gfortran.version: 'gfortran-10'
         makefile.name: 'Makefile.gfortran.openMP'
         exec.name: 'cassandra_gfortran_openMP.exe'
         omp.num.threads: 8
       macOS-gcc-9:
-        imageName: 'macOS-10.15'
+        imageName: 'macOS-latest'
         python.version: 3.7
         gfortran.version: 'gfortran-9'
         makefile.name: 'Makefile.gfortran'
@@ -66,11 +67,11 @@ jobs:
       condition: eq( variables['Agent.OS'], 'Darwin' )
 
     - bash: |
-        brew install gcc@9
-        brew upgrade gcc@9
-        gfortran-9 --version
-      displayName: Install gcc-latest macOS
-      condition: eq( variables['Agent.OS'], 'Darwin' )
+        brew install gcc@8
+        brew upgrade gcc@8
+        gfortran-8 --version
+      displayName: Install gcc-8 if needed
+      condition: eq( variables['gfortran.version'], 'gfortran-8' )
 
     - bash: |
         cd Src
