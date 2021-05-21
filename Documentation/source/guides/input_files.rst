@@ -1353,6 +1353,8 @@ Additional supported keywords are:
 * ``nmols``: Number of molecules of each species
 * ``density``: Density of each species in Å\ :sup:`3`
 * ``mass_density``: Density of the system in kg/m\ :sup:`3`
+* ``energy_HMA``: Energy of the system measured with HMA
+* ``pressure_HMA``: Pressure of the system measured with HMA, in bar.  The harmonic pressure must be provided as a second argument on this line.
 
 For example, if you would like total energy, volume and pressure of a one box
 system to be written, you may specify the following:
