@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 
-def lammpstrjconvert(lammpstrjFilename,n_list,fstr='f'): 
+def lammpstrjconvert(lammpstrjFilename,n_list,fstr='{:f}'): 
     lfnlen = len(lammpstrjFilename)
 
     if lammpstrjFilename.find(".lammpstrj") == (lfnlen-10):
@@ -102,7 +102,7 @@ def lammpstrjconvert(lammpstrjFilename,n_list,fstr='f'):
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f', '--format', default='f', type=ascii)
+    parser.add_argument('-f', '--format', default='{:f}', type=ascii)
     parser.add_argument('fname')
     parser.add_argument('nmols', nargs='+', type=int)
     args = parser.parse_args()
