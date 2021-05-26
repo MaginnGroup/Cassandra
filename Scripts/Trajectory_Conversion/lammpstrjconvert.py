@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 
-def lammpstrjconvert(lammpstrjFilename,n_list): 
+def lammpstrjconvert(lammpstrjFilename,n_list,fstr='f'): 
     lfnlen = len(lammpstrjFilename)
 
     if lammpstrjFilename.find(".lammpstrj") == (lfnlen-10):
@@ -27,7 +27,7 @@ def lammpstrjconvert(lammpstrjFilename,n_list):
                     thislinestr = ltfile.readline(len(tgt))
                 if len(tgt) <= len(thislinestr):
                     tgt_hit = (thislinestr[0:len(tgt)] == tgt)
-                elif len(thislinestr) == 0:
+                elif not thislinestr:
                     eof_flag = True
                     tgt_hit = True
             return eof_flag
@@ -92,7 +92,7 @@ def lammpstrjconvert(lammpstrjFilename,n_list):
             # write xyz file
             xyzfile.write('{:>12d}\n'.format(n_atoms))
             xyzfile.write(' TIMESTEP: {:>11d}\n'.format(timestep))
-            df[['element','xu','yu','zu']].to_csv(xyzfile, sep=' ', header=False, index=False, line_terminator='\n')
+            df[['element','xu','yu','zu']].to_csv(xyzfile, sep=' ', header=False, index=False, line_terminator='\n', float_format=fstr)
             eofreached = findheading("ITEM: TIMESTEP")
 
 
@@ -102,9 +102,10 @@ def lammpstrjconvert(lammpstrjFilename,n_list):
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument('-f', '--format', default='f', type=ascii)
     parser.add_argument('fname')
     parser.add_argument('nmols', nargs='+', type=int)
     args = parser.parse_args()
-    lammpstrjconvert(lammpstrjFilename=args.fname, n_list=args.nmols)
+    lammpstrjconvert(lammpstrjFilename=args.fname, n_list=args.nmols, fstr=args.format)
 
 
