@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import sys, os, argparse, linecache, re
-import io
+import io, csv
 import numpy as np
 import pandas as pd
 
@@ -92,7 +92,7 @@ def lammpstrjconvert(lammpstrjFilename,n_list,fstr='%f'):
             # write xyz file
             xyzfile.write('{:>12d}\n'.format(n_atoms))
             xyzfile.write(' TIMESTEP: {:>11d}\n'.format(timestep))
-            df[['element','xu','yu','zu']].to_csv(xyzfile, sep=' ', header=False, index=False, line_terminator='\n', float_format=fstr)
+            df[['element','xu','yu','zu']].to_csv(xyzfile, sep=' ', header=False, index=False, line_terminator='\n', float_format=fstr, quoting=csv.QUOTE_NONE)
             eofreached = findheading("ITEM: TIMESTEP")
 
 
