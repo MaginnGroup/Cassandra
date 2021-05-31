@@ -249,6 +249,8 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
                      sin_sum(:,ibox) = sin_sum_old(:,ibox)
                   END IF
 
+          ELSE
+                  overlap_counter(is,ibox) = overlap_counter(is,ibox) + 1_INT64
           END IF
   END DO
 
