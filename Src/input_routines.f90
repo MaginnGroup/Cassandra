@@ -5292,7 +5292,9 @@ SUBROUTINE Get_Widom_Info
                         END IF
                         widom_flag = .TRUE.
                         IF(.NOT. ALLOCATED(ntrials)) ALLOCATE(ntrials(nspecies,nbr_boxes))
+                        IF(.NOT. ALLOCATED(overlap_counter)) ALLOCATE(overlap_counter(nspecies,nbr_boxes))
                         ntrials(:,:)%widom = 0
+                        overlap_counter(:,:) = 0_INT64
                         ALLOCATE(wprop_file_unit(nspecies,nbr_boxes))
                         ALLOCATE(wprop_filenames(nspecies,nbr_boxes))
                         ALLOCATE(first_open_wprop(nspecies,nbr_boxes))

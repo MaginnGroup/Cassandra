@@ -591,6 +591,7 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   !!!!!!!!!
   LOGICAL :: widom_flag
   INTEGER, DIMENSION(:), ALLOCATABLE :: tp_correction
+  INTEGER (KIND=INT64), DIMENSION(:,:), ALLOCATABLE :: overlap_counter
 
   ! Pregenerated trajectory
   !LOGICAL :: has_H ! Does the simulation use H file(s)?

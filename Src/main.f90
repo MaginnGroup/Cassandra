@@ -490,12 +490,15 @@ PROGRAM Main
             TRIM(Int_To_String(is)),'in box',TRIM(Int_To_String(ibox)),'is', &
             -kboltz*temperature(ibox)*atomic_to_kJmol*DLOG(species_list(is)%widom_sum(ibox) / ntrials(is,ibox)%widom), &
             'kJ/mol'
+          WRITE(logunit,*) '        ', overlap_counter(is,ibox), ' Widom insertions with overlap out of ', ntrials(is,ibox)%widom
           !WRITE(logunit,'(A,I2,A,I2,A,F24.12)') &
           !  'Ideal Chemical potential for species',is,'in box',i, 'is', &
           !  chpotid(is,i) / ntrials(is,i)%cpcalc
         END IF
       END DO
     END DO
+    WRITE(logunit,'(A80)') '********************************************************************************'
+    WRITE(logunit, *) overlap_counter, ' Widom insertions with overlap out of ', ntrials(is,ibox)%widom
     WRITE(logunit,'(A80)') '********************************************************************************'
   END IF
 
