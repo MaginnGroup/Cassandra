@@ -498,8 +498,6 @@ PROGRAM Main
       END DO
     END DO
     WRITE(logunit,'(A80)') '********************************************************************************'
-    WRITE(logunit, *) overlap_counter, ' Widom insertions with overlap out of ', ntrials(is,ibox)%widom
-    WRITE(logunit,'(A80)') '********************************************************************************'
   END IF
 
 
