@@ -420,7 +420,7 @@ PROGRAM Main
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Run simulation'
   WRITE(logunit,'(A80)') '********************************************************************************'
-  WRITE(logunit,'(X,A9,X,A10,X,A5,X,A3,X,A3,X,A8,X,A9)') 'Step', 'Move', 'Mol', 'Spc', 'Box', 'Success', 'MaxWidth'
+  WRITE(logunit,'(X,A19,X,A10,X,A5,X,A3,X,A3,X,A8,X,A9)') 'Step', 'Move', 'Mol', 'Spc', 'Box', 'Success', 'MaxWidth'
 
   IF (int_sim_type == sim_nvt .OR. int_sim_type == sim_nvt_min) THEN
 

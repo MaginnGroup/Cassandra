@@ -433,8 +433,8 @@ FUNCTION String_To_Int(string_in)
   IMPLICIT NONE
 
   LOGICAL :: is_negative
-  INTEGER :: string_to_int, ndigits, strln
-  INTEGER :: mult, digit, pos, ii
+  INTEGER :: ndigits, strln, digit, pos, ii
+  INTEGER (KIND=INT64) :: mult, string_to_int
   CHARACTER(*) :: string_in
 !****************************************************************************
   !Initialize some things
