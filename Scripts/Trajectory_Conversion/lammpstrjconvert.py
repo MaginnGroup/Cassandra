@@ -4,17 +4,33 @@ import argparse
 import io
 import numpy as np
 import pandas as pd
+from pathlib import Path
 
 
-def lammpstrjconvert(lammpstrjFilename,n_list,fstr="%f"): 
-    lfnlen = len(lammpstrjFilename)
+def lammpstrjconvert(lammpstrjpath,n_list,fstr="%f", Hpath=None, xyzpath=None, getframes=None): 
+    ltpath = Path(lammpstrjpath)
 
-    if lammpstrjFilename.find(".lammpstrj") == (lfnlen-10):
-        namebase = lammpstrjFilename[0:(lfnlen-10):1]
+    if Hpath is None:
+        Hpath = Path(ltpath.stem+'.H')
     else:
-        namebase = lammpstrjFilename
+        Hpath = Path(Hpath)
+    if xyzpath is None:
+        xyzpath = Path(ltpath.stem+'.xyz')
+    else:
+        xyzpath = Path(xyzpath)
+
+    nonsorted = False
+
+    if getframes is None:
+        frame_array = []
+    elif getframes:
+        frame_array = np.array(getframes)
+        nonsorted = any(frame_array[i] >= frame_array[i+1] for i in range(len(frame_array)-1))
+    else:
+        return
+
     
-    with open(lammpstrjFilename) as ltfile, open(namebase+".H",'w') as Hfile, open(namebase+".xyz",'w') as xyzfile:
+    with ltpath.open() as ltfile, Hpath.open('w') as Hfile, xyzpath.open('w') as xyzfile:
         eofreached = False
         
         def findheading(tgt,lineadvance=True):
@@ -31,11 +47,8 @@ def lammpstrjconvert(lammpstrjFilename,n_list,fstr="%f"):
                     eof_flag = True
                     tgt_hit = True
             return eof_flag
-        
-        
-        eofreached = findheading("ITEM: TIMESTEP")
-        
-        while not(eofreached):
+
+        def convert_frame():
             xy = 0.0
             xz = 0.0
             yz = 0.0
@@ -77,10 +90,10 @@ def lammpstrjconvert(lammpstrjFilename,n_list,fstr="%f"):
             a = [xx,0,0]
             b = [xy,yy,0]
             c = [xz,yz,zz]
-            lmat = np.array([a,b,c]).T
+            lmat = np.array([a,b,c]).T # edge vectors a, b, and c are columns
             volume = np.inner(a,np.cross(b,c))
-            box_center = np.sum(lmat,axis=1)*0.5+np.array([xlo,ylo,zlo]).T
-            df[['xu','yu','zu']] -= box_center.T # boxes always have origin at (0,0,0) in Cassandra, but not always in lammps
+            box_center = np.sum(lmat,axis=1)*0.5+np.array([xlo,ylo,zlo])
+            df[['xu','yu','zu']] -= box_center # boxes always have origin at (0,0,0) in Cassandra, but not always in lammps
             nspecies = len(n_list)
             Hfile.write('{:^26.17g}\n'.format(volume))
             Hfile.write('{:^26.17g}{:^26.17g}{:^26.17g}\n'.format(lmat[0,0],lmat[0,1],lmat[0,2]))
@@ -93,7 +106,35 @@ def lammpstrjconvert(lammpstrjFilename,n_list,fstr="%f"):
             xyzfile.write('{:>12d}\n'.format(n_atoms))
             xyzfile.write(' TIMESTEP: {:>11d}\n'.format(timestep))
             df[['element','xu','yu','zu']].to_csv(xyzfile, sep=' ', header=False, index=False, line_terminator='\n', float_format=fstr)
+
+
+        
+        if nonsorted:
+            streampos = {}
+            framerange = np.arange(max(frame_array+1))
+            for iframe in framerange:
+                eofreached = findheading("ITEM: TIMESTEP")
+                if eofreached:
+                    raise ValueError("Frame indices specified in getframes exceed the maximum frame index "+str(iframe-1))
+                if iframe in frame_array:
+                    streampos[iframe] = ltfile.tell()
+            for iframe in frame_array:
+                ltfile.seek(streampos[iframe])
+                convert_frame()
+        else:
             eofreached = findheading("ITEM: TIMESTEP")
+            iframe = 0
+            while not eofreached:
+                if get_frames is None or iframe in frame_array:
+                    convert_frame()
+                eofreached = findheading("ITEM: TIMESTEP")
+                if frame_array:
+                    if iframe == frame_array[-1]:
+                        eofreached = True
+                    elif eofreached:
+                        raise ValueError("Frame indices specified in getframes exceed the maximum frame index "+str(iframe))
+                iframe += 1
+                
 
 
 
@@ -106,6 +147,6 @@ if __name__ == "__main__":
     parser.add_argument('fname')
     parser.add_argument('nmols', nargs='+', type=int)
     args = parser.parse_args()
-    lammpstrjconvert(lammpstrjFilename=args.fname, n_list=args.nmols, fstr=args.format)
+    lammpstrjconvert(lammpstrjpath=args.fname, n_list=args.nmols, fstr=args.format)
 
 
