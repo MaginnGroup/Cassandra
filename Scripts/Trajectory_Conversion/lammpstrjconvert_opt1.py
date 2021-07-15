@@ -92,7 +92,7 @@ def lammpstrjconvert_opt1(lammpstrjpath,n_list,fstr="%f", Hpath=None, xyzpath=No
             for i in range(n_atoms):
                 xyz_buffer.write(ltfile.readline())
             xyz_buffer.seek(0)
-            xyz = np.loadtxt(df_buffer, usecols=[coldict[colname] for colname in colnames])
+            xyz = np.loadtxt(xyz_buffer, usecols=[coldict[colname] for colname in colnames])
             xyz_buffer.close()
             xyz = xyz[np.argsort(xyz[:,0])]
             xyz[:,1:] -= box_center # center the box at (0, 0, 0)
