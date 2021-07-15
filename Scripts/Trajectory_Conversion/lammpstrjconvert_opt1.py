@@ -127,7 +127,7 @@ def lammpstrjconvert_opt1(lammpstrjpath,n_list,fstr="%f", Hpath=None, xyzpath=No
             eofreached = findheading("ITEM: TIMESTEP")
             iframe = 0
             while not eofreached:
-                if get_frames is None or iframe in frame_array:
+                if getframes is None or iframe in frame_array:
                     convert_frame()
                 eofreached = findheading("ITEM: TIMESTEP")
                 if frame_array:
