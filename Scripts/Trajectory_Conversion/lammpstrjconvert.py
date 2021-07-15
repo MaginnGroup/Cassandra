@@ -3,7 +3,6 @@
 import argparse
 import io
 import numpy as np
-import pandas as pd
 from pathlib import Path
 
 
@@ -78,22 +77,21 @@ def lammpstrjconvert(lammpstrjpath,n_list,fstr="%f", Hpath=None, xyzpath=None, g
             xx = xhi-xlo
             yy = yhi-ylo
             zz = zhi-zlo
+            a = [xx,0,0]
+            b = [xy,yy,0]
+            c = [xz,yz,zz]
+            lmat = np.array([a,b,c]).T
+            volume = np.inner(a,np.cross(b,c))
+            # boxes always have origin at (0,0,0) in Cassandra, but not always in lammps
+            box_center = np.sum(lmat,axis=1)*0.5+np.array([xlo,ylo,zlo]).T
             eofreached = findheading("ITEM: ATOMS ",False)
             df_buffer = io.StringIO()
             for i in range(n_atoms+1):
                 df_buffer.write(ltfile.readline())
             df_buffer.seek(0)
-            df = pd.read_csv(df_buffer,delim_whitespace=True)
+            df = np.genfromtxt(df_buffer, names=True)
             df_buffer.close()
-            df["element"] = "X"
-            df = df.sort_values(by='id',ignore_index=True).sort_index(axis=1)
-            a = [xx,0,0]
-            b = [xy,yy,0]
-            c = [xz,yz,zz]
-            lmat = np.array([a,b,c]).T # edge vectors a, b, and c are columns
-            volume = np.inner(a,np.cross(b,c))
-            box_center = np.sum(lmat,axis=1)*0.5+np.array([xlo,ylo,zlo])
-            df[['xu','yu','zu']] -= box_center # boxes always have origin at (0,0,0) in Cassandra, but not always in lammps
+            xyz = np.column_stack((df['xu'],df['yu'],df['zu']))[np.argsort(df['id'])] - box_center
             nspecies = len(n_list)
             Hfile.write('{:^26.17g}\n'.format(volume))
             Hfile.write('{:^26.17g}{:^26.17g}{:^26.17g}\n'.format(lmat[0,0],lmat[0,1],lmat[0,2]))
@@ -105,7 +103,8 @@ def lammpstrjconvert(lammpstrjpath,n_list,fstr="%f", Hpath=None, xyzpath=None, g
             # write xyz file
             xyzfile.write('{:>12d}\n'.format(n_atoms))
             xyzfile.write(' TIMESTEP: {:>11d}\n'.format(timestep))
-            df[['element','xu','yu','zu']].to_csv(xyzfile, sep=' ', header=False, index=False, line_terminator='\n', float_format=fstr)
+            # df[['element','xu','yu','zu']].to_csv(xyzfile, sep=' ', header=False, index=False, line_terminator='\n', float_format=fstr)
+            np.savetxt(xyzfile, xyz, fmt=full_fstr)
 
 
         
