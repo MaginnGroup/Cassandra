@@ -6,9 +6,10 @@ import numpy as np
 from pathlib import Path
 
 
-def lammpstrjconvert(lammpstrjpath,n_list,fstr="%f", Hpath=None, xyzpath=None, getframes=None): 
+def lammpstrjconvert_opt1(lammpstrjpath,n_list,fstr="%f", Hpath=None, xyzpath=None, getframes=None): 
     ltpath = Path(lammpstrjpath)
     full_fstr = "X "+fstr+" "+fstr+" "+fstr
+    colnames = ('id', 'xu', 'yu', 'zu')
 
     if Hpath is None:
         Hpath = Path(ltpath.stem+'.H')
@@ -86,13 +87,15 @@ def lammpstrjconvert(lammpstrjpath,n_list,fstr="%f", Hpath=None, xyzpath=None, g
             # boxes always have origin at (0,0,0) in Cassandra, but not always in lammps
             box_center = np.sum(lmat,axis=1)*0.5+np.array([xlo,ylo,zlo])
             eofreached = findheading("ITEM: ATOMS ",False)
-            df_buffer = io.StringIO()
-            for i in range(n_atoms+1):
-                df_buffer.write(ltfile.readline())
-            df_buffer.seek(0)
-            df = np.genfromtxt(df_buffer, names=True)
-            df_buffer.close()
-            xyz = np.column_stack((df['xu'],df['yu'],df['zu']))[np.argsort(df['id'])] - box_center
+            coldict = {colname: i for i, colname in enumerate(ltfile.readline().strip().split())} # gives indices of columns
+            xyz_buffer = io.StringIO()
+            for i in range(n_atoms):
+                xyz_buffer.write(ltfile.readline())
+            xyz_buffer.seek(0)
+            xyz = np.loadtxt(df_buffer, usecols=[coldict[colname] for colname in colnames])
+            xyz_buffer.close()
+            xyz = xyz[np.argsort(xyz[:,0])]
+            xyz[:,1:] -= box_center # center the box at (0, 0, 0)
             nspecies = len(n_list)
             Hfile.write('{:^26.17g}\n'.format(volume))
             Hfile.write('{:^26.17g}{:^26.17g}{:^26.17g}\n'.format(lmat[0,0],lmat[0,1],lmat[0,2]))
@@ -104,8 +107,7 @@ def lammpstrjconvert(lammpstrjpath,n_list,fstr="%f", Hpath=None, xyzpath=None, g
             # write xyz file
             xyzfile.write('{:>12d}\n'.format(n_atoms))
             xyzfile.write(' TIMESTEP: {:>11d}\n'.format(timestep))
-            # df[['element','xu','yu','zu']].to_csv(xyzfile, sep=' ', header=False, index=False, line_terminator='\n', float_format=fstr)
-            np.savetxt(xyzfile, xyz, fmt=full_fstr)
+            np.savetxt(xyzfile, xyz[:,1:], fmt=full_fstr)
 
 
         
@@ -147,6 +149,6 @@ if __name__ == "__main__":
     parser.add_argument('fname')
     parser.add_argument('nmols', nargs='+', type=int)
     args = parser.parse_args()
-    lammpstrjconvert(lammpstrjpath=args.fname, n_list=args.nmols, fstr=args.format)
+    lammpstrjconvert_opt1(lammpstrjpath=args.fname, n_list=args.nmols, fstr=args.format)
 
 
