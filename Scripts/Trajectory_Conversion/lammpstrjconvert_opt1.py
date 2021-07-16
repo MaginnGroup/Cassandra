@@ -26,7 +26,7 @@ def lammpstrjconvert_opt1(lammpstrjpath,n_list,fstr="%f", Hpath=None, xyzpath=No
         frame_array = []
     elif getframes:
         frame_array = np.array(getframes)
-        nonsorted = any(frame_array[i] >= frame_array[i+1] for i in range(len(frame_array)-1))
+        nonsorted = any([frame_array[i] >= frame_array[i+1] for i in range(len(frame_array)-1)])
     else:
         return
 
