@@ -24,7 +24,7 @@ def lammpstrjconvert_opt1(lammpstrjpath,n_list,fstr="%f", Hpath=None, xyzpath=No
 
     if getframes is None:
         frame_array = []
-    elif getframes:
+    elif len(getframes):
         frame_array = np.array(getframes)
         nonsorted = any([frame_array[i] >= frame_array[i+1] for i in range(len(frame_array)-1)])
     else:
@@ -130,7 +130,7 @@ def lammpstrjconvert_opt1(lammpstrjpath,n_list,fstr="%f", Hpath=None, xyzpath=No
                 if getframes is None or iframe in frame_array:
                     convert_frame()
                 eofreached = findheading("ITEM: TIMESTEP")
-                if frame_array:
+                if getframes is not None:
                     if iframe == frame_array[-1]:
                         eofreached = True
                     elif eofreached:
