@@ -611,4 +611,9 @@ MODULE Type_Definitions
      REAL(DP) :: exp_dE_ratio
   END TYPE Rotation_Class
 
+  TYPE ID_Class
+          ! This class holds the species index, molecule index, and atom index of an atom in a sector
+          INTEGER :: spec, mol, atom
+  END TYPE ID_Class
+
 END MODULE Type_Definitions

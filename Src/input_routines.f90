@@ -5354,6 +5354,50 @@ SUBROUTINE Get_Widom_Info
 
 END SUBROUTINE Get_Widom_Info
 
+SUBROUTINE Get_Lookup_Info
+        INTEGER :: line_nbr, ierr, max_atoms
+        CHARACTER(120) :: line_string
+        REWIND(inputunit)
+        line_nbr = 0
+        line_string = ""
+        l_sectors = .FALSE.
+        DO
+                line_nbr = line_nbr + 1
+                CALL Read_String(inputunit,line_string,ierr)
+                IF(ierr /= 0) THEN
+                   err_msg = ''
+                   err_msg(1) = 'Error while reading input file in Get_Lookup_Info'
+                   CALL clean_abort(err_msg,'Get_Lookup_Info')
+                END IF
+
+                IF(line_string(1:3) == 'END' .or. line_nbr > 10000 ) RETURN
+                IF (line_string(1:17) == '# Atom_Lookup') THEN
+                        DO
+                                line_nbr = line_nbr + 1
+                                CALL Read_String(inputunit,line_string,ierr)
+                                IF(ierr /= 0) THEN
+                                   err_msg = ''
+                                   err_msg(1) = 'Error while reading input file in Get_Lookup_Info'
+                                   CALL clean_abort(err_msg,'Get_Lookup_Info')
+                                END IF
+                                IF (line_string(1:1) /= '!') EXIT
+                        END DO
+                        IF (.NOT. (TRIM(ADJUSTL(line_string))(1:4) == 'TRUE' .OR. &
+                                TRIM(ADJUSTL(line_string))(1:4) == 'true' .OR. &
+                                TRIM(ADJUSTL(line_string))(1:4) == 'True')) RETURN
+                        l_sectors = .TRUE.
+                        rcut_low_inv = 1.0_DP/rcut_low
+                        max_atoms = DOT_PRODUCT(max_molecules, natoms)
+                        ALLOCATE(sectorbound(3,nbr_boxes))
+                        ! The number of populated sectors cannot exceed the number of atoms
+                        ALLOCATE(sector_atoms(15, max_atoms))
+                        sectorbound = 0
+                        sectormaxbound = 0
+                        RETURN
+                END IF
+        END DO
+END SUBROUTINE Get_Lookup_Info
+
 SUBROUTINE Log_Widom_Info
         ! This subroutine writes relevant information about the settings for the Widom insertions
         ! to the log file if Widom insertions are enabled, and also adjusts the widom_interval
