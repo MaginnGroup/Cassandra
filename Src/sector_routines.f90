@@ -37,7 +37,7 @@ MODULE Sector_Routines
 
 CONTAINS
   SUBROUTINE Sector_Setup
-          INTEGER, DIMENSION(3) :: sectormaxbound_old, map_bound
+          INTEGER, DIMENSION(3) :: sectormaxbound_old !, map_bound
           INTEGER, DIMENSION(3,nbr_boxes) :: sectorbound_old
           INTEGER :: i_sector, xi, yi, zi, dx, dy, dz, xshift, yshift, zshift, nsec_old, nsec, secind
           REAL(DP) :: xp, yp, zp, xw, yp, zp
@@ -52,13 +52,13 @@ CONTAINS
                 END DO
           END DO
           sectormaxbound = MAXVAL(sectorbound, 2)
-          map_bound = sectormaxbound*3+1
+          !map_bound = sectormaxbound*3+1
           IF (.NOT. ALL(sectorbound == sectorbound_old)) THEN
                   IF (.NOT. ALL( sectormaxbound <= sectormaxbound_old)) THEN
                           IF (ALLOCATED(sector_index_map)) DEALLOCATE(sector_index_map)
-                          ALLOCATE(sector_index_map(-map_bound(1):map_bound(1), &
-                                  -map_bound(2):map_bound(2), &
-                                  -map_bound(3):map_bound(3), &
+                          ALLOCATE(sector_index_map(-sectormaxbound(1):sectormaxbound(1), &
+                                  -sectormaxbound(2):sectormaxbound(2), &
+                                  -sectormaxbound(3):sectormaxbound(3), &
                                   nbr_boxes))
                   END IF
                   DO ibox = 1, nbr_boxes
