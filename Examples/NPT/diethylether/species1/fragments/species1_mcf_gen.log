@@ -9,14 +9,21 @@
 **********************************Log File**************************************
 ********************************************************************************
 
+For any published work that uses Cassandra, cite the following reference:
+    Shah JK, Marin‐Rimoldi E, Mullen RG, Keene BP, Khan S,
+    Paluch AS, Rai N, Romanielo LL, Rosch TW, Yoo B, Maginn EJ.
+    Cassandra: An open source Monte Carlo package for molecular simulation.
+    Journal of Computational Chemistry. 2017, 38, 1727–1739.
+    http://dx.doi.org/10.1002/jcc.24807
+
 Run info
 ********************************************************************************
-version: Cassandra Development Version
+version: Cassandra Version 1.2.5
 inputfile: species1_mcf_gen.inp
 name of run: species1_mcf_gen
-date (mm/dd/yyyy): 03/03/2018
-time: 20:40:02
-machine: Matthews-MacBook-Pro.local
+date (mm/dd/yyyy): 09/02/2021
+time: 12:43:40
+machine: LAPTOP-IOABUAK5
 ********************************************************************************
 
 Verbose log
