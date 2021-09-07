@@ -9,14 +9,21 @@
 **********************************Log File**************************************
 ********************************************************************************
 
+For any published work that uses Cassandra, cite the following reference:
+    Shah JK, Marin‐Rimoldi E, Mullen RG, Keene BP, Khan S,
+    Paluch AS, Rai N, Romanielo LL, Rosch TW, Yoo B, Maginn EJ.
+    Cassandra: An open source Monte Carlo package for molecular simulation.
+    Journal of Computational Chemistry. 2017, 38, 1727–1739.
+    http://dx.doi.org/10.1002/jcc.24807
+
 Run info
 ********************************************************************************
-version: Cassandra Development Version
-inputfile: /Users/matthewhowenstine/Cassandra/Examples/GCMC/Methane_Butane_Silicalite/methane_butane_Si.inp
+version: Cassandra Version 1.2.5
+inputfile: methane_butane_Si.inp
 name of run: methane_butane_Si.out
-date (mm/dd/yyyy): 03/03/2018
-time: 20:40:11
-machine: Matthews-MacBook-Pro.local
+date (mm/dd/yyyy): 09/02/2021
+time: 13:29:10
+machine: LAPTOP-IOABUAK5
 ********************************************************************************
 
 Verbose log
@@ -58,7 +65,7 @@ CH4_s2 CH2_s3   83.40   3.83
 CH3_s3 CH2_s3   67.90   3.85                                                    
                                                                                 
 # Seed_Info                                                                     
-23854675077543  9309223567521                                                   
+238546750  930922356                                                            
                                                                                 
 # Rcutoff_Low                                                                   
 1.0                                                                             
@@ -279,7 +286,7 @@ Initial configuration for box 1 will add molecules to configuration read from fi
 
 Seed info
 ********************************************************************************
-The starting seeds are:    426715559   2029437089
+The starting seeds are:    238546750    930922356
 ********************************************************************************
 
 Temperature
@@ -325,7 +332,7 @@ Species     3
 Simulation length info
 ********************************************************************************
 Thermodynamic quantities will be computed every       400 Steps     
-Coordinates will be written every                   10000 Steps     
+Coordinates will be written to file every           10000 Steps     
  movie header file is                  methane_butane_Si.out.H
  movie_XYZ file is                     methane_butane_Si.out.xyz
 The simulation will be run for                      10000 Steps     
@@ -385,16 +392,16 @@ Compute total energy
 
  Energy components for box 1     kJ/mol-Extensive
  ---------------------------------------------------------------------
- Total system energy                        8.326
- Intra molecular energy                     8.584
+ Total system energy                        3.164
+ Intra molecular energy                    11.624
    Bond energy                              0.000
-   Bond angle energy                        4.318
-   Dihedral angle energy                    4.266
+   Bond angle energy                        3.715
+   Dihedral angle energy                    7.908
    Improper angle energy                    0.000
    Intra molecule vdw                       0.000
    Intra molecule q                         0.000
- Inter molecular energy                    -0.259
-   Inter molecule vdw                      -0.079
+ Inter molecular energy                    -8.460
+   Inter molecule vdw                      -8.280
    Long range correction                   -0.180
    Inter molecule q                         0.000
  ---------------------------------------------------------------------
@@ -404,11 +411,12 @@ Compute total energy
 Run simulation
 ********************************************************************************
       Step       Move   Mol Spc Box  Success  MaxWidth
-      3000     rotate         3   1  0.80667   3.14159
-      5490  translate         3   1  0.69000   2.76000
-      5987     rotate         3   1  0.83667   3.14159
-      6518  translate         2   1  0.85000   3.40000
-      8829     rotate         3   1  0.67833   3.14159
+      2897     rotate         3   1  0.70000   3.14159
+      4859  translate         3   1  0.56333   2.25333
+      5770     rotate         3   1  0.69667   3.14159
+      6821  translate         2   1  0.87000   3.48000
+      8819     rotate         3   1  0.66833   3.14159
+      9830  translate         3   1  0.53167   2.39604
 ********************************************************************************
 
 Energy of final configuration
@@ -416,17 +424,17 @@ Energy of final configuration
 
  Energy components for box 1     kJ/mol-Extensive       Relative_Error
  ---------------------------------------------------------------------
- Total system energy                      -24.729           -0.829E-13
- Intra molecular energy                    66.229            0.316E-13
+ Total system energy                      -45.849           -0.478E-13
+ Intra molecular energy                    67.615            0.295E-13
    Bond energy                              0.000            0.000E+00
-   Bond angle energy                       29.445            0.809E-13
-   Dihedral angle energy                   36.783            0.321E-14
+   Bond angle energy                       34.885            0.785E-13
+   Dihedral angle energy                   32.730            0.197E-13
    Improper angle energy                    0.000            0.000E+00
    Intra molecule vdw                       0.000            0.000E+00
    Intra molecule q                         0.000            0.000E+00
- Inter molecular energy                   -90.958           -0.600E-15
-   Inter molecule vdw                     -89.974           -0.344E-14
-   Long range correction                   -0.984           -0.000E+00
+ Inter molecular energy                  -113.464           -0.208E-14
+   Inter molecule vdw                    -112.425           -0.194E-14
+   Long range correction                   -1.039           -0.000E+00
    Inter molecule q                         0.000            0.000E+00
  ---------------------------------------------------------------------
 
@@ -447,9 +455,9 @@ Writing information for box  1
    Writing information for species  2
 
                 Move      Trials     Success   % Success
-           Translate         895         759       84.80
-              Insert         998         798       79.96
-              Delete        1005         800       79.60
+           Translate         824         719       87.26
+              Insert         955         793       83.04
+              Delete        1001         790       78.92
    ---------------------------------------------------------
 
 
@@ -457,10 +465,10 @@ Writing information for box  1
    Writing information for species  3
 
                 Move      Trials     Success   % Success
-           Translate        1088         669       61.49
-              Rotate        2016        1560       77.38
-              Insert         967         675       69.80
-              Delete        1026         662       64.52
+           Translate        1228         671       54.64
+              Rotate        2032        1392       68.50
+              Insert         947         587       61.99
+              Delete        1011         575       56.87
    ---------------------------------------------------------
 
 ********************************************************************************
@@ -471,17 +479,17 @@ Writing information about fragments
    ---------------------------------------------------------
    Writing information for species  3
      #_Frags_Regrown      Trials     Success   % Success
-                   1        2005        1844       91.97
+                   1        2002        1808       90.31
    ---------------------------------------------------------
 ********************************************************************************
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.168059 secs.
- Rotation time =               0.263750 secs.
- Insertion time =              0.707926 secs.
- Deletion time =               0.744244 secs.
- Regrowth time =               1.148217 secs.
+ Translation time =            0.078125 secs.
+ Rotation time =               0.218750 secs.
+ Insertion time =              0.609375 secs.
+ Deletion time =               0.390625 secs.
+ Regrowth time =               0.953125 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -496,5 +504,5 @@ Writing information about fragments
          0      Hours
          0    Minutes
          3    Seconds
-       140         ms
+       468         ms
 ********************************************************************************

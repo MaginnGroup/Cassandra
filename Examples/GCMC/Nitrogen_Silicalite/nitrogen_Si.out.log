@@ -9,14 +9,21 @@
 **********************************Log File**************************************
 ********************************************************************************
 
+For any published work that uses Cassandra, cite the following reference:
+    Shah JK, Marin‐Rimoldi E, Mullen RG, Keene BP, Khan S,
+    Paluch AS, Rai N, Romanielo LL, Rosch TW, Yoo B, Maginn EJ.
+    Cassandra: An open source Monte Carlo package for molecular simulation.
+    Journal of Computational Chemistry. 2017, 38, 1727–1739.
+    http://dx.doi.org/10.1002/jcc.24807
+
 Run info
 ********************************************************************************
-version: Cassandra Development Version
-inputfile: /Users/matthewhowenstine/Cassandra/Examples/GCMC/Nitrogen_Silicalite/nitrogen_Si.inp
+version: Cassandra Version 1.2.5
+inputfile: nitrogen_Si.inp
 name of run: nitrogen_Si.out
-date (mm/dd/yyyy): 03/03/2018
-time: 20:40:57
-machine: Matthews-MacBook-Pro.local
+date (mm/dd/yyyy): 09/02/2021
+time: 13:41:47
+machine: LAPTOP-IOABUAK5
 ********************************************************************************
 
 Verbose log
@@ -51,7 +58,7 @@ coul ewald 6.0 1E-5
 lb                                                                              
                                                                                 
 # Seed_Info                                                                     
-6752865750 4278117321                                                           
+675286575 427811732                                                             
                                                                                 
 # Rcutoff_Low                                                                   
 1.0                                                                             
@@ -243,7 +250,7 @@ Initial configuration for box 1 will add molecules to configuration read from fi
 
 Seed info
 ********************************************************************************
-The starting seeds are:  -1837068842    -16849975
+The starting seeds are:    675286575    427811732
 ********************************************************************************
 
 Temperature
@@ -279,7 +286,7 @@ Species     2
 Simulation length info
 ********************************************************************************
 Thermodynamic quantities will be computed every       400 Steps     
-Coordinates will be written every                    4000 Steps     
+Coordinates will be written to file every            4000 Steps     
  movie header file is                  nitrogen_Si.out.H
  movie_XYZ file is                     nitrogen_Si.out.xyz
 The simulation will be run for                       4000 Steps     
@@ -342,7 +349,7 @@ Compute total energy
 
  Energy components for box 1     kJ/mol-Extensive
  ---------------------------------------------------------------------
- Total system energy                  -353081.308
+ Total system energy                  -353411.329
  Intra molecular energy               -285241.399
    Bond energy                              0.000
    Bond angle energy                        0.000
@@ -350,11 +357,11 @@ Compute total energy
    Improper angle energy                    0.000
    Intra molecule vdw                     719.005
    Intra molecule q                   -285960.404
- Inter molecular energy                -67839.909
-   Inter molecule vdw                    1838.211
+ Inter molecular energy                -68169.930
+   Inter molecule vdw                    1507.764
    Long range correction                 -148.762
-   Inter molecule q                    188579.851
-   Reciprocal ewald                      5946.132
+   Inter molecule q                    188570.495
+   Reciprocal ewald                      5955.914
    Self ewald                         -264055.341
  ---------------------------------------------------------------------
    Number of reciprocal vectors              2634
@@ -364,8 +371,8 @@ Compute total energy
 Run simulation
 ********************************************************************************
       Step       Move   Mol Spc Box  Success  MaxWidth
-      2426     rotate         2   1  0.27000   2.98451
-      2536  translate         2   1  0.04000   0.16000
+      2315  translate         2   1  0.03000   0.12000
+      2368     rotate         2   1  0.27000   2.98451
 ********************************************************************************
 
 Energy of final configuration
@@ -373,7 +380,7 @@ Energy of final configuration
 
  Energy components for box 1     kJ/mol-Extensive       Relative_Error
  ---------------------------------------------------------------------
- Total system energy                  -355147.264           -0.000E+00
+ Total system energy                  -355137.285           -0.420E-15
  Intra molecular energy               -285241.399           -0.000E+00
    Bond energy                              0.000            0.000E+00
    Bond angle energy                        0.000            0.000E+00
@@ -381,11 +388,11 @@ Energy of final configuration
    Improper angle energy                    0.000            0.000E+00
    Intra molecule vdw                     719.005            0.000E+00
    Intra molecule q                   -285960.404           -0.000E+00
- Inter molecular energy                -69905.865           -0.133E-15
-   Inter molecule vdw                    -211.606           -0.258E-14
+ Inter molecular energy                -69895.886           -0.147E-14
+   Inter molecule vdw                    -196.552           -0.185E-15
    Long range correction                 -148.762           -0.000E+00
-   Inter molecule q                    188551.554            0.296E-14
-   Reciprocal ewald                      5958.290            0.000E+00
+   Inter molecule q                    188552.039            0.198E-15
+   Reciprocal ewald                      5952.731            0.196E-15
    Self ewald                         -264055.341           -0.000E+00
  ---------------------------------------------------------------------
    Number of reciprocal vectors              2634
@@ -407,20 +414,20 @@ Writing information for box  1
    Writing information for species  2
 
                 Move      Trials     Success   % Success
-           Translate         966         287       29.71
-              Rotate         968         265       27.38
-              Insert        1061          17        1.60
-              Delete        1005          17        1.69
+           Translate        1009         326       32.31
+              Rotate        1014         243       23.96
+              Insert        1016          18        1.77
+              Delete         961          18        1.87
    ---------------------------------------------------------
 
 ********************************************************************************
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.774177 secs.
- Rotation time =               0.790007 secs.
- Insertion time =              1.645716 secs.
- Deletion time =               1.361363 secs.
+ Translation time =            0.656250 secs.
+ Rotation time =               0.671875 secs.
+ Insertion time =              1.375000 secs.
+ Deletion time =               0.812500 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -434,6 +441,6 @@ Writing information for box  1
          0       Days
          0      Hours
          0    Minutes
-         5    Seconds
-       707         ms
+         4    Seconds
+       468         ms
 ********************************************************************************
