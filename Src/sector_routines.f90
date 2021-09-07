@@ -40,6 +40,8 @@ CONTAINS
           INTEGER, DIMENSION(3) :: sectormaxbound_old !, map_bound
           INTEGER, DIMENSION(3,nbr_boxes) :: sectorbound_old
           INTEGER :: i_sector, xi, yi, zi, dx, dy, dz, xshift, yshift, zshift, nsec_old, nsec, secind
+          INTEGER :: sector_ID
+          TYPE(ID_Class) :: sector_atom_ID
           REAL(DP) :: xp, yp, zp, xw, yp, zp
 
           
@@ -71,24 +73,6 @@ CONTAINS
                                         END DO
                                 END DO
                         END DO
-                        DO dx = -1,1
-                                xshift = dx*(2*sectorbound(1,ibox)+1)
-                                DO dy = -1,1
-                                        yshift = dy*(2*sectorbound(2,ibox)+1)
-                                        DO dz = -1,1
-                                                IF (dx == 0 .AND. dy == 0 .AND. dz == 0) CYCLE
-                                                zshift = dz*(2*sectorbound(3,ibox)+1)
-                                                sector_index_map((-sectorbound(1,ibox)+xshift):(sectorbound(1,ibox)+xshift), &
-                                                        (-sectorbound(2,ibox)+yshift):(sectorbound(2,ibox)+yshift), &
-                                                        (-sectorbound(3,ibox)+zshift):(sectorbound(3,ibox)+zshift), &
-                                                        ibox) = sector_index_map(&
-                                                        -sectorbound(1,ibox):sectorbound(1,ibox), &
-                                                        -sectorbound(2,ibox):sectorbound(2,ibox), &
-                                                        -sectorbound(3,ibox):sectorbound(3,ibox), &
-                                                        ibox)
-                                        END DO
-                                END DO
-                        END DO
                   END DO
           END IF
           nsec = MAXVAL(PRODUCT(sectorbound*2+1,1))
@@ -100,14 +84,17 @@ CONTAINS
           END IF
           n_occ_sectors = 0
           sector_has_atoms = .FALSE.
-          sector_n_atoms = 0
+          !sector_n_atoms = 0
           ! place atoms in sectors
           BoxLoop:DO ibox = 1, nbr_boxes
                 SpeciesLoop:DO is = 1, nspecies
+                        sector_atom_ID%spec = is
                         MoleculeLoop:DO imol = 1, nmols(is,ibox)
                                 im = locate(imol, is, ibox)
+                                sector_atom_ID%mol = im
                                 IF (.NOT. molecule_list(im,is)%live) CYCLE MoleculeLoop
-                                DO ia = 1, natoms(is)
+                                AtomLoop:DO ia = 1, natoms(is)
+                                        sector_atom_ID%atom = ia
                                         xp = atom_list(ia,im,is)%rxp
                                         yp = atom_list(ia,im,is)%ryp
                                         zp = atom_list(ia,im,is)%rzp
@@ -116,17 +103,44 @@ CONTAINS
                                         yi = IDNINT(yw)
                                         zi = IDNINT(zw)
                                         secind = sector_index_map(xi,yi,zi,ibox)
-                                        IF (.NOT. sector_has_atoms(secind,ibox)) THEN
+                                        IF (sector_has_atoms(secind,ibox)) THEN
+                                                sector_ID = sector_ID_list(secind,ibox)
+                                                sector_n_atoms(sector_ID) = sector_n_atoms(sector_ID)+1
+                                        ELSE
                                                 n_occ_sectors = n_occ_sectors+1
+                                                sector_ID = n_occ_sectors
+                                                sector_has_atoms(secind,ibox) = .TRUE.
+                                                sector_n_atoms(sector_ID) = 1
+                                                sector_ID_list(secind,ibox) = sector_ID
                                         END IF
-                                END DO
-                        END DO
-                END DO
-          END DO
+                                        sector_atoms(sector_n_atoms(sector_ID),sector_ID) = sector_atom_ID
+                                END DO AtomLoop
+                        END DO MoleculeLoop
+                END DO SpeciesLoop
+          END DO BoxLoop
 
 
 
   END SUBROUTINE Sector_Setup
+
+  SUBROUTINE Check_Overlap(this_species, this_molecule, this_atom, this_box, overlap_flag)
+          !
+          INTEGER :: this_species, this_molecule, this_atom, this_box
+          INTEGER :: this_locate
+          INTEGER :: xi, yi, zi
+          REAL(DP) :: xp, yp, zp, xw, yw, zw
+          LOGICAL :: overlap_flag
+          !
+
+          this_locate = locate(this_molecule, this_species, this_box)
+          xp = atom_list(this_atom, this_locate, this_species)%rxp
+          yp = atom_list(this_atom, this_locate, this_species)%ryp
+          zp = atom_list(this_atom, this_locate, this_species)%rzp
+          CALL Minimum_Image_Separation(this_box,xp,yp,zp,xw,yw,zw)
+          xi = IDNINT(xw)
+          yi = IDNINT(yw)
+          zi = IDNINT(zw)
+  END SUBROUTINE Check_Overlap
 
   SUBROUTINE Add_To_Sector(this_species, this_molecule, this_atom, this_box)
           RETURN
