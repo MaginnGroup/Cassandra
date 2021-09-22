@@ -51,6 +51,7 @@ SUBROUTINE Minimum_Image_Separation(ibox,rxijp,ryijp,rzijp,rxij,ryij,rzij)
   REAL(DP), INTENT(IN) :: rxijp,ryijp,rzijp
   REAL(DP), INTENT(OUT) :: rxij,ryij,rzij
 
+  REAL(DP) :: sx, sy, sz
   REAL(DP), DIMENSION(3) :: temp_vec
   REAL(DP), DIMENSION(3) :: hbox   
  
@@ -86,41 +87,25 @@ SUBROUTINE Minimum_Image_Separation(ibox,rxijp,ryijp,rzijp,rxij,ryij,rzij)
 
   ELSE
 
-     ! Always use cell_matrix convention so this routine works for anything
+    !Always use cell_matrix convention so this routine works for anything
 
-     !First convert the parent coordinates from the Cartesian to fractional
-     !coordinate system
-     temp_vec(1) = box_list(ibox)%length_inv(1,1)*rxijp + &
-       box_list(ibox)%length_inv(1,2)*ryijp +          &
-       box_list(ibox)%length_inv(1,3)*rzijp
+    !First convert the parent coordinates from the Cartesian to fractional
+    !coordinate system
 
-     temp_vec(2) = box_list(ibox)%length_inv(2,1)*rxijp + &
-       box_list(ibox)%length_inv(2,2)*ryijp +          &
-       box_list(ibox)%length_inv(2,3)*rzijp
+    CALL Cartesian_To_Fractional(rxijp, ryijp, rzijp, sx, sy, sz, ibox)
 
-     temp_vec(3) = box_list(ibox)%length_inv(3,1)*rxijp + &
-       box_list(ibox)%length_inv(3,2)*ryijp +          &
-       box_list(ibox)%length_inv(3,3)*rzijp
+    !Apply periodic boundary conditions to the fractional distances.
+    ! Recall NINT rounds and does not truncate.
 
-     !Apply periodic boundary conditions to the fractional distances.
-     ! Recall NINT rounds and does not truncate.
-     temp_vec(1) = temp_vec(1) - REAL(NINT(temp_vec(1)),DP)
-     temp_vec(2) = temp_vec(2) - REAL(NINT(temp_vec(2)),DP)
-     temp_vec(3) = temp_vec(3) - REAL(NINT(temp_vec(3)),DP)
+    sx = sx - REAL(NINT(sx, DP))
+    sy = sy - REAL(NINT(sy, DP))
+    sz = sz - REAL(NINT(sz, DP))
   
-     !Convert back to Cartesian coordinates and return the results as
-     !the child coordinate separations
-     rxij = box_list(ibox)%length(1,1)*temp_vec(1) + &
-       box_list(ibox)%length(1,2)*temp_vec(2) +   &
-       box_list(ibox)%length(1,3)*temp_vec(3)
+    !Convert back to Cartesian coordinates and return the results as
+    !the child coordinate separations
 
-     ryij = box_list(ibox)%length(2,1)*temp_vec(1) + &
-       box_list(ibox)%length(2,2)*temp_vec(2) +   &
-       box_list(ibox)%length(2,3)*temp_vec(3)
+    CALL Fractional_To_Cartesian(sx, sy, sz, rxij, ryij, rzij, ibox)
 
-     rzij = box_list(ibox)%length(3,1)*temp_vec(1) + &
-       box_list(ibox)%length(3,2)*temp_vec(2) +   &
-       box_list(ibox)%length(3,3)*temp_vec(3)
 
   END IF
 
