@@ -185,3 +185,34 @@ will also run Cassandra to generate these libraries, whose location will be at
 example, species 1, species 2 etc. Note that the script overwrites the section
 of the input file where needed (i.e. ``# Fragment_Files``) with the aforementioned
 directory locations.
+
+.. _sec:lammpstrjconvert:
+
+Convert LAMMPS dump file to .xyz and .H trajectory files
+------------------------------------------------------
+
+The script ``lammpstrjconvert.py`` is included to convert custom dump files from LAMMPS 
+to ``.H`` and ``.xyz`` files readable by Cassandra.  The dump file must include 
+``id``, ``xu``, ``yu``, and ``zu``.  Other columns are allowed but ignored.  The coordinates 
+must be in Angstroms, which are used by the LAMMPS unit styles *real* and *metal*.
+The first required argument is the path to the LAMMPS dump file.  This 
+must then be followed by a list of the number of molecules of each species in the trajectory.
+The format string for the coordinate floats can also optionally be specified as the first argument, 
+using ``-f`` or ``--format`` followed by the desired format string; the default is ``%f``.
+For example, to convert a LAMMPS trajectory stored in dump file ``lmp_npt.lammpstrj`` 
+with 30 molecules of species 1, 15 molecules of species 2, and 25 molecules of species 3, 
+writing the coordinates with 7 decimal places, the following command may be used:
+
+.. code-block:: bash
+
+        python lammpstrjconvert.py -f %.7f lmp_npt.lammpstrj 30 15 25
+
+In this example, the trajectory would be converted to ``lmp_npt.H`` and ``lmp_npt.xyz``, 
+as the paths of the ``.H`` and ``.xyz`` files are obtained by removing ``.lammpstrj`` 
+from the end of the LAMMPS dump file name (if this extension is present) and appending ``.H`` or ``.xyz``, 
+respectively; if the LAMMPS dump file path includes parent directories, they are not included in the 
+``.H`` and ``.xyz`` file paths.
+
+The python function ``lammpstrjconvert`` can also be imported from ``lammpstrjconvert.py``.  
+Calling this function directly, rather than through the script, allows additional optional 
+input arguments, such as the frames to include and the ``.H`` and ``.xyz`` file paths.

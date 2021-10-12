@@ -64,6 +64,7 @@ simulation. The following ensembles are supported:
    fragment)
 -  ``ring_fragment`` or ``nvt_mc_ring_fragment`` (canonical ensemble
    simulation of a ring fragment)
+-  ``pregen`` (Read from pregenerated trajectory)
 
 For example,::
 
@@ -1295,6 +1296,41 @@ steps and averaged every 100,000 steps, specify:
 
 This simulation will output 10 averages, and each average will be computed from
 1000 data points.
+
+.. _sec:Pregen_Info:
+
+Pregenerated Trajectory
+~~~~~~~~~~~~~~~~~~~~~~~
+
+| ``# Pregen_Info``
+| *Character(i,1)* *Character(i,2)* \*One line for each box i
+
+This section specifies the paths to the ``.H`` and ``.xyz`` files storing the 
+pregenerated trajectory to be read.  *Character(i,1)* specifies the path to the
+``.H`` file for box *i* and *Character(i,2)* specifies the ``.xyz`` 
+file for box *i*.  Descriptions of these file types can be found in 
+:ref:`sec:output_files`.
+
+For example, to read a pregenerated trajectory from ``md_trajectory.H`` 
+and ``md_trajectory.xyz``, the section could be written as follows:
+
+.. code-block:: none
+
+        # Pregen_Info
+        md_trajectory.H md_trajectory.xyz
+        
+To read a pregenerated trajectory from ``gemc_trajectory.box1.H`` and 
+``gemc_trajectory.box1.xyz`` for box 1 and from ``gemc_trajectory.box2.H`` 
+and ``gemc_trajectory.box2.xyz`` for box 2, the section could be written 
+as follows:
+
+.. code-block:: none
+
+        # Pregen_Info
+        gemc_trajectory.box1.H gemc_trajectory.box1.xyz
+        gemc_trajectory.box2.H gemc_trajectory.box2.xyz
+
+
 
 .. _sec:Widom_Info:
 
