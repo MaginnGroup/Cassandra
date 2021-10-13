@@ -1857,7 +1857,8 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
                  atom_list(this_atom,this_im,is)%ryp = &
                     config_temp_list(this_atom,ii)%ryp 
                  atom_list(this_atom,this_im,is)%rzp = &
-                    config_temp_list(this_atom,ii)%rzp  
+                    config_temp_list(this_atom,ii)%rzp 
+                 ! Check for overlap here using cell list 
               END IF
            END IF
         END DO

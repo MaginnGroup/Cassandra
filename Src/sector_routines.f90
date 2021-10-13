@@ -47,12 +47,13 @@ CONTAINS
           
           sectorbound_old = sectorbound
           sectormaxbound_old = sectormaxbound
-          nsec_old = MAXVAL(PRODUCT(sectorbound*2+1,1))
+          nsec_old = MAXVAL(PRODUCT(length_cells,1))
           DO ibox = 1, nbr_boxes
                 DO i = 1, 3
                         sectorbound(i,ibox) = IDNINT(box_list(ibox)%hlength(i,i)*rcut_low_inv)
                 END DO
           END DO
+          length_cells = sectorbound*2+1
           sectormaxbound = MAXVAL(sectorbound, 2)
           !map_bound = sectormaxbound*3+1
           IF (.NOT. ALL(sectorbound == sectorbound_old)) THEN
@@ -75,7 +76,7 @@ CONTAINS
                         END DO
                   END DO
           END IF
-          nsec = MAXVAL(PRODUCT(sectorbound*2+1,1))
+          nsec = MAXVAL(PRODUCT(length_cells,1))
           IF (nsec > nsec_old) THEN
                 IF (ALLOCATED(sector_ID_list)) DEALLOCATE(sector_ID_list)
                 IF (ALLOCATED(sector_has_atoms)) DEALLOCATE(sector_has_atoms)
@@ -126,20 +127,56 @@ CONTAINS
   SUBROUTINE Check_Overlap(this_species, this_molecule, this_atom, this_box, overlap_flag)
           !
           INTEGER :: this_species, this_molecule, this_atom, this_box
-          INTEGER :: this_locate
-          INTEGER :: xi, yi, zi
+          INTEGER :: this_locate, i_dim
+          INTEGER :: xi, yi, zi, dxi, dyi, dzi
+          INTEGER(3) :: indstart, indend, cell_coords
           REAL(DP) :: xp, yp, zp, xw, yw, zw
           LOGICAL :: overlap_flag
           !
+          indstart = -1
+          indend = 1
 
           this_locate = locate(this_molecule, this_species, this_box)
           xp = atom_list(this_atom, this_locate, this_species)%rxp
           yp = atom_list(this_atom, this_locate, this_species)%ryp
           zp = atom_list(this_atom, this_locate, this_species)%rzp
           CALL Minimum_Image_Separation(this_box,xp,yp,zp,xw,yw,zw)
-          xi = IDNINT(xw)
-          yi = IDNINT(yw)
-          zi = IDNINT(zw)
+          cell_coords(1) = IDNINT(xw)
+          cell_coords(2) = IDNINT(yw)
+          cell_coords(3) = IDNINT(zw)
+          DO i_dim = 1, 3
+                IF (cell_coords(i_dim) == 1 - sectorbound(i_dim, this_box)) THEN
+                        indstart(i_dim) = -2
+                ELSE IF (cell_coords(i_dim) == sectorbound(i_dim, this_box) - 1) THEN
+                        indend(i_dim) = 2
+                END IF
+          END DO
+          DO dxi = indstart(1), indend(1)
+                xi = cell_coords(1) + dxi
+                IF (xi < -sectorbound(1, this_box)) THEN
+                        xi = xi + length_cells(1, this_box)
+                ELSE IF (xi > sectorbound(1, this_box)) THEN
+                        xi = xi - length_cells(1, this_box)
+                END IF
+                DO dyi = indstart(2), indend(2)
+                        yi = cell_coords(2) + dyi
+                        IF (yi < -sectorbound(2, this_box)) THEN
+                                yi = yi + length_cells(2, this_box)
+                        ELSE IF (yi > sectorbound(2, this_box)) THEN
+                                yi = yi - length_cells(2, this_box)
+                        END IF
+                        DO dzi = indstart(3), indend(3)
+                                zi = cell_coords(3) + dzi
+                                IF (zi < -sectorbound(3, this_box)) THEN
+                                        zi = zi + length_cells(3, this_box)
+                                ELSE IF (zi > sectorbound(3, this_box)) THEN
+                                        zi = zi - length_cells(3, this_box)
+                                END IF
+
+                        END DO
+                END DO
+          END DO
+          
   END SUBROUTINE Check_Overlap
 
   SUBROUTINE Add_To_Sector(this_species, this_molecule, this_atom, this_box)

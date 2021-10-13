@@ -610,8 +610,9 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   LOGICAL, DIMENSION(:,:), ALLOCATABLE :: sector_has_atoms
 
   LOGICAL :: l_sectors
-  ! sectorbound is indexed by (box dimension, box index)
+  ! sectorbound and length_cells are indexed by (box dimension, box index)
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: sectorbound
+  INTEGER, DIMENSION(:,:), ALLOCATABLE :: length_cells
   INTEGER, DIMENSION(3) :: sectormaxbound
 
   INTEGER :: n_occ_sectors

@@ -5389,10 +5389,12 @@ SUBROUTINE Get_Lookup_Info
                         rcut_low_inv = 1.0_DP/rcut_low
                         max_atoms = DOT_PRODUCT(max_molecules, natoms)
                         ALLOCATE(sectorbound(3,nbr_boxes))
+                        ALLOCATE(length_cells(3,nbr_boxes))
                         ! The number of populated sectors cannot exceed the number of atoms
                         ALLOCATE(sector_atoms(15, max_atoms))
                         sectorbound = 0
                         sectormaxbound = 0
+                        length_cells = 0
                         RETURN
                 END IF
         END DO
