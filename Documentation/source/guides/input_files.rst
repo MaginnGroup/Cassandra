@@ -64,7 +64,7 @@ simulation. The following ensembles are supported:
    fragment)
 -  ``ring_fragment`` or ``nvt_mc_ring_fragment`` (canonical ensemble
    simulation of a ring fragment)
--  ``pregen`` (Read from pregenerated trajectory)
+-  ``pregen`` (Read from pregenerated trajectory; see :ref:`sec:trajectory_reader`)
 
 For example,::
 

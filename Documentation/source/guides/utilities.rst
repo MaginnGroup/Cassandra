@@ -189,7 +189,7 @@ directory locations.
 .. _sec:lammpstrjconvert:
 
 Convert LAMMPS dump file to .xyz and .H trajectory files
-------------------------------------------------------
+--------------------------------------------------------
 
 The script ``lammpstrjconvert.py`` is included to convert custom dump files from LAMMPS 
 to ``.H`` and ``.xyz`` files readable by Cassandra.  The dump file must include 
