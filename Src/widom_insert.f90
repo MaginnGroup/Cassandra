@@ -39,6 +39,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
   USE Random_Generators
   USE Rotation_Routines
   USE Fragment_Growth
+  USE File_Names
 
   !*****************************************************************************
   ! Declare and Initialize Variables
@@ -54,6 +55,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
   INTEGER :: im                      ! molecule INDEX
   INTEGER :: lm                      ! molecule LOCATE
   INTEGER :: is ! species indices
+  INTEGER :: subinterval
   INTEGER, ALLOCATABLE :: frag_order(:)
 
   INTEGER (KIND=INT64) :: i_widom
@@ -107,6 +109,13 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
      CALL Compute_LR_correction(ibox,E_lrc)
 
   END IF
+
+  IF (first_open_wprop2(is,ibox)) THEN
+          OPEN(unit=wprop2_file_unit(is,ibox),file=wprop2_filenames(is,ibox))
+          first_open_wprop2(is,ibox) = .FALSE.
+  END IF
+
+  subinterval = insertions_in_step/100
 
   DO i_widom = 1, insertions_in_step
           ! Initialize variables
@@ -252,7 +261,9 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
           ELSE
                   overlap_counter(is,ibox) = overlap_counter(is,ibox) + 1_INT64
           END IF
+          IF (i_widom % subinterval == 0) WRITE(wprop2_file_unit(is,ibox), "(E30.22)", ADVANCE="NO") widom_sum/i_widom
   END DO
+  WRITE(wprop2_file_unit(is,ibox),*)
 
 
   IF ( int_vdw_sum_style(ibox) == vdw_cut_tail ) THEN
