@@ -189,7 +189,7 @@ SUBROUTINE GEMC_Particle_Transfer
      ! If there are no molecules in this box then return
      IF (nmols_box(box_out) == 0) THEN
         IF (verbose_log) THEN
-          WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I1,A1,X,X,L8,X,9X,X,A9)') &
+          WRITE(logunit,'(X,I19,X,A10,X,5X,X,3X,X,I1,A1,X,X,L8,X,9X,X,A9)') &
                 i_mcstep, 'swap' , box_out, '>', accept, 'no mols'
         END IF
         RETURN
@@ -274,7 +274,7 @@ SUBROUTINE GEMC_Particle_Transfer
      ! If no molecules, return
      IF (nmols(is,box_out) == 0) THEN
         IF (verbose_log) THEN
-          WRITE(logunit,'(X,I9,X,A10,X,5X,X,I3,X,I1,A1,I1,X,L8,X,9X,X,A9)') &
+          WRITE(logunit,'(X,I19,X,A10,X,5X,X,I3,X,I1,A1,I1,X,L8,X,9X,X,A9)') &
                 i_mcstep, 'swap' , is, box_out, '>', box_in, accept, 'no mols'
         END IF
         RETURN
@@ -383,7 +383,7 @@ SUBROUTINE GEMC_Particle_Transfer
      accept = .FALSE.
 
      IF (verbose_log) THEN
-       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I1,A1,I1,X,L8,X,9X,X,A9)') &
+       WRITE(logunit,'(X,I19,X,A10,X,I5,X,I3,X,I1,A1,I1,X,L8,X,9X,X,A9)') &
              i_mcstep, 'swap' , alive, is, box_out, '>', box_in, accept, 'overlap'
      END IF
 
@@ -758,7 +758,7 @@ SUBROUTINE GEMC_Particle_Transfer
     END IF
   
     IF (verbose_log) THEN
-      WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I1,A1,I1,X,L8,X,9X,X,F9.3)') &
+      WRITE(logunit,'(X,I19,X,A10,X,I5,X,I3,X,I1,A1,I1,X,L8,X,9X,X,F9.3)') &
             i_mcstep, 'swap' , alive, is, box_out, '>', box_in, accept, ln_pacc
     END IF
 

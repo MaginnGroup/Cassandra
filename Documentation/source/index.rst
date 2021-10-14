@@ -24,6 +24,7 @@ Cassandra Monte Carlo Software
    guides/input_files
    guides/utilities
    guides/solids
+   guides/trajectory_reader
 
 .. toctree::
    :hidden:

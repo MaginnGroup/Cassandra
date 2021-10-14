@@ -82,6 +82,7 @@ USE Type_Definitions
   INTEGER, PARAMETER :: sim_gemc_npt = 7
   INTEGER, PARAMETER :: sim_gemc_ig = 8
   INTEGER, PARAMETER :: sim_mcf = 9
+  INTEGER, PARAMETER :: sim_pregen = 10
   LOGICAL :: timed_run, openmp_flag, en_flag, verbose_log, input_is_logfile
   CHARACTER(10) :: sim_length_units
   INTEGER (KIND=INT64):: steps_per_sweep
@@ -490,7 +491,7 @@ USE Type_Definitions
   ! Initial, current and final number of steps
   INTEGER (KIND=INT64) :: i_mcstep, initial_mcstep, n_mcsteps, n_equilsteps, iblock
   ! Information on the output of data
-  INTEGER :: nthermo_freq, ncoord_freq, block_avg_freq, nbr_blocks
+  INTEGER (KIND=INT64) :: nthermo_freq, ncoord_freq, block_avg_freq, nbr_blocks
   REAL(DP) :: data_points_per_block
   INTEGER :: int_coord_style ! 1 = xyz, 2 = custom
   INTEGER,DIMENSION(:),ALLOCATABLE :: nbr_prop_files
@@ -558,7 +559,7 @@ USE Type_Definitions
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   LOGICAL :: echeck
-  INTEGER :: echeck_freq
+  INTEGER (KIND=INT64):: echeck_freq
 
 !!!!! Pair energy arrays. These arrays hold interaction energies between pairs of molecules !!!!!
 
@@ -590,6 +591,11 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   !!!!!!!!!
   LOGICAL :: widom_flag
   INTEGER, DIMENSION(:), ALLOCATABLE :: tp_correction
+  INTEGER (KIND=INT64), DIMENSION(:,:), ALLOCATABLE :: overlap_counter
+
+  ! Pregenerated trajectory
+  !LOGICAL :: has_H ! Does the simulation use H file(s)?
+  LOGICAL :: need_energy
   
 
 

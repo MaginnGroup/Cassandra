@@ -374,7 +374,7 @@ SUBROUTINE GEMC_NVT_Volume
       CALL Reset_Coords
 
       IF (verbose_log) THEN
-         WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I1,A1,I1,X,L8,X,9X,X,A9)') &
+         WRITE(logunit,'(X,I19,X,A10,X,5X,X,3X,X,I1,A1,I1,X,L8,X,9X,X,A9)') &
                i_mcstep, 'vol_swap', box_shk, '>', box_grw, accept, 'overlap'
       END IF
 
@@ -389,7 +389,7 @@ SUBROUTINE GEMC_NVT_Volume
          CALL Reset_Coords
 
          IF (verbose_log) THEN
-            WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I1,A1,I1,X,L8,X,9X,X,A9)') &
+            WRITE(logunit,'(X,I19,X,A10,X,5X,X,3X,X,I1,A1,I1,X,L8,X,9X,X,A9)') &
                   i_mcstep, 'vol_swap', box_shk, '>', box_grw, accept, 'overlap'
          END IF
 
@@ -481,7 +481,7 @@ SUBROUTINE GEMC_NVT_Volume
          END IF
         
          IF (verbose_log) THEN
-            WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I1,A1,I1,X,L8,X,9X,X,F9.3)') &
+            WRITE(logunit,'(X,I19,X,A10,X,5X,X,3X,X,I1,A1,I1,X,L8,X,9X,X,F9.3)') &
                   i_mcstep, 'vol_swap', box_shk, '>', box_grw, accept, ln_pacc
          END IF
 
@@ -509,13 +509,13 @@ SUBROUTINE GEMC_NVT_Volume
 
          END IF
 
-         WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,3X,X,F8.5,X,F9.0)') &
+         WRITE(logunit,'(X,I19,X,A10,X,5X,X,3X,X,3X,X,F8.5,X,F9.0)') &
                i_mcstep, 'vol_swap', success_ratio, box_list(box_grw)%dv_max
 
       ELSE
 
          success_ratio = REAL(nvol_success(box_grw),DP)/REAL(nvolumes(box_grw),DP)
-         WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,3X,X,F8.5)') &
+         WRITE(logunit,'(X,I19,X,A10,X,5X,X,3X,X,3X,X,F8.5)') &
                i_mcstep, 'vol_swap', success_ratio
          
       END IF

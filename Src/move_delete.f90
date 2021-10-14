@@ -123,7 +123,7 @@ SUBROUTINE Deletion
 
   ! Cannot delete a molecule if there aren't any in the box
   IF (nmols(is,ibox) == 0) THEN
-     WRITE(logunit,'(X,I9,X,A10,X,5X,X,I3,X,I3,X,L8,X,9X,X,A9)') &
+     WRITE(logunit,'(X,I19,X,A10,X,5X,X,I3,X,I3,X,L8,X,9X,X,A9)') &
            i_mcstep, 'delete' , is, ibox, .FALSE., 'no mols'
      RETURN
   END IF
@@ -408,7 +408,7 @@ SUBROUTINE Deletion
   IF (l_pair_nrg) DEALLOCATE(pair_vdw_temp,pair_qq_temp)
 
   IF (verbose_log) THEN
-     WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,F9.3)') &
+     WRITE(logunit,'(X,I19,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,F9.3)') &
            i_mcstep, 'delete' , lm, is, ibox, accept, ln_pacc
   END IF
 

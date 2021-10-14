@@ -250,7 +250,7 @@ CONTAINS
           l0 = bond_list(ib,is)%bond_param(1)
           ltol = bond_list(ib,is)%bond_param(2)
           CALL Get_Bond_Length(ib,im,is,length)
-          IF (abs(l0 - length) > ltol) THEN
+          IF ((int_sim_type /= sim_pregen) .AND. (abs(l0 - length) > ltol)) THEN
              WRITE(mcf_bond_length,'(F7.3)') l0
              WRITE(current_bond_length,'(F7.3)') length
              err_msg = ''

@@ -126,7 +126,7 @@ SUBROUTINE Rotate_Dihedral
   ! If there are no molecules then return
   IF (nmols_tot == 0) THEN
      IF (verbose_log) THEN
-       WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8,X,9X,X,A9)') &
+       WRITE(logunit,'(X,I19,X,A10,X,5X,X,3X,X,I3,X,L8,X,9X,X,A9)') &
              i_mcstep, 'dihed' , ibox, accept, 'no mols'
      END IF
      RETURN
@@ -435,7 +435,7 @@ SUBROUTINE Rotate_Dihedral
      IF (l_pair_nrg) CALL Reset_Molecule_Pair_Interaction_Arrays(lm,is,ibox)
 
      IF (verbose_log) THEN
-       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,A9)') &
+       WRITE(logunit,'(X,I19,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,A9)') &
              i_mcstep, 'dihed' , lm, is, ibox, accept, 'overlap'
      END IF
   ELSE
@@ -522,7 +522,7 @@ SUBROUTINE Rotate_Dihedral
      END IF
 
      IF (verbose_log) THEN
-       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,F9.3)') &
+       WRITE(logunit,'(X,I19,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,F9.3)') &
              i_mcstep, 'dihed' , lm, is, ibox, accept, ln_pacc
      END IF
   

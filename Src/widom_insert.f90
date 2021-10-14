@@ -56,8 +56,8 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
   INTEGER :: is ! species indices
   INTEGER, ALLOCATABLE :: frag_order(:)
 
-  INTEGER :: i_widom
-  INTEGER :: insertions_in_step
+  INTEGER (KIND=INT64) :: i_widom
+  INTEGER (KIND=INT64) :: insertions_in_step
 
   REAL(DP) :: dx, dy, dz
   REAL(DP) :: dE, dE_intra, dE_inter, dE_frag
@@ -249,6 +249,8 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
                      sin_sum(:,ibox) = sin_sum_old(:,ibox)
                   END IF
 
+          ELSE
+                  overlap_counter(is,ibox) = overlap_counter(is,ibox) + 1_INT64
           END IF
   END DO
 

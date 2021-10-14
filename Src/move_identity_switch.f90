@@ -384,7 +384,7 @@ SUBROUTINE Identity_Switch
    IF (inter_overlap .OR. rot_overlap_i .OR. rot_overlap_j) THEN
       CALL Revert_Switch
      IF (verbose_log) THEN
-       WRITE(logunit,'(X,I9,X,A16,X,X,I5,X,I5,X,I3,X,I3,X,L8,X,L8,X,9X,X,F9.3)') &
+       WRITE(logunit,'(X,I19,X,A16,X,X,I5,X,I5,X,I3,X,I3,X,L8,X,L8,X,9X,X,F9.3)') &
              i_mcstep, 'identity switch' , lm_i, lm_j,is, js, box_i, box_j, accept, ln_pacc
      END IF
 
@@ -608,7 +608,7 @@ SUBROUTINE Identity_Switch
      END IF
 
      IF (verbose_log) THEN
-       WRITE(logunit,'(X,I9,X,A16,X,X,I5,X,I5,X,I3,X,I3,X,L8,X,L8,X,9X,X,F9.3)') &
+       WRITE(logunit,'(X,I19,X,A16,X,X,I5,X,I5,X,I3,X,I3,X,L8,X,L8,X,9X,X,F9.3)') &
              i_mcstep, 'identity switch' , lm_i, lm_j,is, js, box_i, box_j, accept, ln_pacc
      END IF
 

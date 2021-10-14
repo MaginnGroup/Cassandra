@@ -93,7 +93,7 @@ CONTAINS
       write_str = "# MC_SWEEP"
     END IF
     
-    WRITE(this_unit,'(A12,2X)',ADVANCE='NO') ADJUSTL(write_str)
+    WRITE(this_unit,'(A19,2X)',ADVANCE='NO') ADJUSTL(write_str)
     DO ii = 1, prop_per_file(file_number,this_box)
        WRITE(this_unit,'(A16,2X)',ADVANCE='NO') (TRIM(prop_output(ii,file_number,this_box)))
     END DO
@@ -105,7 +105,7 @@ CONTAINS
     prop_unit(:) = ""
     prop_unit(1) ='# '
 
-    WRITE(this_unit, '(A12,2X)',ADVANCE='NO') ADJUSTL(prop_unit(1))
+    WRITE(this_unit, '(A19,2X)',ADVANCE='NO') ADJUSTL(prop_unit(1))
 
     DO ii = 1, prop_per_file(file_number,this_box)
 
@@ -429,9 +429,9 @@ CONTAINS
    ! write the line buffer to the property file
 
    IF (sim_length_units == 'Steps' .OR. sim_length_units == 'Minutes') THEN
-     WRITE(this_unit,'(I12,2X)',ADVANCE='NO') i_mcstep
+     WRITE(this_unit,'(I19,2X)',ADVANCE='NO') i_mcstep
    ELSE IF (sim_length_units == 'Sweeps') THEN
-     WRITE(this_unit,'(I12,2X)',ADVANCE='NO') i_mcstep / steps_per_sweep
+     WRITE(this_unit,'(I19,2X)',ADVANCE='NO') i_mcstep / steps_per_sweep
    END IF
 
    DO ii = 1, prop_per_file(file_number,this_box)
