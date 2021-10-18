@@ -5344,8 +5344,7 @@ SUBROUTINE Get_Widom_Info
                                         extension2 = '.spec' // TRIM(Int_To_String(is)) // '.wprp2'
                                 ELSE
                                         extension = '.spec' // TRIM(Int_To_String(is)) // '.box' // TRIM(Int_To_String(ibox)) // '.wprp'
-                                        extension2 = '.spec' // TRIM(Int_To_String(is)) // '.box' // TRIM(Int_To_String(ibox)) //
-                                        '.wprp2'
+                                        extension2 = '.spec' // TRIM(Int_To_String(is)) // '.box' // TRIM(Int_To_String(ibox)) // '.wprp2'
                                 END IF
                                 CALL Name_Files(run_name,extension,wprop_filenames(is,ibox))
                                 CALL Name_Files(run_name,extension2,wprop2_filenames(is,ibox))
