@@ -18,12 +18,12 @@ For any published work that uses Cassandra, cite the following reference:
 
 Run info
 ********************************************************************************
-version: Cassandra Development Version
+version: Cassandra Version 1.2.5
 inputfile: methane_butane.inp
 name of run: methane_butane.out
-date (mm/dd/yyyy): 03/20/2020
-time: 14:58:39
-machine: Ryans-MBP.attlocal.net
+date (mm/dd/yyyy): 09/02/2021
+time: 12:54:11
+machine: LAPTOP-IOABUAK5
 ********************************************************************************
 
 Verbose log
@@ -55,7 +55,7 @@ gcmc
 lj cut_tail 13.0                                                                
                                                                                 
 # Seed_Info                                                                     
-45879702104 5976323210                                                          
+458797021 597632321                                                             
                                                                                 
 # Rcutoff_Low                                                                   
 1.0                                                                             
@@ -244,7 +244,7 @@ Initial configuration for box 1 will be made
 
 Seed info
 ********************************************************************************
-The starting seeds are:  -1364938152   1681355914
+The starting seeds are:    458797021    597632321
 ********************************************************************************
 
 Temperature
@@ -338,16 +338,16 @@ Compute total energy
 
  Energy components for box 1     kJ/mol-Extensive
  ---------------------------------------------------------------------
- Total system energy                      410.462
- Intra molecular energy                   434.479
+ Total system energy                      391.105
+ Intra molecular energy                   424.452
    Bond energy                              0.000
-   Bond angle energy                      239.392
-   Dihedral angle energy                  195.087
+   Bond angle energy                      188.718
+   Dihedral angle energy                  235.734
    Improper angle energy                    0.000
    Intra molecule vdw                       0.000
    Intra molecule q                         0.000
- Inter molecular energy                   -24.017
-   Inter molecule vdw                     -23.040
+ Inter molecular energy                   -33.347
+   Inter molecule vdw                     -32.370
    Long range correction                   -0.978
    Inter molecule q                         0.000
  ---------------------------------------------------------------------
@@ -357,38 +357,37 @@ Compute total energy
 Run simulation
 ********************************************************************************
       Step       Move   Mol Spc Box  Success  MaxWidth
-      3165     rotate         2   1  0.95833   3.14159
-      5151  translate         2   1  0.91167   3.64667
-      6037     rotate         2   1  0.96000   3.14159
-      7160  translate         1   1  0.96500   3.86000
-      9181     rotate         2   1  0.98000   3.14159
-     11278  translate         2   1  0.89500   6.52753
-     12241     rotate         2   1  0.96833   3.14159
-     12991  translate         1   1  0.94667   7.30827
-     15109     rotate         2   1  0.97667   3.14159
-     17421  translate         2   1  0.85333  11.14032
-     17997     rotate         2   1  0.97833   3.14159
-     18870  translate         1   1  0.94333  13.00000
-     21144     rotate         2   1  0.97500   3.14159
-     23697  translate         2   1  0.86667  13.00000
-     24237     rotate         2   1  0.98500   3.14159
-     24925  translate         1   1  0.92167  13.00000
-     27200     rotate         2   1  0.97333   3.14159
-     30140  translate         2   1  0.90000  13.00000
-     30164     rotate         2   1  0.95500   3.14159
-     30795  translate         1   1  0.93167  13.00000
-     33151     rotate         2   1  0.97000   3.14159
-     36251     rotate         2   1  0.97333   3.14159
-     36362  translate         1   1  0.93667  13.00000
-     36450  translate         2   1  0.85333  13.00000
-     39223     rotate         2   1  0.95833   3.14159
-     41744  translate         2   1  0.87000  13.00000
-     42332     rotate         2   1  0.97000   3.14159
-     42970  translate         1   1  0.93500  13.00000
-     45342     rotate         2   1  0.96833   3.14159
-     47360  translate         2   1  0.84833  13.00000
-     48286     rotate         2   1  0.97500   3.14159
-     48744  translate         1   1  0.92667  13.00000
+      3000     rotate         2   1  0.95167   3.14159
+      5113  translate         2   1  0.93833   3.75333
+      6064     rotate         2   1  0.98167   3.14159
+      6635  translate         1   1  0.96500   3.86000
+      9078     rotate         2   1  0.95000   3.14159
+     10852  translate         2   1  0.89667   6.73098
+     11985     rotate         2   1  0.96167   3.14159
+     13106  translate         1   1  0.96333   7.43693
+     14778     rotate         2   1  0.96833   3.14159
+     16628  translate         2   1  0.86333  11.62215
+     17827     rotate         2   1  0.96167   3.14159
+     19445  translate         1   1  0.93833  13.00000
+     20828     rotate         2   1  0.97333   3.14159
+     22383  translate         2   1  0.88000  13.00000
+     23889     rotate         2   1  0.95833   3.14159
+     26130  translate         1   1  0.92667  13.00000
+     26977     rotate         2   1  0.96333   3.14159
+     27914  translate         2   1  0.84000  13.00000
+     29898     rotate         2   1  0.97667   3.14159
+     32589  translate         1   1  0.92500  13.00000
+     32722     rotate         2   1  0.97333   3.14159
+     34170  translate         2   1  0.85333  13.00000
+     35717     rotate         2   1  0.96167   3.14159
+     38670  translate         1   1  0.92333  13.00000
+     38742     rotate         2   1  0.96833   3.14159
+     39861  translate         2   1  0.84667  13.00000
+     41633     rotate         2   1  0.96000   3.14159
+     44483     rotate         2   1  0.96667   3.14159
+     44984  translate         1   1  0.91833  13.00000
+     45983  translate         2   1  0.86167  13.00000
+     47522     rotate         2   1  0.98167   3.14159
 ********************************************************************************
 
 Energy of final configuration
@@ -396,17 +395,17 @@ Energy of final configuration
 
  Energy components for box 1     kJ/mol-Extensive       Relative_Error
  ---------------------------------------------------------------------
- Total system energy                      229.464            0.265E-13
- Intra molecular energy                   244.793            0.560E-13
+ Total system energy                      225.108            0.695E-14
+ Intra molecular energy                   249.803            0.111E-13
    Bond energy                              0.000            0.000E+00
-   Bond angle energy                      100.679            0.121E-12
-   Dihedral angle energy                  144.115            0.568E-14
+   Bond angle energy                      118.759            0.141E-13
+   Dihedral angle energy                  131.044            0.197E-13
    Improper angle energy                    0.000            0.000E+00
    Intra molecule vdw                       0.000            0.000E+00
    Intra molecule q                         0.000            0.000E+00
- Inter molecular energy                   -15.329           -0.756E-14
-   Inter molecule vdw                     -14.854           -0.115E-13
-   Long range correction                   -0.475           -0.000E+00
+ Inter molecular energy                   -24.696           -0.184E-15
+   Inter molecule vdw                     -24.291           -0.505E-14
+   Long range correction                   -0.405           -0.000E+00
    Inter molecule q                         0.000            0.000E+00
  ---------------------------------------------------------------------
 
@@ -420,9 +419,9 @@ Writing information for box  1
    Writing information for species  1
 
                 Move      Trials     Success   % Success
-           Translate        4959        4657       93.91
-              Insert        5038        4702       93.33
-              Delete        4995        4670       93.49
+           Translate        4705        4410       93.73
+              Insert        5051        4709       93.23
+              Delete        4956        4674       94.31
    ---------------------------------------------------------
 
 
@@ -430,10 +429,10 @@ Writing information for box  1
    Writing information for species  2
 
                 Move      Trials     Success   % Success
-           Translate        5081        4441       87.40
-              Rotate        9936        9636       96.98
-              Insert        5010        4437       88.56
-              Delete        4976        4476       89.95
+           Translate        5190        4523       87.15
+              Rotate       10085        9746       96.64
+              Insert        5088        4465       87.76
+              Delete        4970        4510       90.74
    ---------------------------------------------------------
 
 ********************************************************************************
@@ -444,17 +443,17 @@ Writing information about fragments
    ---------------------------------------------------------
    Writing information for species  2
      #_Frags_Regrown      Trials     Success   % Success
-                   1       10005        9413       94.08
+                   1        9955        9338       93.80
    ---------------------------------------------------------
 ********************************************************************************
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            0.192127 secs.
- Rotation time =               0.215995 secs.
- Insertion time =              1.684549 secs.
- Deletion time =               1.591665 secs.
- Regrowth time =               2.283877 secs.
+ Translation time =            0.203125 secs.
+ Rotation time =               0.171875 secs.
+ Insertion time =              1.187500 secs.
+ Deletion time =               1.093750 secs.
+ Regrowth time =               1.578125 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -468,6 +467,6 @@ Writing information about fragments
          0       Days
          0      Hours
          0    Minutes
-         6    Seconds
-       118         ms
+         5    Seconds
+       484         ms
 ********************************************************************************
