@@ -897,6 +897,123 @@ CONTAINS
   END SUBROUTINE Compute_Molecule_Nonbond_Inter_Energy
   !-----------------------------------------------------------------------------
 
+  SUBROUTINE Compute_Molecule_Nonbond_Inter_Energy_Widom(im,is, &
+    E_inter_vdw,E_inter_qq,overlap)
+    !***************************************************************************
+    ! This subroutine computes interatomic LJ and charge interactions as well as
+    ! virials associated with these interactions.
+    !
+    ! CALLS
+    !
+    ! Minimum_Image_Separation
+    ! Compute_MoleculePair_Energy
+    ! Clean_Abort
+    !
+    ! CALLED BY
+    !
+    ! Translate
+    ! Rotation
+    ! Rotate_Dihedral
+    ! Angle_Distortion
+    ! Insertion
+    ! Deletion
+    ! Reaction
+    !
+    ! Written by Jindal Shah on 12/07/07
+    !***************************************************************************
+
+    IMPLICIT NONE
+
+!    !$ include 'omp_lib.h'
+
+    INTEGER, INTENT(IN):: im, is
+    REAL(DP), INTENT(OUT) :: E_inter_vdw, E_inter_qq
+    LOGICAL :: overlap
+    !---------------------------------------------------------------------------
+
+    INTEGER  :: ispecies, imolecule, this_box, this_locate
+
+    REAL(DP) :: Eij_vdw, Eij_qq
+    REAL(DP) :: eps
+    REAL(DP) :: rcom, rx, ry, rz
+
+    LOGICAL :: get_interaction
+
+    INTEGER :: locate_1, locate_2
+
+    LOGICAL :: l_pair_store
+    LOGICAL :: my_overlap, shared_overlap
+
+    E_inter_vdw = 0.0_DP
+    E_inter_qq = 0.0_DP
+    overlap = .FALSE.
+    my_overlap = .FALSE.
+    shared_overlap = .FALSE.
+
+    this_box = molecule_list(im,is)%which_box
+
+    l_pair_store = .FALSE.
+
+    IF (l_pair_nrg .AND. (.NOT. cbmc_flag)) l_pair_store = .TRUE.
+
+    IF (l_pair_store) CALL Get_Position_Alive(im,is,locate_1)
+
+    speciesLoop: DO ispecies = 1, nspecies
+
+       !$OMP PARALLEL DO DEFAULT(SHARED) &
+       !$OMP PRIVATE(imolecule,this_locate,locate_2,get_interaction) &
+       !$OMP PRIVATE(rx,ry,rz,rcom,Eij_vdw,Eij_qq) &
+       !$OMP SCHEDULE(DYNAMIC) &
+       !$OMP REDUCTION(+:E_inter_vdw,E_inter_qq) &
+       !$OMP REDUCTION(.OR.:my_overlap)
+
+       moleculeLoop: DO imolecule = 1, nmols(ispecies,this_box)
+
+          IF(shared_overlap) CYCLE
+
+          this_locate = locate(imolecule,ispecies,this_box)
+          IF (.NOT. molecule_list(this_locate,ispecies)%live) CYCLE moleculeLoop
+          IF (ispecies == is .AND. this_locate == im) CYCLE moleculeLoop
+
+          ! reset pair energy, if storing energies
+          IF (l_pair_store) THEN
+             CALL Get_Position_Alive(this_locate,ispecies,locate_2)
+
+             pair_nrg_vdw(locate_1,locate_2) = 0.0_DP
+             pair_nrg_vdw(locate_2,locate_1) = 0.0_DP
+
+             pair_nrg_qq(locate_1,locate_2) = 0.0_DP
+             pair_nrg_qq(locate_2,locate_1) = 0.0_DP
+          END IF
+
+          ! Determine if any atoms of these two molecules will interact
+          CALL Check_MoleculePair_Cutoff(im,is,this_locate,ispecies,get_interaction, &
+               rcom,rx,ry,rz)
+
+          IF (.NOT. get_interaction) CYCLE moleculeLOOP
+
+          CALL Compute_MoleculePair_Energy(im,is,this_locate,ispecies, &
+               this_box,Eij_vdw,Eij_qq,my_overlap)
+
+          IF (my_overlap) shared_overlap = .TRUE.
+
+          E_inter_vdw = E_inter_vdw + Eij_vdw
+          E_inter_qq  = E_inter_qq + Eij_qq
+
+       END DO moleculeLoop
+       !$OMP END PARALLEL DO
+
+       IF(shared_overlap) THEN
+          overlap = .TRUE.
+          RETURN
+       ENDIF
+
+    END DO speciesLoop
+
+  END SUBROUTINE Compute_Molecule_Nonbond_Inter_Energy
+  !-----------------------------------------------------------------------------
+
+
   SUBROUTINE Compute_MoleculeCollection_Nonbond_Inter_Energy(n_list,lm_list,is_list, &
     E_inter_vdw,E_inter_qq,overlap)
     !***************************************************************************

@@ -591,6 +591,10 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   LOGICAL :: widom_flag
   INTEGER, DIMENSION(:), ALLOCATABLE :: tp_correction
   
+  TYPE(Molecule_Class) :: widom_molecule
+  TYPE(Atom_Class), ALLOCATABLE, DIMENSION(:) :: widom_atoms
+
+  !$OMP THREADPRIVATE(widom_molecule, widom_atoms)
 
 
 END MODULE Global_Variables

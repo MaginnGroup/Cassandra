@@ -54,7 +54,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
   INTEGER :: im                      ! molecule INDEX
   INTEGER :: lm                      ! molecule LOCATE
   INTEGER :: is ! species indices
-  INTEGER, ALLOCATABLE :: frag_order(:)
+  INTEGER :: frag_order(nfrags(is))
 
   INTEGER :: i_widom
   INTEGER :: insertions_in_step
@@ -76,6 +76,9 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
 
   this_lambda = 1.0_DP
   widom_sum = 0.0_DP
+
+  del_flag = .FALSE.
+  get_fragorder = .TRUE.
   
   nmols(is,ibox) = nmols(is,ibox)+1
   im = nmols(is,ibox)
@@ -108,6 +111,13 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
 
   END IF
 
+  !$OMP PARALLEL PRIVATE(ln_pseq, ln_pbias, E_ring_frag, inter_overlap, cbmc_overlap, intra_overlap, widom_var) &
+  !$OMP PRIVATE() &
+  !$OMP REDUCTION(+:widom_var)
+  IF (ALLOCATED(widom_atoms)) DEALLOCATE(widom_atoms)
+  ALLOCATE(widom_atoms(natoms(is)))
+
+
   DO i_widom = 1, insertions_in_step
           ! Initialize variables
           ln_pseq = 0.0_DP
@@ -120,7 +130,6 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
           ! Now that an insertion will be attempted, we need to do some bookkeeping:
 
           !  * Increment the counters to track number of widom insertions
-          ntrials(is,ibox)%widom = ntrials(is,ibox)%widom + 1
 
          
           !*****************************************************************************
@@ -130,16 +139,12 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
           !
           ! Build_Molecule places the first fragment, then calls Fragment_Placement
           ! to place the additional fragments 
-          del_flag = .FALSE.     ! Change the coordinates of 'lm'
-          get_fragorder = .TRUE.
-          ALLOCATE(frag_order(nfragments(is)))
           CALL Build_Molecule(lm,is,ibox,frag_order,this_lambda, &
                   ln_pseq,ln_pbias,E_ring_frag,cbmc_overlap)
-          DEALLOCATE(frag_order)
 
           ! Turn the molecule on
-          molecule_list(lm,is)%live = .TRUE.
-          atom_list(:,lm,is)%exist = .TRUE.
+          widom_molecule%live = .TRUE.
+          widom_atoms%exist = .TRUE.
 
           ! So far ln_pbias includes 
           !   * the probability of choosing the insertion 
@@ -267,6 +272,9 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
 
   ! move locate to the list of unused locates
   locate(nmols(is,0),is,0) = lm
+
+
+  ntrials(is,ibox)%widom = ntrials(is,ibox)%widom + insertions_in_step
 
 END SUBROUTINE Widom_Insert
 !*******************************************************************************
