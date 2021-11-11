@@ -121,7 +121,7 @@ SUBROUTINE Get_Internal_Coords
 END SUBROUTINE Get_Internal_Coords
 
 !********************************************************************************
-SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
+SUBROUTINE Get_Bond_Length(this_bond,im,is,r21)
 !********************************************************************************
 
 !********************************************************************************
@@ -143,9 +143,17 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
 
    IMPLICIT NONE
 
-   INTEGER, INTENT(IN) :: this_bond, this_molecule, is
+   INTEGER, INTENT(IN) :: this_bond, im, is
    INTEGER             :: atom1, atom2, this_box
    REAL(DP)            :: rx21, ry21, rz21, r21sq, r21
+
+   TYPE(Atom_Class), POINTER :: these_atoms(:)
+
+   IF (widom_active) THEN
+           these_atoms => widom_atoms
+   ELSE
+           these_atoms => atom_list(:,im,is)
+   END IF
 
   
 ! Obtain the atoms involved in this_bond
@@ -155,11 +163,11 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
 
 ! Calculate vectors, bond lenth
 
-   rx21 = atom_list(atom1,this_molecule,is)%rxp - atom_list(atom2,this_molecule,is)%rxp
-   ry21 = atom_list(atom1,this_molecule,is)%ryp - atom_list(atom2,this_molecule,is)%ryp
-   rz21 = atom_list(atom1,this_molecule,is)%rzp - atom_list(atom2,this_molecule,is)%rzp
+   rx21 = these_atoms(atom1)%rxp - these_atoms(atom2)%rxp
+   ry21 = these_atoms(atom1)%ryp - these_atoms(atom2)%ryp
+   rz21 = these_atoms(atom1)%rzp - these_atoms(atom2)%rzp
 
-!   this_box = molecule_list(this_molecule,is)%which_box
+!   this_box = molecule_list(im,is)%which_box
 !   IF (l_cubic(this_box) == .FALSE.) THEN
 !   CALL Minimum_Image_Separation(this_box,rx21,ry21,rz21,rx21,ry21,rz21)
 !   END IF
@@ -173,7 +181,7 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
 
 
 !********************************************************************************
- SUBROUTINE Get_Bond_Angle(this_angle,this_molecule,is,theta)
+ SUBROUTINE Get_Bond_Angle(this_angle,im,is,theta)
 !********************************************************************************
 
 !********************************************************************************
@@ -195,11 +203,20 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
  
    IMPLICIT NONE
 
-   INTEGER, INTENT(IN) :: this_angle, this_molecule, is
+   INTEGER, INTENT(IN) :: this_angle, im, is
 
    INTEGER             :: atom1, atom2, atom3, this_box
    REAL(DP)            :: rx21, ry21, rz21, rx32, ry32, rz32
    REAL(DP)            :: C22, C23, C33, inv_rt_C3322, costheta, theta
+
+   TYPE(Atom_Class), POINTER :: these_atoms(:)
+
+   IF (widom_active) THEN
+           these_atoms => widom_atoms
+   ELSE
+           these_atoms => atom_list(:,im,is)
+   END IF
+
 
 
 ! Figure out three atoms in the angle
@@ -212,17 +229,17 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
    
 !Vector r21 points from atom 1 to atom 2. Below, the components of this vector are calculated.
 
-   rx21 = atom_list(atom2,this_molecule,is)%rxp - atom_list(atom1,this_molecule,is)%rxp
-   ry21 = atom_list(atom2,this_molecule,is)%ryp - atom_list(atom1,this_molecule,is)%ryp
-   rz21 = atom_list(atom2,this_molecule,is)%rzp - atom_list(atom1,this_molecule,is)%rzp
+   rx21 = these_atoms(atom2)%rxp - these_atoms(atom1)%rxp
+   ry21 = these_atoms(atom2)%ryp - these_atoms(atom1)%ryp
+   rz21 = these_atoms(atom2)%rzp - these_atoms(atom1)%rzp
                                                                                    
 ! Vector r32 points from atom 2 to atom 3. Below the components are calculated.
 
-   rx32 = atom_list(atom3,this_molecule,is)%rxp - atom_list(atom2,this_molecule,is)%rxp
-   ry32 = atom_list(atom3,this_molecule,is)%ryp - atom_list(atom2,this_molecule,is)%ryp
-   rz32 = atom_list(atom3,this_molecule,is)%rzp - atom_list(atom2,this_molecule,is)%rzp
+   rx32 = these_atoms(atom3)%rxp - these_atoms(atom2)%rxp
+   ry32 = these_atoms(atom3)%ryp - these_atoms(atom2)%ryp
+   rz32 = these_atoms(atom3)%rzp - these_atoms(atom2)%rzp
    
-!   this_box = molecule_list(this_molecule,is)%which_box
+!   this_box = molecule_list(im,is)%which_box
 !   IF (l_cubic(this_box) == .FALSE.) THEN
 !   CALL Minimum_Image_Separation(this_box,rx21,ry21,rz21,rx21,ry21,rz21)
 !   CALL Minimum_Image_Separation(this_box,rx32,ry32,rz32,rx32,ry32,rz32)
@@ -252,7 +269,7 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
 
 
 !********************************************************************************
- SUBROUTINE Get_Dihedral_Angle(this_dihedral,this_molecule,is,phi)
+ SUBROUTINE Get_Dihedral_Angle(this_dihedral,im,is,phi)
 !********************************************************************************
 
 !********************************************************************************
@@ -273,7 +290,7 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
 
    IMPLICIT NONE
 
-   INTEGER, INTENT(IN) :: this_dihedral, this_molecule, is
+   INTEGER, INTENT(IN) :: this_dihedral, im, is
 
    INTEGER             :: atom1, atom2, atom3, atom4, this_box
 
@@ -281,6 +298,15 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
    REAL(DP)            :: rx34, ry34, rz34, mx, my, mz, nx, ny, nz
    REAL(DP)            :: msq, nsq, mdn, abs_m, abs_n
    REAL(DP)            :: cosphi, phi, r12dn
+
+   TYPE(Atom_Class), POINTER :: these_atoms(:)
+
+   IF (widom_active) THEN
+           these_atoms => widom_atoms
+   ELSE
+           these_atoms => atom_list(:,im,is)
+   END IF
+
    
   
 ! Get the atoms involved in the dihedral of interest
@@ -292,24 +318,24 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
 
 ! Vector r12 points from atom 2 to atom 1.  Below, the components of this vector are calculated.
 
-   rx12 = atom_list(atom1,this_molecule,is)%rxp - atom_list(atom2,this_molecule,is)%rxp
-   ry12 = atom_list(atom1,this_molecule,is)%ryp - atom_list(atom2,this_molecule,is)%ryp
-   rz12 = atom_list(atom1,this_molecule,is)%rzp - atom_list(atom2,this_molecule,is)%rzp
+   rx12 = these_atoms(atom1)%rxp - these_atoms(atom2)%rxp
+   ry12 = these_atoms(atom1)%ryp - these_atoms(atom2)%ryp
+   rz12 = these_atoms(atom1)%rzp - these_atoms(atom2)%rzp
    
 ! Vector r32 points from atom 2 to atom 3.  Below, the components of this vector are calculated.
 
-   rx32 = atom_list(atom3,this_molecule,is)%rxp - atom_list(atom2,this_molecule,is)%rxp
-   ry32 = atom_list(atom3,this_molecule,is)%ryp - atom_list(atom2,this_molecule,is)%ryp
-   rz32 = atom_list(atom3,this_molecule,is)%rzp - atom_list(atom2,this_molecule,is)%rzp
+   rx32 = these_atoms(atom3)%rxp - these_atoms(atom2)%rxp
+   ry32 = these_atoms(atom3)%ryp - these_atoms(atom2)%ryp
+   rz32 = these_atoms(atom3)%rzp - these_atoms(atom2)%rzp
 
 ! Vector r34 points from atom 4 to atom 3. Below the components of this vector are calculated.
 
-   rx34 = atom_list(atom3,this_molecule,is)%rxp - atom_list(atom4,this_molecule,is)%rxp
-   ry34 = atom_list(atom3,this_molecule,is)%ryp - atom_list(atom4,this_molecule,is)%ryp
-   rz34 = atom_list(atom3,this_molecule,is)%rzp - atom_list(atom4,this_molecule,is)%rzp
+   rx34 = these_atoms(atom3)%rxp - these_atoms(atom4)%rxp
+   ry34 = these_atoms(atom3)%ryp - these_atoms(atom4)%ryp
+   rz34 = these_atoms(atom3)%rzp - these_atoms(atom4)%rzp
 
 
-!   this_box = molecule_list(this_molecule,is)%which_box
+!   this_box = molecule_list(im,is)%which_box
 !   IF (l_cubic(this_box) == .FALSE.) THEN
 !   CALL Minimum_Image_Separation(this_box,rx12,ry12,rz12,rx12,ry12,rz12)
 !   CALL Minimum_Image_Separation(this_box,rx32,ry32,rz32,rx32,ry32,rz32)
@@ -351,7 +377,7 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
  END SUBROUTINE Get_Dihedral_Angle
 
 !********************************************************************************
- SUBROUTINE Get_Improper_Angle(this_improper,this_molecule,is,phi)
+ SUBROUTINE Get_Improper_Angle(this_improper,im,is,phi)
 !********************************************************************************
 
 !********************************************************************************
@@ -371,7 +397,7 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
 
    IMPLICIT NONE
 
-   INTEGER, INTENT(IN) :: this_improper, is, this_molecule
+   INTEGER, INTENT(IN) :: this_improper, is, im
 
    INTEGER             :: atom1, atom2, atom3, atom4, im, this_box
 
@@ -379,6 +405,15 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
    REAL(DP)            :: rx34, ry34, rz34, mx, my, mz, nx, ny, nz
    REAL(DP)            :: msq, nsq, mdn, abs_m, abs_n
    REAL(DP)            :: cosphi, phi, r12dn
+
+   TYPE(Atom_Class), POINTER :: these_atoms(:)
+
+   IF (widom_active) THEN
+           these_atoms => widom_atoms
+   ELSE
+           these_atoms => atom_list(:,im,is)
+   END IF
+
    
 
   
@@ -391,23 +426,23 @@ SUBROUTINE Get_Bond_Length(this_bond,this_molecule,is,r21)
 
 ! Vector r12 points from atom 2 to atom 1.  Below, the components of this vector are calculated.
 
-   rx12 = atom_list(atom1,this_molecule,is)%rxp - atom_list(atom2,this_molecule,is)%rxp
-   ry12 = atom_list(atom1,this_molecule,is)%ryp - atom_list(atom2,this_molecule,is)%ryp
-   rz12 = atom_list(atom1,this_molecule,is)%rzp - atom_list(atom2,this_molecule,is)%rzp
+   rx12 = these_atoms(atom1)%rxp - these_atoms(atom2)%rxp
+   ry12 = these_atoms(atom1)%ryp - these_atoms(atom2)%ryp
+   rz12 = these_atoms(atom1)%rzp - these_atoms(atom2)%rzp
    
 ! Vector r32 points from atom 2 to atom 3.  Below, the components of this vector are calculated.
 
-   rx32 = atom_list(atom3,this_molecule,is)%rxp - atom_list(atom2,this_molecule,is)%rxp
-   ry32 = atom_list(atom3,this_molecule,is)%ryp - atom_list(atom2,this_molecule,is)%ryp
-   rz32 = atom_list(atom3,this_molecule,is)%rzp - atom_list(atom2,this_molecule,is)%rzp
+   rx32 = these_atoms(atom3)%rxp - these_atoms(atom2)%rxp
+   ry32 = these_atoms(atom3)%ryp - these_atoms(atom2)%ryp
+   rz32 = these_atoms(atom3)%rzp - these_atoms(atom2)%rzp
 
 ! Vector r34 points from atom 4 to atom 3. Below the components of this vector are calculated.
 
-   rx34 = atom_list(atom3,this_molecule,is)%rxp - atom_list(atom4,this_molecule,is)%rxp
-   ry34 = atom_list(atom3,this_molecule,is)%ryp - atom_list(atom4,this_molecule,is)%ryp
-   rz34 = atom_list(atom3,this_molecule,is)%rzp - atom_list(atom4,this_molecule,is)%rzp
+   rx34 = these_atoms(atom3)%rxp - these_atoms(atom4)%rxp
+   ry34 = these_atoms(atom3)%ryp - these_atoms(atom4)%ryp
+   rz34 = these_atoms(atom3)%rzp - these_atoms(atom4)%rzp
 
-!   this_box = molecule_list(this_molecule,is)%which_box
+!   this_box = molecule_list(im,is)%which_box
 !   IF (l_cubic(this_box) == .FALSE.) THEN
 !   CALL Minimum_Image_Separation(this_box,rx12,ry12,rz12,rx12,ry12,rz12)
 !   CALL Minimum_Image_Separation(this_box,rx32,ry32,rz32,rx32,ry32,rz32)

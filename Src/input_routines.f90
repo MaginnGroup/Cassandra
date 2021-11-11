@@ -5239,6 +5239,9 @@ SUBROUTINE Get_Widom_Info
 
         line_nbr = 0
         widom_flag = .FALSE.
+        widom_active = .FALSE.
+        widom_locate = 0
+        widom_species = 0
         is = 0
         ibox = 0
         i_unit = 0

@@ -32,6 +32,7 @@ MODULE random_generators
 ! Modified by Andrew Paluch, 1 March 2009.
 USE ISO_FORTRAN_ENV
 USE Type_Definitions, ONLY : DP
+!$ USE OMP_LIB
 IMPLICIT NONE
 ! The intrinsic function "selected_real_kind" takes two arguments. The first is the number 
 ! of digits of precision desired, and the second is the largest magnitude of the exponent of 10.
@@ -40,7 +41,7 @@ INTEGER, PARAMETER:: da = SELECTED_REAL_KIND(14, 60)
 ! values in cast the seeds are not initialized by the user
 INTEGER (KIND=INT64), SAVE  :: s1 = 153587801, s2 = -759022222, s3 = 1288503317, &
                             s4 = -1718083407, s5 = -123456789
-
+!$OMP threadprivate(s1,s2,s3,s4,s5)
 
 CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

@@ -73,39 +73,50 @@ SUBROUTINE Get_COM(alive,is)
   
   INTEGER :: k
   REAL(DP) :: total_mass, this_mass
+
+  TYPE(Molecule_Class), POINTER :: this_molecule
+  TYPE(Atom_Class), POINTER :: these_atoms(:)
+
+  IF (widom_active) THEN
+          this_molecule => widom_molecule
+          these_atoms => widom_atoms
+  ELSE
+          this_molecule => molecule_list(alive,is)
+          these_atoms => atom_list(:,alive,is)
+  END IF
   
   total_mass = 0.0_DP
   
-  molecule_list(alive,is)%xcom = 0.0_DP
-  molecule_list(alive,is)%ycom = 0.0_DP
-  molecule_list(alive,is)%zcom = 0.0_DP
+  this_molecule%xcom = 0.0_DP
+  this_molecule%ycom = 0.0_DP
+  this_molecule%zcom = 0.0_DP
   
   DO k = 1, natoms(is)
      
      ! Peform this part only for atoms that exist in the simulation box.
      ! This allows to compute the COM of partially grown molecules
      
-     IF  (atom_list(k,alive,is)%exist) THEN
+     IF  (these_atoms(k)%exist) THEN
         
         this_mass = nonbond_list(k,is)%mass
         
         total_mass = total_mass + this_mass
         
-        molecule_list(alive,is)%xcom = molecule_list(alive,is)%xcom + this_mass * &
-             atom_list(k,alive,is)%rxp
-        molecule_list(alive,is)%ycom = molecule_list(alive,is)%ycom + this_mass * &
-             atom_list(k,alive,is)%ryp
-        molecule_list(alive,is)%zcom = molecule_list(alive,is)%zcom + this_mass * &
-             atom_list(k,alive,is)%rzp
+        this_molecule%xcom = this_molecule%xcom + this_mass * &
+             these_atoms(k)%rxp
+        this_molecule%ycom = this_molecule%ycom + this_mass * &
+             these_atoms(k)%ryp
+        this_molecule%zcom = this_molecule%zcom + this_mass * &
+             these_atoms(k)%rzp
           
      END IF
      
      
   END DO
   
-  molecule_list(alive,is)%xcom = molecule_list(alive,is)%xcom / total_mass
-  molecule_list(alive,is)%ycom = molecule_list(alive,is)%ycom / total_mass
-  molecule_list(alive,is)%zcom = molecule_list(alive,is)%zcom / total_mass
+  this_molecule%xcom = this_molecule%xcom / total_mass
+  this_molecule%ycom = this_molecule%ycom / total_mass
+  this_molecule%zcom = this_molecule%zcom / total_mass
   
 END SUBROUTINE Get_COM
 
@@ -228,14 +239,26 @@ SUBROUTINE Compute_Max_Com_Distance(alive,is)
 
   INTEGER :: iatom
 
+  TYPE(Molecule_Class), POINTER :: this_molecule
+  TYPE(Atom_Class), POINTER :: these_atoms(:)
+
+  IF (widom_active) THEN
+          this_molecule => widom_molecule
+          these_atoms => widom_atoms
+  ELSE
+          this_molecule => molecule_list(alive,is)
+          these_atoms => atom_list(:,alive,is)
+  END IF
+  
+
   
   ! obtain the com of the molecule
 
-  xcom = molecule_list(alive,is)%xcom
-  ycom = molecule_list(alive,is)%ycom
-  zcom = molecule_list(alive,is)%zcom
+  xcom = this_molecule%xcom
+  ycom = this_molecule%ycom
+  zcom = this_molecule%zcom
 
-  ! set the maximum distanc initially to zero
+  ! set the maximum distance initially to zero
 
   dmax = 0.0_DP
 
@@ -244,11 +267,11 @@ SUBROUTINE Compute_Max_Com_Distance(alive,is)
      ! check to see if the atoms exist. This condition is necessary
      ! to be able to compute the COM of a partially grown molecule.
 
-     IF(atom_list(iatom,alive,is)%exist) THEN
+     IF(these_atoms(iatom)%exist) THEN
         
-        dx = atom_list(iatom,alive,is)%rxp - xcom
-        dy = atom_list(iatom,alive,is)%ryp - ycom
-        dz = atom_list(iatom,alive,is)%rzp - zcom
+        dx = these_atoms(iatom)%rxp - xcom
+        dy = these_atoms(iatom)%ryp - ycom
+        dz = these_atoms(iatom)%rzp - zcom
         
         ! No need to apply periodic boundary conditions 
         
@@ -262,7 +285,7 @@ SUBROUTINE Compute_Max_Com_Distance(alive,is)
 
   ! store the maximum distance 
 
-  molecule_list(alive,is)%max_dcom = DSQRT(dmax)
+  this_molecule%max_dcom = DSQRT(dmax)
 
 END SUBROUTINE Compute_Max_Com_Distance
      

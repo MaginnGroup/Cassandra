@@ -51,6 +51,7 @@ MODULE Global_Variables
 
 USE ISO_FORTRAN_ENV
 USE Type_Definitions
+!$ USE OMP_LIB
 
   SAVE
 
@@ -588,11 +589,13 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   !!!!!!!!!
   !Widom insertions
   !!!!!!!!!
-  LOGICAL :: widom_flag
+  LOGICAL :: widom_flag, widom_active
   INTEGER, DIMENSION(:), ALLOCATABLE :: tp_correction
+
+  INTEGER :: widom_locate, widom_species
   
-  TYPE(Molecule_Class) :: widom_molecule
-  TYPE(Atom_Class), ALLOCATABLE, DIMENSION(:) :: widom_atoms
+  TYPE(Molecule_Class), TARGET :: widom_molecule
+  TYPE(Atom_Class), ALLOCATABLE, DIMENSION(:), TARGET :: widom_atoms
 
   !$OMP THREADPRIVATE(widom_molecule, widom_atoms)
 

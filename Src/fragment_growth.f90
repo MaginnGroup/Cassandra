@@ -264,8 +264,8 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
 
      ! Pull from the reservoir with uniform probability
      !total_fragments is the number of configurations of the frag_start
-     ! this_frag is the randomly configuration choosen
-      total_frags = frag_list(frag_start,is)%nconfig
+     ! this_fragment is the randomly chosen configuration
+     total_frags = frag_list(frag_start,is)%nconfig
      this_fragment = INT(rranf() * total_frags) + 1
 
     
@@ -482,8 +482,13 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
         ! cbmc_flag has been set to true so that the following call will compute
         ! interaction energy of the growing molecule within a small distance
         overlap = .FALSE.
-        CALL Compute_Molecule_Nonbond_Inter_Energy(this_im,is,&
-                E_inter_vdw,E_inter_qq,overlap)
+        IF (widom_active) THEN
+                CALL Compute_Molecule_Nonbond_Inter_Energy_Widom(this_im,is,&
+                        E_inter_vdw,E_inter_qq,overlap)
+        ELSE
+                CALL Compute_Molecule_Nonbond_Inter_Energy(this_im,is,&
+                        E_inter_vdw,E_inter_qq,overlap)
+        END IF
         nrg(itrial) = nrg(itrial) + E_inter_vdw + E_inter_qq 
 
         IF (overlap) THEN
@@ -852,7 +857,7 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
   ln_pbias = ln_pbias - beta(this_box) * nrg(trial) - DLOG(weight(kappa_ins))
 
 ! Now we have the position of the first bead of   
-! Assign this position to proper atom_list
+! Assign this position to proper these_atoms
   these_atoms(first_atom)%rxp = rtrial(first_atom,trial)%rxp
   these_atoms(first_atom)%ryp = rtrial(first_atom,trial)%ryp
   these_atoms(first_atom)%rzp = rtrial(first_atom,trial)%rzp
@@ -1017,7 +1022,7 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
 
   ln_pbias = ln_pbias - beta(this_box) * nrg(trial) - DLOG(weight(kappa_rot))
 
-! Assign positions to the atom_list
+! Assign positions to these_atoms
   DO i=1,frag_list(frag_start,is)%natoms
      this_atom =  frag_list(frag_start,is)%atoms(i)
      these_atoms(this_atom)%rxp = rtrial(this_atom,trial)%rxp
@@ -1427,7 +1432,7 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
   INTEGER :: anchor_frag_connect, atom_ifrag, atom_frag_connect, ii, trial
   INTEGER :: frag_type, dumcount
 
-  INTEGER, DIMENSION(:), ALLOCATABLE :: counted, connection, atom_id
+  INTEGER :: counted(nfragments(is)), connection(nfragments(is)), atom_id(natoms(is))
 
   INTEGER :: ispecies, jmol, k
 
@@ -1444,30 +1449,30 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
   REAL(DP) :: e_prev, temp_var, E_ang, E_inter_vdw, E_inter_qq
   REAL(DP) :: nrg_kBT, p_acc, nrg_intra_vdw, nrg_intra_qq, nrg_inter_vdw, nrg_inter_qq
   REAL(DP) :: trial_weight
-  REAL(DP) :: nrg_ring_frag, nrg_dihed(MAX(kappa_ins,kappa_rot,kappa_dih))
+  REAL(DP) :: nrg_ring_frag, nrg_dihed(kappa_dih)
 
   LOGICAL :: overlap, overlap_trial(kappa_dih)
 
   CHARACTER :: this_file*120, element*1 
 
-  TYPE(Atom_Class), ALLOCATABLE, DIMENSION(:) :: config_list
-  TYPE(Atom_Class), ALLOCATABLE, DIMENSION(:,:) :: config_temp_list
+  TYPE(Atom_Class) :: config_list(natoms(is))
+  TYPE(Atom_Class) :: config_temp_list(natoms(is),kappa_dih)
 
   TYPE(Molecule_Class), POINTER :: this_molecule
   TYPE(Atom_Class), POINTER :: these_atoms(:)
+
+  IF (widom_active) THEN
+          this_molecule => widom_molecule
+          these_atoms => widom_atoms
+  ELSE
+          this_molecule => molecule_list(this_im,is)
+          these_atoms => atom_list(:,this_im,is)
+  END IF
 
 
 !  ! DEBUGging variables
 !  INTEGER :: M_XYZ_unit
 
-
-  IF (.NOT. ALLOCATED(counted)) ALLOCATE(counted(nfragments(is)))
-  IF (.NOT. ALLOCATED(connection)) ALLOCATE(connection(nfragments(is)))
-  ALLOCATE(config_list(natoms(is)))
-! Caution: NR confirm with Jindal. This could just be kappa_dih
-
-  ALLOCATE(config_temp_list(natoms(is),MAX(kappa_ins,kappa_rot,kappa_dih)))
-  ALLOCATE(atom_id(natoms(is)))
 
   config_list(:)%rxp = 0.0_DP
   config_list(:)%ryp = 0.0_DP
@@ -1791,7 +1796,7 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
         ! Loop over atoms (again)
         
 
-             DO j = 1, frag_list(ifrag,is)%natoms
+        DO j = 1, frag_list(ifrag,is)%natoms
            
            this_atom = frag_list(ifrag,is)%atoms(j)
            
@@ -2012,7 +2017,7 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
      ! Recover the individual probability for the accepted trial
      ln_pbias = ln_pbias - beta(this_box) * nrg(trial) - DLOG(weight(kappa_dih))
      
-     ! Give the coordinates of this conformation to atom_list
+     ! Give the coordinates of this conformation to these_atoms
      DO j = 1, frag_list(ifrag,is)%natoms
         
         this_atom = frag_list(ifrag,is)%atoms(j)
@@ -2029,7 +2034,7 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
         END IF
      END DO
      
-     ! also store the total energy upto this point
+     ! also store the total energy up to this point
      e_prev =  nrg_dihed(trial)
      
      ! mark this fragment as placed
@@ -2038,10 +2043,6 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
 
   END DO
 
-  DEALLOCATE(counted)
-  DEALLOCATE(config_list)
-  DEALLOCATE(config_temp_list)
-  DEALLOCATE(connection)
  END SUBROUTINE Fragment_Placement
                  
 !***************************************************************************************************

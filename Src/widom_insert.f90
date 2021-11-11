@@ -39,6 +39,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
   USE Random_Generators
   USE Rotation_Routines
   USE Fragment_Growth
+  !$ USE OMP_LIB
 
   !*****************************************************************************
   ! Declare and Initialize Variables
@@ -52,7 +53,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
   ! Local declarations
   INTEGER :: i, i_type               ! atom indices
   INTEGER :: im                      ! molecule INDEX
-  INTEGER :: lm                      ! molecule LOCATE
+  INTEGER :: widom_locate                      ! molecule LOCATE
   INTEGER :: is ! species indices
   INTEGER :: frag_order(nfrags(is))
 
@@ -77,6 +78,10 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
   this_lambda = 1.0_DP
   widom_sum = 0.0_DP
 
+  lrc_diff = 0.0_DP
+  E_self = 0.0_DP
+  E_recip_in = 0.0_DP
+
   del_flag = .FALSE.
   get_fragorder = .TRUE.
   
@@ -86,10 +91,10 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
   locate(nmols(is,0),is,0) = 0
 
   !  * Set properties of the to-be-inserted molecule
-  lm = locate(im,is,ibox)
-  molecule_list(lm,is)%which_box = ibox
-  molecule_list(lm,is)%frac = this_lambda
-  molecule_list(lm,is)%molecule_type = int_normal
+  widom_locate = locate(im,is,ibox)
+  molecule_list(widom_locate,is)%which_box = ibox
+  molecule_list(widom_locate,is)%frac = this_lambda
+  molecule_list(widom_locate,is)%molecule_type = int_normal
   
   widom_prefactor = box_list(ibox)%volume&
                   / (REAL(nmols(is,ibox),DP)*((species_list(is)%de_broglie(ibox))**3))
@@ -108,8 +113,17 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
      END DO
 
      CALL Compute_LR_correction(ibox,E_lrc)
+     nint_beads(:,ibox) = nbeads_in
+     lrc_diff = E_lrc - energy(ibox)%lrc
 
   END IF
+  
+  IF (int_charge_style(ibox) == charge_coul) THEN
+          CALL Compute_Molecule_Self_Energy(widom_locate,is,ibox,E_self)
+          E_recip_in = energy(ibox)%reciprocal
+  END IF
+  E_inter_constant = lrc_diff + E_self + E_recip_in
+
 
   !$OMP PARALLEL PRIVATE(ln_pseq, ln_pbias, E_ring_frag, inter_overlap, cbmc_overlap, intra_overlap, widom_var) &
   !$OMP PRIVATE() &
@@ -139,7 +153,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
           !
           ! Build_Molecule places the first fragment, then calls Fragment_Placement
           ! to place the additional fragments 
-          CALL Build_Molecule(lm,is,ibox,frag_order,this_lambda, &
+          CALL Build_Molecule(widom_locate,is,ibox,frag_order,this_lambda, &
                   ln_pseq,ln_pbias,E_ring_frag,cbmc_overlap)
 
           ! Turn the molecule on
@@ -170,21 +184,21 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
 
             ! Molecule COM may be outside the box boundary if grown via CBMC, so wrap
             ! the molecule coordinates back in the box (if needed)
-            CALL Fold_Molecule(lm,is,ibox)
+            CALL Fold_Molecule(widom_locate,is,ibox)
 
             ! Recompute the COM in case the molecule was wrapped
-            CALL Get_COM(lm,is)
+            CALL Get_COM(widom_locate,is)
 
             ! Compute the distance of the atom farthest from COM
-            CALL Compute_Max_COM_Distance(lm,is)
+            CALL Compute_Max_COM_Distance(widom_locate,is)
 
             ! Calculate the potential energy interaction between the inserted molecule
             ! and the rest of the system
-            CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is, &
+            CALL Compute_Molecule_Nonbond_Inter_Energy(widom_locate,is, &
                     E_inter_vdw,E_inter_qq,inter_overlap)
 
             ! Calculate the nonbonded energy interaction within the inserted molecule
-            CALL Compute_Molecule_Nonbond_Intra_Energy(lm,is, &
+            CALL Compute_Molecule_Nonbond_Intra_Energy(widom_locate,is, &
                     E_intra_vdw,E_intra_qq,E_periodic_qq,intra_overlap)
             E_inter_qq = E_inter_qq + E_periodic_qq
          
@@ -195,16 +209,16 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
                   ! There are no overlaps, so we can calculate the change in potential energy.
                   !
                   ! Already have the change in nonbonded energies
-                  dE_inter = E_inter_vdw + E_inter_qq 
+                  dE_inter = E_inter_vdw + E_inter_qq + E_inter_constant 
                   dE_intra = E_intra_vdw + E_intra_qq
 
                   ! Bonded intramolecular energies
                   ! If the molecule was grown via CBMC, we already have the intramolecular 
                   ! bond energies? Otherwise we need to compute them.
-                  CALL Compute_Molecule_Bond_Energy(lm,is,E_bond)
-                  CALL Compute_Molecule_Angle_Energy(lm,is,E_angle)
-                  CALL Compute_Molecule_Dihedral_Energy(lm,is,E_dihedral)
-                  CALL Compute_Molecule_Improper_Energy(lm,is,E_improper)
+                  CALL Compute_Molecule_Bond_Energy(widom_locate,is,E_bond)
+                  CALL Compute_Molecule_Angle_Energy(widom_locate,is,E_angle)
+                  CALL Compute_Molecule_Dihedral_Energy(widom_locate,is,E_dihedral)
+                  CALL Compute_Molecule_Improper_Energy(widom_locate,is,E_improper)
 
                   dE_intra = dE_intra + E_bond + E_angle + E_dihedral + E_improper
 
@@ -213,24 +227,11 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
                         IF ( (int_charge_sum_style(ibox) == charge_ewald) .AND. &
                              has_charge(is) ) THEN
                        
-                           CALL Update_System_Ewald_Reciprocal_Energy(lm,is,ibox, &
-                                   int_insertion,E_reciprocal)
+                            CALL Update_System_Ewald_Reciprocal_Energy_Widom(widom_locate, &
+                                   is,ibox,E_reciprocal)
 
                             dE_inter = dE_inter + (E_reciprocal - energy(ibox)%reciprocal)
                         END IF
-
-                        CALL Compute_Molecule_Self_Energy(lm,is,ibox,E_self)
-
-                        dE_inter = dE_inter + E_self
-
-                  END IF
-
-                  ! Long-range energy correction
-
-                  IF (int_vdw_sum_style(ibox) == vdw_cut_tail) THEN
-
-                     dE_inter = dE_inter + E_lrc - energy(ibox)%lrc
-
                   END IF
 
                   ! moved to before the loop
@@ -245,33 +246,21 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
                   widom_var = widom_prefactor*DEXP(-beta(ibox) * (dE - dE_frag) - ln_pbias)
                   ! sum of all widom_var for this step; output argument
                   widom_sum = widom_sum + widom_var
-
-                  IF ( int_charge_sum_style(ibox) == charge_ewald .AND. &
-                       has_charge(is) ) THEN
-                     ! Restore cos_sum and sin_sum. Note that these were changed when the
-                     ! difference in reciprocal energies was computed.
-                     cos_sum(:,ibox) = cos_sum_old(:,ibox)
-                     sin_sum(:,ibox) = sin_sum_old(:,ibox)
-                  END IF
-
           END IF
   END DO
 
 
-  IF ( int_vdw_sum_style(ibox) == vdw_cut_tail ) THEN
-     ! Restore the total number of bead types
-     nint_beads(:,ibox) = nbeads_in(:)
-  END IF
-
   ! remove test molecule
   nmols(is,ibox) = nmols(is,ibox)-1
   locate(im,is,ibox) = 0
-  molecule_list(lm,is)%live = .FALSE.
-  atom_list(:,lm,is)%exist = .FALSE.
-  molecule_list(lm,is)%molecule_type = int_none
+  molecule_list(widom_locate,is)%live = .FALSE.
+  atom_list(:,widom_locate,is)%exist = .FALSE.
+  molecule_list(widom_locate,is)%molecule_type = int_none
 
   ! move locate to the list of unused locates
-  locate(nmols(is,0),is,0) = lm
+  locate(nmols(is,0),is,0) = widom_locate
+  widom_locate = 0
+  widom_species = 0
 
 
   ntrials(is,ibox)%widom = ntrials(is,ibox)%widom + insertions_in_step
