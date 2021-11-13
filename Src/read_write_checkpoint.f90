@@ -441,6 +441,9 @@ SUBROUTINE Read_Checkpoint
                   atom_list(ia,this_im,is)%rxp, &
                   atom_list(ia,this_im,is)%ryp, &
                   atom_list(ia,this_im,is)%rzp
+             atom_list(ia,this_im,is)%rxp_init = atom_list(ia,this_im,is)%rxp
+             atom_list(ia,this_im,is)%ryp_init = atom_list(ia,this_im,is)%ryp
+             atom_list(ia,this_im,is)%rzp_init = atom_list(ia,this_im,is)%rzp
              ! set the frac and exist flags for this atom
              molecule_list(this_im,is)%frac = this_lambda
              atom_list(ia,this_im,is)%exist = .TRUE.

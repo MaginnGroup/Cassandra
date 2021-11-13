@@ -272,6 +272,13 @@ USE Type_Definitions
   TYPE(Pressure_Class), DIMENSION(:), ALLOCATABLE, TARGET :: pressure
   LOGICAL :: need_pressure
 
+  !**********************************************************************************
+  ! HMA properties
+
+  TYPE(Energy_HMA_Class), DIMENSION(:), ALLOCATABLE, TARGET :: energy_HMA
+  TYPE(Pressure_HMA_Class), DIMENSION(:), ALLOCATABLE, TARGET :: pressure_HMA
+  LOGICAL :: need_HMA
+
   ! **********************************************************************************
   ! system size integers used in memory allocation.
   ! Number of species, molecules, atoms, bonds, angles, dihedrals and impropers should
@@ -424,6 +431,7 @@ USE Type_Definitions
 
   ! will have dimensions of nbr_boxes
   REAL(DP), DIMENSION(:,:),ALLOCATABLE,TARGET :: ac_volume, ac_enthalpy, ac_pressure, ac_mass_density
+  REAL(DP), DIMENSION(:,:),ALLOCATABLE,TARGET :: ac_energy_HMA, ac_pressure_HMA
   ! will have dimension of (nspecies,nbr_boxes)
   REAL(DP), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: ac_density, ac_nmols
 

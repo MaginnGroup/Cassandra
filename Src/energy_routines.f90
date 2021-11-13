@@ -134,6 +134,11 @@ MODULE Energy_Routines
   !
   ! Check_AtomPair_Cutoff:
   !
+  ! Check_AtomPair_Lattice_Cutoff: Uses lattice sites to determine truncation
+  !                       instead of molecules (or atoms) so that atoms do not
+  !                       fluctuate in and out of the truncation during the
+  !                       simulation.
+  !
   ! Get_Molecule_Energy: Computes the intra- and inter-molecular energy of
   !                       a given molecule interacting with all other molecules.
   !
@@ -654,7 +659,13 @@ CONTAINS
 
              ENDIF
 
-             CALL Check_AtomPair_Cutoff(rijsq,get_vdw,get_qq,this_box)
+             IF (need_HMA) THEN
+                CALL Check_AtomPair_Lattice_Cutoff(atom_list(ia,im,is), &
+                        atom_list(this_atom,this_molecule,this_species), &
+                        get_vdw,get_qq,this_box)
+             ELSE
+                CALL Check_AtomPair_Cutoff(rijsq,get_vdw,get_qq,this_box)
+             END IF
 
              ! Compute vdw and q-q energy using if required
              IF (get_vdw .OR. get_qq) THEN
@@ -1121,7 +1132,12 @@ CONTAINS
         END IF
 
         ! Now figure out what needs to be computed, then call pair_energy
-        CALL Check_AtomPair_Cutoff(rijsq,get_vdw,get_qq,this_box)
+        IF (need_HMA) THEN
+           CALL Check_AtomPair_Lattice_Cutoff(atom_list(ia,im,is), &
+                   atom_list(ja,jm,js),get_vdw,get_qq,this_box)
+        ELSE
+           CALL Check_AtomPair_Cutoff(rijsq,get_vdw,get_qq,this_box)
+        END IF
 
         IF(cbmc_flag .AND. (.NOT. species_list(is)%L_Coul_CBMC)) THEN
           get_qq=.FALSE.
@@ -2301,6 +2317,11 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
     get_interaction = .TRUE.
 
+    IF (need_HMA) THEN
+       ! HMA uses an atomic cutoff on lattice sites
+       RETURN
+    END IF
+
     ! Figure out the box to be used later.
 
     this_box = molecule_list(im_1,is_1)%which_box
@@ -2446,6 +2467,36 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
  END SUBROUTINE Check_AtomPair_Cutoff
 
+!*******************************************************************************
+ SUBROUTINE Check_AtomPair_Lattice_Cutoff(atom1,atom2,get_vdw,get_qq,this_box)
+   !***************************************************************************
+   ! The subroutine determines if the interaction between atom1 and atom2
+   ! should be truncated or not based on the distance between their lattice
+   ! sites.  This routine computes the lattice distance and uses
+   ! Check_AtomPair_Cutoff to decide on the actual truncation.
+   !***************************************************************************
+   TYPE(Atom_Class) :: atom1, atom2
+   INTEGER          :: this_box
+   LOGICAL          :: get_vdw, get_qq
+
+   REAL(DP) :: rxijp, ryijp, rzijp, rxij, ryij, rzij, rijsq
+
+   rxijp = atom1%rxp_init - atom2%rxp_init
+   ryijp = atom1%ryp_init - atom2%ryp_init
+   rzijp = atom1%rzp_init - atom2%rzp_init
+
+   ! Now get the minimum image separation
+   CALL Minimum_Image_Separation(this_box,rxijp,ryijp,rzijp,rxij,ryij,rzij)
+
+   rijsq = rxij*rxij + ryij*ryij + rzij*rzij
+
+   ! Now figure out what needs to be computed, then call pair_energy
+   CALL Check_AtomPair_Cutoff(rijsq,get_vdw,get_qq,this_box)
+
+   RETURN
+
+ END SUBROUTINE Check_AtomPair_Lattice_Cutoff
+
  SUBROUTINE Compute_System_Total_Force(this_box)
 
    !****************************************************************************
@@ -2481,6 +2532,9 @@ END SUBROUTINE Compute_Molecule_Self_Energy
    W_tensor_charge(:,:,this_box) = 0.0_DP
    W_tensor_recip(:,:,this_box) = 0.0_DP
    W_tensor_elec(:,:,this_box) =  0.0_DP
+   IF (need_HMA) THEN
+      energy_HMA(this_box)%sum_Fdr = 0.0_DP
+   END IF
 
    DO is = 1, nspecies
       imLOOP1: DO im_1 = 1, nmols(is,this_box)
@@ -2623,10 +2677,23 @@ END SUBROUTINE Compute_Molecule_Self_Energy
           rijsq = rxij*rxij + ryij*ryij + rzij*rzij
 
           ! Now figure out what needs to be computed, then call pair_energy
-          CALL Check_AtomPair_Cutoff(rijsq,get_vdw,get_qq,this_box)
+          IF (need_HMA) THEN
+             CALL Check_AtomPair_Lattice_Cutoff(atom_list(ia,im,is), &
+                     atom_list(ja,jm,js),get_vdw,get_qq,this_box)
+          ELSE
+             CALL Check_AtomPair_Cutoff(rijsq,get_vdw,get_qq,this_box)
+          END IF
 
           ! Compute vdw and q-q energy using if required
           IF (get_vdw .OR. get_qq) THEN
+
+             IF (need_HMA) THEN
+                ! molecule-molecule vector was not computed before, but we
+                ! know the molecules have only one atom each
+                rabx = rxij
+                raby = ryij
+                rabz = rzij
+             END IF
 
              CALL Compute_AtomPair_Force(rijsq,is,im,ia,js,jm,ja,&
                   get_vdw,get_qq,Wij_vdw,Wij_qq)
@@ -2685,7 +2752,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     ! Called by: Compute_System_Total_Force
   !-----------------------------------------------------------------------------
     ! Passed to
-    REAL(DP) :: rxij,ryij,rzij,rijsq
+    REAL(DP) :: rijsq
     INTEGER :: is,im,ia,js,jm,ja
     LOGICAL :: get_vdw,get_qq
 
@@ -2706,6 +2773,11 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     ! Coulomb potential
     REAL(DP) :: qi, qj, erfc_val, prefactor
     REAL(DP) :: ewald_constant, exp_const
+    ! HMA
+    REAL(DP) :: dr_dot_product
+    REAL(DP) :: drixp, driyp, drizp, drix, driy, driz
+    REAL(DP) :: drjxp, drjyp, drjzp, drjx, drjy, drjz
+    REAL(DP) :: rxijp, ryijp, rzijp, rxij, ryij, rzij
 
     Wij_vdw = 0.0_DP
     Wij_qq = 0.0_DP
@@ -2817,6 +2889,34 @@ END SUBROUTINE Compute_Molecule_Self_Energy
        ENDIF qq_calc
 
     ENDIF ExistCheck
+
+    HMA_calc: IF (need_HMA) THEN
+       drixp = atom_list(ia,im,is)%rxp - atom_list(ia,im,is)%rxp_init
+       driyp = atom_list(ia,im,is)%ryp - atom_list(ia,im,is)%ryp_init
+       drizp = atom_list(ia,im,is)%rzp - atom_list(ia,im,is)%rzp_init
+       CALL Minimum_Image_Separation(ibox,drixp,driyp,drizp, &
+                  drix,driy,driz)
+
+       drjxp = atom_list(ja,jm,js)%rxp - atom_list(ja,jm,js)%rxp_init
+       drjyp = atom_list(ja,jm,js)%ryp - atom_list(ja,jm,js)%ryp_init
+       drjzp = atom_list(ja,jm,js)%rzp - atom_list(ja,jm,js)%rzp_init
+       CALL Minimum_Image_Separation(ibox,drjxp,drjyp,drjzp, &
+                  drjx,drjy,drjz)
+
+       rxijp = atom_list(ia,im,is)%rxp - atom_list(ja,jm,js)%rxp
+       ryijp = atom_list(ia,im,is)%ryp - atom_list(ja,jm,js)%ryp
+       rzijp = atom_list(ia,im,is)%rzp - atom_list(ja,jm,js)%rzp
+
+       ! Now get the minimum image separation
+       CALL Minimum_Image_Separation(ibox,rxijp,ryijp,rzijp, &
+                  rxij,ryij,rzij)
+
+       dr_dot_product = rxij*(drix-drjx) &
+                      + ryij*(driy-drjy) &
+                      + rzij*(driz-drjz)
+       energy_HMA(ibox)%sum_Fdr = energy_HMA(ibox)%sum_Fdr &
+                                + (Wij_qq+Wij_vdw) * dr_dot_product / rijsq
+    ENDIF HMA_calc
 !------------------------------------------------------------------------------
   CONTAINS
 

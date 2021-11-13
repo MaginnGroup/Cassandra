@@ -5983,6 +5983,39 @@ USE Global_Variables, ONLY: cpcollect
            ELSE IF (line_array(1) == 'enthalpy' .OR. line_array(1) == 'Enthalpy') THEN
               nbr_properties = nbr_properties + 1
               IF (int_sim_type /= sim_npt .AND. int_sim_type /= sim_gemc_npt) need_pressure = .TRUE.
+
+           ELSE IF (line_array(1) == 'energy_HMA' .OR. line_array(1) == 'Energy_HMA' .OR. &
+                    line_array(1) == 'pressure_HMA' .OR. line_array(1) == 'Pressure_HMA') THEN
+
+              IF (.NOT. need_HMA) THEN
+                 ALLOCATE(energy_HMA(nbr_boxes))
+                 ALLOCATE(pressure_HMA(nbr_boxes))
+
+                 energy_HMA(:)%lattice = 0.0_DP
+                 energy_HMA(:)%harmonic = 0.0_DP
+                 energy_HMA(:)%anharmonic = 0.0_DP
+                 energy_HMA(:)%total = 0.0_DP
+
+                 pressure_HMA(:)%lattice = 0.0_DP
+                 pressure_HMA(:)%harmonic = 0.0_DP
+                 pressure_HMA(:)%anharmonic = 0.0_DP
+                 pressure_HMA(:)%total = 0.0_DP
+              END IF
+
+              need_HMA = .TRUE.
+
+              IF (line_array(1) == 'pressure_HMA' .OR. line_array(1) == 'pressure_HMA') THEN
+                 need_pressure = .TRUE.
+                 ! harmonic pressure is the second value on the line
+                 pressure_HMA(this_box)%harmonic = String_To_Double(line_array(2))
+                 WRITE(logunit,'(A,X,I1,X,A,X,F9.3,X,A)',ADVANCE='NO') 'HMA harmonic pressure of box', this_box, 'is', pressure_HMA(this_box)%harmonic,  'bar'
+
+                 ! convert pressure into atomic units
+                 pressure_HMA(this_box)%harmonic = pressure_HMA(this_box)%harmonic / atomic_to_bar
+                 WRITE(logunit,'(X,A,X,E13.6,X,A)') '=', pressure_HMA(this_box)%harmonic,  'amu / (A ps^2)'
+              END IF
+
+              nbr_properties = nbr_properties + 1
            ELSE
               ! this is a property for the system
               nbr_properties = nbr_properties + 1
@@ -6161,6 +6194,12 @@ USE Global_Variables, ONLY: cpcollect
               ELSE IF (line_array(1) == 'mass_density' .OR. line_array(1) == 'Mass_Density') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Mass_Density'
+              ELSE IF (line_array(1) == 'energy_HMA' .OR. line_array(1) == 'Energy_HMA') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_HMA'
+              ELSE IF (line_array(1) == 'pressure_HMA' .OR. line_array(1) == 'Pressure_HMA') THEN
+                 nbr_properties = nbr_properties + 1
+                 prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Pressure_HMA'
               ELSE
                 err_msg = ''
                 err_msg(1) = 'Keyword "' // TRIM(line_array(1)) // '" on line ' // &
@@ -6170,7 +6209,7 @@ USE Global_Variables, ONLY: cpcollect
                 err_msg(4) = '  energy_angle, energy_dihedral, energy_improper, energy_intravdw, energy_intraq'
                 err_msg(5) = '  energy_intervdw, energy_interq, energy_lrc, energy_recip, energy_self,'
                 err_msg(6) = '  enthalpy, pressure, pressure_xx, pressure_yy, pressure_zz, volume, density,'
-                err_msg(7) = '  nmols, mass_density'
+                err_msg(7) = '  nmols, mass_density, energy_HMA, pressure_HMA'
                 CALL Clean_Abort(err_msg,'Get_Property_Info')
               END IF
 
@@ -6243,7 +6282,7 @@ USE Global_Variables, ONLY: cpcollect
 
   END IF
 
-  IF (need_pressure) THEN
+  IF (need_pressure .OR. need_HMA) THEN
      ALLOCATE(W_tensor_charge(3,3,nbr_boxes) , W_tensor_recip(3,3,nbr_boxes))
      ALLOCATE(W_tensor_vdw(3,3,nbr_boxes) , W_tensor_total(3,3,nbr_boxes))
      ALLOCATE(W_tensor_elec(3,3,nbr_boxes), pressure_tensor(3,3,nbr_boxes))
@@ -6702,5 +6741,4 @@ SUBROUTINE Get_Verbosity_Info
   WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_Verbosity_Info
-
 END MODULE Input_Routines

@@ -204,7 +204,7 @@ MODULE Type_Definitions
      ! atom_list has dimensions (natoms, max_molecules, nspecies)
 
      REAL(DP) :: rxp, ryp, rzp
-     REAL(DP) :: rxp_nls, ryp_nls, rzp_nls  ! The starting positions for the neighbor list
+     REAL(DP) :: rxp_init, ryp_init, rzp_init  ! The starting positions
      REAL(DP) :: rxp_old, ryp_old, rzp_old
      LOGICAL :: exist
 
@@ -592,6 +592,53 @@ MODULE Type_Definitions
     INTEGER :: last_calc
 
  END TYPE Pressure_Class
+
+!-------------------------------------------------------------------------------------------------
+
+ TYPE Energy_HMA_Class
+    ! This class holds the HMA energy values for each box
+
+    ! Lattice energy -- energy at the beginning of the simulation
+    REAL(DP) :: lattice
+
+    ! Harmonic energy: (3/2) (N-1) kT
+    REAL(DP) :: harmonic
+
+    ! Anharmonic energy (from HMA)
+    REAL(DP) :: anharmonic
+
+    ! Total energy (from HMA): U_lat + H_harm + U_anh
+    REAL(DP) :: total
+
+    ! Sum of Fi dot dri over all atoms
+    REAL(DP) :: sum_Fdr
+
+    ! last calculation
+    INTEGER :: last_calc
+
+ END TYPE Energy_HMA_Class
+
+!-------------------------------------------------------------------------------------------------
+
+ TYPE Pressure_HMA_Class
+    ! This class holds the HMA energy values for each box
+
+    ! Lattice pressure -- non-ideal pressure at the beginning of the simulation
+    REAL(DP) :: lattice
+
+    ! Harmonic pressure: read from input file
+    REAL(DP) :: harmonic
+
+    ! Anharmonic pressure (from HMA)
+    REAL(DP) :: anharmonic
+
+    ! Total pressure (from HMA): P_lat + P_harm + P_anh
+    REAL(DP) :: total
+
+    ! last calculation
+    INTEGER :: last_calc
+
+ END TYPE Pressure_HMA_Class
 
 !-------------------------------------------------------------------------------------------------
 
