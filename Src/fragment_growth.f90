@@ -229,7 +229,6 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
         
      END IF
 
-     DEALLOCATE(live)
 
   ELSE
 
@@ -699,14 +698,12 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
   INTEGER :: anchor, ifrag, total_connect, frag_connect
   INTEGER :: j, im
   INTEGER :: ii,jj,kk, total_frags, this_fragment
-  INTEGER, ALLOCATABLE, DIMENSION(:) :: live, deadend, central
-  INTEGER, ALLOCATABLE, DIMENSION(:) :: frag_placed
+  INTEGER, DIMENSION(nfragments(is)) :: frag_placed, live
   REAL(DP) :: x_anchor, y_anchor, z_anchor, xcom_old, ycom_old, zcom_old
   REAL(DP) :: dx, dy, dz
   REAL(DP) :: x_this, y_this, z_this,tempx, tempy, tempz, temp_var, E_ang
   LOGICAL :: overlap
   CHARACTER  :: this_file*120, symbol*1
-  TYPE(Atom_Class), ALLOCATABLE, DIMENSION(:) :: config_list
   ! Variables associated with the CBMC part
 
   INTEGER :: itrial, trial, frag_type
@@ -728,8 +725,6 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
   ! mark all the atoms as deleted 
   these_atoms%exist = .FALSE.
 
-  IF (ALLOCATED(frag_placed)) DEALLOCATE(frag_placed)
-  ALLOCATE(frag_placed(nfragments(is)))
   frag_placed(:) = 0
   nrg_ring_frag_total = 0.0_DP
 
@@ -738,8 +733,6 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
      frag_start = 1
      ln_pseq = 0.0_DP
      ! Obtain the order of fragment addition
-     IF (ALLOCATED(live)) DEALLOCATE(live)
-     ALLOCATE(live(nfragments(is)))      
      live(:) = 0
      frag_order(:) = 0
      frag_order(1) = frag_start
@@ -748,7 +741,6 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
      IF (nfragments(is) > 1 ) THEN
         CALL Fragment_Order(frag_start,is,frag_total,frag_order,live,ln_pseq)
      END IF
-     DEALLOCATE(live)
   ELSE
      frag_total = nfragments(is)
   END IF
@@ -1110,9 +1102,9 @@ SUBROUTINE Cut_Regrow(this_im,is,frag_live,frag_dead,frag_order,frag_total, &
   INTEGER :: this_box, i_frag, frag_no, i, this_atom, anchor, this_frag
   INTEGER :: anchor_live, anchor_dead
   
-  INTEGER, DIMENSION(:), ALLOCATABLE :: live ! fragment was not deleted OR 
+  INTEGER, DIMENSION(nfragments(is)) :: live ! fragment was not deleted OR 
                                              ! is in frag_order
-  INTEGER, DIMENSION(:), ALLOCATABLE :: frag_placed ! fragment was not deleted
+  INTEGER, DIMENSION(nfragments(is)):: frag_placed ! fragment was not deleted
 
   REAL(DP) :: E_total, E_intra_vdw, E_intra_qq, E_inter_vdw, E_inter_qq, E_dihed
 
@@ -1140,9 +1132,6 @@ SUBROUTINE Cut_Regrow(this_im,is,frag_live,frag_dead,frag_order,frag_total, &
 
   ! Choose a fragment bond to cut
 
-  IF(ALLOCATED(frag_placed)) DEALLOCATE(frag_placed)
-  ALLOCATE(frag_placed(nfragments(is)))
-
   ! When is del_flag == TRUE?
   IF ( .NOT. DEL_FLAG) THEN
      
@@ -1167,7 +1156,6 @@ SUBROUTINE Cut_Regrow(this_im,is,frag_live,frag_dead,frag_order,frag_total, &
      ! fragments as live, until we come to a terminal fragment. However,  
      ! Fragment_Order will only add dead fragments connected to frag_dead to 
      ! frag_order, so we can get away here with only marking frag_live as live
-     ALLOCATE(live(nfragments(is)))
      live(:) = 0
      live(frag_live) = 1
 
@@ -1180,7 +1168,6 @@ SUBROUTINE Cut_Regrow(this_im,is,frag_live,frag_dead,frag_order,frag_total, &
      ! Obtain random order of fragments to be regrown
      CALL Fragment_Order(frag_dead,is,frag_total,frag_order,live,ln_pseq)
 
-     DEALLOCATE(live)
 
   END IF
      

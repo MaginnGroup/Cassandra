@@ -741,6 +741,14 @@ CONTAINS
 
     LOGICAL :: get_vdw, get_qq, intra_overlap
 
+    TYPE(Atom_Class), POINTER :: these_atoms(:)
+
+    IF (widom_active) THEN
+            these_atoms => widom_atoms
+    ELSE
+            these_atoms => atom_list(:,im,is)
+    END IF
+
     E_intra_vdw = 0.0_DP
     E_intra_qq = 0.0_DP
     E_inter_qq = 0.0_DP
@@ -757,18 +765,18 @@ CONTAINS
        ! Note 'im' is the linked number of the molecule of interest i.e locate(molecule,is)
        ! The checking for existence of a molecule may be unneccessary.
 
-       IF ( atom_list(ia,im,is)%exist) THEN
+       IF ( these_atoms(ia)%exist) THEN
 
           DO ja = ia+1,natoms(is)
 
              ! make sure that the atom is present
 
-             IF ( .NOT. atom_list(ja,im,is)%exist) CYCLE
+             IF ( .NOT. these_atoms(ja)%exist) CYCLE
 
              ! Find distance between this atom and all others in the system
-             rxij = atom_list(ia,im,is)%rxp - atom_list(ja,im,is)%rxp
-             ryij = atom_list(ia,im,is)%ryp - atom_list(ja,im,is)%ryp
-             rzij = atom_list(ia,im,is)%rzp - atom_list(ja,im,is)%rzp
+             rxij = these_atoms(ia)%rxp - these_atoms(ja)%rxp
+             ryij = these_atoms(ia)%ryp - these_atoms(ja)%ryp
+             rzij = these_atoms(ia)%rzp - these_atoms(ja)%rzp
 
              rijsq = rxij*rxij + ryij*ryij + rzij*rzij
 
@@ -1218,7 +1226,7 @@ CONTAINS
 
       DO ja = 1, natoms(js)
 
-        IF ( .NOT. these_atoms_j%exist) CYCLE
+        IF ( .NOT. these_atoms_j(ja)%exist) CYCLE
 
         ! Obtain the minimum image separation
         rxijp = these_atoms_i(ia)%rxp - these_atoms_j(ja)%rxp
@@ -1328,12 +1336,12 @@ CONTAINS
   !----------------------------------------------------------------------------
     ibox = molecule_list(im,is)%which_box
 
-    IF (im == widom_locate .AND. is == widom_species)
+    IF (im == widom_locate .AND. is == widom_species) THEN
             atom_i_exist = widom_atoms(ia)%exist
     ELSE
             atom_i_exist = atom_list(ia,im,is)%exist
     END IF
-    IF (jm == widom_locate .AND. js == widom_species)
+    IF (jm == widom_locate .AND. js == widom_species) THEN
             atom_j_exist = widom_atoms(ja)%exist
     ELSE
             atom_j_exist = atom_list(ja,jm,js)%exist
@@ -3273,7 +3281,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     REAL(DP) :: e_dihed,  e_improper, nrg_vdw, nrg_qq, nrg_inter_qq
 
     LOGICAL :: intra_overlap
-    LOGICAL, ALLOCATABLE, DIMENSION(:) :: exist_flag_old
+    LOGICAL :: exist_flag_old(natoms(is))
 
     nrg_ring_frag = 0.0_DP
 
@@ -3285,7 +3293,6 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
     ! first store the exist flag of the molecule
 
-    ALLOCATE(exist_flag_old(natoms(is)))
     exist_flag_old = atom_list(1:natoms(is),this_im,is)%exist
 
     atom_list(1:natoms(is),this_im,is)%exist = .FALSE.
@@ -3343,7 +3350,6 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
     atom_list(1:natoms(is),this_im,is)%exist = exist_flag_old
 
-    DEALLOCATE(exist_flag_old)
 
   END SUBROUTINE Compute_Ring_Fragment_Energy
 

@@ -399,7 +399,7 @@ SUBROUTINE Get_Bond_Length(this_bond,im,is,r21)
 
    INTEGER, INTENT(IN) :: this_improper, is, im
 
-   INTEGER             :: atom1, atom2, atom3, atom4, im, this_box
+   INTEGER             :: atom1, atom2, atom3, atom4, this_box
 
    REAL(DP)            :: rx12, ry12, rz12, rx32, ry32, rz32
    REAL(DP)            :: rx34, ry34, rz34, mx, my, mz, nx, ny, nz
@@ -413,8 +413,6 @@ SUBROUTINE Get_Bond_Length(this_bond,im,is,r21)
    ELSE
            these_atoms => atom_list(:,im,is)
    END IF
-
-   
 
   
 ! Get the atoms involved in the improper of interest

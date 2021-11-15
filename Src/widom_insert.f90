@@ -48,14 +48,13 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
   IMPLICIT NONE
 
   ! Arguments
-  INTEGER :: ibox ! insert test particles in ibox
+  INTEGER, INTENT(IN) :: ibox ! insert test particles in ibox
+  INTEGER, INTENT(IN) :: is ! species indices
 
   ! Local declarations
   INTEGER :: i, i_type               ! atom indices
   INTEGER :: im                      ! molecule INDEX
-  INTEGER :: widom_locate                      ! molecule LOCATE
-  INTEGER :: is ! species indices
-  INTEGER :: frag_order(nfrags(is))
+  INTEGER :: frag_order(nfragments(is))
 
   INTEGER :: i_widom
   INTEGER :: insertions_in_step
@@ -69,7 +68,8 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
   REAL(DP) :: E_ring_frag
   REAL(DP) :: ln_pacc, ln_pseq, ln_pbias, this_lambda
 
-  REAL(DP) :: widom_prefactor, widom_var, widom_sum
+  REAL(DP) :: widom_prefactor, widom_var_exp, widom_sum
+  REAL(DP) :: E_recip_in, lrc_diff, E_inter_constant
 
 
   LOGICAL :: inter_overlap, cbmc_overlap, intra_overlap
@@ -91,6 +91,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
   locate(nmols(is,0),is,0) = 0
 
   !  * Set properties of the to-be-inserted molecule
+  widom_species = is
   widom_locate = locate(im,is,ibox)
   molecule_list(widom_locate,is)%which_box = ibox
   molecule_list(widom_locate,is)%frac = this_lambda
@@ -124,14 +125,22 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
   END IF
   E_inter_constant = lrc_diff + E_self + E_recip_in
 
+  widom_active = .TRUE.
 
-  !$OMP PARALLEL PRIVATE(ln_pseq, ln_pbias, E_ring_frag, inter_overlap, cbmc_overlap, intra_overlap, widom_var) &
-  !$OMP PRIVATE() &
-  !$OMP REDUCTION(+:widom_var)
+  !$OMP PARALLEL DEFAULT(SHARED) &
+  !$OMP PRIVATE(ln_pseq, ln_pbias, E_ring_frag, inter_overlap, cbmc_overlap, intra_overlap) &
+  !$OMP PRIVATE(widom_var_exp, E_inter_qq, E_periodic_qq, E_intra_qq, E_intra_vdw, E_inter_vdw) &
+  !$OMP PRIVATE(E_bond, E_angle, E_dihedral, E_improper, dE_intra, dE_inter, E_reciprocal, frag_order) &
+  !$OMP REDUCTION(+:widom_sum)
   IF (ALLOCATED(widom_atoms)) DEALLOCATE(widom_atoms)
   ALLOCATE(widom_atoms(natoms(is)))
+  widom_molecule = molecule_list(widom_locate,is)
+  widom_atoms = atom_list(1:natoms(is),widom_locate,is)
+  widom_sum = 0.0_DP
 
 
+  !$OMP DO SCHEDULE(DYNAMIC)
+  !$
   DO i_widom = 1, insertions_in_step
           ! Initialize variables
           ln_pseq = 0.0_DP
@@ -140,7 +149,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
           inter_overlap = .FALSE.
           cbmc_overlap = .FALSE.
           intra_overlap = .FALSE.
-          widom_var = 0.0_DP
+          widom_var_exp = 0.0_DP
           ! Now that an insertion will be attempted, we need to do some bookkeeping:
 
           !  * Increment the counters to track number of widom insertions
@@ -187,14 +196,14 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
             CALL Fold_Molecule(widom_locate,is,ibox)
 
             ! Recompute the COM in case the molecule was wrapped
-            CALL Get_COM(widom_locate,is)
+            !CALL Get_COM(widom_locate,is)
 
             ! Compute the distance of the atom farthest from COM
-            CALL Compute_Max_COM_Distance(widom_locate,is)
+            !CALL Compute_Max_COM_Distance(widom_locate,is)
 
             ! Calculate the potential energy interaction between the inserted molecule
             ! and the rest of the system
-            CALL Compute_Molecule_Nonbond_Inter_Energy(widom_locate,is, &
+            CALL Compute_Molecule_Nonbond_Inter_Energy_Widom(widom_locate,is, &
                     E_inter_vdw,E_inter_qq,inter_overlap)
 
             ! Calculate the nonbonded energy interaction within the inserted molecule
@@ -230,7 +239,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
                             CALL Update_System_Ewald_Reciprocal_Energy_Widom(widom_locate, &
                                    is,ibox,E_reciprocal)
 
-                            dE_inter = dE_inter + (E_reciprocal - energy(ibox)%reciprocal)
+                            dE_inter = dE_inter + E_reciprocal
                         END IF
                   END IF
 
@@ -243,11 +252,15 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
                   dE_frag = E_angle + E_ring_frag
 
                   ! mu' = -(1/beta)*ln(<widom_var>)
-                  widom_var = widom_prefactor*DEXP(-beta(ibox) * (dE - dE_frag) - ln_pbias)
+                  widom_var_exp = DEXP(-beta(ibox) * (dE - dE_frag) - ln_pbias)
                   ! sum of all widom_var for this step; output argument
-                  widom_sum = widom_sum + widom_var
+                  widom_sum = widom_sum + widom_var_exp
           END IF
   END DO
+  !$OMP END DO
+  !$OMP END PARALLEL
+  widom_active = .FALSE.
+  widom_sum = widom_sum * widom_prefactor
 
 
   ! remove test molecule
