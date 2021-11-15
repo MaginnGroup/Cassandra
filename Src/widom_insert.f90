@@ -39,6 +39,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
   USE Random_Generators
   USE Rotation_Routines
   USE Fragment_Growth
+  USE File_Names
   !$ USE OMP_LIB
 
   !*****************************************************************************
@@ -55,6 +56,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
   INTEGER :: i, i_type               ! atom indices
   INTEGER :: im                      ! molecule INDEX
   INTEGER :: frag_order(nfragments(is))
+  INTEGER :: subinterval, i_interval
 
   INTEGER (KIND=INT64) :: i_widom
   INTEGER (KIND=INT64) :: insertions_in_step, n_overlaps
@@ -70,6 +72,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
 
   REAL(DP) :: widom_prefactor, widom_var_exp, widom_sum
   REAL(DP) :: E_recip_in, lrc_diff, E_inter_constant
+  REAL(DP) :: subinterval_sums(100)
 
 
   LOGICAL :: inter_overlap, cbmc_overlap, intra_overlap
@@ -128,21 +131,23 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
 
   widom_active = .TRUE.
 
+
+  subinterval = insertions_in_step/100
+
   !$OMP PARALLEL DEFAULT(SHARED) &
   !$OMP PRIVATE(ln_pseq, ln_pbias, E_ring_frag, inter_overlap, cbmc_overlap, intra_overlap) &
   !$OMP PRIVATE(widom_var_exp, E_inter_qq, E_periodic_qq, E_intra_qq, E_intra_vdw, E_inter_vdw) &
   !$OMP PRIVATE(E_bond, E_angle, E_dihedral, E_improper, dE_intra, dE_inter, E_reciprocal, frag_order) &
-  !$OMP REDUCTION(+:widom_sum,n_overlaps)
+  !$OMP REDUCTION(+:widom_sum,n_overlaps, subinterval_sums)
   IF (ALLOCATED(widom_atoms)) DEALLOCATE(widom_atoms)
   ALLOCATE(widom_atoms(natoms(is)))
   widom_molecule = molecule_list(widom_locate,is)
   widom_atoms = atom_list(1:natoms(is),widom_locate,is)
   widom_sum = 0.0_DP
   n_overlaps = 0_INT64
-
+  subinterval_sums = 0.0_DP
 
   !$OMP DO SCHEDULE(DYNAMIC)
-  !$
   DO i_widom = 1, insertions_in_step
           ! Initialize variables
           ln_pseq = 0.0_DP
@@ -260,12 +265,23 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
           ELSE
                   n_overlaps = n_overlaps + 1_INT64
           END IF
+          i_interval = (i_widom + 1_INT64)/subinterval + 1_INT64
+          if (i_interval < 101) subinterval_sums(i_interval) = subinterval_sums(i_interval) + widom_var_exp
   END DO
   !$OMP END DO
   !$OMP END PARALLEL
   widom_active = .FALSE.
   widom_sum = widom_sum * widom_prefactor
   overlap_counter(is,ibox) = overlap_counter(is,ibox) + n_overlaps
+  subinterval_sums = subinterval_sums * widom_prefactor / subinterval
+  IF (first_open_wprop2(is,ibox)) THEN
+          OPEN(unit=wprop2_file_unit(is,ibox),file=wprop2_filenames(is,ibox))
+          first_open_wprop2(is,ibox) = .FALSE.
+  END IF
+  DO i = 1, 100
+        WRITE(wprop2_file_unit(is,ibox), "(E30.22)", ADVANCE="NO") subinterval_sums(i)
+  END DO
+  WRITE(wprop2_file_unit(is,ibox),*)
 
 
   ! remove test molecule
