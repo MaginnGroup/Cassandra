@@ -56,8 +56,8 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
   INTEGER :: im                      ! molecule INDEX
   INTEGER :: frag_order(nfragments(is))
 
-  INTEGER :: i_widom
-  INTEGER :: insertions_in_step
+  INTEGER (KIND=INT64) :: i_widom
+  INTEGER (KIND=INT64) :: insertions_in_step, n_overlaps
 
   REAL(DP) :: dx, dy, dz
   REAL(DP) :: dE, dE_intra, dE_inter, dE_frag
@@ -77,6 +77,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
 
   this_lambda = 1.0_DP
   widom_sum = 0.0_DP
+  n_overlaps = 0_INT64
 
   lrc_diff = 0.0_DP
   E_self = 0.0_DP
@@ -131,12 +132,13 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
   !$OMP PRIVATE(ln_pseq, ln_pbias, E_ring_frag, inter_overlap, cbmc_overlap, intra_overlap) &
   !$OMP PRIVATE(widom_var_exp, E_inter_qq, E_periodic_qq, E_intra_qq, E_intra_vdw, E_inter_vdw) &
   !$OMP PRIVATE(E_bond, E_angle, E_dihedral, E_improper, dE_intra, dE_inter, E_reciprocal, frag_order) &
-  !$OMP REDUCTION(+:widom_sum)
+  !$OMP REDUCTION(+:widom_sum,n_overlaps)
   IF (ALLOCATED(widom_atoms)) DEALLOCATE(widom_atoms)
   ALLOCATE(widom_atoms(natoms(is)))
   widom_molecule = molecule_list(widom_locate,is)
   widom_atoms = atom_list(1:natoms(is),widom_locate,is)
   widom_sum = 0.0_DP
+  n_overlaps = 0_INT64
 
 
   !$OMP DO SCHEDULE(DYNAMIC)
@@ -255,12 +257,15 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
                   widom_var_exp = DEXP(-beta(ibox) * (dE - dE_frag) - ln_pbias)
                   ! sum of all widom_var for this step; output argument
                   widom_sum = widom_sum + widom_var_exp
+          ELSE
+                  n_overlaps = n_overlaps + 1_INT64
           END IF
   END DO
   !$OMP END DO
   !$OMP END PARALLEL
   widom_active = .FALSE.
   widom_sum = widom_sum * widom_prefactor
+  overlap_counter(is,ibox) = overlap_counter(is,ibox) + n_overlaps
 
 
   ! remove test molecule

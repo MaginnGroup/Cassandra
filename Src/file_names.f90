@@ -165,5 +165,14 @@ INTEGER, DIMENSION(:,:), ALLOCATABLE :: wprop_file_unit
 CHARACTER(FILENAME_LEN), DIMENSION(:,:), ALLOCATABLE :: wprop_filenames
 LOGICAL, DIMENSION(:,:), ALLOCATABLE :: first_open_wprop
 
+! Variables associated with pregenerated trajectory xyz and H files
+INTEGER :: pregen_xyz_unit_base = 240
+INTEGER, DIMENSION(:), ALLOCATABLE :: pregen_xyz_unit
+CHARACTER(FILENAME_LEN), DIMENSION(:), ALLOCATABLE :: pregen_xyz_filenames
+
+INTEGER :: pregen_H_unit_base = 250
+INTEGER, DIMENSION(:), ALLOCATABLE :: pregen_H_unit
+CHARACTER(FILENAME_LEN), DIMENSION(:), ALLOCATABLE :: pregen_H_filenames
+
 
 END MODULE File_Names

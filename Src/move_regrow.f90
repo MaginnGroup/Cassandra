@@ -133,7 +133,7 @@ SUBROUTINE Cut_N_Grow
 
   IF (nmols_tot == 0) THEN
      IF (verbose_log) THEN
-       WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8,X,9X,X,A9)') &
+       WRITE(logunit,'(X,I19,X,A10,X,5X,X,3X,X,I3,X,L8,X,9X,X,A9)') &
              i_mcstep, 'regrow' , ibox, accept, 'no mols'
      END IF
      RETURN
@@ -282,7 +282,7 @@ SUBROUTINE Cut_N_Grow
      IF (ALLOCATED(sin_mol_old)) DEALLOCATE(sin_mol_old)
      
      IF (verbose_log) THEN
-       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,A9)') &
+       WRITE(logunit,'(X,I19,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,A9)') &
              i_mcstep, 'regrow' , lm, is, ibox, .FALSE., 'overlap'
      END IF
 
@@ -319,7 +319,7 @@ SUBROUTINE Cut_N_Grow
      IF (l_pair_nrg) CALL Reset_Molecule_Pair_Interaction_Arrays(lm,is,ibox)
 
      IF (verbose_log) THEN
-       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,A9)') &
+       WRITE(logunit,'(X,I19,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,A9)') &
              i_mcstep, 'regrow' , lm, is, ibox, .FALSE., 'overlap'
      END IF
 
@@ -503,7 +503,7 @@ SUBROUTINE Cut_N_Grow
   DEALLOCATE(new_atom_list)
 
   IF (verbose_log) THEN
-    WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,F9.3)') &
+    WRITE(logunit,'(X,I19,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,F9.3)') &
           i_mcstep, 'regrow' , lm, is, ibox, accept, ln_pacc
   END IF
 
