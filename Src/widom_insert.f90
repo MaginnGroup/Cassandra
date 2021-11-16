@@ -127,7 +127,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
           CALL Compute_Molecule_Self_Energy(widom_locate,is,ibox,E_self)
           E_recip_in = energy(ibox)%reciprocal
   END IF
-  E_inter_constant = lrc_diff + E_self + E_recip_in
+  E_inter_constant = lrc_diff + E_self - E_recip_in
 
   widom_active = .TRUE.
 
@@ -136,7 +136,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
 
   !$OMP PARALLEL DEFAULT(SHARED) &
   !$OMP PRIVATE(ln_pseq, ln_pbias, E_ring_frag, inter_overlap, cbmc_overlap, intra_overlap, i_interval) &
-  !$OMP PRIVATE(widom_var_exp, E_inter_qq, E_periodic_qq, E_intra_qq, E_intra_vdw, E_inter_vdw) &
+  !$OMP PRIVATE(widom_var_exp, E_inter_qq, E_periodic_qq, E_intra_qq, E_intra_vdw, E_inter_vdw, dE_frag) &
   !$OMP PRIVATE(E_bond, E_angle, E_dihedral, E_improper, dE_intra, dE_inter, E_reciprocal, frag_order) &
   !$OMP REDUCTION(+:widom_sum,n_overlaps, subinterval_sums)
   IF (ALLOCATED(widom_atoms)) DEALLOCATE(widom_atoms)
