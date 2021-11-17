@@ -103,7 +103,6 @@ REAL(DP) :: rranf
 
 INTEGER (KIND=INT64) :: b
 
-!$OMP CRITICAL
 b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53_INT64)
 s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
 b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
@@ -119,7 +118,6 @@ s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
 rranf = IEOR( IEOR( IEOR( IEOR(s1,s2), s3), s4), s5) *5.4210108624275221E-20_DP + 0.5_DP
 
 IF(rranf .GE. 1.0_DP) WRITE(logunit,*) 'rranf = 1.0'
-!$OMP END CRITICAL
 
 END FUNCTION rranf
 

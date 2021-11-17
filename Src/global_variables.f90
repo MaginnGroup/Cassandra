@@ -602,7 +602,7 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   TYPE(Molecule_Class), TARGET :: widom_molecule
   TYPE(Atom_Class), ALLOCATABLE, DIMENSION(:), TARGET :: widom_atoms
 
-  !$OMP THREADPRIVATE(widom_molecule, widom_atoms)
+  !$OMP THREADPRIVATE(widom_molecule, widom_atoms, cbmc_flag)
 
 
 END MODULE Global_Variables

@@ -81,6 +81,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
   this_lambda = 1.0_DP
   widom_sum = 0.0_DP
   n_overlaps = 0_INT64
+  subinterval_sums = 0.0_DP
 
   lrc_diff = 0.0_DP
   E_self = 0.0_DP

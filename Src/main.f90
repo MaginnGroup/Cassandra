@@ -229,7 +229,9 @@ PROGRAM Main
   atom_list(:,:,:)%exist = .FALSE.
   molecule_list(:,:)%frac = 0.0_DP
 
+  !$OMP PARALLEL
   cbmc_flag = .FALSE.
+  !$OMP END PARALLEL
 
   WRITE(*,*) 'Begin Cassandra simulation'
   WRITE(*,*)
