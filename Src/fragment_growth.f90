@@ -473,9 +473,10 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
         ! Note that the COM position is always chosen inside the simulation box 
         ! so there is no need to call Fold_Molecule.
            
-        ! For the sake of completeness we calculate the distance of the atom 
-        ! furtherst from the COM
-        CALL Compute_Max_COM_Distance(this_im,is)
+        IF (kappa_ins == 1 .AND. nfragments(is) == 1) THEN
+                cbmc_flag = .FALSE.
+                RETURN
+        END IF
            
         ! Calculate the intermolecular energy of the fragment. Note that
         ! cbmc_flag has been set to true so that the following call will compute

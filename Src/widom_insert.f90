@@ -201,7 +201,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
 
             ! Molecule COM may be outside the box boundary if grown via CBMC, so wrap
             ! the molecule coordinates back in the box (if needed)
-            CALL Fold_Molecule(widom_locate,is,ibox)
+            IF (nfragments(is) > 1) CALL Fold_Molecule(widom_locate,is,ibox)
 
             ! Recompute the COM in case the molecule was wrapped
             !CALL Get_COM(widom_locate,is)
@@ -215,9 +215,11 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
                     E_inter_vdw,E_inter_qq,inter_overlap)
 
             ! Calculate the nonbonded energy interaction within the inserted molecule
-            CALL Compute_Molecule_Nonbond_Intra_Energy(widom_locate,is, &
-                    E_intra_vdw,E_intra_qq,E_periodic_qq,intra_overlap)
-            E_inter_qq = E_inter_qq + E_periodic_qq
+            IF (.NOT. inter_overlap) THEN
+                    CALL Compute_Molecule_Nonbond_Intra_Energy(widom_locate,is, &
+                            E_intra_vdw,E_intra_qq,E_periodic_qq,intra_overlap)
+                    E_inter_qq = E_inter_qq + E_periodic_qq
+            END IF
          
           END IF
 
@@ -266,7 +268,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
           ELSE
                   n_overlaps = n_overlaps + 1_INT64
           END IF
-          i_interval = (i_widom + 1_INT64)/subinterval + 1_INT64
+          i_interval = (i_widom - 1_INT64)/subinterval + 1_INT64
           if (i_interval < 101) subinterval_sums(i_interval) = subinterval_sums(i_interval) + widom_var_exp
   END DO
   !$OMP END DO
@@ -280,6 +282,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
           first_open_wprop2(is,ibox) = .FALSE.
   END IF
   DO i = 1, 100
+        IF (subinterval_sums(i) < 1.0e-98) subinterval_sums(i) = 0.0_DP
         WRITE(wprop2_file_unit(is,ibox), "(E30.22)", ADVANCE="NO") subinterval_sums(i)
   END DO
   WRITE(wprop2_file_unit(is,ibox),*)
