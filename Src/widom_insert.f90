@@ -282,7 +282,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
           first_open_wprop2(is,ibox) = .FALSE.
   END IF
   DO i = 1, 100
-        IF (subinterval_sums(i) < 1.0e-98) subinterval_sums(i) = 0.0_DP
+        IF (subinterval_sums(i) < 1.0e-98_DP) subinterval_sums(i) = 0.0_DP
         WRITE(wprop2_file_unit(is,ibox), "(E30.22)", ADVANCE="NO") subinterval_sums(i)
   END DO
   WRITE(wprop2_file_unit(is,ibox),*)
