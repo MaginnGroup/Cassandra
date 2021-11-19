@@ -5297,9 +5297,6 @@ SUBROUTINE Get_Widom_Info
                         widom_flag = .TRUE.
                         IF(.NOT. ALLOCATED(ntrials)) ALLOCATE(ntrials(nspecies,nbr_boxes))
                         IF(.NOT. ALLOCATED(overlap_counter)) ALLOCATE(overlap_counter(nspecies,nbr_boxes))
-                        !$OMP PARALLEL
-                        IF(.NOT. ALLOCATED(widom_get_interaction)) ALLOCATE(widom_get_interaction(MAXVAL(max_molecules),nspecies))
-                        !$OMP END PARALLEL
                         ntrials(:,:)%widom = 0
                         overlap_counter(:,:) = 0_INT64
                         ALLOCATE(wprop_file_unit(nspecies,nbr_boxes))
