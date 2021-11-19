@@ -235,7 +235,7 @@ SUBROUTINE Compute_Max_Com_Distance(alive,is)
 
   ! Local variables
 
-  REAL(DP) :: xcom, ycom, zcom, dmax, dx, dy, dz, rsq
+  REAL(DP) :: xcom, ycom, zcom, dmax, dx, dy, dz, rsq, dmin
 
   INTEGER :: iatom
 
@@ -261,6 +261,8 @@ SUBROUTINE Compute_Max_Com_Distance(alive,is)
   ! set the maximum distance initially to zero
 
   dmax = 0.0_DP
+  ! set the minimum distance initially to arbitrary, unrealistically large value
+  dmin = 9.9e99_DP
 
   DO iatom = 1,natoms(is)
 
@@ -278,6 +280,7 @@ SUBROUTINE Compute_Max_Com_Distance(alive,is)
         rsq = dx * dx + dy * dy + dz * dz
         
         dmax = MAX(dmax,rsq)
+        dmin = MIN(dmin,rsq)
 
      END IF
 
@@ -286,6 +289,7 @@ SUBROUTINE Compute_Max_Com_Distance(alive,is)
   ! store the maximum distance 
 
   this_molecule%max_dcom = DSQRT(dmax)
+  this_molecule%min_dcom = DSQRT(dmin)
 
 END SUBROUTINE Compute_Max_Com_Distance
      

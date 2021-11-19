@@ -962,47 +962,59 @@ CONTAINS
     REAL(DP) :: Eij_vdw, Eij_qq
     REAL(DP) :: eps
     REAL(DP) :: rcom, rx, ry, rz
+    REAL(DP) :: hardcore_max_r, molecule_hardcore_r
 
     LOGICAL :: get_interaction
-    LOGICAL :: widom_interaction(MAXVAL(nmols(:,widom_molecule%which_box)),nspecies)
-
-    LOGICAL :: my_overlap, shared_overlap
+    LOGICAL, DIMENSION(MAXVAL(nmols(:,widom_molecule%which_box)),nspecies) :: shortrange, midrange
 
     E_inter_vdw = 0.0_DP
     E_inter_qq = 0.0_DP
     overlap = .FALSE.
-    my_overlap = .FALSE.
-    shared_overlap = .FALSE.
 
     this_box = widom_molecule%which_box
+
+    hardcore_max_r = widom_molecule%max_dcom + rcut_min
+    molecule_hardcore_r = rcut_min - widom_molecule%min_dcom
 
 
 
     speciesLoop: DO ispecies = 1, nspecies
-
        moleculeLoop: DO imolecule = 1, nmols(ispecies,this_box)
-
           this_locate = locate(imolecule,ispecies,this_box)
           IF (ispecies == is .AND. this_locate == im) THEN
-                  widom_interaction(imolecule, ispecies) = .FALSE.
+                  shortrange(imolecule, ispecies) = .FALSE.
+                  midrange(imolecule, ispecies) = .FALSE.
                   CYCLE moleculeLoop
           ELSE IF (.NOT. molecule_list(this_locate,ispecies)%live) THEN
-                  widom_interaction(imolecule, ispecies) = .FALSE.
+                  shortrange(imolecule, ispecies) = .FALSE.
+                  midrange(imolecule, ispecies) = .FALSE.
                   CYCLE moleculeLoop
           END IF
 
-          ! Determine if any atoms of these two molecules will interact
+          ! Determine whether any atoms of these two molecules will interact
           CALL Check_MoleculePair_Cutoff(im,is,this_locate,ispecies,get_interaction, &
                rcom,rx,ry,rz)
 
           IF (.NOT. get_interaction) THEN
-                  widom_interaction(imolecule, ispecies) = .FALSE.
-                  CYCLE moleculeLOOP
+                  shortrange(imolecule, ispecies) = .FALSE.
+                  midrange(imolecule, ispecies) = .FALSE.
+          ELSE IF (rcom + molecule_list(this_locate,this_species)%min_dcom < molecule_hardcore_r) THEN
+                  overlap = .TRUE.
+                  RETURN
+          ELSE IF (rcom - molecule_list(this_locate,this_species)%max_dcom > hardcore_max_r) THEN
+                  shortrange(imolecule, ispecies) = .FALSE.
+                  midrange(imolecule, ispecies) = .TRUE.
+          ELSE
+                  shortrange(imolecule, ispecies) = .TRUE.
+                  midrange(imolecule, ispecies) = .FALSE.
           END IF
-          IF (rcom - widom_molecule%max_dcom - molecule_list(this_locate,this_species)%max_dcom > rcut_min) THEN
-                  widom_interaction(imolecule, ispecies) = .TRUE.
-                  CYCLE moleculeLOOP
-          END IF
+       END DO moleculeLoop
+    END DO speciesLoop
+
+    speciesLoop2: DO ispecies = 1, nspecies
+       moleculeLoop2: DO imolecule = 1, nmols(ispecies,this_box)
+          IF (.NOT. shortrange(imolecule,ispecies)) CYCLE moleculeLoop2
+          this_locate = locate(imolecule,ispecies,this_box)
 
           CALL Compute_MoleculePair_Energy(im,is,this_locate,ispecies, &
                this_box,Eij_vdw,Eij_qq,overlap)
@@ -1012,10 +1024,23 @@ CONTAINS
           E_inter_vdw = E_inter_vdw + Eij_vdw
           E_inter_qq  = E_inter_qq + Eij_qq
 
-       END DO moleculeLoop
+       END DO moleculeLoop2
+    END DO speciesLoop2
 
-    END DO speciesLoop
+    speciesLoop3: DO ispecies = 1, nspecies
+       moleculeLoop3: DO imolecule = 1, nmols(ispecies,this_box)
+          IF (.NOT. midrange(imolecule,ispecies)) CYCLE moleculeLoop3
+          this_locate = locate(imolecule,ispecies,this_box)
+          CALL Compute_MoleculePair_Energy(im,is,this_locate,ispecies, &
+               this_box,Eij_vdw,Eij_qq,overlap)
 
+          IF (overlap) RETURN ! there shouldn't be overlap for midrange molecules
+
+          E_inter_vdw = E_inter_vdw + Eij_vdw
+          E_inter_qq  = E_inter_qq + Eij_qq
+
+       END DO moleculeLoop3
+    END DO speciesLoop3
   END SUBROUTINE Compute_Molecule_Nonbond_Inter_Energy_Widom
   !-----------------------------------------------------------------------------
 
