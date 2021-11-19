@@ -973,8 +973,8 @@ CONTAINS
 
     this_box = widom_molecule%which_box
 
-    hardcore_max_r = widom_molecule%max_dcom + rcut_min
-    molecule_hardcore_r = rcut_min - widom_molecule%min_dcom
+    hardcore_max_r = widom_molecule%max_dcom + rcut_low
+    molecule_hardcore_r = rcut_low - widom_molecule%min_dcom
 
 
 
@@ -998,10 +998,10 @@ CONTAINS
           IF (.NOT. get_interaction) THEN
                   shortrange(imolecule, ispecies) = .FALSE.
                   midrange(imolecule, ispecies) = .FALSE.
-          ELSE IF (rcom + molecule_list(this_locate,this_species)%min_dcom < molecule_hardcore_r) THEN
+          ELSE IF (rcom + molecule_list(this_locate,ispecies)%min_dcom < molecule_hardcore_r) THEN
                   overlap = .TRUE.
                   RETURN
-          ELSE IF (rcom - molecule_list(this_locate,this_species)%max_dcom > hardcore_max_r) THEN
+          ELSE IF (rcom - molecule_list(this_locate,ispecies)%max_dcom > hardcore_max_r) THEN
                   shortrange(imolecule, ispecies) = .FALSE.
                   midrange(imolecule, ispecies) = .TRUE.
           ELSE
