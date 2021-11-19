@@ -595,6 +595,8 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   INTEGER :: widom_locate, widom_species
   INTEGER (KIND=INT64), DIMENSION(:,:), ALLOCATABLE :: overlap_counter
 
+  LOGICAL, DIMENSION(:,:), ALLOCATABLE :: widom_get_interaction
+
   ! Pregenerated trajectory
   !LOGICAL :: has_H ! Does the simulation use H file(s)?
   LOGICAL :: need_energy
@@ -602,7 +604,7 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   TYPE(Molecule_Class), TARGET :: widom_molecule
   TYPE(Atom_Class), ALLOCATABLE, DIMENSION(:), TARGET :: widom_atoms
 
-  !$OMP THREADPRIVATE(widom_molecule, widom_atoms, cbmc_flag)
+  !$OMP THREADPRIVATE(widom_molecule, widom_atoms, cbmc_flag, widom_get_interaction)
 
 
 END MODULE Global_Variables

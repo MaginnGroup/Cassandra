@@ -964,6 +964,7 @@ CONTAINS
     REAL(DP) :: rcom, rx, ry, rz
 
     LOGICAL :: get_interaction
+    LOGICAL :: widom_interaction(MAXVAL(nmols(:,widom_molecule%which_box)),nspecies)
 
     LOGICAL :: my_overlap, shared_overlap
 
@@ -982,14 +983,26 @@ CONTAINS
        moleculeLoop: DO imolecule = 1, nmols(ispecies,this_box)
 
           this_locate = locate(imolecule,ispecies,this_box)
-          IF (ispecies == is .AND. this_locate == im) CYCLE moleculeLoop
-          IF (.NOT. molecule_list(this_locate,ispecies)%live) CYCLE moleculeLoop
+          IF (ispecies == is .AND. this_locate == im) THEN
+                  widom_interaction(imolecule, ispecies) = .FALSE.
+                  CYCLE moleculeLoop
+          ELSE IF (.NOT. molecule_list(this_locate,ispecies)%live) THEN
+                  widom_interaction(imolecule, ispecies) = .FALSE.
+                  CYCLE moleculeLoop
+          END IF
 
           ! Determine if any atoms of these two molecules will interact
           CALL Check_MoleculePair_Cutoff(im,is,this_locate,ispecies,get_interaction, &
                rcom,rx,ry,rz)
 
-          IF (.NOT. get_interaction) CYCLE moleculeLOOP
+          IF (.NOT. get_interaction) THEN
+                  widom_interaction(imolecule, ispecies) = .FALSE.
+                  CYCLE moleculeLOOP
+          END IF
+          IF (rcom - widom_molecule%max_dcom - molecule_list(this_locate,this_species)%max_dcom > rcut_min) THEN
+                  widom_interaction(imolecule, ispecies) = .TRUE.
+                  CYCLE moleculeLOOP
+          END IF
 
           CALL Compute_MoleculePair_Energy(im,is,this_locate,ispecies, &
                this_box,Eij_vdw,Eij_qq,overlap)
