@@ -473,11 +473,6 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
         ! Note that the COM position is always chosen inside the simulation box 
         ! so there is no need to call Fold_Molecule.
            
-        IF (kappa_ins == 1 .AND. nfragments(is) == 1) THEN
-                cbmc_flag = .FALSE.
-                RETURN
-        END IF
-           
         ! Calculate the intermolecular energy of the fragment. Note that
         ! cbmc_flag has been set to true so that the following call will compute
         ! interaction energy of the growing molecule within a small distance
