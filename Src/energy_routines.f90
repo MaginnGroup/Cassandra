@@ -373,6 +373,14 @@ CONTAINS
     INTEGER :: idihed, atom1, atom2, atom3, atom4
     REAL(DP) :: a0,a1,a2,a3,a4,a5,a6,a7,a8,edihed,phi,twophi,threephi
 
+    TYPE(Atom_Class), POINTER :: these_atoms(:)
+
+    IF (widom_active) THEN
+            these_atoms => widom_atoms
+    ELSE
+            these_atoms => atom_list(:,molecule,species)
+    END IF
+
     energy_dihed = 0.0_DP
     DO idihed=1,ndihedrals(species)
        IF (dihedral_list(idihed,species)%int_dipot_type == int_none ) THEN
@@ -388,10 +396,10 @@ CONTAINS
           atom3 = dihedral_list(idihed,species)%atom3
           atom4 = dihedral_list(idihed,species)%atom4
 
-          IF ( .NOT. atom_list(atom1,molecule,species)%exist) CYCLE
-          IF ( .NOT. atom_list(atom2,molecule,species)%exist) CYCLE
-          IF ( .NOT. atom_list(atom3,molecule,species)%exist) CYCLE
-          IF ( .NOT. atom_list(atom4,molecule,species)%exist) CYCLE
+          IF ( .NOT. these_atoms(atom1)%exist) CYCLE
+          IF ( .NOT. these_atoms(atom2)%exist) CYCLE
+          IF ( .NOT. these_atoms(atom3)%exist) CYCLE
+          IF ( .NOT. these_atoms(atom4)%exist) CYCLE
 
 
           a0 = dihedral_list(idihed,species)%dihedral_param(1)
@@ -414,10 +422,10 @@ CONTAINS
           atom3 = dihedral_list(idihed,species)%atom3
           atom4 = dihedral_list(idihed,species)%atom4
 
-          IF ( .NOT. atom_list(atom1,molecule,species)%exist) CYCLE
-          IF ( .NOT. atom_list(atom2,molecule,species)%exist) CYCLE
-          IF ( .NOT. atom_list(atom3,molecule,species)%exist) CYCLE
-          IF ( .NOT. atom_list(atom4,molecule,species)%exist) CYCLE
+          IF ( .NOT. these_atoms(atom1)%exist) CYCLE
+          IF ( .NOT. these_atoms(atom2)%exist) CYCLE
+          IF ( .NOT. these_atoms(atom3)%exist) CYCLE
+          IF ( .NOT. these_atoms(atom4)%exist) CYCLE
 
           a0 = dihedral_list(idihed,species)%dihedral_param(1)
           a1 = dihedral_list(idihed,species)%dihedral_param(2)
@@ -434,10 +442,10 @@ CONTAINS
           atom3 = dihedral_list(idihed,species)%atom3
           atom4 = dihedral_list(idihed,species)%atom4
 
-          IF ( .NOT. atom_list(atom1,molecule,species)%exist) CYCLE
-          IF ( .NOT. atom_list(atom2,molecule,species)%exist) CYCLE
-          IF ( .NOT. atom_list(atom3,molecule,species)%exist) CYCLE
-          IF ( .NOT. atom_list(atom4,molecule,species)%exist) CYCLE
+          IF ( .NOT. these_atoms(atom1)%exist) CYCLE
+          IF ( .NOT. these_atoms(atom2)%exist) CYCLE
+          IF ( .NOT. these_atoms(atom3)%exist) CYCLE
+          IF ( .NOT. these_atoms(atom4)%exist) CYCLE
 
           a0 = dihedral_list(idihed,species)%dihedral_param(1)
           a1 = dihedral_list(idihed,species)%dihedral_param(2)
@@ -506,7 +514,7 @@ CONTAINS
   END SUBROUTINE Compute_Molecule_Improper_Energy
   !-----------------------------------------------------------------------------
 
-  SUBROUTINE Compute_Atom_Nonbond_Energy(this_atom,this_molecule,this_species, &
+  SUBROUTINE Compute_Atom_Nonbond_Energy(ia,im,is, &
        E_intra_vdw,E_inter_vdw,E_intra_qq,E_inter_qq,overlap)
 
     !**************************************************************************
@@ -521,9 +529,9 @@ CONTAINS
     !
     ! INPUT VARIABLES
     !
-    !         this_atom[INTEGER]:         atom number
-    !         this_molecule[INTEGER]:     LOCATE of the molecule.
-    !         this_species[INTEGER]:      species type of the molecule.
+    !         ia[INTEGER]:         atom number
+    !         im[INTEGER]:     LOCATE of the molecule.
+    !         is[INTEGER]:      species type of the molecule.
     !
     ! OUTPUT VARIABLES
     !
@@ -540,14 +548,14 @@ CONTAINS
     !**************************************************************************
 
 
-    INTEGER, INTENT(IN) :: this_atom,this_molecule,this_species
+    INTEGER, INTENT(IN) :: ia,im,is
     REAL(DP), INTENT(OUT) :: E_intra_vdw,E_inter_vdw,E_intra_qq,E_inter_qq
     LOGICAL, INTENT(OUT) :: overlap
-    INTEGER :: this_box,is,im,js,ia, mol_is, itype, jtype, rinteraction, vdw_in
+    INTEGER :: this_box,js,jm,ja, mol_js, itype, jtype, rinteraction, vdw_in
     REAL(DP) :: rxij,ryij,rzij,rijsq,rxijp,ryijp,rzijp
     REAL(DP) :: Eij_intra_vdw,Eij_inter_vdw,Eij_intra_qq,Eij_inter_qq
     REAL(DP) :: eps, sig, SigOverRsq, SigOverR6, SigOverR12
-    REAL(DP) :: qi, qj, rij, erf_val, erfc_val, qsc
+    REAL(DP) :: rij, erf_val, erfc_val, qsc
     REAL(DP) :: T, x, xsq, TP
     REAL(DP) :: rcom,rx,ry,rz
     REAL(DP) :: rcut, rcutsq
@@ -559,6 +567,17 @@ CONTAINS
     REAL(DP), PARAMETER :: A3 = 1.421413741_DP, A4 = -1.453152027_DP
     REAL(DP), PARAMETER :: A5 = 1.061405429_DP, P = 0.3275911_DP
 
+    TYPE(Molecule_Class), POINTER :: this_molecule_i, this_molecule_j
+    TYPE(Atom_Class), POINTER :: these_atoms_i(:), these_atoms_j(:)
+
+    IF (widom_active) THEN 
+            this_molecule_i => widom_molecule
+            these_atoms_i => widom_atoms
+    ELSE
+            this_molecule_i => molecule_list(im,is)
+            these_atoms_i => atom_list(:,im,is)
+    END IF
+
     !---------------------------------------------------------------------------
     E_inter_vdw = 0.0_DP
     E_intra_vdw = 0.0_DP
@@ -569,15 +588,15 @@ CONTAINS
     Eij_inter_qq = 0.0_DP
     Eij_intra_qq = 0.0_DP
 
-    ! Check that this_atom exists
-    IF (.NOT. atom_list(this_atom,this_molecule,this_species)%exist ) THEN
+    ! Check that ia exists
+    IF (.NOT. these_atoms_i(ia)%exist ) THEN
        err_msg = ""
        err_msg(1) = 'Attempt to compute energy of an atom that does not exist'
        CALL Clean_Abort(err_msg,'Compute_Atom_Nonbond_Energy')
     ENDIF
 
     ! Set the box number this particular atom is in.
-    this_box = molecule_list(this_molecule,this_species)%which_box
+    this_box = this_molecule_i%which_box
 
     ! Initialize flags which force a call to pair_energy
     get_vdw = .FALSE.
@@ -586,44 +605,51 @@ CONTAINS
     ! Initialize the overlap flag to false to indicate no overlap between atoms.
     overlap = .FALSE.
 
-    SpeciesLoop:DO is=1,nspecies
+    SpeciesLoop:DO js=1,nspecies
 
-       MoleculeLoop:DO mol_is=1,nmols(is,this_box)
+       MoleculeLoop:DO mol_js=1,nmols(js,this_box)
 
-          im = locate(mol_is,is,this_box) ! molecule INDEX
-          IF (.NOT. molecule_list(im,is)%live) CYCLE MoleculeLoop
+          jm = locate(mol_js,js,this_box) ! molecule INDEX
+          IF (jm == widom_locate .AND. js == widom_species) THEN
+                  this_molecule_j => widom_molecule
+                  these_atoms_j => widom_atoms
+          ELSE
+                  this_molecule_j => molecule_list(jm,js)
+                  these_atoms_j => atom_list(:,jm,js)
+          END IF
+          IF (.NOT. this_molecule_j%live) CYCLE MoleculeLoop
 
           ! Check tos see if atom is to interact with the molecule based
           ! on COM cutoff.
-          CALL Check_MoleculePair_Cutoff(im,is,this_molecule,this_species, &
+          CALL Check_MoleculePair_Cutoff(jm,js,im,is, &
                get_interaction,rcom,rx,ry,rz)
 
           IF (.NOT. get_interaction) CYCLE MoleculeLoop
 
-          AtomLoop:DO ia=1,natoms(is)
+          AtomLoop:DO ja=1,natoms(js)
              ! Test for intramolecular interaction
-             IF (.NOT. atom_list(ia,im,is)%exist ) CYCLE AtomLoop
-             IF (is == this_species .AND. im == this_molecule) THEN
+             IF (.NOT. these_atoms_j(ja)%exist ) CYCLE AtomLoop
+             IF (js == is .AND. jm == im) THEN
 
-                IF (ia == this_atom) THEN
+                IF (ja == ia) THEN
                    ! Avoid computing energy with self
                    CYCLE AtomLoop
                 ELSE
                    ! Intra energy. Do not apply PBC
-                   IF ( .NOT. atom_list(ia,im,is)%exist) CYCLE AtomLoop
+                   IF ( .NOT. these_atoms_j(ja)%exist) CYCLE AtomLoop
 
                    ! Interatomic distance
-                   rxij = atom_list(ia,im,is)%rxp &
-                        - atom_list(this_atom,this_molecule,this_species)%rxp
-                   ryij = atom_list(ia,im,is)%ryp &
-                        - atom_list(this_atom,this_molecule,this_species)%ryp
-                   rzij = atom_list(ia,im,is)%rzp &
-                        - atom_list(this_atom,this_molecule,this_species)%rzp
+                   rxij = these_atoms_j(ja)%rxp &
+                        - these_atoms_i(ia)%rxp
+                   ryij = these_atoms_j(ja)%ryp &
+                        - these_atoms_i(ia)%ryp
+                   rzij = these_atoms_j(ja)%rzp &
+                        - these_atoms_i(ia)%rzp
 
                    rijsq = rxij*rxij + ryij*ryij + rzij*rzij
 
                    IF (rijsq <= rcut_lowsq) THEN
-                      IF (.not.(l_bonded(ia,this_atom,is))) THEN
+                      IF (.not.(l_bonded(ja,ia,js))) THEN
                          overlap = .true.
                          RETURN
                       ENDIF
@@ -634,12 +660,12 @@ CONTAINS
                 ! Intermolecular energy so apply pbc.
 
                 ! First compute the parent separation
-                rxijp = atom_list(ia,im,is)%rxp &
-                      - atom_list(this_atom,this_molecule,this_species)%rxp
-                ryijp = atom_list(ia,im,is)%ryp &
-                      - atom_list(this_atom,this_molecule,this_species)%ryp
-                rzijp = atom_list(ia,im,is)%rzp &
-                      - atom_list(this_atom,this_molecule,this_species)%rzp
+                rxijp = these_atoms_j(ja)%rxp &
+                      - these_atoms_i(ia)%rxp
+                ryijp = these_atoms_j(ja)%ryp &
+                      - these_atoms_i(ia)%ryp
+                rzijp = these_atoms_j(ja)%rzp &
+                      - these_atoms_i(ia)%rzp
 
                 ! Now get the minimum image separation
                 CALL Minimum_Image_Separation(this_box,rxijp,ryijp,rzijp, &
@@ -660,7 +686,7 @@ CONTAINS
              IF (get_vdw .OR. get_qq) THEN
 
                 CALL Compute_AtomPair_Energy(rxij,ryij,rzij,rijsq, &
-                     is,im,ia,this_species,this_molecule,this_atom,&
+                     js,jm,ja,is,im,ia,&
                      get_vdw,get_qq, &
                      Eij_intra_vdw,Eij_intra_qq,Eij_inter_vdw,Eij_inter_qq)
 
@@ -715,6 +741,14 @@ CONTAINS
 
     LOGICAL :: get_vdw, get_qq, intra_overlap
 
+    TYPE(Atom_Class), POINTER :: these_atoms(:)
+
+    IF (widom_active) THEN
+            these_atoms => widom_atoms
+    ELSE
+            these_atoms => atom_list(:,im,is)
+    END IF
+
     E_intra_vdw = 0.0_DP
     E_intra_qq = 0.0_DP
     E_inter_qq = 0.0_DP
@@ -731,18 +765,18 @@ CONTAINS
        ! Note 'im' is the linked number of the molecule of interest i.e locate(molecule,is)
        ! The checking for existence of a molecule may be unneccessary.
 
-       IF ( atom_list(ia,im,is)%exist) THEN
+       IF ( these_atoms(ia)%exist) THEN
 
           DO ja = ia+1,natoms(is)
 
              ! make sure that the atom is present
 
-             IF ( .NOT. atom_list(ja,im,is)%exist) CYCLE
+             IF ( .NOT. these_atoms(ja)%exist) CYCLE
 
              ! Find distance between this atom and all others in the system
-             rxij = atom_list(ia,im,is)%rxp - atom_list(ja,im,is)%rxp
-             ryij = atom_list(ia,im,is)%ryp - atom_list(ja,im,is)%ryp
-             rzij = atom_list(ia,im,is)%rzp - atom_list(ja,im,is)%rzp
+             rxij = these_atoms(ia)%rxp - these_atoms(ja)%rxp
+             ryij = these_atoms(ia)%ryp - these_atoms(ja)%ryp
+             rzij = these_atoms(ia)%rzp - these_atoms(ja)%rzp
 
              rijsq = rxij*rxij + ryij*ryij + rzij*rzij
 
@@ -896,6 +930,120 @@ CONTAINS
 
   END SUBROUTINE Compute_Molecule_Nonbond_Inter_Energy
   !-----------------------------------------------------------------------------
+
+  SUBROUTINE Compute_Molecule_Nonbond_Inter_Energy_Widom(im,is, &
+    E_inter_vdw,E_inter_qq,overlap)
+    !***************************************************************************
+    ! This subroutine computes interatomic LJ and charge interactions as well as
+    ! virials associated with these interactions.
+    !
+    ! CALLS
+    !
+    ! Minimum_Image_Separation
+    ! Compute_MoleculePair_Energy
+    ! Clean_Abort
+    !
+    ! CALLED BY
+    !
+    !
+    !***************************************************************************
+
+    IMPLICIT NONE
+
+!    !$ include 'omp_lib.h'
+
+    INTEGER, INTENT(IN):: im, is
+    REAL(DP), INTENT(OUT) :: E_inter_vdw, E_inter_qq
+    LOGICAL :: overlap
+    !---------------------------------------------------------------------------
+
+    INTEGER  :: ispecies, imolecule, this_box, this_locate
+
+    REAL(DP) :: Eij_vdw, Eij_qq
+    REAL(DP) :: eps
+    REAL(DP) :: rcom, rx, ry, rz
+    REAL(DP) :: hardcore_max_r, molecule_hardcore_r
+
+    LOGICAL :: get_interaction
+    LOGICAL, DIMENSION(MAXVAL(nmols(:,widom_molecule%which_box)),nspecies) :: shortrange, midrange
+
+    E_inter_vdw = 0.0_DP
+    E_inter_qq = 0.0_DP
+    overlap = .FALSE.
+
+    this_box = widom_molecule%which_box
+
+    hardcore_max_r = widom_molecule%max_dcom + rcut_low
+    molecule_hardcore_r = rcut_low - widom_molecule%min_dcom
+
+
+
+    speciesLoop: DO ispecies = 1, nspecies
+       moleculeLoop: DO imolecule = 1, nmols(ispecies,this_box)
+          this_locate = locate(imolecule,ispecies,this_box)
+          IF (ispecies == is .AND. this_locate == im) THEN
+                  shortrange(imolecule, ispecies) = .FALSE.
+                  midrange(imolecule, ispecies) = .FALSE.
+                  CYCLE moleculeLoop
+          ELSE IF (.NOT. molecule_list(this_locate,ispecies)%live) THEN
+                  shortrange(imolecule, ispecies) = .FALSE.
+                  midrange(imolecule, ispecies) = .FALSE.
+                  CYCLE moleculeLoop
+          END IF
+
+          ! Determine whether any atoms of these two molecules will interact
+          CALL Check_MoleculePair_Cutoff(im,is,this_locate,ispecies,get_interaction, &
+               rcom,rx,ry,rz)
+
+          IF (.NOT. get_interaction) THEN
+                  shortrange(imolecule, ispecies) = .FALSE.
+                  midrange(imolecule, ispecies) = .FALSE.
+          ELSE IF (rcom + molecule_list(this_locate,ispecies)%min_dcom < molecule_hardcore_r) THEN
+                  overlap = .TRUE.
+                  RETURN
+          ELSE IF (rcom - molecule_list(this_locate,ispecies)%max_dcom > hardcore_max_r) THEN
+                  shortrange(imolecule, ispecies) = .FALSE.
+                  midrange(imolecule, ispecies) = .TRUE.
+          ELSE
+                  shortrange(imolecule, ispecies) = .TRUE.
+                  midrange(imolecule, ispecies) = .FALSE.
+          END IF
+       END DO moleculeLoop
+    END DO speciesLoop
+
+    speciesLoop2: DO ispecies = 1, nspecies
+       moleculeLoop2: DO imolecule = 1, nmols(ispecies,this_box)
+          IF (.NOT. shortrange(imolecule,ispecies)) CYCLE moleculeLoop2
+          this_locate = locate(imolecule,ispecies,this_box)
+
+          CALL Compute_MoleculePair_Energy(im,is,this_locate,ispecies, &
+               this_box,Eij_vdw,Eij_qq,overlap)
+
+          IF (overlap) RETURN
+
+          E_inter_vdw = E_inter_vdw + Eij_vdw
+          E_inter_qq  = E_inter_qq + Eij_qq
+
+       END DO moleculeLoop2
+    END DO speciesLoop2
+
+    speciesLoop3: DO ispecies = 1, nspecies
+       moleculeLoop3: DO imolecule = 1, nmols(ispecies,this_box)
+          IF (.NOT. midrange(imolecule,ispecies)) CYCLE moleculeLoop3
+          this_locate = locate(imolecule,ispecies,this_box)
+          CALL Compute_MoleculePair_Energy(im,is,this_locate,ispecies, &
+               this_box,Eij_vdw,Eij_qq,overlap)
+
+          IF (overlap) RETURN ! there shouldn't be overlap for midrange molecules
+
+          E_inter_vdw = E_inter_vdw + Eij_vdw
+          E_inter_qq  = E_inter_qq + Eij_qq
+
+       END DO moleculeLoop3
+    END DO speciesLoop3
+  END SUBROUTINE Compute_Molecule_Nonbond_Inter_Energy_Widom
+  !-----------------------------------------------------------------------------
+
 
   SUBROUTINE Compute_MoleculeCollection_Nonbond_Inter_Energy(n_list,lm_list,is_list, &
     E_inter_vdw,E_inter_qq,overlap)
@@ -1093,22 +1241,35 @@ CONTAINS
 
     INTEGER :: locate_im, locate_jm
 
+    TYPE(Atom_Class), POINTER :: these_atoms_i(:), these_atoms_j(:)
+
+    IF (im == widom_locate .AND. is == widom_species) THEN
+            these_atoms_i => widom_atoms
+    ELSE
+            these_atoms_i => atom_list(:,im,is)
+    END IF
+    IF (jm == widom_locate .AND. js == widom_species) THEN
+            these_atoms_j => widom_atoms
+    ELSE
+            these_atoms_j => atom_list(:,jm,js)
+    END IF
+
     vlj_pair = 0.0_DP
     vqq_pair = 0.0_DP
     overlap = .FALSE.
 
     DO ia = 1, natoms(is)
 
-      IF (.NOT. atom_list(ia,im,is)%exist) CYCLE
+      IF (.NOT. these_atoms_i(ia)%exist) CYCLE
 
       DO ja = 1, natoms(js)
 
-        IF ( .NOT. atom_list(ja,jm,js)%exist) CYCLE
+        IF ( .NOT. these_atoms_j(ja)%exist) CYCLE
 
         ! Obtain the minimum image separation
-        rxijp = atom_list(ia,im,is)%rxp - atom_list(ja,jm,js)%rxp
-        ryijp = atom_list(ia,im,is)%ryp - atom_list(ja,jm,js)%ryp
-        rzijp = atom_list(ia,im,is)%rzp - atom_list(ja,jm,js)%rzp
+        rxijp = these_atoms_i(ia)%rxp - these_atoms_j(ja)%rxp
+        ryijp = these_atoms_i(ia)%ryp - these_atoms_j(ja)%ryp
+        rzijp = these_atoms_i(ia)%rzp - these_atoms_j(ja)%rzp
 
         ! Now get the minimum image separation
         CALL Minimum_Image_Separation(this_box,rxijp,ryijp,rzijp,rxij,ryij,rzij)
@@ -1142,7 +1303,7 @@ CONTAINS
     END DO
 
     IF (l_pair_nrg) THEN
-      IF ( .NOT. cbmc_flag ) THEN
+      IF ( .NOT. (cbmc_flag .OR. widom_active)) THEN
         ! if here then, there was no overlap between im and jm
         ! update the interaction energy of the pair
         ! first find out the position of each im in the pair interaction energy
@@ -1204,6 +1365,8 @@ CONTAINS
     ! Coulomb potential
     REAL(DP) :: qi, qj, Eij_qq
 
+    LOGICAL :: atom_i_exist, atom_j_exist
+
     E_intra_vdw = 0.0_DP
     E_intra_qq  = 0.0_DP
     E_inter_vdw = 0.0_DP
@@ -1211,9 +1374,20 @@ CONTAINS
   !----------------------------------------------------------------------------
     ibox = molecule_list(im,is)%which_box
 
+    IF (im == widom_locate .AND. is == widom_species) THEN
+            atom_i_exist = widom_atoms(ia)%exist
+    ELSE
+            atom_i_exist = atom_list(ia,im,is)%exist
+    END IF
+    IF (jm == widom_locate .AND. js == widom_species) THEN
+            atom_j_exist = widom_atoms(ja)%exist
+    ELSE
+            atom_j_exist = atom_list(ja,jm,js)%exist
+    END IF
+
     ! If either atom is not yet present, then don't try to compute an energy
     ExistCheck: &
-    IF (atom_list(ia,im,is)%exist .AND. atom_list(ja,jm,js)%exist) THEN
+    IF (atom_i_exist .AND. atom_j_exist) THEN
 
       ! Determine atom type indices
          itype = nonbond_list(ia,is)%atom_type_number
@@ -1633,7 +1807,7 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
   END SUBROUTINE Ewald_Reciprocal_Lattice_Vector_Setup
   !*****************************************************************************
 
-   SUBROUTINE Update_System_Ewald_Reciprocal_Energy(im,is,ibox, &
+  SUBROUTINE Update_System_Ewald_Reciprocal_Energy(im,is,ibox, &
     move_flag,E_reciprocal)
     !***************************************************************************
     ! The subroutine computes the difference in Ewald reciprocal space energy
@@ -1807,6 +1981,59 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
   END SUBROUTINE Update_System_Ewald_Reciprocal_Energy
   !*****************************************************************************
 
+  SUBROUTINE Update_System_Ewald_Reciprocal_Energy_Widom(im,is,ibox, &
+    E_reciprocal)
+    !***************************************************************************
+    ! The subroutine computes the difference in Ewald reciprocal space energy
+    ! for a Widom insertion.
+    !
+    !***************************************************************************
+
+    USE Type_Definitions
+    USE Global_Variables
+
+    IMPLICIT NONE
+
+!    !$ include 'omp_lib.h'
+
+    ! Arguments
+    INTEGER, INTENT(IN) :: ibox   ! box index, 1...nbr_boxes
+    INTEGER, INTENT(IN) :: is     ! species index, 1...nspecies
+    INTEGER, INTENT(IN) :: im     ! molecule 'locate', index to atom_list
+
+    ! Returns
+    REAL(DP), INTENT(OUT) :: E_reciprocal
+
+    ! Local variables
+    REAL(DP), DIMENSION(natoms(is)) :: q, hdotr
+    REAL(DP) :: cos_sum_i, sin_sum_i
+    INTEGER :: i
+
+    q = nonbond_list(1:natoms(is),is)%charge
+
+    ! Initialize variables
+    E_reciprocal = 0.0_DP
+
+    DO i = 1, nvecs(ibox)
+
+      hdotr = hx(i,ibox) * widom_atoms%rxp + &
+              hy(i,ibox) * widom_atoms%ryp + &
+              hz(i,ibox) * widom_atoms%rzp
+
+      cos_sum_i = cos_sum(i,ibox) + DOT_PRODUCT(q, DCOS(hdotr))
+      sin_sum_i = sin_sum(i,ibox) + DOT_PRODUCT(q, DSIN(hdotr))
+
+      E_reciprocal = E_reciprocal + cn(i,ibox) &
+                   * ( cos_sum_i * cos_sum_i &
+                     + sin_sum_i * sin_sum_i )
+
+    END DO
+
+    E_reciprocal = E_reciprocal * charge_factor
+
+  END SUBROUTINE Update_System_Ewald_Reciprocal_Energy_Widom
+  !*****************************************************************************
+
   SUBROUTINE Compute_System_Self_Energy(this_box)
     !***************************************************************************
     ! This subroutine calculates the constant term that arises from particles
@@ -1887,22 +2114,16 @@ SUBROUTINE Compute_Molecule_Self_Energy(im,is,this_box,E_self)
   REAL(DP), INTENT(OUT) :: E_self
 
   ! Local variables
-  INTEGER :: ia
-  REAL(DP) :: q
+  REAL(DP) :: q(natoms(is))
 
   ! Initialize variables
   E_self = 0.0_DP
-
-  ! Compute E_self
-  DO ia = 1, natoms(is)
-    q = nonbond_list(ia,is)%charge
-    E_self = E_self + q * q
-  END DO
+  q = nonbond_list(1:natoms(is),is)%charge
 
   IF (int_charge_sum_style(this_box) == charge_ewald) THEN
-         E_self = - E_self * charge_factor * alpha_ewald(this_box) / rootPI
+          E_self = - DOT_PRODUCT(q,q) * charge_factor * alpha_ewald(this_box) / rootPI
   ELSE IF (int_charge_sum_style(this_box) == charge_dsf) THEN
-         E_self = - E_self * (alpha_dsf(this_box) / rootPI + dsf_factor1(this_box)/2.0_DP) * charge_factor
+          E_self = - DOT_PRODUCT(q,q) * (alpha_dsf(this_box) / rootPI + dsf_factor1(this_box)/2.0_DP) * charge_factor
   END IF
 
 END SUBROUTINE Compute_Molecule_Self_Energy
@@ -2297,21 +2518,34 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
     LOGICAL :: get_interaction
 
+    TYPE(Molecule_Class), POINTER :: molecule_1, molecule_2
+
+    IF (im_1 == widom_locate .AND. is_1 == widom_species) THEN
+            molecule_1 => widom_molecule
+    ELSE
+            molecule_1 => molecule_list(im_1,is_1)
+    END IF
+    IF (im_2 == widom_locate .AND. is_2 == widom_species) THEN
+            molecule_2 => widom_molecule
+    ELSE
+            molecule_2 => molecule_list(im_2,is_2)
+    END IF
+
     ! Initially set the interaction to true.
 
     get_interaction = .TRUE.
 
     ! Figure out the box to be used later.
 
-    this_box = molecule_list(im_1,is_1)%which_box
+    this_box = molecule_1%which_box
 
     IF(int_vdw_sum_style(this_box) == vdw_minimum) RETURN
 
     ! Parent separation
 
-    rxijp = molecule_list(im_1,is_1)%xcom - molecule_list(im_2,is_2)%xcom
-    ryijp = molecule_list(im_1,is_1)%ycom - molecule_list(im_2,is_2)%ycom
-    rzijp = molecule_list(im_1,is_1)%zcom - molecule_list(im_2,is_2)%zcom
+    rxijp = molecule_1%xcom - molecule_2%xcom
+    ryijp = molecule_1%ycom - molecule_2%ycom
+    rzijp = molecule_1%zcom - molecule_2%zcom
 
     ! Compute the minimum image distance
 
@@ -2321,15 +2555,15 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
     IF (CBMC_flag) THEN
 
-       rinteraction = rcut_cbmc(this_box) + molecule_list(im_1,is_1)%max_dcom &
-            + molecule_list(im_2,is_2)%max_dcom
+       rinteraction = rcut_cbmc(this_box) + molecule_1%max_dcom &
+            + molecule_2%max_dcom
 
        IF (rcom > rinteraction) get_interaction = .FALSE.
 
     ELSE
 
-       rinteraction = rcut_max(this_box) + molecule_list(im_1,is_1)%max_dcom &
-            + molecule_list(im_2,is_2)%max_dcom
+       rinteraction = rcut_max(this_box) + molecule_1%max_dcom &
+            + molecule_2%max_dcom
 
        IF (rcom > rinteraction) get_interaction = .FALSE.
 
@@ -3085,7 +3319,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     REAL(DP) :: e_dihed,  e_improper, nrg_vdw, nrg_qq, nrg_inter_qq
 
     LOGICAL :: intra_overlap
-    LOGICAL, ALLOCATABLE, DIMENSION(:) :: exist_flag_old
+    LOGICAL :: exist_flag_old(natoms(is))
 
     nrg_ring_frag = 0.0_DP
 
@@ -3097,7 +3331,6 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
     ! first store the exist flag of the molecule
 
-    ALLOCATE(exist_flag_old(natoms(is)))
     exist_flag_old = atom_list(1:natoms(is),this_im,is)%exist
 
     atom_list(1:natoms(is),this_im,is)%exist = .FALSE.
@@ -3155,7 +3388,6 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
     atom_list(1:natoms(is),this_im,is)%exist = exist_flag_old
 
-    DEALLOCATE(exist_flag_old)
 
   END SUBROUTINE Compute_Ring_Fragment_Energy
 

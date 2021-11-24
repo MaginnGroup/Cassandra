@@ -1,12 +1,37 @@
 #!/usr/bin/env python
-
+""""""
 import argparse
 import io
 import numpy as np
 from pathlib import Path
 
 
-def lammpstrjconvert(lammpstrjpath,n_list,fstr="%f", Hpath=None, xyzpath=None, getframes=None): 
+
+
+def lammpstrjconvert(lammpstrjpath,n_list,fstr="%f", Hpath=None, xyzpath=None, getframes=None):
+    """Convert LAMMMPS custom dump file to .xyz and .H files to be read by Cassandra.
+
+    Inputs:
+        lammpstrjpath: path-like object, such as pathlib.Path or string, containing
+            the path to the LAMMPS dump file to read and convert.
+        n_list: list of integers containing the number of molecules of each species
+            in the order in which the species are listed in the Cassandra input file.
+        fstr: format string designating the format with which to write
+            the coordinate floats in the .xyz file.  The default is "%f".
+        Hpath: path-like object, such as pathlib.Path or string, containing
+            the path to which to write the .H file.  If None (the default), this is
+            lammpstrjpath with the parent directories and ".lammpstrj" suffix (if present)
+            stripped and ".H" appended.
+        xyzpath: path-like object, such as pathlib.Path or string, containing
+            the path to which to write the .H file.  If None (the default), this is
+            lammpstrjpath with the parent directories and ".lammpstrj" suffix (if present)
+            stripped and ".xyz" appended.
+        getframes: sequence or 1-D array of integers designating the zero-based indices of
+            specific frames to write.  If None (the default), all frames are written.
+            If empty, the function effectively does nothing.  The frames are written in
+            the same order with which they are listed in getframes, which is not
+            necessarily in ascending order.
+    """
     ltpath = Path(lammpstrjpath)
     full_fstr = "X "+fstr+" "+fstr+" "+fstr
     colnames = ('id', 'xu', 'yu', 'zu')
@@ -33,7 +58,7 @@ def lammpstrjconvert(lammpstrjpath,n_list,fstr="%f", Hpath=None, xyzpath=None, g
     
     with ltpath.open() as ltfile, Hpath.open('w') as Hfile, xyzpath.open('w') as xyzfile:
         eofreached = False
-        
+        # Define nested functions findheading and convert_frame
         def findheading(tgt,lineadvance=True):
             eof_flag = False
             tgt_hit = False
@@ -109,8 +134,7 @@ def lammpstrjconvert(lammpstrjpath,n_list,fstr="%f", Hpath=None, xyzpath=None, g
             xyzfile.write(' TIMESTEP: {:>11d}\n'.format(timestep))
             np.savetxt(xyzfile, xyz[:,1:], fmt=full_fstr)
 
-
-        
+        # End of nested function definitions
         if nonsorted:
             streampos = {}
             framerange = np.arange(max(frame_array+1))
@@ -138,11 +162,6 @@ def lammpstrjconvert(lammpstrjpath,n_list,fstr="%f", Hpath=None, xyzpath=None, g
                 iframe += 1
                 
 
-
-
-
-
-    
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--format', default="%f")

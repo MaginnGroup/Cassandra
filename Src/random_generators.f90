@@ -32,15 +32,16 @@ MODULE random_generators
 ! Modified by Andrew Paluch, 1 March 2009.
 USE ISO_FORTRAN_ENV
 USE Type_Definitions, ONLY : DP
+!$ USE OMP_LIB
 IMPLICIT NONE
 ! The intrinsic function "selected_real_kind" takes two arguments. The first is the number 
 ! of digits of precision desired, and the second is the largest magnitude of the exponent of 10.
 INTEGER, PARAMETER:: da = SELECTED_REAL_KIND(14, 60)
 ! s1, s2, s3, s4, and s5 are the seeds to the random number generator, and are given default
-! values in cast the seeds are not initialized by the user
+! values in case the seeds are not initialized by the user
 INTEGER (KIND=INT64), SAVE  :: s1 = 153587801, s2 = -759022222, s3 = 1288503317, &
                             s4 = -1718083407, s5 = -123456789
-
+!$OMP threadprivate(s1,s2,s3,s4,s5)
 
 CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -57,10 +58,35 @@ SUBROUTINE init_seeds(i1, i3)
 
 IMPLICIT NONE
 INTEGER (KIND=INT64), INTENT(IN) :: i1, i3
+INTEGER (KIND=INT64), ALLOCATABLE, DIMENSION(:,:) :: thread_seeds
+INTEGER :: nthreads, ithread
+nthreads = 1
 s1 = i1
 s3 = i3
 IF (IAND(s1,      -2_INT64) == 0) s1 = i1 - 8388607_INT64
 IF (IAND(s3,   -4096_INT64) == 0) s3 = i3 - 8388607_INT64
+!$ nthreads = OMP_GET_MAX_THREADS()
+ALLOCATE(thread_seeds(5,0:nthreads-1))
+thread_seeds(1,0) = s1
+thread_seeds(2,:) = s2
+thread_seeds(3,0) = s3
+thread_seeds(4,:) = s4
+thread_seeds(5,:) = s5
+DO ithread = 1, (nthreads-1)
+        thread_seeds(1,ithread) = rranint()
+        thread_seeds(3,ithread) = rranint()
+END DO
+ithread = 0
+!$OMP PARALLEL PRIVATE(ithread)
+!$ ithread = OMP_GET_THREAD_NUM()
+s1 = thread_seeds(1,ithread)
+s2 = thread_seeds(2,ithread)
+s3 = thread_seeds(3,ithread)
+s4 = thread_seeds(4,ithread)
+s5 = thread_seeds(5,ithread)
+IF (IAND(s1,      -2_INT64) == 0) s1 = s1 - 8388607_INT64
+IF (IAND(s3,   -4096_INT64) == 0) s3 = s3 - 8388607_INT64
+!$OMP END PARALLEL
 RETURN
 END SUBROUTINE init_seeds
 
@@ -96,47 +122,30 @@ IF(rranf .GE. 1.0_DP) WRITE(logunit,*) 'rranf = 1.0'
 END FUNCTION rranf
 
 
-  ! Identical guts to rranf, but only return the seed.
-  ! NOTE: randomization of sign bit is explicitly tossed out.
-  INTEGER FUNCTION rranint()
-      USE Global_Variables, ONLY : iseed
+  INTEGER(KIND=INT64) FUNCTION rranint() 
 
-      ! LOCAL
-      INTEGER :: ib, ia, ibc, ida, isum, iff, ie, ix, iy, ix2, ix1
+        IMPLICIT NONE
 
-      ib= iseed/65536
-      ia= iseed - ib*65536
-      ibc= ib*63253
-      ida= ia*24301
-      isum= ibc - 2147483647 + ida
+        INTEGER (KIND=INT64) :: b
 
-      IF( isum .LE. 0 ) THEN
-          isum= isum + 2147483647
-      ELSE
-          isum= isum - 1
-      ENDIF
+        b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53_INT64)
+        s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+        b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
+        s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+        b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
+        s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+        b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
+        s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+        b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
+        s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
 
-      iff = isum/32768
+        rranint = IEOR( IEOR( IEOR( IEOR(s1,s2), s3), s4), s5)
 
-      ie = isum - iff*32768
-      ix = ie + ia
-      iy = 453816691 - 2283*ia
-      ix2 = ix/32768
-      ix1 = ix - 32768*ix2
-      iseed = ix1*65536 - 2147483647 + iy
-
-      IF( iseed .LE. 0 ) THEN
-          iseed= iseed + 2147483647
-      ELSE
-          iseed = iseed - 1
-      ENDIF
-
-      rranint = iseed
   END FUNCTION rranint
 
   INTEGER FUNCTION random_range(low, high)
-      INTEGER, INTENT(IN) :: low, high
-      INTEGER :: binsize, binlimit, rangesize, ranval
+      INTEGER (KIND=INT64), INTENT(IN) :: low, high
+      INTEGER (KIND=INT64) :: binsize, binlimit, rangesize, ranval
 
       rangesize = high - low + 1
 

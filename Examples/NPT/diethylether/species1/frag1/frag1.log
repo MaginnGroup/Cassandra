@@ -9,14 +9,21 @@
 **********************************Log File**************************************
 ********************************************************************************
 
+For any published work that uses Cassandra, cite the following reference:
+    Shah JK, Marin‐Rimoldi E, Mullen RG, Keene BP, Khan S,
+    Paluch AS, Rai N, Romanielo LL, Rosch TW, Yoo B, Maginn EJ.
+    Cassandra: An open source Monte Carlo package for molecular simulation.
+    Journal of Computational Chemistry. 2017, 38, 1727–1739.
+    http://dx.doi.org/10.1002/jcc.24807
+
 Run info
 ********************************************************************************
-version: Cassandra Development Version
+version: Cassandra Version 1.2.5
 inputfile: frag1.inp
 name of run: frag1
-date (mm/dd/yyyy): 03/03/2018
-time: 20:40:02
-machine: Matthews-MacBook-Pro.local
+date (mm/dd/yyyy): 09/02/2021
+time: 12:43:40
+machine: LAPTOP-IOABUAK5
 ********************************************************************************
 
 Verbose log
@@ -84,8 +91,8 @@ Production 1000 10
 Units  Steps                                                                    
 prop_freq  10                                                                   
 coord_freq   90                                                                 
-run          1100                                                               
-nequilsteps  100                                                                
+run          1100000                                                            
+nequilsteps  100000                                                             
                                                                                 
 # File_Info                                                                     
 frag1.dat                                                                       
@@ -184,11 +191,11 @@ Number of moves is :   1
 Simulation length info
 ********************************************************************************
 Thermodynamic quantities will be computed every        10 Steps     
-Coordinates will be written every                      90 Steps     
+Coordinates will be written to file every              90 Steps     
  movie header file is                  frag1.H
  movie_XYZ file is                     frag1.xyz
-The simulation will be run for                       1100 Steps     
-Number of equilibrium steps       100
+The simulation will be run for                    1100000 Steps     
+Number of equilibrium steps    100000
 Instantaneous values will be written every             10 Steps     
 ********************************************************************************
 
@@ -252,10 +259,10 @@ Energy of final configuration
 
  Energy components for box 1     kJ/mol-Extensive       Relative_Error
  ---------------------------------------------------------------------
- Total system energy                        2.042            0.320E-14
- Intra molecular energy                     2.042            0.320E-14
+ Total system energy                        1.340            0.509E-13
+ Intra molecular energy                     1.340            0.509E-13
    Bond energy                              0.000            0.000E+00
-   Bond angle energy                        2.042            0.266E-13
+   Bond angle energy                        1.340            0.126E-12
    Dihedral angle energy                    0.000            0.000E+00
    Improper angle energy                    0.000            0.000E+00
    Intra molecule vdw                       0.000            0.000E+00
@@ -275,7 +282,7 @@ Writing information for box  1
    Writing information for species  1
 
                 Move      Trials     Success   % Success
-   Atom Displacement        1100         652       59.27
+   Atom Displacement     1100000      605152       55.01
    ---------------------------------------------------------
 
 ********************************************************************************
@@ -295,6 +302,6 @@ Writing information for box  1
          0       Days
          0      Hours
          0    Minutes
-         0    Seconds
-         6         ms
+         3    Seconds
+       875         ms
 ********************************************************************************

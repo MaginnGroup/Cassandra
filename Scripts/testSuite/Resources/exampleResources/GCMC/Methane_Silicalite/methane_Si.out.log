@@ -9,14 +9,21 @@
 **********************************Log File**************************************
 ********************************************************************************
 
+For any published work that uses Cassandra, cite the following reference:
+    Shah JK, Marin‐Rimoldi E, Mullen RG, Keene BP, Khan S,
+    Paluch AS, Rai N, Romanielo LL, Rosch TW, Yoo B, Maginn EJ.
+    Cassandra: An open source Monte Carlo package for molecular simulation.
+    Journal of Computational Chemistry. 2017, 38, 1727–1739.
+    http://dx.doi.org/10.1002/jcc.24807
+
 Run info
 ********************************************************************************
-version: Cassandra Development Version
+version: Cassandra Version 1.2.5
 inputfile: methane_Si.inp
 name of run: methane_Si.out
-date (mm/dd/yyyy): 02/01/2018
-time: 16:50:28
-machine: Matthews-MacBook-Pro.local
+date (mm/dd/yyyy): 09/02/2021
+time: 13:33:54
+machine: LAPTOP-IOABUAK5
 ********************************************************************************
 
 Verbose log
@@ -45,7 +52,7 @@ gcmc
 lj cut_tail 13.0                                                                
                                                                                 
 # Seed_Info                                                                     
-86722316473 59009854321                                                         
+867223164 590098543                                                             
                                                                                 
 # Rcutoff_Low                                                                   
 1.0                                                                             
@@ -218,7 +225,7 @@ Initial configuration for box 1 will add molecules to configuration read from fi
 
 Seed info
 ********************************************************************************
-The starting seeds are:    822970553  -1119687823
+The starting seeds are:    867223164    590098543
 ********************************************************************************
 
 Temperature
@@ -251,7 +258,7 @@ Species     2
 Simulation length info
 ********************************************************************************
 Thermodynamic quantities will be computed every       400 Steps     
-Coordinates will be written every                    4000 Steps     
+Coordinates will be written to file every            4000 Steps     
  movie header file is                  methane_Si.out.H
  movie_XYZ file is                     methane_Si.out.xyz
 The simulation will be run for                       4000 Steps     
@@ -305,7 +312,7 @@ Compute total energy
 
  Energy components for box 1     kJ/mol-Extensive
  ---------------------------------------------------------------------
- Total system energy                    21364.665
+ Total system energy                    19497.870
  Intra molecular energy                     0.000
    Bond energy                              0.000
    Bond angle energy                        0.000
@@ -313,8 +320,8 @@ Compute total energy
    Improper angle energy                    0.000
    Intra molecule vdw                       0.000
    Intra molecule q                         0.000
- Inter molecular energy                 21364.665
-   Inter molecule vdw                   21647.194
+ Inter molecular energy                 19497.870
+   Inter molecule vdw                   19780.399
    Long range correction                 -282.529
    Inter molecule q                         0.000
  ---------------------------------------------------------------------
@@ -324,8 +331,8 @@ Compute total energy
 Run simulation
 ********************************************************************************
       Step       Move   Mol Spc Box  Success  MaxWidth
-      1528  translate         2   1  0.20000   0.80000
-      3015  translate         2   1  0.54833   0.87733
+      1545  translate         2   1  0.21500   0.86000
+      3113  translate         2   1  0.52333   0.90013
 ********************************************************************************
 
 Energy of final configuration
@@ -333,7 +340,7 @@ Energy of final configuration
 
  Energy components for box 1     kJ/mol-Extensive       Relative_Error
  ---------------------------------------------------------------------
- Total system energy                    17944.596            0.259E-15
+ Total system energy                    18074.875            0.103E-14
  Intra molecular energy                     0.000            0.000E+00
    Bond energy                              0.000            0.000E+00
    Bond angle energy                        0.000            0.000E+00
@@ -341,9 +348,9 @@ Energy of final configuration
    Improper angle energy                    0.000            0.000E+00
    Intra molecule vdw                       0.000            0.000E+00
    Intra molecule q                         0.000            0.000E+00
- Inter molecular energy                 17944.596            0.259E-15
-   Inter molecule vdw                   18229.160            0.230E-14
-   Long range correction                 -284.564           -0.000E+00
+ Inter molecular energy                 18074.875            0.103E-14
+   Inter molecule vdw                   18356.727            0.127E-15
+   Long range correction                 -281.852           -0.000E+00
    Inter molecule q                         0.000            0.000E+00
  ---------------------------------------------------------------------
 
@@ -364,18 +371,18 @@ Writing information for box  1
    Writing information for species  2
 
                 Move      Trials     Success   % Success
-           Translate        1582         644       40.71
-              Insert        1216         570       46.88
-              Delete        1202         564       46.92
+           Translate        1553         633       40.76
+              Insert        1219         595       48.81
+              Delete        1228         597       48.62
    ---------------------------------------------------------
 
 ********************************************************************************
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            1.311568 secs.
- Insertion time =              6.017920 secs.
- Deletion time =               5.271256 secs.
+ Translation time =            1.328125 secs.
+ Insertion time =              6.156250 secs.
+ Deletion time =               5.468750 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -390,5 +397,5 @@ Writing information for box  1
          0      Hours
          0    Minutes
         19    Seconds
-       415         ms
+       671         ms
 ********************************************************************************

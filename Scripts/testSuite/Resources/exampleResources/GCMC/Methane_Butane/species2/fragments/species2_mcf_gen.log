@@ -6,60 +6,69 @@
              \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                
                                                                                 
 ********************************************************************************
- 
+**********************************Log File**************************************
+********************************************************************************
+
+For any published work that uses Cassandra, cite the following reference:
+    Shah JK, Marin‐Rimoldi E, Mullen RG, Keene BP, Khan S,
+    Paluch AS, Rai N, Romanielo LL, Rosch TW, Yoo B, Maginn EJ.
+    Cassandra: An open source Monte Carlo package for molecular simulation.
+    Journal of Computational Chemistry. 2017, 38, 1727–1739.
+    http://dx.doi.org/10.1002/jcc.24807
+
 Run info
 ********************************************************************************
-version: Cassandra Version 1.2 20160720
+version: Cassandra Version 1.2.5
 inputfile: species2_mcf_gen.inp
 name of run: species2_mcf_gen
-date (mm/dd/yyyy): 07/26/2016
-time: 23:17:05
-machine: maginnfe.crc.nd.edu
+date (mm/dd/yyyy): 09/02/2021
+time: 12:53:35
+machine: LAPTOP-IOABUAK5
 ********************************************************************************
- 
+
 Verbose log
 ********************************************************************************
 Normal output to logfile
 ********************************************************************************
- 
+
 Simulation type
 ********************************************************************************
 MCF_Gen             
 ********************************************************************************
- 
+
 Copy input file
 ********************************************************************************
- # Run_Name
- species2_mcf_gen
- 
- # Sim_Type
- MCF_Gen
- 
- # Nbr_Species
- 1
- 
- # VDW_Style
- lj minimum_image
- 
- # Rcutoff_Low
- 1.0
- 
- # Molecule_Files
- ../../C4H10.mcf 50
- 
- # Box_Info
- 1
- CUBIC
- 30.0 30.0 30.0
- 
- END
+# Run_Name                                                                      
+species2_mcf_gen                                                                
+                                                                                
+# Sim_Type                                                                      
+MCF_Gen                                                                         
+                                                                                
+# Nbr_Species                                                                   
+1                                                                               
+                                                                                
+# VDW_Style                                                                     
+lj minimum_image                                                                
+                                                                                
+# Rcutoff_Low                                                                   
+1.0                                                                             
+                                                                                
+# Molecule_Files                                                                
+../../C4H10.mcf 50                                                              
+                                                                                
+# Box_Info                                                                      
+1                                                                               
+CUBIC                                                                           
+30.0 30.0 30.0                                                                  
+                                                                                
+END                                                                             
 ********************************************************************************
- 
+
 Number of species
 ********************************************************************************
 1
 ********************************************************************************
- 
+
 Box info
 ********************************************************************************
 Number of simulation boxes     1
@@ -70,7 +79,7 @@ Box 1 is CUBIC
  Distance between box faces    30.0000      30.0000      30.0000
  Box volume, A^3         27000.0000
 ********************************************************************************
- 
+
 Pair style
 ********************************************************************************
 VDW style used is:   LJ             in box:  1
@@ -83,14 +92,12 @@ Section "# Pair_Energy" is missing from the input file
 Section "# Mixing_Rule" is missing from the input file
  By default, using Lorentz-Berthelot
 ********************************************************************************
- 
+
 Molecule info
 ********************************************************************************
  Reading molecular connectivity information
  Species:            1
- Molecular connectivity file: 
- ../../C4H10.mcf                                                                
-                                          
+ Molecular connectivity file: ../../C4H10.mcf                                                                                                         
    4 atom(s) specified.
    3 bond(s) specified.
    2 angle(s) specified.
@@ -98,11 +105,11 @@ Molecule info
    0 improper(s) specified.
    2 fragment(s) specified.
    1 fragment bond(s) specified.
- 
+
  Species  Max molecules
  -------  -------------
       1             50
- 
+
  Species     1
  -------------------------------------------------------------------------------
  Atom parameters read
@@ -120,6 +127,6 @@ Molecule info
  Fragment info read
  -------------------------------------------------------------------------------
 ********************************************************************************
- 
+
  Finished generating fragments
  Exiting

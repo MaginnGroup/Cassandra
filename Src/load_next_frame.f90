@@ -12,6 +12,7 @@ SUBROUTINE Load_Next_Frame(end_reached)
         USE Simulation_Properties
         USE IO_Utilities
         USE Energy_Routines
+        !$ USE OMP_LIB
 
         IMPLICIT NONE
         
@@ -196,33 +197,37 @@ SUBROUTINE Load_Next_Frame(end_reached)
                 END IF
                 READ(this_unit,*)
 
+                this_lambda = 1.0_DP
                 ! Read in the coordinates of the molecules
                 DO is = 1, nspecies
                         locate_base = SUM(nmols(is,1:nbr_boxes))
 
                         DO im = 1, nmols_to_read(is,ibox)
-                                locate(im,is,ibox) = im + locate_base
-                                this_im = locate(im,is,ibox)
-                                molecule_list(this_im,is)%live = .TRUE.
-                                this_lambda = 1.0_DP
-                                ! By default all the molecules are normal
-                                molecule_list(this_im,is)%molecule_type = int_normal
-
+                                this_im = im + locate_base
+                                locate(im,is,ibox) = this_im
                                 DO ia = 1, natoms(is)
                                         READ(this_unit,*)this_element, &
                                                 atom_list(ia,this_im,is)%rxp, &
                                                 atom_list(ia,this_im,is)%ryp, &
                                                 atom_list(ia,this_im,is)%rzp
-                                        ! set the frac and exist flags for this atom
-                                        molecule_list(this_im,is)%frac = this_lambda
+                                        ! set the exist flag for this atom
                                         atom_list(ia,this_im,is)%exist = .TRUE.
 
                                 END DO
-
+                        END DO
+                        !$OMP PARALLEL DO DEFAULT(SHARED) SCHEDULE(DYNAMIC) &
+                        !$OMP PRIVATE(xcom_old, ycom_old, zcom_old, xcom_new, ycom_new, zcom_new)
+                        DO this_im = (locate_base+1), (locate_base+nmols_to_read(is,ibox))
+                                molecule_list(this_im,is)%live = .TRUE.
+                                ! By default all the molecules are normal
+                                molecule_list(this_im,is)%molecule_type = int_normal
+                                molecule_list(this_im,is)%frac = this_lambda
                                 ! assign the molecule the box id
                                 molecule_list(this_im,is)%which_box = ibox
                                 ! ensure that the molecular COM is inside the central simulation box
+                                ! Calculate COM and distance from the outermost atom to the COM
                                 CALL Get_COM(this_im,is)
+                                CALL Compute_Max_Com_Distance(this_im,is)
 
                                 xcom_old = molecule_list(this_im,is)%xcom
                                 ycom_old = molecule_list(this_im,is)%ycom
@@ -244,24 +249,12 @@ SUBROUTINE Load_Next_Frame(end_reached)
                                         atom_list(1:natoms(is),this_im,is)%ryp + ycom_new - ycom_old
                                 atom_list(1:natoms(is),this_im,is)%rzp = &
                                         atom_list(1:natoms(is),this_im,is)%rzp + zcom_new - zcom_old
-
-                                nmols(is,ibox) = nmols(is,ibox) + 1
-
                         END DO
+                        !$OMP END PARALLEL DO
+                        nmols(is,ibox) = nmols(is,ibox) + nmols_to_read(is,ibox)
                 END DO
 
                 CALL Get_Internal_Coords
-
-                ! Calculate COM and distance from the outermost atom to the COM
-
-                DO is = 1, nspecies
-                        DO im = 1, nmols(is,ibox)
-                                this_im = locate(im,is,ibox)
-                                IF( .NOT. molecule_list(this_im,is)%live) CYCLE
-                                CALL Get_COM(this_im,is)
-                                CALL Compute_Max_Com_Distance(this_im,is)
-                        END DO
-                END DO
 
                 IF (int_vdw_sum_style(ibox) == vdw_cut_tail) THEN 
                         CALL Compute_Beads(ibox)

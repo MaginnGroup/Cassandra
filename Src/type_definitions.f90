@@ -156,7 +156,7 @@ MODULE Type_Definitions
      ! This variable records the maximum distance of any psuedo atom from its
      ! COM. This is used to speed up energy calculations.
 
-     REAL(DP) :: max_dcom, max_dcom_old
+     REAL(DP) :: max_dcom, max_dcom_old, min_dcom
 
 
 

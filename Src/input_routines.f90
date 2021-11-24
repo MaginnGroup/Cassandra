@@ -44,6 +44,7 @@ MODULE Input_Routines
   USE IO_Utilities
   USE File_Names
   USE Type_Definitions
+  !$ USE OMP_LIB
 
 
   IMPLICIT NONE
@@ -5254,10 +5255,13 @@ SUBROUTINE Get_Widom_Info
         INTEGER :: i_unit
 
         CHARACTER(STRING_LEN) :: line_string,line_array(60)
-        CHARACTER(20) :: extension
+        CHARACTER(20) :: extension, extension2
 
         line_nbr = 0
         widom_flag = .FALSE.
+        widom_active = .FALSE.
+        widom_locate = 0
+        widom_species = 0
         is = 0
         ibox = 0
         i_unit = 0
@@ -5298,7 +5302,11 @@ SUBROUTINE Get_Widom_Info
                         ALLOCATE(wprop_file_unit(nspecies,nbr_boxes))
                         ALLOCATE(wprop_filenames(nspecies,nbr_boxes))
                         ALLOCATE(first_open_wprop(nspecies,nbr_boxes))
+                        ALLOCATE(wprop2_file_unit(nspecies,nbr_boxes))
+                        ALLOCATE(wprop2_filenames(nspecies,nbr_boxes))
+                        ALLOCATE(first_open_wprop2(nspecies,nbr_boxes))
                         first_open_wprop(:,:) = .TRUE.
+                        first_open_wprop2(:,:) = .TRUE.
                         DO is = 1,nspecies
                                 ALLOCATE(species_list(is)%test_particle(1:nbr_boxes))
                                 ALLOCATE(species_list(is)%widom_sum(1:nbr_boxes))
@@ -5334,12 +5342,16 @@ SUBROUTINE Get_Widom_Info
                                 tp_correction(is) = 1
                                 i_unit = i_unit + 1
                                 wprop_file_unit(is,ibox) = wprop_file_unit_base + i_unit
+                                wprop2_file_unit(is,ibox) = wprop2_file_unit_base + i_unit
                                 IF (nbr_boxes == 1) THEN
                                         extension = '.spec' // TRIM(Int_To_String(is)) // '.wprp'
+                                        extension2 = '.spec' // TRIM(Int_To_String(is)) // '.wprp2'
                                 ELSE
                                         extension = '.spec' // TRIM(Int_To_String(is)) // '.box' // TRIM(Int_To_String(ibox)) // '.wprp'
+                                        extension2 = '.spec' // TRIM(Int_To_String(is)) // '.box' // TRIM(Int_To_String(ibox)) // '.wprp2'
                                 END IF
                                 CALL Name_Files(run_name,extension,wprop_filenames(is,ibox))
+                                CALL Name_Files(run_name,extension2,wprop2_filenames(is,ibox))
                         END IF
                         IF (ibox == nbr_boxes) EXIT
                 END DO
