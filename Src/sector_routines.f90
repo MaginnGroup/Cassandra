@@ -126,12 +126,14 @@ CONTAINS
           INTEGER :: this_locate, i_dim
           INTEGER :: xi, yi, zi
           INTEGER(3) :: ci, cell_coords
-          REAL(DP) :: xp, yp, zp, cw(3)
+          REAL(DP) :: xp, yp, zp, cp(3)
           LOGICAL :: overlap_flag
           !
           overlap_flag = .TRUE.
-          CALL Minimum_Image_Separation(this_box,xp,yp,zp,cw(1),cw(2),cw(3))
-          cell_coords = IDNINT(cw*cell_length_inv(:,ibox))
+          cp(1) = xp
+          cp(2) = yp
+          cp(3) = zp
+          cell_coords = IDNINT(cp*cell_length_inv(:,ibox))
           DO xi = cell_coords(1)-1, cell_coords(1)+1
                 IF (xi < -sectorbound(1, this_box)) THEN
                         ci(1) = xi + length_cells(1, this_box)
