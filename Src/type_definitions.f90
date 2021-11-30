@@ -206,6 +206,7 @@ MODULE Type_Definitions
      REAL(DP) :: rxp, ryp, rzp
      REAL(DP) :: rxp_nls, ryp_nls, rzp_nls  ! The starting positions for the neighbor list
      REAL(DP) :: rxp_old, ryp_old, rzp_old
+     INTEGER :: ci(3) ! the integer coordinates of the cell containing this atom
      LOGICAL :: exist
 
   END TYPE Atom_Class
@@ -610,10 +611,5 @@ MODULE Type_Definitions
      REAL(DP) :: exp_dE
      REAL(DP) :: exp_dE_ratio
   END TYPE Rotation_Class
-
-  TYPE ID_Class
-          ! This class holds the species index, molecule index, and atom index of an atom in a sector
-          INTEGER :: spec, mol, atom
-  END TYPE ID_Class
 
 END MODULE Type_Definitions

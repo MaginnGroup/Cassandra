@@ -61,6 +61,7 @@ MODULE Fragment_Growth
   USE Energy_Routines
   USE Random_Generators
   USE Read_Write_Checkpoint
+  USE Sector_Routines
 
   IMPLICIT NONE
 
@@ -368,7 +369,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   ELSE
 
      ! Loop over the multiple trial coordinates
-     DO itrial = 1, kappa_ins
+     trial_loop: DO itrial = 1, kappa_ins
 
         IF ( del_flag .AND. (itrial == 1 )) THEN
         
@@ -449,7 +450,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
         END IF
 
         ! Place the fragment (and all its atoms) at the trial coordinate
-        DO i = 1, frag_list(frag_start,is)%natoms
+        atom_loop: DO i = 1, frag_list(frag_start,is)%natoms
         
            this_atom = frag_list(frag_start,is)%atoms(i)
         
@@ -459,12 +460,23 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                                    rtrial(this_atom,0)%ryp - ycom_old + y_anchor
            these_atoms(this_atom)%rzp = &
                                    rtrial(this_atom,0)%rzp - zcom_old + z_anchor
+           IF (l_sectors .AND. widom_active) THEN
+                   IF (check_overlap(this_atom,this_im,is)) THEN
+                           IF (itrial > 1) THEN
+                                   weight(itrial) = weight(itrial-1)
+                           ELSE
+                                   weight(itrial) = 0.0_DP
+                           END IF
+                           overlap_trial(itrial) = .TRUE.
+                           CYCLE trial_loop
+                   END IF
+           END IF
            
            rtrial(this_atom,itrial)%rxp = these_atoms(this_atom)%rxp
            rtrial(this_atom,itrial)%ryp = these_atoms(this_atom)%ryp
            rtrial(this_atom,itrial)%rzp = these_atoms(this_atom)%rzp
         
-        END DO
+        END DO atom_loop
 
         this_molecule%xcom = x_anchor
         this_molecule%ycom = y_anchor
@@ -524,7 +536,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
         ! Store the cumulative weight of each trial
         IF (itrial > 1 ) weight(itrial) = weight(itrial-1) + weight(itrial)
      
-     END DO
+     END DO trial_loop
 
 
      ! Reject the move if all trials tripped overlap
@@ -1847,7 +1859,7 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
      nrg_dihed(:) = 0.0_DP
      overlap_trial(:) = .FALSE.
 
-     DO ii = 1, kappa_dih
+     trial_loop: DO ii = 1, kappa_dih
 
         ! Reload the coordinates for the atoms of this fragment
         DO j = 1, frag_list(ifrag,is)%natoms
@@ -1861,7 +1873,19 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
                  these_atoms(this_atom)%ryp = &
                     config_temp_list(this_atom,ii)%ryp 
                  these_atoms(this_atom)%rzp = &
-                    config_temp_list(this_atom,ii)%rzp  
+                    config_temp_list(this_atom,ii)%rzp
+                 IF (l_sectors .AND. widom_active) THEN
+                         IF (check_overlap(this_atom,this_im,is)) THEN
+                                IF (ii > 1) THEN
+                                        weight(ii) = weight(ii-1)
+                                ELSE
+                                        weight(ii) = 0.0_DP
+                                END IF
+                                overlap_trial(ii) = .TRUE.
+                                IF (ii == kappa_dih) these_atoms(atom_id(1:nfrag_atoms))%exist = .TRUE.
+                                CYCLE trial_loop
+                         END IF
+                 END IF
               END IF
            END IF
         END DO
@@ -1961,7 +1985,7 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
 !        WRITE(*,*) 'weight',overlap, ii, nrg_kBT
 !        WRITE(*,*) 'energy', e_prev, nrg(ii)
            
-     END DO
+     END DO trial_loop
 
      !**************************************************************************
      ! Step 5) Select a trial dihedral using the weighted probabilities

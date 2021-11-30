@@ -5368,7 +5368,7 @@ END SUBROUTINE Get_Widom_Info
 
 SUBROUTINE Get_Lookup_Info
         INTEGER :: line_nbr, ierr, max_atoms
-        CHARACTER(120) :: line_string
+        CHARACTER(STRING_LEN) :: line_string
         REWIND(inputunit)
         line_nbr = 0
         line_string = ""
@@ -5394,16 +5394,17 @@ SUBROUTINE Get_Lookup_Info
                                 END IF
                                 IF (line_string(1:1) /= '!') EXIT
                         END DO
-                        IF (.NOT. (TRIM(ADJUSTL(line_string))(1:4) == 'TRUE' .OR. &
-                                TRIM(ADJUSTL(line_string))(1:4) == 'true' .OR. &
-                                TRIM(ADJUSTL(line_string))(1:4) == 'True')) RETURN
+                        IF (.NOT. (line_string(1:4) == 'TRUE' .OR. &
+                                line_string(1:4) == 'true' .OR. &
+                                line_string(1:4) == 'True')) RETURN
                         l_sectors = .TRUE.
-                        rcut_low_inv = 1.0_DP/rcut_low
                         max_atoms = DOT_PRODUCT(max_molecules, natoms)
                         ALLOCATE(sectorbound(3,nbr_boxes))
                         ALLOCATE(length_cells(3,nbr_boxes))
+                        ALLOCATE(cell_length_inv(3,nbr_boxes))
                         ! The number of populated sectors cannot exceed the number of atoms
-                        ALLOCATE(sector_atoms(15, max_atoms))
+                        ALLOCATE(sector_atoms(15,max_atoms,3))
+                        ALLOCATE(sector_n_atoms(max_atoms))
                         sectorbound = 0
                         sectormaxbound = 0
                         length_cells = 0

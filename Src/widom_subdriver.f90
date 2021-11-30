@@ -39,6 +39,7 @@ SUBROUTINE Widom_Subdriver
   !*****************************************************************************
 
   USE Global_Variables
+  USE Sector_Routines
 
   !*****************************************************************************
   ! Declare and Initialize Variables
@@ -50,6 +51,9 @@ SUBROUTINE Widom_Subdriver
   ! Local declarations
   INTEGER :: is, ibox
   REAL(DP) :: widom_sum, widom_avg
+  LOGICAL :: need_init
+  need_init = .TRUE.
+  IF (.NOT. l_sectors) need_init = .FALSE.
   ! Loop over all species
   DO is = 1, nspecies
         ! Loop over all boxes
@@ -59,6 +63,10 @@ SUBROUTINE Widom_Subdriver
                 ! move on to next box if the step number isn't divisible by the widom_interval for this species.
                 ! these are separate IF statements because we don't want to divide by zero
                 IF (MOD(i_mcstep,species_list(is)%widom_interval(ibox)) .NE. 0) CYCLE
+                IF (need_init) THEN
+                        CALL Sector_Setup
+                        need_init = .FALSE.
+                END IF
                 CALL Widom_Insert(is,ibox,widom_sum)
                 species_list(is)%widom_sum(ibox) = species_list(is)%widom_sum(ibox) + widom_sum
                 widom_avg = widom_sum / species_list(is)%insertions_in_step(ibox)

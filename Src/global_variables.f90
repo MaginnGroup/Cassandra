@@ -600,21 +600,21 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   LOGICAL :: need_energy
 
   !!!! Sectors
-  ! sector_atoms is indexed by (atom index within sector, sector ID)
-  TYPE(ID_Class), DIMENSION(:,:), ALLOCATABLE :: sector_atoms
+  ! sector_atoms is indexed by (atom index within sector, sector index)
+  INTEGER, DIMENSION(:,:,:), ALLOCATABLE, TARGET :: sector_atoms
   ! sector_index_map is indexed by (x index, y index, z index, box index) to get sector index
   INTEGER, DIMENSION(:,:,:,:), ALLOCATABLE :: sector_index_map
-  ! sector_ID_list is indexed by (sector index, box index) to get sector ID
-  INTEGER, DIMENSION(:,:), ALLOCATABLE :: sector_ID_list
-  ! sector_n_atoms is indexed by (sector ID) to get number of atoms in a sector
+  ! sector_n_atoms is indexed by (sector index) to get number of atoms in a sector
   INTEGER, DIMENSION(:), ALLOCATABLE :: sector_n_atoms
-  ! sector_has_atoms is indexed by (sector index, box index)
-  LOGICAL, DIMENSION(:,:), ALLOCATABLE :: sector_has_atoms
+  ! sector_has_atoms is indexed by (x index, y index, z index, box index)
+  LOGICAL, DIMENSION(:,:,:,:), ALLOCATABLE :: sector_has_atoms
 
   LOGICAL :: l_sectors
-  ! sectorbound and length_cells are indexed by (box dimension, box index)
+  ! sectorbound, length_cells, & cell_length_inv are indexed by (box dimension, box index)
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: sectorbound
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: length_cells
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: cell_length_inv
+
   INTEGER, DIMENSION(3) :: sectormaxbound
 
   INTEGER :: n_occ_sectors
