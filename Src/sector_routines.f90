@@ -72,9 +72,10 @@ CONTAINS
                           -sectormaxbound(3):sectormaxbound(3), &
                           nbr_boxes))
           END IF
+          !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
           n_occ_sectors = 0
           sector_has_atoms = .FALSE.
-          !sector_n_atoms = 0
+          !$OMP END PARALLEL WORKSHARE
           ! place atoms in sectors
           BoxLoop:DO ibox = 1, nbr_boxes
                 SpeciesLoop:DO is = 1, nspecies
@@ -123,9 +124,6 @@ CONTAINS
                         END DO MoleculeLoop2
                 END DO SpeciesLoop
           END DO BoxLoop
-
-
-
   END SUBROUTINE Sector_Setup
 
   LOGICAL FUNCTION check_overlap(ia, im, is)
