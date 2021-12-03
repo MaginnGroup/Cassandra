@@ -35,6 +35,8 @@ SUBROUTINE Pregen_Control
         ! Determine whether widom insertions are done and get relevant details if they are
         CALL Get_Widom_Info
 
+        CALL Get_Lookup_Info
+
         ! Load molecular connectivity and force field parameters.  Note that Get_Nspecies
         ! must be called before this routine
         CALL Get_Molecule_Info
