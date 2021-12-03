@@ -5295,6 +5295,7 @@ SUBROUTINE Get_Widom_Info
                                 line_nbr = line_nbr - 1
                         END IF
                         widom_flag = .TRUE.
+                        CALL Get_Lookup_Info
                         IF(.NOT. ALLOCATED(ntrials)) ALLOCATE(ntrials(nspecies,nbr_boxes))
                         IF(.NOT. ALLOCATED(overlap_counter)) ALLOCATE(overlap_counter(nspecies,nbr_boxes))
                         ntrials(:,:)%widom = 0
