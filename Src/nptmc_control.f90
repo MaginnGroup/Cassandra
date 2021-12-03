@@ -91,8 +91,6 @@ SUBROUTINE NPTMC_Control
   ! Determine whether widom insertions are done and get relevant details if they are
   CALL Get_Widom_Info
 
-  CALL Get_Lookup_Info
-
 
   ! Load molecular conectivity and force field paramters. Note that Get_Nspecies 
   ! must be called before this routine.  
@@ -155,5 +153,7 @@ SUBROUTINE NPTMC_Control
   ! Determine what dihedral angles a given atom participates and how many such
   ! angles exist
   CALL Get_Dihedral_Atoms_To_Place  
+
+  CALL Get_Lookup_Info
 
 END SUBROUTINE NPTMC_Control

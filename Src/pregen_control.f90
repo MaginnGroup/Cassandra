@@ -35,8 +35,6 @@ SUBROUTINE Pregen_Control
         ! Determine whether widom insertions are done and get relevant details if they are
         CALL Get_Widom_Info
 
-        CALL Get_Lookup_Info
-
         ! Load molecular connectivity and force field parameters.  Note that Get_Nspecies
         ! must be called before this routine
         CALL Get_Molecule_Info
@@ -93,10 +91,7 @@ SUBROUTINE Pregen_Control
         ! Connect to pregenerated trajectory files and get other related settings, if any
         CALL Get_Pregen_Info
 
-
-
-
-
+        CALL Get_Lookup_Info
         
 
 END SUBROUTINE Pregen_Control
