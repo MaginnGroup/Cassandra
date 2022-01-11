@@ -73,9 +73,14 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
   REAL(DP) :: widom_prefactor, widom_var_exp, widom_sum
   REAL(DP) :: E_recip_in, lrc_diff, E_inter_constant
   REAL(DP) :: subinterval_sums(100)
+  REAL(DP) :: noncbmc_time_e, noncbmc_time_s, noncbmc_time
+  LOGICAL :: omp_flag
 
 
   LOGICAL :: inter_overlap, cbmc_overlap, intra_overlap
+  omp_flag = .FALSE.
+  !$ omp_flag = .TRUE.
+  noncbmc_time = 0.0_DP
 
 
   this_lambda = 1.0_DP
@@ -139,7 +144,8 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
   !$OMP PRIVATE(ln_pseq, ln_pbias, E_ring_frag, inter_overlap, cbmc_overlap, intra_overlap, i_interval) &
   !$OMP PRIVATE(widom_var_exp, E_inter_qq, E_periodic_qq, E_intra_qq, E_intra_vdw, E_inter_vdw, dE_frag) &
   !$OMP PRIVATE(E_bond, E_angle, E_dihedral, E_improper, dE_intra, dE_inter, E_reciprocal, frag_order) &
-  !$OMP REDUCTION(+:widom_sum,n_overlaps, subinterval_sums)
+  !$OMP PRIVATE(noncbmc_time_e,noncbmc_time_s) &
+  !$OMP REDUCTION(+:widom_sum,n_overlaps, subinterval_sums, noncbmc_time)
   IF (ALLOCATED(widom_atoms)) DEALLOCATE(widom_atoms)
   ALLOCATE(widom_atoms(natoms(is)))
   widom_molecule = molecule_list(widom_locate,is)
@@ -198,6 +204,8 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
           END IF
 
           IF (.NOT. cbmc_overlap) THEN
+            IF (.NOT. omp_flag) CALL cpu_time(noncbmc_time_s)
+            !$ noncbmc_time_s = omp_get_wtime()
 
             ! Molecule COM may be outside the box boundary if grown via CBMC, so wrap
             ! the molecule coordinates back in the box (if needed)
@@ -220,6 +228,10 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
                             E_intra_vdw,E_intra_qq,E_periodic_qq,intra_overlap)
                     E_inter_qq = E_inter_qq + E_periodic_qq
             END IF
+
+            IF (.NOT. omp_flag) CALL cpu_time(noncbmc_time_e)
+            !$ noncbmc_time_e = omp_get_wtime()
+            noncbmc_time = noncbmc_time + (noncbmc_time_e - noncbmc_time_s)
          
           END IF
 
@@ -302,6 +314,8 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
 
 
   ntrials(is,ibox)%widom = ntrials(is,ibox)%widom + insertions_in_step
+
+  WRITE(*,*) noncbmc_time
 
 END SUBROUTINE Widom_Insert
 !*******************************************************************************

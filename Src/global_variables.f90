@@ -613,7 +613,7 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   ! sectorbound, length_cells, & cell_length_inv are indexed by (box dimension, box index)
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: sectorbound
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: length_cells
-  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: cell_length_inv
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: cell_length_inv, cell_length
 
   INTEGER, DIMENSION(3) :: sectormaxbound
 
@@ -622,7 +622,25 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   TYPE(Molecule_Class), TARGET :: widom_molecule
   TYPE(Atom_Class), ALLOCATABLE, DIMENSION(:), TARGET :: widom_atoms
 
-  !$OMP THREADPRIVATE(widom_molecule, widom_atoms, cbmc_flag)
+  INTEGER(KIND=INT64) :: n_clo, n_not_clo, n_nrg_overlap
+  REAL(DP) :: cell_list_time, normal_overlap_time, non_overlap_time, nrg_overlap_time
+
+  INTEGER, DIMENSION(:,:), ALLOCATABLE, TARGET :: cbmcrange_cells, cutrange_cells
+  LOGICAL, DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: cbmc_mask, cut_mask
+
+  INTEGER, DIMENSION(:,:), ALLOCATABLE, TARGET :: ci_grid
+  INTEGER, DIMENSION(:), ALLOCATABLE, TARGET :: cell_index_vector
+  LOGICAL, DIMENSION(:,:,:), ALLOCATABLE, TARGET :: filtered_mask_super
+
+  INTEGER, DIMENSION(:,:), ALLOCATABLE, TARGET :: cut_yb, cbmc_yb
+  INTEGER, DIMENSION(:,:,:), ALLOCATABLE, TARGET :: cut_zb, cbmc_zb
+
+  !$OMP THREADPRIVATE(ci_grid,cell_index_vector,filtered_mask_super)
+
+
+  !$OMP THREADPRIVATE(cell_list_time, normal_overlap_time, non_overlap_time, nrg_overlap_time)
+
+  !$OMP THREADPRIVATE(widom_molecule, widom_atoms, cbmc_flag, n_clo, n_not_clo, n_nrg_overlap)
 
 
 END MODULE Global_Variables

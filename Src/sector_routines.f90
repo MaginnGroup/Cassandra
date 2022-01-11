@@ -42,9 +42,14 @@ CONTAINS
           INTEGER :: i_sector, ci(3), dx, dy, dz, xshift, yshift, zshift, nsec_old, nsec, secind
           INTEGER :: sector_ID
           INTEGER :: i, ibox, is, imol, im, ia
-          INTEGER :: sector_atom_ID(3)
+          INTEGER, DIMENSION(3) :: sector_atom_ID
           TYPE(Atom_Class), POINTER :: atom_ptr
           REAL(DP) :: xp, yp, zp, cp(3)
+          INTEGER, DIMENSION(3,nbr_boxes) :: cbmc_truth_cube_bound, cut_truth_cube_bound
+          INTEGER :: xi, yi, zi, cim(3), cbmc_maxrange(3), cut_maxrange(3), ci_grid_length
+          INTEGER, DIMENSION(:), ALLOCATABLE :: xi_pm, yi_pm, zi_pm
+          REAL(DP), DIMENSION(nbr_boxes) :: rcut_max, rcut_max_sq, rcut_cbmc_sq
+          INTEGER :: dummy
 
           
           sectorbound_old = sectorbound
@@ -58,6 +63,200 @@ CONTAINS
                           sectorbound(i,ibox) = length_cells(i,ibox)/2
                 END DO
           END DO
+          cell_length = 1.0_DP / cell_length_inv
+          rcut_cbmc_sq = rcut_cbmc * rcut_cbmc
+          IF (.NOT. ALLOCATED(cbmcrange_cells)) ALLOCATE(cbmcrange_cells(3,nbr_boxes))
+          IF (.NOT. ALLOCATED(cutrange_cells)) ALLOCATE(cutrange_cells(3,nbr_boxes))
+          DO ibox = 1, nbr_boxes
+                cbmcrange_cells(:,ibox) = CEILING(rcut_cbmc(ibox)*cell_length_inv(:,ibox))
+                cbmc_truth_cube_bound(:,ibox) = CEILING(rcut_cbmc(ibox)/DSQRT(3.0_DP)*cell_length_inv(:,ibox))
+          END DO
+          cbmc_maxrange = MAXVAL(cbmcrange_cells, 2)
+          IF (ALLOCATED(cbmc_mask)) DEALLOCATE(cbmc_mask)
+          ALLOCATE(cbmc_mask(-cbmc_maxrange(1):cbmc_maxrange(1), &
+                  -cbmc_maxrange(2):cbmc_maxrange(2), &
+                  -cbmc_maxrange(3):cbmc_maxrange(3), &
+                  nbr_boxes))
+          !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+          cbmc_mask = .FALSE.
+          !$OMP END PARALLEL WORKSHARE
+          DO ibox = 1, nbr_boxes
+                !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+                cbmc_mask(-cbmc_truth_cube_bound(1,ibox):cbmc_truth_cube_bound(1,ibox), &
+                        -cbmc_truth_cube_bound(2,ibox):cbmc_truth_cube_bound(2,ibox), &
+                        -cbmc_truth_cube_bound(3,ibox):cbmc_truth_cube_bound(3,ibox), &
+                        ibox) = .TRUE.
+                !$OMP END PARALLEL WORKSHARE
+                DO xi = 0, cbmcrange_cells(1,ibox)
+                        IF (xi == 0) THEN
+                                IF (ALLOCATED(xi_pm)) DEALLOCATE(xi_pm)
+                                ALLOCATE(xi_pm(1))
+                                xi_pm(1) = xi
+                        ELSE IF (xi == 1) THEN
+                                IF (ALLOCATED(xi_pm)) DEALLOCATE(xi_pm)
+                                ALLOCATE(xi_pm(2))
+                                xi_pm = (/-xi,xi/)
+                        ELSE
+                                xi_pm = (/-xi,xi/)
+                        END IF
+                        cim(1) = MAX(0, xi-1) * cell_length(1,ibox)
+                        DO yi = 0, cbmcrange_cells(2,ibox)
+                                IF (yi == 0) THEN
+                                        IF (ALLOCATED(yi_pm)) DEALLOCATE(yi_pm)
+                                        ALLOCATE(yi_pm(1))
+                                        yi_pm(1) = yi
+                                ELSE IF (yi == 1) THEN
+                                        IF (ALLOCATED(yi_pm)) DEALLOCATE(yi_pm)
+                                        ALLOCATE(yi_pm(2))
+                                        yi_pm = (/-yi,yi/)
+                                ELSE
+                                        yi_pm = (/-yi,yi/)
+                                END IF
+                                cim(2) = MAX(0, yi-1) * cell_length(2,ibox)
+                                DO zi = 0, cbmcrange_cells(3,ibox)
+                                        IF (cbmc_mask(xi,yi,zi,ibox)) CYCLE
+                                        IF (zi == 0) THEN
+                                                IF (ALLOCATED(zi_pm)) DEALLOCATE(zi_pm)
+                                                ALLOCATE(zi_pm(1))
+                                                zi_pm(1) = zi
+                                        ELSE IF (zi == 1) THEN
+                                                IF (ALLOCATED(zi_pm)) DEALLOCATE(zi_pm)
+                                                ALLOCATE(zi_pm(2))
+                                                zi_pm = (/-zi,zi/)
+                                        ELSE
+                                                zi_pm = (/-zi,zi/)
+                                        END IF
+                                        cim(3) = MAX(0, zi-1) * cell_length(3,ibox)
+                                        IF (DOT_PRODUCT(cim,cim) < rcut_cbmc_sq(ibox)) cbmc_mask(xi_pm,yi_pm,zi_pm,ibox) = .TRUE.
+                                END DO
+                        END DO
+                END DO
+          END DO
+
+          rcut_max = MAX(rcut_vdw,rcut_coul)
+          rcut_max_sq = rcut_max * rcut_max
+          DO ibox = 1, nbr_boxes
+                cutrange_cells(:,ibox) = CEILING(rcut_max(ibox)*cell_length_inv(:,ibox))
+                cut_truth_cube_bound(:,ibox) = CEILING(rcut_max(ibox)/DSQRT(3.0_DP)*cell_length_inv(:,ibox))
+          END DO
+          cut_maxrange = MAXVAL(cutrange_cells, 2)
+          IF (ALLOCATED(cut_mask)) DEALLOCATE(cut_mask)
+          ALLOCATE(cut_mask(-cut_maxrange(1):cut_maxrange(1), &
+                  -cut_maxrange(2):cut_maxrange(2), &
+                  -cut_maxrange(3):cut_maxrange(3), &
+                  nbr_boxes))
+          IF (ALLOCATED(cut_yb)) DEALLOCATE(cut_yb)
+          ALLOCATE(cut_yb(nbr_boxes, &
+                  -cut_maxrange(1):cut_maxrange(1)))
+          IF (ALLOCATED(cut_zb)) DEALLOCATE(cut_zb)
+          ALLOCATE(cut_zb(nbr_boxes, &
+                  -cut_maxrange(1):cut_maxrange(1), &
+                  -cut_maxrange(2):cut_maxrange(2)))
+          IF (ALLOCATED(cbmc_yb)) DEALLOCATE(cbmc_yb)
+          ALLOCATE(cbmc_yb(nbr_boxes, &
+                  -cbmc_maxrange(1):cbmc_maxrange(1)))
+          IF (ALLOCATED(cbmc_zb)) DEALLOCATE(cbmc_zb)
+          ALLOCATE(cbmc_zb(nbr_boxes, &
+                  -cbmc_maxrange(1):cbmc_maxrange(1), &
+                  -cbmc_maxrange(2):cbmc_maxrange(2)))
+          !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+          cut_mask = .FALSE.
+          !$OMP END PARALLEL WORKSHARE
+          DO ibox = 1, nbr_boxes
+                !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+                cut_mask(-cut_truth_cube_bound(1,ibox):cut_truth_cube_bound(1,ibox), &
+                        -cut_truth_cube_bound(2,ibox):cut_truth_cube_bound(2,ibox), &
+                        -cut_truth_cube_bound(3,ibox):cut_truth_cube_bound(3,ibox), &
+                        ibox) = .TRUE.
+                !$OMP END PARALLEL WORKSHARE
+                DO xi = 0, cutrange_cells(1,ibox)
+                        IF (xi == 0) THEN
+                                IF (ALLOCATED(xi_pm)) DEALLOCATE(xi_pm)
+                                ALLOCATE(xi_pm(1))
+                                xi_pm(1) = xi
+                        ELSE IF (xi == 1) THEN
+                                IF (ALLOCATED(xi_pm)) DEALLOCATE(xi_pm)
+                                ALLOCATE(xi_pm(2))
+                                xi_pm = (/-xi,xi/)
+                        ELSE
+                                xi_pm = (/-xi,xi/)
+                        END IF
+                        cim(1) = MAX(0, xi-1) * cell_length(1,ibox)
+                        DO yi = 0, cutrange_cells(2,ibox)
+                                IF (yi == 0) THEN
+                                        IF (ALLOCATED(yi_pm)) DEALLOCATE(yi_pm)
+                                        ALLOCATE(yi_pm(1))
+                                        yi_pm(1) = yi
+                                ELSE IF (yi == 1) THEN
+                                        IF (ALLOCATED(yi_pm)) DEALLOCATE(yi_pm)
+                                        ALLOCATE(yi_pm(2))
+                                        yi_pm = (/-yi,yi/)
+                                ELSE
+                                        yi_pm = (/-yi,yi/)
+                                END IF
+                                cim(2) = MAX(0, yi-1) * cell_length(2,ibox)
+                                DO zi = 0, cutrange_cells(3,ibox)
+                                        IF (cut_mask(xi,yi,zi,ibox)) CYCLE
+                                        IF (zi == 0) THEN
+                                                IF (ALLOCATED(zi_pm)) DEALLOCATE(zi_pm)
+                                                ALLOCATE(zi_pm(1))
+                                                zi_pm(1) = zi
+                                        ELSE IF (zi == 1) THEN
+                                                IF (ALLOCATED(zi_pm)) DEALLOCATE(zi_pm)
+                                                ALLOCATE(zi_pm(2))
+                                                zi_pm = (/-zi,zi/)
+                                        ELSE
+                                                zi_pm = (/-zi,zi/)
+                                        END IF
+                                        cim(3) = MAX(0, zi-1) * cell_length(3,ibox)
+                                        IF (DOT_PRODUCT(cim,cim) < rcut_max_sq(ibox)) cut_mask(xi_pm,yi_pm,zi_pm,ibox) = .TRUE.
+                                END DO
+                        END DO
+                END DO
+                DO xi = -cutrange_cells(1,ibox), cutrange_cells(1,ibox)
+                      dummy = 0
+                      DO WHILE (cut_mask(xi,dummy,0,ibox) .AND. dummy .LE. cutrange_cells(2,ibox))
+                              dummy = dummy + 1
+                      END DO
+                      cut_yb(ibox,xi) = dummy - 1
+                      DO yi = -cutrange_cells(2,ibox), cutrange_cells(2,ibox)
+                              dummy = 0
+                              DO WHILE (cut_mask(xi,yi,dummy,ibox) .AND. dummy .LE. cutrange_cells(3,ibox))
+                                      dummy = dummy + 1
+                              END DO
+                              cut_zb(ibox,xi,yi) = dummy - 1
+                      END DO
+                END DO
+                DO xi = -cbmcrange_cells(1,ibox), cbmcrange_cells(1,ibox)
+                      dummy = 0
+                      DO WHILE (cbmc_mask(xi,dummy,0,ibox) .AND. dummy .LE. cbmcrange_cells(2,ibox))
+                              dummy = dummy + 1
+                      END DO
+                      cbmc_yb(ibox,xi) = dummy - 1
+                      DO yi = -cbmcrange_cells(2,ibox), cbmcrange_cells(2,ibox)
+                              dummy = 0
+                              DO WHILE (cbmc_mask(xi,yi,dummy,ibox) .AND. dummy .LE. cbmcrange_cells(3,ibox))
+                                      dummy = dummy + 1
+                              END DO
+                              cbmc_zb(ibox,xi,yi) = dummy - 1
+                      END DO
+                END DO
+          END DO
+
+          
+
+          ci_grid_length = MAXVAL(cut_maxrange)*2 + 1
+
+          !$OMP PARALLEL DEFAULT(SHARED)
+          IF (ALLOCATED(ci_grid)) DEALLOCATE(ci_grid)
+          ALLOCATE(ci_grid(3,ci_grid_length))
+          IF (ALLOCATED(filtered_mask_super)) DEALLOCATE(filtered_mask_super)
+          ALLOCATE(filtered_mask_super(ci_grid_length,ci_grid_length,ci_grid_length))
+          IF (ALLOCATED(cell_index_vector)) DEALLOCATE(cell_index_vector)
+          ALLOCATE(cell_index_vector(ci_grid_length*ci_grid_length*ci_grid_length))
+          !$OMP END PARALLEL
+
+
           sectormaxbound = MAXVAL(sectorbound, 2)
           !map_bound = sectormaxbound*3+1
           IF (.NOT. ALL( sectormaxbound <= sectormaxbound_old)) THEN
@@ -109,6 +308,7 @@ CONTAINS
                                 AtomLoop2:DO ia = 1, natoms(is)
                                         IF (.NOT. atom_list(ia,im,is)%exist) CYCLE AtomLoop2
                                         sector_atom_ID(1) = ia
+                                        ci = atom_list(ia,im,is)%ci
                                         IF (sector_has_atoms(ci(1),ci(2),ci(3),ibox)) THEN
                                                 secind = sector_index_map(ci(1),ci(2),ci(3),ibox)
                                                 sector_n_atoms(secind) = sector_n_atoms(secind)+1
@@ -141,7 +341,7 @@ CONTAINS
           INTEGER, PARAMETER, DIMENSION(3) :: delta = (/0,-1,1/)
           !
           check_overlap = .TRUE.
-          IF (widom_flag) THEN
+          IF (widom_active) THEN
                   cp(1) = widom_atoms(ia)%rxp
                   cp(2) = widom_atoms(ia)%ryp
                   cp(3) = widom_atoms(ia)%rzp

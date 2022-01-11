@@ -62,6 +62,7 @@ MODULE Fragment_Growth
   USE Random_Generators
   USE Read_Write_Checkpoint
   USE Sector_Routines
+  !$ USE OMP_LIB
 
   IMPLICIT NONE
 
@@ -135,6 +136,8 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                                            ! first fragment
   REAL(DP) :: dx, dy, dz
 
+  REAL(DP), DIMENSION(kappa_ins) :: xcom_trial, ycom_trial, zcom_trial
+
   LOGICAL :: overlap ! TRUE if there is core overlap between a trial atom 
                      ! position and a an atom already in the box
 
@@ -164,6 +167,12 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
 
 !  ! DEBUGging variables
 !  INTEGER :: M_XYZ_unit
+  REAL(DP) :: overlap_time_s, overlap_time_e, overlap_time
+  LOGICAL :: omp_flag
+  LOGICAL :: need_max_dcom
+  omp_flag = .FALSE.
+  !$ omp_flag = .TRUE.
+
 
   ! Initialize variables
   IF (widom_active) THEN
@@ -184,6 +193,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   ! The energy of each trial coordinate will be stored in the array nrg.
   nrg(:) = 0.0_DP 
   overlap_trial(:) = .FALSE.
+  need_max_dcom = .FALSE.
 
 
   !*****************************************************************************
@@ -308,7 +318,6 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   ! 
 
   CALL Get_COM(this_im,is)
-  CALL Compute_Max_COM_Distance(this_im,is)
   
   ! If inserting the fragment, select a random orientation 
   IF ( .NOT. del_flag) CALL Rotate_Molecule_Eulerian(this_im,is)
@@ -342,7 +351,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
 
   ! When is imreplace greater than 0?
   IF(imreplace .GT. 0) THEN
-
+     CALL Compute_Max_COM_Distance(this_im,is)
      IF(.NOT. del_flag) THEN
 
         dx = molecule_list(imreplace,isreplace)%xcom &
@@ -367,6 +376,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
      END IF
 
   ELSE
+     IF (.NOT. (l_sectors .AND. widom_active)) need_max_dcom = .TRUE.
 
      ! Loop over the multiple trial coordinates
      trial_loop: DO itrial = 1, kappa_ins
@@ -448,6 +458,8 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
            END IF
 
         END IF
+        IF (.NOT. omp_flag) CALL cpu_time(overlap_time_s)
+        !$ overlap_time_s = omp_get_wtime()
 
         ! Place the fragment (and all its atoms) at the trial coordinate
         atom_loop: DO i = 1, frag_list(frag_start,is)%natoms
@@ -468,6 +480,10 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                                    weight(itrial) = 0.0_DP
                            END IF
                            overlap_trial(itrial) = .TRUE.
+                           n_clo = n_clo + 1_INT64
+                           IF (.NOT. omp_flag) CALL cpu_time(overlap_time_e)
+                           !$ overlap_time_e = omp_get_wtime()
+                           cell_list_time = cell_list_time + (overlap_time_e - overlap_time_s)
                            CYCLE trial_loop
                    END IF
            END IF
@@ -477,10 +493,19 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
            rtrial(this_atom,itrial)%rzp = these_atoms(this_atom)%rzp
         
         END DO atom_loop
+        n_not_clo = n_not_clo + 1_INT64
 
+        xcom_trial(itrial) = x_anchor
+        ycom_trial(itrial) = y_anchor
+        zcom_trial(itrial) = z_anchor
         this_molecule%xcom = x_anchor
         this_molecule%ycom = y_anchor
         this_molecule%zcom = z_anchor
+
+        IF (need_max_dcom) THEN
+                CALL Compute_Max_COM_Distance(this_im,is)
+                need_max_dcom = .FALSE.
+        END IF
 
         ! Note that the COM position is always chosen inside the simulation box 
         ! so there is no need to call Fold_Molecule.
@@ -509,6 +534,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
               ! the energy is too high, set the weight to zero
               weight(itrial) = 0.0_DP
               overlap_trial(itrial) = .TRUE.
+              n_nrg_overlap = n_nrg_overlap + 1_INT64
            ELSE
               weight(itrial) = DEXP(-nrg_kBT)
            END IF
@@ -532,9 +558,20 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
 !        END IF
 !        WRITE(*,'(I12,X,E12.6,X,E12.6,X,L12)') itrial, beta(this_box)*nrg(itrial), weight(itrial), overlap_trial(itrial)
 !        ! END DEBUGGING OUTPUT
-
         ! Store the cumulative weight of each trial
         IF (itrial > 1 ) weight(itrial) = weight(itrial-1) + weight(itrial)
+
+        IF (.NOT. omp_flag) CALL cpu_time(overlap_time_e)
+        !$ overlap_time_e = omp_get_wtime()
+        overlap_time = overlap_time_e - overlap_time_s
+
+        IF (overlap) THEN
+                normal_overlap_time = normal_overlap_time + overlap_time
+        ELSE IF (overlap_trial(itrial)) THEN
+                nrg_overlap_time = nrg_overlap_time + overlap_time
+        ELSE
+                non_overlap_time = non_overlap_time + overlap_time
+        END IF
      
      END DO trial_loop
 
@@ -596,9 +633,9 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
         these_atoms(this_atom)%rzp = rtrial(this_atom,trial)%rzp
      
      END DO
-
-     ! Compute COM of the fully grown molecule
-     CALL Get_COM(this_im,is)
+     this_molecule%xcom = xcom_trial(trial)
+     this_molecule%ycom = ycom_trial(trial)
+     this_molecule%zcom = zcom_trial(trial)
 
   END IF
   
@@ -1889,9 +1926,10 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
               END IF
            END IF
         END DO
- 
-        CALL Get_COM(this_im,is)
-        CALL Compute_Max_COM_Distance(this_im,is)
+        IF (.NOT. (l_sectors .AND. widom_active)) THEN
+                CALL Get_COM(this_im,is)
+                CALL Compute_Max_COM_Distance(this_im,is)
+        END IF
 
         ! Turn all the atoms off
         overlap = .FALSE.
@@ -2049,6 +2087,10 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
     
 
   END DO
+  IF (frag_total > 1) THEN
+          CALL Get_COM(this_im,is)
+          IF (.NOT. (widom_active .AND. l_sectors)) CALL Compute_Max_COM_Distance(this_im,is)
+  END IF
 
  END SUBROUTINE Fragment_Placement
                  

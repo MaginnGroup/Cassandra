@@ -570,6 +570,16 @@ CONTAINS
     TYPE(Molecule_Class), POINTER :: this_molecule_i, this_molecule_j
     TYPE(Atom_Class), POINTER :: these_atoms_i(:), these_atoms_j(:)
 
+    IF (l_sectors .AND. widom_active) THEN
+            CALL Compute_Atom_Nonbond_Intra_Energy(ia,im,is, &
+                    E_intra_vdw, E_intra_qq, Eij_inter_qq, overlap)
+            IF (overlap) RETURN
+            CALL Compute_Atom_Nonbond_Inter_Energy_Cells(ia,im,is, &
+                    E_inter_vdw, E_inter_qq)
+            E_inter_qq = E_inter_qq + Eij_inter_qq
+            RETURN
+    END IF
+
     IF (widom_active) THEN 
             this_molecule_i => widom_molecule
             these_atoms_i => widom_atoms
@@ -706,13 +716,187 @@ CONTAINS
 
   !-----------------------------------------------------------------------------
 
+  SUBROUTINE Compute_Atom_Nonbond_Intra_Energy(ia,im,is, &
+                  E_intra_vdw,E_intra_qq,E_inter_qq,overlap)
+          INTEGER, INTENT(IN) :: ia,im,is
+          REAL(DP), INTENT(OUT) :: E_intra_vdw, E_intra_qq, E_inter_qq
+          LOGICAL, INTENT(OUT) :: overlap
+          TYPE(Atom_Class), DIMENSION(:), POINTER :: these_atoms
+          INTEGER :: ja, this_box
+          LOGICAL :: get_vdw, get_qq
+          REAL(DP) :: Eij_intra_vdw, Eij_intra_qq, Eij_inter_vdw, Eij_inter_qq
+          REAL(DP) :: rxijp, ryijp, rzijp, rxij, ryij, rzij, rijsq
+          E_intra_vdw = 0.0_DP
+          E_intra_qq = 0.0_DP
+          E_inter_qq = 0.0_DP
+          overlap = .TRUE.
+          IF (widom_active) THEN
+                  these_atoms => widom_atoms
+          ELSE
+                  these_atoms => atom_list(:,im,is)
+          END IF
+          this_box = molecule_list(im,is)%which_box
+          DO ja = 1, natoms(is)
+                IF (ja == ia .OR. .NOT. these_atoms(ja)%exist) CYCLE
+                rxijp = these_atoms(ja)%rxp - these_atoms(ia)%rxp
+                ryijp = these_atoms(ja)%ryp - these_atoms(ia)%ryp
+                rzijp = these_atoms(ja)%rzp - these_atoms(ia)%rzp
+                CALL Minimum_Image_Separation(this_box,rxijp,ryijp,rzijp,rxij,ryij,rzij)
+                rijsq = rxij*rxij+ryij*ryij+rzij*rzij
+                IF (rijsq < rcut_low) RETURN
+                CALL Check_AtomPair_Cutoff(rijsq,get_vdw,get_qq,this_box)
+                ! Compute vdw and q-q energy using if required
+                IF (get_vdw .OR. get_qq) THEN
+                   CALL Compute_AtomPair_Energy(rxij,ryij,rzij,rijsq, &
+                        is,im,ja,is,im,ia,&
+                        get_vdw,get_qq, &
+                        Eij_intra_vdw,Eij_intra_qq,Eij_inter_vdw,Eij_inter_qq)
+                   E_intra_vdw = E_intra_vdw + Eij_intra_vdw
+                   E_intra_qq  = E_intra_qq  + Eij_intra_qq
+                   E_inter_qq = E_inter_qq + Eij_inter_qq
+                ENDIF
+          END DO
+          overlap = .FALSE.
+  END SUBROUTINE Compute_Atom_Nonbond_Intra_Energy
+
+  !-----------------------------------------------------------------------------
+
+  SUBROUTINE Compute_Atom_Nonbond_Inter_Energy_Cells(ia,im,is, &
+       E_inter_vdw,E_inter_qq)
+        INTEGER, INTENT(IN) :: ia,im,is
+        REAL(DP), INTENT(OUT):: E_inter_vdw, E_inter_qq
+        REAL(DP) :: Eij_intra_vdw, Eij_intra_qq, Eij_inter_vdw, Eij_inter_qq
+        INTEGER :: grid_length(3), this_box, i
+        INTEGER, DIMENSION(:), POINTER :: xi, yi, zi, thisrange_cells, sector_atom_ID, these_cells
+        INTEGER :: dummy_ind, dummy, n_cells_occupied, icell, ia_cell, cell_coords(3), secind
+        !LOGICAL, DIMENSION(:,:,:), POINTER :: filtered_mask, this_mask
+        LOGICAL :: get_vdw, get_qq
+        REAL(DP) :: rijsq, rxijp, ryijp, rzijp, rxij, ryij, rzij, cp(3)
+        TYPE(Atom_Class), POINTER :: atom_ptr
+        INTEGER, DIMENSION(:), POINTER :: this_yb
+        INTEGER, DIMENSION(:,:), POINTER :: this_zb
+        INTEGER :: ix, iy, iz, iy_c, iz_c
+        E_inter_vdw = 0.0_DP
+        E_inter_qq = 0.0_DP
+        IF (widom_active) THEN
+                cp(1) = widom_atoms(ia)%rxp
+                cp(2) = widom_atoms(ia)%ryp
+                cp(3) = widom_atoms(ia)%rzp
+                this_box = widom_molecule%which_box
+        ELSE
+                cp(1) = atom_list(ia,im,is)%rxp
+                cp(2) = atom_list(ia,im,is)%ryp
+                cp(3) = atom_list(ia,im,is)%rzp
+                this_box = molecule_list(im,is)%which_box
+        END IF
+        IF (cbmc_flag) THEN
+                thisrange_cells => cbmcrange_cells(:,this_box)
+!                this_mask => cbmc_mask(-thisrange_cells(1):thisrange_cells(1), &
+!                        -thisrange_cells(2):thisrange_cells(2), &
+!                        -thisrange_cells(3):thisrange_cells(3), &
+!                        this_box)
+                this_yb => cbmc_yb(this_box, -thisrange_cells(1):thisrange_cells(1))
+                this_zb => cbmc_zb(this_box, -thisrange_cells(1):thisrange_cells(1), &
+                        -thisrange_cells(2):thisrange_cells(2))
+        ELSE
+                thisrange_cells => cutrange_cells(:,this_box)
+!                this_mask => cut_mask(-thisrange_cells(1):thisrange_cells(1), &
+!                        -thisrange_cells(2):thisrange_cells(2), &
+!                        -thisrange_cells(3):thisrange_cells(3), &
+!                        this_box)
+                this_yb => cut_yb(this_box, -thisrange_cells(1):thisrange_cells(1))
+                this_zb => cut_zb(this_box, -thisrange_cells(1):thisrange_cells(1), &
+                        -thisrange_cells(2):thisrange_cells(2))
+        END IF
+        grid_length = thisrange_cells*2+1
+        !filtered_mask => filtered_mask_super(1:grid_length(1),1:grid_length(2),1:grid_length(3))
+        cell_coords = IDNINT(cp*cell_length_inv(:,this_box))
+        xi => ci_grid(1,1:grid_length(1))
+        yi => ci_grid(2,1:grid_length(2))
+        zi => ci_grid(3,1:grid_length(3))
+        dummy = cell_coords(1) - thisrange_cells(1)
+        DO i = 1, grid_length(1)
+                xi(i) = dummy
+                dummy = dummy + 1
+        END DO
+        dummy = cell_coords(2) - thisrange_cells(2)
+        DO i = 1, grid_length(2)
+                yi(i) = dummy
+                dummy = dummy + 1
+        END DO
+        dummy = cell_coords(3) - thisrange_cells(3)
+        DO i = 1, grid_length(3)
+                zi(i) = dummy
+                dummy = dummy + 1
+        END DO
+        IF (cell_coords(1)+thisrange_cells(1)>sectorbound(1,this_box)) THEN
+                dummy_ind = grid_length(1) + 1 - (cell_coords(1)+thisrange_cells(1)-sectorbound(1,this_box))
+                xi(dummy_ind:grid_length(1)) = xi(dummy_ind:grid_length(1)) - length_cells(1,this_box)
+        ELSE IF (cell_coords(1)-thisrange_cells(1)<-sectorbound(1,this_box)) THEN
+                dummy_ind = thisrange_cells(1)-sectorbound(1,this_box) - cell_coords(1)
+                xi(1:dummy_ind) = xi(1:dummy_ind) + length_cells(1,this_box)
+        END IF
+        IF (cell_coords(2)+thisrange_cells(2)>sectorbound(2,this_box)) THEN
+                dummy_ind = grid_length(2) + 1 - (cell_coords(2)+thisrange_cells(2)-sectorbound(2,this_box))
+                yi(dummy_ind:grid_length(2)) = yi(dummy_ind:grid_length(2)) - length_cells(2,this_box)
+        ELSE IF (cell_coords(2)-thisrange_cells(2)<-sectorbound(2,this_box)) THEN
+                dummy_ind = thisrange_cells(2)-sectorbound(2,this_box) - cell_coords(2)
+                yi(1:dummy_ind) = yi(1:dummy_ind) + length_cells(2,this_box)
+        END IF
+        IF (cell_coords(3)+thisrange_cells(3)>sectorbound(3,this_box)) THEN
+                dummy_ind = grid_length(3) + 1 - (cell_coords(3)+thisrange_cells(3)-sectorbound(3,this_box))
+                zi(dummy_ind:grid_length(3)) = zi(dummy_ind:grid_length(3)) - length_cells(3,this_box)
+        ELSE IF (cell_coords(3)-thisrange_cells(3)<-sectorbound(3,this_box)) THEN
+                dummy_ind = thisrange_cells(3)-sectorbound(3,this_box) - cell_coords(3)
+                zi(1:dummy_ind) = zi(1:dummy_ind) + length_cells(3,this_box)
+        END IF
+!        filtered_mask = sector_has_atoms(xi,yi,zi,this_box) .AND. this_mask
+!        n_cells_occupied = COUNT(filtered_mask)
+!        these_cells => cell_index_vector(1:n_cells_occupied)
+!        these_cells = PACK(sector_index_map(xi,yi,zi,this_box),filtered_mask)
+!        DO icell = 1, n_cells_occupied
+!                secind = these_cells(icell)
+        iy_c = 1+thisrange_cells(2)
+        iz_c = 1+thisrange_cells(3)
+        DO ix = 1, grid_length(1)
+                DO iy = iy_c-this_yb(ix), iy_c+this_yb(ix)
+                        DO iz = iz_c - this_zb(ix,iy), iz_c+this_zb(ix,iy)
+                                IF (.NOT. sector_has_atoms(xi(ix),yi(iy),zi(iz),this_box)) CYCLE
+                                secind = sector_index_map(xi(ix),yi(iy),zi(iz),this_box)
+                                DO ia_cell = 1, sector_n_atoms(secind)
+                                        sector_atom_ID => sector_atoms(ia_cell,secind,:)
+                                        IF (sector_atom_ID(2) == im .AND. sector_atom_ID(3) == is) CYCLE
+                                        atom_ptr => atom_list(sector_atom_ID(1),sector_atom_ID(2),sector_atom_ID(3))
+                                        rxijp = atom_ptr%rxp - cp(1)
+                                        ryijp = atom_ptr%ryp - cp(2)
+                                        rzijp = atom_ptr%rzp - cp(3)
+                                        CALL Minimum_Image_Separation(this_box,rxijp,ryijp,rzijp,rxij,ryij,rzij)
+                                        rijsq = rxij*rxij+ryij*ryij+rzij*rzij
+                                        CALL Check_AtomPair_Cutoff(rijsq,get_vdw,get_qq,this_box)
+                                        ! Compute vdw and q-q energy using if required
+                                        IF (get_vdw .OR. get_qq) THEN
+                                           CALL Compute_AtomPair_Energy(rxij,ryij,rzij,rijsq, &
+                                                sector_atom_ID(3),sector_atom_ID(2),sector_atom_ID(1),is,im,ia,&
+                                                get_vdw,get_qq, &
+                                                Eij_intra_vdw,Eij_intra_qq,Eij_inter_vdw,Eij_inter_qq)
+                                           E_inter_vdw = E_inter_vdw + Eij_inter_vdw
+                                           E_inter_qq  = E_inter_qq  + Eij_inter_qq
+                                        END IF
+                                END DO
+                        END DO
+                END DO
+        END DO
+!        END DO
+  END SUBROUTINE Compute_Atom_Nonbond_Inter_Energy_Cells
+
+  !-----------------------------------------------------------------------------
+
   SUBROUTINE Compute_Molecule_Nonbond_Intra_Energy(im,is, &
     E_intra_vdw,E_intra_qq,E_inter_qq,intra_overlap)
     !---------------------------------------------------------------------------
     ! The subroutine calculates the intramolecular LJ potential energy and
-    ! electrostatic energy of an entire molecule. The routine is based off the
-    ! above routine 'Compute_Atom_Nonbond_Intra_Energy' and takes care of double
-    ! counting by looping only over i+1 to natoms for ith atom interaction.
+    ! electrostatic energy of an entire molecule. The routine takes care of
+    ! double counting by looping only over i+1 to natoms for ith atom interaction.
     !
     ! Only the minimum image electrostatic energy is stored in E_intra_qq. The
     ! periodic image electrostatic energy is stored in E_inter_qq.
@@ -957,12 +1141,13 @@ CONTAINS
     LOGICAL :: overlap
     !---------------------------------------------------------------------------
 
-    INTEGER  :: ispecies, imolecule, this_box, this_locate
+    INTEGER  :: ispecies, imolecule, this_box, this_locate, ia
 
     REAL(DP) :: Eij_vdw, Eij_qq
     REAL(DP) :: eps
     REAL(DP) :: rcom, rx, ry, rz
     REAL(DP) :: hardcore_max_r, molecule_hardcore_r
+    REAL(DP) :: Ei_inter_vdw, Ei_inter_qq
 
     LOGICAL :: get_interaction
     LOGICAL, DIMENSION(MAXVAL(nmols(:,widom_molecule%which_box)),nspecies) :: shortrange, midrange
@@ -973,9 +1158,36 @@ CONTAINS
 
     this_box = widom_molecule%which_box
 
+    IF (widom_active .AND. l_sectors) THEN
+            DO ia = 1, natoms(is)
+                    IF (.NOT. widom_atoms(is)%exist) CYCLE
+                    CALL Compute_Atom_Nonbond_Inter_Energy_Cells(ia,im,is, &
+                            Ei_inter_vdw, Ei_inter_qq)
+                    E_inter_vdw = E_inter_vdw + Ei_inter_vdw
+                    E_inter_qq = E_inter_qq + Ei_inter_qq
+            END DO
+!            speciesLoop0: DO ispecies = 1, nspecies
+!                moleculeLoop0: DO imolecule = 1, nmols(ispecies,this_box)
+!                        this_locate = locate(imolecule,ispecies,this_box)
+!                        IF (ispecies == is .AND. this_locate == im) CYCLE moleculeLoop0
+!                        IF (.NOT. molecule_list(this_locate,ispecies)%live) CYCLE moleculeLoop0
+!                        CALL Check_MoleculePair_Cutoff(im,is,this_locate,ispecies,get_interaction, &
+!                                rcom,rx,ry,rz)
+!                        IF (.NOT. get_interaction) CYCLE moleculeLoop0
+!                        CALL Compute_MoleculePair_Energy(im,is,this_locate,ispecies, &
+!                             this_box,Eij_vdw,Eij_qq,overlap)
+!
+!                        IF (overlap) RETURN ! this should never happen; already caught by cell list
+!
+!                        E_inter_vdw = E_inter_vdw + Eij_vdw
+!                        E_inter_qq  = E_inter_qq + Eij_qq
+!                END DO moleculeLoop0
+!            END DO speciesLoop0
+            RETURN
+    END IF
+
     hardcore_max_r = widom_molecule%max_dcom + rcut_low
     molecule_hardcore_r = rcut_low - widom_molecule%min_dcom
-
 
 
     speciesLoop: DO ispecies = 1, nspecies
