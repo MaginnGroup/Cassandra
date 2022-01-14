@@ -376,7 +376,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
      END IF
 
   ELSE
-     IF (.NOT. (l_sectors .AND. widom_active)) need_max_dcom = .TRUE.
+     need_max_dcom = .TRUE.
 
      ! Loop over the multiple trial coordinates
      trial_loop: DO itrial = 1, kappa_ins
@@ -1484,6 +1484,7 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
   REAL(DP) :: nrg_ring_frag, nrg_dihed(kappa_dih)
 
   LOGICAL :: overlap, overlap_trial(kappa_dih)
+  LOGICAL, DIMENSION(natoms(is)) :: grown_exist, new_exist, combined_exist
 
   CHARACTER :: this_file*120, element*1 
 
@@ -1498,7 +1499,7 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
           these_atoms => widom_atoms
   ELSE
           this_molecule => molecule_list(this_im,is)
-          these_atoms => atom_list(:,this_im,is)
+          these_atoms => atom_list(1:natoms(is),this_im,is)
   END IF
 
 
@@ -1515,12 +1516,14 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
   DO i = frag_start, frag_total
 
      ifrag = frag_order(i)
+
+     grown_exist = these_atoms%exist
      
      !**************************************************************************
      ! Step 1) Select a fragment conformation
      !**************************************************************************
      !
-      IF ( del_flag) THEN
+     IF ( del_flag) THEN
 
         ! For a deletion move, use the existing conformation for each additional
         ! fragment
@@ -1589,6 +1592,8 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
         CLOSE(UNIT=11)
 
      END IF
+     combined_exist = these_atoms%exist
+     new_exist = combined_exist .AND. .NOT. grown_exist
      
      !**************************************************************************
      ! Step 2) Align the fragment to the growing molecule
@@ -1919,24 +1924,17 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
                                         weight(ii) = 0.0_DP
                                 END IF
                                 overlap_trial(ii) = .TRUE.
-                                IF (ii == kappa_dih) these_atoms(atom_id(1:nfrag_atoms))%exist = .TRUE.
+                                !IF (ii == kappa_dih) these_atoms(atom_id(1:nfrag_atoms))%exist = .TRUE.
                                 CYCLE trial_loop
                          END IF
                  END IF
               END IF
            END IF
         END DO
-        IF (.NOT. (l_sectors .AND. widom_active)) THEN
-                CALL Get_COM(this_im,is)
-                CALL Compute_Max_COM_Distance(this_im,is)
-        END IF
-
         ! Turn all the atoms off
         overlap = .FALSE.
-        DO j = 1, nfrag_atoms
-           these_atoms(atom_id(j))%exist = .FALSE.
-        END DO
-           
+        these_atoms(atom_id(1:nfrag_atoms))%exist = .FALSE.
+        
         ! Initialize the energies
         nrg_intra_vdw = 0.0_DP
         nrg_intra_qq = 0.0_DP
@@ -1948,33 +1946,45 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
               
            these_atoms(atom_id(j))%exist = .TRUE.
               
-           CALL Compute_Atom_Nonbond_Energy(atom_id(j),this_im,is, &
-                E_intra_vdw,E_inter_vdw,E_intra_qq,E_inter_qq,overlap)
+           CALL Compute_Atom_Nonbond_Intra_Energy(atom_id(j),this_im,is, &
+                E_intra_vdw,E_intra_qq,E_inter_qq,overlap)
            IF (overlap) THEN
+              IF (ii > 1) THEN
+                      weight(ii) = weight(ii-1)
+              ELSE
+                      weight(ii) = 0.0_DP
+              END IF
+              overlap_trial(ii) = .TRUE.
               ! if it is the last trial, the atom exist flag may not be
               ! properly set to true
-              IF ( ii == kappa_dih)  THEN                    
-                 DO k = 1, nfrag_atoms
-                    these_atoms(atom_id(k))%exist = .TRUE.
-                 END DO
-              END IF
-              
-              EXIT
-
+              IF (ii == kappa_dih) these_atoms(atom_id(1:nfrag_atoms))%exist = .TRUE.
+              CYCLE trial_loop
            END IF
            
            nrg_intra_vdw = nrg_intra_vdw + E_intra_vdw
            nrg_intra_qq  = nrg_intra_qq  + E_intra_qq
-           nrg_inter_vdw = nrg_inter_vdw + E_inter_vdw
            nrg_inter_qq  = nrg_inter_qq  + E_inter_qq
               
         END DO
+
+        these_atoms%exist = new_exist
+        CALL Get_COM(this_im,is)
+        CALL Compute_Max_COM_Distance(this_im,is)
+        IF (widom_active) THEN
+                CALL Compute_Molecule_Nonbond_Inter_Energy_Widom(this_im,is,&
+                        nrg_inter_vdw,E_inter_qq,overlap)
+        ELSE
+                CALL Compute_Molecule_Nonbond_Inter_Energy(this_im,is,&
+                        nrg_inter_vdw,E_inter_qq,overlap)
+        END IF
+        these_atoms%exist = combined_exist
 
         IF (overlap) THEN
            ! atoms are too close, set the weight to zero
            weight(ii) = 0.0_DP
            overlap_trial(ii) = .TRUE.
         ELSE
+           nrg_inter_qq = nrg_inter_qq + E_inter_qq
            CALL Compute_Molecule_Dihedral_Energy(this_im,is,e_dihed)
 
            nrg_dihed(ii) = e_dihed
@@ -2089,7 +2099,7 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
   END DO
   IF (frag_total > 1) THEN
           CALL Get_COM(this_im,is)
-          IF (.NOT. (widom_active .AND. l_sectors)) CALL Compute_Max_COM_Distance(this_im,is)
+          CALL Compute_Max_COM_Distance(this_im,is)
   END IF
 
  END SUBROUTINE Fragment_Placement

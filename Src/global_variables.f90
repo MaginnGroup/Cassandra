@@ -625,18 +625,6 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   INTEGER(KIND=INT64) :: n_clo, n_not_clo, n_nrg_overlap
   REAL(DP) :: cell_list_time, normal_overlap_time, non_overlap_time, nrg_overlap_time
 
-  INTEGER, DIMENSION(:,:), ALLOCATABLE, TARGET :: cbmcrange_cells, cutrange_cells
-  LOGICAL, DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: cbmc_mask, cut_mask
-
-  INTEGER, DIMENSION(:,:), ALLOCATABLE, TARGET :: ci_grid
-  INTEGER, DIMENSION(:), ALLOCATABLE, TARGET :: cell_index_vector
-  LOGICAL, DIMENSION(:,:,:), ALLOCATABLE, TARGET :: filtered_mask_super
-
-  INTEGER, DIMENSION(:,:), ALLOCATABLE, TARGET :: cut_yb, cbmc_yb
-  INTEGER, DIMENSION(:,:,:), ALLOCATABLE, TARGET :: cut_zb, cbmc_zb
-
-  !$OMP THREADPRIVATE(ci_grid,cell_index_vector,filtered_mask_super)
-
 
   !$OMP THREADPRIVATE(cell_list_time, normal_overlap_time, non_overlap_time, nrg_overlap_time)
 
