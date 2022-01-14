@@ -80,7 +80,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
   LOGICAL :: inter_overlap, cbmc_overlap, intra_overlap
   omp_flag = .FALSE.
   !$ omp_flag = .TRUE.
-  noncbmc_time = 0.0_DP
+!widom_timing  noncbmc_time = 0.0_DP
 
 
   this_lambda = 1.0_DP
@@ -204,8 +204,8 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
           END IF
 
           IF (.NOT. cbmc_overlap) THEN
-            IF (.NOT. omp_flag) CALL cpu_time(noncbmc_time_s)
-            !$ noncbmc_time_s = omp_get_wtime()
+!widom_timing            IF (.NOT. omp_flag) CALL cpu_time(noncbmc_time_s)
+!widom_timing            !$ noncbmc_time_s = omp_get_wtime()
 
             ! Molecule COM may be outside the box boundary if grown via CBMC, so wrap
             ! the molecule coordinates back in the box (if needed)
@@ -229,9 +229,9 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
                     E_inter_qq = E_inter_qq + E_periodic_qq
             END IF
 
-            IF (.NOT. omp_flag) CALL cpu_time(noncbmc_time_e)
-            !$ noncbmc_time_e = omp_get_wtime()
-            noncbmc_time = noncbmc_time + (noncbmc_time_e - noncbmc_time_s)
+!widom_timing            IF (.NOT. omp_flag) CALL cpu_time(noncbmc_time_e)
+!widom_timing            !$ noncbmc_time_e = omp_get_wtime()
+!widom_timing            noncbmc_time = noncbmc_time + (noncbmc_time_e - noncbmc_time_s)
          
           END IF
 
@@ -315,7 +315,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
 
   ntrials(is,ibox)%widom = ntrials(is,ibox)%widom + insertions_in_step
 
-  WRITE(*,*) noncbmc_time
+!widom_timing  WRITE(*,*) noncbmc_time
 
 END SUBROUTINE Widom_Insert
 !*******************************************************************************

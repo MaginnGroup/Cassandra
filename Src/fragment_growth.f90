@@ -458,8 +458,8 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
            END IF
 
         END IF
-        IF (.NOT. omp_flag) CALL cpu_time(overlap_time_s)
-        !$ overlap_time_s = omp_get_wtime()
+!widom_timing        IF (.NOT. omp_flag) CALL cpu_time(overlap_time_s)
+!widom_timing        !$ overlap_time_s = omp_get_wtime()
 
         ! Place the fragment (and all its atoms) at the trial coordinate
         atom_loop: DO i = 1, frag_list(frag_start,is)%natoms
@@ -480,10 +480,10 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                                    weight(itrial) = 0.0_DP
                            END IF
                            overlap_trial(itrial) = .TRUE.
-                           n_clo = n_clo + 1_INT64
-                           IF (.NOT. omp_flag) CALL cpu_time(overlap_time_e)
-                           !$ overlap_time_e = omp_get_wtime()
-                           cell_list_time = cell_list_time + (overlap_time_e - overlap_time_s)
+!widom_timing                           n_clo = n_clo + 1_INT64
+!widom_timing                           IF (.NOT. omp_flag) CALL cpu_time(overlap_time_e)
+!widom_timing                           !$ overlap_time_e = omp_get_wtime()
+!widom_timing                           cell_list_time = cell_list_time + (overlap_time_e - overlap_time_s)
                            CYCLE trial_loop
                    END IF
            END IF
@@ -493,7 +493,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
            rtrial(this_atom,itrial)%rzp = these_atoms(this_atom)%rzp
         
         END DO atom_loop
-        n_not_clo = n_not_clo + 1_INT64
+!widom_timing        n_not_clo = n_not_clo + 1_INT64
 
         xcom_trial(itrial) = x_anchor
         ycom_trial(itrial) = y_anchor
@@ -561,17 +561,17 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
         ! Store the cumulative weight of each trial
         IF (itrial > 1 ) weight(itrial) = weight(itrial-1) + weight(itrial)
 
-        IF (.NOT. omp_flag) CALL cpu_time(overlap_time_e)
-        !$ overlap_time_e = omp_get_wtime()
-        overlap_time = overlap_time_e - overlap_time_s
-
-        IF (overlap) THEN
-                normal_overlap_time = normal_overlap_time + overlap_time
-        ELSE IF (overlap_trial(itrial)) THEN
-                nrg_overlap_time = nrg_overlap_time + overlap_time
-        ELSE
-                non_overlap_time = non_overlap_time + overlap_time
-        END IF
+!widom_timing        IF (.NOT. omp_flag) CALL cpu_time(overlap_time_e)
+!widom_timing        !$ overlap_time_e = omp_get_wtime()
+!widom_timing        overlap_time = overlap_time_e - overlap_time_s
+!widom_timing
+!widom_timing        IF (overlap) THEN
+!widom_timing                normal_overlap_time = normal_overlap_time + overlap_time
+!widom_timing        ELSE IF (overlap_trial(itrial)) THEN
+!widom_timing                nrg_overlap_time = nrg_overlap_time + overlap_time
+!widom_timing        ELSE
+!widom_timing                non_overlap_time = non_overlap_time + overlap_time
+!widom_timing        END IF
      
      END DO trial_loop
 
