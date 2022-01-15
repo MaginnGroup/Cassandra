@@ -534,7 +534,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
               ! the energy is too high, set the weight to zero
               weight(itrial) = 0.0_DP
               overlap_trial(itrial) = .TRUE.
-              n_nrg_overlap = n_nrg_overlap + 1_INT64
+!widom_timing              n_nrg_overlap = n_nrg_overlap + 1_INT64
            ELSE
               weight(itrial) = DEXP(-nrg_kBT)
            END IF
