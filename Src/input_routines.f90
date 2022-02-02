@@ -1604,7 +1604,7 @@ SUBROUTINE Get_Atom_Info(is)
 
         EXIT
 
-     ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
+     ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 50000) THEN
 
         ! Problem reading Atom_Info
         err_msg = ''
@@ -1758,7 +1758,7 @@ SUBROUTINE Get_Bond_Info(is)
 
         EXIT
 
-     ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
+     ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 50000) THEN
 
         err_msg = ''
         err_msg(1) = 'Section "# Bond_Info" is missing from the mcf file and is required'
@@ -1916,7 +1916,7 @@ SUBROUTINE Get_Angle_Info(is)
 
         EXIT
 
-     ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
+     ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 50000) THEN
 
         err_msg = ''
         err_msg(1) = 'Section "# Angle_Info" is missing from the mcf file and is required'
@@ -2172,7 +2172,7 @@ SUBROUTINE Get_Dihedral_Info(is)
 
         EXIT
 
-     ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
+     ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 50000) THEN
 
         err_msg = ''
         err_msg(1) = 'Section "# Dihedral_Info" is missing from the mcf file and is required'
@@ -2328,7 +2328,7 @@ INTEGER, INTENT(IN) :: is
 
         EXIT
 
-     ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
+     ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 50000) THEN
 
         err_msg = ''
         err_msg(1) = 'Section "# Improper_Info" is missing from the mcf file and is required'
@@ -2552,7 +2552,7 @@ SUBROUTINE Get_Fragment_Info(is)
 
         EXIT
 
-     ELSE IF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
+     ELSE IF (line_string(1:3) == 'END' .or. line_nbr > 50000) THEN
 
         err_msg = ''
         err_msg(1) = 'Section "# Fragment_Info" is missing from the mcf file and is required'
@@ -2782,7 +2782,7 @@ SUBROUTINE Get_Fragment_Connectivity_Info(is)
 
         EXIT
 
-     ELSE IF (line_string(1:3) == 'END' .OR. line_nbr > 10000 ) THEN
+     ELSE IF (line_string(1:3) == 'END' .OR. line_nbr > 50000 ) THEN
 
         err_msg = ''
         err_msg(1) = 'Section "# Fragment_Connectivity" is missing from the mcf file and is required'
@@ -3393,7 +3393,7 @@ SUBROUTINE Get_Intra_Scaling(is)
 
         EXIT
 
-     ELSE IF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
+     ELSE IF (line_string(1:3) == 'END' .or. line_nbr > 50000) THEN
 
         l_intra_scaling_mcf = .FALSE.
         WRITE(logunit,'(X,A)') 'Section "# Intra_Scaling" missing from mcf, will look in input file'
@@ -3468,7 +3468,7 @@ SUBROUTINE Get_Intra_Scaling(is)
 
            EXIT
 
-        ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
+        ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 50000) THEN
 
            ! No intrascaling set explicitly - use default.
            WRITE(logunit,'(X,A)') 'Section "# Intra_Scaling" is missing from the input file'
