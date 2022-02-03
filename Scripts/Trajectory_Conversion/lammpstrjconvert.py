@@ -31,12 +31,12 @@ def lammpstrjconvert(
         Format string designating the format with which to write the
         coordinate floats in the .xyz file.  The default is "%f".
 
-    Hpath: Pathlib.Path or String or Path-like
+    Hpath: Pathlib.Path or str or Path-like
         Contains the path to which to write the .H file. If None (the
         default), this is lammpstrjpath with the parent directories and
         ".lammpstrj" suffix (if present) stripped and ".H" appended.
 
-    xyzpath: Pathlib.Path or String or Path-like
+    xyzpath: Pathlib.Path or str or Path-like
         Contains the path to which to write the .H file.  If None
         (the default), this is lammpstrjpath with the parent
         directories and ".lammpstrj" suffix (if present) stripped
@@ -71,8 +71,7 @@ def lammpstrjconvert(
     elif len(getframes):
         frame_array = np.array(getframes)
         nonsorted = any(
-            [frame_array[i] >= frame_array[i + 1]
-                for i in range(len(frame_array) - 1)]
+            [frame_array[i] >= frame_array[i + 1] for i in range(len(frame_array) - 1)]
         )
     else:
         return
@@ -92,7 +91,7 @@ def lammpstrjconvert(
                 else:
                     thislinestr = ltfile.readline(len(tgt))
                 if len(tgt) <= len(thislinestr):
-                    tgt_hit = thislinestr[0:len(tgt)] == tgt
+                    tgt_hit = thislinestr[0 : len(tgt)] == tgt
                 elif not thislinestr:
                     eof_flag = True
                     tgt_hit = True
@@ -134,9 +133,8 @@ def lammpstrjconvert(
             volume = np.inner(a, np.cross(b, c))
             # boxes always have origin at (0,0,0) in Cassandra,
             # but not always in lammps
-            box_center = np.sum(lmat, axis=1) * 0.5 + \
-                np.array([xlo, ylo, zlo])
-            eofreached = findheading("ITEM: ATOMS ", False) # noqa
+            box_center = np.sum(lmat, axis=1) * 0.5 + np.array([xlo, ylo, zlo])
+            eofreached = findheading("ITEM: ATOMS ", False)  # noqa
             coldict = {
                 colname: i
                 for i, colname in enumerate(ltfile.readline().strip().split())
@@ -213,11 +211,25 @@ def lammpstrjconvert(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-f", "--format", default="%f")
-    parser.add_argument("fname")
-    parser.add_argument("nmols", nargs="+", type=int)
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="""LAMMPStrjconvert.py:
+        A Lammps trajectory reader for Cassandra
+
+        Example:
+
+        python lammpstrjconvert.py -f %8.3f methane_in_water.lammpstrj 1 1000
+        """
+    )
+
+    parser.add_argument("-f", "--format", default="%f", 
+        help=f"Format string "
+        "designating the format with which to write the " 
+        " coordinate floats in the .xyz file")
+    parser.add_argument("fname", help="Contains the path to the LAMMPS"
+        "dump file to read and convert.")
+    parser.add_argument("nmols", nargs="+", help="List of integers containing"
+        " the number of molecules of each species in the order in which the "
+        " species are listed in the Cassandra input file.")
     args = parser.parse_args()
-    lammpstrjconvert(lammpstrjpath=args.fname,
-                     n_list=args.nmols,
-                     fstr=args.format)
+    lammpstrjconvert(lammpstrjpath=args.fname, n_list=args.nmols, fstr=args.format)
