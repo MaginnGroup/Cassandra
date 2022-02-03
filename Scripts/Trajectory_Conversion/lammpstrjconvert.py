@@ -71,7 +71,8 @@ def lammpstrjconvert(
     elif len(getframes):
         frame_array = np.array(getframes)
         nonsorted = any(
-            [frame_array[i] >= frame_array[i + 1] for i in range(len(frame_array) - 1)]
+            [frame_array[i] >= frame_array[i + 1]
+                for i in range(len(frame_array) - 1)]
         )
     else:
         return
@@ -91,7 +92,7 @@ def lammpstrjconvert(
                 else:
                     thislinestr = ltfile.readline(len(tgt))
                 if len(tgt) <= len(thislinestr):
-                    tgt_hit = thislinestr[0 : len(tgt)] == tgt
+                    tgt_hit = thislinestr[0:len(tgt)] == tgt
                 elif not thislinestr:
                     eof_flag = True
                     tgt_hit = True
@@ -219,17 +220,29 @@ if __name__ == "__main__":
         Example:
 
         python lammpstrjconvert.py -f %8.3f methane_in_water.lammpstrj 1 1000
-        """
+        """,
     )
 
-    parser.add_argument("-f", "--format", default="%f", 
-        help=f"Format string "
-        "designating the format with which to write the " 
-        " coordinate floats in the .xyz file")
-    parser.add_argument("fname", help="Contains the path to the LAMMPS"
-        "dump file to read and convert.")
-    parser.add_argument("nmols", nargs="+", help="List of integers containing"
+    parser.add_argument(
+        "-f",
+        "--format",
+        default="%f",
+        help="Format string "
+        "designating the format with which to write the "
+        " coordinate floats in the .xyz file",
+    )
+    parser.add_argument(
+        "fname", help="Contains the path to the LAMMPS"
+        "dump file to read and convert."
+    )
+    parser.add_argument(
+        "nmols",
+        nargs="+",
+        help="List of integers containing"
         " the number of molecules of each species in the order in which the "
-        " species are listed in the Cassandra input file.")
+        " species are listed in the Cassandra input file.",
+    )
     args = parser.parse_args()
-    lammpstrjconvert(lammpstrjpath=args.fname, n_list=args.nmols, fstr=args.format)
+    lammpstrjconvert(lammpstrjpath=args.fname,
+                     n_list=args.nmols,
+                     fstr=args.format)
