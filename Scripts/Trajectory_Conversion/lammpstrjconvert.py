@@ -1,5 +1,10 @@
 #!/usr/bin/env python
-""""""
+
+"""
+Lammps trajectory reader for Cassandra.
+"""
+
+
 import argparse
 import io
 import numpy as np
@@ -9,29 +14,43 @@ from pathlib import Path
 def lammpstrjconvert(
     lammpstrjpath, n_list, fstr="%f", Hpath=None, xyzpath=None, getframes=None
 ):
-    """Convert LAMMMPS custom dump file to .xyz and .H files to be read by Cassandra.
+    """Convert LAMMPS custom dump file to .xyz and .H files to be read by
+    Cassandra.
 
-    Inputs:
-        lammpstrjpath: path-like object, such as pathlib.Path or string, containing
-            the path to the LAMMPS dump file to read and convert.
-        n_list: list of integers containing the number of molecules of each species
-            in the order in which the species are listed in the Cassandra input file.
-        fstr: format string designating the format with which to write
-            the coordinate floats in the .xyz file.  The default is "%f".
-        Hpath: path-like object, such as pathlib.Path or string, containing
-            the path to which to write the .H file.  If None (the default), this is
-            lammpstrjpath with the parent directories and ".lammpstrj" suffix (if present)
-            stripped and ".H" appended.
-        xyzpath: path-like object, such as pathlib.Path or string, containing
-            the path to which to write the .H file.  If None (the default), this is
-            lammpstrjpath with the parent directories and ".lammpstrj" suffix (if present)
-            stripped and ".xyz" appended.
-        getframes: sequence or 1-D array of integers designating the zero-based indices of
-            specific frames to write.  If None (the default), all frames are written.
-            If empty, the function effectively does nothing.  The frames are written in
-            the same order with which they are listed in getframes, which is not
-            necessarily in ascending order.
+    Parameters
+    ----------
+    lammpstrjpath : Pathlib.Path or String or Path-like
+        Contains the path to the LAMMPS dump file to read and convert.
+
+    n_list : List
+        List of integers containing the number of molecules of
+        each species in the order in which the species are listed in the
+        Cassandra input file.
+
+    fstr: Str
+        Format string designating the format with which to write the
+        coordinate floats in the .xyz file.  The default is "%f".
+
+    Hpath: Pathlib.Path or String or Path-like
+        Contains the path to which to write the .H file. If None (the
+        default), this is lammpstrjpath with the parent directories and
+        ".lammpstrj" suffix (if present) stripped and ".H" appended.
+
+    xyzpath: Pathlib.Path or String or Path-like
+        Contains the path to which to write the .H file.  If None
+        (the default), this is lammpstrjpath with the parent
+        directories and ".lammpstrj" suffix (if present) stripped
+        and ".xyz" appended.
+
+    getframes: List or np.array
+        Sequence or 1-D array of integers designating the zero-based indices
+        of specific frames to write.  If None (the default), all frames are
+        written.
+        If empty, the function effectively does nothing.  The frames are
+        written in the same order with which they are listed in getframes,
+        which is not necessarily in ascending order.
     """
+
     ltpath = Path(lammpstrjpath)
     full_fstr = "X " + fstr + " " + fstr + " " + fstr
     colnames = ("id", "xu", "yu", "zu")
@@ -52,7 +71,8 @@ def lammpstrjconvert(
     elif len(getframes):
         frame_array = np.array(getframes)
         nonsorted = any(
-            [frame_array[i] >= frame_array[i + 1] for i in range(len(frame_array) - 1)]
+            [frame_array[i] >= frame_array[i + 1]
+                for i in range(len(frame_array) - 1)]
         )
     else:
         return
@@ -62,6 +82,7 @@ def lammpstrjconvert(
     ) as xyzfile:
         eofreached = False
         # Define nested functions findheading and convert_frame
+
         def findheading(tgt, lineadvance=True):
             eof_flag = False
             tgt_hit = False
@@ -71,7 +92,7 @@ def lammpstrjconvert(
                 else:
                     thislinestr = ltfile.readline(len(tgt))
                 if len(tgt) <= len(thislinestr):
-                    tgt_hit = thislinestr[0 : len(tgt)] == tgt
+                    tgt_hit = thislinestr[0:len(tgt)] == tgt
                 elif not thislinestr:
                     eof_flag = True
                     tgt_hit = True
@@ -96,7 +117,6 @@ def lammpstrjconvert(
             zlo = float(extent_z_str[0])
             zhi = float(extent_z_str[1])
             if boxbounds_list[0] == "xy":
-                triclinic_flag = True
                 xy = float(extent_x_str[2])
                 xz = float(extent_y_str[2])
                 yz = float(extent_z_str[2])
@@ -112,9 +132,11 @@ def lammpstrjconvert(
             c = [xz, yz, zz]
             lmat = np.array([a, b, c])
             volume = np.inner(a, np.cross(b, c))
-            # boxes always have origin at (0,0,0) in Cassandra, but not always in lammps
-            box_center = np.sum(lmat, axis=1) * 0.5 + np.array([xlo, ylo, zlo])
-            eofreached = findheading("ITEM: ATOMS ", False)
+            # boxes always have origin at (0,0,0) in Cassandra,
+            # but not always in lammps
+            box_center = np.sum(lmat, axis=1) * 0.5 + \
+                np.array([xlo, ylo, zlo])
+            eofreached = findheading("ITEM: ATOMS ", False) # noqa
             coldict = {
                 colname: i
                 for i, colname in enumerate(ltfile.readline().strip().split())
@@ -162,7 +184,8 @@ def lammpstrjconvert(
                 eofreached = findheading("ITEM: TIMESTEP")
                 if eofreached:
                     raise ValueError(
-                        "Frame indices specified in getframes exceed the maximum frame index "
+                        """Frame indices specified in getframes
+                        exceed the maximum frame index"""
                         + str(iframe - 1)
                     )
                 if iframe in frame_array:
@@ -182,7 +205,8 @@ def lammpstrjconvert(
                         eofreached = True
                     elif eofreached:
                         raise ValueError(
-                            "Frame indices specified in getframes exceed the maximum frame index "
+                            """Frame indices specified in getframes
+                            exceed the maximum frame index """
                             + str(iframe)
                         )
                 iframe += 1
@@ -194,4 +218,6 @@ if __name__ == "__main__":
     parser.add_argument("fname")
     parser.add_argument("nmols", nargs="+", type=int)
     args = parser.parse_args()
-    lammpstrjconvert(lammpstrjpath=args.fname, n_list=args.nmols, fstr=args.format)
+    lammpstrjconvert(lammpstrjpath=args.fname,
+                     n_list=args.nmols,
+                     fstr=args.format)
