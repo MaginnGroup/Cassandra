@@ -1579,7 +1579,7 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
            config_list(this_atom)%rzp = &
                  library_coords(nl)%rzp
               !frag_coords(j,this_fragment,frag_type)%rzp
-         END DO
+        END DO
      
         ! For a ring fragment, access the fragment intramolecular energy 
 
@@ -1589,7 +1589,7 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
            nrg_ring_frag_tot = nrg_ring_frag_tot + nrg_ring_frag
         END IF
         
-        CLOSE(UNIT=11)
+!why was this ever here?        CLOSE(UNIT=11)
 
      END IF
      combined_exist = these_atoms%exist
@@ -1904,32 +1904,28 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
      trial_loop: DO ii = 1, kappa_dih
 
         ! Reload the coordinates for the atoms of this fragment
-        DO j = 1, frag_list(ifrag,is)%natoms
+        DO j = 1, nfrag_atoms
            
-           this_atom = frag_list(ifrag,is)%atoms(j)
+                this_atom = atom_id(j)
            
-           IF (this_atom /= anchor_ifrag) THEN
-              IF (this_atom /= anchor_frag_connect) THEN
-                 these_atoms(this_atom)%rxp = &
-                    config_temp_list(this_atom,ii)%rxp 
-                 these_atoms(this_atom)%ryp = &
-                    config_temp_list(this_atom,ii)%ryp 
-                 these_atoms(this_atom)%rzp = &
-                    config_temp_list(this_atom,ii)%rzp
-                 IF (l_sectors .AND. widom_active) THEN
-                         IF (check_overlap(this_atom,this_im,is)) THEN
-                                IF (ii > 1) THEN
-                                        weight(ii) = weight(ii-1)
-                                ELSE
-                                        weight(ii) = 0.0_DP
-                                END IF
-                                overlap_trial(ii) = .TRUE.
-                                !IF (ii == kappa_dih) these_atoms(atom_id(1:nfrag_atoms))%exist = .TRUE.
-                                CYCLE trial_loop
-                         END IF
-                 END IF
-              END IF
-           END IF
+                these_atoms(this_atom)%rxp = &
+                   config_temp_list(this_atom,ii)%rxp 
+                these_atoms(this_atom)%ryp = &
+                   config_temp_list(this_atom,ii)%ryp 
+                these_atoms(this_atom)%rzp = &
+                   config_temp_list(this_atom,ii)%rzp
+                IF (l_sectors .AND. widom_active) THEN
+                        IF (check_overlap(this_atom,this_im,is)) THEN
+                               IF (ii > 1) THEN
+                                       weight(ii) = weight(ii-1)
+                               ELSE
+                                       weight(ii) = 0.0_DP
+                               END IF
+                               overlap_trial(ii) = .TRUE.
+                               !IF (ii == kappa_dih) these_atoms(atom_id(1:nfrag_atoms))%exist = .TRUE.
+                               CYCLE trial_loop
+                        END IF
+                END IF
         END DO
         ! Turn all the atoms off
         overlap = .FALSE.
@@ -2094,6 +2090,7 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
      
      ! mark this fragment as placed
      frag_placed(ifrag) = 1
+
     
 
   END DO

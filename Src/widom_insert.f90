@@ -73,7 +73,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
   REAL(DP) :: widom_prefactor, widom_var_exp, widom_sum
   REAL(DP) :: E_recip_in, lrc_diff, E_inter_constant
   REAL(DP) :: subinterval_sums(100)
-  REAL(DP) :: noncbmc_time_e, noncbmc_time_s, noncbmc_time
+!widom_timing  REAL(DP) :: noncbmc_time_e, noncbmc_time_s, noncbmc_time
   LOGICAL :: omp_flag
 
 
@@ -140,12 +140,16 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
 
   subinterval = insertions_in_step/100
 
+  ! add $ in next line and include in omp parralel creation below when using full widom timing
+  !OMP PRIVATE(noncbmc_time_e,noncbmc_time_s) &
+  ! also include noncbmc_time in omp reduction
+
   !$OMP PARALLEL DEFAULT(SHARED) &
   !$OMP PRIVATE(ln_pseq, ln_pbias, E_ring_frag, inter_overlap, cbmc_overlap, intra_overlap, i_interval) &
-  !$OMP PRIVATE(widom_var_exp, E_inter_qq, E_periodic_qq, E_intra_qq, E_intra_vdw, E_inter_vdw, dE_frag) &
+  !$OMP PRIVATE(widom_var_exp, E_inter_qq, E_periodic_qq, E_intra_qq, E_intra_vdw, E_inter_vdw, dE_frag, dE) &
   !$OMP PRIVATE(E_bond, E_angle, E_dihedral, E_improper, dE_intra, dE_inter, E_reciprocal, frag_order) &
-  !$OMP PRIVATE(noncbmc_time_e,noncbmc_time_s) &
-  !$OMP REDUCTION(+:widom_sum,n_overlaps, subinterval_sums, noncbmc_time)
+  !$OMP REDUCTION(+:widom_sum,n_overlaps,subinterval_sums)
+
   IF (ALLOCATED(widom_atoms)) DEALLOCATE(widom_atoms)
   ALLOCATE(widom_atoms(natoms(is)))
   widom_molecule = molecule_list(widom_locate,is)
@@ -314,6 +318,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
 
 
   ntrials(is,ibox)%widom = ntrials(is,ibox)%widom + insertions_in_step
+
 
 !widom_timing  WRITE(*,*) noncbmc_time
 

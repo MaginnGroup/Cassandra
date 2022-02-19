@@ -1140,7 +1140,7 @@ CONTAINS
     REAL(DP) :: Ei_inter_vdw, Ei_inter_qq
 
     LOGICAL :: get_interaction
-    LOGICAL, DIMENSION(MAXVAL(nmols(:,widom_molecule%which_box)),nspecies) :: shortrange, midrange
+!molecule_priority    LOGICAL, DIMENSION(MAXVAL(nmols(:,widom_molecule%which_box)),nspecies) :: shortrange, midrange
 
     E_inter_vdw = 0.0_DP
     E_inter_qq = 0.0_DP
@@ -1148,94 +1148,94 @@ CONTAINS
 
     this_box = widom_molecule%which_box
 
-    IF (widom_active .AND. l_sectors) THEN
-            speciesLoop0: DO ispecies = 1, nspecies
-                moleculeLoop0: DO imolecule = 1, nmols(ispecies,this_box)
-                        this_locate = locate(imolecule,ispecies,this_box)
-                        IF (ispecies == is .AND. this_locate == im) CYCLE moleculeLoop0
-                        IF (.NOT. molecule_list(this_locate,ispecies)%live) CYCLE moleculeLoop0
-                        CALL Check_MoleculePair_Cutoff(im,is,this_locate,ispecies,get_interaction, &
-                                rcom,rx,ry,rz)
-                        IF (.NOT. get_interaction) CYCLE moleculeLoop0
-                        CALL Compute_MoleculePair_Energy(im,is,this_locate,ispecies, &
-                             this_box,Eij_vdw,Eij_qq,overlap)
+!molecule_priority    IF (widom_active .AND. l_sectors) THEN
+    speciesLoop0: DO ispecies = 1, nspecies
+        moleculeLoop0: DO imolecule = 1, nmols(ispecies,this_box)
+                this_locate = locate(imolecule,ispecies,this_box)
+                IF (ispecies == is .AND. this_locate == im) CYCLE moleculeLoop0
+                IF (.NOT. molecule_list(this_locate,ispecies)%live) CYCLE moleculeLoop0
+                CALL Check_MoleculePair_Cutoff(im,is,this_locate,ispecies,get_interaction, &
+                        rcom,rx,ry,rz)
+                IF (.NOT. get_interaction) CYCLE moleculeLoop0
+                CALL Compute_MoleculePair_Energy(im,is,this_locate,ispecies, &
+                     this_box,Eij_vdw,Eij_qq,overlap)
 
-                        IF (overlap) RETURN ! this should never happen; already caught by cell list
+                IF (overlap) RETURN ! this should never happen; already caught by cell list
 
-                        E_inter_vdw = E_inter_vdw + Eij_vdw
-                        E_inter_qq  = E_inter_qq + Eij_qq
-                END DO moleculeLoop0
-            END DO speciesLoop0
-            RETURN
-    END IF
+                E_inter_vdw = E_inter_vdw + Eij_vdw
+                E_inter_qq  = E_inter_qq + Eij_qq
+        END DO moleculeLoop0
+    END DO speciesLoop0
+!molecule_priority            RETURN
+!molecule_priority    END IF
 
-    hardcore_max_r = widom_molecule%max_dcom + rcut_low
-    molecule_hardcore_r = rcut_low - widom_molecule%min_dcom
-
-
-    speciesLoop: DO ispecies = 1, nspecies
-       moleculeLoop: DO imolecule = 1, nmols(ispecies,this_box)
-          this_locate = locate(imolecule,ispecies,this_box)
-          IF (ispecies == is .AND. this_locate == im) THEN
-                  shortrange(imolecule, ispecies) = .FALSE.
-                  midrange(imolecule, ispecies) = .FALSE.
-                  CYCLE moleculeLoop
-          ELSE IF (.NOT. molecule_list(this_locate,ispecies)%live) THEN
-                  shortrange(imolecule, ispecies) = .FALSE.
-                  midrange(imolecule, ispecies) = .FALSE.
-                  CYCLE moleculeLoop
-          END IF
-
-          ! Determine whether any atoms of these two molecules will interact
-          CALL Check_MoleculePair_Cutoff(im,is,this_locate,ispecies,get_interaction, &
-               rcom,rx,ry,rz)
-
-          IF (.NOT. get_interaction) THEN
-                  shortrange(imolecule, ispecies) = .FALSE.
-                  midrange(imolecule, ispecies) = .FALSE.
-          ELSE IF (rcom + molecule_list(this_locate,ispecies)%min_dcom < molecule_hardcore_r) THEN
-                  overlap = .TRUE.
-                  RETURN
-          ELSE IF (rcom - molecule_list(this_locate,ispecies)%max_dcom > hardcore_max_r) THEN
-                  shortrange(imolecule, ispecies) = .FALSE.
-                  midrange(imolecule, ispecies) = .TRUE.
-          ELSE
-                  shortrange(imolecule, ispecies) = .TRUE.
-                  midrange(imolecule, ispecies) = .FALSE.
-          END IF
-       END DO moleculeLoop
-    END DO speciesLoop
-
-    speciesLoop2: DO ispecies = 1, nspecies
-       moleculeLoop2: DO imolecule = 1, nmols(ispecies,this_box)
-          IF (.NOT. shortrange(imolecule,ispecies)) CYCLE moleculeLoop2
-          this_locate = locate(imolecule,ispecies,this_box)
-
-          CALL Compute_MoleculePair_Energy(im,is,this_locate,ispecies, &
-               this_box,Eij_vdw,Eij_qq,overlap)
-
-          IF (overlap) RETURN
-
-          E_inter_vdw = E_inter_vdw + Eij_vdw
-          E_inter_qq  = E_inter_qq + Eij_qq
-
-       END DO moleculeLoop2
-    END DO speciesLoop2
-
-    speciesLoop3: DO ispecies = 1, nspecies
-       moleculeLoop3: DO imolecule = 1, nmols(ispecies,this_box)
-          IF (.NOT. midrange(imolecule,ispecies)) CYCLE moleculeLoop3
-          this_locate = locate(imolecule,ispecies,this_box)
-          CALL Compute_MoleculePair_Energy(im,is,this_locate,ispecies, &
-               this_box,Eij_vdw,Eij_qq,overlap)
-
-          IF (overlap) RETURN ! there shouldn't be overlap for midrange molecules
-
-          E_inter_vdw = E_inter_vdw + Eij_vdw
-          E_inter_qq  = E_inter_qq + Eij_qq
-
-       END DO moleculeLoop3
-    END DO speciesLoop3
+!molecule_priority    hardcore_max_r = widom_molecule%max_dcom + rcut_low
+!molecule_priority    molecule_hardcore_r = rcut_low - widom_molecule%min_dcom
+!molecule_priority
+!molecule_priority
+!molecule_priority    speciesLoop: DO ispecies = 1, nspecies
+!molecule_priority       moleculeLoop: DO imolecule = 1, nmols(ispecies,this_box)
+!molecule_priority          this_locate = locate(imolecule,ispecies,this_box)
+!molecule_priority          IF (ispecies == is .AND. this_locate == im) THEN
+!molecule_priority                  shortrange(imolecule, ispecies) = .FALSE.
+!molecule_priority                  midrange(imolecule, ispecies) = .FALSE.
+!molecule_priority                  CYCLE moleculeLoop
+!molecule_priority          ELSE IF (.NOT. molecule_list(this_locate,ispecies)%live) THEN
+!molecule_priority                  shortrange(imolecule, ispecies) = .FALSE.
+!molecule_priority                  midrange(imolecule, ispecies) = .FALSE.
+!molecule_priority                  CYCLE moleculeLoop
+!molecule_priority          END IF
+!molecule_priority
+!molecule_priority          ! Determine whether any atoms of these two molecules will interact
+!molecule_priority          CALL Check_MoleculePair_Cutoff(im,is,this_locate,ispecies,get_interaction, &
+!molecule_priority               rcom,rx,ry,rz)
+!molecule_priority
+!molecule_priority          IF (.NOT. get_interaction) THEN
+!molecule_priority                  shortrange(imolecule, ispecies) = .FALSE.
+!molecule_priority                  midrange(imolecule, ispecies) = .FALSE.
+!molecule_priority          ELSE IF (rcom + molecule_list(this_locate,ispecies)%min_dcom < molecule_hardcore_r) THEN
+!molecule_priority                  overlap = .TRUE.
+!molecule_priority                  RETURN
+!molecule_priority          ELSE IF (rcom - molecule_list(this_locate,ispecies)%max_dcom > hardcore_max_r) THEN
+!molecule_priority                  shortrange(imolecule, ispecies) = .FALSE.
+!molecule_priority                  midrange(imolecule, ispecies) = .TRUE.
+!molecule_priority          ELSE
+!molecule_priority                  shortrange(imolecule, ispecies) = .TRUE.
+!molecule_priority                  midrange(imolecule, ispecies) = .FALSE.
+!molecule_priority          END IF
+!molecule_priority       END DO moleculeLoop
+!molecule_priority    END DO speciesLoop
+!molecule_priority
+!molecule_priority    speciesLoop2: DO ispecies = 1, nspecies
+!molecule_priority       moleculeLoop2: DO imolecule = 1, nmols(ispecies,this_box)
+!molecule_priority          IF (.NOT. shortrange(imolecule,ispecies)) CYCLE moleculeLoop2
+!molecule_priority          this_locate = locate(imolecule,ispecies,this_box)
+!molecule_priority
+!molecule_priority          CALL Compute_MoleculePair_Energy(im,is,this_locate,ispecies, &
+!molecule_priority               this_box,Eij_vdw,Eij_qq,overlap)
+!molecule_priority
+!molecule_priority          IF (overlap) RETURN
+!molecule_priority
+!molecule_priority          E_inter_vdw = E_inter_vdw + Eij_vdw
+!molecule_priority          E_inter_qq  = E_inter_qq + Eij_qq
+!molecule_priority
+!molecule_priority       END DO moleculeLoop2
+!molecule_priority    END DO speciesLoop2
+!molecule_priority
+!molecule_priority    speciesLoop3: DO ispecies = 1, nspecies
+!molecule_priority       moleculeLoop3: DO imolecule = 1, nmols(ispecies,this_box)
+!molecule_priority          IF (.NOT. midrange(imolecule,ispecies)) CYCLE moleculeLoop3
+!molecule_priority          this_locate = locate(imolecule,ispecies,this_box)
+!molecule_priority          CALL Compute_MoleculePair_Energy(im,is,this_locate,ispecies, &
+!molecule_priority               this_box,Eij_vdw,Eij_qq,overlap)
+!molecule_priority
+!molecule_priority          IF (overlap) RETURN ! there shouldn't be overlap for midrange molecules
+!molecule_priority
+!molecule_priority          E_inter_vdw = E_inter_vdw + Eij_vdw
+!molecule_priority          E_inter_qq  = E_inter_qq + Eij_qq
+!molecule_priority
+!molecule_priority       END DO moleculeLoop3
+!molecule_priority    END DO speciesLoop3
   END SUBROUTINE Compute_Molecule_Nonbond_Inter_Energy_Widom
   !-----------------------------------------------------------------------------
 
