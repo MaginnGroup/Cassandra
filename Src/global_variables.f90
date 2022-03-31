@@ -623,6 +623,14 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   TYPE(Atom_Class), ALLOCATABLE, DIMENSION(:), TARGET :: widom_atoms
   !$OMP THREADPRIVATE(widom_molecule, widom_atoms, cbmc_flag)
 
+
+
+  ! n_widom_subgroups is indexed by (species,box)
+  INTEGER, DIMENSION(:,:), ALLOCATABLE :: n_widom_subgroups
+
+
+
+
 !widom_timing  INTEGER(KIND=INT64) :: n_clo, n_not_clo, n_nrg_overlap
 !widom_timing  REAL(DP) :: cell_list_time, normal_overlap_time, non_overlap_time, nrg_overlap_time
 !widom_timing  !$OMP THREADPRIVATE(n_clo, n_not_clo, n_nrg_overlap)

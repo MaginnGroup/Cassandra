@@ -72,8 +72,10 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
 
   REAL(DP) :: widom_prefactor, widom_var_exp, widom_sum
   REAL(DP) :: E_recip_in, lrc_diff, E_inter_constant
-  REAL(DP) :: subinterval_sums(100)
+  REAL(DP) :: subinterval_sums(MAX(n_widom_subgroups(is,ibox),1))
+  INTEGER :: n_subintervals
 !widom_timing  REAL(DP) :: noncbmc_time_e, noncbmc_time_s, noncbmc_time
+  LOGICAL :: write_wprp2
   LOGICAL :: omp_flag
 
 
@@ -82,6 +84,14 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
   !$ omp_flag = .TRUE.
 !widom_timing  noncbmc_time = 0.0_DP
 
+
+  IF (n_widom_subgroups(is,ibox) > 0) THEN
+          n_subintervals = n_widom_subgroups(is,ibox)
+          write_wprp2 = .TRUE.
+  ELSE
+          n_subintervals = 1
+          write_wprp2 = .FALSE.
+  END IF
 
   this_lambda = 1.0_DP
   widom_sum = 0.0_DP
@@ -138,9 +148,9 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
   widom_active = .TRUE.
 
 
-  subinterval = insertions_in_step/100
+  subinterval = insertions_in_step/n_subintervals
 
-  ! add $ in next line and include in omp parralel creation below when using full widom timing
+  ! add $ in next line and include in omp parallel creation below when using full widom timing
   !OMP PRIVATE(noncbmc_time_e,noncbmc_time_s) &
   ! also include noncbmc_time in omp reduction
 
@@ -284,24 +294,28 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
           ELSE
                   n_overlaps = n_overlaps + 1_INT64
           END IF
-          i_interval = (i_widom - 1_INT64)/subinterval + 1_INT64
-          if (i_interval < 101) subinterval_sums(i_interval) = subinterval_sums(i_interval) + widom_var_exp
+          IF (write_wprp2) THEN
+                i_interval = (i_widom - 1_INT64)/subinterval + 1_INT64
+                IF (i_interval <= n_subintervals) subinterval_sums(i_interval) = subinterval_sums(i_interval) + widom_var_exp
+          END IF
   END DO
   !$OMP END DO
   !$OMP END PARALLEL
   widom_active = .FALSE.
   widom_sum = widom_sum * widom_prefactor
   overlap_counter(is,ibox) = overlap_counter(is,ibox) + n_overlaps
-  subinterval_sums = subinterval_sums * widom_prefactor / subinterval
-  IF (first_open_wprop2(is,ibox)) THEN
-          OPEN(unit=wprop2_file_unit(is,ibox),file=wprop2_filenames(is,ibox))
-          first_open_wprop2(is,ibox) = .FALSE.
+  IF (write_wprp2) THEN
+          subinterval_sums = subinterval_sums * widom_prefactor / subinterval
+          IF (first_open_wprop2(is,ibox)) THEN
+                  OPEN(unit=wprop2_file_unit(is,ibox),file=wprop2_filenames(is,ibox))
+                  first_open_wprop2(is,ibox) = .FALSE.
+          END IF
+          DO i = 1, n_subintervals
+                IF (subinterval_sums(i) < 1.0e-98_DP) subinterval_sums(i) = 0.0_DP
+                WRITE(wprop2_file_unit(is,ibox), "(E30.22)", ADVANCE="NO") subinterval_sums(i)
+          END DO
+          WRITE(wprop2_file_unit(is,ibox),*)
   END IF
-  DO i = 1, 100
-        IF (subinterval_sums(i) < 1.0e-98_DP) subinterval_sums(i) = 0.0_DP
-        WRITE(wprop2_file_unit(is,ibox), "(E30.22)", ADVANCE="NO") subinterval_sums(i)
-  END DO
-  WRITE(wprop2_file_unit(is,ibox),*)
 
 
   ! remove test molecule

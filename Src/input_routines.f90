@@ -5297,8 +5297,10 @@ SUBROUTINE Get_Widom_Info
                         widom_flag = .TRUE.
                         IF(.NOT. ALLOCATED(ntrials)) ALLOCATE(ntrials(nspecies,nbr_boxes))
                         IF(.NOT. ALLOCATED(overlap_counter)) ALLOCATE(overlap_counter(nspecies,nbr_boxes))
+                        IF(.NOT. ALLOCATED(n_widom_subgroups)) ALLOCATE(n_widom_subgroups(nspecies,nbr_boxes))
                         ntrials(:,:)%widom = 0
                         overlap_counter(:,:) = 0_INT64
+                        n_widom_subgroups = 0
                         ALLOCATE(wprop_file_unit(nspecies,nbr_boxes))
                         ALLOCATE(wprop_filenames(nspecies,nbr_boxes))
                         ALLOCATE(first_open_wprop(nspecies,nbr_boxes))
@@ -5339,6 +5341,12 @@ SUBROUTINE Get_Widom_Info
                                 species_list(is)%widom_sum(ibox) = 0.0_DP
                                 species_list(is)%insertions_in_step(ibox) = String_To_Int(line_array(i_entry+1))
                                 species_list(is)%widom_interval(ibox) = String_To_Int(line_array(i_entry+2))
+                                IF (i_entry+3 <= nbr_entries) THEN
+                                        IF (line_array(i_entry+3) /= 'cbmc' .AND. line_array(i_entry+3) /= 'none' .AND. &
+                                        line_array(i_entry+3)(1:1) /= '!') THEN
+                                                n_widom_subgroups(is,ibox) = String_To_Int(line_array(i_entry+3))
+                                        END IF 
+                                END IF
                                 tp_correction(is) = 1
                                 i_unit = i_unit + 1
                                 wprop_file_unit(is,ibox) = wprop_file_unit_base + i_unit
