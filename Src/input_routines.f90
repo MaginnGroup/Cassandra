@@ -5391,7 +5391,8 @@ SUBROUTINE Get_Lookup_Info
                 END IF
 
                 IF(line_string(1:3) == 'END' .or. line_nbr > 10000 ) RETURN
-                IF (line_string(1:17) == '# Atom_Lookup') THEN
+                IF (line_string(1:13) == '# Atom_Lookup' .OR. &
+                        line_string(1:19) == '# Cell_List_Overlap') THEN
                         DO
                                 line_nbr = line_nbr + 1
                                 CALL Read_String(inputunit,line_string,ierr)
