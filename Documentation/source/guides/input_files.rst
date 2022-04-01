@@ -1339,7 +1339,7 @@ Widom Insertion
 
 | ``# Widom_Insertion``
 | [*Logical*]
-| *Character(i,j,1)* [*Integer(i,j,2) Integer(i,j,3)*] \*One entry for each box j
+| *Character(i,j,1)* [*Integer(i,j,2) Integer(i,j,3)*] [*Integer(i,j,4)*] \*One entry for each box j
 | *\*One line for each species i*
 
 This section specifies which species will be used for Widom insertions and 
@@ -1358,6 +1358,14 @@ section ``# Simulation_Length_Info`` as described in
 :ref:`sec:Simulation_Length_Info`) in box *j*.  Units of time are not 
 supported for *Integer(i,j,3)*, and if they are specified as the units, 
 *Integer(i,j,3)* will still be in units of MC steps.
+
+*Integer(i,j,4)* may optionally be included with a positive value to make Cassandra write 
+a ``.wprp2`` file for species *i* and box *j*, where each group of *Integer(i,j,2)* 
+Widom insertions is split into *Integer(i,j,4)* subgroups with an equal number of 
+Widom insertions.  If *Integer(i,j,2)* is not divisible by *Integer(i,j,4)*, the last remainder 
+of the *Integer(i,j,2)* Widom insertions is ignored for the ``.wprp2`` file but not for the ``.wprp`` 
+file and computed shifted chemical potential for species *i* and box *j*.  Additional details on 
+the ``.wprp2`` files are given in :ref:`sec:output_files`.
 
 For example, for a simulation with one box and two species, in which species 1 is to be inserted 
 5000 times every 1000 steps and species 2 is to be inserted 7000 times every 400 steps, 
@@ -1380,6 +1388,21 @@ and 200 Widom insertions every 30 sweeps in box 2, this section could be written
         # Widom_Insertion
         none cbmc 300 50
         cbmc 7000 350 cbmc 200 30
+
+
+.. _sec:Cell_List_Info:
+
+Cell List Overlap Detection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+| ``# Cell_List_Overlap``
+| *Logical*
+
+To enable cell list-based core overlap detection for Widom insertions, 
+*Logical* should be ``true``.  This requires more memory, but lets Cassandra more quickly 
+detect core overlap without wasting CPU time computing any energies for trial postions with core overlap. 
+This results in a dramatic speed boost for Widom insertions in dense media such as liquids, where 
+most trial positions have core overlap.
 
 
 
