@@ -1402,7 +1402,7 @@ To enable cell list-based core overlap detection for Widom insertions,
 *Logical* should be ``true``.  This requires more memory, but lets Cassandra more quickly 
 detect core overlap without wasting CPU time computing any energies for trial postions with core overlap. 
 This results in a dramatic speed boost for Widom insertions in dense media such as liquids, where 
-most trial positions have core overlap.
+most trial positions have core overlap.  This method only supports cubic boxes and orthogonal boxes.
 
 
 
