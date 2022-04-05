@@ -41,7 +41,7 @@ cubic
 
 
 # Pregen_Info
-lmp_1_prod.H lmp_1_prod.xyz
+bmim-pf6.H bmim-pf6.xyz
 
 # Simulation_Length_Info
 units       steps
