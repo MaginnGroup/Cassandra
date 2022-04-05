@@ -248,6 +248,7 @@ PROGRAM Main
   DO ibox = 1, nbr_boxes
   IF (start_type(ibox) == 'none') THEN
             WRITE(logunit,'(A)') 'No initial configuration needed'
+            IF (int_vdw_sum_style(ibox) == vdw_cut_tail) CALL Compute_Beads(ibox)
             EXIT
     ELSEIF (start_type(ibox) == 'make_config') THEN
        ! Insert molecules using CBMC
