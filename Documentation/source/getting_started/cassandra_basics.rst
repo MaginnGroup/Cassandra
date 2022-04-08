@@ -191,7 +191,7 @@ file name suffix. The following are generated:
   this file to compute thermodynamic averages.
 
 * **Widom property file** (``*.spec#.wprp`` or ``*.spec#.box#.wprp``):  This 
-  file lists the average ``widom_var`` (defined in Eq. :ref:`eq:widom_var` 
+  file lists the average ``widom_var`` (defined  
   in :ref:`sec:widom_insert`) for each system configuration (step) in which 
   Widom insertions are performed for a given species and a given box.  The 
   species number is the ``#`` in ``.spec#`` in the file extension.  For a 
@@ -199,4 +199,16 @@ file name suffix. The following are generated:
   column contains the number of MC steps or sweeps that have been completed 
   when the Widom insertions are performed and the second column contains the 
   average ``widom_var`` for that step.
+
+* **Secondary Widom property file** (``*.spec#.wprp2`` ``*.spec#.box#.wprp2``): This 
+  file lists the average ``widom_var`` (defined  
+  in :ref:`sec:widom_insert`) for each Widom insertion subgroup in each system 
+  configuration (step) in which Widom insertions are performed for a given species 
+  and a given box.  The naming convention is analogous to that of normal Widom 
+  property files.  There is one row (line) per system configuration (frame) in which Widom insertions 
+  are performed for the species and box, and one column per subgroup per Widom insertion frame. 
+  Unlike basic Widom property files, these do not have row or column labels, and do not include 
+  the step number or sweep number, but the step number or sweep number corresponding to each 
+  row is the same as in the Widom property file.  Further details are given in 
+  :ref:`sec:Widom_Info`).
 

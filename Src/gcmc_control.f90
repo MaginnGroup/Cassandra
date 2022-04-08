@@ -134,4 +134,6 @@ SUBROUTINE GCMC_Control
 
   CALL Get_CBMC_Info
 
+  CALL Get_Lookup_Info
+
 END SUBROUTINE GCMC_Control

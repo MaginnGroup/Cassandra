@@ -62,6 +62,17 @@ CONTAINS
    REAL(DP) :: rot31, rot32, rot33, rxpnew, rypnew, rzpnew
    
    INTEGER :: i, ia
+
+   TYPE(Molecule_Class), POINTER :: this_molecule
+   TYPE(Atom_Class), POINTER :: these_atoms(:)
+
+   IF (widom_active) THEN
+           this_molecule => widom_molecule
+           these_atoms => widom_atoms
+   ELSE
+           this_molecule => molecule_list(alive,is)
+           these_atoms => atom_list(:,alive,is)
+   END IF
    
    ! Pick random eulerians
    
@@ -75,11 +86,11 @@ CONTAINS
    
    DO ia = 1,natoms(is)
 
-      IF (atom_list(ia,alive,is)%exist) THEN
+      IF (these_atoms(ia)%exist) THEN
          
-         atom_list(ia,alive,is)%rxp = atom_list(ia,alive,is)%rxp - molecule_list(alive,is)%xcom
-         atom_list(ia,alive,is)%ryp = atom_list(ia,alive,is)%ryp - molecule_list(alive,is)%ycom
-         atom_list(ia,alive,is)%rzp = atom_list(ia,alive,is)%rzp - molecule_list(alive,is)%zcom
+         these_atoms(ia)%rxp = these_atoms(ia)%rxp - this_molecule%xcom
+         these_atoms(ia)%ryp = these_atoms(ia)%ryp - this_molecule%ycom
+         these_atoms(ia)%rzp = these_atoms(ia)%rzp - this_molecule%zcom
          
       END IF
 
@@ -104,20 +115,20 @@ CONTAINS
 
    DO ia = 1, natoms(is)
 
-      IF (atom_list(ia,alive,is)%exist) THEN
+      IF (these_atoms(ia)%exist) THEN
          
-         rxpnew = rot11*atom_list(ia,alive,is)%rxp + rot12*atom_list(ia,alive,is)%ryp + &
-              rot13*atom_list(ia,alive,is)%rzp
-         rypnew = rot21*atom_list(ia,alive,is)%rxp + rot22*atom_list(ia,alive,is)%ryp + &
-              rot23*atom_list(ia,alive,is)%rzp
-         rzpnew = rot31*atom_list(ia,alive,is)%rxp + rot32*atom_list(ia,alive,is)%ryp + &
-              rot33*atom_list(ia,alive,is)%rzp
+         rxpnew = rot11*these_atoms(ia)%rxp + rot12*these_atoms(ia)%ryp + &
+              rot13*these_atoms(ia)%rzp
+         rypnew = rot21*these_atoms(ia)%rxp + rot22*these_atoms(ia)%ryp + &
+              rot23*these_atoms(ia)%rzp
+         rzpnew = rot31*these_atoms(ia)%rxp + rot32*these_atoms(ia)%ryp + &
+              rot33*these_atoms(ia)%rzp
          
          ! Shift the origin back to (0,0,0)
          
-         atom_list(ia,alive,is)%rxp = rxpnew + molecule_list(alive,is)%xcom
-         atom_list(ia,alive,is)%ryp = rypnew + molecule_list(alive,is)%ycom
-         atom_list(ia,alive,is)%rzp = rzpnew + molecule_list(alive,is)%zcom
+         these_atoms(ia)%rxp = rxpnew + this_molecule%xcom
+         these_atoms(ia)%ryp = rypnew + this_molecule%ycom
+         these_atoms(ia)%rzp = rzpnew + this_molecule%zcom
          
       END IF
       
@@ -152,6 +163,18 @@ CONTAINS
    REAL(DP) :: x_orig,y_orig,z_orig
 
    INTEGER :: i, ia, istart
+
+   TYPE(Molecule_Class), POINTER :: this_molecule
+   TYPE(Atom_Class), POINTER :: these_atoms(:)
+
+   IF (widom_active) THEN
+           this_molecule => widom_molecule
+           these_atoms => widom_atoms
+   ELSE
+           this_molecule => molecule_list(alive,is)
+           these_atoms => atom_list(:,alive,is)
+   END IF
+   
    
    ! Pick random eulerians
    
@@ -165,20 +188,20 @@ CONTAINS
 
    atom_orig = frag_list(frag_start,is)%atoms(1)
 
-   x_orig = atom_list(atom_orig,alive,is)%rxp
-   y_orig = atom_list(atom_orig,alive,is)%ryp
-   z_orig = atom_list(atom_orig,alive,is)%rzp
+   x_orig = these_atoms(atom_orig)%rxp
+   y_orig = these_atoms(atom_orig)%ryp
+   z_orig = these_atoms(atom_orig)%rzp
 
    istart = 2
 
    DO i = istart,frag_list(frag_start,is)%natoms
       ia = frag_list(frag_start,is)%atoms(i)
  
-      IF (atom_list(ia,alive,is)%exist) THEN
+      IF (these_atoms(ia)%exist) THEN
          
-         atom_list(ia,alive,is)%rxp = atom_list(ia,alive,is)%rxp - x_orig
-         atom_list(ia,alive,is)%ryp = atom_list(ia,alive,is)%ryp - y_orig
-         atom_list(ia,alive,is)%rzp = atom_list(ia,alive,is)%rzp - z_orig
+         these_atoms(ia)%rxp = these_atoms(ia)%rxp - x_orig
+         these_atoms(ia)%ryp = these_atoms(ia)%ryp - y_orig
+         these_atoms(ia)%rzp = these_atoms(ia)%rzp - z_orig
          
       END IF
 
@@ -203,18 +226,18 @@ CONTAINS
 
    DO ia = 2, natoms(is)
 
-      IF (atom_list(ia,alive,is)%exist) THEN
+      IF (these_atoms(ia)%exist) THEN
          
-         rxpnew = rot11*atom_list(ia,alive,is)%rxp + rot12*atom_list(ia,alive,is)%ryp + &
-              rot13*atom_list(ia,alive,is)%rzp
-         rypnew = rot21*atom_list(ia,alive,is)%rxp + rot22*atom_list(ia,alive,is)%ryp + &
-              rot23*atom_list(ia,alive,is)%rzp
-         rzpnew = rot31*atom_list(ia,alive,is)%rxp + rot32*atom_list(ia,alive,is)%ryp + &
-              rot33*atom_list(ia,alive,is)%rzp
+         rxpnew = rot11*these_atoms(ia)%rxp + rot12*these_atoms(ia)%ryp + &
+              rot13*these_atoms(ia)%rzp
+         rypnew = rot21*these_atoms(ia)%rxp + rot22*these_atoms(ia)%ryp + &
+              rot23*these_atoms(ia)%rzp
+         rzpnew = rot31*these_atoms(ia)%rxp + rot32*these_atoms(ia)%ryp + &
+              rot33*these_atoms(ia)%rzp
          
-         atom_list(ia,alive,is)%rxp = rxpnew
-         atom_list(ia,alive,is)%ryp = rypnew
-         atom_list(ia,alive,is)%rzp = rzpnew
+         these_atoms(ia)%rxp = rxpnew
+         these_atoms(ia)%ryp = rypnew
+         these_atoms(ia)%rzp = rzpnew
 
       END IF
 
@@ -223,9 +246,9 @@ CONTAINS
    ! Shift the origin back to (0,0,0)
    DO i=istart,frag_list(frag_start,is)%natoms
       ia = frag_list(frag_start,is)%atoms(i)
-      atom_list(ia,alive,is)%rxp = atom_list(ia,alive,is)%rxp + x_orig
-      atom_list(ia,alive,is)%ryp = atom_list(ia,alive,is)%ryp + y_orig
-      atom_list(ia,alive,is)%rzp = atom_list(ia,alive,is)%rzp + z_orig
+      these_atoms(ia)%rxp = these_atoms(ia)%rxp + x_orig
+      these_atoms(ia)%ryp = these_atoms(ia)%ryp + y_orig
+      these_atoms(ia)%rzp = these_atoms(ia)%rzp + z_orig
    END DO
  END SUBROUTINE Rotate_XYZ_Axes
 

@@ -51,6 +51,7 @@ MODULE Global_Variables
 
 USE ISO_FORTRAN_ENV
 USE Type_Definitions
+!$ USE OMP_LIB
 
   SAVE
 
@@ -589,14 +590,52 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   !!!!!!!!!
   !Widom insertions
   !!!!!!!!!
-  LOGICAL :: widom_flag
+  LOGICAL :: widom_flag, widom_active
   INTEGER, DIMENSION(:), ALLOCATABLE :: tp_correction
+  INTEGER :: widom_locate, widom_species
   INTEGER (KIND=INT64), DIMENSION(:,:), ALLOCATABLE :: overlap_counter
 
   ! Pregenerated trajectory
   !LOGICAL :: has_H ! Does the simulation use H file(s)?
   LOGICAL :: need_energy
+
+  !!!! Sectors
+  ! sector_atoms is indexed by (atom index within sector, sector index)
+  INTEGER, DIMENSION(:,:,:), ALLOCATABLE, TARGET :: sector_atoms
+  ! sector_index_map is indexed by (x index, y index, z index, box index) to get sector index
+  INTEGER, DIMENSION(:,:,:,:), ALLOCATABLE :: sector_index_map
+  ! sector_n_atoms is indexed by (sector index) to get number of atoms in a sector
+  INTEGER, DIMENSION(:), ALLOCATABLE :: sector_n_atoms
+  ! sector_has_atoms is indexed by (x index, y index, z index, box index)
+  LOGICAL, DIMENSION(:,:,:,:), ALLOCATABLE :: sector_has_atoms
+
+  LOGICAL :: l_sectors
+  ! sectorbound, length_cells, & cell_length_inv are indexed by (box dimension, box index)
+  INTEGER, DIMENSION(:,:), ALLOCATABLE :: sectorbound
+  INTEGER, DIMENSION(:,:), ALLOCATABLE :: length_cells
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: cell_length_inv, cell_length
+
+  INTEGER, DIMENSION(3) :: sectormaxbound
+
+  INTEGER :: n_occ_sectors
   
+  TYPE(Molecule_Class), TARGET :: widom_molecule
+  TYPE(Atom_Class), ALLOCATABLE, DIMENSION(:), TARGET :: widom_atoms
+  !$OMP THREADPRIVATE(widom_molecule, widom_atoms, cbmc_flag)
+
+
+
+  ! n_widom_subgroups is indexed by (species,box)
+  INTEGER, DIMENSION(:,:), ALLOCATABLE :: n_widom_subgroups
+
+
+
+
+!widom_timing  INTEGER(KIND=INT64) :: n_clo, n_not_clo, n_nrg_overlap
+!widom_timing  REAL(DP) :: cell_list_time, normal_overlap_time, non_overlap_time, nrg_overlap_time
+!widom_timing  !$OMP THREADPRIVATE(n_clo, n_not_clo, n_nrg_overlap)
+!widom_timing  !$OMP THREADPRIVATE(cell_list_time, normal_overlap_time, non_overlap_time, nrg_overlap_time)
+
 
 
 END MODULE Global_Variables

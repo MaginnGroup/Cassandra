@@ -126,6 +126,7 @@ OBJS = main.o \
        load_next_frame.o \
        pregen_control.o \
        pregen_driver.o \
+       sector_routines.o \
 
 
 ####################################################################

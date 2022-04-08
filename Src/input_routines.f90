@@ -44,6 +44,7 @@ MODULE Input_Routines
   USE IO_Utilities
   USE File_Names
   USE Type_Definitions
+  !$ USE OMP_LIB
 
 
   IMPLICIT NONE
@@ -4882,7 +4883,7 @@ SUBROUTINE Get_Start_Type
   molecule_list(:,:)%live = .FALSE.
 
   IF (int_sim_type == sim_pregen) THEN
-          start_type = 'NONE'
+          start_type = 'none'
           RETURN
   END IF
 
@@ -5254,10 +5255,13 @@ SUBROUTINE Get_Widom_Info
         INTEGER :: i_unit
 
         CHARACTER(STRING_LEN) :: line_string,line_array(60)
-        CHARACTER(20) :: extension
+        CHARACTER(20) :: extension, extension2
 
         line_nbr = 0
         widom_flag = .FALSE.
+        widom_active = .FALSE.
+        widom_locate = 0
+        widom_species = 0
         is = 0
         ibox = 0
         i_unit = 0
@@ -5293,12 +5297,18 @@ SUBROUTINE Get_Widom_Info
                         widom_flag = .TRUE.
                         IF(.NOT. ALLOCATED(ntrials)) ALLOCATE(ntrials(nspecies,nbr_boxes))
                         IF(.NOT. ALLOCATED(overlap_counter)) ALLOCATE(overlap_counter(nspecies,nbr_boxes))
+                        IF(.NOT. ALLOCATED(n_widom_subgroups)) ALLOCATE(n_widom_subgroups(nspecies,nbr_boxes))
                         ntrials(:,:)%widom = 0
                         overlap_counter(:,:) = 0_INT64
+                        n_widom_subgroups = 0
                         ALLOCATE(wprop_file_unit(nspecies,nbr_boxes))
                         ALLOCATE(wprop_filenames(nspecies,nbr_boxes))
                         ALLOCATE(first_open_wprop(nspecies,nbr_boxes))
+                        ALLOCATE(wprop2_file_unit(nspecies,nbr_boxes))
+                        ALLOCATE(wprop2_filenames(nspecies,nbr_boxes))
+                        ALLOCATE(first_open_wprop2(nspecies,nbr_boxes))
                         first_open_wprop(:,:) = .TRUE.
+                        first_open_wprop2(:,:) = .TRUE.
                         DO is = 1,nspecies
                                 ALLOCATE(species_list(is)%test_particle(1:nbr_boxes))
                                 ALLOCATE(species_list(is)%widom_sum(1:nbr_boxes))
@@ -5331,15 +5341,25 @@ SUBROUTINE Get_Widom_Info
                                 species_list(is)%widom_sum(ibox) = 0.0_DP
                                 species_list(is)%insertions_in_step(ibox) = String_To_Int(line_array(i_entry+1))
                                 species_list(is)%widom_interval(ibox) = String_To_Int(line_array(i_entry+2))
+                                IF (i_entry+3 <= nbr_entries) THEN
+                                        IF (line_array(i_entry+3) /= 'cbmc' .AND. line_array(i_entry+3) /= 'none' .AND. &
+                                        line_array(i_entry+3)(1:1) /= '!') THEN
+                                                n_widom_subgroups(is,ibox) = String_To_Int(line_array(i_entry+3))
+                                        END IF 
+                                END IF
                                 tp_correction(is) = 1
                                 i_unit = i_unit + 1
                                 wprop_file_unit(is,ibox) = wprop_file_unit_base + i_unit
+                                wprop2_file_unit(is,ibox) = wprop2_file_unit_base + i_unit
                                 IF (nbr_boxes == 1) THEN
                                         extension = '.spec' // TRIM(Int_To_String(is)) // '.wprp'
+                                        extension2 = '.spec' // TRIM(Int_To_String(is)) // '.wprp2'
                                 ELSE
                                         extension = '.spec' // TRIM(Int_To_String(is)) // '.box' // TRIM(Int_To_String(ibox)) // '.wprp'
+                                        extension2 = '.spec' // TRIM(Int_To_String(is)) // '.box' // TRIM(Int_To_String(ibox)) // '.wprp2'
                                 END IF
                                 CALL Name_Files(run_name,extension,wprop_filenames(is,ibox))
+                                CALL Name_Files(run_name,extension2,wprop2_filenames(is,ibox))
                         END IF
                         IF (ibox == nbr_boxes) EXIT
                 END DO
@@ -5353,6 +5373,54 @@ SUBROUTINE Get_Widom_Info
         RETURN
 
 END SUBROUTINE Get_Widom_Info
+
+SUBROUTINE Get_Lookup_Info
+        INTEGER :: line_nbr, ierr, max_atoms
+        CHARACTER(STRING_LEN) :: line_string
+        REWIND(inputunit)
+        line_nbr = 0
+        line_string = ""
+        l_sectors = .FALSE.
+        DO
+                line_nbr = line_nbr + 1
+                CALL Read_String(inputunit,line_string,ierr)
+                IF(ierr /= 0) THEN
+                   err_msg = ''
+                   err_msg(1) = 'Error while reading input file in Get_Lookup_Info'
+                   CALL clean_abort(err_msg,'Get_Lookup_Info')
+                END IF
+
+                IF(line_string(1:3) == 'END' .or. line_nbr > 10000 ) RETURN
+                IF (line_string(1:13) == '# Atom_Lookup' .OR. &
+                        line_string(1:19) == '# Cell_List_Overlap') THEN
+                        DO
+                                line_nbr = line_nbr + 1
+                                CALL Read_String(inputunit,line_string,ierr)
+                                IF(ierr /= 0) THEN
+                                   err_msg = ''
+                                   err_msg(1) = 'Error while reading input file in Get_Lookup_Info'
+                                   CALL clean_abort(err_msg,'Get_Lookup_Info')
+                                END IF
+                                IF (line_string(1:1) /= '!') EXIT
+                        END DO
+                        IF (.NOT. (line_string(1:4) == 'TRUE' .OR. &
+                                line_string(1:4) == 'true' .OR. &
+                                line_string(1:4) == 'True')) RETURN
+                        l_sectors = .TRUE.
+                        max_atoms = DOT_PRODUCT(max_molecules, natoms)
+                        ALLOCATE(sectorbound(3,nbr_boxes))
+                        ALLOCATE(length_cells(3,nbr_boxes))
+                        ALLOCATE(cell_length_inv(3,nbr_boxes))
+                        ! The number of populated sectors cannot exceed the number of atoms
+                        ALLOCATE(sector_atoms(15,max_atoms,3))
+                        ALLOCATE(sector_n_atoms(max_atoms))
+                        sectorbound = 0
+                        sectormaxbound = 0
+                        length_cells = 0
+                        RETURN
+                END IF
+        END DO
+END SUBROUTINE Get_Lookup_Info
 
 SUBROUTINE Log_Widom_Info
         ! This subroutine writes relevant information about the settings for the Widom insertions

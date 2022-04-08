@@ -139,4 +139,6 @@ SUBROUTINE GEMC_Control
   ! angles exist
   CALL Get_Dihedral_Atoms_To_Place  
 
+  CALL Get_Lookup_Info
+
 END SUBROUTINE GEMC_Control

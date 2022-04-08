@@ -91,10 +91,7 @@ SUBROUTINE Pregen_Control
         ! Connect to pregenerated trajectory files and get other related settings, if any
         CALL Get_Pregen_Info
 
-
-
-
-
+        CALL Get_Lookup_Info
         
 
 END SUBROUTINE Pregen_Control
