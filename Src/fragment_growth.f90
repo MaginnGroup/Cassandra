@@ -760,6 +760,15 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
   TYPE(Atom_Class) :: rtrial(MAXVAL(natoms),0:MAX(kappa_ins,kappa_rot,kappa_dih))
 
 
+  IF (widom_active) THEN
+          this_molecule => widom_molecule
+          these_atoms => widom_atoms
+  ELSE
+          this_molecule => molecule_list(this_im,is)
+          these_atoms => atom_list(1:natoms(is),this_im,is)
+  END IF
+
+
 
   weight(:)=0.0_DP
   cbmc_flag = .TRUE.
@@ -1157,6 +1166,15 @@ SUBROUTINE Cut_Regrow(this_im,is,frag_live,frag_dead,frag_order,frag_total, &
 
   TYPE(Molecule_Class), POINTER :: this_molecule
   TYPE(Atom_Class), POINTER :: these_atoms(:)
+
+
+  IF (widom_active) THEN
+          this_molecule => widom_molecule
+          these_atoms => widom_atoms
+  ELSE
+          this_molecule => molecule_list(this_im,is)
+          these_atoms => atom_list(1:natoms(is),this_im,is)
+  END IF
 
 
   ! Initialize variables
@@ -2185,6 +2203,15 @@ SUBROUTINE Single_Fragment_Regrowth(this_im,is)
    INTEGER :: total_frags, i, this_atom, this_fragment, frag_type
 
    REAL(DP) :: temp_var, E_ang,x_this, y_this, z_this
+
+  IF (widom_active) THEN
+          this_molecule => widom_molecule
+          these_atoms => widom_atoms
+  ELSE
+          this_molecule => molecule_list(this_im,is)
+          these_atoms => atom_list(1:natoms(is),this_im,is)
+  END IF
+
 
    ! As this molecule has only 1 fragment, we obtain total number
    ! of fragments and atoms using 1 as the identity
