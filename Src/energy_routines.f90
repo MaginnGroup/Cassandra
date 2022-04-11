@@ -713,9 +713,9 @@ CONTAINS
           LOGICAL, INTENT(OUT) :: overlap
           TYPE(Atom_Class), DIMENSION(:), POINTER :: these_atoms
           INTEGER :: ja, this_box
-          LOGICAL :: get_vdw, get_qq
+          LOGICAL :: get_vdw, get_qq, nonzero_vdw, nonzero_qq
           REAL(DP) :: Eij_intra_vdw, Eij_intra_qq, Eij_inter_vdw, Eij_inter_qq
-          REAL(DP) :: rxijp, ryijp, rzijp, rxij, ryij, rzij, rijsq
+          REAL(DP) :: rxij, ryij, rzij, rijsq
           E_intra_vdw = 0.0_DP
           E_intra_qq = 0.0_DP
           E_inter_qq = 0.0_DP
@@ -728,14 +728,19 @@ CONTAINS
           this_box = molecule_list(im,is)%which_box
           DO ja = 1, natoms(is)
                 IF (ja == ia .OR. .NOT. these_atoms(ja)%exist) CYCLE
-                rxijp = these_atoms(ja)%rxp - these_atoms(ia)%rxp
-                ryijp = these_atoms(ja)%ryp - these_atoms(ia)%ryp
-                rzijp = these_atoms(ja)%rzp - these_atoms(ia)%rzp
-                CALL Minimum_Image_Separation(this_box,rxijp,ryijp,rzijp,rxij,ryij,rzij)
+                nonzero_vdw = vdw_intra_scale(ia,ja,is) > 0.0_DP 
+                nonzero_qq = charge_intra_scale(ia,ja,is) > 0.0_DP 
+                IF (.NOT. (nonzero_vdw .OR. nonzero_qq)) CYCLE
+                rxij = these_atoms(ja)%rxp - these_atoms(ia)%rxp
+                ryij = these_atoms(ja)%ryp - these_atoms(ia)%ryp
+                rzij = these_atoms(ja)%rzp - these_atoms(ia)%rzp
+                !CALL Minimum_Image_Separation(this_box,rxijp,ryijp,rzijp,rxij,ryij,rzij)
                 rijsq = rxij*rxij+ryij*ryij+rzij*rzij
-                IF (rijsq < rcut_low) RETURN
+                IF (rijsq < rcut_lowsq .AND. nonzero_vdw) RETURN
                 CALL Check_AtomPair_Cutoff(rijsq,get_vdw,get_qq,this_box)
-                ! Compute vdw and q-q energy using if required
+                get_vdw = get_vdw .AND. nonzero_vdw
+                get_qq = get_qq .AND. nonzero_qq
+                ! Compute vdw and q-q energy if required
                 IF (get_vdw .OR. get_qq) THEN
                    CALL Compute_AtomPair_Energy(rxij,ryij,rzij,rijsq, &
                         is,im,ja,is,im,ia,&
