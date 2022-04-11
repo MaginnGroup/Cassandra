@@ -189,7 +189,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   this_molecule%frac = 0.0_DP
   frag_placed(:) = 0 ! =1 if fragment been placed
   nrg_ring_frag_total = 0.0_DP
-  cbmc_flag = .TRUE.
+  CALL Set_CBMC_Flag(.TRUE.)
   ! The energy of each trial coordinate will be stored in the array nrg.
   nrg(:) = 0.0_DP 
   overlap_trial(:) = .FALSE.
@@ -579,7 +579,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
      ! Reject the move if all trials tripped overlap
      IF (ALL(overlap_trial)) THEN
         cbmc_overlap = .TRUE.
-        cbmc_flag = .FALSE.
+        CALL Set_CBMC_Flag(.FALSE.)
         RETURN
      END IF
 
@@ -607,7 +607,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
            ! the trials had a very small cumulative weight
 
            cbmc_overlap = .TRUE.
-           cbmc_flag = .FALSE.
+           CALL Set_CBMC_Flag(.FALSE.)
            RETURN
         END IF
 
@@ -699,7 +699,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   ! Mark cbmc_flag as FALSE so that intermolecular nonbonded interactions
   ! are properly computed for the molecule
 
-  cbmc_flag = .FALSE.
+  CALL Set_CBMC_Flag(.FALSE.)
   
 END SUBROUTINE Build_Molecule
 
@@ -771,7 +771,7 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
 
 
   weight(:)=0.0_DP
-  cbmc_flag = .TRUE.
+  CALL Set_CBMC_Flag(.TRUE.)
   ln_pbias = 0.0_DP
   
   ! Assign a locate number for the molecule
@@ -884,7 +884,7 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
 
   IF (weight(kappa_ins) == 0.0_DP) THEN
       cbmc_overlap = .TRUE.
-      cbmc_flag = .FALSE.
+      CALL Set_CBMC_Flag(.FALSE.)
       RETURN
   END IF
 
@@ -1049,7 +1049,7 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
 
   IF (weight(kappa_rot) == 0.0_DP) THEN
       cbmc_overlap = .TRUE.
-      cbmc_flag = .FALSE.
+      CALL Set_CBMC_Flag(.FALSE.)
       RETURN
   END IF
 
@@ -1107,7 +1107,7 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
   CALL Fragment_Placement(this_box,this_im,is,2,frag_total,frag_order,frag_placed,this_lambda, &
        e_total,ln_pbias,nrg_ring_frag_total, cbmc_overlap, del_overlap)
 
-  cbmc_flag = .FALSE.
+  CALL Set_CBMC_Flag(.FALSE.)
 
 END SUBROUTINE Build_Rigid_Fragment
 
@@ -1178,7 +1178,7 @@ SUBROUTINE Cut_Regrow(this_im,is,frag_live,frag_dead,frag_order,frag_total, &
 
 
   ! Initialize variables
-  cbmc_flag = .TRUE.
+  CALL Set_CBMC_Flag(.TRUE.)
   del_overlap = .FALSE.
   nrg_ring_frag_tot = 0.0_DP
   ln_pseq = 0.0_DP
@@ -1303,7 +1303,7 @@ SUBROUTINE Cut_Regrow(this_im,is,frag_live,frag_dead,frag_order,frag_total, &
   CALL Fragment_Placement(this_box,this_im,is,frag_start,frag_total, &
        frag_order,frag_placed,this_lambda,E_total,ln_pbias,nrg_ring_frag_tot, &
        cbmc_overlap,del_overlap)
-  cbmc_flag = .FALSE.
+  CALL Set_CBMC_Flag(.FALSE.)
    
 
 END SUBROUTINE Cut_Regrow
@@ -2384,5 +2384,24 @@ SUBROUTINE Get_Common_Fragment_Atoms(is,frag1,frag2,atom1,atom2)
 
    
  END SUBROUTINE Get_Common_Fragment_Atoms
+
+ SUBROUTINE Set_CBMC_Flag(flag_in)
+         LOGICAL, INTENT(IN) :: flag_in
+         IF (widom_active) THEN
+                 CALL Set_Thread_CBMC_Flag
+         ELSE
+                 CALL Set_All_CBMC_Flag
+         END IF
+         CONTAINS
+                 SUBROUTINE Set_All_CBMC_Flag
+                         !$OMP PARALLEL
+                         cbmc_flag = flag_in
+                         !$OMP END PARALLEL
+                 END SUBROUTINE Set_All_CBMC_Flag
+
+                 SUBROUTINE Set_Thread_CBMC_Flag
+                         cbmc_flag = flag_in
+                 END SUBROUTINE Set_Thread_CBMC_Flag
+ END SUBROUTINE Set_CBMC_Flag
 
 END MODULE Fragment_Growth
