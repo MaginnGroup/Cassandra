@@ -1,0 +1,335 @@
+********************************************************************************
+                ______                                __                        
+               / ____/___ _______________ _____  ____/ /________ _              
+              / /   / __ `/ ___/ ___/ __ `/ __ \/ __  / ___/ __ `/              
+             / /___/ /_/ (__  |__  ) /_/ / / / / /_/ / /  / /_/ /               
+             \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                
+                                                                                
+********************************************************************************
+**********************************Log File**************************************
+********************************************************************************
+
+For any published work that uses Cassandra, cite the following reference:
+    Shah JK, Marin‐Rimoldi E, Mullen RG, Keene BP, Khan S,
+    Paluch AS, Rai N, Romanielo LL, Rosch TW, Yoo B, Maginn EJ.
+    Cassandra: An open source Monte Carlo package for molecular simulation.
+    Journal of Computational Chemistry. 2017, 38, 1727–1739.
+    http://dx.doi.org/10.1002/jcc.24807
+
+Run info
+********************************************************************************
+version: Cassandra Version 1.2.5
+inputfile: pentane_widom.inp
+name of run: pentane_widom.out
+date (mm/dd/yyyy): 04/22/2022
+time: 12:36:04
+machine: Hyron
+********************************************************************************
+
+Verbose log
+********************************************************************************
+Normal output to logfile
+********************************************************************************
+
+Simulation type
+********************************************************************************
+pregen              
+********************************************************************************
+
+Copy input file
+********************************************************************************
+                                                                                
+# Run_Name                                                                      
+pentane_widom.out                                                               
+                                                                                
+# Sim_Type                                                                      
+pregen                                                                          
+                                                                                
+# Nbr_Species                                                                   
+1                                                                               
+                                                                                
+# VDW_Style                                                                     
+lj cut_tail 14.0                                                                
+                                                                                
+# Seed_Info                                                                     
+265834938 610725582                                                             
+                                                                                
+# Rcutoff_Low                                                                   
+2.0                                                                             
+                                                                                
+# Molecule_Files                                                                
+pentane.mcf   60                                                                
+                                                                                
+# Box_Info                                                                      
+1                                                                               
+cubic                                                                           
+100.                                                                            
+                                                                                
+# Temperature_Info                                                              
+336.0                                                                           
+                                                                                
+                                                                                
+# Simulation_Length_Info                                                        
+units        steps                                                              
+prop_freq    1                                                                  
+coord_freq   1                                                                  
+run          11                                                                 
+                                                                                
+# Pregen_Info                                                                   
+pentane_traj.H pentane_traj.xyz                                                 
+                                                                                
+# Widom_Insertion                                                               
+true                                                                            
+cbmc 90000 1 3                                                                  
+                                                                                
+# Cell_List_Overlap                                                             
+true                                                                            
+                                                                                
+# Property_Info 1                                                               
+energy_total                                                                    
+pressure                                                                        
+volume                                                                          
+density                                                                         
+mass_density                                                                    
+                                                                                
+# Fragment_Files                                                                
+species1/frag1/frag1.dat  1                                                     
+species1/frag2/frag2.dat  2                                                     
+species1/frag3/frag3.dat  3                                                     
+                                                                                
+# CBMC_Info                                                                     
+kappa_ins 12                                                                    
+kappa_dih 10                                                                    
+rcut_cbmc 6.5                                                                   
+                                                                                
+END                                                                             
+********************************************************************************
+
+Number of species
+********************************************************************************
+1
+********************************************************************************
+
+Box info
+********************************************************************************
+Number of simulation boxes     1
+Box 1 is CUBIC               
+ Each Side Of :      100.0000     Angstrom
+ Cell basis vector lengths in A,    100.0000     100.0000     100.0000
+ Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+ Distance between box faces   100.0000     100.0000     100.0000
+ Box volume, A^3       1000000.0000
+********************************************************************************
+
+Pair style
+********************************************************************************
+VDW style used is:   LJ             in box:  1
+ VDW sum style is:   cut_tail       in box:  1
+ rcut =    14.000 Angstrom
+Section "# Charge_Style" is missing from the input file
+ By default, charge style for box 1 is NONE
+Section "# Pair_Energy" is missing from the input file
+ By default, pair interaction energy arrays will not be stored
+Section "# Mixing_Rule" is missing from the input file
+ By default, using Lorentz-Berthelot
+********************************************************************************
+
+Molecule info
+********************************************************************************
+ Reading molecular connectivity information
+ Species:            1
+ Molecular connectivity file: pentane.mcf                                                                                                             
+   5 atom(s) specified.
+   4 bond(s) specified.
+   3 angle(s) specified.
+   2 dihedral(s) specified.
+   0 improper(s) specified.
+   3 fragment(s) specified.
+   2 fragment bond(s) specified.
+
+ Species  Max molecules
+ -------  -------------
+      1             60
+
+ Species     1
+ -------------------------------------------------------------------------------
+ Atom parameters read
+ Bond parameters read
+ Angle parameters read
+ Dihedral parameters read
+ Improper parameters read
+ Intra molecule scaling factors for species            1
+  VDW 1-2 scaling factor       0.000
+  VDW 1-3 scaling factor       0.000
+  VDW 1-4 scaling factor       0.000
+  VDW 1-N scaling factor       1.000
+ Total number of atoms in fragment     1  is   3
+ Total number of atoms in fragment     2  is   3
+ Total number of atoms in fragment     3  is   3
+ Fragment info read
+ Fragment file for fragment 1 is species1/frag1/frag1.dat
+ Fragment file for fragment 2 is species1/frag2/frag2.dat
+ Fragment file for fragment 3 is species1/frag3/frag3.dat
+ -------------------------------------------------------------------------------
+
+ Fragment coord info
+ -------------------------------------------------------------------------------
+ library_coords array successfully allocated
+ Finished loading fragment coordinates from
+ species1/frag1/frag1.dat
+ species1/frag2/frag2.dat
+ species1/frag3/frag3.dat
+ -------------------------------------------------------------------------------
+********************************************************************************
+
+Seed info
+********************************************************************************
+The starting seeds are:           265834938           610725582
+********************************************************************************
+
+Temperature
+********************************************************************************
+Temperature of box 1 is 336.000 K
+********************************************************************************
+
+CBMC info
+********************************************************************************
+Kappa for first fragment insertion          12
+Kappa for dihedral selection                10
+ Cutoff for CBMC for box 1 is         6.50
+********************************************************************************
+
+Simulation length info
+********************************************************************************
+Thermodynamic quantities will be computed every                    1 Steps     
+Coordinates will be written to file every                          1 Steps     
+ movie header file is                  pentane_widom.out.H
+ movie_XYZ file is                     pentane_widom.out.xyz
+The simulation will be run for                                  11 Steps     
+Instantaneous values will be written every                         1 Steps     
+********************************************************************************
+
+Widom insertion info
+********************************************************************************
+ Species 1 will have 90000 Widom insertions every 1 MC steps
+          with de Broglie wavelength (Angstroms):        0.112128203
+********************************************************************************
+
+Property info
+********************************************************************************
+Total number of property files to be written is     1   for box 1
+ Maximum number of properties per file is    5
+ Writing the name of the property files and the corresponding property output
+ Property file    1   is  pentane_widom.out.prp
+ Properties output in these files are
+ Energy_Total
+ Pressure
+ Volume
+ Density
+ Mass_Density
+********************************************************************************
+
+Minimum distance cutoff
+********************************************************************************
+MC low cutoff distance is   2.000    Angstrom
+********************************************************************************
+
+Pregenerated trajectory info
+********************************************************************************
+ Box size will be replaced by those read from the pregenerated H file
+ Reading pregenerated trajectory for box            1  from xyz file pentane_traj.xyz and H file pentane_traj.H
+********************************************************************************
+
+********************************************************************************
+************************ Begin Cassandra simulation ****************************
+********************************************************************************
+
+Initial configuration
+********************************************************************************
+No initial configuration needed
+********************************************************************************
+
+Compute total energy
+********************************************************************************
+
+ Energy components for box 1     kJ/mol-Extensive
+ ---------------------------------------------------------------------
+ Total system energy                        0.000
+ Intra molecular energy                     0.000
+   Bond energy                              0.000
+   Bond angle energy                        0.000
+   Dihedral angle energy                    0.000
+   Improper angle energy                    0.000
+   Intra molecule vdw                       0.000
+   Intra molecule q                         0.000
+ Inter molecular energy                     0.000
+   Inter molecule vdw                       0.000
+   Long range correction                    0.000
+   Inter molecule q                         0.000
+ ---------------------------------------------------------------------
+
+********************************************************************************
+
+Run simulation
+********************************************************************************
+                Step       Move   Mol Spc Box  Success  MaxWidth
+********************************************************************************
+
+Energy of final configuration
+********************************************************************************
+
+ Energy components for box 1     kJ/mol-Extensive       Relative_Error
+ ---------------------------------------------------------------------
+ Total system energy                      466.604            0.000E+00
+ Intra molecular energy                   517.652            0.000E+00
+   Bond energy                              0.000            0.000E+00
+   Bond angle energy                      203.859            0.000E+00
+   Dihedral angle energy                  350.382            0.000E+00
+   Improper angle energy                    0.000            0.000E+00
+   Intra molecule vdw                     -36.589           -0.000E+00
+   Intra molecule q                         0.000            0.000E+00
+ Inter molecular energy                   -51.047           -0.000E+00
+   Inter molecule vdw                     -50.294           -0.000E+00
+   Long range correction                   -0.753           -0.000E+00
+   Inter molecule q                         0.000            0.000E+00
+ ---------------------------------------------------------------------
+
+********************************************************************************
+
+
+Writing information for box  1
+********************************************************************************
+
+   ---------------------------------------------------------
+   Writing information for species  1
+
+                Move      Trials     Success   % Success
+   ---------------------------------------------------------
+
+********************************************************************************
+
+Shifted chemical potentials from Widom insertions
+********************************************************************************
+Shifted chemical potential for species 1 in box 1 is        -39.080671967063 kJ/mol
+        0 Widom insertions with overlap out of 990000
+********************************************************************************
+
+ Writing information about subroutine times
+********************************************************************************
+ Widom time =                  0.042465 hrs.
+********************************************************************************
+
+********************************************************************************
+************************ Cassandra simulation complete *************************
+********************************************************************************
+
+ Program execution time
+********************************************************************************
+         0      Years
+         0     Months
+         0       Days
+         0      Hours
+         2    Minutes
+        32    Seconds
+       921         ms
+********************************************************************************

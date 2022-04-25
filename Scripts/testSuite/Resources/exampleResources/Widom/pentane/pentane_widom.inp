@@ -1,11 +1,11 @@
 ! This is the input file for a short simulation of pentane
 
 # Run_Name
-equil.out
+pentane_widom.out
 !------------------------------------------------------------------------------
 
 # Sim_Type
-npt_mc
+pregen
 !------------------------------------------------------------------------------
 
 # Nbr_Species
@@ -40,50 +40,23 @@ cubic
 336.0
 !------------------------------------------------------------------------Kelvin
 
-# Pressure_Info
-3.38
-!---------------------------------------------------------------------------bar
-
-# Move_Probability_Info
-
-# Prob_Translation
-60
-50.
-
-# Prob_Rotation
-60
-180.
-
-# Prob_Regrowth
-60
-1.0
-
-# Prob_Volume
-1
-300000.
-
-# Done_Probability_Info
-!---------------------one line for each box and one entry/line for each species
-!------------------------------------------------- 1 sweep = 200 molecule moves
-!-------------------------------------------------         =   1 volume change
-
-# Start_Type
-make_config 60
-!--------make_config: one line for each species and one entry/line for each box
-!------------------------------------------------------------read_old: filename
-!----------------------------------------------------------checkpoint: filename
-
-# Run_Type
-equilibration   600 10
-!-------------------------Equilibration: update maximum widths every 100 sweeps
-!---------------------------Production: report success ratio for each move type
 
 # Simulation_Length_Info
-units        sweeps
-prop_freq    10
-coord_freq   10
-run          100
+units        steps
+prop_freq    1
+coord_freq   1
+run          11
 !----------------- 201 moves = 1 sweep; output every 10 sweeps; run 1000 sweeps
+
+# Pregen_Info
+pentane_traj.H pentane_traj.xyz
+
+# Widom_Insertion
+true
+cbmc 90000 1 3
+
+# Cell_List_Overlap
+true
 
 # Property_Info 1
 energy_total

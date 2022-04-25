@@ -5257,6 +5257,10 @@ SUBROUTINE Get_Widom_Info
         CHARACTER(STRING_LEN) :: line_string,line_array(60)
         CHARACTER(20) :: extension, extension2
 
+        LOGICAL :: inp_flag
+
+        inp_flag = .FALSE.
+
         line_nbr = 0
         widom_flag = .FALSE.
         widom_active = .FALSE.
@@ -5291,8 +5295,8 @@ SUBROUTINE Get_Widom_Info
                                 IF (.NOT. (line_array(1)(1:1) == '!')) EXIT
                         END DO
                         IF (line_array(1) == 'FALSE' .OR. line_array(1) == 'false' .OR. line_array(1) == 'False') RETURN
-                        IF(.NOT. (line_array(1) == 'TRUE' .OR. line_array(1) == 'true' .OR. line_array(1) == 'True')) THEN
-                                line_nbr = line_nbr - 1
+                        IF(line_array(1) == 'TRUE' .OR. line_array(1) == 'true' .OR. line_array(1) == 'True') THEN
+                                inp_flag = .TRUE.
                         END IF
                         widom_flag = .TRUE.
                         IF(.NOT. ALLOCATED(ntrials)) ALLOCATE(ntrials(nspecies,nbr_boxes))
@@ -5321,15 +5325,17 @@ SUBROUTINE Get_Widom_Info
         END DO
         is = 0
         DO
-                line_nbr = line_nbr + 1
-                CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
-                IF(ierr /= 0) THEN
-                   err_msg = ''
-                   err_msg(1) = 'Error while reading input file in Get_Widom_Info'
-                   CALL clean_abort(err_msg,'Get_Widom_Info')
+                IF (inp_flag .OR. is > 0) THEN
+                        line_nbr = line_nbr + 1
+                        CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
+                        IF(ierr /= 0) THEN
+                           err_msg = ''
+                           err_msg(1) = 'Error while reading input file in Get_Widom_Info'
+                           CALL clean_abort(err_msg,'Get_Widom_Info')
+                        END IF
+                        IF (nbr_entries == 0) EXIT
+                        IF (line_array(1)(1:1) == '!') CYCLE
                 END IF
-                IF (nbr_entries == 0) EXIT
-                IF (line_array(1)(1:1) == '!') CYCLE
                 is = is + 1
                 ibox = 0
                 DO i_entry = 1,nbr_entries
