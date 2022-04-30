@@ -150,6 +150,11 @@ parser.add_argument('--mcfFile', '-m',
 parser.add_argument('--massDefault', '-d', type=float,
                 help="""Provide a default mass for unknown elements.""")
 
+parser.add_argument('--solid', '-s', action='store_true', 
+                   help="""A flag to indicate this PDB file is a solid material. """ +
+                                        """ This avoids reading the CONECT information in such files. """ +
+                                        """Currently, CML files are not supported. """)
+
 args = parser.parse_args()
 
 #*******************************************************************************
@@ -1478,6 +1483,8 @@ if args.mcfFile:
 else:
 	mcfFile = basename + '.mcf'
 
+if args.solid:
+    solid_flag = True
 
 #*******************************************************************************
 # MAIN PROGRAM BEGINS HERE
