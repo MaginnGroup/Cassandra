@@ -812,7 +812,7 @@ def ffFileGeneration(infilename,outfilename):
 	vdwType = input("Enter the VDW type (LJ/Mie):")
 
 	global dihedralType
-	if len(dihedralList) > 0:
+	if len(dihedralList) > 0 and solid_flag is False:
 		dihedralType = input("Enter the dihedral functional form " + 
 					 "(CHARMM/OPLS/harmonic/none): ")
 	else:
@@ -980,7 +980,7 @@ returns:
 				      " elements: atom type " + iType + " cannot be elements " +
 							atomParms[iType]['element'] + " and " + iElement)
 		# read bond info
-		if "CONECT" in this_line:
+		if "CONECT" in this_line and solid_flag is False:
 			if repeatedIndex:
 				raise Error("PDB contains a repeated index. Cannot determine bond " +
 					    "connectivity.")
@@ -1276,6 +1276,7 @@ returns:
 					atomParms[i][parm] = atomParms[iType][parm]
 				else:
 					raise Error(parm + ' parms for atom ' + str(i) + ' not found.')
+
 	for bond in bondList:
 		ij = tuple([int(i) for i in bond.split()])
 		ji = ij[::-1]
@@ -1483,9 +1484,9 @@ if args.mcfFile:
 else:
 	mcfFile = basename + '.mcf'
 
+solid_flag = False
 if args.solid:
     solid_flag = True
-
 #*******************************************************************************
 # MAIN PROGRAM BEGINS HERE
 #*******************************************************************************
@@ -1508,58 +1509,68 @@ cyclic_ua_atom = True
 #Initialize returns the intial atom
 #to start the ring scan
 #If molecule is argon, it initial atom is empty
-initialatom=initialize(configFile)
-if initialatom == '':
-	tempfile = open('temporary.temp','w')
-	tempfile.write('1')
-	tempfile.close()
-	initialatom = '1'
-	
-scan_result = scan(initialatom,[],False)
-if cyclic_ua_atom==True:
-	#Clean "ghost atom" from temporary_file
-	tempfile2=open('temporary.temp2','w')
-	tempfile1=open('temporary.temp','r')
-	for line in tempfile1:
-		this_line_new = line.split()
-		if this_line_new[-1] == '0':		
-			for each_atom in this_line_new[0:-1]:
-				tempfile2.write(each_atom+"  ")
-			tempfile2.write("\n")
-		elif '0 1' in line:
-			continue
-		else:
-			tempfile2.write(line)
-	tempfile2.close()
-	tempfile1.close()
-	os.system('mv temporary.temp2 temporary.temp')
+
+if solid_flag is False: 
+
+    initialatom=initialize(configFile)
+    if initialatom == '':
+    	tempfile = open('temporary.temp','w')
+    	tempfile.write('1')
+    	tempfile.close()
+    	initialatom = '1'
+    	
+    scan_result = scan(initialatom,[],False)
+    if cyclic_ua_atom==True:
+    	#Clean "ghost atom" from temporary_file
+    	tempfile2=open('temporary.temp2','w')
+    	tempfile1=open('temporary.temp','r')
+    	for line in tempfile1:
+    		this_line_new = line.split()
+    		if this_line_new[-1] == '0':		
+    			for each_atom in this_line_new[0:-1]:
+    				tempfile2.write(each_atom+"  ")
+    			tempfile2.write("\n")
+    		elif '0 1' in line:
+    			continue
+    		else:
+    			tempfile2.write(line)
+    	tempfile2.close()
+    	tempfile1.close()
+    	os.system('mv temporary.temp2 temporary.temp')
 
 #IDENTIFY BONDS, FRAGMENTS, ANGLES, DIHEDRALS
-bondID()
-fragID()
-angleID()
-dihedralID()
-fragConnectivity()
+
+if solid_flag is False:
+    bondID()
+    fragID()
+    angleID()
+    dihedralID()
+    fragConnectivity()
 
 #PRESENT SCAN SUMMARY TO USER
 print("\n\n*********Generation of Topology File*********\n")
 print("Summary: ")
-print("There are " + str(len(bondList)) + " bonds identified.") 
 
-if cyclic_ua_atom == True and len(scan_result[1]) > 2:
-	print("Cyclic united atom molecule with no branches")
+if solid_flag:
+    print("The solid flag was used. No bonds, angles, dihedrals or fragments will be used")
 else:
-	print("There are " + str(len(ringList)) + " rings identified. These rings are: ")
+    print("There are " + str(len(bondList)) + " bonds identified.") 
 
-	for row in ringList:
-		print(row)
-
-	print("There are " + str(len(fragList)) + " fragments identified")
-print("There are " + str(len(angleList)) + " angles identified")
-print("There are " + str(len(dihedralList)) + " dihedrals identified")
+    if cyclic_ua_atom == True and len(scan_result[1]) > 2:
+    	print("Cyclic united atom molecule with no branches")
+    else:
+    	print("There are " + str(len(ringList)) + " rings identified. These rings are: ")
+    
+    	for row in ringList:
+    		print(row)
+    
+    	print("There are " + str(len(fragList)) + " fragments identified")
+    print("There are " + str(len(angleList)) + " angles identified")
+    print("There are " + str(len(dihedralList)) + " dihedrals identified")
 
 print("Reading Modified PDB File...")
 atomList, atomParms, numAtomTypes = readPdb(configFile)
+
 if ffTemplate:
 	#GENERATE BLANK FORCEFIELD TEMPLATE
 	if os.path.isfile(ffFile) and not os.path.isfile(ffFile + '.BAK'):
@@ -1591,7 +1602,9 @@ else:
 		 atomList, bondList, angleList, dihedralList, ringList,
 		 atomParms, bondParms, angleParms, dihedralParms, improperParms, scaling_1_4)
 
-os.system("rm temporary.temp")
+if solid_flag is False:
+	os.system("rm temporary.temp")
+
 if infilename_type == 'cml':
 	os.system("rm " + configFile)
 
