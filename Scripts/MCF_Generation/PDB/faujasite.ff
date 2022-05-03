@@ -1,0 +1,2326 @@
+atomtypes
+2
+
+begin atom-atomtype
+1 Si3
+2 Si3
+3 O_3
+4 O_3
+5 O_3
+6 O_3
+7 Si3
+8 Si3
+9 O_3
+10 O_3
+11 O_3
+12 O_3
+13 Si3
+14 Si3
+15 O_3
+16 O_3
+17 O_3
+18 O_3
+19 Si3
+20 Si3
+21 O_3
+22 O_3
+23 O_3
+24 O_3
+25 Si3
+26 Si3
+27 O_3
+28 O_3
+29 O_3
+30 O_3
+31 Si3
+32 Si3
+33 O_3
+34 O_3
+35 O_3
+36 O_3
+37 Si3
+38 Si3
+39 O_3
+40 O_3
+41 O_3
+42 O_3
+43 Si3
+44 Si3
+45 O_3
+46 O_3
+47 O_3
+48 O_3
+49 Si3
+50 Si3
+51 O_3
+52 O_3
+53 O_3
+54 O_3
+55 Si3
+56 Si3
+57 O_3
+58 O_3
+59 O_3
+60 O_3
+61 Si3
+62 Si3
+63 O_3
+64 O_3
+65 O_3
+66 O_3
+67 Si3
+68 Si3
+69 O_3
+70 O_3
+71 O_3
+72 O_3
+73 Si3
+74 Si3
+75 O_3
+76 O_3
+77 O_3
+78 O_3
+79 Si3
+80 Si3
+81 O_3
+82 O_3
+83 O_3
+84 O_3
+85 Si3
+86 Si3
+87 O_3
+88 O_3
+89 O_3
+90 O_3
+91 Si3
+92 Si3
+93 O_3
+94 O_3
+95 O_3
+96 O_3
+97 Si3
+98 Si3
+99 O_3
+100 O_3
+101 O_3
+102 O_3
+103 Si3
+104 Si3
+105 O_3
+106 O_3
+107 O_3
+108 O_3
+109 Si3
+110 Si3
+111 O_3
+112 O_3
+113 O_3
+114 O_3
+115 Si3
+116 Si3
+117 O_3
+118 O_3
+119 O_3
+120 O_3
+121 Si3
+122 Si3
+123 O_3
+124 O_3
+125 O_3
+126 O_3
+127 Si3
+128 Si3
+129 O_3
+130 O_3
+131 O_3
+132 O_3
+133 Si3
+134 Si3
+135 O_3
+136 O_3
+137 O_3
+138 O_3
+139 Si3
+140 Si3
+141 O_3
+142 O_3
+143 O_3
+144 O_3
+145 Si3
+146 Si3
+147 O_3
+148 O_3
+149 O_3
+150 O_3
+151 Si3
+152 Si3
+153 O_3
+154 O_3
+155 O_3
+156 O_3
+157 Si3
+158 Si3
+159 O_3
+160 O_3
+161 O_3
+162 O_3
+163 Si3
+164 Si3
+165 O_3
+166 O_3
+167 O_3
+168 O_3
+169 Si3
+170 Si3
+171 O_3
+172 O_3
+173 O_3
+174 O_3
+175 Si3
+176 Si3
+177 O_3
+178 O_3
+179 O_3
+180 O_3
+181 Si3
+182 Si3
+183 O_3
+184 O_3
+185 O_3
+186 O_3
+187 Si3
+188 Si3
+189 O_3
+190 O_3
+191 O_3
+192 O_3
+193 Si3
+194 Si3
+195 O_3
+196 O_3
+197 O_3
+198 O_3
+199 Si3
+200 Si3
+201 O_3
+202 O_3
+203 O_3
+204 O_3
+205 Si3
+206 Si3
+207 O_3
+208 O_3
+209 O_3
+210 O_3
+211 Si3
+212 Si3
+213 O_3
+214 O_3
+215 O_3
+216 O_3
+217 Si3
+218 Si3
+219 O_3
+220 O_3
+221 O_3
+222 O_3
+223 Si3
+224 Si3
+225 O_3
+226 O_3
+227 O_3
+228 O_3
+229 Si3
+230 Si3
+231 O_3
+232 O_3
+233 O_3
+234 O_3
+235 Si3
+236 Si3
+237 O_3
+238 O_3
+239 O_3
+240 O_3
+241 Si3
+242 Si3
+243 O_3
+244 O_3
+245 O_3
+246 O_3
+247 Si3
+248 Si3
+249 O_3
+250 O_3
+251 O_3
+252 O_3
+253 Si3
+254 Si3
+255 O_3
+256 O_3
+257 O_3
+258 O_3
+259 Si3
+260 Si3
+261 O_3
+262 O_3
+263 O_3
+264 O_3
+265 Si3
+266 Si3
+267 O_3
+268 O_3
+269 O_3
+270 O_3
+271 Si3
+272 Si3
+273 O_3
+274 O_3
+275 O_3
+276 O_3
+277 Si3
+278 Si3
+279 O_3
+280 O_3
+281 O_3
+282 O_3
+283 Si3
+284 Si3
+285 O_3
+286 O_3
+287 O_3
+288 O_3
+289 Si3
+290 Si3
+291 O_3
+292 O_3
+293 O_3
+294 O_3
+295 Si3
+296 Si3
+297 O_3
+298 O_3
+299 O_3
+300 O_3
+301 Si3
+302 Si3
+303 O_3
+304 O_3
+305 O_3
+306 O_3
+307 Si3
+308 Si3
+309 O_3
+310 O_3
+311 O_3
+312 O_3
+313 Si3
+314 Si3
+315 O_3
+316 O_3
+317 O_3
+318 O_3
+319 Si3
+320 Si3
+321 O_3
+322 O_3
+323 O_3
+324 O_3
+325 Si3
+326 Si3
+327 O_3
+328 O_3
+329 O_3
+330 O_3
+331 Si3
+332 Si3
+333 O_3
+334 O_3
+335 O_3
+336 O_3
+337 Si3
+338 Si3
+339 O_3
+340 O_3
+341 O_3
+342 O_3
+343 Si3
+344 Si3
+345 O_3
+346 O_3
+347 O_3
+348 O_3
+349 Si3
+350 Si3
+351 O_3
+352 O_3
+353 O_3
+354 O_3
+355 Si3
+356 Si3
+357 O_3
+358 O_3
+359 O_3
+360 O_3
+361 Si3
+362 Si3
+363 O_3
+364 O_3
+365 O_3
+366 O_3
+367 Si3
+368 Si3
+369 O_3
+370 O_3
+371 O_3
+372 O_3
+373 Si3
+374 Si3
+375 O_3
+376 O_3
+377 O_3
+378 O_3
+379 Si3
+380 Si3
+381 O_3
+382 O_3
+383 O_3
+384 O_3
+385 Si3
+386 Si3
+387 O_3
+388 O_3
+389 O_3
+390 O_3
+391 Si3
+392 Si3
+393 O_3
+394 O_3
+395 O_3
+396 O_3
+397 Si3
+398 Si3
+399 O_3
+400 O_3
+401 O_3
+402 O_3
+403 Si3
+404 Si3
+405 O_3
+406 O_3
+407 O_3
+408 O_3
+409 Si3
+410 Si3
+411 O_3
+412 O_3
+413 O_3
+414 O_3
+415 Si3
+416 Si3
+417 O_3
+418 O_3
+419 O_3
+420 O_3
+421 Si3
+422 Si3
+423 O_3
+424 O_3
+425 O_3
+426 O_3
+427 Si3
+428 Si3
+429 O_3
+430 O_3
+431 O_3
+432 O_3
+433 Si3
+434 Si3
+435 O_3
+436 O_3
+437 O_3
+438 O_3
+439 Si3
+440 Si3
+441 O_3
+442 O_3
+443 O_3
+444 O_3
+445 Si3
+446 Si3
+447 O_3
+448 O_3
+449 O_3
+450 O_3
+451 Si3
+452 Si3
+453 O_3
+454 O_3
+455 O_3
+456 O_3
+457 Si3
+458 Si3
+459 O_3
+460 O_3
+461 O_3
+462 O_3
+463 Si3
+464 Si3
+465 O_3
+466 O_3
+467 O_3
+468 O_3
+469 Si3
+470 Si3
+471 O_3
+472 O_3
+473 O_3
+474 O_3
+475 Si3
+476 Si3
+477 O_3
+478 O_3
+479 O_3
+480 O_3
+481 Si3
+482 Si3
+483 O_3
+484 O_3
+485 O_3
+486 O_3
+487 Si3
+488 Si3
+489 O_3
+490 O_3
+491 O_3
+492 O_3
+493 Si3
+494 Si3
+495 O_3
+496 O_3
+497 O_3
+498 O_3
+499 Si3
+500 Si3
+501 O_3
+502 O_3
+503 O_3
+504 O_3
+505 Si3
+506 Si3
+507 O_3
+508 O_3
+509 O_3
+510 O_3
+511 Si3
+512 Si3
+513 O_3
+514 O_3
+515 O_3
+516 O_3
+517 Si3
+518 Si3
+519 O_3
+520 O_3
+521 O_3
+522 O_3
+523 Si3
+524 Si3
+525 O_3
+526 O_3
+527 O_3
+528 O_3
+529 Si3
+530 Si3
+531 O_3
+532 O_3
+533 O_3
+534 O_3
+535 Si3
+536 Si3
+537 O_3
+538 O_3
+539 O_3
+540 O_3
+541 Si3
+542 Si3
+543 O_3
+544 O_3
+545 O_3
+546 O_3
+547 Si3
+548 Si3
+549 O_3
+550 O_3
+551 O_3
+552 O_3
+553 Si3
+554 Si3
+555 O_3
+556 O_3
+557 O_3
+558 O_3
+559 Si3
+560 Si3
+561 O_3
+562 O_3
+563 O_3
+564 O_3
+565 Si3
+566 Si3
+567 O_3
+568 O_3
+569 O_3
+570 O_3
+571 Si3
+572 Si3
+573 O_3
+574 O_3
+575 O_3
+576 O_3
+end atom-atomtype
+
+vdwtype LJ
+dihedraltype none
+
+nonbonded
+Si3
+Sigma 3.80414 
+Epsilon 156.004
+atom_type_charge 1.3
+
+nonbonded
+O_3
+Sigma 3.03315
+Epsilon 48.1598
+atom_type_charge -0.65
+
+charge
+1 
+
+charge
+2 
+
+charge
+3 
+
+charge
+4 
+
+charge
+5 
+
+charge
+6 
+
+charge
+7 
+
+charge
+8 
+
+charge
+9 
+
+charge
+10 
+
+charge
+11 
+
+charge
+12 
+
+charge
+13 
+
+charge
+14 
+
+charge
+15 
+
+charge
+16 
+
+charge
+17 
+
+charge
+18 
+
+charge
+19 
+
+charge
+20 
+
+charge
+21 
+
+charge
+22 
+
+charge
+23 
+
+charge
+24 
+
+charge
+25 
+
+charge
+26 
+
+charge
+27 
+
+charge
+28 
+
+charge
+29 
+
+charge
+30 
+
+charge
+31 
+
+charge
+32 
+
+charge
+33 
+
+charge
+34 
+
+charge
+35 
+
+charge
+36 
+
+charge
+37 
+
+charge
+38 
+
+charge
+39 
+
+charge
+40 
+
+charge
+41 
+
+charge
+42 
+
+charge
+43 
+
+charge
+44 
+
+charge
+45 
+
+charge
+46 
+
+charge
+47 
+
+charge
+48 
+
+charge
+49 
+
+charge
+50 
+
+charge
+51 
+
+charge
+52 
+
+charge
+53 
+
+charge
+54 
+
+charge
+55 
+
+charge
+56 
+
+charge
+57 
+
+charge
+58 
+
+charge
+59 
+
+charge
+60 
+
+charge
+61 
+
+charge
+62 
+
+charge
+63 
+
+charge
+64 
+
+charge
+65 
+
+charge
+66 
+
+charge
+67 
+
+charge
+68 
+
+charge
+69 
+
+charge
+70 
+
+charge
+71 
+
+charge
+72 
+
+charge
+73 
+
+charge
+74 
+
+charge
+75 
+
+charge
+76 
+
+charge
+77 
+
+charge
+78 
+
+charge
+79 
+
+charge
+80 
+
+charge
+81 
+
+charge
+82 
+
+charge
+83 
+
+charge
+84 
+
+charge
+85 
+
+charge
+86 
+
+charge
+87 
+
+charge
+88 
+
+charge
+89 
+
+charge
+90 
+
+charge
+91 
+
+charge
+92 
+
+charge
+93 
+
+charge
+94 
+
+charge
+95 
+
+charge
+96 
+
+charge
+97 
+
+charge
+98 
+
+charge
+99 
+
+charge
+100 
+
+charge
+101 
+
+charge
+102 
+
+charge
+103 
+
+charge
+104 
+
+charge
+105 
+
+charge
+106 
+
+charge
+107 
+
+charge
+108 
+
+charge
+109 
+
+charge
+110 
+
+charge
+111 
+
+charge
+112 
+
+charge
+113 
+
+charge
+114 
+
+charge
+115 
+
+charge
+116 
+
+charge
+117 
+
+charge
+118 
+
+charge
+119 
+
+charge
+120 
+
+charge
+121 
+
+charge
+122 
+
+charge
+123 
+
+charge
+124 
+
+charge
+125 
+
+charge
+126 
+
+charge
+127 
+
+charge
+128 
+
+charge
+129 
+
+charge
+130 
+
+charge
+131 
+
+charge
+132 
+
+charge
+133 
+
+charge
+134 
+
+charge
+135 
+
+charge
+136 
+
+charge
+137 
+
+charge
+138 
+
+charge
+139 
+
+charge
+140 
+
+charge
+141 
+
+charge
+142 
+
+charge
+143 
+
+charge
+144 
+
+charge
+145 
+
+charge
+146 
+
+charge
+147 
+
+charge
+148 
+
+charge
+149 
+
+charge
+150 
+
+charge
+151 
+
+charge
+152 
+
+charge
+153 
+
+charge
+154 
+
+charge
+155 
+
+charge
+156 
+
+charge
+157 
+
+charge
+158 
+
+charge
+159 
+
+charge
+160 
+
+charge
+161 
+
+charge
+162 
+
+charge
+163 
+
+charge
+164 
+
+charge
+165 
+
+charge
+166 
+
+charge
+167 
+
+charge
+168 
+
+charge
+169 
+
+charge
+170 
+
+charge
+171 
+
+charge
+172 
+
+charge
+173 
+
+charge
+174 
+
+charge
+175 
+
+charge
+176 
+
+charge
+177 
+
+charge
+178 
+
+charge
+179 
+
+charge
+180 
+
+charge
+181 
+
+charge
+182 
+
+charge
+183 
+
+charge
+184 
+
+charge
+185 
+
+charge
+186 
+
+charge
+187 
+
+charge
+188 
+
+charge
+189 
+
+charge
+190 
+
+charge
+191 
+
+charge
+192 
+
+charge
+193 
+
+charge
+194 
+
+charge
+195 
+
+charge
+196 
+
+charge
+197 
+
+charge
+198 
+
+charge
+199 
+
+charge
+200 
+
+charge
+201 
+
+charge
+202 
+
+charge
+203 
+
+charge
+204 
+
+charge
+205 
+
+charge
+206 
+
+charge
+207 
+
+charge
+208 
+
+charge
+209 
+
+charge
+210 
+
+charge
+211 
+
+charge
+212 
+
+charge
+213 
+
+charge
+214 
+
+charge
+215 
+
+charge
+216 
+
+charge
+217 
+
+charge
+218 
+
+charge
+219 
+
+charge
+220 
+
+charge
+221 
+
+charge
+222 
+
+charge
+223 
+
+charge
+224 
+
+charge
+225 
+
+charge
+226 
+
+charge
+227 
+
+charge
+228 
+
+charge
+229 
+
+charge
+230 
+
+charge
+231 
+
+charge
+232 
+
+charge
+233 
+
+charge
+234 
+
+charge
+235 
+
+charge
+236 
+
+charge
+237 
+
+charge
+238 
+
+charge
+239 
+
+charge
+240 
+
+charge
+241 
+
+charge
+242 
+
+charge
+243 
+
+charge
+244 
+
+charge
+245 
+
+charge
+246 
+
+charge
+247 
+
+charge
+248 
+
+charge
+249 
+
+charge
+250 
+
+charge
+251 
+
+charge
+252 
+
+charge
+253 
+
+charge
+254 
+
+charge
+255 
+
+charge
+256 
+
+charge
+257 
+
+charge
+258 
+
+charge
+259 
+
+charge
+260 
+
+charge
+261 
+
+charge
+262 
+
+charge
+263 
+
+charge
+264 
+
+charge
+265 
+
+charge
+266 
+
+charge
+267 
+
+charge
+268 
+
+charge
+269 
+
+charge
+270 
+
+charge
+271 
+
+charge
+272 
+
+charge
+273 
+
+charge
+274 
+
+charge
+275 
+
+charge
+276 
+
+charge
+277 
+
+charge
+278 
+
+charge
+279 
+
+charge
+280 
+
+charge
+281 
+
+charge
+282 
+
+charge
+283 
+
+charge
+284 
+
+charge
+285 
+
+charge
+286 
+
+charge
+287 
+
+charge
+288 
+
+charge
+289 
+
+charge
+290 
+
+charge
+291 
+
+charge
+292 
+
+charge
+293 
+
+charge
+294 
+
+charge
+295 
+
+charge
+296 
+
+charge
+297 
+
+charge
+298 
+
+charge
+299 
+
+charge
+300 
+
+charge
+301 
+
+charge
+302 
+
+charge
+303 
+
+charge
+304 
+
+charge
+305 
+
+charge
+306 
+
+charge
+307 
+
+charge
+308 
+
+charge
+309 
+
+charge
+310 
+
+charge
+311 
+
+charge
+312 
+
+charge
+313 
+
+charge
+314 
+
+charge
+315 
+
+charge
+316 
+
+charge
+317 
+
+charge
+318 
+
+charge
+319 
+
+charge
+320 
+
+charge
+321 
+
+charge
+322 
+
+charge
+323 
+
+charge
+324 
+
+charge
+325 
+
+charge
+326 
+
+charge
+327 
+
+charge
+328 
+
+charge
+329 
+
+charge
+330 
+
+charge
+331 
+
+charge
+332 
+
+charge
+333 
+
+charge
+334 
+
+charge
+335 
+
+charge
+336 
+
+charge
+337 
+
+charge
+338 
+
+charge
+339 
+
+charge
+340 
+
+charge
+341 
+
+charge
+342 
+
+charge
+343 
+
+charge
+344 
+
+charge
+345 
+
+charge
+346 
+
+charge
+347 
+
+charge
+348 
+
+charge
+349 
+
+charge
+350 
+
+charge
+351 
+
+charge
+352 
+
+charge
+353 
+
+charge
+354 
+
+charge
+355 
+
+charge
+356 
+
+charge
+357 
+
+charge
+358 
+
+charge
+359 
+
+charge
+360 
+
+charge
+361 
+
+charge
+362 
+
+charge
+363 
+
+charge
+364 
+
+charge
+365 
+
+charge
+366 
+
+charge
+367 
+
+charge
+368 
+
+charge
+369 
+
+charge
+370 
+
+charge
+371 
+
+charge
+372 
+
+charge
+373 
+
+charge
+374 
+
+charge
+375 
+
+charge
+376 
+
+charge
+377 
+
+charge
+378 
+
+charge
+379 
+
+charge
+380 
+
+charge
+381 
+
+charge
+382 
+
+charge
+383 
+
+charge
+384 
+
+charge
+385 
+
+charge
+386 
+
+charge
+387 
+
+charge
+388 
+
+charge
+389 
+
+charge
+390 
+
+charge
+391 
+
+charge
+392 
+
+charge
+393 
+
+charge
+394 
+
+charge
+395 
+
+charge
+396 
+
+charge
+397 
+
+charge
+398 
+
+charge
+399 
+
+charge
+400 
+
+charge
+401 
+
+charge
+402 
+
+charge
+403 
+
+charge
+404 
+
+charge
+405 
+
+charge
+406 
+
+charge
+407 
+
+charge
+408 
+
+charge
+409 
+
+charge
+410 
+
+charge
+411 
+
+charge
+412 
+
+charge
+413 
+
+charge
+414 
+
+charge
+415 
+
+charge
+416 
+
+charge
+417 
+
+charge
+418 
+
+charge
+419 
+
+charge
+420 
+
+charge
+421 
+
+charge
+422 
+
+charge
+423 
+
+charge
+424 
+
+charge
+425 
+
+charge
+426 
+
+charge
+427 
+
+charge
+428 
+
+charge
+429 
+
+charge
+430 
+
+charge
+431 
+
+charge
+432 
+
+charge
+433 
+
+charge
+434 
+
+charge
+435 
+
+charge
+436 
+
+charge
+437 
+
+charge
+438 
+
+charge
+439 
+
+charge
+440 
+
+charge
+441 
+
+charge
+442 
+
+charge
+443 
+
+charge
+444 
+
+charge
+445 
+
+charge
+446 
+
+charge
+447 
+
+charge
+448 
+
+charge
+449 
+
+charge
+450 
+
+charge
+451 
+
+charge
+452 
+
+charge
+453 
+
+charge
+454 
+
+charge
+455 
+
+charge
+456 
+
+charge
+457 
+
+charge
+458 
+
+charge
+459 
+
+charge
+460 
+
+charge
+461 
+
+charge
+462 
+
+charge
+463 
+
+charge
+464 
+
+charge
+465 
+
+charge
+466 
+
+charge
+467 
+
+charge
+468 
+
+charge
+469 
+
+charge
+470 
+
+charge
+471 
+
+charge
+472 
+
+charge
+473 
+
+charge
+474 
+
+charge
+475 
+
+charge
+476 
+
+charge
+477 
+
+charge
+478 
+
+charge
+479 
+
+charge
+480 
+
+charge
+481 
+
+charge
+482 
+
+charge
+483 
+
+charge
+484 
+
+charge
+485 
+
+charge
+486 
+
+charge
+487 
+
+charge
+488 
+
+charge
+489 
+
+charge
+490 
+
+charge
+491 
+
+charge
+492 
+
+charge
+493 
+
+charge
+494 
+
+charge
+495 
+
+charge
+496 
+
+charge
+497 
+
+charge
+498 
+
+charge
+499 
+
+charge
+500 
+
+charge
+501 
+
+charge
+502 
+
+charge
+503 
+
+charge
+504 
+
+charge
+505 
+
+charge
+506 
+
+charge
+507 
+
+charge
+508 
+
+charge
+509 
+
+charge
+510 
+
+charge
+511 
+
+charge
+512 
+
+charge
+513 
+
+charge
+514 
+
+charge
+515 
+
+charge
+516 
+
+charge
+517 
+
+charge
+518 
+
+charge
+519 
+
+charge
+520 
+
+charge
+521 
+
+charge
+522 
+
+charge
+523 
+
+charge
+524 
+
+charge
+525 
+
+charge
+526 
+
+charge
+527 
+
+charge
+528 
+
+charge
+529 
+
+charge
+530 
+
+charge
+531 
+
+charge
+532 
+
+charge
+533 
+
+charge
+534 
+
+charge
+535 
+
+charge
+536 
+
+charge
+537 
+
+charge
+538 
+
+charge
+539 
+
+charge
+540 
+
+charge
+541 
+
+charge
+542 
+
+charge
+543 
+
+charge
+544 
+
+charge
+545 
+
+charge
+546 
+
+charge
+547 
+
+charge
+548 
+
+charge
+549 
+
+charge
+550 
+
+charge
+551 
+
+charge
+552 
+
+charge
+553 
+
+charge
+554 
+
+charge
+555 
+
+charge
+556 
+
+charge
+557 
+
+charge
+558 
+
+charge
+559 
+
+charge
+560 
+
+charge
+561 
+
+charge
+562 
+
+charge
+563 
+
+charge
+564 
+
+charge
+565 
+
+charge
+566 
+
+charge
+567 
+
+charge
+568 
+
+charge
+569 
+
+charge
+570 
+
+charge
+571 
+
+charge
+572 
+
+charge
+573 
+
+charge
+574 
+
+charge
+575 
+
+charge
+576 
+
+end
