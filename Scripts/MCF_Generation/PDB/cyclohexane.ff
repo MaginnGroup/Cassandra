@@ -1,0 +1,59 @@
+atomtypes
+1
+
+begin atom-atomtype
+1 C2
+2 C2
+3 C2
+4 C2
+5 C2
+6 C2
+end atom-atomtype
+
+vdwtype LJ
+dihedraltype OPLS
+scaling_1_4_vdw 0.0
+scaling_1_4_charge 0.0
+
+nonbonded
+C2
+Sigma 3.91
+Epsilon 52.5
+atom_type_charge 
+
+bonds
+C2 C2
+Length 1.54
+Constant fixed
+
+angles
+C2 C2 C2
+Angle 114.0
+Constant 31250.0
+
+dihedrals
+C2 C2 C2 C2
+a0 13.96
+a1 56.87
+a2 -29.17
+a3 0.5239
+
+charge
+1 0.0
+
+charge
+2 0.0
+
+charge
+3 0.0
+
+charge
+4 0.0
+
+charge
+5 0.0
+
+charge
+6 0.0
+
+end
