@@ -2,18 +2,6 @@
 * A tutorial for using this script can be found in the Documentation directory *
 ********************************************************************************
 
-The current folder contains the following files and folders:
-
-	(1) mcfgen.py: script to set up a simulation using data from literature. It uses the connectivity from either
-		       a pdb or cml file.
-	(2) /united_atom/: contains examples of MCF files for united atom models generated using this script. The examples provided are:
-		(a) Argon
-		(b) c2 (UA - Ethane)
-		(c) c4 (UA - Butane)
-
-	(3) /CML/: contains an example of an MCF file generated using this script using CML files.
-		(a) Benzene (UA)
-
 How to use mcfgen.py
 
 Step 1.
@@ -36,6 +24,10 @@ Step 2.
    filled out using the force field parameters found in the
    literature.  Make sure you use proper units, as described in the
    code documentation.
+
+   Note that if you are creating a mcf file that involves a solid, you'll have to add the flag --solid to the command, as
+
+   > python $PATH/mcfgen.py solid.pdb --solid -ffTemplate
 
 Step 3.
    After you have filled the ff file, run the command
@@ -103,5 +95,4 @@ CONECT    7    1
 
 (7) Note that the pdb file and ff files must be located in the working directory.
 
-(8) If an element is not found in the periodic table (i.e. possibly a dummy atom, like in TIP5P water models), 
-its mass is assumed to be 0.0
+(8) If an element is not found in the periodic table (i.e. possibly a dummy atom, like in TIP5P water models), mcfgen.py will prompt for user input of such mass.
