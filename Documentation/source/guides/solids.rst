@@ -18,7 +18,7 @@ surface:
    system (``*.xyz``)
 
 The MCF and fragment library file can be created using the scripts discussed in
-:ref:`sec:mcfgen` and :ref:`sec:libgen`.  Each of these scripts requires a
+:ref:`sec:mcfgen` and :ref:`sec:libgen`.  Each of these scripts require a
 starting PDB configuration file. The input file also requires specific
 parameters as given in the following section. Sample input scripts for GCMC
 simulations of various fluids in silicalite are included in the Examples/GCMC
@@ -86,6 +86,13 @@ ways, among others:
 
    #. From the File menu, click Export Data. Enter a filename ending
       with .pdb (e.g. MFI.pdb)
+
+.. warning::
+    Executing the script ``mcfgen.py`` for solids involves using the 
+    ``-s`` or ``--solid`` flag. This will skip the CONECT information
+    that might be present in PDB files of solid materials, and thus
+    skip creating connectivity information such as bonds, angles, 
+    dihedrals and fragments.
 
 .. _sec:solid_mcf:
 
