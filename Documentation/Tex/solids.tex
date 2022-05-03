@@ -65,6 +65,12 @@ A PDB configuration file for a zeolite can be created in the following ways, amo
 
 \end{itemize}
 
+Executing the script \texttt{mcfgen.py} for solids involves using the 
+\texttt{-s} or \texttt{--solid}. This will skip the CONECT information
+that might be present in PDB files of solid materials, and thus
+skip creating connectivity information such as bonds, angles, 
+dihedrals and fragments.
+
 \section{Molecular connectivity file}\label{sec:solid_mcf}
 Since the solid structure will be rigid, no bond distances, angle parameters or dihedral parameters are needed in the MCF.
 The PDB file for the rigid solid does not list CONECT information, so the \texttt{mcfgen.py} script will not include bond, 
