@@ -1,0 +1,1174 @@
+atomtypes
+2
+
+begin atom-atomtype
+1 O
+2 O
+3 O
+4 O
+5 O
+6 O
+7 O
+8 O
+9 O
+10 O
+11 O
+12 O
+13 O
+14 O
+15 O
+16 O
+17 O
+18 O
+19 O
+20 O
+21 O
+22 O
+23 O
+24 O
+25 O
+26 O
+27 O
+28 O
+29 O
+30 O
+31 O
+32 O
+33 O
+34 O
+35 O
+36 O
+37 O
+38 O
+39 O
+40 O
+41 O
+42 O
+43 O
+44 O
+45 O
+46 O
+47 O
+48 O
+49 O
+50 O
+51 O
+52 O
+53 O
+54 O
+55 O
+56 O
+57 O
+58 O
+59 O
+60 O
+61 O
+62 O
+63 O
+64 O
+65 O
+66 O
+67 O
+68 O
+69 O
+70 O
+71 O
+72 O
+73 O
+74 O
+75 O
+76 O
+77 O
+78 O
+79 O
+80 O
+81 O
+82 O
+83 O
+84 O
+85 O
+86 O
+87 O
+88 O
+89 O
+90 O
+91 O
+92 O
+93 O
+94 O
+95 O
+96 O
+97 O
+98 O
+99 O
+100 O
+101 O
+102 O
+103 O
+104 O
+105 O
+106 O
+107 O
+108 O
+109 O
+110 O
+111 O
+112 O
+113 O
+114 O
+115 O
+116 O
+117 O
+118 O
+119 O
+120 O
+121 O
+122 O
+123 O
+124 O
+125 O
+126 O
+127 O
+128 O
+129 O
+130 O
+131 O
+132 O
+133 O
+134 O
+135 O
+136 O
+137 O
+138 O
+139 O
+140 O
+141 O
+142 O
+143 O
+144 O
+145 O
+146 O
+147 O
+148 O
+149 O
+150 O
+151 O
+152 O
+153 O
+154 O
+155 O
+156 O
+157 O
+158 O
+159 O
+160 O
+161 O
+162 O
+163 O
+164 O
+165 O
+166 O
+167 O
+168 O
+169 O
+170 O
+171 O
+172 O
+173 O
+174 O
+175 O
+176 O
+177 O
+178 O
+179 O
+180 O
+181 O
+182 O
+183 O
+184 O
+185 O
+186 O
+187 O
+188 O
+189 O
+190 O
+191 O
+192 O
+193 Si
+194 Si
+195 Si
+196 Si
+197 Si
+198 Si
+199 Si
+200 Si
+201 Si
+202 Si
+203 Si
+204 Si
+205 Si
+206 Si
+207 Si
+208 Si
+209 Si
+210 Si
+211 Si
+212 Si
+213 Si
+214 Si
+215 Si
+216 Si
+217 Si
+218 Si
+219 Si
+220 Si
+221 Si
+222 Si
+223 Si
+224 Si
+225 Si
+226 Si
+227 Si
+228 Si
+229 Si
+230 Si
+231 Si
+232 Si
+233 Si
+234 Si
+235 Si
+236 Si
+237 Si
+238 Si
+239 Si
+240 Si
+241 Si
+242 Si
+243 Si
+244 Si
+245 Si
+246 Si
+247 Si
+248 Si
+249 Si
+250 Si
+251 Si
+252 Si
+253 Si
+254 Si
+255 Si
+256 Si
+257 Si
+258 Si
+259 Si
+260 Si
+261 Si
+262 Si
+263 Si
+264 Si
+265 Si
+266 Si
+267 Si
+268 Si
+269 Si
+270 Si
+271 Si
+272 Si
+273 Si
+274 Si
+275 Si
+276 Si
+277 Si
+278 Si
+279 Si
+280 Si
+281 Si
+282 Si
+283 Si
+284 Si
+285 Si
+286 Si
+287 Si
+288 Si
+end atom-atomtype
+
+vdwtype LJ
+dihedraltype none
+
+nonbonded
+O
+Sigma 2.806
+Epsilon 89.6
+atom_type_charge -1.0
+
+nonbonded
+Si
+Sigma 0.0
+Epsilon 0.0
+atom_type_charge 2.0
+
+charge
+1 
+
+charge
+2 
+
+charge
+3 
+
+charge
+4 
+
+charge
+5 
+
+charge
+6 
+
+charge
+7 
+
+charge
+8 
+
+charge
+9 
+
+charge
+10 
+
+charge
+11 
+
+charge
+12 
+
+charge
+13 
+
+charge
+14 
+
+charge
+15 
+
+charge
+16 
+
+charge
+17 
+
+charge
+18 
+
+charge
+19 
+
+charge
+20 
+
+charge
+21 
+
+charge
+22 
+
+charge
+23 
+
+charge
+24 
+
+charge
+25 
+
+charge
+26 
+
+charge
+27 
+
+charge
+28 
+
+charge
+29 
+
+charge
+30 
+
+charge
+31 
+
+charge
+32 
+
+charge
+33 
+
+charge
+34 
+
+charge
+35 
+
+charge
+36 
+
+charge
+37 
+
+charge
+38 
+
+charge
+39 
+
+charge
+40 
+
+charge
+41 
+
+charge
+42 
+
+charge
+43 
+
+charge
+44 
+
+charge
+45 
+
+charge
+46 
+
+charge
+47 
+
+charge
+48 
+
+charge
+49 
+
+charge
+50 
+
+charge
+51 
+
+charge
+52 
+
+charge
+53 
+
+charge
+54 
+
+charge
+55 
+
+charge
+56 
+
+charge
+57 
+
+charge
+58 
+
+charge
+59 
+
+charge
+60 
+
+charge
+61 
+
+charge
+62 
+
+charge
+63 
+
+charge
+64 
+
+charge
+65 
+
+charge
+66 
+
+charge
+67 
+
+charge
+68 
+
+charge
+69 
+
+charge
+70 
+
+charge
+71 
+
+charge
+72 
+
+charge
+73 
+
+charge
+74 
+
+charge
+75 
+
+charge
+76 
+
+charge
+77 
+
+charge
+78 
+
+charge
+79 
+
+charge
+80 
+
+charge
+81 
+
+charge
+82 
+
+charge
+83 
+
+charge
+84 
+
+charge
+85 
+
+charge
+86 
+
+charge
+87 
+
+charge
+88 
+
+charge
+89 
+
+charge
+90 
+
+charge
+91 
+
+charge
+92 
+
+charge
+93 
+
+charge
+94 
+
+charge
+95 
+
+charge
+96 
+
+charge
+97 
+
+charge
+98 
+
+charge
+99 
+
+charge
+100 
+
+charge
+101 
+
+charge
+102 
+
+charge
+103 
+
+charge
+104 
+
+charge
+105 
+
+charge
+106 
+
+charge
+107 
+
+charge
+108 
+
+charge
+109 
+
+charge
+110 
+
+charge
+111 
+
+charge
+112 
+
+charge
+113 
+
+charge
+114 
+
+charge
+115 
+
+charge
+116 
+
+charge
+117 
+
+charge
+118 
+
+charge
+119 
+
+charge
+120 
+
+charge
+121 
+
+charge
+122 
+
+charge
+123 
+
+charge
+124 
+
+charge
+125 
+
+charge
+126 
+
+charge
+127 
+
+charge
+128 
+
+charge
+129 
+
+charge
+130 
+
+charge
+131 
+
+charge
+132 
+
+charge
+133 
+
+charge
+134 
+
+charge
+135 
+
+charge
+136 
+
+charge
+137 
+
+charge
+138 
+
+charge
+139 
+
+charge
+140 
+
+charge
+141 
+
+charge
+142 
+
+charge
+143 
+
+charge
+144 
+
+charge
+145 
+
+charge
+146 
+
+charge
+147 
+
+charge
+148 
+
+charge
+149 
+
+charge
+150 
+
+charge
+151 
+
+charge
+152 
+
+charge
+153 
+
+charge
+154 
+
+charge
+155 
+
+charge
+156 
+
+charge
+157 
+
+charge
+158 
+
+charge
+159 
+
+charge
+160 
+
+charge
+161 
+
+charge
+162 
+
+charge
+163 
+
+charge
+164 
+
+charge
+165 
+
+charge
+166 
+
+charge
+167 
+
+charge
+168 
+
+charge
+169 
+
+charge
+170 
+
+charge
+171 
+
+charge
+172 
+
+charge
+173 
+
+charge
+174 
+
+charge
+175 
+
+charge
+176 
+
+charge
+177 
+
+charge
+178 
+
+charge
+179 
+
+charge
+180 
+
+charge
+181 
+
+charge
+182 
+
+charge
+183 
+
+charge
+184 
+
+charge
+185 
+
+charge
+186 
+
+charge
+187 
+
+charge
+188 
+
+charge
+189 
+
+charge
+190 
+
+charge
+191 
+
+charge
+192 
+
+charge
+193 
+
+charge
+194 
+
+charge
+195 
+
+charge
+196 
+
+charge
+197 
+
+charge
+198 
+
+charge
+199 
+
+charge
+200 
+
+charge
+201 
+
+charge
+202 
+
+charge
+203 
+
+charge
+204 
+
+charge
+205 
+
+charge
+206 
+
+charge
+207 
+
+charge
+208 
+
+charge
+209 
+
+charge
+210 
+
+charge
+211 
+
+charge
+212 
+
+charge
+213 
+
+charge
+214 
+
+charge
+215 
+
+charge
+216 
+
+charge
+217 
+
+charge
+218 
+
+charge
+219 
+
+charge
+220 
+
+charge
+221 
+
+charge
+222 
+
+charge
+223 
+
+charge
+224 
+
+charge
+225 
+
+charge
+226 
+
+charge
+227 
+
+charge
+228 
+
+charge
+229 
+
+charge
+230 
+
+charge
+231 
+
+charge
+232 
+
+charge
+233 
+
+charge
+234 
+
+charge
+235 
+
+charge
+236 
+
+charge
+237 
+
+charge
+238 
+
+charge
+239 
+
+charge
+240 
+
+charge
+241 
+
+charge
+242 
+
+charge
+243 
+
+charge
+244 
+
+charge
+245 
+
+charge
+246 
+
+charge
+247 
+
+charge
+248 
+
+charge
+249 
+
+charge
+250 
+
+charge
+251 
+
+charge
+252 
+
+charge
+253 
+
+charge
+254 
+
+charge
+255 
+
+charge
+256 
+
+charge
+257 
+
+charge
+258 
+
+charge
+259 
+
+charge
+260 
+
+charge
+261 
+
+charge
+262 
+
+charge
+263 
+
+charge
+264 
+
+charge
+265 
+
+charge
+266 
+
+charge
+267 
+
+charge
+268 
+
+charge
+269 
+
+charge
+270 
+
+charge
+271 
+
+charge
+272 
+
+charge
+273 
+
+charge
+274 
+
+charge
+275 
+
+charge
+276 
+
+charge
+277 
+
+charge
+278 
+
+charge
+279 
+
+charge
+280 
+
+charge
+281 
+
+charge
+282 
+
+charge
+283 
+
+charge
+284 
+
+charge
+285 
+
+charge
+286 
+
+charge
+287 
+
+charge
+288 
+
+end
