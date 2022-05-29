@@ -21,9 +21,9 @@ Run info
 version: Cassandra Version 1.2.5
 inputfile: species1_mcf_gen.inp
 name of run: species1_mcf_gen
-date (mm/dd/yyyy): 09/02/2021
-time: 12:43:40
-machine: LAPTOP-IOABUAK5
+date (mm/dd/yyyy): 05/28/2022
+time: 23:24:29
+machine: LAPTOP-24O59I2D
 ********************************************************************************
 
 Verbose log

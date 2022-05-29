@@ -21,9 +21,9 @@ Run info
 version: Cassandra Version 1.2.5
 inputfile: dee_widom.inp
 name of run: dee_widom.out
-date (mm/dd/yyyy): 04/22/2022
-time: 12:12:20
-machine: Hyron
+date (mm/dd/yyyy): 05/28/2022
+time: 23:25:16
+machine: LAPTOP-24O59I2D
 ********************************************************************************
 
 Verbose log
@@ -332,13 +332,13 @@ Writing information for box  1
 
 Shifted chemical potentials from Widom insertions
 ********************************************************************************
-Shifted chemical potential for species 1 in box 1 is        -39.995263911843 kJ/mol
-        14328 Widom insertions with overlap out of 110000
+Shifted chemical potential for species 1 in box 1 is        -41.613307889516 kJ/mol
+        14301 Widom insertions with overlap out of 110000
 ********************************************************************************
 
  Writing information about subroutine times
 ********************************************************************************
- Widom time =                  0.036771 hrs.
+ Widom time =                  0.030925 hrs.
 ********************************************************************************
 
 ********************************************************************************
@@ -351,7 +351,7 @@ Shifted chemical potential for species 1 in box 1 is        -39.995263911843 kJ/
          0     Months
          0       Days
          0      Hours
-         2    Minutes
-        15    Seconds
-       593         ms
+         1    Minutes
+        52    Seconds
+       532         ms
 ********************************************************************************

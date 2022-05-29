@@ -21,9 +21,9 @@ Run info
 version: Cassandra Version 1.2.5
 inputfile: frag2.inp
 name of run: frag2
-date (mm/dd/yyyy): 09/02/2021
-time: 12:43:44
-machine: LAPTOP-IOABUAK5
+date (mm/dd/yyyy): 05/28/2022
+time: 23:24:29
+machine: LAPTOP-24O59I2D
 ********************************************************************************
 
 Verbose log
@@ -91,8 +91,8 @@ Production 1000 10
 Units  Steps                                                                    
 prop_freq  10                                                                   
 coord_freq   90                                                                 
-run          1100000                                                            
-nequilsteps  100000                                                             
+run          1100                                                               
+nequilsteps  100                                                                
                                                                                 
 # File_Info                                                                     
 frag2.dat                                                                       
@@ -172,7 +172,7 @@ Initial configuration for box 1 will be read from file
 
 Seed info
 ********************************************************************************
-The starting seeds are:    706111630     70611631
+The starting seeds are:           706111630            70611631
 ********************************************************************************
 
 Temperature
@@ -190,13 +190,13 @@ Number of moves is :   1
 
 Simulation length info
 ********************************************************************************
-Thermodynamic quantities will be computed every        10 Steps     
-Coordinates will be written to file every              90 Steps     
+Thermodynamic quantities will be computed every                   10 Steps     
+Coordinates will be written to file every                         90 Steps     
  movie header file is                  frag2.H
  movie_XYZ file is                     frag2.xyz
-The simulation will be run for                    1100000 Steps     
-Number of equilibrium steps    100000
-Instantaneous values will be written every             10 Steps     
+The simulation will be run for                                1100 Steps     
+Number of equilibrium steps                100
+Instantaneous values will be written every                        10 Steps     
 ********************************************************************************
 
 File info
@@ -251,7 +251,7 @@ Compute total energy
 
 Run simulation
 ********************************************************************************
-      Step       Move   Mol Spc Box  Success  MaxWidth
+                Step       Move   Mol Spc Box  Success  MaxWidth
 ********************************************************************************
 
 Energy of final configuration
@@ -259,10 +259,10 @@ Energy of final configuration
 
  Energy components for box 1     kJ/mol-Extensive       Relative_Error
  ---------------------------------------------------------------------
- Total system energy                        0.894            0.954E-14
- Intra molecular energy                     0.894            0.954E-14
+ Total system energy                        0.421            0.375E-13
+ Intra molecular energy                     0.421            0.375E-13
    Bond energy                              0.000            0.000E+00
-   Bond angle energy                        0.894            0.631E-13
+   Bond angle energy                        0.421            0.192E-13
    Dihedral angle energy                    0.000            0.000E+00
    Improper angle energy                    0.000            0.000E+00
    Intra molecule vdw                       0.000            0.000E+00
@@ -282,7 +282,7 @@ Writing information for box  1
    Writing information for species  1
 
                 Move      Trials     Success   % Success
-   Atom Displacement     1100000      577377       52.49
+   Atom Displacement        1100         598       54.36
    ---------------------------------------------------------
 
 ********************************************************************************
@@ -302,6 +302,6 @@ Writing information for box  1
          0       Days
          0      Hours
          0    Minutes
-         4    Seconds
-        31         ms
+         0    Seconds
+         4         ms
 ********************************************************************************
