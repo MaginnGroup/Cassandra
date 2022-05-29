@@ -21,9 +21,9 @@ Run info
 version: Cassandra Version 1.2.5
 inputfile: npt.inp
 name of run: npt.out
-date (mm/dd/yyyy): 09/02/2021
-time: 12:44:13
-machine: LAPTOP-IOABUAK5
+date (mm/dd/yyyy): 05/28/2022
+time: 23:18:55
+machine: LAPTOP-24O59I2D
 ********************************************************************************
 
 Verbose log
@@ -220,7 +220,7 @@ Initial configuration for box 1 will be made
 
 Seed info
 ********************************************************************************
-The starting seeds are:     82638601    249702601
+The starting seeds are:            82638601           249702601
 ********************************************************************************
 
 Temperature
@@ -258,13 +258,13 @@ Kappa for dihedral selection                10
 
 Simulation length info
 ********************************************************************************
-Thermodynamic quantities will be computed every        10 Sweeps    
-Coordinates will be written to file every              10 Sweeps    
+Thermodynamic quantities will be computed every                   10 Sweeps    
+Coordinates will be written to file every                         10 Sweeps    
  movie header file is                  npt.out.H
  movie_XYZ file is                     npt.out.xyz
-The simulation will be run for                        100 Sweeps    
-Instantaneous values will be written every             10 Sweeps    
-A sweep is defined as                                  91 steps
+The simulation will be run for                                 100 Sweeps    
+Instantaneous values will be written every                        10 Sweeps    
+A sweep is defined as                                             91 steps
 ********************************************************************************
 
 Property info
@@ -314,19 +314,19 @@ Compute total energy
 
  Energy components for box 1     kJ/mol-Extensive
  ---------------------------------------------------------------------
- Total system energy                     1829.134
- Intra molecular energy                   451.867
+ Total system energy                     2795.466
+ Intra molecular energy                   442.698
    Bond energy                              0.000
-   Bond angle energy                       97.742
-   Dihedral angle energy                  322.688
+   Bond angle energy                      137.234
+   Dihedral angle energy                  302.028
    Improper angle energy                    0.000
-   Intra molecule vdw                      31.437
+   Intra molecule vdw                       3.436
    Intra molecule q                         0.000
- Inter molecular energy                  1377.267
-   Inter molecule vdw                    1537.684
+ Inter molecular energy                  2352.768
+   Inter molecule vdw                    2528.693
    Long range correction                 -142.877
-   Inter molecule q                      4219.271
-   Reciprocal ewald                       445.672
+   Inter molecule q                      4207.086
+   Reciprocal ewald                       442.348
    Self ewald                           -4682.482
  ---------------------------------------------------------------------
    Number of reciprocal vectors              2934
@@ -335,34 +335,33 @@ Compute total energy
 
 Run simulation
 ********************************************************************************
-      Step       Move   Mol Spc Box  Success  MaxWidth
-       900  translate         1   1  0.47667
-       920     rotate         1   1  0.49333
-      1042     volume             1  0.60000
-      1788     rotate         1   1  0.51333
-      1800  translate         1   1  0.52333
-      1917     volume             1  0.50000
-      2444     volume             1  0.46667
-      2691  translate         1   1  0.51444
-      2756     rotate         1   1  0.52333
-      2878     volume             1  0.42500
-      3642     rotate         1   1  0.51500
-      3657  translate         1   1  0.51417
-      3825     volume             1  0.38000
-      4557  translate         1   1  0.52600
-      4600     rotate         1   1  0.52067
-      5472     rotate         1   1  0.51722
-      5520  translate         1   1  0.52389
-      5529     volume             1  0.33333
-      6422     rotate         1   1  0.51476
-      6476  translate         1   1  0.52381
-      6546     volume             1  0.32857
-      7294     rotate         1   1  0.52250
-      7406  translate         1   1  0.52583
-      7836     volume             1  0.33750
-      8257     rotate         1   1  0.52222
-      8259  translate         1   1  0.52815
-      8864     volume             1  0.33333
+                Step       Move   Mol Spc Box  Success  MaxWidth
+                 869  translate         1   1  0.39667
+                 959     rotate         1   1  0.42000
+                1013     volume             1  0.30000
+                1805  translate         1   1  0.47167
+                1879     rotate         1   1  0.46500
+                1994     volume             1  0.30000
+                2759  translate         1   1  0.49333
+                2763     rotate         1   1  0.48111
+                2803     volume             1  0.23333
+                3605     rotate         1   1  0.50167
+                3705  translate         1   1  0.50083
+                4399     volume             1  0.22500
+                4560     rotate         1   1  0.50800
+                4607  translate         1   1  0.51267
+                5452     rotate         1   1  0.51167
+                5488  translate         1   1  0.52111
+                5529     volume             1  0.20000
+                6344  translate         1   1  0.52333
+                6418     rotate         1   1  0.51333
+                7051     volume             1  0.21667
+                7297  translate         1   1  0.52125
+                7362     rotate         1   1  0.51167
+                8134  translate         1   1  0.51630
+                8287     rotate         1   1  0.51593
+                8381     volume             1  0.22857
+                8990  translate         1   1  0.51800
 ********************************************************************************
 
 Energy of final configuration
@@ -370,22 +369,22 @@ Energy of final configuration
 
  Energy components for box 1     kJ/mol-Extensive       Relative_Error
  ---------------------------------------------------------------------
- Total system energy                     -301.346           -0.459E-14
- Intra molecular energy                   289.391            0.880E-15
+ Total system energy                     -329.439           -0.640E-14
+ Intra molecular energy                   292.301            0.124E-15
    Bond energy                              0.000            0.000E+00
-   Bond angle energy                      133.442            0.177E-14
-   Dihedral angle energy                  175.070            0.208E-15
+   Bond angle energy                      125.213            0.145E-15
+   Dihedral angle energy                  185.833            0.587E-15
    Improper angle energy                    0.000            0.000E+00
-   Intra molecule vdw                     -19.121           -0.119E-15
+   Intra molecule vdw                     -18.745           -0.364E-15
    Intra molecule q                         0.000            0.000E+00
- Inter molecular energy                  -590.738           -0.259E-14
-   Inter molecule vdw                    -403.119           -0.180E-15
-   Long range correction                 -129.129           -0.000E+00
-   Inter molecule q                      4221.137            0.000E+00
-   Reciprocal ewald                       402.855            0.181E-15
+ Inter molecular energy                  -621.740           -0.410E-14
+   Inter molecule vdw                    -428.337           -0.510E-15
+   Long range correction                 -133.178           -0.000E+00
+   Inter molecule q                      4205.878            0.554E-15
+   Reciprocal ewald                       416.379            0.175E-15
    Self ewald                           -4682.482           -0.000E+00
  ---------------------------------------------------------------------
-   Number of reciprocal vectors              3295
+   Number of reciprocal vectors              3215
 
 ********************************************************************************
 
@@ -393,14 +392,14 @@ Energy of final configuration
 Writing information for box  1
 ********************************************************************************
                 Move      Trials     Success   % Success
-              Volume          95          31       32.63
+              Volume          79          18       22.78
 
    ---------------------------------------------------------
    Writing information for species  1
 
                 Move      Trials     Success   % Success
-           Translate        2988        1586       53.08
-              Rotate        2972        1544       51.95
+           Translate        3036        1570       51.71
+              Rotate        2958        1541       52.10
    ---------------------------------------------------------
 
 ********************************************************************************
@@ -411,17 +410,17 @@ Writing information about fragments
    ---------------------------------------------------------
    Writing information for species  1
      #_Frags_Regrown      Trials     Success   % Success
-                   1        2056        1778       86.48
-                   2         989         656       66.33
+                   1        1999        1740       87.04
+                   2        1028         684       66.54
    ---------------------------------------------------------
 ********************************************************************************
 
  Writing information about subroutine times
 ********************************************************************************
- Translation time =            5.437500 secs.
- Rotation time =               5.656250 secs.
- Volume change time =          5.250000 secs.
- Regrowth time =               7.609375 secs.
+ Translation time =            3.314583 secs.
+ Rotation time =               3.248648 secs.
+ Volume change time =          2.675637 secs.
+ Regrowth time =               4.116096 secs.
 ********************************************************************************
 
 ********************************************************************************
@@ -435,6 +434,6 @@ Writing information about fragments
          0       Days
          0      Hours
          0    Minutes
-        26    Seconds
-       328         ms
+        13    Seconds
+       860         ms
 ********************************************************************************
