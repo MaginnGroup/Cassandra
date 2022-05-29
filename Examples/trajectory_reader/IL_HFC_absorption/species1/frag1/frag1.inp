@@ -50,7 +50,7 @@ Production 1000 10
 Units    Steps
 prop_freq  100
 coord_freq   5000
-run          10000000
+run          10000
 
 # Property_Info 1
 Energy_Total

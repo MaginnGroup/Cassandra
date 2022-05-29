@@ -8,34 +8,34 @@
 ********************************************************************************
 **********************************Log File**************************************
 ********************************************************************************
- 
+
 For any published work that uses Cassandra, cite the following reference:
     Shah JK, Marin‐Rimoldi E, Mullen RG, Keene BP, Khan S,
     Paluch AS, Rai N, Romanielo LL, Rosch TW, Yoo B, Maginn EJ.
     Cassandra: An open source Monte Carlo package for molecular simulation.
     Journal of Computational Chemistry. 2017, 38, 1727–1739.
     http://dx.doi.org/10.1002/jcc.24807
- 
+
 Run info
 ********************************************************************************
 version: Cassandra Version 1.2.5
 inputfile: species2_mcf_gen.inp
 name of run: species2_mcf_gen
-date (mm/dd/yyyy): 04/04/2022
-time: 16:48:27
-machine: maginnfe.crc.nd.edu
+date (mm/dd/yyyy): 05/28/2022
+time: 23:35:03
+machine: LAPTOP-24O59I2D
 ********************************************************************************
- 
+
 Verbose log
 ********************************************************************************
 Normal output to logfile
 ********************************************************************************
- 
+
 Simulation type
 ********************************************************************************
 MCF_Gen             
 ********************************************************************************
- 
+
 Copy input file
 ********************************************************************************
 # Run_Name                                                                      
@@ -66,12 +66,12 @@ CUBIC
                                                                                 
 END                                                                             
 ********************************************************************************
- 
+
 Number of species
 ********************************************************************************
 1
 ********************************************************************************
- 
+
 Box info
 ********************************************************************************
 Number of simulation boxes     1
@@ -82,7 +82,7 @@ Box 1 is CUBIC
  Distance between box faces    30.0000      30.0000      30.0000
  Box volume, A^3         27000.0000
 ********************************************************************************
- 
+
 Pair style
 ********************************************************************************
 VDW style used is:   LJ             in box:  1
@@ -96,7 +96,7 @@ Section "# Pair_Energy" is missing from the input file
 Section "# Mixing_Rule" is missing from the input file
  By default, using Lorentz-Berthelot
 ********************************************************************************
- 
+
 Molecule info
 ********************************************************************************
  Reading molecular connectivity information
@@ -109,11 +109,11 @@ Molecule info
    0 improper(s) specified.
    1 fragment(s) specified.
    0 fragment bond(s) specified.
- 
+
  Species  Max molecules
  -------  -------------
       1             50
- 
+
  Species     1
  -------------------------------------------------------------------------------
  Atom parameters read
@@ -134,6 +134,6 @@ Molecule info
  Fragment info read
  -------------------------------------------------------------------------------
 ********************************************************************************
- 
+
  Finished generating fragments
  Exiting
