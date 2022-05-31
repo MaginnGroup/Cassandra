@@ -1,0 +1,81 @@
+! This is the input file for a short simulation of pentane
+
+# Run_Name
+pentane_widom.out
+!------------------------------------------------------------------------------
+
+# Sim_Type
+pregen
+!------------------------------------------------------------------------------
+
+# Nbr_Species
+1
+!------------------------------------------------------------------------------
+
+# VDW_Style
+lj cut_tail 14.0
+!------------------------------------------------------------------------------
+
+# Seed_Info
+265834938 610725582
+!------------------------------------------------------------------------------
+
+# Rcutoff_Low
+2.0
+!----------------------------------------------------------------------Angstrom
+
+# Molecule_Files
+pentane.mcf   60
+!----------------------------------------------------------one line per species
+
+# Box_Info
+1
+cubic
+100.
+!-------------------------------------------------------line 1: number of boxes
+!--------------------------------------------------------------line 2: box type
+!-------------------------------------------------line 3: box size in Angstroms
+
+# Temperature_Info
+336.0
+!------------------------------------------------------------------------Kelvin
+
+
+# Simulation_Length_Info
+units        steps
+prop_freq    1
+coord_freq   1
+run          11
+!----------------- 201 moves = 1 sweep; output every 10 sweeps; run 1000 sweeps
+
+# Pregen_Info
+pentane_traj.H pentane_traj.xyz
+
+# Widom_Insertion
+true
+cbmc 90000 1 3
+
+# Cell_List_Overlap
+true
+
+# Property_Info 1
+energy_total
+pressure
+volume
+density
+mass_density
+!------------------------------------------------------------------------------
+
+# Fragment_Files
+species1/frag1/frag1.dat  1
+species1/frag2/frag2.dat  2
+species1/frag3/frag3.dat  3
+!---------------------------------------------------------one line per fragment
+
+# CBMC_Info
+kappa_ins 12
+kappa_dih 10
+rcut_cbmc 6.5
+!------------------------------------------------------------------------------
+
+END

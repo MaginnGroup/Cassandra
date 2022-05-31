@@ -44,6 +44,7 @@ MODULE Input_Routines
   USE IO_Utilities
   USE File_Names
   USE Type_Definitions
+  !$ USE OMP_LIB
 
 
   IMPLICIT NONE
@@ -331,6 +332,10 @@ SUBROUTINE Get_Sim_Type
         ELSEIF(line_array(1) == 'mcf_gen' .OR. line_array(1) == 'MCF_Gen') THEN
            sim_type = 'MCF_Gen'
            int_sim_type = sim_mcf
+        ELSEIF(line_array(1) == 'pregen' .OR. line_array(1) == 'PREGEN' .OR. &
+               line_array(1) == 'pregen_mc' .OR. line_array(1) == 'PREGEN_MC') THEN
+           sim_type = 'pregen'
+           int_sim_type = sim_pregen
         ELSE
            err_msg = ''
            err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
@@ -834,8 +839,12 @@ SUBROUTINE Get_Pair_Style
         CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
 
         IF (line_array(1) == 'TRUE' .OR. line_array(1) == 'true') THEN
-           l_pair_nrg = .TRUE.
-           WRITE(logunit,'(A)') 'Pair interaction energy array storage enabled'
+           IF (int_sim_type == sim_pregen) THEN
+                   WRITE(logunit,'(A)') 'Pair interaction energy array storage is not supported for pregenerated trajectories'
+           ELSE
+                   l_pair_nrg = .TRUE.
+                   WRITE(logunit,'(A)') 'Pair interaction energy array storage enabled'
+           END IF
         ELSE IF (line_array(1) == 'FALSE' .OR. line_array(1) == 'false') THEN
            WRITE(logunit,'(A)') 'Pair interaction energy arrays will not be stored'
         ELSE
@@ -3568,7 +3577,7 @@ SUBROUTINE Get_Box_Info
               CALL Clean_Abort(err_msg,'Get_Box_Info')
            END IF
         ELSE
-           IF (nbr_boxes /= 1) THEN
+           IF ((nbr_boxes /= 1) .AND. (int_sim_type /= sim_pregen) ) THEN
               err_msg = ''
               err_msg(1) = 'Option ' // TRIM(line_array(1)) // &
                            ' on line number ' // &
@@ -4146,9 +4155,11 @@ SUBROUTINE Get_Move_Probabilities
   REAL(DP) :: total_mass, this_mass
 
 !******************************************************************************
-  WRITE(logunit,*)
-  WRITE(logunit,'(A)') 'Move probabilities'
-  WRITE(logunit,'(A80)') '********************************************************************************'
+  IF (int_sim_type /= sim_pregen) THEN
+          WRITE(logunit,*)
+          WRITE(logunit,'(A)') 'Move probabilities'
+          WRITE(logunit,'(A80)') '********************************************************************************'
+  END IF
 
   ierr = 0
   line_nbr = 0
@@ -4177,6 +4188,8 @@ SUBROUTINE Get_Move_Probabilities
   ALLOCATE(max_disp(nspecies,nbr_boxes))
   ALLOCATE(max_rot(nspecies,nbr_boxes))
   ALLOCATE(prob_rot_species(nspecies))
+
+  IF (int_sim_type == sim_pregen) RETURN
 
   REWIND(inputunit)
 
@@ -4523,7 +4536,7 @@ SUBROUTINE Get_Move_Probabilities
                        err_msg(1) = 'Keyword ' // TRIM(line_string2(1:17)) // ' on line number ' // &
                                     TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
                        err_msg(2) = 'Supported keywords are: prob_swap_species, prob_swap_from_box'
-                       CALL Clean_Abort(err_msg,'Get_Start_Type')
+                       CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
                     END IF
 
                  END DO
@@ -4827,9 +4840,11 @@ SUBROUTINE Get_Start_Type
   REAL(DP) :: total_mass, this_mass
 
 !******************************************************************************
-  WRITE(logunit,*)
-  WRITE(logunit,'(A)') 'Start type'
-  WRITE(logunit,'(A80)') '********************************************************************************'
+  IF (int_sim_type /= sim_pregen) THEN
+          WRITE(logunit,*)
+          WRITE(logunit,'(A)') 'Start type'
+          WRITE(logunit,'(A80)') '********************************************************************************'
+  END IF
 
   ALLOCATE(start_type(nbr_boxes),Stat=Allocatestatus)
   IF (Allocatestatus /= 0) THEN
@@ -4866,6 +4881,11 @@ SUBROUTINE Get_Start_Type
   nmols_to_read = 0
   nmols = 0
   molecule_list(:,:)%live = .FALSE.
+
+  IF (int_sim_type == sim_pregen) THEN
+          start_type = 'none'
+          RETURN
+  END IF
 
   REWIND(inputunit)
 
@@ -5235,10 +5255,17 @@ SUBROUTINE Get_Widom_Info
         INTEGER :: i_unit
 
         CHARACTER(STRING_LEN) :: line_string,line_array(60)
-        CHARACTER(20) :: extension
+        CHARACTER(20) :: extension, extension2
+
+        LOGICAL :: inp_flag
+
+        inp_flag = .FALSE.
 
         line_nbr = 0
         widom_flag = .FALSE.
+        widom_active = .FALSE.
+        widom_locate = 0
+        widom_species = 0
         is = 0
         ibox = 0
         i_unit = 0
@@ -5268,16 +5295,24 @@ SUBROUTINE Get_Widom_Info
                                 IF (.NOT. (line_array(1)(1:1) == '!')) EXIT
                         END DO
                         IF (line_array(1) == 'FALSE' .OR. line_array(1) == 'false' .OR. line_array(1) == 'False') RETURN
-                        IF(.NOT. (line_array(1) == 'TRUE' .OR. line_array(1) == 'true' .OR. line_array(1) == 'True')) THEN
-                                line_nbr = line_nbr - 1
+                        IF(line_array(1) == 'TRUE' .OR. line_array(1) == 'true' .OR. line_array(1) == 'True') THEN
+                                inp_flag = .TRUE.
                         END IF
                         widom_flag = .TRUE.
                         IF(.NOT. ALLOCATED(ntrials)) ALLOCATE(ntrials(nspecies,nbr_boxes))
+                        IF(.NOT. ALLOCATED(overlap_counter)) ALLOCATE(overlap_counter(nspecies,nbr_boxes))
+                        IF(.NOT. ALLOCATED(n_widom_subgroups)) ALLOCATE(n_widom_subgroups(nspecies,nbr_boxes))
                         ntrials(:,:)%widom = 0
+                        overlap_counter(:,:) = 0_INT64
+                        n_widom_subgroups = 0
                         ALLOCATE(wprop_file_unit(nspecies,nbr_boxes))
                         ALLOCATE(wprop_filenames(nspecies,nbr_boxes))
                         ALLOCATE(first_open_wprop(nspecies,nbr_boxes))
+                        ALLOCATE(wprop2_file_unit(nspecies,nbr_boxes))
+                        ALLOCATE(wprop2_filenames(nspecies,nbr_boxes))
+                        ALLOCATE(first_open_wprop2(nspecies,nbr_boxes))
                         first_open_wprop(:,:) = .TRUE.
+                        first_open_wprop2(:,:) = .TRUE.
                         DO is = 1,nspecies
                                 ALLOCATE(species_list(is)%test_particle(1:nbr_boxes))
                                 ALLOCATE(species_list(is)%widom_sum(1:nbr_boxes))
@@ -5290,15 +5325,17 @@ SUBROUTINE Get_Widom_Info
         END DO
         is = 0
         DO
-                line_nbr = line_nbr + 1
-                CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
-                IF(ierr /= 0) THEN
-                   err_msg = ''
-                   err_msg(1) = 'Error while reading input file in Get_Widom_Info'
-                   CALL clean_abort(err_msg,'Get_Widom_Info')
+                IF (inp_flag .OR. is > 0) THEN
+                        line_nbr = line_nbr + 1
+                        CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
+                        IF(ierr /= 0) THEN
+                           err_msg = ''
+                           err_msg(1) = 'Error while reading input file in Get_Widom_Info'
+                           CALL clean_abort(err_msg,'Get_Widom_Info')
+                        END IF
+                        IF (nbr_entries == 0) EXIT
+                        IF (line_array(1)(1:1) == '!') CYCLE
                 END IF
-                IF (nbr_entries == 0) EXIT
-                IF (line_array(1)(1:1) == '!') CYCLE
                 is = is + 1
                 ibox = 0
                 DO i_entry = 1,nbr_entries
@@ -5310,15 +5347,25 @@ SUBROUTINE Get_Widom_Info
                                 species_list(is)%widom_sum(ibox) = 0.0_DP
                                 species_list(is)%insertions_in_step(ibox) = String_To_Int(line_array(i_entry+1))
                                 species_list(is)%widom_interval(ibox) = String_To_Int(line_array(i_entry+2))
+                                IF (i_entry+3 <= nbr_entries) THEN
+                                        IF (line_array(i_entry+3) /= 'cbmc' .AND. line_array(i_entry+3) /= 'none' .AND. &
+                                        line_array(i_entry+3)(1:1) /= '!') THEN
+                                                n_widom_subgroups(is,ibox) = String_To_Int(line_array(i_entry+3))
+                                        END IF 
+                                END IF
                                 tp_correction(is) = 1
                                 i_unit = i_unit + 1
                                 wprop_file_unit(is,ibox) = wprop_file_unit_base + i_unit
+                                wprop2_file_unit(is,ibox) = wprop2_file_unit_base + i_unit
                                 IF (nbr_boxes == 1) THEN
                                         extension = '.spec' // TRIM(Int_To_String(is)) // '.wprp'
+                                        extension2 = '.spec' // TRIM(Int_To_String(is)) // '.wprp2'
                                 ELSE
                                         extension = '.spec' // TRIM(Int_To_String(is)) // '.box' // TRIM(Int_To_String(ibox)) // '.wprp'
+                                        extension2 = '.spec' // TRIM(Int_To_String(is)) // '.box' // TRIM(Int_To_String(ibox)) // '.wprp2'
                                 END IF
                                 CALL Name_Files(run_name,extension,wprop_filenames(is,ibox))
+                                CALL Name_Files(run_name,extension2,wprop2_filenames(is,ibox))
                         END IF
                         IF (ibox == nbr_boxes) EXIT
                 END DO
@@ -5332,6 +5379,54 @@ SUBROUTINE Get_Widom_Info
         RETURN
 
 END SUBROUTINE Get_Widom_Info
+
+SUBROUTINE Get_Lookup_Info
+        INTEGER :: line_nbr, ierr, max_atoms
+        CHARACTER(STRING_LEN) :: line_string
+        REWIND(inputunit)
+        line_nbr = 0
+        line_string = ""
+        l_sectors = .FALSE.
+        DO
+                line_nbr = line_nbr + 1
+                CALL Read_String(inputunit,line_string,ierr)
+                IF(ierr /= 0) THEN
+                   err_msg = ''
+                   err_msg(1) = 'Error while reading input file in Get_Lookup_Info'
+                   CALL clean_abort(err_msg,'Get_Lookup_Info')
+                END IF
+
+                IF(line_string(1:3) == 'END' .or. line_nbr > 10000 ) RETURN
+                IF (line_string(1:13) == '# Atom_Lookup' .OR. &
+                        line_string(1:19) == '# Cell_List_Overlap') THEN
+                        DO
+                                line_nbr = line_nbr + 1
+                                CALL Read_String(inputunit,line_string,ierr)
+                                IF(ierr /= 0) THEN
+                                   err_msg = ''
+                                   err_msg(1) = 'Error while reading input file in Get_Lookup_Info'
+                                   CALL clean_abort(err_msg,'Get_Lookup_Info')
+                                END IF
+                                IF (line_string(1:1) /= '!') EXIT
+                        END DO
+                        IF (.NOT. (line_string(1:4) == 'TRUE' .OR. &
+                                line_string(1:4) == 'true' .OR. &
+                                line_string(1:4) == 'True')) RETURN
+                        l_sectors = .TRUE.
+                        max_atoms = DOT_PRODUCT(max_molecules, natoms)
+                        ALLOCATE(sectorbound(3,nbr_boxes))
+                        ALLOCATE(length_cells(3,nbr_boxes))
+                        ALLOCATE(cell_length_inv(3,nbr_boxes))
+                        ! The number of populated sectors cannot exceed the number of atoms
+                        ALLOCATE(sector_atoms(15,max_atoms,3))
+                        ALLOCATE(sector_n_atoms(max_atoms))
+                        sectorbound = 0
+                        sectormaxbound = 0
+                        length_cells = 0
+                        RETURN
+                END IF
+        END DO
+END SUBROUTINE Get_Lookup_Info
 
 SUBROUTINE Log_Widom_Info
         ! This subroutine writes relevant information about the settings for the Widom insertions
@@ -5367,6 +5462,150 @@ SUBROUTINE Log_Widom_Info
         END DO
         WRITE(logunit,'(A80)') '********************************************************************************'
 END SUBROUTINE Log_Widom_Info
+
+!******************************************************************************
+SUBROUTINE Get_Pregen_Info
+        ! This subroutine reads the names of the xyz and H files containing pregenerated trajectories
+        ! and opens them
+
+        INTEGER :: ibox, is, xyz_pos, H_pos, line_pos
+        INTEGER :: ierr, line_nbr, nbr_entries, req_entries
+        CHARACTER(STRING_LEN) :: line_string,line_array(60)
+        
+
+        ALLOCATE(pregen_H_unit(nbr_boxes))
+        ALLOCATE(pregen_H_filenames(nbr_boxes))
+        ALLOCATE(pregen_xyz_unit(nbr_boxes))
+        ALLOCATE(pregen_xyz_filenames(nbr_boxes))
+
+        H_pos = 1
+        xyz_pos = 2
+
+        req_entries = 2
+
+        !has_H = .FALSE.
+
+        DO ibox = 1, nbr_boxes
+                pregen_H_unit(ibox) = pregen_H_unit_base + ibox
+                pregen_xyz_unit(ibox) = pregen_xyz_unit_base + ibox
+        END DO
+
+        WRITE(logunit,*)
+        WRITE(logunit,'(A)') 'Pregenerated trajectory info'
+        WRITE(logunit,'(A80)') '********************************************************************************'
+        !
+        REWIND(inputunit)
+        ierr = 0
+        line_nbr = 0
+        
+        DO
+                line_nbr = line_nbr + 1
+                CALL Read_String(inputunit,line_string,ierr)
+                IF(ierr /= 0) THEN
+                        err_msg = ''
+                        err_msg(1) = 'Error while reading # Pregen_Info'
+                        CALL clean_abort(err_msg,'Get_Pregen_Info')
+                END IF
+                IF (line_string(1:13) == '# Pregen_Info') THEN
+!                        line_nbr = line_nbr + 1
+!                        CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
+!                        req_entries = nbr_entries ! minimum number of entries in subsequent lines
+!                        DO line_pos = 1, nbr_entries
+!                                SELECT CASE (line_array(line_pos))
+!                                        CASE ('H','h','.H','.h')
+!                                                IF (H_pos == 0) THEN
+!                                                        H_pos = line_pos
+!                                                        has_H = .TRUE.
+!                                                ELSE
+!                                                        err_msg = ''
+!                                                        err_msg(1) = 'File type H was listed more than once'
+!                                                        CALL clean_abort(err_msg,'Get_Pregen_Info')
+!                                                END IF
+!                                        CASE ('xyz','XYZ','.xyz','.XYZ')
+!                                                IF (xyz_pos == 0) THEN
+!                                                        xyz_pos = line_pos
+!                                                ELSE
+!                                                        err_msg = ''
+!                                                        err_msg(1) = 'File type xyz was listed more than once'
+!                                                        CALL clean_abort(err_msg,'Get_Pregen_Info')
+!                                                END IF
+!                                        CASE DEFAULT
+!                                                err_msg = ''
+!                                                err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
+!                                                        TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
+!                                                err_msg(2) = 'Supported keywords are: xyz, H'
+!                                END SELECT
+!                        END DO
+!                        IF (xyz_pos == 0) THEN
+!                                err_msg = ''
+!                                err_msg(1) = 'Keyword xyz must be included on line number ' // &
+!                                        TRIM(Int_To_String(line_nbr))
+!                                CALL clean_abort(err_msg,'Get_Pregen_Info')
+!                        ELSE IF (has_H) THEN
+                        !box_list(:)%box_shape = 'TRICLINIC'
+                        !box_list(:)%int_box_shape = int_cell
+                        IF (nbr_boxes == 1) THEN
+                                WRITE(logunit,*) 'Box size will be replaced by those read from the pregenerated H file'
+                        ELSE
+                                WRITE(logunit,*) 'Box sizes will be replaced by those read from the pregenerated H files'
+                        END IF
+!                        END IF
+                        DO ibox = 1, nbr_boxes
+                                line_nbr = line_nbr + 1
+                                CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
+                                IF(ierr /= 0) THEN
+                                        err_msg = ''
+                                        err_msg(1) = 'Error while reading # Pregen_Info'
+                                        CALL clean_abort(err_msg,'Get_Pregen_Info')
+                                END IF
+                                IF(req_entries /= nbr_entries) THEN
+                                        err_msg = ''
+                                        err_msg(1) = 'Line ' // TRIM(Int_To_String(line_nbr)) // &
+                                                ' of the input file must contain exactly ' // &
+                                                TRIM(Int_To_String(req_entries)) // ' entries'
+                                        CALL clean_abort(err_msg,'Get_Pregen_Info')
+                                END IF
+                                pregen_xyz_filenames(ibox) = line_array(xyz_pos)
+                                OPEN(unit=pregen_xyz_unit(ibox),file=pregen_xyz_filenames(ibox),STATUS='OLD',IOSTAT=ierr)
+                                IF(ierr /= 0) THEN
+                                        err_msg = ''
+                                        err_msg(1) = 'Error while opening pregenerated xyz file ' // &
+                                                TRIM(pregen_xyz_filenames(ibox)) // &
+                                                ' given as entry  ' // TRIM(Int_To_String(xyz_pos)) // ' on line number ' // &
+                                                TRIM(Int_To_String(line_nbr)) // ' of the input file'
+                                        err_msg(2) = 'Verify that xyz file ' // TRIM(pregen_xyz_filenames(ibox)) // 'exists'
+                                        CALL clean_abort(err_msg,'Get_Pregen_Info')
+                                END IF
+!                                IF (has_H) THEN
+                                pregen_H_filenames(ibox) = line_array(H_pos)
+                                OPEN(unit=pregen_H_unit(ibox),file=pregen_H_filenames(ibox),STATUS='OLD',IOSTAT=ierr)
+                                IF(ierr /= 0) THEN
+                                        err_msg = ''
+                                        err_msg(1) = 'Error while opening pregenerated H file ' // &
+                                                TRIM(pregen_H_filenames(ibox)) // &
+                                                ' given as entry  ' // TRIM(Int_To_String(H_pos)) // ' on line number ' // &
+                                                TRIM(Int_To_String(line_nbr)) // ' of the input file'
+                                        err_msg(2) = 'Verify that H file ' // TRIM(pregen_H_filenames(ibox)) // 'exists'
+                                        CALL clean_abort(err_msg,'Get_Pregen_Info')
+                                END IF
+                                WRITE(logunit,*) 'Reading pregenerated trajectory for box ', ibox, &
+                                        ' from xyz file ', TRIM(pregen_xyz_filenames(ibox)), &
+                                        ' and H file ', TRIM(pregen_H_filenames(ibox))
+!                                ELSE
+!                                        WRITE(logunit,*) 'Reading pregenerated trajectory for box ', ibox, &
+!                                                ' from xyz file ', TRIM(pregen_xyz_filenames(ibox))
+!                                END IF
+
+                        END DO
+                        WRITE(logunit,'(A80)') '********************************************************************************'
+                        RETURN
+                ELSE IF(line_string(1:3) == 'END' .or. line_nbr > 10000 ) THEN
+                        err_msg = ''
+                        err_msg(1) = 'Section # Pregen_Info is missing from the input file and is required'
+                        CALL clean_abort(err_msg,'Get_Pregen_Info')
+                END IF
+        END DO
+END SUBROUTINE Get_Pregen_Info
 
 
 !******************************************************************************
@@ -5579,7 +5818,7 @@ SUBROUTINE Get_Seed_Info
            iseed3 = String_To_Int(line_array(2))
 
         END IF
-        WRITE(logunit,'(A,X,I12,X,I12)') 'The starting seeds are:', iseed1, iseed3
+        WRITE(logunit,'(A,X,I19,X,I19)') 'The starting seeds are:', iseed1, iseed3
 
         EXIT
 
@@ -5683,7 +5922,7 @@ SUBROUTINE Get_Simulation_Length_Info
                  CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
               END IF
 
-              WRITE(logunit,'(A,T50,I8,X,A)') 'Thermodynamic quantities will be computed every', &
+              WRITE(logunit,'(A,T50,I19,X,A)') 'Thermodynamic quantities will be computed every', &
                  nthermo_freq, sim_length_units
 
            ELSE IF (line_array(1) == 'coord_freq' .OR. line_array(1) == 'Coord_Freq') THEN
@@ -5708,7 +5947,7 @@ SUBROUTINE Get_Simulation_Length_Info
                  CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
               END IF
 
-              WRITE(logunit,'(A,T50,I8,X,A)') 'Coordinates will be written to file every', ncoord_freq, sim_length_units
+              WRITE(logunit,'(A,T50,I19,X,A)') 'Coordinates will be written to file every', ncoord_freq, sim_length_units
 
               ALLOCATE(movie_header_file(nbr_boxes))
               ALLOCATE(movie_xyz_file(nbr_boxes))
@@ -5748,7 +5987,7 @@ SUBROUTINE Get_Simulation_Length_Info
                  CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
               END IF
 
-              WRITE(logunit,'(A,T50,I8,X,A)') 'Coordinates will be written to file every', ncoord_freq, sim_length_units
+              WRITE(logunit,'(A,T50,I19,X,A)') 'Coordinates will be written to file every', ncoord_freq, sim_length_units
 
               ALLOCATE(movie_header_file(nbr_boxes))
               movie_custom_file =  TRIM(run_name) // '.crd'
@@ -5768,13 +6007,13 @@ SUBROUTINE Get_Simulation_Length_Info
 
               l_run = .TRUE.
               n_mcsteps = String_To_Int(line_array(2))
-              WRITE(logunit,'(A,T48,I10,X,A)' ) 'The simulation will be run for ', n_mcsteps, sim_length_units
+              WRITE(logunit,'(A,T48,I19,X,A)' ) 'The simulation will be run for ', n_mcsteps, sim_length_units
 
            ELSE IF (line_array(1) == 'nequilsteps' .OR. line_array(1) == 'NequilSteps') THEN
 
               ! # of equilibrium steps will be used only for the fragment generation
               n_equilsteps = String_To_Int(line_array(2))
-              WRITE(logunit, '(A,I10)') 'Number of equilibrium steps', n_equilsteps
+              WRITE(logunit, '(A,I19)') 'Number of equilibrium steps', n_equilsteps
 
            ELSE IF (line_array(1) == 'steps_per_sweep' .OR. line_array(1) == 'Steps_Per_Sweep') THEN
 
@@ -5807,7 +6046,7 @@ SUBROUTINE Get_Simulation_Length_Info
 
               echeck = .TRUE.
               echeck_freq = String_To_Int(line_array(2))
-              WRITE(logunit,'(A,I10,X,A)') 'The energy will be recomputed from scratch every ', echeck_freq, sim_length_units
+              WRITE(logunit,'(A,I19,X,A)') 'The energy will be recomputed from scratch every ', echeck_freq, sim_length_units
 
            ELSE
 
@@ -5860,14 +6099,14 @@ SUBROUTINE Get_Simulation_Length_Info
         CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
      END IF
 
-     WRITE(logunit,'(A,T50,I8,X,A)') 'Block averages will be written every', block_avg_freq, sim_length_units
+     WRITE(logunit,'(A,T50,I19,X,A)') 'Block averages will be written every', block_avg_freq, sim_length_units
      data_points_per_block = REAL(block_avg_freq / nthermo_freq,DP)
   ELSE
-     WRITE(logunit,'(A,T50,I8,X,A)') 'Instantaneous values will be written every', nthermo_freq, sim_length_units
+     WRITE(logunit,'(A,T50,I19,X,A)') 'Instantaneous values will be written every', nthermo_freq, sim_length_units
   END IF
 
   IF (sim_length_units == 'Sweeps') THEN
-     WRITE(logunit,'(A,T50,I8,A)' ) 'A sweep is defined as ', steps_per_sweep, ' steps'
+     WRITE(logunit,'(A,T50,I19,A)' ) 'A sweep is defined as ', steps_per_sweep, ' steps'
      n_mcsteps = n_mcsteps * steps_per_sweep
      nthermo_freq = nthermo_freq * steps_per_sweep
      ncoord_freq = ncoord_freq * steps_per_sweep
@@ -6028,6 +6267,8 @@ USE Global_Variables, ONLY: cpcollect
   line_nbr = 0
   nbr_prop_files = 0
 
+  need_energy = .FALSE.
+
   DO
      line_nbr = line_nbr + 1
      CALL Read_String(inputunit,line_string,ierr)
@@ -6101,48 +6342,63 @@ USE Global_Variables, ONLY: cpcollect
               ELSE IF (line_array(1) == 'energy_total' .OR. line_array(1) == 'Energy_Total') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Total'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'energy_inter') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Inter'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'energy_intra' .OR. line_array(1) == 'Energy_Intra') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Intra'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'energy_bond') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Bond'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'energy_angle') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Angle'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'energy_dihedral') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Dihedral'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'energy_improper') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Improper'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'energy_intravdw') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_IntraVDW'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'energy_intraq') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_IntraQ'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'energy_intervdw') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_InterVDW'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'energy_interq') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_InterQ'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'energy_lrc') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_LRC'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'energy_recip') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Recip'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'energy_self') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Energy_Self'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'enthalpy' .OR. line_array(1) == 'Enthalpy') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Enthalpy'
+                 need_energy = .TRUE.
               ELSE IF (line_array(1) == 'pressure' .OR. line_array(1) == 'Pressure') THEN
                  nbr_properties = nbr_properties + 1
                  prop_output(nbr_properties,nbr_prop_files(this_box),this_box) = 'Pressure'

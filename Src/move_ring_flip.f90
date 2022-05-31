@@ -267,7 +267,7 @@ SUBROUTINE Flip_Move
   END IF
 
   IF (verbose_log) THEN
-    WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,F9.3)') &
+    WRITE(logunit,'(X,I19,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,F9.3)') &
           i_mcstep, 'ring_flip', lm, is, ibox, accept, ln_pacc
   END IF
 

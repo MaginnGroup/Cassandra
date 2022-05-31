@@ -132,6 +132,10 @@ OBJS =  main.o \
   widom_subdriver.o \
   widom_insert.o \
   write_widom_properties.o \
+  load_next_frame.o \
+  pregen_control.o \
+  pregen_driver.o \
+  sector_routines.o \
 
 
 ####################################################################

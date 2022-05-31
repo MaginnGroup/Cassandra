@@ -51,6 +51,7 @@ MODULE Global_Variables
 
 USE ISO_FORTRAN_ENV
 USE Type_Definitions
+!$ USE OMP_LIB
 
   SAVE
 
@@ -82,6 +83,7 @@ USE Type_Definitions
   INTEGER, PARAMETER :: sim_gemc_npt = 7
   INTEGER, PARAMETER :: sim_gemc_ig = 8
   INTEGER, PARAMETER :: sim_mcf = 9
+  INTEGER, PARAMETER :: sim_pregen = 10
   LOGICAL :: timed_run, openmp_flag, en_flag, verbose_log, input_is_logfile
   CHARACTER(10) :: sim_length_units
   INTEGER (KIND=INT64):: steps_per_sweep
@@ -490,7 +492,7 @@ USE Type_Definitions
   ! Initial, current and final number of steps
   INTEGER (KIND=INT64) :: i_mcstep, initial_mcstep, n_mcsteps, n_equilsteps, iblock
   ! Information on the output of data
-  INTEGER :: nthermo_freq, ncoord_freq, block_avg_freq, nbr_blocks
+  INTEGER (KIND=INT64) :: nthermo_freq, ncoord_freq, block_avg_freq, nbr_blocks
   REAL(DP) :: data_points_per_block
   INTEGER :: int_coord_style ! 1 = xyz, 2 = custom
   INTEGER,DIMENSION(:),ALLOCATABLE :: nbr_prop_files
@@ -558,7 +560,7 @@ USE Type_Definitions
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   LOGICAL :: echeck
-  INTEGER :: echeck_freq
+  INTEGER (KIND=INT64):: echeck_freq
 
 !!!!! Pair energy arrays. These arrays hold interaction energies between pairs of molecules !!!!!
 
@@ -588,9 +590,52 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   !!!!!!!!!
   !Widom insertions
   !!!!!!!!!
-  LOGICAL :: widom_flag
+  LOGICAL :: widom_flag, widom_active
   INTEGER, DIMENSION(:), ALLOCATABLE :: tp_correction
+  INTEGER :: widom_locate, widom_species
+  INTEGER (KIND=INT64), DIMENSION(:,:), ALLOCATABLE :: overlap_counter
+
+  ! Pregenerated trajectory
+  !LOGICAL :: has_H ! Does the simulation use H file(s)?
+  LOGICAL :: need_energy
+
+  !!!! Sectors
+  ! sector_atoms is indexed by (atom index within sector, sector index)
+  INTEGER, DIMENSION(:,:,:), ALLOCATABLE, TARGET :: sector_atoms
+  ! sector_index_map is indexed by (x index, y index, z index, box index) to get sector index
+  INTEGER, DIMENSION(:,:,:,:), ALLOCATABLE :: sector_index_map
+  ! sector_n_atoms is indexed by (sector index) to get number of atoms in a sector
+  INTEGER, DIMENSION(:), ALLOCATABLE :: sector_n_atoms
+  ! sector_has_atoms is indexed by (x index, y index, z index, box index)
+  LOGICAL, DIMENSION(:,:,:,:), ALLOCATABLE :: sector_has_atoms
+
+  LOGICAL :: l_sectors
+  ! sectorbound, length_cells, & cell_length_inv are indexed by (box dimension, box index)
+  INTEGER, DIMENSION(:,:), ALLOCATABLE :: sectorbound
+  INTEGER, DIMENSION(:,:), ALLOCATABLE :: length_cells
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: cell_length_inv, cell_length
+
+  INTEGER, DIMENSION(3) :: sectormaxbound
+
+  INTEGER :: n_occ_sectors
   
+  TYPE(Molecule_Class), TARGET :: widom_molecule
+  TYPE(Atom_Class), ALLOCATABLE, DIMENSION(:), TARGET :: widom_atoms
+  !$OMP THREADPRIVATE(widom_molecule, widom_atoms, cbmc_flag)
+
+
+
+  ! n_widom_subgroups is indexed by (species,box)
+  INTEGER, DIMENSION(:,:), ALLOCATABLE :: n_widom_subgroups
+
+
+
+
+!widom_timing  INTEGER(KIND=INT64) :: n_clo, n_not_clo, n_nrg_overlap
+!widom_timing  REAL(DP) :: cell_list_time, normal_overlap_time, non_overlap_time, nrg_overlap_time
+!widom_timing  !$OMP THREADPRIVATE(n_clo, n_not_clo, n_nrg_overlap)
+!widom_timing  !$OMP THREADPRIVATE(cell_list_time, normal_overlap_time, non_overlap_time, nrg_overlap_time)
+
 
 
 END MODULE Global_Variables

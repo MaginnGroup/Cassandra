@@ -110,7 +110,7 @@ SUBROUTINE Atom_Displacement
   ! If there are no molecules then return
   IF (nmols_tot == 0) THEN
      IF (verbose_log) THEN
-       WRITE(logunit,'(X,I9,X,A10,X,5X,X,3X,X,I3,X,L8,X,9X,X,A9)') &
+       WRITE(logunit,'(X,I19,X,A10,X,5X,X,3X,X,I3,X,L8,X,9X,X,A9)') &
              i_mcstep, 'atom_disp' , ibox, accept, 'no mols'
      END IF
      RETURN
@@ -200,7 +200,7 @@ SUBROUTINE Atom_Displacement
   IF (theta_bound) THEN
      CALL Revert_Old_Cartesian_Coordinates(lm,is)
      IF (verbose_log) THEN
-       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,A)') &
+       WRITE(logunit,'(X,I19,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,A)') &
              i_mcstep, 'atom_disp' , lm, is, ibox, accept, 'theta_bound'
      END IF
      RETURN
@@ -222,7 +222,7 @@ SUBROUTINE Atom_Displacement
   IF (overlap) THEN
      CALL Revert_Old_Cartesian_Coordinates(lm,is)
      IF (verbose_log) THEN
-       WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,A9)') &
+       WRITE(logunit,'(X,I19,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,A9)') &
              i_mcstep, 'atom_disp' , lm, is, ibox, accept, 'overlap'
      END IF
      RETURN
@@ -299,7 +299,7 @@ SUBROUTINE Atom_Displacement
   END IF
 
   IF (verbose_log) THEN
-    WRITE(logunit,'(X,I9,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,F9.3)') &
+    WRITE(logunit,'(X,I19,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,F9.3)') &
           i_mcstep, 'atom_disp' , lm, is, ibox, accept, ln_pacc
   END IF
 

@@ -1,0 +1,24 @@
+This directory contains the files necessary to run a short Widom insertion simulation 
+in Cassandra using a trajectory generated in LAMMPS.  The simulation computes the 
+shifted chemical potential of R-32 (difluoromethane) in pure BMIM-PF6 (an ionic liquid).
+The Widom insertions performed in each trajectory frame are split into five subgroups.
+The cell list-based overlap detection is enabled to accelerate the simulation.
+The bash script convert_trajectory.sh shows how to use the python script 
+lammpstrjconvert.py to convert the included LAMMPS trajectory (bmim-pf6.lammpstrj) to 
+bmim-pf6.H and bmim-pf6.xyz, which are the trajectory files read by Cassandra.
+
+BMIM-PF6 is parameterized with the GAFF, while the parameters for R-32 
+come from the following publication:
+
+      Gabriele Raabe.
+      Molecular Dynamics Studies on Liquid-Phase Dynamics and Structures of Four 
+      Different Fluoropropenes and Their Binary Mixtures with R-32 and CO2.
+      J. Phys. Chem. B, 118, 240-254 (2014). 
+      DOI: 10.1021/jp409408k
+
+The parameters for GAFF can be found in the following publication:
+
+      Wang, J., Wolf, R.M., Caldwell, J.W., Kollman, P.A. and Case, D.A. (2004),
+      Development and testing of a general amber force field.
+      J. Comput. Chem., 25: 1157-1174.
+      https://doi.org/10.1002/jcc.20035

@@ -204,6 +204,8 @@ PROGRAM Main
      CALL Fragment_Control
   ELSE IF (int_sim_type == sim_mcf) THEN
      CALL MCF_Control
+  ELSE IF (int_sim_type == sim_pregen) THEN
+     CALL Pregen_Control
   ELSE
      err_msg = ""
      err_msg(1) = 'Sim_Type unknown'
@@ -212,7 +214,7 @@ PROGRAM Main
   ENDIF
 
   ! Determine if it is equilibration or production or test
-  CALL Get_Run_Type
+  IF (int_sim_type .NE. sim_pregen) CALL Get_Run_Type
 
 
   ! initialize counters
@@ -227,7 +229,9 @@ PROGRAM Main
   atom_list(:,:,:)%exist = .FALSE.
   molecule_list(:,:)%frac = 0.0_DP
 
+  !$OMP PARALLEL
   cbmc_flag = .FALSE.
+  !$OMP END PARALLEL
 
   WRITE(*,*) 'Begin Cassandra simulation'
   WRITE(*,*)
@@ -242,7 +246,11 @@ PROGRAM Main
   WRITE(logunit,'(A80)') '********************************************************************************'
 
   DO ibox = 1, nbr_boxes
-    IF (start_type(ibox) == 'make_config') THEN
+  IF (start_type(ibox) == 'none') THEN
+            WRITE(logunit,'(A)') 'No initial configuration needed'
+            IF (int_vdw_sum_style(ibox) == vdw_cut_tail) CALL Compute_Beads(ibox)
+            EXIT
+    ELSEIF (start_type(ibox) == 'make_config') THEN
        ! Insert molecules using CBMC
        CALL Make_Config(ibox)
        initial_mcstep = 0
@@ -415,7 +423,7 @@ PROGRAM Main
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Run simulation'
   WRITE(logunit,'(A80)') '********************************************************************************'
-  WRITE(logunit,'(X,A9,X,A10,X,A5,X,A3,X,A3,X,A8,X,A9)') 'Step', 'Move', 'Mol', 'Spc', 'Box', 'Success', 'MaxWidth'
+  WRITE(logunit,'(X,A19,X,A10,X,A5,X,A3,X,A3,X,A8,X,A9)') 'Step', 'Move', 'Mol', 'Spc', 'Box', 'Success', 'MaxWidth'
 
   IF (int_sim_type == sim_nvt .OR. int_sim_type == sim_nvt_min) THEN
 
@@ -443,6 +451,8 @@ PROGRAM Main
 
      CALL Ring_Fragment_Driver
 
+  ELSE IF (int_sim_type == sim_pregen) THEN
+     CALL Pregen_Driver
   END IF
   WRITE(logunit,'(A80)') '********************************************************************************'
 
@@ -483,6 +493,8 @@ PROGRAM Main
             TRIM(Int_To_String(is)),'in box',TRIM(Int_To_String(ibox)),'is', &
             -kboltz*temperature(ibox)*atomic_to_kJmol*DLOG(species_list(is)%widom_sum(ibox) / ntrials(is,ibox)%widom), &
             'kJ/mol'
+          WRITE(logunit,'(8X,A)') TRIM(Int_To_String(overlap_counter(is,ibox))) // ' Widom insertions with overlap out of ' &
+            // TRIM(Int_To_String(ntrials(is,ibox)%widom))
           !WRITE(logunit,'(A,I2,A,I2,A,F24.12)') &
           !  'Ideal Chemical potential for species',is,'in box',i, 'is', &
           !  chpotid(is,i) / ntrials(is,i)%cpcalc

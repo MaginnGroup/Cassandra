@@ -39,6 +39,8 @@ SUBROUTINE Widom_Subdriver
   !*****************************************************************************
 
   USE Global_Variables
+  USE Sector_Routines
+  !$ USE OMP_LIB
 
   !*****************************************************************************
   ! Declare and Initialize Variables
@@ -49,7 +51,13 @@ SUBROUTINE Widom_Subdriver
 
   ! Local declarations
   INTEGER :: is, ibox
-  REAL(DP) :: widom_sum, widom_avg
+!widom_timing  INTEGER(KIND=INT64) :: num_cell_list_overlap, num_not_cell_list_overlap, num_nrg_overlap
+  REAL(DP) :: widom_sum, widom_avg!widom_timing, setup_time_s, setup_time_e, setup_time
+!widom_timing  REAL(DP) :: r_cell_list_time, r_normal_overlap_time, r_non_overlap_time, r_nrg_overlap_time
+  LOGICAL :: need_init, omp_flag
+  need_init = l_sectors
+  omp_flag = .FALSE.
+  !$ omp_flag = .TRUE.
   ! Loop over all species
   DO is = 1, nspecies
         ! Loop over all boxes
@@ -59,10 +67,54 @@ SUBROUTINE Widom_Subdriver
                 ! move on to next box if the step number isn't divisible by the widom_interval for this species.
                 ! these are separate IF statements because we don't want to divide by zero
                 IF (MOD(i_mcstep,species_list(is)%widom_interval(ibox)) .NE. 0) CYCLE
+                IF (need_init) THEN
+!widom_timing                        IF (.NOT. omp_flag) CALL cpu_time(setup_time_s)
+!widom_timing                        !$ setup_time_s = omp_get_wtime()
+                        CALL Sector_Setup
+!widom_timing                        IF (.NOT. omp_flag) CALL cpu_time(setup_time_e)
+!widom_timing                        !$ setup_time_e = omp_get_wtime()
+!widom_timing                        setup_time = setup_time_e - setup_time_s
+!widom_timing                        WRITE(*,*) setup_time
+                        need_init = .FALSE.
+                END IF
+!widom_timing                !$OMP PARALLEL
+!widom_timing                n_clo = 0_INT64
+!widom_timing                n_not_clo = 0_INT64
+!widom_timing                n_nrg_overlap = 0_INT64
+!widom_timing                cell_list_time = 0.0_DP
+!widom_timing                normal_overlap_time = 0.0_DP
+!widom_timing                non_overlap_time = 0.0_DP
+!widom_timing                nrg_overlap_time = 0.0_DP
+!widom_timing                !$OMP END PARALLEL
                 CALL Widom_Insert(is,ibox,widom_sum)
                 species_list(is)%widom_sum(ibox) = species_list(is)%widom_sum(ibox) + widom_sum
                 widom_avg = widom_sum / species_list(is)%insertions_in_step(ibox)
                 CALL Write_Widom_Properties(is,ibox,widom_avg)
+!widom_timing                num_cell_list_overlap = 0_INT64
+!widom_timing                num_not_cell_list_overlap = 0_INT64
+!widom_timing                num_nrg_overlap = 0_INT64
+!widom_timing                r_cell_list_time = 0.0_DP
+!widom_timing                r_normal_overlap_time = 0.0_DP
+!widom_timing                r_non_overlap_time = 0.0_DP
+!widom_timing                r_nrg_overlap_time = 0.0_DP
+!widom_timing                !$OMP PARALLEL DEFAULT(SHARED) REDUCTION(+:num_cell_list_overlap,num_not_cell_list_overlap) &
+!widom_timing                !$OMP REDUCTION(+: r_cell_list_time, r_normal_overlap_time, r_non_overlap_time) &
+!widom_timing                !$OMP REDUCTION(+: num_nrg_overlap, r_nrg_overlap_time)
+!widom_timing                num_cell_list_overlap = n_clo
+!widom_timing                num_not_cell_list_overlap = n_not_clo
+!widom_timing                num_nrg_overlap = n_nrg_overlap
+!widom_timing                r_cell_list_time = cell_list_time
+!widom_timing                r_normal_overlap_time = normal_overlap_time
+!widom_timing                r_non_overlap_time = non_overlap_time
+!widom_timing                r_nrg_overlap_time = nrg_overlap_time
+!widom_timing                !$OMP END PARALLEL
+!widom_timing                WRITE(*,*) num_cell_list_overlap
+!widom_timing                WRITE(*,*) num_not_cell_list_overlap
+!widom_timing                WRITE(*,*) num_nrg_overlap
+!widom_timing                WRITE(*,*) r_cell_list_time
+!widom_timing                WRITE(*,*) r_normal_overlap_time
+!widom_timing                WRITE(*,*) r_nrg_overlap_time
+!widom_timing                WRITE(*,*) r_non_overlap_time
         END DO
   END DO
 END SUBROUTINE Widom_Subdriver

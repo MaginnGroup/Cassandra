@@ -1,0 +1,357 @@
+********************************************************************************
+                ______                                __                        
+               / ____/___ _______________ _____  ____/ /________ _              
+              / /   / __ `/ ___/ ___/ __ `/ __ \/ __  / ___/ __ `/              
+             / /___/ /_/ (__  |__  ) /_/ / / / / /_/ / /  / /_/ /               
+             \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                
+                                                                                
+********************************************************************************
+**********************************Log File**************************************
+********************************************************************************
+
+For any published work that uses Cassandra, cite the following reference:
+    Shah JK, Marin‐Rimoldi E, Mullen RG, Keene BP, Khan S,
+    Paluch AS, Rai N, Romanielo LL, Rosch TW, Yoo B, Maginn EJ.
+    Cassandra: An open source Monte Carlo package for molecular simulation.
+    Journal of Computational Chemistry. 2017, 38, 1727–1739.
+    http://dx.doi.org/10.1002/jcc.24807
+
+Run info
+********************************************************************************
+version: Cassandra Version 1.2.5
+inputfile: dee_widom.inp
+name of run: dee_widom.out
+date (mm/dd/yyyy): 04/22/2022
+time: 12:12:20
+machine: Hyron
+********************************************************************************
+
+Verbose log
+********************************************************************************
+Normal output to logfile
+********************************************************************************
+
+Simulation type
+********************************************************************************
+pregen              
+********************************************************************************
+
+Copy input file
+********************************************************************************
+                                                                                
+# Run_Name                                                                      
+dee_widom.out                                                                   
+                                                                                
+# Sim_Type                                                                      
+pregen                                                                          
+                                                                                
+# Nbr_Species                                                                   
+1                                                                               
+                                                                                
+# VDW_Style                                                                     
+lj cut_tail 7.0                                                                 
+                                                                                
+# Charge_Style                                                                  
+coul ewald 7.0 0.000001                                                         
+                                                                                
+# Mixing_Rule                                                                   
+LB                                                                              
+                                                                                
+# Seed_Info                                                                     
+82638601 249702601                                                              
+                                                                                
+# Rcutoff_Low                                                                   
+2.0                                                                             
+                                                                                
+# Molecule_Files                                                                
+dee.mcf 30                                                                      
+                                                                                
+# Box_Info                                                                      
+1                                                                               
+cubic                                                                           
+17.5                                                                            
+                                                                                
+# Temperature_Info                                                              
+343.0                                                                           
+                                                                                
+# Pregen_Info                                                                   
+dee_traj.H dee_traj.xyz                                                         
+                                                                                
+# Widom_Insertion                                                               
+true                                                                            
+cbmc 10000 1 4                                                                  
+                                                                                
+# Cell_List_Overlap                                                             
+true                                                                            
+                                                                                
+# Simulation_Length_Info                                                        
+units        steps                                                              
+prop_freq    1                                                                  
+coord_freq   1                                                                  
+run          11                                                                 
+                                                                                
+# Property_Info 1                                                               
+energy_total                                                                    
+pressure                                                                        
+volume                                                                          
+density                                                                         
+                                                                                
+# Fragment_Files                                                                
+species1/frag1/frag1.dat  1                                                     
+species1/frag2/frag2.dat  2                                                     
+species1/frag3/frag3.dat  3                                                     
+                                                                                
+# CBMC_Info                                                                     
+kappa_ins 12                                                                    
+kappa_dih 10                                                                    
+rcut_cbmc 6.5                                                                   
+                                                                                
+END                                                                             
+********************************************************************************
+
+Number of species
+********************************************************************************
+1
+********************************************************************************
+
+Box info
+********************************************************************************
+Number of simulation boxes     1
+Box 1 is CUBIC               
+ Each Side Of :       17.5000     Angstrom
+ Cell basis vector lengths in A,     17.5000      17.5000      17.5000
+ Cosine of angles alpha, beta, gamma     0.0000       0.0000       0.0000
+ Distance between box faces    17.5000      17.5000      17.5000
+ Box volume, A^3          5359.3750
+********************************************************************************
+
+Pair style
+********************************************************************************
+VDW style used is:   LJ             in box:  1
+ VDW sum style is:   cut_tail       in box:  1
+ rcut =     7.000 Angstrom
+Charge style in box 1 is coul
+ Charge sum style is   ewald          in box:  1
+ Ewald real space cutoff is   7.000 Angstroms.
+ Ewald real space parameter is   0.531 inverse Angstroms
+ Ewald reciprocal cutoff is  3.9473 inverse Angstroms
+Section "# Pair_Energy" is missing from the input file
+ By default, pair interaction energy arrays will not be stored
+Lorentz-Berthelot mixing rule specified
+********************************************************************************
+
+Molecule info
+********************************************************************************
+ Reading molecular connectivity information
+ Species:            1
+ Molecular connectivity file: dee.mcf                                                                                                                 
+   5 atom(s) specified.
+   4 bond(s) specified.
+   3 angle(s) specified.
+   2 dihedral(s) specified.
+   0 improper(s) specified.
+   3 fragment(s) specified.
+   2 fragment bond(s) specified.
+
+ Species  Max molecules
+ -------  -------------
+      1             30
+
+ Species     1
+ -------------------------------------------------------------------------------
+ Atom parameters read
+ Bond parameters read
+ Angle parameters read
+ Dihedral parameters read
+ Improper parameters read
+ Intra molecule scaling factors for species            1
+  VDW 1-2 scaling factor       0.000
+  VDW 1-3 scaling factor       0.000
+  VDW 1-4 scaling factor       0.000
+  VDW 1-N scaling factor       1.000
+  Coulomb 1-2 scaling factor   0.000
+  Coulomb 1-3 scaling factor   0.000
+  Coulomb 1-4 scaling factor   0.000
+  Coulomb 1-N scaling factor   1.000
+ Total number of atoms in fragment     1  is   3
+ Total number of atoms in fragment     2  is   3
+ Total number of atoms in fragment     3  is   3
+ Fragment info read
+ Fragment file for fragment 1 is species1/frag1/frag1.dat
+ Fragment file for fragment 2 is species1/frag2/frag2.dat
+ Fragment file for fragment 3 is species1/frag3/frag3.dat
+ -------------------------------------------------------------------------------
+
+ Fragment coord info
+ -------------------------------------------------------------------------------
+ library_coords array successfully allocated
+ Finished loading fragment coordinates from
+ species1/frag1/frag1.dat
+ species1/frag2/frag2.dat
+ species1/frag3/frag3.dat
+ -------------------------------------------------------------------------------
+********************************************************************************
+
+Seed info
+********************************************************************************
+The starting seeds are:            82638601           249702601
+********************************************************************************
+
+Temperature
+********************************************************************************
+Temperature of box 1 is 343.000 K
+********************************************************************************
+
+CBMC info
+********************************************************************************
+Kappa for first fragment insertion          12
+Kappa for dihedral selection                10
+ Cutoff for CBMC for box 1 is         6.50
+********************************************************************************
+
+Simulation length info
+********************************************************************************
+Thermodynamic quantities will be computed every                    1 Steps     
+Coordinates will be written to file every                          1 Steps     
+ movie header file is                  dee_widom.out.H
+ movie_XYZ file is                     dee_widom.out.xyz
+The simulation will be run for                                  11 Steps     
+Instantaneous values will be written every                         1 Steps     
+********************************************************************************
+
+Widom insertion info
+********************************************************************************
+ Species 1 will have 10000 Widom insertions every 1 MC steps
+          with de Broglie wavelength (Angstroms):        0.109491892
+********************************************************************************
+
+Property info
+********************************************************************************
+Total number of property files to be written is     1   for box 1
+ Maximum number of properties per file is    4
+ Writing the name of the property files and the corresponding property output
+ Property file    1   is  dee_widom.out.prp
+ Properties output in these files are
+ Energy_Total
+ Pressure
+ Volume
+ Density
+********************************************************************************
+
+Minimum distance cutoff
+********************************************************************************
+MC low cutoff distance is   2.000    Angstrom
+********************************************************************************
+
+Pregenerated trajectory info
+********************************************************************************
+ Box size will be replaced by those read from the pregenerated H file
+ Reading pregenerated trajectory for box            1  from xyz file dee_traj.xyz and H file dee_traj.H
+********************************************************************************
+
+********************************************************************************
+************************ Begin Cassandra simulation ****************************
+********************************************************************************
+
+Initial configuration
+********************************************************************************
+No initial configuration needed
+********************************************************************************
+
+Charge neutrality check
+********************************************************************************
+ Species 1 has charge:                  0.00000000
+
+ Box     1 has charge:                  0.00000000
+********************************************************************************
+
+Compute total energy
+********************************************************************************
+
+ Energy components for box 1     kJ/mol-Extensive
+ ---------------------------------------------------------------------
+ Total system energy                        0.000
+ Intra molecular energy                     0.000
+   Bond energy                              0.000
+   Bond angle energy                        0.000
+   Dihedral angle energy                    0.000
+   Improper angle energy                    0.000
+   Intra molecule vdw                       0.000
+   Intra molecule q                         0.000
+ Inter molecular energy                     0.000
+   Inter molecule vdw                       0.000
+   Long range correction                    0.000
+   Inter molecule q                         0.000
+   Reciprocal ewald                         0.000
+   Self ewald                              -0.000
+ ---------------------------------------------------------------------
+   Number of reciprocal vectors              2934
+
+********************************************************************************
+
+Run simulation
+********************************************************************************
+                Step       Move   Mol Spc Box  Success  MaxWidth
+********************************************************************************
+
+Energy of final configuration
+********************************************************************************
+
+ Energy components for box 1     kJ/mol-Extensive       Relative_Error
+ ---------------------------------------------------------------------
+ Total system energy                     -301.346           -0.000E+00
+ Intra molecular energy                   289.391            0.000E+00
+   Bond energy                              0.000            0.000E+00
+   Bond angle energy                      133.442            0.000E+00
+   Dihedral angle energy                  175.070            0.000E+00
+   Improper angle energy                    0.000            0.000E+00
+   Intra molecule vdw                     -19.121           -0.000E+00
+   Intra molecule q                         0.000            0.000E+00
+ Inter molecular energy                  -590.738           -0.000E+00
+   Inter molecule vdw                    -403.119           -0.000E+00
+   Long range correction                 -129.129           -0.000E+00
+   Inter molecule q                      4221.137            0.000E+00
+   Reciprocal ewald                       402.855            0.000E+00
+   Self ewald                           -4682.482           -0.000E+00
+ ---------------------------------------------------------------------
+   Number of reciprocal vectors              3295
+
+********************************************************************************
+
+
+Writing information for box  1
+********************************************************************************
+
+   ---------------------------------------------------------
+   Writing information for species  1
+
+                Move      Trials     Success   % Success
+   ---------------------------------------------------------
+
+********************************************************************************
+
+Shifted chemical potentials from Widom insertions
+********************************************************************************
+Shifted chemical potential for species 1 in box 1 is        -39.995263911843 kJ/mol
+        14328 Widom insertions with overlap out of 110000
+********************************************************************************
+
+ Writing information about subroutine times
+********************************************************************************
+ Widom time =                  0.036771 hrs.
+********************************************************************************
+
+********************************************************************************
+************************ Cassandra simulation complete *************************
+********************************************************************************
+
+ Program execution time
+********************************************************************************
+         0      Years
+         0     Months
+         0       Days
+         0      Hours
+         2    Minutes
+        15    Seconds
+       593         ms
+********************************************************************************

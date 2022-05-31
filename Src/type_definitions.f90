@@ -118,7 +118,7 @@ MODULE Type_Definitions
 
      !!!Widom insertions
      LOGICAL, DIMENSION(:), ALLOCATABLE :: test_particle
-     INTEGER, DIMENSION(:), ALLOCATABLE :: insertions_in_step, widom_interval
+     INTEGER (KIND=INT64), DIMENSION(:), ALLOCATABLE :: insertions_in_step, widom_interval
      REAL(DP), DIMENSION(:), ALLOCATABLE :: widom_sum
 
   END TYPE Species_Class
@@ -156,7 +156,7 @@ MODULE Type_Definitions
      ! This variable records the maximum distance of any psuedo atom from its
      ! COM. This is used to speed up energy calculations.
 
-     REAL(DP) :: max_dcom, max_dcom_old
+     REAL(DP) :: max_dcom, max_dcom_old, min_dcom
 
 
 
@@ -206,6 +206,7 @@ MODULE Type_Definitions
      REAL(DP) :: rxp, ryp, rzp
      REAL(DP) :: rxp_nls, ryp_nls, rzp_nls  ! The starting positions for the neighbor list
      REAL(DP) :: rxp_old, ryp_old, rzp_old
+     INTEGER :: ci(3) ! the integer coordinates of the cell containing this atom
      LOGICAL :: exist
 
   END TYPE Atom_Class
@@ -514,11 +515,11 @@ MODULE Type_Definitions
     ! cpcalc : calculation of chemical potential
     ! cluster : move a cluster of molecules
 
-    INTEGER :: displacement, rotation, angle, bond, dihedral, insertion, deletion, switch, cluster
-    INTEGER :: disp_atom, cpcalc, displacement_e, rotation_e
+    INTEGER (KIND=INT64) :: displacement, rotation, angle, bond, dihedral, insertion, deletion, switch, cluster
+    INTEGER (KIND=INT64) :: disp_atom, cpcalc, displacement_e, rotation_e
 
     ! widom insertions technically aren't mc moves but it's convenient to count them in ntrials
-    INTEGER :: widom
+    INTEGER (KIND=INT64) :: widom
 
 
  END TYPE MC_Moves_Class

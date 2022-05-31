@@ -143,4 +143,6 @@ SUBROUTINE NVTMC_Control
   ! Dihedral moves
   CALL Get_Dihedral_Atoms_To_Place
 
+  CALL Get_Lookup_Info
+
 END SUBROUTINE NVTMC_Control

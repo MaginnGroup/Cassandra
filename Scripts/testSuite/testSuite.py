@@ -64,7 +64,7 @@ checkLastTest(1,TestOutput)
 tests=("Test1_LJ_StartEnergy.py", "Test2_Mie_StartEnergy.py", "Test3_Angle_StartEnergy.py", 
 	"Test4_Dihedral_StartEnergy.py", "Test5_ImproperEnergy.py","Test6_NIST_LennardJonesEnergy.py",
 	"Test7_Water.py","Test8_Coul_StartEnergy.py", "Test9_NPTExamples.py",
-	"Test10_NVTExamples.py", "Test11_GEMCExamples.py", "Test12_GCMCExamples.py")
+	"Test10_NVTExamples.py", "Test11_GEMCExamples.py", "Test12_GCMCExamples.py", "Test13_Widom.py")
 
 for i,j in enumerate(tests):
 	if i==len(tests)-1:
