@@ -1102,6 +1102,18 @@ rejected and re-attempted.
         <element> <x> <y> <z>
         ...
 
+.. note::
+    The input ``.xyz`` file must not contain molecules with broken bonds.
+    For instance, a valid ``.xyz`` file for a long linear hydrocarbon can contain
+    some of its atoms outside the box boundaries.
+
+    An invalid ``.xyz`` file would contain coordinates "wrapped" across box boundaries,
+    causing unphysically long bonds.
+
+    Cassandra checks that the bonds computed in the initial configuration match those
+    provided in the MCF. If an invalid ``.xyz`` is provided, long bonds would be measured
+    and Cassandra would throw an error at the beginning of the simulation.
+
 -  | ``add_to_config`` will read the coordinates from an .xyz file,
      but then insert additional molecules. After ``add_to_config`` specify
      the number of molecules of each species to be read, followed by the
