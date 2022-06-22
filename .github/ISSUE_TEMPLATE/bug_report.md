@@ -5,10 +5,10 @@ about: Create a report to help us improve Cassandra
 ---
 
 ## Expected behavior
-A clear and concise description of what the bug is.
+The behavior that would be expected.
 
 ## Current behavior
-A clear and concise description of what the bug is.
+The behavior that is observed.
 
 ## Steps to reproduce
 Steps to reproduce the behavior:

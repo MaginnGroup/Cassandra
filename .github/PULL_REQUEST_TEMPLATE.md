@@ -21,6 +21,8 @@ Please check the fields below as they are completed
 
 - [ ] Suitable new documentation files and/or updates to the existing docs are included.
 - [ ] One or more example input decks are included.
+- [ ] Suitable tests were added to the test suite
+- [ ] My name is in the contributor list at `/Documentation/source/reference/acknowledgements.rst`
 
 ## Further Information, Files, and Links
 Any additional information here, attach relevant text or image files and URLs to external sites, publications , etc.
