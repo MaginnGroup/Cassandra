@@ -340,7 +340,7 @@ SUBROUTINE Get_Sim_Type
            err_msg = ''
            err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
                         TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
-           err_msg(2) = 'Supported keywords are: nvt_mc, npt_mc, gemc, gemc_npt, gcmc,'
+           err_msg(2) = 'Supported keywords are: nvt_mc, npt_mc, gemc, gemc_npt, gcmc, pregen,'
            err_msg(3) = '                        nvt_mc_fragment, nvt_mc_ring_fragment, mcf_gen'
            CALL Clean_Abort(err_msg,'Get_Sim_Type')
         END IF
