@@ -237,6 +237,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "nmols",
+        type=int,
         nargs="+",
         help="List of integers containing"
         " the number of molecules of each species in the order in which the "
