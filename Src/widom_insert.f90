@@ -139,7 +139,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
 
   END IF
   
-  IF (int_charge_style(ibox) == charge_coul) THEN
+  IF (int_charge_style(ibox) == charge_coul .AND. has_charge(is)) THEN
           CALL Compute_Molecule_Self_Energy(widom_locate,is,ibox,E_self)
           E_recip_in = energy(ibox)%reciprocal
   END IF
