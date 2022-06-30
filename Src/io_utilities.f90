@@ -340,7 +340,7 @@ FUNCTION String_To_Double(string_in)
   CHARACTER(*) :: string_in
   CHARACTER(50) :: cff_bd, cff_ad, expv
   INTEGER :: nchars, strln, exp_start,dec_start
-  INTEGER :: ii, cnt, icff_bd, iexpv
+  INTEGER :: ii, cnt, icff_bd, iexpv, digit
   REAL(DP) :: string_to_double, div, add_num
 !****************************************************************************
   !Initialize some things
@@ -413,7 +413,13 @@ FUNCTION String_To_Double(string_in)
   string_to_double = REAL(icff_bd,DP)
   div = 10.0_DP
   DO ii = 1, LEN_TRIM(cff_ad)
-     add_num = (IACHAR(cff_ad(ii:ii)) - 48) / div
+     digit = IACHAR(cff_ad(ii:ii)) - 48
+     IF (digit < 0 .OR. digit > 9) THEN
+             err_msg = ''
+             err_msg(1) = "String " // string_in // " is not a number"
+             CALL Clean_Abort(err_msg, 'String_To_Double')
+     END IF
+     add_num = digit / div
      IF (is_negative) add_num = -add_num
      string_to_double = string_to_double + add_num
      div = div*10.0_DP
@@ -458,6 +464,11 @@ FUNCTION String_To_Int(string_in)
   DO ii = 1, ndigits
      pos = strln - ii + 1
      digit = IACHAR(string_in(pos:pos)) - 48
+     IF (digit < 0 .OR. digit > 9) THEN
+             err_msg = ''
+             err_msg(1) = "String " // string_in // " is not a number"
+             CALL Clean_Abort(err_msg, 'String_To_Int')
+     END IF
      string_to_int = string_to_int + mult*digit
      mult = mult*10
   END DO
