@@ -195,6 +195,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   overlap_trial(:) = .FALSE.
   need_max_dcom = .FALSE.
 
+  weight(:) = 0.0_DP
 
   !*****************************************************************************
   ! Step 1) Select which fragment will be inserted first
@@ -1530,6 +1531,7 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
   config_list(:)%rzp = 0.0_DP
   dumcount = 0
   e_prev = e_total
+  weight(:) = 0.0_DP
 
   DO i = frag_start, frag_total
 
@@ -2012,7 +2014,6 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
            END IF
            
            nrg_kBT = beta(this_box) * nrg(ii)
-           weight(ii) = DEXP(-nrg_kBT)
            
            IF ( nrg_kBT >= max_kBT) THEN
               ! the energy is too high, set the weight to zero
