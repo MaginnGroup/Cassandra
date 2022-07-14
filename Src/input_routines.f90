@@ -1406,6 +1406,8 @@ SUBROUTINE Get_Atom_Info(is)
   ring_atom_ids(:,is) = 0
   exo_atom_ids(:,is) = 0
 
+  species_list(is)%total_charge = 0.0_DP
+
   IF (.NOT. ALLOCATED (has_charge)) THEN
      ALLOCATE(has_charge(nspecies))
      has_charge(:) = .FALSE.
@@ -4182,12 +4184,16 @@ SUBROUTINE Get_Move_Probabilities
   prob_ring = 0.0_DP  ! sampling of ring atoms using flip move
   prob_atom_displacement = 0.0_DP ! sampling of atoms using atom displacement routine
   prob_identity_switch = 0.0_DP
+  species_list(:)%max_torsion = 0.0_DP
 
   ALLOCATE(sorbate_file(nspecies))
   ALLOCATE(init_list(MAXVAL(natoms),1,nspecies))
   ALLOCATE(max_disp(nspecies,nbr_boxes))
   ALLOCATE(max_rot(nspecies,nbr_boxes))
   ALLOCATE(prob_rot_species(nspecies))
+
+  max_disp(:,:) = 0.0_DP
+  max_rot(:,:) = 0.0_DP
 
   IF (int_sim_type == sim_pregen) RETURN
 
@@ -5633,6 +5639,7 @@ SUBROUTINE Get_CBMC_Info
   kappa_dih = 0
   need_kappa_ins = .FALSE.
   need_kappa_dih = .FALSE.
+  rcut_CBMC(:) = 0.0_DP
 
   DO is = 1, nspecies
      species_list(is)%l_coul_cbmc = .TRUE.
