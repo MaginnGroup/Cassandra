@@ -278,13 +278,15 @@
                  END IF
                  ! Compute rminsq
                  IF (calc_rmin_flag .AND. vdw_param1_table(itype,itype) > 0.0_DP) THEN
-                         min_qprod = type_charge_min(itype)*type_charge_max(itype)
-                         IF (min_qprod <= 0) THEN
-                                min_U_q = min_qprod * charge_factor / rcut_low
-                         ELSE
-                                min_U_q = min_qprod * charge_factor / vdw_param2_table(itype,itype)
+                         IF (int_charge_style(1) /= charge_none) THEN
+                                 min_qprod = type_charge_min(itype)*type_charge_max(itype)
+                                 IF (min_qprod <= 0) THEN
+                                        min_U_q = min_qprod * charge_factor / rcut_low
+                                 ELSE
+                                        min_U_q = min_qprod * charge_factor / vdw_param2_table(itype,itype)
+                                 END IF
+                                 U_max = MAX(U_max_base - min_U_q, 0.0_DP)
                          END IF
-                         U_max = MAX(U_max_base - min_U_q, 0.0_DP)
                          lambda = 0.5 * (1.0_DP+DSQRT(1.0_DP+U_max/vdw_param1_table(itype,itype)))
                          rminsq_table(itype,itype) = &
                                 vdw_param2_table(itype,itype) * vdw_param2_table(itype,itype) &
@@ -385,19 +387,21 @@
 
                  ! Compute rminsq
                  IF (calc_rmin_flag .AND. vdw_param1_table(itype,jtype) > 0.0_DP) THEN
-                         min_qprod = MIN(type_charge_min(itype)*type_charge_max(jtype), &
-                                 type_charge_max(itype)*type_charge_min(jtype))
-                         IF (min_qprod <= 0) THEN
-                                min_U_q = min_qprod * charge_factor / rcut_low
-                         ELSE
-                                min_U_q = min_qprod * charge_factor / vdw_param2_table(itype,jtype)
+                         IF (int_charge_style(1) /= charge_none) THEN
+                                 min_qprod = MIN(type_charge_min(itype)*type_charge_max(jtype), &
+                                         type_charge_max(itype)*type_charge_min(jtype))
+                                 IF (min_qprod <= 0) THEN
+                                        min_U_q = min_qprod * charge_factor / rcut_low
+                                 ELSE
+                                        min_U_q = min_qprod * charge_factor / vdw_param2_table(itype,jtype)
+                                 END IF
+                                 U_max = MAX(U_max_base - min_U_q, 0.0_DP)
                          END IF
-                         U_max = MAX(U_max_base - min_U_q, 0.0_DP)
                          lambda = 0.5 * (1.0_DP+DSQRT(1.0_DP+U_max/vdw_param1_table(itype,jtype)))
                          rminsq_table(itype,jtype) = &
                                 vdw_param2_table(itype,jtype) * vdw_param2_table(itype,jtype) &
                                 / lambda**(1.0_DP/3.0_DP)
-                        rminsq_table(jtype,itype) = rminsq_table(itype,jtype)
+                         rminsq_table(jtype,itype) = rminsq_table(itype,jtype)
                  END IF
 
                  ! Report parameters to logfile.
