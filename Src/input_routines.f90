@@ -6653,6 +6653,7 @@ SUBROUTINE Get_Rcutoff_Low
         line_nbr = line_nbr + 1
         CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
         rcut_low = String_To_Double(line_array(1))
+        rcut_lowsq = rcut_low * rcut_low
 
         WRITE(logunit,'(A25,2X,F6.3,2X,A10)') 'MC low cutoff distance is ', rcut_low, ' Angstrom'
 

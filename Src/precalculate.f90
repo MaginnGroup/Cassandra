@@ -85,7 +85,6 @@ SUBROUTINE Precalculate
 
     END DO
 
-    rcut_lowsq = rcut_low * rcut_low
 
     ! initialize the pair_nrg array
     
