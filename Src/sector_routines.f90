@@ -50,13 +50,12 @@ CONTAINS
           INTEGER, DIMENSION(:), ALLOCATABLE :: xi_pm, yi_pm, zi_pm
           INTEGER :: dummy
 
-          
           sectorbound_old = sectorbound
           sectormaxbound_old = sectormaxbound
           nsec_old = MAXVAL(PRODUCT(length_cells,1))
           DO ibox = 1, nbr_boxes
                 DO i = 1, 3
-                          length_cells(i,ibox) = INT(box_list(ibox)%length(i,i)/rcut_low)
+                          length_cells(i,ibox) = INT(box_list(ibox)%length(i,i)/max_rmin)
                           IF (MOD(length_cells(i,ibox),2) .EQ. 0) length_cells(i,ibox) = length_cells(i,ibox) - 1
                           cell_length_inv(i,ibox) = REAL(length_cells(i,ibox),DP) / box_list(ibox)%length(i,i)
                           sectorbound(i,ibox) = length_cells(i,ibox)/2
@@ -185,7 +184,7 @@ CONTAINS
                                         dyp = atom_ptr%ryp - cp(2)
                                         dzp = atom_ptr%rzp - cp(3)
                                         CALL Minimum_Image_Separation(this_box,dxp,dyp,dzp,dx,dy,dz)
-                                        IF (dx*dx+dy*dy+dz*dz<rcut_lowsq) RETURN
+                                        IF (dx*dx+dy*dy+dz*dz < rminsq_table(nonbond_list(sector_atom_ID(1),sector_atom_ID(3))%atom_type_number,nonbond_list(ia,is)%atom_type_number)) RETURN
                                 END DO
                         END DO
                 END DO

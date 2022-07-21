@@ -70,6 +70,7 @@
   INTEGER ::  i_type1, i_type2
   CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
+  REAL(DP) :: min_qprod, min_U_q, U_max, lambda
 
 !******************************************************************************
   IF (verbose_log) THEN
@@ -88,6 +89,8 @@
   ! Initialize the number of atom types and the temp_atomtypes
   nbr_atomtypes = 0
   temp_atomtypes = ''
+  type_charge_min = 0.0_DP
+  type_charge_max = 0.0_DP
 
   ! Compute the number of different atom types
   DO is = 1, nspecies
@@ -138,6 +141,11 @@
            ! atom has no atom_type
            nonbond_list(ia,is)%atom_type_number = 0
         ENDIF
+        ! Get maximum and minimum charge for atom type
+        type_charge_min(nonbond_list(ia,is)%atom_type_number) = &
+                MIN(type_charge_min(nonbond_list(ia,is)%atom_type_number), nonbond_list(ia,is)%charge)
+        type_charge_max(nonbond_list(ia,is)%atom_type_number) = &
+                MAX(type_charge_max(nonbond_list(ia,is)%atom_type_number), nonbond_list(ia,is)%charge)
 
      ENDDO
 
@@ -200,8 +208,20 @@
   IF (AllocateStatus .NE. 0) THEN
      err_msg = ''
      err_msg(1) = ' ERROR: Not enough memory for vdw interaction table '
-     CALL Clean_Abort(err_msg,'ceate_nonbond_table')
+     CALL Clean_Abort(err_msg,'create_nonbond_table')
   END IF
+
+  ! Allocate memory for rminsq_table
+  ALLOCATE(rminsq_table(0:nbr_atomtypes, 0:nbr_atomtypes), Stat=AllocateStatus)
+  rminsq_table = rcut_lowsq
+
+  IF (AllocateStatus .NE. 0) THEN
+     err_msg = ''
+     err_msg(1) = ' ERROR: Not enough memory for rminsq_table '
+     CALL Clean_Abort(err_msg,'create_nonbond_table')
+  END IF
+
+
 
   ! Allocate memory for total number bead types in each box
   ALLOCATE(nint_beads(nbr_atomtypes,nbr_boxes))
@@ -255,6 +275,20 @@
                  ELSE
                     vdw_param2_table(itype,itype) = &
                                            nonbond_list(ia,is)%vdw_param(2)
+                 END IF
+                 ! Compute rminsq
+                 IF (calc_rmin_flag .AND. vdw_param1_table(itype,itype) > 0.0_DP) THEN
+                         min_qprod = type_charge_min(itype)*type_charge_max(itype)
+                         IF (min_qprod <= 0) THEN
+                                min_U_q = min_qprod * charge_factor / rcut_low
+                         ELSE
+                                min_U_q = min_qprod * charge_factor / vdw_param2_table(itype,itype)
+                         END IF
+                         U_max = MAX(U_max_base - min_U_q, 0.0_DP)
+                         lambda = 0.5 * (1.0_DP+DSQRT(1.0_DP+U_max/vdw_param1_table(itype,itype)))
+                         rminsq_table(itype,itype) = &
+                                vdw_param2_table(itype,itype) * vdw_param2_table(itype,itype) &
+                                / lambda**(1.0_DP/3.0_DP)
                  END IF
 
                  ! Report parameters to logfile.
@@ -348,6 +382,23 @@
                     IF (mix_rule == 'geometric') &
                          vdw_param2_table(itype,jtype) = dsqrt(sig_i*sig_j)
                  ENDIF
+
+                 ! Compute rminsq
+                 IF (calc_rmin_flag .AND. vdw_param1_table(itype,jtype) > 0.0_DP) THEN
+                         min_qprod = MIN(type_charge_min(itype)*type_charge_max(jtype), &
+                                 type_charge_max(itype)*type_charge_min(jtype))
+                         IF (min_qprod <= 0) THEN
+                                min_U_q = min_qprod * charge_factor / rcut_low
+                         ELSE
+                                min_U_q = min_qprod * charge_factor / vdw_param2_table(itype,jtype)
+                         END IF
+                         U_max = MAX(U_max_base - min_U_q, 0.0_DP)
+                         lambda = 0.5 * (1.0_DP+DSQRT(1.0_DP+U_max/vdw_param1_table(itype,jtype)))
+                         rminsq_table(itype,jtype) = &
+                                vdw_param2_table(itype,jtype) * vdw_param2_table(itype,jtype) &
+                                / lambda**(1.0_DP/3.0_DP)
+                        rminsq_table(jtype,itype) = rminsq_table(itype,jtype)
+                 END IF
 
                  ! Report parameters to logfile.
                  IF (verbose_log) THEN
@@ -569,5 +620,7 @@
 
      END IF ! mix_rule
   END IF ! nbr_atomtypes > 1
+
+  max_rmin = DSQRT(MAXVAL(rminsq_table))
 
 END SUBROUTINE Create_Nonbond_Table
