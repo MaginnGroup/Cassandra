@@ -4373,7 +4373,7 @@ SUBROUTINE Get_Move_Probabilities
 
                  !TODO the current implementation of log volumes needs validation
                  err_msg = ''
-                 err_msg(1) = 'Volume change moves are only supported for cubic boxes'
+                 err_msg(1) = 'Volume change moves in log space are not supported'
                  CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
 
                  vol_int = String_To_Int(line_array(1))
