@@ -4353,7 +4353,7 @@ SUBROUTINE Get_Move_Probabilities
                     IF (box_list(ibox)%dv_max > 0.0_DP .AND. .NOT. l_cubic(ibox)) THEN
                        err_msg = ''
                        err_msg(1) = 'Volume change moves are only supported for cubic boxes'
-                       CALL Clean_Abort(err_msg,'Get_Move_Probabiltieis')
+                       CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
                     END IF
 
                     WRITE(logunit,'(X,A,X,I2,X,A,X,F10.3,X,A)') &
@@ -4370,6 +4370,12 @@ SUBROUTINE Get_Move_Probabilities
               line_nbr = line_nbr + 1
               CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
               IF ( nbr_entries > 0 ) THEN
+
+                 !TODO the current implementation of log volumes needs validation
+                 err_msg = ''
+                 err_msg(1) = 'Volume change moves are only supported for cubic boxes'
+                 CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
+
                  vol_int = String_To_Int(line_array(1))
                  IF (vol_int == 1 ) THEN
                     ! volume move to be performed in log ratio
