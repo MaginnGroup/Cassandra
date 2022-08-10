@@ -190,6 +190,8 @@ PROGRAM Main
 ! from the input file for starting up that type of simulation
   CALL Get_Sim_Type
 
+  calc_rmin_flag = .FALSE.
+
   ! Check what kind of simulation this is, and then call the appropriate routine
   ! that will load all the relevant information in from the input file
   IF (int_sim_type == sim_nvt .OR. int_sim_type == sim_nvt_min) THEN

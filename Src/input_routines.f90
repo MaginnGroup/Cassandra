@@ -6663,8 +6663,21 @@ SUBROUTINE Get_Rcutoff_Low
         line_nbr = line_nbr + 1
         CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
         rcut_low = String_To_Double(line_array(1))
+        rcut_lowsq = rcut_low * rcut_low
 
         WRITE(logunit,'(A25,2X,F6.3,2X,A10)') 'MC low cutoff distance is ', rcut_low, ' Angstrom'
+
+        line_nbr = line_nbr + 1
+        CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
+        IF (nbr_entries==0) EXIT
+        IF (line_array(1) == "adaptive") THEN
+                calc_rmin_flag = .TRUE.
+                IF (nbr_entries==1) THEN
+                        U_max_base = 708.0_DP / MINVAL(beta)
+                ELSE
+                        U_max_base = String_To_Double(line_array(2)) / MINVAL(beta)
+                END IF
+        END IF
 
         EXIT
 

@@ -638,7 +638,11 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
 !widom_timing  !$OMP THREADPRIVATE(n_clo, n_not_clo, n_nrg_overlap)
 !widom_timing  !$OMP THREADPRIVATE(cell_list_time, normal_overlap_time, non_overlap_time, nrg_overlap_time)
 
-
+  !
+  REAL(DP), DIMENSION(0:1000)  :: type_charge_min, type_charge_max
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: rminsq_table
+  REAL(DP) :: U_max_base, max_rmin
+  LOGICAL :: calc_rmin_flag
 
 END MODULE Global_Variables
 

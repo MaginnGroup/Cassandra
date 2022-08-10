@@ -65,6 +65,11 @@ SUBROUTINE GEMC_Control
   ! Load molecular conectivity and force field paramters. Note that Get_Nspecies 
   ! must be called before this routine.  
   CALL Get_Molecule_Info
+ 
+  ! Obtain the temperature of the simulation
+  CALL Get_Temperature_Info
+
+  CALL Get_Rcutoff_Low
 
   ! If the simulation contains an intermediate box for transfer then
   ! read the number of ideal gas molecules in that box
@@ -86,9 +91,6 @@ SUBROUTINE GEMC_Control
 
   ! Seed info
   CALL Get_Seed_Info
- 
-  ! Obtain the temperature of the simulation
-  CALL Get_Temperature_Info
 
   IF (sim_type == 'GEMC_NPT') THEN
      ! Obtain the pressure of the simulation box
@@ -109,8 +111,6 @@ SUBROUTINE GEMC_Control
 
   ! Properties to be output
   CALL Get_Property_Info
-
-  CALL Get_Rcutoff_Low
 
   CALL Precalculate
 

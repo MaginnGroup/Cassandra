@@ -95,6 +95,10 @@ SUBROUTINE NVTMC_Control
   ! must be called before this routine.  
   CALL Get_Molecule_Info
 
+  CALL Get_Temperature_Info
+
+  CALL Get_Rcutoff_Low
+
   ! Determine the number and identity of unique atom types, and create a vdw interaction table.
   CALL Create_Nonbond_Table
 
@@ -106,8 +110,6 @@ SUBROUTINE NVTMC_Control
 
   CALL Get_Seed_Info
 
-  CALL Get_Temperature_Info
-
   CALL Get_Move_Probabilities
 
   CALL Get_CBMC_Info
@@ -118,8 +120,6 @@ SUBROUTINE NVTMC_Control
   CALL Log_Widom_Info
 
   CALL Get_Property_Info
-
-  CALL Get_Rcutoff_Low
   
   CALL Precalculate
 
