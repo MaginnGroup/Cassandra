@@ -5323,6 +5323,10 @@ SUBROUTINE Get_Widom_Info
                         ALLOCATE(wprop2_file_unit(nspecies,nbr_boxes))
                         ALLOCATE(wprop2_filenames(nspecies,nbr_boxes))
                         ALLOCATE(first_open_wprop2(nspecies,nbr_boxes))
+                        ALLOCATE(widom_wc_time(nspecies,nbr_boxes))
+                        ALLOCATE(widom_cpu_time(nspecies,nbr_boxes))
+                        widom_wc_time = 0.0_DP
+                        widom_cpu_time = 0.0_DP
                         first_open_wprop(:,:) = .TRUE.
                         first_open_wprop2(:,:) = .TRUE.
                         DO is = 1,nspecies

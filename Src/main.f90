@@ -489,12 +489,14 @@ PROGRAM Main
     DO is = 1,nspecies
       DO ibox = 1, nbr_boxes
         IF(ntrials(is,ibox)%widom > 0) THEN
-          WRITE(logunit,'(A,X,A,X,A,X,A,X,A,F24.12,X,A)') 'Shifted chemical potential for species', &
+          WRITE(logunit,'(A,X,A,X,A,X,A,X,A,F21.12,X,A)') 'Shifted chemical potential for species', &
             TRIM(Int_To_String(is)),'in box',TRIM(Int_To_String(ibox)),'is', &
             -kboltz*temperature(ibox)*atomic_to_kJmol*DLOG(species_list(is)%widom_sum(ibox) / ntrials(is,ibox)%widom), &
             'kJ/mol'
           WRITE(logunit,'(8X,A)') TRIM(Int_To_String(overlap_counter(is,ibox))) // ' Widom insertions with overlap out of ' &
             // TRIM(Int_To_String(ntrials(is,ibox)%widom))
+          WRITE(logunit,'(8x,A,F27.3,A)') "CPU time: ", widom_cpu_time(is,ibox), " seconds"
+          WRITE(logunit,'(8x,A,F21.3,A)') "Wallclock time: ", widom_wc_time(is,ibox), " seconds"
           !WRITE(logunit,'(A,I2,A,I2,A,F24.12)') &
           !  'Ideal Chemical potential for species',is,'in box',i, 'is', &
           !  chpotid(is,i) / ntrials(is,i)%cpcalc

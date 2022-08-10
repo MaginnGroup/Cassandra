@@ -19,7 +19,7 @@
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*******************************************************************************
 
-SUBROUTINE Widom_Insert(is,ibox,widom_sum)
+SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
 
   !*****************************************************************************
   ! 
@@ -73,6 +73,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
   REAL(DP) :: widom_prefactor, widom_var_exp, widom_sum
   REAL(DP) :: E_recip_in, lrc_diff, E_inter_constant
   REAL(DP) :: subinterval_sums(MAX(n_widom_subgroups(is,ibox),1))
+  REAL(DP) :: t_cpu, t_cpu_e, t_cpu_s
   INTEGER :: n_subintervals
 !widom_timing  REAL(DP) :: noncbmc_time_e, noncbmc_time_s, noncbmc_time
   LOGICAL :: write_wprp2
@@ -158,7 +159,8 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
   !$OMP PRIVATE(ln_pseq, ln_pbias, E_ring_frag, inter_overlap, cbmc_overlap, intra_overlap, i_interval) &
   !$OMP PRIVATE(widom_var_exp, E_inter_qq, E_periodic_qq, E_intra_qq, E_intra_vdw, E_inter_vdw, dE_frag, dE) &
   !$OMP PRIVATE(E_bond, E_angle, E_dihedral, E_improper, dE_intra, dE_inter, E_reciprocal, frag_order) &
-  !$OMP REDUCTION(+:widom_sum,n_overlaps,subinterval_sums)
+  !$OMP PRIVATE(t_cpu_s, t_cpu_e) &
+  !$OMP REDUCTION(+:widom_sum,n_overlaps,subinterval_sums,t_cpu)
 
   IF (ALLOCATED(widom_atoms)) DEALLOCATE(widom_atoms)
   ALLOCATE(widom_atoms(natoms(is)))
@@ -167,9 +169,12 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
   widom_sum = 0.0_DP
   n_overlaps = 0_INT64
   subinterval_sums = 0.0_DP
+  t_cpu = 0.0_DP
 
   !$OMP DO SCHEDULE(DYNAMIC)
   DO i_widom = 1, insertions_in_step
+          IF (.NOT. omp_flag) CALL CPU_TIME(t_cpu_s)
+          !$ t_cpu_s = omp_get_wtime()
           ! Initialize variables
           ln_pseq = 0.0_DP
           ln_pbias = 0.0_DP
@@ -298,6 +303,9 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum)
                 i_interval = (i_widom - 1_INT64)/subinterval + 1_INT64
                 IF (i_interval <= n_subintervals) subinterval_sums(i_interval) = subinterval_sums(i_interval) + widom_var_exp
           END IF
+          IF (.NOT. omp_flag) CALL CPU_TIME(t_cpu_e)
+          !$ t_cpu_e = omp_get_wtime()
+          t_cpu = t_cpu + t_cpu_e - t_cpu_s
   END DO
   !$OMP END DO
   !$OMP END PARALLEL

@@ -628,6 +628,8 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   ! n_widom_subgroups is indexed by (species,box)
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: n_widom_subgroups
 
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: widom_cpu_time, widom_wc_time
+
 
 
 
