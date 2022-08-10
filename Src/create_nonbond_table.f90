@@ -283,6 +283,8 @@
                                  IF (min_qprod <= 0) THEN
                                         min_U_q = min_qprod * charge_factor / rcut_low
                                  ELSE
+                                        min_qprod = MIN(type_charge_min(itype)*type_charge_min(itype), &
+                                                type_charge_max(itype)*type_charge_max(itype))
                                         min_U_q = min_qprod * charge_factor / vdw_param2_table(itype,itype)
                                  END IF
                                  U_max = MAX(U_max_base - min_U_q, 0.0_DP)
@@ -393,6 +395,8 @@
                                  IF (min_qprod <= 0) THEN
                                         min_U_q = min_qprod * charge_factor / rcut_low
                                  ELSE
+                                        min_qprod = MIN(type_charge_min(itype)*type_charge_min(jtype), &
+                                                type_charge_max(itype)*type_charge_max(jtype))
                                         min_U_q = min_qprod * charge_factor / vdw_param2_table(itype,jtype)
                                  END IF
                                  U_max = MAX(U_max_base - min_U_q, 0.0_DP)
