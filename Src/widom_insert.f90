@@ -51,6 +51,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
   ! Arguments
   INTEGER, INTENT(IN) :: ibox ! insert test particles in ibox
   INTEGER, INTENT(IN) :: is ! species indices
+  REAL(DP), INTENT(OUT) :: t_cpu
 
   ! Local declarations
   INTEGER :: i, i_type               ! atom indices
@@ -73,7 +74,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
   REAL(DP) :: widom_prefactor, widom_var_exp, widom_sum
   REAL(DP) :: E_recip_in, lrc_diff, E_inter_constant
   REAL(DP) :: subinterval_sums(MAX(n_widom_subgroups(is,ibox),1))
-  REAL(DP) :: t_cpu, t_cpu_e, t_cpu_s
+  REAL(DP) :: t_cpu_e, t_cpu_s
   INTEGER :: n_subintervals
 !widom_timing  REAL(DP) :: noncbmc_time_e, noncbmc_time_s, noncbmc_time
   LOGICAL :: write_wprp2
@@ -84,6 +85,8 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
   omp_flag = .FALSE.
   !$ omp_flag = .TRUE.
 !widom_timing  noncbmc_time = 0.0_DP
+
+  t_cpu = 0.0_DP
 
 
   IF (n_widom_subgroups(is,ibox) > 0) THEN
