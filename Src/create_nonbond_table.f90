@@ -142,10 +142,15 @@
            nonbond_list(ia,is)%atom_type_number = 0
         ENDIF
         ! Get maximum and minimum charge for atom type
-        type_charge_min(nonbond_list(ia,is)%atom_type_number) = &
-                MIN(type_charge_min(nonbond_list(ia,is)%atom_type_number), nonbond_list(ia,is)%charge)
-        type_charge_max(nonbond_list(ia,is)%atom_type_number) = &
-                MAX(type_charge_max(nonbond_list(ia,is)%atom_type_number), nonbond_list(ia,is)%charge)
+        IF (repeat_type) THEN
+                type_charge_min(nonbond_list(ia,is)%atom_type_number) = &
+                        MIN(type_charge_min(nonbond_list(ia,is)%atom_type_number), nonbond_list(ia,is)%charge)
+                type_charge_max(nonbond_list(ia,is)%atom_type_number) = &
+                        MAX(type_charge_max(nonbond_list(ia,is)%atom_type_number), nonbond_list(ia,is)%charge)
+        ELSE
+                type_charge_min(nonbond_list(ia,is)%atom_type_number) = nonbond_list(ia,is)%charge
+                type_charge_max(nonbond_list(ia,is)%atom_type_number) = nonbond_list(ia,is)%charge
+        END IF
 
      ENDDO
 
