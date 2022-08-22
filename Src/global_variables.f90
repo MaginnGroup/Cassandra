@@ -121,7 +121,7 @@ USE Type_Definitions
   INTEGER, PARAMETER :: charge_minimum = 4
   INTEGER, PARAMETER :: charge_dsf = 5
 
-  REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_cbmc
+  REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_cbmc, rcut_cbmcsq
   REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_vdw, rcut_coul, ron_charmm, roff_charmm, rcut_max
   REAL(DP), DIMENSION(:), ALLOCATABLE :: ron_switch, roff_switch, roff_switch_sq, switch_factor1
   REAL(DP), DIMENSION(:), ALLOCATABLE :: switch_factor2, ron_switch_sq
@@ -601,23 +601,25 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
 
   !!!! Sectors
   ! sector_atoms is indexed by (atom index within sector, sector index)
-  INTEGER, DIMENSION(:,:,:), ALLOCATABLE, TARGET :: sector_atoms
+  INTEGER, DIMENSION(:,:,:), ALLOCATABLE, TARGET :: sector_atoms, sector_atoms_cbmc, sector_atoms_full
   ! sector_index_map is indexed by (x index, y index, z index, box index) to get sector index
-  INTEGER, DIMENSION(:,:,:,:), ALLOCATABLE :: sector_index_map
+  INTEGER, DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: sector_index_map, sector_index_map_cbmc, sector_index_map_full
   ! sector_n_atoms is indexed by (sector index) to get number of atoms in a sector
-  INTEGER, DIMENSION(:), ALLOCATABLE :: sector_n_atoms
+  INTEGER, DIMENSION(:), ALLOCATABLE, TARGET :: sector_n_atoms, sector_n_atoms_cbmc, sector_n_atoms_full
   ! sector_has_atoms is indexed by (x index, y index, z index, box index)
   LOGICAL, DIMENSION(:,:,:,:), ALLOCATABLE :: sector_has_atoms
 
-  LOGICAL :: l_sectors
+  LOGICAL :: l_sectors, cbmc_cell_list_flag, full_cell_list_flag
   ! sectorbound, length_cells, & cell_length_inv are indexed by (box dimension, box index)
-  INTEGER, DIMENSION(:,:), ALLOCATABLE :: sectorbound
-  INTEGER, DIMENSION(:,:), ALLOCATABLE :: length_cells
-  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: cell_length_inv, cell_length
+  INTEGER, DIMENSION(:,:), ALLOCATABLE :: sectorbound, sectorbound_cbmc, sectorbound_full
+  INTEGER, DIMENSION(:,:), ALLOCATABLE :: length_cells, length_cells_cbmc, length_cells_full
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE, TARGET :: cell_length_inv, cell_length_inv_cbmc, cell_length_inv_full
 
-  INTEGER, DIMENSION(3) :: sectormaxbound
+  INTEGER, DIMENSION(3) :: sectormaxbound, sectormaxbound_cbmc, sectormaxbound_full
 
-  INTEGER :: n_occ_sectors
+  INTEGER :: n_occ_sectors, n_occ_sectors_cbmc, n_occ_sectors_full
+  INTEGER :: max_sector_natoms, max_sector_natoms_cbmc, max_sector_natoms_full
+  INTEGER :: max_occ_sectors, max_occ_sectors_cbmc, max_occ_sectors_full
   
   TYPE(Molecule_Class), TARGET :: widom_molecule
   TYPE(Atom_Class), ALLOCATABLE, DIMENSION(:), TARGET :: widom_atoms

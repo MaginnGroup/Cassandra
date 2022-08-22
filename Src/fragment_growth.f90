@@ -1984,8 +1984,10 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
         END DO
 
         these_atoms%exist = new_exist
-        CALL Get_COM(this_im,is)
-        CALL Compute_Max_COM_Distance(this_im,is)
+        IF (.NOT. (cbmc_cell_list_flag .AND. widom_active)) THEN
+                CALL Get_COM(this_im,is)
+                CALL Compute_Max_COM_Distance(this_im,is)
+        END IF
         IF (widom_active) THEN
                 CALL Compute_Molecule_Nonbond_Inter_Energy_Widom(this_im,is,&
                         nrg_inter_vdw,E_inter_qq,overlap)
@@ -2113,7 +2115,7 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
     
 
   END DO
-  IF (frag_total > 1) THEN
+  IF (frag_total > 1 .AND. .NOT. full_cell_list_flag) THEN
           CALL Get_COM(this_im,is)
           CALL Compute_Max_COM_Distance(this_im,is)
   END IF
