@@ -5399,6 +5399,8 @@ SUBROUTINE Get_Lookup_Info
         line_nbr = 0
         line_string = ""
         l_sectors = .FALSE.
+        cbmc_cell_list_flag = .FALSE.
+        full_cell_list_flag = .FALSE.
         DO
                 line_nbr = line_nbr + 1
                 CALL Read_String(inputunit,line_string,ierr)
@@ -5444,7 +5446,7 @@ SUBROUTINE Get_Lookup_Info
                                 max_occ_sectors_cbmc = 0
                                 sectorbound_cbmc = 0
                                 sectormaxbound_cbmc = 0
-                                length_cells = 0
+                                length_cells_cbmc = 0
                                 max_sector_natoms_cbmc = 1
                         END IF
                         IF (line_string(1:4) ==  'full') THEN
@@ -5455,7 +5457,7 @@ SUBROUTINE Get_Lookup_Info
                                 max_occ_sectors_full = 0
                                 sectorbound_full = 0
                                 sectormaxbound_full = 0
-                                length_cells = 0
+                                length_cells_full = 0
                                 max_sector_natoms_full = 1
                         END IF
                         RETURN

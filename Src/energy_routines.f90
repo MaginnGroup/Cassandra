@@ -893,8 +893,8 @@ CONTAINS
           INTEGER :: this_box
           INTEGER :: this_locate, i_dim, secind
           INTEGER :: xi, yi, zi, i, ia_cell
-          INTEGER, DIMENSION(:), POINTER :: sector_atom_ID, sector_n_atoms_ptr
-          INTEGER, DIMENSION(:,:,:), POINTER :: sector_index_map_ptr, sector_atoms_ptr
+          INTEGER, DIMENSION(:), POINTER :: sector_atom_ID
+          !INTEGER, DIMENSION(:,:,:), POINTER :: sector_index_map_ptr
           TYPE(Atom_Class), POINTER :: atom_ptr
           INTEGER :: cell_coords(3)
           INTEGER, DIMENSION(3) :: ci_min, ci_max
@@ -919,55 +919,67 @@ CONTAINS
           END IF
           IF (cbmc_flag) THEN
                   cell_length_inv_ptr => cell_length_inv_cbmc(:,this_box)
-                  sector_n_atoms_ptr => sector_n_atoms_cbmc
-                  sector_atoms_ptr => sector_atoms_cbmc
           ELSE
                   cell_length_inv_ptr => cell_length_inv_full(:,this_box)
-                  sector_n_atoms_ptr => sector_n_atoms_full
-                  sector_atoms_ptr => sector_atoms_full
           END IF
           cell_coords = IDNINT(cp*cell_length_inv_ptr)
           ci_min = cell_coords - 1
           ci_max = cell_coords + 1
           IF (cbmc_flag) THEN
-                  sector_index_map_ptr => sector_index_map_cbmc( &
-                          ci_min(1):ci_max(1), &
-                          ci_min(2):ci_max(2), &
-                          ci_min(3):ci_max(3), &
-                          this_box)
-          ELSE
-                  sector_index_map_ptr => sector_index_map_full( &
-                          ci_min(1):ci_max(1), &
-                          ci_min(2):ci_max(2), &
-                          ci_min(3):ci_max(3), &
-                          this_box)
-          END IF
-          DO xi = 1, 3
-                DO yi = 1, 3
-                        DO zi = 1, 3
-                                secind = sector_index_map_ptr(xi,yi,zi)
-                                DO ia_cell = 1, sector_n_atoms_ptr(secind)
-                                        sector_atom_ID => sector_atoms_ptr(ia_cell,secind,:)
-                                        atom_ptr => atom_list(sector_atom_ID(1),sector_atom_ID(2),sector_atom_ID(3))
-                                        dxp = atom_ptr%rxp - cp(1)
-                                        dyp = atom_ptr%ryp - cp(2)
-                                        dzp = atom_ptr%rzp - cp(3)
-                                        CALL Minimum_Image_Separation(this_box,dxp,dyp,dzp,dx,dy,dz)
-                                        rijsq = dx*dx+dy*dy+dz*dz
-                                        CALL Check_AtomPair_Cutoff(rijsq,get_vdw,get_qq,this_box)
-                                        IF (get_vdw .OR. get_qq) THEN
-                                           IF (rijsq < rcut_lowsq) RETURN
-                                           CALL Compute_AtomPair_Energy(dx,dy,dz,rijsq, &
-                                                sector_atom_ID(3),sector_atom_ID(2),sector_atom_ID(1),is,im,ia,&
-                                                get_vdw,get_qq, &
-                                                Eij_intra_vdw,Eij_intra_qq,Eij_inter_vdw,Eij_inter_qq)
-                                           E_inter_vdw = E_inter_vdw + Eij_inter_vdw
-                                           E_inter_qq  = E_inter_qq  + Eij_inter_qq
-                                        END IF
+                  DO xi = ci_min(1), ci_max(1)
+                        DO yi = ci_min(2), ci_max(2)
+                                DO zi = ci_min(3), ci_max(3)
+                                        secind = sector_index_map_cbmc(xi,yi,zi,this_box)
+                                        DO ia_cell = 1, sector_n_atoms_cbmc(secind)
+                                                sector_atom_ID => sector_atoms_cbmc(ia_cell,secind,:)
+                                                atom_ptr => atom_list(sector_atom_ID(1),sector_atom_ID(2),sector_atom_ID(3))
+                                                dxp = atom_ptr%rxp - cp(1)
+                                                dyp = atom_ptr%ryp - cp(2)
+                                                dzp = atom_ptr%rzp - cp(3)
+                                                CALL Minimum_Image_Separation(this_box,dxp,dyp,dzp,dx,dy,dz)
+                                                rijsq = dx*dx+dy*dy+dz*dz
+                                                CALL Check_AtomPair_Cutoff(rijsq,get_vdw,get_qq,this_box)
+                                                IF (get_vdw .OR. get_qq) THEN
+                                                   IF (rijsq < rcut_lowsq) RETURN
+                                                   CALL Compute_AtomPair_Energy(dx,dy,dz,rijsq, &
+                                                        sector_atom_ID(3),sector_atom_ID(2),sector_atom_ID(1),is,im,ia,&
+                                                        get_vdw,get_qq, &
+                                                        Eij_intra_vdw,Eij_intra_qq,Eij_inter_vdw,Eij_inter_qq)
+                                                   E_inter_vdw = E_inter_vdw + Eij_inter_vdw
+                                                   E_inter_qq  = E_inter_qq  + Eij_inter_qq
+                                                END IF
+                                        END DO
                                 END DO
                         END DO
-                END DO
-          END DO
+                  END DO
+          ELSE
+                  DO xi = ci_min(1), ci_max(1)
+                        DO yi = ci_min(2), ci_max(2)
+                                DO zi = ci_min(3), ci_max(3)
+                                        secind = sector_index_map_full(xi,yi,zi,this_box)
+                                        DO ia_cell = 1, sector_n_atoms_full(secind)
+                                                sector_atom_ID => sector_atoms_full(ia_cell,secind,:)
+                                                atom_ptr => atom_list(sector_atom_ID(1),sector_atom_ID(2),sector_atom_ID(3))
+                                                dxp = atom_ptr%rxp - cp(1)
+                                                dyp = atom_ptr%ryp - cp(2)
+                                                dzp = atom_ptr%rzp - cp(3)
+                                                CALL Minimum_Image_Separation(this_box,dxp,dyp,dzp,dx,dy,dz)
+                                                rijsq = dx*dx+dy*dy+dz*dz
+                                                CALL Check_AtomPair_Cutoff(rijsq,get_vdw,get_qq,this_box)
+                                                IF (get_vdw .OR. get_qq) THEN
+                                                   IF (rijsq < rcut_lowsq) RETURN
+                                                   CALL Compute_AtomPair_Energy(dx,dy,dz,rijsq, &
+                                                        sector_atom_ID(3),sector_atom_ID(2),sector_atom_ID(1),is,im,ia,&
+                                                        get_vdw,get_qq, &
+                                                        Eij_intra_vdw,Eij_intra_qq,Eij_inter_vdw,Eij_inter_qq)
+                                                   E_inter_vdw = E_inter_vdw + Eij_inter_vdw
+                                                   E_inter_qq  = E_inter_qq  + Eij_inter_qq
+                                                END IF
+                                        END DO
+                                END DO
+                        END DO
+                  END DO
+          END IF
           overlap = .FALSE.
           
 
@@ -1241,8 +1253,8 @@ CONTAINS
     this_box = widom_molecule%which_box
 
     IF ((cbmc_cell_list_flag .AND. cbmc_flag) .OR. full_cell_list_flag) THEN
-            DO ia = 1, natoms(ispecies)
-                IF (.NOT. atom_list(ia,im,is)%exist) CYCLE
+            DO ia = 1, natoms(is)
+                IF (.NOT. widom_atoms(ia)%exist) CYCLE
                 CALL Compute_Atom_Nonbond_Inter_Energy_Cells(ia,im,is, &
                         Ei_inter_vdw, Ei_inter_qq, overlap)
                 IF (overlap) RETURN
