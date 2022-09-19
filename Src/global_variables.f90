@@ -634,6 +634,15 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
 
 
 
+  REAL(DP) :: Eij_max
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: Eij_factor
+  REAL(DP), DIMENSION(:,:,:), ALLOCATABLE :: w_max, Eij_w_sum 
+  INTEGER, DIMENSION(:,:,:), ALLOCATABLE :: Eij_freq_total
+  INTEGER, PARAMETER :: Eij_ind_ubound = 2047
+  !$OMP THREADPRIVATE(Eij_max)
+
+
+
 
 !widom_timing  INTEGER(KIND=INT64) :: n_clo, n_not_clo, n_nrg_overlap
 !widom_timing  REAL(DP) :: cell_list_time, normal_overlap_time, non_overlap_time, nrg_overlap_time

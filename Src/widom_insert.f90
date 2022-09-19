@@ -71,6 +71,13 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
   REAL(DP) :: E_ring_frag
   REAL(DP) :: ln_pacc, ln_pseq, ln_pbias, this_lambda
 
+  REAL(DP) :: thread_Eij_factor, Eij_factor_gcopy
+  REAL(DP), DIMENSION(0:Eij_ind_ubound) :: frame_w_max, w_max_gcopy
+  REAL(DP), DIMENSION(0:Eij_ind_ubound) :: frame_Eij_w_sum, Eij_w_sum_gcopy
+  INTEGER, DIMENSION(0:Eij_ind_ubound) :: Eij_freq, Eij_freq_gcopy
+
+  INTEGER :: changefactor, thread_changefactor, Eij_ind
+
   REAL(DP) :: widom_prefactor, widom_var_exp, widom_sum
   REAL(DP) :: E_recip_in, lrc_diff, E_inter_constant
   REAL(DP) :: subinterval_sums(MAX(n_widom_subgroups(is,ibox),1))
@@ -96,6 +103,13 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
           n_subintervals = 1
           write_wprp2 = .FALSE.
   END IF
+
+  changefactor = 1
+  thread_Eij_factor = 0.0_DP
+  w_max_gcopy(:) = w_max(:,is,ibox)
+  Eij_w_sum_gcopy(:) = Eij_w_sum(:,is,ibox)
+  Eij_freq_gcopy(:) = Eij_freq_total(:,is,ibox)
+  Eij_factor_gcopy = Eij_factor(is,ibox)
 
   this_lambda = 1.0_DP
   widom_sum = 0.0_DP
@@ -158,12 +172,17 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
   !OMP PRIVATE(noncbmc_time_e,noncbmc_time_s) &
   ! also include noncbmc_time in omp reduction
 
+  frame_Eij_w_sum = 0.0_DP
+  Eij_freq = 0
+  frame_w_max = 0.0_DP
+
   !$OMP PARALLEL DEFAULT(SHARED) &
   !$OMP PRIVATE(ln_pseq, ln_pbias, E_ring_frag, inter_overlap, cbmc_overlap, intra_overlap, i_interval) &
   !$OMP PRIVATE(widom_var_exp, E_inter_qq, E_periodic_qq, E_intra_qq, E_intra_vdw, E_inter_vdw, dE_frag, dE) &
   !$OMP PRIVATE(E_bond, E_angle, E_dihedral, E_improper, dE_intra, dE_inter, E_reciprocal, frag_order) &
-  !$OMP PRIVATE(t_cpu_s, t_cpu_e) &
-  !$OMP REDUCTION(+:widom_sum,n_overlaps,subinterval_sums,t_cpu)
+  !$OMP PRIVATE(t_cpu_s, t_cpu_e, thread_changefactor, Eij_ind) &
+  !$OMP REDUCTION(+:widom_sum,n_overlaps,subinterval_sums,t_cpu,Eij_freq,frame_Eij_w_sum) &
+  !$OMP REDUCTION(MAX:frame_w_max,thread_Eij_factor)
 
   IF (ALLOCATED(widom_atoms)) DEALLOCATE(widom_atoms)
   ALLOCATE(widom_atoms(natoms(is)))
@@ -173,6 +192,11 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
   n_overlaps = 0_INT64
   subinterval_sums = 0.0_DP
   t_cpu = 0.0_DP
+  frame_w_max = 0.0_DP
+  frame_Eij_w_sum = 0.0_DP
+  Eij_freq = 0
+  thread_Eij_factor = Eij_factor_gcopy
+  thread_changefactor = changefactor
 
   !$OMP DO SCHEDULE(DYNAMIC)
   DO i_widom = 1, insertions_in_step
@@ -241,6 +265,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
 
             ! Calculate the potential energy interaction between the inserted molecule
             ! and the rest of the system
+            Eij_max = 0.0_DP
             CALL Compute_Molecule_Nonbond_Inter_Energy_Widom(widom_locate,is, &
                     E_inter_vdw,E_inter_qq,inter_overlap)
 
@@ -259,6 +284,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
 
           ! Leave widom_sum unchanged if there is any core overlap
           IF (.NOT. (cbmc_overlap .OR. inter_overlap .OR. intra_overlap)) THEN
+
                   ! There are no overlaps, so we can calculate the change in potential energy.
                   !
                   ! Already have the change in nonbonded energies
@@ -299,6 +325,16 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
                   widom_var_exp = DEXP(-beta(ibox) * (dE - dE_frag) - ln_pbias)
                   ! sum of all widom_var for this step; output argument
                   widom_sum = widom_sum + widom_var_exp
+
+                  Eij_ind = INT(Eij_max * thread_Eij_factor)
+                  DO WHILE (Eij_ind > Eij_ind_ubound)
+                        CALL coarsen_w_max(frame_w_max,frame_Eij_w_sum,Eij_freq,thread_Eij_factor,2)
+                        thread_changefactor = thread_changefactor * 2
+                        Eij_ind = INT(Eij_max * thread_Eij_factor)
+                  END DO
+                  frame_w_max(Eij_ind) = MAX(frame_w_max(Eij_ind), widom_var_exp)
+                  frame_Eij_w_sum(Eij_ind) = frame_Eij_w_sum(Eij_ind) + widom_var_exp
+                  Eij_freq(Eij_ind) = Eij_freq(Eij_ind) + 1
           ELSE
                   n_overlaps = n_overlaps + 1_INT64
           END IF
@@ -311,7 +347,21 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
           t_cpu = t_cpu + t_cpu_e - t_cpu_s
   END DO
   !$OMP END DO
+  !$OMP CRITICAL
+  changefactor = MAX(changefactor,thread_changefactor)
+  !$OMP END CRITICAL
+  !$OMP BARRIER
+  IF (thread_changefactor<changefactor) CALL coarsen_w_max(frame_w_max,frame_Eij_w_sum,Eij_freq,thread_Eij_factor,changefactor/thread_changefactor)
   !$OMP END PARALLEL
+  IF (changefactor>1) CALL coarsen_w_max(w_max_gcopy,Eij_w_sum_gcopy,Eij_freq_gcopy,Eij_factor_gcopy,changefactor)
+  w_max_gcopy = MAX(w_max_gcopy, widom_prefactor*frame_w_max)
+  Eij_w_sum_gcopy = Eij_w_sum_gcopy + widom_prefactor*frame_Eij_w_sum
+  Eij_freq_gcopy = Eij_freq_gcopy + Eij_freq
+  w_max(:,is,ibox) = w_max_gcopy
+  Eij_w_sum(:,is,ibox) = Eij_w_sum_gcopy
+  Eij_freq_total(:,is,ibox) = Eij_freq_gcopy
+  Eij_factor(is,ibox) = Eij_factor_gcopy
+
   widom_active = .FALSE.
   widom_sum = widom_sum * widom_prefactor
   overlap_counter(is,ibox) = overlap_counter(is,ibox) + n_overlaps
@@ -343,6 +393,28 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
 
 
   ntrials(is,ibox)%widom = ntrials(is,ibox)%widom + insertions_in_step
+
+  CONTAINS
+          SUBROUTINE coarsen_w_max(wmax,wsum,Efreq,Efactor,cfactor)
+                  REAL(DP), DIMENSION(0:Eij_ind_ubound), INTENT(INOUT) :: wmax,wsum
+                  INTEGER, DIMENSION(0:Eij_ind_ubound), INTENT(INOUT) :: Efreq
+                  REAL(DP), INTENT(INOUT) :: Efactor
+                  INTEGER, INTENT(IN) :: cfactor
+                  INTEGER :: gwidth, i1, i2, ic
+                  Efactor = Efactor / REAL(cfactor,DP)
+                  gwidth = cfactor - 1
+                  ic = 0
+                  DO i2 = gwidth, Eij_ind_ubound, cfactor
+                        i1 = i2-gwidth
+                        wmax(ic) = MAXVAL(wmax(i1:i2))
+                        Efreq(ic) = SUM(Efreq(i1:i2))
+                        wsum(ic) = SUM(wsum(i1:i2))
+                        ic = ic + 1
+                  END DO
+                  wmax(ic:) = 0.0_DP
+                  wsum(ic:) = 0.0_DP
+                  Efreq(ic:) = 0
+          END SUBROUTINE coarsen_w_max
 
 
 !widom_timing  WRITE(*,*) noncbmc_time

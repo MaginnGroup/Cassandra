@@ -170,6 +170,9 @@ INTEGER, DIMENSION(:,:), ALLOCATABLE :: wprop2_file_unit
 CHARACTER(FILENAME_LEN), DIMENSION(:,:), ALLOCATABLE :: wprop2_filenames
 LOGICAL, DIMENSION(:,:), ALLOCATABLE :: first_open_wprop2
 
+INTEGER :: emax_file_unit = 200
+CHARACTER(FILENAME_LEN), DIMENSION(:,:), ALLOCATABLE :: emax_filenames
+
 ! Variables associated with pregenerated trajectory xyz and H files
 INTEGER :: pregen_xyz_unit_base = 240
 INTEGER, DIMENSION(:), ALLOCATABLE :: pregen_xyz_unit

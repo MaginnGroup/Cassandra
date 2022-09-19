@@ -5267,7 +5267,7 @@ SUBROUTINE Get_Widom_Info
         INTEGER :: i_unit
 
         CHARACTER(STRING_LEN) :: line_string,line_array(60)
-        CHARACTER(20) :: extension, extension2
+        CHARACTER(20) :: extension_base, extension, extension2, extension_emax
 
         LOGICAL :: inp_flag
 
@@ -5325,6 +5325,14 @@ SUBROUTINE Get_Widom_Info
                         ALLOCATE(first_open_wprop2(nspecies,nbr_boxes))
                         ALLOCATE(widom_wc_time(nspecies,nbr_boxes))
                         ALLOCATE(widom_cpu_time(nspecies,nbr_boxes))
+                        ALLOCATE(emax_filenames(nspecies,nbr_boxes))
+                        ALLOCATE(Eij_factor(nspecies,nbr_boxes))
+                        ALLOCATE(w_max(Eij_ind_ubound+1,nspecies,nbr_boxes))
+                        ALLOCATE(Eij_w_sum(Eij_ind_ubound+1,nspecies,nbr_boxes))
+                        ALLOCATE(Eij_freq_total(Eij_ind_ubound+1,nspecies,nbr_boxes))
+                        w_max = 0.0_DP
+                        Eij_w_sum = 0.0_DP
+                        Eij_freq_total = 0
                         widom_wc_time = 0.0_DP
                         widom_cpu_time = 0.0_DP
                         first_open_wprop(:,:) = .TRUE.
@@ -5373,15 +5381,14 @@ SUBROUTINE Get_Widom_Info
                                 i_unit = i_unit + 1
                                 wprop_file_unit(is,ibox) = wprop_file_unit_base + i_unit
                                 wprop2_file_unit(is,ibox) = wprop2_file_unit_base + i_unit
-                                IF (nbr_boxes == 1) THEN
-                                        extension = '.spec' // TRIM(Int_To_String(is)) // '.wprp'
-                                        extension2 = '.spec' // TRIM(Int_To_String(is)) // '.wprp2'
-                                ELSE
-                                        extension = '.spec' // TRIM(Int_To_String(is)) // '.box' // TRIM(Int_To_String(ibox)) // '.wprp'
-                                        extension2 = '.spec' // TRIM(Int_To_String(is)) // '.box' // TRIM(Int_To_String(ibox)) // '.wprp2'
-                                END IF
+                                extension_base = '.spec' // TRIM(Int_To_String(is))
+                                IF (nbr_boxes > 1) extension_base = extension_base // '.box' // TRIM(Int_To_String(ibox))
+                                extension = TRIM(extension_base) // '.wprp'
+                                extension2 = TRIM(extension_base) // '.wprp2'
+                                extension_emax = TRIM(extension_base) // '.emax'
                                 CALL Name_Files(run_name,extension,wprop_filenames(is,ibox))
                                 CALL Name_Files(run_name,extension2,wprop2_filenames(is,ibox))
+                                CALL Name_Files(run_name,extension_emax,emax_filenames(is,ibox))
                         END IF
                         IF (ibox == nbr_boxes) EXIT
                 END DO
@@ -5484,6 +5491,7 @@ SUBROUTINE Log_Widom_Info
         DO is = 1, nspecies
                 DO ibox = 1, nbr_boxes
                         IF (.NOT. species_list(is)%test_particle(ibox)) CYCLE
+                        Eij_factor(is,ibox) = 2.0_DP * beta(ibox)
 
                         linetext = 'Species ' // TRIM(Int_To_String(is)) // ' will have ' // &
                                 TRIM(Int_To_String(species_list(is)%insertions_in_step(ibox))) // &

@@ -886,10 +886,12 @@ CONTAINS
 
   !-----------------------------------------------------------------------------
   SUBROUTINE Compute_Atom_Nonbond_Inter_Energy_Cells(ia,im,is, &
-                  E_inter_vdw, E_inter_qq, overlap)
+                  E_inter_vdw, E_inter_qq, overlap, Eij_qq)
           !
           INTEGER, INTENT(IN) :: ia, im, is
           REAL(DP), INTENT(OUT) :: E_inter_vdw, E_inter_qq
+          REAL(DP), INTENT(OUT), OPTIONAL :: Eij_qq
+          REAL(DP) :: Eij_qq_temp
           INTEGER :: this_box
           INTEGER :: this_locate, i_dim, secind
           INTEGER :: xi, yi, zi, i, ia_cell
@@ -906,6 +908,7 @@ CONTAINS
           overlap = .TRUE.
           E_inter_vdw = 0.0_DP
           E_inter_qq = 0.0_DP
+          Eij_qq_temp = 0.0_DP
           IF (widom_active) THEN
                   cp(1) = widom_atoms(ia)%rxp
                   cp(2) = widom_atoms(ia)%ryp
@@ -974,12 +977,19 @@ CONTAINS
                                                         Eij_intra_vdw,Eij_intra_qq,Eij_inter_vdw,Eij_inter_qq)
                                                    E_inter_vdw = E_inter_vdw + Eij_inter_vdw
                                                    E_inter_qq  = E_inter_qq  + Eij_inter_qq
+                                                   IF (PRESENT(Eij_qq)) THEN
+                                                           IF (widom_active) THEN
+                                                                   Eij_max = MAX(Eij_max,Eij_inter_vdw+Eij_qq)
+                                                           END IF
+                                                           Eij_qq_temp = Eij_qq_temp + Eij_qq
+                                                   END IF
                                                 END IF
                                         END DO
                                 END DO
                         END DO
                   END DO
           END IF
+          Eij_qq = Eij_qq_temp
           overlap = .FALSE.
           
 
@@ -1237,7 +1247,7 @@ CONTAINS
 
     INTEGER  :: ispecies, imolecule, this_box, this_locate, ia
 
-    REAL(DP) :: Eij_vdw, Eij_qq
+    REAL(DP) :: Eij_vdw, Eij_qq, Eij_qq_simple, Ei_qq_simple
     REAL(DP) :: eps
     REAL(DP) :: rcom, rx, ry, rz
 !molecule_priority    REAL(DP) :: hardcore_max_r, molecule_hardcore_r
@@ -1256,7 +1266,7 @@ CONTAINS
             DO ia = 1, natoms(is)
                 IF (.NOT. widom_atoms(ia)%exist) CYCLE
                 CALL Compute_Atom_Nonbond_Inter_Energy_Cells(ia,im,is, &
-                        Ei_inter_vdw, Ei_inter_qq, overlap)
+                        Ei_inter_vdw, Ei_inter_qq, overlap, Ei_qq_simple)
                 IF (overlap) RETURN
                 E_inter_vdw = E_inter_vdw + Ei_inter_vdw
                 E_inter_qq = E_inter_qq + Ei_inter_qq
@@ -1274,7 +1284,7 @@ CONTAINS
                         rcom,rx,ry,rz)
                 IF (.NOT. get_interaction) CYCLE moleculeLoop0
                 CALL Compute_MoleculePair_Energy(im,is,this_locate,ispecies, &
-                     this_box,Eij_vdw,Eij_qq,overlap)
+                     this_box,Eij_vdw,Eij_qq,overlap,Eij_qq_simple)
 
                 IF (overlap) RETURN ! this should never happen; already caught by cell list
 
@@ -1517,7 +1527,7 @@ CONTAINS
   !-----------------------------------------------------------------------------
 
   SUBROUTINE Compute_MoleculePair_Energy(im,is,jm,js,this_box, &
-    vlj_pair,vqq_pair,overlap)
+    vlj_pair,vqq_pair,overlap,Eij_qq)
     !***************************************************************************
     ! The subroutine returns the interaction energy of the input molecule with
     ! another molecule. Thus, it computes the intermolecular vdw and
@@ -1548,6 +1558,9 @@ CONTAINS
     REAL(DP) :: rxijp, ryijp, rzijp, rxij, ryij, rzij, rijsq
     REAL(DP) :: Eij_intra_vdw, Eij_intra_qq, Eij_inter_vdw, Eij_inter_qq
 
+    REAL(DP) :: Eij_qq_temp
+    REAL(DP), OPTIONAL :: Eij_qq
+
     LOGICAL :: get_vdw, get_qq
 
     INTEGER :: locate_im, locate_jm
@@ -1567,6 +1580,7 @@ CONTAINS
 
     vlj_pair = 0.0_DP
     vqq_pair = 0.0_DP
+    Eij_qq_temp = 0.0_DP
     overlap = .FALSE.
 
     DO ia = 1, natoms(is)
@@ -1604,14 +1618,22 @@ CONTAINS
 
           CALL Compute_AtomPair_Energy(rxij,ryij,rzij,rijsq, &
                is,im,ia,js,jm,ja,get_vdw,get_qq, &
-               Eij_intra_vdw,Eij_intra_qq,Eij_inter_vdw,Eij_inter_qq)
+               Eij_intra_vdw,Eij_intra_qq,Eij_inter_vdw,Eij_inter_qq,Eij_qq)
 
           vlj_pair = vlj_pair + Eij_inter_vdw
           vqq_pair = vqq_pair + Eij_inter_qq
 
+          IF (PRESENT(Eij_qq)) THEN
+                  IF (widom_active .AND. .NOT. cbmc_flag) THEN
+                          Eij_max = MAX(Eij_max,Eij_inter_vdw+Eij_qq)
+                  END IF
+                  Eij_qq_temp = Eij_qq_temp + Eij_qq
+          END IF
+
         END IF
       END DO
     END DO
+    IF (PRESENT(Eij_qq)) Eij_qq = Eij_qq_temp
 
     IF (l_pair_nrg) THEN
       IF ( .NOT. (cbmc_flag .OR. widom_active)) THEN
@@ -1633,7 +1655,7 @@ CONTAINS
   !-----------------------------------------------------------------------------
 
   SUBROUTINE Compute_AtomPair_Energy(rxij,ryij,rzij,rijsq,is,im,ia,js,jm,ja, &
-    get_vdw,get_qq,E_intra_vdw,E_intra_qq,E_inter_vdw,E_inter_qq)
+    get_vdw,get_qq,E_intra_vdw,E_intra_qq,E_inter_vdw,E_inter_qq,Eij_qq_o)
 
     ! Computes the vdw and q-q pair energy between atoms ia and ja of molecules
     ! im and jm and species is and js, given their separation rijsq. I have
@@ -1675,6 +1697,7 @@ CONTAINS
     REAL(DP) :: SigByR_shift, SigByRn_shift, SigByRm_shift
     ! Coulomb potential
     REAL(DP) :: qi, qj, Eij_qq
+    REAL(DP), OPTIONAL :: Eij_qq_o
 
     LOGICAL :: atom_i_exist, atom_j_exist
 
@@ -1824,14 +1847,14 @@ CONTAINS
                       ( .NOT. igas_flag) ) THEN
                    ! Real space Ewald part
                    CALL Compute_AtomPair_Ewald_Real(ia,im,is,qi,ja,jm,js,qj, &
-                        rijsq,E_intra_qq,E_inter_qq,ibox)
+                        rijsq,E_intra_qq,E_inter_qq,ibox,Eij_qq_o)
 
                    ! self and reciprocal parts need to be computed as total energy
                    ! differences between original configuration and the perturbed
                    ! configuration.
 
               ELSEIF (int_charge_sum_style(ibox) == charge_dsf) THEN
-                   CALL Compute_AtomPair_DSF_Energy(ia,im,is,qi,ja,jm,js,qj,rijsq,E_intra_qq,E_inter_qq,ibox)
+                   CALL Compute_AtomPair_DSF_Energy(ia,im,is,qi,ja,jm,js,qj,rijsq,E_intra_qq,E_inter_qq,ibox,Eij_qq_o)
 
               ELSEIF (int_charge_sum_style(ibox) == charge_cut .OR. &
                   int_charge_sum_style(ibox) == charge_minimum .OR. igas_flag) THEN
@@ -1839,10 +1862,12 @@ CONTAINS
                    Eij_qq = charge_factor*(qi*qj)/SQRT(rijsq)
                    ! Apply charge scaling for intramolecular energies
                    IF ( is == js .AND. im == jm ) THEN
-                     E_intra_qq = E_intra_qq + charge_intra_scale(ia,ja,is) * Eij_qq
+                     Eij_qq = charge_intra_scale(ia,ja,is) * Eij_qq
+                     E_intra_qq = E_intra_qq + Eij_qq
                    ELSE
                      E_inter_qq = E_inter_qq + Eij_qq
                    END IF
+                   IF (PRESENT(Eij_qq_o)) Eij_qq_o = Eij_qq
 
              ENDIF
 
@@ -1853,26 +1878,29 @@ CONTAINS
   END SUBROUTINE Compute_AtomPair_Energy
 
 
-SUBROUTINE Compute_AtomPair_DSF_Energy(ia,im,is,qi,ja,jm,js,qj,rijsq,E_intra_qq,E_inter_qq,ibox)
+SUBROUTINE Compute_AtomPair_DSF_Energy(ia,im,is,qi,ja,jm,js,qj,rijsq,E_intra_qq,E_inter_qq,ibox,Eij_qq_o)
 USE Global_Variables
 IMPLICIT NONE
 INTEGER :: ia,im,is,ja,jm,js,ibox
-REAL(DP) :: qi,qj,rijsq,rij, Eij, qsc, E_intra_qq,E_inter_qq
+REAL(DP), OPTIONAL :: Eij_qq_o
+REAL(DP) :: qi,qj,rijsq,rij, Eij, qsc, E_intra_qq,E_inter_qq, cfqq, Eij_qq
 
 
       rij = SQRT(rijsq)
+      cfqq = qi*qj*charge_factor
       Eij = dsf_factor2(ibox)*(rij-rcut_coul(ibox)) - dsf_factor1(ibox) + erfc(alpha_dsf(ibox)*rij)/rij
-      Eij = qi*qj*Eij*charge_factor
+      Eij = Eij*cfqq
 
       IF (is==js .AND. im==jm) THEN
               qsc = charge_intra_scale(ia,ja,is)
-              E_intra_qq = Eij - (1.0_DP-qsc)*charge_factor*(qi*qj)/SQRT(rijsq)
+              Eij_qq = cfqq/rij
+              E_intra_qq = Eij - (1.0_DP-qsc)*Eij_qq
               E_inter_qq = 0.0_DP
-
+              IF (PRESENT(Eij_qq_o)) Eij_qq_o = Eij_qq
       ELSE
-
               E_intra_qq = 0.0_DP
               E_inter_qq = Eij
+              IF (PRESENT(Eij_qq_o)) Eij_qq_o = cfqq/rij
       END IF
 
 
@@ -1883,7 +1911,7 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
   !-----------------------------------------------------------------------------
 
   SUBROUTINE Compute_AtomPair_Ewald_Real(ia,im,is,qi,ja,jm,js,qj,rijsq, &
-    E_intra_qq,E_inter_qq,ibox)
+    E_intra_qq,E_inter_qq,ibox,Eij_qq_o)
   !-----------------------------------------------------------------------------
     ! Real space part of the Ewald sum between atoms ia and ja with
     ! charges qi and qj.
@@ -1904,12 +1932,12 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
     INTEGER :: ja,jm,js
     REAL(DP) :: qj
     REAL(DP) :: rijsq
-    REAL(DP) :: E_intra_qq, E_inter_qq
+    REAL(DP) :: E_intra_qq, E_inter_qq, Eij_qq
     INTEGER :: ibox
+    REAL(DP), OPTIONAL :: Eij_qq_o
 
     ! Local variables
     REAL(DP) :: rij,erf_val
-    REAL(DP) :: Eij_qq
 
     ibox = molecule_list(im,is)%which_box
 
@@ -1930,6 +1958,8 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
 
     ! Periodic image real space energy
     E_inter_qq = E_inter_qq - erf_val * Eij_qq
+
+    IF (PRESENT(Eij_qq_o)) Eij_qq_o = Eij_qq
 
 
   !-----------------------------------------------------------------------------

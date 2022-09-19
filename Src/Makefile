@@ -136,6 +136,7 @@ OBJS =  main.o \
   pregen_control.o \
   pregen_driver.o \
   sector_routines.o \
+  pair_emax_estimation.o \
 
 
 ####################################################################

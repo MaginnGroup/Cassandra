@@ -82,6 +82,7 @@ PROGRAM Main
   USE Energy_Routines
   USE Simulation_Properties
   USE Fragment_Growth
+  USE Pair_Emax_Estimation
 
   IMPLICIT NONE
 
@@ -97,6 +98,9 @@ PROGRAM Main
   CHARACTER(80) :: name
 
   LOGICAL :: overlap, check_charge
+
+  REAL(DP) :: Emax
+  INTEGER :: nskips
 
   REAL(DP) :: q_box
 
@@ -499,9 +503,9 @@ PROGRAM Main
             // TRIM(Int_To_String(ntrials(is,ibox)%widom))
           WRITE(logunit,'(8x,A,F27.3,A)') "CPU time: ", widom_cpu_time(is,ibox), " seconds"
           WRITE(logunit,'(8x,A,F21.3,A)') "Wallclock time: ", widom_wc_time(is,ibox), " seconds"
-          !WRITE(logunit,'(A,I2,A,I2,A,F24.12)') &
-          !  'Ideal Chemical potential for species',is,'in box',i, 'is', &
-          !  chpotid(is,i) / ntrials(is,i)%cpcalc
+          CALL Estimate_Pair_Emax(is,ibox,Emax,nskips)
+          WRITE(logunit,'(8x,A,F12.6,A)') "Recommended pair U*_max = ", Emax, &
+                  " would have flagged about " // TRIM(Int_To_String(nskips)) // " more overlaps"
         END IF
       END DO
     END DO
