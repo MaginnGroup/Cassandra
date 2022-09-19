@@ -244,6 +244,37 @@ combining rules can be used, as described elsewhere.
      Energy parameter    :math:`\epsilon/k_B`     K
      Collision diameter  :math:`\sigma`           Å
     =================== ====================== ================ 
+
+Mixing rules
+~~~~~~~~~~~~
+
+The available mixing rules are Lorentz-Berthelot, geometric, size-weighted and custom.
+The algebraic expressions for the first three are:
+
+-  Lorenz-Berthelot
+
+   .. math:: 
+        \epsilon_{ij} = \sqrt {\epsilon_i  \epsilon_j} \\
+        \sigma_{ij} = \frac{\sigma_i + \sigma_j}{2} 
+
+-  Geometric 
+
+   .. math:: 
+        \epsilon_{ij} = \sqrt {\epsilon_i  \epsilon_j} \\
+        \sigma_{ij} = \sqrt{\sigma_i \sigma_j}
+
+-  Size-weighted 
+
+   .. math:: 
+        \epsilon_{ij} = \frac{ \frac{\epsilon_i}{\epsilon_j}  \sigma_i + \frac{\epsilon_j}{\epsilon_i}  \sigma_j }{2}  \\
+        \sigma_{ij} = \frac{\sigma_i + \sigma_j}{2} 
+
+where :math:`\epsilon_{ij}` and :math:`\sigma_{ij}` the energy and size parameters 
+for atom types `i` and `j`, respectively. 
+
+In addition to these analytic mixing rules, the user can specify the specific
+interaction parameters for each pair of atom types using the ``custom``
+mixing rule. For more information, see :ref:`sec:mixing_rule`
     
 Electrostatics
 ~~~~~~~~~~~~~~

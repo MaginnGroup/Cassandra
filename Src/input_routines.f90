@@ -936,6 +936,9 @@ SUBROUTINE Get_Mixing_Rules
            WRITE(logunit,'(A)') 'Lorentz-Berthelot mixing rule specified'
         ELSEIF (mix_rule == 'geometric') THEN
            WRITE(logunit,'(A)') 'Geometric mixing rule specified'
+        ELSEIF (mix_rule == 'sw'.OR. mix_rule == 'SW') THEN
+           mix_rule = 'SW'
+           WRITE(logunit,'(A)') 'Size-weighted mixing rule specified'
         ELSEIF (mix_rule == 'custom') THEN
            WRITE(logunit,'(A)') 'Custom mixing rule specified'
         ELSE
