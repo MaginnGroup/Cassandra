@@ -2076,12 +2076,16 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
 
         DO ii = 1, kappa_dih
 
-           IF ( prob_pick <= weight(ii) ) EXIT
+           IF ( prob_pick < weight(ii) ) EXIT
 
         END DO
 
         trial = ii
 
+     END IF
+     IF (trial == kappa_dih + 1) THEN
+             cbmc_overlap = .TRUE.
+             RETURN
      END IF
 
      ! Recover the individual probability for the accepted trial
