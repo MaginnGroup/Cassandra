@@ -2018,6 +2018,7 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
            IF ( nrg_kBT >= max_kBT) THEN
               ! the energy is too high, set the weight to zero
               weight(ii) = 0.0_DP
+              overlap_trial(ii) = .TRUE.
            ELSE
               weight(ii) = DEXP(-nrg_kBT)
            END IF
