@@ -20,17 +20,17 @@ jobs:
 - job: TestSuite
   strategy:
     matrix:
-      Ubuntu-gcc-8:
+      Ubuntu-gcc-9:
         imageName: 'ubuntu-latest'
         python.version: 3.7
-        gfortran.version: 'gfortran-8'
+        gfortran.version: 'gfortran-9'
         makefile.name: 'Makefile.gfortran'
         exec.name: 'cassandra_gfortran.exe'
         omp.num.threads: 1
-      Ubuntu-gcc-9:
-        imageName: 'ubuntu-18.04'
+      Ubuntu-gcc-10:
+        imageName: 'ubuntu-latest'
         python.version: 3.7
-        gfortran.version: 'gfortran-9'
+        gfortran.version: 'gfortran-10'
         makefile.name: 'Makefile.gfortran'
         exec.name: 'cassandra_gfortran.exe'
         omp.num.threads: 1
@@ -41,10 +41,10 @@ jobs:
         makefile.name: 'Makefile.gfortran.openMP'
         exec.name: 'cassandra_gfortran_openMP.exe'
         omp.num.threads: 8
-      macOS-gcc-9:
+      macOS-gcc-10:
         imageName: 'macOS-latest'
         python.version: 3.7
-        gfortran.version: 'gfortran-9'
+        gfortran.version: 'gfortran-10'
         makefile.name: 'Makefile.gfortran'
         exec.name: 'cassandra_gfortran.exe'
         omp.num.threads: 1
@@ -65,13 +65,6 @@ jobs:
     - bash: sudo chown -R $USER $CONDA
       displayName: Take ownership of conda installation
       condition: eq( variables['Agent.OS'], 'Darwin' )
-
-    - bash: |
-        brew install gcc@8
-        brew upgrade gcc@8
-        gfortran-8 --version
-      displayName: Install gcc-8 if needed
-      condition: eq( variables['gfortran.version'], 'gfortran-8' )
 
     - bash: |
         cd Src
@@ -107,5 +100,3 @@ jobs:
         cd Scripts/testSuite/
         python testSuite.py ../../bin/cassandra.exe
       displayName: Run Tests
-
-
