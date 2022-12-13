@@ -171,13 +171,21 @@ CHARACTER(FILENAME_LEN), DIMENSION(:,:), ALLOCATABLE :: wprop2_filenames
 LOGICAL, DIMENSION(:,:), ALLOCATABLE :: first_open_wprop2
 
 ! Variables associated with pregenerated trajectory xyz and H files
-INTEGER :: pregen_xyz_unit_base = 240
+
+LOGICAL, DIMENSION(:), ALLOCATABLE :: has_xtc, has_xyz, has_ndx, has_Hfile
+
+INTEGER :: pregen_H_unit_base = 240
+INTEGER, DIMENSION(:), ALLOCATABLE :: pregen_H_unit
+CHARACTER(FILENAME_LEN), DIMENSION(:), ALLOCATABLE :: pregen_H_filenames
+
+INTEGER :: pregen_xyz_unit_base = 250
 INTEGER, DIMENSION(:), ALLOCATABLE :: pregen_xyz_unit
 CHARACTER(FILENAME_LEN), DIMENSION(:), ALLOCATABLE :: pregen_xyz_filenames
 
-INTEGER :: pregen_H_unit_base = 250
-INTEGER, DIMENSION(:), ALLOCATABLE :: pregen_H_unit
-CHARACTER(FILENAME_LEN), DIMENSION(:), ALLOCATABLE :: pregen_H_filenames
+LOGICAL, DIMENSION(:), ALLOCATABLE :: xtc_is_open
+CHARACTER(FILENAME_LEN), DIMENSION(:), ALLOCATABLE :: pregen_xtc_filenames
+CHARACTER(FILENAME_LEN), DIMENSION(:), ALLOCATABLE :: pregen_ndx_filenames
+
 
 
 END MODULE File_Names

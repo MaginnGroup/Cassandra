@@ -136,9 +136,13 @@ OBJS =  main.o \
   pregen_control.o \
   pregen_driver.o \
   sector_routines.o \
+  xtc_routines.temp.o \
 
 
 ####################################################################
+
+%.temp.f90 : %.no_xtc.f90
+	cp $< $@
 
 %o: %f90
 	${FC} ${F90FLAGS} ${INCS} ${OPTFLAGS} ${LINK_F90} $<
@@ -147,7 +151,7 @@ exe: $(OBJS)
 	$(FC) $(OPTFLAGS) -o $(BIN_DIR)/$(EXEC_NAME) $(OBJS) $(LIBS) $(LINK_F90) $(LINKFLAGS)
 
 clean:
-	rm -fr *.o *.mod dep.mk
+	rm -fr *.o *.mod *.temp.f90 dep.mk
 
 dep.mk:
 	./get_deps
