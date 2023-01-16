@@ -8,34 +8,34 @@
 ********************************************************************************
 **********************************Log File**************************************
 ********************************************************************************
-
+ 
 For any published work that uses Cassandra, cite the following reference:
     Shah JK, Marin‐Rimoldi E, Mullen RG, Keene BP, Khan S,
     Paluch AS, Rai N, Romanielo LL, Rosch TW, Yoo B, Maginn EJ.
     Cassandra: An open source Monte Carlo package for molecular simulation.
     Journal of Computational Chemistry. 2017, 38, 1727–1739.
     http://dx.doi.org/10.1002/jcc.24807
-
+ 
 Run info
 ********************************************************************************
-version: Cassandra Version 1.2.5
+version: Cassandra Version 1.3.0
 inputfile: dee_widom.inp
 name of run: dee_widom.out
-date (mm/dd/yyyy): 05/28/2022
-time: 23:25:16
-machine: LAPTOP-24O59I2D
+date (mm/dd/yyyy): 10/21/2022
+time: 16:45:07
+machine: maginnfe.crc.nd.edu
 ********************************************************************************
-
+ 
 Verbose log
 ********************************************************************************
 Normal output to logfile
 ********************************************************************************
-
+ 
 Simulation type
 ********************************************************************************
 pregen              
 ********************************************************************************
-
+ 
 Copy input file
 ********************************************************************************
                                                                                 
@@ -108,12 +108,12 @@ rcut_cbmc 6.5
                                                                                 
 END                                                                             
 ********************************************************************************
-
+ 
 Number of species
 ********************************************************************************
 1
 ********************************************************************************
-
+ 
 Box info
 ********************************************************************************
 Number of simulation boxes     1
@@ -124,7 +124,7 @@ Box 1 is CUBIC
  Distance between box faces    17.5000      17.5000      17.5000
  Box volume, A^3          5359.3750
 ********************************************************************************
-
+ 
 Pair style
 ********************************************************************************
 VDW style used is:   LJ             in box:  1
@@ -139,7 +139,7 @@ Section "# Pair_Energy" is missing from the input file
  By default, pair interaction energy arrays will not be stored
 Lorentz-Berthelot mixing rule specified
 ********************************************************************************
-
+ 
 Molecule info
 ********************************************************************************
  Reading molecular connectivity information
@@ -152,11 +152,11 @@ Molecule info
    0 improper(s) specified.
    3 fragment(s) specified.
    2 fragment bond(s) specified.
-
+ 
  Species  Max molecules
  -------  -------------
       1             30
-
+ 
  Species     1
  -------------------------------------------------------------------------------
  Atom parameters read
@@ -181,7 +181,7 @@ Molecule info
  Fragment file for fragment 2 is species1/frag2/frag2.dat
  Fragment file for fragment 3 is species1/frag3/frag3.dat
  -------------------------------------------------------------------------------
-
+ 
  Fragment coord info
  -------------------------------------------------------------------------------
  library_coords array successfully allocated
@@ -191,24 +191,24 @@ Molecule info
  species1/frag3/frag3.dat
  -------------------------------------------------------------------------------
 ********************************************************************************
-
+ 
 Seed info
 ********************************************************************************
 The starting seeds are:            82638601           249702601
 ********************************************************************************
-
+ 
 Temperature
 ********************************************************************************
 Temperature of box 1 is 343.000 K
 ********************************************************************************
-
+ 
 CBMC info
 ********************************************************************************
 Kappa for first fragment insertion          12
 Kappa for dihedral selection                10
  Cutoff for CBMC for box 1 is         6.50
 ********************************************************************************
-
+ 
 Simulation length info
 ********************************************************************************
 Thermodynamic quantities will be computed every                    1 Steps     
@@ -218,13 +218,13 @@ Coordinates will be written to file every                          1 Steps
 The simulation will be run for                                  11 Steps     
 Instantaneous values will be written every                         1 Steps     
 ********************************************************************************
-
+ 
 Widom insertion info
 ********************************************************************************
  Species 1 will have 10000 Widom insertions every 1 MC steps
           with de Broglie wavelength (Angstroms):        0.109491892
 ********************************************************************************
-
+ 
 Property info
 ********************************************************************************
 Total number of property files to be written is     1   for box 1
@@ -237,37 +237,37 @@ Total number of property files to be written is     1   for box 1
  Volume
  Density
 ********************************************************************************
-
+ 
 Minimum distance cutoff
 ********************************************************************************
 MC low cutoff distance is   2.000    Angstrom
 ********************************************************************************
-
+ 
 Pregenerated trajectory info
 ********************************************************************************
  Box size will be replaced by those read from the pregenerated H file
  Reading pregenerated trajectory for box            1  from xyz file dee_traj.xyz and H file dee_traj.H
 ********************************************************************************
-
+ 
 ********************************************************************************
 ************************ Begin Cassandra simulation ****************************
 ********************************************************************************
-
+ 
 Initial configuration
 ********************************************************************************
 No initial configuration needed
 ********************************************************************************
-
+ 
 Charge neutrality check
 ********************************************************************************
  Species 1 has charge:                  0.00000000
-
+ 
  Box     1 has charge:                  0.00000000
 ********************************************************************************
-
+ 
 Compute total energy
 ********************************************************************************
-
+ 
  Energy components for box 1     kJ/mol-Extensive
  ---------------------------------------------------------------------
  Total system energy                        0.000
@@ -283,75 +283,75 @@ Compute total energy
    Long range correction                    0.000
    Inter molecule q                         0.000
    Reciprocal ewald                         0.000
-   Self ewald                              -0.000
+   Self ewald                               0.000
  ---------------------------------------------------------------------
    Number of reciprocal vectors              2934
-
+ 
 ********************************************************************************
-
+ 
 Run simulation
 ********************************************************************************
                 Step       Move   Mol Spc Box  Success  MaxWidth
 ********************************************************************************
-
+ 
 Energy of final configuration
 ********************************************************************************
-
+ 
  Energy components for box 1     kJ/mol-Extensive       Relative_Error
  ---------------------------------------------------------------------
- Total system energy                     -301.346           -0.000E+00
+ Total system energy                     -301.346            0.000E+00
  Intra molecular energy                   289.391            0.000E+00
    Bond energy                              0.000            0.000E+00
    Bond angle energy                      133.442            0.000E+00
    Dihedral angle energy                  175.070            0.000E+00
    Improper angle energy                    0.000            0.000E+00
-   Intra molecule vdw                     -19.121           -0.000E+00
+   Intra molecule vdw                     -19.121            0.000E+00
    Intra molecule q                         0.000            0.000E+00
- Inter molecular energy                  -590.738           -0.000E+00
-   Inter molecule vdw                    -403.119           -0.000E+00
-   Long range correction                 -129.129           -0.000E+00
+ Inter molecular energy                  -590.738            0.000E+00
+   Inter molecule vdw                    -403.119            0.000E+00
+   Long range correction                 -129.129            0.000E+00
    Inter molecule q                      4221.137            0.000E+00
    Reciprocal ewald                       402.855            0.000E+00
-   Self ewald                           -4682.482           -0.000E+00
+   Self ewald                           -4682.482            0.000E+00
  ---------------------------------------------------------------------
    Number of reciprocal vectors              3295
-
+ 
 ********************************************************************************
-
-
+ 
+ 
 Writing information for box  1
 ********************************************************************************
-
+ 
    ---------------------------------------------------------
    Writing information for species  1
-
+ 
                 Move      Trials     Success   % Success
    ---------------------------------------------------------
-
+ 
 ********************************************************************************
-
+ 
 Shifted chemical potentials from Widom insertions
 ********************************************************************************
-Shifted chemical potential for species 1 in box 1 is        -41.613307889516 kJ/mol
-        14301 Widom insertions with overlap out of 110000
+Shifted chemical potential for species 1 in box 1 is        -40.774797181400 kJ/mol
+        14350 Widom insertions with overlap out of 110000
 ********************************************************************************
-
+ 
  Writing information about subroutine times
 ********************************************************************************
- Widom time =                  0.030925 hrs.
+ Widom time =                  0.073203 hrs.
 ********************************************************************************
-
+ 
 ********************************************************************************
 ************************ Cassandra simulation complete *************************
 ********************************************************************************
-
+ 
  Program execution time
 ********************************************************************************
          0      Years
          0     Months
          0       Days
          0      Hours
-         1    Minutes
-        52    Seconds
-       532         ms
+         4    Minutes
+        26    Seconds
+       825         ms
 ********************************************************************************
