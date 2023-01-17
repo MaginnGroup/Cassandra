@@ -40,6 +40,7 @@ SUBROUTINE GEMC_Control
   USE Atoms_To_Place
   USE Angle_Dist_Pick
   USE Energy_Routines
+  USE Atompair_Nrg_Table_Routines
 
   IMPLICIT NONE
 
@@ -140,5 +141,7 @@ SUBROUTINE GEMC_Control
   CALL Get_Dihedral_Atoms_To_Place  
 
   CALL Get_Lookup_Info
+
+  CALL Setup_Atompair_Tables
 
 END SUBROUTINE GEMC_Control

@@ -66,7 +66,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
   REAL(DP) :: dE, dE_intra, dE_inter, dE_frag
   REAL(DP) :: E_bond, E_angle, E_dihedral, E_improper
   REAL(DP) :: E_intra_vdw, E_intra_qq
-  REAL(DP) :: E_inter_vdw, E_inter_qq, E_periodic_qq
+  REAL(DP) :: E_inter, E_periodic_qq
   REAL(DP) :: E_reciprocal, E_self, E_lrc
   REAL(DP) :: E_ring_frag
   REAL(DP) :: ln_pacc, ln_pseq, ln_pbias, this_lambda
@@ -178,7 +178,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
 
   !$OMP PARALLEL DEFAULT(SHARED) &
   !$OMP PRIVATE(ln_pseq, ln_pbias, E_ring_frag, inter_overlap, cbmc_overlap, intra_overlap, i_interval) &
-  !$OMP PRIVATE(widom_var_exp, E_inter_qq, E_periodic_qq, E_intra_qq, E_intra_vdw, E_inter_vdw, dE_frag, dE) &
+  !$OMP PRIVATE(widom_var_exp, E_periodic_qq, E_intra_qq, E_intra_vdw, E_inter, dE_frag, dE) &
   !$OMP PRIVATE(E_bond, E_angle, E_dihedral, E_improper, dE_intra, dE_inter, E_reciprocal, frag_order) &
   !$OMP PRIVATE(t_cpu_s, t_cpu_e, thread_changefactor, Eij_ind) &
   !$OMP REDUCTION(+:widom_sum,n_overlaps,subinterval_sums,t_cpu,Eij_freq,frame_Eij_w_sum) &
@@ -267,13 +267,13 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
             ! and the rest of the system
             Eij_max = 0.0_DP
             CALL Compute_Molecule_Nonbond_Inter_Energy_Widom(widom_locate,is, &
-                    E_inter_vdw,E_inter_qq,inter_overlap)
+                    E_inter,inter_overlap)
 
             ! Calculate the nonbonded energy interaction within the inserted molecule
             IF (.NOT. inter_overlap) THEN
                     CALL Compute_Molecule_Nonbond_Intra_Energy(widom_locate,is, &
                             E_intra_vdw,E_intra_qq,E_periodic_qq,intra_overlap)
-                    E_inter_qq = E_inter_qq + E_periodic_qq
+                    E_inter = E_inter + E_periodic_qq
             END IF
 
 !widom_timing            IF (.NOT. omp_flag) CALL cpu_time(noncbmc_time_e)
@@ -288,7 +288,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
                   ! There are no overlaps, so we can calculate the change in potential energy.
                   !
                   ! Already have the change in nonbonded energies
-                  dE_inter = E_inter_vdw + E_inter_qq + E_inter_constant 
+                  dE_inter = E_inter + E_inter_constant 
                   dE_intra = E_intra_vdw + E_intra_qq
 
                   ! Bonded intramolecular energies

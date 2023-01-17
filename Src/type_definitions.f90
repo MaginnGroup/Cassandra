@@ -121,6 +121,12 @@ MODULE Type_Definitions
      INTEGER (KIND=INT64), DIMENSION(:), ALLOCATABLE :: insertions_in_step, widom_interval
      REAL(DP), DIMENSION(:), ALLOCATABLE :: widom_sum
 
+     !! Is this a solute?  Is this a solvent species?
+     LOGICAL :: l_solute, l_solvent
+
+     !!Atompair_nrg_table index bases
+     INTEGER :: solute_base, solvent_base
+
   END TYPE Species_Class
   !****************************************************************************
 

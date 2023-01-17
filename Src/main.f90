@@ -190,6 +190,9 @@ PROGRAM Main
   ! Standard level of output to logfile, or verbose output
   CALL Get_Verbosity_Info
 
+  need_solvents = .FALSE.
+  precalc_atompair_nrg = .FALSE.
+
 ! Determine the simulation type, and then read in all the necessary information
 ! from the input file for starting up that type of simulation
   CALL Get_Sim_Type

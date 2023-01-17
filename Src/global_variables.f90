@@ -649,6 +649,20 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
 !widom_timing  !$OMP THREADPRIVATE(n_clo, n_not_clo, n_nrg_overlap)
 !widom_timing  !$OMP THREADPRIVATE(cell_list_time, normal_overlap_time, non_overlap_time, nrg_overlap_time)
 
+  !!! atompair energy table global variables
+  INTEGER :: atompair_nrg_res
+  LOGICAL :: precalc_atompair_nrg
+  REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: atompair_nrg_table
+  REAL(DP), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: atompair_rminsq_table
+  REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: typepair_nrg_table
+  REAL(DP) :: rsq_step
+  REAL(DP) :: rsq_shifter
+  INTEGER, DIMENSION(:), ALLOCATABLE :: typepair_solute_indices, typepair_solvent_indices
+  INTEGER, DIMENSION(:), ALLOCATABLE :: solute_atomtypes, solvent_atomtypes
+  INTEGER :: solute_ntypes, solvent_ntypes, solute_maxind, solvent_maxind
+  LOGICAL :: need_solvents
+  !!!!
+
   !
   REAL(DP), DIMENSION(0:1000)  :: type_charge_min, type_charge_max
   REAL(DP), DIMENSION(:,:), ALLOCATABLE :: rminsq_table

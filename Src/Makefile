@@ -137,6 +137,7 @@ OBJS =  main.o \
   pregen_driver.o \
   sector_routines.o \
   pair_emax_estimation.o \
+  atompair_nrg_table_routines.o \
 
 
 ####################################################################

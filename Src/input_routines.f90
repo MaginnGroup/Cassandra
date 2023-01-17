@@ -259,6 +259,8 @@ SUBROUTINE Get_Nspecies
   nfragments = 0
   fragment_bonds = 0
   tp_correction = 0
+  species_list%l_solute = .FALSE.
+  species_list%l_solvent = .FALSE.
 
   WRITE(logunit,'(A80)') '********************************************************************************'
 
@@ -4431,6 +4433,8 @@ SUBROUTINE Get_Move_Probabilities
                     species_list(is)%int_insert = int_random
                     species_list(is)%species_type = 'SORBATE'
                     species_list(is)%int_species_type = int_sorbate
+                    species_list(is)%l_solute = .TRUE.
+                    species_list(is)%l_solvent = .TRUE.
 
                  ELSE IF(line_array(is) == 'RESTRICTED' .OR. line_array(is) == 'restricted') THEN
                     IF (nfragments(is) == 0) THEN
@@ -4447,6 +4451,8 @@ SUBROUTINE Get_Move_Probabilities
                     species_list(is)%int_insert = int_random
                     species_list(is)%species_type = 'SORBATE'
                     species_list(is)%int_species_type = int_sorbate
+                    species_list(is)%l_solute = .TRUE.
+                    species_list(is)%l_solvent = .TRUE.
 
                  ELSE IF(line_array(is) == 'NONE' .OR. line_array(is) == 'none') THEN
                     ! species is not inserted
@@ -4490,6 +4496,7 @@ SUBROUTINE Get_Move_Probabilities
 
                        IF (.NOT. l_prob_swap_species) THEN
                           WRITE(logunit,'(2X,A)') 'By default, species will be selected according to its mole fraction in box_out'
+                          species_list%l_solute = .TRUE.
                        END IF
                        EXIT
                     ELSE IF (line_string2(1:17) == 'prob_swap_species') THEN
@@ -4506,6 +4513,10 @@ SUBROUTINE Get_Move_Probabilities
                        DO is = 1, nspecies
                           prob_swap_species(is) = String_To_Double(line_array(is+1))
                           cum_prob_swap_species(is) = SUM(prob_swap_species(1:is))
+                          IF (prob_swap_species(is) > tiny_number) THEN
+                                  species_list(is)%l_solvent = .TRUE.
+                                  species_list(is)%l_solute = .TRUE.
+                          END IF
 
                           WRITE(logunit,'(X,A,X,F5.3)') 'Cumulative swap probabilty for species ' // &
                                TRIM(Int_To_String(is)) // ' is ', cum_prob_swap_species(is)
@@ -4584,6 +4595,10 @@ SUBROUTINE Get_Move_Probabilities
 
               DO is = 1,nspecies
                  prob_growth_species(is) = String_To_Double(line_array(is))
+                 IF (prob_growth_species(is) > tiny_number) THEN
+                    species_list(is)%l_solvent = .TRUE.
+                    species_list(is)%l_solute = .TRUE.
+                 END IF
                  IF (nfragments(is) == 0 .AND. prob_growth_species(is) > tiny_number) THEN
                     err_msg = ''
                     err_msg(1) = 'Regrowth probability for species ' // TRIM(Int_To_String(is)) // &
@@ -4938,6 +4953,7 @@ SUBROUTINE Get_Start_Type
               ! Read nmols_to_make
               DO is = 1, nspecies
                  nmols_to_make(is,ibox) = String_To_Int(line_array(is+1))
+                 IF (nmols_to_make(is,ibox) > 0) species_list(is)%l_solvent = .TRUE.
 
                  ! check that inserting species have fragments
                  IF (nfragments(is) == 0 .AND. nmols_to_make(is,ibox) /= 0) THEN
@@ -4970,6 +4986,7 @@ SUBROUTINE Get_Start_Type
               ! Read nmols_to_read
               DO is = 1, nspecies
                  nmols_to_read(is,ibox) = String_To_Int(line_array(is+1))
+                 IF (nmols_to_read(is,ibox) > 0) species_list(is)%l_solvent = .TRUE.
                  WRITE(logunit,'(X,A9,2X,I6,2X,A20,2X,I2)') 'Will read', &
                     nmols_to_read(is,ibox), 'molecules of species', is
               END DO
@@ -4999,6 +5016,7 @@ SUBROUTINE Get_Start_Type
               ! Read nmols_to_read
               DO is = 1, nspecies
                  nmols_to_read(is,ibox) = String_To_Int(line_array(is+1))
+                 IF (nmols_to_read(is,ibox) > 0) species_list(is)%l_solvent = .TRUE.
                  WRITE(logunit,'(X,A9,2X,I6,2X,A20,2X,I2)') 'Will read', &
                     nmols_to_read(is,ibox), 'molecules of species', is
               END DO
@@ -5023,6 +5041,7 @@ SUBROUTINE Get_Start_Type
                  ! assign initial number of molecules to add in each box
                  nmols_to_make(is,ibox) = &
                     String_To_Int(line_array(2+nspecies+is))
+                 IF (nmols_to_make(is,ibox) > 0) species_list(is)%l_solvent = .TRUE.
 
                  ! check that inserting species have fragments
                  IF (nfragments(is) == 0 .AND. nmols_to_make(is,ibox) /= 0) THEN
@@ -5368,6 +5387,7 @@ SUBROUTINE Get_Widom_Info
                         ELSE IF (line_array(i_entry) == 'cbmc') THEN
                                 ibox = ibox + 1
                                 species_list(is)%test_particle(ibox) = .TRUE.
+                                species_list(is)%l_solute = .TRUE.
                                 species_list(is)%widom_sum(ibox) = 0.0_DP
                                 species_list(is)%insertions_in_step(ibox) = String_To_Int(line_array(i_entry+1))
                                 species_list(is)%widom_interval(ibox) = String_To_Int(line_array(i_entry+2))
@@ -5377,6 +5397,7 @@ SUBROUTINE Get_Widom_Info
                                                 n_widom_subgroups(is,ibox) = String_To_Int(line_array(i_entry+3))
                                         END IF 
                                 END IF
+                                species_list(is)%l_solute = .TRUE.
                                 tp_correction(is) = 1
                                 i_unit = i_unit + 1
                                 wprop_file_unit(is,ibox) = wprop_file_unit_base + i_unit
@@ -5593,6 +5614,7 @@ SUBROUTINE Get_Pregen_Info
 !                        ELSE IF (has_H) THEN
                         !box_list(:)%box_shape = 'TRICLINIC'
                         !box_list(:)%int_box_shape = int_cell
+                        need_solvents = .TRUE.
                         IF (nbr_boxes == 1) THEN
                                 WRITE(logunit,*) 'Box size will be replaced by those read from the pregenerated H file'
                         ELSE
@@ -5655,6 +5677,37 @@ SUBROUTINE Get_Pregen_Info
                 END IF
         END DO
 END SUBROUTINE Get_Pregen_Info
+
+SUBROUTINE Get_Solvent_Info
+        INTEGER :: ierr, line_nbr, nbr_entries, i
+        CHARACTER(STRING_LEN) :: line_string,line_array(60)
+        REWIND(inputunit)
+        ierr = 0
+        line_nbr = 0
+        DO
+                line_nbr = line_nbr + 1
+                CALL Read_String(inputunit,line_string,ierr)
+                IF(ierr /= 0) THEN
+                        err_msg = ''
+                        err_msg(1) = 'Error while reading # Pregen_Info'
+                        CALL clean_abort(err_msg,'Get_Solvent_Info')
+                END IF
+                IF (line_string(1:13) == '# Solvent_Species') THEN
+                        line_nbr = line_nbr + 1
+                        CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
+                        DO i = 1, nbr_entries
+                                species_list(String_To_Int(line_array(i)))%l_solvent = .TRUE.
+                        END DO
+                        need_solvents = .FALSE.
+                        RETURN
+                ELSE IF(line_string(1:3) == 'END' .or. line_nbr > 10000 ) THEN
+                        err_msg = ''
+                        err_msg(1) = 'Section # Solvent_Species is missing from'
+                        err_msg(2) = 'the input file and is required'
+                        CALL clean_abort(err_msg, 'Get_Solvent_Info')
+                END IF
+        END DO
+END SUBROUTINE Get_Solvent_Info
 
 
 !******************************************************************************
@@ -5768,11 +5821,20 @@ SUBROUTINE Get_CBMC_Info
                        CALL Clean_Abort(err_msg,'Get_CBMC_Info')
                     END IF
                  END DO
+              ELSE IF (line_array(1) == 'energy_table' .OR. line_array(1) == "nrg_table" .OR. &
+                      line_array(1) == "atompair_nrg_table" .OR. line_array(1) == "atompair_energy_table") THEN
+                      precalc_atompair_nrg = .TRUE.
+                      IF (nbr_entries >= 2) THEN
+                              atompair_nrg_res = String_To_Int(line_array(2))
+                      ELSE
+                              atompair_nrg_res = 1000
+                      END IF
               ELSE
                  err_msg = ''
                  err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
                               TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
-                 err_msg(2) = 'Supported keywords are: kappa_ins, kappa_dih, rcut_cbmc, l_coul_cbmc'
+                 err_msg(2) = 'Supported keywords are:'
+                 err_msg(3) = 'kappa_ins, kappa_dih, rcut_cbmc, l_coul_cbmc, nrg_table'
                  CALL Clean_Abort(err_msg,'Get_CBMC_Info')
               END IF
 
