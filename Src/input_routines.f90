@@ -5692,7 +5692,7 @@ SUBROUTINE Get_Solvent_Info
                         err_msg(1) = 'Error while reading # Pregen_Info'
                         CALL clean_abort(err_msg,'Get_Solvent_Info')
                 END IF
-                IF (line_string(1:13) == '# Solvent_Species') THEN
+                IF (line_string(1:17) == '# Solvent_Species') THEN
                         line_nbr = line_nbr + 1
                         CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
                         DO i = 1, nbr_entries
@@ -5787,7 +5787,7 @@ SUBROUTINE Get_CBMC_Info
               line_nbr = line_nbr + 1
               CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
 
-              IF (nbr_entries < 2 .OR. line_array(1)(1:1) == '!') THEN
+              IF (nbr_entries < 1 .OR. line_array(1)(1:1) == '!') THEN
                  EXIT
               END IF
 
@@ -5829,6 +5829,8 @@ SUBROUTINE Get_CBMC_Info
                       ELSE
                               atompair_nrg_res = 1000
                       END IF
+                      WRITE(logunit,'(X,A)') 'Atom pair energy table with rsq resolution = ' // &
+                              TRIM(Int_To_String(atompair_nrg_res)) // ' will be used.'
               ELSE
                  err_msg = ''
                  err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &

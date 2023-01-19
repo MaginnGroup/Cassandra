@@ -158,6 +158,8 @@ CONTAINS
                                 = typepair_solute_indices(nonbond_list(1:natoms(is),is)%atom_type_number)
                 END DO
 
+                rij = SQRT(rsq_mp_vector)
+
                 DO ibox = 1, nbr_boxes
                         IF (int_charge_sum_style(ibox) == charge_ewald) THEN
                                 f2(:,ibox) = erfc(alpha_ewald(ibox) * rij)/rij
