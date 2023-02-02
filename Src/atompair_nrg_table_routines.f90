@@ -30,6 +30,7 @@ MODULE Atompair_nrg_table_routines
   USE Type_Definitions
   USE Energy_Routines , ONLY: AtomPair_VdW_Energy_Vector
   USE Input_Routines , ONLY: Get_Solvent_Info
+  USE Pair_Emax_Estimation, ONLY: Read_Pair_rminsq
   !$ USE OMP_LIB
 
   IMPLICIT NONE
@@ -38,28 +39,42 @@ MODULE Atompair_nrg_table_routines
 
 CONTAINS
         SUBROUTINE Allocate_Atompair_tables
-                INTEGER :: is, ia, itype, solute_nextbase, solvent_nextbase
-                INTEGER :: solute_ntypes_counter, solvent_ntypes_counter
-                LOGICAL, DIMENSION(0:nbr_atomtypes) :: l_type_solute, l_type_solvent
-                IF (.NOT. precalc_atompair_nrg) RETURN
+                INTEGER :: is, ia, itype, solute_nextbase, solvent_nextbase, wsolute_nextbase
+                INTEGER :: solute_ntypes_counter, solvent_ntypes_counter, wsolute_ntypes_counter
+                LOGICAL, DIMENSION(0:nbr_atomtypes) :: l_type_solute, l_type_solvent, l_type_wsolute
                 IF (need_solvents) CALL Get_Solvent_Info
                 solute_nextbase = 0
+                wsolute_nextbase = 0
                 solvent_nextbase = 0
                 solute_ntypes_counter = 0
+                wsolute_ntypes_counter = 0
                 solvent_ntypes_counter = 0
                 l_type_solute = .FALSE.
                 l_type_solvent = .FALSE.
+                l_type_wsolute = .FALSE.
                 IF (ALLOCATED(atompair_nrg_table)) DEALLOCATE(atompair_nrg_table)
                 IF (ALLOCATED(typepair_nrg_table)) DEALLOCATE(typepair_nrg_table)
-                !IF (ALLOCATED(atompair_rminsq_table)) DEALLOCATE(atompair_rminsq_table)
+                IF (ALLOCATED(atompair_rminsq_table)) DEALLOCATE(atompair_rminsq_table)
                 IF (ALLOCATED(typepair_solute_indices)) DEALLOCATE(typepair_solute_indices)
+                IF (ALLOCATED(typepair_wsolute_indices)) DEALLOCATE(typepair_wsolute_indices)
                 IF (ALLOCATED(typepair_solvent_indices)) DEALLOCATE(typepair_solute_indices)
                 ALLOCATE(typepair_solute_indices(0:nbr_atomtypes))
+                ALLOCATE(typepair_wsolute_indices(0:nbr_atomtypes))
                 ALLOCATE(typepair_solvent_indices(0:nbr_atomtypes))
-                typepair_nrg_table = 0.0_DP
                 typepair_solute_indices = 0
+                typepair_wsolute_indices = 0
                 typepair_solvent_indices = 0
                 DO is = 1, nspecies
+                        IF (species_list(is)%l_wsolute) THEN
+                                species_list(is)%wsolute_base = wsolute_nextbase
+                                wsolute_nextbase = wsolute_nextbase + natoms(is)
+                                ! slicing nonbond_list would be improper here because of atom type duplicates
+                                DO ia = 1, natoms(is)
+                                        l_type_wsolute(nonbond_list(ia,is)%atom_type_number) = .TRUE.
+                                END DO
+                        ELSE
+                                species_list(is)%wsolute_base = -99999 ! intended to cause runtime error if used in table reference
+                        END IF
                         IF (species_list(is)%l_solute) THEN
                                 species_list(is)%solute_base = solute_nextbase
                                 solute_nextbase = solute_nextbase + natoms(is)
@@ -82,12 +97,20 @@ CONTAINS
                         END IF
                 END DO
                 solute_ntypes = COUNT(l_type_solute(1:))
+                wsolute_ntypes = COUNT(l_type_wsolute(1:))
                 solvent_ntypes = COUNT(l_type_solvent(1:))
                 IF (ALLOCATED(solute_atomtypes)) DEALLOCATE(solute_atomtypes)
+                IF (ALLOCATED(wsolute_atomtypes)) DEALLOCATE(wsolute_atomtypes)
                 IF (ALLOCATED(solvent_atomtypes)) DEALLOCATE(solvent_atomtypes)
                 ALLOCATE(solute_atomtypes(solute_ntypes))
+                ALLOCATE(wsolute_atomtypes(wsolute_ntypes))
                 ALLOCATE(solvent_atomtypes(solvent_ntypes))
                 DO itype = 1, nbr_atomtypes
+                        IF (l_type_wsolute(itype)) THEN
+                                wsolute_ntypes_counter = wsolute_ntypes_counter + 1
+                                typepair_wsolute_indices(itype) = wsolute_ntypes_counter
+                                wsolute_atomtypes(wsolute_ntypes_counter) = itype
+                        END IF
                         IF (l_type_solute(itype)) THEN
                                 solute_ntypes_counter = solute_ntypes_counter + 1
                                 typepair_solute_indices(itype) = solute_ntypes_counter
@@ -101,9 +124,22 @@ CONTAINS
                 END DO
                 solvent_maxind = solvent_nextbase
                 solute_maxind = solute_nextbase
-                ALLOCATE(typepair_nrg_table(atompair_nrg_res,0:solvent_ntypes,0:solute_ntypes,nbr_boxes))
-                ALLOCATE(atompair_nrg_table(atompair_nrg_res,solvent_nextbase,solute_nextbase,nbr_boxes))
-                !ALLOCATE(atompair_rminsq_table(solvent_nextbase,solute_nextbase,nbr_boxes))
+                wsolute_maxind = wsolute_nextbase
+                IF (precalc_atompair_nrg) THEN
+                        ALLOCATE(typepair_nrg_table(atompair_nrg_res,0:solvent_ntypes,0:solute_ntypes,nbr_boxes))
+                        ALLOCATE(atompair_nrg_table(atompair_nrg_res,solvent_nextbase,solute_nextbase,nbr_boxes))
+                        typepair_nrg_table = 0.0_DP
+                END IF
+                IF (est_atompair_rminsq) THEN
+                        maxrminsq = rsqmin_step * rsqmin_res + rcut_lowsq
+                        rsqmin_shifter = rcut_lowsq - rsqmin_step
+                        ALLOCATE(rsqmin_atompair_w_max(rsqmin_res,solvent_nextbase,wsolute_nextbase,nbr_boxes))
+                        ALLOCATE(rsqmin_atompair_w_sum(rsqmin_res,solvent_nextbase,wsolute_nextbase,nbr_boxes))
+                        ALLOCATE(rsqmin_atompair_freq(rsqmin_res,solvent_maxind,wsolute_maxind,nbr_boxes))
+                END IF
+                IF (read_atompair_rminsq) THEN 
+                        ALLOCATE(atompair_rminsq_table(solvent_nextbase,wsolute_nextbase,nbr_boxes))
+                END IF
         END SUBROUTINE Allocate_Atompair_tables
 
 
@@ -117,8 +153,8 @@ CONTAINS
                 REAL(DP), DIMENSION(solvent_maxind, solute_maxind) :: cfqq
                 REAL(DP), DIMENSION(atompair_nrg_res, nbr_boxes) :: f2
                 REAL(DP) :: solvent_charges(solvent_maxind), solute_charges(solute_maxind)
-                REAL(DP) :: solvent_typeindvec(solvent_maxind), solute_typeindvec(solute_maxind)
-                REAL(DP), DIMENSION(atompair_nrg_res) :: rsq_mp_vector, rsq_lb_vector, rij
+                INTEGER :: solvent_typeindvec(solvent_maxind), solute_typeindvec(solute_maxind)
+                REAL(DP), DIMENSION(atompair_nrg_res) :: rsq_mp_vector, rsq_lb_vector, rij, alpha_rij
                 IF (.NOT. precalc_atompair_nrg) RETURN
                 nsolutes = 0
                 nsolvents = 0
@@ -162,12 +198,14 @@ CONTAINS
 
                 DO ibox = 1, nbr_boxes
                         IF (int_charge_sum_style(ibox) == charge_ewald) THEN
-                                f2(:,ibox) = erfc(alpha_ewald(ibox) * rij)/rij
+                                alpha_rij = alpha_ewald(ibox) * rij
+                                f2(:,ibox) = erfc(alpha_rij)/rij
                         ELSEIF (int_charge_sum_style(ibox) == charge_dsf) THEN
+                                alpha_rij = alpha_dsf(ibox)*rij
                                 f2(:,ibox) = &
                                         dsf_factor2(ibox)*(rij-rcut_coul(ibox)) - &
                                         dsf_factor1(ibox) + &
-                                        erfc(alpha_dsf(ibox)*rij)/rij
+                                        erfc(alpha_rij)/rij
                         ELSEIF (int_charge_sum_style(ibox) == charge_cut) THEN
                                 f2(:,ibox) = 1.0_DP
                         ELSE
@@ -243,9 +281,11 @@ CONTAINS
         END SUBROUTINE Create_Atompair_Nrg_table
 
         SUBROUTINE Setup_Atompair_tables
-                IF (.NOT. precalc_atompair_nrg) RETURN
+                solvent_maxind = 1
+                IF (.NOT. (precalc_atompair_nrg .OR. read_atompair_rminsq .OR. est_atompair_rminsq)) RETURN
                 CALL Allocate_Atompair_Tables
                 IF (precalc_atompair_nrg) CALL Create_Atompair_Nrg_table
+                IF (read_atompair_rminsq) CALL Read_Pair_rminsq
         END SUBROUTINE
 
 

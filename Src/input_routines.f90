@@ -260,6 +260,7 @@ SUBROUTINE Get_Nspecies
   fragment_bonds = 0
   tp_correction = 0
   species_list%l_solute = .FALSE.
+  species_list%l_wsolute = .FALSE.
   species_list%l_solvent = .FALSE.
 
   WRITE(logunit,'(A80)') '********************************************************************************'
@@ -5398,6 +5399,7 @@ SUBROUTINE Get_Widom_Info
                                         END IF 
                                 END IF
                                 species_list(is)%l_solute = .TRUE.
+                                species_list(is)%l_wsolute = .TRUE.
                                 tp_correction(is) = 1
                                 i_unit = i_unit + 1
                                 wprop_file_unit(is,ibox) = wprop_file_unit_base + i_unit
@@ -6732,7 +6734,7 @@ SUBROUTINE Get_Rcutoff_Low
 !
 !******************************************************************************
 
-  INTEGER :: ierr, line_nbr, nbr_entries
+  INTEGER :: ierr, line_nbr, nbr_entries, i_entry
   CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
 !******************************************************************************
@@ -6741,10 +6743,13 @@ SUBROUTINE Get_Rcutoff_Low
   WRITE(logunit,'(A80)') '********************************************************************************'
 
   REWIND(inputunit)
+  est_atompair_rminsq = .FALSE.
+  read_atompair_rminsq = .FALSE.
   ierr = 0
   line_nbr = 0
+  rsqmin_res = 1
 
-  DO
+  sectionsearch:DO
      line_nbr = line_nbr + 1
      CALL Read_String(inputunit,line_string,ierr)
 
@@ -6764,18 +6769,62 @@ SUBROUTINE Get_Rcutoff_Low
         rcut_lowsq = rcut_low * rcut_low
 
         WRITE(logunit,'(A25,2X,F6.3,2X,A10)') 'MC low cutoff distance is ', rcut_low, ' Angstrom'
-
-        line_nbr = line_nbr + 1
-        CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
-        IF (nbr_entries==0) EXIT
-        IF (line_array(1) == "adaptive") THEN
-                calc_rmin_flag = .TRUE.
-                IF (nbr_entries==1) THEN
-                        U_max_base = 708.0_DP / MINVAL(beta)
-                ELSE
-                        U_max_base = String_To_Double(line_array(2)) / MINVAL(beta)
+        keywordsearch:DO
+                line_nbr = line_nbr + 1
+                CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
+                IF (nbr_entries==0) EXIT sectionsearch
+                IF (line_array(1) == "adaptive") THEN
+                        calc_rmin_flag = .TRUE.
+                        IF (nbr_entries==1) THEN
+                                U_max_base = 708.0_DP / MINVAL(beta)
+                        ELSE
+                                U_max_base = String_To_Double(line_array(2)) / MINVAL(beta)
+                        END IF
+                ELSE IF (line_array(1) == "specific") THEN
+                        i_entry = 2
+                        DO WHILE (i_entry <= nbr_entries)
+                                IF (line_array(i_entry) == "write") THEN
+                                        write_rminsq_filename = TRIM(run_name) // ".rminsq"
+                                        IF (i_entry + 2 <= nbr_entries) THEN
+                                                rsqmin_step = String_To_Double(line_array(i_entry+1))
+                                                rsqmin_res = String_To_Int(line_array(i_entry+2))
+                                                i_entry = i_entry + 3
+                                                est_atompair_rminsq = .TRUE.
+                                                WRITE(logunit, "(A,E10.3,A)") "Will create and write atompair rminsq table with " // &
+                                                        TRIM(Int_To_String(rsqmin_res)) // " bins of width ", &
+                                                        rsqmin_step, "square Angstroms"
+                                                WRITE(logunit, "(8X,A)") " to file " // write_rminsq_filename
+                                        ELSE
+                                                err_msg = ""
+                                                err_msg(1) = "Need " // TRIM(Int_To_String(i_entry+2-nbr_entries)) // &
+                                                        " more parameter entries on line " // TRIM(Int_To_String(line_nbr))
+                                                err_msg(2) = "in the input file"
+                                                CALL Clean_Abort(err_msg, "Get_Rcutoff_Low")
+                                        END IF
+                                ELSE IF (line_array(i_entry) == "read") THEN
+                                        IF (i_entry + 1 <= nbr_entries) THEN
+                                                read_rminsq_filename = line_array(i_entry+1)
+                                                read_atompair_rminsq = .TRUE.
+                                                WRITE(logunit, "(A)") "Will read atompair rminsq table from file" // &
+                                                        TRIM(read_rminsq_filename)
+                                                i_entry = i_entry + 2
+                                        ELSE
+                                                err_msg = ""
+                                                err_msg(1) = "Need path to rminsq file"  
+                                                err_msg(2) = "on line " // TRIM(Int_To_String(line_nbr))
+                                                err_msg(3) = "in the input file"
+                                                CALL Clean_Abort(err_msg, "Get_Rcutoff_Low")
+                                        END IF
+                                ELSE
+                                        err_msg = ""
+                                        err_msg(1) = "Keyword " // line_array(i_entry)
+                                        err_msg(2) = "on line " // TRIM(Int_To_String(line_nbr)) // " of input file"
+                                        err_msg(3) = "is not recognized"
+                                        CALL Clean_Abort(err_msg, "Get_Rcutoff_Low")
+                                END IF
+                        END DO
                 END IF
-        END IF
+        END DO keywordsearch
 
         EXIT
 
@@ -6787,7 +6836,7 @@ SUBROUTINE Get_Rcutoff_Low
 
      END IF
 
-  END DO
+  END DO sectionsearch
 
   WRITE(logunit,'(A80)') '********************************************************************************'
 

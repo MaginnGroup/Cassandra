@@ -122,10 +122,10 @@ MODULE Type_Definitions
      REAL(DP), DIMENSION(:), ALLOCATABLE :: widom_sum
 
      !! Is this a solute?  Is this a solvent species?
-     LOGICAL :: l_solute, l_solvent
+     LOGICAL :: l_solute, l_solvent, l_wsolute
 
      !!Atompair_nrg_table index bases
-     INTEGER :: solute_base, solvent_base
+     INTEGER :: solute_base, solvent_base, wsolute_base
 
   END TYPE Species_Class
   !****************************************************************************

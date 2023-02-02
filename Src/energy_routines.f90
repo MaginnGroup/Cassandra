@@ -1634,13 +1634,25 @@ CONTAINS
     INTEGER :: locate_im, locate_jm
 
     TYPE(Atom_Class), POINTER :: these_atoms_i(:), these_atoms_j(:)
+    REAL(DP), DIMENSION(:,:), POINTER :: smp_atompair_rsqmin
+    INTEGER :: bsolvent
+    LOGICAL ::  l_get_rij_min
+
+    l_get_rij_min = .FALSE.
 
     IF (im == widom_locate .AND. is == widom_species) THEN
             these_atoms_i => widom_atoms
+            IF (est_atompair_rminsq .AND. .NOT. cbmc_flag) THEN
+                    l_get_rij_min = .TRUE.
+                    bsolvent = species_list(js)%solvent_base
+                    smp_atompair_rsqmin => swi_atompair_rsqmin( &
+                            bsolvent+1:bsolvent+natoms(js),:) 
+            END IF
     ELSE
             these_atoms_i => atom_list(:,im,is)
     END IF
     IF (jm == widom_locate .AND. js == widom_species) THEN
+            ! not valid with est_atompair_rminsq==.TRUE.
             these_atoms_j => widom_atoms
     ELSE
             these_atoms_j => atom_list(:,jm,js)
@@ -1690,6 +1702,10 @@ CONTAINS
 
           vlj_pair = vlj_pair + Eij_inter_vdw
           vqq_pair = vqq_pair + Eij_inter_qq
+
+          IF (l_get_rij_min) THEN
+                IF (rijsq<smp_atompair_rsqmin(ja,ia)) smp_atompair_rsqmin(ja,ia)=rijsq
+          END IF
 
           IF (PRESENT(Eij_qq)) THEN
                   IF (widom_active .AND. .NOT. cbmc_flag) THEN

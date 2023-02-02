@@ -64,6 +64,7 @@ USE Type_Definitions
 
   ! error handling variables
   INTEGER :: AllocateStatus, OpenStatus, DeAllocateStatus
+  !$OMP THREADPRIVATE(AllocateStatus, OpenStatus, DeAllocateStatus)
 
   ! Timing function
   CHARACTER(15) :: hostname,date,time,zone
@@ -653,7 +654,6 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   INTEGER :: atompair_nrg_res
   LOGICAL :: precalc_atompair_nrg
   REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: atompair_nrg_table
-  REAL(DP), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: atompair_rminsq_table
   REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: typepair_nrg_table
   REAL(DP) :: rsq_step
   REAL(DP) :: rsq_shifter
@@ -663,9 +663,24 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   LOGICAL :: need_solvents
   !!!!
 
+  !!! atompair rminsq table global variables
+  ! swi stands for single Widom insertion
+  ! index swi_atompair_rsqmin with (solvent_base+solvent_ia,solute_ia)
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE, TARGET :: swi_atompair_rsqmin
+  REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: rsqmin_atompair_w_max
+  REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: rsqmin_atompair_w_sum
+  INTEGER(KIND=INT64), DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: rsqmin_atompair_freq
+  REAL(DP), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: atompair_rminsq_table
+  INTEGER, DIMENSION(:), ALLOCATABLE :: typepair_wsolute_indices, wsolute_atomtypes
+  REAL(DP) :: maxrminsq, rsqmin_step, rsqmin_shifter
+  INTEGER :: rsqmin_res, wsolute_ntypes, wsolute_maxind
+  LOGICAL :: est_atompair_rminsq, read_atompair_rminsq
+  !$OMP THREADPRIVATE(swi_atompair_rsqmin)
+  !
+
   !
   REAL(DP), DIMENSION(0:1000)  :: type_charge_min, type_charge_max
-  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: rminsq_table
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE, TARGET :: rminsq_table
   REAL(DP) :: U_max_base, max_rmin
   LOGICAL :: calc_rmin_flag
 

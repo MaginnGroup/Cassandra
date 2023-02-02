@@ -167,9 +167,10 @@ CONTAINS
           TYPE(Atom_Class), POINTER :: atom_ptr
           INTEGER :: cell_coords(3)
           INTEGER, DIMENSION(3,3) :: ci
-          REAL(DP) :: cp(3), dx, dy, dz, dxp, dyp, dzp
+          REAL(DP) :: cp(3), dx, dy, dz, dxp, dyp, dzp, rminsq
           LOGICAL :: need_wrapping(3)
           INTEGER, PARAMETER, DIMENSION(3) :: delta = (/0,-1,1/)
+          REAL(DP), DIMENSION(:), POINTER :: rminsq_ptr
           !
           check_overlap = .TRUE.
           IF (widom_active) THEN
@@ -197,6 +198,11 @@ CONTAINS
                         END DO
                 END IF
           END DO
+          IF (read_atompair_rminsq) THEN
+                  rminsq_ptr => atompair_rminsq_table(:,species_list(is)%wsolute_base+ia,this_box)
+          ELSE
+                  rminsq_ptr => rminsq_table(0:,nonbond_list(ia,is)%atom_type_number)
+          END IF
           DO xi = 1,3
                 DO yi = 1,3
                         DO zi = 1,3
@@ -209,7 +215,15 @@ CONTAINS
                                         dyp = atom_ptr%ryp - cp(2)
                                         dzp = atom_ptr%rzp - cp(3)
                                         CALL Minimum_Image_Separation(this_box,dxp,dyp,dzp,dx,dy,dz)
-                                        IF (dx*dx+dy*dy+dz*dz < rminsq_table(nonbond_list(sector_atom_ID(1),sector_atom_ID(3))%atom_type_number,nonbond_list(ia,is)%atom_type_number)) RETURN
+                                        IF (read_atompair_rminsq) THEN
+                                                rminsq = rminsq_ptr( &
+                                                        species_list(sector_atom_ID(3))%solvent_base + &
+                                                        sector_atom_ID(1))
+                                        ELSE
+                                                rminsq = rminsq_ptr( &
+                                                        nonbond_list(sector_atom_ID(1),sector_atom_ID(3))%atom_type_number+1)
+                                        END IF
+                                        IF (dx*dx+dy*dy+dz*dz < rminsq) RETURN
                                 END DO
                         END DO
                 END DO

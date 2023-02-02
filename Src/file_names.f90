@@ -172,6 +172,7 @@ LOGICAL, DIMENSION(:,:), ALLOCATABLE :: first_open_wprop2
 
 INTEGER :: emax_file_unit = 200
 CHARACTER(FILENAME_LEN), DIMENSION(:,:), ALLOCATABLE :: emax_filenames
+CHARACTER(FILENAME_LEN) :: read_rminsq_filename, write_rminsq_filename
 
 ! Variables associated with pregenerated trajectory xyz and H files
 INTEGER :: pregen_xyz_unit_base = 240

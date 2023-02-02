@@ -492,6 +492,10 @@ PROGRAM Main
 
 
   IF(widom_flag) THEN
+    IF (est_atompair_rminsq) THEN
+            CALL Estimate_Pair_rminsq
+            CALL Write_Pair_rminsq
+    END IF
     WRITE(logunit,*)
     WRITE(logunit,'(A)') 'Shifted chemical potentials from Widom insertions'
     WRITE(logunit,'(A80)') '********************************************************************************'
@@ -509,6 +513,10 @@ PROGRAM Main
           CALL Estimate_Pair_Emax(is,ibox,Emax,nskips)
           WRITE(logunit,'(8x,A,F12.6,A)') "Recommended pair U*_max = ", Emax, &
                   " would have flagged about " // TRIM(Int_To_String(nskips)) // " more overlaps"
+          IF (est_atompair_rminsq) THEN
+                  WRITE(logunit,'(8x,A)') "Recommended atompair rminsq table would have flagged at least " // &
+                          TRIM(Int_To_String(Get_rminsq_nskips(is,ibox))) // " more overlaps"
+          END IF
         END IF
       END DO
     END DO
