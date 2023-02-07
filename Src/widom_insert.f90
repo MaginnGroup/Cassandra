@@ -79,9 +79,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
 
   INTEGER :: changefactor, thread_changefactor, Eij_ind
 
-  REAL(DP), DIMENSION(rsqmin_res,solvent_maxind,natoms(is)) :: frame_rsqmin_atompair_w_max
-  REAL(DP), DIMENSION(rsqmin_res,solvent_maxind,natoms(is)) :: frame_rsqmin_atompair_w_sum
-  INTEGER(KIND=INT64), DIMENSION(rsqmin_res,solvent_maxind,natoms(is)) :: frame_rsqmin_atompair_freq
+  !REAL(DP), DIMENSION(rsqmin_res,solvent_maxind,natoms(is)) :: frame_rsqmin_atompair_w_max
   REAL(DP), DIMENSION(:,:,:), POINTER :: rsqmin_atompair_w_max_ptr, rsqmin_atompair_w_sum_ptr
   INTEGER(KIND=INT64), DIMENSION(:,:,:), POINTER :: rsqmin_atompair_freq_ptr
   INTEGER :: bsolute, rsq_ind, ia, ti_solvent
@@ -97,8 +95,28 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
 
 
   LOGICAL :: inter_overlap, cbmc_overlap, intra_overlap
+
+  !!! 4-d allocatable shared target arrays with the last axis for thread number are used 
+  !       in conjunction with private pointers and sum or maxval is used along the last axis
+  !       of the target array.  This functionally imitates the behavior of having 3-d variables
+  !       in OMP REDUCTION clauses, which was the original implementation, except it allocates
+  !       the arrays to the heap, whereas REDUCTION variables are kept in the stack.  This 
+  !       is necessary because having realistically sized yet relatively large REDUCTION
+  !       variables with dimensions like (550,30,13) caused runtime segmentation faults
+  !       which apparently originated from stack buffer overflow, even though `ulimit -s`
+  !       in bash showed the stack size as unlimited.
+  REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: frame_rsqmin_atompair_w_sum_tgt, frame_rsqmin_atompair_w_max_tgt
+  INTEGER(KIND=INT64), DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: frame_rsqmin_atompair_freq_tgt
+  REAL(DP), DIMENSION(:,:,:), POINTER :: frame_rsqmin_atompair_w_sum, frame_rsqmin_atompair_w_max
+  INTEGER(KIND=INT64), DIMENSION(:,:,:), POINTER :: frame_rsqmin_atompair_freq
+  !!!
+
+  INTEGER :: nbr_threads, ithread
+  nbr_threads = 1
   omp_flag = .FALSE.
   !$ omp_flag = .TRUE.
+  !$ nbr_threads = omp_get_max_threads()
+
 !widom_timing  noncbmc_time = 0.0_DP
 
 
@@ -112,6 +130,35 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
                   bsolute+1:bsolute+natoms(is),ibox)
           rsqmin_atompair_freq_ptr => rsqmin_atompair_freq(:,:, &
                   bsolute+1:bsolute+natoms(is),ibox)
+          IF (ALLOCATED(frame_rsqmin_atompair_w_sum_tgt)) THEN
+                  DEALLOCATE(frame_rsqmin_atompair_w_sum_tgt)
+          END IF
+          IF (ALLOCATED(frame_rsqmin_atompair_w_max_tgt)) THEN
+                  DEALLOCATE(frame_rsqmin_atompair_w_max_tgt)
+          END IF
+          IF (ALLOCATED(frame_rsqmin_atompair_freq_tgt)) THEN
+                  DEALLOCATE(frame_rsqmin_atompair_freq_tgt)
+          END IF
+          ALLOCATE(frame_rsqmin_atompair_w_sum_tgt( &
+                  rsqmin_res, &
+                  solvent_maxind, &
+                  natoms(is), &
+                  nbr_threads))
+          ALLOCATE(frame_rsqmin_atompair_w_max_tgt( &
+                  rsqmin_res, &
+                  solvent_maxind, &
+                  natoms(is), &
+                  nbr_threads))
+          ALLOCATE(frame_rsqmin_atompair_freq_tgt( &
+                  rsqmin_res, &
+                  solvent_maxind, &
+                  natoms(is), &
+                  nbr_threads))
+          !$OMP WORKSHARE
+          frame_rsqmin_atompair_w_sum_tgt = 0.0_DP
+          frame_rsqmin_atompair_w_max_tgt = 0.0_DP
+          frame_rsqmin_atompair_freq_tgt = 0_INT64
+          !$OMP END WORKSHARE
   END IF
 
 
@@ -196,18 +243,22 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
   Eij_freq = 0
   frame_w_max = 0.0_DP
 
-  frame_rsqmin_atompair_w_sum = 0.0_DP
-  frame_rsqmin_atompair_freq = 0
-  frame_rsqmin_atompair_w_max = 0.0_DP
-
   !$OMP PARALLEL DEFAULT(SHARED) &
   !$OMP PRIVATE(ln_pseq, ln_pbias, E_ring_frag, inter_overlap, cbmc_overlap, intra_overlap, i_interval) &
   !$OMP PRIVATE(widom_var_exp, E_periodic_qq, E_intra_qq, E_intra_vdw, E_inter, dE_frag, dE) &
   !$OMP PRIVATE(E_bond, E_angle, E_dihedral, E_improper, dE_intra, dE_inter, E_reciprocal, frag_order) &
   !$OMP PRIVATE(t_cpu_s, t_cpu_e, thread_changefactor, Eij_ind, rsq_ind, ia, ti_solvent) &
-  !$OMP REDUCTION(+:widom_sum,n_overlaps,subinterval_sums,t_cpu,Eij_freq,frame_Eij_w_sum, &
-  !$OMP frame_rsqmin_atompair_w_sum,frame_rsqmin_atompair_freq) &
-  !$OMP REDUCTION(MAX:frame_w_max,thread_Eij_factor,frame_rsqmin_atompair_w_max)
+  !$OMP PRIVATE(frame_rsqmin_atompair_w_sum,frame_rsqmin_atompair_w_max,frame_rsqmin_atompair_freq) &
+  !$OMP REDUCTION(+:widom_sum,n_overlaps,subinterval_sums,t_cpu,Eij_freq,frame_Eij_w_sum) &
+  !$OMP REDUCTION(MAX:frame_w_max,thread_Eij_factor)
+
+  ithread = 1
+  !$ ithread = omp_get_thread_num() + 1
+  IF (est_atompair_rminsq) THEN
+          frame_rsqmin_atompair_w_sum => frame_rsqmin_atompair_w_sum_tgt(:,:,:,ithread)
+          frame_rsqmin_atompair_w_max => frame_rsqmin_atompair_w_max_tgt(:,:,:,ithread)
+          frame_rsqmin_atompair_freq => frame_rsqmin_atompair_freq_tgt(:,:,:,ithread)
+  END IF
 
   IF (ALLOCATED(widom_atoms)) THEN
           DEALLOCATE(widom_atoms, STAT=DeallocateStatus)
@@ -432,9 +483,9 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
   Eij_factor(is,ibox) = Eij_factor_gcopy
 
   IF (est_atompair_rminsq) THEN
-          rsqmin_atompair_freq_ptr = rsqmin_atompair_freq_ptr + frame_rsqmin_atompair_freq
-          rsqmin_atompair_w_max_ptr = MAX(rsqmin_atompair_w_max_ptr, widom_prefactor*frame_rsqmin_atompair_w_max)
-          rsqmin_atompair_w_sum_ptr = rsqmin_atompair_w_sum_ptr + widom_prefactor*frame_rsqmin_atompair_w_sum
+          rsqmin_atompair_freq_ptr = rsqmin_atompair_freq_ptr + SUM(frame_rsqmin_atompair_freq_tgt,4)
+          rsqmin_atompair_w_max_ptr = MAX(rsqmin_atompair_w_max_ptr, widom_prefactor*MAXVAL(frame_rsqmin_atompair_w_max_tgt,4))
+          rsqmin_atompair_w_sum_ptr = rsqmin_atompair_w_sum_ptr + widom_prefactor*SUM(frame_rsqmin_atompair_w_sum_tgt,4)
   END IF
 
   widom_active = .FALSE.
