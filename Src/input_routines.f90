@@ -6734,7 +6734,7 @@ SUBROUTINE Get_Rcutoff_Low
 !
 !******************************************************************************
 
-  INTEGER :: ierr, line_nbr, nbr_entries, i_entry
+  INTEGER :: ierr, line_nbr, nbr_entries, i_entry, i_tol
   CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
 !******************************************************************************
@@ -6769,6 +6769,9 @@ SUBROUTINE Get_Rcutoff_Low
         rcut_lowsq = rcut_low * rcut_low
 
         WRITE(logunit,'(A25,2X,F6.3,2X,A10)') 'MC low cutoff distance is ', rcut_low, ' Angstrom'
+        ALLOCATE(tol_list(1))
+        tol_list = 1.0e-10_DP
+        nbr_tols = 1
         keywordsearch:DO
                 line_nbr = line_nbr + 1
                 CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
@@ -6811,6 +6814,22 @@ SUBROUTINE Get_Rcutoff_Low
                                         ELSE
                                                 err_msg = ""
                                                 err_msg(1) = "Need path to rminsq file"  
+                                                err_msg(2) = "on line " // TRIM(Int_To_String(line_nbr))
+                                                err_msg(3) = "in the input file"
+                                                CALL Clean_Abort(err_msg, "Get_Rcutoff_Low")
+                                        END IF
+                                ELSE IF (line_array(i_entry) == "tol_list") THEN
+                                        IF (i_entry + 2 <= nbr_entries) THEN
+                                                nbr_tols = String_To_Int(line_array(i_entry+1))
+                                                DEALLOCATE(tol_list)
+                                                ALLOCATE(tol_list(nbr_tols))
+                                                DO i_tol = 1, nbr_tols
+                                                        tol_list(i_tol) = String_To_Double(line_array(i_entry+1+i_tol))
+                                                END DO
+                                                i_entry = i_entry + 2 + nbr_tols
+                                        ELSE
+                                                err_msg = ""
+                                                err_msg(1) = "Not enough entries after keyword tol_list"  
                                                 err_msg(2) = "on line " // TRIM(Int_To_String(line_nbr))
                                                 err_msg(3) = "in the input file"
                                                 CALL Clean_Abort(err_msg, "Get_Rcutoff_Low")

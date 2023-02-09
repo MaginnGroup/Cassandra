@@ -292,9 +292,6 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
   t_cpu = 0.0_DP
   frame_w_max = 0.0_DP
   frame_Eij_w_sum = 0.0_DP
-  frame_rsqmin_atompair_freq = 0
-  frame_rsqmin_atompair_w_sum = 0.0_DP
-  frame_rsqmin_atompair_w_max = 0.0_DP
   Eij_freq = 0
   thread_Eij_factor = Eij_factor_gcopy
   thread_changefactor = changefactor

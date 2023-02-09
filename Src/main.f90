@@ -100,7 +100,7 @@ PROGRAM Main
   LOGICAL :: overlap, check_charge
 
   REAL(DP) :: Emax
-  INTEGER :: nskips
+  INTEGER :: nskips, i_tol
 
   REAL(DP) :: q_box
 
@@ -514,8 +514,17 @@ PROGRAM Main
           WRITE(logunit,'(8x,A,F12.6,A)') "Recommended pair U*_max = ", Emax, &
                   " would have flagged about " // TRIM(Int_To_String(nskips)) // " more overlaps"
           IF (est_atompair_rminsq) THEN
-                  WRITE(logunit,'(8x,A)') "Recommended atompair rminsq table would have flagged at least " // &
-                          TRIM(Int_To_String(Get_rminsq_nskips(is,ibox))) // " more overlaps"
+                  DO i_tol=1, nbr_tols
+                          WRITE(logunit,'(8x,A,ES10.3)') "The atompair rminsq table created with tolerance =", &
+                                  tol_list(i_tol) 
+                          WRITE(logunit,'(16x,A)') "would have flagged at least " // &
+                                  TRIM(Int_To_String(Get_rminsq_nskips(is,ibox,i_tol))) // " more overlaps"
+                          WRITE(logunit,'(16x,A,E12.5)') "and discarded insertions with widom_var up to ", &
+                                  Get_rminsq_wmax(is,ibox,i_tol)
+                          WRITE(logunit,'(24x,A,E12.5,A)') "(", &
+                                  (Get_rminsq_wmax(is,ibox,i_tol)/species_list(is)%widom_sum(ibox)), &
+                                  " of total widom_var sum)."
+                  END DO
           END IF
         END IF
       END DO

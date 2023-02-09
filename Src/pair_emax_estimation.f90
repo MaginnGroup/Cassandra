@@ -33,8 +33,9 @@ MODULE Pair_Emax_Estimation
 
   IMPLICIT NONE
 
-  INTEGER, DIMENSION(:,:,:), ALLOCATABLE, TARGET ::atompair_rminsq_ind_table
-  INTEGER(KIND=INT64), DIMENSION(:,:), ALLOCATABLE :: rminsq_nskips
+  INTEGER, DIMENSION(:,:,:,:), ALLOCATABLE, TARGET ::atompair_rminsq_ind_table
+  INTEGER(KIND=INT64), DIMENSION(:,:,:), ALLOCATABLE :: rminsq_nskips
+  REAL(DP), DIMENSION(:,:,:), ALLOCATABLE :: rminsq_wmax
 
 CONTAINS
         SUBROUTINE Estimate_Pair_Emax(is,ibox,Emax,nskips)
@@ -76,22 +77,26 @@ CONTAINS
         END SUBROUTINE Estimate_Pair_Emax
 
         SUBROUTINE Estimate_Pair_rminsq
-                INTEGER :: is, ibox
-                REAL(DP) :: Emax
+                INTEGER :: is, ibox, i_tol
+                REAL(DP) :: this_tol
 
                 INTEGER :: rsqmin_ind, bsolute, ti_solute, ti_solvent
-                REAL(DP) :: wfrac_csum
+                REAL(DP) :: wfrac_csum, wmax
                 INTEGER(KIND=INT64) :: freq_csum
                 REAL(DP), DIMENSION(:), POINTER :: rsqmin_wfrac_ptr
+                REAL(DP), DIMENSION(:), POINTER :: rsqmin_wmax_ptr
                 REAL(DP), DIMENSION(rsqmin_res,solvent_maxind,wsolute_maxind,nbr_boxes), TARGET :: rsqmin_atompair_wfrac
                 INTEGER(KIND=INT64), DIMENSION(:), POINTER :: rsqmin_freq_ptr
-                INTEGER(KIND=INT64), DIMENSION(solvent_maxind,wsolute_maxind,nbr_boxes) :: atompair_nskips
+                INTEGER(KIND=INT64), DIMENSION(solvent_maxind,wsolute_maxind,nbr_boxes,nbr_tols) :: atompair_nskips
+                REAL(DP), DIMENSION(solvent_maxind,wsolute_maxind,nbr_boxes,nbr_tols) :: atompair_wmax
 
                 IF (.NOT. ALLOCATED(atompair_rminsq_ind_table)) THEN
-                        ALLOCATE(atompair_rminsq_ind_table(solvent_maxind,wsolute_maxind,nbr_boxes))
+                        ALLOCATE(atompair_rminsq_ind_table(solvent_maxind,wsolute_maxind,nbr_boxes,nbr_tols))
                 END IF
                 IF (ALLOCATED(rminsq_nskips)) DEALLOCATE(rminsq_nskips)
-                ALLOCATE(rminsq_nskips(nspecies,nbr_boxes))
+                ALLOCATE(rminsq_nskips(nspecies,nbr_boxes,nbr_tols))
+                IF (ALLOCATED(rminsq_wmax)) DEALLOCATE(rminsq_wmax)
+                ALLOCATE(rminsq_wmax(nspecies,nbr_boxes,nbr_tols))
 
                 DO ibox = 1, nbr_boxes
                         DO is = 1, nspecies
@@ -104,22 +109,30 @@ CONTAINS
                 END DO
 
                 !$OMP PARALLEL DEFAULT(SHARED) &
-                !$OMP PRIVATE(rsqmin_wfrac_ptr, wfrac_csum, rsqmin_ind, freq_csum, rsqmin_freq_ptr)
-                !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
+                !$OMP PRIVATE(rsqmin_wfrac_ptr, wfrac_csum, rsqmin_ind, freq_csum, rsqmin_freq_ptr, this_tol) &
+                !$OMP PRIVATE(wmax, rsqmin_wmax_ptr)
+                !$OMP DO COLLAPSE(4) SCHEDULE(STATIC)
                 DO ibox = 1, nbr_boxes
                         DO ti_solute = 1, wsolute_maxind
                                 DO ti_solvent = 1, solvent_maxind
-                                        rsqmin_wfrac_ptr => rsqmin_atompair_wfrac(:,ti_solvent,ti_solute,ibox)
-                                        rsqmin_freq_ptr => rsqmin_atompair_freq(:,ti_solvent,ti_solute,ibox)
-                                        wfrac_csum = 0.0_DP
-                                        freq_csum = 0_INT64
-                                        DO rsqmin_ind = 1, rsqmin_res
-                                                wfrac_csum = wfrac_csum + rsqmin_wfrac_ptr(rsqmin_ind)
-                                                IF (wfrac_csum > 1.0e-10_DP) EXIT
-                                                freq_csum = freq_csum + rsqmin_freq_ptr(rsqmin_ind)
+                                        DO i_tol = 1, nbr_tols
+                                                rsqmin_wfrac_ptr => rsqmin_atompair_wfrac(:,ti_solvent,ti_solute,ibox)
+                                                rsqmin_freq_ptr => rsqmin_atompair_freq(:,ti_solvent,ti_solute,ibox)
+                                                rsqmin_wmax_ptr => rsqmin_atompair_w_max(:,ti_solvent,ti_solute,ibox)
+                                                this_tol = tol_list(i_tol)
+                                                wmax = 0.0_DP
+                                                wfrac_csum = 0.0_DP
+                                                freq_csum = 0_INT64
+                                                DO rsqmin_ind = 1, rsqmin_res
+                                                        wfrac_csum = wfrac_csum + rsqmin_wfrac_ptr(rsqmin_ind)
+                                                        IF (wfrac_csum > this_tol) EXIT
+                                                        IF (rsqmin_wmax_ptr(rsqmin_ind)>wmax) wmax = rsqmin_wmax_ptr(rsqmin_ind)
+                                                        freq_csum = freq_csum + rsqmin_freq_ptr(rsqmin_ind)
+                                                END DO
+                                                atompair_rminsq_ind_table(ti_solvent,ti_solute,ibox,i_tol) = rsqmin_ind
+                                                atompair_nskips(ti_solvent,ti_solute,ibox,i_tol) = freq_csum
+                                                atompair_wmax(ti_solvent,ti_solute,ibox,i_tol) = wmax
                                         END DO
-                                        atompair_rminsq_ind_table(ti_solvent,ti_solute,ibox) = rsqmin_ind
-                                        atompair_nskips(ti_solvent,ti_solute,ibox) = freq_csum
                                 END DO
                         END DO
                 END DO
@@ -130,50 +143,71 @@ CONTAINS
                         DO is = 1, nspecies
                                 IF (.NOT. species_list(is)%test_particle(ibox)) CYCLE
                                 bsolute = species_list(is)%wsolute_base
-                                rminsq_nskips(is,ibox) = MAXVAL(atompair_nskips(:, &
-                                        bsolute+1:bsolute+natoms(is), ibox))
+                                DO i_tol = 1, nbr_tols
+                                        rminsq_nskips(is,ibox,i_tol) = MAXVAL(atompair_nskips(:, &
+                                                bsolute+1:bsolute+natoms(is), ibox, i_tol))
+                                        rminsq_wmax(is,ibox,i_tol) = MAXVAL(atompair_wmax(:, &
+                                                bsolute+1:bsolute+natoms(is), ibox, i_tol))
+                                END DO
                         END DO
                 END DO
 
         END SUBROUTINE Estimate_Pair_rminsq
 
-        FUNCTION Get_rminsq_nskips(ispecies,ibox)
-                INTEGER :: get_rminsq_nskips, ispecies, ibox
+        FUNCTION Get_rminsq_nskips(ispecies,ibox,i_tol)
+                INTEGER :: get_rminsq_nskips, ispecies, ibox, i_tol
                 IF (.NOT. ALLOCATED(rminsq_nskips)) CALL Estimate_Pair_rminsq
-                get_rminsq_nskips = rminsq_nskips(ispecies,ibox)
+                get_rminsq_nskips = rminsq_nskips(ispecies,ibox,i_tol)
         END FUNCTION Get_rminsq_nskips
 
+        FUNCTION Get_rminsq_wmax(ispecies,ibox,i_tol)
+                REAL(DP) :: get_rminsq_wmax
+                INTEGER :: ispecies, ibox, i_tol
+                IF (.NOT. ALLOCATED(rminsq_wmax)) CALL Estimate_Pair_rminsq
+                get_rminsq_wmax = rminsq_wmax(ispecies,ibox,i_tol)
+        END FUNCTION Get_rminsq_wmax
+
         SUBROUTINE Write_Pair_rminsq
-                INTEGER :: this_unit, nchars, ti_solvent, ti_solute, ibox
+                INTEGER :: this_unit, nchars, ti_solvent, ti_solute, ibox, i_tol
                 CHARACTER(20) :: fstring
+                CHARACTER(FILENAME_LEN) :: this_path
                 nchars = INT(LOG10(REAL(rsqmin_res))) + 2
                 this_unit = emax_file_unit
+                this_path = ""
                 fstring = ""
                 fstring = "(" // TRIM(Int_To_String(wsolute_maxind)) // "I" // TRIM(Int_To_String(nchars)) // ")"
-                OPEN(unit=this_unit,file=write_rminsq_filename,ACTION='WRITE')
-                WRITE(this_unit,*) rcut_lowsq, rsqmin_step, rsqmin_res
-                WRITE(this_unit,*) solvent_maxind, wsolute_maxind, nbr_boxes
-                DO ibox = 1, nbr_boxes
-                        DO ti_solvent = 1, solvent_maxind
-                                WRITE(this_unit, fstring) &
-                                        (atompair_rminsq_ind_table(ti_solvent,ti_solute,ibox),ti_solute=1,wsolute_maxind)
-                                !WRITE(this_unit,"(I" // TRIM(Int_To_String(nchars)) // ")") &
-                                !        (atompair_rminsq_ind_table(ti_solvent,ti_solute,ibox),ti_solute=1,wsolute_maxind)
+                this_path = TRIM(write_rminsq_filename)
+                DO i_tol = 1, nbr_tols
+                        IF (nbr_tols > 1) this_path = TRIM(write_rminsq_filename) // TRIM(Int_To_String(i_tol))
+                        OPEN(unit=this_unit,file=this_path,ACTION='WRITE')
+                        WRITE(this_unit,*) tol_list(i_tol)
+                        WRITE(this_unit,*) rcut_lowsq, rsqmin_step, rsqmin_res
+                        WRITE(this_unit,*) solvent_maxind, wsolute_maxind, nbr_boxes
+                        DO ibox = 1, nbr_boxes
+                                DO ti_solvent = 1, solvent_maxind
+                                        WRITE(this_unit, fstring) &
+                                                (atompair_rminsq_ind_table(ti_solvent,ti_solute,ibox,i_tol),ti_solute=1,wsolute_maxind)
+                                        !WRITE(this_unit,"(I" // TRIM(Int_To_String(nchars)) // ")") &
+                                        !        (atompair_rminsq_ind_table(ti_solvent,ti_solute,ibox),ti_solute=1,wsolute_maxind)
+                                END DO
                         END DO
+                        CLOSE(this_unit)
                 END DO
-                CLOSE(this_unit)
         END SUBROUTINE Write_Pair_rminsq
 
         SUBROUTINE Read_Pair_rminsq
                 INTEGER :: this_unit, ti_solvent, ti_solute, ibox, this_rsqmin_res
-                REAL(DP) :: this_rcut_lowsq, this_rsqmin_step, this_rsqmin_shifter
+                REAL(DP) :: this_rcut_lowsq, this_rsqmin_step, this_rsqmin_shifter, this_tol, min_rmin
                 INTEGER :: this_solvent_maxind, this_wsolute_maxind, this_nbr_boxes
                 INTEGER, DIMENSION(:), POINTER :: atompair_rminsq_ind_table_ptr
                 this_unit = emax_file_unit
                 IF (.NOT. ALLOCATED(atompair_rminsq_ind_table)) THEN
-                        ALLOCATE(atompair_rminsq_ind_table(solvent_maxind,wsolute_maxind,nbr_boxes))
+                        ALLOCATE(atompair_rminsq_ind_table(solvent_maxind,wsolute_maxind,nbr_boxes,nbr_tols))
                 END IF
                 OPEN(unit=this_unit,file=read_rminsq_filename,POSITION="REWIND",ACTION='READ',STATUS='OLD')
+                WRITE(logunit,'(A80)') "********************************************************************************"
+                READ(this_unit,*) this_tol
+                WRITE(logunit,'(A,ES10.3)') "Reading atompair rminsq table made with tolerance = ", this_tol
                 READ(this_unit,*) this_rcut_lowsq, this_rsqmin_step, this_rsqmin_res
                 this_rsqmin_shifter = this_rcut_lowsq - this_rsqmin_step
                 READ(this_unit,*) this_solvent_maxind, this_wsolute_maxind, this_nbr_boxes
@@ -194,15 +228,20 @@ CONTAINS
                 DO ibox = 1, nbr_boxes
                         DO ti_solvent = 1, solvent_maxind
                                 atompair_rminsq_ind_table_ptr => &
-                                        atompair_rminsq_ind_table(ti_solvent,:,ibox)
+                                        atompair_rminsq_ind_table(ti_solvent,:,ibox,1)
                                 READ(this_unit,*) &
                                         (atompair_rminsq_ind_table_ptr(ti_solute),ti_solute=1,wsolute_maxind)
                         END DO
                 END DO
                 CLOSE(this_unit)
-                max_rmin = SQRT(REAL(MAXVAL(atompair_rminsq_ind_table,atompair_rminsq_ind_table<(rsqmin_res+1)),DP) &
+                max_rmin = SQRT(REAL(MAXVAL(atompair_rminsq_ind_table(:,:,:,1), &
+                        atompair_rminsq_ind_table(:,:,:,1)<(this_rsqmin_res+1)),DP) &
                         * this_rsqmin_step + this_rsqmin_shifter)
-                atompair_rminsq_table = REAL(atompair_rminsq_ind_table,DP) * this_rsqmin_step + this_rsqmin_shifter
+                atompair_rminsq_table = REAL(atompair_rminsq_ind_table(:,:,:,1),DP) * this_rsqmin_step + this_rsqmin_shifter
+                min_rmin = SQRT(MINVAL(atompair_rminsq_table))
+                WRITE(logunit,'(A,F6.3,A)') "Finished reading atompair rminsq table with atompair rmin values in the interval"
+                WRITE(logunit, '(8x,A,F5.3,A,F6.3,A)') "[", min_rmin, ",", max_rmin, "] Angstroms"
+                WRITE(logunit,'(A80)') "********************************************************************************"
         END SUBROUTINE Read_Pair_rminsq
 
 

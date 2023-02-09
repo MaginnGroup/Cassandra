@@ -136,6 +136,9 @@ CONTAINS
                         ALLOCATE(rsqmin_atompair_w_max(rsqmin_res,solvent_nextbase,wsolute_nextbase,nbr_boxes))
                         ALLOCATE(rsqmin_atompair_w_sum(rsqmin_res,solvent_nextbase,wsolute_nextbase,nbr_boxes))
                         ALLOCATE(rsqmin_atompair_freq(rsqmin_res,solvent_maxind,wsolute_maxind,nbr_boxes))
+                        rsqmin_atompair_w_max = 0.0_DP
+                        rsqmin_atompair_w_sum = 0.0_DP
+                        rsqmin_atompair_freq = 0_INT64
                 END IF
                 IF (read_atompair_rminsq) THEN 
                         ALLOCATE(atompair_rminsq_table(solvent_nextbase,wsolute_nextbase,nbr_boxes))

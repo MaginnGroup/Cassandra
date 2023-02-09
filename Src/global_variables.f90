@@ -675,6 +675,8 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   REAL(DP) :: maxrminsq, rsqmin_step, rsqmin_shifter
   INTEGER :: rsqmin_res, wsolute_ntypes, wsolute_maxind
   LOGICAL :: est_atompair_rminsq, read_atompair_rminsq
+  REAL(DP), DIMENSION(:), ALLOCATABLE :: tol_list
+  INTEGER :: nbr_tols
   !$OMP THREADPRIVATE(swi_atompair_rsqmin)
   !
 
