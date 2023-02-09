@@ -287,11 +287,13 @@ USE Type_Definitions
   INTEGER, DIMENSION(:), ALLOCATABLE :: nbonds, nangles, nangles_fixed
   INTEGER, DIMENSION(:), ALLOCATABLE :: ndihedrals, nimpropers
   INTEGER, DIMENSION(:), ALLOCATABLE :: nfragments, fragment_bonds
+  INTEGER, DIMENSION(:), ALLOCATABLE :: natoms_to_read
 
   ! array to hold the total number of molecules of each species in a given box
 
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: nmols
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: nmols_to_make, nmols_to_read
+  INTEGER, DIMENSION(:,:,:), ALLOCATABLE :: atom_ibounds
 
   ! array to hold ring atom ids and exo atom ids for a fragment
   ! will have (MAXVAL(natoms), nspecies) dimensions

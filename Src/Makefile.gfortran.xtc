@@ -43,7 +43,7 @@
 
 CASS_DIR =  .
 BIN_DIR = $(CASS_DIR)
-EXEC_NAME = cassandra_gfortran.exe
+EXEC_NAME = cassandra_gfortran_xtc.exe
 
 ####################################################################
 ##  Known Machine Types                                            #
@@ -57,8 +57,8 @@ EXEC_NAME = cassandra_gfortran.exe
 
 
 FC = gfortran
-LIBS = 
-INCS = 
+LIBS = `pkg-config --cflags --libs libgmxfort`
+INCS = `pkg-config --cflags --libs libgmxfort`
 F90FLAGS = -c -ffree-line-length-none -fcheck=all
 LINKFLAGS = 
 
@@ -135,7 +135,7 @@ OBJS =  main.o \
 
 ####################################################################
 
-%.temp.f90: %.no_xtc.f90
+%.temp.f90: %.f90
 	cp $< $@
 
 %o: %f90

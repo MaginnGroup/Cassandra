@@ -28,39 +28,38 @@
 ##  Invocation Options:
 ##
 ##   1. make                  Build the Cassandra executable
-##   2. make clean            Delete object and executable files
-##                            and dependencies file. Note you will
-##                            get a warning when compiling after
-##                            using make clean, but disregard.
-##
-
+##   2. make clean            Delete object and executable files and dependencies file
+##                            Note you will get a warning upon compilaton
+##                            after invoking make clean, but disregard
 ###################################################################
 ##  Master Directory Locations; Change as Needed for Local Site  ##
 ###################################################################
 ##
-##  CASS_DIR     CASS Distribution Directory
-##  BIN_DIR      Hard Copies of CASSANDRA Executables go here
+##  CASS_DIR     CASSANDRA Distribution Directory
+##  BIN_DIR      Hard Copies of CASSANDRA Executable goes here
 
 CASS_DIR =  .
 BIN_DIR = $(CASS_DIR)
-EXEC_NAME = cassandra_gfortran.exe
+EXEC_NAME = cassandra_gfortran_openMP_xtc.exe
 
 ####################################################################
 ##  Known Machine Types                                            #
 ####################################################################
 
 ##
-##  Machine:  Mac OS 10.7.5
-##  CPU Type: Intel
-##  Compiler: gfortran
+##  Machine: x86_64-linux
+##  CPU Type: Opteron
+##  Compiler: gfortran with openMP
 ##
 
-
+## Compilation command
 FC = gfortran
-LIBS = 
-INCS = 
-F90FLAGS = -c -ffree-line-length-none -fcheck=all
-LINKFLAGS = 
+LIBS = `pkg-config --cflags --libs libgmxfort`
+INCS = `pkg-config --cflags --libs libgmxfort`
+#
+F90FLAGS = -c -ffree-line-length-none -fopenmp -O3
+LINKFLAGS =  -fopenmp
+
 
 ####################################################################
 OBJS =  main.o \
@@ -135,7 +134,7 @@ OBJS =  main.o \
 
 ####################################################################
 
-%.temp.f90: %.no_xtc.f90
+%.temp.f90: %.f90
 	cp $< $@
 
 %o: %f90

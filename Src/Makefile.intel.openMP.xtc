@@ -22,45 +22,56 @@
 ###################################################################
 ##                                                               ##
 ##  Makefile for building the CASSANDRA simulation package       ##
-##                                                               ##
+##  This is the default makefile, and will be involked if you    ##
+##  type 'make'. Use this as a template if you want to build     ##
+##  your own makefile, or create another makefile and run it     ##
+##  using make -f name_of_your_makefile                          ##
 ###################################################################
 ##
 ##  Invocation Options:
 ##
 ##   1. make                  Build the Cassandra executable
 ##   2. make clean            Delete object and executable files
-##                            and dependencies file. Note you will
-##                            get a warning when compiling after
-##                            using make clean, but disregard.
-##
+##                            Note you will get a warning upon compilaton
+##                            after invoking make clean, but disregard
 
 ###################################################################
 ##  Master Directory Locations; Change as Needed for Local Site  ##
 ###################################################################
 ##
 ##  CASS_DIR     CASS Distribution Directory
-##  BIN_DIR      Hard Copies of CASSANDRA Executables go here
+##  BIN_DIR      Hard Copies of CASS Executables go here
 
 CASS_DIR =  .
 BIN_DIR = $(CASS_DIR)
-EXEC_NAME = cassandra_gfortran.exe
+EXEC_NAME = cassandra_intel_openMP_xtc.exe
 
 ####################################################################
-##  Known Machine Types                                            #
+##  Known Machine Types;                                           #
 ####################################################################
 
 ##
-##  Machine:  Mac OS 10.7.5
-##  CPU Type: Intel
-##  Compiler: gfortran
+##  Machine:
+##  CPU Type:
+##  Compiler:
 ##
 
+## Name of compiler and compilation options
+FC = ifort
+LIBS = `pkg-config --cflags --libs libgmxfort`
+INCS = `pkg-config --cflags --libs libgmxfort`
+#
+#F90FLAGS = -c  -ffree-line-length-none
+F90FLAGS = -c -g -no-wrap-margin -qopenmp #-check all -traceback #-warn unused #-openmp
+OPTFLAGS = -O3
+LINKFLAGS = -qopenmp
 
-FC = gfortran
-LIBS = 
-INCS = 
-F90FLAGS = -c -ffree-line-length-none -fcheck=all
-LINKFLAGS = 
+
+#F90FLAGS = -c -g -no-wrap-margin -O3  #-warn unused #-openmp
+#F90FLAGS = -c -openmp
+#F90FLAGS = -p -c -O3
+#F90FLAGS = -c -O3 -openmp
+#LINKFLAGS = -p
 
 ####################################################################
 OBJS =  main.o \
@@ -135,7 +146,7 @@ OBJS =  main.o \
 
 ####################################################################
 
-%.temp.f90: %.no_xtc.f90
+%.temp.f90 : %.f90
 	cp $< $@
 
 %o: %f90
@@ -145,7 +156,7 @@ exe: $(OBJS)
 	$(FC) $(OPTFLAGS) -o $(BIN_DIR)/$(EXEC_NAME) $(OBJS) $(LIBS) $(LINK_F90) $(LINKFLAGS)
 
 clean:
-	rm *.o *.mod *.temp.f90 dep.mk
+	rm -fr *.o *.mod *.temp.f90 dep.mk
 
 dep.mk:
 	./get_deps

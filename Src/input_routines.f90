@@ -4895,6 +4895,13 @@ SUBROUTINE Get_Start_Type
     CALL Clean_Abort(err_msg, 'Get_Start_Type')
   END IF
 
+  ALLOCATE(natoms_to_read(nbr_boxes),Stat=Allocatestatus)
+  IF (Allocatestatus /= 0) THEN
+    err_msg = ''
+    err_msg(1) = 'Memory could not be allocated for natoms_to_read'
+    CALL Clean_Abort(err_msg, 'Get_Start_Type')
+  END IF
+
   ALLOCATE(nmols_to_make(nspecies,nbr_boxes),Stat=Allocatestatus)
   IF (Allocatestatus /= 0) THEN
     err_msg = ''
@@ -5540,22 +5547,33 @@ SUBROUTINE Get_Pregen_Info
         ! This subroutine reads the names of the xyz and H files containing pregenerated trajectories
         ! and opens them
 
-        INTEGER :: ibox, is, xyz_pos, H_pos, line_pos
-        INTEGER :: ierr, line_nbr, nbr_entries, req_entries
+        INTEGER :: ibox, is, xyz_pos, H_pos, line_pos, i_entry
+        INTEGER :: ierr, line_nbr, nbr_entries, nmols_entry
         CHARACTER(STRING_LEN) :: line_string,line_array(60)
+        LOGICAL :: tspec
         
 
         ALLOCATE(pregen_H_unit(nbr_boxes))
         ALLOCATE(pregen_H_filenames(nbr_boxes))
         ALLOCATE(pregen_xyz_unit(nbr_boxes))
         ALLOCATE(pregen_xyz_filenames(nbr_boxes))
+        ALLOCATE(pregen_xtc_filenames(nbr_boxes))
+        ALLOCATE(pregen_ndx_filenames(nbr_boxes))
+        IF (.NOT. ALLOCATED(has_xtc)) ALLOCATE(has_xtc(nbr_boxes))
+        IF (.NOT. ALLOCATED(has_xyz)) ALLOCATE(has_xyz(nbr_boxes))
+        IF (.NOT. ALLOCATED(has_ndx)) ALLOCATE(has_ndx(nbr_boxes))
+        IF (.NOT. ALLOCATED(has_Hfile)) ALLOCATE(has_Hfile(nbr_boxes))
+        IF (.NOT. ALLOCATED(xtc_is_open)) ALLOCATE(xtc_is_open(nbr_boxes))
+        IF (.NOT. ALLOCATED(atom_ibounds)) ALLOCATE(atom_ibounds(2,nspecies,nbr_boxes))
+        has_xtc = .FALSE.
+        has_xyz = .FALSE.
+        has_ndx = .FALSE.
+        has_Hfile = .FALSE.
+        xtc_is_open = .FALSE.
 
         H_pos = 1
         xyz_pos = 2
 
-        req_entries = 2
-
-        !has_H = .FALSE.
 
         DO ibox = 1, nbr_boxes
                 pregen_H_unit(ibox) = pregen_H_unit_base + ibox
@@ -5579,97 +5597,106 @@ SUBROUTINE Get_Pregen_Info
                         CALL clean_abort(err_msg,'Get_Pregen_Info')
                 END IF
                 IF (line_string(1:13) == '# Pregen_Info') THEN
-!                        line_nbr = line_nbr + 1
-!                        CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
-!                        req_entries = nbr_entries ! minimum number of entries in subsequent lines
-!                        DO line_pos = 1, nbr_entries
-!                                SELECT CASE (line_array(line_pos))
-!                                        CASE ('H','h','.H','.h')
-!                                                IF (H_pos == 0) THEN
-!                                                        H_pos = line_pos
-!                                                        has_H = .TRUE.
-!                                                ELSE
-!                                                        err_msg = ''
-!                                                        err_msg(1) = 'File type H was listed more than once'
-!                                                        CALL clean_abort(err_msg,'Get_Pregen_Info')
-!                                                END IF
-!                                        CASE ('xyz','XYZ','.xyz','.XYZ')
-!                                                IF (xyz_pos == 0) THEN
-!                                                        xyz_pos = line_pos
-!                                                ELSE
-!                                                        err_msg = ''
-!                                                        err_msg(1) = 'File type xyz was listed more than once'
-!                                                        CALL clean_abort(err_msg,'Get_Pregen_Info')
-!                                                END IF
-!                                        CASE DEFAULT
-!                                                err_msg = ''
-!                                                err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
-!                                                        TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
-!                                                err_msg(2) = 'Supported keywords are: xyz, H'
-!                                END SELECT
-!                        END DO
-!                        IF (xyz_pos == 0) THEN
-!                                err_msg = ''
-!                                err_msg(1) = 'Keyword xyz must be included on line number ' // &
-!                                        TRIM(Int_To_String(line_nbr))
-!                                CALL clean_abort(err_msg,'Get_Pregen_Info')
-!                        ELSE IF (has_H) THEN
-                        !box_list(:)%box_shape = 'TRICLINIC'
-                        !box_list(:)%int_box_shape = int_cell
-                        need_solvents = .TRUE.
+                        need_solvents = .FALSE.
+                        nmols_to_read = 0
                         IF (nbr_boxes == 1) THEN
-                                WRITE(logunit,*) 'Box size will be replaced by those read from the pregenerated H file'
+                                WRITE(logunit,*) 'Box size will be replaced by those read from a pregenerated trajectory file'
                         ELSE
-                                WRITE(logunit,*) 'Box sizes will be replaced by those read from the pregenerated H files'
+                                WRITE(logunit,*) 'Box sizes will be replaced by those read from pregenerated trajectory files'
                         END IF
-!                        END IF
                         DO ibox = 1, nbr_boxes
                                 line_nbr = line_nbr + 1
-                                CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
+                                CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
                                 IF(ierr /= 0) THEN
                                         err_msg = ''
                                         err_msg(1) = 'Error while reading # Pregen_Info'
                                         CALL clean_abort(err_msg,'Get_Pregen_Info')
                                 END IF
-                                IF(req_entries /= nbr_entries) THEN
-                                        err_msg = ''
-                                        err_msg(1) = 'Line ' // TRIM(Int_To_String(line_nbr)) // &
-                                                ' of the input file must contain exactly ' // &
-                                                TRIM(Int_To_String(req_entries)) // ' entries'
-                                        CALL clean_abort(err_msg,'Get_Pregen_Info')
+                                tspec = .FALSE.
+                                nmols_entry = 0
+                                DO i_entry = 1, nbr_entries-1
+                                        SELECT CASE(line_array(i_entry))
+                                                CASE("xtc", "XTC")
+                                                        tspec = .TRUE.
+                                                        has_xtc(ibox) = .TRUE.
+                                                        pregen_xtc_filenames(ibox) = line_array(i_entry+1)
+                                                        nmols_entry = MAX(nmols_entry,i_entry+2)
+
+                                                CASE("xyz", "XYZ")
+                                                        tspec = .TRUE.
+                                                        has_xyz(ibox) = .TRUE.
+                                                        pregen_xyz_filenames(ibox) = line_array(i_entry+1)
+                                                        nmols_entry = MAX(nmols_entry,i_entry+2)
+
+                                                CASE("H", "h")
+                                                        tspec = .TRUE.
+                                                        has_Hfile(ibox) = .TRUE.
+                                                        pregen_H_filenames(ibox) = line_array(i_entry+1)
+                                                        nmols_entry = MAX(nmols_entry,i_entry+2)
+
+                                                CASE("ndx")
+                                                        tspec = .TRUE.
+                                                        has_ndx(ibox) = .TRUE.
+                                                        pregen_ndx_filenames(ibox) = line_array(i_entry+1)
+                                                        nmols_entry = MAX(nmols_entry,i_entry+2)
+                                                END SELECT
+                                END DO
+                                IF (.NOT. tspec) THEN
+                                        need_solvents = .TRUE.
+                                        has_Hfile(ibox) = .TRUE.
+                                        has_xyz(ibox) = .TRUE.
+                                        pregen_xyz_filenames(ibox) = line_array(xyz_pos)
+                                        OPEN(unit=pregen_xyz_unit(ibox),file=pregen_xyz_filenames(ibox),STATUS='OLD',IOSTAT=ierr)
+                                        IF(ierr /= 0) THEN
+                                                err_msg = ''
+                                                err_msg(1) = 'Error while opening pregenerated xyz file ' // &
+                                                        TRIM(pregen_xyz_filenames(ibox)) // &
+                                                        ' given as entry  ' // TRIM(Int_To_String(xyz_pos)) // ' on line number ' // &
+                                                        TRIM(Int_To_String(line_nbr)) // ' of the input file'
+                                                err_msg(2) = 'Verify that xyz file ' // TRIM(pregen_xyz_filenames(ibox)) // 'exists'
+                                                CALL clean_abort(err_msg,'Get_Pregen_Info')
+                                        END IF
+                                        pregen_H_filenames(ibox) = line_array(H_pos)
+                                        OPEN(unit=pregen_H_unit(ibox),file=pregen_H_filenames(ibox),STATUS='OLD',IOSTAT=ierr)
+                                        IF(ierr /= 0) THEN
+                                                err_msg = ''
+                                                err_msg(1) = 'Error while opening pregenerated H file ' // &
+                                                        TRIM(pregen_H_filenames(ibox)) // &
+                                                        ' given as entry  ' // TRIM(Int_To_String(H_pos)) // ' on line number ' // &
+                                                        TRIM(Int_To_String(line_nbr)) // ' of the input file'
+                                                err_msg(2) = 'Verify that H file ' // TRIM(pregen_H_filenames(ibox)) // 'exists'
+                                                CALL clean_abort(err_msg,'Get_Pregen_Info')
+                                        END IF
+                                        WRITE(logunit,*) 'Reading pregenerated trajectory for box ', ibox, &
+                                                ' from xyz file ', TRIM(pregen_xyz_filenames(ibox)), &
+                                                ' and H file ', TRIM(pregen_H_filenames(ibox))
+                                ELSEIF (nmols_entry <= nbr_entries) THEN
+                                        DO i_entry = nmols_entry, nbr_entries
+                                                nmols_to_read(i_entry-nmols_entry+1,ibox) = String_To_Int(line_array(i_entry))
+                                        END DO
+                                        atom_ibounds(2,:,ibox) = natoms*nmols_to_read(:,ibox)
+                                        natoms_to_read(ibox) = SUM(atom_ibounds(2,:,ibox))
+                                        DO is = 2, nspecies
+                                                atom_ibounds(2,is,ibox) = SUM(atom_ibounds(2,is-1:is,ibox))
+                                        END DO
+                                        atom_ibounds(1,1,ibox) = 1
+                                        IF (nspecies > 1) atom_ibounds(1,2:nspecies,ibox) = atom_ibounds(2,1:(nspecies-1),ibox)+1
+                                ELSE
+                                        need_solvents = .TRUE.
+                                        IF (.NOT. (has_xyz(ibox) .AND. has_Hfile(ibox))) THEN
+                                                err_msg = ""
+                                                err_msg(1) = "xyz and H trajectory files are required if number of molecules "
+                                                err_msg(2) = "of each species in trajectory is not given"
+                                                CALL Clean_Abort(err_msg, "Get_Pregen_Info")
+                                        END IF
                                 END IF
-                                pregen_xyz_filenames(ibox) = line_array(xyz_pos)
-                                OPEN(unit=pregen_xyz_unit(ibox),file=pregen_xyz_filenames(ibox),STATUS='OLD',IOSTAT=ierr)
-                                IF(ierr /= 0) THEN
-                                        err_msg = ''
-                                        err_msg(1) = 'Error while opening pregenerated xyz file ' // &
-                                                TRIM(pregen_xyz_filenames(ibox)) // &
-                                                ' given as entry  ' // TRIM(Int_To_String(xyz_pos)) // ' on line number ' // &
-                                                TRIM(Int_To_String(line_nbr)) // ' of the input file'
-                                        err_msg(2) = 'Verify that xyz file ' // TRIM(pregen_xyz_filenames(ibox)) // 'exists'
-                                        CALL clean_abort(err_msg,'Get_Pregen_Info')
-                                END IF
-!                                IF (has_H) THEN
-                                pregen_H_filenames(ibox) = line_array(H_pos)
-                                OPEN(unit=pregen_H_unit(ibox),file=pregen_H_filenames(ibox),STATUS='OLD',IOSTAT=ierr)
-                                IF(ierr /= 0) THEN
-                                        err_msg = ''
-                                        err_msg(1) = 'Error while opening pregenerated H file ' // &
-                                                TRIM(pregen_H_filenames(ibox)) // &
-                                                ' given as entry  ' // TRIM(Int_To_String(H_pos)) // ' on line number ' // &
-                                                TRIM(Int_To_String(line_nbr)) // ' of the input file'
-                                        err_msg(2) = 'Verify that H file ' // TRIM(pregen_H_filenames(ibox)) // 'exists'
-                                        CALL clean_abort(err_msg,'Get_Pregen_Info')
-                                END IF
-                                WRITE(logunit,*) 'Reading pregenerated trajectory for box ', ibox, &
-                                        ' from xyz file ', TRIM(pregen_xyz_filenames(ibox)), &
-                                        ' and H file ', TRIM(pregen_H_filenames(ibox))
 !                                ELSE
 !                                        WRITE(logunit,*) 'Reading pregenerated trajectory for box ', ibox, &
 !                                                ' from xyz file ', TRIM(pregen_xyz_filenames(ibox))
 !                                END IF
 
                         END DO
+                        IF (.NOT. need_solvents) species_list%l_solvent = ANY(nmols_to_read>0,2)
                         WRITE(logunit,'(A80)') '********************************************************************************'
                         RETURN
                 ELSE IF(line_string(1:3) == 'END' .or. line_nbr > 10000 ) THEN

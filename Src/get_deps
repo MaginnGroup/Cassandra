@@ -17,5 +17,8 @@ done
 sed -ibkp s/\ netcdf.o/\ / dep.mk
 sed -ibkp s/omp_lib.o// dep.mk
 sed -ibkp s/iso_fortran_env.o// dep.mk
+sed -ibkp s/gmxfort_trajectory.o// dep.mk
+sed -ibkp s/gmxfort_utils.o// dep.mk
+sed -ibkp s/xtc_routines.o/xtc_routines.temp.o/ dep.mk
 rm dep.mkbkp
 
