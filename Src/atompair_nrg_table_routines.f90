@@ -285,10 +285,16 @@ CONTAINS
 
         SUBROUTINE Setup_Atompair_tables
                 solvent_maxind = 1
+                rsqmin_res_d = 1
+                solvent_maxind_d = 1
                 IF (.NOT. (precalc_atompair_nrg .OR. read_atompair_rminsq .OR. est_atompair_rminsq)) RETURN
                 CALL Allocate_Atompair_Tables
                 IF (precalc_atompair_nrg) CALL Create_Atompair_Nrg_table
                 IF (read_atompair_rminsq) CALL Read_Pair_rminsq
+                IF (est_atompair_rminsq .AND. .NOT. l_heap) THEN
+                        rsqmin_res_d = rsqmin_res
+                        solvent_maxind_d = solvent_maxind
+                END IF
         END SUBROUTINE
 
 

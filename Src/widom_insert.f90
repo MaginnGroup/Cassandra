@@ -79,7 +79,9 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
 
   INTEGER :: changefactor, thread_changefactor, Eij_ind
 
-  !REAL(DP), DIMENSION(rsqmin_res,solvent_maxind,natoms(is)) :: frame_rsqmin_atompair_w_max
+  REAL(DP), DIMENSION(rsqmin_res_d,solvent_maxind_d,natoms(is)), TARGET :: frame_rsqmin_atompair_w_sum
+  REAL(DP), DIMENSION(rsqmin_res_d,solvent_maxind_d,natoms(is)), TARGET :: frame_rsqmin_atompair_w_max
+  INTEGER(KIND=INT64), DIMENSION(rsqmin_res_d,solvent_maxind_d,natoms(is)), TARGET :: frame_rsqmin_atompair_freq
   REAL(DP), DIMENSION(:,:,:), POINTER :: rsqmin_atompair_w_max_ptr, rsqmin_atompair_w_sum_ptr
   INTEGER(KIND=INT64), DIMENSION(:,:,:), POINTER :: rsqmin_atompair_freq_ptr
   INTEGER :: bsolute, rsq_ind, ia, ti_solvent
@@ -99,16 +101,16 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
   !!! 4-d allocatable shared target arrays with the last axis for thread number are used 
   !       in conjunction with private pointers and sum or maxval is used along the last axis
   !       of the target array.  This functionally imitates the behavior of having 3-d variables
-  !       in OMP REDUCTION clauses, which was the original implementation, except it allocates
-  !       the arrays to the heap, whereas REDUCTION variables are kept in the stack.  This 
-  !       is necessary because having realistically sized yet relatively large REDUCTION
-  !       variables with dimensions like (550,30,13) caused runtime segmentation faults
-  !       which apparently originated from stack buffer overflow, even though `ulimit -s`
-  !       in bash showed the stack size as unlimited.
+  !       in OMP REDUCTION clauses, except it allocates
+  !       the arrays to the heap, whereas REDUCTION variables are kept in the stack. 
+  !       This is now optional, and either the stack or the heap may be used, with the stack
+  !       being the default.  If you want to use the stack but get segmentation faults 
+  !       due to stack buffer overflow, set environment variable OMP_STACKSIZE to increase
+  !       the size of the stack for threads other than the main thread.
   REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: frame_rsqmin_atompair_w_sum_tgt, frame_rsqmin_atompair_w_max_tgt
   INTEGER(KIND=INT64), DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: frame_rsqmin_atompair_freq_tgt
-  REAL(DP), DIMENSION(:,:,:), POINTER :: frame_rsqmin_atompair_w_sum, frame_rsqmin_atompair_w_max
-  INTEGER(KIND=INT64), DIMENSION(:,:,:), POINTER :: frame_rsqmin_atompair_freq
+  REAL(DP), DIMENSION(:,:,:), POINTER :: frame_rsqmin_atompair_w_sum_ptr, frame_rsqmin_atompair_w_max_ptr
+  INTEGER(KIND=INT64), DIMENSION(:,:,:), POINTER :: frame_rsqmin_atompair_freq_ptr
   !!!
 
   INTEGER :: nbr_threads, ithread
@@ -130,35 +132,37 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
                   bsolute+1:bsolute+natoms(is),ibox)
           rsqmin_atompair_freq_ptr => rsqmin_atompair_freq(:,:, &
                   bsolute+1:bsolute+natoms(is),ibox)
-          IF (ALLOCATED(frame_rsqmin_atompair_w_sum_tgt)) THEN
-                  DEALLOCATE(frame_rsqmin_atompair_w_sum_tgt)
+          IF (l_heap) THEN
+                  IF (ALLOCATED(frame_rsqmin_atompair_w_sum_tgt)) THEN
+                          DEALLOCATE(frame_rsqmin_atompair_w_sum_tgt)
+                  END IF
+                  IF (ALLOCATED(frame_rsqmin_atompair_w_max_tgt)) THEN
+                          DEALLOCATE(frame_rsqmin_atompair_w_max_tgt)
+                  END IF
+                  IF (ALLOCATED(frame_rsqmin_atompair_freq_tgt)) THEN
+                          DEALLOCATE(frame_rsqmin_atompair_freq_tgt)
+                  END IF
+                  ALLOCATE(frame_rsqmin_atompair_w_sum_tgt( &
+                          rsqmin_res, &
+                          solvent_maxind, &
+                          natoms(is), &
+                          nbr_threads))
+                  ALLOCATE(frame_rsqmin_atompair_w_max_tgt( &
+                          rsqmin_res, &
+                          solvent_maxind, &
+                          natoms(is), &
+                          nbr_threads))
+                  ALLOCATE(frame_rsqmin_atompair_freq_tgt( &
+                          rsqmin_res, &
+                          solvent_maxind, &
+                          natoms(is), &
+                          nbr_threads))
+                  !$OMP PARALLEL WORKSHARE
+                  frame_rsqmin_atompair_w_sum_tgt = 0.0_DP
+                  frame_rsqmin_atompair_w_max_tgt = 0.0_DP
+                  frame_rsqmin_atompair_freq_tgt = 0_INT64
+                  !$OMP END PARALLEL WORKSHARE
           END IF
-          IF (ALLOCATED(frame_rsqmin_atompair_w_max_tgt)) THEN
-                  DEALLOCATE(frame_rsqmin_atompair_w_max_tgt)
-          END IF
-          IF (ALLOCATED(frame_rsqmin_atompair_freq_tgt)) THEN
-                  DEALLOCATE(frame_rsqmin_atompair_freq_tgt)
-          END IF
-          ALLOCATE(frame_rsqmin_atompair_w_sum_tgt( &
-                  rsqmin_res, &
-                  solvent_maxind, &
-                  natoms(is), &
-                  nbr_threads))
-          ALLOCATE(frame_rsqmin_atompair_w_max_tgt( &
-                  rsqmin_res, &
-                  solvent_maxind, &
-                  natoms(is), &
-                  nbr_threads))
-          ALLOCATE(frame_rsqmin_atompair_freq_tgt( &
-                  rsqmin_res, &
-                  solvent_maxind, &
-                  natoms(is), &
-                  nbr_threads))
-          !$OMP WORKSHARE
-          frame_rsqmin_atompair_w_sum_tgt = 0.0_DP
-          frame_rsqmin_atompair_w_max_tgt = 0.0_DP
-          frame_rsqmin_atompair_freq_tgt = 0_INT64
-          !$OMP END WORKSHARE
   END IF
 
 
@@ -242,22 +246,35 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
   frame_Eij_w_sum = 0.0_DP
   Eij_freq = 0
   frame_w_max = 0.0_DP
+  frame_rsqmin_atompair_w_sum = 0.0_DP
+  frame_rsqmin_atompair_w_max = 0.0_DP
+  frame_rsqmin_atompair_freq = 0_INT64
 
   !$OMP PARALLEL DEFAULT(SHARED) &
   !$OMP PRIVATE(ln_pseq, ln_pbias, E_ring_frag, inter_overlap, cbmc_overlap, intra_overlap, i_interval) &
   !$OMP PRIVATE(widom_var_exp, E_periodic_qq, E_intra_qq, E_intra_vdw, E_inter, dE_frag, dE) &
   !$OMP PRIVATE(E_bond, E_angle, E_dihedral, E_improper, dE_intra, dE_inter, E_reciprocal, frag_order) &
   !$OMP PRIVATE(t_cpu_s, t_cpu_e, thread_changefactor, Eij_ind, rsq_ind, ia, ti_solvent) &
-  !$OMP PRIVATE(frame_rsqmin_atompair_w_sum,frame_rsqmin_atompair_w_max,frame_rsqmin_atompair_freq) &
+  !$OMP PRIVATE(frame_rsqmin_atompair_w_sum_ptr,frame_rsqmin_atompair_w_max_ptr,frame_rsqmin_atompair_freq_ptr) &
   !$OMP REDUCTION(+:widom_sum,n_overlaps,subinterval_sums,t_cpu,Eij_freq,frame_Eij_w_sum) &
-  !$OMP REDUCTION(MAX:frame_w_max,thread_Eij_factor)
+  !$OMP REDUCTION(+:frame_rsqmin_atompair_w_sum,frame_rsqmin_atompair_freq) &
+  !$OMP REDUCTION(MAX:frame_w_max,thread_Eij_factor,frame_rsqmin_atompair_w_max)
+  frame_rsqmin_atompair_w_sum = 0.0_DP
+  frame_rsqmin_atompair_w_max = 0.0_DP
+  frame_rsqmin_atompair_freq = 0_INT64
 
   ithread = 1
   !$ ithread = omp_get_thread_num() + 1
   IF (est_atompair_rminsq) THEN
-          frame_rsqmin_atompair_w_sum => frame_rsqmin_atompair_w_sum_tgt(:,:,:,ithread)
-          frame_rsqmin_atompair_w_max => frame_rsqmin_atompair_w_max_tgt(:,:,:,ithread)
-          frame_rsqmin_atompair_freq => frame_rsqmin_atompair_freq_tgt(:,:,:,ithread)
+          IF (l_heap) THEN
+                  frame_rsqmin_atompair_w_sum_ptr => frame_rsqmin_atompair_w_sum_tgt(:,:,:,ithread)
+                  frame_rsqmin_atompair_w_max_ptr => frame_rsqmin_atompair_w_max_tgt(:,:,:,ithread)
+                  frame_rsqmin_atompair_freq_ptr => frame_rsqmin_atompair_freq_tgt(:,:,:,ithread)
+          ELSE
+                  frame_rsqmin_atompair_w_sum_ptr => frame_rsqmin_atompair_w_sum
+                  frame_rsqmin_atompair_w_max_ptr => frame_rsqmin_atompair_w_max
+                  frame_rsqmin_atompair_freq_ptr => frame_rsqmin_atompair_freq
+          END IF
   END IF
 
   IF (ALLOCATED(widom_atoms)) THEN
@@ -431,14 +448,14 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
                                 DO ti_solvent = 1, solvent_maxind
                                         IF (swi_atompair_rsqmin(ti_solvent,ia) >= maxrminsq) CYCLE
                                         rsq_ind = INT((swi_atompair_rsqmin(ti_solvent,ia)-rsqmin_shifter) / rsqmin_step)
-                                        IF (widom_var_exp > frame_rsqmin_atompair_w_max(rsq_ind,ti_solvent,ia)) THEN
-                                                frame_rsqmin_atompair_w_max(rsq_ind,ti_solvent,ia) = widom_var_exp
+                                        IF (widom_var_exp > frame_rsqmin_atompair_w_max_ptr(rsq_ind,ti_solvent,ia)) THEN
+                                                frame_rsqmin_atompair_w_max_ptr(rsq_ind,ti_solvent,ia) = widom_var_exp
                                         END IF
-                                        frame_rsqmin_atompair_w_sum(rsq_ind,ti_solvent,ia) = &
-                                                frame_rsqmin_atompair_w_sum(rsq_ind,ti_solvent,ia) + &
+                                        frame_rsqmin_atompair_w_sum_ptr(rsq_ind,ti_solvent,ia) = &
+                                                frame_rsqmin_atompair_w_sum_ptr(rsq_ind,ti_solvent,ia) + &
                                                 widom_var_exp
-                                        frame_rsqmin_atompair_freq(rsq_ind,ti_solvent,ia) = &
-                                                frame_rsqmin_atompair_freq(rsq_ind,ti_solvent,ia) + 1
+                                        frame_rsqmin_atompair_freq_ptr(rsq_ind,ti_solvent,ia) = &
+                                                frame_rsqmin_atompair_freq_ptr(rsq_ind,ti_solvent,ia) + 1
                                 END DO
                           END DO
                   END IF
@@ -471,19 +488,39 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
   IF (thread_changefactor<changefactor) CALL coarsen_w_max(frame_w_max,frame_Eij_w_sum,Eij_freq,thread_Eij_factor,changefactor/thread_changefactor)
   !$OMP END PARALLEL
   IF (changefactor>1) CALL coarsen_w_max(w_max_gcopy,Eij_w_sum_gcopy,Eij_freq_gcopy,Eij_factor_gcopy,changefactor)
-  w_max_gcopy = MAX(w_max_gcopy, widom_prefactor*frame_w_max)
-  Eij_w_sum_gcopy = Eij_w_sum_gcopy + widom_prefactor*frame_Eij_w_sum
-  Eij_freq_gcopy = Eij_freq_gcopy + Eij_freq
-  w_max(:,is,ibox) = w_max_gcopy
-  Eij_w_sum(:,is,ibox) = Eij_w_sum_gcopy
-  Eij_freq_total(:,is,ibox) = Eij_freq_gcopy
   Eij_factor(is,ibox) = Eij_factor_gcopy
+  !$OMP PARALLEL
+  !$OMP SECTIONS
+  !$OMP SECTION
+  w_max(:,is,ibox) = MAX(w_max_gcopy, widom_prefactor*frame_w_max)
+  !$OMP SECTION
+  Eij_w_sum(:,is,ibox) = Eij_w_sum_gcopy + widom_prefactor*frame_Eij_w_sum
+  !$OMP SECTION
+  Eij_freq_total(:,is,ibox) = Eij_freq_gcopy + Eij_freq
+  !$OMP END SECTIONS NOWAIT
 
   IF (est_atompair_rminsq) THEN
-          rsqmin_atompair_freq_ptr = rsqmin_atompair_freq_ptr + SUM(frame_rsqmin_atompair_freq_tgt,4)
-          rsqmin_atompair_w_max_ptr = MAX(rsqmin_atompair_w_max_ptr, widom_prefactor*MAXVAL(frame_rsqmin_atompair_w_max_tgt,4))
-          rsqmin_atompair_w_sum_ptr = rsqmin_atompair_w_sum_ptr + widom_prefactor*SUM(frame_rsqmin_atompair_w_sum_tgt,4)
+          IF (l_heap) THEN
+                  !$OMP SECTIONS
+                  !$OMP SECTION
+                  rsqmin_atompair_freq_ptr = rsqmin_atompair_freq_ptr + SUM(frame_rsqmin_atompair_freq_tgt,4)
+                  !$OMP SECTION
+                  rsqmin_atompair_w_max_ptr = MAX(rsqmin_atompair_w_max_ptr, widom_prefactor*MAXVAL(frame_rsqmin_atompair_w_max_tgt,4))
+                  !$OMP SECTION
+                  rsqmin_atompair_w_sum_ptr = rsqmin_atompair_w_sum_ptr + widom_prefactor*SUM(frame_rsqmin_atompair_w_sum_tgt,4)
+                  !$OMP END SECTIONS
+          ELSE
+                  !$OMP SECTIONS
+                  !$OMP SECTION
+                  rsqmin_atompair_freq_ptr = rsqmin_atompair_freq_ptr + frame_rsqmin_atompair_freq
+                  !$OMP SECTION
+                  rsqmin_atompair_w_sum_ptr = rsqmin_atompair_w_sum_ptr + widom_prefactor*frame_rsqmin_atompair_w_sum
+                  !$OMP SECTION
+                  rsqmin_atompair_w_max_ptr = MAX(rsqmin_atompair_w_max_ptr,widom_prefactor*frame_rsqmin_atompair_w_max)
+                  !$OMP END SECTIONS
+          END IF
   END IF
+  !$OMP END PARALLEL
 
   widom_active = .FALSE.
   widom_sum = widom_sum * widom_prefactor

@@ -6772,6 +6772,7 @@ SUBROUTINE Get_Rcutoff_Low
         ALLOCATE(tol_list(1))
         tol_list = 1.0e-10_DP
         nbr_tols = 1
+        l_heap = .FALSE.
         keywordsearch:DO
                 line_nbr = line_nbr + 1
                 CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
@@ -6834,6 +6835,9 @@ SUBROUTINE Get_Rcutoff_Low
                                                 err_msg(3) = "in the input file"
                                                 CALL Clean_Abort(err_msg, "Get_Rcutoff_Low")
                                         END IF
+                                ELSE IF (line_array(i_entry) == "heap") THEN
+                                        l_heap = .TRUE.
+                                        i_entry = i_entry + 1
                                 ELSE
                                         err_msg = ""
                                         err_msg(1) = "Keyword " // line_array(i_entry)
