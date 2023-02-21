@@ -175,12 +175,17 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
           write_wprp2 = .FALSE.
   END IF
 
-  changefactor = 1
-  thread_Eij_factor = 0.0_DP
-  w_max_gcopy(:) = w_max(:,is,ibox)
-  Eij_w_sum_gcopy(:) = Eij_w_sum(:,is,ibox)
-  Eij_freq_gcopy(:) = Eij_freq_total(:,is,ibox)
-  Eij_factor_gcopy = Eij_factor(is,ibox)
+  IF (est_emax) THEN
+          changefactor = 1
+          thread_Eij_factor = 0.0_DP
+          w_max_gcopy(:) = w_max(:,is,ibox)
+          Eij_w_sum_gcopy(:) = Eij_w_sum(:,is,ibox)
+          Eij_freq_gcopy(:) = Eij_freq_total(:,is,ibox)
+          Eij_factor_gcopy = Eij_factor(is,ibox)
+          frame_Eij_w_sum = 0.0_DP
+          Eij_freq = 0
+          frame_w_max = 0.0_DP
+  END IF
 
   this_lambda = 1.0_DP
   widom_sum = 0.0_DP
@@ -243,9 +248,6 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
   !OMP PRIVATE(noncbmc_time_e,noncbmc_time_s) &
   ! also include noncbmc_time in omp reduction
 
-  frame_Eij_w_sum = 0.0_DP
-  Eij_freq = 0
-  frame_w_max = 0.0_DP
   frame_rsqmin_atompair_w_sum = 0.0_DP
   frame_rsqmin_atompair_w_max = 0.0_DP
   frame_rsqmin_atompair_freq = 0_INT64
@@ -307,11 +309,13 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
   n_overlaps = 0_INT64
   subinterval_sums = 0.0_DP
   t_cpu = 0.0_DP
-  frame_w_max = 0.0_DP
-  frame_Eij_w_sum = 0.0_DP
-  Eij_freq = 0
-  thread_Eij_factor = Eij_factor_gcopy
-  thread_changefactor = changefactor
+  IF (est_emax) THEN
+          frame_w_max = 0.0_DP
+          frame_Eij_w_sum = 0.0_DP
+          Eij_freq = 0
+          thread_Eij_factor = Eij_factor_gcopy
+          thread_changefactor = changefactor
+  END IF
 
   !$OMP DO SCHEDULE(DYNAMIC)
   DO i_widom = 1, insertions_in_step
@@ -460,15 +464,17 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
                           END DO
                   END IF
 
-                  Eij_ind = INT(Eij_max * thread_Eij_factor)
-                  DO WHILE (Eij_ind > Eij_ind_ubound)
-                        CALL coarsen_w_max(frame_w_max,frame_Eij_w_sum,Eij_freq,thread_Eij_factor,2)
-                        thread_changefactor = thread_changefactor * 2
-                        Eij_ind = INT(Eij_max * thread_Eij_factor)
-                  END DO
-                  frame_w_max(Eij_ind) = MAX(frame_w_max(Eij_ind), widom_var_exp)
-                  frame_Eij_w_sum(Eij_ind) = frame_Eij_w_sum(Eij_ind) + widom_var_exp
-                  Eij_freq(Eij_ind) = Eij_freq(Eij_ind) + 1
+                  IF (est_emax) THEN
+                          Eij_ind = INT(Eij_max * thread_Eij_factor)
+                          DO WHILE (Eij_ind > Eij_ind_ubound)
+                                CALL coarsen_w_max(frame_w_max,frame_Eij_w_sum,Eij_freq,thread_Eij_factor,2)
+                                thread_changefactor = thread_changefactor * 2
+                                Eij_ind = INT(Eij_max * thread_Eij_factor)
+                          END DO
+                          frame_w_max(Eij_ind) = MAX(frame_w_max(Eij_ind), widom_var_exp)
+                          frame_Eij_w_sum(Eij_ind) = frame_Eij_w_sum(Eij_ind) + widom_var_exp
+                          Eij_freq(Eij_ind) = Eij_freq(Eij_ind) + 1
+                  END IF
           ELSE
                   n_overlaps = n_overlaps + 1_INT64
           END IF
@@ -481,23 +487,29 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
           t_cpu = t_cpu + t_cpu_e - t_cpu_s
   END DO
   !$OMP END DO
-  !$OMP CRITICAL
-  changefactor = MAX(changefactor,thread_changefactor)
-  !$OMP END CRITICAL
-  !$OMP BARRIER
-  IF (thread_changefactor<changefactor) CALL coarsen_w_max(frame_w_max,frame_Eij_w_sum,Eij_freq,thread_Eij_factor,changefactor/thread_changefactor)
+  IF (est_emax) THEN
+          !$OMP CRITICAL
+          changefactor = MAX(changefactor,thread_changefactor)
+          !$OMP END CRITICAL
+          !$OMP BARRIER
+          IF (thread_changefactor<changefactor) CALL coarsen_w_max(frame_w_max,frame_Eij_w_sum,Eij_freq,thread_Eij_factor,changefactor/thread_changefactor)
+  END IF
   !$OMP END PARALLEL
-  IF (changefactor>1) CALL coarsen_w_max(w_max_gcopy,Eij_w_sum_gcopy,Eij_freq_gcopy,Eij_factor_gcopy,changefactor)
-  Eij_factor(is,ibox) = Eij_factor_gcopy
+  IF (est_emax) THEN
+          IF (changefactor>1) CALL coarsen_w_max(w_max_gcopy,Eij_w_sum_gcopy,Eij_freq_gcopy,Eij_factor_gcopy,changefactor)
+          Eij_factor(is,ibox) = Eij_factor_gcopy
+  END IF
   !$OMP PARALLEL
-  !$OMP SECTIONS
-  !$OMP SECTION
-  w_max(:,is,ibox) = MAX(w_max_gcopy, widom_prefactor*frame_w_max)
-  !$OMP SECTION
-  Eij_w_sum(:,is,ibox) = Eij_w_sum_gcopy + widom_prefactor*frame_Eij_w_sum
-  !$OMP SECTION
-  Eij_freq_total(:,is,ibox) = Eij_freq_gcopy + Eij_freq
-  !$OMP END SECTIONS NOWAIT
+  IF (est_emax) THEN
+          !$OMP SECTIONS
+          !$OMP SECTION
+          w_max(:,is,ibox) = MAX(w_max_gcopy, widom_prefactor*frame_w_max)
+          !$OMP SECTION
+          Eij_w_sum(:,is,ibox) = Eij_w_sum_gcopy + widom_prefactor*frame_Eij_w_sum
+          !$OMP SECTION
+          Eij_freq_total(:,is,ibox) = Eij_freq_gcopy + Eij_freq
+          !$OMP END SECTIONS NOWAIT
+  END IF
 
   IF (est_atompair_rminsq) THEN
           IF (l_heap) THEN

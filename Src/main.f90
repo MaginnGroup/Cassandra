@@ -510,9 +510,11 @@ PROGRAM Main
             // TRIM(Int_To_String(ntrials(is,ibox)%widom))
           WRITE(logunit,'(8x,A,F27.3,A)') "CPU time: ", widom_cpu_time(is,ibox), " seconds"
           WRITE(logunit,'(8x,A,F21.3,A)') "Wallclock time: ", widom_wc_time(is,ibox), " seconds"
-          CALL Estimate_Pair_Emax(is,ibox,Emax,nskips)
-          WRITE(logunit,'(8x,A,F12.6,A)') "Recommended pair U*_max = ", Emax, &
-                  " would have flagged about " // TRIM(Int_To_String(nskips)) // " more overlaps"
+          IF (est_emax) THEN
+                  CALL Estimate_Pair_Emax(is,ibox,Emax,nskips)
+                  WRITE(logunit,'(8x,A,F12.6,A)') "Recommended pair U*_max = ", Emax, &
+                          " would have flagged about " // TRIM(Int_To_String(nskips)) // " more overlaps"
+          END IF
           IF (est_atompair_rminsq) THEN
                   DO i_tol=1, nbr_tols
                           WRITE(logunit,'(8x,A,ES10.3)') "The atompair rminsq table created with tolerance =", &

@@ -6745,6 +6745,8 @@ SUBROUTINE Get_Rcutoff_Low
   REWIND(inputunit)
   est_atompair_rminsq = .FALSE.
   read_atompair_rminsq = .FALSE.
+  est_emax = .FALSE.
+  Eij_ind_ubound = 1
   ierr = 0
   line_nbr = 0
   rsqmin_res = 1
@@ -6779,11 +6781,24 @@ SUBROUTINE Get_Rcutoff_Low
                 IF (nbr_entries==0) EXIT sectionsearch
                 IF (line_array(1) == "adaptive") THEN
                         calc_rmin_flag = .TRUE.
-                        IF (nbr_entries==1) THEN
-                                U_max_base = 708.0_DP / MINVAL(beta)
-                        ELSE
-                                U_max_base = String_To_Double(line_array(2)) / MINVAL(beta)
-                        END IF
+                        i_entry = 2
+                        U_max_base = 708.0_DP / MINVAL(beta)
+                        DO WHILE (i_entry <= nbr_entries)
+                                IF (line_array(i_entry) == "est_emax") THEN
+                                        est_emax = .TRUE.
+                                        Eij_ind_ubound = 2047
+                                        i_entry = i_entry + 1
+                                ELSEIF (i_entry == 2) THEN
+                                        U_max_base = String_To_Double(line_array(2)) / MINVAL(beta)
+                                        i_entry = i_entry + 1
+                                ELSE
+                                        err_msg = ""
+                                        err_msg(1) = "Entry " // Int_To_String(i_entry) // " in line " // &
+                                                Int_To_String(line_nbr) // " of input file is invalid."
+                                        err_msg(2) = '"est_emax" is the only keyword that would be valid here.'
+                                        CALL Clean_Abort(err_msg, "Get_Rcutoff_Low")
+                                END IF
+                        END DO
                 ELSE IF (line_array(1) == "specific") THEN
                         i_entry = 2
                         DO WHILE (i_entry <= nbr_entries)
