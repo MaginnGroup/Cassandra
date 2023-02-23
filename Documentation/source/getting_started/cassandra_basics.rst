@@ -210,5 +210,31 @@ file name suffix. The following are generated:
   Unlike basic Widom property files, these do not have row or column labels, and do not include 
   the step number or sweep number, but the step number or sweep number corresponding to each 
   row is the same as in the Widom property file.  Further details are given in 
-  :ref:`sec:Widom_Info`).
+  :ref:`sec:Widom_Info`.
+
+* **Emax file** (``*.spec#.emax`` ``*.spec#.box#.emax``): This file contains
+  fraction of total ``widom_var`` sum, maximum single-insertion ``widom_var``,
+  and number of Widom insertions binned by ``max_Eij``, the maximum
+  single intermolecular atom pair energy for a single Widom insertion.
+  ``Eij_index`` represents the bin number.
+
+* **rminsq file** (``*.rminsq`` ``*.rminsq#``): This file stores the 
+  intermolecular atom pair-specific overlap radii estimated with a
+  given tolerance.  The first line shows the tolerance used to estimate
+  these values.  The second line shows ``rcut_lowsq`` (the square of the basic
+  :math:`r_{min}`, ``rsqmin_step``, and ``rsqmin_res``
+  specified in section ``# Rcutoff_Low`` of the input file used to generate
+  the ``.rminsq`` file as described in :ref:`sec:minimum_cutoff`.
+  The third line shows the dimensions of the array of atom pair overlap radii,
+  where the last dimension is the number of boxes.
+  After these header lines, an integer representation of the array slice for
+  box 1 is written, with the solvent atoms on the vertical axis and
+  Widom solute atoms on the horizontal axis.  If there are multiple boxes,
+  this part is repeated below for each one without space between them.
+  The square of the actual atom pair-specific overlap radius values
+  can be calculated from the integer values by multiplying
+  by ``rsqmin_step`` and adding ``rcut_lowsq``.  If a single simulation
+  uses multiple tolerances to estimate these overlap radius arrays, it
+  writes a separate ``*.rminsq#`` file for each one, numbered in the same
+  order in which the tolerances were specified in the input file.
 
