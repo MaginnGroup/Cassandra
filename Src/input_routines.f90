@@ -5347,12 +5347,6 @@ SUBROUTINE Get_Widom_Info
                         ALLOCATE(widom_cpu_time(nspecies,nbr_boxes))
                         ALLOCATE(emax_filenames(nspecies,nbr_boxes))
                         ALLOCATE(Eij_factor(nspecies,nbr_boxes))
-                        ALLOCATE(w_max(Eij_ind_ubound+1,nspecies,nbr_boxes))
-                        ALLOCATE(Eij_w_sum(Eij_ind_ubound+1,nspecies,nbr_boxes))
-                        ALLOCATE(Eij_freq_total(Eij_ind_ubound+1,nspecies,nbr_boxes))
-                        w_max = 0.0_DP
-                        Eij_w_sum = 0.0_DP
-                        Eij_freq_total = 0
                         widom_wc_time = 0.0_DP
                         widom_cpu_time = 0.0_DP
                         first_open_wprop(:,:) = .TRUE.
@@ -6787,6 +6781,12 @@ SUBROUTINE Get_Rcutoff_Low
                                 IF (line_array(i_entry) == "est_emax") THEN
                                         est_emax = .TRUE.
                                         Eij_ind_ubound = 2047
+                                        ALLOCATE(w_max(Eij_ind_ubound+1,nspecies,nbr_boxes))
+                                        ALLOCATE(Eij_w_sum(Eij_ind_ubound+1,nspecies,nbr_boxes))
+                                        ALLOCATE(Eij_freq_total(Eij_ind_ubound+1,nspecies,nbr_boxes))
+                                        w_max = 0.0_DP
+                                        Eij_w_sum = 0.0_DP
+                                        Eij_freq_total = 0
                                         i_entry = i_entry + 1
                                 ELSEIF (i_entry == 2) THEN
                                         U_max_base = String_To_Double(line_array(2)) / MINVAL(beta)
