@@ -5354,12 +5354,6 @@ SUBROUTINE Get_Widom_Info
                         ALLOCATE(widom_cpu_time(nspecies,nbr_boxes))
                         ALLOCATE(emax_filenames(nspecies,nbr_boxes))
                         ALLOCATE(Eij_factor(nspecies,nbr_boxes))
-                        ALLOCATE(w_max(Eij_ind_ubound+1,nspecies,nbr_boxes))
-                        ALLOCATE(Eij_w_sum(Eij_ind_ubound+1,nspecies,nbr_boxes))
-                        ALLOCATE(Eij_freq_total(Eij_ind_ubound+1,nspecies,nbr_boxes))
-                        w_max = 0.0_DP
-                        Eij_w_sum = 0.0_DP
-                        Eij_freq_total = 0
                         widom_wc_time = 0.0_DP
                         widom_cpu_time = 0.0_DP
                         first_open_wprop(:,:) = .TRUE.
@@ -6772,6 +6766,8 @@ SUBROUTINE Get_Rcutoff_Low
   REWIND(inputunit)
   est_atompair_rminsq = .FALSE.
   read_atompair_rminsq = .FALSE.
+  est_emax = .FALSE.
+  Eij_ind_ubound = 1
   ierr = 0
   line_nbr = 0
   rsqmin_res = 1
@@ -6799,17 +6795,37 @@ SUBROUTINE Get_Rcutoff_Low
         ALLOCATE(tol_list(1))
         tol_list = 1.0e-10_DP
         nbr_tols = 1
+        l_heap = .FALSE.
         keywordsearch:DO
                 line_nbr = line_nbr + 1
                 CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
                 IF (nbr_entries==0) EXIT sectionsearch
                 IF (line_array(1) == "adaptive") THEN
                         calc_rmin_flag = .TRUE.
-                        IF (nbr_entries==1) THEN
-                                U_max_base = 708.0_DP / MINVAL(beta)
-                        ELSE
-                                U_max_base = String_To_Double(line_array(2)) / MINVAL(beta)
-                        END IF
+                        i_entry = 2
+                        U_max_base = 708.0_DP / MINVAL(beta)
+                        DO WHILE (i_entry <= nbr_entries)
+                                IF (line_array(i_entry) == "est_emax") THEN
+                                        est_emax = .TRUE.
+                                        Eij_ind_ubound = 2047
+                                        ALLOCATE(w_max(Eij_ind_ubound+1,nspecies,nbr_boxes))
+                                        ALLOCATE(Eij_w_sum(Eij_ind_ubound+1,nspecies,nbr_boxes))
+                                        ALLOCATE(Eij_freq_total(Eij_ind_ubound+1,nspecies,nbr_boxes))
+                                        w_max = 0.0_DP
+                                        Eij_w_sum = 0.0_DP
+                                        Eij_freq_total = 0
+                                        i_entry = i_entry + 1
+                                ELSEIF (i_entry == 2) THEN
+                                        U_max_base = String_To_Double(line_array(2)) / MINVAL(beta)
+                                        i_entry = i_entry + 1
+                                ELSE
+                                        err_msg = ""
+                                        err_msg(1) = "Entry " // Int_To_String(i_entry) // " in line " // &
+                                                Int_To_String(line_nbr) // " of input file is invalid."
+                                        err_msg(2) = '"est_emax" is the only keyword that would be valid here.'
+                                        CALL Clean_Abort(err_msg, "Get_Rcutoff_Low")
+                                END IF
+                        END DO
                 ELSE IF (line_array(1) == "specific") THEN
                         i_entry = 2
                         DO WHILE (i_entry <= nbr_entries)
@@ -6861,6 +6877,9 @@ SUBROUTINE Get_Rcutoff_Low
                                                 err_msg(3) = "in the input file"
                                                 CALL Clean_Abort(err_msg, "Get_Rcutoff_Low")
                                         END IF
+                                ELSE IF (line_array(i_entry) == "heap") THEN
+                                        l_heap = .TRUE.
+                                        i_entry = i_entry + 1
                                 ELSE
                                         err_msg = ""
                                         err_msg(1) = "Keyword " // line_array(i_entry)

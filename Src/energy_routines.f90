@@ -1268,8 +1268,13 @@ CONTAINS
     IF ((cbmc_cell_list_flag .AND. cbmc_flag) .OR. full_cell_list_flag) THEN
             DO ia = 1, natoms(is)
                 IF (.NOT. widom_atoms(ia)%exist) CYCLE
-                CALL Compute_Atom_Nonbond_Inter_Energy_Cells(ia,im,is, &
-                        Ei_inter_vdw, Ei_inter_qq, overlap, Ei_qq_simple)
+                IF (est_emax) THEN
+                        CALL Compute_Atom_Nonbond_Inter_Energy_Cells(ia,im,is, &
+                                Ei_inter_vdw, Ei_inter_qq, overlap, Ei_qq_simple)
+                ELSE
+                        CALL Compute_Atom_Nonbond_Inter_Energy_Cells(ia,im,is, &
+                                Ei_inter_vdw, Ei_inter_qq, overlap)
+                END IF
                 IF (overlap) RETURN
                 E_inter = E_inter + Ei_inter_vdw + Ei_inter_qq
             END DO
@@ -1290,8 +1295,13 @@ CONTAINS
                                 this_box, Eij, overlap)
                         E_inter = E_inter + Eij 
                 ELSE
-                        CALL Compute_MoleculePair_Energy(im,is,this_locate,ispecies, &
-                             this_box,Eij_vdw,Eij_qq,overlap,Eij_qq_simple)
+                        IF (est_emax) THEN
+                                CALL Compute_MoleculePair_Energy(im,is,this_locate,ispecies, &
+                                     this_box,Eij_vdw,Eij_qq,overlap,Eij_qq_simple)
+                        ELSE
+                                CALL Compute_MoleculePair_Energy(im,is,this_locate,ispecies, &
+                                     this_box,Eij_vdw,Eij_qq,overlap)
+                        END IF
                         E_inter = E_inter + Eij_vdw + Eij_qq
                 END IF
 

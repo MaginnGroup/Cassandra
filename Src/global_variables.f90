@@ -641,7 +641,8 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   REAL(DP), DIMENSION(:,:), ALLOCATABLE :: Eij_factor
   REAL(DP), DIMENSION(:,:,:), ALLOCATABLE :: w_max, Eij_w_sum 
   INTEGER, DIMENSION(:,:,:), ALLOCATABLE :: Eij_freq_total
-  INTEGER, PARAMETER :: Eij_ind_ubound = 2047
+  INTEGER :: Eij_ind_ubound
+  LOGICAL :: est_emax
   !$OMP THREADPRIVATE(Eij_max)
 
 
@@ -676,9 +677,9 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   INTEGER, DIMENSION(:), ALLOCATABLE :: typepair_wsolute_indices, wsolute_atomtypes
   REAL(DP) :: maxrminsq, rsqmin_step, rsqmin_shifter
   INTEGER :: rsqmin_res, wsolute_ntypes, wsolute_maxind
-  LOGICAL :: est_atompair_rminsq, read_atompair_rminsq
+  LOGICAL :: est_atompair_rminsq, read_atompair_rminsq, l_heap
   REAL(DP), DIMENSION(:), ALLOCATABLE :: tol_list
-  INTEGER :: nbr_tols
+  INTEGER :: nbr_tols, solvent_maxind_d, rsqmin_res_d
   !$OMP THREADPRIVATE(swi_atompair_rsqmin)
   !
 

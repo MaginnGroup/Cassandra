@@ -361,13 +361,18 @@ As an example,
     specified in the input file are used.
 
 
+.. _sec:minimum_cutoff:
+
 Minimum Cutoff
 ~~~~~~~~~~~~~~
 
 | ``# Rcutoff_Low``
-| *Real*
+| *Real(1,1)*
+| [``adaptive`` [*Real(2,2)* [``est_emax``]]
+| [``specific`` [``write`` *Real(3,3)* *Integer(3,4)*] [``read`` *Character(3,6)*] [``tol_list`` *Integer(3,8)* *Real(3,9)* ... *Real(3,8+n)*] [``heap``]]
 
-Sets the minimum allowable distance in Å between two atoms. Any MC move
+Sets :math:`r_{min}`, the minimum allowable distance in Å between two atoms,
+from *Real(1,1)*. Any MC move
 bringing two sites closer than this distance will be immediately rejected. It
 avoids numerical problems associated with random moves that happen to place
 atoms very close to one another such that they will have unphysically strong
@@ -378,6 +383,56 @@ atomic sites of the molecules (for example, the TIP4P water model), it is
 important that the minimum distance is set to be less than the shortest
 distance between any two sites on the molecule. For most systems, 1 Å seems to
 work OK, but for models with dummy sites, a shorter value may be required.
+
+The following options only apply to the Widom insertion portion of a simulation.
+
+If ``adaptive`` is specified, Cassandra uses atom type pair-specific overlap
+radii based on ``emax``, the desired maximum allowed intermolecular atom pair energy 
+divided by :math:`k_BT` specified in *Real(2,2)*, defaulting to 708 if *Real(2,2)*
+is not present.  If ``est_emax`` is specified on the same line, Cassandra
+will estimate good values for ``emax`` for each Widom insertion species in
+each box.  These values are conservative but generally much less so than the default.
+Note that atom type pair-specific overlap radii are only used during cell list
+overlap checking.
+
+If ``specific`` is specified, the behavior depends on the optional keywords
+that follow it.  These keywords are individually optional, but at least
+``write`` or ``read`` must be present. Section :ref:`sec:solvent_species` might
+also be required.
+If ``write`` is present, 
+Cassandra will estimate good atom pair-specific intermolecular overlap radii
+based on a tolerance for the maximum fraction of the total ``widom_var`` allowed
+to be lost due to flagging overlaps with the atom pair-specific overlap radii.
+If ``tol_list`` is also present, Cassandra will do this for each of
+:math:`n=` *Integer(3,8)* tolerances listed as *Real(3,9)* ... *Real(3,8+n)*,
+but otherwise, Cassandra only uses a single default tolerance, :math:`10^{-10}`.
+Cassandra stores these estimates in a ``.rminsq`` file described in 
+:ref:`sec:output_files` for each tolerance.
+The keyword ``write`` must be followed by a float and an integer.
+*Real(3,3)* is ``rsqmin_step`` and *Integer(3,4)* is ``rsqmin_res``.
+Respectively, these are the bin width and number of bins
+used to discretize the distance squared between atoms, and each estimated
+atom pair-specific overlap radius squared can only be :math:`r_{min}^2`
+plus a multiple of ``rsqmin_step``.
+If ``read`` is present, Cassandra will use pair-specific intermolecular overlap
+radii obtained from a ``.rminsq`` file, the path to which is specified in
+*Character(3,6)*, to detect intermolecular atomic overlap during cell list
+overlap checking.
+If ``heap`` is specified, certain relatively large arrays involved in 
+estimating atom pair overlap radii when ``write`` is present will be allocated
+to the heap instead of the stack.  This is slower but is provided as an option
+because these large arrays can cause stack buffer overflow if allocated to the stack.
+This stack buffer overflow shows up as a segmentation fault if it occurs,
+and your system may or may not warn you of stack smashing.
+If your stack size is unlimited, this shouldn't happen on the primary thread, but
+it may still happen on other threads when multithreading because the system
+stack size limit doesn't apply to additional threads.  In order to set the
+stack size for additional threads, you must set the environment variable
+``OMP_STACKSIZE`` to the size you want prior to running Cassandra.  If
+you don't want to bother with that or your system has a small maximum
+stack size that you can't increase for some reason, you can simply provide
+the ``heap`` keyword instead.
+
 
 Pair Energy Storage
 ~~~~~~~~~~~~~~~~~~~
@@ -1634,6 +1689,9 @@ the fragment being simulated.
 
     This tells Cassandra to store the fragment library in the file named ``frag.dat``.
 
+
+.. _sec:cbmc_parameters:
+
 CBMC parameters
 ~~~~~~~~~~~~~~~
 
@@ -1641,6 +1699,7 @@ CBMC parameters
 | ``kappa_ins`` *Integer(1)*
 | ``kappa_dih`` *Integer(2)*
 | ``rcut_cbmc`` *Real(3,1)* [*Real(3,2)*]
+| [``energy_table`` [*Integer(4)*]]
 
 Cassandra utilizes a configurational bias methodology based on
 `sampling a library of fragment conformations <https://doi.org/10.1063/1.3644939>`_.
@@ -1678,6 +1737,18 @@ short cutoff is used. *Real(4,i)* specifies the cutoff distance in
 overlaps. You can experiment with this value to optimize it for your
 system.
 
+Keyword ``energy_table`` causes Cassandra to precalculate intermolecular
+atom pair energy as a discretized function of :math:`r^2`, atom pair
+separation squared.
+Cassandra uses this energy table to quickly estimate the intermolecular
+energy for CBMC trials since it's just for biasing purposes. In other
+contexts, intermolecular energies are calculated normally, so in the table,
+:math:`r^2` only goes from :math:`r_{min}^2` (from :ref:`sec:minimum_cutoff`) to
+``rcut_cbmc`` squared, and is discretized with *Integer(4)* bins (default 1000),
+with the energies being precalculated from the midpoint of the bins.
+With keyword ``energy_table`` present, section :ref:`sec:solvent_species`
+may  also be required.
+
 For a GEMC simulation in which 12 candidate positions are generated
 for biased insertion/deletion, 10 trials for biased dihedral angle
 selection and the cutoff for biasing energy calculation is set to 5.0
@@ -1689,6 +1760,27 @@ selection and the cutoff for biasing energy calculation is set to 5.0
     kappa_ins 12
     kappa_dih 10
     rcut_cbmc 5.0 6.5
+
+
+.. _sec:solvent_species:
+
+Solvent Species
+~~~~~~~~~~~~~~~
+
+| ``# Solvent_Species``
+| *Integer(1) ... Integer(n)*
+
+This section is only necessary if ``energy_table`` is present in
+:ref:`sec:cbmc_parameters` and/or ``specific`` is present in
+:ref:`sec:minimum_cutoff` and the species that can ever actually reside
+in a simulation box during the simulation cannot be determined from other
+parts of the input file, i.e. when a trajectory is read from a ``.xyz``
+file and a ``.H`` file and the number of molecules of each species in
+the trajectory is not given in :ref:`sec:Pregen_Info`.
+
+This section simply lists, by number, which species could ever possibly
+reside in a simulation box during the simulation.
+
 
 
 .. _sec:mcf_file:
