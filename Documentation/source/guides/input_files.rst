@@ -421,6 +421,8 @@ molecules and 5 octane molecules in the total system. The maximum
 number of molecules specified here will be used to allocate memory for
 each species, so do not use larger numbers than are needed.
 
+.. _sec:simulation_box:
+
 Simulation Box
 ~~~~~~~~~~~~~~
 
@@ -1315,16 +1317,59 @@ Pregenerated Trajectory
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 | ``# Pregen_Info``
-| *Character(i,1)* *Character(i,2)* \*One line for each box i
+| *Character(i,1)* *Character(i,2)* [*Character(i,3)* *Character(i,4)*] [*Integer(i,3)* ... *Integer(i,2+n)*] \*One line for each box i
+.. | *Character(i,1)* *Character(i,2)* \*One line for each box i
 
-This section specifies the paths to the ``.H`` and ``.xyz`` files storing the 
-pregenerated trajectory to be read.  *Character(i,1)* specifies the path to the
-``.H`` file for box *i* and *Character(i,2)* specifies the ``.xyz`` 
-file for box *i*.  Descriptions of these file types can be found in 
-:ref:`sec:output_files`.
+This section specifies the paths to the files storing the 
+pregenerated trajectory to be read.  *Character(i,1)* can be
+``xyx``, ``H``, or ``xtc``, and it specifies the file format of the
+first trajectory file provided for box *i* and *Character(i,2)*
+specifies its path.
+*Character(i,3)* and *Character(i,4)* provide the same information for
+the second trajectory file provided for box *i*.  A second trajectory
+file is required (and required to be ``xyz`` format) if the format of
+the first file is ``H``, optional (and required to be ``H`` format if
+provided) if the first file is ``xyz`` format, and not applicable if
+the first file is ``xtc`` format. Descriptions of ``xyz`` and ``H``
+file types can be found in :ref:`sec:output_files`.  The ``xtc`` format
+is a portable, compressed, binary format made for GROMACS but also used by
+other software such as LAMMPS.  It contains the number of atoms for the
+whole trajectory and the box matrix and atom coordinates in nanometers for
+each frame of the trajectory.
+
+If no ``H`` file was provided, the number of molecules present in the box
+must then be listed for each species.  The length of this list is allowed to be
+less than the number of species, in which case all species for which the
+number of molecules was not listed will be assumed to have zero molecules
+in the box.  If the only file is ``xyz`` format, the simulation box will
+remain the fixed size specified in :ref:`sec:simulation_box`.
+Cassandra will always assume the simulation box always has the same shape type
+as in :ref:`sec:simulation_box`, and it will not check whether that is
+consistent with box vectors provided in ``H`` or ``xtc`` format files.
+If the shape type is ``cubic`` or ``orthogonal``, the box must be
+oriented such that the box matrix is a diagonal matrix.
+
+To maintain backwards compatibility, if box *i* has both ``xyz`` and ``H``
+trajectory files, it is valid to simply put the path to the ``H`` file, then
+the path to the ``xyz`` file, with the two file paths separated by one or
+more spaces, without first specifying their formats.
 
 For example, to read a pregenerated trajectory from ``md_trajectory.H`` 
 and ``md_trajectory.xyz``, the section could be written as follows:
+
+.. code-block:: none
+
+        # Pregen_Info
+        xyz md_trajectory.xyz H md_trajectory.H
+
+or
+
+.. code-block:: none
+
+        # Pregen_Info
+        H md_trajectory.H xyz md_trajectory.xyz
+
+or
 
 .. code-block:: none
 
@@ -1341,6 +1386,23 @@ as follows:
         # Pregen_Info
         gemc_trajectory.box1.H gemc_trajectory.box1.xyz
         gemc_trajectory.box2.H gemc_trajectory.box2.xyz
+
+To read a pregenerated trajectory with 300 molecules of species 1,
+0 molecules of species 2, 50 molecules of species 3, and 0 molecules of
+species 4 from ``md_trajectory.xtc``, the section could be written in
+the following ways:
+
+.. code-block:: none
+
+        # Pregen_Info
+        xtc md_trajectory.xtc 300 0 50 0
+
+or
+
+.. code-block:: none
+
+        # Pregen_Info
+        xtc md_trajectory.xtc 300 0 50
 
 
 

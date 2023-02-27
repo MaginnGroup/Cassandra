@@ -144,7 +144,12 @@ file name suffix. The following are generated:
   written, then the coordinates of molecule 2 of species 1 are written, etc.
   After all the coordinates of the molecules of species 1 are written, the
   coordinates of the molecules of species 2 are written, etc. You can use this
-  file to do all your structural analysis and post processing.
+  file to do all your structural analysis and post processing.  The element symbol
+  for each atom is given in the first column.  All coordinates are in Angstroms.
+  When Cassandra reads this kind of file, the element symbol column must be present
+  but its contents are ignored, so writing a filler value such as ``X`` for the
+  element symbol for each atom would also be appropriate if writing the actual
+  element symbol is inconvenient.
 
 .. note::
     Note that if you generate your initial configuration using the ``make_config``
@@ -170,7 +175,7 @@ file name suffix. The following are generated:
 
 * **H-matrix file** (``*.H`` or ``*.box#.H``): This file is written to every
   ``Coord_Freq`` MC steps. The first line is the box volume in angstrom\ :sup:`3`. The
-  next three lines are the box coordinates in angstrom in an H-matrix form.
+  next three lines are the box coordinates in angstroms in an H-matrix form.
   Since Cassandra only supports cubic boxes at the moment, this is just a
   diagonal and symmetric matrix, but is included here for later versions that
   will enable non-orthogonal boxes. After this, a blank line is written. The

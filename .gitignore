@@ -21,6 +21,7 @@
 *.pch
 
 # Compiled Dynamic libraries
+*.so.*
 *.so
 *.dylib
 *.dll
@@ -45,3 +46,8 @@ __pycache__
 
 # Test suite
 failureLog
+
+# build directory
+build/
+# locals directory
+locals/
