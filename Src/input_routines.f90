@@ -5466,7 +5466,7 @@ SUBROUTINE Get_Lookup_Info
                         l_sectors = .TRUE.
                         ALLOCATE(sectorbound(3,nbr_boxes))
                         ALLOCATE(length_cells(3,nbr_boxes))
-                        ALLOCATE(cell_length_inv(3,nbr_boxes))
+                        ALLOCATE(cell_length_inv(3,3,nbr_boxes))
                         max_occ_sectors = 0
                         sectorbound = 0
                         sectormaxbound = 0
@@ -5477,7 +5477,7 @@ SUBROUTINE Get_Lookup_Info
                                 cbmc_cell_list_flag = .TRUE.
                                 ALLOCATE(sectorbound_cbmc(3,nbr_boxes))
                                 ALLOCATE(length_cells_cbmc(3,nbr_boxes))
-                                ALLOCATE(cell_length_inv_cbmc(3,nbr_boxes))
+                                ALLOCATE(cell_length_inv_cbmc(3,3,nbr_boxes))
                                 max_occ_sectors_cbmc = 0
                                 sectorbound_cbmc = 0
                                 sectormaxbound_cbmc = 0
@@ -5488,7 +5488,7 @@ SUBROUTINE Get_Lookup_Info
                                 full_cell_list_flag = .TRUE.
                                 ALLOCATE(sectorbound_full(3,nbr_boxes))
                                 ALLOCATE(length_cells_full(3,nbr_boxes))
-                                ALLOCATE(cell_length_inv_full(3,nbr_boxes))
+                                ALLOCATE(cell_length_inv_full(3,3,nbr_boxes))
                                 max_occ_sectors_full = 0
                                 sectorbound_full = 0
                                 sectormaxbound_full = 0
@@ -5647,7 +5647,7 @@ SUBROUTINE Get_Pregen_Info
                                                         TRIM(pregen_xyz_filenames(ibox)) // &
                                                         ' given as entry  ' // TRIM(Int_To_String(xyz_pos)) // ' on line number ' // &
                                                         TRIM(Int_To_String(line_nbr)) // ' of the input file'
-                                                err_msg(2) = 'Verify that xyz file ' // TRIM(pregen_xyz_filenames(ibox)) // 'exists'
+                                                err_msg(2) = 'Verify that xyz file ' // TRIM(pregen_xyz_filenames(ibox)) // ' exists'
                                                 CALL clean_abort(err_msg,'Get_Pregen_Info')
                                         END IF
                                         pregen_H_filenames(ibox) = line_array(H_pos)

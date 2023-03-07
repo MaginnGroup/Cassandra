@@ -613,10 +613,10 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   LOGICAL, DIMENSION(:,:,:,:), ALLOCATABLE :: sector_has_atoms
 
   LOGICAL :: l_sectors, cbmc_cell_list_flag, full_cell_list_flag
-  ! sectorbound, length_cells, & cell_length_inv are indexed by (box dimension, box index)
+  ! sectorbound and length_cells are indexed by (box dimension, box index)
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: sectorbound, sectorbound_cbmc, sectorbound_full
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: length_cells, length_cells_cbmc, length_cells_full
-  REAL(DP), DIMENSION(:,:), ALLOCATABLE, TARGET :: cell_length_inv, cell_length_inv_cbmc, cell_length_inv_full
+  REAL(DP), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: cell_length_inv, cell_length_inv_cbmc, cell_length_inv_full
 
   INTEGER, DIMENSION(3) :: sectormaxbound, sectormaxbound_cbmc, sectormaxbound_full
 

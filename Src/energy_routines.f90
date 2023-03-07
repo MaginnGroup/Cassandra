@@ -902,7 +902,7 @@ CONTAINS
           INTEGER, DIMENSION(3) :: ci_min, ci_max
           REAL(DP) :: cp(3), dx, dy, dz, dxp, dyp, dzp, rijsq
           REAL(DP) :: Eij_intra_vdw,Eij_intra_qq,Eij_inter_vdw,Eij_inter_qq
-          REAL(DP), DIMENSION(:), POINTER :: cell_length_inv_ptr
+          REAL(DP), DIMENSION(:,:), POINTER :: cell_length_inv_ptr
           LOGICAL :: get_vdw, get_qq, overlap
           !
           overlap = .TRUE.
@@ -921,11 +921,11 @@ CONTAINS
                   this_box = molecule_list(im,is)%which_box
           END IF
           IF (cbmc_flag) THEN
-                  cell_length_inv_ptr => cell_length_inv_cbmc(:,this_box)
+                  cell_length_inv_ptr => cell_length_inv_cbmc(:,:,this_box)
           ELSE
-                  cell_length_inv_ptr => cell_length_inv_full(:,this_box)
+                  cell_length_inv_ptr => cell_length_inv_full(:,:,this_box)
           END IF
-          cell_coords = IDNINT(cp*cell_length_inv_ptr)
+          cell_coords = IDNINT(MATMUL(cell_length_inv_ptr,cp))
           ci_min = cell_coords - 1
           ci_max = cell_coords + 1
           IF (cbmc_flag) THEN

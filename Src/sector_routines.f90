@@ -46,35 +46,33 @@ CONTAINS
           TYPE(Atom_Class), POINTER :: atom_ptr
           REAL(DP) :: xp, yp, zp, cp(3)
 !          INTEGER, DIMENSION(3,nbr_boxes) :: cbmc_truth_cube_bound, cut_truth_cube_bound
-          INTEGER :: xi, yi, zi, cim(3)
+          INTEGER :: xi, yi, zi, cim(3), xyzi(3), i_dim
           INTEGER :: max_occ_sectors_old, total_atoms
+          INTEGER, DIMENSION(2,3) :: tgt_slice, src_slice
           INTEGER, DIMENSION(:), ALLOCATABLE :: xi_pm, yi_pm, zi_pm
           INTEGER :: dummy
           LOGICAL :: asflag
+          REAL(DP), DIMENSION(:,:), POINTER :: cell_length_inv_ptr
 
+          
           sectorbound_old = sectorbound
           sectormaxbound_old = sectormaxbound
           nsec_old = MAXVAL(PRODUCT(length_cells,1))
           DO ibox = 1, nbr_boxes
                 DO i = 1, 3
-                          length_cells(i,ibox) = INT(box_list(ibox)%length(i,i)/max_rmin)
+                          length_cells(i,ibox) = INT(box_list(ibox)%face_distance(i)/max_rmin)
                           IF (MOD(length_cells(i,ibox),2) .EQ. 0) length_cells(i,ibox) = length_cells(i,ibox) - 1
-                          cell_length_inv(i,ibox) = REAL(length_cells(i,ibox),DP) / box_list(ibox)%length(i,i)
+                          cell_length_inv(i,:,ibox) = REAL(length_cells(i,ibox),DP) * box_list(ibox)%length_inv(i,:)
                           sectorbound(i,ibox) = length_cells(i,ibox)/2
                 END DO
           END DO
-          ! cell_length = 1.0_DP / cell_length_inv
+          !cell_length = 1.0_DP / cell_length_inv
 
-          sectormaxbound = MAXVAL(sectorbound, 2)
+          sectormaxbound = MAXVAL(sectorbound, 2)+1
           !map_bound = sectormaxbound*3+1
           IF (.NOT. ALL( sectormaxbound <= sectormaxbound_old)) THEN
                   IF (ALLOCATED(sector_index_map)) DEALLOCATE(sector_index_map)
                   ALLOCATE(sector_index_map(-sectormaxbound(1):sectormaxbound(1), &
-                          -sectormaxbound(2):sectormaxbound(2), &
-                          -sectormaxbound(3):sectormaxbound(3), &
-                          nbr_boxes))
-                  IF (ALLOCATED(sector_has_atoms)) DEALLOCATE(sector_has_atoms)
-                  ALLOCATE(sector_has_atoms(-sectormaxbound(1):sectormaxbound(1), &
                           -sectormaxbound(2):sectormaxbound(2), &
                           -sectormaxbound(3):sectormaxbound(3), &
                           nbr_boxes))
@@ -88,15 +86,16 @@ CONTAINS
                   ALLOCATE(sector_n_atoms(0:max_occ_sectors))
                   ALLOCATE(sector_atoms(max_sector_natoms,max_occ_sectors,3))
           END IF
+          n_occ_sectors = 0
           !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
           sector_n_atoms = 0
-          n_occ_sectors = 0
-          sector_has_atoms = .FALSE.
+          sector_index_map = 0
           !$OMP END PARALLEL WORKSHARE
           asflag = .TRUE.
           AllocationSizeLoop: DO
           ! place atoms in sectors
           BoxLoop:DO ibox = 1, nbr_boxes
+                cell_length_inv_ptr => cell_length_inv(:,:,ibox)
                 SpeciesLoop:DO is = 1, nspecies
                         sector_atom_ID(3) = is
                         !$OMP PARALLEL DO DEFAULT(SHARED) &
@@ -110,7 +109,7 @@ CONTAINS
                                         cp(1) = atom_ptr%rxp
                                         cp(2) = atom_ptr%ryp
                                         cp(3) = atom_ptr%rzp
-                                        atom_ptr%ci = IDNINT(cp*cell_length_inv(:,ibox))
+                                        atom_ptr%ci = IDNINT(MATMUL(cell_length_inv_ptr,cp))
                                         DO i = 1,3
                                                 IF (atom_ptr%ci(i) > sectorbound(i,ibox)) THEN
                                                         atom_ptr%ci(i) = atom_ptr%ci(i) - length_cells(i,ibox)
@@ -129,13 +128,12 @@ CONTAINS
                                         IF (.NOT. atom_list(ia,im,is)%exist) CYCLE AtomLoop2
                                         sector_atom_ID(1) = ia
                                         ci = atom_list(ia,im,is)%ci
-                                        IF (sector_has_atoms(ci(1),ci(2),ci(3),ibox)) THEN
-                                                secind = sector_index_map(ci(1),ci(2),ci(3),ibox)
+                                        secind = sector_index_map(ci(1),ci(2),ci(3),ibox)
+                                        IF (secind>0) THEN
                                                 sector_n_atoms(secind) = sector_n_atoms(secind)+1
                                         ELSE
                                                 n_occ_sectors = n_occ_sectors+1
                                                 secind = n_occ_sectors
-                                                sector_has_atoms(ci(1),ci(2),ci(3),ibox) = .TRUE.
                                                 sector_n_atoms(secind) = 1
                                                 sector_index_map(ci(1),ci(2),ci(3),ibox) = secind
                                         END IF
@@ -144,6 +142,37 @@ CONTAINS
                                 END DO AtomLoop2
                         END DO MoleculeLoop2
                 END DO SpeciesLoop
+                !$OMP PARALLEL PRIVATE(xyzi, i_dim, tgt_slice, src_slice)
+                !$OMP DO SCHEDULE(STATIC) COLLAPSE(3)
+                DO xi = -1, 1
+                        DO yi = -1, 1
+                                DO zi = -1, 1
+                                        IF (xi == 0 .AND. yi == 0 .AND. zi == 0) CYCLE
+                                        xyzi = (/ xi, yi, zi /)
+                                        DO i_dim = 1,3
+                                                IF (xyzi(i_dim) == 0) THEN
+                                                        tgt_slice(:,i_dim) = (/ -1, 1 /) * sectorbound(i_dim,ibox)
+                                                        src_slice(:,i_dim) = tgt_slice(:,i_dim)
+                                                ELSE
+                                                        tgt_slice(:,i_dim) = sectorbound(i_dim,ibox)*xyzi(i_dim) + xyzi(i_dim)
+                                                        src_slice(:,i_dim) = -sectorbound(i_dim,ibox)*xyzi(i_dim)
+                                                END IF
+                                        END DO
+                                        sector_index_map(&
+                                                tgt_slice(1,1):tgt_slice(2,1), &
+                                                tgt_slice(1,2):tgt_slice(2,2), &
+                                                tgt_slice(1,3):tgt_slice(2,3), &
+                                                ibox) = &
+                                                sector_index_map(&
+                                                src_slice(1,1):src_slice(2,1), &
+                                                src_slice(1,2):src_slice(2,2), &
+                                                src_slice(1,3):src_slice(2,3), &
+                                                ibox)
+                                END DO
+                        END DO
+                END DO
+                !$OMP END DO
+                !$OMP END PARALLEL
           END DO BoxLoop
           IF (asflag) THEN
                 EXIT AllocationSizeLoop
@@ -165,11 +194,9 @@ CONTAINS
           INTEGER :: xi, yi, zi, i, ia_cell
           INTEGER, DIMENSION(:), POINTER :: sector_atom_ID
           TYPE(Atom_Class), POINTER :: atom_ptr
-          INTEGER :: cell_coords(3)
+          INTEGER, DIMENSION(3) :: cell_coords, ci_min, ci_max
           INTEGER, DIMENSION(3,3) :: ci
           REAL(DP) :: cp(3), dx, dy, dz, dxp, dyp, dzp, rminsq
-          LOGICAL :: need_wrapping(3)
-          INTEGER, PARAMETER, DIMENSION(3) :: delta = (/0,-1,1/)
           REAL(DP), DIMENSION(:), POINTER :: rminsq_ptr
           !
           check_overlap = .TRUE.
@@ -184,18 +211,12 @@ CONTAINS
                   cp(3) = atom_list(ia,im,is)%rzp
                   this_box = molecule_list(im,is)%which_box
           END IF
-          cell_coords = IDNINT(cp*cell_length_inv(:,this_box))
-          need_wrapping = ABS(cell_coords) .GE. sectorbound(:,this_box)
-          DO i_dim = 1,3
-                ci(i_dim,:) = cell_coords(i_dim) + delta
-                IF (need_wrapping(i_dim)) THEN
-                        DO i = 1,3
-                                IF (ci(i_dim,i) > sectorbound(i_dim,this_box)) THEN
-                                        ci(i_dim,i) = ci(i_dim,i) - length_cells(i_dim,this_box)
-                                ELSE IF (ci(i_dim,i) < -sectorbound(i_dim,this_box)) THEN
-                                        ci(i_dim,i) = ci(i_dim,i) + length_cells(i_dim,this_box)
-                                END IF
-                        END DO
+          cell_coords = IDNINT(MATMUL(cell_length_inv(:,:,this_box),cp))
+          DO i = 1,3
+                IF (cell_coords(i) > sectorbound(i,this_box)) THEN
+                        cell_coords(i) = cell_coords(i) - length_cells(i,this_box)
+                ELSE IF (cell_coords(i) < -sectorbound(i,this_box)) THEN
+                        cell_coords(i) = cell_coords(i) + length_cells(i,this_box)
                 END IF
           END DO
           IF (read_atompair_rminsq) THEN
@@ -203,11 +224,12 @@ CONTAINS
           ELSE
                   rminsq_ptr => rminsq_table(0:,nonbond_list(ia,is)%atom_type_number)
           END IF
-          DO xi = 1,3
-                DO yi = 1,3
-                        DO zi = 1,3
-                                IF (.NOT. sector_has_atoms(ci(1,xi),ci(2,yi),ci(3,zi),this_box)) CYCLE
-                                secind = sector_index_map(ci(1,xi),ci(2,yi),ci(3,zi),this_box)
+          ci_min = cell_coords-1
+          ci_max = cell_coords+1
+          DO xi = ci_min(1), ci_max(1)
+                DO yi = ci_min(2), ci_max(2)
+                        DO zi = ci_min(3), ci_max(3)
+                                secind = sector_index_map(xi,yi,zi,this_box)
                                 DO ia_cell = 1, sector_n_atoms(secind)
                                         sector_atom_ID => sector_atoms(ia_cell,secind,:)
                                         atom_ptr => atom_list(sector_atom_ID(1),sector_atom_ID(2),sector_atom_ID(3))
@@ -242,13 +264,13 @@ CONTAINS
           TYPE(Atom_Class), POINTER :: atom_ptr
           REAL(DP) :: xp, yp, zp, cp(3)
 !          INTEGER, DIMENSION(3,nbr_boxes) :: cbmc_truth_cube_bound, cut_truth_cube_bound
-          INTEGER :: xi, yi, zi, cim(3)
+          INTEGER :: xi, yi, zi, cim(3), xyzi(3), i_dim
           INTEGER :: max_occ_sectors_old, total_atoms
-          INTEGER, DIMENSION(2) :: xslice, yslice, zslice
-          INTEGER, DIMENSION(:,:,:), POINTER :: box_sector_ptr
+          INTEGER, DIMENSION(2,3) :: tgt_slice, src_slice
           INTEGER, DIMENSION(:), ALLOCATABLE :: xi_pm, yi_pm, zi_pm
           INTEGER :: dummy
           LOGICAL :: asflag
+          REAL(DP), DIMENSION(:,:), POINTER :: cell_length_inv_ptr
 
           
           sectorbound_old = sectorbound_cbmc
@@ -256,15 +278,15 @@ CONTAINS
           nsec_old = MAXVAL(PRODUCT(length_cells_cbmc,1))
           DO ibox = 1, nbr_boxes
                 DO i = 1, 3
-                          length_cells_cbmc(i,ibox) = INT(box_list(ibox)%length(i,i)/rcut_cbmc(ibox))
+                          length_cells_cbmc(i,ibox) = INT(box_list(ibox)%face_distance(i)/rcut_cbmc(ibox))
                           IF (MOD(length_cells_cbmc(i,ibox),2) .EQ. 0) length_cells_cbmc(i,ibox) = length_cells_cbmc(i,ibox) - 1
-                          cell_length_inv_cbmc(i,ibox) = REAL(length_cells_cbmc(i,ibox),DP) / box_list(ibox)%length(i,i)
+                          cell_length_inv_cbmc(i,:,ibox) = REAL(length_cells_cbmc(i,ibox),DP) * box_list(ibox)%length_inv(i,:)
                           sectorbound_cbmc(i,ibox) = length_cells_cbmc(i,ibox)/2
                 END DO
           END DO
           !cell_length_cbmc = 1.0_DP / cell_length_inv_cbmc
 
-          sectormaxbound_cbmc = 3*MAXVAL(sectorbound_cbmc, 2)+1
+          sectormaxbound_cbmc = MAXVAL(sectorbound_cbmc, 2)+1
           !map_bound = sectormaxbound_cbmc*3+1
           IF (.NOT. ALL( sectormaxbound_cbmc <= sectormaxbound_old)) THEN
                   IF (ALLOCATED(sector_index_map_cbmc)) DEALLOCATE(sector_index_map_cbmc)
@@ -291,6 +313,7 @@ CONTAINS
           AllocationSizeLoop: DO
           ! place atoms in sectors
           BoxLoop:DO ibox = 1, nbr_boxes
+                cell_length_inv_ptr => cell_length_inv_cbmc(:,:,ibox)
                 SpeciesLoop:DO is = 1, nspecies
                         sector_atom_ID(3) = is
                         !$OMP PARALLEL DO DEFAULT(SHARED) &
@@ -304,7 +327,7 @@ CONTAINS
                                         cp(1) = atom_ptr%rxp
                                         cp(2) = atom_ptr%ryp
                                         cp(3) = atom_ptr%rzp
-                                        atom_ptr%ci_cbmc = IDNINT(cp*cell_length_inv_cbmc(:,ibox))
+                                        atom_ptr%ci_cbmc = IDNINT(MATMUL(cell_length_inv_ptr,cp))
                                         DO i = 1,3
                                                 IF (atom_ptr%ci_cbmc(i) > sectorbound_cbmc(i,ibox)) THEN
                                                         atom_ptr%ci_cbmc(i) = atom_ptr%ci_cbmc(i) - length_cells_cbmc(i,ibox)
@@ -337,29 +360,37 @@ CONTAINS
                                 END DO AtomLoop2
                         END DO MoleculeLoop2
                 END DO SpeciesLoop
-                box_sector_ptr => sector_index_map_cbmc( &
-                        -sectorbound_cbmc(1,ibox):sectorbound_cbmc(1,ibox), &
-                        -sectorbound_cbmc(2,ibox):sectorbound_cbmc(2,ibox), &
-                        -sectorbound_cbmc(3,ibox):sectorbound_cbmc(3,ibox), &
-                        ibox)
+                !$OMP PARALLEL PRIVATE(xyzi, i_dim, tgt_slice, src_slice)
+                !$OMP DO SCHEDULE(STATIC) COLLAPSE(3)
                 DO xi = -1, 1
-                        xslice(1) = -sectorbound_cbmc(1,ibox)+xi*length_cells_cbmc(1,ibox)
-                        xslice(2) = sectorbound_cbmc(1,ibox)+xi*length_cells_cbmc(1,ibox)
                         DO yi = -1, 1
-                                yslice(1) = -sectorbound_cbmc(2,ibox)+yi*length_cells_cbmc(2,ibox)
-                                yslice(2) = sectorbound_cbmc(2,ibox)+yi*length_cells_cbmc(2,ibox)
                                 DO zi = -1, 1
                                         IF (xi == 0 .AND. yi == 0 .AND. zi == 0) CYCLE
-                                        zslice(1) = -sectorbound_cbmc(3,ibox)+zi*length_cells_cbmc(3,ibox)
-                                        zslice(2) = sectorbound_cbmc(3,ibox)+zi*length_cells_cbmc(3,ibox)
+                                        xyzi = (/ xi, yi, zi /)
+                                        DO i_dim = 1,3
+                                                IF (xyzi(i_dim) == 0) THEN
+                                                        tgt_slice(:,i_dim) = (/ -1, 1 /) * sectorbound_cbmc(i_dim,ibox)
+                                                        src_slice(:,i_dim) = tgt_slice(:,i_dim)
+                                                ELSE
+                                                        tgt_slice(:,i_dim) = sectorbound_cbmc(i_dim,ibox)*xyzi(i_dim) + xyzi(i_dim)
+                                                        src_slice(:,i_dim) = -sectorbound_cbmc(i_dim,ibox)*xyzi(i_dim)
+                                                END IF
+                                        END DO
                                         sector_index_map_cbmc(&
-                                                xslice(1):xslice(2), &
-                                                yslice(1):yslice(2), &
-                                                zslice(1):zslice(2), &
-                                                ibox) = box_sector_ptr
+                                                tgt_slice(1,1):tgt_slice(2,1), &
+                                                tgt_slice(1,2):tgt_slice(2,2), &
+                                                tgt_slice(1,3):tgt_slice(2,3), &
+                                                ibox) = &
+                                                sector_index_map_cbmc(&
+                                                src_slice(1,1):src_slice(2,1), &
+                                                src_slice(1,2):src_slice(2,2), &
+                                                src_slice(1,3):src_slice(2,3), &
+                                                ibox)
                                 END DO
                         END DO
                 END DO
+                !$OMP END DO
+                !$OMP END PARALLEL
           END DO BoxLoop
           IF (asflag) THEN
                 EXIT AllocationSizeLoop
@@ -391,6 +422,7 @@ CONTAINS
           INTEGER :: dummy
           REAL(DP) :: max_rcut
           LOGICAL :: asflag
+          REAL(DP), DIMENSION(:,:), POINTER :: cell_length_inv_ptr
 
           sectorbound_old = sectorbound_full
           sectormaxbound_old = sectormaxbound_full
@@ -398,9 +430,9 @@ CONTAINS
           DO ibox = 1, nbr_boxes
                 max_rcut = MAX(rcut_vdw(ibox), rcut_coul(ibox))
                 DO i = 1, 3
-                          length_cells_full(i,ibox) = INT(box_list(ibox)%length(i,i)/max_rcut)
+                          length_cells_full(i,ibox) = INT(box_list(ibox)%face_distance(i)/max_rcut)
                           IF (MOD(length_cells_full(i,ibox),2) .EQ. 0) length_cells_full(i,ibox) = length_cells_full(i,ibox) - 1
-                          cell_length_inv_full(i,ibox) = REAL(length_cells_full(i,ibox),DP) / box_list(ibox)%length(i,i)
+                          cell_length_inv_full(i,:,ibox) = REAL(length_cells_full(i,ibox),DP) * box_list(ibox)%length_inv(i,:)
                           sectorbound_full(i,ibox) = length_cells_full(i,ibox)/2
                 END DO
           END DO
@@ -433,6 +465,7 @@ CONTAINS
           AllocationSizeLoop: DO
           ! place atoms in sectors
           BoxLoop:DO ibox = 1, nbr_boxes
+                cell_length_inv_ptr => cell_length_inv_full(:,:,ibox)
                 SpeciesLoop:DO is = 1, nspecies
                         sector_atom_ID(3) = is
                         !$OMP PARALLEL DO DEFAULT(SHARED) &
@@ -446,7 +479,7 @@ CONTAINS
                                         cp(1) = atom_ptr%rxp
                                         cp(2) = atom_ptr%ryp
                                         cp(3) = atom_ptr%rzp
-                                        atom_ptr%ci_full = IDNINT(cp*cell_length_inv_full(:,ibox))
+                                        atom_ptr%ci_full = IDNINT(MATMUL(cell_length_inv_ptr,cp))
                                         DO i = 1,3
                                                 IF (atom_ptr%ci_full(i) > sectorbound_full(i,ibox)) THEN
                                                         atom_ptr%ci_full(i) = atom_ptr%ci_full(i) - length_cells_full(i,ibox)
