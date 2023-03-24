@@ -316,6 +316,7 @@ USE Type_Definitions
   CHARACTER(23), DIMENSION(:), ALLOCATABLE :: atom_type_list
 
   INTEGER, DIMENSION(:), ALLOCATABLE :: nbr_vdw_params
+  INTEGER, DIMENSION(:), ALLOCATABLE :: n_vdw_p_list
 
   ! Information of the position line where starts the coordinates storage of
   ! each fragment type
@@ -688,6 +689,9 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   REAL(DP), DIMENSION(:,:), ALLOCATABLE, TARGET :: rminsq_table
   REAL(DP) :: U_max_base, max_rmin
   LOGICAL :: calc_rmin_flag
+
+
+  LOGICAL, PARAMETER :: l_vectorized = .TRUE.
 
 END MODULE Global_Variables
 

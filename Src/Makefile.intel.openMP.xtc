@@ -78,7 +78,7 @@ INCS = `pkg-config --cflags --libs libgmxfort`
 #
 #F90FLAGS = -c  -ffree-line-length-none
 F90FLAGS = -c -g -no-wrap-margin -qopenmp #-check all -traceback #-warn unused #-openmp
-OPTFLAGS = -O3
+OPTFLAGS = -O3 --qopt-report=2 -qopt-report-phase=vec
 LINKFLAGS = -qopenmp -Wl,-rpath=${locallib} 
 
 

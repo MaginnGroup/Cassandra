@@ -123,6 +123,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
 
 
   t_cpu = 0.0_DP
+  IF (l_vectorized) CALL Field_Allocation(ibox)
 
   IF (est_atompair_rminsq) THEN
           bsolute = species_list(is)%wsolute_base

@@ -405,6 +405,8 @@ SUBROUTINE Get_Pair_Style
 
   ALLOCATE(l_half_len_cutoff(nbr_boxes))
   l_half_len_cutoff = .FALSE.
+  ALLOCATE(n_vdw_p_list(nbr_boxes))
+  n_vdw_p_list = 0
 
   ! vdw style
   line_nbr = 0
@@ -433,6 +435,7 @@ SUBROUTINE Get_Pair_Style
            ! the sum method
 
            IF ( line_array(1) == 'LJ' .OR. line_array(1) == 'Lj' .OR. line_array(1) == 'lj' ) THEN
+              n_vdw_p_list(ibox) = 2
               vdw_style(ibox) = 'LJ'
               int_vdw_style(ibox) = vdw_lj
               WRITE(logunit,'(A,2x,A,A,I3)') 'VDW style used is: ',vdw_style(ibox), 'in box:', ibox
@@ -532,6 +535,7 @@ SUBROUTINE Get_Pair_Style
               ENDIF
 
            ELSEIF ( line_array(1) == 'MIE' .OR. line_array(1) == 'Mie' .OR. line_array(1) == 'mie' ) THEN
+              n_vdw_p_list(ibox) = 4
               vdw_style(ibox) = 'MIE'
               int_vdw_style(ibox) = vdw_mie
               WRITE(logunit,'(A,2x,A,A,I3)') 'VDW style used is: ',vdw_style(ibox), 'in box:', ibox

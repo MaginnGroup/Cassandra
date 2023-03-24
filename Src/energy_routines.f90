@@ -189,6 +189,8 @@ MODULE Energy_Routines
 
   IMPLICIT NONE
 
+  REAL(DP), DIMENSION(:), ALLOCATABLE :: zero_field, rijsq_field
+
 CONTAINS
 
   !-----------------------------------------------------------------------------
@@ -1260,6 +1262,9 @@ CONTAINS
     LOGICAL :: get_interaction
 !molecule_priority    LOGICAL, DIMENSION(MAXVAL(nmols(:,widom_molecule%which_box)),nspecies) :: shortrange, midrange
 
+
+
+
     E_inter = 0.0_DP
     overlap = .FALSE.
 
@@ -1280,6 +1285,21 @@ CONTAINS
             END DO
             RETURN
     END IF
+
+    ! Start vectorized version
+    IF (l_vectorized .AND. .NOT. (cbmc_flag .AND. precalc_atompair_nrg)) THEN
+            CALL Compute_Molecule_Nonbond_Inter_Energy_Vectorized_Widom(im,is,this_box,&
+                    Ei_inter_vdw,Ei_inter_qq,overlap)
+            IF (.NOT. overlap) E_inter = Ei_inter_vdw + Ei_inter_qq
+            RETURN
+    END IF
+
+
+
+
+    ! End vectorized version
+
+
 
 !molecule_priority    IF (widom_active .AND. l_sectors) THEN
     speciesLoop0: DO ispecies = 1, nspecies
@@ -1381,6 +1401,371 @@ CONTAINS
 !molecule_priority    END DO speciesLoop3
   END SUBROUTINE Compute_Molecule_Nonbond_Inter_Energy_Widom
   !-----------------------------------------------------------------------------
+  SUBROUTINE Field_Allocation(ibox)
+          INTEGER :: ibox
+          INTEGER :: na
+          na = DOT_PRODUCT(nmols(:,ibox),natoms)
+          IF (ALLOCATED(zero_field)) THEN
+                  IF (SIZE(zero_field) .LE. na) RETURN
+                  DEALLOCATE(zero_field)
+                  DEALLOCATE(rijsq_field)
+          END IF
+          ALLOCATE(zero_field(na))
+          ALLOCATE(rijsq_field(na))
+          zero_field = 0.0_DP
+          rijsq_field = 9.0e98_DP
+  END SUBROUTINE Field_Allocation
+
+  SUBROUTINE Compute_Molecule_Nonbond_Inter_Energy_Vectorized_Widom(im,is, &
+    this_box,vdw_energy,qq_energy,overlap)
+    ! Arguments
+    INTEGER, INTENT(IN) :: im, is, this_box
+    REAL(DP), INTENT(OUT) :: vdw_energy, qq_energy
+    LOGICAL, INTENT(OUT) :: overlap
+    ! End Arguments
+    LOGICAL :: this_est_emax, l_get_rij_min, l_ortho
+    INTEGER, DIMENSION(nspecies) :: jspec_n_interact, jspec_istart, jspec_iend
+    INTEGER :: n_vdw_p, ia_counter, i, j, n_i_exist, first_i_vdw, thistype, istart, iend, nlive, n_interact, vlen, orig_vlen, n_j_exist
+    INTEGER :: bsolvent, istart_base, natoms_js, ti_solvent, ja, js, n_coul, n_vdw, ia
+    REAL(DP) :: mol_rcut, max_dcom_i_const, this_vdw_rcutsq, this_coul_rcutsq
+    REAL(DP), DIMENSION(3,3) :: length_inv_T, length_T
+    LOGICAL, DIMENSION(natoms(is)) :: i_exist
+    INTEGER, DIMENSION(COUNT(widom_atoms%exist)) :: which_i_exist, ispec_atomtypes
+    REAL(DP), DIMENSION(COUNT(widom_atoms%exist)) :: icharge
+    REAL(DP), DIMENSION(COUNT(widom_atoms%exist),3) :: irp, isp
+    REAL(DP), DIMENSION(3) :: irp_com
+    LOGICAL, DIMENSION(COUNT(widom_atoms%exist)) :: i_has_vdw
+    INTEGER, DIMENSION(:), POINTER :: spec_locates
+    INTEGER, DIMENSION(MAXVAL(nmols(:,this_box))), TARGET :: spec_locates_tgt
+    LOGICAL, DIMENSION(:), POINTER :: spec_live, interact_vec, j_exist, j_hascharge, j_hasvdw, vdw_mask, coul_mask
+    !LOGICAL, DIMENSION(MAXVAL(nmols(:,this_box))), TARGET :: spec_live_tgt
+    REAL(DP), DIMENSION(:,:), POINTER :: drp, dsp, drw, ij_vdw_p, jrp, jsp
+    REAL(DP), DIMENSION(DOT_PRODUCT(nmols(:,this_box),natoms),10), TARGET :: dtgt
+    LOGICAL, DIMENSION(DOT_PRODUCT(nmols(:,this_box),natoms),5), TARGET :: logical_tgt
+    INTEGER, DIMENSION(MAXVAL(natoms)), TARGET :: jspec_atomtypes_tgt
+    INTEGER, DIMENSION(:), POINTER :: jspec_atomtypes
+    REAL(DP), DIMENSION(MAXVAL(natoms),COUNT(widom_atoms%exist),n_vdw_p_list(this_box)), TARGET :: spec_vdw_p_tgt
+    REAL(DP), DIMENSION(DOT_PRODUCT(nmols(:,this_box),natoms),COUNT(widom_atoms%exist),n_vdw_p_list(this_box)), TARGET :: vdw_p_tgt
+    REAL(DP), DIMENSION(DOT_PRODUCT(nmols(:,this_box),natoms),n_vdw_p_list(this_box)), TARGET :: ij_vdw_p_tgt
+    REAL(DP), DIMENSION(:,:,:), POINTER :: spec_vdw_p, vdw_p
+    REAL(DP), DIMENSION(:), POINTER :: jcharge, jcharge_coul, nrg_vdw, nrg_coul, rijsq, rijsq_4min, vec_atompair_rsqmin
+    REAL(DP), DIMENSION(:), POINTER :: sigbyr2, sigbyr6, sigbyr12, rijsq_vdw, rijsq_coul, rij, roffsq_rijsq, up_nrg_vec
+    REAL(DP), DIMENSION(:), POINTER :: mie_m, mie_n
+
+
+    l_get_rij_min = est_atompair_rminsq .AND. .NOT. cbmc_flag
+    this_est_emax = est_emax .AND. widom_active .AND. .NOT. cbmc_flag
+    jspec_n_interact = 0
+    n_vdw_p = n_vdw_p_list(this_box)
+    l_ortho = box_list(this_box)%int_box_shape <= int_ortho
+    IF (cbmc_flag) THEN
+            mol_rcut = rcut_cbmc(this_box)
+    ELSE
+            mol_rcut = rcut_max(this_box)
+    END IF
+    max_dcom_i_const = widom_molecule%max_dcom + mol_rcut
+    length_inv_T = TRANSPOSE(box_list(this_box)%length_inv)
+    length_T = TRANSPOSE(box_list(this_box)%length)
+    i_exist = widom_atoms%exist
+    ia_counter = 0
+    DO i = 1, natoms(is)
+        IF (i_exist(i)) THEN
+                ia_counter = ia_counter + 1
+                which_i_exist(ia_counter) = i
+        END IF
+    END DO
+    n_i_exist = COUNT(i_exist)
+    irp(:,1) = PACK(widom_atoms%rxp,i_exist)
+    irp(:,2) = PACK(widom_atoms%ryp,i_exist)
+    irp(:,3) = PACK(widom_atoms%rzp,i_exist)
+    ispec_atomtypes = PACK(nonbond_list(1:natoms(is),is)%atom_type_number,i_exist)
+    icharge = PACK(nonbond_list(1:natoms(is),is)%charge,i_exist)
+    first_i_vdw = 0
+    j_exist => logical_tgt(:,1)
+    jcharge => dtgt(:,7)
+    DO i = 1, n_i_exist
+        thistype = ispec_atomtypes(i)
+        IF (vdw_param1_table(thistype,thistype) .NE. 0.0_DP .AND. &
+                vdw_param2_table(thistype,thistype) .NE. 0.0_DP) THEN
+                IF (first_i_vdw == 0) first_i_vdw = i
+                i_has_vdw(i) = .TRUE.
+        ELSE
+                i_has_vdw(i) = .FALSE.
+        END IF
+    END DO
+    irp_com(1) = widom_molecule%xcom
+    irp_com(2) = widom_molecule%ycom
+    irp_com(3) = widom_molecule%zcom
+    istart = 1
+    DO js = 1, nspecies
+        IF (nmols(js,this_box) == 0) CYCLE
+        spec_locates => spec_locates_tgt(1:nmols(js,this_box))
+        spec_locates = locate(1:nmols(js,this_box),js,this_box)
+        spec_live => logical_tgt(1:nmols(js,this_box),2)
+        spec_live = molecule_list(spec_locates,js)%live
+        nlive = COUNT(spec_live)
+        IF (nlive .NE. nmols(js,this_box)) THEN
+                spec_locates(1:nlive) = PACK(spec_locates,spec_live)
+                spec_locates => spec_locates_tgt(1:nlive)
+                spec_live => logical_tgt(1:nlive,2)
+        END IF
+        drp => dtgt(1:nlive,1:3)
+        dsp => drp
+        drw => drp
+        drp(:,1) = molecule_list(spec_locates,js)%xcom - irp_com(1)
+        drp(:,2) = molecule_list(spec_locates,js)%ycom - irp_com(2)
+        drp(:,3) = molecule_list(spec_locates,js)%zcom - irp_com(3)
+        IF (l_ortho) THEN
+                DO i = 1,3
+                        drw(:,i) = drp(:,i) - &
+                                NINT(drp(:,i)/box_list(this_box)%length(i,i))*box_list(this_box)%length(i,i)
+                END DO
+        ELSE
+                dsp = MATMUL(drp,length_inv_T)
+                drw = MATMUL(dsp - NINT(dsp),length_T)
+        END IF
+        interact_vec => logical_tgt(1:nlive,2)
+        interact_vec = max_dcom_i_const > &
+                SQRT( &
+                drw(:,1)*drw(:,1) + &
+                drw(:,2)*drw(:,2) + &
+                drw(:,3)*drw(:,3)) - &
+                molecule_list(spec_locates,js)%max_dcom
+        n_interact = COUNT(interact_vec)
+        spec_locates(1:n_interact) = PACK(spec_locates,interact_vec)
+        ! interact_vec isn't used again until next iteration of js loop, so its target can be repurposed
+        spec_locates => spec_locates_tgt(1:n_interact)
+        vlen = n_interact*natoms(js)
+        iend = istart + vlen - 1
+        jspec_atomtypes => jspec_atomtypes_tgt(1:natoms(js))
+        jspec_atomtypes = nonbond_list(1:natoms(js),js)%atom_type_number
+        spec_vdw_p => spec_vdw_p_tgt(1:natoms(js),:,1:n_vdw_p)
+        spec_vdw_p(:,:,1) = vdw_param1_table(jspec_atomtypes,ispec_atomtypes) ! epsilon
+        spec_vdw_p(:,:,2) = vdw_param2_table(jspec_atomtypes,ispec_atomtypes) ! sigma
+        IF (int_vdw_sum_style(this_box) .NE. vdw_charmm .AND. int_vdw_style(this_box) == vdw_lj) THEN
+                spec_vdw_p(:,:,1) = spec_vdw_p(:,:,1) * 4.0_DP ! epsilon usually has a factor of 4 before it
+        END IF
+        ! Snce sigma is always squared for lj and has some power for Mie, square it early here.
+        ! This avoids having to take square root of rijsq for Mie.
+        spec_vdw_p(:,:,2) = spec_vdw_p(:,:,2)*spec_vdw_p(:,:,2)
+        IF (int_vdw_style(this_box) == vdw_mie) THEN
+                ! halve the exponents since they are applied to (r/sigma)**2 instead of (r/sigma)
+                spec_vdw_p(:,:,3) = vdw_param3_table(jspec_atomtypes,ispec_atomtypes) * 0.5_DP
+                spec_vdw_p(:,:,4) = vdw_param4_table(jspec_atomtypes,ispec_atomtypes) * 0.5_DP
+                ! Multiply epsilon by Mie coefficient
+                ! The 0.5 factor applied above cancels out for the Mie coefficient so the equation is unchanged.
+                spec_vdw_p(:,:,1) = spec_vdw_p(:,:,1) * spec_vdw_p(:,:,3)/(spec_vdw_p(:,:,3)-spec_vdw_p(:,:,4)) * &
+                        (spec_vdw_p(:,:,3)/spec_vdw_p(:,:,4))**(spec_vdw_p(:,:,4)/(spec_vdw_p(:,:,3)-spec_vdw_p(:,:,4)))
+        END IF
+        j_exist(istart:iend) = RESHAPE(atom_list(1:natoms(js),spec_locates,js)%exist,(/ vlen /))
+        jrp => dtgt(istart:iend,4:6)
+        jrp(:,1) = RESHAPE(atom_list(1:natoms(js),spec_locates,js)%rxp,(/ vlen /))
+        jrp(:,2) = RESHAPE(atom_list(1:natoms(js),spec_locates,js)%ryp,(/ vlen /))
+        jrp(:,3) = RESHAPE(atom_list(1:natoms(js),spec_locates,js)%rzp,(/ vlen /))
+        !jatomtype(istart:iend) = RESHAPE(SPREAD(nonbond_list(1:natoms(js),js)%atom_type_number,2,n_interact), (/ vlen /))
+        jcharge(istart:iend) = RESHAPE(SPREAD(nonbond_list(1:natoms(js),js)%charge,2,n_interact), (/ vlen /))
+        vdw_p_tgt(istart:iend,:,:) = RESHAPE(SPREAD(spec_vdw_p,2,n_interact), (/ vlen, n_i_exist, n_vdw_p /))
+        IF (l_get_rij_min) THEN
+                jspec_n_interact(js) = n_interact
+                jspec_istart(js) = istart
+                jspec_iend(js) = iend
+        END IF
+        istart = istart+vlen
+    END DO
+    vlen = istart - 1
+    orig_vlen = vlen
+    ! The following IF statement condition is unlikely to be true.
+    ! That is why this process is saved until now; it's unlikely to be necessary.
+    IF (.NOT. ALL(j_exist(1:vlen))) THEN
+            n_j_exist = COUNT(j_exist(1:vlen))
+            jrp => dtgt(:,4:6)
+            DO i = 1,3
+                jrp(1:n_j_exist,i) = PACK(jrp(1:vlen,i),j_exist(1:vlen))
+            END DO
+            jcharge(1:n_j_exist) = PACK(jcharge(1:vlen),j_exist(1:vlen))
+            DO j = 1, n_vdw_p
+                DO i = 1, n_i_exist
+                        vdw_p_tgt(1:n_j_exist,i,j) = PACK(vdw_p_tgt(1:vlen,i,j),j_exist(1:vlen))
+                END DO
+            END DO
+            vlen = n_j_exist
+    END IF
+    jrp => dtgt(1:vlen,4:6)
+    jsp => jrp
+    dsp => dtgt(1:vlen,1:3)
+    drw => dsp
+    rijsq => dtgt(1:vlen,1)
+    IF (this_est_emax) THEN
+            up_nrg_vec => dtgt(1:vlen,10)
+            up_nrg_vec = 0.0_DP
+    END IF
+    vdw_p => vdw_p_tgt(1:vlen,:,:)
+    j_hascharge => logical_tgt(1:vlen,2)
+    j_hasvdw => logical_tgt(1:vlen,3)
+    j_hascharge = jcharge .NE. 0.0_DP
+    j_hasvdw = vdw_p(:,first_i_vdw,1) .NE. 0.0_DP .AND. vdw_p(:,first_i_vdw,2) .NE. 0.0_DP
+    !allvdw = ALL(j_hasvdw)
+    !allcoul = ALL(j_hascharge)
+    IF (l_ortho) THEN
+            DO i = 1,3
+                jsp(:,i) = jrp(:,i) / box_list(this_box)%length(i,i)
+                isp(:,i) = irp(:,i) / box_list(this_box)%length(i,i)
+            END DO
+    ELSE
+            jsp = MATMUL(jrp,length_inv_T)
+            isp = MATMUL(irp,length_inv_T)
+    END IF
+
+    DO ia = 1, n_i_exist
+        DO i = 1,3
+                dsp(:,i) = jsp(:,i) - isp(ia,i)
+        END DO
+        IF (l_ortho) THEN
+                DO i = 1,3
+                        drw(:,i) = (dsp(:,i)-NINT(dsp(:,i)))*box_list(this_box)%length(i,i)
+                END DO
+        ELSE
+                drw = MATMUL(dsp-NINT(dsp),length_T)
+        END IF
+        rijsq = drw(:,1)*drw(:,1) + drw(:,2)*drw(:,2) + drw(:,3)*drw(:,3)
+        IF (.NOT. l_sectors) THEN
+                IF (ANY(rijsq < rcut_lowsq)) THEN
+                        overlap = .TRUE.
+                        RETURN
+                END IF
+        END IF
+        IF (l_get_rij_min) THEN
+                IF (vlen .NE. orig_vlen) THEN
+                        rijsq_4min => dtgt(1:vlen,2)
+                        rijsq_4min = UNPACK(rijsq,j_exist(1:orig_vlen),rijsq_field(1:orig_vlen)) ! rijsq_field should be shared
+                ELSE
+                        rijsq_4min => rijsq
+                END IF
+                vec_atompair_rsqmin => swi_atompair_rsqmin(:,which_i_exist(ia))
+                DO js = 1, nspecies
+                        IF (jspec_n_interact(js) == 0) CYCLE
+                        bsolvent = species_list(js)%solvent_base
+                        iend = jspec_iend(js)
+                        istart_base = jspec_istart(js) - 1
+                        natoms_js = natoms(js)
+                        DO ja = 1, natoms(js)
+                                ti_solvent = bsolvent + ja
+                                istart = istart_base + ja
+                                vec_atompair_rsqmin(ti_solvent) = &
+                                        MINVAL(rijsq_4min(istart:iend:natoms_js))
+                        END DO
+                END DO
+        END IF
+        IF (cbmc_flag) THEN
+                this_vdw_rcutsq = rcut_cbmcsq(this_box)
+                this_coul_rcutsq = rcut_cbmcsq(this_box)
+        ELSE
+                IF (int_vdw_sum_style(this_box) == vdw_cut_switch) THEN
+                        this_vdw_rcutsq = roff_switch_sq(this_box)
+                ELSE
+                        this_vdw_rcutsq = rcut_vdwsq(this_box)
+                END IF
+                this_coul_rcutsq = rcut_coulsq(this_box)
+        END IF
+        IF (int_vdw_style(this_box) .NE. vdw_none .AND. i_has_vdw(ia)) THEN
+                vdw_mask => logical_tgt(1:vlen,4)
+                vdw_mask = j_hasvdw .AND. rijsq < this_vdw_rcutsq
+                n_vdw = COUNT(vdw_mask)
+                sigbyr2 => dtgt(1:n_vdw,2)
+                sigbyr6 => dtgt(1:n_vdw,2)
+                sigbyr12 => dtgt(1:n_vdw,3)
+                rijsq_vdw => dtgt(1:n_vdw,8)
+                nrg_vdw => dtgt(1:n_vdw,9)
+                ij_vdw_p => ij_vdw_p_tgt(1:n_vdw,1:n_vdw_p)
+                DO i = 1, n_vdw_p
+                        ij_vdw_p(:,i) = PACK(vdw_p(:,ia,i),vdw_mask)
+                END DO
+                roffsq_rijsq => dtgt(1:n_vdw,2)
+                rijsq_vdw = PACK(rijsq,vdw_mask)
+                IF (int_vdw_style(this_box) == vdw_lj) THEN
+                        sigbyr2 = ij_vdw_p(:,2)/rijsq_vdw ! sigma was already squared
+                        sigbyr6 = sigbyr2*sigbyr2*sigbyr2
+                        sigbyr12 = sigbyr6*sigbyr6
+                        IF (int_vdw_sum_style(this_box) == vdw_charmm) THEN
+                                nrg_vdw = ij_vdw_p(:,1) * (sigbyr12 - 2.0_DP*sigbyr6) ! eps was not multiplied by 4
+                        ELSE
+                                nrg_vdw = ij_vdw_p(:,1) * (sigbyr12 - sigbyr6) ! eps was already multiplied by 4
+                        END IF
+                        IF (int_vdw_sum_style(this_box) == vdw_cut_shift) THEN
+                                sigbyr2 = ij_vdw_p(:,2) / rcut_vdwsq(this_box) ! sigma was already squared
+                                sigbyr6 = sigbyr2*sigbyr2*sigbyr2
+                                sigbyr12 = sigbyr6*sigbyr6
+                                nrg_vdw = nrg_vdw - ij_vdw_p(:,1) * (sigbyr12 - sigbyr6) ! eps was already multiplied by 4
+                        ELSE IF (int_vdw_sum_style(this_box) == vdw_cut_switch) THEN
+                                roffsq_rijsq = roff_switch_sq(this_box) - rijsq_vdw
+                                ! The following loop should be vectorized by the compiler.
+                                DO i = 1, n_vdw
+                                        IF (rijsq_vdw(i) .GE. ron_switch_sq(this_box)) THEN
+                                                nrg_vdw(i) = &
+                                                        roffsq_rijsq(i)*roffsq_rijsq(i) * &
+                                                        (switch_factor2(this_box)+2.0_DP*rijsq_vdw(i))*switch_factor1(this_box) * &
+                                                        nrg_vdw(i)
+                                        END IF
+                                END DO
+                        ELSE IF (int_vdw_sum_style(this_box) == vdw_cut_shift_force) THEN
+                                sigbyr2 = ij_vdw_p(:,2) / rcut_vdwsq(this_box)
+                                sigbyr6 = sigbyr2*sigbyr2*sigbyr2
+                                sigbyr12 = sigbyr6*sigbyr6
+                                nrg_vdw = nrg_vdw - &
+                                        ij_vdw_p(:,1) * (sigbyr12 - sigbyr6) - &
+                                        (SQRT(rijsq_vdw) - rcut_vdw(this_box)) * &
+                                        -6.0_DP * ij_vdw_p(:,1) * &
+                                        (2.0_DP * sigbyr12 - sigbyr6) / rcut_vdw(this_box)
+                        END IF
+                ELSE IF (int_vdw_style(this_box) == vdw_mie) THEN
+                        ! exponents were already halved so there's no need for SQRT
+                        mie_n => ij_vdw_p(:,3) ! already halved
+                        mie_m => ij_vdw_p(:,4) ! already halved
+                        sigbyr2 = ij_vdw_p(:,2) / rijsq_vdw
+                        nrg_vdw = ij_vdw_p(:,1) * &
+                                (sigbyr2**mie_n - sigbyr2**mie_m)
+                        IF (int_vdw_sum_style(this_box) == vdw_cut_shift) THEN
+                                sigbyr2 = ij_vdw_p(:,2) / rcut_vdw(this_box)
+                                nrg_vdw = nrg_vdw - ij_vdw_p(:,1) * &
+                                        (sigbyr2**mie_n - sigbyr2**mie_m)
+                        END IF
+                END IF
+                vdw_energy = SUM(nrg_vdw)
+                IF (this_est_emax) up_nrg_vec = UNPACK(nrg_vdw, vdw_mask, zero_field(1:vlen))
+        END IF
+        ! Electrostatics
+        IF (icharge(ia) .NE. 0.0_DP .AND. int_charge_style(this_box) == charge_coul .AND. &
+                (species_list(is)%l_coul_cbmc .OR. .NOT. cbmc_flag)) THEN
+                coul_mask => logical_tgt(1:vlen,5)
+                coul_mask = j_hascharge .AND. rijsq < this_coul_rcutsq
+                n_coul = COUNT(coul_mask)
+                jcharge_coul => dtgt(1:n_coul,2)
+                jcharge_coul = PACK(jcharge, coul_mask)
+                rijsq_coul => dtgt(1:n_coul,8)
+                nrg_coul => dtgt(1:n_coul,9)
+                rijsq_coul = PACK(rijsq,coul_mask)
+                rij = SQRT(rijsq_coul)
+                IF (int_charge_sum_style(this_box) == charge_ewald) THEN
+                        nrg_coul = ERFC(alpha_ewald(this_box)*rij) / rijsq_coul * jcharge_coul ! omit icharge and charge factor for now
+                ELSE IF (int_charge_sum_style(this_box) == charge_dsf) THEN
+                        nrg_coul = (dsf_factor2(this_box) * (rij - rcut_coul(this_box)) - &
+                                dsf_factor1(this_box) + &
+                                ERFC(alpha_dsf(this_box)*rij) / rij) * jcharge_coul / rij
+                ELSE IF (int_charge_sum_style(this_box) == charge_cut) THEN
+                        nrg_coul = jcharge_coul / rij
+                ELSE
+                        nrg_coul = 0.0_DP
+                END IF
+                qq_energy = SUM(nrg_coul) * icharge(ia) * charge_factor
+                IF (this_est_emax) THEN
+                        up_nrg_vec = up_nrg_vec + UNPACK(jcharge_coul*icharge(ia)*charge_factor/rij, coul_mask, zero_field(1:vlen))
+                END IF
+        END IF
+        IF (this_est_emax) THEN
+                Eij_max  = MAX(Eij_max, MAXVAL(up_nrg_vec))
+        END IF
+    END DO
+  END SUBROUTINE Compute_Molecule_Nonbond_Inter_Energy_Vectorized_Widom
 
 
   SUBROUTINE Compute_MoleculeCollection_Nonbond_Inter_Energy(n_list,lm_list,is_list, &
@@ -1566,12 +1951,12 @@ CONTAINS
           IF (im == widom_locate .AND. is == widom_species) THEN
                   these_atoms_i => widom_atoms
           ELSE
-                  these_atoms_i => atom_list(:,im,is)
+                  these_atoms_i => atom_list(1:natoms(is),im,is)
           END IF
           IF (jm == widom_locate .AND. js == widom_species) THEN
                   these_atoms_j => widom_atoms
           ELSE
-                  these_atoms_j => atom_list(:,jm,js)
+                  these_atoms_j => atom_list(1:natoms(js),jm,js)
           END IF
 
           bsolvent = species_list(js)%solvent_base
