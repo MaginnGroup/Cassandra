@@ -1435,22 +1435,21 @@ CONTAINS
     REAL(DP), DIMENSION(COUNT(widom_atoms%exist),3) :: irp, isp
     REAL(DP), DIMENSION(3) :: irp_com
     LOGICAL, DIMENSION(COUNT(widom_atoms%exist)) :: i_has_vdw
-    INTEGER, DIMENSION(:), POINTER :: spec_locates
+    INTEGER, DIMENSION(:), CONTIGUOUS, POINTER :: spec_locates, jspec_atomtypes
     INTEGER, DIMENSION(MAXVAL(nmols(:,this_box))), TARGET :: spec_locates_tgt
-    LOGICAL, DIMENSION(:), POINTER :: spec_live, interact_vec, j_exist, j_hascharge, j_hasvdw, vdw_mask, coul_mask
+    LOGICAL, DIMENSION(:), CONTIGUOUS, POINTER :: spec_live, interact_vec, j_exist, j_hascharge, j_hasvdw, vdw_mask, coul_mask
     !LOGICAL, DIMENSION(MAXVAL(nmols(:,this_box))), TARGET :: spec_live_tgt
     REAL(DP), DIMENSION(:,:), POINTER :: drp, dsp, drw, ij_vdw_p, jrp, jsp
     REAL(DP), DIMENSION(DOT_PRODUCT(nmols(:,this_box),natoms),10), TARGET :: dtgt
     LOGICAL, DIMENSION(DOT_PRODUCT(nmols(:,this_box),natoms),5), TARGET :: logical_tgt
     INTEGER, DIMENSION(MAXVAL(natoms)), TARGET :: jspec_atomtypes_tgt
-    INTEGER, DIMENSION(:), POINTER :: jspec_atomtypes
     REAL(DP), DIMENSION(MAXVAL(natoms),COUNT(widom_atoms%exist),n_vdw_p_list(this_box)), TARGET :: spec_vdw_p_tgt
     REAL(DP), DIMENSION(DOT_PRODUCT(nmols(:,this_box),natoms),COUNT(widom_atoms%exist),n_vdw_p_list(this_box)), TARGET :: vdw_p_tgt
     REAL(DP), DIMENSION(DOT_PRODUCT(nmols(:,this_box),natoms),n_vdw_p_list(this_box)), TARGET :: ij_vdw_p_tgt
     REAL(DP), DIMENSION(:,:,:), POINTER :: spec_vdw_p, vdw_p
-    REAL(DP), DIMENSION(:), POINTER :: jcharge, jcharge_coul, nrg_vdw, nrg_coul, rijsq, rijsq_4min, vec_atompair_rsqmin
-    REAL(DP), DIMENSION(:), POINTER :: sigbyr2, sigbyr6, sigbyr12, rijsq_vdw, rijsq_coul, rij, roffsq_rijsq, up_nrg_vec
-    REAL(DP), DIMENSION(:), POINTER :: mie_m, mie_n
+    REAL(DP), DIMENSION(:), CONTIGUOUS, POINTER :: jcharge, jcharge_coul, nrg_vdw, nrg_coul, rijsq, rijsq_4min, vec_atompair_rsqmin
+    REAL(DP), DIMENSION(:), CONTIGUOUS, POINTER :: sigbyr2, sigbyr6, sigbyr12, rijsq_vdw, rijsq_coul, rij, roffsq_rijsq, up_nrg_vec
+    REAL(DP), DIMENSION(:), CONTIGUOUS, POINTER :: mie_m, mie_n
 
 
     l_get_rij_min = est_atompair_rminsq .AND. .NOT. cbmc_flag
@@ -1697,10 +1696,11 @@ CONTAINS
                                 sigbyr12 = sigbyr6*sigbyr6
                                 nrg_vdw = nrg_vdw - ij_vdw_p(:,1) * (sigbyr12 - sigbyr6) ! eps was already multiplied by 4
                         ELSE IF (int_vdw_sum_style(this_box) == vdw_cut_switch) THEN
-                                roffsq_rijsq = roff_switch_sq(this_box) - rijsq_vdw
+                                !roffsq_rijsq = roff_switch_sq(this_box) - rijsq_vdw
                                 ! The following loop should be vectorized by the compiler.
                                 DO i = 1, n_vdw
                                         IF (rijsq_vdw(i) .GE. ron_switch_sq(this_box)) THEN
+                                                roffsq_rijsq(i) = roff_switch_sq(this_box) - rijsq_vdw(i)
                                                 nrg_vdw(i) = &
                                                         roffsq_rijsq(i)*roffsq_rijsq(i) * &
                                                         (switch_factor2(this_box)+2.0_DP*rijsq_vdw(i))*switch_factor1(this_box) * &
