@@ -303,6 +303,7 @@ SUBROUTINE Get_Sim_Type
 
         line_nbr = line_nbr + 1
         CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
+        open_mc_flag = .FALSE.
 
         IF(line_array(1) == 'nvt' .OR. line_array(1) == 'NVT' .OR. &
            line_array(1) == 'nvt_mc' .OR. line_array(1) == 'NVT_MC') THEN
@@ -318,12 +319,15 @@ SUBROUTINE Get_Sim_Type
         ELSEIF(line_array(1) == 'gemc' .OR. line_array(1) == 'GEMC') THEN
            sim_type = 'GEMC'
            int_sim_type = sim_gemc
+           open_mc_flag = .TRUE.
         ELSEIF(line_array(1) == 'gemc_npt' .OR. line_array(1) == 'GEMC_NPT') THEN
            sim_type = 'GEMC_NPT'
            int_sim_type = sim_gemc_npt
+           open_mc_flag = .TRUE.
         ELSEIF(line_array(1) == 'gcmc' .OR. line_array(1) == 'GCMC') THEN
            sim_type = 'GCMC'
            int_sim_type = sim_gcmc
+           open_mc_flag = .TRUE.
         ELSEIF(line_array(1) == 'fragment' .OR. &
                line_array(1) == 'nvt_mc_fragment' .OR. line_array(1) == 'NVT_MC_Fragment') THEN
            sim_type = 'NVT_MC_Fragment'
@@ -3839,6 +3843,7 @@ SUBROUTINE Get_Box_Info
      err_msg(1) = 'Memory could not be allocated for nmols'
      CALL Clean_Abort(err_msg,'Get_Box_Info')
   END IF
+  ALLOCATE(nlive(nspecies,nbr_boxes))
 
   ALLOCATE(vdw_style(nbr_boxes) , charge_style(nbr_boxes))
   ALLOCATE(vdw_sum_style(nbr_boxes) , charge_sum_style(nbr_boxes))

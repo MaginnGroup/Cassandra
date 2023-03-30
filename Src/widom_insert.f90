@@ -84,7 +84,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
   INTEGER(KIND=INT64), DIMENSION(rsqmin_res_d,solvent_maxind_d,natoms(is)), TARGET :: frame_rsqmin_atompair_freq
   REAL(DP), DIMENSION(:,:,:), POINTER :: rsqmin_atompair_w_max_ptr, rsqmin_atompair_w_sum_ptr
   INTEGER(KIND=INT64), DIMENSION(:,:,:), POINTER :: rsqmin_atompair_freq_ptr
-  INTEGER :: bsolute, rsq_ind, ia, ti_solvent
+  INTEGER :: bsolute, rsq_ind(solvent_maxind,natoms(is)), ia, ti_solvent
 
   REAL(DP) :: widom_prefactor, widom_var_exp, widom_sum
   REAL(DP) :: E_recip_in, lrc_diff, E_inter_constant
@@ -123,7 +123,6 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
 
 
   t_cpu = 0.0_DP
-  IF (l_vectorized) CALL Field_Allocation(ibox)
 
   IF (est_atompair_rminsq) THEN
           bsolute = species_list(is)%wsolute_base
@@ -448,19 +447,24 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
                   widom_sum = widom_sum + widom_var_exp
 
 
+                  rsq_ind = INT((swi_atompair_rsqmin-rsqmin_shifter) / rsqmin_step)
                   IF (est_atompair_rminsq) THEN
                           DO ia = 1, natoms(is)
                                 DO ti_solvent = 1, solvent_maxind
-                                        IF (swi_atompair_rsqmin(ti_solvent,ia) >= maxrminsq) CYCLE
-                                        rsq_ind = INT((swi_atompair_rsqmin(ti_solvent,ia)-rsqmin_shifter) / rsqmin_step)
-                                        IF (widom_var_exp > frame_rsqmin_atompair_w_max_ptr(rsq_ind,ti_solvent,ia)) THEN
-                                                frame_rsqmin_atompair_w_max_ptr(rsq_ind,ti_solvent,ia) = widom_var_exp
+                                        IF (swi_atompair_rsqmin(ti_solvent,ia) >= maxrminsq) THEN
+                                                !rsq_ind = INT((swi_atompair_rsqmin(ti_solvent,ia)-rsqmin_shifter) / rsqmin_step)
+                                                frame_rsqmin_atompair_w_max_ptr(rsq_ind(ti_solvent,ia),ti_solvent,ia) = &
+                                                        MAX(widom_var_exp, &
+                                                        frame_rsqmin_atompair_w_max_ptr(rsq_ind(ti_solvent,ia),ti_solvent,ia))
+                                                !IF (widom_var_exp > frame_rsqmin_atompair_w_max_ptr(rsq_ind,ti_solvent,ia)) THEN
+                                                !        frame_rsqmin_atompair_w_max_ptr(rsq_ind,ti_solvent,ia) = widom_var_exp
+                                                !END IF
+                                                frame_rsqmin_atompair_w_sum_ptr(rsq_ind(ti_solvent,ia),ti_solvent,ia) = &
+                                                        frame_rsqmin_atompair_w_sum_ptr(rsq_ind(ti_solvent,ia),ti_solvent,ia) + &
+                                                        widom_var_exp
+                                                frame_rsqmin_atompair_freq_ptr(rsq_ind(ti_solvent,ia),ti_solvent,ia) = &
+                                                        frame_rsqmin_atompair_freq_ptr(rsq_ind(ti_solvent,ia),ti_solvent,ia) + 1
                                         END IF
-                                        frame_rsqmin_atompair_w_sum_ptr(rsq_ind,ti_solvent,ia) = &
-                                                frame_rsqmin_atompair_w_sum_ptr(rsq_ind,ti_solvent,ia) + &
-                                                widom_var_exp
-                                        frame_rsqmin_atompair_freq_ptr(rsq_ind,ti_solvent,ia) = &
-                                                frame_rsqmin_atompair_freq_ptr(rsq_ind,ti_solvent,ia) + 1
                                 END DO
                           END DO
                   END IF

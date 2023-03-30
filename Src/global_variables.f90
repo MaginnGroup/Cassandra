@@ -85,7 +85,7 @@ USE Type_Definitions
   INTEGER, PARAMETER :: sim_gemc_ig = 8
   INTEGER, PARAMETER :: sim_mcf = 9
   INTEGER, PARAMETER :: sim_pregen = 10
-  LOGICAL :: timed_run, openmp_flag, en_flag, verbose_log, input_is_logfile
+  LOGICAL :: timed_run, openmp_flag, en_flag, verbose_log, input_is_logfile, open_mc_flag
   CHARACTER(10) :: sim_length_units
   INTEGER (KIND=INT64):: steps_per_sweep
 
@@ -692,6 +692,7 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
 
 
   LOGICAL, PARAMETER :: l_vectorized = .TRUE.
+  INTEGER, DIMENSION(:,:), ALLOCATABLE :: nlive
 
 END MODULE Global_Variables
 
