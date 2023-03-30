@@ -202,15 +202,15 @@ CONTAINS
                 DO ibox = 1, nbr_boxes
                         IF (int_charge_sum_style(ibox) == charge_ewald) THEN
                                 alpha_rij = alpha_ewald(ibox) * rij
-                                f2(:,ibox) = erfc(alpha_rij)/rij
+                                f2(:,ibox) = ERFC(alpha_rij)/rij
                         ELSEIF (int_charge_sum_style(ibox) == charge_dsf) THEN
                                 alpha_rij = alpha_dsf(ibox)*rij
                                 f2(:,ibox) = &
                                         dsf_factor2(ibox)*(rij-rcut_coul(ibox)) - &
                                         dsf_factor1(ibox) + &
-                                        erfc(alpha_rij)/rij
+                                        ERFC(alpha_rij)/rij
                         ELSEIF (int_charge_sum_style(ibox) == charge_cut) THEN
-                                f2(:,ibox) = 1.0_DP
+                                f2(:,ibox) = 1.0_DP/rij
                         ELSE
                                 f2(:,ibox) = 0.0_DP
                         END IF
@@ -258,29 +258,6 @@ CONTAINS
                 !$OMP END PARALLEL
 
 
-                CONTAINS
-
-                    FUNCTION erfc(x)
-                      !*************************************************************************
-                      !
-                      ! Calculate the complementary error function for a number
-                      !
-                      !*************************************************************************
-
-                      REAL(DP), DIMENSION(atompair_nrg_res) :: erfc
-                      REAL(DP), PARAMETER :: A1 = 0.254829592_DP, A2 = -0.284496736_DP
-                      REAL(DP), PARAMETER :: A3 = 1.421413741_DP, A4 = -1.453152027_DP
-                      REAL(DP), PARAMETER :: A5 = 1.061405429_DP, P = 0.3275911_DP
-                      REAL(DP), DIMENSION(atompair_nrg_res) :: T, x, xsq, TP
-
-                      T = 1.0_DP / (1.0_DP + P*x)
-                      xsq = x*x
-
-                      TP = T * (A1 + T * (A2 + T * (A3 + T * (A4 + T * A5))))
-
-                      erfc = TP * DEXP(-xsq)
-
-                    END FUNCTION erfc
         END SUBROUTINE Create_Atompair_Nrg_table
 
         SUBROUTINE Setup_Atompair_tables
