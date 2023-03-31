@@ -1852,7 +1852,7 @@ CONTAINS
                                         sigbyr12 = sigbyr6*sigbyr6
                                         nrg_vdw = ij_vdw_p(i,1) * (sigbyr12 - 2.0_DP*sigbyr6) ! eps was not multiplied by 4
                                         vdw_energy = vdw_energy + nrg_vdw
-                                        up_nrg_vec(i) = nrg_vdw
+                                        IF (this_est_emax) up_nrg_vec(i) = nrg_vdw
                                 END DO
                         ELSE IF (int_vdw_sum_style(this_box) == vdw_cut_shift) THEN
                                 DO i = 1, n_vdw
@@ -1865,7 +1865,7 @@ CONTAINS
                                         sigbyr12 = sigbyr6*sigbyr6
                                         nrg_vdw = nrg_vdw - ij_vdw_p(i,1) * (sigbyr12 - sigbyr6) ! eps was already multiplied by 4
                                         vdw_energy = vdw_energy + nrg_vdw
-                                        up_nrg_vec(i) = nrg_vdw
+                                        IF (this_est_emax) up_nrg_vec(i) = nrg_vdw
                                 END DO
                         ELSE IF (int_vdw_sum_style(this_box) == vdw_cut_switch) THEN
                                 DO i = 1, n_vdw
@@ -1881,7 +1881,7 @@ CONTAINS
                                                         nrg_vdw
                                         END IF
                                         vdw_energy = vdw_energy + nrg_vdw
-                                        up_nrg_vec(i) = nrg_vdw
+                                        IF (this_est_emax) up_nrg_vec(i) = nrg_vdw
                                 END DO
                         ELSE IF (int_vdw_sum_style(this_box) == vdw_cut_shift_force) THEN
                                 DO i = 1, n_vdw
@@ -1898,7 +1898,7 @@ CONTAINS
                                                 -6.0_DP * ij_vdw_p(i,1) * &
                                                 (2.0_DP * sigbyr12 - sigbyr6) / rcut_vdw(this_box)
                                         vdw_energy = vdw_energy + nrg_vdw
-                                        up_nrg_vec(i) = nrg_vdw
+                                        IF (this_est_emax) up_nrg_vec(i) = nrg_vdw
                                 END DO
                         ELSE
                                 DO i = 1, n_vdw
@@ -1907,7 +1907,7 @@ CONTAINS
                                         sigbyr12 = sigbyr6*sigbyr6
                                         nrg_vdw = ij_vdw_p(i,1) * (sigbyr12 - sigbyr6) ! eps was already multiplied by 4
                                         vdw_energy = vdw_energy + nrg_vdw
-                                        up_nrg_vec(i) = nrg_vdw
+                                        IF (this_est_emax) up_nrg_vec(i) = nrg_vdw
                                 END DO
                         END IF
                 ELSE IF (int_vdw_style(this_box) == vdw_mie) THEN
@@ -1924,7 +1924,7 @@ CONTAINS
                                                 (sigbyr2**mie_n - sigbyr2**mie_m)
                                 END IF
                                 vdw_energy = vdw_energy + nrg_vdw
-                                up_nrg_vec(i) = nrg_vdw
+                                IF (this_est_emax) up_nrg_vec(i) = nrg_vdw
                         END DO
                 END IF
                 !vdw_energy = SUM(nrg_vdw)
