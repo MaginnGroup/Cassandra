@@ -218,6 +218,15 @@ MODULE Type_Definitions
   END TYPE Atom_Class
   !****************************************************************************
 
+  TYPE Atom256
+          REAL(DP) :: rxp, ryp, rzp
+          LOGICAL(8) :: exist
+  END TYPE Atom256
+
+  TYPE VdW256
+          REAL(DP) :: p1, p2, p3, p4
+  END TYPE VdW256
+
 
 
   !****************************************************************************

@@ -694,5 +694,8 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   LOGICAL, PARAMETER :: l_vectorized = .TRUE.
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: nlive
 
+  REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE :: ppvdwp_table
+  TYPE(VdW256), DIMENSION(:,:,:), ALLOCATABLE :: ppvdwp_list
+
 END MODULE Global_Variables
 

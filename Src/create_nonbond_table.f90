@@ -66,7 +66,7 @@
   ! Steele potential
   REAL(DP) :: sigma_ss, eps_ss, rho_s, delta_s, eps_sf
   !custom mixing rules
-  INTEGER :: ierr,line_nbr,nbr_entries, is_1, is_2, ia_1, ia_2, itype_custom, jtype_custom
+  INTEGER :: ierr,line_nbr,nbr_entries, is_1, is_2, ia_1, ia_2, itype_custom, jtype_custom, ibox
   INTEGER ::  i_type1, i_type2
   CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
@@ -209,6 +209,8 @@
   ALLOCATE(vdw_param3_table(nbr_atomtypes,nbr_atomtypes), Stat=AllocateStatus)
   ALLOCATE(vdw_param4_table(nbr_atomtypes,nbr_atomtypes), Stat=AllocateStatus)
   ALLOCATE(vdw_param5_table(nbr_atomtypes,nbr_atomtypes), Stat=AllocateStatus)
+  ALLOCATE(ppvdwp_table(4,nbr_atomtypes,nbr_atomtypes,nbr_boxes))
+  ALLOCATE(ppvdwp_list(nbr_atomtypes,nbr_atomtypes,nbr_boxes))
 
   IF (AllocateStatus .NE. 0) THEN
      err_msg = ''
@@ -633,6 +635,29 @@
 
      END IF ! mix_rule
   END IF ! nbr_atomtypes > 1
+
+
+  DO ibox = 1, nbr_boxes
+        IF (int_vdw_sum_style(ibox) .NE. vdw_charmm .AND. int_vdw_style(ibox) == vdw_lj) THEN
+                ppvdwp_table(1,:,:,ibox) = vdw_param1_table * 4.0_DP
+                ppvdwp_table(2,:,:,ibox) = -vdw_param2_table * vdw_param2_table
+        ELSE
+                ppvdwp_table(1,:,:,ibox) = vdw_param1_table
+                ppvdwp_table(2,:,:,ibox) = vdw_param2_table * vdw_param2_table
+        END IF
+        IF (int_vdw_style(ibox) == vdw_mie) THEN
+                ppvdwp_table(3,:,:,ibox) = vdw_param3_table * 0.5_DP
+                ppvdwp_table(4,:,:,ibox) = vdw_param4_table * 0.5_DP
+                ppvdwp_table(1,:,:,ibox) = ppvdwp_table(1,:,:,ibox) * &
+                        vdw_param3_table/(vdw_param3_table-vdw_param4_table) * &
+                        (vdw_param3_table/vdw_param4_table)** &
+                        (vdw_param4_table/(vdw_param3_table-vdw_param4_table))
+        END IF
+  END DO
+  ppvdwp_list%p1 = ppvdwp_table(1,:,:,:)
+  ppvdwp_list%p2 = ppvdwp_table(2,:,:,:)
+  ppvdwp_list%p3 = ppvdwp_table(3,:,:,:)
+  ppvdwp_list%p4 = ppvdwp_table(4,:,:,:)
 
   max_rmin = DSQRT(MAXVAL(rminsq_table))
 
