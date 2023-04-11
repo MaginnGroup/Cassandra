@@ -195,10 +195,10 @@ MODULE Energy_Routines
   !TYPE(Atom256), DIMENSION(:,:,:,:), ALLOCATABLE :: live_atom_list
   REAL(DP), DIMENSION(:,:,:,:,:), ALLOCATABLE :: live_atom_rsp
   LOGICAL, DIMENSION(:,:,:,:), ALLOCATABLE :: live_atom_exist
-  !!!dir$ attributes align:32 :: zero_field, rijsq_field, vec123, live_xcom, live_ycom, live_zcom, live_max_dcom, live_atom_list
-  !!!dir$ assume_aligned zero_field:32, rijsq_field:32, vec123:32, live_xcom:32, live_ycom:32, live_zcom:32, live_max_dcom:32, live_atom_list:32
   INTEGER :: maxnmols, maxboxnatoms
   LOGICAL :: l_not_all_exist
+  !dir$ attributes align:32 :: zero_field, rijsq_field, vec123, live_xcom, live_ycom, live_zcom, live_max_dcom
+  !dir$ assume_aligned zero_field:32, rijsq_field:32, vec123:32, live_xcom:32, live_ycom:32, live_zcom:32, live_max_dcom:32
 
 CONTAINS
 
@@ -1693,12 +1693,16 @@ CONTAINS
     REAL(DP), DIMENSION(3,maxboxnatoms) :: jrsp
     TYPE(Atom256), DIMENSION(maxboxnatoms) :: j_atoms
     TYPE(VdW256), DIMENSION(maxboxnatoms) :: ij_vdw_p
-    REAL(DP), DIMENSION(4,maxboxnatoms) :: ij_vdw_p_table
+    REAL(DP), DIMENSION(4,maxboxnatoms) :: mie_vdw_p_table
+    REAL(DP), DIMENSION(2,maxboxnatoms) :: ij_vdw_p_table
+    REAL(DP), DIMENSION(maxboxnatoms,4) :: ij_vdw_p_table_T
     LOGICAL :: this_est_emax, l_get_rij_min, l_ortho
     INTEGER :: n_vdw_p, ia_counter, i, j, n_i_exist, istart, iend, jnlive, n_interact, vlen, orig_vlen, n_j_exist
     INTEGER :: bsolvent, istart_base, natoms_js, ti_solvent, ja, js, n_coul, n_vdw, ia, live_vlen, jnmols, jnatoms, itype
     REAL(DP) :: mol_rcut, max_dcom_i_const, this_vdw_rcutsq, this_coul_rcutsq
     REAL(DP) :: sigbyr2, sigbyr6, sigbyr12, rij, roffsq_rijsq, nrg_vdw, nrg_coul, i_qq_energy, mie_m, mie_n, icharge_factor
+
+    INTEGER :: this_int_vdw_style, ibox, jtype
 
     LOGICAL :: l_check_coul, l_notallvdw, l_notallcoul, l_pack_separately, l_notsamecut, i_get_vdw, i_get_coul
     LOGICAL(8) :: l_interact
@@ -1706,10 +1710,18 @@ CONTAINS
     REAL(DP) :: ixp, iyp, izp, dxcom, dycom, dzcom, dscom, ixcom, iycom, izcom, dxp, dyp, dzp, dsp
     REAL(DP) :: xl, yl, zl, hxl, hyl, hzl
     REAL(DP) :: h11,h21,h31,h12,h22,h32,h13,h23,h33
+    !!!dir$ attributes align:32 :: interact_vec, vdw_mask, coul_mask, j_hascharge, j_hasvdw, j_exist, jatomtype, packed_types, &
+    !dir$ attributes align:32 :: jxp, jyp, jzp, jrsp, ij_vdw_p_table
+    !dir$ assume_aligned jxp:32, jyp:32, jzp:32, jrsp:32, ij_vdw_p_table:32, ij_vdw_p_table_T:32
+    !DIR$ ASSUME_ALIGNED rijsq:32, rijsq_packed:32, jcharge:32, jcharge_coul:32
+    !DIR$ ASSUME_ALIGNED vdw_mask:32, coul_mask:32, j_hascharge:32, j_hasvdw:32, j_exist:32
+    !DIR$ ASSUME_ALIGNED jatomtype:32, packed_types:32, up_nrg_vec:32
+    !dir$ assume (MOD(maxboxnatoms,8) .EQ. 0)
 
     vdw_energy = 0.0_DP
     qq_energy = 0.0_DP
     overlap = .FALSE.
+    ibox = widom_molecule%which_box
 
 
     l_get_rij_min = est_atompair_rminsq .AND. .NOT. cbmc_flag
@@ -1778,9 +1790,9 @@ CONTAINS
         n_interact = 0
         IF (l_ortho) THEN
                 DO i = 1, jnlive
-                        dxcom = ABS(live_xcom(i,js,this_box) - ixcom)
-                        dycom = ABS(live_ycom(i,js,this_box) - iycom)
-                        dzcom = ABS(live_zcom(i,js,this_box) - izcom)
+                        dxcom = ABS(live_xcom(i,js,ibox) - ixcom)
+                        dycom = ABS(live_ycom(i,js,ibox) - iycom)
+                        dzcom = ABS(live_zcom(i,js,ibox) - izcom)
                         IF (dxcom > hxl) dxcom = dxcom - xl
                         IF (dycom > hyl) dycom = dycom - yl
                         IF (dzcom > hzl) dzcom = dzcom - zl
@@ -2042,8 +2054,9 @@ CONTAINS
                 !ij_vdw_p_table(1:4,1:n_vdw) = ppvdwp_table(1:4,packed_types(1:n_vdw),itype,this_box)
                 !ij_vdw_p_table(1:4,1:n_vdw) = ppvdwp_table(1:4,PACK(jatomtype(1:vlen),vdw_mask(1:vlen)),itype,this_box)
                 rijsq_packed(1:n_vdw) = PACK(rijsq(1:vlen),vdw_mask(1:vlen))
-                IF (int_vdw_style(this_box) == vdw_lj) THEN
-                        ij_vdw_p_table(1:2,1:n_vdw) = ppvdwp_table(1:2,PACK(jatomtype(1:vlen),vdw_mask(1:vlen)),itype,this_box)
+                this_int_vdw_style = int_vdw_style(this_box)
+                IF (this_int_vdw_style == vdw_lj) THEN
+                        ij_vdw_p_table(1:2,1:n_vdw) = ppvdwp_table(1:2,PACK(jatomtype(1:vlen),vdw_mask(1:vlen)),itype,ibox)
                         IF (int_vdw_sum_style(this_box) == vdw_charmm) THEN
                                 DO i = 1, n_vdw
                                         eps = ij_vdw_p_table(1,i) ! epsilon
@@ -2112,10 +2125,10 @@ CONTAINS
                                 END DO
                         ELSE
                                 DO i = 1, n_vdw
+                                        !eps = ppvdwp_table(1,packed_types(i),itype,ibox) ! 4*epsilon
+                                        !negsigsq = ppvdwp_table(2,packed_types(i),itype,ibox) ! -(sigma**2)
                                         eps = ij_vdw_p_table(1,i) ! 4*epsilon
                                         negsigsq = ij_vdw_p_table(2,i) ! -(sigma**2)
-                                        !eps = ij_vdw_p_table(1,i) ! 4*epsilon
-                                        !negsigsq = ij_vdw_p_table(2,i) ! -(sigma**2)
                                         negsigbyr2 = negsigsq/rijsq_packed(i)
                                         rterm = negsigbyr2*negsigbyr2*negsigbyr2
                                         rterm = rterm + rterm*rterm
@@ -2125,12 +2138,13 @@ CONTAINS
                                 END DO
                         END IF
                 ELSE IF (int_vdw_style(this_box) == vdw_mie) THEN
-                        ij_vdw_p_table(1:4,1:n_vdw) = ppvdwp_table(1:4,PACK(jatomtype(1:vlen),vdw_mask(1:vlen)),itype,this_box)
+                        !DIR$ ASSUME (n_vdw_p_list(this_box) .EQ. 2)
+                        mie_vdw_p_table(1:4,1:n_vdw) = ppvdwp_table(1:4,PACK(jatomtype(1:vlen),vdw_mask(1:vlen)),itype,this_box)
                         DO i = 1, n_vdw
-                                eps = ij_vdw_p_table(1,i) ! epsilon * mie_coeff
-                                sigsq = ij_vdw_p_table(2,i) ! sigma**2
-                                mie_n = ij_vdw_p_table(3,i) ! already halved
-                                mie_m = ij_vdw_p_table(4,i) ! already halved
+                                eps = mie_vdw_p_table(1,i) ! epsilon * mie_coeff
+                                sigsq = mie_vdw_p_table(2,i) ! sigma**2
+                                mie_n = mie_vdw_p_table(3,i) ! already halved
+                                mie_m = mie_vdw_p_table(4,i) ! already halved
                                 ! exponents were already halved so there's no need for SQRT
                                 sigbyr2 = sigsq / rijsq_packed(i)
                                 nrg_vdw = eps * &
@@ -2177,7 +2191,7 @@ CONTAINS
                 END DO
                 qq_energy = qq_energy + i_qq_energy * icharge_factor
                 IF (this_est_emax) THEN
-                        up_nrg_vec = up_nrg_vec + UNPACK(jcharge_coul*icharge_factor/SQRT(rijsq_packed(1:n_coul)), coul_mask(1:vlen), zero_field(1:vlen))
+                        up_nrg_vec = up_nrg_vec + UNPACK(jcharge_coul(1:n_coul)*icharge_factor/SQRT(rijsq_packed(1:n_coul)), coul_mask(1:vlen), zero_field(1:vlen))
                 END IF
         END IF
         IF (this_est_emax) THEN
