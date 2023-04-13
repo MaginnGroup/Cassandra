@@ -1448,7 +1448,7 @@ CONTAINS
           TYPE(Atom_Class), DIMENSION(:,:), ALLOCATABLE :: j_atom_list
           TYPE(Molecule_Class), DIMENSION(:), ALLOCATABLE :: j_molecule_list
           REAL(DP) :: h11,h21,h31,h12,h22,h32,h13,h23,h33
-          REAL(DP) :: rxp,ryp,rzp,sxp,syp,szp
+          REAL(DP) :: rxp,ryp,rzp,sxp,syp,szp,jrp
           REAL(DP) :: rcom,xcom,ycom,zcom
           l_not_all_exist = .FALSE.
           IF (PRESENT(know_all_live)) THEN
@@ -1515,7 +1515,7 @@ CONTAINS
           maxnlive = MAXVAL(nlive)
           !ALLOCATE(live_atom_list(MAXVAL(natoms),maxnlive,nspecies,nbr_boxes))
           ALLOCATE(live_atom_exist(MAXVAL(natoms),maxnlive,nspecies,nbr_boxes))
-          ALLOCATE(live_atom_rsp(3,MAXVAL(natoms),maxnlive,nspecies,nbr_boxes))
+          ALLOCATE(live_atom_rsp(MAXVAL(natoms),maxnlive,3,nspecies,nbr_boxes))
           IF (.NOT. (l_all_live .AND. l_unit_stride)) THEN
                   ALLOCATE(j_atom_list(MAXVAL(natoms),maxnlive))
                   ALLOCATE(j_molecule_list(maxnlive))
@@ -1540,9 +1540,9 @@ CONTAINS
                                 !$OMP DO SIMD COLLAPSE(2)
                                 DO jm = 1, jnlive
                                         DO ja = 1, jnatoms
-                                                live_atom_rsp(1,ja,jm,js,ibox) = atom_list(ja,jm+cjnmols,js)%rxp
-                                                live_atom_rsp(2,ja,jm,js,ibox) = atom_list(ja,jm+cjnmols,js)%ryp
-                                                live_atom_rsp(3,ja,jm,js,ibox) = atom_list(ja,jm+cjnmols,js)%rzp
+                                                live_atom_rsp(ja,jm,1,js,ibox) = atom_list(ja,jm+cjnmols,js)%rxp
+                                                live_atom_rsp(ja,jm,2,js,ibox) = atom_list(ja,jm+cjnmols,js)%ryp
+                                                live_atom_rsp(ja,jm,3,js,ibox) = atom_list(ja,jm+cjnmols,js)%rzp
                                                 live_atom_exist(ja,jm,js,ibox) = atom_list(ja,jm+cjnmols,js)%exist
                                                 !live_atom_list(ja,jm,js,ibox)%rxp = atom_list(ja,jm+cjnmols,js)%rxp
                                                 !live_atom_list(ja,jm,js,ibox)%ryp = atom_list(ja,jm+cjnmols,js)%ryp
@@ -1578,9 +1578,9 @@ CONTAINS
                                 !$OMP DO SIMD COLLAPSE(2)
                                 DO jm = 1, jnlive
                                         DO ja = 1, jnatoms
-                                                live_atom_rsp(1,ja,jm,js,ibox) = j_atom_list(ja,jm)%rxp
-                                                live_atom_rsp(2,ja,jm,js,ibox) = j_atom_list(ja,jm)%ryp
-                                                live_atom_rsp(3,ja,jm,js,ibox) = j_atom_list(ja,jm)%rzp
+                                                live_atom_rsp(ja,jm,1,js,ibox) = j_atom_list(ja,jm)%rxp
+                                                live_atom_rsp(ja,jm,2,js,ibox) = j_atom_list(ja,jm)%ryp
+                                                live_atom_rsp(ja,jm,3,js,ibox) = j_atom_list(ja,jm)%rzp
                                                 live_atom_exist(ja,jm,js,ibox) = j_atom_list(ja,jm)%exist
                                                 !live_atom_list(ja,jm,js,ibox)%rxp = j_atom_list(ja,jm)%rxp
                                                 !live_atom_list(ja,jm,js,ibox)%ryp = j_atom_list(ja,jm)%ryp
@@ -1641,28 +1641,28 @@ CONTAINS
                                 live_zcom(jm,js,ibox) = zcom
                         END DO
                         !$OMP END DO SIMD
-                        !$OMP DO SIMD PRIVATE(rxp,ryp,rzp,sxp,syp,szp) &
-                        !$OMP COLLAPSE(2)
+                        !$OMP DO PRIVATE(jrp,sxp,syp,szp,ja) &
+                        !$OMP SCHEDULE(STATIC)
                         DO jm = 1, jnlive
                                 DO ja = 1, jnatoms
-                                        rxp = live_atom_rsp(1,ja,jm,js,ibox)
-                                        ryp = live_atom_rsp(2,ja,jm,js,ibox)
-                                        rzp = live_atom_rsp(3,ja,jm,js,ibox)
-                                        sxp = h11*rxp
-                                        syp = h21*rxp
-                                        szp = h31*rxp
-                                        sxp = sxp + h12*ryp
-                                        syp = syp + h22*ryp
-                                        szp = szp + h32*ryp
-                                        sxp = sxp + h13*rzp
-                                        syp = syp + h23*rzp
-                                        szp = szp + h33*rzp
-                                        live_atom_rsp(1,ja,jm,js,ibox) = rxp
-                                        live_atom_rsp(2,ja,jm,js,ibox) = ryp
-                                        live_atom_rsp(3,ja,jm,js,ibox) = rzp
+                                        jrp = live_atom_rsp(ja,jm,1,js,ibox)
+                                        sxp = h11*jrp
+                                        syp = h21*jrp
+                                        szp = h31*jrp
+                                        jrp = live_atom_rsp(ja,jm,2,js,ibox)
+                                        sxp = sxp + h12*jrp
+                                        syp = syp + h22*jrp
+                                        szp = szp + h32*jrp
+                                        jrp = live_atom_rsp(ja,jm,3,js,ibox)
+                                        sxp = sxp + h13*jrp
+                                        syp = syp + h23*jrp
+                                        szp = szp + h33*jrp
+                                        live_atom_rsp(ja,jm,1,js,ibox) = sxp
+                                        live_atom_rsp(ja,jm,2,js,ibox) = syp
+                                        live_atom_rsp(ja,jm,3,js,ibox) = szp
                                 END DO
                         END DO
-                        !$OMP END DO SIMD
+                        !$OMP END DO
                         !$OMP END PARALLEL
                 END DO
           END DO
@@ -1690,7 +1690,7 @@ CONTAINS
     LOGICAL(1), DIMENSION(maxboxnatoms) :: vdw_mask, coul_mask, j_hascharge, j_hasvdw, j_exist
     INTEGER, DIMENSION(maxboxnatoms) :: jatomtype, packed_types
     REAL(DP), DIMENSION(maxboxnatoms) :: jcharge, up_nrg_vec, rijsq_packed, rijsq, jcharge_coul, jxp, jyp, jzp
-    REAL(DP), DIMENSION(3,maxboxnatoms) :: jrsp
+    REAL(DP), DIMENSION(maxboxnatoms,3) :: jrsp
     TYPE(Atom256), DIMENSION(maxboxnatoms) :: j_atoms
     TYPE(VdW256), DIMENSION(maxboxnatoms) :: ij_vdw_p
     REAL(DP), DIMENSION(4,maxboxnatoms) :: mie_vdw_p_table
@@ -1858,8 +1858,8 @@ CONTAINS
         !which_interact(1:n_interact) = PACK(vec123(1:jnlive),interact_vec(1:jnlive))
         vlen = n_interact*natoms(js)
         iend = istart + vlen - 1
-        jrsp(:,istart:iend) = RESHAPE(live_atom_rsp(:,1:jnatoms,PACK(vec123(1:jnlive),interact_vec(1:jnlive)),js,this_box), &
-                (/ 3, vlen /))
+        jrsp(istart:iend,:) = RESHAPE(live_atom_rsp(1:jnatoms,PACK(vec123(1:jnlive),interact_vec(1:jnlive)),1:3,js,this_box), &
+                (/ vlen, 3 /))
         IF (l_not_all_exist) THEN
                 j_exist(istart:iend) = RESHAPE(&
                         live_atom_exist(1:jnatoms,PACK(vec123(1:jnlive),interact_vec(1:jnlive)),js,this_box), (/ vlen /))
@@ -1883,7 +1883,7 @@ CONTAINS
                     !j_exist(1:vlen) = j_atoms(1:vlen)%exist
                     n_j_exist = COUNT(j_exist(1:vlen))
                     DO i = 1,3
-                        jrsp(i,1:n_j_exist) = PACK(jrsp(i,1:vlen),j_exist(1:vlen))
+                        jrsp(1:n_j_exist,i) = PACK(jrsp(1:vlen,i),j_exist(1:vlen))
                     END DO
                     !j_atoms(1:n_j_exist) = PACK(j_atoms(1:vlen),j_exist(1:vlen))
                     jcharge(1:n_j_exist) = PACK(jcharge(1:vlen),j_exist(1:vlen))
@@ -1891,11 +1891,6 @@ CONTAINS
                     vlen = n_j_exist
             END IF
     END IF
-    DO i = 1, vlen
-        jxp(i) = jrsp(1,i)
-        jyp(i) = jrsp(2,i)
-        jzp(i) = jrsp(3,i)
-    END DO
     IF (this_est_emax) THEN
             up_nrg_vec = 0.0_DP
     END IF
@@ -1922,9 +1917,9 @@ CONTAINS
                         !dxp = j_atoms(i)%rxp
                         !dyp = j_atoms(i)%ryp
                         !dzp = j_atoms(i)%rzp
-                        dxp = jxp(i)
-                        dyp = jyp(i)
-                        dzp = jzp(i)
+                        dxp = jrsp(i,1)
+                        dyp = jrsp(i,2)
+                        dzp = jrsp(i,3)
                         dxp = ABS(dxp - ixp)
                         dyp = ABS(dyp - iyp)
                         dzp = ABS(dzp - izp)
@@ -1952,7 +1947,7 @@ CONTAINS
                 DO i = 1, vlen
                         ! atom coordinates are fractional if box is triclinic
                         !dsp = j_atoms(i)%rxp
-                        dsp = jxp(i)
+                        dsp = jrsp(i,1)
                         dsp = dsp - ixp
                         IF (dsp > 0.5_DP) THEN
                                 dsp = dsp - 1.0_DP
@@ -1963,7 +1958,7 @@ CONTAINS
                         dyp = h21*dsp
                         dzp = h31*dsp
                         !dsp = j_atoms(i)%ryp
-                        dsp = jyp(i)
+                        dsp = jrsp(i,2)
                         dsp = dsp - iyp
                         IF (dsp > 0.5_DP) THEN
                                 dsp = dsp - 1.0_DP
@@ -1974,7 +1969,7 @@ CONTAINS
                         dyp = dyp + h22*dsp
                         dzp = dzp + h32*dsp
                         !dsp = j_atoms(i)%rzp
-                        dsp = jzp(i)
+                        dsp = jrsp(i,3)
                         dsp = dsp - izp
                         IF (dsp > 0.5_DP) THEN
                                 dsp = dsp - 1.0_DP
