@@ -1691,7 +1691,6 @@ CONTAINS
     INTEGER, DIMENSION(maxboxnatoms) :: jatomtype, packed_types
     REAL(DP), DIMENSION(maxboxnatoms) :: jcharge, up_nrg_vec, rijsq_packed, rijsq, jcharge_coul, jxp, jyp, jzp
     REAL(DP), DIMENSION(maxboxnatoms,3) :: jrsp
-    TYPE(Atom256), DIMENSION(maxboxnatoms) :: j_atoms
     TYPE(VdW256), DIMENSION(maxboxnatoms) :: ij_vdw_p
     REAL(DP), DIMENSION(4,maxboxnatoms) :: mie_vdw_p_table
     REAL(DP), DIMENSION(2,maxboxnatoms) :: ij_vdw_p_table
@@ -1864,7 +1863,6 @@ CONTAINS
                 j_exist(istart:iend) = RESHAPE(&
                         live_atom_exist(1:jnatoms,PACK(vec123(1:jnlive),interact_vec(1:jnlive)),js,this_box), (/ vlen /))
         END IF
-        !j_atoms(istart:iend) = RESHAPE(live_atom_list(1:jnatoms,PACK(vec123(1:jnlive),interact_vec(1:jnlive)),js,this_box), (/ vlen /))
         jatomtype(istart:iend) = RESHAPE(SPREAD(nonbond_list(1:natoms(js),js)%atom_type_number,2,n_interact), (/ vlen /))
         jcharge(istart:iend) = RESHAPE(SPREAD(nonbond_list(1:natoms(js),js)%charge,2,n_interact), (/ vlen /))
         IF (l_get_rij_min) THEN
@@ -1879,13 +1877,11 @@ CONTAINS
     ! The following IF statement condition is unlikely to be true.
     ! That is why this process is saved until now; it's unlikely to be necessary.
     IF (l_not_all_exist) THEN
-            IF (.NOT. ALL(j_atoms(1:vlen)%exist)) THEN
-                    !j_exist(1:vlen) = j_atoms(1:vlen)%exist
+            IF (.NOT. ALL(j_exist(1:vlen))) THEN
                     n_j_exist = COUNT(j_exist(1:vlen))
                     DO i = 1,3
                         jrsp(1:n_j_exist,i) = PACK(jrsp(1:vlen,i),j_exist(1:vlen))
                     END DO
-                    !j_atoms(1:n_j_exist) = PACK(j_atoms(1:vlen),j_exist(1:vlen))
                     jcharge(1:n_j_exist) = PACK(jcharge(1:vlen),j_exist(1:vlen))
                     jatomtype(1:n_j_exist) = PACK(jatomtype(1:vlen),j_exist(1:vlen))
                     vlen = n_j_exist
@@ -1914,9 +1910,6 @@ CONTAINS
                 iyp = irp(2,ia)
                 izp = irp(3,ia)
                 DO i = 1, vlen
-                        !dxp = j_atoms(i)%rxp
-                        !dyp = j_atoms(i)%ryp
-                        !dzp = j_atoms(i)%rzp
                         dxp = jrsp(i,1)
                         dyp = jrsp(i,2)
                         dzp = jrsp(i,3)
@@ -1946,7 +1939,6 @@ CONTAINS
                 izp = isp(3,ia)
                 DO i = 1, vlen
                         ! atom coordinates are fractional if box is triclinic
-                        !dsp = j_atoms(i)%rxp
                         dsp = jrsp(i,1)
                         dsp = dsp - ixp
                         IF (dsp > 0.5_DP) THEN
@@ -1957,7 +1949,6 @@ CONTAINS
                         dxp = h11*dsp
                         dyp = h21*dsp
                         dzp = h31*dsp
-                        !dsp = j_atoms(i)%ryp
                         dsp = jrsp(i,2)
                         dsp = dsp - iyp
                         IF (dsp > 0.5_DP) THEN
@@ -1968,7 +1959,6 @@ CONTAINS
                         dxp = dxp + h12*dsp
                         dyp = dyp + h22*dsp
                         dzp = dzp + h32*dsp
-                        !dsp = j_atoms(i)%rzp
                         dsp = jrsp(i,3)
                         dsp = dsp - izp
                         IF (dsp > 0.5_DP) THEN
