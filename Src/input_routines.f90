@@ -5474,6 +5474,8 @@ SUBROUTINE Get_Lookup_Info
                                 line_string(1:4) == 'full')) RETURN
                         l_sectors = .TRUE.
                         ALLOCATE(sectorbound(3,nbr_boxes))
+                        ALLOCATE(cell_length_recip(3,nbr_boxes))
+                        ALLOCATE(real_length_cells(3,nbr_boxes))
                         ALLOCATE(length_cells(3,nbr_boxes))
                         ALLOCATE(cell_length_inv(3,3,nbr_boxes))
                         max_occ_sectors = 0
@@ -6799,6 +6801,7 @@ SUBROUTINE Get_Rcutoff_Low
         CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
         rcut_low = String_To_Double(line_array(1))
         rcut_lowsq = rcut_low * rcut_low
+        sp_rcut_lowsq = REAL(rcut_lowsq,SP)
 
         WRITE(logunit,'(A25,2X,F6.3,2X,A10)') 'MC low cutoff distance is ', rcut_low, ' Angstrom'
         ALLOCATE(tol_list(1))

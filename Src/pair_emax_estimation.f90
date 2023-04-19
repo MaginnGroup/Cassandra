@@ -239,6 +239,7 @@ CONTAINS
                         * this_rsqmin_step + this_rsqmin_shifter)
                 atompair_rminsq_table = REAL(atompair_rminsq_ind_table(:,:,:,1),DP) * this_rsqmin_step + this_rsqmin_shifter
                 min_rmin = SQRT(MINVAL(atompair_rminsq_table))
+                sp_atompair_rminsq_table = REAL(atompair_rminsq_table,SP)
                 WRITE(logunit,'(A,F6.3,A)') "Finished reading atompair rminsq table with atompair rmin values in the interval"
                 WRITE(logunit, '(8x,A,F5.3,A,F6.3,A)') "[", min_rmin, ",", max_rmin, "] Angstroms"
                 WRITE(logunit,'(A80)') "********************************************************************************"

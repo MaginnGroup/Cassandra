@@ -130,6 +130,7 @@ USE Type_Definitions
   REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut9, rcut3
   REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_vdw3, rcut_vdw6
   REAL(DP) :: edens_cut, rcut_clus, rcut_low, rcut_lowsq
+  REAL(SP) :: sp_rcut_lowsq
   LOGICAL, DIMENSION(:), ALLOCATABLE :: l_half_len_cutoff
 
  ! Mixing Rules variables :
@@ -619,6 +620,17 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: length_cells, length_cells_cbmc, length_cells_full
   REAL(DP), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: cell_length_inv, cell_length_inv_cbmc, cell_length_inv_full
 
+
+  ! indexed like (n_adj_cell_atoms,dimension in 1:3, x index, y index, z index, box index)
+  REAL(SP), DIMENSION(:,:,:,:,:,:), ALLOCATABLE :: adj_cell_rsp
+  INTEGER(2), DIMENSION(:,:,:,:,:), ALLOCATABLE :: adj_cell_ti
+  INTEGER, DIMENSION(:,:,:,:), ALLOCATABLE :: n_adj_cell_atoms
+  INTEGER, DIMENSION(3) :: adj_cellmaxbound
+
+  INTEGER :: max_adj_cell_atoms
+  REAL(SP), DIMENSION(:,:), ALLOCATABLE :: cell_length_recip, real_length_cells
+
+
   INTEGER, DIMENSION(3) :: sectormaxbound, sectormaxbound_cbmc, sectormaxbound_full
 
   INTEGER :: n_occ_sectors, n_occ_sectors_cbmc, n_occ_sectors_full
@@ -675,6 +687,7 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: rsqmin_atompair_w_sum
   INTEGER(KIND=INT64), DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: rsqmin_atompair_freq
   REAL(DP), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: atompair_rminsq_table
+  REAL(SP), DIMENSION(:,:,:), ALLOCATABLE :: sp_atompair_rminsq_table
   INTEGER, DIMENSION(:), ALLOCATABLE :: typepair_wsolute_indices, wsolute_atomtypes
   REAL(DP) :: maxrminsq, rsqmin_step, rsqmin_shifter
   INTEGER :: rsqmin_res, wsolute_ntypes, wsolute_maxind
@@ -687,6 +700,7 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   !
   REAL(DP), DIMENSION(0:1000)  :: type_charge_min, type_charge_max
   REAL(DP), DIMENSION(:,:), ALLOCATABLE, TARGET :: rminsq_table
+  REAL(SP), DIMENSION(:,:), ALLOCATABLE :: sp_rminsq_table
   REAL(DP) :: U_max_base, max_rmin
   LOGICAL :: calc_rmin_flag
 
@@ -696,6 +710,16 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
 
   REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE :: ppvdwp_table
   TYPE(VdW256), DIMENSION(:,:,:), ALLOCATABLE :: ppvdwp_list
+
+
+  REAL(DP), DIMENSION(:), ALLOCATABLE :: zero_field, rijsq_field
+  INTEGER, DIMENSION(:), ALLOCATABLE :: vec123
+  REAL(DP), DIMENSION(:,:,:), ALLOCATABLE :: live_xcom, live_ycom, live_zcom, live_max_dcom
+  !TYPE(Atom256), DIMENSION(:,:,:,:), ALLOCATABLE :: live_atom_list
+  REAL(DP), DIMENSION(:,:,:,:,:), ALLOCATABLE :: live_atom_rsp
+  LOGICAL, DIMENSION(:,:,:,:), ALLOCATABLE :: live_atom_exist
+  INTEGER :: maxnmols, maxboxnatoms
+  LOGICAL :: l_not_all_exist
 
 END MODULE Global_Variables
 

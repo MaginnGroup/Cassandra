@@ -189,16 +189,6 @@ MODULE Energy_Routines
 
   IMPLICIT NONE
 
-  REAL(DP), DIMENSION(:), ALLOCATABLE :: zero_field, rijsq_field
-  INTEGER, DIMENSION(:), ALLOCATABLE :: vec123
-  REAL(DP), DIMENSION(:,:,:), ALLOCATABLE :: live_xcom, live_ycom, live_zcom, live_max_dcom
-  !TYPE(Atom256), DIMENSION(:,:,:,:), ALLOCATABLE :: live_atom_list
-  REAL(DP), DIMENSION(:,:,:,:,:), ALLOCATABLE :: live_atom_rsp
-  LOGICAL, DIMENSION(:,:,:,:), ALLOCATABLE :: live_atom_exist
-  INTEGER :: maxnmols, maxboxnatoms
-  LOGICAL :: l_not_all_exist
-  !dir$ attributes align:32 :: zero_field, rijsq_field, vec123, live_xcom, live_ycom, live_zcom, live_max_dcom
-  !dir$ assume_aligned zero_field:32, rijsq_field:32, vec123:32, live_xcom:32, live_ycom:32, live_zcom:32, live_max_dcom:32
 
 CONTAINS
 
@@ -1666,7 +1656,6 @@ CONTAINS
                         !$OMP END PARALLEL
                 END DO
           END DO
-          maxboxnatoms = MAXVAL(SPREAD(natoms,2,nbr_boxes)*nlive)
 
   END SUBROUTINE Livelist_Packing
 

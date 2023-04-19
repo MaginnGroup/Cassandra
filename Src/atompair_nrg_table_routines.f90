@@ -142,6 +142,7 @@ CONTAINS
                 END IF
                 IF (read_atompair_rminsq) THEN 
                         ALLOCATE(atompair_rminsq_table(solvent_nextbase,wsolute_nextbase,nbr_boxes))
+                        ALLOCATE(sp_atompair_rminsq_table(solvent_nextbase,wsolute_nextbase,nbr_boxes))
                 END IF
         END SUBROUTINE Allocate_Atompair_tables
 

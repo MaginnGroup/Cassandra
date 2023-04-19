@@ -439,6 +439,10 @@ MODULE Type_Definitions
     REAL(DP), DIMENSION(3) :: basis_length, cos_angle, angle, face_distance
     REAL(DP) :: volume, dv_max
 
+    REAL(SP), DIMENSION(3) :: sp_diag_length, cell_length_recip, real_length_cells
+    REAL(DP), DIMENSION(3,3) :: cell_length_inv
+    INTEGER, DIMENSION(3) :: length_cells, sectorbound
+
   ! Inner shape is used to define a limited region into which molecules can be
   ! inserted
     INTEGER :: int_inner_shape
