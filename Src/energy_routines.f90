@@ -3330,31 +3330,63 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
     REAL(DP), INTENT(OUT) :: E_reciprocal
 
     ! Local variables
-    REAL(DP), DIMENSION(natoms(is)) :: q, hdotr
-    REAL(DP) :: cos_sum_i, sin_sum_i
-    INTEGER :: i
+    REAL(DP), DIMENSION(natoms(is)) :: q, rxp, ryp, rzp
+    REAL(DP), DIMENSION(nvecs(ibox)) :: this_cos_sum, this_sin_sum
+    REAL(DP) :: hdotr, trigfactor, ihx, ihy, ihz, qia
+    REAL(DP) :: cos_sum_i, sin_sum_i, E_recip_redux
+    INTEGER :: i, ia
+    !DIR$ ASSUME_ALIGNED q:32, rxp:32, ryp:32, rzp:32, this_cos_sum:32, this_sin_sum:32
 
     q = nonbond_list(1:natoms(is),is)%charge
 
     ! Initialize variables
-    E_reciprocal = 0.0_DP
+    !E_reciprocal = 0.0_DP
+    E_recip_redux = 0.0_DP
 
+    rxp = widom_atoms%rxp
+    ryp = widom_atoms%ryp
+    rzp = widom_atoms%rzp
+
+!    DO i = 1, nvecs(ibox)
+!
+!      hdotr = hx(i,ibox) * rxp + &
+!              hy(i,ibox) * ryp + &
+!              hz(i,ibox) * rzp
+!
+!      cos_sum_i = cos_sum(i,ibox) + DOT_PRODUCT(q, DCOS(hdotr))
+!      sin_sum_i = sin_sum(i,ibox) + DOT_PRODUCT(q, DSIN(hdotr))
+!
+!      E_reciprocal = E_reciprocal + cn(i,ibox) &
+!                   * ( cos_sum_i * cos_sum_i &
+!                     + sin_sum_i * sin_sum_i )
+!
+!    END DO
     DO i = 1, nvecs(ibox)
-
-      hdotr = hx(i,ibox) * widom_atoms%rxp + &
-              hy(i,ibox) * widom_atoms%ryp + &
-              hz(i,ibox) * widom_atoms%rzp
-
-      cos_sum_i = cos_sum(i,ibox) + DOT_PRODUCT(q, DCOS(hdotr))
-      sin_sum_i = sin_sum(i,ibox) + DOT_PRODUCT(q, DSIN(hdotr))
-
-      E_reciprocal = E_reciprocal + cn(i,ibox) &
-                   * ( cos_sum_i * cos_sum_i &
-                     + sin_sum_i * sin_sum_i )
-
+        ihx = hx(i,ibox)
+        ihy = hy(i,ibox)
+        ihz = hz(i,ibox)
+        cos_sum_i = 0.0_DP
+        sin_sum_i = 0.0_DP
+        DO ia = 1, natoms(is)
+                hdotr = ihx*rxp(ia)
+                hdotr = hdotr + ihy*ryp(ia)
+                hdotr = hdotr + ihz*rzp(ia)
+                qia = q(ia)
+                cos_sum_i = cos_sum_i + qia*DCOS(hdotr)
+                sin_sum_i = sin_sum_i + qia*DSIN(hdotr)
+        END DO
+        this_cos_sum(i) = cos_sum_i
+        this_sin_sum(i) = sin_sum_i
+    END DO
+    DO i = 1, nvecs(ibox)
+        cos_sum_i = this_cos_sum(i) + cos_sum(i,ibox)
+        sin_sum_i = this_sin_sum(i) + sin_sum(i,ibox)
+        trigfactor = cos_sum_i*cos_sum_i
+        trigfactor = trigfactor + sin_sum_i*sin_sum_i
+        E_recip_redux = E_recip_redux + cn(i,ibox)*trigfactor
     END DO
 
-    E_reciprocal = E_reciprocal * charge_factor
+    E_reciprocal = E_recip_redux * charge_factor
 
   END SUBROUTINE Update_System_Ewald_Reciprocal_Energy_Widom
   !*****************************************************************************
