@@ -87,9 +87,9 @@ SUBROUTINE Get_COM(alive,is)
   
   total_mass = 0.0_DP
   
-  this_molecule%xcom = 0.0_DP
-  this_molecule%ycom = 0.0_DP
-  this_molecule%zcom = 0.0_DP
+  this_molecule%rcom(1) = 0.0_DP
+  this_molecule%rcom(2) = 0.0_DP
+  this_molecule%rcom(3) = 0.0_DP
   
   DO k = 1, natoms(is)
      
@@ -102,21 +102,21 @@ SUBROUTINE Get_COM(alive,is)
         
         total_mass = total_mass + this_mass
         
-        this_molecule%xcom = this_molecule%xcom + this_mass * &
-             these_atoms(k)%rxp
-        this_molecule%ycom = this_molecule%ycom + this_mass * &
-             these_atoms(k)%ryp
-        this_molecule%zcom = this_molecule%zcom + this_mass * &
-             these_atoms(k)%rzp
+        this_molecule%rcom(1) = this_molecule%rcom(1) + this_mass * &
+             these_atoms(k)%rp(1)
+        this_molecule%rcom(2) = this_molecule%rcom(2) + this_mass * &
+             these_atoms(k)%rp(2)
+        this_molecule%rcom(3) = this_molecule%rcom(3) + this_mass * &
+             these_atoms(k)%rp(3)
           
      END IF
      
      
   END DO
   
-  this_molecule%xcom = this_molecule%xcom / total_mass
-  this_molecule%ycom = this_molecule%ycom / total_mass
-  this_molecule%zcom = this_molecule%zcom / total_mass
+  this_molecule%rcom(1) = this_molecule%rcom(1) / total_mass
+  this_molecule%rcom(2) = this_molecule%rcom(2) / total_mass
+  this_molecule%rcom(3) = this_molecule%rcom(3) / total_mass
   
 END SUBROUTINE Get_COM
 
@@ -254,9 +254,9 @@ SUBROUTINE Compute_Max_Com_Distance(alive,is)
   
   ! obtain the com of the molecule
 
-  xcom = this_molecule%xcom
-  ycom = this_molecule%ycom
-  zcom = this_molecule%zcom
+  xcom = this_molecule%rcom(1)
+  ycom = this_molecule%rcom(2)
+  zcom = this_molecule%rcom(3)
 
   ! set the maximum distance initially to zero
 
@@ -271,9 +271,9 @@ SUBROUTINE Compute_Max_Com_Distance(alive,is)
 
      IF(these_atoms(iatom)%exist) THEN
         
-        dx = these_atoms(iatom)%rxp - xcom
-        dy = these_atoms(iatom)%ryp - ycom
-        dz = these_atoms(iatom)%rzp - zcom
+        dx = these_atoms(iatom)%rp(1) - xcom
+        dy = these_atoms(iatom)%rp(2) - ycom
+        dz = these_atoms(iatom)%rp(3) - zcom
         
         ! No need to apply periodic boundary conditions 
         
@@ -288,7 +288,7 @@ SUBROUTINE Compute_Max_Com_Distance(alive,is)
 
   ! store the maximum distance 
 
-  this_molecule%max_dcom = DSQRT(dmax)
+  this_molecule%rcom(4) = DSQRT(dmax)
   this_molecule%min_dcom = DSQRT(dmin)
 
 END SUBROUTINE Compute_Max_Com_Distance

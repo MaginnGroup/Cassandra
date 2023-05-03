@@ -211,13 +211,13 @@ SUBROUTINE Translate
   dz = ( 2.0_DP * rranf() - 1.0_DP) * max_disp(is,ibox)
 
   ! Move atoms by the above vector dx,dy,dz and also update the COM
-  atom_list(:,lm,is)%rxp = atom_list(:,lm,is)%rxp + dx
-  atom_list(:,lm,is)%ryp = atom_list(:,lm,is)%ryp + dy
-  atom_list(:,lm,is)%rzp = atom_list(:,lm,is)%rzp + dz
+  atom_list(:,lm,is)%rp(1) = atom_list(:,lm,is)%rp(1) + dx
+  atom_list(:,lm,is)%rp(2) = atom_list(:,lm,is)%rp(2) + dy
+  atom_list(:,lm,is)%rp(3) = atom_list(:,lm,is)%rp(3) + dz
 
-  molecule_list(lm,is)%xcom = molecule_list(lm,is)%xcom + dx
-  molecule_list(lm,is)%ycom = molecule_list(lm,is)%ycom + dy
-  molecule_list(lm,is)%zcom = molecule_list(lm,is)%zcom + dz
+  molecule_list(lm,is)%rcom(1) = molecule_list(lm,is)%rcom(1) + dx
+  molecule_list(lm,is)%rcom(2) = molecule_list(lm,is)%rcom(2) + dy
+  molecule_list(lm,is)%rcom(3) = molecule_list(lm,is)%rcom(3) + dz
 
 
   !**************************************************************************

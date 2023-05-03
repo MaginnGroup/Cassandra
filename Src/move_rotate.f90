@@ -427,38 +427,38 @@ CONTAINS
 
     ! Move the origin to the COM of this molecule
 
-    atom_list(:,lm,is)%rxp = atom_list(:,lm,is)%rxp - molecule_list(lm,is)%xcom
-    atom_list(:,lm,is)%ryp = atom_list(:,lm,is)%ryp - molecule_list(lm,is)%ycom
-    atom_list(:,lm,is)%rzp = atom_list(:,lm,is)%rzp - molecule_list(lm,is)%zcom
+    atom_list(:,lm,is)%rp(1) = atom_list(:,lm,is)%rp(1) - molecule_list(lm,is)%rcom(1)
+    atom_list(:,lm,is)%rp(2) = atom_list(:,lm,is)%rp(2) - molecule_list(lm,is)%rcom(2)
+    atom_list(:,lm,is)%rp(3) = atom_list(:,lm,is)%rp(3) - molecule_list(lm,is)%rcom(3)
 
     ! Apply the rotation matrix to these coordinates
 
 
     DO ia = 1, natoms(is)
 
-       rxpnew = rot11*atom_list(ia,lm,is)%rxp + rot12*atom_list(ia,lm,is)%ryp + &
-            rot13*atom_list(ia,lm,is)%rzp
-       rypnew = rot21*atom_list(ia,lm,is)%rxp + rot22*atom_list(ia,lm,is)%ryp + &
-            rot23*atom_list(ia,lm,is)%rzp
-       rzpnew = rot31*atom_list(ia,lm,is)%rxp + rot32*atom_list(ia,lm,is)%ryp + &
-            rot33*atom_list(ia,lm,is)%rzp
+       rxpnew = rot11*atom_list(ia,lm,is)%rp(1) + rot12*atom_list(ia,lm,is)%rp(2) + &
+            rot13*atom_list(ia,lm,is)%rp(3)
+       rypnew = rot21*atom_list(ia,lm,is)%rp(1) + rot22*atom_list(ia,lm,is)%rp(2) + &
+            rot23*atom_list(ia,lm,is)%rp(3)
+       rzpnew = rot31*atom_list(ia,lm,is)%rp(1) + rot32*atom_list(ia,lm,is)%rp(2) + &
+            rot33*atom_list(ia,lm,is)%rp(3)
 
-       dxrot(ia) = rxpnew - atom_list(ia,lm,is)%rxp
-       dyrot(ia) = rypnew - atom_list(ia,lm,is)%ryp
-       dzrot(ia) = rzpnew - atom_list(ia,lm,is)%rzp
+       dxrot(ia) = rxpnew - atom_list(ia,lm,is)%rp(1)
+       dyrot(ia) = rypnew - atom_list(ia,lm,is)%rp(2)
+       dzrot(ia) = rzpnew - atom_list(ia,lm,is)%rp(3)
 
-       atom_list(ia,lm,is)%rxp = rxpnew
-       atom_list(ia,lm,is)%ryp = rypnew
-       atom_list(ia,lm,is)%rzp = rzpnew
+       atom_list(ia,lm,is)%rp(1) = rxpnew
+       atom_list(ia,lm,is)%rp(2) = rypnew
+       atom_list(ia,lm,is)%rp(3) = rzpnew
 
     END DO
     
     
     ! Shift the origin back to the space fixed axes.
 
-    atom_list(:,lm,is)%rxp = atom_list(:,lm,is)%rxp + molecule_list(lm,is)%xcom
-    atom_list(:,lm,is)%ryp = atom_list(:,lm,is)%ryp + molecule_list(lm,is)%ycom
-    atom_list(:,lm,is)%rzp = atom_list(:,lm,is)%rzp + molecule_list(lm,is)%zcom
+    atom_list(:,lm,is)%rp(1) = atom_list(:,lm,is)%rp(1) + molecule_list(lm,is)%rcom(1)
+    atom_list(:,lm,is)%rp(2) = atom_list(:,lm,is)%rp(2) + molecule_list(lm,is)%rcom(2)
+    atom_list(:,lm,is)%rp(3) = atom_list(:,lm,is)%rp(3) + molecule_list(lm,is)%rcom(3)
 
   END SUBROUTINE Rotate_Molecule_Axis
   !-----------------------------------------------------------------------------------------------
@@ -483,9 +483,9 @@ CONTAINS
 
     ! shift the origin to the COM of the molecule
 
-    atom_list(:,lm,is)%rxp = atom_list(:,lm,is)%rxp - molecule_list(lm,is)%xcom
-    atom_list(:,lm,is)%ryp = atom_list(:,lm,is)%ryp - molecule_list(lm,is)%ycom
-    atom_list(:,lm,is)%rzp = atom_list(:,lm,is)%rzp - molecule_list(lm,is)%zcom
+    atom_list(:,lm,is)%rp(1) = atom_list(:,lm,is)%rp(1) - molecule_list(lm,is)%rcom(1)
+    atom_list(:,lm,is)%rp(2) = atom_list(:,lm,is)%rp(2) - molecule_list(lm,is)%rcom(2)
+    atom_list(:,lm,is)%rp(3) = atom_list(:,lm,is)%rp(3) - molecule_list(lm,is)%rcom(3)
 
     ! Construct the rotation matrix that needs to be applied to each of the vectors
     ! This is the A matrix in Goldstein notation
@@ -506,27 +506,27 @@ CONTAINS
 
     DO ia = 1, natoms(is)
 
-       rxpnew = rot11*atom_list(ia,lm,is)%rxp & 
-              + rot12*atom_list(ia,lm,is)%ryp &
-              + rot13*atom_list(ia,lm,is)%rzp
-       rypnew = rot21*atom_list(ia,lm,is)%rxp &
-              + rot22*atom_list(ia,lm,is)%ryp &
-              + rot23*atom_list(ia,lm,is)%rzp
-       rzpnew = rot31*atom_list(ia,lm,is)%rxp &
-              + rot32*atom_list(ia,lm,is)%ryp &
-              + rot33*atom_list(ia,lm,is)%rzp
+       rxpnew = rot11*atom_list(ia,lm,is)%rp(1) & 
+              + rot12*atom_list(ia,lm,is)%rp(2) &
+              + rot13*atom_list(ia,lm,is)%rp(3)
+       rypnew = rot21*atom_list(ia,lm,is)%rp(1) &
+              + rot22*atom_list(ia,lm,is)%rp(2) &
+              + rot23*atom_list(ia,lm,is)%rp(3)
+       rzpnew = rot31*atom_list(ia,lm,is)%rp(1) &
+              + rot32*atom_list(ia,lm,is)%rp(2) &
+              + rot33*atom_list(ia,lm,is)%rp(3)
 
-       atom_list(ia,lm,is)%rxp = rxpnew
-       atom_list(ia,lm,is)%ryp = rypnew
-       atom_list(ia,lm,is)%rzp = rzpnew
+       atom_list(ia,lm,is)%rp(1) = rxpnew
+       atom_list(ia,lm,is)%rp(2) = rypnew
+       atom_list(ia,lm,is)%rp(3) = rzpnew
 
     END DO    
 
     ! Shift the origin back to (0,0,0)
 
-    atom_list(:,lm,is)%rxp = atom_list(:,lm,is)%rxp + molecule_list(lm,is)%xcom
-    atom_list(:,lm,is)%ryp = atom_list(:,lm,is)%ryp + molecule_list(lm,is)%ycom
-    atom_list(:,lm,is)%rzp = atom_list(:,lm,is)%rzp + molecule_list(lm,is)%zcom
+    atom_list(:,lm,is)%rp(1) = atom_list(:,lm,is)%rp(1) + molecule_list(lm,is)%rcom(1)
+    atom_list(:,lm,is)%rp(2) = atom_list(:,lm,is)%rp(2) + molecule_list(lm,is)%rcom(2)
+    atom_list(:,lm,is)%rp(3) = atom_list(:,lm,is)%rp(3) + molecule_list(lm,is)%rcom(3)
     
   END SUBROUTINE Rotate_Molecule_Eulerian
 

@@ -187,9 +187,9 @@ SUBROUTINE Atom_Displacement
   ref_atom = species_list(is)%disp_atom_ref(this_atom)
 !  write(*,*) iatom, ref_atom
 !  write(*,*) atom_list(iatom,lm,is)
-  atom_list(iatom,lm,is)%rxp = atom_list(iatom,lm,is)%rxp - atom_list(ref_atom,lm,is)%rxp
-  atom_list(iatom,lm,is)%ryp = atom_list(iatom,lm,is)%ryp - atom_list(ref_atom,lm,is)%ryp
-  atom_list(iatom,lm,is)%rzp = atom_list(iatom,lm,is)%rzp - atom_list(ref_atom,lm,is)%rzp
+  atom_list(iatom,lm,is)%rp(1) = atom_list(iatom,lm,is)%rp(1) - atom_list(ref_atom,lm,is)%rp(1)
+  atom_list(iatom,lm,is)%rp(2) = atom_list(iatom,lm,is)%rp(2) - atom_list(ref_atom,lm,is)%rp(2)
+  atom_list(iatom,lm,is)%rp(3) = atom_list(iatom,lm,is)%rp(3) - atom_list(ref_atom,lm,is)%rp(3)
 
   ! Displace iatom
 
@@ -208,9 +208,9 @@ SUBROUTINE Atom_Displacement
 
   ! change coordinates of iatom to lab frame of reference
 
-  atom_list(iatom,lm,is)%rxp = atom_list(iatom,lm,is)%rxp + atom_list(ref_atom,lm,is)%rxp
-  atom_list(iatom,lm,is)%ryp = atom_list(iatom,lm,is)%ryp + atom_list(ref_atom,lm,is)%ryp
-  atom_list(iatom,lm,is)%rzp = atom_list(iatom,lm,is)%rzp + atom_list(ref_atom,lm,is)%rzp
+  atom_list(iatom,lm,is)%rp(1) = atom_list(iatom,lm,is)%rp(1) + atom_list(ref_atom,lm,is)%rp(1)
+  atom_list(iatom,lm,is)%rp(2) = atom_list(iatom,lm,is)%rp(2) + atom_list(ref_atom,lm,is)%rp(2)
+  atom_list(iatom,lm,is)%rp(3) = atom_list(iatom,lm,is)%rp(3) + atom_list(ref_atom,lm,is)%rp(3)
 !   write(*,*) atom_list(iatom,lm,is)
   CALL Get_COM(lm,is)
   CALL Compute_Max_COM_Distance(lm,is)
@@ -327,9 +327,9 @@ SUBROUTINE Change_Phi_Theta(this_atom,im,is,theta_bound)
 
 
   ! Get spherical coordinates
-  this_x = atom_list(this_atom,im,is)%rxp
-  this_y = atom_list(this_atom,im,is)%ryp
-  this_z = atom_list(this_atom,im,is)%rzp
+  this_x = atom_list(this_atom,im,is)%rp(1)
+  this_y = atom_list(this_atom,im,is)%rp(2)
+  this_z = atom_list(this_atom,im,is)%rp(3)
 
   rho = this_x * this_x + this_y * this_y 
   bond_length = this_z * this_z + rho
@@ -364,9 +364,9 @@ SUBROUTINE Change_Phi_Theta(this_atom,im,is,theta_bound)
   phi = phi + dphi
   
   ! new coordinates
-  atom_list(this_atom,im,is)%rxp = bond_length * DSIN(theta) * DCOS(phi)
-  atom_list(this_atom,im,is)%ryp = bond_length * DSIN(theta) * DSIN(phi)
-  atom_list(this_atom,im,is)%rzp = bond_length * DCOS(theta)
+  atom_list(this_atom,im,is)%rp(1) = bond_length * DSIN(theta) * DCOS(phi)
+  atom_list(this_atom,im,is)%rp(2) = bond_length * DSIN(theta) * DSIN(phi)
+  atom_list(this_atom,im,is)%rp(3) = bond_length * DCOS(theta)
 
 END SUBROUTINE Change_Phi_Theta
   

@@ -257,27 +257,27 @@ SUBROUTINE Angle_Distortion
   
   ! Move all the atoms with respect to iatom2
   
-  iatom2_rxp = atom_list(iatom2,lm,is)%rxp
-  iatom2_ryp = atom_list(iatom2,lm,is)%ryp
-  iatom2_rzp = atom_list(iatom2,lm,is)%rzp
+  iatom2_rxp = atom_list(iatom2,lm,is)%rp(1)
+  iatom2_ryp = atom_list(iatom2,lm,is)%rp(2)
+  iatom2_rzp = atom_list(iatom2,lm,is)%rp(3)
   
-  atom_list(:,lm,is)%rxp = atom_list(:,lm,is)%rxp - iatom2_rxp
-  atom_list(:,lm,is)%ryp = atom_list(:,lm,is)%ryp - iatom2_ryp
-  atom_list(:,lm,is)%rzp = atom_list(:,lm,is)%rzp - iatom2_rzp
+  atom_list(:,lm,is)%rp(1) = atom_list(:,lm,is)%rp(1) - iatom2_rxp
+  atom_list(:,lm,is)%rp(2) = atom_list(:,lm,is)%rp(2) - iatom2_ryp
+  atom_list(:,lm,is)%rp(3) = atom_list(:,lm,is)%rp(3) - iatom2_rzp
   
   ! We will generate a perpendicular frame at atom2 such that x - axis
   ! is aligned along iatom2 --- > iatom3 and y - axis is in the plane
   ! defined by iatom1 - iatom2 - iatom3. We will assume that iatom1 is moving.
   
-  vec23(1) = atom_list(iatom3,lm,is)%rxp - atom_list(iatom2,lm,is)%rxp
-  vec23(2) = atom_list(iatom3,lm,is)%ryp - atom_list(iatom2,lm,is)%ryp
-  vec23(3) = atom_list(iatom3,lm,is)%rzp - atom_list(iatom2,lm,is)%rzp
+  vec23(1) = atom_list(iatom3,lm,is)%rp(1) - atom_list(iatom2,lm,is)%rp(1)
+  vec23(2) = atom_list(iatom3,lm,is)%rp(2) - atom_list(iatom2,lm,is)%rp(2)
+  vec23(3) = atom_list(iatom3,lm,is)%rp(3) - atom_list(iatom2,lm,is)%rp(3)
 
   ! vector from iatom2 to iatom1
 
-  vec21(1) = atom_list(iatom1,lm,is)%rxp - atom_list(iatom2,lm,is)%rxp
-  vec21(2) = atom_list(iatom1,lm,is)%ryp - atom_list(iatom2,lm,is)%ryp
-  vec21(3) = atom_list(iatom1,lm,is)%rzp - atom_list(iatom2,lm,is)%rzp
+  vec21(1) = atom_list(iatom1,lm,is)%rp(1) - atom_list(iatom2,lm,is)%rp(1)
+  vec21(2) = atom_list(iatom1,lm,is)%rp(2) - atom_list(iatom2,lm,is)%rp(2)
+  vec21(3) = atom_list(iatom1,lm,is)%rp(3) - atom_list(iatom2,lm,is)%rp(3)
 
   ! Normalize these vectors
 
@@ -320,15 +320,15 @@ SUBROUTINE Angle_Distortion
      
      this_atom = atoms_to_place_list(j)
 
-     tempx = atom_list(this_atom,lm,is)%rxp
-     tempy = atom_list(this_atom,lm,is)%ryp
-     tempz = atom_list(this_atom,lm,is)%rzp
+     tempx = atom_list(this_atom,lm,is)%rp(1)
+     tempy = atom_list(this_atom,lm,is)%rp(2)
+     tempz = atom_list(this_atom,lm,is)%rp(3)
 
-     atom_list(this_atom,lm,is)%rxp = tempx * aligner(1,1) + tempy * aligner(1,2) + &
+     atom_list(this_atom,lm,is)%rp(1) = tempx * aligner(1,1) + tempy * aligner(1,2) + &
           tempz * aligner(1,3)
-     atom_list(this_atom,lm,is)%ryp = tempx * aligner(2,1) + tempy * aligner(2,2) + &
+     atom_list(this_atom,lm,is)%rp(2) = tempx * aligner(2,1) + tempy * aligner(2,2) + &
           tempz * aligner(2,3)
-     atom_list(this_atom,lm,is)%rzp = tempx * aligner(3,1) + tempy * aligner(3,2) + &
+     atom_list(this_atom,lm,is)%rp(3) = tempx * aligner(3,1) + tempy * aligner(3,2) + &
           tempz * aligner(3,3)
 
   END DO
@@ -342,7 +342,7 @@ SUBROUTINE Angle_Distortion
   ! is to be performed in the counter clockwise direction if the atom1 is positioned
   ! in the 3rd or 4th quadrant.
 
-  IF ( atom_list(iatom1,lm,is)%ryp >= 0.0_DP ) THEN
+  IF ( atom_list(iatom1,lm,is)%rp(2) >= 0.0_DP ) THEN
      delta_theta = -delta_theta
   END IF
 
@@ -354,11 +354,11 @@ SUBROUTINE Angle_Distortion
 
      this_atom = atoms_to_place_list(j)
 
-     tempx = atom_list(this_atom,lm,is)%rxp
-     tempy = atom_list(this_atom,lm,is)%ryp
+     tempx = atom_list(this_atom,lm,is)%rp(1)
+     tempy = atom_list(this_atom,lm,is)%rp(2)
      
-     atom_list(this_atom,lm,is)%rxp = tempx * cos_dtheta + tempy * sin_dtheta
-     atom_list(this_atom,lm,is)%ryp = -tempx * sin_dtheta + tempy * cos_dtheta
+     atom_list(this_atom,lm,is)%rp(1) = tempx * cos_dtheta + tempy * sin_dtheta
+     atom_list(this_atom,lm,is)%rp(2) = -tempx * sin_dtheta + tempy * cos_dtheta
 
   END DO
 
@@ -382,22 +382,22 @@ SUBROUTINE Angle_Distortion
 
      this_atom = atoms_to_place_list(j)
 
-     tempx = atom_list(this_atom,lm,is)%rxp
-     tempy = atom_list(this_atom,lm,is)%ryp
-     tempz = atom_list(this_atom,lm,is)%rzp
+     tempx = atom_list(this_atom,lm,is)%rp(1)
+     tempy = atom_list(this_atom,lm,is)%rp(2)
+     tempz = atom_list(this_atom,lm,is)%rp(3)
 
-     atom_list(this_atom,lm,is)%rxp = tempx * hanger(1,1) + tempy * hanger(1,2) + &
+     atom_list(this_atom,lm,is)%rp(1) = tempx * hanger(1,1) + tempy * hanger(1,2) + &
           tempz * hanger(1,3)
-     atom_list(this_atom,lm,is)%ryp = tempx * hanger(2,1) + tempy * hanger(2,2) + &
+     atom_list(this_atom,lm,is)%rp(2) = tempx * hanger(2,1) + tempy * hanger(2,2) + &
           tempz * hanger(2,3)
-     atom_list(this_atom,lm,is)%rzp = tempx * hanger(3,1) + tempy * hanger(3,2) + &
+     atom_list(this_atom,lm,is)%rp(3) = tempx * hanger(3,1) + tempy * hanger(3,2) + &
           tempz * hanger(3,3)
 
   END DO
 
-  atom_list(:,lm,is)%rxp = atom_list(:,lm,is)%rxp + iatom2_rxp
-  atom_list(:,lm,is)%ryp = atom_list(:,lm,is)%ryp + iatom2_ryp
-  atom_list(:,lm,is)%rzp = atom_list(:,lm,is)%rzp + iatom2_rzp
+  atom_list(:,lm,is)%rp(1) = atom_list(:,lm,is)%rp(1) + iatom2_rxp
+  atom_list(:,lm,is)%rp(2) = atom_list(:,lm,is)%rp(2) + iatom2_ryp
+  atom_list(:,lm,is)%rp(3) = atom_list(:,lm,is)%rp(3) + iatom2_rzp
 
   ! Calculate the energies after the move. First compute intramolecular and intermolecular
   ! nonbonded interactions so that the move can be immediately rejected if an overlap is detected.

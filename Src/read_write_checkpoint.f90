@@ -126,9 +126,9 @@ CONTAINS
              DO ia = 1, natoms(is)
 !                WRITE(chkptunit,'(A,T10,3(F15.10,1X),T70,I3)') nonbond_list(ia,is)%element, &
                 WRITE(chkptunit,*) nonbond_list(ia,is)%element, &
-                     atom_list(ia,this_im,is)%rxp, &
-                     atom_list(ia,this_im,is)%ryp, &
-                     atom_list(ia,this_im,is)%rzp, &
+                     atom_list(ia,this_im,is)%rp(1), &
+                     atom_list(ia,this_im,is)%rp(2), &
+                     atom_list(ia,this_im,is)%rp(3), &
                      this_box
              END DO
 
@@ -281,9 +281,9 @@ SUBROUTINE Read_Checkpoint
 
           DO ia = 1, natoms(is)
              READ(restartunit,*)nonbond_list(ia,is)%element, &
-                  atom_list(ia,im,is)%rxp, &
-                  atom_list(ia,im,is)%ryp, &
-                  atom_list(ia,im,is)%rzp, &
+                  atom_list(ia,im,is)%rp(1), &
+                  atom_list(ia,im,is)%rp(2), &
+                  atom_list(ia,im,is)%rp(3), &
                   this_box
              ! set exist flags for this atom
              atom_list(ia,im,is)%exist = .TRUE.
@@ -325,9 +325,9 @@ SUBROUTINE Read_Checkpoint
              !
              CALL Get_COM(this_im,is)
 
-             xcom_old = molecule_list(this_im,is)%xcom
-             ycom_old = molecule_list(this_im,is)%ycom
-             zcom_old = molecule_list(this_im,is)%zcom
+             xcom_old = molecule_list(this_im,is)%rcom(1)
+             ycom_old = molecule_list(this_im,is)%rcom(2)
+             zcom_old = molecule_list(this_im,is)%rcom(3)
 
              ! Apply PBC
 
@@ -339,8 +339,8 @@ SUBROUTINE Read_Checkpoint
                      xcom_new, ycom_new, zcom_new)
 
 !!$                IF (this_box == 2) THEN
-!!$                   write(203,*) atom_list(1,this_im,is)%rxp, atom_list(1,this_im,is)%ryp, &
-!!$                        atom_list(1,this_im,is)%rzp
+!!$                   write(203,*) atom_list(1,this_im,is)%rp(1), atom_list(1,this_im,is)%rp(2), &
+!!$                        atom_list(1,this_im,is)%rp(3)
 !!$                END IF
 !!$                write(*,*) 'cubic'
 
@@ -355,17 +355,17 @@ SUBROUTINE Read_Checkpoint
 
              ! COM in the central simulation box
 
-             molecule_list(this_im,is)%xcom = xcom_new
-             molecule_list(this_im,is)%ycom = ycom_new
-             molecule_list(this_im,is)%zcom = zcom_new
+             molecule_list(this_im,is)%rcom(1) = xcom_new
+             molecule_list(this_im,is)%rcom(2) = ycom_new
+             molecule_list(this_im,is)%rcom(3) = zcom_new
 
              ! displace atomic coordinates
 
-             atom_list(1:natoms(is),this_im,is)%rxp = atom_list(1:natoms(is),this_im,is)%rxp + &
+             atom_list(1:natoms(is),this_im,is)%rp(1) = atom_list(1:natoms(is),this_im,is)%rp(1) + &
                   xcom_new - xcom_old
-             atom_list(1:natoms(is),this_im,is)%ryp = atom_list(1:natoms(is),this_im,is)%ryp + &
+             atom_list(1:natoms(is),this_im,is)%rp(2) = atom_list(1:natoms(is),this_im,is)%rp(2) + &
                   ycom_new - ycom_old
-             atom_list(1:natoms(is),this_im,is)%rzp = atom_list(1:natoms(is),this_im,is)%rzp + &
+             atom_list(1:natoms(is),this_im,is)%rp(3) = atom_list(1:natoms(is),this_im,is)%rp(3) + &
                   zcom_new - zcom_old
 
              CALL Compute_Max_Com_Distance(this_im,is)
@@ -439,9 +439,9 @@ SUBROUTINE Read_Checkpoint
           DO ia = 1, natoms(is)
 
              READ(old_config_unit,*)nonbond_list(ia,is)%element, &
-                  atom_list(ia,this_im,is)%rxp, &
-                  atom_list(ia,this_im,is)%ryp, &
-                  atom_list(ia,this_im,is)%rzp
+                  atom_list(ia,this_im,is)%rp(1), &
+                  atom_list(ia,this_im,is)%rp(2), &
+                  atom_list(ia,this_im,is)%rp(3)
              ! set the frac and exist flags for this atom
              molecule_list(this_im,is)%frac = this_lambda
              atom_list(ia,this_im,is)%exist = .TRUE.
@@ -455,9 +455,9 @@ SUBROUTINE Read_Checkpoint
        !
           CALL Get_COM(this_im,is)
 
-          xcom_old = molecule_list(this_im,is)%xcom
-          ycom_old = molecule_list(this_im,is)%ycom
-          zcom_old = molecule_list(this_im,is)%zcom
+          xcom_old = molecule_list(this_im,is)%rcom(1)
+          ycom_old = molecule_list(this_im,is)%rcom(2)
+          zcom_old = molecule_list(this_im,is)%rcom(3)
 
           ! Apply PBC
           IF (l_cubic(ibox)) THEN
@@ -469,22 +469,22 @@ SUBROUTINE Read_Checkpoint
           END IF
 
           ! COM in the central simulation box
-          molecule_list(this_im,is)%xcom = xcom_new
-          molecule_list(this_im,is)%ycom = ycom_new
-          molecule_list(this_im,is)%zcom = zcom_new
+          molecule_list(this_im,is)%rcom(1) = xcom_new
+          molecule_list(this_im,is)%rcom(2) = ycom_new
+          molecule_list(this_im,is)%rcom(3) = zcom_new
 
           ! COM in the central simulation box
-          molecule_list(this_im,is)%xcom = xcom_new
-          molecule_list(this_im,is)%ycom = ycom_new
-          molecule_list(this_im,is)%zcom = zcom_new
+          molecule_list(this_im,is)%rcom(1) = xcom_new
+          molecule_list(this_im,is)%rcom(2) = ycom_new
+          molecule_list(this_im,is)%rcom(3) = zcom_new
 
           ! displace atomic coordinates
-          atom_list(1:natoms(is),this_im,is)%rxp = &
-               atom_list(1:natoms(is),this_im,is)%rxp + xcom_new - xcom_old
-          atom_list(1:natoms(is),this_im,is)%ryp = &
-               atom_list(1:natoms(is),this_im,is)%ryp + ycom_new - ycom_old
-          atom_list(1:natoms(is),this_im,is)%rzp = &
-               atom_list(1:natoms(is),this_im,is)%rzp + zcom_new - zcom_old
+          atom_list(1:natoms(is),this_im,is)%rp(1) = &
+               atom_list(1:natoms(is),this_im,is)%rp(1) + xcom_new - xcom_old
+          atom_list(1:natoms(is),this_im,is)%rp(2) = &
+               atom_list(1:natoms(is),this_im,is)%rp(2) + ycom_new - ycom_old
+          atom_list(1:natoms(is),this_im,is)%rp(3) = &
+               atom_list(1:natoms(is),this_im,is)%rp(3) + zcom_new - zcom_old
 
           nmols(is,ibox) = nmols(is,ibox) + 1
 

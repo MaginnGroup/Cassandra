@@ -291,15 +291,15 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
         
         nl = (frag_position_library(frag_type)-1) + &
                                            frag_list(frag_start,is)%natoms*(this_fragment -1) + i 
-        these_atoms(this_atom)%rxp = &
-                                    !  frag_coords(i,this_fragment,frag_type)%rxp
-                                       library_coords(nl)%rxp
-        these_atoms(this_atom)%ryp = &
-                                     ! frag_coords(i,this_fragment,frag_type)%ryp
-                                        library_coords(nl)%ryp
-        these_atoms(this_atom)%rzp = &
-                                     ! frag_coords(i,this_fragment,frag_type)%rzp
-                                        library_coords(nl)%rzp
+        these_atoms(this_atom)%rp(1) = &
+                                    !  frag_coords(i,this_fragment,frag_type)%rp(1)
+                                       library_coords(nl)%rp(1)
+        these_atoms(this_atom)%rp(2) = &
+                                     ! frag_coords(i,this_fragment,frag_type)%rp(2)
+                                        library_coords(nl)%rp(2)
+        these_atoms(this_atom)%rp(3) = &
+                                     ! frag_coords(i,this_fragment,frag_type)%rp(3)
+                                        library_coords(nl)%rp(3)
       END DO
   END IF
   ! Turn on the molecule and its individual atoms
@@ -337,16 +337,16 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
 
      this_atom = frag_list(frag_start,is)%atoms(i)
      
-     rtrial(this_atom,0)%rxp = these_atoms(this_atom)%rxp
-     rtrial(this_atom,0)%ryp = these_atoms(this_atom)%ryp
-     rtrial(this_atom,0)%rzp = these_atoms(this_atom)%rzp
+     rtrial(this_atom,0)%rp(1) = these_atoms(this_atom)%rp(1)
+     rtrial(this_atom,0)%rp(2) = these_atoms(this_atom)%rp(2)
+     rtrial(this_atom,0)%rp(3) = these_atoms(this_atom)%rp(3)
 
   END DO
 
   ! Store the COM
-  xcom_old = this_molecule%xcom
-  ycom_old = this_molecule%ycom
-  zcom_old = this_molecule%zcom
+  xcom_old = this_molecule%rcom(1)
+  ycom_old = this_molecule%rcom(2)
+  zcom_old = this_molecule%rcom(3)
 
   ! We will place this fragment based only on its external weight
 
@@ -355,23 +355,23 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
      CALL Compute_Max_COM_Distance(this_im,is)
      IF(.NOT. del_flag) THEN
 
-        dx = molecule_list(imreplace,isreplace)%xcom &
-           - this_molecule%xcom
-        dy = molecule_list(imreplace,isreplace)%ycom &
-           - this_molecule%ycom
-        dz = molecule_list(imreplace,isreplace)%zcom &
-           - this_molecule%zcom
+        dx = molecule_list(imreplace,isreplace)%rcom(1) &
+           - this_molecule%rcom(1)
+        dy = molecule_list(imreplace,isreplace)%rcom(2) &
+           - this_molecule%rcom(2)
+        dz = molecule_list(imreplace,isreplace)%rcom(3) &
+           - this_molecule%rcom(3)
 
-        this_molecule%xcom = molecule_list(imreplace,isreplace)%xcom
-        this_molecule%ycom = molecule_list(imreplace,isreplace)%ycom
-        this_molecule%zcom = molecule_list(imreplace,isreplace)%zcom
+        this_molecule%rcom(1) = molecule_list(imreplace,isreplace)%rcom(1)
+        this_molecule%rcom(2) = molecule_list(imreplace,isreplace)%rcom(2)
+        this_molecule%rcom(3) = molecule_list(imreplace,isreplace)%rcom(3)
 
         DO i = 1, frag_list(frag_start,is)%natoms
 
            this_atom = frag_list(frag_start,is)%atoms(i)
-           these_atoms(this_atom)%rxp = rtrial(this_atom,0)%rxp + dx
-           these_atoms(this_atom)%ryp = rtrial(this_atom,0)%ryp + dy
-           these_atoms(this_atom)%rzp = rtrial(this_atom,0)%rzp + dz
+           these_atoms(this_atom)%rp(1) = rtrial(this_atom,0)%rp(1) + dx
+           these_atoms(this_atom)%rp(2) = rtrial(this_atom,0)%rp(2) + dy
+           these_atoms(this_atom)%rp(3) = rtrial(this_atom,0)%rp(3) + dz
         END DO
 
      END IF
@@ -467,12 +467,12 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
         
            this_atom = frag_list(frag_start,is)%atoms(i)
         
-           these_atoms(this_atom)%rxp = & 
-                                   rtrial(this_atom,0)%rxp - xcom_old + x_anchor
-           these_atoms(this_atom)%ryp = & 
-                                   rtrial(this_atom,0)%ryp - ycom_old + y_anchor
-           these_atoms(this_atom)%rzp = &
-                                   rtrial(this_atom,0)%rzp - zcom_old + z_anchor
+           these_atoms(this_atom)%rp(1) = & 
+                                   rtrial(this_atom,0)%rp(1) - xcom_old + x_anchor
+           these_atoms(this_atom)%rp(2) = & 
+                                   rtrial(this_atom,0)%rp(2) - ycom_old + y_anchor
+           these_atoms(this_atom)%rp(3) = &
+                                   rtrial(this_atom,0)%rp(3) - zcom_old + z_anchor
            IF (l_sectors .AND. widom_active) THEN
                    IF (check_overlap(this_atom,this_im,is)) THEN
                            IF (itrial > 1) THEN
@@ -489,9 +489,9 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                    END IF
            END IF
            
-           rtrial(this_atom,itrial)%rxp = these_atoms(this_atom)%rxp
-           rtrial(this_atom,itrial)%ryp = these_atoms(this_atom)%ryp
-           rtrial(this_atom,itrial)%rzp = these_atoms(this_atom)%rzp
+           rtrial(this_atom,itrial)%rp(1) = these_atoms(this_atom)%rp(1)
+           rtrial(this_atom,itrial)%rp(2) = these_atoms(this_atom)%rp(2)
+           rtrial(this_atom,itrial)%rp(3) = these_atoms(this_atom)%rp(3)
         
         END DO atom_loop
 !widom_timing        n_not_clo = n_not_clo + 1_INT64
@@ -499,9 +499,9 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
         xcom_trial(itrial) = x_anchor
         ycom_trial(itrial) = y_anchor
         zcom_trial(itrial) = z_anchor
-        this_molecule%xcom = x_anchor
-        this_molecule%ycom = y_anchor
-        this_molecule%zcom = z_anchor
+        this_molecule%rcom(1) = x_anchor
+        this_molecule%rcom(2) = y_anchor
+        this_molecule%rcom(3) = z_anchor
 
         IF (need_max_dcom) THEN
                 CALL Compute_Max_COM_Distance(this_im,is)
@@ -551,9 +551,9 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
 !           WRITE(M_XYZ_unit,*) &
 !              TRIM(nonbond_list(this_atom,is)%element) // &
 !              TRIM(int_to_string(itrial)), & 
-!              rtrial(this_atom,itrial)%rxp, &
-!              rtrial(this_atom,itrial)%ryp, &
-!              rtrial(this_atom,itrial)%rzp
+!              rtrial(this_atom,itrial)%rp(1), &
+!              rtrial(this_atom,itrial)%rp(2), &
+!              rtrial(this_atom,itrial)%rp(3)
 !        END DO
 !        IF (itrial==1) THEN
 !           WRITE(*,'(2(A,X,I5,X))'), 'i_mcstep', i_mcstep, 'lm', this_im
@@ -631,14 +631,14 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
      
         this_atom = frag_list(frag_start,is)%atoms(i)
      
-        these_atoms(this_atom)%rxp = rtrial(this_atom,trial)%rxp
-        these_atoms(this_atom)%ryp = rtrial(this_atom,trial)%ryp
-        these_atoms(this_atom)%rzp = rtrial(this_atom,trial)%rzp
+        these_atoms(this_atom)%rp(1) = rtrial(this_atom,trial)%rp(1)
+        these_atoms(this_atom)%rp(2) = rtrial(this_atom,trial)%rp(2)
+        these_atoms(this_atom)%rp(3) = rtrial(this_atom,trial)%rp(3)
      
      END DO
-     this_molecule%xcom = xcom_trial(trial)
-     this_molecule%ycom = ycom_trial(trial)
-     this_molecule%zcom = zcom_trial(trial)
+     this_molecule%rcom(1) = xcom_trial(trial)
+     this_molecule%rcom(2) = ycom_trial(trial)
+     this_molecule%rcom(3) = zcom_trial(trial)
 
   END IF
   
@@ -825,17 +825,17 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
 
   DO itrial = 1, kappa_ins
      IF (del_flag .and.(itrial.eq.1)) THEN
-        rtrial(first_atom,itrial)%rxp =  these_atoms(first_atom)%rxp
-        rtrial(first_atom,itrial)%ryp =  these_atoms(first_atom)%ryp
-        rtrial(first_atom,itrial)%rzp =  these_atoms(first_atom)%rzp
+        rtrial(first_atom,itrial)%rp(1) =  these_atoms(first_atom)%rp(1)
+        rtrial(first_atom,itrial)%rp(2) =  these_atoms(first_atom)%rp(2)
+        rtrial(first_atom,itrial)%rp(3) =  these_atoms(first_atom)%rp(3)
      ELSE
         IF (box_list(this_box)%int_box_shape == int_cubic) THEN
            
-           rtrial(first_atom,itrial)%rxp = (0.5_DP - rranf()) * &
+           rtrial(first_atom,itrial)%rp(1) = (0.5_DP - rranf()) * &
                 box_list(this_box)%length(1,1)
-           rtrial(first_atom,itrial)%ryp = (0.5_DP - rranf()) * &
+           rtrial(first_atom,itrial)%rp(2) = (0.5_DP - rranf()) * &
                 box_list(this_box)%length(2,2)
-           rtrial(first_atom,itrial)%rzp = (0.5_DP - rranf()) * &
+           rtrial(first_atom,itrial)%rp(3) = (0.5_DP - rranf()) * &
                 box_list(this_box)%length(3,3)
            
         END IF
@@ -843,15 +843,15 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
      ENDIF
 
   ! Store them in correct array for the energy call
-     these_atoms(first_atom)%rxp = rtrial(first_atom,itrial)%rxp
-     these_atoms(first_atom)%ryp = rtrial(first_atom,itrial)%ryp
-     these_atoms(first_atom)%rzp = rtrial(first_atom,itrial)%rzp
+     these_atoms(first_atom)%rp(1) = rtrial(first_atom,itrial)%rp(1)
+     these_atoms(first_atom)%rp(2) = rtrial(first_atom,itrial)%rp(2)
+     these_atoms(first_atom)%rp(3) = rtrial(first_atom,itrial)%rp(3)
 
 
      ! Compute the energy of this atom    
-     this_molecule%xcom = rtrial(first_atom,itrial)%rxp 
-     this_molecule%ycom = rtrial(first_atom,itrial)%ryp 
-     this_molecule%zcom = rtrial(first_atom,itrial)%rzp
+     this_molecule%rcom(1) = rtrial(first_atom,itrial)%rp(1) 
+     this_molecule%rcom(2) = rtrial(first_atom,itrial)%rp(2) 
+     this_molecule%rcom(3) = rtrial(first_atom,itrial)%rp(3)
 
      CALL Compute_Max_COM_Distance(this_im,is)
 
@@ -907,9 +907,9 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
 
 ! Now we have the position of the first bead of   
 ! Assign this position to proper these_atoms
-  these_atoms(first_atom)%rxp = rtrial(first_atom,trial)%rxp
-  these_atoms(first_atom)%ryp = rtrial(first_atom,trial)%ryp
-  these_atoms(first_atom)%rzp = rtrial(first_atom,trial)%rzp
+  these_atoms(first_atom)%rp(1) = rtrial(first_atom,trial)%rp(1)
+  these_atoms(first_atom)%rp(2) = rtrial(first_atom,trial)%rp(2)
+  these_atoms(first_atom)%rp(3) = rtrial(first_atom,trial)%rp(3)
 
 ! NR: End selection of the first bead of the fragment
 
@@ -936,31 +936,31 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
                                            frag_list(1,is)%natoms*(this_fragment-1)+i
 
                     
-         rtrial(this_atom,0)%rxp = library_coords(nl)%rxp -&
-                                   library_coords(nlo)%rxp +&
-                                   these_atoms(first_atom)%rxp
-         rtrial(this_atom,0)%ryp = library_coords(nl)%ryp -&
-                                   library_coords(nlo)%ryp +& 
-                                   these_atoms(first_atom)%ryp
-         rtrial(this_atom,0)%rzp = library_coords(nl)%rzp -& 
-                                   library_coords(nlo)%rzp +& 
-                                   these_atoms(first_atom)%rzp
-      !  rtrial(this_atom,0)%rxp = frag_coords(i,this_fragment,frag_type)%rxp-&
-      !                            frag_coords(1,this_fragment,frag_type)%rxp+&
-      !                            these_atoms(first_atom)%rxp 
-      !  rtrial(this_atom,0)%ryp = frag_coords(i,this_fragment,frag_type)%ryp-&
-      !                            frag_coords(1,this_fragment,frag_type)%ryp+&
-      !                            these_atoms(first_atom)%ryp
-      !  rtrial(this_atom,0)%rzp = frag_coords(i,this_fragment,frag_type)%rzp-&
-      !                            frag_coords(1,this_fragment,frag_type)%rzp+&
-      !                            these_atoms(first_atom)%rzp 
+         rtrial(this_atom,0)%rp(1) = library_coords(nl)%rp(1) -&
+                                   library_coords(nlo)%rp(1) +&
+                                   these_atoms(first_atom)%rp(1)
+         rtrial(this_atom,0)%rp(2) = library_coords(nl)%rp(2) -&
+                                   library_coords(nlo)%rp(2) +& 
+                                   these_atoms(first_atom)%rp(2)
+         rtrial(this_atom,0)%rp(3) = library_coords(nl)%rp(3) -& 
+                                   library_coords(nlo)%rp(3) +& 
+                                   these_atoms(first_atom)%rp(3)
+      !  rtrial(this_atom,0)%rp(1) = frag_coords(i,this_fragment,frag_type)%rp(1)-&
+      !                            frag_coords(1,this_fragment,frag_type)%rp(1)+&
+      !                            these_atoms(first_atom)%rp(1) 
+      !  rtrial(this_atom,0)%rp(2) = frag_coords(i,this_fragment,frag_type)%rp(2)-&
+      !                            frag_coords(1,this_fragment,frag_type)%rp(2)+&
+      !                            these_atoms(first_atom)%rp(2)
+      !  rtrial(this_atom,0)%rp(3) = frag_coords(i,this_fragment,frag_type)%rp(3)-&
+      !                            frag_coords(1,this_fragment,frag_type)%rp(3)+&
+      !                            these_atoms(first_atom)%rp(3) 
      END DO
   ELSE
      DO i = 1,frag_list(frag_start,is)%natoms
         this_atom = frag_list(frag_start,is)%atoms(i)
-        rtrial(this_atom,0)%rxp = these_atoms(this_atom)%rxp
-        rtrial(this_atom,0)%ryp = these_atoms(this_atom)%ryp
-        rtrial(this_atom,0)%rzp = these_atoms(this_atom)%rzp
+        rtrial(this_atom,0)%rp(1) = these_atoms(this_atom)%rp(1)
+        rtrial(this_atom,0)%rp(2) = these_atoms(this_atom)%rp(2)
+        rtrial(this_atom,0)%rp(3) = these_atoms(this_atom)%rp(3)
      END DO
   END IF
 
@@ -974,26 +974,26 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
      IF(del_flag .and. (itrial.eq.1)) THEN
        DO i=1,frag_list(frag_start,is)%natoms
           this_atom = frag_list(frag_start,is)%atoms(i)
-          rtrial(this_atom,itrial)%rxp = these_atoms(this_atom)%rxp
-          rtrial(this_atom,itrial)%ryp = these_atoms(this_atom)%ryp
-          rtrial(this_atom,itrial)%rzp = these_atoms(this_atom)%rzp
+          rtrial(this_atom,itrial)%rp(1) = these_atoms(this_atom)%rp(1)
+          rtrial(this_atom,itrial)%rp(2) = these_atoms(this_atom)%rp(2)
+          rtrial(this_atom,itrial)%rp(3) = these_atoms(this_atom)%rp(3)
        END DO
        CALL Get_COM(this_im,is)
     ELSE
        DO i = 1,frag_list(frag_start,is)%natoms
           this_atom = frag_list(frag_start,is)%atoms(i)  
-          these_atoms(this_atom)%rxp = rtrial(this_atom,0)%rxp
-          these_atoms(this_atom)%ryp = rtrial(this_atom,0)%ryp
-          these_atoms(this_atom)%rzp = rtrial(this_atom,0)%rzp
+          these_atoms(this_atom)%rp(1) = rtrial(this_atom,0)%rp(1)
+          these_atoms(this_atom)%rp(2) = rtrial(this_atom,0)%rp(2)
+          these_atoms(this_atom)%rp(3) = rtrial(this_atom,0)%rp(3)
        ENDDO
        CALL Rotate_XYZ_Axes(this_im,is,frag_start,.true.,.true.,.true.,1)
        CALL Get_COM(this_im,is)
        !       CALL Fold_Molecule(this_im,is,this_box) 
        DO i = 1,frag_list(frag_start,is)%natoms
           this_atom = frag_list(frag_start,is)%atoms(i)
-          rtrial(this_atom,itrial)%rxp = these_atoms(this_atom)%rxp
-          rtrial(this_atom,itrial)%ryp = these_atoms(this_atom)%ryp
-          rtrial(this_atom,itrial)%rzp = these_atoms(this_atom)%rzp
+          rtrial(this_atom,itrial)%rp(1) = these_atoms(this_atom)%rp(1)
+          rtrial(this_atom,itrial)%rp(2) = these_atoms(this_atom)%rp(2)
+          rtrial(this_atom,itrial)%rp(3) = these_atoms(this_atom)%rp(3)
        END DO
        
     ENDIF
@@ -1006,13 +1006,13 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
 !     DO i = 1,frag_list(frag_start,is)%natoms
 !           this_atom = frag_list(frag_start,is)%atoms(i)
 !           IF (this_atom .eq. 1) then 
-!               Write(8,*) 'O', these_atoms(this_atom)%rxp, &
-!                               these_atoms(this_atom)%ryp, &
-!                               these_atoms(this_atom)%rzp
+!               Write(8,*) 'O', these_atoms(this_atom)%rp(1), &
+!                               these_atoms(this_atom)%rp(2), &
+!                               these_atoms(this_atom)%rp(3)
 !           ELSE
-!               Write(8,*) 'C', these_atoms(this_atom)%rxp, &
-!                               these_atoms(this_atom)%ryp, &
-!                               these_atoms(this_atom)%rzp
+!               Write(8,*) 'C', these_atoms(this_atom)%rp(1), &
+!                               these_atoms(this_atom)%rp(2), &
+!                               these_atoms(this_atom)%rp(3)
 !           END IF
 !     END DO  
 
@@ -1074,15 +1074,15 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
 ! Assign positions to these_atoms
   DO i=1,frag_list(frag_start,is)%natoms
      this_atom =  frag_list(frag_start,is)%atoms(i)
-     these_atoms(this_atom)%rxp = rtrial(this_atom,trial)%rxp
-     these_atoms(this_atom)%ryp = rtrial(this_atom,trial)%ryp
-     these_atoms(this_atom)%rzp = rtrial(this_atom,trial)%rzp
+     these_atoms(this_atom)%rp(1) = rtrial(this_atom,trial)%rp(1)
+     these_atoms(this_atom)%rp(2) = rtrial(this_atom,trial)%rp(2)
+     these_atoms(this_atom)%rp(3) = rtrial(this_atom,trial)%rp(3)
   END DO
 
 ! IF ( .NOT. del_flag) THEN
-! write(*,*) these_atoms%rxp
-! write(*,*) these_atoms%rzp
-! write(*,*) these_atoms%ryp
+! write(*,*) these_atoms%rp(1)
+! write(*,*) these_atoms%rp(3)
+! write(*,*) these_atoms%rp(2)
 ! NR: Now we have place the first fragment.
 ! write(*,*)
 !	End if
@@ -1528,9 +1528,9 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
 !  INTEGER :: M_XYZ_unit
 
 
-  config_list(:)%rxp = 0.0_DP
-  config_list(:)%ryp = 0.0_DP
-  config_list(:)%rzp = 0.0_DP
+  config_list(:)%rp(1) = 0.0_DP
+  config_list(:)%rp(2) = 0.0_DP
+  config_list(:)%rp(3) = 0.0_DP
   dumcount = 0
   e_prev = e_total
   weight(:) = 0.0_DP
@@ -1555,9 +1555,9 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
 
            these_atoms(this_atom)%exist = .TRUE.
 
-           config_list(this_atom)%rxp = these_atoms(this_atom)%rxp
-           config_list(this_atom)%ryp = these_atoms(this_atom)%ryp
-           config_list(this_atom)%rzp = these_atoms(this_atom)%rzp
+           config_list(this_atom)%rp(1) = these_atoms(this_atom)%rp(1)
+           config_list(this_atom)%rp(2) = these_atoms(this_atom)%rp(2)
+           config_list(this_atom)%rp(3) = these_atoms(this_atom)%rp(3)
         END DO
 
         ! For a ring fragment, calculate the fragment intramolecular energy
@@ -1592,15 +1592,15 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
            these_atoms(this_atom)%exist = .TRUE.
            nl = (frag_position_library(frag_type)-1) + &
                         frag_list(ifrag,is)%natoms*(this_fragment-1)+ j
-           config_list(this_atom)%rxp = &
-                 library_coords(nl)%rxp
-              !frag_coords(j,this_fragment,frag_type)%rxp
-           config_list(this_atom)%ryp = &
-                 library_coords(nl)%ryp
-              !frag_coords(j,this_fragment,frag_type)%ryp
-           config_list(this_atom)%rzp = &
-                 library_coords(nl)%rzp
-              !frag_coords(j,this_fragment,frag_type)%rzp
+           config_list(this_atom)%rp(1) = &
+                 library_coords(nl)%rp(1)
+              !frag_coords(j,this_fragment,frag_type)%rp(1)
+           config_list(this_atom)%rp(2) = &
+                 library_coords(nl)%rp(2)
+              !frag_coords(j,this_fragment,frag_type)%rp(2)
+           config_list(this_atom)%rp(3) = &
+                 library_coords(nl)%rp(3)
+              !frag_coords(j,this_fragment,frag_type)%rp(3)
         END DO
      
         ! For a ring fragment, access the fragment intramolecular energy 
@@ -1719,20 +1719,20 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
 
      ! for ifrag
 
-     vec1(1) = config_list(anchor_ifrag)%rxp &
-             - config_list(anchor_frag_connect)%rxp
-     vec1(2) = config_list(anchor_ifrag)%ryp &
-             - config_list(anchor_frag_connect)%ryp
-     vec1(3) = config_list(anchor_ifrag)%rzp &
-             - config_list(anchor_frag_connect)%rzp
+     vec1(1) = config_list(anchor_ifrag)%rp(1) &
+             - config_list(anchor_frag_connect)%rp(1)
+     vec1(2) = config_list(anchor_ifrag)%rp(2) &
+             - config_list(anchor_frag_connect)%rp(2)
+     vec1(3) = config_list(anchor_ifrag)%rp(3) &
+             - config_list(anchor_frag_connect)%rp(3)
 
 
-     vec2(1) = config_list(atom_ifrag)%rxp &
-             - config_list(anchor_frag_connect)%rxp
-     vec2(2) = config_list(atom_ifrag)%ryp &
-             - config_list(anchor_frag_connect)%ryp
-     vec2(3) = config_list(atom_ifrag)%rzp &
-             - config_list(anchor_frag_connect)%rzp
+     vec2(1) = config_list(atom_ifrag)%rp(1) &
+             - config_list(anchor_frag_connect)%rp(1)
+     vec2(2) = config_list(atom_ifrag)%rp(2) &
+             - config_list(anchor_frag_connect)%rp(2)
+     vec2(3) = config_list(atom_ifrag)%rp(3) &
+             - config_list(anchor_frag_connect)%rp(3)
        
 
      CALL Get_Aligner_Hanger(vec1, vec2, aligner_ifrag,hanger_ifrag)
@@ -1742,23 +1742,23 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
      IF ( .NOT. del_flag) THEN
         
         
-        vec1(1) = these_atoms(anchor_ifrag)%rxp - &
-             these_atoms(anchor_frag_connect)%rxp
+        vec1(1) = these_atoms(anchor_ifrag)%rp(1) - &
+             these_atoms(anchor_frag_connect)%rp(1)
         
-        vec1(2) = these_atoms(anchor_ifrag)%ryp - &
-             these_atoms(anchor_frag_connect)%ryp
+        vec1(2) = these_atoms(anchor_ifrag)%rp(2) - &
+             these_atoms(anchor_frag_connect)%rp(2)
         
-        vec1(3) = these_atoms(anchor_ifrag)%rzp - &
-             these_atoms(anchor_frag_connect)%rzp
+        vec1(3) = these_atoms(anchor_ifrag)%rp(3) - &
+             these_atoms(anchor_frag_connect)%rp(3)
         
-        vec2(1) = these_atoms(atom_frag_connect)%rxp - &
-             these_atoms(anchor_frag_connect)%rxp
+        vec2(1) = these_atoms(atom_frag_connect)%rp(1) - &
+             these_atoms(anchor_frag_connect)%rp(1)
         
-        vec2(2) = these_atoms(atom_frag_connect)%ryp - &
-             these_atoms(anchor_frag_connect)%ryp
+        vec2(2) = these_atoms(atom_frag_connect)%rp(2) - &
+             these_atoms(anchor_frag_connect)%rp(2)
         
-        vec2(3) = these_atoms(atom_frag_connect)%rzp - &
-             these_atoms(anchor_frag_connect)%rzp     
+        vec2(3) = these_atoms(atom_frag_connect)%rp(3) - &
+             these_atoms(anchor_frag_connect)%rp(3)     
      
 
         CALL Get_Aligner_Hanger(vec1, vec2, aligner_frag_connect,hanger_frag_connect)
@@ -1771,29 +1771,29 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
      ! Apply aligner of ifrag
      
 
-     tempx = config_list(anchor_frag_connect)%rxp
-     tempy = config_list(anchor_frag_connect)%ryp
-     tempz = config_list(anchor_frag_connect)%rzp
+     tempx = config_list(anchor_frag_connect)%rp(1)
+     tempy = config_list(anchor_frag_connect)%rp(2)
+     tempz = config_list(anchor_frag_connect)%rp(3)
      
-     config_list(:)%rxp = config_list(:)%rxp - tempx
-     config_list(:)%ryp = config_list(:)%ryp - tempy
-     config_list(:)%rzp = config_list(:)%rzp - tempz
+     config_list(:)%rp(1) = config_list(:)%rp(1) - tempx
+     config_list(:)%rp(2) = config_list(:)%rp(2) - tempy
+     config_list(:)%rp(3) = config_list(:)%rp(3) - tempz
          
      DO j = 1, frag_list(ifrag,is)%natoms
         
         this_atom = frag_list(ifrag,is)%atoms(j)
         
-        tempx = config_list(this_atom)%rxp
-        tempy = config_list(this_atom)%ryp
-        tempz = config_list(this_atom)%rzp
+        tempx = config_list(this_atom)%rp(1)
+        tempy = config_list(this_atom)%rp(2)
+        tempz = config_list(this_atom)%rp(3)
         
-        config_list(this_atom)%rxp = tempx * aligner_ifrag(1,1) &
+        config_list(this_atom)%rp(1) = tempx * aligner_ifrag(1,1) &
                                    + tempy * aligner_ifrag(1,2) &
                                    + tempz * aligner_ifrag(1,3)
-        config_list(this_atom)%ryp = tempx * aligner_ifrag(2,1) &
+        config_list(this_atom)%rp(2) = tempx * aligner_ifrag(2,1) &
                                    + tempy * aligner_ifrag(2,2) &
                                    + tempz * aligner_ifrag(2,3)
-        config_list(this_atom)%rzp = tempx * aligner_ifrag(3,1) &
+        config_list(this_atom)%rp(3) = tempx * aligner_ifrag(3,1) &
                                    + tempy * aligner_ifrag(3,2) &
                                    + tempz * aligner_ifrag(3,3)
      END DO
@@ -1834,20 +1834,20 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
      DO 
 !     DO ii = 1, kappa_dih
 
-        config_temp_list(:,ii)%rxp  = config_list(:)%rxp
-        config_temp_list(:,ii)%ryp  = 0.0_DP
-        config_temp_list(:,ii)%rzp  = 0.0_DP
+        config_temp_list(:,ii)%rp(1)  = config_list(:)%rp(1)
+        config_temp_list(:,ii)%rp(2)  = 0.0_DP
+        config_temp_list(:,ii)%rp(3)  = 0.0_DP
         ! Loop over atoms
         DO j = 1, frag_list(ifrag,is)%natoms
            
            this_atom = frag_list(ifrag,is)%atoms(j)
            
-           tempx = config_list(this_atom)%rxp
-           tempy = config_list(this_atom)%ryp
-           tempz = config_list(this_atom)%rzp
-           config_temp_list(this_atom,ii)%ryp =  DCOS(theta) * tempy &
+           tempx = config_list(this_atom)%rp(1)
+           tempy = config_list(this_atom)%rp(2)
+           tempz = config_list(this_atom)%rp(3)
+           config_temp_list(this_atom,ii)%rp(2) =  DCOS(theta) * tempy &
                                               +  DSIN(theta) * tempz
-           config_temp_list(this_atom,ii)%rzp = -DSIN(theta) * tempy &
+           config_temp_list(this_atom,ii)%rp(3) = -DSIN(theta) * tempy &
                                               +  DCOS(theta) * tempz
 
         END DO
@@ -1859,19 +1859,19 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
            
            this_atom = frag_list(ifrag,is)%atoms(j)
            
-           tempx = config_temp_list(this_atom,ii)%rxp
-           tempy = config_temp_list(this_atom,ii)%ryp
-           tempz = config_temp_list(this_atom,ii)%rzp
+           tempx = config_temp_list(this_atom,ii)%rp(1)
+           tempy = config_temp_list(this_atom,ii)%rp(2)
+           tempz = config_temp_list(this_atom,ii)%rp(3)
            
-           config_temp_list(this_atom,ii)%rxp = tempx*hanger_frag_connect(1,1) &
+           config_temp_list(this_atom,ii)%rp(1) = tempx*hanger_frag_connect(1,1) &
                                               + tempy*hanger_frag_connect(1,2) &
                                               + tempz*hanger_frag_connect(1,3)
            
-           config_temp_list(this_atom,ii)%ryp = tempx*hanger_frag_connect(2,1) &
+           config_temp_list(this_atom,ii)%rp(2) = tempx*hanger_frag_connect(2,1) &
                                               + tempy*hanger_frag_connect(2,2) &
                                               + tempz*hanger_frag_connect(2,3) 
            
-           config_temp_list(this_atom,ii)%rzp = tempx*hanger_frag_connect(3,1) &
+           config_temp_list(this_atom,ii)%rp(3) = tempx*hanger_frag_connect(3,1) &
                                               + tempy*hanger_frag_connect(3,2) &
                                               + tempz*hanger_frag_connect(3,3)
 
@@ -1879,26 +1879,26 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
            IF ( this_atom /= anchor_ifrag) THEN
               IF ( this_atom /= anchor_frag_connect) THEN
                  
-                 config_temp_list(this_atom,ii)%rxp = &
-                      config_temp_list(this_atom,ii)%rxp + &
-                      these_atoms(anchor_frag_connect)%rxp
+                 config_temp_list(this_atom,ii)%rp(1) = &
+                      config_temp_list(this_atom,ii)%rp(1) + &
+                      these_atoms(anchor_frag_connect)%rp(1)
                  
-                 config_temp_list(this_atom,ii)%ryp = &
-                      config_temp_list(this_atom,ii)%ryp + &
-                      these_atoms(anchor_frag_connect)%ryp
+                 config_temp_list(this_atom,ii)%rp(2) = &
+                      config_temp_list(this_atom,ii)%rp(2) + &
+                      these_atoms(anchor_frag_connect)%rp(2)
                  
-                 config_temp_list(this_atom,ii)%rzp = &
-                      config_temp_list(this_atom,ii)%rzp + &
-                      these_atoms(anchor_frag_connect)%rzp
+                 config_temp_list(this_atom,ii)%rp(3) = &
+                      config_temp_list(this_atom,ii)%rp(3) + &
+                      these_atoms(anchor_frag_connect)%rp(3)
                  
-                 these_atoms(this_atom)%rxp = &
-                      config_temp_list(this_atom,ii)%rxp 
+                 these_atoms(this_atom)%rp(1) = &
+                      config_temp_list(this_atom,ii)%rp(1) 
                  
-                 these_atoms(this_atom)%ryp = &
-                      config_temp_list(this_atom,ii)%ryp 
+                 these_atoms(this_atom)%rp(2) = &
+                      config_temp_list(this_atom,ii)%rp(2) 
                  
-                 these_atoms(this_atom)%rzp = &
-                      config_temp_list(this_atom,ii)%rzp  
+                 these_atoms(this_atom)%rp(3) = &
+                      config_temp_list(this_atom,ii)%rp(3)  
 
               END IF
            END IF
@@ -1930,12 +1930,12 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
            
                 this_atom = atom_id(j)
            
-                these_atoms(this_atom)%rxp = &
-                   config_temp_list(this_atom,ii)%rxp 
-                these_atoms(this_atom)%ryp = &
-                   config_temp_list(this_atom,ii)%ryp 
-                these_atoms(this_atom)%rzp = &
-                   config_temp_list(this_atom,ii)%rzp
+                these_atoms(this_atom)%rp(1) = &
+                   config_temp_list(this_atom,ii)%rp(1) 
+                these_atoms(this_atom)%rp(2) = &
+                   config_temp_list(this_atom,ii)%rp(2) 
+                these_atoms(this_atom)%rp(3) = &
+                   config_temp_list(this_atom,ii)%rp(3)
                 IF (l_sectors .AND. widom_active) THEN
                         IF (check_overlap(this_atom,this_im,is)) THEN
                                IF (ii > 1) THEN
@@ -2038,9 +2038,9 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
 !           WRITE(M_XYZ_unit,*) &
 !              TRIM(nonbond_list(this_atom,is)%element) // &
 !              TRIM(int_to_string(ii)), & 
-!              these_atoms(this_atom)%rxp, &
-!              these_atoms(this_atom)%ryp, &
-!              these_atoms(this_atom)%rzp
+!              these_atoms(this_atom)%rp(1), &
+!              these_atoms(this_atom)%rp(2), &
+!              these_atoms(this_atom)%rp(3)
 !        END DO
 !        IF (ii==1) THEN
 !           WRITE(*,'(A,X,I5)'), 'i_mcstep', i_mcstep
@@ -2105,12 +2105,12 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
         
         IF (this_atom /= anchor_ifrag) THEN
            IF (this_atom /= anchor_frag_connect) THEN
-              these_atoms(this_atom)%rxp = &
-                 config_temp_list(this_atom,trial)%rxp
-              these_atoms(this_atom)%ryp = &
-                 config_temp_list(this_atom,trial)%ryp
-              these_atoms(this_atom)%rzp = &
-                 config_temp_list(this_atom,trial)%rzp
+              these_atoms(this_atom)%rp(1) = &
+                 config_temp_list(this_atom,trial)%rp(1)
+              these_atoms(this_atom)%rp(2) = &
+                 config_temp_list(this_atom,trial)%rp(2)
+              these_atoms(this_atom)%rp(3) = &
+                 config_temp_list(this_atom,trial)%rp(3)
            END IF
         END IF
      END DO
@@ -2241,12 +2241,12 @@ SUBROUTINE Single_Fragment_Regrowth(this_im,is)
       this_atom = frag_list(1,is)%atoms(i)
       nl = (frag_position_library(frag_type)-1) + &
                                            frag_list(1,is)%natoms*(this_fragment -1) + i      
-      these_atoms(this_atom)%rxp =  library_coords(nl)%rxp
-                                             !frag_coords(i,this_fragment,frag_type)%rxp
-      these_atoms(this_atom)%ryp =  library_coords(nl)%ryp
-                                             !frag_coords(i,this_fragment,frag_type)%ryp
-      these_atoms(this_atom)%rzp =  library_coords(nl)%rzp
-                                              !frag_coords(i,this_fragment,frag_type)%rzp
+      these_atoms(this_atom)%rp(1) =  library_coords(nl)%rp(1)
+                                             !frag_coords(i,this_fragment,frag_type)%rp(1)
+      these_atoms(this_atom)%rp(2) =  library_coords(nl)%rp(2)
+                                             !frag_coords(i,this_fragment,frag_type)%rp(2)
+      these_atoms(this_atom)%rp(3) =  library_coords(nl)%rp(3)
+                                              !frag_coords(i,this_fragment,frag_type)%rp(3)
    END DO
 
 
@@ -2267,14 +2267,14 @@ SUBROUTINE Single_Fragment_Regrowth(this_im,is)
    DO i = 1, frag_list(1,is)%natoms
       this_atom = frag_list(1,is)%atoms(i)
 
-      these_atoms(this_atom)%rxp = these_atoms(this_atom)%rxp + &
-           this_molecule%xcom_old - this_molecule%xcom
+      these_atoms(this_atom)%rp(1) = these_atoms(this_atom)%rp(1) + &
+           this_molecule%rcom_old(1) - this_molecule%rcom(1)
 
-      these_atoms(this_atom)%ryp = these_atoms(this_atom)%ryp + &
-           this_molecule%ycom_old - this_molecule%ycom
+      these_atoms(this_atom)%rp(2) = these_atoms(this_atom)%rp(2) + &
+           this_molecule%rcom_old(2) - this_molecule%rcom(2)
 
-      these_atoms(this_atom)%rzp = these_atoms(this_atom)%rzp + &
-           this_molecule%zcom_old - this_molecule%zcom
+      these_atoms(this_atom)%rp(3) = these_atoms(this_atom)%rp(3) + &
+           this_molecule%rcom_old(3) - this_molecule%rcom(3)
 
    END DO
    CALL Get_COM(this_im,is)

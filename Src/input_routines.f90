@@ -385,7 +385,7 @@ SUBROUTINE Get_Pair_Style
 !                 This will alert the code if pair interaction energy arrays
 !                 need to be stored.
 !******************************************************************************
-  INTEGER :: ierr,line_nbr,nbr_entries, iassign, ibox, k
+  INTEGER :: ierr,line_nbr,nbr_entries, iassign, ibox, k, is
   CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
   REAL(DP), ALLOCATABLE :: ewald_tol(:)
@@ -853,6 +853,10 @@ SUBROUTINE Get_Pair_Style
            IF (int_sim_type == sim_pregen) THEN
                    WRITE(logunit,'(A)') 'Pair interaction energy array storage is not supported for pregenerated trajectories'
            ELSE
+                   species_list(1)%superlocate_base = 0
+                   DO is = 2, nspecies
+                        species_list(is)%superlocate_base = SUM(max_molecules(1:is-1))
+                   END DO
                    l_pair_nrg = .TRUE.
                    WRITE(logunit,'(A)') 'Pair interaction energy array storage enabled'
            END IF
@@ -3282,12 +3286,12 @@ SUBROUTINE Get_Fragment_Coords
 
   ! Load coordinates
 
-  library_coords(:)%rxp = 0.0_DP
-  library_coords(:)%ryp = 0.0_DP
-  library_coords(:)%rzp = 0.0_DP
-  !frag_library(:)%frag_coords(:,:)%rxp = 0.0_DP
-  !frag_library(:)%frag_coords(:,:)%ryp = 0.0_DP
-  ! frag_library(:)%frag_coords(:,:)%rzp = 0.0_DP
+  library_coords(:)%rp(1) = 0.0_DP
+  library_coords(:)%rp(2) = 0.0_DP
+  library_coords(:)%rp(3) = 0.0_DP
+  !frag_library(:)%frag_coords(:,:)%rp(1) = 0.0_DP
+  !frag_library(:)%frag_coords(:,:)%rp(2) = 0.0_DP
+  ! frag_library(:)%frag_coords(:,:)%rp(3) = 0.0_DP
 
 
 
@@ -3316,14 +3320,14 @@ SUBROUTINE Get_Fragment_Coords
               DO ia = 1, frag_list(ifrag,is)%natoms
 
                  READ(10,*) symbol, x_this, y_this, z_this
-      !           frag_library(ifrag_type)%frag_coords(ia,iconfig)%rxp = x_this
-      !           frag_library(ifrag_type)%frag_coords(ia,iconfig)%ryp = y_this
-      !           frag_library(ifrag_type)%frag_coords(ia,iconfig)%rzp = z_this
+      !           frag_library(ifrag_type)%frag_coords(ia,iconfig)%rp(1) = x_this
+      !           frag_library(ifrag_type)%frag_coords(ia,iconfig)%rp(2) = y_this
+      !           frag_library(ifrag_type)%frag_coords(ia,iconfig)%rp(3) = z_this
                   nl = (frag_position_library(ifrag_type)-1)+ &
                             (iconfig-1)*natoms_this_frag(ifrag_type) +ia
-                  library_coords(nl)%rxp = x_this
-                  library_coords(nl)%ryp = y_this
-                  library_coords(nl)%rzp = z_this
+                  library_coords(nl)%rp(1) = x_this
+                  library_coords(nl)%rp(2) = y_this
+                  library_coords(nl)%rp(3) = z_this
               END DO
            END DO
 

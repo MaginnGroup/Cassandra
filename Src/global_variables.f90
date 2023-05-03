@@ -585,7 +585,7 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: x_lat, y_lat, z_lat
 INTEGER :: n_lat_atoms
 
 !!! Pair_Nrg_Variables
-REAL(DP), ALLOCATABLE :: pair_vdw_temp(:), pair_qq_temp(:)
+REAL(DP), ALLOCATABLE :: pair_vdw_temp(:,:), pair_qq_temp(:,:)
 
 !!!! DSF variables
 REAL(DP), ALLOCATABLE, DIMENSION(:) :: alpha_dsf
@@ -694,8 +694,10 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   LOGICAL, PARAMETER :: l_vectorized = .TRUE.
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: nlive
 
-  REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE :: ppvdwp_table
+  REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE :: ppvdwp_table, ppvdwp_table2
   TYPE(VdW256), DIMENSION(:,:,:), ALLOCATABLE :: ppvdwp_list
+
+  LOGICAL, PARAMETER :: l_not_all_live = .FALSE.
 
 END MODULE Global_Variables
 

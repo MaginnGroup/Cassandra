@@ -96,13 +96,13 @@ SUBROUTINE Chempot(this_box,is)
 
   ELSE
 
-     molecule_list(alive,is)%xcom = species_list(is)%xcom
-     molecule_list(alive,is)%ycom = species_list(is)%ycom
-     molecule_list(alive,is)%zcom = species_list(is)%zcom
+     molecule_list(alive,is)%rcom(1) = species_list(is)%rcom(1)
+     molecule_list(alive,is)%rcom(2) = species_list(is)%rcom(2)
+     molecule_list(alive,is)%rcom(3) = species_list(is)%rcom(3)
 
-     atom_list(:,alive,is)%rxp = init_list(:,1,is)%rxp
-     atom_list(:,alive,is)%ryp = init_list(:,1,is)%ryp
-     atom_list(:,alive,is)%rzp = init_list(:,1,is)%rzp
+     atom_list(:,alive,is)%rp(1) = init_list(:,1,is)%rp(1)
+     atom_list(:,alive,is)%rp(2) = init_list(:,1,is)%rp(2)
+     atom_list(:,alive,is)%rp(3) = init_list(:,1,is)%rp(3)
 
      atom_list(:,alive,is)%exist = .TRUE.
 
@@ -110,19 +110,19 @@ SUBROUTINE Chempot(this_box,is)
 
      IF ( box_list(this_box)%int_box_shape == int_cubic ) THEN
  
-        molecule_list(alive,is)%xcom = (rranf() - 0.5_DP) * box_list(this_box)%length(1,1)
-        molecule_list(alive,is)%ycom = (rranf() - 0.5_DP) * box_list(this_box)%length(2,2)
-        molecule_list(alive,is)%zcom = (rranf() - 0.5_DP) * box_list(this_box)%length(3,3)
+        molecule_list(alive,is)%rcom(1) = (rranf() - 0.5_DP) * box_list(this_box)%length(1,1)
+        molecule_list(alive,is)%rcom(2) = (rranf() - 0.5_DP) * box_list(this_box)%length(2,2)
+        molecule_list(alive,is)%rcom(3) = (rranf() - 0.5_DP) * box_list(this_box)%length(3,3)
 
      END IF
 
-     dx = molecule_list(alive,is)%xcom - species_list(is)%xcom
-     dy = molecule_list(alive,is)%ycom - species_list(is)%ycom
-     dz = molecule_list(alive,is)%zcom - species_list(is)%zcom
+     dx = molecule_list(alive,is)%rcom(1) - species_list(is)%rcom(1)
+     dy = molecule_list(alive,is)%rcom(2) - species_list(is)%rcom(2)
+     dz = molecule_list(alive,is)%rcom(3) - species_list(is)%rcom(3)
 
-     atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp + dx
-     atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp + dy
-     atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp + dz
+     atom_list(:,alive,is)%rp(1) = atom_list(:,alive,is)%rp(1) + dx
+     atom_list(:,alive,is)%rp(2) = atom_list(:,alive,is)%rp(2) + dy
+     atom_list(:,alive,is)%rp(3) = atom_list(:,alive,is)%rp(3) + dz
 
   END IF
 

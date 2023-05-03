@@ -106,9 +106,9 @@ CONTAINS
                                 AtomLoop:DO ia = 1, natoms(is)
                                         atom_ptr => atom_list(ia,im,is)
                                         IF (.NOT. atom_ptr%exist) CYCLE AtomLoop
-                                        cp(1) = atom_ptr%rxp
-                                        cp(2) = atom_ptr%ryp
-                                        cp(3) = atom_ptr%rzp
+                                        cp(1) = atom_ptr%rp(1)
+                                        cp(2) = atom_ptr%rp(2)
+                                        cp(3) = atom_ptr%rp(3)
                                         atom_ptr%ci = IDNINT(MATMUL(cell_length_inv_ptr,cp))
                                         DO i = 1,3
                                                 IF (atom_ptr%ci(i) > sectorbound(i,ibox)) THEN
@@ -201,14 +201,14 @@ CONTAINS
           !
           check_overlap = .TRUE.
           IF (widom_active) THEN
-                  cp(1) = widom_atoms(ia)%rxp
-                  cp(2) = widom_atoms(ia)%ryp
-                  cp(3) = widom_atoms(ia)%rzp
+                  cp(1) = widom_atoms(ia)%rp(1)
+                  cp(2) = widom_atoms(ia)%rp(2)
+                  cp(3) = widom_atoms(ia)%rp(3)
                   this_box = widom_molecule%which_box
           ELSE
-                  cp(1) = atom_list(ia,im,is)%rxp
-                  cp(2) = atom_list(ia,im,is)%ryp
-                  cp(3) = atom_list(ia,im,is)%rzp
+                  cp(1) = atom_list(ia,im,is)%rp(1)
+                  cp(2) = atom_list(ia,im,is)%rp(2)
+                  cp(3) = atom_list(ia,im,is)%rp(3)
                   this_box = molecule_list(im,is)%which_box
           END IF
           cell_coords = IDNINT(MATMUL(cell_length_inv(:,:,this_box),cp))
@@ -233,9 +233,9 @@ CONTAINS
                                 DO ia_cell = 1, sector_n_atoms(secind)
                                         sector_atom_ID => sector_atoms(ia_cell,secind,:)
                                         atom_ptr => atom_list(sector_atom_ID(1),sector_atom_ID(2),sector_atom_ID(3))
-                                        dxp = atom_ptr%rxp - cp(1)
-                                        dyp = atom_ptr%ryp - cp(2)
-                                        dzp = atom_ptr%rzp - cp(3)
+                                        dxp = atom_ptr%rp(1) - cp(1)
+                                        dyp = atom_ptr%rp(2) - cp(2)
+                                        dzp = atom_ptr%rp(3) - cp(3)
                                         CALL Minimum_Image_Separation(this_box,dxp,dyp,dzp,dx,dy,dz)
                                         IF (read_atompair_rminsq) THEN
                                                 rminsq = rminsq_ptr( &
@@ -324,9 +324,9 @@ CONTAINS
                                 AtomLoop:DO ia = 1, natoms(is)
                                         atom_ptr => atom_list(ia,im,is)
                                         IF (.NOT. atom_ptr%exist) CYCLE AtomLoop
-                                        cp(1) = atom_ptr%rxp
-                                        cp(2) = atom_ptr%ryp
-                                        cp(3) = atom_ptr%rzp
+                                        cp(1) = atom_ptr%rp(1)
+                                        cp(2) = atom_ptr%rp(2)
+                                        cp(3) = atom_ptr%rp(3)
                                         atom_ptr%ci_cbmc = IDNINT(MATMUL(cell_length_inv_ptr,cp))
                                         DO i = 1,3
                                                 IF (atom_ptr%ci_cbmc(i) > sectorbound_cbmc(i,ibox)) THEN
@@ -476,9 +476,9 @@ CONTAINS
                                 AtomLoop:DO ia = 1, natoms(is)
                                         atom_ptr => atom_list(ia,im,is)
                                         IF (.NOT. atom_ptr%exist) CYCLE AtomLoop
-                                        cp(1) = atom_ptr%rxp
-                                        cp(2) = atom_ptr%ryp
-                                        cp(3) = atom_ptr%rzp
+                                        cp(1) = atom_ptr%rp(1)
+                                        cp(2) = atom_ptr%rp(2)
+                                        cp(3) = atom_ptr%rp(3)
                                         atom_ptr%ci_full = IDNINT(MATMUL(cell_length_inv_ptr,cp))
                                         DO i = 1,3
                                                 IF (atom_ptr%ci_full(i) > sectorbound_full(i,ibox)) THEN

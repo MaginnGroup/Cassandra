@@ -127,6 +127,9 @@ MODULE Type_Definitions
      !!Atompair_nrg_table index bases
      INTEGER :: solute_base, solvent_base, wsolute_base
 
+     ! Pair energy array index base
+     INTEGER :: superlocate_base
+
   END TYPE Species_Class
   !****************************************************************************
 
@@ -138,6 +141,8 @@ MODULE Type_Definitions
 
      ! The molecule list will have dimensions (max_molecules,nspecies)
 
+     REAL(DP), DIMENSION(4) :: rcom, rcom_old
+
      ! What kind of molecule is this? normal, fractional, fixed, etc.
      ! Note that the following integers will be defined for the type
      ! int_normal = 0
@@ -147,22 +152,27 @@ MODULE Type_Definitions
      INTEGER :: rx_num
 
      ! for open system and multi-box simulations (GEMC, parallel tempering)
-     LOGICAL :: live
-     LOGICAL :: inside
      INTEGER :: which_box
+     LOGICAL :: live
+
+     REAL(DP) :: unused_dummy1, unused_dummy2 ! added for padding derived type
 
      ! also include com information for each of the molecules.
      ! com and euler angles refer to the x,y and z com coordinates
      ! and 1, 2 and 3 euler angles of the molecule. The suffix
      ! old denotes old coordinates.
      ! frac is the fractional scaling parameter for the molecule
-     REAL(DP)  :: xcom, ycom, zcom, euler1, euler2, euler3
-     REAL(DP)  :: xcom_old, ycom_old, zcom_old, euler1_old,euler2_old,euler3_old
+     ! xcom, ycom, and zcom are now rcom(1), rcom(2), and rcom(3), respectively
+     ! likewise for with the "_old" suffix
+     REAL(DP)  :: euler1, euler2, euler3
+     REAL(DP)  :: euler1_old,euler2_old,euler3_old
      REAL(DP)  :: frac
      ! This variable records the maximum distance of any psuedo atom from its
      ! COM. This is used to speed up energy calculations.
 
-     REAL(DP) :: max_dcom, max_dcom_old, min_dcom
+     ! max_dcom is now rcom(4) and max_dcom_old is now rcom_old(4)
+
+     REAL(DP) :: min_dcom
 
 
 
@@ -209,9 +219,11 @@ MODULE Type_Definitions
 
      ! atom_list has dimensions (natoms, max_molecules, nspecies)
 
-     REAL(DP) :: rxp, ryp, rzp
+     REAL(DP), DIMENSION(3) :: rp, rp_old
+
+     !REAL(DP) :: rxp, ryp, rzp
      REAL(DP) :: rxp_nls, ryp_nls, rzp_nls  ! The starting positions for the neighbor list
-     REAL(DP) :: rxp_old, ryp_old, rzp_old
+     !REAL(DP) :: rxp_old, ryp_old, rzp_old
      INTEGER :: ci(3), ci_cbmc(3), ci_full(3) ! the integer coordinates of the cell containing this atom
      LOGICAL :: exist
 
@@ -581,7 +593,7 @@ MODULE Type_Definitions
 !-------------------------------------------------------------------------------------------------
 
  TYPE Library_Coords_Class
-    REAL(DP) :: rxp, ryp, rzp
+    REAL(DP) :: rp(3)
  END TYPE Library_Coords_Class
 
 !-------------------------------------------------------------------------------------------------

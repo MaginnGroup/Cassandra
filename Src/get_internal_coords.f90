@@ -163,9 +163,9 @@ SUBROUTINE Get_Bond_Length(this_bond,im,is,r21)
 
 ! Calculate vectors, bond lenth
 
-   rx21 = these_atoms(atom1)%rxp - these_atoms(atom2)%rxp
-   ry21 = these_atoms(atom1)%ryp - these_atoms(atom2)%ryp
-   rz21 = these_atoms(atom1)%rzp - these_atoms(atom2)%rzp
+   rx21 = these_atoms(atom1)%rp(1) - these_atoms(atom2)%rp(1)
+   ry21 = these_atoms(atom1)%rp(2) - these_atoms(atom2)%rp(2)
+   rz21 = these_atoms(atom1)%rp(3) - these_atoms(atom2)%rp(3)
 
 !   this_box = molecule_list(im,is)%which_box
 !   IF (l_cubic(this_box) == .FALSE.) THEN
@@ -229,15 +229,15 @@ SUBROUTINE Get_Bond_Length(this_bond,im,is,r21)
    
 !Vector r21 points from atom 1 to atom 2. Below, the components of this vector are calculated.
 
-   rx21 = these_atoms(atom2)%rxp - these_atoms(atom1)%rxp
-   ry21 = these_atoms(atom2)%ryp - these_atoms(atom1)%ryp
-   rz21 = these_atoms(atom2)%rzp - these_atoms(atom1)%rzp
+   rx21 = these_atoms(atom2)%rp(1) - these_atoms(atom1)%rp(1)
+   ry21 = these_atoms(atom2)%rp(2) - these_atoms(atom1)%rp(2)
+   rz21 = these_atoms(atom2)%rp(3) - these_atoms(atom1)%rp(3)
                                                                                    
 ! Vector r32 points from atom 2 to atom 3. Below the components are calculated.
 
-   rx32 = these_atoms(atom3)%rxp - these_atoms(atom2)%rxp
-   ry32 = these_atoms(atom3)%ryp - these_atoms(atom2)%ryp
-   rz32 = these_atoms(atom3)%rzp - these_atoms(atom2)%rzp
+   rx32 = these_atoms(atom3)%rp(1) - these_atoms(atom2)%rp(1)
+   ry32 = these_atoms(atom3)%rp(2) - these_atoms(atom2)%rp(2)
+   rz32 = these_atoms(atom3)%rp(3) - these_atoms(atom2)%rp(3)
    
 !   this_box = molecule_list(im,is)%which_box
 !   IF (l_cubic(this_box) == .FALSE.) THEN
@@ -318,21 +318,21 @@ SUBROUTINE Get_Bond_Length(this_bond,im,is,r21)
 
 ! Vector r12 points from atom 2 to atom 1.  Below, the components of this vector are calculated.
 
-   rx12 = these_atoms(atom1)%rxp - these_atoms(atom2)%rxp
-   ry12 = these_atoms(atom1)%ryp - these_atoms(atom2)%ryp
-   rz12 = these_atoms(atom1)%rzp - these_atoms(atom2)%rzp
+   rx12 = these_atoms(atom1)%rp(1) - these_atoms(atom2)%rp(1)
+   ry12 = these_atoms(atom1)%rp(2) - these_atoms(atom2)%rp(2)
+   rz12 = these_atoms(atom1)%rp(3) - these_atoms(atom2)%rp(3)
    
 ! Vector r32 points from atom 2 to atom 3.  Below, the components of this vector are calculated.
 
-   rx32 = these_atoms(atom3)%rxp - these_atoms(atom2)%rxp
-   ry32 = these_atoms(atom3)%ryp - these_atoms(atom2)%ryp
-   rz32 = these_atoms(atom3)%rzp - these_atoms(atom2)%rzp
+   rx32 = these_atoms(atom3)%rp(1) - these_atoms(atom2)%rp(1)
+   ry32 = these_atoms(atom3)%rp(2) - these_atoms(atom2)%rp(2)
+   rz32 = these_atoms(atom3)%rp(3) - these_atoms(atom2)%rp(3)
 
 ! Vector r34 points from atom 4 to atom 3. Below the components of this vector are calculated.
 
-   rx34 = these_atoms(atom3)%rxp - these_atoms(atom4)%rxp
-   ry34 = these_atoms(atom3)%ryp - these_atoms(atom4)%ryp
-   rz34 = these_atoms(atom3)%rzp - these_atoms(atom4)%rzp
+   rx34 = these_atoms(atom3)%rp(1) - these_atoms(atom4)%rp(1)
+   ry34 = these_atoms(atom3)%rp(2) - these_atoms(atom4)%rp(2)
+   rz34 = these_atoms(atom3)%rp(3) - these_atoms(atom4)%rp(3)
 
 
 !   this_box = molecule_list(im,is)%which_box
@@ -424,21 +424,21 @@ SUBROUTINE Get_Bond_Length(this_bond,im,is,r21)
 
 ! Vector r12 points from atom 2 to atom 1.  Below, the components of this vector are calculated.
 
-   rx12 = these_atoms(atom1)%rxp - these_atoms(atom2)%rxp
-   ry12 = these_atoms(atom1)%ryp - these_atoms(atom2)%ryp
-   rz12 = these_atoms(atom1)%rzp - these_atoms(atom2)%rzp
+   rx12 = these_atoms(atom1)%rp(1) - these_atoms(atom2)%rp(1)
+   ry12 = these_atoms(atom1)%rp(2) - these_atoms(atom2)%rp(2)
+   rz12 = these_atoms(atom1)%rp(3) - these_atoms(atom2)%rp(3)
    
 ! Vector r32 points from atom 2 to atom 3.  Below, the components of this vector are calculated.
 
-   rx32 = these_atoms(atom3)%rxp - these_atoms(atom2)%rxp
-   ry32 = these_atoms(atom3)%ryp - these_atoms(atom2)%ryp
-   rz32 = these_atoms(atom3)%rzp - these_atoms(atom2)%rzp
+   rx32 = these_atoms(atom3)%rp(1) - these_atoms(atom2)%rp(1)
+   ry32 = these_atoms(atom3)%rp(2) - these_atoms(atom2)%rp(2)
+   rz32 = these_atoms(atom3)%rp(3) - these_atoms(atom2)%rp(3)
 
 ! Vector r34 points from atom 4 to atom 3. Below the components of this vector are calculated.
 
-   rx34 = these_atoms(atom3)%rxp - these_atoms(atom4)%rxp
-   ry34 = these_atoms(atom3)%ryp - these_atoms(atom4)%ryp
-   rz34 = these_atoms(atom3)%rzp - these_atoms(atom4)%rzp
+   rx34 = these_atoms(atom3)%rp(1) - these_atoms(atom4)%rp(1)
+   ry34 = these_atoms(atom3)%rp(2) - these_atoms(atom4)%rp(2)
+   rz34 = these_atoms(atom3)%rp(3) - these_atoms(atom4)%rp(3)
 
 !   this_box = molecule_list(im,is)%which_box
 !   IF (l_cubic(this_box) == .FALSE.) THEN

@@ -147,37 +147,37 @@ CONTAINS
              
              DO i = 1,3
                 
-                s(i) = box_list_old%length_inv(i,1) * molecule_list(lm,is)%xcom + &
-                     box_list_old%length_inv(i,2) * molecule_list(lm,is)%ycom + &
-                     box_list_old%length_inv(i,3) * molecule_list(lm,is)%zcom
+                s(i) = box_list_old%length_inv(i,1) * molecule_list(lm,is)%rcom(1) + &
+                     box_list_old%length_inv(i,2) * molecule_list(lm,is)%rcom(2) + &
+                     box_list_old%length_inv(i,3) * molecule_list(lm,is)%rcom(3)
              END DO
              
              
              ! now obtain the new positions of COMs
              
              
-             molecule_list(lm,is)%xcom = box_list(this_box)%length(1,1) * s(1) &
+             molecule_list(lm,is)%rcom(1) = box_list(this_box)%length(1,1) * s(1) &
                   + box_list(this_box)%length(1,2) * s(2) + &
                     box_list(this_box)%length(1,3) * s(3)
              
-             molecule_list(lm,is)%ycom = box_list(this_box)%length(2,1) * s(1) &
+             molecule_list(lm,is)%rcom(2) = box_list(this_box)%length(2,1) * s(1) &
                   + box_list(this_box)%length(2,2) * s(2) + &
                     box_list(this_box)%length(2,3) * s(3)
              
-             molecule_list(lm,is)%zcom = box_list(this_box)%length(3,1) * s(1) &
+             molecule_list(lm,is)%rcom(3) = box_list(this_box)%length(3,1) * s(1) &
                   + box_list(this_box)%length(3,2) * s(2) + &
                     box_list(this_box)%length(3,3) * s(3)
              
              ! Obtain the new positions of atoms in this molecule
              
-             atom_list(:,lm,is)%rxp = atom_list(:,lm,is)%rxp + &
-                  molecule_list(lm,is)%xcom - molecule_list(lm,is)%xcom_old
+             atom_list(:,lm,is)%rp(1) = atom_list(:,lm,is)%rp(1) + &
+                  molecule_list(lm,is)%rcom(1) - molecule_list(lm,is)%rcom_old(1)
              
-             atom_list(:,lm,is)%ryp = atom_list(:,lm,is)%ryp + &
-                  molecule_list(lm,is)%ycom - molecule_list(lm,is)%ycom_old
+             atom_list(:,lm,is)%rp(2) = atom_list(:,lm,is)%rp(2) + &
+                  molecule_list(lm,is)%rcom(2) - molecule_list(lm,is)%rcom_old(2)
              
-             atom_list(:,lm,is)%rzp = atom_list(:,lm,is)%rzp + &
-                  molecule_list(lm,is)%zcom - molecule_list(lm,is)%zcom_old
+             atom_list(:,lm,is)%rp(3) = atom_list(:,lm,is)%rp(3) + &
+                  molecule_list(lm,is)%rcom(3) - molecule_list(lm,is)%rcom_old(3)
              
           END IF
           

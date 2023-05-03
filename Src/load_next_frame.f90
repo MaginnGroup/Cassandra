@@ -241,11 +241,11 @@ SUBROUTINE Load_Next_Frame(end_reached)
                         al_ptr => atom_list(1:natoms(is),sloc:eloc,is)
                         newshape(1) = natoms(is)
                         newshape(2) = nmols_to_read(is,ibox)
-                        al_ptr%rxp = &
+                        al_ptr%rp(1) = &
                                 RESHAPE(frame_xyz(aib(1):aib(2),1), newshape) 
-                        al_ptr%ryp = &
+                        al_ptr%rp(2) = &
                                 RESHAPE(frame_xyz(aib(1):aib(2),2), newshape) 
-                        al_ptr%rzp = &
+                        al_ptr%rp(3) = &
                                 RESHAPE(frame_xyz(aib(1):aib(2),3), newshape) 
                         al_ptr%exist = .TRUE.
                         !$OMP PARALLEL DO DEFAULT(SHARED) SCHEDULE(STATIC) &
@@ -262,26 +262,26 @@ SUBROUTINE Load_Next_Frame(end_reached)
                                 CALL Get_COM(this_im,is)
                                 CALL Compute_Max_Com_Distance(this_im,is)
 
-                                xcom_old = molecule_list(this_im,is)%xcom
-                                ycom_old = molecule_list(this_im,is)%ycom
-                                zcom_old = molecule_list(this_im,is)%zcom
+                                xcom_old = molecule_list(this_im,is)%rcom(1)
+                                ycom_old = molecule_list(this_im,is)%rcom(2)
+                                zcom_old = molecule_list(this_im,is)%rcom(3)
 
                                 ! Apply PBC
                                 CALL Apply_PBC_Anint(ibox,xcom_old,ycom_old,zcom_old, &
                                                           xcom_new, ycom_new, zcom_new)
 
                                 ! COM in the central simulation box
-                                molecule_list(this_im,is)%xcom = xcom_new
-                                molecule_list(this_im,is)%ycom = ycom_new
-                                molecule_list(this_im,is)%zcom = zcom_new
+                                molecule_list(this_im,is)%rcom(1) = xcom_new
+                                molecule_list(this_im,is)%rcom(2) = ycom_new
+                                molecule_list(this_im,is)%rcom(3) = zcom_new
 
                                 ! displace atomic coordinates
-                                atom_list(1:natoms(is),this_im,is)%rxp = &
-                                        atom_list(1:natoms(is),this_im,is)%rxp + xcom_new - xcom_old
-                                atom_list(1:natoms(is),this_im,is)%ryp = &
-                                        atom_list(1:natoms(is),this_im,is)%ryp + ycom_new - ycom_old
-                                atom_list(1:natoms(is),this_im,is)%rzp = &
-                                        atom_list(1:natoms(is),this_im,is)%rzp + zcom_new - zcom_old
+                                atom_list(1:natoms(is),this_im,is)%rp(1) = &
+                                        atom_list(1:natoms(is),this_im,is)%rp(1) + xcom_new - xcom_old
+                                atom_list(1:natoms(is),this_im,is)%rp(2) = &
+                                        atom_list(1:natoms(is),this_im,is)%rp(2) + ycom_new - ycom_old
+                                atom_list(1:natoms(is),this_im,is)%rp(3) = &
+                                        atom_list(1:natoms(is),this_im,is)%rp(3) + zcom_new - zcom_old
                         END DO
                         !$OMP END PARALLEL DO
                         nmols(is,ibox) = nmols(is,ibox) + nmols_to_read(is,ibox)
