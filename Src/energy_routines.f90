@@ -3918,6 +3918,7 @@ CONTAINS
                   !$OMP END DO
           END IF
           tcount_vec(ithread) = tcount
+          !$OMP BARRIER
           !$OMP SINGLE
           ctcount = 0
           DO j = 1, nthreads_used
