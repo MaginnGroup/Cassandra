@@ -518,6 +518,8 @@ USE Type_Definitions
 
   INTEGER :: imreplace, isreplace
 
+  INTEGER :: atompairdim
+
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! variables for the neighbor list
@@ -698,6 +700,8 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   TYPE(VdW256), DIMENSION(:,:,:), ALLOCATABLE :: ppvdwp_list
 
   LOGICAL, PARAMETER :: l_not_all_live = .FALSE.
+
+  INTEGER :: global_nthreads
 
 END MODULE Global_Variables
 

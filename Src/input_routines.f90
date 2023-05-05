@@ -853,10 +853,6 @@ SUBROUTINE Get_Pair_Style
            IF (int_sim_type == sim_pregen) THEN
                    WRITE(logunit,'(A)') 'Pair interaction energy array storage is not supported for pregenerated trajectories'
            ELSE
-                   species_list(1)%superlocate_base = 0
-                   DO is = 2, nspecies
-                        species_list(is)%superlocate_base = SUM(max_molecules(1:is-1))
-                   END DO
                    l_pair_nrg = .TRUE.
                    WRITE(logunit,'(A)') 'Pair interaction energy array storage enabled'
            END IF
@@ -1391,6 +1387,10 @@ SUBROUTINE Get_Molecule_Info
            END IF
         END IF
      END IF
+  END DO
+  species_list(1)%superlocate_base = 0
+  DO is = 2, nspecies
+       species_list(is)%superlocate_base = SUM(max_molecules(1:is-1))
   END DO
 
   WRITE(logunit,'(A80)') '********************************************************************************'

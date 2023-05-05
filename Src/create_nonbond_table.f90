@@ -221,6 +221,14 @@
      CALL Clean_Abort(err_msg,'create_nonbond_table')
   END IF
 
+  vdw_param1_table = 0.0_DP
+  vdw_param2_table = 0.0_DP
+  vdw_param3_table = 0.0_DP
+  vdw_param4_table = 0.0_DP
+  vdw_param5_table = 0.0_DP
+  ppvdwp_table = 0.0_DP
+  ppvdwp_table2 = 0.0_DP
+
   ! Allocate memory for rminsq_table
   ALLOCATE(rminsq_table(0:nbr_atomtypes, 0:nbr_atomtypes), Stat=AllocateStatus)
   rminsq_table = rcut_lowsq
@@ -643,8 +651,8 @@
   DO ibox = 1, nbr_boxes
         IF (int_vdw_sum_style(ibox) .NE. vdw_charmm .AND. int_vdw_style(ibox) == vdw_lj) THEN
                 sixbycut = 6.0_DP / rcut_vdw(ibox)
-                DO jtype = 0, nbr_atomtypes
-                        DO itype = 0, nbr_atomtypes
+                DO jtype = 1, nbr_atomtypes
+                        DO itype = 1, nbr_atomtypes
                                 eps = vdw_param1_table(itype,jtype)*4.0_DP
                                 sigma = vdw_param2_table(itype,jtype)
                                 negsigsq = -sigma*sigma
@@ -690,10 +698,10 @@
   END DO
 
   !order2 = (/ 2, 3, 1, 4 /)
-  shape1 = SHAPE(ppvdwp_table)
-  shape2 = shape1(order2)
+  !shape1 = SHAPE(ppvdwp_table)
+  !shape2 = shape1(order2) ! wrong
 
-  ppvdwp_table2 = RESHAPE(ppvdwp_table, shape2, ORDER=order2)
+  ppvdwp_table2 = RESHAPE(ppvdwp_table, SHAPE(ppvdwp_table2), ORDER=order2)
 
   max_rmin = DSQRT(MAXVAL(rminsq_table))
 

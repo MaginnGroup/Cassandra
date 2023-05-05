@@ -83,6 +83,7 @@ PROGRAM Main
   USE Simulation_Properties
   USE Fragment_Growth
   USE Pair_Emax_Estimation
+  !$ USE OMP_LIB
 
   IMPLICIT NONE
 
@@ -114,6 +115,11 @@ PROGRAM Main
 ! Get starting time information (intrinsic function)
   CALL DATE_AND_TIME(date,time,zone,begin_values)
   CALL cpu_time(start_time)
+
+  openmp_flag = .FALSE.
+  !$ openmp_flag = .TRUE.
+  global_nthreads = 1
+  !$ global_nthreads = OMP_GET_MAX_THREADS()
 
 !Get the input file name as a command line parameter
   count = IARGC()
