@@ -199,6 +199,8 @@ SUBROUTINE Rotate
   END IF
 
   IF (inter_overlap)  THEN
+     l_debug_print = .TRUE.
+     CALL Compute_Molecule_Nonbond_Inter_Energy(lm,is,E_vdw,E_qq,inter_overlap)
      err_msg = ""
      err_msg(1) = "Attempted to rotate molecule " // TRIM(Int_To_String(im)) // &
                   " of species " // TRIM(Int_To_String(is))

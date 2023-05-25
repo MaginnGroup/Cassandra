@@ -439,7 +439,7 @@ SUBROUTINE GEMC_Particle_Transfer
 
        DO i = 1, natoms(is)
           i_type = nonbond_list(i,is)%atom_type_number
-          nint_beads(i_type,box_in) = nint_beads(i_type,box_in) + 1
+          IF (i_type > 0) nint_beads(i_type,box_in) = nint_beads(i_type,box_in) + 1
        END DO
           
        CALL Compute_LR_Correction(box_in,E_lrc_in)
@@ -572,7 +572,7 @@ SUBROUTINE GEMC_Particle_Transfer
        nbeads_out(:) = nint_beads(:,box_out)
        DO i = 1, natoms(is)
           i_type = nonbond_list(i,is)%atom_type_number
-          nint_beads(i_type,box_out) = nint_beads(i_type,box_out) - 1
+          IF (i_type > 0) nint_beads(i_type,box_out) = nint_beads(i_type,box_out) - 1
        END DO
 
        CALL Compute_LR_correction(box_out,E_lrc_out)

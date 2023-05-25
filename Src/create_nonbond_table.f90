@@ -102,7 +102,9 @@
         
         repeat_type = .FALSE.
 
-        IF (nonbond_list(ia,is)%vdw_type /= 'NONE') THEN
+        IF (nonbond_list(ia,is)%vdw_type /= 'NONE' .AND. &
+                (ANY(ABS(nonbond_list(ia,is)%vdw_param(1:nbr_vdw_params(is)))>tiny_number) &
+                .OR. mix_rule == 'custom')) THEN
 
            !----------------------------------------------------------------
            ! Determine whether the atomtype has already been accounted for

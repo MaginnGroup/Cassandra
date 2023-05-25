@@ -116,6 +116,8 @@ PROGRAM Main
   CALL DATE_AND_TIME(date,time,zone,begin_values)
   CALL cpu_time(start_time)
 
+  l_debug_print = .FALSE.
+
   openmp_flag = .FALSE.
   !$ openmp_flag = .TRUE.
   global_nthreads = 1

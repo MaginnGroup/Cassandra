@@ -286,7 +286,7 @@ SUBROUTINE Deletion
 
      DO i = 1, natoms(is)
         i_type = nonbond_list(i,is)%atom_type_number
-        nint_beads(i_type,ibox) = nint_beads(i_type,ibox) - 1
+        IF (i_type > 0) nint_beads(i_type,ibox) = nint_beads(i_type,ibox) - 1
      END DO
 
      CALL Compute_LR_correction(ibox,e_lrc)

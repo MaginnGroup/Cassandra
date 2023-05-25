@@ -1165,7 +1165,9 @@ CONTAINS
     this_box = molecule_list(im,is)%which_box
     IF (l_vectorized) THEN
             atompairdim = natoms(is)*MAXVAL(natoms)
-            IF (MOD(atompairdim,4) .NE. 0) atompairdim = 4*(atompairdim/4+1)
+            mol_dim = MAXVAL(nmols(:,this_box))
+            IF (MOD(atompairdim,8) .NE. 0) atompairdim = 8*(atompairdim/8+1)
+            IF (MOD(mol_dim,8) .NE. 0) mol_dim = 8*(mol_dim/8+1)
             CALL Compute_Molecule_Nonbond_Inter_Energy_Vectorized(im,is, &
                     E_inter_vdw, E_inter_qq, overlap)
             RETURN
@@ -3000,6 +3002,37 @@ CONTAINS
           drzp = drzp + h(3,3)*dszp
   END SUBROUTINE Triclinic_Minimum_Image
 
+  SUBROUTINE Set_Pair_Chunks
+          INTEGER :: chunksize, nthreads_used, jnlive, ibox, js
+          IF (ALLOCATED(chunksize_array)) THEN
+                  IF (ALL(chunks_set_nmols .EQ. nmols)) RETURN
+          ELSE
+                  ALLOCATE(chunks_set_nmols(nspecies,0:nbr_boxes))
+                  ! js, is
+                  ALLOCATE(chunksize_array(nspecies,nspecies,nbr_boxes))
+                  ALLOCATE(nthreads_used_array(nspecies,nspecies,nbr_boxes))
+          END IF
+          chunks_set_nmols = nmols
+          DO ibox = 1, nbr_boxes
+                DO js = 1, nspecies
+                        jnlive = nmols(js,ibox)
+                        chunksize = MAX(jnlive / global_nthreads + 1,8)
+                        IF (MOD(chunksize,4) .NE. 0) chunksize = 4*(chunksize/4+1)
+                        nthreads_used = jnlive/chunksize
+                        IF (MOD(jnlive,chunksize) .NE. 0) nthreads_used = nthreads_used + 1
+                        chunksize_array(js,:,ibox) = chunksize
+                        nthreads_used_array(js,:,ibox) = nthreads_used
+                        jnlive = jnlive - 1
+                        chunksize = MAX(jnlive / global_nthreads + 1,8)
+                        IF (MOD(chunksize,4) .NE. 0) chunksize = 4*(chunksize/4+1)
+                        nthreads_used = jnlive/chunksize
+                        IF (MOD(jnlive,chunksize) .NE. 0) nthreads_used = nthreads_used + 1
+                        chunksize_array(js,js,ibox) = chunksize
+                        nthreads_used_array(js,js,ibox) = nthreads_used
+                END DO
+          END DO
+  END SUBROUTINE Set_Pair_Chunks
+
   SUBROUTINE Compute_Molecule_Nonbond_Inter_Energy_Vectorized(im,is, &
     i_vdw_energy,i_qq_energy,overlap)
     ! Arguments
@@ -3013,11 +3046,11 @@ CONTAINS
     !LOGICAL, DIMENSION(MAXVAL(nmols(:,this_box))), TARGET :: spec_live_tgt
     !INTEGER, DIMENSION(MAXVAL(nlive(:,this_box))) :: which_interact
     LOGICAL :: this_est_emax, l_get_rij_min, l_ortho
-    INTEGER :: n_vdw_p, ia_counter, i, j, js, n_i_exist, istart, iend, jnlive, n_interact, vlen, orig_vlen, n_j_exist
-    INTEGER :: bsolvent, istart_base, natoms_js, ti_solvent, ja, n_coul, n_vdw, ia, live_vlen, jnmols, jnatoms, itype
+    INTEGER :: ia_counter, i, j, js, n_i_exist, istart, iend, jnlive, orig_vlen, n_j_exist
+    INTEGER :: bsolvent, istart_base, natoms_js, ti_solvent, ja, n_coul, n_vdw, ia, ia0, live_vlen, jnmols, jnatoms
     REAL(DP) :: mol_rcut, max_dcom_i_const, this_vdw_rcutsq, this_coul_rcutsq, this_coul_rcut
 
-    INTEGER :: this_int_vdw_style, ibox, jtype, this_box
+    INTEGER :: this_int_vdw_style, ibox, this_box
 
     LOGICAL :: get_vdw, get_qq, i_get_qq
     LOGICAL(1) :: l_interact
@@ -3027,11 +3060,13 @@ CONTAINS
     REAL(DP) :: h11,h21,h31,h12,h22,h32,h13,h23,h33
     REAL(DP) :: inv_h11,inv_h21,inv_h31,inv_h12,inv_h22,inv_h32,inv_h13,inv_h23,inv_h33
 
-    INTEGER :: j_limit, ibase,ibase2,jloc,k
+    INTEGER :: j_limit, j_limit_2, ibase,ibase2,jloc,k
     REAL(DP) :: max_dcom
 
-    LOGICAL(1), DIMENSION(MAXVAL(max_molecules)) :: interact_vec
-    INTEGER, DIMENSION(MAXVAL(max_molecules)) :: live_locates, which_interact
+    LOGICAL(1), DIMENSION(MAXVAL(max_molecules)) :: interact_vec, all_interact_vec
+    INTEGER, DIMENSION(MAXVAL(max_molecules)) :: live_locates, which_may_interact_p, &
+            which_all_interact_p, which_interact
+    INTEGER :: n_all_interact, n_may_interact, n_interact, n_all_interact_p, n_may_interact_p
     REAL(DP), DIMENSION(4,MAXVAL(max_molecules)) :: live_rcom
 
     INTEGER, DIMENSION(MAXVAL(natoms)) :: jatomtypes
@@ -3039,24 +3074,51 @@ CONTAINS
     LOGICAL :: lj_charmm, lj_cut_shift, lj_cut_switch, lj_cut_shift_force, lj_cut, mie_cut_shift, mie_cut, l_charge_ewald, l_charge_dsf
     LOGICAL :: l_charge_cut, need_sqrt, l_pair_store, ij_overlap, i_overlap, l_order_ij
 
-    INTEGER :: jm, jsl, isl, jsl_base, j_interact, natompairs, ji
+    INTEGER :: jm, jsl, isl, jsl_base, j_interact
+    INTEGER(2) :: natompairs, ji, n_vdw_p
     REAL(DP) :: dxp, dyp, dzp, rijsq, rij, vdw_energy, qq_energy
     REAL(DP) :: rxp, ryp, rzp, sxp, syp, szp
 
-    REAL(DP), DIMENSION(atompairdim) :: irxp, iryp, irzp, jrxp, jryp, jrzp, cfqq_vec, rijsq_vec, rij_vec
-    REAL(DP), DIMENSION(atompairdim,5) :: vdw_p
+    REAL(DP), DIMENSION(atompairdim) :: irxp, iryp, irzp, jrxp, jryp, jrzp, cfqq_vec, rij_vec, rijsq_packed
+    REAL(DP), DIMENSION(atompairdim) :: vdw_p1,vdw_p2,vdw_p3,vdw_p4,vdw_p5
+    REAL(DP), DIMENSION(MAX(atompairdim,MAXVAL(max_molecules))) :: rijsq_vec, rijsq_svec
+    REAL(DP), DIMENSION(atompairdim,5) :: vdw_p, vdw_p_packed, vdw_p_nonzero
     REAL(DP) :: dsxp,dsyp,dszp,eps,sigsq,sigbyr2,sigbyr6,sigbyr12,rterm,rterm2
     REAL(DP) :: jsxp, jsyp, jszp, dsp
     REAL(DP) :: negsigsq,negsigbyr2,roffsq_rijsq
     REAL(DP) :: epsig_n,epsig_m,mie_n,mie_m
     REAL(DP) :: shift_p1, shift_p2, cfqq
 
+    INTEGER :: chunksize, nthreads_used, im_thread, jbase, ithread, n_interact_p, cni, j_end_shared
+    INTEGER, DIMENSION(global_nthreads) :: ibase_vec, ibase_all_vec, n_may_interact_vec, n_all_interact_vec
+    INTEGER(2) :: ji_end,ji_start,vlen,ji_end_2,ji_base_2
+    LOGICAL(1), DIMENSION(MAX(atompairdim,mol_dim)) :: vdw_interact_vec, qq_interact_vec
+
+    REAL(DP), DIMENSION(mol_dim,MAX(0,MAXVAL(natoms,MASK=natoms .LE. nmols(:,molecule_list(im,is)%which_box))),3) :: jrp_perm
+    LOGICAL :: l_molvectorized,ij_get_vdw,ij_get_qq,l_getdrcom,l_vdw_packed,l_vdw_gather,l_vdw_strided,l_masked
+    LOGICAL :: l_shortvdw, l_shortcoul, l_notsamecut
+    REAL(DP) :: pair_max_rcutsq,pair_min_rcutsq,nrg,dsf_const,i_max_dcom
+    INTEGER :: itype,jtype,maxvlen,minvlen,vdw_vlen,qq_vlen, n_interact_qq_pairstore, n_interact_vdw_pairstore
+    INTEGER, DIMENSION(atompairdim) :: which_have_vdw
+    INTEGER :: atompair_vlen, ji_base, ji_stride
+    REAL(DP), DIMENSION(mol_dim) :: mol_vdw_energy_p, mol_qq_energy_p
+    REAL(DP), DIMENSION(:), ALLOCATABLE :: mol_vdw_energy, mol_qq_energy
+
+    INTEGER :: i_selector
+    LOGICAL :: l_read_svec, switchflag
+    INTEGER(1) :: ji_start_byte, ji_byte
+
     !DIR$ ASSUME_ALIGNED jrxp:32, jryp:32, jrzp:32, irxp:32, iryp:32, irzp:32, cfqq_vec:32, rijsq_vec:32, rij_vec:32
-    !DIR$ ASSUME (MOD(atompairdim,4) .EQ. 0)
+    !DIR$ ASSUME_ALIGNED vdw_p:32, jrp_perm:32, vdw_p_packed:32, vdw_p_nonzero:32, interact_vec:32, all_interact_vec:32
+    !DIR$ ASSUME_ALIGNED rijsq_packed:32
+    !DIR$ ASSUME_ALIGNED vdw_p1:32, vdw_p2:32, vdw_p3:32, vdw_p4:32, vdw_p5:32
+    !DIR$ ASSUME (MOD(atompairdim,8) .EQ. 0)
+    !DIR$ ASSUME (MOD(mol_dim,8) .EQ. 0)
 
     i_vdw_energy = 0.0_DP
     i_qq_energy = 0.0_DP
     overlap = .FALSE.
+    i_overlap = .FALSE.
     this_box = molecule_list(im,is)%which_box
     ibox = this_box
     n_vdw_p = 0
@@ -3069,10 +3131,53 @@ CONTAINS
     END DO
     l_ortho = box_list(this_box)%int_box_shape <= int_ortho
 
+    CALL Set_Pair_Chunks
+
+    ithread = 1
 
 
-    !!!$OMP PARALLEL SECTIONS
-    !!!$OMP SECTION
+
+    !$OMP PARALLEL PRIVATE(jm,jrxp,jryp,jrzp,dsp,dxp,dyp,dzp,i,j,k,ji,rijsq,rij) &
+    !$OMP PRIVATE(vdw_energy,qq_energy,jsl,ij_overlap) &
+    !$OMP PRIVATE(jsxp,jsyp,jszp,eps,sigsq,sigbyr2,sigbyr6,sigbyr12,rterm,rterm2) &
+    !$OMP PRIVATE(negsigsq,negsigbyr2,roffsq_rijsq) &
+    !$OMP PRIVATE(epsig_n,epsig_m,mie_n,mie_m) &
+    !$OMP PRIVATE(l_interact, shift_p1, shift_p2, cfqq) &
+    !$OMP PRIVATE(rijsq_vec,rijsq_svec, rij_vec) &
+    !$OMP PRIVATE(js,jnmols,get_qq,natompairs,jsl_base,jnlive,chunksize,nthreads_used) &
+    !$OMP PRIVATE(j_limit,j_limit_2,im_thread,jbase,ithread) &
+    !$OMP PRIVATE(dxcom,dycom,dzcom,max_dcom,dsxcom,dsycom,dszcom) &
+    !$OMP PRIVATE(n_may_interact_p,which_may_interact_p,cni,need_sqrt) &
+    !$OMP PRIVATE(n_all_interact_p,which_all_interact_p,n_interact) &
+    !$OMP PRIVATE(ji_end,ji_start,vlen,ji_end_2,ji_base_2) &
+    !$OMP PRIVATE(rijsq_packed,vdw_p_packed) &
+    !$OMP PRIVATE(l_molvectorized,ij_get_vdw,ij_get_qq,l_getdrcom) &
+    !$OMP PRIVATE(l_vdw_packed,l_vdw_gather,l_vdw_strided,l_masked) &
+    !$OMP PRIVATE(rxp,ryp,rzp,pair_max_rcutsq,pair_min_rcutsq,nrg) &
+    !$OMP PRIVATE(itype,jtype,maxvlen,minvlen,vdw_vlen,qq_vlen,atompair_vlen) &
+    !$OMP PRIVATE(qq_interact_vec,vdw_interact_vec) &
+    !$OMP PRIVATE(mol_vdw_energy_p,mol_qq_energy_p) &
+    !$OMP PRIVATE(interact_vec,all_interact_vec) &
+    !$OMP PRIVATE(l_read_svec, i_selector, switchflag) &
+    !$OMP PRIVATE(ji_start_byte,ji_byte) &
+    !$OMP PRIVATE(ji_base, ji_stride) &
+    !$OMP PRIVATE(vdw_p1,vdw_p2,vdw_p3,vdw_p4,vdw_p5) &
+    !$OMP PRIVATE(ia,ia0,ja,ibase) &
+    !$OMP REDUCTION(+: i_vdw_energy,i_qq_energy) &
+    !$OMP REDUCTION(.OR.: i_overlap)
+
+    i_overlap = .FALSE.
+    i_vdw_energy = 0.0_DP
+    i_qq_energy = 0.0_DP
+
+
+    !$ ithread = OMP_GET_THREAD_NUM() + 1
+
+    !DIR$ ASSUME (MOD(atompairdim,8) .EQ. 0)
+    !DIR$ ASSUME (MOD(mol_dim,8) .EQ. 0)
+
+    !$OMP SECTIONS
+    !$OMP SECTION
     l_order_ij = n_i_exist .GE. 4 .AND. l_ortho
     IF (l_ortho) THEN
             xl = box_list(this_box)%length(1,1)
@@ -3131,26 +3236,7 @@ CONTAINS
                 irszp_vec(i) = rzp
         END IF
     END DO
-    !!!$OMP SECTION
-    IF (cbmc_flag) THEN
-            mol_rcut = rcut_cbmc(this_box)
-            this_vdw_rcutsq = rcut_cbmcsq(this_box)
-            this_coul_rcutsq = rcut_cbmcsq(this_box)
-            this_coul_rcut = rcut_cbmc(this_box)
-    ELSE
-            mol_rcut = rcut_max(this_box)
-            IF (int_vdw_sum_style(this_box) == vdw_cut_switch) THEN
-                    this_vdw_rcutsq = roff_switch_sq(this_box)
-            ELSE
-                    this_vdw_rcutsq = rcut_vdwsq(this_box)
-            END IF
-            this_coul_rcutsq = rcut_coulsq(this_box)
-            this_coul_rcut = rcut_coul(this_box)
-    END IF
-    max_dcom_i_const = molecule_list(im,is)%rcom(4) + mol_rcut
-    ixcom = molecule_list(im,is)%rcom(1)
-    iycom = molecule_list(im,is)%rcom(2)
-    izcom = molecule_list(im,is)%rcom(3)
+    !$OMP SECTION
     lj_charmm = .FALSE.
     lj_cut_shift = .FALSE.
     lj_cut_switch = .FALSE.
@@ -3200,157 +3286,321 @@ CONTAINS
                         l_charge_ewald = .TRUE.
                 CASE (charge_dsf)
                         l_charge_dsf = .TRUE.
+                        dsf_const = -dsf_factor1(this_box) - rcut_coul(this_box)*dsf_factor2(this_box)
                 CASE DEFAULT
                         l_charge_cut = .TRUE.
             END SELECT
     END IF
+    IF (cbmc_flag) THEN
+            mol_rcut = rcut_cbmc(this_box)
+            this_vdw_rcutsq = rcut_cbmcsq(this_box)
+            this_coul_rcutsq = rcut_cbmcsq(this_box)
+            this_coul_rcut = rcut_cbmc(this_box)
+            l_shortvdw = .FALSE.
+            l_shortcoul = .FALSE.
+            l_notsamecut = .FALSE.
+    ELSE
+            mol_rcut = rcut_max(this_box)
+            IF (int_vdw_sum_style(this_box) == vdw_cut_switch) THEN
+                    this_vdw_rcutsq = roff_switch_sq(this_box)
+            ELSE IF (get_vdw) THEN
+                    this_vdw_rcutsq = rcut_vdwsq(this_box)
+            ELSE
+                    this_vdw_rcutsq = 0.0_DP
+            END IF
+            IF (i_get_qq) THEN
+                    this_coul_rcutsq = rcut_coulsq(this_box)
+            ELSE
+                    this_coul_rcutsq = 0.0_DP
+            END IF
+            !this_coul_rcut = rcut_coul(this_box)
+            l_shortcoul = this_coul_rcutsq < this_vdw_rcutsq
+            l_shortvdw = this_vdw_rcutsq < this_coul_rcutsq
+            l_notsamecut = l_shortcoul .OR. l_shortvdw
+    END IF
+    i_max_dcom = molecule_list(im,is)%rcom(4)
+    max_dcom_i_const = i_max_dcom + mol_rcut
+    ixcom = molecule_list(im,is)%rcom(1)
+    iycom = molecule_list(im,is)%rcom(2)
+    izcom = molecule_list(im,is)%rcom(3)
     l_pair_store = l_pair_nrg .AND. .NOT. cbmc_flag
     IF (l_pair_store) THEN
             isl = species_list(is)%superlocate_base + im
     END IF
-    !!!$OMP END PARALLEL SECTIONS
+    !$OMP END SECTIONS
     DO js = 1, nspecies
             jnmols = nmols(js,ibox)
             IF (jnmols == 0) CYCLE
             get_qq = i_get_qq .AND. has_charge(js)
             jnatoms = natoms(js)
-            natompairs = natoms(js)*n_i_exist
+            natompairs = jnatoms*n_i_exist
+            l_getdrcom = natompairs > 3 ! I don't exactly know what the threshold should be. Subject to change.
             IF (open_mc_flag .OR. ibox > 1) THEN
-                    live_locates(1:jnmols) = locate(1:jnmols,js,ibox)
                     IF (l_pair_store) THEN
                             jsl_base = species_list(js)%superlocate_base
-                            !$OMP PARALLEL WORKSHARE
-                            pair_nrg_vdw(live_locates(1:jnmols)+jsl_base,isl) = 0.0_DP
-                            pair_nrg_qq(live_locates(1:jnmols)+jsl_base,isl) = 0.0_DP
-                            pair_nrg_vdw(isl,live_locates(1:jnmols)+jsl_base) = 0.0_DP
-                            pair_nrg_qq(isl,live_locates(1:jnmols)+jsl_base) = 0.0_DP
-                            !$OMP END PARALLEL WORKSHARE
+                            !$OMP WORKSHARE
+                            pair_nrg_vdw(locate(1:jnmols,js,ibox)+jsl_base,isl) = 0.0_DP
+                            pair_nrg_qq(locate(1:jnmols,js,ibox)+jsl_base,isl) = 0.0_DP
+                            pair_nrg_vdw(isl,locate(1:jnmols,js,ibox)+jsl_base) = 0.0_DP
+                            pair_nrg_qq(isl,locate(1:jnmols,js,ibox)+jsl_base) = 0.0_DP
+                            !$OMP END WORKSHARE
                     END IF
-                    IF (is .EQ. js .OR. l_not_all_live) THEN
+                    IF (l_not_all_live) THEN
+                            !$OMP SINGLE
                             molecule_list(im,is)%live = .FALSE.
                             jnlive = 0
                             DO j = 1, jnmols
-                                jm = live_locates(j)
+                                jm = locate(j,js,ibox)
                                 IF (molecule_list(jm,js)%live) THEN
                                         jnlive = jnlive + 1
                                         live_locates(jnlive) = jm
-                                        live_rcom(:,jnlive) = molecule_list(jm,js)%rcom
+                                        IF (l_getdrcom) live_rcom(:,jnlive) = molecule_list(jm,js)%rcom
                                 END IF
                             END DO
                             molecule_list(im,is)%live = .TRUE.
+                            !$OMP END SINGLE
+                    ELSE IF (is .EQ. js) THEN
+                            jnlive = jnmols - 1
+                            !$OMP SINGLE
+                            j_end_shared = jnmols + 1
+                            !$OMP END SINGLE
+                            !$OMP DO SIMD SCHEDULE(STATIC) REDUCTION(MIN:j_end_shared)
+                            DO j = 1, jnmols
+                                IF (locate(j,js,ibox) .EQ. im) j_end_shared = MIN(j_end_shared,j)
+                            END DO
+                            !$OMP END DO SIMD
+                            !$OMP WORKSHARE
+                            live_locates(1:j_end_shared-1) = locate(1:j_end_shared-1,js,ibox)
+                            live_locates(j_end_shared:jnlive) = locate(j_end_shared+1:jnmols,js,ibox)
+                            !$OMP END WORKSHARE
+                            IF (l_getdrcom) THEN
+                                    !$OMP DO SCHEDULE(STATIC)
+                                    DO j = 1, jnlive
+                                        live_rcom(:,j) = molecule_list(live_locates(j),js)%rcom
+                                    END DO
+                                    !$OMP END DO
+                            END IF
                     ELSE
                             jnlive = jnmols
-                            DO i = 1, jnlive
-                                    live_rcom(:,i) = molecule_list(live_locates(i),js)%rcom
-                            END DO
+                            !$OMP WORKSHARE
+                            live_locates(1:jnlive) = locate(1:jnlive,js,ibox)
+                            !$OMP END WORKSHARE NOWAIT
+                            IF (l_getdrcom) THEN
+                                    !$OMP DO SCHEDULE(STATIC)
+                                    DO j = 1, jnlive
+                                            live_rcom(:,j) = molecule_list(locate(j,js,ibox),js)%rcom
+                                    END DO
+                                    !$OMP END DO
+                            END IF
                     END IF
             ELSE
+                    jnlive = jnmols
                     IF (l_pair_store) THEN
                             jsl_base = species_list(js)%superlocate_base
-                            !$OMP PARALLEL WORKSHARE
+                            !$OMP WORKSHARE
                             pair_nrg_vdw(jsl_base+1:jsl_base+jnmols,isl) = 0.0_DP
                             pair_nrg_qq(jsl_base+1:jsl_base+jnmols,isl) = 0.0_DP
                             pair_nrg_vdw(isl,jsl_base+1:jsl_base+jnmols) = 0.0_DP
                             pair_nrg_qq(isl,jsl_base+1:jsl_base+jnmols) = 0.0_DP
-                            !$OMP END PARALLEL WORKSHARE
+                            !$OMP END WORKSHARE
                     END IF
-                    jnlive = jnmols
             END IF
-            IF (open_mc_flag) THEN
-                    j_limit = jnlive
-            ELSE IF (is .EQ. js) THEN
-                    j_limit = im - 1
-                    interact_vec(im) = .FALSE.
-            ELSE
-                    j_limit = jnlive
-            END IF
-            IF (l_ortho) THEN
-                    IF (open_mc_flag) THEN
-                            !$OMP PARALLEL PRIVATE(dxcom,dycom,dzcom,max_dcom,l_interact)
-                            !$OMP DO SIMD SCHEDULE(STATIC) &
-                            !$OMP PRIVATE(dxcom,dycom,dzcom,max_dcom,l_interact)
-                            DO j = 1, j_limit
-                                    dxcom = live_rcom(1,j)
-                                    dycom = live_rcom(2,j)
-                                    dzcom = live_rcom(3,j)
-                                    max_dcom = live_rcom(4,j)
-                                    dxcom = ABS(dxcom - ixcom)
-                                    dycom = ABS(dycom - iycom)
-                                    dzcom = ABS(dzcom - izcom)
-                                    IF (dxcom > hxl) dxcom = dxcom - xl
-                                    IF (dycom > hyl) dycom = dycom - yl
-                                    IF (dzcom > hzl) dzcom = dzcom - zl
-                                    ! Repurposing dxcom as rijsq accumulator to enforce FMA3 instructions if supported
-                                    dxcom = dxcom * dxcom
-                                    dxcom = dxcom + dycom * dycom
-                                    dxcom = dxcom + dzcom * dzcom
-                                    l_interact = max_dcom_i_const > &
-                                            SQRT(dxcom) - max_dcom
-                                    interact_vec(j) = l_interact
-                            END DO
-                            !$OMP END DO SIMD
-                            !$OMP END PARALLEL
+            IF (l_getdrcom) THEN
+                    chunksize = chunksize_array(js,is,ibox)
+                    nthreads_used = nthreads_used_array(js,is,ibox)
+                    IF (is .EQ. js .AND. .NOT. open_mc_flag) THEN
+                            !IF (MOD(im-1,chunksize) == 0) THEN
+                            !        im_thread = 9999
+                            !ELSE
+                            !        im_thread = (im-1)/chunksize + 1
+                            !END IF
+                            im_thread = (im-1)/chunksize + 1
+                            im_thread = MIN(nthreads_used,im_thread)
+                            im_thread = MAX(1,im_thread)
+                            IF (ithread .LE. im_thread) THEN
+                                    jbase = (ithread-1)*chunksize
+                            ELSE
+                                    jbase = jnlive - (nthreads_used - ithread + 1)*chunksize
+                                    jbase = MAX(jbase,im)
+                            END IF
+                            IF (ithread == im_thread) THEN
+                                    j_limit = im - 1 - jbase
+                                    j_limit_2 = jnlive - (nthreads_used - im_thread)*chunksize - jbase
+                                    interact_vec(j_limit+1) = .FALSE.
+                                    all_interact_vec(j_limit+1) = .FALSE.
+                            ELSE
+                                    j_limit = chunksize
+                                    j_limit_2 = chunksize
+                            END IF
                     ELSE
-                            !$OMP PARALLEL PRIVATE(dxcom,dycom,dzcom,max_dcom,l_interact)
-                            !$OMP DO SIMD SCHEDULE(STATIC) &
-                            !$OMP PRIVATE(dxcom,dycom,dzcom,max_dcom,l_interact)
-                            DO j = 1, j_limit
-                                    dxcom = molecule_list(j,js)%rcom(1)
-                                    dycom = molecule_list(j,js)%rcom(2)
-                                    dzcom = molecule_list(j,js)%rcom(3)
-                                    max_dcom = molecule_list(j,js)%rcom(4)
-                                    dxcom = ABS(dxcom - ixcom)
-                                    dycom = ABS(dycom - iycom)
-                                    dzcom = ABS(dzcom - izcom)
-                                    IF (dxcom > hxl) dxcom = dxcom - xl
-                                    IF (dycom > hyl) dycom = dycom - yl
-                                    IF (dzcom > hzl) dzcom = dzcom - zl
-                                    ! Repurposing dxcom as rijsq accumulator to enforce FMA3 instructions if supported
-                                    dxcom = dxcom * dxcom
-                                    dxcom = dxcom + dycom * dycom
-                                    dxcom = dxcom + dzcom * dzcom
-                                    l_interact = max_dcom_i_const > &
-                                            SQRT(dxcom) - max_dcom
-                                    interact_vec(j) = l_interact
-                            END DO
-                            !$OMP END DO SIMD
-                            !$OMP END PARALLEL
-                            !$OMP PARALLEL PRIVATE(dxcom,dycom,dzcom,max_dcom,l_interact)
-                            !$OMP DO SIMD SCHEDULE(STATIC) &
-                            !$OMP PRIVATE(dxcom,dycom,dzcom,max_dcom,l_interact)
-                            DO j = j_limit+2, jnlive
-                                    dxcom = molecule_list(j,js)%rcom(1)
-                                    dycom = molecule_list(j,js)%rcom(2)
-                                    dzcom = molecule_list(j,js)%rcom(3)
-                                    max_dcom = molecule_list(j,js)%rcom(4)
-                                    dxcom = ABS(dxcom - ixcom)
-                                    dycom = ABS(dycom - iycom)
-                                    dzcom = ABS(dzcom - izcom)
-                                    IF (dxcom > hxl) dxcom = dxcom - xl
-                                    IF (dycom > hyl) dycom = dycom - yl
-                                    IF (dzcom > hzl) dzcom = dzcom - zl
-                                    ! Repurposing dxcom as rijsq accumulator to enforce FMA3 instructions if supported
-                                    dxcom = dxcom * dxcom
-                                    dxcom = dxcom + dycom * dycom
-                                    dxcom = dxcom + dzcom * dzcom
-                                    l_interact = max_dcom_i_const > &
-                                            SQRT(dxcom) - max_dcom
-                                    interact_vec(j) = l_interact
-                            END DO
-                            !$OMP END DO SIMD
-                            !$OMP END PARALLEL
+                            im_thread = 9999
+                            jbase = (ithread-1)*chunksize
+                            j_limit = chunksize
+                            j_limit_2 = chunksize
                     END IF
-            ELSE
-                    IF (open_mc_flag) THEN
-                            !$OMP PARALLEL PRIVATE(dxcom,dycom,dzcom,max_dcom,l_interact)
-                            !$OMP DO SIMD SCHEDULE(STATIC) &
-                            !$OMP PRIVATE(dxcom,dycom,dzcom,max_dcom,l_interact) &
-                            !$OMP PRIVATE(dsxcom,dsycom,dszcom)
+                    !IF (l_debug_print .OR. (i_mcstep > 0 .AND. i_mcstep < 10 .AND. .NOT. cbmc_flag) ) WRITE(*,*) im_thread, ithread, im, jnlive, jbase, j_limit, j_limit_2, chunksize
+                    j_limit = MIN(j_limit,jnlive-jbase)
+                    j_limit_2 = MIN(j_limit_2,jnlive-jbase)
+                    !IF (l_debug_print .OR. (i_mcstep > 0 .AND. i_mcstep < 10 .AND. .NOT. cbmc_flag) ) WRITE(*,*) im_thread, ithread, im, jnlive, jbase, j_limit, j_limit_2, chunksize
+                    IF (l_ortho) THEN
                             DO j = 1, j_limit
-                                    dxcom = live_rcom(1,j)
-                                    dycom = live_rcom(2,j)
-                                    dzcom = live_rcom(3,j)
-                                    max_dcom = live_rcom(4,j)
+                                    IF (open_mc_flag) THEN
+                                            dxcom = live_rcom(1,j+jbase)
+                                            dycom = live_rcom(2,j+jbase)
+                                            dzcom = live_rcom(3,j+jbase)
+                                            max_dcom = live_rcom(4,j+jbase)
+                                    ELSE
+                                            dxcom = molecule_list(j+jbase,js)%rcom(1)
+                                            dycom = molecule_list(j+jbase,js)%rcom(2)
+                                            dzcom = molecule_list(j+jbase,js)%rcom(3)
+                                            max_dcom = molecule_list(j+jbase,js)%rcom(4)
+                                    END IF
+                                    dxcom = ABS(dxcom - ixcom)
+                                    dycom = ABS(dycom - iycom)
+                                    dzcom = ABS(dzcom - izcom)
+                                    IF (dxcom > hxl) dxcom = dxcom - xl
+                                    IF (dycom > hyl) dycom = dycom - yl
+                                    IF (dzcom > hzl) dzcom = dzcom - zl
+                                    ! Repurposing dxcom as rijsq accumulator to enforce FMA3 instructions if supported
+                                    dxcom = dxcom * dxcom
+                                    dxcom = dxcom + dycom * dycom
+                                    dxcom = dxcom + dzcom * dzcom
+                                    dxcom = SQRT(dxcom) ! rij
+                                    max_dcom = max_dcom + i_max_dcom
+                                    interact_vec(j) = mol_rcut > dxcom - max_dcom
+                                    all_interact_vec(j) = mol_rcut > dxcom + max_dcom
+                                    !l_interact = max_dcom_i_const > &
+                                    !        SQRT(dxcom) - max_dcom
+                            END DO
+                            DO j = j_limit+2, j_limit_2 !jnlive
+                                    dxcom = molecule_list(j+jbase,js)%rcom(1)
+                                    dycom = molecule_list(j+jbase,js)%rcom(2)
+                                    dzcom = molecule_list(j+jbase,js)%rcom(3)
+                                    max_dcom = molecule_list(j+jbase,js)%rcom(4)
+                                    dxcom = ABS(dxcom - ixcom)
+                                    dycom = ABS(dycom - iycom)
+                                    dzcom = ABS(dzcom - izcom)
+                                    IF (dxcom > hxl) dxcom = dxcom - xl
+                                    IF (dycom > hyl) dycom = dycom - yl
+                                    IF (dzcom > hzl) dzcom = dzcom - zl
+                                    ! Repurposing dxcom as rijsq accumulator to enforce FMA3 instructions if supported
+                                    dxcom = dxcom * dxcom
+                                    dxcom = dxcom + dycom * dycom
+                                    dxcom = dxcom + dzcom * dzcom
+                                    dxcom = SQRT(dxcom) ! rij
+                                    max_dcom = max_dcom + i_max_dcom
+                                    interact_vec(j) = mol_rcut > dxcom - max_dcom
+                                    all_interact_vec(j) = mol_rcut > dxcom + max_dcom
+                            END DO
+                    ELSE
+                            IF (open_mc_flag) THEN
+                                    DO j = 1, j_limit
+                                            dxcom = live_rcom(1,j+jbase)
+                                            dycom = live_rcom(2,j+jbase)
+                                            dzcom = live_rcom(3,j+jbase)
+                                            max_dcom = live_rcom(4,j+jbase)
+                                            dxcom = dxcom - ixcom
+                                            dsxcom = inv_h11*dxcom
+                                            dsycom = inv_h21*dxcom
+                                            dszcom = inv_h31*dxcom
+                                            dycom = dycom - iycom
+                                            dsxcom = dsxcom + inv_h12*dycom
+                                            dsycom = dsycom + inv_h22*dycom
+                                            dszcom = dszcom + inv_h32*dycom
+                                            dzcom = dzcom - izcom
+                                            dsxcom = dsxcom + inv_h13*dzcom
+                                            dsycom = dsycom + inv_h23*dzcom
+                                            dszcom = dszcom + inv_h33*dzcom
+                                            IF (dsxcom > 0.5_DP) THEN
+                                                    dsxcom = dsxcom - 1.0_DP
+                                            ELSE IF (dsxcom < -0.5_DP) THEN
+                                                    dsxcom = dsxcom + 1.0_DP
+                                            END IF
+                                            IF (dsycom > 0.5_DP) THEN
+                                                    dsycom = dsycom - 1.0_DP
+                                            ELSE IF (dsycom < -0.5_DP) THEN
+                                                    dsycom = dsycom + 1.0_DP
+                                            END IF
+                                            IF (dszcom > 0.5_DP) THEN
+                                                    dszcom = dszcom - 1.0_DP
+                                            ELSE IF (dszcom < -0.5_DP) THEN
+                                                    dszcom = dszcom + 1.0_DP
+                                            END IF
+                                            dxcom = h11*dsxcom
+                                            dycom = h21*dsxcom
+                                            dzcom = h31*dsxcom
+                                            dxcom = dxcom + h12*dsycom
+                                            dycom = dycom + h22*dsycom
+                                            dzcom = dzcom + h32*dsycom
+                                            dxcom = dxcom + h13*dszcom
+                                            dycom = dycom + h23*dszcom
+                                            dzcom = dzcom + h33*dszcom
+                                            ! Repurposing dxcom as rijsq accumulator to enforce FMA3 instructions if supported
+                                            dxcom = dxcom * dxcom
+                                            dxcom = dxcom + dycom * dycom
+                                            dxcom = dxcom + dzcom * dzcom
+                                            dxcom = SQRT(dxcom) ! rij
+                                            max_dcom = max_dcom + i_max_dcom
+                                            interact_vec(j) = mol_rcut > dxcom - max_dcom
+                                            all_interact_vec(j) = mol_rcut > dxcom + max_dcom
+                                    END DO
+                            ELSE
+                                    DO j = 1, j_limit
+                                            dxcom = molecule_list(j+jbase,js)%rcom(1)
+                                            dycom = molecule_list(j+jbase,js)%rcom(2)
+                                            dzcom = molecule_list(j+jbase,js)%rcom(3)
+                                            max_dcom = molecule_list(j+jbase,js)%rcom(4)
+                                            dxcom = dxcom - ixcom
+                                            dsxcom = inv_h11*dxcom
+                                            dsycom = inv_h21*dxcom
+                                            dszcom = inv_h31*dxcom
+                                            dycom = dycom - iycom
+                                            dsxcom = dsxcom + inv_h12*dycom
+                                            dsycom = dsycom + inv_h22*dycom
+                                            dszcom = dszcom + inv_h32*dycom
+                                            dzcom = dzcom - izcom
+                                            dsxcom = dsxcom + inv_h13*dzcom
+                                            dsycom = dsycom + inv_h23*dzcom
+                                            dszcom = dszcom + inv_h33*dzcom
+                                            IF (dsxcom > 0.5_DP) THEN
+                                                    dsxcom = dsxcom - 1.0_DP
+                                            ELSE IF (dsxcom < -0.5_DP) THEN
+                                                    dsxcom = dsxcom + 1.0_DP
+                                            END IF
+                                            IF (dsycom > 0.5_DP) THEN
+                                                    dsycom = dsycom - 1.0_DP
+                                            ELSE IF (dsycom < -0.5_DP) THEN
+                                                    dsycom = dsycom + 1.0_DP
+                                            END IF
+                                            IF (dszcom > 0.5_DP) THEN
+                                                    dszcom = dszcom - 1.0_DP
+                                            ELSE IF (dszcom < -0.5_DP) THEN
+                                                    dszcom = dszcom + 1.0_DP
+                                            END IF
+                                            dxcom = h11*dsxcom
+                                            dycom = h21*dsxcom
+                                            dzcom = h31*dsxcom
+                                            dxcom = dxcom + h12*dsycom
+                                            dycom = dycom + h22*dsycom
+                                            dzcom = dzcom + h32*dsycom
+                                            dxcom = dxcom + h13*dszcom
+                                            dycom = dycom + h23*dszcom
+                                            dzcom = dzcom + h33*dszcom
+                                            ! Repurposing dxcom as rijsq accumulator to enforce FMA3 instructions if supported
+                                            dxcom = dxcom * dxcom
+                                            dxcom = dxcom + dycom * dycom
+                                            dxcom = dxcom + dzcom * dzcom
+                                            dxcom = SQRT(dxcom) ! rij
+                                            max_dcom = max_dcom + i_max_dcom
+                                            interact_vec(j) = mol_rcut > dxcom - max_dcom
+                                            all_interact_vec(j) = mol_rcut > dxcom + max_dcom
+                                    END DO
+                            END IF
+                            DO j = j_limit+2, j_limit_2
+                                    dxcom = molecule_list(j+jbase,js)%rcom(1)
+                                    dycom = molecule_list(j+jbase,js)%rcom(2)
+                                    dzcom = molecule_list(j+jbase,js)%rcom(3)
+                                    max_dcom = molecule_list(j+jbase,js)%rcom(4)
                                     dxcom = dxcom - ixcom
                                     dsxcom = inv_h11*dxcom
                                     dsycom = inv_h21*dxcom
@@ -3391,153 +3641,78 @@ CONTAINS
                                     dxcom = dxcom * dxcom
                                     dxcom = dxcom + dycom * dycom
                                     dxcom = dxcom + dzcom * dzcom
-                                    l_interact = max_dcom_i_const > &
-                                            SQRT(dxcom) - max_dcom
-                                    interact_vec(j) = l_interact
+                                    dxcom = SQRT(dxcom) ! rij
+                                    max_dcom = max_dcom + i_max_dcom
+                                    interact_vec(j) = mol_rcut > dxcom - max_dcom
+                                    all_interact_vec(j) = mol_rcut > dxcom + max_dcom
                             END DO
-                            !$OMP END DO SIMD
-                            !$OMP END PARALLEL
-                    ELSE
-                            !$OMP PARALLEL PRIVATE(dxcom,dycom,dzcom,max_dcom,l_interact)
-                            !$OMP DO SIMD SCHEDULE(STATIC) &
-                            !$OMP PRIVATE(dxcom,dycom,dzcom,max_dcom,l_interact) &
-                            !$OMP PRIVATE(dsxcom,dsycom,dszcom)
-                            DO j = 1, j_limit
-                                    dxcom = molecule_list(j,js)%rcom(1)
-                                    dycom = molecule_list(j,js)%rcom(2)
-                                    dzcom = molecule_list(j,js)%rcom(3)
-                                    max_dcom = molecule_list(j,js)%rcom(4)
-                                    dxcom = dxcom - ixcom
-                                    dsxcom = inv_h11*dxcom
-                                    dsycom = inv_h21*dxcom
-                                    dszcom = inv_h31*dxcom
-                                    dycom = dycom - iycom
-                                    dsxcom = dsxcom + inv_h12*dycom
-                                    dsycom = dsycom + inv_h22*dycom
-                                    dszcom = dszcom + inv_h32*dycom
-                                    dzcom = dzcom - izcom
-                                    dsxcom = dsxcom + inv_h13*dzcom
-                                    dsycom = dsycom + inv_h23*dzcom
-                                    dszcom = dszcom + inv_h33*dzcom
-                                    IF (dsxcom > 0.5_DP) THEN
-                                            dsxcom = dsxcom - 1.0_DP
-                                    ELSE IF (dsxcom < -0.5_DP) THEN
-                                            dsxcom = dsxcom + 1.0_DP
-                                    END IF
-                                    IF (dsycom > 0.5_DP) THEN
-                                            dsycom = dsycom - 1.0_DP
-                                    ELSE IF (dsycom < -0.5_DP) THEN
-                                            dsycom = dsycom + 1.0_DP
-                                    END IF
-                                    IF (dszcom > 0.5_DP) THEN
-                                            dszcom = dszcom - 1.0_DP
-                                    ELSE IF (dszcom < -0.5_DP) THEN
-                                            dszcom = dszcom + 1.0_DP
-                                    END IF
-                                    dxcom = h11*dsxcom
-                                    dycom = h21*dsxcom
-                                    dzcom = h31*dsxcom
-                                    dxcom = dxcom + h12*dsycom
-                                    dycom = dycom + h22*dsycom
-                                    dzcom = dzcom + h32*dsycom
-                                    dxcom = dxcom + h13*dszcom
-                                    dycom = dycom + h23*dszcom
-                                    dzcom = dzcom + h33*dszcom
-                                    ! Repurposing dxcom as rijsq accumulator to enforce FMA3 instructions if supported
-                                    dxcom = dxcom * dxcom
-                                    dxcom = dxcom + dycom * dycom
-                                    dxcom = dxcom + dzcom * dzcom
-                                    l_interact = max_dcom_i_const > &
-                                            SQRT(dxcom) - max_dcom
-                                    interact_vec(j) = l_interact
-                            END DO
-                            !$OMP END DO SIMD
-                            !$OMP END PARALLEL
-                            !$OMP PARALLEL PRIVATE(dxcom,dycom,dzcom,max_dcom,l_interact)
-                            !$OMP DO SIMD SCHEDULE(STATIC) &
-                            !$OMP PRIVATE(dxcom,dycom,dzcom,max_dcom,l_interact) &
-                            !$OMP PRIVATE(dsxcom,dsycom,dszcom)
-                            DO j = j_limit+2, jnlive
-                                    dxcom = molecule_list(j,js)%rcom(1)
-                                    dycom = molecule_list(j,js)%rcom(2)
-                                    dzcom = molecule_list(j,js)%rcom(3)
-                                    max_dcom = molecule_list(j,js)%rcom(4)
-                                    dxcom = dxcom - ixcom
-                                    dsxcom = inv_h11*dxcom
-                                    dsycom = inv_h21*dxcom
-                                    dszcom = inv_h31*dxcom
-                                    dycom = dycom - iycom
-                                    dsxcom = dsxcom + inv_h12*dycom
-                                    dsycom = dsycom + inv_h22*dycom
-                                    dszcom = dszcom + inv_h32*dycom
-                                    dzcom = dzcom - izcom
-                                    dsxcom = dsxcom + inv_h13*dzcom
-                                    dsycom = dsycom + inv_h23*dzcom
-                                    dszcom = dszcom + inv_h33*dzcom
-                                    IF (dsxcom > 0.5_DP) THEN
-                                            dsxcom = dsxcom - 1.0_DP
-                                    ELSE IF (dsxcom < -0.5_DP) THEN
-                                            dsxcom = dsxcom + 1.0_DP
-                                    END IF
-                                    IF (dsycom > 0.5_DP) THEN
-                                            dsycom = dsycom - 1.0_DP
-                                    ELSE IF (dsycom < -0.5_DP) THEN
-                                            dsycom = dsycom + 1.0_DP
-                                    END IF
-                                    IF (dszcom > 0.5_DP) THEN
-                                            dszcom = dszcom - 1.0_DP
-                                    ELSE IF (dszcom < -0.5_DP) THEN
-                                            dszcom = dszcom + 1.0_DP
-                                    END IF
-                                    dxcom = h11*dsxcom
-                                    dycom = h21*dsxcom
-                                    dzcom = h31*dsxcom
-                                    dxcom = dxcom + h12*dsycom
-                                    dycom = dycom + h22*dsycom
-                                    dzcom = dzcom + h32*dsycom
-                                    dxcom = dxcom + h13*dszcom
-                                    dycom = dycom + h23*dszcom
-                                    dzcom = dzcom + h33*dszcom
-                                    ! Repurposing dxcom as rijsq accumulator to enforce FMA3 instructions if supported
-                                    dxcom = dxcom * dxcom
-                                    dxcom = dxcom + dycom * dycom
-                                    dxcom = dxcom + dzcom * dzcom
-                                    l_interact = max_dcom_i_const > &
-                                            SQRT(dxcom) - max_dcom
-                                    interact_vec(j) = l_interact
-                            END DO
-                            !$OMP END DO SIMD
-                            !$OMP END PARALLEL
                     END IF
-            END IF
-            IF (jnlive > 24 .AND. global_nthreads > 1) THEN
+                    n_all_interact_p = 0
+                    n_may_interact_p = 0
                     IF (open_mc_flag) THEN
-                            which_interact(1:jnlive) = &
-                                    Pack_Parallel_INT32(interact_vec(1:jnlive),jnlive,n_interact,live_locates(1:jnlive))
-                    ELSE
-                            which_interact(1:jnlive) = &
-                                    Pack_Parallel_INT32(interact_vec(1:jnlive),jnlive,n_interact)
-                    END IF
-            ELSE
-                    n_interact = 0
-                    IF (open_mc_flag) THEN
-                            DO i = 1, jnlive
-                                IF (interact_vec(i)) THEN
-                                        n_interact = n_interact + 1
-                                        which_interact(n_interact) = live_locates(i)
+                            DO j = 1, j_limit_2
+                                IF (all_interact_vec(j)) THEN
+                                        n_all_interact_p = n_all_interact_p + 1
+                                        which_all_interact_p(n_all_interact_p) = live_locates(j+jbase)
+                                ELSE IF (interact_vec(j)) THEN
+                                        n_may_interact_p = n_may_interact_p + 1
+                                        which_may_interact_p(n_may_interact_p) = live_locates(j+jbase)
                                 END IF
                             END DO
                     ELSE
-                            DO i = 1, jnlive
-                                IF (interact_vec(i)) THEN
-                                        n_interact = n_interact + 1
-                                        which_interact(n_interact) = i
+                            DO j = 1, j_limit_2
+                                IF (all_interact_vec(j)) THEN
+                                        n_all_interact_p = n_all_interact_p + 1
+                                        which_all_interact_p(n_all_interact_p) = j+jbase
+                                ELSE IF (interact_vec(j)) THEN
+                                        n_may_interact_p = n_may_interact_p + 1
+                                        which_may_interact_p(n_may_interact_p) = j+jbase
                                 END IF
                             END DO
                     END IF
+                    IF (ithread .LE. nthreads_used) n_may_interact_vec(ithread) = n_may_interact_p
+                    IF (ithread .LE. nthreads_used) n_all_interact_vec(ithread) = n_all_interact_p
+                    !$OMP BARRIER
+                    !$OMP SECTIONS
+                    !$OMP SECTION
+                    cni = 0
+                    DO j = 1, nthreads_used
+                        ibase_vec(j) = cni
+                        cni = cni + n_may_interact_vec(j)
+                    END DO
+                    n_may_interact = cni ! does not include molecules guaranteed to fully interact
+                    !$OMP SECTION
+                    cni = 0
+                    DO j = 1, nthreads_used
+                        ibase_all_vec(j) = cni
+                        cni = cni + n_all_interact_vec(j)
+                    END DO
+                    n_all_interact = cni
+                    !$OMP END SECTIONS
+                    !$OMP CRITICAL
+                    IF (ithread .LE. nthreads_used) THEN
+                            ! The first n_all_interact molecules in which_interact are guaranteed to be fully in-range.
+                            ! The next n_may_interact molecules might have some atoms in range.
+                            ibase = ibase_all_vec(ithread)
+                            !IF (i_mcstep < 10 .AND. .NOT. cbmc_flag) WRITE(*,*) nthreads_used, &
+                            !        ithread,ibase,n_may_interact_vec(ithread),n_may_interact_p,n_all_interact_p
+                            which_interact(ibase+1:ibase+n_all_interact_p) = which_all_interact_p(1:n_all_interact_p)
+                            ibase = ibase_vec(ithread) + n_all_interact
+                            !IF (i_mcstep < 10 .AND. .NOT. cbmc_flag) WRITE(*,*) nthreads_used, &
+                            !        ithread,ibase,n_may_interact_vec(ithread),n_may_interact_p,n_all_interact_p
+                            which_interact(ibase+1:ibase+n_may_interact_p) = which_may_interact_p(1:n_may_interact_p)
+                    END IF
+                    !$OMP END CRITICAL
+                    n_interact = n_all_interact + n_may_interact
+                    l_molvectorized = n_interact > natompairs
+                    IF (l_debug_print) WRITE(*,*) "n_interact = ", n_interact, n_all_interact, n_may_interact, l_molvectorized
+                    IF (l_debug_print) WRITE(*,*) n_all_interact_p, n_may_interact_p
+                    IF (l_debug_print) WRITE(*,*) "nthreads_used = ", nthreads_used
+                    IF (l_debug_print) WRITE(*,*) n_all_interact_vec(ithread), n_may_interact_vec(ithread)
+            ELSE
+                    l_molvectorized = .TRUE.
             END IF
-            IF (l_order_ij) THEN
-                    !$OMP PARALLEL
+            IF (l_order_ij .AND. .NOT. l_molvectorized) THEN
                     !$OMP WORKSHARE
                     iatomtypes = nonbond_list(which_i_exist,is)%atom_type_number
                     jatomtypes(1:jnatoms) = nonbond_list(1:jnatoms,js)%atom_type_number
@@ -3545,16 +3720,14 @@ CONTAINS
                     irxp(1:natompairs) = RESHAPE(SPREAD(irsxp_vec(1:n_i_exist),2,jnatoms), (/ natompairs /))
                     iryp(1:natompairs) = RESHAPE(SPREAD(irsyp_vec(1:n_i_exist),2,jnatoms), (/ natompairs /))
                     irzp(1:natompairs) = RESHAPE(SPREAD(irszp_vec(1:n_i_exist),2,jnatoms), (/ natompairs /))
-                    !$OMP END WORKSHARE
-                    !$OMP END PARALLEL
+                    !$OMP END WORKSHARE NOWAIT
                     IF (get_qq) THEN
-                            !!!$OMP PARALLEL WORKSHARE
+                            !$OMP WORKSHARE
                             cfqq_vec(1:natompairs) = RESHAPE(SPREAD(nonbond_list(1:jnatoms,js)%charge,1,n_i_exist) * &
                                     SPREAD(nonbond_list(which_i_exist,is)%charge,2,jnatoms) * charge_factor, (/ natompairs /))
-                            !!!$OMP END PARALLEL WORKSHARE
+                            !$OMP END WORKSHARE NOWAIT
                     END IF
-            ELSE
-                    !$OMP PARALLEL
+            ELSE IF (.NOT. l_molvectorized) THEN
                     !$OMP WORKSHARE
                     iatomtypes = nonbond_list(which_i_exist,is)%atom_type_number
                     jatomtypes(1:jnatoms) = nonbond_list(1:jnatoms,js)%atom_type_number
@@ -3562,320 +3735,2252 @@ CONTAINS
                     irxp(1:natompairs) = RESHAPE(SPREAD(irsxp_vec(1:n_i_exist),1,jnatoms), (/ natompairs /))
                     iryp(1:natompairs) = RESHAPE(SPREAD(irsyp_vec(1:n_i_exist),1,jnatoms), (/ natompairs /))
                     irzp(1:natompairs) = RESHAPE(SPREAD(irszp_vec(1:n_i_exist),1,jnatoms), (/ natompairs /))
-                    !$OMP END WORKSHARE
-                    !$OMP END PARALLEL
+                    !$OMP END WORKSHARE NOWAIT
                     IF (get_qq) THEN
-                            !!!$OMP PARALLEL WORKSHARE
+                            !$OMP WORKSHARE
                             cfqq_vec(1:natompairs) = RESHAPE(SPREAD(nonbond_list(1:jnatoms,js)%charge,2,n_i_exist) * &
                                     SPREAD(nonbond_list(which_i_exist,is)%charge,1,jnatoms) * charge_factor, (/ natompairs /))
-                            !!!$OMP END PARALLEL WORKSHARE
+                            !$OMP END WORKSHARE NOWAIT
                     END IF
             END IF
-            i_overlap = .FALSE.
+
             need_sqrt = get_qq .OR. lj_cut_shift_force
 
-            !$OMP PARALLEL PRIVATE(jm,jrxp,jryp,jrzp,dsp,dxp,dyp,dzp,i,j,k,ji,rijsq,rij) &
-            !$OMP PRIVATE(vdw_energy,qq_energy,jsl,ij_overlap) &
-            !$OMP PRIVATE(jsxp,jsyp,jszp,eps,sigsq,sigbyr2,sigbyr6,sigbyr12,rterm,rterm2) &
-            !$OMP PRIVATE(negsigsq,negsigbyr2,roffsq_rijsq) &
-            !$OMP PRIVATE(epsig_n,epsig_m,mie_n,mie_m) &
-            !$OMP PRIVATE(l_interact, shift_p1, shift_p2, cfqq) &
-            !$OMP PRIVATE(rijsq_vec, rij_vec) &
-            !$OMP REDUCTION(+: i_vdw_energy,i_qq_energy) &
-            !$OMP REDUCTION(.OR.: i_overlap)
-            !$OMP DO SCHEDULE(STATIC)
-            DO j_interact = 1, n_interact
-                ij_overlap = .FALSE.
-                vdw_energy = 0.0_DP
-                qq_energy = 0.0_DP
-                jm = which_interact(j_interact)
-                IF (l_ortho) THEN
-                        IF (l_order_ij) THEN
+            !$OMP BARRIER
+            !IF (i_mcstep < 10 .AND. .NOT. cbmc_flag) WRITE(*,*) which_interact(1:n_interact)
+            IF (l_molvectorized) THEN
+                    IF (l_debug_print) WRITE(*,*) "l_molvectorized"
+                    IF (l_getdrcom) THEN
+                            !$OMP WORKSHARE
+                            jrp_perm(1:n_interact,1:jnatoms,1) = TRANSPOSE(atom_list(1:jnatoms,which_interact(1:n_interact),js)%rp(1))
+                            jrp_perm(1:n_interact,1:jnatoms,2) = TRANSPOSE(atom_list(1:jnatoms,which_interact(1:n_interact),js)%rp(2))
+                            jrp_perm(1:n_interact,1:jnatoms,3) = TRANSPOSE(atom_list(1:jnatoms,which_interact(1:n_interact),js)%rp(3))
+                            !$OMP END WORKSHARE
+                            IF (l_debug_print) THEN
+                                    WRITE(*,*) im
+                                    WRITE(*,*) irsxp_vec
+                                    WRITE(*,*) irsyp_vec
+                                    WRITE(*,*) irszp_vec
+                                    WRITE(*,*)
+                                    WRITE(*,*) n_interact, jnatoms
+                                    DO i = 1, n_interact
+                                        WRITE(*,*) "Molecule ", which_interact(i)
+                                        DO j = 1, jnatoms
+                                                WRITE(*,*) jrp_perm(i,j,1:3)
+                                        END DO
+                                    END DO
+                            END IF
+                    ELSE IF (open_mc_flag) THEN
+                            n_interact = jnlive
+                            !$OMP WORKSHARE
+                            n_all_interact = 0
+                            n_may_interact = n_interact
+                            jrp_perm(1:jnlive,1:jnatoms,1) = TRANSPOSE(atom_list(1:jnatoms,live_locates(1:jnlive),js)%rp(1))
+                            jrp_perm(1:jnlive,1:jnatoms,2) = TRANSPOSE(atom_list(1:jnatoms,live_locates(1:jnlive),js)%rp(2))
+                            jrp_perm(1:jnlive,1:jnatoms,3) = TRANSPOSE(atom_list(1:jnatoms,live_locates(1:jnlive),js)%rp(3))
+                            !$OMP END WORKSHARE
+                    ELSE
+                            IF (is .EQ. js) THEN
+                                    n_interact = jnlive - 1
+                                    !$OMP DO SCHEDULE(STATIC) COLLAPSE(2)
+                                    DO ja = 1, jnatoms
+                                        DO i = 1, 3
+                                                jrp_perm(1:im-1,ja,i) = atom_list(ja,1:im-1,js)%rp(i)
+                                                jrp_perm(im:n_interact,ja,i) = atom_list(ja,im+1:jnlive,js)%rp(i)
+                                        END DO
+                                    END DO
+                                    !$OMP END DO NOWAIT
+                            ELSE IF (l_ortho) THEN
+                                    n_interact = jnlive
+                                    !$OMP DO SCHEDULE(STATIC) COLLAPSE(2)
+                                    DO ja = 1, jnatoms
+                                        DO i = 1, 3
+                                                jrp_perm(1:n_interact,ja,i) = atom_list(ja,1:jnlive,js)%rp(i)
+                                        END DO
+                                    END DO
+                                    !$OMP END DO NOWAIT
+                            ELSE
+                                    n_interact = jnlive
+                            END IF
+                            !$OMP SINGLE
+                            n_all_interact = 0
+                            n_may_interact = n_interact
+                            !$OMP END SINGLE
+                    END IF
+                    IF (.NOT. l_ortho) THEN
+                            switchflag = l_getdrcom .OR. open_mc_flag .OR. is .EQ. js
+                            !$OMP DO SCHEDULE(STATIC)
+                            DO ja = 1, jnatoms
+                                DO j = 1, n_interact
+                                        IF (switchflag) THEN
+                                                rxp = jrp_perm(j,ja,1)
+                                                ryp = jrp_perm(j,ja,2)
+                                                rzp = jrp_perm(j,ja,3)
+                                        ELSE
+                                                rxp = atom_list(ja,j,js)%rp(1)
+                                                ryp = atom_list(ja,j,js)%rp(2)
+                                                rzp = atom_list(ja,j,js)%rp(3)
+                                        END IF
+                                        jsxp = inv_h11*rxp
+                                        jsyp = inv_h21*rxp
+                                        jszp = inv_h31*rxp
+                                        jsxp = jsxp + inv_h12*ryp
+                                        jsyp = jsyp + inv_h22*ryp
+                                        jszp = jszp + inv_h32*ryp
+                                        jsxp = jsxp + inv_h13*rzp
+                                        jsyp = jsyp + inv_h23*rzp
+                                        jszp = jszp + inv_h33*rzp
+                                        jrp_perm(j,ja,1) = jsxp
+                                        jrp_perm(j,ja,2) = jsyp
+                                        jrp_perm(j,ja,3) = jszp
+                                END DO
+                            END DO
+                            !$OMP END DO
+                    END IF
+                    !$OMP SINGLE
+                    IF (get_vdw .AND. l_pair_store) THEN
+                            n_interact_vdw_pairstore = n_interact
+                    ELSE
+                            n_interact_vdw_pairstore = 1 ! reduction item cannot have zero length
+                    END IF
+                    IF (get_qq .AND. l_pair_store) THEN
+                            n_interact_qq_pairstore = n_interact
+                    ELSE
+                            n_interact_qq_pairstore = 1 ! reduction item cannot have zero length
+                    END IF
+                    IF (.NOT. ALLOCATED(mol_vdw_energy)) THEN
+                            ALLOCATE(mol_vdw_energy(n_interact_vdw_pairstore))
+                    ELSE IF (SIZE(mol_vdw_energy,1) < n_interact_vdw_pairstore) THEN
+                            DEALLOCATE(mol_vdw_energy)
+                            ALLOCATE(mol_vdw_energy(n_interact_vdw_pairstore))
+                    END IF
+                    IF (.NOT. ALLOCATED(mol_qq_energy)) THEN
+                            ALLOCATE(mol_qq_energy(n_interact_qq_pairstore))
+                    ELSE IF (SIZE(mol_qq_energy,1) < n_interact_qq_pairstore) THEN
+                            DEALLOCATE(mol_qq_energy)
+                            ALLOCATE(mol_qq_energy(n_interact_qq_pairstore))
+                    END IF
+                    mol_vdw_energy = 0.0_DP
+                    mol_qq_energy = 0.0_DP
+                    !$OMP END SINGLE
+                    !$OMP DO COLLAPSE(2) SCHEDULE(DYNAMIC) &
+                    !$OMP REDUCTION(+:mol_vdw_energy,mol_qq_energy)
+                    DO ja = 1, jnatoms
+                        DO ia = 1, n_i_exist
+                                !DIR$ ASSUME (MOD(atompairdim,8) .EQ. 0)
+                                !DIR$ ASSUME (MOD(mol_dim,8) .EQ. 0)
+                                IF (overlap .OR. i_overlap) CYCLE
+                                ia0 = which_i_exist(ia)
+                                itype = nonbond_list(ia0,is)%atom_type_number
+                                jtype = nonbond_list(ja,js)%atom_type_number
+                                ij_get_vdw = itype > 0 .AND. jtype > 0 .AND. get_vdw
+                                IF (i_get_qq) THEN
+                                        cfqq = nonbond_list(ia0,is)%charge * nonbond_list(ja,js)%charge * charge_factor
+                                        ij_get_qq = ABS(cfqq) > 0.0_DP
+                                ELSE
+                                        ij_get_qq = .FALSE.
+                                END IF
+                                IF (l_ortho) THEN
+                                        DO j = 1, n_interact
+                                                dxp = ABS(jrp_perm(j,ja,1) - irsxp_vec(ia))
+                                                dyp = ABS(jrp_perm(j,ja,2) - irsyp_vec(ia))
+                                                dzp = ABS(jrp_perm(j,ja,3) - irszp_vec(ia))
+                                                IF (dxp > hxl) dxp = dxp - xl
+                                                IF (dyp > hyl) dyp = dyp - yl
+                                                IF (dzp > hzl) dzp = dzp - zl
+                                                dxp = dxp*dxp
+                                                dxp = dxp + dyp*dyp
+                                                dxp = dxp + dzp*dzp
+                                                rijsq_vec(j) = dxp
+                                                IF (ij_get_vdw) vdw_interact_vec(j) = dxp < this_vdw_rcutsq
+                                                IF (ij_get_qq) qq_interact_vec(j) = dxp < this_coul_rcutsq
+                                                i_overlap = i_overlap .OR. dxp < rcut_lowsq
+                                        END DO
+                                ELSE
+                                        DO j = 1, n_interact
+                                                dsp = jrp_perm(j,ja,1) - irsxp_vec(ia)
+                                                IF (dsp > 0.5_DP) THEN
+                                                        dsp = dsp - 1.0_DP
+                                                ELSE IF (dsp < -0.5_DP) THEN
+                                                        dsp = dsp + 1.0_DP
+                                                END IF
+                                                dxp = h11*dsp
+                                                dyp = h21*dsp
+                                                dzp = h31*dsp
+                                                dsp = jrp_perm(j,ja,2) - irsyp_vec(ia)
+                                                IF (dsp > 0.5_DP) THEN
+                                                        dsp = dsp - 1.0_DP
+                                                ELSE IF (dsp < -0.5_DP) THEN
+                                                        dsp = dsp + 1.0_DP
+                                                END IF
+                                                dxp = dxp + h12*dsp
+                                                dyp = dyp + h22*dsp
+                                                dzp = dzp + h32*dsp
+                                                dsp = jrp_perm(j,ja,3) - irszp_vec(ia)
+                                                IF (dsp > 0.5_DP) THEN
+                                                        dsp = dsp - 1.0_DP
+                                                ELSE IF (dsp < -0.5_DP) THEN
+                                                        dsp = dsp + 1.0_DP
+                                                END IF
+                                                dxp = dxp + h13*dsp
+                                                dyp = dyp + h23*dsp
+                                                dzp = dzp + h33*dsp
+                                                dxp = dxp*dxp
+                                                dxp = dxp + dyp*dyp
+                                                dxp = dxp + dzp*dzp
+                                                rijsq_vec(j) = dxp
+                                                IF (ij_get_vdw) vdw_interact_vec(j) = dxp < this_vdw_rcutsq
+                                                IF (ij_get_qq) qq_interact_vec(j) = dxp < this_coul_rcutsq
+                                                i_overlap = i_overlap .OR. dxp < rcut_lowsq
+                                        END DO
+                                END IF
+                                IF (l_debug_print) THEN
+                                        WRITE(*,*) "i_overlap = ", i_overlap
+                                        WRITE(*,*) "rijsq_vec = "
+                                        WRITE(*,*) rijsq_vec(1:n_interact)
+                                END IF
+                                IF (i_overlap) THEN
+                                        overlap = .TRUE.
+                                        CYCLE
+                                END IF
+                                IF (ij_get_vdw .AND. ij_get_qq) THEN
+                                        pair_max_rcutsq = MAX(this_vdw_rcutsq,this_coul_rcutsq)
+                                        pair_min_rcutsq = MIN(this_vdw_rcutsq,this_coul_rcutsq)
+                                        n_all_interact_p = n_all_interact
+                                ELSE IF (ij_get_vdw) THEN
+                                        pair_max_rcutsq = this_vdw_rcutsq
+                                        IF (l_shortvdw) THEN
+                                                n_all_interact_p = 0
+                                        ELSE
+                                                n_all_interact_p = n_all_interact
+                                        END IF
+                                ELSE IF (ij_get_qq) THEN
+                                        pair_max_rcutsq = this_coul_rcutsq
+                                        IF (l_shortcoul) THEN
+                                                n_all_interact_p = 0
+                                        ELSE
+                                                n_all_interact_p = n_all_interact
+                                        END IF
+                                END IF
+                                maxvlen = n_all_interact_p
+                                DO j = n_all_interact_p+1, n_interact
+                                        rijsq = rijsq_vec(j)
+                                        IF (rijsq < pair_max_rcutsq) THEN
+                                                maxvlen = maxvlen + 1
+                                                rijsq_vec(maxvlen) = rijsq
+                                        END IF
+                                END DO
+                                IF (ij_get_vdw .AND. ij_get_qq .AND. l_notsamecut) THEN
+                                        minvlen = 0
+                                        DO j = 1, maxvlen
+                                                rijsq = rijsq_vec(j)
+                                                IF (rijsq < pair_min_rcutsq) THEN
+                                                        minvlen = minvlen + 1
+                                                        rijsq_svec(minvlen) = rijsq
+                                                END IF
+                                        END DO
+                                        IF (l_shortcoul) THEN
+                                                vdw_vlen = maxvlen
+                                                qq_vlen = minvlen
+                                        ELSE
+                                                vdw_vlen = minvlen
+                                                qq_vlen = maxvlen
+                                        END IF
+                                ELSE
+                                        IF (ij_get_vdw) vdw_vlen = maxvlen
+                                        IF (ij_get_qq) qq_vlen = maxvlen
+                                END IF
+                                !IF (i_mcstep == 1) THEN
+                                !        WRITE(*,*) l_notsamecut, l_shortcoul, l_shortvdw
+                                !        WRITE(*,*) itype, jtype, cfqq
+                                !        WRITE(*,*) minvlen, maxvlen, n_all_interact_p, n_interact, vdw_vlen, qq_vlen, ij_get_vdw, ij_get_qq
+                                !END IF
+                                IF (ij_get_vdw) THEN
+                                        l_read_svec = ij_get_qq .AND. l_shortvdw
+                                        IF (l_debug_print) WRITE(*,*) "l_read_svec = ", l_read_svec
+                                        IF (lj_charmm) THEN
+                                                eps = ppvdwp_table2(1,itype,jtype,ibox) ! epsilon
+                                                sigsq = ppvdwp_table2(2,itype,jtype,ibox) ! sigma**2
+                                                vdw_energy = 0.0_DP
+                                                !$OMP SIMD PRIVATE(rijsq,sigbyr2,sigbyr6,sigbyr12) REDUCTION(+:vdw_energy)
+                                                DO j = 1, vdw_vlen
+                                                        IF (l_read_svec) THEN
+                                                                rijsq = rijsq_svec(j)
+                                                        ELSE
+                                                                rijsq = rijsq_vec(j)
+                                                        END IF
+                                                        sigbyr2 = sigsq/rijsq ! sigma was already squared
+                                                        sigbyr6 = sigbyr2*sigbyr2*sigbyr2
+                                                        IF (l_pair_store) THEN
+                                                                sigbyr12 = sigbyr6*sigbyr6
+                                                                sigbyr12 = sigbyr12 - 2.0_DP*sigbyr6
+                                                                mol_vdw_energy_p(j) = eps*sigbyr12
+                                                                vdw_energy = vdw_energy + sigbyr12
+                                                        ELSE
+                                                                vdw_energy = vdw_energy + sigbyr6*sigbyr6 !- 2.0_DP *sigbyr6
+                                                                vdw_energy = vdw_energy - 2.0_DP*sigbyr6
+                                                        END IF
+                                                END DO
+                                                !$OMP END SIMD
+
+                                                !IF (l_pair_store) THEN
+                                                !        IF (ij_get_qq .AND. l_shortvdw) THEN
+                                                !                DO j = 1, vdw_vlen
+                                                !                        rijsq = rijsq_svec(j)
+                                                !                        sigbyr2 = sigsq/rijsq ! sigma was already squared
+                                                !                        sigbyr6 = sigbyr2*sigbyr2*sigbyr2
+                                                !                        sigbyr12 = sigbyr6*sigbyr6
+                                                !                        sigbyr12 = sigbyr12 - 2.0_DP*sigbyr6
+                                                !                        mol_vdw_energy_p(j) = eps*sigbyr12
+                                                !                        vdw_energy = vdw_energy + sigbyr12
+                                                !                END DO
+                                                !        ELSE
+                                                !                DO j = 1, vdw_vlen
+                                                !                        rijsq = rijsq_vec(j)
+                                                !                        sigbyr2 = sigsq/rijsq ! sigma was already squared
+                                                !                        sigbyr6 = sigbyr2*sigbyr2*sigbyr2
+                                                !                        sigbyr12 = sigbyr6*sigbyr6
+                                                !                        sigbyr12 = sigbyr12 - 2.0_DP*sigbyr6
+                                                !                        mol_vdw_energy_p(j) = eps*sigbyr12
+                                                !                        vdw_energy = vdw_energy + sigbyr12
+                                                !                END DO
+                                                !        END IF
+                                                !ELSE
+                                                !        IF (ij_get_qq .AND. l_shortvdw) THEN
+                                                !                DO j = 1, vdw_vlen
+                                                !                        rijsq = rijsq_svec(j)
+                                                !                        sigbyr2 = sigsq/rijsq ! sigma was already squared
+                                                !                        sigbyr6 = sigbyr2*sigbyr2*sigbyr2
+                                                !                        vdw_energy = vdw_energy + sigbyr6*sigbyr6
+                                                !                        vdw_energy = vdw_energy - 2.0_DP*sigbyr6
+                                                !                END DO
+                                                !        ELSE
+                                                !                DO j = 1, vdw_vlen
+                                                !                        rijsq = rijsq_vec(j)
+                                                !                        sigbyr2 = sigsq/rijsq ! sigma was already squared
+                                                !                        sigbyr6 = sigbyr2*sigbyr2*sigbyr2
+                                                !                        vdw_energy = vdw_energy + sigbyr6*sigbyr6
+                                                !                        vdw_energy = vdw_energy - 2.0_DP*sigbyr6
+                                                !                END DO
+                                                !        END IF
+                                                !END IF
+                                                i_vdw_energy = i_vdw_energy + vdw_energy * eps
+                                        ELSE IF (lj_cut_shift) THEN
+                                                eps = ppvdwp_table2(1,itype,jtype,ibox) ! 4*epsilon
+                                                negsigsq = ppvdwp_table2(2,itype,jtype,ibox) ! -(sigma**2)
+                                                shift_p1 = ppvdwp_table2(3,itype,jtype,ibox)
+                                                vdw_energy = 0.0_DP
+                                                IF (l_read_svec) THEN
+                                                        IF (l_pair_store) THEN
+                                                                DO j = 1, vdw_vlen
+                                                                        rijsq = rijsq_svec(j)
+                                                                        negsigbyr2 = negsigsq/rijsq
+                                                                        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                                        rterm = rterm + rterm*rterm
+                                                                        vdw_energy = vdw_energy + rterm
+                                                                        mol_vdw_energy_p(j) = eps*rterm - shift_p1
+                                                                END DO
+                                                        ELSE
+                                                                DO j = 1, vdw_vlen
+                                                                        rijsq = rijsq_svec(j)
+                                                                        negsigbyr2 = negsigsq/rijsq
+                                                                        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                                        rterm = rterm + rterm*rterm
+                                                                        vdw_energy = vdw_energy + rterm
+                                                                END DO
+                                                        END IF
+                                                ELSE
+                                                        IF (l_pair_store) THEN
+                                                                DO j = 1, vdw_vlen
+                                                                        rijsq = rijsq_vec(j)
+                                                                        negsigbyr2 = negsigsq/rijsq
+                                                                        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                                        rterm = rterm + rterm*rterm
+                                                                        vdw_energy = vdw_energy + rterm
+                                                                        mol_vdw_energy_p(j) = eps*rterm - shift_p1
+                                                                END DO
+                                                        ELSE
+                                                                DO j = 1, vdw_vlen
+                                                                        rijsq = rijsq_vec(j)
+                                                                        negsigbyr2 = negsigsq/rijsq
+                                                                        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                                        rterm = rterm + rterm*rterm
+                                                                        vdw_energy = vdw_energy + rterm
+                                                                END DO
+                                                        END IF
+                                                END IF
+                                                !DO j = 1, vdw_vlen
+                                                !        IF (l_read_svec) THEN
+                                                !                rijsq = rijsq_svec(j)
+                                                !        ELSE
+                                                !                rijsq = rijsq_vec(j)
+                                                !        END IF
+                                                !        negsigbyr2 = negsigsq/rijsq
+                                                !        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                !        rterm = rterm + rterm*rterm
+                                                !        vdw_energy = vdw_energy + rterm
+                                                !        IF (l_pair_store) THEN
+                                                !                mol_vdw_energy_p(j) = eps*rterm - shift_p1
+                                                !        END IF
+                                                !        !vdw_energy = vdw_energy + eps * rterm - shift_p1
+                                                !END DO
+                                                i_vdw_energy = i_vdw_energy + vdw_energy*eps - vdw_vlen*shift_p1
+                                        ELSE IF (lj_cut_switch) THEN
+                                                eps = ppvdwp_table2(1,itype,jtype,ibox) ! 4*epsilon
+                                                negsigsq = ppvdwp_table2(2,itype,jtype,ibox) ! -(sigma**2)
+                                                vdw_energy = 0.0_DP
+                                                IF (l_read_svec) THEN
+                                                        IF (l_pair_store) THEN
+                                                                DO j = 1, vdw_vlen
+                                                                        rijsq = rijsq_svec(j)
+                                                                        negsigbyr2 = negsigsq/rijsq
+                                                                        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                                        rterm = rterm + rterm*rterm
+                                                                        roffsq_rijsq = roff_switch_sq(this_box) - rijsq
+                                                                        roffsq_rijsq = roffsq_rijsq * roffsq_rijsq * switch_factor1(this_box) * &
+                                                                                (switch_factor2(this_box)+2.0_DP*rijsq)
+                                                                        roffsq_rijsq = MERGE(roffsq_rijsq, 1.0_DP, rijsq .GE. ron_switch_sq(this_box))
+                                                                        vdw_energy = vdw_energy + roffsq_rijsq*rterm
+                                                                        mol_vdw_energy_p(j) = eps*roffsq_rijsq*rterm
+                                                                END DO
+                                                        ELSE
+                                                                DO j = 1, vdw_vlen
+                                                                        rijsq = rijsq_svec(j)
+                                                                        negsigbyr2 = negsigsq/rijsq
+                                                                        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                                        rterm = rterm + rterm*rterm
+                                                                        roffsq_rijsq = roff_switch_sq(this_box) - rijsq
+                                                                        roffsq_rijsq = roffsq_rijsq * roffsq_rijsq * switch_factor1(this_box) * &
+                                                                                (switch_factor2(this_box)+2.0_DP*rijsq)
+                                                                        roffsq_rijsq = MERGE(roffsq_rijsq, 1.0_DP, rijsq .GE. ron_switch_sq(this_box))
+                                                                        vdw_energy = vdw_energy + roffsq_rijsq*rterm
+                                                                END DO
+                                                        END IF
+                                                ELSE
+                                                        IF (l_pair_store) THEN
+                                                                DO j = 1, vdw_vlen
+                                                                        rijsq = rijsq_vec(j)
+                                                                        negsigbyr2 = negsigsq/rijsq
+                                                                        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                                        rterm = rterm + rterm*rterm
+                                                                        roffsq_rijsq = roff_switch_sq(this_box) - rijsq
+                                                                        roffsq_rijsq = roffsq_rijsq * roffsq_rijsq * switch_factor1(this_box) * &
+                                                                                (switch_factor2(this_box)+2.0_DP*rijsq)
+                                                                        roffsq_rijsq = MERGE(roffsq_rijsq, 1.0_DP, rijsq .GE. ron_switch_sq(this_box))
+                                                                        vdw_energy = vdw_energy + roffsq_rijsq*rterm
+                                                                        mol_vdw_energy_p(j) = eps*roffsq_rijsq*rterm
+                                                                END DO
+                                                        ELSE
+                                                                DO j = 1, vdw_vlen
+                                                                        rijsq = rijsq_vec(j)
+                                                                        negsigbyr2 = negsigsq/rijsq
+                                                                        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                                        rterm = rterm + rterm*rterm
+                                                                        roffsq_rijsq = roff_switch_sq(this_box) - rijsq
+                                                                        roffsq_rijsq = roffsq_rijsq * roffsq_rijsq * switch_factor1(this_box) * &
+                                                                                (switch_factor2(this_box)+2.0_DP*rijsq)
+                                                                        roffsq_rijsq = MERGE(roffsq_rijsq, 1.0_DP, rijsq .GE. ron_switch_sq(this_box))
+                                                                        vdw_energy = vdw_energy + roffsq_rijsq*rterm
+                                                                END DO
+                                                        END IF
+                                                END IF
+                                                !DO j = 1, vdw_vlen
+                                                !        IF (l_read_svec) THEN
+                                                !                rijsq = rijsq_svec(j)
+                                                !        ELSE
+                                                !                rijsq = rijsq_vec(j)
+                                                !        END IF
+                                                !        negsigbyr2 = negsigsq/rijsq
+                                                !        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                !        rterm = rterm + rterm*rterm
+                                                !        roffsq_rijsq = roff_switch_sq(this_box) - rijsq
+                                                !        roffsq_rijsq = roffsq_rijsq * roffsq_rijsq * switch_factor1(this_box) * &
+                                                !                (switch_factor2(this_box)+2.0_DP*rijsq)
+                                                !        roffsq_rijsq = MERGE(roffsq_rijsq, 1.0_DP, rijsq .GE. ron_switch_sq(this_box))
+                                                !        vdw_energy = vdw_energy + roffsq_rijsq*rterm
+                                                !        IF (l_pair_store) THEN
+                                                !                mol_vdw_energy_p(j) = eps*roffsq_rijsq*rterm
+                                                !        END IF
+                                                !END DO
+                                                i_vdw_energy = i_vdw_energy + vdw_energy*eps
+                                        ELSE IF (lj_cut_shift_force) THEN
+                                                eps = ppvdwp_table2(1,itype,jtype,ibox) ! 4*epsilon
+                                                negsigsq = ppvdwp_table2(2,itype,jtype,ibox) ! -(sigma**2)
+                                                !shift_p1 = ppvdwp_table2(3,itype,jtype,ibox)
+                                                !vdw_energy = shift_p1
+                                                vdw_energy = ppvdwp_table2(3,itype,jtype,ibox)
+                                                shift_p2 = ppvdwp_table2(4,itype,jtype,ibox)
+                                                vdw_energy = vdw_energy + rcut_vdw(this_box)*shift_p2
+                                                IF (l_pair_store) shift_p1 = vdw_energy
+                                                vdw_energy = -vdw_vlen*vdw_energy
+                                                IF (l_read_svec) THEN
+                                                        IF (l_pair_store) THEN
+                                                                DO j = 1, vdw_vlen
+                                                                        rijsq = rijsq_svec(j)
+                                                                        negsigbyr2 = negsigsq/rijsq
+                                                                        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                                        rterm = rterm + rterm*rterm
+                                                                        nrg = eps*rterm + SQRT(rijsq)*shift_p2
+                                                                        vdw_energy = vdw_energy + nrg
+                                                                        mol_vdw_energy_p(j) = nrg - shift_p1
+                                                                END DO
+                                                        ELSE
+                                                                DO j = 1, vdw_vlen
+                                                                        rijsq = rijsq_svec(j)
+                                                                        negsigbyr2 = negsigsq/rijsq
+                                                                        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                                        rterm = rterm + rterm*rterm
+                                                                        vdw_energy = vdw_energy + eps*rterm + SQRT(rijsq)*shift_p2
+                                                                END DO
+                                                        END IF
+                                                ELSE
+                                                        IF (l_pair_store) THEN
+                                                                DO j = 1, vdw_vlen
+                                                                        rijsq = rijsq_vec(j)
+                                                                        negsigbyr2 = negsigsq/rijsq
+                                                                        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                                        rterm = rterm + rterm*rterm
+                                                                        nrg = eps*rterm + SQRT(rijsq)*shift_p2
+                                                                        vdw_energy = vdw_energy + nrg
+                                                                        mol_vdw_energy_p(j) = nrg - shift_p1
+                                                                END DO
+                                                        ELSE
+                                                                DO j = 1, vdw_vlen
+                                                                        rijsq = rijsq_vec(j)
+                                                                        negsigbyr2 = negsigsq/rijsq
+                                                                        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                                        rterm = rterm + rterm*rterm
+                                                                        vdw_energy = vdw_energy + eps*rterm + SQRT(rijsq)*shift_p2
+                                                                END DO
+                                                        END IF
+                                                END IF
+                                                !DO j = 1, vdw_vlen
+                                                !        IF (l_read_svec) THEN
+                                                !                rijsq = rijsq_svec(j)
+                                                !        ELSE
+                                                !                rijsq = rijsq_vec(j)
+                                                !        END IF
+                                                !        negsigbyr2 = negsigsq/rijsq
+                                                !        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                !        rterm = rterm + rterm*rterm
+                                                !        IF (l_pair_store) THEN
+                                                !                nrg = eps*rterm + SQRT(rijsq)*shift_p2
+                                                !                vdw_energy = vdw_energy + nrg
+                                                !                mol_vdw_energy_p(j) = nrg - shift_p1
+                                                !        ELSE
+                                                !                vdw_energy = vdw_energy + eps*rterm + SQRT(rijsq)*shift_p2
+                                                !        END IF
+                                                !        !vdw_energy = vdw_energy + eps * rterm - shift_p1 - &
+                                                !        !        (rcut_vdw(this_box)-SQRT(rijsq))*shift_p2
+                                                !END DO
+                                                i_vdw_energy = i_vdw_energy + vdw_energy
+                                        ELSE IF (lj_cut) THEN
+                                                eps = ppvdwp_table2(1,itype,jtype,ibox) ! 4*epsilon
+                                                negsigsq = ppvdwp_table2(2,itype,jtype,ibox) ! -(sigma**2)
+                                                vdw_energy = 0.0_DP
+                                                IF (l_read_svec) THEN
+                                                        IF (l_pair_store) THEN
+                                                                DO j = 1, vdw_vlen
+                                                                        rijsq = rijsq_svec(j)
+                                                                        negsigbyr2 = negsigsq/rijsq
+                                                                        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                                        rterm = rterm + rterm*rterm
+                                                                        vdw_energy = vdw_energy + rterm
+                                                                        mol_vdw_energy_p(j) = eps*rterm 
+                                                                END DO
+                                                        ELSE
+                                                                DO j = 1, vdw_vlen
+                                                                        rijsq = rijsq_svec(j)
+                                                                        negsigbyr2 = negsigsq/rijsq
+                                                                        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                                        rterm = rterm + rterm*rterm
+                                                                        vdw_energy = vdw_energy + rterm
+                                                                END DO
+                                                        END IF
+                                                ELSE
+                                                        IF (l_pair_store) THEN
+                                                                DO j = 1, vdw_vlen
+                                                                        rijsq = rijsq_vec(j)
+                                                                        negsigbyr2 = negsigsq/rijsq
+                                                                        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                                        rterm = rterm + rterm*rterm
+                                                                        vdw_energy = vdw_energy + rterm
+                                                                        mol_vdw_energy_p(j) = eps*rterm 
+                                                                END DO
+                                                        ELSE
+                                                                DO j = 1, vdw_vlen
+                                                                        rijsq = rijsq_vec(j)
+                                                                        negsigbyr2 = negsigsq/rijsq
+                                                                        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                                        rterm = rterm + rterm*rterm
+                                                                        vdw_energy = vdw_energy + rterm
+                                                                END DO
+                                                        END IF
+                                                END IF
+                                                !DO j = 1, vdw_vlen
+                                                !        IF (l_read_svec) THEN
+                                                !                rijsq = rijsq_svec(j)
+                                                !        ELSE
+                                                !                rijsq = rijsq_vec(j)
+                                                !        END IF
+                                                !        negsigbyr2 = negsigsq/rijsq
+                                                !        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                !        rterm = rterm + rterm*rterm
+                                                !        vdw_energy = vdw_energy + rterm
+                                                !        IF (l_pair_store) THEN
+                                                !                mol_vdw_energy_p(j) = eps*rterm 
+                                                !        END IF
+                                                !        !vdw_energy = vdw_energy + eps * rterm
+                                                !END DO
+                                                i_vdw_energy = i_vdw_energy + vdw_energy*eps
+                                        ELSE IF (mie_cut .OR. mie_cut_shift) THEN
+                                                epsig_n = ppvdwp_table2(1,itype,jtype,ibox) ! epsilon * mie_coeff * sigma ** n
+                                                epsig_m = ppvdwp_table2(2,itype,jtype,ibox) ! epsilon * mie_coeff * sigma ** m
+                                                mie_n = ppvdwp_table2(3,itype,jtype,ibox) ! already halved
+                                                mie_m = ppvdwp_table2(4,itype,jtype,ibox) ! already halved
+                                                IF (mie_cut_shift) THEN
+                                                        shift_p1 = ppvdwp_table2(5,itype,jtype,ibox)
+                                                        IF (l_pair_store) THEN
+                                                                vdw_energy = 0.0_DP
+                                                        ELSE
+                                                                vdw_energy = -shift_p1*vdw_vlen
+                                                        END IF
+                                                ELSE
+                                                        vdw_energy = 0.0_DP
+                                                        shift_p1 = 0.0_DP
+                                                END IF
+                                                IF (l_read_svec) THEN
+                                                        IF (l_pair_store) THEN
+                                                                DO j = 1, vdw_vlen
+                                                                        rijsq = rijsq_svec(j)
+                                                                        nrg = shift_p1
+                                                                        nrg = epsig_n * rijsq**mie_n - nrg
+                                                                        nrg = nrg - epsig_m * rijsq**mie_m
+                                                                        mol_vdw_energy_p(j) = nrg
+                                                                        vdw_energy = vdw_energy + nrg
+                                                                END DO
+                                                        ELSE
+                                                                DO j = 1, vdw_vlen
+                                                                        rijsq = rijsq_svec(j)
+                                                                        vdw_energy = vdw_energy + epsig_n * rijsq**mie_n - &
+                                                                                epsig_m * rijsq**mie_m
+                                                                        !vdw_energy = vdw_energy - epsig_m * rijsq**mie_m
+                                                                END DO
+                                                        END IF
+                                                ELSE
+                                                        IF (l_pair_store) THEN
+                                                                DO j = 1, vdw_vlen
+                                                                        rijsq = rijsq_vec(j)
+                                                                        nrg = shift_p1
+                                                                        nrg = epsig_n * rijsq**mie_n - nrg
+                                                                        nrg = nrg - epsig_m * rijsq**mie_m
+                                                                        mol_vdw_energy_p(j) = nrg
+                                                                        vdw_energy = vdw_energy + nrg
+                                                                END DO
+                                                        ELSE
+                                                                DO j = 1, vdw_vlen
+                                                                        rijsq = rijsq_vec(j)
+                                                                        vdw_energy = vdw_energy + epsig_n * rijsq**mie_n - &
+                                                                                epsig_m * rijsq**mie_m
+                                                                        !vdw_energy = vdw_energy + epsig_n * rijsq**mie_n
+                                                                        !vdw_energy = vdw_energy - epsig_m * rijsq**mie_m
+                                                                END DO
+                                                        END IF
+                                                END IF
+                                                !!$OMP SIMD PRIVATE(rijsq,nrg) REDUCTION(+:vdw_energy)
+                                                !DO j = 1, vdw_vlen
+                                                !        IF (l_read_svec) THEN
+                                                !                rijsq = rijsq_svec(j)
+                                                !        ELSE
+                                                !                rijsq = rijsq_vec(j)
+                                                !        END IF
+                                                !        IF (l_pair_store) THEN
+                                                !                nrg = shift_p1
+                                                !                nrg = epsig_n * rijsq**mie_n - nrg
+                                                !                nrg = nrg - epsig_m * rijsq**mie_m
+                                                !                mol_vdw_energy_p(j) = nrg
+                                                !                vdw_energy = vdw_energy + nrg
+                                                !        ELSE
+                                                !                vdw_energy = vdw_energy + epsig_n * rijsq**mie_n
+                                                !                vdw_energy = vdw_energy - epsig_m * rijsq**mie_m
+                                                !        END IF
+                                                !        !vdw_energy = vdw_energy - shift_p1
+                                                !END DO
+                                                !!$OMP END SIMD
+                                                i_vdw_energy = i_vdw_energy + vdw_energy
+                                        END IF
+                                        IF (l_pair_store) THEN
+                                                IF (l_getdrcom .AND. .NOT. l_shortvdw) THEN
+                                                        mol_vdw_energy(1:n_all_interact_p) = &
+                                                                mol_vdw_energy(1:n_all_interact_p) + &
+                                                                mol_vdw_energy_p(1:n_all_interact_p)
+                                                        mol_vdw_energy(n_all_interact_p+1:n_interact) = &
+                                                                mol_vdw_energy(n_all_interact_p+1:n_interact) + &
+                                                                UNPACK(mol_vdw_energy_p(n_all_interact_p+1:vdw_vlen), &
+                                                                vdw_interact_vec(n_all_interact_p+1:n_interact), &
+                                                                SPREAD(0.0_DP,1,n_may_interact))
+                                                ELSE
+                                                        mol_vdw_energy(1:n_interact) = &
+                                                                mol_vdw_energy(1:n_interact) + &
+                                                                UNPACK(mol_vdw_energy_p(1:vdw_vlen), &
+                                                                vdw_interact_vec(1:n_interact), &
+                                                                SPREAD(0.0_DP,1,n_interact))
+                                                END IF
+                                        END IF
+                                END IF
+                                IF (ij_get_qq) THEN
+                                        l_read_svec = ij_get_vdw .AND. l_shortcoul
+                                        IF (l_charge_ewald) THEN
+                                                qq_energy = 0.0_DP
+                                                IF (l_read_svec) THEN
+                                                        IF (l_pair_store) THEN
+                                                                DO j = 1, qq_vlen
+                                                                        rijsq = rijsq_svec(j)
+                                                                        rij = SQRT(rijsq)
+                                                                        nrg = ERFC(alpha_ewald(this_box)*rij) / rij
+                                                                        mol_qq_energy_p(j) = cfqq*nrg
+                                                                        qq_energy = qq_energy + nrg
+                                                                END DO
+                                                        ELSE
+                                                                DO j = 1, qq_vlen
+                                                                        rijsq = rijsq_svec(j)
+                                                                        rij = SQRT(rijsq)
+                                                                        qq_energy = qq_energy + ERFC(alpha_ewald(this_box)*rij) / rij
+                                                                END DO
+                                                        END IF
+                                                ELSE
+                                                        IF (l_pair_store) THEN
+                                                                DO j = 1, qq_vlen
+                                                                        rijsq = rijsq_vec(j)
+                                                                        rij = SQRT(rijsq)
+                                                                        nrg = ERFC(alpha_ewald(this_box)*rij) / rij
+                                                                        mol_qq_energy_p(j) = cfqq*nrg
+                                                                        qq_energy = qq_energy + nrg
+                                                                END DO
+                                                        ELSE
+                                                                DO j = 1, qq_vlen
+                                                                        rijsq = rijsq_vec(j)
+                                                                        rij = SQRT(rijsq)
+                                                                        qq_energy = qq_energy + ERFC(alpha_ewald(this_box)*rij) / rij
+                                                                END DO
+                                                        END IF
+                                                END IF
+                                                !!$OMP SIMD PRIVATE(rijsq,rij,nrg) REDUCTION(+:qq_energy)
+                                                !DO j = 1, qq_vlen
+                                                !        IF (l_read_svec) THEN
+                                                !                rijsq = rijsq_svec(j)
+                                                !        ELSE
+                                                !                rijsq = rijsq_vec(j)
+                                                !        END IF
+                                                !        rij = SQRT(rijsq)
+                                                !        IF (l_pair_store) THEN
+                                                !                nrg = ERFC(alpha_ewald(this_box)*rij) / rij
+                                                !                mol_qq_energy_p(j) = cfqq*nrg
+                                                !                qq_energy = qq_energy + nrg
+                                                !        ELSE
+                                                !                qq_energy = qq_energy + ERFC(alpha_ewald(this_box)*rij) / rij
+                                                !        END IF
+                                                !        !qq_energy = qq_energy + ERFC(alpha_ewald(this_box)*rij) / rij * cfqq
+                                                !END DO
+                                                !!$OMP END SIMD
+                                                i_qq_energy = i_qq_energy + cfqq*qq_energy
+                                        ELSE IF (l_charge_dsf) THEN
+                                                IF (l_pair_store) THEN
+                                                        qq_energy = 0.0_DP
+                                                ELSE
+                                                        qq_energy = dsf_const*qq_vlen
+                                                END IF
+                                                IF (l_read_svec) THEN
+                                                        IF (l_pair_store) THEN
+                                                                DO j = 1, qq_vlen
+                                                                        rijsq = rijsq_svec(j)
+                                                                        rij = SQRT(rijsq)
+                                                                        nrg = dsf_const
+                                                                        nrg = nrg + dsf_factor2(this_box)*rij + &
+                                                                                ERFC(alpha_dsf(this_box)*rij) / rij
+                                                                        qq_energy = qq_energy + nrg
+                                                                        nrg = nrg*cfqq
+                                                                        mol_qq_energy_p(j) = nrg
+                                                                END DO
+                                                        ELSE
+                                                                DO j = 1, qq_vlen
+                                                                        rijsq = rijsq_svec(j)
+                                                                        rij = SQRT(rijsq)
+                                                                        qq_energy = qq_energy + dsf_factor2(this_box) * rij + &
+                                                                                ERFC(alpha_dsf(this_box)*rij) / rij
+                                                                END DO
+                                                        END IF
+                                                ELSE
+                                                        IF (l_pair_store) THEN
+                                                                DO j = 1, qq_vlen
+                                                                        rijsq = rijsq_vec(j)
+                                                                        rij = SQRT(rijsq)
+                                                                        nrg = dsf_const
+                                                                        nrg = nrg + dsf_factor2(this_box)*rij + &
+                                                                                ERFC(alpha_dsf(this_box)*rij) / rij
+                                                                        qq_energy = qq_energy + nrg
+                                                                        nrg = nrg*cfqq
+                                                                        mol_qq_energy_p(j) = nrg
+                                                                END DO
+                                                        ELSE
+                                                                DO j = 1, qq_vlen
+                                                                        rijsq = rijsq_vec(j)
+                                                                        rij = SQRT(rijsq)
+                                                                        qq_energy = qq_energy + dsf_factor2(this_box) * rij + &
+                                                                                ERFC(alpha_dsf(this_box)*rij) / rij
+                                                                END DO
+                                                        END IF
+                                                END IF
+                                                !!$OMP SIMD PRIVATE(rijsq,rij,nrg) REDUCTION(+:qq_energy)
+                                                !DO j = 1, qq_vlen
+                                                !        IF (l_read_svec) THEN
+                                                !                rijsq = rijsq_svec(j)
+                                                !        ELSE
+                                                !                rijsq = rijsq_vec(j)
+                                                !        END IF
+                                                !        rij = SQRT(rijsq)
+                                                !        IF (l_pair_store) THEN
+                                                !                nrg = dsf_const
+                                                !                nrg = nrg + dsf_factor2(this_box)*rij + &
+                                                !                        ERFC(alpha_dsf(this_box)*rij) / rij
+                                                !                qq_energy = qq_energy + nrg
+                                                !                nrg = nrg*cfqq
+                                                !                mol_qq_energy_p(j) = nrg
+                                                !        ELSE
+                                                !                qq_energy = qq_energy + dsf_factor2(this_box) * rij + &
+                                                !                        ERFC(alpha_dsf(this_box)*rij) / rij
+                                                !        END IF
+                                                !        !qq_energy = qq_energy + (dsf_factor2(this_box) * (rij - rcut_coul(this_box)) - &
+                                                !        !        dsf_factor1(this_box) + &
+                                                !        !        ERFC(alpha_dsf(this_box)*rij) / rij) * cfqq
+                                                !END DO
+                                                !!$OMP END SIMD
+                                                i_qq_energy = i_qq_energy + cfqq*qq_energy
+                                        ELSE IF (l_charge_cut) THEN
+                                                qq_energy = 0.0_DP
+                                                IF (l_read_svec) THEN
+                                                        IF (l_pair_store) THEN
+                                                                DO j = 1, vdw_vlen
+                                                                        rijsq = rijsq_svec(j)
+                                                                        nrg = cfqq / SQRT(rijsq)
+                                                                        mol_qq_energy_p(j) = nrg
+                                                                        qq_energy = qq_energy + nrg
+                                                                END DO
+                                                        ELSE
+                                                                DO j = 1, vdw_vlen
+                                                                        rijsq = rijsq_svec(j)
+                                                                        qq_energy = qq_energy + 1.0_DP / SQRT(rijsq)
+                                                                END DO
+                                                        END IF
+                                                ELSE
+                                                        IF (l_pair_store) THEN
+                                                                DO j = 1, vdw_vlen
+                                                                        rijsq = rijsq_vec(j)
+                                                                        nrg = cfqq / SQRT(rijsq)
+                                                                        mol_qq_energy_p(j) = nrg
+                                                                        qq_energy = qq_energy + nrg
+                                                                END DO
+                                                        ELSE
+                                                                DO j = 1, vdw_vlen
+                                                                        rijsq = rijsq_vec(j)
+                                                                        qq_energy = qq_energy + 1.0_DP / SQRT(rijsq)
+                                                                END DO
+                                                        END IF
+                                                END IF
+                                                !!$OMP SIMD PRIVATE(rijsq,nrg) REDUCTION(+:qq_energy)
+                                                !DO j = 1, qq_vlen
+                                                !        IF (l_read_svec) THEN
+                                                !                rijsq = rijsq_svec(j)
+                                                !        ELSE
+                                                !                rijsq = rijsq_vec(j)
+                                                !        END IF
+                                                !        IF (l_pair_store) THEN
+                                                !                nrg = cfqq / SQRT(rijsq)
+                                                !                mol_qq_energy_p(j) = nrg
+                                                !                qq_energy = qq_energy + nrg
+                                                !        ELSE
+                                                !                qq_energy = qq_energy + 1.0_DP / SQRT(rijsq)
+                                                !        END IF
+                                                !        !qq_energy = qq_energy + cfqq / rij
+                                                !END DO
+                                                !!$OMP END SIMD
+                                                IF (l_pair_store) THEN
+                                                        i_qq_energy = i_qq_energy + qq_energy
+                                                ELSE
+                                                        i_qq_energy = i_qq_energy + cfqq*qq_energy
+                                                END IF
+                                        END IF
+                                        IF (l_pair_store) THEN
+                                                IF (l_getdrcom .AND. .NOT. l_shortcoul) THEN
+                                                        mol_qq_energy(1:n_all_interact_p) = &
+                                                                mol_qq_energy(1:n_all_interact_p) + &
+                                                                mol_qq_energy_p(1:n_all_interact_p)
+                                                        mol_qq_energy(n_all_interact_p+1:n_interact) = &
+                                                                mol_qq_energy(n_all_interact_p+1:n_interact) + &
+                                                                UNPACK(mol_qq_energy_p(n_all_interact_p+1:qq_vlen), &
+                                                                qq_interact_vec(n_all_interact_p+1:n_interact), &
+                                                                SPREAD(0.0_DP,1,n_may_interact))
+                                                ELSE
+                                                        mol_qq_energy(1:n_interact) = &
+                                                                mol_qq_energy(1:n_interact) + &
+                                                                UNPACK(mol_qq_energy_p(1:qq_vlen), &
+                                                                qq_interact_vec(1:n_interact), &
+                                                                SPREAD(0.0_DP,1,n_interact))
+                                                END IF
+                                        END IF
+                                END IF
+                        END DO
+                    END DO
+                    !$OMP END DO
+                    IF (l_pair_store) THEN
+                            IF (l_getdrcom) THEN
+                                    !$OMP WORKSHARE
+                                    pair_nrg_vdw(which_interact(1:n_interact_vdw_pairstore)+jsl_base,isl) = mol_vdw_energy(1:n_interact_vdw_pairstore)
+                                    pair_nrg_vdw(isl,which_interact(1:n_interact_vdw_pairstore)+jsl_base) = mol_vdw_energy(1:n_interact_vdw_pairstore)
+                                    pair_nrg_qq(which_interact(1:n_interact_qq_pairstore)+jsl_base,isl) = mol_qq_energy(1:n_interact_qq_pairstore)
+                                    pair_nrg_qq(isl,which_interact(1:n_interact_qq_pairstore)+jsl_base) = mol_qq_energy(1:n_interact_qq_pairstore)
+                                    !$OMP END WORKSHARE
+                            ELSE IF (open_mc_flag) THEN
+                                    !$OMP WORKSHARE
+                                    pair_nrg_vdw(live_locates(1:n_interact_vdw_pairstore)+jsl_base,isl) = mol_vdw_energy(1:n_interact_vdw_pairstore)
+                                    pair_nrg_vdw(isl,live_locates(1:n_interact_vdw_pairstore)+jsl_base) = mol_vdw_energy(1:n_interact_vdw_pairstore)
+                                    pair_nrg_qq(live_locates(1:n_interact_qq_pairstore)+jsl_base,isl) = mol_qq_energy(1:n_interact_qq_pairstore)
+                                    pair_nrg_qq(isl,live_locates(1:n_interact_qq_pairstore)+jsl_base) = mol_qq_energy(1:n_interact_qq_pairstore)
+                                    !$OMP END WORKSHARE
+                            ELSE
+                                    !$OMP WORKSHARE
+                                    pair_nrg_vdw(jsl_base+1:jsl_base+n_interact_vdw_pairstore,isl) = mol_vdw_energy(1:n_interact_vdw_pairstore)
+                                    pair_nrg_qq(jsl_base+1:jsl_base+n_interact_qq_pairstore,isl) = mol_qq_energy(1:n_interact_qq_pairstore)
+                                    pair_nrg_vdw(isl,jsl_base+1:jsl_base+n_interact_vdw_pairstore) = mol_vdw_energy(1:n_interact_vdw_pairstore)
+                                    pair_nrg_qq(isl,jsl_base+1:jsl_base+n_interact_qq_pairstore) = mol_qq_energy(1:n_interact_qq_pairstore)
+                                    !$OMP END WORKSHARE
+                            END IF
+                    END IF
+            ELSE
+                    vdw_p1(1:natompairs) = vdw_p(1:natompairs,1)
+                    vdw_p2(1:natompairs) = vdw_p(1:natompairs,2)
+                    IF (n_vdw_p > 2) vdw_p3(1:natompairs) = vdw_p(1:natompairs,3)
+                    IF (n_vdw_p > 3) vdw_p4(1:natompairs) = vdw_p(1:natompairs,4)
+                    IF (n_vdw_p > 4) vdw_p5(1:natompairs) = vdw_p(1:natompairs,5)
+                    IF (l_debug_print) WRITE(*,*) "n_interact = ", n_interact
+                    !$OMP DO SCHEDULE(DYNAMIC)
+                    DO j_interact = 1, n_interact !n_all_interact
+                        !DIR$ ASSUME (MOD(atompairdim,8) .EQ. 0)
+                        !DIR$ ASSUME (MOD(mol_dim,8) .EQ. 0)
+                        !DIR$ ASSUME (MOD(SIZE(vdw_p,1),8) .EQ. 0)
+                        !DIR$ ASSUME (MOD(SIZE(jrp_perm,1),8) .EQ. 0)
+                        IF (overlap .OR. i_overlap) CYCLE
+                        ij_overlap = .FALSE.
+                        vdw_energy = 0.0_DP
+                        qq_energy = 0.0_DP
+                        jm = which_interact(j_interact) !which_all_interact(j_interact)
+                        IF (l_ortho) THEN
+                                IF (l_order_ij) THEN
+                                        DO j = 1, jnatoms
+                                                jsxp = atom_list(j,jm,js)%rp(1)
+                                                jsyp = atom_list(j,jm,js)%rp(2)
+                                                jszp = atom_list(j,jm,js)%rp(3)
+                                                k = (j-1) * n_i_exist
+                                                !$OMP SIMD
+                                                DO i = 1, n_i_exist
+                                                        jrxp(i+k) = jsxp
+                                                        jryp(i+k) = jsyp
+                                                        jrzp(i+k) = jszp
+                                                END DO
+                                                !$OMP END SIMD
+                                        END DO
+                                ELSE
+                                        !$OMP SIMD PRIVATE(jsxp,jsyp,jszp)
+                                        DO j = 1, jnatoms
+                                                jsxp = atom_list(j,jm,js)%rp(1)
+                                                jsyp = atom_list(j,jm,js)%rp(2)
+                                                jszp = atom_list(j,jm,js)%rp(3)
+                                                jrxp(j) = jsxp
+                                                jryp(j) = jsyp
+                                                jrzp(j) = jszp
+                                                DO i = 1, n_i_exist - 1
+                                                        k = i*jnatoms
+                                                        jrxp(j+k) = jsxp
+                                                        jryp(j+k) = jsyp
+                                                        jrzp(j+k) = jszp
+                                                END DO
+                                        END DO
+                                        !$OMP END SIMD
+                                END IF
+                        ELSE
+                                !$OMP SIMD PRIVATE(jrp,jsxp,jsyp,jszp)
                                 DO j = 1, jnatoms
-                                        jsxp = atom_list(j,jm,js)%rp(1)
-                                        jsyp = atom_list(j,jm,js)%rp(2)
-                                        jszp = atom_list(j,jm,js)%rp(3)
-                                        k = (j-1) * n_i_exist
-                                        !$OMP SIMD
-                                        DO i = 1, n_i_exist
+                                        jrp = atom_list(j,jm,js)%rp(1)
+                                        jsxp = inv_h11*jrp
+                                        jsyp = inv_h21*jrp
+                                        jszp = inv_h31*jrp
+                                        jrp = atom_list(j,jm,js)%rp(2)
+                                        jsxp = jsxp + inv_h12*jrp
+                                        jsyp = jsyp + inv_h22*jrp
+                                        jszp = jszp + inv_h32*jrp
+                                        jrp = atom_list(j,jm,js)%rp(3)
+                                        jsxp = jsxp + inv_h13*jrp
+                                        jsyp = jsyp + inv_h23*jrp
+                                        jszp = jszp + inv_h33*jrp
+                                        jrxp(j) = jsxp
+                                        jryp(j) = jsyp
+                                        jrzp(j) = jszp
+                                        DO i = 1, n_i_exist-1
+                                                k = i*jnatoms
                                                 jrxp(i+k) = jsxp
                                                 jryp(i+k) = jsyp
                                                 jrzp(i+k) = jszp
                                         END DO
-                                        !$OMP END SIMD
-                                END DO
-                        ELSE
-                                !$OMP SIMD PRIVATE(jsxp,jsyp,jszp)
-                                DO j = 1, jnatoms
-                                        jsxp = atom_list(j,jm,js)%rp(1)
-                                        jsyp = atom_list(j,jm,js)%rp(2)
-                                        jszp = atom_list(j,jm,js)%rp(3)
-                                        jrxp(j) = jsxp
-                                        jryp(j) = jsyp
-                                        jrzp(j) = jszp
-                                        DO i = 1, n_i_exist - 1
-                                                k = i*jnatoms
-                                                jrxp(j+k) = jsxp
-                                                jryp(j+k) = jsyp
-                                                jrzp(j+k) = jszp
-                                        END DO
                                 END DO
                                 !$OMP END SIMD
                         END IF
-                ELSE
-                        !$OMP SIMD PRIVATE(jrp,jsxp,jsyp,jszp)
-                        DO j = 1, jnatoms
-                                jrp = atom_list(j,jm,js)%rp(1)
-                                jsxp = inv_h11*jrp
-                                jsyp = inv_h21*jrp
-                                jszp = inv_h31*jrp
-                                jrp = atom_list(j,jm,js)%rp(2)
-                                jsxp = jsxp + inv_h12*jrp
-                                jsyp = jsyp + inv_h22*jrp
-                                jszp = jszp + inv_h32*jrp
-                                jrp = atom_list(j,jm,js)%rp(3)
-                                jsxp = jsxp + inv_h13*jrp
-                                jsyp = jsyp + inv_h23*jrp
-                                jszp = jszp + inv_h33*jrp
-                                jrxp(j) = jsxp
-                                jryp(j) = jsyp
-                                jrzp(j) = jszp
-                                DO i = 1, n_i_exist-1
-                                        k = i*jnatoms
-                                        jrxp(i+k) = jsxp
-                                        jryp(i+k) = jsyp
-                                        jrzp(i+k) = jszp
-                                END DO
-                        END DO
-                        !$OMP END SIMD
-                END IF
-                !jrxp = RESHAPE(SPREAD(jrxp_vec,2,n_i_exist), (/ natompairs /))
-                !jryp = RESHAPE(SPREAD(jryp_vec,2,n_i_exist), (/ natompairs /))
-                !jrzp = RESHAPE(SPREAD(jrzp_vec,2,n_i_exist), (/ natompairs /))
-                IF (l_ortho) THEN
-                        DO ji = 1, natompairs
-                                dxp = ABS(jrxp(ji) - irxp(ji))
-                                dyp = ABS(jryp(ji) - iryp(ji))
-                                dzp = ABS(jrzp(ji) - irzp(ji))
-                                IF (dxp > hxl) dxp = dxp - xl
-                                IF (dyp > hyl) dyp = dyp - yl
-                                IF (dzp > hzl) dzp = dzp - zl
-                                dxp = dxp*dxp
-                                dxp = dxp + dyp*dyp
-                                dxp = dxp + dzp*dzp
-                                rijsq_vec(ji) = dxp
-                                IF (need_sqrt) rij_vec(ji) = SQRT(dxp)
-                                i_overlap = i_overlap .OR. dxp < rcut_lowsq
-                        END DO
-                ELSE
-                        DO ji = 1, natompairs
-                                dsp = jrxp(ji) - irxp(ji)
-                                IF (dsp > 0.5_DP) THEN
-                                        dsp = dsp - 1.0_DP
-                                ELSE IF (dsp < -0.5_DP) THEN
-                                        dsp = dsp + 1.0_DP
-                                END IF
-                                dxp = h11*dsp
-                                dyp = h21*dsp
-                                dzp = h31*dsp
-                                dsp = jryp(ji) - iryp(ji)
-                                IF (dsp > 0.5_DP) THEN
-                                        dsp = dsp - 1.0_DP
-                                ELSE IF (dsp < -0.5_DP) THEN
-                                        dsp = dsp + 1.0_DP
-                                END IF
-                                dxp = dxp + h12*dsp
-                                dyp = dyp + h22*dsp
-                                dzp = dzp + h32*dsp
-                                dsp = jrzp(ji) - irzp(ji)
-                                IF (dsp > 0.5_DP) THEN
-                                        dsp = dsp - 1.0_DP
-                                ELSE IF (dsp < -0.5_DP) THEN
-                                        dsp = dsp + 1.0_DP
-                                END IF
-                                dxp = dxp + h13*dsp
-                                dyp = dyp + h23*dsp
-                                dzp = dzp + h33*dsp
-                                dxp = dxp*dxp
-                                dxp = dxp + dyp*dyp
-                                dxp = dxp + dzp*dzp
-                                rijsq_vec(ji) = dxp
-                                IF (need_sqrt) rij_vec(ji) = SQRT(dxp)
-                                i_overlap = i_overlap .OR. dxp < rcut_lowsq
-                        END DO
-                END IF
-                IF (lj_charmm) THEN
-                        DO ji = 1, natompairs
-                                eps = vdw_p(ji,1) ! epsilon
-                                sigsq = vdw_p(ji,2) ! sigma**2
-                                rijsq = rijsq_vec(ji)
-                                l_interact = rijsq < this_vdw_rcutsq
-                                sigbyr2 = sigsq/rijsq ! sigma was already squared
-                                sigbyr6 = sigbyr2*sigbyr2*sigbyr2
-                                sigbyr12 = sigbyr6*sigbyr6
-                                sigbyr12 = sigbyr12 - 2.0_DP*sigbyr6
-                                IF (l_interact) vdw_energy = vdw_energy + eps * sigbyr12
-                                !CALL Compute_LJ_Charmm(rijsq,vdw_p(ji,1),vdw_p(ji,2),vdw_energy)
-                        END DO
-                ELSE IF (lj_cut_shift) THEN
-                        DO ji = 1, natompairs
-                                rijsq = rijsq_vec(ji)
-                                eps = vdw_p(ji,1) ! 4*epsilon
-                                negsigsq = vdw_p(ji,2) ! -(sigma**2)
-                                shift_p1 = vdw_p(ji,3)
-                                l_interact = rijsq < this_vdw_rcutsq
-                                negsigbyr2 = negsigsq/rijsq
-                                rterm = negsigbyr2*negsigbyr2*negsigbyr2
-                                rterm = rterm + rterm*rterm
-                                IF (l_interact) vdw_energy = vdw_energy + eps * rterm - shift_p1
-                                !CALL Compute_LJ_Cut(rijsq,vdw_p(ji,1),vdw_p(ji,2),vdw_energy)
-                        END DO
-                ELSE IF (lj_cut_switch) THEN
-                        DO ji = 1, natompairs
-                                rijsq = rijsq_vec(ji)
-                                eps = vdw_p(ji,1) ! 4*epsilon
-                                negsigsq = vdw_p(ji,2) ! -(sigma**2)
-                                l_interact = rijsq < this_vdw_rcutsq
-                                negsigbyr2 = negsigsq/rijsq
-                                rterm = negsigbyr2*negsigbyr2*negsigbyr2
-                                rterm = rterm + rterm*rterm
-                                roffsq_rijsq = roff_switch_sq(this_box) - rijsq
-                                IF (l_interact .AND. rijsq .GE. ron_switch_sq(this_box)) THEN
-                                        vdw_energy = vdw_energy + &
-                                                roffsq_rijsq*roffsq_rijsq * &
-                                                (switch_factor2(this_box)+2.0_DP*rijsq)*switch_factor1(this_box) * &
-                                                eps*rterm
-                                ELSE IF (l_interact) THEN
-                                        vdw_energy = vdw_energy + eps*rterm
-                                END IF
-                                !CALL Compute_LJ_Cut_Switch(rijsq,vdw_p(ji,1),vdw_p(ji,2),vdw_energy,this_box)
-                        END DO
-                ELSE IF (lj_cut_shift_force) THEN
-                        DO ji = 1, natompairs
-                                rijsq = rijsq_vec(ji)
-                                rij = rij_vec(ji)
-                                eps = vdw_p(ji,1) ! 4*epsilon
-                                negsigsq = vdw_p(ji,2) ! -(sigma**2)
-                                shift_p1 = vdw_p(ji,3)
-                                shift_p2 = vdw_p(ji,4)
-                                l_interact = rijsq < this_vdw_rcutsq
-                                negsigbyr2 = negsigsq/rijsq
-                                rterm = negsigbyr2*negsigbyr2*negsigbyr2
-                                rterm = rterm + rterm*rterm
-                                IF (l_interact) vdw_energy = vdw_energy + eps * rterm - shift_p1 - &
-                                        (rcut_vdw(this_box)-rij)*shift_p2
-                                !CALL Compute_LJ_Cut(rijsq,vdw_p(ji,1),vdw_p(ji,2),vdw_energy)
-                        END DO
-                ELSE IF (lj_cut) THEN
-                        DO ji = 1, natompairs
-                                rijsq = rijsq_vec(ji)
-                                eps = vdw_p(ji,1) ! 4*epsilon
-                                negsigsq = vdw_p(ji,2) ! -(sigma**2)
-                                l_interact = rijsq < this_vdw_rcutsq
-                                negsigbyr2 = negsigsq/rijsq
-                                rterm = negsigbyr2*negsigbyr2*negsigbyr2
-                                rterm = rterm + rterm*rterm
-                                IF (l_interact) vdw_energy = vdw_energy + eps * rterm
-                                !CALL Compute_LJ_Cut(rijsq,vdw_p(ji,1),vdw_p(ji,2),vdw_energy)
-                        END DO
-                ELSE IF (mie_cut_shift) THEN
-                        DO ji = 1, natompairs
-                                rijsq = rijsq_vec(ji)
-                                epsig_n = vdw_p(ji,1) ! epsilon * mie_coeff * sigma ** n
-                                epsig_m = vdw_p(ji,2) ! epsilon * mie_coeff * sigma ** m
-                                mie_n = vdw_p(ji,3) ! already halved
-                                mie_m = vdw_p(ji,4) ! already halved
-                                shift_p1 = vdw_p(ji,5)
-                                l_interact = rijsq < this_vdw_rcutsq
-                                IF (l_interact) THEN
-                                        vdw_energy = vdw_energy + epsig_n * rijsq**mie_n
-                                        vdw_energy = vdw_energy - epsig_m * rijsq**mie_m
-                                        vdw_energy = vdw_energy - shift_p1
-                                END IF
-                                !CALL Compute_Mie_Cut(rijsq,vdw_p(ji,1),vdw_p(ji,2), &
-                                !        vdw_p(ji,3),vdw_p(ji,4),vdw_energy)
-                        END DO
-                ELSE IF (mie_cut) THEN
-                        DO ji = 1, natompairs
-                                rijsq = rijsq_vec(ji)
-                                epsig_n = vdw_p(ji,1) ! epsilon * mie_coeff * sigma ** n
-                                epsig_m = vdw_p(ji,2) ! epsilon * mie_coeff * sigma ** m
-                                mie_n = vdw_p(ji,3) ! already halved
-                                mie_m = vdw_p(ji,4) ! already halved
-                                l_interact = rijsq < this_vdw_rcutsq
-                                IF (l_interact) THEN
-                                        vdw_energy = vdw_energy + epsig_n * rijsq**mie_n
-                                        vdw_energy = vdw_energy - epsig_m * rijsq**mie_m
-                                END IF
-                                !CALL Compute_Mie_Cut(rijsq,vdw_p(ji,1),vdw_p(ji,2), &
-                                !        vdw_p(ji,3),vdw_p(ji,4),vdw_energy)
-                        END DO
-                END IF
-                IF (get_qq) THEN
-                        IF (l_charge_ewald) THEN
+                        !jrxp = RESHAPE(SPREAD(jrxp_vec,2,n_i_exist), (/ natompairs /))
+                        !jryp = RESHAPE(SPREAD(jryp_vec,2,n_i_exist), (/ natompairs /))
+                        !jrzp = RESHAPE(SPREAD(jrzp_vec,2,n_i_exist), (/ natompairs /))
+                        IF (l_ortho) THEN
                                 DO ji = 1, natompairs
-                                        rij = rij_vec(ji)
-                                        cfqq = cfqq_vec(ji)
-                                        l_interact = rij < this_coul_rcut
-                                        IF (l_interact) THEN
-                                                qq_energy = qq_energy + ERFC(alpha_ewald(this_box)*rij) / rij * cfqq
-                                        END IF
+                                        dxp = ABS(jrxp(ji) - irxp(ji))
+                                        dyp = ABS(jryp(ji) - iryp(ji))
+                                        dzp = ABS(jrzp(ji) - irzp(ji))
+                                        IF (dxp > hxl) dxp = dxp - xl
+                                        IF (dyp > hyl) dyp = dyp - yl
+                                        IF (dzp > hzl) dzp = dzp - zl
+                                        dxp = dxp*dxp
+                                        dxp = dxp + dyp*dyp
+                                        dxp = dxp + dzp*dzp
+                                        rijsq_vec(ji) = dxp
+                                        vdw_interact_vec(ji) = dxp < this_vdw_rcutsq
+                                        IF (need_sqrt) rij_vec(ji) = SQRT(dxp)
+                                        i_overlap = i_overlap .OR. dxp < rcut_lowsq
                                 END DO
-                        ELSE IF (l_charge_dsf) THEN
+                        ELSE
                                 DO ji = 1, natompairs
-                                        rij = rij_vec(ji)
-                                        cfqq = cfqq_vec(ji)
-                                        l_interact = rij < this_coul_rcut
-                                        IF (l_interact) THEN
-                                                qq_energy = qq_energy + (dsf_factor2(this_box) * (rij - rcut_coul(this_box)) - &
-                                                        dsf_factor1(this_box) + &
-                                                        ERFC(alpha_dsf(this_box)*rij) / rij) * cfqq
+                                        dsp = jrxp(ji) - irxp(ji)
+                                        IF (dsp > 0.5_DP) THEN
+                                                dsp = dsp - 1.0_DP
+                                        ELSE IF (dsp < -0.5_DP) THEN
+                                                dsp = dsp + 1.0_DP
                                         END IF
-                                END DO
-                        ELSE IF (l_charge_cut) THEN
-                                DO ji = 1, natompairs
-                                        rij = rij_vec(ji)
-                                        cfqq = cfqq_vec(ji)
-                                        l_interact = rij < this_coul_rcut
-                                        IF (l_interact) THEN
-                                                qq_energy = qq_energy + cfqq / rij
+                                        dxp = h11*dsp
+                                        dyp = h21*dsp
+                                        dzp = h31*dsp
+                                        dsp = jryp(ji) - iryp(ji)
+                                        IF (dsp > 0.5_DP) THEN
+                                                dsp = dsp - 1.0_DP
+                                        ELSE IF (dsp < -0.5_DP) THEN
+                                                dsp = dsp + 1.0_DP
                                         END IF
+                                        dxp = dxp + h12*dsp
+                                        dyp = dyp + h22*dsp
+                                        dzp = dzp + h32*dsp
+                                        dsp = jrzp(ji) - irzp(ji)
+                                        IF (dsp > 0.5_DP) THEN
+                                                dsp = dsp - 1.0_DP
+                                        ELSE IF (dsp < -0.5_DP) THEN
+                                                dsp = dsp + 1.0_DP
+                                        END IF
+                                        dxp = dxp + h13*dsp
+                                        dyp = dyp + h23*dsp
+                                        dzp = dzp + h33*dsp
+                                        dxp = dxp*dxp
+                                        dxp = dxp + dyp*dyp
+                                        dxp = dxp + dzp*dzp
+                                        rijsq_vec(ji) = dxp
+                                        !vdw_interact_vec(ji) = dxp < this_vdw_rcutsq
+                                        i_overlap = i_overlap .OR. dxp < rcut_lowsq
                                 END DO
                         END IF
-                END IF
-                IF (l_pair_store) THEN
-                        jsl = jsl_base + jm
-                        pair_nrg_vdw(isl,jsl) = vdw_energy
-                        pair_nrg_vdw(jsl,isl) = vdw_energy
-                        pair_nrg_qq(isl,jsl) = qq_energy
-                        pair_nrg_qq(jsl,isl) = qq_energy
-                END IF
-                i_vdw_energy = i_vdw_energy + vdw_energy
-                i_qq_energy = i_qq_energy + qq_energy
-                !IF (i_overlap) THEN
-                !        !$OMP CRITICAL
-                !        WRITE(*,*)
-                !        WRITE(*,*)
-                !        WRITE(*,*) i_overlap, l_order_ij
-                !        WRITE(*,*) im, jm, j_interact, i_mcstep
-                !        WRITE(*,*) vdw_energy, qq_energy
-                !        WRITE(*,*) rijsq_vec(1:natompairs)
-                !        WRITE(*,*)
-                !        WRITE(*,*) irxp(1:natompairs)
-                !        WRITE(*,*) jrxp(1:natompairs)
-                !        WRITE(*,*)
-                !        WRITE(*,*) iryp(1:natompairs)
-                !        WRITE(*,*) jryp(1:natompairs)
-                !        WRITE(*,*)
-                !        WRITE(*,*) irzp(1:natompairs)
-                !        WRITE(*,*) jrzp(1:natompairs)
-                !        !$OMP END CRITICAL
-                !END IF
-            END DO
-            !$OMP END DO
-            !$OMP END PARALLEL
-            overlap = i_overlap
+                        IF (l_debug_print) THEN
+                                WRITE(*,*) "jm = ", jm
+                                WRITE(*,*) "i_overlap = ", i_overlap
+                                WRITE(*,*) "rijsq_vec = "
+                                WRITE(*,*) rijsq_vec(1:natompairs)
+                        END IF
+                        IF (i_overlap) THEN
+                                overlap = .TRUE.
+                                CYCLE
+                        END IF
+                        !ji_end = 1
+                        !ji_base_2 = 0
+                        !DO WHILE (ji_end .LE. natompairs)
+                        !        ji_start = natompairs+1
+                        !        ji_base = ji_end - 1
+                        !        DO WHILE (ji_base .LE. natompairs - 32)
+                        !                ji_start_byte = 33
+                        !                DO ji_byte = 1, 32
+                        !                        IF (vdw_interact_vec(ji_byte+ji_base)) ji_start_byte = MIN(ji_start_byte,ji_byte)
+                        !                END DO
+                        !                IF (ji_start_byte < 33) THEN
+                        !                        ji_start = ji_base + ji_start_byte
+                        !                        EXIT
+                        !                END IF
+                        !                ji_base = ji_base + 32
+                        !        END DO
+                        !        IF (ji_start > natompairs) THEN
+                        !                !DIR$ ASSUME (natompairs-ji_base<32)
+                        !                DO ji = ji_base+1, natompairs
+                        !                        IF (vdw_interact_vec(ji)) ji_start = MIN(ji_start,ji)
+                        !                END DO
+                        !        END IF
+                        !        !DO ji = ji_end, natompairs ! ji_end
+                        !        !        IF (vdw_interact_vec(ji)) ji_start = MIN(ji_start,ji)
+                        !        !END DO
+                        !        IF (ji_start > natompairs) EXIT
+                        !        ji_end = natompairs+1
+                        !        DO ji = ji_start, natompairs
+                        !                IF (.NOT. vdw_interact_vec(ji)) ji_end = MIN(ji_end,ji)
+                        !                !IF (.NOT. vdw_interact_vec(ji)) EXIT
+                        !        END DO
+                        !        vlen = ji_end - ji_start
+                        !        ji_end_2 = ji_base_2 + vlen
+                        !        rijsq_packed(ji_base_2+1:ji_end_2) = rijsq_vec(ji_start:ji_end-1)
+                        !        vdw_p_packed(ji_base_2+1:ji_end_2,1:n_vdw_p) = vdw_p(ji_start:ji_end-1,1:n_vdw_p)
+                        !        ji_base_2 = ji_end_2
+                        !END DO
+                        !atompair_vlen = ji_end_2
+                        !IF (l_vdw_packed) THEN
+                        !        i_selector = 1
+                        !ELSE IF (l_vdw_gather) THEN
+                        !        i_selector = 2
+                        !ELSE IF (l_vdw_strided) THEN
+                        !        i_selector = 3
+                        !ELSE
+                        !        i_selector = 4
+                        !END IF
+                        !i_selector = nspecies ! remove this, it's just for testing vectorization
+                        !l_masked = atompair_vlen < 16 ! remove this, it's just for testing vectorization
+                        l_masked = j_interact > n_all_interact .OR. l_shortvdw
+                        atompair_vlen = natompairs ! temporary, replace when appropriate
+                        IF (lj_charmm) THEN
+                                IF (l_masked) THEN
+                                        DO ji = 1, atompair_vlen
+                                                rijsq = rijsq_vec(ji)
+                                                IF (rijsq < this_vdw_rcutsq) THEN
+                                                        eps = vdw_p1(ji) ! epsilon
+                                                        sigsq = vdw_p2(ji) ! sigma**2
+                                                        sigbyr2 = sigsq/rijsq ! sigma was already squared
+                                                        sigbyr6 = sigbyr2*sigbyr2*sigbyr2
+                                                        sigbyr12 = sigbyr6*sigbyr6
+                                                        sigbyr12 = sigbyr12 - 2.0_DP*sigbyr6
+                                                        vdw_energy = vdw_energy + eps*sigbyr12
+                                                END IF
+                                        END DO
+                                ELSE
+                                        DO ji = 1, atompair_vlen
+                                                rijsq = rijsq_vec(ji)
+                                                eps = vdw_p1(ji) ! epsilon
+                                                sigsq = vdw_p2(ji) ! sigma**2
+                                                sigbyr2 = sigsq/rijsq ! sigma was already squared
+                                                sigbyr6 = sigbyr2*sigbyr2*sigbyr2
+                                                sigbyr12 = sigbyr6*sigbyr6
+                                                sigbyr12 = sigbyr12 - 2.0_DP*sigbyr6
+                                                vdw_energy = vdw_energy + eps*sigbyr12
+                                        END DO
+                                END IF
+                                !DO ji = 1, natompairs
+                                !        rijsq = rijsq_vec(ji)
+                                !        IF (l_masked) THEN
+                                !                l_interact = rijsq < this_vdw_rcutsq
+                                !        ELSE
+                                !                l_interact = .TRUE.
+                                !        END IF
+                                !        IF (l_interact) THEN
+                                !                eps = vdw_p1(ji) ! epsilon
+                                !                sigsq = vdw_p2(ji) ! sigma**2
+                                !                sigbyr2 = sigsq/rijsq ! sigma was already squared
+                                !                sigbyr6 = sigbyr2*sigbyr2*sigbyr2
+                                !                sigbyr12 = sigbyr6*sigbyr6
+                                !                sigbyr12 = sigbyr12 - 2.0_DP*sigbyr6
+                                !                vdw_energy = vdw_energy + eps*sigbyr12
+                                !        END IF
+                                !        !IF (rijsq < this_vdw_rcutsq .OR. .NOT. l_masked) THEN
+                                !        !        vdw_energy = vdw_energy + eps*sigbyr12
+                                !        !END IF
+                                !        !ELSE
+                                !        !        l_interact = .TRUE.
+                                !        !END IF
+                                !END DO
+                                !DO ji = 1, natompairs
+                                !        rijsq = rijsq_vec(ji)
+                                !        eps = vdw_p1(ji) ! epsilon
+                                !        sigsq = vdw_p2(ji) ! sigma**2
+                                !        sigbyr2 = sigsq/rijsq ! sigma was already squared
+                                !        sigbyr6 = sigbyr2*sigbyr2*sigbyr2
+                                !        sigbyr12 = sigbyr6*sigbyr6
+                                !        sigbyr12 = sigbyr12 - 2.0_DP*sigbyr6
+                                !        vdw_energy = vdw_energy + eps*sigbyr12
+                                !        !IF (rijsq < this_vdw_rcutsq .OR. .NOT. l_masked) THEN
+                                !        !        vdw_energy = vdw_energy + eps*sigbyr12
+                                !        !END IF
+                                !        !ELSE
+                                !        !        l_interact = .TRUE.
+                                !        !END IF
+                                !END DO
+                                !DO ji = 1, atompair_vlen !natompairs
+                                !        SELECT CASE (i_selector)
+                                !        CASE (1)
+                                !                rijsq = rijsq_packed(ji)
+                                !                eps = vdw_p_packed(ji,1) ! epsilon
+                                !                sigsq = vdw_p_packed(ji,2) ! sigma**2
+                                !        CASE (2)
+                                !                rijsq = rijsq_vec(which_have_vdw(ji))
+                                !                eps = vdw_p_nonzero(ji,1) ! epsilon
+                                !                sigsq = vdw_p_nonzero(ji,2) ! sigma**2
+                                !        CASE (3)
+                                !                rijsq = rijsq_vec(ji_base+ji_stride*ji)
+                                !                eps = vdw_p_nonzero(ji,1) ! epsilon
+                                !                sigsq = vdw_p_nonzero(ji,2) ! sigma**2
+                                !        CASE DEFAULT
+                                !                rijsq = rijsq_vec(ji)
+                                !                eps = vdw_p(ji,1) ! epsilon
+                                !                sigsq = vdw_p(ji,2) ! sigma**2
+                                !        END SELECT
+                                !        sigbyr2 = sigsq/rijsq ! sigma was already squared
+                                !        sigbyr6 = sigbyr2*sigbyr2*sigbyr2
+                                !        sigbyr12 = sigbyr6*sigbyr6
+                                !        sigbyr12 = sigbyr12 - 2.0_DP*sigbyr6
+                                !        IF (l_masked) THEN
+                                !                vdw_energy = MERGE(vdw_energy + eps*sigbyr12, &
+                                !                       vdw_energy, rijsq < this_vdw_rcutsq)
+                                !        ELSE
+                                !                vdw_energy = vdw_energy + eps*sigbyr12
+                                !        END IF
+                                !END DO
+                                !IF (l_masked) THEN
+                                !        DO ji = 1, atompair_vlen !natompairs
+                                !                SELECT CASE (i_selector)
+                                !                CASE (1)
+                                !                        rijsq = rijsq_packed(ji)
+                                !                        eps = vdw_p_packed(ji,1) ! epsilon
+                                !                        sigsq = vdw_p_packed(ji,2) ! sigma**2
+                                !                CASE (2)
+                                !                        rijsq = rijsq_vec(which_have_vdw(ji))
+                                !                        eps = vdw_p_nonzero(ji,1) ! epsilon
+                                !                        sigsq = vdw_p_nonzero(ji,2) ! sigma**2
+                                !                CASE (3)
+                                !                        rijsq = rijsq_vec(ji_base+ji_stride*ji)
+                                !                        eps = vdw_p_nonzero(ji,1) ! epsilon
+                                !                        sigsq = vdw_p_nonzero(ji,2) ! sigma**2
+                                !                CASE DEFAULT
+                                !                        rijsq = rijsq_vec(ji)
+                                !                        eps = vdw_p(ji,1) ! epsilon
+                                !                        sigsq = vdw_p(ji,2) ! sigma**2
+                                !                END SELECT
+                                !                sigbyr2 = sigsq/rijsq ! sigma was already squared
+                                !                sigbyr6 = sigbyr2*sigbyr2*sigbyr2
+                                !                sigbyr12 = sigbyr6*sigbyr6
+                                !                sigbyr12 = sigbyr12 - 2.0_DP*sigbyr6
+                                !                vdw_energy = MERGE(vdw_energy + eps*sigbyr12, &
+                                !                       vdw_energy, rijsq < this_vdw_rcutsq)
+                                !        END DO
+                                !ELSE
+                                !        DO ji = 1, atompair_vlen !natompairs
+                                !                SELECT CASE (i_selector)
+                                !                CASE (1)
+                                !                        rijsq = rijsq_packed(ji)
+                                !                        eps = vdw_p_packed(ji,1) ! epsilon
+                                !                        sigsq = vdw_p_packed(ji,2) ! sigma**2
+                                !                CASE (2)
+                                !                        rijsq = rijsq_vec(which_have_vdw(ji))
+                                !                        eps = vdw_p_nonzero(ji,1) ! epsilon
+                                !                        sigsq = vdw_p_nonzero(ji,2) ! sigma**2
+                                !                CASE (3)
+                                !                        rijsq = rijsq_vec(ji_base+ji_stride*ji)
+                                !                        eps = vdw_p_nonzero(ji,1) ! epsilon
+                                !                        sigsq = vdw_p_nonzero(ji,2) ! sigma**2
+                                !                CASE DEFAULT
+                                !                        rijsq = rijsq_vec(ji)
+                                !                        eps = vdw_p(ji,1) ! epsilon
+                                !                        sigsq = vdw_p(ji,2) ! sigma**2
+                                !                END SELECT
+                                !                sigbyr2 = sigsq/rijsq ! sigma was already squared
+                                !                sigbyr6 = sigbyr2*sigbyr2*sigbyr2
+                                !                sigbyr12 = sigbyr6*sigbyr6
+                                !                sigbyr12 = sigbyr12 - 2.0_DP*sigbyr6
+                                !                vdw_energy = vdw_energy + eps * sigbyr12
+                                !        END DO
+                                !END IF
+                                !DO ji = 1, atompair_vlen !natompairs
+                                !        IF (l_vdw_packed) THEN
+                                !                rijsq = rijsq_packed(ji)
+                                !                eps = vdw_p_packed(ji,1) ! epsilon
+                                !                sigsq = vdw_p_packed(ji,2) ! sigma**2
+                                !        ELSE IF (l_vdw_gather) THEN
+                                !                rijsq = rijsq_vec(which_have_vdw(ji))
+                                !                eps = vdw_p_nonzero(ji,1) ! epsilon
+                                !                sigsq = vdw_p_nonzero(ji,2) ! sigma**2
+                                !        ELSE IF (l_vdw_strided) THEN
+                                !                rijsq = rijsq_vec(ji_base+ji_stride*ji)
+                                !                eps = vdw_p_nonzero(ji,1) ! epsilon
+                                !                sigsq = vdw_p_nonzero(ji,2) ! sigma**2
+                                !        ELSE
+                                !                rijsq = rijsq_vec(ji)
+                                !                eps = vdw_p(ji,1) ! epsilon
+                                !                sigsq = vdw_p(ji,2) ! sigma**2
+                                !        END IF
+                                !        sigbyr2 = sigsq/rijsq ! sigma was already squared
+                                !        sigbyr6 = sigbyr2*sigbyr2*sigbyr2
+                                !        sigbyr12 = sigbyr6*sigbyr6
+                                !        sigbyr12 = sigbyr12 - 2.0_DP*sigbyr6
+                                !        IF (l_masked) THEN
+                                !                vdw_energy = MERGE(vdw_energy + eps*sigbyr12, &
+                                !                       vdw_energy, rijsq < this_vdw_rcutsq)
+                                !        ELSE
+                                !                vdw_energy = vdw_energy + eps * sigbyr12
+                                !        END IF
+                                !        !CALL Compute_LJ_Charmm(rijsq,vdw_p(ji,1),vdw_p(ji,2),vdw_energy)
+                                !END DO
+                        ELSE IF (lj_cut_shift) THEN
+                                IF (l_masked) THEN
+                                        DO ji = 1, atompair_vlen
+                                                rijsq = rijsq_vec(ji)
+                                                IF (rijsq < this_vdw_rcutsq) THEN
+                                                        eps = vdw_p1(ji) ! 4*epsilon
+                                                        negsigsq = vdw_p2(ji) ! -(sigma**2)
+                                                        shift_p1 = vdw_p3(ji)
+                                                        negsigbyr2 = negsigsq/rijsq
+                                                        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                        rterm = rterm + rterm*rterm
+                                                        vdw_energy = vdw_energy + eps * rterm - shift_p1
+                                                END IF
+                                        END DO
+                                ELSE
+                                        DO ji = 1, atompair_vlen
+                                                rijsq = rijsq_vec(ji)
+                                                eps = vdw_p1(ji) ! 4*epsilon
+                                                negsigsq = vdw_p2(ji) ! -(sigma**2)
+                                                shift_p1 = vdw_p3(ji)
+                                                negsigbyr2 = negsigsq/rijsq
+                                                rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                rterm = rterm + rterm*rterm
+                                                vdw_energy = vdw_energy + eps * rterm - shift_p1
+                                        END DO
+                                END IF
+                                !DO ji = 1, natompairs
+                                !        rijsq = rijsq_packed(ji)
+                                !        eps = vdw_p1(ji) ! 4*epsilon
+                                !        negsigsq = vdw_p2(ji) ! -(sigma**2)
+                                !        shift_p1 = vdw_p3(ji)
+                                !        negsigbyr2 = negsigsq/rijsq
+                                !        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                !        rterm = rterm + rterm*rterm
+                                !        vdw_energy = vdw_energy + eps * rterm - shift_p1
+                                !        !CALL Compute_LJ_Cut(rijsq,vdw_p(ji,1),vdw_p(ji,2),vdw_energy)
+                                !END DO
+                        ELSE IF (lj_cut_switch) THEN
+                                IF (l_masked) THEN
+                                        DO ji = 1, atompair_vlen
+                                                rijsq = rijsq_vec(ji)
+                                                IF (rijsq < this_vdw_rcutsq) THEN
+                                                        eps = vdw_p1(ji) ! 4*epsilon
+                                                        negsigsq = vdw_p2(ji) ! -(sigma**2)
+                                                        negsigbyr2 = negsigsq/rijsq
+                                                        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                        rterm = rterm + rterm*rterm
+                                                        roffsq_rijsq = roff_switch_sq(this_box) - rijsq
+                                                        roffsq_rijsq = roffsq_rijsq * roffsq_rijsq * switch_factor1(this_box) * &
+                                                                (switch_factor2(this_box)+2.0_DP*rijsq)*eps
+                                                        eps = MERGE(roffsq_rijsq, eps, rijsq .GE. ron_switch_sq(this_box))
+                                                        vdw_energy = vdw_energy + eps*rterm
+                                                END IF
+                                        END DO
+                                ELSE
+                                        DO ji = 1, atompair_vlen
+                                                rijsq = rijsq_vec(ji)
+                                                eps = vdw_p1(ji) ! 4*epsilon
+                                                negsigsq = vdw_p2(ji) ! -(sigma**2)
+                                                negsigbyr2 = negsigsq/rijsq
+                                                rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                rterm = rterm + rterm*rterm
+                                                roffsq_rijsq = roff_switch_sq(this_box) - rijsq
+                                                roffsq_rijsq = roffsq_rijsq * roffsq_rijsq * switch_factor1(this_box) * &
+                                                        (switch_factor2(this_box)+2.0_DP*rijsq)*eps
+                                                eps = MERGE(roffsq_rijsq, eps, rijsq .GE. ron_switch_sq(this_box))
+                                                vdw_energy = vdw_energy + eps*rterm
+                                        END DO
+                                END IF
+                                !DO ji = 1, natompairs
+                                !        rijsq = rijsq_packed(ji)
+                                !        eps = vdw_p1(ji) ! 4*epsilon
+                                !        negsigsq = vdw_p2(ji) ! -(sigma**2)
+                                !        negsigbyr2 = negsigsq/rijsq
+                                !        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                !        rterm = rterm + rterm*rterm
+                                !        roffsq_rijsq = roff_switch_sq(this_box) - rijsq
+                                !        roffsq_rijsq = roffsq_rijsq * roffsq_rijsq * switch_factor1(this_box) * &
+                                !                (switch_factor2(this_box)+2.0_DP*rijsq)*eps
+                                !        eps = MERGE(roffsq_rijsq, eps, rijsq .GE. ron_switch_sq(this_box))
+                                !        vdw_energy = vdw_energy + eps*rterm
+                                !        !CALL Compute_LJ_Cut_Switch(rijsq,vdw_p(ji,1),vdw_p(ji,2),vdw_energy,this_box)
+                                !END DO
+                        ELSE IF (lj_cut_shift_force) THEN
+                                IF (l_masked) THEN
+                                        DO ji = 1, atompair_vlen
+                                                rijsq = rijsq_vec(ji)
+                                                IF (rijsq < this_vdw_rcutsq) THEN
+                                                        eps = vdw_p1(ji) ! 4*epsilon
+                                                        negsigsq = vdw_p2(ji) ! -(sigma**2)
+                                                        shift_p1 = vdw_p3(ji)
+                                                        shift_p2 = vdw_p4(ji)
+                                                        negsigbyr2 = negsigsq/rijsq
+                                                        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                        rterm = rterm + rterm*rterm
+                                                        vdw_energy = vdw_energy + eps * rterm - shift_p1 - &
+                                                                (rcut_vdw(this_box)-SQRT(rijsq))*shift_p2
+                                                END IF
+                                        END DO
+                                ELSE
+                                        DO ji = 1, atompair_vlen
+                                                rijsq = rijsq_vec(ji)
+                                                eps = vdw_p1(ji) ! 4*epsilon
+                                                negsigsq = vdw_p2(ji) ! -(sigma**2)
+                                                shift_p1 = vdw_p3(ji)
+                                                shift_p2 = vdw_p4(ji)
+                                                negsigbyr2 = negsigsq/rijsq
+                                                rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                rterm = rterm + rterm*rterm
+                                                vdw_energy = vdw_energy + eps * rterm - shift_p1 - &
+                                                        (rcut_vdw(this_box)-SQRT(rijsq))*shift_p2
+                                        END DO
+                                END IF
+                                !DO ji = 1, natompairs
+                                !        rijsq = rijsq_packed(ji)
+                                !        eps = vdw_p1(ji) ! 4*epsilon
+                                !        negsigsq = vdw_p2(ji) ! -(sigma**2)
+                                !        shift_p1 = vdw_p3(ji)
+                                !        shift_p2 = vdw_p4(ji)
+                                !        negsigbyr2 = negsigsq/rijsq
+                                !        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                !        rterm = rterm + rterm*rterm
+                                !        vdw_energy = vdw_energy + eps * rterm - shift_p1 - &
+                                !                (rcut_vdw(this_box)-SQRT(rijsq))*shift_p2
+                                !        !CALL Compute_LJ_Cut(rijsq,vdw_p(ji,1),vdw_p(ji,2),vdw_energy)
+                                !END DO
+                        ELSE IF (lj_cut) THEN
+                                IF (l_masked) THEN
+                                        DO ji = 1, atompair_vlen
+                                                rijsq = rijsq_vec(ji)
+                                                IF (rijsq < this_vdw_rcutsq) THEN
+                                                        eps = vdw_p1(ji) ! 4*epsilon
+                                                        negsigsq = vdw_p2(ji) ! -(sigma**2)
+                                                        l_interact = rijsq < this_vdw_rcutsq
+                                                        negsigbyr2 = negsigsq/rijsq
+                                                        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                        rterm = rterm + rterm*rterm
+                                                        vdw_energy = vdw_energy + eps * rterm
+                                                END IF
+                                        END DO
+                                ELSE
+                                        DO ji = 1, atompair_vlen
+                                                rijsq = rijsq_vec(ji)
+                                                eps = vdw_p1(ji) ! 4*epsilon
+                                                negsigsq = vdw_p2(ji) ! -(sigma**2)
+                                                l_interact = rijsq < this_vdw_rcutsq
+                                                negsigbyr2 = negsigsq/rijsq
+                                                rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                                rterm = rterm + rterm*rterm
+                                                vdw_energy = vdw_energy + eps * rterm
+                                        END DO
+                                END IF
+                                !DO ji = 1, natompairs
+                                !        rijsq = rijsq_packed(ji)
+                                !        eps = vdw_p1(ji) ! 4*epsilon
+                                !        negsigsq = vdw_p2(ji) ! -(sigma**2)
+                                !        l_interact = rijsq < this_vdw_rcutsq
+                                !        negsigbyr2 = negsigsq/rijsq
+                                !        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                !        rterm = rterm + rterm*rterm
+                                !        vdw_energy = vdw_energy + eps * rterm
+                                !        !CALL Compute_LJ_Cut(rijsq,vdw_p(ji,1),vdw_p(ji,2),vdw_energy)
+                                !END DO
+                        ELSE IF (mie_cut_shift) THEN
+                                IF (l_masked) THEN
+                                        DO ji = 1, atompair_vlen
+                                                rijsq = rijsq_vec(ji)
+                                                IF (rijsq < this_vdw_rcutsq) THEN
+                                                        epsig_n = vdw_p1(ji) ! epsilon * mie_coeff * sigma ** n
+                                                        epsig_m = vdw_p2(ji) ! epsilon * mie_coeff * sigma ** m
+                                                        mie_n = vdw_p3(ji) ! already halved
+                                                        mie_m = vdw_p4(ji) ! already halved
+                                                        shift_p1 = vdw_p5(ji)
+                                                        vdw_energy = vdw_energy + epsig_n * rijsq**mie_n
+                                                        vdw_energy = vdw_energy - epsig_m * rijsq**mie_m
+                                                        vdw_energy = vdw_energy - shift_p1
+                                                END IF
+                                        END DO
+                                ELSE
+                                        DO ji = 1, atompair_vlen
+                                                rijsq = rijsq_vec(ji)
+                                                epsig_n = vdw_p1(ji) ! epsilon * mie_coeff * sigma ** n
+                                                epsig_m = vdw_p2(ji) ! epsilon * mie_coeff * sigma ** m
+                                                mie_n = vdw_p3(ji) ! already halved
+                                                mie_m = vdw_p4(ji) ! already halved
+                                                shift_p1 = vdw_p5(ji)
+                                                vdw_energy = vdw_energy + epsig_n * rijsq**mie_n
+                                                vdw_energy = vdw_energy - epsig_m * rijsq**mie_m
+                                                vdw_energy = vdw_energy - shift_p1
+                                        END DO
+                                END IF
+                                !DO ji = 1, natompairs
+                                !        rijsq = rijsq_packed(ji)
+                                !        epsig_n = vdw_p1(ji) ! epsilon * mie_coeff * sigma ** n
+                                !        epsig_m = vdw_p2(ji) ! epsilon * mie_coeff * sigma ** m
+                                !        mie_n = vdw_p3(ji) ! already halved
+                                !        mie_m = vdw_p4(ji) ! already halved
+                                !        shift_p1 = vdw_p5(ji)
+                                !        vdw_energy = vdw_energy + epsig_n * rijsq**mie_n
+                                !        vdw_energy = vdw_energy - epsig_m * rijsq**mie_m
+                                !        vdw_energy = vdw_energy - shift_p1
+                                !        !CALL Compute_Mie_Cut(rijsq,vdw_p(ji,1),vdw_p(ji,2), &
+                                !        !        vdw_p(ji,3),vdw_p(ji,4),vdw_energy)
+                                !END DO
+                        ELSE IF (mie_cut) THEN
+                                IF (l_masked) THEN
+                                        DO ji = 1, atompair_vlen
+                                                rijsq = rijsq_vec(ji)
+                                                IF (rijsq < this_vdw_rcutsq) THEN
+                                                        epsig_n = vdw_p1(ji) ! epsilon * mie_coeff * sigma ** n
+                                                        epsig_m = vdw_p2(ji) ! epsilon * mie_coeff * sigma ** m
+                                                        mie_n = vdw_p3(ji) ! already halved
+                                                        mie_m = vdw_p4(ji) ! already halved
+                                                        vdw_energy = vdw_energy + epsig_n * rijsq**mie_n
+                                                        vdw_energy = vdw_energy - epsig_m * rijsq**mie_m
+                                                END IF
+                                        END DO
+                                ELSE
+                                        DO ji = 1, atompair_vlen
+                                                rijsq = rijsq_vec(ji)
+                                                epsig_n = vdw_p1(ji) ! epsilon * mie_coeff * sigma ** n
+                                                epsig_m = vdw_p2(ji) ! epsilon * mie_coeff * sigma ** m
+                                                mie_n = vdw_p3(ji) ! already halved
+                                                mie_m = vdw_p4(ji) ! already halved
+                                                vdw_energy = vdw_energy + epsig_n * rijsq**mie_n
+                                                vdw_energy = vdw_energy - epsig_m * rijsq**mie_m
+                                        END DO
+                                END IF
+                                !DO ji = 1, natompairs
+                                !        rijsq = rijsq_packed(ji)
+                                !        epsig_n = vdw_p1(ji) ! epsilon * mie_coeff * sigma ** n
+                                !        epsig_m = vdw_p2(ji) ! epsilon * mie_coeff * sigma ** m
+                                !        mie_n = vdw_p3(ji) ! already halved
+                                !        mie_m = vdw_p4(ji) ! already halved
+                                !        vdw_energy = vdw_energy + epsig_n * rijsq**mie_n
+                                !        vdw_energy = vdw_energy - epsig_m * rijsq**mie_m
+                                !        !CALL Compute_Mie_Cut(rijsq,vdw_p(ji,1),vdw_p(ji,2), &
+                                !        !        vdw_p(ji,3),vdw_p(ji,4),vdw_energy)
+                                !END DO
+                        END IF
+                        l_masked = j_interact > n_all_interact .OR. l_shortcoul
+                        IF (l_charge_ewald) THEN
+                                IF (l_masked) THEN
+                                        DO ji = 1, atompair_vlen
+                                                rijsq = rijsq_vec(ji)
+                                                IF (rijsq < this_coul_rcutsq) THEN
+                                                        cfqq = cfqq_vec(ji)
+                                                        rij = SQRT(rijsq)
+                                                        qq_energy = qq_energy + ERFC(alpha_ewald(this_box)*rij) / rij * cfqq
+                                                END IF
+                                        END DO
+                                ELSE
+                                        DO ji = 1, atompair_vlen
+                                                rijsq = rijsq_vec(ji)
+                                                cfqq = cfqq_vec(ji)
+                                                rij = SQRT(rijsq)
+                                                qq_energy = qq_energy + ERFC(alpha_ewald(this_box)*rij) / rij * cfqq
+                                        END DO
+                                END IF
+                                !DO ji = 1, natompairs
+                                !        cfqq = cfqq_vec(ji)
+                                !        rij = SQRT(rijsq)
+                                !        qq_energy = qq_energy + ERFC(alpha_ewald(this_box)*rij) / rij * cfqq
+                                !END DO
+                        ELSE IF (l_charge_dsf) THEN
+                                IF (l_masked) THEN
+                                        DO ji = 1, atompair_vlen
+                                                rijsq = rijsq_vec(ji)
+                                                IF (rijsq < this_coul_rcutsq) THEN
+                                                        cfqq = cfqq_vec(ji)
+                                                        rij = SQRT(rijsq)
+                                                        nrg = ERFC(alpha_dsf(this_box)*rij)/rij + dsf_const
+                                                        nrg = nrg + rij*dsf_factor2(this_box)
+                                                        qq_energy = qq_energy + nrg*cfqq
+                                                END IF
+                                        END DO
+                                ELSE
+                                        DO ji = 1, atompair_vlen
+                                                rijsq = rijsq_vec(ji)
+                                                cfqq = cfqq_vec(ji)
+                                                rij = SQRT(rijsq)
+                                                nrg = ERFC(alpha_dsf(this_box)*rij)/rij + dsf_const
+                                                nrg = nrg + rij*dsf_factor2(this_box)
+                                                qq_energy = qq_energy + nrg*cfqq
+                                        END DO
+                                END IF
+                                !DO ji = 1, natompairs
+                                !        cfqq = cfqq_vec(ji)
+                                !        rij = SQRT(rijsq)
+                                !        nrg = ERFC(alpha_dsf(this_box)*rij)/rij + dsf_const
+                                !        nrg = nrg + rij*dsf_factor2(this_box)
+                                !        qq_energy = qq_energy + nrg*cfqq
+                                !        !qq_energy = qq_energy + (dsf_factor2(this_box) * (rij - rcut_coul(this_box)) - &
+                                !        !        dsf_factor1(this_box) + &
+                                !        !        ERFC(alpha_dsf(this_box)*rij) / rij) * cfqq
+                                !END DO
+                        ELSE IF (l_charge_cut) THEN
+                                IF (l_masked) THEN
+                                        DO ji = 1, atompair_vlen
+                                                rijsq = rijsq_vec(ji)
+                                                IF (rijsq < this_coul_rcutsq) THEN
+                                                        cfqq = cfqq_vec(ji)
+                                                        qq_energy = qq_energy + cfqq / SQRT(rijsq)
+                                                END IF
+                                        END DO
+                                ELSE
+                                        DO ji = 1, atompair_vlen
+                                                rijsq = rijsq_vec(ji)
+                                                cfqq = cfqq_vec(ji)
+                                                qq_energy = qq_energy + cfqq / SQRT(rijsq)
+                                        END DO
+                                END IF
+                                !DO ji = 1, natompairs
+                                !        cfqq = cfqq_vec(ji)
+                                !        qq_energy = qq_energy + cfqq / SQRT(rijsq)
+                                !END DO
+                        END IF
+                        !i_overlap = i_overlap .OR. ij_overlap
+                        IF (l_pair_store) THEN
+                                jsl = jsl_base + jm
+                                pair_nrg_vdw(isl,jsl) = vdw_energy
+                                pair_nrg_vdw(jsl,isl) = vdw_energy
+                                pair_nrg_qq(isl,jsl) = qq_energy
+                                pair_nrg_qq(jsl,isl) = qq_energy
+                        END IF
+                        i_vdw_energy = i_vdw_energy + vdw_energy
+                        i_qq_energy = i_qq_energy + qq_energy
+                        !IF (i_overlap) THEN
+                        !        !$OMP CRITICAL
+                        !        WRITE(*,*)
+                        !        WRITE(*,*)
+                        !        WRITE(*,*) i_overlap, l_order_ij
+                        !        WRITE(*,*) im, jm, j_interact, i_mcstep
+                        !        WRITE(*,*) vdw_energy, qq_energy
+                        !        WRITE(*,*) rijsq_vec(1:natompairs)
+                        !        WRITE(*,*)
+                        !        WRITE(*,*) irxp(1:natompairs)
+                        !        WRITE(*,*) jrxp(1:natompairs)
+                        !        WRITE(*,*)
+                        !        WRITE(*,*) iryp(1:natompairs)
+                        !        WRITE(*,*) jryp(1:natompairs)
+                        !        WRITE(*,*)
+                        !        WRITE(*,*) irzp(1:natompairs)
+                        !        WRITE(*,*) jrzp(1:natompairs)
+                        !        !$OMP END CRITICAL
+                        !END IF
+                    END DO
+                    !$OMP END DO
+            END IF
+
+            IF (overlap) EXIT
+
+
+!            !$OMP DO SCHEDULE(STATIC)
+!            DO j_interact = 1, n_interact
+!                IF (overlap .OR. i_overlap) CYCLE
+!                ij_overlap = .FALSE.
+!                vdw_energy = 0.0_DP
+!                qq_energy = 0.0_DP
+!                jm = which_interact(j_interact)
+!                IF (l_ortho) THEN
+!                        IF (l_order_ij) THEN
+!                                DO j = 1, jnatoms
+!                                        jsxp = atom_list(j,jm,js)%rp(1)
+!                                        jsyp = atom_list(j,jm,js)%rp(2)
+!                                        jszp = atom_list(j,jm,js)%rp(3)
+!                                        k = (j-1) * n_i_exist
+!                                        !$OMP SIMD
+!                                        DO i = 1, n_i_exist
+!                                                jrxp(i+k) = jsxp
+!                                                jryp(i+k) = jsyp
+!                                                jrzp(i+k) = jszp
+!                                        END DO
+!                                        !$OMP END SIMD
+!                                END DO
+!                        ELSE
+!                                !$OMP SIMD PRIVATE(jsxp,jsyp,jszp)
+!                                DO j = 1, jnatoms
+!                                        jsxp = atom_list(j,jm,js)%rp(1)
+!                                        jsyp = atom_list(j,jm,js)%rp(2)
+!                                        jszp = atom_list(j,jm,js)%rp(3)
+!                                        jrxp(j) = jsxp
+!                                        jryp(j) = jsyp
+!                                        jrzp(j) = jszp
+!                                        DO i = 1, n_i_exist - 1
+!                                                k = i*jnatoms
+!                                                jrxp(j+k) = jsxp
+!                                                jryp(j+k) = jsyp
+!                                                jrzp(j+k) = jszp
+!                                        END DO
+!                                END DO
+!                                !$OMP END SIMD
+!                        END IF
+!                ELSE
+!                        !$OMP SIMD PRIVATE(jrp,jsxp,jsyp,jszp)
+!                        DO j = 1, jnatoms
+!                                jrp = atom_list(j,jm,js)%rp(1)
+!                                jsxp = inv_h11*jrp
+!                                jsyp = inv_h21*jrp
+!                                jszp = inv_h31*jrp
+!                                jrp = atom_list(j,jm,js)%rp(2)
+!                                jsxp = jsxp + inv_h12*jrp
+!                                jsyp = jsyp + inv_h22*jrp
+!                                jszp = jszp + inv_h32*jrp
+!                                jrp = atom_list(j,jm,js)%rp(3)
+!                                jsxp = jsxp + inv_h13*jrp
+!                                jsyp = jsyp + inv_h23*jrp
+!                                jszp = jszp + inv_h33*jrp
+!                                jrxp(j) = jsxp
+!                                jryp(j) = jsyp
+!                                jrzp(j) = jszp
+!                                DO i = 1, n_i_exist-1
+!                                        k = i*jnatoms
+!                                        jrxp(i+k) = jsxp
+!                                        jryp(i+k) = jsyp
+!                                        jrzp(i+k) = jszp
+!                                END DO
+!                        END DO
+!                        !$OMP END SIMD
+!                END IF
+!                !jrxp = RESHAPE(SPREAD(jrxp_vec,2,n_i_exist), (/ natompairs /))
+!                !jryp = RESHAPE(SPREAD(jryp_vec,2,n_i_exist), (/ natompairs /))
+!                !jrzp = RESHAPE(SPREAD(jrzp_vec,2,n_i_exist), (/ natompairs /))
+!                IF (l_ortho) THEN
+!                        DO ji = 1, natompairs
+!                                dxp = ABS(jrxp(ji) - irxp(ji))
+!                                dyp = ABS(jryp(ji) - iryp(ji))
+!                                dzp = ABS(jrzp(ji) - irzp(ji))
+!                                IF (dxp > hxl) dxp = dxp - xl
+!                                IF (dyp > hyl) dyp = dyp - yl
+!                                IF (dzp > hzl) dzp = dzp - zl
+!                                dxp = dxp*dxp
+!                                dxp = dxp + dyp*dyp
+!                                dxp = dxp + dzp*dzp
+!                                rijsq_vec(ji) = dxp
+!                                IF (need_sqrt) rij_vec(ji) = SQRT(dxp)
+!                                i_overlap = i_overlap .OR. dxp < rcut_lowsq
+!                        END DO
+!                ELSE
+!                        DO ji = 1, natompairs
+!                                dsp = jrxp(ji) - irxp(ji)
+!                                IF (dsp > 0.5_DP) THEN
+!                                        dsp = dsp - 1.0_DP
+!                                ELSE IF (dsp < -0.5_DP) THEN
+!                                        dsp = dsp + 1.0_DP
+!                                END IF
+!                                dxp = h11*dsp
+!                                dyp = h21*dsp
+!                                dzp = h31*dsp
+!                                dsp = jryp(ji) - iryp(ji)
+!                                IF (dsp > 0.5_DP) THEN
+!                                        dsp = dsp - 1.0_DP
+!                                ELSE IF (dsp < -0.5_DP) THEN
+!                                        dsp = dsp + 1.0_DP
+!                                END IF
+!                                dxp = dxp + h12*dsp
+!                                dyp = dyp + h22*dsp
+!                                dzp = dzp + h32*dsp
+!                                dsp = jrzp(ji) - irzp(ji)
+!                                IF (dsp > 0.5_DP) THEN
+!                                        dsp = dsp - 1.0_DP
+!                                ELSE IF (dsp < -0.5_DP) THEN
+!                                        dsp = dsp + 1.0_DP
+!                                END IF
+!                                dxp = dxp + h13*dsp
+!                                dyp = dyp + h23*dsp
+!                                dzp = dzp + h33*dsp
+!                                dxp = dxp*dxp
+!                                dxp = dxp + dyp*dyp
+!                                dxp = dxp + dzp*dzp
+!                                rijsq_vec(ji) = dxp
+!                                IF (need_sqrt) rij_vec(ji) = SQRT(dxp)
+!                                i_overlap = i_overlap .OR. dxp < rcut_lowsq
+!                        END DO
+!                END IF
+!                IF (i_overlap) THEN
+!                        overlap = .TRUE.
+!                        CYCLE
+!                END IF
+!                IF (lj_charmm) THEN
+!                        DO ji = 1, natompairs
+!                                eps = vdw_p(ji,1) ! epsilon
+!                                sigsq = vdw_p(ji,2) ! sigma**2
+!                                rijsq = rijsq_vec(ji)
+!                                l_interact = rijsq < this_vdw_rcutsq
+!                                sigbyr2 = sigsq/rijsq ! sigma was already squared
+!                                sigbyr6 = sigbyr2*sigbyr2*sigbyr2
+!                                sigbyr12 = sigbyr6*sigbyr6
+!                                sigbyr12 = sigbyr12 - 2.0_DP*sigbyr6
+!                                IF (l_interact) vdw_energy = vdw_energy + eps * sigbyr12
+!                                !CALL Compute_LJ_Charmm(rijsq,vdw_p(ji,1),vdw_p(ji,2),vdw_energy)
+!                        END DO
+!                ELSE IF (lj_cut_shift) THEN
+!                        DO ji = 1, natompairs
+!                                rijsq = rijsq_vec(ji)
+!                                eps = vdw_p(ji,1) ! 4*epsilon
+!                                negsigsq = vdw_p(ji,2) ! -(sigma**2)
+!                                shift_p1 = vdw_p(ji,3)
+!                                l_interact = rijsq < this_vdw_rcutsq
+!                                negsigbyr2 = negsigsq/rijsq
+!                                rterm = negsigbyr2*negsigbyr2*negsigbyr2
+!                                rterm = rterm + rterm*rterm
+!                                IF (l_interact) vdw_energy = vdw_energy + eps * rterm - shift_p1
+!                                !CALL Compute_LJ_Cut(rijsq,vdw_p(ji,1),vdw_p(ji,2),vdw_energy)
+!                        END DO
+!                ELSE IF (lj_cut_switch) THEN
+!                        DO ji = 1, natompairs
+!                                rijsq = rijsq_vec(ji)
+!                                eps = vdw_p(ji,1) ! 4*epsilon
+!                                negsigsq = vdw_p(ji,2) ! -(sigma**2)
+!                                l_interact = rijsq < this_vdw_rcutsq
+!                                negsigbyr2 = negsigsq/rijsq
+!                                rterm = negsigbyr2*negsigbyr2*negsigbyr2
+!                                rterm = rterm + rterm*rterm
+!                                roffsq_rijsq = roff_switch_sq(this_box) - rijsq
+!                                IF (l_interact .AND. rijsq .GE. ron_switch_sq(this_box)) THEN
+!                                        vdw_energy = vdw_energy + &
+!                                                roffsq_rijsq*roffsq_rijsq * &
+!                                                (switch_factor2(this_box)+2.0_DP*rijsq)*switch_factor1(this_box) * &
+!                                                eps*rterm
+!                                ELSE IF (l_interact) THEN
+!                                        vdw_energy = vdw_energy + eps*rterm
+!                                END IF
+!                                !CALL Compute_LJ_Cut_Switch(rijsq,vdw_p(ji,1),vdw_p(ji,2),vdw_energy,this_box)
+!                        END DO
+!                ELSE IF (lj_cut_shift_force) THEN
+!                        DO ji = 1, natompairs
+!                                rijsq = rijsq_vec(ji)
+!                                rij = rij_vec(ji)
+!                                eps = vdw_p(ji,1) ! 4*epsilon
+!                                negsigsq = vdw_p(ji,2) ! -(sigma**2)
+!                                shift_p1 = vdw_p(ji,3)
+!                                shift_p2 = vdw_p(ji,4)
+!                                l_interact = rijsq < this_vdw_rcutsq
+!                                negsigbyr2 = negsigsq/rijsq
+!                                rterm = negsigbyr2*negsigbyr2*negsigbyr2
+!                                rterm = rterm + rterm*rterm
+!                                IF (l_interact) vdw_energy = vdw_energy + eps * rterm - shift_p1 - &
+!                                        (rcut_vdw(this_box)-rij)*shift_p2
+!                                !CALL Compute_LJ_Cut(rijsq,vdw_p(ji,1),vdw_p(ji,2),vdw_energy)
+!                        END DO
+!                ELSE IF (lj_cut) THEN
+!                        DO ji = 1, natompairs
+!                                rijsq = rijsq_vec(ji)
+!                                eps = vdw_p(ji,1) ! 4*epsilon
+!                                negsigsq = vdw_p(ji,2) ! -(sigma**2)
+!                                l_interact = rijsq < this_vdw_rcutsq
+!                                negsigbyr2 = negsigsq/rijsq
+!                                rterm = negsigbyr2*negsigbyr2*negsigbyr2
+!                                rterm = rterm + rterm*rterm
+!                                IF (l_interact) vdw_energy = vdw_energy + eps * rterm
+!                                !CALL Compute_LJ_Cut(rijsq,vdw_p(ji,1),vdw_p(ji,2),vdw_energy)
+!                        END DO
+!                ELSE IF (mie_cut_shift) THEN
+!                        DO ji = 1, natompairs
+!                                rijsq = rijsq_vec(ji)
+!                                epsig_n = vdw_p(ji,1) ! epsilon * mie_coeff * sigma ** n
+!                                epsig_m = vdw_p(ji,2) ! epsilon * mie_coeff * sigma ** m
+!                                mie_n = vdw_p(ji,3) ! already halved
+!                                mie_m = vdw_p(ji,4) ! already halved
+!                                shift_p1 = vdw_p(ji,5)
+!                                l_interact = rijsq < this_vdw_rcutsq
+!                                IF (l_interact) THEN
+!                                        vdw_energy = vdw_energy + epsig_n * rijsq**mie_n
+!                                        vdw_energy = vdw_energy - epsig_m * rijsq**mie_m
+!                                        vdw_energy = vdw_energy - shift_p1
+!                                END IF
+!                                !CALL Compute_Mie_Cut(rijsq,vdw_p(ji,1),vdw_p(ji,2), &
+!                                !        vdw_p(ji,3),vdw_p(ji,4),vdw_energy)
+!                        END DO
+!                ELSE IF (mie_cut) THEN
+!                        DO ji = 1, natompairs
+!                                rijsq = rijsq_vec(ji)
+!                                epsig_n = vdw_p(ji,1) ! epsilon * mie_coeff * sigma ** n
+!                                epsig_m = vdw_p(ji,2) ! epsilon * mie_coeff * sigma ** m
+!                                mie_n = vdw_p(ji,3) ! already halved
+!                                mie_m = vdw_p(ji,4) ! already halved
+!                                l_interact = rijsq < this_vdw_rcutsq
+!                                IF (l_interact) THEN
+!                                        vdw_energy = vdw_energy + epsig_n * rijsq**mie_n
+!                                        vdw_energy = vdw_energy - epsig_m * rijsq**mie_m
+!                                END IF
+!                                !CALL Compute_Mie_Cut(rijsq,vdw_p(ji,1),vdw_p(ji,2), &
+!                                !        vdw_p(ji,3),vdw_p(ji,4),vdw_energy)
+!                        END DO
+!                END IF
+!                IF (get_qq) THEN
+!                        IF (l_charge_ewald) THEN
+!                                DO ji = 1, natompairs
+!                                        rij = rij_vec(ji)
+!                                        cfqq = cfqq_vec(ji)
+!                                        l_interact = rij < this_coul_rcut
+!                                        IF (l_interact) THEN
+!                                                qq_energy = qq_energy + ERFC(alpha_ewald(this_box)*rij) / rij * cfqq
+!                                        END IF
+!                                END DO
+!                        ELSE IF (l_charge_dsf) THEN
+!                                DO ji = 1, natompairs
+!                                        rij = rij_vec(ji)
+!                                        cfqq = cfqq_vec(ji)
+!                                        l_interact = rij < this_coul_rcut
+!                                        IF (l_interact) THEN
+!                                                qq_energy = qq_energy + (dsf_factor2(this_box) * (rij - rcut_coul(this_box)) - &
+!                                                        dsf_factor1(this_box) + &
+!                                                        ERFC(alpha_dsf(this_box)*rij) / rij) * cfqq
+!                                        END IF
+!                                END DO
+!                        ELSE IF (l_charge_cut) THEN
+!                                DO ji = 1, natompairs
+!                                        rij = rij_vec(ji)
+!                                        cfqq = cfqq_vec(ji)
+!                                        l_interact = rij < this_coul_rcut
+!                                        IF (l_interact) THEN
+!                                                qq_energy = qq_energy + cfqq / rij
+!                                        END IF
+!                                END DO
+!                        END IF
+!                END IF
+!                IF (l_pair_store) THEN
+!                        jsl = jsl_base + jm
+!                        pair_nrg_vdw(isl,jsl) = vdw_energy
+!                        pair_nrg_vdw(jsl,isl) = vdw_energy
+!                        pair_nrg_qq(isl,jsl) = qq_energy
+!                        pair_nrg_qq(jsl,isl) = qq_energy
+!                END IF
+!                i_vdw_energy = i_vdw_energy + vdw_energy
+!                i_qq_energy = i_qq_energy + qq_energy
+!                !IF (i_overlap) THEN
+!                !        !$OMP CRITICAL
+!                !        WRITE(*,*)
+!                !        WRITE(*,*)
+!                !        WRITE(*,*) i_overlap, l_order_ij
+!                !        WRITE(*,*) im, jm, j_interact, i_mcstep
+!                !        WRITE(*,*) vdw_energy, qq_energy
+!                !        WRITE(*,*) rijsq_vec(1:natompairs)
+!                !        WRITE(*,*)
+!                !        WRITE(*,*) irxp(1:natompairs)
+!                !        WRITE(*,*) jrxp(1:natompairs)
+!                !        WRITE(*,*)
+!                !        WRITE(*,*) iryp(1:natompairs)
+!                !        WRITE(*,*) jryp(1:natompairs)
+!                !        WRITE(*,*)
+!                !        WRITE(*,*) irzp(1:natompairs)
+!                !        WRITE(*,*) jrzp(1:natompairs)
+!                !        !$OMP END CRITICAL
+!                !END IF
+!            END DO
+!            !$OMP END DO
+!
+!            !$OMP DO SCHEDULE(STATIC)
+!            DO j_interact = 1, n_interact
+!                IF (overlap .OR. i_overlap) CYCLE
+!                ij_overlap = .FALSE.
+!                vdw_energy = 0.0_DP
+!                qq_energy = 0.0_DP
+!                jm = which_interact(j_interact)
+!                IF (l_ortho) THEN
+!                        IF (l_order_ij) THEN
+!                                DO j = 1, jnatoms
+!                                        jsxp = atom_list(j,jm,js)%rp(1)
+!                                        jsyp = atom_list(j,jm,js)%rp(2)
+!                                        jszp = atom_list(j,jm,js)%rp(3)
+!                                        k = (j-1) * n_i_exist
+!                                        !$OMP SIMD
+!                                        DO i = 1, n_i_exist
+!                                                jrxp(i+k) = jsxp
+!                                                jryp(i+k) = jsyp
+!                                                jrzp(i+k) = jszp
+!                                        END DO
+!                                        !$OMP END SIMD
+!                                END DO
+!                        ELSE
+!                                !$OMP SIMD PRIVATE(jsxp,jsyp,jszp)
+!                                DO j = 1, jnatoms
+!                                        jsxp = atom_list(j,jm,js)%rp(1)
+!                                        jsyp = atom_list(j,jm,js)%rp(2)
+!                                        jszp = atom_list(j,jm,js)%rp(3)
+!                                        jrxp(j) = jsxp
+!                                        jryp(j) = jsyp
+!                                        jrzp(j) = jszp
+!                                        DO i = 1, n_i_exist - 1
+!                                                k = i*jnatoms
+!                                                jrxp(j+k) = jsxp
+!                                                jryp(j+k) = jsyp
+!                                                jrzp(j+k) = jszp
+!                                        END DO
+!                                END DO
+!                                !$OMP END SIMD
+!                        END IF
+!                ELSE
+!                        !$OMP SIMD PRIVATE(jrp,jsxp,jsyp,jszp)
+!                        DO j = 1, jnatoms
+!                                jrp = atom_list(j,jm,js)%rp(1)
+!                                jsxp = inv_h11*jrp
+!                                jsyp = inv_h21*jrp
+!                                jszp = inv_h31*jrp
+!                                jrp = atom_list(j,jm,js)%rp(2)
+!                                jsxp = jsxp + inv_h12*jrp
+!                                jsyp = jsyp + inv_h22*jrp
+!                                jszp = jszp + inv_h32*jrp
+!                                jrp = atom_list(j,jm,js)%rp(3)
+!                                jsxp = jsxp + inv_h13*jrp
+!                                jsyp = jsyp + inv_h23*jrp
+!                                jszp = jszp + inv_h33*jrp
+!                                jrxp(j) = jsxp
+!                                jryp(j) = jsyp
+!                                jrzp(j) = jszp
+!                                DO i = 1, n_i_exist-1
+!                                        k = i*jnatoms
+!                                        jrxp(i+k) = jsxp
+!                                        jryp(i+k) = jsyp
+!                                        jrzp(i+k) = jszp
+!                                END DO
+!                        END DO
+!                        !$OMP END SIMD
+!                END IF
+!                !jrxp = RESHAPE(SPREAD(jrxp_vec,2,n_i_exist), (/ natompairs /))
+!                !jryp = RESHAPE(SPREAD(jryp_vec,2,n_i_exist), (/ natompairs /))
+!                !jrzp = RESHAPE(SPREAD(jrzp_vec,2,n_i_exist), (/ natompairs /))
+!                IF (l_ortho) THEN
+!                        DO ji = 1, natompairs
+!                                dxp = ABS(jrxp(ji) - irxp(ji))
+!                                dyp = ABS(jryp(ji) - iryp(ji))
+!                                dzp = ABS(jrzp(ji) - irzp(ji))
+!                                IF (dxp > hxl) dxp = dxp - xl
+!                                IF (dyp > hyl) dyp = dyp - yl
+!                                IF (dzp > hzl) dzp = dzp - zl
+!                                dxp = dxp*dxp
+!                                dxp = dxp + dyp*dyp
+!                                dxp = dxp + dzp*dzp
+!                                rijsq_vec(ji) = dxp
+!                                IF (need_sqrt) rij_vec(ji) = SQRT(dxp)
+!                                i_overlap = i_overlap .OR. dxp < rcut_lowsq
+!                        END DO
+!                ELSE
+!                        DO ji = 1, natompairs
+!                                dsp = jrxp(ji) - irxp(ji)
+!                                IF (dsp > 0.5_DP) THEN
+!                                        dsp = dsp - 1.0_DP
+!                                ELSE IF (dsp < -0.5_DP) THEN
+!                                        dsp = dsp + 1.0_DP
+!                                END IF
+!                                dxp = h11*dsp
+!                                dyp = h21*dsp
+!                                dzp = h31*dsp
+!                                dsp = jryp(ji) - iryp(ji)
+!                                IF (dsp > 0.5_DP) THEN
+!                                        dsp = dsp - 1.0_DP
+!                                ELSE IF (dsp < -0.5_DP) THEN
+!                                        dsp = dsp + 1.0_DP
+!                                END IF
+!                                dxp = dxp + h12*dsp
+!                                dyp = dyp + h22*dsp
+!                                dzp = dzp + h32*dsp
+!                                dsp = jrzp(ji) - irzp(ji)
+!                                IF (dsp > 0.5_DP) THEN
+!                                        dsp = dsp - 1.0_DP
+!                                ELSE IF (dsp < -0.5_DP) THEN
+!                                        dsp = dsp + 1.0_DP
+!                                END IF
+!                                dxp = dxp + h13*dsp
+!                                dyp = dyp + h23*dsp
+!                                dzp = dzp + h33*dsp
+!                                dxp = dxp*dxp
+!                                dxp = dxp + dyp*dyp
+!                                dxp = dxp + dzp*dzp
+!                                rijsq_vec(ji) = dxp
+!                                IF (need_sqrt) rij_vec(ji) = SQRT(dxp)
+!                                i_overlap = i_overlap .OR. dxp < rcut_lowsq
+!                        END DO
+!                END IF
+!                IF (i_overlap) THEN
+!                        overlap = .TRUE.
+!                        CYCLE
+!                END IF
+!                IF (lj_charmm) THEN
+!                        DO ji = 1, natompairs
+!                                eps = vdw_p(ji,1) ! epsilon
+!                                sigsq = vdw_p(ji,2) ! sigma**2
+!                                rijsq = rijsq_vec(ji)
+!                                l_interact = rijsq < this_vdw_rcutsq
+!                                sigbyr2 = sigsq/rijsq ! sigma was already squared
+!                                sigbyr6 = sigbyr2*sigbyr2*sigbyr2
+!                                sigbyr12 = sigbyr6*sigbyr6
+!                                sigbyr12 = sigbyr12 - 2.0_DP*sigbyr6
+!                                IF (l_interact) vdw_energy = vdw_energy + eps * sigbyr12
+!                                !CALL Compute_LJ_Charmm(rijsq,vdw_p(ji,1),vdw_p(ji,2),vdw_energy)
+!                        END DO
+!                ELSE IF (lj_cut_shift) THEN
+!                        DO ji = 1, natompairs
+!                                rijsq = rijsq_vec(ji)
+!                                eps = vdw_p(ji,1) ! 4*epsilon
+!                                negsigsq = vdw_p(ji,2) ! -(sigma**2)
+!                                shift_p1 = vdw_p(ji,3)
+!                                l_interact = rijsq < this_vdw_rcutsq
+!                                negsigbyr2 = negsigsq/rijsq
+!                                rterm = negsigbyr2*negsigbyr2*negsigbyr2
+!                                rterm = rterm + rterm*rterm
+!                                IF (l_interact) vdw_energy = vdw_energy + eps * rterm - shift_p1
+!                                !CALL Compute_LJ_Cut(rijsq,vdw_p(ji,1),vdw_p(ji,2),vdw_energy)
+!                        END DO
+!                ELSE IF (lj_cut_switch) THEN
+!                        DO ji = 1, natompairs
+!                                rijsq = rijsq_vec(ji)
+!                                eps = vdw_p(ji,1) ! 4*epsilon
+!                                negsigsq = vdw_p(ji,2) ! -(sigma**2)
+!                                l_interact = rijsq < this_vdw_rcutsq
+!                                negsigbyr2 = negsigsq/rijsq
+!                                rterm = negsigbyr2*negsigbyr2*negsigbyr2
+!                                rterm = rterm + rterm*rterm
+!                                roffsq_rijsq = roff_switch_sq(this_box) - rijsq
+!                                IF (l_interact .AND. rijsq .GE. ron_switch_sq(this_box)) THEN
+!                                        vdw_energy = vdw_energy + &
+!                                                roffsq_rijsq*roffsq_rijsq * &
+!                                                (switch_factor2(this_box)+2.0_DP*rijsq)*switch_factor1(this_box) * &
+!                                                eps*rterm
+!                                ELSE IF (l_interact) THEN
+!                                        vdw_energy = vdw_energy + eps*rterm
+!                                END IF
+!                                !CALL Compute_LJ_Cut_Switch(rijsq,vdw_p(ji,1),vdw_p(ji,2),vdw_energy,this_box)
+!                        END DO
+!                ELSE IF (lj_cut_shift_force) THEN
+!                        DO ji = 1, natompairs
+!                                rijsq = rijsq_vec(ji)
+!                                rij = rij_vec(ji)
+!                                eps = vdw_p(ji,1) ! 4*epsilon
+!                                negsigsq = vdw_p(ji,2) ! -(sigma**2)
+!                                shift_p1 = vdw_p(ji,3)
+!                                shift_p2 = vdw_p(ji,4)
+!                                l_interact = rijsq < this_vdw_rcutsq
+!                                negsigbyr2 = negsigsq/rijsq
+!                                rterm = negsigbyr2*negsigbyr2*negsigbyr2
+!                                rterm = rterm + rterm*rterm
+!                                IF (l_interact) vdw_energy = vdw_energy + eps * rterm - shift_p1 - &
+!                                        (rcut_vdw(this_box)-rij)*shift_p2
+!                                !CALL Compute_LJ_Cut(rijsq,vdw_p(ji,1),vdw_p(ji,2),vdw_energy)
+!                        END DO
+!                ELSE IF (lj_cut) THEN
+!                        DO ji = 1, natompairs
+!                                rijsq = rijsq_vec(ji)
+!                                eps = vdw_p(ji,1) ! 4*epsilon
+!                                negsigsq = vdw_p(ji,2) ! -(sigma**2)
+!                                l_interact = rijsq < this_vdw_rcutsq
+!                                negsigbyr2 = negsigsq/rijsq
+!                                rterm = negsigbyr2*negsigbyr2*negsigbyr2
+!                                rterm = rterm + rterm*rterm
+!                                IF (l_interact) vdw_energy = vdw_energy + eps * rterm
+!                                !CALL Compute_LJ_Cut(rijsq,vdw_p(ji,1),vdw_p(ji,2),vdw_energy)
+!                        END DO
+!                ELSE IF (mie_cut_shift) THEN
+!                        DO ji = 1, natompairs
+!                                rijsq = rijsq_vec(ji)
+!                                epsig_n = vdw_p(ji,1) ! epsilon * mie_coeff * sigma ** n
+!                                epsig_m = vdw_p(ji,2) ! epsilon * mie_coeff * sigma ** m
+!                                mie_n = vdw_p(ji,3) ! already halved
+!                                mie_m = vdw_p(ji,4) ! already halved
+!                                shift_p1 = vdw_p(ji,5)
+!                                l_interact = rijsq < this_vdw_rcutsq
+!                                IF (l_interact) THEN
+!                                        vdw_energy = vdw_energy + epsig_n * rijsq**mie_n
+!                                        vdw_energy = vdw_energy - epsig_m * rijsq**mie_m
+!                                        vdw_energy = vdw_energy - shift_p1
+!                                END IF
+!                                !CALL Compute_Mie_Cut(rijsq,vdw_p(ji,1),vdw_p(ji,2), &
+!                                !        vdw_p(ji,3),vdw_p(ji,4),vdw_energy)
+!                        END DO
+!                ELSE IF (mie_cut) THEN
+!                        DO ji = 1, natompairs
+!                                rijsq = rijsq_vec(ji)
+!                                epsig_n = vdw_p(ji,1) ! epsilon * mie_coeff * sigma ** n
+!                                epsig_m = vdw_p(ji,2) ! epsilon * mie_coeff * sigma ** m
+!                                mie_n = vdw_p(ji,3) ! already halved
+!                                mie_m = vdw_p(ji,4) ! already halved
+!                                l_interact = rijsq < this_vdw_rcutsq
+!                                IF (l_interact) THEN
+!                                        vdw_energy = vdw_energy + epsig_n * rijsq**mie_n
+!                                        vdw_energy = vdw_energy - epsig_m * rijsq**mie_m
+!                                END IF
+!                                !CALL Compute_Mie_Cut(rijsq,vdw_p(ji,1),vdw_p(ji,2), &
+!                                !        vdw_p(ji,3),vdw_p(ji,4),vdw_energy)
+!                        END DO
+!                END IF
+!                IF (get_qq) THEN
+!                        IF (l_charge_ewald) THEN
+!                                DO ji = 1, natompairs
+!                                        rij = rij_vec(ji)
+!                                        cfqq = cfqq_vec(ji)
+!                                        l_interact = rij < this_coul_rcut
+!                                        IF (l_interact) THEN
+!                                                qq_energy = qq_energy + ERFC(alpha_ewald(this_box)*rij) / rij * cfqq
+!                                        END IF
+!                                END DO
+!                        ELSE IF (l_charge_dsf) THEN
+!                                DO ji = 1, natompairs
+!                                        rij = rij_vec(ji)
+!                                        cfqq = cfqq_vec(ji)
+!                                        l_interact = rij < this_coul_rcut
+!                                        IF (l_interact) THEN
+!                                                qq_energy = qq_energy + (dsf_factor2(this_box) * (rij - rcut_coul(this_box)) - &
+!                                                        dsf_factor1(this_box) + &
+!                                                        ERFC(alpha_dsf(this_box)*rij) / rij) * cfqq
+!                                        END IF
+!                                END DO
+!                        ELSE IF (l_charge_cut) THEN
+!                                DO ji = 1, natompairs
+!                                        rij = rij_vec(ji)
+!                                        cfqq = cfqq_vec(ji)
+!                                        l_interact = rij < this_coul_rcut
+!                                        IF (l_interact) THEN
+!                                                qq_energy = qq_energy + cfqq / rij
+!                                        END IF
+!                                END DO
+!                        END IF
+!                END IF
+!                IF (l_pair_store) THEN
+!                        jsl = jsl_base + jm
+!                        pair_nrg_vdw(isl,jsl) = vdw_energy
+!                        pair_nrg_vdw(jsl,isl) = vdw_energy
+!                        pair_nrg_qq(isl,jsl) = qq_energy
+!                        pair_nrg_qq(jsl,isl) = qq_energy
+!                END IF
+!                i_vdw_energy = i_vdw_energy + vdw_energy
+!                i_qq_energy = i_qq_energy + qq_energy
+!                !IF (i_overlap) THEN
+!                !        !$OMP CRITICAL
+!                !        WRITE(*,*)
+!                !        WRITE(*,*)
+!                !        WRITE(*,*) i_overlap, l_order_ij
+!                !        WRITE(*,*) im, jm, j_interact, i_mcstep
+!                !        WRITE(*,*) vdw_energy, qq_energy
+!                !        WRITE(*,*) rijsq_vec(1:natompairs)
+!                !        WRITE(*,*)
+!                !        WRITE(*,*) irxp(1:natompairs)
+!                !        WRITE(*,*) jrxp(1:natompairs)
+!                !        WRITE(*,*)
+!                !        WRITE(*,*) iryp(1:natompairs)
+!                !        WRITE(*,*) jryp(1:natompairs)
+!                !        WRITE(*,*)
+!                !        WRITE(*,*) irzp(1:natompairs)
+!                !        WRITE(*,*) jrzp(1:natompairs)
+!                !        !$OMP END CRITICAL
+!                !END IF
+!            END DO
+!            !$OMP END DO
     END DO
+    !IF (i_mcstep < 10 .AND. .NOT. cbmc_flag) WRITE(*,*) overlap,i_overlap, i_vdw_energy, i_qq_energy, n_interact
+    !IF (i_mcstep < 10 .AND. cbmc_flag) WRITE(*,*) overlap,i_overlap, i_vdw_energy, i_qq_energy, n_interact
+    !$OMP END PARALLEL
+    overlap = i_overlap
+    !IF (i_mcstep < 10 .AND. cbmc_flag) WRITE(*,*) overlap,i_overlap, i_vdw_energy, i_qq_energy, n_interact
+    !IF (i_mcstep < 10 .AND. .NOT. cbmc_flag) WRITE(*,*) overlap,i_overlap, i_vdw_energy, i_qq_energy, n_interact
   END SUBROUTINE Compute_Molecule_Nonbond_Inter_Energy_Vectorized
 
   FUNCTION Pack_Parallel_INT32(mask,asize,psize,a) RESULT(p)
@@ -5528,6 +7633,9 @@ END SUBROUTINE Compute_Molecule_Self_Energy
           END DO imLOOP2
           !$OMP END PARALLEL DO
           IF (SHARED_OVERLAP) THEN
+             l_debug_print = .TRUE.
+             CALL Compute_Molecule_Nonbond_Inter_Energy(this_im_1,is,vlj_pair,vqq_pair,my_overlap)
+             l_debug_print = .FALSE.
              overlap = .true.
              RETURN
           ENDIF
@@ -5598,6 +7706,8 @@ END SUBROUTINE Compute_Molecule_Self_Energy
              END DO imLOOP4
              !$OMP END PARALLEL DO
              IF (SHARED_OVERLAP) THEN
+                l_debug_print = .TRUE.
+                CALL Compute_Molecule_Nonbond_Inter_Energy(this_im_1,is_1,vlj_pair,vqq_pair,my_overlap)
                 overlap = .true.
                 RETURN
              ENDIF

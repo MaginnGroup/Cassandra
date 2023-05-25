@@ -518,7 +518,7 @@ USE Type_Definitions
 
   INTEGER :: imreplace, isreplace
 
-  INTEGER :: atompairdim
+  INTEGER :: atompairdim, mol_dim
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -702,6 +702,11 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   LOGICAL, PARAMETER :: l_not_all_live = .FALSE.
 
   INTEGER :: global_nthreads
+
+  INTEGER, DIMENSION(:,:,:), ALLOCATABLE :: chunksize_array, nthreads_used_array
+  INTEGER, DIMENSION(:,:), ALLOCATABLE :: chunks_set_nmols
+
+  LOGICAL :: l_debug_print
 
 END MODULE Global_Variables
 
