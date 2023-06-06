@@ -233,6 +233,7 @@
 
   ! Allocate memory for rminsq_table
   ALLOCATE(rminsq_table(0:nbr_atomtypes, 0:nbr_atomtypes), Stat=AllocateStatus)
+  ALLOCATE(sp_rminsq_table(0:nbr_atomtypes, 0:nbr_atomtypes), Stat=AllocateStatus)
   rminsq_table = rcut_lowsq
 
   IF (AllocateStatus .NE. 0) THEN
@@ -706,5 +707,6 @@
   ppvdwp_table2 = RESHAPE(ppvdwp_table, SHAPE(ppvdwp_table2), ORDER=order2)
 
   max_rmin = DSQRT(MAXVAL(rminsq_table))
+  sp_rminsq_table = REAL(rminsq_table,SP)
 
 END SUBROUTINE Create_Nonbond_Table
