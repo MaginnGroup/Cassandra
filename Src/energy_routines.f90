@@ -3090,7 +3090,6 @@ CONTAINS
     REAL(DP) :: shift_p1, shift_p2, cfqq
 
     INTEGER :: chunksize, nthreads_used, im_thread, jbase, ithread, n_interact_p, cni, j_end_shared
-    INTEGER, DIMENSION(global_nthreads) :: ibase_vec, ibase_all_vec, n_may_interact_vec, n_all_interact_vec
     INTEGER(2) :: ji_end,ji_start,vlen,ji_end_2,ji_base_2
     LOGICAL(1), DIMENSION(MAX(atompairdim,mol_dim)) :: vdw_interact_vec, qq_interact_vec
 
@@ -3103,6 +3102,8 @@ CONTAINS
     INTEGER :: atompair_vlen, ji_base, ji_stride
     REAL(DP), DIMENSION(mol_dim) :: mol_vdw_energy_p, mol_qq_energy_p
     REAL(DP), DIMENSION(:), ALLOCATABLE :: mol_vdw_energy, mol_qq_energy
+
+    REAL(DP) :: alpharsq, alpha_sq, ewald_const, numer, denom
 
     INTEGER :: i_selector
     LOGICAL :: l_read_svec, switchflag
@@ -3131,13 +3132,16 @@ CONTAINS
     END DO
     l_ortho = box_list(this_box)%int_box_shape <= int_ortho
 
-    CALL Set_Pair_Chunks
+    !CALL Set_Pair_Chunks
 
     ithread = 1
+
+    nthreads_used = 1
 
 
 
     !$OMP PARALLEL PRIVATE(jm,jrxp,jryp,jrzp,dsp,dxp,dyp,dzp,i,j,k,ji,rijsq,rij) &
+    !$OMP PRIVATE(alpharsq,numer,denom) &
     !$OMP PRIVATE(vdw_energy,qq_energy,jsl,ij_overlap) &
     !$OMP PRIVATE(jsxp,jsyp,jszp,eps,sigsq,sigbyr2,sigbyr6,sigbyr12,rterm,rterm2) &
     !$OMP PRIVATE(negsigsq,negsigbyr2,roffsq_rijsq) &
@@ -3148,7 +3152,7 @@ CONTAINS
     !$OMP PRIVATE(j_limit,j_limit_2,im_thread,jbase,ithread) &
     !$OMP PRIVATE(dxcom,dycom,dzcom,max_dcom,dsxcom,dsycom,dszcom) &
     !$OMP PRIVATE(n_may_interact_p,which_may_interact_p,cni,need_sqrt) &
-    !$OMP PRIVATE(n_all_interact_p,which_all_interact_p,n_interact) &
+    !$OMP PRIVATE(n_all_interact_p,which_all_interact_p) &
     !$OMP PRIVATE(ji_end,ji_start,vlen,ji_end_2,ji_base_2) &
     !$OMP PRIVATE(rijsq_packed,vdw_p_packed) &
     !$OMP PRIVATE(l_molvectorized,ij_get_vdw,ij_get_qq,l_getdrcom) &
@@ -3157,7 +3161,6 @@ CONTAINS
     !$OMP PRIVATE(itype,jtype,maxvlen,minvlen,vdw_vlen,qq_vlen,atompair_vlen) &
     !$OMP PRIVATE(qq_interact_vec,vdw_interact_vec) &
     !$OMP PRIVATE(mol_vdw_energy_p,mol_qq_energy_p) &
-    !$OMP PRIVATE(interact_vec,all_interact_vec) &
     !$OMP PRIVATE(l_read_svec, i_selector, switchflag) &
     !$OMP PRIVATE(ji_start_byte,ji_byte) &
     !$OMP PRIVATE(ji_base, ji_stride) &
@@ -3172,6 +3175,8 @@ CONTAINS
 
 
     !$ ithread = OMP_GET_THREAD_NUM() + 1
+
+    !$ nthreads_used = OMP_GET_NUM_THREADS()
 
     !DIR$ ASSUME (MOD(atompairdim,8) .EQ. 0)
     !DIR$ ASSUME (MOD(mol_dim,8) .EQ. 0)
@@ -3284,6 +3289,8 @@ CONTAINS
             SELECT CASE (int_charge_sum_style(this_box))
                 CASE (charge_ewald)
                         l_charge_ewald = .TRUE.
+                        !ewald_const = alpha_ewald(this_box)/rootPI
+                        !alpha_sq = alpha_ewald(this_box)*alpha_ewald(this_box)
                 CASE (charge_dsf)
                         l_charge_dsf = .TRUE.
                         dsf_const = -dsf_factor1(this_box) - rcut_coul(this_box)*dsf_factor2(this_box)
@@ -3406,54 +3413,55 @@ CONTAINS
                     END IF
             END IF
             IF (l_getdrcom) THEN
-                    chunksize = chunksize_array(js,is,ibox)
-                    nthreads_used = nthreads_used_array(js,is,ibox)
-                    IF (is .EQ. js .AND. .NOT. open_mc_flag) THEN
-                            !IF (MOD(im-1,chunksize) == 0) THEN
-                            !        im_thread = 9999
-                            !ELSE
-                            !        im_thread = (im-1)/chunksize + 1
-                            !END IF
-                            im_thread = (im-1)/chunksize + 1
-                            im_thread = MIN(nthreads_used,im_thread)
-                            im_thread = MAX(1,im_thread)
-                            IF (ithread .LE. im_thread) THEN
-                                    jbase = (ithread-1)*chunksize
-                            ELSE
-                                    jbase = jnlive - (nthreads_used - ithread + 1)*chunksize
-                                    jbase = MAX(jbase,im)
-                            END IF
-                            IF (ithread == im_thread) THEN
-                                    j_limit = im - 1 - jbase
-                                    j_limit_2 = jnlive - (nthreads_used - im_thread)*chunksize - jbase
-                                    interact_vec(j_limit+1) = .FALSE.
-                                    all_interact_vec(j_limit+1) = .FALSE.
-                            ELSE
-                                    j_limit = chunksize
-                                    j_limit_2 = chunksize
-                            END IF
-                    ELSE
-                            im_thread = 9999
-                            jbase = (ithread-1)*chunksize
-                            j_limit = chunksize
-                            j_limit_2 = chunksize
-                    END IF
-                    !IF (l_debug_print .OR. (i_mcstep > 0 .AND. i_mcstep < 10 .AND. .NOT. cbmc_flag) ) WRITE(*,*) im_thread, ithread, im, jnlive, jbase, j_limit, j_limit_2, chunksize
-                    j_limit = MIN(j_limit,jnlive-jbase)
-                    j_limit_2 = MIN(j_limit_2,jnlive-jbase)
-                    !IF (l_debug_print .OR. (i_mcstep > 0 .AND. i_mcstep < 10 .AND. .NOT. cbmc_flag) ) WRITE(*,*) im_thread, ithread, im, jnlive, jbase, j_limit, j_limit_2, chunksize
+                    !chunksize = chunksize_array(js,is,ibox)
+                    !nthreads_used = nthreads_used_array(js,is,ibox)
+                    !IF (is .EQ. js .AND. .NOT. open_mc_flag) THEN
+                    !        !IF (MOD(im-1,chunksize) == 0) THEN
+                    !        !        im_thread = 9999
+                    !        !ELSE
+                    !        !        im_thread = (im-1)/chunksize + 1
+                    !        !END IF
+                    !        im_thread = (im-1)/chunksize + 1
+                    !        im_thread = MIN(nthreads_used,im_thread)
+                    !        im_thread = MAX(1,im_thread)
+                    !        IF (ithread .LE. im_thread) THEN
+                    !                jbase = (ithread-1)*chunksize
+                    !        ELSE
+                    !                jbase = jnlive - (nthreads_used - ithread + 1)*chunksize
+                    !                jbase = MAX(jbase,im)
+                    !        END IF
+                    !        IF (ithread == im_thread) THEN
+                    !                j_limit = im - 1 - jbase
+                    !                j_limit_2 = jnlive - (nthreads_used - im_thread)*chunksize - jbase
+                    !                interact_vec(j_limit+1) = .FALSE.
+                    !                all_interact_vec(j_limit+1) = .FALSE.
+                    !        ELSE
+                    !                j_limit = chunksize
+                    !                j_limit_2 = chunksize
+                    !        END IF
+                    !ELSE
+                    !        im_thread = 9999
+                    !        jbase = (ithread-1)*chunksize
+                    !        j_limit = chunksize
+                    !        j_limit_2 = chunksize
+                    !END IF
+                    !!IF (l_debug_print .OR. (i_mcstep > 0 .AND. i_mcstep < 10 .AND. .NOT. cbmc_flag) ) WRITE(*,*) im_thread, ithread, im, jnlive, jbase, j_limit, j_limit_2, chunksize
+                    !j_limit = MIN(j_limit,jnlive-jbase)
+                    !j_limit_2 = MIN(j_limit_2,jnlive-jbase)
+                    !!IF (l_debug_print .OR. (i_mcstep > 0 .AND. i_mcstep < 10 .AND. .NOT. cbmc_flag) ) WRITE(*,*) im_thread, ithread, im, jnlive, jbase, j_limit, j_limit_2, chunksize
                     IF (l_ortho) THEN
-                            DO j = 1, j_limit
+                            !$OMP DO SIMD SCHEDULE(SIMD:STATIC) PRIVATE(dxcom,dycom,dzcom,max_dcom)
+                            DO j = 1, jnlive
                                     IF (open_mc_flag) THEN
-                                            dxcom = live_rcom(1,j+jbase)
-                                            dycom = live_rcom(2,j+jbase)
-                                            dzcom = live_rcom(3,j+jbase)
-                                            max_dcom = live_rcom(4,j+jbase)
+                                            dxcom = live_rcom(1,j)
+                                            dycom = live_rcom(2,j)
+                                            dzcom = live_rcom(3,j)
+                                            max_dcom = live_rcom(4,j)
                                     ELSE
-                                            dxcom = molecule_list(j+jbase,js)%rcom(1)
-                                            dycom = molecule_list(j+jbase,js)%rcom(2)
-                                            dzcom = molecule_list(j+jbase,js)%rcom(3)
-                                            max_dcom = molecule_list(j+jbase,js)%rcom(4)
+                                            dxcom = molecule_list(j,js)%rcom(1)
+                                            dycom = molecule_list(j,js)%rcom(2)
+                                            dzcom = molecule_list(j,js)%rcom(3)
+                                            max_dcom = molecule_list(j,js)%rcom(4)
                                     END IF
                                     dxcom = ABS(dxcom - ixcom)
                                     dycom = ABS(dycom - iycom)
@@ -3472,33 +3480,15 @@ CONTAINS
                                     !l_interact = max_dcom_i_const > &
                                     !        SQRT(dxcom) - max_dcom
                             END DO
-                            DO j = j_limit+2, j_limit_2 !jnlive
-                                    dxcom = molecule_list(j+jbase,js)%rcom(1)
-                                    dycom = molecule_list(j+jbase,js)%rcom(2)
-                                    dzcom = molecule_list(j+jbase,js)%rcom(3)
-                                    max_dcom = molecule_list(j+jbase,js)%rcom(4)
-                                    dxcom = ABS(dxcom - ixcom)
-                                    dycom = ABS(dycom - iycom)
-                                    dzcom = ABS(dzcom - izcom)
-                                    IF (dxcom > hxl) dxcom = dxcom - xl
-                                    IF (dycom > hyl) dycom = dycom - yl
-                                    IF (dzcom > hzl) dzcom = dzcom - zl
-                                    ! Repurposing dxcom as rijsq accumulator to enforce FMA3 instructions if supported
-                                    dxcom = dxcom * dxcom
-                                    dxcom = dxcom + dycom * dycom
-                                    dxcom = dxcom + dzcom * dzcom
-                                    dxcom = SQRT(dxcom) ! rij
-                                    max_dcom = max_dcom + i_max_dcom
-                                    interact_vec(j) = mol_rcut > dxcom - max_dcom
-                                    all_interact_vec(j) = mol_rcut > dxcom + max_dcom
-                            END DO
+                            !$OMP END DO SIMD
                     ELSE
                             IF (open_mc_flag) THEN
-                                    DO j = 1, j_limit
-                                            dxcom = live_rcom(1,j+jbase)
-                                            dycom = live_rcom(2,j+jbase)
-                                            dzcom = live_rcom(3,j+jbase)
-                                            max_dcom = live_rcom(4,j+jbase)
+                                    !$OMP DO SIMD SCHEDULE(SIMD:STATIC) PRIVATE(dxcom,dycom,dzcom,max_dcom,dsxcom,dsycom,dszcom)
+                                    DO j = 1, jnlive
+                                            dxcom = live_rcom(1,j)
+                                            dycom = live_rcom(2,j)
+                                            dzcom = live_rcom(3,j)
+                                            max_dcom = live_rcom(4,j)
                                             dxcom = dxcom - ixcom
                                             dsxcom = inv_h11*dxcom
                                             dsycom = inv_h21*dxcom
@@ -3544,12 +3534,14 @@ CONTAINS
                                             interact_vec(j) = mol_rcut > dxcom - max_dcom
                                             all_interact_vec(j) = mol_rcut > dxcom + max_dcom
                                     END DO
+                                    !$OMP END DO SIMD
                             ELSE
-                                    DO j = 1, j_limit
-                                            dxcom = molecule_list(j+jbase,js)%rcom(1)
-                                            dycom = molecule_list(j+jbase,js)%rcom(2)
-                                            dzcom = molecule_list(j+jbase,js)%rcom(3)
-                                            max_dcom = molecule_list(j+jbase,js)%rcom(4)
+                                    !$OMP DO SIMD SCHEDULE(SIMD:STATIC) PRIVATE(dxcom,dycom,dzcom,max_dcom,dsxcom,dsycom,dszcom)
+                                    DO j = 1, jnlive
+                                            dxcom = molecule_list(j,js)%rcom(1)
+                                            dycom = molecule_list(j,js)%rcom(2)
+                                            dzcom = molecule_list(j,js)%rcom(3)
+                                            max_dcom = molecule_list(j,js)%rcom(4)
                                             dxcom = dxcom - ixcom
                                             dsxcom = inv_h11*dxcom
                                             dsycom = inv_h21*dxcom
@@ -3595,120 +3587,59 @@ CONTAINS
                                             interact_vec(j) = mol_rcut > dxcom - max_dcom
                                             all_interact_vec(j) = mol_rcut > dxcom + max_dcom
                                     END DO
+                                    !$OMP END DO SIMD
                             END IF
-                            DO j = j_limit+2, j_limit_2
-                                    dxcom = molecule_list(j+jbase,js)%rcom(1)
-                                    dycom = molecule_list(j+jbase,js)%rcom(2)
-                                    dzcom = molecule_list(j+jbase,js)%rcom(3)
-                                    max_dcom = molecule_list(j+jbase,js)%rcom(4)
-                                    dxcom = dxcom - ixcom
-                                    dsxcom = inv_h11*dxcom
-                                    dsycom = inv_h21*dxcom
-                                    dszcom = inv_h31*dxcom
-                                    dycom = dycom - iycom
-                                    dsxcom = dsxcom + inv_h12*dycom
-                                    dsycom = dsycom + inv_h22*dycom
-                                    dszcom = dszcom + inv_h32*dycom
-                                    dzcom = dzcom - izcom
-                                    dsxcom = dsxcom + inv_h13*dzcom
-                                    dsycom = dsycom + inv_h23*dzcom
-                                    dszcom = dszcom + inv_h33*dzcom
-                                    IF (dsxcom > 0.5_DP) THEN
-                                            dsxcom = dsxcom - 1.0_DP
-                                    ELSE IF (dsxcom < -0.5_DP) THEN
-                                            dsxcom = dsxcom + 1.0_DP
-                                    END IF
-                                    IF (dsycom > 0.5_DP) THEN
-                                            dsycom = dsycom - 1.0_DP
-                                    ELSE IF (dsycom < -0.5_DP) THEN
-                                            dsycom = dsycom + 1.0_DP
-                                    END IF
-                                    IF (dszcom > 0.5_DP) THEN
-                                            dszcom = dszcom - 1.0_DP
-                                    ELSE IF (dszcom < -0.5_DP) THEN
-                                            dszcom = dszcom + 1.0_DP
-                                    END IF
-                                    dxcom = h11*dsxcom
-                                    dycom = h21*dsxcom
-                                    dzcom = h31*dsxcom
-                                    dxcom = dxcom + h12*dsycom
-                                    dycom = dycom + h22*dsycom
-                                    dzcom = dzcom + h32*dsycom
-                                    dxcom = dxcom + h13*dszcom
-                                    dycom = dycom + h23*dszcom
-                                    dzcom = dzcom + h33*dszcom
-                                    ! Repurposing dxcom as rijsq accumulator to enforce FMA3 instructions if supported
-                                    dxcom = dxcom * dxcom
-                                    dxcom = dxcom + dycom * dycom
-                                    dxcom = dxcom + dzcom * dzcom
-                                    dxcom = SQRT(dxcom) ! rij
-                                    max_dcom = max_dcom + i_max_dcom
-                                    interact_vec(j) = mol_rcut > dxcom - max_dcom
-                                    all_interact_vec(j) = mol_rcut > dxcom + max_dcom
-                            END DO
                     END IF
+                    IF (is == js .AND. .NOT. open_mc_flag) THEN
+                            !$OMP SINGLE
+                            interact_vec(im) = .FALSE.
+                            all_interact_vec(im) = .FALSE.
+                            !$OMP END SINGLE
+                    END IF
+                    IF (nthreads_used > 1) THEN
+                            !$OMP WORKSHARE
+                            n_interact = COUNT(interact_vec(1:jnlive))
+                            n_all_interact = COUNT(all_interact_vec(1:jnlive))
+                            n_may_interact = n_interact - n_all_interact
+                            !$OMP END WORKSHARE
+                    END IF
+                    !$OMP SINGLE
                     n_all_interact_p = 0
                     n_may_interact_p = 0
                     IF (open_mc_flag) THEN
-                            DO j = 1, j_limit_2
+                            DO j = 1, jnlive
                                 IF (all_interact_vec(j)) THEN
                                         n_all_interact_p = n_all_interact_p + 1
-                                        which_all_interact_p(n_all_interact_p) = live_locates(j+jbase)
+                                        which_interact(n_all_interact_p) = live_locates(j)
                                 ELSE IF (interact_vec(j)) THEN
                                         n_may_interact_p = n_may_interact_p + 1
-                                        which_may_interact_p(n_may_interact_p) = live_locates(j+jbase)
+                                        which_may_interact_p(n_may_interact_p) = live_locates(j)
                                 END IF
                             END DO
                     ELSE
-                            DO j = 1, j_limit_2
+                            DO j = 1, jnlive
                                 IF (all_interact_vec(j)) THEN
                                         n_all_interact_p = n_all_interact_p + 1
-                                        which_all_interact_p(n_all_interact_p) = j+jbase
+                                        which_interact(n_all_interact_p) = j
                                 ELSE IF (interact_vec(j)) THEN
                                         n_may_interact_p = n_may_interact_p + 1
-                                        which_may_interact_p(n_may_interact_p) = j+jbase
+                                        which_may_interact_p(n_may_interact_p) = j
                                 END IF
                             END DO
                     END IF
-                    IF (ithread .LE. nthreads_used) n_may_interact_vec(ithread) = n_may_interact_p
-                    IF (ithread .LE. nthreads_used) n_all_interact_vec(ithread) = n_all_interact_p
-                    !$OMP BARRIER
-                    !$OMP SECTIONS
-                    !$OMP SECTION
-                    cni = 0
-                    DO j = 1, nthreads_used
-                        ibase_vec(j) = cni
-                        cni = cni + n_may_interact_vec(j)
-                    END DO
-                    n_may_interact = cni ! does not include molecules guaranteed to fully interact
-                    !$OMP SECTION
-                    cni = 0
-                    DO j = 1, nthreads_used
-                        ibase_all_vec(j) = cni
-                        cni = cni + n_all_interact_vec(j)
-                    END DO
-                    n_all_interact = cni
-                    !$OMP END SECTIONS
-                    !$OMP CRITICAL
-                    IF (ithread .LE. nthreads_used) THEN
-                            ! The first n_all_interact molecules in which_interact are guaranteed to be fully in-range.
-                            ! The next n_may_interact molecules might have some atoms in range.
-                            ibase = ibase_all_vec(ithread)
-                            !IF (i_mcstep < 10 .AND. .NOT. cbmc_flag) WRITE(*,*) nthreads_used, &
-                            !        ithread,ibase,n_may_interact_vec(ithread),n_may_interact_p,n_all_interact_p
-                            which_interact(ibase+1:ibase+n_all_interact_p) = which_all_interact_p(1:n_all_interact_p)
-                            ibase = ibase_vec(ithread) + n_all_interact
-                            !IF (i_mcstep < 10 .AND. .NOT. cbmc_flag) WRITE(*,*) nthreads_used, &
-                            !        ithread,ibase,n_may_interact_vec(ithread),n_may_interact_p,n_all_interact_p
-                            which_interact(ibase+1:ibase+n_may_interact_p) = which_may_interact_p(1:n_may_interact_p)
+                    ! The first n_all_interact molecules in which_interact are guaranteed to be fully in-range.
+                    ! The next n_may_interact molecules might have some atoms in range.
+                    which_interact(n_all_interact_p+1:n_all_interact_p+n_may_interact_p) = which_may_interact_p(1:n_may_interact_p)
+                    IF (nthreads_used < 2) THEN
+                            n_all_interact = n_all_interact_p
+                            n_may_interact = n_may_interact_p
+                            n_interact = n_all_interact_p + n_may_interact_p
                     END IF
-                    !$OMP END CRITICAL
-                    n_interact = n_all_interact + n_may_interact
+                    !$OMP END SINGLE NOWAIT
                     l_molvectorized = n_interact > natompairs
                     IF (l_debug_print) WRITE(*,*) "n_interact = ", n_interact, n_all_interact, n_may_interact, l_molvectorized
                     IF (l_debug_print) WRITE(*,*) n_all_interact_p, n_may_interact_p
                     IF (l_debug_print) WRITE(*,*) "nthreads_used = ", nthreads_used
-                    IF (l_debug_print) WRITE(*,*) n_all_interact_vec(ithread), n_may_interact_vec(ithread)
             ELSE
                     l_molvectorized = .TRUE.
             END IF
@@ -3751,6 +3682,8 @@ CONTAINS
             IF (l_molvectorized) THEN
                     IF (l_debug_print) WRITE(*,*) "l_molvectorized"
                     IF (l_getdrcom) THEN
+                            !WRITE(*,*) SHAPE(jrp_perm)
+                            !WRITE(*,*) n_interact, jnatoms
                             !$OMP WORKSHARE
                             jrp_perm(1:n_interact,1:jnatoms,1) = TRANSPOSE(atom_list(1:jnatoms,which_interact(1:n_interact),js)%rp(1))
                             jrp_perm(1:n_interact,1:jnatoms,2) = TRANSPOSE(atom_list(1:jnatoms,which_interact(1:n_interact),js)%rp(2))
@@ -3771,8 +3704,8 @@ CONTAINS
                                     END DO
                             END IF
                     ELSE IF (open_mc_flag) THEN
-                            n_interact = jnlive
                             !$OMP WORKSHARE
+                            n_interact = jnlive
                             n_all_interact = 0
                             n_may_interact = n_interact
                             jrp_perm(1:jnlive,1:jnatoms,1) = TRANSPOSE(atom_list(1:jnatoms,live_locates(1:jnlive),js)%rp(1))
@@ -3781,31 +3714,39 @@ CONTAINS
                             !$OMP END WORKSHARE
                     ELSE
                             IF (is .EQ. js) THEN
+                                    !$OMP SINGLE
                                     n_interact = jnlive - 1
+                                    n_all_interact = 0
+                                    n_may_interact = n_interact
+                                    !$OMP END SINGLE NOWAIT
                                     !$OMP DO SCHEDULE(STATIC) COLLAPSE(2)
                                     DO ja = 1, jnatoms
                                         DO i = 1, 3
                                                 jrp_perm(1:im-1,ja,i) = atom_list(ja,1:im-1,js)%rp(i)
-                                                jrp_perm(im:n_interact,ja,i) = atom_list(ja,im+1:jnlive,js)%rp(i)
+                                                jrp_perm(im:jnlive-1,ja,i) = atom_list(ja,im+1:jnlive,js)%rp(i)
                                         END DO
                                     END DO
-                                    !$OMP END DO NOWAIT
+                                    !$OMP END DO
                             ELSE IF (l_ortho) THEN
+                                    !$OMP SINGLE
                                     n_interact = jnlive
+                                    n_all_interact = 0
+                                    n_may_interact = n_interact
+                                    !$OMP END SINGLE NOWAIT
                                     !$OMP DO SCHEDULE(STATIC) COLLAPSE(2)
                                     DO ja = 1, jnatoms
                                         DO i = 1, 3
-                                                jrp_perm(1:n_interact,ja,i) = atom_list(ja,1:jnlive,js)%rp(i)
+                                                jrp_perm(1:jnlive,ja,i) = atom_list(ja,1:jnlive,js)%rp(i)
                                         END DO
                                     END DO
-                                    !$OMP END DO NOWAIT
+                                    !$OMP END DO
                             ELSE
+                                    !$OMP SINGLE
                                     n_interact = jnlive
+                                    n_all_interact = 0
+                                    n_may_interact = n_interact
+                                    !$OMP END SINGLE
                             END IF
-                            !$OMP SINGLE
-                            n_all_interact = 0
-                            n_may_interact = n_interact
-                            !$OMP END SINGLE
                     END IF
                     IF (.NOT. l_ortho) THEN
                             switchflag = l_getdrcom .OR. open_mc_flag .OR. is .EQ. js
@@ -3835,7 +3776,7 @@ CONTAINS
                                         jrp_perm(j,ja,3) = jszp
                                 END DO
                             END DO
-                            !$OMP END DO
+                            !$OMP END DO NOWAIT
                     END IF
                     !$OMP SINGLE
                     IF (get_vdw .AND. l_pair_store) THEN
@@ -4458,6 +4399,93 @@ CONTAINS
                                                                         qq_energy = qq_energy + nrg
                                                                 END DO
                                                         ELSE
+                                                                !! experimental algorithm.  swap out with commented if it's bad
+                                                                !DO j = 1, qq_vlen
+                                                                !        alpharsq = alpha_sq*rijsq_vec(j)
+                                                                !        nrg = EXP(-alpharsq)*ewald_const
+                                                                !        !numer = 1.0_DP
+                                                                !        !denom = 3.5_DP
+                                                                !        !denom = denom*2.5_DP
+                                                                !        !denom = denom + numer*alpharsq
+                                                                !        !numer = numer*2.0_DP + denom
+                                                                !        denom = 8.75_DP + 9.0_DP*alpharsq + alpharsq*alpharsq
+                                                                !        !numer = 13.0_DP + 2.0_DP*alpharsq + denom
+                                                                !        numer = 21.75_DP + 11.0_DP*alpharsq + alpharsq*alpharsq
+                                                                !        denom = denom*1.5_DP
+                                                                !        denom = denom + numer*alpharsq
+                                                                !        numer = numer + denom ! even_denom
+                                                                !        denom = denom*0.5_DP
+                                                                !        denom = denom + numer*alpharsq
+                                                                !        qq_energy = qq_energy + (numer/denom)*nrg
+                                                                !END DO
+                                                                !! experimental algorithm.  swap out with commented if it's bad
+                                                                !DO j = 1, qq_vlen
+                                                                !        alpharsq = alpha_sq*rijsq_vec(j)
+                                                                !        nrg = EXP(-alpharsq)*ewald_const
+                                                                !        !numer = 1.0_DP
+                                                                !        !denom = 2.5_DP
+                                                                !        !numer = 4.5_DP + alpharsq
+                                                                !        !denom = 3.75_DP + 1.5_DP*alpharsq !denom*1.5_DP
+                                                                !        !denom = denom + numer*alpharsq
+                                                                !        denom = 3.75_DP + 6.0_DP*alpharsq + alpharsq*alpharsq
+                                                                !        numer = 4.5_DP + alpharsq + denom ! even_denom
+                                                                !        denom = denom*0.5_DP
+                                                                !        denom = denom + numer*alpharsq
+                                                                !        qq_energy = qq_energy + (numer/denom)*nrg
+                                                                !END DO
+                                                                !! experimental algorithm.  swap out with commented if it's bad
+                                                                !DO j = 1, qq_vlen
+                                                                !        alpharsq = alpha_sq*rijsq_vec(j)
+                                                                !        nrg = EXP(-alpharsq)*ewald_const
+                                                                !        numer = 1.0_DP
+                                                                !        denom = 2.5_DP
+                                                                !        denom = denom + numer*alpharsq
+                                                                !        numer = numer*2.0_DP + denom
+                                                                !        denom = denom*1.5_DP
+                                                                !        denom = denom + numer*alpharsq
+                                                                !        numer = numer*1.0_DP + denom ! even_denom
+                                                                !        denom = denom*0.5_DP
+                                                                !        denom = denom + numer*alpharsq
+                                                                !        qq_energy = qq_energy + (numer/denom)*nrg
+                                                                !END DO
+                                                                !! experimental algorithm.  swap out with commented if it's bad
+                                                                !DO j = 1, qq_vlen
+                                                                !        alpharsq = alpha_sq*rijsq_vec(j)
+                                                                !        nrg = EXP(-alpharsq)*ewald_const
+                                                                !        odd_denom = 1.0_DP
+                                                                !        odd_numer = 2.5_DP
+                                                                !        odd_numer = odd_numer + odd_denom*alpharsq
+                                                                !        odd_denom = odd_denom*2.0_DP + odd_numer
+                                                                !        odd_numer = odd_numer*1.5_DP
+                                                                !        odd_numer = odd_numer + odd_denom*alpharsq
+                                                                !        odd_denom = odd_denom*1.0_DP + odd_numer ! even_denom
+                                                                !        odd_numer = odd_numer*0.5_DP
+                                                                !        odd_numer = odd_numer + odd_denom*alpharsq
+                                                                !        qq_energy = qq_energy + (odd_denom/odd_numer)*nrg
+                                                                !END DO
+                                                                !! experimental algorithm.  swap out with commented if it's bad
+                                                                !DO j = 1, qq_vlen
+                                                                !        alpharsq = alpha_sq*rijsq_vec(j)
+                                                                !        nrg = EXP(-alpharsq)*ewald_const
+                                                                !        odd_denom = 1.0_DP
+                                                                !        odd_numer = 2.5_DP
+                                                                !        odd_numer = odd_numer + odd_denom*alpharsq
+                                                                !        even_denom = odd_numer
+                                                                !        even_numer = odd_denom*2.0_DP
+                                                                !        even_numer = even_numer + even_denom
+                                                                !        odd_denom = even_numer
+                                                                !        odd_numer = even_denom*1.5_DP
+                                                                !        odd_numer = odd_numer + odd_denom*alpharsq
+                                                                !        even_denom = odd_numer
+                                                                !        even_numer = odd_denom*1.0_DP
+                                                                !        even_numer = even_numer + even_denom
+                                                                !        odd_denom = even_numer
+                                                                !        odd_numer = even_denom*0.5_DP
+                                                                !        odd_numer = odd_numer + odd_denom*alpharsq
+                                                                !        confrac = odd_denom/odd_numer
+                                                                !        nrg = nrg*confrac
+                                                                !        qq_energy = qq_energy + nrg
+                                                                !END DO
                                                                 DO j = 1, qq_vlen
                                                                         rijsq = rijsq_vec(j)
                                                                         rij = SQRT(rijsq)

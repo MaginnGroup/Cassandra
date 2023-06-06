@@ -57,7 +57,7 @@ FC = gfortran
 LIBS =
 INCS =
 #
-F90FLAGS = -c -g -ffree-line-length-none -fopenmp -fcheck=all #-O3
+F90FLAGS = -c -g -ffree-line-length-none -fopenmp -fcheck=all #-fdump-tree-original #-ffpe-trap=invalid,zero,overflow,underflow,denormal -O3
 LINKFLAGS =  -fopenmp
 
 
