@@ -1709,6 +1709,7 @@ CONTAINS
     REAL(DP) :: ixp, iyp, izp, dxcom, dycom, dzcom, dscom, ixcom, iycom, izcom, dxp, dyp, dzp, dsp
     REAL(DP) :: xl, yl, zl, hxl, hyl, hzl
     REAL(DP) :: h11,h21,h31,h12,h22,h32,h13,h23,h33
+    REAL(DP) :: invcutx2_cbmc, invcutsq_cbmc, inv_rij
     !!!dir$ attributes align:32 :: interact_vec, vdw_mask, coul_mask, j_hascharge, j_hasvdw, j_exist, jatomtype, packed_types, &
     !dir$ attributes align:32 :: jxp, jyp, jzp, jrsp, ij_vdw_p_table
     !dir$ assume_aligned jxp:32, jyp:32, jzp:32, jrsp:32, ij_vdw_p_table:32, ij_vdw_p_table_T:32
@@ -1750,6 +1751,8 @@ CONTAINS
             mol_rcut = rcut_cbmc(this_box)
             this_vdw_rcutsq = rcut_cbmcsq(this_box)
             this_coul_rcutsq = rcut_cbmcsq(this_box)
+            invcutx2_cbmc = 2.0_DP/rcut_cbmc(this_box)
+            invcutsq_cbmc = 1.0_DP/rcut_cbmcsq(this_box)
     ELSE
             mol_rcut = rcut_max(this_box)
             IF (int_vdw_sum_style(this_box) == vdw_cut_switch) THEN
@@ -2159,16 +2162,26 @@ CONTAINS
                 END IF
                 i_qq_energy = 0.0_DP
                 DO i = 1, n_coul
-                        rij = SQRT(rijsq_packed(i))
-                        IF (int_charge_sum_style(this_box) == charge_ewald) THEN
-                                nrg_coul = ERFC(alpha_ewald(this_box)*rij) / rij * jcharge_coul(i) ! omit icharge and charge factor for now
+                        this_rijsq = rijsq_packed(i)
+                        rij = this_rijsq * 0.5_DP
+                        inv_rij = TRANSFER(Z'5FE6EB50C7B537A9' - ISHFT(TRANSFER(this_rijsq,0_INT64),-1),inv_rij)
+                        inv_rij = inv_rij * (1.5 - rij*inv_rij*inv_rij)
+                        inv_rij = inv_rij * (1.5 - rij*inv_rij*inv_rij)
+                        inv_rij = inv_rij * (1.5 - rij*inv_rij*inv_rij)
+                        inv_rij = inv_rij * (1.5 - rij*inv_rij*inv_rij)
+                        rij = inv_rij * this_rijsq
+                        !rij = SQRT(rijsq_packed(i))
+                        IF (cbmc_flag) THEN ! undamped shifted force method
+                                nrg_coul = jcharge_coul(i) * (inv_rij - invcutx2_cbmc + rij*invcutsq_cbmc)
+                        ELSE IF (int_charge_sum_style(this_box) == charge_ewald) THEN
+                                nrg_coul = ERFC(alpha_ewald(this_box)*rij) * inv_rij * jcharge_coul(i) ! omit icharge and charge factor for now
                         ELSE IF (int_charge_sum_style(this_box) == charge_dsf) THEN
                                 nrg_coul = (dsf_factor2(this_box) * (rij - rcut_coul(this_box)) - &
                                         dsf_factor1(this_box) + &
-                                        ERFC(alpha_dsf(this_box)*rij) / rij) * jcharge_coul(i)
+                                        ERFC(alpha_dsf(this_box)*rij) * inv_rij) * jcharge_coul(i)
                         !ELSE IF (int_charge_sum_style(this_box) == charge_cut) THEN
                         ELSE ! implies int_charge_sum_style(this_box) == charge_cut
-                                nrg_coul = jcharge_coul(i) / rij
+                                nrg_coul = jcharge_coul(i) * inv_rij
                         END IF
                         i_qq_energy = i_qq_energy + nrg_coul
                 END DO
@@ -6802,7 +6815,16 @@ CONTAINS
               qj = nonbond_list(ja,js)%charge
 
 
-              IF (int_charge_sum_style(ibox) == charge_ewald .AND. &
+              IF (cbmc_flag) THEN
+                      IF (is == js .AND. im == jm) THEN
+                              E_intra_qq = E_intra_qq +&
+                                     charge_factor*qi*qj* &
+                                     (charge_intra_scale(ia,ja,is)/SQRT(rijsq) - 2.0_DP/rcut_cbmc(ibox) + SQRT(rijsq)/rcut_cbmcsq(ibox))
+                      ELSE
+                              E_intra_qq = E_intra_qq + &
+                                      charge_factor*qi*qj*(1.0_DP/SQRT(rijsq) - 2.0_DP/rcut_cbmc(ibox) + SQRT(rijsq)/rcut_cbmcsq(ibox))
+                      END IF
+              ELSEIF (int_charge_sum_style(ibox) == charge_ewald .AND. &
                       ( .NOT. igas_flag) ) THEN
                    ! Real space Ewald part
                    CALL Compute_AtomPair_Ewald_Real(ia,im,is,qi,ja,jm,js,qj, &

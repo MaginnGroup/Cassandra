@@ -89,6 +89,8 @@ CONTAINS
                 INTEGER(KIND=INT64), DIMENSION(:), POINTER :: rsqmin_freq_ptr
                 INTEGER(KIND=INT64), DIMENSION(solvent_maxind,wsolute_maxind,nbr_boxes,nbr_tols) :: atompair_nskips
                 REAL(DP), DIMENSION(solvent_maxind,wsolute_maxind,nbr_boxes,nbr_tols) :: atompair_wmax
+                CHARACTER(FILENAME_LEN) :: this_path
+                INTEGER :: this_unit
 
                 IF (.NOT. ALLOCATED(atompair_rminsq_ind_table)) THEN
                         ALLOCATE(atompair_rminsq_ind_table(solvent_maxind,wsolute_maxind,nbr_boxes,nbr_tols))
@@ -138,6 +140,53 @@ CONTAINS
                 END DO
                 !$OMP END DO
                 !$OMP END PARALLEL
+                this_unit = emax_file_unit
+                this_path = ""
+                this_path = TRIM(run_name) // ".rsqmin.wmax"
+                OPEN(unit=this_unit,file=this_path,ACTION='WRITE')
+                DO ibox = 1, nbr_boxes
+                        WRITE(this_unit,*) "Box ", ibox
+                        DO ti_solute = 1, wsolute_maxind
+                                WRITE(this_unit,*)
+                                WRITE(this_unit,*) "Solute atom ", ti_solute
+                                DO ti_solvent = 1, solvent_maxind
+                                        WRITE(this_unit,*) rsqmin_atompair_w_max(:,ti_solvent,ti_solute,ibox)
+                                END DO
+                        END DO
+                END DO
+                WRITE(this_unit,*) "END"
+                CLOSE(this_unit)
+                this_path = ""
+                this_path = TRIM(run_name) // ".rsqmin.wfrac"
+                OPEN(unit=this_unit,file=this_path,ACTION='WRITE')
+                DO ibox = 1, nbr_boxes
+                        WRITE(this_unit,*) "Box ", ibox
+                        DO ti_solute = 1, wsolute_maxind
+                                WRITE(this_unit,*)
+                                WRITE(this_unit,*) "Solute atom ", ti_solute
+                                DO ti_solvent = 1, solvent_maxind
+                                        WRITE(this_unit,*) rsqmin_atompair_wfrac(:,ti_solvent,ti_solute,ibox)
+                                END DO
+                        END DO
+                END DO
+                WRITE(this_unit,*) "END"
+                CLOSE(this_unit)
+                this_path = ""
+                this_path = TRIM(run_name) // ".rsqmin.freq"
+                OPEN(unit=this_unit,file=this_path,ACTION='WRITE')
+                DO ibox = 1, nbr_boxes
+                        WRITE(this_unit,*) "Box ", ibox
+                        DO ti_solute = 1, wsolute_maxind
+                                WRITE(this_unit,*)
+                                WRITE(this_unit,*) "Solute atom ", ti_solute
+                                DO ti_solvent = 1, solvent_maxind
+                                        WRITE(this_unit,*) rsqmin_atompair_freq(:,ti_solvent,ti_solute,ibox)
+                                END DO
+                        END DO
+                END DO
+                WRITE(this_unit,*) "END"
+                CLOSE(this_unit)
+
 
                 DO ibox = 1, nbr_boxes
                         DO is = 1, nspecies
