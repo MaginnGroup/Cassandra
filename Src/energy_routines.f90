@@ -2062,7 +2062,8 @@ CONTAINS
                    IF (PRESENT(Eij_qq_o)) Eij_qq_o = Eij_qq
 
              ENDIF
-
+         ELSEIF (PRESENT(Eij_qq_o)) THEN
+             Eij_qq_o = 0.0_DP
          ENDIF qq_calc
 
     ENDIF ExistCheck
