@@ -415,7 +415,6 @@
                                 vdw_param2_table(itype,jtype) * vdw_param2_table(itype,jtype) &
                                 / lambda**(1.0_DP/3.0_DP)
                          rminsq_table(jtype,itype) = rminsq_table(itype,jtype)
-                         WRITE(*,*) U_max, lambda, rminsq_table(itype,jtype)
                  END IF
 
                  ! Report parameters to logfile.
