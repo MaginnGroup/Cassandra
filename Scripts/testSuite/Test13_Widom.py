@@ -66,11 +66,11 @@ cassStr[0] = (("Energy_Total","Pressure","Volume","Density"),)
 cassStr[1] = (("Energy_Total","Pressure","Volume","Density", "Mass_Density"),)
 cassStr[2] = (("Energy_Total","Pressure","Volume","Density", "Mass_Density"),)
 cassPrint[0] = (("Energy_Total [kJ/mol-Ext]","Pressure [bar]","Volume [A^3]","Density [molec/A^3]", 
-    "Shifted Chem. Potential [kJ/mol]", "Avg widom_var", "Subgroup 1 <widom_var>", "Subgroup 2 <widom_var>", "Subgroup 3 <widom_var>"),)
+    "Shifted Chem. Potential [kJ/mol]", "Recommended Emax", "atompair rminsq index", "Avg widom_var", "Subgroup 1 <widom_var>", "Subgroup 2 <widom_var>", "Subgroup 3 <widom_var>"),)
 cassPrint[1] = (("Energy_Total [kJ/mol-Ext]","Pressure [bar]","Volume [A^3]","Density [molec/A^3]", "Mass_Density [kg/m^3]", 
-    "Shifted Chem. Potential [kJ/mol]", "Avg widom_var", "Subgroup 1 <widom_var>", "Subgroup 2 <widom_var>", "Subgroup 3 <widom_var>"),)
+    "Shifted Chem. Potential [kJ/mol]", "Recommended Emax", "atompair rminsq index", "Avg widom_var", "Subgroup 1 <widom_var>", "Subgroup 2 <widom_var>", "Subgroup 3 <widom_var>"),)
 cassPrint[2] = (("Energy_Total [kJ/mol-Ext]","Pressure [bar]","Volume [A^3]","Density [molec/A^3]", "Mass_Density [kg/m^3]", 
-    "Shifted Chem. Potential [kJ/mol]", "Avg widom_var", "Subgroup 1 <widom_var>", "Subgroup 2 <widom_var>", "Subgroup 3 <widom_var>"),)
+    "Shifted Chem. Potential [kJ/mol]", "Recommended Emax", "atompair rminsq index", "Avg widom_var", "Subgroup 1 <widom_var>", "Subgroup 2 <widom_var>", "Subgroup 3 <widom_var>"),)
 endStep = (10,10,10)
 errorTol = 5e-4
 
@@ -180,8 +180,18 @@ for i in range(nChecks):
             for line in runLog:
                 if "chemical potential for species" in line:
                     cassAnswer[i][index] = float(line.split()[-2])
-                    break
+                elif "Recommended pair " in line:
+                    cassAnswer[i][index] = float(line.split('=')[1].strip().split()[0])
+                else:
+                    continue
+                index += 1
+
+        with open(cassRun[i]+".rminsq2") as run_rminsq2:
+            for line in run_rminsq2:
+                lastline = line
+            cassAnswer[i][index] = int(lastline.split()[-2].strip())
         index += 1
+        #index += 1
         line_num = -1
 
         with open(cassRun[i] + ".spec1.wprp") as runwprp:
@@ -212,7 +222,16 @@ for i in range(nChecks):
             for line in resLog:
                 if "chemical potential for species" in line:
                     analyticAnswer[i][index] = float(line.split()[-2])
-                    break
+                elif "Recommended pair " in line:
+                    analyticAnswer[i][index] = float(line.split('=')[1].strip().split()[0])
+                else:
+                    continue
+                index += 1
+        rminsqResName = logResName[i].replace("log","rminsq2")
+        with open(rminsqResName) as res_rminsq2:
+            for line in res_rminsq2:
+                lastline = line
+            analyticAnswer[i][index] = int(lastline.split()[-2].strip())
         index += 1
         line_num = -1
 

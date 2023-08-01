@@ -30,7 +30,12 @@ LB
 
 # Rcutoff_Low
 2.0
+adaptive 700 est_emax
+specific write 0.1 250 tol_list 3 1e-20 1e-15 1e-10 heap
 !------------------------------------------------------------------------------
+
+# Solvent_Species
+1
 
 # Molecule_Files
 dee.mcf 30
@@ -54,6 +59,7 @@ dee_traj.H dee_traj.xyz
 # Widom_Insertion
 true
 cbmc 10000 1 4
+energy_table 1000
 
 # Cell_List_Overlap
 true
