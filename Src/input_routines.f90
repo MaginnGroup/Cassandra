@@ -5593,11 +5593,6 @@ SUBROUTINE Get_Pregen_Info
                 IF (line_string(1:13) == '# Pregen_Info') THEN
                         need_solvents = .FALSE.
                         nmols_to_read = 0
-                        IF (nbr_boxes == 1) THEN
-                                WRITE(logunit,*) 'Box size will be replaced by those read from a pregenerated trajectory file'
-                        ELSE
-                                WRITE(logunit,*) 'Box sizes will be replaced by those read from pregenerated trajectory files'
-                        END IF
                         DO ibox = 1, nbr_boxes
                                 line_nbr = line_nbr + 1
                                 CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
@@ -5615,19 +5610,51 @@ SUBROUTINE Get_Pregen_Info
                                                         has_xtc(ibox) = .TRUE.
                                                         pregen_xtc_filenames(ibox) = line_array(i_entry+1)
                                                         nmols_entry = MAX(nmols_entry,i_entry+2)
+                                                        WRITE(logunit,*) 'Reading trajectory cell matrix and atom coordinates for box ', &
+                                                                TRIM(Int_To_String(ibox))
+                                                        WRITE(logunit,*) "        from XTC file ", TRIM(pregen_xtc_filenames(ibox))
+                                                        WRITE(logunit,*) "        Box size from section # Box_Info " // &
+                                                                "will be replaced with sizes read from the above file."
 
                                                 CASE("xyz", "XYZ")
                                                         tspec = .TRUE.
                                                         has_xyz(ibox) = .TRUE.
                                                         pregen_xyz_filenames(ibox) = line_array(i_entry+1)
                                                         nmols_entry = MAX(nmols_entry,i_entry+2)
+                                                        OPEN(unit=pregen_xyz_unit(ibox),file=pregen_xyz_filenames(ibox),STATUS='OLD',IOSTAT=ierr)
+                                                        IF(ierr /= 0) THEN
+                                                                err_msg = ''
+                                                                err_msg(1) = 'Error while opening pregenerated xyz file ' // &
+                                                                        TRIM(pregen_xyz_filenames(ibox)) // &
+                                                                        ' given as entry  ' // TRIM(Int_To_String(i_entry+1)) // ' on line number ' // &
+                                                                        TRIM(Int_To_String(line_nbr)) // ' of the input file'
+                                                                err_msg(2) = 'Verify that xyz file ' // TRIM(pregen_xyz_filenames(ibox)) // 'exists'
+                                                                CALL clean_abort(err_msg,'Get_Pregen_Info')
+                                                        END IF
+                                                        WRITE(logunit,*) 'Reading trajectory coordinates for box ', &
+                                                                TRIM(Int_To_String(ibox))
+                                                        WRITE(logunit,*) '        from xyz file ', TRIM(pregen_xyz_filenames(ibox))
 
                                                 CASE("H", "h")
                                                         tspec = .TRUE.
                                                         has_Hfile(ibox) = .TRUE.
                                                         pregen_H_filenames(ibox) = line_array(i_entry+1)
                                                         nmols_entry = MAX(nmols_entry,i_entry+2)
-
+                                                        OPEN(unit=pregen_H_unit(ibox),file=pregen_H_filenames(ibox),STATUS='OLD',IOSTAT=ierr)
+                                                        IF(ierr /= 0) THEN
+                                                                err_msg = ''
+                                                                err_msg(1) = 'Error while opening pregenerated H file ' // &
+                                                                        TRIM(pregen_H_filenames(ibox)) // &
+                                                                        ' given as entry  ' // TRIM(Int_To_String(i_entry+1)) // ' on line number ' // &
+                                                                        TRIM(Int_To_String(line_nbr)) // ' of the input file'
+                                                                err_msg(2) = 'Verify that H file ' // TRIM(pregen_H_filenames(ibox)) // 'exists'
+                                                                CALL clean_abort(err_msg,'Get_Pregen_Info')
+                                                        END IF
+                                                        WRITE(logunit,*) 'Reading trajectory cell matrix and molecule counts for box ', &
+                                                                TRIM(Int_To_String(ibox))
+                                                        WRITE(logunit,*) "        from H file ", TRIM(pregen_H_filenames(ibox))
+                                                        WRITE(logunit,*) "        Box size from section # Box_Info " // &
+                                                                "will be replaced with sizes read from the above file."
                                                 CASE("ndx")
                                                         tspec = .TRUE.
                                                         has_ndx(ibox) = .TRUE.
@@ -5664,6 +5691,8 @@ SUBROUTINE Get_Pregen_Info
                                         WRITE(logunit,*) 'Reading pregenerated trajectory for box ', ibox, &
                                                 ' from xyz file ', TRIM(pregen_xyz_filenames(ibox)), &
                                                 ' and H file ', TRIM(pregen_H_filenames(ibox))
+                                        WRITE(logunit,*) 'Box size read from the above H file will replace box size from ' // &
+                                                'section # Box_Info'
                                 ELSEIF (nmols_entry <= nbr_entries) THEN
                                         DO i_entry = nmols_entry, nbr_entries
                                                 nmols_to_read(i_entry-nmols_entry+1,ibox) = String_To_Int(line_array(i_entry))
@@ -6838,7 +6867,7 @@ SUBROUTINE Get_Rcutoff_Low
                                                 est_atompair_rminsq = .TRUE.
                                                 WRITE(logunit, "(A,E10.3,A)") "Will create and write atompair rminsq table with " // &
                                                         TRIM(Int_To_String(rsqmin_res)) // " bins of width ", &
-                                                        rsqmin_step, "square Angstroms"
+                                                        rsqmin_step, " square Angstroms"
                                                 WRITE(logunit, "(8X,A)") " to file " // write_rminsq_filename
                                         ELSE
                                                 err_msg = ""
@@ -6851,7 +6880,7 @@ SUBROUTINE Get_Rcutoff_Low
                                         IF (i_entry + 1 <= nbr_entries) THEN
                                                 read_rminsq_filename = line_array(i_entry+1)
                                                 read_atompair_rminsq = .TRUE.
-                                                WRITE(logunit, "(A)") "Will read atompair rminsq table from file" // &
+                                                WRITE(logunit, "(A)") "Will read atompair rminsq table from file " // &
                                                         TRIM(read_rminsq_filename)
                                                 i_entry = i_entry + 2
                                         ELSE
