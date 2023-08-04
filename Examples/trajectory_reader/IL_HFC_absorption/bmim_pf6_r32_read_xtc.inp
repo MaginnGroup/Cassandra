@@ -1,0 +1,95 @@
+
+# Run_Name
+bmim_pf6_r32_read_xtc.out
+
+# Verbose_Log
+false
+
+# Sim_Type
+pregen
+
+# Cell_List_Overlap
+true
+
+# Nbr_Species
+3
+
+# VDW_Style
+lj cut_tail 12
+
+# Charge_Style
+coul ewald 12 1e-5
+
+# Seed_Info
+336671807 1146584549
+
+# Rcutoff_Low
+1.0
+specific read bmim_pf6_r32.rminsq
+
+# Molecule_Files
+bmim.mcf 300
+pf6.mcf 300
+r32.mcf 1
+
+# Box_Info
+1
+cubic
+48
+
+# Temperature_Info
+298.15
+
+
+# Pregen_Info
+xtc bmim-pf6.xtc 300 300
+!bmim-pf6.H bmim-pf6.xyz
+
+# Simulation_Length_Info
+units       steps
+prop_freq   1
+coord_freq  1
+run         10
+
+# Widom_Insertion
+true
+none
+none
+cbmc 100000 1 5
+
+# CBMC_Info
+kappa_ins 100
+rcut_cbmc 6.5
+energy_table 1000
+
+# Property_Info 1
+energy_total
+pressure
+volume
+mass_density
+enthalpy
+energy_intervdw
+energy_lrc
+energy_interq
+energy_recip
+energy_self
+energy_angle
+energy_dihedral
+energy_improper
+energy_intravdw
+energy_intraq
+energy_intra
+energy_inter
+
+# Fragment_Files
+species1/frag1/frag1.dat  1
+species1/frag2/frag2.dat  2
+species1/frag3/frag3.dat  3
+species1/frag4/frag4.dat  4
+species1/frag5/frag5.dat  5
+species1/frag6/frag6.dat  6
+species2/frag1/frag1.dat  7
+species3/frag1/frag1.dat  8
+!---------------------------------------------------------one line per fragment
+
+END
