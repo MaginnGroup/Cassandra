@@ -22,69 +22,44 @@
 ###################################################################
 ##                                                               ##
 ##  Makefile for building the CASSANDRA simulation package       ##
-##  This is the default makefile, and will be involked if you    ##
-##  type 'make'. Use this as a template if you want to build     ##
-##  your own makefile, or create another makefile and run it     ##
-##  using make -f name_of_your_makefile                          ##
+##                                                               ##
 ###################################################################
 ##
 ##  Invocation Options:
 ##
 ##   1. make                  Build the Cassandra executable
-##   2. make clean            Delete object and executable files
+##   2. make clean            Delete object and executable files and dependencies file
 ##                            Note you will get a warning upon compilaton
 ##                            after invoking make clean, but disregard
-
 ###################################################################
 ##  Master Directory Locations; Change as Needed for Local Site  ##
 ###################################################################
 ##
-##  CASS_DIR     CASS Distribution Directory
-##  BIN_DIR      Hard Copies of CASS Executables go here
+##  CASS_DIR     CASSANDRA Distribution Directory
+##  BIN_DIR      Hard Copies of CASSANDRA Executable goes here
 
 CASS_DIR =  .
 BIN_DIR = $(CASS_DIR)
-EXEC_NAME = cassandra_xtc.exe
+EXEC_NAME = cassandra_gfortran_openMP_noXTC.exe
 
 ####################################################################
-##  Known Machine Types;                                           #
+##  Known Machine Types                                            #
 ####################################################################
 
 ##
-##  Machine:
-##  CPU Type:
-##  Compiler:
+##  Machine: x86_64-linux
+##  CPU Type: Opteron
+##  Compiler: gfortran with openMP
 ##
 
-## Name of compiler and compilation options
-FC = ifort
-export FC
-librariespath := ${abspath ../Libraries}
-libgmxfortbuild := ${librariespath}/Src/libgmxfort/build/
-libxdrfilebuild := ${librariespath}/Src/libxdrfile/build/
-localdir := ${librariespath}/locals/${FC}/local
-locallib := ${localdir}/lib
-libxdrfilepath = ${locallib}/libxdrfile.so
-libgmxfortpath = ${locallib}/libgmxfort.so
-
-#LD_LIBRARY_PATH_env := ${locallib}:${LD_LIBRARY_PATH}
-#LD_LIBRARY_PATH := ${LD_LIBRARY_PATH_env}
-#export LD_LIBRARY_PATH
-PKG_CONFIG_PATH := ${locallib}/pkgconfig
-export PKG_CONFIG_PATH
-LIBS = `pkg-config --cflags --libs libgmxfort`
-INCS = `pkg-config --cflags --libs libgmxfort`
+## Compilation command
+FC = gfortran
+LIBS =
+INCS =
 #
-#F90FLAGS = -c  -ffree-line-length-none
-F90FLAGS = -c -g -no-wrap-margin #-check all -traceback #-warn unused #-openmp
-LINKFLAGS = -Wl,-rpath=${locallib}
-#F90FLAGS = -c -g -no-wrap-margin -O3  #-warn unused #-openmp
-#F90FLAGS = -c -openmp
-#F90FLAGS = -p -c -O3
-#F90FLAGS = -c -O3 -openmp
-OPTFLAGS = -O3
-#LINKFLAGS = -openmp
-#LINKFLAGS = -p
+F90FLAGS = -c -ffree-line-length-none -fopenmp -O3
+LINKFLAGS =  -fopenmp
+
 
 ####################################################################
 OBJS =  main.o \
@@ -159,30 +134,17 @@ OBJS =  main.o \
 
 ####################################################################
 
-%.temp.f90 : %.f90
+%.temp.f90 : %.no_xtc.f90
 	cp $< $@
 
-%o: %f90 ${libgmxfortpath}
+%o: %f90
 	${FC} ${F90FLAGS} ${INCS} ${OPTFLAGS} ${LINK_F90} $<
 
 exe: $(OBJS)
 	$(FC) $(OPTFLAGS) -o $(BIN_DIR)/$(EXEC_NAME) $(OBJS) $(LIBS) $(LINK_F90) $(LINKFLAGS)
 
-${libgmxfortpath}: ${libxdrfilepath}
-	rm -fr ${libgmxfortbuild} && mkdir ${libgmxfortbuild} && cd ${libgmxfortbuild} && \
-		cmake .. -DCMAKE_INSTALL_PREFIX=${localdir} && \
-		${MAKE} && ${MAKE} test && ${MAKE} install && \
-		echo $$LD_LIBRARY_PATH && echo $$PKG_CONFIG_PATH
-
-${libxdrfilepath}:
-	rm -fr ${libxdrfilebuild} && mkdir ${libxdrfilebuild} && cd ${libxdrfilebuild} && \
-		cmake .. -DCMAKE_INSTALL_PREFIX=${localdir} && \
-		${MAKE} && ${MAKE} test && ${MAKE} install && \
-		echo $$LD_LIBRARY_PATH && echo $$PKG_CONFIG_PATH
-
-
 clean:
-	rm -fr *.o *.mod *.temp.f90 dep.mk
+	rm *.o *.mod *.temp.f90 dep.mk
 
 dep.mk:
 	./get_deps

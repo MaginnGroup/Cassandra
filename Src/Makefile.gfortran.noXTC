@@ -43,7 +43,7 @@
 
 CASS_DIR =  .
 BIN_DIR = $(CASS_DIR)
-EXEC_NAME = cassandra_gfortran_xtc.exe
+EXEC_NAME = cassandra_gfortran_noXTC.exe
 
 ####################################################################
 ##  Known Machine Types                                            #
@@ -57,24 +57,10 @@ EXEC_NAME = cassandra_gfortran_xtc.exe
 
 
 FC = gfortran
-export FC
-librariespath := ${abspath ../Libraries}
-libgmxfortbuild := ${librariespath}/Src/libgmxfort/build/
-libxdrfilebuild := ${librariespath}/Src/libxdrfile/build/
-localdir := ${librariespath}/locals/${FC}/local
-locallib := ${localdir}/lib
-libxdrfilepath = ${locallib}/libxdrfile.so
-libgmxfortpath = ${locallib}/libgmxfort.so
-
-#LD_LIBRARY_PATH_env := ${locallib}:${LD_LIBRARY_PATH}
-#LD_LIBRARY_PATH := ${LD_LIBRARY_PATH_env}
-#export LD_LIBRARY_PATH
-PKG_CONFIG_PATH := ${locallib}/pkgconfig
-export PKG_CONFIG_PATH
-LIBS = `pkg-config --cflags --libs libgmxfort`
-INCS = `pkg-config --cflags --libs libgmxfort`
+LIBS = 
+INCS = 
 F90FLAGS = -c -ffree-line-length-none -fcheck=all
-LINKFLAGS = -Wl,-rpath=${locallib}
+LINKFLAGS = 
 
 ####################################################################
 OBJS =  main.o \
@@ -149,27 +135,14 @@ OBJS =  main.o \
 
 ####################################################################
 
-%.temp.f90: %.f90
+%.temp.f90: %.no_xtc.f90
 	cp $< $@
 
-%o: %f90 ${libgmxfortpath}
+%o: %f90
 	${FC} ${F90FLAGS} ${INCS} ${OPTFLAGS} ${LINK_F90} $<
 
 exe: $(OBJS)
 	$(FC) $(OPTFLAGS) -o $(BIN_DIR)/$(EXEC_NAME) $(OBJS) $(LIBS) $(LINK_F90) $(LINKFLAGS)
-
-${libgmxfortpath}: ${libxdrfilepath}
-	rm -fr ${libgmxfortbuild} && mkdir ${libgmxfortbuild} && cd ${libgmxfortbuild} && \
-		cmake .. -DCMAKE_INSTALL_PREFIX=${localdir} && \
-		${MAKE} && ${MAKE} test && ${MAKE} install && \
-		echo $$LD_LIBRARY_PATH && echo $$PKG_CONFIG_PATH
-
-${libxdrfilepath}:
-	rm -fr ${libxdrfilebuild} && mkdir ${libxdrfilebuild} && cd ${libxdrfilebuild} && \
-		cmake .. -DCMAKE_INSTALL_PREFIX=${localdir} && \
-		${MAKE} && ${MAKE} test && ${MAKE} install && \
-		echo $$LD_LIBRARY_PATH && echo $$PKG_CONFIG_PATH
-
 
 clean:
 	rm *.o *.mod *.temp.f90 dep.mk
