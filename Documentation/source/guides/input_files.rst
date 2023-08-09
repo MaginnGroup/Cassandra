@@ -387,7 +387,7 @@ work OK, but for models with dummy sites, a shorter value may be required.
 The following options only apply to the Widom insertion portion of a simulation.
 
 If ``adaptive`` is specified, Cassandra uses atom type pair-specific overlap
-radii based on ``emax``, the desired maximum allowed intermolecular atom pair energy 
+radii based on ``emax``, the desired maximum allowed intermolecular atom pair energy
 divided by :math:`k_BT` specified in *Real(2,2)*, defaulting to 708 if *Real(2,2)*
 is not present.  If ``est_emax`` is specified on the same line, Cassandra
 will estimate good values for ``emax`` for each Widom insertion species in
@@ -399,14 +399,14 @@ If ``specific`` is specified, the behavior depends on the optional keywords
 that follow it.  These keywords are individually optional, but at least
 ``write`` or ``read`` must be present. Section :ref:`sec:solvent_species` might
 also be required.
-If ``write`` is present, 
+If ``write`` is present,
 Cassandra will estimate good atom pair-specific intermolecular overlap radii
 based on a tolerance for the maximum fraction of the total ``widom_var`` allowed
 to be lost due to flagging overlaps with the atom pair-specific overlap radii.
 If ``tol_list`` is also present, Cassandra will do this for each of
 :math:`n=` *Integer(3,8)* tolerances listed as *Real(3,9)* ... *Real(3,8+n)*,
 but otherwise, Cassandra only uses a single default tolerance, :math:`10^{-10}`.
-Cassandra stores these estimates in a ``.rminsq`` file described in 
+Cassandra stores these estimates in a ``.rminsq`` file described in
 :ref:`sec:output_files` for each tolerance.
 The keyword ``write`` must be followed by a float and an integer.
 *Real(3,3)* is ``rsqmin_step`` and *Integer(3,4)* is ``rsqmin_res``.
@@ -418,7 +418,7 @@ If ``read`` is present, Cassandra will use pair-specific intermolecular overlap
 radii obtained from a ``.rminsq`` file, the path to which is specified in
 *Character(3,6)*, to detect intermolecular atomic overlap during cell list
 overlap checking.
-If ``heap`` is specified, certain relatively large arrays involved in 
+If ``heap`` is specified, certain relatively large arrays involved in
 estimating atom pair overlap radii when ``write`` is present will be allocated
 to the heap instead of the stack.  This is slower but is provided as an option
 because these large arrays can cause stack buffer overflow if allocated to the stack.
@@ -433,6 +433,36 @@ you don't want to bother with that or your system has a small maximum
 stack size that you can't increase for some reason, you can simply provide
 the ``heap`` keyword instead.
 
+The following example input specifies to use atom type pair-specific (adaptive)
+overlap radii based on ``emax`` = 300.0 and estimate appropriate but more
+aggressive values for ``emax`` for each species in each box. The default
+overlap radius specified here is 1.2 Angstroms; this overlap radius is
+used for overlap in contexts other than intermolecular Widom insertion
+energy calculations and for atom type pairs involving an atom type
+without positive Lennard-Jones parameters. It also specifies
+to estimate good atom pair-specific overlap radii based on the three
+tolerances 1e-20, 1e-15, and 1e-10 using 400 bins from
+:math:`1.2^2` to :math:`1.2^2 + 40` square Angstroms that are each 0.1
+square Angstroms wide.
+
+.. code-block:: none
+
+    # Rcutoff_Low 
+    1.2
+    adaptive 300.0 est_emax
+    specific write 0.1 400 tol_list 3 1e-20 1e-15 1e-10
+
+The following example input specifies to use 1.3 Angstroms as the default overlap 
+radius and to use atom pair-specific overlap radii obtained from file
+``cassandra_widom.out.rminsq2`` for intermolecular Widom insertion 
+interactions.
+
+
+.. code-block:: none
+
+    # Rcutoff_Low 
+    1.3
+    specific read cassandra_widom.out.rminsq2
 
 Pair Energy Storage
 ~~~~~~~~~~~~~~~~~~~
@@ -1749,10 +1779,11 @@ with the energies being precalculated from the midpoint of the bins.
 With keyword ``energy_table`` present, section :ref:`sec:solvent_species`
 may  also be required.
 
-For a GEMC simulation in which 12 candidate positions are generated
-for biased insertion/deletion, 10 trials for biased dihedral angle
-selection and the cutoff for biasing energy calculation is set to 5.0
-Å in box 1 and 6.5 Å in box 2, this section would look like:
+For a GEMC simulation in which 12 candidate positions are generated for biased
+insertion/deletion, 10 trials are generated for biased dihedral angle selection,
+intermolecular CBMC trial energies are estimated from a precalculated energy table
+with 1200 :math:`r^2` bins, and the cutoff for biasing energy calculation is set
+to 5.0 Å in box 1 and 6.5 Å in box 2, this section would look like:
 
 .. code-block:: none
 
@@ -1760,6 +1791,7 @@ selection and the cutoff for biasing energy calculation is set to 5.0
     kappa_ins 12
     kappa_dih 10
     rcut_cbmc 5.0 6.5
+    energy_table 1200
 
 
 .. _sec:solvent_species:
