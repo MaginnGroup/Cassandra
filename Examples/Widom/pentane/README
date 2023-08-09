@@ -13,6 +13,12 @@ pentane_widom.inp
     9000 Widom insertions are performed on each snapshot.  The Widom insertions
     for each snapshot are split into 3 Widom insertion subgroups.
 
+    Atom type pair-specific (adaptive) overlap radii based on Emax = 300.0 are used, 
+    and recommended Emax estimation is enabled. Atom pair-specific (specific) 
+    overlap radius estimation is enabled with three tolerances.
+
+    CBMC trial energies are estimated from a precomputed energy table.
+
     Thermodynamic properties are output for each trajectory snapshot.
 
 pentane_traj.H

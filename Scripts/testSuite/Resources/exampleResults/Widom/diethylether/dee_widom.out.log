@@ -21,8 +21,8 @@ Run info
 version: Cassandra Version 1.3.0
 inputfile: dee_widom.inp
 name of run: dee_widom.out
-date (mm/dd/yyyy): 08/01/2023
-time: 11:13:56
+date (mm/dd/yyyy): 08/09/2023
+time: 10:22:44
 machine: maginnfe.crc.nd.edu
 ********************************************************************************
  
@@ -85,7 +85,6 @@ dee_traj.H dee_traj.xyz
 # Widom_Insertion                                                               
 true                                                                            
 cbmc 10000 1 4                                                                  
-energy_table 1000                                                               
                                                                                 
 # Cell_List_Overlap                                                             
 true                                                                            
@@ -111,6 +110,7 @@ species1/frag3/frag3.dat  3
 kappa_ins 12                                                                    
 kappa_dih 10                                                                    
 rcut_cbmc 6.5                                                                   
+energy_table 1000                                                               
                                                                                 
 END                                                                             
 ********************************************************************************
@@ -206,7 +206,7 @@ Temperature of box 1 is 343.000 K
 Minimum distance cutoff
 ********************************************************************************
 MC low cutoff distance is   2.000    Angstrom
-Will create and write atompair rminsq table with 250 bins of width  0.100E+00square Angstroms
+Will create and write atompair rminsq table with 250 bins of width  0.100E+00 square Angstroms
          to file dee_widom.out.rminsq                                                                                                    
 ********************************************************************************
  
@@ -220,6 +220,7 @@ CBMC info
 Kappa for first fragment insertion          12
 Kappa for dihedral selection                10
  Cutoff for CBMC for box 1 is         6.50
+ Atom pair energy table with rsq resolution = 1000 will be used.
 ********************************************************************************
  
 Simulation length info
@@ -253,8 +254,8 @@ Total number of property files to be written is     1   for box 1
  
 Pregenerated trajectory info
 ********************************************************************************
- Box size will be replaced by those read from a pregenerated trajectory file
  Reading pregenerated trajectory for box            1  from xyz file dee_traj.xyz and H file dee_traj.H
+ Box size read from the above H file will replace box size from section # Box_Info
 ********************************************************************************
  
 ********************************************************************************
@@ -340,28 +341,28 @@ Writing information for box  1
  
 Shifted chemical potentials from Widom insertions
 ********************************************************************************
-Shifted chemical potential for species 1 in box 1 is     -41.939166461208 kJ/mol
-        14615 Widom insertions with overlap out of 110000
-        CPU time:                      32.239 seconds
-        Wallclock time:                32.268 seconds
-        Recommended pair U*_max =    53.500000 would have flagged about 45270 more overlaps
+Shifted chemical potential for species 1 in box 1 is     -41.735656574398 kJ/mol
+        14709 Widom insertions with overlap out of 110000
+        CPU time:                      28.638 seconds
+        Wallclock time:                28.646 seconds
+        Recommended pair U*_max =    53.500000 would have flagged about 45234 more overlaps
         The atompair rminsq table created with tolerance = 1.000E-20
-                would have flagged at least 8913 more overlaps
-                and discarded insertions with widom_var up to  0.19459E-08
-                        ( 0.72618E-20 of total widom_var sum).
+                would have flagged at least 8325 more overlaps
+                and discarded insertions with widom_var up to  0.19384E-08
+                        ( 0.77689E-20 of total widom_var sum).
         The atompair rminsq table created with tolerance = 1.000E-15
-                would have flagged at least 11204 more overlaps
-                and discarded insertions with widom_var up to  0.13005E-03
-                        ( 0.48533E-15 of total widom_var sum).
+                would have flagged at least 11214 more overlaps
+                and discarded insertions with widom_var up to  0.13350E-03
+                        ( 0.53504E-15 of total widom_var sum).
         The atompair rminsq table created with tolerance = 1.000E-10
-                would have flagged at least 15077 more overlaps
-                and discarded insertions with widom_var up to  0.20245E+02
-                        ( 0.75550E-10 of total widom_var sum).
+                would have flagged at least 14571 more overlaps
+                and discarded insertions with widom_var up to  0.13294E+02
+                        ( 0.53281E-10 of total widom_var sum).
 ********************************************************************************
  
  Writing information about subroutine times
 ********************************************************************************
- Widom time =                 32.268086 secs.
+ Widom time =                 28.646563 secs.
 ********************************************************************************
  
 ********************************************************************************
@@ -375,6 +376,6 @@ Shifted chemical potential for species 1 in box 1 is     -41.939166461208 kJ/mol
          0       Days
          0      Hours
          0    Minutes
-        33    Seconds
-       794         ms
+        30    Seconds
+       217         ms
 ********************************************************************************

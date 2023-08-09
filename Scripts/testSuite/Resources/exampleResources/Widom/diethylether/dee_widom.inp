@@ -59,7 +59,6 @@ dee_traj.H dee_traj.xyz
 # Widom_Insertion
 true
 cbmc 10000 1 4
-energy_table 1000
 
 # Cell_List_Overlap
 true
@@ -87,6 +86,7 @@ species1/frag3/frag3.dat  3
 kappa_ins 12
 kappa_dih 10
 rcut_cbmc 6.5 
+energy_table 1000
 !------------------------------------------------------------------------------
 
 END
