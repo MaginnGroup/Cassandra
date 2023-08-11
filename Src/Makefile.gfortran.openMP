@@ -40,7 +40,7 @@
 
 CASS_DIR =  .
 BIN_DIR = $(CASS_DIR)
-EXEC_NAME = cassandra_gfortran_openMP_xtc.exe
+EXEC_NAME = cassandra_gfortran_openMP.exe
 
 ####################################################################
 ##  Known Machine Types                                            #
