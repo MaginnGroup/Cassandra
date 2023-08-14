@@ -23,6 +23,7 @@ jobs:
       Ubuntu-gcc-9:
         imageName: 'ubuntu-latest'
         python.version: 3.7
+        gcc.version: 'gcc-9'
         gfortran.version: 'gfortran-9'
         makefile.name: 'Makefile.gfortran'
         exec.name: 'cassandra_gfortran.exe'
@@ -30,21 +31,40 @@ jobs:
       Ubuntu-gcc-10:
         imageName: 'ubuntu-latest'
         python.version: 3.7
+        gcc.version: 'gcc-10'
         gfortran.version: 'gfortran-10'
         makefile.name: 'Makefile.gfortran'
         exec.name: 'cassandra_gfortran.exe'
         omp.num.threads: 1
-      Ubuntu-gcc-10-openMP:
+      Ubuntu-gcc-11:
         imageName: 'ubuntu-latest'
         python.version: 3.7
-        gfortran.version: 'gfortran-10'
+        gcc.version: 'gcc-11'
+        gfortran.version: 'gfortran-11'
+        makefile.name: 'Makefile.gfortran'
+        exec.name: 'cassandra_gfortran.exe'
+        omp.num.threads: 1
+      Ubuntu-gcc-12:
+        imageName: 'ubuntu-latest'
+        python.version: 3.7
+        gcc.version: 'gcc-12'
+        gfortran.version: 'gfortran-12'
+        makefile.name: 'Makefile.gfortran'
+        exec.name: 'cassandra_gfortran.exe'
+        omp.num.threads: 1
+      Ubuntu-gcc-12-openMP:
+        imageName: 'ubuntu-latest'
+        python.version: 3.7
+        gcc.version: 'gcc-12'
+        gfortran.version: 'gfortran-12'
         makefile.name: 'Makefile.gfortran.openMP'
         exec.name: 'cassandra_gfortran_openMP.exe'
         omp.num.threads: 8
-      macOS-gcc-10:
+      macOS-gcc-12:
         imageName: 'macOS-latest'
         python.version: 3.7
-        gfortran.version: 'gfortran-10'
+        gcc.version: 'gcc-12'
+        gfortran.version: 'gfortran-12'
         makefile.name: 'Makefile.gfortran'
         exec.name: 'cassandra_gfortran.exe'
         omp.num.threads: 1
