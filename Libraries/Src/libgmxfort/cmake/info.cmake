@@ -18,6 +18,8 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+cmake_policy(SET CMP0042 NEW)
+
 set ( PROJECT_DESCRIPTION "Fortran toolkit for analyzing GROMACS simulations" )
 set ( PROJECT_URL "https://github.com/wesbarnett/libgmxfort" )
 set ( LIBDIR "lib")
