@@ -390,8 +390,9 @@ If ``adaptive`` is specified, Cassandra uses atom type pair-specific overlap
 radii based on ``emax``, the desired maximum allowed intermolecular atom pair energy
 divided by :math:`k_BT` specified in *Real(2,2)*, defaulting to 708 if *Real(2,2)*
 is not present.  If ``est_emax`` is specified on the same line, Cassandra
-will estimate good values for ``emax`` for each Widom insertion species in
-each box.  These values are conservative but generally much less so than the default.
+will estimate a good value for ``emax`` for each Widom insertion species in
+each box and output it to the log file near where the estimated chemical potential
+is output. These values are conservative but generally much less so than the default.
 Note that atom type pair-specific overlap radii are only used during cell list
 overlap checking.
 
@@ -439,7 +440,8 @@ aggressive values for ``emax`` for each species in each box. The default
 overlap radius specified here is 1.2 Angstroms; this overlap radius is
 used for overlap in contexts other than intermolecular Widom insertion
 energy calculations and for atom type pairs involving an atom type
-without positive Lennard-Jones parameters. It also specifies
+without positive Lennard-Jones parameters (i.e. an oxygen-bonded hydrogen atom
+represented as just a point charge, as in SPC/E water). It also specifies
 to estimate good atom pair-specific overlap radii based on the three
 tolerances 1e-20, 1e-15, and 1e-10 using 400 bins from
 :math:`1.2^2` to :math:`1.2^2 + 40` square Angstroms that are each 0.1
@@ -1527,14 +1529,15 @@ file and computed shifted chemical potential for species *i* and box *j*.  Addit
 the ``.wprp2`` files are given in :ref:`sec:output_files`.
 
 For example, for a simulation with one box and two species, in which species 1 is to be inserted 
-5000 times every 1000 steps and species 2 is to be inserted 7000 times every 400 steps, 
+5000 times every 1000 steps and species 2 is to be inserted 7000 times every 400 steps, with
+100 subgroups of 50 Widom insertions per step written to the ``.wprp2`` file for species 1,
 this section could be written as follows:
 
 .. code-block:: none
 
         # Widom_Insertion
         true
-        cbmc 5000 1000
+        cbmc 5000 1000 100
         cbmc 7000 400
 
 For a simulation with two boxes and two species, for which the simulation length units 
@@ -1806,9 +1809,11 @@ This section is only necessary if ``energy_table`` is present in
 :ref:`sec:cbmc_parameters` and/or ``specific`` is present in
 :ref:`sec:minimum_cutoff` and the species that can ever actually reside
 in a simulation box during the simulation cannot be determined from other
-parts of the input file, i.e. when a trajectory is read from a ``.xyz``
-file and a ``.H`` file and the number of molecules of each species in
-the trajectory is not given in :ref:`sec:Pregen_Info`.
+parts of the input file, such as when trajectory molecule counts are read
+from a ``.H`` file and the number of molecules of each species in
+the trajectory is not given in :ref:`sec:Pregen_Info`.  If molecule 
+counts are not read from a ``.H`` file, this section probably isn't
+necessary.
 
 This section simply lists, by number, which species could ever possibly
 reside in a simulation box during the simulation.
