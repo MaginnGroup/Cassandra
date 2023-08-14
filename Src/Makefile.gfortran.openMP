@@ -70,7 +70,7 @@ LIBS = -I${localdir}/include -L${locallib} -lgmxfort # `pkg-config --cflags --li
 INCS = -I${localdir}/include -L${locallib} -lgmxfort # `pkg-config --cflags --libs libgmxfort`
 #
 F90FLAGS = -c -ffree-line-length-none -fopenmp -O3
-LINKFLAGS = -fopenmp -Wl,-rpath=${locallib}
+LINKFLAGS = -fopenmp -Wl,-rpath,${locallib}
 
 
 ####################################################################

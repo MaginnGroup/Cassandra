@@ -75,7 +75,7 @@ INCS = -I${localdir}/include -L${locallib} -lgmxfort # `pkg-config --cflags --li
 #
 #F90FLAGS = -c  -ffree-line-length-none
 F90FLAGS = -c -g -no-wrap-margin #-check all -traceback #-warn unused #-openmp
-LINKFLAGS = -Wl,-rpath=${locallib}
+LINKFLAGS = -Wl,-rpath,${locallib}
 #F90FLAGS = -c -g -no-wrap-margin -O3  #-warn unused #-openmp
 #F90FLAGS = -c -openmp
 #F90FLAGS = -p -c -O3

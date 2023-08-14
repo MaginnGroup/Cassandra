@@ -69,7 +69,7 @@ libgmxfortpath = ${locallib}/libgmxfort.so
 LIBS = -I${localdir}/include -L${locallib} -lgmxfort # `pkg-config --cflags --libs libgmxfort`
 INCS = -I${localdir}/include -L${locallib} -lgmxfort # `pkg-config --cflags --libs libgmxfort`
 F90FLAGS = -c -ffree-line-length-none -fcheck=all
-LINKFLAGS = -Wl,-rpath=${locallib}
+LINKFLAGS = -Wl,-rpath,${locallib}
 
 ####################################################################
 OBJS =  main.o \
