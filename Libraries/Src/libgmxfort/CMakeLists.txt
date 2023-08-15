@@ -24,6 +24,7 @@ enable_language ( Fortran )
 list ( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake )
 
 project ( gmxfort NONE )
+cmake_policy( SET CMP0042 NEW )
 
 # Set project info
 include ( info )

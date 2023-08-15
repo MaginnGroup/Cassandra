@@ -2,7 +2,7 @@
 #*******************************************************************************
 # SCRIPT:  Test9_NPTexamples.py
 # VERSION: 1.0
-# FEATURES: Test the results of a short simulation of the NPT examples
+# FEATURES: Test the results of a short simulation of the GCMC examples
 #*******************************************************************************
 
 #*******************************************************************************
@@ -51,8 +51,14 @@ test_no = 12
 test_desc = "GCMC Examples"
 
 # Check parameters
-nChecks = 6 # number of simulations to run
-title = ("Methane", "Methane_Butane", "Methane_Butane_Silicalite", "Methane_Silicalite", "Nitrogen", "Nitrogen_Silicalite")
+nChecks = 7 # number of simulations to run
+title = ("Methane",
+        "Methane_Butane",
+        "Methane_Butane_energy_table",
+        "Methane_Butane_Silicalite",
+        "Methane_Silicalite",
+        "Nitrogen",
+        "Nitrogen_Silicalite")
 analyticAnswer = [None] * nChecks # list to hold analytic answers
 cassAnswer     = [None] * nChecks # list to hold cassandra's answers
 passCheck      = [None] * nChecks # list to hold if cassandra passed each check
@@ -60,18 +66,20 @@ cassStr = [None]* nChecks
 cassPrint = [None]* nChecks
 cassStr[0] = (("Energy_Total","Nmols","Volume"),)
 cassStr[1] = (("Energy_Total","Nmols_1","Nmols_2","Pressure", "Mass_Density"),)
-cassStr[2] = (("Energy_Total","Nmols_1","Nmols_2","Nmols_3","Volume", "Pressure"),)
-cassStr[3] = (("Energy_Total","Nmols_1","Nmols_2"),)
-cassStr[4] = (("Energy_Total","Nmols","Density", "Pressure", "Mass_Density"),)
-cassStr[5] = (("Energy_Total","Nmols_1","Nmols_2", "Pressure"),)
+cassStr[2] = (("Energy_Total","Nmols_1","Nmols_2","Pressure", "Mass_Density"),)
+cassStr[3] = (("Energy_Total","Nmols_1","Nmols_2","Nmols_3","Volume", "Pressure"),)
+cassStr[4] = (("Energy_Total","Nmols_1","Nmols_2"),)
+cassStr[5] = (("Energy_Total","Nmols","Density", "Pressure", "Mass_Density"),)
+cassStr[6] = (("Energy_Total","Nmols_1","Nmols_2", "Pressure"),)
 
 cassPrint[0] = (("Energy_Total [kJ/mol-Ext]","Nmols","Volume [A^3]"),)
 cassPrint[1] = (("Energy_Total [kJ/mol-Ext]","Nmols_1","Nmols_2","Pressure [bar]", "Mass_Density [kg/m^3]"),)
-cassPrint[2] = (("Energy_Total [kJ/mol-Ext]","Nmols_1","Nmols_2","Nmols_3","Volume [A^3]", "Pressure [bar]"),)
-cassPrint[3] = (("Energy_Total [kJ/mol-Ext]","Nmols_1","Nmols_2"),)
-cassPrint[4] = (("Energy_Total [kJ/mol-Ext]","Nmols","Density [molec/A^3]", "Pressure [bar]", "Mass_Density [kg/m^3]"),)
-cassPrint[5] = (("Energy_Total [kJ/mol-Ext]","Nmols_1","Nmols_2", "Pressure [bar]"),)
-endStep = (4000,50000,10000,4000,4000, 4000)
+cassPrint[2] = (("Energy_Total [kJ/mol-Ext]","Nmols_1","Nmols_2","Pressure [bar]", "Mass_Density [kg/m^3]"),)
+cassPrint[3] = (("Energy_Total [kJ/mol-Ext]","Nmols_1","Nmols_2","Nmols_3","Volume [A^3]", "Pressure [bar]"),)
+cassPrint[4] = (("Energy_Total [kJ/mol-Ext]","Nmols_1","Nmols_2"),)
+cassPrint[5] = (("Energy_Total [kJ/mol-Ext]","Nmols","Density [molec/A^3]", "Pressure [bar]", "Mass_Density [kg/m^3]"),)
+cassPrint[6] = (("Energy_Total [kJ/mol-Ext]","Nmols_1","Nmols_2", "Pressure [bar]"),)
+endStep = (4000,50000,50000,10000,4000,4000, 4000)
 errorTol = 5e-2
 
  # Formatting variables
@@ -87,34 +95,34 @@ resourceDir = MainDir + "Scripts/testSuite/Resources/"
 cassExe     = args.cassandra_exe
 resFolder	= (resourceDir+"exampleResources/GCMC/Methane/",
 		resourceDir+"exampleResources/GCMC/Methane_Butane/",
+		resourceDir+"exampleResources/GCMC/Methane_Butane_energy_table/",
 		resourceDir+"exampleResources/GCMC/Methane_Butane_Silicalite/",
 		resourceDir+"exampleResources/GCMC/Methane_Silicalite/",
 		resourceDir+"exampleResources/GCMC/Nitrogen/",
 		resourceDir+"exampleResources/GCMC/Nitrogen_Silicalite/")
-cassRun 	= ("methane.out","methane_butane.out","methane_butane_Si.out",
+cassRun 	= ("methane.out","methane_butane.out","methane_butane.out","methane_butane_Si.out",
 		"methane_Si.out","nitrogen.out","nitrogen_Si.out")
-inpName 	= ("methane.inp","methane_butane.inp","methane_butane_Si.inp",
+inpName 	= ("methane.inp","methane_butane.inp","methane_butane.inp","methane_butane_Si.inp",
 		"methane_Si.inp","nitrogen.inp","nitrogen_Si.inp")
-mcfRun 	= (["CH4.mcf"],["C4H10.mcf","CH4.mcf"],["C4H10.mcf","CH4.mcf","unitcell.mcf"],["CH4.mcf","SiO2.mcf"],
+mcfRun 	= (["CH4.mcf"],["C4H10.mcf","CH4.mcf"],["C4H10.mcf","CH4.mcf"],["C4H10.mcf","CH4.mcf","unitcell.mcf"],["CH4.mcf","SiO2.mcf"],
 		["N23S.mcf"],["MFI.mcf","N23S.mcf"])
-species = ([1],[1,2],[2,3],[2],[1],[2])
-xyzFlag 	= (0,0,1,1,0,1)
-xyzName 	=('','','unitcell.xyz','Si27ucEM.xyz','','MFI.xyz')
-chkFlag 	= (0,0,0,0,0,0)
-chkName 	=('','','','','','')
-initFlag 	= (0,0,0,0,0,0)
-initName 	=('','','','','','')
+species = ([1],[1,2],[1,2],[2,3],[2],[1],[2])
+xyzFlag 	= (0,0,0,1,1,0,1)
+xyzName 	=('','','','unitcell.xyz','Si27ucEM.xyz','','MFI.xyz')
+chkFlag 	= (0,0,0,0,0,0,0)
+chkName 	=('','','','','','','')
+initFlag 	= (0,0,0,0,0,0,0)
+initName 	=('','','','','','','')
 
 
 resultFolder= (resourceDir+"exampleResults/GCMC/Methane/",
 		resourceDir+"exampleResults/GCMC/Methane_Butane/",
+		resourceDir+"exampleResults/GCMC/Methane_Butane_energy_table/",
 		resourceDir+"exampleResults/GCMC/Methane_Butane_Silicalite/",
 		resourceDir+"exampleResults/GCMC/Methane_Silicalite/",
 		resourceDir+"exampleResults/GCMC/Nitrogen/",
 		resourceDir+"exampleResults/GCMC/Nitrogen_Silicalite/")
-prpResName  = (resultFolder[0]+"methane.out.prp",resultFolder[1]+"methane_butane.out.prp",
-		resultFolder[2]+"methane_butane_Si.out.prp", resultFolder[3]+"methane_Si.out.prp", 
-		resultFolder[4]+"nitrogen.out.prp", resultFolder[5]+"nitrogen_Si.out.prp")
+prpResName  = [resultFolder[i]+cassRun[i]+".prp" for i in range(nChecks)]
 #*******************************************************************************
 # FUNCTION DEFINITIONS
 #*******************************************************************************

@@ -58,15 +58,29 @@ EXEC_NAME = cassandra.exe
 
 ## Name of compiler and compilation options
 FC = ifort
-LIBS =
-INCS =
+export FC
+librariespath := ${abspath ../Libraries}
+libgmxfortbuild := ${librariespath}/Src/libgmxfort/build/
+libxdrfilebuild := ${librariespath}/Src/libxdrfile/build/
+localdir := ${librariespath}/locals/${FC}/local
+locallib := ${localdir}/lib
+libxdrfilepath = ${locallib}/libxdrfile.so
+libgmxfortpath = ${locallib}/libgmxfort.so
+
+#PKG_CONFIG_PATH := ${locallib}/pkgconfig
+#export PKG_CONFIG_PATH
+
+LIBS = -I${localdir}/include -L${locallib} -lgmxfort # `pkg-config --cflags --libs libgmxfort`
+INCS = -I${localdir}/include -L${locallib} -lgmxfort # `pkg-config --cflags --libs libgmxfort`
 #
 #F90FLAGS = -c  -ffree-line-length-none
-F90FLAGS = -c -g -no-wrap-margin -check all -traceback #-warn unused #-openmp
+F90FLAGS = -c -g -no-wrap-margin #-check all -traceback #-warn unused #-openmp
+LINKFLAGS = -Wl,-rpath,${locallib}
+#F90FLAGS = -c -g -no-wrap-margin -O3  #-warn unused #-openmp
 #F90FLAGS = -c -openmp
 #F90FLAGS = -p -c -O3
 #F90FLAGS = -c -O3 -openmp
-#OPTFLAGS =
+OPTFLAGS = -O3
 #LINKFLAGS = -openmp
 #LINKFLAGS = -p
 
@@ -143,14 +157,25 @@ OBJS =  main.o \
 
 ####################################################################
 
-%.temp.f90 : %.no_xtc.f90
+%.temp.f90 : %.f90
 	cp $< $@
 
-%o: %f90
+%o: %f90 ${libgmxfortpath}
 	${FC} ${F90FLAGS} ${INCS} ${OPTFLAGS} ${LINK_F90} $<
 
 exe: $(OBJS)
 	$(FC) $(OPTFLAGS) -o $(BIN_DIR)/$(EXEC_NAME) $(OBJS) $(LIBS) $(LINK_F90) $(LINKFLAGS)
+
+${libgmxfortpath}: ${libxdrfilepath}
+	rm -fr ${libgmxfortbuild} && mkdir ${libgmxfortbuild} && cd ${libgmxfortbuild} && \
+		cmake .. -DCMAKE_INSTALL_PREFIX=${localdir} && \
+		${MAKE} && ${MAKE} test && ${MAKE} install
+
+${libxdrfilepath}:
+	rm -fr ${libxdrfilebuild} && mkdir ${libxdrfilebuild} && cd ${libxdrfilebuild} && \
+		cmake .. -DCMAKE_INSTALL_PREFIX=${localdir} && \
+		${MAKE} && ${MAKE} test && ${MAKE} install
+
 
 clean:
 	rm -fr *.o *.mod *.temp.f90 dep.mk
