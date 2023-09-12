@@ -126,7 +126,8 @@ USE Type_Definitions
   REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_vdw, rcut_coul, ron_charmm, roff_charmm, rcut_max
   REAL(DP), DIMENSION(:), ALLOCATABLE :: ron_switch, roff_switch, roff_switch_sq, switch_factor1
   REAL(DP), DIMENSION(:), ALLOCATABLE :: switch_factor2, ron_switch_sq
-  REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_vdwsq, rcut_coulsq, ron_charmmsq, roff_charmmsq
+  REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_vdwsq, inv_rcut_vdwsq, rcut_coulsq, ron_charmmsq, roff_charmmsq
+  REAL(SP), DIMENSION(:), ALLOCATABLE :: rcut_vdwsq_sp, inv_rcut_vdwsq_sp
   REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut9, rcut3
   REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_vdw3, rcut_vdw6
   REAL(DP) :: edens_cut, rcut_clus, rcut_low, rcut_lowsq
@@ -612,7 +613,7 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   ! sector_index_map is indexed by (x index, y index, z index, box index) to get sector index
   INTEGER, DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: sector_index_map, sector_index_map_cbmc, sector_index_map_full
   ! sector_n_atoms is indexed by (sector index) to get number of atoms in a sector
-  INTEGER, DIMENSION(:), ALLOCATABLE, TARGET :: sector_n_atoms, sector_n_atoms_cbmc, sector_n_atoms_full
+  INTEGER(4), DIMENSION(:), ALLOCATABLE, TARGET :: sector_n_atoms, sector_n_atoms_cbmc, sector_n_atoms_full
   ! sector_has_atoms is indexed by (x index, y index, z index, box index)
   LOGICAL, DIMENSION(:,:,:,:), ALLOCATABLE :: sector_has_atoms
 
@@ -623,13 +624,14 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   REAL(DP), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: cell_length_inv, cell_length_inv_cbmc, cell_length_inv_full
 
 
-  ! indexed like (n_adj_cell_atoms,dimension in 1:3, x index, y index, z index, box index)
-  REAL(SP), DIMENSION(:,:,:,:,:,:), ALLOCATABLE :: adj_cell_rsp
-  INTEGER(2), DIMENSION(:,:,:,:,:), ALLOCATABLE :: adj_cell_ti
-  INTEGER, DIMENSION(:,:,:,:), ALLOCATABLE :: n_adj_cell_atoms
+  ! indexed like (n_adj_cell_atoms,dimension in 1:4, x index, y index, z index, box index)
+  ! there is no 4th dimension of coordinates; this stores charge instead
+  REAL(SP), DIMENSION(:,:,:,:,:,:), ALLOCATABLE :: adj_cell_rsp, cbmc_cell_rsp
+  INTEGER(INT32), DIMENSION(:,:,:,:,:), ALLOCATABLE :: adj_cell_ti, cbmc_cell_ti, cbmc_cell_atomtypes
+  INTEGER(4), DIMENSION(:,:,:,:), ALLOCATABLE :: n_adj_cell_atoms, cbmc_cell_n_interact
   INTEGER, DIMENSION(3) :: adj_cellmaxbound
 
-  INTEGER :: max_adj_cell_atoms
+  INTEGER :: max_adj_cell_atoms, cbmc_max_interact
   REAL(SP), DIMENSION(:,:), ALLOCATABLE :: cell_length_recip, real_length_cells
 
 
@@ -670,10 +672,13 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
 
   !!! atompair energy table global variables
   INTEGER :: atompair_nrg_res
+  REAL(SP) :: atompair_nrg_res_sp
   LOGICAL :: precalc_atompair_nrg
   REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: atompair_nrg_table
+  REAL(SP), DIMENSION(:,:,:), ALLOCATABLE :: atompair_nrg_table_reduced
   REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: typepair_nrg_table
-  REAL(DP) :: rsq_step
+  REAL(DP) :: rsq_step, inv_rsq_step
+  REAL(SP) :: inv_rsq_step_sp
   REAL(DP) :: rsq_shifter
   INTEGER, DIMENSION(:), ALLOCATABLE :: typepair_solute_indices, typepair_solvent_indices
   INTEGER, DIMENSION(:), ALLOCATABLE :: solute_atomtypes, solvent_atomtypes
@@ -690,6 +695,8 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   INTEGER(KIND=INT64), DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: rsqmin_atompair_freq
   REAL(DP), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: atompair_rminsq_table
   REAL(SP), DIMENSION(:,:,:), ALLOCATABLE :: sp_atompair_rminsq_table
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: solvent_max_rminsq, solvent_min_rminsq
+  REAL(SP), DIMENSION(:,:), ALLOCATABLE :: solvent_max_rminsq_sp
   INTEGER, DIMENSION(:), ALLOCATABLE :: typepair_wsolute_indices, wsolute_atomtypes
   REAL(DP) :: maxrminsq, rsqmin_step, rsqmin_shifter
   INTEGER :: rsqmin_res, wsolute_ntypes, wsolute_maxind
@@ -705,13 +712,17 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   REAL(SP), DIMENSION(:,:), ALLOCATABLE :: sp_rminsq_table
   REAL(DP) :: U_max_base, max_rmin
   LOGICAL :: calc_rmin_flag
+  REAL(DP), DIMENSION(:), ALLOCATABLE :: atomtype_max_rminsq, atomtype_min_rminsq
+  REAL(SP), DIMENSION(:), ALLOCATABLE :: atomtype_max_rminsq_sp
 
 
   LOGICAL, PARAMETER :: l_vectorized = .TRUE.
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: nlive
 
   REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE :: ppvdwp_table, ppvdwp_table2
+  REAL(SP), DIMENSION(:,:,:,:), ALLOCATABLE :: ppvdwp_table_sp, ppvdwp_table2_sp
   TYPE(VdW256), DIMENSION(:,:,:), ALLOCATABLE :: ppvdwp_list
+  LOGICAL :: l_nonuniform_exponents
 
   LOGICAL, PARAMETER :: l_not_all_live = .FALSE.
 
@@ -730,6 +741,16 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   LOGICAL, DIMENSION(:,:,:,:), ALLOCATABLE :: live_atom_exist
   INTEGER :: maxnmols, maxboxnatoms
   LOGICAL :: l_not_all_exist
+
+
+
+  LOGICAL, PARAMETER :: bitcell_flag = .TRUE.
+  INTEGER :: solvents_or_types_maxind
+
+
+  INTEGER :: kappa_ins_pad8, kappa_ins_pad64
+
+  LOGICAL :: l_zerotype_present
 
 END MODULE Global_Variables
 

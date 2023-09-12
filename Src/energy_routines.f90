@@ -905,6 +905,9 @@ CONTAINS
           REAL(DP) :: Eij_intra_vdw,Eij_intra_qq,Eij_inter_vdw,Eij_inter_qq
           REAL(DP), DIMENSION(:,:), POINTER :: cell_length_inv_ptr
           LOGICAL :: get_vdw, get_qq, overlap
+          INTEGER :: coord_limit(4)
+
+          REAL(SP) :: cp_sp(3)
           !
           overlap = .TRUE.
           E_inter_vdw = 0.0_DP
@@ -922,7 +925,30 @@ CONTAINS
                   this_box = molecule_list(im,is)%which_box
           END IF
           IF (cbmc_flag) THEN
-                  cell_length_inv_ptr => cell_length_inv_cbmc(:,:,this_box)
+                  cp_sp = REAL(cp,SP)
+                  cell_coords = IDNINT(MATMUL(REAL(box_list(this_box)%cell_length_inv,SP),cp))
+                  coord_limit = UBOUND(cbmc_cell_n_interact)
+                  IF (ANY(ABS(cell_coords) > coord_limit(1:3))) THEN
+                          !WRITE(*,*) cell_coords, coord_limit(1:3), cp_sp, MATMUL(REAL(box_list(this_box)%cell_length_inv,SP),cp)
+                          !WRITE(*,*) cp
+                          DO i = 1, 3
+                                IF (cell_coords(i) < LBOUND(cbmc_cell_n_interact,i)) THEN
+                                        cell_coords(i) = cell_coords(i) + SIZE(cbmc_cell_n_interact,i)
+                                        cp_sp(i) = cp_sp(i) + box_list(this_box)%length(i,i)*0.5_DP
+                                ELSE IF (cell_coords(i) > UBOUND(cbmc_cell_n_interact,i)) THEN
+                                        cell_coords(i) = cell_coords(i) - SIZE(cbmc_cell_n_interact,i)
+                                        cp_sp(i) = cp_sp(i) - box_list(this_box)%length(i,i)*0.5_DP
+                                ELSE
+                                        CYCLE
+                                END IF
+                                !WRITE(*,*) cp_sp(i), box_list(this_box)%length(i,i)*0.5_DP
+                          END DO
+                  END IF
+                  ! next line includes qq energy along with vdw
+                  E_inter_vdw = REAL(Compute_Cell_List_CBMC_nrg(cp_sp,cell_coords,ia,is,this_box),DP)
+                  overlap = .FALSE.
+                  RETURN
+                  !cell_length_inv_ptr => cell_length_inv_cbmc(:,:,this_box)
           ELSE
                   cell_length_inv_ptr => cell_length_inv_full(:,:,this_box)
           END IF
@@ -1987,6 +2013,10 @@ CONTAINS
         IF (.NOT. l_sectors) THEN
                 IF (ANY(rijsq(1:vlen) < rcut_lowsq)) THEN
                         overlap = .TRUE.
+                        !!$OMP CRITICAL
+                        !WRITE(*,*) "CRITICAL OVERLAP!", MINVAL(rijsq(1:vlen)), MAXVAL(rijsq(1:vlen)), ia, is, cbmc_flag
+                        !WRITE(*,*) "check_overlap: ", check_overlap(ia,im,is)
+                        !!$OMP END CRITICAL
                         RETURN
                 END IF
         END IF
@@ -2123,19 +2153,20 @@ CONTAINS
                                 END DO
                         END IF
                 ELSE IF (int_vdw_style(this_box) == vdw_mie) THEN
-                        !DIR$ ASSUME (n_vdw_p_list(this_box) .EQ. 2)
-                        mie_vdw_p_table(1:4,1:n_vdw) = ppvdwp_table2(1:4,PACK(jatomtype(1:vlen),vdw_mask(1:vlen)),itype,this_box)
+                        packed_types(1:n_vdw) = PACK(jatomtype(1:vlen),vdw_mask(1:vlen))
+                        mie_vdw_p_table(1:4,1:n_vdw) = ppvdwp_table2(1:4,packed_types(1:n_vdw),itype,this_box)
                         DO i = 1, n_vdw
-                                this_rijsq = rijsq_packed(i)
+                                this_rijsq = LOG(rijsq_packed(i)) ! actually ln(rijsq)
                                 epsig_n = mie_vdw_p_table(1,i)  ! epsilon * mie_coeff * sigma ** n
                                 epsig_m = mie_vdw_p_table(2,i) ! epsilon * mie_coeff * sigma ** m
                                 mie_n = mie_vdw_p_table(3,i) ! already halved
                                 mie_m = mie_vdw_p_table(4,i) ! already halved
-                                nrg_vdw = epsig_n * this_rijsq**mie_n
-                                nrg_vdw = nrg_vdw - epsig_m * this_rijsq**mie_m
+                                nrg_vdw = epsig_n * EXP(this_rijsq*mie_n)
+                                nrg_vdw = nrg_vdw - epsig_m * EXP(this_rijsq*mie_m)
                                 IF (int_vdw_sum_style(this_box) == vdw_cut_shift) THEN
-                                        nrg_vdw = nrg_vdw + epsig_n * rcut_vdwsq(this_box)**mie_n
-                                        nrg_vdw = nrg_vdw - epsig_m * rcut_vdwsq(this_box)**mie_m
+                                        nrg_vdw = nrg_vdw - ppvdwp_table(packed_types(i),itype,5,this_box)
+                                        !nrg_vdw = nrg_vdw + epsig_n * rcut_vdwsq(this_box)**mie_n
+                                        !nrg_vdw = nrg_vdw - epsig_m * rcut_vdwsq(this_box)**mie_m
                                 END IF
                                 vdw_energy = vdw_energy + nrg_vdw
                                 IF (this_est_emax) up_nrg_vec(i) = nrg_vdw
@@ -6370,6 +6401,274 @@ CONTAINS
           overlap = .FALSE.
           !
   END SUBROUTINE Estimate_MoleculePair_Energy
+
+  REAL(SP) FUNCTION Compute_Cell_List_CBMC_nrg(irp,cp,ia,is,this_box)
+          REAL(SP) :: irp(3)
+          INTEGER, INTENT(IN) :: cp(3), ia, is, this_box
+          ! The following parameters are here so you can optimize speed by setting them.
+          !     The best options probably depend on your processor architecture, unfortunately.
+          !     They are currently not used at all
+          LOGICAL, PARAMETER :: pregather_lj = .FALSE., lj_p_readfirstdim = .FALSE.
+          INTEGER :: xi, yi, zi, vlen, i
+          REAL(SP) :: nrg
+
+          INTEGER :: dmult, isolute, rsqsol
+          REAL(SP) :: this_shifter, rsq_shift, drp
+          REAL(SP) :: dxp, dyp, dzp
+
+          REAL(SP) :: rsq, rcutsq
+          REAL(SP), DIMENSION(cbmc_max_interact) :: rsq_vec
+          !REAL(SP), DIMENSION(cbmc_max_interact,2) :: ppljp
+          INTEGER :: itype, jtype, this_int_vdw_style, this_int_vdw_sum_style
+          REAL(SP) :: eps, sigsq, sigbyr2, sigbyr6, sigbyr12, nrg_vdw, rterm, rterm2, negsigsq, negsigbyr2, roffsq_rijsq
+          REAL(SP) :: mie_m, mie_n, lnrsq, epsig_n, epsig_m
+          REAL(SP) :: icharge, jcharge, invr, rij, nrg_qq, dsf_const, alpha_ewald_sp
+          REAL(SP) :: const1, const2, const3, const4
+          INTEGER :: this_int_charge_sum_style
+          LOGICAL :: i_get_coul
+
+          xi = cp(1)
+          yi = cp(2)
+          zi = cp(3)
+          vlen = cbmc_cell_n_interact(xi,yi,zi,this_box)
+          !DIR$ ASSUME (MOD(vlen,8) .EQ. 0)
+          nrg = 0.0
+
+          IF (precalc_atompair_nrg) THEN
+                  dmult = SIZE(atompair_nrg_table,1)
+                  this_shifter = -sp_rcut_lowsq !-(rsq_shifter + rsq_step)
+                  isolute = species_list(is)%solute_base + ia
+                  !DIR$ VECTOR ALIGNED
+                  DO i = 1, vlen
+                        rsq_shift = this_shifter
+                        drp = cbmc_cell_rsp(i,1,xi,yi,zi,this_box) - irp(1)
+                        rsq_shift = rsq_shift + drp*drp
+                        drp = cbmc_cell_rsp(i,2,xi,yi,zi,this_box) - irp(2)
+                        rsq_shift = rsq_shift + drp*drp
+                        drp = cbmc_cell_rsp(i,3,xi,yi,zi,this_box) - irp(3)
+                        rsq_shift = rsq_shift + drp*drp
+                        rsqsol = INT(MIN(rsq_shift*inv_rsq_step_sp,atompair_nrg_res_sp)) + &
+                                cbmc_cell_ti(i,xi,yi,zi,this_box)*dmult
+                        nrg = nrg + atompair_nrg_table_reduced(rsqsol,isolute,this_box)
+                  END DO
+                  Compute_Cell_List_CBMC_nrg = nrg
+                  RETURN
+          END IF
+          rcutsq = REAL(rcut_cbmcsq(this_box),SP)
+          !DIR$ ASSUME_ALIGNED rsq_vec:32
+          !DIR$ VECTOR ALIGNED
+          DO i = 1, vlen
+                drp = cbmc_cell_rsp(i,1,xi,yi,zi,this_box) - irp(1)
+                rsq = drp*drp 
+                drp = cbmc_cell_rsp(i,2,xi,yi,zi,this_box) - irp(2)
+                rsq = rsq + drp*drp
+                drp = cbmc_cell_rsp(i,3,xi,yi,zi,this_box) - irp(3)
+                rsq = rsq + drp*drp
+                rsq_vec(i) = rsq
+          END DO
+          itype = nonbond_list(ia,is)%atom_type_number
+          this_int_vdw_style = MIN(itype,1) * int_vdw_style(this_box)
+          this_int_vdw_sum_style = MIN(itype,1) * int_vdw_sum_style(this_box)
+          icharge = nonbond_list(ia,is)%charge
+          i_get_coul = icharge .NE. 0.0_SP .AND. int_charge_style(this_box) .NE. charge_none .AND. species_list(is)%l_coul_cbmc
+          this_int_charge_sum_style = MERGE(int_charge_sum_style(this_box),0,i_get_coul)
+          nrg_vdw = 0.0_SP
+          nrg_qq = 0.0_SP
+          !ppljp(1:vlen,1:2) = TRANSPOSE(ppvdwp_table2_sp(1:2,cbmc_cell_atomtypes(1:vlen,xi,yi,zi,this_box),itype,this_box))
+          !!DIR$ VECTOR MULTIPLE_GATHER_SCATTER_BY_SHUFFLES, ALIGNED
+          !!$OMP SIMD
+          !DO i = 1, vlen
+          !      jtype = cbmc_cell_atomtypes(i,xi,yi,zi,this_box)
+          !      eps = ppvdwp_table2_sp(1,jtype,itype,this_box)
+          !      negsigsq = ppvdwp_table2_sp(2,jtype,itype,this_box)
+          !      ppljp(i,1) = eps
+          !      ppljp(i,2) = negsigsq
+          !END DO
+          !!$OMP END SIMD
+          SELECT CASE(this_int_vdw_style)
+          CASE(vdw_lj)
+                  SELECT CASE (this_int_vdw_sum_style)
+                  CASE(vdw_charmm)
+                          !DIR$ VECTOR ALIGNED
+                          !$OMP SIMD PRIVATE(rsq,jtype,eps,sigsq,sigbyr2,sigbyr6) &
+                          !$OMP REDUCTION(+:nrg_vdw)
+                          DO i = 1, vlen
+                                rsq = rsq_vec(i)
+                                jtype = cbmc_cell_atomtypes(i,xi,yi,zi,this_box)
+                                eps = ppvdwp_table2_sp(1,jtype,itype,this_box) ! epsilon
+                                sigsq = ppvdwp_table2_sp(2,jtype,itype,this_box) ! sigma**2
+                                !eps = ppljp(i,1)
+                                !sigsq = ppljp(i,2)
+                                sigbyr2 = sigsq/rsq ! sigma was already squared
+                                sigbyr6 = sigbyr2*sigbyr2*sigbyr2
+                                nrg_vdw = nrg_vdw + eps * (sigbyr6*sigbyr6 - sigbyr6 - sigbyr6) ! eps was not multiplied by 4
+                                !IF (rsq < rcutsq) THEN
+                                !  jtype = cbmc_cell_atomtypes(i,xi,yi,zi,this_box)
+                                !  eps = ppvdwp_table2_sp(1,jtype,itype,this_box) ! epsilon
+                                !  sigsq = ppvdwp_table2_sp(2,jtype,itype,this_box) ! sigma**2
+                                !  sigbyr2 = sigsq/rsq ! sigma was already squared
+                                !  sigbyr6 = sigbyr2*sigbyr2*sigbyr2
+                                !  nrg_vdw = nrg_vdw + eps * (sigbyr6*sigbyr6 - sigbyr6 - sigbyr6) ! eps was not multiplied by 4
+                                !END IF
+                          END DO
+                          !$OMP END SIMD
+                  CASE(vdw_cut_shift)
+                          !DIR$ VECTOR MULTIPLE_GATHER_SCATTER_BY_SHUFFLES
+                          DO i = 1, vlen
+                                rsq = rsq_vec(i)
+                                jtype = cbmc_cell_atomtypes(i,xi,yi,zi,this_box)
+                                IF (rsq < rcutsq) THEN
+                                  eps = ppvdwp_table2_sp(1,jtype,itype,this_box) ! 4*epsilon
+                                  negsigsq = ppvdwp_table2_sp(2,jtype,itype,this_box) ! -(sigma**2)
+                                  negsigbyr2 = negsigsq/rsq
+                                  rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                  rterm = rterm + rterm*rterm
+                                  nrg_vdw = nrg_vdw + eps*rterm
+                                  negsigbyr2 = negsigsq*inv_rcut_vdwsq_sp(this_box)
+                                  rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                  rterm = rterm + rterm*rterm
+                                  nrg_vdw = nrg_vdw - eps*rterm
+                                END IF
+                          END DO
+                  CASE(vdw_cut_switch)
+                          const1 = switch_factor1(this_box)*switch_factor2(this_box)
+                          const2 = switch_factor1(this_box)*2
+                          const3 = ron_switch_sq(this_box)
+                          const4 = roff_switch_sq(this_box)
+                          !DIR$ VECTOR MULTIPLE_GATHER_SCATTER_BY_SHUFFLES
+                          DO i = 1, vlen
+                                rsq = rsq_vec(i)
+                                jtype = cbmc_cell_atomtypes(i,xi,yi,zi,this_box)
+                                IF (rsq < rcutsq) THEN
+                                  eps = ppvdwp_table2_sp(1,jtype,itype,this_box) ! 4*epsilon
+                                  negsigsq = ppvdwp_table2_sp(2,jtype,itype,this_box) ! -(sigma**2)
+                                  negsigbyr2 = negsigsq/rsq
+                                  rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                  rterm = rterm + rterm*rterm
+                                  IF (rsq .GE. const3) THEN
+                                          roffsq_rijsq = const4 - rsq
+                                          eps = &
+                                                  roffsq_rijsq*roffsq_rijsq * &
+                                                  (const1+const2*rsq) * eps
+                                  END IF
+                                  nrg_vdw = nrg_vdw + eps*rterm
+                                END IF
+                          END DO
+                  CASE(vdw_cut_shift_force)
+                          const1 = 36.0_SP*inv_rcut_vdwsq_sp(this_box)
+                          !DIR$ VECTOR MULTIPLE_GATHER_SCATTER_BY_SHUFFLES
+                          DO i = 1, vlen
+                                rsq = rsq_vec(i)
+                                jtype = cbmc_cell_atomtypes(i,xi,yi,zi,this_box)
+                                IF (rsq < rcutsq) THEN
+                                  eps = ppvdwp_table_sp(jtype,itype,1,this_box) ! 4*epsilon
+                                  negsigsq = ppvdwp_table_sp(jtype,itype,2,this_box) ! -(sigma**2)
+                                  !eps = ppvdwp_table2_sp(1,jtype,itype,this_box) ! 4*epsilon
+                                  !negsigsq = ppvdwp_table2_sp(2,jtype,itype,this_box) ! -(sigma**2)
+                                  negsigbyr2 = negsigsq/rsq
+                                  rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                  rterm = rterm + rterm*rterm
+                                  nrg_vdw = nrg_vdw + eps * rterm
+                                  negsigbyr2 = negsigsq*inv_rcut_vdwsq_sp(this_box)
+                                  rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                  rterm2 = rterm * rterm
+                                  rterm2 = rterm + 2.0_SP * rterm2
+                                  rterm = rterm + rterm*rterm
+                                  nrg_vdw = nrg_vdw - eps * rterm
+                                  nrg_vdw = nrg_vdw + &
+                                          (SQRT(rsq*const1) - 6.0_SP) * &
+                                          eps * rterm2
+                                  !nrg_vdw = nrg_vdw - &
+                                  !        (SQRT(rsq) - rcut_vdw_sp(this_box)) * &
+                                  !        -6.0_SP * eps * rterm2 * inv_rcut_vdw_sp(this_box)
+                                END IF
+                          END DO
+                  CASE(vdw_cut,vdw_cut_tail)
+                          !DIR$ VECTOR ALIGNED
+                          !$OMP SIMD PRIVATE(eps,negsigsq,negsigbyr2,rterm,rsq,jtype) &
+                          !$OMP REDUCTION(+:nrg_vdw)
+                          DO i = 1, vlen
+                                rsq = rsq_vec(i)
+                                jtype = cbmc_cell_atomtypes(i,xi,yi,zi,this_box)
+                                !eps = ppvdwp_table_sp(jtype,itype,1,this_box) ! 4*epsilon
+                                !negsigsq = ppvdwp_table_sp(jtype,itype,2,this_box) ! -(sigma**2)
+                                IF (rsq < rcutsq) THEN
+                                  !eps = ppvdwp_table2_sp(1,jtype,itype,this_box) ! 4*epsilon
+                                  !negsigsq = ppvdwp_table2_sp(2,jtype,itype,this_box) ! -(sigma**2)
+                                  eps = ppvdwp_table_sp(jtype,itype,1,this_box) ! 4*epsilon
+                                  negsigsq = ppvdwp_table_sp(jtype,itype,2,this_box) ! -(sigma**2)
+                                  negsigbyr2 = negsigsq/rsq
+                                  rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                  rterm = rterm + rterm*rterm
+                                  ! nrg = eps * rterm
+                                  nrg_vdw = nrg_vdw + eps * rterm
+                                END IF
+                          END DO
+                          !$OMP END SIMD
+                  END SELECT
+          CASE(vdw_mie)
+                  IF (.NOT. l_nonuniform_exponents) THEN
+                          mie_n = ppvdwp_table2_sp(3,itype,itype,this_box)
+                          mie_m = ppvdwp_table2_sp(4,itype,itype,this_box)
+                  END IF
+                  DO i = 1, vlen
+                        rsq = rsq_vec(i)
+                        jtype = cbmc_cell_atomtypes(i,xi,yi,zi,this_box)
+                        IF (rsq < rcutsq) THEN
+                          lnrsq = LOG(rsq)
+                          epsig_n = ppvdwp_table2_sp(1,jtype,itype,this_box)  ! epsilon * mie_coeff * sigma ** n
+                          epsig_m = ppvdwp_table2_sp(2,jtype,itype,this_box) ! epsilon * mie_coeff * sigma ** m
+                          IF (l_nonuniform_exponents) THEN
+                                  mie_n = ppvdwp_table2_sp(3,jtype,itype,this_box) ! already halved
+                                  mie_m = ppvdwp_table2_sp(4,jtype,itype,this_box) ! already halved
+                          END IF
+                          nrg_vdw = nrg_vdw + epsig_n*EXP(lnrsq*mie_n) - epsig_m*EXP(lnrsq*mie_m)
+                          IF (int_vdw_sum_style(this_box) == vdw_cut_shift) THEN
+                                  nrg_vdw = nrg_vdw - ppvdwp_table_sp(jtype,itype,5,this_box)
+                                  !nrg = nrg + epsig_n * rcut_vdwsq(this_box)**mie_n
+                                  !nrg = nrg - epsig_m * rcut_vdwsq(this_box)**mie_m
+                          END IF
+                        END IF
+                  END DO
+          END SELECT
+          SELECT CASE (this_int_charge_sum_style)
+          CASE(charge_ewald)
+                  alpha_ewald_sp = REAL(alpha_ewald(this_box),SP)
+                  !DIR$ VECTOR ALIGNED
+                  DO i = 1, vlen
+                        rsq = rsq_vec(i)
+                        jcharge = cbmc_cell_rsp(i,4,xi,yi,zi,this_box)
+                        IF (rsq < rcutsq) THEN
+                                invr = 1.0 / SQRT(rsq)
+                                rij = rsq * invr
+                                nrg_qq = nrg_qq + ERFC(alpha_ewald_sp*rij)*invr*jcharge
+                        END IF
+                  END DO
+          CASE(charge_dsf)
+                  dsf_const = -dsf_factor2(this_box)*(rcut_coul(this_box)+dsf_factor1(this_box))
+                  DO i = 1, vlen
+                        rsq = rsq_vec(i)
+                        IF (rsq < rcutsq) THEN
+                                jcharge = cbmc_cell_rsp(i,4,xi,yi,zi,this_box)
+                                invr = 1.0 / SQRT(rsq)
+                                rij = rsq*invr
+                                nrg = ERFC(alpha_dsf(this_box)*rij)*invr + dsf_const + &
+                                        rij*dsf_factor2(this_box)
+                                nrg_qq = nrg_qq + jcharge * nrg
+                        END IF
+                  END DO
+          CASE(charge_cut)
+                  DO i = 1, vlen
+                        rsq = rsq_vec(i)
+                        IF (rsq < rcutsq) THEN
+                                jcharge = cbmc_cell_rsp(i,4,xi,yi,zi,this_box)
+                                invr = 1.0 / SQRT(rsq)
+                                nrg_qq = nrg_qq + jcharge*invr
+                        END IF
+                  END DO
+          END SELECT
+          Compute_Cell_List_CBMC_nrg = nrg_vdw + icharge*charge_factor*nrg_qq
+  END FUNCTION Compute_Cell_List_CBMC_nrg
 
   SUBROUTINE Compute_MoleculePair_Energy(im,is,jm,js,this_box, &
     vlj_pair,vqq_pair,overlap,Eij_qq)

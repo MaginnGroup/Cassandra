@@ -239,7 +239,15 @@ CONTAINS
                         * this_rsqmin_step + this_rsqmin_shifter)
                 atompair_rminsq_table = REAL(atompair_rminsq_ind_table(:,:,:,1),DP) * this_rsqmin_step + this_rsqmin_shifter
                 min_rmin = SQRT(MINVAL(atompair_rminsq_table))
+                ALLOCATE(solvent_max_rminsq(solvent_maxind,nbr_boxes))
+                ALLOCATE(solvent_min_rminsq(solvent_maxind,nbr_boxes))
+                ALLOCATE(solvent_max_rminsq_sp(solvent_maxind,nbr_boxes))
+                solvent_max_rminsq = MAXVAL(atompair_rminsq_table,2) ! 2-D result
+                solvent_min_rminsq = MINVAL(atompair_rminsq_table,2) ! 2-D result
+                box_list%ideal_bitcell_length = SQRT(MAXVAL(solvent_min_rminsq,1)) / 28.0_DP ! vector with one element per box
                 sp_atompair_rminsq_table = REAL(atompair_rminsq_table,SP)
+                solvent_max_rminsq_sp = REAL(solvent_max_rminsq,SP)
+                solvents_or_types_maxind = solvent_maxind
                 WRITE(logunit,'(A,F6.3,A)') "Finished reading atompair rminsq table with atompair rmin values in the interval"
                 WRITE(logunit, '(8x,A,F5.3,A,F6.3,A)') "[", min_rmin, ",", max_rmin, "] Angstroms"
                 WRITE(logunit,'(A80)') "********************************************************************************"

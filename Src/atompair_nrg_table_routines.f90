@@ -127,7 +127,8 @@ CONTAINS
                 wsolute_maxind = wsolute_nextbase
                 IF (precalc_atompair_nrg) THEN
                         ALLOCATE(typepair_nrg_table(atompair_nrg_res,0:solvent_ntypes,0:solute_ntypes,nbr_boxes))
-                        ALLOCATE(atompair_nrg_table(atompair_nrg_res,solvent_nextbase,solute_nextbase,nbr_boxes))
+                        ALLOCATE(atompair_nrg_table(atompair_nrg_res+1,solvent_nextbase,solute_nextbase,nbr_boxes))
+                        ALLOCATE(atompair_nrg_table_reduced(0:(atompair_nrg_res+1)*solvent_nextbase-1,solute_nextbase,nbr_boxes))
                         typepair_nrg_table = 0.0_DP
                 END IF
                 IF (est_atompair_rminsq) THEN
@@ -163,6 +164,8 @@ CONTAINS
                 nsolutes = 0
                 nsolvents = 0
                 rsq_step = (MAXVAL(rcut_cbmcsq)-rcut_lowsq)/atompair_nrg_res
+                inv_rsq_step = 1.0_DP/rsq_step
+                inv_rsq_step_sp = REAL(inv_rsq_step,SP)
                 rsq_shifter = rcut_lowsq - rsq_step
                 DO i = 1, atompair_nrg_res
                         rsq_lb_vector(i) = rsq_shifter + rsq_step*i
@@ -241,7 +244,7 @@ CONTAINS
                 !$OMP END PARALLEL
 
                 !$OMP WORKSHARE
-                atompair_nrg_table = typepair_nrg_table(:,solvent_typeindvec,solute_typeindvec,:)
+                atompair_nrg_table(1:atompair_nrg_res,:,:,:) = typepair_nrg_table(:,solvent_typeindvec,solute_typeindvec,:)
                 !$OMP END WORKSHARE
 
                 !$OMP PARALLEL DEFAULT(SHARED)
@@ -249,14 +252,19 @@ CONTAINS
                 DO ibox = 1, nbr_boxes
                         DO ti_solute = 1, solute_maxind
                                 DO ti_solvent = 1, solvent_maxind
-                                        atompair_nrg_table(:,ti_solvent,ti_solute,ibox) = &
-                                                atompair_nrg_table(:,ti_solvent,ti_solute,ibox) + &
+                                        atompair_nrg_table(1:atompair_nrg_res,ti_solvent,ti_solute,ibox) = &
+                                                atompair_nrg_table(1:atompair_nrg_res,ti_solvent,ti_solute,ibox) + &
                                                 f2(:,ibox)*cfqq(ti_solvent,ti_solute)
                                 END DO
                         END DO
                 END DO
                 !$OMP END DO
+                !$OMP WORKSHARE
+                atompair_nrg_table(atompair_nrg_res+1,:,:,:) = 0.0
+                atompair_nrg_table_reduced = REAL(RESHAPE(atompair_nrg_table, SHAPE(atompair_nrg_table_reduced)),SP)
+                !$OMP END WORKSHARE
                 !$OMP END PARALLEL
+
 
 
         END SUBROUTINE Create_Atompair_Nrg_table

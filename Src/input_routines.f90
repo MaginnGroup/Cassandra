@@ -878,6 +878,10 @@ SUBROUTINE Get_Pair_Style
      ENDIF
 
   END DO
+  rcut_vdwsq = rcut_vdw*rcut_vdw
+  inv_rcut_vdwsq = 1.0_DP/rcut_vdwsq
+  rcut_vdwsq_sp = REAL(rcut_vdwsq,SP)
+  inv_rcut_vdwsq_sp = REAL(inv_rcut_vdwsq,SP)
 
   !Now determine the mixing rule to use
    CALL Get_Mixing_Rules
@@ -3859,7 +3863,8 @@ SUBROUTINE Get_Box_Info
   ALLOCATE(rcut_vdw(nbr_boxes) , rcut_coul(nbr_boxes))
   ALLOCATE(ron_charmm(nbr_boxes) , roff_charmm(nbr_boxes))
   ALLOCATE(ron_switch(nbr_boxes) , roff_switch(nbr_boxes))
-  ALLOCATE(rcut_max(nbr_boxes), rcut_vdwsq(nbr_boxes))
+  ALLOCATE(rcut_max(nbr_boxes), rcut_vdwsq(nbr_boxes), rcut_vdwsq_sp(nbr_boxes), inv_rcut_vdwsq_sp(nbr_boxes))
+  ALLOCATE(inv_rcut_vdwsq(nbr_boxes))
   ALLOCATE(ron_switch_sq(nbr_boxes) , roff_switch_sq(nbr_boxes))
   ALLOCATE(ron_charmmsq(nbr_boxes) , roff_charmmsq(nbr_boxes))
   ALLOCATE(switch_factor1(nbr_boxes) , switch_factor2(nbr_boxes))
@@ -5860,6 +5865,8 @@ SUBROUTINE Get_CBMC_Info
 
               IF (line_array(1) == 'kappa_ins' .OR. line_array(1) == 'Kappa_Ins') THEN
                  kappa_ins = String_To_Int(line_array(2))
+                 kappa_ins_pad8 = MERGE(kappa_ins,(kappa_ins/8+1)*8,MOD(kappa_ins,8)==0)
+                 kappa_ins_pad64 = MERGE(kappa_ins,(kappa_ins/64+1)*64,MOD(kappa_ins,64)==0)
                  WRITE(logunit,'(A,T35,I12)') 'Kappa for first fragment insertion ', kappa_ins
               ELSE IF (line_array(1) == 'kappa_rot' .OR. line_array(1) == 'Kappa_Rot') THEN
                  kappa_rot = String_To_Int(line_array(2))
@@ -5896,6 +5903,7 @@ SUBROUTINE Get_CBMC_Info
                       ELSE
                               atompair_nrg_res = 1000
                       END IF
+                      atompair_nrg_res_sp = REAL(atompair_nrg_res,SP)
                       WRITE(logunit,'(X,A)') 'Atom pair energy table with rsq resolution = ' // &
                               TRIM(Int_To_String(atompair_nrg_res)) // ' will be used.'
               ELSE

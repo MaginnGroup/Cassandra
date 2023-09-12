@@ -79,7 +79,7 @@ SUBROUTINE Widom_Subdriver
                                 CALL Livelist_Packing(.TRUE.,l_unitstride)
                         END IF
                         IF (l_sectors) CALL Sector_Setup
-                        IF (cbmc_cell_list_flag) CALL CBMC_Cell_List_Setup
+                        !IF (cbmc_cell_list_flag) CALL CBMC_Cell_List_Setup
                         IF (full_cell_list_flag) CALL Full_Cell_List_Setup
 !widom_timing                        IF (.NOT. omp_flag) CALL cpu_time(setup_time_e)
 !widom_timing                        !$ setup_time_e = omp_get_wtime()

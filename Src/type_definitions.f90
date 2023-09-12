@@ -56,6 +56,10 @@ MODULE Type_Definitions
   INTEGER, PARAMETER :: SP = REAL32
   INTEGER, PARAMETER :: DP = REAL64
 
+  ! Define REAL type infinity using hexadecimal literal constants
+  REAL(REAL32), PARAMETER :: infinity_sp = REAL(Z'7F800000',REAL32)
+  REAL(REAL64), PARAMETER :: infinity_dp = REAL(Z'7FF0000000000000',REAL64)
+
   ! Specify the limits on the parameters for various intramolecular function classes
   INTEGER, PARAMETER :: max_bond_params = 5
   INTEGER, PARAMETER :: max_angle_params = 5
@@ -452,6 +456,8 @@ MODULE Type_Definitions
     REAL(DP) :: volume, dv_max
 
     REAL(SP), DIMENSION(3) :: sp_diag_length, cell_length_recip, real_length_cells
+    REAL(SP), DIMENSION(3) :: cell_H_diag
+    REAL(DP), DIMENSION(3) :: cell_face_distance
     REAL(DP), DIMENSION(3,3) :: cell_length_inv
     INTEGER, DIMENSION(3) :: length_cells, sectorbound
 
@@ -459,6 +465,15 @@ MODULE Type_Definitions
   ! inserted
     INTEGER :: int_inner_shape
     REAL(DP) :: inner_volume, inner_radius, inner_radius2, inner_zmax, inner_zmin
+
+    INTEGER :: border_thickness(3)
+    INTEGER, DIMENSION(:,:,:), ALLOCATABLE :: cbmc_cell_mask
+
+    INTEGER, DIMENSION(3) :: length_bitcells
+    REAL(SP), DIMENSION(3) :: bit_cell_length_recip, real_length_bitcells
+    INTEGER(4), DIMENSION(:), ALLOCATABLE :: bitcell_int32_vec
+    INTEGER, DIMENSION(2:3) :: bitcell_dimfactor
+    REAL(DP) :: ideal_bitcell_length
 
  END TYPE Box_Class
 

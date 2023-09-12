@@ -76,6 +76,7 @@
   REAL(DP) :: sixbycut, eps, sigma, negsigsq, negsigbyr2, rterm, rterm2
 
 !******************************************************************************
+  l_zerotype_present = .FALSE.
   IF (verbose_log) THEN
      WRITE(logunit,*)
      WRITE(logunit,'(A)') 'Nonbond tables'
@@ -145,6 +146,7 @@
         ELSE
            ! atom has no atom_type
            nonbond_list(ia,is)%atom_type_number = 0
+           l_zerotype_present = .TRUE.
         ENDIF
         ! Get maximum and minimum charge for atom type
         IF (repeat_type) THEN
@@ -216,6 +218,8 @@
   ALLOCATE(vdw_param5_table(0:nbr_atomtypes,0:nbr_atomtypes), Stat=AllocateStatus)
   ALLOCATE(ppvdwp_table(0:nbr_atomtypes,0:nbr_atomtypes,5,nbr_boxes))
   ALLOCATE(ppvdwp_table2(5,0:nbr_atomtypes,0:nbr_atomtypes,nbr_boxes))
+  ALLOCATE(ppvdwp_table_sp(0:nbr_atomtypes,0:nbr_atomtypes,5,nbr_boxes))
+  ALLOCATE(ppvdwp_table2_sp(5,0:nbr_atomtypes,0:nbr_atomtypes,nbr_boxes))
 
   IF (AllocateStatus .NE. 0) THEN
      err_msg = ''
@@ -690,6 +694,8 @@
                         vdw_param2_table ** vdw_param4_table
                 ppvdwp_table(:,:,1,ibox) = ppvdwp_table(:,:,1,ibox) * &
                         vdw_param2_table ** vdw_param3_table
+                l_nonuniform_exponents = ANY(vdw_param3_table(1:,1:) .NE. vdw_param3_table(1,1)) &
+                        .OR. ANY (vdw_param4_table(1:,1:) .NE. vdw_param4_table(1,1))
                 ppvdwp_table(:,:,3,ibox) = vdw_param3_table * -0.5_DP
                 ppvdwp_table(:,:,4,ibox) = vdw_param4_table * -0.5_DP
                 IF (int_vdw_sum_style(ibox) == vdw_cut_shift) THEN
@@ -709,8 +715,55 @@
   !shape2 = shape1(order2) ! wrong
 
   ppvdwp_table2 = RESHAPE(ppvdwp_table, SHAPE(ppvdwp_table2), ORDER=order2)
+  ppvdwp_table2_sp = REAL(ppvdwp_table2,SP)
+  ppvdwp_table_sp = REAL(ppvdwp_table,SP)
 
-  max_rmin = DSQRT(MAXVAL(rminsq_table))
-  sp_rminsq_table = REAL(rminsq_table,SP)
+  IF (calc_rmin_flag) THEN
+          max_rmin = DSQRT(MAXVAL(rminsq_table))
+          sp_rminsq_table = REAL(rminsq_table,SP)
+          ALLOCATE(atomtype_max_rminsq(0:nbr_atomtypes))
+          ALLOCATE(atomtype_min_rminsq(0:nbr_atomtypes))
+          ALLOCATE(atomtype_max_rminsq_sp(0:nbr_atomtypes))
+          atomtype_max_rminsq = MAXVAL(rminsq_table(:, &
+                  which_true_from_zero(l_wsolute_atomtype(),nbr_atomtypes+1)),2)
+          atomtype_min_rminsq = MINVAL(rminsq_table(:, &
+                  which_true_from_zero(l_wsolute_atomtype(),nbr_atomtypes+1)),2)
+          atomtype_max_rminsq_sp = REAL(atomtype_max_rminsq,SP)
+          box_list%ideal_bitcell_length = SQRT(MAXVAL(atomtype_min_rminsq)) / 28.0_DP ! RHS scalar LHS vector with one element per box
+          solvents_or_types_maxind = nbr_atomtypes+1
+  ELSE
+          box_list%ideal_bitcell_length = rcut_lowsq / 28.0_DP
+          solvents_or_types_maxind = 0
+  END IF
+  CONTAINS
+          FUNCTION l_wsolute_atomtype()
+                  LOGICAL, DIMENSION(0:nbr_atomtypes) :: l_wsolute_atomtype
+                  INTEGER :: is
+                  l_wsolute_atomtype = .FALSE.
+                  DO is = 1, nspecies
+                        IF (species_list(is)%l_wsolute) THEN
+                                DO ia = 1, natoms(is)
+                                        l_wsolute_atomtype(nonbond_list(ia,is)%atom_type_number) = .TRUE.
+                                END DO
+                        END IF
+                  END DO
+          END FUNCTION l_wsolute_atomtype
+          FUNCTION which_true_from_zero(lvec,nl)
+                  INTEGER :: nl
+                  LOGICAL, DIMENSION(0:nl-1) :: lvec
+                  INTEGER :: nt
+                  INTEGER, DIMENSION(COUNT(lvec)) :: which_true_from_zero
+                  INTEGER :: i, tcount
+                  nt = COUNT(lvec)
+                  i = 0
+                  tcount = 0
+                  DO WHILE (tcount < nt)
+                        IF (lvec(i)) THEN
+                                tcount = tcount + 1
+                                which_true_from_zero(tcount) = i
+                        END IF
+                        i = i + 1
+                  END DO
+          END FUNCTION which_true_from_zero
 
 END SUBROUTINE Create_Nonbond_Table
