@@ -2191,7 +2191,7 @@ SUBROUTINE Get_Dihedral_Info(is)
                               rb_c(4) = 8.0_DP*signfactor*dihedral_param(1)
                               rb_c(2) = -rb_c(4)
                       CASE(5)
-                              ! works due to pentuple angle identity for cosine
+                              ! works due to quintuple angle identity for cosine
                               ! cos(5x) = 16*cos^5(x) - 20*cos^3(x) + 5*cos(x)
                               rb_c(0) = dihedral_param(1)
                               rb_c(1) = 5.0_DP*signfactor*dihedral_param(1)
