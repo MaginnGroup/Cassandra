@@ -371,7 +371,7 @@ CONTAINS
   USE Global_Variables
     INTEGER :: molecule,species
     REAL(DP) :: energy_dihed
-    INTEGER :: idihed, atom1, atom2, atom3, atom4
+    INTEGER :: idihed, idihed_rb, atom1, atom2, atom3, atom4
     REAL(DP) :: a0,a1,a2,a3,a4,a5,a6,a7,a8,edihed,phi,cosphi,r12dn,twophi,threephi
     REAL(DP) :: cosphi_vec(0:5)
 
@@ -386,19 +386,23 @@ CONTAINS
     energy_dihed = 0.0_DP
     cosphi_vec = 0.0_DP
     cosphi_vec(0) = 1.0_DP
-    DO idihed = 1, ndihedrals_rb(species)
-        IF (.NOT. ALL(these_atoms(dihedral_list(idihed,species)%atom)%exist)) CYCLE
-        CALL Get_Dihedral_Angle_COS(idihed,molecule,species,cosphi_vec(1))
+    DO idihed_rb = 1, species_list(species)%ndihedrals_rb
+        IF (.NOT. ALL(these_atoms(dihedral_list(idihed_rb,species)%atom)%exist)) CYCLE
+        CALL Get_Dihedral_Angle_COS(idihed_rb,molecule,species,cosphi_vec(1))
         cosphi_vec(2) = cosphi_vec(1)*cosphi_vec(1)
         cosphi_vec(3) = cosphi_vec(1)*cosphi_vec(2)
         cosphi_vec(4) = cosphi_vec(2)*cosphi_vec(2)
         cosphi_vec(5) = cosphi_vec(2)*cosphi_vec(3)
-        energy_dihed = energy_dihed + DOT_PRODUCT(cosphi_vec,dihedral_list(idihed,species)%rb_c)
+        energy_dihed = energy_dihed + DOT_PRODUCT(cosphi_vec,dihedral_list(idihed_rb,species)%rb_c)
     END DO
-    DO idihed=ndihedrals_rb(species)+1,ndihedrals(species)
+    DO idihed=idihed_rb, species_list(species)%ndihedrals_energetic
+       ! Verify that the atoms of this dihedral exist. This is required
+       ! for CBMC moves in which only a part of the molecule is present in
+       ! the simulation
+       IF (.NOT. ALL(these_atoms(dihedral_list(idihed,species)%atom)%exist)) CYCLE
+       CALL Get_Dihedral_Angle_COS(idihed,molecule,species,cosphi,r12dn)
+       phi = SIGN(ACOS(cosphi), r12dn)
        SELECT CASE(dihedral_list(idihed,species)%int_dipot_type)
-       CASE(int_none)
-          edihed = 0.0_DP
        CASE(int_opls)
           ! Note: this case should never occur now that all OPLS dihedrals are internally converted to RB torsions
           ! However, I left it here anyway just in case that changes somehow.
@@ -407,9 +411,6 @@ CONTAINS
           a1 = dihedral_list(idihed,species)%dihedral_param(2)
           a2 = dihedral_list(idihed,species)%dihedral_param(3)
           a3 = dihedral_list(idihed,species)%dihedral_param(4)
-
-          CALL Get_Dihedral_Angle_COS(idihed,molecule,species,cosphi,r12dn)
-          phi = SIGN(ACOS(cosphi), r12dn)
 
           twophi = 2.0_DP*phi
           threephi = 3.0_DP*phi
@@ -425,10 +426,6 @@ CONTAINS
           a1 = dihedral_list(idihed,species)%dihedral_param(2)
           a2 = dihedral_list(idihed,species)%dihedral_param(3)
 
-          CALL Get_Dihedral_Angle_COS(idihed,molecule,species,cosphi,r12dn)
-          phi = SIGN(ACOS(cosphi), r12dn)
-
-
           edihed = a0 * (1.0_DP + DCOS(a1*phi - a2))
 
        CASE(int_harmonic)
@@ -436,10 +433,6 @@ CONTAINS
 
           a0 = dihedral_list(idihed,species)%dihedral_param(1)
           a1 = dihedral_list(idihed,species)%dihedral_param(2)
-
-          CALL Get_Dihedral_Angle_COS(idihed,molecule,species,cosphi,r12dn)
-          phi = SIGN(ACOS(cosphi), r12dn)
-
 
           IF(a1 .GT. 0.0_DP .AND. phi .LT.0) phi = phi + twoPI
 

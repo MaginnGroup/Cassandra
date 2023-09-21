@@ -201,7 +201,7 @@ SUBROUTINE Get_Nspecies
      STOP
   END IF
 
-  ALLOCATE( ndihedrals(nspecies), ndihedrals_rb(nspecies), ndihedrals_uncombined(nspecies), nimpropers(nspecies), Stat=AllocateStatus)
+  ALLOCATE( ndihedrals(nspecies), nimpropers(nspecies), Stat=AllocateStatus )
   IF (AllocateStatus /= 0) THEN
      write(*,*)'memory could not be allocated for ndihedrals or nimpropers array'
      write(*,*)'stopping'
@@ -254,6 +254,9 @@ SUBROUTINE Get_Nspecies
   nangles = 0
   nangles_fixed = 0
   ndihedrals = 0
+  species_list%ndihedrals_uncombined = 0
+  species_list%ndihedrals_energetic = 0
+  species_list%ndihedrals_rb = 0
   nimpropers = 0
   nbr_vdw_params = 0
   nfragments = 0
@@ -2322,16 +2325,25 @@ SUBROUTINE Get_Dihedral_Info(is)
            END IF
 
         ENDDO
-        ndihedrals_rb(is) = n_rb_dihedrals
+        species_list(is)%ndihedrals_rb = n_rb_dihedrals
         n_combined_dihedrals = n_rb_dihedrals
         DO idihed = 1, ndihedrals(is)
-                IF (.NOT. uncombined_dihedral_list(idihed,is)%l_rb_formatted) THEN
+                IF (.NOT. (uncombined_dihedral_list(idihed,is)%l_rb_formatted &
+                        .OR. uncombined_dihedral_list(idihed,is)%int_dipot_type .EQ. int_none)) THEN
                         n_combined_dihedrals = n_combined_dihedrals + 1
                         dihedral_list(n_combined_dihedrals,is) = &
                                 uncombined_dihedral_list(idihed,is)
                 END IF
         END DO
-        ndihedrals_uncombined(is) = ndihedrals(is)
+        species_list(is)%ndihedrals_energetic = n_combined_dihedrals
+        DO idihed = 1, ndihedrals(is)
+                IF (uncombined_dihedral_list(idihed,is)%int_dipot_type .EQ. int_none) THEN
+                        n_combined_dihedrals = n_combined_dihedrals + 1
+                        dihedral_list(n_combined_dihedrals,is) = &
+                                uncombined_dihedral_list(idihed,is)
+                END IF
+        END DO
+        species_list(is)%ndihedrals_uncombined = ndihedrals(is)
         ndihedrals(is) = n_combined_dihedrals
 
         EXIT

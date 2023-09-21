@@ -285,7 +285,7 @@ USE Type_Definitions
   LOGICAL :: first_res_update, igas_flag
   INTEGER, DIMENSION(:), ALLOCATABLE :: max_molecules, natoms, nmol_start, nring_atoms, nexo_atoms
   INTEGER, DIMENSION(:), ALLOCATABLE :: nbonds, nangles, nangles_fixed
-  INTEGER, DIMENSION(:), ALLOCATABLE :: ndihedrals, ndihedrals_rb, ndihedrals_uncombined, nimpropers
+  INTEGER, DIMENSION(:), ALLOCATABLE :: ndihedrals, nimpropers
   INTEGER, DIMENSION(:), ALLOCATABLE :: nfragments, fragment_bonds
 
   ! array to hold the total number of molecules of each species in a given box

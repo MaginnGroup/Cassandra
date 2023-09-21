@@ -121,6 +121,9 @@ MODULE Type_Definitions
      INTEGER (KIND=INT64), DIMENSION(:), ALLOCATABLE :: insertions_in_step, widom_interval
      REAL(DP), DIMENSION(:), ALLOCATABLE :: widom_sum
 
+     ! # of RB dihedrals, # of dihedrals with nonzero energy, # of dihedrals before stacked dihedrals were combined
+     INTEGER :: ndihedrals_rb, ndihedrals_energetic, ndihedrals_uncombined
+
   END TYPE Species_Class
   !****************************************************************************
 
