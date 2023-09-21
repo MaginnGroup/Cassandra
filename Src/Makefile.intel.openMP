@@ -113,7 +113,7 @@ OBJS =  main.o \
   mcf_control.o \
   nptmc_driver.o \
   create_nonbond_table.o \
-  get_internal_coords.o \
+  internal_coordinate_routines.o \
   clean_abort.o \
   move_translate.o \
   random_generators.o \
@@ -143,7 +143,6 @@ OBJS =  main.o \
   move_regrow.o \
   ring_fragment_driver.o \
   move_atom.o \
-  chempot.o \
   pair_nrg_variables.o \
   move_ring_flip.o \
   move_identity_switch.o \

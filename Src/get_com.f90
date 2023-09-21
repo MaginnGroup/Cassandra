@@ -145,6 +145,7 @@ SUBROUTINE Get_Internal_Coordinates(alive,ispecies)
   
   USE Type_Definitions
   USE Global_Variables
+  USE Internal_Coordinate_Routines
   
   IMPLICIT NONE
   

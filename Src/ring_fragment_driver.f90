@@ -170,8 +170,8 @@ SUBROUTINE ID_Multiring_Atoms(is)
            ! this_atom is at the apex
            angle_id = angle_part_list(this_atom, is)%which_angle(j)
            ! check if other atoms in the angle are ring atoms
-           atom1 = angle_list(angle_id, is)%atom1
-           atom2 = angle_list(angle_id, is)%atom3
+           atom1 = angle_list(angle_id, is)%atom(1)
+           atom2 = angle_list(angle_id, is)%atom(3)
            IF (nonbond_list(atom1, is)%ring_atom .AND. nonbond_list(atom2, is)%ring_atom) THEN
               ! If yes, increment counter
               atom_ring_count = atom_ring_count + 1

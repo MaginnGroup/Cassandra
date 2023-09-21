@@ -201,9 +201,9 @@ SUBROUTINE Angle_Distortion
 !  CALL Get_Internal_Coordinates(lm,is)
 
   ! determine the atoms that define the angle
-  atom1 = angle_list(angle_to_move,is)%atom1
-  atom2 = angle_list(angle_to_move,is)%atom2
-  atom3 = angle_list(angle_to_move,is)%atom3
+  atom1 = angle_list(angle_to_move,is)%atom(1)
+  atom2 = angle_list(angle_to_move,is)%atom(2)
+  atom3 = angle_list(angle_to_move,is)%atom(3)
 
   ! We first determine the angle before the move and also the probability of observing this
   ! angle. 

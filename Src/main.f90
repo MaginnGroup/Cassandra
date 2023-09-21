@@ -84,6 +84,7 @@ PROGRAM Main
   USE Fragment_Growth
   USE Pair_Emax_Estimation
   !$ USE OMP_LIB
+  USE Internal_Coordinate_Routines
 
   IMPLICIT NONE
 

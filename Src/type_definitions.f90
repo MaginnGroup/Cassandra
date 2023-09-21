@@ -134,6 +134,9 @@ MODULE Type_Definitions
      ! Pair energy array index base
      INTEGER :: superlocate_base
 
+     ! # of RB dihedrals, # of dihedrals with nonzero energy, # of dihedrals before stacked dihedrals were combined
+     INTEGER :: ndihedrals_rb, ndihedrals_energetic, ndihedrals_uncombined
+
   END TYPE Species_Class
   !****************************************************************************
 
@@ -277,7 +280,7 @@ MODULE Type_Definitions
   TYPE Bond_Class
 
      ! bond list has dimensions (MAXVAL(nbonds), nspecies)
-     INTEGER :: atom1, atom2, int_bond_type
+     INTEGER :: atom(2), int_bond_type
      REAL(DP), DIMENSION(max_bond_params) :: bond_param
      CHARACTER(20) :: bond_potential_type
 
@@ -292,7 +295,7 @@ MODULE Type_Definitions
      ! angle list has dimensions (MAXVAL(nangles,nspecies)
 
      ! 1 - 2 - 3 forms an angle with 2 at the apex.
-     INTEGER :: atom1, atom2, atom3
+     INTEGER :: atom(3)
 
      REAL(DP), DIMENSION(max_angle_params) :: angle_param
      CHARACTER(20) :: angle_potential_type
@@ -313,10 +316,14 @@ MODULE Type_Definitions
      ! defined sequentially (1-2-3-4) along dihedral angle, and parameters for the
      ! potential are held in an array.
 
-     INTEGER :: atom1, atom2, atom3, atom4
+     INTEGER :: atom(4)
+     ! RB torsion series constants
+     REAL(DP) :: rb_c(0:5)
      REAL(DP), DIMENSION(max_dihedral_params) :: dihedral_param
      CHARACTER(20) :: dihedral_potential_type
      INTEGER :: int_dipot_type
+     ! Flag to tell whether dihedral is formatted as RB torsion
+     LOGICAL :: l_rb_formatted
 
   END TYPE Dihedral_Class
   !****************************************************************************
@@ -331,7 +338,7 @@ MODULE Type_Definitions
      ! Describes an improper dihedral: atom 1 is the central atom, and atoms 2
      ! through 4 are attached to atom 1, parameters are stored in an array
 
-     INTEGER :: atom1, atom2, atom3, atom4
+     INTEGER :: atom(4)
      REAL(DP), DIMENSION(max_improper_params) :: improper_param
      CHARACTER(20) :: improper_potential_type
      INTEGER :: int_improp_type

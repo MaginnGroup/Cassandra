@@ -228,10 +228,10 @@ SUBROUTINE Rotate_Dihedral
   dihedral_to_move = INT( rranf() * ndihedrals(is) ) + 1
 
   ! Determine the atoms that form the dihedral to move
-  atom1 = dihedral_list(dihedral_to_move,is)%atom1
-  atom2 = dihedral_list(dihedral_to_move,is)%atom2
-  atom3 = dihedral_list(dihedral_to_move,is)%atom3
-  atom4 = dihedral_list(dihedral_to_move,is)%atom4
+  atom1 = dihedral_list(dihedral_to_move,is)%atom(1)
+  atom2 = dihedral_list(dihedral_to_move,is)%atom(2)
+  atom3 = dihedral_list(dihedral_to_move,is)%atom(3)
+  atom4 = dihedral_list(dihedral_to_move,is)%atom(4)
 
   
   IF (.NOT. ALLOCATED(atoms_to_place_list)) ALLOCATE(atoms_to_place_list(MAXVAL(natoms)),Stat=AllocateStatus)
