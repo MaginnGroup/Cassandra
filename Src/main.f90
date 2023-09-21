@@ -82,6 +82,7 @@ PROGRAM Main
   USE Energy_Routines
   USE Simulation_Properties
   USE Fragment_Growth
+  USE Internal_Coordinate_Routines
 
   IMPLICIT NONE
 

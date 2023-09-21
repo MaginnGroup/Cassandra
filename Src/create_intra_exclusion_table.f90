@@ -107,8 +107,8 @@ SUBROUTINE Create_Intra_Exclusion_Table
      !
 
      DO kk=1,ndihedrals(is)
-        ii = dihedral_list(kk,is)%atom1
-        jj = dihedral_list(kk,is)%atom4
+        ii = dihedral_list(kk,is)%atom(1)
+        jj = dihedral_list(kk,is)%atom(4)
 
         vdw_intra_scale(ii,jj,is) = scale_1_4_vdw(is)
         vdw_intra_scale(jj,ii,is) = scale_1_4_vdw(is)
@@ -121,8 +121,8 @@ SUBROUTINE Create_Intra_Exclusion_Table
      ! 1-3 scaling via angles
      DO kk = 1,nangles(is)
 
-        ii = angle_list(kk,is)%atom1
-        jj = angle_list(kk,is)%atom3
+        ii = angle_list(kk,is)%atom(1)
+        jj = angle_list(kk,is)%atom(3)
 
         vdw_intra_scale(ii,jj,is) = scale_1_3_vdw(is)
         vdw_intra_scale(jj,ii,is) = scale_1_3_vdw(is)
@@ -134,8 +134,8 @@ SUBROUTINE Create_Intra_Exclusion_Table
      ! 1-2 scaling via bonds     
      DO kk=1,nbonds(is)
 
-        ii = bond_list(kk,is)%atom1
-        jj = bond_list(kk,is)%atom2
+        ii = bond_list(kk,is)%atom(1)
+        jj = bond_list(kk,is)%atom(2)
 
         vdw_intra_scale(ii,jj,is) = scale_1_2_vdw(is)
         vdw_intra_scale(jj,ii,is) = scale_1_2_vdw(is)

@@ -185,6 +185,7 @@ MODULE Energy_Routines
   USE File_Names
   USE Pair_Nrg_Routines
   USE IO_Utilities
+  USE Internal_Coordinate_Routines
  !$  USE OMP_LIB
 
   IMPLICIT NONE
@@ -255,8 +256,8 @@ CONTAINS
              WRITE(current_bond_length,'(F7.3)') length
              err_msg = ''
              err_msg(1) = 'Fixed bond is broken between atoms ' &
-                        // TRIM(Int_To_String(bond_list(ib,is)%atom1)) // ' and ' &
-                        // TRIM(Int_To_String(bond_list(ib,is)%atom2)) &
+                        // TRIM(Int_To_String(bond_list(ib,is)%atom(1))) // ' and ' &
+                        // TRIM(Int_To_String(bond_list(ib,is)%atom(2))) &
                         // ' of molecule ' // TRIM(Int_To_String(im)) &
                         // ' of species ' // TRIM(Int_To_String(is))
              err_msg(2) = 'Bond length in MCF:  ' // mcf_bond_length
@@ -323,9 +324,9 @@ CONTAINS
              WRITE(current_angle,'(F7.3)') theta
              err_msg = ''
              err_msg(1) = 'Fixed angle is broken between atoms ' &
-                        // TRIM(Int_To_String(angle_list(ia,is)%atom1)) // ' and ' &
-                        // TRIM(Int_To_String(angle_list(ia,is)%atom2)) // ' and ' &
-                        // TRIM(Int_To_String(angle_list(ia,is)%atom3)) &
+                        // TRIM(Int_To_String(angle_list(ia,is)%atom(1))) // ' and ' &
+                        // TRIM(Int_To_String(angle_list(ia,is)%atom(2))) // ' and ' &
+                        // TRIM(Int_To_String(angle_list(ia,is)%atom(3))) &
                         // ' of molecule ' // TRIM(Int_To_String(im)) &
                         // ' of species ' // TRIM(Int_To_String(is))
              err_msg(2) = 'Angle in MCF:  ' // mcf_angle
@@ -371,9 +372,10 @@ CONTAINS
     INTEGER :: molecule,species
     REAL(DP) :: energy_dihed
     INTEGER :: idihed, atom1, atom2, atom3, atom4
-    REAL(DP) :: a0,a1,a2,a3,a4,a5,a6,a7,a8,edihed,phi,twophi,threephi
+    REAL(DP) :: a0,a1,a2,a3,a4,a5,a6,a7,a8,edihed,phi,cosphi,r12dn,twophi,threephi
+    REAL(DP) :: cosphi_vec(0:5)
 
-    TYPE(Atom_Class), POINTER :: these_atoms(:)
+    TYPE(Atom_Class), POINTER, CONTIGUOUS :: these_atoms(:)
 
     IF (widom_active) THEN
             these_atoms => widom_atoms
@@ -382,82 +384,69 @@ CONTAINS
     END IF
 
     energy_dihed = 0.0_DP
-    DO idihed=1,ndihedrals(species)
-       IF (dihedral_list(idihed,species)%int_dipot_type == int_none ) THEN
+    cosphi_vec = 0.0_DP
+    cosphi_vec(0) = 1.0_DP
+    DO idihed = 1, ndihedrals_rb(species)
+        IF (.NOT. ALL(these_atoms(dihedral_list(idihed,species)%atom)%exist)) CYCLE
+        CALL Get_Dihedral_Angle_COS(idihed,molecule,species,cosphi_vec(1))
+        cosphi_vec(2) = cosphi_vec(1)*cosphi_vec(1)
+        cosphi_vec(3) = cosphi_vec(1)*cosphi_vec(2)
+        cosphi_vec(4) = cosphi_vec(2)*cosphi_vec(2)
+        cosphi_vec(5) = cosphi_vec(2)*cosphi_vec(3)
+        energy_dihed = energy_dihed + DOT_PRODUCT(cosphi_vec,dihedral_list(idihed,species)%rb_c)
+    END DO
+    DO idihed=ndihedrals_rb(species)+1,ndihedrals(species)
+       SELECT CASE(dihedral_list(idihed,species)%int_dipot_type)
+       CASE(int_none)
           edihed = 0.0_DP
-       ELSEIF (dihedral_list(idihed,species)%int_dipot_type == int_opls ) THEN
-
-          ! Check to see if the atoms of this dihedral exists. This is required
-          ! for CBMC moves in which only a part of the molecule is present in
-          ! the simulation
-
-          atom1 = dihedral_list(idihed,species)%atom1
-          atom2 = dihedral_list(idihed,species)%atom2
-          atom3 = dihedral_list(idihed,species)%atom3
-          atom4 = dihedral_list(idihed,species)%atom4
-
-          IF ( .NOT. these_atoms(atom1)%exist) CYCLE
-          IF ( .NOT. these_atoms(atom2)%exist) CYCLE
-          IF ( .NOT. these_atoms(atom3)%exist) CYCLE
-          IF ( .NOT. these_atoms(atom4)%exist) CYCLE
-
-
+       CASE(int_opls)
+          ! Note: this case should never occur now that all OPLS dihedrals are internally converted to RB torsions
+          ! However, I left it here anyway just in case that changes somehow.
+          IF (.NOT. ALL(these_atoms(dihedral_list(idihed,species)%atom)%exist)) CYCLE
           a0 = dihedral_list(idihed,species)%dihedral_param(1)
           a1 = dihedral_list(idihed,species)%dihedral_param(2)
           a2 = dihedral_list(idihed,species)%dihedral_param(3)
           a3 = dihedral_list(idihed,species)%dihedral_param(4)
 
-          CALL Get_Dihedral_Angle(idihed,molecule,species,phi)
+          CALL Get_Dihedral_Angle_COS(idihed,molecule,species,cosphi,r12dn)
+          phi = SIGN(ACOS(cosphi), r12dn)
 
           twophi = 2.0_DP*phi
           threephi = 3.0_DP*phi
           edihed =  a0 + a1*(1.0_DP+COS(phi)) + &
                a2*(1.0_DP-COS(twophi)) + a3*(1.0_DP+COS(threephi))
-
-
-       ELSEIF (dihedral_list(idihed,species)%int_dipot_type == int_charmm ) THEN
-
-          atom1 = dihedral_list(idihed,species)%atom1
-          atom2 = dihedral_list(idihed,species)%atom2
-          atom3 = dihedral_list(idihed,species)%atom3
-          atom4 = dihedral_list(idihed,species)%atom4
-
-          IF ( .NOT. these_atoms(atom1)%exist) CYCLE
-          IF ( .NOT. these_atoms(atom2)%exist) CYCLE
-          IF ( .NOT. these_atoms(atom3)%exist) CYCLE
-          IF ( .NOT. these_atoms(atom4)%exist) CYCLE
+       CASE(int_charmm)
+          ! Check to see if the atoms of this dihedral exists. This is required
+          ! for CBMC moves in which only a part of the molecule is present in
+          ! the simulation
+          IF (.NOT. ALL(these_atoms(dihedral_list(idihed,species)%atom)%exist)) CYCLE
 
           a0 = dihedral_list(idihed,species)%dihedral_param(1)
           a1 = dihedral_list(idihed,species)%dihedral_param(2)
           a2 = dihedral_list(idihed,species)%dihedral_param(3)
 
-          CALL Get_Dihedral_Angle(idihed,molecule,species,phi)
+          CALL Get_Dihedral_Angle_COS(idihed,molecule,species,cosphi,r12dn)
+          phi = SIGN(ACOS(cosphi), r12dn)
+
 
           edihed = a0 * (1.0_DP + DCOS(a1*phi - a2))
 
-       ELSEIF (dihedral_list(idihed,species)%int_dipot_type == int_harmonic ) THEN
-
-          atom1 = dihedral_list(idihed,species)%atom1
-          atom2 = dihedral_list(idihed,species)%atom2
-          atom3 = dihedral_list(idihed,species)%atom3
-          atom4 = dihedral_list(idihed,species)%atom4
-
-          IF ( .NOT. these_atoms(atom1)%exist) CYCLE
-          IF ( .NOT. these_atoms(atom2)%exist) CYCLE
-          IF ( .NOT. these_atoms(atom3)%exist) CYCLE
-          IF ( .NOT. these_atoms(atom4)%exist) CYCLE
+       CASE(int_harmonic)
+          IF (.NOT. ALL(these_atoms(dihedral_list(idihed,species)%atom)%exist)) CYCLE
 
           a0 = dihedral_list(idihed,species)%dihedral_param(1)
           a1 = dihedral_list(idihed,species)%dihedral_param(2)
 
-          CALL Get_Dihedral_Angle(idihed,molecule,species,phi)
+          CALL Get_Dihedral_Angle_COS(idihed,molecule,species,cosphi,r12dn)
+          phi = SIGN(ACOS(cosphi), r12dn)
+
 
           IF(a1 .GT. 0.0_DP .AND. phi .LT.0) phi = phi + twoPI
 
           edihed = a0 * (phi - a1)**2
 
           ! Add more potential functions here.
-       ENDIF
+       END SELECT
        energy_dihed = energy_dihed + edihed
     ENDDO
 

@@ -12,6 +12,7 @@ SUBROUTINE Load_Next_Frame(end_reached)
         USE Simulation_Properties
         USE IO_Utilities
         USE Energy_Routines
+        USE Internal_Coordinate_Routines
         !$ USE OMP_LIB
 
         IMPLICIT NONE

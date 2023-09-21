@@ -260,6 +260,7 @@ USE Type_Definitions
   INTEGER, PARAMETER :: int_harmonic = 3
   INTEGER, PARAMETER :: int_cvff = 4
   INTEGER, PARAMETER :: int_amber = 5
+  INTEGER, PARAMETER :: int_rb_torsion = 6
 
   ! Define integers for molecule type
   INTEGER, PARAMETER :: int_noexist = -1
@@ -284,7 +285,7 @@ USE Type_Definitions
   LOGICAL :: first_res_update, igas_flag
   INTEGER, DIMENSION(:), ALLOCATABLE :: max_molecules, natoms, nmol_start, nring_atoms, nexo_atoms
   INTEGER, DIMENSION(:), ALLOCATABLE :: nbonds, nangles, nangles_fixed
-  INTEGER, DIMENSION(:), ALLOCATABLE :: ndihedrals, nimpropers
+  INTEGER, DIMENSION(:), ALLOCATABLE :: ndihedrals, ndihedrals_rb, ndihedrals_uncombined, nimpropers
   INTEGER, DIMENSION(:), ALLOCATABLE :: nfragments, fragment_bonds
 
   ! array to hold the total number of molecules of each species in a given box
@@ -353,7 +354,7 @@ USE Type_Definitions
   TYPE(Angle_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: angle_list
 
   ! Array with dimensions (ndihedrals, nspecies)
-  TYPE(Dihedral_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: dihedral_list
+  TYPE(Dihedral_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: dihedral_list, uncombined_dihedral_list
 
   ! Array with dimensions (nimpropers, nspecies)
   TYPE(Improper_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: improper_list

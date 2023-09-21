@@ -87,7 +87,7 @@ OBJS =  main.o \
   mcf_control.o \
   nptmc_driver.o \
   create_nonbond_table.o \
-  get_internal_coords.o \
+  internal_coordinate_routines.o \
   clean_abort.o \
   move_translate.o \
   random_generators.o \
