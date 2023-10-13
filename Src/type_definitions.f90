@@ -73,6 +73,15 @@ MODULE Type_Definitions
   ! Place a limit on the number of angle evaluations for probability calculations
   INTEGER, PARAMETER :: nregions = 1000
 
+
+  REAL(DP), PARAMETER :: PI=3.1415926536_DP
+  REAL(DP), PARAMETER :: twoPI = 6.2831853072_DP
+  REAL(DP), PARAMETER :: rootPI = 1.7724538509_DP
+  REAL(DP), PARAMETER :: halfPI = 0.5_DP*PI
+  REAL(DP), PARAMETER :: threehalfPI_DP = 3.0_DP*halfPI
+  REAL(SP), PARAMETER :: twoPI_SP = REAL(twoPI,SP)
+  REAL(SP), PARAMETER :: PI_SP = REAL(PI,SP)
+
   ! Define some classes to hold variables associated with different objects
   ! in the simulation. These will be converted to lists in global_variables for speed.
 
@@ -114,7 +123,7 @@ MODULE Type_Definitions
      LOGICAL :: linear
      ! NR: Adding to have an option not to include
      ! Coul interaction during biased growth
-     LOGICAL :: L_Coul_CBMC
+     LOGICAL :: L_Coul_CBMC = .TRUE.
      ! N.B. natoms, max_molecules, etc. are in a separate arrays
      ! NR: for insertion style
      LOGICAL :: lcom
@@ -136,6 +145,22 @@ MODULE Type_Definitions
 
      ! # of RB dihedrals, # of dihedrals with nonzero energy, # of dihedrals before stacked dihedrals were combined
      INTEGER :: ndihedrals_rb, ndihedrals_energetic, ndihedrals_uncombined
+
+     ! CBMC biasing info
+     INTEGER :: kappa_ins = 0, kappa_ins_pad8, kappa_ins_pad64
+     INTEGER :: kappa_dih = 0, kappa_dih_pad8, kappa_dih_pad32
+     INTEGER :: kappa_rot = 0
+     INTEGER :: nfragments
+     REAL(DP) :: theta_step, log_kappa_ins, log_kappa_rot, ln_pbias_dih_const
+     REAL(SP) :: theta_step_sp
+     LOGICAL :: need_kappa_ins = .FALSE., need_kappa_dih = .FALSE.
+
+     REAL(DP), DIMENSION(:,:), ALLOCATABLE :: sincos_lintheta_dp
+     REAL(SP), DIMENSION(:,:), ALLOCATABLE :: sincos_lintheta_sp
+
+     CONTAINS
+             PROCEDURE setup_CBMC_kappas => Setup_Species_kappas
+             PROCEDURE write_CBMC_kappas => Write_Species_kappas
 
   END TYPE Species_Class
   !****************************************************************************
@@ -320,10 +345,15 @@ MODULE Type_Definitions
      ! RB torsion series constants
      REAL(DP) :: rb_c(0:5)
      REAL(DP), DIMENSION(max_dihedral_params) :: dihedral_param
+     REAL(SP) :: rb_c_sp(0:5)
+     REAL(SP), DIMENSION(max_dihedral_params) :: dihedral_param_sp
      CHARACTER(20) :: dihedral_potential_type
      INTEGER :: int_dipot_type
      ! Flag to tell whether dihedral is formatted as RB torsion
      LOGICAL :: l_rb_formatted
+     CONTAINS
+             PROCEDURE :: SP_Convert => Convert_Dihedral_DP_to_SP
+             PROCEDURE :: Init => Initialize_Dihedral_Class
 
   END TYPE Dihedral_Class
   !****************************************************************************
@@ -664,5 +694,62 @@ MODULE Type_Definitions
      REAL(DP) :: exp_dE
      REAL(DP) :: exp_dE_ratio
   END TYPE Rotation_Class
+
+  PRIVATE Convert_Dihedral_DP_to_SP, Initialize_Dihedral_Class, Setup_Species_Kappas, Write_Species_Kappas
+
+  CONTAINS
+          ELEMENTAL SUBROUTINE Convert_Dihedral_DP_to_SP(this)
+                  CLASS(Dihedral_Class), INTENT(INOUT) :: this
+                  this%rb_c_sp = REAL(this%rb_c,SP)
+                  this%dihedral_param_sp = REAL(this%dihedral_param,SP)
+          END SUBROUTINE Convert_Dihedral_DP_to_SP
+          ELEMENTAL SUBROUTINE Initialize_Dihedral_Class(this)
+                  CLASS(Dihedral_Class), INTENT(INOUT) :: this
+                  this%atom = 0
+                  this%rb_c = 0.0_DP
+                  this%dihedral_param = 0.0_DP
+                  this%rb_c_sp = 0.0 ! Maybe this should be initalized to NaN, so there's a clear error if it wasn't converted first
+                  this%dihedral_param_sp = 0.0
+                  this%dihedral_potential_type = ""
+                  this%int_dipot_type = 0
+                  this%l_rb_formatted = .FALSE.
+          END SUBROUTINE Initialize_Dihedral_Class
+          ELEMENTAL SUBROUTINE Setup_Species_Kappas(this)
+                  CLASS(Species_Class), INTENT(INOUT) :: this
+                  INTEGER :: i
+                  REAL(DP) :: theta
+                  this%kappa_ins_pad8 = IAND(this%kappa_ins+7,NOT(7))
+                  this%kappa_ins_pad64 = IAND(this%kappa_ins+63,NOT(63))
+                  this%kappa_dih_pad8 = IAND(this%kappa_dih+7,NOT(7))
+                  this%kappa_dih_pad32 = IAND(this%kappa_dih+31,NOT(31))
+                  IF (this%need_kappa_ins) this%log_kappa_ins = LOG(REAL(this%kappa_ins,DP))
+                  IF (this%kappa_rot > 0) this%log_kappa_rot = LOG(REAL(this%kappa_rot,DP))
+                  IF (this%need_kappa_dih) THEN
+                          this%ln_pbias_dih_const = REAL(this%nfragments-1,DP)*LOG(REAL(this%kappa_dih,DP))
+                          IF (ALLOCATED(this%sincos_lintheta_dp)) DEALLOCATE(this%sincos_lintheta_dp)
+                          IF (ALLOCATED(this%sincos_lintheta_sp)) DEALLOCATE(this%sincos_lintheta_sp)
+                          ALLOCATE(this%sincos_lintheta_dp(this%kappa_dih_pad8,2))
+                          ALLOCATE(this%sincos_lintheta_sp(this%kappa_dih_pad8,2))
+                          this%theta_step = twoPI/this%kappa_dih
+                          this%theta_step_sp = REAL(this%theta_step,SP)
+                          !DIR$ VECTOR ALIGNED
+                          DO i = 0, this%kappa_dih_pad8-1
+                                theta = i*this%theta_step
+                                this%sincos_lintheta_dp(i+1,1) = SIN(theta)
+                                this%sincos_lintheta_dp(i+1,2) = COS(theta)
+                          END DO
+                          this%sincos_lintheta_sp = REAL(this%sincos_lintheta_dp,SP)
+                  END IF
+          END SUBROUTINE Setup_Species_Kappas
+          SUBROUTINE Write_Species_Kappas(this,outputunit)
+                  CLASS(Species_Class), INTENT(INOUT) :: this
+                  INTEGER, INTENT(IN) :: outputunit
+                  IF (this%need_kappa_ins) THEN
+                          WRITE(outputunit,'(X,A,T35,I12)') 'Kappa for first fragment insertion ', this%kappa_ins
+                  END IF
+                  IF (this%need_kappa_dih) THEN
+                          WRITE(outputunit,'(X,A,T35,I12)') 'Kappa for dihedral selection ', this%kappa_dih
+                  END IF
+          END SUBROUTINE Write_Species_Kappas
 
 END MODULE Type_Definitions

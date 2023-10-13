@@ -450,18 +450,6 @@ SUBROUTINE GEMC_Particle_Transfer
     dE_in = dE_intra_in + dE_inter_in
     dE_frag_in = E_angle_in + E_ring_frag_in
 
-    IF(cpcollect) THEN
-    
-       potw = 1.0_DP / (P_forward * kappa_ins*kappa_rot*kappa_dih &
-            ** (nfragments(is)-1)) 
-       CP_energy = dE_in - dE_frag_in
-     
-       chpot(is,box_in) = chpot(is,box_in) &
-        + potw * (box_list(box_in)%volume &
-        / (REAL(nmols(is,box_in)))) * DEXP(-beta(box_in) * CP_energy)
-
-    END IF
-
     !*****************************************************************************
     ! Step 6) Calculate the change in box_out's potential energy from deleting
     !         alive

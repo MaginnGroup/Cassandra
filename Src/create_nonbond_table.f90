@@ -732,8 +732,15 @@
           box_list%ideal_bitcell_length = SQRT(MAXVAL(atomtype_min_rminsq)) / 28.0_DP ! RHS scalar LHS vector with one element per box
           solvents_or_types_maxind = nbr_atomtypes+1
   ELSE
-          box_list%ideal_bitcell_length = rcut_lowsq / 28.0_DP
+          box_list%ideal_bitcell_length = rcut_low / 28.0_DP
           solvents_or_types_maxind = 0
+  END IF
+  box_list%ideal_bitcell_length = MAX(min_ideal_bitcell_length,box_list%ideal_bitcell_length)
+  IF (bitcell_flag .AND. .NOT. read_atompair_rminsq) THEN
+        DO ibox = 1, nbr_boxes
+                WRITE(logunit, '(A,F5.3,A)') "Setting box " // Int_To_String(ibox) // " ideal bitcell length = ", &
+                        box_list(ibox)%ideal_bitcell_length, " Angstroms"
+        END DO
   END IF
   CONTAINS
           FUNCTION l_wsolute_atomtype()

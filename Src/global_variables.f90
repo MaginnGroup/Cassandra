@@ -121,6 +121,9 @@ USE Type_Definitions
   INTEGER, PARAMETER :: charge_ewald = 3
   INTEGER, PARAMETER :: charge_minimum = 4
   INTEGER, PARAMETER :: charge_dsf = 5
+  INTEGER, PARAMETER :: charge_sf = 6
+
+  LOGICAL, PARAMETER :: cbmc_charge_sf_flag = .FALSE. ! eventually make this a variable the user can set, not a parameter
 
   REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_cbmc, rcut_cbmcsq
   REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_vdw, rcut_coul, ron_charmm, roff_charmm, rcut_max
@@ -181,9 +184,13 @@ USE Type_Definitions
  !***************************************************************
   !Conversion factors and constants
 
-  REAL(DP), PARAMETER :: PI=3.1415926536_DP
-  REAL(DP), PARAMETER :: twoPI = 6.2831853072_DP
-  REAL(DP), PARAMETER :: rootPI = 1.7724538509_DP
+  !REAL(DP), PARAMETER :: PI=3.1415926536_DP
+  !REAL(DP), PARAMETER :: twoPI = 6.2831853072_DP
+  !REAL(DP), PARAMETER :: rootPI = 1.7724538509_DP
+  !REAL(DP), PARAMETER :: halfPI = 0.5_DP*PI
+  !REAL(DP), PARAMETER :: threehalfPI_DP = 3.0_DP*halfPI
+  !REAL(SP), PARAMETER :: twoPI_SP = REAL(twoPI,SP)
+  !REAL(SP), PARAMETER :: PI_SP = REAL(PI,SP)
 
   !KBOLTZ is Boltzmann's constant in atomic units amu A^2 / (K ps^2)
   REAL(DP), PARAMETER :: kboltz = 0.8314472_DP
@@ -234,8 +241,8 @@ USE Type_Definitions
   REAL(DP), PARAMETER :: errel = 1.0E-5_DP
 
   ! Parameter identifying number of trials
-
-  INTEGER :: kappa_ins, kappa_rot, kappa_dih
+  ! Moved to Species_Class as its attributes
+  !INTEGER :: kappa_ins, kappa_rot, kappa_dih, kappa_dih_pad8, kappa_dih_pad32
 
   ! Parameters identifying move in Ewald calculations
 
@@ -395,7 +402,12 @@ USE Type_Definitions
 
   ! Array for storing coordinates of fragments
   !TYPE(Frag_Library_Class), DIMENSION(:), ALLOCATABLE :: frag_library
-  TYPE(Library_Coords_Class), DIMENSION(:), ALLOCATABLE :: library_coords
+  !TYPE(Library_Coords_Class), DIMENSION(:), ALLOCATABLE :: library_coords
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: library_coords
+  ! library_coords_dim1 is the size of library_coords in the first dimension
+  !      since 1, 2, and 3 on the first axis correspond to x, y, and z, it must be at least 3,
+  !      but 4 or 8 might be desirable for the sake of vectorization or alignment.
+  INTEGER, PARAMETER :: library_coords_dim1 = 4
 
   ! Array for storing the energy of each configuration of each fragment
   ! nrg_frag has dimension (number of fragment )
@@ -508,8 +520,6 @@ USE Type_Definitions
 
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: prop_per_file
   LOGICAL, DIMENSION(:,:), ALLOCATABLE :: first_open
-
-  LOGICAL :: cpcollect  !  logical determining if the chemical potential info is collected
 
   LOGICAL :: accept
 
@@ -671,6 +681,31 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
 !widom_timing  !$OMP THREADPRIVATE(n_clo, n_not_clo, n_nrg_overlap)
 !widom_timing  !$OMP THREADPRIVATE(cell_list_time, normal_overlap_time, non_overlap_time, nrg_overlap_time)
 
+  ! widom timing variables and parameters
+  LOGICAL, PARAMETER :: widom_timing = .TRUE.
+  REAL(DP) :: trial_loop_ins_time, cell_list_ins_time, cell_list_cbmc_nrg_ins_time
+  REAL(DP) :: noncell_cbmc_nrg_ins_time, rng_ins_time, cbmc_setup_ins_time
+  REAL(DP) :: cbmc_returnzone_ins_time, cbmc_endzone_ins_time
+  REAL(DP) :: cbmc_fragment_placement_time, cbmc_dih_time, bitcell_overlap_ins_time
+  REAL(DP) :: widom_ewald_recip_time
+  INTEGER(INT64) :: cbmc_nonoverlap_ins_count, cbmc_dih_count, bitcell_overlap_ins_checks
+  INTEGER(INT64) :: cell_list_ins_checks, cell_list_cbmc_nrg_ins_checks, bitcell_overlap_ins_overlaps
+  INTEGER(INT64) :: nrg_ins_overlaps
+  !$OMP THREADPRIVATE(trial_loop_ins_time, cell_list_ins_time, cell_list_cbmc_nrg_ins_time)
+  !$OMP THREADPRIVATE(noncell_cbmc_nrg_ins_time,rng_ins_time,cbmc_setup_ins_time)
+  !$OMP THREADPRIVATE(cbmc_returnzone_ins_time, cbmc_endzone_ins_time)
+  !$OMP THREADPRIVATE(bitcell_overlap_ins_time, bitcell_overlap_ins_checks, bitcell_overlap_ins_overlaps)
+  !$OMP THREADPRIVATE(cbmc_nonoverlap_ins_count, cbmc_dih_count)
+  !$OMP THREADPRIVATE(cell_list_ins_checks, cell_list_cbmc_nrg_ins_checks)
+  !$OMP THREADPRIVATE(total_cbmc_time, widom_ewald_recip_time, nrg_ins_overlaps)
+  REAL(DP) :: trial_loop_ins_time_redux, cell_list_ins_time_redux, cell_list_cbmc_nrg_ins_time_redux
+  REAL(DP) :: noncell_cbmc_nrg_ins_time_redux, rng_ins_time_redux, cbmc_setup_ins_time_redux
+  REAL(DP) :: cbmc_returnzone_ins_time_redux, cbmc_endzone_ins_time_redux
+  REAL(DP) :: cbmc_fragment_placement_time_redux, cbmc_dih_time_redux, bitcell_overlap_ins_time_redux
+  INTEGER(INT64) :: cbmc_nonoverlap_ins_count_redux, cbmc_dih_count_redux, bitcell_overlap_ins_checks_redux
+  INTEGER(INT64) :: cell_list_ins_checks_redux, cell_list_cbmc_nrg_ins_checks_redux, bitcell_overlap_ins_overlaps_redux
+  REAL(DP) :: noncbmc_time_total, total_cbmc_time_redux, widom_ewald_recip_time_redux, nrg_ins_overlaps_redux
+
   !!! atompair energy table global variables
   INTEGER :: atompair_nrg_res
   REAL(SP) :: atompair_nrg_res_sp
@@ -745,13 +780,35 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
 
 
 
-  LOGICAL, PARAMETER :: bitcell_flag = .TRUE.
+  LOGICAL :: bitcell_flag
+  REAL(DP) :: min_ideal_bitcell_length
   INTEGER :: solvents_or_types_maxind
 
 
-  INTEGER :: kappa_ins_pad8, kappa_ins_pad64
+  ! Moved to Species_Class as its attributes
+  !INTEGER :: kappa_ins_pad8, kappa_ins_pad64
 
   LOGICAL :: l_zerotype_present
+
+
+
+
+  ! Moved to Species_Class as its attributes
+  !REAL(DP), DIMENSION(:,:), ALLOCATABLE :: sincos_lintheta_dp
+  !REAL(SP), DIMENSION(:,:), ALLOCATABLE :: sincos_lintheta_sp
+
+
+  ! Use these parameters below to efficiently round positive integers up (not down) to the nearest multiple of 8, 16, etc.
+  ! If the original integer is already a multiple of 8, 16, etc., the answer is the same as the original number.
+  ! It actually works as long as the correct answer isn't negative, even if the original integer is 0 or slightly negative
+  ! Example: n_pad8 = IAND(n+7,pad8mask), n_pad64 = IAND(n+63,pad64mask)
+  ! In those examples, n_pad8 is a multiple of 8, n_pad64 is a multiple of 64, and n is the original number to be "padded"
+  ! Note that 7 is equivalent to MASKR(3) and 63 is equivalent to MASKR(6)
+  ! This technique only works for padding to positive multiples of power of 2
+  INTEGER(INT32), PARAMETER :: pad8mask = NOT(MASKR(3,INT32))
+  INTEGER(INT32), PARAMETER :: pad16mask = NOT(MASKR(4,INT32))
+  INTEGER(INT32), PARAMETER :: pad32mask = NOT(MASKR(5,INT32))
+  INTEGER(INT32), PARAMETER :: pad64mask = NOT(MASKR(6,INT32))
 
 END MODULE Global_Variables
 

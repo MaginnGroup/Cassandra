@@ -199,14 +199,14 @@ SUBROUTINE Deletion
   !   * the number of trial dihedrals, kappa_dih, for each dihedral.
 
   ln_pbias = ln_pbias + ln_pseq
-  ln_pbias = ln_pbias + DLOG(REAL(kappa_ins,DP))
+  ln_pbias = ln_pbias + species_list(is)%log_kappa_ins
 
-  IF (kappa_rot /= 0 ) THEN
-     ln_pbias = ln_pbias + DLOG(REAL(kappa_rot,DP))
+  IF (species_list(is)%kappa_rot > 0 ) THEN
+     ln_pbias = ln_pbias + species_list(is)%log_kappa_rot
   END IF
 
-  IF (kappa_dih /= 0 ) THEN
-     ln_pbias = ln_pbias + REAL(nfragments(is)-1,DP) * DLOG(REAL(kappa_dih,DP))
+  IF (species_list(is)%need_kappa_dih) THEN
+     ln_pbias = ln_pbias + species_list(is)%ln_pbias_dih_const
   END IF
   
   !*****************************************************************************

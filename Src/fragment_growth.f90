@@ -70,7 +70,7 @@ CONTAINS
 
 !*******************************************************************************
 SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
-              ln_pseq,ln_pbias,nrg_ring_frag_total,cbmc_overlap)
+              ln_pseq,ln_pbias,nrg_ring_frag_total,cbmc_overlap,E_interfrag)
 !*******************************************************************************
 !
 ! PURPOSE: build the molecule from scratch
@@ -117,6 +117,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   REAL(DP), INTENT(OUT) :: nrg_ring_frag_total ! potential energy of the
                                                ! isolated ring fragment
   LOGICAL, INTENT(INOUT) :: cbmc_overlap ! did all trials have core overlap?
+  REAL(DP), INTENT(OUT), OPTIONAL :: E_interfrag ! total intramolecular, interfragment energy of molecule
 
   ! Local declarations
   INTEGER :: i, j, this_atom      ! atom indices
@@ -137,7 +138,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                                            ! first fragment
   REAL(DP) :: dx, dy, dz
 
-  REAL(DP), DIMENSION(kappa_ins_pad8) :: xcom_trial, ycom_trial, zcom_trial
+  REAL(DP), DIMENSION(species_list(is)%kappa_ins_pad8) :: xcom_trial, ycom_trial, zcom_trial
 
   LOGICAL :: overlap ! TRUE if there is core overlap between a trial atom 
                      ! position and a an atom already in the box
@@ -149,13 +150,13 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
 
 
   ! Variables associated with the CBMC part
-  INTEGER :: itrial, trial, frag_type, n_frag_atoms
+  INTEGER :: itrial, trial, frag_type, ifrag_natoms
 
-  REAL(DP) :: weight(kappa_ins_pad8), rand_no, E_dihed
+  REAL(DP) :: weight(species_list(is)%kappa_ins_pad8), rand_no, E_dihed
   REAL(DP) :: E_intra_vdw, E_intra_qq, E_inter_vdw, E_inter_qq, E_total
-  REAL(DP) :: nrg(kappa_ins_pad8), nrg_kBT, nrg_ring_frag
+  REAL(DP) :: nrg(species_list(is)%kappa_ins_pad8), nrg_kBT, nrg_ring_frag
 
-  LOGICAL :: del_overlap, overlap_trial(kappa_ins_pad8)
+  LOGICAL :: del_overlap, overlap_trial(species_list(is)%kappa_ins_pad8)
 
   !Type(Atom_Class) :: rtrial(MAXVAL(natoms),0:MAX(kappa_ins,kappa_rot,kappa_dih))
   ! Slit pore variables
@@ -178,27 +179,27 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   INTEGER :: n_good_trials, n_good_trials_old
 
   REAL(DP) :: rtrial0(3,MAXVAL(frag_list(1:nfragments(is),is)%natoms))
-  REAL(DP) :: rtrial(kappa_ins_pad8,3,MAXVAL(frag_list(1:nfragments(is),is)%natoms))
-  REAL(DP), DIMENSION(kappa_ins_pad8,3) :: xyz_rand_dp
-  REAL(SP), DIMENSION(kappa_ins_pad8,3) :: xyz_rand
+  REAL(DP) :: rtrial(species_list(is)%kappa_ins_pad8,3,MAXVAL(frag_list(1:nfragments(is),is)%natoms))
+  REAL(DP), DIMENSION(species_list(is)%kappa_ins_pad8,3) :: xyz_rand_dp
+  REAL(SP), DIMENSION(species_list(is)%kappa_ins_pad8,3) :: xyz_rand
   REAL(DP) :: xl, hxl, yl, hyl, zl, hzl, length_dp(3,3), drxcom, drycom, drzcom, isp, max_dcomsq
   REAL(DP), DIMENSION(MAXVAL(frag_list(1:nfragments(is),is)%natoms)) :: drxcom_vec, drycom_vec, drzcom_vec
   REAL(SP) :: length_sp(3,3), dscom(3), dsxcom, dsycom, dszcom
   REAL(SP) :: sxp, syp, szp, rsl, hrsl, rsp
   REAL(SP) :: rxp, ryp, rzp, this_atom_rp(3)
-  REAL(4), DIMENSION(kappa_ins_pad8,3,MAXVAL(frag_list(1:nfragments(is),is)%natoms)) :: trial_atom_rp
-  INTEGER, DIMENSION(kappa_ins_pad8,3,MAXVAL(frag_list(1:nfragments(is),is)%natoms)) :: trial_cell_coords
+  REAL(4), DIMENSION(species_list(is)%kappa_ins_pad8,3,MAXVAL(frag_list(1:nfragments(is),is)%natoms)) :: trial_atom_rp
+  INTEGER, DIMENSION(species_list(is)%kappa_ins_pad8,3,MAXVAL(frag_list(1:nfragments(is),is)%natoms)) :: trial_cell_coords
 
-  REAL(SP) :: nrg_sp, nrg_sp_vec(kappa_ins_pad8)
+  REAL(SP) :: nrg_sp, nrg_sp_vec(species_list(is)%kappa_ins_pad8), overlap_nrg_sp
   REAL(DP) :: nrg_dp, cweight
 
   INTEGER :: zbcdf, zlbc, ybcdf, ylbc, xlbc, ia_frag
   INTEGER :: bitcell_bit, bitcell_int
-  INTEGER, DIMENSION(kappa_ins_pad8) :: which_good_trials
+  INTEGER, DIMENSION(species_list(is)%kappa_ins_pad8) :: which_good_trials
   INTEGER :: rlc, gtrial
   INTEGER, DIMENSION(3) :: this_atom_ci
 
-  LOGICAL(1) :: bitcell_overlap(kappa_ins_pad64,MAXVAL(frag_list(1:nfragments(is),is)%natoms))
+  LOGICAL(1) :: bitcell_overlap(species_list(is)%kappa_ins_pad64,MAXVAL(frag_list(1:nfragments(is),is)%natoms))
 
   LOGICAL :: l_widom_cells
 
@@ -207,6 +208,25 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
 
   INTEGER :: bitcell_int_ior, bitcell_bit_min, bitcell_bit_max, bitcell_int1_min, bitcell_int1_max
   INTEGER :: bitcell_int2_min, bitcell_int2_max
+
+  REAL(DP) :: t1, t2, t12, cbmc_time_s, cbmc_time_e, cbmc_time_e2, cbmc_time_e3, cbmc_time_e4
+  REAL(DP) :: rng_time_s, rng_time_e, rng_time, cell_list_cbmc_nrg_time, trial_loop_time_s, trial_loop_time
+  REAL(DP) :: cell_list_cbmc_nrg_time_s, cell_list_cbmc_nrg_time_e, noncell_cbmc_nrg_time_s, noncell_cbmc_nrg_time
+  REAL(DP) :: noncell_cbmc_nrg_time_e
+
+  INTEGER :: kappa_ins, kappa_ins_pad8, kappa_ins_pad64, kappa_dih, kappa_dih_pad8, kappa_dih_pad32
+  IF (widom_timing) THEN
+          omp_flag = .FALSE.
+          !$ omp_flag = .TRUE.
+          IF (.NOT. omp_flag) CALL CPU_TIME(cbmc_time_s)
+          !$ cbmc_time_s = omp_get_wtime()
+  END IF
+  kappa_ins = species_list(is)%kappa_ins
+  kappa_ins_pad8 = species_list(is)%kappa_ins_pad8
+  kappa_ins_pad64 = species_list(is)%kappa_ins_pad64
+  kappa_dih = species_list(is)%kappa_dih
+  kappa_dih_pad8 = species_list(is)%kappa_dih_pad8
+  kappa_dih_pad32 = species_list(is)%kappa_dih_pad32
 
 
   !DIR$ ASSUME_ALIGNED trial_atom_rp:32, trial_cell_coords:32, bitcell_overlap:32, xyz_rand_dp:32
@@ -219,10 +239,10 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
 
 
 
-  n_good_trials = kappa_ins
+  n_good_trials = species_list(is)%kappa_ins
 
-  !omp_flag = .FALSE.
-  !!$ omp_flag = .TRUE.
+  omp_flag = .FALSE.
+  !$ omp_flag = .TRUE.
 
   cbmc_overlap = .TRUE.
 
@@ -237,7 +257,6 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
           these_atoms => atom_list(:,this_im,is)
           l_store_dp_trials = .TRUE.
   END IF
-  n_frag_atoms = 0
   ln_pbias = 0.0_DP
   this_box = this_molecule%which_box ! which box this_im is in
   these_atoms%exist = .FALSE. ! mark all the atoms as deleted 
@@ -253,6 +272,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   weight(:) = 0.0_DP
 
   overlap_nrg = max_kBT / beta(this_box)
+  overlap_nrg_sp = REAL(overlap_nrg,SP)
 
   l_ortho = box_list(this_box)%int_box_shape <= int_ortho
   l_widom_cells = widom_active .AND. l_sectors
@@ -330,6 +350,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
 
   ! If get_fragorder = .FALSE., then frag_start is not yet defined
   frag_start = frag_order(1)
+  ifrag_natoms = frag_list(frag_start,is)%natoms
 
   ! If inserting a molecule, choose the first fragment's conformation from the 
   ! reservoir
@@ -353,16 +374,17 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
         this_atom = frag_list(frag_start,is)%atoms(i)
         
         nl = (frag_position_library(frag_type)-1) + &
-                                           frag_list(frag_start,is)%natoms*(this_fragment -1) + i 
-        these_atoms(this_atom)%rp(1) = &
-                                    !  frag_coords(i,this_fragment,frag_type)%rp(1)
-                                       library_coords(nl)%rp(1)
-        these_atoms(this_atom)%rp(2) = &
-                                     ! frag_coords(i,this_fragment,frag_type)%rp(2)
-                                        library_coords(nl)%rp(2)
-        these_atoms(this_atom)%rp(3) = &
-                                     ! frag_coords(i,this_fragment,frag_type)%rp(3)
-                                        library_coords(nl)%rp(3)
+                                           frag_list(frag_start,is)%natoms*(this_fragment -1) + i
+        these_atoms(this_atom)%rp(1:3) = library_coords(1:3,nl)
+        !these_atoms(this_atom)%rp(1) = &
+        !                            !  frag_coords(i,this_fragment,frag_type)%rp(1)
+        !                               library_coords(nl)%rp(1)
+        !these_atoms(this_atom)%rp(2) = &
+        !                             ! frag_coords(i,this_fragment,frag_type)%rp(2)
+        !                                library_coords(nl)%rp(2)
+        !these_atoms(this_atom)%rp(3) = &
+        !                             ! frag_coords(i,this_fragment,frag_type)%rp(3)
+        !                                library_coords(nl)%rp(3)
       END DO
   END IF
   ! Turn on the molecule and its individual atoms
@@ -443,12 +465,22 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   ELSE
      need_max_dcom = .TRUE.
 
+     IF (widom_timing) THEN
+             IF (.NOT. cbmc_flag) CALL CPU_TIME(rng_time_s)
+             !$ rng_time_s = omp_get_wtime()
+     END IF
      DO i_dim = 1, 3
         DO itrial = 1, kappa_ins
                 xyz_rand_dp(itrial,i_dim) = rranf()
         END DO
      END DO
-     xyz_rand = REAL(xyz_rand_dp,4)
+     IF (l_widom_cells) xyz_rand = REAL(xyz_rand_dp,SP)
+     IF (widom_timing) THEN
+             IF (.NOT. cbmc_flag) CALL CPU_TIME(rng_time_e)
+             !$ rng_time_e = omp_get_wtime()
+             rng_time = rng_time_e - rng_time_s
+             rng_ins_time = rng_ins_time + rng_time
+     END IF
      xl = box_list(this_box)%length(1,1)
      hxl = 0.5_DP * xl
      yl = box_list(this_box)%length(2,2)
@@ -461,6 +493,12 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
              rtrial0(2,1:frag_list(frag_start,is)%natoms) - ycom_old
      drzcom_vec(1:frag_list(frag_start,is)%natoms) = &
              rtrial0(3,1:frag_list(frag_start,is)%natoms) - zcom_old
+     IF (widom_timing) THEN
+          IF (.NOT. omp_flag) CALL CPU_TIME(cbmc_time_e)
+          !$ cbmc_time_e = omp_get_wtime()
+          t12 = cbmc_time_e - cbmc_time_s
+          cbmc_setup_ins_time = cbmc_setup_ins_time + t12
+     END IF
      IF (species_list(is)%insertion == 'RESTRICTED' .AND. &
              box_list(this_box)%int_inner_shape /= int_none .AND. &
              .NOT. widom_active) THEN
@@ -532,6 +570,10 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
         END SELECT
      ELSE! IF (l_widom_cells) THEN
              IF (l_get_bitcell) THEN
+                     IF (widom_timing) THEN
+                             IF (.NOT. omp_flag) CALL cpu_time(t1)
+                             !$ t1 = omp_get_wtime()
+                     END IF
                      zbcdf = box_list(this_box)%bitcell_dimfactor(3)
                      zlbc = box_list(this_box)%length_bitcells(3)
                      ybcdf = box_list(this_box)%bitcell_dimfactor(2)
@@ -561,9 +603,9 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                                 dsycom = dscom(2)
                                 dszcom = dscom(3)
                              END IF
-                             !DIR$ ASSUME_ALIGNED xyz_rand(1,1):32, xyz_rand(1,2):32, xyz_rand(1,3):32
-                             !DIR$ ASSUME (MOD(kappa_ins_pad64,64) .EQ. 0)
-                             !DIR$ ASSUME (MOD(kappa_ins_pad8,8) .EQ. 0)
+                             !DIR$ LOOP COUNT = 1000
+                             !DIR$ VECTOR ALIGNED
+                             !$OMP SIMD PRIVATE(sxp,syp,szp,bitcell_bit,bitcell_int) 
                              DO itrial = 1, kappa_ins
                                 sxp = xyz_rand(itrial,1) + dsxcom
                                 syp = xyz_rand(itrial,2) + dsycom
@@ -593,10 +635,12 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                                 bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
                                 bitcell_overlap(itrial,ia_frag) = BTEST(bitcell_int,bitcell_bit)
                              END DO
+                             !$OMP END SIMD
                      END DO
                      bitcell_overlap(:,1) = .NOT. ANY( &
                              bitcell_overlap(:,1:frag_list(frag_start,is)%natoms),2) ! inverted so .FALSE. is overlap
                      n_good_trials = 0
+                     !DIR$ LOOP COUNT = 1000
                      DO itrial = 1, kappa_ins
                         IF (bitcell_overlap(itrial,1)) THEN
                                 n_good_trials = n_good_trials+1
@@ -604,6 +648,14 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                                 xyz_rand(n_good_trials,:) = xyz_rand(itrial,:)
                         END IF
                      END DO
+                     IF (widom_timing) THEN
+                             IF (.NOT. omp_flag) CALL cpu_time(t2)
+                             !$ t2 = omp_get_wtime()
+                             t12 = t2 - t1
+                             bitcell_overlap_ins_time = bitcell_overlap_ins_time + t12
+                             bitcell_overlap_ins_checks = bitcell_overlap_ins_checks + kappa_ins
+                             bitcell_overlap_ins_overlaps = bitcell_overlap_ins_overlaps + (kappa_ins-n_good_trials)
+                     END IF
                      IF (n_good_trials == 0) THEN
                         CALL Set_CBMC_Flag(.FALSE.)
                         RETURN
@@ -612,6 +664,11 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                      n_good_trials = kappa_ins
              END IF
              IF (l_widom_cells) THEN
+                     IF (widom_timing) THEN
+                             IF (.NOT. omp_flag) CALL cpu_time(t1)
+                             !$ t1 = omp_get_wtime()
+                     END IF
+                     !DIR$ LOOP COUNT = 5
                      DO ia_frag = 1, frag_list(frag_start,is)%natoms
                              this_atom = frag_list(frag_start,is)%atoms(ia_frag)
                              drxcom = drxcom_vec(ia_frag)
@@ -662,6 +719,11 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                      END DO
                      n_good_trials_old = n_good_trials
                      n_good_trials = 0
+                     IF (widom_timing) THEN
+                             IF (.NOT. omp_flag) CALL cpu_time(trial_loop_time_s)
+                             !$ trial_loop_time_s = omp_get_wtime()
+                             cell_list_cbmc_nrg_time = 0.0_DP
+                     END IF
                      trial_loop: DO itrial = 1, n_good_trials_old
                         DO ia_frag = 1, frag_list(frag_start,is)%natoms
                                 ia = frag_list(frag_start,is)%atoms(ia_frag)
@@ -671,25 +733,60 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                                         CYCLE trial_loop
                                 END IF
                         END DO
+                        IF (cbmc_cell_list_flag) THEN
+                                IF (widom_timing) THEN
+                                        IF (.NOT. omp_flag) CALL cpu_time(cell_list_cbmc_nrg_time_s)
+                                        !$ cell_list_cbmc_nrg_time_s = omp_get_wtime()
+                                        cell_list_cbmc_nrg_ins_checks = cell_list_cbmc_nrg_ins_checks + 1
+                                END IF
+                                nrg_sp = SUM(Compute_Cell_List_CBMC_nrg(&
+                                        trial_atom_rp(itrial,1,1:ifrag_natoms),trial_atom_rp(itrial,2,1:ifrag_natoms),& 
+                                        trial_atom_rp(itrial,3,1:ifrag_natoms), &
+                                        trial_cell_coords(itrial,1,1:ifrag_natoms),trial_cell_coords(itrial,2,1:ifrag_natoms), &
+                                        trial_cell_coords(itrial,3,1:ifrag_natoms), &
+                                        frag_list(frag_start,is)%atoms(1:ifrag_natoms),is,this_box))
+                                IF (widom_timing) THEN
+                                        IF (.NOT. omp_flag) CALL cpu_time(cell_list_cbmc_nrg_time_e)
+                                        !$ cell_list_cbmc_nrg_time_e = omp_get_wtime()
+                                        cell_list_cbmc_nrg_time = cell_list_cbmc_nrg_time + &
+                                                (cell_list_cbmc_nrg_time_e - cell_list_cbmc_nrg_time_s)
+                                END IF
+                                IF (nrg_sp > overlap_nrg_sp) CYCLE trial_loop
+                                !nrg_sp = 0.0
+                                !DO ia_frag = 1, frag_list(frag_start,is)%natoms
+                                !        ia = frag_list(frag_start,is)%atoms(ia_frag)
+                                !        this_atom_rp = trial_atom_rp(itrial,:,ia_frag)
+                                !        this_atom_ci = trial_cell_coords(itrial,:,ia_frag)
+                                !        nrg_sp = nrg_sp + Compute_Cell_List_CBMC_nrg(this_atom_rp(1:3),this_atom_ci,ia,is,this_box)
+                                !END DO
+                                !nrg_sp_vec(n_good_trials) = nrg_sp
+                        END IF
                         n_good_trials = n_good_trials + 1
                         which_good_trials(n_good_trials) = MERGE(which_good_trials(itrial),itrial,l_get_bitcell)
-                        IF (cbmc_cell_list_flag) THEN
-                                nrg_sp = 0.0
-                                DO ia_frag = 1, frag_list(frag_start,is)%natoms
-                                        ia = frag_list(frag_start,is)%atoms(ia_frag)
-                                        this_atom_rp = trial_atom_rp(itrial,:,ia_frag)
-                                        this_atom_ci = trial_cell_coords(itrial,:,ia_frag)
-                                        nrg_sp = nrg_sp + Compute_Cell_List_CBMC_nrg(this_atom_rp(1:3),this_atom_ci,ia,is,this_box)
-                                END DO
-                                nrg_sp_vec(n_good_trials) = nrg_sp
-                        END IF
+                        IF (cbmc_cell_list_flag) nrg_sp_vec(n_good_trials) = nrg_sp
                      END DO trial_loop 
+                     IF (widom_timing) THEN
+                             IF (.NOT. omp_flag) CALL cpu_time(t2)
+                             !$ t2 = omp_get_wtime()
+                             t12 = t2 - t1
+                             trial_loop_time = t2 - trial_loop_time_s
+                             trial_loop_ins_time = trial_loop_ins_time + trial_loop_time
+                             cell_list_ins_time = cell_list_ins_time + t12
+                             cell_list_cbmc_nrg_ins_time = cell_list_cbmc_nrg_ins_time + cell_list_cbmc_nrg_time
+                             cell_list_ins_checks = cell_list_ins_checks + n_good_trials_old
+                             !cell_list_cbmc_nrg_ins_checks = cell_list_cbmc_nrg_ins_checks + n_good_trials
+                     END IF
                      IF (n_good_trials == 0) THEN
                         CALL Set_CBMC_Flag(.FALSE.)
                         RETURN
                      END IF
              END IF
              IF (l_ortho .AND. l_store_dp_trials) THEN
+                     IF (widom_timing) THEN
+                             IF (.NOT. omp_flag) CALL cpu_time(noncell_cbmc_nrg_time_s)
+                             !$ noncell_cbmc_nrg_time_s = omp_get_wtime()
+                             noncell_cbmc_nrg_time = 0.0_DP
+                     END IF
                      IF (l_widom_cells) THEN
                              DO itrial = 1, n_good_trials
                                 gtrial = which_good_trials(itrial)
@@ -705,7 +802,18 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                              zcom_trial(1:n_good_trials) = &
                                      xyz_rand_dp(1:n_good_trials,3)*zl - hzl
                      END IF
+                     IF (widom_timing) THEN
+                             IF (.NOT. omp_flag) CALL cpu_time(noncell_cbmc_nrg_time_e)
+                             !$ noncell_cbmc_nrg_time_e = omp_get_wtime()
+                             noncell_cbmc_nrg_time = noncell_cbmc_nrg_time + &
+                                     (noncell_cbmc_nrg_time_e-noncell_cbmc_nrg_time_s)
+                     END IF
              ELSE IF (l_store_dp_trials) THEN
+                     IF (widom_timing) THEN
+                             IF (.NOT. omp_flag) CALL cpu_time(noncell_cbmc_nrg_time_s)
+                             !$ noncell_cbmc_nrg_time_s = omp_get_wtime()
+                             noncell_cbmc_nrg_time = 0.0_DP
+                     END IF
                      DO itrial = 1, n_good_trials
                         ! make sure optimization takes conditional out of loop
                         IF (l_widom_cells) THEN
@@ -729,6 +837,12 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                         ycom_trial(itrial) = y_anchor
                         zcom_trial(itrial) = z_anchor
                      END DO
+                     IF (widom_timing) THEN
+                             IF (.NOT. omp_flag) CALL cpu_time(noncell_cbmc_nrg_time_e)
+                             !$ noncell_cbmc_nrg_time_e = omp_get_wtime()
+                             noncell_cbmc_nrg_time = noncell_cbmc_nrg_time + &
+                                     (noncell_cbmc_nrg_time_e-noncell_cbmc_nrg_time_s)
+                     END IF
              END IF
      END IF
      max_dcomsq = 0.0_DP
@@ -742,6 +856,10 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
      this_molecule%rcom(4) = SQRT(max_dcomsq)
      !DIR$ ASSUME_ALIGNED nrg:32, weight:32, overlap_trial:32
      IF (l_store_dp_trials) THEN
+             IF (widom_timing) THEN
+                     IF (.NOT. omp_flag) CALL cpu_time(noncell_cbmc_nrg_time_s)
+                     !$ noncell_cbmc_nrg_time_s = omp_get_wtime()
+             END IF
              DO i = 1, frag_list(frag_start,is)%natoms
                 rtrial(1:n_good_trials,1,i) = xcom_trial(1:n_good_trials) + drxcom_vec(i)
                 rtrial(1:n_good_trials,2,i) = ycom_trial(1:n_good_trials) + drycom_vec(i)
@@ -790,10 +908,19 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                                 E_inter_vdw,E_inter_qq,overlap)
                         nrg_dp = MERGE(infinity_DP, E_inter_vdw + E_inter_qq, overlap)
                         overlap = overlap .OR. nrg_dp >= overlap_nrg
+                        overlap_trial(itrial) = overlap
                         cbmc_overlap = cbmc_overlap .AND. overlap
                         IF (.NOT. overlap) nrg(itrial) = nrg_dp
                 END IF
              END DO
+             IF (widom_timing) THEN
+                     IF (.NOT. omp_flag) CALL cpu_time(noncell_cbmc_nrg_time_e)
+                     !$ noncell_cbmc_nrg_time_e = omp_get_wtime()
+                     noncell_cbmc_nrg_time = noncell_cbmc_nrg_time + &
+                             (noncell_cbmc_nrg_time_e-noncell_cbmc_nrg_time_s)
+                     noncell_cbmc_nrg_ins_time = noncell_cbmc_nrg_ins_time + noncell_cbmc_nrg_time
+                     nrg_ins_overlaps = nrg_ins_overlaps + COUNT(overlap_trial(1:n_good_trials))
+             END IF
              ! Reject the move if all trials tripped overlap
              IF (cbmc_overlap) THEN
                 CALL Set_CBMC_Flag(.FALSE.)
@@ -810,20 +937,27 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                 !END IF
              END DO
      ELSE
-             !$OMP SIMD PRIVATE(nrg_dp,overlap) REDUCTION(.AND.:cbmc_overlap)
+             !$OMP SIMD PRIVATE(nrg_dp,overlap)
              DO itrial = 1, n_good_trials
                 nrg_dp = REAL(nrg_sp_vec(itrial),DP)
                 nrg(itrial) = nrg_dp
-                overlap = nrg_dp >= overlap_nrg
-                cbmc_overlap = cbmc_overlap .AND. overlap
-                weight(itrial) = MERGE(0.0_DP,EXP(-beta(this_box)*nrg_dp),overlap)
+                !overlap = nrg_dp >= overlap_nrg
+                !cbmc_overlap = cbmc_overlap .AND. overlap
+                weight(itrial) = EXP(-beta(this_box)*nrg_dp)
              END DO
              !$OMP END SIMD
-             ! Reject the move if all trials tripped overlap
-             IF (cbmc_overlap) THEN
-                CALL Set_CBMC_Flag(.FALSE.)
-                RETURN
-             END IF
+             !! Reject the move if all trials tripped overlap
+             !IF (cbmc_overlap) THEN
+             !   CALL Set_CBMC_Flag(.FALSE.)
+             !   RETURN
+             !END IF
+     END IF
+     IF (widom_timing) THEN
+          IF (.NOT. omp_flag) CALL CPU_TIME(cbmc_time_e2)
+          !$ cbmc_time_e2 = omp_get_wtime()
+          t12 = cbmc_time_e2 - cbmc_time_e
+          cbmc_returnzone_ins_time = cbmc_returnzone_ins_time + t12
+          cbmc_nonoverlap_ins_count = cbmc_nonoverlap_ins_count + 1_INT64
      END IF
      ! Store the cumulative weight of each trial
      cweight = weight(1)
@@ -906,7 +1040,6 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   END IF
   
   ! Mark this fragment is placed
-  e_total = 0.0_DP
   frag_placed(frag_start) = 1
 
   ! We have our first segment placed in the system. 
@@ -938,8 +1071,8 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   ! Now we will place rest of the segments based on the initial fragment placed
 
   ! Why will the dihedral energy be anything other than zero?
-  CALL Compute_Molecule_Dihedral_Energy(this_im,is,E_dihed)
-  E_total = E_dihed
+  !CALL Compute_Molecule_Dihedral_Energy(this_im,is,E_dihed)
+  !E_total = E_dihed
 
   ! If we've gotten this far, cbmc_overlap = FALSE
   cbmc_overlap = .FALSE.
@@ -949,9 +1082,26 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   ! We will call Fragment_Placement to place the remaining fragments in
   ! frag_order, starting with fragment frag_order(2)
   frag_start = 2
+  E_total = 0.0_DP
+  IF (widom_timing) THEN
+       IF (.NOT. omp_flag) CALL CPU_TIME(cbmc_time_e3)
+       !$ cbmc_time_e3 = omp_get_wtime()
+       t12 = cbmc_time_e3 - cbmc_time_e2
+       cbmc_endzone_ins_time = cbmc_endzone_ins_time + t12
+  END IF
   CALL Fragment_Placement(this_box,this_im,is,frag_start,frag_total, &
                           frag_order,frag_placed,this_lambda,E_total,ln_pbias, &
                           nrg_ring_frag_total,cbmc_overlap,del_overlap)
+  IF (widom_timing) THEN
+       IF (.NOT. omp_flag) CALL CPU_TIME(cbmc_time_e4)
+       !$ cbmc_time_e4 = omp_get_wtime()
+       t12 = cbmc_time_e4 - cbmc_time_e3
+       cbmc_fragment_placement_time = cbmc_fragment_placement_time + t12
+       IF (species_list(is)%nfragments > 1) THEN
+               cbmc_dih_time = cbmc_dih_time + t12
+               cbmc_dih_count = cbmc_dih_count + 1_INT64
+       END IF
+  END IF
 
   ! Note that cbmc_overlap may be TRUE and the cbmc_flag will be properly 
   ! assigned FALSE while exiting the code.
@@ -962,6 +1112,8 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   ! not grown
 
   IF (del_overlap) cbmc_overlap = .TRUE.
+
+  IF (PRESENT(E_interfrag)) E_interfrag = E_total
 
   ! Mark cbmc_flag as FALSE so that intermolecular nonbonded interactions
   ! are properly computed for the molecule
@@ -1019,12 +1171,21 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
   ! Variables associated with the CBMC part
 
   INTEGER :: itrial, trial, frag_type
-  REAL(DP) :: weight(MAX(kappa_ins,kappa_rot,kappa_dih)), rand_no
+  REAL(DP) :: weight(MAX(species_list(is)%kappa_ins,species_list(is)%kappa_rot,species_list(is)%kappa_dih)), rand_no
   REAL(DP) :: e_dihed, E_intra_vdw, E_intra_qq, E_inter_vdw
   REAL(DP) :: E_inter_qq, E_total
-  REAL(DP) :: nrg(MAX(kappa_ins,kappa_rot,kappa_dih)), nrg_kBT, time0, time1, nrg_ring_frag
+  REAL(DP) :: nrg(MAX(species_list(is)%kappa_ins,species_list(is)%kappa_rot,species_list(is)%kappa_dih)), nrg_kBT, time0, time1, nrg_ring_frag
   LOGICAL :: del_overlap
-  TYPE(Atom_Class) :: rtrial(MAXVAL(natoms),0:MAX(kappa_ins,kappa_rot,kappa_dih))
+  TYPE(Atom_Class) :: rtrial(MAXVAL(natoms),0:MAX(species_list(is)%kappa_ins,species_list(is)%kappa_rot,species_list(is)%kappa_dih))
+
+  INTEGER :: kappa_ins, kappa_ins_pad8, kappa_ins_pad64, kappa_dih, kappa_dih_pad8, kappa_dih_pad32
+  kappa_ins = species_list(is)%kappa_ins
+  kappa_ins_pad8 = species_list(is)%kappa_ins_pad8
+  kappa_ins_pad64 = species_list(is)%kappa_ins_pad64
+  kappa_dih = species_list(is)%kappa_dih
+  kappa_dih_pad8 = species_list(is)%kappa_dih_pad8
+  kappa_dih_pad32 = species_list(is)%kappa_dih_pad32
+
 
 
   IF (widom_active) THEN
@@ -1199,16 +1360,18 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
         nl = (frag_position_library(frag_type)-1) + &
                                            frag_list(1,is)%natoms*(this_fragment-1)+i
 
-                    
-         rtrial(this_atom,0)%rp(1) = library_coords(nl)%rp(1) -&
-                                   library_coords(nlo)%rp(1) +&
-                                   these_atoms(first_atom)%rp(1)
-         rtrial(this_atom,0)%rp(2) = library_coords(nl)%rp(2) -&
-                                   library_coords(nlo)%rp(2) +& 
-                                   these_atoms(first_atom)%rp(2)
-         rtrial(this_atom,0)%rp(3) = library_coords(nl)%rp(3) -& 
-                                   library_coords(nlo)%rp(3) +& 
-                                   these_atoms(first_atom)%rp(3)
+         rtrial(this_atom,0)%rp(1:3) = library_coords(1:3,nl) - &
+                 library_coords(1:3,nlo) + &
+                 these_atoms(first_atom)%rp(1:3)
+         !rtrial(this_atom,0)%rp(1) = library_coords(nl)%rp(1) -&
+         !                          library_coords(nlo)%rp(1) +&
+         !                          these_atoms(first_atom)%rp(1)
+         !rtrial(this_atom,0)%rp(2) = library_coords(nl)%rp(2) -&
+         !                          library_coords(nlo)%rp(2) +& 
+         !                          these_atoms(first_atom)%rp(2)
+         !rtrial(this_atom,0)%rp(3) = library_coords(nl)%rp(3) -& 
+         !                          library_coords(nlo)%rp(3) +& 
+         !                          these_atoms(first_atom)%rp(3)
       !  rtrial(this_atom,0)%rp(1) = frag_coords(i,this_fragment,frag_type)%rp(1)-&
       !                            frag_coords(1,this_fragment,frag_type)%rp(1)+&
       !                            these_atoms(first_atom)%rp(1) 
@@ -1234,7 +1397,7 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
 ! Rotate this fragment about the first bead along different axes
 ! select one from trials
 
-  DO itrial = 1, kappa_rot
+  DO itrial = 1, species_list(is)%kappa_rot
      IF(del_flag .and. (itrial.eq.1)) THEN
        DO i=1,frag_list(frag_start,is)%natoms
           this_atom = frag_list(frag_start,is)%atoms(i)
@@ -1314,7 +1477,7 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
      IF (itrial > 1 ) weight(itrial) = weight(itrial-1) + weight(itrial)
   ENDDO ! End the generation of trial orientations and associating waight
 
-  IF (weight(kappa_rot) == 0.0_DP) THEN
+  IF (weight(species_list(is)%kappa_rot) == 0.0_DP) THEN
       cbmc_overlap = .TRUE.
       CALL Set_CBMC_Flag(.FALSE.)
       RETURN
@@ -1324,8 +1487,8 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
       trial = 1
   ELSE
    ! Choose one from Golden sampling for an insertion move
-      rand_no = rranf() * weight(kappa_rot)
-      DO i = 1, kappa_rot
+      rand_no = rranf() * weight(species_list(is)%kappa_rot)
+      DO i = 1, species_list(is)%kappa_rot
          IF ( rand_no < weight(i)) EXIT
       END DO
       trial = i
@@ -1333,7 +1496,7 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
 
 !  Write(8,*) 'selected', trial
 
-  ln_pbias = ln_pbias - beta(this_box) * nrg(trial) - DLOG(weight(kappa_rot))
+  ln_pbias = ln_pbias - beta(this_box) * nrg(trial) - DLOG(weight(species_list(is)%kappa_rot))
 
 ! Assign positions to these_atoms
   DO i=1,frag_list(frag_start,is)%natoms
@@ -1433,6 +1596,15 @@ SUBROUTINE Cut_Regrow(this_im,is,frag_live,frag_dead,frag_order,frag_total, &
 
   TYPE(Molecule_Class), POINTER :: this_molecule
   TYPE(Atom_Class), POINTER :: these_atoms(:)
+
+  INTEGER :: kappa_ins, kappa_ins_pad8, kappa_ins_pad64, kappa_dih, kappa_dih_pad8, kappa_dih_pad32
+  kappa_ins = species_list(is)%kappa_ins
+  kappa_ins_pad8 = species_list(is)%kappa_ins_pad8
+  kappa_ins_pad64 = species_list(is)%kappa_ins_pad64
+  kappa_dih = species_list(is)%kappa_dih
+  kappa_dih_pad8 = species_list(is)%kappa_dih_pad8
+  kappa_dih_pad32 = species_list(is)%kappa_dih_pad32
+
 
 
   IF (widom_active) THEN
@@ -1628,6 +1800,15 @@ SUBROUTINE Fragment_Order(this_frag,is,frag_total,frag_order,live,ln_pseq)
   INTEGER :: hanging_connections(nfragments(is)) ! to hold ids of frags ready to add
   REAL(DP) :: randno, prob(nfragments(is)), cum_prob(nfragments(is))
 
+  INTEGER :: kappa_ins, kappa_ins_pad8, kappa_ins_pad64, kappa_dih, kappa_dih_pad8, kappa_dih_pad32
+  kappa_ins = species_list(is)%kappa_ins
+  kappa_ins_pad8 = species_list(is)%kappa_ins_pad8
+  kappa_ins_pad64 = species_list(is)%kappa_ins_pad64
+  kappa_dih = species_list(is)%kappa_dih
+  kappa_dih_pad8 = species_list(is)%kappa_dih_pad8
+  kappa_dih_pad32 = species_list(is)%kappa_dih_pad32
+
+
   !*****************************************************************************
   !   Step 1) Determine the number & identity of hanging connections
   !*****************************************************************************
@@ -1749,35 +1930,93 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
   INTEGER :: anchor_frag_connect, atom_ifrag, atom_frag_connect, ii, trial
   INTEGER :: frag_type, dumcount
 
-  INTEGER :: counted(nfragments(is)), connection(nfragments(is)), atom_id(natoms(is))
+  INTEGER, DIMENSION(nfragments(is)) :: counted, connection
 
   INTEGER :: ispecies, jmol, k
 
-  INTEGER :: nl, nlo      ! number of the line where start the x,y,x coords of
-                          ! config and fragment randomly selected
+  INTEGER :: nl_base ! index of library_coords column immediately before the start of the
+                     ! coordinates of the chosen fragment conformation
 
   INTEGER :: total_frags, this_fragment, nfrag_atoms
   REAL(DP) :: x_this,y_this,z_this, vec1(3), vec2(3), aligner_ifrag(3,3)
   REAL(DP) :: hanger_ifrag(3,3), aligner_frag_connect(3,3), hanger_frag_connect(3,3)
 
   REAL(DP) :: tempx, tempy, tempz, theta, e_dihed
-  REAL(DP) :: weight(kappa_dih), nrg(kappa_dih)
+  REAL(DP) :: weight(species_list(is)%kappa_dih_pad8), nrg_dp_vec(species_list(is)%kappa_dih_pad8)
   REAL(DP) :: E_intra_qq, E_intra_vdw, prob_pick
-  REAL(DP) :: e_prev, temp_var, E_ang, E_inter_vdw, E_inter_qq
+  REAL(DP) :: temp_var, E_ang, E_inter_vdw, E_inter_qq
   REAL(DP) :: nrg_kBT, p_acc, nrg_intra_vdw, nrg_intra_qq, nrg_inter_vdw, nrg_inter_qq
   REAL(DP) :: trial_weight
-  REAL(DP) :: nrg_ring_frag, nrg_dihed(kappa_dih)
+  REAL(DP) :: nrg_ring_frag
 
-  LOGICAL :: overlap, overlap_trial(kappa_dih)
+  LOGICAL :: overlap, overlap_trial(species_list(is)%kappa_dih_pad8)
   LOGICAL, DIMENSION(natoms(is)) :: grown_exist, new_exist, combined_exist
 
   CHARACTER :: this_file*120, element*1 
 
-  TYPE(Atom_Class) :: config_list(natoms(is))
-  TYPE(Atom_Class) :: config_temp_list(natoms(is),kappa_dih)
+  !TYPE(Atom_Class) :: config_list(natoms(is)) ! superceded by config_list_rp and new_rp
+  !TYPE(Atom_Class) :: config_temp_list(natoms(is),species_list(is)%kappa_dih) ! superceded by trial_atom_rp
 
   TYPE(Molecule_Class), POINTER :: this_molecule
-  TYPE(Atom_Class), POINTER :: these_atoms(:)
+  TYPE(Atom_Class), POINTER, CONTIGUOUS :: these_atoms(:)
+  INTEGER :: ifrag_outer, itrial, itrial_orig
+
+  INTEGER :: ifrag_natoms
+  INTEGER :: clrp_anchor_ifrag, clrp_anchor_frag_connect
+  INTEGER, DIMENSION(natoms(is)) :: clrp_atom_id, atom_id, inv_atom_id
+
+  INTEGER :: i_dim, ja, ia_new
+
+  REAL(DP), DIMENSION(library_coords_dim1,natoms(is)) :: config_list_rp
+  REAL(DP), DIMENSION(3,natoms(is)) :: new_rp
+  REAL(SP), DIMENSION(species_list(is)%kappa_dih_pad8,3,natoms(is)) :: trial_atom_rp, trial_atom_rsp
+  INTEGER, DIMENSION(species_list(is)%kappa_dih_pad8,3,natoms(is)) :: trial_cell_coords
+  REAL(DP) :: theta_step, theta0, inv_nfrag_atoms_dp, max_dcomsq, jcharge_dp
+
+  REAL(SP), DIMENSION(3,3) :: hanger_frag_connect_sp, inv_H_sp, H_sp
+  INTEGER :: zbcdf,ybcdf,zlbc,ylbc,xlbc
+  REAL(SP), DIMENSION(species_list(is)%kappa_dih_pad8) :: sintheta_sp_vec, costheta_sp_vec, nrg_sp_vec, nrg_dihed_vec
+  REAL(DP) :: costheta0, sintheta0, costheta, sintheta
+  REAL(SP) :: costheta0_sp, sintheta0_sp, sintheta_sp, costheta_sp, overlap_nrg, nrg_sp
+  REAL(SP), DIMENSION(3) :: rp00, rp0, inv_l_vec, l_sp_vec, this_atom_rp
+  REAL(SP) :: x0, y0, z0, tempy_sp, tempz_sp, rxp, ryp, rzp, hl_sp, irsp
+  REAL(SP) :: sxp, syp, szp, rlc, l_sp, inv_l, rcutsq, jrp(3), vdwscale, chargescale, cfqq
+  REAL(SP) :: rsq, drp, rsq_vec(species_list(is)%kappa_dih_pad8), rij
+  REAL(SP) :: eps, sigsq, sigbyr2, sigbyr6, negsigsq, negsigbyr2, rterm
+  REAL(SP) :: epsig_n, epsig_m, mie_n, mie_m, lnrsq, invr, alpha_ewald_sp
+  REAL(SP) :: const1, const2, const3, const4, shift_p1, shift_p2, dsf_const, dsf_factor2_sp, sf_const1, sf_const2
+  REAL(SP) :: roffsq_rijsq
+  REAL(SP) :: anchor_frag_connect_rp(3), anchor_ifrag_rp(3), atom3_rp(3), m_sp(3)
+  INTEGER :: atom1, atom2, atom3, atom4, dihedral_atoms(4), idihed, idihed_rb
+  REAL(DP) :: r32_base(3), r32_dp(3), vecdp(3), m_dp(3), last_phi_dp, nrg_dp, cweight
+  REAL(SP) :: m_normsq, rx32, ry32, rz32, rx34, ry34, rz34, ni, cosphi, invnorm
+  REAL(SP) :: rb_c(5), cosphi2, cosphi3, cosphi4, cosphi5
+  REAL(SP), DIMENSION(species_list(is)%kappa_dih_pad8) :: cosphi_vec, phi_vec
+  REAL(SP) :: last_phi, phi_step_sp, theta_step_sp, a0, phi
+  REAL(DP) :: sinlintheta, coslintheta, sincosmat(2,2)
+  INTEGER :: bitcell_bit, bitcell_int, this_atom_ci(3), jtype, itype
+  INTEGER :: this_int_vdw_style, this_int_vdw_sum_style, this_int_charge_sum_style
+  LOGICAL :: l_ortho, l_widom_cells, l_get_bitcell, ij_get_coul
+  LOGICAL(1), DIMENSION(species_list(is)%kappa_dih_pad32,natoms(is)) :: bitcell_overlap
+  INTEGER :: n_good_trials, n_good_trials_pad8, n_good_trials_old
+  INTEGER :: anchor_atoms(2), anchor_atoms_reversed(2)
+  INTEGER, DIMENSION(species_list(is)%kappa_dih_pad8) :: which_good_trials
+
+  REAL(DP) :: rijsq_dp, Eij_intra_vdw, Eij_intra_qq, Eij_inter_qq, Eij_inter_vdw
+  LOGICAL :: get_vdw, get_qq, l_skip_dihed_vec(species_list(is)%ndihedrals_energetic)
+  INTEGER :: interfrag_nonbond_pairlist(2,natoms(is)*natoms(is)/(2*species_list(is)%nfragments))
+  INTEGER :: n_interfrag_nonbond_pairs
+
+  REAL(DP) :: nrg_vdw_dp, nrg_qq_dp
+
+  INTEGER :: kappa_ins, kappa_ins_pad8, kappa_ins_pad64, kappa_dih, kappa_dih_pad8, kappa_dih_pad32
+  kappa_ins = species_list(is)%kappa_ins
+  kappa_ins_pad8 = species_list(is)%kappa_ins_pad8
+  kappa_ins_pad64 = species_list(is)%kappa_ins_pad64
+  kappa_dih = species_list(is)%kappa_dih
+  kappa_dih_pad8 = species_list(is)%kappa_dih_pad8
+  kappa_dih_pad32 = species_list(is)%kappa_dih_pad32
+
 
   IF (widom_active) THEN
           this_molecule => widom_molecule
@@ -1786,106 +2025,38 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
           this_molecule => molecule_list(this_im,is)
           these_atoms => atom_list(1:natoms(is),this_im,is)
   END IF
+  overlap_nrg = max_kBT/beta(this_box)
+  this_int_vdw_sum_style = int_vdw_sum_style(this_box)
+  n_interfrag_nonbond_pairs = 0
+
+  SELECT CASE(this_int_vdw_sum_style)
+  CASE(vdw_cut_switch)
+          const1 = switch_factor1(this_box)*switch_factor2(this_box)
+          const2 = switch_factor1(this_box)*2
+          const3 = ron_switch_sq(this_box)
+          const4 = roff_switch_sq(this_box)
+  END SELECT
 
 
 !  ! DEBUGging variables
 !  INTEGER :: M_XYZ_unit
 
 
-  config_list(:)%rp(1) = 0.0_DP
-  config_list(:)%rp(2) = 0.0_DP
-  config_list(:)%rp(3) = 0.0_DP
+  l_ortho = box_list(this_box)%int_box_shape <= int_ortho
+  l_widom_cells = widom_active .AND. l_sectors
+  l_get_bitcell = widom_active .AND. bitcell_flag
+  config_list_rp = 0.0_DP
   dumcount = 0
-  e_prev = e_total
   weight(:) = 0.0_DP
 
-  DO i = frag_start, frag_total
+  l_skip_dihed_vec = .FALSE. ! currently marks dihedral as already being computed and able to be skipped early
+  ! l_skip_dihed_vec gets inverted later to mark which dihedrals aren't interfragment dihedrals
+  !DIR$ LOOP COUNT = 0, 1, 2, 3
+  DO ifrag_outer = frag_start, frag_total
 
-     ifrag = frag_order(i)
+     ifrag = frag_order(ifrag_outer)
 
      grown_exist = these_atoms%exist
-     
-     !**************************************************************************
-     ! Step 1) Select a fragment conformation
-     !**************************************************************************
-     !
-     IF ( del_flag) THEN
-
-        ! For a deletion move, use the existing conformation for each additional
-        ! fragment
-
-        DO j = 1, frag_list(ifrag,is)%natoms
-           this_atom = frag_list(ifrag,is)%atoms(j)
-
-           these_atoms(this_atom)%exist = .TRUE.
-
-           config_list(this_atom)%rp(1) = these_atoms(this_atom)%rp(1)
-           config_list(this_atom)%rp(2) = these_atoms(this_atom)%rp(2)
-           config_list(this_atom)%rp(3) = these_atoms(this_atom)%rp(3)
-        END DO
-
-        ! For a ring fragment, calculate the fragment intramolecular energy
-
-        IF (frag_list(ifrag,is)%ring) THEN
-           CALL Compute_Ring_Fragment_Energy(ifrag,this_im,is,this_box, &
-                   nrg_ring_frag)
-           nrg_ring_frag_tot = nrg_ring_frag_tot + nrg_ring_frag
-        END IF
-
-     ELSE
-
-        ! Select a fragment conformation from the reservoir
-        ! The reservoir was populated with a Boltzmann distribution, so now we
-        ! can pull from it with a uniform probability
-
-        total_frags = frag_list(ifrag,is)%nconfig
-        this_fragment = INT(rranf() * total_frags) + 1
-        
-        ! Select a fragment conformation from the reservoir
-        ! The reservoir was populated with a Boltzmann distribution, so now we
-        ! can pull from it with a uniform probability
-        
-        this_fragment = INT(rranf() * total_frags) + 1
-        ! Read in the coordinates
-        frag_type = frag_list(ifrag,is)%type
-
-        DO j = 1, frag_list(ifrag,is)%natoms
-           
-           this_atom = frag_list(ifrag,is)%atoms(j)
-           
-           these_atoms(this_atom)%exist = .TRUE.
-           nl = (frag_position_library(frag_type)-1) + &
-                        frag_list(ifrag,is)%natoms*(this_fragment-1)+ j
-           config_list(this_atom)%rp(1) = &
-                 library_coords(nl)%rp(1)
-              !frag_coords(j,this_fragment,frag_type)%rp(1)
-           config_list(this_atom)%rp(2) = &
-                 library_coords(nl)%rp(2)
-              !frag_coords(j,this_fragment,frag_type)%rp(2)
-           config_list(this_atom)%rp(3) = &
-                 library_coords(nl)%rp(3)
-              !frag_coords(j,this_fragment,frag_type)%rp(3)
-        END DO
-     
-        ! For a ring fragment, access the fragment intramolecular energy 
-
-        IF (frag_list(ifrag,is)%ring) THEN
-           nrg_ring_frag =  nrg_frag(frag_type)%this_config_energy(this_fragment)
-                              ! nrg_frag(this_fragment,frag_type)
-           nrg_ring_frag_tot = nrg_ring_frag_tot + nrg_ring_frag
-        END IF
-        
-!why was this ever here?        CLOSE(UNIT=11)
-
-     END IF
-     combined_exist = these_atoms%exist
-     new_exist = combined_exist .AND. .NOT. grown_exist
-     
-     !**************************************************************************
-     ! Step 2) Align the fragment to the growing molecule
-     !**************************************************************************
-     !
-
      ! Note that there has to be only one connection of ifrag that is already 
      ! placed. Let us find out which fragment that is
 
@@ -1913,30 +2084,121 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
      ! If here then only one connection found
 
      frag_connect = connection(1)
-    
-     ! Note that frag_connect already has anchor of ifrag placed both for fixed 
-     ! and variable bond length cases so all we have to do is obtain the 
-     ! coordinates of these atoms in the configuration and align it to their 
-     ! coordinates in the simulation box.
-     
      ! find anchor atom ids for both the fragments
 
      CALL Get_Common_Fragment_Atoms(is,ifrag,frag_connect,anchor_ifrag, &
              anchor_frag_connect)
      nfrag_atoms = 0
      atom_id(:) = 0
+     ifrag_natoms = frag_list(ifrag,is)%natoms
      
-     DO j = 1, frag_list(ifrag,is)%natoms
+     DO j = 1, ifrag_natoms
        
         this_atom = frag_list(ifrag,is)%atoms(j)
-        
-        IF ( (this_atom /= anchor_ifrag) .AND. &
-             (this_atom /= anchor_frag_connect)) THEN
-           nfrag_atoms = nfrag_atoms + 1
-           atom_id(nfrag_atoms) = this_atom
+        IF (this_atom .EQ. anchor_ifrag) THEN
+                clrp_anchor_ifrag = j
+        ELSE IF (this_atom .EQ. anchor_frag_connect) THEN
+                clrp_anchor_frag_connect = j
+        ELSE
+                nfrag_atoms = nfrag_atoms + 1
+                atom_id(nfrag_atoms) = this_atom
+                clrp_atom_id(nfrag_atoms) = j
         END IF
         
+        !IF ( (this_atom /= anchor_ifrag) .AND. &
+        !     (this_atom /= anchor_frag_connect)) THEN
+        !   nfrag_atoms = nfrag_atoms + 1
+        !   atom_id(nfrag_atoms) = this_atom
+        !END IF
+        
      END DO
+    
+     ! Note that frag_connect already has anchor of ifrag placed both for fixed 
+     ! and variable bond length cases so all we have to do is obtain the 
+     ! coordinates of these atoms in the configuration and align it to their 
+     ! coordinates in the simulation box.
+     
+     !**************************************************************************
+     ! Step 1) Select a fragment conformation
+     !**************************************************************************
+     !
+     IF ( del_flag) THEN
+
+        ! For a deletion move, use the existing conformation for each additional
+        ! fragment
+
+        DO j = 1, ifrag_natoms
+           this_atom = frag_list(ifrag,is)%atoms(j)
+
+           these_atoms(this_atom)%exist = .TRUE.
+           config_list_rp(1:3,j) = these_atoms(this_atom)%rp(1:3)
+
+           !config_list(this_atom)%rp(1) = these_atoms(this_atom)%rp(1)
+           !config_list(this_atom)%rp(2) = these_atoms(this_atom)%rp(2)
+           !config_list(this_atom)%rp(3) = these_atoms(this_atom)%rp(3)
+        END DO
+
+        ! For a ring fragment, calculate the fragment intramolecular energy
+
+        IF (frag_list(ifrag,is)%ring) THEN
+           CALL Compute_Ring_Fragment_Energy(ifrag,this_im,is,this_box, &
+                   nrg_ring_frag)
+           nrg_ring_frag_tot = nrg_ring_frag_tot + nrg_ring_frag
+        END IF
+
+     ELSE
+
+        ! Select a fragment conformation from the reservoir
+        ! The reservoir was populated with a Boltzmann distribution, so now we
+        ! can pull from it with a uniform probability
+
+        total_frags = frag_list(ifrag,is)%nconfig
+        this_fragment = INT(rranf() * total_frags) + 1
+        
+        ! Read in the coordinates
+        frag_type = frag_list(ifrag,is)%type
+
+        nl_base = (frag_position_library(frag_type)-1) + &
+                     frag_list(ifrag,is)%natoms*(this_fragment-1)
+        config_list_rp(:,1:ifrag_natoms) = &
+                library_coords(:,nl_base+1:nl_base+ifrag_natoms)
+        these_atoms(frag_list(ifrag,is)%atoms(1:ifrag_natoms))%exist = .TRUE.
+        !DO j = 1, frag_list(ifrag,is)%natoms
+        !   
+        !   this_atom = frag_list(ifrag,is)%atoms(j)
+        !   
+        !   these_atoms(this_atom)%exist = .TRUE.
+        !   config_list(this_atom)%rp(1) = &
+        !         library_coords(nl)%rp(1)
+        !      !frag_coords(j,this_fragment,frag_type)%rp(1)
+        !   config_list(this_atom)%rp(2) = &
+        !         library_coords(nl)%rp(2)
+        !      !frag_coords(j,this_fragment,frag_type)%rp(2)
+        !   config_list(this_atom)%rp(3) = &
+        !         library_coords(nl)%rp(3)
+        !      !frag_coords(j,this_fragment,frag_type)%rp(3)
+        !END DO
+     
+        ! For a ring fragment, access the fragment intramolecular energy 
+
+        IF (frag_list(ifrag,is)%ring) THEN
+           nrg_ring_frag =  nrg_frag(frag_type)%this_config_energy(this_fragment)
+                              ! nrg_frag(this_fragment,frag_type)
+           nrg_ring_frag_tot = nrg_ring_frag_tot + nrg_ring_frag
+        END IF
+!why was this ever here?        CLOSE(UNIT=11)
+
+     END IF
+     combined_exist = these_atoms%exist
+     new_exist = combined_exist .AND. .NOT. grown_exist
+     these_atoms%exist = new_exist
+     
+     !**************************************************************************
+     ! Step 2) Align the fragment to the growing molecule
+     !**************************************************************************
+     !
+
+     
      
 !     anchor_ifrag = frag_list(ifrag,is)%anchor(1)
 !     anchor_frag_connect = frag_list(frag_connect,is)%anchor(1)
@@ -1944,16 +2206,16 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
      ! Find one atom of ifrag and frag_connect that will be used for generating 
      ! xy plane
 
-     DO j = 1, frag_list(ifrag,is)%natoms
+     !DO j = 1, frag_list(ifrag,is)%natoms
 
-        this_atom = frag_list(ifrag,is)%atoms(j)
+     !   this_atom = frag_list(ifrag,is)%atoms(j)
 
-        IF ( (this_atom /= anchor_ifrag) .AND. &
-             (this_atom /= anchor_frag_connect)) EXIT
+     !   IF ( (this_atom /= anchor_ifrag) .AND. &
+     !        (this_atom /= anchor_frag_connect)) EXIT
 
-     END DO
+     !END DO
 
-     atom_ifrag = this_atom
+     !atom_ifrag = this_atom
 
      ! Similarly for frag_connect
 
@@ -1983,46 +2245,56 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
 
      ! for ifrag
 
-     vec1(1) = config_list(anchor_ifrag)%rp(1) &
-             - config_list(anchor_frag_connect)%rp(1)
-     vec1(2) = config_list(anchor_ifrag)%rp(2) &
-             - config_list(anchor_frag_connect)%rp(2)
-     vec1(3) = config_list(anchor_ifrag)%rp(3) &
-             - config_list(anchor_frag_connect)%rp(3)
+     new_rp(1:3,1:nfrag_atoms) = config_list_rp(1:3,clrp_atom_id(1:nfrag_atoms))
+
+     vec1(1:3) = config_list_rp(1:3,clrp_anchor_ifrag) - config_list_rp(1:3,clrp_anchor_frag_connect)
+     vec2(1:3) = new_rp(1:3,1) - config_list_rp(1:3,clrp_anchor_frag_connect)
+
+     !vec1(1) = config_list(anchor_ifrag)%rp(1) &
+     !        - config_list(anchor_frag_connect)%rp(1)
+     !vec1(2) = config_list(anchor_ifrag)%rp(2) &
+     !        - config_list(anchor_frag_connect)%rp(2)
+     !vec1(3) = config_list(anchor_ifrag)%rp(3) &
+     !        - config_list(anchor_frag_connect)%rp(3)
 
 
-     vec2(1) = config_list(atom_ifrag)%rp(1) &
-             - config_list(anchor_frag_connect)%rp(1)
-     vec2(2) = config_list(atom_ifrag)%rp(2) &
-             - config_list(anchor_frag_connect)%rp(2)
-     vec2(3) = config_list(atom_ifrag)%rp(3) &
-             - config_list(anchor_frag_connect)%rp(3)
+     !vec2(1) = config_list(atom_ifrag)%rp(1) &
+     !        - config_list(anchor_frag_connect)%rp(1)
+     !vec2(2) = config_list(atom_ifrag)%rp(2) &
+     !        - config_list(anchor_frag_connect)%rp(2)
+     !vec2(3) = config_list(atom_ifrag)%rp(3) &
+     !        - config_list(anchor_frag_connect)%rp(3)
        
 
      CALL Get_Aligner_Hanger(vec1, vec2, aligner_ifrag,hanger_ifrag)
      
      ! Calculate this only for inserting a molecule
-     
+     ! The following line was moved out of the following IF statement because it's used again later
+     r32_base = these_atoms(anchor_ifrag)%rp(1:3) - &
+             these_atoms(anchor_frag_connect)%rp(1:3)
      IF ( .NOT. del_flag) THEN
         
         
-        vec1(1) = these_atoms(anchor_ifrag)%rp(1) - &
-             these_atoms(anchor_frag_connect)%rp(1)
+        vec1(1:3) = r32_base
+        !vec1(1) = these_atoms(anchor_ifrag)%rp(1) - &
+        !     these_atoms(anchor_frag_connect)%rp(1)
+        !
+        !vec1(2) = these_atoms(anchor_ifrag)%rp(2) - &
+        !     these_atoms(anchor_frag_connect)%rp(2)
+        !
+        !vec1(3) = these_atoms(anchor_ifrag)%rp(3) - &
+        !     these_atoms(anchor_frag_connect)%rp(3)
+        vec2(1:3) = these_atoms(atom_frag_connect)%rp(1:3) - &
+                these_atoms(anchor_frag_connect)%rp(1:3)
         
-        vec1(2) = these_atoms(anchor_ifrag)%rp(2) - &
-             these_atoms(anchor_frag_connect)%rp(2)
-        
-        vec1(3) = these_atoms(anchor_ifrag)%rp(3) - &
-             these_atoms(anchor_frag_connect)%rp(3)
-        
-        vec2(1) = these_atoms(atom_frag_connect)%rp(1) - &
-             these_atoms(anchor_frag_connect)%rp(1)
-        
-        vec2(2) = these_atoms(atom_frag_connect)%rp(2) - &
-             these_atoms(anchor_frag_connect)%rp(2)
-        
-        vec2(3) = these_atoms(atom_frag_connect)%rp(3) - &
-             these_atoms(anchor_frag_connect)%rp(3)     
+        !vec2(1) = these_atoms(atom_frag_connect)%rp(1) - &
+        !     these_atoms(anchor_frag_connect)%rp(1)
+        !
+        !vec2(2) = these_atoms(atom_frag_connect)%rp(2) - &
+        !     these_atoms(anchor_frag_connect)%rp(2)
+        !
+        !vec2(3) = these_atoms(atom_frag_connect)%rp(3) - &
+        !     these_atoms(anchor_frag_connect)%rp(3)     
      
 
         CALL Get_Aligner_Hanger(vec1, vec2, aligner_frag_connect,hanger_frag_connect)
@@ -2035,32 +2307,35 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
      ! Apply aligner of ifrag
      
 
-     tempx = config_list(anchor_frag_connect)%rp(1)
-     tempy = config_list(anchor_frag_connect)%rp(2)
-     tempz = config_list(anchor_frag_connect)%rp(3)
-     
-     config_list(:)%rp(1) = config_list(:)%rp(1) - tempx
-     config_list(:)%rp(2) = config_list(:)%rp(2) - tempy
-     config_list(:)%rp(3) = config_list(:)%rp(3) - tempz
+     !tempx = config_list(anchor_frag_connect)%rp(1)
+     !tempy = config_list(anchor_frag_connect)%rp(2)
+     !tempz = config_list(anchor_frag_connect)%rp(3)
+     !
+     !config_list(:)%rp(1) = config_list(:)%rp(1) - tempx
+     !config_list(:)%rp(2) = config_list(:)%rp(2) - tempy
+     !config_list(:)%rp(3) = config_list(:)%rp(3) - tempz
+     new_rp(1:3,1:nfrag_atoms) = new_rp(1:3,1:nfrag_atoms) - SPREAD(config_list_rp(1:3,clrp_anchor_frag_connect),2,nfrag_atoms)
+
+     new_rp(1:3,1:nfrag_atoms) = MATMUL(aligner_ifrag,new_rp(1:3,1:nfrag_atoms))
          
-     DO j = 1, frag_list(ifrag,is)%natoms
-        
-        this_atom = frag_list(ifrag,is)%atoms(j)
-        
-        tempx = config_list(this_atom)%rp(1)
-        tempy = config_list(this_atom)%rp(2)
-        tempz = config_list(this_atom)%rp(3)
-        
-        config_list(this_atom)%rp(1) = tempx * aligner_ifrag(1,1) &
-                                   + tempy * aligner_ifrag(1,2) &
-                                   + tempz * aligner_ifrag(1,3)
-        config_list(this_atom)%rp(2) = tempx * aligner_ifrag(2,1) &
-                                   + tempy * aligner_ifrag(2,2) &
-                                   + tempz * aligner_ifrag(2,3)
-        config_list(this_atom)%rp(3) = tempx * aligner_ifrag(3,1) &
-                                   + tempy * aligner_ifrag(3,2) &
-                                   + tempz * aligner_ifrag(3,3)
-     END DO
+     !DO j = 1, frag_list(ifrag,is)%natoms
+     !   
+     !   this_atom = frag_list(ifrag,is)%atoms(j)
+     !   
+     !   tempx = config_list(this_atom)%rp(1)
+     !   tempy = config_list(this_atom)%rp(2)
+     !   tempz = config_list(this_atom)%rp(3)
+     !   
+     !   config_list(this_atom)%rp(1) = tempx * aligner_ifrag(1,1) &
+     !                              + tempy * aligner_ifrag(1,2) &
+     !                              + tempz * aligner_ifrag(1,3)
+     !   config_list(this_atom)%rp(2) = tempx * aligner_ifrag(2,1) &
+     !                              + tempy * aligner_ifrag(2,2) &
+     !                              + tempz * aligner_ifrag(2,3)
+     !   config_list(this_atom)%rp(3) = tempx * aligner_ifrag(3,1) &
+     !                              + tempy * aligner_ifrag(3,2) &
+     !                              + tempz * aligner_ifrag(3,3)
+     !END DO
      
      !**************************************************************************
      ! Step 3) Select kappa_dih orientations for each additional fragment
@@ -2072,10 +2347,13 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
      ! anchoring atoms do not change due to this rotation. For the deletion 
      ! move, the first trial must be the one corresponding to the actual 
      ! coordinates, hence there should be no rotation about x-axis.
+     theta_step_sp = species_list(is)%theta_step_sp
+     theta_step = species_list(is)%theta_step
 
      IF ( del_flag ) THEN
 
-        theta = 0.0_DP
+        !theta = 0.0_DP
+        theta0 = 0.0_DP !-threehalfPI_DP
 
         ! also note that we will transform the position based on hanger_ifrag so
         ! that the original positions are recovered
@@ -2086,240 +2364,782 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
 
         ! Select a random theta with uniform probability
         
-        theta = twopi * rranf()
+        !theta = twopi * rranf()
+        theta0 = theta_step * rranf() !- threehalfPI_DP
      END IF
 
      ! Now that we have a starting theta, the other dihedral positions are 
      ! uniformly spaced around the 2pi disc. We need to calculate the atomic
      ! coordinates:
 
-     ! Loop over the trial dihedrals
-     ii = 1
-     DO 
-!     DO ii = 1, kappa_dih
+     ! RS: Note that both the original code and my refactor of it actually rotate the dihdral
+     !     in the negative phi direction. For the dihedrals between frag_connect and ifrag,
+     !     phi = phi0 - theta.  This never mattered before, but it's important when calculating dihedral phi
+     !     for a given trial based on the phi and theta of another trial.
 
-        config_temp_list(:,ii)%rp(1)  = config_list(:)%rp(1)
-        config_temp_list(:,ii)%rp(2)  = 0.0_DP
-        config_temp_list(:,ii)%rp(3)  = 0.0_DP
-        ! Loop over atoms
-        DO j = 1, frag_list(ifrag,is)%natoms
-           
-           this_atom = frag_list(ifrag,is)%atoms(j)
-           
-           tempx = config_list(this_atom)%rp(1)
-           tempy = config_list(this_atom)%rp(2)
-           tempz = config_list(this_atom)%rp(3)
-           config_temp_list(this_atom,ii)%rp(2) =  DCOS(theta) * tempy &
-                                              +  DSIN(theta) * tempz
-           config_temp_list(this_atom,ii)%rp(3) = -DSIN(theta) * tempy &
-                                              +  DCOS(theta) * tempz
+     ! Vectorized version start
+     IF (.NOT. (cbmc_cell_list_flag .AND. l_widom_cells)) THEN
+             inv_nfrag_atoms_dp = 1.0_DP / nfrag_atoms
+             ! ignore actual mass for fragment growth.  Use average position of new atoms instead
+             this_molecule%rcom(1:3) = SUM(new_rp(1:3,1:nfrag_atoms),2)*inv_nfrag_atoms_dp
+             max_dcomsq = 0.0_DP
+             DO j = 1, nfrag_atoms
+                vec2 = new_rp(1:3,j) - this_molecule%rcom(1:3)
+                max_dcomsq = MAX(max_dcomsq,DOT_PRODUCT(vec2,vec2))
+             END DO
+             this_molecule%rcom(4) = SQRT(max_dcomsq) ! constant for all trials
+     END IF
+     hanger_frag_connect_sp = REAL(hanger_frag_connect,SP)
+     IF (l_get_bitcell) THEN
+             zbcdf = box_list(this_box)%bitcell_dimfactor(3)
+             zlbc = box_list(this_box)%length_bitcells(3)
+             ybcdf = box_list(this_box)%bitcell_dimfactor(2)
+             ylbc = box_list(this_box)%length_bitcells(2)
+             xlbc = box_list(this_box)%length_bitcells(1)
+     END IF
+     ! Use Ptolemy's identities to compute SIN and COS of randomly shifted angles from precomputed array and SIN and COS of the shift
+     IF (del_flag) THEN
+             sintheta_sp_vec = species_list(is)%sincos_lintheta_sp(:,1)
+             costheta_sp_vec = species_list(is)%sincos_lintheta_sp(:,2)
+     ELSE
+             costheta0 = COS(theta0)
+             sintheta0 = SIN(theta0)
+             costheta0_sp = REAL(costheta0,SP)
+             sintheta0_sp = REAL(sintheta0,SP)
+             !DIR$ VECTOR ALIGNED
+             !$OMP SIMD PRIVATE(sintheta_sp,costheta_sp)
+             DO itrial = 1, kappa_dih_pad8
+                sintheta_sp = species_list(is)%sincos_lintheta_sp(itrial,1)
+                costheta_sp = species_list(is)%sincos_lintheta_sp(itrial,2)
+                sintheta_sp_vec(itrial) = sintheta_sp*costheta0_sp + costheta_sp*sintheta0_sp
+                costheta_sp_vec(itrial) = costheta_sp*costheta0_sp - sintheta_sp*sintheta0_sp
+             END DO
+             !$OMP END SIMD
+     END IF
 
-        END DO
-
-        ! Loop over atoms (again)
-        
-
-        DO j = 1, frag_list(ifrag,is)%natoms
-           
-           this_atom = frag_list(ifrag,is)%atoms(j)
-           
-           tempx = config_temp_list(this_atom,ii)%rp(1)
-           tempy = config_temp_list(this_atom,ii)%rp(2)
-           tempz = config_temp_list(this_atom,ii)%rp(3)
-           
-           config_temp_list(this_atom,ii)%rp(1) = tempx*hanger_frag_connect(1,1) &
-                                              + tempy*hanger_frag_connect(1,2) &
-                                              + tempz*hanger_frag_connect(1,3)
-           
-           config_temp_list(this_atom,ii)%rp(2) = tempx*hanger_frag_connect(2,1) &
-                                              + tempy*hanger_frag_connect(2,2) &
-                                              + tempz*hanger_frag_connect(2,3) 
-           
-           config_temp_list(this_atom,ii)%rp(3) = tempx*hanger_frag_connect(3,1) &
-                                              + tempy*hanger_frag_connect(3,2) &
-                                              + tempz*hanger_frag_connect(3,3)
-
-    
-           IF ( this_atom /= anchor_ifrag) THEN
-              IF ( this_atom /= anchor_frag_connect) THEN
-                 
-                 config_temp_list(this_atom,ii)%rp(1) = &
-                      config_temp_list(this_atom,ii)%rp(1) + &
-                      these_atoms(anchor_frag_connect)%rp(1)
-                 
-                 config_temp_list(this_atom,ii)%rp(2) = &
-                      config_temp_list(this_atom,ii)%rp(2) + &
-                      these_atoms(anchor_frag_connect)%rp(2)
-                 
-                 config_temp_list(this_atom,ii)%rp(3) = &
-                      config_temp_list(this_atom,ii)%rp(3) + &
-                      these_atoms(anchor_frag_connect)%rp(3)
-                 
-                 these_atoms(this_atom)%rp(1) = &
-                      config_temp_list(this_atom,ii)%rp(1) 
-                 
-                 these_atoms(this_atom)%rp(2) = &
-                      config_temp_list(this_atom,ii)%rp(2) 
-                 
-                 these_atoms(this_atom)%rp(3) = &
-                      config_temp_list(this_atom,ii)%rp(3)  
-
-              END IF
-           END IF
-        END DO
-
-        ! Exit the loop if we've computed atomic coords for all trial dihedrals
-        IF( ii == kappa_dih ) EXIT
-
-        ! Increment the counter and dihedral angle
-        ii = ii + 1
-        theta = theta + twopi / REAL(kappa_dih,DP)
-
+     !! First, generate COS(theta) and SIN(theta) values for each trial
+     !! The way it's done here is faster than calling both intrinsic trig functions (proven in tests)
+     !! It is also faster to call SIN than COS, for some reason, so this loop calls SIN and computes COS from the result.
+     !! This method only works because of the very specific range (whole period starting at -(3/2)*PI) in which theta values
+     !!  are generated; otherwise the sign of COS can be wrong.  This method is still valid because it can generate theta values
+     !!  anywhere in an interval that spans a whole 2*PI period.
+     !!DIR$ VECTOR ALIGNED
+     !DO ii = 0, kappa_dih-1
+     !   theta_sp = REAL(ii,SP)
+     !   theta_sp = theta0_sp + theta_step_sp*theta_sp
+     !   sintheta_sp = SIN(theta_sp)
+     !   sintheta_sp_vec(ii+1) = sintheta_sp
+     !   costheta_sp = sintheta_sp
+     !   theta_sp = theta_sp+halfPI_SP ! angle isn't actually changing, this just repurposes theta to get the sign of costheta
+     !   costheta_sp = 1.0_SP - costheta_sp*costheta_sp ! costheta on RHS is actually sintheta
+     !   costheta_sp = SIGN(SQRT(costheta_sp),theta_sp)
+     !   costheta_sp_vec(ii+1) = costheta_sp
+     !   !sintheta = SIN(theta)
+     !   !costheta = COS(theta)
+     !   !sinthetavec(ii) = sintheta
+     !   !costhetavec(ii) = costheta
+     !END DO
+     rp00 = REAL(these_atoms(anchor_frag_connect)%rp(1:3),SP)
+     IF (l_ortho .AND. l_widom_cells) THEN
+             DO i_dim = 1,3
+                inv_l_vec(i_dim) = REAL(1.0_DP/box_list(this_box)%length(i_dim,i_dim),SP)
+                l_sp_vec(i_dim) = REAL(box_list(this_box)%length(i_dim,i_dim),SP)
+             END DO
+     ELSE IF (l_widom_cells) THEN
+             inv_H_sp = REAL(box_list(this_box)%length_inv,SP)
+             H_sp = REAL(box_list(this_box)%length,SP)
+     END IF
+     !DIR$ ASSUME (MOD(kappa_dih_pad8,8) == 0)
+     !DIR$ LOOP COUNT = 3
+     DO j = 1, nfrag_atoms
+             x0 = REAL(new_rp(1,j),SP)
+             y0 = REAL(new_rp(2,j),SP)
+             z0 = REAL(new_rp(3,j),SP)
+             !DIR$ ASSUME (MOD(kappa_dih_pad8,8) == 0)
+             !DIR$ LOOP COUNT = 8, 16, 32
+             !DIR$ VECTOR ALIGNED
+             DO ii = 1, kappa_dih_pad8
+                costheta_sp = costheta_sp_vec(ii)
+                sintheta_sp = sintheta_sp_vec(ii)
+                trial_atom_rp(ii,2,j) = costheta_sp*y0 + sintheta_sp*z0
+                trial_atom_rp(ii,3,j) = costheta_sp*z0 - sintheta_sp*y0
+             END DO
+             rp0 = rp00
+             rp0 = rp0 + x0*hanger_frag_connect_sp(1:3,1)
+             !DIR$ LOOP COUNT = 8, 16, 32
+             !DIR$ VECTOR ALIGNED
+             DO ii = 1, kappa_dih_pad8
+                tempy_sp = trial_atom_rp(ii,2,j)
+                rxp = rp0(1) + tempy_sp*hanger_frag_connect_sp(1,2)
+                ryp = rp0(2) + tempy_sp*hanger_frag_connect_sp(2,2)
+                rzp = rp0(3) + tempy_sp*hanger_frag_connect_sp(3,2)
+                tempz_sp = trial_atom_rp(ii,3,j)
+                rxp = rxp + tempz_sp*hanger_frag_connect_sp(1,3)
+                ryp = ryp + tempz_sp*hanger_frag_connect_sp(2,3)
+                rzp = rzp + tempz_sp*hanger_frag_connect_sp(3,3)
+                trial_atom_rp(ii,1,j) = rxp
+                trial_atom_rp(ii,2,j) = ryp
+                trial_atom_rp(ii,3,j) = rzp
+             END DO
+             IF (.NOT. l_widom_cells) CYCLE ! The rest of the loop body is relevant only if doing Widom insertions with cell list
+             IF (l_ortho) THEN
+                     DO i_dim = 1,3
+                        inv_l = inv_l_vec(i_dim)
+                        l_sp = l_sp_vec(i_dim)
+                        hl_sp = 0.5 * l_sp
+                        !DIR$ LOOP COUNT = 8, 16, 32
+                        !DIR$ VECTOR ALIGNED
+                        DO ii = 1, kappa_dih_pad8
+                                irsp = REAL(trial_atom_rp(ii,i_dim,j),SP)
+                                irsp = irsp*inv_l + 0.5
+                                ! Note: it is important that the < checks and shifts come before the >= checks and shifts
+                                !       due to floating point rounding.  It's fine for irsp to be zero or even
+                                !       just barely less than zero due to the behavior of INT(), but if it ends up equal to
+                                !       1.0, that can cause bitcell_int to be out of bounds or otherwise severely incorrect.
+                                !       This was found out the hard way.
+                                IF (irsp < 0.0) irsp = irsp + 1.0
+                                IF (irsp >= 1.0) irsp = irsp - 1.0
+                                trial_atom_rsp(ii,i_dim,j) = irsp
+                                !irsp = irsp*l_sp - hl_sp
+                                !sp_config_temp_list_rp(ii,this_atom,i_dim) = irsp
+                        END DO
+                     END DO
+             ELSE
+                     !DIR$ LOOP COUNT = 8, 16, 32
+                     !DIR$ VECTOR ALIGNED
+                     DO ii = 1, kappa_dih_pad8
+                        rxp = REAL(trial_atom_rp(ii,1,j),SP)
+                        sxp = inv_H_sp(1,1)*rxp
+                        syp = inv_H_sp(2,1)*rxp
+                        szp = inv_H_sp(3,1)*rxp
+                        ryp = REAL(trial_atom_rp(ii,2,j),SP)
+                        sxp = sxp + inv_H_sp(1,2)*ryp
+                        syp = syp + inv_H_sp(2,2)*ryp
+                        szp = szp + inv_H_sp(3,2)*ryp
+                        rzp = REAL(trial_atom_rp(ii,3,j),SP)
+                        sxp = sxp + inv_H_sp(1,3)*rzp
+                        syp = syp + inv_H_sp(2,3)*rzp
+                        szp = szp + inv_H_sp(3,3)*rzp
+                        trial_atom_rsp(ii,1,j) = sxp
+                        trial_atom_rsp(ii,2,j) = syp
+                        trial_atom_rsp(ii,3,j) = szp
+                     END DO
+                     !trial_atom_rsp(1:kappa_dih,:) = &
+                     !        MATMUL(sp_config_temp_list_rp(1:kappa_dih,:),TRANSPOSE(REAL(box_list(this_box)%length_inv,SP)))
+             END IF
+             IF (l_get_bitcell) THEN
+                     !DIR$ LOOP COUNT = 8, 16, 32
+                     !DIR$ VECTOR ALIGNED
+                     DO ii = 1, kappa_dih
+                        sxp = trial_atom_rsp(ii,1,j)
+                        syp = trial_atom_rsp(ii,2,j)
+                        szp = trial_atom_rsp(ii,3,j)
+                        bitcell_bit = INT(sxp*xlbc)
+                        bitcell_int = ISHFT(bitcell_bit,-5) + &
+                                INT(syp*ylbc)*ybcdf + &
+                                INT(szp*zlbc)*zbcdf
+                        bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
+                        bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
+                        bitcell_overlap(ii,j) = BTEST(bitcell_int,bitcell_bit)
+                     END DO
+             END IF
      END DO
+     IF (l_get_bitcell) THEN
+             bitcell_overlap(:,1) = .NOT. ANY(bitcell_overlap(:,1:nfrag_atoms),2)
+             n_good_trials = 0
+             !DIR$ LOOP COUNT = 8, 16, 32
+             DO itrial = 1, kappa_dih
+                IF (bitcell_overlap(itrial,1)) THEN
+                        n_good_trials = n_good_trials+1
+                        which_good_trials(n_good_trials) = itrial
+                        trial_atom_rsp(n_good_trials,:,1:nfrag_atoms) = trial_atom_rsp(itrial,:,1:nfrag_atoms)
+                END IF
+             END DO
+             IF (n_good_trials == 0) THEN
+                cbmc_overlap = .TRUE.
+                RETURN
+             END IF
+     ELSE
+             n_good_trials = kappa_dih
+     END IF
+     n_good_trials_pad8 = IAND(n_good_trials+7,NOT(7))
+     !DIR$ ASSUME (MOD(n_good_trials_pad8,8) == 0)
+     IF (l_widom_cells) THEN
+             DO j = 1, nfrag_atoms
+                     IF (l_ortho) THEN
+                             DO i_dim = 1, 3
+                                     rlc = box_list(this_box)%real_length_cells(i_dim)
+                                     l_sp = l_sp_vec(i_dim)
+                                     hl_sp = 0.5 * l_sp
+                                     !DIR$ LOOP COUNT = 8, 16, 32
+                                     !DIR$ VECTOR ALIGNED
+                                     DO itrial = 1, n_good_trials_pad8
+                                        irsp = trial_atom_rsp(itrial,i_dim,j)
+                                        trial_cell_coords(itrial,i_dim,j) = &
+                                                INT(irsp*rlc) - box_list(this_box)%sectorbound(i_dim)
+                                        irsp = irsp*l_sp - hl_sp
+                                        trial_atom_rsp(itrial,i_dim,j) = irsp
+                                     END DO
+                             END DO
+                     ELSE
+                             !DIR$ LOOP COUNT = 8, 16, 32
+                             !DIR$ VECTOR ALIGNED
+                             DO itrial = 1, n_good_trials_pad8
+                                sxp = trial_atom_rsp(itrial,1,j)
+                                trial_cell_coords(itrial,1,j) = &
+                                        INT(sxp*box_list(this_box)%real_length_cells(1)) - &
+                                        box_list(this_box)%sectorbound(1)
+                                rxp = H_sp(1,1)*sxp
+                                ryp = H_sp(2,1)*sxp
+                                rzp = H_sp(3,1)*sxp
+                                syp = trial_atom_rsp(itrial,2,j)
+                                trial_cell_coords(itrial,2,j) = &
+                                        INT(syp*box_list(this_box)%real_length_cells(2)) - &
+                                        box_list(this_box)%sectorbound(2)
+                                rxp = rxp + H_sp(1,2)*syp
+                                ryp = ryp + H_sp(2,2)*syp
+                                rzp = rzp + H_sp(3,2)*syp
+                                szp = trial_atom_rsp(itrial,3,j)
+                                trial_cell_coords(itrial,3,j) = &
+                                        INT(szp*box_list(this_box)%real_length_cells(3)) - &
+                                        box_list(this_box)%sectorbound(3)
+                                rxp = rxp + H_sp(1,3)*szp
+                                ryp = ryp + H_sp(2,3)*szp
+                                rzp = rzp + H_sp(3,3)*szp
+                                trial_atom_rsp(ii,1,j) = rxp
+                                trial_atom_rsp(ii,2,j) = ryp
+                                trial_atom_rsp(ii,3,j) = rzp
+                             END DO
+                     END IF
+             END DO
+     END IF
+     n_good_trials_old = n_good_trials
+     n_good_trials = 0
+     !DIR$ LOOP COUNT = 1, 2, 3, 4, 8, 16, 32
+     trial_loop: DO itrial = 1, n_good_trials_old
+        IF (l_widom_cells) THEN
+                !DIR$ LOOP COUNT = 3
+                DO j = 1, nfrag_atoms
+                        ia = atom_id(j)
+                        this_atom_rp = trial_atom_rsp(itrial,:,j)
+                        this_atom_ci = trial_cell_coords(itrial,:,j)
+                        IF (check_overlap(this_atom_rp(1:3),this_atom_ci,ia,is,this_box)) THEN
+                                CYCLE trial_loop
+                        END IF
+                END DO
+        END IF
+        itrial_orig = MERGE(which_good_trials(itrial),itrial,l_get_bitcell)
+        IF (cbmc_cell_list_flag .AND. l_widom_cells) THEN
+                nrg_sp = SUM(Compute_Cell_List_CBMC_nrg(&
+                        trial_atom_rsp(itrial,1,1:nfrag_atoms),trial_atom_rsp(itrial,2,1:nfrag_atoms),& 
+                        trial_atom_rsp(itrial,3,1:nfrag_atoms), &
+                        trial_cell_coords(itrial,1,1:nfrag_atoms),trial_cell_coords(itrial,2,1:nfrag_atoms), &
+                        trial_cell_coords(itrial,3,1:nfrag_atoms), &
+                        atom_id(1:nfrag_atoms),is,this_box))
+        ELSE
+                this_molecule%rcom(1:3) = 0.0_DP
+                !DIR$ LOOP COUNT = 3
+                DO j = 1, nfrag_atoms
+                        ia = atom_id(j)
+                        these_atoms(ia)%rp(1:3) = REAL(trial_atom_rp(itrial_orig,1:3,j),DP)
+                        this_molecule%rcom(1:3) = this_molecule%rcom(1:3) + inv_nfrag_atoms_dp*these_atoms(ia)%rp(1:3)
+                END DO
+                IF (widom_active) THEN
+                        CALL Compute_Molecule_Nonbond_Inter_Energy_Widom(this_im,is,nrg_vdw_dp,overlap)
+                        IF (overlap) CYCLE trial_loop
+                        nrg_sp = REAL(nrg_vdw_dp,SP)
+                ELSE
+                        CALL Compute_Molecule_Nonbond_Inter_Energy(this_im,is,nrg_vdw_dp,nrg_qq_dp,overlap)
+                        IF (overlap) CYCLE trial_loop
+                        nrg_sp = REAL(nrg_vdw_dp + nrg_qq_dp,SP)
+                END IF
+        END IF
+        !!DIR$ LOOP COUNT = 3
+        !DO j = 1, nfrag_atoms
+        !        ia = atom_id(j)
+        !        IF (cbmc_cell_list_flag .AND. l_widom_cells) THEN
+        !                this_atom_rp = trial_atom_rsp(itrial,:,j)
+        !                this_atom_ci = trial_cell_coords(itrial,:,j)
+        !                nrg_sp = nrg_sp + Compute_Cell_List_CBMC_nrg(this_atom_rp(1:3),this_atom_ci,ia,is,this_box)
+        !        ELSE
+        !                these_atoms(ia)%rp(1:3) = REAL(trial_atom_rp(itrial_orig,1:3,j),DP)
+        !                IF (j > 1) THEN
+        !                        this_molecule%rcom(1:3) = this_molecule%rcom(1:3) + inv_nfrag_atoms_dp*these_atoms(ia)%rp(1:3)
+        !                ELSE
+        !                        this_molecule%rcom(1:3) = inv_nfrag_atoms_dp*these_atoms(ia)%rp(1:3)
+        !                END IF
+        !        END IF
+        !END DO
+        !IF (.NOT. widom_active) THEN
+        !        CALL Compute_Molecule_Nonbond_Inter_Energy(this_im,is,nrg_vdw_dp,nrg_qq_dp,overlap)
+        !        IF (overlap) CYCLE trial_loop
+        !        nrg_sp = REAL(nrg_vdw_dp + nrg_qq_dp,SP)
+        !ELSE IF (.NOT. cbmc_cell_list_flag) THEN
+        !        CALL Compute_Molecule_Nonbond_Inter_Energy_Widom(this_im,is,nrg_vdw_dp,overlap)
+        !        IF (overlap) CYCLE trial_loop
+        !        nrg_sp = REAL(nrg_vdw_dp,SP)
+        !END IF
+        IF (nrg_sp > overlap_nrg) CYCLE trial_loop
+        n_good_trials = n_good_trials + 1
+        nrg_sp_vec(n_good_trials) = nrg_sp
+        which_good_trials(n_good_trials) = itrial_orig
+        IF (n_good_trials .NE. itrial_orig) THEN
+                !DIR$ ASSUME (itrial_orig > n_good_trials)
+                trial_atom_rp(n_good_trials,:,1:nfrag_atoms) = &
+                        trial_atom_rp(itrial_orig,:,1:nfrag_atoms)
+        END IF
+        !IF (cbmc_cell_list_flag) THEN
+        !        nrg_sp = 0.0
+        !        DO j = 1, nfrag_atoms
+        !                ia = atom_id(j)
+        !                this_atom_rp = trial_atom_rsp(itrial,:,)
+        !                this_atom_ci = trial_cell_coords(itrial,:,j)
+        !                nrg_sp = nrg_sp + Compute_Cell_List_CBMC_nrg(this_atom_rp(1:3),this_atom_ci,ia,is,this_box)
+        !        END DO
+        !        nrg_sp_vec(n_good_trials) = nrg_sp
+        !END IF
+     END DO trial_loop
+     IF (n_good_trials == 0) THEN
+             cbmc_overlap = .TRUE.
+             RETURN
+     END IF
+     DO j = 1, nfrag_atoms
+        inv_atom_id(atom_id(j)) = j
+     END DO
+     rcutsq = REAL(rcut_cbmcsq(this_box),SP)
+     anchor_atoms = (/ anchor_frag_connect, anchor_ifrag /)
+     anchor_atoms_reversed = anchor_atoms(2:1:-1)
+     n_good_trials_pad8 = IAND(n_good_trials+7,NOT(7))
+     !DIR$ ASSUME (MOD(n_good_trials_pad8,8) .EQ. 0)
+     overlap_trial(1:n_good_trials_pad8) = .FALSE.
+     DO ja = 1, natoms(is)
+        IF (.NOT. grown_exist(ja) .OR. ANY(ja .EQ. anchor_atoms)) CYCLE
+        jrp = these_atoms(ja)%rp(1:3)
+        jtype = nonbond_list(ja,is)%atom_type_number
+        jcharge_dp = nonbond_list(ja,is)%charge
+        !DIR$ LOOP COUNT = 3
+        DO ia_new = 1, nfrag_atoms
+                ia = atom_id(ia_new)
+                vdwscale = vdw_intra_scale(ia,ja,is)
+                chargescale = charge_intra_scale(ia,ja,is)
+                cfqq = REAL(nonbond_list(ia,is)%charge * jcharge_dp * charge_factor,SP)
+                itype = nonbond_list(ia,is)%atom_type_number
+                this_int_vdw_style = MIN(itype*jtype,1)*int_vdw_style(this_box)
+                this_int_vdw_sum_style = int_vdw_sum_style(this_box)
+                ij_get_coul = cfqq .NE. 0.0 .AND. int_charge_style(this_box) .NE. charge_none .AND. &
+                        species_list(is)%l_coul_cbmc
+                IF ((vdwscale == 0.0 .OR. this_int_vdw_style == 0) .AND. .NOT. ij_get_coul) CYCLE
+                this_int_charge_sum_style = MERGE(MERGE(charge_sf,int_charge_sum_style(this_box),cbmc_charge_sf_flag),0,ij_get_coul)
+                !DIR$ LOOP COUNT = 8, 16
+                !DIR$ VECTOR ALIGNED
+                DO itrial = 1, n_good_trials_pad8
+                        drp = trial_atom_rp(itrial,1,ia_new) - jrp(1)
+                        rsq = drp*drp
+                        drp = trial_atom_rp(itrial,2,ia_new) - jrp(2)
+                        rsq = rsq + drp*drp
+                        drp = trial_atom_rp(itrial,3,ia_new) - jrp(3)
+                        rsq = rsq + drp*drp
+                        overlap_trial(itrial) = overlap_trial(itrial) .OR. rsq < sp_rcut_lowsq
+                        rsq_vec(itrial) = MERGE(rsq,infinity_sp,rsq<rcutsq)
+                END DO
+                SELECT CASE(this_int_vdw_style)
+                CASE(vdw_lj)
+                        SELECT CASE(this_int_vdw_sum_style)
+                        CASE(vdw_charmm)
+                                eps = vdwscale*ppvdwp_table2_sp(1,itype,jtype,this_box) ! epsilon
+                                sigsq = ppvdwp_table2_sp(2,itype,jtype,this_box) ! sigma**2
+                                !DIR$ LOOP COUNT = 8, 16
+                                !DIR$ VECTOR ALIGNED
+                                DO itrial = 1, n_good_trials_pad8
+                                        rsq = rsq_vec(itrial)
+                                        nrg_sp = nrg_sp_vec(itrial)
+                                        sigbyr2 = sigsq/rsq
+                                        sigbyr6 = sigbyr2*sigbyr2*sigbyr2
+                                        nrg_sp = nrg_sp + eps * (sigbyr6*sigbyr6 - sigbyr6 - sigbyr6) ! eps was not multiplied by 4
+                                        nrg_sp_vec(itrial) = nrg_sp
+                                END DO
+                        CASE(vdw_cut_shift)
+                                eps = vdwscale*ppvdwp_table2_sp(1,itype,jtype,this_box) ! 4*epsilon
+                                negsigsq = ppvdwp_table2_sp(2,itype,jtype,this_box) ! -(sigma**2)
+                                shift_p1 = vdwscale*ppvdwp_table2_sp(3,itype,jtype,this_box)
+                                !DIR$ LOOP COUNT = 8, 16
+                                !DIR$ VECTOR ALIGNED
+                                DO itrial = 1, n_good_trials_pad8
+                                        rsq = rsq_vec(itrial)
+                                        nrg_sp = nrg_sp_vec(itrial)
+                                        negsigbyr2 = negsigsq/rsq
+                                        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                        rterm = rterm + rterm*rterm
+                                        nrg_sp = nrg_sp + eps*rterm - MERGE(shift_p1,0.0,rsq<rcutsq)
+                                        nrg_sp_vec(itrial) = nrg_sp
+                                END DO
+                        CASE(vdw_cut_switch)
+                                eps = vdwscale*ppvdwp_table2_sp(1,itype,jtype,this_box) ! 4*epsilon
+                                negsigsq = ppvdwp_table2_sp(2,itype,jtype,this_box) ! -(sigma**2)
+                                !DIR$ LOOP COUNT = 8, 16
+                                !DIR$ VECTOR ALIGNED
+                                DO itrial = 1, n_good_trials_pad8
+                                        rsq = rsq_vec(itrial)
+                                        nrg_sp = nrg_sp_vec(itrial)
+                                        negsigbyr2 = negsigsq/rsq
+                                        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                        rterm = rterm + rterm*rterm
+                                        IF (rsq .GE. const3) THEN
+                                                roffsq_rijsq = const4 - rsq
+                                                rterm = roffsq_rijsq*roffsq_rijsq * &
+                                                        (const1+const2*rsq) * rterm
+                                        END IF
+                                        nrg_sp = nrg_sp + eps*rterm
+                                        nrg_sp_vec(itrial) = nrg_sp
+                                END DO
+                        CASE(vdw_cut_shift_force)
+                                eps = vdwscale*ppvdwp_table2_sp(1,itype,jtype,this_box) ! 4*epsilon
+                                negsigsq = ppvdwp_table2_sp(2,itype,jtype,this_box) ! -(sigma**2)
+                                shift_p1 = vdwscale*ppvdwp_table2_sp(3,itype,jtype,this_box)
+                                shift_p2 = vdwscale*ppvdwp_table2_sp(4,itype,jtype,this_box)
+                                shift_p1 = shift_p1 + REAL(rcut_vdw(this_box),SP)*shift_p2
+                                !DIR$ LOOP COUNT = 8, 16
+                                !DIR$ VECTOR ALIGNED
+                                DO itrial = 1, n_good_trials_pad8
+                                        rsq = rsq_vec(itrial)
+                                        nrg_sp = nrg_sp_vec(itrial)
+                                        negsigbyr2 = negsigsq/rsq
+                                        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                        rterm = rterm + rterm*rterm
+                                        IF (rsq < rcutsq) THEN
+                                                nrg_sp = nrg_sp + eps*rterm + SQRT(rsq)*shift_p2 - shift_p1
+                                        END IF
+                                        nrg_sp_vec(itrial) = nrg_sp
+                                END DO
+                        CASE(vdw_cut,vdw_cut_tail)
+                                eps = vdwscale*ppvdwp_table2_sp(1,itype,jtype,this_box) ! 4*epsilon
+                                negsigsq = ppvdwp_table2_sp(2,itype,jtype,this_box) ! -(sigma**2)
+                                !DIR$ LOOP COUNT = 8, 16
+                                !DIR$ VECTOR ALIGNED
+                                DO itrial = 1, n_good_trials_pad8
+                                        rsq = rsq_vec(itrial)
+                                        nrg_sp = nrg_sp_vec(itrial)
+                                        negsigbyr2 = negsigsq/rsq
+                                        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                        rterm = rterm + rterm*rterm
+                                        nrg_sp = nrg_sp + eps*rterm
+                                        nrg_sp_vec(itrial) = nrg_sp
+                                END DO
+                        END SELECT
+                CASE(vdw_mie)
+                        epsig_n = vdwscale*ppvdwp_table2_sp(1,jtype,itype,this_box)
+                        epsig_m = vdwscale*ppvdwp_table2_sp(2,jtype,itype,this_box)
+                        mie_n = ppvdwp_table2_sp(3,jtype,itype,this_box)
+                        mie_m = ppvdwp_table2_sp(4,jtype,itype,this_box)
+                        SELECT CASE(this_int_vdw_sum_style)
+                        CASE(vdw_cut_shift)
+                                shift_p1 = vdwscale*ppvdwp_table2_sp(5,itype,jtype,this_box)
+                                !DIR$ LOOP COUNT = 8, 16
+                                !DIR$ VECTOR ALIGNED
+                                DO itrial = 1, n_good_trials_pad8
+                                        rsq = rsq_vec(itrial)
+                                        nrg_sp = nrg_sp_vec(itrial)
+                                        lnrsq = LOG(rsq)
+                                        nrg_sp = nrg_sp + epsig_n*EXP(lnrsq*mie_n) - epsig_m*EXP(lnrsq*mie_m) - shift_p1
+                                        nrg_sp_vec(itrial) = nrg_sp
+                                END DO
+                        CASE(vdw_cut,vdw_cut_tail)
+                                !DIR$ LOOP COUNT = 8, 16
+                                !DIR$ VECTOR ALIGNED
+                                DO itrial = 1, n_good_trials_pad8
+                                        rsq = rsq_vec(itrial)
+                                        nrg_sp = nrg_sp_vec(itrial)
+                                        lnrsq = LOG(rsq)
+                                        nrg_sp = nrg_sp + epsig_n*EXP(lnrsq*mie_n) - epsig_m*EXP(lnrsq*mie_m)
+                                        nrg_sp_vec(itrial) = nrg_sp
+                                END DO
+                        END SELECT
+                END SELECT
+                SELECT CASE(this_int_charge_sum_style)
+                CASE(charge_ewald)
+                        alpha_ewald_sp = REAL(alpha_ewald(this_box),SP)
+                        !DIR$ LOOP COUNT = 8, 16
+                        !DIR$ VECTOR ALIGNED
+                        DO itrial = 1, n_good_trials_pad8
+                                rsq = rsq_vec(itrial)
+                                nrg_sp = nrg_sp_vec(itrial)
+                                invr = 1.0/SQRT(rsq)
+                                rij = rsq*invr
+                                nrg_sp = nrg_sp + (chargescale - ERF(alpha_ewald_sp*rij))*cfqq*invr
+                                nrg_sp_vec(itrial) = nrg_sp
+                        END DO
+                CASE(charge_dsf)
+                        dsf_const = -dsf_factor2(this_box)*(rcut_coul(this_box)+dsf_factor1(this_box))
+                        dsf_factor2_sp = REAL(dsf_factor2(this_box),SP)
+                        !DIR$ LOOP COUNT = 8, 16
+                        !DIR$ VECTOR ALIGNED
+                        DO itrial = 1, n_good_trials_pad8
+                                rsq = rsq_vec(itrial)
+                                nrg_sp = nrg_sp_vec(itrial)
+                                invr = 1.0/SQRT(rsq)
+                                rij = rsq*invr
+                                nrg_sp = dsf_const + (chargescale - ERF(alpha_dsf(this_box)*rij))*invr + dsf_factor2_sp*rij
+                                nrg_sp = cfqq*nrg_sp + nrg_sp_vec(itrial)
+                                nrg_sp_vec(itrial) = nrg_sp
+                        END DO
+                CASE(charge_cut)
+                        cfqq = cfqq*chargescale
+                        !DIR$ LOOP COUNT = 8, 16
+                        !DIR$ VECTOR ALIGNED
+                        DO itrial = 1, n_good_trials_pad8
+                                rsq = rsq_vec(itrial)
+                                nrg_sp = nrg_sp_vec(itrial)
+                                invr = 1.0/SQRT(rsq)
+                                nrg_sp = nrg_sp + cfqq*invr
+                                nrg_sp_vec(itrial) = nrg_sp
+                        END DO
+                CASE(charge_sf)
+                        sf_const1 = REAL(2.0_DP/rcut_cbmc(this_box),SP)
+                        sf_const2 = 1.0/rcutsq
+                        !DIR$ LOOP COUNT = 8, 16
+                        !DIR$ VECTOR ALIGNED
+                        DO itrial = 1, n_good_trials_pad8
+                                rsq = rsq_vec(itrial)
+                                nrg_sp = nrg_sp_vec(itrial)
+                                invr = 1.0/SQRT(rsq)
+                                rij = rsq*invr
+                                rij = rij*sf_const2 - sf_const1 ! rij no longer storing atomic separation distance
+                                rij = MERGE(rij,0.0,rsq<rcutsq)
+                                rij = rij + chargescale*invr
+                                nrg_sp = nrg_sp + cfqq*rij
+                                nrg_sp_vec(itrial) = nrg_sp
+                        END DO
+                END SELECT
+        END DO
+     END DO
+     ! Having intramolecular overlap is unlikely in most cases
+     IF (ANY(overlap_trial(1:n_good_trials))) THEN
+             IF (ALL(overlap_trial(1:n_good_trials))) THEN
+                     cbmc_overlap = .TRUE.
+                     RETURN
+             END IF
+             n_good_trials_old = n_good_trials
+             n_good_trials = 0
+             DO itrial = 1, n_good_trials_old
+                IF (.NOT. overlap_trial(itrial)) THEN
+                        n_good_trials = n_good_trials + 1
+                        which_good_trials(n_good_trials) = MERGE(itrial,which_good_trials(itrial),n_good_trials_old==kappa_dih)
+                        trial_atom_rp(n_good_trials,1:3,1:nfrag_atoms) = &
+                                trial_atom_rp(itrial,1:3,1:nfrag_atoms)
+                        nrg_sp_vec(n_good_trials) = nrg_sp_vec(itrial)
+                END IF
+             END DO
+             n_good_trials_pad8 = IAND(n_good_trials+7,NOT(7))
+     END IF
+     !DIR$ ASSUME (MOD(n_good_trials_pad8,8) == 0)
+     nrg_dihed_vec = 0.0
+     anchor_frag_connect_rp = REAL(these_atoms(anchor_frag_connect)%rp(1:3),SP)
+     anchor_ifrag_rp = REAL(these_atoms(anchor_ifrag)%rp(1:3),SP)
+     !DIR$ LOOP COUNT = 0, 9, 18
+     DO idihed_rb = 1, species_list(is)%ndihedrals_rb
+        IF (l_skip_dihed_vec(idihed_rb)) CYCLE ! it would CYCLE anyway due to other conditionals but this is faster
+        dihedral_atoms = dihedral_list(idihed_rb,is)%atom(1:4)
+        IF (ALL(dihedral_atoms(2:3) .EQ. anchor_atoms) .AND. &
+                grown_exist(dihedral_atoms(1)) .AND. &
+                new_exist(dihedral_atoms(4))) THEN
+                atom1 = dihedral_atoms(1)
+                atom2 = dihedral_atoms(2)
+                atom3 = dihedral_atoms(3)
+                atom4 = inv_atom_id(dihedral_atoms(4))
+                r32_dp = r32_base
+                atom3_rp = anchor_ifrag_rp
+        ELSE IF (ALL(dihedral_atoms(2:3) .EQ. anchor_atoms_reversed) .AND. &
+                new_exist(dihedral_atoms(1)) .AND. &
+                grown_exist(dihedral_atoms(4))) THEN
+                atom1 = dihedral_atoms(4)
+                atom2 = dihedral_atoms(3)
+                atom3 = dihedral_atoms(2)
+                atom4 = inv_atom_id(dihedral_atoms(1))
+                r32_dp = -r32_base
+                atom3_rp = anchor_frag_connect_rp
+        ELSE
+                CYCLE
+        END IF
+        l_skip_dihed_vec(idihed_rb) = .TRUE.
+        vecdp = these_atoms(atom1)%rp(1:3) - &
+                these_atoms(atom2)%rp(1:3) ! r12
+        m_dp(1) = vecdp(2)*r32_dp(3) - vecdp(3)*r32_dp(2)
+        m_dp(2) = vecdp(3)*r32_dp(1) - vecdp(1)*r32_dp(3)
+        m_dp(3) = vecdp(1)*r32_dp(2) - vecdp(2)*r32_dp(1)
+        m_normsq = REAL(DOT_PRODUCT(m_dp,m_dp),SP)
+        m_sp = REAL(m_dp,SP)
+        rx32 = REAL(r32_dp(1),SP)
+        ry32 = REAL(r32_dp(2),SP)
+        rz32 = REAL(r32_dp(3),SP)
+        !DIR$ LOOP COUNT = 8, 16
+        !DIR$ VECTOR ALIGNED
+        DO itrial = 1, n_good_trials_pad8
+                rx34 = trial_atom_rp(itrial,1,atom4)
+                ry34 = trial_atom_rp(itrial,2,atom4)
+                rz34 = trial_atom_rp(itrial,3,atom4)
+                rx34 = atom3_rp(1) - rx34
+                ry34 = atom3_rp(2) - ry34
+                rz34 = atom3_rp(3) - rz34
+                ni = ry32*rz34 - rz32*ry34 ! nx
+                cosphi = m_sp(1)*ni ! currently accumulator corresponding to mdn
+                invnorm = ni*ni ! invnorm similarly needs to undergo further operations
+                ni = rz32*rx34 - rx32*rz34 ! ny
+                cosphi = cosphi + m_sp(2)*ni
+                invnorm = invnorm + ni*ni
+                ni = rx32*ry34 - ry32*rx34 ! nz
+                invnorm = invnorm + ni*ni
+                cosphi = cosphi + m_sp(3)*ni
+                invnorm = invnorm * m_normsq
+                invnorm = 1.0_SP / SQRT(invnorm) ! finally reciprocal of norm product
+                cosphi = cosphi*invnorm ! now cosphi is actually COS(phi)
+                cosphi_vec(itrial) = cosphi
+        END DO
+        rb_c(1:5) = dihedral_list(idihed_rb,is)%rb_c_sp(1:5)
+        !DIR$ LOOP COUNT = 8, 16
+        !DIR$ VECTOR ALIGNED
+        DO itrial = 1, n_good_trials_pad8
+                cosphi = cosphi_vec(itrial)
+                cosphi2 = cosphi*cosphi
+                cosphi3 = cosphi*cosphi2
+                cosphi4 = cosphi2*cosphi2
+                cosphi5 = cosphi2*cosphi3
+                nrg_dihed_vec(itrial) = nrg_dihed_vec(itrial) + &
+                        rb_c(1)*cosphi + &
+                        rb_c(2)*cosphi2 + &
+                        rb_c(3)*cosphi3 + &
+                        rb_c(4)*cosphi4 + &
+                        rb_c(5)*cosphi5
+        END DO
+     END DO
+     !DIR$ LOOP COUNT = 0, 9, 18
+     DO idihed = idihed_rb, species_list(is)%ndihedrals_energetic
+        IF (l_skip_dihed_vec(idihed)) CYCLE ! it would CYCLE anyway due to other conditionals but this is faster
+        dihedral_atoms = dihedral_list(idihed_rb,is)%atom(1:4)
+        IF (ALL(dihedral_atoms(2:3) .EQ. anchor_atoms) .AND. &
+                grown_exist(dihedral_atoms(1)) .AND. &
+                new_exist(dihedral_atoms(4))) THEN
+                these_atoms(dihedral_atoms(4))%rp(1:3) = &
+                        trial_atom_rp(n_good_trials,1:3,inv_atom_id(dihedral_atoms(4)))
+        ELSE IF (ALL(dihedral_atoms(2:3) .EQ. anchor_atoms_reversed) .AND. &
+                new_exist(dihedral_atoms(1)) .AND. &
+                grown_exist(dihedral_atoms(4))) THEN
+                these_atoms(dihedral_atoms(1))%rp(1:3) = &
+                        trial_atom_rp(n_good_trials,1:3,inv_atom_id(dihedral_atoms(1)))
+        ELSE
+                CYCLE
+        END IF
+        l_skip_dihed_vec(idihed) = .TRUE.
+        CALL Get_Dihedral_Angle(idihed,this_im,is,last_phi_dp)
+        SELECT CASE(dihedral_list(idihed,is)%int_dipot_type)
+        CASE(int_charmm)
+                last_phi = REAL(last_phi_dp - dihedral_list(idihed,is)%dihedral_param(3),SP)
+                phi_step_sp = REAL(theta_step * dihedral_list(idihed,is)%dihedral_param(2),SP)
+        CASE(int_harmonic)
+                last_phi = REAL(last_phi_dp - dihedral_list(idihed,is)%dihedral_param(2) - twoPI,SP)
+                phi_step_sp = theta_step_sp
+        END SELECT
+        a0 = dihedral_list(idihed,is)%dihedral_param_sp(1)
+        IF (l_widom_cells) THEN
+                DO itrial = 1, n_good_trials-1
+                        phi_vec(itrial) = (which_good_trials(n_good_trials)-which_good_trials(itrial)) * &
+                                phi_step_sp + last_phi
+                END DO
+        ELSE
+                DO itrial = 1, n_good_trials-1
+                        phi_vec(itrial) = (n_good_trials-itrial) * &
+                                phi_step_sp + last_phi
+                END DO
+        END IF
+        ! I ignore any constant terms in dihedral energy because only relative energy matters.
+        SELECT CASE(dihedral_list(idihed,is)%int_dipot_type)
+        CASE(int_charmm)
+                nrg_dihed_vec(1:n_good_trials) = nrg_dihed_vec(1:n_good_trials) + &
+                        a0*COS(phi_vec(1:n_good_trials))
+        CASE(int_harmonic)
+                DO itrial = 1, n_good_trials
+                        phi = ABS(phi_vec(itrial))
+                        IF (phi > PI_SP) phi = phi - twoPI_SP
+                        nrg_dihed_vec(itrial) = nrg_dihed_vec(itrial) + phi*phi*a0
+                END DO
+        END SELECT
+     END DO
+     ! Compute trial weights
+     !DIR$ LOOP COUNT = 8, 16
+     !DIR$ VECTOR ALIGNED
+     DO itrial = 1, n_good_trials_pad8
+        nrg_sp = nrg_sp_vec(itrial) + nrg_dihed_vec(itrial)
+        nrg_dp = REAL(nrg_sp,DP)
+        nrg_dp_vec(itrial) = nrg_dp
+        weight(itrial) = EXP(-beta(this_box)*nrg_dp)
+     END DO
+     cweight = weight(1)
+     !DIR$ LOOP COUNT = 1, 2, 3, 4, 8
+     DO itrial = 1, n_good_trials
+        cweight = cweight + weight(itrial)
+        weight(itrial) = cweight
+     END DO
+     ! If the cumulative weight is 0, then all trial dihedrals had core overlap
+     ! Reject the move if all trials tripped overlap
+     IF (cweight == 0.0_DP ) THEN
+             cbmc_overlap = .TRUE.
+             RETURN
+     END IF
+     IF (del_flag) THEN
+             trial = 1
+             itrial = 1
+             IF (n_good_trials .NE. kappa_dih .AND. which_good_trials(1) .NE. 1) THEN
+                     cbmc_overlap = .TRUE.
+                     RETURN
+             END IF
+     ELSE
+             prob_pick = rranf() * cweight
+             DO itrial = 1, n_good_trials
+                IF (prob_pick <= weight(itrial)) EXIT
+             END DO
+             ! The above loop should always exit "early", so itrial should never be > n_good_trials
+             trial = MERGE(itrial, which_good_trials(itrial), n_good_trials==kappa_dih)
+     END IF
+     ! place atoms for chosen trial
+     sinlintheta = species_list(is)%sincos_lintheta_dp(trial,1)
+     coslintheta = species_list(is)%sincos_lintheta_dp(trial,2)
+     sintheta = sinlintheta*costheta0 + coslintheta*sintheta0
+     costheta = coslintheta*costheta0 - sinlintheta*sintheta0
+     sincosmat(1,:) = (/ costheta, sintheta /)
+     sincosmat(2,:) = (/ -sintheta, costheta /)
+     new_rp(2:3,1:nfrag_atoms) = MATMUL(sincosmat,new_rp(2:3,1:nfrag_atoms))
+     new_rp(1:3,1:nfrag_atoms) = MATMUL(hanger_frag_connect,new_rp(1:3,1:nfrag_atoms))
+     DO j = 1, nfrag_atoms
+        these_atoms(atom_id(j))%rp(1:3) = new_rp(1:3,j) + these_atoms(anchor_frag_connect)%rp(1:3)
+     END DO
+     these_atoms%exist = combined_exist
+     IF (widom_active) THEN
+             ! Note, this part could be precomputed in the simulation setup instead, since the interfragment
+             !      intramolecular nonbonded pairs are the same for each run of this subroutine for a given species
+             !      unless you are doing a partial deletion and regrowth, in which case some of the pairs would be
+             !      unneeded, but they shouldn't make the computation wrong since the extra pairs would be the same for
+             !      the partial deletion and the regrowth, and the extra energies would cancel out when computing dE.
+             ! I just didn't take the time to do so.
+             DO ja = 1, natoms(is)
+                IF ((.NOT. grown_exist(ja)) .OR. ANY(ja == anchor_atoms)) CYCLE
+                interfrag_nonbond_pairlist(1,n_interfrag_nonbond_pairs+1:n_interfrag_nonbond_pairs+nfrag_atoms) = &
+                        SPREAD(ja,1,nfrag_atoms)
+                interfrag_nonbond_pairlist(2,n_interfrag_nonbond_pairs+1:n_interfrag_nonbond_pairs+nfrag_atoms) = &
+                        atom_id(1:nfrag_atoms)
+                n_interfrag_nonbond_pairs = n_interfrag_nonbond_pairs + nfrag_atoms
+             END DO
+     END IF
+     ! Recover the individual probability for the accepted trial
+     ln_pbias = ln_pbias - beta(this_box) * nrg_dp_vec(itrial) - LOG(cweight)
+     ! mark this fragment as placed
+     frag_placed(ifrag) = 1
+     ! Vectorized version end
+
+     ! Loop over the trial dihedrals
 
      !**************************************************************************
      ! Step 4) Compute the energy of the fragment 
      !**************************************************************************
      ! 
-     ! Initialize the energies
-
-     nrg(:) = 0.0_DP
-     nrg_dihed(:) = 0.0_DP
-     overlap_trial(:) = .FALSE.
-
-     trial_loop: DO ii = 1, kappa_dih
-
-        ! Reload the coordinates for the atoms of this fragment
-        DO j = 1, nfrag_atoms
-           
-                this_atom = atom_id(j)
-           
-                these_atoms(this_atom)%rp(1) = &
-                   config_temp_list(this_atom,ii)%rp(1) 
-                these_atoms(this_atom)%rp(2) = &
-                   config_temp_list(this_atom,ii)%rp(2) 
-                these_atoms(this_atom)%rp(3) = &
-                   config_temp_list(this_atom,ii)%rp(3)
-                IF (l_sectors .AND. widom_active) THEN
-                        IF (check_overlap(this_atom,this_im,is)) THEN
-                               IF (ii > 1) THEN
-                                       weight(ii) = weight(ii-1)
-                               ELSE
-                                       weight(ii) = 0.0_DP
-                               END IF
-                               overlap_trial(ii) = .TRUE.
-                               !IF (ii == kappa_dih) these_atoms(atom_id(1:nfrag_atoms))%exist = .TRUE.
-                               CYCLE trial_loop
-                        END IF
-                END IF
-        END DO
-        ! Turn all the atoms off
-        overlap = .FALSE.
-        these_atoms(atom_id(1:nfrag_atoms))%exist = .FALSE.
-        
-        ! Initialize the energies
-        nrg_intra_vdw = 0.0_DP
-        nrg_intra_qq = 0.0_DP
-        nrg_inter_vdw = 0.0_DP
-        nrg_inter_qq = 0.0_DP
-           
-        ! Compute the atomic energies as the fragment is slowly turned on
-        DO j = 1, nfrag_atoms
-              
-           these_atoms(atom_id(j))%exist = .TRUE.
-              
-           CALL Compute_Atom_Nonbond_Intra_Energy(atom_id(j),this_im,is, &
-                E_intra_vdw,E_intra_qq,E_inter_qq,overlap)
-           IF (overlap) THEN
-              IF (ii > 1) THEN
-                      weight(ii) = weight(ii-1)
-              ELSE
-                      weight(ii) = 0.0_DP
-              END IF
-              overlap_trial(ii) = .TRUE.
-              ! if it is the last trial, the atom exist flag may not be
-              ! properly set to true
-              IF (ii == kappa_dih) these_atoms(atom_id(1:nfrag_atoms))%exist = .TRUE.
-              CYCLE trial_loop
-           END IF
-           
-           nrg_intra_vdw = nrg_intra_vdw + E_intra_vdw
-           nrg_intra_qq  = nrg_intra_qq  + E_intra_qq
-           nrg_inter_qq  = nrg_inter_qq  + E_inter_qq
-              
-        END DO
-
-        these_atoms%exist = new_exist
-        IF (.NOT. (cbmc_cell_list_flag .AND. widom_active)) THEN
-                CALL Get_COM(this_im,is)
-                CALL Compute_Max_COM_Distance(this_im,is)
-        END IF
-        IF (widom_active) THEN
-                CALL Compute_Molecule_Nonbond_Inter_Energy_Widom(this_im,is,&
-                        nrg_inter_vdw,overlap)
-                ! in this case, nrg_inter_vdw already includes qq energy
-                E_inter_qq = 0.0_DP
-        ELSE
-                CALL Compute_Molecule_Nonbond_Inter_Energy(this_im,is,&
-                        nrg_inter_vdw,E_inter_qq,overlap)
-        END IF
-        these_atoms%exist = combined_exist
-
-        IF (overlap) THEN
-           ! atoms are too close, set the weight to zero
-           weight(ii) = 0.0_DP
-           overlap_trial(ii) = .TRUE.
-        ELSE
-           nrg_inter_qq = nrg_inter_qq + E_inter_qq
-           CALL Compute_Molecule_Dihedral_Energy(this_im,is,e_dihed)
-
-           nrg_dihed(ii) = e_dihed
-
-           nrg(ii) = e_dihed + nrg_intra_vdw + nrg_intra_qq  + &          
-                nrg_inter_vdw + nrg_inter_qq - e_prev
-
-           IF (frag_list(ifrag,is)%ring) THEN
-              ! subtract the biasing energy used to sample intramolecular DOFs
-              nrg(ii) = nrg(ii) - nrg_ring_frag
-           END IF
-           
-           nrg_kBT = beta(this_box) * nrg(ii)
-           
-           IF ( nrg_kBT >= max_kBT) THEN
-              ! the energy is too high, set the weight to zero
-              weight(ii) = 0.0_DP
-              overlap_trial(ii) = .TRUE.
-           ELSE
-              weight(ii) = DEXP(-nrg_kBT)
-           END IF
-        END IF
-
-!        ! BEGIN DEBUGGING OUTPUT
-!        ! Write out the fragment coordinates for each trial position
-!        M_XYZ_unit = movie_xyz_unit + this_box
-!        DO j = 1, frag_list(ifrag,is)%natoms
-!           this_atom = frag_list(ifrag,is)%atoms(j)
-!           WRITE(M_XYZ_unit,*) &
-!              TRIM(nonbond_list(this_atom,is)%element) // &
-!              TRIM(int_to_string(ii)), & 
-!              these_atoms(this_atom)%rp(1), &
-!              these_atoms(this_atom)%rp(2), &
-!              these_atoms(this_atom)%rp(3)
-!        END DO
-!        IF (ii==1) THEN
-!           WRITE(*,'(A,X,I5)'), 'i_mcstep', i_mcstep
-!           WRITE(*,'(4(A12,X))') 'DIH' // TRIM(int_to_string(i)) // ':trial ', 'energy', 'weight', 'overlap'
-!        END IF
-!        WRITE(*,'(I12,X,E12.6,X,E12.6,X,L12)') ii, beta(this_box)*nrg(ii), weight(ii), overlap_trial(ii)
-!        ! END DEBUGGING OUTPUT
-                 
-        ! Track the cumulative weights for Golden sampling
-        IF ( ii > 1 ) weight(ii) = weight(ii-1) + weight(ii)
-
-!        WRITE(*,*) 'weight',overlap, ii, nrg_kBT
-!        WRITE(*,*) 'energy', e_prev, nrg(ii)
-           
-     END DO trial_loop
 
      !**************************************************************************
      ! Step 5) Select a trial dihedral using the weighted probabilities
@@ -2327,68 +3147,37 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
      ! 
      ! 
 
-     ! If the cumulative weight is 0, then all trial dihedrals had core overlap
-     ! Reject the move if all trials tripped overlap
-     IF (ALL(overlap_trial)) THEN
-        cbmc_overlap = .TRUE.
-        RETURN
-     END IF
-
-
-     IF (del_flag) THEN
-
-        ! Use trial 1, which holds the current coordinates of the fragment
-        trial = 1
-
-     ELSE
-
-        ! Select a trial from the weighted distribution
-        prob_pick = rranf() * weight(kappa_dih)
-
-        DO ii = 1, kappa_dih
-
-           IF ( prob_pick < weight(ii) ) EXIT
-
-        END DO
-
-        trial = ii
-
-     END IF
-     IF (trial == kappa_dih + 1) THEN
-             cbmc_overlap = .TRUE.
-             RETURN
-     END IF
-
-     ! Recover the individual probability for the accepted trial
-     ln_pbias = ln_pbias - beta(this_box) * nrg(trial) - DLOG(weight(kappa_dih))
      
-     ! Give the coordinates of this conformation to these_atoms
-     DO j = 1, frag_list(ifrag,is)%natoms
-        
-        this_atom = frag_list(ifrag,is)%atoms(j)
-        
-        IF (this_atom /= anchor_ifrag) THEN
-           IF (this_atom /= anchor_frag_connect) THEN
-              these_atoms(this_atom)%rp(1) = &
-                 config_temp_list(this_atom,trial)%rp(1)
-              these_atoms(this_atom)%rp(2) = &
-                 config_temp_list(this_atom,trial)%rp(2)
-              these_atoms(this_atom)%rp(3) = &
-                 config_temp_list(this_atom,trial)%rp(3)
-           END IF
-        END IF
-     END DO
      
-     ! also store the total energy up to this point
-     e_prev =  nrg_dihed(trial)
-     
-     ! mark this fragment as placed
-     frag_placed(ifrag) = 1
 
     
 
   END DO
-  IF (frag_total > 1 .AND. .NOT. full_cell_list_flag) THEN
+  ! apply this part to other CBMC moves, not just Widom insertions, if we determine it's correct for them
+  IF (widom_active .AND. n_interfrag_nonbond_pairs > 0) THEN
+          DO i = 1, n_interfrag_nonbond_pairs
+                ia = interfrag_nonbond_pairlist(1,i)
+                ja = interfrag_nonbond_pairlist(2,i)
+                vec2 = these_atoms(ja)%rp(1:3) - these_atoms(ia)%rp(1:3)
+                rijsq_dp = DOT_PRODUCT(vec2,vec2)
+                get_vdw = rijsq_dp < rcut_vdwsq(this_box) .AND. ALL(nonbond_list((/ia,ja/),is)%atom_type_number .NE. 0)
+                get_qq = rijsq_dp < rcut_coulsq(this_box) .AND. ALL(nonbond_list((/ia,ja/),is)%charge .NE. 0.0_DP)
+                IF (.NOT. (get_vdw .OR. get_qq)) CYCLE
+                CALL Compute_AtomPair_Energy(vec2(1),vec2(2),vec2(3),rijsq_dp,is,this_im,ia,is,this_im,ja, &
+                        get_vdw,get_qq, Eij_intra_vdw, Eij_intra_qq, Eij_inter_vdw, Eij_inter_qq)
+                E_total = E_total + Eij_intra_vdw + Eij_intra_qq + Eij_inter_qq + Eij_inter_vdw
+          END DO
+  END IF
+  IF (widom_active .AND. ANY(l_skip_dihed_vec)) THEN
+          ! Previously indicated dihedral should be skipped early for biasing energy because it was already done
+          !    and there's no way it would be needed twice (at least with the present CBMC algorithms)
+          l_skip_dihed_vec = .NOT. l_skip_dihed_vec ! inverting l_skip_dihed_vec
+          ! l_skip_dihed_vec now indicates which dihedrals to skip when computing interfragment dihedral energy
+          !    because they aren't interfragment dihedrals
+          CALL Compute_Molecule_Dihedral_Energy(this_im,is,E_dihed,l_skip_dihed_vec)
+          E_total = E_total + E_dihed
+  END IF
+  IF (frag_total > 1 .AND. .NOT. (full_cell_list_flag .AND. widom_active)) THEN
           CALL Get_COM(this_im,is)
           CALL Compute_Max_COM_Distance(this_im,is)
   END IF
@@ -2504,13 +3293,14 @@ SUBROUTINE Single_Fragment_Regrowth(this_im,is)
       
       this_atom = frag_list(1,is)%atoms(i)
       nl = (frag_position_library(frag_type)-1) + &
-                                           frag_list(1,is)%natoms*(this_fragment -1) + i      
-      these_atoms(this_atom)%rp(1) =  library_coords(nl)%rp(1)
-                                             !frag_coords(i,this_fragment,frag_type)%rp(1)
-      these_atoms(this_atom)%rp(2) =  library_coords(nl)%rp(2)
-                                             !frag_coords(i,this_fragment,frag_type)%rp(2)
-      these_atoms(this_atom)%rp(3) =  library_coords(nl)%rp(3)
-                                              !frag_coords(i,this_fragment,frag_type)%rp(3)
+                                           frag_list(1,is)%natoms*(this_fragment -1) + i
+      these_atoms(this_atom)%rp(1:3) = library_coords(1:3,nl) 
+      !these_atoms(this_atom)%rp(1) =  library_coords(nl)%rp(1)
+      !                                       !frag_coords(i,this_fragment,frag_type)%rp(1)
+      !these_atoms(this_atom)%rp(2) =  library_coords(nl)%rp(2)
+      !                                       !frag_coords(i,this_fragment,frag_type)%rp(2)
+      !these_atoms(this_atom)%rp(3) =  library_coords(nl)%rp(3)
+      !                                        !frag_coords(i,this_fragment,frag_type)%rp(3)
    END DO
 
 

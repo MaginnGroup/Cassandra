@@ -348,7 +348,7 @@ CONTAINS
   END SUBROUTINE Compute_Molecule_Angle_Energy
   !-----------------------------------------------------------------------------
 
-  SUBROUTINE Compute_Molecule_Dihedral_Energy(molecule,species,energy_dihed)
+  SUBROUTINE Compute_Molecule_Dihedral_Energy(molecule,species,energy_dihed,l_skip_dihed_vec)
     !**************************************************************************
     ! This routine is passed a molecule and species index. It then computes
     !the total dihedral angle energy of this molecule.
@@ -372,6 +372,7 @@ CONTAINS
   USE Global_Variables
     INTEGER :: molecule,species
     REAL(DP) :: energy_dihed
+    LOGICAL, DIMENSION(species_list(species)%ndihedrals_energetic), INTENT(IN), OPTIONAL :: l_skip_dihed_vec
     INTEGER :: idihed, idihed_rb, atom1, atom2, atom3, atom4
     REAL(DP) :: a0,a1,a2,a3,a4,a5,a6,a7,a8,edihed,phi,cosphi,r12dn,twophi,threephi
     REAL(DP) :: cosphi_vec(0:5)
@@ -388,6 +389,9 @@ CONTAINS
     cosphi_vec = 0.0_DP
     cosphi_vec(0) = 1.0_DP
     DO idihed_rb = 1, species_list(species)%ndihedrals_rb
+        IF (PRESENT(l_skip_dihed_vec)) THEN
+                IF (l_skip_dihed_vec(idihed_rb)) CYCLE
+        END IF
         IF (.NOT. ALL(these_atoms(dihedral_list(idihed_rb,species)%atom)%exist)) CYCLE
         CALL Get_Dihedral_Angle_COS(idihed_rb,molecule,species,cosphi_vec(1))
         cosphi_vec(2) = cosphi_vec(1)*cosphi_vec(1)
@@ -397,6 +401,9 @@ CONTAINS
         energy_dihed = energy_dihed + DOT_PRODUCT(cosphi_vec,dihedral_list(idihed_rb,species)%rb_c)
     END DO
     DO idihed=idihed_rb, species_list(species)%ndihedrals_energetic
+       IF (PRESENT(l_skip_dihed_vec)) THEN
+               IF (l_skip_dihed_vec(idihed)) CYCLE
+       END IF
        ! Verify that the atoms of this dihedral exist. This is required
        ! for CBMC moves in which only a part of the molecule is present in
        ! the simulation
@@ -927,7 +934,8 @@ CONTAINS
                           END DO
                   END IF
                   ! next line includes qq energy along with vdw
-                  E_inter_vdw = REAL(Compute_Cell_List_CBMC_nrg(cp_sp,cell_coords,ia,is,this_box),DP)
+                  E_inter_vdw = REAL(Compute_Cell_List_CBMC_nrg(cp_sp(1), cp_sp(2), cp_sp(3), &
+                          cell_coords(1),cell_coords(2),cell_coords(3),ia,is,this_box),DP)
                   overlap = .FALSE.
                   RETURN
                   !cell_length_inv_ptr => cell_length_inv_cbmc(:,:,this_box)
@@ -6140,17 +6148,66 @@ CONTAINS
                   -6.0_DP * eps * rterm2 / rcut_vdw(this_box)
   END SUBROUTINE Compute_LJ_Cut_Shift_Force
 
-  SUBROUTINE Compute_LJ_Cut(rijsq,eps,negsigsq,vdw_energy)
-          !!!!$OMP DECLARE SIMD(Compute_LJ_Cut)
-          REAL(DP) :: eps ! 4*epsilon
-          REAL(DP) :: negsigsq ! -(sigma**2)
-          REAL(DP) :: rijsq, vdw_energy
+  ELEMENTAL FUNCTION Compute_LJ_Cut_Fn(rijsq,eps,negsigsq) RESULT(vdw_energy)
+          !!!!$OMP DECLARE SIMD(Compute_LJ_Cut_Fn) SIMDLEN(4) UNIFORM(eps,negsigsq)
+          REAL(DP), INTENT(IN) :: eps ! 4*epsilon
+          REAL(DP), INTENT(IN) :: negsigsq ! -(sigma**2)
+          REAL(DP), INTENT(IN) :: rijsq
+          REAL(DP) :: vdw_energy
+          REAL(DP) :: negsigbyr2, rterm
+          negsigbyr2 = negsigsq/rijsq
+          rterm = negsigbyr2*negsigbyr2*negsigbyr2
+          rterm = rterm + rterm*rterm
+          vdw_energy = eps * rterm
+  END FUNCTION Compute_LJ_Cut_Fn
+  ELEMENTAL SUBROUTINE Compute_LJ_Cut(rijsq,eps,negsigsq,vdw_energy)
+          !!!$OMP DECLARE SIMD(Compute_LJ_Cut) SIMDLEN(4)
+          REAL(DP), INTENT(IN) :: eps ! 4*epsilon
+          REAL(DP), INTENT(IN) :: negsigsq ! -(sigma**2)
+          REAL(DP), INTENT(IN) :: rijsq
+          REAL(DP), INTENT(INOUT) :: vdw_energy
           REAL(DP) :: negsigbyr2, rterm
           negsigbyr2 = negsigsq/rijsq
           rterm = negsigbyr2*negsigbyr2*negsigbyr2
           rterm = rterm + rterm*rterm
           vdw_energy = vdw_energy + eps * rterm
   END SUBROUTINE Compute_LJ_Cut
+  ELEMENTAL SUBROUTINE Compute_LJ_Cut_Typed(rijsq,itype,jtype,this_box,vdw_energy)
+          !!!$OMP DECLARE SIMD(Compute_LJ_Cut_Typed) SIMDLEN(4), UNIFORM(this_box)
+          !!!$OMP DECLARE SIMD(Compute_LJ_Cut_Typed) SIMDLEN(4), UNIFORM(jtype,this_box)
+          REAL(DP) :: eps ! 4*epsilon
+          REAL(DP) :: negsigsq ! -(sigma**2)
+          REAL(DP), INTENT(IN) :: rijsq
+          REAL(DP), INTENT(INOUT) :: vdw_energy
+          REAL(DP) :: negsigbyr2, rterm
+          INTEGER, INTENT(IN) :: this_box, itype, jtype
+          eps = ppvdwp_table2(1,itype,jtype,this_box)
+          negsigsq = ppvdwp_table2(2,itype,jtype,this_box)
+          negsigbyr2 = negsigsq/rijsq
+          rterm = negsigbyr2*negsigbyr2*negsigbyr2
+          rterm = rterm + rterm*rterm
+          vdw_energy = vdw_energy + eps * rterm
+  END SUBROUTINE Compute_LJ_Cut_Typed
+  SUBROUTINE Compute_LJ_Cut_Typed_Vector(i,rijsq_vec,itype_vec,jtype,this_box,vdw_energy)
+          !!!!$OMP DECLARE SIMD(Compute_LJ_Cut_Typed_Vector) SIMDLEN(4), UNIFORM(rijsq_vec,itype_vec,jtype,this_box), LINEAR(i:1)
+          REAL(DP) :: eps ! 4*epsilon
+          REAL(DP) :: negsigsq ! -(sigma**2)
+          REAL(DP), INTENT(IN), DIMENSION(:), CONTIGUOUS :: rijsq_vec
+          REAL(DP) :: rijsq
+          REAL(DP), INTENT(INOUT) :: vdw_energy
+          REAL(DP) :: negsigbyr2, rterm
+          INTEGER, INTENT(IN) :: this_box, jtype
+          INTEGER :: itype, i
+          INTEGER, INTENT(IN), DIMENSION(:), CONTIGUOUS :: itype_vec
+          itype = itype_vec(i)
+          rijsq = rijsq_vec(i)
+          eps = ppvdwp_table2(1,itype,jtype,this_box)
+          negsigsq = ppvdwp_table2(2,itype,jtype,this_box)
+          negsigbyr2 = negsigsq/rijsq
+          rterm = negsigbyr2*negsigbyr2*negsigbyr2
+          rterm = rterm + rterm*rterm
+          vdw_energy = vdw_energy + eps * rterm
+  END SUBROUTINE Compute_LJ_Cut_Typed_Vector
 
   SUBROUTINE Compute_Mie_Cut(rijsq,epsig_n,epsig_m,mie_n,mie_m,vdw_energy)
           !!!!$OMP DECLARE SIMD(Compute_Mie_Cut)
@@ -6384,14 +6441,10 @@ CONTAINS
           !
   END SUBROUTINE Estimate_MoleculePair_Energy
 
-  REAL(SP) FUNCTION Compute_Cell_List_CBMC_nrg(irp,cp,ia,is,this_box)
-          REAL(SP) :: irp(3)
-          INTEGER, INTENT(IN) :: cp(3), ia, is, this_box
-          ! The following parameters are here so you can optimize speed by setting them.
-          !     The best options probably depend on your processor architecture, unfortunately.
-          !     They are currently not used at all
-          LOGICAL, PARAMETER :: pregather_lj = .FALSE., lj_p_readfirstdim = .FALSE.
-          INTEGER :: xi, yi, zi, vlen, i
+  REAL(SP) ELEMENTAL FUNCTION Compute_Cell_List_CBMC_nrg(irxp,iryp,irzp,xi,yi,zi,ia,is,this_box)
+          REAL(SP), INTENT(IN) :: irxp,iryp,irzp
+          INTEGER, INTENT(IN) :: xi,yi,zi, ia, is, this_box
+          INTEGER :: vlen, i
           REAL(SP) :: nrg
 
           INTEGER :: dmult, isolute, rsqsol
@@ -6404,14 +6457,11 @@ CONTAINS
           INTEGER :: itype, jtype, this_int_vdw_style, this_int_vdw_sum_style
           REAL(SP) :: eps, sigsq, sigbyr2, sigbyr6, sigbyr12, nrg_vdw, rterm, rterm2, negsigsq, negsigbyr2, roffsq_rijsq
           REAL(SP) :: mie_m, mie_n, lnrsq, epsig_n, epsig_m
-          REAL(SP) :: icharge, jcharge, invr, rij, nrg_qq, dsf_const, alpha_ewald_sp
-          REAL(SP) :: const1, const2, const3, const4
+          REAL(SP) :: icharge, jcharge, invr, rij, nrg_qq, dsf_const, alpha_ewald_sp, alpha_dsf_sp, dsf_factor2_sp
+          REAL(SP) :: const1, const2, const3, const4, sf_const1, sf_const2
           INTEGER :: this_int_charge_sum_style
           LOGICAL :: i_get_coul
 
-          xi = cp(1)
-          yi = cp(2)
-          zi = cp(3)
           vlen = cbmc_cell_n_interact(xi,yi,zi,this_box)
           !DIR$ ASSUME (MOD(vlen,8) .EQ. 0)
           nrg = 0.0
@@ -6423,11 +6473,11 @@ CONTAINS
                   !DIR$ VECTOR ALIGNED
                   DO i = 1, vlen
                         rsq_shift = this_shifter
-                        drp = cbmc_cell_rsp(i,1,xi,yi,zi,this_box) - irp(1)
+                        drp = cbmc_cell_rsp(i,1,xi,yi,zi,this_box) - irxp
                         rsq_shift = rsq_shift + drp*drp
-                        drp = cbmc_cell_rsp(i,2,xi,yi,zi,this_box) - irp(2)
+                        drp = cbmc_cell_rsp(i,2,xi,yi,zi,this_box) - iryp
                         rsq_shift = rsq_shift + drp*drp
-                        drp = cbmc_cell_rsp(i,3,xi,yi,zi,this_box) - irp(3)
+                        drp = cbmc_cell_rsp(i,3,xi,yi,zi,this_box) - irzp
                         rsq_shift = rsq_shift + drp*drp
                         rsqsol = INT(MIN(rsq_shift*inv_rsq_step_sp,atompair_nrg_res_sp)) + &
                                 cbmc_cell_ti(i,xi,yi,zi,this_box)*dmult
@@ -6440,20 +6490,20 @@ CONTAINS
           !DIR$ ASSUME_ALIGNED rsq_vec:32
           !DIR$ VECTOR ALIGNED
           DO i = 1, vlen
-                drp = cbmc_cell_rsp(i,1,xi,yi,zi,this_box) - irp(1)
+                drp = cbmc_cell_rsp(i,1,xi,yi,zi,this_box) - irxp
                 rsq = drp*drp 
-                drp = cbmc_cell_rsp(i,2,xi,yi,zi,this_box) - irp(2)
+                drp = cbmc_cell_rsp(i,2,xi,yi,zi,this_box) - iryp
                 rsq = rsq + drp*drp
-                drp = cbmc_cell_rsp(i,3,xi,yi,zi,this_box) - irp(3)
+                drp = cbmc_cell_rsp(i,3,xi,yi,zi,this_box) - irzp
                 rsq = rsq + drp*drp
                 rsq_vec(i) = rsq
           END DO
           itype = nonbond_list(ia,is)%atom_type_number
           this_int_vdw_style = MIN(itype,1) * int_vdw_style(this_box)
           this_int_vdw_sum_style = MIN(itype,1) * int_vdw_sum_style(this_box)
-          icharge = nonbond_list(ia,is)%charge
+          icharge = nonbond_list(ia,is)%charge * charge_factor
           i_get_coul = icharge .NE. 0.0_SP .AND. int_charge_style(this_box) .NE. charge_none .AND. species_list(is)%l_coul_cbmc
-          this_int_charge_sum_style = MERGE(int_charge_sum_style(this_box),0,i_get_coul)
+          this_int_charge_sum_style = MERGE(MERGE(charge_sf,int_charge_sum_style(this_box),cbmc_charge_sf_flag),0,i_get_coul)
           nrg_vdw = 0.0_SP
           nrg_qq = 0.0_SP
           !ppljp(1:vlen,1:2) = TRANSPOSE(ppvdwp_table2_sp(1:2,cbmc_cell_atomtypes(1:vlen,xi,yi,zi,this_box),itype,this_box))
@@ -6477,8 +6527,8 @@ CONTAINS
                           DO i = 1, vlen
                                 rsq = rsq_vec(i)
                                 jtype = cbmc_cell_atomtypes(i,xi,yi,zi,this_box)
-                                eps = ppvdwp_table2_sp(1,jtype,itype,this_box) ! epsilon
-                                sigsq = ppvdwp_table2_sp(2,jtype,itype,this_box) ! sigma**2
+                                eps = ppvdwp_table_sp(jtype,itype,1,this_box) ! epsilon
+                                sigsq = ppvdwp_table_sp(jtype,itype,2,this_box) ! sigma**2
                                 !eps = ppljp(i,1)
                                 !sigsq = ppljp(i,2)
                                 sigbyr2 = sigsq/rsq ! sigma was already squared
@@ -6495,13 +6545,12 @@ CONTAINS
                           END DO
                           !$OMP END SIMD
                   CASE(vdw_cut_shift)
-                          !DIR$ VECTOR MULTIPLE_GATHER_SCATTER_BY_SHUFFLES
                           DO i = 1, vlen
                                 rsq = rsq_vec(i)
                                 jtype = cbmc_cell_atomtypes(i,xi,yi,zi,this_box)
                                 IF (rsq < rcutsq) THEN
-                                  eps = ppvdwp_table2_sp(1,jtype,itype,this_box) ! 4*epsilon
-                                  negsigsq = ppvdwp_table2_sp(2,jtype,itype,this_box) ! -(sigma**2)
+                                  eps = ppvdwp_table_sp(jtype,itype,1,this_box) ! 4*epsilon
+                                  negsigsq = ppvdwp_table_sp(jtype,itype,2,this_box) ! -(sigma**2)
                                   negsigbyr2 = negsigsq/rsq
                                   rterm = negsigbyr2*negsigbyr2*negsigbyr2
                                   rterm = rterm + rterm*rterm
@@ -6517,13 +6566,12 @@ CONTAINS
                           const2 = switch_factor1(this_box)*2
                           const3 = ron_switch_sq(this_box)
                           const4 = roff_switch_sq(this_box)
-                          !DIR$ VECTOR MULTIPLE_GATHER_SCATTER_BY_SHUFFLES
                           DO i = 1, vlen
                                 rsq = rsq_vec(i)
                                 jtype = cbmc_cell_atomtypes(i,xi,yi,zi,this_box)
                                 IF (rsq < rcutsq) THEN
-                                  eps = ppvdwp_table2_sp(1,jtype,itype,this_box) ! 4*epsilon
-                                  negsigsq = ppvdwp_table2_sp(2,jtype,itype,this_box) ! -(sigma**2)
+                                  eps = ppvdwp_table_sp(jtype,itype,1,this_box) ! 4*epsilon
+                                  negsigsq = ppvdwp_table_sp(jtype,itype,2,this_box) ! -(sigma**2)
                                   negsigbyr2 = negsigsq/rsq
                                   rterm = negsigbyr2*negsigbyr2*negsigbyr2
                                   rterm = rterm + rterm*rterm
@@ -6566,19 +6614,20 @@ CONTAINS
                                 END IF
                           END DO
                   CASE(vdw_cut,vdw_cut_tail)
+                          !DIR$ LOOP COUNT = 40, 48, 56, 64
                           !DIR$ VECTOR ALIGNED
                           !$OMP SIMD PRIVATE(eps,negsigsq,negsigbyr2,rterm,rsq,jtype) &
                           !$OMP REDUCTION(+:nrg_vdw)
                           DO i = 1, vlen
                                 rsq = rsq_vec(i)
                                 jtype = cbmc_cell_atomtypes(i,xi,yi,zi,this_box)
-                                !eps = ppvdwp_table_sp(jtype,itype,1,this_box) ! 4*epsilon
-                                !negsigsq = ppvdwp_table_sp(jtype,itype,2,this_box) ! -(sigma**2)
+                                eps = ppvdwp_table_sp(jtype,itype,1,this_box) ! 4*epsilon
+                                negsigsq = ppvdwp_table_sp(jtype,itype,2,this_box) ! -(sigma**2)
                                 IF (rsq < rcutsq) THEN
                                   !eps = ppvdwp_table2_sp(1,jtype,itype,this_box) ! 4*epsilon
                                   !negsigsq = ppvdwp_table2_sp(2,jtype,itype,this_box) ! -(sigma**2)
-                                  eps = ppvdwp_table_sp(jtype,itype,1,this_box) ! 4*epsilon
-                                  negsigsq = ppvdwp_table_sp(jtype,itype,2,this_box) ! -(sigma**2)
+                                  !eps = ppvdwp_table_sp(jtype,itype,1,this_box) ! 4*epsilon
+                                  !negsigsq = ppvdwp_table_sp(jtype,itype,2,this_box) ! -(sigma**2)
                                   negsigbyr2 = negsigsq/rsq
                                   rterm = negsigbyr2*negsigbyr2*negsigbyr2
                                   rterm = rterm + rterm*rterm
@@ -6616,6 +6665,7 @@ CONTAINS
           SELECT CASE (this_int_charge_sum_style)
           CASE(charge_ewald)
                   alpha_ewald_sp = REAL(alpha_ewald(this_box),SP)
+                  !DIR$ LOOP COUNT = 40, 48, 56, 64
                   !DIR$ VECTOR ALIGNED
                   DO i = 1, vlen
                         rsq = rsq_vec(i)
@@ -6628,18 +6678,24 @@ CONTAINS
                   END DO
           CASE(charge_dsf)
                   dsf_const = -dsf_factor2(this_box)*(rcut_coul(this_box)+dsf_factor1(this_box))
+                  alpha_dsf_sp = REAL(alpha_dsf(this_box),SP)
+                  dsf_factor2_sp = dsf_factor2(this_box)
+                  !DIR$ LOOP COUNT = 40, 48, 56, 64
+                  !DIR$ VECTOR ALIGNED
                   DO i = 1, vlen
                         rsq = rsq_vec(i)
                         IF (rsq < rcutsq) THEN
                                 jcharge = cbmc_cell_rsp(i,4,xi,yi,zi,this_box)
                                 invr = 1.0 / SQRT(rsq)
                                 rij = rsq*invr
-                                nrg = ERFC(alpha_dsf(this_box)*rij)*invr + dsf_const + &
+                                nrg = ERFC(alpha_dsf_sp*rij)*invr + dsf_const + &
                                         rij*dsf_factor2(this_box)
                                 nrg_qq = nrg_qq + jcharge * nrg
                         END IF
                   END DO
           CASE(charge_cut)
+                  !DIR$ LOOP COUNT = 40, 48, 56, 64
+                  !DIR$ VECTOR ALIGNED
                   DO i = 1, vlen
                         rsq = rsq_vec(i)
                         IF (rsq < rcutsq) THEN
@@ -6648,8 +6704,24 @@ CONTAINS
                                 nrg_qq = nrg_qq + jcharge*invr
                         END IF
                   END DO
+          CASE(charge_sf)
+                  sf_const1 = REAL(2.0_DP/rcut_cbmc(this_box),SP)
+                  sf_const2 = 1.0/rcutsq
+                  !DIR$ LOOP COUNT = 40, 48, 56, 64
+                  !DIR$ VECTOR ALIGNED
+                  DO i = 1, vlen
+                        rsq = rsq_vec(i)
+                        jcharge = cbmc_cell_rsp(i,4,xi,yi,zi,this_box)
+                        IF (rsq < rcutsq) THEN
+                                invr = 1.0/SQRT(rsq)
+                                rij = rsq*invr
+                                nrg = invr - sf_const1
+                                nrg = nrg + rij*sf_const2
+                                nrg_qq = nrg_qq + jcharge*nrg
+                        END IF
+                  END DO
           END SELECT
-          Compute_Cell_List_CBMC_nrg = nrg_vdw + icharge*charge_factor*nrg_qq
+          Compute_Cell_List_CBMC_nrg = nrg_vdw + icharge*nrg_qq
   END FUNCTION Compute_Cell_List_CBMC_nrg
 
   SUBROUTINE Compute_MoleculePair_Energy(im,is,jm,js,this_box, &
@@ -6894,8 +6966,8 @@ CONTAINS
 
   END FUNCTION AtomPair_VdW_Energy_Vector
 
-  SUBROUTINE Compute_AtomPair_Energy(rxij,ryij,rzij,rijsq,is,im,ia,js,jm,ja, &
-    get_vdw,get_qq,E_intra_vdw,E_intra_qq,E_inter_vdw,E_inter_qq,Eij_qq_o)
+  ELEMENTAL SUBROUTINE Compute_AtomPair_Energy(rxij,ryij,rzij,rijsq,is,im,ia,js,jm,ja, &
+    get_vdw,get_qq,E_intra_vdw,E_intra_qq,E_inter_vdw,E_inter_qq,Eij_qq_o,excess_flag_o,minimg_flag_o)
 
     ! Computes the vdw and q-q pair energy between atoms ia and ja of molecules
     ! im and jm and species is and js, given their separation rijsq. I have
@@ -6915,17 +6987,19 @@ CONTAINS
     !   Compute_AtomPair_Ewald_Real
   !----------------------------------------------------------------------------
     ! Passed to
-    REAL(DP) :: rxij,ryij,rzij,rijsq
-    INTEGER :: is,im,ia,js,jm,ja,ibox
-    LOGICAL :: get_vdw,get_qq
+    REAL(DP), INTENT(IN) :: rxij,ryij,rzij,rijsq
+    INTEGER, INTENT(IN) :: is,im,ia,js,jm,ja
+    LOGICAL, INTENT(IN) :: get_vdw,get_qq
+    LOGICAL, INTENT(IN), OPTIONAL :: excess_flag_o, minimg_flag_o
 
     ! Returned
-    REAL(DP) :: E_intra_vdw,E_intra_qq
-    REAL(DP) :: E_inter_vdw,E_inter_qq
+    REAL(DP), INTENT(OUT) :: E_intra_vdw,E_intra_qq
+    REAL(DP), INTENT(OUT) :: E_inter_vdw,E_inter_qq
+    REAL(DP), INTENT(OUT), OPTIONAL :: Eij_qq_o
 
     ! Local
     ! LJ potential
-    INTEGER :: itype, jtype
+    INTEGER :: itype, jtype, ibox
     REAL(DP) :: rij, rcut_vdw
     REAL(DP) :: eps, sig, Eij_vdw, dEij_dr
     REAL(DP) :: SigByR2, SigByR6, SigByR12
@@ -6937,9 +7011,19 @@ CONTAINS
     REAL(DP) :: SigByR_shift, SigByRn_shift, SigByRm_shift
     ! Coulomb potential
     REAL(DP) :: qi, qj, Eij_qq
-    REAL(DP), OPTIONAL :: Eij_qq_o
 
-    LOGICAL :: atom_i_exist, atom_j_exist
+    LOGICAL :: atom_i_exist, atom_j_exist, excess_flag, minimg_flag
+
+    IF (PRESENT(excess_flag_o)) THEN
+            excess_flag = excess_flag_o
+    ELSE
+            excess_flag = .FALSE.
+    END IF
+    IF (PRESENT(excess_flag_o)) THEN
+            minimg_flag = minimg_flag_o
+    ELSE
+            minimg_flag = .FALSE.
+    END IF
 
     E_intra_vdw = 0.0_DP
     E_intra_qq  = 0.0_DP
@@ -6988,9 +7072,15 @@ CONTAINS
                    SigByR12 = SigByR6 * SigByR6
 
                    ! use standard LJ potential
-                   Eij_vdw = 4.0_DP * eps * (SigByR12 - SigByR6)
+                   IF (excess_flag .AND. int_vdw_sum_style(ibox) .NE. vdw_cut_switch .AND. .NOT. minimg_flag) THEN
+                           Eij_vdw = 0.0_DP
+                   ELSE
+                           Eij_vdw = 4.0_DP * eps * (SigByR12 - SigByR6)
+                   END IF
 
-                   IF (int_vdw_sum_style(ibox) == vdw_cut_shift) THEN
+                   IF (minimg_flag) THEN
+                           CONTINUE
+                   ELSE IF (int_vdw_sum_style(ibox) == vdw_cut_shift) THEN
                          ! shift the LJ potential
                          SigByR2_shift = sig**2/rcut_vdwsq(ibox)
                          SigByR6_shift = SigByR2_shift * SigByR2_shift * SigByR2_shift
@@ -7008,14 +7098,18 @@ CONTAINS
                            roffsq_rijsq_sq = roffsq_rijsq * roffsq_rijsq
                            factor2 = switch_factor2(ibox) + 2.0_DP * rijsq
                            fscale = roffsq_rijsq_sq * factor2 * switch_factor1(ibox)
-                           Eij_vdw = fscale * Eij_vdw
                          ELSE
                            fscale = 0.0_DP
-                           Eij_vdw = 0.0_DP
                          END IF
+                         IF (excess_flag) fscale = fscale - 1.0_DP
+                         Eij_vdw = fscale * Eij_vdw
                    ELSE IF (int_vdw_sum_style(ibox) == vdw_charmm) THEN
                          ! use the form for modified LJ potential
-                         Eij_vdw = eps * (SigByR12 - 2.0_DP * SigByR6)
+                         IF (excess_flag) THEN
+                                 Eij_vdw = eps * (2.0_DP * SigByR6 - 3.0_DP * SigByR12)
+                         ELSE
+                                 Eij_vdw = eps * (SigByR12 - 2.0_DP * SigByR6)
+                         END IF
                    ELSE IF (int_vdw_sum_style(ibox) == vdw_cut_shift_force) THEN
                          ! apply the shifted-force LJ potential
                          ! u_sf(r) = u_lj(r) - u_lj(rc) - (r-rc)*du_lj/dr(rc)
@@ -7052,11 +7146,14 @@ CONTAINS
                    rcut_vdw = SQRT(rcut_vdwsq(ibox))
 
                    mie_coeff = mie_n/(mie_n-mie_m) * (mie_n/mie_m)**(mie_m/(mie_n-mie_m))
-
-                   SigByR = sig/rij
-                   SigByRn = SigByR ** mie_n
-                   SigByRm = SigByR ** mie_m
-                   Eij_vdw =  mie_coeff * eps * (SigByRn - SigByRm)
+                   IF (excess_flag) THEN
+                           Eij_vdw = 0.0_DP
+                   ELSE
+                           SigByR = sig/rij
+                           SigByRn = SigByR ** mie_n
+                           SigByRm = SigByR ** mie_m
+                           Eij_vdw =  mie_coeff * eps * (SigByRn - SigByRm)
+                   END IF
                    !use cut-shift potential
                    IF (int_vdw_sum_style(ibox) == vdw_cut_shift) THEN
                          SigByR_shift = sig/rcut_vdw
@@ -7084,20 +7181,20 @@ CONTAINS
 
 
               IF (int_charge_sum_style(ibox) == charge_ewald .AND. &
-                      ( .NOT. igas_flag) ) THEN
+                      .NOT. (igas_flag .OR. minimg_flag) ) THEN
                    ! Real space Ewald part
                    CALL Compute_AtomPair_Ewald_Real(ia,im,is,qi,ja,jm,js,qj, &
-                        rijsq,E_intra_qq,E_inter_qq,ibox,Eij_qq_o)
+                        rijsq,E_intra_qq,E_inter_qq,ibox,Eij_qq_o,excess_flag_o)
 
                    ! self and reciprocal parts need to be computed as total energy
                    ! differences between original configuration and the perturbed
                    ! configuration.
 
-              ELSEIF (int_charge_sum_style(ibox) == charge_dsf) THEN
-                   CALL Compute_AtomPair_DSF_Energy(ia,im,is,qi,ja,jm,js,qj,rijsq,E_intra_qq,E_inter_qq,ibox,Eij_qq_o)
+              ELSEIF (int_charge_sum_style(ibox) == charge_dsf .AND. .NOT. (igas_flag .OR. minimg_flag)) THEN
+                   CALL Compute_AtomPair_DSF_Energy(ia,im,is,qi,ja,jm,js,qj,rijsq,E_intra_qq,E_inter_qq,ibox,Eij_qq_o,excess_flag_o)
 
-              ELSEIF (int_charge_sum_style(ibox) == charge_cut .OR. &
-                  int_charge_sum_style(ibox) == charge_minimum .OR. igas_flag) THEN
+              ELSEIF ((int_charge_sum_style(ibox) == charge_cut .OR. &
+                  int_charge_sum_style(ibox) == charge_minimum .OR. igas_flag .OR. minimg_flag) .AND. .NOT. excess_flag) THEN
 
                    Eij_qq = charge_factor*(qi*qj)/SQRT(rijsq)
                    ! Apply charge scaling for intramolecular energies
@@ -7118,18 +7215,100 @@ CONTAINS
 
   END SUBROUTINE Compute_AtomPair_Energy
 
+REAL(DP) FUNCTION Excess_Molecule_Intrafragment_Energy(im,is,ibox)
+        ! This function returns the intrafragment, intramolecular nonbonded energy of a molecule
+        !     minus the intrafragment nonbonded energy that would be computed with simple minimum image
+        !     vdw/charge summation styles (the styles used by fragment library generation simulations).
+        INTEGER, INTENT(IN) :: im, is, ibox
+        INTEGER :: ifrag, ifrag_natoms, ia, ia_frag, ja, ja_frag, maxatom, minatom
+        REAL(DP) :: Eij_intra_vdw, Eij_intra_qq, Eij_inter_vdw, Eij_inter_qq, Etot, rijsq
+        REAL(DP), DIMENSION(3) :: irp, drp
+        LOGICAL :: get_vdw_base, get_vdw, get_qq, get_qq_base
+        TYPE(Atom_Class), DIMENSION(:), POINTER :: these_atoms
+        LOGICAL(1), DIMENSION(natoms(is),natoms(is)) :: already_computed
+        INTEGER(INT8), DIMENSION(natoms(is),natoms(is)) :: n_repeats
+        get_vdw_base = ALL(int_vdw_sum_style(ibox) .NE. (/ vdw_cut, vdw_cut_tail, vdw_none /))
+        get_qq_base = ALL(int_charge_sum_style(ibox) .NE. (/ charge_cut, charge_minimum, charge_none /)) .AND. has_charge(is)
+        Excess_Molecule_Intrafragment_Energy = 0.0_DP
+        IF (scale_1_2_vdw(is) < tiny_number .AND. scale_1_2_charge(is) < tiny_number .AND. .NOT. (get_vdw_base .OR. get_qq_base)) RETURN
+        get_qq = .FALSE.
+        already_computed = .FALSE.
+        n_repeats = 0_INT8
+        IF (widom_active) THEN
+                these_atoms => widom_atoms
+        ELSE
+                these_atoms => atom_list(1:natoms(is),im,is)
+        END IF
+        Etot = 0.0_DP
+        DO ifrag = 1, species_list(is)%nfragments
+                ifrag_natoms = frag_list(ifrag,is)%natoms
+                DO ia_frag = 1, ifrag_natoms
+                        ia = frag_list(ifrag,is)%atoms(ia_frag)
+                        irp = these_atoms(ia)%rp
+                        DO ja_frag = ia_frag+1, ifrag_natoms
+                                ja = frag_list(ifrag,is)%atoms(ja_frag)
+                                maxatom = MAX(ia,ja)
+                                minatom = MIN(ia,ja)
+                                IF (already_computed(maxatom,minatom)) THEN
+                                        n_repeats(maxatom,minatom) = n_repeats(maxatom,minatom) + 1_INT8
+                                        CYCLE
+                                END IF
+                                already_computed(maxatom,minatom) = .TRUE.
+                                get_vdw = get_vdw_base .AND. vdw_intra_scale(ja,ia,is) > 0.0_DP
+                                IF (get_qq_base) get_qq = ALL(nonbond_list((/ minatom,maxatom /),is)%charge .NE. 0.0_DP)
+                                IF (.NOT. (get_vdw .OR. get_qq)) CYCLE
+                                drp = these_atoms(ja)%rp - irp
+                                rijsq = DOT_PRODUCT(drp,drp)
+                                CALL Compute_AtomPair_Energy(drp(1),drp(2),drp(3),rijsq,is,im,ia,is,im,ja, &
+                                        get_vdw,get_qq, Eij_intra_vdw, Eij_intra_qq, Eij_inter_vdw, Eij_inter_qq, &
+                                        excess_flag_o=.TRUE., minimg_flag_o=.FALSE.)
+                                Etot = Etot + Eij_intra_vdw + Eij_intra_qq + Eij_inter_vdw + Eij_inter_qq
+                        END DO
+                END DO
+        END DO
+        IF (scale_1_2_vdw(is) > tiny_number .OR. (scale_1_2_charge(is) > tiny_number .AND. has_charge(is))) THEN
+                DO ia = 1, natoms(is)
+                        DO ja = ia+1, natoms(is)
+                                IF (n_repeats(ja,ia) > 0_INT8) THEN
+                                        get_vdw = vdw_intra_scale(ja,ia,is) > 0.0_DP
+                                        get_qq = charge_intra_scale(ja,ia,is) > 0.0_DP
+                                        IF (.NOT. (get_vdw .OR. get_qq)) CYCLE
+                                        drp = these_atoms(ja)%rp - these_atoms(ia)%rp
+                                        rijsq = DOT_PRODUCT(drp,drp)
+                                        CALL Compute_AtomPair_Energy(drp(1),drp(2),drp(3),rijsq,is,im,ia,is,im,ja, &
+                                                get_vdw,get_qq, Eij_intra_vdw, Eij_intra_qq, Eij_inter_vdw, Eij_inter_qq, &
+                                                excess_flag_o=.FALSE., minimg_flag_o=.TRUE.)
+                                        Etot = Etot - n_repeats(ja,ia)*(Eij_intra_vdw + Eij_intra_qq + Eij_inter_vdw + Eij_inter_qq)
+                                END IF
+                        END DO
+                END DO
+        END IF
+        Excess_Molecule_Intrafragment_Energy = Etot
+END FUNCTION Excess_Molecule_Intrafragment_Energy
 
-SUBROUTINE Compute_AtomPair_DSF_Energy(ia,im,is,qi,ja,jm,js,qj,rijsq,E_intra_qq,E_inter_qq,ibox,Eij_qq_o)
+ELEMENTAL SUBROUTINE Compute_AtomPair_DSF_Energy(ia,im,is,qi,ja,jm,js,qj,rijsq,E_intra_qq,E_inter_qq,ibox,Eij_qq_o,excess_flag_o)
 USE Global_Variables
 IMPLICIT NONE
-INTEGER :: ia,im,is,ja,jm,js,ibox
-REAL(DP), OPTIONAL :: Eij_qq_o
-REAL(DP) :: qi,qj,rijsq,rij, Eij, qsc, E_intra_qq,E_inter_qq, cfqq, Eij_qq
+INTEGER, INTENT(IN) :: ia,im,is,ja,jm,js,ibox
+REAL(DP), INTENT(OUT), OPTIONAL :: Eij_qq_o
+LOGICAL, INTENT(IN), OPTIONAL :: excess_flag_o
+REAL(DP), INTENT(IN) :: qi,qj,rijsq
+REAL(DP), INTENT(OUT) :: E_intra_qq, E_inter_qq
+REAL(DP) :: rij, Eij, qsc, cfqq, Eij_qq
 
 
       rij = SQRT(rijsq)
       cfqq = qi*qj*charge_factor
-      Eij = dsf_factor2(ibox)*(rij-rcut_coul(ibox)) - dsf_factor1(ibox) + erfc(alpha_dsf(ibox)*rij)/rij
+      Eij = dsf_factor2(ibox)*(rij-rcut_coul(ibox)) - dsf_factor1(ibox)
+      IF (PRESENT(excess_flag_o)) THEN
+              IF (excess_flag_o) THEN
+                      Eij = Eij - ERF(alpha_dsf(ibox)*rij)/rij
+                      E_inter_qq = 0.0_DP
+                      E_intra_qq = Eij*cfqq
+                      RETURN
+              END IF
+      END IF
+      Eij = Eij + erfc(alpha_dsf(ibox)*rij)/rij
       Eij = Eij*cfqq
 
       IF (is==js .AND. im==jm) THEN
@@ -7151,8 +7330,8 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
 
   !-----------------------------------------------------------------------------
 
-  SUBROUTINE Compute_AtomPair_Ewald_Real(ia,im,is,qi,ja,jm,js,qj,rijsq, &
-    E_intra_qq,E_inter_qq,ibox,Eij_qq_o)
+  ELEMENTAL SUBROUTINE Compute_AtomPair_Ewald_Real(ia,im,is,qi,ja,jm,js,qj,rijsq, &
+    E_intra_qq,E_inter_qq,ibox,Eij_qq_o,excess_flag_o)
   !-----------------------------------------------------------------------------
     ! Real space part of the Ewald sum between atoms ia and ja with
     ! charges qi and qj.
@@ -7168,14 +7347,16 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
     ! Compute_AtomPair_Energy
   !-----------------------------------------------------------------------------
     ! Arguments
-    INTEGER :: ia,im,is
-    REAL(DP) :: qi
-    INTEGER :: ja,jm,js
-    REAL(DP) :: qj
-    REAL(DP) :: rijsq
-    REAL(DP) :: E_intra_qq, E_inter_qq, Eij_qq
-    INTEGER :: ibox
-    REAL(DP), OPTIONAL :: Eij_qq_o
+    INTEGER, INTENT(IN) :: ia,im,is
+    REAL(DP), INTENT(IN) :: qi
+    INTEGER, INTENT(IN) :: ja,jm,js
+    REAL(DP), INTENT(IN) :: qj
+    REAL(DP), INTENT(IN) :: rijsq
+    REAL(DP), INTENT(OUT) :: E_intra_qq, E_inter_qq
+    REAL(DP) :: Eij_qq
+    INTEGER, INTENT(OUT) :: ibox
+    REAL(DP), INTENT(OUT), OPTIONAL :: Eij_qq_o
+    LOGICAL, INTENT(IN), OPTIONAL :: excess_flag_o
 
     ! Local variables
     REAL(DP) :: rij,erf_val
@@ -7183,9 +7364,16 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
     ibox = molecule_list(im,is)%which_box
 
     rij = SQRT(rijsq)
+    Eij_qq = qi * qj / rij * charge_factor
+    IF (PRESENT(excess_flag_o)) THEN
+            IF (excess_flag_o) THEN
+                    E_inter_qq = -Eij_qq*ERF(alpha_ewald(ibox)*rij)
+                    E_intra_qq = 0.0_DP
+                    RETURN
+            END IF
+    END IF
     ! May need to protect against very small rijsq
     erf_val = 1.0_DP - erfc(alpha_ewald(ibox) * rij)
-    Eij_qq = qi * qj / rij * charge_factor
 
     ! Minimum image real space energy
     IF (is == js .AND. im == jm) THEN
@@ -7206,7 +7394,7 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
   !-----------------------------------------------------------------------------
   CONTAINS
 
-    FUNCTION erfc(x)
+    ELEMENTAL FUNCTION erfc(x)
       !*************************************************************************
       !
       ! Calculate the complementary error function for a number
@@ -7217,7 +7405,8 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
       REAL(DP), PARAMETER :: A1 = 0.254829592_DP, A2 = -0.284496736_DP
       REAL(DP), PARAMETER :: A3 = 1.421413741_DP, A4 = -1.453152027_DP
       REAL(DP), PARAMETER :: A5 = 1.061405429_DP, P = 0.3275911_DP
-      REAL(DP) :: T, x, xsq, TP
+      REAL(DP), INTENT(IN) :: x
+      REAL(DP) :: T, xsq, TP
 
       T = 1.0_DP / (1.0_DP + P*x)
       xsq = x*x

@@ -85,6 +85,7 @@ PROGRAM Main
   USE Pair_Emax_Estimation
   !$ USE OMP_LIB
   USE Internal_Coordinate_Routines
+  USE ISO_FORTRAN_ENV
 
   IMPLICIT NONE
 
@@ -157,6 +158,31 @@ PROGRAM Main
      err_msg(2) = logfile
      CALL Clean_Abort(err_msg,'Read_Inputfile')
   ENDIF
+  IF (widom_timing) THEN
+          !$OMP PARALLEL
+          trial_loop_ins_time = 0.0_DP
+          cell_list_ins_time = 0.0_DP
+          cell_list_cbmc_nrg_ins_time = 0.0_DP
+          noncell_cbmc_nrg_ins_time = 0.0_DP
+          rng_ins_time = 0.0_DP
+          cbmc_setup_ins_time = 0.0_DP
+          cbmc_returnzone_ins_time = 0.0_DP
+          cbmc_endzone_ins_time = 0.0_DP
+          cbmc_fragment_placement_time = 0.0_DP
+          cbmc_dih_time = 0.0_DP
+          cbmc_nonoverlap_ins_count = 0
+          cbmc_dih_count = 0
+          cell_list_ins_checks = 0
+          cell_list_cbmc_nrg_ins_checks = 0
+          bitcell_overlap_ins_time = 0.0_DP
+          bitcell_overlap_ins_checks = 0
+          bitcell_overlap_ins_overlaps = 0
+          total_cbmc_time = 0.0_DP
+          widom_ewald_recip_time = 0.0_DP
+          nrg_ins_overlaps = 0
+          !$OMP END PARALLEL
+          noncbmc_time_total = 0.0_DP
+  END IF
 
   WRITE(logunit,'(A80)')'********************************************************************************'
   WRITE(logunit,'(A80)')'               ______                                __                        '
@@ -194,6 +220,8 @@ PROGRAM Main
 
   CALL HOSTNM(name)
   WRITE(logunit,'(a,a)') 'machine: ', TRIM(name)
+  WRITE(logunit,'(a,a)') 'compiler version: ', TRIM(COMPILER_VERSION())
+  WRITE(logunit,'(a,a)') 'compiler options: ', TRIM(COMPILER_OPTIONS())
   WRITE(logunit,'(A80)') '********************************************************************************'
 
   ! Standard level of output to logfile, or verbose output
@@ -550,6 +578,80 @@ PROGRAM Main
   tot_time = tot_time - start_time
 
   CALL Write_Subroutine_Times
+
+  IF (widom_timing) THEN
+          trial_loop_ins_time_redux = 0.0_DP
+          cell_list_ins_time_redux = 0.0_DP
+          cell_list_cbmc_nrg_ins_time_redux = 0.0_DP
+          noncell_cbmc_nrg_ins_time_redux = 0.0_DP
+          rng_ins_time_redux = 0.0_DP
+          cbmc_setup_ins_time_redux = 0.0_DP
+          cbmc_returnzone_ins_time_redux = 0.0_DP
+          cbmc_endzone_ins_time_redux = 0.0_DP
+          cbmc_fragment_placement_time_redux = 0.0_DP
+          cbmc_dih_time_redux = 0.0_DP
+          cbmc_nonoverlap_ins_count_redux = 0
+          cbmc_dih_count_redux = 0
+          cell_list_ins_checks_redux = 0
+          cell_list_cbmc_nrg_ins_checks_redux = 0
+          bitcell_overlap_ins_time_redux = 0.0_DP
+          bitcell_overlap_ins_checks_redux = 0
+          bitcell_overlap_ins_overlaps_redux = 0
+          total_cbmc_time_redux = 0.0_DP
+          nrg_ins_overlaps_redux = 0.0_DP
+          !$OMP PARALLEL &
+          !$OMP REDUCTION(+:trial_loop_ins_time_redux, cell_list_ins_time_redux, cell_list_cbmc_nrg_ins_time_redux) &
+          !$OMP REDUCTION(+:noncell_cbmc_nrg_ins_time_redux,rng_ins_time_redux,cbmc_setup_ins_time_redux) &
+          !$OMP REDUCTION(+:cbmc_returnzone_ins_time_redux, cbmc_endzone_ins_time_redux) &
+          !$OMP REDUCTION(+:cbmc_nonoverlap_ins_count_redux, cbmc_dih_count_redux) &
+          !$OMP REDUCTION(+:cell_list_ins_checks_redux, cell_list_cbmc_nrg_ins_checks_redux) &
+          !$OMP REDUCTION(+:bitcell_overlap_ins_time_redux, bitcell_overlap_ins_checks_redux) &
+          !$OMP REDUCTION(+:bitcell_overlap_ins_overlaps_redux, total_cbmc_time_redux) &
+          !$OMP REDUCTION(+:widom_ewald_recip_time_redux,nrg_ins_overlaps_redux)
+          trial_loop_ins_time_redux = trial_loop_ins_time
+          cell_list_ins_time_redux = cell_list_ins_time
+          cell_list_cbmc_nrg_ins_time_redux = cell_list_cbmc_nrg_ins_time
+          noncell_cbmc_nrg_ins_time_redux = noncell_cbmc_nrg_ins_time
+          rng_ins_time_redux = rng_ins_time
+          cbmc_setup_ins_time_redux = cbmc_setup_ins_time
+          cbmc_returnzone_ins_time_redux = cbmc_returnzone_ins_time
+          cbmc_endzone_ins_time_redux = cbmc_endzone_ins_time
+          cbmc_fragment_placement_time_redux = cbmc_fragment_placement_time
+          cbmc_dih_time_redux = cbmc_dih_time
+          cbmc_nonoverlap_ins_count_redux = cbmc_nonoverlap_ins_count
+          cbmc_dih_count_redux = cbmc_dih_count
+          cell_list_ins_checks_redux = cell_list_ins_checks
+          cell_list_cbmc_nrg_ins_checks_redux = cell_list_cbmc_nrg_ins_checks
+          bitcell_overlap_ins_time_redux = bitcell_overlap_ins_time
+          bitcell_overlap_ins_checks_redux = bitcell_overlap_ins_checks
+          bitcell_overlap_ins_overlaps_redux = bitcell_overlap_ins_overlaps
+          total_cbmc_time_redux = total_cbmc_time
+          widom_ewald_recip_time_redux = widom_ewald_recip_time
+          nrg_ins_overlaps_redux = nrg_ins_overlaps
+          !$OMP END PARALLEL
+          WRITE(logunit,*) "WIDOM_TIME report:"
+          WRITE(logunit,*) "noncbmc_time_total", noncbmc_time_total
+          WRITE(logunit,*) "widom_ewald_recip_time", widom_ewald_recip_time_redux
+          WRITE(logunit,*) "total_cbmc_time", total_cbmc_time_redux
+          WRITE(logunit,*) "trial_loop_ins_time", trial_loop_ins_time_redux
+          WRITE(logunit,*) "cell_list_ins_time", cell_list_ins_time_redux
+          WRITE(logunit,*) "cell_list_cbmc_nrg_ins_time", cell_list_cbmc_nrg_ins_time_redux
+          WRITE(logunit,*) "noncell_cbmc_nrg_ins_time", noncell_cbmc_nrg_ins_time_redux
+          WRITE(logunit,*) "rng_ins_time", rng_ins_time_redux
+          WRITE(logunit,*) "cbmc_setup_ins_time", cbmc_setup_ins_time_redux
+          WRITE(logunit,*) "cbmc_returnzone_ins_time", cbmc_returnzone_ins_time_redux
+          WRITE(logunit,*) "cbmc_endzone_ins_time", cbmc_endzone_ins_time_redux
+          WRITE(logunit,*) "cbmc_fragment_placement_time", cbmc_fragment_placement_time_redux
+          WRITE(logunit,*) "cbmc_dih_time", cbmc_dih_time_redux
+          WRITE(logunit,*) "cbmc_nonoverlap_ins_count", cbmc_nonoverlap_ins_count_redux
+          WRITE(logunit,*) "cbmc_dih_count", cbmc_dih_count_redux
+          WRITE(logunit,*) "cell_list_ins_checks", cell_list_ins_checks_redux
+          WRITE(logunit,*) "cell_list_cbmc_nrg_ins_checks", cell_list_cbmc_nrg_ins_checks_redux
+          WRITE(logunit,*) "bitcell_overlap_ins_time", bitcell_overlap_ins_time_redux
+          WRITE(logunit,*) "bitcell_overlap_ins_checks", bitcell_overlap_ins_checks_redux
+          WRITE(logunit,*) "bitcell_overlap_ins_overlaps", bitcell_overlap_ins_overlaps_redux
+          WRITE(logunit,*) "nrg_ins_overlaps", nrg_ins_overlaps_redux
+  END IF
 
   WRITE(logunit,*)
   WRITE(logunit,'(A80)') '********************************************************************************'
