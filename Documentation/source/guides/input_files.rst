@@ -44,6 +44,8 @@ For example::
 | Cassandra will then use ``dee.out`` as prefix for all output files
   created.
 
+.. _sec:sim_type:
+
 Simulation Type
 ~~~~~~~~~~~~~~~
 
@@ -78,6 +80,8 @@ temperature :math:`T` are held constant.
 .. note::
     Simulation types ``fragment`` and ``ring_fragment`` are used only for
     generating a fragment library. 
+
+.. _sec:num_species:
 
 Number of species
 ~~~~~~~~~~~~~~~~~
@@ -197,6 +201,8 @@ selection of *Character(i,2)* as described below:
     For all options, cutoff distances must be less than or equal to
     the shortest edge length of a simulation box.
 
+.. _sec:charge_style:
+
 Charge Style
 ~~~~~~~~~~~~
 
@@ -291,6 +297,8 @@ liquid phase simulations.
     the half of the simulation box length. In the case of Ewald summation,
     however, the accuracy will be the same as *Real(i,4)*.
 
+.. _sec:mixing_rule:
+
 Mixing Rule
 ~~~~~~~~~~~
 
@@ -299,9 +307,13 @@ Mixing Rule
 
 Sets the method by which van der Waals interactions between unlike atoms are
 calculated. Acceptable options are ``lb`` for Lorentz-Berthelot, ``geometric``
-for geometric mixing rule and ``custom`` for allowing the user to provide
-specific values. To use either ``lb`` or ``geometric`` keywords with the Mie
+for geometric mixing rule, ``sw`` for size-weighted
+and ``custom`` for allowing
+the user to provide specific values. To use either ``lb`` or ``geometric``
+keywords with the Mie
 potential, all atomtypes must have the same repulsive and dispersive exponents.
+Currently,
+the size-weighted mixing rule is not implemented for the Mie potential.
 If this section is missing, ``lb`` is used as default.
 
 To illustrate the use of the ``custom`` option, consider a mixture of methane
@@ -360,6 +372,7 @@ As an example,
     checkpoint file. If ``# Start_Type`` is ``read_config``, then the seeds
     specified in the input file are used.
 
+.. _sec:min_cutoff:
 
 Minimum Cutoff
 ~~~~~~~~~~~~~~
@@ -379,6 +392,8 @@ important that the minimum distance is set to be less than the shortest
 distance between any two sites on the molecule. For most systems, 1 Å seems to
 work OK, but for models with dummy sites, a shorter value may be required.
 
+.. _sec:pair_storage:
+
 Pair Energy Storage
 ~~~~~~~~~~~~~~~~~~~
 
@@ -390,6 +405,8 @@ molecules are stored and used during energy evaluations after a move,
 thereby saving a loop over all molecules. This requires more memory,
 but it can be faster. The default is to not use this feature. If you
 wish to use this, set *Logical* to ``true``.
+
+.. _sec:mol_files:
 
 Molecule Files
 ~~~~~~~~~~~~~~
@@ -420,6 +437,8 @@ octane. There can be a maximum of 100 butane molecules, 20 hexane
 molecules and 5 octane molecules in the total system. The maximum
 number of molecules specified here will be used to allocate memory for
 each species, so do not use larger numbers than are needed.
+
+.. _sec:sim_box:
 
 Simulation Box
 ~~~~~~~~~~~~~~
@@ -496,12 +515,12 @@ several options: ``sphere``, ``cylinder``, ``slitpore``, or ``interface``.
 Each option requires additional parameters, as follows:
 
 -	| ``sphere r``, where ``r`` is the radius of a sphere centered at the origin
+
 -	| ``cylinder r``, where ``r`` is the radius of a cylinder centered on the z-axis
--	| ``slitpore z_max``, where ``z_max`` is half the height of a rectangular prism
-    centered on the *xy*-plane
--   | ``interface z_min z_max``, which defines two rectangular prisms that span
-    the box in the *x* and *y* directions. One box has bounds ``z_min < z < z_max``
-    and the other has bounds ``-z_max < z < -z_min``.
+
+-	| ``slitpore z_max``, where ``z_max`` is half the height of a rectangular prism centered on the *xy*-plane
+
+-   | ``interface z_min z_max``, which defines two rectangular prisms that span the box in the *x* and *y* directions. One box has bounds ``z_min < z < z_max`` and the other has bounds ``-z_max < z < -z_min``.
 
 For example, to make a spherical droplet with a radius of 5 Å in cubic box
 with 100 Å side lengths:
@@ -517,6 +536,7 @@ with 100 Å side lengths:
 In addition, the insertion method for each species must be identified in the
 ``Start_Type`` or ``Move_Probability_Info`` sections.
 
+.. _sec:temperature:
 
 Temperature
 ~~~~~~~~~~~
@@ -532,6 +552,8 @@ the temperature of box 2 will be read from a second line:
     # Temperature_Info
     300.0
     300.0
+
+.. _sec:pressure:
 
 Pressure
 ~~~~~~~~
@@ -550,6 +572,8 @@ the pressure of box 2 will be read from a second line:
 
 If the simulation type does not require an input pressure (e.g., NVT),
 this section will be ignored.
+
+.. _sec:chemical_potential:
 
 Chemical Potential
 ~~~~~~~~~~~~~~~~~~
@@ -584,6 +608,8 @@ potential (for methane) is required and the following are equivalent:
     Specifying the chemical potential as ``0.0`` is **not** the same as
     ``none``. 
 
+.. _sec:move_probabilities:
+
 Move Probabilities
 ~~~~~~~~~~~~~~~~~~
 
@@ -601,6 +627,8 @@ subsections must be between the section header and footer.
 
     If the move probabilities do not sum to 1.0, then the probability of
     each move will be divided by the total.
+
+.. _sec:translation:
 
 Translation
 ^^^^^^^^^^^
@@ -632,6 +660,8 @@ For a simulation that involves solid frameworks, set the maximum
 displacement of the solid species to zero. Every molecule in the
 simulation with a maximum displacement greater than zero has an equal
 chance of being moved.
+
+.. _sec:rotation:
 
 Rotation
 ^^^^^^^^
@@ -686,6 +716,8 @@ Molecules of species 1 will be rotated a maximum of 30 around the x, y
 or z-axis, molecules of species 2 will be rotated by choosing a random
 unit vector, and the point particles will not be rotated.
 
+.. _sec:angle:
+
 Angle
 ^^^^^
 
@@ -714,6 +746,7 @@ containing angles within a given box.
     the case where parts of its fragments are rarely regrown by a regrowth
     move.
 
+.. _sec:dihedral:
 
 Dihedral
 ^^^^^^^^
@@ -751,6 +784,8 @@ systems containing more than one box.
     case where the parts of its fragments are rarely regrown (albeit a
     small maximum width is provided).
 
+.. _sec:regrowth:
+
 Regrowth
 ^^^^^^^^
 
@@ -785,6 +820,8 @@ balance of regrowth moves on a molecule of species 2.
  
     *Real(2,i)* should be set to zero for monatomic, linear, or rigid
     species, including solid frameworks.
+
+.. _sec:volume:
 
 Volume
 ^^^^^^
@@ -840,6 +877,8 @@ achieve about 50% acceptance rates.
 .. note::
 
     The volume perturbation move is only supported for cubic boxes.
+
+.. _sec:insert_delete:
 
 Insertion and Deletion Moves
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -960,6 +999,8 @@ donor box for 75% of attempted swaps, use:
     prob_swap_from_box 0.25 0.75
 
 The probability of selecting a species with insertion method ``none`` must be 0.
+
+.. _sec:ring_flip:
 
 Ring Flip Move
 ^^^^^^^^^^^^^^
@@ -1181,6 +1222,7 @@ rejected and re-attempted.
         read_config 100 0 water.xyz
         make_config  50  50
 
+.. _sec:run_type:
 
 Run Type
 ~~~~~~~~
@@ -1417,6 +1459,7 @@ This results in a dramatic speed boost for Widom insertions in dense media such 
 most trial positions have core overlap.  This method only supports cubic boxes and orthogonal boxes.
 
 
+.. _sec:prop_output:
 
 Property Output
 ~~~~~~~~~~~~~~~
@@ -1503,6 +1546,8 @@ may be output using the following format:
     density
     pressure
 
+.. _sec:fragment_files:
+
 Fragment Files
 ~~~~~~~~~~~~~~
 
@@ -1537,6 +1582,8 @@ This tells Cassandra to use the files ``frag_1_1.dat``, ``frag_2_1.dat`` and
 identical fragment, Cassandra will use the same fragment library ``frag_1_2.dat``
 for these fragments.
 
+.. _sec:verbosity_logfile:
+
 Verbosity in log file
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -1548,6 +1595,8 @@ simulation setup that is output to the log file. Controlling this can be useful
 for development purposes. If this section is missing, *Logical* is set to
 ``false`` by default. Supported options for *Logical* are ``true`` or
 ``false``.
+
+.. _sec:file_info:
 
 File Info
 ~~~~~~~~~
@@ -1571,6 +1620,8 @@ the fragment being simulated.
         frag.dat
 
     This tells Cassandra to store the fragment library in the file named ``frag.dat``.
+
+.. _sec:cbmc_parameters:
 
 CBMC parameters
 ~~~~~~~~~~~~~~~

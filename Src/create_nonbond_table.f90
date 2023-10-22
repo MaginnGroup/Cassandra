@@ -426,6 +426,64 @@
            ENDDO
         ENDDO
 
+
+     ELSE IF (mix_rule == 'SW') THEN
+
+        DO itype = 1, nbr_atomtypes
+           DO jtype = itype+1, nbr_atomtypes
+
+              IF (int_vdw_style(1) == vdw_lj) THEN
+                 ! There are two vdw parameters that need mixing
+
+                 ! epsilonij needs both epsilons and sigmas 
+
+                 eps_i = vdw_param1_table(itype,itype)
+                 eps_j = vdw_param1_table(jtype,jtype)
+
+                 sig_i = vdw_param2_table(itype,itype)
+                 sig_j = vdw_param2_table(jtype,jtype)
+
+                 ! for parameters with zero, avoid overflow and set to zero
+                 IF (eps_i <= tiny_number) eps_i = 0.0_DP
+                 IF (eps_j <= tiny_number) eps_j = 0.0_DP
+
+                 IF (sig_i <= tiny_number .OR. sig_j <= tiny_number) THEN
+                    err_msg = ""
+                    err_msg(1) = "The size-weighted mixing rule requires a non-zero sigma LJ parameter"
+                    CALL Clean_Abort(err_msg,'Create_Nonbond_Table')
+                 END IF
+
+                 ! SW mixing_rule: epsij = (sigma_i / sigma_j) * epsilon_i + (sigma_j / sigma_i) * epsilon_j
+                 vdw_param1_table(itype,jtype) = ( (sig_i / sig_j) * eps_i + (sig_j / sig_i) * eps_j ) * 0.5_DP
+
+                 ! SW mixing rule: sigmaij = (sigmai * sigmaj)^(1/2)
+                 vdw_param2_table(itype,jtype) = (sig_i + sig_j) * 0.5_DP
+
+                 ! Report parameters to logfile.
+                 IF (verbose_log) THEN
+                   WRITE(logunit,'(X,A23,5X,A23,2X,F12.4,X,F12.4)') &
+                        atom_type_list(itype), atom_type_list(jtype), &
+                        vdw_param1_table(itype,jtype), vdw_param2_table(itype,jtype)
+                 ENDIF
+
+                 ! Mixed interactions are symmetric
+                 vdw_param1_table(jtype,itype) = vdw_param1_table(itype,jtype)
+                 vdw_param2_table(jtype,itype) = vdw_param2_table(itype,jtype)
+
+                 ! Mark that the parameters have been set
+                 vdw_param_set(itype,jtype) = 1
+                 vdw_param_set(jtype,itype) = 1
+
+              ELSEIF (int_vdw_style(1) == vdw_mie) THEN
+                  err_msg = ""
+                  err_msg(1) = "The size-weighted mixing rule has not been implemented for the Mie potential yet."
+                  CALL Clean_Abort(err_msg,'Create_Nonbond_Table')
+              END IF
+
+           ENDDO
+        ENDDO
+
+
      ELSE IF (mix_rule == 'custom') THEN
 
        REWIND(inputunit)
