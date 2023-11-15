@@ -1151,7 +1151,8 @@ CONTAINS
 
        this_dihedral = dihed_id(i)
 
-       IF (dihedral_list(this_dihedral,is)%int_dipot_type == int_opls) THEN
+       SELECT CASE(dihedral_list(this_dihedral,is)%int_dipot_type)
+       CASE(int_opls)
 
           WRITE(201,'(I5,2X,4(I4,2X),A4,2X,4(F8.3,2X))') i, &
                first_atom(i), second_atom(i), third_atom(i), fourth_atom(i), &
@@ -1161,7 +1162,7 @@ CONTAINS
                dihedral_list(this_dihedral,is)%dihedral_param(3)/kjmol_to_atomic, &
                dihedral_list(this_dihedral,is)%dihedral_param(4)/kjmol_to_atomic
 
-       ELSE IF (dihedral_list(this_dihedral,is)%int_dipot_type == int_charmm) THEN
+       CASE(int_charmm)
           
           WRITE(201,'(I5,2X,4(I4,2X), A6, 2X, F8.3, 2X, F8.0, 2X, F8.3)') i, &
                first_atom(i), second_atom(i), third_atom(i), fourth_atom(i), &
@@ -1170,22 +1171,22 @@ CONTAINS
                dihedral_list(this_dihedral,is)%dihedral_param(2), &
                dihedral_list(this_dihedral,is)%dihedral_param(3) * ( 180.0_DP/PI)
 
-       ELSE IF (dihedral_list(this_dihedral,is)%int_dipot_type == int_amber) THEN
+       !CASE(int_amber)
 
-          WRITE(201,'(I5,2X,4(I4,2X),A5,2X,9(F8.3,2X))') i, &
-               first_atom(i), second_atom(i), third_atom(i), fourth_atom(i), &
-               'AMBER', &
-               dihedral_list(this_dihedral,is)%dihedral_param(1)/kjmol_to_atomic, &
-               dihedral_list(this_dihedral,is)%dihedral_param(2), &
-               dihedral_list(this_dihedral,is)%dihedral_param(3) * (180_DP/PI), &
-               dihedral_list(this_dihedral,is)%dihedral_param(4)/kjmol_to_atomic, &
-               dihedral_list(this_dihedral,is)%dihedral_param(5), &
-               dihedral_list(this_dihedral,is)%dihedral_param(6) * (180_DP/PI), &
-               dihedral_list(this_dihedral,is)%dihedral_param(7)/kjmol_to_atomic, &
-               dihedral_list(this_dihedral,is)%dihedral_param(8), &
-               dihedral_list(this_dihedral,is)%dihedral_param(9) * (180_DP/PI)
-               
-       ELSE IF (dihedral_list(this_dihedral,is)%int_dipot_type == int_harmonic) THEN
+       !   WRITE(201,'(I5,2X,4(I4,2X),A5,2X,9(F8.3,2X))') i, &
+       !        first_atom(i), second_atom(i), third_atom(i), fourth_atom(i), &
+       !        'AMBER', &
+       !        dihedral_list(this_dihedral,is)%dihedral_param(1)/kjmol_to_atomic, &
+       !        dihedral_list(this_dihedral,is)%dihedral_param(2), &
+       !        dihedral_list(this_dihedral,is)%dihedral_param(3) * (180_DP/PI), &
+       !        dihedral_list(this_dihedral,is)%dihedral_param(4)/kjmol_to_atomic, &
+       !        dihedral_list(this_dihedral,is)%dihedral_param(5), &
+       !        dihedral_list(this_dihedral,is)%dihedral_param(6) * (180_DP/PI), &
+       !        dihedral_list(this_dihedral,is)%dihedral_param(7)/kjmol_to_atomic, &
+       !        dihedral_list(this_dihedral,is)%dihedral_param(8), &
+       !        dihedral_list(this_dihedral,is)%dihedral_param(9) * (180_DP/PI)
+       
+       CASE(int_harmonic)
           
           WRITE(201,'(I5,2X, 4(I4,2X), A8,2X, 2(F8.3,2X))') i, &
                first_atom(i), second_atom(i), third_atom(i), fourth_atom(i), &
@@ -1193,13 +1194,22 @@ CONTAINS
                dihedral_list(this_dihedral,is)%dihedral_param(1)/ kboltz, &
                dihedral_list(this_dihedral,is)%dihedral_param(2) * (180.0_DP/PI) 
 
-       ELSE IF (dihedral_list(this_dihedral,is)%int_dipot_type == int_none) THEN
+       CASE(int_none)
 
           WRITE(201,'(I5,2X,4(I4,2X),A4)') i, &
                first_atom(i), second_atom(i), third_atom(i), fourth_atom(i), 'none'
+       CASE(int_rb_torsion)
 
-          
-       END IF
+          WRITE(201,'(I5,2X,4(I4,2X),A4,2X,6(F8.3,2X))') i, &
+               first_atom(i), second_atom(i), third_atom(i), fourth_atom(i), &
+               'RB', &
+               dihedral_list(this_dihedral,is)%rb_c(0)/kjmol_to_atomic, &
+               dihedral_list(this_dihedral,is)%rb_c(1)/kjmol_to_atomic, &
+               dihedral_list(this_dihedral,is)%rb_c(2)/kjmol_to_atomic, &
+               dihedral_list(this_dihedral,is)%rb_c(3)/kjmol_to_atomic, &
+               dihedral_list(this_dihedral,is)%rb_c(4)/kjmol_to_atomic, &
+               dihedral_list(this_dihedral,is)%rb_c(5)/kjmol_to_atomic
+       END SELECT
 
     END DO
 

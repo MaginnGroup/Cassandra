@@ -41,7 +41,8 @@ INTEGER, PARAMETER:: da = SELECTED_REAL_KIND(14, 60)
 ! values in case the seeds are not initialized by the user
 INTEGER (KIND=INT64), SAVE  :: s1 = 153587801, s2 = -759022222, s3 = 1288503317, &
                             s4 = -1718083407, s5 = -123456789
-!$OMP threadprivate(s1,s2,s3,s4,s5)
+INTEGER(INT64), DIMENSION(4,5) :: s_arr
+!$OMP threadprivate(s1,s2,s3,s4,s5,s_arr)
 
 CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -55,11 +56,12 @@ SUBROUTINE init_seeds(i1, i3)
 !
 ! For our simulations, we will specify only two of the five seeds, and leave the others
 ! as the default values
+! The above statement does not apply to SIMD lane-specific seeds
 
 IMPLICIT NONE
 INTEGER (KIND=INT64), INTENT(IN) :: i1, i3
 INTEGER (KIND=INT64), ALLOCATABLE, DIMENSION(:,:) :: thread_seeds
-INTEGER :: nthreads, ithread
+INTEGER :: nthreads, ithread, i, j
 nthreads = 1
 s1 = i1
 s3 = i3
@@ -77,7 +79,7 @@ DO ithread = 1, (nthreads-1)
         thread_seeds(3,ithread) = rranint()
 END DO
 ithread = 0
-!$OMP PARALLEL PRIVATE(ithread)
+!$OMP PARALLEL PRIVATE(ithread,i,j)
 !$ ithread = OMP_GET_THREAD_NUM()
 s1 = thread_seeds(1,ithread)
 s2 = thread_seeds(2,ithread)
@@ -86,6 +88,14 @@ s4 = thread_seeds(4,ithread)
 s5 = thread_seeds(5,ithread)
 IF (IAND(s1,      -2_INT64) == 0) s1 = s1 - 8388607_INT64
 IF (IAND(s3,   -4096_INT64) == 0) s3 = s3 - 8388607_INT64
+s_arr = 0_INT64
+DO WHILE (ANY(IAND(s_arr,MASKL(41,INT64))+1_INT64==1_INT64))
+        DO j = 1, 5
+                DO i = 1, 4
+                        s_arr(i,j) = rranint()
+                END DO
+        END DO
+END DO
 !$OMP END PARALLEL
 RETURN
 END SUBROUTINE init_seeds
@@ -120,6 +130,109 @@ rranf = IEOR( IEOR( IEOR( IEOR(s1,s2), s3), s4), s5) *5.4210108624275221E-20_DP 
 IF(rranf .GE. 1.0_DP) WRITE(logunit,*) 'rranf = 1.0'
 
 END FUNCTION rranf
+SUBROUTINE vector_rranint(rranint_vec)
+
+        IMPLICIT NONE
+
+        INTEGER (KIND=INT64) :: b
+        INTEGER(INT64), DIMENSION(:), CONTIGUOUS :: rranint_vec
+        INTEGER :: vec_len, jmax, lenmod4, i, j
+        INTEGER(INT64) :: s1,s2,s3,s4,s5
+        vec_len = SIZE(rranint_vec)
+        jmax = ISHFT(vec_len,-2)-1
+        lenmod4 = IAND(vec_len,4_INT32)
+
+        !DIR$ VECTOR ALIGNED
+        !$OMP SIMD PRIVATE(b,s1,s2,s3,s4,s5) SAFELEN(4)
+        DO i = 1, 4
+                s1 = s_arr(i,1)
+                s2 = s_arr(i,2)
+                s3 = s_arr(i,3)
+                s4 = s_arr(i,4)
+                s5 = s_arr(i,5)
+                !DIR$ LOOP COUNT = 250000
+                DO j = 0, jmax
+                        b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53_INT64)
+                        s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                        b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
+                        s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                        b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
+                        s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                        b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
+                        s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                        b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
+                        s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+
+                        rranint_vec(j*4+i) = IEOR( IEOR( IEOR( IEOR(s1,s2), s3), s4), s5)
+                END DO
+                s_arr(i,1) = s1
+                s_arr(i,2) = s2
+                s_arr(i,3) = s3
+                s_arr(i,4) = s4
+                s_arr(i,5) = s5
+        END DO
+        !$OMP END SIMD
+        DO i = 1, lenmod4
+                rranint_vec((jmax+1)*4+i) = rranint()
+        END DO
+
+END SUBROUTINE vector_rranint
+
+SUBROUTINE vector_rranf(rranf_vec)
+
+        IMPLICIT NONE
+
+        INTEGER (KIND=INT64) :: b
+        REAL(DP), DIMENSION(:), CONTIGUOUS :: rranf_vec
+        INTEGER :: vec_len, jmax, lenmod4, i, j
+        INTEGER(INT64) :: s1,s2,s3,s4,s5,intres
+        vec_len = SIZE(rranf_vec)
+        jmax = ISHFT(vec_len,-2)-1
+        lenmod4 = IAND(vec_len,4_INT32)
+
+        !DIR$ VECTOR ALIGNED
+        !$OMP SIMD PRIVATE(b,s1,s2,s3,s4,s5,intres) SAFELEN(4)
+        DO i = 1, 4
+                s1 = s_arr(i,1)
+                s2 = s_arr(i,2)
+                s3 = s_arr(i,3)
+                s4 = s_arr(i,4)
+                s5 = s_arr(i,5)
+                !DIR$ LOOP COUNT = 250
+                DO j = 0, jmax
+                        b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53_INT64)
+                        s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                        b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
+                        s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                        intres = IEOR(s1,s2)
+                        b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
+                        s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                        intres = IEOR(intres,s3)
+                        b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
+                        s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                        intres = IEOR(intres,s4)
+                        b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
+                        s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                        intres = IEOR(intres,s5)
+
+                        ! We don't use the following line because conversion from INT64 to DP is not vectorized well unless
+                        ! you have AVX-512, which we don't, and neither do any AMD processors, currently.
+                        !rranf_vec(j*4+i) = IEOR( IEOR( IEOR( IEOR(s1,s2), s3), s4), s5)*5.4210108624275221E-20_DP + 0.5_DP
+                        !intres = IEOR(IEOR(IEOR(IEOR(s1,s2),s3),s4),s5)
+                        rranf_vec(j*4+i) = TRANSFER(IOR(TRANSFER(0.5_DP,intres),ISHFT(intres,-12)),0.5_DP)*2.0_DP-1.0_DP
+                END DO
+                s_arr(i,1) = s1
+                s_arr(i,2) = s2
+                s_arr(i,3) = s3
+                s_arr(i,4) = s4
+                s_arr(i,5) = s5
+        END DO
+        !$OMP END SIMD
+        DO i = 1, lenmod4
+                rranf_vec((jmax+1)*4+i) = rranf()
+        END DO
+
+END SUBROUTINE vector_rranf
 
 
   INTEGER(KIND=INT64) FUNCTION rranint() 

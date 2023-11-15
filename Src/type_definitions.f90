@@ -506,11 +506,11 @@ MODULE Type_Definitions
     INTEGER :: border_thickness(3)
     INTEGER, DIMENSION(:,:,:), ALLOCATABLE :: cbmc_cell_mask
 
-    INTEGER, DIMENSION(3) :: length_bitcells
+    INTEGER, DIMENSION(3) :: length_bitcells, setbit_extent
     REAL(SP), DIMENSION(3) :: bit_cell_length_recip, real_length_bitcells
     INTEGER(4), DIMENSION(:), ALLOCATABLE :: bitcell_int32_vec
     INTEGER, DIMENSION(2:3) :: bitcell_dimfactor
-    REAL(DP) :: ideal_bitcell_length
+    REAL(DP) :: ideal_bitcell_length, rcut_low_max
 
  END TYPE Box_Class
 

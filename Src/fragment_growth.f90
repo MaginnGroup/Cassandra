@@ -151,6 +151,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
 
   ! Variables associated with the CBMC part
   INTEGER :: itrial, trial, frag_type, ifrag_natoms
+  INTEGER :: itrial_start
 
   REAL(DP) :: weight(species_list(is)%kappa_ins_pad8), rand_no, E_dihed
   REAL(DP) :: E_intra_vdw, E_intra_qq, E_inter_vdw, E_inter_qq, E_total
@@ -184,7 +185,9 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   REAL(SP), DIMENSION(species_list(is)%kappa_ins_pad8,3) :: xyz_rand
   REAL(DP) :: xl, hxl, yl, hyl, zl, hzl, length_dp(3,3), drxcom, drycom, drzcom, isp, max_dcomsq
   REAL(DP), DIMENSION(MAXVAL(frag_list(1:nfragments(is),is)%natoms)) :: drxcom_vec, drycom_vec, drzcom_vec
-  REAL(SP) :: length_sp(3,3), dscom(3), dsxcom, dsycom, dszcom
+  REAL(DP), DIMENSION(3,MAXVAL(frag_list(1:nfragments(is),is)%natoms)) :: drcom_mat
+  REAL(SP), DIMENSION(3,MAXVAL(frag_list(1:nfragments(is),is)%natoms)) :: dscom_mat
+  REAL(SP) :: length_sp(3,3), dscom(3), dsxcom, dsycom, dszcom, sxcom, sycom, szcom
   REAL(SP) :: sxp, syp, szp, rsl, hrsl, rsp
   REAL(SP) :: rxp, ryp, rzp, this_atom_rp(3)
   REAL(4), DIMENSION(species_list(is)%kappa_ins_pad8,3,MAXVAL(frag_list(1:nfragments(is),is)%natoms)) :: trial_atom_rp
@@ -201,7 +204,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
 
   LOGICAL(1) :: bitcell_overlap(species_list(is)%kappa_ins_pad64,MAXVAL(frag_list(1:nfragments(is),is)%natoms))
 
-  LOGICAL :: l_widom_cells
+  LOGICAL :: l_widom_cells, this_bitcell_overlap
 
   REAL(DP) :: overlap_nrg
   INTEGER :: i_dim, ia
@@ -469,12 +472,18 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
              IF (.NOT. cbmc_flag) CALL CPU_TIME(rng_time_s)
              !$ rng_time_s = omp_get_wtime()
      END IF
+     !CALL vector_rranf(TRANSFER(xyz_rand_dp,xyz_rand_dp)) ! Don't do this; it causes a wasteful memcopy to be generated
      DO i_dim = 1, 3
-        DO itrial = 1, kappa_ins
-                xyz_rand_dp(itrial,i_dim) = rranf()
-        END DO
+        CALL vector_rranf(xyz_rand_dp(:,i_dim))
+        IF (l_widom_cells) THEN
+                !DIR$ VECTOR ALIGNED
+                xyz_rand(:,i_dim) = REAL(xyz_rand_dp(:,i_dim),SP)
+        END IF
+        !DO itrial = 1, kappa_ins
+        !        xyz_rand_dp(itrial,i_dim) = rranf()
+        !END DO
      END DO
-     IF (l_widom_cells) xyz_rand = REAL(xyz_rand_dp,SP)
+     !IF (l_widom_cells) xyz_rand = REAL(xyz_rand_dp,SP)
      IF (widom_timing) THEN
              IF (.NOT. cbmc_flag) CALL CPU_TIME(rng_time_e)
              !$ rng_time_e = omp_get_wtime()
@@ -487,6 +496,9 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
      hyl = 0.5_DP * yl
      zl = box_list(this_box)%length(3,3)
      hzl = 0.5_DP * zl
+     drxcom_vec = 0.0_DP
+     drycom_vec = 0.0_DP
+     drzcom_vec = 0.0_DP
      drxcom_vec(1:frag_list(frag_start,is)%natoms) = &
              rtrial0(1,1:frag_list(frag_start,is)%natoms) - xcom_old
      drycom_vec(1:frag_list(frag_start,is)%natoms) = &
@@ -586,30 +598,30 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                      !bitcell_int1_min = HUGE(bitcell_int1_max)
                      !bitcell_int2_max = -(HUGE(bitcell_int2_min)-1)
                      !bitcell_int2_min = HUGE(bitcell_int2_max)
-                     DO ia_frag = 1, frag_list(frag_start,is)%natoms
-                             this_atom = frag_list(frag_start,is)%atoms(ia_frag)
-                             drxcom = drxcom_vec(ia_frag)
-                             drycom = drycom_vec(ia_frag)
-                             drzcom = drzcom_vec(ia_frag)
-                             IF (l_ortho) THEN
-                                dsxcom = REAL(drxcom / xl,4)
-                                dsycom = REAL(drycom / yl,4)
-                                dszcom = REAL(drzcom / zl,4)
-                                dscom = (/ dsxcom, dsycom, dszcom /)
-                             ELSE
-                                dscom = REAL(MATMUL(box_list(this_box)%length_inv, &
-                                        (/ drxcom, drycom, drzcom /)),4)
-                                dsxcom = dscom(1)
-                                dsycom = dscom(2)
-                                dszcom = dscom(3)
-                             END IF
+
+                     IF (l_ortho) THEN
+                             dscom_mat(1,:) = drxcom_vec/xl
+                             dscom_mat(2,:) = drycom_vec/yl
+                             dscom_mat(3,:) = drzcom_vec/zl
+                     ELSE
+                             drcom_mat(1,:) = drxcom_vec
+                             drcom_mat(2,:) = drycom_vec
+                             drcom_mat(3,:) = drzcom_vec
+                             dscom_mat = REAL(MATMUL(box_list(this_box)%length_inv, &
+                                     drcom_mat),SP)
+                     END IF
+                     SELECT CASE(ifrag_natoms)
+                     CASE(1)
                              !DIR$ LOOP COUNT = 1000
                              !DIR$ VECTOR ALIGNED
-                             !$OMP SIMD PRIVATE(sxp,syp,szp,bitcell_bit,bitcell_int) 
+                             !$OMP SIMD PRIVATE(sxp,syp,szp,bitcell_bit,bitcell_int,this_bitcell_overlap,sxcom,sycom,szcom) 
                              DO itrial = 1, kappa_ins
-                                sxp = xyz_rand(itrial,1) + dsxcom
-                                syp = xyz_rand(itrial,2) + dsycom
-                                szp = xyz_rand(itrial,3) + dszcom
+                                sxcom = xyz_rand(itrial,1)
+                                sycom = xyz_rand(itrial,2)
+                                szcom = xyz_rand(itrial,3)
+                                sxp = sxcom + dscom_mat(1,1)
+                                syp = sycom + dscom_mat(2,1)
+                                szp = szcom + dscom_mat(3,1)
                                 ! Note: it is important that the < checks and shifts come before the >= checks and shifts
                                 !       due to floating point rounding.  It's fine for sxp, syp, or szp to be zero or even
                                 !       just barely less than zero due to the behavior of INT(), but if they end up equal to
@@ -626,19 +638,402 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                                         INT(syp*ylbc)*ybcdf + &
                                         INT(szp*zlbc)*zbcdf
                                 bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
-                                !IF (bitcell_int > UBOUND(box_list(this_box)%bitcell_int32_vec,1)) THEN
-                                !        WRITE(*,*) sxp, syp, szp, bitcell_bit
-                                !        WRITE(*,*) xlbc, ylbc, zlbc
-                                !        WRITE(*,*) ybcdf, zbcdf
-                                !        WRITE(*,*) bitcell_bit
-                                !END IF
                                 bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
-                                bitcell_overlap(itrial,ia_frag) = BTEST(bitcell_int,bitcell_bit)
+                                this_bitcell_overlap = BTEST(bitcell_int,bitcell_bit)
+                                bitcell_overlap(itrial,1) = .NOT. this_bitcell_overlap
                              END DO
                              !$OMP END SIMD
-                     END DO
-                     bitcell_overlap(:,1) = .NOT. ANY( &
-                             bitcell_overlap(:,1:frag_list(frag_start,is)%natoms),2) ! inverted so .FALSE. is overlap
+                     CASE(2)
+                             !DIR$ LOOP COUNT = 1000
+                             !DIR$ VECTOR ALIGNED
+                             !$OMP SIMD PRIVATE(sxp,syp,szp,bitcell_bit,bitcell_int,this_bitcell_overlap,sxcom,sycom,szcom) 
+                             DO itrial = 1, kappa_ins
+                                sxcom = xyz_rand(itrial,1)
+                                sycom = xyz_rand(itrial,2)
+                                szcom = xyz_rand(itrial,3)
+                                sxp = sxcom + dscom_mat(1,1)
+                                syp = sycom + dscom_mat(2,1)
+                                szp = szcom + dscom_mat(3,1)
+                                ! Note: it is important that the < checks and shifts come before the >= checks and shifts
+                                !       due to floating point rounding.  It's fine for sxp, syp, or szp to be zero or even
+                                !       just barely less than zero due to the behavior of INT(), but if they end up equal to
+                                !       1.0, that can cause bitcell_int to be out of bounds or otherwise severely incorrect.
+                                !       This was found out the hard way.
+                                IF (sxp < 0.0) sxp = sxp + 1.0
+                                IF (syp < 0.0) syp = syp + 1.0
+                                IF (szp < 0.0) szp = szp + 1.0
+                                IF (sxp >= 1.0) sxp = sxp - 1.0
+                                IF (syp >= 1.0) syp = syp - 1.0
+                                IF (szp >= 1.0) szp = szp - 1.0
+                                bitcell_bit = INT(sxp*xlbc)
+                                bitcell_int = ISHFT(bitcell_bit,-5) + &
+                                        INT(syp*ylbc)*ybcdf + &
+                                        INT(szp*zlbc)*zbcdf
+                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
+                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
+                                this_bitcell_overlap = BTEST(bitcell_int,bitcell_bit)
+                                ! Iteration 2
+                                sxp = sxcom + dscom_mat(1,2)
+                                syp = sycom + dscom_mat(2,2)
+                                szp = szcom + dscom_mat(3,2)
+                                IF (sxp < 0.0) sxp = sxp + 1.0
+                                IF (syp < 0.0) syp = syp + 1.0
+                                IF (szp < 0.0) szp = szp + 1.0
+                                IF (sxp >= 1.0) sxp = sxp - 1.0
+                                IF (syp >= 1.0) syp = syp - 1.0
+                                IF (szp >= 1.0) szp = szp - 1.0
+                                bitcell_bit = INT(sxp*xlbc)
+                                bitcell_int = ISHFT(bitcell_bit,-5) + &
+                                        INT(syp*ylbc)*ybcdf + &
+                                        INT(szp*zlbc)*zbcdf
+                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
+                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
+                                this_bitcell_overlap = this_bitcell_overlap .OR. BTEST(bitcell_int,bitcell_bit)
+                                ! Store result
+                                bitcell_overlap(itrial,1) = .NOT. this_bitcell_overlap
+                             END DO
+                             !$OMP END SIMD
+                     CASE(3)
+                             !DIR$ LOOP COUNT = 1000
+                             !DIR$ VECTOR ALIGNED
+                             !$OMP SIMD PRIVATE(sxp,syp,szp,bitcell_bit,bitcell_int,this_bitcell_overlap,sxcom,sycom,szcom) 
+                             DO itrial = 1, kappa_ins
+                                sxcom = xyz_rand(itrial,1)
+                                sycom = xyz_rand(itrial,2)
+                                szcom = xyz_rand(itrial,3)
+                                sxp = sxcom + dscom_mat(1,1)
+                                syp = sycom + dscom_mat(2,1)
+                                szp = szcom + dscom_mat(3,1)
+                                ! Note: it is important that the < checks and shifts come before the >= checks and shifts
+                                !       due to floating point rounding.  It's fine for sxp, syp, or szp to be zero or even
+                                !       just barely less than zero due to the behavior of INT(), but if they end up equal to
+                                !       1.0, that can cause bitcell_int to be out of bounds or otherwise severely incorrect.
+                                !       This was found out the hard way.
+                                IF (sxp < 0.0) sxp = sxp + 1.0
+                                IF (syp < 0.0) syp = syp + 1.0
+                                IF (szp < 0.0) szp = szp + 1.0
+                                IF (sxp >= 1.0) sxp = sxp - 1.0
+                                IF (syp >= 1.0) syp = syp - 1.0
+                                IF (szp >= 1.0) szp = szp - 1.0
+                                bitcell_bit = INT(sxp*xlbc)
+                                bitcell_int = ISHFT(bitcell_bit,-5) + &
+                                        INT(syp*ylbc)*ybcdf + &
+                                        INT(szp*zlbc)*zbcdf
+                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
+                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
+                                this_bitcell_overlap = BTEST(bitcell_int,bitcell_bit)
+                                ! Iteration 2
+                                sxp = sxcom + dscom_mat(1,2)
+                                syp = sycom + dscom_mat(2,2)
+                                szp = szcom + dscom_mat(3,2)
+                                IF (sxp < 0.0) sxp = sxp + 1.0
+                                IF (syp < 0.0) syp = syp + 1.0
+                                IF (szp < 0.0) szp = szp + 1.0
+                                IF (sxp >= 1.0) sxp = sxp - 1.0
+                                IF (syp >= 1.0) syp = syp - 1.0
+                                IF (szp >= 1.0) szp = szp - 1.0
+                                bitcell_bit = INT(sxp*xlbc)
+                                bitcell_int = ISHFT(bitcell_bit,-5) + &
+                                        INT(syp*ylbc)*ybcdf + &
+                                        INT(szp*zlbc)*zbcdf
+                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
+                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
+                                this_bitcell_overlap = this_bitcell_overlap .OR. BTEST(bitcell_int,bitcell_bit)
+                                ! Iteration 3
+                                sxp = sxcom + dscom_mat(1,3)
+                                syp = sycom + dscom_mat(2,3)
+                                szp = szcom + dscom_mat(3,3)
+                                IF (sxp < 0.0) sxp = sxp + 1.0
+                                IF (syp < 0.0) syp = syp + 1.0
+                                IF (szp < 0.0) szp = szp + 1.0
+                                IF (sxp >= 1.0) sxp = sxp - 1.0
+                                IF (syp >= 1.0) syp = syp - 1.0
+                                IF (szp >= 1.0) szp = szp - 1.0
+                                bitcell_bit = INT(sxp*xlbc)
+                                bitcell_int = ISHFT(bitcell_bit,-5) + &
+                                        INT(syp*ylbc)*ybcdf + &
+                                        INT(szp*zlbc)*zbcdf
+                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
+                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
+                                this_bitcell_overlap = this_bitcell_overlap .OR. BTEST(bitcell_int,bitcell_bit)
+                                ! Store result
+                                bitcell_overlap(itrial,1) = .NOT. this_bitcell_overlap
+                             END DO
+                             !$OMP END SIMD
+                     CASE(4)
+                             !DIR$ LOOP COUNT = 1000
+                             !DIR$ VECTOR ALIGNED
+                             !$OMP SIMD PRIVATE(sxp,syp,szp,bitcell_bit,bitcell_int,this_bitcell_overlap,sxcom,sycom,szcom) 
+                             DO itrial = 1, kappa_ins
+                                sxcom = xyz_rand(itrial,1)
+                                sycom = xyz_rand(itrial,2)
+                                szcom = xyz_rand(itrial,3)
+                                sxp = sxcom + dscom_mat(1,1)
+                                syp = sycom + dscom_mat(2,1)
+                                szp = szcom + dscom_mat(3,1)
+                                ! Note: it is important that the < checks and shifts come before the >= checks and shifts
+                                !       due to floating point rounding.  It's fine for sxp, syp, or szp to be zero or even
+                                !       just barely less than zero due to the behavior of INT(), but if they end up equal to
+                                !       1.0, that can cause bitcell_int to be out of bounds or otherwise severely incorrect.
+                                !       This was found out the hard way.
+                                IF (sxp < 0.0) sxp = sxp + 1.0
+                                IF (syp < 0.0) syp = syp + 1.0
+                                IF (szp < 0.0) szp = szp + 1.0
+                                IF (sxp >= 1.0) sxp = sxp - 1.0
+                                IF (syp >= 1.0) syp = syp - 1.0
+                                IF (szp >= 1.0) szp = szp - 1.0
+                                bitcell_bit = INT(sxp*xlbc)
+                                bitcell_int = ISHFT(bitcell_bit,-5) + &
+                                        INT(syp*ylbc)*ybcdf + &
+                                        INT(szp*zlbc)*zbcdf
+                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
+                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
+                                this_bitcell_overlap = BTEST(bitcell_int,bitcell_bit)
+                                ! Iteration 2
+                                sxp = sxcom + dscom_mat(1,2)
+                                syp = sycom + dscom_mat(2,2)
+                                szp = szcom + dscom_mat(3,2)
+                                IF (sxp < 0.0) sxp = sxp + 1.0
+                                IF (syp < 0.0) syp = syp + 1.0
+                                IF (szp < 0.0) szp = szp + 1.0
+                                IF (sxp >= 1.0) sxp = sxp - 1.0
+                                IF (syp >= 1.0) syp = syp - 1.0
+                                IF (szp >= 1.0) szp = szp - 1.0
+                                bitcell_bit = INT(sxp*xlbc)
+                                bitcell_int = ISHFT(bitcell_bit,-5) + &
+                                        INT(syp*ylbc)*ybcdf + &
+                                        INT(szp*zlbc)*zbcdf
+                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
+                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
+                                this_bitcell_overlap = this_bitcell_overlap .OR. BTEST(bitcell_int,bitcell_bit)
+                                ! Iteration 3
+                                sxp = sxcom + dscom_mat(1,3)
+                                syp = sycom + dscom_mat(2,3)
+                                szp = szcom + dscom_mat(3,3)
+                                IF (sxp < 0.0) sxp = sxp + 1.0
+                                IF (syp < 0.0) syp = syp + 1.0
+                                IF (szp < 0.0) szp = szp + 1.0
+                                IF (sxp >= 1.0) sxp = sxp - 1.0
+                                IF (syp >= 1.0) syp = syp - 1.0
+                                IF (szp >= 1.0) szp = szp - 1.0
+                                bitcell_bit = INT(sxp*xlbc)
+                                bitcell_int = ISHFT(bitcell_bit,-5) + &
+                                        INT(syp*ylbc)*ybcdf + &
+                                        INT(szp*zlbc)*zbcdf
+                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
+                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
+                                this_bitcell_overlap = this_bitcell_overlap .OR. BTEST(bitcell_int,bitcell_bit)
+                                ! Iteration 4
+                                sxp = sxcom + dscom_mat(1,4)
+                                syp = sycom + dscom_mat(2,4)
+                                szp = szcom + dscom_mat(3,4)
+                                IF (sxp < 0.0) sxp = sxp + 1.0
+                                IF (syp < 0.0) syp = syp + 1.0
+                                IF (szp < 0.0) szp = szp + 1.0
+                                IF (sxp >= 1.0) sxp = sxp - 1.0
+                                IF (syp >= 1.0) syp = syp - 1.0
+                                IF (szp >= 1.0) szp = szp - 1.0
+                                bitcell_bit = INT(sxp*xlbc)
+                                bitcell_int = ISHFT(bitcell_bit,-5) + &
+                                        INT(syp*ylbc)*ybcdf + &
+                                        INT(szp*zlbc)*zbcdf
+                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
+                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
+                                this_bitcell_overlap = this_bitcell_overlap .OR. BTEST(bitcell_int,bitcell_bit)
+                                ! Store result
+                                bitcell_overlap(itrial,1) = .NOT. this_bitcell_overlap
+                             END DO
+                             !$OMP END SIMD
+                     CASE(5)
+                             !DIR$ LOOP COUNT = 1000
+                             !DIR$ VECTOR ALIGNED
+                             !$OMP SIMD PRIVATE(sxp,syp,szp,bitcell_bit,bitcell_int,this_bitcell_overlap,sxcom,sycom,szcom) 
+                             DO itrial = 1, kappa_ins
+                                sxcom = xyz_rand(itrial,1)
+                                sycom = xyz_rand(itrial,2)
+                                szcom = xyz_rand(itrial,3)
+                                sxp = sxcom + dscom_mat(1,1)
+                                syp = sycom + dscom_mat(2,1)
+                                szp = szcom + dscom_mat(3,1)
+                                ! Note: it is important that the < checks and shifts come before the >= checks and shifts
+                                !       due to floating point rounding.  It's fine for sxp, syp, or szp to be zero or even
+                                !       just barely less than zero due to the behavior of INT(), but if they end up equal to
+                                !       1.0, that can cause bitcell_int to be out of bounds or otherwise severely incorrect.
+                                !       This was found out the hard way.
+                                IF (sxp < 0.0) sxp = sxp + 1.0
+                                IF (syp < 0.0) syp = syp + 1.0
+                                IF (szp < 0.0) szp = szp + 1.0
+                                IF (sxp >= 1.0) sxp = sxp - 1.0
+                                IF (syp >= 1.0) syp = syp - 1.0
+                                IF (szp >= 1.0) szp = szp - 1.0
+                                bitcell_bit = INT(sxp*xlbc)
+                                bitcell_int = ISHFT(bitcell_bit,-5) + &
+                                        INT(syp*ylbc)*ybcdf + &
+                                        INT(szp*zlbc)*zbcdf
+                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
+                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
+                                this_bitcell_overlap = BTEST(bitcell_int,bitcell_bit)
+                                ! Iteration 2
+                                sxp = sxcom + dscom_mat(1,2)
+                                syp = sycom + dscom_mat(2,2)
+                                szp = szcom + dscom_mat(3,2)
+                                IF (sxp < 0.0) sxp = sxp + 1.0
+                                IF (syp < 0.0) syp = syp + 1.0
+                                IF (szp < 0.0) szp = szp + 1.0
+                                IF (sxp >= 1.0) sxp = sxp - 1.0
+                                IF (syp >= 1.0) syp = syp - 1.0
+                                IF (szp >= 1.0) szp = szp - 1.0
+                                bitcell_bit = INT(sxp*xlbc)
+                                bitcell_int = ISHFT(bitcell_bit,-5) + &
+                                        INT(syp*ylbc)*ybcdf + &
+                                        INT(szp*zlbc)*zbcdf
+                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
+                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
+                                this_bitcell_overlap = this_bitcell_overlap .OR. BTEST(bitcell_int,bitcell_bit)
+                                ! Iteration 3
+                                sxp = sxcom + dscom_mat(1,3)
+                                syp = sycom + dscom_mat(2,3)
+                                szp = szcom + dscom_mat(3,3)
+                                IF (sxp < 0.0) sxp = sxp + 1.0
+                                IF (syp < 0.0) syp = syp + 1.0
+                                IF (szp < 0.0) szp = szp + 1.0
+                                IF (sxp >= 1.0) sxp = sxp - 1.0
+                                IF (syp >= 1.0) syp = syp - 1.0
+                                IF (szp >= 1.0) szp = szp - 1.0
+                                bitcell_bit = INT(sxp*xlbc)
+                                bitcell_int = ISHFT(bitcell_bit,-5) + &
+                                        INT(syp*ylbc)*ybcdf + &
+                                        INT(szp*zlbc)*zbcdf
+                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
+                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
+                                this_bitcell_overlap = this_bitcell_overlap .OR. BTEST(bitcell_int,bitcell_bit)
+                                ! Iteration 4
+                                sxp = sxcom + dscom_mat(1,4)
+                                syp = sycom + dscom_mat(2,4)
+                                szp = szcom + dscom_mat(3,4)
+                                IF (sxp < 0.0) sxp = sxp + 1.0
+                                IF (syp < 0.0) syp = syp + 1.0
+                                IF (szp < 0.0) szp = szp + 1.0
+                                IF (sxp >= 1.0) sxp = sxp - 1.0
+                                IF (syp >= 1.0) syp = syp - 1.0
+                                IF (szp >= 1.0) szp = szp - 1.0
+                                bitcell_bit = INT(sxp*xlbc)
+                                bitcell_int = ISHFT(bitcell_bit,-5) + &
+                                        INT(syp*ylbc)*ybcdf + &
+                                        INT(szp*zlbc)*zbcdf
+                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
+                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
+                                this_bitcell_overlap = this_bitcell_overlap .OR. BTEST(bitcell_int,bitcell_bit)
+                                ! Iteration 5
+                                sxp = sxcom + dscom_mat(1,5)
+                                syp = sycom + dscom_mat(2,5)
+                                szp = szcom + dscom_mat(3,5)
+                                IF (sxp < 0.0) sxp = sxp + 1.0
+                                IF (syp < 0.0) syp = syp + 1.0
+                                IF (szp < 0.0) szp = szp + 1.0
+                                IF (sxp >= 1.0) sxp = sxp - 1.0
+                                IF (syp >= 1.0) syp = syp - 1.0
+                                IF (szp >= 1.0) szp = szp - 1.0
+                                bitcell_bit = INT(sxp*xlbc)
+                                bitcell_int = ISHFT(bitcell_bit,-5) + &
+                                        INT(syp*ylbc)*ybcdf + &
+                                        INT(szp*zlbc)*zbcdf
+                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
+                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
+                                this_bitcell_overlap = this_bitcell_overlap .OR. BTEST(bitcell_int,bitcell_bit)
+                                ! Store result
+                                bitcell_overlap(itrial,1) = .NOT. this_bitcell_overlap
+                             END DO
+                             !$OMP END SIMD
+                     CASE DEFAULT
+                             DO ia_frag = 1, frag_list(frag_start,is)%natoms
+                                     dsxcom = dscom_mat(1,ia_frag)
+                                     dsycom = dscom_mat(2,ia_frag)
+                                     dszcom = dscom_mat(3,ia_frag)
+                                     !DIR$ LOOP COUNT = 1000
+                                     !DIR$ VECTOR ALIGNED
+                                     !$OMP SIMD PRIVATE(sxp,syp,szp,bitcell_bit,bitcell_int) 
+                                     DO itrial = 1, kappa_ins
+                                        sxp = xyz_rand(itrial,1) + dsxcom
+                                        syp = xyz_rand(itrial,2) + dsycom
+                                        szp = xyz_rand(itrial,3) + dszcom
+                                        ! Note: it is important that the < checks and shifts come before the >= checks and shifts
+                                        !       due to floating point rounding.  It's fine for sxp, syp, or szp to be zero or even
+                                        !       just barely less than zero due to the behavior of INT(), but if they end up equal to
+                                        !       1.0, that can cause bitcell_int to be out of bounds or otherwise severely incorrect.
+                                        !       This was found out the hard way.
+                                        IF (sxp < 0.0) sxp = sxp + 1.0
+                                        IF (syp < 0.0) syp = syp + 1.0
+                                        IF (szp < 0.0) szp = szp + 1.0
+                                        IF (sxp >= 1.0) sxp = sxp - 1.0
+                                        IF (syp >= 1.0) syp = syp - 1.0
+                                        IF (szp >= 1.0) szp = szp - 1.0
+                                        bitcell_bit = INT(sxp*xlbc)
+                                        bitcell_int = ISHFT(bitcell_bit,-5) + &
+                                                INT(syp*ylbc)*ybcdf + &
+                                                INT(szp*zlbc)*zbcdf
+                                        bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
+                                        bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
+                                        bitcell_overlap(itrial,ia_frag) = BTEST(bitcell_int,bitcell_bit)
+                                     END DO
+                                     !$OMP END SIMD
+                             END DO
+                             bitcell_overlap(:,1) = .NOT. ANY( &
+                                     bitcell_overlap(:,1:frag_list(frag_start,is)%natoms),2) ! inverted so .FALSE. is overlap
+                     END SELECT
+                     !DO ia_frag = 1, frag_list(frag_start,is)%natoms
+                     !        this_atom = frag_list(frag_start,is)%atoms(ia_frag)
+                     !        drxcom = drxcom_vec(ia_frag)
+                     !        drycom = drycom_vec(ia_frag)
+                     !        drzcom = drzcom_vec(ia_frag)
+                     !        IF (l_ortho) THEN
+                     !           dsxcom = REAL(drxcom / xl,4)
+                     !           dsycom = REAL(drycom / yl,4)
+                     !           dszcom = REAL(drzcom / zl,4)
+                     !           dscom = (/ dsxcom, dsycom, dszcom /)
+                     !        ELSE
+                     !           dscom = REAL(MATMUL(box_list(this_box)%length_inv, &
+                     !                   (/ drxcom, drycom, drzcom /)),4)
+                     !           dsxcom = dscom(1)
+                     !           dsycom = dscom(2)
+                     !           dszcom = dscom(3)
+                     !        END IF
+                     !        !!DIR$ LOOP COUNT = 1000
+                     !        !!DIR$ VECTOR ALIGNED
+                     !        !!$OMP SIMD PRIVATE(sxp,syp,szp,bitcell_bit,bitcell_int) 
+                     !        !DO itrial = 1, kappa_ins
+                     !        !   sxp = xyz_rand(itrial,1) + dsxcom
+                     !        !   syp = xyz_rand(itrial,2) + dsycom
+                     !        !   szp = xyz_rand(itrial,3) + dszcom
+                     !        !   ! Note: it is important that the < checks and shifts come before the >= checks and shifts
+                     !        !   !       due to floating point rounding.  It's fine for sxp, syp, or szp to be zero or even
+                     !        !   !       just barely less than zero due to the behavior of INT(), but if they end up equal to
+                     !        !   !       1.0, that can cause bitcell_int to be out of bounds or otherwise severely incorrect.
+                     !        !   !       This was found out the hard way.
+                     !        !   IF (sxp < 0.0) sxp = sxp + 1.0
+                     !        !   IF (syp < 0.0) syp = syp + 1.0
+                     !        !   IF (szp < 0.0) szp = szp + 1.0
+                     !        !   IF (sxp >= 1.0) sxp = sxp - 1.0
+                     !        !   IF (syp >= 1.0) syp = syp - 1.0
+                     !        !   IF (szp >= 1.0) szp = szp - 1.0
+                     !        !   bitcell_bit = INT(sxp*xlbc)
+                     !        !   bitcell_int = ISHFT(bitcell_bit,-5) + &
+                     !        !           INT(syp*ylbc)*ybcdf + &
+                     !        !           INT(szp*zlbc)*zbcdf
+                     !        !   bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
+                     !        !   !IF (bitcell_int > UBOUND(box_list(this_box)%bitcell_int32_vec,1)) THEN
+                     !        !   !        WRITE(*,*) sxp, syp, szp, bitcell_bit
+                     !        !   !        WRITE(*,*) xlbc, ylbc, zlbc
+                     !        !   !        WRITE(*,*) ybcdf, zbcdf
+                     !        !   !        WRITE(*,*) bitcell_bit
+                     !        !   !END IF
+                     !        !   bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
+                     !        !   bitcell_overlap(itrial,ia_frag) = BTEST(bitcell_int,bitcell_bit)
+                     !        !END DO
+                     !        !!$OMP END SIMD
+                     !END DO
+                     !bitcell_overlap(:,1) = .NOT. ANY( &
+                     !        bitcell_overlap(:,1:frag_list(frag_start,is)%natoms),2) ! inverted so .FALSE. is overlap
                      n_good_trials = 0
                      !DIR$ LOOP COUNT = 1000
                      DO itrial = 1, kappa_ins
@@ -3153,6 +3548,7 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
     
 
   END DO
+  CALL Set_CBMC_Flag(.FALSE.)
   ! apply this part to other CBMC moves, not just Widom insertions, if we determine it's correct for them
   IF (widom_active .AND. n_interfrag_nonbond_pairs > 0) THEN
           DO i = 1, n_interfrag_nonbond_pairs

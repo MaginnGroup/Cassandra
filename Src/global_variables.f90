@@ -123,7 +123,7 @@ USE Type_Definitions
   INTEGER, PARAMETER :: charge_dsf = 5
   INTEGER, PARAMETER :: charge_sf = 6
 
-  LOGICAL, PARAMETER :: cbmc_charge_sf_flag = .FALSE. ! eventually make this a variable the user can set, not a parameter
+  LOGICAL :: cbmc_charge_sf_flag = .TRUE.
 
   REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_cbmc, rcut_cbmcsq
   REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_vdw, rcut_coul, ron_charmm, roff_charmm, rcut_max
@@ -809,6 +809,12 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   INTEGER(INT32), PARAMETER :: pad16mask = NOT(MASKR(4,INT32))
   INTEGER(INT32), PARAMETER :: pad32mask = NOT(MASKR(5,INT32))
   INTEGER(INT32), PARAMETER :: pad64mask = NOT(MASKR(6,INT32))
+
+
+  INTEGER(INT64), PARAMETER :: recip_sqrt_magic_number = INT(Z'5FE6EB50C7B537A9',INT64)
+
+  INTEGER :: nspecies_present
+  INTEGER, DIMENSION(:), ALLOCATABLE :: which_species_present
 
 END MODULE Global_Variables
 

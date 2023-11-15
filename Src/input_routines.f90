@@ -5988,6 +5988,7 @@ SUBROUTINE Get_CBMC_Info
   REWIND(inputunit)
   ierr = 0
   line_nbr = 0
+  cbmc_charge_sf_flag = .FALSE.
 
   rcut_CBMC(:) = 0.0_DP
   species_list%nfragments = nfragments
@@ -5995,20 +5996,20 @@ SUBROUTINE Get_CBMC_Info
   ! Are CBMC parameters needed?
   DO ibox = 1, nbr_boxes
     IF (start_type(ibox) == 'make_config' .OR. start_type(ibox) == 'add_to_config') THEN
-       species_list%need_kappa_ins = .TRUE.
        DO is = 1, nspecies
-          IF (nfragments(is) > 1 .AND. nmols_to_make(is,ibox) > 0) THEN
-             species_list(is)%need_kappa_dih = .TRUE.
+          IF (nmols_to_make(is,ibox) > 0) THEN
+                IF (species_list(is)%nfragments > 1) species_list(is)%need_kappa_dih = .TRUE.
+                species_list(is)%need_kappa_ins = .TRUE.
           END IF
        END DO
     END IF
   END DO
 
   IF (int_sim_type == sim_gcmc .OR. int_sim_type == sim_gemc .OR. int_sim_type == sim_gemc_npt .OR. widom_flag) THEN
-     species_list%need_kappa_ins = .TRUE.
      DO is = 1, nspecies
-        IF (nfragments(is) > 1 .AND. (species_list(is)%insertion == 'CBMC' .OR. tp_correction(is) .NE. 0)) THEN
-           species_list(is)%need_kappa_dih = .TRUE.
+        IF (species_list(is)%insertion == 'CBMC' .OR. tp_correction(is) .NE. 0) THEN
+                species_list(is)%need_kappa_ins = .TRUE.
+                IF (species_list(is)%nfragments > 1) species_list(is)%need_kappa_dih = .TRUE.
         END IF
      END DO
   END IF
@@ -6099,6 +6100,9 @@ SUBROUTINE Get_CBMC_Info
                       atompair_nrg_res_sp = REAL(atompair_nrg_res,SP)
                       WRITE(logunit,'(X,A)') 'Atom pair energy table with rsq resolution = ' // &
                               TRIM(Int_To_String(atompair_nrg_res)) // ' will be used.'
+              CASE('cbmc_charge_sf')
+                      cbmc_charge_sf_flag = .TRUE.
+                      WRITE(logunit,'(X,A)') "CBMC trials will use shifted force charge sum style."
               CASE DEFAULT
               !ELSE
                  err_msg = ''

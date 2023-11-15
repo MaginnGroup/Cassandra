@@ -89,6 +89,8 @@ CONTAINS
                 INTEGER(KIND=INT64), DIMENSION(:), POINTER :: rsqmin_freq_ptr
                 INTEGER(KIND=INT64), DIMENSION(solvent_maxind,wsolute_maxind,nbr_boxes,nbr_tols) :: atompair_nskips
                 REAL(DP), DIMENSION(solvent_maxind,wsolute_maxind,nbr_boxes,nbr_tols) :: atompair_wmax
+                CHARACTER(FILENAME_LEN) :: this_path
+                INTEGER :: this_unit
 
                 IF (.NOT. ALLOCATED(atompair_rminsq_ind_table)) THEN
                         ALLOCATE(atompair_rminsq_ind_table(solvent_maxind,wsolute_maxind,nbr_boxes,nbr_tols))
@@ -138,6 +140,101 @@ CONTAINS
                 END DO
                 !$OMP END DO
                 !$OMP END PARALLEL
+                this_unit = emax_file_unit
+                this_path = ""
+                this_path = TRIM(run_name) // ".rsqmin.wmax"
+                OPEN(unit=this_unit,file=this_path,ACTION='WRITE')
+                DO ibox = 1, nbr_boxes
+                        WRITE(this_unit,*) "Box ", ibox
+                        DO ti_solute = 1, wsolute_maxind
+                                WRITE(this_unit,*)
+                                WRITE(this_unit,*) "Solute atom ", ti_solute
+                                DO ti_solvent = 1, solvent_maxind
+                                        WRITE(this_unit,*) rsqmin_atompair_w_max(:,ti_solvent,ti_solute,ibox)
+                                END DO
+                        END DO
+                END DO
+                WRITE(this_unit,*) "END"
+                CLOSE(this_unit)
+                DO ibox = 1, nbr_boxes
+                        DO is = 1, nspecies
+                                IF (.NOT. species_list(is)%test_particle(ibox)) CYCLE
+                                bsolute = species_list(is)%wsolute_base
+                                rsqmin_atompair_w_max(:,:,bsolute+1:bsolute+natoms(is),ibox) = &
+                                        rsqmin_atompair_w_max(:,:,bsolute+1:bsolute+natoms(is),ibox) / &
+                                        species_list(is)%widom_sum(ibox)
+                        END DO
+                END DO
+                this_path = ""
+                this_path = TRIM(run_name) // ".rsqmin.wmax_frac"
+                OPEN(unit=this_unit,file=this_path,ACTION='WRITE')
+                DO ibox = 1, nbr_boxes
+                        WRITE(this_unit,*) "Box ", ibox
+                        DO ti_solute = 1, wsolute_maxind
+                                WRITE(this_unit,*)
+                                WRITE(this_unit,*) "Solute atom ", ti_solute
+                                DO ti_solvent = 1, solvent_maxind
+                                        WRITE(this_unit,*) rsqmin_atompair_w_max(:,ti_solvent,ti_solute,ibox)
+                                END DO
+                        END DO
+                END DO
+                WRITE(this_unit,*) "END"
+                CLOSE(this_unit)
+                DO ibox = 1, nbr_boxes
+                        DO is = 1, nspecies
+                                IF (.NOT. species_list(is)%test_particle(ibox)) CYCLE
+                                bsolute = species_list(is)%wsolute_base
+                                rsqmin_atompair_w_max(:,:,bsolute+1:bsolute+natoms(is),ibox) = &
+                                        rsqmin_atompair_w_max(:,:,bsolute+1:bsolute+natoms(is),ibox) * &
+                                        ntrials(is,ibox)%widom
+                        END DO
+                END DO
+                this_path = ""
+                this_path = TRIM(run_name) // ".rsqmin.wmax_norm"
+                OPEN(unit=this_unit,file=this_path,ACTION='WRITE')
+                DO ibox = 1, nbr_boxes
+                        WRITE(this_unit,*) "Box ", ibox
+                        DO ti_solute = 1, wsolute_maxind
+                                WRITE(this_unit,*)
+                                WRITE(this_unit,*) "Solute atom ", ti_solute
+                                DO ti_solvent = 1, solvent_maxind
+                                        WRITE(this_unit,*) rsqmin_atompair_w_max(:,ti_solvent,ti_solute,ibox)
+                                END DO
+                        END DO
+                END DO
+                WRITE(this_unit,*) "END"
+                CLOSE(this_unit)
+                this_path = ""
+                this_path = TRIM(run_name) // ".rsqmin.wfrac"
+                OPEN(unit=this_unit,file=this_path,ACTION='WRITE')
+                DO ibox = 1, nbr_boxes
+                        WRITE(this_unit,*) "Box ", ibox
+                        DO ti_solute = 1, wsolute_maxind
+                                WRITE(this_unit,*)
+                                WRITE(this_unit,*) "Solute atom ", ti_solute
+                                DO ti_solvent = 1, solvent_maxind
+                                        WRITE(this_unit,*) rsqmin_atompair_wfrac(:,ti_solvent,ti_solute,ibox)
+                                END DO
+                        END DO
+                END DO
+                WRITE(this_unit,*) "END"
+                CLOSE(this_unit)
+                this_path = ""
+                this_path = TRIM(run_name) // ".rsqmin.freq"
+                OPEN(unit=this_unit,file=this_path,ACTION='WRITE')
+                DO ibox = 1, nbr_boxes
+                        WRITE(this_unit,*) "Box ", ibox
+                        DO ti_solute = 1, wsolute_maxind
+                                WRITE(this_unit,*)
+                                WRITE(this_unit,*) "Solute atom ", ti_solute
+                                DO ti_solvent = 1, solvent_maxind
+                                        WRITE(this_unit,*) rsqmin_atompair_freq(:,ti_solvent,ti_solute,ibox)
+                                END DO
+                        END DO
+                END DO
+                WRITE(this_unit,*) "END"
+                CLOSE(this_unit)
+
 
                 DO ibox = 1, nbr_boxes
                         DO is = 1, nspecies
@@ -244,8 +341,9 @@ CONTAINS
                 ALLOCATE(solvent_max_rminsq_sp(solvent_maxind,nbr_boxes))
                 solvent_max_rminsq = MAXVAL(atompair_rminsq_table,2) ! 2-D result
                 solvent_min_rminsq = MINVAL(atompair_rminsq_table,2) ! 2-D result
+                box_list%rcut_low_max = SQRT(MAXVAL(solvent_min_rminsq,1))
                 box_list%ideal_bitcell_length = &
-                        MAX(min_ideal_bitcell_length,SQRT(MAXVAL(solvent_min_rminsq,1)) / 28.0_DP) ! vector with one element per box
+                        MAX(min_ideal_bitcell_length,box_list%rcut_low_max / 28.0_DP) ! vector with one element per box
                 sp_atompair_rminsq_table = REAL(atompair_rminsq_table,SP)
                 solvent_max_rminsq_sp = REAL(solvent_max_rminsq,SP)
                 solvents_or_types_maxind = solvent_maxind
@@ -253,7 +351,7 @@ CONTAINS
                 WRITE(logunit, '(8x,A,F5.3,A,F6.3,A)') "[", min_rmin, ",", max_rmin, "] Angstroms"
                 IF (bitcell_flag) THEN
                         DO ibox = 1, nbr_boxes
-                                WRITE(logunit, '(A,F5.3,A)') "Setting box " // Int_To_String(ibox) // " ideal bitcell length = ", &
+                                WRITE(logunit, '(A,F5.3,A)') "Setting box " // TRIM(Int_To_String(ibox)) // " ideal bitcell length = ", &
                                         box_list(ibox)%ideal_bitcell_length, " Angstroms"
                         END DO
                 END IF

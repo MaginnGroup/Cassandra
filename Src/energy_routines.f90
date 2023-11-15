@@ -1457,7 +1457,7 @@ CONTAINS
           LOGICAL, INTENT(IN), OPTIONAL :: know_all_live, know_unit_stride
           LOGICAL :: l_all_live, l_unit_stride, l_ortho
           INTEGER :: js, jnlive, jnmols, ibox, istart, iend, jnatoms, maxnlive
-          INTEGER :: ja, jm, maxvlen, i, vlen, cjnmols
+          INTEGER :: ja, jm, maxvlen, i, vlen, cjnmols, js_present
           REAL(DP) :: lx_recip, ly_recip, lz_recip
           LOGICAL, DIMENSION(maxnmols) :: spec_live
           INTEGER, DIMENSION(maxnmols,nspecies,nbr_boxes) :: live_locates
@@ -1479,6 +1479,14 @@ CONTAINS
                   l_unit_stride = .FALSE.
           END IF
           nlive = 0
+          nspecies_present = 0
+          IF (.NOT. ALLOCATED(which_species_present)) ALLOCATE(which_species_present(nspecies))
+          DO js = 1, nspecies
+                IF (SUM(nmols(js,1:))>0) THEN
+                        nspecies_present = nspecies_present+1
+                        which_species_present(nspecies_present) = js
+                END IF
+          END DO
           IF (l_unit_stride) THEN
                   IF (l_all_live) THEN
                           nlive = nmols(:,1:)
@@ -1496,10 +1504,11 @@ CONTAINS
                           END DO
                   END IF
           ELSE
-                  !$OMP PARALLEL PRIVATE(jnmols,spec_locates,spec_live)
+                  !$OMP PARALLEL PRIVATE(jnmols,spec_locates,spec_live,js)
                   !$OMP DO COLLAPSE(2) SCHEDULE(DYNAMIC)
                   DO ibox = 1, nbr_boxes
-                        DO js = 1, nspecies
+                        DO js_present = 1, nspecies_present
+                                js = which_species_present(js_present)
                                 IF (nmols(js,ibox) == 0) CYCLE
                                 jnmols = nmols(js,ibox)
                                 IF (l_all_live) THEN
@@ -1531,18 +1540,19 @@ CONTAINS
           IF (ALLOCATED(live_atom_exist)) DEALLOCATE(live_atom_exist)
           maxnlive = MAXVAL(nlive)
           !ALLOCATE(live_atom_list(MAXVAL(natoms),maxnlive,nspecies,nbr_boxes))
-          ALLOCATE(live_atom_exist(MAXVAL(natoms),maxnlive,nspecies,nbr_boxes))
-          ALLOCATE(live_atom_rsp(MAXVAL(natoms),maxnlive,3,nspecies,nbr_boxes))
+          ALLOCATE(live_atom_exist(MAXVAL(natoms),maxnlive,nspecies_present,nbr_boxes))
+          ALLOCATE(live_atom_rsp(MAXVAL(natoms),maxnlive,3,nspecies_present,nbr_boxes))
           IF (.NOT. (l_all_live .AND. l_unit_stride)) THEN
                   ALLOCATE(j_atom_list(MAXVAL(natoms),maxnlive))
                   ALLOCATE(j_molecule_list(maxnlive))
           END IF
           maxnlive = (maxnlive/8 + 1) * 8
-          ALLOCATE(live_xcom(maxnlive,nspecies,nbr_boxes))
-          ALLOCATE(live_ycom(maxnlive,nspecies,nbr_boxes))
-          ALLOCATE(live_zcom(maxnlive,nspecies,nbr_boxes))
-          ALLOCATE(live_max_dcom(maxnlive,nspecies,nbr_boxes))
-          DO js = 1, nspecies
+          ALLOCATE(live_xcom(maxnlive,nspecies_present,nbr_boxes))
+          ALLOCATE(live_ycom(maxnlive,nspecies_present,nbr_boxes))
+          ALLOCATE(live_zcom(maxnlive,nspecies_present,nbr_boxes))
+          ALLOCATE(live_max_dcom(maxnlive,nspecies_present,nbr_boxes))
+          DO js_present = 1, nspecies_present
+                js = which_species_present(js_present)
                 istart = 1
                 jnatoms = natoms(js)
                 cjnmols = 0
@@ -1557,10 +1567,10 @@ CONTAINS
                                 !$OMP DO SIMD COLLAPSE(2)
                                 DO jm = 1, jnlive
                                         DO ja = 1, jnatoms
-                                                live_atom_rsp(ja,jm,1,js,ibox) = atom_list(ja,jm+cjnmols,js)%rp(1)
-                                                live_atom_rsp(ja,jm,2,js,ibox) = atom_list(ja,jm+cjnmols,js)%rp(2)
-                                                live_atom_rsp(ja,jm,3,js,ibox) = atom_list(ja,jm+cjnmols,js)%rp(3)
-                                                live_atom_exist(ja,jm,js,ibox) = atom_list(ja,jm+cjnmols,js)%exist
+                                                live_atom_rsp(ja,jm,1,js_present,ibox) = atom_list(ja,jm+cjnmols,js)%rp(1)
+                                                live_atom_rsp(ja,jm,2,js_present,ibox) = atom_list(ja,jm+cjnmols,js)%rp(2)
+                                                live_atom_rsp(ja,jm,3,js_present,ibox) = atom_list(ja,jm+cjnmols,js)%rp(3)
+                                                live_atom_exist(ja,jm,js_present,ibox) = atom_list(ja,jm+cjnmols,js)%exist
                                                 !live_atom_list(ja,jm,js,ibox)%rp(1) = atom_list(ja,jm+cjnmols,js)%rp(1)
                                                 !live_atom_list(ja,jm,js,ibox)%rp(2) = atom_list(ja,jm+cjnmols,js)%rp(2)
                                                 !live_atom_list(ja,jm,js,ibox)%rp(3) = atom_list(ja,jm+cjnmols,js)%rp(3)
@@ -1570,10 +1580,10 @@ CONTAINS
                                 !$OMP END DO SIMD
                                 !$OMP DO SIMD
                                 DO jm = 1, jnlive
-                                        live_xcom(jm,js,ibox) = molecule_list(jm+cjnmols,js)%rcom(1)
-                                        live_ycom(jm,js,ibox) = molecule_list(jm+cjnmols,js)%rcom(2)
-                                        live_zcom(jm,js,ibox) = molecule_list(jm+cjnmols,js)%rcom(3)
-                                        live_max_dcom(jm,js,ibox) = molecule_list(jm+cjnmols,js)%rcom(4)
+                                        live_xcom(jm,js_present,ibox) = molecule_list(jm+cjnmols,js)%rcom(1)
+                                        live_ycom(jm,js_present,ibox) = molecule_list(jm+cjnmols,js)%rcom(2)
+                                        live_zcom(jm,js_present,ibox) = molecule_list(jm+cjnmols,js)%rcom(3)
+                                        live_max_dcom(jm,js_present,ibox) = molecule_list(jm+cjnmols,js)%rcom(4)
                                 END DO
                                 !$OMP END DO SIMD
                                 !$OMP END PARALLEL
@@ -1595,10 +1605,10 @@ CONTAINS
                                 !$OMP DO SIMD COLLAPSE(2)
                                 DO jm = 1, jnlive
                                         DO ja = 1, jnatoms
-                                                live_atom_rsp(ja,jm,1,js,ibox) = j_atom_list(ja,jm)%rp(1)
-                                                live_atom_rsp(ja,jm,2,js,ibox) = j_atom_list(ja,jm)%rp(2)
-                                                live_atom_rsp(ja,jm,3,js,ibox) = j_atom_list(ja,jm)%rp(3)
-                                                live_atom_exist(ja,jm,js,ibox) = j_atom_list(ja,jm)%exist
+                                                live_atom_rsp(ja,jm,1,js_present,ibox) = j_atom_list(ja,jm)%rp(1)
+                                                live_atom_rsp(ja,jm,2,js_present,ibox) = j_atom_list(ja,jm)%rp(2)
+                                                live_atom_rsp(ja,jm,3,js_present,ibox) = j_atom_list(ja,jm)%rp(3)
+                                                live_atom_exist(ja,jm,js_present,ibox) = j_atom_list(ja,jm)%exist
                                                 !live_atom_list(ja,jm,js,ibox)%rp(1) = j_atom_list(ja,jm)%rp(1)
                                                 !live_atom_list(ja,jm,js,ibox)%rp(2) = j_atom_list(ja,jm)%rp(2)
                                                 !live_atom_list(ja,jm,js,ibox)%rp(3) = j_atom_list(ja,jm)%rp(3)
@@ -1608,16 +1618,16 @@ CONTAINS
                                 !$OMP END DO SIMD
                                 !$OMP DO SIMD
                                 DO jm = 1, jnlive
-                                        live_xcom(jm,js,ibox) = j_molecule_list(jm)%rcom(1)
-                                        live_ycom(jm,js,ibox) = j_molecule_list(jm)%rcom(2)
-                                        live_zcom(jm,js,ibox) = j_molecule_list(jm)%rcom(3)
-                                        live_max_dcom(jm,js,ibox) = j_molecule_list(jm)%rcom(4)
+                                        live_xcom(jm,js_present,ibox) = j_molecule_list(jm)%rcom(1)
+                                        live_ycom(jm,js_present,ibox) = j_molecule_list(jm)%rcom(2)
+                                        live_zcom(jm,js_present,ibox) = j_molecule_list(jm)%rcom(3)
+                                        live_max_dcom(jm,js_present,ibox) = j_molecule_list(jm)%rcom(4)
                                 END DO
                                 !$OMP END DO SIMD
                                 !$OMP END PARALLEL
                         END IF
                         !IF (.NOT. ALL(live_atom_list(1:jnatoms,1:jnlive,js,ibox)%exist)) l_not_all_exist = .TRUE.
-                        IF (.NOT. ALL(live_atom_exist(1:jnatoms,1:jnlive,js,ibox))) l_not_all_exist = .TRUE.
+                        IF (.NOT. ALL(live_atom_exist(1:jnatoms,1:jnlive,js_present,ibox))) l_not_all_exist = .TRUE.
                         istart = istart + jnmols
                         cjnmols = cjnmols + jnmols
                 END DO
@@ -1634,49 +1644,50 @@ CONTAINS
                 h13 = box_list(ibox)%length_inv(1,3)
                 h23 = box_list(ibox)%length_inv(2,3)
                 h33 = box_list(ibox)%length_inv(3,3)
-                DO js = 1, nspecies
+                DO js_present = 1, nspecies_present
+                        js = which_species_present(js_present)
                         jnlive = nlive(js,ibox)
                         jnatoms = natoms(js)
                         !$OMP PARALLEL
                         !$OMP DO SIMD PRIVATE(xcom,ycom,zcom,rcom) &
                         !$OMP ALIGNED(live_xcom,live_ycom,live_zcom)
                         DO jm = 1, jnlive
-                                rcom = live_xcom(jm,js,ibox)
+                                rcom = live_xcom(jm,js_present,ibox)
                                 xcom = h11*rcom
                                 ycom = h21*rcom
                                 zcom = h31*rcom
-                                rcom = live_ycom(jm,js,ibox)
+                                rcom = live_ycom(jm,js_present,ibox)
                                 xcom = xcom + h12*rcom
                                 ycom = ycom + h22*rcom
                                 zcom = zcom + h32*rcom
-                                rcom = live_zcom(jm,js,ibox)
+                                rcom = live_zcom(jm,js_present,ibox)
                                 xcom = xcom + h13*rcom
                                 ycom = ycom + h23*rcom
                                 zcom = zcom + h33*rcom
-                                live_xcom(jm,js,ibox) = xcom
-                                live_ycom(jm,js,ibox) = ycom
-                                live_zcom(jm,js,ibox) = zcom
+                                live_xcom(jm,js_present,ibox) = xcom
+                                live_ycom(jm,js_present,ibox) = ycom
+                                live_zcom(jm,js_present,ibox) = zcom
                         END DO
                         !$OMP END DO SIMD
                         !$OMP DO PRIVATE(jrp,sxp,syp,szp,ja) &
                         !$OMP SCHEDULE(STATIC)
                         DO jm = 1, jnlive
                                 DO ja = 1, jnatoms
-                                        jrp = live_atom_rsp(ja,jm,1,js,ibox)
+                                        jrp = live_atom_rsp(ja,jm,1,js_present,ibox)
                                         sxp = h11*jrp
                                         syp = h21*jrp
                                         szp = h31*jrp
-                                        jrp = live_atom_rsp(ja,jm,2,js,ibox)
+                                        jrp = live_atom_rsp(ja,jm,2,js_present,ibox)
                                         sxp = sxp + h12*jrp
                                         syp = syp + h22*jrp
                                         szp = szp + h32*jrp
-                                        jrp = live_atom_rsp(ja,jm,3,js,ibox)
+                                        jrp = live_atom_rsp(ja,jm,3,js_present,ibox)
                                         sxp = sxp + h13*jrp
                                         syp = syp + h23*jrp
                                         szp = szp + h33*jrp
-                                        live_atom_rsp(ja,jm,1,js,ibox) = sxp
-                                        live_atom_rsp(ja,jm,2,js,ibox) = syp
-                                        live_atom_rsp(ja,jm,3,js,ibox) = szp
+                                        live_atom_rsp(ja,jm,1,js_present,ibox) = sxp
+                                        live_atom_rsp(ja,jm,2,js_present,ibox) = syp
+                                        live_atom_rsp(ja,jm,3,js_present,ibox) = szp
                                 END DO
                         END DO
                         !$OMP END DO
@@ -1713,7 +1724,7 @@ CONTAINS
     REAL(DP), DIMENSION(maxboxnatoms,4) :: ij_vdw_p_table_T
     LOGICAL :: this_est_emax, l_get_rij_min, l_ortho
     INTEGER :: n_vdw_p, ia_counter, i, j, n_i_exist, istart, iend, jnlive, n_interact, vlen, orig_vlen, n_j_exist
-    INTEGER :: bsolvent, istart_base, natoms_js, ti_solvent, ja, js, n_coul, n_vdw, ia, live_vlen, jnmols, jnatoms, itype
+    INTEGER :: bsolvent, istart_base, natoms_js, ti_solvent, ja, js, js_present, n_coul, n_vdw, ia, live_vlen, jnmols, jnatoms, itype
     REAL(DP) :: mol_rcut, max_dcom_i_const, this_vdw_rcutsq, this_coul_rcutsq
     REAL(DP) :: sigbyr2, sigbyr6, sigbyr12, rij, roffsq_rijsq, nrg_vdw, nrg_coul, i_qq_energy, mie_m, mie_n, icharge_factor
 
@@ -1725,6 +1736,8 @@ CONTAINS
     REAL(DP) :: ixp, iyp, izp, dxcom, dycom, dzcom, dscom, ixcom, iycom, izcom, dxp, dyp, dzp, dsp
     REAL(DP) :: xl, yl, zl, hxl, hyl, hzl
     REAL(DP) :: h11,h21,h31,h12,h22,h32,h13,h23,h33
+    REAL(DP) :: invcutx2_cbmc, invcutsq_cbmc, inv_rij
+    INTEGER :: this_int_charge_sum_style
     !!!dir$ attributes align:32 :: interact_vec, vdw_mask, coul_mask, j_hascharge, j_hasvdw, j_exist, jatomtype, packed_types, &
     !dir$ attributes align:32 :: jxp, jyp, jzp, jrsp, ij_vdw_p_table
     !dir$ assume_aligned jxp:32, jyp:32, jzp:32, jrsp:32, ij_vdw_p_table:32, ij_vdw_p_table_T:32
@@ -1737,6 +1750,7 @@ CONTAINS
     qq_energy = 0.0_DP
     overlap = .FALSE.
     ibox = widom_molecule%which_box
+    this_int_charge_sum_style = MERGE(charge_sf,int_charge_sum_style(ibox),cbmc_flag .AND. cbmc_charge_sf_flag)
 
 
     l_get_rij_min = est_atompair_rminsq .AND. .NOT. cbmc_flag
@@ -1766,6 +1780,8 @@ CONTAINS
             mol_rcut = rcut_cbmc(this_box)
             this_vdw_rcutsq = rcut_cbmcsq(this_box)
             this_coul_rcutsq = rcut_cbmcsq(this_box)
+            invcutx2_cbmc = 2.0_DP/rcut_cbmc(this_box)
+            invcutsq_cbmc = 1.0_DP/rcut_cbmcsq(this_box)
     ELSE
             mol_rcut = rcut_max(this_box)
             IF (int_vdw_sum_style(this_box) == vdw_cut_switch) THEN
@@ -1798,16 +1814,17 @@ CONTAINS
             izcom = isp_com(3)
     END IF
     istart = 1
-    DO js = 1, nspecies
+    DO js_present = 1, nspecies_present
+        js = which_species_present(js_present)
         jnlive = nlive(js,this_box)
         IF (jnlive == 0) CYCLE
         jnatoms = natoms(js)
         n_interact = 0
         IF (l_ortho) THEN
                 DO i = 1, jnlive
-                        dxcom = ABS(live_xcom(i,js,ibox) - ixcom)
-                        dycom = ABS(live_ycom(i,js,ibox) - iycom)
-                        dzcom = ABS(live_zcom(i,js,ibox) - izcom)
+                        dxcom = ABS(live_xcom(i,js_present,ibox) - ixcom)
+                        dycom = ABS(live_ycom(i,js_present,ibox) - iycom)
+                        dzcom = ABS(live_zcom(i,js_present,ibox) - izcom)
                         IF (dxcom > hxl) dxcom = dxcom - xl
                         IF (dycom > hyl) dycom = dycom - yl
                         IF (dzcom > hzl) dzcom = dzcom - zl
@@ -1816,7 +1833,7 @@ CONTAINS
                         dxcom = dxcom + dycom * dycom
                         dxcom = dxcom + dzcom * dzcom
                         l_interact = max_dcom_i_const > &
-                                SQRT(dxcom) - live_max_dcom(i,js,this_box)
+                                SQRT(dxcom) - live_max_dcom(i,js_present,this_box)
                         interact_vec(i) = l_interact
                         IF (l_interact) n_interact = n_interact + 1
                 END DO
@@ -1827,7 +1844,7 @@ CONTAINS
         ELSE
                 DO i = 1, jnlive
                         ! COM coordinates are fractional if box is triclinic
-                        dscom = live_xcom(i,js,this_box)
+                        dscom = live_xcom(i,js_present,this_box)
                         dscom = dscom - ixcom
                         IF (dscom > 0.5_DP) THEN
                                 dscom = dscom - 1.0_DP
@@ -1837,7 +1854,7 @@ CONTAINS
                         dxcom = h11*dscom
                         dycom = h21*dscom
                         dzcom = h31*dscom
-                        dscom = live_ycom(i,js,this_box)
+                        dscom = live_ycom(i,js_present,this_box)
                         dscom = dscom - iycom
                         IF (dscom > 0.5_DP) THEN
                                 dscom = dscom - 1.0_DP
@@ -1847,7 +1864,7 @@ CONTAINS
                         dxcom = dxcom + h12*dscom
                         dycom = dycom + h22*dscom
                         dzcom = dzcom + h32*dscom
-                        dscom = live_zcom(i,js,this_box)
+                        dscom = live_zcom(i,js_present,this_box)
                         dscom = dscom - izcom
                         IF (dscom > 0.5_DP) THEN
                                 dscom = dscom - 1.0_DP
@@ -1862,7 +1879,7 @@ CONTAINS
                         dxcom = dxcom + dycom * dycom
                         dxcom = dxcom + dzcom * dzcom
                         l_interact = max_dcom_i_const > &
-                                SQRT(dxcom) - live_max_dcom(i,js,this_box)
+                                SQRT(dxcom) - live_max_dcom(i,js_present,this_box)
                         interact_vec(i) = l_interact
                         IF (l_interact) n_interact = n_interact + 1
                 END DO
@@ -1873,11 +1890,11 @@ CONTAINS
         !which_interact(1:n_interact) = PACK(vec123(1:jnlive),interact_vec(1:jnlive))
         vlen = n_interact*natoms(js)
         iend = istart + vlen - 1
-        jrsp(istart:iend,:) = RESHAPE(live_atom_rsp(1:jnatoms,PACK(vec123(1:jnlive),interact_vec(1:jnlive)),1:3,js,this_box), &
+        jrsp(istart:iend,:) = RESHAPE(live_atom_rsp(1:jnatoms,PACK(vec123(1:jnlive),interact_vec(1:jnlive)),1:3,js_present,this_box), &
                 (/ vlen, 3 /))
         IF (l_not_all_exist) THEN
                 j_exist(istart:iend) = RESHAPE(&
-                        live_atom_exist(1:jnatoms,PACK(vec123(1:jnlive),interact_vec(1:jnlive)),js,this_box), (/ vlen /))
+                        live_atom_exist(1:jnatoms,PACK(vec123(1:jnlive),interact_vec(1:jnlive)),js_present,this_box), (/ vlen /))
         END IF
         jatomtype(istart:iend) = RESHAPE(SPREAD(nonbond_list(1:natoms(js),js)%atom_type_number,2,n_interact), (/ vlen /))
         jcharge(istart:iend) = RESHAPE(SPREAD(nonbond_list(1:natoms(js),js)%charge,2,n_interact), (/ vlen /))
@@ -2179,20 +2196,76 @@ CONTAINS
                         n_coul = n_vdw
                 END IF
                 i_qq_energy = 0.0_DP
-                DO i = 1, n_coul
-                        rij = SQRT(rijsq_packed(i))
-                        IF (int_charge_sum_style(this_box) == charge_ewald) THEN
-                                nrg_coul = ERFC(alpha_ewald(this_box)*rij) / rij * jcharge_coul(i) ! omit icharge and charge factor for now
-                        ELSE IF (int_charge_sum_style(this_box) == charge_dsf) THEN
-                                nrg_coul = (dsf_factor2(this_box) * (rij - rcut_coul(this_box)) - &
+                SELECT CASE(this_int_charge_sum_style)
+                CASE(charge_sf)
+                        DO i = 1, n_coul
+                                this_rijsq = rijsq_packed(i)
+                                inv_rij = Recip_Sqrt(this_rijsq)
+                                rij = inv_rij * this_rijsq
+                                i_qq_energy = i_qq_energy + jcharge_coul(i) * (inv_rij - invcutx2_cbmc + rij*invcutsq_cbmc)
+                        END DO
+                CASE(charge_ewald)
+                        DO i = 1, n_coul
+                                this_rijsq = rijsq_packed(i)
+                                inv_rij = Recip_Sqrt(this_rijsq)
+                                rij = inv_rij * this_rijsq
+                                i_qq_energy = i_qq_energy + ERFC(alpha_ewald(this_box)*rij) * inv_rij * jcharge_coul(i)
+                        END DO
+                CASE(charge_dsf)
+                        DO i = 1, n_coul
+                                this_rijsq = rijsq_packed(i)
+                                inv_rij = Recip_Sqrt(this_rijsq)
+                                rij = inv_rij * this_rijsq
+                                i_qq_energy = i_qq_energy + (dsf_factor2(this_box) * (rij - rcut_coul(this_box)) - &
                                         dsf_factor1(this_box) + &
-                                        ERFC(alpha_dsf(this_box)*rij) / rij) * jcharge_coul(i)
-                        !ELSE IF (int_charge_sum_style(this_box) == charge_cut) THEN
-                        ELSE ! implies int_charge_sum_style(this_box) == charge_cut
-                                nrg_coul = jcharge_coul(i) / rij
-                        END IF
-                        i_qq_energy = i_qq_energy + nrg_coul
-                END DO
+                                        ERFC(alpha_dsf(this_box)*rij) * inv_rij) * jcharge_coul(i)
+                        END DO
+                CASE DEFAULT
+                        DO i = 1, n_coul
+                                this_rijsq = rijsq_packed(i)
+                                inv_rij = Recip_Sqrt(this_rijsq)
+                                i_qq_energy = i_qq_energy + inv_rij*jcharge_coul(i)
+                        END DO
+                END SELECT
+                !DO i = 1, n_coul
+                !        this_rijsq = rijsq_packed(i)
+                !        ! I don't use the function here because the compiler incorrectly assumed vector dependencies when I tried
+                !        ! it, even when I specified IVDEP.  I instead manually inlined its contents.
+                !        inv_rij = Recip_Sqrt(this_rijsq)
+                !        !rij = this_rijsq * 0.5_DP
+                !        !inv_rij = TRANSFER(recip_sqrt_magic_number - ISHFT(TRANSFER(this_rijsq,recip_sqrt_magic_number),-1),inv_rij)
+                !        !inv_rij = inv_rij * (1.5 - rij*inv_rij*inv_rij)
+                !        !inv_rij = inv_rij * (1.5 - rij*inv_rij*inv_rij)
+                !        !inv_rij = inv_rij * (1.5 - rij*inv_rij*inv_rij)
+                !        !inv_rij = inv_rij * (1.5 - rij*inv_rij*inv_rij)
+                !        rij = inv_rij * this_rijsq
+                !        !rij = SQRT(rijsq_packed(i))
+                !        SELECT CASE(this_int_charge_sum_style)
+                !        CASE(charge_sf)
+                !                nrg_coul = jcharge_coul(i) * (inv_rij - invcutx2_cbmc + rij*invcutsq_cbmc)
+                !        CASE(charge_ewald)
+                !                nrg_coul = ERFC(alpha_ewald(this_box)*rij) * inv_rij * jcharge_coul(i) ! omit icharge and charge factor for now
+                !        CASE(charge_dsf)
+                !                nrg_coul = (dsf_factor2(this_box) * (rij - rcut_coul(this_box)) - &
+                !                        dsf_factor1(this_box) + &
+                !                        ERFC(alpha_dsf(this_box)*rij) * inv_rij) * jcharge_coul(i)
+                !        CASE DEFAULT
+                !                nrg_coul = jcharge_coul(i) * inv_rij
+                !        END SELECT
+                !        !IF (cbmc_flag .AND. cbmc_charge_sf_flag) THEN ! undamped shifted force method
+                !        !        nrg_coul = jcharge_coul(i) * (inv_rij - invcutx2_cbmc + rij*invcutsq_cbmc)
+                !        !ELSE IF (int_charge_sum_style(this_box) == charge_ewald) THEN
+                !        !        nrg_coul = ERFC(alpha_ewald(this_box)*rij) * inv_rij * jcharge_coul(i) ! omit icharge and charge factor for now
+                !        !ELSE IF (int_charge_sum_style(this_box) == charge_dsf) THEN
+                !        !        nrg_coul = (dsf_factor2(this_box) * (rij - rcut_coul(this_box)) - &
+                !        !                dsf_factor1(this_box) + &
+                !        !                ERFC(alpha_dsf(this_box)*rij) * inv_rij) * jcharge_coul(i)
+                !        !!ELSE IF (int_charge_sum_style(this_box) == charge_cut) THEN
+                !        !ELSE ! implies int_charge_sum_style(this_box) == charge_cut
+                !        !        nrg_coul = jcharge_coul(i) * inv_rij
+                !        !END IF
+                !        i_qq_energy = i_qq_energy + nrg_coul
+                !END DO
                 qq_energy = qq_energy + i_qq_energy * icharge_factor
                 IF (this_est_emax) THEN
                         up_nrg_vec = up_nrg_vec + UNPACK(jcharge_coul(1:n_coul)*icharge_factor/SQRT(rijsq_packed(1:n_coul)), coul_mask(1:vlen), zero_field(1:vlen))
@@ -2203,6 +2276,31 @@ CONTAINS
         END IF
     END DO
   END SUBROUTINE Compute_Molecule_Nonbond_Inter_Energy_Vectorized_Widom
+
+  ELEMENTAL FUNCTION Recip_Sqrt(x) RESULT(rsqrt)
+          !DIR$ ATTRIBUTES FORCEINLINE, VECTOR :: Recip_Sqrt
+          ! Double precision fast inverse square root algorithm
+          ! Not beneficial for single precision these days because reciprocal square root is usually
+          !     implemented as a hardware intrinsic in single precision for modern CPUs.
+          ! However, it's only a hardware intrinsic in double precision for CPUs with AVX-512 instruction set, 
+          !     which is still relatively uncommon and is currently missing from all non-Intel CPUs.
+          ! Using this method is faster than using both a sqare root operation and a division or reciprocal operation, 
+          !     according to tests I've run on both Intel and AMD CPUs with the AVX2 instruction set.
+          ! If you need both the square root and the reciprocal sqare root of a number (x), use this function to get the 
+          !     reciprocal sqare root, then multiply the reciprocal square root with the original number (x) 
+          !     to get the square root of x.
+          ! I'm not sure whether it will behave properly if x is infinity.  I haven't tested that yet.
+          REAL(DP), INTENT(IN) :: x
+          INTEGER(INT64), PARAMETER :: magic_number = INT(Z'5FE6EB50C7B537A9',INT64)
+          REAL(DP), PARAMETER :: threehalves = 1.5_DP
+          REAL(DP) :: x2, rsqrt
+          x2 = x * 0.5_DP
+          rsqrt = TRANSFER(magic_number - ISHFT(TRANSFER(x,magic_number),-1),rsqrt)
+          rsqrt = rsqrt * (threehalves - x2*rsqrt*rsqrt)
+          rsqrt = rsqrt * (threehalves - x2*rsqrt*rsqrt)
+          rsqrt = rsqrt * (threehalves - x2*rsqrt*rsqrt)
+          rsqrt = rsqrt * (threehalves - x2*rsqrt*rsqrt)
+  END FUNCTION Recip_Sqrt
 
   SUBROUTINE Compute_Molecule_Nonbond_Inter_Energy_Vectorized_2(im,is, &
     this_box,vdw_energy,qq_energy,overlap)
@@ -6480,7 +6578,7 @@ CONTAINS
                         drp = cbmc_cell_rsp(i,3,xi,yi,zi,this_box) - irzp
                         rsq_shift = rsq_shift + drp*drp
                         rsqsol = INT(MIN(rsq_shift*inv_rsq_step_sp,atompair_nrg_res_sp)) + &
-                                cbmc_cell_ti(i,xi,yi,zi,this_box)*dmult
+                                (cbmc_cell_ti(i,xi,yi,zi,this_box)-1)*dmult
                         nrg = nrg + atompair_nrg_table_reduced(rsqsol,isolute,this_box)
                   END DO
                   Compute_Cell_List_CBMC_nrg = nrg
@@ -7180,7 +7278,16 @@ CONTAINS
               qj = nonbond_list(ja,js)%charge
 
 
-              IF (int_charge_sum_style(ibox) == charge_ewald .AND. &
+              IF (cbmc_flag .AND. cbmc_charge_sf_flag  .AND. .NOT. (igas_flag .OR. minimg_flag)) THEN
+                      IF (is == js .AND. im == jm) THEN
+                              E_intra_qq = E_intra_qq +&
+                                     charge_factor*qi*qj* &
+                                     (charge_intra_scale(ia,ja,is)/SQRT(rijsq) - 2.0_DP/rcut_cbmc(ibox) + SQRT(rijsq)/rcut_cbmcsq(ibox))
+                      ELSE
+                              E_intra_qq = E_intra_qq + &
+                                      charge_factor*qi*qj*(1.0_DP/SQRT(rijsq) - 2.0_DP/rcut_cbmc(ibox) + SQRT(rijsq)/rcut_cbmcsq(ibox))
+                      END IF
+              ELSEIF (int_charge_sum_style(ibox) == charge_ewald .AND. &
                       .NOT. (igas_flag .OR. minimg_flag) ) THEN
                    ! Real space Ewald part
                    CALL Compute_AtomPair_Ewald_Real(ia,im,is,qi,ja,jm,js,qj, &
@@ -7778,9 +7885,9 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
     ! Local variables
     REAL(DP), DIMENSION(natoms(is)) :: q, rxp, ryp, rzp
     REAL(DP), DIMENSION(nvecs(ibox)) :: this_cos_sum, this_sin_sum
-    REAL(DP) :: hdotr, trigfactor, ihx, ihy, ihz, qia
+    REAL(DP) :: hdotr, trigfactor, ihx, ihy, ihz, qia, rpq(4,natoms(is))
     REAL(DP) :: cos_sum_i, sin_sum_i, E_recip_redux
-    INTEGER :: i, ia
+    INTEGER :: i, ia, this_natoms
     !DIR$ ASSUME_ALIGNED q:32, rxp:32, ryp:32, rzp:32, this_cos_sum:32, this_sin_sum:32
 
     q = nonbond_list(1:natoms(is),is)%charge
@@ -7789,9 +7896,9 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
     !E_reciprocal = 0.0_DP
     E_recip_redux = 0.0_DP
 
-    rxp = widom_atoms%rp(1)
-    ryp = widom_atoms%rp(2)
-    rzp = widom_atoms%rp(3)
+    !rxp = widom_atoms%rp(1)
+    !ryp = widom_atoms%rp(2)
+    !rzp = widom_atoms%rp(3)
 
 !    DO i = 1, nvecs(ibox)
 !
@@ -7807,32 +7914,85 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
 !                     + sin_sum_i * sin_sum_i )
 !
 !    END DO
-    DO i = 1, nvecs(ibox)
-        ihx = hx(i,ibox)
-        ihy = hy(i,ibox)
-        ihz = hz(i,ibox)
-        cos_sum_i = 0.0_DP
-        sin_sum_i = 0.0_DP
-        DO ia = 1, natoms(is)
-                hdotr = ihx*rxp(ia)
-                hdotr = hdotr + ihy*ryp(ia)
-                hdotr = hdotr + ihz*rzp(ia)
-                qia = q(ia)
-                cos_sum_i = cos_sum_i + qia*DCOS(hdotr)
-                sin_sum_i = sin_sum_i + qia*DSIN(hdotr)
-        END DO
-        this_cos_sum(i) = cos_sum_i
-        this_sin_sum(i) = sin_sum_i
+    DO ia = 1, natoms(is)
+        rpq(1:3,ia) = widom_atoms(ia)%rp
+        rpq(4,ia) = q(ia)
     END DO
-    DO i = 1, nvecs(ibox)
-        cos_sum_i = this_cos_sum(i) + cos_sum(i,ibox)
-        sin_sum_i = this_sin_sum(i) + sin_sum(i,ibox)
-        trigfactor = cos_sum_i*cos_sum_i
-        trigfactor = trigfactor + sin_sum_i*sin_sum_i
-        E_recip_redux = E_recip_redux + cn(i,ibox)*trigfactor
-    END DO
+    this_natoms = natoms(is)
+    SELECT CASE(this_natoms)
+    CASE(1)
+            E_recip_redux = Get_E_recip_redux(1)
+    CASE(2)
+            E_recip_redux = Get_E_recip_redux(2)
+    CASE(3)
+            E_recip_redux = Get_E_recip_redux(3)
+    CASE(4)
+            E_recip_redux = Get_E_recip_redux(4)
+    CASE(5)
+            E_recip_redux = Get_E_recip_redux(5)
+    CASE(6)
+            E_recip_redux = Get_E_recip_redux(6)
+    CASE(7)
+            E_recip_redux = Get_E_recip_redux(7)
+    CASE(8)
+            E_recip_redux = Get_E_recip_redux(8)
+    CASE DEFAULT
+            !DIR$ ASSUME (this_natoms .GT. 8)
+            E_recip_redux = Get_E_recip_redux(this_natoms)
+    END SELECT
+    !DO i = 1, nvecs(ibox)
+    !    ihx = hx(i,ibox)
+    !    ihy = hy(i,ibox)
+    !    ihz = hz(i,ibox)
+    !    cos_sum_i = 0.0_DP
+    !    sin_sum_i = 0.0_DP
+    !    DO ia = 1, natoms(is)
+    !            hdotr = ihx*rxp(ia)
+    !            hdotr = hdotr + ihy*ryp(ia)
+    !            hdotr = hdotr + ihz*rzp(ia)
+    !            qia = q(ia)
+    !            cos_sum_i = cos_sum_i + qia*DCOS(hdotr)
+    !            sin_sum_i = sin_sum_i + qia*DSIN(hdotr)
+    !    END DO
+    !    this_cos_sum(i) = cos_sum_i
+    !    this_sin_sum(i) = sin_sum_i
+    !END DO
+    !DO i = 1, nvecs(ibox)
+    !    cos_sum_i = this_cos_sum(i) + cos_sum(i,ibox)
+    !    sin_sum_i = this_sin_sum(i) + sin_sum(i,ibox)
+    !    trigfactor = cos_sum_i*cos_sum_i
+    !    trigfactor = trigfactor + sin_sum_i*sin_sum_i
+    !    E_recip_redux = E_recip_redux + cn(i,ibox)*trigfactor
+    !END DO
 
     E_reciprocal = E_recip_redux * charge_factor
+    CONTAINS
+            REAL(DP) FUNCTION Get_E_recip_redux(na)
+                    !DIR$ ATTRIBUTES FORCEINLINE :: Get_E_recip_redux
+                    INTEGER :: na, ia, i
+                    REAL(DP) :: ihx,ihy,ihz,cos_sum_i,sin_sum_i,hdotr,qia
+                    !DIR$ VECTOR ALIGNED
+                    !$OMP SIMD PRIVATE(ihx,ihy,ihz,cos_sum_i,sin_sum_i,hdotr) REDUCTION(+:Get_E_recip_redux)
+                    DO i = 1, nvecs(ibox)
+                        ihx = hx(i,ibox)
+                        ihy = hy(i,ibox)
+                        ihz = hz(i,ibox)
+                        cos_sum_i = cos_sum(i,ibox)
+                        sin_sum_i = sin_sum(i,ibox)
+                        DO ia = 1, na
+                                hdotr = ihx*rpq(1,ia)
+                                hdotr = hdotr + ihy*rpq(2,ia)
+                                hdotr = hdotr + ihz*rpq(3,ia)
+                                qia = rpq(4,ia)
+                                cos_sum_i = cos_sum_i + qia*DCOS(hdotr)
+                                sin_sum_i = sin_sum_i + qia*DSIN(hdotr)
+                        END DO
+                        cos_sum_i = cos_sum_i*cos_sum_i ! repurposing cos_sum_i as cos_sum_i*cos_sum_i + sin_sum_i*sin_sum_i
+                        cos_sum_i = cos_sum_i + sin_sum_i*sin_sum_i
+                        Get_E_recip_redux = Get_E_recip_redux + cn(i,ibox)*cos_sum_i
+                    END DO
+                    !$OMP END SIMD
+            END FUNCTION Get_E_recip_redux
 
   END SUBROUTINE Update_System_Ewald_Reciprocal_Energy_Widom
   !*****************************************************************************

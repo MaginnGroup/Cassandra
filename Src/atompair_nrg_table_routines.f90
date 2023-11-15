@@ -28,7 +28,7 @@ MODULE Atompair_nrg_table_routines
   !********************************************************************************
   USE Global_Variables
   USE Type_Definitions
-  USE Energy_Routines , ONLY: AtomPair_VdW_Energy_Vector
+  USE Energy_Routines , ONLY: AtomPair_VdW_Energy_Vector, Recip_Sqrt
   USE Input_Routines , ONLY: Get_Solvent_Info
   USE Pair_Emax_Estimation, ONLY: Read_Pair_rminsq
   !$ USE OMP_LIB
@@ -159,7 +159,7 @@ CONTAINS
                 REAL(DP), DIMENSION(atompair_nrg_res, nbr_boxes) :: f2
                 REAL(DP) :: solvent_charges(solvent_maxind), solute_charges(solute_maxind)
                 INTEGER :: solvent_typeindvec(solvent_maxind), solute_typeindvec(solute_maxind)
-                REAL(DP), DIMENSION(atompair_nrg_res) :: rsq_mp_vector, rsq_lb_vector, rij, alpha_rij
+                REAL(DP), DIMENSION(atompair_nrg_res) :: rsq_mp_vector, rsq_lb_vector, rij, inv_rij, alpha_rij
                 IF (.NOT. precalc_atompair_nrg) RETURN
                 nsolutes = 0
                 nsolvents = 0
@@ -201,20 +201,23 @@ CONTAINS
                                 = typepair_solute_indices(nonbond_list(1:natoms(is),is)%atom_type_number)
                 END DO
 
-                rij = SQRT(rsq_mp_vector)
+                inv_rij = Recip_Sqrt(rsq_mp_vector)
+                rij = inv_rij*rsq_mp_vector
 
                 DO ibox = 1, nbr_boxes
-                        IF (int_charge_sum_style(ibox) == charge_ewald) THEN
+                        IF (cbmc_charge_sf_flag) THEN
+                                f2(:,ibox) = inv_rij - 2.0_DP/rcut_cbmc(ibox) + rij/rcut_cbmcsq(ibox)
+                        ELSEIF (int_charge_sum_style(ibox) == charge_ewald) THEN
                                 alpha_rij = alpha_ewald(ibox) * rij
-                                f2(:,ibox) = ERFC(alpha_rij)/rij
+                                f2(:,ibox) = ERFC(alpha_rij)*inv_rij
                         ELSEIF (int_charge_sum_style(ibox) == charge_dsf) THEN
                                 alpha_rij = alpha_dsf(ibox)*rij
                                 f2(:,ibox) = &
                                         dsf_factor2(ibox)*(rij-rcut_coul(ibox)) - &
                                         dsf_factor1(ibox) + &
-                                        ERFC(alpha_rij)/rij
+                                        ERFC(alpha_rij)*inv_rij
                         ELSEIF (int_charge_sum_style(ibox) == charge_cut) THEN
-                                f2(:,ibox) = 1.0_DP/rij
+                                f2(:,ibox) = inv_rij
                         ELSE
                                 f2(:,ibox) = 0.0_DP
                         END IF

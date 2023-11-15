@@ -44,7 +44,7 @@ CONTAINS
           INTEGER, DIMENSION(3) :: adj_cellmaxbound_old
           INTEGER :: i_sector, dx, dy, dz, xshift, yshift, zshift, nsec_old, nsec, secind
           INTEGER :: sector_ID
-          INTEGER :: i, ibox, is, imol, im, ia
+          INTEGER :: i, ibox, is, is_present, imol, im, ia
           INTEGER, DIMENSION(3) :: sector_atom_ID
           TYPE(Atom_Class), POINTER :: atom_ptr
           REAL(DP) :: xp, yp, zp
@@ -91,7 +91,7 @@ CONTAINS
           INTEGER(1), DIMENSION(:,:,:), ALLOCATABLE :: bitcell_int8_array, bitcell_int8_array_2
 
           INTEGER :: max_adj_cell_atoms_old, cbmc_max_interact_old, max_neighbors
-          INTEGER :: bt(3)
+          INTEGER :: bt(3), sbe(3)
 
           REAL(SP) :: rcutsq, cell_rsxp, cell_rsyp, cell_rszp
           REAL(SP), DIMENSION(maxboxnatoms) :: rsq_vec
@@ -125,10 +125,16 @@ CONTAINS
           !$OMP PRIVATE(h11,h21,h31,h12,h22,h32,h13,h23,h33) &
           !$OMP PRIVATE(dzi,dyi,dxi,zi2,yi2,xi2,cell_rsxp,cell_rsyp,cell_rszp) &
           !$OMP PRIVATE(dsp,drxp,dryp,drzp,rsq_vec,cbmc_cell_rsp_priv,ti_priv,atomtype_priv) &
-          !$OMP PRIVATE(rxp,ryp,rzp,isp,n_interact,adj_iend,which_interact,bcd)
+          !$OMP PRIVATE(rxp,ryp,rzp,isp,n_interact,adj_iend,which_interact,bcd,sbe)
+          IF (bitcell_flag) THEN
+                  !$OMP WORKSHARE
+                  bitcell_int64 = 0_INT64
+                  !$OMP END WORKSHARE
+          END IF
           DO ibox = 1, nbr_boxes
                 istart = 1
-                DO is = 1, nspecies
+                DO is_present = 1, nspecies_present
+                        is = which_species_present(is_present)
                         inlive = nlive(is,ibox)
                         IF (inlive < 1) CYCLE
                         inatoms = natoms(is)
@@ -136,12 +142,12 @@ CONTAINS
                         vlen = inlive*inatoms
                         iend = istart + vlen - 1
                         !$OMP WORKSHARE
-                        sp_live_atom_rsp(istart:iend,1:3,ibox) = RESHAPE(REAL(live_atom_rsp(1:inatoms,1:inlive,1:3,is,ibox),SP), &
+                        sp_live_atom_rsp(istart:iend,1:3,ibox) = RESHAPE(REAL(live_atom_rsp(1:inatoms,1:inlive,1:3,is_present,ibox),SP), &
                                 (/ vlen, 3 /))
                         !$OMP END WORKSHARE
                         IF (l_not_all_exist) THEN
                                 !$OMP WORKSHARE
-                                i_exist(istart:iend) = RESHAPE(live_atom_exist(1:inatoms,1:inlive,is,ibox), (/ vlen /))
+                                i_exist(istart:iend) = RESHAPE(live_atom_exist(1:inatoms,1:inlive,is_present,ibox), (/ vlen /))
                                 !$OMP END WORKSHARE
                         END IF
                         IF (need_atom_ti) THEN
@@ -212,7 +218,12 @@ CONTAINS
                           box_list(ibox)%sectorbound(i) = box_list(ibox)%length_cells(i)/2
                           box_list(ibox)%sp_diag_length(i) = REAL(box_list(ibox)%length(i,i),SP)
                 END DO
-                IF (bitcell_flag) box_list(ibox)%real_length_bitcells = REAL(box_list(ibox)%length_bitcells,SP)
+                IF (bitcell_flag) THEN
+                        box_list(ibox)%real_length_bitcells = REAL(box_list(ibox)%length_bitcells,SP)
+                        box_list(ibox)%setbit_extent = &
+                                MIN(INT(CEILING(box_list(ibox)%rcut_low_max*box_list(ibox)%length_bitcells/box_list(ibox)%face_distance)),28)
+                        ! MIN(...,28) above is unlikely to be necessary but is included just to be safe.
+                END IF
                 box_list(ibox)%real_length_cells = REAL(box_list(ibox)%length_cells,SP)
                 box_list(ibox)%cell_face_distance = box_list(ibox)%face_distance / box_list(ibox)%length_cells
                 IF (cbmc_cell_list_flag) THEN
@@ -253,16 +264,13 @@ CONTAINS
                         !$OMP END DO
                 END IF
                 IF (bitcell_flag) THEN
-                        !$OMP WORKSHARE
-                        bitcell_int64(29:31,:,:,ibox,0) = 0_INT64
-                        bitcell_int64(:,29:31,:,ibox,0) = 0_INT64
-                        !$OMP END WORKSHARE
+                        sbe = box_list(ibox)%setbit_extent
                         !$OMP DO COLLAPSE(2) SCHEDULE(STATIC)
-                        DO zi = -28, 28
-                        DO yi = -28, 28
+                        DO zi = -sbe(3), sbe(3)
+                        DO yi = -sbe(2), sbe(2)
                         priv_bitcell_int64 = 0_INT64
                         l_inrange_vec = .FALSE.
-                        DO xi = -28, 29
+                        DO xi = -sbe(1), sbe(1)+1
                                 xyzi = (/ xi, yi, zi /)
                                 dxyzi_dp = REAL(SIGN(ABS(xyzi)+1,xyzi),DP)
                                 IF (l_ortho) THEN
@@ -588,9 +596,10 @@ CONTAINS
                                 ELSE
                                         ti = 1
                                 END IF
+                                sbe = box_list(ibox)%setbit_extent
                                 !$OMP DO COLLAPSE(2) SCHEDULE(STATIC)
-                                DO zi = 0, 56
-                                        DO yi = 0, 56
+                                DO zi = 28-sbe(3), 28+sbe(3)
+                                        DO yi = 28-sbe(2), 28+sbe(2) ! 0, 56 previously
                                                 bitcell_int8_array(bcpx:bcpx+7,bcpy+yi,bcpz+zi) = &
                                                         TRANSFER(IOR(TRANSFER(&
                                                         bitcell_int8_array(bcpx:bcpx+7,bcpy+yi,bcpz+zi),0_INT64), &
@@ -905,6 +914,9 @@ CONTAINS
                           nbr_boxes))
                   !$OMP END SINGLE
           END IF
+          !$OMP WORKSHARE
+          cell_l_inrange = .FALSE.
+          !$OMP END WORKSHARE
 
 
 
@@ -1061,62 +1073,13 @@ CONTAINS
                   END DO
                   !$OMP END DO
           END DO
-          !$OMP SINGLE
-          ! ensure 32-byte padding of first dimension
-          IF (MOD(max_adj_cell_atoms,8) .NE. 0) max_adj_cell_atoms = (max_adj_cell_atoms/8+1)*8
-          IF (ALLOCATED(adj_cell_rsp)) THEN
-                  IF (SIZE(adj_cell_rsp,1) < max_adj_cell_atoms .OR. ANY(adj_cellmaxbound>adj_cellmaxbound_old)) THEN
-                          DEALLOCATE(adj_cell_rsp, Stat=AllocateStatus)
-                          IF (Allocatestatus /= 0) THEN
-                            err_msg = ''
-                            err_msg(1) = 'Memory could not be deallocated from adj_cell_rsp'
-                            CALL Clean_Abort(err_msg, 'Sector_Setup')
-                          END IF
-                          DEALLOCATE(adj_cell_ti, Stat=AllocateStatus)
-                          IF (Allocatestatus /= 0) THEN
-                            err_msg = ''
-                            err_msg(1) = 'Memory could not be deallocated from adj_cell_ti'
-                            CALL Clean_Abort(err_msg, 'Sector_Setup')
-                          END IF
-                  END IF
-          END IF
-          IF (.NOT. ALLOCATED(adj_cell_rsp)) THEN
-                  ALLOCATE(adj_cell_rsp(max_adj_cell_atoms,4, &
-                          -adj_cellmaxbound(1):adj_cellmaxbound(1), &
-                          -adj_cellmaxbound(2):adj_cellmaxbound(2), &
-                          -adj_cellmaxbound(3):adj_cellmaxbound(3), &
-                          nbr_boxes), Stat=AllocateStatus)
-                  IF (Allocatestatus /= 0) THEN
-                    err_msg = ''
-                    err_msg(1) = 'Memory could not be allocated for adj_cell_rsp'
-                    CALL Clean_Abort(err_msg, 'Sector_Setup')
-                  END IF
-                  WRITE(*,*) "Allocated adj_cell_rsp with:"
-                  WRITE(*,*) "SHAPE", SHAPE(adj_cell_rsp)
-                  WRITE(*,*) "Occupying ", SIZEOF(adj_cell_rsp), " bytes"
-                  WRITE(*,*) "on step ", i_mcstep
-                  ALLOCATE(adj_cell_ti(max_adj_cell_atoms, &
-                          -adj_cellmaxbound(1):adj_cellmaxbound(1), &
-                          -adj_cellmaxbound(2):adj_cellmaxbound(2), &
-                          -adj_cellmaxbound(3):adj_cellmaxbound(3), &
-                          nbr_boxes), Stat=AllocateStatus)
-                  IF (Allocatestatus /= 0) THEN
-                    err_msg = ''
-                    err_msg(1) = 'Memory could not be allocated for adj_cell_ti'
-                    CALL Clean_Abort(err_msg, 'Sector_Setup')
-                  END IF
-                  WRITE(*,*) "Allocated adj_cell_ti with:"
-                  WRITE(*,*) "SHAPE", SHAPE(adj_cell_ti)
-                  WRITE(*,*) "Occupying ", SIZEOF(adj_cell_ti), " bytes"
-                  WRITE(*,*) "on step ", i_mcstep
-          END IF
-          !$OMP END SINGLE
-          !$OMP WORKSHARE
-          adj_cell_rsp = infinity_sp ! guaranteed to be out of range unless overwritten
-          adj_cell_ti = 1
-          !$OMP END WORKSHARE
           IF (cbmc_cell_list_flag) THEN
-                  !$OMP SINGLE
+                  !$OMP WORKSHARE
+                  cell_l_inrange(:,2,:,:,:,:) = cell_l_inrange(:,2,:,:,:,:) .AND. .NOT. cell_l_inrange(:,1,:,:,:,:)
+                  !$OMP END WORKSHARE
+          END IF
+          !$OMP SINGLE
+          IF (cbmc_cell_list_flag) THEN
                   cbmc_max_interact = MAX(cbmc_max_interact,cbmc_max_interact_old)
                   ! ensure 32-byte padding of first dimension
                   IF (MOD(cbmc_max_interact,8) .NE. 0) cbmc_max_interact = (cbmc_max_interact/8+1)*8
@@ -1173,7 +1136,7 @@ CONTAINS
                           WRITE(*,*) "Occupying ", SIZEOF(cbmc_cell_rsp), " bytes"
                           WRITE(*,*) "on step ", i_mcstep
                   END IF
-                  IF (precalc_atompair_nrg) THEN
+                  IF (need_atom_ti) THEN
                           IF (.NOT. ALLOCATED(cbmc_cell_ti)) THEN
                                   ALLOCATE(cbmc_cell_ti(cbmc_max_interact, &
                                           -adj_cellmaxbound(1):adj_cellmaxbound(1), &
@@ -1190,7 +1153,8 @@ CONTAINS
                                   WRITE(*,*) "Occupying ", SIZEOF(cbmc_cell_ti), " bytes"
                                   WRITE(*,*) "on step ", i_mcstep
                           END IF
-                  ELSE
+                  END IF
+                  IF (need_atomtypes) THEN
                           IF (.NOT. ALLOCATED(cbmc_cell_atomtypes)) THEN
                                   ALLOCATE(cbmc_cell_atomtypes(cbmc_max_interact, &
                                           -adj_cellmaxbound(1):adj_cellmaxbound(1), &
@@ -1208,22 +1172,100 @@ CONTAINS
                                   WRITE(*,*) "on step ", i_mcstep
                           END IF
                   END IF
-                  !$OMP END SINGLE
-                  !$OMP WORKSHARE
-                  cbmc_cell_rsp(:,1:3,:,:,:,:) = infinity_sp ! guaranteed to be out of range unless overwritten
-                  cbmc_cell_rsp(:,4,:,:,:,:) = 0.0
-                  !$OMP END WORKSHARE NOWAIT
-                  IF (precalc_atompair_nrg) THEN
-                          !$OMP WORKSHARE
-                          cbmc_cell_ti = 1
-                          !$OMP END WORKSHARE NOWAIT
-                  ELSE
-                          !$OMP WORKSHARE
-                          cbmc_cell_atomtypes = 0
-                          !$OMP END WORKSHARE NOWAIT
+          ELSE
+                  ! ensure 32-byte padding of first dimension
+                  IF (MOD(max_adj_cell_atoms,8) .NE. 0) max_adj_cell_atoms = (max_adj_cell_atoms/8+1)*8
+                  IF (ALLOCATED(cbmc_cell_rsp)) THEN
+                          IF (SIZE(cbmc_cell_rsp,1) < max_adj_cell_atoms .OR. ANY(adj_cellmaxbound>adj_cellmaxbound_old)) THEN
+                                  DEALLOCATE(cbmc_cell_rsp, Stat=AllocateStatus)
+                                  IF (Allocatestatus /= 0) THEN
+                                    err_msg = ''
+                                    err_msg(1) = 'Memory could not be deallocated from cbmc_cell_rsp'
+                                    CALL Clean_Abort(err_msg, 'Sector_Setup')
+                                  END IF
+                                  IF (need_atom_ti) THEN
+                                          DEALLOCATE(cbmc_cell_ti, Stat=AllocateStatus)
+                                          IF (Allocatestatus /= 0) THEN
+                                            err_msg = ''
+                                            err_msg(1) = 'Memory could not be deallocated from cbmc_cell_ti'
+                                            CALL Clean_Abort(err_msg, 'Sector_Setup')
+                                          END IF
+                                  END IF
+                                  IF (need_atomtypes) THEN
+                                          DEALLOCATE(cbmc_cell_atomtypes, Stat=AllocateStatus)
+                                          IF (Allocatestatus /= 0) THEN
+                                            err_msg = ''
+                                            err_msg(1) = 'Memory could not be deallocated from cbmc_cell_atomtypes'
+                                            CALL Clean_Abort(err_msg, 'Sector_Setup')
+                                          END IF
+                                  END IF
+                          END IF
                   END IF
-                  !$OMP BARRIER
+                  IF (.NOT. ALLOCATED(cbmc_cell_rsp)) THEN
+                          ALLOCATE(cbmc_cell_rsp(max_adj_cell_atoms,4, &
+                                  -adj_cellmaxbound(1):adj_cellmaxbound(1), &
+                                  -adj_cellmaxbound(2):adj_cellmaxbound(2), &
+                                  -adj_cellmaxbound(3):adj_cellmaxbound(3), &
+                                  nbr_boxes), Stat=AllocateStatus)
+                          IF (Allocatestatus /= 0) THEN
+                            err_msg = ''
+                            err_msg(1) = 'Memory could not be allocated for cbmc_cell_rsp'
+                            CALL Clean_Abort(err_msg, 'Sector_Setup')
+                          END IF
+                          WRITE(*,*) "Allocated cbmc_cell_rsp with:"
+                          WRITE(*,*) "SHAPE", SHAPE(cbmc_cell_rsp)
+                          WRITE(*,*) "Occupying ", SIZEOF(cbmc_cell_rsp), " bytes"
+                          WRITE(*,*) "on step ", i_mcstep
+                          IF (need_atom_ti) THEN
+                                  ALLOCATE(cbmc_cell_ti(max_adj_cell_atoms, &
+                                          -adj_cellmaxbound(1):adj_cellmaxbound(1), &
+                                          -adj_cellmaxbound(2):adj_cellmaxbound(2), &
+                                          -adj_cellmaxbound(3):adj_cellmaxbound(3), &
+                                          nbr_boxes), Stat=AllocateStatus)
+                                  IF (Allocatestatus /= 0) THEN
+                                    err_msg = ''
+                                    err_msg(1) = 'Memory could not be allocated for cbmc_cell_ti'
+                                    CALL Clean_Abort(err_msg, 'Sector_Setup')
+                                  END IF
+                                  WRITE(*,*) "Allocated cbmc_cell_ti with:"
+                                  WRITE(*,*) "SHAPE", SHAPE(cbmc_cell_ti)
+                                  WRITE(*,*) "Occupying ", SIZEOF(cbmc_cell_ti), " bytes"
+                                  WRITE(*,*) "on step ", i_mcstep
+                          END IF
+                          IF (need_atomtypes) THEN
+                                  ALLOCATE(cbmc_cell_atomtypes(max_adj_cell_atoms, &
+                                          -adj_cellmaxbound(1):adj_cellmaxbound(1), &
+                                          -adj_cellmaxbound(2):adj_cellmaxbound(2), &
+                                          -adj_cellmaxbound(3):adj_cellmaxbound(3), &
+                                          nbr_boxes), Stat=AllocateStatus)
+                                  IF (Allocatestatus /= 0) THEN
+                                    err_msg = ''
+                                    err_msg(1) = 'Memory could not be allocated for cbmc_cell_atomtypes'
+                                    CALL Clean_Abort(err_msg, 'Sector_Setup')
+                                  END IF
+                                  WRITE(*,*) "Allocated cbmc_cell_atomtypes with:"
+                                  WRITE(*,*) "SHAPE", SHAPE(cbmc_cell_atomtypes)
+                                  WRITE(*,*) "Occupying ", SIZEOF(cbmc_cell_atomtypes), " bytes"
+                                  WRITE(*,*) "on step ", i_mcstep
+                          END IF
+                  END IF
           END IF
+          !$OMP END SINGLE
+          !$OMP WORKSHARE
+          cbmc_cell_rsp(:,1:3,:,:,:,:) = infinity_sp ! guaranteed to be out of range unless overwritten
+          cbmc_cell_rsp(:,4,:,:,:,:) = 0.0
+          !$OMP END WORKSHARE NOWAIT
+          IF (need_atom_ti) THEN
+                  !$OMP WORKSHARE
+                  cbmc_cell_ti = 1
+                  !$OMP END WORKSHARE NOWAIT
+          END IF
+          IF (need_atomtypes) THEN
+                  !$OMP WORKSHARE
+                  cbmc_cell_atomtypes = 0
+                  !$OMP END WORKSHARE NOWAIT
+          END IF
+          !$OMP BARRIER
           DO ibox = 1, nbr_boxes
                   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
                   DO zi = -box_list(ibox)%sectorbound(3), box_list(ibox)%sectorbound(3)
@@ -1260,72 +1302,66 @@ CONTAINS
                                         which_interact(n_interact) = i
                                 END IF
                         END DO
-                        adj_cell_rsp(1:n_interact,1:4,xi,yi,zi,ibox) = &
-                                cbmc_cell_rsp_priv(which_interact(1:n_interact),:)
-                        IF (read_atompair_rminsq) THEN
-                                adj_cell_ti(1:n_interact,xi,yi,zi,ibox) = &
-                                        ti_priv(which_interact(1:n_interact))
-                        ELSE IF (calc_rmin_flag) THEN
-                                adj_cell_ti(1:n_interact,xi,yi,zi,ibox) = &
-                                        atomtype_priv(which_interact(1:n_interact))
-                        END IF
-                        n_interact = IAND(n_interact+7,pad8mask) ! padding to multiple of 8 or zero
-                        n_adj_cell_atoms(xi,yi,zi,ibox) = n_interact
-                        IF (.NOT. cbmc_cell_list_flag) CYCLE
-                        DO dzi = -bt(3), bt(3)
-                                IF (ABS(dzi)<2) CYCLE
-                                zi2 = zi+dzi
-                                DO dyi = -bt(2), bt(2)
-                                        IF (ABS(dyi)<2) CYCLE
-                                        yi2 = yi + dyi
-                                        DO dxi = -bt(1), bt(1)
-                                                IF (ABS(dxi)<2) CYCLE
-                                                xi2 = xi + dxi
-                                                vlen = IAND(n_cell_atoms(xi2,yi2,zi2,ibox), &
-                                                        box_list(ibox)%cbmc_cell_mask(dxi,dyi,dzi))
-                                                IF (vlen < 1) CYCLE
-                                                iend = istart + vlen - 1
-                                                cbmc_cell_rsp_priv(istart:iend,1:4) = &
-                                                        this_cell_rsp(1:vlen,1:4,xi2,yi2,zi2,ibox)
-                                                IF (precalc_atompair_nrg) THEN
-                                                        ti_priv(istart:iend) = &
-                                                                this_cell_ti(1:vlen,xi2,yi2,zi2,ibox)
-                                                ELSE
-                                                        atomtype_priv(istart:iend) = &
-                                                                this_cell_atomtypes(1:vlen,xi2,yi2,zi2,ibox)
-                                                END IF
-                                                istart = istart + vlen
+                        !n_interact = IAND(n_interact+7,pad8mask) ! padding to multiple of 8 or zero
+                        n_adj_cell_atoms(xi,yi,zi,ibox) = IAND(n_interact+7,NOT(7))
+                        IF (cbmc_cell_list_flag) THEN
+                                DO dzi = -bt(3), bt(3)
+                                        IF (ABS(dzi)<2) CYCLE
+                                        zi2 = zi+dzi
+                                        DO dyi = -bt(2), bt(2)
+                                                IF (ABS(dyi)<2) CYCLE
+                                                yi2 = yi + dyi
+                                                DO dxi = -bt(1), bt(1)
+                                                        IF (ABS(dxi)<2) CYCLE
+                                                        xi2 = xi + dxi
+                                                        vlen = IAND(n_cell_atoms(xi2,yi2,zi2,ibox), &
+                                                                box_list(ibox)%cbmc_cell_mask(dxi,dyi,dzi))
+                                                        IF (vlen < 1) CYCLE
+                                                        iend = istart + vlen - 1
+                                                        cbmc_cell_rsp_priv(istart:iend,1:4) = &
+                                                                this_cell_rsp(1:vlen,1:4,xi2,yi2,zi2,ibox)
+                                                        IF (need_atom_ti) THEN
+                                                                ti_priv(istart:iend) = &
+                                                                        this_cell_ti(1:vlen,xi2,yi2,zi2,ibox)
+                                                        END IF
+                                                        IF (need_atomtypes) THEN
+                                                                atomtype_priv(istart:iend) = &
+                                                                        this_cell_atomtypes(1:vlen,xi2,yi2,zi2,ibox)
+                                                        END IF
+                                                        istart = istart + vlen
+                                                END DO
                                         END DO
                                 END DO
-                        END DO
-                        n_interact = 0
-                        DO i = 1, iend
-                                IF (cell_l_inrange(i,2,xi,yi,zi,ibox)) THEN
-                                        n_interact = n_interact + 1
-                                        which_interact(n_interact) = i
-                                END IF
-                        END DO
+                                !n_interact = 0
+                                DO i = 1, iend
+                                        IF (cell_l_inrange(i,2,xi,yi,zi,ibox)) THEN
+                                                n_interact = n_interact + 1
+                                                which_interact(n_interact) = i
+                                        END IF
+                                END DO
+                                !n_interact = IAND(n_interact+7,pad8mask) ! padding to multiple of 8 or zero
+                                cbmc_cell_n_interact(xi,yi,zi,ibox) = IAND(n_interact+7,NOT(7))
+                        END IF
                         cbmc_cell_rsp(1:n_interact,1:4,xi,yi,zi,ibox) = &
                                 cbmc_cell_rsp_priv(which_interact(1:n_interact),:)
-                        IF (precalc_atompair_nrg) THEN
+                        IF (need_atom_ti) THEN
                                 cbmc_cell_ti(1:n_interact,xi,yi,zi,ibox) = &
                                         ti_priv(which_interact(1:n_interact))
-                        ELSE
+                        END IF
+                        IF (need_atomtypes) THEN
                                 cbmc_cell_atomtypes(1:n_interact,xi,yi,zi,ibox) = &
                                         atomtype_priv(which_interact(1:n_interact))
                         END IF
-                        n_interact = IAND(n_interact+7,pad8mask) ! padding to multiple of 8 or zero
-                        cbmc_cell_n_interact(xi,yi,zi,ibox) = n_interact
                   END DO
                   END DO
                   END DO
                   !$OMP END DO
           END DO
-          IF (cbmc_cell_list_flag .AND. precalc_atompair_nrg) THEN
-                  !$OMP WORKSHARE
-                  cbmc_cell_ti = cbmc_cell_ti - 1
-                  !$OMP END WORKSHARE
-          END IF
+          !IF (cbmc_cell_list_flag .AND. precalc_atompair_nrg) THEN
+          !        !$OMP WORKSHARE
+          !        cbmc_cell_ti = cbmc_cell_ti - 1
+          !        !$OMP END WORKSHARE
+          !END IF
           !$OMP END PARALLEL
 
   END SUBROUTINE Sector_Setup
@@ -1405,16 +1441,16 @@ CONTAINS
           END IF
           overlap = .FALSE.
           DO i = 1, vlen
-                dxp = adj_cell_rsp(i,1,xi,yi,zi,this_box) - irp(1)
-                dyp = adj_cell_rsp(i,2,xi,yi,zi,this_box) - irp(2)
-                dzp = adj_cell_rsp(i,3,xi,yi,zi,this_box) - irp(3)
+                dxp = cbmc_cell_rsp(i,1,xi,yi,zi,this_box) - irp(1)
+                dyp = cbmc_cell_rsp(i,2,xi,yi,zi,this_box) - irp(2)
+                dzp = cbmc_cell_rsp(i,3,xi,yi,zi,this_box) - irp(3)
                 rijsq = dxp*dxp
                 rijsq = rijsq + dyp*dyp
                 rijsq = rijsq + dzp*dzp
                 IF (read_atompair_rminsq) THEN
-                        rminsq = sp_atompair_rminsq_table(adj_cell_ti(i,xi,yi,zi,this_box),ti_solute,this_box)
+                        rminsq = sp_atompair_rminsq_table(cbmc_cell_ti(i,xi,yi,zi,this_box),ti_solute,this_box)
                 ELSE IF (calc_rmin_flag) THEN
-                        rminsq = sp_rminsq_table(adj_cell_ti(i,xi,yi,zi,this_box),ti_solute)
+                        rminsq = sp_rminsq_table(cbmc_cell_atomtypes(i,xi,yi,zi,this_box),ti_solute)
                 END IF
                 this_overlap = rijsq < rminsq
                 overlap = overlap .OR. this_overlap
