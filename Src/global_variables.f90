@@ -816,5 +816,12 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   INTEGER :: nspecies_present
   INTEGER, DIMENSION(:), ALLOCATABLE :: which_species_present
 
+  INTEGER, DIMENSION(3) :: dummy3vec
+
+
+  INTEGER, DIMENSION(:), ALLOCATABLE :: which_solvent_atomtypes, which_solvent_atomtypes_inv
+  INTEGER, DIMENSION(:), ALLOCATABLE :: which_wsolute_atomtypes, which_wsolute_atomtypes_inv
+  INTEGER :: n_solvent_atomtypes, n_wsolute_atomtypes
+
 END MODULE Global_Variables
 

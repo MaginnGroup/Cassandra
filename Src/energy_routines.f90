@@ -1435,7 +1435,8 @@ CONTAINS
           END DO
           na = MAXVAL(navec)
           maxnmols = (MAXVAL(nmols(:,1:))/8+1)*8
-          maxboxnatoms = (maxboxnatoms/8+1)*8
+          !maxboxnatoms = (maxboxnatoms/8+1)*8
+          maxboxnatoms = IAND(maxboxnatoms+7,NOT(7))
           IF (ALLOCATED(zero_field)) THEN
                   IF (SIZE(zero_field) .LE. na) RETURN
                   DEALLOCATE(zero_field)
@@ -1699,6 +1700,7 @@ CONTAINS
 
   SUBROUTINE Compute_Molecule_Nonbond_Inter_Energy_Vectorized_Widom(im,is, &
     this_box,vdw_energy,qq_energy,overlap)
+
     ! Arguments
     INTEGER, INTENT(IN) :: im, is, this_box
     REAL(DP), INTENT(OUT) :: vdw_energy, qq_energy
@@ -7971,6 +7973,7 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
                     !DIR$ ATTRIBUTES FORCEINLINE :: Get_E_recip_redux
                     INTEGER :: na, ia, i
                     REAL(DP) :: ihx,ihy,ihz,cos_sum_i,sin_sum_i,hdotr,qia
+                    Get_E_recip_redux = 0.0_DP
                     !DIR$ VECTOR ALIGNED
                     !$OMP SIMD PRIVATE(ihx,ihy,ihz,cos_sum_i,sin_sum_i,hdotr) REDUCTION(+:Get_E_recip_redux)
                     DO i = 1, nvecs(ibox)

@@ -343,7 +343,7 @@ CONTAINS
                 solvent_min_rminsq = MINVAL(atompair_rminsq_table,2) ! 2-D result
                 box_list%rcut_low_max = SQRT(MAXVAL(solvent_min_rminsq,1))
                 box_list%ideal_bitcell_length = &
-                        MAX(min_ideal_bitcell_length,box_list%rcut_low_max / 28.0_DP) ! vector with one element per box
+                        MAX(min_ideal_bitcell_length,box_list%rcut_low_max/SQRT(902.0_DP)) ! vector with one element per box
                 sp_atompair_rminsq_table = REAL(atompair_rminsq_table,SP)
                 solvent_max_rminsq_sp = REAL(solvent_max_rminsq,SP)
                 solvents_or_types_maxind = solvent_maxind
@@ -351,6 +351,8 @@ CONTAINS
                 WRITE(logunit, '(8x,A,F5.3,A,F6.3,A)') "[", min_rmin, ",", max_rmin, "] Angstroms"
                 IF (bitcell_flag) THEN
                         DO ibox = 1, nbr_boxes
+                                WRITE(logunit, '(A,F5.3,A)') "For box " // TRIM(Int_To_String(ibox)) // ", computed ideal bitcell length = ", &
+                                        box_list(ibox)%rcut_low_max/SQRT(902.0_DP), " Angstroms"
                                 WRITE(logunit, '(A,F5.3,A)') "Setting box " // TRIM(Int_To_String(ibox)) // " ideal bitcell length = ", &
                                         box_list(ibox)%ideal_bitcell_length, " Angstroms"
                         END DO

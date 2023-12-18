@@ -28,6 +28,7 @@ MODULE Atompair_nrg_table_routines
   !********************************************************************************
   USE Global_Variables
   USE Type_Definitions
+  USE Io_Utilities
   USE Energy_Routines , ONLY: AtomPair_VdW_Energy_Vector, Recip_Sqrt
   USE Input_Routines , ONLY: Get_Solvent_Info
   USE Pair_Emax_Estimation, ONLY: Read_Pair_rminsq
@@ -273,9 +274,85 @@ CONTAINS
         END SUBROUTINE Create_Atompair_Nrg_table
 
         SUBROUTINE Setup_Atompair_tables
+                LOGICAL, DIMENSION(0:nbr_atomtypes) :: solvent_lvec, wsolute_lvec
+                INTEGER :: ia, is, solvent_tcount, wsolute_tcount, itype, ibox
                 solvent_maxind = 1
                 rsqmin_res_d = 1
                 solvent_maxind_d = 1
+
+
+                IF (calc_rmin_flag) THEN
+                        IF (need_solvents) CALL Get_Solvent_Info
+                        solvent_lvec = .FALSE.
+                        wsolute_lvec = .FALSE.
+                        DO is = 1, nspecies
+                              IF (species_list(is)%l_solvent) THEN
+                                      DO ia = 1, natoms(is)
+                                              solvent_lvec(nonbond_list(ia,is)%atom_type_number) = .TRUE.
+                                      END DO
+                              END IF
+                              IF (species_list(is)%l_wsolute) THEN
+                                      DO ia = 1, natoms(is)
+                                              wsolute_lvec(nonbond_list(ia,is)%atom_type_number) = .TRUE.
+                                      END DO
+                              END IF
+                        END DO
+                        n_solvent_atomtypes = COUNT(solvent_lvec)
+                        n_wsolute_atomtypes = COUNT(wsolute_lvec)
+                        ALLOCATE(which_solvent_atomtypes(n_solvent_atomtypes))
+                        ALLOCATE(which_solvent_atomtypes_inv(0:nbr_atomtypes))
+                        ALLOCATE(which_wsolute_atomtypes(n_wsolute_atomtypes))
+                        ALLOCATE(which_wsolute_atomtypes_inv(0:nbr_atomtypes)) ! inverse function of above
+                        which_solvent_atomtypes_inv = -2000000000 ! meant to cause invalid index if used where it isn't properly set
+                        which_wsolute_atomtypes_inv = -2000000000 ! meant to cause invalid index if used where it isn't properly set
+                        solvent_tcount = 0
+                        wsolute_tcount = 0
+                        DO itype = 0, nbr_atomtypes
+                              IF (solvent_lvec(itype)) THEN
+                                      solvent_tcount = solvent_tcount + 1
+                                      which_solvent_atomtypes(solvent_tcount) = itype
+                                      which_solvent_atomtypes_inv(itype) = solvent_tcount
+                              END IF
+                              IF (wsolute_lvec(itype)) THEN
+                                      wsolute_tcount = wsolute_tcount + 1
+                                      which_wsolute_atomtypes(wsolute_tcount) = itype
+                                      which_wsolute_atomtypes_inv(itype) = wsolute_tcount
+                              END IF
+                        END DO
+                        max_rmin = DSQRT(MAXVAL(rminsq_table))
+                        sp_rminsq_table = REAL(rminsq_table,SP)
+                        ALLOCATE(atomtype_max_rminsq(0:nbr_atomtypes))
+                        ALLOCATE(atomtype_min_rminsq(n_solvent_atomtypes))
+                        ALLOCATE(atomtype_max_rminsq_sp(0:nbr_atomtypes))
+                        atomtype_max_rminsq = MAXVAL(rminsq_table(:, &
+                                which_wsolute_atomtypes),2)
+                        atomtype_min_rminsq = MINVAL(rminsq_table(which_solvent_atomtypes, &
+                                which_wsolute_atomtypes),2)
+                        atomtype_max_rminsq_sp = REAL(atomtype_max_rminsq,SP)
+                        box_list%rcut_low_max = SQRT(MAXVAL(atomtype_min_rminsq))
+                        box_list%ideal_bitcell_length = box_list%rcut_low_max / SQRT(902.0_DP) ! RHS scalar LHS vector with one element per box
+                        solvents_or_types_maxind = n_solvent_atomtypes
+                ELSE
+                        box_list%rcut_low_max = rcut_low
+                        box_list%ideal_bitcell_length = rcut_low / SQRT(902.0_DP)
+                        solvents_or_types_maxind = 1
+                END IF
+                IF (bitcell_flag .AND. .NOT. read_atompair_rminsq) THEN
+                      DO ibox = 1, nbr_boxes
+                              WRITE(logunit, '(A,F5.3,A)') "For box " // TRIM(Int_To_String(ibox)) // ", computed ideal bitcell length = ", &
+                                      box_list(ibox)%ideal_bitcell_length, " Angstroms"
+                      END DO
+                END IF
+                box_list%ideal_bitcell_length = MAX(min_ideal_bitcell_length,box_list%ideal_bitcell_length)
+                IF (bitcell_flag .AND. .NOT. read_atompair_rminsq) THEN
+                      DO ibox = 1, nbr_boxes
+                              WRITE(logunit, '(A,F5.3,A)') "Setting box " // TRIM(Int_To_String(ibox)) // " ideal bitcell length = ", &
+                                      box_list(ibox)%ideal_bitcell_length, " Angstroms"
+                      END DO
+                END IF
+
+
+
                 IF (.NOT. (precalc_atompair_nrg .OR. read_atompair_rminsq .OR. est_atompair_rminsq)) RETURN
                 CALL Allocate_Atompair_Tables
                 IF (precalc_atompair_nrg) CALL Create_Atompair_Nrg_table

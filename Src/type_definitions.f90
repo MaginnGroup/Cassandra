@@ -494,8 +494,9 @@ MODULE Type_Definitions
 
     REAL(SP), DIMENSION(3) :: sp_diag_length, cell_length_recip, real_length_cells
     REAL(SP), DIMENSION(3) :: cell_H_diag
-    REAL(DP), DIMENSION(3) :: cell_face_distance
-    REAL(DP), DIMENSION(3,3) :: cell_length_inv
+    REAL(DP), DIMENSION(3) :: cell_face_distance, cell_xyzortho_bbox_length
+    REAL(DP), DIMENSION(3,3) :: cell_length_inv, cell_H_dp
+    REAL(SP), DIMENSION(3,3) :: cell_H_sp
     INTEGER, DIMENSION(3) :: length_cells, sectorbound
 
   ! Inner shape is used to define a limited region into which molecules can be
@@ -511,6 +512,7 @@ MODULE Type_Definitions
     INTEGER(4), DIMENSION(:), ALLOCATABLE :: bitcell_int32_vec
     INTEGER, DIMENSION(2:3) :: bitcell_dimfactor
     REAL(DP) :: ideal_bitcell_length, rcut_low_max
+    REAL(DP), DIMENSION(3) :: bitcell_face_distance, bitcell_face_distance_recip
 
  END TYPE Box_Class
 

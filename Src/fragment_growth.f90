@@ -218,6 +218,11 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   REAL(DP) :: noncell_cbmc_nrg_time_e
 
   INTEGER :: kappa_ins, kappa_ins_pad8, kappa_ins_pad64, kappa_dih, kappa_dih_pad8, kappa_dih_pad32
+
+  REAL(DP) :: sz_rand_dp, zpart_width, zpart_shift
+  LOGICAL, PARAMETER :: l_zscan = .FALSE.
+  !INTEGER :: n_zparts
+  !INTEGER, PARAMETER :: zpartition_kappa = 32 ! must be a multiple of 8 (or less than 8 to turn off z-partitioning)
   IF (widom_timing) THEN
           omp_flag = .FALSE.
           !$ omp_flag = .TRUE.
@@ -473,16 +478,22 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
              !$ rng_time_s = omp_get_wtime()
      END IF
      !CALL vector_rranf(TRANSFER(xyz_rand_dp,xyz_rand_dp)) ! Don't do this; it causes a wasteful memcopy to be generated
-     DO i_dim = 1, 3
-        CALL vector_rranf(xyz_rand_dp(:,i_dim))
-        IF (l_widom_cells) THEN
-                !DIR$ VECTOR ALIGNED
-                xyz_rand(:,i_dim) = REAL(xyz_rand_dp(:,i_dim),SP)
-        END IF
-        !DO itrial = 1, kappa_ins
-        !        xyz_rand_dp(itrial,i_dim) = rranf()
-        !END DO
-     END DO
+     IF (l_widom_cells .AND. l_zscan .AND. kappa_ins >= 8) THEN
+             CALL array_boxscan_rranf(xyz_rand_dp,kappa_ins)
+             !DIR$ VECTOR ALIGNED
+             xyz_rand = REAL(xyz_rand_dp,SP)
+     ELSE
+             DO i_dim = 1, 3
+                CALL vector_rranf(xyz_rand_dp(:,i_dim))
+                IF (l_widom_cells) THEN
+                        !DIR$ VECTOR ALIGNED
+                        xyz_rand(:,i_dim) = REAL(xyz_rand_dp(:,i_dim),SP)
+                END IF
+                !DO itrial = 1, kappa_ins
+                !        xyz_rand_dp(itrial,i_dim) = rranf()
+                !END DO
+             END DO
+     END IF
      !IF (l_widom_cells) xyz_rand = REAL(xyz_rand_dp,SP)
      IF (widom_timing) THEN
              IF (.NOT. cbmc_flag) CALL CPU_TIME(rng_time_e)
@@ -2904,9 +2915,13 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
                      !DIR$ VECTOR ALIGNED
                      DO ii = 1, kappa_dih_pad8
                         rxp = REAL(trial_atom_rp(ii,1,j),SP)
-                        sxp = inv_H_sp(1,1)*rxp
-                        syp = inv_H_sp(2,1)*rxp
-                        szp = inv_H_sp(3,1)*rxp
+                        ! Adding extra 0.5 because the fractional coordinates we want here assume the box is centered at 0.5
+                        ! and the real coordinates are for a box centered at 0.0
+                        ! Fractional coordinates elsewhere in Cassandra typically use the same centering as the real coordinates
+                        ! (centered at 0.0), but it isn't convenient for bitcell overlap detection, so it's done differently here.
+                        sxp = 0.5 + inv_H_sp(1,1)*rxp
+                        syp = 0.5 + inv_H_sp(2,1)*rxp
+                        szp = 0.5 + inv_H_sp(3,1)*rxp
                         ryp = REAL(trial_atom_rp(ii,2,j),SP)
                         sxp = sxp + inv_H_sp(1,2)*ryp
                         syp = syp + inv_H_sp(2,2)*ryp
@@ -2915,6 +2930,12 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
                         sxp = sxp + inv_H_sp(1,3)*rzp
                         syp = syp + inv_H_sp(2,3)*rzp
                         szp = szp + inv_H_sp(3,3)*rzp
+                        IF (sxp < 0.0) sxp = sxp + 1.0
+                        IF (sxp >= 1.0) sxp = sxp - 1.0
+                        IF (syp < 0.0) syp = syp + 1.0
+                        IF (syp >= 1.0) syp = syp - 1.0
+                        IF (szp < 0.0) szp = szp + 1.0
+                        IF (szp >= 1.0) szp = szp - 1.0
                         trial_atom_rsp(ii,1,j) = sxp
                         trial_atom_rsp(ii,2,j) = syp
                         trial_atom_rsp(ii,3,j) = szp
@@ -2984,6 +3005,7 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
                                 trial_cell_coords(itrial,1,j) = &
                                         INT(sxp*box_list(this_box)%real_length_cells(1)) - &
                                         box_list(this_box)%sectorbound(1)
+                                sxp = sxp - 0.5
                                 rxp = H_sp(1,1)*sxp
                                 ryp = H_sp(2,1)*sxp
                                 rzp = H_sp(3,1)*sxp
@@ -2991,6 +3013,7 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
                                 trial_cell_coords(itrial,2,j) = &
                                         INT(syp*box_list(this_box)%real_length_cells(2)) - &
                                         box_list(this_box)%sectorbound(2)
+                                syp = syp - 0.5
                                 rxp = rxp + H_sp(1,2)*syp
                                 ryp = ryp + H_sp(2,2)*syp
                                 rzp = rzp + H_sp(3,2)*syp
@@ -2998,12 +3021,13 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
                                 trial_cell_coords(itrial,3,j) = &
                                         INT(szp*box_list(this_box)%real_length_cells(3)) - &
                                         box_list(this_box)%sectorbound(3)
+                                szp = szp - 0.5
                                 rxp = rxp + H_sp(1,3)*szp
                                 ryp = ryp + H_sp(2,3)*szp
                                 rzp = rzp + H_sp(3,3)*szp
-                                trial_atom_rsp(ii,1,j) = rxp
-                                trial_atom_rsp(ii,2,j) = ryp
-                                trial_atom_rsp(ii,3,j) = rzp
+                                trial_atom_rsp(itrial,1,j) = rxp
+                                trial_atom_rsp(itrial,2,j) = ryp
+                                trial_atom_rsp(itrial,3,j) = rzp
                              END DO
                      END IF
              END DO

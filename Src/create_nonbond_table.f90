@@ -718,61 +718,113 @@
   ppvdwp_table2_sp = REAL(ppvdwp_table2,SP)
   ppvdwp_table_sp = REAL(ppvdwp_table,SP)
 
-  IF (calc_rmin_flag) THEN
-          max_rmin = DSQRT(MAXVAL(rminsq_table))
-          sp_rminsq_table = REAL(rminsq_table,SP)
-          ALLOCATE(atomtype_max_rminsq(0:nbr_atomtypes))
-          ALLOCATE(atomtype_min_rminsq(0:nbr_atomtypes))
-          ALLOCATE(atomtype_max_rminsq_sp(0:nbr_atomtypes))
-          atomtype_max_rminsq = MAXVAL(rminsq_table(:, &
-                  which_true_from_zero(l_wsolute_atomtype(),nbr_atomtypes+1)),2)
-          atomtype_min_rminsq = MINVAL(rminsq_table(:, &
-                  which_true_from_zero(l_wsolute_atomtype(),nbr_atomtypes+1)),2)
-          atomtype_max_rminsq_sp = REAL(atomtype_max_rminsq,SP)
-          box_list%rcut_low_max = SQRT(MAXVAL(atomtype_min_rminsq))
-          box_list%ideal_bitcell_length = box_list%rcut_low_max / 28.0_DP ! RHS scalar LHS vector with one element per box
-          solvents_or_types_maxind = nbr_atomtypes+1
-  ELSE
-          box_list%rcut_low_max = rcut_low
-          box_list%ideal_bitcell_length = rcut_low / 28.0_DP
-          solvents_or_types_maxind = 0
-  END IF
-  box_list%ideal_bitcell_length = MAX(min_ideal_bitcell_length,box_list%ideal_bitcell_length)
-  IF (bitcell_flag .AND. .NOT. read_atompair_rminsq) THEN
-        DO ibox = 1, nbr_boxes
-                WRITE(logunit, '(A,F5.3,A)') "Setting box " // TRIM(Int_To_String(ibox)) // " ideal bitcell length = ", &
-                        box_list(ibox)%ideal_bitcell_length, " Angstroms"
-        END DO
-  END IF
-  CONTAINS
-          FUNCTION l_wsolute_atomtype()
-                  LOGICAL, DIMENSION(0:nbr_atomtypes) :: l_wsolute_atomtype
-                  INTEGER :: is
-                  l_wsolute_atomtype = .FALSE.
-                  DO is = 1, nspecies
-                        IF (species_list(is)%l_wsolute) THEN
-                                DO ia = 1, natoms(is)
-                                        l_wsolute_atomtype(nonbond_list(ia,is)%atom_type_number) = .TRUE.
-                                END DO
-                        END IF
-                  END DO
-          END FUNCTION l_wsolute_atomtype
-          FUNCTION which_true_from_zero(lvec,nl)
-                  INTEGER :: nl
-                  LOGICAL, DIMENSION(0:nl-1) :: lvec
-                  INTEGER :: nt
-                  INTEGER, DIMENSION(COUNT(lvec)) :: which_true_from_zero
-                  INTEGER :: i, tcount
-                  nt = COUNT(lvec)
-                  i = 0
-                  tcount = 0
-                  DO WHILE (tcount < nt)
-                        IF (lvec(i)) THEN
-                                tcount = tcount + 1
-                                which_true_from_zero(tcount) = i
-                        END IF
-                        i = i + 1
-                  END DO
-          END FUNCTION which_true_from_zero
+  !IF (calc_rmin_flag) THEN
+  !        IF (need_solvents) CALL Get_Solvent_Info
+  !        ALLOCATE(lvec(0:nbr_atomtypes))
+  !        IF (.NOT. ALLOCATED(which_solvent_atomtypes)) THEN
+  !                lvec = .FALSE.
+  !                DO is = 1, nspecies
+  !                      IF (.NOT. species_list(is)%l_solvent) CYCLE
+  !                      DO ia = 1, natoms(is)
+  !                              lvec(nonbond_list(ia,is)%atom_type_number) = .TRUE.
+  !                      END DO
+  !                END DO
+  !                n_solvent_atomtypes = COUNT(lvec)
+  !                ALLOCATE(which_solvent_atomtypes(n_solvent_atomtypes))
+  !                ALLOCATE(which_solvent_atomtypes_inv(0:nbr_atomtypes))
+  !                which_solvent_atomtypes_inv = -2000000000 ! meant to cause invalid index if used where it isn't properly set
+  !                tcount = 0
+  !                DO itype = 0, nbr_atomtypes
+  !                      IF (lvec(i)) THEN
+  !                              tcount = tcount + 1
+  !                              which_solvent_atomtypes(tcount) = itype
+  !                              which_solvent_atomtypes_inv(itype) = tcount
+  !                      END IF
+  !                END DO
+  !        END IF
+  !        IF (.NOT. ALLOCATED(which_wsolute_atomtypes)) THEN
+  !                lvec = .FALSE.
+  !                DO is = 1, nspecies
+  !                      IF (.NOT. species_list(is)%l_wsolute) CYCLE
+  !                      DO ia = 1, natoms(is)
+  !                              lvec(nonbond_list(ia,is)%atom_type_number) = .TRUE.
+  !                      END DO
+  !                END DO
+  !                n_wsolute_atomtypes = COUNT(lvec)
+  !                ALLOCATE(which_wsolute_atomtypes(n_solvent_atomtypes))
+  !                ALLOCATE(which_wsolute_atomtypes_inv(0:nbr_atomtypes)) ! inverse function of above
+  !                which_wsolute_atomtypes_inv = -2000000000 ! meant to cause invalid index if used where it isn't properly set
+  !                tcount = 0
+  !                DO itype = 0, nbr_atomtypes
+  !                      IF (lvec(i)) THEN
+  !                              tcount = tcount + 1
+  !                              which_wsolute_atomtypes(tcount) = itype
+  !                              which_wsolute_atomtypes_inv(itype) = tcount
+  !                      END IF
+  !                END DO
+  !        END IF
+  !        max_rmin = DSQRT(MAXVAL(rminsq_table))
+  !        sp_rminsq_table = REAL(rminsq_table,SP)
+  !        ALLOCATE(atomtype_max_rminsq(0:nbr_atomtypes))
+  !        ALLOCATE(atomtype_min_rminsq(n_solvent_atomtypes))
+  !        ALLOCATE(atomtype_max_rminsq_sp(0:nbr_atomtypes))
+  !        !ALLOCATE(atomtype_max_rminsq(0:nbr_atomtypes))
+  !        !ALLOCATE(atomtype_min_rminsq(0:nbr_atomtypes))
+  !        !ALLOCATE(atomtype_max_rminsq_sp(0:nbr_atomtypes))
+  !        atomtype_max_rminsq = MAXVAL(rminsq_table(:, &
+  !                which_wsolute_atomtypes),2)
+  !        atomtype_min_rminsq = MINVAL(rminsq_table(which_solvent_atomtypes, &
+  !                which_wsolute_atomtypes),2)
+  !        atomtype_max_rminsq_sp = REAL(atomtype_max_rminsq,SP)
+  !        !atomtype_max_rminsq = MAXVAL(rminsq_table(:, &
+  !        !        which_true_from_zero(l_wsolute_atomtype(),nbr_atomtypes+1)),2)
+  !        !atomtype_min_rminsq = MINVAL(rminsq_table(:, &
+  !        !        which_true_from_zero(l_wsolute_atomtype(),nbr_atomtypes+1)),2)
+  !        !atomtype_max_rminsq_sp = REAL(atomtype_max_rminsq,SP)
+  !        box_list%rcut_low_max = SQRT(MAXVAL(atomtype_min_rminsq))
+  !        box_list%ideal_bitcell_length = box_list%rcut_low_max / 30.0_DP ! RHS scalar LHS vector with one element per box
+  !        solvents_or_types_maxind = n_solvent_atomtypes
+  !ELSE
+  !        box_list%rcut_low_max = rcut_low
+  !        box_list%ideal_bitcell_length = rcut_low / 30.0_DP
+  !        solvents_or_types_maxind = 1
+  !END IF
+  !box_list%ideal_bitcell_length = MAX(min_ideal_bitcell_length,box_list%ideal_bitcell_length)
+  !IF (bitcell_flag .AND. .NOT. read_atompair_rminsq) THEN
+  !      DO ibox = 1, nbr_boxes
+  !              WRITE(logunit, '(A,F5.3,A)') "Setting box " // TRIM(Int_To_String(ibox)) // " ideal bitcell length = ", &
+  !                      box_list(ibox)%ideal_bitcell_length, " Angstroms"
+  !      END DO
+  !END IF
+  !CONTAINS
+  !        FUNCTION l_wsolute_atomtype()
+  !                LOGICAL, DIMENSION(0:nbr_atomtypes) :: l_wsolute_atomtype
+  !                INTEGER :: is
+  !                l_wsolute_atomtype = .FALSE.
+  !                DO is = 1, nspecies
+  !                      IF (species_list(is)%l_wsolute) THEN
+  !                              DO ia = 1, natoms(is)
+  !                                      l_wsolute_atomtype(nonbond_list(ia,is)%atom_type_number) = .TRUE.
+  !                              END DO
+  !                      END IF
+  !                END DO
+  !        END FUNCTION l_wsolute_atomtype
+  !        FUNCTION which_true_from_zero(lvec,nl)
+  !                INTEGER :: nl
+  !                LOGICAL, DIMENSION(0:nl-1) :: lvec
+  !                INTEGER :: nt
+  !                INTEGER, DIMENSION(COUNT(lvec)) :: which_true_from_zero
+  !                INTEGER :: i, tcount
+  !                nt = COUNT(lvec)
+  !                i = 0
+  !                tcount = 0
+  !                DO WHILE (tcount < nt)
+  !                      IF (lvec(i)) THEN
+  !                              tcount = tcount + 1
+  !                              which_true_from_zero(tcount) = i
+  !                      END IF
+  !                      i = i + 1
+  !                END DO
+  !        END FUNCTION which_true_from_zero
 
 END SUBROUTINE Create_Nonbond_Table
