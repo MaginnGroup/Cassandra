@@ -731,7 +731,8 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   INTEGER(KIND=INT64), DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: rsqmin_atompair_freq
   REAL(DP), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: atompair_rminsq_table
   REAL(SP), DIMENSION(:,:,:), ALLOCATABLE :: sp_atompair_rminsq_table
-  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: solvent_max_rminsq, solvent_min_rminsq
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: solvent_max_rminsq
+  REAL(DP), DIMENSION(:,:,:), ALLOCATABLE :: solvent_min_rminsq
   REAL(SP), DIMENSION(:,:), ALLOCATABLE :: solvent_max_rminsq_sp
   INTEGER, DIMENSION(:), ALLOCATABLE :: typepair_wsolute_indices, wsolute_atomtypes
   REAL(DP) :: maxrminsq, rsqmin_step, rsqmin_shifter
@@ -748,7 +749,8 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   REAL(SP), DIMENSION(:,:), ALLOCATABLE :: sp_rminsq_table
   REAL(DP) :: U_max_base, max_rmin
   LOGICAL :: calc_rmin_flag
-  REAL(DP), DIMENSION(:), ALLOCATABLE :: atomtype_max_rminsq, atomtype_min_rminsq
+  REAL(DP), DIMENSION(:), ALLOCATABLE :: atomtype_max_rminsq
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: atomtype_min_rminsq
   REAL(SP), DIMENSION(:), ALLOCATABLE :: atomtype_max_rminsq_sp
 
 
@@ -822,6 +824,13 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   INTEGER, DIMENSION(:), ALLOCATABLE :: which_solvent_atomtypes, which_solvent_atomtypes_inv
   INTEGER, DIMENSION(:), ALLOCATABLE :: which_wsolute_atomtypes, which_wsolute_atomtypes_inv
   INTEGER :: n_solvent_atomtypes, n_wsolute_atomtypes
+
+
+  INTEGER :: n_big_atoms
+
+  TYPE(Cavity_Data_Class), DIMENSION(:,:), ALLOCATABLE :: cavdatalist
+
+  LOGICAL :: cavity_biasing_flag
 
 END MODULE Global_Variables
 

@@ -5627,6 +5627,7 @@ SUBROUTINE Get_Lookup_Info
         cbmc_cell_list_flag = .FALSE.
         full_cell_list_flag = .FALSE.
         bitcell_flag = .FALSE.
+        cavity_biasing_flag = .FALSE.
         min_ideal_bitcell_length = 0.0_DP
         DO
                 line_nbr = line_nbr + 1
@@ -5666,6 +5667,7 @@ SUBROUTINE Get_Lookup_Info
                         sectormaxbound = 0
                         length_cells = 0
                         max_sector_natoms = 1
+                        WRITE(logunit,*) " overlap cell neighbor list method enabled"
                         IF (line_string(1:4) ==  'cbmc' .OR. &
                                 line_string(1:4) == 'full') THEN
                                 cbmc_cell_list_flag = .TRUE.
@@ -5677,6 +5679,7 @@ SUBROUTINE Get_Lookup_Info
                                 sectormaxbound_cbmc = 0
                                 length_cells_cbmc = 0
                                 max_sector_natoms_cbmc = 1
+                                WRITE(logunit,*) " CBMC cell neighbor list method enabled"
                         END IF
                         IF (line_string(1:4) ==  'full') THEN
                                 full_cell_list_flag = .TRUE.
@@ -5693,9 +5696,15 @@ SUBROUTINE Get_Lookup_Info
                         CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
                         IF (nbr_entries < 1) RETURN
                         SELECT CASE (line_array(1))
-                        CASE ("bit_cell", "bitcell", "bit_cell_overlap", "bitcell_overlap")
+                        CASE ("bit_cell", "bitcell", "bit_cell_overlap", "bitcell_overlap", "bovine", "BOVINE", "voxel",&
+                                        "bit_voxel", "cavity_biasing", "cavbias")
                                 bitcell_flag = .TRUE.
+                                WRITE(logunit,*) " BOVINE method enabled"
                                 IF (nbr_entries > 1) min_ideal_bitcell_length = String_To_Double(line_array(2))
+                                IF (line_array(1)(1:3) == "cav") THEN
+                                        cavity_biasing_flag = .TRUE.
+                                        WRITE(logunit,*) " Cavity biasing enabled"
+                                END IF
                         CASE DEFAULT
                                 err_msg = ''
                                 err_msg(1) = 'Entry 1 on line ' // Int_To_String(line_nbr) // ' of the input file is invalid.'

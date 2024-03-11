@@ -276,11 +276,16 @@ CONTAINS
         SUBROUTINE Setup_Atompair_tables
                 LOGICAL, DIMENSION(0:nbr_atomtypes) :: solvent_lvec, wsolute_lvec
                 INTEGER :: ia, is, solvent_tcount, wsolute_tcount, itype, ibox
+                INTEGER, DIMENSION(0:nbr_atomtypes) :: ti_which_big_atom
+                INTEGER, DIMENSION(nbr_atomtypes+1) :: big_atom_ti_list
+                INTEGER :: ifrag, ia_frag, ia_frag_ti, biggest_atom, biggest_atom_ti, i_big_atom
+                REAL(DP) :: ia_frag_rminsq_sum, biggest_atom_rminsq_sum
                 solvent_maxind = 1
                 rsqmin_res_d = 1
                 solvent_maxind_d = 1
 
 
+                n_big_atoms = 0
                 IF (calc_rmin_flag) THEN
                         IF (need_solvents) CALL Get_Solvent_Info
                         solvent_lvec = .FALSE.
@@ -321,13 +326,46 @@ CONTAINS
                         END DO
                         max_rmin = DSQRT(MAXVAL(rminsq_table))
                         sp_rminsq_table = REAL(rminsq_table,SP)
+                        IF (cavity_biasing_flag) THEN
+                                ti_which_big_atom = -999999
+                                DO is = 1, nspecies
+                                        IF (.NOT. species_list(is)%l_wsolute) CYCLE
+                                        DO ifrag = 1, nfragments(is)
+                                                biggest_atom = 1
+                                                biggest_atom_ti = nonbond_list(frag_list(ifrag,is)%atoms(1),is)%atom_type_number
+                                                biggest_atom_rminsq_sum = SUM(rminsq_table(:,biggest_atom_ti))
+                                                DO ia_frag = 2, frag_list(ifrag,is)%natoms
+                                                        ia_frag_ti = &
+                                                                nonbond_list(frag_list(ifrag,is)%atoms(ia_frag),is)%atom_type_number
+                                                        ia_frag_rminsq_sum = SUM(rminsq_table(:,ia_frag_ti))
+                                                        IF (ia_frag_rminsq_sum>biggest_atom_rminsq_sum) THEN
+                                                                biggest_atom = ia_frag
+                                                                biggest_atom_ti = ia_frag_ti
+                                                                biggest_atom_rminsq_sum = ia_frag_rminsq_sum
+                                                        END IF
+                                                END DO
+                                                i_big_atom = ti_which_big_atom(biggest_atom_ti)
+                                                IF (i_big_atom < 0) THEN
+                                                        n_big_atoms = n_big_atoms+1
+                                                        i_big_atom = n_big_atoms
+                                                        ti_which_big_atom(biggest_atom_ti) = n_big_atoms
+                                                        big_atom_ti_list(n_big_atoms) = biggest_atom_ti
+                                                END IF
+                                                frag_list(ifrag,is)%i_big_atom = i_big_atom
+                                                frag_list(ifrag,is)%ia_frag_big_atom = biggest_atom
+                                        END DO
+                                END DO
+                        END IF
                         ALLOCATE(atomtype_max_rminsq(0:nbr_atomtypes))
-                        ALLOCATE(atomtype_min_rminsq(n_solvent_atomtypes))
+                        ALLOCATE(atomtype_min_rminsq(n_solvent_atomtypes,0:n_big_atoms))
                         ALLOCATE(atomtype_max_rminsq_sp(0:nbr_atomtypes))
                         atomtype_max_rminsq = MAXVAL(rminsq_table(:, &
                                 which_wsolute_atomtypes),2)
-                        atomtype_min_rminsq = MINVAL(rminsq_table(which_solvent_atomtypes, &
+                        atomtype_min_rminsq(:,0) = MINVAL(rminsq_table(which_solvent_atomtypes, &
                                 which_wsolute_atomtypes),2)
+                        IF (cavity_biasing_flag) THEN
+                                atomtype_min_rminsq(:,1:n_big_atoms) = rminsq_table(:,big_atom_ti_list(1:n_big_atoms))
+                        END IF
                         atomtype_max_rminsq_sp = REAL(atomtype_max_rminsq,SP)
                         box_list%rcut_low_max = SQRT(MAXVAL(atomtype_min_rminsq))
                         box_list%ideal_bitcell_length = box_list%rcut_low_max / SQRT(902.0_DP) ! RHS scalar LHS vector with one element per box

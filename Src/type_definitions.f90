@@ -516,6 +516,12 @@ MODULE Type_Definitions
 
  END TYPE Box_Class
 
+ TYPE Cavity_Data_Class
+         INTEGER(INT64), DIMENSION(:), ALLOCATABLE :: cavity_locs
+         INTEGER(INT64) :: ncavs
+         REAL(DP) :: ncavs_dp, ln_cavfrac
+ END TYPE Cavity_Data_Class
+
   !****************************************************************************
 
  TYPE Angle_Probability_Class
@@ -632,6 +638,7 @@ MODULE Type_Definitions
     LOGICAL:: ring
     REAL(DP)::rcut_vdwsq, rcut_coulsq,alpha_ewald
     REAL(DP) :: prob_ins, cum_prob_ins
+    INTEGER :: i_big_atom = 0, ia_frag_big_atom=1
 
  END TYPE Frag_Class
 !-------------------------------------------------------------------------------------------------

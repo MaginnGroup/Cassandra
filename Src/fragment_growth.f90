@@ -185,9 +185,12 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   REAL(SP), DIMENSION(species_list(is)%kappa_ins_pad8,3) :: xyz_rand
   REAL(DP) :: xl, hxl, yl, hyl, zl, hzl, length_dp(3,3), drxcom, drycom, drzcom, isp, max_dcomsq
   REAL(DP), DIMENSION(MAXVAL(frag_list(1:nfragments(is),is)%natoms)) :: drxcom_vec, drycom_vec, drzcom_vec
-  REAL(DP), DIMENSION(3,MAXVAL(frag_list(1:nfragments(is),is)%natoms)) :: drcom_mat
-  REAL(SP), DIMENSION(3,MAXVAL(frag_list(1:nfragments(is),is)%natoms)) :: dscom_mat
-  REAL(SP) :: length_sp(3,3), dscom(3), dsxcom, dsycom, dszcom, sxcom, sycom, szcom
+  REAL(DP), DIMENSION(MAXVAL(frag_list(1:nfragments(is),is)%natoms)) :: drxref_vec, dryref_vec, drzref_vec
+  REAL(DP), DIMENSION(3,MAXVAL(frag_list(1:nfragments(is),is)%natoms)) :: drref_mat
+  REAL(DP) :: dscom_big_atom(3), drxref, dryref, drzref, sxcom_dp, sycom_dp, szcom_dp
+  REAL(SP) :: dsxref, dsyref, dszref 
+  REAL(SP), DIMENSION(3,MAXVAL(frag_list(1:nfragments(is),is)%natoms)) :: dsref_mat
+  REAL(SP) :: length_sp(3,3), dscom(3), dsref(3), dsxcom, dsycom, dszcom, sxcom, sycom, szcom
   REAL(SP) :: sxp, syp, szp, rsl, hrsl, rsp
   REAL(SP) :: rxp, ryp, rzp, this_atom_rp(3)
   REAL(4), DIMENSION(species_list(is)%kappa_ins_pad8,3,MAXVAL(frag_list(1:nfragments(is),is)%natoms)) :: trial_atom_rp
@@ -202,7 +205,8 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   INTEGER :: rlc, gtrial
   INTEGER, DIMENSION(3) :: this_atom_ci
 
-  LOGICAL(1) :: bitcell_overlap(species_list(is)%kappa_ins_pad64,MAXVAL(frag_list(1:nfragments(is),is)%natoms))
+  !LOGICAL(1) :: bitcell_overlap(species_list(is)%kappa_ins_pad64,MAXVAL(frag_list(1:nfragments(is),is)%natoms))
+  LOGICAL(1) :: bitcell_overlap(species_list(is)%kappa_ins_pad64)
 
   LOGICAL :: l_widom_cells, this_bitcell_overlap
 
@@ -221,6 +225,9 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
 
   REAL(DP) :: sz_rand_dp, zpart_width, zpart_shift
   LOGICAL, PARAMETER :: l_zscan = .FALSE.
+
+  INTEGER :: n_small_atoms, i_big_atom, ia_frag_big_atom, which_small_atoms(MAXVAL(frag_list(1:nfragments(is),is)%natoms))
+  LOGICAL :: l_widom_cavity_biasing
   !INTEGER :: n_zparts
   !INTEGER, PARAMETER :: zpartition_kappa = 32 ! must be a multiple of 8 (or less than 8 to turn off z-partitioning)
   IF (widom_timing) THEN
@@ -359,6 +366,20 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   ! If get_fragorder = .FALSE., then frag_start is not yet defined
   frag_start = frag_order(1)
   ifrag_natoms = frag_list(frag_start,is)%natoms
+  l_widom_cavity_biasing = l_get_bitcell .AND. cavity_biasing_flag
+  IF (l_widom_cavity_biasing) THEN
+          i_big_atom = frag_list(frag_start,is)%i_big_atom
+          ia_frag_big_atom = frag_list(frag_start,is)%ia_frag_big_atom
+          n_small_atoms = 0
+          DO i = 1, ifrag_natoms
+                IF (i == ia_frag_big_atom) CYCLE
+                n_small_atoms = n_small_atoms + 1
+                which_small_atoms(n_small_atoms) = i
+          END DO
+          IF (n_small_atoms .EQ. 0) l_get_bitcell = .FALSE.
+  ELSE
+          n_small_atoms = ifrag_natoms
+  END IF
 
   ! If inserting a molecule, choose the first fragment's conformation from the 
   ! reservoir
@@ -478,7 +499,11 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
              !$ rng_time_s = omp_get_wtime()
      END IF
      !CALL vector_rranf(TRANSFER(xyz_rand_dp,xyz_rand_dp)) ! Don't do this; it causes a wasteful memcopy to be generated
-     IF (l_widom_cells .AND. l_zscan .AND. kappa_ins >= 8) THEN
+     IF (l_widom_cavity_biasing) THEN
+             CALL cavity_biased_rranf(xyz_rand_dp,i_big_atom,this_box)
+             !$DIR$ VECTOR ALIGNED
+             xyz_rand = REAL(xyz_rand_dp,SP)
+     ELSE IF (l_widom_cells .AND. l_zscan .AND. kappa_ins >= 8) THEN
              CALL array_boxscan_rranf(xyz_rand_dp,kappa_ins)
              !DIR$ VECTOR ALIGNED
              xyz_rand = REAL(xyz_rand_dp,SP)
@@ -510,12 +535,29 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
      drxcom_vec = 0.0_DP
      drycom_vec = 0.0_DP
      drzcom_vec = 0.0_DP
+     IF (l_widom_cavity_biasing) THEN
+             dscom_big_atom = MATMUL(&
+                     box_list(this_box)%length_inv,&
+                     rtrial0(:,ia_frag_big_atom) - this_molecule%rcom(1:3))
+     END IF
      drxcom_vec(1:frag_list(frag_start,is)%natoms) = &
              rtrial0(1,1:frag_list(frag_start,is)%natoms) - xcom_old
      drycom_vec(1:frag_list(frag_start,is)%natoms) = &
              rtrial0(2,1:frag_list(frag_start,is)%natoms) - ycom_old
      drzcom_vec(1:frag_list(frag_start,is)%natoms) = &
              rtrial0(3,1:frag_list(frag_start,is)%natoms) - zcom_old
+     IF (l_widom_cavity_biasing) THEN
+             drxref_vec(1:ifrag_natoms) = &
+                     rtrial0(1,1:ifrag_natoms) - rtrial0(1,ia_frag_big_atom)
+             dryref_vec(1:ifrag_natoms) = &
+                     rtrial0(2,1:ifrag_natoms) - rtrial0(2,ia_frag_big_atom)
+             drzref_vec(1:ifrag_natoms) = &
+                     rtrial0(3,1:ifrag_natoms) - rtrial0(3,ia_frag_big_atom)
+     ELSE
+             drxref_vec = drxcom_vec
+             dryref_vec = drycom_vec
+             drzref_vec = drzcom_vec
+     END IF
      IF (widom_timing) THEN
           IF (.NOT. omp_flag) CALL CPU_TIME(cbmc_time_e)
           !$ cbmc_time_e = omp_get_wtime()
@@ -529,6 +571,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
         SELECT CASE(box_list(this_box)%int_inner_shape)
         CASE(int_sphere)
                 log_inner_radius = LOG(box_list(this_box)%inner_radius)
+                !DIR$ VECTOR ALIGNED
                 DO itrial = 1, kappa_ins
                         theta = 2.0_DP*PI*xyz_rand_dp(itrial,1)
                         phi = ACOS(2.0_DP*xyz_rand_dp(itrial,2)-1.0_DP)
@@ -538,17 +581,9 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                         ycom_trial(itrial) = SIN(theta) * rsinphi
                         zcom_trial(itrial) = radius * COS(phi)
                 END DO
-           !radius2 = x_anchor**2 + y_anchor**2 + z_anchor**2
-           !IF (radius2 > box_list(this_box)%inner_radius2) THEN
-           !   theta = 2.0_DP*PI*rranf()
-           !   phi = ACOS(2.0_DP*rranf()-1.0_DP)
-           !   radius = (rranf())**(1.0_DP/3.0_DP) * box_list(this_box)%inner_radius
-           !   x_anchor = radius * COS(theta) * SIN(phi)
-           !   y_anchor = radius * SIN(theta) * SIN(phi)
-           !   z_anchor = radius * COS(phi)
-           !END IF
         CASE(int_cylinder)
                 ! WARNING: this does not work for triclinic boxes
+                !DIR$ VECTOR ALIGNED
                 DO itrial = 1, kappa_ins
                         theta = 2.0_DP*PI*xyz_rand_dp(itrial,1)
                         radius = SQRT(xyz_rand_dp(itrial,2)) * box_list(this_box)%inner_radius
@@ -556,40 +591,24 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                         ycom_trial(itrial) = radius * SIN(theta)
                         zcom_trial(itrial) = zl*xyz_rand_dp(itrial,3) - hzl 
                 END DO
-           !radius2 = x_anchor**2 + y_anchor**2
-           !IF (radius2 > box_list(this_box)%inner_radius2) THEN
-           !   theta = 2.0_DP*PI*rranf()
-           !   radius = SQRT(rranf()) * box_list(this_box)%inner_radius
-           !   x_anchor = radius * COS(theta)
-           !   y_anchor = radius * SIN(theta)
-           !END IF
         CASE(int_slitpore)
                 zmax = box_list(this_box)%inner_zmax
                 hzmax = 0.5_DP * zmax
+                !DIR$ VECTOR ALIGNED
                 DO itrial = 1, kappa_ins
                         xcom_trial(itrial) = xyz_rand_dp(itrial,1)*xl - hxl
                         ycom_trial(itrial) = xyz_rand_dp(itrial,2)*yl - hyl
                         zcom_trial(itrial) = xyz_rand_dp(itrial,3)*zmax - hzmax
                 END DO
-           !IF (ABS(z_anchor) > box_list(this_box)%inner_zmax) THEN
-           !   z_anchor = (0.5_DP - rranf()) * box_list(this_box)%inner_zmax
-           !END IF
         CASE(int_interface)
                 inner_dz = box_list(this_box)%inner_zmax - box_list(this_box)%inner_zmin
+                !DIR$ VECTOR ALIGNED
                 DO itrial = 1, kappa_ins
                         xcom_trial(itrial) = xyz_rand_dp(itrial,1)*xl - hxl
                         ycom_trial(itrial) = xyz_rand_dp(itrial,2)*yl - hyl
                         zscale = xyz_rand_dp(itrial,3)*2.0_DP - 1.0_DP
                         zcom_trial(itrial) = SIGN(box_list(this_box)%inner_zmin,zscale) + zscale*inner_dz
                 END DO
-           !IF (ABS(z_anchor) > box_list(this_box)%inner_zmax .OR. &
-           !    ABS(z_anchor) < box_list(this_box)%inner_zmin) THEN
-           !   z_anchor = rranf() * (box_list(this_box)%inner_zmax - box_list(this_box)%inner_zmin)
-           !   z_anchor = z_anchor + box_list(this_box)%inner_zmin
-           !   IF (rranf() > 0.5_DP) THEN
-           !      z_anchor = - z_anchor 
-           !   END IF
-           !END IF
         END SELECT
      ELSE! IF (l_widom_cells) THEN
              IF (l_get_bitcell) THEN
@@ -602,457 +621,53 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                      ybcdf = box_list(this_box)%bitcell_dimfactor(2)
                      ylbc = box_list(this_box)%length_bitcells(2)
                      xlbc = box_list(this_box)%length_bitcells(1)
-                     !bitcell_int_ior = 0
-                     !bitcell_bit_min = 100000
-                     !bitcell_bit_max = -100000
-                     !bitcell_int1_max = -(HUGE(bitcell_int1_min)-1)
-                     !bitcell_int1_min = HUGE(bitcell_int1_max)
-                     !bitcell_int2_max = -(HUGE(bitcell_int2_min)-1)
-                     !bitcell_int2_min = HUGE(bitcell_int2_max)
 
                      IF (l_ortho) THEN
-                             dscom_mat(1,:) = drxcom_vec/xl
-                             dscom_mat(2,:) = drycom_vec/yl
-                             dscom_mat(3,:) = drzcom_vec/zl
+                             IF (l_widom_cavity_biasing) THEN
+                                     dsref_mat(1,1:n_small_atoms) = drxref_vec(which_small_atoms(1:n_small_atoms))/xl
+                                     dsref_mat(2,1:n_small_atoms) = dryref_vec(which_small_atoms(1:n_small_atoms))/yl
+                                     dsref_mat(3,1:n_small_atoms) = drzref_vec(which_small_atoms(1:n_small_atoms))/zl
+                             ELSE
+                                     dsref_mat(1,1:n_small_atoms) = drxref_vec(1:n_small_atoms)/xl
+                                     dsref_mat(2,1:n_small_atoms) = dryref_vec(1:n_small_atoms)/yl
+                                     dsref_mat(3,1:n_small_atoms) = drzref_vec(1:n_small_atoms)/zl
+                             END IF
                      ELSE
-                             drcom_mat(1,:) = drxcom_vec
-                             drcom_mat(2,:) = drycom_vec
-                             drcom_mat(3,:) = drzcom_vec
-                             dscom_mat = REAL(MATMUL(box_list(this_box)%length_inv, &
-                                     drcom_mat),SP)
+                             IF (l_widom_cavity_biasing) THEN
+                                     drref_mat(1,1:n_small_atoms) = drxref_vec(which_small_atoms(1:n_small_atoms))
+                                     drref_mat(2,1:n_small_atoms) = dryref_vec(which_small_atoms(1:n_small_atoms))
+                                     drref_mat(3,1:n_small_atoms) = drzref_vec(which_small_atoms(1:n_small_atoms))
+                                     dsref_mat(:,1:n_small_atoms) = REAL(MATMUL(box_list(this_box)%length_inv, &
+                                             drref_mat(:,1:n_small_atoms)),SP)
+                             ELSE
+                                     drref_mat(1,1:n_small_atoms) = drxref_vec(1:n_small_atoms)
+                                     drref_mat(2,1:n_small_atoms) = dryref_vec(1:n_small_atoms)
+                                     drref_mat(3,1:n_small_atoms) = drzref_vec(1:n_small_atoms)
+                                     dsref_mat(:,1:n_small_atoms) = REAL(MATMUL(box_list(this_box)%length_inv, &
+                                             drref_mat(:,1:n_small_atoms)),SP)
+                             END IF
                      END IF
-                     SELECT CASE(ifrag_natoms)
+                     SELECT CASE(n_small_atoms)
                      CASE(1)
-                             !DIR$ LOOP COUNT = 1000
-                             !DIR$ VECTOR ALIGNED
-                             !$OMP SIMD PRIVATE(sxp,syp,szp,bitcell_bit,bitcell_int,this_bitcell_overlap,sxcom,sycom,szcom) 
-                             DO itrial = 1, kappa_ins
-                                sxcom = xyz_rand(itrial,1)
-                                sycom = xyz_rand(itrial,2)
-                                szcom = xyz_rand(itrial,3)
-                                sxp = sxcom + dscom_mat(1,1)
-                                syp = sycom + dscom_mat(2,1)
-                                szp = szcom + dscom_mat(3,1)
-                                ! Note: it is important that the < checks and shifts come before the >= checks and shifts
-                                !       due to floating point rounding.  It's fine for sxp, syp, or szp to be zero or even
-                                !       just barely less than zero due to the behavior of INT(), but if they end up equal to
-                                !       1.0, that can cause bitcell_int to be out of bounds or otherwise severely incorrect.
-                                !       This was found out the hard way.
-                                IF (sxp < 0.0) sxp = sxp + 1.0
-                                IF (syp < 0.0) syp = syp + 1.0
-                                IF (szp < 0.0) szp = szp + 1.0
-                                IF (sxp >= 1.0) sxp = sxp - 1.0
-                                IF (syp >= 1.0) syp = syp - 1.0
-                                IF (szp >= 1.0) szp = szp - 1.0
-                                bitcell_bit = INT(sxp*xlbc)
-                                bitcell_int = ISHFT(bitcell_bit,-5) + &
-                                        INT(syp*ylbc)*ybcdf + &
-                                        INT(szp*zlbc)*zbcdf
-                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
-                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
-                                this_bitcell_overlap = BTEST(bitcell_int,bitcell_bit)
-                                bitcell_overlap(itrial,1) = .NOT. this_bitcell_overlap
-                             END DO
-                             !$OMP END SIMD
+                             CALL Bitcell_Overlap_Detection(1,box_list(this_box)%bitcell_int32_vec)
                      CASE(2)
-                             !DIR$ LOOP COUNT = 1000
-                             !DIR$ VECTOR ALIGNED
-                             !$OMP SIMD PRIVATE(sxp,syp,szp,bitcell_bit,bitcell_int,this_bitcell_overlap,sxcom,sycom,szcom) 
-                             DO itrial = 1, kappa_ins
-                                sxcom = xyz_rand(itrial,1)
-                                sycom = xyz_rand(itrial,2)
-                                szcom = xyz_rand(itrial,3)
-                                sxp = sxcom + dscom_mat(1,1)
-                                syp = sycom + dscom_mat(2,1)
-                                szp = szcom + dscom_mat(3,1)
-                                ! Note: it is important that the < checks and shifts come before the >= checks and shifts
-                                !       due to floating point rounding.  It's fine for sxp, syp, or szp to be zero or even
-                                !       just barely less than zero due to the behavior of INT(), but if they end up equal to
-                                !       1.0, that can cause bitcell_int to be out of bounds or otherwise severely incorrect.
-                                !       This was found out the hard way.
-                                IF (sxp < 0.0) sxp = sxp + 1.0
-                                IF (syp < 0.0) syp = syp + 1.0
-                                IF (szp < 0.0) szp = szp + 1.0
-                                IF (sxp >= 1.0) sxp = sxp - 1.0
-                                IF (syp >= 1.0) syp = syp - 1.0
-                                IF (szp >= 1.0) szp = szp - 1.0
-                                bitcell_bit = INT(sxp*xlbc)
-                                bitcell_int = ISHFT(bitcell_bit,-5) + &
-                                        INT(syp*ylbc)*ybcdf + &
-                                        INT(szp*zlbc)*zbcdf
-                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
-                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
-                                this_bitcell_overlap = BTEST(bitcell_int,bitcell_bit)
-                                ! Iteration 2
-                                sxp = sxcom + dscom_mat(1,2)
-                                syp = sycom + dscom_mat(2,2)
-                                szp = szcom + dscom_mat(3,2)
-                                IF (sxp < 0.0) sxp = sxp + 1.0
-                                IF (syp < 0.0) syp = syp + 1.0
-                                IF (szp < 0.0) szp = szp + 1.0
-                                IF (sxp >= 1.0) sxp = sxp - 1.0
-                                IF (syp >= 1.0) syp = syp - 1.0
-                                IF (szp >= 1.0) szp = szp - 1.0
-                                bitcell_bit = INT(sxp*xlbc)
-                                bitcell_int = ISHFT(bitcell_bit,-5) + &
-                                        INT(syp*ylbc)*ybcdf + &
-                                        INT(szp*zlbc)*zbcdf
-                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
-                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
-                                this_bitcell_overlap = this_bitcell_overlap .OR. BTEST(bitcell_int,bitcell_bit)
-                                ! Store result
-                                bitcell_overlap(itrial,1) = .NOT. this_bitcell_overlap
-                             END DO
-                             !$OMP END SIMD
+                             CALL Bitcell_Overlap_Detection(2,box_list(this_box)%bitcell_int32_vec)
                      CASE(3)
-                             !DIR$ LOOP COUNT = 1000
-                             !DIR$ VECTOR ALIGNED
-                             !$OMP SIMD PRIVATE(sxp,syp,szp,bitcell_bit,bitcell_int,this_bitcell_overlap,sxcom,sycom,szcom) 
-                             DO itrial = 1, kappa_ins
-                                sxcom = xyz_rand(itrial,1)
-                                sycom = xyz_rand(itrial,2)
-                                szcom = xyz_rand(itrial,3)
-                                sxp = sxcom + dscom_mat(1,1)
-                                syp = sycom + dscom_mat(2,1)
-                                szp = szcom + dscom_mat(3,1)
-                                ! Note: it is important that the < checks and shifts come before the >= checks and shifts
-                                !       due to floating point rounding.  It's fine for sxp, syp, or szp to be zero or even
-                                !       just barely less than zero due to the behavior of INT(), but if they end up equal to
-                                !       1.0, that can cause bitcell_int to be out of bounds or otherwise severely incorrect.
-                                !       This was found out the hard way.
-                                IF (sxp < 0.0) sxp = sxp + 1.0
-                                IF (syp < 0.0) syp = syp + 1.0
-                                IF (szp < 0.0) szp = szp + 1.0
-                                IF (sxp >= 1.0) sxp = sxp - 1.0
-                                IF (syp >= 1.0) syp = syp - 1.0
-                                IF (szp >= 1.0) szp = szp - 1.0
-                                bitcell_bit = INT(sxp*xlbc)
-                                bitcell_int = ISHFT(bitcell_bit,-5) + &
-                                        INT(syp*ylbc)*ybcdf + &
-                                        INT(szp*zlbc)*zbcdf
-                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
-                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
-                                this_bitcell_overlap = BTEST(bitcell_int,bitcell_bit)
-                                ! Iteration 2
-                                sxp = sxcom + dscom_mat(1,2)
-                                syp = sycom + dscom_mat(2,2)
-                                szp = szcom + dscom_mat(3,2)
-                                IF (sxp < 0.0) sxp = sxp + 1.0
-                                IF (syp < 0.0) syp = syp + 1.0
-                                IF (szp < 0.0) szp = szp + 1.0
-                                IF (sxp >= 1.0) sxp = sxp - 1.0
-                                IF (syp >= 1.0) syp = syp - 1.0
-                                IF (szp >= 1.0) szp = szp - 1.0
-                                bitcell_bit = INT(sxp*xlbc)
-                                bitcell_int = ISHFT(bitcell_bit,-5) + &
-                                        INT(syp*ylbc)*ybcdf + &
-                                        INT(szp*zlbc)*zbcdf
-                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
-                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
-                                this_bitcell_overlap = this_bitcell_overlap .OR. BTEST(bitcell_int,bitcell_bit)
-                                ! Iteration 3
-                                sxp = sxcom + dscom_mat(1,3)
-                                syp = sycom + dscom_mat(2,3)
-                                szp = szcom + dscom_mat(3,3)
-                                IF (sxp < 0.0) sxp = sxp + 1.0
-                                IF (syp < 0.0) syp = syp + 1.0
-                                IF (szp < 0.0) szp = szp + 1.0
-                                IF (sxp >= 1.0) sxp = sxp - 1.0
-                                IF (syp >= 1.0) syp = syp - 1.0
-                                IF (szp >= 1.0) szp = szp - 1.0
-                                bitcell_bit = INT(sxp*xlbc)
-                                bitcell_int = ISHFT(bitcell_bit,-5) + &
-                                        INT(syp*ylbc)*ybcdf + &
-                                        INT(szp*zlbc)*zbcdf
-                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
-                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
-                                this_bitcell_overlap = this_bitcell_overlap .OR. BTEST(bitcell_int,bitcell_bit)
-                                ! Store result
-                                bitcell_overlap(itrial,1) = .NOT. this_bitcell_overlap
-                             END DO
-                             !$OMP END SIMD
+                             CALL Bitcell_Overlap_Detection(3,box_list(this_box)%bitcell_int32_vec)
                      CASE(4)
-                             !DIR$ LOOP COUNT = 1000
-                             !DIR$ VECTOR ALIGNED
-                             !$OMP SIMD PRIVATE(sxp,syp,szp,bitcell_bit,bitcell_int,this_bitcell_overlap,sxcom,sycom,szcom) 
-                             DO itrial = 1, kappa_ins
-                                sxcom = xyz_rand(itrial,1)
-                                sycom = xyz_rand(itrial,2)
-                                szcom = xyz_rand(itrial,3)
-                                sxp = sxcom + dscom_mat(1,1)
-                                syp = sycom + dscom_mat(2,1)
-                                szp = szcom + dscom_mat(3,1)
-                                ! Note: it is important that the < checks and shifts come before the >= checks and shifts
-                                !       due to floating point rounding.  It's fine for sxp, syp, or szp to be zero or even
-                                !       just barely less than zero due to the behavior of INT(), but if they end up equal to
-                                !       1.0, that can cause bitcell_int to be out of bounds or otherwise severely incorrect.
-                                !       This was found out the hard way.
-                                IF (sxp < 0.0) sxp = sxp + 1.0
-                                IF (syp < 0.0) syp = syp + 1.0
-                                IF (szp < 0.0) szp = szp + 1.0
-                                IF (sxp >= 1.0) sxp = sxp - 1.0
-                                IF (syp >= 1.0) syp = syp - 1.0
-                                IF (szp >= 1.0) szp = szp - 1.0
-                                bitcell_bit = INT(sxp*xlbc)
-                                bitcell_int = ISHFT(bitcell_bit,-5) + &
-                                        INT(syp*ylbc)*ybcdf + &
-                                        INT(szp*zlbc)*zbcdf
-                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
-                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
-                                this_bitcell_overlap = BTEST(bitcell_int,bitcell_bit)
-                                ! Iteration 2
-                                sxp = sxcom + dscom_mat(1,2)
-                                syp = sycom + dscom_mat(2,2)
-                                szp = szcom + dscom_mat(3,2)
-                                IF (sxp < 0.0) sxp = sxp + 1.0
-                                IF (syp < 0.0) syp = syp + 1.0
-                                IF (szp < 0.0) szp = szp + 1.0
-                                IF (sxp >= 1.0) sxp = sxp - 1.0
-                                IF (syp >= 1.0) syp = syp - 1.0
-                                IF (szp >= 1.0) szp = szp - 1.0
-                                bitcell_bit = INT(sxp*xlbc)
-                                bitcell_int = ISHFT(bitcell_bit,-5) + &
-                                        INT(syp*ylbc)*ybcdf + &
-                                        INT(szp*zlbc)*zbcdf
-                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
-                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
-                                this_bitcell_overlap = this_bitcell_overlap .OR. BTEST(bitcell_int,bitcell_bit)
-                                ! Iteration 3
-                                sxp = sxcom + dscom_mat(1,3)
-                                syp = sycom + dscom_mat(2,3)
-                                szp = szcom + dscom_mat(3,3)
-                                IF (sxp < 0.0) sxp = sxp + 1.0
-                                IF (syp < 0.0) syp = syp + 1.0
-                                IF (szp < 0.0) szp = szp + 1.0
-                                IF (sxp >= 1.0) sxp = sxp - 1.0
-                                IF (syp >= 1.0) syp = syp - 1.0
-                                IF (szp >= 1.0) szp = szp - 1.0
-                                bitcell_bit = INT(sxp*xlbc)
-                                bitcell_int = ISHFT(bitcell_bit,-5) + &
-                                        INT(syp*ylbc)*ybcdf + &
-                                        INT(szp*zlbc)*zbcdf
-                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
-                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
-                                this_bitcell_overlap = this_bitcell_overlap .OR. BTEST(bitcell_int,bitcell_bit)
-                                ! Iteration 4
-                                sxp = sxcom + dscom_mat(1,4)
-                                syp = sycom + dscom_mat(2,4)
-                                szp = szcom + dscom_mat(3,4)
-                                IF (sxp < 0.0) sxp = sxp + 1.0
-                                IF (syp < 0.0) syp = syp + 1.0
-                                IF (szp < 0.0) szp = szp + 1.0
-                                IF (sxp >= 1.0) sxp = sxp - 1.0
-                                IF (syp >= 1.0) syp = syp - 1.0
-                                IF (szp >= 1.0) szp = szp - 1.0
-                                bitcell_bit = INT(sxp*xlbc)
-                                bitcell_int = ISHFT(bitcell_bit,-5) + &
-                                        INT(syp*ylbc)*ybcdf + &
-                                        INT(szp*zlbc)*zbcdf
-                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
-                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
-                                this_bitcell_overlap = this_bitcell_overlap .OR. BTEST(bitcell_int,bitcell_bit)
-                                ! Store result
-                                bitcell_overlap(itrial,1) = .NOT. this_bitcell_overlap
-                             END DO
-                             !$OMP END SIMD
+                             CALL Bitcell_Overlap_Detection(4,box_list(this_box)%bitcell_int32_vec)
                      CASE(5)
-                             !DIR$ LOOP COUNT = 1000
-                             !DIR$ VECTOR ALIGNED
-                             !$OMP SIMD PRIVATE(sxp,syp,szp,bitcell_bit,bitcell_int,this_bitcell_overlap,sxcom,sycom,szcom) 
-                             DO itrial = 1, kappa_ins
-                                sxcom = xyz_rand(itrial,1)
-                                sycom = xyz_rand(itrial,2)
-                                szcom = xyz_rand(itrial,3)
-                                sxp = sxcom + dscom_mat(1,1)
-                                syp = sycom + dscom_mat(2,1)
-                                szp = szcom + dscom_mat(3,1)
-                                ! Note: it is important that the < checks and shifts come before the >= checks and shifts
-                                !       due to floating point rounding.  It's fine for sxp, syp, or szp to be zero or even
-                                !       just barely less than zero due to the behavior of INT(), but if they end up equal to
-                                !       1.0, that can cause bitcell_int to be out of bounds or otherwise severely incorrect.
-                                !       This was found out the hard way.
-                                IF (sxp < 0.0) sxp = sxp + 1.0
-                                IF (syp < 0.0) syp = syp + 1.0
-                                IF (szp < 0.0) szp = szp + 1.0
-                                IF (sxp >= 1.0) sxp = sxp - 1.0
-                                IF (syp >= 1.0) syp = syp - 1.0
-                                IF (szp >= 1.0) szp = szp - 1.0
-                                bitcell_bit = INT(sxp*xlbc)
-                                bitcell_int = ISHFT(bitcell_bit,-5) + &
-                                        INT(syp*ylbc)*ybcdf + &
-                                        INT(szp*zlbc)*zbcdf
-                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
-                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
-                                this_bitcell_overlap = BTEST(bitcell_int,bitcell_bit)
-                                ! Iteration 2
-                                sxp = sxcom + dscom_mat(1,2)
-                                syp = sycom + dscom_mat(2,2)
-                                szp = szcom + dscom_mat(3,2)
-                                IF (sxp < 0.0) sxp = sxp + 1.0
-                                IF (syp < 0.0) syp = syp + 1.0
-                                IF (szp < 0.0) szp = szp + 1.0
-                                IF (sxp >= 1.0) sxp = sxp - 1.0
-                                IF (syp >= 1.0) syp = syp - 1.0
-                                IF (szp >= 1.0) szp = szp - 1.0
-                                bitcell_bit = INT(sxp*xlbc)
-                                bitcell_int = ISHFT(bitcell_bit,-5) + &
-                                        INT(syp*ylbc)*ybcdf + &
-                                        INT(szp*zlbc)*zbcdf
-                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
-                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
-                                this_bitcell_overlap = this_bitcell_overlap .OR. BTEST(bitcell_int,bitcell_bit)
-                                ! Iteration 3
-                                sxp = sxcom + dscom_mat(1,3)
-                                syp = sycom + dscom_mat(2,3)
-                                szp = szcom + dscom_mat(3,3)
-                                IF (sxp < 0.0) sxp = sxp + 1.0
-                                IF (syp < 0.0) syp = syp + 1.0
-                                IF (szp < 0.0) szp = szp + 1.0
-                                IF (sxp >= 1.0) sxp = sxp - 1.0
-                                IF (syp >= 1.0) syp = syp - 1.0
-                                IF (szp >= 1.0) szp = szp - 1.0
-                                bitcell_bit = INT(sxp*xlbc)
-                                bitcell_int = ISHFT(bitcell_bit,-5) + &
-                                        INT(syp*ylbc)*ybcdf + &
-                                        INT(szp*zlbc)*zbcdf
-                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
-                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
-                                this_bitcell_overlap = this_bitcell_overlap .OR. BTEST(bitcell_int,bitcell_bit)
-                                ! Iteration 4
-                                sxp = sxcom + dscom_mat(1,4)
-                                syp = sycom + dscom_mat(2,4)
-                                szp = szcom + dscom_mat(3,4)
-                                IF (sxp < 0.0) sxp = sxp + 1.0
-                                IF (syp < 0.0) syp = syp + 1.0
-                                IF (szp < 0.0) szp = szp + 1.0
-                                IF (sxp >= 1.0) sxp = sxp - 1.0
-                                IF (syp >= 1.0) syp = syp - 1.0
-                                IF (szp >= 1.0) szp = szp - 1.0
-                                bitcell_bit = INT(sxp*xlbc)
-                                bitcell_int = ISHFT(bitcell_bit,-5) + &
-                                        INT(syp*ylbc)*ybcdf + &
-                                        INT(szp*zlbc)*zbcdf
-                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
-                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
-                                this_bitcell_overlap = this_bitcell_overlap .OR. BTEST(bitcell_int,bitcell_bit)
-                                ! Iteration 5
-                                sxp = sxcom + dscom_mat(1,5)
-                                syp = sycom + dscom_mat(2,5)
-                                szp = szcom + dscom_mat(3,5)
-                                IF (sxp < 0.0) sxp = sxp + 1.0
-                                IF (syp < 0.0) syp = syp + 1.0
-                                IF (szp < 0.0) szp = szp + 1.0
-                                IF (sxp >= 1.0) sxp = sxp - 1.0
-                                IF (syp >= 1.0) syp = syp - 1.0
-                                IF (szp >= 1.0) szp = szp - 1.0
-                                bitcell_bit = INT(sxp*xlbc)
-                                bitcell_int = ISHFT(bitcell_bit,-5) + &
-                                        INT(syp*ylbc)*ybcdf + &
-                                        INT(szp*zlbc)*zbcdf
-                                bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
-                                bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
-                                this_bitcell_overlap = this_bitcell_overlap .OR. BTEST(bitcell_int,bitcell_bit)
-                                ! Store result
-                                bitcell_overlap(itrial,1) = .NOT. this_bitcell_overlap
-                             END DO
-                             !$OMP END SIMD
+                             CALL Bitcell_Overlap_Detection(5,box_list(this_box)%bitcell_int32_vec)
                      CASE DEFAULT
-                             DO ia_frag = 1, frag_list(frag_start,is)%natoms
-                                     dsxcom = dscom_mat(1,ia_frag)
-                                     dsycom = dscom_mat(2,ia_frag)
-                                     dszcom = dscom_mat(3,ia_frag)
-                                     !DIR$ LOOP COUNT = 1000
-                                     !DIR$ VECTOR ALIGNED
-                                     !$OMP SIMD PRIVATE(sxp,syp,szp,bitcell_bit,bitcell_int) 
-                                     DO itrial = 1, kappa_ins
-                                        sxp = xyz_rand(itrial,1) + dsxcom
-                                        syp = xyz_rand(itrial,2) + dsycom
-                                        szp = xyz_rand(itrial,3) + dszcom
-                                        ! Note: it is important that the < checks and shifts come before the >= checks and shifts
-                                        !       due to floating point rounding.  It's fine for sxp, syp, or szp to be zero or even
-                                        !       just barely less than zero due to the behavior of INT(), but if they end up equal to
-                                        !       1.0, that can cause bitcell_int to be out of bounds or otherwise severely incorrect.
-                                        !       This was found out the hard way.
-                                        IF (sxp < 0.0) sxp = sxp + 1.0
-                                        IF (syp < 0.0) syp = syp + 1.0
-                                        IF (szp < 0.0) szp = szp + 1.0
-                                        IF (sxp >= 1.0) sxp = sxp - 1.0
-                                        IF (syp >= 1.0) syp = syp - 1.0
-                                        IF (szp >= 1.0) szp = szp - 1.0
-                                        bitcell_bit = INT(sxp*xlbc)
-                                        bitcell_int = ISHFT(bitcell_bit,-5) + &
-                                                INT(syp*ylbc)*ybcdf + &
-                                                INT(szp*zlbc)*zbcdf
-                                        bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
-                                        bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
-                                        bitcell_overlap(itrial,ia_frag) = BTEST(bitcell_int,bitcell_bit)
-                                     END DO
-                                     !$OMP END SIMD
-                             END DO
-                             bitcell_overlap(:,1) = .NOT. ANY( &
-                                     bitcell_overlap(:,1:frag_list(frag_start,is)%natoms),2) ! inverted so .FALSE. is overlap
+                             CALL Bitcell_Overlap_Detection(n_small_atoms,box_list(this_box)%bitcell_int32_vec)
                      END SELECT
-                     !DO ia_frag = 1, frag_list(frag_start,is)%natoms
-                     !        this_atom = frag_list(frag_start,is)%atoms(ia_frag)
-                     !        drxcom = drxcom_vec(ia_frag)
-                     !        drycom = drycom_vec(ia_frag)
-                     !        drzcom = drzcom_vec(ia_frag)
-                     !        IF (l_ortho) THEN
-                     !           dsxcom = REAL(drxcom / xl,4)
-                     !           dsycom = REAL(drycom / yl,4)
-                     !           dszcom = REAL(drzcom / zl,4)
-                     !           dscom = (/ dsxcom, dsycom, dszcom /)
-                     !        ELSE
-                     !           dscom = REAL(MATMUL(box_list(this_box)%length_inv, &
-                     !                   (/ drxcom, drycom, drzcom /)),4)
-                     !           dsxcom = dscom(1)
-                     !           dsycom = dscom(2)
-                     !           dszcom = dscom(3)
-                     !        END IF
-                     !        !!DIR$ LOOP COUNT = 1000
-                     !        !!DIR$ VECTOR ALIGNED
-                     !        !!$OMP SIMD PRIVATE(sxp,syp,szp,bitcell_bit,bitcell_int) 
-                     !        !DO itrial = 1, kappa_ins
-                     !        !   sxp = xyz_rand(itrial,1) + dsxcom
-                     !        !   syp = xyz_rand(itrial,2) + dsycom
-                     !        !   szp = xyz_rand(itrial,3) + dszcom
-                     !        !   ! Note: it is important that the < checks and shifts come before the >= checks and shifts
-                     !        !   !       due to floating point rounding.  It's fine for sxp, syp, or szp to be zero or even
-                     !        !   !       just barely less than zero due to the behavior of INT(), but if they end up equal to
-                     !        !   !       1.0, that can cause bitcell_int to be out of bounds or otherwise severely incorrect.
-                     !        !   !       This was found out the hard way.
-                     !        !   IF (sxp < 0.0) sxp = sxp + 1.0
-                     !        !   IF (syp < 0.0) syp = syp + 1.0
-                     !        !   IF (szp < 0.0) szp = szp + 1.0
-                     !        !   IF (sxp >= 1.0) sxp = sxp - 1.0
-                     !        !   IF (syp >= 1.0) syp = syp - 1.0
-                     !        !   IF (szp >= 1.0) szp = szp - 1.0
-                     !        !   bitcell_bit = INT(sxp*xlbc)
-                     !        !   bitcell_int = ISHFT(bitcell_bit,-5) + &
-                     !        !           INT(syp*ylbc)*ybcdf + &
-                     !        !           INT(szp*zlbc)*zbcdf
-                     !        !   bitcell_bit = IAND(bitcell_bit,MASKR(5,INT32)) ! same as modulo 32
-                     !        !   !IF (bitcell_int > UBOUND(box_list(this_box)%bitcell_int32_vec,1)) THEN
-                     !        !   !        WRITE(*,*) sxp, syp, szp, bitcell_bit
-                     !        !   !        WRITE(*,*) xlbc, ylbc, zlbc
-                     !        !   !        WRITE(*,*) ybcdf, zbcdf
-                     !        !   !        WRITE(*,*) bitcell_bit
-                     !        !   !END IF
-                     !        !   bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
-                     !        !   bitcell_overlap(itrial,ia_frag) = BTEST(bitcell_int,bitcell_bit)
-                     !        !END DO
-                     !        !!$OMP END SIMD
-                     !END DO
-                     !bitcell_overlap(:,1) = .NOT. ANY( &
-                     !        bitcell_overlap(:,1:frag_list(frag_start,is)%natoms),2) ! inverted so .FALSE. is overlap
                      n_good_trials = 0
                      !DIR$ LOOP COUNT = 1000
                      DO itrial = 1, kappa_ins
-                        IF (bitcell_overlap(itrial,1)) THEN
-                                n_good_trials = n_good_trials+1
-                                which_good_trials(n_good_trials) = itrial
-                                xyz_rand(n_good_trials,:) = xyz_rand(itrial,:)
-                        END IF
+                        IF (bitcell_overlap(itrial)) CYCLE
+                        n_good_trials = n_good_trials+1
+                        which_good_trials(n_good_trials) = itrial
+                        xyz_rand(n_good_trials,:) = xyz_rand(itrial,:)
                      END DO
                      IF (widom_timing) THEN
                              IF (.NOT. omp_flag) CALL cpu_time(t2)
@@ -1077,24 +692,25 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                      !DIR$ LOOP COUNT = 5
                      DO ia_frag = 1, frag_list(frag_start,is)%natoms
                              this_atom = frag_list(frag_start,is)%atoms(ia_frag)
-                             drxcom = drxcom_vec(ia_frag)
-                             drycom = drycom_vec(ia_frag)
-                             drzcom = drzcom_vec(ia_frag)
+                             drxref = drxref_vec(ia_frag)
+                             dryref = dryref_vec(ia_frag)
+                             drzref = drzref_vec(ia_frag)
                              IF (l_ortho) THEN
-                                dsxcom = REAL(drxcom / length_dp(1,1),4)
-                                dsycom = REAL(drycom / length_dp(2,2),4)
-                                dszcom = REAL(drzcom / length_dp(3,3),4)
-                                dscom = (/ dsxcom, dsycom, dszcom /)
+                                dsxref = REAL(drxref / length_dp(1,1),4)
+                                dsyref = REAL(dryref / length_dp(2,2),4)
+                                dszref = REAL(drzref / length_dp(3,3),4)
+                                dsref = (/ dsxref, dsyref, dszref /)
                              ELSE
-                                dscom = REAL(MATMUL(box_list(this_box)%length_inv, &
-                                        (/ drxcom, drycom, drzcom /)),4)
+                                dsref = REAL(MATMUL(box_list(this_box)%length_inv, &
+                                        (/ drxref, dryref, drzref /)),4)
                              END IF
                              DO i_dim = 1, 3
                                      rsl = MERGE(length_sp(i_dim,i_dim),1.0,l_ortho)
                                      hrsl = 0.5*rsl
                                      rlc = box_list(this_box)%real_length_cells(i_dim)
+                                     !DIR$ VECTOR ALIGNED
                                      DO itrial = 1, n_good_trials
-                                        rsp = xyz_rand(itrial,i_dim) + dscom(i_dim)
+                                        rsp = xyz_rand(itrial,i_dim) + dsref(i_dim)
                                         IF (rsp < 0.0) rsp = rsp + 1.0
                                         IF (rsp >= 1.0) rsp = rsp - 1.0
                                         trial_cell_coords(itrial,i_dim,ia_frag) = &
@@ -1104,6 +720,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                                      END DO
                              END DO
                              IF (.NOT. l_ortho) THEN
+                                     !DIR$ VECTOR ALIGNED
                                      DO itrial = 1, n_good_trials
                                         sxp = trial_atom_rp(itrial,1,ia_frag)
                                         rxp = length_sp(1,1)*sxp
@@ -1158,14 +775,6 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                                                 (cell_list_cbmc_nrg_time_e - cell_list_cbmc_nrg_time_s)
                                 END IF
                                 IF (nrg_sp > overlap_nrg_sp) CYCLE trial_loop
-                                !nrg_sp = 0.0
-                                !DO ia_frag = 1, frag_list(frag_start,is)%natoms
-                                !        ia = frag_list(frag_start,is)%atoms(ia_frag)
-                                !        this_atom_rp = trial_atom_rp(itrial,:,ia_frag)
-                                !        this_atom_ci = trial_cell_coords(itrial,:,ia_frag)
-                                !        nrg_sp = nrg_sp + Compute_Cell_List_CBMC_nrg(this_atom_rp(1:3),this_atom_ci,ia,is,this_box)
-                                !END DO
-                                !nrg_sp_vec(n_good_trials) = nrg_sp
                         END IF
                         n_good_trials = n_good_trials + 1
                         which_good_trials(n_good_trials) = MERGE(which_good_trials(itrial),itrial,l_get_bitcell)
@@ -1180,7 +789,6 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                              cell_list_ins_time = cell_list_ins_time + t12
                              cell_list_cbmc_nrg_ins_time = cell_list_cbmc_nrg_ins_time + cell_list_cbmc_nrg_time
                              cell_list_ins_checks = cell_list_ins_checks + n_good_trials_old
-                             !cell_list_cbmc_nrg_ins_checks = cell_list_cbmc_nrg_ins_checks + n_good_trials
                      END IF
                      IF (n_good_trials == 0) THEN
                         CALL Set_CBMC_Flag(.FALSE.)
@@ -1193,18 +801,42 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                              !$ noncell_cbmc_nrg_time_s = omp_get_wtime()
                              noncell_cbmc_nrg_time = 0.0_DP
                      END IF
-                     IF (l_widom_cells) THEN
+                     IF (l_widom_cavity_biasing) THEN
+                             !DIR$ VECTOR ALIGNED
                              DO itrial = 1, n_good_trials
                                 gtrial = which_good_trials(itrial)
-                                xcom_trial(itrial) = xyz_rand_dp(gtrial,1)*xl - hxl
-                                ycom_trial(itrial) = xyz_rand_dp(gtrial,2)*yl - hyl
-                                zcom_trial(itrial) = xyz_rand_dp(gtrial,3)*zl - hzl
+                                sxcom_dp = xyz_rand_dp(gtrial,1) - dscom_big_atom(1)
+                                sycom_dp = xyz_rand_dp(gtrial,2) - dscom_big_atom(2)
+                                szcom_dp = xyz_rand_dp(gtrial,3) - dscom_big_atom(3)
+                                IF (sxcom_dp < 0.0_DP) sxcom_dp = sxcom_dp + 1.0_DP
+                                IF (sxcom_dp >= 1.0_DP) sxcom_dp = sxcom_dp - 1.0_DP
+                                IF (sycom_dp < 0.0_DP) sycom_dp = sycom_dp + 1.0_DP
+                                IF (sycom_dp >= 1.0_DP) sycom_dp = sycom_dp - 1.0_DP
+                                IF (szcom_dp < 0.0_DP) szcom_dp = szcom_dp + 1.0_DP
+                                IF (szcom_dp >= 1.0_DP) szcom_dp = szcom_dp - 1.0_DP
+                                xcom_trial(itrial) = sxcom_dp*xl - hxl
+                                ycom_trial(itrial) = sycom_dp*yl - hyl
+                                zcom_trial(itrial) = szcom_dp*zl - hzl
+                             END DO
+                     ELSE IF (l_widom_cells) THEN
+                             !DIR$ VECTOR ALIGNED
+                             DO itrial = 1, n_good_trials
+                                gtrial = which_good_trials(itrial)
+                                sxcom_dp = xyz_rand_dp(gtrial,1)
+                                sycom_dp = xyz_rand_dp(gtrial,2)
+                                szcom_dp = xyz_rand_dp(gtrial,3)
+                                xcom_trial(itrial) = sxcom_dp*xl - hxl
+                                ycom_trial(itrial) = sycom_dp*yl - hyl
+                                zcom_trial(itrial) = szcom_dp*zl - hzl
                              END DO
                      ELSE
+                             !DIR$ VECTOR ALIGNED
                              xcom_trial(1:n_good_trials) = &
                                      xyz_rand_dp(1:n_good_trials,1)*xl - hxl
+                             !DIR$ VECTOR ALIGNED
                              ycom_trial(1:n_good_trials) = &
                                      xyz_rand_dp(1:n_good_trials,2)*yl - hyl
+                             !DIR$ VECTOR ALIGNED
                              zcom_trial(1:n_good_trials) = &
                                      xyz_rand_dp(1:n_good_trials,3)*zl - hzl
                      END IF
@@ -1220,29 +852,69 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                              !$ noncell_cbmc_nrg_time_s = omp_get_wtime()
                              noncell_cbmc_nrg_time = 0.0_DP
                      END IF
-                     DO itrial = 1, n_good_trials
-                        ! make sure optimization takes conditional out of loop
-                        IF (l_widom_cells) THEN
+                     IF (l_widom_cavity_biasing) THEN
+                             !DIR$ VECTOR ALIGNED
+                             DO itrial = 1, n_good_trials
                                 gtrial = which_good_trials(itrial)
-                        ELSE
-                                gtrial = itrial
-                        END IF
-                        isp = xyz_rand_dp(gtrial,1) - 0.5_DP
-                        x_anchor = length_dp(1,1)*isp
-                        y_anchor = length_dp(2,1)*isp
-                        z_anchor = length_dp(3,1)*isp
-                        isp = xyz_rand_dp(gtrial,2) - 0.5_DP
-                        x_anchor = x_anchor + length_dp(1,2)*isp
-                        y_anchor = y_anchor + length_dp(2,2)*isp
-                        z_anchor = z_anchor + length_dp(3,2)*isp
-                        isp = xyz_rand_dp(gtrial,3) - 0.5_DP
-                        x_anchor = x_anchor + length_dp(1,3)*isp
-                        y_anchor = y_anchor + length_dp(2,3)*isp
-                        z_anchor = z_anchor + length_dp(3,3)*isp
-                        xcom_trial(itrial) = x_anchor
-                        ycom_trial(itrial) = y_anchor
-                        zcom_trial(itrial) = z_anchor
-                     END DO
+                                isp = xyz_rand_dp(gtrial,1) - 0.5_DP - dscom_big_atom(1)
+                                IF (ABS(isp) > 0.5_DP) isp = isp - SIGN(1.0_DP,isp)
+                                x_anchor = length_dp(1,1)*isp
+                                y_anchor = length_dp(2,1)*isp
+                                z_anchor = length_dp(3,1)*isp
+                                isp = xyz_rand_dp(gtrial,2) - 0.5_DP - dscom_big_atom(2)
+                                IF (ABS(isp) > 0.5_DP) isp = isp - SIGN(1.0_DP,isp)
+                                x_anchor = x_anchor + length_dp(1,2)*isp
+                                y_anchor = y_anchor + length_dp(2,2)*isp
+                                z_anchor = z_anchor + length_dp(3,2)*isp
+                                isp = xyz_rand_dp(gtrial,3) - 0.5_DP - dscom_big_atom(3)
+                                IF (ABS(isp) > 0.5_DP) isp = isp - SIGN(1.0_DP,isp)
+                                x_anchor = x_anchor + length_dp(1,3)*isp
+                                y_anchor = y_anchor + length_dp(2,3)*isp
+                                z_anchor = z_anchor + length_dp(3,3)*isp
+                                xcom_trial(itrial) = x_anchor
+                                ycom_trial(itrial) = y_anchor
+                                zcom_trial(itrial) = z_anchor
+                             END DO
+                     ELSE IF (l_widom_cells) THEN
+                             !DIR$ VECTOR ALIGNED
+                             DO itrial = 1, n_good_trials
+                                gtrial = which_good_trials(itrial)
+                                isp = xyz_rand_dp(gtrial,1) - 0.5_DP
+                                x_anchor = length_dp(1,1)*isp
+                                y_anchor = length_dp(2,1)*isp
+                                z_anchor = length_dp(3,1)*isp
+                                isp = xyz_rand_dp(gtrial,2) - 0.5_DP
+                                x_anchor = x_anchor + length_dp(1,2)*isp
+                                y_anchor = y_anchor + length_dp(2,2)*isp
+                                z_anchor = z_anchor + length_dp(3,2)*isp
+                                isp = xyz_rand_dp(gtrial,3) - 0.5_DP
+                                x_anchor = x_anchor + length_dp(1,3)*isp
+                                y_anchor = y_anchor + length_dp(2,3)*isp
+                                z_anchor = z_anchor + length_dp(3,3)*isp
+                                xcom_trial(itrial) = x_anchor
+                                ycom_trial(itrial) = y_anchor
+                                zcom_trial(itrial) = z_anchor
+                             END DO
+                     ELSE
+                             !DIR$ VECTOR ALIGNED
+                             DO itrial = 1, n_good_trials
+                                isp = xyz_rand_dp(itrial,1) - 0.5_DP
+                                x_anchor = length_dp(1,1)*isp
+                                y_anchor = length_dp(2,1)*isp
+                                z_anchor = length_dp(3,1)*isp
+                                isp = xyz_rand_dp(itrial,2) - 0.5_DP
+                                x_anchor = x_anchor + length_dp(1,2)*isp
+                                y_anchor = y_anchor + length_dp(2,2)*isp
+                                z_anchor = z_anchor + length_dp(3,2)*isp
+                                isp = xyz_rand_dp(itrial,3) - 0.5_DP
+                                x_anchor = x_anchor + length_dp(1,3)*isp
+                                y_anchor = y_anchor + length_dp(2,3)*isp
+                                z_anchor = z_anchor + length_dp(3,3)*isp
+                                xcom_trial(itrial) = x_anchor
+                                ycom_trial(itrial) = y_anchor
+                                zcom_trial(itrial) = z_anchor
+                             END DO
+                     END IF
                      IF (widom_timing) THEN
                              IF (.NOT. omp_flag) CALL cpu_time(noncell_cbmc_nrg_time_e)
                              !$ noncell_cbmc_nrg_time_e = omp_get_wtime()
@@ -1333,30 +1005,20 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
                 RETURN
              END IF
 
+             !DIR$ VECTOR ALIGNED
              DO itrial = 1, n_good_trials
                 nrg_dp = nrg(itrial)
                 weight(itrial) = MERGE(0.0_DP,EXP(-beta(this_box)*nrg_dp),overlap_trial(itrial))
-                !IF (overlap_trial(itrial)) THEN
-                !        weight(itrial) = 0.0_DP
-                !ELSE
-                !        weight(itrial) = EXP(-beta(this_box)*nrg_dp)
-                !END IF
              END DO
      ELSE
+             !DIR$ VECTOR ALIGNED
              !$OMP SIMD PRIVATE(nrg_dp,overlap)
              DO itrial = 1, n_good_trials
                 nrg_dp = REAL(nrg_sp_vec(itrial),DP)
                 nrg(itrial) = nrg_dp
-                !overlap = nrg_dp >= overlap_nrg
-                !cbmc_overlap = cbmc_overlap .AND. overlap
                 weight(itrial) = EXP(-beta(this_box)*nrg_dp)
              END DO
              !$OMP END SIMD
-             !! Reject the move if all trials tripped overlap
-             !IF (cbmc_overlap) THEN
-             !   CALL Set_CBMC_Flag(.FALSE.)
-             !   RETURN
-             !END IF
      END IF
      IF (widom_timing) THEN
           IF (.NOT. omp_flag) CALL CPU_TIME(cbmc_time_e2)
@@ -1406,6 +1068,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
 
      ! Compute the weight of the selected trial coordinate
      ln_pbias = ln_pbias - beta(this_box) * nrg(trial) - DLOG(cweight)
+     IF (l_widom_cavity_biasing) ln_pbias = ln_pbias - cavdatalist(i_big_atom,this_box)%ln_cavfrac
   
      ! This line is not used
      !e_total = nrg(trial)
@@ -1429,11 +1092,33 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
              END DO
      ELSE
              IF (l_ortho) THEN
-                     this_molecule%rcom(1:3) = (xyz_rand_dp(which_good_trials(trial),1:3) - 0.5_DP) * &
-                             (/ length_dp(1,1) , length_dp(2,2), length_dp(3,3) /)
+                     IF (l_widom_cavity_biasing) THEN
+                             this_molecule%rcom(1:3) = &
+                                     (xyz_rand_dp(which_good_trials(trial),1:3) - 0.5_DP - dscom_big_atom)
+                             this_molecule%rcom(1:3) = MERGE(&
+                                     this_molecule%rcom(1:3) - SIGN(1.0_DP,this_molecule%rcom(1:3)), &
+                                     this_molecule%rcom(1:3), &
+                                     ABS(this_molecule%rcom(1:3)) > 0.5_DP)
+                             this_molecule%rcom(1:3) = this_molecule%rcom(1:3) * &
+                                     (/ length_dp(1,1) , length_dp(2,2), length_dp(3,3) /)
+                     ELSE
+                             this_molecule%rcom(1:3) = (xyz_rand_dp(which_good_trials(trial),1:3) - 0.5_DP) * &
+                                     (/ length_dp(1,1) , length_dp(2,2), length_dp(3,3) /)
+                     END IF
              ELSE
-                     this_molecule%rcom(1:3) = MATMUL(length_dp, &
-                             xyz_rand_dp(which_good_trials(trial),1:3) - 0.5_DP)
+                     IF (l_widom_cavity_biasing) THEN
+                             this_molecule%rcom(1:3) = &
+                                     (xyz_rand_dp(which_good_trials(trial),1:3) - 0.5_DP - dscom_big_atom)
+                             this_molecule%rcom(1:3) = MERGE(&
+                                     this_molecule%rcom(1:3) - SIGN(1.0_DP,this_molecule%rcom(1:3)), &
+                                     this_molecule%rcom(1:3), &
+                                     ABS(this_molecule%rcom(1:3)) > 0.5_DP)
+                             this_molecule%rcom(1:3) = MATMUL(length_dp, &
+                                     this_molecule%rcom(1:3))
+                     ELSE
+                             this_molecule%rcom(1:3) = MATMUL(length_dp, &
+                                     xyz_rand_dp(which_good_trials(trial),1:3) - 0.5_DP)
+                     END IF
              END IF
              DO i = 1, frag_list(frag_start,is)%natoms
                 this_atom = frag_list(frag_start,is)%atoms(i)
@@ -1525,6 +1210,68 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   ! are properly computed for the molecule
 
   CALL Set_CBMC_Flag(.FALSE.)
+
+  CONTAINS
+          SUBROUTINE Bitcell_Overlap_Detection(nsa,bitcell_int32_vec)
+                  !DIR$ ATTRIBUTES FORCEINLINE :: Bitcell_Overlap_Detection
+                  INTEGER, INTENT(IN) :: nsa
+                  INTEGER(INT32), DIMENSION(0:), CONTIGUOUS, INTENT(IN) :: bitcell_int32_vec
+                  INTEGER :: isa
+                  REAL(SP) :: sxref, syref, szref
+                  !DIR$ LOOP COUNT = 1000
+                  !DIR$ VECTOR ALIGNED
+                  !$OMP SIMD PRIVATE(sxp,syp,szp,bitcell_bit,bitcell_int,this_bitcell_overlap,sxref,syref,szref) 
+                  DO itrial = 1, kappa_ins
+                     sxref = xyz_rand(itrial,1)
+                     syref = xyz_rand(itrial,2)
+                     szref = xyz_rand(itrial,3)
+                     sxp = sxref + dsref_mat(1,1)
+                     syp = syref + dsref_mat(2,1)
+                     szp = szref + dsref_mat(3,1)
+                     ! Note: it is important that the < checks and shifts come before the >= checks and shifts
+                     !       due to floating point rounding.  It's fine for sxp, syp, or szp to be zero or even
+                     !       just barely less than zero due to the behavior of INT(), but if they end up equal to
+                     !       1.0, that can cause bitcell_int to be out of bounds or otherwise severely incorrect.
+                     !       This was found out the hard way.
+                     IF (sxp < 0.0) sxp = sxp + 1.0
+                     IF (syp < 0.0) syp = syp + 1.0
+                     IF (szp < 0.0) szp = szp + 1.0
+                     IF (sxp >= 1.0) sxp = sxp - 1.0
+                     IF (syp >= 1.0) syp = syp - 1.0
+                     IF (szp >= 1.0) szp = szp - 1.0
+                     bitcell_bit = INT(sxp*xlbc)
+                     bitcell_int = ISHFT(bitcell_bit,-5) + &
+                             INT(syp*ylbc)*ybcdf + &
+                             INT(szp*zlbc)*zbcdf
+                     bitcell_bit = IAND(bitcell_bit,31_INT32) ! same as modulo 32
+                     !bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
+                     bitcell_int = bitcell_int32_vec(bitcell_int)
+                     this_bitcell_overlap = BTEST(bitcell_int,bitcell_bit)
+                     ! Iteration 2+
+                     DO isa = 2, nsa
+                             sxp = sxref + dsref_mat(1,isa)
+                             syp = syref + dsref_mat(2,isa)
+                             szp = szref + dsref_mat(3,isa)
+                             IF (sxp < 0.0) sxp = sxp + 1.0
+                             IF (syp < 0.0) syp = syp + 1.0
+                             IF (szp < 0.0) szp = szp + 1.0
+                             IF (sxp >= 1.0) sxp = sxp - 1.0
+                             IF (syp >= 1.0) syp = syp - 1.0
+                             IF (szp >= 1.0) szp = szp - 1.0
+                             bitcell_bit = INT(sxp*xlbc)
+                             bitcell_int = ISHFT(bitcell_bit,-5) + &
+                                     INT(syp*ylbc)*ybcdf + &
+                                     INT(szp*zlbc)*zbcdf
+                             bitcell_bit = IAND(bitcell_bit,31_INT32) ! same as modulo 32
+                             bitcell_int = bitcell_int32_vec(bitcell_int)
+                             !bitcell_int = box_list(this_box)%bitcell_int32_vec(bitcell_int)
+                             this_bitcell_overlap = this_bitcell_overlap .OR. BTEST(bitcell_int,bitcell_bit)
+                     END DO
+                     ! Store result
+                     bitcell_overlap(itrial) = this_bitcell_overlap
+                  END DO
+                  !$OMP END SIMD
+          END SUBROUTINE Bitcell_Overlap_Detection
   
 END SUBROUTINE Build_Molecule
 

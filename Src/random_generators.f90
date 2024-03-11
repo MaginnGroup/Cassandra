@@ -235,6 +235,335 @@ SUBROUTINE vector_rranf(rranf_vec)
 
 END SUBROUTINE vector_rranf
 
+SUBROUTINE cavity_biased_rranf(rranf_arr,i_big_atom,ibox)
+
+        USE Global_Variables, ONLY: box_list, cavdatalist
+
+        IMPLICIT NONE
+
+        INTEGER (KIND=INT64) :: b
+        REAL(DP), DIMENSION(:,:), CONTIGUOUS, INTENT(OUT) :: rranf_arr
+        INTEGER, INTENT(IN) :: i_big_atom, ibox
+        REAL(DP) :: lbcr(3), cavxyzloc, ncavs_dp
+        INTEGER :: vec_len, lenmod4, i, j, jmax
+        INTEGER(INT64) :: s1,s2,s3,s4,s5,intres
+        INTEGER(INT64) :: cavloc, ncavs
+
+        vec_len = SIZE(rranf_arr,1)
+        jmax = ISHFT(vec_len,-2)-1
+        lenmod4 = IAND(vec_len,4_INT32)
+
+        ncavs_dp = cavdatalist(i_big_atom,ibox)%ncavs_dp
+        lbcr = 1.0_DP/REAL(box_list(ibox)%length_bitcells,DP)
+
+        ncavs = cavdatalist(i_big_atom,ibox)%ncavs
+        IF (LEADZ(ncavs)>32) THEN
+                !DIR$ VECTOR ALIGNED
+                !$OMP SIMD PRIVATE(b,s1,s2,s3,s4,s5,intres,cavloc,cavxyzloc) SAFELEN(4)
+                DO i = 1, 4
+                        s1 = s_arr(i,1)
+                        s2 = s_arr(i,2)
+                        s3 = s_arr(i,3)
+                        s4 = s_arr(i,4)
+                        s5 = s_arr(i,5)
+                        !DIR$ LOOP COUNT = 256
+                        DO j = 0, jmax
+                                b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
+                                s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                                b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
+                                s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                                intres = IEOR(s1,s2)
+                                b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
+                                s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                                intres = IEOR(intres,s3)
+                                b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
+                                s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                                intres = IEOR(intres,s4)
+                                b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
+                                s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                                intres = IEOR(intres,s5)
+                                cavloc = INT(INT(&
+                                        TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)*ncavs_dp-ncavs_dp,&
+                                        INT32),INT64)
+                                !cavloc = TRANSFER( MAX(&
+                                !        TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)*ncavs_dp-ncavs_dp,&
+                                !        0.25_DP),cavloc)
+                                !cavloc = ISHFT(&
+                                !        IOR(ISHFT(1_INT64,52),IAND(cavloc,MASKR(52,INT64))),&
+                                !        ISHFT(cavloc,-52)-1075_INT64)
+                                cavloc = cavdatalist(i_big_atom,ibox)%cavity_locs(cavloc)
+
+
+
+
+                                b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
+                                s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                                b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
+                                s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                                intres = IEOR(s1,s2)
+                                b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
+                                s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                                intres = IEOR(intres,s3)
+                                b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
+                                s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                                intres = IEOR(intres,s4)
+                                b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
+                                s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                                intres = IEOR(intres,s5)
+                                cavxyzloc = REAL(INT(IAND(cavloc,MASKR(21,INT64))-1_INT64,INT32),DP)
+                                cavloc = ISHFT(cavloc,-21)
+
+                                ! We don't use the following line because conversion from INT64 to DP is not vectorized well unless
+                                ! you have AVX-512, which we don't, and neither do any AMD processors, currently.
+                                !rranf_vec(j*4+i) = IEOR( IEOR( IEOR( IEOR(s1,s2), s3), s4), s5)*5.4210108624275221E-20_DP + 0.5_DP
+                                !intres = IEOR(IEOR(IEOR(IEOR(s1,s2),s3),s4),s5)
+                                rranf_arr(j*4+i,1) = (TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)+cavxyzloc)*lbcr(1)
+                                !rranf_arr(j*4+i,1) = TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)-1.0_DP
+
+
+                                b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
+                                s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                                b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
+                                s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                                intres = IEOR(s1,s2)
+                                b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
+                                s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                                intres = IEOR(intres,s3)
+                                b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
+                                s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                                intres = IEOR(intres,s4)
+                                b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
+                                s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                                intres = IEOR(intres,s5)
+                                cavxyzloc = REAL(INT(IAND(cavloc,MASKR(21,INT64))-1_INT64,INT32),DP)
+                                cavloc = ISHFT(cavloc,-21)
+                                rranf_arr(j*4+i,2) = (TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)+cavxyzloc)*lbcr(2)
+                                !rranf_arr(j*4+i,2) = TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)-1.0_DP
+
+                                b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
+                                s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                                b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
+                                s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                                intres = IEOR(s1,s2)
+                                b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
+                                s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                                intres = IEOR(intres,s3)
+                                b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
+                                s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                                intres = IEOR(intres,s4)
+                                b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
+                                s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                                intres = IEOR(intres,s5)
+                                cavxyzloc = REAL(INT(IAND(cavloc,MASKR(21,INT64))-1_INT64,INT32),DP)
+                                rranf_arr(j*4+i,3) = (TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)+cavxyzloc)*lbcr(3)
+                        END DO
+                        s_arr(i,1) = s1
+                        s_arr(i,2) = s2
+                        s_arr(i,3) = s3
+                        s_arr(i,4) = s4
+                        s_arr(i,5) = s5
+                END DO
+                !$OMP END SIMD
+        ELSE
+                !DIR$ VECTOR ALIGNED
+                !$OMP SIMD PRIVATE(b,s1,s2,s3,s4,s5,intres,cavloc,cavxyzloc) SAFELEN(4)
+                DO i = 1, 4
+                        s1 = s_arr(i,1)
+                        s2 = s_arr(i,2)
+                        s3 = s_arr(i,3)
+                        s4 = s_arr(i,4)
+                        s5 = s_arr(i,5)
+                        !DIR$ LOOP COUNT = 256
+                        DO j = 0, jmax
+                                b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
+                                s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                                b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
+                                s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                                intres = IEOR(s1,s2)
+                                b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
+                                s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                                intres = IEOR(intres,s3)
+                                b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
+                                s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                                intres = IEOR(intres,s4)
+                                b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
+                                s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                                intres = IEOR(intres,s5)
+                                cavloc = INT(TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)*ncavs_dp-ncavs_dp,INT64)
+                                !cavloc = TRANSFER( MAX(&
+                                !        TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)*ncavs_dp-ncavs_dp,&
+                                !        0.25_DP),cavloc)
+                                !cavloc = ISHFT(&
+                                !        IOR(ISHFT(1_INT64,52),IAND(cavloc,MASKR(52,INT64))),&
+                                !        ISHFT(cavloc,-52)-1075_INT64)
+                                cavloc = cavdatalist(i_big_atom,ibox)%cavity_locs(cavloc)
+
+
+
+
+                                b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
+                                s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                                b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
+                                s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                                intres = IEOR(s1,s2)
+                                b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
+                                s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                                intres = IEOR(intres,s3)
+                                b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
+                                s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                                intres = IEOR(intres,s4)
+                                b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
+                                s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                                intres = IEOR(intres,s5)
+                                cavxyzloc = REAL(INT(IAND(cavloc,MASKR(21,INT64))-1_INT64,INT32),DP)
+                                cavloc = ISHFT(cavloc,-21)
+
+                                ! We don't use the following line because conversion from INT64 to DP is not vectorized well unless
+                                ! you have AVX-512, which we don't, and neither do any AMD processors, currently.
+                                !rranf_vec(j*4+i) = IEOR( IEOR( IEOR( IEOR(s1,s2), s3), s4), s5)*5.4210108624275221E-20_DP + 0.5_DP
+                                !intres = IEOR(IEOR(IEOR(IEOR(s1,s2),s3),s4),s5)
+                                rranf_arr(j*4+i,1) = (TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)+cavxyzloc)*lbcr(1)
+                                !rranf_arr(j*4+i,1) = TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)-1.0_DP
+
+
+                                b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
+                                s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                                b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
+                                s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                                intres = IEOR(s1,s2)
+                                b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
+                                s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                                intres = IEOR(intres,s3)
+                                b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
+                                s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                                intres = IEOR(intres,s4)
+                                b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
+                                s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                                intres = IEOR(intres,s5)
+                                cavxyzloc = REAL(INT(IAND(cavloc,MASKR(21,INT64))-1_INT64,INT32),DP)
+                                cavloc = ISHFT(cavloc,-21)
+                                rranf_arr(j*4+i,2) = (TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)+cavxyzloc)*lbcr(2)
+                                !rranf_arr(j*4+i,2) = TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)-1.0_DP
+
+                                b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
+                                s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                                b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
+                                s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                                intres = IEOR(s1,s2)
+                                b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
+                                s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                                intres = IEOR(intres,s3)
+                                b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
+                                s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                                intres = IEOR(intres,s4)
+                                b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
+                                s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                                intres = IEOR(intres,s5)
+                                cavxyzloc = REAL(INT(IAND(cavloc,MASKR(21,INT64))-1_INT64,INT32),DP)
+                                rranf_arr(j*4+i,3) = (TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)+cavxyzloc)*lbcr(3)
+                        END DO
+                        s_arr(i,1) = s1
+                        s_arr(i,2) = s2
+                        s_arr(i,3) = s3
+                        s_arr(i,4) = s4
+                        s_arr(i,5) = s5
+                END DO
+                !$OMP END SIMD
+        END IF
+
+        !$DIR ASSUME (lenmod4 < 4)
+        DO i = 1, lenmod4
+                s1 = s_arr(i,1)
+                s2 = s_arr(i,2)
+                s3 = s_arr(i,3)
+                s4 = s_arr(i,4)
+                s5 = s_arr(i,5)
+                b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
+                s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
+                s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                intres = IEOR(s1,s2)
+                b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
+                s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                intres = IEOR(intres,s3)
+                b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
+                s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                intres = IEOR(intres,s4)
+                b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
+                s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                intres = IEOR(intres,s5)
+                cavloc = INT(TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)*ncavs_dp-ncavs_dp,INT64)
+                cavloc = cavdatalist(i_big_atom,ibox)%cavity_locs(cavloc)
+
+
+
+
+                b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
+                s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
+                s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                intres = IEOR(s1,s2)
+                b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
+                s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                intres = IEOR(intres,s3)
+                b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
+                s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                intres = IEOR(intres,s4)
+                b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
+                s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                intres = IEOR(intres,s5)
+                cavxyzloc = REAL(INT(IAND(cavloc,MASKR(21,INT64))-1_INT64,INT32),DP)
+                cavloc = ISHFT(cavloc,-21)
+
+                rranf_arr((jmax+1)*4+i,1) = (TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)+cavxyzloc)*lbcr(1)
+                !rranf_arr(j*4+i,1) = TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)-1.0_DP
+
+
+                b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
+                s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
+                s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                intres = IEOR(s1,s2)
+                b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
+                s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                intres = IEOR(intres,s3)
+                b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
+                s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                intres = IEOR(intres,s4)
+                b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
+                s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                intres = IEOR(intres,s5)
+                cavxyzloc = REAL(INT(IAND(cavloc,MASKR(21,INT64))-1_INT64,INT32),DP)
+                cavloc = ISHFT(cavloc,-21)
+                rranf_arr((jmax+1)*4+i,2) = (TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)+cavxyzloc)*lbcr(2)
+                !rranf_arr(j*4+i,2) = TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)-1.0_DP
+
+                b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
+                s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
+                s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                intres = IEOR(s1,s2)
+                b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
+                s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                intres = IEOR(intres,s3)
+                b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
+                s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                intres = IEOR(intres,s4)
+                b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
+                s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                intres = IEOR(intres,s5)
+                cavxyzloc = REAL(INT(IAND(cavloc,MASKR(21,INT64))-1_INT64,INT32),DP)
+                rranf_arr((jmax+1)*4+i,3) = (TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)+cavxyzloc)*lbcr(3)
+                s_arr(i,1) = s1
+                s_arr(i,2) = s2
+                s_arr(i,3) = s3
+                s_arr(i,4) = s4
+                s_arr(i,5) = s5
+        END DO
+
+END SUBROUTINE cavity_biased_rranf
+
+
 
 SUBROUTINE array_boxscan_rranf(rranf_arr,kappa_ins)
 
