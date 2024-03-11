@@ -687,7 +687,7 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   REAL(DP) :: noncell_cbmc_nrg_ins_time, rng_ins_time, cbmc_setup_ins_time
   REAL(DP) :: cbmc_returnzone_ins_time, cbmc_endzone_ins_time
   REAL(DP) :: cbmc_fragment_placement_time, cbmc_dih_time, bitcell_overlap_ins_time
-  REAL(DP) :: widom_ewald_recip_time
+  REAL(DP) :: widom_ewald_recip_time, total_cbmc_time
   INTEGER(INT64) :: cbmc_nonoverlap_ins_count, cbmc_dih_count, bitcell_overlap_ins_checks
   INTEGER(INT64) :: cell_list_ins_checks, cell_list_cbmc_nrg_ins_checks, bitcell_overlap_ins_overlaps
   INTEGER(INT64) :: nrg_ins_overlaps

@@ -1223,7 +1223,7 @@ CONTAINS
                                 CLOSE(2777)
                                 OPEN(2777,file=TRIM(TRIM(run_name) // '.bitcell_int32_vec'))
                                 DO i = 0, vlen-1
-                                        WRITE(2777,'(I)') box_list(ibox)%bitcell_int32_vec(i)
+                                        WRITE(2777,*) box_list(ibox)%bitcell_int32_vec(i)
                                 END DO
                                 CLOSE(2777)
                         END IF

@@ -69,7 +69,7 @@ libgmxfortpath = ${locallib}/libgmxfort.so
 LIBS = -I${localdir}/include -L${locallib} -lgmxfort # `pkg-config --cflags --libs libgmxfort`
 INCS = -I${localdir}/include -L${locallib} -lgmxfort # `pkg-config --cflags --libs libgmxfort`
 #
-F90FLAGS = -c -ffree-line-length-none -fopenmp -O3
+F90FLAGS = -c -ffree-line-length-none -fno-range-check -fopenmp -O3
 LINKFLAGS = -fopenmp -Wl,-rpath,${locallib}
 
 

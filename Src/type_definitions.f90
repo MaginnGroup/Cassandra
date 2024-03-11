@@ -57,8 +57,10 @@ MODULE Type_Definitions
   INTEGER, PARAMETER :: DP = REAL64
 
   ! Define REAL type infinity using hexadecimal literal constants
-  REAL(REAL32), PARAMETER :: infinity_sp = REAL(Z'7F800000',REAL32)
-  REAL(REAL64), PARAMETER :: infinity_dp = REAL(Z'7FF0000000000000',REAL64)
+  !REAL(REAL32), PARAMETER :: infinity_sp = REAL(Z'7F800000',REAL32)
+  !REAL(REAL64), PARAMETER :: infinity_dp = REAL(Z'7FF0000000000000',REAL64)
+  REAL(REAL32), PARAMETER :: infinity_sp = Z'7F800000'
+  REAL(REAL64), PARAMETER :: infinity_dp = Z'7FF0000000000000'
 
   ! Specify the limits on the parameters for various intramolecular function classes
   INTEGER, PARAMETER :: max_bond_params = 5
@@ -159,8 +161,8 @@ MODULE Type_Definitions
      REAL(SP), DIMENSION(:,:), ALLOCATABLE :: sincos_lintheta_sp
 
      CONTAINS
-             PROCEDURE setup_CBMC_kappas => Setup_Species_kappas
-             PROCEDURE write_CBMC_kappas => Write_Species_kappas
+             PROCEDURE :: setup_CBMC_kappas => Setup_Species_kappas
+             PROCEDURE :: write_CBMC_kappas => Write_Species_kappas
 
   END TYPE Species_Class
   !****************************************************************************
