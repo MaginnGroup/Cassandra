@@ -144,12 +144,15 @@ file name suffix. The following are generated:
   written, then the coordinates of molecule 2 of species 1 are written, etc.
   After all the coordinates of the molecules of species 1 are written, the
   coordinates of the molecules of species 2 are written, etc. You can use this
-  file to do all your structural analysis and post processing.  The element symbol
+  file to do all your structural analysis and post processing.  The order of
+  atoms for a given molecule is the same as the order specified in the MCF file.
+  The element symbol
   for each atom is given in the first column.  All coordinates are in Angstroms.
   When Cassandra reads this kind of file, the element symbol column must be present
-  but its contents are ignored, so writing a filler value such as ``X`` for the
-  element symbol for each atom would also be appropriate if writing the actual
-  element symbol is inconvenient.
+  but its contents are ignored, as the element information is read from the MCF file. 
+  This might be useful in helper tools such as the LAMMPS trajectory converter  :ref:`sec:lammpstrjconvert` , which 
+  uses filler values, such as ``X``, to translate from trajectory formats that
+  do not specify elements.
 
 .. note::
     Note that if you generate your initial configuration using the ``make_config``
@@ -226,8 +229,9 @@ file name suffix. The following are generated:
 * **rminsq file** (``*.rminsq`` ``*.rminsq#``): This file stores the 
   intermolecular atom pair-specific overlap radii estimated with a
   given tolerance.  The first line shows the tolerance used to estimate
-  these values.  The second line shows ``rcut_lowsq`` (the square of the basic
-  :math:`r_{min}`, ``rsqmin_step``, and ``rsqmin_res``
+  these values.  The second line shows the values of ``rcut_lowsq`` (the square of the basic
+  :math:`r_{min}`, ``rsqmin_step`` (the bin width for all atom pair histograms), and ``rsqmin_res``
+  (the number of bins for each atom pair histogram) 
   specified in section ``# Rcutoff_Low`` of the input file used to generate
   the ``.rminsq`` file as described in :ref:`sec:minimum_cutoff`.
   The third line shows the dimensions of the array of atom pair overlap radii,
