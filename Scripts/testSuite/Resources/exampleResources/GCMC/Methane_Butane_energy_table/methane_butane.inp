@@ -1,0 +1,113 @@
+! This is the input file for a GCMC simulation of a mixture of CH4 and C4H10 at 300.0 K.
+
+# Run_Name
+methane_butane.out
+!--------------
+
+# Verbose_Log
+false
+!--------------
+
+# Sim_Type
+gcmc
+!---------------
+
+# Nbr_Species
+2
+!----------------
+
+# VDW_Style
+lj cut_tail 13.0
+!----------------
+
+# Seed_Info
+458797021 597632321
+!-------------------
+
+# Rcutoff_Low
+1.0
+!----------------
+
+# Pair_Energy
+true
+!-----------
+
+# Molecule_Files
+CH4.mcf 300
+C4H10.mcf 300
+!------------------------
+
+# Box_Info
+1
+cubic
+100.0
+!-------------------------
+
+# Temperature_Info
+300.0 
+!------------------
+
+# Chemical_Potential_Info
+-35.41  -37.0
+!------------------------
+
+# Move_Probability_Info
+
+# Prob_Translation
+0.2
+2.0  2.0
+
+# Prob_Rotation
+0.2
+0.0  180.0
+
+# Prob_Regrowth
+0.2
+0.0 1.0
+
+# Prob_Insertion
+0.20
+cbmc cbmc
+
+# Prob_Deletion
+0.20
+
+# Done_Probability_Info
+!----------------------
+
+# Start_Type
+make_config 10 90
+!------------------
+
+# Run_Type
+equilibration   600  
+!------------------
+
+# Simulation_Length_Info
+units      steps
+prop_freq    500
+coord_freq   25000
+run          50000
+!----------------------------
+
+# Property_Info 1 
+energy_total
+nmols
+pressure
+mass_density
+!----------------
+
+# Fragment_Files
+species1/frag1/frag1.dat  1
+species2/frag1/frag1.dat  2
+species2/frag2/frag2.dat  3
+!---------------------------------------------------------one line per fragment
+
+# CBMC_Info
+kappa_ins 12
+kappa_dih 10
+rcut_cbmc 6.5 
+energy_table 16384
+!------------
+
+END

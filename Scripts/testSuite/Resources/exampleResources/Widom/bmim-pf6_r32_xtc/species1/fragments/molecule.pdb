@@ -1,0 +1,56 @@
+REMARK   1 CREATED WITH MDTraj 1.9.5, 2021-05-27
+CRYST1  100.000  100.000  100.000  90.00  90.00  90.00 P 1           1 
+MODEL        0
+ATOM      1  C   RES A   0      99.980   0.050   0.000  1.00  0.00           C  
+ATOM      2  N   RES A   0     101.350  -0.050   0.030  1.00  0.00           N  
+ATOM      3  C1  RES A   0     101.890   1.210   0.000  1.00  0.00           C  
+ATOM      4  C2  RES A   0     100.870   2.130   0.000  1.00  0.00           C  
+ATOM      5  N1  RES A   0      99.720   1.390   0.000  1.00  0.00           N  
+ATOM      6  H   RES A   0     102.960   1.370  -0.010  1.00  0.00           H  
+ATOM      7  H1  RES A   0      99.280  -0.770  -0.010  1.00  0.00           H  
+ATOM      8  H2  RES A   0     100.890   3.210  -0.010  1.00  0.00           H  
+ATOM      9  C3  RES A   0     102.130  -1.280   0.000  1.00  0.00           C  
+ATOM     10  H3  RES A   0     103.090  -1.130   0.510  1.00  0.00           H  
+ATOM     11  H4  RES A   0     102.320  -1.570  -1.030  1.00  0.00           H  
+ATOM     12  H5  RES A   0     101.590  -2.080   0.520  1.00  0.00           H  
+ATOM     13  C4  RES A   0      98.370   1.940   0.000  1.00  0.00           C  
+ATOM     14  H6  RES A   0      97.840   1.570   0.880  1.00  0.00           H  
+ATOM     15  H7  RES A   0      97.840   1.570  -0.890  1.00  0.00           H  
+ATOM     16  C5  RES A   0      98.350   3.480   0.000  1.00  0.00           C  
+ATOM     17  H8  RES A   0      98.880   3.830   0.880  1.00  0.00           H  
+ATOM     18  H9  RES A   0      98.880   3.840  -0.890  1.00  0.00           H  
+ATOM     19  C6  RES A   0      96.960   4.120   0.000  1.00  0.00           C  
+ATOM     20  H10 RES A   0      96.400   3.810   0.890  1.00  0.00           H  
+ATOM     21  H11 RES A   0      96.390   3.800  -0.870  1.00  0.00           H  
+ATOM     22  C7  RES A   0      97.090   5.650   0.000  1.00  0.00           C  
+ATOM     23  H12 RES A   0      98.130   5.970   0.100  1.00  0.00           H  
+ATOM     24  H13 RES A   0      96.530   6.090   0.830  1.00  0.00           H  
+ATOM     25  H14 RES A   0      96.700   6.070  -0.930  1.00  0.00           H  
+TER      26      RES A   0
+ENDMDL
+CONECT    1    2    5    7
+CONECT    2    1    3    9
+CONECT    3    2    4    6
+CONECT    4    5    3    8
+CONECT    5    1    4   13
+CONECT    6    3
+CONECT    7    1
+CONECT    8    4
+CONECT    9    2   10   11   12
+CONECT   10    9
+CONECT   11    9
+CONECT   12    9
+CONECT   13    5   16   14   15
+CONECT   14   13
+CONECT   15   13
+CONECT   16   13   19   17   18
+CONECT   17   16
+CONECT   18   16
+CONECT   19   16   22   20   21
+CONECT   20   19
+CONECT   21   19
+CONECT   22   19   23   24   25
+CONECT   23   22
+CONECT   24   22
+CONECT   25   22
+END

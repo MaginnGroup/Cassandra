@@ -361,13 +361,18 @@ As an example,
     specified in the input file are used.
 
 
+.. _sec:minimum_cutoff:
+
 Minimum Cutoff
 ~~~~~~~~~~~~~~
 
 | ``# Rcutoff_Low``
-| *Real*
+| *Real(1,1)*
+| [``adaptive`` [*Real(2,2)* [``est_emax``]]
+| [``specific`` [``write`` *Real(3,3)* *Integer(3,4)*] [``read`` *Character(3,6)*] [``tol_list`` *Integer(3,8)* *Real(3,9)* ... *Real(3,8+n)*] [``heap``]]
 
-Sets the minimum allowable distance in Å between two atoms. Any MC move
+Sets :math:`r_{min}`, the minimum allowable distance in Å between two atoms,
+from *Real(1,1)*. Any MC move
 bringing two sites closer than this distance will be immediately rejected. It
 avoids numerical problems associated with random moves that happen to place
 atoms very close to one another such that they will have unphysically strong
@@ -378,6 +383,88 @@ atomic sites of the molecules (for example, the TIP4P water model), it is
 important that the minimum distance is set to be less than the shortest
 distance between any two sites on the molecule. For most systems, 1 Å seems to
 work OK, but for models with dummy sites, a shorter value may be required.
+
+The following options only apply to the Widom insertion portion of a simulation.
+
+If ``adaptive`` is specified, Cassandra uses atom type pair-specific overlap
+radii based on ``emax``, the desired maximum allowed intermolecular atom pair energy
+divided by :math:`k_BT` specified in *Real(2,2)*, defaulting to 708 if *Real(2,2)*
+is not present.  If ``est_emax`` is specified on the same line, Cassandra
+will estimate a good value for ``emax`` for each Widom insertion species in
+each box and output it to the log file near where the estimated chemical potential
+is output. These values are conservative but generally much less so than the default.
+Note that atom type pair-specific overlap radii are only used during cell list
+overlap checking.
+
+If ``specific`` is specified, the behavior depends on the optional keywords
+that follow it.  These keywords are individually optional, but at least
+``write`` or ``read`` must be present. Section :ref:`sec:solvent_species` might
+also be required.
+If ``write`` is present,
+Cassandra will estimate good atom pair-specific intermolecular overlap radii
+based on a tolerance for the maximum fraction of the total ``widom_var`` allowed
+to be lost due to flagging overlaps with the atom pair-specific overlap radii.
+If ``tol_list`` is also present, Cassandra will do this for each of
+:math:`n=` *Integer(3,8)* tolerances listed as *Real(3,9)* ... *Real(3,8+n)*,
+but otherwise, Cassandra only uses a single default tolerance, :math:`10^{-10}`.
+Cassandra stores these estimates in a ``.rminsq`` file described in
+:ref:`sec:output_files` for each tolerance.
+The keyword ``write`` must be followed by a float and an integer.
+*Real(3,3)* is ``rsqmin_step`` and *Integer(3,4)* is ``rsqmin_res``.
+Respectively, these are the bin width and number of bins
+used to discretize the distance squared between atoms, and each estimated
+atom pair-specific overlap radius squared can only be :math:`r_{min}^2`
+plus a multiple of ``rsqmin_step``.
+If ``read`` is present, Cassandra will use pair-specific intermolecular overlap
+radii obtained from a ``.rminsq`` file, the path to which is specified in
+*Character(3,6)*, to detect intermolecular atomic overlap during cell list
+overlap checking.
+If ``heap`` is specified, certain relatively large arrays involved in
+estimating atom pair overlap radii when ``write`` is present will be allocated
+to the heap instead of the stack.  This is slower but is provided as an option
+because these large arrays can cause stack buffer overflow if allocated to the stack.
+This stack buffer overflow shows up as a segmentation fault if it occurs,
+and your system may or may not warn you of stack smashing.
+If your stack size is unlimited, this shouldn't happen on the primary thread, but
+it may still happen on other threads when multithreading because the system
+stack size limit doesn't apply to additional threads.  In order to set the
+stack size for additional threads, you must set the environment variable
+``OMP_STACKSIZE`` to the size you want prior to running Cassandra.  If
+you don't want to bother with that or your system has a small maximum
+stack size that you can't increase for some reason, you can simply provide
+the ``heap`` keyword instead.
+
+The following example input specifies to use atom type pair-specific (adaptive)
+overlap radii based on ``emax`` = 300.0 and estimate appropriate but more
+aggressive values for ``emax`` for each species in each box. The default
+overlap radius specified here is 1.2 Angstroms; this overlap radius is
+used for overlap in contexts other than intermolecular Widom insertion
+energy calculations and for atom type pairs involving an atom type
+without positive Lennard-Jones parameters (i.e. an oxygen-bonded hydrogen atom
+represented as just a point charge, as in SPC/E water). It also specifies
+to estimate good atom pair-specific overlap radii based on the three
+tolerances 1e-20, 1e-15, and 1e-10 using 400 bins from
+:math:`1.2^2` to :math:`1.2^2 + 40` square Angstroms that are each 0.1
+square Angstroms wide.
+
+.. code-block:: none
+
+    # Rcutoff_Low 
+    1.2
+    adaptive 300.0 est_emax
+    specific write 0.1 400 tol_list 3 1e-20 1e-15 1e-10
+
+The following example input specifies to use 1.3 Angstroms as the default overlap 
+radius and to use atom pair-specific overlap radii obtained from file
+``cassandra_widom.out.rminsq2`` for intermolecular Widom insertion 
+interactions.
+
+
+.. code-block:: none
+
+    # Rcutoff_Low 
+    1.3
+    specific read cassandra_widom.out.rminsq2
 
 Pair Energy Storage
 ~~~~~~~~~~~~~~~~~~~
@@ -420,6 +507,8 @@ octane. There can be a maximum of 100 butane molecules, 20 hexane
 molecules and 5 octane molecules in the total system. The maximum
 number of molecules specified here will be used to allocate memory for
 each species, so do not use larger numbers than are needed.
+
+.. _sec:simulation_box:
 
 Simulation Box
 ~~~~~~~~~~~~~~
@@ -1315,16 +1404,59 @@ Pregenerated Trajectory
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 | ``# Pregen_Info``
-| *Character(i,1)* *Character(i,2)* \*One line for each box i
+| *Character(i,1)* *Character(i,2)* [*Character(i,3)* *Character(i,4)*] [*Integer(i,3)* ... *Integer(i,2+n)*] \*One line for each box i
+.. | *Character(i,1)* *Character(i,2)* \*One line for each box i
 
-This section specifies the paths to the ``.H`` and ``.xyz`` files storing the 
-pregenerated trajectory to be read.  *Character(i,1)* specifies the path to the
-``.H`` file for box *i* and *Character(i,2)* specifies the ``.xyz`` 
-file for box *i*.  Descriptions of these file types can be found in 
-:ref:`sec:output_files`.
+This section specifies the paths to the files storing the 
+pregenerated trajectory to be read.  *Character(i,1)* can be
+``xyx``, ``H``, or ``xtc``, and it specifies the file format of the
+first trajectory file provided for box *i* and *Character(i,2)*
+specifies its path.
+*Character(i,3)* and *Character(i,4)* provide the same information for
+the second trajectory file provided for box *i*.  A second trajectory
+file is required (and required to be ``xyz`` format) if the format of
+the first file is ``H``, optional (and required to be ``H`` format if
+provided) if the first file is ``xyz`` format, and not applicable if
+the first file is ``xtc`` format. Descriptions of ``xyz`` and ``H``
+file types can be found in :ref:`sec:output_files`.  The ``xtc`` format
+is a portable, compressed, binary format made for GROMACS but also used by
+other software such as LAMMPS.  It contains the number of atoms for the
+whole trajectory and the box matrix and atom coordinates in nanometers for
+each frame of the trajectory.
+
+If no ``H`` file was provided, the number of molecules present in the box
+must then be listed for each species.  The length of this list is allowed to be
+less than the number of species, in which case all species for which the
+number of molecules was not listed will be assumed to have zero molecules
+in the box.  If the only file is ``xyz`` format, the simulation box will
+remain the fixed size specified in :ref:`sec:simulation_box`.
+Cassandra will always assume the simulation box always has the same shape type
+as in :ref:`sec:simulation_box`, and it will not check whether that is
+consistent with box vectors provided in ``H`` or ``xtc`` format files.
+If the shape type is ``cubic`` or ``orthogonal``, the box must be
+oriented such that the box matrix is a diagonal matrix.
+
+To maintain backwards compatibility, if box *i* has both ``xyz`` and ``H``
+trajectory files, it is valid to simply put the path to the ``H`` file, then
+the path to the ``xyz`` file, with the two file paths separated by one or
+more spaces, without first specifying their formats.
 
 For example, to read a pregenerated trajectory from ``md_trajectory.H`` 
 and ``md_trajectory.xyz``, the section could be written as follows:
+
+.. code-block:: none
+
+        # Pregen_Info
+        xyz md_trajectory.xyz H md_trajectory.H
+
+or
+
+.. code-block:: none
+
+        # Pregen_Info
+        H md_trajectory.H xyz md_trajectory.xyz
+
+or
 
 .. code-block:: none
 
@@ -1341,6 +1473,23 @@ as follows:
         # Pregen_Info
         gemc_trajectory.box1.H gemc_trajectory.box1.xyz
         gemc_trajectory.box2.H gemc_trajectory.box2.xyz
+
+To read a pregenerated trajectory with 300 molecules of species 1,
+0 molecules of species 2, 50 molecules of species 3, and 0 molecules of
+species 4 from ``md_trajectory.xtc``, the section could be written in
+the following ways:
+
+.. code-block:: none
+
+        # Pregen_Info
+        xtc md_trajectory.xtc 300 0 50 0
+
+or
+
+.. code-block:: none
+
+        # Pregen_Info
+        xtc md_trajectory.xtc 300 0 50
 
 
 
@@ -1380,14 +1529,15 @@ file and computed shifted chemical potential for species *i* and box *j*.  Addit
 the ``.wprp2`` files are given in :ref:`sec:output_files`.
 
 For example, for a simulation with one box and two species, in which species 1 is to be inserted 
-5000 times every 1000 steps and species 2 is to be inserted 7000 times every 400 steps, 
+5000 times every 1000 steps and species 2 is to be inserted 7000 times every 400 steps, with
+100 subgroups of 50 Widom insertions per step written to the ``.wprp2`` file for species 1,
 this section could be written as follows:
 
 .. code-block:: none
 
         # Widom_Insertion
         true
-        cbmc 5000 1000
+        cbmc 5000 1000 100
         cbmc 7000 400
 
 For a simulation with two boxes and two species, for which the simulation length units 
@@ -1572,6 +1722,9 @@ the fragment being simulated.
 
     This tells Cassandra to store the fragment library in the file named ``frag.dat``.
 
+
+.. _sec:cbmc_parameters:
+
 CBMC parameters
 ~~~~~~~~~~~~~~~
 
@@ -1579,6 +1732,7 @@ CBMC parameters
 | ``kappa_ins`` *Integer(1)*
 | ``kappa_dih`` *Integer(2)*
 | ``rcut_cbmc`` *Real(3,1)* [*Real(3,2)*]
+| [``energy_table`` [*Integer(4)*]]
 
 Cassandra utilizes a configurational bias methodology based on
 `sampling a library of fragment conformations <https://doi.org/10.1063/1.3644939>`_.
@@ -1616,10 +1770,23 @@ short cutoff is used. *Real(4,i)* specifies the cutoff distance in
 overlaps. You can experiment with this value to optimize it for your
 system.
 
-For a GEMC simulation in which 12 candidate positions are generated
-for biased insertion/deletion, 10 trials for biased dihedral angle
-selection and the cutoff for biasing energy calculation is set to 5.0
-Å in box 1 and 6.5 Å in box 2, this section would look like:
+Keyword ``energy_table`` causes Cassandra to precalculate intermolecular
+atom pair energy as a discretized function of :math:`r^2`, atom pair
+separation squared.
+Cassandra uses this energy table to quickly estimate the intermolecular
+energy for CBMC trials since it's just for biasing purposes. In other
+contexts, intermolecular energies are calculated normally, so in the table,
+:math:`r^2` only goes from :math:`r_{min}^2` (from :ref:`sec:minimum_cutoff`) to
+``rcut_cbmc`` squared, and is discretized with *Integer(4)* bins (default 1000),
+with the energies being precalculated from the midpoint of the bins.
+With keyword ``energy_table`` present, section :ref:`sec:solvent_species`
+may  also be required.
+
+For a GEMC simulation in which 12 candidate positions are generated for biased
+insertion/deletion, 10 trials are generated for biased dihedral angle selection,
+intermolecular CBMC trial energies are estimated from a precalculated energy table
+with 1200 :math:`r^2` bins, and the cutoff for biasing energy calculation is set
+to 5.0 Å in box 1 and 6.5 Å in box 2, this section would look like:
 
 .. code-block:: none
 
@@ -1627,6 +1794,30 @@ selection and the cutoff for biasing energy calculation is set to 5.0
     kappa_ins 12
     kappa_dih 10
     rcut_cbmc 5.0 6.5
+    energy_table 1200
+
+
+.. _sec:solvent_species:
+
+Solvent Species
+~~~~~~~~~~~~~~~
+
+| ``# Solvent_Species``
+| *Integer(1) ... Integer(n)*
+
+This section is only necessary if ``energy_table`` is present in
+:ref:`sec:cbmc_parameters` and/or ``specific`` is present in
+:ref:`sec:minimum_cutoff` and the species that can ever actually reside
+in a simulation box during the simulation cannot be determined from other
+parts of the input file, such as when trajectory molecule counts are read
+from a ``.H`` file and the number of molecules of each species in
+the trajectory is not given in :ref:`sec:Pregen_Info`.  If molecule 
+counts are not read from a ``.H`` file, this section probably isn't
+necessary.
+
+This section simply lists, by number, which species could ever possibly
+reside in a simulation box during the simulation.
+
 
 
 .. _sec:mcf_file:

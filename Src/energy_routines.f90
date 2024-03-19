@@ -885,6 +885,115 @@ CONTAINS
 !  END SUBROUTINE Compute_Atom_Nonbond_Inter_Energy_Cells
 
   !-----------------------------------------------------------------------------
+  SUBROUTINE Compute_Atom_Nonbond_Inter_Energy_Cells(ia,im,is, &
+                  E_inter_vdw, E_inter_qq, overlap, Eij_qq)
+          !
+          INTEGER, INTENT(IN) :: ia, im, is
+          REAL(DP), INTENT(OUT) :: E_inter_vdw, E_inter_qq
+          REAL(DP), INTENT(OUT), OPTIONAL :: Eij_qq
+          REAL(DP) :: Eij_qq_temp
+          INTEGER :: this_box
+          INTEGER :: this_locate, i_dim, secind
+          INTEGER :: xi, yi, zi, i, ia_cell
+          INTEGER, DIMENSION(:), POINTER :: sector_atom_ID
+          !INTEGER, DIMENSION(:,:,:), POINTER :: sector_index_map_ptr
+          TYPE(Atom_Class), POINTER :: atom_ptr
+          INTEGER :: cell_coords(3)
+          INTEGER, DIMENSION(3) :: ci_min, ci_max
+          REAL(DP) :: cp(3), dx, dy, dz, dxp, dyp, dzp, rijsq
+          REAL(DP) :: Eij_intra_vdw,Eij_intra_qq,Eij_inter_vdw,Eij_inter_qq
+          REAL(DP), DIMENSION(:), POINTER :: cell_length_inv_ptr
+          LOGICAL :: get_vdw, get_qq, overlap
+          !
+          overlap = .TRUE.
+          E_inter_vdw = 0.0_DP
+          E_inter_qq = 0.0_DP
+          Eij_qq_temp = 0.0_DP
+          IF (widom_active) THEN
+                  cp(1) = widom_atoms(ia)%rxp
+                  cp(2) = widom_atoms(ia)%ryp
+                  cp(3) = widom_atoms(ia)%rzp
+                  this_box = widom_molecule%which_box
+          ELSE
+                  cp(1) = atom_list(ia,im,is)%rxp
+                  cp(2) = atom_list(ia,im,is)%ryp
+                  cp(3) = atom_list(ia,im,is)%rzp
+                  this_box = molecule_list(im,is)%which_box
+          END IF
+          IF (cbmc_flag) THEN
+                  cell_length_inv_ptr => cell_length_inv_cbmc(:,this_box)
+          ELSE
+                  cell_length_inv_ptr => cell_length_inv_full(:,this_box)
+          END IF
+          cell_coords = IDNINT(cp*cell_length_inv_ptr)
+          ci_min = cell_coords - 1
+          ci_max = cell_coords + 1
+          IF (cbmc_flag) THEN
+                  DO xi = ci_min(1), ci_max(1)
+                        DO yi = ci_min(2), ci_max(2)
+                                DO zi = ci_min(3), ci_max(3)
+                                        secind = sector_index_map_cbmc(xi,yi,zi,this_box)
+                                        DO ia_cell = 1, sector_n_atoms_cbmc(secind)
+                                                sector_atom_ID => sector_atoms_cbmc(ia_cell,secind,:)
+                                                atom_ptr => atom_list(sector_atom_ID(1),sector_atom_ID(2),sector_atom_ID(3))
+                                                dxp = atom_ptr%rxp - cp(1)
+                                                dyp = atom_ptr%ryp - cp(2)
+                                                dzp = atom_ptr%rzp - cp(3)
+                                                CALL Minimum_Image_Separation(this_box,dxp,dyp,dzp,dx,dy,dz)
+                                                rijsq = dx*dx+dy*dy+dz*dz
+                                                CALL Check_AtomPair_Cutoff(rijsq,get_vdw,get_qq,this_box)
+                                                IF (get_vdw .OR. get_qq) THEN
+                                                   IF (rijsq < rcut_lowsq) RETURN
+                                                   CALL Compute_AtomPair_Energy(dx,dy,dz,rijsq, &
+                                                        sector_atom_ID(3),sector_atom_ID(2),sector_atom_ID(1),is,im,ia,&
+                                                        get_vdw,get_qq, &
+                                                        Eij_intra_vdw,Eij_intra_qq,Eij_inter_vdw,Eij_inter_qq)
+                                                   E_inter_vdw = E_inter_vdw + Eij_inter_vdw
+                                                   E_inter_qq  = E_inter_qq  + Eij_inter_qq
+                                                END IF
+                                        END DO
+                                END DO
+                        END DO
+                  END DO
+          ELSE
+                  DO xi = ci_min(1), ci_max(1)
+                        DO yi = ci_min(2), ci_max(2)
+                                DO zi = ci_min(3), ci_max(3)
+                                        secind = sector_index_map_full(xi,yi,zi,this_box)
+                                        DO ia_cell = 1, sector_n_atoms_full(secind)
+                                                sector_atom_ID => sector_atoms_full(ia_cell,secind,:)
+                                                atom_ptr => atom_list(sector_atom_ID(1),sector_atom_ID(2),sector_atom_ID(3))
+                                                dxp = atom_ptr%rxp - cp(1)
+                                                dyp = atom_ptr%ryp - cp(2)
+                                                dzp = atom_ptr%rzp - cp(3)
+                                                CALL Minimum_Image_Separation(this_box,dxp,dyp,dzp,dx,dy,dz)
+                                                rijsq = dx*dx+dy*dy+dz*dz
+                                                CALL Check_AtomPair_Cutoff(rijsq,get_vdw,get_qq,this_box)
+                                                IF (get_vdw .OR. get_qq) THEN
+                                                   IF (rijsq < rcut_lowsq) RETURN
+                                                   CALL Compute_AtomPair_Energy(dx,dy,dz,rijsq, &
+                                                        sector_atom_ID(3),sector_atom_ID(2),sector_atom_ID(1),is,im,ia,&
+                                                        get_vdw,get_qq, &
+                                                        Eij_intra_vdw,Eij_intra_qq,Eij_inter_vdw,Eij_inter_qq)
+                                                   E_inter_vdw = E_inter_vdw + Eij_inter_vdw
+                                                   E_inter_qq  = E_inter_qq  + Eij_inter_qq
+                                                   IF (PRESENT(Eij_qq)) THEN
+                                                           IF (widom_active) THEN
+                                                                   Eij_max = MAX(Eij_max,Eij_inter_vdw+Eij_qq)
+                                                           END IF
+                                                           Eij_qq_temp = Eij_qq_temp + Eij_qq
+                                                   END IF
+                                                END IF
+                                        END DO
+                                END DO
+                        END DO
+                  END DO
+          END IF
+          Eij_qq = Eij_qq_temp
+          overlap = .FALSE.
+          
+
+  END SUBROUTINE Compute_Atom_Nonbond_Inter_Energy_Cells
 
   SUBROUTINE Compute_Molecule_Nonbond_Intra_Energy(im,is, &
     E_intra_vdw,E_intra_qq,E_inter_qq,intra_overlap)
@@ -1088,14 +1197,19 @@ CONTAINS
                rcom,rx,ry,rz)
 
           IF (.NOT. get_interaction) CYCLE moleculeLOOP
-
-          CALL Compute_MoleculePair_Energy(im,is,this_locate,ispecies, &
-               this_box,Eij_vdw,Eij_qq,my_overlap)
-
+          IF (cbmc_flag .AND. precalc_atompair_nrg) THEN
+                  CALL Estimate_MoleculePair_Energy(im,is,this_locate,ispecies, &
+                          this_box,Eij_vdw,my_overlap)
+                  ! Eij_vdw given by estimate is actually combined vdW and qq energy
+                  ! so don't add Eij_qq
+          ELSE
+                  CALL Compute_MoleculePair_Energy(im,is,this_locate,ispecies, &
+                       this_box,Eij_vdw,Eij_qq,my_overlap)
+                  E_inter_qq  = E_inter_qq + Eij_qq
+          END IF
           IF (my_overlap) shared_overlap = .TRUE.
 
           E_inter_vdw = E_inter_vdw + Eij_vdw
-          E_inter_qq  = E_inter_qq + Eij_qq
 
        END DO moleculeLoop
        !$OMP END PARALLEL DO
@@ -1111,7 +1225,7 @@ CONTAINS
   !-----------------------------------------------------------------------------
 
   SUBROUTINE Compute_Molecule_Nonbond_Inter_Energy_Widom(im,is, &
-    E_inter_vdw,E_inter_qq,overlap)
+    E_inter,overlap)
     !***************************************************************************
     ! This subroutine computes interatomic LJ and charge interactions as well as
     ! virials associated with these interactions.
@@ -1120,7 +1234,6 @@ CONTAINS
     !
     ! Minimum_Image_Separation
     ! Compute_MoleculePair_Energy
-    ! Clean_Abort
     !
     ! CALLED BY
     !
@@ -1132,26 +1245,41 @@ CONTAINS
 !    !$ include 'omp_lib.h'
 
     INTEGER, INTENT(IN):: im, is
-    REAL(DP), INTENT(OUT) :: E_inter_vdw, E_inter_qq
+    REAL(DP), INTENT(OUT) :: E_inter
     LOGICAL :: overlap
     !---------------------------------------------------------------------------
 
     INTEGER  :: ispecies, imolecule, this_box, this_locate, ia
 
-    REAL(DP) :: Eij_vdw, Eij_qq
+    REAL(DP) :: Eij, Eij_vdw, Eij_qq, Eij_qq_simple, Ei_qq_simple
     REAL(DP) :: eps
     REAL(DP) :: rcom, rx, ry, rz
-    REAL(DP) :: hardcore_max_r, molecule_hardcore_r
+!molecule_priority    REAL(DP) :: hardcore_max_r, molecule_hardcore_r
     REAL(DP) :: Ei_inter_vdw, Ei_inter_qq
 
     LOGICAL :: get_interaction
 !molecule_priority    LOGICAL, DIMENSION(MAXVAL(nmols(:,widom_molecule%which_box)),nspecies) :: shortrange, midrange
 
-    E_inter_vdw = 0.0_DP
-    E_inter_qq = 0.0_DP
+    E_inter = 0.0_DP
     overlap = .FALSE.
 
     this_box = widom_molecule%which_box
+
+    IF ((cbmc_cell_list_flag .AND. cbmc_flag) .OR. full_cell_list_flag) THEN
+            DO ia = 1, natoms(is)
+                IF (.NOT. widom_atoms(ia)%exist) CYCLE
+                IF (est_emax) THEN
+                        CALL Compute_Atom_Nonbond_Inter_Energy_Cells(ia,im,is, &
+                                Ei_inter_vdw, Ei_inter_qq, overlap, Ei_qq_simple)
+                ELSE
+                        CALL Compute_Atom_Nonbond_Inter_Energy_Cells(ia,im,is, &
+                                Ei_inter_vdw, Ei_inter_qq, overlap)
+                END IF
+                IF (overlap) RETURN
+                E_inter = E_inter + Ei_inter_vdw + Ei_inter_qq
+            END DO
+            RETURN
+    END IF
 
 !molecule_priority    IF (widom_active .AND. l_sectors) THEN
     speciesLoop0: DO ispecies = 1, nspecies
@@ -1162,13 +1290,23 @@ CONTAINS
                 CALL Check_MoleculePair_Cutoff(im,is,this_locate,ispecies,get_interaction, &
                         rcom,rx,ry,rz)
                 IF (.NOT. get_interaction) CYCLE moleculeLoop0
-                CALL Compute_MoleculePair_Energy(im,is,this_locate,ispecies, &
-                     this_box,Eij_vdw,Eij_qq,overlap)
+                IF (cbmc_flag .AND. precalc_atompair_nrg) THEN
+                        CALL Estimate_MoleculePair_Energy(im,is,this_locate,ispecies, &
+                                this_box, Eij, overlap)
+                        E_inter = E_inter + Eij 
+                ELSE
+                        IF (est_emax) THEN
+                                CALL Compute_MoleculePair_Energy(im,is,this_locate,ispecies, &
+                                     this_box,Eij_vdw,Eij_qq,overlap,Eij_qq_simple)
+                        ELSE
+                                CALL Compute_MoleculePair_Energy(im,is,this_locate,ispecies, &
+                                     this_box,Eij_vdw,Eij_qq,overlap)
+                        END IF
+                        E_inter = E_inter + Eij_vdw + Eij_qq
+                END IF
 
-                IF (overlap) RETURN ! this should never happen; already caught by cell list
+                IF (overlap) RETURN ! this should never happen when using cell list
 
-                E_inter_vdw = E_inter_vdw + Eij_vdw
-                E_inter_qq  = E_inter_qq + Eij_qq
         END DO moleculeLoop0
     END DO speciesLoop0
 !molecule_priority            RETURN
@@ -1405,8 +1543,69 @@ CONTAINS
   END SUBROUTINE Compute_MoleculeCollection_Nonbond_Inter_Energy
   !-----------------------------------------------------------------------------
 
+  SUBROUTINE Estimate_MoleculePair_Energy(im,is,jm,js,this_box,mpnrg,overlap)
+          ! Only for use during CBMC trials
+          !
+          !
+          ! molecule i is the "solute" molecule and molecule j
+          !    is the "solvent" molecule
+          IMPLICIT NONE
+          INTEGER, INTENT(IN) :: im, is, jm, js, this_box
+          REAL(DP), INTENT(OUT) :: mpnrg
+          !----
+          INTEGER :: ia, ja, bsolvent, bsolute
+          TYPE(Atom_Class), POINTER :: these_atoms_i(:), these_atoms_j(:)
+          REAL(DP) :: rcutsq_shift, rijsq_shift
+          REAL(DP) :: ixp, iyp, izp, dx, dy, dz
+          REAL(DP), DIMENSION(:,:,:), POINTER :: atompair_nrg_ptr
+          LOGICAL :: overlap
+          !
+          overlap = .TRUE.
+          mpnrg = 0.0_DP
+
+          IF (im == widom_locate .AND. is == widom_species) THEN
+                  these_atoms_i => widom_atoms
+          ELSE
+                  these_atoms_i => atom_list(:,im,is)
+          END IF
+          IF (jm == widom_locate .AND. js == widom_species) THEN
+                  these_atoms_j => widom_atoms
+          ELSE
+                  these_atoms_j => atom_list(:,jm,js)
+          END IF
+
+          bsolvent = species_list(js)%solvent_base
+          bsolute = species_list(is)%solute_base
+          atompair_nrg_ptr => atompair_nrg_table(:, &
+                  bsolvent+1:bsolvent+natoms(js), &
+                  bsolute+1:bsolute+natoms(is), &
+                  this_box)
+          rcutsq_shift = rcut_cbmcsq(this_box) - rsq_shifter
+          DO ia = 1, natoms(is)
+                IF (.NOT. these_atoms_i(ia)%exist) CYCLE
+                ixp = these_atoms_i(ia)%rxp
+                iyp = these_atoms_i(ia)%ryp
+                izp = these_atoms_i(ia)%rzp
+                DO ja = 1, natoms(js)
+                        IF (.NOT. these_atoms_j(ja)%exist) CYCLE
+                        CALL Minimum_Image_Separation(this_box, &
+                                ixp - these_atoms_j(ja)%rxp, &
+                                iyp - these_atoms_j(ja)%ryp, &
+                                izp - these_atoms_j(ja)%rzp, &
+                                dx, dy, dz)
+                        rijsq_shift = dx*dx + dy*dy + dz*dz - rsq_shifter
+                        IF (rijsq_shift >= rcutsq_shift) CYCLE
+                        IF (rijsq_shift < rsq_step) RETURN
+                        mpnrg = mpnrg + atompair_nrg_ptr( &
+                                INT(rijsq_shift/rsq_step), ja, ia)
+                END DO
+          END DO
+          overlap = .FALSE.
+          !
+  END SUBROUTINE Estimate_MoleculePair_Energy
+
   SUBROUTINE Compute_MoleculePair_Energy(im,is,jm,js,this_box, &
-    vlj_pair,vqq_pair,overlap)
+    vlj_pair,vqq_pair,overlap,Eij_qq)
     !***************************************************************************
     ! The subroutine returns the interaction energy of the input molecule with
     ! another molecule. Thus, it computes the intermolecular vdw and
@@ -1437,18 +1636,33 @@ CONTAINS
     REAL(DP) :: rxijp, ryijp, rzijp, rxij, ryij, rzij, rijsq
     REAL(DP) :: Eij_intra_vdw, Eij_intra_qq, Eij_inter_vdw, Eij_inter_qq
 
+    REAL(DP) :: Eij_qq_temp
+    REAL(DP), OPTIONAL :: Eij_qq
+
     LOGICAL :: get_vdw, get_qq
 
     INTEGER :: locate_im, locate_jm
 
     TYPE(Atom_Class), POINTER :: these_atoms_i(:), these_atoms_j(:)
+    REAL(DP), DIMENSION(:,:), POINTER :: smp_atompair_rsqmin
+    INTEGER :: bsolvent
+    LOGICAL ::  l_get_rij_min
+
+    l_get_rij_min = .FALSE.
 
     IF (im == widom_locate .AND. is == widom_species) THEN
             these_atoms_i => widom_atoms
+            IF (est_atompair_rminsq .AND. .NOT. cbmc_flag) THEN
+                    l_get_rij_min = .TRUE.
+                    bsolvent = species_list(js)%solvent_base
+                    smp_atompair_rsqmin => swi_atompair_rsqmin( &
+                            bsolvent+1:bsolvent+natoms(js),:) 
+            END IF
     ELSE
             these_atoms_i => atom_list(:,im,is)
     END IF
     IF (jm == widom_locate .AND. js == widom_species) THEN
+            ! not valid with est_atompair_rminsq==.TRUE.
             these_atoms_j => widom_atoms
     ELSE
             these_atoms_j => atom_list(:,jm,js)
@@ -1456,6 +1670,7 @@ CONTAINS
 
     vlj_pair = 0.0_DP
     vqq_pair = 0.0_DP
+    Eij_qq_temp = 0.0_DP
     overlap = .FALSE.
 
     DO ia = 1, natoms(is)
@@ -1493,14 +1708,26 @@ CONTAINS
 
           CALL Compute_AtomPair_Energy(rxij,ryij,rzij,rijsq, &
                is,im,ia,js,jm,ja,get_vdw,get_qq, &
-               Eij_intra_vdw,Eij_intra_qq,Eij_inter_vdw,Eij_inter_qq)
+               Eij_intra_vdw,Eij_intra_qq,Eij_inter_vdw,Eij_inter_qq,Eij_qq)
 
           vlj_pair = vlj_pair + Eij_inter_vdw
           vqq_pair = vqq_pair + Eij_inter_qq
 
+          IF (l_get_rij_min) THEN
+                IF (rijsq<smp_atompair_rsqmin(ja,ia)) smp_atompair_rsqmin(ja,ia)=rijsq
+          END IF
+
+          IF (PRESENT(Eij_qq)) THEN
+                  IF (widom_active .AND. .NOT. cbmc_flag) THEN
+                          Eij_max = MAX(Eij_max,Eij_inter_vdw+Eij_qq)
+                  END IF
+                  Eij_qq_temp = Eij_qq_temp + Eij_qq
+          END IF
+
         END IF
       END DO
     END DO
+    IF (PRESENT(Eij_qq)) Eij_qq = Eij_qq_temp
 
     IF (l_pair_nrg) THEN
       IF ( .NOT. (cbmc_flag .OR. widom_active)) THEN
@@ -1521,8 +1748,106 @@ CONTAINS
   END SUBROUTINE Compute_MoleculePair_Energy
   !-----------------------------------------------------------------------------
 
+  FUNCTION AtomPair_VdW_Energy_Vector(rijsq,itype,jtype,ibox)
+      REAL(DP), DIMENSION(atompair_nrg_res) :: atompair_vdw_energy_vector
+      REAL(DP), DIMENSION(atompair_nrg_res), INTENT(IN) :: rijsq
+      INTEGER, INTENT(IN) :: itype, jtype, ibox
+      REAL(DP) :: rcut_vdw
+      REAL(DP) :: eps, sig, dEij_dr
+      REAL(DP), DIMENSION(atompair_nrg_res) :: SigByR2, SigByR6, SigByR12
+      REAL(DP) :: SigByR2_shift, SigByR6_shift, SigByR12_shift
+      REAL(DP) :: roffsq_rijsq
+      ! Mie potential
+      REAL(DP) :: mie_coeff, mie_n, mie_m
+      REAL(DP), DIMENSION(atompair_nrg_res) :: SigByR, SigByRn, SigByRm
+      REAL(DP) :: SigByR_shift, SigByRn_shift, SigByRm_shift
+      INTEGER :: i
+      IF (int_vdw_style(ibox) == vdw_lj) THEN
+
+           ! For now, assume all interactions are the same.
+           ! Use the lookup table created in Compute_Nonbond_Table
+           eps = vdw_param1_table(itype,jtype)
+           sig = vdw_param2_table(itype,jtype)
+
+           SigByR2 = (sig**2) / rijsq
+           SigByR6 = SigByR2 * SigByR2 * SigByR2
+           SigByR12 = SigByR6 * SigByR6
+
+           ! use standard LJ potential
+           atompair_vdw_energy_vector = 4.0_DP * eps * (SigByR12 - SigByR6)
+
+           IF (int_vdw_sum_style(ibox) == vdw_cut_shift) THEN
+                 ! shift the LJ potential
+                 SigByR2_shift = sig**2/rcut_vdwsq(ibox)
+                 SigByR6_shift = SigByR2_shift * SigByR2_shift * SigByR2_shift
+                 SigByR12_shift = SigByR6_shift * SigByR6_shift
+
+                 atompair_vdw_energy_vector = atompair_vdw_energy_vector &
+                         - 4.0_DP * eps * (SigByR12_shift - SigByR6_shift)
+
+           ELSE IF (int_vdw_sum_style(ibox) == vdw_cut_switch) THEN
+                 DO i = 1, atompair_nrg_res
+                         ! scale the LJ potential
+                         IF ( rijsq(i) < ron_switch_sq(ibox) ) CYCLE
+                         IF ( rijsq(i) > roff_switch_sq(ibox) ) THEN
+                                 atompair_vdw_energy_vector(i) = 0.0_DP
+                                 CYCLE
+                         END IF
+                         roffsq_rijsq = roff_switch_sq(ibox) - rijsq(i)
+                         atompair_vdw_energy_vector(i) = &
+                                 roffsq_rijsq*roffsq_rijsq &
+                                 * (switch_factor2(ibox)+2.0_DP*rijsq(i))*switch_factor1(ibox) &
+                                 * atompair_vdw_energy_vector(i)
+                 END DO
+           ELSE IF (int_vdw_sum_style(ibox) == vdw_charmm) THEN
+                 ! use the form for modified LJ potential
+                 atompair_vdw_energy_vector = eps * (SigByR12 - 2.0_DP * SigByR6)
+           ELSE IF (int_vdw_sum_style(ibox) == vdw_cut_shift_force) THEN
+                 ! apply the shifted-force LJ potential
+                 ! u_sf(r) = u_lj(r) - u_lj(rc) - (r-rc)*du_lj/dr(rc)
+                 SigByR2_shift = sig**2/rcut_vdwsq(ibox)
+                 SigByR6_shift = SigByR2_shift * SigByR2_shift * SigByR2_shift
+                 SigByR12_shift = SigByR6_shift * SigByR6_shift
+
+                 rcut_vdw = SQRT(rcut_vdwsq(ibox))
+
+                 dEij_dr = - 24.0_DP * eps * ( 2.0_DP * SigByR12_shift &
+                                              - SigByR6_shift) / rcut_vdw
+
+                 atompair_vdw_energy_vector = atompair_vdw_energy_vector &
+                         - 4.0_DP * eps * (SigByR12_shift - SigByR6_shift) &
+                         - (SQRT(rijsq) - rcut_vdw) * dEij_dr
+
+           END IF
+
+      ELSE IF (int_vdw_style(ibox) == vdw_mie) THEN
+           eps = vdw_param1_table(itype,jtype)
+           sig = vdw_param2_table(itype,jtype)
+           mie_n = vdw_param3_table(itype,jtype) ! repulsive exponent
+           mie_m = vdw_param4_table(itype,jtype) ! dispersive exponent
+
+           rcut_vdw = SQRT(rcut_vdwsq(ibox))
+
+           mie_coeff = mie_n/(mie_n-mie_m) * (mie_n/mie_m)**(mie_m/(mie_n-mie_m))
+
+           SigByR = sig/SQRT(rijsq)
+           SigByRn = SigByR ** mie_n
+           SigByRm = SigByR ** mie_m
+           atompair_vdw_energy_vector =  mie_coeff * eps * (SigByRn - SigByRm)
+           !use cut-shift potential
+           IF (int_vdw_sum_style(ibox) == vdw_cut_shift) THEN
+                 SigByR_shift = sig/rcut_vdw
+                 SigByRn_shift = SigByR_shift ** mie_n
+                 SigByRm_shift = SigByR_shift ** mie_m
+                 atompair_vdw_energy_vector =  atompair_vdw_energy_vector - mie_coeff * eps * (SigByRn_shift - SigByRm_shift)
+           END IF
+
+      END IF
+
+  END FUNCTION AtomPair_VdW_Energy_Vector
+
   SUBROUTINE Compute_AtomPair_Energy(rxij,ryij,rzij,rijsq,is,im,ia,js,jm,ja, &
-    get_vdw,get_qq,E_intra_vdw,E_intra_qq,E_inter_vdw,E_inter_qq)
+    get_vdw,get_qq,E_intra_vdw,E_intra_qq,E_inter_vdw,E_inter_qq,Eij_qq_o)
 
     ! Computes the vdw and q-q pair energy between atoms ia and ja of molecules
     ! im and jm and species is and js, given their separation rijsq. I have
@@ -1564,6 +1889,7 @@ CONTAINS
     REAL(DP) :: SigByR_shift, SigByRn_shift, SigByRm_shift
     ! Coulomb potential
     REAL(DP) :: qi, qj, Eij_qq
+    REAL(DP), OPTIONAL :: Eij_qq_o
 
     LOGICAL :: atom_i_exist, atom_j_exist
 
@@ -1589,7 +1915,7 @@ CONTAINS
     ExistCheck: &
     IF (atom_i_exist .AND. atom_j_exist) THEN
 
-      ! Determine atom type indices
+         ! Determine atom type indices
          itype = nonbond_list(ia,is)%atom_type_number
          jtype = nonbond_list(ja,js)%atom_type_number
 
@@ -1713,14 +2039,14 @@ CONTAINS
                       ( .NOT. igas_flag) ) THEN
                    ! Real space Ewald part
                    CALL Compute_AtomPair_Ewald_Real(ia,im,is,qi,ja,jm,js,qj, &
-                        rijsq,E_intra_qq,E_inter_qq,ibox)
+                        rijsq,E_intra_qq,E_inter_qq,ibox,Eij_qq_o)
 
                    ! self and reciprocal parts need to be computed as total energy
                    ! differences between original configuration and the perturbed
                    ! configuration.
 
               ELSEIF (int_charge_sum_style(ibox) == charge_dsf) THEN
-                   CALL Compute_AtomPair_DSF_Energy(ia,im,is,qi,ja,jm,js,qj,rijsq,E_intra_qq,E_inter_qq,ibox)
+                   CALL Compute_AtomPair_DSF_Energy(ia,im,is,qi,ja,jm,js,qj,rijsq,E_intra_qq,E_inter_qq,ibox,Eij_qq_o)
 
               ELSEIF (int_charge_sum_style(ibox) == charge_cut .OR. &
                   int_charge_sum_style(ibox) == charge_minimum .OR. igas_flag) THEN
@@ -1728,13 +2054,16 @@ CONTAINS
                    Eij_qq = charge_factor*(qi*qj)/SQRT(rijsq)
                    ! Apply charge scaling for intramolecular energies
                    IF ( is == js .AND. im == jm ) THEN
-                     E_intra_qq = E_intra_qq + charge_intra_scale(ia,ja,is) * Eij_qq
+                     Eij_qq = charge_intra_scale(ia,ja,is) * Eij_qq
+                     E_intra_qq = E_intra_qq + Eij_qq
                    ELSE
                      E_inter_qq = E_inter_qq + Eij_qq
                    END IF
+                   IF (PRESENT(Eij_qq_o)) Eij_qq_o = Eij_qq
 
              ENDIF
-
+         ELSEIF (PRESENT(Eij_qq_o)) THEN
+             Eij_qq_o = 0.0_DP
          ENDIF qq_calc
 
     ENDIF ExistCheck
@@ -1742,26 +2071,29 @@ CONTAINS
   END SUBROUTINE Compute_AtomPair_Energy
 
 
-SUBROUTINE Compute_AtomPair_DSF_Energy(ia,im,is,qi,ja,jm,js,qj,rijsq,E_intra_qq,E_inter_qq,ibox)
+SUBROUTINE Compute_AtomPair_DSF_Energy(ia,im,is,qi,ja,jm,js,qj,rijsq,E_intra_qq,E_inter_qq,ibox,Eij_qq_o)
 USE Global_Variables
 IMPLICIT NONE
 INTEGER :: ia,im,is,ja,jm,js,ibox
-REAL(DP) :: qi,qj,rijsq,rij, Eij, qsc, E_intra_qq,E_inter_qq
+REAL(DP), OPTIONAL :: Eij_qq_o
+REAL(DP) :: qi,qj,rijsq,rij, Eij, qsc, E_intra_qq,E_inter_qq, cfqq, Eij_qq
 
 
       rij = SQRT(rijsq)
+      cfqq = qi*qj*charge_factor
       Eij = dsf_factor2(ibox)*(rij-rcut_coul(ibox)) - dsf_factor1(ibox) + erfc(alpha_dsf(ibox)*rij)/rij
-      Eij = qi*qj*Eij*charge_factor
+      Eij = Eij*cfqq
 
       IF (is==js .AND. im==jm) THEN
               qsc = charge_intra_scale(ia,ja,is)
-              E_intra_qq = Eij - (1.0_DP-qsc)*charge_factor*(qi*qj)/SQRT(rijsq)
+              Eij_qq = cfqq/rij
+              E_intra_qq = Eij - (1.0_DP-qsc)*Eij_qq
               E_inter_qq = 0.0_DP
-
+              IF (PRESENT(Eij_qq_o)) Eij_qq_o = Eij_qq
       ELSE
-
               E_intra_qq = 0.0_DP
               E_inter_qq = Eij
+              IF (PRESENT(Eij_qq_o)) Eij_qq_o = cfqq/rij
       END IF
 
 
@@ -1772,7 +2104,7 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
   !-----------------------------------------------------------------------------
 
   SUBROUTINE Compute_AtomPair_Ewald_Real(ia,im,is,qi,ja,jm,js,qj,rijsq, &
-    E_intra_qq,E_inter_qq,ibox)
+    E_intra_qq,E_inter_qq,ibox,Eij_qq_o)
   !-----------------------------------------------------------------------------
     ! Real space part of the Ewald sum between atoms ia and ja with
     ! charges qi and qj.
@@ -1793,12 +2125,12 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
     INTEGER :: ja,jm,js
     REAL(DP) :: qj
     REAL(DP) :: rijsq
-    REAL(DP) :: E_intra_qq, E_inter_qq
+    REAL(DP) :: E_intra_qq, E_inter_qq, Eij_qq
     INTEGER :: ibox
+    REAL(DP), OPTIONAL :: Eij_qq_o
 
     ! Local variables
     REAL(DP) :: rij,erf_val
-    REAL(DP) :: Eij_qq
 
     ibox = molecule_list(im,is)%which_box
 
@@ -1819,6 +2151,8 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
 
     ! Periodic image real space energy
     E_inter_qq = E_inter_qq - erf_val * Eij_qq
+
+    IF (PRESENT(Eij_qq_o)) Eij_qq_o = Eij_qq
 
 
   !-----------------------------------------------------------------------------
@@ -2776,10 +3110,8 @@ END SUBROUTINE Compute_Molecule_Self_Energy
  SUBROUTINE Check_AtomPair_Cutoff(rijsq,get_vdw,get_qq,this_box)
 
    INTEGER  :: this_box
-   REAL(DP) :: rijsq,rcut_cbmcsq
+   REAL(DP) :: rijsq
    LOGICAL  :: get_vdw, get_qq
-
-   rcut_cbmcsq = rcut_cbmc(this_box)*rcut_cbmc(this_box)
 
    get_vdw = .FALSE.
    get_qq = .FALSE.
@@ -2790,7 +3122,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
    ELSEIF (int_vdw_style(this_box) == vdw_lj) THEN
 
       IF (CBMC_flag) THEN
-         IF (rijsq <= rcut_cbmcsq) THEN
+         IF (rijsq <= rcut_cbmcsq(this_box)) THEN
             get_vdw = .TRUE.
          ELSE
             get_vdw = .FALSE.
@@ -2825,7 +3157,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
    ELSEIF (int_vdw_style(this_box) == vdw_mie) THEN
 
       IF (CBMC_flag) THEN
-         IF (rijsq <= rcut_cbmcsq) THEN
+         IF (rijsq <= rcut_cbmcsq(this_box)) THEN
             get_vdw = .TRUE.
          ELSE
             get_vdw = .FALSE.
@@ -2857,7 +3189,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
           int_charge_sum_style(this_box) == charge_dsf) THEN
 
          IF(CBMC_flag) THEN
-            IF (rijsq <= rcut_cbmcsq) THEN
+            IF (rijsq <= rcut_cbmcsq(this_box)) THEN
                get_qq = .TRUE.
             ELSE
                get_qq = .FALSE.

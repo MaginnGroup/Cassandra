@@ -82,6 +82,7 @@ PROGRAM Main
   USE Energy_Routines
   USE Simulation_Properties
   USE Fragment_Growth
+  USE Pair_Emax_Estimation
 
   IMPLICIT NONE
 
@@ -97,6 +98,9 @@ PROGRAM Main
   CHARACTER(80) :: name
 
   LOGICAL :: overlap, check_charge
+
+  REAL(DP) :: Emax
+  INTEGER :: nskips, i_tol
 
   REAL(DP) :: q_box
 
@@ -186,9 +190,14 @@ PROGRAM Main
   ! Standard level of output to logfile, or verbose output
   CALL Get_Verbosity_Info
 
+  need_solvents = .FALSE.
+  precalc_atompair_nrg = .FALSE.
+
 ! Determine the simulation type, and then read in all the necessary information
 ! from the input file for starting up that type of simulation
   CALL Get_Sim_Type
+
+  calc_rmin_flag = .FALSE.
 
   ! Check what kind of simulation this is, and then call the appropriate routine
   ! that will load all the relevant information in from the input file
@@ -483,21 +492,42 @@ PROGRAM Main
 
 
   IF(widom_flag) THEN
+    IF (est_atompair_rminsq) THEN
+            CALL Estimate_Pair_rminsq
+            CALL Write_Pair_rminsq
+    END IF
     WRITE(logunit,*)
     WRITE(logunit,'(A)') 'Shifted chemical potentials from Widom insertions'
     WRITE(logunit,'(A80)') '********************************************************************************'
     DO is = 1,nspecies
       DO ibox = 1, nbr_boxes
         IF(ntrials(is,ibox)%widom > 0) THEN
-          WRITE(logunit,'(A,X,A,X,A,X,A,X,A,F24.12,X,A)') 'Shifted chemical potential for species', &
+          WRITE(logunit,'(A,X,A,X,A,X,A,X,A,F21.12,X,A)') 'Shifted chemical potential for species', &
             TRIM(Int_To_String(is)),'in box',TRIM(Int_To_String(ibox)),'is', &
             -kboltz*temperature(ibox)*atomic_to_kJmol*DLOG(species_list(is)%widom_sum(ibox) / ntrials(is,ibox)%widom), &
             'kJ/mol'
           WRITE(logunit,'(8X,A)') TRIM(Int_To_String(overlap_counter(is,ibox))) // ' Widom insertions with overlap out of ' &
             // TRIM(Int_To_String(ntrials(is,ibox)%widom))
-          !WRITE(logunit,'(A,I2,A,I2,A,F24.12)') &
-          !  'Ideal Chemical potential for species',is,'in box',i, 'is', &
-          !  chpotid(is,i) / ntrials(is,i)%cpcalc
+          WRITE(logunit,'(8x,A,F27.3,A)') "CPU time: ", widom_cpu_time(is,ibox), " seconds"
+          WRITE(logunit,'(8x,A,F21.3,A)') "Wallclock time: ", widom_wc_time(is,ibox), " seconds"
+          IF (est_emax) THEN
+                  CALL Estimate_Pair_Emax(is,ibox,Emax,nskips)
+                  WRITE(logunit,'(8x,A,F12.6,A)') "Recommended pair U*_max = ", Emax, &
+                          " would have flagged about " // TRIM(Int_To_String(nskips)) // " more overlaps"
+          END IF
+          IF (est_atompair_rminsq) THEN
+                  DO i_tol=1, nbr_tols
+                          WRITE(logunit,'(8x,A,ES10.3)') "The atompair rminsq table created with tolerance =", &
+                                  tol_list(i_tol) 
+                          WRITE(logunit,'(16x,A)') "would have flagged at least " // &
+                                  TRIM(Int_To_String(Get_rminsq_nskips(is,ibox,i_tol))) // " more overlaps"
+                          WRITE(logunit,'(16x,A,E12.5)') "and discarded insertions with widom_var up to ", &
+                                  Get_rminsq_wmax(is,ibox,i_tol)
+                          WRITE(logunit,'(24x,A,E12.5,A)') "(", &
+                                  (Get_rminsq_wmax(is,ibox,i_tol)/species_list(is)%widom_sum(ibox)), &
+                                  " of total widom_var sum)."
+                  END DO
+          END IF
         END IF
       END DO
     END DO

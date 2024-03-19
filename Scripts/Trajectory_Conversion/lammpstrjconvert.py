@@ -12,7 +12,8 @@ from pathlib import Path
 
 
 def lammpstrjconvert(
-    lammpstrjpath, n_list, fstr="%f", Hpath=None, xyzpath=None, getframes=None
+    lammpstrjpath, n_list, fstr="%f", Hpath=None, xyzpath=None, getframes=None,
+    center=False
 ):
     """Convert LAMMPS custom dump file to .xyz and .H files to be read by
     Cassandra.
@@ -49,6 +50,9 @@ def lammpstrjconvert(
         If empty, the function effectively does nothing.  The frames are
         written in the same order with which they are listed in getframes,
         which is not necessarily in ascending order.
+    center: boolean
+        Center the box around (0,0,0) origin if True.  If False (the default), 
+        leave atom coordinates unchanged.
     """
 
     ltpath = Path(lammpstrjpath)
@@ -132,9 +136,6 @@ def lammpstrjconvert(
             c = [xz, yz, zz]
             lmat = np.array([a, b, c])
             volume = np.inner(a, np.cross(b, c))
-            # boxes always have origin at (0,0,0) in Cassandra,
-            # but not always in lammps
-            box_center = np.sum(lmat, axis=1) * 0.5 + np.array([xlo, ylo, zlo])
             eofreached = findheading("ITEM: ATOMS ", False)  # noqa
             coldict = {
                 colname: i
@@ -149,7 +150,11 @@ def lammpstrjconvert(
             )
             xyz_buffer.close()
             xyz = xyz[np.argsort(xyz[:, 0])]
-            xyz[:, 1:] -= box_center  # center the box at (0, 0, 0)
+            if center:
+                # boxes always have origin at (0,0,0) in Cassandra,
+                # but not always in LAMMPS
+                box_center = np.sum(lmat, axis=1) * 0.5 + np.array([xlo, ylo, zlo])
+                xyz[:, 1:] -= box_center  # center the box at (0, 0, 0)
             nspecies = len(n_list)
             Hfile.write("{:^26.17g}\n".format(volume))
             Hfile.write(
@@ -224,12 +229,18 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "--center",
+        action="store_true",
+        help="Center box around (0,0,0) origin."
+    )
+
+    parser.add_argument(
         "-f",
         "--format",
         default="%f",
         help="Format string "
         "designating the format with which to write the "
-        " coordinate floats in the .xyz file",
+        " coordinate floats in the .xyz file.",
     )
     parser.add_argument(
         "fname", help="Contains the path to the LAMMPS"
@@ -246,4 +257,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     lammpstrjconvert(lammpstrjpath=args.fname,
                      n_list=args.nmols,
-                     fstr=args.format)
+                     fstr=args.format,
+                     center=args.center)

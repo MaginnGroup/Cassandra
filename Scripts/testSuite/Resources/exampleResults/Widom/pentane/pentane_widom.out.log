@@ -8,34 +8,34 @@
 ********************************************************************************
 **********************************Log File**************************************
 ********************************************************************************
-
+ 
 For any published work that uses Cassandra, cite the following reference:
     Shah JK, Marin‐Rimoldi E, Mullen RG, Keene BP, Khan S,
     Paluch AS, Rai N, Romanielo LL, Rosch TW, Yoo B, Maginn EJ.
     Cassandra: An open source Monte Carlo package for molecular simulation.
     Journal of Computational Chemistry. 2017, 38, 1727–1739.
     http://dx.doi.org/10.1002/jcc.24807
-
+ 
 Run info
 ********************************************************************************
-version: Cassandra Version 1.2.5
+version: Cassandra Version 1.3.0
 inputfile: pentane_widom.inp
 name of run: pentane_widom.out
-date (mm/dd/yyyy): 04/22/2022
-time: 12:36:04
-machine: Hyron
+date (mm/dd/yyyy): 07/31/2023
+time: 11:23:58
+machine: maginnfe.crc.nd.edu
 ********************************************************************************
-
+ 
 Verbose log
 ********************************************************************************
 Normal output to logfile
 ********************************************************************************
-
+ 
 Simulation type
 ********************************************************************************
 pregen              
 ********************************************************************************
-
+ 
 Copy input file
 ********************************************************************************
                                                                                 
@@ -56,6 +56,11 @@ lj cut_tail 14.0
                                                                                 
 # Rcutoff_Low                                                                   
 2.0                                                                             
+adaptive 300 est_emax                                                           
+specific write 0.1 300 tol_list 3 1e-20 1e-15 1e-10 heap                        
+                                                                                
+# Solvent_Species                                                               
+1                                                                               
                                                                                 
 # Molecule_Files                                                                
 pentane.mcf   60                                                                
@@ -98,18 +103,19 @@ species1/frag2/frag2.dat  2
 species1/frag3/frag3.dat  3                                                     
                                                                                 
 # CBMC_Info                                                                     
-kappa_ins 12                                                                    
-kappa_dih 10                                                                    
+kappa_ins 4                                                                     
+kappa_dih 4                                                                     
 rcut_cbmc 6.5                                                                   
+energy_table 1000                                                               
                                                                                 
 END                                                                             
 ********************************************************************************
-
+ 
 Number of species
 ********************************************************************************
 1
 ********************************************************************************
-
+ 
 Box info
 ********************************************************************************
 Number of simulation boxes     1
@@ -120,7 +126,7 @@ Box 1 is CUBIC
  Distance between box faces   100.0000     100.0000     100.0000
  Box volume, A^3       1000000.0000
 ********************************************************************************
-
+ 
 Pair style
 ********************************************************************************
 VDW style used is:   LJ             in box:  1
@@ -133,7 +139,7 @@ Section "# Pair_Energy" is missing from the input file
 Section "# Mixing_Rule" is missing from the input file
  By default, using Lorentz-Berthelot
 ********************************************************************************
-
+ 
 Molecule info
 ********************************************************************************
  Reading molecular connectivity information
@@ -146,11 +152,11 @@ Molecule info
    0 improper(s) specified.
    3 fragment(s) specified.
    2 fragment bond(s) specified.
-
+ 
  Species  Max molecules
  -------  -------------
       1             60
-
+ 
  Species     1
  -------------------------------------------------------------------------------
  Atom parameters read
@@ -171,7 +177,7 @@ Molecule info
  Fragment file for fragment 2 is species1/frag2/frag2.dat
  Fragment file for fragment 3 is species1/frag3/frag3.dat
  -------------------------------------------------------------------------------
-
+ 
  Fragment coord info
  -------------------------------------------------------------------------------
  library_coords array successfully allocated
@@ -181,24 +187,32 @@ Molecule info
  species1/frag3/frag3.dat
  -------------------------------------------------------------------------------
 ********************************************************************************
-
-Seed info
-********************************************************************************
-The starting seeds are:           265834938           610725582
-********************************************************************************
-
+ 
 Temperature
 ********************************************************************************
 Temperature of box 1 is 336.000 K
 ********************************************************************************
-
+ 
+Minimum distance cutoff
+********************************************************************************
+MC low cutoff distance is   2.000    Angstrom
+Will create and write atompair rminsq table with 300 bins of width  0.100E+00square Angstroms
+         to file pentane_widom.out.rminsq                                                                                                
+********************************************************************************
+ 
+Seed info
+********************************************************************************
+The starting seeds are:           265834938           610725582
+********************************************************************************
+ 
 CBMC info
 ********************************************************************************
-Kappa for first fragment insertion          12
-Kappa for dihedral selection                10
+Kappa for first fragment insertion           4
+Kappa for dihedral selection                 4
  Cutoff for CBMC for box 1 is         6.50
+ Atom pair energy table with rsq resolution = 1000 will be used.
 ********************************************************************************
-
+ 
 Simulation length info
 ********************************************************************************
 Thermodynamic quantities will be computed every                    1 Steps     
@@ -208,13 +222,13 @@ Coordinates will be written to file every                          1 Steps
 The simulation will be run for                                  11 Steps     
 Instantaneous values will be written every                         1 Steps     
 ********************************************************************************
-
+ 
 Widom insertion info
 ********************************************************************************
  Species 1 will have 90000 Widom insertions every 1 MC steps
           with de Broglie wavelength (Angstroms):        0.112128203
 ********************************************************************************
-
+ 
 Property info
 ********************************************************************************
 Total number of property files to be written is     1   for box 1
@@ -228,30 +242,25 @@ Total number of property files to be written is     1   for box 1
  Density
  Mass_Density
 ********************************************************************************
-
-Minimum distance cutoff
-********************************************************************************
-MC low cutoff distance is   2.000    Angstrom
-********************************************************************************
-
+ 
 Pregenerated trajectory info
 ********************************************************************************
- Box size will be replaced by those read from the pregenerated H file
+ Box size will be replaced by those read from a pregenerated trajectory file
  Reading pregenerated trajectory for box            1  from xyz file pentane_traj.xyz and H file pentane_traj.H
 ********************************************************************************
-
+ 
 ********************************************************************************
 ************************ Begin Cassandra simulation ****************************
 ********************************************************************************
-
+ 
 Initial configuration
 ********************************************************************************
 No initial configuration needed
 ********************************************************************************
-
+ 
 Compute total energy
 ********************************************************************************
-
+ 
  Energy components for box 1     kJ/mol-Extensive
  ---------------------------------------------------------------------
  Total system energy                        0.000
@@ -267,17 +276,17 @@ Compute total energy
    Long range correction                    0.000
    Inter molecule q                         0.000
  ---------------------------------------------------------------------
-
+ 
 ********************************************************************************
-
+ 
 Run simulation
 ********************************************************************************
                 Step       Move   Mol Spc Box  Success  MaxWidth
 ********************************************************************************
-
+ 
 Energy of final configuration
 ********************************************************************************
-
+ 
  Energy components for box 1     kJ/mol-Extensive       Relative_Error
  ---------------------------------------------------------------------
  Total system energy                      466.604            0.000E+00
@@ -286,50 +295,65 @@ Energy of final configuration
    Bond angle energy                      203.859            0.000E+00
    Dihedral angle energy                  350.382            0.000E+00
    Improper angle energy                    0.000            0.000E+00
-   Intra molecule vdw                     -36.589           -0.000E+00
+   Intra molecule vdw                     -36.589            0.000E+00
    Intra molecule q                         0.000            0.000E+00
- Inter molecular energy                   -51.047           -0.000E+00
-   Inter molecule vdw                     -50.294           -0.000E+00
-   Long range correction                   -0.753           -0.000E+00
+ Inter molecular energy                   -51.047            0.000E+00
+   Inter molecule vdw                     -50.294            0.000E+00
+   Long range correction                   -0.753            0.000E+00
    Inter molecule q                         0.000            0.000E+00
  ---------------------------------------------------------------------
-
+ 
 ********************************************************************************
-
-
+ 
+ 
 Writing information for box  1
 ********************************************************************************
-
+ 
    ---------------------------------------------------------
    Writing information for species  1
-
+ 
                 Move      Trials     Success   % Success
    ---------------------------------------------------------
-
+ 
 ********************************************************************************
-
+ 
 Shifted chemical potentials from Widom insertions
 ********************************************************************************
-Shifted chemical potential for species 1 in box 1 is        -39.080671967063 kJ/mol
+Shifted chemical potential for species 1 in box 1 is     -39.082587539029 kJ/mol
         0 Widom insertions with overlap out of 990000
+        CPU time:                      25.574 seconds
+        Wallclock time:                25.604 seconds
+        Recommended pair U*_max =    11.500000 would have flagged about 25 more overlaps
+        The atompair rminsq table created with tolerance = 1.000E-20
+                would have flagged at least 1 more overlaps
+                and discarded insertions with widom_var up to  0.66253E-08
+                        ( 0.56222E-20 of total widom_var sum).
+        The atompair rminsq table created with tolerance = 1.000E-15
+                would have flagged at least 4 more overlaps
+                and discarded insertions with widom_var up to  0.57768E-03
+                        ( 0.49022E-15 of total widom_var sum).
+        The atompair rminsq table created with tolerance = 1.000E-10
+                would have flagged at least 7 more overlaps
+                and discarded insertions with widom_var up to  0.85745E+02
+                        ( 0.72763E-10 of total widom_var sum).
 ********************************************************************************
-
+ 
  Writing information about subroutine times
 ********************************************************************************
- Widom time =                  0.042465 hrs.
+ Widom time =                 25.605328 secs.
 ********************************************************************************
-
+ 
 ********************************************************************************
 ************************ Cassandra simulation complete *************************
 ********************************************************************************
-
+ 
  Program execution time
 ********************************************************************************
          0      Years
          0     Months
          0       Days
          0      Hours
-         2    Minutes
-        32    Seconds
-       921         ms
+         0    Minutes
+        25    Seconds
+       625         ms
 ********************************************************************************

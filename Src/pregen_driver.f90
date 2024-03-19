@@ -40,6 +40,7 @@ SUBROUTINE Pregen_Driver
   USE Energy_Routines
   USE Read_Write_Checkpoint
   USE Simulation_Properties
+  USE XTC_Routines, ONLY : Close_XTC
 
   IMPLICIT NONE
 
@@ -254,6 +255,9 @@ SUBROUTINE Pregen_Driver
         END IF
      END IF
 
+  END DO
+  DO ibox = 1, nbr_boxes
+        IF (xtc_is_open(ibox)) CALL Close_XTC(ibox)
   END DO
 
 

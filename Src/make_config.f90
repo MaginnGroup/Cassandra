@@ -68,11 +68,13 @@
     REAL(DP) :: rand_lambda,lambda_ins,lambda_del
     REAL(DP) :: nrg_ring_frag_tot
 
-    LOGICAL :: overlap, cbmc_overlap
+    LOGICAL :: overlap, cbmc_overlap, temp_precalc_atompair_nrg
 
     CHARACTER(FILENAME_LEN) :: init_config_file, init_config_file1
 !*******************************************************************************
     ! Place molecules in the box using CB growth.
+    temp_precalc_atompair_nrg = precalc_atompair_nrg
+    precalc_atompair_nrg = .FALSE.
 
     overlap = .false. 
     del_flag = .FALSE. 
@@ -209,6 +211,7 @@
     overlap = .FALSE.
 
     IF(int_vdw_sum_style(ibox) == vdw_cut_tail) CALL Compute_Beads(ibox)
+    precalc_atompair_nrg = temp_precalc_atompair_nrg
 
   CONTAINS
     
