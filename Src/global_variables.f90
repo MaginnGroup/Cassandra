@@ -64,6 +64,7 @@ USE Type_Definitions
 
   ! error handling variables
   INTEGER :: AllocateStatus, OpenStatus, DeAllocateStatus
+  !$OMP THREADPRIVATE(AllocateStatus, OpenStatus, DeAllocateStatus)
 
   ! Timing function
   CHARACTER(15) :: hostname,date,time,zone
@@ -121,7 +122,7 @@ USE Type_Definitions
   INTEGER, PARAMETER :: charge_minimum = 4
   INTEGER, PARAMETER :: charge_dsf = 5
 
-  REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_cbmc
+  REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_cbmc, rcut_cbmcsq
   REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_vdw, rcut_coul, ron_charmm, roff_charmm, rcut_max
   REAL(DP), DIMENSION(:), ALLOCATABLE :: ron_switch, roff_switch, roff_switch_sq, switch_factor1
   REAL(DP), DIMENSION(:), ALLOCATABLE :: switch_factor2, ron_switch_sq
@@ -287,11 +288,13 @@ USE Type_Definitions
   INTEGER, DIMENSION(:), ALLOCATABLE :: nbonds, nangles, nangles_fixed
   INTEGER, DIMENSION(:), ALLOCATABLE :: ndihedrals, nimpropers
   INTEGER, DIMENSION(:), ALLOCATABLE :: nfragments, fragment_bonds
+  INTEGER, DIMENSION(:), ALLOCATABLE :: natoms_to_read
 
   ! array to hold the total number of molecules of each species in a given box
 
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: nmols
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: nmols_to_make, nmols_to_read
+  INTEGER, DIMENSION(:,:,:), ALLOCATABLE :: atom_ibounds
 
   ! array to hold ring atom ids and exo atom ids for a fragment
   ! will have (MAXVAL(natoms), nspecies) dimensions
@@ -602,23 +605,25 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
 
   !!!! Sectors
   ! sector_atoms is indexed by (atom index within sector, sector index)
-  INTEGER, DIMENSION(:,:,:), ALLOCATABLE, TARGET :: sector_atoms
+  INTEGER, DIMENSION(:,:,:), ALLOCATABLE, TARGET :: sector_atoms, sector_atoms_cbmc, sector_atoms_full
   ! sector_index_map is indexed by (x index, y index, z index, box index) to get sector index
-  INTEGER, DIMENSION(:,:,:,:), ALLOCATABLE :: sector_index_map
+  INTEGER, DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: sector_index_map, sector_index_map_cbmc, sector_index_map_full
   ! sector_n_atoms is indexed by (sector index) to get number of atoms in a sector
-  INTEGER, DIMENSION(:), ALLOCATABLE :: sector_n_atoms
+  INTEGER, DIMENSION(:), ALLOCATABLE, TARGET :: sector_n_atoms, sector_n_atoms_cbmc, sector_n_atoms_full
   ! sector_has_atoms is indexed by (x index, y index, z index, box index)
   LOGICAL, DIMENSION(:,:,:,:), ALLOCATABLE :: sector_has_atoms
 
-  LOGICAL :: l_sectors
+  LOGICAL :: l_sectors, cbmc_cell_list_flag, full_cell_list_flag
   ! sectorbound, length_cells, & cell_length_inv are indexed by (box dimension, box index)
-  INTEGER, DIMENSION(:,:), ALLOCATABLE :: sectorbound
-  INTEGER, DIMENSION(:,:), ALLOCATABLE :: length_cells
-  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: cell_length_inv, cell_length
+  INTEGER, DIMENSION(:,:), ALLOCATABLE :: sectorbound, sectorbound_cbmc, sectorbound_full
+  INTEGER, DIMENSION(:,:), ALLOCATABLE :: length_cells, length_cells_cbmc, length_cells_full
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE, TARGET :: cell_length_inv, cell_length_inv_cbmc, cell_length_inv_full
 
-  INTEGER, DIMENSION(3) :: sectormaxbound
+  INTEGER, DIMENSION(3) :: sectormaxbound, sectormaxbound_cbmc, sectormaxbound_full
 
-  INTEGER :: n_occ_sectors
+  INTEGER :: n_occ_sectors, n_occ_sectors_cbmc, n_occ_sectors_full
+  INTEGER :: max_sector_natoms, max_sector_natoms_cbmc, max_sector_natoms_full
+  INTEGER :: max_occ_sectors, max_occ_sectors_cbmc, max_occ_sectors_full
   
   TYPE(Molecule_Class), TARGET :: widom_molecule
   TYPE(Atom_Class), ALLOCATABLE, DIMENSION(:), TARGET :: widom_atoms
@@ -629,6 +634,18 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   ! n_widom_subgroups is indexed by (species,box)
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: n_widom_subgroups
 
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: widom_cpu_time, widom_wc_time
+
+
+
+  REAL(DP) :: Eij_max
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: Eij_factor
+  REAL(DP), DIMENSION(:,:,:), ALLOCATABLE :: w_max, Eij_w_sum 
+  INTEGER, DIMENSION(:,:,:), ALLOCATABLE :: Eij_freq_total
+  INTEGER :: Eij_ind_ubound
+  LOGICAL :: est_emax
+  !$OMP THREADPRIVATE(Eij_max)
+
 
 
 
@@ -637,7 +654,41 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
 !widom_timing  !$OMP THREADPRIVATE(n_clo, n_not_clo, n_nrg_overlap)
 !widom_timing  !$OMP THREADPRIVATE(cell_list_time, normal_overlap_time, non_overlap_time, nrg_overlap_time)
 
+  !!! atompair energy table global variables
+  INTEGER :: atompair_nrg_res
+  LOGICAL :: precalc_atompair_nrg
+  REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: atompair_nrg_table
+  REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: typepair_nrg_table
+  REAL(DP) :: rsq_step
+  REAL(DP) :: rsq_shifter
+  INTEGER, DIMENSION(:), ALLOCATABLE :: typepair_solute_indices, typepair_solvent_indices
+  INTEGER, DIMENSION(:), ALLOCATABLE :: solute_atomtypes, solvent_atomtypes
+  INTEGER :: solute_ntypes, solvent_ntypes, solute_maxind, solvent_maxind
+  LOGICAL :: need_solvents
+  !!!!
 
+  !!! atompair rminsq table global variables
+  ! swi stands for single Widom insertion
+  ! index swi_atompair_rsqmin with (solvent_base+solvent_ia,solute_ia)
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE, TARGET :: swi_atompair_rsqmin
+  REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: rsqmin_atompair_w_max
+  REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: rsqmin_atompair_w_sum
+  INTEGER(KIND=INT64), DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: rsqmin_atompair_freq
+  REAL(DP), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: atompair_rminsq_table
+  INTEGER, DIMENSION(:), ALLOCATABLE :: typepair_wsolute_indices, wsolute_atomtypes
+  REAL(DP) :: maxrminsq, rsqmin_step, rsqmin_shifter
+  INTEGER :: rsqmin_res, wsolute_ntypes, wsolute_maxind
+  LOGICAL :: est_atompair_rminsq, read_atompair_rminsq, l_heap
+  REAL(DP), DIMENSION(:), ALLOCATABLE :: tol_list
+  INTEGER :: nbr_tols, solvent_maxind_d, rsqmin_res_d
+  !$OMP THREADPRIVATE(swi_atompair_rsqmin)
+  !
+
+  !
+  REAL(DP), DIMENSION(0:1000)  :: type_charge_min, type_charge_max
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE, TARGET :: rminsq_table
+  REAL(DP) :: U_max_base, max_rmin
+  LOGICAL :: calc_rmin_flag
 
 END MODULE Global_Variables
 

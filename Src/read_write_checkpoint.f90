@@ -264,6 +264,7 @@ SUBROUTINE Read_Checkpoint
     READ(restartunit,*)
     DO is = 1, nspecies
        READ(restartunit,*) this_species, sp_nmoltotal(is)
+       IF (sp_nmoltotal(is) > 0) species_list(is)%l_solvent = .TRUE.
     END DO
     WRITE(logunit,*) 'Number of molecules read successfully'
 

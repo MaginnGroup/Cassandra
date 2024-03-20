@@ -3,11 +3,21 @@ in Cassandra using a trajectory generated in LAMMPS.  The simulation computes th
 shifted chemical potential of R-32 (difluoromethane) in pure BMIM-PF6 (an ionic liquid).
 The Widom insertions performed in each trajectory frame are split into five subgroups.
 The cell list-based overlap detection is enabled to accelerate the simulation.
+Atom pair-specific overlap radii are used and set with bmim_pf6_r32.rminsq.
+There are two simulation input files provided, bmim_pf6_r32_read_xyz.inp and 
+bmim_pf6_r32_read_xtc.inp.  The former reads the trajectory frames from a .xyz file
+and a .H file, while the latter reads the trajectory frames from bmim-pf6.xtc instead.
+
 The bash script convert_trajectory.sh shows how to use the python script 
 lammpstrjconvert.py to convert the included LAMMPS trajectory (bmim-pf6.lammpstrj) to 
-bmim-pf6.H and bmim-pf6.xyz, which are the trajectory files read by Cassandra.
+bmim-pf6.H and bmim-pf6.xyz, which are the trajectory files read by Cassandra when 
+running bmim_pf6_32_read_xyz.inp.
 
-BMIM-PF6 is parameterized with the GAFF, while the parameters for R-32 
+The trajectory frames stored in bmim-pf6.lammpstrj and bmim-pf6.xtc are the same, 
+just in different formats, so both Widom insertion simulations should yield almost
+identical results.
+
+BMIM-PF6 is parameterized with GAFF, while the parameters for R-32 
 come from the following publication:
 
       Gabriele Raabe.

@@ -51,8 +51,10 @@ SUBROUTINE Widom_Subdriver
 
   ! Local declarations
   INTEGER :: is, ibox
+  INTEGER(KIND=INT64) :: n_overlaps
 !widom_timing  INTEGER(KIND=INT64) :: num_cell_list_overlap, num_not_cell_list_overlap, num_nrg_overlap
   REAL(DP) :: widom_sum, widom_avg!widom_timing, setup_time_s, setup_time_e, setup_time
+  REAL(DP) :: t_wc_s, t_wc_e, t_cpu
 !widom_timing  REAL(DP) :: r_cell_list_time, r_normal_overlap_time, r_non_overlap_time, r_nrg_overlap_time
   LOGICAL :: need_init, omp_flag
   need_init = l_sectors
@@ -71,6 +73,8 @@ SUBROUTINE Widom_Subdriver
 !widom_timing                        IF (.NOT. omp_flag) CALL cpu_time(setup_time_s)
 !widom_timing                        !$ setup_time_s = omp_get_wtime()
                         CALL Sector_Setup
+                        IF (cbmc_cell_list_flag) CALL CBMC_Cell_List_Setup
+                        IF (full_cell_list_flag) CALL Full_Cell_List_Setup
 !widom_timing                        IF (.NOT. omp_flag) CALL cpu_time(setup_time_e)
 !widom_timing                        !$ setup_time_e = omp_get_wtime()
 !widom_timing                        setup_time = setup_time_e - setup_time_s
@@ -86,10 +90,16 @@ SUBROUTINE Widom_Subdriver
 !widom_timing                non_overlap_time = 0.0_DP
 !widom_timing                nrg_overlap_time = 0.0_DP
 !widom_timing                !$OMP END PARALLEL
-                CALL Widom_Insert(is,ibox,widom_sum)
+                IF (.NOT. omp_flag) CALL CPU_TIME(t_wc_s)
+                !$ t_wc_s = omp_get_wtime()
+                CALL Widom_Insert(is,ibox,widom_sum,t_cpu,n_overlaps)
+                widom_cpu_time(is,ibox) = widom_cpu_time(is,ibox) + t_cpu
                 species_list(is)%widom_sum(ibox) = species_list(is)%widom_sum(ibox) + widom_sum
                 widom_avg = widom_sum / species_list(is)%insertions_in_step(ibox)
-                CALL Write_Widom_Properties(is,ibox,widom_avg)
+                CALL Write_Widom_Properties(is,ibox,widom_avg,t_cpu,n_overlaps)
+                IF (.NOT. omp_flag) CALL CPU_TIME(t_wc_e)
+                !$ t_wc_e = omp_get_wtime()
+                widom_wc_time(is,ibox) = (t_wc_e - t_wc_s) + widom_wc_time(is,ibox)
 !widom_timing                num_cell_list_overlap = 0_INT64
 !widom_timing                num_not_cell_list_overlap = 0_INT64
 !widom_timing                num_nrg_overlap = 0_INT64

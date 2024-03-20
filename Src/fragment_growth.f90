@@ -517,12 +517,14 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
         overlap = .FALSE.
         IF (widom_active) THEN
                 CALL Compute_Molecule_Nonbond_Inter_Energy_Widom(this_im,is,&
-                        E_inter_vdw,E_inter_qq,overlap)
+                        E_inter_vdw,overlap)
+                ! in this case, E_inter_vdw already includes qq energy
+                nrg(itrial) = nrg(itrial) + E_inter_vdw 
         ELSE
                 CALL Compute_Molecule_Nonbond_Inter_Energy(this_im,is,&
                         E_inter_vdw,E_inter_qq,overlap)
+                nrg(itrial) = nrg(itrial) + E_inter_vdw + E_inter_qq 
         END IF
-        nrg(itrial) = nrg(itrial) + E_inter_vdw + E_inter_qq 
 
         IF (overlap) THEN
            ! atoms are too close, set the weight to zero
@@ -1984,11 +1986,15 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
         END DO
 
         these_atoms%exist = new_exist
-        CALL Get_COM(this_im,is)
-        CALL Compute_Max_COM_Distance(this_im,is)
+        IF (.NOT. (cbmc_cell_list_flag .AND. widom_active)) THEN
+                CALL Get_COM(this_im,is)
+                CALL Compute_Max_COM_Distance(this_im,is)
+        END IF
         IF (widom_active) THEN
                 CALL Compute_Molecule_Nonbond_Inter_Energy_Widom(this_im,is,&
-                        nrg_inter_vdw,E_inter_qq,overlap)
+                        nrg_inter_vdw,overlap)
+                ! in this case, nrg_inter_vdw already includes qq energy
+                E_inter_qq = 0.0_DP
         ELSE
                 CALL Compute_Molecule_Nonbond_Inter_Energy(this_im,is,&
                         nrg_inter_vdw,E_inter_qq,overlap)
@@ -2118,7 +2124,7 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
     
 
   END DO
-  IF (frag_total > 1) THEN
+  IF (frag_total > 1 .AND. .NOT. full_cell_list_flag) THEN
           CALL Get_COM(this_im,is)
           CALL Compute_Max_COM_Distance(this_im,is)
   END IF

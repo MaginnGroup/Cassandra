@@ -63,6 +63,7 @@ SUBROUTINE NPTMC_Control
   USE Atoms_To_Place
   USE Angle_Dist_Pick
   USE Energy_Routines
+  USE Atompair_Nrg_Table_Routines
 
   IMPLICIT NONE
 
@@ -96,6 +97,11 @@ SUBROUTINE NPTMC_Control
   ! must be called before this routine.  
   CALL Get_Molecule_Info
 
+  ! Obtain the temperature of the simulation
+  CALL Get_Temperature_Info
+
+  CALL Get_Rcutoff_Low
+
   ! Determine the number and identity of unique atom types, and create a vdw interaction table.
   CALL Create_Nonbond_Table
 
@@ -107,9 +113,6 @@ SUBROUTINE NPTMC_Control
 
   ! Seed info
   CALL Get_Seed_Info
-
-  ! Obtain the temperature of the simulation
-  CALL Get_Temperature_Info
 
   ! Obtain the pressure of the simulation box
   CALL Get_Pressure_Info
@@ -126,8 +129,6 @@ SUBROUTINE NPTMC_Control
 
   ! Properties to be output
   CALL Get_Property_Info
-
-  CALL Get_Rcutoff_Low
 
   CALL Precalculate
 
@@ -155,5 +156,7 @@ SUBROUTINE NPTMC_Control
   CALL Get_Dihedral_Atoms_To_Place  
 
   CALL Get_Lookup_Info
+
+  CALL Setup_Atompair_Tables
 
 END SUBROUTINE NPTMC_Control

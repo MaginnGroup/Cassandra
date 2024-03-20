@@ -55,8 +55,8 @@ if num_threads is not None:
     os.environ['OMP_NUM_THREADS'] = '1'
 
 # Check parameters
-nChecks = 3 # number of simulations to run
-title = ("Diethylether", "Pentane", "Water SPCE")
+nChecks = 5 # number of simulations to run
+title = ("Diethylether", "Pentane", "Water SPCE", "R-32 in BMIM-PF6, xyz", "R-32 in BMIM-PF6, xtc")
 analyticAnswer = [None] * nChecks # list to hold analytic answers
 cassAnswer     = [None] * nChecks # list to hold cassandra's answers
 passCheck      = [None] * nChecks # list to hold if cassandra passed each check
@@ -65,13 +65,31 @@ cassPrint = [None]* nChecks
 cassStr[0] = (("Energy_Total","Pressure","Volume","Density"),)
 cassStr[1] = (("Energy_Total","Pressure","Volume","Density", "Mass_Density"),)
 cassStr[2] = (("Energy_Total","Pressure","Volume","Density", "Mass_Density"),)
+cassStr[3] = (("Energy_Total","Pressure","Volume","Mass_Density","Enthalpy",
+    "Energy_InterVDW","Energy_LRC","Energy_InterQ","Energy_Recip","Energy_Self",
+    "Energy_Angle","Energy_Dihedral","Energy_Improper","Energy_IntraVDW",
+    "Energy_IntraQ","Energy_Intra","Energy_Inter"),)
+cassStr[4] = (("Energy_Total","Pressure","Volume","Mass_Density","Enthalpy",
+    "Energy_InterVDW","Energy_LRC","Energy_InterQ","Energy_Recip","Energy_Self",
+    "Energy_Angle","Energy_Dihedral","Energy_Improper","Energy_IntraVDW",
+    "Energy_IntraQ","Energy_Intra","Energy_Inter"),)
 cassPrint[0] = (("Energy_Total [kJ/mol-Ext]","Pressure [bar]","Volume [A^3]","Density [molec/A^3]", 
-    "Shifted Chem. Potential [kJ/mol]", "Avg widom_var", "Subgroup 1 <widom_var>", "Subgroup 2 <widom_var>", "Subgroup 3 <widom_var>"),)
+    "Shifted Chem. Potential [kJ/mol]", "Recommended Emax", "atompair rminsq index", "Avg widom_var", "Subgroup 1 <widom_var>", "Subgroup 2 <widom_var>", "Subgroup 3 <widom_var>"),)
 cassPrint[1] = (("Energy_Total [kJ/mol-Ext]","Pressure [bar]","Volume [A^3]","Density [molec/A^3]", "Mass_Density [kg/m^3]", 
-    "Shifted Chem. Potential [kJ/mol]", "Avg widom_var", "Subgroup 1 <widom_var>", "Subgroup 2 <widom_var>", "Subgroup 3 <widom_var>"),)
+    "Shifted Chem. Potential [kJ/mol]", "Recommended Emax", "atompair rminsq index", "Avg widom_var", "Subgroup 1 <widom_var>", "Subgroup 2 <widom_var>", "Subgroup 3 <widom_var>"),)
 cassPrint[2] = (("Energy_Total [kJ/mol-Ext]","Pressure [bar]","Volume [A^3]","Density [molec/A^3]", "Mass_Density [kg/m^3]", 
+    "Shifted Chem. Potential [kJ/mol]", "Recommended Emax", "atompair rminsq index", "Avg widom_var", "Subgroup 1 <widom_var>", "Subgroup 2 <widom_var>", "Subgroup 3 <widom_var>"),)
+cassPrint[3] = (("Energy_Total [kJ/mol-Ext]","Pressure [bar]","Volume [A^3]", "Mass_Density [kg/m^3]", "Enthalpy [kJ/mol-Ext]",
+    "Energy_InterVDW [kJ/mol-Ext]","Energy_LRC [kJ/mol-Ext]","Energy_InterQ [kJ/mol-Ext]","Energy_Recip [kJ/mol-Ext]","Energy_Self [kJ/mol-Ext]",
+    "Energy_Angle [kJ/mol-Ext]","Energy_Dihedral [kJ/mol-Ext]","Energy_Improper [kJ/mol-Ext]","Energy_IntraVDW [kJ/mol-Ext]",
+    "Energy_IntraQ [kJ/mol-Ext]","Energy_Intra [kJ/mol-Ext]","Energy_Inter [kJ/mol-Ext]",
     "Shifted Chem. Potential [kJ/mol]", "Avg widom_var", "Subgroup 1 <widom_var>", "Subgroup 2 <widom_var>", "Subgroup 3 <widom_var>"),)
-endStep = (10,10,10)
+cassPrint[4] = (("Energy_Total [kJ/mol-Ext]","Pressure [bar]","Volume [A^3]", "Mass_Density [kg/m^3]", "Enthalpy [kJ/mol-Ext]",
+    "Energy_InterVDW [kJ/mol-Ext]","Energy_LRC [kJ/mol-Ext]","Energy_InterQ [kJ/mol-Ext]","Energy_Recip [kJ/mol-Ext]","Energy_Self [kJ/mol-Ext]",
+    "Energy_Angle [kJ/mol-Ext]","Energy_Dihedral [kJ/mol-Ext]","Energy_Improper [kJ/mol-Ext]","Energy_IntraVDW [kJ/mol-Ext]",
+    "Energy_IntraQ [kJ/mol-Ext]","Energy_Intra [kJ/mol-Ext]","Energy_Inter [kJ/mol-Ext]",
+    "Shifted Chem. Potential [kJ/mol]", "Avg widom_var", "Subgroup 1 <widom_var>", "Subgroup 2 <widom_var>", "Subgroup 3 <widom_var>"),)
+endStep = (10,10,10,10,10)
 errorTol = 5e-4
 
  # Formatting variables
@@ -87,25 +105,30 @@ resourceDir = MainDir + "Scripts/testSuite/Resources/"
 cassExe     = args.cassandra_exe
 resFolder       = (resourceDir+"exampleResources/Widom/diethylether/",
                 resourceDir+"exampleResources/Widom/pentane/",
-                resourceDir+"exampleResources/Widom/water_spce/")
-cassRun         = ("dee_widom.out","pentane_widom.out","spce_widom.out")
-mcfRun  = ("dee.mcf","pentane.mcf","spce.mcf")
-species = ([1],[1],[1])
-inpName         = ("dee_widom.inp","pentane_widom.inp","spce_widom.inp")
-xyzFlag         = (1,1,1)
-hFileFlag       = (1,1,1)
-xyzName         =('dee_traj.xyz','pentane_traj.xyz','spce_traj.xyz')
-hFileName       =('dee_traj.H','pentane_traj.H','spce_traj.H')
+                resourceDir+"exampleResources/Widom/water_spce/",
+                resourceDir+"exampleResources/Widom/bmim-pf6_r32_xyz/",
+                resourceDir+"exampleResources/Widom/bmim-pf6_r32_xtc/")
+cassRun         = ("dee_widom.out","pentane_widom.out","spce_widom.out","bmim_pf6_r32.out","bmim_pf6_r32.out")
+mcfRun  = ("dee.mcf","pentane.mcf","spce.mcf", "*.mcf", "*.mcf")
+species = ([1],[1],[1],[1,2,3],[1,2,3])
+inpName         = ("dee_widom.inp","pentane_widom.inp","spce_widom.inp","bmim_pf6_r32.inp","bmim_pf6_r32.inp")
+trajFiles_etc       = [('dee_traj.xyz','dee_traj.H'),
+        ('pentane_traj.xyz','pentane_traj.H'),
+        ('spce_traj.xyz','spce_traj.H'),
+        ('bmim-pf6.xyz','bmim-pf6.H','bmim_pf6_r32.rminsq'),
+        ('bmim-pf6.xtc','bmim_pf6_r32.rminsq')]
 
 
 
 resultFolder= (resourceDir+"exampleResults/Widom/diethylether/",
                 resourceDir+"exampleResults/Widom/pentane/",
-                resourceDir+"exampleResults/Widom/water_spce/")
-prpResName  = (resultFolder[0]+"dee_widom.out.prp",resultFolder[1]+"pentane_widom.out.prp",resultFolder[2]+"spce_widom.out.prp")
+                resourceDir+"exampleResults/Widom/water_spce/",
+                resourceDir+"exampleResults/Widom/bmim-pf6_r32_xyz/",
+                resourceDir+"exampleResults/Widom/bmim-pf6_r32_xtc/")
+prpResName = [resultFolder[i]+cassRun[i]+".prp" for i in range(nChecks)]
 logResName  = [resultFolder[i]+cassRun[i]+".log" for i in range(nChecks)]
-wprpResName  = [resultFolder[i]+cassRun[i]+".spec1.wprp" for i in range(nChecks)]
-wprp2ResName  = [resultFolder[i]+cassRun[i]+".spec1.wprp2" for i in range(nChecks)]
+wprpResName  = [resultFolder[i]+cassRun[i]+".spec"+str(species[i][-1])+".wprp" for i in range(nChecks)]
+wprp2ResName  = [resultFolder[i]+cassRun[i]+".spec"+str(species[i][-1])+".wprp2" for i in range(nChecks)]
 #*******************************************************************************
 # FUNCTION DEFINITIONS
 #*******************************************************************************
@@ -134,18 +157,34 @@ for i in range(nChecks):
         # Step 3) Run Cassandra to get its answer
 
         os.system('cp '+resFolder[i]+inpName[i]+' '+inpName[i])
-        os.system('cp '+resFolder[i]+mcfRun[i]+' '+mcfRun[i])
+        os.system('cp '+resFolder[i]+mcfRun[i]+' '+'.')
         for iSpec, jSpec in enumerate(species[i]):
                 os.system('cp -r '+resFolder[i]+'species'+str(jSpec) + ' species'+str(jSpec))
-        if xyzFlag[i]:
-            os.system('cp '+resFolder[i]+xyzName[i]+' '+xyzName[i])
-        if hFileFlag[i]:
-            os.system('cp '+resFolder[i]+hFileName[i]+' '+hFileName[i])
+        for trajName in trajFiles_etc[i]:
+            os.system('cp '+resFolder[i]+trajName+' .')
 
-        proc = sp.Popen([cassExe + " " + inpName[i]], stdout=sp.PIPE, shell=True)
+        proc = sp.Popen([cassExe + " " + inpName[i]], stdout=sp.PIPE, stderr=sp.PIPE, shell=True, text=True)
         (out, err) = proc.communicate()
-        if err is not None:
-                print("Error.Abort.")
+        if "xtc" in resFolder[i] and  "libgmxfort to support xtc file operations" in out.lower():
+            print("Cassandra executable was not compiled with XTC support from libgmxfort. XTC Test is not applicable.")
+            os.system('rm ./*.mcf')
+            os.system('rm -r ./species*')
+            os.system('rm '+inpName[i])
+            os.system('rm '+cassRun[i]+".*")
+            for trajName in trajFiles_etc[i]:
+                os.system('rm '+trajName)
+            continue
+        if err:
+            print("Error.Abort.")
+            print(err)
+            FailCount += 1
+            os.system('rm ./*.mcf')
+            os.system('rm -r ./species*')
+            os.system('rm '+inpName[i])
+            for trajName in trajFiles_etc[i]:
+                os.system('rm '+trajName)
+            os.system('rm '+cassRun[i]+".*")
+            continue
 
         nPrp = len(cassPrint[i][0])
 
@@ -180,11 +219,22 @@ for i in range(nChecks):
             for line in runLog:
                 if "chemical potential for species" in line:
                     cassAnswer[i][index] = float(line.split()[-2])
-                    break
-        index += 1
+                elif "Recommended pair " in line:
+                    cassAnswer[i][index] = float(line.split('=')[1].strip().split()[0])
+                else:
+                    continue
+                index += 1
+
+        if "atompair rminsq index" in cassPrint[i][0]:
+            with open(cassRun[i]+".rminsq2") as run_rminsq2:
+                for line in run_rminsq2:
+                    lastline = line
+                cassAnswer[i][index] = int(lastline.split()[-2].strip())
+            index += 1
+        #index += 1
         line_num = -1
 
-        with open(cassRun[i] + ".spec1.wprp") as runwprp:
+        with open(cassRun[i] + ".spec"+str(species[i][-1])+".wprp") as runwprp:
             for line in runwprp:
                 lineSplit = line.split()
                 if lineSplit[0] == str(endStep[i]):
@@ -193,7 +243,7 @@ for i in range(nChecks):
                 line_num += 1
 
         index += 1
-        with open(cassRun[i] + ".spec1.wprp2") as runwprp2:
+        with open(cassRun[i] + ".spec"+str(species[i][-1])+".wprp2") as runwprp2:
             for iline in range(line_num):
                 runwprp2.readline()
             lineSplit = runwprp2.readline().split()
@@ -212,8 +262,18 @@ for i in range(nChecks):
             for line in resLog:
                 if "chemical potential for species" in line:
                     analyticAnswer[i][index] = float(line.split()[-2])
-                    break
-        index += 1
+                elif "Recommended pair " in line:
+                    analyticAnswer[i][index] = float(line.split('=')[1].strip().split()[0])
+                else:
+                    continue
+                index += 1
+        if "atompair rminsq index" in cassPrint[i][0]:
+            rminsqResName = logResName[i].replace("log","rminsq2")
+            with open(rminsqResName) as res_rminsq2:
+                for line in res_rminsq2:
+                    lastline = line
+                analyticAnswer[i][index] = int(lastline.split()[-2].strip())
+            index += 1
         line_num = -1
 
         with open(wprpResName[i]) as reswprp:
@@ -262,10 +322,10 @@ for i in range(nChecks):
         for iSpec, jSpec in enumerate(species[i]):
             os.system('rm -r species'+str(jSpec))
         os.system('rm '+ cassRun[i]+ "*")
-        if xyzFlag[i]:
-            os.system('rm '+xyzName[i])
-        if hFileFlag[i]:
-            os.system('rm '+hFileName[i])
+        for trajName in trajFiles_etc[i]:
+            os.system('rm '+trajName)
+
+
 
 
 if (FailCount != 0):

@@ -22,7 +22,12 @@ lj cut_tail 14.0
 
 # Rcutoff_Low
 2.0
+adaptive 300 est_emax
+specific write 0.1 300 tol_list 3 1e-20 1e-15 1e-10 heap
 !----------------------------------------------------------------------Angstrom
+
+# Solvent_Species
+1
 
 # Molecule_Files
 pentane.mcf   60
@@ -73,9 +78,10 @@ species1/frag3/frag3.dat  3
 !---------------------------------------------------------one line per fragment
 
 # CBMC_Info
-kappa_ins 12
-kappa_dih 10
+kappa_ins 4
+kappa_dih 4
 rcut_cbmc 6.5
+energy_table 1000
 !------------------------------------------------------------------------------
 
 END

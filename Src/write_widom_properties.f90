@@ -18,7 +18,7 @@
 !   You should have received a copy of the GNU General Public License
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*******************************************************************************
-SUBROUTINE Write_Widom_Properties(is,this_box,widom_avg)
+SUBROUTINE Write_Widom_Properties(is,this_box,widom_avg,t_cpu,n_overlaps)
   !
   ! CALLED BY
   !
@@ -32,9 +32,13 @@ SUBROUTINE Write_Widom_Properties(is,this_box,widom_avg)
 
   IMPLICIT NONE
 
-  INTEGER :: this_box, this_unit, is
+  INTEGER, INTENT(IN) :: this_box, is
+  INTEGER(KIND=INT64), INTENT(IN) :: n_overlaps
 
+  REAL(DP), INTENT(IN) :: t_cpu
   REAL(DP) :: widom_avg
+
+  INTEGER :: this_unit
 
   LOGICAL :: is_sweeps
 
@@ -49,9 +53,11 @@ SUBROUTINE Write_Widom_Properties(is,this_box,widom_avg)
      ! in the file
      !CALL Write_Widom_Header(i)
      IF (is_sweeps) THEN
-             WRITE(this_unit,'(A19,7X,A30)') 'Sweep_#', 'Average widom_var for sweep'
+             WRITE(this_unit,'(A19,7X,A30,7X,A30,7X,A17)') 'Sweep_#', 'Average widom_var for sweep', 'Widom CPU time for sweep (s)', &
+                     'Number of overlaps'
      ELSE
-             WRITE(this_unit,'(A19,7X,A30)') 'Step_#', 'Average widom_var for step'
+             WRITE(this_unit,'(A19,7X,A30,7X,A30,7X,A17)') 'Step_#', 'Average widom_var for step', 'Widom CPU time for step (s)', &
+                     'Number of overlaps'
      END IF
      first_open_wprop(is,this_box) = .FALSE.
   END IF
@@ -59,8 +65,8 @@ SUBROUTINE Write_Widom_Properties(is,this_box,widom_avg)
   !widom_avg = widom_sum / species_list(is)%insertions_in_step(this_box)
   IF (widom_avg < 1.0e-99_DP) widom_avg = 0.0_DP
   IF (is_sweeps) THEN
-          WRITE(this_unit,'(I19,7X,E30.22)') i_mcstep/steps_per_sweep, widom_avg
+          WRITE(this_unit,'(I19,7X,E30.22,7X,E30.22,7X,I19)') i_mcstep/steps_per_sweep, widom_avg, t_cpu, n_overlaps
   ELSE
-          WRITE(this_unit,'(I19,7X,E30.22)') i_mcstep, widom_avg
+          WRITE(this_unit,'(I19,7X,E30.22,7X,E30.22,7X,I19)') i_mcstep, widom_avg, t_cpu, n_overlaps
   END IF
 END SUBROUTINE Write_Widom_Properties

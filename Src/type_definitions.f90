@@ -123,6 +123,10 @@ MODULE Type_Definitions
 
      ! # of RB dihedrals, # of dihedrals with nonzero energy, # of dihedrals before stacked dihedrals were combined
      INTEGER :: ndihedrals_rb, ndihedrals_energetic, ndihedrals_uncombined
+     !! Is this a solute?  Is this a solvent species?
+     LOGICAL :: l_solute, l_solvent, l_wsolute
+     !!Atompair_nrg_table index bases
+     INTEGER :: solute_base, solvent_base, wsolute_base
 
   END TYPE Species_Class
   !****************************************************************************
@@ -209,7 +213,7 @@ MODULE Type_Definitions
      REAL(DP) :: rxp, ryp, rzp
      REAL(DP) :: rxp_nls, ryp_nls, rzp_nls  ! The starting positions for the neighbor list
      REAL(DP) :: rxp_old, ryp_old, rzp_old
-     INTEGER :: ci(3) ! the integer coordinates of the cell containing this atom
+     INTEGER :: ci(3), ci_cbmc(3), ci_full(3) ! the integer coordinates of the cell containing this atom
      LOGICAL :: exist
 
   END TYPE Atom_Class

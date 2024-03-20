@@ -262,6 +262,9 @@ SUBROUTINE Get_Nspecies
   nfragments = 0
   fragment_bonds = 0
   tp_correction = 0
+  species_list%l_solute = .FALSE.
+  species_list%l_wsolute = .FALSE.
+  species_list%l_solvent = .FALSE.
 
   WRITE(logunit,'(A80)') '********************************************************************************'
 
@@ -4004,7 +4007,7 @@ SUBROUTINE Get_Box_Info
   ALLOCATE(int_vdw_style(nbr_boxes) , int_vdw_sum_style(nbr_boxes))
   ALLOCATE(int_charge_style(nbr_boxes) , int_charge_sum_style(nbr_boxes))
 
-  ALLOCATE(rcut_CBMC(nbr_boxes))
+  ALLOCATE(rcut_CBMC(nbr_boxes), rcut_cbmcsq(nbr_boxes))
   ALLOCATE(rcut_vdw(nbr_boxes) , rcut_coul(nbr_boxes))
   ALLOCATE(ron_charmm(nbr_boxes) , roff_charmm(nbr_boxes))
   ALLOCATE(ron_switch(nbr_boxes) , roff_switch(nbr_boxes))
@@ -4596,6 +4599,8 @@ SUBROUTINE Get_Move_Probabilities
                     species_list(is)%int_insert = int_random
                     species_list(is)%species_type = 'SORBATE'
                     species_list(is)%int_species_type = int_sorbate
+                    species_list(is)%l_solute = .TRUE.
+                    species_list(is)%l_solvent = .TRUE.
 
                  ELSE IF(line_array(is) == 'RESTRICTED' .OR. line_array(is) == 'restricted') THEN
                     IF (nfragments(is) == 0) THEN
@@ -4612,6 +4617,8 @@ SUBROUTINE Get_Move_Probabilities
                     species_list(is)%int_insert = int_random
                     species_list(is)%species_type = 'SORBATE'
                     species_list(is)%int_species_type = int_sorbate
+                    species_list(is)%l_solute = .TRUE.
+                    species_list(is)%l_solvent = .TRUE.
 
                  ELSE IF(line_array(is) == 'NONE' .OR. line_array(is) == 'none') THEN
                     ! species is not inserted
@@ -4655,6 +4662,7 @@ SUBROUTINE Get_Move_Probabilities
 
                        IF (.NOT. l_prob_swap_species) THEN
                           WRITE(logunit,'(2X,A)') 'By default, species will be selected according to its mole fraction in box_out'
+                          species_list%l_solute = .TRUE.
                        END IF
                        EXIT
                     ELSE IF (line_string2(1:17) == 'prob_swap_species') THEN
@@ -4671,6 +4679,10 @@ SUBROUTINE Get_Move_Probabilities
                        DO is = 1, nspecies
                           prob_swap_species(is) = String_To_Double(line_array(is+1))
                           cum_prob_swap_species(is) = SUM(prob_swap_species(1:is))
+                          IF (prob_swap_species(is) > tiny_number) THEN
+                                  species_list(is)%l_solvent = .TRUE.
+                                  species_list(is)%l_solute = .TRUE.
+                          END IF
 
                           WRITE(logunit,'(X,A,X,F5.3)') 'Cumulative swap probabilty for species ' // &
                                TRIM(Int_To_String(is)) // ' is ', cum_prob_swap_species(is)
@@ -4749,6 +4761,10 @@ SUBROUTINE Get_Move_Probabilities
 
               DO is = 1,nspecies
                  prob_growth_species(is) = String_To_Double(line_array(is))
+                 IF (prob_growth_species(is) > tiny_number) THEN
+                    species_list(is)%l_solvent = .TRUE.
+                    species_list(is)%l_solute = .TRUE.
+                 END IF
                  IF (nfragments(is) == 0 .AND. prob_growth_species(is) > tiny_number) THEN
                     err_msg = ''
                     err_msg(1) = 'Regrowth probability for species ' // TRIM(Int_To_String(is)) // &
@@ -5044,6 +5060,13 @@ SUBROUTINE Get_Start_Type
     CALL Clean_Abort(err_msg, 'Get_Start_Type')
   END IF
 
+  ALLOCATE(natoms_to_read(nbr_boxes),Stat=Allocatestatus)
+  IF (Allocatestatus /= 0) THEN
+    err_msg = ''
+    err_msg(1) = 'Memory could not be allocated for natoms_to_read'
+    CALL Clean_Abort(err_msg, 'Get_Start_Type')
+  END IF
+
   ALLOCATE(nmols_to_make(nspecies,nbr_boxes),Stat=Allocatestatus)
   IF (Allocatestatus /= 0) THEN
     err_msg = ''
@@ -5103,6 +5126,7 @@ SUBROUTINE Get_Start_Type
               ! Read nmols_to_make
               DO is = 1, nspecies
                  nmols_to_make(is,ibox) = String_To_Int(line_array(is+1))
+                 IF (nmols_to_make(is,ibox) > 0) species_list(is)%l_solvent = .TRUE.
 
                  ! check that inserting species have fragments
                  IF (nfragments(is) == 0 .AND. nmols_to_make(is,ibox) /= 0) THEN
@@ -5135,6 +5159,7 @@ SUBROUTINE Get_Start_Type
               ! Read nmols_to_read
               DO is = 1, nspecies
                  nmols_to_read(is,ibox) = String_To_Int(line_array(is+1))
+                 IF (nmols_to_read(is,ibox) > 0) species_list(is)%l_solvent = .TRUE.
                  WRITE(logunit,'(X,A9,2X,I6,2X,A20,2X,I2)') 'Will read', &
                     nmols_to_read(is,ibox), 'molecules of species', is
               END DO
@@ -5164,6 +5189,7 @@ SUBROUTINE Get_Start_Type
               ! Read nmols_to_read
               DO is = 1, nspecies
                  nmols_to_read(is,ibox) = String_To_Int(line_array(is+1))
+                 IF (nmols_to_read(is,ibox) > 0) species_list(is)%l_solvent = .TRUE.
                  WRITE(logunit,'(X,A9,2X,I6,2X,A20,2X,I2)') 'Will read', &
                     nmols_to_read(is,ibox), 'molecules of species', is
               END DO
@@ -5188,6 +5214,7 @@ SUBROUTINE Get_Start_Type
                  ! assign initial number of molecules to add in each box
                  nmols_to_make(is,ibox) = &
                     String_To_Int(line_array(2+nspecies+is))
+                 IF (nmols_to_make(is,ibox) > 0) species_list(is)%l_solvent = .TRUE.
 
                  ! check that inserting species have fragments
                  IF (nfragments(is) == 0 .AND. nmols_to_make(is,ibox) /= 0) THEN
@@ -5432,7 +5459,7 @@ SUBROUTINE Get_Widom_Info
         INTEGER :: i_unit
 
         CHARACTER(STRING_LEN) :: line_string,line_array(60)
-        CHARACTER(20) :: extension, extension2
+        CHARACTER(20) :: extension_base, extension, extension2, extension_emax
 
         LOGICAL :: inp_flag
 
@@ -5488,6 +5515,12 @@ SUBROUTINE Get_Widom_Info
                         ALLOCATE(wprop2_file_unit(nspecies,nbr_boxes))
                         ALLOCATE(wprop2_filenames(nspecies,nbr_boxes))
                         ALLOCATE(first_open_wprop2(nspecies,nbr_boxes))
+                        ALLOCATE(widom_wc_time(nspecies,nbr_boxes))
+                        ALLOCATE(widom_cpu_time(nspecies,nbr_boxes))
+                        ALLOCATE(emax_filenames(nspecies,nbr_boxes))
+                        ALLOCATE(Eij_factor(nspecies,nbr_boxes))
+                        widom_wc_time = 0.0_DP
+                        widom_cpu_time = 0.0_DP
                         first_open_wprop(:,:) = .TRUE.
                         first_open_wprop2(:,:) = .TRUE.
                         DO is = 1,nspecies
@@ -5521,6 +5554,7 @@ SUBROUTINE Get_Widom_Info
                         ELSE IF (line_array(i_entry) == 'cbmc') THEN
                                 ibox = ibox + 1
                                 species_list(is)%test_particle(ibox) = .TRUE.
+                                species_list(is)%l_solute = .TRUE.
                                 species_list(is)%widom_sum(ibox) = 0.0_DP
                                 species_list(is)%insertions_in_step(ibox) = String_To_Int(line_array(i_entry+1))
                                 species_list(is)%widom_interval(ibox) = String_To_Int(line_array(i_entry+2))
@@ -5530,19 +5564,20 @@ SUBROUTINE Get_Widom_Info
                                                 n_widom_subgroups(is,ibox) = String_To_Int(line_array(i_entry+3))
                                         END IF 
                                 END IF
+                                species_list(is)%l_solute = .TRUE.
+                                species_list(is)%l_wsolute = .TRUE.
                                 tp_correction(is) = 1
                                 i_unit = i_unit + 1
                                 wprop_file_unit(is,ibox) = wprop_file_unit_base + i_unit
                                 wprop2_file_unit(is,ibox) = wprop2_file_unit_base + i_unit
-                                IF (nbr_boxes == 1) THEN
-                                        extension = '.spec' // TRIM(Int_To_String(is)) // '.wprp'
-                                        extension2 = '.spec' // TRIM(Int_To_String(is)) // '.wprp2'
-                                ELSE
-                                        extension = '.spec' // TRIM(Int_To_String(is)) // '.box' // TRIM(Int_To_String(ibox)) // '.wprp'
-                                        extension2 = '.spec' // TRIM(Int_To_String(is)) // '.box' // TRIM(Int_To_String(ibox)) // '.wprp2'
-                                END IF
+                                extension_base = '.spec' // TRIM(Int_To_String(is))
+                                IF (nbr_boxes > 1) extension_base = extension_base // '.box' // TRIM(Int_To_String(ibox))
+                                extension = TRIM(extension_base) // '.wprp'
+                                extension2 = TRIM(extension_base) // '.wprp2'
+                                extension_emax = TRIM(extension_base) // '.emax'
                                 CALL Name_Files(run_name,extension,wprop_filenames(is,ibox))
                                 CALL Name_Files(run_name,extension2,wprop2_filenames(is,ibox))
+                                CALL Name_Files(run_name,extension_emax,emax_filenames(is,ibox))
                         END IF
                         IF (ibox == nbr_boxes) EXIT
                 END DO
@@ -5564,6 +5599,8 @@ SUBROUTINE Get_Lookup_Info
         line_nbr = 0
         line_string = ""
         l_sectors = .FALSE.
+        cbmc_cell_list_flag = .FALSE.
+        full_cell_list_flag = .FALSE.
         DO
                 line_nbr = line_nbr + 1
                 CALL Read_String(inputunit,line_string,ierr)
@@ -5588,18 +5625,41 @@ SUBROUTINE Get_Lookup_Info
                         END DO
                         IF (.NOT. (line_string(1:4) == 'TRUE' .OR. &
                                 line_string(1:4) == 'true' .OR. &
-                                line_string(1:4) == 'True')) RETURN
+                                line_string(1:4) == 'True' .OR. &
+                                line_string(1:4) == 'cbmc' .OR. &
+                                line_string(1:4) == 'full')) RETURN
                         l_sectors = .TRUE.
-                        max_atoms = DOT_PRODUCT(max_molecules, natoms)
                         ALLOCATE(sectorbound(3,nbr_boxes))
                         ALLOCATE(length_cells(3,nbr_boxes))
                         ALLOCATE(cell_length_inv(3,nbr_boxes))
-                        ! The number of populated sectors cannot exceed the number of atoms
-                        ALLOCATE(sector_atoms(15,max_atoms,3))
-                        ALLOCATE(sector_n_atoms(max_atoms))
+                        max_occ_sectors = 0
                         sectorbound = 0
                         sectormaxbound = 0
                         length_cells = 0
+                        max_sector_natoms = 1
+                        IF (line_string(1:4) ==  'cbmc' .OR. &
+                                line_string(1:4) == 'full') THEN
+                                cbmc_cell_list_flag = .TRUE.
+                                ALLOCATE(sectorbound_cbmc(3,nbr_boxes))
+                                ALLOCATE(length_cells_cbmc(3,nbr_boxes))
+                                ALLOCATE(cell_length_inv_cbmc(3,nbr_boxes))
+                                max_occ_sectors_cbmc = 0
+                                sectorbound_cbmc = 0
+                                sectormaxbound_cbmc = 0
+                                length_cells_cbmc = 0
+                                max_sector_natoms_cbmc = 1
+                        END IF
+                        IF (line_string(1:4) ==  'full') THEN
+                                full_cell_list_flag = .TRUE.
+                                ALLOCATE(sectorbound_full(3,nbr_boxes))
+                                ALLOCATE(length_cells_full(3,nbr_boxes))
+                                ALLOCATE(cell_length_inv_full(3,nbr_boxes))
+                                max_occ_sectors_full = 0
+                                sectorbound_full = 0
+                                sectormaxbound_full = 0
+                                length_cells_full = 0
+                                max_sector_natoms_full = 1
+                        END IF
                         RETURN
                 END IF
         END DO
@@ -5620,6 +5680,7 @@ SUBROUTINE Log_Widom_Info
         DO is = 1, nspecies
                 DO ibox = 1, nbr_boxes
                         IF (.NOT. species_list(is)%test_particle(ibox)) CYCLE
+                        Eij_factor(is,ibox) = 2.0_DP * beta(ibox)
 
                         linetext = 'Species ' // TRIM(Int_To_String(is)) // ' will have ' // &
                                 TRIM(Int_To_String(species_list(is)%insertions_in_step(ibox))) // &
@@ -5645,22 +5706,33 @@ SUBROUTINE Get_Pregen_Info
         ! This subroutine reads the names of the xyz and H files containing pregenerated trajectories
         ! and opens them
 
-        INTEGER :: ibox, is, xyz_pos, H_pos, line_pos
-        INTEGER :: ierr, line_nbr, nbr_entries, req_entries
+        INTEGER :: ibox, is, xyz_pos, H_pos, line_pos, i_entry
+        INTEGER :: ierr, line_nbr, nbr_entries, nmols_entry
         CHARACTER(STRING_LEN) :: line_string,line_array(60)
+        LOGICAL :: tspec
         
 
         ALLOCATE(pregen_H_unit(nbr_boxes))
         ALLOCATE(pregen_H_filenames(nbr_boxes))
         ALLOCATE(pregen_xyz_unit(nbr_boxes))
         ALLOCATE(pregen_xyz_filenames(nbr_boxes))
+        ALLOCATE(pregen_xtc_filenames(nbr_boxes))
+        ALLOCATE(pregen_ndx_filenames(nbr_boxes))
+        IF (.NOT. ALLOCATED(has_xtc)) ALLOCATE(has_xtc(nbr_boxes))
+        IF (.NOT. ALLOCATED(has_xyz)) ALLOCATE(has_xyz(nbr_boxes))
+        IF (.NOT. ALLOCATED(has_ndx)) ALLOCATE(has_ndx(nbr_boxes))
+        IF (.NOT. ALLOCATED(has_Hfile)) ALLOCATE(has_Hfile(nbr_boxes))
+        IF (.NOT. ALLOCATED(xtc_is_open)) ALLOCATE(xtc_is_open(nbr_boxes))
+        IF (.NOT. ALLOCATED(atom_ibounds)) ALLOCATE(atom_ibounds(2,nspecies,nbr_boxes))
+        has_xtc = .FALSE.
+        has_xyz = .FALSE.
+        has_ndx = .FALSE.
+        has_Hfile = .FALSE.
+        xtc_is_open = .FALSE.
 
         H_pos = 1
         xyz_pos = 2
 
-        req_entries = 2
-
-        !has_H = .FALSE.
 
         DO ibox = 1, nbr_boxes
                 pregen_H_unit(ibox) = pregen_H_unit_base + ibox
@@ -5684,96 +5756,135 @@ SUBROUTINE Get_Pregen_Info
                         CALL clean_abort(err_msg,'Get_Pregen_Info')
                 END IF
                 IF (line_string(1:13) == '# Pregen_Info') THEN
-!                        line_nbr = line_nbr + 1
-!                        CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
-!                        req_entries = nbr_entries ! minimum number of entries in subsequent lines
-!                        DO line_pos = 1, nbr_entries
-!                                SELECT CASE (line_array(line_pos))
-!                                        CASE ('H','h','.H','.h')
-!                                                IF (H_pos == 0) THEN
-!                                                        H_pos = line_pos
-!                                                        has_H = .TRUE.
-!                                                ELSE
-!                                                        err_msg = ''
-!                                                        err_msg(1) = 'File type H was listed more than once'
-!                                                        CALL clean_abort(err_msg,'Get_Pregen_Info')
-!                                                END IF
-!                                        CASE ('xyz','XYZ','.xyz','.XYZ')
-!                                                IF (xyz_pos == 0) THEN
-!                                                        xyz_pos = line_pos
-!                                                ELSE
-!                                                        err_msg = ''
-!                                                        err_msg(1) = 'File type xyz was listed more than once'
-!                                                        CALL clean_abort(err_msg,'Get_Pregen_Info')
-!                                                END IF
-!                                        CASE DEFAULT
-!                                                err_msg = ''
-!                                                err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
-!                                                        TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
-!                                                err_msg(2) = 'Supported keywords are: xyz, H'
-!                                END SELECT
-!                        END DO
-!                        IF (xyz_pos == 0) THEN
-!                                err_msg = ''
-!                                err_msg(1) = 'Keyword xyz must be included on line number ' // &
-!                                        TRIM(Int_To_String(line_nbr))
-!                                CALL clean_abort(err_msg,'Get_Pregen_Info')
-!                        ELSE IF (has_H) THEN
-                        !box_list(:)%box_shape = 'TRICLINIC'
-                        !box_list(:)%int_box_shape = int_cell
-                        IF (nbr_boxes == 1) THEN
-                                WRITE(logunit,*) 'Box size will be replaced by those read from the pregenerated H file'
-                        ELSE
-                                WRITE(logunit,*) 'Box sizes will be replaced by those read from the pregenerated H files'
-                        END IF
-!                        END IF
+                        need_solvents = .FALSE.
+                        nmols_to_read = 0
                         DO ibox = 1, nbr_boxes
                                 line_nbr = line_nbr + 1
-                                CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
+                                CALL Parse_String(inputunit,line_nbr,2,nbr_entries,line_array,ierr)
                                 IF(ierr /= 0) THEN
                                         err_msg = ''
                                         err_msg(1) = 'Error while reading # Pregen_Info'
                                         CALL clean_abort(err_msg,'Get_Pregen_Info')
                                 END IF
-                                IF(req_entries /= nbr_entries) THEN
-                                        err_msg = ''
-                                        err_msg(1) = 'Line ' // TRIM(Int_To_String(line_nbr)) // &
-                                                ' of the input file must contain exactly ' // &
-                                                TRIM(Int_To_String(req_entries)) // ' entries'
-                                        CALL clean_abort(err_msg,'Get_Pregen_Info')
+                                tspec = .FALSE.
+                                nmols_entry = 0
+                                DO i_entry = 1, nbr_entries-1
+                                        SELECT CASE(line_array(i_entry))
+                                                CASE("xtc", "XTC")
+                                                        tspec = .TRUE.
+                                                        has_xtc(ibox) = .TRUE.
+                                                        pregen_xtc_filenames(ibox) = line_array(i_entry+1)
+                                                        nmols_entry = MAX(nmols_entry,i_entry+2)
+                                                        WRITE(logunit,*) 'Reading trajectory cell matrix and atom coordinates for box ', &
+                                                                TRIM(Int_To_String(ibox))
+                                                        WRITE(logunit,*) "        from XTC file ", TRIM(pregen_xtc_filenames(ibox))
+                                                        WRITE(logunit,*) "        Box size from section # Box_Info " // &
+                                                                "will be replaced with sizes read from the above file."
+
+                                                CASE("xyz", "XYZ")
+                                                        tspec = .TRUE.
+                                                        has_xyz(ibox) = .TRUE.
+                                                        pregen_xyz_filenames(ibox) = line_array(i_entry+1)
+                                                        nmols_entry = MAX(nmols_entry,i_entry+2)
+                                                        OPEN(unit=pregen_xyz_unit(ibox),file=pregen_xyz_filenames(ibox),STATUS='OLD',IOSTAT=ierr)
+                                                        IF(ierr /= 0) THEN
+                                                                err_msg = ''
+                                                                err_msg(1) = 'Error while opening pregenerated xyz file ' // &
+                                                                        TRIM(pregen_xyz_filenames(ibox)) // &
+                                                                        ' given as entry  ' // TRIM(Int_To_String(i_entry+1)) // ' on line number ' // &
+                                                                        TRIM(Int_To_String(line_nbr)) // ' of the input file'
+                                                                err_msg(2) = 'Verify that xyz file ' // TRIM(pregen_xyz_filenames(ibox)) // 'exists'
+                                                                CALL clean_abort(err_msg,'Get_Pregen_Info')
+                                                        END IF
+                                                        WRITE(logunit,*) 'Reading trajectory coordinates for box ', &
+                                                                TRIM(Int_To_String(ibox))
+                                                        WRITE(logunit,*) '        from xyz file ', TRIM(pregen_xyz_filenames(ibox))
+
+                                                CASE("H", "h")
+                                                        tspec = .TRUE.
+                                                        has_Hfile(ibox) = .TRUE.
+                                                        pregen_H_filenames(ibox) = line_array(i_entry+1)
+                                                        nmols_entry = MAX(nmols_entry,i_entry+2)
+                                                        OPEN(unit=pregen_H_unit(ibox),file=pregen_H_filenames(ibox),STATUS='OLD',IOSTAT=ierr)
+                                                        IF(ierr /= 0) THEN
+                                                                err_msg = ''
+                                                                err_msg(1) = 'Error while opening pregenerated H file ' // &
+                                                                        TRIM(pregen_H_filenames(ibox)) // &
+                                                                        ' given as entry  ' // TRIM(Int_To_String(i_entry+1)) // ' on line number ' // &
+                                                                        TRIM(Int_To_String(line_nbr)) // ' of the input file'
+                                                                err_msg(2) = 'Verify that H file ' // TRIM(pregen_H_filenames(ibox)) // 'exists'
+                                                                CALL clean_abort(err_msg,'Get_Pregen_Info')
+                                                        END IF
+                                                        WRITE(logunit,*) 'Reading trajectory cell matrix and molecule counts for box ', &
+                                                                TRIM(Int_To_String(ibox))
+                                                        WRITE(logunit,*) "        from H file ", TRIM(pregen_H_filenames(ibox))
+                                                        WRITE(logunit,*) "        Box size from section # Box_Info " // &
+                                                                "will be replaced with sizes read from the above file."
+                                                CASE("ndx")
+                                                        tspec = .TRUE.
+                                                        has_ndx(ibox) = .TRUE.
+                                                        pregen_ndx_filenames(ibox) = line_array(i_entry+1)
+                                                        nmols_entry = MAX(nmols_entry,i_entry+2)
+                                                END SELECT
+                                END DO
+                                IF (.NOT. tspec) THEN
+                                        need_solvents = .TRUE.
+                                        has_Hfile(ibox) = .TRUE.
+                                        has_xyz(ibox) = .TRUE.
+                                        pregen_xyz_filenames(ibox) = line_array(xyz_pos)
+                                        OPEN(unit=pregen_xyz_unit(ibox),file=pregen_xyz_filenames(ibox),STATUS='OLD',IOSTAT=ierr)
+                                        IF(ierr /= 0) THEN
+                                                err_msg = ''
+                                                err_msg(1) = 'Error while opening pregenerated xyz file ' // &
+                                                        TRIM(pregen_xyz_filenames(ibox)) // &
+                                                        ' given as entry  ' // TRIM(Int_To_String(xyz_pos)) // ' on line number ' // &
+                                                        TRIM(Int_To_String(line_nbr)) // ' of the input file'
+                                                err_msg(2) = 'Verify that xyz file ' // TRIM(pregen_xyz_filenames(ibox)) // 'exists'
+                                                CALL clean_abort(err_msg,'Get_Pregen_Info')
+                                        END IF
+                                        pregen_H_filenames(ibox) = line_array(H_pos)
+                                        OPEN(unit=pregen_H_unit(ibox),file=pregen_H_filenames(ibox),STATUS='OLD',IOSTAT=ierr)
+                                        IF(ierr /= 0) THEN
+                                                err_msg = ''
+                                                err_msg(1) = 'Error while opening pregenerated H file ' // &
+                                                        TRIM(pregen_H_filenames(ibox)) // &
+                                                        ' given as entry  ' // TRIM(Int_To_String(H_pos)) // ' on line number ' // &
+                                                        TRIM(Int_To_String(line_nbr)) // ' of the input file'
+                                                err_msg(2) = 'Verify that H file ' // TRIM(pregen_H_filenames(ibox)) // 'exists'
+                                                CALL clean_abort(err_msg,'Get_Pregen_Info')
+                                        END IF
+                                        WRITE(logunit,*) 'Reading pregenerated trajectory for box ', ibox, &
+                                                ' from xyz file ', TRIM(pregen_xyz_filenames(ibox)), &
+                                                ' and H file ', TRIM(pregen_H_filenames(ibox))
+                                        WRITE(logunit,*) 'Box size read from the above H file will replace box size from ' // &
+                                                'section # Box_Info'
+                                ELSEIF (nmols_entry <= nbr_entries) THEN
+                                        DO i_entry = nmols_entry, nbr_entries
+                                                nmols_to_read(i_entry-nmols_entry+1,ibox) = String_To_Int(line_array(i_entry))
+                                        END DO
+                                        atom_ibounds(2,:,ibox) = natoms*nmols_to_read(:,ibox)
+                                        natoms_to_read(ibox) = SUM(atom_ibounds(2,:,ibox))
+                                        DO is = 2, nspecies
+                                                atom_ibounds(2,is,ibox) = SUM(atom_ibounds(2,is-1:is,ibox))
+                                        END DO
+                                        atom_ibounds(1,1,ibox) = 1
+                                        IF (nspecies > 1) atom_ibounds(1,2:nspecies,ibox) = atom_ibounds(2,1:(nspecies-1),ibox)+1
+                                ELSE
+                                        need_solvents = .TRUE.
+                                        IF (.NOT. (has_xyz(ibox) .AND. has_Hfile(ibox))) THEN
+                                                err_msg = ""
+                                                err_msg(1) = "xyz and H trajectory files are required if number of molecules "
+                                                err_msg(2) = "of each species in trajectory is not given"
+                                                CALL Clean_Abort(err_msg, "Get_Pregen_Info")
+                                        END IF
                                 END IF
-                                pregen_xyz_filenames(ibox) = line_array(xyz_pos)
-                                OPEN(unit=pregen_xyz_unit(ibox),file=pregen_xyz_filenames(ibox),STATUS='OLD',IOSTAT=ierr)
-                                IF(ierr /= 0) THEN
-                                        err_msg = ''
-                                        err_msg(1) = 'Error while opening pregenerated xyz file ' // &
-                                                TRIM(pregen_xyz_filenames(ibox)) // &
-                                                ' given as entry  ' // TRIM(Int_To_String(xyz_pos)) // ' on line number ' // &
-                                                TRIM(Int_To_String(line_nbr)) // ' of the input file'
-                                        err_msg(2) = 'Verify that xyz file ' // TRIM(pregen_xyz_filenames(ibox)) // 'exists'
-                                        CALL clean_abort(err_msg,'Get_Pregen_Info')
-                                END IF
-!                                IF (has_H) THEN
-                                pregen_H_filenames(ibox) = line_array(H_pos)
-                                OPEN(unit=pregen_H_unit(ibox),file=pregen_H_filenames(ibox),STATUS='OLD',IOSTAT=ierr)
-                                IF(ierr /= 0) THEN
-                                        err_msg = ''
-                                        err_msg(1) = 'Error while opening pregenerated H file ' // &
-                                                TRIM(pregen_H_filenames(ibox)) // &
-                                                ' given as entry  ' // TRIM(Int_To_String(H_pos)) // ' on line number ' // &
-                                                TRIM(Int_To_String(line_nbr)) // ' of the input file'
-                                        err_msg(2) = 'Verify that H file ' // TRIM(pregen_H_filenames(ibox)) // 'exists'
-                                        CALL clean_abort(err_msg,'Get_Pregen_Info')
-                                END IF
-                                WRITE(logunit,*) 'Reading pregenerated trajectory for box ', ibox, &
-                                        ' from xyz file ', TRIM(pregen_xyz_filenames(ibox)), &
-                                        ' and H file ', TRIM(pregen_H_filenames(ibox))
 !                                ELSE
 !                                        WRITE(logunit,*) 'Reading pregenerated trajectory for box ', ibox, &
 !                                                ' from xyz file ', TRIM(pregen_xyz_filenames(ibox))
 !                                END IF
 
                         END DO
+                        IF (.NOT. need_solvents) species_list%l_solvent = ANY(nmols_to_read>0,2)
                         WRITE(logunit,'(A80)') '********************************************************************************'
                         RETURN
                 ELSE IF(line_string(1:3) == 'END' .or. line_nbr > 10000 ) THEN
@@ -5783,6 +5894,37 @@ SUBROUTINE Get_Pregen_Info
                 END IF
         END DO
 END SUBROUTINE Get_Pregen_Info
+
+SUBROUTINE Get_Solvent_Info
+        INTEGER :: ierr, line_nbr, nbr_entries, i
+        CHARACTER(STRING_LEN) :: line_string,line_array(60)
+        REWIND(inputunit)
+        ierr = 0
+        line_nbr = 0
+        DO
+                line_nbr = line_nbr + 1
+                CALL Read_String(inputunit,line_string,ierr)
+                IF(ierr /= 0) THEN
+                        err_msg = ''
+                        err_msg(1) = 'Error while reading # Pregen_Info'
+                        CALL clean_abort(err_msg,'Get_Solvent_Info')
+                END IF
+                IF (line_string(1:17) == '# Solvent_Species') THEN
+                        line_nbr = line_nbr + 1
+                        CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
+                        DO i = 1, nbr_entries
+                                species_list(String_To_Int(line_array(i)))%l_solvent = .TRUE.
+                        END DO
+                        need_solvents = .FALSE.
+                        RETURN
+                ELSE IF(line_string(1:3) == 'END' .or. line_nbr > 10000 ) THEN
+                        err_msg = ''
+                        err_msg(1) = 'Section # Solvent_Species is missing from'
+                        err_msg(2) = 'the input file and is required'
+                        CALL clean_abort(err_msg, 'Get_Solvent_Info')
+                END IF
+        END DO
+END SUBROUTINE Get_Solvent_Info
 
 
 !******************************************************************************
@@ -5862,7 +6004,7 @@ SUBROUTINE Get_CBMC_Info
               line_nbr = line_nbr + 1
               CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
 
-              IF (nbr_entries < 2 .OR. line_array(1)(1:1) == '!') THEN
+              IF (nbr_entries < 1 .OR. line_array(1)(1:1) == '!') THEN
                  EXIT
               END IF
 
@@ -5896,11 +6038,22 @@ SUBROUTINE Get_CBMC_Info
                        CALL Clean_Abort(err_msg,'Get_CBMC_Info')
                     END IF
                  END DO
+              ELSE IF (line_array(1) == 'energy_table' .OR. line_array(1) == "nrg_table" .OR. &
+                      line_array(1) == "atompair_nrg_table" .OR. line_array(1) == "atompair_energy_table") THEN
+                      precalc_atompair_nrg = .TRUE.
+                      IF (nbr_entries >= 2) THEN
+                              atompair_nrg_res = String_To_Int(line_array(2))
+                      ELSE
+                              atompair_nrg_res = 1000
+                      END IF
+                      WRITE(logunit,'(X,A)') 'Atom pair energy table with rsq resolution = ' // &
+                              TRIM(Int_To_String(atompair_nrg_res)) // ' will be used.'
               ELSE
                  err_msg = ''
                  err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
                               TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
-                 err_msg(2) = 'Supported keywords are: kappa_ins, kappa_dih, rcut_cbmc, l_coul_cbmc'
+                 err_msg(2) = 'Supported keywords are:'
+                 err_msg(3) = 'kappa_ins, kappa_dih, rcut_cbmc, l_coul_cbmc, nrg_table'
                  CALL Clean_Abort(err_msg,'Get_CBMC_Info')
               END IF
 
@@ -5928,6 +6081,7 @@ SUBROUTINE Get_CBMC_Info
                 CALL clean_abort(err_msg,'Get_CBMC_Info')
              END IF
            END DO
+           rcut_cbmcsq = rcut_cbmc * rcut_cbmc
 
            EXIT
 
@@ -6795,7 +6949,7 @@ SUBROUTINE Get_Rcutoff_Low
 !
 !******************************************************************************
 
-  INTEGER :: ierr, line_nbr, nbr_entries
+  INTEGER :: ierr, line_nbr, nbr_entries, i_entry, i_tol
   CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
 !******************************************************************************
@@ -6804,10 +6958,15 @@ SUBROUTINE Get_Rcutoff_Low
   WRITE(logunit,'(A80)') '********************************************************************************'
 
   REWIND(inputunit)
+  est_atompair_rminsq = .FALSE.
+  read_atompair_rminsq = .FALSE.
+  est_emax = .FALSE.
+  Eij_ind_ubound = 1
   ierr = 0
   line_nbr = 0
+  rsqmin_res = 1
 
-  DO
+  sectionsearch:DO
      line_nbr = line_nbr + 1
      CALL Read_String(inputunit,line_string,ierr)
 
@@ -6824,8 +6983,107 @@ SUBROUTINE Get_Rcutoff_Low
         line_nbr = line_nbr + 1
         CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
         rcut_low = String_To_Double(line_array(1))
+        rcut_lowsq = rcut_low * rcut_low
 
         WRITE(logunit,'(A25,2X,F6.3,2X,A10)') 'MC low cutoff distance is ', rcut_low, ' Angstrom'
+        ALLOCATE(tol_list(1))
+        tol_list = 1.0e-10_DP
+        nbr_tols = 1
+        l_heap = .FALSE.
+        keywordsearch:DO
+                line_nbr = line_nbr + 1
+                CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
+                IF (nbr_entries==0) EXIT sectionsearch
+                IF (line_array(1) == "adaptive") THEN
+                        calc_rmin_flag = .TRUE.
+                        i_entry = 2
+                        U_max_base = 708.0_DP / MINVAL(beta)
+                        DO WHILE (i_entry <= nbr_entries)
+                                IF (line_array(i_entry) == "est_emax") THEN
+                                        est_emax = .TRUE.
+                                        Eij_ind_ubound = 2047
+                                        ALLOCATE(w_max(Eij_ind_ubound+1,nspecies,nbr_boxes))
+                                        ALLOCATE(Eij_w_sum(Eij_ind_ubound+1,nspecies,nbr_boxes))
+                                        ALLOCATE(Eij_freq_total(Eij_ind_ubound+1,nspecies,nbr_boxes))
+                                        w_max = 0.0_DP
+                                        Eij_w_sum = 0.0_DP
+                                        Eij_freq_total = 0
+                                        i_entry = i_entry + 1
+                                ELSEIF (i_entry == 2) THEN
+                                        U_max_base = String_To_Double(line_array(2)) / MINVAL(beta)
+                                        i_entry = i_entry + 1
+                                ELSE
+                                        err_msg = ""
+                                        err_msg(1) = "Entry " // Int_To_String(i_entry) // " in line " // &
+                                                Int_To_String(line_nbr) // " of input file is invalid."
+                                        err_msg(2) = '"est_emax" is the only keyword that would be valid here.'
+                                        CALL Clean_Abort(err_msg, "Get_Rcutoff_Low")
+                                END IF
+                        END DO
+                ELSE IF (line_array(1) == "specific") THEN
+                        i_entry = 2
+                        DO WHILE (i_entry <= nbr_entries)
+                                IF (line_array(i_entry) == "write") THEN
+                                        write_rminsq_filename = TRIM(run_name) // ".rminsq"
+                                        IF (i_entry + 2 <= nbr_entries) THEN
+                                                rsqmin_step = String_To_Double(line_array(i_entry+1))
+                                                rsqmin_res = String_To_Int(line_array(i_entry+2))
+                                                i_entry = i_entry + 3
+                                                est_atompair_rminsq = .TRUE.
+                                                WRITE(logunit, "(A,E10.3,A)") "Will create and write atompair rminsq table with " // &
+                                                        TRIM(Int_To_String(rsqmin_res)) // " bins of width ", &
+                                                        rsqmin_step, " square Angstroms"
+                                                WRITE(logunit, "(8X,A)") " to file " // write_rminsq_filename
+                                        ELSE
+                                                err_msg = ""
+                                                err_msg(1) = "Need " // TRIM(Int_To_String(i_entry+2-nbr_entries)) // &
+                                                        " more parameter entries on line " // TRIM(Int_To_String(line_nbr))
+                                                err_msg(2) = "in the input file"
+                                                CALL Clean_Abort(err_msg, "Get_Rcutoff_Low")
+                                        END IF
+                                ELSE IF (line_array(i_entry) == "read") THEN
+                                        IF (i_entry + 1 <= nbr_entries) THEN
+                                                read_rminsq_filename = line_array(i_entry+1)
+                                                read_atompair_rminsq = .TRUE.
+                                                WRITE(logunit, "(A)") "Will read atompair rminsq table from file " // &
+                                                        TRIM(read_rminsq_filename)
+                                                i_entry = i_entry + 2
+                                        ELSE
+                                                err_msg = ""
+                                                err_msg(1) = "Need path to rminsq file"  
+                                                err_msg(2) = "on line " // TRIM(Int_To_String(line_nbr))
+                                                err_msg(3) = "in the input file"
+                                                CALL Clean_Abort(err_msg, "Get_Rcutoff_Low")
+                                        END IF
+                                ELSE IF (line_array(i_entry) == "tol_list") THEN
+                                        IF (i_entry + 2 <= nbr_entries) THEN
+                                                nbr_tols = String_To_Int(line_array(i_entry+1))
+                                                DEALLOCATE(tol_list)
+                                                ALLOCATE(tol_list(nbr_tols))
+                                                DO i_tol = 1, nbr_tols
+                                                        tol_list(i_tol) = String_To_Double(line_array(i_entry+1+i_tol))
+                                                END DO
+                                                i_entry = i_entry + 2 + nbr_tols
+                                        ELSE
+                                                err_msg = ""
+                                                err_msg(1) = "Not enough entries after keyword tol_list"  
+                                                err_msg(2) = "on line " // TRIM(Int_To_String(line_nbr))
+                                                err_msg(3) = "in the input file"
+                                                CALL Clean_Abort(err_msg, "Get_Rcutoff_Low")
+                                        END IF
+                                ELSE IF (line_array(i_entry) == "heap") THEN
+                                        l_heap = .TRUE.
+                                        i_entry = i_entry + 1
+                                ELSE
+                                        err_msg = ""
+                                        err_msg(1) = "Keyword " // line_array(i_entry)
+                                        err_msg(2) = "on line " // TRIM(Int_To_String(line_nbr)) // " of input file"
+                                        err_msg(3) = "is not recognized"
+                                        CALL Clean_Abort(err_msg, "Get_Rcutoff_Low")
+                                END IF
+                        END DO
+                END IF
+        END DO keywordsearch
 
         EXIT
 
@@ -6837,7 +7095,7 @@ SUBROUTINE Get_Rcutoff_Low
 
      END IF
 
-  END DO
+  END DO sectionsearch
 
   WRITE(logunit,'(A80)') '********************************************************************************'
 

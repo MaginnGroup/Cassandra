@@ -54,11 +54,23 @@ EXEC_NAME = cassandra_gfortran_openMP.exe
 
 ## Compilation command
 FC = gfortran
-LIBS =
-INCS =
+export FC
+librariespath := ${abspath ../Libraries}
+libgmxfortbuild := ${librariespath}/Src/libgmxfort/build/
+libxdrfilebuild := ${librariespath}/Src/libxdrfile/build/
+localdir := ${librariespath}/locals/${FC}/local
+locallib := ${localdir}/lib
+libxdrfilepath = ${locallib}/libxdrfile.so
+libgmxfortpath = ${locallib}/libgmxfort.so
+
+#PKG_CONFIG_PATH := ${locallib}/pkgconfig
+#export PKG_CONFIG_PATH
+
+LIBS = -I${localdir}/include -L${locallib} -lgmxfort # `pkg-config --cflags --libs libgmxfort`
+INCS = -I${localdir}/include -L${locallib} -lgmxfort # `pkg-config --cflags --libs libgmxfort`
 #
 F90FLAGS = -c -ffree-line-length-none -fopenmp -O3
-LINKFLAGS =  -fopenmp
+LINKFLAGS = -fopenmp -Wl,-rpath,${locallib}
 
 
 ####################################################################
@@ -127,18 +139,34 @@ OBJS =  main.o \
   pregen_control.o \
   pregen_driver.o \
   sector_routines.o \
+  pair_emax_estimation.o \
+  atompair_nrg_table_routines.o \
+  xtc_routines.temp.o \
 
 
 ####################################################################
 
-%o: %f90
+%.temp.f90: %.f90
+	cp $< $@
+
+%o: %f90 ${libgmxfortpath}
 	${FC} ${F90FLAGS} ${INCS} ${OPTFLAGS} ${LINK_F90} $<
 
 exe: $(OBJS)
 	$(FC) $(OPTFLAGS) -o $(BIN_DIR)/$(EXEC_NAME) $(OBJS) $(LIBS) $(LINK_F90) $(LINKFLAGS)
 
+${libgmxfortpath}: ${libxdrfilepath}
+	rm -fr ${libgmxfortbuild} && mkdir ${libgmxfortbuild} && cd ${libgmxfortbuild} && \
+		cmake .. -DCMAKE_INSTALL_PREFIX=${localdir} && \
+		${MAKE} && ${MAKE} test && ${MAKE} install
+
+${libxdrfilepath}:
+	rm -fr ${libxdrfilebuild} && mkdir ${libxdrfilebuild} && cd ${libxdrfilebuild} && \
+		cmake .. -DCMAKE_INSTALL_PREFIX=${localdir} && \
+		${MAKE} && ${MAKE} test && ${MAKE} install
+
 clean:
-	rm *.o *.mod dep.mk
+	rm *.o *.mod *.temp.f90 dep.mk
 
 dep.mk:
 	./get_deps

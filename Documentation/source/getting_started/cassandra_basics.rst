@@ -144,7 +144,15 @@ file name suffix. The following are generated:
   written, then the coordinates of molecule 2 of species 1 are written, etc.
   After all the coordinates of the molecules of species 1 are written, the
   coordinates of the molecules of species 2 are written, etc. You can use this
-  file to do all your structural analysis and post processing.
+  file to do all your structural analysis and post processing.  The order of
+  atoms for a given molecule is the same as the order specified in the MCF file.
+  The element symbol
+  for each atom is given in the first column.  All coordinates are in Angstroms.
+  When Cassandra reads this kind of file, the element symbol column must be present
+  but its contents are ignored, as the element information is read from the MCF file. 
+  This might be useful in helper tools such as the LAMMPS trajectory converter  :ref:`sec:lammpstrjconvert` , which 
+  uses filler values, such as ``X``, to translate from trajectory formats that
+  do not specify elements.
 
 .. note::
     Note that if you generate your initial configuration using the ``make_config``
@@ -170,7 +178,7 @@ file name suffix. The following are generated:
 
 * **H-matrix file** (``*.H`` or ``*.box#.H``): This file is written to every
   ``Coord_Freq`` MC steps. The first line is the box volume in angstrom\ :sup:`3`. The
-  next three lines are the box coordinates in angstrom in an H-matrix form.
+  next three lines are the box coordinates in angstroms in an H-matrix form.
   Since Cassandra only supports cubic boxes at the moment, this is just a
   diagonal and symmetric matrix, but is included here for later versions that
   will enable non-orthogonal boxes. After this, a blank line is written. The
@@ -210,5 +218,32 @@ file name suffix. The following are generated:
   Unlike basic Widom property files, these do not have row or column labels, and do not include 
   the step number or sweep number, but the step number or sweep number corresponding to each 
   row is the same as in the Widom property file.  Further details are given in 
-  :ref:`sec:Widom_Info`).
+  :ref:`sec:Widom_Info`.
+
+* **Emax file** (``*.spec#.emax`` ``*.spec#.box#.emax``): This file contains
+  fraction of total ``widom_var`` sum, maximum single-insertion ``widom_var``,
+  and number of Widom insertions binned by ``max_Eij``, the maximum
+  single intermolecular atom pair energy for a single Widom insertion.
+  ``Eij_index`` represents the bin number.
+
+* **rminsq file** (``*.rminsq`` ``*.rminsq#``): This file stores the 
+  intermolecular atom pair-specific overlap radii estimated with a
+  given tolerance.  The first line shows the tolerance used to estimate
+  these values.  The second line shows the values of ``rcut_lowsq`` (the square of the basic
+  :math:`r_{min}`, ``rsqmin_step`` (the bin width for all atom pair histograms), and ``rsqmin_res``
+  (the number of bins for each atom pair histogram) 
+  specified in section ``# Rcutoff_Low`` of the input file used to generate
+  the ``.rminsq`` file as described in :ref:`sec:minimum_cutoff`.
+  The third line shows the dimensions of the array of atom pair overlap radii,
+  where the last dimension is the number of boxes.
+  After these header lines, an integer representation of the array slice for
+  box 1 is written, with the solvent atoms on the vertical axis and
+  Widom solute atoms on the horizontal axis.  If there are multiple boxes,
+  this part is repeated below for each one without space between them.
+  The square of the actual atom pair-specific overlap radius values
+  can be calculated from the integer values by multiplying
+  by ``rsqmin_step`` and adding ``rcut_lowsq``.  If a single simulation
+  uses multiple tolerances to estimate these overlap radius arrays, it
+  writes a separate ``*.rminsq#`` file for each one, numbered in the same
+  order in which the tolerances were specified in the input file.
 

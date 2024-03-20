@@ -51,9 +51,9 @@ test_no = 11
 test_desc = "GEMC Examples"
 
 # Check parameters
-nChecks = 5 # number of simulations to run
+nChecks = 6 # number of simulations to run
 nBox = 2 # number of simulation boxes
-title = ("2,2-dimethylhexane", "Cyclohexane", "Diethylether", "Isobutane", "Methane")
+title = ("2,2-dimethylhexane", "Cyclohexane", "Diethylether", "Diethylether nrg table", "Isobutane", "Methane")
 analyticAnswer = [None] * nChecks # list to hold analytic answers
 cassAnswer     = [None] * nChecks # list to hold cassandra's answers
 passCheck      = [None] * nChecks # list to hold if cassandra passed each check
@@ -62,16 +62,18 @@ cassPrint = [None]* nChecks
 cassStr[0] = (("Energy_Total","Density","Nmols","Volume","Mass_Density"),)
 cassStr[1] = (("Energy_Total","Density","Nmols","Volume","Pressure"),)
 cassStr[2] = (("Energy_Total","Density","Nmols","Volume","Pressure"),)
-cassStr[3] = (("Energy_Total","Density","Nmols","Volume"),)
-cassStr[4] = (("Density","Nmols","Volume","Pressure"),)
+cassStr[3] = (("Energy_Total","Density","Nmols","Volume","Pressure"),)
+cassStr[4] = (("Energy_Total","Density","Nmols","Volume"),)
+cassStr[5] = (("Density","Nmols","Volume","Pressure"),)
 
 cassPrint[0] = (("Energy_Total [kJ/mol-Ext]","Density [molec/A^3]","Nmols","Volume [A^3]","Mass_Density [kg/m^3]"),)
 cassPrint[1] = (("Energy_Total [kJ/mol-Ext]","Density [molec/A^3]","Nmols","Volume [A^3]","Pressure [bar]"),)
 cassPrint[2] = (("Energy_Total [kJ/mol-Ext]","Density [molec/A^3]","Nmols","Volume [A^3]","Pressure [bar]"),)
-cassPrint[3] = (("Energy_Total [kJ/mol-Ext]","Density [molec/A^3]","Nmols","Volume [A^3]"),)
-cassPrint[4] = (("Density [molec/A^3]","Nmols","Volume [A^3]","Pressure"),)
+cassPrint[3] = (("Energy_Total [kJ/mol-Ext]","Density [molec/A^3]","Nmols","Volume [A^3]","Pressure [bar]"),)
+cassPrint[4] = (("Energy_Total [kJ/mol-Ext]","Density [molec/A^3]","Nmols","Volume [A^3]"),)
+cassPrint[5] = (("Density [molec/A^3]","Nmols","Volume [A^3]","Pressure"),)
 
-endStep = (2200,2200,2200,2200,2200)
+endStep = (2200,2200,2200,2200,2200,2200)
 errorTol = 5e-4
 
  # Formatting variables
@@ -88,26 +90,27 @@ cassExe     = args.cassandra_exe
 resFolder	= (resourceDir+"exampleResources/GEMC/2,2-dimethylhexane/",
 		resourceDir+"exampleResources/GEMC/Cyclohexane/",
 		resourceDir+"exampleResources/GEMC/Diethylether/",
+		resourceDir+"exampleResources/GEMC/Diethylether_energy_table/",
 		resourceDir+"exampleResources/GEMC/Isobutane/",
 		resourceDir+"exampleResources/GEMC/Methane/")
-cassRun 	= ("gemc_dimethylhexane.out","gemc_cyclohexane.out","gemc_diethylether.out","gemc_isobutane.out","gemc_methane.out")
-inpName 	= ("gemc_dimethylhexane.inp","gemc_cyclohexane.inp","gemc_diethylether.inp","gemc_isobutane.inp","gemc_methane.inp")
-mcfRun 	= ("dimethylhexane.mcf","cyclohexane.mcf","diethylether.mcf","isobutane.mcf","methane.mcf")
-species = ([1],[1],[1],[1],[1])
-xyzFlag 	= (0,0,0,0,0)
-xyzName 	=('','','','','')
-chkFlag 	= (0,0,0,0,0)
-chkName 	=('','','','','')
-initFlag 	= (0,0,1,1,0)
-initName 	=('','',"Init_Config","Init_Config",'')
+cassRun 	= ("gemc_dimethylhexane.out","gemc_cyclohexane.out","gemc_diethylether.out","gemc_diethylether.out","gemc_isobutane.out","gemc_methane.out")
+inpName 	= ("gemc_dimethylhexane.inp","gemc_cyclohexane.inp","gemc_diethylether.inp","gemc_diethylether.inp","gemc_isobutane.inp","gemc_methane.inp")
+mcfRun 	= ("dimethylhexane.mcf","cyclohexane.mcf","diethylether.mcf","diethylether.mcf","isobutane.mcf","methane.mcf")
+species = ([1],[1],[1],[1],[1],[1])
+xyzFlag 	= (0,0,0,0,0,0)
+xyzName 	=('','','','','','')
+chkFlag 	= (0,0,0,0,0,0)
+chkName 	=('','','','','','')
+initFlag 	= (0,0,1,1,1,0)
+initName 	=('','',"Init_Config","Init_Config","Init_Config",'')
 
 resultFolder= (resourceDir+"exampleResults/GEMC/2,2-dimethylhexane/",
 		resourceDir+"exampleResults/GEMC/Cyclohexane/",
 		resourceDir+"exampleResults/GEMC/Diethylether/",
+		resourceDir+"exampleResults/GEMC/Diethylether_energy_table/",
 		resourceDir+"exampleResults/GEMC/Isobutane/",
 		resourceDir+"exampleResults/GEMC/Methane/")
-fileResultName  = (resultFolder[0]+"gemc_dimethylhexane.out",resultFolder[1]+"gemc_cyclohexane.out",resultFolder[2]+"gemc_diethylether.out",
-		resultFolder[3]+"gemc_isobutane.out",resultFolder[4]+"gemc_methane.out")
+fileResultName  = [resultFolder[i]+cassRun[i] for i in range(nChecks)]
 #*******************************************************************************
 # FUNCTION DEFINITIONS
 #*******************************************************************************
