@@ -201,7 +201,7 @@ SUBROUTINE Get_Nspecies
      STOP
   END IF
 
-  ALLOCATE( ndihedrals(nspecies), nimpropers(nspecies), Stat = AllocateStatus )
+  ALLOCATE( ndihedrals(nspecies), nimpropers(nspecies), Stat=AllocateStatus )
   IF (AllocateStatus /= 0) THEN
      write(*,*)'memory could not be allocated for ndihedrals or nimpropers array'
      write(*,*)'stopping'
@@ -254,6 +254,9 @@ SUBROUTINE Get_Nspecies
   nangles = 0
   nangles_fixed = 0
   ndihedrals = 0
+  species_list%ndihedrals_uncombined = 0
+  species_list%ndihedrals_energetic = 0
+  species_list%ndihedrals_rb = 0
   nimpropers = 0
   nbr_vdw_params = 0
   nfragments = 0
@@ -1240,6 +1243,13 @@ SUBROUTINE Get_Molecule_Info
      write(*,*)'stopping'
      STOP
   END IF
+  ALLOCATE( uncombined_dihedral_list(MAXVAL(ndihedrals), nspecies), Stat = AllocateStatus )
+  IF (AllocateStatus /= 0) THEN
+     write(*,*)'memory could not be allocated for dihedral_list array'
+     write(*,*)'stopping'
+     STOP
+  END IF
+  uncombined_dihedral_list%l_rb_formatted = .FALSE.
 
   ALLOCATE( improper_list(MAXVAL(nimpropers), nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
@@ -1713,14 +1723,14 @@ SUBROUTINE Get_Bond_Info(is)
            ENDIF
 
            ! Assign appropriate values to list elements
-           bond_list(ib,is)%atom1 = String_To_Int(line_array(2))
-           bond_list(ib,is)%atom2 = String_To_Int(line_array(3))
+           bond_list(ib,is)%atom(1) = String_To_Int(line_array(2))
+           bond_list(ib,is)%atom(2) = String_To_Int(line_array(3))
            bond_list(ib,is)%bond_potential_type = line_array(4)
 
            IF (verbose_log) THEN
               WRITE(logunit,'(A,T25,I3,1x,I3)') 'Species and bond number', is,ib
-              WRITE(logunit,'(A,T25,I3)') ' atom1:',bond_list(ib,is)%atom1
-              WRITE(logunit,'(A,T25,I3)') ' atom2:',bond_list(ib,is)%atom2
+              WRITE(logunit,'(A,T25,I3)') ' atom1:',bond_list(ib,is)%atom(1)
+              WRITE(logunit,'(A,T25,I3)') ' atom2:',bond_list(ib,is)%atom(2)
               WRITE(logunit,'(A,T25,A)') ' bond type:',bond_list(ib,is)%bond_potential_type
            END IF
 
@@ -1860,16 +1870,16 @@ SUBROUTINE Get_Angle_Info(is)
            ENDIF
 
            ! Assign appropriate values to list elements
-           angle_list(iang,is)%atom1 = String_To_Int(line_array(2))
-           angle_list(iang,is)%atom2 = String_To_Int(line_array(3))
-           angle_list(iang,is)%atom3 = String_To_Int(line_array(4))
+           angle_list(iang,is)%atom(1) = String_To_Int(line_array(2))
+           angle_list(iang,is)%atom(2) = String_To_Int(line_array(3))
+           angle_list(iang,is)%atom(3) = String_To_Int(line_array(4))
            angle_list(iang,is)%angle_potential_type = line_array(5)
 
            IF (verbose_log) THEN
                    WRITE(logunit,'(A,T25,I3,1x,I3)') 'Species and angle number', is,iang
-                   WRITE(logunit,'(A,T25,I3)') ' atom1:',angle_list(iang,is)%atom1
-                   WRITE(logunit,'(A,T25,I3)') ' atom2:',angle_list(iang,is)%atom2
-                   WRITE(logunit,'(A,T25,I3)') ' atom3:',angle_list(iang,is)%atom3
+                   WRITE(logunit,'(A,T25,I3)') ' atom1:',angle_list(iang,is)%atom(1)
+                   WRITE(logunit,'(A,T25,I3)') ' atom2:',angle_list(iang,is)%atom(2)
+                   WRITE(logunit,'(A,T25,I3)') ' atom3:',angle_list(iang,is)%atom(3)
                    WRITE(logunit,'(A,T25,A)') ' angle type:',angle_list(iang,is)%angle_potential_type
            END IF
 
@@ -1978,8 +1988,13 @@ SUBROUTINE Get_Dihedral_Info(is)
 
   INTEGER, INTENT(IN) :: is
 
-  INTEGER :: ierr,line_nbr,nbr_entries, idihed
+  INTEGER :: ierr,line_nbr,nbr_entries, idihed, idihed_rb
   CHARACTER(STRING_LEN) :: line_string, line_array(60)
+  REAL(DP), DIMENSION(max_dihedral_params) :: dihedral_param
+  REAL(DP), DIMENSION(0:5) :: rb_c
+  REAL(DP) :: signfactor
+  INTEGER :: n_rb_dihedrals, n_combined_dihedrals, int_n, i_entry, i
+  INTEGER, DIMENSION(4) :: i_atoms, i_atoms_reversed, i_rb_atoms
 
 !******************************************************************************
   REWIND(molfile_unit)
@@ -2012,14 +2027,17 @@ SUBROUTINE Get_Dihedral_Info(is)
            IF (verbose_log) WRITE(logunit,*) 'No dihedrals in species ',is
            EXIT
         ENDIF
+        n_rb_dihedrals = 0
+        n_combined_dihedrals = 0
 
         DO idihed = 1,ndihedrals(is)
+           rb_c = 0.0_DP
            ! Now read the entries on the next lines. There must be at least 6 for
            ! each dihedral.
            line_nbr = line_nbr + 1
            CALL Parse_String(molfile_unit,line_nbr,6,nbr_entries,line_array,ierr)
 
-           ! Test for problems readin file
+           ! Test for problems reading file
            IF (ierr /= 0) THEN
               err_msg = ''
               err_msg(1) = "Error reading dihedral info."
@@ -2034,155 +2052,302 @@ SUBROUTINE Get_Dihedral_Info(is)
            ENDIF
 
            ! Assign appropriate values to list elements
-           dihedral_list(idihed,is)%atom1 = String_To_Int(line_array(2))
-           dihedral_list(idihed,is)%atom2 = String_To_Int(line_array(3))
-           dihedral_list(idihed,is)%atom3 = String_To_Int(line_array(4))
-           dihedral_list(idihed,is)%atom4 = String_To_Int(line_array(5))
+           uncombined_dihedral_list(idihed,is)%atom(1) = String_To_Int(line_array(2))
+           uncombined_dihedral_list(idihed,is)%atom(2) = String_To_Int(line_array(3))
+           uncombined_dihedral_list(idihed,is)%atom(3) = String_To_Int(line_array(4))
+           uncombined_dihedral_list(idihed,is)%atom(4) = String_To_Int(line_array(5))
 
-           dihedral_list(idihed,is)%dihedral_potential_type = line_array(6)
+           uncombined_dihedral_list(idihed,is)%dihedral_potential_type = line_array(6)
 
            IF (verbose_log) THEN
               WRITE(logunit,'(A,T25,I3,1x,I3)') 'Species and dihedral number', is,idihed
-              WRITE(logunit,'(A,T25,I3)') ' atom1:',dihedral_list(idihed,is)%atom1
-              WRITE(logunit,'(A,T25,I3)') ' atom2:',dihedral_list(idihed,is)%atom2
-              WRITE(logunit,'(A,T25,I3)') ' atom3:',dihedral_list(idihed,is)%atom3
-              WRITE(logunit,'(A,T25,I3)') ' atom4:',dihedral_list(idihed,is)%atom4
+              WRITE(logunit,'(A,T25,I3)') ' atom1:',uncombined_dihedral_list(idihed,is)%atom(1)
+              WRITE(logunit,'(A,T25,I3)') ' atom2:',uncombined_dihedral_list(idihed,is)%atom(2)
+              WRITE(logunit,'(A,T25,I3)') ' atom3:',uncombined_dihedral_list(idihed,is)%atom(3)
+              WRITE(logunit,'(A,T25,I3)') ' atom4:',uncombined_dihedral_list(idihed,is)%atom(4)
               WRITE(logunit,'(A,T25,A)') ' dihedral type:', &
-                dihedral_list(idihed,is)%dihedral_potential_type
+                uncombined_dihedral_list(idihed,is)%dihedral_potential_type
            END IF
 
            ! Load dihedral potential parameters, specific for each individual type
-           IF (dihedral_list(idihed,is)%dihedral_potential_type == 'OPLS') THEN
+           SELECT CASE(uncombined_dihedral_list(idihed,is)%dihedral_potential_type)
+           CASE('OPLS','opls')
+           !IF (uncombined_dihedral_list(idihed,is)%dihedral_potential_type == 'OPLS') THEN
 
-              dihedral_list(idihed,is)%int_dipot_type = int_opls
+              uncombined_dihedral_list(idihed,is)%int_dipot_type = int_opls
               !a0, a1, a2, a3 in kJ/mol
-              dihedral_list(idihed,is)%dihedral_param(1) = String_To_Double(line_array(7))
-              dihedral_list(idihed,is)%dihedral_param(2) = String_To_Double(line_array(8))
-              dihedral_list(idihed,is)%dihedral_param(3) = String_To_Double(line_array(9))
-              dihedral_list(idihed,is)%dihedral_param(4) = String_To_Double(line_array(10))
+              uncombined_dihedral_list(idihed,is)%dihedral_param(1) = String_To_Double(line_array(7))
+              uncombined_dihedral_list(idihed,is)%dihedral_param(2) = String_To_Double(line_array(8))
+              uncombined_dihedral_list(idihed,is)%dihedral_param(3) = String_To_Double(line_array(9))
+              uncombined_dihedral_list(idihed,is)%dihedral_param(4) = String_To_Double(line_array(10))
+              dihedral_param(1:4) = uncombined_dihedral_list(idihed,is)%dihedral_param(1:4)
 
               IF (verbose_log) THEN
                  WRITE(logunit,'(A,T25,F10.4)') ' a0, kJ/mol:', &
-                   dihedral_list(idihed,is)%dihedral_param(1)
+                   uncombined_dihedral_list(idihed,is)%dihedral_param(1)
                  WRITE(logunit,'(A,T25,F10.4)') ' a1, kJ/mol:', &
-                   dihedral_list(idihed,is)%dihedral_param(2)
+                   uncombined_dihedral_list(idihed,is)%dihedral_param(2)
                  WRITE(logunit,'(A,T25,F10.4)') ' a2, kJ/mol:', &
-                   dihedral_list(idihed,is)%dihedral_param(3)
+                   uncombined_dihedral_list(idihed,is)%dihedral_param(3)
                  WRITE(logunit,'(A,T25,F10.4)') ' a3, kJ/mol:', &
-                   dihedral_list(idihed,is)%dihedral_param(4)
+                   uncombined_dihedral_list(idihed,is)%dihedral_param(4)
               END IF
 
               ! Convert to molecular units amu A^2/ps^2
-              dihedral_list(idihed,is)%dihedral_param(1) = kjmol_to_atomic* dihedral_list(idihed,is)%dihedral_param(1)
-              dihedral_list(idihed,is)%dihedral_param(2) = kjmol_to_atomic* dihedral_list(idihed,is)%dihedral_param(2)
-              dihedral_list(idihed,is)%dihedral_param(3) = kjmol_to_atomic* dihedral_list(idihed,is)%dihedral_param(3)
-              dihedral_list(idihed,is)%dihedral_param(4) = kjmol_to_atomic* dihedral_list(idihed,is)%dihedral_param(4)
+              dihedral_param(1:4) = kjmol_to_atomic*dihedral_param(1:4)
+              uncombined_dihedral_list(idihed,is)%dihedral_param(1:4) = dihedral_param(1:4)
 
+              IF (ALL(ABS(dihedral_param(1:4)) < tiny_number)) THEN
+                      uncombined_dihedral_list(idihed,is)%int_dipot_type = int_none
+                      uncombined_dihedral_list(idihed,is)%dihedral_potential_type = 'NONE'
+              ELSE
+                      uncombined_dihedral_list(idihed,is)%l_rb_formatted = .TRUE.
+                      rb_c = 0.0_DP
+                      rb_c(0) = dihedral_param(3) + SUM(dihedral_param(1:4))
+                      rb_c(1) = dihedral_param(2) - 3.0_DP*dihedral_param(4)
+                      rb_c(2) = -2.0_DP*dihedral_param(3)
+                      rb_c(3) = 4.0_DP*dihedral_param(4)
+              END IF
 
-           ELSE IF (dihedral_list(idihed,is)%dihedral_potential_type == 'CHARMM') THEN
-              dihedral_list(idihed,is)%int_dipot_type = int_charmm
-              dihedral_list(idihed,is)%dihedral_param(1) = String_To_Double(line_array(7))
-              dihedral_list(idihed,is)%dihedral_param(2) = String_To_Double(line_array(8))
-              dihedral_list(idihed,is)%dihedral_param(3) = String_To_Double(line_array(9))
+           CASE('RB','rb', 'Ryckaert-Bellemans')
+           !ELSE IF (uncombined_dihedral_list(idihed,is)%dihedral_potential_type == 'RB') THEN
+                uncombined_dihedral_list(idihed,is)%int_dipot_type = int_rb_torsion
+                dihedral_param(1:6) = 0.0_DP
+                DO i = 1, 6
+                        i_entry = i + 6
+                        IF (i_entry > nbr_entries) EXIT
+                        dihedral_param(i) = String_To_Double(line_array(i_entry))
+                        IF (verbose_log) THEN
+                                WRITE(logunit,'(A2,I1,A9,T25,F10.4)') ' c', i-1, ', kJ/mol:', &
+                                        dihedral_param(i)
+                        END IF
+                END DO
+                IF (ALL(ABS(dihedral_param(1:6))<tiny_number)) THEN
+                        uncombined_dihedral_list(idihed,is)%int_dipot_type = int_none
+                        uncombined_dihedral_list(idihed,is)%dihedral_potential_type = 'NONE'
+                ELSE
+                        rb_c = dihedral_param(1:6) * kjmol_to_atomic
+                        uncombined_dihedral_list(idihed,is)%l_rb_formatted = .TRUE.
+                END IF
+
+           CASE('CHARMM','charmm')
+           !ELSE IF (uncombined_dihedral_list(idihed,is)%dihedral_potential_type == 'CHARMM') THEN
+              uncombined_dihedral_list(idihed,is)%int_dipot_type = int_charmm
+              dihedral_param(1) = String_To_Double(line_array(7))
+              dihedral_param(2) = String_To_Double(line_array(8))
+              dihedral_param(3) = String_To_Double(line_array(9))
+              IF (ABS(ABS(dihedral_param(3))-180.0_DP) < tiny_number .AND. ABS(dihedral_param(2))<tiny_number) THEN
+                      dihedral_param(1) = 0.0_DP
+              END IF
               !
 
               IF (verbose_log) THEN
                  WRITE(logunit,'(A,T25,F10.4)') ' a0, kJ/mol:', &
-                      dihedral_list(idihed,is)%dihedral_param(1)
+                      dihedral_param(1)
                  WRITE(logunit,'(A,T25,F10.4)') ' n ', &
-                      dihedral_list(idihed,is)%dihedral_param(2)
+                      dihedral_param(2)
                  WRITE(logunit,'(A,T25,F10.4)') 'delta', &
-                      dihedral_list(idihed,is)%dihedral_param(3)
+                      dihedral_param(3)
+              END IF
+              ! cos(±x) = cos(x)
+              int_n = NINT(dihedral_param(2))
+              ! cos(±x ± 180°) = -cos(x)
+              IF (ABS(ABS(dihedral_param(3))-180.0_DP) < tiny_number) THEN
+                      signfactor = -1.0_DP
+              ELSE IF (ABS(dihedral_param(3))<tiny_number) THEN
+                      signfactor = 1.0_DP
+              ELSE
+                      signfactor = 0.0_DP
               END IF
 
 
               ! Convert to molecular units amu A^2/ps^2 and the delta
               ! parameter to radians
-              dihedral_list(idihed,is)%dihedral_param(1) = kjmol_to_atomic* dihedral_list(idihed,is)%dihedral_param(1)
-              dihedral_list(idihed,is)%dihedral_param(3) = (PI/180.0_DP)* dihedral_list(idihed,is)%dihedral_param(3)
-
-!AV: AMBER style for dihedral multiplicity, cf. Zhong et al. JpcB, 115, 10027, 2011.
-!Note that I assumed the maximum # of dihedral multiplicity is 3 and tried to avoide a 2-dimensional arrays.
-           ELSE IF (dihedral_list(idihed,is)%dihedral_potential_type == 'AMBER') THEN
-              dihedral_list(idihed,is)%int_dipot_type = int_amber
-              dihedral_list(idihed,is)%dihedral_param(1) = String_To_Double(line_array(7))
-              dihedral_list(idihed,is)%dihedral_param(2) = String_To_Double(line_array(8))
-              dihedral_list(idihed,is)%dihedral_param(3) = String_To_Double(line_array(9))
-              dihedral_list(idihed,is)%dihedral_param(4) = String_To_Double(line_array(10))
-              dihedral_list(idihed,is)%dihedral_param(5) = String_To_Double(line_array(11))
-              dihedral_list(idihed,is)%dihedral_param(6) = String_To_Double(line_array(12))
-              dihedral_list(idihed,is)%dihedral_param(7) = String_To_Double(line_array(13))
-              dihedral_list(idihed,is)%dihedral_param(8) = String_To_Double(line_array(14))
-              dihedral_list(idihed,is)%dihedral_param(9) = String_To_Double(line_array(15))
-              !AV: commented out b/c 3 terms is usually enough.
-              !dihedral_list(idihed,is)%dihedral_param(10) = String_To_Double(line_array(16))
-              !dihedral_list(idihed,is)%dihedral_param(11) = String_To_Double(line_array(17))
-              !dihedral_list(idihed,is)%dihedral_param(12) = String_To_Double(line_array(18))
-
-              !
-
-              IF (verbose_log) THEN
-                 WRITE(logunit,'(A,T25,F10.4)') ' a01, kJ/mol:', &
-                   dihedral_list(idihed,is)%dihedral_param(1)
-                 WRITE(logunit,'(A,T25,F10.4)') ' n1 ', &
-                   dihedral_list(idihed,is)%dihedral_param(2)
-                 WRITE(logunit,'(A,T25,F10.4)') 'delta1', &
-                   dihedral_list(idihed,is)%dihedral_param(3)
-                 WRITE(logunit,'(A,T25,F10.4)') ' a02, kJ/mol:', &
-                   dihedral_list(idihed,is)%dihedral_param(4)
-                 WRITE(logunit,'(A,T25,F10.4)') ' n2 ', &
-                   dihedral_list(idihed,is)%dihedral_param(5)
-                 WRITE(logunit,'(A,T25,F10.4)') 'delta2', &
-                   dihedral_list(idihed,is)%dihedral_param(6)
-                 WRITE(logunit,'(A,T25,F10.4)') ' a03, kJ/mol:', &
-                   dihedral_list(idihed,is)%dihedral_param(7)
-                 WRITE(logunit,'(A,T25,F10.4)') ' n3 ', &
-                   dihedral_list(idihed,is)%dihedral_param(8)
-                 WRITE(logunit,'(A,T25,F10.4)') 'delta3', &
-                   dihedral_list(idihed,is)%dihedral_param(9)
+              dihedral_param(1) = kjmol_to_atomic* dihedral_param(1)
+              dihedral_param(3) = (PI/180.0_DP)* dihedral_param(3)
+              uncombined_dihedral_list(idihed,is)%dihedral_param(1:3) = dihedral_param(1:3)
+              IF (ABS(dihedral_param(1)) < tiny_number) THEN
+                      uncombined_dihedral_list(idihed,is)%int_dipot_type = int_none
+                      uncombined_dihedral_list(idihed,is)%dihedral_potential_type = 'NONE'
+              ELSE IF (ABS(REAL(int_n,DP) - dihedral_param(2))<tiny_number .AND. signfactor .NE. 0.0_DP) THEN
+                      uncombined_dihedral_list(idihed,is)%l_rb_formatted = .TRUE.
+                      int_n = ABS(int_n)
+                      SELECT CASE(int_n)
+                      CASE(0)
+                              rb_c(0) = (1.0_DP+signfactor)*dihedral_param(1)
+                      CASE(1)
+                              rb_c(0) = dihedral_param(1)
+                              rb_c(1) = signfactor*dihedral_param(1)
+                      CASE(2)
+                              ! works due to double angle identity for cosine
+                              rb_c(0) = (1.0_DP-signfactor)*dihedral_param(1)
+                              rb_c(2) = 2.0_DP*signfactor*dihedral_param(1)
+                      CASE(3)
+                              ! works due to triple angle identity for cosine
+                              rb_c(0) = dihedral_param(1)
+                              rb_c(1) = -3.0_DP*signfactor*dihedral_param(1)
+                              rb_c(3) = 4.0_DP*signfactor*dihedral_param(1)
+                      CASE(4)
+                              ! works due to quadruple angle identity for cosine
+                              ! cos(4x) = 8*cos^4(x) - 8*cos^2(x) + 1
+                              rb_c(0) = (1.0_DP+signfactor)*dihedral_param(1)
+                              rb_c(4) = 8.0_DP*signfactor*dihedral_param(1)
+                              rb_c(2) = -rb_c(4)
+                      CASE(5)
+                              ! works due to quintuple angle identity for cosine
+                              ! cos(5x) = 16*cos^5(x) - 20*cos^3(x) + 5*cos(x)
+                              rb_c(0) = dihedral_param(1)
+                              rb_c(1) = 5.0_DP*signfactor*dihedral_param(1)
+                              rb_c(3) = -20.0_DP*signfactor*dihedral_param(1)
+                              rb_c(5) = 16.0_DP*signfactor*dihedral_param(1)
+                      CASE DEFAULT
+                              uncombined_dihedral_list(idihed,is)%l_rb_formatted = .FALSE.
+                      END SELECT
+                      IF (ALL(ABS(rb_c)<tiny_number) .AND. uncombined_dihedral_list(idihed,is)%l_rb_formatted) THEN
+                              uncombined_dihedral_list(idihed,is)%l_rb_formatted = .FALSE.
+                              uncombined_dihedral_list(idihed,is)%int_dipot_type = int_none
+                              uncombined_dihedral_list(idihed,is)%dihedral_potential_type = 'NONE'
+                      END IF
               END IF
 
-              ! Convert to molecular units amu A^2/ps^2 and the delta
-              ! parameter to radians
-              dihedral_list(idihed,is)%dihedral_param(1) = kjmol_to_atomic* dihedral_list(idihed,is)%dihedral_param(1)
-              dihedral_list(idihed,is)%dihedral_param(4) = kjmol_to_atomic* dihedral_list(idihed,is)%dihedral_param(4)
-              dihedral_list(idihed,is)%dihedral_param(7) = kjmol_to_atomic* dihedral_list(idihed,is)%dihedral_param(7)
-              dihedral_list(idihed,is)%dihedral_param(3) = (PI/180.0_DP)* dihedral_list(idihed,is)%dihedral_param(3)
-              dihedral_list(idihed,is)%dihedral_param(6) = (PI/180.0_DP)* dihedral_list(idihed,is)%dihedral_param(6)
-              dihedral_list(idihed,is)%dihedral_param(9) = (PI/180.0_DP)* dihedral_list(idihed,is)%dihedral_param(9)
+              ! RS: I commented out the AMBER dihedral part below because it's a dead end. AV supposedly
+              !     implemented AMBER style dihedrals but they aren't dealt with anywhere else in the code,
+              !     except for when writing ring fragment mcf files, which just writes this info out again.
+              !     Until someone actually adds a way to use AMBER style dihedrals, specifying this type of
+              !     dihedral should cause an error message.  I also made it compatible with SELECT CASE instead of IF.
 
-           ELSE IF (dihedral_list(idihed,is)%dihedral_potential_type == 'harmonic') THEN
-              dihedral_list(idihed,is)%int_dipot_type = int_harmonic
+!!AV: AMBER style for dihedral multiplicity, cf. Zhong et al. JpcB, 115, 10027, 2011.
+!!Note that I assumed the maximum # of dihedral multiplicity is 3 and tried to avoide a 2-dimensional arrays.
+!           CASE('AMBER','amber')
+!           !ELSE IF (uncombined_dihedral_list(idihed,is)%dihedral_potential_type == 'AMBER') THEN
+!              uncombined_dihedral_list(idihed,is)%int_dipot_type = int_amber
+!              uncombined_dihedral_list(idihed,is)%dihedral_param(1) = String_To_Double(line_array(7))
+!              uncombined_dihedral_list(idihed,is)%dihedral_param(2) = String_To_Double(line_array(8))
+!              uncombined_dihedral_list(idihed,is)%dihedral_param(3) = String_To_Double(line_array(9))
+!              uncombined_dihedral_list(idihed,is)%dihedral_param(4) = String_To_Double(line_array(10))
+!              uncombined_dihedral_list(idihed,is)%dihedral_param(5) = String_To_Double(line_array(11))
+!              uncombined_dihedral_list(idihed,is)%dihedral_param(6) = String_To_Double(line_array(12))
+!              uncombined_dihedral_list(idihed,is)%dihedral_param(7) = String_To_Double(line_array(13))
+!              uncombined_dihedral_list(idihed,is)%dihedral_param(8) = String_To_Double(line_array(14))
+!              uncombined_dihedral_list(idihed,is)%dihedral_param(9) = String_To_Double(line_array(15))
+!              !AV: commented out b/c 3 terms is usually enough.
+!              !uncombined_dihedral_list(idihed,is)%dihedral_param(10) = String_To_Double(line_array(16))
+!              !uncombined_dihedral_list(idihed,is)%dihedral_param(11) = String_To_Double(line_array(17))
+!              !uncombined_dihedral_list(idihed,is)%dihedral_param(12) = String_To_Double(line_array(18))
+!
+!              !
+!
+!              IF (verbose_log) THEN
+!                 WRITE(logunit,'(A,T25,F10.4)') ' a01, kJ/mol:', &
+!                   uncombined_dihedral_list(idihed,is)%dihedral_param(1)
+!                 WRITE(logunit,'(A,T25,F10.4)') ' n1 ', &
+!                   uncombined_dihedral_list(idihed,is)%dihedral_param(2)
+!                 WRITE(logunit,'(A,T25,F10.4)') 'delta1', &
+!                   uncombined_dihedral_list(idihed,is)%dihedral_param(3)
+!                 WRITE(logunit,'(A,T25,F10.4)') ' a02, kJ/mol:', &
+!                   uncombined_dihedral_list(idihed,is)%dihedral_param(4)
+!                 WRITE(logunit,'(A,T25,F10.4)') ' n2 ', &
+!                   uncombined_dihedral_list(idihed,is)%dihedral_param(5)
+!                 WRITE(logunit,'(A,T25,F10.4)') 'delta2', &
+!                   uncombined_dihedral_list(idihed,is)%dihedral_param(6)
+!                 WRITE(logunit,'(A,T25,F10.4)') ' a03, kJ/mol:', &
+!                   uncombined_dihedral_list(idihed,is)%dihedral_param(7)
+!                 WRITE(logunit,'(A,T25,F10.4)') ' n3 ', &
+!                   uncombined_dihedral_list(idihed,is)%dihedral_param(8)
+!                 WRITE(logunit,'(A,T25,F10.4)') 'delta3', &
+!                   uncombined_dihedral_list(idihed,is)%dihedral_param(9)
+!              END IF
+!
+!              ! Convert to molecular units amu A^2/ps^2 and the delta
+!              ! parameter to radians
+!              uncombined_dihedral_list(idihed,is)%dihedral_param(1) = kjmol_to_atomic* uncombined_dihedral_list(idihed,is)%dihedral_param(1)
+!              uncombined_dihedral_list(idihed,is)%dihedral_param(4) = kjmol_to_atomic* uncombined_dihedral_list(idihed,is)%dihedral_param(4)
+!              uncombined_dihedral_list(idihed,is)%dihedral_param(7) = kjmol_to_atomic* uncombined_dihedral_list(idihed,is)%dihedral_param(7)
+!              uncombined_dihedral_list(idihed,is)%dihedral_param(3) = (PI/180.0_DP)* uncombined_dihedral_list(idihed,is)%dihedral_param(3)
+!              uncombined_dihedral_list(idihed,is)%dihedral_param(6) = (PI/180.0_DP)* uncombined_dihedral_list(idihed,is)%dihedral_param(6)
+!              uncombined_dihedral_list(idihed,is)%dihedral_param(9) = (PI/180.0_DP)* uncombined_dihedral_list(idihed,is)%dihedral_param(9)
+
+           CASE('HARMONIC','harmonic')
+           !ELSE IF (uncombined_dihedral_list(idihed,is)%dihedral_potential_type == 'harmonic') THEN
+              uncombined_dihedral_list(idihed,is)%int_dipot_type = int_harmonic
               ! d0 read in in units ofin K/radians^2 read in
-              dihedral_list(idihed,is)%dihedral_param(1) = String_To_Double(line_array(7))
+              uncombined_dihedral_list(idihed,is)%dihedral_param(1) = String_To_Double(line_array(7))
               ! theta0 in degrees
-              dihedral_list(idihed,is)%dihedral_param(2) = String_To_Double(line_array(8))
+              uncombined_dihedral_list(idihed,is)%dihedral_param(2) = String_To_Double(line_array(8))
 
 
               IF (verbose_log) THEN
                  WRITE(logunit,'(A,T25,F10.4)') ' Do_angle in K/rad^2:', &
-                   dihedral_list(idihed,is)%dihedral_param(1)
+                   uncombined_dihedral_list(idihed,is)%dihedral_param(1)
                  WRITE(logunit,'(A,T25,F10.4)') ' theta0 in degrees:', &
-                   dihedral_list(idihed,is)%dihedral_param(2)
+                   uncombined_dihedral_list(idihed,is)%dihedral_param(2)
               END IF
               ! Convert force constant to atomic units amu A^2/(rad^2 ps^2)
               ! so that Edihedral = amu A^2/ps^2v
-              dihedral_list(idihed,is)%dihedral_param(1) = kboltz * dihedral_list(idihed,is)%dihedral_param(1)
+              uncombined_dihedral_list(idihed,is)%dihedral_param(1) = kboltz * uncombined_dihedral_list(idihed,is)%dihedral_param(1)
 
               ! Convert the nominal bond angle to radians
-              dihedral_list(idihed,is)%dihedral_param(2) = (PI/180.0_DP)*dihedral_list(idihed,is)%dihedral_param(2)
+              uncombined_dihedral_list(idihed,is)%dihedral_param(2) = (PI/180.0_DP)*uncombined_dihedral_list(idihed,is)%dihedral_param(2)
+              IF (ABS(uncombined_dihedral_list(idihed,is)%dihedral_param(1)) < tiny_number) THEN
+                      uncombined_dihedral_list(idihed,is)%int_dipot_type = int_none
+                      uncombined_dihedral_list(idihed,is)%dihedral_potential_type = 'NONE'
+              END IF
 
 
-           ELSEIF (dihedral_list(idihed,is)%dihedral_potential_type == 'none') THEN
-              dihedral_list(idihed,is)%int_dipot_type = int_none
+           CASE('NONE','none')
+           !ELSEIF (uncombined_dihedral_list(idihed,is)%dihedral_potential_type == 'none') THEN
+              uncombined_dihedral_list(idihed,is)%int_dipot_type = int_none
 
-           ELSE
+           CASE DEFAULT
+           !ELSE
               err_msg = ''
               err_msg(1) = 'dihedral_potential type improperly specified in mcf file'
               CALL Clean_Abort(err_msg,'Get_Dihedral_Info')
-           ENDIF
+           END SELECT
+           !ENDIF
+           uncombined_dihedral_list(idihed,is)%rb_c = rb_c
+           IF (uncombined_dihedral_list(idihed,is)%l_rb_formatted) THEN
+                   i_atoms = uncombined_dihedral_list(idihed,is)%atom(:)
+                   i_atoms_reversed = i_atoms(4:1:-1)
+                   ! nothing needs to be changed if the dihedral atom order is reversed because the sign of phi
+                   !      doesn't matter for dihedrals formatted as RB torsions since cos(-x) = cos(x)
+                   DO idihed_rb = 1, n_rb_dihedrals
+                        i_rb_atoms = dihedral_list(idihed_rb,is)%atom(:)
+                        IF (ALL(i_atoms .EQ. i_rb_atoms) .OR. ALL(i_atoms_reversed .EQ. i_rb_atoms)) THEN
+                                dihedral_list(idihed_rb,is)%rb_c = &
+                                        dihedral_list(idihed_rb,is)%rb_c + rb_c
+                                EXIT
+                        END IF
+                   END DO
+                   IF (idihed_rb > n_rb_dihedrals) THEN
+                           dihedral_list(idihed_rb,is) = uncombined_dihedral_list(idihed,is)
+                           dihedral_list(idihed_rb,is)%dihedral_potential_type = 'RB torsion'
+                           dihedral_list(idihed_rb,is)%int_dipot_type = int_rb_torsion
+                           n_rb_dihedrals = idihed_rb
+                   END IF
+           END IF
 
         ENDDO
+        species_list(is)%ndihedrals_rb = n_rb_dihedrals
+        n_combined_dihedrals = n_rb_dihedrals
+        DO idihed = 1, ndihedrals(is)
+                IF (.NOT. (uncombined_dihedral_list(idihed,is)%l_rb_formatted &
+                        .OR. uncombined_dihedral_list(idihed,is)%int_dipot_type .EQ. int_none)) THEN
+                        n_combined_dihedrals = n_combined_dihedrals + 1
+                        dihedral_list(n_combined_dihedrals,is) = &
+                                uncombined_dihedral_list(idihed,is)
+                END IF
+        END DO
+        species_list(is)%ndihedrals_energetic = n_combined_dihedrals
+        DO idihed = 1, ndihedrals(is)
+                IF (uncombined_dihedral_list(idihed,is)%int_dipot_type .EQ. int_none) THEN
+                        n_combined_dihedrals = n_combined_dihedrals + 1
+                        dihedral_list(n_combined_dihedrals,is) = &
+                                uncombined_dihedral_list(idihed,is)
+                END IF
+        END DO
+        species_list(is)%ndihedrals_uncombined = ndihedrals(is)
+        ndihedrals(is) = n_combined_dihedrals
 
         EXIT
 
@@ -2263,19 +2428,19 @@ INTEGER, INTENT(IN) :: is
            ENDIF
 
            ! Assign appropriate values to list elements
-           improper_list(iimprop,is)%atom1 = String_To_Int(line_array(2))
-           improper_list(iimprop,is)%atom2 = String_To_Int(line_array(3))
-           improper_list(iimprop,is)%atom3 = String_To_Int(line_array(4))
-           improper_list(iimprop,is)%atom4 = String_To_Int(line_array(5))
+           improper_list(iimprop,is)%atom(1) = String_To_Int(line_array(2))
+           improper_list(iimprop,is)%atom(2) = String_To_Int(line_array(3))
+           improper_list(iimprop,is)%atom(3) = String_To_Int(line_array(4))
+           improper_list(iimprop,is)%atom(4) = String_To_Int(line_array(5))
 
            improper_list(iimprop,is)%improper_potential_type = line_array(6)
 
            IF (verbose_log) THEN
                    WRITE(logunit,'(A,T25,I3,1x,I3)') 'Species and improper number', is,iimprop
-                   WRITE(logunit,'(A,T25,I3)') ' atom1:',improper_list(iimprop,is)%atom1
-                   WRITE(logunit,'(A,T25,I3)') ' atom2:',improper_list(iimprop,is)%atom2
-                   WRITE(logunit,'(A,T25,I3)') ' atom3:',improper_list(iimprop,is)%atom3
-                   WRITE(logunit,'(A,T25,I3)') ' atom4:',improper_list(iimprop,is)%atom4
+                   WRITE(logunit,'(A,T25,I3)') ' atom1:',improper_list(iimprop,is)%atom(1)
+                   WRITE(logunit,'(A,T25,I3)') ' atom2:',improper_list(iimprop,is)%atom(2)
+                   WRITE(logunit,'(A,T25,I3)') ' atom3:',improper_list(iimprop,is)%atom(3)
+                   WRITE(logunit,'(A,T25,I3)') ' atom4:',improper_list(iimprop,is)%atom(4)
                    WRITE(logunit,'(A,T25,A)') ' dihedral type:', &
                 improper_list(iimprop,is)%improper_potential_type
            END IF
@@ -2327,8 +2492,8 @@ INTEGER, INTENT(IN) :: is
               IF (verbose_log) THEN
               WRITE(logunit,'(A,4(I6,1x),A,I4)') &
                    'No improper potential between atoms: ',&
-                   improper_list(iimprop,is)%atom1, improper_list(iimprop,is)%atom2, &
-                   improper_list(iimprop,is)%atom3, improper_list(iimprop,is)%atom4, &
+                   improper_list(iimprop,is)%atom(1), improper_list(iimprop,is)%atom(2), &
+                   improper_list(iimprop,is)%atom(3), improper_list(iimprop,is)%atom(4), &
                    'in species', is
               END IF
 
@@ -2617,8 +2782,8 @@ SUBROUTINE Get_Fragment_Info(is)
 
               DO ibonds = 1, nbonds(is)
 
-                 atom1 = bond_list(ibonds,is)%atom1
-                 atom2 = bond_list(ibonds,is)%atom2
+                 atom1 = bond_list(ibonds,is)%atom(1)
+                 atom2 = bond_list(ibonds,is)%atom(2)
 
                  IF (i_atom == atom1 .AND. j_atom == atom2) &
                       iatoms_bond = iatoms_bond + 1

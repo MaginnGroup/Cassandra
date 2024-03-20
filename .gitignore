@@ -10,6 +10,10 @@
 # Prerequisites
 *.d
 
+# Optimization reports and assembly listings
+*.optrpt
+*.s
+
 # Compiled Object files
 *.slo
 *.lo

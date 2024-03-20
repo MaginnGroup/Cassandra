@@ -261,6 +261,7 @@ USE Type_Definitions
   INTEGER, PARAMETER :: int_harmonic = 3
   INTEGER, PARAMETER :: int_cvff = 4
   INTEGER, PARAMETER :: int_amber = 5
+  INTEGER, PARAMETER :: int_rb_torsion = 6
 
   ! Define integers for molecule type
   INTEGER, PARAMETER :: int_noexist = -1
@@ -356,7 +357,7 @@ USE Type_Definitions
   TYPE(Angle_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: angle_list
 
   ! Array with dimensions (ndihedrals, nspecies)
-  TYPE(Dihedral_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: dihedral_list
+  TYPE(Dihedral_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: dihedral_list, uncombined_dihedral_list
 
   ! Array with dimensions (nimpropers, nspecies)
   TYPE(Improper_Class), DIMENSION(:,:), ALLOCATABLE, TARGET :: improper_list

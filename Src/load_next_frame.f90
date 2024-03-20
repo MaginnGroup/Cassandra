@@ -8,6 +8,7 @@ SUBROUTINE Load_Next_Frame(end_reached)
         USE Simulation_Properties
         USE IO_Utilities
         USE Energy_Routines
+        USE Internal_Coordinate_Routines
         USE Type_Definitions
         USE XTC_Routines
         !$ USE OMP_LIB

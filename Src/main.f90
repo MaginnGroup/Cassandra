@@ -82,6 +82,7 @@ PROGRAM Main
   USE Energy_Routines
   USE Simulation_Properties
   USE Fragment_Growth
+  USE Internal_Coordinate_Routines
   USE Pair_Emax_Estimation
 
   IMPLICIT NONE

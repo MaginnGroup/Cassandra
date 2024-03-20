@@ -102,8 +102,8 @@ SUBROUTINE Participation
 
   DO is = 1,nspecies
      DO ibonds = 1,nbonds(is)
-        iatom = bond_list(ibonds,is)%atom1
-        jatom = bond_list(ibonds,is)%atom2
+        iatom = bond_list(ibonds,is)%atom(1)
+        jatom = bond_list(ibonds,is)%atom(2)
         l_bonded(iatom,jatom,is)=.true.
         l_bonded(jatom,iatom,is)=.true.
      ENDDO       
@@ -141,8 +141,8 @@ SUBROUTINE Participation
 
         DO ibonds = 1, nbonds(is)
            
-           atom1 = bond_list(ibonds,is)%atom1
-           atom2 = bond_list(ibonds,is)%atom2
+           atom1 = bond_list(ibonds,is)%atom(1)
+           atom2 = bond_list(ibonds,is)%atom(2)
 
            IF (atom1 == iatom .OR. atom2 == iatom) THEN
 
@@ -281,9 +281,9 @@ SUBROUTINE Participation
 
            ! obtain three atoms that define the angle
 
-           atom1 = angle_list(iangles,is)%atom1
-           atom2 = angle_list(iangles,is)%atom2
-           atom3 = angle_list(iangles,is)%atom3
+           atom1 = angle_list(iangles,is)%atom(1)
+           atom2 = angle_list(iangles,is)%atom(2)
+           atom3 = angle_list(iangles,is)%atom(3)
 
            IF ( iatom == atom1 ) THEN
 
@@ -390,10 +390,10 @@ SUBROUTINE Participation
 
            ! get the four atoms in the dihedral
 
-           atom1 = dihedral_list(idihedral,is)%atom1
-           atom2 = dihedral_list(idihedral,is)%atom2
-           atom3 = dihedral_list(idihedral,is)%atom3
-           atom4 = dihedral_list(idihedral,is)%atom4
+           atom1 = dihedral_list(idihedral,is)%atom(1)
+           atom2 = dihedral_list(idihedral,is)%atom(2)
+           atom3 = dihedral_list(idihedral,is)%atom(3)
+           atom4 = dihedral_list(idihedral,is)%atom(4)
 
            IF ( iatom == atom1 ) THEN
 
@@ -744,8 +744,8 @@ SUBROUTINE Participation
                     
                     this_angle = angle_part_list(ia,is)%which_angle(i)
                     
-                    first_atom = angle_list(this_angle,is)%atom1
-                    third_atom = angle_list(this_angle,is)%atom3
+                    first_atom = angle_list(this_angle,is)%atom(1)
+                    third_atom = angle_list(this_angle,is)%atom(3)
                     
                     DO j = 1, bondpart_list(ia,is)%nbonds
                        
@@ -986,9 +986,9 @@ CONTAINS
 
              this_angle = angle_part_list(this_atom,is)%which_angle(j)
 
-             first_atom = angle_list(this_angle,is)%atom1
-             second_atom = angle_list(this_angle,is)%atom2
-             third_atom = angle_list(this_angle,is)%atom3
+             first_atom = angle_list(this_angle,is)%atom(1)
+             second_atom = angle_list(this_angle,is)%atom(2)
+             third_atom = angle_list(this_angle,is)%atom(3)
 
              ! Now look for these two atoms in the fragment list to find their
              ! local id
@@ -1057,7 +1057,7 @@ CONTAINS
   !--------------------------------------------------------------------------------------------
   SUBROUTINE Write_Ring_Fragment_MCF_Dihedral_Info(ifrag,is)
     !------------------------------------------------------------------------------------------
-    ! Write the '# Dihderal Info' section to the ring fragment MCF file
+    ! Write the '# Dihedral Info' section to the ring fragment MCF file
     !------------------------------------------------------------------------------------------
     IMPLICIT NONE
 
@@ -1087,10 +1087,10 @@ CONTAINS
 
     DO idihed = 1, ndihedrals(is)
 
-       atom_1 = dihedral_list(idihed,is)%atom1
-       atom_2 = dihedral_list(idihed,is)%atom2
-       atom_3 = dihedral_list(idihed,is)%atom3
-       atom_4 = dihedral_list(idihed,is)%atom4
+       atom_1 = dihedral_list(idihed,is)%atom(1)
+       atom_2 = dihedral_list(idihed,is)%atom(2)
+       atom_3 = dihedral_list(idihed,is)%atom(3)
+       atom_4 = dihedral_list(idihed,is)%atom(4)
 
        ! loop over all the fragment atoms and see if all the four atoms are part of
        ! the fragement
@@ -1151,7 +1151,8 @@ CONTAINS
 
        this_dihedral = dihed_id(i)
 
-       IF (dihedral_list(this_dihedral,is)%int_dipot_type == int_opls) THEN
+       SELECT CASE(dihedral_list(this_dihedral,is)%int_dipot_type)
+       CASE(int_opls)
 
           WRITE(201,'(I5,2X,4(I4,2X),A4,2X,4(F8.3,2X))') i, &
                first_atom(i), second_atom(i), third_atom(i), fourth_atom(i), &
@@ -1161,7 +1162,7 @@ CONTAINS
                dihedral_list(this_dihedral,is)%dihedral_param(3)/kjmol_to_atomic, &
                dihedral_list(this_dihedral,is)%dihedral_param(4)/kjmol_to_atomic
 
-       ELSE IF (dihedral_list(this_dihedral,is)%int_dipot_type == int_charmm) THEN
+       CASE(int_charmm)
           
           WRITE(201,'(I5,2X,4(I4,2X), A6, 2X, F8.3, 2X, F8.0, 2X, F8.3)') i, &
                first_atom(i), second_atom(i), third_atom(i), fourth_atom(i), &
@@ -1170,22 +1171,22 @@ CONTAINS
                dihedral_list(this_dihedral,is)%dihedral_param(2), &
                dihedral_list(this_dihedral,is)%dihedral_param(3) * ( 180.0_DP/PI)
 
-       ELSE IF (dihedral_list(this_dihedral,is)%int_dipot_type == int_amber) THEN
+       !CASE(int_amber)
 
-          WRITE(201,'(I5,2X,4(I4,2X),A5,2X,9(F8.3,2X))') i, &
-               first_atom(i), second_atom(i), third_atom(i), fourth_atom(i), &
-               'AMBER', &
-               dihedral_list(this_dihedral,is)%dihedral_param(1)/kjmol_to_atomic, &
-               dihedral_list(this_dihedral,is)%dihedral_param(2), &
-               dihedral_list(this_dihedral,is)%dihedral_param(3) * (180_DP/PI), &
-               dihedral_list(this_dihedral,is)%dihedral_param(4)/kjmol_to_atomic, &
-               dihedral_list(this_dihedral,is)%dihedral_param(5), &
-               dihedral_list(this_dihedral,is)%dihedral_param(6) * (180_DP/PI), &
-               dihedral_list(this_dihedral,is)%dihedral_param(7)/kjmol_to_atomic, &
-               dihedral_list(this_dihedral,is)%dihedral_param(8), &
-               dihedral_list(this_dihedral,is)%dihedral_param(9) * (180_DP/PI)
+       !   WRITE(201,'(I5,2X,4(I4,2X),A5,2X,9(F8.3,2X))') i, &
+       !        first_atom(i), second_atom(i), third_atom(i), fourth_atom(i), &
+       !        'AMBER', &
+       !        dihedral_list(this_dihedral,is)%dihedral_param(1)/kjmol_to_atomic, &
+       !        dihedral_list(this_dihedral,is)%dihedral_param(2), &
+       !        dihedral_list(this_dihedral,is)%dihedral_param(3) * (180_DP/PI), &
+       !        dihedral_list(this_dihedral,is)%dihedral_param(4)/kjmol_to_atomic, &
+       !        dihedral_list(this_dihedral,is)%dihedral_param(5), &
+       !        dihedral_list(this_dihedral,is)%dihedral_param(6) * (180_DP/PI), &
+       !        dihedral_list(this_dihedral,is)%dihedral_param(7)/kjmol_to_atomic, &
+       !        dihedral_list(this_dihedral,is)%dihedral_param(8), &
+       !        dihedral_list(this_dihedral,is)%dihedral_param(9) * (180_DP/PI)
                
-       ELSE IF (dihedral_list(this_dihedral,is)%int_dipot_type == int_harmonic) THEN
+       CASE(int_harmonic)
           
           WRITE(201,'(I5,2X, 4(I4,2X), A8,2X, 2(F8.3,2X))') i, &
                first_atom(i), second_atom(i), third_atom(i), fourth_atom(i), &
@@ -1193,13 +1194,26 @@ CONTAINS
                dihedral_list(this_dihedral,is)%dihedral_param(1)/ kboltz, &
                dihedral_list(this_dihedral,is)%dihedral_param(2) * (180.0_DP/PI) 
 
-       ELSE IF (dihedral_list(this_dihedral,is)%int_dipot_type == int_none) THEN
+       CASE(int_none)
 
           WRITE(201,'(I5,2X,4(I4,2X),A4)') i, &
                first_atom(i), second_atom(i), third_atom(i), fourth_atom(i), 'none'
 
+       CASE(int_rb_torsion)
+
+          WRITE(201,'(I5,2X,4(I4,2X),A4,2X,6(F8.3,2X))') i, &
+               first_atom(i), second_atom(i), third_atom(i), fourth_atom(i), &
+               'RB', &
+               dihedral_list(this_dihedral,is)%rb_c(0)/kjmol_to_atomic, &
+               dihedral_list(this_dihedral,is)%rb_c(1)/kjmol_to_atomic, &
+               dihedral_list(this_dihedral,is)%rb_c(2)/kjmol_to_atomic, &
+               dihedral_list(this_dihedral,is)%rb_c(3)/kjmol_to_atomic, &
+               dihedral_list(this_dihedral,is)%rb_c(4)/kjmol_to_atomic, &
+               dihedral_list(this_dihedral,is)%rb_c(5)/kjmol_to_atomic
+       END SELECT
+
           
-       END IF
+       !END IF
 
     END DO
 
@@ -1234,10 +1248,10 @@ CONTAINS
 
     DO imp_ang = 1, nimpropers(is)
 
-       atom_1 = improper_list(imp_ang,is)%atom1
-       atom_2 = improper_list(imp_ang,is)%atom2
-       atom_3 = improper_list(imp_ang,is)%atom3
-       atom_4 = improper_list(imp_ang,is)%atom4
+       atom_1 = improper_list(imp_ang,is)%atom(1)
+       atom_2 = improper_list(imp_ang,is)%atom(2)
+       atom_3 = improper_list(imp_ang,is)%atom(3)
+       atom_4 = improper_list(imp_ang,is)%atom(4)
 
        ! loop over the fragment atoms and determine if all the atoms belong to the fragment
 

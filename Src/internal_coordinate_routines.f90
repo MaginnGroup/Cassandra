@@ -18,6 +18,10 @@
 !   You should have received a copy of the GNU General Public License
 !   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*******************************************************************************
+MODULE Internal_Coordinate_Routines
+USE Type_Definitions
+IMPLICIT NONE
+CONTAINS
 
 SUBROUTINE Get_Internal_Coords
 
@@ -158,8 +162,8 @@ SUBROUTINE Get_Bond_Length(this_bond,im,is,r21)
   
 ! Obtain the atoms involved in this_bond
 
-   atom1 = bond_list(this_bond,is)%atom1
-   atom2 = bond_list(this_bond,is)%atom2
+   atom1 = bond_list(this_bond,is)%atom(1)
+   atom2 = bond_list(this_bond,is)%atom(2)
 
 ! Calculate vectors, bond lenth
 
@@ -221,9 +225,9 @@ SUBROUTINE Get_Bond_Length(this_bond,im,is,r21)
 
 ! Figure out three atoms in the angle
 
-   atom1 = angle_list(this_angle,is)%atom1
-   atom2 = angle_list(this_angle,is)%atom2
-   atom3 = angle_list(this_angle,is)%atom3
+   atom1 = angle_list(this_angle,is)%atom(1)
+   atom2 = angle_list(this_angle,is)%atom(2)
+   atom3 = angle_list(this_angle,is)%atom(3)
 
 ! Calculate vectors, dot products and bond angle
    
@@ -285,19 +289,50 @@ SUBROUTINE Get_Bond_Length(this_bond,im,is,r21)
 !        get_com
 !********************************************************************************
 
+   IMPLICIT NONE
+
+   INTEGER, INTENT(IN) :: this_dihedral, im, is
+   REAL(DP)            :: cosphi, phi, r12dn
+
+   ! Calculate the value of dihedral angle
+   CALL Get_Dihedral_Angle_COS(this_dihedral,im,is,cosphi,r12dn)
+
+   phi = SIGN(ACOS(cosphi), r12dn)
+
+ END SUBROUTINE Get_Dihedral_Angle
+
+!********************************************************************************
+ SUBROUTINE Get_Dihedral_Angle_COS(this_dihedral,im,is,cosphi,r12dn)
+
+!********************************************************************************
+! This subroutine calculates the cosine of the dihedral angle passed to it.
+! r12dn is an optional output argument with the same sign as phi, and is 
+! intended to be used to calculate phi via SIGN(ACOS(cosphi), r12dn_out)
+!
+! CALLED BY
+!
+!        energy_routines
+!
+!              Compute_Dihedral_Energy
+!              Compute_Molecule_Dihedral_Energy
+!
+!        get_com
+!********************************************************************************
+
    USE Type_Definitions
    USE Global_Variables
 
    IMPLICIT NONE
 
    INTEGER, INTENT(IN) :: this_dihedral, im, is
+   REAL(DP), INTENT(OUT) :: cosphi
+   REAL(DP), INTENT(OUT), OPTIONAL :: r12dn
 
    INTEGER             :: atom1, atom2, atom3, atom4, this_box
 
    REAL(DP)            :: rx12, ry12, rz12, rx32, ry32, rz32
    REAL(DP)            :: rx34, ry34, rz34, mx, my, mz, nx, ny, nz
    REAL(DP)            :: msq, nsq, mdn, abs_m, abs_n
-   REAL(DP)            :: cosphi, phi, r12dn
 
    TYPE(Atom_Class), POINTER :: these_atoms(:)
 
@@ -311,10 +346,10 @@ SUBROUTINE Get_Bond_Length(this_bond,im,is,r21)
   
 ! Get the atoms involved in the dihedral of interest
 
-   atom1 = dihedral_list(this_dihedral,is)%atom1
-   atom2 = dihedral_list(this_dihedral,is)%atom2
-   atom3 = dihedral_list(this_dihedral,is)%atom3
-   atom4 = dihedral_list(this_dihedral,is)%atom4
+   atom1 = dihedral_list(this_dihedral,is)%atom(1)
+   atom2 = dihedral_list(this_dihedral,is)%atom(2)
+   atom3 = dihedral_list(this_dihedral,is)%atom(3)
+   atom4 = dihedral_list(this_dihedral,is)%atom(4)
 
 ! Vector r12 points from atom 2 to atom 1.  Below, the components of this vector are calculated.
 
@@ -355,26 +390,24 @@ SUBROUTINE Get_Bond_Length(this_bond,im,is,r21)
    nz =   rx32 * ry34 - ry32 * rx34
    
    msq = mx * mx + my * my + mz * mz
-   abs_m = DSQRT(msq)
+   !abs_m = SQRT(msq)
    nsq = nx * nx + ny * ny + nz * nz
-   abs_n = DSQRT(nsq)
+   !abs_n = SQRT(nsq)
                                                                                 
 ! Calculate the dot product needed to calculate phi
 
    mdn = mx * nx + my * ny + mz * nz
-   r12dn = rx12 * nx + ry12 * ny + rz12 * nz
                                                                                 
 ! Determine what cosine of phi is and take care against numerical imprecision
 
-   cosphi = mdn/(abs_m * abs_n)
-   cosphi = MIN(cosphi,  1.0_DP)
-   cosphi = MAX(cosphi, -1.0_DP)
+   cosphi = mdn/SQRT(msq*nsq)
+   IF (PRESENT(r12dn)) THEN
+           r12dn = rx12 * nx + ry12 * ny + rz12 * nz
+           cosphi = MIN(cosphi,  1.0_DP)
+           cosphi = MAX(cosphi, -1.0_DP)
+   END IF
    
-! Calculate the value of dihedral angle
-
-   phi = SIGN(DACOS(cosphi), r12dn)
-
- END SUBROUTINE Get_Dihedral_Angle
+ END SUBROUTINE Get_Dihedral_Angle_COS
 
 !********************************************************************************
  SUBROUTINE Get_Improper_Angle(this_improper,im,is,phi)
@@ -417,10 +450,10 @@ SUBROUTINE Get_Bond_Length(this_bond,im,is,r21)
   
 ! Get the atoms involved in the improper of interest
 
-   atom1 = improper_list(this_improper,is)%atom1
-   atom2 = improper_list(this_improper,is)%atom2
-   atom3 = improper_list(this_improper,is)%atom3
-   atom4 = improper_list(this_improper,is)%atom4
+   atom1 = improper_list(this_improper,is)%atom(1)
+   atom2 = improper_list(this_improper,is)%atom(2)
+   atom3 = improper_list(this_improper,is)%atom(3)
+   atom4 = improper_list(this_improper,is)%atom(4)
 
 ! Vector r12 points from atom 2 to atom 1.  Below, the components of this vector are calculated.
 
@@ -481,3 +514,4 @@ SUBROUTINE Get_Bond_Length(this_bond,im,is,r21)
    
 
  END SUBROUTINE Get_Improper_Angle
+END MODULE Internal_Coordinate_Routines

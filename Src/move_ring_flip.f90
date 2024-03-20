@@ -107,8 +107,8 @@ SUBROUTINE Flip_Move
         
         ! check if other atoms are ring atoms
 
-        atom1 = angle_list(angle_id,is)%atom1
-        atom2 = angle_list(angle_id,is)%atom3
+        atom1 = angle_list(angle_id,is)%atom(1)
+        atom2 = angle_list(angle_id,is)%atom(3)
 
         IF (nonbond_list(atom1,is)%ring_atom .AND. nonbond_list(atom2,is)%ring_atom) EXIT
 

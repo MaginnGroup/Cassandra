@@ -36,6 +36,7 @@ MODULE Read_Write_Checkpoint
   USE Simulation_Properties
   USE Random_Generators, ONLY : s1,s2,s3,s4,s5, rranf
   USE IO_Utilities
+  USE Internal_Coordinate_Routines
 
   IMPLICIT NONE
 

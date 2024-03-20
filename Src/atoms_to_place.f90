@@ -108,8 +108,8 @@ CONTAINS
           IF (AllocateStatus /= 0 ) STOP
 
           ! identify atom1 and atom2 associated with global bond number ibonds in species ispecies
-          atom1 = bond_list(ibonds,ispecies)%atom1
-          atom2 = bond_list(ibonds,ispecies)%atom2
+          atom1 = bond_list(ibonds,ispecies)%atom(1)
+          atom2 = bond_list(ibonds,ispecies)%atom(2)
 
           ! initially set the total number of atoms to be placed equal to
           ! zero for both of these atoms
@@ -157,7 +157,7 @@ CONTAINS
           ! Since the identity of atom1 might have changed by recursive_placement routine. We
           ! determine the identity of atom1 once again.
 
-          atom1 = bond_list(ibonds,ispecies)%atom1
+          atom1 = bond_list(ibonds,ispecies)%atom(1)
 
           alive_atoms = 0
           alive = 0
@@ -266,9 +266,9 @@ CONTAINS
 
           ! determine the atoms that form iangles
 
-          atom1 = angle_list(iangles,ispecies)%atom1
-          atom2 = angle_list(iangles,ispecies)%atom2
-          atom3 = angle_list(iangles,ispecies)%atom3
+          atom1 = angle_list(iangles,ispecies)%atom(1)
+          atom2 = angle_list(iangles,ispecies)%atom(2)
+          atom3 = angle_list(iangles,ispecies)%atom(3)
 
           ! when the atoms, atom1 and all the atoms connected to it are regrown
           
@@ -284,7 +284,7 @@ CONTAINS
           ! since the identity of atom1 might have changed due to the recursive routine, we reset
           ! this identity
 
-          atom1 = angle_list(iangles,ispecies)%atom1
+          atom1 = angle_list(iangles,ispecies)%atom(1)
           
           ! assign all the atoms 
           
@@ -298,7 +298,7 @@ CONTAINS
           END DO
 
           ! Reassign the identity of atom1
-          atom1 = angle_list(iangles,ispecies)%atom1
+          atom1 = angle_list(iangles,ispecies)%atom(1)
           
           alive_atoms = 0
           atoms_to_place_list(:) = 0
@@ -430,10 +430,10 @@ CONTAINS
 
           ! obtain atoms in this dihedral
 
-          atom1 = dihedral_list(idihedrals,ispecies)%atom1
-          atom2 = dihedral_list(idihedrals,ispecies)%atom2
-          atom3 = dihedral_list(idihedrals,ispecies)%atom3
-          atom4 = dihedral_list(idihedrals,ispecies)%atom4
+          atom1 = dihedral_list(idihedrals,ispecies)%atom(1)
+          atom2 = dihedral_list(idihedrals,ispecies)%atom(2)
+          atom3 = dihedral_list(idihedrals,ispecies)%atom(3)
+          atom4 = dihedral_list(idihedrals,ispecies)%atom(4)
 
           ! now when the dihedral move affects atom1 and other atoms connected to atom1
 
@@ -469,7 +469,7 @@ CONTAINS
           ! now hold atom1, atom2 and atom3 fixed so that dihedral move affects atom4
           ! reassign the indentity of atom1
 
-          atom1 = dihedral_list(idihedrals,ispecies)%atom1
+          atom1 = dihedral_list(idihedrals,ispecies)%atom(1)
 
           alive_atoms = 0
           atoms_to_place_list(:) = 0
@@ -516,8 +516,8 @@ CONTAINS
        DO i = 1, nspecies
           DO j = 1,ndihedrals(i)
              write(logunit,*) 'dihedral, atom1, atom2, atom3, atom4'
-             write(logunit,*) j,dihedral_list(j,i)%atom1,dihedral_list(j,i)%atom2, dihedral_list(j,i)%atom3, &
-                  dihedral_list(j,i)%atom4
+             write(logunit,*) j,dihedral_list(j,i)%atom(1),dihedral_list(j,i)%atom(2), dihedral_list(j,i)%atom(3), &
+                  dihedral_list(j,i)%atom(4)
              write(logunit,*)
              write(logunit,*) 'natoms to place if atom 1 moves and the moving atom numbers'
              write(logunit,*) dihedral_atoms_to_place_list(j,i)%atom1_natoms, dihedral_atoms_to_place_list(j,i)%atom1
@@ -608,8 +608,8 @@ CONTAINS
           
           bond_i = bondpart_list(atomplaced,ispecies)%bond_num(i)
           
-          atom1i = bond_list(bond_i,ispecies)%atom1
-          atom2i = bond_list(bond_i,ispecies)%atom2
+          atom1i = bond_list(bond_i,ispecies)%atom(1)
+          atom2i = bond_list(bond_i,ispecies)%atom(2)
           
           IF ( atom1i == atomplaced ) THEN
              
@@ -651,8 +651,8 @@ CONTAINS
              bond_j = bondpart_list(atomplaced,ispecies)%bond_num(j)
              
              ! Now find the global atom numbers on either side of global bond number bond_j
-             atom1j = bond_list(bond_j,ispecies)%atom1
-             atom2j = bond_list(bond_j,ispecies)%atom2
+             atom1j = bond_list(bond_j,ispecies)%atom(1)
+             atom2j = bond_list(bond_j,ispecies)%atom(2)
              
              IF ( atom1j == atomplaced) THEN
                 
@@ -694,8 +694,8 @@ CONTAINS
           
           bond_j = bondpart_list(atomplaced,ispecies)%bond_num(j)
           
-          atom1j = bond_list(bond_j,ispecies)%atom1
-          atom2j = bond_list(bond_j,ispecies)%atom2
+          atom1j = bond_list(bond_j,ispecies)%atom(1)
+          atom2j = bond_list(bond_j,ispecies)%atom(2)
           
           IF (atom1j == atomplaced) THEN
              
