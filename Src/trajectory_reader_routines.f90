@@ -81,7 +81,7 @@ MODULE Trajectory_Reader_Routines
 
                 IF (early_end) RETURN
 
-                l_size_change = (.NOT. ALL(box_list(ibox)%length .EQ. this_length))
+                l_size_change = (.NOT. ALL(box_list(ibox)%orig_length .EQ. this_length))
 
                 IF (l_size_change) THEN
                         box_list(ibox)%length = this_length
@@ -148,7 +148,7 @@ MODULE Trajectory_Reader_Routines
                                 ALLOCATE(cos_sum_old(SIZE(cos_sum,1),nbr_boxes), Stat = AllocateStatus)
                                 IF (AllocateStatus /= 0) THEN
                                         err_msg = ''
-                                        err_msg(1) = 'Memory could not be allocated for cos_mol_old'
+                                        err_msg(1) = 'Memory could not be allocated for cos_sum_old'
                                         CALL Clean_Abort(err_msg,'Read_H_frame')
                                 END IF
                                 ALLOCATE(sin_sum_old(SIZE(sin_sum,1),nbr_boxes), Stat = AllocateStatus)
@@ -160,13 +160,13 @@ MODULE Trajectory_Reader_Routines
                                 ALLOCATE(cos_sum_start(SIZE(cos_sum,1),nbr_boxes), Stat = AllocateStatus)
                                 IF (AllocateStatus /= 0) THEN
                                         err_msg = ''
-                                        err_msg(1) = 'Memory could not be allocated for cos_mol_start'
+                                        err_msg(1) = 'Memory could not be allocated for cos_sum_start'
                                         CALL Clean_Abort(err_msg,'Read_H_frame')
                                 END IF
                                 ALLOCATE(sin_sum_start(SIZE(sin_sum,1),nbr_boxes), Stat = AllocateStatus)
                                 IF (AllocateStatus /= 0) THEN
                                         err_msg = ''
-                                        err_msg(1) = 'Memory could not be allocated for sin_mol_start'
+                                        err_msg(1) = 'Memory could not be allocated for sin_sum_start'
                                         CALL Clean_Abort(err_msg,'Read_H_frame')
                                 END IF
 
@@ -338,7 +338,6 @@ MODULE Trajectory_Reader_Routines
                 END IF
 
                 this_lambda = 1.0_DP
-                ! Read in the coordinates of the molecules
                 DO is = 1, nspecies
                         IF (nmols_to_read(is,ibox) < 1) CYCLE
                         ntr = IAND(nmols_to_read(is,ibox)+3,NOT(3))
@@ -351,7 +350,6 @@ MODULE Trajectory_Reader_Routines
                         eloc = locate_base +nmols_to_read(is,ibox)
                         aib = atom_ibounds(:,is,ibox)
                         !$OMP END SINGLE
-                        ! unwrap start
                         !$OMP WORKSHARE
                         frame_xyz_rs(1:nmols_to_read(is,ibox),1:natoms(is),1:3) = &
                                 RESHAPE(frame_xyz(aib(1):aib(2),:),&
@@ -560,47 +558,7 @@ MODULE Trajectory_Reader_Routines
                         !$OMP SINGLE
                         nmols(is,ibox) = nmols(is,ibox) + nmols_to_read(is,ibox)
                         !$OMP END SINGLE
-                        !!$OMP WORKSHARE
-                        !molecule_list(sloc:eloc,is)%live = .TRUE.
-                        !!$OMP END WORKSHARE
-                        !!$OMP WORKSHARE
-                        !!molecule_list(sloc:eloc,is)%frac = this_lambda
-                        !!molecule_list(sloc:eloc,is)%which_box = ibox
-                        !!atom_list(1:natoms(is),sloc:eloc,is)%exist = .TRUE.
-                        !molecule_list(sloc:eloc,is)%rcom(1) = rcom_arr(1:nmols_to_read(is,ibox),1)
-                        !molecule_list(sloc:eloc,is)%rcom(2) = rcom_arr(1:nmols_to_read(is,ibox),2)
-                        !molecule_list(sloc:eloc,is)%rcom(3) = rcom_arr(1:nmols_to_read(is,ibox),3)
-                        !molecule_list(sloc:eloc,is)%rcom(4) = rcom_arr(1:nmols_to_read(is,ibox),4)
-                        !atom_list(1:natoms(is),sloc:eloc,is)%rp(1) = &
-                        !        TRANSPOSE(frame_xyz_rs(1:nmols_to_read(is,ibox),1:natoms(is),1))
-                        !atom_list(1:natoms(is),sloc:eloc,is)%rp(2) = &
-                        !        TRANSPOSE(frame_xyz_rs(1:nmols_to_read(is,ibox),1:natoms(is),2))
-                        !atom_list(1:natoms(is),sloc:eloc,is)%rp(3) = &
-                        !        TRANSPOSE(frame_xyz_rs(1:nmols_to_read(is,ibox),1:natoms(is),3))
-                        !!$OMP END WORKSHARE
-                        !!$OMP CRITICAL
-                        !WRITE(*,*) ALL(molecule_list(sloc:eloc,is)%live), COUNT(molecule_list(sloc:eloc,is)%live), &
-                        !        SUM(molecule_list(sloc:eloc,is)%which_box)
-                        !WRITE(*,*) ALL(atom_list(1:natoms(is),sloc:eloc,is)%exist), COUNT(atom_list(1:natoms(is),sloc:eloc,is)%exist)
-                        !WRITE(*,*) MINVAL(PACK(locate(1:nmols_to_read(is,ibox),is,ibox),molecule_list(sloc:eloc,is)%live)), &
-                        !        MAXVAL(PACK(locate(1:nmols_to_read(is,ibox),is,ibox),molecule_list(sloc:eloc,is)%live))
-                        !WRITE(*,*) MINVAL(molecule_list(sloc:eloc,is)%rcom(4)), &
-                        !        MAXVAL(molecule_list(sloc:eloc,is)%rcom(4))
-                        !WRITE(*,*) MINVAL(ABS(molecule_list(sloc:eloc,is)%rcom(1))), &
-                        !        MAXVAL(ABS(molecule_list(sloc:eloc,is)%rcom(1)))
-                        !WRITE(*,*) MINVAL(ABS(molecule_list(sloc:eloc,is)%rcom(2))), &
-                        !        MAXVAL(ABS(molecule_list(sloc:eloc,is)%rcom(2)))
-                        !WRITE(*,*) MINVAL(ABS(molecule_list(sloc:eloc,is)%rcom(3))), &
-                        !        MAXVAL(ABS(molecule_list(sloc:eloc,is)%rcom(3)))
-                        !WRITE(*,*) MINVAL(ABS(atom_list(1:natoms(is),sloc:eloc,is)%rp(1))), &
-                        !        MAXVAL(ABS(atom_list(1:natoms(is),sloc:eloc,is)%rp(1)))
-                        !WRITE(*,*) MINVAL(ABS(atom_list(1:natoms(is),sloc:eloc,is)%rp(2))), &
-                        !        MAXVAL(ABS(atom_list(1:natoms(is),sloc:eloc,is)%rp(2)))
-                        !WRITE(*,*) MINVAL(ABS(atom_list(1:natoms(is),sloc:eloc,is)%rp(3))), &
-                        !        MAXVAL(ABS(atom_list(1:natoms(is),sloc:eloc,is)%rp(3)))
-                        !!$OMP END CRITICAL
 
-                        ! unwrap end
                 END DO
                 !$OMP END PARALLEL
                 !WRITE(*,*) sloc, eloc, is, ibox, this_lambda

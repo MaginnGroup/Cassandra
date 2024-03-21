@@ -71,7 +71,6 @@ SUBROUTINE Compute_Cell_Dimensions(box_nbr)
   ! orig_length_inv and basis_converter in the box object are used elsewhere
   !     to transform the coordinates read from trajectory, checkpoint, or configuration files
   !     to the new basis if the cell matrix provided does not already meet the requirements.
-  ! orig_length is currently unused at time of writing but may be useful in the future.
   H = box_list(box_nbr)%length
   box_list(box_nbr)%orig_length = H
   left_basis = DOT_PRODUCT(Cross_Product(H(:,1),H(:,2)),H(:,3)) < 0.0_DP
