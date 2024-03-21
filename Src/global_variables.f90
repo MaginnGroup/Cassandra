@@ -832,5 +832,7 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
 
   LOGICAL :: cavity_biasing_flag
 
+  LOGICAL :: early_end
+
 END MODULE Global_Variables
 

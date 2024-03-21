@@ -121,8 +121,8 @@ CONTAINS
           INTEGER :: yi_mult, zi_mult
           REAL(DP), DIMENSION(3,3) :: cell_H_dp
           REAL(SP), DIMENSION(3) :: xyzi_sp, cell_rp
-          INTEGER :: bcp_shift, xcp_base_shift_stride, zcp_base_shift, ycp_base_shift, xcp_base_shift
-          INTEGER :: zcp_base, ycp_base, xcp_base, j, xcp, ycp, zcp, xub, ylb, zlb
+          INTEGER :: bcp_shift, xcp_base_shift_stride, xcp_base_stride, zcp_base_shift, ycp_base_shift, xcp_base_shift
+          INTEGER :: zcp_base, ycp_base, xcp_base, j, xcp, ycp, zcp, xub, ylb, zlb, xlb, yub, zub
           INTEGER(INT64) :: xfer_int64
           INTEGER :: sbe_ti(2:3), sbe_ti_mat(2:3,solvents_or_types_maxind,0:n_big_atoms)
           REAL(DP) :: bfd(3), bfdr(3)
@@ -161,7 +161,7 @@ CONTAINS
           !$OMP PRIVATE(ibox,istart,is,inlive,inatoms,bsolvent,vlen,iend,box_vlen) &
           !$OMP PRIVATE(xyzi,xyzi_sp,xyzi_dp,xyzi_dp_spread,dxyzi_dp,drp,cell_rp,zi_mult,yi_mult) &
           !$OMP PRIVATE(l_ortho,l_inrange_vec,l_inrange_vec_old,xi,yi,zi,i_dim,l_switch,bitmask) &
-          !$OMP PRIVATE(isolvent,priv_bitcell_int64,zlb,ylb,xub) &
+          !$OMP PRIVATE(isolvent,priv_bitcell_int64,zlb,ylb,xub,xlb,yub,zub) &
           !$OMP PRIVATE(lbox,clr,bclr,cp_ub,cp_lb,lc,rp_ub,rp_lb,bcp_shift) &
           !$OMP PRIVATE(bcp,bcpx,bcpy,bcpz,bcps,ti) &
           !$OMP PRIVATE(boxlen,lbc,tgt_slice,src_slice,bit_tgt_slice,bit_src_slice,border_range) &
@@ -312,10 +312,16 @@ CONTAINS
                 END IF
                 !$OMP END SINGLE
                 IF (cbmc_cell_list_flag) THEN
+                        zub = box_list(ibox)%border_thickness(3)
+                        yub = box_list(ibox)%border_thickness(2)
+                        xub = box_list(ibox)%border_thickness(1)
+                        zlb = -zub
+                        ylb = -yub
+                        xlb = -xub
                         !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
-                        DO zi = -box_list(ibox)%border_thickness(3), box_list(ibox)%border_thickness(3)
-                        DO yi = -box_list(ibox)%border_thickness(2), box_list(ibox)%border_thickness(2)
-                        DO xi = -box_list(ibox)%border_thickness(1), box_list(ibox)%border_thickness(1)
+                        DO zi = zlb, zub
+                        DO yi = ylb, yub
+                        DO xi = xlb, xub
                                 xyzi = (/ xi, yi, zi /)
                                 xyzi_dp = REAL(xyzi,DP)
                                 IF (l_ortho) THEN
@@ -344,12 +350,15 @@ CONTAINS
                         zlb = MERGE(0,-sbe(3),l_ortho)
                         ylb = MERGE(0,-sbe(2),l_ortho)
                         xub = MERGE(0,sbe(1)+1,l_ortho)
+                        xlb = -sbe(1)
+                        yub = sbe(2)
+                        zub = sbe(3)
                         !$OMP DO COLLAPSE(2) SCHEDULE(STATIC)
-                        DO zi = zlb, sbe(3)
-                        DO yi = ylb, sbe(2)
+                        DO zi = zlb, zub
+                        DO yi = ylb, yub
                         priv_bitcell_int64 = 0_INT64
                         l_inrange_vec = .FALSE.
-                        DO xi = -sbe(1), xub
+                        DO xi = xlb, xub
                                 xyzi = (/ xi, yi, zi /)
                                 xyzi_dp = REAL(xyzi,DP)
                                 IF (l_ortho) THEN
@@ -727,6 +736,7 @@ CONTAINS
                         live_atom_bcp_T = TRANSPOSE(live_atom_bcp(:,:,ibox))
                         xcp_base_shift_stride = INT(CEILING( &
                                 72.0_DP*REAL(box_list(ibox)%length_cells(1),DP)/REAL(box_list(ibox)%length_bitcells(1),DP)))
+                        xcp_base_stride = 2*xcp_base_shift_stride
                         !$OMP END WORKSHARE
                         bfd = box_list(ibox)%bitcell_face_distance
                         bfdr = box_list(ibox)%bitcell_face_distance_recip
@@ -750,10 +760,16 @@ CONTAINS
                         DO zcp_base_shift = 0,2,2
                         DO ycp_base_shift = 0,2,2
                         DO xcp_base_shift = 0,xcp_base_shift_stride,xcp_base_shift_stride
+                        zub = box_list(ibox)%sectorbound(3)
+                        zlb = zcp_base_shift-zub
+                        yub = box_list(ibox)%sectorbound(2)
+                        ylb = ycp_base_shift-yub
+                        xub = box_list(ibox)%sectorbound(1)
+                        xlb = xcp_base_shift-xub
                         !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
-                        DO zcp_base = zcp_base_shift-box_list(ibox)%sectorbound(3), box_list(ibox)%sectorbound(3), 4
-                        DO ycp_base = ycp_base_shift-box_list(ibox)%sectorbound(2), box_list(ibox)%sectorbound(2), 4
-                        DO xcp_base = xcp_base_shift-box_list(ibox)%sectorbound(1), box_list(ibox)%sectorbound(1), 2*xcp_base_shift_stride
+                        DO zcp_base = zlb, zub, 4
+                        DO ycp_base = ylb, yub, 4
+                        DO xcp_base = xlb, xub, xcp_base_stride
                         DO zcp = zcp_base, MIN(zcp_base+1,box_list(ibox)%sectorbound(3))
                         DO ycp = ycp_base, MIN(ycp_base+1,box_list(ibox)%sectorbound(2))
                         DO xcp = xcp_base, MIN(xcp_base+xcp_base_shift_stride-1,box_list(ibox)%sectorbound(1))
@@ -1039,6 +1055,7 @@ CONTAINS
                                 int16shape(1) = ISHFT(int16shape(1),-4)
                                 int16ub = int16shape - 1
                                 yi_chunkstride = MIN(MASKR(15)/lbp16(1),lbp16(2))
+                                zub = int8ub(3)
                                 !$OMP SINGLE
                                 big_atom_start = MERGE(1,0,read_atompair_rminsq .OR. calc_rmin_flag)
                                 IF (.NOT. ALLOCATED(cavdatalist)) ALLOCATE(cavdatalist(big_atom_start:n_big_atoms,nbr_boxes))
@@ -1080,7 +1097,7 @@ CONTAINS
                                         !zcavcount(0) = 0_INT64
                                         !$OMP END WORKSHARE
                                         !$OMP DO SCHEDULE(STATIC)
-                                        DO zi = 0, int8ub(3)
+                                        DO zi = 0, zub
                                                 ncavs = 0_INT64
                                                 DO yi_chunkstart = 0, int16ub(2), yi_chunkstride
                                                         yi_chunkend = MIN(yi_chunkstart + yi_chunkstride - 1, int16ub(2))
@@ -1146,7 +1163,7 @@ CONTAINS
                                                 PRODUCT(REAL(box_list(ibox)%length_bitcells,DP)))
                                         !$OMP END SINGLE
                                         !$OMP DO SCHEDULE(STATIC)
-                                        DO zi = 0, int8ub(3)
+                                        DO zi = 0, zub
                                                 icav = zcavcount(zi)
                                                 locbase = ISHFT(INT(zi,INT64),42)
                                                 DO yi = 0, int16ub(2)
@@ -1265,10 +1282,16 @@ CONTAINS
           IF (cbmc_cell_list_flag) THEN
                   DO ibox = 1, nbr_boxes
                           bt = box_list(ibox)%border_thickness
+                          zub = box_list(ibox)%sectorbound(3)
+                          yub = box_list(ibox)%sectorbound(2)
+                          xub = box_list(ibox)%sectorbound(1)
+                          zlb = -zub
+                          ylb = -yub
+                          xlb = -xub
                           !$OMP DO COLLAPSE(3) REDUCTION(MAX:max_neighbors)
-                          DO zi = -box_list(ibox)%sectorbound(3), box_list(ibox)%sectorbound(3)
-                                  DO yi = -box_list(ibox)%sectorbound(2), box_list(ibox)%sectorbound(2)
-                                          DO xi = -box_list(ibox)%sectorbound(1), box_list(ibox)%sectorbound(1)
+                          DO zi = zlb, zub
+                                  DO yi = ylb, yub
+                                          DO xi = xlb, xub
                                                   max_neighbors = MAX(SUM(IAND(n_cell_atoms( &
                                                           xi-bt(1):xi+bt(1), &
                                                           yi-bt(2):yi+bt(2), &
@@ -1318,10 +1341,16 @@ CONTAINS
                   !$OMP END SINGLE
           ELSE
                   DO ibox = 1, nbr_boxes
+                          zub = box_list(ibox)%sectorbound(3)
+                          yub = box_list(ibox)%sectorbound(2)
+                          xub = box_list(ibox)%sectorbound(1)
+                          zlb = -zub
+                          ylb = -yub
+                          xlb = -xub
                           !$OMP DO COLLAPSE(3) REDUCTION(MAX:max_neighbors)
-                          DO zi = -box_list(ibox)%sectorbound(3), box_list(ibox)%sectorbound(3)
-                                  DO yi = -box_list(ibox)%sectorbound(2), box_list(ibox)%sectorbound(2)
-                                          DO xi = -box_list(ibox)%sectorbound(1), box_list(ibox)%sectorbound(1)
+                          DO zi = zlb, zub
+                                  DO yi = ylb, yub
+                                          DO xi = xlb, xub
                                                   max_neighbors = MAX(SUM(n_cell_atoms( &
                                                           xi-1:xi+1, &
                                                           yi-1:yi+1, &
@@ -1354,11 +1383,8 @@ CONTAINS
                   bt = box_list(ibox)%border_thickness
                   IF (.NOT. l_ortho) THEN
                           h11 = REAL(box_list(ibox)%length(1,1),SP)
-                          h21 = REAL(box_list(ibox)%length(2,1),SP)
-                          h31 = REAL(box_list(ibox)%length(3,1),SP)
                           h12 = REAL(box_list(ibox)%length(1,2),SP)
                           h22 = REAL(box_list(ibox)%length(2,2),SP)
-                          h32 = REAL(box_list(ibox)%length(3,2),SP)
                           h13 = REAL(box_list(ibox)%length(1,3),SP)
                           h23 = REAL(box_list(ibox)%length(2,3),SP)
                           h33 = REAL(box_list(ibox)%length(3,3),SP)
@@ -1367,23 +1393,26 @@ CONTAINS
                           !length_cells_recip_dp = 1.0_DP/REAL(box_list(ibox)%length_cells,DP)
                           !hlcr_dp = length_cells_recip_dp*0.5_DP
                           cell_H = box_list(ibox)%cell_H_sp
+                          zub = bt(3)+box_list(ibox)%sectorbound(3)
+                          yub = bt(2)+box_list(ibox)%sectorbound(2)
+                          xub = bt(1)+box_list(ibox)%sectorbound(1)
+                          zlb = -zub
+                          ylb = -yub
+                          xlb = -xub
                           !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
-                          DO zi = -bt(3)-box_list(ibox)%sectorbound(3), bt(3)+box_list(ibox)%sectorbound(3)
-                                  DO yi = -bt(2)-box_list(ibox)%sectorbound(2), bt(2)+box_list(ibox)%sectorbound(2)
-                                          DO xi = -bt(1)-box_list(ibox)%sectorbound(1), bt(1)+box_list(ibox)%sectorbound(1)
+                          DO zi = zlb, zub
+                                  DO yi = ylb, yub
+                                          DO xi = xlb, xub
                                                   DO i = 1, n_cell_atoms(xi,yi,zi,ibox)
                                                           isp = this_cell_rsp(i,1,xi,yi,zi,ibox)
                                                           rxp = h11*isp
-                                                          ryp = h21*isp
-                                                          rzp = h31*isp
                                                           isp = this_cell_rsp(i,2,xi,yi,zi,ibox)
                                                           rxp = rxp + h12*isp
-                                                          ryp = ryp + h22*isp
-                                                          rzp = rzp + h32*isp
+                                                          ryp = h22*isp
                                                           isp = this_cell_rsp(i,3,xi,yi,zi,ibox)
                                                           rxp = rxp + h13*isp
                                                           ryp = ryp + h23*isp
-                                                          rzp = rzp + h33*isp
+                                                          rzp = h33*isp
                                                           this_cell_rsp(i,1,xi,yi,zi,ibox) = rxp
                                                           this_cell_rsp(i,2,xi,yi,zi,ibox) = ryp
                                                           this_cell_rsp(i,3,xi,yi,zi,ibox) = rzp
@@ -1393,12 +1422,22 @@ CONTAINS
                           END DO
                           !$OMP END DO
                   END IF
+                  !!$OMP SINGLE
+                  !WRITE(*,*) SHAPE(cell_l_inrange)
+                  !!$OMP END SINGLE
+                  zub = box_list(ibox)%sectorbound(3)
+                  yub = box_list(ibox)%sectorbound(2)
+                  xub = box_list(ibox)%sectorbound(1)
+                  zlb = -zub
+                  ylb = -yub
+                  xlb = -xub
 
                   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC) REDUCTION(MAX:cbmc_max_interact,max_adj_cell_atoms)
-                  DO zi = -box_list(ibox)%sectorbound(3), box_list(ibox)%sectorbound(3)
-                  DO yi = -box_list(ibox)%sectorbound(2), box_list(ibox)%sectorbound(2)
-                  DO xi = -box_list(ibox)%sectorbound(1), box_list(ibox)%sectorbound(1)
+                  DO zi = zlb, zub
+                  DO yi = ylb, yub
+                  DO xi = xlb, xub
                         istart = 1
+                        iend = 0
                         DO dzi = -1, 1
                                 zi2 = zi+dzi
                                 DO dyi = -1, 1
@@ -1485,6 +1524,17 @@ CONTAINS
                                 cell_l_inrange(1:adj_iend,1,xi,yi,zi,ibox) = &
                                         rsq_vec(1:adj_iend) < solvent_max_rminsq_sp(ti_priv(1:adj_iend),ibox)
                         ELSE IF (calc_rmin_flag) THEN
+                                !IF (ANY( (/ adj_iend,1,xi,yi,zi,ibox /)>UBOUND(cell_l_inrange) .OR. &
+                                !        (/ adj_iend,1,xi,yi,zi,ibox /)<LBOUND(cell_l_inrange))) THEN
+                                !        WRITE(*,*) adj_iend,1,xi,yi,zi,ibox
+                                !ELSE IF (adj_iend > UBOUND(ti_priv,1) .OR. adj_iend < LBOUND(ti_priv,1)) THEN
+                                !        WRITE(*,*) "adj_iend is out of bounds", adj_iend, UBOUND(ti_priv,1)
+                                !ELSE IF (ANY(ti_priv(1:adj_iend)>UBOUND(atomtype_max_rminsq_sp,1) .OR. &
+                                !        ti_priv(1:adj_iend)<LBOUND(atomtype_max_rminsq_sp,1))) THEN
+                                !        WRITE(*,*) "ti_priv is out of bounds", ti_priv(1:adj_iend)
+                                !ELSE IF (adj_iend > UBOUND(rsq_vec,1) ) THEN
+                                !        WRITE(*,*) "adj_iend is out of bounds for rsq_vec", adj_iend, UBOUND(rsq_vec)
+                                !END IF
                                 cell_l_inrange(1:adj_iend,1,xi,yi,zi,ibox) = &
                                         rsq_vec(1:adj_iend) < atomtype_max_rminsq_sp(ti_priv(1:adj_iend))
                         ELSE
@@ -1696,11 +1746,18 @@ CONTAINS
           END IF
           !$OMP BARRIER
           DO ibox = 1, nbr_boxes
+                  zub = box_list(ibox)%sectorbound(3)
+                  yub = box_list(ibox)%sectorbound(2)
+                  xub = box_list(ibox)%sectorbound(1)
+                  zlb = -zub
+                  ylb = -yub
+                  xlb = -xub
                   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
-                  DO zi = -box_list(ibox)%sectorbound(3), box_list(ibox)%sectorbound(3)
-                  DO yi = -box_list(ibox)%sectorbound(2), box_list(ibox)%sectorbound(2)
-                  DO xi = -box_list(ibox)%sectorbound(1), box_list(ibox)%sectorbound(1)
+                  DO zi = zlb, zub
+                  DO yi = ylb, yub
+                  DO xi = xlb, xub
                         istart = 1
+                        iend = 0
                         DO dzi = -1, 1
                                 zi2 = zi+dzi
                                 DO dyi = -1, 1

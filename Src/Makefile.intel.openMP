@@ -78,7 +78,7 @@ INCS = -I${localdir}/include -L${locallib} -lgmxfort # `pkg-config --cflags --li
 #
 #F90FLAGS = -c  -ffree-line-length-none
 F90FLAGS = -c -g -no-wrap-margin -qopenmp -traceback #-debug -check all,noarg_temp_created #-warn unused #-openmp
-OPTFLAGS = -O3 -fp-model=fast=2 -march=core-avx2 -fma -align array32byte -vecabi cmdtarget -qopt-report=5 -qopt-report-phase=vec,loop # -ipo
+OPTFLAGS = -O3 -fp-model=fast=2 -march=core-avx2 -fma -align array32byte -vecabi cmdtarget -qopt-report=5 -qopt-report-phase=vec,loop,openmp # -ipo
 LINKFLAGS = -qopenmp -Wl,-rpath,${locallib} 
 
 
@@ -149,7 +149,7 @@ OBJS =  main.o \
   widom_subdriver.o \
   widom_insert.o \
   write_widom_properties.o \
-  load_next_frame.o \
+  trajectory_reader_routines.o \
   pregen_control.o \
   pregen_driver.o \
   sector_routines.o \

@@ -154,7 +154,7 @@ SUBROUTINE Read_Checkpoint
 
     REAL(DP) :: this_lambda = 1.0_DP
     REAL(DP) :: E_self, xcom_old, ycom_old, zcom_old
-    REAL(DP) :: xcom_new, ycom_new, zcom_new
+    REAL(DP) :: xcom_new, ycom_new, zcom_new, rp(3)
 
     LOGICAL :: overlap
     LOGICAL :: lopen
@@ -282,10 +282,16 @@ SUBROUTINE Read_Checkpoint
 
           DO ia = 1, natoms(is)
              READ(restartunit,*)nonbond_list(ia,is)%element, &
-                  atom_list(ia,im,is)%rp(1), &
-                  atom_list(ia,im,is)%rp(2), &
-                  atom_list(ia,im,is)%rp(3), &
+                  rp(1), &
+                  rp(2), &
+                  rp(3), &
                   this_box
+             IF (box_list(ibox)%basis_changed) THEN
+                     atom_list(ia,im,is)%rp(1:3) = &
+                             MATMUL(box_list(this_box)%basis_converter,rp)
+             ELSE
+                     atom_list(ia,im,is)%rp(1:3) = rp
+             END IF
              ! set exist flags for this atom
              atom_list(ia,im,is)%exist = .TRUE.
           END DO
@@ -407,6 +413,7 @@ SUBROUTINE Read_Checkpoint
     REAL(DP) :: E_recip, E_self, E_intra
     REAL(DP) :: E_old, xcom_old, ycom_old, zcom_old
     REAL(DP) :: xcom_new, ycom_new, zcom_new
+    REAL(DP) :: rp(3)
     LOGICAL :: overlap
 
     Type(Energy_Class) :: inrg
@@ -440,9 +447,15 @@ SUBROUTINE Read_Checkpoint
           DO ia = 1, natoms(is)
 
              READ(old_config_unit,*)nonbond_list(ia,is)%element, &
-                  atom_list(ia,this_im,is)%rp(1), &
-                  atom_list(ia,this_im,is)%rp(2), &
-                  atom_list(ia,this_im,is)%rp(3)
+                  rp(1), &
+                  rp(2), &
+                  rp(3)
+             IF (box_list(ibox)%basis_changed) THEN
+                     atom_list(ia,this_im,is)%rp(1:3) = &
+                             MATMUL(box_list(ibox)%basis_converter,rp)
+             ELSE
+                     atom_list(ia,this_im,is)%rp(1:3) = rp
+             END IF
              ! set the frac and exist flags for this atom
              molecule_list(this_im,is)%frac = this_lambda
              atom_list(ia,this_im,is)%exist = .TRUE.

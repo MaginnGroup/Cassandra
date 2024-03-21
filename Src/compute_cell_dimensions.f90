@@ -51,6 +51,58 @@ SUBROUTINE Compute_Cell_Dimensions(box_nbr)
   REAL(DP) :: bxc1, bxc2, bxc3
   REAL(DP) :: cxa1, cxa2, cxa3
   REAL(DP) :: det, inv_det
+  LOGICAL :: change_basis, left_basis
+  REAL(DP), DIMENSION(3,3) :: H, orig_H_inv
+  REAL(DP), DIMENSION(3) :: orig_abc, orig_abcsq
+  REAL(DP) :: ax,bx,by,cx,cy,cz
+
+  ! Cassandra now automatically converts the cell matrix to the form
+  !     required by LAMMPS since it allows better efficiency enhancement
+  !     due to being an upper triangular matrix (with 3 elements guaranteed 
+  !     to be zero). The cell matrix inverse is also upper triangular.
+  !     This should especially help with vectorized conversions between real and
+  !     fractional coordinates, since only 6 matrix elements must be stored in 6
+  !     vector registers, leaving more vector registers available to store intermediates
+  !     and coordinates or displacement components and possibly perform other operations
+  !     without needing to load constant elements to vector registers every vector iteration 
+  !     (there are 16 ymm vector registers in AVX2).
+  !     The diagonal elements are also all positive in the new basis.
+  ! The cell matrix is only converted if it does not already meet the new basis criteria.
+  ! orig_length_inv and basis_converter in the box object are used elsewhere
+  !     to transform the coordinates read from trajectory, checkpoint, or configuration files
+  !     to the new basis if the cell matrix provided does not already meet the requirements.
+  ! orig_length is currently unused at time of writing but may be useful in the future.
+  H = box_list(box_nbr)%length
+  box_list(box_nbr)%orig_length = H
+  left_basis = DOT_PRODUCT(Cross_Product(H(:,1),H(:,2)),H(:,3)) < 0.0_DP
+  change_basis = &
+          ANY(ABS((/ H(2,1),H(3,1),H(3,2) /))>tiny_number .OR. &
+          (/ H(1,1), H(2,2), H(3,3) /) <= 0.0_DP) .OR. &
+          left_basis
+  IF (change_basis) THEN
+          orig_H_inv(1,:) = Cross_Product(H(:,2),H(:,3))
+          orig_H_inv(2,:) = Cross_Product(H(:,3),H(:,1))
+          orig_H_inv(3,:) = Cross_Product(H(:,1),H(:,2))
+          IF (left_basis) H(:,3) = -H(:,3)
+          orig_abcsq(1) = DOT_PRODUCT(H(:,1),H(:,1))
+          orig_abcsq(2) = DOT_PRODUCT(H(:,2),H(:,2))
+          orig_abcsq(3) = DOT_PRODUCT(H(:,3),H(:,3))
+          orig_abc = SQRT(orig_abcsq)
+          ax = orig_abc(1)
+          bx = DOT_PRODUCT(H(:,2),H(:,1))/orig_abc(1)
+          by = SQRT(orig_abcsq(2)-bx*bx)
+          cx = DOT_PRODUCT(H(:,3),H(:,1))/orig_abc(1)
+          cy = (DOT_PRODUCT(H(:,2),H(:,3))-bx*cx)/by
+          cz = SQRT(orig_abcsq(3) - cx*cx - cy*cy)
+          H = 0.0_DP
+          H(1,1) = ax
+          H(1,2) = bx
+          H(2,2) = by
+          H(1,3) = cx
+          H(2,3) = cy
+          H(3,3) = cz
+          box_list(box_nbr)%length = H
+  END IF
 
   !Cell basis vector lengths
   box_list(box_nbr)%basis_length(1) = &
@@ -180,6 +232,14 @@ SUBROUTINE Compute_Cell_Dimensions(box_nbr)
 
   ! The adjoint divided by the determinant is the inverse of the cell basis matrix
   box_list(box_nbr)%length_inv = box_list(box_nbr)%length_inv * inv_det
+  IF (change_basis) THEN
+          orig_H_inv = orig_H_inv * inv_det
+          box_list(box_nbr)%orig_length_inv = orig_H_inv
+          box_list(box_nbr)%basis_converter = MATMUL(H,orig_H_inv)
+  ELSE
+          box_list(box_nbr)%orig_length_inv = box_list(box_nbr)%length_inv
+  END IF
+  box_list(box_nbr)%basis_changed = change_basis
 
   ! Compute half of the box length to be used in Fold_Molecule
 
@@ -189,3 +249,4 @@ SUBROUTINE Compute_Cell_Dimensions(box_nbr)
 
       
 END SUBROUTINE Compute_Cell_Dimensions
+

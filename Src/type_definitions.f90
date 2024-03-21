@@ -493,6 +493,8 @@ MODULE Type_Definitions
     REAL(DP), DIMENSION(3,3) :: length, length_inv, max_delta, hlength
     REAL(DP), DIMENSION(3) :: basis_length, cos_angle, angle, face_distance
     REAL(DP) :: volume, dv_max
+    REAL(DP), DIMENSION(3,3) :: basis_converter, orig_length_inv, orig_length
+    LOGICAL :: basis_changed
 
     REAL(SP), DIMENSION(3) :: sp_diag_length, cell_length_recip, real_length_cells
     REAL(SP), DIMENSION(3) :: cell_H_diag
@@ -762,5 +764,20 @@ MODULE Type_Definitions
                           WRITE(outputunit,'(X,A,T35,I12)') 'Kappa for dihedral selection ', this%kappa_dih
                   END IF
           END SUBROUTINE Write_Species_Kappas
+
+
+        PURE FUNCTION Cross_Product(a,b) RESULT(c)
+                REAL(DP), DIMENSION(3) :: c
+                REAL(DP), DIMENSION(3), INTENT(IN) :: a, b
+                CALL Elemental_Cross_Product(a(1),a(2),a(3),b(1),b(2),b(3),c(1),c(2),c(3))
+        END FUNCTION Cross_Product
+
+        ELEMENTAL SUBROUTINE Elemental_Cross_Product(a1,a2,a3,b1,b2,b3,c1,c2,c3)
+                REAL(DP), INTENT(IN) :: a1,a2,a3,b1,b2,b3
+                REAL(DP), INTENT(OUT) :: c1,c2,c3
+                c1 = a2*b3 - a3*b2
+                c2 = a3*b1 - a1*b3
+                c3 = a1*b2 - a2*b1
+        END SUBROUTINE Elemental_Cross_Product
 
 END MODULE Type_Definitions

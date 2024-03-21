@@ -364,7 +364,7 @@ CONTAINS
                         atomtype_min_rminsq(:,0) = MINVAL(rminsq_table(which_solvent_atomtypes, &
                                 which_wsolute_atomtypes),2)
                         IF (cavity_biasing_flag) THEN
-                                atomtype_min_rminsq(:,1:n_big_atoms) = rminsq_table(:,big_atom_ti_list(1:n_big_atoms))
+                                atomtype_min_rminsq(:,1:n_big_atoms) = rminsq_table(which_solvent_atomtypes,big_atom_ti_list(1:n_big_atoms))
                         END IF
                         atomtype_max_rminsq_sp = REAL(atomtype_max_rminsq,SP)
                         box_list%rcut_low_max = SQRT(MAXVAL(atomtype_min_rminsq))

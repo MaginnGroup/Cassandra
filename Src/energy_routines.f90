@@ -1448,16 +1448,13 @@ CONTAINS
                         DO jm = 1, jnlive
                                 rcom = live_xcom(jm,js_present,ibox)
                                 xcom = h11*rcom
-                                ycom = h21*rcom
-                                zcom = h31*rcom
                                 rcom = live_ycom(jm,js_present,ibox)
                                 xcom = xcom + h12*rcom
-                                ycom = ycom + h22*rcom
-                                zcom = zcom + h32*rcom
+                                ycom = h22*rcom
                                 rcom = live_zcom(jm,js_present,ibox)
                                 xcom = xcom + h13*rcom
                                 ycom = ycom + h23*rcom
-                                zcom = zcom + h33*rcom
+                                zcom = h33*rcom
                                 live_xcom(jm,js_present,ibox) = xcom
                                 live_ycom(jm,js_present,ibox) = ycom
                                 live_zcom(jm,js_present,ibox) = zcom
@@ -1469,16 +1466,13 @@ CONTAINS
                                 DO ja = 1, jnatoms
                                         jrp = live_atom_rsp(ja,jm,1,js_present,ibox)
                                         sxp = h11*jrp
-                                        syp = h21*jrp
-                                        szp = h31*jrp
                                         jrp = live_atom_rsp(ja,jm,2,js_present,ibox)
                                         sxp = sxp + h12*jrp
-                                        syp = syp + h22*jrp
-                                        szp = szp + h32*jrp
+                                        syp = h22*jrp
                                         jrp = live_atom_rsp(ja,jm,3,js_present,ibox)
                                         sxp = sxp + h13*jrp
                                         syp = syp + h23*jrp
-                                        szp = szp + h33*jrp
+                                        szp = h33*jrp
                                         live_atom_rsp(ja,jm,1,js_present,ibox) = sxp
                                         live_atom_rsp(ja,jm,2,js_present,ibox) = syp
                                         live_atom_rsp(ja,jm,3,js_present,ibox) = szp
@@ -1647,8 +1641,6 @@ CONTAINS
                                 dscom = dscom + 1.0_DP
                         END IF
                         dxcom = h11*dscom
-                        dycom = h21*dscom
-                        dzcom = h31*dscom
                         dscom = live_ycom(i,js_present,this_box)
                         dscom = dscom - iycom
                         IF (dscom > 0.5_DP) THEN
@@ -1657,8 +1649,7 @@ CONTAINS
                                 dscom = dscom + 1.0_DP
                         END IF
                         dxcom = dxcom + h12*dscom
-                        dycom = dycom + h22*dscom
-                        dzcom = dzcom + h32*dscom
+                        dycom = h22*dscom
                         dscom = live_zcom(i,js_present,this_box)
                         dscom = dscom - izcom
                         IF (dscom > 0.5_DP) THEN
@@ -1668,7 +1659,7 @@ CONTAINS
                         END IF
                         dxcom = dxcom + h13*dscom
                         dycom = dycom + h23*dscom
-                        dzcom = dzcom + h33*dscom
+                        dzcom = h33*dscom
                         ! Repurposing dxcom as rijsq accumulator to enforce FMA3 instructions if supported
                         dxcom = dxcom * dxcom
                         dxcom = dxcom + dycom * dycom
@@ -1775,8 +1766,6 @@ CONTAINS
                                 dsp = dsp + 1.0_DP
                         END IF
                         dxp = h11*dsp
-                        dyp = h21*dsp
-                        dzp = h31*dsp
                         dsp = jrsp(i,2)
                         dsp = dsp - iyp
                         IF (dsp > 0.5_DP) THEN
@@ -1785,8 +1774,7 @@ CONTAINS
                                 dsp = dsp + 1.0_DP
                         END IF
                         dxp = dxp + h12*dsp
-                        dyp = dyp + h22*dsp
-                        dzp = dzp + h32*dsp
+                        dyp = h22*dsp
                         dsp = jrsp(i,3)
                         dsp = dsp - izp
                         IF (dsp > 0.5_DP) THEN
@@ -1796,7 +1784,7 @@ CONTAINS
                         END IF
                         dxp = dxp + h13*dsp
                         dyp = dyp + h23*dsp
-                        dzp = dzp + h33*dsp
+                        dzp = h33*dsp
                         ! Repurposing dxp as rijsq accumulator to enforce FMA3 instructions if supported
                         dxp = dxp * dxp
                         dxp = dxp + dyp * dyp
@@ -2253,14 +2241,11 @@ CONTAINS
                 irszp_vec(i) = rzp
         ELSE
                 sxp = inv_h11*rxp
-                syp = inv_h21*rxp
-                szp = inv_h31*rxp
                 sxp = sxp + inv_h12*ryp
-                syp = syp + inv_h22*ryp
-                szp = szp + inv_h32*ryp
+                syp = inv_h22*ryp
                 sxp = sxp + inv_h13*rzp
                 syp = syp + inv_h23*rzp
-                szp = szp + inv_h33*rzp
+                szp = inv_h33*rzp
                 irsxp_vec(i) = rxp
                 irsyp_vec(i) = ryp
                 irszp_vec(i) = rzp
@@ -2480,16 +2465,13 @@ CONTAINS
                                             max_dcom = live_rcom(4,j)
                                             dxcom = dxcom - ixcom
                                             dsxcom = inv_h11*dxcom
-                                            dsycom = inv_h21*dxcom
-                                            dszcom = inv_h31*dxcom
                                             dycom = dycom - iycom
                                             dsxcom = dsxcom + inv_h12*dycom
-                                            dsycom = dsycom + inv_h22*dycom
-                                            dszcom = dszcom + inv_h32*dycom
+                                            dsycom = inv_h22*dycom
                                             dzcom = dzcom - izcom
                                             dsxcom = dsxcom + inv_h13*dzcom
                                             dsycom = dsycom + inv_h23*dzcom
-                                            dszcom = dszcom + inv_h33*dzcom
+                                            dszcom = inv_h33*dzcom
                                             IF (dsxcom > 0.5_DP) THEN
                                                     dsxcom = dsxcom - 1.0_DP
                                             ELSE IF (dsxcom < -0.5_DP) THEN
@@ -2506,14 +2488,11 @@ CONTAINS
                                                     dszcom = dszcom + 1.0_DP
                                             END IF
                                             dxcom = h11*dsxcom
-                                            dycom = h21*dsxcom
-                                            dzcom = h31*dsxcom
                                             dxcom = dxcom + h12*dsycom
-                                            dycom = dycom + h22*dsycom
-                                            dzcom = dzcom + h32*dsycom
+                                            dycom = h22*dsycom
                                             dxcom = dxcom + h13*dszcom
                                             dycom = dycom + h23*dszcom
-                                            dzcom = dzcom + h33*dszcom
+                                            dzcom = h33*dszcom
                                             ! Repurposing dxcom as rijsq accumulator to enforce FMA3 instructions if supported
                                             dxcom = dxcom * dxcom
                                             dxcom = dxcom + dycom * dycom
@@ -2533,16 +2512,13 @@ CONTAINS
                                             max_dcom = molecule_list(j,js)%rcom(4)
                                             dxcom = dxcom - ixcom
                                             dsxcom = inv_h11*dxcom
-                                            dsycom = inv_h21*dxcom
-                                            dszcom = inv_h31*dxcom
                                             dycom = dycom - iycom
                                             dsxcom = dsxcom + inv_h12*dycom
-                                            dsycom = dsycom + inv_h22*dycom
-                                            dszcom = dszcom + inv_h32*dycom
+                                            dsycom = inv_h22*dycom
                                             dzcom = dzcom - izcom
                                             dsxcom = dsxcom + inv_h13*dzcom
                                             dsycom = dsycom + inv_h23*dzcom
-                                            dszcom = dszcom + inv_h33*dzcom
+                                            dszcom = inv_h33*dzcom
                                             IF (dsxcom > 0.5_DP) THEN
                                                     dsxcom = dsxcom - 1.0_DP
                                             ELSE IF (dsxcom < -0.5_DP) THEN
@@ -2559,14 +2535,11 @@ CONTAINS
                                                     dszcom = dszcom + 1.0_DP
                                             END IF
                                             dxcom = h11*dsxcom
-                                            dycom = h21*dsxcom
-                                            dzcom = h31*dsxcom
                                             dxcom = dxcom + h12*dsycom
-                                            dycom = dycom + h22*dsycom
-                                            dzcom = dzcom + h32*dsycom
+                                            dycom = h22*dsycom
                                             dxcom = dxcom + h13*dszcom
                                             dycom = dycom + h23*dszcom
-                                            dzcom = dzcom + h33*dszcom
+                                            dzcom = h33*dszcom
                                             ! Repurposing dxcom as rijsq accumulator to enforce FMA3 instructions if supported
                                             dxcom = dxcom * dxcom
                                             dxcom = dxcom + dycom * dycom
@@ -2751,14 +2724,11 @@ CONTAINS
                                                 rzp = atom_list(ja,j,js)%rp(3)
                                         END IF
                                         jsxp = inv_h11*rxp
-                                        jsyp = inv_h21*rxp
-                                        jszp = inv_h31*rxp
                                         jsxp = jsxp + inv_h12*ryp
-                                        jsyp = jsyp + inv_h22*ryp
-                                        jszp = jszp + inv_h32*ryp
+                                        jsyp = inv_h22*ryp
                                         jsxp = jsxp + inv_h13*rzp
                                         jsyp = jsyp + inv_h23*rzp
-                                        jszp = jszp + inv_h33*rzp
+                                        jszp = inv_h33*rzp
                                         jrp_perm(j,ja,1) = jsxp
                                         jrp_perm(j,ja,2) = jsyp
                                         jrp_perm(j,ja,3) = jszp
@@ -2834,8 +2804,6 @@ CONTAINS
                                                         dsp = dsp + 1.0_DP
                                                 END IF
                                                 dxp = h11*dsp
-                                                dyp = h21*dsp
-                                                dzp = h31*dsp
                                                 dsp = jrp_perm(j,ja,2) - irsyp_vec(ia)
                                                 IF (dsp > 0.5_DP) THEN
                                                         dsp = dsp - 1.0_DP
@@ -2843,8 +2811,7 @@ CONTAINS
                                                         dsp = dsp + 1.0_DP
                                                 END IF
                                                 dxp = dxp + h12*dsp
-                                                dyp = dyp + h22*dsp
-                                                dzp = dzp + h32*dsp
+                                                dyp = h22*dsp
                                                 dsp = jrp_perm(j,ja,3) - irszp_vec(ia)
                                                 IF (dsp > 0.5_DP) THEN
                                                         dsp = dsp - 1.0_DP
@@ -2853,7 +2820,7 @@ CONTAINS
                                                 END IF
                                                 dxp = dxp + h13*dsp
                                                 dyp = dyp + h23*dsp
-                                                dzp = dzp + h33*dsp
+                                                dzp = h33*dsp
                                                 dxp = dxp*dxp
                                                 dxp = dxp + dyp*dyp
                                                 dxp = dxp + dzp*dzp
@@ -3446,16 +3413,13 @@ CONTAINS
                                 DO j = 1, jnatoms
                                         jrp = atom_list(j,jm,js)%rp(1)
                                         jsxp = inv_h11*jrp
-                                        jsyp = inv_h21*jrp
-                                        jszp = inv_h31*jrp
                                         jrp = atom_list(j,jm,js)%rp(2)
                                         jsxp = jsxp + inv_h12*jrp
-                                        jsyp = jsyp + inv_h22*jrp
-                                        jszp = jszp + inv_h32*jrp
+                                        jsyp = inv_h22*jrp
                                         jrp = atom_list(j,jm,js)%rp(3)
                                         jsxp = jsxp + inv_h13*jrp
                                         jsyp = jsyp + inv_h23*jrp
-                                        jszp = jszp + inv_h33*jrp
+                                        jszp = inv_h33*jrp
                                         jrxp(j) = jsxp
                                         jryp(j) = jsyp
                                         jrzp(j) = jszp
@@ -3496,8 +3460,6 @@ CONTAINS
                                                 dsp = dsp + 1.0_DP
                                         END IF
                                         dxp = h11*dsp
-                                        dyp = h21*dsp
-                                        dzp = h31*dsp
                                         dsp = jryp(ji) - iryp(ji)
                                         IF (dsp > 0.5_DP) THEN
                                                 dsp = dsp - 1.0_DP
@@ -3505,8 +3467,7 @@ CONTAINS
                                                 dsp = dsp + 1.0_DP
                                         END IF
                                         dxp = dxp + h12*dsp
-                                        dyp = dyp + h22*dsp
-                                        dzp = dzp + h32*dsp
+                                        dyp = h22*dsp
                                         dsp = jrzp(ji) - irzp(ji)
                                         IF (dsp > 0.5_DP) THEN
                                                 dsp = dsp - 1.0_DP
@@ -3515,7 +3476,7 @@ CONTAINS
                                         END IF
                                         dxp = dxp + h13*dsp
                                         dyp = dyp + h23*dsp
-                                        dzp = dzp + h33*dsp
+                                        dzp = h33*dsp
                                         dxp = dxp*dxp
                                         dxp = dxp + dyp*dyp
                                         dxp = dxp + dzp*dzp
