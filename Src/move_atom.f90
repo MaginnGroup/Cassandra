@@ -73,6 +73,7 @@ SUBROUTINE Atom_Displacement
   INTEGER :: ibox, ndisp_species, is, im
   INTEGER :: lm, this_atom, iatom, ref_atom, nmolecules_species, mcstep
   INTEGER :: nmols_tot, nmols_box(nbr_boxes)
+  INTEGER :: im_locate
 
   INTEGER, DIMENSION(:), ALLOCATABLE :: species_id
 
@@ -292,8 +293,18 @@ SUBROUTINE Atom_Displacement
      ! to here except restore the cos_sum and sin_sum arrays
 
      IF (int_charge_sum_style(ibox) == charge_ewald) THEN
-        cos_sum(:,ibox) = cos_sum_old(:,ibox)
-        sin_sum(:,ibox) = sin_sum_old(:,ibox)
+        IF (is .EQ. 1) THEN
+                im_locate = im
+        ELSE
+                im_locate = SUM(max_molecules(1:is-1)) + im
+        END IF
+        !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+        box_list(ibox)%sincos_sum = box_list(ibox)%sincos_sum_old
+        cos_mol(1:nvecs(ibox),im_locate) = cos_mol(1:nvecs(ibox),0)
+        sin_mol(1:nvecs(ibox),im_locate) = sin_mol(1:nvecs(ibox),0)
+        !$OMP END PARALLEL WORKSHARE
+        !cos_sum(:,ibox) = cos_sum_old(:,ibox)
+        !sin_sum(:,ibox) = sin_sum_old(:,ibox)
      END IF
 
   END IF

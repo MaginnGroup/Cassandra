@@ -77,8 +77,8 @@ LIBS = -I${localdir}/include -L${locallib} -lgmxfort # `pkg-config --cflags --li
 INCS = -I${localdir}/include -L${locallib} -lgmxfort # `pkg-config --cflags --libs libgmxfort`
 #
 #F90FLAGS = -c  -ffree-line-length-none
-F90FLAGS = -c -g -no-wrap-margin -qopenmp #-check all -traceback #-warn unused #-openmp
-OPTFLAGS = -O3
+F90FLAGS = -c -g -no-wrap-margin -qopenmp -traceback #-check all #-warn unused #-openmp
+OPTFLAGS = -O3 -march=core-avx2 -fma -align array32byte -qopt-report=5 -qopt-report-phase=vec,loop
 LINKFLAGS = -qopenmp -Wl,-rpath,${locallib} 
 
 
@@ -144,7 +144,6 @@ OBJS =  main.o \
   move_regrow.o \
   ring_fragment_driver.o \
   move_atom.o \
-  chempot.o \
   pair_nrg_variables.o \
   move_ring_flip.o \
   move_identity_switch.o \

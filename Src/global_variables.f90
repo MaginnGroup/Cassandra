@@ -289,6 +289,8 @@ USE Type_Definitions
   INTEGER, DIMENSION(:), ALLOCATABLE :: ndihedrals, nimpropers
   INTEGER, DIMENSION(:), ALLOCATABLE :: nfragments, fragment_bonds
   INTEGER, DIMENSION(:), ALLOCATABLE :: natoms_to_read
+  INTEGER :: max_max_molecules, sum_max_molecules
+  INTEGER :: max_max_molecules_p4, sum_max_molecules_p4
 
   ! array to hold the total number of molecules of each species in a given box
 
@@ -440,15 +442,7 @@ USE Type_Definitions
   ! nvecs will have dimensions of nbr_boxes
   INTEGER, DIMENSION(:), ALLOCATABLE, TARGET :: nvecs
 
-  INTEGER, PARAMETER  :: maxk = 100000
-
-  ! Dimensions of (maxk, nbr_boxes)
-  REAL(DP), DIMENSION(:,:), ALLOCATABLE, TARGET :: hx, hy, hz, hsq, Cn
-
-  ! the following arrays will have dimensions of (MAXVAL(nvecs),nbr_boxes)
-
-  REAL(DP), DIMENSION(:,:), ALLOCATABLE, TARGET :: cos_sum, sin_sum, cos_sum_old, sin_sum_old
-  REAL(DP), DIMENSION(:,:), ALLOCATABLE, TARGET :: cos_sum_start, sin_sum_start
+  !INTEGER, PARAMETER  :: maxk = 100000
 
   !*********************************************************************************************************
   ! Information on trial and probabilities of trial moves

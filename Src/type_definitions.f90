@@ -432,13 +432,21 @@ MODULE Type_Definitions
     CHARACTER(20) :: box_shape
     INTEGER :: int_box_shape
     REAL(DP), DIMENSION(3,3) :: length, length_inv, max_delta, hlength
-    REAL(DP), DIMENSION(3) :: basis_length, cos_angle, angle, face_distance
+    REAL(DP), DIMENSION(3) :: basis_length, cos_angle, angle, face_distance, invT_face_distance
     REAL(DP) :: volume, dv_max
 
   ! Inner shape is used to define a limited region into which molecules can be
   ! inserted
     INTEGER :: int_inner_shape
     REAL(DP) :: inner_volume, inner_radius, inner_radius2, inner_zmax, inner_zmin
+
+
+    ! Ewald reciprocal space (kspace) lattice vectors and related data
+    ! 5 columns: first 3 are hx,hy,hz; 4th is Cn, 5th is a factor used for pressure calculation
+    REAL(DP), DIMENSION(:,:), ALLOCATABLE :: kspace_vectors
+    REAL(DP), DIMENSION(:,:), ALLOCATABLE :: sincos_sum, sincos_sum_old
+    INTEGER, DIMENSION(:), ALLOCATABLE :: kspace_vector_ints
+    INTEGER :: kxyz_max(3), kxyz_maxmax
 
  END TYPE Box_Class
 
@@ -622,5 +630,24 @@ MODULE Type_Definitions
      REAL(DP) :: exp_dE
      REAL(DP) :: exp_dE_ratio
   END TYPE Rotation_Class
+
+
+
+  CONTAINS
+
+
+        PURE FUNCTION Cross_Product(a,b) RESULT(c)
+                REAL(DP), DIMENSION(3) :: c
+                REAL(DP), DIMENSION(3), INTENT(IN) :: a, b
+                CALL Elemental_Cross_Product(a(1),a(2),a(3),b(1),b(2),b(3),c(1),c(2),c(3))
+        END FUNCTION Cross_Product
+
+        ELEMENTAL SUBROUTINE Elemental_Cross_Product(a1,a2,a3,b1,b2,b3,c1,c2,c3)
+                REAL(DP), INTENT(IN) :: a1,a2,a3,b1,b2,b3
+                REAL(DP), INTENT(OUT) :: c1,c2,c3
+                c1 = a2*b3 - a3*b2
+                c2 = a3*b1 - a1*b3
+                c3 = a1*b2 - a2*b1
+        END SUBROUTINE Elemental_Cross_Product
 
 END MODULE Type_Definitions

@@ -67,6 +67,7 @@ SUBROUTINE Volume_Change
   USE Random_Generators
   USE Energy_Routines
   USE IO_Utilities
+  USE Volume
   
   
   IMPLICIT NONE
@@ -74,14 +75,13 @@ SUBROUTINE Volume_Change
   !  !$ include 'omp_lib.h'
   
   INTEGER :: is, im, alive, this_box, i, total_molecules, nvecs_old, ibox
-  INTEGER :: nvecs_max, k, iatom, mcstep
+  INTEGER :: nvecs_max, k, iatom, mcstep, nvecs_max_new_p4
   
   INTEGER :: ia
   
   REAL(DP) :: x_box(nbr_boxes), randno
   REAL(DP) :: random_displacement, s(3), delta_volume, ln_pacc, success_ratio
   REAL(DP) :: this_volume
-  REAL(DP), DIMENSION(maxk) :: hx_old, hy_old, hz_old, Cn_old
   
   REAL(DP) :: dE
 
@@ -90,26 +90,27 @@ SUBROUTINE Volume_Change
   
   LOGICAL :: overlap, xz_change, accept_or_reject
   
-  TYPE(Box_Class) :: box_list_old
+  REAL(DP), DIMENSION(3,3) :: length_old, length_inv_old
+  REAL(DP) :: volume_old
   
   TYPE(Energy_Class) :: energy_old, virial_old
   
   REAL(DP), ALLOCATABLE :: pair_nrg_vdw_old(:,:), pair_nrg_qq_old(:,:)
   
   INTEGER, ALLOCATABLE :: my_species_id(:), my_locate_id(:), my_position_id(:)
-  INTEGER :: position, my_box
+  INTEGER :: lm, pos, my_box
+  INTEGER :: istart, iend, im_locate_shift, nboxmols
+  INTEGER, DIMENSION(MAXVAL(SUM(nmols,1))) :: posvec
   
-  REAL(DP), ALLOCATABLE :: cos_mol_old(:,:), sin_mol_old(:,:)
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: cos_mol_old, sin_mol_old, kspace_vectors_old
+  INTEGER, DIMENSION(:), ALLOCATABLE :: kspace_vector_ints_old
   
   REAL(DP) :: rcut_vdw_old, rcut_coul_old, rcut3_old, rcut9_old, alpha_ewald_old
   REAL(DP) :: h_ewald_cut_old, rcut_vdwsq_old, rcut_coulsq_old, rcut_vdw3_old
   REAL(DP) :: rcut_vdw6_old, rcut_max_old
+
   
-  REAL(DP) :: time1,time0
   
-  CHARACTER(7) :: box_str, cutoff_str
-  ! Framework related stuff
-  REAL(DP) :: pore_width_old, ratio_width, area, half_pore_width_old
   
   
   ! Done with that section
@@ -186,50 +187,24 @@ SUBROUTINE Volume_Change
   
   END DO
   
-  !  call cpu_time(time0)
   
   IF (l_pair_nrg) THEN
+
+     CALL MOVE_ALLOC(pair_nrg_vdw,pair_nrg_vdw_old)
+     CALL MOVE_ALLOC(pair_nrg_qq,pair_nrg_qq_old)
+
      
-     ALLOCATE(pair_nrg_vdw_old(SUM(max_molecules),SUM(max_molecules)))
-     ALLOCATE(pair_nrg_qq_old(SUM(max_molecules),SUM(max_molecules)))
+     ALLOCATE(pair_nrg_vdw(sum_max_molecules_p4,sum_max_molecules))
+     ALLOCATE(pair_nrg_qq(sum_max_molecules_p4,sum_max_molecules))
      
-     !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-     pair_nrg_vdw_old(:,:) = pair_nrg_vdw(:,:)
-     pair_nrg_qq_old(:,:) = pair_nrg_qq(:,:)
-     !!$OMP END PARALLEL WORKSHARE
      
   END IF
   
-  IF (int_charge_sum_style(this_box) == charge_ewald) THEN
-     
-     ! store the cos_mol and sin_mol arrays
-  
-     ALLOCATE(cos_mol_old(MAXVAL(nvecs),SUM(max_molecules)), Stat = AllocateStatus)
-  
-     IF (AllocateStatus /=0 ) THEN
-        err_msg = ''
-        err_msg(1) = 'cos_mol_old cannot be allocated'
-        err_msg(2) = 'in Volume_Change'
-        CALL Clean_Abort(err_msg,'Volume_Change')
-     END IF
-  
-     ALLOCATE(sin_mol_old(MAXVAL(nvecs),SUM(max_molecules)), Stat = AllocateStatus)
-  
-     IF (AllocateStatus /=0 ) THEN
-        err_msg = ''
-        err_msg(1) = 'sin_mol_old cannot be allocated'
-        err_msg(2) = 'in Volume_Change'
-        CALL Clean_Abort(err_msg,'Volume_Change')
-     END IF
-  
-     
-     cos_mol_old(:,:) = cos_mol(:,:)
-     sin_mol_old(:,:) = sin_mol(:,:)
-  
-  END IF
   
   ! Store the box_list matrix
-  box_list_old = box_list(this_box)
+  length_old = box_list(this_box)%length
+  length_inv_old = box_list(this_box)%length_inv
+  volume_old = box_list(this_box)%volume
   
   ! Change the box size
   ! Assume box is cubic
@@ -292,54 +267,56 @@ SUBROUTINE Volume_Change
      END IF
   END IF
      
-  delta_volume = box_list(this_box)%volume - box_list_old%volume
+  delta_volume = box_list(this_box)%volume - volume_old
   
   ! we scale the coordinates of the COM of each of the molecules based on
   ! the old and new cell basis vectors. The idea is to keep the fractional
   ! coordinates of the COM the same before and after the move.
-  
-  DO is = 1, nspecies
 
-     DO im = 1, nmols(is,this_box)
-        
-        alive = locate(im,is,this_box)
-        
-        ! obtain the new coordinates of the COM for this molecule
-        
-        ! first determine the fractional coordinate
-        
-        DO i = 1,3
-           s(i) = box_list_old%length_inv(i,1) * molecule_list(alive,is)%xcom &
-                + box_list_old%length_inv(i,2) * molecule_list(alive,is)%ycom &
-                + box_list_old%length_inv(i,3) * molecule_list(alive,is)%zcom
-        END DO
-        
-        ! now obtain the new positions of COMs
-        molecule_list(alive,is)%xcom = box_list(this_box)%length(1,1) * s(1) &
-                                     + box_list(this_box)%length(1,2) * s(2) &
-                                     + box_list(this_box)%length(1,3) * s(3)
-        
-        molecule_list(alive,is)%ycom = box_list(this_box)%length(2,1) * s(1) &
-                                     + box_list(this_box)%length(2,2) * s(2) &
-                                     + box_list(this_box)%length(2,3) * s(3)
-        
-        molecule_list(alive,is)%zcom = box_list(this_box)%length(3,1) * s(1) &
-                                     + box_list(this_box)%length(3,2) * s(2) &
-                                     + box_list(this_box)%length(3,3) * s(3)
-        
-        ! Obtain the new positions of atoms in this molecule
-        atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp + &
-             molecule_list(alive,is)%xcom - molecule_list(alive,is)%xcom_old
-        
-        atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp + &
-             molecule_list(alive,is)%ycom - molecule_list(alive,is)%ycom_old
-        
-        atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp + &
-             molecule_list(alive,is)%zcom - molecule_list(alive,is)%zcom_old
-        
-     END DO
-     
-  END DO
+  CALL Scale_COM_Cartesian(this_box,length_inv_old)
+  
+  !DO is = 1, nspecies
+
+  !   DO im = 1, nmols(is,this_box)
+  !      
+  !      alive = locate(im,is,this_box)
+  !      
+  !      ! obtain the new coordinates of the COM for this molecule
+  !      
+  !      ! first determine the fractional coordinate
+  !      
+  !      DO i = 1,3
+  !         s(i) = box_list_old%length_inv(i,1) * molecule_list(alive,is)%xcom &
+  !              + box_list_old%length_inv(i,2) * molecule_list(alive,is)%ycom &
+  !              + box_list_old%length_inv(i,3) * molecule_list(alive,is)%zcom
+  !      END DO
+  !      
+  !      ! now obtain the new positions of COMs
+  !      molecule_list(alive,is)%xcom = box_list(this_box)%length(1,1) * s(1) &
+  !                                   + box_list(this_box)%length(1,2) * s(2) &
+  !                                   + box_list(this_box)%length(1,3) * s(3)
+  !      
+  !      molecule_list(alive,is)%ycom = box_list(this_box)%length(2,1) * s(1) &
+  !                                   + box_list(this_box)%length(2,2) * s(2) &
+  !                                   + box_list(this_box)%length(2,3) * s(3)
+  !      
+  !      molecule_list(alive,is)%zcom = box_list(this_box)%length(3,1) * s(1) &
+  !                                   + box_list(this_box)%length(3,2) * s(2) &
+  !                                   + box_list(this_box)%length(3,3) * s(3)
+  !      
+  !      ! Obtain the new positions of atoms in this molecule
+  !      atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp + &
+  !           molecule_list(alive,is)%xcom - molecule_list(alive,is)%xcom_old
+  !      
+  !      atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp + &
+  !           molecule_list(alive,is)%ycom - molecule_list(alive,is)%ycom_old
+  !      
+  !      atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp + &
+  !           molecule_list(alive,is)%zcom - molecule_list(alive,is)%zcom_old
+  !      
+  !   END DO
+  !   
+  !END DO
   ! Energy change section,
   ! Store the old values of energy(this_box) and recompute the new components
 
@@ -358,72 +335,36 @@ SUBROUTINE Volume_Change
 
      nvecs_old = nvecs(this_box)
      nvecs_max = MAXVAL(nvecs)
+
+     CALL MOVE_ALLOC(cos_mol,cos_mol_old)
+     CALL MOVE_ALLOC(sin_mol,sin_mol_old)
      
-     !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED) 
-     cos_sum_old(:,:) = cos_sum(:,:)
-     sin_sum_old(:,:) = sin_sum(:,:)
-     hx_old(:) = hx(:,this_box)
-     hy_old(:) = hy(:,this_box)
-     hz_old(:) = hz(:,this_box)
-     Cn_old(:) = Cn(:,this_box)
-     !!$OMP END PARALLEL WORKSHARE
+     IF (ALLOCATED(box_list(this_box)%sincos_sum_old)) DEALLOCATE(box_list(this_box)%sincos_sum_old)
+     CALL MOVE_ALLOC(box_list(this_box)%sincos_sum,box_list(this_box)%sincos_sum_old)
+     CALL MOVE_ALLOC(box_list(this_box)%kspace_vectors,kspace_vectors_old)
+     CALL MOVE_ALLOC(box_list(this_box)%kspace_vector_ints,kspace_vector_ints_old)
+     !!!$OMP PARALLEL WORKSHARE DEFAULT(SHARED) 
+     !cos_sum_old(:,:) = cos_sum(:,:)
+     !sin_sum_old(:,:) = sin_sum(:,:)
+     !hx_old(:) = hx(:,this_box)
+     !hy_old(:) = hy(:,this_box)
+     !hz_old(:) = hz(:,this_box)
+     !Cn_old(:) = Cn(:,this_box)
+     !!!$OMP END PARALLEL WORKSHARE
 
 
-     ! Determine the new k vectors for this box. The call will change Cn, hx, hy and hz and hence will
-     ! change cos_sum and sin_sum.
+     ! Determine the new k vectors for this box.
      CALL Ewald_Reciprocal_Lattice_Vector_Setup(this_box)
+     nvecs_max_new_p4 = IAND(MAXVAL(nvecs)+3,NOT(3))
+     ALLOCATE(cos_mol(nvecs_max_new_p4,0:SUM(max_molecules)))
+     ALLOCATE(sin_mol(nvecs_max_new_p4,0:SUM(max_molecules)))
 
-     ! cos_sum and sin_sum need to be re-allocated since the number of vectors has changed
-     ! The operation destoys the cos_sum and sin_sum for other boxes but can be easily restored
-     ! from cos_sum_old and sin_sum_old. Note that these terms for this_box will be calculated
-     ! via the call to total system energy routine.
-     ! Similar reasoning goes for cos_mol and sin_mol
-     
-     IF (ALLOCATED(cos_sum)) DEALLOCATE(cos_sum)
-     IF (ALLOCATED(sin_sum)) DEALLOCATE(sin_sum)
-     IF (ALLOCATED(cos_mol)) DEALLOCATE(cos_mol)
-     IF (ALLOCATED(sin_mol)) DEALLOCATE(sin_mol)
-
-     ALLOCATE(cos_sum(MAXVAL(nvecs),nbr_boxes), Stat = AllocateStatus)
-     
-     IF (Allocatestatus /= 0) THEN
-        err_msg = ''
-        err_msg(1) = 'Memory could not be allocated for cos_sum'
-        err_msg(2) = 'allocation_cos_sin'
-        CALL Clean_Abort(err_msg,'Volume_Change')
-     END IF
-     
-
-     ALLOCATE(sin_sum(MAXVAL(nvecs),nbr_boxes), Stat = AllocateStatus)
-
-     IF (Allocatestatus /= 0) THEN
-        err_msg = ''
-        err_msg(1) = 'Memory could not be allocated for sin_sum'
-        err_msg(2) = 'allocation_cos_sin'
-        CALL Clean_Abort(err_msg,'Volume_Change')
-     END IF
-
-     ALLOCATE(cos_mol(MAXVAL(nvecs),SUM(max_molecules)), Stat = AllocateStatus)
-
-     IF (Allocatestatus /= 0) THEN
-        err_msg = ''
-        err_msg(1) = 'Memory could not be allocated for cos_mol'
-        err_msg(2) = 'allocation_cos_sin'
-        CALL Clean_Abort(err_msg,'Volume_Change')
-     END IF
-
-     ALLOCATE(sin_mol(MAXVAL(nvecs),SUM(max_molecules)), Stat = AllocateStatus)
-
-     IF (Allocatestatus /= 0) THEN
-        err_msg = ''
-        err_msg(1) = 'Memory could not be allocated for sin_mol'
-        err_msg(2) = 'allocation_cos_sin'
-        CALL Clean_Abort(err_msg,'Volume_Change')
-     END IF
      
   END IF
 
   CALL Compute_System_Total_Energy(this_box,.TRUE.,overlap)
+  ! Internal degrees of freedom remain the same.
+  !CALL Compute_System_Total_Energy(this_box,.FALSE.,overlap)
 
   IF (overlap) THEN
      ! reject move
@@ -438,11 +379,12 @@ SUBROUTINE Volume_Change
      
      ! change in the energy of the system 
      dE = energy(this_box)%total - energy_old%total
+     !dE = energy(this_box)%inter - energy_old%inter
      
      ! based on the energy, calculate the acceptance ratio
      ln_pacc = beta(this_box) * dE &
              + beta(this_box) * pressure(this_box)%setpoint * delta_volume &
-             - total_molecules * DLOG(box_list(this_box)%volume/box_list_old%volume)
+             - total_molecules * DLOG(box_list(this_box)%volume/volume_old)
      accept = accept_or_reject(ln_pacc)
      
      IF ( accept ) THEN
@@ -450,56 +392,57 @@ SUBROUTINE Volume_Change
         nvol_success(this_box) = nvol_success(this_box) + 1
         ivol_success(this_box) = ivol_success(this_box) + 1
         ! energy, positions and box dimensions are already updated
-
-        
-        IF (int_charge_sum_style(this_box) == charge_ewald) THEN
-           ! put the sin_sum and cos_sum for other boxes
-           ! Note that hx,hy,hz and Cn are updated when the total energy routine is called above.
-           ! there is no need to update these arrays.
-           DO ibox = 1, nbr_boxes
-              IF (ibox /= this_box ) THEN
-                 !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-                 sin_sum(1:nvecs(ibox),ibox) = sin_sum_old(1:nvecs(ibox),ibox)
-                 cos_sum(1:nvecs(ibox),ibox) = cos_sum_old(1:nvecs(ibox),ibox)
-                 !!$OMP END PARALLEL WORKSHARE
-              END IF
-           END DO
+        IF ((l_pair_nrg .OR. int_charge_sum_style(this_box) == charge_ewald) .AND. nbr_boxes>1) THEN
            
-           ! Now deallocate cos_sum_old and sin_sum_old so that they have the same dimensions
-           ! as sin_sum and cos_sum 
            
-           DEALLOCATE(cos_sum_old,sin_sum_old)
-           ALLOCATE(cos_sum_old(SIZE(cos_sum,1),nbr_boxes))
-           ALLOCATE(sin_sum_old(SIZE(sin_sum,1),nbr_boxes))
-           DEALLOCATE(cos_sum_start,sin_sum_start)
-           ALLOCATE(cos_sum_start(SIZE(cos_sum,1),nbr_boxes))
-           ALLOCATE(sin_sum_start(SIZE(sin_sum,1),nbr_boxes))
-
-           ! cos_mol
-           
-           !              CALL cpu_time(time0)
+           ! Now assign cos_mol and sin_mol for the molecules present in other
+           ! boxes. Note that cos_mol and sin_mol for this_box were assigned
+           ! during Compute_System_Total_Energy.
            
            DO ibox = 1, nbr_boxes
-              ! skip the molecules in 'this_box'
-              IF (ibox == this_box )CYCLE 
+              IF (ibox == this_box) CYCLE
+              nboxmols = SUM(nmols(:,ibox))
+              IF (nboxmols < 1) CYCLE
+              !$OMP PARALLEL DEFAULT(SHARED) PRIVATE(is,pos,im_locate_shift,iend,istart)
+              !$OMP DO SCHEDULE(STATIC)
               DO is = 1, nspecies
-                 DO im = 1, nmols(is,ibox)
-                    alive = locate(im,is,ibox)
-                    IF (.NOT. molecule_list(alive,is)%live) CYCLE
-                    CALL Get_Position_Alive(alive,is,position)
-                    
-                    cos_mol(1:nvecs(ibox),position) = cos_mol_old(1:nvecs(ibox),position)
-                    !                    cos_mol(nvecs(ibox)+1,nvecs(this_box)) = 0.0_DP
-                    
-                    sin_mol(1:nvecs(ibox),position) = sin_mol_old(1:nvecs(ibox),position)
-                    !                   sin_mol(nvecs(ibox)+1,nvecs(this_box)) = 0.0_DP
-                    
-                 END DO
+                 IF (is==1) THEN
+                         im_locate_shift = 0
+                 ELSE
+                         im_locate_shift = SUM(max_molecules(1:is-1))
+                 END IF
+                 iend = SUM(nmols(1:is,ibox))
+                 istart = iend - nmols(is,ibox) + 1
+                 posvec(istart:iend) = im_locate_shift + locate(1:nmols(is,ibox),is,ibox)
               END DO
+              !$OMP END DO
+              !$OMP DO SCHEDULE(STATIC)
+              DO im = 1, nboxmols
+                    pos = posvec(im)
+                    IF (int_charge_sum_style(this_box) == charge_ewald) THEN
+                            !DIR$ VECTOR ALIGNED
+                            cos_mol(1:nvecs(ibox),pos) = cos_mol_old(1:nvecs(ibox),pos)
+                            !DIR$ VECTOR ALIGNED
+                            sin_mol(1:nvecs(ibox),pos) = sin_mol_old(1:nvecs(ibox),pos)
+                            cos_mol(nvecs(ibox)+1:,pos) = 0.0_DP
+                            sin_mol(nvecs(ibox)+1:,pos) = 0.0_DP
+                    END IF
+                    IF (l_pair_nrg) THEN
+                            ! Technically unnecessary but generally faster (and harmless) to copy whole column 
+                            ! instead of only the elements in posvec
+                            !DIR$ VECTOR ALIGNED
+                            pair_nrg_vdw(:,pos) = pair_nrg_vdw_old(:,pos)
+                            !DIR$ VECTOR ALIGNED
+                            pair_nrg_qq(:,pos) = pair_nrg_qq_old(:,pos)
+                    END IF
+              END DO
+              !$OMP END DO
+              !$OMP END PARALLEL
            END DO
-           
            DEALLOCATE(cos_mol_old,sin_mol_old)
         END IF
+
+        
 
      ELSE
         
@@ -572,7 +515,8 @@ SUBROUTINE Volume_Change
       
       ! Reset the box dimensions
       
-      box_list(this_box) = box_list_old
+      box_list(this_box)%length = length_old
+      CALL Compute_Cell_Dimensions(this_box)
 
       
       ! Reset the energy components
@@ -580,11 +524,10 @@ SUBROUTINE Volume_Change
       energy(this_box) = energy_old
 
       IF (l_pair_nrg) THEN
+         DEALLOCATE(pair_nrg_vdw,pair_nrg_qq)
+         CALL MOVE_ALLOC(pair_nrg_vdw_old,pair_nrg_vdw)
+         CALL MOVE_ALLOC(pair_nrg_qq_old,pair_nrg_qq)
 
-         pair_nrg_vdw(:,:) = pair_nrg_vdw_old(:,:)
-         pair_nrg_qq(:,:) = pair_nrg_qq_old(:,:)
-         
-         DEALLOCATE(pair_nrg_vdw_old,pair_nrg_qq_old)
          
       END IF
       
@@ -617,61 +560,18 @@ SUBROUTINE Volume_Change
          ! reset the terms related to Ewald reciprocal energy
          ! reset the total number of kvectors
          nvecs(this_box) = nvecs_old
+         DEALLOCATE(box_list(this_box)%sincos_sum)
+         DEALLOCATE(box_list(this_box)%kspace_vectors)
+         DEALLOCATE(box_list(this_box)%kspace_vector_ints)
+         DEALLOCATE(sin_mol,cos_mol)
+         CALL MOVE_ALLOC(sin_mol_old,sin_mol)
+         CALL MOVE_ALLOC(cos_mol_old,cos_mol)
+
+         CALL MOVE_ALLOC(box_list(this_box)%sincos_sum_old,box_list(this_box)%sincos_sum)
+         CALL MOVE_ALLOC(kspace_vectors_old,box_list(this_box)%kspace_vectors)
+         CALL MOVE_ALLOC(kspace_vector_ints_old,box_list(this_box)%kspace_vector_ints)
 
          
-         DEALLOCATE(cos_sum,sin_sum)
-         DEALLOCATE(cos_mol,sin_mol)
-         
-         ALLOCATE(cos_sum(MAXVAL(nvecs),nbr_boxes),Stat = Allocatestatus)
-         
-         IF (Allocatestatus /= 0) THEN
-            err_msg = ''
-            err_msg(1) = 'Memory could not be allocated for cos_sum'
-            err_msg(2) = 'volume move rejected'
-            CALL Clean_Abort(err_msg,'Volume_Change')
-         END IF
-         
-         ALLOCATE(sin_sum(MAXVAL(nvecs),nbr_boxes),Stat = Allocatestatus)
-         IF (Allocatestatus /= 0) THEN
-            err_msg = ''
-            err_msg(1) = 'Memory could not be allocated in the volume rejection'
-            CALL Clean_Abort(err_msg,'Volume_Change')
-         END IF
-         
-         ALLOCATE(cos_mol(MAXVAL(nvecs),SUM(max_molecules)), Stat = AllocateStatus)
-         
-         IF (Allocatestatus /= 0) THEN
-            err_msg = ''
-            err_msg(1) = 'Memory could not be in the volume rejection'
-            CALL Clean_Abort(err_msg,'Volume_Change')
-         END IF
-         
-         ALLOCATE(sin_mol(MAXVAL(nvecs),SUM(max_molecules)), Stat = AllocateStatus)
-         
-         IF (Allocatestatus /= 0) THEN
-            err_msg = ''
-            err_msg(1) = 'Memory could not be allocated in the volume rejection'
-            CALL Clean_Abort(err_msg,'Volume_Change')
-         END IF
-         
-         !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED) 
-         cos_mol(1:SIZE(cos_mol_old,1),:) = cos_mol_old(:,:)
-         sin_mol(1:SIZE(sin_mol_old,1),:) = sin_mol_old(:,:)
-         cos_sum(:,:) = cos_sum_old(:,:)
-         sin_sum(:,:) = sin_sum_old(:,:)
-         hx(:,this_box) = hx_old(:)
-         hy(:,this_box) = hy_old(:)
-         hz(:,this_box) = hz_old(:)
-         Cn(:,this_box) = Cn_old(:)
-         !!$OMP END PARALLEL WORKSHARE
-         
-         ! here we make sure that cos_sum_old and sin_sum_old have the same dimensions
-         ! as cos_sum and sin_sum
-         DEALLOCATE(cos_mol_old,sin_mol_old)
-         DEALLOCATE(cos_sum_old,sin_sum_old)
-         ALLOCATE(cos_sum_old(SIZE(cos_sum,1),nbr_boxes),sin_sum_old(SIZE(sin_sum,1),nbr_boxes))
-         DEALLOCATE(cos_sum_start,sin_sum_start)
-         ALLOCATE(cos_sum_start(SIZE(cos_sum,1),nbr_boxes),sin_sum_start(SIZE(sin_sum,1),nbr_boxes))
          
       END IF
     END SUBROUTINE Reset_Coords

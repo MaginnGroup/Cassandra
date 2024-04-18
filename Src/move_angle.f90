@@ -76,7 +76,7 @@ SUBROUTINE Angle_Distortion
 
   ! Pair Energy variables
 
-  REAL(DP), ALLOCATABLE :: cos_mol_old(:),sin_mol_old(:)
+  !REAL(DP), ALLOCATABLE :: cos_mol_old(:),sin_mol_old(:)
   INTEGER :: position
   inter_overlap = .false.
   intra_overlap = .false.
@@ -458,11 +458,10 @@ SUBROUTINE Angle_Distortion
 
      IF ( int_charge_sum_style(ibox) == charge_ewald .and. has_charge(is)) THEN
         
-        ALLOCATE(cos_mol_old(nvecs(ibox)),sin_mol_old(nvecs(ibox)))
-        CALL Get_Position_Alive(lm,is,position)
+        !ALLOCATE(cos_mol_old(nvecs(ibox)),sin_mol_old(nvecs(ibox)))
         
-        cos_mol_old(:) = cos_mol(1:nvecs(ibox),position)
-        sin_mol_old(:) = sin_mol(1:nvecs(ibox),position)
+        !cos_mol(1:nvecs(ibox),0) = cos_mol(1:nvecs(ibox),position)
+        !sin_mol(1:nvecs(ibox),0) = sin_mol(1:nvecs(ibox),position)
         
         CALL Update_System_Ewald_Reciprocal_Energy(lm,is,ibox, &
              int_intra,E_reciprocal_move)
@@ -506,8 +505,8 @@ SUBROUTINE Angle_Distortion
 
         CALL Fold_Molecule(lm,is,ibox)
         
-        IF(ALLOCATED(cos_mol_old)) DEALLOCATE(cos_mol_old)
-        IF(ALLOCATED(sin_mol_old)) DEALLOCATE(sin_mol_old)
+        !IF(ALLOCATED(cos_mol_old)) DEALLOCATE(cos_mol_old)
+        !IF(ALLOCATED(sin_mol_old)) DEALLOCATE(sin_mol_old)
         
         IF (l_pair_nrg) DEALLOCATE(pair_vdw_temp,pair_qq_temp)
         
@@ -522,15 +521,17 @@ SUBROUTINE Angle_Distortion
         
         IF (int_charge_sum_style(ibox) == charge_ewald .AND. has_charge(is)) THEN
            ! Also reset the old cos_sum and sin_sum for reciprocal space vectors
+           CALL Get_Position_Alive(lm,is,position)
            !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-           cos_sum(:,ibox) = cos_sum_old(:,ibox)
-           sin_sum(:,ibox) = sin_sum_old(:,ibox)
+           box_list(ibox)%sincos_sum = box_list(ibox)%sincos_sum_old
+           !cos_sum(:,ibox) = cos_sum_old(:,ibox)
+           !sin_sum(:,ibox) = sin_sum_old(:,ibox)
            
-           cos_mol(1:nvecs(ibox),position) = cos_mol_old(:)
-           sin_mol(1:nvecs(ibox),position) = sin_mol_old(:)
+           cos_mol(1:nvecs(ibox),position) = cos_mol(1:nvecs(ibox),0)
+           sin_mol(1:nvecs(ibox),position) = sin_mol(1:nvecs(ibox),0)
            !$OMP END PARALLEL WORKSHARE
            
-           DEALLOCATE(cos_mol_old,sin_mol_old)
+           !DEALLOCATE(cos_mol_old,sin_mol_old)
 
         END IF
         

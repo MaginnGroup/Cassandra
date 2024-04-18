@@ -115,21 +115,23 @@ CONTAINS
 
 !****************************************************************************
 
-  SUBROUTINE Scale_COM_Cartesian(this_box,box_list_old)
+  SUBROUTINE Scale_COM_Cartesian(this_box,length_inv_old)
 
     ! Scales the cartesian coordinates and COM of all the molecules
     ! in the input box such that intramolecular DOFs do not change
     ! This is achieved by keeping the fractional coordinates of the COM
-    ! the same before and after the move. The old cell basis vector is
-    ! used for this purpose
+    ! the same before and after the move.
 
     INTEGER, INTENT(IN) :: this_box
-    TYPE(Box_Class), INTENT(IN) :: box_list_old
+    REAL(DP), INTENT(IN) :: length_inv_old(3,3)
 
     ! Local variables
 
     INTEGER :: is, im, lm, i
     REAL(DP) :: s(3)
+    REAL(DP) :: scaling_matrix(3,3)
+
+    scaling_matrix = MATMUL(box_list(this_box)%length,length_inv_old)
 
 
 
@@ -143,31 +145,40 @@ CONTAINS
              
              ! obtain the new coordinates of the COM for this molecule
              
-             ! first determine the fractional coordinate
-             
+             !! first determine the fractional coordinate
+             !
+             !DO i = 1,3
+             !   
+             !   s(i) = box_list_old%length_inv(i,1) * molecule_list(lm,is)%xcom + &
+             !        box_list_old%length_inv(i,2) * molecule_list(lm,is)%ycom + &
+             !        box_list_old%length_inv(i,3) * molecule_list(lm,is)%zcom
+             !END DO
+             ! use scaling matrix to convert directly between real coordinates
              DO i = 1,3
                 
-                s(i) = box_list_old%length_inv(i,1) * molecule_list(lm,is)%xcom + &
-                     box_list_old%length_inv(i,2) * molecule_list(lm,is)%ycom + &
-                     box_list_old%length_inv(i,3) * molecule_list(lm,is)%zcom
+                s(i) = scaling_matrix(i,1) * molecule_list(lm,is)%xcom + &
+                     scaling_matrix(i,2) * molecule_list(lm,is)%ycom + &
+                     scaling_matrix(i,3) * molecule_list(lm,is)%zcom
              END DO
              
              
              ! now obtain the new positions of COMs
              
              
-             molecule_list(lm,is)%xcom = box_list(this_box)%length(1,1) * s(1) &
-                  + box_list(this_box)%length(1,2) * s(2) + &
-                    box_list(this_box)%length(1,3) * s(3)
-             
-             molecule_list(lm,is)%ycom = box_list(this_box)%length(2,1) * s(1) &
-                  + box_list(this_box)%length(2,2) * s(2) + &
-                    box_list(this_box)%length(2,3) * s(3)
-             
-             molecule_list(lm,is)%zcom = box_list(this_box)%length(3,1) * s(1) &
-                  + box_list(this_box)%length(3,2) * s(2) + &
-                    box_list(this_box)%length(3,3) * s(3)
-             
+             !molecule_list(lm,is)%xcom = box_list(this_box)%length(1,1) * s(1) &
+             !     + box_list(this_box)%length(1,2) * s(2) + &
+             !       box_list(this_box)%length(1,3) * s(3)
+             !
+             !molecule_list(lm,is)%ycom = box_list(this_box)%length(2,1) * s(1) &
+             !     + box_list(this_box)%length(2,2) * s(2) + &
+             !       box_list(this_box)%length(2,3) * s(3)
+             !
+             !molecule_list(lm,is)%zcom = box_list(this_box)%length(3,1) * s(1) &
+             !     + box_list(this_box)%length(3,2) * s(2) + &
+             !       box_list(this_box)%length(3,3) * s(3)
+             molecule_list(lm,is)%xcom = s(1)
+             molecule_list(lm,is)%ycom = s(2)
+             molecule_list(lm,is)%zcom = s(3)
              ! Obtain the new positions of atoms in this molecule
              
              atom_list(:,lm,is)%rxp = atom_list(:,lm,is)%rxp + &
