@@ -2223,6 +2223,7 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
     INTEGER :: ky_dimfactor, kz_dimfactor, ky_dimshift, kx_dimshift 
     INTEGER :: kx_shifted_start, ky_shifted_start, kx_shifted_end, ky_shifted_end
     INTEGER :: shiftconst
+    INTEGER :: ithread, chunkstart, chunkend, chunksize, nthreads
 
     ky_dimfactor = kxyz_max(1)*2+1
     kz_dimfactor = ky_dimfactor*(kxyz_max(2)*2+1)
@@ -2304,7 +2305,8 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
     !$OMP PARALLEL PRIVATE(kz,ky,kx,kxyz,x,y,z,hx,hy,hz,hsq,l_inrange,i) &
     !$OMP PRIVATE(prefactor,factor1,factor2) &
     !$OMP PRIVATE(xsq_sp,ysq_sp,zsq_sp,x_sp,y_sp,z_sp,hx_sp,hy_sp,hz_sp) &
-    !$OMP PRIVATE(kx_shifted,ky_shifted1,kz_shifted,ky_shifted2,shiftconst)
+    !$OMP PRIVATE(kx_shifted,ky_shifted1,kz_shifted,ky_shifted2,shiftconst) &
+    !$OMP PRIVATE(ithread,chunkstart,chunkend)
     !$OMP DO SCHEDULE(STATIC)
     DO ky_shifted1 = ky_shifted_start, ky_shifted_end
         ky_shifted2 = SHIFTL(ky_shifted1,11)
@@ -2397,11 +2399,18 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
     IF (.NOT. ALLOCATED(box_list(this_box)%sincos_sum)) THEN
             ALLOCATE(box_list(this_box)%sincos_sum(kvecs_p4,2))
     END IF
+    !$ nthreads = OMP_GET_NUM_THREADS()
+    !$ chunksize = IAND((kvecs+nthreads-1)/nthreads+7,NOT(7))
     !$OMP END SECTIONS
+    chunkstart = 1
+    chunkend = kvecs
+    !$ ithread = OMP_GET_THREAD_NUM()
+    !$ chunkstart = ithread*chunksize+1
+    !$ chunkend = MIN((ithread+1)*chunksize,kvecs)
     IF (l_ortho) THEN
             !DIR$ VECTOR ALIGNED
-            !$OMP DO SIMD SCHEDULE(SIMD:STATIC) PRIVATE(kxyz,kx,ky,kz,x,y,z,prefactor)
-            DO i = 1, kvecs
+            !$OMP SIMD PRIVATE(kxyz,kx,ky,kz,x,y,z,prefactor)
+            DO i = chunkstart, chunkend
                 kxyz = box_list(this_box)%kspace_vector_ints(i)
                 CALL Extract_Kvector_Ints(kxyz,kx,ky,kz) ! Should be inlined by compiler
                 z = REAL(kz,DP)
@@ -2413,12 +2422,11 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
                 box_list(this_box)%kspace_vectors(i,3) = z
                 box_list(this_box)%kspace_vectors(i,5) = prefactor
             END DO
-            !$OMP END DO SIMD
+            !$OMP END SIMD
             ! if it is an orthogonal box, then h vectors are simply hx = twoPI * kx / Lx and so on
             !DIR$ VECTOR ALIGNED
-            !$OMP DO SIMD SCHEDULE(SIMD:STATIC) &
-            !$OMP PRIVATE(x,y,z,hx,hy,hz,hsq)
-            DO i = 1, kvecs
+            !$OMP SIMD PRIVATE(x,y,z,hx,hy,hz,hsq)
+            DO i = chunkstart, chunkend
                 x = box_list(this_box)%kspace_vectors(i,1)
                 y = box_list(this_box)%kspace_vectors(i,2)
                 z = box_list(this_box)%kspace_vectors(i,3)
@@ -2431,11 +2439,11 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
                 box_list(this_box)%kspace_vectors(i,3) = hz
                 box_list(this_box)%kspace_vectors(i,4) = hsq
             END DO
-            !$OMP END DO SIMD
+            !$OMP END SIMD
     ELSE
             !DIR$ VECTOR ALIGNED
-            !$OMP DO SIMD SCHEDULE(SIMD:STATIC) PRIVATE(kxyz,kx,ky,kz,x,y,z,prefactor)
-            DO i = 1, kvecs
+            !$OMP SIMD PRIVATE(kxyz,kx,ky,kz,x,y,z,prefactor)
+            DO i = chunkstart, chunkend
                 kxyz = box_list(this_box)%kspace_vector_ints(i)
                 CALL Extract_Kvector_Ints(kxyz,kx,ky,kz) ! Should be inlined by compiler
                 z = REAL(kz,DP)
@@ -2447,11 +2455,10 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
                 box_list(this_box)%kspace_vectors(i,3) = z
                 box_list(this_box)%kspace_vectors(i,5) = prefactor
             END DO
-            !$OMP END DO SIMD
+            !$OMP END SIMD
             !DIR$ VECTOR ALIGNED
-            !$OMP DO SIMD SCHEDULE(SIMD:STATIC) &
-            !$OMP PRIVATE(x,y,z,hx,hy,hz,hsq)
-            DO i = 1, kvecs
+            !$OMP SIMD PRIVATE(x,y,z,hx,hy,hz,hsq)
+            DO i = chunkstart, chunkend
                 x = box_list(this_box)%kspace_vectors(i,1)
                 y = box_list(this_box)%kspace_vectors(i,2)
                 z = box_list(this_box)%kspace_vectors(i,3)
@@ -2464,11 +2471,11 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
                 box_list(this_box)%kspace_vectors(i,3) = hz
                 box_list(this_box)%kspace_vectors(i,4) = hsq
             END DO
-            !$OMP END DO SIMD
+            !$OMP END SIMD
     END IF
     !DIR$ VECTOR ALIGNED
-    !$OMP DO SIMD SCHEDULE(SIMD:STATIC) PRIVATE(hsq,prefactor,factor1,factor2)
-    DO i = 1, kvecs
+    !$OMP SIMD PRIVATE(hsq,prefactor,factor1,factor2)
+    DO i = chunkstart, chunkend
              hsq = box_list(this_box)%kspace_vectors(i,4)
              prefactor = box_list(this_box)%kspace_vectors(i,5)
              factor2 = 1.0_DP/hsq
@@ -2480,7 +2487,7 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
              box_list(this_box)%kspace_vectors(i,4) = factor1
              box_list(this_box)%kspace_vectors(i,5) = factor2
     END DO
-    !$OMP END DO SIMD
+    !$OMP END SIMD
     !$OMP END PARALLEL
 
   END SUBROUTINE Ewald_Reciprocal_Lattice_Vector_Setup
@@ -3943,6 +3950,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     !
     ! Added by Tom Rosch on 06/11/09
     ! (See Wheeler, Mol. Phys. 1997 Vol. 92 pg. 55)
+    ! Drastically refactored by Ryan Smith in 2024
     !
     !***************************************************************************
 
@@ -3982,23 +3990,23 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     INTEGER :: istart, iend, i_dim, ni
     LOGICAL :: l_ortho
     INTEGER :: chunkstart,chunkend,chunksize,ithread,nthreads
+    REAL(DP), DIMENSION(6) :: qw_vec
 
-    !const_val = 1.0_DP/(2.0_DP * alpha_ewald(this_box) * alpha_ewald(this_box))
-    !const_val = 0.5_DP/(alpha_ewald(this_box) * alpha_ewald(this_box))
     l_ortho = box_list(this_box)%int_box_shape <= int_ortho
     diag_initializer = energy(this_box)%reciprocal * inv_charge_factor
-    qw1 = diag_initializer
-    qw2 = 0.0_DP
-    qw3 = 0.0_DP
-    qw5 = diag_initializer
-    qw6 = 0.0_DP
-    qw9 = diag_initializer
-    recip_11 = 0.0_DP
-    recip_21 = 0.0_DP
-    recip_31 = 0.0_DP
-    recip_22 = 0.0_DP
-    recip_23 = 0.0_DP
-    recip_33 = 0.0_DP
+    !qw1 = diag_initializer
+    !qw2 = 0.0_DP
+    !qw3 = 0.0_DP
+    !qw5 = diag_initializer
+    !qw6 = 0.0_DP
+    !qw9 = diag_initializer
+    !recip_11 = 0.0_DP
+    !recip_21 = 0.0_DP
+    !recip_31 = 0.0_DP
+    !recip_22 = 0.0_DP
+    !recip_23 = 0.0_DP
+    !recip_33 = 0.0_DP
+    qw_vec = 0.0_DP
 
     H_inv = twoPI*box_list(this_box)%length_inv
     kxyz_maxmax = box_list(this_box)%kxyz_maxmax
@@ -4013,70 +4021,16 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     !$OMP PRIVATE(qpiix_sin_sum, qpiix_cos_sum, qpiiy_sin_sum, qpiiy_cos_sum, qpiiz_sin_sum, qpiiz_cos_sum) &
     !$OMP PRIVATE(piix,piiy,piiz,qpiix,qpiiy,qpiiz) &
     !$OMP PRIVATE(hx,hy,hz,hxp,hyp,hzp,this_kxyz_max) &
-    !$OMP PRIVATE(chunkstart,chunkend,chunksize,ithread,nthreads)
+    !$OMP PRIVATE(chunkstart,chunkend,chunksize,ithread,nthreads) &
+    !$OMP PRIVATE(qw1,qw2,qw3,qw5,qw6,recip_11,recip_21,recip_31,recip_22,recip_23,recip_33) &
+    !$OMP REDUCTION(+:qw_vec)
 
-    !DIR$ VECTOR ALIGNED
-    !$OMP DO SIMD SCHEDULE(SIMD:STATIC) &
-    !$OMP PRIVATE(cos_sum_i,sin_sum_i,hxsq,hysq,hzsq) &
-    !$OMP PRIVATE(hxhy,hxhz,hyhz,factor) &
-    !$OMP REDUCTION(+:qw1,qw2,qw3,qw5,qw6,qw9)
-    DO i = 1, nvecs(this_box)
-       !un = box_list(this_box)%kspace_vectors(i,4)
-       sin_sum_i = box_list(this_box)%sincos_sum(i,1)
-       cos_sum_i = box_list(this_box)%sincos_sum(i,2)
-       factor = cos_sum_i*cos_sum_i+sin_sum_i*sin_sum_i
-       factor = factor*box_list(this_box)%kspace_vectors(i,5)
-       hxsq = box_list(this_box)%kspace_vectors(i,1) ! not squared yet
-       hysq = box_list(this_box)%kspace_vectors(i,2) ! not squared yet
-       hzsq = box_list(this_box)%kspace_vectors(i,3) ! not squared yet
-       hxhy = hxsq*hysq
-       hxhz = hxsq*hzsq
-       hyhz = hysq*hzsq
-       hxsq = hxsq*hxsq
-       hysq = hysq*hysq
-       hzsq = hzsq*hzsq
-       !factor = hxsq + hysq + hzsq
-       !factor = -2.0_DP/factor - const_val
-       !factor = factor*un
-       !hxsq = un + factor*hxsq ! update on qw1
-       !hysq = un + factor*hysq ! update on qw5
-       !hzsq = un + factor*hzsq ! update on qw9
-       qw1 = qw1 + factor*hxsq
-       qw2 = qw2 + factor*hxhy
-       qw3 = qw3 + factor*hxhz
-       qw5 = qw5 + factor*hysq
-       qw6 = qw6 + factor*hyhz
-       qw9 = qw9 + factor*hzsq
-
-       !un = Cn(i,this_box) * (cos_sum(i,this_box) * cos_sum(i,this_box) + sin_sum(i,this_box) * sin_sum(i,this_box))
-
-       !qwxy =  un * ( -2.0_DP*(1.0_DP/hsq(i,this_box) + 0.5_DP*const_val) &
-       !       *hx(i,this_box)*hy(i,this_box) )
-       !qwxz =  un * ( -2.0_DP*(1.0_DP/hsq(i,this_box) + 0.5_DP*const_val) &
-       !       *hx(i,this_box)*hz(i,this_box) )
-       !qwyz =  un * ( -2.0_DP*(1.0_DP/hsq(i,this_box) + 0.5_DP*const_val) &
-       !       *hy(i,this_box)*hz(i,this_box) )
-
-       !qw(1) = qw(1) + &
-       !        ( un * ( 1.0_DP - 2.0_DP*(1.0_DP/hsq(i,this_box) + 0.5_DP*const_val) &
-       !        *hx(i,this_box)*hx(i,this_box)))
-       !qw(2) = qw(2) + qwxy
-       !qw(3) = qw(3) + qwxz
-       !qw(5) = qw(5) + &
-       !        ( un * ( 1.0_DP - 2.0_DP*(1.0_DP/hsq(i,this_box) + 0.5_DP*const_val) &
-       !        *hy(i,this_box)*hy(i,this_box)))
-       !qw(6) = qw(6) + qwyz
-       !qw(9) = qw(9) + &
-       !        ( un * ( 1.0_DP - 2.0_DP*(1.0_DP/hsq(i,this_box) + 0.5_DP*const_val) &
-       !        *hz(i,this_box)*hz(i,this_box)))
-
-    END DO
-    !$OMP END DO SIMD
-
+    !$ nthreads = OMP_GET_NUM_THREADS()
+    !$ ithread = OMP_GET_THREAD_NUM()
 
     istart = 1
     DO is = 1, nspecies
-       IF (.NOT. has_charge(is)) CYCLE
+       IF (nmols(is,this_box)==0 .OR. .NOT. has_charge(is)) CYCLE
        !$OMP SINGLE
        nlive = 0
        DO im = 1, nmols(is,this_box)
@@ -4119,44 +4073,11 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     n_charged_live_p4 = IAND(n_charged_live+3,NOT(3))
     ALLOCATE(sincos(n_charged_live_p4,2,-kxyz_maxmax:kxyz_maxmax,3))
     !$OMP END SINGLE
-    !$OMP WORKSHARE
-    !sincos = 0.0_DP
-    sincos(:,1,0,:) = 0.0_DP
-    sincos(:,2,0,:) = 1.0_DP
-    !$OMP END WORKSHARE
-    !!DIR$ VECTOR ALIGNED
-    !!$OMP DO SIMD SCHEDULE(SIMD:STATIC) PRIVATE(xcom,ycom,zcom,rxp,ryp,rzp,charge)
-    !DO i = 1, n_charged_live
-    !    xcom = qpii(i,1)
-    !    rxp = rp(i,1)
-    !    ycom = qpii(i,2)
-    !    ryp = rp(i,2)
-    !    zcom = qpii(i,3)
-    !    rzp = rp(i,3)
-    !    charge = charges(i)
-    !    rxp = rxp-xcom
-    !    ryp = ryp-ycom
-    !    rzp = rzp-zcom
-    !    rxp = rxp*charge
-    !    ryp = ryp*charge
-    !    rzp = rzp*charge
-    !    qpii(i,1) = rxp
-    !    qpii(i,2) = ryp
-    !    qpii(i,3) = rzp
-    !END DO
-    !!$OMP END DO SIMD
     chunkstart = 1
     chunkend = n_charged_live
-    !$ nthreads = OMP_GET_NUM_THREADS()
-    !!$ IF (nthreads > 1) THEN
-    !$ ithread = OMP_GET_THREAD_NUM()
     !$ chunksize = IAND((n_charged_live+nthreads-1)/nthreads+3,NOT(3))
     !$ chunkstart = ithread*chunksize+1
     !$ chunkend = MIN((ithread+1)*chunksize,n_charged_live)
-    !!$ ELSE
-    !chunkstart = 1
-    !chunkend = n_charged_live
-    !!$ END IF
     IF (l_ortho) THEN
             !DIR$ VECTOR ALIGNED
             !$OMP SIMD PRIVATE(xcom,ycom,zcom,rxp,ryp,rzp,charge)
@@ -4228,6 +4149,8 @@ END SUBROUTINE Compute_Molecule_Self_Energy
         !$OMP SIMD PRIVATE(ihp,sin1,cos1)
         DO i = chunkstart, chunkend
                  ihp = rp(i,i_dim)
+                 sincos(i,1,0,i_dim) = 0.0_DP
+                 sincos(i,2,0,i_dim) = 1.0_DP
                  sin1 = SIN(ihp)
                  cos1 = COS(ihp)
                  sincos(i,1, 1,i_dim) = sin1
@@ -4278,13 +4201,13 @@ END SUBROUTINE Compute_Molecule_Self_Energy
                 !$OMP END SIMD
         END IF
     END DO
-    !$OMP BARRIER
     IF (n_charged_live_p4 .NE. n_charged_live) THEN
-            !$OMP WORKSHARE
+            !$OMP SINGLE
             sincos(n_charged_live+1:n_charged_live_p4,:,:,:) = 0.0_DP
             qpii(n_charged_live+1:n_charged_live_p4,:) = 0.0_DP
-            !$OMP END WORKSHARE
+            !$OMP END SINGLE NOWAIT
     END IF
+    !$OMP BARRIER
     !$OMP DO SCHEDULE(STATIC)
     DO i = 1, nvecs(this_box)
         kxyz = box_list(this_box)%kspace_vector_ints(i)
@@ -4329,11 +4252,16 @@ END SUBROUTINE Compute_Molecule_Self_Energy
         qpii_sincos_sum(i,3,2) = qpiiz_cos_sum
     END DO
     !$OMP END DO
+    chunkstart = 1
+    chunkend = nvecs(this_box)
+    !$ chunksize = IAND((nvecs(this_box)+nthreads-1)/nthreads+3,NOT(3))
+    !$ chunkstart = ithread*chunksize+1
+    !$ chunkend = MIN((ithread+1)*chunksize,nvecs(this_box))
     !DIR$ VECTOR ALIGNED
-    !$OMP DO SIMD SCHEDULE(SIMD:STATIC) &
+    !$OMP SIMD &
     !$OMP PRIVATE(cos_sum_i,sin_sum_i,qpiix_sin_sum,qpiix_cos_sum) &
     !$OMP PRIVATE(qpiiy_sin_sum,qpiiy_cos_sum,qpiiz_sin_sum,qpiiz_cos_sum)
-    DO i = 1, nvecs(this_box)
+    DO i = chunkstart, chunkend
         sin_sum_i = box_list(this_box)%sincos_sum(i,1)
         cos_sum_i = box_list(this_box)%sincos_sum(i,2)
         qpiix_sin_sum = qpii_sincos_sum(i,1,1)
@@ -4352,12 +4280,18 @@ END SUBROUTINE Compute_Molecule_Self_Energy
         qpii_sincos_sum(i,2,1) = qpiiy_cos_sum
         qpii_sincos_sum(i,3,1) = qpiiz_cos_sum
     END DO
-    !$OMP END DO SIMD
+    !$OMP END SIMD
+    recip_11 = 0.0_DP
+    recip_21 = 0.0_DP
+    recip_31 = 0.0_DP
+    recip_22 = 0.0_DP
+    recip_23 = 0.0_DP
+    recip_33 = 0.0_DP
     !DIR$ VECTOR ALIGNED
-    !$OMP DO SIMD SCHEDULE(SIMD:STATIC) &
+    !$OMP SIMD &
     !$OMP PRIVATE(factor,hx,hy,hz,piix,piiy,piiz) &
     !$OMP REDUCTION(+:recip_11,recip_21,recip_31,recip_22,recip_23,recip_33)
-    DO i = 1, nvecs(this_box)
+    DO i = chunkstart, chunkend
         factor = box_list(this_box)%kspace_vectors(i,4)
         hx = box_list(this_box)%kspace_vectors(i,1)
         hy = box_list(this_box)%kspace_vectors(i,2)
@@ -4378,14 +4312,67 @@ END SUBROUTINE Compute_Molecule_Self_Energy
         recip_23 = recip_23 + hy*piiz
         recip_33 = recip_33 + hz*piiz
     END DO
-    !$OMP END DO SIMD
-    !$OMP END PARALLEL
+    !$OMP END SIMD
+    qw1 = 0.0_DP
+    qw2 = 0.0_DP
+    qw3 = 0.0_DP
+    qw5 = 0.0_DP
+    qw6 = 0.0_DP
+    qw9 = 0.0_DP
+    !DIR$ VECTOR ALIGNED
+    !$OMP SIMD &
+    !$OMP PRIVATE(cos_sum_i,sin_sum_i,hxsq,hysq,hzsq) &
+    !$OMP PRIVATE(hxhy,hxhz,hyhz,factor) &
+    !$OMP REDUCTION(+:qw1,qw2,qw3,qw5,qw6,qw9)
+    DO i = chunkstart, chunkend
+       sin_sum_i = box_list(this_box)%sincos_sum(i,1)
+       cos_sum_i = box_list(this_box)%sincos_sum(i,2)
+       factor = cos_sum_i*cos_sum_i+sin_sum_i*sin_sum_i
+       factor = factor*box_list(this_box)%kspace_vectors(i,5)
+       hxsq = box_list(this_box)%kspace_vectors(i,1) ! not squared yet
+       hysq = box_list(this_box)%kspace_vectors(i,2) ! not squared yet
+       hzsq = box_list(this_box)%kspace_vectors(i,3) ! not squared yet
+       hxhy = hxsq*hysq
+       hxhz = hxsq*hzsq
+       hyhz = hysq*hzsq
+       hxsq = hxsq*hxsq
+       hysq = hysq*hysq
+       hzsq = hzsq*hzsq
+       qw1 = qw1 + factor*hxsq
+       qw2 = qw2 + factor*hxhy
+       qw3 = qw3 + factor*hxhz
+       qw5 = qw5 + factor*hysq
+       qw6 = qw6 + factor*hyhz
+       qw9 = qw9 + factor*hzsq
+
+
+    END DO
+    !$OMP END SIMD
     qw1 = qw1 + 2.0_DP*recip_11
     qw2 = qw2 + recip_21
     qw3 = qw3 + recip_31
     qw5 = qw5 + 2.0_DP*recip_22
     qw6 = qw6 + recip_23
     qw9 = qw9 + 2.0_DP*recip_33
+    qw_vec(1) = qw1
+    qw_vec(2) = qw2
+    qw_vec(3) = qw3
+    qw_vec(4) = qw5
+    qw_vec(5) = qw6
+    qw_vec(6) = qw9
+    !$OMP END PARALLEL
+    qw1 = qw_vec(1) + diag_initializer
+    qw2 = qw_vec(2)
+    qw3 = qw_vec(3)
+    qw5 = qw_vec(4) + diag_initializer
+    qw6 = qw_vec(5)
+    qw9 = qw_vec(6) + diag_initializer
+    !qw1 = qw1 + 2.0_DP*recip_11
+    !qw2 = qw2 + recip_21
+    !qw3 = qw3 + recip_31
+    !qw5 = qw5 + 2.0_DP*recip_22
+    !qw6 = qw6 + recip_23
+    !qw9 = qw9 + 2.0_DP*recip_33
     W_tensor_recip(1,1,this_box) = qw1
     W_tensor_recip(2,1,this_box) = qw2
     W_tensor_recip(1,2,this_box) = qw2
@@ -4396,80 +4383,6 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     W_tensor_recip(2,3,this_box) = qw6
     W_tensor_recip(3,3,this_box) = qw9
 
-    !   !$OMP DO SCHEDULE(STATIC) COLLAPSE(2) &
-    !   !$OMP REDUCTION(+:qw1,qw2,qw3,qw5,qw6,qw9)
-    !   DO im = 1, nlive
-    !      DO i_charged_atom = 1, n_charged_atoms
-    !         ia = which_charged_atoms(i_charged_atom)
-
-    !         this_locate = live_locates(im)
-
-    !         xcmi = molecule_list(this_locate,is)%xcom
-    !         ycmi = molecule_list(this_locate,is)%ycom
-    !         zcmi = molecule_list(this_locate,is)%zcom
-    !         rxp = atom_list(ia,this_locate,is)%rxp
-    !         ryp = atom_list(ia,this_locate,is)%ryp
-    !         rzp = atom_list(ia,this_locate,is)%rzp
-    !         piix = rxp - xcmi
-    !         piiy = ryp - ycmi
-    !         piiz = rzp - zcmi
-    !         doublecharge = 2.0_DP*nonbond_list(ia,is)%charge
-
-    !         recip_11 = 0.0_DP
-    !         recip_21 = 0.0_DP
-    !         recip_31 = 0.0_DP
-    !         recip_22 = 0.0_DP
-    !         recip_23 = 0.0_DP
-    !         recip_33 = 0.0_DP
-
-
-    !         !$OMP SIMD &
-    !         !$OMP PRIVATE(hx,hy,hz,trigterm1,trigterm2,factor) &
-    !         !$OMP REDUCTION(+:recip_11, recip_21, recip_31) &
-    !         !$OMP REDUCTION(+:recip_22, recip_23, recip_33)
-    !         DO i = 1, nvecs(this_box)
-    !            hx = box_list(this_box)%kspace_vectors(i,1)
-    !            hy = box_list(this_box)%kspace_vectors(i,2)
-    !            hz = box_list(this_box)%kspace_vectors(i,3)
-    !            factor = hx*rxp + hy*ryp + hz*rzp
-    !            trigterm1 = COS(factor)
-    !            trigterm2 = SIN(factor)
-    !            factor = box_list(this_box)%kspace_vectors(i,4)
-    !            factor = factor*doublecharge
-    !            trigterm1 = trigterm1*sin_sum(i,this_box)
-    !            trigterm1 = trigterm1 - trigterm2*cos_sum(i,this_box)
-    !            factor = factor*trigterm1
-
-    !            !arg = hx(i,this_box)*atom_list(ia,this_locate,is)%rxp + &
-    !            !      hy(i,this_box)*atom_list(ia,this_locate,is)%ryp + &
-    !            !      hz(i,this_box)*atom_list(ia,this_locate,is)%rzp
-
-    !            !factor = Cn(i,this_box)*2.0_DP*(-cos_sum(i,this_box)*SIN(arg) + &
-    !            !         sin_sum(i,this_box)*COS(arg))*charge
-
-    !            recip_11 = recip_11 + factor*hx*piix
-    !            recip_21 = recip_21 + factor* 0.5_DP*(hx*piiy+hy*piix)
-    !            recip_31 = recip_31 + factor* 0.5_DP*(hx*piiz+hz*piix)
-    !            recip_22 = recip_22 + factor*hy*piiy
-    !            recip_23 = recip_23 + factor* 0.5_DP*(hy*piiz+hz*piiy)
-    !            recip_33 = recip_33 + factor*hz*piiz
-
-    !         END DO
-    !         !$OMP END SIMD
-
-    !         qw1 = qw1 + recip_11
-    !         qw2 = qw2 + recip_21
-    !         qw3 = qw3 + recip_31
-    !         qw5 = qw5 + recip_22
-    !         qw6 = qw6 + recip_23
-    !         qw9 = qw9 + recip_33
-
-
-    !      END DO
-
-    !   END DO
-
-    !END DO
 
 
 
@@ -4828,7 +4741,6 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
 
     ! Initialize variables
-    !const_val = 1.0_DP/(2.0_DP * alpha_ewald(this_box) * alpha_ewald(this_box))
     E_reciprocal = 0.0_DP
     l_ortho = box_list(this_box)%int_box_shape <= int_ortho
     kxyz_maxmax = box_list(this_box)%kxyz_maxmax
@@ -4853,23 +4765,6 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     !$OMP END WORKSHARE
 
 
-    !! Create an index, im_locate, for each live molecule in this_box
-    !! im_locate will be used to access cos_mol and sin_mol
-    !ALLOCATE(im_locate(MAXVAL(max_molecules),nspecies))
-    !DO is = 1, nspecies
-    !   DO im = 1, nmols(is,this_box)
-    !      this_locate = locate(im,is,this_box)
-    !      IF (.NOT. molecule_list(this_locate,is)%live) CYCLE
-
-    !      ! create index
-    !      IF (is == 1) THEN
-    !         im_locate(im,is) = this_locate
-    !      ELSE
-    !         im_locate(im,is) = SUM(max_molecules(1:is-1)) + this_locate
-    !      END IF
-
-    !   END DO
-    !END DO
     ! Loop over each species, molecule
     DO is = 1, nspecies
        ! skip nonpolar species
@@ -4999,45 +4894,6 @@ END SUBROUTINE Compute_Molecule_Self_Energy
                         END DO
                         !$OMP END DO
                 END SELECT
-                !!$OMP DO SCHEDULE(STATIC)
-                !DO i = 1, nvecs(this_box)
-                !        xi = box_list(this_box)%kspace_vector_ints(i,1)
-                !        yi = box_list(this_box)%kspace_vector_ints(i,2)
-                !        zi = box_list(this_box)%kspace_vector_ints(i,3)
-                !        cos_sum_i = cos_sum(i,this_box)
-                !        sin_sum_i = sin_sum(i,this_box)
-                !        !DIR$ VECTOR ALIGNED
-                !        !$OMP SIMD PRIVATE(this_cos_mol,this_sin_mol) &
-                !        !$OMP PRIVATE(sin1,cos1,sin2,cos2,sin3,cos3,sin12,cos12,charge) &
-                !        !$OMP REDUCTION(+:cos_sum_i,sin_sum_i)
-                !        DO im = 1, nlive_p4
-                !                this_cos_mol = 0.0_DP
-                !                this_sin_mol = 0.0_DP
-                !                DO ia = 1, n_charged_atoms
-                !                        sin1 = sincos(im,ia,1,xi,1)
-                !                        cos1 = sincos(im,ia,2,xi,1)
-                !                        sin2 = sincos(im,ia,1,yi,2)
-                !                        cos2 = sincos(im,ia,2,yi,2)
-                !                        sin3 = sincos(im,ia,1,zi,3)
-                !                        cos3 = sincos(im,ia,2,zi,3)
-                !                        sin12 = sin1*cos2 + cos1*sin2
-                !                        cos12 = cos1*cos2 - sin1*sin2
-                !                        sin1 = sin12*cos3 + cos12*sin3
-                !                        cos1 = cos12*cos3 - sin12*sin3
-                !                        charge = charges(ia)
-                !                        this_cos_mol = this_cos_mol + charge*cos1
-                !                        this_sin_mol = this_sin_mol + charge*sin1
-                !                END DO
-                !                species_cos_mol(im,i) = this_cos_mol
-                !                species_sin_mol(im,i) = this_sin_mol
-                !                cos_sum_i = cos_sum_i + this_cos_mol
-                !                sin_sum_i = sin_sum_i + this_sin_mol
-                !        END DO
-                !        !$OMP END SIMD
-                !        sin_sum(i,this_box) = sin_sum_i
-                !        cos_sum(i,this_box) = cos_sum_i
-                !END DO
-                !!$OMP END DO
                 !$OMP WORKSHARE
                 cos_mol(1:nvecs(this_box),im_locate_shift+live_locates(1:nlive)) = &
                         TRANSPOSE(species_cos_mol(1:nlive,1:nvecs(this_box)))
@@ -5114,57 +4970,6 @@ END SUBROUTINE Compute_Molecule_Self_Energy
                 END DO
                 !$OMP END DO
        END IF
-       !rpq(4,1:natoms(is)) = nonbond_list(1:natoms(is),is)%charge
-
-       !DO im = 1, nmols(is,this_box)
-       !   this_locate = locate(im,is,this_box) ! index to atom_list, molecule_list
-       !   IF( .NOT. molecule_list(this_locate,is)%live) CYCLE
-
-       !   position = im_locate(im,is) ! index to cos_mol, sin_mol
-
-       !   rpq(1,1:natoms(is)) = atom_list(1:natoms(is),this_locate,is)%rxp
-       !   rpq(2,1:natoms(is)) = atom_list(1:natoms(is),this_locate,is)%ryp
-       !   rpq(3,1:natoms(is)) = atom_list(1:natoms(is),this_locate,is)%rzp
-
-
-       !   ! loop over all the k vectors of this box
-       !   !$OMP DO SIMD SCHEDULE(SIMD:STATIC) &
-       !   !$OMP PRIVATE(hdotr,charge,hx,hy,hz,this_cos_mol,this_sin_mol)
-       !   DO i = 1, nvecs(this_box)
-       !      this_cos_mol = 0.0_DP
-       !      this_sin_mol = 0.0_DP
-
-       !      !cos_mol(i,position) = 0.0_DP
-       !      !sin_mol(i,position) = 0.0_DP
-       !      hx = box_list(this_box)%kspace_vectors(i,1)
-       !      hy = box_list(this_box)%kspace_vectors(i,2)
-       !      hz = box_list(this_box)%kspace_vectors(i,3)
-
-       !      DO ia = 1, natoms(is)
-       !         ! compute hdotr
-       !         hdotr = hx * rpq(1,ia) + &
-       !                 hy * rpq(2,ia) + &
-       !                 hz * rpq(3,ia)
-
-       !         charge = rpq(4,ia)
-
-       !         this_cos_mol = this_cos_mol + charge * COS(hdotr)
-       !         this_sin_mol = this_sin_mol + charge * SIN(hdotr)
-       !         !cos_mol(i,position) = cos_mol(i,position) + charge * DCOS(hdotr)
-       !         !sin_mol(i,position) = sin_mol(i,position) + charge * DSIN(hdotr)
-       !      END DO
-       !      cos_mol(i,position) = this_cos_mol
-       !      sin_mol(i,position) = this_sin_mol
-
-       !      cos_sum(i,this_box) = cos_sum(i,this_box) &
-       !                          + this_cos_mol
-       !      sin_sum(i,this_box) = sin_sum(i,this_box) &
-       !                          + this_sin_mol
-       !   END DO
-
-       !   !$OMP END DO SIMD
-
-       !END DO
     END DO
 
     ! At the end of all the loops we have computed cos_sum, sin_sum, cos_mol and
@@ -5184,78 +4989,6 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     END DO
     !$OMP END DO SIMD
     !$OMP END PARALLEL
-
-    !!$OMP DO SIMD SCHEDULE(SIMD:STATIC) &
-    !!$OMP PRIVATE(i,  un)  &
-    !!$OMP REDUCTION(+:E_reciprocal)
-    !DO i = 1, nvecs(this_box)
-    !   un =  cos_sum(i,this_box) * cos_sum(i,this_box) &
-    !      +  sin_sum(i,this_box) * sin_sum(i,this_box)
-    !   E_reciprocal = E_reciprocal + Cn(i,this_box) * un
-    !END DO
-    !!$OMP END DO SIMD
-
-    !! Loop over each species, molecule
-    !DO is = 1, nspecies
-    !   ! skip nonpolar species
-    !   IF (.NOT. has_charge(is)) CYCLE
-
-    !   DO im = 1, nmols(is,this_box)
-    !      this_locate = locate(im,is,this_box) ! index to atom_list, molecule_list
-    !      IF( .NOT. molecule_list(this_locate,is)%live) CYCLE
-
-    !      position = im_locate(im,is) ! index to cos_mol, sin_mol
-
-    !      !$OMP PARALLEL DO DEFAULT(SHARED) &
-    !      !$OMP PRIVATE(i,ia,hdotr,charge) &
-    !      !$OMP SCHEDULE(STATIC)
-
-    !      ! loop over all the k vectors of this box
-    !      DO i = 1, nvecs(this_box)
-
-    !         cos_mol(i,position) = 0.0_DP
-    !         sin_mol(i,position) = 0.0_DP
-
-    !         DO ia = 1, natoms(is)
-    !            ! compute hdotr
-    !            hdotr = hx(i,this_box) * atom_list(ia,this_locate,is)%rxp + &
-    !                    hy(i,this_box) * atom_list(ia,this_locate,is)%ryp + &
-    !                    hz(i,this_box) * atom_list(ia,this_locate,is)%rzp
-
-    !            charge = nonbond_list(ia,is)%charge
-
-    !            cos_mol(i,position) = cos_mol(i,position) + charge * DCOS(hdotr)
-    !            sin_mol(i,position) = sin_mol(i,position) + charge * DSIN(hdotr)
-    !         END DO
-
-    !         cos_sum(i,this_box) = cos_sum(i,this_box) &
-    !                             + cos_mol(i,position)
-    !         sin_sum(i,this_box) = sin_sum(i,this_box) &
-    !                             + sin_mol(i,position)
-    !      END DO
-
-    !      !$OMP END PARALLEL DO
-
-    !   END DO
-    !END DO
-
-    !! At the end of all the loops we have computed cos_sum, sin_sum, cos_mol and
-    !! sin_mol for each of the k-vectors. Now let us calculate the reciprocal
-    !! space energy
-
-    !!$OMP PARALLEL DO DEFAULT(SHARED) &
-    !!$OMP PRIVATE(i,  un)  &
-    !!$OMP SCHEDULE(STATIC) &
-    !!$OMP REDUCTION(+:E_reciprocal)
-
-    !DO i = 1, nvecs(this_box)
-    !   un =  cos_sum(i,this_box) * cos_sum(i,this_box) &
-    !      +  sin_sum(i,this_box) * sin_sum(i,this_box)
-    !   E_reciprocal = E_reciprocal + Cn(i,this_box) * un
-    !END DO
-
-    !!$OMP END PARALLEL DO
-
 
     energy(this_box)%reciprocal = E_reciprocal * charge_factor
 
