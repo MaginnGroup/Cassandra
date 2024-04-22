@@ -2086,7 +2086,7 @@ Dihedral Info
 
 | ``# Dihderal_Info``
 | *Integer(1)*
-| *Integer(i,2) Integer(i,3) Integer(i,4) Integer(i,5) Integer(i,6) Character(i,7) Real(i,8) Real(i,9) Real(i,10) Real(i,11)*
+| *Integer(i,2) Integer(i,3) Integer(i,4) Integer(i,5) Integer(i,6) Character(i,7) Real(i,8) Real(i,9) Real(i,10) Real(i,11) Real(i,12)*
 
 This section of the MCF lists the number of dihedral angles and
 associated information for a given species. It is a required keyword
@@ -2099,9 +2099,11 @@ in the MCF. If not specified, the code will abort.
 -  *Integer(i,3): Integer(i,6)* - IDs of the atoms in the :math:`i^{th}`
    dihedral angle.
 
--  *Character(i,7)* : Dihedral potential type. Acceptable options are ``OPLS``,
-   ``CHARMM``, ``harmonic`` and ``none``. If ``OPLS`` dihedral potential type is
-   selected, then the real numbers *Real(i,8) - Real(i,11)* are the coefficients
+-  *Character(i,7)* : Dihedral potential type. Acceptable options are ``RB``, ``OPLS``,
+   ``CHARMM``, ``harmonic`` and ``none``. If ``RB`` dihedral potential is selected, then the real numbers
+   *Real(i, 8) - Real(i, 12)* are the coefficients of the Ryckaert-Bellemans functional form (see :ref:`sec:ff_dihedrals`)
+   The units are in kJ/mol.  If ``OPLS`` dihedral potential type is
+   selected, then *Real(i,8) - Real(i,11)* are the coefficients
    in the Fourier series (see :ref:`sec:ff_dihedrals`). The units are in kJ/mol. For
    the ``CHARMM`` dihedral potential type, three additional parameters are
    specified: :math:`a_0, a_1` and :math:`\delta` (see :ref:`sec:ff_dihedrals`). If
@@ -2109,6 +2111,9 @@ in the MCF. If not specified, the code will abort.
    :math:`K_{phi}` and :math:`\phi_0` (see :ref:`sec:ff_dihedrals`), are
    specified. For the ``none`` dihedral potential type, no additional parameters
    are necessary.
+
+.. note::
+   Cassandra will convert all dihedral functional form to the Ryckaert-Bellemans form due to efficiency reasons, whenever possible.
 
 For example, for a united atom pentane molecule using an OPLS dihedral
 potential type, the dihedrals are specified as follows:

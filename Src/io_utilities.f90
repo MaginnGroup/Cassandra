@@ -517,7 +517,8 @@ SUBROUTINE Check_String(string_in,ierr)
      IF ( .NOT. ((string_in(i:i) >=  'A' .AND. (string_in(i:i) <= 'Z')) .OR. &
           (string_in(i:i) >= 'a' .AND. (string_in(i:i) <= 'z')) .OR. &
           (string_in(i:i) >= '0' .AND. (string_in(i:i) <= '9')) .OR. &
-          (string_in(i:i) == '.' .OR. string_in(i:i) == '_' .OR. string_in(i:i) == '/'))) THEN
+          (string_in(i:i) == '.' .OR. string_in(i:i) == '_' .OR. &
+         string_in(i:i) == '-' .OR. string_in(i:i) == '/'))) THEN
         ! character other than letters and digits found
         ierr = 1
         RETURN

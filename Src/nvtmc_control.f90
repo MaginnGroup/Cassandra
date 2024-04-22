@@ -148,4 +148,6 @@ SUBROUTINE NVTMC_Control
 
   CALL Setup_Atompair_Tables
 
+  CALL Setup_Atompair_Tables
+
 END SUBROUTINE NVTMC_Control

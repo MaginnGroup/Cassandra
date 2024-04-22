@@ -1160,9 +1160,6 @@ CONTAINS
     LOGICAL :: get_interaction
 !molecule_priority    LOGICAL, DIMENSION(MAXVAL(nmols(:,widom_molecule%which_box)),nspecies) :: shortrange, midrange
 
-
-
-
     E_inter = 0.0_DP
     overlap = .FALSE.
 
@@ -4533,6 +4530,7 @@ CONTAINS
     REAL(DP) :: SigByR_shift, SigByRn_shift, SigByRm_shift
     ! Coulomb potential
     REAL(DP) :: qi, qj, Eij_qq
+    REAL(DP), OPTIONAL :: Eij_qq_o
 
     LOGICAL :: atom_i_exist, atom_j_exist, excess_flag, minimg_flag
 

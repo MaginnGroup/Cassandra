@@ -61,7 +61,18 @@ constant is defined in any force field you use.
 Dihedrals
 ---------
 
-Cassandra can handle four different types of dihedral angles:
+Cassandra can handle five different types of dihedral angles: Ryckaert-Bellemans, OPLS, CHARMM, harmonic, and none.
+
+.. note::
+   Cassandra will convert all dihedral functional form to the Ryckaert-Bellemans form due to efficiency reasons, whenever possible.
+
+-  ``Ryckaert-Bellemans``: The dihedral potential is of the form:
+
+   .. math::
+
+      E_\phi = \sum_{n=0}^{5} C_n \left ( cos(\phi)^n \right ) 
+
+where :math:`C_n` is specified by the user.
 
 -  ``OPLS``: The functional form of the dihedral potential is
 
@@ -99,6 +110,7 @@ where :math:`K_\phi` and :math:`\phi_0` are specified by the user.
     =========================== ==================================================== ================ 
      Functional Form              Parameter                                               Units
     =========================== ==================================================== ================ 
+     Ryckaert-Bellemans          :math:`C_n`                                          kJ/mol
      OPLS                        :math:`a_0`, :math:`a_1`, :math:`a_2`, :math:`a_3`   kJ/mol
      CHARMM                      :math:`a_0`                                          kJ/mol
      CHARMM                      :math:`a_1`                                          dimensionless
@@ -290,6 +302,7 @@ Summary of Cassandra units
     Bonds                       :math:`l`                                             Å
     Bond angles                 :math:`\theta_0`                                      degrees
     Bond angles                 :math:`K_\theta`                                      K/rad\ :sup:`2`
+    Ryckaert-Bellemans          :math:`C_n`                                           kJ/mol
     OPLS dihedrals              :math:`a_0`, :math:`a_1`, :math:`a_2`, :math:`a_3`    kJ/mol
     CHARMM dihedrals            :math:`a_0`                                           kJ/mol
     CHARMM dihedrals            :math:`a_1`                                           dimensionless

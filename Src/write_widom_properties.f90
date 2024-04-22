@@ -40,6 +40,8 @@ SUBROUTINE Write_Widom_Properties(is,this_box,widom_avg,t_cpu,n_overlaps)
 
   INTEGER :: this_unit
 
+  INTEGER :: this_unit
+
   LOGICAL :: is_sweeps
 
   is_sweeps = (sim_length_units == 'Sweeps')

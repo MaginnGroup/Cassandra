@@ -1185,7 +1185,6 @@ CONTAINS
        !        dihedral_list(this_dihedral,is)%dihedral_param(7)/kjmol_to_atomic, &
        !        dihedral_list(this_dihedral,is)%dihedral_param(8), &
        !        dihedral_list(this_dihedral,is)%dihedral_param(9) * (180_DP/PI)
-       
        CASE(int_harmonic)
           
           WRITE(201,'(I5,2X, 4(I4,2X), A8,2X, 2(F8.3,2X))') i, &
@@ -1198,6 +1197,8 @@ CONTAINS
 
           WRITE(201,'(I5,2X,4(I4,2X),A4)') i, &
                first_atom(i), second_atom(i), third_atom(i), fourth_atom(i), 'none'
+       CASE(int_rb_torsion)
+
        CASE(int_rb_torsion)
 
           WRITE(201,'(I5,2X,4(I4,2X),A4,2X,6(F8.3,2X))') i, &
