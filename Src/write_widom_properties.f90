@@ -36,9 +36,7 @@ SUBROUTINE Write_Widom_Properties(is,this_box,widom_avg,t_cpu,n_overlaps)
   INTEGER(KIND=INT64), INTENT(IN) :: n_overlaps
 
   REAL(DP), INTENT(IN) :: t_cpu
-  REAL(DP) :: widom_avg, cavfrac
-
-  INTEGER :: this_unit
+  REAL(DP) :: widom_avg, cavfrac, cavbias
 
   INTEGER :: this_unit
 
@@ -51,8 +49,11 @@ SUBROUTINE Write_Widom_Properties(is,this_box,widom_avg,t_cpu,n_overlaps)
   IF (cavity_biasing_flag) THEN
           cavfrac = SUM(EXP(cavdatalist(frag_list(1:species_list(is)%nfragments,is)%i_big_atom,this_box)%ln_cavfrac)) / &
                   species_list(is)%nfragments
+          cavbias = SUM(EXP(-cavdatalist(frag_list(1:species_list(is)%nfragments,is)%i_big_atom,this_box)%ln_cavfrac)) / &
+                  species_list(is)%nfragments
   ELSE
-          cavfrac = 1.0
+          cavfrac = 1.0_DP
+          cavbias = 1.0_DP
   END IF
      
   IF (first_open_wprop(is,this_box)) THEN
@@ -61,11 +62,11 @@ SUBROUTINE Write_Widom_Properties(is,this_box,widom_avg,t_cpu,n_overlaps)
      ! in the file
      !CALL Write_Widom_Header(i)
      IF (is_sweeps) THEN
-             WRITE(this_unit,'(A19,7X,A30,7X,A30,7X,A17,9X,A15)') 'Sweep_#', 'Average widom_var for sweep', 'Widom CPU time for sweep (s)', &
-                     'Number of overlaps', 'Cavity fraction'
+             WRITE(this_unit,'(A19,7X,A30,7X,A30,7X,A17,9X,A15,11X,A18)') 'Sweep_#', 'Average widom_var for sweep', 'Widom CPU time for sweep (s)', &
+                     'Number of overlaps', 'Cavity fraction', 'Cavity bias factor'
      ELSE
-             WRITE(this_unit,'(A19,7X,A30,7X,A30,7X,A17,9X,A15)') 'Step_#', 'Average widom_var for step', 'Widom CPU time for step (s)', &
-                     'Number of overlaps', 'Cavity fraction'
+             WRITE(this_unit,'(A19,7X,A30,7X,A30,7X,A17,9X,A15,11X,A18)') 'Step_#', 'Average widom_var for step', 'Widom CPU time for step (s)', &
+                     'Number of overlaps', 'Cavity fraction', 'Cavity bias factor'
      END IF
      first_open_wprop(is,this_box) = .FALSE.
   END IF
@@ -73,8 +74,10 @@ SUBROUTINE Write_Widom_Properties(is,this_box,widom_avg,t_cpu,n_overlaps)
   !widom_avg = widom_sum / species_list(is)%insertions_in_step(this_box)
   IF (widom_avg < 1.0e-99_DP) widom_avg = 0.0_DP
   IF (is_sweeps) THEN
-          WRITE(this_unit,'(I19,7X,E30.22,7X,E30.22,7X,I19,E26.18)') i_mcstep/steps_per_sweep, widom_avg, t_cpu, n_overlaps, cavfrac
+          WRITE(this_unit,'(I19,7X,E30.22,7X,E30.22,7X,I19,E26.18,E26.18)') i_mcstep/steps_per_sweep, widom_avg, t_cpu, n_overlaps, &
+                  cavfrac, cavbias
   ELSE
-          WRITE(this_unit,'(I19,7X,E30.22,7X,E30.22,7X,I19,E26.18)') i_mcstep, widom_avg, t_cpu, n_overlaps, cavfrac
+          WRITE(this_unit,'(I19,7X,E30.22,7X,E30.22,7X,I19,E26.18,E26.18)') i_mcstep, widom_avg, t_cpu, n_overlaps, &
+                  cavfrac, cavbias
   END IF
 END SUBROUTINE Write_Widom_Properties

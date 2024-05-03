@@ -51,6 +51,7 @@ SUBROUTINE Compute_Cell_Dimensions(box_nbr)
   REAL(DP) :: bxc1, bxc2, bxc3
   REAL(DP) :: cxa1, cxa2, cxa3
   REAL(DP) :: det, inv_det
+  REAL(DP) :: inv_H_T(3,3), unit_cross(3)
   LOGICAL :: change_basis, left_basis
   REAL(DP), DIMENSION(3,3) :: H, orig_H_inv
   REAL(DP), DIMENSION(3) :: orig_abc, orig_abcsq
@@ -245,6 +246,19 @@ SUBROUTINE Compute_Cell_Dimensions(box_nbr)
   box_list(box_nbr)%hlength(1,1) =0.5_DP * box_list(box_nbr)%basis_length(1)
   box_list(box_nbr)%hlength(2,2) =0.5_DP * box_list(box_nbr)%basis_length(2)
   box_list(box_nbr)%hlength(3,3) =0.5_DP * box_list(box_nbr)%basis_length(3)
+
+  ! Compute face distance of transpose of inverse of cell matrix
+  ! This is used for reciprocal lattice vector setup
+  inv_H_T = TRANSPOSE(box_list(box_nbr)%length_inv)
+  unit_cross = Cross_Product(inv_H_T(:,2),inv_H_T(:,3))
+  unit_cross = unit_cross/SQRT(DOT_PRODUCT(unit_cross,unit_cross))
+  box_list(box_nbr)%invT_face_distance(1) = ABS(DOT_PRODUCT(inv_H_T(:,1),unit_cross))
+  unit_cross = Cross_Product(inv_H_T(:,3),inv_H_T(:,1))
+  unit_cross = unit_cross/SQRT(DOT_PRODUCT(unit_cross,unit_cross))
+  box_list(box_nbr)%invT_face_distance(2) = ABS(DOT_PRODUCT(inv_H_T(:,2),unit_cross))
+  unit_cross = Cross_Product(inv_H_T(:,1),inv_H_T(:,2))
+  unit_cross = unit_cross/SQRT(DOT_PRODUCT(unit_cross,unit_cross))
+  box_list(box_nbr)%invT_face_distance(3) = ABS(DOT_PRODUCT(inv_H_T(:,3),unit_cross))
 
       
 END SUBROUTINE Compute_Cell_Dimensions

@@ -57,10 +57,10 @@ MODULE Type_Definitions
   INTEGER, PARAMETER :: DP = REAL64
 
   ! Define REAL type infinity using hexadecimal literal constants
-  !REAL(REAL32), PARAMETER :: infinity_sp = REAL(Z'7F800000',REAL32)
-  !REAL(REAL64), PARAMETER :: infinity_dp = REAL(Z'7FF0000000000000',REAL64)
-  REAL(REAL32), PARAMETER :: infinity_sp = Z'7F800000'
-  REAL(REAL64), PARAMETER :: infinity_dp = Z'7FF0000000000000'
+  REAL(REAL32), PARAMETER :: infinity_sp = REAL(Z'7F800000',REAL32)
+  REAL(REAL64), PARAMETER :: infinity_dp = REAL(Z'7FF0000000000000',REAL64)
+  !REAL(REAL32), PARAMETER :: infinity_sp = Z'7F800000'
+  !REAL(REAL64), PARAMETER :: infinity_dp = Z'7FF0000000000000'
 
   ! Specify the limits on the parameters for various intramolecular function classes
   INTEGER, PARAMETER :: max_bond_params = 5
@@ -491,7 +491,7 @@ MODULE Type_Definitions
     CHARACTER(20) :: box_shape
     INTEGER :: int_box_shape
     REAL(DP), DIMENSION(3,3) :: length, length_inv, max_delta, hlength
-    REAL(DP), DIMENSION(3) :: basis_length, cos_angle, angle, face_distance
+    REAL(DP), DIMENSION(3) :: basis_length, cos_angle, angle, face_distance, invT_face_distance
     REAL(DP) :: volume, dv_max
     REAL(DP), DIMENSION(3,3) :: basis_converter, orig_length_inv, orig_length
     LOGICAL :: basis_changed
@@ -513,15 +513,24 @@ MODULE Type_Definitions
 
     INTEGER, DIMENSION(3) :: length_bitcells, setbit_extent
     REAL(SP), DIMENSION(3) :: bit_cell_length_recip, real_length_bitcells
+    LOGICAL :: l_cavloc_int32
     INTEGER(4), DIMENSION(:), ALLOCATABLE :: bitcell_int32_vec
     INTEGER, DIMENSION(2:3) :: bitcell_dimfactor
     REAL(DP) :: ideal_bitcell_length, rcut_low_max
     REAL(DP), DIMENSION(3) :: bitcell_face_distance, bitcell_face_distance_recip
 
+    ! Ewald reciprocal space (kspace) lattice vectors and related data
+    ! 5 columns: first 3 are hx,hy,hz; 4th is Cn, 5th is a factor used for pressure calculation
+    REAL(DP), DIMENSION(:,:), ALLOCATABLE :: kspace_vectors
+    REAL(DP), DIMENSION(:,:), ALLOCATABLE :: sincos_sum, sincos_sum_old
+    INTEGER, DIMENSION(:), ALLOCATABLE :: kspace_vector_ints
+    INTEGER :: kxyz_max(3), kxyz_maxmax
+
  END TYPE Box_Class
 
  TYPE Cavity_Data_Class
          INTEGER(INT64), DIMENSION(:), ALLOCATABLE :: cavity_locs
+         INTEGER(INT32), DIMENSION(:), ALLOCATABLE :: cavity_locs_int32
          INTEGER(INT64) :: ncavs
          REAL(DP) :: ncavs_dp, ln_cavfrac
  END TYPE Cavity_Data_Class

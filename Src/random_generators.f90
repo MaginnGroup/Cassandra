@@ -42,6 +42,11 @@ INTEGER, PARAMETER:: da = SELECTED_REAL_KIND(14, 60)
 INTEGER (KIND=INT64), SAVE  :: s1 = 153587801, s2 = -759022222, s3 = 1288503317, &
                             s4 = -1718083407, s5 = -123456789
 INTEGER(INT64), DIMENSION(4,5) :: s_arr
+INTEGER(INT64), PARAMETER :: const1 = -2_INT64, &
+        const2 = -512_INT64, &
+        const3 = -4096_INT64, &
+        const4 = -131072_INT64, &
+        const5 = -8388608_INT64
 !$OMP threadprivate(s1,s2,s3,s4,s5,s_arr)
 
 CONTAINS
@@ -65,8 +70,8 @@ INTEGER :: nthreads, ithread, i, j
 nthreads = 1
 s1 = i1
 s3 = i3
-IF (IAND(s1,      -2_INT64) == 0) s1 = i1 - 8388607_INT64
-IF (IAND(s3,   -4096_INT64) == 0) s3 = i3 - 8388607_INT64
+IF (IAND(s1,      const1) == 0) s1 = i1 - 8388607_INT64
+IF (IAND(s3,   const3) == 0) s3 = i3 - 8388607_INT64
 !$ nthreads = OMP_GET_MAX_THREADS()
 ALLOCATE(thread_seeds(5,0:nthreads-1))
 thread_seeds(1,0) = s1
@@ -86,8 +91,8 @@ s2 = thread_seeds(2,ithread)
 s3 = thread_seeds(3,ithread)
 s4 = thread_seeds(4,ithread)
 s5 = thread_seeds(5,ithread)
-IF (IAND(s1,      -2_INT64) == 0) s1 = s1 - 8388607_INT64
-IF (IAND(s3,   -4096_INT64) == 0) s3 = s3 - 8388607_INT64
+IF (IAND(s1,      const1) == 0) s1 = s1 - 8388607_INT64
+IF (IAND(s3,   const3) == 0) s3 = s3 - 8388607_INT64
 s_arr = 0_INT64
 DO WHILE (ANY(IAND(s_arr,MASKL(41,INT64))+1_INT64==1_INT64))
         DO j = 1, 5
@@ -96,6 +101,13 @@ DO WHILE (ANY(IAND(s_arr,MASKL(41,INT64))+1_INT64==1_INT64))
                 END DO
         END DO
 END DO
+s1 = thread_seeds(1,ithread)
+s2 = thread_seeds(2,ithread)
+s3 = thread_seeds(3,ithread)
+s4 = thread_seeds(4,ithread)
+s5 = thread_seeds(5,ithread)
+IF (IAND(s1,      const1) == 0) s1 = s1 - 8388607_INT64
+IF (IAND(s3,   const3) == 0) s3 = s3 - 8388607_INT64
 !$OMP END PARALLEL
 RETURN
 END SUBROUTINE init_seeds
@@ -114,15 +126,15 @@ REAL(DP) :: rranf
 INTEGER (KIND=INT64) :: b
 
 b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53_INT64)
-s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+s1 = IEOR( ISHFT( IAND(s1,const1), 10), b)
 b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
-s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+s2 = IEOR( ISHFT( IAND(s2,const2), 5), b)
 b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
-s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+s3 = IEOR( ISHFT( IAND(s3,const3), 29), b)
 b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
-s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+s4 = IEOR( ISHFT( IAND(s4,const4), 23), b)
 b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
-s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+s5 = IEOR( ISHFT( IAND(s5,const5), 8), b)
 
 ! pconst is the reciprocal of (2^64 - 1)
 rranf = IEOR( IEOR( IEOR( IEOR(s1,s2), s3), s4), s5) *5.4210108624275221E-20_DP + 0.5_DP
@@ -140,7 +152,7 @@ SUBROUTINE vector_rranint(rranint_vec)
         INTEGER(INT64) :: s1,s2,s3,s4,s5
         vec_len = SIZE(rranint_vec)
         jmax = ISHFT(vec_len,-2)-1
-        lenmod4 = IAND(vec_len,4_INT32)
+        lenmod4 = IAND(vec_len,3_INT32)
 
         !DIR$ VECTOR ALIGNED
         !$OMP SIMD PRIVATE(b,s1,s2,s3,s4,s5) SAFELEN(4)
@@ -153,15 +165,15 @@ SUBROUTINE vector_rranint(rranint_vec)
                 !DIR$ LOOP COUNT = 250000
                 DO j = 0, jmax
                         b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
-                        s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                        s1 = IEOR( ISHFT( IAND(s1,const1), 10), b)
                         b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
-                        s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                        s2 = IEOR( ISHFT( IAND(s2,const2), 5), b)
                         b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
-                        s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                        s3 = IEOR( ISHFT( IAND(s3,const3), 29), b)
                         b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
-                        s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                        s4 = IEOR( ISHFT( IAND(s4,const4), 23), b)
                         b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
-                        s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                        s5 = IEOR( ISHFT( IAND(s5,const5), 8), b)
 
                         rranint_vec(j*4+i) = IEOR( IEOR( IEOR( IEOR(s1,s2), s3), s4), s5)
                 END DO
@@ -189,7 +201,7 @@ SUBROUTINE vector_rranf(rranf_vec)
         REAL(DP), PARAMETER :: one_dp = 1.0_DP
         vec_len = SIZE(rranf_vec)
         jmax = ISHFT(vec_len,-2)-1
-        lenmod4 = IAND(vec_len,4_INT32)
+        lenmod4 = IAND(vec_len,3_INT32)
 
         !DIR$ VECTOR ALIGNED
         !$OMP SIMD PRIVATE(b,s1,s2,s3,s4,s5,intres) SAFELEN(4)
@@ -202,18 +214,18 @@ SUBROUTINE vector_rranf(rranf_vec)
                 !DIR$ LOOP COUNT = 250
                 DO j = 0, jmax
                         b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
-                        s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                        s1 = IEOR( ISHFT( IAND(s1,const1), 10), b)
                         b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
-                        s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                        s2 = IEOR( ISHFT( IAND(s2,const2), 5), b)
                         intres = IEOR(s1,s2)
                         b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
-                        s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                        s3 = IEOR( ISHFT( IAND(s3,const3), 29), b)
                         intres = IEOR(intres,s3)
                         b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
-                        s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                        s4 = IEOR( ISHFT( IAND(s4,const4), 23), b)
                         intres = IEOR(intres,s4)
                         b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
-                        s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                        s5 = IEOR( ISHFT( IAND(s5,const5), 8), b)
                         intres = IEOR(intres,s5)
 
                         ! We don't use the following line because conversion from INT64 to DP is not vectorized well unless
@@ -248,16 +260,171 @@ SUBROUTINE cavity_biased_rranf(rranf_arr,i_big_atom,ibox)
         INTEGER :: vec_len, lenmod4, i, j, jmax
         INTEGER(INT64) :: s1,s2,s3,s4,s5,intres
         INTEGER(INT64) :: cavloc, ncavs
+        INTEGER(INT32) :: cavloc_int32, cavxyzloc_int32
+
+        INTEGER(INT64), PARAMETER :: one_dp_as_int = TRANSFER(1.0_DP,const1)
+        INTEGER(INT64), PARAMETER :: ncavs_threshold = SHIFTL(1_INT64,31)
 
         vec_len = SIZE(rranf_arr,1)
         jmax = ISHFT(vec_len,-2)-1
-        lenmod4 = IAND(vec_len,4_INT32)
+        ! This subroutine is only valid for vec_vlen as a multiple of 4, so no remainder.
+        ! At time of writing, it is only used in a case in which vec_vlen is padded to a multple of 8.
+        !lenmod4 = IAND(vec_len,3_INT32)
 
         ncavs_dp = cavdatalist(i_big_atom,ibox)%ncavs_dp
         lbcr = 1.0_DP/REAL(box_list(ibox)%length_bitcells,DP)
 
         ncavs = cavdatalist(i_big_atom,ibox)%ncavs
-        IF (LEADZ(ncavs)>32) THEN
+        IF (box_list(ibox)%l_cavloc_int32) THEN
+                !DIR$ VECTOR ALIGNED
+                !$OMP SIMD PRIVATE(b,s1,s2,s3,s4,s5,intres,cavloc_int32,cavxyzloc,cavxyzloc_int32)
+                DO i = 1, 4
+                        s1 = s_arr(i,1)
+                        s2 = s_arr(i,2)
+                        s3 = s_arr(i,3)
+                        s4 = s_arr(i,4)
+                        s5 = s_arr(i,5)
+                        !DIR$ LOOP COUNT = 256
+                        DO j = 0, jmax
+                                b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
+                                s1 = IEOR( ISHFT( IAND(s1,const1), 10), b)
+                                b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
+                                s2 = IEOR( ISHFT( IAND(s2,const2), 5), b)
+                                intres = IEOR(s1,s2)
+                                b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
+                                s3 = IEOR( ISHFT( IAND(s3,const3), 29), b)
+                                intres = IEOR(intres,s3)
+                                b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
+                                s4 = IEOR( ISHFT( IAND(s4,const4), 23), b)
+                                intres = IEOR(intres,s4)
+                                b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
+                                s5 = IEOR( ISHFT( IAND(s5,const5), 8), b)
+                                intres = IEOR(intres,s5)
+
+
+                                ! use 52 most significant bits of random integer (intres) as significand fraction of DP float
+                                ! to obtain random floating point number in range [1.0, 2.0)
+                                intres = SHIFTR(intres,12)
+                                intres = IOR(intres, one_dp_as_int)
+                                ! only using cavxyzloc because it's a float, despite it not being used the same as in later steps
+                                cavxyzloc = ncavs_dp
+                                cavxyzloc = TRANSFER(intres,cavxyzloc)*cavxyzloc - cavxyzloc
+                                ! cavxyzloc is now random float in range [0.0,ncavs_dp)
+                                ! convert cavxyzloc to 32-bit integer in range [0,ncavs-1]
+                                cavloc_int32 = INT(cavxyzloc,INT32) ! now we have the randomly chosen cavity voxel index
+                                cavloc_int32 = cavdatalist(i_big_atom,ibox)%cavity_locs_int32(cavloc_int32) ! fetch voxel coordinates from random index
+
+                                ! cavloc now stores the 3-D integer voxel grid coordinates of the chosen cavity voxel as a single
+                                ! 64-bit integer.
+                                ! The first-dimension coordinate is stored in bits 0-10, the second-dimension coordinate is stored
+                                ! in the next 10 bits (11-20), and the third-dimension coordinate is stored in bits 21-30.
+                                ! bit 31 should be zero
+
+
+
+
+                                b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
+                                s1 = IEOR( ISHFT( IAND(s1,const1), 10), b)
+                                b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
+                                s2 = IEOR( ISHFT( IAND(s2,const2), 5), b)
+                                intres = IEOR(s1,s2)
+                                b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
+                                s3 = IEOR( ISHFT( IAND(s3,const3), 29), b)
+                                intres = IEOR(intres,s3)
+                                b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
+                                s4 = IEOR( ISHFT( IAND(s4,const4), 23), b)
+                                intres = IEOR(intres,s4)
+                                b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
+                                s5 = IEOR( ISHFT( IAND(s5,const5), 8), b)
+                                intres = IEOR(intres,s5)
+                                ! use two bitshifts to zero all bits to the left of bit position 10 to yield only first coordinate
+                                cavxyzloc_int32 = SHIFTL(cavloc_int32,21)
+                                cavxyzloc_int32 = SHIFTR(cavxyzloc_int32,21)
+                                ! We want a random float in range [cavxyzloc_int32, cavxyzloc_int32+1).
+                                ! decrement by 1 because the random float we will add has range [1.0, 2.0) instead of [0.0,1.0)
+                                cavxyzloc_int32 = cavxyzloc_int32 - 1
+                                cavxyzloc = REAL(cavxyzloc_int32,DP) ! convert b to float
+
+                                ! use 52 most significant bits of random integer (intres) as significand fraction of DP float
+                                ! to obtain random floating point number in range [1.0, 2.0)
+                                intres = SHIFTR(intres,12)
+                                ! addition or IOR or IEOR works to combine exponent and significand fraction
+                                ! because the ones don't overlap and sign bit is 0
+                                intres = IOR(intres,one_dp_as_int) 
+                                ! add resulting random float to floating point representation of decremented voxel coordinate
+                                cavxyzloc = cavxyzloc + TRANSFER(intres,cavxyzloc)
+                                ! divide by box's length in voxels in first dimension to obtain fractional coordinate
+                                cavxyzloc = cavxyzloc*lbcr(1)
+                                rranf_arr(j*4+i,1) = cavxyzloc ! write first-dimension fractional coordinate to memory
+
+
+                                b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
+                                s1 = IEOR( ISHFT( IAND(s1,const1), 10), b)
+                                b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
+                                s2 = IEOR( ISHFT( IAND(s2,const2), 5), b)
+                                intres = IEOR(s1,s2)
+                                b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
+                                s3 = IEOR( ISHFT( IAND(s3,const3), 29), b)
+                                intres = IEOR(intres,s3)
+                                b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
+                                s4 = IEOR( ISHFT( IAND(s4,const4), 23), b)
+                                intres = IEOR(intres,s4)
+                                b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
+                                s5 = IEOR( ISHFT( IAND(s5,const5), 8), b)
+                                ! use two bitshifts to move second-dimension coordinate to first 10 bits & clear other bits
+                                cavxyzloc_int32 = SHIFTL(cavloc_int32,11) ! discards bits to the left of second-dimension coordinate
+                                cavxyzloc_int32 = SHIFTR(cavxyzloc_int32,22) ! moves second-dimension coordinate to proper place while discarding bits to right
+                                cavxyzloc_int32 = cavxyzloc_int32 - 1
+                                cavxyzloc = REAL(cavxyzloc_int32,DP)
+                                ! Move third-dimension coordinate to first 10 bits and clear other bits.
+                                ! Shift in place this time to keep result in cavloc_int32 because the other coordinates were already
+                                ! extracted
+                                cavloc_int32 = SHIFTR(cavloc_int32,21) ! only one bitshift is needed because nothing is to the left
+                                cavloc_int32 = cavloc_int32 - 1
+                                intres = IEOR(intres,s5)
+                                ! use 52 most significant bits of random integer (intres) as significand fraction of DP float
+                                ! to obtain random floating point number in range [1.0, 2.0)
+                                intres = SHIFTR(intres,12)
+                                intres = IOR(intres,one_dp_as_int)
+                                ! add resulting random float to floating point representation of decremented voxel coordinate
+                                cavxyzloc = cavxyzloc + TRANSFER(intres,cavxyzloc)
+                                ! divide by box's length in voxels in second dimension to obtain fractional coordinate
+                                cavxyzloc = cavxyzloc*lbcr(2)
+                                rranf_arr(j*4+i,2) = cavxyzloc ! write second-dimension fractional coordinate to memory
+                                cavxyzloc = REAL(cavloc_int32,DP)
+
+                                b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
+                                s1 = IEOR( ISHFT( IAND(s1,const1), 10), b)
+                                b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
+                                s2 = IEOR( ISHFT( IAND(s2,const2), 5), b)
+                                intres = IEOR(s1,s2)
+                                b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
+                                s3 = IEOR( ISHFT( IAND(s3,const3), 29), b)
+                                intres = IEOR(intres,s3)
+                                b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
+                                s4 = IEOR( ISHFT( IAND(s4,const4), 23), b)
+                                intres = IEOR(intres,s4)
+                                b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
+                                s5 = IEOR( ISHFT( IAND(s5,const5), 8), b)
+                                intres = IEOR(intres,s5)
+                                ! use 52 most significant bits of random integer (intres) as significand fraction of DP float
+                                ! to obtain random floating point number in range [1.0, 2.0)
+                                intres = SHIFTR(intres,12)
+                                intres = IOR(intres,one_dp_as_int)
+                                ! add resulting random float to floating point representation of decremented voxel coordinate
+                                cavxyzloc = cavxyzloc + TRANSFER(intres,cavxyzloc)
+                                ! divide by box's length in voxels in third dimension to obtain fractional coordinate
+                                cavxyzloc = cavxyzloc*lbcr(3)
+                                rranf_arr(j*4+i,3) = cavxyzloc ! write third-dimension fractional coordinate to memory
+                        END DO
+                        s_arr(i,1) = s1
+                        s_arr(i,2) = s2
+                        s_arr(i,3) = s3
+                        s_arr(i,4) = s4
+                        s_arr(i,5) = s5
+                END DO
+                !$OMP END SIMD
+        ELSE IF (ncavs<ncavs_threshold) THEN
                 !DIR$ VECTOR ALIGNED
                 !$OMP SIMD PRIVATE(b,s1,s2,s3,s4,s5,intres,cavloc,cavxyzloc) SAFELEN(4)
                 DO i = 1, 4
@@ -269,93 +436,136 @@ SUBROUTINE cavity_biased_rranf(rranf_arr,i_big_atom,ibox)
                         !DIR$ LOOP COUNT = 256
                         DO j = 0, jmax
                                 b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
-                                s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                                s1 = IEOR( ISHFT( IAND(s1,const1), 10), b)
                                 b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
-                                s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                                s2 = IEOR( ISHFT( IAND(s2,const2), 5), b)
                                 intres = IEOR(s1,s2)
                                 b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
-                                s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                                s3 = IEOR( ISHFT( IAND(s3,const3), 29), b)
                                 intres = IEOR(intres,s3)
                                 b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
-                                s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                                s4 = IEOR( ISHFT( IAND(s4,const4), 23), b)
                                 intres = IEOR(intres,s4)
                                 b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
-                                s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                                s5 = IEOR( ISHFT( IAND(s5,const5), 8), b)
                                 intres = IEOR(intres,s5)
-                                cavloc = INT(INT(&
-                                        TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)*ncavs_dp-ncavs_dp,&
-                                        INT32),INT64)
-                                !cavloc = TRANSFER( MAX(&
-                                !        TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)*ncavs_dp-ncavs_dp,&
-                                !        0.25_DP),cavloc)
-                                !cavloc = ISHFT(&
-                                !        IOR(ISHFT(1_INT64,52),IAND(cavloc,MASKR(52,INT64))),&
-                                !        ISHFT(cavloc,-52)-1075_INT64)
-                                cavloc = cavdatalist(i_big_atom,ibox)%cavity_locs(cavloc)
+
+
+                                ! use 52 most significant bits of random integer (intres) as significand fraction of DP float
+                                ! to obtain random floating point number in range [1.0, 2.0)
+                                intres = SHIFTR(intres,12)
+                                intres = IOR(intres, one_dp_as_int)
+                                ! only using cavxyzloc because it's a float, despite it not being used the same as in later steps
+                                cavxyzloc = ncavs_dp
+                                cavxyzloc = TRANSFER(intres,cavxyzloc)*cavxyzloc - cavxyzloc
+                                ! cavxyzloc is now random float in range [0.0,ncavs_dp)
+                                ! convert cavxyzloc to integer in range [0,ncavs-1]
+                                ! convert to 32-bit integer, then 64-bit integer because conversion from 64-bit REAL to 64-bit
+                                ! integer is not vectorized with AVX2. Since ncavs is small enough, this works.
+                                cavloc = INT(INT(cavxyzloc,INT32),INT64) ! now we have the randomly chosen cavity voxel index
+                                cavloc = cavdatalist(i_big_atom,ibox)%cavity_locs(cavloc) ! fetch voxel coordinates from random index
+
+                                ! cavloc now stores the 3-D integer voxel grid coordinates of the chosen cavity voxel as a single
+                                ! 64-bit integer.
+                                ! The first-dimension coordinate is stored in bits 0-20, the second-dimension coordinate is stored
+                                ! in the next 21 bits (21-41), and the third-dimension coordinate is stored in the remaining bits
 
 
 
 
                                 b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
-                                s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                                s1 = IEOR( ISHFT( IAND(s1,const1), 10), b)
                                 b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
-                                s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                                s2 = IEOR( ISHFT( IAND(s2,const2), 5), b)
                                 intres = IEOR(s1,s2)
                                 b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
-                                s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                                s3 = IEOR( ISHFT( IAND(s3,const3), 29), b)
                                 intres = IEOR(intres,s3)
                                 b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
-                                s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                                s4 = IEOR( ISHFT( IAND(s4,const4), 23), b)
                                 intres = IEOR(intres,s4)
                                 b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
-                                s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                                s5 = IEOR( ISHFT( IAND(s5,const5), 8), b)
                                 intres = IEOR(intres,s5)
-                                cavxyzloc = REAL(INT(IAND(cavloc,MASKR(21,INT64))-1_INT64,INT32),DP)
-                                cavloc = ISHFT(cavloc,-21)
+                                ! use two bitshifts to zero all bits to the left of bit position 20 to yield only first coordinate
+                                b = SHIFTL(cavloc,43)
+                                b = SHIFTR(b,43)
+                                ! We want a random float in range [b, b+1) (using current value of b)
+                                ! decrement b by 1 because the random float we will add has range [1.0, 2.0) instead of [0.0,1.0)
+                                b = b - 1_INT64
+                                cavxyzloc = REAL(INT(b,INT32),DP) ! convert b to float
 
-                                ! We don't use the following line because conversion from INT64 to DP is not vectorized well unless
-                                ! you have AVX-512, which we don't, and neither do any AMD processors, currently.
-                                !rranf_vec(j*4+i) = IEOR( IEOR( IEOR( IEOR(s1,s2), s3), s4), s5)*5.4210108624275221E-20_DP + 0.5_DP
-                                !intres = IEOR(IEOR(IEOR(IEOR(s1,s2),s3),s4),s5)
-                                rranf_arr(j*4+i,1) = (TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)+cavxyzloc)*lbcr(1)
-                                !rranf_arr(j*4+i,1) = TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)-1.0_DP
+                                ! use 52 most significant bits of random integer (intres) as significand fraction of DP float
+                                ! to obtain random floating point number in range [1.0, 2.0)
+                                intres = SHIFTR(intres,12)
+                                ! addition or IOR or IEOR works to combine exponent and significand fraction
+                                ! because the ones don't overlap and sign bit is 0
+                                intres = IOR(intres,one_dp_as_int) 
+                                ! add resulting random float to floating point representation of decremented voxel coordinate
+                                cavxyzloc = cavxyzloc + TRANSFER(intres,cavxyzloc)
+                                ! divide by box's length in voxels in first dimension to obtain fractional coordinate
+                                cavxyzloc = cavxyzloc*lbcr(1)
+                                rranf_arr(j*4+i,1) = cavxyzloc ! write first-dimension fractional coordinate to memory
 
 
                                 b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
-                                s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                                s1 = IEOR( ISHFT( IAND(s1,const1), 10), b)
                                 b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
-                                s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                                s2 = IEOR( ISHFT( IAND(s2,const2), 5), b)
                                 intres = IEOR(s1,s2)
                                 b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
-                                s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                                s3 = IEOR( ISHFT( IAND(s3,const3), 29), b)
                                 intres = IEOR(intres,s3)
                                 b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
-                                s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                                s4 = IEOR( ISHFT( IAND(s4,const4), 23), b)
                                 intres = IEOR(intres,s4)
                                 b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
-                                s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                                s5 = IEOR( ISHFT( IAND(s5,const5), 8), b)
+                                ! use two bitshifts to move second-dimension coordinate to first 21 bits & clear other bits
+                                b = SHIFTL(cavloc,22) ! discards bits to the left of second-dimension coordinate
+                                b = SHIFTR(b,43) ! moves second-dimension coordinate to proper place while discarding bits to right
+                                b = b - 1_INT64
+                                ! Move third-dimension coordinate to first 22 bits and clear other bits.
+                                ! Shift in place this time to keep result in cavloc because the other coordinates were already
+                                ! extracted and b is also used to hold an intermediate in random integer generation
+                                cavloc = SHIFTR(cavloc,42) ! only one bitshift is needed because nothing is to the left
+                                cavloc = cavloc - 1_INT64
+                                cavxyzloc = REAL(INT(b,INT32),DP)
                                 intres = IEOR(intres,s5)
-                                cavxyzloc = REAL(INT(IAND(cavloc,MASKR(21,INT64))-1_INT64,INT32),DP)
-                                cavloc = ISHFT(cavloc,-21)
-                                rranf_arr(j*4+i,2) = (TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)+cavxyzloc)*lbcr(2)
-                                !rranf_arr(j*4+i,2) = TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)-1.0_DP
+                                ! use 52 most significant bits of random integer (intres) as significand fraction of DP float
+                                ! to obtain random floating point number in range [1.0, 2.0)
+                                intres = SHIFTR(intres,12)
+                                intres = IOR(intres,one_dp_as_int)
+                                ! add resulting random float to floating point representation of decremented voxel coordinate
+                                cavxyzloc = cavxyzloc + TRANSFER(intres,cavxyzloc)
+                                ! divide by box's length in voxels in second dimension to obtain fractional coordinate
+                                cavxyzloc = cavxyzloc*lbcr(2)
+                                rranf_arr(j*4+i,2) = cavxyzloc ! write second-dimension fractional coordinate to memory
+                                cavxyzloc = REAL(INT(cavloc,INT32),DP)
 
                                 b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
-                                s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                                s1 = IEOR( ISHFT( IAND(s1,const1), 10), b)
                                 b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
-                                s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                                s2 = IEOR( ISHFT( IAND(s2,const2), 5), b)
                                 intres = IEOR(s1,s2)
                                 b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
-                                s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                                s3 = IEOR( ISHFT( IAND(s3,const3), 29), b)
                                 intres = IEOR(intres,s3)
                                 b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
-                                s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                                s4 = IEOR( ISHFT( IAND(s4,const4), 23), b)
                                 intres = IEOR(intres,s4)
                                 b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
-                                s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                                s5 = IEOR( ISHFT( IAND(s5,const5), 8), b)
                                 intres = IEOR(intres,s5)
-                                cavxyzloc = REAL(INT(IAND(cavloc,MASKR(21,INT64))-1_INT64,INT32),DP)
-                                rranf_arr(j*4+i,3) = (TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)+cavxyzloc)*lbcr(3)
+                                ! use 52 most significant bits of random integer (intres) as significand fraction of DP float
+                                ! to obtain random floating point number in range [1.0, 2.0)
+                                intres = SHIFTR(intres,12)
+                                intres = IOR(intres,one_dp_as_int)
+                                ! add resulting random float to floating point representation of decremented voxel coordinate
+                                cavxyzloc = cavxyzloc + TRANSFER(intres,cavxyzloc)
+                                ! divide by box's length in voxels in third dimension to obtain fractional coordinate
+                                cavxyzloc = cavxyzloc*lbcr(3)
+                                rranf_arr(j*4+i,3) = cavxyzloc ! write third-dimension fractional coordinate to memory
                         END DO
                         s_arr(i,1) = s1
                         s_arr(i,2) = s2
@@ -376,91 +586,134 @@ SUBROUTINE cavity_biased_rranf(rranf_arr,i_big_atom,ibox)
                         !DIR$ LOOP COUNT = 256
                         DO j = 0, jmax
                                 b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
-                                s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                                s1 = IEOR( ISHFT( IAND(s1,const1), 10), b)
                                 b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
-                                s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                                s2 = IEOR( ISHFT( IAND(s2,const2), 5), b)
                                 intres = IEOR(s1,s2)
                                 b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
-                                s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                                s3 = IEOR( ISHFT( IAND(s3,const3), 29), b)
                                 intres = IEOR(intres,s3)
                                 b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
-                                s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                                s4 = IEOR( ISHFT( IAND(s4,const4), 23), b)
                                 intres = IEOR(intres,s4)
                                 b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
-                                s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                                s5 = IEOR( ISHFT( IAND(s5,const5), 8), b)
                                 intres = IEOR(intres,s5)
-                                cavloc = INT(TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)*ncavs_dp-ncavs_dp,INT64)
-                                !cavloc = TRANSFER( MAX(&
-                                !        TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)*ncavs_dp-ncavs_dp,&
-                                !        0.25_DP),cavloc)
-                                !cavloc = ISHFT(&
-                                !        IOR(ISHFT(1_INT64,52),IAND(cavloc,MASKR(52,INT64))),&
-                                !        ISHFT(cavloc,-52)-1075_INT64)
-                                cavloc = cavdatalist(i_big_atom,ibox)%cavity_locs(cavloc)
+
+
+                                ! use 52 most significant bits of random integer (intres) as significand fraction of DP float
+                                ! to obtain random floating point number in range [1.0, 2.0)
+                                intres = SHIFTR(intres,12)
+                                intres = IOR(intres, one_dp_as_int)
+                                ! only using cavxyzloc because it's a float, despite it not being used the same as in later steps
+                                cavxyzloc = ncavs_dp
+                                cavxyzloc = TRANSFER(intres,cavxyzloc)*cavxyzloc - cavxyzloc
+                                ! cavxyzloc is now random float in range [0.0,ncavs_dp)
+                                ! convert cavxyzloc to integer in range [0,ncavs-1]
+                                cavloc = INT(cavxyzloc,INT64) ! now we have the randomly chosen cavity voxel index
+                                cavloc = cavdatalist(i_big_atom,ibox)%cavity_locs(cavloc) ! fetch voxel coordinates from random index
+
+                                ! cavloc now stores the 3-D integer voxel grid coordinates of the chosen cavity voxel as a single
+                                ! 64-bit integer.
+                                ! The first-dimension coordinate is stored in bits 0-20, the second-dimension coordinate is stored
+                                ! in the next 21 bits (21-41), and the third-dimension coordinate is stored in the remaining bits
 
 
 
 
                                 b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
-                                s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                                s1 = IEOR( ISHFT( IAND(s1,const1), 10), b)
                                 b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
-                                s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                                s2 = IEOR( ISHFT( IAND(s2,const2), 5), b)
                                 intres = IEOR(s1,s2)
                                 b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
-                                s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                                s3 = IEOR( ISHFT( IAND(s3,const3), 29), b)
                                 intres = IEOR(intres,s3)
                                 b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
-                                s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                                s4 = IEOR( ISHFT( IAND(s4,const4), 23), b)
                                 intres = IEOR(intres,s4)
                                 b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
-                                s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                                s5 = IEOR( ISHFT( IAND(s5,const5), 8), b)
                                 intres = IEOR(intres,s5)
-                                cavxyzloc = REAL(INT(IAND(cavloc,MASKR(21,INT64))-1_INT64,INT32),DP)
-                                cavloc = ISHFT(cavloc,-21)
+                                ! use two bitshifts to zero all bits to the left of bit position 20 to yield only first coordinate
+                                b = SHIFTL(cavloc,43)
+                                b = SHIFTR(b,43)
+                                ! We want a random float in range [b, b+1) (using current value of b)
+                                ! decrement b by 1 because the random float we will add has range [1.0, 2.0) instead of [0.0,1.0)
+                                b = b - 1_INT64
+                                cavxyzloc = REAL(INT(b,INT32),DP) ! convert b to float
 
-                                ! We don't use the following line because conversion from INT64 to DP is not vectorized well unless
-                                ! you have AVX-512, which we don't, and neither do any AMD processors, currently.
-                                !rranf_vec(j*4+i) = IEOR( IEOR( IEOR( IEOR(s1,s2), s3), s4), s5)*5.4210108624275221E-20_DP + 0.5_DP
-                                !intres = IEOR(IEOR(IEOR(IEOR(s1,s2),s3),s4),s5)
-                                rranf_arr(j*4+i,1) = (TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)+cavxyzloc)*lbcr(1)
-                                !rranf_arr(j*4+i,1) = TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)-1.0_DP
+                                ! use 52 most significant bits of random integer (intres) as significand fraction of DP float
+                                ! to obtain random floating point number in range [1.0, 2.0)
+                                intres = SHIFTR(intres,12)
+                                ! addition or IOR or IEOR works to combine exponent and significand fraction
+                                ! because the ones don't overlap and sign bit is 0
+                                intres = IOR(intres,one_dp_as_int) 
+                                ! add resulting random float to floating point representation of decremented voxel coordinate
+                                cavxyzloc = cavxyzloc + TRANSFER(intres,cavxyzloc)
+                                ! divide by box's length in voxels in first dimension to obtain fractional coordinate
+                                cavxyzloc = cavxyzloc*lbcr(1)
+                                rranf_arr(j*4+i,1) = cavxyzloc ! write first-dimension fractional coordinate to memory
 
 
                                 b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
-                                s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                                s1 = IEOR( ISHFT( IAND(s1,const1), 10), b)
                                 b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
-                                s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                                s2 = IEOR( ISHFT( IAND(s2,const2), 5), b)
                                 intres = IEOR(s1,s2)
                                 b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
-                                s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                                s3 = IEOR( ISHFT( IAND(s3,const3), 29), b)
                                 intres = IEOR(intres,s3)
                                 b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
-                                s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                                s4 = IEOR( ISHFT( IAND(s4,const4), 23), b)
                                 intres = IEOR(intres,s4)
                                 b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
-                                s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                                s5 = IEOR( ISHFT( IAND(s5,const5), 8), b)
+                                ! use two bitshifts to move second-dimension coordinate to first 21 bits & clear other bits
+                                b = SHIFTL(cavloc,22) ! discards bits to the left of second-dimension coordinate
+                                b = SHIFTR(b,43) ! moves second-dimension coordinate to proper place while discarding bits to right
+                                b = b - 1_INT64
+                                ! Move third-dimension coordinate to first 22 bits and clear other bits.
+                                ! Shift in place this time to keep result in cavloc because the other coordinates were already
+                                ! extracted and b is also used to hold an intermediate in random integer generation
+                                cavloc = SHIFTR(cavloc,42) ! only one bitshift is needed because nothing is to the left
+                                cavloc = cavloc - 1_INT64
+                                cavxyzloc = REAL(INT(b,INT32),DP)
                                 intres = IEOR(intres,s5)
-                                cavxyzloc = REAL(INT(IAND(cavloc,MASKR(21,INT64))-1_INT64,INT32),DP)
-                                cavloc = ISHFT(cavloc,-21)
-                                rranf_arr(j*4+i,2) = (TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)+cavxyzloc)*lbcr(2)
-                                !rranf_arr(j*4+i,2) = TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)-1.0_DP
+                                ! use 52 most significant bits of random integer (intres) as significand fraction of DP float
+                                ! to obtain random floating point number in range [1.0, 2.0)
+                                intres = SHIFTR(intres,12)
+                                intres = IOR(intres,one_dp_as_int)
+                                ! add resulting random float to floating point representation of decremented voxel coordinate
+                                cavxyzloc = cavxyzloc + TRANSFER(intres,cavxyzloc)
+                                ! divide by box's length in voxels in second dimension to obtain fractional coordinate
+                                cavxyzloc = cavxyzloc*lbcr(2)
+                                rranf_arr(j*4+i,2) = cavxyzloc ! write second-dimension fractional coordinate to memory
+                                cavxyzloc = REAL(INT(cavloc,INT32),DP)
 
                                 b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
-                                s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                                s1 = IEOR( ISHFT( IAND(s1,const1), 10), b)
                                 b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
-                                s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                                s2 = IEOR( ISHFT( IAND(s2,const2), 5), b)
                                 intres = IEOR(s1,s2)
                                 b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
-                                s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                                s3 = IEOR( ISHFT( IAND(s3,const3), 29), b)
                                 intres = IEOR(intres,s3)
                                 b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
-                                s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                                s4 = IEOR( ISHFT( IAND(s4,const4), 23), b)
                                 intres = IEOR(intres,s4)
                                 b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
-                                s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                                s5 = IEOR( ISHFT( IAND(s5,const5), 8), b)
                                 intres = IEOR(intres,s5)
-                                cavxyzloc = REAL(INT(IAND(cavloc,MASKR(21,INT64))-1_INT64,INT32),DP)
-                                rranf_arr(j*4+i,3) = (TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)+cavxyzloc)*lbcr(3)
+                                ! use 52 most significant bits of random integer (intres) as significand fraction of DP float
+                                ! to obtain random floating point number in range [1.0, 2.0)
+                                intres = SHIFTR(intres,12)
+                                intres = IOR(intres,one_dp_as_int)
+                                ! add resulting random float to floating point representation of decremented voxel coordinate
+                                cavxyzloc = cavxyzloc + TRANSFER(intres,cavxyzloc)
+                                ! divide by box's length in voxels in third dimension to obtain fractional coordinate
+                                cavxyzloc = cavxyzloc*lbcr(3)
+                                rranf_arr(j*4+i,3) = cavxyzloc ! write third-dimension fractional coordinate to memory
                         END DO
                         s_arr(i,1) = s1
                         s_arr(i,2) = s2
@@ -470,96 +723,97 @@ SUBROUTINE cavity_biased_rranf(rranf_arr,i_big_atom,ibox)
                 END DO
                 !$OMP END SIMD
         END IF
+        ! This subroutine is only valid for vec_vlen as a multiple of 4, so no remainder
 
-        !$DIR ASSUME (lenmod4 < 4)
-        DO i = 1, lenmod4
-                s1 = s_arr(i,1)
-                s2 = s_arr(i,2)
-                s3 = s_arr(i,3)
-                s4 = s_arr(i,4)
-                s5 = s_arr(i,5)
-                b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
-                s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
-                b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
-                s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
-                intres = IEOR(s1,s2)
-                b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
-                s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
-                intres = IEOR(intres,s3)
-                b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
-                s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
-                intres = IEOR(intres,s4)
-                b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
-                s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
-                intres = IEOR(intres,s5)
-                cavloc = INT(TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)*ncavs_dp-ncavs_dp,INT64)
-                cavloc = cavdatalist(i_big_atom,ibox)%cavity_locs(cavloc)
-
-
-
-
-                b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
-                s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
-                b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
-                s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
-                intres = IEOR(s1,s2)
-                b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
-                s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
-                intres = IEOR(intres,s3)
-                b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
-                s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
-                intres = IEOR(intres,s4)
-                b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
-                s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
-                intres = IEOR(intres,s5)
-                cavxyzloc = REAL(INT(IAND(cavloc,MASKR(21,INT64))-1_INT64,INT32),DP)
-                cavloc = ISHFT(cavloc,-21)
-
-                rranf_arr((jmax+1)*4+i,1) = (TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)+cavxyzloc)*lbcr(1)
-                !rranf_arr(j*4+i,1) = TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)-1.0_DP
+        !!$DIR ASSUME (lenmod4 < 4)
+        !DO i = 1, lenmod4
+        !        s1 = s_arr(i,1)
+        !        s2 = s_arr(i,2)
+        !        s3 = s_arr(i,3)
+        !        s4 = s_arr(i,4)
+        !        s5 = s_arr(i,5)
+        !        b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
+        !        s1 = IEOR( ISHFT( IAND(s1,const1), 10), b)
+        !        b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
+        !        s2 = IEOR( ISHFT( IAND(s2,const2), 5), b)
+        !        intres = IEOR(s1,s2)
+        !        b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
+        !        s3 = IEOR( ISHFT( IAND(s3,const3), 29), b)
+        !        intres = IEOR(intres,s3)
+        !        b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
+        !        s4 = IEOR( ISHFT( IAND(s4,const4), 23), b)
+        !        intres = IEOR(intres,s4)
+        !        b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
+        !        s5 = IEOR( ISHFT( IAND(s5,const5), 8), b)
+        !        intres = IEOR(intres,s5)
+        !        cavloc = INT(TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)*ncavs_dp-ncavs_dp,INT64)
+        !        cavloc = cavdatalist(i_big_atom,ibox)%cavity_locs(cavloc)
 
 
-                b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
-                s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
-                b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
-                s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
-                intres = IEOR(s1,s2)
-                b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
-                s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
-                intres = IEOR(intres,s3)
-                b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
-                s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
-                intres = IEOR(intres,s4)
-                b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
-                s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
-                intres = IEOR(intres,s5)
-                cavxyzloc = REAL(INT(IAND(cavloc,MASKR(21,INT64))-1_INT64,INT32),DP)
-                cavloc = ISHFT(cavloc,-21)
-                rranf_arr((jmax+1)*4+i,2) = (TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)+cavxyzloc)*lbcr(2)
-                !rranf_arr(j*4+i,2) = TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)-1.0_DP
 
-                b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
-                s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
-                b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
-                s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
-                intres = IEOR(s1,s2)
-                b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
-                s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
-                intres = IEOR(intres,s3)
-                b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
-                s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
-                intres = IEOR(intres,s4)
-                b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
-                s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
-                intres = IEOR(intres,s5)
-                cavxyzloc = REAL(INT(IAND(cavloc,MASKR(21,INT64))-1_INT64,INT32),DP)
-                rranf_arr((jmax+1)*4+i,3) = (TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)+cavxyzloc)*lbcr(3)
-                s_arr(i,1) = s1
-                s_arr(i,2) = s2
-                s_arr(i,3) = s3
-                s_arr(i,4) = s4
-                s_arr(i,5) = s5
-        END DO
+
+        !        b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
+        !        s1 = IEOR( ISHFT( IAND(s1,const1), 10), b)
+        !        b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
+        !        s2 = IEOR( ISHFT( IAND(s2,const2), 5), b)
+        !        intres = IEOR(s1,s2)
+        !        b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
+        !        s3 = IEOR( ISHFT( IAND(s3,const3), 29), b)
+        !        intres = IEOR(intres,s3)
+        !        b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
+        !        s4 = IEOR( ISHFT( IAND(s4,const4), 23), b)
+        !        intres = IEOR(intres,s4)
+        !        b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
+        !        s5 = IEOR( ISHFT( IAND(s5,const5), 8), b)
+        !        intres = IEOR(intres,s5)
+        !        cavxyzloc = REAL(INT(IAND(cavloc,MASKR(21,INT64))-1_INT64,INT32),DP)
+        !        cavloc = ISHFT(cavloc,-21)
+
+        !        rranf_arr((jmax+1)*4+i,1) = (TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)+cavxyzloc)*lbcr(1)
+        !        !rranf_arr(j*4+i,1) = TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)-1.0_DP
+
+
+        !        b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
+        !        s1 = IEOR( ISHFT( IAND(s1,const1), 10), b)
+        !        b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
+        !        s2 = IEOR( ISHFT( IAND(s2,const2), 5), b)
+        !        intres = IEOR(s1,s2)
+        !        b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
+        !        s3 = IEOR( ISHFT( IAND(s3,const3), 29), b)
+        !        intres = IEOR(intres,s3)
+        !        b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
+        !        s4 = IEOR( ISHFT( IAND(s4,const4), 23), b)
+        !        intres = IEOR(intres,s4)
+        !        b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
+        !        s5 = IEOR( ISHFT( IAND(s5,const5), 8), b)
+        !        intres = IEOR(intres,s5)
+        !        cavxyzloc = REAL(INT(IAND(cavloc,MASKR(21,INT64))-1_INT64,INT32),DP)
+        !        cavloc = ISHFT(cavloc,-21)
+        !        rranf_arr((jmax+1)*4+i,2) = (TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)+cavxyzloc)*lbcr(2)
+        !        !rranf_arr(j*4+i,2) = TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)-1.0_DP
+
+        !        b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53)
+        !        s1 = IEOR( ISHFT( IAND(s1,const1), 10), b)
+        !        b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
+        !        s2 = IEOR( ISHFT( IAND(s2,const2), 5), b)
+        !        intres = IEOR(s1,s2)
+        !        b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
+        !        s3 = IEOR( ISHFT( IAND(s3,const3), 29), b)
+        !        intres = IEOR(intres,s3)
+        !        b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
+        !        s4 = IEOR( ISHFT( IAND(s4,const4), 23), b)
+        !        intres = IEOR(intres,s4)
+        !        b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
+        !        s5 = IEOR( ISHFT( IAND(s5,const5), 8), b)
+        !        intres = IEOR(intres,s5)
+        !        cavxyzloc = REAL(INT(IAND(cavloc,MASKR(21,INT64))-1_INT64,INT32),DP)
+        !        rranf_arr((jmax+1)*4+i,3) = (TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)+cavxyzloc)*lbcr(3)
+        !        s_arr(i,1) = s1
+        !        s_arr(i,2) = s2
+        !        s_arr(i,3) = s3
+        !        s_arr(i,4) = s4
+        !        s_arr(i,5) = s5
+        !END DO
 
 END SUBROUTINE cavity_biased_rranf
 
@@ -585,7 +839,7 @@ SUBROUTINE array_boxscan_rranf(rranf_arr,kappa_ins)
         !zpart_width = 1.0_DP/n_zparts
         vec_len = SIZE(rranf_arr,1)
         jmax2 = ISHFT(vec_len,-2)-1
-        lenmod4 = IAND(vec_len,4_INT32)
+        lenmod4 = IAND(vec_len,3_INT32)
 
         !DIR$ VECTOR ALIGNED
         !$OMP SIMD PRIVATE(b,s1,s2,s3,s4,s5,intres) SAFELEN(4)
@@ -599,18 +853,18 @@ SUBROUTINE array_boxscan_rranf(rranf_arr,kappa_ins)
                 !DIR$ LOOP COUNT = 256
                 DO j = 0, jmax1
                         b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53_INT64)
-                        s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                        s1 = IEOR( ISHFT( IAND(s1,const1), 10), b)
                         b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
-                        s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                        s2 = IEOR( ISHFT( IAND(s2,const2), 5), b)
                         intres = IEOR(s1,s2)
                         b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
-                        s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                        s3 = IEOR( ISHFT( IAND(s3,const3), 29), b)
                         intres = IEOR(intres,s3)
                         b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
-                        s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                        s4 = IEOR( ISHFT( IAND(s4,const4), 23), b)
                         intres = IEOR(intres,s4)
                         b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
-                        s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                        s5 = IEOR( ISHFT( IAND(s5,const5), 8), b)
                         intres = IEOR(intres,s5)
 
                         ! We don't use the following line because conversion from INT64 to DP is not vectorized well unless
@@ -621,52 +875,52 @@ SUBROUTINE array_boxscan_rranf(rranf_arr,kappa_ins)
 
 
                         b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53_INT64)
-                        s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                        s1 = IEOR( ISHFT( IAND(s1,const1), 10), b)
                         b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
-                        s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                        s2 = IEOR( ISHFT( IAND(s2,const2), 5), b)
                         intres = IEOR(s1,s2)
                         b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
-                        s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                        s3 = IEOR( ISHFT( IAND(s3,const3), 29), b)
                         intres = IEOR(intres,s3)
                         b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
-                        s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                        s4 = IEOR( ISHFT( IAND(s4,const4), 23), b)
                         intres = IEOR(intres,s4)
                         b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
-                        s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                        s5 = IEOR( ISHFT( IAND(s5,const5), 8), b)
                         intres = IEOR(intres,s5)
                         rranf_arr(j*4+i,2) = TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)-1.0_DP
 
                         b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53_INT64)
-                        s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                        s1 = IEOR( ISHFT( IAND(s1,const1), 10), b)
                         b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
-                        s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                        s2 = IEOR( ISHFT( IAND(s2,const2), 5), b)
                         intres = IEOR(s1,s2)
                         b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
-                        s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                        s3 = IEOR( ISHFT( IAND(s3,const3), 29), b)
                         intres = IEOR(intres,s3)
                         b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
-                        s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                        s4 = IEOR( ISHFT( IAND(s4,const4), 23), b)
                         intres = IEOR(intres,s4)
                         b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
-                        s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                        s5 = IEOR( ISHFT( IAND(s5,const5), 8), b)
                         intres = IEOR(intres,s5)
                         rranf_arr(j*4+i,3) = TRANSFER(IOR(TRANSFER(zpart_width,intres),ISHFT(intres,-12)),1.0_DP)-zshift
                         zshift = zshift-zpart_width
                 END DO
                 DO j = jmax1+1, jmax2
                         b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53_INT64)
-                        s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                        s1 = IEOR( ISHFT( IAND(s1,const1), 10), b)
                         b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
-                        s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                        s2 = IEOR( ISHFT( IAND(s2,const2), 5), b)
                         intres = IEOR(s1,s2)
                         b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
-                        s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                        s3 = IEOR( ISHFT( IAND(s3,const3), 29), b)
                         intres = IEOR(intres,s3)
                         b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
-                        s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                        s4 = IEOR( ISHFT( IAND(s4,const4), 23), b)
                         intres = IEOR(intres,s4)
                         b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
-                        s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                        s5 = IEOR( ISHFT( IAND(s5,const5), 8), b)
                         intres = IEOR(intres,s5)
 
                         ! We don't use the following line because conversion from INT64 to DP is not vectorized well unless
@@ -677,35 +931,35 @@ SUBROUTINE array_boxscan_rranf(rranf_arr,kappa_ins)
 
 
                         b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53_INT64)
-                        s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                        s1 = IEOR( ISHFT( IAND(s1,const1), 10), b)
                         b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
-                        s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                        s2 = IEOR( ISHFT( IAND(s2,const2), 5), b)
                         intres = IEOR(s1,s2)
                         b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
-                        s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                        s3 = IEOR( ISHFT( IAND(s3,const3), 29), b)
                         intres = IEOR(intres,s3)
                         b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
-                        s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                        s4 = IEOR( ISHFT( IAND(s4,const4), 23), b)
                         intres = IEOR(intres,s4)
                         b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
-                        s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                        s5 = IEOR( ISHFT( IAND(s5,const5), 8), b)
                         intres = IEOR(intres,s5)
                         rranf_arr(j*4+i,2) = TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)-1.0_DP
 
 
                         b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53_INT64)
-                        s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+                        s1 = IEOR( ISHFT( IAND(s1,const1), 10), b)
                         b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
-                        s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+                        s2 = IEOR( ISHFT( IAND(s2,const2), 5), b)
                         intres = IEOR(s1,s2)
                         b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
-                        s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+                        s3 = IEOR( ISHFT( IAND(s3,const3), 29), b)
                         intres = IEOR(intres,s3)
                         b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
-                        s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+                        s4 = IEOR( ISHFT( IAND(s4,const4), 23), b)
                         intres = IEOR(intres,s4)
                         b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
-                        s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+                        s5 = IEOR( ISHFT( IAND(s5,const5), 8), b)
                         intres = IEOR(intres,s5)
                         rranf_arr(j*4+i,3) = TRANSFER(IOR(TRANSFER(1.0_DP,intres),ISHFT(intres,-12)),1.0_DP)-1.0_DP
                 END DO
@@ -732,15 +986,15 @@ END SUBROUTINE array_boxscan_rranf
         INTEGER (KIND=INT64) :: b
 
         b  = ISHFT( IEOR( ISHFT(s1,1), s1), -53_INT64)
-        s1 = IEOR( ISHFT( IAND(s1,-2_INT64), 10), b)
+        s1 = IEOR( ISHFT( IAND(s1,const1), 10), b)
         b  = ISHFT( IEOR( ISHFT(s2,24), s2), -50)
-        s2 = IEOR( ISHFT( IAND(s2,-512_INT64), 5), b)
+        s2 = IEOR( ISHFT( IAND(s2,const2), 5), b)
         b  = ISHFT( IEOR( ISHFT(s3,3), s3), -23)
-        s3 = IEOR( ISHFT( IAND(s3,-4096_INT64), 29), b)
+        s3 = IEOR( ISHFT( IAND(s3,const3), 29), b)
         b  = ISHFT( IEOR( ISHFT(s4,5), s4), -24)
-        s4 = IEOR( ISHFT( IAND(s4,-131072_INT64), 23), b)
+        s4 = IEOR( ISHFT( IAND(s4,const4), 23), b)
         b  = ISHFT( IEOR( ISHFT(s5,3), s5), -33)
-        s5 = IEOR( ISHFT( IAND(s5,-8388608_INT64), 8), b)
+        s5 = IEOR( ISHFT( IAND(s5,const5), 8), b)
 
         rranint = IEOR( IEOR( IEOR( IEOR(s1,s2), s3), s4), s5)
 

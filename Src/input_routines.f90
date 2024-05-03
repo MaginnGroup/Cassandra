@@ -1204,10 +1204,15 @@ SUBROUTINE Get_Molecule_Info
   ! the number of molecules of each species in a simulation at the end of a step is still capped at max_molecules - tp_correction
   max_molecules = max_molecules + tp_correction
 
+  sum_max_molecules = SUM(max_molecules)
+  sum_max_molecules_p4 = IAND(sum_max_molecules+3,NOT(3))
+  max_max_molecules = MAXVAL(max_molecules)
+  max_max_molecules_p4 = IAND(max_max_molecules+3,NOT(3))
+
   ! Allocate arrays that depend on max_molecules, natoms, and nspecies
   ! N.B.: MAXVAL instrinsic function selects the largest value from an array
 
-  ALLOCATE( atom_list(MAXVAL(natoms), MAXVAL(max_molecules), nspecies), Stat = AllocateStatus )
+  ALLOCATE( atom_list(MAXVAL(natoms), max_max_molecules, nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
      write(*,*)'memory could not be allocated for atom_list array'
      write(*,*)'stopping'
@@ -1272,14 +1277,14 @@ SUBROUTINE Get_Molecule_Info
      STOP
   END IF
 
-  ALLOCATE( molecule_list(MAXVAL(max_molecules), nspecies), Stat = AllocateStatus )
+  ALLOCATE( molecule_list(max_max_molecules, nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
      write(*,*)'memory could not be allocated for molecule_list array'
      write(*,*)'stopping'
      STOP
   END IF
 
-  ALLOCATE( locate(MAXVAL(max_molecules),nspecies,0:nbr_boxes), Stat = AllocateStatus )
+  ALLOCATE( locate(max_max_molecules_p4,nspecies,0:nbr_boxes), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
      write(*,*)'memory could not be allocated for locate array'
      write(*,*)'stopping'
@@ -1287,14 +1292,14 @@ SUBROUTINE Get_Molecule_Info
   END IF
 
   IF (l_pair_nrg) THEN
-     ALLOCATE( pair_nrg_vdw(SUM(max_molecules),SUM(max_molecules)), Stat = AllocateStatus)
+     ALLOCATE( pair_nrg_vdw(sum_max_molecules_p4,sum_max_molecules), Stat = AllocateStatus)
      IF (AllocateStatus /= 0 ) THEN
         write(*,*) 'memmory could not be allocated for pair_nrg_vdw array'
         write(*,*) 'aborting'
         STOP
      END IF
 
-     ALLOCATE( pair_nrg_qq(SUM(max_molecules),SUM(max_molecules)), Stat = AllocateStatus)
+     ALLOCATE( pair_nrg_qq(sum_max_molecules_p4,sum_max_molecules), Stat = AllocateStatus)
      IF (AllocateStatus /= 0 ) THEN
         write(*,*) 'memmory could not be allocated for pair_nrg_qq array'
         write(*,*) 'aborting'
@@ -1313,7 +1318,7 @@ SUBROUTINE Get_Molecule_Info
 
   max_index = MAX(MAXVAL(nbonds),MAXVAL(nangles),MAXVAL(ndihedrals),MAXVAL(nimpropers))
 
-  ALLOCATE( internal_coord_list(max_index, MAXVAL(max_molecules), nspecies), Stat = AllocateStatus )
+  ALLOCATE( internal_coord_list(max_index, max_max_molecules, nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
      write(*,*)'memory could not be allocated for internal_coord_list array'
      write(*,*)'stopping'

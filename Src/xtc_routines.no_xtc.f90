@@ -70,17 +70,17 @@ CONTAINS
 
   END FUNCTION Read_XTC_Frame
 
-  FUNCTION Get_XTC_Coords(ibox)
-          INTEGER :: ibox
-          REAL(DP), DIMENSION(natoms_to_read(ibox),3) :: Get_XTC_Coords
+  SUBROUTINE Get_XTC_Coords(ibox,xtc_coords_dp)
+          INTEGER, INTENT(IN) :: ibox
+          REAL(DP), DIMENSION(:,:), INTENT(OUT) :: xtc_coords_dp
 
           err_msg = ''
           err_msg(1) = 'Cassandra must be compiled with libgmxfort to support xtc file operations.'
           CALL Clean_Abort(err_msg, 'Get_XTC_Coords')
 
-          Get_XTC_Coords = 0.0_DP
+          !xtc_coords_dp = 0.0_DP
 
-  END FUNCTION Get_XTC_Coords
+  END SUBROUTINE Get_XTC_Coords
 
   FUNCTION Get_XTC_Box(ibox)
           INTEGER :: ibox

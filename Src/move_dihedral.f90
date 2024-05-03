@@ -77,7 +77,7 @@ SUBROUTINE Rotate_Dihedral
 
 !  !$ include 'omp_lib.h'
   
-  INTEGER :: ibox, is, im, dihedral_to_move, lm
+  INTEGER :: ibox, is, im, dihedral_to_move, lm, im_locate
   INTEGER :: i, j, this_atom, mcstep
   INTEGER :: atom1, atom2, atom3, atom4, iatom1, iatom2, iatom3, iatom4
   INTEGER :: natoms_to_place
@@ -512,9 +512,17 @@ SUBROUTINE Rotate_Dihedral
 
         IF (int_charge_sum_style(ibox) == charge_ewald) THEN
            ! Also reset the old cos_sum and sin_sum for reciprocal space vectors
+           IF (is == 1) THEN
+                   im_locate = im
+           ELSE
+                   im_locate = SUM(max_molecules(1:is-1)) + im
+           END IF
            !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-           cos_sum(:,ibox) = cos_sum_old(:,ibox)
-           sin_sum(:,ibox) = sin_sum_old(:,ibox)
+           !cos_sum(:,ibox) = cos_sum_old(:,ibox)
+           !sin_sum(:,ibox) = sin_sum_old(:,ibox)
+           box_list(ibox)%sincos_sum = box_list(ibox)%sincos_sum_old
+           cos_mol(1:nvecs(ibox),im_locate) = cos_mol(1:nvecs(ibox),0)
+           sin_mol(1:nvecs(ibox),im_locate) = sin_mol(1:nvecs(ibox),0)
            !$OMP END PARALLEL WORKSHARE
 
         END IF

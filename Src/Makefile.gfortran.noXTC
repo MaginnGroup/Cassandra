@@ -117,7 +117,6 @@ OBJS =  main.o \
   move_regrow.o \
   ring_fragment_driver.o \
   move_atom.o \
-  chempot.o \
   pair_nrg_variables.o \
   move_ring_flip.o \
   move_identity_switch.o \

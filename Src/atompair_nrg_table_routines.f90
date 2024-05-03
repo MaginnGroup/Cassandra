@@ -58,7 +58,7 @@ CONTAINS
                 IF (ALLOCATED(atompair_rminsq_table)) DEALLOCATE(atompair_rminsq_table)
                 IF (ALLOCATED(typepair_solute_indices)) DEALLOCATE(typepair_solute_indices)
                 IF (ALLOCATED(typepair_wsolute_indices)) DEALLOCATE(typepair_wsolute_indices)
-                IF (ALLOCATED(typepair_solvent_indices)) DEALLOCATE(typepair_solute_indices)
+                IF (ALLOCATED(typepair_solvent_indices)) DEALLOCATE(typepair_solvent_indices)
                 ALLOCATE(typepair_solute_indices(0:nbr_atomtypes))
                 ALLOCATE(typepair_wsolute_indices(0:nbr_atomtypes))
                 ALLOCATE(typepair_solvent_indices(0:nbr_atomtypes))

@@ -103,7 +103,7 @@ SUBROUTINE GEMC_Particle_Transfer
 
   INTEGER :: position
 
-  REAL(DP), ALLOCATABLE :: cos_mol_old(:), sin_mol_old(:), cos_mol_new(:), sin_mol_new(:)
+  !REAL(DP), ALLOCATABLE :: cos_mol_old(:), sin_mol_old(:), cos_mol_new(:), sin_mol_new(:)
   REAL(DP) :: time0, time1, randno
   
   LOGICAL :: l_charge_in, l_charge_out
@@ -312,21 +312,21 @@ SUBROUTINE GEMC_Particle_Transfer
   CALL Save_Old_Cartesian_Coordinates(alive,is)
   CALL Compute_Molecule_Dihedral_Energy(alive,is,E_dihed_out)
 
-  ! Save the interaction energies
+  !! Save the interaction energies
   IF (l_pair_nrg) CALL Store_Molecule_Pair_Interaction_Arrays(alive,is, &
        box_out, E_inter_vdw_out, E_inter_qq_out)
   
-  ! Save the k-vectors
-  IF (int_charge_sum_style(box_in)  == charge_ewald .AND.&
-      has_charge(is)) THEN
-     ALLOCATE(cos_mol_old(nvecs(box_out)), sin_mol_old(nvecs(box_out)))
-     CALL Get_Position_Alive(alive,is,position)
-     
-     !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-     cos_mol_old(:) = cos_mol(1:nvecs(box_out),position)
-     sin_mol_old(:) = sin_mol(1:nvecs(box_out),position)
-     !$OMP END PARALLEL WORKSHARE
-  END IF
+  !! Save the k-vectors
+  !IF (int_charge_sum_style(box_in)  == charge_ewald .AND.&
+  !    has_charge(is)) THEN
+  !   ALLOCATE(cos_mol_old(nvecs(box_out)), sin_mol_old(nvecs(box_out)))
+  !   CALL Get_Position_Alive(alive,is,position)
+  !   
+  !   !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+  !   cos_mol_old(:) = cos_mol(1:nvecs(box_out),position)
+  !   sin_mol_old(:) = sin_mol(1:nvecs(box_out),position)
+  !   !$OMP END PARALLEL WORKSHARE
+  !END IF
 
   ! Switch the box identity of alive
   molecule_list(alive,is)%which_box = box_in
@@ -353,6 +353,9 @@ SUBROUTINE GEMC_Particle_Transfer
   ! overlap and also when the weight of all trials is zero.
 
   IF (.NOT. cbmc_overlap) THEN
+        !! Save the interaction energies
+        !IF (l_pair_nrg) CALL Store_Molecule_Pair_Interaction_Arrays(alive,is, &
+        !     box_out, E_inter_vdw_out, E_inter_qq_out)
         CALL Compute_Molecule_Nonbond_Inter_Energy(alive,is, &
              E_inter_vdw_in,E_inter_qq_in,inter_overlap)
   END IF
@@ -373,12 +376,13 @@ SUBROUTINE GEMC_Particle_Transfer
      atom_list(:,alive,is)%exist = .TRUE.
      molecule_list(alive,is)%frac = 1.0_DP
 
+     !IF (l_pair_nrg .AND. .NOT. cbmc_overlap) THEN
      IF (l_pair_nrg) THEN
         CALL Reset_Molecule_Pair_Interaction_Arrays(alive,is,box_out)
      END IF
 
-     IF(ALLOCATED(cos_mol_old)) DEALLOCATE(cos_mol_old)
-     IF(ALLOCATED(sin_mol_old)) DEALLOCATE(sin_mol_old)
+     !IF(ALLOCATED(cos_mol_old)) DEALLOCATE(cos_mol_old)
+     !IF(ALLOCATED(sin_mol_old)) DEALLOCATE(sin_mol_old)
 
      accept = .FALSE.
 
@@ -412,6 +416,12 @@ SUBROUTINE GEMC_Particle_Transfer
     dE_inter_in = dE_inter_in + E_periodic_qq
 
     call cpu_time(time0)
+    IF (int_charge_style(box_out) == charge_coul .AND. has_charge(is)) THEN
+       IF (int_charge_sum_style(box_out) == charge_ewald) THEN
+            CALL Update_System_Ewald_Reciprocal_Energy(alive,is,box_out, &
+                    int_deletion,E_reciprocal_out)
+       END IF
+    END IF
 
     IF (int_charge_style(box_in) == charge_coul .AND. has_charge(is)) THEN
        
@@ -419,7 +429,7 @@ SUBROUTINE GEMC_Particle_Transfer
 
             ! Note that this call will change cos_mol, sin_mol of alive and this
             ! will have to be restored below while computing the energy of box_out
-            ! without molecule alive. 
+            ! without molecule alive.  -- RS: just compute deletion first. no need to restore between them.
             CALL Update_System_Ewald_Reciprocal_Energy(alive,is,box_in, &
                  int_insertion,E_reciprocal_in)
        
@@ -518,33 +528,32 @@ SUBROUTINE GEMC_Particle_Transfer
     dE_inter_out = - E_inter_vdw_out - E_inter_qq_out
 
     IF (int_charge_style(box_out) == charge_coul .AND. has_charge(is)) THEN
-       IF (int_charge_sum_style(box_in) == charge_ewald .AND. &
-           int_charge_sum_style(box_out) == charge_ewald) THEN
-          ! Restore the cos_mol and sin_mol as they changed above
-          ! but restoring will destroy the newly computed vector so now here allocate
-          ! cos_mol_new
-          ! sin_mol_new vectors so that if the move is accepted we can restore these
+       IF (int_charge_sum_style(box_out) == charge_ewald) THEN
+          !! Restore the cos_mol and sin_mol as they changed above
+          !! but restoring will destroy the newly computed vector so now here allocate
+          !! cos_mol_new
+          !! sin_mol_new vectors so that if the move is accepted we can restore these
        
-          call cpu_time(time0)
+          !call cpu_time(time0)
        
-          ALLOCATE(cos_mol_new(nvecs(box_in)))
-          ALLOCATE(sin_mol_new(nvecs(box_in)))
+          !ALLOCATE(cos_mol_new(nvecs(box_in)))
+          !ALLOCATE(sin_mol_new(nvecs(box_in)))
        
-          !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-          cos_mol_new(:) = cos_mol(1:nvecs(box_in),position)
-          sin_mol_new(:) = sin_mol(1:nvecs(box_in),position)
+          !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+          !cos_mol_new(:) = cos_mol(1:nvecs(box_in),position)
+          !sin_mol_new(:) = sin_mol(1:nvecs(box_in),position)
 
 
-          cos_mol(1:nvecs(box_out),position) = cos_mol_old(1:nvecs(box_out))
-          sin_mol(1:nvecs(box_out),position) = sin_mol_old(1:nvecs(box_out))
-          !$OMP END PARALLEL WORKSHARE
+          !cos_mol(1:nvecs(box_out),position) = cos_mol_old(1:nvecs(box_out))
+          !sin_mol(1:nvecs(box_out),position) = sin_mol_old(1:nvecs(box_out))
+          !!$OMP END PARALLEL WORKSHARE
        
-          call cpu_time(time1)
+          !call cpu_time(time1)
        
-         ! copy_time = copy_time + time1-time0
+         !! copy_time = copy_time + time1-time0
        
-          CALL Update_System_Ewald_Reciprocal_Energy(alive,is, &
-               box_out,int_deletion,E_reciprocal_out)
+          !CALL Update_System_Ewald_Reciprocal_Energy(alive,is, &
+          !     box_out,int_deletion,E_reciprocal_out)
        
           dE_inter_out = dE_inter_out + (E_reciprocal_out - energy(box_out)%reciprocal)
        
@@ -625,25 +634,25 @@ SUBROUTINE GEMC_Particle_Transfer
        molecule_list(alive,is) = new_molecule_list
        CALL Fold_Molecule(alive,is,box_in)
 
-       IF (int_charge_sum_style(box_in) == charge_ewald .AND. &
-           has_charge(is)) THEN
-          call cpu_time(time0)
-          !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-          cos_mol(1:nvecs(box_in),position) = cos_mol_new(:)
-          sin_mol(1:nvecs(box_in),position) = sin_mol_new(:)
-          !$OMP END PARALLEL WORKSHARE
-          
-          DEALLOCATE(cos_mol_new,sin_mol_new)
-          
-          call cpu_time(time1)
-!          copy_time = copy_time + time1-time0
-       END IF
+       !IF (int_charge_sum_style(box_in) == charge_ewald .AND. &
+       !    has_charge(is)) THEN
+       !   call cpu_time(time0)
+       !   !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+       !   cos_mol(1:nvecs(box_in),position) = cos_mol_new(:)
+       !   sin_mol(1:nvecs(box_in),position) = sin_mol_new(:)
+       !   !$OMP END PARALLEL WORKSHARE
+       !   
+       !   DEALLOCATE(cos_mol_new,sin_mol_new)
+       !   
+       !   call cpu_time(time1)
+!      !    copy_time = copy_time + time1-time0
+       !END IF
 
        IF (l_pair_nrg) DEALLOCATE(pair_vdw_temp,pair_qq_temp)
-       IF (ALLOCATED(cos_mol_old)) DEALLOCATE(cos_mol_old)
-       IF (ALLOCATED(sin_mol_old)) DEALLOCATE(sin_mol_old)
-       IF (ALLOCATED(cos_mol_new)) DEALLOCATE(cos_mol_new)
-       IF (ALLOCATED(sin_mol_new)) DEALLOCATE(sin_mol_new)
+       !IF (ALLOCATED(cos_mol_old)) DEALLOCATE(cos_mol_old)
+       !IF (ALLOCATED(sin_mol_old)) DEALLOCATE(sin_mol_old)
+       !IF (ALLOCATED(cos_mol_new)) DEALLOCATE(cos_mol_new)
+       !IF (ALLOCATED(sin_mol_new)) DEALLOCATE(sin_mol_new)
 
        ! Restore the coordinates of the molecule due to successful insertion
        CALL Get_Internal_Coordinates(alive,is)
@@ -705,29 +714,27 @@ SUBROUTINE GEMC_Particle_Transfer
        nmols(is,box_in) = nmols(is,box_in) - 1
 
 
-       IF (has_charge(is)) THEN
+       IF (has_charge(is) .AND. ANY(int_charge_sum_style((/box_in,box_out/))==charge_ewald)) THEN
            ! Restore the reciprocal space k vectors
+           !$OMP PARALLEL DEFAULT(SHARED)
            IF (int_charge_sum_style(box_in) == charge_ewald) THEN
-              !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-              cos_sum(1:nvecs(box_in),box_in) = cos_sum_old(1:nvecs(box_in),box_in)
-              sin_sum(1:nvecs(box_in),box_in) = sin_sum_old(1:nvecs(box_in),box_in)
-              !$OMP END PARALLEL WORKSHARE
+              !$OMP WORKSHARE
+              box_list(box_in)%sincos_sum = box_list(box_in)%sincos_sum_old
+              !$OMP END WORKSHARE NOWAIT
       
-              DEALLOCATE(cos_mol_new,sin_mol_new)
            END IF
       
            IF (int_charge_sum_style(box_out) == charge_ewald) THEN
-              !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-              cos_sum(1:nvecs(box_out),box_out) = cos_sum_old(1:nvecs(box_out),box_out)
-              sin_sum(1:nvecs(box_out),box_out) = sin_sum_old(1:nvecs(box_out),box_out)
+              CALL Get_Position_Alive(alive,is,position)
+              !$OMP WORKSHARE
+              box_list(box_out)%sincos_sum = box_list(box_out)%sincos_sum_old
               
-              cos_mol(1:nvecs(box_out),position) = cos_mol_old(:)
-              sin_mol(1:nvecs(box_out),position) = sin_mol_old(:)
-              !$OMP END PARALLEL WORKSHARE
+              cos_mol(1:nvecs(box_out),position) = cos_mol(1:nvecs(box_out),0)
+              sin_mol(1:nvecs(box_out),position) = sin_mol(1:nvecs(box_out),0)
+              !$OMP END WORKSHARE
       
-              DEALLOCATE(cos_mol_old)
-              DEALLOCATE(sin_mol_old)
            END IF
+           !$OMP END PARALLEL
        END IF
 
        IF (l_pair_nrg) THEN

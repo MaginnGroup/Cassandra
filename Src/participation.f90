@@ -1197,7 +1197,6 @@ CONTAINS
 
           WRITE(201,'(I5,2X,4(I4,2X),A4)') i, &
                first_atom(i), second_atom(i), third_atom(i), fourth_atom(i), 'none'
-       CASE(int_rb_torsion)
 
        CASE(int_rb_torsion)
 

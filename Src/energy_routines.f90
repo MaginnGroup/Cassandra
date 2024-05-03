@@ -190,6 +190,7 @@ MODULE Energy_Routines
 
   IMPLICIT NONE
 
+  INTEGER, PARAMETER :: kxyz_max_allowed = 1023
 
 CONTAINS
 
@@ -1961,6 +1962,8 @@ CONTAINS
                 END IF
                 !vdw_energy = SUM(nrg_vdw)
                 IF (this_est_emax) up_nrg_vec(1:vlen) = UNPACK(up_nrg_vec(1:n_vdw), vdw_mask(1:vlen), zero_field(1:vlen))
+        ELSE IF (this_est_emax) THEN
+                up_nrg_vec(1:vlen) = 0.0_DP
         END IF
         ! Electrostatics
         IF (i_get_coul) THEN
@@ -2009,11 +2012,11 @@ CONTAINS
                 END SELECT
                 qq_energy = qq_energy + i_qq_energy * icharge_factor
                 IF (this_est_emax) THEN
-                        up_nrg_vec = up_nrg_vec + UNPACK(jcharge_coul(1:n_coul)*icharge_factor/SQRT(rijsq_packed(1:n_coul)), coul_mask(1:vlen), zero_field(1:vlen))
+                        up_nrg_vec(1:vlen) = up_nrg_vec(1:vlen) + UNPACK(jcharge_coul(1:n_coul)*icharge_factor/SQRT(rijsq_packed(1:n_coul)), coul_mask(1:vlen), zero_field(1:vlen))
                 END IF
         END IF
         IF (this_est_emax) THEN
-                Eij_max  = MAX(Eij_max, MAXVAL(up_nrg_vec))
+                Eij_max  = MAX(Eij_max, MAXVAL(up_nrg_vec(1:vlen)))
         END IF
     END DO
   END SUBROUTINE Compute_Molecule_Nonbond_Inter_Energy_Vectorized_Widom
@@ -4066,6 +4069,7 @@ CONTAINS
                                 eps = ppvdwp_table_sp(jtype,itype,1,this_box) ! epsilon
                                 sigsq = ppvdwp_table_sp(jtype,itype,2,this_box) ! sigma**2
                                 sigbyr2 = sigsq/rsq ! sigma was already squared
+                                IF (rsq >= rcutsq) sigbyr2 = 0.0
                                 sigbyr6 = sigbyr2*sigbyr2*sigbyr2
                                 nrg_vdw = nrg_vdw + eps * (sigbyr6*sigbyr6 - sigbyr6 - sigbyr6) ! eps was not multiplied by 4
                           END DO
@@ -4169,8 +4173,8 @@ CONTAINS
                           epsig_n = ppvdwp_table2_sp(1,jtype,itype,this_box)  ! epsilon * mie_coeff * sigma ** n
                           epsig_m = ppvdwp_table2_sp(2,jtype,itype,this_box) ! epsilon * mie_coeff * sigma ** m
                           IF (l_nonuniform_exponents) THEN
-                                  mie_n = ppvdwp_table2_sp(3,jtype,itype,this_box) ! already halved
-                                  mie_m = ppvdwp_table2_sp(4,jtype,itype,this_box) ! already halved
+                                  mie_n = ppvdwp_table2_sp(3,jtype,itype,this_box) ! already halved and negative
+                                  mie_m = ppvdwp_table2_sp(4,jtype,itype,this_box) ! already halved and negative
                           END IF
                           nrg_vdw = nrg_vdw + epsig_n*EXP(lnrsq*mie_n) - epsig_m*EXP(lnrsq*mie_m)
                           IF (int_vdw_sum_style(this_box) == vdw_cut_shift) THEN
@@ -4530,7 +4534,6 @@ CONTAINS
     REAL(DP) :: SigByR_shift, SigByRn_shift, SigByRm_shift
     ! Coulomb potential
     REAL(DP) :: qi, qj, Eij_qq
-    REAL(DP), OPTIONAL :: Eij_qq_o
 
     LOGICAL :: atom_i_exist, atom_j_exist, excess_flag, minimg_flag
 
@@ -4951,6 +4954,20 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
 
   !*****************************************************************************
 
+
+  ELEMENTAL SUBROUTINE Extract_Kvector_Ints(kxyz,kx,ky,kz)
+          !DIR$ ATTRIBUTES FORCEINLINE :: Extract_Kvector_Ints
+          INTEGER, INTENT(IN) :: kxyz
+          INTEGER, INTENT(OUT) :: kx, ky, kz
+          INTEGER, PARAMETER :: tmask = MASKR(11)
+          ky = SHIFTR(kxyz,11)
+          kz = SHIFTR(kxyz,22)
+          kx = IAND(kxyz,tmask)
+          kx = kx - kxyz_max_allowed
+          ky = IAND(ky,tmask)
+          ky = ky - kxyz_max_allowed
+  END SUBROUTINE Extract_Kvector_Ints
+
   SUBROUTINE Ewald_Reciprocal_Lattice_Vector_Setup(this_box)
     !***************************************************************************
     ! This subroutine sets up the reciprocal lattice vector constants required in the reciprocal
@@ -4967,142 +4984,296 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
 
     IMPLICIT NONE
 
-    INTEGER :: nx, ny, nz, this_box, kvecs, kx_max, ky_max, kz_max
+    INTEGER :: nx, ny, nz, this_box, kvecs, kvecs_p4
 
-    REAL(DP) :: const_val, hcutsq, x, y, z
-    REAL(DP) :: hx_val, hy_val, hz_val, hsq_val
+    REAL(DP) :: const_val, const_val_2, hcutsq, x, y, z
+    REAL(DP) :: hx, hy, hz, hsq
+    INTEGER :: i
+    LOGICAL :: l_inrange
+    LOGICAL, DIMENSION(:), ALLOCATABLE, SAVE :: l_inrange_vec
+    INTEGER :: nchecks
+    LOGICAL :: l_ortho
+    REAL(DP) :: prefactor_constant, double_prefactor_constant
+    REAL(SP) :: hcutsq_sp
+    INTEGER :: kxyz_max(3)
+    INTEGER(INT64) :: kxyz_max_int64(3), nchecks_int64
+    REAL(DP), DIMENSION(3) :: inv_l, inv_lsq
+    REAL(DP), DIMENSION(3,3) :: inv_H
+    REAL(SP), DIMENSION(3) :: inv_lsq_sp
+    REAL(SP), DIMENSION(3,3) :: inv_H_sp
+    INTEGER :: tcount
+    REAL(DP) :: prefactor, factor1, factor2
+    INTEGER :: kx, ky, kz, kxyz, kx_shifted, ky_shifted1, ky_shifted2, kz_shifted
+    REAL(SP) :: xsq_sp,ysq_sp,zsq_sp,x_sp,y_sp,z_sp,hx_sp,hy_sp,hz_sp
+    INTEGER :: ky_dimfactor, kz_dimfactor, ky_dimshift, kx_dimshift 
+    INTEGER :: kx_shifted_start, ky_shifted_start, kx_shifted_end, ky_shifted_end
+    INTEGER :: shiftconst
+    INTEGER :: ithread, chunkstart, chunkend, chunksize, nthreads
+
+    ky_dimfactor = kxyz_max(1)*2+1
+    kz_dimfactor = ky_dimfactor*(kxyz_max(2)*2+1)
+    ky_dimshift = kxyz_max(2)-kxyz_max_allowed
+    kx_dimshift = kxyz_max(1)-kxyz_max_allowed + 1
+    kx_shifted_start = kxyz_max_allowed - kxyz_max(1)
+    ky_shifted_start = kxyz_max_allowed - kxyz_max(2)
+    kx_shifted_end = kxyz_max_allowed + kxyz_max(1)
+    ky_shifted_end = kxyz_max_allowed + kxyz_max(2)
+
+    l_ortho = box_list(this_box)%int_box_shape <= int_ortho
+    prefactor_constant = twoPI/box_list(this_box)%volume
+    double_prefactor_constant = 2.0_DP*prefactor_constant
 
     ! Total number of k vectors
-    kvecs = 1
+    !kvecs = 1
 
-    const_val = 1.0_DP/(4.0_DP * alpha_ewald(this_box) * alpha_ewald(this_box))
+    !const_val = 1.0_DP/(4.0_DP * alpha_ewald(this_box) * alpha_ewald(this_box))
+    const_val_2 = -0.5_DP/(alpha_ewald(this_box) * alpha_ewald(this_box))
+    const_val = const_val_2*0.5_DP
     hcutsq = h_ewald_cut(this_box) * h_ewald_cut(this_box)
+    hcutsq_sp = REAL(hcutsq,SP)
 
-    IF (box_list(this_box)%int_box_shape == int_cell .OR. box_list(this_box)%int_box_shape == int_ortho) THEN
-
-       ! The most general definition for a wave-vector is h = 2*pi*TRANSPOSE(cell_matrix)^-1)*n
-       ! where h is the wave vector and n is a vector of integers
-
-       ! We will use symmetry about the x to calculate only half the wave vectors
-
-       DO nz = -20, 20
-          DO ny = -20, 20
-             DO nx = 0, 20
-
-                ! Exclude the possiblity for the central  simulation box where h = 0
-
-                IF ( (nx == 0) .AND. (ny == 0) .AND. (nz == 0) ) CYCLE
-
-                x = REAL(nx,DP)
-                y = REAL(ny,DP)
-                z = REAL(nz,DP)
-
-                hx_val = twoPI * (box_list(this_box)%length_inv(1,1)*x + &
-                     box_list(this_box)%length_inv(2,1)*y + box_list(this_box)%length_inv(3,1)*z)
-                hy_val = twoPI * (box_list(this_box)%length_inv(1,2)*x + &
-                     box_list(this_box)%length_inv(2,2)*y + box_list(this_box)%length_inv(3,2)*z)
-                hz_val = twoPI * (box_list(this_box)%length_inv(1,3)*x + &
-                     box_list(this_box)%length_inv(2,3)*y + box_list(this_box)%length_inv(3,3)*z)
-
-                hsq_val = hx_val * hx_val + hy_val * hy_val + hz_val * hz_val
-
-                IF (hsq_val < hcutsq) THEN
-
-                   hx(kvecs,this_box) = hx_val
-                   hy(kvecs,this_box) = hy_val
-                   hz(kvecs,this_box) = hz_val
-                   hsq(kvecs,this_box) = hsq_val
-
-                   ! if x /= 0, multipy the constant by 2 for symmetry
-
-                   IF ( nx == 0 ) THEN
-
-                      Cn(kvecs,this_box) = twoPI / box_list(this_box)%volume &
-                           * DEXP ( -hsq(kvecs,this_box) * const_val ) / hsq(kvecs,this_box)
-
-                   ELSE
-
-                      Cn(kvecs,this_box) = 2.0_DP * twoPI / box_list(this_box)%volume &
-                           * DEXP ( -hsq(kvecs,this_box) * const_val ) / hsq(kvecs,this_box)
-
-                   END IF
-
-                   kvecs = kvecs + 1
-
-                END IF
-
-             END DO
-          END DO
-       END DO
-
-    ELSE
-
-       ! if it is an orthogonal box, then h vectors are simply hx = twoPI * nx / Lx and so on
-
-       ! we will determine the number of reciprocal space vectors needed in each direction
-
-       kz_max = INT ( (h_ewald_cut(this_box) * box_list(this_box)%basis_length(3))/twoPI ) + 1
-       ky_max = INT ( (h_ewald_cut(this_box) * box_list(this_box)%basis_length(2))/twoPI ) + 1
-       kx_max = INT ( (h_ewald_cut(this_box) * box_list(this_box)%basis_length(1))/twoPI ) + 1
-
-
-       DO nz = -kz_max, kz_max
-          DO ny = -ky_max, ky_max
-             DO nx = 0, kx_max
-                IF ( kvecs > maxk) THEN
-                   err_msg = ""
-                   err_msg(1) = 'Total number of k vectors exceeded'
-                   CALL Clean_Abort(err_msg,'Ewald_Reciprocal_Lattice_Vector_Setup')
-                END IF
-
-                IF ( (nx == 0) .AND. (ny == 0) .AND. (nz == 0)) CYCLE
-
-                hx_val = twoPI * REAL(nx,DP)/box_list(this_box)%basis_length(1)
-                hy_val = twoPI * REAL(ny,DP)/box_list(this_box)%basis_length(2)
-                hz_val = twoPI * REAL(nz,DP)/box_list(this_box)%basis_length(3)
-
-                hsq_val = hx_val * hx_val + hy_val * hy_val + hz_val * hz_val
-
-                IF (hsq_val < hcutsq ) THEN
-
-                   hx(kvecs,this_box) = hx_val
-                   hy(kvecs,this_box) = hy_val
-                   hz(kvecs,this_box) = hz_val
-                   hsq(kvecs,this_box) = hsq_val
-
-                   !hsq(kvecs,this_box) = hx(kvecs,this_box)*hx(kvecs,this_box) + &
-                   ! hy(kvecs,this_box)*hy(kvecs,this_box) + hz(kvecs,this_box)*hz(kvecs,this_box)
-
-                   ! if x /= 0, multipy the constant by 2 for symmetry
-                   IF ( nx == 0 ) THEN
-
-                      Cn(kvecs,this_box) = twoPI / box_list(this_box)%volume &
-                           * DEXP ( - hsq(kvecs,this_box) * const_val ) / hsq(kvecs,this_box)
-
-                   ELSE
-
-                      Cn(kvecs,this_box) = 2.0_DP * twoPI / box_list(this_box)%volume &
-                           * DEXP ( - hsq(kvecs,this_box) * const_val ) / hsq(kvecs,this_box)
-
-                   END IF
-
-                   kvecs = kvecs + 1
-
-                END IF
-
-             END DO
-          END DO
-       END DO
-
+    kxyz_max = INT( h_ewald_cut(this_box) / (twoPI * box_list(this_box)%invT_face_distance)) + 1
+    IF (ANY(kxyz_max>kxyz_max_allowed)) THEN
+            WRITE(logunit,*) kxyz_max
+            WRITE(*,*) kxyz_max
+            err_msg = ""
+            err_msg(1) = "At least one of the above kspace vector integer component maxima"
+            err_msg(2) = "exceeds the maximum allowed value, " // TRIM(Int_To_String(kxyz_max_allowed))
+            CALL Clean_Abort(err_msg,'Ewald_Reciprocal_Lattice_Vector_Setup')
     END IF
+    kxyz_max_int64 = INT(kxyz_max,INT64)
+    box_list(this_box)%kxyz_maxmax = MAXVAL(kxyz_max)
+    box_list(this_box)%kxyz_max = kxyz_max
+    nchecks_int64 = PRODUCT((/2_INT64,2_INT64,1_INT64/)*kxyz_max_int64+1_INT64)
+    IF (nchecks_int64 >= HUGE(nchecks)) THEN
+            err_msg = ""
+            err_msg(1) = 'Too many kspace vectors to check'
+            CALL Clean_Abort(err_msg,'Ewald_Reciprocal_Lattice_Vector_Setup')
+    END IF
+    nchecks = INT(nchecks_int64,INT32) ! PRODUCT((/2,2,1/)*kxyz_max+1)
+    IF (l_ortho) THEN
+            inv_l(1) = twoPI/box_list(this_box)%length(1,1)
+            inv_l(2) = twoPI/box_list(this_box)%length(2,2)
+            inv_l(3) = twoPI/box_list(this_box)%length(3,3)
+            inv_lsq = inv_l*inv_l
+            inv_lsq_sp = REAL(inv_lsq,SP)
+    ELSE
+            inv_H = twoPI*box_list(this_box)%length_inv
+            inv_H_sp = REAL(inv_H,SP)
+    END IF
+    kvecs = -1 ! exclude central box
+    IF (ALLOCATED(box_list(this_box)%kspace_vector_ints)) THEN
+            IF (UBOUND(box_list(this_box)%kspace_vector_ints,1) < nchecks) DEALLOCATE(box_list(this_box)%kspace_vector_ints)
+    END IF
+    IF (.NOT. ALLOCATED(box_list(this_box)%kspace_vector_ints)) THEN
+            ALLOCATE(box_list(this_box)%kspace_vector_ints(nchecks))
+    END IF
+    IF (ALLOCATED(l_inrange_vec)) THEN
+            IF (UBOUND(l_inrange_vec,1) < nchecks) DEALLOCATE(l_inrange_vec)
+    END IF
+    IF (.NOT. ALLOCATED(l_inrange_vec)) THEN
+            ALLOCATE(l_inrange_vec(nchecks))
+    END IF
+    ky_dimfactor = kxyz_max(1)*2+1
+    kz_dimfactor = ky_dimfactor*(kxyz_max(2)*2+1)
+    ky_dimshift = kxyz_max(2)-kxyz_max_allowed
+    kx_dimshift = kxyz_max(1)-kxyz_max_allowed + 1
+    kx_shifted_start = kxyz_max_allowed - kxyz_max(1)
+    ky_shifted_start = kxyz_max_allowed - kxyz_max(2)
+    kx_shifted_end = kxyz_max_allowed + kxyz_max(1)
+    ky_shifted_end = kxyz_max_allowed + kxyz_max(2)
+    ! The most general definition for a wave-vector is h = 2*pi*TRANSPOSE(cell_matrix)^-1)*n
+    ! where h is the wave vector and n is a vector of integers
 
+    ! We will use symmetry to calculate only half the wave vectors
 
-
-    ! nvecs points to where the next wave_vector should be written, i. e. it is too high by 1
-    nvecs(this_box) = kvecs - 1
-    ! Note that at this point we do not allocate the memory for cos_sum and sin_sum arrays.
-    ! It will have to be decided by the maximum number of k vectors encountered in all the boxes
-
+    !$OMP PARALLEL PRIVATE(kz,ky,kx,kxyz,x,y,z,hx,hy,hz,hsq,l_inrange,i) &
+    !$OMP PRIVATE(prefactor,factor1,factor2) &
+    !$OMP PRIVATE(xsq_sp,ysq_sp,zsq_sp,x_sp,y_sp,z_sp,hx_sp,hy_sp,hz_sp) &
+    !$OMP PRIVATE(kx_shifted,ky_shifted1,kz_shifted,ky_shifted2,shiftconst) &
+    !$OMP PRIVATE(ithread,chunkstart,chunkend)
+    !$OMP DO SCHEDULE(STATIC)
+    DO ky_shifted1 = ky_shifted_start, ky_shifted_end
+        ky_shifted2 = SHIFTL(ky_shifted1,11)
+        shiftconst = (ky_shifted1 + ky_dimshift)*ky_dimfactor + kx_dimshift
+        !$OMP SIMD
+        DO kx_shifted = kx_shifted_start, kx_shifted_end
+                box_list(this_box)%kspace_vector_ints(shiftconst+kx_shifted) = IOR(kx_shifted,ky_shifted2)
+        END DO
+        !$OMP END SIMD
+    END DO
+    !$OMP END DO
+    !$OMP DO SCHEDULE(STATIC)
+    DO kz = 1, kxyz_max(3)
+        kz_shifted = SHIFTL(kz,22)
+        shiftconst = kz*kz_dimfactor
+        !$OMP SIMD
+        DO i = 1, kz_dimfactor
+                box_list(this_box)%kspace_vector_ints(shiftconst+i) = &
+                        IOR(box_list(this_box)%kspace_vector_ints(i),kz_shifted)
+        END DO
+        !$OMP END SIMD
+        !box_list(this_box)%kspace_vector_ints(kz*kz_dimfactor+1:(kz+1)*kz_dimfactor) = &
+        !        IOR(box_list(this_box)%kspace_vector_ints(:kz_dimfactor),kz_shifted)
+    END DO
+    !$OMP END DO
+    IF (l_ortho) THEN
+            ! if it is an orthogonal box, then h vectors are simply hx = twoPI * kx / Lx and so on
+            !DIR$ VECTOR ALIGNED
+            !$OMP DO SIMD SCHEDULE(SIMD:STATIC) &
+            !$OMP PRIVATE(kxyz,kx,ky,kz,xsq_sp,ysq_sp,zsq_sp,l_inrange) &
+            !$OMP REDUCTION(+:kvecs)
+            DO i = 1, nchecks
+                kxyz = box_list(this_box)%kspace_vector_ints(i)
+                CALL Extract_Kvector_Ints(kxyz,kx,ky,kz) ! Should be inlined by compiler
+                kx = kx*kx
+                ky = ky*ky
+                kz = kz*kz
+                xsq_sp = REAL(kx,SP)
+                ysq_sp = REAL(ky,SP)
+                zsq_sp = REAL(kz,SP)
+                l_inrange = inv_lsq_sp(1)*xsq_sp + inv_lsq_sp(2)*ysq_sp + inv_lsq_sp(3)*zsq_sp < hcutsq_sp
+                l_inrange_vec(i) = l_inrange
+                IF (l_inrange) kvecs = kvecs + 1
+            END DO
+            !$OMP END DO SIMD
+    ELSE
+            !DIR$ VECTOR ALIGNED
+            !$OMP DO SIMD SCHEDULE(SIMD:STATIC) &
+            !$OMP PRIVATE(kxyz,kx,ky,kz,x_sp,y_sp,z_sp,hx_sp,hy_sp,hz_sp,l_inrange) &
+            !$OMP REDUCTION(+:kvecs)
+            DO i = 1, nchecks
+                kxyz = box_list(this_box)%kspace_vector_ints(i)
+                CALL Extract_Kvector_Ints(kxyz,kx,ky,kz) ! Should be inlined by compiler
+                x_sp = REAL(kx,SP)
+                y_sp = REAL(ky,SP)
+                z_sp = REAL(kz,SP)
+                hx_sp = inv_H_sp(1,1)*x_sp + inv_H_sp(2,1)*y_sp + inv_H_sp(3,1)*z_sp
+                hy_sp = inv_H_sp(1,2)*x_sp + inv_H_sp(2,2)*y_sp + inv_H_sp(3,2)*z_sp
+                hz_sp = inv_H_sp(1,3)*x_sp + inv_H_sp(2,3)*y_sp + inv_H_sp(3,3)*z_sp
+                l_inrange = hx_sp*hx_sp + hy_sp*hy_sp + hz_sp*hz_sp < hcutsq_sp
+                l_inrange_vec(i) = l_inrange
+                IF (l_inrange) kvecs = kvecs + 1
+            END DO
+            !$OMP END DO SIMD
+    END IF
+    !$OMP SECTIONS
+    !$OMP SECTION
+    l_inrange_vec(1+kxyz_max(2)*(kxyz_max(1)*2+1)+kxyz_max(1)) = .FALSE. ! Exclude central box (0,0,0)
+    tcount = 0
+    i = 0
+    DO WHILE (tcount < kvecs)
+        i = i + 1
+        IF (l_inrange_vec(i)) THEN
+                tcount = tcount + 1
+                box_list(this_box)%kspace_vector_ints(tcount) = box_list(this_box)%kspace_vector_ints(i)
+        END IF
+    END DO
+    !$OMP SECTION
+    nvecs(this_box) = kvecs
+    kvecs_p4 = IAND(kvecs+3,NOT(3))
+    IF (ALLOCATED(box_list(this_box)%kspace_vectors)) THEN
+            IF (UBOUND(box_list(this_box)%kspace_vectors,1) < kvecs) DEALLOCATE(box_list(this_box)%kspace_vectors)
+    END IF
+    IF (.NOT. ALLOCATED(box_list(this_box)%kspace_vectors)) THEN
+            ALLOCATE(box_list(this_box)%kspace_vectors(kvecs_p4,5))
+    END IF
+    IF (ALLOCATED(box_list(this_box)%sincos_sum)) THEN
+            IF (UBOUND(box_list(this_box)%sincos_sum,1) < kvecs) DEALLOCATE(box_list(this_box)%sincos_sum)
+    END IF
+    IF (.NOT. ALLOCATED(box_list(this_box)%sincos_sum)) THEN
+            ALLOCATE(box_list(this_box)%sincos_sum(kvecs_p4,2))
+    END IF
+    !$ nthreads = OMP_GET_NUM_THREADS()
+    !$ chunksize = IAND((kvecs+nthreads-1)/nthreads+7,NOT(7))
+    !$OMP END SECTIONS
+    chunkstart = 1
+    chunkend = kvecs
+    !$ ithread = OMP_GET_THREAD_NUM()
+    !$ chunkstart = ithread*chunksize+1
+    !$ chunkend = MIN((ithread+1)*chunksize,kvecs)
+    IF (l_ortho) THEN
+            !DIR$ VECTOR ALIGNED
+            !$OMP SIMD PRIVATE(kxyz,kx,ky,kz,x,y,z,prefactor)
+            DO i = chunkstart, chunkend
+                kxyz = box_list(this_box)%kspace_vector_ints(i)
+                CALL Extract_Kvector_Ints(kxyz,kx,ky,kz) ! Should be inlined by compiler
+                z = REAL(kz,DP)
+                x = REAL(kx,DP)
+                y = REAL(ky,DP)
+                prefactor = MERGE(prefactor_constant,double_prefactor_constant,kz==0)
+                box_list(this_box)%kspace_vectors(i,1) = x
+                box_list(this_box)%kspace_vectors(i,2) = y
+                box_list(this_box)%kspace_vectors(i,3) = z
+                box_list(this_box)%kspace_vectors(i,5) = prefactor
+            END DO
+            !$OMP END SIMD
+            ! if it is an orthogonal box, then h vectors are simply hx = twoPI * kx / Lx and so on
+            !DIR$ VECTOR ALIGNED
+            !$OMP SIMD PRIVATE(x,y,z,hx,hy,hz,hsq)
+            DO i = chunkstart, chunkend
+                x = box_list(this_box)%kspace_vectors(i,1)
+                y = box_list(this_box)%kspace_vectors(i,2)
+                z = box_list(this_box)%kspace_vectors(i,3)
+                hx = inv_l(1)*x
+                hy = inv_l(2)*y
+                hz = inv_l(3)*z
+                hsq = hx*hx + hy*hy + hz*hz
+                box_list(this_box)%kspace_vectors(i,1) = hx
+                box_list(this_box)%kspace_vectors(i,2) = hy
+                box_list(this_box)%kspace_vectors(i,3) = hz
+                box_list(this_box)%kspace_vectors(i,4) = hsq
+            END DO
+            !$OMP END SIMD
+    ELSE
+            !DIR$ VECTOR ALIGNED
+            !$OMP SIMD PRIVATE(kxyz,kx,ky,kz,x,y,z,prefactor)
+            DO i = chunkstart, chunkend
+                kxyz = box_list(this_box)%kspace_vector_ints(i)
+                CALL Extract_Kvector_Ints(kxyz,kx,ky,kz) ! Should be inlined by compiler
+                z = REAL(kz,DP)
+                x = REAL(kx,DP)
+                y = REAL(ky,DP)
+                prefactor = MERGE(prefactor_constant,double_prefactor_constant,kz==0)
+                box_list(this_box)%kspace_vectors(i,1) = x
+                box_list(this_box)%kspace_vectors(i,2) = y
+                box_list(this_box)%kspace_vectors(i,3) = z
+                box_list(this_box)%kspace_vectors(i,5) = prefactor
+            END DO
+            !$OMP END SIMD
+            !DIR$ VECTOR ALIGNED
+            !$OMP SIMD PRIVATE(x,y,z,hx,hy,hz,hsq)
+            DO i = chunkstart, chunkend
+                x = box_list(this_box)%kspace_vectors(i,1)
+                y = box_list(this_box)%kspace_vectors(i,2)
+                z = box_list(this_box)%kspace_vectors(i,3)
+                hx = inv_H(1,1)*x + inv_H(2,1)*y + inv_H(3,1)*z
+                hy = inv_H(1,2)*x + inv_H(2,2)*y + inv_H(3,2)*z
+                hz = inv_H(1,3)*x + inv_H(2,3)*y + inv_H(3,3)*z
+                hsq = hx*hx + hy*hy + hz*hz
+                box_list(this_box)%kspace_vectors(i,1) = hx
+                box_list(this_box)%kspace_vectors(i,2) = hy
+                box_list(this_box)%kspace_vectors(i,3) = hz
+                box_list(this_box)%kspace_vectors(i,4) = hsq
+            END DO
+            !$OMP END SIMD
+    END IF
+    !DIR$ VECTOR ALIGNED
+    !$OMP SIMD PRIVATE(hsq,prefactor,factor1,factor2)
+    DO i = chunkstart, chunkend
+             hsq = box_list(this_box)%kspace_vectors(i,4)
+             prefactor = box_list(this_box)%kspace_vectors(i,5)
+             factor2 = 1.0_DP/hsq
+             prefactor = prefactor*factor2
+             factor1 = EXP(hsq*const_val)
+             factor1 = prefactor*factor1
+             factor2 = const_val_2 - 2.0_DP*factor2
+             factor2 = factor2*factor1
+             box_list(this_box)%kspace_vectors(i,4) = factor1
+             box_list(this_box)%kspace_vectors(i,5) = factor2
+    END DO
+    !$OMP END SIMD
+    !$OMP END PARALLEL
 
   END SUBROUTINE Ewald_Reciprocal_Lattice_Vector_Setup
   !*****************************************************************************
@@ -5140,8 +5311,11 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
     REAL(DP), INTENT(OUT) :: E_reciprocal
 
     ! Local variables
-    REAL(DP) :: q
-    INTEGER :: i, ia, jm, js
+    REAL(DP) :: q, hx, hy, hz, sin_sum_i, cos_sum_i, factor
+    INTEGER :: i, ia, jm, js, kvecs, kvecs_p4
+    INTEGER :: n_charged_atoms
+    REAL(DP), DIMENSION(4,natoms(is)) :: rpq
+    REAL(DP) :: charge
 
     REAL(DP) :: hdotr
 
@@ -5153,10 +5327,19 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
     ! Initialize variables
     E_reciprocal = 0.0_DP
 
-    !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-    cos_sum_old(1:nvecs(ibox),ibox) = cos_sum(1:nvecs(ibox),ibox)
-    sin_sum_old(1:nvecs(ibox),ibox) = sin_sum(1:nvecs(ibox),ibox)
-    !$OMP END PARALLEL WORKSHARE
+    kvecs = nvecs(ibox)
+    kvecs_p4 = IAND(kvecs+3,NOT(3))
+
+    IF (ALLOCATED(box_list(ibox)%sincos_sum_old)) THEN
+            IF (UBOUND(box_list(ibox)%sincos_sum_old,1) .NE. &
+                    UBOUND(box_list(ibox)%sincos_sum,1)) THEN
+                    DEALLOCATE(box_list(ibox)%sincos_sum_old)
+            END IF
+    END IF
+    IF (.NOT. ALLOCATED(box_list(ibox)%sincos_sum_old)) THEN
+        ALLOCATE(box_list(ibox)%sincos_sum_old(UBOUND(box_list(ibox)%sincos_sum,1),2))
+    END IF
+
 
     ! get the location of im for cos_mol, sin_mol arrays
     IF (is==1) THEN
@@ -5164,118 +5347,149 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
     ELSE
       im_locate = SUM(max_molecules(1:is-1)) + im
     END IF
+    n_charged_atoms = 0
+    DO ia = 1, natoms(is)
+        charge = nonbond_list(ia,is)%charge
+        IF (charge == 0.0_DP) CYCLE
+        n_charged_atoms = n_charged_atoms+1
+        rpq(1:3,n_charged_atoms) = atom_list(ia,im,is)%rp
+        rpq(4,n_charged_atoms) = charge
+    END DO
 
-    IF ( move_flag == int_translation .OR. move_flag == int_rotation .OR. &
-         move_flag == int_intra ) THEN
+    !$OMP PARALLEL DEFAULT(SHARED) PRIVATE(ia) &
+    !$OMP PRIVATE(cos_mol_im,sin_mol_im) &
+    !$OMP PRIVATE(cos_mol_im_o, sin_mol_im_o) &
+    !$OMP PRIVATE(hdotr, q, hx, hy, hz, sin_sum_i, cos_sum_i, factor)
+    SELECT CASE(move_flag)
+    CASE(int_translation,int_rotation,int_intra)
+            !DIR$ VECTOR ALIGNED
+            !$OMP DO SIMD SCHEDULE(SIMD:STATIC) &
+            !$OMP PRIVATE(cos_mol_im,sin_mol_im) &
+            !$OMP PRIVATE(cos_mol_im_o, sin_mol_im_o) &
+            !$OMP PRIVATE(hdotr, q, hx, hy, hz, sin_sum_i, cos_sum_i, factor) &
+            !$OMP REDUCTION(+:E_reciprocal)
+            DO i = 1, nvecs(ibox)
 
-      ! only the particle coordinates change. Therefore, the contribution of
-      ! cos(hdotr) and sin(hdotr) of the old coordinates will be subtracted
-      ! off for each of reciprocal vectors and corresponding terms for the new
-      ! coordinates are added.
+              cos_mol_im = 0.0_DP
+              sin_mol_im = 0.0_DP
+              hx = box_list(ibox)%kspace_vectors(i,1)
+              hy = box_list(ibox)%kspace_vectors(i,2)
+              hz = box_list(ibox)%kspace_vectors(i,3)
 
-      ! Note that the flag INTRA will refer to any of the moves that
-      ! correspond to the intramolecular DOF change.
+              DO ia = 1, n_charged_atoms
+                ! compute the new hdotr
+                hdotr = hx * rpq(1,ia) + &
+                        hy * rpq(2,ia) + &
+                        hz * rpq(3,ia)
 
-      !$OMP PARALLEL DO DEFAULT(SHARED) &
-      !$OMP PRIVATE(i,ia,cos_mol_im,sin_mol_im) &
-      !$OMP PRIVATE(cos_mol_im_o, sin_mol_im_o) &
-      !$OMP PRIVATE(hdotr, q) &
-      !$OMP SCHEDULE(STATIC) &
-      !$OMP REDUCTION(+:E_reciprocal)
-      DO i = 1, nvecs(ibox)
+                q = rpq(4,ia)
+                cos_mol_im = cos_mol_im + q*COS(hdotr)
+                sin_mol_im = sin_mol_im + q*SIN(hdotr)
+              END DO
 
-        cos_mol_im = 0.0_DP
-        sin_mol_im = 0.0_DP
+              sin_sum_i = box_list(ibox)%sincos_sum(i,1)
+              cos_sum_i = box_list(ibox)%sincos_sum(i,2)
+              factor = box_list(ibox)%kspace_vectors(i,4)
+              box_list(ibox)%sincos_sum_old(i,1) = sin_sum_i
+              box_list(ibox)%sincos_sum_old(i,2) = cos_sum_i
+              cos_mol_im_o = cos_mol(i,im_locate)
+              sin_mol_im_o = sin_mol(i,im_locate)
+              cos_mol(i,0) = cos_mol_im_o
+              sin_mol(i,0) = sin_mol_im_o
+              cos_sum_i = cos_sum_i + (cos_mol_im - cos_mol_im_o)
+              sin_sum_i = sin_sum_i + (sin_mol_im - sin_mol_im_o)
+              ! set the molecule's cos and sin terms to the one calculated here
+              cos_mol(i,im_locate) = cos_mol_im
+              sin_mol(i,im_locate) = sin_mol_im
 
-        DO ia = 1,natoms(is)
-          ! compute the new hdotr
-          hdotr = hx(i,ibox) * atom_list(ia,im,is)%rp(1) + &
-                  hy(i,ibox) * atom_list(ia,im,is)%rp(2) + &
-                  hz(i,ibox) * atom_list(ia,im,is)%rp(3)
+              box_list(ibox)%sincos_sum(i,1) = sin_sum_i
+              box_list(ibox)%sincos_sum(i,2) = cos_sum_i
 
-          q = nonbond_list(ia,is)%charge
-          cos_mol_im = cos_mol_im + q * DCOS(hdotr)
-          sin_mol_im = sin_mol_im + q * DSIN(hdotr)
-        END DO
+              E_reciprocal = E_reciprocal + factor &
+                           * (cos_sum_i * cos_sum_i &
+                           + sin_sum_i * sin_sum_i)
 
-        cos_mol_im_o = cos_mol(i,im_locate)
-        sin_mol_im_o = sin_mol(i,im_locate)
 
-        cos_sum(i,ibox) = cos_sum(i,ibox) + (cos_mol_im - cos_mol_im_o)
-        sin_sum(i,ibox) = sin_sum(i,ibox) + (sin_mol_im - sin_mol_im_o)
+            END DO
+            !$OMP END DO SIMD
+    CASE(int_insertion)
+            !DIR$ VECTOR ALIGNED
+            !$OMP DO SIMD SCHEDULE(SIMD:STATIC) &
+            !$OMP PRIVATE(cos_mol_im,sin_mol_im) &
+            !$OMP PRIVATE(cos_mol_im_o, sin_mol_im_o) &
+            !$OMP PRIVATE(hdotr, q, hx, hy, hz, sin_sum_i, cos_sum_i, factor) &
+            !$OMP REDUCTION(+:E_reciprocal)
+            DO i = 1, nvecs(ibox)
 
-        E_reciprocal = E_reciprocal + cn(i,ibox) &
-                     * (cos_sum(i,ibox) * cos_sum(i,ibox) &
-                     + sin_sum(i,ibox) * sin_sum(i,ibox))
+              cos_mol_im = 0.0_DP
+              sin_mol_im = 0.0_DP
+              hx = box_list(ibox)%kspace_vectors(i,1)
+              hy = box_list(ibox)%kspace_vectors(i,2)
+              hz = box_list(ibox)%kspace_vectors(i,3)
 
-        ! set the molecules cos and sin terms to the one calculated here
-        cos_mol(i,im_locate) = cos_mol_im
-        sin_mol(i,im_locate) = sin_mol_im
+              DO ia = 1, n_charged_atoms
+                ! compute the new hdotr
+                hdotr = hx * rpq(1,ia) + &
+                        hy * rpq(2,ia) + &
+                        hz * rpq(3,ia)
 
-      END DO
-      !$OMP END PARALLEL DO
+                q = rpq(4,ia)
+                cos_mol_im = cos_mol_im + q*COS(hdotr)
+                sin_mol_im = sin_mol_im + q*SIN(hdotr)
+              END DO
 
-    ELSE IF ( move_flag == int_deletion) THEN
+              sin_sum_i = box_list(ibox)%sincos_sum(i,1)
+              cos_sum_i = box_list(ibox)%sincos_sum(i,2)
+              factor = box_list(ibox)%kspace_vectors(i,4)
+              box_list(ibox)%sincos_sum_old(i,1) = sin_sum_i
+              box_list(ibox)%sincos_sum_old(i,2) = cos_sum_i
+              cos_sum_i = cos_sum_i + cos_mol_im
+              sin_sum_i = sin_sum_i + sin_mol_im
+              ! set the molecule's cos and sin terms to the one calculated here
+              cos_mol(i,im_locate) = cos_mol_im
+              sin_mol(i,im_locate) = sin_mol_im
 
-      ! We need to subtract off the cos(hdotr) and sin(hdotr) for each of the
-      ! k vectors.
+              box_list(ibox)%sincos_sum(i,1) = sin_sum_i
+              box_list(ibox)%sincos_sum(i,2) = cos_sum_i
 
-      !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-      cos_sum(1:nvecs(ibox),ibox) = cos_sum(1:nvecs(ibox),ibox) &
-                            - cos_mol(1:nvecs(ibox),im_locate)
-      sin_sum(1:nvecs(ibox),ibox) = sin_sum(1:nvecs(ibox),ibox) &
-                            - sin_mol(1:nvecs(ibox),im_locate)
-      !$OMP END PARALLEL WORKSHARE
+              E_reciprocal = E_reciprocal + factor &
+                           * (cos_sum_i * cos_sum_i &
+                           + sin_sum_i * sin_sum_i)
 
-      !$OMP PARALLEL DO DEFAULT(SHARED) &
-      !$OMP PRIVATE(i) &
-      !$OMP SCHEDULE(STATIC) &
-      !$OMP REDUCTION(+:E_reciprocal)
-      DO i = 1, nvecs(ibox)
 
-        E_reciprocal = E_reciprocal + cn(i,ibox) &
-                     * ( cos_sum(i,ibox) * cos_sum(i,ibox) &
-                       + sin_sum(i,ibox) * sin_sum(i,ibox) )
+            END DO
+            !$OMP END DO SIMD
+    CASE(int_deletion)
+            !DIR$ VECTOR ALIGNED
+            !$OMP DO SIMD &
+            !$OMP PRIVATE(factor, cos_sum_i, sin_sum_i) &
+            !$OMP PRIVATE(cos_mol_im_o,sin_mol_im_o) &
+            !$OMP SCHEDULE(SIMD:STATIC) &
+            !$OMP REDUCTION(+:E_reciprocal)
+            DO i = 1, nvecs(ibox)
+              sin_sum_i = box_list(ibox)%sincos_sum(i,1)
+              cos_sum_i = box_list(ibox)%sincos_sum(i,2)
+              box_list(ibox)%sincos_sum_old(i,1) = sin_sum_i
+              box_list(ibox)%sincos_sum_old(i,2) = cos_sum_i
+              sin_mol_im_o = sin_mol(i,im_locate)
+              cos_mol_im_o = cos_mol(i,im_locate)
+              sin_sum_i = sin_sum_i - sin_mol_im_o
+              cos_sum_i = cos_sum_i - cos_mol_im_o
+              sin_mol(i,0) = sin_mol_im_o
+              cos_mol(i,0) = cos_mol_im_o
+              box_list(ibox)%sincos_sum(i,1) = sin_sum_i
+              box_list(ibox)%sincos_sum(i,2) = cos_sum_i
+              factor = box_list(ibox)%kspace_vectors(i,4)
 
-      END DO
-      !$OMP END PARALLEL DO
 
-    ELSE IF ( move_flag == int_insertion ) THEN
+              E_reciprocal = E_reciprocal + factor &
+                           * ( cos_sum_i * cos_sum_i &
+                             + sin_sum_i * sin_sum_i )
 
-      !$OMP PARALLEL DO DEFAULT(SHARED) &
-      !$OMP PRIVATE(i, ia, hdotr, q) &
-      !$OMP SCHEDULE(STATIC) &
-      !$OMP REDUCTION(+:E_reciprocal)
-
-      DO i = 1, nvecs(ibox)
-
-        cos_mol(i,im_locate) = 0.0_DP
-        sin_mol(i,im_locate) = 0.0_DP
-
-        DO ia = 1, natoms(is)
-          ! Compute the new hdotr vector
-          hdotr = hx(i,ibox) * atom_list(ia,im,is)%rp(1) + &
-                  hy(i,ibox) * atom_list(ia,im,is)%rp(2) + &
-                  hz(i,ibox) * atom_list(ia,im,is)%rp(3)
-
-          q = nonbond_list(ia,is)%charge
-          cos_mol(i,im_locate) = cos_mol(i,im_locate) + q * DCOS(hdotr)
-          sin_mol(i,im_locate) = sin_mol(i,im_locate) + q * DSIN(hdotr)
-        END DO
-
-        cos_sum(i,ibox) = cos_sum(i,ibox) &
-                        + cos_mol(i,im_locate)
-        sin_sum(i,ibox) = sin_sum(i,ibox) &
-                        + sin_mol(i,im_locate)
-
-        E_reciprocal = E_reciprocal + cn(i,ibox) &
-                     * ( cos_sum(i,ibox) * cos_sum(i,ibox) &
-                       + sin_sum(i,ibox) * sin_sum(i,ibox) )
-
-      END DO
-      !$OMP END PARALLEL DO
-    END IF
-
+            END DO
+            !$OMP END DO SIMD
+    END SELECT
+    !$OMP END PARALLEL
     E_reciprocal = E_reciprocal * charge_factor
 
   END SUBROUTINE Update_System_Ewald_Reciprocal_Energy
@@ -5305,117 +5519,89 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
     REAL(DP), INTENT(OUT) :: E_reciprocal
 
     ! Local variables
-    REAL(DP), DIMENSION(natoms(is)) :: q, rxp, ryp, rzp
-    REAL(DP), DIMENSION(nvecs(ibox)) :: this_cos_sum, this_sin_sum
-    REAL(DP) :: hdotr, trigfactor, ihx, ihy, ihz, qia, rpq(4,natoms(is))
-    REAL(DP) :: cos_sum_i, sin_sum_i, E_recip_redux
-    INTEGER :: i, ia, this_natoms
-    !DIR$ ASSUME_ALIGNED q:32, rxp:32, ryp:32, rzp:32, this_cos_sum:32, this_sin_sum:32
+    REAL(DP) :: charge
+    REAL(DP), DIMENSION(4,natoms(is)) :: rpq
+    INTEGER :: i, ia, n_charged_atoms
 
-    q = nonbond_list(1:natoms(is),is)%charge
+    n_charged_atoms = 0
+    DO ia = 1, natoms(is)
+        charge = nonbond_list(ia,is)%charge
+        IF (charge == 0.0_DP) CYCLE
+        n_charged_atoms = n_charged_atoms+1
+        rpq(1:3,n_charged_atoms) = widom_atoms(ia)%rp
+        rpq(4,n_charged_atoms) = charge
+    END DO
+
 
     ! Initialize variables
-    !E_reciprocal = 0.0_DP
-    E_recip_redux = 0.0_DP
 
-    !rxp = widom_atoms%rp(1)
-    !ryp = widom_atoms%rp(2)
-    !rzp = widom_atoms%rp(3)
-
-!    DO i = 1, nvecs(ibox)
-!
-!      hdotr = hx(i,ibox) * rxp + &
-!              hy(i,ibox) * ryp + &
-!              hz(i,ibox) * rzp
-!
-!      cos_sum_i = cos_sum(i,ibox) + DOT_PRODUCT(q, DCOS(hdotr))
-!      sin_sum_i = sin_sum(i,ibox) + DOT_PRODUCT(q, DSIN(hdotr))
-!
-!      E_reciprocal = E_reciprocal + cn(i,ibox) &
-!                   * ( cos_sum_i * cos_sum_i &
-!                     + sin_sum_i * sin_sum_i )
-!
-!    END DO
-    DO ia = 1, natoms(is)
-        rpq(1:3,ia) = widom_atoms(ia)%rp
-        rpq(4,ia) = q(ia)
-    END DO
-    this_natoms = natoms(is)
-    SELECT CASE(this_natoms)
+    ! Multiversion inner loop nested in vectorized loop
+    SELECT CASE(n_charged_atoms)
     CASE(1)
-            E_recip_redux = Get_E_recip_redux(1)
+            E_reciprocal = Compute_E_reciprocal(1)
     CASE(2)
-            E_recip_redux = Get_E_recip_redux(2)
+            E_reciprocal = Compute_E_reciprocal(2)
     CASE(3)
-            E_recip_redux = Get_E_recip_redux(3)
+            E_reciprocal = Compute_E_reciprocal(3)
     CASE(4)
-            E_recip_redux = Get_E_recip_redux(4)
+            E_reciprocal = Compute_E_reciprocal(4)
     CASE(5)
-            E_recip_redux = Get_E_recip_redux(5)
+            E_reciprocal = Compute_E_reciprocal(5)
     CASE(6)
-            E_recip_redux = Get_E_recip_redux(6)
+            E_reciprocal = Compute_E_reciprocal(6)
     CASE(7)
-            E_recip_redux = Get_E_recip_redux(7)
+            E_reciprocal = Compute_E_reciprocal(7)
     CASE(8)
-            E_recip_redux = Get_E_recip_redux(8)
+            E_reciprocal = Compute_E_reciprocal(8)
     CASE DEFAULT
-            !DIR$ ASSUME (this_natoms .GT. 8)
-            E_recip_redux = Get_E_recip_redux(this_natoms)
+            E_reciprocal = Compute_E_reciprocal(n_charged_atoms)
     END SELECT
-    !DO i = 1, nvecs(ibox)
-    !    ihx = hx(i,ibox)
-    !    ihy = hy(i,ibox)
-    !    ihz = hz(i,ibox)
-    !    cos_sum_i = 0.0_DP
-    !    sin_sum_i = 0.0_DP
-    !    DO ia = 1, natoms(is)
-    !            hdotr = ihx*rxp(ia)
-    !            hdotr = hdotr + ihy*ryp(ia)
-    !            hdotr = hdotr + ihz*rzp(ia)
-    !            qia = q(ia)
-    !            cos_sum_i = cos_sum_i + qia*DCOS(hdotr)
-    !            sin_sum_i = sin_sum_i + qia*DSIN(hdotr)
-    !    END DO
-    !    this_cos_sum(i) = cos_sum_i
-    !    this_sin_sum(i) = sin_sum_i
-    !END DO
-    !DO i = 1, nvecs(ibox)
-    !    cos_sum_i = this_cos_sum(i) + cos_sum(i,ibox)
-    !    sin_sum_i = this_sin_sum(i) + sin_sum(i,ibox)
-    !    trigfactor = cos_sum_i*cos_sum_i
-    !    trigfactor = trigfactor + sin_sum_i*sin_sum_i
-    !    E_recip_redux = E_recip_redux + cn(i,ibox)*trigfactor
-    !END DO
 
-    E_reciprocal = E_recip_redux * charge_factor
+
+    E_reciprocal = E_reciprocal * charge_factor
+
     CONTAINS
-            REAL(DP) FUNCTION Get_E_recip_redux(na)
-                    !DIR$ ATTRIBUTES FORCEINLINE :: Get_E_recip_redux
-                    INTEGER :: na, ia, i
-                    REAL(DP) :: ihx,ihy,ihz,cos_sum_i,sin_sum_i,hdotr,qia
-                    Get_E_recip_redux = 0.0_DP
+            FUNCTION Compute_E_reciprocal(na) RESULT(E_reciprocal_redux)
+                    !DIR$ ATTRIBUTES FORCEINLINE :: Compute_E_reciprocal
+                    INTEGER, INTENT(IN) :: na
+                    REAL(DP) :: E_reciprocal_redux
+                    REAL(DP) :: hdotr, q, hx, hy, hz, sin_sum_i, cos_sum_i, factor
+                    INTEGER :: i, ia
+                    E_reciprocal_redux = 0.0_DP
                     !DIR$ VECTOR ALIGNED
-                    !$OMP SIMD PRIVATE(ihx,ihy,ihz,cos_sum_i,sin_sum_i,hdotr) REDUCTION(+:Get_E_recip_redux)
+                    !$OMP SIMD &
+                    !$OMP PRIVATE(hdotr, q, hx, hy, hz, sin_sum_i, cos_sum_i, factor) &
+                    !$OMP REDUCTION(+:E_reciprocal_redux)
                     DO i = 1, nvecs(ibox)
-                        ihx = hx(i,ibox)
-                        ihy = hy(i,ibox)
-                        ihz = hz(i,ibox)
-                        cos_sum_i = cos_sum(i,ibox)
-                        sin_sum_i = sin_sum(i,ibox)
-                        DO ia = 1, na
-                                hdotr = ihx*rpq(1,ia)
-                                hdotr = hdotr + ihy*rpq(2,ia)
-                                hdotr = hdotr + ihz*rpq(3,ia)
-                                qia = rpq(4,ia)
-                                cos_sum_i = cos_sum_i + qia*DCOS(hdotr)
-                                sin_sum_i = sin_sum_i + qia*DSIN(hdotr)
-                        END DO
-                        cos_sum_i = cos_sum_i*cos_sum_i ! repurposing cos_sum_i as cos_sum_i*cos_sum_i + sin_sum_i*sin_sum_i
-                        cos_sum_i = cos_sum_i + sin_sum_i*sin_sum_i
-                        Get_E_recip_redux = Get_E_recip_redux + cn(i,ibox)*cos_sum_i
+
+                      hx = box_list(ibox)%kspace_vectors(i,1)
+                      hy = box_list(ibox)%kspace_vectors(i,2)
+                      hz = box_list(ibox)%kspace_vectors(i,3)
+                      sin_sum_i = box_list(ibox)%sincos_sum(i,1)
+                      cos_sum_i = box_list(ibox)%sincos_sum(i,2)
+                      factor = box_list(ibox)%kspace_vectors(i,4)
+
+                      DO ia = 1, na
+                        ! compute the new hdotr
+                        hdotr = hx * rpq(1,ia) + &
+                                hy * rpq(2,ia) + &
+                                hz * rpq(3,ia)
+
+                        q = rpq(4,ia)
+                        sin_sum_i = sin_sum_i + q*SIN(hdotr)
+                        cos_sum_i = cos_sum_i + q*COS(hdotr)
+                      END DO
+
+                      sin_sum_i = sin_sum_i * sin_sum_i
+                      sin_sum_i = sin_sum_i + cos_sum_i*cos_sum_i
+
+
+                      E_reciprocal_redux = E_reciprocal_redux + factor*sin_sum_i
+
+
                     END DO
                     !$OMP END SIMD
-            END FUNCTION Get_E_recip_redux
+            END FUNCTION Compute_E_reciprocal
 
   END SUBROUTINE Update_System_Ewald_Reciprocal_Energy_Widom
   !*****************************************************************************
@@ -5480,7 +5666,6 @@ SUBROUTINE Compute_Molecule_Self_Energy(im,is,this_box,E_self)
   !
   ! CALLED BY:
   !
-  ! Chempot
   ! GEMC_Particle_Transfer
   ! Insertion
   ! Deletion
@@ -5558,9 +5743,11 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     energy(this_box)%total = 0.0_DP
     energy(this_box)%inter = 0.0_DP
     energy(this_box)%inter_vdw = 0.0_DP
-    energy(this_box)%lrc = 0.0_DP
     energy(this_box)%inter_q = 0.0_DP
-    energy(this_box)%reciprocal = 0.0_DP
+    IF (int_sim_type .NE. sim_pregen) THEN
+        energy(this_box)%reciprocal = 0.0_DP
+        energy(this_box)%lrc = 0.0_DP
+    END IF
     ! Compute the intramolecular energy of the system if the flag is set.
 
     IF (intra_flag) THEN
@@ -5653,7 +5840,11 @@ END SUBROUTINE Compute_Molecule_Self_Energy
           this_im_1 = locate(im_1,is,this_box)
           IF (.NOT. molecule_list(this_im_1,is)%live) CYCLE imLOOP1
 
-          IF (l_pair_store) CALL Get_Position_Alive(this_im_1, is, locate_1)
+          IF (l_pair_store) THEN
+                  CALL Get_Position_Alive(this_im_1, is, locate_1)
+                  pair_nrg_vdw(locate_1,locate_1) = 0.0_DP
+                  pair_nrg_qq(locate_1,locate_1) = 0.0_DP
+          END IF
 
           E_inter_vdw = 0.0_DP
           E_inter_qq  = 0.0_DP
@@ -5796,8 +5987,9 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     ! Compute the reciprocal and self energy terms of the electrostatic energies if flag for Ewald is set.
     IF (int_charge_style(this_box) == charge_coul) THEN
        IF (int_charge_sum_style(this_box) == charge_ewald) THEN
-
-            CALL Compute_System_Ewald_Reciprocal_Energy(this_box)
+            IF (int_sim_type .NE. sim_pregen) THEN
+                 CALL Compute_System_Ewald_Reciprocal_Energy(this_box)
+            END IF
 
             energy(this_box)%inter = energy(this_box)%inter &
                                    + energy(this_box)%reciprocal
@@ -5813,9 +6005,11 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
     ! Long range correction if it is required
     IF (int_vdw_sum_style(this_box) == vdw_cut_tail) THEN
-       CALL Compute_LR_Correction(this_box,e_lrc)
-       ! add to the correction to the inter energy of the system
-       energy(this_box)%lrc = e_lrc
+       IF (int_sim_type .NE. sim_pregen) THEN
+               CALL Compute_LR_Correction(this_box,e_lrc)
+               ! add to the correction to the inter energy of the system
+               energy(this_box)%lrc = e_lrc
+       END IF
        energy(this_box)%inter = energy(this_box)%inter + energy(this_box)%lrc
     END IF
 
@@ -6080,9 +6274,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
    !
    ! CALLED BY
    !
-   ! Volume_Change
-   ! Main
-   ! Write_Properties_Buffer
+   ! Compute_Pressure
    !
    !****************************************************************************
 
@@ -6548,6 +6740,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     !
     ! Added by Tom Rosch on 06/11/09
     ! (See Wheeler, Mol. Phys. 1997 Vol. 92 pg. 55)
+    ! Drastically refactored by Ryan Smith in 2024
     !
     !***************************************************************************
 
@@ -6560,121 +6753,704 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
     INTEGER :: i, is, im, ia, this_locate, this_box
 
-    REAL(DP) :: charge
-    REAL(DP) :: qw(9), qwxy, qwxz, qwyz, un, const_val
-    REAL(DP) :: xcmi, ycmi, zcmi, piix, piiy, piiz, arg, factor
+    REAL(DP) :: un, const_val
+    REAL(DP) :: piix, piiy, piiz, arg, factor
     REAL(DP) :: recip_11, recip_21, recip_31, recip_22, recip_23, recip_33
+    REAL(DP) :: qw1,qw2,qw3,qw5,qw6,qw9
+    REAL(DP) :: hxhy,hxhz,hyhz,rxp,ryp,rzp
+    REAL(DP) :: hxsq, hysq, hzsq, hx, hy, hz
 
-    const_val = 1.0_DP/(2.0_DP * alpha_ewald(this_box) * alpha_ewald(this_box))
-    qw(:) = 0.0_DP
-    W_tensor_recip(:,:,this_box) = 0.0_DP
+    INTEGER :: nlive_count, n_charged_atoms, n_charged_live, n_charged_live_p4
+    INTEGER, DIMENSION(MAXVAL(nmols(:,this_box))) :: live_locates
+    REAL(DP), PARAMETER :: inv_charge_factor = 1.0_DP/charge_factor
+    REAL(DP) :: diag_initializer
+    REAL(DP), DIMENSION(IAND(SUM(nmols(:,this_box)*natoms)+3,NOT(3)),3) :: qpii, rp
+    REAL(DP), DIMENSION(IAND(SUM(nmols(:,this_box)*natoms)+3,NOT(3))) :: charges
+    REAL(DP), DIMENSION(3,3) :: H_inv
+    REAL(DP), DIMENSION(MAXVAL(natoms)) :: species_charges
+    INTEGER, DIMENSION(MAXVAL(natoms)) :: which_charged_atoms
+    REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE :: sincos
+    REAL(DP), DIMENSION(IAND(nvecs(this_box)+3,NOT(3)),3,2) :: qpii_sincos_sum
+    REAL(DP) :: qpiix, qpiiy, qpiiz
+    REAL(DP) :: qpiix_sin_sum, qpiix_cos_sum, qpiiy_sin_sum, qpiiy_cos_sum, qpiiz_sin_sum, qpiiz_cos_sum
+    INTEGER :: kxyz_max(3), kxyz_maxmax, kxyz, kx, ky, kz, this_kxyz_max, hxp, hyp, hzp
+    REAL(DP) :: charge, xcom, ycom, zcom
+    REAL(DP) :: ihp, sin1, cos1, nsin1, ncos1, nsin2, ncos2, sin2, cos2, sin12, cos12, sin3, cos3
+    REAL(DP) :: sin_sum_i, cos_sum_i
+    INTEGER :: istart, iend, i_dim, ni
+    LOGICAL :: l_ortho
+    INTEGER :: chunkstart,chunkend,chunksize,ithread,nthreads
+    REAL(DP), DIMENSION(6) :: qw_vec
 
-    !$OMP PARALLEL DO DEFAULT(SHARED) &
-    !$OMP SCHEDULE(STATIC) &
-    !$OMP PRIVATE(i, un, qwxy, qwxz, qwyz) &
-    !$OMP REDUCTION(+:qw)
-    DO i = 1, nvecs(this_box)
+    l_ortho = box_list(this_box)%int_box_shape <= int_ortho
+    diag_initializer = energy(this_box)%reciprocal * inv_charge_factor
+    !qw1 = diag_initializer
+    !qw2 = 0.0_DP
+    !qw3 = 0.0_DP
+    !qw5 = diag_initializer
+    !qw6 = 0.0_DP
+    !qw9 = diag_initializer
+    !recip_11 = 0.0_DP
+    !recip_21 = 0.0_DP
+    !recip_31 = 0.0_DP
+    !recip_22 = 0.0_DP
+    !recip_23 = 0.0_DP
+    !recip_33 = 0.0_DP
+    qw_vec = 0.0_DP
 
-       un = Cn(i,this_box) * (cos_sum(i,this_box) * cos_sum(i,this_box) + sin_sum(i,this_box) * sin_sum(i,this_box))
+    H_inv = twoPI*box_list(this_box)%length_inv
+    kxyz_maxmax = box_list(this_box)%kxyz_maxmax
+    kxyz_max = box_list(this_box)%kxyz_max
 
-       qwxy =  un * ( -2.0_DP*(1.0_DP/hsq(i,this_box) + 0.5_DP*const_val) &
-              *hx(i,this_box)*hy(i,this_box) )
-       qwxz =  un * ( -2.0_DP*(1.0_DP/hsq(i,this_box) + 0.5_DP*const_val) &
-              *hx(i,this_box)*hz(i,this_box) )
-       qwyz =  un * ( -2.0_DP*(1.0_DP/hsq(i,this_box) + 0.5_DP*const_val) &
-              *hy(i,this_box)*hz(i,this_box) )
+    istart = 1
+    n_charged_live = 0
 
-       qw(1) = qw(1) + &
-               ( un * ( 1.0_DP - 2.0_DP*(1.0_DP/hsq(i,this_box) + 0.5_DP*const_val) &
-               *hx(i,this_box)*hx(i,this_box)))
-       qw(2) = qw(2) + qwxy
-       qw(3) = qw(3) + qwxz
-       qw(5) = qw(5) + &
-               ( un * ( 1.0_DP - 2.0_DP*(1.0_DP/hsq(i,this_box) + 0.5_DP*const_val) &
-               *hy(i,this_box)*hy(i,this_box)))
-       qw(6) = qw(6) + qwyz
-       qw(9) = qw(9) + &
-               ( un * ( 1.0_DP - 2.0_DP*(1.0_DP/hsq(i,this_box) + 0.5_DP*const_val) &
-               *hz(i,this_box)*hz(i,this_box)))
 
-    END DO
-    !$OMP END PARALLEL DO
+    !$OMP PARALLEL DEFAULT(SHARED) &
+    !$OMP PRIVATE(i,cos_sum_i,sin_sum_i,hxsq,hysq,hzsq) &
+    !$OMP PRIVATE(hxhy,hxhz,hyhz,factor) &
+    !$OMP PRIVATE(is,im,ia,this_locate,ni,i_dim) &
+    !$OMP PRIVATE(xcom,ycom,zcom,rxp,ryp,rzp,charge) &
+    !$OMP PRIVATE(ihp, sin1, cos1, nsin1, ncos1, nsin2, ncos2, sin2, cos2, sin12, cos12, sin3, cos3) &
+    !$OMP PRIVATE(qpiix_sin_sum, qpiix_cos_sum, qpiiy_sin_sum, qpiiy_cos_sum, qpiiz_sin_sum, qpiiz_cos_sum) &
+    !$OMP PRIVATE(piix,piiy,piiz,qpiix,qpiiy,qpiiz) &
+    !$OMP PRIVATE(hx,hy,hz,hxp,hyp,hzp,this_kxyz_max) &
+    !$OMP PRIVATE(chunkstart,chunkend,chunksize,ithread,nthreads) &
+    !$OMP PRIVATE(kxyz,kx,ky,kz) &
+    !$OMP PRIVATE(qw1,qw2,qw3,qw5,qw6,recip_11,recip_21,recip_31,recip_22,recip_23,recip_33) &
+    !$OMP REDUCTION(+:qw_vec)
 
-    W_tensor_recip(1,1,this_box) = qw(1)
-    W_tensor_recip(2,1,this_box) = qw(2)
-    W_tensor_recip(3,1,this_box) = qw(3)
-    W_tensor_recip(2,2,this_box) = qw(5)
-    W_tensor_recip(3,2,this_box) = qw(6)
-    W_tensor_recip(3,3,this_box) = qw(9)
+    !$ nthreads = OMP_GET_NUM_THREADS()
+    !$ ithread = OMP_GET_THREAD_NUM()
 
     DO is = 1, nspecies
-
+       IF (nmols(is,this_box)==0 .OR. .NOT. has_charge(is)) CYCLE
+       !$OMP SINGLE
+       istart = istart + n_charged_live
+       nlive_count = 0
        DO im = 1, nmols(is,this_box)
-
-          this_locate = locate(im,is,this_box)
-          IF( .NOT. molecule_list(this_locate,is)%live) CYCLE
-
-          xcmi = molecule_list(this_locate,is)%rcom(1)
-          ycmi = molecule_list(this_locate,is)%rcom(2)
-          zcmi = molecule_list(this_locate,is)%rcom(3)
-
-          DO ia = 1, natoms(is)
-
-             piix = atom_list(ia,this_locate,is)%rp(1) - xcmi
-             piiy = atom_list(ia,this_locate,is)%rp(2) - ycmi
-             piiz = atom_list(ia,this_locate,is)%rp(3) - zcmi
-             charge = nonbond_list(ia,is)%charge
-
-             recip_11 = 0.0_DP
-             recip_21 = 0.0_DP
-             recip_31 = 0.0_DP
-             recip_22 = 0.0_DP
-             recip_23 = 0.0_DP
-             recip_33 = 0.0_DP
-
-             !$OMP PARALLEL DO DEFAULT(SHARED) &
-             !$OMP SCHEDULE(STATIC) &
-             !$OMP PRIVATE(i,arg,factor) &
-             !$OMP REDUCTION(+:recip_11, recip_21, recip_31) &
-             !$OMP REDUCTION(+:recip_22, recip_23, recip_33)
-             DO i = 1, nvecs(this_box)
-
-                arg = hx(i,this_box)*atom_list(ia,this_locate,is)%rp(1) + &
-                      hy(i,this_box)*atom_list(ia,this_locate,is)%rp(2) + &
-                      hz(i,this_box)*atom_list(ia,this_locate,is)%rp(3)
-
-                factor = Cn(i,this_box)*2.0_DP*(-cos_sum(i,this_box)*DSIN(arg) + &
-                         sin_sum(i,this_box)*DCOS(arg))*charge
-
-                recip_11 = recip_11 + factor*hx(i,this_box)*piix
-                recip_21 = recip_21 + factor* 0.5_DP*(hx(i,this_box)*piiy+hy(i,this_box)*piix)
-                recip_31 = recip_31 + factor* 0.5_DP*(hx(i,this_box)*piiz+hz(i,this_box)*piix)
-                recip_22 = recip_22 + factor*hy(i,this_box)*piiy
-                recip_23 = recip_23 + factor* 0.5_DP*(hy(i,this_box)*piiz+hz(i,this_box)*piiy)
-                recip_33 = recip_33 + factor*hz(i,this_box)*piiz
-
-             END DO
-             !$OMP END PARALLEL DO
-
-             W_tensor_recip(1,1,this_box) = W_tensor_recip(1,1,this_box) + recip_11
-             W_tensor_recip(2,1,this_box) = W_tensor_recip(2,1,this_box) + recip_21
-             W_tensor_recip(3,1,this_box) = W_tensor_recip(3,1,this_box) + recip_31
-             W_tensor_recip(2,2,this_box) = W_tensor_recip(2,2,this_box) + recip_22
-             W_tensor_recip(2,3,this_box) = W_tensor_recip(2,3,this_box) + recip_23
-             W_tensor_recip(3,3,this_box) = W_tensor_recip(3,3,this_box) + recip_33
-
-
-          END DO
-
+                this_locate = locate(im,is,this_box)
+                IF (.NOT. molecule_list(this_locate,is)%live) CYCLE
+                nlive_count = nlive_count + 1
+                live_locates(nlive_count) = this_locate
        END DO
+       n_charged_atoms = 0
+       DO ia = 1, natoms(is)
+                charge = nonbond_list(ia,is)%charge
+                IF (charge == 0.0_DP) CYCLE
+                n_charged_atoms = n_charged_atoms + 1
+                which_charged_atoms(n_charged_atoms) = ia
+                species_charges(n_charged_atoms) = charge
+       END DO
+       n_charged_live = nlive_count*n_charged_atoms
+       iend = istart + n_charged_live - 1
+       !$OMP END SINGLE
+       IF (n_charged_live == 0) CYCLE
+       !$OMP WORKSHARE
+       charges(istart:iend) = RESHAPE(SPREAD(species_charges(1:n_charged_atoms),1,nlive_count), (/ n_charged_live /))
+       qpii(istart:iend,1) = RESHAPE(SPREAD(molecule_list(live_locates(1:nlive_count),is)%rcom(1),2,n_charged_atoms), &
+               (/ n_charged_live /))
+       qpii(istart:iend,2) = RESHAPE(SPREAD(molecule_list(live_locates(1:nlive_count),is)%rcom(2),2,n_charged_atoms), &
+               (/ n_charged_live /))
+       qpii(istart:iend,3) = RESHAPE(SPREAD(molecule_list(live_locates(1:nlive_count),is)%rcom(3),2,n_charged_atoms), &
+               (/ n_charged_live /))
+       rp(istart:iend,1) = RESHAPE(TRANSPOSE(atom_list(which_charged_atoms(1:n_charged_atoms),live_locates(1:nlive_count),is)%rp(1)), &
+               (/ n_charged_live /))
+       rp(istart:iend,2) = RESHAPE(TRANSPOSE(atom_list(which_charged_atoms(1:n_charged_atoms),live_locates(1:nlive_count),is)%rp(2)), &
+               (/ n_charged_live /))
+       rp(istart:iend,3) = RESHAPE(TRANSPOSE(atom_list(which_charged_atoms(1:n_charged_atoms),live_locates(1:nlive_count),is)%rp(3)), &
+               (/ n_charged_live /))
+       !$OMP END WORKSHARE
+    END DO
+    !$OMP SINGLE
+    n_charged_live = iend
+    n_charged_live_p4 = IAND(n_charged_live+3,NOT(3))
+    ALLOCATE(sincos(n_charged_live_p4,2,-kxyz_maxmax:kxyz_maxmax,3))
+    !$OMP END SINGLE
+    chunkstart = 1
+    chunkend = n_charged_live
+    !$ chunksize = IAND((n_charged_live+nthreads-1)/nthreads+3,NOT(3))
+    !$ chunkstart = ithread*chunksize+1
+    !$ chunkend = MIN((ithread+1)*chunksize,n_charged_live)
+    IF (l_ortho) THEN
+            !DIR$ VECTOR ALIGNED
+            !$OMP SIMD PRIVATE(xcom,ycom,zcom,rxp,ryp,rzp,charge)
+            DO i = chunkstart, chunkend
+                xcom = qpii(i,1)
+                rxp = rp(i,1)
+                ycom = qpii(i,2)
+                ryp = rp(i,2)
+                zcom = qpii(i,3)
+                rzp = rp(i,3)
+                charge = charges(i)
+                xcom = rxp-xcom
+                ycom = ryp-ycom
+                zcom = rzp-zcom
+                rxp = H_inv(1,1)*rxp
+                ryp = H_inv(2,2)*ryp
+                rzp = H_inv(3,3)*rzp
+                xcom = xcom*charge
+                ycom = ycom*charge
+                zcom = zcom*charge
+                rp(i,1) = rxp
+                rp(i,2) = ryp
+                rp(i,3) = rzp
+                qpii(i,1) = xcom
+                qpii(i,2) = ycom
+                qpii(i,3) = zcom
+            END DO
+            !$OMP END SIMD
+    ELSE
+            !DIR$ VECTOR ALIGNED
+            !$OMP SIMD PRIVATE(xcom,ycom,zcom,rxp,ryp,rzp,charge)
+            DO i = chunkstart, chunkend
+                xcom = qpii(i,1)
+                rxp = rp(i,1)
+                ycom = qpii(i,2)
+                ryp = rp(i,2)
+                zcom = qpii(i,3)
+                rzp = rp(i,3)
+                charge = charges(i)
+                rxp = rxp-xcom
+                ryp = ryp-ycom
+                rzp = rzp-zcom
+                rxp = rxp*charge
+                ryp = ryp*charge
+                rzp = rzp*charge
+                qpii(i,1) = rxp
+                qpii(i,2) = ryp
+                qpii(i,3) = rzp
+            END DO
+            !$OMP END SIMD
+            !DIR$ VECTOR ALIGNED
+            !$OMP SIMD PRIVATE(hxp,hyp,hzp,rxp,ryp,rzp)
+            DO i = chunkstart, chunkend
+                rxp = rp(i,1)
+                ryp = rp(i,2)
+                rzp = rp(i,3)
+                hxp = H_inv(1,1)*rxp + H_inv(2,1)*ryp + H_inv(3,1)*rzp
+                hyp = H_inv(1,2)*rxp + H_inv(2,2)*ryp + H_inv(3,2)*rzp
+                hzp = H_inv(1,3)*rxp + H_inv(2,3)*ryp + H_inv(3,3)*rzp
+                rp(i,1) = hxp
+                rp(i,2) = hyp
+                rp(i,3) = hzp
+            END DO
+            !$OMP END SIMD
+    END IF
+    DO i_dim = 1, 3
+        this_kxyz_max = kxyz_max(i_dim)
+        !DIR$ VECTOR ALIGNED
+        !$OMP SIMD PRIVATE(ihp,sin1,cos1)
+        DO i = chunkstart, chunkend
+                 ihp = rp(i,i_dim)
+                 sincos(i,1,0,i_dim) = 0.0_DP
+                 sincos(i,2,0,i_dim) = 1.0_DP
+                 sin1 = SIN(ihp)
+                 cos1 = COS(ihp)
+                 sincos(i,1, 1,i_dim) = sin1
+                 sincos(i,2, 1,i_dim) = cos1
+        END DO
+        !$OMP END SIMD
+        IF (i_dim == 3) THEN
+                !DIR$ VECTOR ALIGNED
+                !$OMP SIMD PRIVATE(sin1,cos1,nsin1,ncos1,nsin2,ncos2)
+                DO i = chunkstart, chunkend
+                        sin1 = sincos(i,1,1,3)
+                        cos1 = sincos(i,2,1,3)
+                        nsin1 = sin1
+                        ncos1 = cos1
+                        ! Ptolemy's identities
+                        DO ni = 2, this_kxyz_max
+                                nsin2 = nsin1*cos1 + ncos1*sin1
+                                ncos2 = ncos1*cos1 - nsin1*sin1
+                                sincos(i,1, ni,3) = nsin2
+                                sincos(i,2, ni,3) = ncos2
+                                nsin1 = nsin2
+                                ncos1 = ncos2
+                        END DO
+                END DO
+                !$OMP END SIMD
+        ELSE
+                !DIR$ VECTOR ALIGNED
+                !$OMP SIMD PRIVATE(sin1,cos1,nsin1,ncos1,nsin2,ncos2)
+                DO i = chunkstart, chunkend
+                        sin1 = sincos(i,1,1,i_dim)
+                        cos1 = sincos(i,2,1,i_dim)
+                        sincos(i,1,-1,i_dim) = -sin1
+                        sincos(i,2,-1,i_dim) = cos1
+                        nsin1 = sin1
+                        ncos1 = cos1
+                        ! Ptolemy's identities
+                        DO ni = 2, this_kxyz_max
+                                nsin2 = nsin1*cos1 + ncos1*sin1
+                                ncos2 = ncos1*cos1 - nsin1*sin1
+                                sincos(i,1, ni,i_dim) = nsin2
+                                sincos(i,1,-ni,i_dim) = -nsin2
+                                sincos(i,2, ni,i_dim) = ncos2
+                                sincos(i,2,-ni,i_dim) = ncos2
+                                nsin1 = nsin2
+                                ncos1 = ncos2
+                        END DO
+                END DO
+                !$OMP END SIMD
+        END IF
+    END DO
+    IF (n_charged_live_p4 .NE. n_charged_live) THEN
+            !$OMP SINGLE
+            sincos(n_charged_live+1:n_charged_live_p4,:,:,:) = 0.0_DP
+            qpii(n_charged_live+1:n_charged_live_p4,:) = 0.0_DP
+            !$OMP END SINGLE NOWAIT
+    END IF
+    !$OMP BARRIER
+    !$OMP DO SCHEDULE(STATIC)
+    DO i = 1, nvecs(this_box)
+        kxyz = box_list(this_box)%kspace_vector_ints(i)
+        CALL Extract_Kvector_Ints(kxyz,kx,ky,kz)
+        qpiix_cos_sum = 0.0_DP
+        qpiix_sin_sum = 0.0_DP
+        qpiiy_cos_sum = 0.0_DP
+        qpiiy_sin_sum = 0.0_DP
+        qpiiz_cos_sum = 0.0_DP
+        qpiiz_sin_sum = 0.0_DP
+        !DIR$ ASSUME (MOD(n_charged_live_p4,4) .EQ. 0)
+        !DIR$ VECTOR ALIGNED
+        !$OMP SIMD PRIVATE(sin1,cos1,sin2,cos2,sin3,cos3,sin12,cos12,qpiix,qpiiy,qpiiz) &
+        !$OMP REDUCTION(+:qpiix_sin_sum,qpiix_cos_sum,qpiiy_sin_sum,qpiiy_cos_sum,qpiiz_sin_sum,qpiiz_cos_sum)
+        DO ia = 1, n_charged_live_p4
+                sin1 = sincos(ia,1,kx,1)
+                cos1 = sincos(ia,2,kx,1)
+                sin2 = sincos(ia,1,ky,2)
+                cos2 = sincos(ia,2,ky,2)
+                sin3 = sincos(ia,1,kz,3)
+                cos3 = sincos(ia,2,kz,3)
+                sin12 = sin1*cos2 + cos1*sin2
+                cos12 = cos1*cos2 - sin1*sin2
+                sin1 = sin12*cos3 + cos12*sin3
+                cos1 = cos12*cos3 - sin12*sin3
+                qpiix = qpii(ia,1)
+                qpiiy = qpii(ia,2)
+                qpiiz = qpii(ia,3)
+                qpiix_sin_sum = qpiix_sin_sum + qpiix*sin1
+                qpiix_cos_sum = qpiix_cos_sum + qpiix*cos1
+                qpiiy_sin_sum = qpiiy_sin_sum + qpiiy*sin1
+                qpiiy_cos_sum = qpiiy_cos_sum + qpiiy*cos1
+                qpiiz_sin_sum = qpiiz_sin_sum + qpiiz*sin1
+                qpiiz_cos_sum = qpiiz_cos_sum + qpiiz*cos1
+        END DO
+        !$OMP END SIMD
+        qpii_sincos_sum(i,1,1) = qpiix_sin_sum
+        qpii_sincos_sum(i,1,2) = qpiix_cos_sum
+        qpii_sincos_sum(i,2,1) = qpiiy_sin_sum
+        qpii_sincos_sum(i,2,2) = qpiiy_cos_sum
+        qpii_sincos_sum(i,3,1) = qpiiz_sin_sum
+        qpii_sincos_sum(i,3,2) = qpiiz_cos_sum
+    END DO
+    !$OMP END DO
+    chunkstart = 1
+    chunkend = nvecs(this_box)
+    !$ chunksize = IAND((nvecs(this_box)+nthreads-1)/nthreads+3,NOT(3))
+    !$ chunkstart = ithread*chunksize+1
+    !$ chunkend = MIN((ithread+1)*chunksize,nvecs(this_box))
+    !DIR$ VECTOR ALIGNED
+    !$OMP SIMD &
+    !$OMP PRIVATE(cos_sum_i,sin_sum_i,qpiix_sin_sum,qpiix_cos_sum) &
+    !$OMP PRIVATE(qpiiy_sin_sum,qpiiy_cos_sum,qpiiz_sin_sum,qpiiz_cos_sum)
+    DO i = chunkstart, chunkend
+        sin_sum_i = box_list(this_box)%sincos_sum(i,1)
+        cos_sum_i = box_list(this_box)%sincos_sum(i,2)
+        qpiix_sin_sum = qpii_sincos_sum(i,1,1)
+        qpiix_cos_sum = qpii_sincos_sum(i,1,2)
+        qpiiy_sin_sum = qpii_sincos_sum(i,2,1)
+        qpiiy_cos_sum = qpii_sincos_sum(i,2,2)
+        qpiiz_sin_sum = qpii_sincos_sum(i,3,1)
+        qpiiz_cos_sum = qpii_sincos_sum(i,3,2)
+        qpiix_cos_sum = qpiix_cos_sum*sin_sum_i
+        qpiix_cos_sum = qpiix_cos_sum - qpiix_sin_sum*cos_sum_i
+        qpiiy_cos_sum = qpiiy_cos_sum*sin_sum_i
+        qpiiy_cos_sum = qpiiy_cos_sum - qpiiy_sin_sum*cos_sum_i
+        qpiiz_cos_sum = qpiiz_cos_sum*sin_sum_i
+        qpiiz_cos_sum = qpiiz_cos_sum - qpiiz_sin_sum*cos_sum_i
+        qpii_sincos_sum(i,1,1) = qpiix_cos_sum
+        qpii_sincos_sum(i,2,1) = qpiiy_cos_sum
+        qpii_sincos_sum(i,3,1) = qpiiz_cos_sum
+    END DO
+    !$OMP END SIMD
+    recip_11 = 0.0_DP
+    recip_21 = 0.0_DP
+    recip_31 = 0.0_DP
+    recip_22 = 0.0_DP
+    recip_23 = 0.0_DP
+    recip_33 = 0.0_DP
+    !DIR$ VECTOR ALIGNED
+    !$OMP SIMD &
+    !$OMP PRIVATE(factor,hx,hy,hz,piix,piiy,piiz) &
+    !$OMP REDUCTION(+:recip_11,recip_21,recip_31,recip_22,recip_23,recip_33)
+    DO i = chunkstart, chunkend
+        factor = box_list(this_box)%kspace_vectors(i,4)
+        hx = box_list(this_box)%kspace_vectors(i,1)
+        hy = box_list(this_box)%kspace_vectors(i,2)
+        hz = box_list(this_box)%kspace_vectors(i,3)
+        piix = qpii_sincos_sum(i,1,1)
+        piiy = qpii_sincos_sum(i,2,1)
+        piiz = qpii_sincos_sum(i,3,1)
+        hx = hx*factor
+        hy = hy*factor
+        hz = hz*factor
+        recip_11 = recip_11 + hx*piix
+        recip_21 = recip_21 + hy*piix
+        recip_31 = recip_31 + hz*piix
+        recip_21 = recip_21 + hx*piiy
+        recip_22 = recip_22 + hy*piiy
+        recip_23 = recip_23 + hz*piiy
+        recip_31 = recip_31 + hx*piiz
+        recip_23 = recip_23 + hy*piiz
+        recip_33 = recip_33 + hz*piiz
+    END DO
+    !$OMP END SIMD
+    qw1 = 0.0_DP
+    qw2 = 0.0_DP
+    qw3 = 0.0_DP
+    qw5 = 0.0_DP
+    qw6 = 0.0_DP
+    qw9 = 0.0_DP
+    !DIR$ VECTOR ALIGNED
+    !$OMP SIMD &
+    !$OMP PRIVATE(cos_sum_i,sin_sum_i,hxsq,hysq,hzsq) &
+    !$OMP PRIVATE(hxhy,hxhz,hyhz,factor) &
+    !$OMP REDUCTION(+:qw1,qw2,qw3,qw5,qw6,qw9)
+    DO i = chunkstart, chunkend
+       sin_sum_i = box_list(this_box)%sincos_sum(i,1)
+       cos_sum_i = box_list(this_box)%sincos_sum(i,2)
+       factor = cos_sum_i*cos_sum_i+sin_sum_i*sin_sum_i
+       factor = factor*box_list(this_box)%kspace_vectors(i,5)
+       hxsq = box_list(this_box)%kspace_vectors(i,1) ! not squared yet
+       hysq = box_list(this_box)%kspace_vectors(i,2) ! not squared yet
+       hzsq = box_list(this_box)%kspace_vectors(i,3) ! not squared yet
+       hxhy = hxsq*hysq
+       hxhz = hxsq*hzsq
+       hyhz = hysq*hzsq
+       hxsq = hxsq*hxsq
+       hysq = hysq*hysq
+       hzsq = hzsq*hzsq
+       qw1 = qw1 + factor*hxsq
+       qw2 = qw2 + factor*hxhy
+       qw3 = qw3 + factor*hxhz
+       qw5 = qw5 + factor*hysq
+       qw6 = qw6 + factor*hyhz
+       qw9 = qw9 + factor*hzsq
+
 
     END DO
+    !$OMP END SIMD
+    qw1 = qw1 + 2.0_DP*recip_11
+    qw2 = qw2 + recip_21
+    qw3 = qw3 + recip_31
+    qw5 = qw5 + 2.0_DP*recip_22
+    qw6 = qw6 + recip_23
+    qw9 = qw9 + 2.0_DP*recip_33
+    qw_vec(1) = qw1
+    qw_vec(2) = qw2
+    qw_vec(3) = qw3
+    qw_vec(4) = qw5
+    qw_vec(5) = qw6
+    qw_vec(6) = qw9
+    !$OMP END PARALLEL
+    qw1 = qw_vec(1) + diag_initializer
+    qw2 = qw_vec(2)
+    qw3 = qw_vec(3)
+    qw5 = qw_vec(4) + diag_initializer
+    qw6 = qw_vec(5)
+    qw9 = qw_vec(6) + diag_initializer
+    !qw1 = qw1 + 2.0_DP*recip_11
+    !qw2 = qw2 + recip_21
+    !qw3 = qw3 + recip_31
+    !qw5 = qw5 + 2.0_DP*recip_22
+    !qw6 = qw6 + recip_23
+    !qw9 = qw9 + 2.0_DP*recip_33
+    W_tensor_recip(1,1,this_box) = qw1
+    W_tensor_recip(2,1,this_box) = qw2
+    W_tensor_recip(1,2,this_box) = qw2
+    W_tensor_recip(1,3,this_box) = qw3
+    W_tensor_recip(3,1,this_box) = qw3
+    W_tensor_recip(2,2,this_box) = qw5
+    W_tensor_recip(3,2,this_box) = qw6
+    W_tensor_recip(2,3,this_box) = qw6
+    W_tensor_recip(3,3,this_box) = qw9
 
-  W_tensor_recip(1,2,this_box) = W_tensor_recip(2,1,this_box)
-  W_tensor_recip(1,3,this_box) = W_tensor_recip(3,1,this_box)
-  W_tensor_recip(3,2,this_box) = W_tensor_recip(2,3,this_box)
+
+
 
   END SUBROUTINE Compute_System_Ewald_Reciprocal_Force
+
+  !-----------------------------------------------------------------------------
+
+  SUBROUTINE Compute_System_Ewald_Reciprocal_Energy_Pregen(this_box)
+    !***************************************************************************
+    !
+    !***************************************************************************
+
+    USE Type_Definitions
+    USE Global_Variables
+
+    IMPLICIT NONE
+
+!    !$ include 'omp_lib.h'
+
+    INTEGER :: i, is, im, ia, this_locate, this_box
+
+    REAL(DP) :: factor
+    REAL(DP) :: rxp,ryp,rzp
+
+    INTEGER :: nlive_count, n_charged_atoms, n_charged_live, n_charged_live_p4
+    INTEGER, DIMENSION(MAXVAL(nmols(:,this_box))) :: live_locates
+    REAL(DP), DIMENSION(IAND(SUM(nmols(:,this_box)*natoms)+3,NOT(3)),4) :: rpq
+    REAL(DP), DIMENSION(3,3) :: H_inv
+    REAL(DP), DIMENSION(MAXVAL(natoms)) :: species_charges
+    INTEGER, DIMENSION(MAXVAL(natoms)) :: which_charged_atoms
+    REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE :: sincos
+    INTEGER :: kxyz_max(3), kxyz_maxmax, kxyz, kx, ky, kz, this_kxyz_max, hxp, hyp, hzp
+    REAL(DP) :: charge
+    REAL(DP) :: ihp, sin1, cos1, nsin1, ncos1, nsin2, ncos2, sin2, cos2, sin12, cos12, sin3, cos3
+    REAL(DP) :: sin_sum_i, cos_sum_i
+    INTEGER :: istart, iend, i_dim, ni
+    LOGICAL :: l_ortho
+    INTEGER :: chunkstart,chunkend,chunksize,ithread,nthreads
+    REAL(DP) :: E_reciprocal
+
+    l_ortho = box_list(this_box)%int_box_shape <= int_ortho
+
+    H_inv = twoPI*box_list(this_box)%length_inv
+    kxyz_maxmax = box_list(this_box)%kxyz_maxmax
+    kxyz_max = box_list(this_box)%kxyz_max
+    E_reciprocal = 0.0_DP
+    n_charged_live = 0
+    istart = 1
+
+    !$OMP PARALLEL DEFAULT(SHARED) &
+    !$OMP PRIVATE(i,cos_sum_i,sin_sum_i) &
+    !$OMP PRIVATE(factor) &
+    !$OMP PRIVATE(is,im,ia,this_locate,ni,i_dim) &
+    !$OMP PRIVATE(rxp,ryp,rzp,charge) &
+    !$OMP PRIVATE(ihp, sin1, cos1, nsin1, ncos1, nsin2, ncos2, sin2, cos2, sin12, cos12, sin3, cos3) &
+    !$OMP PRIVATE(hxp,hyp,hzp,this_kxyz_max) &
+    !$OMP PRIVATE(kxyz,kx,ky,kz) &
+    !$OMP PRIVATE(chunkstart,chunkend,chunksize,ithread,nthreads)
+
+    !$ nthreads = OMP_GET_NUM_THREADS()
+    !$ ithread = OMP_GET_THREAD_NUM()
+
+    !istart = 1
+    DO is = 1, nspecies
+       IF (nmols(is,this_box)==0 .OR. .NOT. has_charge(is)) CYCLE
+       !$OMP SINGLE
+       istart = istart + n_charged_live
+       nlive_count = 0
+       DO im = 1, nmols(is,this_box)
+                this_locate = locate(im,is,this_box)
+                IF (.NOT. molecule_list(this_locate,is)%live) CYCLE
+                nlive_count = nlive_count + 1
+                live_locates(nlive_count) = this_locate
+       END DO
+       n_charged_atoms = 0
+       DO ia = 1, natoms(is)
+                charge = nonbond_list(ia,is)%charge
+                IF (charge == 0.0_DP) CYCLE
+                n_charged_atoms = n_charged_atoms + 1
+                which_charged_atoms(n_charged_atoms) = ia
+                species_charges(n_charged_atoms) = charge
+       END DO
+       n_charged_live = nlive_count*n_charged_atoms
+       iend = istart + n_charged_live - 1
+       !$OMP END SINGLE
+       IF (n_charged_live == 0) CYCLE
+       !$OMP WORKSHARE
+       rpq(istart:iend,4) = RESHAPE(SPREAD(species_charges(1:n_charged_atoms),1,nlive_count), (/ n_charged_live /))
+       rpq(istart:iend,1) = RESHAPE(TRANSPOSE(atom_list(which_charged_atoms(1:n_charged_atoms),live_locates(1:nlive_count),is)%rp(1)), &
+               (/ n_charged_live /))
+       rpq(istart:iend,2) = RESHAPE(TRANSPOSE(atom_list(which_charged_atoms(1:n_charged_atoms),live_locates(1:nlive_count),is)%rp(2)), &
+               (/ n_charged_live /))
+       rpq(istart:iend,3) = RESHAPE(TRANSPOSE(atom_list(which_charged_atoms(1:n_charged_atoms),live_locates(1:nlive_count),is)%rp(3)), &
+               (/ n_charged_live /))
+       !$OMP END WORKSHARE
+    END DO
+    !$OMP SINGLE
+    n_charged_live = iend
+    n_charged_live_p4 = IAND(n_charged_live+3,NOT(3))
+    ALLOCATE(sincos(n_charged_live_p4,2,-kxyz_maxmax:kxyz_maxmax,3))
+    !IF (i_mcstep == 1) THEN
+    !        WRITE(*,*)
+    !        WRITE(*,*) i_mcstep
+    !        WRITE(*,*) kxyz_max
+    !        WRITE(*,*) "Good rpq 1!", n_charged_live
+    !        DO i = 1, n_charged_live
+    !            WRITE(*,*) rpq(i,:)
+    !        END DO
+    !        WRITE(*,*)
+    !END IF
+    !IF (ANY(rpq(:n_charged_live,:) .NE. rpq(:n_charged_live,:))) THEN
+    !        WRITE(*,*)
+    !        WRITE(*,*) i_mcstep
+    !        WRITE(*,*) kxyz_max
+    !        WRITE(*,*) "Bad rpq 1!", n_charged_live
+    !        DO i = 1, n_charged_live
+    !            WRITE(*,*) rpq(i,:)
+    !        END DO
+    !        WRITE(*,*)
+    !END IF
+    !IF (i_mcstep == 1) THEN
+    !    WRITE(*,*) n_charged_live, n_charged_live_p4
+    !    WRITE(*,*) "ithread, nthreads, chunksize, chunkstart, chunkend"
+    !END IF
+    !$OMP END SINGLE
+    chunkstart = 1
+    chunkend = n_charged_live
+    !$ chunksize = IAND((n_charged_live+nthreads-1)/nthreads+3,NOT(3))
+    !$ chunkstart = ithread*chunksize+1
+    !$ chunkend = MIN((ithread+1)*chunksize,n_charged_live)
+    IF (l_ortho) THEN
+            !DIR$ VECTOR ALIGNED
+            !$OMP SIMD PRIVATE(rxp,ryp,rzp,charge)
+            DO i = chunkstart, chunkend
+                rxp = rpq(i,1)
+                ryp = rpq(i,2)
+                rzp = rpq(i,3)
+                rxp = H_inv(1,1)*rxp
+                ryp = H_inv(2,2)*ryp
+                rzp = H_inv(3,3)*rzp
+                rpq(i,1) = rxp
+                rpq(i,2) = ryp
+                rpq(i,3) = rzp
+            END DO
+            !$OMP END SIMD
+    ELSE
+            !DIR$ VECTOR ALIGNED
+            !$OMP SIMD PRIVATE(hxp,hyp,hzp,rxp,ryp,rzp)
+            DO i = chunkstart, chunkend
+                rxp = rpq(i,1)
+                ryp = rpq(i,2)
+                rzp = rpq(i,3)
+                hxp = H_inv(1,1)*rxp
+                hyp = H_inv(1,2)*rxp + H_inv(2,2)*ryp
+                hzp = H_inv(1,3)*rxp + H_inv(2,3)*ryp + H_inv(3,3)*rzp
+                rpq(i,1) = hxp
+                rpq(i,2) = hyp
+                rpq(i,3) = hzp
+            END DO
+            !$OMP END SIMD
+    END IF
+    DO i_dim = 1, 3
+        this_kxyz_max = kxyz_max(i_dim)
+        !DIR$ VECTOR ALIGNED
+        !$OMP SIMD PRIVATE(ihp,sin1,cos1)
+        DO i = chunkstart, chunkend
+                 ihp = rpq(i,i_dim)
+                 sincos(i,1,0,i_dim) = 0.0_DP
+                 sincos(i,2,0,i_dim) = 1.0_DP
+                 sin1 = SIN(ihp)
+                 cos1 = COS(ihp)
+                 sincos(i,1, 1,i_dim) = sin1
+                 sincos(i,2, 1,i_dim) = cos1
+        END DO
+        !$OMP END SIMD
+        IF (i_dim == 3) THEN
+                !DIR$ VECTOR ALIGNED
+                !$OMP SIMD PRIVATE(sin1,cos1,nsin1,ncos1,nsin2,ncos2)
+                DO i = chunkstart, chunkend
+                        sin1 = sincos(i,1,1,3)
+                        cos1 = sincos(i,2,1,3)
+                        nsin1 = sin1
+                        ncos1 = cos1
+                        ! Ptolemy's identities
+                        DO ni = 2, this_kxyz_max
+                                nsin2 = nsin1*cos1 + ncos1*sin1
+                                ncos2 = ncos1*cos1 - nsin1*sin1
+                                sincos(i,1, ni,3) = nsin2
+                                sincos(i,2, ni,3) = ncos2
+                                nsin1 = nsin2
+                                ncos1 = ncos2
+                        END DO
+                END DO
+                !$OMP END SIMD
+        ELSE
+                !DIR$ VECTOR ALIGNED
+                !$OMP SIMD PRIVATE(sin1,cos1,nsin1,ncos1,nsin2,ncos2)
+                DO i = chunkstart, chunkend
+                        sin1 = sincos(i,1,1,i_dim)
+                        cos1 = sincos(i,2,1,i_dim)
+                        sincos(i,1,-1,i_dim) = -sin1
+                        sincos(i,2,-1,i_dim) = cos1
+                        nsin1 = sin1
+                        ncos1 = cos1
+                        ! Ptolemy's identities
+                        DO ni = 2, this_kxyz_max
+                                nsin2 = nsin1*cos1 + ncos1*sin1
+                                ncos2 = ncos1*cos1 - nsin1*sin1
+                                sincos(i,1, ni,i_dim) = nsin2
+                                sincos(i,1,-ni,i_dim) = -nsin2
+                                sincos(i,2, ni,i_dim) = ncos2
+                                sincos(i,2,-ni,i_dim) = ncos2
+                                nsin1 = nsin2
+                                ncos1 = ncos2
+                        END DO
+                END DO
+                !$OMP END SIMD
+        END IF
+    END DO
+    IF (n_charged_live_p4 .NE. n_charged_live) THEN
+            !$OMP SINGLE
+            sincos(n_charged_live+1:n_charged_live_p4,:,:,:) = 0.0_DP
+            rpq(n_charged_live+1:n_charged_live_p4,4) = 0.0_DP
+            !$OMP END SINGLE NOWAIT
+    END IF
+    !$OMP BARRIER
+    !$OMP DO SCHEDULE(STATIC)
+    DO i = 1, nvecs(this_box)
+        kxyz = box_list(this_box)%kspace_vector_ints(i)
+        CALL Extract_Kvector_Ints(kxyz,kx,ky,kz)
+        sin_sum_i = 0.0_DP
+        cos_sum_i = 0.0_DP
+        !DIR$ ASSUME (MOD(n_charged_live_p4,4) .EQ. 0)
+        !DIR$ VECTOR ALIGNED
+        !$OMP SIMD PRIVATE(sin1,cos1,sin2,cos2,sin3,cos3,sin12,cos12,charge) &
+        !$OMP REDUCTION(+:sin_sum_i,cos_sum_i)
+        DO ia = 1, n_charged_live_p4
+                sin1 = sincos(ia,1,kx,1)
+                cos1 = sincos(ia,2,kx,1)
+                sin2 = sincos(ia,1,ky,2)
+                cos2 = sincos(ia,2,ky,2)
+                sin3 = sincos(ia,1,kz,3)
+                cos3 = sincos(ia,2,kz,3)
+                charge = rpq(ia,4)
+                sin12 = sin1*cos2 + cos1*sin2
+                cos12 = cos1*cos2 - sin1*sin2
+                sin1 = sin12*cos3 + cos12*sin3
+                cos1 = cos12*cos3 - sin12*sin3
+                sin_sum_i = sin_sum_i + charge*sin1
+                cos_sum_i = cos_sum_i + charge*cos1
+        END DO
+        !$OMP END SIMD
+        box_list(this_box)%sincos_sum(i,1) = sin_sum_i
+        box_list(this_box)%sincos_sum(i,2) = cos_sum_i
+    END DO
+    !$OMP END DO
+    !$OMP DO SIMD SCHEDULE(SIMD:STATIC) PRIVATE(sin_sum_i,cos_sum_i,factor) &
+    !$OMP REDUCTION(+:E_reciprocal)
+    DO i = 1, nvecs(this_box)
+        sin_sum_i = box_list(this_box)%sincos_sum(i,1)
+        cos_sum_i = box_list(this_box)%sincos_sum(i,2)
+        factor = box_list(this_box)%kspace_vectors(i,4)
+        sin_sum_i = sin_sum_i*sin_sum_i
+        sin_sum_i = sin_sum_i + cos_sum_i*cos_sum_i
+        E_reciprocal = E_reciprocal + factor*sin_sum_i
+    END DO
+    !$OMP END DO SIMD
+    !$OMP END PARALLEL
+    energy(this_box)%reciprocal = E_reciprocal*charge_factor
+
+
+
+
+  END SUBROUTINE Compute_System_Ewald_Reciprocal_Energy_Pregen
 
   !-----------------------------------------------------------------------------
 
@@ -7007,101 +7783,389 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     REAL(DP) :: un, const_val
     REAL(DP) :: charge, hdotr, E_reciprocal
 
-    ! individual k-space vector stuff
-    INTEGER ::  position
-    INTEGER, ALLOCATABLE :: im_locate(:,:)
+    INTEGER :: i_dim
+    REAL(DP) :: cos_sum_i,sin_sum_i,this_cos_mol,this_sin_mol
+    REAL(DP) :: sin1,cos1,sin2,cos2,sin3,cos3,sin12,cos12
+    REAL(DP) :: trigsum, factor
+    REAL(DP), DIMENSION(3,3) :: H_inv
+    INTEGER :: im_locate_shift, im_locate_shift_vec(nspecies)
+    INTEGER :: nlive_count, nlive_count_p4, n_charged_atoms, n_charged_atoms_p4
+    REAL(DP), DIMENSION(IAND(MAXVAL(natoms)+3,NOT(3))) :: charges
+    INTEGER, DIMENSION(MAXVAL(natoms)) :: which_charged_atoms
+    INTEGER, DIMENSION(MAXVAL(nmols(:,this_box))) :: live_locates
+    LOGICAL :: molvectorized, l_ortho
+    REAL(DP), DIMENSION(:,:,:), ALLOCATABLE :: rp
+    REAL(DP), DIMENSION(:,:,:,:,:), ALLOCATABLE :: sincos
+    REAL(DP), DIMENSION(:,:), ALLOCATABLE :: species_cos_mol, species_sin_mol
+    INTEGER :: kxyz,kx,ky,kz,kxyz_maxmax,kxyz_max(3)
 
-    ! openmp stuff
-!   INTEGER :: omp_get_num_threads, omp_get_thread_num
+    !! individual k-space vector stuff
+    !INTEGER ::  position
+    !INTEGER, ALLOCATABLE :: im_locate(:,:)
+
 
     ! Initialize variables
-    const_val = 1.0_DP/(2.0_DP * alpha_ewald(this_box) * alpha_ewald(this_box))
     E_reciprocal = 0.0_DP
-    !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-    cos_sum(:,this_box) = 0.0_DP
-    sin_sum(:,this_box) = 0.0_DP
-    !$OMP END PARALLEL WORKSHARE
-
-    ! Create an index, im_locate, for each live molecule in this_box
-    ! im_locate will be used to access cos_mol and sin_mol
-    ALLOCATE(im_locate(MAXVAL(max_molecules),nspecies))
-    DO is = 1, nspecies
-       DO im = 1, nmols(is,this_box)
-          this_locate = locate(im,is,this_box)
-          IF (.NOT. molecule_list(this_locate,is)%live) CYCLE
-
-          ! create index
-          IF (is == 1) THEN
-             im_locate(im,is) = this_locate
-          ELSE
-             im_locate(im,is) = SUM(max_molecules(1:is-1)) + this_locate
-          END IF
-
-       END DO
+    l_ortho = box_list(this_box)%int_box_shape <= int_ortho
+    kxyz_maxmax = box_list(this_box)%kxyz_maxmax
+    kxyz_max = box_list(this_box)%kxyz_max
+    H_inv = twoPI*box_list(this_box)%length_inv
+    im_locate_shift_vec(1) = 0
+    im_locate_shift = max_molecules(1)
+    DO is = 2, nspecies
+        im_locate_shift_vec(is) = im_locate_shift
+        im_locate_shift = im_locate_shift + max_molecules(is)
     END DO
+    !$OMP PARALLEL DEFAULT(SHARED) &
+    !$OMP PRIVATE(i,is,im,i_dim,ia,this_locate,kxyz,kx,ky,kz) &
+    !$OMP PRIVATE(cos_sum_i,sin_sum_i,this_cos_mol,this_sin_mol) &
+    !$OMP PRIVATE(sin1,cos1,sin2,cos2,sin3,cos3,sin12,cos12,charge) &
+    !$OMP PRIVATE(trigsum,factor)
+
+
+
+    !$OMP WORKSHARE
+    box_list(this_box)%sincos_sum = 0.0_DP
+    !$OMP END WORKSHARE
+
 
     ! Loop over each species, molecule
     DO is = 1, nspecies
        ! skip nonpolar species
-       IF (.NOT. has_charge(is)) CYCLE
-
+       IF (nmols(is,this_box) == 0 .OR. .NOT. has_charge(is)) CYCLE
+       !$OMP SINGLE
+       nlive_count = 0
        DO im = 1, nmols(is,this_box)
-          this_locate = locate(im,is,this_box) ! index to atom_list, molecule_list
-          IF( .NOT. molecule_list(this_locate,is)%live) CYCLE
-
-          position = im_locate(im,is) ! index to cos_mol, sin_mol
-
-          !$OMP PARALLEL DO DEFAULT(SHARED) &
-          !$OMP PRIVATE(i,ia,hdotr,charge) &
-          !$OMP SCHEDULE(STATIC)
-
-          ! loop over all the k vectors of this box
-          DO i = 1, nvecs(this_box)
-
-             cos_mol(i,position) = 0.0_DP
-             sin_mol(i,position) = 0.0_DP
-
-             DO ia = 1, natoms(is)
-                ! compute hdotr
-                hdotr = hx(i,this_box) * atom_list(ia,this_locate,is)%rp(1) + &
-                        hy(i,this_box) * atom_list(ia,this_locate,is)%rp(2) + &
-                        hz(i,this_box) * atom_list(ia,this_locate,is)%rp(3)
-
-                charge = nonbond_list(ia,is)%charge
-
-                cos_mol(i,position) = cos_mol(i,position) + charge * DCOS(hdotr)
-                sin_mol(i,position) = sin_mol(i,position) + charge * DSIN(hdotr)
-             END DO
-
-             cos_sum(i,this_box) = cos_sum(i,this_box) &
-                                 + cos_mol(i,position)
-             sin_sum(i,this_box) = sin_sum(i,this_box) &
-                                 + sin_mol(i,position)
-          END DO
-
-          !$OMP END PARALLEL DO
-
+                this_locate = locate(im,is,this_box)
+                IF (.NOT. molecule_list(this_locate,is)%live) CYCLE
+                nlive_count = nlive_count + 1
+                live_locates(nlive_count) = this_locate
        END DO
+       nlive_count_p4 = IAND(nlive_count+3,NOT(3))
+       n_charged_atoms = 0
+       charges = 0.0_DP
+       DO ia = 1, natoms(is)
+                charge = nonbond_list(ia,is)%charge
+                IF (charge == 0.0_DP) CYCLE
+                n_charged_atoms = n_charged_atoms + 1
+                which_charged_atoms(n_charged_atoms) = ia
+                charges(n_charged_atoms) = charge
+       END DO
+       n_charged_atoms_p4 = IAND(n_charged_atoms+3,NOT(3))
+       molvectorized = nlive_count > n_charged_atoms ! vectorize over molecules instead of atoms
+       IF (ALLOCATED(rp)) DEALLOCATE(rp)
+       IF (ALLOCATED(sincos)) DEALLOCATE(sincos)
+       IF (ALLOCATED(species_cos_mol)) DEALLOCATE(species_cos_mol)
+       IF (ALLOCATED(species_sin_mol)) DEALLOCATE(species_sin_mol)
+       IF (molvectorized) THEN
+               ALLOCATE(rp(nlive_count_p4,3,n_charged_atoms))
+               ALLOCATE(sincos(nlive_count_p4,n_charged_atoms,2,-kxyz_maxmax:kxyz_maxmax,3))
+               ALLOCATE(species_cos_mol(nlive_count_p4,nvecs(this_box)))
+               ALLOCATE(species_sin_mol(nlive_count_p4,nvecs(this_box)))
+       ELSE
+               ALLOCATE(rp(n_charged_atoms_p4,3,nlive_count))
+               ALLOCATE(sincos(n_charged_atoms_p4,nlive_count,2,-kxyz_maxmax:kxyz_maxmax,3))
+       END IF
+       im_locate_shift = im_locate_shift_vec(is)
+       !$OMP END SINGLE
+       IF (molvectorized) THEN
+                !$OMP WORKSHARE
+                sincos = 0.0_DP
+                sincos(:,:,2,0,:) = 1.0_DP
+                rp = 0.0_DP
+                rp(1:nlive_count,1,1:n_charged_atoms) = TRANSPOSE(&
+                        atom_list(which_charged_atoms(1:n_charged_atoms),live_locates(1:nlive_count),is)%rp(1))
+                rp(1:nlive_count,2,1:n_charged_atoms) = TRANSPOSE(&
+                        atom_list(which_charged_atoms(1:n_charged_atoms),live_locates(1:nlive_count),is)%rp(2))
+                rp(1:nlive_count,3,1:n_charged_atoms) = TRANSPOSE(&
+                        atom_list(which_charged_atoms(1:n_charged_atoms),live_locates(1:nlive_count),is)%rp(3))
+                !$OMP END WORKSHARE
+                IF (l_ortho) THEN
+                       !$OMP DO COLLAPSE(2) SCHEDULE(STATIC)
+                       DO ia = 1, n_charged_atoms
+                               DO i_dim = 1, 3
+                                        CALL Fill_sincos_ortho(nlive_count_p4,ia,i_dim)
+                               END DO
+                       END DO
+                       !$OMP END DO
+                ELSE
+                       !$OMP DO COLLAPSE(2) SCHEDULE(STATIC)
+                       DO ia = 1, n_charged_atoms
+                               DO i_dim = 1, 3
+                                        CALL Fill_sincos_nonortho(nlive_count_p4,ia,i_dim)
+                               END DO
+                       END DO
+                       !$OMP END DO
+                END IF
+                IF (nlive_count_p4 > nlive_count) THEN
+                        !$OMP WORKSHARE
+                        sincos(nlive_count+1:nlive_count_p4,:,:,:,:) = 0.0_DP
+                        !$OMP END WORKSHARE
+                END IF
+                SELECT CASE(n_charged_atoms)
+                CASE(1)
+                        !$OMP DO SCHEDULE(STATIC)
+                        DO i = 1, nvecs(this_box)
+                                CALL Molvectorized_Loop(i,1)
+                        END DO
+                        !$OMP END DO
+                CASE(2)
+                        !$OMP DO SCHEDULE(STATIC)
+                        DO i = 1, nvecs(this_box)
+                                CALL Molvectorized_Loop(i,2)
+                        END DO
+                        !$OMP END DO
+                CASE(3)
+                        !$OMP DO SCHEDULE(STATIC)
+                        DO i = 1, nvecs(this_box)
+                                CALL Molvectorized_Loop(i,3)
+                        END DO
+                        !$OMP END DO
+                CASE(4)
+                        !$OMP DO SCHEDULE(STATIC)
+                        DO i = 1, nvecs(this_box)
+                                CALL Molvectorized_Loop(i,4)
+                        END DO
+                        !$OMP END DO
+                CASE(5)
+                        !$OMP DO SCHEDULE(STATIC)
+                        DO i = 1, nvecs(this_box)
+                                CALL Molvectorized_Loop(i,5)
+                        END DO
+                        !$OMP END DO
+                CASE(6)
+                        !$OMP DO SCHEDULE(STATIC)
+                        DO i = 1, nvecs(this_box)
+                                CALL Molvectorized_Loop(i,6)
+                        END DO
+                        !$OMP END DO
+                CASE(7)
+                        !$OMP DO SCHEDULE(STATIC)
+                        DO i = 1, nvecs(this_box)
+                                CALL Molvectorized_Loop(i,7)
+                        END DO
+                        !$OMP END DO
+                CASE(8)
+                        !$OMP DO SCHEDULE(STATIC)
+                        DO i = 1, nvecs(this_box)
+                                CALL Molvectorized_Loop(i,8)
+                        END DO
+                        !$OMP END DO
+                CASE DEFAULT
+                        !$OMP DO SCHEDULE(STATIC)
+                        DO i = 1, nvecs(this_box)
+                                CALL Molvectorized_Loop(i,n_charged_atoms)
+                        END DO
+                        !$OMP END DO
+                END SELECT
+                !$OMP WORKSHARE
+                cos_mol(1:nvecs(this_box),im_locate_shift+live_locates(1:nlive_count)) = &
+                        TRANSPOSE(species_cos_mol(1:nlive_count,1:nvecs(this_box)))
+                sin_mol(1:nvecs(this_box),im_locate_shift+live_locates(1:nlive_count)) = &
+                        TRANSPOSE(species_sin_mol(1:nlive_count,1:nvecs(this_box)))
+                !$OMP END WORKSHARE
+       ELSE ! Vectorized over atoms
+                !$OMP WORKSHARE
+                sincos = 0.0_DP
+                sincos(:,:,2,0,:) = 1.0_DP
+                rp = 0.0_DP
+                rp(1:n_charged_atoms,1,1:nlive_count) = &
+                        atom_list(which_charged_atoms(1:n_charged_atoms),live_locates(1:nlive_count),is)%rp(1)
+                rp(1:n_charged_atoms,2,1:nlive_count) = &
+                        atom_list(which_charged_atoms(1:n_charged_atoms),live_locates(1:nlive_count),is)%rp(2)
+                rp(1:n_charged_atoms,3,1:nlive_count) = &
+                        atom_list(which_charged_atoms(1:n_charged_atoms),live_locates(1:nlive_count),is)%rp(3)
+                !$OMP END WORKSHARE
+                IF (l_ortho) THEN
+                        !$OMP DO COLLAPSE(2) SCHEDULE(STATIC)
+                        DO im = 1, nlive_count
+                                DO i_dim = 1, 3
+                                        CALL Fill_sincos_ortho(n_charged_atoms_p4,im,i_dim)
+                                END DO
+                        END DO
+                        !$OMP END DO
+                ELSE
+                        !$OMP DO COLLAPSE(2) SCHEDULE(STATIC)
+                        DO im = 1, nlive_count
+                                DO i_dim = 1, 3
+                                        CALL Fill_sincos_nonortho(n_charged_atoms_p4,im,i_dim)
+                                END DO
+                        END DO
+                        !$OMP END DO
+                END IF
+                !$OMP DO SCHEDULE(STATIC)
+                DO i = 1, nvecs(this_box)
+                        kxyz = box_list(this_box)%kspace_vector_ints(i)
+                        CALL Extract_Kvector_Ints(kxyz,kx,ky,kz)
+                        sin_sum_i = box_list(this_box)%sincos_sum(i,1)
+                        cos_sum_i = box_list(this_box)%sincos_sum(i,2)
+                        DO im = 1, nlive_count
+                                this_cos_mol = 0.0_DP
+                                this_sin_mol = 0.0_DP
+                                !DIR$ ASSUME (MOD(n_charged_atoms_p4,4) .EQ. 0)
+                                !DIR$ VECTOR ALIGNED
+                                !$OMP SIMD &
+                                !$OMP PRIVATE(sin1,cos1,sin2,cos2,sin3,cos3,sin12,cos12,charge) &
+                                !$OMP REDUCTION(+:this_cos_mol,this_sin_mol)
+                                DO ia = 1, n_charged_atoms_p4
+                                        sin1 = sincos(ia,im,1,kx,1)
+                                        cos1 = sincos(ia,im,2,kx,1)
+                                        sin2 = sincos(ia,im,1,ky,2)
+                                        cos2 = sincos(ia,im,2,ky,2)
+                                        sin3 = sincos(ia,im,1,kz,3)
+                                        cos3 = sincos(ia,im,2,kz,3)
+                                        sin12 = sin1*cos2 + cos1*sin2
+                                        cos12 = cos1*cos2 - sin1*sin2
+                                        sin1 = sin12*cos3 + cos12*sin3
+                                        cos1 = cos12*cos3 - sin12*sin3
+                                        charge = charges(ia)
+                                        this_cos_mol = this_cos_mol + charge*cos1
+                                        this_sin_mol = this_sin_mol + charge*sin1
+                                END DO
+                                !$OMP END SIMD
+                                this_locate = im_locate_shift + live_locates(im)
+                                cos_mol(i,this_locate) = this_cos_mol
+                                sin_mol(i,this_locate) = this_sin_mol
+                                cos_sum_i = cos_sum_i + this_cos_mol
+                                sin_sum_i = sin_sum_i + this_sin_mol
+                        END DO
+                        box_list(this_box)%sincos_sum(i,1) = sin_sum_i
+                        box_list(this_box)%sincos_sum(i,2) = cos_sum_i
+                END DO
+                !$OMP END DO
+       END IF
     END DO
 
     ! At the end of all the loops we have computed cos_sum, sin_sum, cos_mol and
     ! sin_mol for each of the k-vectors. Now let us calculate the reciprocal
     ! space energy
 
-    !$OMP PARALLEL DO DEFAULT(SHARED) &
-    !$OMP PRIVATE(i,  un)  &
-    !$OMP SCHEDULE(STATIC) &
+    !DIR$ VECTOR ALIGNED
+    !$OMP DO SIMD SCHEDULE(SIMD:STATIC) &
+    !$OMP PRIVATE(sin_sum_i,cos_sum_i,factor,trigsum) &
     !$OMP REDUCTION(+:E_reciprocal)
-
     DO i = 1, nvecs(this_box)
-       un =  cos_sum(i,this_box) * cos_sum(i,this_box) &
-          +  sin_sum(i,this_box) * sin_sum(i,this_box)
-       E_reciprocal = E_reciprocal + Cn(i,this_box) * un
+            sin_sum_i = box_list(this_box)%sincos_sum(i,1)
+            cos_sum_i = box_list(this_box)%sincos_sum(i,2)
+            factor = box_list(this_box)%kspace_vectors(i,4)
+            trigsum = sin_sum_i*sin_sum_i + cos_sum_i*cos_sum_i
+            E_reciprocal = E_reciprocal + factor*trigsum
     END DO
-
-    !$OMP END PARALLEL DO
+    !$OMP END DO SIMD
+    !$OMP END PARALLEL
 
     energy(this_box)%reciprocal = E_reciprocal * charge_factor
+
+    CONTAINS
+            SUBROUTINE Molvectorized_Loop(i,nca)
+                    !DIR$ ATTRIBUTES FORCEINLINE :: Molvectorized_Loop
+                    INTEGER, INTENT(IN) :: i, nca
+                    INTEGER :: im,ia
+                    REAL(DP) :: sin1,cos1,sin2,cos2,sin3,cos3,sin12,cos12,charge
+                    REAL(DP) :: cos_sum_i, sin_sum_i, this_cos_mol, this_sin_mol
+                    kxyz = box_list(this_box)%kspace_vector_ints(i)
+                    CALL Extract_Kvector_Ints(kxyz,kx,ky,kz)
+                    sin_sum_i = box_list(this_box)%sincos_sum(i,1)
+                    cos_sum_i = box_list(this_box)%sincos_sum(i,2)
+                    !DIR$ VECTOR ALIGNED
+                    !$OMP SIMD PRIVATE(this_cos_mol,this_sin_mol) &
+                    !$OMP PRIVATE(sin1,cos1,sin2,cos2,sin3,cos3,sin12,cos12,charge) &
+                    !$OMP REDUCTION(+:cos_sum_i,sin_sum_i)
+                    DO im = 1, nlive_count_p4
+                            this_cos_mol = 0.0_DP
+                            this_sin_mol = 0.0_DP
+                            DO ia = 1, nca
+                                    sin1 = sincos(im,ia,1,kx,1)
+                                    cos1 = sincos(im,ia,2,kx,1)
+                                    sin2 = sincos(im,ia,1,ky,2)
+                                    cos2 = sincos(im,ia,2,ky,2)
+                                    sin3 = sincos(im,ia,1,kz,3)
+                                    cos3 = sincos(im,ia,2,kz,3)
+                                    sin12 = sin1*cos2 + cos1*sin2
+                                    cos12 = cos1*cos2 - sin1*sin2
+                                    sin1 = sin12*cos3 + cos12*sin3
+                                    cos1 = cos12*cos3 - sin12*sin3
+                                    charge = charges(ia)
+                                    this_cos_mol = this_cos_mol + charge*cos1
+                                    this_sin_mol = this_sin_mol + charge*sin1
+                            END DO
+                            species_cos_mol(im,i) = this_cos_mol
+                            species_sin_mol(im,i) = this_sin_mol
+                            cos_sum_i = cos_sum_i + this_cos_mol
+                            sin_sum_i = sin_sum_i + this_sin_mol
+                    END DO
+                    !$OMP END SIMD
+                    box_list(this_box)%sincos_sum(i,1) = sin_sum_i
+                    box_list(this_box)%sincos_sum(i,2) = cos_sum_i
+            END SUBROUTINE Molvectorized_Loop
+            SUBROUTINE Fill_sincos_ortho(imax,j,i_dim)
+                    !DIR$ ATTRIBUTES FORCEINLINE :: Fill_sincos_ortho
+                    INTEGER, INTENT(IN) :: imax, j, i_dim
+                    INTEGER :: ni, i
+                    REAL(DP) :: ki,sin1,cos1,nsin1,nsin2,ncos1,ncos2
+                    !DIR$ ASSUME (MOD(imax,4) .EQ. 0)
+                    !DIR$ VECTOR ALIGNED
+                    !$OMP SIMD PRIVATE(ki,sin1,cos1,nsin1,nsin2,ncos1,ncos2)
+                    DO i = 1, imax
+                             ki = H_inv(i_dim,i_dim)*rp(i,i_dim,j)
+                             sin1 = SIN(ki)
+                             cos1 = COS(ki)
+                             sincos(i,j,1, 1,i_dim) = sin1
+                             sincos(i,j,1,-1,i_dim) = -sin1
+                             sincos(i,j,2, 1,i_dim) = cos1
+                             sincos(i,j,2,-1,i_dim) = cos1
+                             nsin1 = sin1
+                             ncos1 = cos1
+                             ! Ptolemy's identities
+                             DO ni = 2, kxyz_max(i_dim)
+                                     nsin2 = nsin1*cos1 + ncos1*sin1
+                                     ncos2 = ncos1*cos1 - nsin1*sin1
+                                     nsin1 = nsin2
+                                     ncos1 = ncos2
+                                     sincos(i,j,1, ni,i_dim) = nsin2
+                                     sincos(i,j,1,-ni,i_dim) = -nsin2
+                                     sincos(i,j,2, ni,i_dim) = ncos2
+                                     sincos(i,j,2,-ni,i_dim) = ncos2
+                             END DO
+                    END DO
+                    !$OMP END SIMD
+            END SUBROUTINE Fill_sincos_ortho
+            SUBROUTINE Fill_sincos_nonortho(imax,j,i_dim)
+                    !DIR$ ATTRIBUTES FORCEINLINE :: Fill_sincos_nonortho
+                    INTEGER, INTENT(IN) :: imax, j, i_dim
+                    INTEGER :: ni, i
+                    REAL(DP) :: ki,sin1,cos1,nsin1,nsin2,ncos1,ncos2
+                    REAL(DP) :: rxp,ryp,rzp
+                    !DIR$ ASSUME (MOD(imax,4) .EQ. 0)
+                    !DIR$ VECTOR ALIGNED
+                    !$OMP SIMD PRIVATE(rxp,ryp,rzp,ki,sin1,cos1,nsin1,nsin2,ncos1,ncos2)
+                    DO i = 1, imax
+                             rxp = rp(i,1,j)
+                             ryp = rp(i,2,j)
+                             rzp = rp(i,3,j)
+                             ki = H_inv(1,i_dim)*rxp + H_inv(2,i_dim)*ryp + H_inv(3,i_dim)*rzp
+                             sin1 = SIN(ki)
+                             cos1 = COS(ki)
+                             sincos(i,j,1, 1,i_dim) = sin1
+                             sincos(i,j,1,-1,i_dim) = -sin1
+                             sincos(i,j,2, 1,i_dim) = cos1
+                             sincos(i,j,2,-1,i_dim) = cos1
+                             nsin1 = sin1
+                             ncos1 = cos1
+                             ! Ptolemy's identities
+                             DO ni = 2, kxyz_max(i_dim)
+                                     nsin2 = nsin1*cos1 + ncos1*sin1
+                                     ncos2 = ncos1*cos1 - nsin1*sin1
+                                     nsin1 = nsin2
+                                     ncos1 = ncos2
+                                     sincos(i,j,1, ni,i_dim) = nsin2
+                                     sincos(i,j,1,-ni,i_dim) = -nsin2
+                                     sincos(i,j,2, ni,i_dim) = ncos2
+                                     sincos(i,j,2,-ni,i_dim) = ncos2
+                             END DO
+                    END DO
+                    !$OMP END SIMD
+            END SUBROUTINE Fill_sincos_nonortho
 
   END SUBROUTINE Compute_System_Ewald_Reciprocal_Energy
 

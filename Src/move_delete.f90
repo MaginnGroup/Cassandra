@@ -394,8 +394,10 @@ SUBROUTINE Deletion
            (has_charge(is)) ) THEN
         ! Restore cos_sum and sin_sum. Note that these were changed when
         ! difference in reciprocal energies was computed
-        cos_sum(:,ibox) = cos_sum_old(:,ibox)
-        sin_sum(:,ibox) = sin_sum_old(:,ibox)
+        DEALLOCATE(box_list(ibox)%sincos_sum)
+        CALL MOVE_ALLOC(box_list(ibox)%sincos_sum_old,box_list(ibox)%sincos_sum)
+        !cos_sum(:,ibox) = cos_sum_old(:,ibox)
+        !sin_sum(:,ibox) = sin_sum_old(:,ibox)
      END IF
 
      IF ( int_vdw_sum_style(ibox) == vdw_cut_tail ) THEN

@@ -167,50 +167,6 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
 
 
 
-  t_cpu = 0.0_DP
-
-  IF (est_atompair_rminsq) THEN
-          bsolute = species_list(is)%wsolute_base
-          rsqmin_atompair_w_max_ptr => rsqmin_atompair_w_max(:,:, &
-                  bsolute+1:bsolute+natoms(is),ibox)
-          rsqmin_atompair_w_sum_ptr => rsqmin_atompair_w_sum(:,:, &
-                  bsolute+1:bsolute+natoms(is),ibox)
-          rsqmin_atompair_freq_ptr => rsqmin_atompair_freq(:,:, &
-                  bsolute+1:bsolute+natoms(is),ibox)
-          IF (l_heap) THEN
-                  IF (ALLOCATED(frame_rsqmin_atompair_w_sum_tgt)) THEN
-                          DEALLOCATE(frame_rsqmin_atompair_w_sum_tgt)
-                  END IF
-                  IF (ALLOCATED(frame_rsqmin_atompair_w_max_tgt)) THEN
-                          DEALLOCATE(frame_rsqmin_atompair_w_max_tgt)
-                  END IF
-                  IF (ALLOCATED(frame_rsqmin_atompair_freq_tgt)) THEN
-                          DEALLOCATE(frame_rsqmin_atompair_freq_tgt)
-                  END IF
-                  ALLOCATE(frame_rsqmin_atompair_w_sum_tgt( &
-                          rsqmin_res, &
-                          solvent_maxind, &
-                          natoms(is), &
-                          nbr_threads))
-                  ALLOCATE(frame_rsqmin_atompair_w_max_tgt( &
-                          rsqmin_res, &
-                          solvent_maxind, &
-                          natoms(is), &
-                          nbr_threads))
-                  ALLOCATE(frame_rsqmin_atompair_freq_tgt( &
-                          rsqmin_res, &
-                          solvent_maxind, &
-                          natoms(is), &
-                          nbr_threads))
-                  !$OMP PARALLEL WORKSHARE
-                  frame_rsqmin_atompair_w_sum_tgt = 0.0_DP
-                  frame_rsqmin_atompair_w_max_tgt = 0.0_DP
-                  frame_rsqmin_atompair_freq_tgt = 0_INT64
-                  !$OMP END PARALLEL WORKSHARE
-          END IF
-  END IF
-
-
 
   IF (n_widom_subgroups(is,ibox) > 0) THEN
           n_subintervals = n_widom_subgroups(is,ibox)
@@ -535,7 +491,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
 
 
                   ! used to subtract rsqmin_shifter but now subtract rcut_lowsq and add 1 to int in case
-                  ! floating point rounding somehow allowed proximities slightly closer than rcut_lowsq
+                  ! floating point rounding somehow allowed proximities slightly closer than rcut_low
                   rsq_ind = INT((swi_atompair_rsqmin-rcut_lowsq) / rsqmin_step) + 1
                   IF (est_atompair_rminsq) THEN
                           DO ia = 1, natoms(is)
@@ -690,31 +646,6 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
                   wsum(ic:) = 0.0_DP
                   Efreq(ic:) = 0
           END SUBROUTINE coarsen_w_max
-
-  CONTAINS
-          SUBROUTINE coarsen_w_max(wmax,wsum,Efreq,Efactor,cfactor)
-                  REAL(DP), DIMENSION(0:Eij_ind_ubound), INTENT(INOUT) :: wmax,wsum
-                  INTEGER, DIMENSION(0:Eij_ind_ubound), INTENT(INOUT) :: Efreq
-                  REAL(DP), INTENT(INOUT) :: Efactor
-                  INTEGER, INTENT(IN) :: cfactor
-                  INTEGER :: gwidth, i1, i2, ic
-                  Efactor = Efactor / REAL(cfactor,DP)
-                  gwidth = cfactor - 1
-                  ic = 0
-                  DO i2 = gwidth, Eij_ind_ubound, cfactor
-                        i1 = i2-gwidth
-                        wmax(ic) = MAXVAL(wmax(i1:i2))
-                        Efreq(ic) = SUM(Efreq(i1:i2))
-                        wsum(ic) = SUM(wsum(i1:i2))
-                        ic = ic + 1
-                  END DO
-                  wmax(ic:) = 0.0_DP
-                  wsum(ic:) = 0.0_DP
-                  Efreq(ic:) = 0
-          END SUBROUTINE coarsen_w_max
-
-
-!widom_timing  WRITE(*,*) noncbmc_time
 
 END SUBROUTINE Widom_Insert
 !*******************************************************************************

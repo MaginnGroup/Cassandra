@@ -370,8 +370,8 @@ PROGRAM Main
   ! Ewald stuff
   IF ( int_charge_sum_style(1) == charge_ewald) THEN
 
-     ALLOCATE(hx(maxk,nbr_boxes),hy(maxk,nbr_boxes),hz(maxk,nbr_boxes), &
-          hsq(maxk,nbr_boxes), Cn(maxk,nbr_boxes),Stat=AllocateStatus)
+     !ALLOCATE(hx(maxk,nbr_boxes),hy(maxk,nbr_boxes),hz(maxk,nbr_boxes), &
+     !     hsq(maxk,nbr_boxes), Cn(maxk,nbr_boxes),Stat=AllocateStatus)
      ALLOCATE(nvecs(nbr_boxes))
 
      IF (AllocateStatus /=0) THEN
@@ -384,19 +384,19 @@ PROGRAM Main
         CALL  Ewald_Reciprocal_Lattice_Vector_Setup(ibox)
      END DO
 
-     ! Here we can allocate the memory for cos_sum, sin_sum etc
+     !! Here we can allocate the memory for cos_sum, sin_sum etc
 
-     ALLOCATE(cos_sum(MAXVAL(nvecs),nbr_boxes))
-     ALLOCATE(sin_sum(MAXVAL(nvecs),nbr_boxes))
-     ALLOCATE(cos_sum_old(MAXVAL(nvecs),nbr_boxes))
-     ALLOCATE(sin_sum_old(MAXVAL(nvecs),nbr_boxes))
-     ALLOCATE(cos_sum_start(MAXVAL(nvecs),nbr_boxes))
-     ALLOCATE(sin_sum_start(MAXVAL(nvecs),nbr_boxes))
-     ALLOCATE(cos_mol(MAXVAL(nvecs), SUM(max_molecules)))
-     ALLOCATE(sin_mol(MAXVAL(nvecs), SUM(max_molecules)))
-     ! initialize these vectors
-     cos_mol(:,:) = 0.0_DP
-     sin_mol(:,:) = 0.0_DP
+     !ALLOCATE(cos_sum(MAXVAL(nvecs),nbr_boxes))
+     !ALLOCATE(sin_sum(MAXVAL(nvecs),nbr_boxes))
+     !ALLOCATE(cos_sum_old(MAXVAL(nvecs),nbr_boxes))
+     !ALLOCATE(sin_sum_old(MAXVAL(nvecs),nbr_boxes))
+     IF (int_sim_type .NE. sim_pregen) THEN
+             ALLOCATE(cos_mol(IAND(MAXVAL(nvecs)+3,NOT(3)), 0:SUM(max_molecules)))
+             ALLOCATE(sin_mol(IAND(MAXVAL(nvecs)+3,NOT(3)), 0:SUM(max_molecules)))
+             ! initialize these arrays
+             cos_mol(:,:) = 0.0_DP
+             sin_mol(:,:) = 0.0_DP
+     END IF
 
   END IF
 

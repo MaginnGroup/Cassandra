@@ -392,7 +392,10 @@ SUBROUTINE Identity_Switch
       dE = 0.0_DP
       dE_i = 0.0_DP
       dE_j = 0.0_DP
-
+      ! Note by RS: the Ewald part of this move was wrong and is still wrong at least for multiple boxes,
+      !         but I made changes so that it references data structures I implemented instead of those that
+      !         no longer exist so it doesn't interfere with compilation.
+      !         I'm currently just trying to improve the Ewald summation implementation, not fix this broken move type.
       !Ewald charge code:
       IF ((int_charge_sum_style(box) == charge_ewald) .AND. (has_charge(is) .OR. has_charge(js))) THEN
          !TODO:Eventually rewrite Update_System_Ewald_Reciprocal_Energy!
@@ -402,8 +405,10 @@ SUBROUTINE Identity_Switch
 
             ALLOCATE(cos_sum_old_idsw(nvecs(box),nbr_boxes), sin_sum_old_idsw(nvecs(box),nbr_boxes))
             !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-            cos_sum_old_idsw(1:nvecs(box),box) = cos_sum(1:nvecs(box),box)
-            sin_sum_old_idsw(1:nvecs(box),box) = sin_sum(1:nvecs(box),box)
+            cos_sum_old_idsw(1:nvecs(box),box) = box_list(box)%sincos_sum(1:nvecs(box),2)
+            sin_sum_old_idsw(1:nvecs(box),box) = box_list(box)%sincos_sum(1:nvecs(box),1)
+            !cos_sum_old_idsw(1:nvecs(box),box) = cos_sum(1:nvecs(box),box)
+            !sin_sum_old_idsw(1:nvecs(box),box) = sin_sum(1:nvecs(box),box)
             !$OMP END PARALLEL WORKSHARE
 
             IF (has_charge(is)) THEN
@@ -581,8 +586,8 @@ SUBROUTINE Identity_Switch
         CALL Revert_Switch
         IF ((int_charge_sum_style(box) == charge_ewald) .AND. (has_charge(is) .OR. has_charge(js))) THEN
            !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-           cos_sum(1:nvecs(box), box) = cos_sum_old_idsw(1:nvecs(box),box)
-           sin_sum(1:nvecs(box), box) = sin_sum_old_idsw(1:nvecs(box),box)
+           box_list(box)%sincos_sum(1:nvecs(box),2) = cos_sum_old_idsw(1:nvecs(box),box)
+           box_list(box)%sincos_sum(1:nvecs(box),1) = sin_sum_old_idsw(1:nvecs(box),box)
            !$OMP END PARALLEL WORKSHARE
 
            DEALLOCATE(cos_sum_old_idsw, sin_sum_old_idsw)
