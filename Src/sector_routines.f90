@@ -33,7 +33,7 @@ MODULE Sector_Routines
 
   IMPLICIT NONE
 
-  LOGICAL :: l_firstframe = .FALSE.
+  LOGICAL :: l_firstframe = .FALSE. ! initialize this to true if you want to write voxel grid data for visualization
 
 
   INTERFACE check_overlap
@@ -51,7 +51,6 @@ CONTAINS
           INTEGER, DIMENSION(3) :: sector_atom_ID
           TYPE(Atom_Class), POINTER :: atom_ptr
           REAL(DP) :: xp, yp, zp
-!          INTEGER, DIMENSION(3,nbr_boxes) :: cbmc_truth_cube_bound, cut_truth_cube_bound
           INTEGER :: xi, yi, zi, cim(3), xyzi(3), i_dim
           INTEGER, DIMENSION(2,3) :: tgt_slice, src_slice, bit_tgt_slice, bit_src_slice
           INTEGER, DIMENSION(:), ALLOCATABLE :: xi_pm, yi_pm, zi_pm
@@ -111,7 +110,6 @@ CONTAINS
           INTEGER :: isolvent, lbc, border_range(2), n_interact, adj_iend
           REAL(SP) :: bclr, dsp, drxp, dryp, drzp
 
-          INTEGER(INT32), PARAMETER :: pad8mask = NOT(MASKR(3,INT32))
           INTEGER(INT64) :: superpopcnt
 
           REAL(DP), DIMENSION(3,3) :: bitcell_H_T, bitcell_H_T_sign, cell_H_T, cell_H_T_sign
@@ -127,38 +125,38 @@ CONTAINS
           INTEGER :: sbe_ti(2:3), sbe_ti_mat(2:3,solvents_or_types_maxind,0:n_big_atoms)
           REAL(DP) :: bfd(3), bfdr(3)
 
-          INTEGER, DIMENSION(3) :: int8shape, int8ub, lbp16, int16shape, int16ub
+          INTEGER, DIMENSION(3) :: int8shape, int8ub, lbp16, int16shape, int16ub, int16shape_coarse, int16ub_coarse
           INTEGER(INT64) :: xub_int64
 
-          INTEGER(INT16), DIMENSION(:,:,:), ALLOCATABLE :: bitcell_int16_array
-          INTEGER(INT64), DIMENSION(:), ALLOCATABLE :: zcavcount
-          INTEGER(INT64) :: ncavs, icav, locbase, xi_int64
-          INTEGER :: locbase_int32
+          INTEGER(INT16), DIMENSION(:,:,:), ALLOCATABLE :: bitcell_int16_array, coarse_voxel_array
+          INTEGER(INT64), DIMENSION(:), ALLOCATABLE :: zcavcount, zcavcount_coarse
+          INTEGER(INT64) :: ncavs, ncavs_coarse, ncavs_combined, ncavs_fine, icav, locbase, loc, xi_int64
+          INTEGER :: locbase_int32, loc_int32
 
           INTEGER(INT16) :: oneshift_int16, ncavs_int16
 
           INTEGER :: i_big_atom
 
-          LOGICAL(2), DIMENSION(0:MASKR(15)) :: ncavlvec
+          !LOGICAL(2), DIMENSION(0:MASKR(15)) :: ncavlvec
 
           INTEGER :: big_atom_start
           INTEGER(INT16), DIMENSION(0:15), PARAMETER :: oneshift_int16_vec = &
                   ISHFT(1_INT16,(/0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15/))
-          INTEGER :: yi_chunkstart, yi_chunkstride, yi_chunkend, chunksize, chunksize_p16
-          INTEGER(INT16), DIMENSION(ISHFT(1,12)) :: bitcell_int16_vec
+          INTEGER(INT16), DIMENSION(0:7), PARAMETER :: oneshift_int16_vec_coarse = oneshift_int16_vec(::2)
+          INTEGER :: yi_chunkstart, yi_chunkstride, yi2_chunkstride, yi_chunkend, chunksize, chunksize_p16
+          INTEGER(INT16), DIMENSION(ISHFT(1,13)) :: bitcell_int16_vec
           INTEGER(INT16) :: cavbits_int16
-
-          !WRITE(*,*) "sector_setup started"
+          INTEGER(INT16) :: fine00,fine10,fine01,fine11,coarse,coarse2
+          INTEGER(INT16), PARAMETER :: mask_int16 = INT(Z'5555',INT16)
 
           need_atom_ti = read_atompair_rminsq .OR. (cbmc_cell_list_flag .AND. precalc_atompair_nrg)
           need_atomtypes = calc_rmin_flag .OR. (cbmc_cell_list_flag .AND. .NOT. precalc_atompair_nrg)
           need_charges = ANY(int_charge_style .NE. charge_none) .AND. cbmc_cell_list_flag .AND. .NOT. precalc_atompair_nrg
 
-          !sp_live_atom_rsp = REAL(live_atom_rsp)
           !$OMP PARALLEL PRIVATE(ci,nca) &
           !$OMP PRIVATE(int8shape,int8ub,lbp16,int16shape,int16ub,xub_int64,ncavs,icav,locbase_int32,locbase,xi_int64,oneshift_int16,i_big_atom) &
-          !$OMP PRIVATE(ncavlvec,ncavs_int16,yi_chunkstart, yi_chunkstride, yi_chunkend, chunksize, chunksize_p16) &
-          !$OMP PRIVATE(bitcell_int16_vec, cavbits_int16) &
+          !$OMP PRIVATE(ncavs_int16,yi_chunkstart, yi_chunkstride, yi_chunkend, chunksize, chunksize_p16) &
+          !$OMP PRIVATE(bitcell_int16_vec, cavbits_int16, loc, loc_int32) &
           !$OMP PRIVATE(ibox,istart,is,inlive,inatoms,bsolvent,vlen,iend,box_vlen) &
           !$OMP PRIVATE(xyzi,xyzi_sp,xyzi_dp,xyzi_dp_spread,dxyzi_dp,drp,cell_rp,zi_mult,yi_mult) &
           !$OMP PRIVATE(l_ortho,l_inrange_vec,l_inrange_vec_old,xi,yi,zi,i_dim,l_switch,bitmask) &
@@ -172,15 +170,14 @@ CONTAINS
           !$OMP PRIVATE(dsp,drxp,dryp,drzp,rsq_vec,cbmc_cell_rsp_priv,ti_priv,atomtype_priv) &
           !$OMP PRIVATE(rxp,ryp,rzp,isp,n_interact,adj_iend,which_interact,bcd,sbe,xcp,ycp,zcp,i,j) &
           !$OMP PRIVATE(zcp_base_shift,ycp_base_shift,xcp_base_shift,zcp_base,ycp_base,xcp_base,xfer_int64) &
+          !$OMP PRIVATE(fine00,fine10,fine01,fine11,coarse,coarse2) &
+          !$OMP PRIVATE(int16shape_coarse,int16ub_coarse,yi2_chunkstride) &
           !$OMP PRIVATE(sbe_ti,sbe_ti_mat,bfd,bfdr)
           IF (bitcell_flag) THEN
                   !$OMP WORKSHARE
                   bitcell_int64 = 0_INT64
                   !$OMP END WORKSHARE
           END IF
-          !!$OMP SINGLE
-          !WRITE(*,*) "bitcell_int64 initialized"
-          !!$OMP END SINGLE
           DO ibox = 1, nbr_boxes
                 istart = 1
                 DO is_present = 1, nspecies_present
@@ -256,16 +253,13 @@ CONTAINS
 
                                   END IF
                                   bitcell_H(:,i) = box_list(ibox)%length(:,i) / box_list(ibox)%length_bitcells(i)
-                                  !bitcell_H_diag(i) = bitcell_H(i,i)
                                   box_list(ibox)%bit_cell_length_recip(i) = REAL(REAL( &
                                           box_list(ibox)%length_bitcells(i),DP)/box_list(ibox)%length(i,i),SP)
                           END IF
                           box_list(ibox)%length_cells(i) = INT(box_list(ibox)%face_distance(i)/max_rmin)
                           IF (MOD(box_list(ibox)%length_cells(i),2) .EQ. 0) box_list(ibox)%length_cells(i) = box_list(ibox)%length_cells(i) - 1
                           box_list(ibox)%cell_H_dp(:,i) = box_list(ibox)%length(:,i) / box_list(ibox)%length_cells(i)
-                          !cell_H(:,i) = box_list(ibox)%length(:,i) / box_list(ibox)%length_cells(i)
                           box_list(ibox)%cell_H_diag(i) = box_list(ibox)%cell_H_dp(i,i)
-                          !box_list(ibox)%cell_H_diag(i) = cell_H(i,i)
                           box_list(ibox)%cell_length_inv(i,:) = REAL(box_list(ibox)%length_cells(i),DP) * box_list(ibox)%length_inv(i,:)
                           box_list(ibox)%cell_length_recip(i) = REAL(REAL(box_list(ibox)%length_cells(i),DP)/box_list(ibox)%length(i,i),SP) ! kind 4
                           box_list(ibox)%sectorbound(i) = box_list(ibox)%length_cells(i)/2
@@ -282,15 +276,10 @@ CONTAINS
                                 box_list(ibox)%setbit_extent(i) = &
                                         MIN(INT(SQRT((box_list(ibox)%rcut_low_max*bfdr(i))**2 + 1.0_DP - SUM(bfd*bfdr(i))))-1,28)
                         END DO
-                        !box_list(ibox)%setbit_extent = &
-                        !        MIN(INT(SQRT((box_list(ibox)%rcut_low_max*box_list(ibox)%length_bitcells/box_list(ibox)%face_distance)**2-2)-1),28)
-                        !box_list(ibox)%setbit_extent = &
-                        !        MIN(INT(CEILING(box_list(ibox)%rcut_low_max*box_list(ibox)%length_bitcells/box_list(ibox)%face_distance)),28)
                         ! MIN(...,28) above is unlikely to be necessary but is included just to be safe.
                 END IF
                 box_list(ibox)%cell_H_sp = REAL(box_list(ibox)%cell_H_dp,SP)
                 cell_H_dp = box_list(ibox)%cell_H_dp
-                !WRITE(*,*) box_list(ibox)%length, box_list(ibox)%cell_H_dp, box_list(ibox)%cell_H_sp
                 box_list(ibox)%cell_xyzortho_bbox_length = SUM(ABS(cell_H_dp),2)
                 box_list(ibox)%real_length_cells = REAL(box_list(ibox)%length_cells,SP)
                 box_list(ibox)%cell_face_distance = box_list(ibox)%face_distance / box_list(ibox)%length_cells
@@ -333,10 +322,6 @@ CONTAINS
                                         !cellcenter_drp = MATMUL(cell_H_dp,xyzi_dp)
                                         !drp = SIGN(MAX(ABS(cellcenter_drp)-box_list(ibox)%cell_xyzortho_bbox_length,0.0_DP),cellcenter_drp)
                                         drp = MAX(ABS(MATMUL(cell_H_dp,xyzi_dp))-box_list(ibox)%cell_xyzortho_bbox_length,0.0_DP)
-                                        !xyzi_dp_spread = SPREAD(SPREAD(xyzi_dp,2,3),3,2)
-                                        !drp = MINVAL( &
-                                        !        ABS(SUM((xyzi_dp_spread+MERGE(SPREAD(SPREAD(SPREAD(0.0_DP,1,3),2,3),3,2), &
-                                        !        cell_H_T_posneg_sign,xyzi_dp_spread .EQ. 0.0_DP))*cell_H_T_spread,1)),2)
                                 END IF
                                 box_list(ibox)%cbmc_cell_mask(xi,yi,zi) = &
                                         MERGE(NOT(0),0,DOT_PRODUCT(drp,drp)<rcut_cbmcsq(ibox))
@@ -425,21 +410,12 @@ CONTAINS
                                         END DO
                                 END IF
                         END DO
-                        !DO zi_mult = MERGE(-1,1,l_ortho .AND. zi>0),1,2
-                        !        DO yi_mult = MERGE(-1,1,l_ortho .AND. yi>0),1,2
-                        !                bitcell_int64(yi*yi_mult,zi*zi_mult,1:vlen,ibox) = priv_bitcell_int64(1:vlen)
-                        !        END DO
-                        !END DO
-                        !DO zi_mult = MERGE(-zi,zi,l_ortho .AND. zi>0),zi,MIN(2*zi,1)
-                        !        DO yi_mult = MERGE(-yi,yi,l_ortho .AND. yi>0),yi,MIN(2*yi,1)
-                        !                bitcell_int64(yi_mult,zi_mult,1:vlen,ibox) = priv_bitcell_int64(1:vlen)
-                        !        END DO
-                        !END DO
                         bitcell_int64(yi,zi,1:vlen,:,ibox) = priv_bitcell_int64(1:vlen,:)
                         END DO
                         END DO
                         !$OMP END DO
                         IF (l_ortho) THEN
+                                ! Apply symmetry for orthogonal voxels
                                 !$OMP WORKSHARE
                                 bitcell_int64(-1:-sbe(2):-1,-1:-sbe(3):-1,:,:,ibox) = &
                                         bitcell_int64(1:sbe(2),1:sbe(3),:,:,ibox)
@@ -452,37 +428,6 @@ CONTAINS
                 END IF
           END DO
           !$OMP BARRIER
-          !!$OMP SINGLE
-          !WRITE(*,*) "bitcell_int64 filled", SHAPE(bitcell_int64)
-          !!$OMP END SINGLE
-          !!$OMP SINGLE
-          !WRITE(*,*) "bitcell_int64 slices:"
-          !WRITE(*,*) bitcell_int64(-10,-10,:,1,0)
-          !WRITE(*,*) bitcell_int64(0,0,:,1,0)
-          !WRITE(*,*) bitcell_int64(15,5,:,1,0)
-          !WRITE(*,*) "bitcell_int64 slices LEADZ - TRAILZ:"
-          !WRITE(*,*) LEADZ(bitcell_int64(-10,-10,:,1,0)) - TRAILZ(bitcell_int64(-10,-10,:,1,0))
-          !WRITE(*,*) LEADZ(bitcell_int64(0,0,:,1,0)) - TRAILZ(bitcell_int64(0,0,:,1,0))
-          !WRITE(*,*) LEADZ(bitcell_int64(15,5,:,1,0)) - TRAILZ(bitcell_int64(15,5,:,1,0))
-          !WRITE(*,*) "bitcell_int64 type 0 8bit transfer:"
-          !WRITE(*,*) TRANSFER(bitcell_int64(-10,-10,1,1,0),bitcell_int8_array)
-          !WRITE(*,*) TRANSFER(bitcell_int64(0,0,1,1,0),bitcell_int8_array)
-          !WRITE(*,*) TRANSFER(bitcell_int64(15,5,1,1,0),bitcell_int8_array)
-          !!$OMP END SINGLE
-          !IF (bitcell_flag) THEN
-          !        DO i = 1, 7
-          !                !$OMP WORKSHARE
-          !                bitcell_int64(:,:,:,:,i) = ISHFT(bitcell_int64(:,:,:,:,0),i)
-          !                !$OMP END WORKSHARE NOWAIT
-          !        END DO
-          !        !$OMP BARRIER
-          !END IF
-          !!$OMP SINGLE
-          !WRITE(*,*) "bitcell_int64 slices shift 4:"
-          !WRITE(*,*) bitcell_int64(-10,-10,:,1,4)
-          !WRITE(*,*) bitcell_int64(0,0,:,1,4)
-          !WRITE(*,*) bitcell_int64(15,5,:,1,4)
-          !!$OMP END SINGLE
           DO ibox = 1, nbr_boxes
                 vlen = box_vlen(ibox)
                 l_ortho = box_list(ibox)%int_box_shape <= int_ortho
@@ -539,23 +484,16 @@ CONTAINS
                 END DO
           END DO
           !$OMP BARRIER
-          !!$OMP SINGLE
-          !WRITE(*,*) "live_atom_bcp filled"!, SHAPE(live_atom_bcp)
-          !dummy3vec = SHAPE(live_atom_bcp)
-          !!$OMP END SINGLE
           !$OMP SINGLE
           sectormaxbound = box_list(1)%sectorbound + box_list(1)%border_thickness
           DO ibox = 2, nbr_boxes
                 sectormaxbound = MAX(sectormaxbound,box_list(ibox)%sectorbound + box_list(ibox)%border_thickness)
           END DO
 
-          !sectormaxbound = MAXVAL(sectorbound, 2)+1
           adj_cellmaxbound_old = adj_cellmaxbound
-          !adj_cellmaxbound = box_list(1)%sectorbound
           DO ibox = 1, nbr_boxes
                 adj_cellmaxbound = MAX(adj_cellmaxbound,box_list(ibox)%sectorbound)
           END DO
-          !map_bound = sectormaxbound*3+1
           ALLOCATE(n_cell_atoms( &
                   -sectormaxbound(1):sectormaxbound(1), &
                   -sectormaxbound(2):sectormaxbound(2), &
@@ -587,12 +525,11 @@ CONTAINS
                     err_msg(1) = 'Memory could not be allocated for n_adj_cell_atoms'
                     CALL Clean_Abort(err_msg, 'Sector_Setup')
                   END IF
-                  WRITE(*,*) "Allocated n_adj_cell_atoms with:"
-                  WRITE(*,*) "SHAPE", SHAPE(n_adj_cell_atoms)
-                  WRITE(*,*) "Occupying ", SIZEOF(n_adj_cell_atoms), " bytes"
-                  WRITE(*,*) "on step ", i_mcstep
+                  !WRITE(*,*) "Allocated n_adj_cell_atoms with:"
+                  !WRITE(*,*) "SHAPE", SHAPE(n_adj_cell_atoms)
+                  !WRITE(*,*) "Occupying ", SIZEOF(n_adj_cell_atoms), " bytes"
+                  !WRITE(*,*) "on step ", i_mcstep
           END IF
-          !WRITE(*,*) "n_adj_cell_atoms allocated", SHAPE(n_adj_cell_atoms)
           max_adj_cell_atoms_old = max_adj_cell_atoms
           max_adj_cell_atoms = 0
           max_neighbors = 0
@@ -705,9 +642,6 @@ CONTAINS
                           CALL Clean_Abort(err_msg, 'Sector_Setup')
                         END IF
                         lbp32(1) = IAND(lbp32(1)+31,NOT(31))
-                        !IF (MOD(lbp32(1),32) .NE. 0) THEN
-                        !        lbp32(1) = (lbp32(1)/32+1)*32
-                        !END IF
                         !$OMP END SINGLE
                         !$OMP WORKSHARE
                         bitcell_int8_array = 0_INT8
@@ -720,19 +654,10 @@ CONTAINS
                                 live_atom_bcp(i,4,ibox) = IAND(bcp,7) ! MOD(bcp,8)
                         END DO
                         !$OMP END DO SIMD
-                        !!$OMP SINGLE
-                        !WRITE(*,*) "bitcell_int8_array bounds: "
-                        !WRITE(*,*) LBOUND(bitcell_int8_array)
-                        !WRITE(*,*) UBOUND(bitcell_int8_array)
-                        !WRITE(*,*) "live_atom_bcp(1:50,:,1) = "
-                        !DO i = 1, 50
-                        !        WRITE(*,*) live_atom_bcp(i,:,1)
-                        !END DO
-                        !!$OMP END SINGLE
 
 
 
-                        !DIR$ ASSUME_ALIGNED live_atom_bcp_T:32
+                        !DIR$ ASSUME_ALIGNED live_atom_bcp_T:array_align_bytes
                         !$OMP WORKSHARE
                         live_atom_bcp_T = TRANSPOSE(live_atom_bcp(:,:,ibox))
                         xcp_base_shift_stride = INT(CEILING( &
@@ -755,9 +680,8 @@ CONTAINS
                                 sbe_ti = sbe(2:3)
                                 ti = 1
                         END IF
-                        !!$OMP SINGLE
-                        !WRITE(*,*) "xcp_base_shift_stride", xcp_base_shift_stride
-                        !!$OMP END SINGLE
+                        ! Domain decomposition allows some but not all cells to have overlap masks applied in parallel
+                        ! The OMP DO must be executed 8 times
                         DO zcp_base_shift = 0,2,2
                         DO ycp_base_shift = 0,2,2
                         DO xcp_base_shift = 0,xcp_base_shift_stride,xcp_base_shift_stride
@@ -785,6 +709,7 @@ CONTAINS
                                 ELSE IF (calc_rmin_flag) THEN
                                         ti = which_solvent_atomtypes_inv(live_atom_atomtypes(i,ibox))
                                 END IF
+                                ! i_big_atom 0 is the "small" atom used for BOVINE (usually not for cavity biasing)
                                 DO i_big_atom = 0, n_big_atoms
                                         IF (read_atompair_rminsq .OR. calc_rmin_flag) sbe_ti = sbe_ti_mat(:,ti,i_big_atom)
                                         DO zi = -sbe_ti(3), sbe_ti(3)
@@ -797,13 +722,6 @@ CONTAINS
                                                         IF (bitmask == xfer_int64) CYCLE ! No point in writing what is already there
                                                         bitcell_int8_array(bcpx:bcpx+7,bcpy+yi,bcpz+zi,i_big_atom) = &
                                                                 TRANSFER(bitmask,bitcell_int8_array)
-                                                        !bitcell_int8_array(bcpx:bcpx+7,bcpy+yi,bcpz+zi) = &
-                                                        !        TRANSFER(IOR(TRANSFER(&
-                                                        !        bitcell_int8_array(bcpx:bcpx+7,bcpy+yi,bcpz+zi),0_INT64), &
-                                                        !        ISHFT(bitmask,bcps)),bitcell_int8_array)
-                                                        !bitcell_int8_array(bcpx:bcpx+7,bcpy+yi,bcpz+zi) = &
-                                                        !        IOR(bitcell_int8_array(bcpx:bcpx+7,bcpy+yi,bcpz+zi), &
-                                                        !        TRANSFER(bitcell_int64(yi,zi,ti,ibox,bcps),bitcell_int8_array))
                                                 END DO
                                         END DO
                                 END DO
@@ -818,46 +736,8 @@ CONTAINS
                         END DO
                         END DO
                         END DO
-                        !DO i = 1, vlen
-                        !        !!$OMP SINGLE
-                        !        !IF (ANY(live_atom_bcp(i,1:3,ibox) < LBOUND(bitcell_int8_array) .OR. &
-                        !        !        live_atom_bcp(i,1:3,ibox) + (/ 7, 56, 56 /) > &
-                        !        !        UBOUND(bitcell_int8_array))) THEN
-                        !        !        WRITE(*,*) "ATOM ", i, " is out of bounds!"
-                        !        !        WRITE(*,*) "bad coordinates are :"
-                        !        !        WRITE(*,*) live_atom_bcp(i,:,ibox)
-                        !        !END IF
-                        !        !!$OMP END SINGLE
-                        !        bcpx = live_atom_bcp(i,1,ibox)
-                        !        bcpy = live_atom_bcp(i,2,ibox)
-                        !        bcpz = live_atom_bcp(i,3,ibox)
-                        !        bcps = live_atom_bcp(i,4,ibox)
-                        !        IF (read_atompair_rminsq) THEN
-                        !                ti = live_atom_ti(i,ibox)
-                        !        ELSE IF (calc_rmin_flag) THEN
-                        !                ti = live_atom_atomtypes(i,ibox)+1
-                        !        ELSE
-                        !                ti = 1
-                        !        END IF
-                        !        sbe = box_list(ibox)%setbit_extent
-                        !        !$OMP DO COLLAPSE(2) SCHEDULE(STATIC)
-                        !        DO zi = -sbe(3), sbe(3)
-                        !                DO yi = -sbe(2), sbe(2)
-                        !                        bitmask = bitcell_int64(yi,zi,ti,ibox,bcps)
-                        !                        IF (bitmask .NE. 0_INT64) THEN
-                        !                                bitcell_int8_array(bcpx:bcpx+7,bcpy+yi,bcpz+zi) = &
-                        !                                        TRANSFER(IOR(TRANSFER(&
-                        !                                        bitcell_int8_array(bcpx:bcpx+7,bcpy+yi,bcpz+zi),0_INT64), &
-                        !                                        bitmask),bitcell_int8_array)
-                        !                        END IF
-                        !                        !bitcell_int8_array(bcpx:bcpx+7,bcpy+yi,bcpz+zi) = &
-                        !                        !        IOR(bitcell_int8_array(bcpx:bcpx+7,bcpy+yi,bcpz+zi), &
-                        !                        !        TRANSFER(bitcell_int64(yi,zi,ti,ibox,bcps),bitcell_int8_array))
-                        !                END DO
-                        !        END DO
-                        !        !$OMP END DO
-                        !END DO
                 END IF
+                ! Apply PBC to cell list structure and the overlap bitmaps
                 DO xi = -1, 1
                         DO yi = -1, 1
                                 DO zi = -1, 1
@@ -1043,9 +923,9 @@ CONTAINS
                                 32:31+lbp32(3),0)
                         box_list(ibox)%bitcell_int32_vec(0:vlen-1) = TRANSFER(bitcell_int8_array_2, &
                                 box_list(ibox)%bitcell_int32_vec)
-                        !superpopcnt = SUM(POPCNT(TRANSFER(box_list(ibox)%bitcell_int32_vec(0:vlen-1),bitcell_int64)))
                         !$OMP END WORKSHARE
                         IF (cavity_biasing_flag) THEN
+                                ! determine array dimensions and bounds
                                 int8shape = box_list(ibox)%length_bitcells
                                 xub = box_list(ibox)%length_bitcells(1)-1
                                 xub_int64 = INT(xub,INT64)
@@ -1056,13 +936,16 @@ CONTAINS
                                 int16shape = lbp16
                                 int16shape(1) = ISHFT(int16shape(1),-4)
                                 int16ub = int16shape - 1
+                                int16shape_coarse = int16shape
+                                int16shape_coarse(2:3) = SHIFTR(int16shape_coarse(2:3),1)
+                                int16ub_coarse = int16shape_coarse - 1
                                 yi_chunkstride = MIN(MASKR(15)/lbp16(1),lbp16(2))
+                                yi2_chunkstride = MIN(MASKR(16)/lbp16(1),int16shape_coarse(2))
                                 zub = int8ub(3)
+                                !$OMP SINGLE
+                                ! can cavity voxel coordinates be represented with 32-bit integers?
                                 box_list(ibox)%l_cavloc_int32 = &
                                         ALL(box_list(ibox)%length_bitcells <= SHIFTL(1, 10+(/1,0,0/)))
-                                        !xub<SHIFTL(1,11) .AND. int16ub(2) < SHIFTL(1,10) .AND. &
-                                        !zub<SHIFTL(1,10)
-                                !$OMP SINGLE
                                 big_atom_start = MERGE(1,0,read_atompair_rminsq .OR. calc_rmin_flag)
                                 IF (.NOT. ALLOCATED(cavdatalist)) ALLOCATE(cavdatalist(big_atom_start:n_big_atoms,nbr_boxes))
                                 DEALLOCATE(bitcell_int8_array_2)
@@ -1076,9 +959,9 @@ CONTAINS
                                   CALL Clean_Abort(err_msg, 'Sector_Setup')
                                 END IF
                                 ALLOCATE(bitcell_int16_array(&
-                                        0:ISHFT(lbp16(1),-4)-1,&
-                                        0:lbp16(2)-1,&
-                                        0:lbp16(3)-1), Stat=Allocatestatus)
+                                        0:int16ub(1),&
+                                        0:int16ub(2),&
+                                        0:int16ub(3)), Stat=Allocatestatus)
                                 IF (Allocatestatus /= 0) THEN
                                   err_msg = ''
                                   err_msg(1) = 'Memory could not be allocated for bitcell_int16_array'
@@ -1086,6 +969,19 @@ CONTAINS
                                 END IF
                                 ALLOCATE(zcavcount(&
                                         0:lbp16(3)))
+                                IF (l_compress) THEN
+                                        ALLOCATE(coarse_voxel_array(&
+                                                0:int16ub_coarse(1),&
+                                                0:int16ub_coarse(2),&
+                                                0:int16ub_coarse(3)), Stat=Allocatestatus)
+                                        IF (Allocatestatus /= 0) THEN
+                                          err_msg = ''
+                                          err_msg(1) = 'Memory could not be allocated for coarse_voxel_array'
+                                          CALL Clean_Abort(err_msg, 'Sector_Setup')
+                                        END IF
+                                        ALLOCATE(zcavcount_coarse(&
+                                                0:int16shape_coarse(3)))
+                                END IF
                                 !$OMP END SINGLE
                                 DO i_big_atom = big_atom_start, n_big_atoms
                                         !$OMP WORKSHARE
@@ -1102,20 +998,92 @@ CONTAINS
                                         !zcavcount(1:) = SUM(INT(SUM(POPCNT(bitcell_int16_array),1),INT64),1)
                                         !zcavcount(0) = 0_INT64
                                         !$OMP END WORKSHARE
+                                        IF (l_compress) THEN
+                                                ! Facilitate lossless compression of cavity voxel coordinate array.
+                                                ! Identify 2x2x2 blocks of cavity voxel array that are entirely cavity space.
+                                                ! Clear the fine voxels that make up these blocks.
+                                                ! Set the coarse voxels representing these blocks.
+                                                ! These 2x2x2 blocks can only be recognized if they are aligned with coarse voxel
+                                                ! boundaries.
+                                                ! In the coarse voxel bitmap, only even (or zero) bit positions (0, 2, 4, 6, ...)
+                                                ! mean anything.
+                                                !$OMP DO SCHEDULE(STATIC)
+                                                DO zi2 = 0, int16ub_coarse(3)
+                                                        zi = SHIFTL(zi2,1)
+                                                        DO yi2 = 0, int16ub_coarse(2)
+                                                                yi = SHIFTL(yi2,1)
+                                                                !DIR$ LOOP COUNT MIN=1, MAX=1000, AVG=16
+                                                                DO i = 0, int16ub(1)
+                                                                        fine00 = bitcell_int16_array(i,yi,zi)
+                                                                        fine10 = bitcell_int16_array(i,yi+1,zi)
+                                                                        fine01 = bitcell_int16_array(i,yi,zi+1)
+                                                                        fine11 = bitcell_int16_array(i,yi+1,zi+1)
+                                                                        coarse = IAND(fine00,fine10)
+                                                                        coarse = IAND(coarse,fine01)
+                                                                        coarse = IAND(coarse,fine11)
+                                                                        coarse2 = SHIFTR(coarse,1)
+                                                                        coarse = IAND(coarse,coarse2)
+                                                                        coarse = IAND(coarse,mask_int16)
+                                                                        coarse2 = SHIFTL(coarse,1)
+                                                                        coarse2 = IOR(coarse,coarse2)
+                                                                        coarse2 = NOT(coarse2)
+                                                                        fine00 = IAND(fine00,coarse2)
+                                                                        fine10 = IAND(fine10,coarse2)
+                                                                        fine01 = IAND(fine01,coarse2)
+                                                                        fine11 = IAND(fine11,coarse2)
+                                                                        coarse_voxel_array(i,yi2,zi2) = coarse
+                                                                        bitcell_int16_array(i,yi,zi) = fine00
+                                                                        bitcell_int16_array(i,yi+1,zi) = fine10
+                                                                        bitcell_int16_array(i,yi,zi+1) = fine01
+                                                                        bitcell_int16_array(i,yi+1,zi+1) = fine11
+                                                                END DO
+                                                        END DO
+                                                        ! Count the coarse cavity voxels
+                                                        ncavs = 0_INT64
+                                                        DO yi_chunkstart = 0, int16ub_coarse(2), yi2_chunkstride
+                                                                yi_chunkend = MIN(yi_chunkstart + yi2_chunkstride - 1, int16ub_coarse(2))
+                                                                chunksize = (yi_chunkend + 1 - yi_chunkstart) * int16shape(1)
+                                                                bitcell_int16_vec(1:chunksize) = &
+                                                                        TRANSFER(coarse_voxel_array(:,yi_chunkstart:yi_chunkend,zi2),bitcell_int16_vec)
+                                                                chunksize_p16 = IAND(chunksize+padconst_2byte,padmask_2byte)
+                                                                IF (chunksize_p16 > chunksize) THEN
+                                                                        bitcell_int16_vec(chunksize+1:chunksize_p16) = 0_INT16
+                                                                END IF
+                                                                ncavs_int16 = 0_INT16
+                                                                !DIR$ ASSUME (MOD(chunksize_p16,dimpad_2byte) .EQ. 0)
+                                                                !DIR$ VECTOR ALIGNED
+                                                                !$OMP SIMD PRIVATE(cavbits_int16) REDUCTION(+:ncavs_int16)
+                                                                DO i = 1, chunksize_p16
+                                                                        cavbits_int16 = bitcell_int16_vec(i)
+                                                                        ncavs_int16 = ncavs_int16 + IAND(cavbits_int16,1_INT16)
+                                                                        DO j = 2, 14, 2
+                                                                                ncavs_int16 = ncavs_int16 + &
+                                                                                        IAND(SHIFTR(cavbits_int16,j),1_INT16)
+                                                                        END DO
+                                                                END DO
+                                                                !$OMP END SIMD
+                                                                ncavs = ncavs + INT(ncavs_int16,INT64)
+                                                        END DO
+                                                        zcavcount_coarse(zi2+1) = ncavs
+                                                END DO
+                                                !$OMP END DO
+                                        END IF
+                                        ! Count the fine cavity voxels
                                         !$OMP DO SCHEDULE(STATIC)
                                         DO zi = 0, zub
                                                 ncavs = 0_INT64
                                                 DO yi_chunkstart = 0, int16ub(2), yi_chunkstride
                                                         yi_chunkend = MIN(yi_chunkstart + yi_chunkstride - 1, int16ub(2))
                                                         chunksize = (yi_chunkend + 1 - yi_chunkstart) * int16shape(1)
+                                                        ! Chunks are small enough the int16 reduction can't overflow
                                                         bitcell_int16_vec(1:chunksize) = &
                                                                 TRANSFER(bitcell_int16_array(:,yi_chunkstart:yi_chunkend,zi),bitcell_int16_vec)
-                                                        chunksize_p16 = IAND(chunksize+15,NOT(15))
+                                                        chunksize_p16 = IAND(chunksize+padconst_2byte,padmask_2byte)
                                                         IF (chunksize_p16 > chunksize) THEN
                                                                 bitcell_int16_vec(chunksize+1:chunksize_p16) = 0_INT16
                                                         END IF
                                                         ncavs_int16 = 0_INT16
-                                                        !DIR$ ASSUME (MOD(chunksize_p16,16) .EQ. 0)
+                                                        !DIR$ ASSUME (MOD(chunksize_p16,dimpad_2byte) .EQ. 0)
                                                         !DIR$ VECTOR ALIGNED
                                                         !$OMP SIMD PRIVATE(cavbits_int16) REDUCTION(+:ncavs_int16)
                                                         DO i = 1, chunksize_p16
@@ -1129,22 +1097,6 @@ CONTAINS
                                                         !$OMP END SIMD
                                                         ncavs = ncavs + INT(ncavs_int16,INT64)
                                                 END DO
-                                                !DO yi = 0, int16ub(2)
-                                                !        ncavs_int16 = 0_INT16
-                                                !        !DIR$ VECTOR ALIGNED
-                                                !        !$OMP SIMD PRIVATE(oneshift_int16) REDUCTION(+:ncavs_int16)
-                                                !        DO i = 0, 15
-                                                !                oneshift_int16 = oneshift_int16_vec(i) !ISHFT(1_INT16,i)
-                                                !                DO j = 0, int16ub(1)
-                                                !                        IF (IAND(oneshift_int16,&
-                                                !                                bitcell_int16_array(j,yi,zi)) .NE. 0_INT16) THEN
-                                                !                                ncavs_int16 = ncavs_int16 + 1
-                                                !                        END IF
-                                                !                END DO
-                                                !        END DO
-                                                !        !$OMP END SIMD
-                                                !        ncavs = ncavs + ncavs_int16
-                                                !END DO
                                                 zcavcount(zi+1) = ncavs
                                         END DO
                                         !$OMP END DO
@@ -1155,25 +1107,44 @@ CONTAINS
                                                 ncavs = ncavs + zcavcount(zi)
                                                 zcavcount(zi) = ncavs
                                         END DO
+                                        ncavs_combined = ncavs
+                                        IF (l_compress) THEN
+                                                ncavs_fine = ncavs
+                                                zcavcount_coarse(0) = 0_INT64
+                                                ncavs_coarse = zcavcount_coarse(1)
+                                                DO zi2 = 2, int16shape_coarse(3)
+                                                        ncavs_coarse = ncavs_coarse + zcavcount_coarse(zi2)
+                                                        zcavcount_coarse(zi2) = ncavs_coarse
+                                                END DO
+                                                ! zcavcount_coarse must store starting index for coarse cavity locations in each z-slice
+                                                zcavcount_coarse = zcavcount_coarse + ncavs_fine
+                                                ! ncavs is number of cavity-positive voxels in original cavity bitmap
+                                                ! (before compression)
+                                                ncavs = ncavs + SHIFTL(ncavs_coarse,3)
+                                                ncavs_combined = ncavs_combined + ncavs_coarse
+                                                cavdatalist(i_big_atom,ibox)%ncavs_coarse = ncavs_coarse
+                                                cavdatalist(i_big_atom,ibox)%ncavs_fine = ncavs_fine
+                                                cavdatalist(i_big_atom,ibox)%ncavs_combined = ncavs_combined
+                                        END IF
                                         IF (ALLOCATED(cavdatalist(i_big_atom,ibox)%cavity_locs)) THEN
                                                 IF (box_list(ibox)%l_cavloc_int32 .OR. &
-                                                        ncavs>SIZE(cavdatalist(i_big_atom,ibox)%cavity_locs,1,INT64)) THEN
+                                                        ncavs_combined>SIZE(cavdatalist(i_big_atom,ibox)%cavity_locs,1,INT64)) THEN
                                                         DEALLOCATE(cavdatalist(i_big_atom,ibox)%cavity_locs)
                                                 END IF
                                         END IF
                                         IF (ALLOCATED(cavdatalist(i_big_atom,ibox)%cavity_locs_int32)) THEN
                                                 IF (.NOT. box_list(ibox)%l_cavloc_int32 .OR. &
-                                                        ncavs>SIZE(cavdatalist(i_big_atom,ibox)%cavity_locs_int32,1,INT64)) THEN
+                                                        ncavs_combined>SIZE(cavdatalist(i_big_atom,ibox)%cavity_locs_int32,1,INT64)) THEN
                                                         DEALLOCATE(cavdatalist(i_big_atom,ibox)%cavity_locs_int32)
                                                 END IF
                                         END IF
                                         IF (box_list(ibox)%l_cavloc_int32) THEN
                                                 IF (.NOT. ALLOCATED(cavdatalist(i_big_atom,ibox)%cavity_locs_int32)) THEN
-                                                        ALLOCATE(cavdatalist(i_big_atom,ibox)%cavity_locs_int32(0:ncavs-1))
+                                                        ALLOCATE(cavdatalist(i_big_atom,ibox)%cavity_locs_int32(0:ncavs_combined-1))
                                                 END IF
                                         ELSE
                                                 IF (.NOT. ALLOCATED(cavdatalist(i_big_atom,ibox)%cavity_locs)) THEN
-                                                        ALLOCATE(cavdatalist(i_big_atom,ibox)%cavity_locs(0:ncavs-1))
+                                                        ALLOCATE(cavdatalist(i_big_atom,ibox)%cavity_locs(0:ncavs_combined-1))
                                                 END IF
                                         END IF
                                         cavdatalist(i_big_atom,ibox)%ncavs = ncavs
@@ -1182,55 +1153,126 @@ CONTAINS
                                                 PRODUCT(REAL(box_list(ibox)%length_bitcells,DP)))
                                         !$OMP END SINGLE
                                         IF (box_list(ibox)%l_cavloc_int32) THEN
+                                                IF (l_compress) THEN
+                                                        !$OMP DO SCHEDULE(STATIC)
+                                                        DO zi2 = 0, int16ub_coarse(3)
+                                                                zi = SHIFTL(zi2,1)
+                                                                icav = zcavcount_coarse(zi2)
+                                                                locbase_int32 = ISHFT(zi,21)
+                                                                DO yi2 = 0, int16ub_coarse(2)
+                                                                        DO xi = 0, int16ub_coarse(1)
+                                                                                cavbits_int16 = coarse_voxel_array(xi,yi2,zi2)
+                                                                                IF (cavbits_int16 .EQ. 0_INT16) CYCLE
+                                                                                loc_int32 = IOR(locbase_int32,SHIFTL(xi,4))
+                                                                                IF (IAND(cavbits_int16,1_INT16) .NE. 0_INT16) THEN
+                                                                                        cavdatalist(i_big_atom,ibox)%cavity_locs_int32(icav)=loc_int32
+                                                                                        icav = icav + 1_INT64
+                                                                                END IF
+                                                                                DO j = 1, 7
+                                                                                        cavbits_int16 = SHIFTR(cavbits_int16,2)
+                                                                                        loc_int32 = loc_int32 + 2
+                                                                                        IF (IAND(cavbits_int16,1_INT16) .EQ. 0_INT16) CYCLE
+                                                                                        cavdatalist(i_big_atom,ibox)%cavity_locs_int32(icav)=loc_int32
+                                                                                        icav = icav + 1_INT64
+                                                                                END DO
+                                                                        END DO
+                                                                        locbase_int32 = locbase_int32 + ISHFT(2,11)
+                                                                END DO
+                                                        END DO
+                                                        !$OMP END DO NOWAIT
+                                                END IF
                                                 !$OMP DO SCHEDULE(STATIC)
                                                 DO zi = 0, zub
                                                         icav = zcavcount(zi)
                                                         locbase_int32 = ISHFT(zi,21)
                                                         DO yi = 0, int16ub(2)
-                                                                !DIR$ VECTOR ALIGNED
-                                                                !$OMP SIMD PRIVATE(oneshift_int16)
-                                                                DO i = 0, 15
-                                                                        oneshift_int16 = oneshift_int16_vec(i) !ISHFT(1_INT16,i)
-                                                                        DO j = 0, int16ub(1)
-                                                                                ncavlvec(j*16+i) = &
-                                                                                        IAND(oneshift_int16,&
-                                                                                        bitcell_int16_array(j,yi,zi)) .EQ. 0_INT16
+                                                                DO xi = 0, int16ub(1)
+                                                                        cavbits_int16 = bitcell_int16_array(xi,yi,zi)
+                                                                        IF (cavbits_int16 .EQ. 0_INT16) CYCLE
+                                                                        loc_int32 = IOR(locbase_int32,SHIFTL(xi,4))
+                                                                        IF (IAND(cavbits_int16,1_INT16) .NE. 0_INT16) THEN
+                                                                                cavdatalist(i_big_atom,ibox)%cavity_locs_int32(icav)=loc_int32
+                                                                                icav = icav + 1_INT64
+                                                                        END IF
+                                                                        DO j = 1, 15
+                                                                                cavbits_int16 = SHIFTR(cavbits_int16,1)
+                                                                                loc_int32 = loc_int32 + 1
+                                                                                IF (IAND(cavbits_int16,1_INT16) .EQ. 0_INT16) CYCLE
+                                                                                cavdatalist(i_big_atom,ibox)%cavity_locs_int32(icav)=loc_int32
+                                                                                icav = icav + 1_INT64
                                                                         END DO
-                                                                END DO
-                                                                !$OMP END SIMD
-                                                                DO xi = 0, xub
-                                                                        IF (ncavlvec(xi)) CYCLE
-                                                                        cavdatalist(i_big_atom,ibox)%cavity_locs_int32(icav) = &
-                                                                                IOR(locbase_int32,xi)
-                                                                        icav = icav + 1_INT64
                                                                 END DO
                                                                 locbase_int32 = locbase_int32 + ISHFT(1,11)
                                                         END DO
                                                 END DO
                                                 !$OMP END DO
                                         ELSE
+                                                IF (l_compress) THEN
+                                                        !$OMP DO SCHEDULE(STATIC)
+                                                        DO zi2 = 0, int16ub_coarse(3)
+                                                                zi = SHIFTL(zi2,1)
+                                                                icav = zcavcount_coarse(zi2)
+                                                                locbase = ISHFT(INT(zi,INT64),42)
+                                                                DO yi2 = 0, int16ub_coarse(2)
+                                                                        DO xi = 0, int16ub_coarse(1)
+                                                                                cavbits_int16 = coarse_voxel_array(xi,yi2,zi2)
+                                                                                IF (cavbits_int16 .EQ. 0_INT16) CYCLE
+                                                                                loc = IOR(locbase,SHIFTL(INT(xi,INT64),4))
+                                                                                IF (IAND(cavbits_int16,1_INT16) .NE. 0_INT16) THEN
+                                                                                        cavdatalist(i_big_atom,ibox)%cavity_locs(icav)=loc
+                                                                                        icav = icav + 1_INT64
+                                                                                END IF
+                                                                                DO j = 1, 7
+                                                                                        cavbits_int16 = SHIFTR(cavbits_int16,2)
+                                                                                        loc = loc + 2_INT64
+                                                                                        IF (IAND(cavbits_int16,1_INT16) .EQ. 0_INT16) CYCLE
+                                                                                        cavdatalist(i_big_atom,ibox)%cavity_locs(icav)=loc
+                                                                                        icav = icav + 1_INT64
+                                                                                END DO
+                                                                        END DO
+                                                                        locbase = locbase + ISHFT(2,21)
+                                                                END DO
+                                                        END DO
+                                                        !$OMP END DO NOWAIT
+                                                END IF
                                                 !$OMP DO SCHEDULE(STATIC)
                                                 DO zi = 0, zub
                                                         icav = zcavcount(zi)
                                                         locbase = ISHFT(INT(zi,INT64),42)
                                                         DO yi = 0, int16ub(2)
-                                                                !DIR$ VECTOR ALIGNED
-                                                                !$OMP SIMD PRIVATE(oneshift_int16)
-                                                                DO i = 0, 15
-                                                                        oneshift_int16 = oneshift_int16_vec(i) !ISHFT(1_INT16,i)
-                                                                        DO j = 0, int16ub(1)
-                                                                                ncavlvec(j*16+i) = &
-                                                                                        IAND(oneshift_int16,&
-                                                                                        bitcell_int16_array(j,yi,zi)) .EQ. 0_INT16
+                                                                DO xi = 0, int16ub(1)
+                                                                        cavbits_int16 = bitcell_int16_array(xi,yi,zi)
+                                                                        IF (cavbits_int16 .EQ. 0_INT16) CYCLE
+                                                                        loc = IOR(locbase,SHIFTL(INT(xi,INT64),4))
+                                                                        IF (IAND(cavbits_int16,1_INT16) .NE. 0_INT16) THEN
+                                                                                cavdatalist(i_big_atom,ibox)%cavity_locs(icav)=loc
+                                                                                icav = icav + 1_INT64
+                                                                        END IF
+                                                                        DO j = 1, 15
+                                                                                cavbits_int16 = SHIFTR(cavbits_int16,1)
+                                                                                loc = loc + 1
+                                                                                IF (IAND(cavbits_int16,1_INT16) .EQ. 0_INT16) CYCLE
+                                                                                cavdatalist(i_big_atom,ibox)%cavity_locs(icav)=loc
+                                                                                icav = icav + 1_INT64
                                                                         END DO
                                                                 END DO
-                                                                !$OMP END SIMD
-                                                                DO xi_int64 = 0_INT64, xub_int64
-                                                                        IF (ncavlvec(xi_int64)) CYCLE
-                                                                        cavdatalist(i_big_atom,ibox)%cavity_locs(icav) = &
-                                                                                IOR(locbase,xi_int64)
-                                                                        icav = icav + 1_INT64
-                                                                END DO
+                                                                !!DIR$ VECTOR ALIGNED
+                                                                !!$OMP SIMD PRIVATE(oneshift_int16)
+                                                                !DO i = 0, 15
+                                                                !        oneshift_int16 = oneshift_int16_vec(i) !ISHFT(1_INT16,i)
+                                                                !        DO j = 0, int16ub(1)
+                                                                !                ncavlvec(j*16+i) = &
+                                                                !                        IAND(oneshift_int16,&
+                                                                !                        bitcell_int16_array(j,yi,zi)) .EQ. 0_INT16
+                                                                !        END DO
+                                                                !END DO
+                                                                !!$OMP END SIMD
+                                                                !DO xi_int64 = 0_INT64, xub_int64
+                                                                !        IF (ncavlvec(xi_int64)) CYCLE
+                                                                !        cavdatalist(i_big_atom,ibox)%cavity_locs(icav) = &
+                                                                !                IOR(locbase,xi_int64)
+                                                                !        icav = icav + 1_INT64
+                                                                !END DO
                                                                 locbase = locbase + ISHFT(1_INT64,21)
                                                         END DO
                                                 END DO
@@ -1256,9 +1298,15 @@ CONTAINS
                                         DO i_big_atom = big_atom_start, n_big_atoms
                                                 OPEN(2777,file=TRIM(TRIM(run_name) //&
                                                         '.cavity_locs.' // TRIM(Int_To_String(i_big_atom))))
-                                                DO icav = 0, cavdatalist(i_big_atom,1)%ncavs
-                                                        WRITE(2777,*) cavdatalist(i_big_atom,1)%cavity_locs(icav)
-                                                END DO
+                                                IF (box_list(ibox)%l_cavloc_int32) THEN
+                                                        DO icav = 0, cavdatalist(i_big_atom,1)%ncavs_combined
+                                                                WRITE(2777,*) cavdatalist(i_big_atom,1)%cavity_locs_int32(icav)
+                                                        END DO
+                                                ELSE
+                                                        DO icav = 0, cavdatalist(i_big_atom,1)%ncavs_combined
+                                                                WRITE(2777,*) cavdatalist(i_big_atom,1)%cavity_locs(icav)
+                                                        END DO
+                                                END IF
                                                 CLOSE(2777)
                                         END DO
                                 END IF
@@ -1285,6 +1333,10 @@ CONTAINS
                                 WRITE(2777,*) EXP(cavdatalist(:,1)%ln_cavfrac)
                                 WRITE(2777,*) "ncavs"
                                 WRITE(2777,*) cavdatalist(:,1)%ncavs
+                                WRITE(2777,*) "ncavs_fine"
+                                WRITE(2777,*) cavdatalist(:,1)%ncavs_fine
+                                WRITE(2777,*) "ncavs_coarse"
+                                WRITE(2777,*) cavdatalist(:,1)%ncavs_coarse
                                 CLOSE(2777)
                                 OPEN(2777,file=TRIM(TRIM(run_name) // '.bitcell_int32_vec'))
                                 DO i = 0, vlen-1
@@ -1305,27 +1357,7 @@ CONTAINS
                           CALL Clean_Abort(err_msg, 'Sector_Setup')
                         END IF
                         !$OMP END SINGLE
-                        !WRITE(*,*) "DEALLOCATING bitcell_int8_array"
-                        !DEALLOCATE(bitcell_int8_array)
-                        !WRITE(*,*) "DEALLOCATED bitcell_int8_array", ALLOCATED(bitcell_int8_array)
-                        !!$OMP END SINGLE
-                        !!$OMP BARRIER
-                        !!$OMP WORKSHARE
-                        !box_list(ibox)%bitcell_int32_vec(0:vlen-1) = TRANSFER(bitcell_int8_array( &
-                        !        4:3+ISHFT(lbp32(1),-3), &
-                        !        32:31+lbp32(2), &
-                        !        32:31+lbp32(3)), &
-                        !        box_list(ibox)%bitcell_int32_vec)
-                        !!$OMP END WORKSHARE
-                        !!$OMP BARRIER
-                        !!$OMP SINGLE
-                        !WRITE(*,*) "DEALLOCATING bitcell_int8_array"
-                        !DEALLOCATE(bitcell_int8_array)
-                        !WRITE(*,*) "DEALLOCATED bitcell_int8_array", ALLOCATED(bitcell_int8_array)
-                        !!$OMP END SINGLE
                 END IF
-                !!!!$OMP END DO
-                !!!!$OMP END PARALLEL
           END DO
           IF (cbmc_cell_list_flag) THEN
                   DO ibox = 1, nbr_boxes
@@ -1374,10 +1406,10 @@ CONTAINS
                             err_msg(1) = 'Memory could not be allocated for cbmc_cell_n_interact'
                             CALL Clean_Abort(err_msg, 'Sector_Setup')
                           END IF
-                          WRITE(*,*) "Allocated cbmc_cell_n_interact with:"
-                          WRITE(*,*) "SHAPE", SHAPE(cbmc_cell_n_interact)
-                          WRITE(*,*) "Occupying ", SIZEOF(cbmc_cell_n_interact), " bytes"
-                          WRITE(*,*) "on step ", i_mcstep
+                          !WRITE(*,*) "Allocated cbmc_cell_n_interact with:"
+                          !WRITE(*,*) "SHAPE", SHAPE(cbmc_cell_n_interact)
+                          !WRITE(*,*) "Occupying ", SIZEOF(cbmc_cell_n_interact), " bytes"
+                          !WRITE(*,*) "on step ", i_mcstep
                   END IF
                   ALLOCATE(cell_l_inrange(max_neighbors,2, &
                           -adj_cellmaxbound(1):adj_cellmaxbound(1), &
@@ -1436,10 +1468,6 @@ CONTAINS
                           h13 = REAL(box_list(ibox)%length(1,3),SP)
                           h23 = REAL(box_list(ibox)%length(2,3),SP)
                           h33 = REAL(box_list(ibox)%length(3,3),SP)
-                          !length_cells_recip = 1.0/box_list(ibox)%real_length_cells
-                          !hlcr = length_cells_recip*0.5
-                          !length_cells_recip_dp = 1.0_DP/REAL(box_list(ibox)%length_cells,DP)
-                          !hlcr_dp = length_cells_recip_dp*0.5_DP
                           cell_H = box_list(ibox)%cell_H_sp
                           zub = bt(3)+box_list(ibox)%sectorbound(3)
                           yub = bt(2)+box_list(ibox)%sectorbound(2)
@@ -1470,9 +1498,6 @@ CONTAINS
                           END DO
                           !$OMP END DO
                   END IF
-                  !!$OMP SINGLE
-                  !WRITE(*,*) SHAPE(cell_l_inrange)
-                  !!$OMP END SINGLE
                   zub = box_list(ibox)%sectorbound(3)
                   yub = box_list(ibox)%sectorbound(2)
                   xub = box_list(ibox)%sectorbound(1)
@@ -1534,9 +1559,6 @@ CONTAINS
                         ELSE
                                 cell_rp = MATMUL(cell_H,xyzi_sp)
                         END IF
-                                !cell_rsxp = xi*box_list(ibox)%cell_H_diag(1)
-                                !cell_rsyp = yi*box_list(ibox)%cell_H_diag(2)
-                                !cell_rszp = zi*box_list(ibox)%cell_H_diag(3)
                         !DIR$ VECTOR ALIGNED
                         DO i = 1, iend
                                 drxp = cbmc_cell_rsp_priv(i,1)-cell_rp(1)
@@ -1547,42 +1569,10 @@ CONTAINS
                                 drzp = MAX(ABS(drzp)-hl(3),0.0)
                                 rsq_vec(i) = drxp*drxp + dryp*dryp + drzp*drzp
                         END DO
-                                !DO i = 1, iend
-                                !        dsp = cbmc_cell_rsp_priv(i,1)-cell_rsxp
-                                !        dsp = SIGN(MAX(ABS(dsp)-hlcr(1),0.0),dsp)
-                                !        drxp = h11*dsp
-                                !        dryp = h21*dsp
-                                !        drzp = h31*dsp
-                                !        dsp = cbmc_cell_rsp_priv(i,2)-cell_rsyp
-                                !        dsp = SIGN(MAX(ABS(dsp)-hlcr(2),0.0),dsp)
-                                !        drxp = drxp + h12*dsp
-                                !        dryp = dryp + h22*dsp
-                                !        drzp = drzp + h32*dsp
-                                !        dsp = cbmc_cell_rsp_priv(i,3)-cell_rszp
-                                !        dsp = SIGN(MAX(ABS(dsp)-hlcr(3),0.0),dsp)
-                                !        drxp = drxp + h13*dsp
-                                !        dryp = dryp + h23*dsp
-                                !        drzp = drzp + h33*dsp
-                                !        drxp = drxp*drxp
-                                !        drxp = drxp + dryp*dryp
-                                !        drxp = drxp + drzp*drzp
-                                !        rsq_vec(i) = drxp
-                                !END DO
                         IF (read_atompair_rminsq) THEN
                                 cell_l_inrange(1:adj_iend,1,xi,yi,zi,ibox) = &
                                         rsq_vec(1:adj_iend) < solvent_max_rminsq_sp(ti_priv(1:adj_iend),ibox)
                         ELSE IF (calc_rmin_flag) THEN
-                                !IF (ANY( (/ adj_iend,1,xi,yi,zi,ibox /)>UBOUND(cell_l_inrange) .OR. &
-                                !        (/ adj_iend,1,xi,yi,zi,ibox /)<LBOUND(cell_l_inrange))) THEN
-                                !        WRITE(*,*) adj_iend,1,xi,yi,zi,ibox
-                                !ELSE IF (adj_iend > UBOUND(ti_priv,1) .OR. adj_iend < LBOUND(ti_priv,1)) THEN
-                                !        WRITE(*,*) "adj_iend is out of bounds", adj_iend, UBOUND(ti_priv,1)
-                                !ELSE IF (ANY(ti_priv(1:adj_iend)>UBOUND(atomtype_max_rminsq_sp,1) .OR. &
-                                !        ti_priv(1:adj_iend)<LBOUND(atomtype_max_rminsq_sp,1))) THEN
-                                !        WRITE(*,*) "ti_priv is out of bounds", ti_priv(1:adj_iend)
-                                !ELSE IF (adj_iend > UBOUND(rsq_vec,1) ) THEN
-                                !        WRITE(*,*) "adj_iend is out of bounds for rsq_vec", adj_iend, UBOUND(rsq_vec)
-                                !END IF
                                 cell_l_inrange(1:adj_iend,1,xi,yi,zi,ibox) = &
                                         rsq_vec(1:adj_iend) < atomtype_max_rminsq_sp(ti_priv(1:adj_iend))
                         ELSE
@@ -1608,14 +1598,14 @@ CONTAINS
           IF (cbmc_cell_list_flag) THEN
                   cbmc_max_interact = MAX(cbmc_max_interact,cbmc_max_interact_old)
                   ! ensure 32-byte padding of first dimension
-                  IF (MOD(cbmc_max_interact,8) .NE. 0) cbmc_max_interact = (cbmc_max_interact/8+1)*8
+                  cbmc_max_interact = IAND(cbmc_max_interact+padconst_4byte,padmask_4byte)
                   IF (cbmc_max_interact > cbmc_max_interact_old .OR. ANY(adj_cellmaxbound > adj_cellmaxbound_old)) THEN
                           IF (ALLOCATED(cbmc_cell_rsp)) THEN
-                                  WRITE(*,*) "cbmc_cell_rsp shape was previously: "
-                                  WRITE(*,*) SHAPE(cbmc_cell_rsp)
-                                  WRITE(*,*) cbmc_max_interact, ">", cbmc_max_interact_old
-                                  WRITE(*,*) adj_cellmaxbound
-                                  WRITE(*,*) adj_cellmaxbound_old
+                                  !WRITE(*,*) "cbmc_cell_rsp shape was previously: "
+                                  !WRITE(*,*) SHAPE(cbmc_cell_rsp)
+                                  !WRITE(*,*) cbmc_max_interact, ">", cbmc_max_interact_old
+                                  !WRITE(*,*) adj_cellmaxbound
+                                  !WRITE(*,*) adj_cellmaxbound_old
                                   DEALLOCATE(cbmc_cell_rsp, Stat=AllocateStatus)
                           END IF
                           IF (Allocatestatus /= 0) THEN
@@ -1657,10 +1647,10 @@ CONTAINS
                             err_msg(1) = 'Memory could not be allocated for cbmc_cell_rsp'
                             CALL Clean_Abort(err_msg, 'Sector_Setup')
                           END IF
-                          WRITE(*,*) "Allocated cbmc_cell_rsp with:"
-                          WRITE(*,*) "SHAPE", SHAPE(cbmc_cell_rsp)
-                          WRITE(*,*) "Occupying ", SIZEOF(cbmc_cell_rsp), " bytes"
-                          WRITE(*,*) "on step ", i_mcstep
+                          !WRITE(*,*) "Allocated cbmc_cell_rsp with:"
+                          !WRITE(*,*) "SHAPE", SHAPE(cbmc_cell_rsp)
+                          !WRITE(*,*) "Occupying ", SIZEOF(cbmc_cell_rsp), " bytes"
+                          !WRITE(*,*) "on step ", i_mcstep
                   END IF
                   IF (need_atom_ti) THEN
                           IF (.NOT. ALLOCATED(cbmc_cell_ti)) THEN
@@ -1674,10 +1664,10 @@ CONTAINS
                                     err_msg(1) = 'Memory could not be allocated for cbmc_cell_ti'
                                     CALL Clean_Abort(err_msg, 'Sector_Setup')
                                   END IF
-                                  WRITE(*,*) "Allocated cbmc_cell_ti with:"
-                                  WRITE(*,*) "SHAPE", SHAPE(cbmc_cell_ti)
-                                  WRITE(*,*) "Occupying ", SIZEOF(cbmc_cell_ti), " bytes"
-                                  WRITE(*,*) "on step ", i_mcstep
+                                  !WRITE(*,*) "Allocated cbmc_cell_ti with:"
+                                  !WRITE(*,*) "SHAPE", SHAPE(cbmc_cell_ti)
+                                  !WRITE(*,*) "Occupying ", SIZEOF(cbmc_cell_ti), " bytes"
+                                  !WRITE(*,*) "on step ", i_mcstep
                           END IF
                   END IF
                   IF (need_atomtypes) THEN
@@ -1692,15 +1682,15 @@ CONTAINS
                                     err_msg(1) = 'Memory could not be allocated for cbmc_cell_atomtypes'
                                     CALL Clean_Abort(err_msg, 'Sector_Setup')
                                   END IF
-                                  WRITE(*,*) "Allocated cbmc_cell_atomtypes with:"
-                                  WRITE(*,*) "SHAPE", SHAPE(cbmc_cell_atomtypes)
-                                  WRITE(*,*) "Occupying ", SIZEOF(cbmc_cell_atomtypes), " bytes"
-                                  WRITE(*,*) "on step ", i_mcstep
+                                  !WRITE(*,*) "Allocated cbmc_cell_atomtypes with:"
+                                  !WRITE(*,*) "SHAPE", SHAPE(cbmc_cell_atomtypes)
+                                  !WRITE(*,*) "Occupying ", SIZEOF(cbmc_cell_atomtypes), " bytes"
+                                  !WRITE(*,*) "on step ", i_mcstep
                           END IF
                   END IF
           ELSE
                   ! ensure 32-byte padding of first dimension
-                  IF (MOD(max_adj_cell_atoms,8) .NE. 0) max_adj_cell_atoms = (max_adj_cell_atoms/8+1)*8
+                  max_adj_cell_atoms = IAND(max_adj_cell_atoms+padconst_4byte,padmask_4byte)
                   IF (ALLOCATED(cbmc_cell_rsp)) THEN
                           IF (SIZE(cbmc_cell_rsp,1) < max_adj_cell_atoms .OR. ANY(adj_cellmaxbound>adj_cellmaxbound_old)) THEN
                                   DEALLOCATE(cbmc_cell_rsp, Stat=AllocateStatus)
@@ -1738,10 +1728,10 @@ CONTAINS
                             err_msg(1) = 'Memory could not be allocated for cbmc_cell_rsp'
                             CALL Clean_Abort(err_msg, 'Sector_Setup')
                           END IF
-                          WRITE(*,*) "Allocated cbmc_cell_rsp with:"
-                          WRITE(*,*) "SHAPE", SHAPE(cbmc_cell_rsp)
-                          WRITE(*,*) "Occupying ", SIZEOF(cbmc_cell_rsp), " bytes"
-                          WRITE(*,*) "on step ", i_mcstep
+                          !WRITE(*,*) "Allocated cbmc_cell_rsp with:"
+                          !WRITE(*,*) "SHAPE", SHAPE(cbmc_cell_rsp)
+                          !WRITE(*,*) "Occupying ", SIZEOF(cbmc_cell_rsp), " bytes"
+                          !WRITE(*,*) "on step ", i_mcstep
                           IF (need_atom_ti) THEN
                                   ALLOCATE(cbmc_cell_ti(max_adj_cell_atoms, &
                                           -adj_cellmaxbound(1):adj_cellmaxbound(1), &
@@ -1753,10 +1743,10 @@ CONTAINS
                                     err_msg(1) = 'Memory could not be allocated for cbmc_cell_ti'
                                     CALL Clean_Abort(err_msg, 'Sector_Setup')
                                   END IF
-                                  WRITE(*,*) "Allocated cbmc_cell_ti with:"
-                                  WRITE(*,*) "SHAPE", SHAPE(cbmc_cell_ti)
-                                  WRITE(*,*) "Occupying ", SIZEOF(cbmc_cell_ti), " bytes"
-                                  WRITE(*,*) "on step ", i_mcstep
+                                  !WRITE(*,*) "Allocated cbmc_cell_ti with:"
+                                  !WRITE(*,*) "SHAPE", SHAPE(cbmc_cell_ti)
+                                  !WRITE(*,*) "Occupying ", SIZEOF(cbmc_cell_ti), " bytes"
+                                  !WRITE(*,*) "on step ", i_mcstep
                           END IF
                           IF (need_atomtypes) THEN
                                   ALLOCATE(cbmc_cell_atomtypes(max_adj_cell_atoms, &
@@ -1769,10 +1759,10 @@ CONTAINS
                                     err_msg(1) = 'Memory could not be allocated for cbmc_cell_atomtypes'
                                     CALL Clean_Abort(err_msg, 'Sector_Setup')
                                   END IF
-                                  WRITE(*,*) "Allocated cbmc_cell_atomtypes with:"
-                                  WRITE(*,*) "SHAPE", SHAPE(cbmc_cell_atomtypes)
-                                  WRITE(*,*) "Occupying ", SIZEOF(cbmc_cell_atomtypes), " bytes"
-                                  WRITE(*,*) "on step ", i_mcstep
+                                  !WRITE(*,*) "Allocated cbmc_cell_atomtypes with:"
+                                  !WRITE(*,*) "SHAPE", SHAPE(cbmc_cell_atomtypes)
+                                  !WRITE(*,*) "Occupying ", SIZEOF(cbmc_cell_atomtypes), " bytes"
+                                  !WRITE(*,*) "on step ", i_mcstep
                           END IF
                   END IF
           END IF
@@ -1836,8 +1826,7 @@ CONTAINS
                                         which_interact(n_interact) = i
                                 END IF
                         END DO
-                        !n_interact = IAND(n_interact+7,pad8mask) ! padding to multiple of 8 or zero
-                        n_adj_cell_atoms(xi,yi,zi,ibox) = IAND(n_interact+7,NOT(7))
+                        n_adj_cell_atoms(xi,yi,zi,ibox) = IAND(n_interact+padconst_4byte,padmask_4byte)
                         IF (cbmc_cell_list_flag) THEN
                                 DO dzi = -bt(3), bt(3)
                                         IF (ABS(dzi)<2) CYCLE
@@ -1873,8 +1862,7 @@ CONTAINS
                                                 which_interact(n_interact) = i
                                         END IF
                                 END DO
-                                !n_interact = IAND(n_interact+7,pad8mask) ! padding to multiple of 8 or zero
-                                cbmc_cell_n_interact(xi,yi,zi,ibox) = IAND(n_interact+7,NOT(7))
+                                cbmc_cell_n_interact(xi,yi,zi,ibox) = IAND(n_interact+padconst_4byte,padmask_4byte)
                         END IF
                         !DIR$ VECTOR ALIGNED
                         cbmc_cell_rsp(1:n_interact,1:4,xi,yi,zi,ibox) = &
@@ -1894,11 +1882,6 @@ CONTAINS
                   END DO
                   !$OMP END DO
           END DO
-          !IF (cbmc_cell_list_flag .AND. precalc_atompair_nrg) THEN
-          !        !$OMP WORKSHARE
-          !        cbmc_cell_ti = cbmc_cell_ti - 1
-          !        !$OMP END WORKSHARE
-          !END IF
           !$OMP END PARALLEL
 
   END SUBROUTINE Sector_Setup
@@ -1977,7 +1960,7 @@ CONTAINS
                   rminsq = sp_rcut_lowsq
           END IF
           overlap = .FALSE.
-          !DIR$ ASSUME (MOD(vlen,8) .EQ. 0)
+          !DIR$ ASSUME (MOD(vlen,dimpad_4byte) .EQ. 0)
           !DIR$ LOOP COUNT = 8, 16, 24, 32, 40
           !DIR$ VECTOR ALIGNED
           DO i = 1, vlen

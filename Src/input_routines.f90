@@ -1205,9 +1205,9 @@ SUBROUTINE Get_Molecule_Info
   max_molecules = max_molecules + tp_correction
 
   sum_max_molecules = SUM(max_molecules)
-  sum_max_molecules_p4 = IAND(sum_max_molecules+3,NOT(3))
+  sum_max_molecules_p4 = IAND(sum_max_molecules+padconst_8byte,padmask_8byte)
   max_max_molecules = MAXVAL(max_molecules)
-  max_max_molecules_p4 = IAND(max_max_molecules+3,NOT(3))
+  max_max_molecules_p4 = IAND(max_max_molecules+padconst_8byte,padmask_8byte)
 
   ! Allocate arrays that depend on max_molecules, natoms, and nspecies
   ! N.B.: MAXVAL instrinsic function selects the largest value from an array

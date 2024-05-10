@@ -161,6 +161,7 @@ CONTAINS
                 REAL(DP) :: solvent_charges(solvent_maxind), solute_charges(solute_maxind)
                 INTEGER :: solvent_typeindvec(solvent_maxind), solute_typeindvec(solute_maxind)
                 REAL(DP), DIMENSION(atompair_nrg_res) :: rsq_mp_vector, rsq_lb_vector, rij, inv_rij, alpha_rij
+                REAL(DP), DIMENSION(:,:,:), ALLOCATABLE :: atompair_nrg_table_reduced_dp
                 IF (.NOT. precalc_atompair_nrg) RETURN
                 nsolutes = 0
                 nsolvents = 0
@@ -202,7 +203,7 @@ CONTAINS
                                 = typepair_solute_indices(nonbond_list(1:natoms(is),is)%atom_type_number)
                 END DO
 
-                inv_rij = Recip_Sqrt(rsq_mp_vector)
+                inv_rij = 1.0_DP/SQRT(rsq_mp_vector)
                 rij = inv_rij*rsq_mp_vector
 
                 DO ibox = 1, nbr_boxes
@@ -263,9 +264,13 @@ CONTAINS
                         END DO
                 END DO
                 !$OMP END DO
+                ALLOCATE(atompair_nrg_table_reduced_dp(SIZE(atompair_nrg_table_reduced,1),&
+                        SIZE(atompair_nrg_table_reduced,2), &
+                        SIZE(atompair_nrg_table_reduced,3)))
                 !$OMP WORKSHARE
                 atompair_nrg_table(atompair_nrg_res+1,:,:,:) = 0.0
-                atompair_nrg_table_reduced = REAL(RESHAPE(atompair_nrg_table, SHAPE(atompair_nrg_table_reduced)),SP)
+                atompair_nrg_table_reduced_dp = RESHAPE(atompair_nrg_table, SHAPE(atompair_nrg_table_reduced))
+                atompair_nrg_table_reduced = REAL(atompair_nrg_table_reduced_dp,SP)
                 !$OMP END WORKSHARE
                 !$OMP END PARALLEL
 

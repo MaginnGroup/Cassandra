@@ -84,6 +84,52 @@ MODULE Type_Definitions
   REAL(SP), PARAMETER :: twoPI_SP = REAL(twoPI,SP)
   REAL(SP), PARAMETER :: PI_SP = REAL(PI,SP)
 
+  LOGICAL, PARAMETER :: array8byte = INDEX(COMPILER_OPTIONS(),"array8byte") .NE. 0 .OR. &
+          INDEX(COMPILER_OPTIONS(),"-mmmx") .NE. 0
+  LOGICAL, PARAMETER :: array16byte = INDEX(COMPILER_OPTIONS(),"array16byte") .NE. 0 .OR. &
+          INDEX(COMPILER_OPTIONS(),"-msse") .NE. 0
+  LOGICAL, PARAMETER :: array32byte = INDEX(COMPILER_OPTIONS(),"array32byte") .NE. 0 .OR. &
+          INDEX(COMPILER_OPTIONS(),"-mavx") .NE. 0
+  LOGICAL, PARAMETER :: array64byte = INDEX(COMPILER_OPTIONS(),"array64byte") .NE. 0 .OR. &
+          INDEX(COMPILER_OPTIONS(),"-mavx512") .NE. 0
+  LOGICAL, PARAMETER :: array128byte = INDEX(COMPILER_OPTIONS(),"array128byte") .NE. 0
+  LOGICAL, PARAMETER :: array256byte = INDEX(COMPILER_OPTIONS(),"array256byte") .NE. 0
+  !INTEGER, DIMENSION(6), PARAMETER :: align_byte_options = (/ 8, 16, 32, 64, 128, 256 /)
+  INTEGER, DIMENSION(6), PARAMETER :: log2align_byte_options = (/ 3, 4, 5, 6, 7, 8 /)
+  !INTEGER, DIMENSION(6), PARAMETER :: align_byte_options = SHIFTL(1,log2align_byte_options)
+  LOGICAL, DIMENSION(6), PARAMETER :: array_n_byte_vec = (/ &
+          array8byte, array16byte, array32byte, array64byte, array128byte, array256byte /)
+  !INTEGER, PARAMETER :: array_align_bytes = MAXVAL(PACK(align_byte_options,array_n_byte_vec,(/1,1,1,1,1,1/)))
+  INTEGER, PARAMETER :: log2array_align_bytes = MAXVAL(MERGE(log2align_byte_options,(/0,0,0,0,0,0/),array_n_byte_vec))
+  INTEGER, PARAMETER :: array_align_bytes = SHIFTL(1,log2array_align_bytes)
+  INTEGER, PARAMETER :: log2dimpad_1byte = log2array_align_bytes
+  INTEGER, PARAMETER :: log2dimpad_2byte = MAX(0,log2array_align_bytes-1)
+  INTEGER, PARAMETER :: log2dimpad_4byte = MAX(0,log2array_align_bytes-2)
+  INTEGER, PARAMETER :: log2dimpad_8byte = MAX(0,log2array_align_bytes-3)
+  INTEGER, PARAMETER :: log2dimpad_16byte = MAX(0,log2array_align_bytes-4)
+  INTEGER, PARAMETER :: log2dimpad_32byte = MAX(0,log2array_align_bytes-5)
+
+  INTEGER, PARAMETER :: dimpad_1byte = array_align_bytes
+  INTEGER, PARAMETER :: dimpad_2byte = SHIFTL(1,log2dimpad_2byte)
+  INTEGER, PARAMETER :: dimpad_4byte = SHIFTL(1,log2dimpad_4byte)
+  INTEGER, PARAMETER :: dimpad_8byte = SHIFTL(1,log2dimpad_8byte)
+  INTEGER, PARAMETER :: dimpad_16byte = SHIFTL(1,log2dimpad_16byte)
+  INTEGER, PARAMETER :: dimpad_32byte = SHIFTL(1,log2dimpad_32byte)
+
+  INTEGER, PARAMETER :: padconst_1byte = dimpad_1byte-1
+  INTEGER, PARAMETER :: padconst_2byte = dimpad_2byte-1
+  INTEGER, PARAMETER :: padconst_4byte = dimpad_4byte-1
+  INTEGER, PARAMETER :: padconst_8byte = dimpad_8byte-1
+  INTEGER, PARAMETER :: padconst_16byte = dimpad_16byte-1
+  INTEGER, PARAMETER :: padconst_32byte = dimpad_32byte-1
+
+  INTEGER, PARAMETER :: padmask_1byte = NOT(padconst_1byte)
+  INTEGER, PARAMETER :: padmask_2byte = NOT(padconst_2byte)
+  INTEGER, PARAMETER :: padmask_4byte = NOT(padconst_4byte)
+  INTEGER, PARAMETER :: padmask_8byte = NOT(padconst_8byte)
+  INTEGER, PARAMETER :: padmask_16byte = NOT(padconst_16byte)
+  INTEGER, PARAMETER :: padmask_32byte = NOT(padconst_32byte)
+
   ! Define some classes to hold variables associated with different objects
   ! in the simulation. These will be converted to lists in global_variables for speed.
 
@@ -149,7 +195,7 @@ MODULE Type_Definitions
      INTEGER :: ndihedrals_rb, ndihedrals_energetic, ndihedrals_uncombined
 
      ! CBMC biasing info
-     INTEGER :: kappa_ins = 0, kappa_ins_pad8, kappa_ins_pad64
+     INTEGER :: kappa_ins = 0, kappa_ins_pad8, kappa_ins_pad32
      INTEGER :: kappa_dih = 0, kappa_dih_pad8, kappa_dih_pad32
      INTEGER :: kappa_rot = 0
      INTEGER :: nfragments
@@ -531,7 +577,7 @@ MODULE Type_Definitions
  TYPE Cavity_Data_Class
          INTEGER(INT64), DIMENSION(:), ALLOCATABLE :: cavity_locs
          INTEGER(INT32), DIMENSION(:), ALLOCATABLE :: cavity_locs_int32
-         INTEGER(INT64) :: ncavs
+         INTEGER(INT64) :: ncavs, ncavs_fine, ncavs_coarse, ncavs_combined
          REAL(DP) :: ncavs_dp, ln_cavfrac
  END TYPE Cavity_Data_Class
 
@@ -740,10 +786,10 @@ MODULE Type_Definitions
                   CLASS(Species_Class), INTENT(INOUT) :: this
                   INTEGER :: i
                   REAL(DP) :: theta
-                  this%kappa_ins_pad8 = IAND(this%kappa_ins+7,NOT(7))
-                  this%kappa_ins_pad64 = IAND(this%kappa_ins+63,NOT(63))
-                  this%kappa_dih_pad8 = IAND(this%kappa_dih+7,NOT(7))
-                  this%kappa_dih_pad32 = IAND(this%kappa_dih+31,NOT(31))
+                  this%kappa_ins_pad8 = IAND(this%kappa_ins+padconst_4byte,padmask_4byte)
+                  this%kappa_ins_pad32 = IAND(this%kappa_ins+padconst_1byte,padmask_1byte)
+                  this%kappa_dih_pad8 = IAND(this%kappa_dih+padconst_4byte,padmask_4byte)
+                  this%kappa_dih_pad32 = IAND(this%kappa_dih+padconst_1byte,padmask_1byte)
                   IF (this%need_kappa_ins) this%log_kappa_ins = LOG(REAL(this%kappa_ins,DP))
                   IF (this%kappa_rot > 0) this%log_kappa_rot = LOG(REAL(this%kappa_rot,DP))
                   IF (this%need_kappa_dih) THEN

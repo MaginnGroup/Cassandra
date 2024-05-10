@@ -80,7 +80,7 @@ LINKFLAGS = -Wl,-rpath,${locallib}
 #F90FLAGS = -c -openmp
 #F90FLAGS = -p -c -O3
 #F90FLAGS = -c -O3 -openmp
-OPTFLAGS = -O3
+OPTFLAGS = -O3 -align array32byte -march=core-avx2
 #LINKFLAGS = -openmp
 #LINKFLAGS = -p
 

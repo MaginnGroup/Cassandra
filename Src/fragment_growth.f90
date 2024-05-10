@@ -205,8 +205,8 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   INTEGER :: rlc, gtrial
   INTEGER, DIMENSION(3) :: this_atom_ci
 
-  !LOGICAL(1) :: bitcell_overlap(species_list(is)%kappa_ins_pad64,MAXVAL(frag_list(1:nfragments(is),is)%natoms))
-  LOGICAL(1) :: bitcell_overlap(species_list(is)%kappa_ins_pad64)
+  !LOGICAL(1) :: bitcell_overlap(species_list(is)%kappa_ins_pad32,MAXVAL(frag_list(1:nfragments(is),is)%natoms))
+  LOGICAL(1) :: bitcell_overlap(species_list(is)%kappa_ins_pad32)
 
   LOGICAL :: l_widom_cells, this_bitcell_overlap
 
@@ -221,7 +221,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   REAL(DP) :: cell_list_cbmc_nrg_time_s, cell_list_cbmc_nrg_time_e, noncell_cbmc_nrg_time_s, noncell_cbmc_nrg_time
   REAL(DP) :: noncell_cbmc_nrg_time_e
 
-  INTEGER :: kappa_ins, kappa_ins_pad8, kappa_ins_pad64, kappa_dih, kappa_dih_pad8, kappa_dih_pad32
+  INTEGER :: kappa_ins, kappa_ins_pad8, kappa_ins_pad32, kappa_dih, kappa_dih_pad8, kappa_dih_pad32
 
   REAL(DP) :: sz_rand_dp, zpart_width, zpart_shift
   LOGICAL, PARAMETER :: l_zscan = .FALSE.
@@ -238,16 +238,16 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
   END IF
   kappa_ins = species_list(is)%kappa_ins
   kappa_ins_pad8 = species_list(is)%kappa_ins_pad8
-  kappa_ins_pad64 = species_list(is)%kappa_ins_pad64
+  kappa_ins_pad32 = species_list(is)%kappa_ins_pad32
   kappa_dih = species_list(is)%kappa_dih
   kappa_dih_pad8 = species_list(is)%kappa_dih_pad8
   kappa_dih_pad32 = species_list(is)%kappa_dih_pad32
 
 
-  !DIR$ ASSUME_ALIGNED trial_atom_rp:32, trial_cell_coords:32, bitcell_overlap:32, xyz_rand_dp:32
-  !DIR$ ASSUME_ALIGNED nrg_sp_vec:32, xyz_rand:32, rtrial:32
-  !DIR$ ASSUME (MOD(kappa_ins_pad8,8) .EQ. 0)
-  !DIR$ ASSUME (MOD(kappa_ins_pad64,64) .EQ. 0)
+  !DIR$ ASSUME_ALIGNED trial_atom_rp:array_align_bytes, trial_cell_coords:array_align_bytes, bitcell_overlap:array_align_bytes, xyz_rand_dp:array_align_bytes
+  !DIR$ ASSUME_ALIGNED nrg_sp_vec:array_align_bytes, xyz_rand:array_align_bytes, rtrial:array_align_bytes
+  !DIR$ ASSUME (MOD(kappa_ins_pad8,dimpad_4byte) .EQ. 0)
+  !DIR$ ASSUME (MOD(kappa_ins_pad32,dimpad_1byte) .EQ. 0)
 
 
 
@@ -933,7 +933,7 @@ SUBROUTINE Build_Molecule(this_im,is,this_box,frag_order,this_lambda, &
         max_dcomsq = MAX(max_dcomsq,drxcom)
      END DO
      this_molecule%rcom(4) = SQRT(max_dcomsq)
-     !DIR$ ASSUME_ALIGNED nrg:32, weight:32, overlap_trial:32
+     !DIR$ ASSUME_ALIGNED nrg:array_align_bytes, weight:array_align_bytes, overlap_trial:array_align_bytes
      IF (l_store_dp_trials) THEN
              IF (widom_timing) THEN
                      IF (.NOT. omp_flag) CALL cpu_time(noncell_cbmc_nrg_time_s)
@@ -1336,10 +1336,10 @@ SUBROUTINE Build_Rigid_Fragment(this_im,is,this_box,frag_order,this_lambda, &
   LOGICAL :: del_overlap
   TYPE(Atom_Class) :: rtrial(MAXVAL(natoms),0:MAX(species_list(is)%kappa_ins,species_list(is)%kappa_rot,species_list(is)%kappa_dih))
 
-  INTEGER :: kappa_ins, kappa_ins_pad8, kappa_ins_pad64, kappa_dih, kappa_dih_pad8, kappa_dih_pad32
+  INTEGER :: kappa_ins, kappa_ins_pad8, kappa_ins_pad32, kappa_dih, kappa_dih_pad8, kappa_dih_pad32
   kappa_ins = species_list(is)%kappa_ins
   kappa_ins_pad8 = species_list(is)%kappa_ins_pad8
-  kappa_ins_pad64 = species_list(is)%kappa_ins_pad64
+  kappa_ins_pad32 = species_list(is)%kappa_ins_pad32
   kappa_dih = species_list(is)%kappa_dih
   kappa_dih_pad8 = species_list(is)%kappa_dih_pad8
   kappa_dih_pad32 = species_list(is)%kappa_dih_pad32
@@ -1755,10 +1755,10 @@ SUBROUTINE Cut_Regrow(this_im,is,frag_live,frag_dead,frag_order,frag_total, &
   TYPE(Molecule_Class), POINTER :: this_molecule
   TYPE(Atom_Class), POINTER :: these_atoms(:)
 
-  INTEGER :: kappa_ins, kappa_ins_pad8, kappa_ins_pad64, kappa_dih, kappa_dih_pad8, kappa_dih_pad32
+  INTEGER :: kappa_ins, kappa_ins_pad8, kappa_ins_pad32, kappa_dih, kappa_dih_pad8, kappa_dih_pad32
   kappa_ins = species_list(is)%kappa_ins
   kappa_ins_pad8 = species_list(is)%kappa_ins_pad8
-  kappa_ins_pad64 = species_list(is)%kappa_ins_pad64
+  kappa_ins_pad32 = species_list(is)%kappa_ins_pad32
   kappa_dih = species_list(is)%kappa_dih
   kappa_dih_pad8 = species_list(is)%kappa_dih_pad8
   kappa_dih_pad32 = species_list(is)%kappa_dih_pad32
@@ -1958,10 +1958,10 @@ SUBROUTINE Fragment_Order(this_frag,is,frag_total,frag_order,live,ln_pseq)
   INTEGER :: hanging_connections(nfragments(is)) ! to hold ids of frags ready to add
   REAL(DP) :: randno, prob(nfragments(is)), cum_prob(nfragments(is))
 
-  INTEGER :: kappa_ins, kappa_ins_pad8, kappa_ins_pad64, kappa_dih, kappa_dih_pad8, kappa_dih_pad32
+  INTEGER :: kappa_ins, kappa_ins_pad8, kappa_ins_pad32, kappa_dih, kappa_dih_pad8, kappa_dih_pad32
   kappa_ins = species_list(is)%kappa_ins
   kappa_ins_pad8 = species_list(is)%kappa_ins_pad8
-  kappa_ins_pad64 = species_list(is)%kappa_ins_pad64
+  kappa_ins_pad32 = species_list(is)%kappa_ins_pad32
   kappa_dih = species_list(is)%kappa_dih
   kappa_dih_pad8 = species_list(is)%kappa_dih_pad8
   kappa_dih_pad32 = species_list(is)%kappa_dih_pad32
@@ -2172,11 +2172,11 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
   REAL(DP), DIMENSION(species_list(is)%kappa_dih) :: nrg, nrg_dihed, weightnorm, oldweightnorm
   REAL(DP) :: ran_no, prob_pick_compat, ln_pbias_compat
 
-  INTEGER :: kappa_ins, kappa_ins_pad8, kappa_ins_pad64, kappa_dih, kappa_dih_pad8, kappa_dih_pad32
+  INTEGER :: kappa_ins, kappa_ins_pad8, kappa_ins_pad32, kappa_dih, kappa_dih_pad8, kappa_dih_pad32
   LOGICAL :: l_checkoverlap
   kappa_ins = species_list(is)%kappa_ins
   kappa_ins_pad8 = species_list(is)%kappa_ins_pad8
-  kappa_ins_pad64 = species_list(is)%kappa_ins_pad64
+  kappa_ins_pad32 = species_list(is)%kappa_ins_pad32
   kappa_dih = species_list(is)%kappa_dih
   kappa_dih_pad8 = species_list(is)%kappa_dih_pad8
   kappa_dih_pad32 = species_list(is)%kappa_dih_pad32
@@ -2904,13 +2904,13 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
              inv_H_sp = REAL(box_list(this_box)%length_inv,SP)
              H_sp = REAL(box_list(this_box)%length,SP)
      END IF
-     !DIR$ ASSUME (MOD(kappa_dih_pad8,8) == 0)
+     !DIR$ ASSUME (MOD(kappa_dih_pad8,dimpad_4byte) == 0)
      !DIR$ LOOP COUNT = 3
      DO j = 1, nfrag_atoms
              x0 = REAL(new_rp(1,j),SP)
              y0 = REAL(new_rp(2,j),SP)
              z0 = REAL(new_rp(3,j),SP)
-             !DIR$ ASSUME (MOD(kappa_dih_pad8,8) == 0)
+             !DIR$ ASSUME (MOD(kappa_dih_pad8,dimpad_4byte) == 0)
              !DIR$ LOOP COUNT = 8, 16, 32
              !DIR$ VECTOR ALIGNED
              DO ii = 1, kappa_dih_pad8
@@ -3027,8 +3027,8 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
      ELSE
              n_good_trials = kappa_dih
      END IF
-     n_good_trials_pad8 = IAND(n_good_trials+7,NOT(7))
-     !DIR$ ASSUME (MOD(n_good_trials_pad8,8) == 0)
+     n_good_trials_pad8 = IAND(n_good_trials+padconst_4byte,padmask_4byte)
+     !DIR$ ASSUME (MOD(n_good_trials_pad8,dimpad_4byte) == 0)
      IF (l_widom_cells) THEN
              DO j = 1, nfrag_atoms
                      IF (l_ortho) THEN
@@ -3178,8 +3178,8 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
      rcutsq = REAL(rcut_cbmcsq(this_box),SP)
      anchor_atoms = (/ anchor_frag_connect, anchor_ifrag /)
      anchor_atoms_reversed = anchor_atoms(2:1:-1)
-     n_good_trials_pad8 = IAND(n_good_trials+7,NOT(7))
-     !DIR$ ASSUME (MOD(n_good_trials_pad8,8) .EQ. 0)
+     n_good_trials_pad8 = IAND(n_good_trials+padconst_4byte,padmask_4byte)
+     !DIR$ ASSUME (MOD(n_good_trials_pad8,dimpad_4byte) .EQ. 0)
      overlap_trial(1:n_good_trials_pad8) = .FALSE.
      DO ja = 1, natoms(is)
         IF (.NOT. grown_exist(ja) .OR. ((.NOT. compatibility_mode) .AND. ANY(ja .EQ. anchor_atoms))) CYCLE
@@ -3406,9 +3406,9 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
                         nrg_sp_vec(n_good_trials) = nrg_sp_vec(itrial)
                 END IF
              END DO
-             n_good_trials_pad8 = IAND(n_good_trials+7,NOT(7))
+             n_good_trials_pad8 = IAND(n_good_trials+padconst_4byte,padmask_4byte)
      END IF
-     !DIR$ ASSUME (MOD(n_good_trials_pad8,8) == 0)
+     !DIR$ ASSUME (MOD(n_good_trials_pad8,dimpad_4byte) == 0)
      nrg_dihed_vec = 0.0
      anchor_frag_connect_rp = REAL(these_atoms(anchor_frag_connect)%rp(1:3),SP)
      anchor_ifrag_rp = REAL(these_atoms(anchor_ifrag)%rp(1:3),SP)

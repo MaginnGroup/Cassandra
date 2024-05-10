@@ -34,7 +34,7 @@ MODULE Read_Write_Checkpoint
   USE Global_Variables
   USE File_Names
   USE Simulation_Properties
-  USE Random_Generators, ONLY : s1,s2,s3,s4,s5, rranf
+  USE Random_Generators, ONLY : s1,s2,s3,s4,s5,s_arr, init_seeds, rranf
   USE IO_Utilities
   USE Internal_Coordinate_Routines
 
@@ -46,6 +46,7 @@ CONTAINS
 
     INTEGER :: ibox, is, ii, jj, im, this_im, ia, nmolecules_is, this_box
     INTEGER :: total_molecules_is, this_unit, position
+    INTEGER :: i
 
     LOGICAL :: lopen
     REAL(DP) :: this_lambda = 1.0_DP
@@ -107,6 +108,10 @@ CONTAINS
 
     WRITE(chkptunit,*) '**** SEEDS *******'
     WRITE(chkptunit,*) s1,s2,s3,s4,s5
+    WRITE(chkptunit,*) "SIMD " // TRIM(Int_To_String(dimpad_8byte))
+    DO i = 1, dimpad_8byte
+        WRITE(chkptunit,*) s_arr(i,1), s_arr(i,2), s_arr(i,3), s_arr(i,4), s_arr(i,5)
+    END DO
 
     WRITE(chkptunit,*) '******* Info for total number of molecules'
     ! write number of molecules of each of the species
@@ -149,6 +154,8 @@ SUBROUTINE Read_Checkpoint
     INTEGER :: sp_nmoltotal(nspecies)
     INTEGER :: this_species, nfrac_global, i, this_rxnum, j, m, alive
     INTEGER :: this_unit
+    INTEGER :: checkpoint_simd, nbr_entries, ierr
+    CHARACTER(STRING_LEN) :: line_array(60)
 
     INTEGER, DIMENSION(:), ALLOCATABLE :: total_molecules, n_int
 
@@ -258,10 +265,36 @@ SUBROUTINE Read_Checkpoint
 
     READ(restartunit,*)
     READ(restartunit,*) s1,s2,s3,s4,s5
+    CALL Init_Seeds
+    CALL Parse_String(restartunit,-1,0,nbr_entries,line_array,ierr)
+    IF (nbr_entries == 2) THEN
+            IF (line_array(1) .NE. 'SIMD') THEN
+                    err_msg = ""
+                    err_msg(1) = 'Unrecognized keyword ' // TRIM(line_array(1))
+                    err_msg(2) = 'after checkpoint RNG seeds.'
+                    err_msg(3) = 'This line should be empty or have "SIMD" followed by the number of SIMD lanes.'
+                    CALL Clean_Abort(err_msg,'Read_Checkpoint')
+            END IF
+            checkpoint_simd = String_To_Int(line_array(2))
+            IF (checkpoint_simd == dimpad_8byte) THEN
+                    WRITE(logunit,*) "Reading SIMD RNG seeds"
+                    DO i = 1, dimpad_8byte
+                        READ(restartunit,*) s_arr(i,1), s_arr(i,2), s_arr(i,3), s_arr(i,4), s_arr(i,5)
+                    END DO
+            ELSE
+                    WRITE(logunit,*) "Ignoring SIMD RNG seeds due to conflicting number of SIMD lanes"
+                    DO i = 1, checkpoint_simd
+                        READ(restartunit,*)
+                    END DO
+            END IF
+            READ(restartunit,*)
+    ELSE
+            WRITE(logunit,*) "No SIMD RNG seeds were found. Using freshly generated SIMD RNG seeds."
+    END IF
     WRITE(logunit,*) 'Seed info read successfully'
 
     ! read total number of molecules of each of the species
-    READ(restartunit,*)
+    !READ(restartunit,*) ! line advanced already when checking for SIMD seeds
     DO is = 1, nspecies
        READ(restartunit,*) this_species, sp_nmoltotal(is)
        IF (sp_nmoltotal(is) > 0) species_list(is)%l_solvent = .TRUE.

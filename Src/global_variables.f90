@@ -748,7 +748,6 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   REAL(SP), DIMENSION(:), ALLOCATABLE :: atomtype_max_rminsq_sp
 
 
-  LOGICAL, PARAMETER :: l_vectorized = .TRUE., compatibility_mode = .TRUE.
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: nlive
 
   REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE :: ppvdwp_table, ppvdwp_table2
@@ -827,6 +826,17 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   LOGICAL :: cavity_biasing_flag
 
   LOGICAL :: early_end
+
+  ! Use lossless compression for vector of cavity voxel locations.
+  ! This can reduce the required memory and probably improve cache hit rate and memory access speed.
+  LOGICAL, PARAMETER :: l_compress = .TRUE.
+  ! l_vectorized controls whether intermolecular pairwise energy calculations are vectorized
+  ! compatibility_mode attempts to emulate prior CBMC implementation results, although
+  ! having it .FALSE. should still yield results that are just as valid.
+  ! At time of writing, compatibility_mode also results in printing values when the new implementation (with some behaviors modified
+  ! to try to emulate old results better)
+  ! still results in a different dihedral trial being chosen than with the more extensive emulation of the old implementation.
+  LOGICAL, PARAMETER :: l_vectorized = .TRUE., compatibility_mode = .TRUE.
 
 END MODULE Global_Variables
 

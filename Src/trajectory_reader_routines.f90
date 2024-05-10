@@ -37,7 +37,7 @@ MODULE Trajectory_Reader_Routines
                                 this_length = Read_H_Frame()
                                 IF (early_end) RETURN
                         ELSEIF (.NOT. ALLOCATED(frame_xyz)) THEN
-                                natr_p = IAND(MAXVAL(natoms_to_read)+7,NOT(7))
+                                natr_p = IAND(MAXVAL(natoms_to_read)+padconst_4byte,padmask_4byte)
                                 ALLOCATE(frame_xyz(natr_p,3))
                                 !DIR$ VECTOR ALIGNED
                                 frame_xyz = 0.0_DP
@@ -150,7 +150,7 @@ MODULE Trajectory_Reader_Routines
                 END DO
                 atom_ibounds(1,1,ibox) = 1
                 IF (nspecies > 1) atom_ibounds(1,2:nspecies,ibox) = atom_ibounds(2,1:(nspecies-1),ibox)+1
-                natr_p = IAND(natoms_to_read(ibox)+7,NOT(7))
+                natr_p = IAND(natoms_to_read(ibox)+padconst_4byte,padmask_4byte)
                 IF (ALLOCATED(frame_xyz)) THEN
                         IF (SIZE(frame_xyz,1)<natr_p) DEALLOCATE(frame_xyz)
                 END IF
@@ -171,9 +171,9 @@ MODULE Trajectory_Reader_Routines
                 LOGICAL :: overlap
 
                 INTEGER :: sloc, eloc, aib(2)
-                !REAL(DP), DIMENSION(IAND(MAXVAL(nmols_to_read(:,ibox))+3,NOT(3)),MAXVAL(natoms),3) :: &
+                !REAL(DP), DIMENSION(IAND(MAXVAL(nmols_to_read(:,ibox))+padconst_8byte,padmask_8byte),MAXVAL(natoms),3) :: &
                 !        frame_xyz_rs
-                !REAL(DP), DIMENSION(IAND(MAXVAL(nmols_to_read(:,ibox))+3,NOT(3)),4) :: &
+                !REAL(DP), DIMENSION(IAND(MAXVAL(nmols_to_read(:,ibox))+padconst_8byte,padmask_8byte),4) :: &
                 !        molwrapvec, rcom_arr
                 REAL(DP) :: h11,h12,h13,h21,h22,h23,h31,h32,h33
                 REAL(DP) :: inv_h11,inv_h12,inv_h13,inv_h21,inv_h22,inv_h23,inv_h31,inv_h32,inv_h33
@@ -227,7 +227,7 @@ MODULE Trajectory_Reader_Routines
                                 inv_h13 = box_list(ibox)%orig_length_inv(1,3)
                                 inv_h23 = box_list(ibox)%orig_length_inv(2,3)
                                 inv_h33 = box_list(ibox)%orig_length_inv(3,3)
-                                !DIR$ ASSUME (MOD(natr_p,4) .EQ. 0)
+                                !DIR$ ASSUME (MOD(natr_p,dimpad_8byte) .EQ. 0)
                                 !DIR$ VECTOR ALIGNED
                                 !$OMP DO SIMD SCHEDULE(SIMD:STATIC) PRIVATE(rxp,ryp,rzp,sxp,syp,szp)
                                 DO ia = 1, natr_p
@@ -261,7 +261,7 @@ MODULE Trajectory_Reader_Routines
                                 inv_h13 = box_list(ibox)%length_inv(1,3)
                                 inv_h23 = box_list(ibox)%length_inv(2,3)
                                 inv_h33 = box_list(ibox)%length_inv(3,3)
-                                !DIR$ ASSUME (MOD(natr_p,4) .EQ. 0)
+                                !DIR$ ASSUME (MOD(natr_p,dimpad_8byte) .EQ. 0)
                                 !DIR$ VECTOR ALIGNED
                                 !$OMP DO SIMD SCHEDULE(SIMD:STATIC) PRIVATE(rxp,ryp,rzp,sxp,syp,szp)
                                 DO ia = 1, natr_p
@@ -286,9 +286,9 @@ MODULE Trajectory_Reader_Routines
                 !$ ithread = OMP_GET_THREAD_NUM()
                 DO is = 1, nspecies
                         IF (nmols_to_read(is,ibox) < 1) CYCLE
-                        ntr = IAND(nmols_to_read(is,ibox)+3,NOT(3))
+                        ntr = IAND(nmols_to_read(is,ibox)+padconst_8byte,padmask_8byte)
                         chunksize = ntr
-                        !$ chunksize = IAND((ntr+nthreads-1)/nthreads+3,NOT(3))
+                        !$ chunksize = IAND((ntr+nthreads-1)/nthreads+padconst_8byte,padmask_8byte)
                         !chunkstart = 1
                         chunkshift = 0
                         chunkend = ntr
@@ -298,224 +298,6 @@ MODULE Trajectory_Reader_Routines
                         !$ chunksize = MAX(0,chunkend-chunkshift)
                         IF (chunksize .EQ. 0) CYCLE
                         CALL Set_Species_Frame_Coords(is,natoms(is),chunksize,chunkshift,l_ortho)
-                        !locate_base = SUM(nmols(is,1:nbr_boxes))
-                        !!$OMP SINGLE
-                        !DO imol = 1, nmols_to_read(is,ibox)
-                        !        locate(imol,is,ibox) = imol+locate_base
-                        !END DO
-                        !sloc = locate_base + 1
-                        !eloc = locate_base +nmols_to_read(is,ibox)
-                        !aib = atom_ibounds(:,is,ibox)
-                        !!$OMP END SINGLE
-                        !!$OMP WORKSHARE
-                        !frame_xyz_rs(1:nmols_to_read(is,ibox),1:natoms(is),1:3) = &
-                        !        RESHAPE(frame_xyz(aib(1):aib(2),:),&
-                        !        (/ nmols_to_read(is,ibox),natoms(is),3 /),ORDER=(/2,1,3/))
-                        !!$OMP END WORKSHARE
-                        !l_moved = .FALSE.
-                        !l_moved(1) = .TRUE.
-                        !!DIR$ ASSUME (MOD(chunkend,4) .EQ. 0)
-                        !!DIR$ ASSUME (MOD(chunkstart,4) .EQ. 1)
-                        !DO WHILE (.NOT. ALL(l_moved(1:natoms(is))))
-                        !!WRITE(*,*) l_moved(1:natoms(is))
-                        !DO ia = 1, natoms(is)
-                        !        IF (.NOT. l_moved(ia)) CYCLE
-                        !        DO ibond = 1 , bondpart_list(ia,is)%nbonds
-                        !                ja = bondpart_list(ia,is)%atom(ibond)
-                        !                IF (l_moved(ja)) CYCLE
-                        !                l_moved(ja) = .TRUE.
-                        !                DO i_dim = 1, 3
-                        !                        IF (l_ortho) THEN
-                        !                                boxlen = box_list(ibox)%length(i_dim,i_dim)
-                        !                        ELSE
-                        !                                boxlen = 1.0_DP
-                        !                        END IF
-                        !                        hl = 0.5_DP * boxlen
-                        !                        !DIR$ VECTOR ALIGNED
-                        !                        !$OMP SIMD PRIVATE(irp,jrp,drp,absdrp)
-                        !                        DO im = chunkstart, chunkend
-                        !                                irp = frame_xyz_rs(im,ia,i_dim)
-                        !                                jrp = frame_xyz_rs(im,ja,i_dim)
-                        !                                drp = jrp - irp
-                        !                                absdrp = ABS(drp)
-                        !                                IF (absdrp > hl) jrp = jrp - SIGN(boxlen,drp)
-                        !                                frame_xyz_rs(im,ja,i_dim) = jrp
-                        !                        END DO
-                        !                        !$OMP END SIMD
-                        !                END DO
-                        !        END DO
-                        !END DO
-                        !END DO
-                        !IF (.NOT. l_ortho) THEN
-                        !        DO ia = 1, natoms(is)
-                        !                !DIR$ VECTOR ALIGNED
-                        !                !$OMP SIMD PRIVATE(isp,rxp,ryp,rzp)
-                        !                DO im = chunkstart, chunkend
-                        !                        isp = frame_xyz_rs(im,ia,1)
-                        !                        rxp = h11*isp
-                        !                        isp = frame_xyz_rs(im,ia,2)
-                        !                        rxp = rxp + h12*isp
-                        !                        ryp = h22*isp
-                        !                        isp = frame_xyz_rs(im,ia,3)
-                        !                        rxp = rxp + h13*isp
-                        !                        ryp = ryp + h23*isp
-                        !                        rzp = h33*isp
-                        !                        frame_xyz_rs(im,ia,1) = rxp
-                        !                        frame_xyz_rs(im,ia,2) = ryp
-                        !                        frame_xyz_rs(im,ia,3) = rzp
-                        !                END DO
-                        !                !$OMP END SIMD
-                        !        END DO
-                        !END IF
-                        !inv_total_mass = 1.0_DP/SUM(nonbond_list(1:natoms(is),is)%mass)
-                        !massfrac_vec(1:natoms(is)) = nonbond_list(1:natoms(is),is)%mass*inv_total_mass
-                        !!DIR$ VECTOR ALIGNED
-                        !!$OMP SIMD &
-                        !!$OMP PRIVATE(rxp,ryp,rzp,xcom,ycom,zcom,dxcom,dycom,dzcom) &
-                        !!$OMP PRIVATE(max_dcomsq,dcomsq,massfrac)
-                        !DO im = chunkstart, chunkend
-                        !        massfrac = massfrac_vec(1)
-                        !        rxp = frame_xyz_rs(im,1,1)
-                        !        ryp = frame_xyz_rs(im,1,2)
-                        !        rzp = frame_xyz_rs(im,1,3)
-                        !        xcom = massfrac*rxp
-                        !        ycom = massfrac*ryp
-                        !        zcom = massfrac*rzp
-                        !        DO ia = 2, natoms(is)
-                        !                massfrac = massfrac_vec(ia)
-                        !                rxp = frame_xyz_rs(im,ia,1)
-                        !                ryp = frame_xyz_rs(im,ia,2)
-                        !                rzp = frame_xyz_rs(im,ia,3)
-                        !                xcom = xcom + massfrac*rxp
-                        !                ycom = ycom + massfrac*ryp
-                        !                zcom = zcom + massfrac*rzp
-                        !        END DO
-                        !        rcom_arr(im,1) = xcom
-                        !        rcom_arr(im,2) = ycom
-                        !        rcom_arr(im,3) = zcom
-                        !        rxp = frame_xyz_rs(im,1,1)
-                        !        ryp = frame_xyz_rs(im,1,2)
-                        !        rzp = frame_xyz_rs(im,1,3)
-                        !        dxcom = rxp - xcom
-                        !        dycom = ryp - ycom
-                        !        dzcom = rzp - zcom
-                        !        max_dcomsq = dxcom*dxcom + dycom*dycom + dzcom*dzcom
-                        !        DO ia = 2, natoms(is)
-                        !                rxp = frame_xyz_rs(im,ia,1)
-                        !                ryp = frame_xyz_rs(im,ia,2)
-                        !                rzp = frame_xyz_rs(im,ia,3)
-                        !                dxcom = rxp - xcom
-                        !                dycom = ryp - ycom
-                        !                dzcom = rzp - zcom
-                        !                dcomsq = dxcom*dxcom + dycom*dycom + dzcom*dzcom
-                        !                max_dcomsq = MAX(max_dcomsq,dcomsq)
-                        !        END DO
-                        !        rcom_arr(im,4) = SQRT(max_dcomsq)
-                        !END DO
-                        !!$OMP END SIMD
-                        !IF (l_ortho) THEN
-                        !        DO i_dim = 1, 3
-                        !                boxlen = box_list(ibox)%length(i_dim,i_dim)
-                        !                inv_l = 1.0_DP/boxlen
-                        !                !DIR$ VECTOR ALIGNED
-                        !                !$OMP SIMD PRIVATE(rcom,mwv,irp)
-                        !                DO im = chunkstart, chunkend
-                        !                        rcom = rcom_arr(im,i_dim)
-                        !                        mwv = boxlen*ANINT(rcom*inv_l)
-                        !                        !molwrapvec(im,i_dim) = mwv
-                        !                        rcom_arr(im,i_dim) = rcom - mwv
-                        !                        DO ia = 1, natoms(is)
-                        !                                irp = frame_xyz_rs(im,ia,i_dim)
-                        !                                irp = irp - mwv
-                        !                                frame_xyz_rs(im,ia,i_dim) = irp
-                        !                        END DO
-                        !                END DO
-                        !                !$OMP END SIMD
-                        !        END DO
-                        !ELSE
-                        !        !DIR$ VECTOR ALIGNED
-                        !        !$OMP SIMD PRIVATE(rxcom,rycom,rzcom)
-                        !        DO im = chunkstart, chunkend
-                        !                rxcom = rcom_arr(im,1)
-                        !                rycom = rcom_arr(im,2)
-                        !                rzcom = rcom_arr(im,3)
-                        !                molwrapvec(im,1) = rxcom*inv_h11 + rycom*inv_h12 + rzcom*inv_h13
-                        !                molwrapvec(im,2) =                 rycom*inv_h22 + rzcom*inv_h23
-                        !                molwrapvec(im,3) =                                 rzcom*inv_h33
-                        !        END DO
-                        !        !$OMP END SIMD
-                        !        !DIR$ VECTOR ALIGNED
-                        !        !$OMP SIMD PRIVATE(mwv)
-                        !        DO im = chunkstart, chunkend
-                        !                mwv = molwrapvec(im,1)
-                        !                molwrapvec(im,1) = ANINT(mwv)
-                        !                mwv = molwrapvec(im,2)
-                        !                molwrapvec(im,2) = ANINT(mwv)
-                        !                mwv = molwrapvec(im,3)
-                        !                molwrapvec(im,3) = ANINT(mwv)
-                        !        END DO
-                        !        !$OMP END SIMD
-                        !        !molwrapvec(1:nmols_to_read(is,ibox),:) = ANINT(molwrapvec(1:nmols_to_read(is,ibox),:))
-                        !        !DIR$ VECTOR ALIGNED
-                        !        !$OMP SIMD PRIVATE(sxmwv,symwv,szmwv)
-                        !        DO im = chunkstart, chunkend
-                        !                sxmwv = molwrapvec(im,1)
-                        !                symwv = molwrapvec(im,2)
-                        !                szmwv = molwrapvec(im,3)
-                        !                molwrapvec(im,1) = sxmwv*h11 + symwv*h12 + szmwv*h13
-                        !                molwrapvec(im,2) =             symwv*h22 + szmwv*h23
-                        !                molwrapvec(im,3) =                         szmwv*h33
-                        !        END DO
-                        !        !$OMP END SIMD
-                        !        DO i_dim = 1, 3
-                        !                !DIR$ VECTOR ALIGNED
-                        !                !$OMP SIMD PRIVATE(rcom,mwv,irp)
-                        !                DO im = chunkstart, chunkend
-                        !                        rcom = rcom_arr(im,i_dim)
-                        !                        mwv = molwrapvec(im,i_dim)
-                        !                        rcom = rcom - mwv
-                        !                        rcom_arr(im,i_dim) = rcom
-                        !                        DO ia = 1, natoms(is)
-                        !                                irp = frame_xyz_rs(im,ia,i_dim)
-                        !                                irp = irp - mwv
-                        !                                frame_xyz_rs(im,ia,i_dim) = irp
-                        !                        END DO
-                        !                END DO
-                        !                !$OMP END SIMD
-                        !        END DO
-                        !END IF
-                        !!DO ia = 1, natoms(is)
-                        !!        DO i_dim = 1, 3
-                        !!                !DIR$ VECTOR ALIGNED
-                        !!                DO im = chunkstart, chunkend
-                        !!                        mwv = molwrapvec(im,i_dim)
-                        !!                        irp = frame_xyz_rs(im,ia,i_dim)
-                        !!                        irp = irp - mwv
-                        !!                        frame_xyz_rs(im,ia,i_dim) = irp
-                        !!                END DO
-                        !!        END DO
-                        !!END DO
-                        !!$OMP BARRIER
-                        !!$OMP DO SCHEDULE(STATIC)
-                        !DO im = sloc, eloc
-                        !        molecule_list(im,is)%live = .TRUE.
-                        !        molecule_list(im,is)%frac = this_lambda
-                        !        molecule_list(im,is)%which_box = ibox
-                        !        molecule_list(im,is)%rcom = rcom_arr(im-locate_base,:)
-                        !        !atom_list(1:natoms(is),im,is)%exist = .TRUE.
-                        !END DO
-                        !!$OMP END DO NOWAIT
-                        !!$OMP DO SCHEDULE(STATIC) COLLAPSE(2)
-                        !DO ia = 1, natoms(is)
-                        !DO im = sloc, eloc
-                        !        atom_list(ia,im,is)%exist = .TRUE.
-                        !        atom_list(ia,im,is)%rp(1:3) = frame_xyz_rs(im-locate_base,ia,1:3)
-                        !END DO
-                        !END DO
-                        !!$OMP END DO NOWAIT
-                        !!$OMP SINGLE
-                        !nmols(is,ibox) = nmols(is,ibox) + nmols_to_read(is,ibox)
-                        !!$OMP END SINGLE
 
                 END DO
                 IF (ithread+1 .EQ. nthreads) THEN
@@ -529,18 +311,6 @@ MODULE Trajectory_Reader_Routines
                 !$OMP BARRIER
                 !$OMP END PARALLEL
                 nmols(:,ibox) = nmols(:,ibox) + nmols_to_read(:,ibox)
-                !WRITE(*,*) sloc, eloc, is, ibox, this_lambda
-                !WRITE(*,*) ALL(molecule_list(sloc:eloc,is)%live), COUNT(molecule_list(sloc:eloc,is)%live), &
-                !        SUM(molecule_list(sloc:eloc,is)%which_box)
-
-                !WRITE(*,*) natoms
-                !WRITE(*,*) natoms_to_read
-                !WRITE(*,*) nmols_to_read
-                !WRITE(*,*) nmols
-                !WRITE(*,*) nspecies
-                !WRITE(*,*) nbr_boxes
-
-                !CALL Get_Internal_Coords
 
                 IF (int_vdw_sum_style(ibox) == vdw_cut_tail) THEN 
                         CALL Compute_Beads(ibox)
@@ -590,7 +360,7 @@ MODULE Trajectory_Reader_Routines
                 END IF
                 l_moved = .FALSE.
                 l_moved(1) = .TRUE.
-                !DIR$ ASSUME (MOD(chunksize,4) .EQ. 0)
+                !DIR$ ASSUME (MOD(chunksize,dimpad_8byte) .EQ. 0)
                 DO WHILE (.NOT. ALL(l_moved))
                         DO ia = 1, na
                                 IF (.NOT. l_moved(ia)) CYCLE

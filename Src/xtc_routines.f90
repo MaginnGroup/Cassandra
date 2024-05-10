@@ -112,8 +112,8 @@ CONTAINS
           !$OMP PRIVATE(chunkstart, chunkend, chunksize, ithread, nthreads)
           !$ nthreads = OMP_GET_NUM_THREADS()
           chunkstart = 1
-          chunkend = IAND(natoms_to_read(ibox)+7,NOT(7))
-          !$ chunksize = IAND((chunkend+nthreads-1)/nthreads+7,NOT(7))
+          chunkend = IAND(natoms_to_read(ibox)+padconst_4byte,padmask_4byte)
+          !$ chunksize = IAND((chunkend+nthreads-1)/nthreads+padconst_4byte,padmask_4byte)
           !$ ithread = OMP_GET_THREAD_NUM()
           !$ chunkstart = ithread*chunksize+1
           !$ chunkend = MIN((ithread+1)*chunksize,chunkend)
@@ -139,8 +139,8 @@ CONTAINS
                           DO i = chunkstart, MIN(chunkend,natoms_to_read(ibox))
                                 xtc_coords_sp(i,:) = trj(ibox)%x(j,i)
                           END DO
-                          !DIR$ ASSUME (MOD(chunkstart,8) .EQ. 1)
-                          !DIR$ ASSUME (MOD(chunkend,8) .EQ. 0)
+                          !DIR$ ASSUME (MOD(chunkstart,dimpad_4byte) .EQ. 1)
+                          !DIR$ ASSUME (MOD(chunkend,dimpad_4byte) .EQ. 0)
                           DO i_dim = 1, 3
                                   !DIR$ VECTOR ALIGNED
                                   DO i = chunkstart, chunkend

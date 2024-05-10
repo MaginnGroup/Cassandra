@@ -60,6 +60,8 @@ FC = gfortran
 LIBS = 
 INCS = 
 F90FLAGS = -c -ffree-line-length-none -fcheck=all
+# specifying -mavx2 is redundant with -march but Cassandra looks for it to recognize vector length
+OPTFLAGS = -O3 -ffast-math -mavx2 -mfma -march=haswell
 LINKFLAGS = 
 
 ####################################################################

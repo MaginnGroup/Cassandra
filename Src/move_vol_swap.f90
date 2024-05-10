@@ -344,7 +344,7 @@ SUBROUTINE GEMC_NVT_Volume
      
      CALL Ewald_Reciprocal_Lattice_Vector_Setup(box_grw)
      CALL Ewald_Reciprocal_Lattice_Vector_Setup(box_shk)
-     nvecs_max_new_p4 = IAND(MAXVAL(nvecs)+3,NOT(3))
+     nvecs_max_new_p4 = IAND(MAXVAL(nvecs)+padconst_8byte,padmask_8byte)
      ALLOCATE(sin_mol(nvecs_max_new_p4,0:SUM(max_molecules)))
      ALLOCATE(cos_mol(nvecs_max_new_p4,0:SUM(max_molecules)))
 

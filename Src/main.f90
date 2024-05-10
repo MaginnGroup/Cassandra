@@ -391,8 +391,8 @@ PROGRAM Main
      !ALLOCATE(cos_sum_old(MAXVAL(nvecs),nbr_boxes))
      !ALLOCATE(sin_sum_old(MAXVAL(nvecs),nbr_boxes))
      IF (int_sim_type .NE. sim_pregen) THEN
-             ALLOCATE(cos_mol(IAND(MAXVAL(nvecs)+3,NOT(3)), 0:SUM(max_molecules)))
-             ALLOCATE(sin_mol(IAND(MAXVAL(nvecs)+3,NOT(3)), 0:SUM(max_molecules)))
+             ALLOCATE(cos_mol(IAND(MAXVAL(nvecs)+padconst_8byte,padmask_8byte), 0:SUM(max_molecules)))
+             ALLOCATE(sin_mol(IAND(MAXVAL(nvecs)+padconst_8byte,padmask_8byte), 0:SUM(max_molecules)))
              ! initialize these arrays
              cos_mol(:,:) = 0.0_DP
              sin_mol(:,:) = 0.0_DP

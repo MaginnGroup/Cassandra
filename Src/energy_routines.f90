@@ -1045,8 +1045,8 @@ CONTAINS
     IF (l_vectorized) THEN
             atompairdim = natoms(is)*MAXVAL(natoms)
             mol_dim = MAXVAL(nmols(:,this_box))
-            IF (MOD(atompairdim,8) .NE. 0) atompairdim = 8*(atompairdim/8+1)
-            IF (MOD(mol_dim,8) .NE. 0) mol_dim = 8*(mol_dim/8+1)
+            atompairdim = IAND(atompairdim+padconst_4byte,padmask_4byte)
+            mol_dim = IAND(mol_dim+padconst_4byte,padmask_4byte)
             CALL Compute_Molecule_Nonbond_Inter_Energy_Vectorized(im,is, &
                     E_inter_vdw, E_inter_qq, overlap)
             RETURN
@@ -1234,9 +1234,8 @@ CONTAINS
                 maxboxnatoms = MAX(maxboxnatoms,DOT_PRODUCT(nmols(:,ibox),natoms))
           END DO
           na = MAXVAL(navec)
-          maxnmols = (MAXVAL(nmols(:,1:))/8+1)*8
-          !maxboxnatoms = (maxboxnatoms/8+1)*8
-          maxboxnatoms = IAND(maxboxnatoms+7,NOT(7))
+          maxnmols = IAND(MAXVAL(nmols(:,1:))+padconst_4byte,padmask_4byte)
+          maxboxnatoms = IAND(maxboxnatoms+padconst_4byte,padmask_4byte)
           IF (ALLOCATED(zero_field)) THEN
                   IF (SIZE(zero_field) .LE. na) RETURN
                   DEALLOCATE(zero_field)
@@ -1347,7 +1346,7 @@ CONTAINS
                   ALLOCATE(j_atom_list(MAXVAL(natoms),maxnlive))
                   ALLOCATE(j_molecule_list(maxnlive))
           END IF
-          maxnlive = (maxnlive/8 + 1) * 8
+          maxnlive = IAND(maxnlive+padconst_4byte,padmask_4byte)
           ALLOCATE(live_xcom(maxnlive,nspecies_present,nbr_boxes))
           ALLOCATE(live_ycom(maxnlive,nspecies_present,nbr_boxes))
           ALLOCATE(live_zcom(maxnlive,nspecies_present,nbr_boxes))
@@ -1525,13 +1524,11 @@ CONTAINS
     REAL(DP) :: h11,h21,h31,h12,h22,h32,h13,h23,h33
     REAL(DP) :: invcutx2_cbmc, invcutsq_cbmc, inv_rij
     INTEGER :: this_int_charge_sum_style
-    !!!dir$ attributes align:32 :: interact_vec, vdw_mask, coul_mask, j_hascharge, j_hasvdw, j_exist, jatomtype, packed_types, &
-    !!dir$ attributes align:32 :: jxp, jyp, jzp, jrsp, ij_vdw_p_table
-    !dir$ assume_aligned jxp:32, jyp:32, jzp:32, jrsp:32, ij_vdw_p_table:32, ij_vdw_p_table_T:32
-    !DIR$ ASSUME_ALIGNED rijsq:32, rijsq_packed:32, jcharge:32, jcharge_coul:32
-    !DIR$ ASSUME_ALIGNED vdw_mask:32, coul_mask:32, j_hascharge:32, j_hasvdw:32, j_exist:32
-    !DIR$ ASSUME_ALIGNED jatomtype:32, packed_types:32, up_nrg_vec:32
-    !dir$ assume (MOD(maxboxnatoms,8) .EQ. 0)
+    !dir$ assume_aligned jxp:array_align_bytes, jyp:array_align_bytes, jzp:array_align_bytes, jrsp:array_align_bytes, ij_vdw_p_table:array_align_bytes, ij_vdw_p_table_T:array_align_bytes
+    !DIR$ ASSUME_ALIGNED rijsq:array_align_bytes, rijsq_packed:array_align_bytes, jcharge:array_align_bytes, jcharge_coul:array_align_bytes
+    !DIR$ ASSUME_ALIGNED vdw_mask:array_align_bytes, coul_mask:array_align_bytes, j_hascharge:array_align_bytes, j_hasvdw:array_align_bytes, j_exist:array_align_bytes
+    !DIR$ ASSUME_ALIGNED jatomtype:array_align_bytes, packed_types:array_align_bytes, up_nrg_vec:array_align_bytes
+    !dir$ assume (MOD(maxboxnatoms,dimpad_4byte) .EQ. 0)
 
     vdw_energy = 0.0_DP
     qq_energy = 0.0_DP
@@ -2022,7 +2019,7 @@ CONTAINS
   END SUBROUTINE Compute_Molecule_Nonbond_Inter_Energy_Vectorized_Widom
 
   ELEMENTAL FUNCTION Recip_Sqrt(x) RESULT(rsqrt)
-          !DIR$ ATTRIBUTES FORCEINLINE, VECTOR :: Recip_Sqrt
+          !DIR$ ATTRIBUTES FORCEINLINE :: Recip_Sqrt
           ! Double precision fast inverse square root algorithm
           ! Not beneficial for single precision these days because reciprocal square root is usually
           !     implemented as a hardware intrinsic in single precision for modern CPUs.
@@ -2123,12 +2120,12 @@ CONTAINS
     LOGICAL :: l_read_svec, switchflag
     INTEGER(1) :: ji_start_byte, ji_byte
 
-    !DIR$ ASSUME_ALIGNED jrxp:32, jryp:32, jrzp:32, irxp:32, iryp:32, irzp:32, cfqq_vec:32, rijsq_vec:32, rij_vec:32
-    !DIR$ ASSUME_ALIGNED vdw_p:32, jrp_perm:32, vdw_p_packed:32, vdw_p_nonzero:32, interact_vec:32, all_interact_vec:32
-    !DIR$ ASSUME_ALIGNED rijsq_packed:32
-    !DIR$ ASSUME_ALIGNED vdw_p1:32, vdw_p2:32, vdw_p3:32, vdw_p4:32, vdw_p5:32
-    !DIR$ ASSUME (MOD(atompairdim,8) .EQ. 0)
-    !DIR$ ASSUME (MOD(mol_dim,8) .EQ. 0)
+    !DIR$ ASSUME_ALIGNED jrxp:array_align_bytes, jryp:array_align_bytes, jrzp:array_align_bytes, irxp:array_align_bytes, iryp:array_align_bytes, irzp:array_align_bytes, cfqq_vec:array_align_bytes, rijsq_vec:array_align_bytes, rij_vec:array_align_bytes
+    !DIR$ ASSUME_ALIGNED vdw_p:array_align_bytes, jrp_perm:array_align_bytes, vdw_p_packed:array_align_bytes, vdw_p_nonzero:array_align_bytes, interact_vec:array_align_bytes, all_interact_vec:array_align_bytes
+    !DIR$ ASSUME_ALIGNED rijsq_packed:array_align_bytes
+    !DIR$ ASSUME_ALIGNED vdw_p1:array_align_bytes, vdw_p2:array_align_bytes, vdw_p3:array_align_bytes, vdw_p4:array_align_bytes, vdw_p5:array_align_bytes
+    !DIR$ ASSUME (MOD(atompairdim,dimpad_4byte) .EQ. 0)
+    !DIR$ ASSUME (MOD(mol_dim,dimpad_4byte) .EQ. 0)
 
     i_vdw_energy = 0.0_DP
     i_qq_energy = 0.0_DP
@@ -2191,8 +2188,8 @@ CONTAINS
 
     !$ nthreads_used = OMP_GET_NUM_THREADS()
 
-    !DIR$ ASSUME (MOD(atompairdim,8) .EQ. 0)
-    !DIR$ ASSUME (MOD(mol_dim,8) .EQ. 0)
+    !DIR$ ASSUME (MOD(atompairdim,dimpad_4byte) .EQ. 0)
+    !DIR$ ASSUME (MOD(mol_dim,dimpad_4byte) .EQ. 0)
 
     !$OMP SECTIONS
     !$OMP SECTION
@@ -2766,8 +2763,8 @@ CONTAINS
                     !$OMP REDUCTION(+:mol_vdw_energy,mol_qq_energy)
                     DO ja = 1, jnatoms
                         DO ia = 1, n_i_exist
-                                !DIR$ ASSUME (MOD(atompairdim,8) .EQ. 0)
-                                !DIR$ ASSUME (MOD(mol_dim,8) .EQ. 0)
+                                !DIR$ ASSUME (MOD(atompairdim,dimpad_4byte) .EQ. 0)
+                                !DIR$ ASSUME (MOD(mol_dim,dimpad_4byte) .EQ. 0)
                                 IF (overlap .OR. i_overlap) CYCLE
                                 ia0 = which_i_exist(ia)
                                 itype = nonbond_list(ia0,is)%atom_type_number
@@ -3366,10 +3363,10 @@ CONTAINS
                     IF (l_debug_print) WRITE(*,*) "n_interact = ", n_interact
                     !$OMP DO SCHEDULE(DYNAMIC)
                     DO j_interact = 1, n_interact !n_all_interact
-                        !DIR$ ASSUME (MOD(atompairdim,8) .EQ. 0)
-                        !DIR$ ASSUME (MOD(mol_dim,8) .EQ. 0)
-                        !DIR$ ASSUME (MOD(SIZE(vdw_p,1),8) .EQ. 0)
-                        !DIR$ ASSUME (MOD(SIZE(jrp_perm,1),8) .EQ. 0)
+                        !DIR$ ASSUME (MOD(atompairdim,dimpad_4byte) .EQ. 0)
+                        !DIR$ ASSUME (MOD(mol_dim,dimpad_4byte) .EQ. 0)
+                        !DIR$ ASSUME (MOD(SIZE(vdw_p,1),dimpad_4byte) .EQ. 0)
+                        !DIR$ ASSUME (MOD(SIZE(jrp_perm,1),dimpad_4byte) .EQ. 0)
                         IF (overlap .OR. i_overlap) CYCLE
                         ij_overlap = .FALSE.
                         vdw_energy = 0.0_DP
@@ -4013,7 +4010,7 @@ CONTAINS
           LOGICAL :: i_get_coul
 
           vlen = cbmc_cell_n_interact(xi,yi,zi,this_box)
-          !DIR$ ASSUME (MOD(vlen,8) .EQ. 0)
+          !DIR$ ASSUME (MOD(vlen,dimpad_4byte) .EQ. 0)
           nrg = 0.0
 
           IF (precalc_atompair_nrg) THEN
@@ -4037,7 +4034,7 @@ CONTAINS
                   RETURN
           END IF
           rcutsq = REAL(rcut_cbmcsq(this_box),SP)
-          !DIR$ ASSUME_ALIGNED rsq_vec:32
+          !DIR$ ASSUME_ALIGNED rsq_vec:array_align_bytes
           !DIR$ VECTOR ALIGNED
           DO i = 1, vlen
                 drp = cbmc_cell_rsp(i,1,xi,yi,zi,this_box) - irxp
@@ -5171,7 +5168,7 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
     END DO
     !$OMP SECTION
     nvecs(this_box) = kvecs
-    kvecs_p4 = IAND(kvecs+3,NOT(3))
+    kvecs_p4 = IAND(kvecs+padconst_8byte,padmask_8byte)
     IF (ALLOCATED(box_list(this_box)%kspace_vectors)) THEN
             IF (UBOUND(box_list(this_box)%kspace_vectors,1) < kvecs) DEALLOCATE(box_list(this_box)%kspace_vectors)
     END IF
@@ -5185,7 +5182,7 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
             ALLOCATE(box_list(this_box)%sincos_sum(kvecs_p4,2))
     END IF
     !$ nthreads = OMP_GET_NUM_THREADS()
-    !$ chunksize = IAND((kvecs+nthreads-1)/nthreads+7,NOT(7))
+    !$ chunksize = IAND((kvecs+nthreads-1)/nthreads+padconst_4byte,padmask_4byte)
     !$OMP END SECTIONS
     chunkstart = 1
     chunkend = kvecs
@@ -5328,7 +5325,7 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
     E_reciprocal = 0.0_DP
 
     kvecs = nvecs(ibox)
-    kvecs_p4 = IAND(kvecs+3,NOT(3))
+    kvecs_p4 = IAND(kvecs+padconst_8byte,padmask_8byte)
 
     IF (ALLOCATED(box_list(ibox)%sincos_sum_old)) THEN
             IF (UBOUND(box_list(ibox)%sincos_sum_old,1) .NE. &
@@ -6764,13 +6761,13 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     INTEGER, DIMENSION(MAXVAL(nmols(:,this_box))) :: live_locates
     REAL(DP), PARAMETER :: inv_charge_factor = 1.0_DP/charge_factor
     REAL(DP) :: diag_initializer
-    REAL(DP), DIMENSION(IAND(SUM(nmols(:,this_box)*natoms)+3,NOT(3)),3) :: qpii, rp
-    REAL(DP), DIMENSION(IAND(SUM(nmols(:,this_box)*natoms)+3,NOT(3))) :: charges
+    REAL(DP), DIMENSION(IAND(SUM(nmols(:,this_box)*natoms)+padconst_8byte,padmask_8byte),3) :: qpii, rp
+    REAL(DP), DIMENSION(IAND(SUM(nmols(:,this_box)*natoms)+padconst_8byte,padmask_8byte)) :: charges
     REAL(DP), DIMENSION(3,3) :: H_inv
     REAL(DP), DIMENSION(MAXVAL(natoms)) :: species_charges
     INTEGER, DIMENSION(MAXVAL(natoms)) :: which_charged_atoms
     REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE :: sincos
-    REAL(DP), DIMENSION(IAND(nvecs(this_box)+3,NOT(3)),3,2) :: qpii_sincos_sum
+    REAL(DP), DIMENSION(IAND(nvecs(this_box)+padconst_8byte,padmask_8byte),3,2) :: qpii_sincos_sum
     REAL(DP) :: qpiix, qpiiy, qpiiz
     REAL(DP) :: qpiix_sin_sum, qpiix_cos_sum, qpiiy_sin_sum, qpiiy_cos_sum, qpiiz_sin_sum, qpiiz_cos_sum
     INTEGER :: kxyz_max(3), kxyz_maxmax, kxyz, kx, ky, kz, this_kxyz_max, hxp, hyp, hzp
@@ -6864,12 +6861,12 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     END DO
     !$OMP SINGLE
     n_charged_live = iend
-    n_charged_live_p4 = IAND(n_charged_live+3,NOT(3))
+    n_charged_live_p4 = IAND(n_charged_live+padconst_8byte,padmask_8byte)
     ALLOCATE(sincos(n_charged_live_p4,2,-kxyz_maxmax:kxyz_maxmax,3))
     !$OMP END SINGLE
     chunkstart = 1
     chunkend = n_charged_live
-    !$ chunksize = IAND((n_charged_live+nthreads-1)/nthreads+3,NOT(3))
+    !$ chunksize = IAND((n_charged_live+nthreads-1)/nthreads+padconst_8byte,padmask_8byte)
     !$ chunkstart = ithread*chunksize+1
     !$ chunkend = MIN((ithread+1)*chunksize,n_charged_live)
     IF (l_ortho) THEN
@@ -7012,7 +7009,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
         qpiiy_sin_sum = 0.0_DP
         qpiiz_cos_sum = 0.0_DP
         qpiiz_sin_sum = 0.0_DP
-        !DIR$ ASSUME (MOD(n_charged_live_p4,4) .EQ. 0)
+        !DIR$ ASSUME (MOD(n_charged_live_p4,dimpad_8byte) .EQ. 0)
         !DIR$ VECTOR ALIGNED
         !$OMP SIMD PRIVATE(sin1,cos1,sin2,cos2,sin3,cos3,sin12,cos12,qpiix,qpiiy,qpiiz) &
         !$OMP REDUCTION(+:qpiix_sin_sum,qpiix_cos_sum,qpiiy_sin_sum,qpiiy_cos_sum,qpiiz_sin_sum,qpiiz_cos_sum)
@@ -7048,7 +7045,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     !$OMP END DO
     chunkstart = 1
     chunkend = nvecs(this_box)
-    !$ chunksize = IAND((nvecs(this_box)+nthreads-1)/nthreads+3,NOT(3))
+    !$ chunksize = IAND((nvecs(this_box)+nthreads-1)/nthreads+padconst_8byte,padmask_8byte)
     !$ chunkstart = ithread*chunksize+1
     !$ chunkend = MIN((ithread+1)*chunksize,nvecs(this_box))
     !DIR$ VECTOR ALIGNED
@@ -7203,7 +7200,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
     INTEGER :: nlive_count, n_charged_atoms, n_charged_live, n_charged_live_p4
     INTEGER, DIMENSION(MAXVAL(nmols(:,this_box))) :: live_locates
-    REAL(DP), DIMENSION(IAND(SUM(nmols(:,this_box)*natoms)+3,NOT(3)),4) :: rpq
+    REAL(DP), DIMENSION(IAND(SUM(nmols(:,this_box)*natoms)+padconst_8byte,padmask_8byte),4) :: rpq
     REAL(DP), DIMENSION(3,3) :: H_inv
     REAL(DP), DIMENSION(MAXVAL(natoms)) :: species_charges
     INTEGER, DIMENSION(MAXVAL(natoms)) :: which_charged_atoms
@@ -7275,7 +7272,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     END DO
     !$OMP SINGLE
     n_charged_live = iend
-    n_charged_live_p4 = IAND(n_charged_live+3,NOT(3))
+    n_charged_live_p4 = IAND(n_charged_live+padconst_8byte,padmask_8byte)
     ALLOCATE(sincos(n_charged_live_p4,2,-kxyz_maxmax:kxyz_maxmax,3))
     !IF (i_mcstep == 1) THEN
     !        WRITE(*,*)
@@ -7304,7 +7301,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     !$OMP END SINGLE
     chunkstart = 1
     chunkend = n_charged_live
-    !$ chunksize = IAND((n_charged_live+nthreads-1)/nthreads+3,NOT(3))
+    !$ chunksize = IAND((n_charged_live+nthreads-1)/nthreads+padconst_8byte,padmask_8byte)
     !$ chunkstart = ithread*chunksize+1
     !$ chunkend = MIN((ithread+1)*chunksize,n_charged_live)
     IF (l_ortho) THEN
@@ -7409,7 +7406,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
         CALL Extract_Kvector_Ints(kxyz,kx,ky,kz)
         sin_sum_i = 0.0_DP
         cos_sum_i = 0.0_DP
-        !DIR$ ASSUME (MOD(n_charged_live_p4,4) .EQ. 0)
+        !DIR$ ASSUME (MOD(n_charged_live_p4,dimpad_8byte) .EQ. 0)
         !DIR$ VECTOR ALIGNED
         !$OMP SIMD PRIVATE(sin1,cos1,sin2,cos2,sin3,cos3,sin12,cos12,charge) &
         !$OMP REDUCTION(+:sin_sum_i,cos_sum_i)
@@ -7790,7 +7787,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
     REAL(DP), DIMENSION(3,3) :: H_inv
     INTEGER :: im_locate_shift, im_locate_shift_vec(nspecies)
     INTEGER :: nlive_count, nlive_count_p4, n_charged_atoms, n_charged_atoms_p4
-    REAL(DP), DIMENSION(IAND(MAXVAL(natoms)+3,NOT(3))) :: charges
+    REAL(DP), DIMENSION(IAND(MAXVAL(natoms)+padconst_8byte,padmask_8byte)) :: charges
     INTEGER, DIMENSION(MAXVAL(natoms)) :: which_charged_atoms
     INTEGER, DIMENSION(MAXVAL(nmols(:,this_box))) :: live_locates
     LOGICAL :: molvectorized, l_ortho
@@ -7841,7 +7838,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
                 nlive_count = nlive_count + 1
                 live_locates(nlive_count) = this_locate
        END DO
-       nlive_count_p4 = IAND(nlive_count+3,NOT(3))
+       nlive_count_p4 = IAND(nlive_count+padconst_8byte,padmask_8byte)
        n_charged_atoms = 0
        charges = 0.0_DP
        DO ia = 1, natoms(is)
@@ -7851,7 +7848,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
                 which_charged_atoms(n_charged_atoms) = ia
                 charges(n_charged_atoms) = charge
        END DO
-       n_charged_atoms_p4 = IAND(n_charged_atoms+3,NOT(3))
+       n_charged_atoms_p4 = IAND(n_charged_atoms+padconst_8byte,padmask_8byte)
        molvectorized = nlive_count > n_charged_atoms ! vectorize over molecules instead of atoms
        IF (ALLOCATED(rp)) DEALLOCATE(rp)
        IF (ALLOCATED(sincos)) DEALLOCATE(sincos)
@@ -8002,7 +7999,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
                         DO im = 1, nlive_count
                                 this_cos_mol = 0.0_DP
                                 this_sin_mol = 0.0_DP
-                                !DIR$ ASSUME (MOD(n_charged_atoms_p4,4) .EQ. 0)
+                                !DIR$ ASSUME (MOD(n_charged_atoms_p4,dimpad_8byte) .EQ. 0)
                                 !DIR$ VECTOR ALIGNED
                                 !$OMP SIMD &
                                 !$OMP PRIVATE(sin1,cos1,sin2,cos2,sin3,cos3,sin12,cos12,charge) &
@@ -8103,7 +8100,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
                     INTEGER, INTENT(IN) :: imax, j, i_dim
                     INTEGER :: ni, i
                     REAL(DP) :: ki,sin1,cos1,nsin1,nsin2,ncos1,ncos2
-                    !DIR$ ASSUME (MOD(imax,4) .EQ. 0)
+                    !DIR$ ASSUME (MOD(imax,dimpad_8byte) .EQ. 0)
                     !DIR$ VECTOR ALIGNED
                     !$OMP SIMD PRIVATE(ki,sin1,cos1,nsin1,nsin2,ncos1,ncos2)
                     DO i = 1, imax
@@ -8136,7 +8133,7 @@ END SUBROUTINE Compute_Molecule_Self_Energy
                     INTEGER :: ni, i
                     REAL(DP) :: ki,sin1,cos1,nsin1,nsin2,ncos1,ncos2
                     REAL(DP) :: rxp,ryp,rzp
-                    !DIR$ ASSUME (MOD(imax,4) .EQ. 0)
+                    !DIR$ ASSUME (MOD(imax,dimpad_8byte) .EQ. 0)
                     !DIR$ VECTOR ALIGNED
                     !$OMP SIMD PRIVATE(rxp,ryp,rzp,ki,sin1,cos1,nsin1,nsin2,ncos1,ncos2)
                     DO i = 1, imax

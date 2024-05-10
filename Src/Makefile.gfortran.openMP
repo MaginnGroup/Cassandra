@@ -69,7 +69,9 @@ libgmxfortpath = ${locallib}/libgmxfort.so
 LIBS = -I${localdir}/include -L${locallib} -lgmxfort # `pkg-config --cflags --libs libgmxfort`
 INCS = -I${localdir}/include -L${locallib} -lgmxfort # `pkg-config --cflags --libs libgmxfort`
 #
-F90FLAGS = -c -ffree-line-length-none -fno-range-check -fopenmp -O3
+F90FLAGS = -c -ffree-line-length-none -fno-range-check -fopenmp
+# specifying -mavx2 is redundant with -march but Cassandra looks for it to recognize vector length
+OPTFLAGS = -O3 -ffast-math -mavx2 -mfma -march=haswell
 LINKFLAGS = -fopenmp -Wl,-rpath,${locallib}
 
 

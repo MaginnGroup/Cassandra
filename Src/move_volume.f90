@@ -355,7 +355,7 @@ SUBROUTINE Volume_Change
 
      ! Determine the new k vectors for this box.
      CALL Ewald_Reciprocal_Lattice_Vector_Setup(this_box)
-     nvecs_max_new_p4 = IAND(MAXVAL(nvecs)+3,NOT(3))
+     nvecs_max_new_p4 = IAND(MAXVAL(nvecs)+padconst_8byte,padmask_8byte)
      ALLOCATE(cos_mol(nvecs_max_new_p4,0:SUM(max_molecules)))
      ALLOCATE(sin_mol(nvecs_max_new_p4,0:SUM(max_molecules)))
 
