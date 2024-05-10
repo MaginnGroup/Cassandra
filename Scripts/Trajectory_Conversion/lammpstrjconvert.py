@@ -57,7 +57,6 @@ def lammpstrjconvert(
 
     ltpath = Path(lammpstrjpath)
     full_fstr = "X " + fstr + " " + fstr + " " + fstr
-    colnames = ("id", "xu", "yu", "zu")
 
     if Hpath is None:
         Hpath = Path(ltpath.stem + ".H")
@@ -141,6 +140,10 @@ def lammpstrjconvert(
                 colname: i
                 for i, colname in enumerate(ltfile.readline().strip().split())
             }  # gives indices of columns
+            if ("xu" in coldict) and ("yu" in coldict) and ("zu" in coldict):
+                colnames = ("id", "xu", "yu", "zu")
+            else:
+                colnames = ("id", "x", "y", "z")
             xyz_buffer = io.StringIO()
             for i in range(n_atoms):
                 xyz_buffer.write(ltfile.readline())

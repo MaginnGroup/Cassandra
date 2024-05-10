@@ -40,6 +40,7 @@ SUBROUTINE Widom_Subdriver
 
   USE Global_Variables
   USE Sector_Routines
+  USE Energy_Routines , ONLY: Field_Allocation, Livelist_Packing
   !$ USE OMP_LIB
 
   !*****************************************************************************
@@ -56,8 +57,9 @@ SUBROUTINE Widom_Subdriver
   REAL(DP) :: widom_sum, widom_avg!widom_timing, setup_time_s, setup_time_e, setup_time
   REAL(DP) :: t_wc_s, t_wc_e, t_cpu
 !widom_timing  REAL(DP) :: r_cell_list_time, r_normal_overlap_time, r_non_overlap_time, r_nrg_overlap_time
-  LOGICAL :: need_init, omp_flag
-  need_init = l_sectors
+  LOGICAL :: need_init, omp_flag, l_unitstride
+  l_unitstride = .NOT. open_mc_flag
+  need_init = .TRUE.
   omp_flag = .FALSE.
   !$ omp_flag = .TRUE.
   ! Loop over all species
@@ -72,8 +74,12 @@ SUBROUTINE Widom_Subdriver
                 IF (need_init) THEN
 !widom_timing                        IF (.NOT. omp_flag) CALL cpu_time(setup_time_s)
 !widom_timing                        !$ setup_time_s = omp_get_wtime()
-                        CALL Sector_Setup
-                        IF (cbmc_cell_list_flag) CALL CBMC_Cell_List_Setup
+                        IF (l_vectorized .OR. l_sectors) THEN
+                                CALL Field_Allocation
+                                CALL Livelist_Packing(.TRUE.,l_unitstride)
+                        END IF
+                        IF (l_sectors) CALL Sector_Setup
+                        !IF (cbmc_cell_list_flag) CALL CBMC_Cell_List_Setup
                         IF (full_cell_list_flag) CALL Full_Cell_List_Setup
 !widom_timing                        IF (.NOT. omp_flag) CALL cpu_time(setup_time_e)
 !widom_timing                        !$ setup_time_e = omp_get_wtime()

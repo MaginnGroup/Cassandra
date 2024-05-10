@@ -1185,7 +1185,6 @@ CONTAINS
        !        dihedral_list(this_dihedral,is)%dihedral_param(7)/kjmol_to_atomic, &
        !        dihedral_list(this_dihedral,is)%dihedral_param(8), &
        !        dihedral_list(this_dihedral,is)%dihedral_param(9) * (180_DP/PI)
-               
        CASE(int_harmonic)
           
           WRITE(201,'(I5,2X, 4(I4,2X), A8,2X, 2(F8.3,2X))') i, &
@@ -1211,9 +1210,6 @@ CONTAINS
                dihedral_list(this_dihedral,is)%rb_c(4)/kjmol_to_atomic, &
                dihedral_list(this_dihedral,is)%rb_c(5)/kjmol_to_atomic
        END SELECT
-
-          
-       !END IF
 
     END DO
 

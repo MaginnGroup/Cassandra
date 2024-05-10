@@ -306,6 +306,7 @@ SUBROUTINE Get_Sim_Type
 
         line_nbr = line_nbr + 1
         CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
+        open_mc_flag = .FALSE.
 
         IF(line_array(1) == 'nvt' .OR. line_array(1) == 'NVT' .OR. &
            line_array(1) == 'nvt_mc' .OR. line_array(1) == 'NVT_MC') THEN
@@ -321,12 +322,15 @@ SUBROUTINE Get_Sim_Type
         ELSEIF(line_array(1) == 'gemc' .OR. line_array(1) == 'GEMC') THEN
            sim_type = 'GEMC'
            int_sim_type = sim_gemc
+           open_mc_flag = .TRUE.
         ELSEIF(line_array(1) == 'gemc_npt' .OR. line_array(1) == 'GEMC_NPT') THEN
            sim_type = 'GEMC_NPT'
            int_sim_type = sim_gemc_npt
+           open_mc_flag = .TRUE.
         ELSEIF(line_array(1) == 'gcmc' .OR. line_array(1) == 'GCMC') THEN
            sim_type = 'GCMC'
            int_sim_type = sim_gcmc
+           open_mc_flag = .TRUE.
         ELSEIF(line_array(1) == 'fragment' .OR. &
                line_array(1) == 'nvt_mc_fragment' .OR. line_array(1) == 'NVT_MC_Fragment') THEN
            sim_type = 'NVT_MC_Fragment'
@@ -384,7 +388,7 @@ SUBROUTINE Get_Pair_Style
 !                 This will alert the code if pair interaction energy arrays
 !                 need to be stored.
 !******************************************************************************
-  INTEGER :: ierr,line_nbr,nbr_entries, iassign, ibox, k
+  INTEGER :: ierr,line_nbr,nbr_entries, iassign, ibox, k, is
   CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
   REAL(DP), ALLOCATABLE :: ewald_tol(:)
@@ -408,6 +412,8 @@ SUBROUTINE Get_Pair_Style
 
   ALLOCATE(l_half_len_cutoff(nbr_boxes))
   l_half_len_cutoff = .FALSE.
+  ALLOCATE(n_vdw_p_list(nbr_boxes))
+  n_vdw_p_list = 0
 
   ! vdw style
   line_nbr = 0
@@ -436,6 +442,7 @@ SUBROUTINE Get_Pair_Style
            ! the sum method
 
            IF ( line_array(1) == 'LJ' .OR. line_array(1) == 'Lj' .OR. line_array(1) == 'lj' ) THEN
+              n_vdw_p_list(ibox) = 2
               vdw_style(ibox) = 'LJ'
               int_vdw_style(ibox) = vdw_lj
               WRITE(logunit,'(A,2x,A,A,I3)') 'VDW style used is: ',vdw_style(ibox), 'in box:', ibox
@@ -535,6 +542,7 @@ SUBROUTINE Get_Pair_Style
               ENDIF
 
            ELSEIF ( line_array(1) == 'MIE' .OR. line_array(1) == 'Mie' .OR. line_array(1) == 'mie' ) THEN
+              n_vdw_p_list(ibox) = 4
               vdw_style(ibox) = 'MIE'
               int_vdw_style(ibox) = vdw_mie
               WRITE(logunit,'(A,2x,A,A,I3)') 'VDW style used is: ',vdw_style(ibox), 'in box:', ibox
@@ -873,6 +881,10 @@ SUBROUTINE Get_Pair_Style
      ENDIF
 
   END DO
+  rcut_vdwsq = rcut_vdw*rcut_vdw
+  inv_rcut_vdwsq = 1.0_DP/rcut_vdwsq
+  rcut_vdwsq_sp = REAL(rcut_vdwsq,SP)
+  inv_rcut_vdwsq_sp = REAL(inv_rcut_vdwsq,SP)
 
   !Now determine the mixing rule to use
    CALL Get_Mixing_Rules
@@ -1192,10 +1204,15 @@ SUBROUTINE Get_Molecule_Info
   ! the number of molecules of each species in a simulation at the end of a step is still capped at max_molecules - tp_correction
   max_molecules = max_molecules + tp_correction
 
+  sum_max_molecules = SUM(max_molecules)
+  sum_max_molecules_p4 = IAND(sum_max_molecules+padconst_8byte,padmask_8byte)
+  max_max_molecules = MAXVAL(max_molecules)
+  max_max_molecules_p4 = IAND(max_max_molecules+padconst_8byte,padmask_8byte)
+
   ! Allocate arrays that depend on max_molecules, natoms, and nspecies
   ! N.B.: MAXVAL instrinsic function selects the largest value from an array
 
-  ALLOCATE( atom_list(MAXVAL(natoms), MAXVAL(max_molecules), nspecies), Stat = AllocateStatus )
+  ALLOCATE( atom_list(MAXVAL(natoms), max_max_molecules, nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
      write(*,*)'memory could not be allocated for atom_list array'
      write(*,*)'stopping'
@@ -1250,6 +1267,8 @@ SUBROUTINE Get_Molecule_Info
      STOP
   END IF
   uncombined_dihedral_list%l_rb_formatted = .FALSE.
+  CALL dihedral_list%init
+  CALL uncombined_dihedral_list%init
 
   ALLOCATE( improper_list(MAXVAL(nimpropers), nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
@@ -1258,14 +1277,14 @@ SUBROUTINE Get_Molecule_Info
      STOP
   END IF
 
-  ALLOCATE( molecule_list(MAXVAL(max_molecules), nspecies), Stat = AllocateStatus )
+  ALLOCATE( molecule_list(max_max_molecules, nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
      write(*,*)'memory could not be allocated for molecule_list array'
      write(*,*)'stopping'
      STOP
   END IF
 
-  ALLOCATE( locate(MAXVAL(max_molecules),nspecies,0:nbr_boxes), Stat = AllocateStatus )
+  ALLOCATE( locate(max_max_molecules_p4,nspecies,0:nbr_boxes), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
      write(*,*)'memory could not be allocated for locate array'
      write(*,*)'stopping'
@@ -1273,14 +1292,14 @@ SUBROUTINE Get_Molecule_Info
   END IF
 
   IF (l_pair_nrg) THEN
-     ALLOCATE( pair_nrg_vdw(SUM(max_molecules),SUM(max_molecules)), Stat = AllocateStatus)
+     ALLOCATE( pair_nrg_vdw(sum_max_molecules_p4,sum_max_molecules), Stat = AllocateStatus)
      IF (AllocateStatus /= 0 ) THEN
         write(*,*) 'memmory could not be allocated for pair_nrg_vdw array'
         write(*,*) 'aborting'
         STOP
      END IF
 
-     ALLOCATE( pair_nrg_qq(SUM(max_molecules),SUM(max_molecules)), Stat = AllocateStatus)
+     ALLOCATE( pair_nrg_qq(sum_max_molecules_p4,sum_max_molecules), Stat = AllocateStatus)
      IF (AllocateStatus /= 0 ) THEN
         write(*,*) 'memmory could not be allocated for pair_nrg_qq array'
         write(*,*) 'aborting'
@@ -1299,7 +1318,7 @@ SUBROUTINE Get_Molecule_Info
 
   max_index = MAX(MAXVAL(nbonds),MAXVAL(nangles),MAXVAL(ndihedrals),MAXVAL(nimpropers))
 
-  ALLOCATE( internal_coord_list(max_index, MAXVAL(max_molecules), nspecies), Stat = AllocateStatus )
+  ALLOCATE( internal_coord_list(max_index, max_max_molecules, nspecies), Stat = AllocateStatus )
   IF (AllocateStatus /= 0) THEN
      write(*,*)'memory could not be allocated for internal_coord_list array'
      write(*,*)'stopping'
@@ -1389,6 +1408,10 @@ SUBROUTINE Get_Molecule_Info
            END IF
         END IF
      END IF
+  END DO
+  species_list(1)%superlocate_base = 0
+  DO is = 2, nspecies
+       species_list(is)%superlocate_base = SUM(max_molecules(1:is-1))
   END DO
 
   WRITE(logunit,'(A80)') '********************************************************************************'
@@ -2348,6 +2371,7 @@ SUBROUTINE Get_Dihedral_Info(is)
         END DO
         species_list(is)%ndihedrals_uncombined = ndihedrals(is)
         ndihedrals(is) = n_combined_dihedrals
+        CALL dihedral_list(1:species_list(is)%ndihedrals_energetic,is)%SP_Convert
 
         EXIT
 
@@ -2795,7 +2819,7 @@ SUBROUTINE Get_Fragment_Info(is)
            END DO
 
            IF (iatoms_bond >= 2 ) THEN
-              ! this atom is connected to more than two bonds
+              ! this atom is connected to at least two bonds
               ! in the fragment and is an anchor
               nanchors = nanchors + 1
               anchor_id(nanchors) = i_atom
@@ -3310,7 +3334,7 @@ SUBROUTINE Get_Fragment_Coords
 !******************************************************************************
 
   INTEGER :: nfrag_types, this_fragment, is, ifrag, ifrag_type, this_config
-  INTEGER :: iconfig, ia, this_atom, ntcoords,  nl, nfl, aux
+  INTEGER :: iconfig, ia, this_atom, ntcoords,  nl, nfl, aux, nl_base
 
   REAL(DP) :: x_this, y_this, z_this
   REAL(DP) :: this_temperature, this_nrg
@@ -3401,7 +3425,7 @@ SUBROUTINE Get_Fragment_Coords
     END DO
 
 
-    ALLOCATE(library_coords(ntcoords),STAT = AllocateStatus)
+    ALLOCATE(library_coords(library_coords_dim1,ntcoords),STAT = AllocateStatus)
       IF (Allocatestatus /= 0 ) THEN
          err_msg = ''
          err_msg(1) = 'Error allocating library_coords'
@@ -3439,12 +3463,13 @@ SUBROUTINE Get_Fragment_Coords
 
   ! Load coordinates
 
-  library_coords(:)%rxp = 0.0_DP
-  library_coords(:)%ryp = 0.0_DP
-  library_coords(:)%rzp = 0.0_DP
-  !frag_library(:)%frag_coords(:,:)%rxp = 0.0_DP
-  !frag_library(:)%frag_coords(:,:)%ryp = 0.0_DP
-  ! frag_library(:)%frag_coords(:,:)%rzp = 0.0_DP
+  !library_coords(:)%rp(1) = 0.0_DP
+  !library_coords(:)%rp(2) = 0.0_DP
+  !library_coords(:)%rp(3) = 0.0_DP
+  library_coords = 0.0_DP
+  !frag_library(:)%frag_coords(:,:)%rp(1) = 0.0_DP
+  !frag_library(:)%frag_coords(:,:)%rp(2) = 0.0_DP
+  ! frag_library(:)%frag_coords(:,:)%rp(3) = 0.0_DP
 
 
 
@@ -3469,19 +3494,22 @@ SUBROUTINE Get_Fragment_Coords
               ! read in the energy of the fragment
               READ(10,*) this_temperature, this_nrg
               nrg_frag(ifrag_type)%this_config_energy(iconfig) = this_nrg
-              ! read coordinates
+              nl_base = (frag_position_library(ifrag_type)-1)+ &
+                        (iconfig-1)*natoms_this_frag(ifrag_type)
               DO ia = 1, frag_list(ifrag,is)%natoms
-
-                 READ(10,*) symbol, x_this, y_this, z_this
-      !           frag_library(ifrag_type)%frag_coords(ia,iconfig)%rxp = x_this
-      !           frag_library(ifrag_type)%frag_coords(ia,iconfig)%ryp = y_this
-      !           frag_library(ifrag_type)%frag_coords(ia,iconfig)%rzp = z_this
-                  nl = (frag_position_library(ifrag_type)-1)+ &
-                            (iconfig-1)*natoms_this_frag(ifrag_type) +ia
-                  library_coords(nl)%rxp = x_this
-                  library_coords(nl)%ryp = y_this
-                  library_coords(nl)%rzp = z_this
+                nl = nl_base + ia
+                READ(10,*) symbol, library_coords(1,nl), library_coords(2,nl), library_coords(3,nl)
               END DO
+              ! read coordinates
+              !DO ia = 1, frag_list(ifrag,is)%natoms
+
+              !   READ(10,*) symbol, x_this, y_this, z_this
+              !    nl = (frag_position_library(ifrag_type)-1)+ &
+              !              (iconfig-1)*natoms_this_frag(ifrag_type) +ia
+              !    library_coords(nl)%rp(1) = x_this
+              !    library_coords(nl)%rp(2) = y_this
+              !    library_coords(nl)%rp(3) = z_this
+              !END DO
            END DO
 
            WRITE(logunit,*) TRIM(res_file(ifrag,is))
@@ -4000,6 +4028,7 @@ SUBROUTINE Get_Box_Info
      err_msg(1) = 'Memory could not be allocated for nmols'
      CALL Clean_Abort(err_msg,'Get_Box_Info')
   END IF
+  ALLOCATE(nlive(nspecies,nbr_boxes))
 
   ALLOCATE(vdw_style(nbr_boxes) , charge_style(nbr_boxes))
   ALLOCATE(vdw_sum_style(nbr_boxes) , charge_sum_style(nbr_boxes))
@@ -4011,7 +4040,8 @@ SUBROUTINE Get_Box_Info
   ALLOCATE(rcut_vdw(nbr_boxes) , rcut_coul(nbr_boxes))
   ALLOCATE(ron_charmm(nbr_boxes) , roff_charmm(nbr_boxes))
   ALLOCATE(ron_switch(nbr_boxes) , roff_switch(nbr_boxes))
-  ALLOCATE(rcut_max(nbr_boxes), rcut_vdwsq(nbr_boxes))
+  ALLOCATE(rcut_max(nbr_boxes), rcut_vdwsq(nbr_boxes), rcut_vdwsq_sp(nbr_boxes), inv_rcut_vdwsq_sp(nbr_boxes))
+  ALLOCATE(inv_rcut_vdwsq(nbr_boxes))
   ALLOCATE(ron_switch_sq(nbr_boxes) , roff_switch_sq(nbr_boxes))
   ALLOCATE(ron_charmmsq(nbr_boxes) , roff_charmmsq(nbr_boxes))
   ALLOCATE(switch_factor1(nbr_boxes) , switch_factor2(nbr_boxes))
@@ -5593,14 +5623,17 @@ SUBROUTINE Get_Widom_Info
 END SUBROUTINE Get_Widom_Info
 
 SUBROUTINE Get_Lookup_Info
-        INTEGER :: line_nbr, ierr, max_atoms
-        CHARACTER(STRING_LEN) :: line_string
+        INTEGER :: line_nbr, ierr, max_atoms, nbr_entries
+        CHARACTER(STRING_LEN) :: line_string, line_array(60)
         REWIND(inputunit)
         line_nbr = 0
         line_string = ""
         l_sectors = .FALSE.
         cbmc_cell_list_flag = .FALSE.
         full_cell_list_flag = .FALSE.
+        bitcell_flag = .FALSE.
+        cavity_biasing_flag = .FALSE.
+        min_ideal_bitcell_length = 0.0_DP
         DO
                 line_nbr = line_nbr + 1
                 CALL Read_String(inputunit,line_string,ierr)
@@ -5630,36 +5663,58 @@ SUBROUTINE Get_Lookup_Info
                                 line_string(1:4) == 'full')) RETURN
                         l_sectors = .TRUE.
                         ALLOCATE(sectorbound(3,nbr_boxes))
+                        ALLOCATE(cell_length_recip(3,nbr_boxes))
+                        ALLOCATE(real_length_cells(3,nbr_boxes))
                         ALLOCATE(length_cells(3,nbr_boxes))
-                        ALLOCATE(cell_length_inv(3,nbr_boxes))
+                        ALLOCATE(cell_length_inv(3,3,nbr_boxes))
                         max_occ_sectors = 0
                         sectorbound = 0
                         sectormaxbound = 0
                         length_cells = 0
                         max_sector_natoms = 1
+                        WRITE(logunit,*) " overlap cell neighbor list method enabled"
                         IF (line_string(1:4) ==  'cbmc' .OR. &
                                 line_string(1:4) == 'full') THEN
                                 cbmc_cell_list_flag = .TRUE.
                                 ALLOCATE(sectorbound_cbmc(3,nbr_boxes))
                                 ALLOCATE(length_cells_cbmc(3,nbr_boxes))
-                                ALLOCATE(cell_length_inv_cbmc(3,nbr_boxes))
+                                ALLOCATE(cell_length_inv_cbmc(3,3,nbr_boxes))
                                 max_occ_sectors_cbmc = 0
                                 sectorbound_cbmc = 0
                                 sectormaxbound_cbmc = 0
                                 length_cells_cbmc = 0
                                 max_sector_natoms_cbmc = 1
+                                WRITE(logunit,*) " CBMC cell neighbor list method enabled"
                         END IF
                         IF (line_string(1:4) ==  'full') THEN
                                 full_cell_list_flag = .TRUE.
                                 ALLOCATE(sectorbound_full(3,nbr_boxes))
                                 ALLOCATE(length_cells_full(3,nbr_boxes))
-                                ALLOCATE(cell_length_inv_full(3,nbr_boxes))
+                                ALLOCATE(cell_length_inv_full(3,3,nbr_boxes))
                                 max_occ_sectors_full = 0
                                 sectorbound_full = 0
                                 sectormaxbound_full = 0
                                 length_cells_full = 0
                                 max_sector_natoms_full = 1
                         END IF
+                        line_nbr = line_nbr + 1
+                        CALL Parse_String(inputunit,line_nbr,0,nbr_entries,line_array,ierr)
+                        IF (nbr_entries < 1) RETURN
+                        SELECT CASE (line_array(1))
+                        CASE ("bit_cell", "bitcell", "bit_cell_overlap", "bitcell_overlap", "bovine", "BOVINE", "voxel",&
+                                        "bit_voxel", "cavity_biasing", "cavbias")
+                                bitcell_flag = .TRUE.
+                                WRITE(logunit,*) " BOVINE method enabled"
+                                IF (nbr_entries > 1) min_ideal_bitcell_length = String_To_Double(line_array(2))
+                                IF (line_array(1)(1:3) == "cav") THEN
+                                        cavity_biasing_flag = .TRUE.
+                                        WRITE(logunit,*) " Cavity biasing enabled"
+                                END IF
+                        CASE DEFAULT
+                                err_msg = ''
+                                err_msg(1) = 'Entry 1 on line ' // Int_To_String(line_nbr) // ' of the input file is invalid.'
+                                CALL clean_abort(err_msg,'Get_Lookup_Info')
+                        END SELECT
                         RETURN
                 END IF
         END DO
@@ -5839,7 +5894,7 @@ SUBROUTINE Get_Pregen_Info
                                                         TRIM(pregen_xyz_filenames(ibox)) // &
                                                         ' given as entry  ' // TRIM(Int_To_String(xyz_pos)) // ' on line number ' // &
                                                         TRIM(Int_To_String(line_nbr)) // ' of the input file'
-                                                err_msg(2) = 'Verify that xyz file ' // TRIM(pregen_xyz_filenames(ibox)) // 'exists'
+                                                err_msg(2) = 'Verify that xyz file ' // TRIM(pregen_xyz_filenames(ibox)) // ' exists'
                                                 CALL clean_abort(err_msg,'Get_Pregen_Info')
                                         END IF
                                         pregen_H_filenames(ibox) = line_array(H_pos)
@@ -5936,7 +5991,8 @@ SUBROUTINE Get_CBMC_Info
   INTEGER :: ibox, is
   INTEGER :: ierr, line_nbr, nbr_entries
   CHARACTER(STRING_LEN) :: line_string,line_array(60)
-  LOGICAL :: need_kappa_ins, need_kappa_dih
+  REAL(DP) :: theta_step, theta
+  INTEGER :: i
 
 !******************************************************************************
   WRITE(logunit,*)
@@ -5946,35 +6002,28 @@ SUBROUTINE Get_CBMC_Info
   REWIND(inputunit)
   ierr = 0
   line_nbr = 0
+  cbmc_charge_sf_flag = .FALSE.
 
-  kappa_ins = 0
-  kappa_rot = 0
-  kappa_dih = 0
-  need_kappa_ins = .FALSE.
-  need_kappa_dih = .FALSE.
   rcut_CBMC(:) = 0.0_DP
-
-  DO is = 1, nspecies
-     species_list(is)%l_coul_cbmc = .TRUE.
-  END DO
+  species_list%nfragments = nfragments
 
   ! Are CBMC parameters needed?
   DO ibox = 1, nbr_boxes
     IF (start_type(ibox) == 'make_config' .OR. start_type(ibox) == 'add_to_config') THEN
-       need_kappa_ins = .TRUE.
        DO is = 1, nspecies
-          IF (nfragments(is) > 1 .AND. nmols_to_make(is,ibox) > 0) THEN
-             need_kappa_dih = .TRUE.
+          IF (nmols_to_make(is,ibox) > 0) THEN
+                IF (species_list(is)%nfragments > 1) species_list(is)%need_kappa_dih = .TRUE.
+                species_list(is)%need_kappa_ins = .TRUE.
           END IF
        END DO
     END IF
   END DO
 
   IF (int_sim_type == sim_gcmc .OR. int_sim_type == sim_gemc .OR. int_sim_type == sim_gemc_npt .OR. widom_flag) THEN
-     need_kappa_ins = .TRUE.
      DO is = 1, nspecies
-        IF (nfragments(is) > 1 .AND. (species_list(is)%insertion == 'CBMC' .OR. tp_correction(is) .NE. 0)) THEN
-           need_kappa_dih = .TRUE.
+        IF (species_list(is)%insertion == 'CBMC' .OR. tp_correction(is) .NE. 0) THEN
+                species_list(is)%need_kappa_ins = .TRUE.
+                IF (species_list(is)%nfragments > 1) species_list(is)%need_kappa_dih = .TRUE.
         END IF
      END DO
   END IF
@@ -5982,13 +6031,13 @@ SUBROUTINE Get_CBMC_Info
   IF (prob_regrowth > tiny_number) THEN
      DO is = 1, nspecies
         IF (nfragments(is) > 1 .AND. prob_growth_species(is) > tiny_number) THEN
-           need_kappa_dih = .TRUE.
+           species_list(is)%need_kappa_dih = .TRUE.
         END IF
      END DO
   END IF
 
   ! Look for CBMC parameters
-  IF (need_kappa_ins .OR. need_kappa_dih) THEN
+  IF (ANY(species_list%need_kappa_ins .OR. species_list%need_kappa_dih)) THEN
 
      DO
         line_nbr = line_nbr + 1
@@ -6008,23 +6057,38 @@ SUBROUTINE Get_CBMC_Info
                  EXIT
               END IF
 
-              IF (line_array(1) == 'kappa_ins' .OR. line_array(1) == 'Kappa_Ins') THEN
-                 kappa_ins = String_To_Int(line_array(2))
-                 WRITE(logunit,'(A,T35,I12)') 'Kappa for first fragment insertion ', kappa_ins
-              ELSE IF (line_array(1) == 'kappa_rot' .OR. line_array(1) == 'Kappa_Rot') THEN
-                 kappa_rot = String_To_Int(line_array(2))
+              SELECT CASE(line_array(1))
+              CASE('kappa_ins','Kappa_Ins')
+              !IF (line_array(1) == 'kappa_ins' .OR. line_array(1) == 'Kappa_Ins') THEN
+                 DO is = 1, nspecies
+                        IF (is < nbr_entries) THEN
+                                species_list(is)%kappa_ins = String_To_Int(line_array(is+1))
+                        ELSE
+                                species_list(is)%kappa_ins = species_list(nbr_entries-1)%kappa_ins
+                        END IF
+                 END DO
+              CASE('kappa_rot','Kappa_Rot')
+              !ELSE IF (line_array(1) == 'kappa_rot' .OR. line_array(1) == 'Kappa_Rot') THEN
                  WRITE(logunit,'(X,A)') 'Orientational bias not supported. Kappa set to zero'
-                 kappa_rot = 0
-              ELSE IF (line_array(1) == 'kappa_dih' .OR. line_array(1) == 'Kappa_Dih') THEN
-                 kappa_dih = String_To_Int(line_array(2))
-                 WRITE(logunit,'(A,T35,I12)') 'Kappa for dihedral selection ', kappa_dih
-              ELSE IF (line_array(1) == 'rcut_cbmc' .OR. line_array(1) == 'Rcut_CBMC') THEN
+                 species_list%kappa_rot = 0
+              CASE('kappa_dih','Kappa_Dih')
+              !ELSE IF (line_array(1) == 'kappa_dih' .OR. line_array(1) == 'Kappa_Dih') THEN
+                 DO is = 1, nspecies
+                        IF (is < nbr_entries) THEN
+                                species_list(is)%kappa_dih = String_To_Int(line_array(is+1))
+                        ELSE
+                                species_list(is)%kappa_dih = species_list(nbr_entries-1)%kappa_dih
+                        END IF
+                 END DO
+              CASE('rcut_cbmc','Rcut_CBMC')
+              !ELSE IF (line_array(1) == 'rcut_cbmc' .OR. line_array(1) == 'Rcut_CBMC') THEN
                  DO ibox = 1, nbr_boxes
                     rcut_CBMC(ibox) = String_To_Double(line_array(ibox+1))
                     WRITE(logunit,'(X,A,F12.2)') 'Cutoff for CBMC for box '// TRIM(Int_To_String(ibox)) // &
                        ' is ', rcut_CBMC(ibox)
                  END DO
-              ELSE IF (line_array(1) == 'l_coul_cbmc' .OR. line_array(1) == 'L_Coul_CBMC') THEN
+              CASE('l_coul_cbmc','L_Coul_CBMC')
+              !ELSE IF (line_array(1) == 'l_coul_cbmc' .OR. line_array(1) == 'L_Coul_CBMC') THEN
                  DO is = 1, nspecies
                     IF (line_array(is+1) == 'true' .OR. line_array(is+1) == 'TRUE') THEN
                        species_list(is)%l_coul_cbmc = .TRUE.
@@ -6038,40 +6102,51 @@ SUBROUTINE Get_CBMC_Info
                        CALL Clean_Abort(err_msg,'Get_CBMC_Info')
                     END IF
                  END DO
-              ELSE IF (line_array(1) == 'energy_table' .OR. line_array(1) == "nrg_table" .OR. &
-                      line_array(1) == "atompair_nrg_table" .OR. line_array(1) == "atompair_energy_table") THEN
+              CASE('energy_table','nrg_table','atompair_nrg_table','atompair_energy_table')
+              !ELSE IF (line_array(1) == 'energy_table' .OR. line_array(1) == "nrg_table" .OR. &
+              !        line_array(1) == "atompair_nrg_table" .OR. line_array(1) == "atompair_energy_table") THEN
                       precalc_atompair_nrg = .TRUE.
                       IF (nbr_entries >= 2) THEN
                               atompair_nrg_res = String_To_Int(line_array(2))
                       ELSE
                               atompair_nrg_res = 1000
                       END IF
+                      atompair_nrg_res_sp = REAL(atompair_nrg_res,SP)
                       WRITE(logunit,'(X,A)') 'Atom pair energy table with rsq resolution = ' // &
                               TRIM(Int_To_String(atompair_nrg_res)) // ' will be used.'
-              ELSE
+              CASE('cbmc_charge_sf')
+                      cbmc_charge_sf_flag = .TRUE.
+                      WRITE(logunit,'(X,A)') "CBMC trials will use shifted force charge sum style."
+              CASE DEFAULT
+              !ELSE
                  err_msg = ''
                  err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
                               TRIM(Int_To_String(line_nbr)) // ' of the input file is not supported'
                  err_msg(2) = 'Supported keywords are:'
                  err_msg(3) = 'kappa_ins, kappa_dih, rcut_cbmc, l_coul_cbmc, nrg_table'
                  CALL Clean_Abort(err_msg,'Get_CBMC_Info')
-              END IF
+              END SELECT
+              !END IF
 
            END DO
 
-           ! kappa_dih must be positive
-           IF (need_kappa_dih .AND. kappa_dih <= 0) THEN
-              err_msg = ''
-              err_msg(1) = 'kappa_dih must be positive'
-              CALL clean_abort(err_msg,'Get_CBMC_Info')
-           END IF
-
-           ! kappa_ins must be positive
-           IF (need_kappa_ins .AND. kappa_ins <= 0) THEN
-              err_msg = ''
-              err_msg(1) = 'kappa_ins must be positive'
-              CALL clean_abort(err_msg,'Get_CBMC_Info')
-           END IF
+           DO is = 1, nspecies
+                   ! kappa_dih must be positive
+                   IF (species_list(is)%need_kappa_dih .AND. species_list(is)%kappa_dih <= 0) THEN
+                      err_msg = ''
+                      err_msg(1) = 'kappa_dih must be positive for species ' // TRIM(Int_To_String(is))
+                      CALL clean_abort(err_msg,'Get_CBMC_Info')
+                   END IF
+                   ! kappa_ins must be positive
+                   IF (species_list(is)%need_kappa_ins .AND. species_list(is)%kappa_ins <= 0) THEN
+                      err_msg = ''
+                      err_msg(1) = 'kappa_ins must be positive for species ' // TRIM(Int_To_String(is))
+                      CALL clean_abort(err_msg,'Get_CBMC_Info')
+                   END IF
+                   WRITE(logunit,'(A)') "CBMC kappa values for species " // TRIM(Int_To_String(is)) // ":"
+                   CALL species_list(is)%Write_CBMC_Kappas(logunit)
+           END DO
+           CALL species_list%setup_cbmc_kappas
 
            ! rcut_cbmc must be positive
            DO ibox = 1, nbr_boxes
@@ -6460,8 +6535,6 @@ SUBROUTINE Get_Property_Info
 ! will be written in respective files.
 !******************************************************************************
 
-USE Global_Variables, ONLY: cpcollect
-
   INTEGER :: ierr, line_nbr, nbr_properties, max_properties, nbr_entries
   INTEGER :: i, j, this_box, ibox, is, average_id, ifrac
   CHARACTER(STRING_LEN) :: line_string, line_array(60)
@@ -6482,7 +6555,6 @@ USE Global_Variables, ONLY: cpcollect
   line_nbr = 0
   nbr_prop_files(:) = 0
   max_properties = 0
-  cpcollect = .FALSE.
   need_pressure = .FALSE.
 
   DO
@@ -6530,10 +6602,6 @@ USE Global_Variables, ONLY: cpcollect
                     line_array(1) == 'density' .OR. line_array(1) == 'Density') THEN
               ! there are as many properties to be written as there are species
               nbr_properties = nbr_properties + nspecies
-! chem_pot routines need testing
-!           ELSE IF (line_array(1) == 'chemical_potential' .OR. line_array(1) == 'Chemical_Potential') THEN
-!              nbr_properties = nbr_properties + nspecies
-!              cpcollect = .TRUE.
            ELSE IF (line_array(1) == 'pressure' .OR. line_array(1) == 'Pressure') THEN
               nbr_properties = nbr_properties + 1
               need_pressure = .TRUE.
@@ -6819,17 +6887,6 @@ USE Global_Variables, ONLY: cpcollect
      END IF
   END DO
 
-  IF(cpcollect) THEN
-
-     DEALLOCATE(locate)
-     DEALLOCATE(molecule_list)
-     DEALLOCATE(atom_list)
-
-     ALLOCATE(locate(MAXVAL(max_molecules)+1,nspecies,0:nbr_boxes))
-     ALLOCATE(molecule_list(MAXVAL(max_molecules)+1,nspecies))
-     ALLOCATE(atom_list(MAXVAL(natoms),MAXVAL(max_molecules)+1,nspecies))
-
-  END IF
 
   IF (need_pressure) THEN
      ALLOCATE(W_tensor_charge(3,3,nbr_boxes) , W_tensor_recip(3,3,nbr_boxes))
@@ -6984,6 +7041,7 @@ SUBROUTINE Get_Rcutoff_Low
         CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
         rcut_low = String_To_Double(line_array(1))
         rcut_lowsq = rcut_low * rcut_low
+        sp_rcut_lowsq = REAL(rcut_lowsq,SP)
 
         WRITE(logunit,'(A25,2X,F6.3,2X,A10)') 'MC low cutoff distance is ', rcut_low, ' Angstrom'
         ALLOCATE(tol_list(1))

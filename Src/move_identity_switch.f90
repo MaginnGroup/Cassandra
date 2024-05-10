@@ -282,35 +282,35 @@ SUBROUTINE Identity_Switch
    ! Step 8) Switch the two molecules by COM translation
    !
    !*****************************************************************************
-   xcom_i = molecule_list(lm_i,is)%xcom
-   ycom_i = molecule_list(lm_i,is)%ycom
-   zcom_i = molecule_list(lm_i,is)%zcom
+   xcom_i = molecule_list(lm_i,is)%rcom(1)
+   ycom_i = molecule_list(lm_i,is)%rcom(2)
+   zcom_i = molecule_list(lm_i,is)%rcom(3)
 
    ALLOCATE(dx_xcom_i(natoms(is)), dy_ycom_i(natoms(is)), dz_zcom_i(natoms(is)))
    ALLOCATE(dx_xcom_j(natoms(js)), dy_ycom_j(natoms(js)), dz_zcom_j(natoms(js)))
-   dx_xcom_i = xcom_i - atom_list(:,lm_i,is)%rxp
-   dy_ycom_i = ycom_i - atom_list(:,lm_i,is)%ryp
-   dz_zcom_i = zcom_i - atom_list(:,lm_i,is)%rzp
+   dx_xcom_i = xcom_i - atom_list(:,lm_i,is)%rp(1)
+   dy_ycom_i = ycom_i - atom_list(:,lm_i,is)%rp(2)
+   dz_zcom_i = zcom_i - atom_list(:,lm_i,is)%rp(3)
 
-   dx_xcom_j =  molecule_list(lm_j,js)%xcom - atom_list(:,lm_j,js)%rxp
-   dy_ycom_j =  molecule_list(lm_j,js)%ycom - atom_list(:,lm_j,js)%ryp
-   dz_zcom_j =  molecule_list(lm_j,js)%zcom - atom_list(:,lm_j,js)%rzp
+   dx_xcom_j =  molecule_list(lm_j,js)%rcom(1) - atom_list(:,lm_j,js)%rp(1)
+   dy_ycom_j =  molecule_list(lm_j,js)%rcom(2) - atom_list(:,lm_j,js)%rp(2)
+   dz_zcom_j =  molecule_list(lm_j,js)%rcom(3) - atom_list(:,lm_j,js)%rp(3)
 
    !Switch first molecule
-   molecule_list(lm_i,is)%xcom = molecule_list(lm_j,js)%xcom
-   molecule_list(lm_i,is)%ycom = molecule_list(lm_j,js)%ycom
-   molecule_list(lm_i,is)%zcom = molecule_list(lm_j,js)%zcom
-   atom_list(:,lm_i,is)%rxp = molecule_list(lm_i,is)%xcom - dx_xcom_i
-   atom_list(:,lm_i,is)%ryp = molecule_list(lm_i,is)%ycom - dy_ycom_i
-   atom_list(:,lm_i,is)%rzp = molecule_list(lm_i,is)%zcom - dz_zcom_i
+   molecule_list(lm_i,is)%rcom(1) = molecule_list(lm_j,js)%rcom(1)
+   molecule_list(lm_i,is)%rcom(2) = molecule_list(lm_j,js)%rcom(2)
+   molecule_list(lm_i,is)%rcom(3) = molecule_list(lm_j,js)%rcom(3)
+   atom_list(:,lm_i,is)%rp(1) = molecule_list(lm_i,is)%rcom(1) - dx_xcom_i
+   atom_list(:,lm_i,is)%rp(2) = molecule_list(lm_i,is)%rcom(2) - dy_ycom_i
+   atom_list(:,lm_i,is)%rp(3) = molecule_list(lm_i,is)%rcom(3) - dz_zcom_i
 
    !Switch second molecule
-   molecule_list(lm_j,js)%xcom = xcom_i
-   molecule_list(lm_j,js)%ycom = ycom_i
-   molecule_list(lm_j,js)%zcom = zcom_i
-   atom_list(:,lm_j,js)%rxp = xcom_i - dx_xcom_j
-   atom_list(:,lm_j,js)%ryp = ycom_i - dy_ycom_j
-   atom_list(:,lm_j,js)%rzp = zcom_i - dz_zcom_j
+   molecule_list(lm_j,js)%rcom(1) = xcom_i
+   molecule_list(lm_j,js)%rcom(2) = ycom_i
+   molecule_list(lm_j,js)%rcom(3) = zcom_i
+   atom_list(:,lm_j,js)%rp(1) = xcom_i - dx_xcom_j
+   atom_list(:,lm_j,js)%rp(2) = ycom_i - dy_ycom_j
+   atom_list(:,lm_j,js)%rp(3) = zcom_i - dz_zcom_j
    DEALLOCATE(dx_xcom_i, dy_ycom_i, dz_zcom_i)
    DEALLOCATE(dx_xcom_j, dy_ycom_j, dz_zcom_j)
 
@@ -392,7 +392,10 @@ SUBROUTINE Identity_Switch
       dE = 0.0_DP
       dE_i = 0.0_DP
       dE_j = 0.0_DP
-
+      ! Note by RS: the Ewald part of this move was wrong and is still wrong at least for multiple boxes,
+      !         but I made changes so that it references data structures I implemented instead of those that
+      !         no longer exist so it doesn't interfere with compilation.
+      !         I'm currently just trying to improve the Ewald summation implementation, not fix this broken move type.
       !Ewald charge code:
       IF ((int_charge_sum_style(box) == charge_ewald) .AND. (has_charge(is) .OR. has_charge(js))) THEN
          !TODO:Eventually rewrite Update_System_Ewald_Reciprocal_Energy!
@@ -402,8 +405,10 @@ SUBROUTINE Identity_Switch
 
             ALLOCATE(cos_sum_old_idsw(nvecs(box),nbr_boxes), sin_sum_old_idsw(nvecs(box),nbr_boxes))
             !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-            cos_sum_old_idsw(1:nvecs(box),box) = cos_sum(1:nvecs(box),box)
-            sin_sum_old_idsw(1:nvecs(box),box) = sin_sum(1:nvecs(box),box)
+            cos_sum_old_idsw(1:nvecs(box),box) = box_list(box)%sincos_sum(1:nvecs(box),2)
+            sin_sum_old_idsw(1:nvecs(box),box) = box_list(box)%sincos_sum(1:nvecs(box),1)
+            !cos_sum_old_idsw(1:nvecs(box),box) = cos_sum(1:nvecs(box),box)
+            !sin_sum_old_idsw(1:nvecs(box),box) = sin_sum(1:nvecs(box),box)
             !$OMP END PARALLEL WORKSHARE
 
             IF (has_charge(is)) THEN
@@ -581,8 +586,8 @@ SUBROUTINE Identity_Switch
         CALL Revert_Switch
         IF ((int_charge_sum_style(box) == charge_ewald) .AND. (has_charge(is) .OR. has_charge(js))) THEN
            !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-           cos_sum(1:nvecs(box), box) = cos_sum_old_idsw(1:nvecs(box),box)
-           sin_sum(1:nvecs(box), box) = sin_sum_old_idsw(1:nvecs(box),box)
+           box_list(box)%sincos_sum(1:nvecs(box),2) = cos_sum_old_idsw(1:nvecs(box),box)
+           box_list(box)%sincos_sum(1:nvecs(box),1) = sin_sum_old_idsw(1:nvecs(box),box)
            !$OMP END PARALLEL WORKSHARE
 
            DEALLOCATE(cos_sum_old_idsw, sin_sum_old_idsw)
@@ -696,9 +701,9 @@ SUBROUTINE Identity_Switch
 
           !save rotation coordinates
           DO ia = 1, natoms(is)
-            rtrial(ia,i_rot)%rxp = atom_list(ia,lm,is)%rxp
-            rtrial(ia,i_rot)%ryp = atom_list(ia,lm,is)%ryp
-            rtrial(ia,i_rot)%rzp = atom_list(ia,lm,is)%rzp
+            rtrial(ia,i_rot)%rp(1) = atom_list(ia,lm,is)%rp(1)
+            rtrial(ia,i_rot)%rp(2) = atom_list(ia,lm,is)%rp(2)
+            rtrial(ia,i_rot)%rp(3) = atom_list(ia,lm,is)%rp(3)
           END DO
 
           overlap = .FALSE.
@@ -754,9 +759,9 @@ SUBROUTINE Identity_Switch
       ! We chose the ith trial coordinate for placement. Store the ith trial
       ! coordinates in the atom_list array.
       DO ia = 1, natoms(is)
-        atom_list(ia,lm,is)%rxp = rtrial(ia,i_rot)%rxp
-        atom_list(ia,lm,is)%ryp = rtrial(ia,i_rot)%ryp
-        atom_list(ia,lm,is)%rzp = rtrial(ia,i_rot)%rzp
+        atom_list(ia,lm,is)%rp(1) = rtrial(ia,i_rot)%rp(1)
+        atom_list(ia,lm,is)%rp(2) = rtrial(ia,i_rot)%rp(2)
+        atom_list(ia,lm,is)%rp(3) = rtrial(ia,i_rot)%rp(3)
       END DO
 
       !COM was not stored, so recalculate

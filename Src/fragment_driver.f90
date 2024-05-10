@@ -83,9 +83,9 @@ SUBROUTINE Fragment_Driver
            WRITE(frag_file_unit,*) temperature(ibox), energy(ibox)%total
            DO ia = 1, natoms(is)
               WRITE(frag_file_unit,*) nonbond_list(ia,is)%element, &
-                                      atom_list(ia,im,is)%rxp, &
-                                      atom_list(ia,im,is)%ryp, &
-                                      atom_list(ia,im,is)%rzp
+                                      atom_list(ia,im,is)%rp(1), &
+                                      atom_list(ia,im,is)%rp(2), &
+                                      atom_list(ia,im,is)%rp(3)
            END DO
            
         END IF

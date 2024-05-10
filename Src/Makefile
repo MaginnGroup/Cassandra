@@ -80,7 +80,7 @@ LINKFLAGS = -Wl,-rpath,${locallib}
 #F90FLAGS = -c -openmp
 #F90FLAGS = -p -c -O3
 #F90FLAGS = -c -O3 -openmp
-OPTFLAGS = -O3
+OPTFLAGS = -O3 -align array32byte -march=core-avx2
 #LINKFLAGS = -openmp
 #LINKFLAGS = -p
 
@@ -139,14 +139,13 @@ OBJS =  main.o \
   move_regrow.o \
   ring_fragment_driver.o \
   move_atom.o \
-  chempot.o \
   pair_nrg_variables.o \
   move_ring_flip.o \
   move_identity_switch.o \
   widom_subdriver.o \
   widom_insert.o \
   write_widom_properties.o \
-  load_next_frame.o \
+  trajectory_reader_routines.o \
   pregen_control.o \
   pregen_driver.o \
   sector_routines.o \

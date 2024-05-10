@@ -80,8 +80,8 @@ SUBROUTINE Translate
   LOGICAL :: inter_overlap, overlap, accept_or_reject
 
   ! Pair_Energy arrays and Ewald implementation
-  INTEGER :: position
-  REAL(DP), ALLOCATABLE :: cos_mol_old(:), sin_mol_old(:)
+  INTEGER :: pos
+  !REAL(DP), ALLOCATABLE :: cos_mol_old(:), sin_mol_old(:)
 
 ! Done with that section
 
@@ -211,13 +211,13 @@ SUBROUTINE Translate
   dz = ( 2.0_DP * rranf() - 1.0_DP) * max_disp(is,ibox)
 
   ! Move atoms by the above vector dx,dy,dz and also update the COM
-  atom_list(:,lm,is)%rxp = atom_list(:,lm,is)%rxp + dx
-  atom_list(:,lm,is)%ryp = atom_list(:,lm,is)%ryp + dy
-  atom_list(:,lm,is)%rzp = atom_list(:,lm,is)%rzp + dz
+  atom_list(:,lm,is)%rp(1) = atom_list(:,lm,is)%rp(1) + dx
+  atom_list(:,lm,is)%rp(2) = atom_list(:,lm,is)%rp(2) + dy
+  atom_list(:,lm,is)%rp(3) = atom_list(:,lm,is)%rp(3) + dz
 
-  molecule_list(lm,is)%xcom = molecule_list(lm,is)%xcom + dx
-  molecule_list(lm,is)%ycom = molecule_list(lm,is)%ycom + dy
-  molecule_list(lm,is)%zcom = molecule_list(lm,is)%zcom + dz
+  molecule_list(lm,is)%rcom(1) = molecule_list(lm,is)%rcom(1) + dx
+  molecule_list(lm,is)%rcom(2) = molecule_list(lm,is)%rcom(2) + dy
+  molecule_list(lm,is)%rcom(3) = molecule_list(lm,is)%rcom(3) + dz
 
 
   !**************************************************************************
@@ -241,13 +241,12 @@ SUBROUTINE Translate
 
      IF ((int_charge_sum_style(ibox) == charge_ewald) .AND. (has_charge(is))) THEN
 
-        ALLOCATE(cos_mol_old(nvecs(ibox)),sin_mol_old(nvecs(ibox)))
-        CALL Get_Position_Alive(lm,is,position)
+        !ALLOCATE(cos_mol_old(nvecs(ibox)),sin_mol_old(nvecs(ibox)))
         
-        !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-        cos_mol_old(:) = cos_mol(1:nvecs(ibox),position)
-        sin_mol_old(:) = sin_mol(1:nvecs(ibox),position)
-        !$OMP END PARALLEL WORKSHARE
+        !!$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+        !cos_mol(1:nvecs(ibox),0) = cos_mol(1:nvecs(ibox),position)
+        !sin_mol(1:nvecs(ibox),0) = sin_mol(1:nvecs(ibox),position)
+        !!$OMP END PARALLEL WORKSHARE
 
         CALL Update_System_Ewald_Reciprocal_Energy(lm,is,ibox,int_translation,E_reciprocal_move)
         dE = E_reciprocal_move - energy(ibox)%reciprocal
@@ -285,8 +284,8 @@ SUBROUTINE Translate
         nequil_success(is,ibox)%displacement = nequil_success(is,ibox)%displacement + 1
 
         IF (l_pair_nrg) DEALLOCATE(pair_vdw_temp,pair_qq_temp)
-        IF (ALLOCATED(cos_mol_old)) DEALLOCATE(cos_mol_old)
-        IF (ALLOCATED(sin_mol_old)) DEALLOCATE(sin_mol_old)
+        !IF (ALLOCATED(cos_mol_old)) DEALLOCATE(cos_mol_old)
+        !IF (ALLOCATED(sin_mol_old)) DEALLOCATE(sin_mol_old)
 
      ELSE
 
@@ -296,13 +295,13 @@ SUBROUTINE Translate
         IF ((int_charge_sum_style(ibox) == charge_ewald) .AND. (has_charge(is))) THEN
            ! Also reset the old cos_sum and sin_sum for reciprocal space vectors. Note
            ! that old vectors were set while difference in ewald reciprocal energy was computed.
-           !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)           
-           cos_sum(:,ibox) = cos_sum_old(:,ibox)
-           sin_sum(:,ibox) = sin_sum_old(:,ibox)
-           cos_mol(1:nvecs(ibox),position) =cos_mol_old(:)
-           sin_mol(1:nvecs(ibox),position) =sin_mol_old(:)
+           CALL Get_Position_Alive(lm,is,pos)
+           !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+           box_list(ibox)%sincos_sum = box_list(ibox)%sincos_sum_old
+           cos_mol(1:nvecs(ibox),pos) =cos_mol(1:nvecs(ibox),0)
+           sin_mol(1:nvecs(ibox),pos) =sin_mol(1:nvecs(ibox),0)
            !$OMP END PARALLEL WORKSHARE
-           DEALLOCATE(cos_mol_old,sin_mol_old)
+           !DEALLOCATE(cos_mol_old,sin_mol_old)
         END IF
         IF (l_pair_nrg)  CALL Reset_Molecule_Pair_Interaction_Arrays(lm,is,ibox)
      ENDIF

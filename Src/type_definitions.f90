@@ -56,6 +56,12 @@ MODULE Type_Definitions
   INTEGER, PARAMETER :: SP = REAL32
   INTEGER, PARAMETER :: DP = REAL64
 
+  ! Define REAL type infinity using hexadecimal literal constants
+  REAL(REAL32), PARAMETER :: infinity_sp = REAL(Z'7F800000',REAL32)
+  REAL(REAL64), PARAMETER :: infinity_dp = REAL(Z'7FF0000000000000',REAL64)
+  !REAL(REAL32), PARAMETER :: infinity_sp = Z'7F800000'
+  !REAL(REAL64), PARAMETER :: infinity_dp = Z'7FF0000000000000'
+
   ! Specify the limits on the parameters for various intramolecular function classes
   INTEGER, PARAMETER :: max_bond_params = 5
   INTEGER, PARAMETER :: max_angle_params = 5
@@ -68,6 +74,61 @@ MODULE Type_Definitions
 
   ! Place a limit on the number of angle evaluations for probability calculations
   INTEGER, PARAMETER :: nregions = 1000
+
+
+  REAL(DP), PARAMETER :: PI=3.1415926536_DP
+  REAL(DP), PARAMETER :: twoPI = 6.2831853072_DP
+  REAL(DP), PARAMETER :: rootPI = 1.7724538509_DP
+  REAL(DP), PARAMETER :: halfPI = 0.5_DP*PI
+  REAL(DP), PARAMETER :: threehalfPI_DP = 3.0_DP*halfPI
+  REAL(SP), PARAMETER :: twoPI_SP = REAL(twoPI,SP)
+  REAL(SP), PARAMETER :: PI_SP = REAL(PI,SP)
+
+  LOGICAL, PARAMETER :: array8byte = INDEX(COMPILER_OPTIONS(),"array8byte") .NE. 0 .OR. &
+          INDEX(COMPILER_OPTIONS(),"-mmmx") .NE. 0
+  LOGICAL, PARAMETER :: array16byte = INDEX(COMPILER_OPTIONS(),"array16byte") .NE. 0 .OR. &
+          INDEX(COMPILER_OPTIONS(),"-msse") .NE. 0
+  LOGICAL, PARAMETER :: array32byte = INDEX(COMPILER_OPTIONS(),"array32byte") .NE. 0 .OR. &
+          INDEX(COMPILER_OPTIONS(),"-mavx") .NE. 0
+  LOGICAL, PARAMETER :: array64byte = INDEX(COMPILER_OPTIONS(),"array64byte") .NE. 0 .OR. &
+          INDEX(COMPILER_OPTIONS(),"-mavx512") .NE. 0
+  LOGICAL, PARAMETER :: array128byte = INDEX(COMPILER_OPTIONS(),"array128byte") .NE. 0
+  LOGICAL, PARAMETER :: array256byte = INDEX(COMPILER_OPTIONS(),"array256byte") .NE. 0
+  !INTEGER, DIMENSION(6), PARAMETER :: align_byte_options = (/ 8, 16, 32, 64, 128, 256 /)
+  INTEGER, DIMENSION(6), PARAMETER :: log2align_byte_options = (/ 3, 4, 5, 6, 7, 8 /)
+  !INTEGER, DIMENSION(6), PARAMETER :: align_byte_options = SHIFTL(1,log2align_byte_options)
+  LOGICAL, DIMENSION(6), PARAMETER :: array_n_byte_vec = (/ &
+          array8byte, array16byte, array32byte, array64byte, array128byte, array256byte /)
+  !INTEGER, PARAMETER :: array_align_bytes = MAXVAL(PACK(align_byte_options,array_n_byte_vec,(/1,1,1,1,1,1/)))
+  INTEGER, PARAMETER :: log2array_align_bytes = MAXVAL(MERGE(log2align_byte_options,(/0,0,0,0,0,0/),array_n_byte_vec))
+  INTEGER, PARAMETER :: array_align_bytes = SHIFTL(1,log2array_align_bytes)
+  INTEGER, PARAMETER :: log2dimpad_1byte = log2array_align_bytes
+  INTEGER, PARAMETER :: log2dimpad_2byte = MAX(0,log2array_align_bytes-1)
+  INTEGER, PARAMETER :: log2dimpad_4byte = MAX(0,log2array_align_bytes-2)
+  INTEGER, PARAMETER :: log2dimpad_8byte = MAX(0,log2array_align_bytes-3)
+  INTEGER, PARAMETER :: log2dimpad_16byte = MAX(0,log2array_align_bytes-4)
+  INTEGER, PARAMETER :: log2dimpad_32byte = MAX(0,log2array_align_bytes-5)
+
+  INTEGER, PARAMETER :: dimpad_1byte = array_align_bytes
+  INTEGER, PARAMETER :: dimpad_2byte = SHIFTL(1,log2dimpad_2byte)
+  INTEGER, PARAMETER :: dimpad_4byte = SHIFTL(1,log2dimpad_4byte)
+  INTEGER, PARAMETER :: dimpad_8byte = SHIFTL(1,log2dimpad_8byte)
+  INTEGER, PARAMETER :: dimpad_16byte = SHIFTL(1,log2dimpad_16byte)
+  INTEGER, PARAMETER :: dimpad_32byte = SHIFTL(1,log2dimpad_32byte)
+
+  INTEGER, PARAMETER :: padconst_1byte = dimpad_1byte-1
+  INTEGER, PARAMETER :: padconst_2byte = dimpad_2byte-1
+  INTEGER, PARAMETER :: padconst_4byte = dimpad_4byte-1
+  INTEGER, PARAMETER :: padconst_8byte = dimpad_8byte-1
+  INTEGER, PARAMETER :: padconst_16byte = dimpad_16byte-1
+  INTEGER, PARAMETER :: padconst_32byte = dimpad_32byte-1
+
+  INTEGER, PARAMETER :: padmask_1byte = NOT(padconst_1byte)
+  INTEGER, PARAMETER :: padmask_2byte = NOT(padconst_2byte)
+  INTEGER, PARAMETER :: padmask_4byte = NOT(padconst_4byte)
+  INTEGER, PARAMETER :: padmask_8byte = NOT(padconst_8byte)
+  INTEGER, PARAMETER :: padmask_16byte = NOT(padconst_16byte)
+  INTEGER, PARAMETER :: padmask_32byte = NOT(padconst_32byte)
 
   ! Define some classes to hold variables associated with different objects
   ! in the simulation. These will be converted to lists in global_variables for speed.
@@ -110,7 +171,7 @@ MODULE Type_Definitions
      LOGICAL :: linear
      ! NR: Adding to have an option not to include
      ! Coul interaction during biased growth
-     LOGICAL :: L_Coul_CBMC
+     LOGICAL :: L_Coul_CBMC = .TRUE.
      ! N.B. natoms, max_molecules, etc. are in a separate arrays
      ! NR: for insertion style
      LOGICAL :: lcom
@@ -121,12 +182,33 @@ MODULE Type_Definitions
      INTEGER (KIND=INT64), DIMENSION(:), ALLOCATABLE :: insertions_in_step, widom_interval
      REAL(DP), DIMENSION(:), ALLOCATABLE :: widom_sum
 
-     ! # of RB dihedrals, # of dihedrals with nonzero energy, # of dihedrals before stacked dihedrals were combined
-     INTEGER :: ndihedrals_rb, ndihedrals_energetic, ndihedrals_uncombined
      !! Is this a solute?  Is this a solvent species?
      LOGICAL :: l_solute, l_solvent, l_wsolute
+
      !!Atompair_nrg_table index bases
      INTEGER :: solute_base, solvent_base, wsolute_base
+
+     ! Pair energy array index base
+     INTEGER :: superlocate_base
+
+     ! # of RB dihedrals, # of dihedrals with nonzero energy, # of dihedrals before stacked dihedrals were combined
+     INTEGER :: ndihedrals_rb, ndihedrals_energetic, ndihedrals_uncombined
+
+     ! CBMC biasing info
+     INTEGER :: kappa_ins = 0, kappa_ins_pad8, kappa_ins_pad32
+     INTEGER :: kappa_dih = 0, kappa_dih_pad8, kappa_dih_pad32
+     INTEGER :: kappa_rot = 0
+     INTEGER :: nfragments
+     REAL(DP) :: theta_step, log_kappa_ins, log_kappa_rot, ln_pbias_dih_const
+     REAL(SP) :: theta_step_sp
+     LOGICAL :: need_kappa_ins = .FALSE., need_kappa_dih = .FALSE.
+
+     REAL(DP), DIMENSION(:,:), ALLOCATABLE :: sincos_lintheta_dp
+     REAL(SP), DIMENSION(:,:), ALLOCATABLE :: sincos_lintheta_sp
+
+     CONTAINS
+             PROCEDURE :: setup_CBMC_kappas => Setup_Species_kappas
+             PROCEDURE :: write_CBMC_kappas => Write_Species_kappas
 
   END TYPE Species_Class
   !****************************************************************************
@@ -139,6 +221,8 @@ MODULE Type_Definitions
 
      ! The molecule list will have dimensions (max_molecules,nspecies)
 
+     REAL(DP), DIMENSION(4) :: rcom, rcom_old
+
      ! What kind of molecule is this? normal, fractional, fixed, etc.
      ! Note that the following integers will be defined for the type
      ! int_normal = 0
@@ -148,22 +232,27 @@ MODULE Type_Definitions
      INTEGER :: rx_num
 
      ! for open system and multi-box simulations (GEMC, parallel tempering)
-     LOGICAL :: live
-     LOGICAL :: inside
      INTEGER :: which_box
+     LOGICAL :: live
+
+     REAL(DP) :: unused_dummy1, unused_dummy2 ! added for padding derived type
 
      ! also include com information for each of the molecules.
      ! com and euler angles refer to the x,y and z com coordinates
      ! and 1, 2 and 3 euler angles of the molecule. The suffix
      ! old denotes old coordinates.
      ! frac is the fractional scaling parameter for the molecule
-     REAL(DP)  :: xcom, ycom, zcom, euler1, euler2, euler3
-     REAL(DP)  :: xcom_old, ycom_old, zcom_old, euler1_old,euler2_old,euler3_old
+     ! xcom, ycom, and zcom are now rcom(1), rcom(2), and rcom(3), respectively
+     ! likewise for with the "_old" suffix
+     REAL(DP)  :: euler1, euler2, euler3
+     REAL(DP)  :: euler1_old,euler2_old,euler3_old
      REAL(DP)  :: frac
      ! This variable records the maximum distance of any psuedo atom from its
      ! COM. This is used to speed up energy calculations.
 
-     REAL(DP) :: max_dcom, max_dcom_old, min_dcom
+     ! max_dcom is now rcom(4) and max_dcom_old is now rcom_old(4)
+
+     REAL(DP) :: min_dcom
 
 
 
@@ -210,14 +299,25 @@ MODULE Type_Definitions
 
      ! atom_list has dimensions (natoms, max_molecules, nspecies)
 
-     REAL(DP) :: rxp, ryp, rzp
+     REAL(DP), DIMENSION(3) :: rp, rp_old
+
+     !REAL(DP) :: rxp, ryp, rzp
      REAL(DP) :: rxp_nls, ryp_nls, rzp_nls  ! The starting positions for the neighbor list
-     REAL(DP) :: rxp_old, ryp_old, rzp_old
+     !REAL(DP) :: rxp_old, ryp_old, rzp_old
      INTEGER :: ci(3), ci_cbmc(3), ci_full(3) ! the integer coordinates of the cell containing this atom
      LOGICAL :: exist
 
   END TYPE Atom_Class
   !****************************************************************************
+
+  TYPE Atom256
+          REAL(DP) :: rxp, ryp, rzp
+          LOGICAL(8) :: exist
+  END TYPE Atom256
+
+  TYPE VdW256
+          REAL(DP) :: p1, p2, p3, p4
+  END TYPE VdW256
 
 
 
@@ -293,10 +393,15 @@ MODULE Type_Definitions
      ! RB torsion series constants
      REAL(DP) :: rb_c(0:5)
      REAL(DP), DIMENSION(max_dihedral_params) :: dihedral_param
+     REAL(SP) :: rb_c_sp(0:5)
+     REAL(SP), DIMENSION(max_dihedral_params) :: dihedral_param_sp
      CHARACTER(20) :: dihedral_potential_type
      INTEGER :: int_dipot_type
      ! Flag to tell whether dihedral is formatted as RB torsion
      LOGICAL :: l_rb_formatted
+     CONTAINS
+             PROCEDURE :: SP_Convert => Convert_Dihedral_DP_to_SP
+             PROCEDURE :: Init => Initialize_Dihedral_Class
 
   END TYPE Dihedral_Class
   !****************************************************************************
@@ -432,15 +537,49 @@ MODULE Type_Definitions
     CHARACTER(20) :: box_shape
     INTEGER :: int_box_shape
     REAL(DP), DIMENSION(3,3) :: length, length_inv, max_delta, hlength
-    REAL(DP), DIMENSION(3) :: basis_length, cos_angle, angle, face_distance
+    REAL(DP), DIMENSION(3) :: basis_length, cos_angle, angle, face_distance, invT_face_distance
     REAL(DP) :: volume, dv_max
+    REAL(DP), DIMENSION(3,3) :: basis_converter, orig_length_inv, orig_length
+    LOGICAL :: basis_changed
+
+    REAL(SP), DIMENSION(3) :: sp_diag_length, cell_length_recip, real_length_cells
+    REAL(SP), DIMENSION(3) :: cell_H_diag
+    REAL(DP), DIMENSION(3) :: cell_face_distance, cell_xyzortho_bbox_length
+    REAL(DP), DIMENSION(3,3) :: cell_length_inv, cell_H_dp
+    REAL(SP), DIMENSION(3,3) :: cell_H_sp
+    INTEGER, DIMENSION(3) :: length_cells, sectorbound
 
   ! Inner shape is used to define a limited region into which molecules can be
   ! inserted
     INTEGER :: int_inner_shape
     REAL(DP) :: inner_volume, inner_radius, inner_radius2, inner_zmax, inner_zmin
 
+    INTEGER :: border_thickness(3)
+    INTEGER, DIMENSION(:,:,:), ALLOCATABLE :: cbmc_cell_mask
+
+    INTEGER, DIMENSION(3) :: length_bitcells, setbit_extent
+    REAL(SP), DIMENSION(3) :: bit_cell_length_recip, real_length_bitcells
+    LOGICAL :: l_cavloc_int32
+    INTEGER(4), DIMENSION(:), ALLOCATABLE :: bitcell_int32_vec
+    INTEGER, DIMENSION(2:3) :: bitcell_dimfactor
+    REAL(DP) :: ideal_bitcell_length, rcut_low_max
+    REAL(DP), DIMENSION(3) :: bitcell_face_distance, bitcell_face_distance_recip
+
+    ! Ewald reciprocal space (kspace) lattice vectors and related data
+    ! 5 columns: first 3 are hx,hy,hz; 4th is Cn, 5th is a factor used for pressure calculation
+    REAL(DP), DIMENSION(:,:), ALLOCATABLE :: kspace_vectors
+    REAL(DP), DIMENSION(:,:), ALLOCATABLE :: sincos_sum, sincos_sum_old
+    INTEGER, DIMENSION(:), ALLOCATABLE :: kspace_vector_ints
+    INTEGER :: kxyz_max(3), kxyz_maxmax
+
  END TYPE Box_Class
+
+ TYPE Cavity_Data_Class
+         INTEGER(INT64), DIMENSION(:), ALLOCATABLE :: cavity_locs
+         INTEGER(INT32), DIMENSION(:), ALLOCATABLE :: cavity_locs_int32
+         INTEGER(INT64) :: ncavs, ncavs_fine, ncavs_coarse, ncavs_combined
+         REAL(DP) :: ncavs_dp, ln_cavfrac
+ END TYPE Cavity_Data_Class
 
   !****************************************************************************
 
@@ -558,6 +697,7 @@ MODULE Type_Definitions
     LOGICAL:: ring
     REAL(DP)::rcut_vdwsq, rcut_coulsq,alpha_ewald
     REAL(DP) :: prob_ins, cum_prob_ins
+    INTEGER :: i_big_atom = 0, ia_frag_big_atom=1
 
  END TYPE Frag_Class
 !-------------------------------------------------------------------------------------------------
@@ -577,7 +717,7 @@ MODULE Type_Definitions
 !-------------------------------------------------------------------------------------------------
 
  TYPE Library_Coords_Class
-    REAL(DP) :: rxp, ryp, rzp
+    REAL(DP) :: rp(3)
  END TYPE Library_Coords_Class
 
 !-------------------------------------------------------------------------------------------------
@@ -622,5 +762,77 @@ MODULE Type_Definitions
      REAL(DP) :: exp_dE
      REAL(DP) :: exp_dE_ratio
   END TYPE Rotation_Class
+
+  PRIVATE Convert_Dihedral_DP_to_SP, Initialize_Dihedral_Class, Setup_Species_Kappas, Write_Species_Kappas
+
+  CONTAINS
+          ELEMENTAL SUBROUTINE Convert_Dihedral_DP_to_SP(this)
+                  CLASS(Dihedral_Class), INTENT(INOUT) :: this
+                  this%rb_c_sp = REAL(this%rb_c,SP)
+                  this%dihedral_param_sp = REAL(this%dihedral_param,SP)
+          END SUBROUTINE Convert_Dihedral_DP_to_SP
+          ELEMENTAL SUBROUTINE Initialize_Dihedral_Class(this)
+                  CLASS(Dihedral_Class), INTENT(INOUT) :: this
+                  this%atom = 0
+                  this%rb_c = 0.0_DP
+                  this%dihedral_param = 0.0_DP
+                  this%rb_c_sp = 0.0 ! Maybe this should be initalized to NaN, so there's a clear error if it wasn't converted first
+                  this%dihedral_param_sp = 0.0
+                  this%dihedral_potential_type = ""
+                  this%int_dipot_type = 0
+                  this%l_rb_formatted = .FALSE.
+          END SUBROUTINE Initialize_Dihedral_Class
+          ELEMENTAL SUBROUTINE Setup_Species_Kappas(this)
+                  CLASS(Species_Class), INTENT(INOUT) :: this
+                  INTEGER :: i
+                  REAL(DP) :: theta
+                  this%kappa_ins_pad8 = IAND(this%kappa_ins+padconst_4byte,padmask_4byte)
+                  this%kappa_ins_pad32 = IAND(this%kappa_ins+padconst_1byte,padmask_1byte)
+                  this%kappa_dih_pad8 = IAND(this%kappa_dih+padconst_4byte,padmask_4byte)
+                  this%kappa_dih_pad32 = IAND(this%kappa_dih+padconst_1byte,padmask_1byte)
+                  IF (this%need_kappa_ins) this%log_kappa_ins = LOG(REAL(this%kappa_ins,DP))
+                  IF (this%kappa_rot > 0) this%log_kappa_rot = LOG(REAL(this%kappa_rot,DP))
+                  IF (this%need_kappa_dih) THEN
+                          this%ln_pbias_dih_const = REAL(this%nfragments-1,DP)*LOG(REAL(this%kappa_dih,DP))
+                          IF (ALLOCATED(this%sincos_lintheta_dp)) DEALLOCATE(this%sincos_lintheta_dp)
+                          IF (ALLOCATED(this%sincos_lintheta_sp)) DEALLOCATE(this%sincos_lintheta_sp)
+                          ALLOCATE(this%sincos_lintheta_dp(this%kappa_dih_pad8,2))
+                          ALLOCATE(this%sincos_lintheta_sp(this%kappa_dih_pad8,2))
+                          this%theta_step = twoPI/this%kappa_dih
+                          this%theta_step_sp = REAL(this%theta_step,SP)
+                          !DIR$ VECTOR ALIGNED
+                          DO i = 0, this%kappa_dih_pad8-1
+                                theta = i*this%theta_step
+                                this%sincos_lintheta_dp(i+1,1) = SIN(theta)
+                                this%sincos_lintheta_dp(i+1,2) = COS(theta)
+                          END DO
+                          this%sincos_lintheta_sp = REAL(this%sincos_lintheta_dp,SP)
+                  END IF
+          END SUBROUTINE Setup_Species_Kappas
+          SUBROUTINE Write_Species_Kappas(this,outputunit)
+                  CLASS(Species_Class), INTENT(INOUT) :: this
+                  INTEGER, INTENT(IN) :: outputunit
+                  IF (this%need_kappa_ins) THEN
+                          WRITE(outputunit,'(X,A,T35,I12)') 'Kappa for first fragment insertion ', this%kappa_ins
+                  END IF
+                  IF (this%need_kappa_dih) THEN
+                          WRITE(outputunit,'(X,A,T35,I12)') 'Kappa for dihedral selection ', this%kappa_dih
+                  END IF
+          END SUBROUTINE Write_Species_Kappas
+
+
+        PURE FUNCTION Cross_Product(a,b) RESULT(c)
+                REAL(DP), DIMENSION(3) :: c
+                REAL(DP), DIMENSION(3), INTENT(IN) :: a, b
+                CALL Elemental_Cross_Product(a(1),a(2),a(3),b(1),b(2),b(3),c(1),c(2),c(3))
+        END FUNCTION Cross_Product
+
+        ELEMENTAL SUBROUTINE Elemental_Cross_Product(a1,a2,a3,b1,b2,b3,c1,c2,c3)
+                REAL(DP), INTENT(IN) :: a1,a2,a3,b1,b2,b3
+                REAL(DP), INTENT(OUT) :: c1,c2,c3
+                c1 = a2*b3 - a3*b2
+                c2 = a3*b1 - a1*b3
+                c3 = a1*b2 - a2*b1
+        END SUBROUTINE Elemental_Cross_Product
 
 END MODULE Type_Definitions

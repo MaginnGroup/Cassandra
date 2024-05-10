@@ -73,6 +73,7 @@ SUBROUTINE Atom_Displacement
   INTEGER :: ibox, ndisp_species, is, im
   INTEGER :: lm, this_atom, iatom, ref_atom, nmolecules_species, mcstep
   INTEGER :: nmols_tot, nmols_box(nbr_boxes)
+  INTEGER :: im_locate
 
   INTEGER, DIMENSION(:), ALLOCATABLE :: species_id
 
@@ -187,9 +188,9 @@ SUBROUTINE Atom_Displacement
   ref_atom = species_list(is)%disp_atom_ref(this_atom)
 !  write(*,*) iatom, ref_atom
 !  write(*,*) atom_list(iatom,lm,is)
-  atom_list(iatom,lm,is)%rxp = atom_list(iatom,lm,is)%rxp - atom_list(ref_atom,lm,is)%rxp
-  atom_list(iatom,lm,is)%ryp = atom_list(iatom,lm,is)%ryp - atom_list(ref_atom,lm,is)%ryp
-  atom_list(iatom,lm,is)%rzp = atom_list(iatom,lm,is)%rzp - atom_list(ref_atom,lm,is)%rzp
+  atom_list(iatom,lm,is)%rp(1) = atom_list(iatom,lm,is)%rp(1) - atom_list(ref_atom,lm,is)%rp(1)
+  atom_list(iatom,lm,is)%rp(2) = atom_list(iatom,lm,is)%rp(2) - atom_list(ref_atom,lm,is)%rp(2)
+  atom_list(iatom,lm,is)%rp(3) = atom_list(iatom,lm,is)%rp(3) - atom_list(ref_atom,lm,is)%rp(3)
 
   ! Displace iatom
 
@@ -208,9 +209,9 @@ SUBROUTINE Atom_Displacement
 
   ! change coordinates of iatom to lab frame of reference
 
-  atom_list(iatom,lm,is)%rxp = atom_list(iatom,lm,is)%rxp + atom_list(ref_atom,lm,is)%rxp
-  atom_list(iatom,lm,is)%ryp = atom_list(iatom,lm,is)%ryp + atom_list(ref_atom,lm,is)%ryp
-  atom_list(iatom,lm,is)%rzp = atom_list(iatom,lm,is)%rzp + atom_list(ref_atom,lm,is)%rzp
+  atom_list(iatom,lm,is)%rp(1) = atom_list(iatom,lm,is)%rp(1) + atom_list(ref_atom,lm,is)%rp(1)
+  atom_list(iatom,lm,is)%rp(2) = atom_list(iatom,lm,is)%rp(2) + atom_list(ref_atom,lm,is)%rp(2)
+  atom_list(iatom,lm,is)%rp(3) = atom_list(iatom,lm,is)%rp(3) + atom_list(ref_atom,lm,is)%rp(3)
 !   write(*,*) atom_list(iatom,lm,is)
   CALL Get_COM(lm,is)
   CALL Compute_Max_COM_Distance(lm,is)
@@ -292,8 +293,18 @@ SUBROUTINE Atom_Displacement
      ! to here except restore the cos_sum and sin_sum arrays
 
      IF (int_charge_sum_style(ibox) == charge_ewald) THEN
-        cos_sum(:,ibox) = cos_sum_old(:,ibox)
-        sin_sum(:,ibox) = sin_sum_old(:,ibox)
+        IF (is .EQ. 1) THEN
+                im_locate = im
+        ELSE
+                im_locate = SUM(max_molecules(1:is-1)) + im
+        END IF
+        !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
+        box_list(ibox)%sincos_sum = box_list(ibox)%sincos_sum_old
+        cos_mol(1:nvecs(ibox),im_locate) = cos_mol(1:nvecs(ibox),0)
+        sin_mol(1:nvecs(ibox),im_locate) = sin_mol(1:nvecs(ibox),0)
+        !$OMP END PARALLEL WORKSHARE
+        !cos_sum(:,ibox) = cos_sum_old(:,ibox)
+        !sin_sum(:,ibox) = sin_sum_old(:,ibox)
      END IF
 
   END IF
@@ -327,9 +338,9 @@ SUBROUTINE Change_Phi_Theta(this_atom,im,is,theta_bound)
 
 
   ! Get spherical coordinates
-  this_x = atom_list(this_atom,im,is)%rxp
-  this_y = atom_list(this_atom,im,is)%ryp
-  this_z = atom_list(this_atom,im,is)%rzp
+  this_x = atom_list(this_atom,im,is)%rp(1)
+  this_y = atom_list(this_atom,im,is)%rp(2)
+  this_z = atom_list(this_atom,im,is)%rp(3)
 
   rho = this_x * this_x + this_y * this_y 
   bond_length = this_z * this_z + rho
@@ -364,9 +375,9 @@ SUBROUTINE Change_Phi_Theta(this_atom,im,is,theta_bound)
   phi = phi + dphi
   
   ! new coordinates
-  atom_list(this_atom,im,is)%rxp = bond_length * DSIN(theta) * DCOS(phi)
-  atom_list(this_atom,im,is)%ryp = bond_length * DSIN(theta) * DSIN(phi)
-  atom_list(this_atom,im,is)%rzp = bond_length * DCOS(theta)
+  atom_list(this_atom,im,is)%rp(1) = bond_length * DSIN(theta) * DCOS(phi)
+  atom_list(this_atom,im,is)%rp(2) = bond_length * DSIN(theta) * DSIN(phi)
+  atom_list(this_atom,im,is)%rp(3) = bond_length * DCOS(theta)
 
 END SUBROUTINE Change_Phi_Theta
   

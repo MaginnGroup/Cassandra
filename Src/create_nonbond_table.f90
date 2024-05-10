@@ -66,13 +66,17 @@
   ! Steele potential
   REAL(DP) :: sigma_ss, eps_ss, rho_s, delta_s, eps_sf
   !custom mixing rules
-  INTEGER :: ierr,line_nbr,nbr_entries, is_1, is_2, ia_1, ia_2, itype_custom, jtype_custom
+  INTEGER :: ierr,line_nbr,nbr_entries, is_1, is_2, ia_1, ia_2, itype_custom, jtype_custom, ibox
   INTEGER ::  i_type1, i_type2
   CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
   REAL(DP) :: min_qprod, min_U_q, U_max, lambda
+  INTEGER, DIMENSION(4), PARAMETER :: order2 = (/ 2, 3, 1, 4 /)
+  INTEGER, DIMENSION(4) :: shape1, shape2
+  REAL(DP) :: sixbycut, eps, sigma, negsigsq, negsigbyr2, rterm, rterm2
 
 !******************************************************************************
+  l_zerotype_present = .FALSE.
   IF (verbose_log) THEN
      WRITE(logunit,*)
      WRITE(logunit,'(A)') 'Nonbond tables'
@@ -99,7 +103,9 @@
         
         repeat_type = .FALSE.
 
-        IF (nonbond_list(ia,is)%vdw_type /= 'NONE') THEN
+        IF (nonbond_list(ia,is)%vdw_type /= 'NONE' .AND. &
+                (ANY(ABS(nonbond_list(ia,is)%vdw_param(1:nbr_vdw_params(is)))>tiny_number) &
+                .OR. mix_rule == 'custom')) THEN
 
            !----------------------------------------------------------------
            ! Determine whether the atomtype has already been accounted for
@@ -140,6 +146,7 @@
         ELSE
            ! atom has no atom_type
            nonbond_list(ia,is)%atom_type_number = 0
+           l_zerotype_present = .TRUE.
         ENDIF
         ! Get maximum and minimum charge for atom type
         IF (repeat_type) THEN
@@ -204,11 +211,15 @@
   IF (ALLOCATED(temp_atomtypes)) DEALLOCATE(temp_atomtypes)
 
   ! allocate arrays containing vdw parameters for all interaction pairs.
-  ALLOCATE(vdw_param1_table(nbr_atomtypes,nbr_atomtypes), Stat=AllocateStatus)
-  ALLOCATE(vdw_param2_table(nbr_atomtypes,nbr_atomtypes), Stat=AllocateStatus)
-  ALLOCATE(vdw_param3_table(nbr_atomtypes,nbr_atomtypes), Stat=AllocateStatus)
-  ALLOCATE(vdw_param4_table(nbr_atomtypes,nbr_atomtypes), Stat=AllocateStatus)
-  ALLOCATE(vdw_param5_table(nbr_atomtypes,nbr_atomtypes), Stat=AllocateStatus)
+  ALLOCATE(vdw_param1_table(0:nbr_atomtypes,0:nbr_atomtypes), Stat=AllocateStatus)
+  ALLOCATE(vdw_param2_table(0:nbr_atomtypes,0:nbr_atomtypes), Stat=AllocateStatus)
+  ALLOCATE(vdw_param3_table(0:nbr_atomtypes,0:nbr_atomtypes), Stat=AllocateStatus)
+  ALLOCATE(vdw_param4_table(0:nbr_atomtypes,0:nbr_atomtypes), Stat=AllocateStatus)
+  ALLOCATE(vdw_param5_table(0:nbr_atomtypes,0:nbr_atomtypes), Stat=AllocateStatus)
+  ALLOCATE(ppvdwp_table(0:nbr_atomtypes,0:nbr_atomtypes,5,nbr_boxes))
+  ALLOCATE(ppvdwp_table2(5,0:nbr_atomtypes,0:nbr_atomtypes,nbr_boxes))
+  ALLOCATE(ppvdwp_table_sp(0:nbr_atomtypes,0:nbr_atomtypes,5,nbr_boxes))
+  ALLOCATE(ppvdwp_table2_sp(5,0:nbr_atomtypes,0:nbr_atomtypes,nbr_boxes))
 
   IF (AllocateStatus .NE. 0) THEN
      err_msg = ''
@@ -216,8 +227,17 @@
      CALL Clean_Abort(err_msg,'create_nonbond_table')
   END IF
 
+  vdw_param1_table = 0.0_DP
+  vdw_param2_table = 0.0_DP
+  vdw_param3_table = 0.0_DP
+  vdw_param4_table = 0.0_DP
+  vdw_param5_table = 0.0_DP
+  ppvdwp_table = 0.0_DP
+  ppvdwp_table2 = 0.0_DP
+
   ! Allocate memory for rminsq_table
   ALLOCATE(rminsq_table(0:nbr_atomtypes, 0:nbr_atomtypes), Stat=AllocateStatus)
+  ALLOCATE(sp_rminsq_table(0:nbr_atomtypes, 0:nbr_atomtypes), Stat=AllocateStatus)
   rminsq_table = rcut_lowsq
 
   IF (AllocateStatus .NE. 0) THEN
@@ -638,6 +658,63 @@
      END IF ! mix_rule
   END IF ! nbr_atomtypes > 1
 
-  max_rmin = DSQRT(MAXVAL(rminsq_table))
+
+  DO ibox = 1, nbr_boxes
+        IF (int_vdw_sum_style(ibox) .NE. vdw_charmm .AND. int_vdw_style(ibox) == vdw_lj) THEN
+                sixbycut = 6.0_DP / rcut_vdw(ibox)
+                DO jtype = 1, nbr_atomtypes
+                        DO itype = 1, nbr_atomtypes
+                                eps = vdw_param1_table(itype,jtype)*4.0_DP
+                                sigma = vdw_param2_table(itype,jtype)
+                                negsigsq = -sigma*sigma
+                                ppvdwp_table(itype,jtype,1,ibox) = eps
+                                ppvdwp_table(itype,jtype,2,ibox) = negsigsq
+                                IF (int_vdw_sum_style(ibox) == vdw_cut_shift) THEN
+                                        negsigbyr2 = negsigsq/rcut_vdwsq(ibox)
+                                        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                        rterm = rterm + rterm*rterm
+                                        ppvdwp_table(itype,jtype,3,ibox) = eps*rterm
+                                ELSE IF (int_vdw_sum_style(ibox) == vdw_cut_shift_force) THEN
+                                        negsigbyr2 = negsigsq/rcut_vdwsq(ibox)
+                                        rterm = negsigbyr2*negsigbyr2*negsigbyr2
+                                        rterm = rterm + rterm*rterm
+                                        rterm2 = rterm * rterm
+                                        rterm = rterm + rterm*rterm
+                                        ppvdwp_table(itype,jtype,3,ibox) = eps*rterm
+                                        ppvdwp_table(itype,jtype,4,ibox) = sixbycut * eps * rterm2
+                                END IF
+                        END DO
+                END DO
+        ELSE IF (int_vdw_style(ibox) == vdw_mie) THEN
+                ppvdwp_table(:,:,1,ibox) = vdw_param1_table * &
+                        vdw_param3_table/(vdw_param3_table-vdw_param4_table) * &
+                        (vdw_param3_table/vdw_param4_table)** &
+                        (vdw_param4_table/(vdw_param3_table-vdw_param4_table))
+                ppvdwp_table(:,:,2,ibox) = ppvdwp_table(:,:,1,ibox) * &
+                        vdw_param2_table ** vdw_param4_table
+                ppvdwp_table(:,:,1,ibox) = ppvdwp_table(:,:,1,ibox) * &
+                        vdw_param2_table ** vdw_param3_table
+                l_nonuniform_exponents = ANY(vdw_param3_table(1:,1:) .NE. vdw_param3_table(1,1)) &
+                        .OR. ANY (vdw_param4_table(1:,1:) .NE. vdw_param4_table(1,1))
+                ppvdwp_table(:,:,3,ibox) = vdw_param3_table * -0.5_DP
+                ppvdwp_table(:,:,4,ibox) = vdw_param4_table * -0.5_DP
+                IF (int_vdw_sum_style(ibox) == vdw_cut_shift) THEN
+                        ! this shift constant is positive and meant to be subtracted, not added
+                        ppvdwp_table(:,:,5,ibox) = &
+                                ppvdwp_table(:,:,1,ibox) * rcut_vdwsq(ibox)**ppvdwp_table(:,:,3,ibox) - &
+                                ppvdwp_table(:,:,2,ibox) * rcut_vdwsq(ibox)**ppvdwp_table(:,:,4,ibox)
+                END IF
+        ELSE
+                ppvdwp_table(:,:,1,ibox) = vdw_param1_table
+                ppvdwp_table(:,:,2,ibox) = vdw_param2_table * vdw_param2_table
+        END IF
+  END DO
+
+  !order2 = (/ 2, 3, 1, 4 /)
+
+  ppvdwp_table2 = RESHAPE(ppvdwp_table, SHAPE(ppvdwp_table2), ORDER=order2)
+  ppvdwp_table2_sp = REAL(ppvdwp_table2,SP)
+  ppvdwp_table_sp = REAL(ppvdwp_table,SP)
+
 
 END SUBROUTINE Create_Nonbond_Table

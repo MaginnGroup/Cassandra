@@ -44,6 +44,7 @@ MODULE Pair_Nrg_Routines
 
   USE Type_Definitions
   USE Global_Variables
+  !$ USE OMP_LIB
 
   IMPLICIT NONE
 
@@ -73,11 +74,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: alive, is
     INTEGER, INTENT(OUT) :: position
 
-    IF ( is == 1) THEN
-       position = alive
-    ELSE
-       position = SUM(max_molecules(1:is-1)) + alive
-    END IF
+    position = species_list(is)%superlocate_base + alive
 
   END SUBROUTINE Get_Position_Alive
   !********************************************************
@@ -163,19 +160,21 @@ CONTAINS
     INTEGER, OPTIONAL:: n_cls_mol, id_cls_mol(:), is_cls_mol(:)
     INTEGER, OPTIONAL :: box_cls_mol(:)
 
-    INTEGER :: n_mols, stride, position, imol
+    INTEGER :: n_mols, stride, imol
     REAL(DP), INTENT(OUT) :: E_vdw, E_qq
 
     REAL(DP), OPTIONAL, INTENT(OUT) :: box_nrg_vdw(:), box_nrg_qq(:)
 
     INTEGER :: locate_1, locate_2, this_species, this_im, locate_im
+    INTEGER :: vlen, sl_base, i_base, i
+    REAL(DP) :: nrg_vdw, nrg_qq
 
 
     IF ( .NOT. present(n_cls_mol)) THEN
        ! only a single molecule storage is necessary
        n_mols = 1
-       ALLOCATE(pair_vdw_temp(SUM(max_molecules)))
-       ALLOCATE(pair_qq_temp(SUM(max_molecules)))
+       ALLOCATE(pair_vdw_temp(SUM(nmols(:,this_box)),1))
+       ALLOCATE(pair_qq_temp(SUM(nmols(:,this_box)),1))
 
     ELSE
 
@@ -183,8 +182,8 @@ CONTAINS
        ! we will form an array that is n_cls_mol * SUM(max_molecules)
        n_mols = n_cls_mol
 
-       ALLOCATE(pair_vdw_temp(n_mols*SUM(max_molecules)))
-       ALLOCATE(pair_qq_temp(n_mols*SUM(max_molecules)))
+       ALLOCATE(pair_vdw_temp(MAXVAL(SUM(nmols(:,1:),1)),n_mols))
+       ALLOCATE(pair_qq_temp(MAXVAL(SUM(nmols(:,1:),1)),n_mols))
 
        IF ( present(box_cls_mol)) THEN
           box_nrg_vdw(:) = 0.0_DP
@@ -196,18 +195,10 @@ CONTAINS
     E_vdw = 0.0_DP
     E_qq = 0.0_DP
    
-    pair_vdw_temp(:) = 0.0_DP
-    pair_qq_temp(:) = 0.0_DP
-
-   
 
     DO imol = 1, n_mols
        
-       IF ( .NOT. present(n_cls_mol)) THEN
-       
-          CALL Get_Position_Alive(alive,is,locate_1)
-
-       ELSE
+       IF (present(n_cls_mol)) THEN
 
           alive = id_cls_mol(imol)
           is = is_cls_mol(imol)
@@ -215,41 +206,56 @@ CONTAINS
        END IF
 
        IF ( present(box_cls_mol) ) THEN
-
           this_box = box_cls_mol(imol)
           E_vdw = 0.0_DP
           E_qq = 0.0_DP
 
        END IF
           
-       CALL Get_Position_Alive(alive,is,locate_1)
+       !CALL Get_Position_Alive(alive,is,locate_1)
+       locate_1 = species_list(is)%superlocate_base+alive
 
        !Get_Position_Alive is used in conjunction with pair_vdw/pair_qq arrays
 
-       stride = (imol-1) * SUM(max_molecules)
+       i_base = 0
        
        speciesLoop: DO this_species = 1, nspecies
+                sl_base = species_list(this_species)%superlocate_base
+                vlen = nmols(this_species,this_box)
+                IF (vlen == 0) CYCLE
+                IF (open_mc_flag) THEN
+                        !$OMP PARALLEL
+                        !$OMP DO SIMD SCHEDULE(STATIC) PRIVATE(nrg_vdw,nrg_qq,locate_2) &
+                        !$OMP REDUCTION(+: E_vdw, E_qq)
+                        DO i = 1, vlen
+                                locate_2 = locate(i,this_species,this_box)+sl_base
+                                nrg_vdw = pair_nrg_vdw(locate_2,locate_1)
+                                nrg_qq = pair_nrg_qq(locate_2,locate_1)
+                                pair_vdw_temp(i_base+i,imol) = nrg_vdw
+                                pair_qq_temp(i_base+i,imol) = nrg_qq
+                                E_vdw = E_vdw + nrg_vdw
+                                E_qq = E_qq + nrg_qq
+                        END DO
+                        !$OMP END DO SIMD
+                        !$OMP END PARALLEL
+                ELSE
+                        IF (this_box > 1) sl_base = sl_base + SUM(nmols(this_species,1:this_box-1))
+                        !$OMP PARALLEL
+                        !$OMP DO SIMD SCHEDULE(STATIC) PRIVATE(nrg_vdw,nrg_qq) &
+                        !$OMP REDUCTION(+: E_vdw, E_qq)
+                        DO i = 1, vlen
+                                nrg_vdw = pair_nrg_vdw(i+sl_base,locate_1)
+                                nrg_qq = pair_nrg_qq(i+sl_base,locate_1)
+                                pair_vdw_temp(i_base+i,imol) = nrg_vdw
+                                pair_qq_temp(i_base+i,imol) = nrg_qq
+                                E_vdw = E_vdw + nrg_vdw
+                                E_qq = E_qq + nrg_qq
+                        END DO
+                        !$OMP END DO SIMD
+                        !$OMP END PARALLEL
+                END IF
+                i_base = i_base + vlen
           
-          molidLoop: DO this_im = 1, nmols(this_species, this_box)
-             
-             locate_im = locate(this_im,this_species,this_box)
-             
-             IF (molecule_list(locate_im,this_species)%live) THEN
-                   
-                   CALL Get_Position_Alive(locate_im,this_species,locate_2)
-                   
-                   position = locate_2 + stride
-                   
-                   pair_vdw_temp(position) = pair_nrg_vdw(locate_2,locate_1)
-                   pair_qq_temp(position) = pair_nrg_qq(locate_2,locate_1)
-                   
-                   E_vdw = E_vdw + pair_vdw_temp(position)
-                   E_qq = E_qq + pair_qq_temp(position)
-                   
-                
-             END IF
-             
-          END DO molidLoop
           
        END DO speciesLoop
 
@@ -290,6 +296,8 @@ CONTAINS
     INTEGER :: n_mols, imol, stride
 
     INTEGER :: locate_1, this_species, this_im, locate_im, locate_2
+    INTEGER :: vlen, sl_base, i_base, i
+    REAL(DP) :: nrg_vdw, nrg_qq
 
 
     IF ( present(n_cls_mol)) THEN
@@ -310,32 +318,47 @@ CONTAINS
        END IF
        
        
-       CALL Get_Position_Alive(alive,is,locate_1)
+       !CALL Get_Position_Alive(alive,is,locate_1)
+       locate_1 = species_list(is)%superlocate_base+alive
+       i_base = 0
 
-       stride = (imol - 1) * SUM(max_molecules)
-       
        DO this_species = 1, nspecies
-          
-          DO this_im = 1, nmols(this_species, this_box)
-             
-             locate_im = locate(this_im,this_species,this_box)
-             
-             IF (molecule_list(locate_im,this_species)%live) THEN
-                
-                   
-                   CALL Get_Position_Alive(locate_im,this_species,locate_2)
-                   
-                   pair_nrg_vdw(locate_1,locate_2) = pair_vdw_temp(locate_2 + stride)
-                   pair_nrg_vdw(locate_2,locate_1) = pair_vdw_temp(locate_2 + stride)
-                   
-                   pair_nrg_qq(locate_1,locate_2) = pair_qq_temp(locate_2 + stride)
-                   pair_nrg_qq(locate_2,locate_1) = pair_qq_temp(locate_2 + stride)
-                
-                
-             END IF
-             
-          END DO
-          
+                sl_base = species_list(this_species)%superlocate_base
+                vlen = nmols(this_species,this_box)
+                IF (vlen == 0) CYCLE
+                IF (open_mc_flag) THEN
+                        !$OMP PARALLEL WORKSHARE
+                        pair_nrg_vdw(locate(1:vlen,this_species,this_box)+sl_base,locate_1) = pair_vdw_temp(i_base+1:i_base+vlen,imol)
+                        pair_nrg_qq(locate(1:vlen,this_species,this_box)+sl_base,locate_1) = pair_qq_temp(i_base+1:i_base+vlen,imol)
+                        pair_nrg_vdw(locate_1,locate(1:vlen,this_species,this_box)+sl_base) = pair_vdw_temp(i_base+1:i_base+vlen,imol)
+                        pair_nrg_qq(locate_1,locate(1:vlen,this_species,this_box)+sl_base) = pair_qq_temp(i_base+1:i_base+vlen,imol)
+                        !$OMP END PARALLEL WORKSHARE
+                ELSE
+                        IF (this_box > 1) sl_base = sl_base + SUM(nmols(this_species,1:this_box-1))
+                        !$OMP PARALLEL
+                        !$OMP DO SIMD SCHEDULE(STATIC) PRIVATE(nrg_vdw,nrg_qq)
+                        DO i = 1, locate_1-sl_base-1
+                                nrg_vdw = pair_vdw_temp(i_base+i,imol)
+                                nrg_qq = pair_qq_temp(i_base+i,imol)
+                                pair_nrg_vdw(i+sl_base,locate_1) = nrg_vdw
+                                pair_nrg_qq(i+sl_base,locate_1) = nrg_qq
+                                pair_nrg_vdw(locate_1,i+sl_base) = nrg_vdw
+                                pair_nrg_qq(locate_1,i+sl_base) = nrg_qq
+                        END DO
+                        !$OMP END DO SIMD NOWAIT
+                        !$OMP DO SIMD SCHEDULE(STATIC) PRIVATE(nrg_vdw,nrg_qq)
+                        DO i = locate_1-sl_base+1, vlen
+                                nrg_vdw = pair_vdw_temp(i_base+i,imol)
+                                nrg_qq = pair_qq_temp(i_base+i,imol)
+                                pair_nrg_vdw(i+sl_base,locate_1) = nrg_vdw
+                                pair_nrg_qq(i+sl_base,locate_1) = nrg_qq
+                                pair_nrg_vdw(locate_1,i+sl_base) = nrg_vdw
+                                pair_nrg_qq(locate_1,i+sl_base) = nrg_qq
+                        END DO
+                        !$OMP END DO SIMD
+                        !$OMP END PARALLEL
+                END IF
+                i_base = i_base + vlen
        END DO
        
     END DO

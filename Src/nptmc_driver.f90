@@ -287,12 +287,6 @@ SUBROUTINE NPTMC_Driver
 
      END IF
 
-     !IF ( cpcollect ) THEN
-     !   DO is = 1,nspecies
-     !      CALL Chempot(1, is)
-     !   END DO
-     !END IF
-
 
      ! do widom insertions, if applicable to this simulation and step
      IF (widom_flag) THEN
