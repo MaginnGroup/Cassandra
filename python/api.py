@@ -1,6 +1,3 @@
-<!-- end list -->
-
-```python
 # In python/api.py
 import subprocess
 import os
@@ -11,22 +8,23 @@ def run_cassandra(input_file_path: str, cassandra_exe_path: str = "cassandra.exe
     Runs the Cassandra executable as a subprocess.
 
     Args:
-        input_file_path: The path to the .inp file (e.g., "Examples/run.inp").
+        input_file_path: The path to the .inp file (e.g., "Examples/NVT/water_spc/nvt.inp").
         cassandra_exe_path: The path to the compiled cassandra executable.
     """
     print(f"--- Running Cassandra for {input_file_path} ---")
 
-    # Get the directory where the input file lives
-    run_directory = os.path.dirname(input_file_path)
-    
-    # Get just the name of the input file
-    inp_file = os.path.basename(input_file_path)
+    # Get the FULL, ABSOLUTE path to the input file and executable
+    inp_file_abs = os.path.abspath(input_file_path)
+    exe_path_abs = os.path.abspath(cassandra_exe_path)
 
-    # We must run Cassandra in the same directory as the input file
-    # so it can find all the other files (like .mol, .dat)
+    # Get the directory where the input file lives.
+    # We will run Cassandra from this directory so all output
+    # files (log, prp, etc.) end up in the right place.
+    run_directory = os.path.dirname(inp_file_abs)
     
-    # Note: shlex.split is safer than a simple list for commands
-    command = shlex.split(f"{cassandra_exe_path} -i {inp_file}")
+    # This is the command Cassandra expects:
+    # /path/to/executable /path/to/input.inp
+    command = shlex.split(f"{exe_path_abs} {inp_file_abs}")
 
     print(f"Running in directory: {run_directory}")
     print(f"Running command: {command}")
@@ -49,4 +47,3 @@ def run_cassandra(input_file_path: str, cassandra_exe_path: str = "cassandra.exe
 
     print("--- Cassandra run complete ---")
     return result
-```

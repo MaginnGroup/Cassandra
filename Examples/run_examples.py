@@ -13,7 +13,7 @@ Runs all examples using the Cassandra executable specified, including path.
 Also cleans all previous results, and the fragment libraries of all non-GCMC 
 examples.
 
-Note: It is neccessary to speficy an *EXACT* path. The use of ../ to specify 
+Note: It is necessary to specify an *EXACT* path. The use of ../ to specify 
 a relative path will prohibit the script from running properly. 
 
 EXAMPLES:

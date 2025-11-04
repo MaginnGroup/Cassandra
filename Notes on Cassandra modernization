@@ -1,0 +1,184 @@
+Step 1: Clone the Repository
+First, you need a local copy of your code on your computer. You only need to do this step one time. If you already have a local copy, you can skip to Step 2.
+Action:
+1.	Open your terminal.
+2.	Navigate to a directory where you want to store your projects (e.g., cd ~/Documents/Projects).
+3.	Clone the repository from GitHub. This command copies the entire project and its history to your machine.
+Bash
+git clone https://github.com/MaginnGroup/Cassandra.git
+
+Step 2: Enter the Project Directory
+All git commands need to be run from inside the project folder.
+Action:
+1.	Move into the new directory that git just created:
+Bash
+cd Cassandra
+
+Step 3: Create and Switch to Your New Branch
+This is the most important step. You are creating a new, parallel timeline called modernization. Your main timeline, master, will be untouched.
+The command git checkout -b <branch-name> is a shortcut that does two things:
+•	git branch modernization: Creates a new branch.
+•	git checkout modernization: Switches you to that new branch.
+Action:
+1.	Run this command:
+Bash
+git checkout -b modernization
+You'll see a message like Switched to a new branch 'modernization'.
+
+Step 4: Verify Your Location (Optional but Recommended)
+Let's just confirm you are in the right place.
+Action:
+1.	Run this command to see all your local branches:
+Bash
+git branch
+You will see a list of branches, and your active one will have an asterisk * next to it:
+* modernization
+  master
+This confirms you are safely on the modernization branch.
+Summary: You Are Ready!
+That's it. You are now in your sandbox.
+Any changes you make, any files you add, and any code you write will be saved only to the modernization branch. Your master branch remains clean, safe, and untouched.
+Your next step is to start Phase 2 by creating a new python/ folder inside this Cassandra directory and adding your first file, api.py.
+--------------------------------------------------------
+
+Great\! You're now on your `modernization` branch and ready to start Phase 2.
+
+Your first step is to create the new Python directory and your main API file. This is where your new wrapper code will live, completely separate from the Fortran source.
+
+-----
+
+### Step 1: Create Your Python File
+
+**Action:**
+
+1.  Make sure you are in your `Cassandra` directory (the one that contains the `Src`, `Examples`, etc. folders).
+
+2.  Create a new directory named `python`:
+
+    ```bash
+    mkdir python
+    ```
+
+3.  Now, create your first Python file inside that new directory. You can do this by opening your favorite text editor (like VS Code, Atom, etc.) and saving a new, empty file as `api.py` inside the `python` folder.
+
+    Your directory structure should now look like this:
+
+    ```
+    Cassandra/
+    ├── .git/
+    ├── Examples/
+    ├── Src/
+    ├── python/
+    │   └── api.py   <-- YOUR NEW FILE
+    ├── .gitignore
+    └── README.md
+    ```
+
+-----
+
+### Step 2: Write Your First Function (The "Runner")
+
+**Action:**
+
+1.  Open the `python/api.py` file in your text editor.
+2.  Add the following Python code to it. This is the `run_cassandra` function we discussed.
+
+<!-- end list -->
+
+```python
+# In python/api.py
+import subprocess
+import os
+import shlex
+
+def run_cassandra(input_file_path: str, cassandra_exe_path: str = "cassandra.exe"):
+    """
+    Runs the Cassandra executable as a subprocess.
+
+    Args:
+        input_file_path: The path to the .inp file (e.g., "Examples/run.inp").
+        cassandra_exe_path: The path to the compiled cassandra executable.
+    """
+    print(f"--- Running Cassandra for {input_file_path} ---")
+
+    # Get the directory where the input file lives
+    run_directory = os.path.dirname(input_file_path)
+    
+    # Get just the name of the input file
+    inp_file = os.path.basename(input_file_path)
+
+    # We must run Cassandra in the same directory as the input file
+    # so it can find all the other files (like .mol, .dat)
+    
+    # Note: shlex.split is safer than a simple list for commands
+    command = shlex.split(f"{cassandra_exe_path} -i {inp_file}")
+
+    print(f"Running in directory: {run_directory}")
+    print(f"Running command: {command}")
+
+    # Use subprocess.run to call the executable
+    result = subprocess.run(
+        command,
+        cwd=run_directory,         # 'cwd' = run from this directory
+        capture_output=True,     # Capture stdout/stderr
+        text=True                  # As text, not bytes
+    )
+
+    # Print the output from Cassandra
+    print("--- CASSANDRA STDOUT ---")
+    print(result.stdout)
+    
+    if result.stderr:
+        print("--- CASSANDRA STDERR ---")
+        print(result.stderr)
+
+    print("--- Cassandra run complete ---")
+    return result
+```
+
+3.  **Save the file.**
+
+-----
+
+### Step 3: Save Your Work (Your First Commit)
+
+You've just added a new file. Now you need to "save" this change to your `modernization` branch using `git`. This is the "safety net" workflow.
+
+**Action:**
+
+1.  Go back to your terminal, making sure you're in the main `Cassandra` directory.
+
+2.  **Add the file:** Tell `git` to start tracking this new file.
+
+    ```bash
+    git add python/api.py
+    ```
+
+3.  **Commit the file:** Save a snapshot of your change with a descriptive message.
+
+    ```bash
+    git commit -m "Added initial python/api.py with run_cassandra function"
+    ```
+
+4.  **Push to GitHub:** "Back up" this new commit to the GitHub server. This saves your work remotely.
+
+    ```bash
+    git push origin modernization
+    ```
+
+    (You may have to type your GitHub username and password/token the first time).
+
+-----
+
+### You're Done\!
+
+You have successfully added your first piece of the new API and, more importantly, you've completed the full **"code -\> add -\> commit -\> push"** developer cycle.
+
+Your next step is to test this new function. Would you like to write a simple Python script to test the `run_cassandra` function on one of the `Examples`?
+
+
+Setting up an environment
+conda create --name cassandra-dev python=3.10
+conda init
+source ~/.bash_profile
+conda activate cassandra-dev
