@@ -59,9 +59,10 @@ EXEC_NAME = cassandra_gfortran_noXTC.exe
 FC = gfortran
 LIBS = 
 INCS = 
-F90FLAGS = -c -ffree-line-length-none -fcheck=all
+F90FLAGS = -c -ffree-line-length-none
 # specifying -mavx2 is redundant with -march but Cassandra looks for it to recognize vector length
 OPTFLAGS = -O3 -ffast-math -mavx2 -mfma -march=haswell
+#OPTFLAGS = -O0 -fcheck=all,no-array-temps -g -fbacktrace
 LINKFLAGS = 
 
 ####################################################################
@@ -89,7 +90,7 @@ OBJS =  main.o \
   mcf_control.o \
   nptmc_driver.o \
   create_nonbond_table.o \
-  get_internal_coords.o \
+  internal_coordinate_routines.o \
   clean_abort.o \
   move_translate.o \
   random_generators.o \
