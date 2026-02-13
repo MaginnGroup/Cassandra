@@ -3563,6 +3563,10 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
              IF (ALL(old_overlap_trial(1:kappa_dih)) .NEQV. (cweight == 0.0_DP)) THEN
                      WRITE(*,*) cweight
              END IF
+             IF (ALL(old_overlap_trial(1:kappa_dih))) THEN
+                     cbmc_overlap = .TRUE.
+                     RETURN
+             END IF
      END IF
      ! If the cumulative weight is 0, then all trial dihedrals had core overlap
      ! Reject the move if all trials tripped overlap

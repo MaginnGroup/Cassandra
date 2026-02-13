@@ -319,7 +319,7 @@ SUBROUTINE Read_Checkpoint
                   rp(2), &
                   rp(3), &
                   this_box
-             IF (box_list(ibox)%basis_changed) THEN
+             IF (box_list(this_box)%basis_changed) THEN
                      atom_list(ia,im,is)%rp(1:3) = &
                              MATMUL(box_list(this_box)%basis_converter,rp)
              ELSE

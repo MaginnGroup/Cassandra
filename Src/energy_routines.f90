@@ -2854,6 +2854,8 @@ CONTAINS
                                         ELSE
                                                 n_all_interact_p = n_all_interact
                                         END IF
+                                ELSE
+                                        n_all_interact_p = 0
                                 END IF
                                 maxvlen = n_all_interact_p
                                 DO j = n_all_interact_p+1, n_interact
