@@ -85,7 +85,7 @@ USE Type_Definitions
   INTEGER, PARAMETER :: sim_gemc_ig = 8
   INTEGER, PARAMETER :: sim_mcf = 9
   INTEGER, PARAMETER :: sim_pregen = 10
-  LOGICAL :: timed_run, openmp_flag, en_flag, verbose_log, input_is_logfile
+  LOGICAL :: timed_run, openmp_flag, en_flag, verbose_log, input_is_logfile, open_mc_flag
   CHARACTER(10) :: sim_length_units
   INTEGER (KIND=INT64):: steps_per_sweep
 
@@ -121,15 +121,20 @@ USE Type_Definitions
   INTEGER, PARAMETER :: charge_ewald = 3
   INTEGER, PARAMETER :: charge_minimum = 4
   INTEGER, PARAMETER :: charge_dsf = 5
+  INTEGER, PARAMETER :: charge_sf = 6
+
+  LOGICAL :: cbmc_charge_sf_flag = .TRUE.
 
   REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_cbmc, rcut_cbmcsq
   REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_vdw, rcut_coul, ron_charmm, roff_charmm, rcut_max
   REAL(DP), DIMENSION(:), ALLOCATABLE :: ron_switch, roff_switch, roff_switch_sq, switch_factor1
   REAL(DP), DIMENSION(:), ALLOCATABLE :: switch_factor2, ron_switch_sq
-  REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_vdwsq, rcut_coulsq, ron_charmmsq, roff_charmmsq
+  REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_vdwsq, inv_rcut_vdwsq, rcut_coulsq, ron_charmmsq, roff_charmmsq
+  REAL(SP), DIMENSION(:), ALLOCATABLE :: rcut_vdwsq_sp, inv_rcut_vdwsq_sp
   REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut9, rcut3
   REAL(DP), DIMENSION(:), ALLOCATABLE :: rcut_vdw3, rcut_vdw6
   REAL(DP) :: edens_cut, rcut_clus, rcut_low, rcut_lowsq
+  REAL(SP) :: sp_rcut_lowsq
   LOGICAL, DIMENSION(:), ALLOCATABLE :: l_half_len_cutoff
 
  ! Mixing Rules variables :
@@ -179,9 +184,13 @@ USE Type_Definitions
  !***************************************************************
   !Conversion factors and constants
 
-  REAL(DP), PARAMETER :: PI=3.1415926536_DP
-  REAL(DP), PARAMETER :: twoPI = 6.2831853072_DP
-  REAL(DP), PARAMETER :: rootPI = 1.7724538509_DP
+  !REAL(DP), PARAMETER :: PI=3.1415926536_DP
+  !REAL(DP), PARAMETER :: twoPI = 6.2831853072_DP
+  !REAL(DP), PARAMETER :: rootPI = 1.7724538509_DP
+  !REAL(DP), PARAMETER :: halfPI = 0.5_DP*PI
+  !REAL(DP), PARAMETER :: threehalfPI_DP = 3.0_DP*halfPI
+  !REAL(SP), PARAMETER :: twoPI_SP = REAL(twoPI,SP)
+  !REAL(SP), PARAMETER :: PI_SP = REAL(PI,SP)
 
   !KBOLTZ is Boltzmann's constant in atomic units amu A^2 / (K ps^2)
   REAL(DP), PARAMETER :: kboltz = 0.8314472_DP
@@ -232,8 +241,8 @@ USE Type_Definitions
   REAL(DP), PARAMETER :: errel = 1.0E-5_DP
 
   ! Parameter identifying number of trials
-
-  INTEGER :: kappa_ins, kappa_rot, kappa_dih
+  ! Moved to Species_Class as its attributes
+  !INTEGER :: kappa_ins, kappa_rot, kappa_dih, kappa_dih_pad8, kappa_dih_pad32
 
   ! Parameters identifying move in Ewald calculations
 
@@ -289,6 +298,8 @@ USE Type_Definitions
   INTEGER, DIMENSION(:), ALLOCATABLE :: ndihedrals, nimpropers
   INTEGER, DIMENSION(:), ALLOCATABLE :: nfragments, fragment_bonds
   INTEGER, DIMENSION(:), ALLOCATABLE :: natoms_to_read
+  INTEGER :: max_max_molecules, sum_max_molecules
+  INTEGER :: max_max_molecules_p4, sum_max_molecules_p4
 
   ! array to hold the total number of molecules of each species in a given box
 
@@ -317,6 +328,7 @@ USE Type_Definitions
   CHARACTER(23), DIMENSION(:), ALLOCATABLE :: atom_type_list
 
   INTEGER, DIMENSION(:), ALLOCATABLE :: nbr_vdw_params
+  INTEGER, DIMENSION(:), ALLOCATABLE :: n_vdw_p_list
 
   ! Information of the position line where starts the coordinates storage of
   ! each fragment type
@@ -392,7 +404,12 @@ USE Type_Definitions
 
   ! Array for storing coordinates of fragments
   !TYPE(Frag_Library_Class), DIMENSION(:), ALLOCATABLE :: frag_library
-  TYPE(Library_Coords_Class), DIMENSION(:), ALLOCATABLE :: library_coords
+  !TYPE(Library_Coords_Class), DIMENSION(:), ALLOCATABLE :: library_coords
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: library_coords
+  ! library_coords_dim1 is the size of library_coords in the first dimension
+  !      since 1, 2, and 3 on the first axis correspond to x, y, and z, it must be at least 3,
+  !      but 4 or 8 might be desirable for the sake of vectorization or alignment.
+  INTEGER, PARAMETER :: library_coords_dim1 = 4
 
   ! Array for storing the energy of each configuration of each fragment
   ! nrg_frag has dimension (number of fragment )
@@ -440,15 +457,7 @@ USE Type_Definitions
   ! nvecs will have dimensions of nbr_boxes
   INTEGER, DIMENSION(:), ALLOCATABLE, TARGET :: nvecs
 
-  INTEGER, PARAMETER  :: maxk = 100000
-
-  ! Dimensions of (maxk, nbr_boxes)
-  REAL(DP), DIMENSION(:,:), ALLOCATABLE, TARGET :: hx, hy, hz, hsq, Cn
-
-  ! the following arrays will have dimensions of (MAXVAL(nvecs),nbr_boxes)
-
-  REAL(DP), DIMENSION(:,:), ALLOCATABLE, TARGET :: cos_sum, sin_sum, cos_sum_old, sin_sum_old
-  REAL(DP), DIMENSION(:,:), ALLOCATABLE, TARGET :: cos_sum_start, sin_sum_start
+  !INTEGER, PARAMETER  :: maxk = 100000
 
   !*********************************************************************************************************
   ! Information on trial and probabilities of trial moves
@@ -506,8 +515,6 @@ USE Type_Definitions
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: prop_per_file
   LOGICAL, DIMENSION(:,:), ALLOCATABLE :: first_open
 
-  LOGICAL :: cpcollect  !  logical determining if the chemical potential info is collected
-
   LOGICAL :: accept
 
   LOGICAL :: cbmc_flag, del_flag, phi_Flag, angle_Flag, imp_Flag
@@ -517,6 +524,8 @@ USE Type_Definitions
   LOGICAL :: get_fragorder, l_check
 
   INTEGER :: imreplace, isreplace
+
+  INTEGER :: atompairdim, mol_dim
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -585,7 +594,7 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: x_lat, y_lat, z_lat
 INTEGER :: n_lat_atoms
 
 !!! Pair_Nrg_Variables
-REAL(DP), ALLOCATABLE :: pair_vdw_temp(:), pair_qq_temp(:)
+REAL(DP), ALLOCATABLE :: pair_vdw_temp(:,:), pair_qq_temp(:,:)
 
 !!!! DSF variables
 REAL(DP), ALLOCATABLE, DIMENSION(:) :: alpha_dsf
@@ -609,15 +618,27 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   ! sector_index_map is indexed by (x index, y index, z index, box index) to get sector index
   INTEGER, DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: sector_index_map, sector_index_map_cbmc, sector_index_map_full
   ! sector_n_atoms is indexed by (sector index) to get number of atoms in a sector
-  INTEGER, DIMENSION(:), ALLOCATABLE, TARGET :: sector_n_atoms, sector_n_atoms_cbmc, sector_n_atoms_full
+  INTEGER(4), DIMENSION(:), ALLOCATABLE, TARGET :: sector_n_atoms, sector_n_atoms_cbmc, sector_n_atoms_full
   ! sector_has_atoms is indexed by (x index, y index, z index, box index)
   LOGICAL, DIMENSION(:,:,:,:), ALLOCATABLE :: sector_has_atoms
 
   LOGICAL :: l_sectors, cbmc_cell_list_flag, full_cell_list_flag
-  ! sectorbound, length_cells, & cell_length_inv are indexed by (box dimension, box index)
+  ! sectorbound and length_cells are indexed by (box dimension, box index)
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: sectorbound, sectorbound_cbmc, sectorbound_full
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: length_cells, length_cells_cbmc, length_cells_full
-  REAL(DP), DIMENSION(:,:), ALLOCATABLE, TARGET :: cell_length_inv, cell_length_inv_cbmc, cell_length_inv_full
+  REAL(DP), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: cell_length_inv, cell_length_inv_cbmc, cell_length_inv_full
+
+
+  ! indexed like (n_adj_cell_atoms,dimension in 1:4, x index, y index, z index, box index)
+  ! there is no 4th dimension of coordinates; this stores charge instead
+  REAL(SP), DIMENSION(:,:,:,:,:,:), ALLOCATABLE :: adj_cell_rsp, cbmc_cell_rsp
+  INTEGER(INT32), DIMENSION(:,:,:,:,:), ALLOCATABLE :: adj_cell_ti, cbmc_cell_ti, cbmc_cell_atomtypes
+  INTEGER(4), DIMENSION(:,:,:,:), ALLOCATABLE :: n_adj_cell_atoms, cbmc_cell_n_interact
+  INTEGER, DIMENSION(3) :: adj_cellmaxbound
+
+  INTEGER :: max_adj_cell_atoms, cbmc_max_interact
+  REAL(SP), DIMENSION(:,:), ALLOCATABLE :: cell_length_recip, real_length_cells
+
 
   INTEGER, DIMENSION(3) :: sectormaxbound, sectormaxbound_cbmc, sectormaxbound_full
 
@@ -654,12 +675,40 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
 !widom_timing  !$OMP THREADPRIVATE(n_clo, n_not_clo, n_nrg_overlap)
 !widom_timing  !$OMP THREADPRIVATE(cell_list_time, normal_overlap_time, non_overlap_time, nrg_overlap_time)
 
+  ! widom timing variables and parameters
+  LOGICAL, PARAMETER :: widom_timing = .TRUE.
+  REAL(DP) :: trial_loop_ins_time, cell_list_ins_time, cell_list_cbmc_nrg_ins_time
+  REAL(DP) :: noncell_cbmc_nrg_ins_time, rng_ins_time, cbmc_setup_ins_time
+  REAL(DP) :: cbmc_returnzone_ins_time, cbmc_endzone_ins_time
+  REAL(DP) :: cbmc_fragment_placement_time, cbmc_dih_time, bitcell_overlap_ins_time
+  REAL(DP) :: widom_ewald_recip_time, total_cbmc_time
+  INTEGER(INT64) :: cbmc_nonoverlap_ins_count, cbmc_dih_count, bitcell_overlap_ins_checks
+  INTEGER(INT64) :: cell_list_ins_checks, cell_list_cbmc_nrg_ins_checks, bitcell_overlap_ins_overlaps
+  INTEGER(INT64) :: nrg_ins_overlaps
+  !$OMP THREADPRIVATE(trial_loop_ins_time, cell_list_ins_time, cell_list_cbmc_nrg_ins_time)
+  !$OMP THREADPRIVATE(noncell_cbmc_nrg_ins_time,rng_ins_time,cbmc_setup_ins_time)
+  !$OMP THREADPRIVATE(cbmc_returnzone_ins_time, cbmc_endzone_ins_time)
+  !$OMP THREADPRIVATE(bitcell_overlap_ins_time, bitcell_overlap_ins_checks, bitcell_overlap_ins_overlaps)
+  !$OMP THREADPRIVATE(cbmc_nonoverlap_ins_count, cbmc_dih_count)
+  !$OMP THREADPRIVATE(cell_list_ins_checks, cell_list_cbmc_nrg_ins_checks)
+  !$OMP THREADPRIVATE(total_cbmc_time, widom_ewald_recip_time, nrg_ins_overlaps)
+  REAL(DP) :: trial_loop_ins_time_redux, cell_list_ins_time_redux, cell_list_cbmc_nrg_ins_time_redux
+  REAL(DP) :: noncell_cbmc_nrg_ins_time_redux, rng_ins_time_redux, cbmc_setup_ins_time_redux
+  REAL(DP) :: cbmc_returnzone_ins_time_redux, cbmc_endzone_ins_time_redux
+  REAL(DP) :: cbmc_fragment_placement_time_redux, cbmc_dih_time_redux, bitcell_overlap_ins_time_redux
+  INTEGER(INT64) :: cbmc_nonoverlap_ins_count_redux, cbmc_dih_count_redux, bitcell_overlap_ins_checks_redux
+  INTEGER(INT64) :: cell_list_ins_checks_redux, cell_list_cbmc_nrg_ins_checks_redux, bitcell_overlap_ins_overlaps_redux
+  REAL(DP) :: noncbmc_time_total, total_cbmc_time_redux, widom_ewald_recip_time_redux, nrg_ins_overlaps_redux
+
   !!! atompair energy table global variables
   INTEGER :: atompair_nrg_res
+  REAL(SP) :: atompair_nrg_res_sp
   LOGICAL :: precalc_atompair_nrg
   REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: atompair_nrg_table
+  REAL(SP), DIMENSION(:,:,:), ALLOCATABLE :: atompair_nrg_table_reduced
   REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: typepair_nrg_table
-  REAL(DP) :: rsq_step
+  REAL(DP) :: rsq_step, inv_rsq_step
+  REAL(SP) :: inv_rsq_step_sp
   REAL(DP) :: rsq_shifter
   INTEGER, DIMENSION(:), ALLOCATABLE :: typepair_solute_indices, typepair_solvent_indices
   INTEGER, DIMENSION(:), ALLOCATABLE :: solute_atomtypes, solvent_atomtypes
@@ -675,6 +724,10 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: rsqmin_atompair_w_sum
   INTEGER(KIND=INT64), DIMENSION(:,:,:,:), ALLOCATABLE, TARGET :: rsqmin_atompair_freq
   REAL(DP), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: atompair_rminsq_table
+  REAL(SP), DIMENSION(:,:,:), ALLOCATABLE :: sp_atompair_rminsq_table
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: solvent_max_rminsq
+  REAL(DP), DIMENSION(:,:,:), ALLOCATABLE :: solvent_min_rminsq
+  REAL(SP), DIMENSION(:,:), ALLOCATABLE :: solvent_max_rminsq_sp
   INTEGER, DIMENSION(:), ALLOCATABLE :: typepair_wsolute_indices, wsolute_atomtypes
   REAL(DP) :: maxrminsq, rsqmin_step, rsqmin_shifter
   INTEGER :: rsqmin_res, wsolute_ntypes, wsolute_maxind
@@ -687,8 +740,103 @@ REAL(DP), ALLOCATABLE, DIMENSION(:) :: dsf_factor1, dsf_factor2
   !
   REAL(DP), DIMENSION(0:1000)  :: type_charge_min, type_charge_max
   REAL(DP), DIMENSION(:,:), ALLOCATABLE, TARGET :: rminsq_table
+  REAL(SP), DIMENSION(:,:), ALLOCATABLE :: sp_rminsq_table
   REAL(DP) :: U_max_base, max_rmin
   LOGICAL :: calc_rmin_flag
+  REAL(DP), DIMENSION(:), ALLOCATABLE :: atomtype_max_rminsq
+  REAL(DP), DIMENSION(:,:), ALLOCATABLE :: atomtype_min_rminsq
+  REAL(SP), DIMENSION(:), ALLOCATABLE :: atomtype_max_rminsq_sp
+
+
+  INTEGER, DIMENSION(:,:), ALLOCATABLE :: nlive
+
+  REAL(DP), DIMENSION(:,:,:,:), ALLOCATABLE :: ppvdwp_table, ppvdwp_table2
+  REAL(SP), DIMENSION(:,:,:,:), ALLOCATABLE :: ppvdwp_table_sp, ppvdwp_table2_sp
+  TYPE(VdW256), DIMENSION(:,:,:), ALLOCATABLE :: ppvdwp_list
+  LOGICAL :: l_nonuniform_exponents
+
+  LOGICAL, PARAMETER :: l_not_all_live = .FALSE.
+
+  INTEGER :: global_nthreads
+
+  INTEGER, DIMENSION(:,:,:), ALLOCATABLE :: chunksize_array, nthreads_used_array
+  INTEGER, DIMENSION(:,:), ALLOCATABLE :: chunks_set_nmols
+
+  LOGICAL :: l_debug_print
+
+  REAL(DP), DIMENSION(:), ALLOCATABLE :: zero_field, rijsq_field
+  INTEGER, DIMENSION(:), ALLOCATABLE :: vec123
+  REAL(DP), DIMENSION(:,:,:), ALLOCATABLE :: live_xcom, live_ycom, live_zcom, live_max_dcom
+  !TYPE(Atom256), DIMENSION(:,:,:,:), ALLOCATABLE :: live_atom_list
+  REAL(DP), DIMENSION(:,:,:,:,:), ALLOCATABLE :: live_atom_rsp
+  LOGICAL, DIMENSION(:,:,:,:), ALLOCATABLE :: live_atom_exist
+  INTEGER :: maxnmols, maxboxnatoms
+  LOGICAL :: l_not_all_exist
+
+
+
+  LOGICAL :: bitcell_flag
+  REAL(DP) :: min_ideal_bitcell_length
+  INTEGER :: solvents_or_types_maxind
+
+
+  ! Moved to Species_Class as its attributes
+  !INTEGER :: kappa_ins_pad8, kappa_ins_pad64
+
+  LOGICAL :: l_zerotype_present
+
+
+
+
+  ! Moved to Species_Class as its attributes
+  !REAL(DP), DIMENSION(:,:), ALLOCATABLE :: sincos_lintheta_dp
+  !REAL(SP), DIMENSION(:,:), ALLOCATABLE :: sincos_lintheta_sp
+
+
+  ! Use these parameters below to efficiently round positive integers up (not down) to the nearest multiple of 8, 16, etc.
+  ! If the original integer is already a multiple of 8, 16, etc., the answer is the same as the original number.
+  ! It actually works as long as the correct answer isn't negative, even if the original integer is 0 or slightly negative
+  ! Example: n_pad8 = IAND(n+7,pad8mask), n_pad64 = IAND(n+63,pad64mask)
+  ! In those examples, n_pad8 is a multiple of 8, n_pad64 is a multiple of 64, and n is the original number to be "padded"
+  ! Note that 7 is equivalent to MASKR(3) and 63 is equivalent to MASKR(6)
+  ! This technique only works for padding to positive multiples of power of 2
+  INTEGER(INT32), PARAMETER :: pad8mask = NOT(MASKR(3,INT32))
+  INTEGER(INT32), PARAMETER :: pad16mask = NOT(MASKR(4,INT32))
+  INTEGER(INT32), PARAMETER :: pad32mask = NOT(MASKR(5,INT32))
+  INTEGER(INT32), PARAMETER :: pad64mask = NOT(MASKR(6,INT32))
+
+
+  INTEGER(INT64), PARAMETER :: recip_sqrt_magic_number = INT(Z'5FE6EB50C7B537A9',INT64)
+
+  INTEGER :: nspecies_present
+  INTEGER, DIMENSION(:), ALLOCATABLE :: which_species_present
+
+  INTEGER, DIMENSION(3) :: dummy3vec
+
+
+  INTEGER, DIMENSION(:), ALLOCATABLE :: which_solvent_atomtypes, which_solvent_atomtypes_inv
+  INTEGER, DIMENSION(:), ALLOCATABLE :: which_wsolute_atomtypes, which_wsolute_atomtypes_inv
+  INTEGER :: n_solvent_atomtypes, n_wsolute_atomtypes
+
+
+  INTEGER :: n_big_atoms
+
+  TYPE(Cavity_Data_Class), DIMENSION(:,:), ALLOCATABLE :: cavdatalist
+
+  LOGICAL :: cavity_biasing_flag
+
+  LOGICAL :: early_end
+
+  ! Use lossless compression for vector of cavity voxel locations.
+  ! This can reduce the required memory and probably improve cache hit rate and memory access speed.
+  LOGICAL, PARAMETER :: l_compress = .TRUE.
+  ! l_vectorized controls whether intermolecular pairwise energy calculations are vectorized
+  ! compatibility_mode attempts to emulate prior CBMC implementation results, although
+  ! having it .FALSE. should still yield results that are just as valid.
+  ! At time of writing, compatibility_mode also results in printing values when the new implementation (with some behaviors modified
+  ! to try to emulate old results better)
+  ! still results in a different dihedral trial being chosen than with the more extensive emulation of the old implementation.
+  LOGICAL, PARAMETER :: l_vectorized = .TRUE., compatibility_mode = .TRUE.
 
 END MODULE Global_Variables
 

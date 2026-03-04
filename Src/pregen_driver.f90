@@ -40,6 +40,7 @@ SUBROUTINE Pregen_Driver
   USE Energy_Routines
   USE Read_Write_Checkpoint
   USE Simulation_Properties
+  USE Trajectory_Reader_Routines
   USE XTC_Routines, ONLY : Close_XTC
 
   IMPLICIT NONE
@@ -52,7 +53,7 @@ SUBROUTINE Pregen_Driver
   REAL(DP) :: rand_no
   REAL(DP) :: time_start, now_time, thermo_time, coord_time, block_avg_time
 
-  LOGICAL :: overlap, early_end
+  LOGICAL :: overlap
   LOGICAL :: write_flag, complete
 
   TYPE(Energy_Class) :: energy_old
@@ -118,7 +119,7 @@ SUBROUTINE Pregen_Driver
      ! Load and advance to next frame
      !*****************************************************************************
 
-     CALL Load_Next_Frame(early_end)
+     CALL Load_Next_Frame
 
      IF (early_end) THEN
              WRITE(logunit,*)

@@ -187,49 +187,49 @@ SUBROUTINE Fold_Molecule(alive,is,this_box)
 
   IF (l_cubic(this_box)) THEN
      
-     IF(this_molecule%xcom .GT. box_list(this_box)%hlength(1,1)) THEN
-        this_molecule%xcom = &
-             this_molecule%xcom - box_list(this_box)%length(1,1)
-        these_atoms%rxp = these_atoms%rxp - box_list(this_box)%length(1,1)
+     IF(this_molecule%rcom(1) .GT. box_list(this_box)%hlength(1,1)) THEN
+        this_molecule%rcom(1) = &
+             this_molecule%rcom(1) - box_list(this_box)%length(1,1)
+        these_atoms%rp(1) = these_atoms%rp(1) - box_list(this_box)%length(1,1)
         
-     ELSE IF(this_molecule%xcom .LT. -box_list(this_box)%hlength(1,1)) THEN
-        this_molecule%xcom = &
-             this_molecule%xcom + box_list(this_box)%length(1,1)
-        these_atoms%rxp = these_atoms%rxp + box_list(this_box)%length(1,1)
+     ELSE IF(this_molecule%rcom(1) .LT. -box_list(this_box)%hlength(1,1)) THEN
+        this_molecule%rcom(1) = &
+             this_molecule%rcom(1) + box_list(this_box)%length(1,1)
+        these_atoms%rp(1) = these_atoms%rp(1) + box_list(this_box)%length(1,1)
      END IF
 
-     IF(this_molecule%ycom .GT. box_list(this_box)%hlength(2,2)) THEN
-        this_molecule%ycom = &
-             this_molecule%ycom - box_list(this_box)%length(2,2)
-        these_atoms%ryp = these_atoms%ryp - box_list(this_box)%length(2,2)
+     IF(this_molecule%rcom(2) .GT. box_list(this_box)%hlength(2,2)) THEN
+        this_molecule%rcom(2) = &
+             this_molecule%rcom(2) - box_list(this_box)%length(2,2)
+        these_atoms%rp(2) = these_atoms%rp(2) - box_list(this_box)%length(2,2)
 
-     ELSE IF(this_molecule%ycom .LT. -box_list(this_box)%hlength(2,2)) THEN
+     ELSE IF(this_molecule%rcom(2) .LT. -box_list(this_box)%hlength(2,2)) THEN
 
-        this_molecule%ycom = &
-             this_molecule%ycom + box_list(this_box)%length(2,2)
-        these_atoms%ryp = these_atoms%ryp + box_list(this_box)%length(2,2)
+        this_molecule%rcom(2) = &
+             this_molecule%rcom(2) + box_list(this_box)%length(2,2)
+        these_atoms%rp(2) = these_atoms%rp(2) + box_list(this_box)%length(2,2)
 
      END IF
 
-     IF(this_molecule%zcom .GT. box_list(this_box)%hlength(3,3)) THEN
+     IF(this_molecule%rcom(3) .GT. box_list(this_box)%hlength(3,3)) THEN
 
-        this_molecule%zcom = &
-             this_molecule%zcom - box_list(this_box)%length(3,3)
-        these_atoms%rzp = these_atoms%rzp - box_list(this_box)%length(3,3)
+        this_molecule%rcom(3) = &
+             this_molecule%rcom(3) - box_list(this_box)%length(3,3)
+        these_atoms%rp(3) = these_atoms%rp(3) - box_list(this_box)%length(3,3)
         
-     ELSE IF(this_molecule%zcom .LT. -box_list(this_box)%hlength(3,3)) THEN
+     ELSE IF(this_molecule%rcom(3) .LT. -box_list(this_box)%hlength(3,3)) THEN
         
-        this_molecule%zcom = &
-             this_molecule%zcom + box_list(this_box)%length(3,3)
-        these_atoms%rzp = these_atoms%rzp + box_list(this_box)%length(3,3)
+        this_molecule%rcom(3) = &
+             this_molecule%rcom(3) + box_list(this_box)%length(3,3)
+        these_atoms%rp(3) = these_atoms%rp(3) + box_list(this_box)%length(3,3)
      END IF
 
 
   ELSE
 
-     thisx = this_molecule%xcom
-     thisy = this_molecule%ycom
-     thisz = this_molecule%zcom
+     thisx = this_molecule%rcom(1)
+     thisy = this_molecule%rcom(2)
+     thisz = this_molecule%rcom(3)
   
 
      CALL Cartesian_To_Fractional(thisx,thisy,thisz,frac_comx, frac_comy, frac_comz, this_box)
@@ -239,34 +239,34 @@ SUBROUTINE Fold_Molecule(alive,is,this_box)
         frac_comx = frac_comx-1.0_DP
 !        CALL Fold_Molecule_In_Fractional_Coords(alive,is,this_box)  
         ! store old COM coordinates for displacement
-        xcom_old = this_molecule%xcom
-        ycom_old = this_molecule%ycom
-        zcom_old = this_molecule%zcom
+        xcom_old = this_molecule%rcom(1)
+        ycom_old = this_molecule%rcom(2)
+        zcom_old = this_molecule%rcom(3)
 
         CALL Fractional_To_Cartesian(frac_comx, frac_comy, frac_comz, thisx, thisy, thisz,this_box)
         ! update COM
-        this_molecule%xcom = thisx
-        this_molecule%ycom = thisy
-        this_molecule%zcom = thisz
+        this_molecule%rcom(1) = thisx
+        this_molecule%rcom(2) = thisy
+        this_molecule%rcom(3) = thisz
 
         ! move atomic coordinates
-        these_atoms%rxp = these_atoms%rxp + &
-             this_molecule%xcom - xcom_old
-        these_atoms%ryp = these_atoms%ryp + &
-             this_molecule%ycom - ycom_old
-        these_atoms%rzp = these_atoms%rzp + &
-             this_molecule%zcom - zcom_old
+        these_atoms%rp(1) = these_atoms%rp(1) + &
+             this_molecule%rcom(1) - xcom_old
+        these_atoms%rp(2) = these_atoms%rp(2) + &
+             this_molecule%rcom(2) - ycom_old
+        these_atoms%rp(3) = these_atoms%rp(3) + &
+             this_molecule%rcom(3) - zcom_old
 
 !     DO i = 1, natoms(is)
-!        thisiax=atom_list(i,alive,is)%rxp
-!        thisiay=atom_list(i,alive,is)%ryp
-!        thisiaz=atom_list(i,alive,is)%rzp
+!        thisiax=atom_list(i,alive,is)%rp(1)
+!        thisiay=atom_list(i,alive,is)%rp(2)
+!        thisiaz=atom_list(i,alive,is)%rp(3)
 !        CALL Cartesian_To_Fractional(thisiax,thisiay,thisiaz,fraciax,fraciay,fraciaz,this_box)
 !        fraciax = fraciax-1.0_DP
 !        CALL Fractional_To_Cartesian(fraciax,fraciay,fraciaz,thisiax,thisiay,thisiaz,this_box)
-!        atom_list(i,alive,is)%rxp = thisiax
-!        atom_list(i,alive,is)%ryp = thisiay
-!        atom_list(i,alive,is)%rzp = thisiaz
+!        atom_list(i,alive,is)%rp(1) = thisiax
+!        atom_list(i,alive,is)%rp(2) = thisiay
+!        atom_list(i,alive,is)%rp(3) = thisiaz
 !     END DO
  
 
@@ -275,34 +275,34 @@ SUBROUTINE Fold_Molecule(alive,is,this_box)
 !        CALL Fold_Molecule_In_Fractional_Coords(alive,is, this_box)
         frac_comx = frac_comx+1.0_DP
 
-        xcom_old = this_molecule%xcom
-        ycom_old = this_molecule%ycom
-        zcom_old = this_molecule%zcom
+        xcom_old = this_molecule%rcom(1)
+        ycom_old = this_molecule%rcom(2)
+        zcom_old = this_molecule%rcom(3)
 
         CALL Fractional_To_Cartesian(frac_comx, frac_comy, frac_comz, thisx, thisy, thisz,this_box)
         
-        this_molecule%xcom = thisx
-        this_molecule%ycom = thisy
-        this_molecule%zcom = thisz
+        this_molecule%rcom(1) = thisx
+        this_molecule%rcom(2) = thisy
+        this_molecule%rcom(3) = thisz
 
-        these_atoms%rxp = these_atoms%rxp + &
-             this_molecule%xcom - xcom_old
-        these_atoms%ryp = these_atoms%ryp + &
-             this_molecule%ycom - ycom_old
-        these_atoms%rzp = these_atoms%rzp + &
-             this_molecule%zcom - zcom_old
+        these_atoms%rp(1) = these_atoms%rp(1) + &
+             this_molecule%rcom(1) - xcom_old
+        these_atoms%rp(2) = these_atoms%rp(2) + &
+             this_molecule%rcom(2) - ycom_old
+        these_atoms%rp(3) = these_atoms%rp(3) + &
+             this_molecule%rcom(3) - zcom_old
 
 
 !     DO i = 1, natoms(is)
-!        thisiax=atom_list(i,alive,is)%rxp
-!        thisiay=atom_list(i,alive,is)%ryp
-!        thisiaz=atom_list(i,alive,is)%rzp
+!        thisiax=atom_list(i,alive,is)%rp(1)
+!        thisiay=atom_list(i,alive,is)%rp(2)
+!        thisiaz=atom_list(i,alive,is)%rp(3)
 !        CALL Cartesian_To_Fractional(thisiax,thisiay,thisiaz,fraciax,fraciay,fraciaz,this_box)
 !        fraciax = fraciax+1.0_DP
 !        CALL Fractional_To_Cartesian(fraciax,fraciay,fraciaz,thisiax,thisiay,thisiaz,this_box)
-!        atom_list(i,alive,is)%rxp = thisiax
-!        atom_list(i,alive,is)%ryp = thisiay
-!        atom_list(i,alive,is)%rzp = thisiaz
+!        atom_list(i,alive,is)%rp(1) = thisiax
+!        atom_list(i,alive,is)%rp(2) = thisiay
+!        atom_list(i,alive,is)%rp(3) = thisiaz
 !     END DO
 
      END IF
@@ -312,64 +312,64 @@ SUBROUTINE Fold_Molecule(alive,is,this_box)
      IF(frac_comy .GT. 0.5) THEN
         
 !        CALL Fold_Molecule_In_Fractional_Coords(alive,is,this_box)  
-        xcom_old = this_molecule%xcom
-        ycom_old = this_molecule%ycom
-        zcom_old = this_molecule%zcom
+        xcom_old = this_molecule%rcom(1)
+        ycom_old = this_molecule%rcom(2)
+        zcom_old = this_molecule%rcom(3)
 
         frac_comy = frac_comy-1.0_DP
         CALL Fractional_To_Cartesian(frac_comx, frac_comy, frac_comz, thisx, thisy, thisz,this_box)
-        this_molecule%xcom = thisx
-        this_molecule%ycom = thisy
-        this_molecule%zcom = thisz
+        this_molecule%rcom(1) = thisx
+        this_molecule%rcom(2) = thisy
+        this_molecule%rcom(3) = thisz
         
-        these_atoms%rxp = these_atoms%rxp + &
-             this_molecule%xcom - xcom_old
-        these_atoms%ryp = these_atoms%ryp + &
-             this_molecule%ycom - ycom_old
-        these_atoms%rzp = these_atoms%rzp + &
-             this_molecule%zcom - zcom_old
+        these_atoms%rp(1) = these_atoms%rp(1) + &
+             this_molecule%rcom(1) - xcom_old
+        these_atoms%rp(2) = these_atoms%rp(2) + &
+             this_molecule%rcom(2) - ycom_old
+        these_atoms%rp(3) = these_atoms%rp(3) + &
+             this_molecule%rcom(3) - zcom_old
 
 !     DO i = 1, natoms(is)
-!        thisiax=atom_list(i,alive,is)%rxp
-!        thisiay=atom_list(i,alive,is)%ryp
-!        thisiaz=atom_list(i,alive,is)%rzp
+!        thisiax=atom_list(i,alive,is)%rp(1)
+!        thisiay=atom_list(i,alive,is)%rp(2)
+!        thisiaz=atom_list(i,alive,is)%rp(3)
 !        CALL Cartesian_To_Fractional(thisiax,thisiay,thisiaz,fraciax,fraciay,fraciaz,this_box)
 !        fraciay = fraciay-1.0_DP
 !        CALL Fractional_To_Cartesian(fraciax,fraciay,fraciaz,thisiax,thisiay,thisiaz,this_box)
-!        atom_list(i,alive,is)%rxp = thisiax
-!        atom_list(i,alive,is)%ryp = thisiay
-!        atom_list(i,alive,is)%rzp = thisiaz
+!        atom_list(i,alive,is)%rp(1) = thisiax
+!        atom_list(i,alive,is)%rp(2) = thisiay
+!        atom_list(i,alive,is)%rp(3) = thisiaz
 !     END DO
 
      ELSE IF(frac_comy .LT. -0.5) THEN
 !        CALL Fold_Molecu  le_In_Fractional_Coords(alive,is,this_box)  
-        xcom_old = this_molecule%xcom
-        ycom_old = this_molecule%ycom
-        zcom_old = this_molecule%zcom
+        xcom_old = this_molecule%rcom(1)
+        ycom_old = this_molecule%rcom(2)
+        zcom_old = this_molecule%rcom(3)
         frac_comy = frac_comy+1.0_DP
         
         CALL Fractional_To_Cartesian(frac_comx, frac_comy, frac_comz, thisx, thisy, thisz,this_box)
-        this_molecule%xcom = thisx
-        this_molecule%ycom = thisy
-        this_molecule%zcom = thisz
+        this_molecule%rcom(1) = thisx
+        this_molecule%rcom(2) = thisy
+        this_molecule%rcom(3) = thisz
 
-        these_atoms%rxp = these_atoms%rxp + &
-             this_molecule%xcom - xcom_old
-        these_atoms%ryp = these_atoms%ryp + &
-             this_molecule%ycom - ycom_old
-        these_atoms%rzp = these_atoms%rzp + &
-             this_molecule%zcom - zcom_old
+        these_atoms%rp(1) = these_atoms%rp(1) + &
+             this_molecule%rcom(1) - xcom_old
+        these_atoms%rp(2) = these_atoms%rp(2) + &
+             this_molecule%rcom(2) - ycom_old
+        these_atoms%rp(3) = these_atoms%rp(3) + &
+             this_molecule%rcom(3) - zcom_old
 
 !     DO i = 1, natoms(is)
-!        thisiax=atom_list(i,alive,is)%rxp
-!        thisiay=atom_list(i,alive,is)%ryp
-!        thisiaz=atom_list(i,alive,is)%rzp
+!        thisiax=atom_list(i,alive,is)%rp(1)
+!        thisiay=atom_list(i,alive,is)%rp(2)
+!        thisiaz=atom_list(i,alive,is)%rp(3)
 !        CALL Cartesian_To_Fractional(thisiax,thisiay,thisiaz,fraciax,fraciay,fraciaz,this_box)
 !        fraciay = fraciay+1.0_DP
 !        CALL Fractional_To_Cartesian(fraciax,fraciay,fraciaz,thisiax,thisiay,thisiaz,this_box)
-!        atom_list(i,alive,is)%rxp = thisiax
-!        atom_list(i,alive,is)%ryp = thisiay
-!        atom_list(i,alive,is)%rzp = thisiaz
+!        atom_list(i,alive,is)%rp(1) = thisiax
+!        atom_list(i,alive,is)%rp(2) = thisiay
+!        atom_list(i,alive,is)%rp(3) = thisiaz
 !     END DO
 
 
@@ -378,68 +378,68 @@ SUBROUTINE Fold_Molecule(alive,is,this_box)
      IF(frac_comz .GT. 0.5) THEN
 
 !        CALL Fold_Molecule_In_Fractional_Coords(alive,is,this_box)  
-        xcom_old = this_molecule%xcom
-        ycom_old = this_molecule%ycom
-        zcom_old = this_molecule%zcom
+        xcom_old = this_molecule%rcom(1)
+        ycom_old = this_molecule%rcom(2)
+        zcom_old = this_molecule%rcom(3)
     
         frac_comz = frac_comz-1.0_DP
         CALL Fractional_To_Cartesian(frac_comx, frac_comy, frac_comz, thisx, thisy, thisz,this_box)
-        this_molecule%xcom = thisx
-        this_molecule%ycom = thisy
-        this_molecule%zcom = thisz
+        this_molecule%rcom(1) = thisx
+        this_molecule%rcom(2) = thisy
+        this_molecule%rcom(3) = thisz
         
-        these_atoms%rxp = these_atoms%rxp + &
-             this_molecule%xcom - xcom_old
-        these_atoms%ryp = these_atoms%ryp + &
-             this_molecule%ycom - ycom_old
-        these_atoms%rzp = these_atoms%rzp + &
-             this_molecule%zcom - zcom_old
+        these_atoms%rp(1) = these_atoms%rp(1) + &
+             this_molecule%rcom(1) - xcom_old
+        these_atoms%rp(2) = these_atoms%rp(2) + &
+             this_molecule%rcom(2) - ycom_old
+        these_atoms%rp(3) = these_atoms%rp(3) + &
+             this_molecule%rcom(3) - zcom_old
 
 !     DO i = 1, natoms(is)
-!        thisiax=atom_list(i,alive,is)%rxp
-!        thisiay=atom_list(i,alive,is)%ryp
-!        thisiaz=atom_list(i,alive,is)%rzp
+!        thisiax=atom_list(i,alive,is)%rp(1)
+!        thisiay=atom_list(i,alive,is)%rp(2)
+!        thisiaz=atom_list(i,alive,is)%rp(3)
 !        CALL Cartesian_To_Fractional(thisiax,thisiay,thisiaz,fraciax,fraciay,fraciaz,this_box)
 !        fraciaz = fraciaz-1.0_DP
 !        CALL Fractional_To_Cartesian(fraciax,fraciay,fraciaz,thisiax,thisiay,thisiaz,this_box)
-!        atom_list(i,alive,is)%rxp = thisiax
-!        atom_list(i,alive,is)%ryp = thisiay
-!        atom_list(i,alive,is)%rzp = thisiaz
+!        atom_list(i,alive,is)%rp(1) = thisiax
+!        atom_list(i,alive,is)%rp(2) = thisiay
+!        atom_list(i,alive,is)%rp(3) = thisiaz
 !     END DO
 
      ELSE IF(frac_comz .LT. -0.5) THEN
 
 !        CALL Fold_Molecule_In_Fractional_Coords(alive,is,this_box)  
-        xcom_old = this_molecule%xcom
-        ycom_old = this_molecule%ycom
-        zcom_old = this_molecule%zcom
+        xcom_old = this_molecule%rcom(1)
+        ycom_old = this_molecule%rcom(2)
+        zcom_old = this_molecule%rcom(3)
 
         frac_comz = frac_comz+1.0_DP
 
         CALL Fractional_To_Cartesian(frac_comx, frac_comy, frac_comz, thisx, thisy, thisz,this_box)
-        this_molecule%xcom = thisx
-        this_molecule%ycom = thisy
-        this_molecule%zcom = thisz
+        this_molecule%rcom(1) = thisx
+        this_molecule%rcom(2) = thisy
+        this_molecule%rcom(3) = thisz
 
-        these_atoms%rxp = these_atoms%rxp + &
-             this_molecule%xcom - xcom_old
-        these_atoms%ryp = these_atoms%ryp + &
-             this_molecule%ycom - ycom_old
-        these_atoms%rzp = these_atoms%rzp + &
-             this_molecule%zcom - zcom_old
+        these_atoms%rp(1) = these_atoms%rp(1) + &
+             this_molecule%rcom(1) - xcom_old
+        these_atoms%rp(2) = these_atoms%rp(2) + &
+             this_molecule%rcom(2) - ycom_old
+        these_atoms%rp(3) = these_atoms%rp(3) + &
+             this_molecule%rcom(3) - zcom_old
 
 
 
 !     DO i = 1, natoms(is)
-!        thisiax=atom_list(i,alive,is)%rxp
-!        thisiay=atom_list(i,alive,is)%ryp
-!        thisiaz=atom_list(i,alive,is)%rzp
+!        thisiax=atom_list(i,alive,is)%rp(1)
+!        thisiay=atom_list(i,alive,is)%rp(2)
+!        thisiaz=atom_list(i,alive,is)%rp(3)
 !        CALL Cartesian_To_Fractional(thisiax,thisiay,thisiaz,fraciax,fraciay,fraciaz,this_box)
 !        fraciaz = fraciaz+1.0_DP
 !        CALL Fractional_To_Cartesian(fraciax,fraciay,fraciaz,thisiax,thisiay,thisiaz,this_box)
-!        atom_list(i,alive,is)%rxp = thisiax
-!        atom_list(i,alive,is)%ryp = thisiay
-!        atom_list(i,alive,is)%rzp = thisiaz
+!        atom_list(i,alive,is)%rp(1) = thisiax
+!        atom_list(i,alive,is)%rp(2) = thisiay
+!        atom_list(i,alive,is)%rp(3) = thisiaz
 !     END DO
      END IF
 

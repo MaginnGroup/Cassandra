@@ -160,12 +160,12 @@ INTEGER :: lattice_file_unit = 170
 CHARACTER(FILENAME_LEN) :: lattice_file
 
 ! Variables associated with widom property files
-INTEGER :: wprop_file_unit_base = 180
+INTEGER :: wprop_file_unit_base = 1000 !180
 INTEGER, DIMENSION(:,:), ALLOCATABLE :: wprop_file_unit
 CHARACTER(FILENAME_LEN), DIMENSION(:,:), ALLOCATABLE :: wprop_filenames
 LOGICAL, DIMENSION(:,:), ALLOCATABLE :: first_open_wprop
 
-INTEGER :: wprop2_file_unit_base = 190
+INTEGER :: wprop2_file_unit_base = 2000 !190
 INTEGER, DIMENSION(:,:), ALLOCATABLE :: wprop2_file_unit
 CHARACTER(FILENAME_LEN), DIMENSION(:,:), ALLOCATABLE :: wprop2_filenames
 LOGICAL, DIMENSION(:,:), ALLOCATABLE :: first_open_wprop2

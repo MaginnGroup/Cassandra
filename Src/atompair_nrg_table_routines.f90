@@ -28,7 +28,8 @@ MODULE Atompair_nrg_table_routines
   !********************************************************************************
   USE Global_Variables
   USE Type_Definitions
-  USE Energy_Routines , ONLY: AtomPair_VdW_Energy_Vector
+  USE Io_Utilities
+  USE Energy_Routines , ONLY: AtomPair_VdW_Energy_Vector, Recip_Sqrt
   USE Input_Routines , ONLY: Get_Solvent_Info
   USE Pair_Emax_Estimation, ONLY: Read_Pair_rminsq
   !$ USE OMP_LIB
@@ -57,7 +58,7 @@ CONTAINS
                 IF (ALLOCATED(atompair_rminsq_table)) DEALLOCATE(atompair_rminsq_table)
                 IF (ALLOCATED(typepair_solute_indices)) DEALLOCATE(typepair_solute_indices)
                 IF (ALLOCATED(typepair_wsolute_indices)) DEALLOCATE(typepair_wsolute_indices)
-                IF (ALLOCATED(typepair_solvent_indices)) DEALLOCATE(typepair_solute_indices)
+                IF (ALLOCATED(typepair_solvent_indices)) DEALLOCATE(typepair_solvent_indices)
                 ALLOCATE(typepair_solute_indices(0:nbr_atomtypes))
                 ALLOCATE(typepair_wsolute_indices(0:nbr_atomtypes))
                 ALLOCATE(typepair_solvent_indices(0:nbr_atomtypes))
@@ -127,7 +128,8 @@ CONTAINS
                 wsolute_maxind = wsolute_nextbase
                 IF (precalc_atompair_nrg) THEN
                         ALLOCATE(typepair_nrg_table(atompair_nrg_res,0:solvent_ntypes,0:solute_ntypes,nbr_boxes))
-                        ALLOCATE(atompair_nrg_table(atompair_nrg_res,solvent_nextbase,solute_nextbase,nbr_boxes))
+                        ALLOCATE(atompair_nrg_table(atompair_nrg_res+1,solvent_nextbase,solute_nextbase,nbr_boxes))
+                        ALLOCATE(atompair_nrg_table_reduced(0:(atompair_nrg_res+1)*solvent_nextbase-1,solute_nextbase,nbr_boxes))
                         typepair_nrg_table = 0.0_DP
                 END IF
                 IF (est_atompair_rminsq) THEN
@@ -142,6 +144,7 @@ CONTAINS
                 END IF
                 IF (read_atompair_rminsq) THEN 
                         ALLOCATE(atompair_rminsq_table(solvent_nextbase,wsolute_nextbase,nbr_boxes))
+                        ALLOCATE(sp_atompair_rminsq_table(solvent_nextbase,wsolute_nextbase,nbr_boxes))
                 END IF
         END SUBROUTINE Allocate_Atompair_tables
 
@@ -157,11 +160,14 @@ CONTAINS
                 REAL(DP), DIMENSION(atompair_nrg_res, nbr_boxes) :: f2
                 REAL(DP) :: solvent_charges(solvent_maxind), solute_charges(solute_maxind)
                 INTEGER :: solvent_typeindvec(solvent_maxind), solute_typeindvec(solute_maxind)
-                REAL(DP), DIMENSION(atompair_nrg_res) :: rsq_mp_vector, rsq_lb_vector, rij, alpha_rij
+                REAL(DP), DIMENSION(atompair_nrg_res) :: rsq_mp_vector, rsq_lb_vector, rij, inv_rij, alpha_rij
+                REAL(DP), DIMENSION(:,:,:), ALLOCATABLE :: atompair_nrg_table_reduced_dp
                 IF (.NOT. precalc_atompair_nrg) RETURN
                 nsolutes = 0
                 nsolvents = 0
                 rsq_step = (MAXVAL(rcut_cbmcsq)-rcut_lowsq)/atompair_nrg_res
+                inv_rsq_step = 1.0_DP/rsq_step
+                inv_rsq_step_sp = REAL(inv_rsq_step,SP)
                 rsq_shifter = rcut_lowsq - rsq_step
                 DO i = 1, atompair_nrg_res
                         rsq_lb_vector(i) = rsq_shifter + rsq_step*i
@@ -197,20 +203,23 @@ CONTAINS
                                 = typepair_solute_indices(nonbond_list(1:natoms(is),is)%atom_type_number)
                 END DO
 
-                rij = SQRT(rsq_mp_vector)
+                inv_rij = 1.0_DP/SQRT(rsq_mp_vector)
+                rij = inv_rij*rsq_mp_vector
 
                 DO ibox = 1, nbr_boxes
-                        IF (int_charge_sum_style(ibox) == charge_ewald) THEN
+                        IF (cbmc_charge_sf_flag) THEN
+                                f2(:,ibox) = inv_rij - 2.0_DP/rcut_cbmc(ibox) + rij/rcut_cbmcsq(ibox)
+                        ELSEIF (int_charge_sum_style(ibox) == charge_ewald) THEN
                                 alpha_rij = alpha_ewald(ibox) * rij
-                                f2(:,ibox) = ERFC(alpha_rij)/rij
+                                f2(:,ibox) = ERFC(alpha_rij)*inv_rij
                         ELSEIF (int_charge_sum_style(ibox) == charge_dsf) THEN
                                 alpha_rij = alpha_dsf(ibox)*rij
                                 f2(:,ibox) = &
                                         dsf_factor2(ibox)*(rij-rcut_coul(ibox)) - &
                                         dsf_factor1(ibox) + &
-                                        ERFC(alpha_rij)/rij
+                                        ERFC(alpha_rij)*inv_rij
                         ELSEIF (int_charge_sum_style(ibox) == charge_cut) THEN
-                                f2(:,ibox) = 1.0_DP/rij
+                                f2(:,ibox) = inv_rij
                         ELSE
                                 f2(:,ibox) = 0.0_DP
                         END IF
@@ -240,7 +249,7 @@ CONTAINS
                 !$OMP END PARALLEL
 
                 !$OMP WORKSHARE
-                atompair_nrg_table = typepair_nrg_table(:,solvent_typeindvec,solute_typeindvec,:)
+                atompair_nrg_table(1:atompair_nrg_res,:,:,:) = typepair_nrg_table(:,solvent_typeindvec,solute_typeindvec,:)
                 !$OMP END WORKSHARE
 
                 !$OMP PARALLEL DEFAULT(SHARED)
@@ -248,22 +257,145 @@ CONTAINS
                 DO ibox = 1, nbr_boxes
                         DO ti_solute = 1, solute_maxind
                                 DO ti_solvent = 1, solvent_maxind
-                                        atompair_nrg_table(:,ti_solvent,ti_solute,ibox) = &
-                                                atompair_nrg_table(:,ti_solvent,ti_solute,ibox) + &
+                                        atompair_nrg_table(1:atompair_nrg_res,ti_solvent,ti_solute,ibox) = &
+                                                atompair_nrg_table(1:atompair_nrg_res,ti_solvent,ti_solute,ibox) + &
                                                 f2(:,ibox)*cfqq(ti_solvent,ti_solute)
                                 END DO
                         END DO
                 END DO
                 !$OMP END DO
+                ALLOCATE(atompair_nrg_table_reduced_dp(SIZE(atompair_nrg_table_reduced,1),&
+                        SIZE(atompair_nrg_table_reduced,2), &
+                        SIZE(atompair_nrg_table_reduced,3)))
+                !$OMP WORKSHARE
+                atompair_nrg_table(atompair_nrg_res+1,:,:,:) = 0.0
+                atompair_nrg_table_reduced_dp = RESHAPE(atompair_nrg_table, SHAPE(atompair_nrg_table_reduced))
+                atompair_nrg_table_reduced = REAL(atompair_nrg_table_reduced_dp,SP)
+                !$OMP END WORKSHARE
                 !$OMP END PARALLEL
+
 
 
         END SUBROUTINE Create_Atompair_Nrg_table
 
         SUBROUTINE Setup_Atompair_tables
+                LOGICAL, DIMENSION(0:nbr_atomtypes) :: solvent_lvec, wsolute_lvec
+                INTEGER :: ia, is, solvent_tcount, wsolute_tcount, itype, ibox
+                INTEGER, DIMENSION(0:nbr_atomtypes) :: ti_which_big_atom
+                INTEGER, DIMENSION(nbr_atomtypes+1) :: big_atom_ti_list
+                INTEGER :: ifrag, ia_frag, ia_frag_ti, biggest_atom, biggest_atom_ti, i_big_atom
+                REAL(DP) :: ia_frag_rminsq_sum, biggest_atom_rminsq_sum
                 solvent_maxind = 1
                 rsqmin_res_d = 1
                 solvent_maxind_d = 1
+
+
+                n_big_atoms = 0
+                IF (calc_rmin_flag) THEN
+                        IF (need_solvents) CALL Get_Solvent_Info
+                        solvent_lvec = .FALSE.
+                        wsolute_lvec = .FALSE.
+                        DO is = 1, nspecies
+                              IF (species_list(is)%l_solvent) THEN
+                                      DO ia = 1, natoms(is)
+                                              solvent_lvec(nonbond_list(ia,is)%atom_type_number) = .TRUE.
+                                      END DO
+                              END IF
+                              IF (species_list(is)%l_wsolute) THEN
+                                      DO ia = 1, natoms(is)
+                                              wsolute_lvec(nonbond_list(ia,is)%atom_type_number) = .TRUE.
+                                      END DO
+                              END IF
+                        END DO
+                        n_solvent_atomtypes = COUNT(solvent_lvec)
+                        n_wsolute_atomtypes = COUNT(wsolute_lvec)
+                        ALLOCATE(which_solvent_atomtypes(n_solvent_atomtypes))
+                        ALLOCATE(which_solvent_atomtypes_inv(0:nbr_atomtypes))
+                        ALLOCATE(which_wsolute_atomtypes(n_wsolute_atomtypes))
+                        ALLOCATE(which_wsolute_atomtypes_inv(0:nbr_atomtypes)) ! inverse function of above
+                        which_solvent_atomtypes_inv = -2000000000 ! meant to cause invalid index if used where it isn't properly set
+                        which_wsolute_atomtypes_inv = -2000000000 ! meant to cause invalid index if used where it isn't properly set
+                        solvent_tcount = 0
+                        wsolute_tcount = 0
+                        DO itype = 0, nbr_atomtypes
+                              IF (solvent_lvec(itype)) THEN
+                                      solvent_tcount = solvent_tcount + 1
+                                      which_solvent_atomtypes(solvent_tcount) = itype
+                                      which_solvent_atomtypes_inv(itype) = solvent_tcount
+                              END IF
+                              IF (wsolute_lvec(itype)) THEN
+                                      wsolute_tcount = wsolute_tcount + 1
+                                      which_wsolute_atomtypes(wsolute_tcount) = itype
+                                      which_wsolute_atomtypes_inv(itype) = wsolute_tcount
+                              END IF
+                        END DO
+                        max_rmin = DSQRT(MAXVAL(rminsq_table))
+                        sp_rminsq_table = REAL(rminsq_table,SP)
+                        IF (cavity_biasing_flag) THEN
+                                ti_which_big_atom = -999999
+                                DO is = 1, nspecies
+                                        IF (.NOT. species_list(is)%l_wsolute) CYCLE
+                                        DO ifrag = 1, nfragments(is)
+                                                biggest_atom = 1
+                                                biggest_atom_ti = nonbond_list(frag_list(ifrag,is)%atoms(1),is)%atom_type_number
+                                                biggest_atom_rminsq_sum = SUM(rminsq_table(:,biggest_atom_ti))
+                                                DO ia_frag = 2, frag_list(ifrag,is)%natoms
+                                                        ia_frag_ti = &
+                                                                nonbond_list(frag_list(ifrag,is)%atoms(ia_frag),is)%atom_type_number
+                                                        ia_frag_rminsq_sum = SUM(rminsq_table(:,ia_frag_ti))
+                                                        IF (ia_frag_rminsq_sum>biggest_atom_rminsq_sum) THEN
+                                                                biggest_atom = ia_frag
+                                                                biggest_atom_ti = ia_frag_ti
+                                                                biggest_atom_rminsq_sum = ia_frag_rminsq_sum
+                                                        END IF
+                                                END DO
+                                                i_big_atom = ti_which_big_atom(biggest_atom_ti)
+                                                IF (i_big_atom < 0) THEN
+                                                        n_big_atoms = n_big_atoms+1
+                                                        i_big_atom = n_big_atoms
+                                                        ti_which_big_atom(biggest_atom_ti) = n_big_atoms
+                                                        big_atom_ti_list(n_big_atoms) = biggest_atom_ti
+                                                END IF
+                                                frag_list(ifrag,is)%i_big_atom = i_big_atom
+                                                frag_list(ifrag,is)%ia_frag_big_atom = biggest_atom
+                                        END DO
+                                END DO
+                        END IF
+                        ALLOCATE(atomtype_max_rminsq(0:nbr_atomtypes))
+                        ALLOCATE(atomtype_min_rminsq(n_solvent_atomtypes,0:n_big_atoms))
+                        ALLOCATE(atomtype_max_rminsq_sp(0:nbr_atomtypes))
+                        atomtype_max_rminsq = MAXVAL(rminsq_table(:, &
+                                which_wsolute_atomtypes),2)
+                        atomtype_min_rminsq(:,0) = MINVAL(rminsq_table(which_solvent_atomtypes, &
+                                which_wsolute_atomtypes),2)
+                        IF (cavity_biasing_flag) THEN
+                                atomtype_min_rminsq(:,1:n_big_atoms) = rminsq_table(which_solvent_atomtypes,big_atom_ti_list(1:n_big_atoms))
+                        END IF
+                        atomtype_max_rminsq_sp = REAL(atomtype_max_rminsq,SP)
+                        box_list%rcut_low_max = SQRT(MAXVAL(atomtype_min_rminsq))
+                        box_list%ideal_bitcell_length = box_list%rcut_low_max / SQRT(902.0_DP) ! RHS scalar LHS vector with one element per box
+                        solvents_or_types_maxind = n_solvent_atomtypes
+                ELSE
+                        box_list%rcut_low_max = rcut_low
+                        box_list%ideal_bitcell_length = rcut_low / SQRT(902.0_DP)
+                        solvents_or_types_maxind = 1
+                END IF
+                IF (bitcell_flag .AND. .NOT. read_atompair_rminsq) THEN
+                      DO ibox = 1, nbr_boxes
+                              WRITE(logunit, '(A,F5.3,A)') "For box " // TRIM(Int_To_String(ibox)) // ", computed ideal bitcell length = ", &
+                                      box_list(ibox)%ideal_bitcell_length, " Angstroms"
+                      END DO
+                END IF
+                box_list%ideal_bitcell_length = MAX(min_ideal_bitcell_length,box_list%ideal_bitcell_length)
+                IF (bitcell_flag .AND. .NOT. read_atompair_rminsq) THEN
+                      DO ibox = 1, nbr_boxes
+                              WRITE(logunit, '(A,F5.3,A)') "Setting box " // TRIM(Int_To_String(ibox)) // " ideal bitcell length = ", &
+                                      box_list(ibox)%ideal_bitcell_length, " Angstroms"
+                      END DO
+                END IF
+
+
+
                 IF (.NOT. (precalc_atompair_nrg .OR. read_atompair_rminsq .OR. est_atompair_rminsq)) RETURN
                 CALL Allocate_Atompair_Tables
                 IF (precalc_atompair_nrg) CALL Create_Atompair_Nrg_table

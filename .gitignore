@@ -6,6 +6,8 @@
 .DS_Store
 .DS_Store?
 *.[oa]
+*.optrpt
+*.003t.original
 
 # Prerequisites
 *.d

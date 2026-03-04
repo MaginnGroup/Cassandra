@@ -88,9 +88,9 @@ CONTAINS
 
       IF (these_atoms(ia)%exist) THEN
          
-         these_atoms(ia)%rxp = these_atoms(ia)%rxp - this_molecule%xcom
-         these_atoms(ia)%ryp = these_atoms(ia)%ryp - this_molecule%ycom
-         these_atoms(ia)%rzp = these_atoms(ia)%rzp - this_molecule%zcom
+         these_atoms(ia)%rp(1) = these_atoms(ia)%rp(1) - this_molecule%rcom(1)
+         these_atoms(ia)%rp(2) = these_atoms(ia)%rp(2) - this_molecule%rcom(2)
+         these_atoms(ia)%rp(3) = these_atoms(ia)%rp(3) - this_molecule%rcom(3)
          
       END IF
 
@@ -117,18 +117,18 @@ CONTAINS
 
       IF (these_atoms(ia)%exist) THEN
          
-         rxpnew = rot11*these_atoms(ia)%rxp + rot12*these_atoms(ia)%ryp + &
-              rot13*these_atoms(ia)%rzp
-         rypnew = rot21*these_atoms(ia)%rxp + rot22*these_atoms(ia)%ryp + &
-              rot23*these_atoms(ia)%rzp
-         rzpnew = rot31*these_atoms(ia)%rxp + rot32*these_atoms(ia)%ryp + &
-              rot33*these_atoms(ia)%rzp
+         rxpnew = rot11*these_atoms(ia)%rp(1) + rot12*these_atoms(ia)%rp(2) + &
+              rot13*these_atoms(ia)%rp(3)
+         rypnew = rot21*these_atoms(ia)%rp(1) + rot22*these_atoms(ia)%rp(2) + &
+              rot23*these_atoms(ia)%rp(3)
+         rzpnew = rot31*these_atoms(ia)%rp(1) + rot32*these_atoms(ia)%rp(2) + &
+              rot33*these_atoms(ia)%rp(3)
          
          ! Shift the origin back to (0,0,0)
          
-         these_atoms(ia)%rxp = rxpnew + this_molecule%xcom
-         these_atoms(ia)%ryp = rypnew + this_molecule%ycom
-         these_atoms(ia)%rzp = rzpnew + this_molecule%zcom
+         these_atoms(ia)%rp(1) = rxpnew + this_molecule%rcom(1)
+         these_atoms(ia)%rp(2) = rypnew + this_molecule%rcom(2)
+         these_atoms(ia)%rp(3) = rzpnew + this_molecule%rcom(3)
          
       END IF
       
@@ -188,9 +188,9 @@ CONTAINS
 
    atom_orig = frag_list(frag_start,is)%atoms(1)
 
-   x_orig = these_atoms(atom_orig)%rxp
-   y_orig = these_atoms(atom_orig)%ryp
-   z_orig = these_atoms(atom_orig)%rzp
+   x_orig = these_atoms(atom_orig)%rp(1)
+   y_orig = these_atoms(atom_orig)%rp(2)
+   z_orig = these_atoms(atom_orig)%rp(3)
 
    istart = 2
 
@@ -199,9 +199,9 @@ CONTAINS
  
       IF (these_atoms(ia)%exist) THEN
          
-         these_atoms(ia)%rxp = these_atoms(ia)%rxp - x_orig
-         these_atoms(ia)%ryp = these_atoms(ia)%ryp - y_orig
-         these_atoms(ia)%rzp = these_atoms(ia)%rzp - z_orig
+         these_atoms(ia)%rp(1) = these_atoms(ia)%rp(1) - x_orig
+         these_atoms(ia)%rp(2) = these_atoms(ia)%rp(2) - y_orig
+         these_atoms(ia)%rp(3) = these_atoms(ia)%rp(3) - z_orig
          
       END IF
 
@@ -228,16 +228,16 @@ CONTAINS
 
       IF (these_atoms(ia)%exist) THEN
          
-         rxpnew = rot11*these_atoms(ia)%rxp + rot12*these_atoms(ia)%ryp + &
-              rot13*these_atoms(ia)%rzp
-         rypnew = rot21*these_atoms(ia)%rxp + rot22*these_atoms(ia)%ryp + &
-              rot23*these_atoms(ia)%rzp
-         rzpnew = rot31*these_atoms(ia)%rxp + rot32*these_atoms(ia)%ryp + &
-              rot33*these_atoms(ia)%rzp
+         rxpnew = rot11*these_atoms(ia)%rp(1) + rot12*these_atoms(ia)%rp(2) + &
+              rot13*these_atoms(ia)%rp(3)
+         rypnew = rot21*these_atoms(ia)%rp(1) + rot22*these_atoms(ia)%rp(2) + &
+              rot23*these_atoms(ia)%rp(3)
+         rzpnew = rot31*these_atoms(ia)%rp(1) + rot32*these_atoms(ia)%rp(2) + &
+              rot33*these_atoms(ia)%rp(3)
          
-         these_atoms(ia)%rxp = rxpnew
-         these_atoms(ia)%ryp = rypnew
-         these_atoms(ia)%rzp = rzpnew
+         these_atoms(ia)%rp(1) = rxpnew
+         these_atoms(ia)%rp(2) = rypnew
+         these_atoms(ia)%rp(3) = rzpnew
 
       END IF
 
@@ -246,9 +246,9 @@ CONTAINS
    ! Shift the origin back to (0,0,0)
    DO i=istart,frag_list(frag_start,is)%natoms
       ia = frag_list(frag_start,is)%atoms(i)
-      these_atoms(ia)%rxp = these_atoms(ia)%rxp + x_orig
-      these_atoms(ia)%ryp = these_atoms(ia)%ryp + y_orig
-      these_atoms(ia)%rzp = these_atoms(ia)%rzp + z_orig
+      these_atoms(ia)%rp(1) = these_atoms(ia)%rp(1) + x_orig
+      these_atoms(ia)%rp(2) = these_atoms(ia)%rp(2) + y_orig
+      these_atoms(ia)%rp(3) = these_atoms(ia)%rp(3) + z_orig
    END DO
  END SUBROUTINE Rotate_XYZ_Axes
 

@@ -128,20 +128,20 @@
                 
                 IF(box_list(ibox)%box_shape == 'cubic') THEN
                    ! -- all the cell lengths are identical,
-                   atom_list(1,alive,is)%rxp = (rranf() - 0.5_DP) * box_list(ibox)%length(1,1)
-                   atom_list(1,alive,is)%ryp = (rranf() - 0.5_DP) * box_list(ibox)%length(2,2)
-                   atom_list(1,alive,is)%rzp = (rranf() - 0.5_DP) * box_list(ibox)%length(3,3)                      
+                   atom_list(1,alive,is)%rp(1) = (rranf() - 0.5_DP) * box_list(ibox)%length(1,1)
+                   atom_list(1,alive,is)%rp(2) = (rranf() - 0.5_DP) * box_list(ibox)%length(2,2)
+                   atom_list(1,alive,is)%rp(3) = (rranf() - 0.5_DP) * box_list(ibox)%length(3,3)                      
                 END IF
                 
                 ! insert the rest of the molecule
                 DO ia = 2,natoms(is)
                    
-                   atom_list(ia,alive,is)%rxp = atom_list(1,alive,is)%rxp + init_list(ia,1,is)%rxp - &
-                        init_list(1,1,is)%rxp
-                   atom_list(ia,alive,is)%ryp = atom_list(1,alive,is)%ryp + init_list(ia,1,is)%ryp - &
-                        init_list(1,1,is)%ryp
-                   atom_list(ia,alive,is)%rzp = atom_list(1,alive,is)%rzp + init_list(ia,1,is)%rzp - &
-                        init_list(1,1,is)%rzp
+                   atom_list(ia,alive,is)%rp(1) = atom_list(1,alive,is)%rp(1) + init_list(ia,1,is)%rp(1) - &
+                        init_list(1,1,is)%rp(1)
+                   atom_list(ia,alive,is)%rp(2) = atom_list(1,alive,is)%rp(2) + init_list(ia,1,is)%rp(2) - &
+                        init_list(1,1,is)%rp(2)
+                   atom_list(ia,alive,is)%rp(3) = atom_list(1,alive,is)%rp(3) + init_list(ia,1,is)%rp(3) - &
+                        init_list(1,1,is)%rp(3)
                 END DO
                 
                 ! Obtain COM of the molecule
@@ -167,9 +167,9 @@
                       
                       DO ja = 1, natoms(is2)
                          
-                         rxijp = atom_list(ia,alive,is)%rxp - atom_list(ja,this_im,is2)%rxp
-                         ryijp = atom_list(ia,alive,is)%ryp - atom_list(ja,this_im,is2)%ryp
-                         rzijp = atom_list(ia,alive,is)%rzp - atom_list(ja,this_im,is2)%rzp
+                         rxijp = atom_list(ia,alive,is)%rp(1) - atom_list(ja,this_im,is2)%rp(1)
+                         ryijp = atom_list(ia,alive,is)%rp(2) - atom_list(ja,this_im,is2)%rp(2)
+                         rzijp = atom_list(ia,alive,is)%rp(3) - atom_list(ja,this_im,is2)%rp(3)
                          
                          CALL Minimum_Image_Separation(ibox,rxijp,ryijp,rzijp,rxij,ryij,rzij)
                          
@@ -235,9 +235,9 @@
       
       ! shift the origin to the COM of the molecule
       
-      atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp - molecule_list(alive,is)%xcom
-      atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp - molecule_list(alive,is)%ycom
-      atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp - molecule_list(alive,is)%zcom
+      atom_list(:,alive,is)%rp(1) = atom_list(:,alive,is)%rp(1) - molecule_list(alive,is)%rcom(1)
+      atom_list(:,alive,is)%rp(2) = atom_list(:,alive,is)%rp(2) - molecule_list(alive,is)%rcom(2)
+      atom_list(:,alive,is)%rp(3) = atom_list(:,alive,is)%rp(3) - molecule_list(alive,is)%rcom(3)
       
       ! Construct the rotation matrix that needs to be applied to each of the vectors
       ! This is the A matrix in Goldstein notation
@@ -257,24 +257,24 @@
       
       DO ia = 1, natoms(is)
          
-         rxpnew = rot11*atom_list(ia,alive,is)%rxp + rot12*atom_list(ia,alive,is)%ryp + &
-              rot13*atom_list(ia,alive,is)%rzp
-         rypnew = rot21*atom_list(ia,alive,is)%rxp + rot22*atom_list(ia,alive,is)%ryp + &
-              rot23*atom_list(ia,alive,is)%rzp
-         rzpnew = rot31*atom_list(ia,alive,is)%rxp + rot32*atom_list(ia,alive,is)%ryp + &
-              rot33*atom_list(ia,alive,is)%rzp
+         rxpnew = rot11*atom_list(ia,alive,is)%rp(1) + rot12*atom_list(ia,alive,is)%rp(2) + &
+              rot13*atom_list(ia,alive,is)%rp(3)
+         rypnew = rot21*atom_list(ia,alive,is)%rp(1) + rot22*atom_list(ia,alive,is)%rp(2) + &
+              rot23*atom_list(ia,alive,is)%rp(3)
+         rzpnew = rot31*atom_list(ia,alive,is)%rp(1) + rot32*atom_list(ia,alive,is)%rp(2) + &
+              rot33*atom_list(ia,alive,is)%rp(3)
          
-         atom_list(ia,alive,is)%rxp = rxpnew
-         atom_list(ia,alive,is)%ryp = rypnew
-         atom_list(ia,alive,is)%rzp = rzpnew
+         atom_list(ia,alive,is)%rp(1) = rxpnew
+         atom_list(ia,alive,is)%rp(2) = rypnew
+         atom_list(ia,alive,is)%rp(3) = rzpnew
          
       END DO
       
       ! Shift the origin back to (0,0,0)
       
-      atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp + molecule_list(alive,is)%xcom
-      atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp + molecule_list(alive,is)%ycom
-      atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp + molecule_list(alive,is)%zcom
+      atom_list(:,alive,is)%rp(1) = atom_list(:,alive,is)%rp(1) + molecule_list(alive,is)%rcom(1)
+      atom_list(:,alive,is)%rp(2) = atom_list(:,alive,is)%rp(2) + molecule_list(alive,is)%rcom(2)
+      atom_list(:,alive,is)%rp(3) = atom_list(:,alive,is)%rp(3) + molecule_list(alive,is)%rcom(3)
       
     END SUBROUTINE Rotate_Molecule_Eulerian
     

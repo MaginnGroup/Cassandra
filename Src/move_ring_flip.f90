@@ -123,13 +123,13 @@ SUBROUTINE Flip_Move
   ! Align plane of atom1, atom2 and this_atom such that atom1 is at the origin, atom2 is 
   ! along the x-axis and this_atom is in xy plane
 
-  vec1(1) = atom_list(atom2,im,is)%rxp - atom_list(atom1,im,is)%rxp
-  vec1(2) = atom_list(atom2,im,is)%ryp - atom_list(atom1,im,is)%ryp
-  vec1(3) = atom_list(atom2,im,is)%rzp - atom_list(atom1,im,is)%rzp
+  vec1(1) = atom_list(atom2,im,is)%rp(1) - atom_list(atom1,im,is)%rp(1)
+  vec1(2) = atom_list(atom2,im,is)%rp(2) - atom_list(atom1,im,is)%rp(2)
+  vec1(3) = atom_list(atom2,im,is)%rp(3) - atom_list(atom1,im,is)%rp(3)
   
-  vec2(1) = atom_list(this_atom,im,is)%rxp - atom_list(atom1,im,is)%rxp
-  vec2(2) = atom_list(this_atom,im,is)%ryp - atom_list(atom1,im,is)%ryp
-  vec2(3) = atom_list(this_atom,im,is)%rzp - atom_list(atom1,im,is)%rzp
+  vec2(1) = atom_list(this_atom,im,is)%rp(1) - atom_list(atom1,im,is)%rp(1)
+  vec2(2) = atom_list(this_atom,im,is)%rp(2) - atom_list(atom1,im,is)%rp(2)
+  vec2(3) = atom_list(this_atom,im,is)%rp(3) - atom_list(atom1,im,is)%rp(3)
 
 
   CALL Get_Aligner_Hanger(vec1,vec2,aligner,hanger)
@@ -185,9 +185,9 @@ SUBROUTINE Flip_Move
      atom_i = atoms_to_move(i)
 
 
-     a(1) = atom_list(atom_i,im,is)%rxp - atom_list(atom1,im,is)%rxp
-     a(2) = atom_list(atom_i,im,is)%ryp - atom_list(atom1,im,is)%ryp
-     a(3) = atom_list(atom_i,im,is)%rzp - atom_list(atom1,im,is)%rzp
+     a(1) = atom_list(atom_i,im,is)%rp(1) - atom_list(atom1,im,is)%rp(1)
+     a(2) = atom_list(atom_i,im,is)%rp(2) - atom_list(atom1,im,is)%rp(2)
+     a(3) = atom_list(atom_i,im,is)%rp(3) - atom_list(atom1,im,is)%rp(3)
      
      ! first transformation
 
@@ -204,9 +204,9 @@ SUBROUTINE Flip_Move
 
      c = MATMUL(hanger,b)
 
-     atom_list(atom_i,im,is)%rxp = c(1) + atom_list(atom1,im,is)%rxp
-     atom_list(atom_i,im,is)%ryp = c(2) + atom_list(atom1,im,is)%ryp
-     atom_list(atom_i,im,is)%rzp = c(3) + atom_list(atom1,im,is)%rzp
+     atom_list(atom_i,im,is)%rp(1) = c(1) + atom_list(atom1,im,is)%rp(1)
+     atom_list(atom_i,im,is)%rp(2) = c(2) + atom_list(atom1,im,is)%rp(2)
+     atom_list(atom_i,im,is)%rp(3) = c(3) + atom_list(atom1,im,is)%rp(3)
         
   END DO
 

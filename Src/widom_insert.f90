@@ -64,9 +64,9 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
 
   REAL(DP) :: dx, dy, dz
   REAL(DP) :: dE, dE_intra, dE_inter, dE_frag
-  REAL(DP) :: E_bond, E_angle, E_dihedral, E_improper
+  REAL(DP) :: E_bond, E_dihedral, E_improper
   REAL(DP) :: E_intra_vdw, E_intra_qq
-  REAL(DP) :: E_inter, E_periodic_qq
+  REAL(DP) :: E_inter, E_interfrag, E_periodic_qq, E_angle
   REAL(DP) :: E_reciprocal, E_self, E_lrc
   REAL(DP) :: E_ring_frag
   REAL(DP) :: ln_pacc, ln_pseq, ln_pbias, this_lambda
@@ -84,14 +84,14 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
   INTEGER(KIND=INT64), DIMENSION(rsqmin_res_d,solvent_maxind_d,natoms(is)), TARGET :: frame_rsqmin_atompair_freq
   REAL(DP), DIMENSION(:,:,:), POINTER :: rsqmin_atompair_w_max_ptr, rsqmin_atompair_w_sum_ptr
   INTEGER(KIND=INT64), DIMENSION(:,:,:), POINTER :: rsqmin_atompair_freq_ptr
-  INTEGER :: bsolute, rsq_ind, ia, ti_solvent
+  INTEGER :: bsolute, rsq_ind(solvent_maxind,natoms(is)), ia, ti_solvent
 
   REAL(DP) :: widom_prefactor, widom_var_exp, widom_sum
   REAL(DP) :: E_recip_in, lrc_diff, E_inter_constant
   REAL(DP) :: subinterval_sums(MAX(n_widom_subgroups(is,ibox),1))
   REAL(DP) :: t_cpu_e, t_cpu_s
   INTEGER :: n_subintervals
-!widom_timing  REAL(DP) :: noncbmc_time_e, noncbmc_time_s, noncbmc_time
+  REAL(DP) :: noncbmc_time_e, noncbmc_time_s, noncbmc_time
   LOGICAL :: write_wprp2
   LOGICAL :: omp_flag
 
@@ -119,7 +119,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
   !$ omp_flag = .TRUE.
   !$ nbr_threads = omp_get_max_threads()
 
-!widom_timing  noncbmc_time = 0.0_DP
+  noncbmc_time = 0.0_DP
 
 
   t_cpu = 0.0_DP
@@ -164,6 +164,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
                   !$OMP END PARALLEL WORKSHARE
           END IF
   END IF
+
 
 
 
@@ -224,7 +225,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
 
      DO i = 1, natoms(is)
         i_type = nonbond_list(i,is)%atom_type_number
-        nint_beads(i_type,ibox) = nint_beads(i_type,ibox) + 1
+        IF (i_type > 0) nint_beads(i_type,ibox) = nint_beads(i_type,ibox) + 1
      END DO
 
      CALL Compute_LR_correction(ibox,E_lrc)
@@ -251,33 +252,31 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
   frame_rsqmin_atompair_w_sum = 0.0_DP
   frame_rsqmin_atompair_w_max = 0.0_DP
   frame_rsqmin_atompair_freq = 0_INT64
+  widom_sum = 0.0_DP
+  n_overlaps = 0_INT64
+  subinterval_sums = 0.0_DP
+  t_cpu = 0.0_DP
+  IF (est_emax) THEN
+          frame_w_max = 0.0_DP
+          frame_Eij_w_sum = 0.0_DP
+          Eij_freq = 0
+          thread_Eij_factor = Eij_factor_gcopy
+  END IF
 
   !$OMP PARALLEL DEFAULT(SHARED) &
   !$OMP PRIVATE(ln_pseq, ln_pbias, E_ring_frag, inter_overlap, cbmc_overlap, intra_overlap, i_interval) &
-  !$OMP PRIVATE(widom_var_exp, E_periodic_qq, E_intra_qq, E_intra_vdw, E_inter, dE_frag, dE) &
-  !$OMP PRIVATE(E_bond, E_angle, E_dihedral, E_improper, dE_intra, dE_inter, E_reciprocal, frag_order) &
+  !$OMP PRIVATE(widom_var_exp, E_interfrag, E_intra_qq, E_intra_vdw, E_inter, dE_frag, dE) &
+  !$OMP PRIVATE(E_bond, E_dihedral, E_improper, dE_intra, dE_inter, E_reciprocal, frag_order) &
   !$OMP PRIVATE(t_cpu_s, t_cpu_e, thread_changefactor, Eij_ind, rsq_ind, ia, ti_solvent) &
   !$OMP PRIVATE(frame_rsqmin_atompair_w_sum_ptr,frame_rsqmin_atompair_w_max_ptr,frame_rsqmin_atompair_freq_ptr) &
-  !$OMP REDUCTION(+:widom_sum,n_overlaps,subinterval_sums,t_cpu,Eij_freq,frame_Eij_w_sum) &
-  !$OMP REDUCTION(+:frame_rsqmin_atompair_w_sum,frame_rsqmin_atompair_freq) &
-  !$OMP REDUCTION(MAX:frame_w_max,thread_Eij_factor,frame_rsqmin_atompair_w_max)
-  frame_rsqmin_atompair_w_sum = 0.0_DP
-  frame_rsqmin_atompair_w_max = 0.0_DP
-  frame_rsqmin_atompair_freq = 0_INT64
+  !$OMP PRIVATE(noncbmc_time_e,noncbmc_time_s,E_periodic_qq,E_angle) &
+  !$OMP REDUCTION(+:Eij_freq,frame_Eij_w_sum) &
+  !$OMP REDUCTION(MAX:frame_w_max,thread_Eij_factor) &
+  !$OMP REDUCTION(+:t_cpu) &
+  !$OMP REDUCTION(+:noncbmc_time)
 
   ithread = 1
   !$ ithread = omp_get_thread_num() + 1
-  IF (est_atompair_rminsq) THEN
-          IF (l_heap) THEN
-                  frame_rsqmin_atompair_w_sum_ptr => frame_rsqmin_atompair_w_sum_tgt(:,:,:,ithread)
-                  frame_rsqmin_atompair_w_max_ptr => frame_rsqmin_atompair_w_max_tgt(:,:,:,ithread)
-                  frame_rsqmin_atompair_freq_ptr => frame_rsqmin_atompair_freq_tgt(:,:,:,ithread)
-          ELSE
-                  frame_rsqmin_atompair_w_sum_ptr => frame_rsqmin_atompair_w_sum
-                  frame_rsqmin_atompair_w_max_ptr => frame_rsqmin_atompair_w_max
-                  frame_rsqmin_atompair_freq_ptr => frame_rsqmin_atompair_freq
-          END IF
-  END IF
 
   IF (ALLOCATED(widom_atoms)) THEN
           DEALLOCATE(widom_atoms, STAT=DeallocateStatus)
@@ -305,10 +304,15 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
   END IF
   widom_molecule = molecule_list(widom_locate,is)
   widom_atoms = atom_list(1:natoms(is),widom_locate,is)
-  widom_sum = 0.0_DP
-  n_overlaps = 0_INT64
-  subinterval_sums = 0.0_DP
-  t_cpu = 0.0_DP
+  IF (est_atompair_rminsq .AND. l_heap) THEN
+          frame_rsqmin_atompair_w_sum_ptr => frame_rsqmin_atompair_w_sum_tgt(:,:,:,ithread)
+          frame_rsqmin_atompair_w_max_ptr => frame_rsqmin_atompair_w_max_tgt(:,:,:,ithread)
+          frame_rsqmin_atompair_freq_ptr => frame_rsqmin_atompair_freq_tgt(:,:,:,ithread)
+  END IF
+  !widom_sum = 0.0_DP
+  !n_overlaps = 0_INT64
+  !subinterval_sums = 0.0_DP
+  !t_cpu = 0.0_DP
   IF (est_emax) THEN
           frame_w_max = 0.0_DP
           frame_Eij_w_sum = 0.0_DP
@@ -317,10 +321,18 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
           thread_changefactor = changefactor
   END IF
 
-  !$OMP DO SCHEDULE(DYNAMIC)
+  !$OMP DO SCHEDULE(DYNAMIC) &
+  !$OMP REDUCTION(+:widom_sum,n_overlaps,subinterval_sums) &
+  !$OMP REDUCTION(+:frame_rsqmin_atompair_w_sum,frame_rsqmin_atompair_freq) &
+  !$OMP REDUCTION(MAX:frame_rsqmin_atompair_w_max)
   DO i_widom = 1, insertions_in_step
           IF (.NOT. omp_flag) CALL CPU_TIME(t_cpu_s)
           !$ t_cpu_s = omp_get_wtime()
+          IF (est_atompair_rminsq .AND. .NOT. l_heap) THEN
+                  frame_rsqmin_atompair_w_sum_ptr => frame_rsqmin_atompair_w_sum
+                  frame_rsqmin_atompair_w_max_ptr => frame_rsqmin_atompair_w_max
+                  frame_rsqmin_atompair_freq_ptr => frame_rsqmin_atompair_freq
+          END IF
           ! Initialize variables
           swi_atompair_rsqmin = 10000.0_DP
           ln_pseq = 0.0_DP
@@ -342,8 +354,17 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
           !
           ! Build_Molecule places the first fragment, then calls Fragment_Placement
           ! to place the additional fragments 
+          IF (widom_timing) THEN
+                  IF (.NOT. omp_flag) CALL cpu_time(noncbmc_time_s)
+                  !$ noncbmc_time_s = omp_get_wtime()
+          END IF
           CALL Build_Molecule(widom_locate,is,ibox,frag_order,this_lambda, &
-                  ln_pseq,ln_pbias,E_ring_frag,cbmc_overlap)
+                  ln_pseq,ln_pbias,E_ring_frag,cbmc_overlap,E_interfrag)
+          IF (widom_timing) THEN
+                  IF (.NOT. omp_flag) CALL cpu_time(noncbmc_time_e)
+                  !$ noncbmc_time_e = omp_get_wtime()
+                  total_cbmc_time = total_cbmc_time + (noncbmc_time_e - noncbmc_time_s)
+          END IF
 
           ! Turn the molecule on
           widom_molecule%live = .TRUE.
@@ -359,23 +380,25 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
           !   * the number of trial dihedrals, kappa_dih, for each dihedral.
 
           ln_pbias = ln_pbias + ln_pseq
-          ln_pbias = ln_pbias + DLOG(REAL(kappa_ins,DP))
+          ln_pbias = ln_pbias + species_list(is)%log_kappa_ins
 
-          IF (kappa_rot /= 0 ) THEN
-             ln_pbias = ln_pbias + DLOG(REAL(kappa_rot,DP))
+          IF (species_list(is)%kappa_rot > 0 ) THEN
+             ln_pbias = ln_pbias + species_list(is)%log_kappa_rot
           END IF
 
-          IF (kappa_dih /= 0 ) THEN
-             ln_pbias = ln_pbias + REAL(nfragments(is)-1,DP) * DLOG(REAL(kappa_dih,DP))
+          IF (species_list(is)%need_kappa_dih) THEN
+             ln_pbias = ln_pbias + species_list(is)%ln_pbias_dih_const
           END IF
 
           IF (.NOT. cbmc_overlap) THEN
-!widom_timing            IF (.NOT. omp_flag) CALL cpu_time(noncbmc_time_s)
-!widom_timing            !$ noncbmc_time_s = omp_get_wtime()
+            IF (widom_timing) THEN
+                    IF (.NOT. omp_flag) CALL cpu_time(noncbmc_time_s)
+                    !$ noncbmc_time_s = omp_get_wtime()
+            END IF
 
             ! Molecule COM may be outside the box boundary if grown via CBMC, so wrap
             ! the molecule coordinates back in the box (if needed)
-            IF (nfragments(is) > 1) CALL Fold_Molecule(widom_locate,is,ibox)
+            IF (species_list(is)%need_kappa_dih) CALL Fold_Molecule(widom_locate,is,ibox)
 
             ! Recompute the COM in case the molecule was wrapped
             !CALL Get_COM(widom_locate,is)
@@ -390,44 +413,63 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
                     E_inter,inter_overlap)
 
             ! Calculate the nonbonded energy interaction within the inserted molecule
-            IF (.NOT. inter_overlap) THEN
-                    CALL Compute_Molecule_Nonbond_Intra_Energy(widom_locate,is, &
-                            E_intra_vdw,E_intra_qq,E_periodic_qq,intra_overlap)
-                    E_inter = E_inter + E_periodic_qq
-            END IF
+            !IF (.NOT. inter_overlap) THEN
+            !        CALL Compute_Molecule_Nonbond_Intra_Energy(widom_locate,is, &
+            !                E_intra_vdw,E_intra_qq,E_periodic_qq,intra_overlap)
+            !        !E_inter = E_inter + E_periodic_qq
+            !END IF
 
-!widom_timing            IF (.NOT. omp_flag) CALL cpu_time(noncbmc_time_e)
-!widom_timing            !$ noncbmc_time_e = omp_get_wtime()
-!widom_timing            noncbmc_time = noncbmc_time + (noncbmc_time_e - noncbmc_time_s)
+            IF (widom_timing) THEN
+                    IF (.NOT. omp_flag) CALL cpu_time(noncbmc_time_e)
+                    !$ noncbmc_time_e = omp_get_wtime()
+                    noncbmc_time = noncbmc_time + (noncbmc_time_e - noncbmc_time_s)
+            END IF
          
           END IF
 
           ! Leave widom_sum unchanged if there is any core overlap
-          IF (.NOT. (cbmc_overlap .OR. inter_overlap .OR. intra_overlap)) THEN
+          IF (.NOT. (cbmc_overlap .OR. inter_overlap)) THEN
 
                   ! There are no overlaps, so we can calculate the change in potential energy.
                   !
                   ! Already have the change in nonbonded energies
                   dE_inter = E_inter + E_inter_constant 
-                  dE_intra = E_intra_vdw + E_intra_qq
+                  dE_intra = E_interfrag + Excess_Molecule_Intrafragment_Energy(widom_locate,widom_species,ibox)
+                  !dE_intra = E_intra_vdw + E_intra_qq
 
                   ! Bonded intramolecular energies
                   ! If the molecule was grown via CBMC, we already have the intramolecular 
                   ! bond energies? Otherwise we need to compute them.
-                  CALL Compute_Molecule_Bond_Energy(widom_locate,is,E_bond)
-                  CALL Compute_Molecule_Angle_Energy(widom_locate,is,E_angle)
-                  CALL Compute_Molecule_Dihedral_Energy(widom_locate,is,E_dihedral)
-                  CALL Compute_Molecule_Improper_Energy(widom_locate,is,E_improper)
+                  ! Commenting out Bond energy because Cassanrdra only allows fixed bond lengths
+                  !CALL Compute_Molecule_Bond_Energy(widom_locate,is,E_bond)
+                  !CALL Compute_Molecule_Angle_Energy(widom_locate,is,E_angle)
+                  ! Removing intramolecular energy calculation only because only interfragment energy should be included in it
+                  !CALL Compute_Molecule_Dihedral_Energy(widom_locate,is,E_dihedral)
+                  !CALL Compute_Molecule_Improper_Energy(widom_locate,is,E_improper)
 
-                  dE_intra = dE_intra + E_bond + E_angle + E_dihedral + E_improper
+                  ! Angle energy contribution is commented out because it would also be part of 
+                  !     dE_frag, which gets subtracted from dE in the Boltzmann exponent, so
+                  !     it would just cancel out.
+
+                  !dE_intra = dE_intra + E_dihedral + E_improper ! + E_angle + E_bond
 
                   ! Ewald energies
                   IF (int_charge_style(ibox) == charge_coul) THEN
                         IF ( (int_charge_sum_style(ibox) == charge_ewald) .AND. &
                              has_charge(is) ) THEN
                        
+                            IF (widom_timing) THEN
+                                    IF (.NOT. omp_flag) CALL cpu_time(noncbmc_time_s)
+                                    !$ noncbmc_time_s = omp_get_wtime()
+                            END IF
                             CALL Update_System_Ewald_Reciprocal_Energy_Widom(widom_locate, &
                                    is,ibox,E_reciprocal)
+                            IF (widom_timing) THEN
+                                    IF (.NOT. omp_flag) CALL cpu_time(noncbmc_time_e)
+                                    !$ noncbmc_time_e = omp_get_wtime()
+                                    widom_ewald_recip_time = widom_ewald_recip_time + &
+                                            (noncbmc_time_e - noncbmc_time_s)
+                            END IF
 
                             dE_inter = dE_inter + E_reciprocal
                         END IF
@@ -438,28 +480,35 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
                   !        / (REAL(nmols(is,ibox),DP)*((species_list(is)%de_broglie(ibox))**3))
 
                   ! change in energy, less energy used to bias fragment selection
-                  dE = dE_intra + dE_inter
-                  dE_frag = E_angle + E_ring_frag
+                  ! RS: Changed such that instead of subtracting dE_frag, just leave it out of dE_intra
+                  dE = dE_inter + dE_intra
+                  !dE_frag = E_ring_frag ! + E_angle
 
                   ! mu' = -(1/beta)*ln(<widom_var>)
-                  widom_var_exp = DEXP(-beta(ibox) * (dE - dE_frag) - ln_pbias)
+                  widom_var_exp = DEXP(-beta(ibox) * dE - ln_pbias)
                   ! sum of all widom_var for this step; output argument
                   widom_sum = widom_sum + widom_var_exp
 
 
+                  ! used to subtract rsqmin_shifter but now subtract rcut_lowsq and add 1 to int in case
+                  ! floating point rounding somehow allowed proximities slightly closer than rcut_low
+                  rsq_ind = INT((swi_atompair_rsqmin-rcut_lowsq) / rsqmin_step) + 1
                   IF (est_atompair_rminsq) THEN
                           DO ia = 1, natoms(is)
                                 DO ti_solvent = 1, solvent_maxind
                                         IF (swi_atompair_rsqmin(ti_solvent,ia) >= maxrminsq) CYCLE
-                                        rsq_ind = INT((swi_atompair_rsqmin(ti_solvent,ia)-rsqmin_shifter) / rsqmin_step)
-                                        IF (widom_var_exp > frame_rsqmin_atompair_w_max_ptr(rsq_ind,ti_solvent,ia)) THEN
-                                                frame_rsqmin_atompair_w_max_ptr(rsq_ind,ti_solvent,ia) = widom_var_exp
-                                        END IF
-                                        frame_rsqmin_atompair_w_sum_ptr(rsq_ind,ti_solvent,ia) = &
-                                                frame_rsqmin_atompair_w_sum_ptr(rsq_ind,ti_solvent,ia) + &
+                                        !rsq_ind = INT((swi_atompair_rsqmin(ti_solvent,ia)-rsqmin_shifter) / rsqmin_step)
+                                        frame_rsqmin_atompair_w_max_ptr(rsq_ind(ti_solvent,ia),ti_solvent,ia) = &
+                                                MAX(widom_var_exp, &
+                                                frame_rsqmin_atompair_w_max_ptr(rsq_ind(ti_solvent,ia),ti_solvent,ia))
+                                        !IF (widom_var_exp > frame_rsqmin_atompair_w_max_ptr(rsq_ind,ti_solvent,ia)) THEN
+                                        !        frame_rsqmin_atompair_w_max_ptr(rsq_ind,ti_solvent,ia) = widom_var_exp
+                                        !END IF
+                                        frame_rsqmin_atompair_w_sum_ptr(rsq_ind(ti_solvent,ia),ti_solvent,ia) = &
+                                                frame_rsqmin_atompair_w_sum_ptr(rsq_ind(ti_solvent,ia),ti_solvent,ia) + &
                                                 widom_var_exp
-                                        frame_rsqmin_atompair_freq_ptr(rsq_ind,ti_solvent,ia) = &
-                                                frame_rsqmin_atompair_freq_ptr(rsq_ind,ti_solvent,ia) + 1
+                                        frame_rsqmin_atompair_freq_ptr(rsq_ind(ti_solvent,ia),ti_solvent,ia) = &
+                                                frame_rsqmin_atompair_freq_ptr(rsq_ind(ti_solvent,ia),ti_solvent,ia) + 1
                                 END DO
                           END DO
                   END IF
@@ -487,6 +536,43 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
           t_cpu = t_cpu + t_cpu_e - t_cpu_s
   END DO
   !$OMP END DO
+  IF (est_atompair_rminsq) THEN
+          IF (l_heap) THEN
+                  !$OMP WORKSHARE
+                  rsqmin_atompair_freq(:,:,bsolute+1:bsolute+natoms(is),ibox) = &
+                          rsqmin_atompair_freq(:,:,bsolute+1:bsolute+natoms(is),ibox) + SUM(frame_rsqmin_atompair_freq_tgt,4)
+                  rsqmin_atompair_w_max(:,:,bsolute+1:bsolute+natoms(is),ibox) = &
+                          MAX(rsqmin_atompair_w_max(:,:,bsolute+1:bsolute+natoms(is),ibox),widom_prefactor*MAXVAL(frame_rsqmin_atompair_w_max_tgt,4))
+                  rsqmin_atompair_w_sum(:,:,bsolute+1:bsolute+natoms(is),ibox) = &
+                          rsqmin_atompair_w_sum(:,:,bsolute+1:bsolute+natoms(is),ibox) + widom_prefactor*SUM(frame_rsqmin_atompair_w_sum_tgt,4)
+                  !$OMP END WORKSHARE
+                  !!$OMP SECTIONS
+                  !!$OMP SECTION
+                  !rsqmin_atompair_freq_ptr = rsqmin_atompair_freq_ptr + SUM(frame_rsqmin_atompair_freq_tgt,4)
+                  !!$OMP SECTION
+                  !rsqmin_atompair_w_max_ptr = MAX(rsqmin_atompair_w_max_ptr, widom_prefactor*MAXVAL(frame_rsqmin_atompair_w_max_tgt,4))
+                  !!$OMP SECTION
+                  !rsqmin_atompair_w_sum_ptr = rsqmin_atompair_w_sum_ptr + widom_prefactor*SUM(frame_rsqmin_atompair_w_sum_tgt,4)
+                  !!$OMP END SECTIONS
+          ELSE
+                  !$OMP WORKSHARE
+                  rsqmin_atompair_freq(:,:,bsolute+1:bsolute+natoms(is),ibox) = &
+                          rsqmin_atompair_freq(:,:,bsolute+1:bsolute+natoms(is),ibox) + frame_rsqmin_atompair_freq
+                  rsqmin_atompair_w_max(:,:,bsolute+1:bsolute+natoms(is),ibox) = &
+                          MAX(rsqmin_atompair_w_max(:,:,bsolute+1:bsolute+natoms(is),ibox),widom_prefactor*frame_rsqmin_atompair_w_max)
+                  rsqmin_atompair_w_sum(:,:,bsolute+1:bsolute+natoms(is),ibox) = &
+                          rsqmin_atompair_w_sum(:,:,bsolute+1:bsolute+natoms(is),ibox) + widom_prefactor*frame_rsqmin_atompair_w_sum
+                  !$OMP END WORKSHARE
+                  !!$OMP SECTIONS
+                  !!$OMP SECTION
+                  !rsqmin_atompair_freq_ptr = rsqmin_atompair_freq_ptr + frame_rsqmin_atompair_freq
+                  !!$OMP SECTION
+                  !rsqmin_atompair_w_sum_ptr = rsqmin_atompair_w_sum_ptr + widom_prefactor*frame_rsqmin_atompair_w_sum
+                  !!$OMP SECTION
+                  !rsqmin_atompair_w_max_ptr = MAX(rsqmin_atompair_w_max_ptr,widom_prefactor*frame_rsqmin_atompair_w_max)
+                  !!$OMP END SECTIONS
+          END IF
+  END IF
   IF (est_emax) THEN
           !$OMP CRITICAL
           changefactor = MAX(changefactor,thread_changefactor)
@@ -499,40 +585,12 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
           IF (changefactor>1) CALL coarsen_w_max(w_max_gcopy,Eij_w_sum_gcopy,Eij_freq_gcopy,Eij_factor_gcopy,changefactor)
           Eij_factor(is,ibox) = Eij_factor_gcopy
   END IF
-  !$OMP PARALLEL
   IF (est_emax) THEN
-          !$OMP SECTIONS
-          !$OMP SECTION
           w_max(:,is,ibox) = MAX(w_max_gcopy, widom_prefactor*frame_w_max)
-          !$OMP SECTION
           Eij_w_sum(:,is,ibox) = Eij_w_sum_gcopy + widom_prefactor*frame_Eij_w_sum
-          !$OMP SECTION
           Eij_freq_total(:,is,ibox) = Eij_freq_gcopy + Eij_freq
-          !$OMP END SECTIONS NOWAIT
   END IF
 
-  IF (est_atompair_rminsq) THEN
-          IF (l_heap) THEN
-                  !$OMP SECTIONS
-                  !$OMP SECTION
-                  rsqmin_atompair_freq_ptr = rsqmin_atompair_freq_ptr + SUM(frame_rsqmin_atompair_freq_tgt,4)
-                  !$OMP SECTION
-                  rsqmin_atompair_w_max_ptr = MAX(rsqmin_atompair_w_max_ptr, widom_prefactor*MAXVAL(frame_rsqmin_atompair_w_max_tgt,4))
-                  !$OMP SECTION
-                  rsqmin_atompair_w_sum_ptr = rsqmin_atompair_w_sum_ptr + widom_prefactor*SUM(frame_rsqmin_atompair_w_sum_tgt,4)
-                  !$OMP END SECTIONS
-          ELSE
-                  !$OMP SECTIONS
-                  !$OMP SECTION
-                  rsqmin_atompair_freq_ptr = rsqmin_atompair_freq_ptr + frame_rsqmin_atompair_freq
-                  !$OMP SECTION
-                  rsqmin_atompair_w_sum_ptr = rsqmin_atompair_w_sum_ptr + widom_prefactor*frame_rsqmin_atompair_w_sum
-                  !$OMP SECTION
-                  rsqmin_atompair_w_max_ptr = MAX(rsqmin_atompair_w_max_ptr,widom_prefactor*frame_rsqmin_atompair_w_max)
-                  !$OMP END SECTIONS
-          END IF
-  END IF
-  !$OMP END PARALLEL
 
   widom_active = .FALSE.
   widom_sum = widom_sum * widom_prefactor
@@ -565,6 +623,7 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
 
 
   ntrials(is,ibox)%widom = ntrials(is,ibox)%widom + insertions_in_step
+  IF (widom_timing) noncbmc_time_total = noncbmc_time_total + noncbmc_time
 
   CONTAINS
           SUBROUTINE coarsen_w_max(wmax,wsum,Efreq,Efactor,cfactor)
@@ -587,9 +646,6 @@ SUBROUTINE Widom_Insert(is,ibox,widom_sum,t_cpu, n_overlaps)
                   wsum(ic:) = 0.0_DP
                   Efreq(ic:) = 0
           END SUBROUTINE coarsen_w_max
-
-
-!widom_timing  WRITE(*,*) noncbmc_time
 
 END SUBROUTINE Widom_Insert
 !*******************************************************************************

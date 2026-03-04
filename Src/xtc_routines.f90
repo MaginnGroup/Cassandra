@@ -28,6 +28,7 @@ MODULE XTC_Routines
   USE Simulation_Properties
   USE IO_Utilities
   USE GMXFORT_TRAJECTORY
+  !$ USE OMP_LIB
 
   IMPLICIT NONE
 
@@ -92,20 +93,63 @@ CONTAINS
 
   END FUNCTION Read_XTC_Frame
 
-  FUNCTION Get_XTC_Coords(ibox)
-          INTEGER :: ibox
-          REAL(DP), DIMENSION(natoms_to_read(ibox),3) :: Get_XTC_Coords
-          INTEGER :: i, j
+  SUBROUTINE Get_XTC_Coords(ibox,xtc_coords_dp)
+          INTEGER, INTENT(IN) :: ibox
+          REAL(DP), DIMENSION(:,:), CONTIGUOUS, INTENT(OUT) :: xtc_coords_dp
+          INTEGER :: chunkstart, chunkend, ithread, nthreads, chunksize
+          !INTEGER :: i, j
 
-          j = iframe(ibox)
+          !j = iframe(ibox)
 
-          !$OMP PARALLEL DO DEFAULT(SHARED) SCHEDULE(STATIC)
-          DO i = 1, natoms_to_read(ibox)
-                Get_XTC_Coords(i,:) = trj(ibox)%x(j,i) * 10.0_DP
-          END DO
-          !$OMP END PARALLEL DO
+          !!$OMP PARALLEL DO DEFAULT(SHARED) SCHEDULE(STATIC)
+          !DO i = 1, natoms_to_read(ibox)
+          !      Get_XTC_Coords(i,:) = trj(ibox)%x(j,i) * 10.0_DP
+          !END DO
+          !!$OMP END PARALLEL DO
 
-  END FUNCTION Get_XTC_Coords
+
+          !$OMP PARALLEL DEFAULT(SHARED) &
+          !$OMP PRIVATE(chunkstart, chunkend, chunksize, ithread, nthreads)
+          !$ nthreads = OMP_GET_NUM_THREADS()
+          chunkstart = 1
+          chunkend = IAND(natoms_to_read(ibox)+padconst_4byte,padmask_4byte)
+          !$ chunksize = IAND((chunkend+nthreads-1)/nthreads+padconst_4byte,padmask_4byte)
+          !$ ithread = OMP_GET_THREAD_NUM()
+          !$ chunkstart = ithread*chunksize+1
+          !$ chunkend = MIN((ithread+1)*chunksize,chunkend)
+          IF (chunkend>chunkstart) CALL Thread_XTC_Coords(chunkstart,chunkend)
+          !$OMP END PARALLEL
+
+
+          !DO i = 1, natoms_to_read(ibox)
+          !      XTC_Coords_sp(i,:) = trj(ibox)%x(j,i)
+          !END DO
+          !DO i = 1, natoms_to_read(ibox)
+          !      Get_XTC_Coords(i,1) = REAL(XTC_Coords_sp(i,1)*10.0,DP)
+          !      Get_XTC_Coords(i,2) = REAL(XTC_Coords_sp(i,2)*10.0,DP)
+          !      Get_XTC_Coords(i,3) = REAL(XTC_Coords_sp(i,3)*10.0,DP)
+          !END DO
+
+          CONTAINS
+                  SUBROUTINE Thread_XTC_Coords(chunkstart,chunkend)
+                          INTEGER, INTENT(IN) :: chunkstart,chunkend
+                          REAL(SP), DIMENSION(chunkstart:chunkend,3) :: xtc_coords_sp
+                          INTEGER :: i, j, i_dim
+                          j = iframe(ibox)
+                          DO i = chunkstart, MIN(chunkend,natoms_to_read(ibox))
+                                xtc_coords_sp(i,:) = trj(ibox)%x(j,i)
+                          END DO
+                          !DIR$ ASSUME (MOD(chunkstart,dimpad_4byte) .EQ. 1)
+                          !DIR$ ASSUME (MOD(chunkend,dimpad_4byte) .EQ. 0)
+                          DO i_dim = 1, 3
+                                  !DIR$ VECTOR ALIGNED
+                                  DO i = chunkstart, chunkend
+                                        xtc_coords_dp(i,i_dim) = REAL(xtc_coords_sp(i,i_dim)*10.0,DP)
+                                  END DO
+                          END DO
+                  END SUBROUTINE Thread_XTC_Coords
+
+  END SUBROUTINE Get_XTC_Coords
 
   FUNCTION Get_XTC_Box(ibox)
           INTEGER :: ibox

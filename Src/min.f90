@@ -191,49 +191,49 @@ SUBROUTINE Fold_Molecule(alive,is,this_box)
 
   IF (l_cubic(this_box)) THEN
      
-     IF(molecule_list(alive,is)%xcom .GT. box_list(this_box)%hlength(1,1)) THEN
-        molecule_list(alive,is)%xcom = &
-             molecule_list(alive,is)%xcom - box_list(this_box)%length(1,1)
-        atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp - box_list(this_box)%length(1,1)
+     IF(molecule_list(alive,is)%rcom(1) .GT. box_list(this_box)%hlength(1,1)) THEN
+        molecule_list(alive,is)%rcom(1) = &
+             molecule_list(alive,is)%rcom(1) - box_list(this_box)%length(1,1)
+        atom_list(:,alive,is)%rp(1) = atom_list(:,alive,is)%rp(1) - box_list(this_box)%length(1,1)
         
-     ELSE IF(molecule_list(alive,is)%xcom .LT. -box_list(this_box)%hlength(1,1)) THEN
-        molecule_list(alive,is)%xcom = &
-             molecule_list(alive,is)%xcom + box_list(this_box)%length(1,1)
-        atom_list(:,alive,is)%rxp = atom_list(:,alive,is)%rxp + box_list(this_box)%length(1,1)
+     ELSE IF(molecule_list(alive,is)%rcom(1) .LT. -box_list(this_box)%hlength(1,1)) THEN
+        molecule_list(alive,is)%rcom(1) = &
+             molecule_list(alive,is)%rcom(1) + box_list(this_box)%length(1,1)
+        atom_list(:,alive,is)%rp(1) = atom_list(:,alive,is)%rp(1) + box_list(this_box)%length(1,1)
      END IF
 
-     IF(molecule_list(alive,is)%ycom .GT. box_list(this_box)%hlength(2,2)) THEN
-        molecule_list(alive,is)%ycom = &
-             molecule_list(alive,is)%ycom - box_list(this_box)%length(2,2)
-        atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp - box_list(this_box)%length(2,2)
+     IF(molecule_list(alive,is)%rcom(2) .GT. box_list(this_box)%hlength(2,2)) THEN
+        molecule_list(alive,is)%rcom(2) = &
+             molecule_list(alive,is)%rcom(2) - box_list(this_box)%length(2,2)
+        atom_list(:,alive,is)%rp(2) = atom_list(:,alive,is)%rp(2) - box_list(this_box)%length(2,2)
 
-     ELSE IF(molecule_list(alive,is)%ycom .LT. -box_list(this_box)%hlength(2,2)) THEN
+     ELSE IF(molecule_list(alive,is)%rcom(2) .LT. -box_list(this_box)%hlength(2,2)) THEN
 
-        molecule_list(alive,is)%ycom = &
-             molecule_list(alive,is)%ycom + box_list(this_box)%length(2,2)
-        atom_list(:,alive,is)%ryp = atom_list(:,alive,is)%ryp + box_list(this_box)%length(2,2)
+        molecule_list(alive,is)%rcom(2) = &
+             molecule_list(alive,is)%rcom(2) + box_list(this_box)%length(2,2)
+        atom_list(:,alive,is)%rp(2) = atom_list(:,alive,is)%rp(2) + box_list(this_box)%length(2,2)
 
      END IF
 
-     IF(molecule_list(alive,is)%zcom .GT. box_list(this_box)%hlength(3,3)) THEN
+     IF(molecule_list(alive,is)%rcom(3) .GT. box_list(this_box)%hlength(3,3)) THEN
 
-        molecule_list(alive,is)%zcom = &
-             molecule_list(alive,is)%zcom - box_list(this_box)%length(3,3)
-        atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp - box_list(this_box)%length(3,3)
+        molecule_list(alive,is)%rcom(3) = &
+             molecule_list(alive,is)%rcom(3) - box_list(this_box)%length(3,3)
+        atom_list(:,alive,is)%rp(3) = atom_list(:,alive,is)%rp(3) - box_list(this_box)%length(3,3)
         
-     ELSE IF(molecule_list(alive,is)%zcom .LT. -box_list(this_box)%hlength(3,3)) THEN
+     ELSE IF(molecule_list(alive,is)%rcom(3) .LT. -box_list(this_box)%hlength(3,3)) THEN
         
-        molecule_list(alive,is)%zcom = &
-             molecule_list(alive,is)%zcom + box_list(this_box)%length(3,3)
-        atom_list(:,alive,is)%rzp = atom_list(:,alive,is)%rzp + box_list(this_box)%length(3,3)
+        molecule_list(alive,is)%rcom(3) = &
+             molecule_list(alive,is)%rcom(3) + box_list(this_box)%length(3,3)
+        atom_list(:,alive,is)%rp(3) = atom_list(:,alive,is)%rp(3) + box_list(this_box)%length(3,3)
      END IF
 
 
   ELSE
 
-  thisx = molecule_list(alive,is)%xcom
-  thisy = molecule_list(alive,is)%ycom
-  thisz = molecule_list(alive,is)%zcom
+  thisx = molecule_list(alive,is)%rcom(1)
+  thisy = molecule_list(alive,is)%rcom(2)
+  thisz = molecule_list(alive,is)%rcom(3)
 
   CALL Cartesian_To_Fractional(thisx,thisy,thisz,frac_comx, frac_comy, frac_comz, this_box)
 
@@ -335,27 +335,27 @@ REAL(DP) :: thisx2,thisy2,thisz2
 INTEGER :: i
 
 
-     thisx=molecule_list(this_im,this_is)%xcom
-     thisy=molecule_list(this_im,this_is)%ycom
-     thisz=molecule_list(this_im,this_is)%zcom
+     thisx=molecule_list(this_im,this_is)%rcom(1)
+     thisy=molecule_list(this_im,this_is)%rcom(2)
+     thisz=molecule_list(this_im,this_is)%rcom(3)
 
      CALL Apply_PBC_Anint(this_box,thisx,thisy,thisz,thisx2,thisy2,thisz2)
      
-     molecule_list(this_im,this_is)%xcom = thisx2
-     molecule_list(this_im,this_is)%ycom = thisy2
-     molecule_list(this_im,this_is)%zcom = thisz2
+     molecule_list(this_im,this_is)%rcom(1) = thisx2
+     molecule_list(this_im,this_is)%rcom(2) = thisy2
+     molecule_list(this_im,this_is)%rcom(3) = thisz2
 
      DO i = 1, natoms(this_is)
 
-        thisx=atom_list(i,this_im,this_is)%rxp
-        thisy=atom_list(i,this_im,this_is)%ryp
-        thisz=atom_list(i,this_im,this_is)%rzp
+        thisx=atom_list(i,this_im,this_is)%rp(1)
+        thisy=atom_list(i,this_im,this_is)%rp(2)
+        thisz=atom_list(i,this_im,this_is)%rp(3)
 
         CALL Apply_PBC_Anint(this_box,thisx,thisy,thisz,thisx2,thisy2,thisz2)
 
-        atom_list(i,this_im,this_is)%rxp = thisx2
-        atom_list(i,this_im,this_is)%ryp = thisy2
-        atom_list(i,this_im,this_is)%rzp = thisz2
+        atom_list(i,this_im,this_is)%rp(1) = thisx2
+        atom_list(i,this_im,this_is)%rp(2) = thisy2
+        atom_list(i,this_im,this_is)%rp(3) = thisz2
 
      END DO
 

@@ -199,14 +199,14 @@ SUBROUTINE Deletion
   !   * the number of trial dihedrals, kappa_dih, for each dihedral.
 
   ln_pbias = ln_pbias + ln_pseq
-  ln_pbias = ln_pbias + DLOG(REAL(kappa_ins,DP))
+  ln_pbias = ln_pbias + species_list(is)%log_kappa_ins
 
-  IF (kappa_rot /= 0 ) THEN
-     ln_pbias = ln_pbias + DLOG(REAL(kappa_rot,DP))
+  IF (species_list(is)%kappa_rot > 0 ) THEN
+     ln_pbias = ln_pbias + species_list(is)%log_kappa_rot
   END IF
 
-  IF (kappa_dih /= 0 ) THEN
-     ln_pbias = ln_pbias + REAL(nfragments(is)-1,DP) * DLOG(REAL(kappa_dih,DP))
+  IF (species_list(is)%need_kappa_dih) THEN
+     ln_pbias = ln_pbias + species_list(is)%ln_pbias_dih_const
   END IF
   
   !*****************************************************************************
@@ -286,7 +286,7 @@ SUBROUTINE Deletion
 
      DO i = 1, natoms(is)
         i_type = nonbond_list(i,is)%atom_type_number
-        nint_beads(i_type,ibox) = nint_beads(i_type,ibox) - 1
+        IF (i_type > 0) nint_beads(i_type,ibox) = nint_beads(i_type,ibox) - 1
      END DO
 
      CALL Compute_LR_correction(ibox,e_lrc)
@@ -394,8 +394,10 @@ SUBROUTINE Deletion
            (has_charge(is)) ) THEN
         ! Restore cos_sum and sin_sum. Note that these were changed when
         ! difference in reciprocal energies was computed
-        cos_sum(:,ibox) = cos_sum_old(:,ibox)
-        sin_sum(:,ibox) = sin_sum_old(:,ibox)
+        DEALLOCATE(box_list(ibox)%sincos_sum)
+        CALL MOVE_ALLOC(box_list(ibox)%sincos_sum_old,box_list(ibox)%sincos_sum)
+        !cos_sum(:,ibox) = cos_sum_old(:,ibox)
+        !sin_sum(:,ibox) = sin_sum_old(:,ibox)
      END IF
 
      IF ( int_vdw_sum_style(ibox) == vdw_cut_tail ) THEN

@@ -99,7 +99,7 @@ SUBROUTINE Cut_N_Grow
 
   INTEGER :: start, locate_im, count, this_species, position, this_im
 !  REAL(DP), ALLOCATABLE :: pair_vdw_temp(:), pair_qq_temp(:)
-  REAL(DP), ALLOCATABLE :: cos_mol_old(:), sin_mol_old(:)
+  !REAL(DP), ALLOCATABLE :: cos_mol_old(:), sin_mol_old(:)
 
   LOGICAL :: l_charge
 
@@ -278,8 +278,8 @@ SUBROUTINE Cut_N_Grow
 
      IF (l_pair_nrg) CALL Reset_Molecule_Pair_Interaction_Arrays(lm,is,ibox)
      
-     IF (ALLOCATED(cos_mol_old)) DEALLOCATE(cos_mol_old)
-     IF (ALLOCATED(sin_mol_old)) DEALLOCATE(sin_mol_old)
+     !IF (ALLOCATED(cos_mol_old)) DEALLOCATE(cos_mol_old)
+     !IF (ALLOCATED(sin_mol_old)) DEALLOCATE(sin_mol_old)
      
      IF (verbose_log) THEN
        WRITE(logunit,'(X,I19,X,A10,X,I5,X,I3,X,I3,X,L8,X,9X,X,A9)') &
@@ -337,15 +337,14 @@ SUBROUTINE Cut_N_Grow
 
   IF (int_charge_sum_style(ibox)  == charge_ewald .AND.&
       has_charge(is)) THEN
-     ! store cos_mol and sin_mol arrays
-     
-     ALLOCATE(cos_mol_old(nvecs(ibox)),sin_mol_old(nvecs(ibox)))
-     CALL Get_Position_Alive(lm,is,position)
-     
-     !$OMP PARALLEL WORKSHARE  DEFAULT(SHARED)
-     cos_mol_old(:) = cos_mol(1:nvecs(ibox),position)
-     sin_mol_old(:) = sin_mol(1:nvecs(ibox),position)
-     !$OMP END PARALLEL WORKSHARE
+     !! store cos_mol and sin_mol arrays
+     !
+     !ALLOCATE(cos_mol_old(nvecs(ibox)),sin_mol_old(nvecs(ibox)))
+     !
+     !!$OMP PARALLEL WORKSHARE  DEFAULT(SHARED)
+     !cos_mol_old(:) = cos_mol(1:nvecs(ibox),position)
+     !sin_mol_old(:) = sin_mol(1:nvecs(ibox),position)
+     !!$OMP END PARALLEL WORKSHARE
 
      ! Compute the change in Ewald reciprocal energy due to the move
      CALL Update_System_Ewald_Reciprocal_Energy(lm,is,ibox, &
@@ -472,8 +471,8 @@ SUBROUTINE Cut_N_Grow
 
      regrowth_success(frag_total,is) = regrowth_success(frag_total,is) + 1
 
-     IF (int_charge_sum_style(ibox)  == charge_ewald .AND.&
-      has_charge(is)) DEALLOCATE(cos_mol_old,sin_mol_old)
+     !IF (int_charge_sum_style(ibox)  == charge_ewald .AND.&
+     ! has_charge(is)) DEALLOCATE(cos_mol_old,sin_mol_old)
      IF (l_pair_nrg) DEALLOCATE(pair_vdw_temp,pair_qq_temp)
 
       ! Fold the molecule in case the COM has moved out of cell boundary
@@ -485,11 +484,13 @@ SUBROUTINE Cut_N_Grow
      IF (int_charge_sum_style(ibox)  == charge_ewald .AND.&
          has_charge(is)) THEN
         
+        CALL Get_Position_Alive(lm,is,position)
         !$OMP PARALLEL WORKSHARE DEFAULT(SHARED)
-        cos_sum(1:nvecs(ibox),ibox) = cos_sum_old(1:nvecs(ibox),ibox)
-        sin_sum(1:nvecs(ibox),ibox) = sin_sum_old(1:nvecs(ibox),ibox)
-        cos_mol(1:nvecs(ibox),position) =cos_mol_old(:)
-        sin_mol(1:nvecs(ibox),position) =sin_mol_old(:)
+        box_list(ibox)%sincos_sum = box_list(ibox)%sincos_sum_old
+        !cos_sum(1:nvecs(ibox),ibox) = cos_sum_old(1:nvecs(ibox),ibox)
+        !sin_sum(1:nvecs(ibox),ibox) = sin_sum_old(1:nvecs(ibox),ibox)
+        cos_mol(1:nvecs(ibox),position) =cos_mol(1:nvecs(ibox),0)
+        sin_mol(1:nvecs(ibox),position) =sin_mol(1:nvecs(ibox),0)
         !$OMP END PARALLEL WORKSHARE
         
      END IF

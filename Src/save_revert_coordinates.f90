@@ -70,22 +70,22 @@ SUBROUTINE Save_Old_Cartesian_Coordinates(im,is)
 
 ! Save the parent coordinates
 
-  atom_list(:,im,is)%rxp_old = atom_list(:,im,is)%rxp
-  atom_list(:,im,is)%ryp_old = atom_list(:,im,is)%ryp
-  atom_list(:,im,is)%rzp_old = atom_list(:,im,is)%rzp
+  atom_list(:,im,is)%rp_old(1) = atom_list(:,im,is)%rp(1)
+  atom_list(:,im,is)%rp_old(2) = atom_list(:,im,is)%rp(2)
+  atom_list(:,im,is)%rp_old(3) = atom_list(:,im,is)%rp(3)
 
 
 ! Save the COM and Eulerian angles
   
-  molecule_list(im,is)%xcom_old = molecule_list(im,is)%xcom
-  molecule_list(im,is)%ycom_old = molecule_list(im,is)%ycom
-  molecule_list(im,is)%zcom_old = molecule_list(im,is)%zcom
+  molecule_list(im,is)%rcom_old(1) = molecule_list(im,is)%rcom(1)
+  molecule_list(im,is)%rcom_old(2) = molecule_list(im,is)%rcom(2)
+  molecule_list(im,is)%rcom_old(3) = molecule_list(im,is)%rcom(3)
 
   molecule_list(im,is)%euler1_old = molecule_list(im,is)%euler1
   molecule_list(im,is)%euler2_old = molecule_list(im,is)%euler2
   molecule_list(im,is)%euler3_old = molecule_list(im,is)%euler3
 
-  molecule_list(im,is)%max_dcom_old = molecule_list(im,is)%max_dcom
+  molecule_list(im,is)%rcom_old(4) = molecule_list(im,is)%rcom(4)
 
 END SUBROUTINE Save_Old_Cartesian_Coordinates
 
@@ -202,22 +202,22 @@ SUBROUTINE Revert_Old_Cartesian_Coordinates(im,is)
   
 ! Revert to the old x,y and z parent coordinates of the atoms
 
-  atom_list(:,im,is)%rxp = atom_list(:,im,is)%rxp_old
-  atom_list(:,im,is)%ryp = atom_list(:,im,is)%ryp_old
-  atom_list(:,im,is)%rzp = atom_list(:,im,is)%rzp_old
+  atom_list(:,im,is)%rp(1) = atom_list(:,im,is)%rp_old(1)
+  atom_list(:,im,is)%rp(2) = atom_list(:,im,is)%rp_old(2)
+  atom_list(:,im,is)%rp(3) = atom_list(:,im,is)%rp_old(3)
 
 
 ! Revert to the COM and Eulerian angles for the molecule
 
-  molecule_list(im,is)%xcom = molecule_list(im,is)%xcom_old
-  molecule_list(im,is)%ycom = molecule_list(im,is)%ycom_old
-  molecule_list(im,is)%zcom = molecule_list(im,is)%zcom_old
+  molecule_list(im,is)%rcom(1) = molecule_list(im,is)%rcom_old(1)
+  molecule_list(im,is)%rcom(2) = molecule_list(im,is)%rcom_old(2)
+  molecule_list(im,is)%rcom(3) = molecule_list(im,is)%rcom_old(3)
 
   molecule_list(im,is)%euler1 = molecule_list(im,is)%euler1_old
   molecule_list(im,is)%euler2 = molecule_list(im,is)%euler2_old
   molecule_list(im,is)%euler3 = molecule_list(im,is)%euler3_old
 
-  molecule_list(im,is)%max_dcom = molecule_list(im,is)%max_dcom_old
+  molecule_list(im,is)%rcom(4) = molecule_list(im,is)%rcom_old(4)
         
 END SUBROUTINE Revert_Old_Cartesian_Coordinates
 

@@ -512,9 +512,9 @@ SUBROUTINE Write_Coords_XYZ(this_box)
         IF(molecule_list(this_im,is)%live) THEN
            DO ia = 1, natoms(is)
               WRITE(M_XYZ_unit,*) nonbond_list(ia,is)%element, &
-                   atom_list(ia,this_im,is)%rxp, &
-                   atom_list(ia,this_im,is)%ryp, &
-                   atom_list(ia,this_im,is)%rzp
+                   atom_list(ia,this_im,is)%rp(1), &
+                   atom_list(ia,this_im,is)%rp(2), &
+                   atom_list(ia,this_im,is)%rp(3)
            END DO
         END IF
      END DO
@@ -605,9 +605,9 @@ SUBROUTINE Write_Coords_Custom
       WRITE(movie_custom_unit,'(I0,1X,I0)') this_im+mol_id_base, ibox
       DO ia = 1, natoms(is)
         WRITE(movie_custom_unit,'(A,2X,4F12.5)') nonbond_list(ia,is)%element, &
-                                        atom_list(ia,this_im,is)%rxp, &
-                                        atom_list(ia,this_im,is)%ryp, &
-                                        atom_list(ia,this_im,is)%rzp, &
+                                        atom_list(ia,this_im,is)%rp(1), &
+                                        atom_list(ia,this_im,is)%rp(2), &
+                                        atom_list(ia,this_im,is)%rp(3), &
                                         nonbond_list(ia,is)%charge
       END DO
     END DO
