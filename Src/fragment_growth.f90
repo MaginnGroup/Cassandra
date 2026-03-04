@@ -3662,12 +3662,14 @@ SUBROUTINE Fragment_Placement(this_box, this_im, is, frag_start, frag_total, &
      frag_placed(ifrag) = 1
      ! Vectorized version end
 
-     IF (.NOT. widom_active) e_prev = nrg_dihed(ii)
      IF (compatibility_mode) THEN
              ln_pbias_compat = ln_pbias_compat - beta(this_box)*nrg(ii) - LOG(oldweight(kappa_dih))
+             IF (.NOT. widom_active) e_prev = nrg_dihed(ii)
              !IF (frag_total > 1) THEN
              !        WRITE(*,*) ifrag_outer, ifrag, ln_pbias, ln_pbias_compat
              !END IF
+     ELSE
+             IF (.NOT. widom_active) e_prev = nrg_dihed(itrial)
      END IF
 
      ! Loop over the trial dihedrals
