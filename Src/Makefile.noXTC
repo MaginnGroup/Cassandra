@@ -62,13 +62,10 @@ LIBS =
 INCS =
 #
 #F90FLAGS = -c  -ffree-line-length-none
-F90FLAGS = -c -g -no-wrap-margin -check all -traceback #-warn unused #-openmp
-#F90FLAGS = -c -openmp
-#F90FLAGS = -p -c -O3
-#F90FLAGS = -c -O3 -openmp
-#OPTFLAGS =
-#LINKFLAGS = -openmp
-#LINKFLAGS = -p
+F90FLAGS = -c -g -no-wrap-margin -traceback #-debug -check all,noarg_temp_created #-warn unused #-openmp
+OPTFLAGS = -O3 -march=core-avx2 -align array32byte #-qopt-report=5 -qopt-report-phase=vec,loop,openmp # -ipo -fp-model=fast=2
+#F90FLAGS = -c -g -no-wrap-margin #-check all -traceback #-warn unused #-openmp
+#OPTFLAGS = -O0
 
 ####################################################################
 OBJS =  main.o \

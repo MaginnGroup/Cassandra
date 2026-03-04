@@ -61,7 +61,7 @@ LIBS =
 INCS = 
 F90FLAGS = -c -ffree-line-length-none
 # specifying -mavx2 is redundant with -march but Cassandra looks for it to recognize vector length
-OPTFLAGS = -O3 -ffast-math -mavx2 -mfma -march=haswell
+OPTFLAGS = -O3 -mavx2 -mfma -march=haswell# -funsafe-math-optimizations #-ffast-math
 #OPTFLAGS = -O0 -fcheck=all,no-array-temps -g -fbacktrace
 LINKFLAGS = 
 

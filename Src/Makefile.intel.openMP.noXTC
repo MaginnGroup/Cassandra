@@ -57,7 +57,8 @@ FC = ifort
 LIBS =
 INCS =
 #
-F90FLAGS = -c -O3 -no-wrap-margin -qopenmp
+F90FLAGS = -c -g -no-wrap-margin -qopenmp -traceback #-debug -check all,noarg_temp_created #-warn unused #-openmp
+OPTFLAGS = -O3 -march=core-avx2 -align array32byte #-qopt-report=5 -qopt-report-phase=vec,loop,openmp # -ipo -fp-model=fast=2
 #F90FLAGS = -c -g -check all -traceback -qopenmp
 LINKFLAGS = -qopenmp
 
