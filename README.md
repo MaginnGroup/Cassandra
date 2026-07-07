@@ -29,6 +29,11 @@
 A Python interface to Cassandra is under development as well. Further details are
 available [here](https://mosdef-cassandra.readthedocs.io/en/latest/).
 
+### V2 modernization (developer notes)
+
+Work on the Cassandra V2 modernization branch is documented in
+[`docs/README.md`](docs/README.md) — conda setup, git workflow, and the Python wrapper.
+
 ## <a name="features"></a> Features
 
 The following features are supported in version 1.2:

@@ -3,6 +3,10 @@
 This document describes how the Cassandra V2 modernization project is organized in
 Git and GitHub, and how to commit and push work safely.
 
+**Other V2 reminders:** [docs index](README.md) ·
+[Development environment](V2_DEVELOPMENT_ENVIRONMENT.md) ·
+[Python API](../python/README.md)
+
 ## Repository strategy
 
 **There is no separate CassandraV2 GitHub repository.** V2 development happens on
@@ -128,17 +132,14 @@ git push origin modernization   # should NOT ask for username/password
 > but `git push` still asks for username/password if step 4 was skipped.
 > Loading the SSH key and switching the remote URL are **both** required.
 
-### Conda build environment (optional but recommended)
+### Conda build environment
+
+Use the **`cassandra-dev`** conda environment. See
+[V2_DEVELOPMENT_ENVIRONMENT.md](V2_DEVELOPMENT_ENVIRONMENT.md) for full setup,
+switching between environments, and compile/run workflow.
 
 ```bash
-conda create --name cassandra-dev python=3.10
 conda activate cassandra-dev
-conda install -c conda-forge cmake pandas gfortran
-```
-
-Compile from `Src/`:
-
-```bash
 cd Src
 make -f Makefile.gfortran
 ```
@@ -353,6 +354,8 @@ python run_test.py
 
 ## Related docs
 
+- [docs/README.md](README.md) — index of all V2 developer reminders
+- [V2_DEVELOPMENT_ENVIRONMENT.md](V2_DEVELOPMENT_ENVIRONMENT.md) — conda, compile, run
 - `python/README.md` — Python wrapper usage
 - `CONTRIBUTING.md` — upstream contribution guidelines for `master`
 - `~/CassandraV2/Notes on Cassandra modernization` — personal notes (outside repo)
