@@ -151,7 +151,8 @@ python run_test.py
 ```
 
 This calls `python/api.py` to run the SPC water NVT example at
-`Examples/NVT/water_spc/nvt.inp`.
+`Examples/NVT/water_spc/nvt.inp`. See [smoke-test.md](../docs/smoke-test.md) for
+input/output file locations and what to expect.
 
 ### 4. Run the legacy test suite (optional, slower)
 
