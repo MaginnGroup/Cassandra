@@ -55,8 +55,5 @@ failureLog
 build/
 # locals directory
 locals/
-# Test scripts
-run_test.py
-
 # Ignore any credential/token files
 *token*
