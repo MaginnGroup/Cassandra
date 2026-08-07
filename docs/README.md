@@ -25,6 +25,7 @@ python run_test.py                 # smoke test
 | [smoke-test.md](smoke-test.md) | How to run `run_test.py`, input/output files, what to expect |
 | [V2_DEVELOPMENT_ENVIRONMENT.md](V2_DEVELOPMENT_ENVIRONMENT.md) | Conda environments, compilers, compile & run workflow |
 | [V2_GIT_WORKFLOW.md](V2_GIT_WORKFLOW.md) | Branch strategy, commit/push, SSH authentication |
+| [VS-CODE-Guide.md](VS-CODE-Guide.md) | VS Code / Cursor workspace, tasks, and run setup |
 | [../python/README.md](../python/README.md) | Python `run_cassandra()` API |
 
 ## Project layout (reminder)
