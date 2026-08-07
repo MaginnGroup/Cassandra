@@ -119,6 +119,127 @@ Details and caveats: [Scripts/MCF_Generation/README](../Scripts/MCF_Generation/R
 
 ---
 
+## Important: PDB geometry ≠ MCF geometry
+
+This is easy to miss and worth understanding before you trust a run.
+
+### What the PDB is for
+
+`molecule_to_pdb` (PubChem / RDKit from SMILES) produces a **reasonable 3-D
+sketch**: connectivity (`CONECT`) plus Cartesian coordinates that look like
+the molecule. Those coordinates are **not** required to match your force-field
+bond lengths or equilibrium angles.
+
+What Cassandra needs from the PDB for setup is mainly:
+
+1. **Atom order** (must match the MCF `# Atom_Info` order after `mcfgen`)
+2. **Connectivity** (`CONECT` → bonds in the MCF)
+3. A starting guess for fragment generation
+
+The **MCF** is the geometry authority: fixed bond lengths \(r_0\), harmonic
+angle \(\theta_0\) / \(K_\theta\), dihedrals, charges, LJ parameters.
+
+### Worked example — R125 (`r125.pdb` vs `r125.mcf`)
+
+For 1,1,1,2,2-pentafluoroethane (project `hfc125`), the SMILES-generated PDB
+and the literature-parameter MCF disagree. Atom order matches (C1, C2, F1–F3,
+F4, F5, H1 → MCF atoms 1–8).
+
+**Bonds (Å)** — PDB measured vs MCF fixed \(r_0\):
+
+| # | Atoms | \(r\) (PDB) | \(r_0\) (MCF) | \(\Delta\) |
+|---|-------|-------------|---------------|------------|
+| 1 | C–C (1–2) | 1.521 | 1.538 | −0.017 |
+| 2 | C–F (1–6) | 1.361 | 1.350 | +0.011 |
+| 3 | C–F (1–7) | 1.360 | 1.350 | +0.010 |
+| 4 | C–H (1–8) | 1.093 | 1.096 | −0.003 |
+| 5 | C–F (2–3) | 1.357 | 1.350 | +0.007 |
+| 6 | C–F (2–4) | 1.356 | 1.350 | +0.006 |
+| 7 | C–F (2–5) | 1.352 | 1.350 | +0.002 |
+
+**Angles (°)** — PDB measured vs MCF \(\theta_0\) (all harmonic in this MCF):
+
+| # | Atoms | \(\theta\) (PDB) | \(\theta_0\) (MCF) | \(\Delta\) |
+|---|-------|------------------|--------------------|------------|
+| 1 | C–C–F (2–1–6) | 111.40 | 109.24 | +2.16 |
+| 2 | C–C–F (2–1–7) | 111.38 | 109.24 | +2.14 |
+| 3 | C–C–H (2–1–8) | 111.15 | 110.32 | +0.83 |
+| 4 | F–C–F (6–1–7) | 106.30 | 107.36 | −1.06 |
+| 5 | F–C–H (6–1–8) | 108.22 | 108.79 | −0.57 |
+| 6 | F–C–H (7–1–8) | 108.21 | 108.79 | −0.58 |
+| 7 | C–C–F (1–2–3) | 111.18 | 109.24 | +1.94 |
+| 8 | C–C–F (1–2–4) | 111.17 | 109.24 | +1.93 |
+| 9 | C–C–F (1–2–5) | 112.65 | 109.24 | +3.41 |
+| 10 | F–C–F (3–2–4) | 106.63 | 107.36 | −0.73 |
+| 11 | F–C–F (3–2–5) | 107.46 | 107.36 | +0.10 |
+| 12 | F–C–F (4–2–5) | 107.46 | 107.36 | +0.10 |
+
+So the starter PDB can be off by ~0.02 Å in bonds and a few degrees in angles.
+That is **normal** for a SMILES/PubChem geometry.
+
+### How Cassandra “corrects” this
+
+Production configurations are **not** copies of the PDB Cartesians.
+
+1. **`library_setup.py`** builds fragment libraries using the MCF (and
+   Cassandra) so fragment geometries respect **fixed bond lengths** in the
+   MCF.
+2. **`# Start_Type make_config`** assembles the initial box from those
+   fragments / MCF topology. Molecules in the run therefore have bonds at
+   the MCF \(r_0\) values (constraints), while harmonic angles fluctuate
+   around \(\theta_0\) under Monte Carlo.
+
+You can verify after a short run with the diagnostics:
+
+```bash
+# Bonds should sit on r0 (near machine precision aside from XYZ output rounding)
+python ~/CassandraV2/Cassandra/diagnostics/bond_distribution.py \
+  run.out.xyz species.mcf --bond 1 --no-show
+
+# Angles: sampled PDF vs Boltzmann at T (mean near theta0)
+python ~/CassandraV2/Cassandra/diagnostics/angle_distribution.py \
+  run.out.xyz species.mcf --inp run.inp --angle 1 --no-show
+```
+
+For the R125 equilibration movie, all seven fixed bonds matched MCF \(r_0\)
+to ~\(10^{-8}\)–\(10^{-13}\) Å even though the original `r125.pdb` did not —
+exactly the behavior above.
+
+**Teaching takeaway:** do not expect the PDB to equal the MCF geometry; expect
+the **simulation** (after fragment setup + `make_config`) to equal the MCF
+constraints. If `bond_distribution` shows large \(|r - r_0|\`, something is
+wrong (wrong MCF, atom-order mismatch, or species layout) — not “the PDB was
+approximate.”
+
+### Packmol / `read_config` — do wrong bonds “heal”?
+
+Some workflows build the initial box with **Packmol** (or another packer) and
+start Cassandra with `# Start_Type read_config`. That can work, but
+intramolecular geometry is **not** automatically repaired the way
+`make_config` is.
+
+Abbreviated rules (fuller discussion planned for the user-guide / Read the
+Docs):
+
+- Cassandra treats MCF bonds as **fixed**. On energy evaluation it **checks**
+  \(|r - r_0|\) against a tolerance (default **0.01 Å**) and **aborts** if a
+  bond is broken — it does **not** rescale coordinates to \(r_0\).
+- Translate, rotate, angle, dihedral, and volume moves **preserve** existing
+  bond lengths (rigid-body / COM shifts). Harmonic **angles** and **dihedrals**
+  can relax under their MC moves; fixed **bonds** do not.
+- Fragment **regrowth** / insert / `make_config` rebuild molecules from the
+  fragment library (MCF \(r_0\)). That fixes bonds only for molecules that
+  actually get rebuilt — not every molecule in the box by default.
+- So a Packmol box with SMILES-like monomers (bonds off by ~0.01–0.02 Å, as in
+  the R125 PDB above) may **fail at startup** or, if under tolerance, **keep**
+  slightly wrong bonds for the whole run unless those molecules are regrown.
+
+**Practical advice:** pack **MCF-correct** monomers (or prefer
+`make_config` + fragment libraries). Do not assume “regrowth will fix
+everything over time.”
+
+---
+
 ## Step 4 — Fragment library setup
 
 Needs: MCF, a draft `.inp`, and the PDB(s) in the same directory.
@@ -170,8 +291,10 @@ Or via the Python wrapper once paths are set (see [python/README.md](../python/R
 - [ ] `cassandra-dev` active; RDKit installed if using molecule_to_pdb
 - [ ] Atom types on every PDB atom line
 - [ ] FF filled in Cassandra units (angle \(K\) in K/rad²)
+- [ ] Understand PDB ≠ MCF geometry; MCF + fragments/`make_config` set bonds
 - [ ] Fragment libraries generated
 - [ ] `# Rcutoff_Low` safe for this chemistry
+- [ ] Optional: `bond_distribution` / `angle_distribution` on a short run
 - [ ] Do not `git add` simulation outputs blindly
 
 ---
@@ -180,4 +303,5 @@ Or via the Python wrapper once paths are set (see [python/README.md](../python/R
 
 - [docs/README.md](README.md) — V2 docs index
 - [smoke-test.md](smoke-test.md) — running the Python smoke test
+- [diagnostics/README.md](../diagnostics/README.md) — bond / angle / dihedral checks
 - [V2_DEVELOPMENT_ENVIRONMENT.md](V2_DEVELOPMENT_ENVIRONMENT.md) — conda / compile

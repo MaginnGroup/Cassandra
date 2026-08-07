@@ -104,14 +104,20 @@ Code: `Write_Stdout_Run_Banner` and stdout echo in `Write_Properties`
 ## Implications for future Python tools
 
 Diagnostic tools live in [`diagnostics/`](../diagnostics/README.md) (not
-`Scripts/` or `python/`). Shared `.prp` parsing is in
-`diagnostics/io/prp.py`; the first CLI is `diagnostics/property_plotter.py`.
+`Scripts/` or `python/`). Shared parsers: `diagnostics/io/prp.py`,
+`diagnostics/io/xyz.py`, `diagnostics/io/mcf.py`, `diagnostics/io/inp.py`,
+`diagnostics/io/layout.py`.
 
 | Tool idea | Primary inputs | Status |
 |-----------|----------------|--------|
-| Property vs step (instantaneous + running average) | `.prp` | `property_plotter.py` |
-| Bond-angle PDF (one molecule or all) | `.xyz` + MCF (+ `.H` if \(N\) changes) | planned |
-| Compare to ideal-gas Boltzmann angle distribution | MCF \(K_\theta\), \(\theta_0\); \(T\) from `.inp`/`.log` | planned |
+| Property vs step (instantaneous + running average) | `.prp` | `property_plotter.py` (**diagnostic**) |
+| Fixed bond length vs MCF \(r_0\) | `.xyz` + MCF | `bond_distribution.py` (**diagnostic**) |
+| Bond-angle PDF + ideal-gas Boltzmann | `.xyz` + MCF; \(T\) / species from `.inp` | `angle_distribution.py` (**diagnostic**) |
+| Dihedral PDF + bare-potential Boltzmann | `.xyz` + MCF; \(T\) / species from `.inp` | `dihedral_distribution.py` (**diagnostic**) |
+| Multi-species fixed-\(N\) layout | `# Molecule_Files` (+ `--nmols`) | supported in bond/angle/dihedral tools |
+| COM MSD vs sweep (NVT/NPT exploration; not MD \(D\)) | `.xyz` + MCF + `.inp` (+ `.H` for NPT) | `msd_com.py` (**diagnostic**) |
+| Block averages, \(g(r)\), … | `.prp` / `.xyz` | planned **post-processing** (separate) |
+| Variable-\(N\) (GCMC) from `.H` | `.xyz` + `.H` + MCF | planned |
 
 Keep XYZ as plain XYZ (VMD-compatible). Do not require molecule IDs in the
 coordinate file for Phase 1 analysis designs.

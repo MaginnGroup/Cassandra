@@ -16,7 +16,7 @@ First worked through for R125 NPT equilibration on **2026-08-07** (EJM).
 
 | Where | Use for |
 |-------|---------|
-| **Laptop** | Edit inputs, short tests, Git commits, Python diagnostics (`property_plotter`) |
+| **Laptop** | Edit inputs, short tests, Git commits, Python diagnostics (`property_plotter`, `angle_distribution`, `dihedral_distribution`) |
 | **maginnfe** | Compile Cassandra, `git pull`, submit jobs with `qsub` |
 | **Compute nodes** | Long MC runs (via the UGE queue — still often called “SGE”) |
 
@@ -27,7 +27,7 @@ Prefer `qsub` even though maginnfe allows longer interactive jobs than public fr
 Laptop  --git push-->  GitHub  --git clone/pull-->  maginnfe
 Laptop  --rsync/scp-->  project files (inp, mcf, chk, fragments)
 maginnfe --qsub-->  long queue  -->  compute node  -->  .prp / .chk / .xyz
-maginnfe --scp-->  laptop  -->  diagnostics/property_plotter.py
+maginnfe --scp-->  laptop  -->  diagnostics/{property_plotter,angle_distribution,dihedral_distribution}.py
 ```
 
 ---
@@ -305,6 +305,22 @@ conda activate cassandra-dev
 cd ~/CassandraV2/Cassandra
 python diagnostics/property_plotter.py \
   ~/CassandraV2/projects/hfc125/R125equil_cont1.out.prp -p Mass_Density
+```
+
+For bond / angle / dihedral diagnostics, also copy the `.xyz`, species `.mcf`,
+and `.inp` when needed:
+
+```bash
+python diagnostics/bond_distribution.py \
+  path/to/run.out.xyz path/to/species.mcf --bond 1 --save bond1.png --no-show
+
+python diagnostics/angle_distribution.py \
+  path/to/run.out.xyz path/to/species.mcf \
+  --inp path/to/run.inp --angle 1 --save angle1.png --no-show
+
+python diagnostics/dihedral_distribution.py \
+  path/to/run.out.xyz path/to/species.mcf \
+  --inp path/to/run.inp --dihedral 1 --save dih1.png --no-show
 ```
 
 A conda env on maginnfe for plotting is optional later; laptop plotting is enough

@@ -5,7 +5,6 @@
 #  Cassandra V2 diagnostic tool — plot a thermodynamic property from a .prp
 #  file versus Monte Carlo sweep (or step).
 #
-#  Purpose (teaching / research)
 #  ----------------------------
 #  After an MC run, Cassandra writes instantaneous properties to a ``.prp``
 #  file at intervals set by ``prop_freq`` in the input.  Looking at a single
