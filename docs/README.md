@@ -22,6 +22,7 @@ python run_test.py                 # smoke test
 | Doc | What it covers |
 |-----|----------------|
 | [mcf-setup-workflow.md](mcf-setup-workflow.md) | New molecule checklist: PDB → FF → MCF → fragments → inp |
+| [output-formats.md](output-formats.md) | `.xyz` / `.prp` precision, layout, and analysis assumptions |
 | [smoke-test.md](smoke-test.md) | How to run `run_test.py`, input/output files, what to expect |
 | [V2_DEVELOPMENT_ENVIRONMENT.md](V2_DEVELOPMENT_ENVIRONMENT.md) | Conda environments, compilers, compile & run workflow |
 | [V2_GIT_WORKFLOW.md](V2_GIT_WORKFLOW.md) | Branch strategy, commit/push, SSH authentication |

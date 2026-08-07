@@ -33,6 +33,7 @@ SUBROUTINE Write_Properties(this_box)
   !   None
   !
   ! 08/12/13 : Created beta version
+  ! 08/07/26 (EJM) : .prp values E16.6; right-aligned headers; Enthalpy/Nmols units
 !*******************************************************************************
 
   USE Global_Variables
@@ -41,7 +42,6 @@ SUBROUTINE Write_Properties(this_box)
 
   IMPLICIT NONE
 
-  CHARACTER(24) :: write_str
   INTEGER :: i, this_box, this_unit, is, n_start, n_end
   INTEGER :: ifrac, my_ifrac
 
@@ -77,6 +77,9 @@ CONTAINS
     INTEGER :: file_number, ii
     CHARACTER*120 :: prop_to_write
     CHARACTER*120, ALLOCATABLE :: prop_unit(:)
+    ! Fixed-width fields so headers right-align with I19 / E16.6 data columns
+    CHARACTER(LEN=19) :: col1_hdr
+    CHARACTER(LEN=16) :: col_hdr
 
     ! Header line 1
     IF (block_avg) THEN
@@ -85,17 +88,18 @@ CONTAINS
        WRITE(this_unit,'(A)') '# Instantaneous properties'
     END IF
 
-    ! Header line 2, property names
-    write_str = ""
+    ! Header line 2, property names (right-aligned to match data columns)
+    col1_hdr = ""
     IF (sim_length_units == 'Steps' .OR. sim_length_units == 'Minutes') THEN
-      write_str = "# MC_STEP"
+      col1_hdr = "# MC_STEP"
     ELSE IF (sim_length_units == 'Sweeps') THEN
-      write_str = "# MC_SWEEP"
+      col1_hdr = "# MC_SWEEP"
     END IF
-    
-    WRITE(this_unit,'(A19,2X)',ADVANCE='NO') ADJUSTL(write_str)
+
+    WRITE(this_unit,'(A19,2X)',ADVANCE='NO') ADJUSTR(col1_hdr)
     DO ii = 1, prop_per_file(file_number,this_box)
-       WRITE(this_unit,'(A16,2X)',ADVANCE='NO') (TRIM(prop_output(ii,file_number,this_box)))
+       col_hdr = TRIM(prop_output(ii,file_number,this_box))
+       WRITE(this_unit,'(A16,2X)',ADVANCE='NO') ADJUSTR(col_hdr)
     END DO
     WRITE(this_unit,*)
 
@@ -105,13 +109,18 @@ CONTAINS
     prop_unit(:) = ""
     prop_unit(1) ='# '
 
-    WRITE(this_unit, '(A19,2X)',ADVANCE='NO') ADJUSTL(prop_unit(1))
+    col1_hdr = TRIM(prop_unit(1))
+    WRITE(this_unit, '(A19,2X)',ADVANCE='NO') ADJUSTR(col1_hdr)
 
     DO ii = 1, prop_per_file(file_number,this_box)
 
        prop_to_write = prop_output(ii,file_number,this_box)
 
        IF (prop_to_write(1:6) == 'Energy') THEN
+
+          prop_unit(ii) = '(kJ/mol)-Ext'
+
+       ELSE IF (prop_to_write == 'Enthalpy') THEN
 
           prop_unit(ii) = '(kJ/mol)-Ext'
 
@@ -148,9 +157,14 @@ CONTAINS
 
           prop_unit(ii) = '(kJ/mol)'
 
+       ELSE IF (prop_to_write(1:5) == 'Nmols') THEN
+
+          prop_unit(ii) = '(molecules)'
+
        END IF
 
-       WRITE(this_unit,'(A16,2X)',ADVANCE='NO') (TRIM(prop_unit(ii)))
+       col_hdr = TRIM(prop_unit(ii))
+       WRITE(this_unit,'(A16,2X)',ADVANCE='NO') ADJUSTR(col_hdr)
 
     END DO
 
@@ -165,7 +179,7 @@ CONTAINS
    ! The subroutine fills in a line buffer based on which properties are to
    ! be written and then write the buffer to a file.
    !
-   ! Writte by Jindal Shah
+   ! written by Jindal Shah
    !
    ! Revision History
    !
@@ -436,7 +450,8 @@ CONTAINS
 
    DO ii = 1, prop_per_file(file_number,this_box)
 
-      WRITE(this_unit,'(E16.8,2X)',ADVANCE='NO') write_buff(ii+1)
+      ! E16.6: scientific notation; field width matches A16 headers
+      WRITE(this_unit,'(E16.6,2X)',ADVANCE='NO') write_buff(ii+1)
 
    END DO
    WRITE(this_unit,*)
@@ -460,6 +475,7 @@ SUBROUTINE Write_Coords_XYZ(this_box)
   !        nvtmc_driver
   !
   ! 08/12/13 (JS) : Created beta version
+  ! 08/07/26 (EJM) : .xyz coords F12.3 (smaller, readable output)
   !*****************************************************************************
   
   USE Global_Variables
@@ -511,7 +527,8 @@ SUBROUTINE Write_Coords_XYZ(this_box)
         this_im = locate(im,is,this_box)
         IF(molecule_list(this_im,is)%live) THEN
            DO ia = 1, natoms(is)
-              WRITE(M_XYZ_unit,*) nonbond_list(ia,is)%element, &
+              ! F12.3 Angstroms: enough for visualization and structural analysis
+              WRITE(M_XYZ_unit,'(A,1X,3F12.3)') nonbond_list(ia,is)%element, &
                    atom_list(ia,this_im,is)%rxp, &
                    atom_list(ia,this_im,is)%ryp, &
                    atom_list(ia,this_im,is)%rzp
@@ -641,7 +658,6 @@ SUBROUTINE Write_Mean_Error(ibox)
 
    IMPLICIT NONE
 
-   CHARACTER(24) :: write_str
    INTEGER :: i, ibox, this_unit
 
    INTEGER :: ii, is, is_dens, is_cp
@@ -802,13 +818,13 @@ SUBROUTINE Write_Mean_Error(ibox)
 
       WRITE(this_unit,'(A12,2X)',ADVANCE='NO') 'mean'
       DO ii = 1, prop_per_file(i,ibox)
-         WRITE(this_unit,'(E16.8,2X)',ADVANCE='NO') write_mean(ii+1)
+         WRITE(this_unit,'(E16.6,2X)',ADVANCE='NO') write_mean(ii+1)
       END DO
       WRITE(this_unit,*)
-      
+
       WRITE(this_unit,'(A12,2X)',ADVANCE='NO') 'stdev'
       DO ii = 1, prop_per_file(i,ibox)
-         WRITE(this_unit,'(E16.8,2X)',ADVANCE='NO') write_err(ii+1)
+         WRITE(this_unit,'(E16.6,2X)',ADVANCE='NO') write_err(ii+1)
       END DO
       WRITE(this_unit,*)
       
