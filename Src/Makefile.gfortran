@@ -155,7 +155,7 @@ exe: $(OBJS)
 
 ${libgmxfortpath}: ${libxdrfilepath}
 	rm -fr ${libgmxfortbuild} && mkdir ${libgmxfortbuild} && cd ${libgmxfortbuild} && \
-		cmake .. -DCMAKE_INSTALL_PREFIX=${localdir} && \
+		cmake .. -DCMAKE_INSTALL_PREFIX=${localdir} -DCMAKE_Fortran_COMPILER=${FC} && \
 		${MAKE} && ${MAKE} test && ${MAKE} install
 
 ${libxdrfilepath}:
