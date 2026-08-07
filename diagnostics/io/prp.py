@@ -1,3 +1,37 @@
+#*******************************************************************************
+#  diagnostics/io/prp.py
+#
+#  Shared reader for Cassandra ``.prp`` (property) files.
+#
+#  Why this module exists
+#  ----------------------
+#  Diagnostic tools (property plots, future block-average checks, etc.) all
+#  need the same understanding of Cassandra's property output.  Keep that
+#  logic here so each CLI script stays short and students have one place to
+#  study how the file format is interpreted.
+#
+#  File format (see also docs/output-formats.md)
+#  ---------------------------------------------
+#  Cassandra writes three header lines, then one data row per property write:
+#
+#    # Instantaneous properties          ← title (or "# Block averages")
+#             # MC_SWEEP  Energy_Total … ← column names (right-aligned)
+#                      #  (kJ/mol)-Ext … ← units
+#                     10  -0.362783E+04 … ← data: step, then floats
+#
+#  Parsing strategy: split on whitespace and convert with ``float()``.
+#  Do **not** assume fixed character columns — Fortran formats (A16, E16.6)
+#  control alignment for humans, but Python should treat the file as
+#  whitespace-delimited.  That is robust if column widths change later.
+#
+#  At the end of some runs Cassandra may append ``mean`` / ``stdev`` lines
+#  (from ``Write_Mean_Error``).  Those start with a non-numeric token and
+#  are skipped so they are not mistaken for MC steps.
+#
+#  Author:  Edward J. Maginn (EJM), University of Notre Dame
+#  Written: 08/07/26
+#
+#*******************************************************************************
 """Parse Cassandra instantaneous (or block-average) ``.prp`` property files.
 
 Expected layout (see ``docs/output-formats.md``)::
@@ -22,7 +56,28 @@ import numpy as np
 
 @dataclass
 class PrpData:
-    """Contents of one Cassandra ``.prp`` file."""
+    """In-memory representation of one Cassandra ``.prp`` file.
+
+    Attributes
+    ----------
+    path :
+        Source file path (for titles / error messages).
+    title :
+        First header line without the leading ``#``
+        (e.g. ``Instantaneous properties``).
+    step_label :
+        Name of the independent-variable column: ``MC_SWEEP`` or ``MC_STEP``
+        (depends on ``# Simulation_Length_Info`` units in the ``.inp``).
+    property_names :
+        Thermodynamic columns in file order (e.g. ``Energy_Total``).
+    property_units :
+        Parallel list of unit strings (may be empty strings if missing).
+    steps :
+        1-D array of sweep/step indices, shape ``(n_rows,)``.
+    values :
+        2-D array of property values, shape ``(n_rows, n_properties)``.
+        ``values[i, j]`` is property ``j`` at row ``i``.
+    """
 
     path: Path
     title: str
@@ -30,27 +85,31 @@ class PrpData:
     property_names: list[str]
     property_units: list[str]
     steps: np.ndarray
-    values: np.ndarray  # shape (n_rows, n_properties)
+    values: np.ndarray
 
     @property
     def n_rows(self) -> int:
+        """Number of property-write samples in the file."""
         return int(self.steps.shape[0])
 
     @property
     def n_properties(self) -> int:
+        """Number of thermodynamic columns (excludes the step column)."""
         return len(self.property_names)
 
     def column(self, name: str) -> np.ndarray:
-        """Return values for ``name`` (exact match after resolve)."""
+        """Return the 1-D series for property ``name`` (exact name)."""
         idx = self.property_names.index(name)
         return self.values[:, idx]
 
     def unit_for(self, name: str) -> str:
+        """Return the unit string for property ``name`` (exact name)."""
         idx = self.property_names.index(name)
         return self.property_units[idx]
 
 
 def _is_data_token(token: str) -> bool:
+    """True if ``token`` can be parsed as a float (MC step or property value)."""
     try:
         float(token)
         return True
@@ -59,7 +118,16 @@ def _is_data_token(token: str) -> bool:
 
 
 def read_prp(path: str | Path) -> PrpData:
-    """Read a Cassandra ``.prp`` file into a :class:`PrpData` object."""
+    """Read a Cassandra ``.prp`` file into a :class:`PrpData` object.
+
+    Steps
+    -----
+    1. Read all lines as text.
+    2. Parse the three header lines (title, names, units).
+    3. Convert each subsequent numeric row into a step + property vector.
+    4. Skip blank lines, comment lines, and non-numeric footers.
+    5. Stack rows into NumPy arrays for plotting / analysis.
+    """
     path = Path(path)
     if not path.is_file():
         raise FileNotFoundError(f"Property file not found: {path}")
@@ -68,14 +136,15 @@ def read_prp(path: str | Path) -> PrpData:
     if len(lines) < 3:
         raise ValueError(f"Property file too short (need header + data): {path}")
 
+    # --- header line 1: title --------------------------------------------
     title = lines[0].strip().lstrip("#").strip()
-    name_tokens = lines[1].split()
-    unit_tokens = lines[2].split()
 
+    # --- header line 2: step label + property names ----------------------
+    # Example tokens after split: ['#', 'MC_SWEEP', 'Energy_Total', 'Pressure']
+    name_tokens = lines[1].split()
     if not name_tokens:
         raise ValueError(f"Missing property-name header in {path}")
 
-    # First header token is "#"; second is MC_SWEEP / MC_STEP.
     if name_tokens[0] == "#":
         name_tokens = name_tokens[1:]
     if not name_tokens:
@@ -84,19 +153,22 @@ def read_prp(path: str | Path) -> PrpData:
     step_label = name_tokens[0]
     property_names = name_tokens[1:]
 
-    # Units line: leading "#" then one unit token (or token group) per property.
-    # Units may contain no spaces in current Cassandra output, e.g. (kJ/mol)-Ext.
+    # --- header line 3: units (one token per property in current format) -
+    # Example: ['#', '(kJ/mol)-Ext', '(bar)', '(kJ/mol)-Ext']
+    unit_tokens = lines[2].split()
     if unit_tokens and unit_tokens[0] == "#":
         unit_tokens = unit_tokens[1:]
     property_units = list(unit_tokens)
+    # Tolerate missing/extra unit tokens so a slightly broken file still loads
     if len(property_units) < len(property_names):
         property_units.extend([""] * (len(property_names) - len(property_units)))
     elif len(property_units) > len(property_names):
         property_units = property_units[: len(property_names)]
 
+    # --- data rows -------------------------------------------------------
     steps: list[float] = []
     rows: list[list[float]] = []
-    n_expected = 1 + len(property_names)
+    n_expected = 1 + len(property_names)  # step + each property
 
     for line_no, raw in enumerate(lines[3:], start=4):
         line = raw.strip()
@@ -105,7 +177,7 @@ def read_prp(path: str | Path) -> PrpData:
         tokens = line.split()
         if not tokens:
             continue
-        # Skip mean/stdev footer lines written by Write_Mean_Error.
+        # Footer lines like "mean ..." / "stdev ..." start with words, not numbers
         if not _is_data_token(tokens[0]):
             continue
         if len(tokens) < n_expected:
@@ -135,10 +207,15 @@ def read_prp(path: str | Path) -> PrpData:
 
 
 def resolve_property(names: Sequence[str], query: str) -> str:
-    """Match ``query`` to a property name (case-insensitive).
+    """Map a user-typed query to an exact property name in ``names``.
 
-    Exact (case-insensitive) match preferred; otherwise unique substring match.
-    Raises ``ValueError`` if zero or multiple matches.
+    Matching order
+    --------------
+    1. Case-insensitive exact match (``enthalpy`` → ``Enthalpy``).
+    2. Otherwise, unique case-insensitive *substring* match
+       (``press`` → ``Pressure`` if that is the only hit).
+    3. Error if zero matches or more than one substring match
+       (forces the student to be more specific).
     """
     if not query or not query.strip():
         raise ValueError("Property name is empty")
