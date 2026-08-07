@@ -4,7 +4,7 @@ A practical guide to conda environments, compilers, and the day-to-day workflow
 for building and running Cassandra on your Mac.
 
 **Related docs:** [docs index](README.md) · [Git workflow](V2_GIT_WORKFLOW.md) ·
-[Python API](../python/README.md)
+[Python API](../python/README.md) · [MCF setup workflow](mcf-setup-workflow.md)
 
 ---
 
@@ -79,6 +79,7 @@ Use **`cassandra-dev`** for all Cassandra V2 work on this machine.
 | gfortran | Compile `Src/cassandra_gfortran.exe` |
 | cmake | Build bundled libraries under `Libraries/` |
 | numpy, pandas | Test suite and analysis scripts |
+| RDKit | Optional; needed for `Scripts/molecule_to_pdb` (`conda install -c conda-forge rdkit`) |
 
 ### Do not use `thermo2026` for Cassandra
 
@@ -257,4 +258,5 @@ python run_test.py
 
 - [docs/README.md](README.md) — index of all V2 developer reminders
 - [V2_GIT_WORKFLOW.md](V2_GIT_WORKFLOW.md) — git branch, commit, push, SSH
+- [mcf-setup-workflow.md](mcf-setup-workflow.md) — new molecule PDB → MCF → inp checklist
 - [python/README.md](../python/README.md) — `run_cassandra()` API

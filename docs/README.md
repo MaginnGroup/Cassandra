@@ -21,6 +21,7 @@ python run_test.py                 # smoke test
 
 | Doc | What it covers |
 |-----|----------------|
+| [mcf-setup-workflow.md](mcf-setup-workflow.md) | New molecule checklist: PDB → FF → MCF → fragments → inp |
 | [smoke-test.md](smoke-test.md) | How to run `run_test.py`, input/output files, what to expect |
 | [V2_DEVELOPMENT_ENVIRONMENT.md](V2_DEVELOPMENT_ENVIRONMENT.md) | Conda environments, compilers, compile & run workflow |
 | [V2_GIT_WORKFLOW.md](V2_GIT_WORKFLOW.md) | Branch strategy, commit/push, SSH authentication |
@@ -33,6 +34,7 @@ python run_test.py                 # smoke test
 ├── Cassandra/              ← git repo (modernization branch)
 │   ├── docs/             ← you are here
 │   ├── python/           ← V2 Python wrapper
+│   ├── Scripts/          ← helpers (molecule_to_pdb, mcfgen, library_setup, …)
 │   ├── Src/              ← Fortran source; compile here
 │   ├── Examples/         ← input files for test runs
 │   └── run_test.py       ← smoke test script
@@ -45,3 +47,5 @@ python run_test.py                 # smoke test
 - Use conda env **`cassandra-dev`** for Cassandra — not your class env (`thermo2026`).
 - Git push needs **SSH** (`git@github.com:...`), not your GitHub password.
 - `python run_test.py` writes output files under `Examples/` — don't `git add .` blindly.
+- New molecule setup: follow [mcf-setup-workflow.md](mcf-setup-workflow.md).
+- Fluorinated molecules: `# Rcutoff_Low` of 2.0 is often too large (use ~1.0).
