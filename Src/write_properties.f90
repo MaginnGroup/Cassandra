@@ -34,6 +34,7 @@ SUBROUTINE Write_Properties(this_box)
   !
   ! 08/12/13 : Created beta version
   ! 08/07/26 (EJM) : .prp values E16.6; right-aligned headers; Enthalpy/Nmols units
+  ! 08/07/26 (EJM) : echo properties to stdout at prop_freq for interactive runs
 !*******************************************************************************
 
   USE Global_Variables
@@ -44,12 +45,16 @@ SUBROUTINE Write_Properties(this_box)
 
   INTEGER :: i, this_box, this_unit, is, n_start, n_end
   INTEGER :: ifrac, my_ifrac
+  INTEGER :: file_unit
+  LOGICAL :: wrote_file_header
 
 
   DO i = 1, nbr_prop_files(this_box)
      
      !-- check to see if the file is open or not
-     this_unit = (this_box-1)*MAXVAL(nbr_prop_files) + i + propunit
+     file_unit = (this_box-1)*MAXVAL(nbr_prop_files) + i + propunit
+     this_unit = file_unit
+     wrote_file_header = .FALSE.
      
      IF (first_open(i,this_box)) THEN
         
@@ -60,10 +65,24 @@ SUBROUTINE Write_Properties(this_box)
         CALL Write_Header(i)
 
         first_open(i,this_box) = .FALSE.
+        wrote_file_header = .TRUE.
 
      END IF
         
      CALL Write_Properties_Buffer(i)
+
+     ! Echo first property file to the screen (interactive progress)
+     IF (i == 1) THEN
+        this_unit = 6
+        IF (wrote_file_header) THEN
+           IF (nbr_boxes > 1) THEN
+              WRITE(6,*)
+              WRITE(6,'(A,I0)') '  Box ', this_box
+           END IF
+           CALL Write_Header(i)
+        END IF
+        CALL Write_Properties_Buffer(i)
+     END IF
      
   END DO
 
@@ -834,3 +853,89 @@ SUBROUTINE Write_Mean_Error(ibox)
    END DO
 
 END SUBROUTINE Write_Mean_Error
+
+!*******************************************************************************
+SUBROUTINE Write_Stdout_Run_Banner
+  !*****************************************************************************
+  ! Print a short interactive summary so the user can confirm the run that is
+  ! about to start (ensemble, T, N, box, write frequencies, OpenMP).
+  !
+  ! 08/07/26 (EJM) : Created for V2 interactive output
+  !*****************************************************************************
+
+  USE Global_Variables
+
+  IMPLICIT NONE
+
+  INTEGER :: ibox, is
+  INTEGER :: run_display, prop_display, coord_display
+  LOGICAL :: omp_on
+  CHARACTER(32) :: freq_label
+
+  omp_on = .FALSE.
+!$ omp_on = .TRUE.
+
+  IF (sim_length_units == 'Sweeps') THEN
+     freq_label = 'sweeps'
+     run_display = INT(n_mcsteps / steps_per_sweep)
+     prop_display = INT(nthermo_freq / steps_per_sweep)
+     coord_display = INT(ncoord_freq / steps_per_sweep)
+  ELSE IF (sim_length_units == 'Minutes') THEN
+     freq_label = 'minutes'
+     run_display = INT(n_mcsteps)
+     prop_display = INT(nthermo_freq)
+     coord_display = INT(ncoord_freq)
+  ELSE
+     freq_label = 'steps'
+     run_display = INT(n_mcsteps)
+     prop_display = INT(nthermo_freq)
+     coord_display = INT(ncoord_freq)
+  END IF
+
+  WRITE(*,*)
+  WRITE(*,'(A)') '--------------------------------------------------------------------------------'
+  WRITE(*,'(A)') '  Cassandra run summary'
+  WRITE(*,'(A)') '--------------------------------------------------------------------------------'
+  WRITE(*,'(A,A)')   '  Run name:     ', TRIM(run_name)
+  WRITE(*,'(A,A)')   '  Ensemble:     ', TRIM(sim_type)
+  WRITE(*,'(A,F8.2,A)') '  Temperature:  ', temperature(1), ' K'
+
+  IF (int_sim_type == sim_npt .OR. int_sim_type == sim_gemc_npt) THEN
+     WRITE(*,'(A,F8.3,A)') '  Pressure set: ', pressure(1)%setpoint * atomic_to_bar, ' bar'
+  END IF
+
+  DO ibox = 1, nbr_boxes
+     IF (nbr_boxes > 1) THEN
+        WRITE(*,'(A,I0)') '  Box ', ibox
+     END IF
+     WRITE(*,'(A,A,A,F10.3,A)') '  Box shape:    ', TRIM(box_list(ibox)%box_shape), &
+          ', V = ', box_list(ibox)%volume, ' A^3'
+     IF (box_list(ibox)%int_box_shape == int_cubic) THEN
+        WRITE(*,'(A,F10.3,A)') '  Box length:   ', box_list(ibox)%basis_length(1), ' A'
+     END IF
+     DO is = 1, nspecies
+        WRITE(*,'(A,I0,A,I0)') '  Molecules:    species ', is, ' = ', nmols(is,ibox)
+     END DO
+  END DO
+
+  IF (.NOT. timed_run) THEN
+     WRITE(*,'(A,I0,1X,A)') '  Run length:   ', run_display, TRIM(freq_label)
+  ELSE
+     WRITE(*,'(A,I0,A)') '  Run length:   ', run_display, ' minutes (timed run)'
+  END IF
+  WRITE(*,'(A,I0,1X,A,A)') '  Prop write:   every ', prop_display, TRIM(freq_label), &
+       '  (echoed to screen)'
+  WRITE(*,'(A,I0,1X,A)') '  Coord write:  every ', coord_display, TRIM(freq_label)
+
+  IF (omp_on) THEN
+     WRITE(*,'(A)') '  OpenMP:       enabled'
+  ELSE
+     WRITE(*,'(A)') '  OpenMP:       disabled'
+  END IF
+
+  WRITE(*,'(A)') '--------------------------------------------------------------------------------'
+  WRITE(*,'(A)') '  Starting Monte Carlo moves...'
+  WRITE(*,'(A)') '--------------------------------------------------------------------------------'
+  WRITE(*,*)
+
+END SUBROUTINE Write_Stdout_Run_Banner

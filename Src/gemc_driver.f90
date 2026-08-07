@@ -68,8 +68,6 @@ SUBROUTINE GEMC_Driver
 
 !$ openmp_flag = .TRUE.
 
-  write(*,*) 'openmp_flag = ', openmp_flag
-
   IF(.NOT. openmp_flag) THEN
      CALL cpu_time(time_start)
   ELSE

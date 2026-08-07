@@ -104,8 +104,6 @@ SUBROUTINE Pregen_Driver
 
 !$ openmp_flag = .TRUE.
 
-  WRITE(*,*) 'openmp_flag = ', openmp_flag
-
   IF(.NOT. openmp_flag) THEN
      CALL cpu_time(time_start)
   ELSE

@@ -80,6 +80,27 @@ Typical units (see also the user guide):
 
 ---
 
+## Interactive stdout (updated 2026-08)
+
+When you run Cassandra in the foreground, the terminal shows:
+
+1. A short **setup** message while the initial configuration is built  
+2. A **run summary** (ensemble, T, N, box, write frequencies, OpenMP on/off)  
+3. **Property lines** at the same frequency as `.prp` (`prop_freq`), mirroring
+   `# Property_Info` with the same `E16.6` formatting  
+4. `Cassandra simulation complete` at the end  
+
+The cryptic `openmp_flag = F` message has been removed; OpenMP status appears
+in the run summary as `enabled` or `disabled`.
+
+Screen output is for interactive confidence only. Analysis tools should still
+read `.prp` and `.xyz` files.
+
+Code: `Write_Stdout_Run_Banner` and stdout echo in `Write_Properties`
+(`Src/write_properties.f90`, `Src/main.f90`).
+
+---
+
 ## Implications for future Python tools
 
 | Tool idea | Primary inputs |

@@ -80,6 +80,7 @@ run          100
 # Property_Info 1 
 energy_total
 pressure
+enthalpy
 !------------------------------------------------------------------------------
 
 # Fragment_Files

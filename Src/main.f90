@@ -70,7 +70,7 @@ PROGRAM Main
   !        Write_Subroutine_Times
   !
   !  08/07/13 : Created beta version
-  !
+  !  08/07/26 (EJM) : interactive setup message; call Write_Stdout_Run_Banner
   !
 !*******************************************************************************
 
@@ -245,7 +245,11 @@ PROGRAM Main
 
   WRITE(*,*) 'Begin Cassandra simulation'
   WRITE(*,*)
-
+  WRITE(*,*) '  Setting up the initial configuration and energies...'
+  WRITE(*,*)
+  WRITE(*,*) '  (Progress and thermodynamic properties will be echoed to'
+  WRITE(*,*) '   this screen once the Monte Carlo run starts.)'
+  WRITE(*,*)
   WRITE(logunit,*)
   WRITE(logunit,'(A80)') '********************************************************************************'
   WRITE(logunit,'(A80)') '************************ Begin Cassandra simulation ****************************'
@@ -398,6 +402,11 @@ PROGRAM Main
      CALL Check_System_Energy(ibox,.FALSE.)
   END DO
   WRITE(logunit,'(A80)') '********************************************************************************'
+
+  ! Interactive run summary (after setup, before properties / MC moves)
+  IF (n_mcsteps > initial_mcstep) THEN
+     CALL Write_Stdout_Run_Banner
+  END IF
 
   ! Write initial properties, if needed
   DO ibox = 1, nbr_boxes
