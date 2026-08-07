@@ -28,6 +28,7 @@ python run_test.py                 # smoke test
 | [V2_GIT_WORKFLOW.md](V2_GIT_WORKFLOW.md) | Branch strategy, commit/push, SSH authentication |
 | [VS-CODE-Guide.md](VS-CODE-Guide.md) | VS Code / Cursor workspace, tasks, and run setup |
 | [../python/README.md](../python/README.md) | Python `run_cassandra()` API |
+| [../diagnostics/README.md](../diagnostics/README.md) | Post-run diagnostics (property plots, …) |
 
 ## Project layout (reminder)
 
@@ -36,6 +37,7 @@ python run_test.py                 # smoke test
 ├── Cassandra/              ← git repo (modernization branch)
 │   ├── docs/             ← you are here
 │   ├── python/           ← V2 Python wrapper
+│   ├── diagnostics/      ← post-run checks and plots
 │   ├── Scripts/          ← helpers (molecule_to_pdb, mcfgen, library_setup, …)
 │   ├── Src/              ← Fortran source; compile here
 │   ├── Examples/         ← input files for test runs

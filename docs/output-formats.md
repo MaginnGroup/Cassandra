@@ -103,11 +103,15 @@ Code: `Write_Stdout_Run_Banner` and stdout echo in `Write_Properties`
 
 ## Implications for future Python tools
 
-| Tool idea | Primary inputs |
-|-----------|----------------|
-| Property vs step (instantaneous + running average) | `.prp` |
-| Bond-angle PDF (one molecule or all) | `.xyz` + MCF (+ `.H` if \(N\) changes) |
-| Compare to ideal-gas Boltzmann angle distribution | MCF \(K_\theta\), \(\theta_0\); \(T\) from `.inp`/`.log` |
+Diagnostic tools live in [`diagnostics/`](../diagnostics/README.md) (not
+`Scripts/` or `python/`). Shared `.prp` parsing is in
+`diagnostics/io/prp.py`; the first CLI is `diagnostics/property_plotter.py`.
+
+| Tool idea | Primary inputs | Status |
+|-----------|----------------|--------|
+| Property vs step (instantaneous + running average) | `.prp` | `property_plotter.py` |
+| Bond-angle PDF (one molecule or all) | `.xyz` + MCF (+ `.H` if \(N\) changes) | planned |
+| Compare to ideal-gas Boltzmann angle distribution | MCF \(K_\theta\), \(\theta_0\); \(T\) from `.inp`/`.log` | planned |
 
 Keep XYZ as plain XYZ (VMD-compatible). Do not require molecule IDs in the
 coordinate file for Phase 1 analysis designs.

@@ -99,6 +99,7 @@ except CassandraRunError as exc:
 | Location | Purpose |
 |----------|---------|
 | `python/api.py` | New V2 wrapper (this module) |
+| `diagnostics/` | Post-run analysis tools (property plots, …) |
 | `run_test.py` | Smoke test that calls `run_cassandra()` |
 | `Scripts/testSuite/` | Legacy regression tests with their own `subprocess` calls |
 | [MoSDeF-Cassandra](https://mosdef-cassandra.readthedocs.io/) | Separate higher-level Python interface |
