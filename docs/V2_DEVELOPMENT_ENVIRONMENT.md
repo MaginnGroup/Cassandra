@@ -4,6 +4,7 @@ A practical guide to conda environments, compilers, and the day-to-day workflow
 for building and running Cassandra on your Mac.
 
 **Related docs:** [docs index](README.md) · [Git workflow](V2_GIT_WORKFLOW.md) ·
+[CRC / maginnfe](V2_CRC_WORKFLOW.md) ·
 [Python API](../python/README.md) · [MCF setup workflow](mcf-setup-workflow.md)
 
 ---

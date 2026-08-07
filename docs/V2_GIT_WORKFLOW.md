@@ -5,6 +5,7 @@ Git and GitHub, and how to commit and push work safely.
 
 **Other V2 reminders:** [docs index](README.md) ·
 [Development environment](V2_DEVELOPMENT_ENVIRONMENT.md) ·
+[CRC / maginnfe](V2_CRC_WORKFLOW.md) ·
 [Python API](../python/README.md)
 
 ## Repository strategy
