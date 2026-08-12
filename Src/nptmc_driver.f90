@@ -47,7 +47,10 @@ SUBROUTINE NPTMC_Driver
   !        Compute_System_Total_Energy
   !        Write_Trials_Success
   !
+  ! Revision history
+  !
   !  08/07/13  : Created beta version
+  !  08/12/26 (EJM) : Call Maybe_Write_Log_Progress for 10–90% logfile snapshots
   !*******************************************************************************
 
   USE Global_Variables
@@ -123,6 +126,8 @@ SUBROUTINE NPTMC_Driver
   ELSE
 !$  time_start = omp_get_wtime()
   END IF
+
+  CALL Init_Log_Progress
 
   DO WHILE (.NOT. complete)
 
@@ -329,6 +334,8 @@ SUBROUTINE NPTMC_Driver
      !*****************************************************************************
      ! check if compute properties this step
      !*****************************************************************************
+     CALL Maybe_Write_Log_Progress
+
      IF (echeck) THEN
         IF(MOD(i_mcstep,echeck_freq) == 0) THEN
            DO ibox = 1,nbr_boxes

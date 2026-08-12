@@ -31,6 +31,7 @@ SUBROUTINE GEMC_Driver
   ! Revision history
   !
   !   12/10/13 : Beta Release
+  !   08/12/26 (EJM) : Call Maybe_Write_Log_Progress for 10–90% logfile snapshots
   !****************************************************************************
 
   USE Global_Variables
@@ -59,6 +60,7 @@ SUBROUTINE GEMC_Driver
   complete = .FALSE.
 
   i_mcstep = initial_mcstep
+  CALL Init_Log_Progress
 
   ! The total number of trial move array may not have been set if this
   ! is a fresh run i.e. start_type == make_config. Otherwise this array
@@ -294,6 +296,8 @@ SUBROUTINE GEMC_Driver
      !*****************************************************************************
      ! check if compute properties this step
      !*****************************************************************************
+     CALL Maybe_Write_Log_Progress
+
      IF (echeck) THEN
         IF(MOD(i_mcstep,echeck_freq) == 0) THEN
            DO ibox = 1,nbr_boxes

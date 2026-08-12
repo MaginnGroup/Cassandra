@@ -117,7 +117,7 @@ The `Run_Name` field in `nvt.inp` controls the filename prefix. With
 
 | File | Purpose |
 |------|---------|
-| `nvt.out.log` | Verbose simulation log (start here to check success) |
+| `nvt.out.log` | Simulation log (setup, MCF echo, progress snapshots, final stats) |
 | `nvt.out.prp` | Thermodynamic properties (energy, pressure, etc.) |
 | `nvt.out.xyz` | Coordinate trajectory |
 | `nvt.out.chk` | Updated checkpoint for restarts |

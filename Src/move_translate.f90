@@ -47,7 +47,10 @@ SUBROUTINE Translate
   !        Update_Ewald_Reciprocal_Energy
   !
   !
+  ! Revision history
+  !
   !  12/10/13 : Beta release
+  !  08/12/26 (EJM) : Mid-run Step/Success/MaxWidth log lines only if verbose_log
   !*****************************************************************************
 
   USE Type_Definitions
@@ -321,10 +324,8 @@ SUBROUTINE Translate
         success_ratio = REAL(nsuccess(is,ibox)%displacement,DP)/REAL(ntrials(is,ibox)%displacement,DP)
      END IF
 
-     WRITE(logunit,'(X,I19,X,A10,X,5X,X,I3,X,I3,X,F8.5)',ADVANCE='NO') &
-           i_mcstep, 'translate', is, ibox, success_ratio
-
-     !nsuccess(is,ibox)%displacement = 0
+     ! Mid-run Step/Success/MaxWidth lines are omitted from the logfile (V2).
+     ! Equilibration still updates max_disp; widths are reported in progress snapshots.
 
      IF ( int_run_type == run_equil ) THEN
 
@@ -343,12 +344,8 @@ SUBROUTINE Translate
              END IF
              max_disp(is,ibox) = MIN(rcut_small,2.0_DP*success_ratio*max_disp(is,ibox))
          END IF
-
-         WRITE(logunit,'(X,F9.5)',ADVANCE='NO') max_disp(is,ibox)
         
      END IF
-
-     WRITE(logunit,*)
 
   END IF
 

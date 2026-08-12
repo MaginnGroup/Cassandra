@@ -36,6 +36,7 @@ SUBROUTINE GEMC_NVT_Volume
   ! Revision history
   !
   !   12/05/13 : Beta Release
+  !   08/12/26 (EJM) : Mid-run Step/Success/MaxWidth log lines only if verbose_log
   !*************************************************************************
 
   USE Global_Variables
@@ -509,14 +510,11 @@ SUBROUTINE GEMC_NVT_Volume
 
          END IF
 
-         WRITE(logunit,'(X,I19,X,A10,X,5X,X,3X,X,3X,X,F8.5,X,F9.0)') &
-               i_mcstep, 'vol_swap', success_ratio, box_list(box_grw)%dv_max
+         ! Mid-run Step/Success/MaxWidth lines omitted (V2); widths in progress snapshots.
 
       ELSE
 
          success_ratio = REAL(nvol_success(box_grw),DP)/REAL(nvolumes(box_grw),DP)
-         WRITE(logunit,'(X,I19,X,A10,X,5X,X,3X,X,3X,X,F8.5)') &
-               i_mcstep, 'vol_swap', success_ratio
          
       END IF
 

@@ -178,6 +178,7 @@ MODULE Energy_Routines
   ! Revision history
   !
   !   12/10/13  : Beta Release
+  !   08/12/26 (EJM) : Intensive (E/N) column in Check_System_Energy logfile tables
   !-----------------------------------------------------------------------------
 
   USE Type_Definitions
@@ -3920,6 +3921,9 @@ END SUBROUTINE Compute_Molecule_Self_Energy
      TYPE(Energy_Class) :: e_check
      TYPE(Energy_Class) :: e_diff
 
+     INTEGER :: n_mol_box, is_loc
+     REAL(DP) :: inv_n
+
      IF (present(check_inp)) THEN
         check = check_inp
      ELSE
@@ -4026,65 +4030,59 @@ END SUBROUTINE Compute_Molecule_Self_Energy
         END IF
      END IF
 
-     ! Write the recomputed energy components to log
+     ! Molecule count for intensive (per-molecule) energies
+     n_mol_box = 0
+     DO is_loc = 1, nspecies
+        n_mol_box = n_mol_box + nmols(is_loc, ibox)
+     END DO
+     IF (n_mol_box > 0) THEN
+        inv_n = 1.0_DP / REAL(n_mol_box, DP)
+     ELSE
+        inv_n = 0.0_DP
+     END IF
+
+     ! Write the recomputed energy components to log (extensive + intensive)
      WRITE(logunit,*)
-     WRITE(logunit,'(X,A,X,I1,T30,A20)',ADVANCE='NO') 'Energy components for box', ibox, 'kJ/mol-Extensive'
-     IF (check) WRITE(logunit,'(X,A20)',ADVANCE='NO') 'Relative_Error'
-     WRITE(logunit,*)
-     WRITE(logunit,'(X,A)') '---------------------------------------------------------------------'
-     WRITE(logunit,'(X,A,T30,F20.3)',ADVANCE='NO') 'Total system energy', energy(ibox)%total*atomic_to_kjmol
-     IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%total
-     WRITE(logunit,*)
-     WRITE(logunit,'(X,A,T30,F20.3)',ADVANCE='NO') 'Intra molecular energy', energy(ibox)%intra*atomic_to_kjmol
-     IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%intra
-     WRITE(logunit,*)
-     WRITE(logunit,'(3X,A,T30,F20.3)',ADVANCE='NO') 'Bond energy',energy(ibox)%bond*atomic_to_kjmol
-     IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%bond
-     WRITE(logunit,*)
-     WRITE(logunit,'(3X,A,T30,F20.3)',ADVANCE='NO') 'Bond angle energy',energy(ibox)%angle*atomic_to_kjmol
-     IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%angle
-     WRITE(logunit,*)
-     WRITE(logunit,'(3X,A,T30,F20.3)',ADVANCE='NO') 'Dihedral angle energy', energy(ibox)%dihedral*atomic_to_kjmol
-     IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%dihedral
-     WRITE(logunit,*)
-     WRITE(logunit,'(3X,A,T30,F20.3)',ADVANCE='NO') 'Improper angle energy', energy(ibox)%improper*atomic_to_kjmol
-     IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%improper
-     WRITE(logunit,*)
-     WRITE(logunit,'(3X,A,T30,F20.3)',ADVANCE='NO') 'Intra molecule vdw', energy(ibox)%intra_vdw*atomic_to_kjmol
-     IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%intra_vdw
-     WRITE(logunit,*)
-     WRITE(logunit,'(3X,A,T30,F20.3)',ADVANCE='NO') 'Intra molecule q',energy(ibox)%intra_q*atomic_to_kjmol
-     IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%intra_q
-     WRITE(logunit,*)
-     WRITE(logunit,'(X,A,T30,F20.3)',ADVANCE='NO') 'Inter molecular energy', energy(ibox)%inter*atomic_to_kjmol
-     IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%inter
-     WRITE(logunit,*)
-     WRITE(logunit,'(3X,A,T30,F20.3)',ADVANCE='NO') 'Inter molecule vdw', energy(ibox)%inter_vdw*atomic_to_kjmol
-     IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%inter_vdw
-     WRITE(logunit,*)
+     WRITE(logunit,'(X,A,X,I0)') 'Energy components for box', ibox
+     IF (check) THEN
+        WRITE(logunit,'(X,A,T35,A14,X,A18,X,A16)') &
+             'Component', 'Extensive', 'Intensive', 'Relative_Error'
+        WRITE(logunit,'(X,A,T35,A14,X,A18,X,A16)') &
+             ' ', 'kJ/mol', 'kJ/mol/molecule', ' '
+        WRITE(logunit,'(X,A)') REPEAT('-', 83)
+     ELSE
+        WRITE(logunit,'(X,A,T35,A14,X,A18)') 'Component', 'Extensive', 'Intensive'
+        WRITE(logunit,'(X,A,T35,A14,X,A18)') ' ', 'kJ/mol', 'kJ/mol/molecule'
+        WRITE(logunit,'(X,A)') REPEAT('-', 66)
+     END IF
+     CALL Write_Energy_Row('Total system energy', .FALSE., energy(ibox)%total, e_diff%total)
+     CALL Write_Energy_Row('Intra molecular energy', .FALSE., energy(ibox)%intra, e_diff%intra)
+     CALL Write_Energy_Row('Bond energy', .TRUE., energy(ibox)%bond, e_diff%bond)
+     CALL Write_Energy_Row('Bond angle energy', .TRUE., energy(ibox)%angle, e_diff%angle)
+     CALL Write_Energy_Row('Dihedral angle energy', .TRUE., energy(ibox)%dihedral, e_diff%dihedral)
+     CALL Write_Energy_Row('Improper angle energy', .TRUE., energy(ibox)%improper, e_diff%improper)
+     CALL Write_Energy_Row('Intra molecule vdw', .TRUE., energy(ibox)%intra_vdw, e_diff%intra_vdw)
+     CALL Write_Energy_Row('Intra molecule q', .TRUE., energy(ibox)%intra_q, e_diff%intra_q)
+     CALL Write_Energy_Row('Inter molecular energy', .FALSE., energy(ibox)%inter, e_diff%inter)
+     CALL Write_Energy_Row('Inter molecule vdw', .TRUE., energy(ibox)%inter_vdw, e_diff%inter_vdw)
      IF (int_vdw_sum_style(ibox) == vdw_cut_tail) THEN
-        WRITE(logunit,'(3X,A,T30,F20.3)',ADVANCE='NO') 'Long range correction', energy(ibox)%lrc*atomic_to_kjmol
-        IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%lrc
-        WRITE(logunit,*)
+        CALL Write_Energy_Row('Long range correction', .TRUE., energy(ibox)%lrc, e_diff%lrc)
      END IF
-     WRITE(logunit,'(3X,A,T30,F20.3)',ADVANCE='NO') 'Inter molecule q',energy(ibox)%inter_q*atomic_to_kjmol
-     IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%inter_q
-     WRITE(logunit,*)
+     CALL Write_Energy_Row('Inter molecule q', .TRUE., energy(ibox)%inter_q, e_diff%inter_q)
      IF (int_charge_sum_style(ibox) == charge_ewald) THEN
-        WRITE(logunit,'(3X,A,T30,F20.3)',ADVANCE='NO') 'Reciprocal ewald',energy(ibox)%reciprocal*atomic_to_kjmol
-        IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%reciprocal
-        WRITE(logunit,*)
-        WRITE(logunit,'(3X,A,T30,F20.3)',ADVANCE='NO') 'Self ewald',energy(ibox)%self*atomic_to_kjmol
-        IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%self
-        WRITE(logunit,*)
+        CALL Write_Energy_Row('Reciprocal ewald', .TRUE., energy(ibox)%reciprocal, e_diff%reciprocal)
+        CALL Write_Energy_Row('Self ewald', .TRUE., energy(ibox)%self, e_diff%self)
      ELSE IF (int_charge_sum_style(ibox) == charge_dsf) THEN
-        WRITE(logunit,'(X,A,T30,F20.3)',ADVANCE='NO') 'Self DSF',energy(ibox)%self*atomic_to_kjmol
-        IF (check) WRITE(logunit,'(X,E20.3)',ADVANCE='NO') e_diff%self
-        WRITE(logunit,*)
+        CALL Write_Energy_Row('Self DSF', .FALSE., energy(ibox)%self, e_diff%self)
      END IF
-     WRITE(logunit,'(X,A)') '---------------------------------------------------------------------'
+     IF (check) THEN
+        WRITE(logunit,'(X,A)') REPEAT('-', 83)
+     ELSE
+        WRITE(logunit,'(X,A)') REPEAT('-', 66)
+     END IF
+     WRITE(logunit,'(3X,A,T35,I14)') 'Molecules in box', n_mol_box
      IF (int_charge_sum_style(ibox) == charge_ewald) &
-        WRITE(logunit,'(3X,A,T33,I17)') 'Number of reciprocal vectors',nvecs(ibox)
+        WRITE(logunit,'(3X,A,T35,I14)') 'Number of reciprocal vectors', nvecs(ibox)
      WRITE(logunit,*)
 
      IF (check) THEN
@@ -4103,6 +4101,29 @@ END SUBROUTINE Compute_Molecule_Self_Energy
         energy(ibox)%reciprocal = e_check%reciprocal
         energy(ibox)%self = e_check%self
      END IF
+
+  CONTAINS
+
+     SUBROUTINE Write_Energy_Row(label, indented, e_atomic, e_rel)
+        CHARACTER(*), INTENT(IN) :: label
+        LOGICAL, INTENT(IN) :: indented
+        REAL(DP), INTENT(IN) :: e_atomic, e_rel
+        REAL(DP) :: e_ext
+
+        e_ext = e_atomic * atomic_to_kjmol
+        IF (indented) THEN
+           WRITE(logunit,'(3X,A,T35,F14.3)',ADVANCE='NO') TRIM(label), e_ext
+        ELSE
+           WRITE(logunit,'(X,A,T35,F14.3)',ADVANCE='NO') TRIM(label), e_ext
+        END IF
+        IF (n_mol_box > 0) THEN
+           WRITE(logunit,'(X,F18.3)',ADVANCE='NO') e_ext * inv_n
+        ELSE
+           WRITE(logunit,'(X,A18)',ADVANCE='NO') 'n/a'
+        END IF
+        IF (check) WRITE(logunit,'(X,E16.3)',ADVANCE='NO') e_rel
+        WRITE(logunit,*)
+     END SUBROUTINE Write_Energy_Row
 
   END SUBROUTINE Check_System_Energy
 

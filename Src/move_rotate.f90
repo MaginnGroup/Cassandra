@@ -47,7 +47,8 @@ SUBROUTINE Rotate
 !
 ! Revision History
 !
-!   12/10/13 : Beta Release 
+!   12/10/13 : Beta Release
+!   08/12/26 (EJM) : Mid-run Step/Success/MaxWidth log lines only if verbose_log
 !********************************************************************************
 
   USE Type_Definitions
@@ -331,9 +332,9 @@ SUBROUTINE Rotate
      ELSE
         success_ratio = REAL(nsuccess(is,ibox)%rotation,DP)/REAL(ntrials(is,ibox)%rotation,DP)
      END IF
- 
-     WRITE(logunit,'(X,I19,X,A10,X,5X,X,I3,X,I3,X,F8.5)',ADVANCE='NO') &
-           i_mcstep, 'rotate', is, ibox, success_ratio
+
+     ! Mid-run Step/Success/MaxWidth lines are omitted from the logfile (V2).
+     ! Equilibration still updates max_rot; widths are reported in progress snapshots.
 
      IF (int_run_type == run_equil) THEN   
     
@@ -347,12 +348,9 @@ SUBROUTINE Rotate
            max_rot(is,ibox) = MIN(PI,1.05_DP*max_rot(is,ibox))
 
         END IF
-        WRITE(logunit,'(X,F9.5)',ADVANCE='NO') max_rot(is,ibox)
         
      END IF
      
-     WRITE(logunit,*)
-
   END IF
 
 !***************************************************************************

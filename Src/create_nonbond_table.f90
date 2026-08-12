@@ -48,6 +48,8 @@
   ! 08/26/11 (JS) : Steele potential constants calculations
   !
   ! 03/27/14 Eliseo Rimoldi : custom (manually input) nonbond potentials added
+  !
+  ! 08/12/26 (EJM) : Logfile redesign — Nonbond tables section uses underlined heading
 
 !******************************************************************************
   USE Global_Variables
@@ -76,7 +78,7 @@
   IF (verbose_log) THEN
      WRITE(logunit,*)
      WRITE(logunit,'(A)') 'Nonbond tables'
-     WRITE(logunit,'(A80)') '********************************************************************************'
+     WRITE(logunit,'(A)') '--------------'
   END IF
 
   ALLOCATE(temp_atomtypes(1000), Stat=AllocateStatus)

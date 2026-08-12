@@ -1,10 +1,10 @@
-# Output file formats (`.xyz` and `.prp`)
+# Output file formats (`.xyz`, `.prp`, and `.log`)
 
-Brief notes for V2 modernization: how Cassandra writes trajectory and property
-files, and what future analysis tools should assume.
+Brief notes for V2 modernization: how Cassandra writes trajectory, property,
+and logfile outputs, and what future analysis tools should assume.
 
 **Related:** [docs index](README.md) · [smoke test](smoke-test.md) ·
-[MCF setup](mcf-setup-workflow.md)
+[MCF setup](mcf-setup-workflow.md) · [logfile format](logfile-format.md)
 
 ---
 
@@ -48,6 +48,14 @@ from the MCF (and temperature from the `.inp` / `.log`).
 
 Companion **`.H`** file (same `coord_freq`): volume, H-matrix, species counts —
 needed for box size and GCMC analysis.
+
+---
+
+## `.log` simulation logfile
+
+Human-readable archive of the run (input echo, MCF echo, energies, 10% progress
+snapshots, final acceptance and timings). Mid-run Step/Move/Success spam is
+omitted by default. Full details: [logfile-format.md](logfile-format.md).
 
 ---
 

@@ -30,6 +30,8 @@ MODULE Read_Write_Checkpoint
   !
   ! Revision History:
   ! 12/10/13  :: Beta version
+  ! 08/12/26 (EJM) : Init/Maybe/Write_Log_Progress; reformat acceptance, move-
+  !                  width, and subroutine-time logfile sections (logfile redesign)
   !**************************************************************************
   USE Global_Variables
   USE File_Names
@@ -39,6 +41,9 @@ MODULE Read_Write_Checkpoint
   USE Internal_Coordinate_Routines
 
   IMPLICIT NONE
+
+  ! Next 10% progress milestone index (1..9); 10 means disabled / finished
+  INTEGER :: next_log_progress_k = 1
 
 CONTAINS
 
@@ -530,8 +535,8 @@ SUBROUTINE Write_Trials_Success
 
   DO ibox = 1, nbr_boxes
 
-     WRITE(logunit,'(A27,X,I2)') 'Writing information for box', ibox
-     WRITE(logunit,'(A80)') '********************************************************************************'
+     WRITE(logunit,'(A,I0)') '  box ', ibox
+     WRITE(logunit,'(A)') '  -----'
 
      IF (nvolumes(ibox) /= 0 ) THEN
         WRITE(logunit,'(A20,2X,A10,2X,A10,2X,A10)') 'Move', 'Trials', 'Success', '% Success'
@@ -543,7 +548,7 @@ SUBROUTINE Write_Trials_Success
 
         WRITE(logunit,*)
         WRITE(logunit,'(3X,A57)') '---------------------------------------------------------'
-        WRITE(logunit,'(3X,A31,X,I2)') 'Writing information for species', is
+        WRITE(logunit,'(3X,A8,X,I2)') 'Species', is
         WRITE(logunit,*)
         WRITE(logunit,'(A20,2X,A10,2X,A10,2X,A10)') 'Move', 'Trials', 'Success', '% Success'
 
@@ -630,8 +635,6 @@ SUBROUTINE Write_Trials_Success
         WRITE(logunit,*)
       END DO
 
-      WRITE(logunit,'(A80)') '********************************************************************************'
-
    END DO
 
 11 FORMAT(A20,2x,I10,2x,I10,2x,f10.2)
@@ -641,8 +644,8 @@ SUBROUTINE Write_Trials_Success
      IF (SUM(regrowth_trials(:,:)) .GT. 0) THEN
 
         WRITE(logunit,*)
-        WRITE(logunit,'(A)') 'Writing information about fragments'
-        WRITE(logunit,'(A80)') '********************************************************************************'
+        WRITE(logunit,'(A)') ' Fragment regrowth'
+        WRITE(logunit,'(A)') ' -----------------'
 
         DO is = 1, nspecies
 
@@ -650,7 +653,7 @@ SUBROUTINE Write_Trials_Success
 
               WRITE(logunit,*)
               WRITE(logunit,'(3X,A57)') '---------------------------------------------------------'
-              WRITE(logunit,'(3X,A31,X,I2)') 'Writing information for species', is
+              WRITE(logunit,'(3X,A8,X,I2)') 'Species', is
               WRITE(logunit,'(A20,2x,A10,2x,A10,2X,A10)') '#_Frags_Regrown', 'Trials', 'Success', '% Success'
 
               DO ifrag = 1, nfragments(is)
@@ -665,20 +668,145 @@ SUBROUTINE Write_Trials_Success
            END IF
 
         END DO
-        WRITE(logunit,'(A80)') '********************************************************************************'
 
      END IF
   END IF
 
 END SUBROUTINE Write_Trials_Success
 
+!*******************************************************************************
+! Log progress snapshots (Cassandra V2 logfile redesign)
+!*******************************************************************************
+
+SUBROUTINE Init_Log_Progress
+  ! Reset 10% progress milestones for the current driver run.
+  ! Progress is measured over the remaining span (n_mcsteps - initial_mcstep).
+  IMPLICIT NONE
+  INTEGER :: span, k, thresh
+
+  next_log_progress_k = 1
+  IF (timed_run) THEN
+     next_log_progress_k = 10
+     RETURN
+  END IF
+  span = n_mcsteps - initial_mcstep
+  IF (span < 10) THEN
+     next_log_progress_k = 10
+     RETURN
+  END IF
+  ! If restarting past some milestones of this span, skip those already reached
+  DO k = 1, 9
+     thresh = initial_mcstep + (k * span) / 10
+     IF (initial_mcstep >= thresh) THEN
+        next_log_progress_k = k + 1
+     ELSE
+        EXIT
+     END IF
+  END DO
+END SUBROUTINE Init_Log_Progress
+
+SUBROUTINE Maybe_Write_Log_Progress
+  ! Call once per MC step from the drivers. Writes when i_mcstep first reaches
+  ! each 10%, 20%, ..., 90% threshold of the planned step span.
+  IMPLICIT NONE
+  INTEGER :: span, thresh, pct
+
+  IF (next_log_progress_k > 9) RETURN
+  IF (timed_run) RETURN
+
+  span = n_mcsteps - initial_mcstep
+  IF (span < 10) RETURN
+
+  DO WHILE (next_log_progress_k <= 9)
+     thresh = initial_mcstep + (next_log_progress_k * span) / 10
+     IF (i_mcstep < thresh) EXIT
+     pct = next_log_progress_k * 10
+     CALL Write_Log_Progress(pct)
+     next_log_progress_k = next_log_progress_k + 1
+  END DO
+END SUBROUTINE Maybe_Write_Log_Progress
+
+SUBROUTINE Write_Log_Progress(pct)
+  ! Mid-run logfile snapshot: totals energy, N/V/density, acceptance, widths, times.
+  IMPLICIT NONE
+  INTEGER, INTENT(IN) :: pct
+  INTEGER :: ibox, is, n_mol_box
+  REAL(DP) :: e_ext, e_int, mass_density, inv_n
+
+  WRITE(logunit,*)
+  WRITE(logunit,'(A80)') '********************************************************************************'
+  WRITE(logunit,'(A,I3,A,I12,A,I12)') ' Progress ', pct, '%   step ', i_mcstep, ' / ', n_mcsteps
+  WRITE(logunit,'(A80)') '********************************************************************************'
+
+  DO ibox = 1, nbr_boxes
+     n_mol_box = 0
+     DO is = 1, nspecies
+        n_mol_box = n_mol_box + nmols(is, ibox)
+     END DO
+
+     mass_density = 0.0_DP
+     IF (box_list(ibox)%volume > tiny_number) THEN
+        DO is = 1, nspecies
+           mass_density = mass_density + REAL(nmols(is,ibox),DP) * species_list(is)%molecular_weight
+        END DO
+        mass_density = mass_density / box_list(ibox)%volume * atomic_to_kgm3
+     END IF
+
+     WRITE(logunit,*)
+     WRITE(logunit,'(A,I2,A,I8,A,ES14.6,A,A,F12.3,A)') &
+          ' Box ', ibox, ': N = ', n_mol_box, &
+          '   V = ', box_list(ibox)%volume, ' Ang^3', &
+          '   density = ', mass_density, ' kg/m^3'
+     WRITE(logunit,'(A)',ADVANCE='NO') '   N by species:'
+     DO is = 1, nspecies
+        WRITE(logunit,'(X,I0,A,I0)',ADVANCE='NO') is, '=', nmols(is,ibox)
+     END DO
+     WRITE(logunit,*)
+
+     e_ext = energy(ibox)%total * atomic_to_kjmol
+     IF (n_mol_box > 0) THEN
+        inv_n = 1.0_DP / REAL(n_mol_box, DP)
+        e_int = e_ext * inv_n
+        WRITE(logunit,'(A,F16.3,A,F16.3,A)') &
+             ' Total system energy: ', e_ext, ' kJ/mol   (intensive ', e_int, &
+             ' kJ/mol/molecule)'
+     ELSE
+        WRITE(logunit,'(A,F16.3,A)') &
+             ' Total system energy: ', e_ext, ' kJ/mol   (intensive n/a)'
+     END IF
+  END DO
+
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') ' Move acceptance (cumulative to this point)'
+  CALL Write_Trials_Success
+
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') ' Current move widths'
+  WRITE(logunit,'(A)') ' -------------------'
+  DO ibox = 1, nbr_boxes
+     IF (ALLOCATED(max_disp)) THEN
+        DO is = 1, nspecies
+           WRITE(logunit,'(A,I0,A,I0,A,F12.6,A)') &
+                '  max_disp species ', is, ' box ', ibox, ': ', max_disp(is,ibox), ' Ang'
+           WRITE(logunit,'(A,I0,A,I0,A,F12.6,A)') &
+                '  max_rot  species ', is, ' box ', ibox, ': ', max_rot(is,ibox), ' rad'
+        END DO
+     END IF
+     WRITE(logunit,'(A,I0,A,ES14.6,A)') &
+          '  dv_max box ', ibox, ': ', box_list(ibox)%dv_max, ' Ang^3'
+  END DO
+
+  CALL Write_Subroutine_Times
+
+END SUBROUTINE Write_Log_Progress
+
 SUBROUTINE Write_Subroutine_Times
 
   IMPLICIT NONE
 
 WRITE(logunit,*)
-WRITE(logunit,*) 'Writing information about subroutine times'
-WRITE(logunit,'(A80)') '********************************************************************************'
+WRITE(logunit,'(A)') ' Subroutine times'
+WRITE(logunit,'(A)') ' ----------------'
 
 
 IF(movetime(imove_trans) .GT. 0.0_DP ) THEN
@@ -838,10 +966,6 @@ IF(movetime(imove_widom) .GT. 0.0_DP ) THEN
    END IF
 
 END IF
-
-
-
-WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Write_Subroutine_Times
 

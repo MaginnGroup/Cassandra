@@ -71,6 +71,8 @@ PROGRAM Main
   !
   !  08/07/13 : Created beta version
   !  08/07/26 (EJM) : interactive setup message; call Write_Stdout_Run_Banner
+  !  08/12/26 (EJM) : Logfile redesign — Run info / initial / charge / energy /
+  !                   run / complete sections use underlined headings
   !
 !*******************************************************************************
 
@@ -158,45 +160,46 @@ PROGRAM Main
   WRITE(logunit,'(A80)')'            \____/\__,_/____/____/\__,_/_/ /_/\__,_/_/   \__,_/                '
   WRITE(logunit,'(A80)')'                                                                               '
   WRITE(logunit,'(A80)')'********************************************************************************'
-  WRITE(logunit,'(A80)')'**********************************Log File**************************************'
+  WRITE(logunit,'(A)') ' Cassandra V2  --  simulation logfile'
   WRITE(logunit,'(A80)')'********************************************************************************'
 ! Create a checkpoint file to periodically write system information
 
   WRITE(logunit,*)
-  WRITE(logunit,'(A73)')'For any published work that uses Cassandra, cite the following reference:'
-  WRITE(logunit,'(4X,A56)')'Shah JK, Marin‐Rimoldi E, Mullen RG, Keene BP, Khan S,'
-  WRITE(logunit,'(4X,A59)')'Paluch AS, Rai N, Romanielo LL, Rosch TW, Yoo B, Maginn EJ.'
-  WRITE(logunit,'(4X,A71)')'Cassandra: An open source Monte Carlo package for molecular simulation.'
-  WRITE(logunit,'(4X,A58)')'Journal of Computational Chemistry. 2017, 38, 1727–1739.'
-  WRITE(logunit,'(4X,A35)')'http://dx.doi.org/10.1002/jcc.24807'
+  WRITE(logunit,'(A)') 'For any published work that uses Cassandra, cite the following reference:'
+  WRITE(logunit,'(4X,A)') 'Shah JK, Marin-Rimoldi E, Mullen RG, Keene BP, Khan S,'
+  WRITE(logunit,'(4X,A)') 'Paluch AS, Rai N, Romanielo LL, Rosch TW, Yoo B, Maginn EJ.'
+  WRITE(logunit,'(4X,A)') 'Cassandra: An open source Monte Carlo package for molecular simulation.'
+  WRITE(logunit,'(4X,A)') 'Journal of Computational Chemistry. 2017, 38, 1727-1739.'
+  WRITE(logunit,'(4X,A)') 'http://dx.doi.org/10.1002/jcc.24807'
 
-  WRITE(logunit,*)
-  WRITE(logunit,'(A)') 'Run info'
-  WRITE(logunit,'(A80)') '********************************************************************************'
-  WRITE(logunit,'(a,a)') 'version: ', TRIM(version)
-  WRITE(logunit,'(a,a)') 'inputfile: ', TRIM(inputfile)
-  WRITE(logunit,'(a,a)') 'name of run: ',TRIM(run_name)
-
-  CALL DATE_AND_TIME(date,time)
-
-  WRITE(logunit,'(a18,x,a2,a1,a2,a3,a2)') 'date (mm/dd/yyyy):', date(5:6), '/', date(7:8), '/20', date(3:4)
-  WRITE(logunit,'(a5,1x,a2,a1,a2,a1,a2)') 'time:',time(1:2),':',time(3:4),':',time(5:6)
-
-! Get name of computer running code using intrinsic function.
-
-  CALL HOSTNM(name)
-  WRITE(logunit,'(a,a)') 'machine: ', TRIM(name)
-  WRITE(logunit,'(A80)') '********************************************************************************'
-
-  ! Standard level of output to logfile, or verbose output
+  ! Verbosity and sim type are read first so they can appear in one Run info block
   CALL Get_Verbosity_Info
 
   need_solvents = .FALSE.
   precalc_atompair_nrg = .FALSE.
 
-! Determine the simulation type, and then read in all the necessary information
-! from the input file for starting up that type of simulation
   CALL Get_Sim_Type
+
+  CALL DATE_AND_TIME(date,time)
+  CALL HOSTNM(name)
+
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'Run info'
+  WRITE(logunit,'(A)') '--------'
+  WRITE(logunit,'(A,A)') ' version:      ', TRIM(version)
+  WRITE(logunit,'(A,A)') ' inputfile:    ', TRIM(inputfile)
+  WRITE(logunit,'(A,A)') ' name of run:  ', TRIM(run_name)
+  WRITE(logunit,'(A,A2,A,A2,A,A2,A2)') ' date:         ', &
+       date(5:6), '/', date(7:8), '/20', date(3:4)
+  WRITE(logunit,'(A,A2,A,A2,A,A2)') ' time:         ', &
+       time(1:2), ':', time(3:4), ':', time(5:6)
+  WRITE(logunit,'(A,A)') ' machine:      ', TRIM(name)
+  IF (verbose_log) THEN
+     WRITE(logunit,'(A)') ' verbosity:    verbose'
+  ELSE
+     WRITE(logunit,'(A)') ' verbosity:    normal'
+  END IF
+  WRITE(logunit,'(A,A)') ' simulation:   ', TRIM(sim_type)
 
   calc_rmin_flag = .FALSE.
 
@@ -257,7 +260,7 @@ PROGRAM Main
 
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Initial configuration'
-  WRITE(logunit,'(A80)') '********************************************************************************'
+  WRITE(logunit,'(A)') '---------------------'
 
   DO ibox = 1, nbr_boxes
   IF (start_type(ibox) == 'none') THEN
@@ -289,8 +292,6 @@ PROGRAM Main
 
     ENDIF
   END DO
-  WRITE(logunit,'(A80)') '********************************************************************************'
-
   ! Add LOCATE for any unplaced molecules in array under BOX==0,
   ! in reverse order
   DO is = 1, nspecies
@@ -308,11 +309,11 @@ PROGRAM Main
   IF (check_charge) THEN
      WRITE(logunit,*)
      WRITE(logunit,'(A)') 'Charge neutrality check'
-     WRITE(logunit,'(A80)') '********************************************************************************'
+     WRITE(logunit,'(A)') '-----------------------'
 
      DO is = 1, nspecies
-        WRITE(logunit,'(X,A,T35,4x,f12.8)')'Species ' // TRIM(Int_To_String(is)) // ' has charge:', &
-           species_list(is)%total_charge
+        WRITE(logunit,'(A,A,A,F12.8)') '  species ', TRIM(Int_To_String(is)), &
+           ' charge:   ', species_list(is)%total_charge
      END DO
      WRITE(logunit,*)
 
@@ -321,7 +322,8 @@ PROGRAM Main
         DO is = 1, nspecies
            q_box = q_box + REAL(nmols(is,ibox),DP) * species_list(is)%total_charge
         END DO
-        WRITE(logunit,'(X,A,T35,4X,f12.8)')'Box     ' // TRIM(Int_To_String(ibox)) // ' has charge:', q_box
+        WRITE(logunit,'(A,A,A,F12.8)') '  box ', TRIM(Int_To_String(ibox)), &
+             ' charge:       ', q_box
 
         IF (ABS(q_box) > tiny_number .AND. &
            (int_charge_sum_style(ibox) == charge_ewald .OR. int_charge_sum_style(ibox) == charge_dsf)) THEN
@@ -332,7 +334,6 @@ PROGRAM Main
         END IF
      END DO
 
-     WRITE(logunit,'(A80)') '********************************************************************************'
   END IF
 
   ! Ewald stuff
@@ -397,11 +398,10 @@ PROGRAM Main
 
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Compute total energy'
-  WRITE(logunit,'(A80)') '********************************************************************************'
+  WRITE(logunit,'(A)') '--------------------'
   DO ibox = 1,nbr_boxes
      CALL Check_System_Energy(ibox,.FALSE.)
   END DO
-  WRITE(logunit,'(A80)') '********************************************************************************'
 
   ! Interactive run summary (after setup, before properties / MC moves)
   IF (n_mcsteps > initial_mcstep) THEN
@@ -441,8 +441,9 @@ PROGRAM Main
 
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Run simulation'
-  WRITE(logunit,'(A80)') '********************************************************************************'
-  WRITE(logunit,'(X,A19,X,A10,X,A5,X,A3,X,A3,X,A8,X,A9)') 'Step', 'Move', 'Mol', 'Spc', 'Box', 'Success', 'MaxWidth'
+  WRITE(logunit,'(A)') '--------------'
+  WRITE(logunit,'(A)') '  Progress snapshots every 10% (energy, acceptance, move widths, timings)'
+  WRITE(logunit,'(A)') '  Per-move Step/Success lines omitted; set # Verbose_Logfile TRUE for debug detail'
 
   IF (int_sim_type == sim_nvt .OR. int_sim_type == sim_nvt_min) THEN
 
@@ -473,8 +474,6 @@ PROGRAM Main
   ELSE IF (int_sim_type == sim_pregen) THEN
      CALL Pregen_Driver
   END IF
-  WRITE(logunit,'(A80)') '********************************************************************************'
-
   ! write error of the mean
   IF (block_avg) THEN
      DO ibox = 1, nbr_boxes
@@ -484,11 +483,10 @@ PROGRAM Main
 
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Energy of final configuration'
-  WRITE(logunit,'(A80)') '********************************************************************************'
+  WRITE(logunit,'(A)') '-----------------------------'
   DO ibox = 1, nbr_boxes
      CALL Check_System_Energy(ibox)
   END DO
-  WRITE(logunit,'(A80)') '********************************************************************************'
 
   ! Write success ratios of each move type
   CALL Write_Trials_Success
@@ -508,18 +506,18 @@ PROGRAM Main
     END IF
     WRITE(logunit,*)
     WRITE(logunit,'(A)') 'Shifted chemical potentials from Widom insertions'
-    WRITE(logunit,'(A80)') '********************************************************************************'
+    WRITE(logunit,'(A)') '------------------------------------------------'
     DO is = 1,nspecies
       DO ibox = 1, nbr_boxes
         IF(ntrials(is,ibox)%widom > 0) THEN
-          WRITE(logunit,'(A,X,A,X,A,X,A,X,A,F21.12,X,A)') 'Shifted chemical potential for species', &
-            TRIM(Int_To_String(is)),'in box',TRIM(Int_To_String(ibox)),'is', &
+          WRITE(logunit,'(A,A,A,A,A,F21.12,A)') '  species ', &
+            TRIM(Int_To_String(is)),' box ',TRIM(Int_To_String(ibox)),' mu_shifted: ', &
             -kboltz*temperature(ibox)*atomic_to_kJmol*DLOG(species_list(is)%widom_sum(ibox) / ntrials(is,ibox)%widom), &
-            'kJ/mol'
-          WRITE(logunit,'(8X,A)') TRIM(Int_To_String(overlap_counter(is,ibox))) // ' Widom insertions with overlap out of ' &
-            // TRIM(Int_To_String(ntrials(is,ibox)%widom))
-          WRITE(logunit,'(8x,A,F27.3,A)') "CPU time: ", widom_cpu_time(is,ibox), " seconds"
-          WRITE(logunit,'(8x,A,F21.3,A)') "Wallclock time: ", widom_wc_time(is,ibox), " seconds"
+            ' kJ/mol'
+          WRITE(logunit,'(A)') '    overlaps: ' // TRIM(Int_To_String(overlap_counter(is,ibox))) // &
+            ' / ' // TRIM(Int_To_String(ntrials(is,ibox)%widom))
+          WRITE(logunit,'(A,F27.3,A)') '    CPU time:         ', widom_cpu_time(is,ibox), ' seconds'
+          WRITE(logunit,'(A,F21.3,A)') '    wallclock time:   ', widom_wc_time(is,ibox), ' seconds'
           IF (est_emax) THEN
                   CALL Estimate_Pair_Emax(is,ibox,Emax,nskips)
                   WRITE(logunit,'(8x,A,F12.6,A)') "Recommended pair U*_max = ", Emax, &
@@ -541,7 +539,6 @@ PROGRAM Main
         END IF
       END DO
     END DO
-    WRITE(logunit,'(A80)') '********************************************************************************'
   END IF
 
 
@@ -560,8 +557,8 @@ PROGRAM Main
   WRITE(*,*) 'Cassandra simulation complete'
 
   WRITE(logunit,*)
-  WRITE(logunit,*) 'Program execution time'
-  WRITE(logunit,'(A80)') '********************************************************************************'
+  WRITE(logunit,'(A)') 'Program execution time'
+  WRITE(logunit,'(A)') '----------------------'
 
   nyears = INT(tot_time/3600.0_DP/24.0_DP/365.0_DP)
   month_time = tot_time - REAL(nyears,DP) * 3600.0_DP * 24.0_DP * 365.0_DP
@@ -577,13 +574,12 @@ PROGRAM Main
   ms_time = sec_time - REAL(nsec,DP)
   nms = INT(ms_time*1000_DP)
 
-  WRITE(logunit,'(I10,1x,a10)') nyears, 'Years'
-  WRITE(logunit,'(I10,1x,a10)') nmonths, 'Months'
-  WRITE(logunit,'(I10,1x,a10)') ndays,'Days'
-  WRITE(logunit,'(I10,1x,a10)') nhours,'Hours'
-  WRITE(logunit,'(I10,1x,a10)') nmin,'Minutes'
-  WRITE(logunit,'(I10,1X,a10)') nsec,'Seconds'
-  WRITE(logunit,'(I10,1x,a10)') nms,'ms'
-  WRITE(logunit,'(A80)') '********************************************************************************'
+  WRITE(logunit,'(A,I0)') '  years:             ', nyears
+  WRITE(logunit,'(A,I0)') '  months:            ', nmonths
+  WRITE(logunit,'(A,I0)') '  days:              ', ndays
+  WRITE(logunit,'(A,I0)') '  hours:             ', nhours
+  WRITE(logunit,'(A,I0)') '  minutes:           ', nmin
+  WRITE(logunit,'(A,I0)') '  seconds:           ', nsec
+  WRITE(logunit,'(A,I0)') '  ms:                ', nms
 
 END PROGRAM Main

@@ -31,6 +31,7 @@ SUBROUTINE GCMC_Driver
   ! Revision history
   !
   !   12/10/13 : Beta Release
+  !   08/12/26 (EJM) : Call Maybe_Write_Log_Progress for 10–90% logfile snapshots
 !*******************************************************************************
 
   USE Global_Variables
@@ -71,6 +72,7 @@ SUBROUTINE GCMC_Driver
   END IF
 
   i_mcstep = initial_mcstep
+  CALL Init_Log_Progress
 
   DO WHILE (.NOT. complete)
 
@@ -290,6 +292,8 @@ SUBROUTINE GCMC_Driver
      !*****************************************************************************
      ! check if compute properties this step
      !*****************************************************************************
+     CALL Maybe_Write_Log_Progress
+
      IF (echeck) THEN
         IF(MOD(i_mcstep,echeck_freq) == 0) THEN
            DO ibox = 1,nbr_boxes

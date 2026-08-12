@@ -48,6 +48,7 @@ SUBROUTINE Volume_Change
   ! Revision History
   !
   ! 12/10/13 : Beta release
+  ! 08/12/26 (EJM) : Mid-run Step/Success/MaxWidth log lines only if verbose_log
   !*****************************************************************************
   ! The subroutine is based on the following algorithm
   !
@@ -525,7 +526,8 @@ SUBROUTINE Volume_Change
         success_ratio = REAL(nvol_success(this_box),DP)/REAL(nvolumes(this_box),DP)
      END IF
 
-     WRITE(logunit,'(X,I19,X,A10,X,5X,X,3X,X,I3,X,F8.5)',ADVANCE='NO') i_mcstep, 'volume' , this_box, success_ratio
+     ! Mid-run Step/Success/MaxWidth lines are omitted from the logfile (V2).
+     ! Equilibration still updates dv_max; widths are reported in progress snapshots.
 
      IF (int_run_type == run_equil) THEN
         ! dv_max will be adjusted to achieve 0.5 acceptance using the formula
@@ -541,12 +543,9 @@ SUBROUTINE Volume_Change
         ELSE
            box_list(this_box)%dv_max = 2.0_DP * success_ratio * box_list(this_box)%dv_max
         END IF
-        WRITE(logunit,'(X,F9.0)',ADVANCE='NO') box_list(this_box)%dv_max
         
         ivol_success(this_box) = 0
      END IF
-
-     WRITE(logunit,*)
 
   END IF
 

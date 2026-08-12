@@ -58,8 +58,10 @@ SUBROUTINE Participation
   ! None
 
   ! Revision history:
-  
-  ! 12/10/13  : Beta version 
+  !
+  ! 12/10/13  : Beta version
+  ! 08/12/26 (EJM) : Verbose bond/angle/dihedral participation log sections
+  !                  use underlined headings (logfile redesign)
 !**********************************************************************
 
   USE Type_Definitions
@@ -214,7 +216,7 @@ SUBROUTINE Participation
   IF (verbose_log .AND. (prob_ring + prob_atom_displacement > 0)) THEN
     WRITE(logunit,*)
     WRITE(logunit,'(A)') 'Bond participation'
-    WRITE(logunit,'(A)') '********************************************************************************'
+    WRITE(logunit,'(A)') '-----------------'
     DO is = 1, nspecies
 
        DO iatom = 1, natoms(is)
@@ -241,7 +243,6 @@ SUBROUTINE Participation
        END IF
     END DO        
     
-    WRITE(logunit,'(A)') '********************************************************************************'
   END IF
 
   !***************************************************************************
@@ -325,7 +326,7 @@ SUBROUTINE Participation
         IF (verbose_log .AND. prob_angle > 0) THEN
           WRITE(logunit,*)
           WRITE(logunit,'(A)') 'Angle participation'
-          WRITE(logunit,'(A)') '********************************************************************************'
+          WRITE(logunit,'(A)') '------------------'
           WRITE(logunit,*)'Number of atom in question', iatom
           WRITE(logunit,*)'Total number of angles', angle_part_list(iatom,is)%nangles
           IF (angle_part_list(iatom,is)%nangles > 0) THEN
@@ -336,8 +337,7 @@ SUBROUTINE Participation
             WRITE(logunit,*)(angle_part_list(iatom,is)%position(i), i=1, &
                  angle_part_list(iatom,is)%nangles)
           END IF
-          WRITE(logunit,'(A)') '********************************************************************************'
-        END IF
+              END IF
      END DO
 
   END DO
@@ -367,7 +367,7 @@ SUBROUTINE Participation
   IF (verbose_log .AND. prob_torsion > 0) THEN
     WRITE(logunit,*)
     WRITE(logunit,'(A)') 'Dihedral participation'
-    WRITE(logunit,'(A)') '********************************************************************************'
+    WRITE(logunit,'(A)') '---------------------'
   END IF
 
   ! Allocate memeory for the participation list
@@ -461,7 +461,6 @@ SUBROUTINE Participation
   END DO
 
   IF (verbose_log .AND. prob_torsion > 0) THEN
-    WRITE(logunit,'(A)') '********************************************************************************'
   END IF
 
   IF (int_sim_type == sim_mcf) THEN

@@ -38,6 +38,8 @@ MODULE Input_Routines
   ! Revision history
   !
   !    12/10/13  : Beta version
+  !    08/12/26 (EJM) : Logfile redesign — underlined setup sections, MCF echo,
+  !                    aligned label/value lines (Temperature through Run type)
   !***************************************************************************
 
   USE Global_Variables
@@ -128,7 +130,7 @@ SUBROUTINE Get_Nspecies
 !******************************************************************************
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Number of species'
-  WRITE(logunit,'(A80)') '********************************************************************************'
+  WRITE(logunit,'(A)') '-----------------'
 
   REWIND(inputunit)
 
@@ -152,7 +154,7 @@ SUBROUTINE Get_Nspecies
 
 ! Assign the first entry on the line to the number of species.
         nspecies = String_To_Int(line_array(1))
-        WRITE(logunit,'(A)') TRIM(Int_To_String(nspecies))
+        WRITE(logunit,'(A,I0)') ' nspecies:      ', nspecies
 
         EXIT
 
@@ -266,8 +268,6 @@ SUBROUTINE Get_Nspecies
   species_list%l_wsolute = .FALSE.
   species_list%l_solvent = .FALSE.
 
-  WRITE(logunit,'(A80)') '********************************************************************************'
-
 END SUBROUTINE Get_Nspecies
 
 !******************************************************************************
@@ -283,10 +283,7 @@ SUBROUTINE Get_Sim_Type
   CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
 !******************************************************************************
-  WRITE(logunit,*)
-  WRITE(logunit,'(A)') 'Simulation type'
-  WRITE(logunit,'(A80)') '********************************************************************************'
-
+  ! Section headers are written once in main (Run info). Do not box this section.
   REWIND(inputunit)
 
   ierr = 0
@@ -351,8 +348,6 @@ SUBROUTINE Get_Sim_Type
            CALL Clean_Abort(err_msg,'Get_Sim_Type')
         END IF
 
-        WRITE(logunit,'(A)') sim_type
-
         EXIT
 
      ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
@@ -364,9 +359,6 @@ SUBROUTINE Get_Sim_Type
      ENDIF
 
   ENDDO
-
-
-  WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_Sim_Type
 
@@ -392,7 +384,7 @@ SUBROUTINE Get_Pair_Style
 !******************************************************************************
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Pair style'
-  WRITE(logunit,'(A80)') '********************************************************************************'
+  WRITE(logunit,'(A)') '----------'
 
 
   ierr = 0
@@ -438,9 +430,11 @@ SUBROUTINE Get_Pair_Style
            IF ( line_array(1) == 'LJ' .OR. line_array(1) == 'Lj' .OR. line_array(1) == 'lj' ) THEN
               vdw_style(ibox) = 'LJ'
               int_vdw_style(ibox) = vdw_lj
-              WRITE(logunit,'(A,2x,A,A,I3)') 'VDW style used is: ',vdw_style(ibox), 'in box:', ibox
               vdw_sum_style(ibox) = line_array(2)
-              WRITE(logunit,'(A,2x,A,A,I3)') ' VDW sum style is: ',vdw_sum_style(ibox), 'in box:', ibox
+              WRITE(logunit,*)
+              WRITE(logunit,'(A,I0)') ' Box ', ibox
+              WRITE(logunit,'(A,A)') '  VDW style:         ', TRIM(vdw_style(ibox))
+              WRITE(logunit,'(A,A)') '  VDW sum:           ', TRIM(vdw_sum_style(ibox))
 
               IF (vdw_sum_style(ibox) == 'CHARMM' .OR. vdw_sum_style(ibox) == 'charmm') THEN
                  int_vdw_sum_style(ibox) = vdw_charmm
@@ -455,8 +449,8 @@ SUBROUTINE Get_Pair_Style
                     CALL Clean_Abort(err_msg, 'Get_Pair_Style')
                  END IF
 
-                 WRITE(logunit,'(A,2X,F7.3,A)') ' r_on = ', ron_charmm(ibox),  ' Angstrom'
-                 WRITE(logunit,'(A,2X,F7.3,A)') ' r_off = ',roff_charmm(ibox), ' Angstrom'
+                 WRITE(logunit,'(A,F7.3,A)') '  r_on:              ', ron_charmm(ibox),  ' Angstrom'
+                 WRITE(logunit,'(A,F7.3,A)') '  r_off:             ', roff_charmm(ibox), ' Angstrom'
 
               ELSEIF (vdw_sum_style(ibox) == 'cut_switch') THEN
                  int_vdw_sum_style(ibox) = vdw_cut_switch
@@ -471,8 +465,8 @@ SUBROUTINE Get_Pair_Style
                     CALL Clean_Abort(err_msg, 'Get_Pair_Style')
                  END IF
 
-                 WRITE(logunit,'(A,2x,F7.3,A)') ' r_on =',  ron_switch(ibox),  ' Angstrom'
-                 WRITE(logunit,'(A,2x,F7.3,A)') ' r_off =', roff_switch(ibox), ' Angstrom'
+                 WRITE(logunit,'(A,F7.3,A)') '  r_on:              ', ron_switch(ibox),  ' Angstrom'
+                 WRITE(logunit,'(A,F7.3,A)') '  r_off:             ', roff_switch(ibox), ' Angstrom'
 
               ELSEIF (vdw_sum_style(ibox)(1:3) == 'cut') THEN
                  rcut_vdw(ibox) = String_To_Double(line_array(3))
@@ -484,7 +478,7 @@ SUBROUTINE Get_Pair_Style
                        rcut_vdw(ibox) = 0.5 * MIN(box_list(ibox)%face_distance(1), &
                                                   box_list(ibox)%face_distance(2), &
                                                   box_list(ibox)%face_distance(3))
-                       WRITE(logunit,*) 'Cutoffs are set to half of the box length'
+                       WRITE(logunit,'(A)') '  note: cutoffs set to half the box length'
                     END IF
                  END IF
 
@@ -516,14 +510,14 @@ SUBROUTINE Get_Pair_Style
                     CALL Clean_Abort(err_msg,'Get_Pair_Style')
                  END IF
 
-                 WRITE(logunit,'(A,2x,F7.3, A)') ' rcut = ',rcut_vdw(ibox), ' Angstrom'
+                 WRITE(logunit,'(A,F7.3,A)') '  rcut_vdw:          ', rcut_vdw(ibox), ' Angstrom'
 
               ELSEIF (vdw_sum_style(ibox) == 'minimum_image') THEN
                  int_vdw_sum_style(ibox) = vdw_minimum
                  rcut_vdw(ibox) = 0.5_DP * MIN(box_list(ibox)%face_distance(1), &
                                                box_list(ibox)%face_distance(2), &
                                                box_list(ibox)%face_distance(3))
-                 WRITE(logunit,'(A)') ' Minimum image convention used for VDW'
+                 WRITE(logunit,'(A)') '  VDW sum:           minimum_image'
 
               ELSE
                  err_msg = ''
@@ -537,9 +531,11 @@ SUBROUTINE Get_Pair_Style
            ELSEIF ( line_array(1) == 'MIE' .OR. line_array(1) == 'Mie' .OR. line_array(1) == 'mie' ) THEN
               vdw_style(ibox) = 'MIE'
               int_vdw_style(ibox) = vdw_mie
-              WRITE(logunit,'(A,2x,A,A,I3)') 'VDW style used is: ',vdw_style(ibox), 'in box:', ibox
               vdw_sum_style(ibox) = line_array(2)
-              WRITE(logunit,'(A,2x,A,A,I3)') ' VDW sum style is:',vdw_sum_style(ibox), 'in box:', ibox
+              WRITE(logunit,*)
+              WRITE(logunit,'(A,I0)') ' Box ', ibox
+              WRITE(logunit,'(A,A)') '  VDW style:         ', TRIM(vdw_style(ibox))
+              WRITE(logunit,'(A,A)') '  VDW sum:           ', TRIM(vdw_sum_style(ibox))
 
               IF (vdw_sum_style(ibox)(1:3) == 'cut') THEN
                  rcut_vdw(ibox) = String_To_Double(line_array(3))
@@ -551,7 +547,7 @@ SUBROUTINE Get_Pair_Style
                        rcut_vdw(ibox) = 0.5 * MIN(box_list(ibox)%face_distance(1), &
                                                   box_list(ibox)%face_distance(2), &
                                                   box_list(ibox)%face_distance(3))
-                       WRITE(logunit,*) 'Cutoffs are set to half of the box length'
+                       WRITE(logunit,'(A)') '  note: cutoffs set to half the box length'
                     END IF
                  END IF
 
@@ -580,14 +576,14 @@ SUBROUTINE Get_Pair_Style
                     CALL Clean_Abort(err_msg,'Get_Pair_Style')
                  END IF
 
-                 WRITE(logunit,'(A,2x,F7.3, A)') ' rcut = ',rcut_vdw(ibox), ' Angstrom'
+                 WRITE(logunit,'(A,F7.3,A)') '  rcut_vdw:          ', rcut_vdw(ibox), ' Angstrom'
 
               ELSEIF (vdw_sum_style(ibox) == 'minimum_image') THEN
                  int_vdw_sum_style(ibox) = vdw_minimum
                  rcut_vdw(ibox) = 0.5_DP * MIN(box_list(ibox)%face_distance(1), &
                                                box_list(ibox)%face_distance(2), &
                                                box_list(ibox)%face_distance(3))
-                 WRITE(logunit,'(A)') ' Minimum image convention used for VDW'
+                 WRITE(logunit,'(A)') '  VDW sum:           minimum_image'
 
               ELSE
                  err_msg = ''
@@ -653,11 +649,10 @@ SUBROUTINE Get_Pair_Style
            IF (line_array(1) == 'coul' .OR. line_array(1) == 'Coul') THEN
               charge_style(ibox) = 'coul'
               int_charge_style(ibox) = charge_coul
-              WRITE(logunit,'(A)') 'Charge style in box ' // TRIM(Int_To_String(ibox)) // ' is ' // &
-                 TRIM(charge_style(ibox))
+              WRITE(logunit,'(A,A)') '  charge style:      ', TRIM(charge_style(ibox))
 
               charge_sum_style(ibox) = line_array(2)
-              WRITE(logunit,'(A,2x,A,A,I3)') ' Charge sum style is ',charge_sum_style(ibox), 'in box:', ibox
+              WRITE(logunit,'(A,A)') '  charge sum:        ', TRIM(charge_sum_style(ibox))
 
               IF (charge_sum_style(ibox) == 'cut') THEN
                  int_charge_sum_style(ibox) = charge_cut
@@ -669,7 +664,7 @@ SUBROUTINE Get_Pair_Style
                     rcut_coul(ibox) = String_To_Double(line_array(3))
                  END IF
 
-                 WRITE(logunit,'(A,2x,F7.3, A)') ' rcut = ',rcut_coul(ibox), '   Angstrom'
+                 WRITE(logunit,'(A,F7.3,A)') '  rcut_coul:         ', rcut_coul(ibox), ' Angstrom'
 
               ELSEIF (charge_sum_style(ibox) == 'Ewald' .OR. &
                       charge_sum_style(ibox) == 'ewald') THEN
@@ -717,12 +712,12 @@ SUBROUTINE Get_Pair_Style
 
 
 
-                 WRITE(logunit,'(X,A,F7.3,A)') 'Ewald real space cutoff is ', &
-                    rcut_coul(ibox), ' Angstroms.'
-                 WRITE(logunit, '(X,A,F7.3,A)') 'Ewald real space parameter is ', &
-                      alpha_ewald(ibox), ' inverse Angstroms'
-                 WRITE(logunit,'(X,A,F7.4,A)') 'Ewald reciprocal cutoff is ', &
-                      h_ewald_cut(ibox), ' inverse Angstroms'
+                 WRITE(logunit,'(A,F7.3,A)') '  Ewald rcut:        ', &
+                    rcut_coul(ibox), ' Angstrom'
+                 WRITE(logunit,'(A,F7.3,A)') '  Ewald alpha:       ', &
+                      alpha_ewald(ibox), ' 1/Angstrom'
+                 WRITE(logunit,'(A,F7.4,A)') '  Ewald kcut:        ', &
+                      h_ewald_cut(ibox), ' 1/Angstrom'
 
 
 
@@ -738,16 +733,17 @@ SUBROUTINE Get_Pair_Style
 
                  IF (nbr_entries == 4) THEN
                          alpha_dsf(ibox) = String_To_Double(line_array(4))
-                         WRITE(logunit,*) 'Damping alpha was specified to ',alpha_dsf(ibox)
+                         WRITE(logunit,'(A,F10.6)') '  DSF alpha:         ', alpha_dsf(ibox)
                  ELSE
                          alpha_dsf(ibox) = 0.425_DP - rcut_coul(ibox)*0.02_DP
                          IF (alpha_dsf(ibox) < 0.0) THEN
                              alpha_dsf(ibox) = 3.3930702_DP/rcut_coul(ibox)
                          END IF
 
-                         WRITE(logunit,*) 'No damping alpha was specified. &
-                                           Assume depends linearly with rcut. &
-                                           Alpha set to ',alpha_dsf(ibox)
+                         WRITE(logunit,'(A,F10.6)') &
+                              '  DSF alpha:         ', alpha_dsf(ibox)
+                         WRITE(logunit,'(A)') &
+                              '  note: alpha defaulted from rcut (linear estimate)'
 
                  END IF
 
@@ -766,7 +762,7 @@ SUBROUTINE Get_Pair_Style
                     err_msg(1) = 'Minimum image requires both vdw and q-q to be so-specified'
                     CALL Clean_Abort(err_msg,'Get_Pair_Style')
                  ELSE
-                    WRITE(logunit,'(A)') ' Minimum image convention used for charge'
+                    WRITE(logunit,'(A)') '  charge sum:        minimum_image'
                  ENDIF
               ELSE
                  err_msg = ''
@@ -791,8 +787,7 @@ SUBROUTINE Get_Pair_Style
               charge_style(ibox) = 'NONE'
               int_charge_style(ibox) = charge_none
               int_charge_sum_style(ibox) = charge_none
-              WRITE(logunit,'(A)') 'Charge style in box ' // TRIM(Int_To_String(ibox)) // ' is ' // &
-                 TRIM(charge_style(ibox))
+              WRITE(logunit,'(A,A)') '  charge style:      ', TRIM(charge_style(ibox))
 
            ELSE
 
@@ -812,13 +807,12 @@ SUBROUTINE Get_Pair_Style
 
      ELSE IF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
 
-        WRITE(logunit,'(A)') 'Section "# Charge_Style" is missing from the input file'
+        WRITE(logunit,'(A)') '  note: # Charge_Style missing; defaulting charge style to none'
         DO ibox = 1, nbr_boxes
           charge_style(ibox) = 'NONE'
           int_charge_style(ibox) = charge_none
           int_charge_sum_style(ibox) = charge_none
-          WRITE(logunit,'(X,A)') 'By default, charge style for box ' // TRIM(Int_To_String(ibox)) // ' is ' // &
-             TRIM(charge_style(ibox))
+          WRITE(logunit,'(A,I0,A,A)') '  box ', ibox, ' charge style: ', TRIM(charge_style(ibox))
         END DO
 
         EXIT
@@ -846,13 +840,14 @@ SUBROUTINE Get_Pair_Style
 
         IF (line_array(1) == 'TRUE' .OR. line_array(1) == 'true') THEN
            IF (int_sim_type == sim_pregen) THEN
-                   WRITE(logunit,'(A)') 'Pair interaction energy array storage is not supported for pregenerated trajectories'
+                   WRITE(logunit,'(A)') &
+                        '  pair energy arrays: not supported for pregenerated trajectories'
            ELSE
                    l_pair_nrg = .TRUE.
-                   WRITE(logunit,'(A)') 'Pair interaction energy array storage enabled'
+                   WRITE(logunit,'(A)') '  pair energy arrays: stored'
            END IF
         ELSE IF (line_array(1) == 'FALSE' .OR. line_array(1) == 'false') THEN
-           WRITE(logunit,'(A)') 'Pair interaction energy arrays will not be stored'
+           WRITE(logunit,'(A)') '  pair energy arrays: not stored'
         ELSE
            err_msg = ''
            err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
@@ -865,8 +860,8 @@ SUBROUTINE Get_Pair_Style
 
      ELSE IF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
 
-        WRITE(logunit,'(A)') 'Section "# Pair_Energy" is missing from the input file'
-        WRITE(logunit,'(X,A)') 'By default, pair interaction energy arrays will not be stored'
+        WRITE(logunit,'(A)') &
+             '  pair energy arrays: not stored (default; # Pair_Energy missing)'
 
         EXIT
 
@@ -874,10 +869,7 @@ SUBROUTINE Get_Pair_Style
 
   END DO
 
-  !Now determine the mixing rule to use
-   CALL Get_Mixing_Rules
-
-  WRITE(logunit,'(A80)') '********************************************************************************'
+  CALL Get_Mixing_Rules
 
 CONTAINS
 
@@ -939,11 +931,11 @@ SUBROUTINE Get_Mixing_Rules
 
         IF (mix_rule == 'lb' .OR. mix_rule == 'LB') THEN
            mix_rule = 'LB'
-           WRITE(logunit,'(A)') 'Lorentz-Berthelot mixing rule specified'
+           WRITE(logunit,'(A)') '  mixing rule:        Lorentz-Berthelot'
         ELSEIF (mix_rule == 'geometric') THEN
-           WRITE(logunit,'(A)') 'Geometric mixing rule specified'
+           WRITE(logunit,'(A)') '  mixing rule:        geometric'
         ELSEIF (mix_rule == 'custom') THEN
-           WRITE(logunit,'(A)') 'Custom mixing rule specified'
+           WRITE(logunit,'(A)') '  mixing rule:        custom'
         ELSE
            err_msg = ''
            err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
@@ -956,8 +948,7 @@ SUBROUTINE Get_Mixing_Rules
 
      ELSEIF (line_string(1:3) == 'END' .or. line_nbr > 10000) THEN
 
-        WRITE(logunit,'(A)') 'Section "# Mixing_Rule" is missing from the input file'
-        WRITE(logunit,'(X,A)') 'By default, using Lorentz-Berthelot'
+        WRITE(logunit,'(A)') '  mixing rule:        Lorentz-Berthelot (default; # Mixing_Rule missing)'
         mix_rule = 'LB'
 
         EXIT
@@ -991,7 +982,7 @@ SUBROUTINE Get_Molecule_Info
 !******************************************************************************
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Molecule info'
-  WRITE(logunit,'(A80)') '********************************************************************************'
+  WRITE(logunit,'(A)') '-------------'
 
 ! determine the type of molecule input and connectivity
 
@@ -1060,9 +1051,9 @@ SUBROUTINE Get_Molecule_Info
            END IF
            max_molecules(i) = String_To_Int(line_array(2))
 
-           WRITE(logunit,*) 'Reading molecular connectivity information'
-           WRITE(logunit,*) 'Species: ',i
-           WRITE(logunit,*) 'Molecular connectivity file: ',molfile_name(i)
+           WRITE(logunit,*)
+           WRITE(logunit,'(A,I0)') ' Species ', i
+           WRITE(logunit,'(A,A)') '  MCF file:          ', TRIM(molfile_name(i))
 
            ! Open the file and determine how many atoms, bonds, angles, dihedrals and impropers
            ! this molecule has
@@ -1391,7 +1382,8 @@ SUBROUTINE Get_Molecule_Info
      END IF
   END DO
 
-  WRITE(logunit,'(A80)') '********************************************************************************'
+  CALL Copy_MCF_Files
+
 
 END SUBROUTINE Get_Molecule_Info
 
@@ -2543,7 +2535,7 @@ SUBROUTINE Get_Fragment_Anchor_Info(is)
 !******************************************************************************
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Fragment anchors'
-  WRITE(logunit,'(A80)') '********************************************************************************'
+  WRITE(logunit,'(A)') '----------------'
 
   line_nbr = 0
   ierr = 0
@@ -2619,7 +2611,6 @@ SUBROUTINE Get_Fragment_Anchor_Info(is)
   IF (.NOT. verbose_log) THEN
     WRITE(logunit, '(A,I2)') 'Parameters properly read for species ', is
   END IF
-  WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_Fragment_Anchor_Info
 
@@ -3703,7 +3694,7 @@ SUBROUTINE Get_Box_Info
 !******************************************************************************
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Box info'
-  WRITE(logunit,'(A80)') '********************************************************************************'
+  WRITE(logunit,'(A)') '--------'
 
   REWIND(inputunit)
 
@@ -3757,7 +3748,7 @@ SUBROUTINE Get_Box_Info
            END IF
         END IF
 
-        WRITE(logunit,'(A,T30,I3)') 'Number of simulation boxes ',nbr_boxes
+        WRITE(logunit,'(A,I0)') ' number of boxes: ', nbr_boxes
 
         ! Allocate arrays associated with the box variables
         ALLOCATE(box_list(nbr_boxes), STAT=AllocateStatus)
@@ -3792,9 +3783,10 @@ SUBROUTINE Get_Box_Info
               box_list(ibox)%length(2,2) = String_To_Double(line_array(1))
               box_list(ibox)%length(3,3) = String_To_Double(line_array(1))
 
-              WRITE (logunit,'(A)') 'Box ' // TRIM(Int_To_String(ibox)) // ' is ' // &
-                 box_list(ibox)%box_shape
-              WRITE (logunit,'(X,A,T20,F10.4,T35,A)') 'Each Side Of :', box_list(ibox)%length(1,1), 'Angstrom'
+              WRITE(logunit,*)
+              WRITE(logunit,'(A,I0,A,A)') ' Box ', ibox, ': ', TRIM(box_list(ibox)%box_shape)
+              WRITE(logunit,'(A,F10.4,A)') '  side length:       ', &
+                   box_list(ibox)%length(1,1), ' Angstrom'
 
               ! Set off-diagonal components to zero
               box_list(ibox)%length(1,2) = 0.0
@@ -3822,11 +3814,14 @@ SUBROUTINE Get_Box_Info
               box_list(ibox)%length(3,1) = 0.0
               box_list(ibox)%length(3,2) = 0.0
 
-              WRITE (logunit,'(A)') 'Box ' // TRIM(Int_To_String(ibox)) // ' is ' // &
-                 box_list(ibox)%box_shape
-              WRITE (logunit,'(X,A,T20,F10.4,T35,A)') 'X dimension :', box_list(ibox)%length(1,1), 'Angstrom'
-              WRITE (logunit,'(X,A,T20,F10.4,T35,A)') 'Y dimension :', box_list(ibox)%length(2,2), 'Angstrom'
-              WRITE (logunit,'(X,A,T20,F10.4,T35,A)') 'Z dimension :', box_list(ibox)%length(3,3), 'Angstrom'
+              WRITE(logunit,*)
+              WRITE(logunit,'(A,I0,A,A)') ' Box ', ibox, ': ', TRIM(box_list(ibox)%box_shape)
+              WRITE(logunit,'(A,F10.4,A)') '  x length:          ', &
+                   box_list(ibox)%length(1,1), ' Angstrom'
+              WRITE(logunit,'(A,F10.4,A)') '  y length:          ', &
+                   box_list(ibox)%length(2,2), ' Angstrom'
+              WRITE(logunit,'(A,F10.4,A)') '  z length:          ', &
+                   box_list(ibox)%length(3,3), ' Angstrom'
 
            ELSEIF (line_array(1) == 'cell_matrix' .OR. line_array(1) == 'CELL_MATRIX' .OR. &
                    line_array(1) == 'triclinic' .OR. line_array(1) == 'TRICLINIC') THEN
@@ -3850,11 +3845,12 @@ SUBROUTINE Get_Box_Info
               box_list(ibox)%length(3,2) = String_To_Double(line_array(2))
               box_list(ibox)%length(3,3) = String_To_Double(line_array(3))
 
-              WRITE (logunit,'(A)') 'Box ' // TRIM(Int_To_String(ibox)) // ' is ' // &
-                 box_list(ibox)%box_shape
-              WRITE (logunit,'(X,T5,f10.4,T20,f10.4,T30,f10.4)') box_list(ibox)%length(1,1:3)
-              WRITE (logunit,'(X,T5,f10.4,T20,f10.4,T30,f10.4)') box_list(ibox)%length(2,1:3)
-              WRITE (logunit,'(X,T5,f10.4,T20,f10.4,T30,f10.4)') box_list(ibox)%length(3,1:3)
+              WRITE(logunit,*)
+              WRITE(logunit,'(A,I0,A,A)') ' Box ', ibox, ': ', TRIM(box_list(ibox)%box_shape)
+              WRITE(logunit,'(A)') '  cell matrix (Angstrom):'
+              WRITE(logunit,'(X,T5,f10.4,T20,f10.4,T30,f10.4)') box_list(ibox)%length(1,1:3)
+              WRITE(logunit,'(X,T5,f10.4,T20,f10.4,T30,f10.4)') box_list(ibox)%length(2,1:3)
+              WRITE(logunit,'(X,T5,f10.4,T20,f10.4,T30,f10.4)') box_list(ibox)%length(3,1:3)
 
            ELSE
               err_msg = ''
@@ -3875,13 +3871,14 @@ SUBROUTINE Get_Box_Info
            ! Compute information on the simulation box and write to log.
            CALL Compute_Cell_Dimensions(ibox)
 
-           WRITE(logunit,'(X,A,3(f10.4,3x))') 'Cell basis vector lengths in A,  ',&
-                box_list(ibox)%basis_length
-           WRITE(logunit,'(X,A,3(f10.4,3x))') 'Cosine of angles alpha, beta, gamma ',&
+           WRITE(logunit,'(A,3(F10.4,1X),A)') '  basis lengths:     ', &
+                box_list(ibox)%basis_length, 'Angstrom'
+           WRITE(logunit,'(A,3(F10.4,1X))') '  cos(a,b,g):        ', &
                 box_list(ibox)%cos_angle
-           WRITE(logunit,'(X,A,3(f10.4,3x))') 'Distance between box faces ',&
-                box_list(ibox)%face_distance
-           WRITE(logunit,'(X,A,f18.4)') 'Box volume, A^3 ', box_list(ibox)%volume
+           WRITE(logunit,'(A,3(F10.4,1X),A)') '  face distances:    ', &
+                box_list(ibox)%face_distance, 'Angstrom'
+           WRITE(logunit,'(A,F14.4,A)') '  volume:            ', &
+                box_list(ibox)%volume, ' Angstrom^3'
 
            ! Read next line
            line_nbr = line_nbr + 1
@@ -4020,8 +4017,6 @@ SUBROUTINE Get_Box_Info
 
   ALLOCATE(rcut_vdw3(nbr_boxes), rcut_vdw6(nbr_boxes))
 
-  WRITE(logunit,'(A80)') '********************************************************************************'
-
 END SUBROUTINE Get_Box_Info
 
 !******************************************************************************
@@ -4038,7 +4033,7 @@ SUBROUTINE Get_Temperature_Info
 !******************************************************************************
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Temperature'
-  WRITE(logunit,'(A80)') '********************************************************************************'
+  WRITE(logunit,'(A)') '-----------'
 
   ! Check to make sure that we have read in number of boxes if not then abort
 
@@ -4104,7 +4099,7 @@ SUBROUTINE Get_Temperature_Info
 
            ! write to the logunit that temperature is specified for box
 
-           WRITE(logunit,'(A,X,I1,X,A,X,F7.3,X,A)') 'Temperature of box', i, 'is', temperature(i), 'K'
+           WRITE(logunit,'(A,I0,A,F8.3,A)') '  box ', i, ' temperature:  ', temperature(i), ' K'
 
         END DO
 
@@ -4120,7 +4115,6 @@ SUBROUTINE Get_Temperature_Info
 
   END DO outer
 
-  WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_Temperature_Info
 
@@ -4138,7 +4132,7 @@ SUBROUTINE Get_Pressure_Info
 !******************************************************************************
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Pressure'
-  WRITE(logunit,'(A80)') '********************************************************************************'
+  WRITE(logunit,'(A)') '--------'
 
   REWIND(inputunit)
 
@@ -4175,13 +4169,13 @@ SUBROUTINE Get_Pressure_Info
               CALL Clean_Abort(err_msg,'Get_Pressure_Info')
            END IF
 
-           ! assign the pressures
+           ! assign the pressures (bar); convert to atomic units after logging
            pressure(i)%setpoint = String_To_Double(line_array(1))
-           WRITE(logunit,'(A,X,I1,X,A,X,F9.3,X,A)',ADVANCE='NO') 'Pressure of box', i, 'is', pressure(i)%setpoint,  'bar'
-
-           ! convert pressure into atomic units
+           WRITE(logunit,'(A,I0,A,F10.3,A)') '  box ', i, ' pressure:     ', &
+                pressure(i)%setpoint, ' bar'
            pressure(i)%setpoint = pressure(i)%setpoint / atomic_to_bar
-           WRITE(logunit,'(X,A,X,E13.6,X,A)') '=', pressure(i)%setpoint,  'amu / (A ps^2)'
+           WRITE(logunit,'(A,I0,A,ES13.6,A)') '  box ', i, ' pressure:     ', &
+                pressure(i)%setpoint, ' amu/(A ps^2)'
 
         END DO
 
@@ -4198,7 +4192,6 @@ SUBROUTINE Get_Pressure_Info
 
   END DO
 
-  WRITE(logunit,'(A80)') '********************************************************************************'
 
 
 END SUBROUTINE Get_Pressure_Info
@@ -4237,14 +4230,15 @@ SUBROUTINE Get_Chemical_Potential_Info
      IF (line_string(1:25) == '# Chemical_Potential_Info'  ) THEN
         WRITE(logunit,*)
         WRITE(logunit,'(A)') 'Chemical potential'
-        WRITE(logunit,'(A80)') '********************************************************************************'
+        WRITE(logunit,'(A)') '------------------'
         ! we found a section that contains the information on Chemical Potential of all the species
         line_nbr = line_nbr + 1
         CALL Parse_String(inputunit,line_nbr,nspec_insert,nbr_entries,line_array,ierr)
 
         DO is = 1,nspecies
 
-           WRITE(logunit,'(A,X,I5)') 'Species', is
+           WRITE(logunit,'(A,I0)') ' Species ', is
+           WRITE(logunit,'(A)') ' --------'
            IF (.NOT. ALLOCATED(species_list(is)%de_broglie)) ALLOCATE(species_list(is)%de_broglie(nbr_boxes))
 
            ! Assume there will be an entry for each species, including non-insertable species
@@ -4258,8 +4252,8 @@ SUBROUTINE Get_Chemical_Potential_Info
               ! convert the chemical potential into atomic units
               species_list(is)%chem_potential = species_list(is)%chem_potential / atomic_to_kJmol
 
-              WRITE(logunit,'(X,A,T40,X,F16.9)') 'Chemical potential (internal units):', &
-                    species_list(is)%chem_potential
+              WRITE(logunit,'(A,I0,A,F16.9,A)') '  species ', is, &
+                    ' mu:        ', species_list(is)%chem_potential, ' (internal units)'
 
               ! Now compute the de Broglie wavelength for this species in each box
               DO ibox = 1, nbr_boxes
@@ -4267,8 +4261,8 @@ SUBROUTINE Get_Chemical_Potential_Info
                  species_list(is)%de_broglie(ibox) = &
                       h_plank  * DSQRT( beta(ibox)/(twopi * species_list(is)%molecular_weight))
 
-                 WRITE(logunit,'(X,A,T40,X,F16.9)') &
-                       'de Broglie wavelength (Angstroms):', species_list(is)%de_broglie(ibox)
+                 WRITE(logunit,'(A,I0,A,I0,A,F16.9,A)') '  species ', is, &
+                       ' box ', ibox, ' de Broglie: ', species_list(is)%de_broglie(ibox), ' Ang'
 
               END DO
 
@@ -4277,9 +4271,9 @@ SUBROUTINE Get_Chemical_Potential_Info
               species_list(is)%chem_potential = 0.0_DP
               ! if there's an entry, it must be 'none' or 'NONE'
               IF (line_array(spec_counter) == 'none' .OR. line_array(spec_counter) == 'NONE') THEN
-                 WRITE(logunit,'(X,A)') 'Chemical potential not required.'
+                 WRITE(logunit,'(A,I0,A)') '  species ', is, ': chemical potential not required'
               ELSE
-                 WRITE(logunit,'(X,A)') 'No entry in input file. Chemical potential not required.'
+                 WRITE(logunit,'(A,I0,A)') '  species ', is, ': chemical potential not required'
                  ! the entry is not 'none' or 'NONE', so there is no entry of this species
                  ! back track the counter so this entry can be assigned to the next species
                  spec_counter = spec_counter - 1
@@ -4288,7 +4282,6 @@ SUBROUTINE Get_Chemical_Potential_Info
 
         END DO
 
-        WRITE(logunit,'(A80)') '********************************************************************************'
 
         EXIT
 
@@ -4328,7 +4321,7 @@ SUBROUTINE Get_Move_Probabilities
   IF (int_sim_type /= sim_pregen) THEN
           WRITE(logunit,*)
           WRITE(logunit,'(A)') 'Move probabilities'
-          WRITE(logunit,'(A80)') '********************************************************************************'
+          WRITE(logunit,'(A)') '------------------'
   END IF
 
   ierr = 0
@@ -4394,8 +4387,7 @@ SUBROUTINE Get_Move_Probabilities
               CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
               prob_trans = String_To_Double(line_array(1))
 
-              WRITE(logunit,'(A,T40,F12.6)') &
-                   'Probability for translation', prob_trans
+              WRITE(logunit,'(A,F12.6)') '  translation:       ', prob_trans
 
               IF (int_sim_type == sim_ring .OR. int_sim_type == sim_frag) THEN
                  ! the second line contains information on delta_cos_max and delta_phi_max
@@ -4405,8 +4397,8 @@ SUBROUTINE Get_Move_Probabilities
                  delta_cos_max = String_To_Double(line_array(1))
                  delta_phi_max = String_To_Double(line_array(2))
 
-                 WRITE(logunit,*) 'Maximum width in cosine of polar angle is', delta_cos_max
-                 WRITE(logunit,*) 'Maximum width (degrees) in azimuthal angle is', delta_phi_max
+                 WRITE(logunit,'(A,F12.6)') '    delta_cos_max:   ', delta_cos_max
+                 WRITE(logunit,'(A,F12.6,A)') '    delta_phi_max:   ', delta_phi_max, ' deg'
 
                  ! convert delta_phi_max to radians
 
@@ -4420,8 +4412,8 @@ SUBROUTINE Get_Move_Probabilities
                     ! assign the maximum displacement widths to each of the species
                     DO i = 1, nspecies
                        max_disp(i,j) = String_To_Double(line_array(i))
-                       WRITE(logunit,'(X,A,T40,I3,A,T50,I3,T55,A,T60,F10.5)') 'Maximum displacement width for species', &
-                            i, ' in box', j, 'is', max_disp(i,j)
+                       WRITE(logunit,'(A,I0,A,I0,A,F10.5,A)') &
+                            '    max_disp species ', i, ' box ', j, ': ', max_disp(i,j), ' Ang'
                     END DO
                  END DO
 
@@ -4434,8 +4426,7 @@ SUBROUTINE Get_Move_Probabilities
               CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
               prob_rot = String_To_Double(line_array(1))
 
-              WRITE(logunit,'(A,T40,F12.6)') &
-                   'Probability for rotation', prob_rot
+              WRITE(logunit,'(A,F12.6)') '  rotation:          ', prob_rot
 
               DO j = 1, nbr_boxes
                  ! get maximum rotational width for each of the species
@@ -4446,8 +4437,8 @@ SUBROUTINE Get_Move_Probabilities
                     max_rot(i,j) = String_To_Double(line_array(i))
                     ! Note that input is in degrees. Convert the displacement to radians
                     max_rot(i,j) = max_rot(i,j) * PI / 180.0_DP
-                    WRITE(logunit,'(X,A,T40,I3,A,T50,I3,T55,A,T60,F10.4,T70,A)') 'The rotational width for the species', &
-                         i, ' in box', j, ' is', max_rot(i,j), ' radians'
+                    WRITE(logunit,'(A,I0,A,I0,A,F10.4,A)') &
+                         '    max_rot species ', i, ' box ', j, ': ', max_rot(i,j), ' rad'
                  END DO
               END DO
 
@@ -4458,8 +4449,7 @@ SUBROUTINE Get_Move_Probabilities
               CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
               prob_torsion = String_To_Double(line_array(1))
 
-              WRITE(logunit,'(A,T40,F12.6)') &
-                   'Probability for dihedral move', prob_torsion
+              WRITE(logunit,'(A,F12.6)') '  dihedral:          ', prob_torsion
 
               ! Get species dependent maximum displacements
 
@@ -4468,8 +4458,8 @@ SUBROUTINE Get_Move_Probabilities
               DO i = 1, nspecies
                  species_list(i)%max_torsion = String_To_Double(line_array(i))
                  species_list(i)%max_torsion = species_list(i)%max_torsion * PI / 180.0_DP
-                 WRITE(logunit,'(X,A,T40,I3,A,T55,F10.4,T70,A)')'The dihedral move width for the species', i, ' is', &
-                      species_list(i)%max_torsion, ' radians'
+                 WRITE(logunit,'(A,I0,A,F10.4,A)') &
+                      '    max_dih species ', i, ': ', species_list(i)%max_torsion, ' rad'
               END DO
 
            ELSE IF (line_string(1:12) == '# Prob_Angle') THEN
@@ -4479,8 +4469,7 @@ SUBROUTINE Get_Move_Probabilities
               CALL Parse_String(inputunit,line_nbr,1,nbr_entries,line_array,ierr)
               prob_angle = String_To_Double(line_array(1))
 
-              WRITE(logunit,'(A,T40,F12.6)') &
-                   'Probability for angle move', prob_angle
+              WRITE(logunit,'(A,F12.6)') '  angle:             ', prob_angle
 
            ELSE IF (line_string(1:13) == '# Prob_Volume') THEN
               num_moves = num_moves + 1
@@ -4495,8 +4484,7 @@ SUBROUTINE Get_Move_Probabilities
 
               prob_volume = String_To_Double(line_array(1))
 
-              WRITE(logunit,'(A,T40,F12.6)') &
-                   'Probability for volume move', prob_volume
+              WRITE(logunit,'(A,F12.6)') '  volume:            ', prob_volume
 
               ! Now read in information for each of the boxes for maximum displacement
               IF (int_sim_type == sim_gemc .OR. int_sim_type == sim_npt) THEN
@@ -4506,8 +4494,7 @@ SUBROUTINE Get_Move_Probabilities
 
                  box_list(:)%dv_max = String_To_Double(line_array(1))
 
-                 WRITE(logunit,'(X,A,X,F10.3)') &
-                       'Maximum volume displacement is', box_list(1)%dv_max
+                 WRITE(logunit,'(A,F10.3,A)') '    dv_max:           ', box_list(1)%dv_max, ' Ang^3'
 
               ELSE
                  ! gemc_npt, separate dv_max for each box
@@ -4524,9 +4511,8 @@ SUBROUTINE Get_Move_Probabilities
                        CALL Clean_Abort(err_msg,'Get_Move_Probabilities')
                     END IF
 
-                    WRITE(logunit,'(X,A,X,I2,X,A,X,F10.3,X,A)') &
-                         'Maximum volume displacement for box', ibox, 'is', &
-                         box_list(ibox)%dv_max, ' A^3'
+                    WRITE(logunit,'(A,I0,A,F10.3,A)') &
+                         '    dv_max box ', ibox, ': ', box_list(ibox)%dv_max, ' Ang^3'
 
 
                  END DO
@@ -4554,9 +4540,9 @@ SUBROUTINE Get_Move_Probabilities
 
               IF (f_dv) THEN
 
-                 WRITE(logunit,*) 'Volume moves will be performed in actual volumes'
+                 WRITE(logunit,'(A)') '    volume space:     actual volumes'
               ELSE IF (f_vratio) THEN
-                 WRITE(logunit,*) 'Volume moves will be performed in logarithm of ratio of volumes'
+                 WRITE(logunit,'(A)') '    volume space:     log volume ratio'
               END IF
 
            ELSE IF (line_string(1:16) == '# Prob_Insertion' .OR. &
@@ -4568,13 +4554,11 @@ SUBROUTINE Get_Move_Probabilities
               IF (line_string(1:16) == '# Prob_Insertion') THEN
                  num_moves = num_moves + 1
                  prob_insertion = String_To_Double(line_array(1))
-                 WRITE(logunit,'(A,T40,F12.6)') &
-                      'Probability for insertion', prob_insertion
+                 WRITE(logunit,'(A,F12.6)') '  insertion:         ', prob_insertion
               ELSE IF (line_string(1:11) == '# Prob_Swap') THEN
                  num_moves = num_moves + 1
                  prob_swap = String_To_Double(line_array(1))
-                 WRITE(logunit,'(A,T40,F12.6)') &
-                      'Probability for particle swap', prob_swap
+                 WRITE(logunit,'(A,F12.6)') '  particle swap:     ', prob_swap
               END IF
 
               ! the next line lists 'none' or 'cbmc' or 'restricted' for each species
@@ -4595,7 +4579,7 @@ SUBROUTINE Get_Move_Probabilities
                     nspec_insert = nspec_insert + 1
                     species_list(is)%insertion = 'CBMC'
 
-                    WRITE(logunit,'(X,A,X,A,X,A)') 'Species', TRIM(Int_To_String(is)), 'will be inserted using CBMC'
+                    WRITE(logunit,'(A,A,A)') '    species ', TRIM(Int_To_String(is)), ' insert method: CBMC'
                     species_list(is)%int_insert = int_random
                     species_list(is)%species_type = 'SORBATE'
                     species_list(is)%int_species_type = int_sorbate
@@ -4613,7 +4597,7 @@ SUBROUTINE Get_Move_Probabilities
                     nspec_insert = nspec_insert + 1
                     species_list(is)%insertion = 'RESTRICTED'
 
-                    WRITE(logunit,'(X,A,X,A,X,A)') 'Species', TRIM(Int_To_String(is)), 'insertion will be restricted'
+                    WRITE(logunit,'(A,A,A)') '    species ', TRIM(Int_To_String(is)), ' insert method: restricted'
                     species_list(is)%int_insert = int_random
                     species_list(is)%species_type = 'SORBATE'
                     species_list(is)%int_species_type = int_sorbate
@@ -4628,7 +4612,7 @@ SUBROUTINE Get_Move_Probabilities
                     species_list(is)%species_type ='NON_EXCHANGE'
                     species_list(is)%int_species_type = int_solvent
 
-                    WRITE(logunit,'(X,A,X,A,X,A)') 'Species', TRIM(Int_To_String(is)), 'will not be inserted'
+                    WRITE(logunit,'(A,A,A)') '    species ', TRIM(Int_To_String(is)), ' insert method: none'
                  ELSE
                     err_msg =''
                     err_msg(1) = 'Insertion method for species ' // TRIM(Int_To_String(is)) // &
@@ -4639,7 +4623,7 @@ SUBROUTINE Get_Move_Probabilities
 
               END DO
 
-              WRITE(logunit,"(X,A,2X,I3)") 'Number of insertable species is', nspec_insert
+              WRITE(logunit,'(A,I0)') '    insertable species: ', nspec_insert
 
               ! Check for additional keywords in section # Prob_Swap
               IF (line_string(1:11) == '# Prob_Swap') THEN
@@ -4657,11 +4641,11 @@ SUBROUTINE Get_Move_Probabilities
 
                     IF (line_string2(1:1) == '!' .OR. TRIM(line_string2) == '') THEN
                        IF (.NOT. l_prob_swap_from_box) THEN
-                          WRITE(logunit,'(2X,A)') 'By default, box_out will be selected according to its mole fraction'
+                          WRITE(logunit,'(A)') '    swap box select:  mole fraction (default)'
                        END IF
 
                        IF (.NOT. l_prob_swap_species) THEN
-                          WRITE(logunit,'(2X,A)') 'By default, species will be selected according to its mole fraction in box_out'
+                          WRITE(logunit,'(A)') '    swap species select: mole fraction in box_out (default)'
                           species_list%l_solute = .TRUE.
                        END IF
                        EXIT
@@ -4684,8 +4668,8 @@ SUBROUTINE Get_Move_Probabilities
                                   species_list(is)%l_solute = .TRUE.
                           END IF
 
-                          WRITE(logunit,'(X,A,X,F5.3)') 'Cumulative swap probabilty for species ' // &
-                               TRIM(Int_To_String(is)) // ' is ', cum_prob_swap_species(is)
+                          WRITE(logunit,'(A,A,A,F5.3)') '    cum_swap species ', &
+                               TRIM(Int_To_String(is)), ': ', cum_prob_swap_species(is)
                        END DO
 
                        IF (ABS(cum_prob_swap_species(nspecies) - 1.0_DP) > tiny_number) THEN
@@ -4708,9 +4692,8 @@ SUBROUTINE Get_Move_Probabilities
                        DO ibox = 1, nbr_boxes
                           prob_swap_from_box(ibox) = String_To_Double(line_array(ibox+1))
                           cum_prob_swap_from_box(ibox) = SUM(prob_swap_from_box(1:ibox))
-                          WRITE(logunit,'(X,A,X,F5.3)') 'Cumulative swap probabilty from box ' // &
-                               TRIM(Int_To_String(ibox)) // ' is ', &
-                               cum_prob_swap_from_box(ibox)
+                          WRITE(logunit,'(A,A,A,F5.3)') '    cum_swap from box ', &
+                               TRIM(Int_To_String(ibox)), ': ', cum_prob_swap_from_box(ibox)
                        END DO
 
                        IF (ABS(cum_prob_swap_from_box(nbr_boxes) - 1.0_DP) > tiny_number) THEN
@@ -4740,8 +4723,7 @@ SUBROUTINE Get_Move_Probabilities
 
               prob_deletion = String_To_Double(line_array(1))
 
-              WRITE(logunit,'(A,T40,F12.6)') &
-                   'Probability for deletion', prob_deletion
+              WRITE(logunit,'(A,F12.6)') '  deletion:          ', prob_deletion
 
            ELSE IF (line_string(1:15 ) == '# Prob_Regrowth') THEN
               ALLOCATE(prob_growth_species(nspecies))
@@ -4752,8 +4734,7 @@ SUBROUTINE Get_Move_Probabilities
 
               prob_regrowth = String_To_Double(line_array(1))
 
-              WRITE(logunit,'(A,T40,F12.6)') &
-                   'Probability for regrowth', prob_regrowth
+              WRITE(logunit,'(A,F12.6)') '  regrowth:          ', prob_regrowth
 
               ! On the next line read the species probability
               line_nbr = line_nbr + 1
@@ -4776,9 +4757,8 @@ SUBROUTINE Get_Move_Probabilities
                          prob_growth_species(is-1)
                  END IF
 
-                 WRITE(logunit,'(X,A,2X,I3,2X,A2,2X,F9.6)') &
-                      'Cumulative probability for regrowth of species ',is, 'is ',&
-                      prob_growth_species(is)
+                 WRITE(logunit,'(A,I0,A,F9.6)') &
+                      '    cum_regrowth species ', is, ': ', prob_growth_species(is)
               END DO
 
               IF ( abs(prob_growth_species(nspecies) - 1.0_DP) > 0.000001_DP) THEN
@@ -4803,9 +4783,8 @@ SUBROUTINE Get_Move_Probabilities
 
               omega_max = omega_max * PI/180.0_DP
 
-              WRITE(logunit,'(A,T40,F12.6)') &
-                   'Probability for ring moves', prob_ring
-              WRITE(logunit,*) 'Maximum flip angle in radians', omega_max
+              WRITE(logunit,'(A,F12.6)') '  ring:              ', prob_ring
+              WRITE(logunit,'(A,F12.6,A)') '    omega_max:       ', omega_max, ' rad'
 
            ELSE IF (line_string(1:24) == '# Prob_Atom_Displacement') THEN
               num_moves = num_moves + 1
@@ -4815,8 +4794,7 @@ SUBROUTINE Get_Move_Probabilities
 
               prob_atom_displacement = String_To_Double(line_array(1))
 
-              WRITE(logunit,'(A,T40,F12.6)') &
-                   'Probability for atom displacment', prob_atom_displacement
+              WRITE(logunit,'(A,F12.6)') '  atom displacement: ', prob_atom_displacement
 
               ! on next line read in the information about delta_cos_max and
               ! delta_phi_max
@@ -4826,8 +4804,8 @@ SUBROUTINE Get_Move_Probabilities
               delta_cos_max = String_To_Double(line_array(1))
               delta_phi_max = String_To_Double(line_array(2))
 
-              WRITE(logunit,*) 'Maximum width in cosine of polar angle is', delta_cos_max
-              WRITE(logunit,*) 'Maximum width (degrees) in azimuthal angle is', delta_phi_max
+              WRITE(logunit,'(A,F12.6)') '    delta_cos_max:   ', delta_cos_max
+              WRITE(logunit,'(A,F12.6,A)') '    delta_phi_max:   ', delta_phi_max, ' deg'
 
               ! convert delta_phi_max to radians
 
@@ -4951,7 +4929,7 @@ SUBROUTINE Get_Move_Probabilities
 
   END IF
 
-  WRITE(logunit,'(A20,I4)') 'Number of moves is :', num_moves
+  WRITE(logunit,'(A,I0)') '  n_move_types:      ', num_moves
 
   movetime(:) = 0.0_DP
 
@@ -4974,8 +4952,8 @@ SUBROUTINE Get_Move_Probabilities
 
   IF (ABS(cut_atom_displacement-1.0_DP) > tiny_number ) THEN
 
-     WRITE (logunit,*) 'Move probabilities do not sum to 1.0'
-     WRITE (logunit,'(X,A,F12.6)') 'Dividing each probability by ', cut_atom_displacement
+     WRITE(logunit,'(A)') '  note: move probabilities do not sum to 1.0'
+     WRITE(logunit,'(A,F12.6)') '  normalizing by:     ', cut_atom_displacement
      cut_trans = cut_trans / cut_atom_displacement
      cut_rot = cut_rot / cut_atom_displacement
      cut_torsion = cut_torsion / cut_atom_displacement
@@ -5006,7 +4984,6 @@ SUBROUTINE Get_Move_Probabilities
      WRITE(logunit,'(X,A12,X,F8.6)') 'Atom:', cut_atom_displacement
   END IF
 
-  WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_Move_Probabilities
 
@@ -5036,7 +5013,7 @@ SUBROUTINE Get_Start_Type
   IF (int_sim_type /= sim_pregen) THEN
           WRITE(logunit,*)
           WRITE(logunit,'(A)') 'Start type'
-          WRITE(logunit,'(A80)') '********************************************************************************'
+          WRITE(logunit,'(A)') '----------'
   END IF
 
   ALLOCATE(start_type(nbr_boxes),Stat=Allocatestatus)
@@ -5110,8 +5087,7 @@ SUBROUTINE Get_Start_Type
            IF (line_array(1) == 'make_config') THEN
               start_type(ibox) = 'make_config'
 
-              WRITE(logunit,'(A)') 'Initial configuration for box ' // &
-                 TRIM(Int_To_String(ibox)) // ' will be made'
+              WRITE(logunit,'(A,A,A)') '  box ', TRIM(Int_To_String(ibox)), ' start: make_config'
 
               ! check number of entries
               IF (nbr_entries < nspecies + 1) THEN
@@ -5136,15 +5112,14 @@ SUBROUTINE Get_Start_Type
                     CALL Clean_Abort(err_msg, 'Get_Start_Type')
                  END IF
 
-                 WRITE(logunit,'(X,A11,2X,I6,2X,A20,2X,I2)') 'Will insert', &
-                    nmols_to_make(is,ibox), 'molecules of species', is
+                 WRITE(logunit,'(A,I0,A,I0,A,I0)') &
+                    '    insert species ', is, ': ', nmols_to_make(is,ibox), ' molecules'
               END DO
 
            ELSE IF (line_array(1) == 'read_config') THEN
               start_type(ibox) = 'read_config'
 
-              WRITE(logunit,'(A)') 'Initial configuration for box ' // &
-                 TRIM(Int_To_String(ibox)) // ' will be read from file'
+              WRITE(logunit,'(A,A,A)') '  box ', TRIM(Int_To_String(ibox)), ' start: read_config'
 
               ! Check number of entries
               IF (nbr_entries < nspecies+2) THEN
@@ -5160,8 +5135,8 @@ SUBROUTINE Get_Start_Type
               DO is = 1, nspecies
                  nmols_to_read(is,ibox) = String_To_Int(line_array(is+1))
                  IF (nmols_to_read(is,ibox) > 0) species_list(is)%l_solvent = .TRUE.
-                 WRITE(logunit,'(X,A9,2X,I6,2X,A20,2X,I2)') 'Will read', &
-                    nmols_to_read(is,ibox), 'molecules of species', is
+                 WRITE(logunit,'(A,I0,A,I0,A,I0)') &
+                    '    read species ', is, ': ', nmols_to_read(is,ibox), ' molecules'
               END DO
 
               ! Make sure that the characters of the string are alphanumeric
@@ -5176,22 +5151,19 @@ SUBROUTINE Get_Start_Type
               END IF
               old_config_file(ibox) = TRIM(ADJUSTL(line_array(2+nspecies)))
 
-              WRITE(logunit,'(X,A33,X,A)') &
-                 'Will read configuration from file', TRIM(old_config_file(ibox))
+              WRITE(logunit,'(A,A)') '    config file:      ', TRIM(old_config_file(ibox))
 
            ELSE IF (line_array(1) == 'add_to_config') THEN
               start_type(ibox) = 'add_to_config'
 
-              WRITE(logunit,'(A)') 'Initial configuration for box ' // &
-                 TRIM(Int_To_String(ibox)) // ' will add molecules to ' // &
-                 'configuration read from file'
+              WRITE(logunit,'(A,A,A)') '  box ', TRIM(Int_To_String(ibox)), ' start: add_to_config'
 
               ! Read nmols_to_read
               DO is = 1, nspecies
                  nmols_to_read(is,ibox) = String_To_Int(line_array(is+1))
                  IF (nmols_to_read(is,ibox) > 0) species_list(is)%l_solvent = .TRUE.
-                 WRITE(logunit,'(X,A9,2X,I6,2X,A20,2X,I2)') 'Will read', &
-                    nmols_to_read(is,ibox), 'molecules of species', is
+                 WRITE(logunit,'(A,I0,A,I0,A,I0)') &
+                    '    read species ', is, ': ', nmols_to_read(is,ibox), ' molecules'
               END DO
 
               ! Make sure that the characters of the string are alphanumeric
@@ -5206,8 +5178,7 @@ SUBROUTINE Get_Start_Type
               END IF
               old_config_file(ibox) = TRIM(ADJUSTL(line_array(2+nspecies)))
 
-              WRITE(logunit,'(X,A33,X,A)') &
-                 'Will read configuration from file', TRIM(old_config_file(ibox))
+              WRITE(logunit,'(A,A)') '    config file:      ', TRIM(old_config_file(ibox))
 
               ! Read nmols_to_make
               DO is = 1, nspecies
@@ -5224,14 +5195,14 @@ SUBROUTINE Get_Start_Type
                     CALL Clean_Abort(err_msg, 'Get_Start_Type')
                  END IF
 
-                 WRITE(logunit,'(X,A11,2X,I6,2X,A20,2X,I2)') 'Will insert', &
-                    nmols_to_make(is,ibox), 'molecules of species', is
+                 WRITE(logunit,'(A,I0,A,I0,A,I0)') &
+                    '    insert species ', is, ': ', nmols_to_make(is,ibox), ' molecules'
               END DO
 
            ELSE IF (line_array(1) == 'checkpoint') THEN
               start_type(1) = 'checkpoint'
 
-              WRITE(logunit,'(A)') 'Starting configuration will be read from checkpoint file'
+              WRITE(logunit,'(A)') '  start:              checkpoint'
 
               ! Make sure that the characters of the string are alphanumeric with
               ! a possibility of a . (dot). or _ (dash).
@@ -5250,7 +5221,7 @@ SUBROUTINE Get_Start_Type
               END IF
 
               restart_file = line_array(2)
-              WRITE(logunit,*) TRIM(restart_file)
+              WRITE(logunit,'(A,A)') '  checkpoint file:    ', TRIM(restart_file)
 
               ibox = nbr_boxes
            ELSE
@@ -5311,7 +5282,6 @@ SUBROUTINE Get_Start_Type
      END IF
   END DO
 
-  WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_Start_Type
 
@@ -5333,7 +5303,7 @@ SUBROUTINE Get_Run_Type
 !******************************************************************************
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Run type'
-  WRITE(logunit,'(A80)') '********************************************************************************'
+  WRITE(logunit,'(A)') '--------'
 
   REWIND(inputunit)
 
@@ -5401,8 +5371,8 @@ SUBROUTINE Get_Run_Type
 
         nupdate = String_To_Int(line_array(2))
 
-        WRITE(logunit,*) 'The input run type is ', TRIM(line_array(1))
-        WRITE(logunit,*) 'Update frequency is ', nupdate
+        WRITE(logunit,'(A,A)') '  run type:          ', TRIM(line_array(1))
+        WRITE(logunit,'(A,I0)') '  update frequency:  ', nupdate
 
         IF (int_sim_type == sim_npt .OR. int_sim_type == sim_gemc .OR. &
             int_sim_type == sim_gemc_npt .OR. &
@@ -5417,8 +5387,7 @@ SUBROUTINE Get_Run_Type
 
            nvol_update = String_To_Int(line_array(3))
 
-           WRITE(logunit,*) 'Update frequency for adjusting maximum volume displacement is'
-           WRITE(logunit,*) nvol_update
+           WRITE(logunit,'(A,I0)') '  volume update freq: ', nvol_update
 
         END IF
 
@@ -5441,7 +5410,6 @@ SUBROUTINE Get_Run_Type
 
   END DO
 
-  WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_Run_Type
 
@@ -5676,7 +5644,7 @@ SUBROUTINE Log_Widom_Info
         IF (.NOT. widom_flag) RETURN
         WRITE(logunit,*)
         WRITE(logunit,'(A)') 'Widom insertion info'
-        WRITE(logunit,'(A80)') '********************************************************************************'
+        WRITE(logunit,'(A)') '--------------------'
         DO is = 1, nspecies
                 DO ibox = 1, nbr_boxes
                         IF (.NOT. species_list(is)%test_particle(ibox)) CYCLE
@@ -5698,7 +5666,6 @@ SUBROUTINE Log_Widom_Info
                               'with de Broglie wavelength (Angstroms):', species_list(is)%de_broglie(ibox)
                 END DO
         END DO
-        WRITE(logunit,'(A80)') '********************************************************************************'
 END SUBROUTINE Log_Widom_Info
 
 !******************************************************************************
@@ -5741,7 +5708,7 @@ SUBROUTINE Get_Pregen_Info
 
         WRITE(logunit,*)
         WRITE(logunit,'(A)') 'Pregenerated trajectory info'
-        WRITE(logunit,'(A80)') '********************************************************************************'
+        WRITE(logunit,'(A)') '----------------------------'
         !
         REWIND(inputunit)
         ierr = 0
@@ -5885,7 +5852,6 @@ SUBROUTINE Get_Pregen_Info
 
                         END DO
                         IF (.NOT. need_solvents) species_list%l_solvent = ANY(nmols_to_read>0,2)
-                        WRITE(logunit,'(A80)') '********************************************************************************'
                         RETURN
                 ELSE IF(line_string(1:3) == 'END' .or. line_nbr > 10000 ) THEN
                         err_msg = ''
@@ -5941,7 +5907,7 @@ SUBROUTINE Get_CBMC_Info
 !******************************************************************************
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'CBMC info'
-  WRITE(logunit,'(A80)') '********************************************************************************'
+  WRITE(logunit,'(A)') '---------'
 
   REWIND(inputunit)
   ierr = 0
@@ -6010,19 +5976,19 @@ SUBROUTINE Get_CBMC_Info
 
               IF (line_array(1) == 'kappa_ins' .OR. line_array(1) == 'Kappa_Ins') THEN
                  kappa_ins = String_To_Int(line_array(2))
-                 WRITE(logunit,'(A,T35,I12)') 'Kappa for first fragment insertion ', kappa_ins
+                 WRITE(logunit,'(A,I0)') '  kappa_ins:         ', kappa_ins
               ELSE IF (line_array(1) == 'kappa_rot' .OR. line_array(1) == 'Kappa_Rot') THEN
                  kappa_rot = String_To_Int(line_array(2))
-                 WRITE(logunit,'(X,A)') 'Orientational bias not supported. Kappa set to zero'
+                 WRITE(logunit,'(A)') '  kappa_rot:         0 (orientational bias not supported)'
                  kappa_rot = 0
               ELSE IF (line_array(1) == 'kappa_dih' .OR. line_array(1) == 'Kappa_Dih') THEN
                  kappa_dih = String_To_Int(line_array(2))
-                 WRITE(logunit,'(A,T35,I12)') 'Kappa for dihedral selection ', kappa_dih
+                 WRITE(logunit,'(A,I0)') '  kappa_dih:         ', kappa_dih
               ELSE IF (line_array(1) == 'rcut_cbmc' .OR. line_array(1) == 'Rcut_CBMC') THEN
                  DO ibox = 1, nbr_boxes
                     rcut_CBMC(ibox) = String_To_Double(line_array(ibox+1))
-                    WRITE(logunit,'(X,A,F12.2)') 'Cutoff for CBMC for box '// TRIM(Int_To_String(ibox)) // &
-                       ' is ', rcut_CBMC(ibox)
+                    WRITE(logunit,'(A,A,A,F12.2,A)') '  rcut_cbmc box ', TRIM(Int_To_String(ibox)), &
+                       ': ', rcut_CBMC(ibox), ' Ang'
                  END DO
               ELSE IF (line_array(1) == 'l_coul_cbmc' .OR. line_array(1) == 'L_Coul_CBMC') THEN
                  DO is = 1, nspecies
@@ -6046,8 +6012,7 @@ SUBROUTINE Get_CBMC_Info
                       ELSE
                               atompair_nrg_res = 1000
                       END IF
-                      WRITE(logunit,'(X,A)') 'Atom pair energy table with rsq resolution = ' // &
-                              TRIM(Int_To_String(atompair_nrg_res)) // ' will be used.'
+                      WRITE(logunit,'(A,A)') '  atompair_nrg_res:  ', TRIM(Int_To_String(atompair_nrg_res))
               ELSE
                  err_msg = ''
                  err_msg(1) = 'Keyword ' // TRIM(line_array(1)) // ' on line number ' // &
@@ -6094,10 +6059,9 @@ SUBROUTINE Get_CBMC_Info
         END IF
      END DO
   ELSE
-     WRITE(logunit,'(A)') 'Section "# CBMC_Info" not required'
+     WRITE(logunit,'(A)') '  note: # CBMC_Info not required for this run'
   END IF
 
-  WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_CBMC_Info
 
@@ -6113,7 +6077,7 @@ SUBROUTINE Get_Seed_Info
 !******************************************************************************
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Seed info'
-  WRITE(logunit,'(A80)') '********************************************************************************'
+  WRITE(logunit,'(A)') '---------'
 
   REWIND(inputunit)
   ierr = 0
@@ -6122,7 +6086,7 @@ SUBROUTINE Get_Seed_Info
   DO
 
      IF (start_type(1) == 'checkpoint') THEN
-        WRITE(logunit,*) 'Seed will be read from a checkpoint file'
+        WRITE(logunit,'(A)') '  seed source:       checkpoint file'
         EXIT
      END IF
      line_nbr = line_nbr + 1
@@ -6150,7 +6114,7 @@ SUBROUTINE Get_Seed_Info
            iseed3 = String_To_Int(line_array(2))
 
         END IF
-        WRITE(logunit,'(A,X,I19,X,I19)') 'The starting seeds are:', iseed1, iseed3
+        WRITE(logunit,'(A,I19,X,I19)') '  seeds (iseed1, iseed3): ', iseed1, iseed3
 
         EXIT
 
@@ -6164,7 +6128,6 @@ SUBROUTINE Get_Seed_Info
 
   END DO
 
-  WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_Seed_Info
 
@@ -6179,7 +6142,7 @@ SUBROUTINE Get_Simulation_Length_Info
 !******************************************************************************
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Simulation length info'
-  WRITE(logunit,'(A80)') '********************************************************************************'
+  WRITE(logunit,'(A)') '----------------------'
 
   REWIND(inputunit)
 
@@ -6226,6 +6189,7 @@ SUBROUTINE Get_Simulation_Length_Info
               err_msg(2) = 'Supported options are: steps, sweeps, minutes'
               CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
            END IF
+           WRITE(logunit,'(A,A)') '  units:             ', TRIM(sim_length_units)
 
         ELSE
            err_msg = ''
@@ -6254,8 +6218,7 @@ SUBROUTINE Get_Simulation_Length_Info
                  CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
               END IF
 
-              WRITE(logunit,'(A,T50,I19,X,A)') 'Thermodynamic quantities will be computed every', &
-                 nthermo_freq, sim_length_units
+              WRITE(logunit,'(A,I0,A,A)') '  prop_freq:         ', nthermo_freq, ' ', TRIM(sim_length_units)
 
            ELSE IF (line_array(1) == 'coord_freq' .OR. line_array(1) == 'Coord_Freq') THEN
 
@@ -6279,7 +6242,7 @@ SUBROUTINE Get_Simulation_Length_Info
                  CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
               END IF
 
-              WRITE(logunit,'(A,T50,I19,X,A)') 'Coordinates will be written to file every', ncoord_freq, sim_length_units
+              WRITE(logunit,'(A,I0,A,A)') '  coord_freq:        ', ncoord_freq, ' ', TRIM(sim_length_units)
 
               ALLOCATE(movie_header_file(nbr_boxes))
               ALLOCATE(movie_xyz_file(nbr_boxes))
@@ -6287,14 +6250,14 @@ SUBROUTINE Get_Simulation_Length_Info
                  ibox = 1
                  movie_header_file(ibox) = TRIM(run_name) // '.H'
                  movie_xyz_file(ibox) =    TRIM(run_name) // '.xyz'
-                 WRITE(logunit,'(X,A,T40,A)') 'movie header file is', TRIM(movie_header_file(ibox))
-                 WRITE(logunit,'(X,A,T40,A)') 'movie_XYZ file is', TRIM(movie_xyz_file(ibox))
+                 WRITE(logunit,'(A,A)') '  movie header:      ', TRIM(movie_header_file(ibox))
+                 WRITE(logunit,'(A,A)') '  movie XYZ:         ', TRIM(movie_xyz_file(ibox))
               ELSE
                  DO ibox = 1, nbr_boxes
                     movie_header_file(ibox) = TRIM(run_name) // '.box' // TRIM(Int_To_String(ibox)) // '.H'
                     movie_xyz_file(ibox) =    TRIM(run_name) // '.box' // TRIM(Int_To_String(ibox)) // '.xyz'
-                    WRITE(logunit,'(X,A,T30,I1,A,T40,A)') 'movie header file for box ', ibox ,' is', TRIM(movie_header_file(ibox))
-                    WRITE(logunit,'(X,A,T30,I1,A,T40,A)') 'movie_XYZ file for box ', ibox ,' is', TRIM(movie_xyz_file(ibox))
+                    WRITE(logunit,'(A,I0,A,A)') '  movie header box ', ibox, ': ', TRIM(movie_header_file(ibox))
+                    WRITE(logunit,'(A,I0,A,A)') '  movie XYZ box ', ibox, ':    ', TRIM(movie_xyz_file(ibox))
                  END DO
               ENDIF
 
@@ -6319,19 +6282,19 @@ SUBROUTINE Get_Simulation_Length_Info
                  CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
               END IF
 
-              WRITE(logunit,'(A,T50,I19,X,A)') 'Coordinates will be written to file every', ncoord_freq, sim_length_units
+              WRITE(logunit,'(A,I0,A,A)') '  coord_freq:        ', ncoord_freq, ' ', TRIM(sim_length_units)
 
               ALLOCATE(movie_header_file(nbr_boxes))
               movie_custom_file =  TRIM(run_name) // '.crd'
-              WRITE(logunit,'(X,A,T40,A)') 'movie file is', TRIM(movie_custom_file)
+              WRITE(logunit,'(A,A)') '  movie file:        ', TRIM(movie_custom_file)
               IF (nbr_boxes == 1) THEN
                  ibox = 1
                  movie_header_file(ibox) = TRIM(run_name) // '.H'
-                 WRITE(logunit,'(X,A,T40,A)') 'movie header file is', TRIM(movie_header_file(ibox))
+                 WRITE(logunit,'(A,A)') '  movie header:      ', TRIM(movie_header_file(ibox))
               ELSE
                  DO ibox = 1, nbr_boxes
                     movie_header_file(ibox) = TRIM(run_name) // '.box' // TRIM(Int_To_String(ibox)) // '.H'
-                    WRITE(logunit,'(X,A,T30,I1,A,T40,A)') 'movie header file for box ', ibox ,' is', TRIM(movie_header_file(ibox))
+                    WRITE(logunit,'(A,I0,A,A)') '  movie header box ', ibox, ': ', TRIM(movie_header_file(ibox))
                  END DO
               ENDIF
 
@@ -6339,13 +6302,13 @@ SUBROUTINE Get_Simulation_Length_Info
 
               l_run = .TRUE.
               n_mcsteps = String_To_Int(line_array(2))
-              WRITE(logunit,'(A,T48,I19,X,A)' ) 'The simulation will be run for ', n_mcsteps, sim_length_units
+              WRITE(logunit,'(A,I0,A,A)') '  run length:        ', n_mcsteps, ' ', TRIM(sim_length_units)
 
            ELSE IF (line_array(1) == 'nequilsteps' .OR. line_array(1) == 'NequilSteps') THEN
 
               ! # of equilibrium steps will be used only for the fragment generation
               n_equilsteps = String_To_Int(line_array(2))
-              WRITE(logunit, '(A,I19)') 'Number of equilibrium steps', n_equilsteps
+              WRITE(logunit,'(A,I0)') '  equil steps:       ', n_equilsteps
 
            ELSE IF (line_array(1) == 'steps_per_sweep' .OR. line_array(1) == 'Steps_Per_Sweep') THEN
 
@@ -6378,7 +6341,7 @@ SUBROUTINE Get_Simulation_Length_Info
 
               echeck = .TRUE.
               echeck_freq = String_To_Int(line_array(2))
-              WRITE(logunit,'(A,I19,X,A)') 'The energy will be recomputed from scratch every ', echeck_freq, sim_length_units
+              WRITE(logunit,'(A,I0,A,A)') '  echeck_freq:       ', echeck_freq, ' ', TRIM(sim_length_units)
 
            ELSE
 
@@ -6431,14 +6394,14 @@ SUBROUTINE Get_Simulation_Length_Info
         CALL Clean_Abort(err_msg,'Get_Simulation_Length_Info')
      END IF
 
-     WRITE(logunit,'(A,T50,I19,X,A)') 'Block averages will be written every', block_avg_freq, sim_length_units
+     WRITE(logunit,'(A,I0,A,A)') '  block_avg_freq:    ', block_avg_freq, ' ', TRIM(sim_length_units)
      data_points_per_block = REAL(block_avg_freq / nthermo_freq,DP)
   ELSE
-     WRITE(logunit,'(A,T50,I19,X,A)') 'Instantaneous values will be written every', nthermo_freq, sim_length_units
+     WRITE(logunit,'(A,I0,A,A)') '  write style:       instantaneous every ', nthermo_freq, ' ', TRIM(sim_length_units)
   END IF
 
   IF (sim_length_units == 'Sweeps') THEN
-     WRITE(logunit,'(A,T50,I19,A)' ) 'A sweep is defined as ', steps_per_sweep, ' steps'
+     WRITE(logunit,'(A,I0,A)' ) '  steps per sweep:   ', steps_per_sweep, ' steps'
      n_mcsteps = n_mcsteps * steps_per_sweep
      nthermo_freq = nthermo_freq * steps_per_sweep
      ncoord_freq = ncoord_freq * steps_per_sweep
@@ -6446,7 +6409,6 @@ SUBROUTINE Get_Simulation_Length_Info
      IF (echeck) echeck_freq = echeck_freq * steps_per_sweep
   END IF
 
-  WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_Simulation_Length_Info
 
@@ -6472,7 +6434,7 @@ USE Global_Variables, ONLY: cpcollect
 !******************************************************************************
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Property info'
-  WRITE(logunit,'(A80)') '********************************************************************************'
+  WRITE(logunit,'(A)') '-------------'
 
   REWIND(inputunit)
 
@@ -6802,20 +6764,16 @@ USE Global_Variables, ONLY: cpcollect
 
   DO ibox = 1, nbr_boxes
      IF ( nbr_prop_files(ibox) /= 0) THEN
-        WRITE(logunit,'(A48,2X,I3,2X,A8,I2)') 'Total number of property files to be written is ',  &
-             nbr_prop_files(ibox), ' for box ', ibox
-        WRITE(logunit,'(A42,2X,I2)') 'Maximum number of properties per file is ', max_properties
-
-        WRITE(logunit,*) 'Writing the name of the property files and the corresponding property output'
+        WRITE(logunit,'(A,I0,A,I0)') '  box ', ibox, ' property files: ', nbr_prop_files(ibox)
+        WRITE(logunit,'(A,I0)') '  max props/file:    ', max_properties
         DO i = 1, nbr_prop_files(ibox)
-           WRITE(logunit,'(A15,2x,I2,2X,A3,2X,A)') 'Property file ', i, ' is ', TRIM(prop_files(i,ibox))
-           WRITE(logunit,*) 'Properties output in these files are'
+           WRITE(logunit,'(A,I0,A,A)') '  property file ', i, ':  ', TRIM(prop_files(i,ibox))
            DO j = 1, prop_per_file(i,ibox)
-              WRITE(logunit,*) TRIM(prop_output(j,i,ibox))
+              WRITE(logunit,'(A,A)') '    property:        ', TRIM(prop_output(j,i,ibox))
            END DO
         END DO
      ELSE
-        WRITE(logunit,*) 'No property output files will be generated for box ', ibox
+        WRITE(logunit,'(A,I0,A)') '  box ', ibox, ': no property output files'
      END IF
   END DO
 
@@ -6847,7 +6805,6 @@ USE Global_Variables, ONLY: cpcollect
      pressure(:)%last_calc = -1
   END IF
 
-  WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_Property_Info
 
@@ -6869,7 +6826,7 @@ SUBROUTINE Copy_Inputfile
 
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Copy input file'
-  WRITE(logunit,'(A80)') '********************************************************************************'
+  WRITE(logunit,'(A)') '---------------'
 
   REWIND(inputunit)
 
@@ -6933,9 +6890,57 @@ SUBROUTINE Copy_Inputfile
 
   END IF
 
-  WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Copy_Inputfile
+
+!******************************************************************************
+SUBROUTINE Copy_MCF_Files
+!******************************************************************************
+!
+! Echo each species molecular connectivity file (MCF) into the logfile so the
+! force-field parameters used for the run are archived with the input.
+! Comment lines beginning with '!' are omitted (same convention as Copy_Inputfile).
+!
+!******************************************************************************
+
+  INTEGER :: is, ierr, line_nbr, openstatus
+  CHARACTER(STRING_LEN) :: line_string
+
+  IF (.NOT. ALLOCATED(molfile_name)) RETURN
+  IF (nspecies < 1) RETURN
+
+  WRITE(logunit,*)
+  WRITE(logunit,'(A)') 'Copy MCF files'
+  WRITE(logunit,'(A)') '--------------'
+
+  DO is = 1, nspecies
+     WRITE(logunit,*)
+     WRITE(logunit,'(A,I0,A,A)') 'Species ', is, ': ', TRIM(molfile_name(is))
+     WRITE(logunit,'(A)') '--------------'
+
+     OPEN(UNIT=molfile_unit, FILE=molfile_name(is), STATUS='OLD', IOSTAT=openstatus, ACTION='READ')
+     IF (openstatus /= 0) THEN
+        WRITE(logunit,'(A)') '*** Unable to open MCF for echo; skipping ***'
+        CYCLE
+     END IF
+
+     ierr = 0
+     line_nbr = 0
+     DO
+        line_nbr = line_nbr + 1
+        CALL Read_String(molfile_unit, line_string, ierr)
+        IF (ierr /= 0) EXIT
+        IF (line_string(1:1) /= '!') THEN
+           WRITE(logunit,'(A)') TRIM(line_string)
+        END IF
+        IF (line_nbr > 100000) EXIT
+     END DO
+
+     CLOSE(UNIT=molfile_unit)
+  END DO
+
+
+END SUBROUTINE Copy_MCF_Files
 
 !******************************************************************************
 SUBROUTINE Get_Rcutoff_Low
@@ -6955,7 +6960,7 @@ SUBROUTINE Get_Rcutoff_Low
 !******************************************************************************
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Minimum distance cutoff'
-  WRITE(logunit,'(A80)') '********************************************************************************'
+  WRITE(logunit,'(A)') '-----------------------'
 
   REWIND(inputunit)
   est_atompair_rminsq = .FALSE.
@@ -6985,7 +6990,7 @@ SUBROUTINE Get_Rcutoff_Low
         rcut_low = String_To_Double(line_array(1))
         rcut_lowsq = rcut_low * rcut_low
 
-        WRITE(logunit,'(A25,2X,F6.3,2X,A10)') 'MC low cutoff distance is ', rcut_low, ' Angstrom'
+        WRITE(logunit,'(A,F6.3,A)') '  MC low cutoff:     ', rcut_low, ' Angstrom'
         ALLOCATE(tol_list(1))
         tol_list = 1.0e-10_DP
         nbr_tols = 1
@@ -7097,7 +7102,6 @@ SUBROUTINE Get_Rcutoff_Low
 
   END DO sectionsearch
 
-  WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_Rcutoff_Low
 
@@ -7120,7 +7124,7 @@ SUBROUTINE Get_File_Info
 !******************************************************************************
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'File info'
-  WRITE(logunit,'(A80)') '********************************************************************************'
+  WRITE(logunit,'(A)') '---------'
 
   ierr = 0
   REWIND(inputunit)
@@ -7162,7 +7166,6 @@ SUBROUTINE Get_File_Info
 
   END DO
 
-  WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_File_Info
 
@@ -7185,7 +7188,7 @@ SUBROUTINE Get_Lattice_File_Info
 !******************************************************************************
     WRITE(logunit,*)
     WRITE(logunit,'(A)') 'Lattice file'
-    WRITE(logunit,'(A80)') '********************************************************************************'
+    WRITE(logunit,'(A)') '------------'
 
     REWIND(inputunit)
 
@@ -7230,7 +7233,6 @@ SUBROUTINE Get_Lattice_File_Info
 
     END DO
 
-    WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_Lattice_File_Info
 
@@ -7266,7 +7268,7 @@ SUBROUTINE Get_Lattice_Coordinates
 
     WRITE(logunit,*)
     WRITE(logunit,'(A)') 'Lattice coordinates'
-    WRITE(logunit,'(A80)') '********************************************************************************'
+    WRITE(logunit,'(A)') '-------------------'
 
     nbr_boxes = 1
 
@@ -7323,7 +7325,6 @@ SUBROUTINE Get_Lattice_Coordinates
 
     CLOSE(UNIT=lattice_file_unit)
 
-    WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_Lattice_Coordinates
 
@@ -7344,10 +7345,7 @@ SUBROUTINE Get_Verbosity_Info
   CHARACTER(STRING_LEN) :: line_string, line_array(60)
 
 !******************************************************************************
-  WRITE(logunit,*)
-  WRITE(logunit,'(A)') 'Verbose log'
-  WRITE(logunit,'(A80)') '********************************************************************************'
-
+  ! Verbosity is reported in main's Run info block; no separate log section here.
   verbose_log = .FALSE.
 
   REWIND(inputunit)
@@ -7385,13 +7383,6 @@ SUBROUTINE Get_Verbosity_Info
      ENDIF
 
   ENDDO
-
-  IF (verbose_log) THEN
-     WRITE(logunit,'(A)') 'Verbose output to logfile'
-  ELSE
-     WRITE(logunit,'(A)') 'Normal output to logfile'
-  END IF
-  WRITE(logunit,'(A80)') '********************************************************************************'
 
 END SUBROUTINE Get_Verbosity_Info
 

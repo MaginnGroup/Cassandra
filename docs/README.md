@@ -59,6 +59,7 @@ post-processing (block averages, RDF, …) stays separate later.
 |-----|----------------|
 | [mcf-setup-workflow.md](mcf-setup-workflow.md) | New molecule checklist: PDB → FF → MCF → fragments → inp |
 | [output-formats.md](output-formats.md) | `.xyz` / `.prp` precision, layout, and analysis assumptions |
+| [logfile-format.md](logfile-format.md) | Simulation `.log` structure, progress snapshots, intensive energies |
 | [smoke-test.md](smoke-test.md) | How to run `run_test.py`, input/output files, what to expect |
 | [V2_DEVELOPMENT_ENVIRONMENT.md](V2_DEVELOPMENT_ENVIRONMENT.md) | Conda environments, compilers, compile & run workflow |
 | [V2_CRC_WORKFLOW.md](V2_CRC_WORKFLOW.md) | maginnfe / CRC: Git, rsync, OpenMP, Python module / `.bashrc`, `qsub` |
