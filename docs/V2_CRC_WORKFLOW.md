@@ -294,7 +294,53 @@ total and `qsub`.
 
 ---
 
-## 8. Bring results home for diagnostics
+## 8. Python on maginnfe (interactive shells)
+
+CRC’s `python` module provides **`python3`**, not always a `python` command.
+If you see `python: command not found` after `module load python`, call
+`python3` (or add the alias below).
+
+Available versions (2026-08): `python/3.12.13`, `python/3.14.5`. Pin a
+version so a default change later does not surprise you.
+
+**Recommended interactive `~/.bashrc` on maginnfe** (keep CRC’s Modules init
+block at the top; put this under the existing `#Additional aliases` /
+`#Additional modules` comments):
+
+```bash
+#Additional aliases
+alias python=python3
+
+#Additional modules
+# Interactive shells only (avoid surprising non-interactive scripts)
+if [[ $- == *i* ]]; then
+        module load python/3.12.13
+fi
+
+export PATH=$HOME/packmol:$PATH
+```
+
+After editing:
+
+```bash
+source ~/.bashrc
+module list          # expect python/3.12.13
+which python3
+python --version     # expect Python 3.12.13
+```
+
+Do **not** put `module load gcc/15.2.0` in `.bashrc` unless you always want
+that compiler on every login — keep it in compile steps and job scripts.
+Job scripts must still `module load` what they need; do not rely on `.bashrc`
+for `qsub`.
+
+Diagnostics need **numpy** (and **matplotlib** for plots). Prefer bringing
+results home and using `cassandra-dev` on the laptop (next section). A conda
+env on maginnfe for in-cluster plotting is still deferred.
+
+---
+
+## 9. Bring results home for diagnostics
 
 ```bash
 # on laptop
@@ -339,6 +385,7 @@ for now.
 | No new `.chk` after short restart | Did not land on a `coord_freq` boundary |
 | `.mod` / compiler errors on rebuild | Mixed compilers — stick to `module load gcc/15.2.0` |
 | Windows-edited job script rejected | Run `dos2unix script.job` |
+| `python: command not found` after `module load python` | CRC provides **`python3`** — use it or `alias python=python3` |
 
 ---
 

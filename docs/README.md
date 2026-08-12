@@ -17,6 +17,42 @@ ssh-add --apple-use-keychain ~/.ssh/id_ed25519
 python run_test.py                 # smoke test
 ```
 
+## Session start protocol
+
+Use this checklist at the start of every modernization session (laptop). It
+avoids the common traps: wrong conda env, wrong branch, and stale local code.
+
+```bash
+conda activate cassandra-dev       # not thermo2026 / base
+cd ~/CassandraV2/Cassandra
+git branch --show-current          # expect: modernization
+git status -sb                     # see untracked plots / Examples outputs
+git pull                           # when you want latest from origin
+git log --oneline -8               # what changed since last time
+```
+
+Optional after a `git pull` that touched Fortran, or when something feels off:
+
+```bash
+python run_test.py                 # smoke test; see smoke-test.md
+```
+
+**Laptop vs CRC reminder**
+
+| Where | Typical work |
+|-------|----------------|
+| **Laptop** (`cassandra-dev`) | Edit inputs, Git commits, Python diagnostics |
+| **maginnfe** | Compile OpenMP binary, `git pull`, `qsub` long runs |
+
+Bring `.prp` / `.xyz` / `.H` home with `scp`/`rsync` and plot on the laptop for
+now. On the front end, CRC’s Python module provides `python3` (not always
+`python`) — see [V2_CRC_WORKFLOW.md](V2_CRC_WORKFLOW.md) § Python on maginnfe.
+
+Working style for this project: plan → approve → implement; document durable
+workflow changes under `docs/`; stage → commit → push on `modernization` (no
+PR unless asked). Keep `diagnostics/` for reliability checks only — research
+post-processing (block averages, RDF, …) stays separate later.
+
 ## Guides
 
 | Doc | What it covers |
@@ -25,7 +61,7 @@ python run_test.py                 # smoke test
 | [output-formats.md](output-formats.md) | `.xyz` / `.prp` precision, layout, and analysis assumptions |
 | [smoke-test.md](smoke-test.md) | How to run `run_test.py`, input/output files, what to expect |
 | [V2_DEVELOPMENT_ENVIRONMENT.md](V2_DEVELOPMENT_ENVIRONMENT.md) | Conda environments, compilers, compile & run workflow |
-| [V2_CRC_WORKFLOW.md](V2_CRC_WORKFLOW.md) | maginnfe / CRC: Git, rsync, OpenMP build, checkpoint, `qsub` |
+| [V2_CRC_WORKFLOW.md](V2_CRC_WORKFLOW.md) | maginnfe / CRC: Git, rsync, OpenMP, Python module / `.bashrc`, `qsub` |
 | [V2_GIT_WORKFLOW.md](V2_GIT_WORKFLOW.md) | Branch strategy, commit/push, SSH authentication |
 | [VS-CODE-Guide.md](VS-CODE-Guide.md) | VS Code / Cursor workspace, tasks, and run setup |
 | [../python/README.md](../python/README.md) | Python `run_cassandra()` API |
