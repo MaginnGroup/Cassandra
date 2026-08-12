@@ -54,12 +54,47 @@ Off campus: ND VPN (or CRC’s off-campus instructions) before SSH.
 
 ---
 
-## 1. GitHub access from maginnfe (one-time)
+## 1. GitHub access from maginnfe
 
-The SSH key on your **laptop** does **not** unlock GitHub from maginnfe. Create a
-**separate** key on the front end.
+The SSH key on your **laptop** does **not** unlock GitHub from maginnfe. The
+cluster needs its **own** key registered with GitHub.
 
-### On maginnfe
+### 1a. Returning session — key already exists?
+
+```bash
+ls ~/.ssh/id_ed25519_github.pub
+```
+
+If that prints a path (e.g. `/users/ed/.ssh/id_ed25519_github.pub`), **skip
+keygen**. Do this every new login (or put the `ssh-add` in `~/.bashrc`):
+
+```bash
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519_github
+
+# Ensure GitHub always uses this key
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+cat > ~/.ssh/config << 'EOF'
+Host github.com
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/id_ed25519_github
+  IdentitiesOnly yes
+EOF
+chmod 600 ~/.ssh/config
+
+ssh -T git@github.com
+# expect: Hi ejmaginn! You've successfully authenticated...
+```
+
+| `ssh -T` result | What to do |
+|-----------------|------------|
+| `Hi … You've successfully authenticated` | Done — go to §2 |
+| `Permission denied (publickey)` | Public key is missing from GitHub, or wrong `IdentityFile` — see §1c |
+| Asks for passphrase | Type the passphrase you set at `ssh-keygen` (empty is fine if you used none) |
+
+### 1b. First time only — create the key
 
 ```bash
 ssh-keygen -t ed25519 -C "ed@maginnfe-github" -f ~/.ssh/id_ed25519_github
@@ -69,26 +104,20 @@ ssh-add ~/.ssh/id_ed25519_github
 cat ~/.ssh/id_ed25519_github.pub
 ```
 
-### In the browser (laptop)
+Then do §1c and finish with the `~/.ssh/config` + `ssh -T` steps in §1a.
 
-GitHub → **Settings → SSH and GPG keys → New SSH key**  
-Title: `maginnfe` → paste the `.pub` line → Save.
-
-Optional `~/.ssh/config` on maginnfe so GitHub always uses this key:
-
-```
-Host github.com
-  HostName github.com
-  User git
-  IdentityFile ~/.ssh/id_ed25519_github
-  IdentitiesOnly yes
-```
+### 1c. Register the public key on GitHub (browser / laptop)
 
 ```bash
-chmod 600 ~/.ssh/config
-ssh -T git@github.com
-# Hi ejmaginn! You've successfully authenticated...
+# On maginnfe — copy this entire line
+cat ~/.ssh/id_ed25519_github.pub
 ```
+
+On your laptop: GitHub → **Settings → SSH and GPG keys → New SSH key**  
+Title: `maginnfe` → paste the `.pub` line → Save.
+
+If a key titled `maginnfe` already exists, confirm its fingerprint matches this
+`.pub` file; if not, add a new key or replace the old one.
 
 Never share the **private** key (`id_ed25519_github` without `.pub`).
 
@@ -96,9 +125,11 @@ See also [V2_GIT_WORKFLOW.md](V2_GIT_WORKFLOW.md) for laptop Git habits.
 
 ---
 
-## 2. Clone Cassandra (`modernization`) on maginnfe
+## 2. Clone or update Cassandra (`modernization`) on maginnfe
 
 **Source code** travels via GitHub. Do not SFTP the whole `Src/` tree every time.
+
+### First clone
 
 ```bash
 mkdir -p /users/ed/CassandraV2
@@ -109,14 +140,35 @@ git checkout modernization
 git pull
 ```
 
-Later updates:
+### Later updates (usual case after a laptop push)
 
 ```bash
-cd /users/ed/CassandraV2/Cassandra
+cd /users/ed/CassandraV2/Cassandra   # adjust if your clone path differs
+
+git status
+# If Example smoke outputs are dirty, discard them (do not commit):
+git restore Examples/NVT/water_spc/nvt.out.* 2>/dev/null || true
+
 git checkout modernization
-git pull
-# then recompile if Fortran changed
+git pull origin modernization
+# then recompile if Fortran changed (see §3)
 ```
+
+`Your branch is up to date with 'origin/modernization'` only means **local
+tracking info** is current — it does **not** fetch new commits until `git pull`
+succeeds. If pull fails with `Permission denied (publickey)`, fix §1 first.
+
+### After a successful pull with Fortran changes
+
+```bash
+cd Src
+module purge
+module load gcc/15.2.0
+make -f Makefile.openMP clean    # or Makefile.gfortran if that is what you use
+make -f Makefile.openMP
+```
+
+(Use the same compiler module you used for the previous build.)
 
 Layout on CRC mirrors the laptop idea:
 
@@ -378,7 +430,9 @@ for now.
 
 | Symptom | Likely cause |
 |---------|----------------|
-| `Permission denied (publickey)` on `git clone` | No GitHub SSH key on **maginnfe** |
+| `Permission denied (publickey)` on `git clone` / `git pull` | Key not loaded, missing `~/.ssh/config`, or `.pub` not on GitHub — see §1 |
+| `Your branch is up to date` but code looks old | Tracking is stale until a successful `git pull`; fix SSH then pull |
+| Dirty `Examples/.../nvt.out.*` blocking a clean tree | Smoke-test leftovers — `git restore Examples/NVT/water_spc/nvt.out.*` |
 | `rsync: mkdir ... failed` | Parent `projects/hfc125` missing — `mkdir -p` first |
 | Job fails / “No such file” for exe | Used `cassandra_gfortran.exe` instead of **`cassandra_gfortran_openMP.exe`** |
 | Run ends instantly after checkpoint | `run` ≤ current sweep in `.chk` |

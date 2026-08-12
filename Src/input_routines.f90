@@ -40,6 +40,8 @@ MODULE Input_Routines
   !    12/10/13  : Beta version
   !    08/12/26 (EJM) : Logfile redesign — underlined setup sections, MCF echo,
   !                    aligned label/value lines (Temperature through Run type)
+  !    08/12/26 (EJM) : Clearer # Run_Type errors when update freqs are non-integers
+  !    08/12/26 (EJM) : Check_String reports illegal filename characters clearly
   !***************************************************************************
 
   USE Global_Variables
@@ -5139,16 +5141,8 @@ SUBROUTINE Get_Start_Type
                     '    read species ', is, ': ', nmols_to_read(is,ibox), ' molecules'
               END DO
 
-              ! Make sure that the characters of the string are alphanumeric
-              ! with a possibility of a . (dot).
-              ! The first character must be an alphabet
-              CALL Check_String(line_array(2+nspecies),ierr)
-              IF (ierr /= 0 ) THEN
-                 err_msg = ''
-                 err_msg(1) = 'An error in the input line ' // &
-                      TRIM(Int_to_String(line_nbr)) // ' of input file.'
-                 CALL Clean_Abort(err_msg,'Get_Start_Type')
-              END IF
+              ! Validate config filename characters (letters, digits, . _ - /)
+              CALL Check_String(line_array(2+nspecies), ierr, line_nbr)
               old_config_file(ibox) = TRIM(ADJUSTL(line_array(2+nspecies)))
 
               WRITE(logunit,'(A,A)') '    config file:      ', TRIM(old_config_file(ibox))
@@ -5166,16 +5160,8 @@ SUBROUTINE Get_Start_Type
                     '    read species ', is, ': ', nmols_to_read(is,ibox), ' molecules'
               END DO
 
-              ! Make sure that the characters of the string are alphanumeric
-              ! with a possibility of a . (dot).
-              ! The first character must be an alphabet
-              CALL Check_String(line_array(2+nspecies),ierr)
-              IF (ierr /= 0 ) THEN
-                 err_msg = ''
-                 err_msg(1) = 'An error in the input line ' // &
-                      TRIM(Int_to_String(line_nbr)) // ' of input file.'
-                 CALL Clean_Abort(err_msg,'Get_Start_Type')
-              END IF
+              ! Validate config filename characters (letters, digits, . _ - /)
+              CALL Check_String(line_array(2+nspecies), ierr, line_nbr)
               old_config_file(ibox) = TRIM(ADJUSTL(line_array(2+nspecies)))
 
               WRITE(logunit,'(A,A)') '    config file:      ', TRIM(old_config_file(ibox))
@@ -5204,16 +5190,8 @@ SUBROUTINE Get_Start_Type
 
               WRITE(logunit,'(A)') '  start:              checkpoint'
 
-              ! Make sure that the characters of the string are alphanumeric with
-              ! a possibility of a . (dot). or _ (dash).
-              ! The first character must be a letter from the alphabet
-              CALL Check_String(line_array(2),ierr)
-              IF (ierr /= 0 ) THEN
-                 err_msg = ''
-                 err_msg(1) = 'An error in the input line ' // TRIM(Int_to_String(line_nbr)) &
-                      // ' of input file.'
-                 CALL Clean_Abort(err_msg,'Get_Start_Type')
-              END IF
+              ! Validate checkpoint filename characters (letters, digits, . _ - /)
+              CALL Check_String(line_array(2), ierr, line_nbr)
               IF (ibox /= 1) THEN
                  err_msg = ''
                  err_msg(1) = 'checkpoint must be the first start type option'
@@ -5369,6 +5347,16 @@ SUBROUTINE Get_Run_Type
         !   CALL Clean_Abort(err_msg,'Get_Run_Type')
         !END IF
 
+        ! Update frequencies must be whole numbers (move-attempt counts)
+        IF (INDEX(TRIM(ADJUSTL(line_array(2))), '.') /= 0) THEN
+           err_msg = ''
+           err_msg(1) = '# Run_Type update frequency must be an integer, got: ' // &
+                        TRIM(ADJUSTL(line_array(2)))
+           err_msg(2) = 'Example (NVT): equilibration 100'
+           err_msg(3) = 'Example (NPT/GEMC): equilibration 100 10'
+           CALL Clean_Abort(err_msg,'Get_Run_Type')
+        END IF
+
         nupdate = String_To_Int(line_array(2))
 
         WRITE(logunit,'(A,A)') '  run type:          ', TRIM(line_array(1))
@@ -5382,6 +5370,15 @@ SUBROUTINE Get_Run_Type
               err_msg = ''
               err_msg(1) = 'Frequency to print/update the volume displacement'
               err_msg(2) = 'must be specified for simulations with volume moves'
+              err_msg(3) = 'Example: equilibration 100 10'
+              CALL Clean_Abort(err_msg,'Get_Run_Type')
+           END IF
+
+           IF (INDEX(TRIM(ADJUSTL(line_array(3))), '.') /= 0) THEN
+              err_msg = ''
+              err_msg(1) = '# Run_Type volume update frequency must be an integer, got: ' // &
+                           TRIM(ADJUSTL(line_array(3)))
+              err_msg(2) = 'Example: equilibration 100 10'
               CALL Clean_Abort(err_msg,'Get_Run_Type')
            END IF
 

@@ -52,6 +52,9 @@ MODULE IO_Utilities
   ! Revision history
   !
   !    12/10/13  : Beta version
+  !    08/12/26 (EJM) : Clearer String_To_Int / String_To_Double error messages
+  !    08/12/26 (EJM) : Clearer Parse_String / numeric / logical input errors
+  !    08/12/26 (EJM) : Check_String reports illegal filename characters clearly
   !********************************************************************************
   USE Global_Variables
   USE File_Names
@@ -116,6 +119,14 @@ CONTAINS
 ! Read the string from the file
     CALL Read_String(file_number,string,ierr)
 
+    IF (ierr /= 0) THEN
+       err_msg = ''
+       err_msg(1) = 'Unexpected end of file or read error near line ' // &
+                    TRIM(Int_To_String(line_nbr)) // ' of the input file'
+       err_msg(2) = 'A required data line may be missing after a section header'
+       CALL Clean_Abort(err_msg,'Parse_String')
+    END IF
+
     IF (string(1:1) .NE. '!') THEN
        IF (string(1:1) .NE. ' ') THEN
           ! first character is an entry, so advance counter
@@ -146,10 +157,20 @@ CONTAINS
     ! Test to see if the minimum number of entries was read in      
     IF (nbr_entries < min_entries) THEN
        err_msg = ""
-       err_msg(1) = 'Error attempting to parse line ' // &
-                    TRIM(Int_To_String(line_nbr)) // ' of input file: '
-       err_msg(2) = TRIM(string)
-       err_msg(3) = 'into at least ' // TRIM(Int_To_String(min_entries)) // ' entries'
+       err_msg(1) = 'Could not parse line ' // TRIM(Int_To_String(line_nbr)) // &
+                    ' of the input file'
+       IF (LEN_TRIM(string) == 0 .OR. string(1:1) == '!') THEN
+          err_msg(2) = '  line: (blank or comment-only)'
+       ELSE
+          err_msg(2) = '  line: ' // TRIM(string)
+       END IF
+       err_msg(3) = '  found: ' // TRIM(Int_To_String(nbr_entries)) // &
+                    ' token(s); need at least ' // TRIM(Int_To_String(min_entries))
+       err_msg(4) = 'Hint: separate fields with spaces (not tabs)'
+       err_msg(5) = 'Hint: comments must start with ! in column 1'
+       IF (INDEX(string, CHAR(9)) /= 0) THEN
+          err_msg(6) = 'Hint: this line contains a TAB character'
+       END IF
        CALL Clean_Abort(err_msg,'Parse_String')
     END IF
       
@@ -186,6 +207,14 @@ CONTAINS
 ! Read the string from the file
     CALL Read_String_Zeo(file_number,string,ierr)
 
+    IF (ierr /= 0) THEN
+       err_msg = ''
+       err_msg(1) = 'Unexpected end of file or read error near line ' // &
+                    TRIM(Int_To_String(line_nbr)) // ' of the input file'
+       err_msg(2) = 'A required data line may be missing after a section header'
+       CALL Clean_Abort(err_msg,'Parse_String_Zeolite_Frag')
+    END IF
+
     IF (string(1:1) .NE. '!') THEN
        IF (string(1:1) .NE. ' ') THEN
           ! first character is an entry, so advance counter
@@ -217,8 +246,21 @@ CONTAINS
     ! Test to see if the minimum number of entries was read in      
     IF (nbr_entries < min_entries) THEN
        err_msg = ""
-       err_msg(1) = 'Expected at least '// TRIM(Int_To_String(min_entries))//&
-            ' input(s) on line '//TRIM(Int_To_String(line_nbr))//' of input file.'
+       err_msg(1) = 'Could not parse line ' // TRIM(Int_To_String(line_nbr)) // &
+                    ' of the input file'
+       IF (LEN_TRIM(string) == 0 .OR. string(1:1) == '!') THEN
+          err_msg(2) = '  line: (blank or comment-only)'
+       ELSE
+          ! Truncate long zeolite lines for the 80-char err_msg slots
+          err_msg(2) = '  line: ' // TRIM(string(1:MIN(70, LEN_TRIM(string))))
+       END IF
+       err_msg(3) = '  found: ' // TRIM(Int_To_String(nbr_entries)) // &
+                    ' token(s); need at least ' // TRIM(Int_To_String(min_entries))
+       err_msg(4) = 'Hint: separate fields with spaces (not tabs)'
+       err_msg(5) = 'Hint: comments must start with ! in column 1'
+       IF (INDEX(string, CHAR(9)) /= 0) THEN
+          err_msg(6) = 'Hint: this line contains a TAB character'
+       END IF
        CALL Clean_Abort(err_msg,'Parse_String_Zeolite_Frag')
     END IF
       
@@ -339,6 +381,7 @@ FUNCTION String_To_Double(string_in)
   LOGICAL :: dec_found, exp_found, is_negative
   CHARACTER(*) :: string_in
   CHARACTER(50) :: cff_bd, cff_ad, expv
+  CHARACTER(STRING_LEN) :: token
   INTEGER :: nchars, strln, exp_start,dec_start
   INTEGER :: ii, cnt, icff_bd, iexpv, digit
   REAL(DP) :: string_to_double, div, add_num
@@ -351,21 +394,65 @@ FUNCTION String_To_Double(string_in)
   cff_ad = ""
   expv = ""
   string_in = ADJUSTL(string_in)
+  token = ADJUSTL(string_in)
   nchars = LEN_TRIM(string_in)
   strln = LEN(string_in)
   is_negative = .FALSE.
   IF (string_in(1:1) == "-") is_negative = .TRUE.
+
+  IF (nchars == 0) THEN
+     err_msg = ''
+     err_msg(1) = 'Cannot convert an empty field to a real number'
+     err_msg(2) = 'Expected a number such as 298.15 or 1.0e-5'
+     CALL Clean_Abort(err_msg, 'String_To_Double')
+  END IF
+
+  IF (INDEX(string_in(1:nchars), CHAR(13)) /= 0) THEN
+     err_msg = ''
+     err_msg(1) = 'Cannot convert "' // TRIM(token) // '" to a real number'
+     err_msg(2) = 'Field contains a carriage return (CRLF / Windows line ending)'
+     err_msg(3) = 'Run dos2unix on the input file and try again'
+     CALL Clean_Abort(err_msg, 'String_To_Double')
+  END IF
+
+  ! Reject clearly non-numeric tokens before calling String_To_Int on pieces
+  DO ii = 1, nchars
+     IF (.NOT. ( (string_in(ii:ii) >= '0' .AND. string_in(ii:ii) <= '9') .OR. &
+                 string_in(ii:ii) == '+' .OR. string_in(ii:ii) == '-' .OR. &
+                 string_in(ii:ii) == '.' .OR. &
+                 string_in(ii:ii) == 'e' .OR. string_in(ii:ii) == 'E' .OR. &
+                 string_in(ii:ii) == 'd' .OR. string_in(ii:ii) == 'D' ) ) THEN
+        err_msg = ''
+        err_msg(1) = 'Cannot convert "' // TRIM(token) // '" to a real number'
+        err_msg(2) = 'Expected a number such as 298.15 or 1.0e-5'
+        CALL Clean_Abort(err_msg, 'String_To_Double')
+     END IF
+  END DO
   
   ! Make an initial pass through the string to find
   ! if and where the decimal and exponent marker are
   exp_start = -1
   dec_start = -1
   DO ii = 1, nchars
-     IF (string_in(ii:ii) == ".") dec_start = ii
-     IF (string_in(ii:ii) == "D") exp_start = ii
-     IF (string_in(ii:ii) == "d") exp_start = ii
-     IF (string_in(ii:ii) == "E") exp_start = ii
-     IF (string_in(ii:ii) == "e") exp_start = ii
+     IF (string_in(ii:ii) == ".") THEN
+        IF (dec_start > 0) THEN
+           err_msg = ''
+           err_msg(1) = 'Cannot convert "' // TRIM(token) // '" to a real number'
+           err_msg(2) = 'More than one decimal point found'
+           CALL Clean_Abort(err_msg, 'String_To_Double')
+        END IF
+        dec_start = ii
+     END IF
+     IF (string_in(ii:ii) == "D" .OR. string_in(ii:ii) == "d" .OR. &
+         string_in(ii:ii) == "E" .OR. string_in(ii:ii) == "e") THEN
+        IF (exp_start > 0) THEN
+           err_msg = ''
+           err_msg(1) = 'Cannot convert "' // TRIM(token) // '" to a real number'
+           err_msg(2) = 'More than one exponent marker (e/E/d/D) found'
+           CALL Clean_Abort(err_msg, 'String_To_Double')
+        END IF
+        exp_start = ii
+     END IF
   END DO
   IF (exp_start > 0) THEN
      exp_found = .TRUE.
@@ -404,6 +491,19 @@ FUNCTION String_To_Double(string_in)
   ELSE
      expv(1:1) = "0"
   END IF
+
+  ! Empty pieces are valid (e.g. ".5" has no digits before the decimal)
+  IF (LEN_TRIM(cff_bd) == 0) cff_bd = "0"
+  IF (LEN_TRIM(cff_ad) == 0) cff_ad = "0"
+  IF (LEN_TRIM(expv) == 0) expv = "0"
+  ! Sign-only before decimal (e.g. "-.5") means zero magnitude there
+  IF (TRIM(ADJUSTL(cff_bd)) == '+' .OR. TRIM(ADJUSTL(cff_bd)) == '-') cff_bd = "0"
+  IF (TRIM(ADJUSTL(expv)) == '+' .OR. TRIM(ADJUSTL(expv)) == '-') THEN
+     err_msg = ''
+     err_msg(1) = 'Cannot convert "' // TRIM(token) // '" to a real number'
+     err_msg(2) = 'Exponent is missing digits after e/E/d/D'
+     CALL Clean_Abort(err_msg, 'String_To_Double')
+  END IF
   
   !Convert exponent, predecimal components to integers
   icff_bd = string_to_int(cff_bd)
@@ -416,7 +516,8 @@ FUNCTION String_To_Double(string_in)
      digit = IACHAR(cff_ad(ii:ii)) - 48
      IF (digit < 0 .OR. digit > 9) THEN
              err_msg = ''
-             err_msg(1) = "String " // string_in // " is not a number"
+             err_msg(1) = 'Cannot convert "' // TRIM(token) // '" to a real number'
+             err_msg(2) = 'Expected a number such as 298.15 or 1.0e-5'
              CALL Clean_Abort(err_msg, 'String_To_Double')
      END IF
      add_num = digit / div
@@ -442,12 +543,29 @@ FUNCTION String_To_Int(string_in)
   INTEGER :: ndigits, strln, digit, pos, ii
   INTEGER (KIND=INT64) :: mult, string_to_int
   CHARACTER(*) :: string_in
+  CHARACTER(STRING_LEN) :: token
 !****************************************************************************
   !Initialize some things
   string_to_int = 0
   string_in = ADJUSTL(string_in)
+  token = ADJUSTL(string_in)
   ndigits = LEN_TRIM(string_in)
   strln = LEN(string_in)
+
+  IF (ndigits == 0) THEN
+     err_msg = ''
+     err_msg(1) = 'Cannot convert an empty field to an integer'
+     err_msg(2) = 'Expected a whole number (e.g. 100)'
+     CALL Clean_Abort(err_msg, 'String_To_Int')
+  END IF
+
+  IF (INDEX(string_in(1:ndigits), CHAR(13)) /= 0) THEN
+     err_msg = ''
+     err_msg(1) = 'Cannot convert "' // TRIM(token) // '" to an integer'
+     err_msg(2) = 'Field contains a carriage return (CRLF / Windows line ending)'
+     err_msg(3) = 'Run dos2unix on the input file and try again'
+     CALL Clean_Abort(err_msg, 'String_To_Int')
+  END IF
 
   !Find out if the number is negative
   is_negative = .FALSE.
@@ -456,6 +574,13 @@ FUNCTION String_To_Int(string_in)
      ndigits = ndigits - 1
   END IF
   IF (string_in(1:1) == "+") ndigits = ndigits - 1
+
+  IF (ndigits <= 0) THEN
+     err_msg = ''
+     err_msg(1) = 'Cannot convert "' // TRIM(token) // '" to an integer'
+     err_msg(2) = 'Expected a whole number (e.g. 100), not a real or text'
+     CALL Clean_Abort(err_msg, 'String_To_Int')
+  END IF
 
   !Pull of digits starting at the end, multiply by
   !the correct power of ten and add to value
@@ -466,7 +591,8 @@ FUNCTION String_To_Int(string_in)
      digit = IACHAR(string_in(pos:pos)) - 48
      IF (digit < 0 .OR. digit > 9) THEN
              err_msg = ''
-             err_msg(1) = "String " // string_in // " is not a number"
+             err_msg(1) = 'Cannot convert "' // TRIM(ADJUSTL(token)) // '" to an integer'
+             err_msg(2) = 'Expected a whole number (e.g. 100), not a real or text'
              CALL Clean_Abort(err_msg, 'String_To_Int')
      END IF
      string_to_int = string_to_int + mult*digit
@@ -478,52 +604,113 @@ FUNCTION String_To_Int(string_in)
 
 END FUNCTION String_To_Int
 !****************************************************************************
-ELEMENTAL FUNCTION String_To_Logical(string_in)
+FUNCTION String_To_Logical(string_in)
 !****************************************************************************
-! This function takes a character string as input out returns the 
-! equivalent logical.
+! This function takes a character string as input and returns the
+! equivalent logical. Only true/false (and t/f) are accepted.
 !****************************************************************************
 
   IMPLICIT NONE
  
   CHARACTER(*), INTENT(in) :: string_in
+  CHARACTER(STRING_LEN) :: token
   LOGICAL :: string_to_logical
 
-  String_To_Logical = (string_in(1:1) == 't' .OR. string_in(1:1) == 'T' &
-       .OR. string_in(2:2) == 't' .OR. string_in(2:2) == 'T')
+  token = ADJUSTL(string_in)
+  token = TRIM(token)
+
+  IF (token == 'true' .OR. token == 'TRUE' .OR. token == 'True' .OR. &
+      token == 't' .OR. token == 'T') THEN
+     string_to_logical = .TRUE.
+  ELSE IF (token == 'false' .OR. token == 'FALSE' .OR. token == 'False' .OR. &
+           token == 'f' .OR. token == 'F') THEN
+     string_to_logical = .FALSE.
+  ELSE
+     err_msg = ''
+     err_msg(1) = 'Cannot convert "' // TRIM(token) // '" to logical'
+     err_msg(2) = 'Expected true or false'
+     CALL Clean_Abort(err_msg, 'String_To_Logical')
+  END IF
 
 END FUNCTION String_To_Logical
 
-SUBROUTINE Check_String(string_in,ierr)
-  ! The subroutine checks that the first character of the input string is
-  ! an alphabet. Also, it determines if all the characters are alphanumeric
-  ! or a dot. 
-  
+SUBROUTINE Check_String(string_in, ierr, line_nbr)
+  ! Validate a filename/path token (e.g. # Start_Type checkpoint / read_config).
+  ! Allowed characters: A–Z a–z 0–9 . _ - /
+  ! Digits and path punctuation may appear in any position (including first).
+  ! On failure: sets ierr = 1 and Clean_Abort with a clear message.
+  ! Optional line_nbr is included in the error text when present.
+
   IMPLICIT NONE
 
   CHARACTER(*) :: string_in
+  INTEGER, INTENT(OUT) :: ierr
+  INTEGER, INTENT(IN), OPTIONAL :: line_nbr
 
-  INTEGER :: ncharacters, strln, i, ierr
-  
+  INTEGER :: ncharacters, i, imsg
+  CHARACTER(STRING_LEN) :: token
+  CHARACTER(1) :: bad_char
+
   ierr = 0
 
   string_in = ADJUSTL(string_in)
+  token = ADJUSTL(string_in)
   ncharacters = LEN_TRIM(string_in)
-  strln = LEN(string_in)
 
-  ! Now check for the rest of the characters
+  IF (ncharacters == 0) THEN
+     ierr = 1
+     err_msg = ''
+     err_msg(1) = 'Filename/path field is empty'
+     imsg = 2
+     IF (PRESENT(line_nbr)) THEN
+        err_msg(imsg) = 'Error on line ' // TRIM(Int_To_String(line_nbr)) // &
+                        ' of the input file'
+        imsg = imsg + 1
+     END IF
+     err_msg(imsg) = 'Allowed characters: letters, digits, . _ - /'
+     err_msg(imsg+1) = 'Used by # Start_Type (checkpoint / read_config / add_to_config)'
+     CALL Clean_Abort(err_msg, 'Check_String')
+  END IF
 
   DO i = 1, ncharacters
-     IF ( .NOT. ((string_in(i:i) >=  'A' .AND. (string_in(i:i) <= 'Z')) .OR. &
-          (string_in(i:i) >= 'a' .AND. (string_in(i:i) <= 'z')) .OR. &
-          (string_in(i:i) >= '0' .AND. (string_in(i:i) <= '9')) .OR. &
-          (string_in(i:i) == '.' .OR. string_in(i:i) == '_' .OR. &
-         string_in(i:i) == '-' .OR. string_in(i:i) == '/'))) THEN
-        ! character other than letters and digits found
+     IF ( .NOT. ((string_in(i:i) >=  'A' .AND. string_in(i:i) <= 'Z') .OR. &
+          (string_in(i:i) >= 'a' .AND. string_in(i:i) <= 'z') .OR. &
+          (string_in(i:i) >= '0' .AND. string_in(i:i) <= '9') .OR. &
+          string_in(i:i) == '.' .OR. string_in(i:i) == '_' .OR. &
+          string_in(i:i) == '-' .OR. string_in(i:i) == '/') ) THEN
         ierr = 1
-        RETURN
+        bad_char = string_in(i:i)
+        err_msg = ''
+        err_msg(1) = 'Illegal character in filename/path: "' // TRIM(token) // '"'
+        imsg = 2
+        IF (bad_char == CHAR(13)) THEN
+           err_msg(imsg) = '  bad character: carriage return (CRLF) at position ' // &
+                           TRIM(Int_To_String(i))
+           imsg = imsg + 1
+           err_msg(imsg) = '  Run dos2unix on the input file and try again'
+           imsg = imsg + 1
+        ELSE IF (bad_char == CHAR(9)) THEN
+           err_msg(imsg) = '  bad character: TAB at position ' // TRIM(Int_To_String(i))
+           imsg = imsg + 1
+        ELSE IF (bad_char == ' ') THEN
+           err_msg(imsg) = '  bad character: space at position ' // TRIM(Int_To_String(i))
+           imsg = imsg + 1
+        ELSE
+           err_msg(imsg) = '  bad character: ''' // bad_char // ''' at position ' // &
+                           TRIM(Int_To_String(i))
+           imsg = imsg + 1
+        END IF
+        IF (PRESENT(line_nbr)) THEN
+           err_msg(imsg) = '  on line ' // TRIM(Int_To_String(line_nbr)) // &
+                           ' of the input file'
+           imsg = imsg + 1
+        END IF
+        err_msg(imsg) = 'Allowed characters: letters, digits, . _ - /'
+        err_msg(imsg+1) = 'Used by # Start_Type (checkpoint / read_config / add_to_config)'
+        CALL Clean_Abort(err_msg, 'Check_String')
      END IF
   END DO
+
 END SUBROUTINE Check_String
 
 END MODULE IO_Utilities

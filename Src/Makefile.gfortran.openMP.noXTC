@@ -144,7 +144,7 @@ exe: $(OBJS)
 	$(FC) $(OPTFLAGS) -o $(BIN_DIR)/$(EXEC_NAME) $(OBJS) $(LIBS) $(LINK_F90) $(LINKFLAGS)
 
 clean:
-	rm *.o *.mod *.temp.f90 dep.mk
+	rm -f *.o *.mod *.temp.f90 dep.mk
 
 dep.mk:
 	./get_deps
