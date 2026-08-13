@@ -6243,18 +6243,28 @@ SUBROUTINE Get_Simulation_Length_Info
 
               ALLOCATE(movie_header_file(nbr_boxes))
               ALLOCATE(movie_xyz_file(nbr_boxes))
+              ALLOCATE(restart_xyz_file(nbr_boxes))
+              ALLOCATE(restart_h_file(nbr_boxes))
               IF (nbr_boxes == 1) THEN
                  ibox = 1
                  movie_header_file(ibox) = TRIM(run_name) // '.H'
                  movie_xyz_file(ibox) =    TRIM(run_name) // '.xyz'
+                 restart_h_file(ibox) =    TRIM(run_name) // '.restart.H'
+                 restart_xyz_file(ibox) =  TRIM(run_name) // '.restart.xyz'
                  WRITE(logunit,'(A,A)') '  movie header:      ', TRIM(movie_header_file(ibox))
                  WRITE(logunit,'(A,A)') '  movie XYZ:         ', TRIM(movie_xyz_file(ibox))
+                 WRITE(logunit,'(A,A)') '  restart header:    ', TRIM(restart_h_file(ibox))
+                 WRITE(logunit,'(A,A)') '  restart XYZ:       ', TRIM(restart_xyz_file(ibox))
               ELSE
                  DO ibox = 1, nbr_boxes
                     movie_header_file(ibox) = TRIM(run_name) // '.box' // TRIM(Int_To_String(ibox)) // '.H'
                     movie_xyz_file(ibox) =    TRIM(run_name) // '.box' // TRIM(Int_To_String(ibox)) // '.xyz'
+                    restart_h_file(ibox) =    TRIM(run_name) // '.box' // TRIM(Int_To_String(ibox)) // '.restart.H'
+                    restart_xyz_file(ibox) =  TRIM(run_name) // '.box' // TRIM(Int_To_String(ibox)) // '.restart.xyz'
                     WRITE(logunit,'(A,I0,A,A)') '  movie header box ', ibox, ': ', TRIM(movie_header_file(ibox))
                     WRITE(logunit,'(A,I0,A,A)') '  movie XYZ box ', ibox, ':    ', TRIM(movie_xyz_file(ibox))
+                    WRITE(logunit,'(A,I0,A,A)') '  restart header box ', ibox, ': ', TRIM(restart_h_file(ibox))
+                    WRITE(logunit,'(A,I0,A,A)') '  restart XYZ box ', ibox, ':    ', TRIM(restart_xyz_file(ibox))
                  END DO
               ENDIF
 
@@ -6282,16 +6292,26 @@ SUBROUTINE Get_Simulation_Length_Info
               WRITE(logunit,'(A,I0,A,A)') '  coord_freq:        ', ncoord_freq, ' ', TRIM(sim_length_units)
 
               ALLOCATE(movie_header_file(nbr_boxes))
+              ALLOCATE(restart_xyz_file(nbr_boxes))
+              ALLOCATE(restart_h_file(nbr_boxes))
               movie_custom_file =  TRIM(run_name) // '.crd'
               WRITE(logunit,'(A,A)') '  movie file:        ', TRIM(movie_custom_file)
               IF (nbr_boxes == 1) THEN
                  ibox = 1
                  movie_header_file(ibox) = TRIM(run_name) // '.H'
+                 restart_h_file(ibox) =    TRIM(run_name) // '.restart.H'
+                 restart_xyz_file(ibox) =  TRIM(run_name) // '.restart.xyz'
                  WRITE(logunit,'(A,A)') '  movie header:      ', TRIM(movie_header_file(ibox))
+                 WRITE(logunit,'(A,A)') '  restart header:    ', TRIM(restart_h_file(ibox))
+                 WRITE(logunit,'(A,A)') '  restart XYZ:       ', TRIM(restart_xyz_file(ibox))
               ELSE
                  DO ibox = 1, nbr_boxes
                     movie_header_file(ibox) = TRIM(run_name) // '.box' // TRIM(Int_To_String(ibox)) // '.H'
+                    restart_h_file(ibox) =    TRIM(run_name) // '.box' // TRIM(Int_To_String(ibox)) // '.restart.H'
+                    restart_xyz_file(ibox) =  TRIM(run_name) // '.box' // TRIM(Int_To_String(ibox)) // '.restart.xyz'
                     WRITE(logunit,'(A,I0,A,A)') '  movie header box ', ibox, ': ', TRIM(movie_header_file(ibox))
+                    WRITE(logunit,'(A,I0,A,A)') '  restart header box ', ibox, ': ', TRIM(restart_h_file(ibox))
+                    WRITE(logunit,'(A,I0,A,A)') '  restart XYZ box ', ibox, ':    ', TRIM(restart_xyz_file(ibox))
                  END DO
               ENDIF
 

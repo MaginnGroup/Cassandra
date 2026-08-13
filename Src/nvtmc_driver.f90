@@ -364,5 +364,9 @@ SUBROUTINE NVTMC_Driver
 
   END DO
 
+  ! Ensure restart XYZ/H match the final configuration (coord_freq may miss last step)
+  DO ibox = 1, nbr_boxes
+     CALL Write_Restart_Config(ibox)
+  END DO
 
 END SUBROUTINE NVTMC_Driver

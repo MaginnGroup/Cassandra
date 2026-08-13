@@ -285,7 +285,15 @@ Then run:
 
 Or via the Python wrapper once paths are set (see [python/README.md](../python/README.md)).
 
-**Check:** log reaches `Cassandra simulation complete`; `.prp` / `.xyz` written.
+**Check:** log reaches `Cassandra simulation complete`; `.prp` / `.xyz` written;
+`*.restart.xyz` and `*.restart.H` present for production handoff.
+
+### Equilibration → production
+
+Use `read_config` with `run_name.restart.xyz` (not the movie `.xyz`). Copy box
+size from `run_name.restart.H` into `# Box_Info`; molecule counts on the
+`read_config` line must match. Details: [V2_CRC_WORKFLOW.md](V2_CRC_WORKFLOW.md) §5
+and [output-formats.md](output-formats.md).
 
 ---
 

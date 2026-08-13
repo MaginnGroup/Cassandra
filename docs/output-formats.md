@@ -51,6 +51,24 @@ needed for box size and GCMC analysis.
 
 ---
 
+## Restart files (`*.restart.xyz` / `*.restart.H`)
+
+Written on every coordinate dump and again at a successful end of run
+(**overwrite**, single frame — not a movie):
+
+| File | Contents |
+|------|----------|
+| `run_name.restart.xyz` | One XYZ frame (`F18.8` coords); for `# Start_Type read_config` |
+| `run_name.restart.H` | One `.H` block: volume, cell matrix, nspecies, `(is, nmols)` |
+
+Multi-box: `run_name.boxN.restart.xyz` / `.H`.
+
+**Do not** pass the multi-frame movie `.xyz` to `read_config` (that reads the
+first frame only). Use `*.restart.xyz` and set `# Box_Info` / molecule counts
+from `*.restart.H`. See [V2_CRC_WORKFLOW.md](V2_CRC_WORKFLOW.md) §5.
+
+---
+
 ## `.log` simulation logfile
 
 Human-readable archive of the run (input echo, MCF echo, energies, 10% progress

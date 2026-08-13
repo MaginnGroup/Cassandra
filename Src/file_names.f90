@@ -154,6 +154,11 @@ INTEGER :: movie_xyz_unit = 160
 CHARACTER(FILENAME_LEN),DIMENSION(:),ALLOCATABLE :: movie_xyz_file
 INTEGER :: movie_custom_unit = 165
 CHARACTER(FILENAME_LEN) :: movie_custom_file
+! Single-frame restart config (overwrite each coord dump); for read_config handoff
+INTEGER :: restart_xyz_unit = 166
+CHARACTER(FILENAME_LEN),DIMENSION(:),ALLOCATABLE :: restart_xyz_file
+INTEGER :: restart_h_unit = 167
+CHARACTER(FILENAME_LEN),DIMENSION(:),ALLOCATABLE :: restart_h_file
 
 ! Variables associated with zeolite unit cell file
 INTEGER :: lattice_file_unit = 170

@@ -486,6 +486,9 @@ SUBROUTINE Write_Coords_XYZ(this_box)
   ! The subroutine writes coordinates of simulation box for later analyis of
   ! RDFs. It gets called by driver routines.
   !
+  ! Also overwrites single-frame run_name.restart.xyz / .restart.H for
+  ! read_config handoff (latest configuration).
+  !
   ! CALLED BY
   !
   !        gcmc_driver
@@ -495,6 +498,7 @@ SUBROUTINE Write_Coords_XYZ(this_box)
   !
   ! 08/12/13 (JS) : Created beta version
   ! 08/07/26 (EJM) : .xyz coords F12.3 (smaller, readable output)
+  ! 08/13/26 (EJM) : Overwrite companion .restart.xyz / .restart.H
   !*****************************************************************************
   
   USE Global_Variables
@@ -556,7 +560,86 @@ SUBROUTINE Write_Coords_XYZ(this_box)
      END DO
   END DO
 
+  CALL Write_Restart_Config(this_box)
+
 END SUBROUTINE Write_Coords_XYZ
+
+!-----------------------------------------------------------------------------
+
+SUBROUTINE Write_Restart_Config(this_box)
+  !*****************************************************************************
+  ! Overwrite single-frame restart XYZ + H for this box (read_config handoff).
+  ! Same layout as one movie frame / H block; XYZ uses higher precision than
+  ! the F12.3 movie. Safe to call at end of run even if already written this step.
+  !
+  ! 08/13/26 (EJM) : Added for equil → production restart workflow
+  !*****************************************************************************
+
+  USE Global_Variables
+  USE File_Names
+
+  IMPLICIT NONE
+
+  INTEGER, INTENT(IN) :: this_box
+
+  INTEGER :: ii, jj, is, im, this_im, ia, Num_Atoms, ios
+  INTEGER :: rx_unit, rh_unit
+
+  IF (.NOT. ALLOCATED(restart_xyz_file) .OR. .NOT. ALLOCATED(restart_h_file)) RETURN
+
+  Num_Atoms = 0
+  DO is = 1, nspecies
+     Num_Atoms = Num_Atoms + nmols(is,this_box)*natoms(is)
+  END DO
+
+  rx_unit = restart_xyz_unit + this_box
+  rh_unit = restart_h_unit + this_box
+
+  OPEN(unit=rx_unit, file=restart_xyz_file(this_box), status='REPLACE', &
+       action='WRITE', iostat=ios)
+  IF (ios /= 0) THEN
+     err_msg = ''
+     err_msg(1) = 'Unable to open restart XYZ file: ' // TRIM(restart_xyz_file(this_box))
+     CALL Clean_Abort(err_msg, 'Write_Restart_Config')
+  END IF
+
+  WRITE(rx_unit,*) Num_Atoms
+  WRITE(rx_unit,*) 'RESTART MC_STEP: ', i_mcstep
+  DO is = 1, nspecies
+     DO im = 1, nmols(is,this_box)
+        this_im = locate(im,is,this_box)
+        IF (molecule_list(this_im,is)%live) THEN
+           DO ia = 1, natoms(is)
+              WRITE(rx_unit,'(A,1X,3F18.8)') nonbond_list(ia,is)%element, &
+                   atom_list(ia,this_im,is)%rxp, &
+                   atom_list(ia,this_im,is)%ryp, &
+                   atom_list(ia,this_im,is)%rzp
+           END DO
+        END IF
+     END DO
+  END DO
+  CLOSE(rx_unit)
+
+  OPEN(unit=rh_unit, file=restart_h_file(this_box), status='REPLACE', &
+       action='WRITE', iostat=ios)
+  IF (ios /= 0) THEN
+     err_msg = ''
+     err_msg(1) = 'Unable to open restart H file: ' // TRIM(restart_h_file(this_box))
+     CALL Clean_Abort(err_msg, 'Write_Restart_Config')
+  END IF
+
+  WRITE(rh_unit,*) box_list(this_box)%volume
+  DO ii = 1, 3
+     WRITE(rh_unit,*) (box_list(this_box)%length(ii,jj), jj=1,3)
+  END DO
+  WRITE(rh_unit,*)
+  WRITE(rh_unit,*) nspecies
+  DO is = 1, nspecies
+     WRITE(rh_unit,*) is, nmols(is,this_box)
+  END DO
+  CLOSE(rh_unit)
+
+END SUBROUTINE Write_Restart_Config
 
 SUBROUTINE Write_Coords_Custom
   !*****************************************************************************
@@ -648,6 +731,10 @@ SUBROUTINE Write_Coords_Custom
       END DO
     END DO
     mol_id_base = mol_id_base + max_molecules(is)
+  END DO
+
+  DO ibox = 1, nbr_boxes
+     CALL Write_Restart_Config(ibox)
   END DO
 
 END SUBROUTINE Write_Coords_Custom

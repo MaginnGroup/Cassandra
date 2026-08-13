@@ -164,8 +164,8 @@ succeeds. If pull fails with `Permission denied (publickey)`, fix §1 first.
 cd Src
 module purge
 module load gcc/15.2.0
-make -f Makefile.openMP clean    # or Makefile.gfortran if that is what you use
-make -f Makefile.openMP
+make -f Makefile.gfortran.openMP clean    # or Makefile.gfortran if that is what you use
+make -f Makefile.gfortran.openMP
 ```
 
 (Use the same compiler module you used for the previous build.)
@@ -259,6 +259,34 @@ checkpoint R125equil.out.chk
 ```
 
 Seeds in the `.inp` are overwritten by those in the checkpoint (Cassandra docs).
+
+### Equilibration → **new** production run (not checkpoint)
+
+Do **not** use the multi-frame movie `run_name.xyz` with `read_config` — that
+loads the **first** frame. Use the overwrite restart pair written every
+`coord_freq` (and again at a clean finish):
+
+| File | Role |
+|------|------|
+| `run_name.restart.xyz` | Latest single-frame coordinates |
+| `run_name.restart.H` | Latest volume, H-matrix, species molecule counts |
+
+GEMC (2 boxes): `run_name.box1.restart.xyz` / `.H` and `run_name.box2.restart.*`.
+
+Production example:
+
+```text
+# Start_Type
+read_config  200  equil.out.restart.xyz
+```
+
+Set `# Box_Info` from `equil.out.restart.H` (especially after NPT). Molecule
+counts on the `read_config` line must match that `.H`. If the companion
+`*.restart.H` is present, Cassandra **aborts** when volume/cell or \(N\)
+disagree with the input (legacy XYZ without a sibling `.H` skips the check).
+
+Checkpoint continues the **same** run (RNG, step counter). Restart XYZ/H
+starts a **fresh** production run with new seeds.
 
 ### `run` is a **total** end point, not “how many more”
 

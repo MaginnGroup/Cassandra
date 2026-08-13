@@ -386,4 +386,8 @@ SUBROUTINE GEMC_Driver
   END DO
 
 
+  DO ibox = 1, nbr_boxes
+     CALL Write_Restart_Config(ibox)
+  END DO
+
 END SUBROUTINE GEMC_Driver

@@ -254,6 +254,11 @@ SUBROUTINE Pregen_Driver
      END IF
 
   END DO
+
+  DO ibox = 1, nbr_boxes
+     CALL Write_Restart_Config(ibox)
+  END DO
+
   DO ibox = 1, nbr_boxes
         IF (xtc_is_open(ibox)) CALL Close_XTC(ibox)
   END DO

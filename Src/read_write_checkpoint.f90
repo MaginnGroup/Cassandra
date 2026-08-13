@@ -32,6 +32,7 @@ MODULE Read_Write_Checkpoint
   ! 12/10/13  :: Beta version
   ! 08/12/26 (EJM) : Init/Maybe/Write_Log_Progress; reformat acceptance, move-
   !                  width, and subroutine-time logfile sections (logfile redesign)
+  ! 08/13/26 (EJM) : Check_Restart_H_Consistency for read_config vs companion .H
   !**************************************************************************
   USE Global_Variables
   USE File_Names
@@ -517,7 +518,152 @@ SUBROUTINE Read_Checkpoint
 
     IF (int_vdw_sum_style(ibox) == vdw_cut_tail) CALL Compute_Beads(ibox)
 
+    CALL Check_Restart_H_Consistency(ibox)
+
   END SUBROUTINE Read_Config
+!*******************************************************************************
+
+  SUBROUTINE Check_Restart_H_Consistency(ibox)
+    !***************************************************************************
+    ! If a companion .H exists for the read_config XYZ (same stem, .xyz → .H),
+    ! compare volume / cell matrix to Box_Info and molecule counts to
+    ! nmols_to_read. Abort on mismatch. Missing companion → log and return.
+    !
+    ! 08/13/26 (EJM) : Equil → production restart safety check
+    !***************************************************************************
+
+    IMPLICIT NONE
+
+    INTEGER, INTENT(IN) :: ibox
+
+    CHARACTER(FILENAME_LEN) :: companion_h, cfg
+    CHARACTER(32) :: s_vol_inp, s_vol_file, s_len_inp, s_len_file
+    INTEGER :: ios, is, is_file, n_spec_file, n_mol_file, ii, jj
+    REAL(DP) :: vol_file, length_file(3,3), vol_tol, len_tol
+    LOGICAL :: exists
+
+    cfg = TRIM(ADJUSTL(old_config_file(ibox)))
+    companion_h = cfg
+
+    ! Derive companion: replace trailing .xyz / .XYZ with .H
+    IF (LEN_TRIM(cfg) >= 4) THEN
+       IF (cfg(LEN_TRIM(cfg)-3:LEN_TRIM(cfg)) == '.xyz' .OR. &
+           cfg(LEN_TRIM(cfg)-3:LEN_TRIM(cfg)) == '.XYZ') THEN
+          companion_h = cfg(1:LEN_TRIM(cfg)-4) // '.H'
+       ELSE
+          WRITE(logunit,'(A)') '  No .xyz suffix on config file; skipping restart.H check'
+          RETURN
+       END IF
+    ELSE
+       RETURN
+    END IF
+
+    INQUIRE(file=TRIM(companion_h), exist=exists)
+    IF (.NOT. exists) THEN
+       WRITE(logunit,'(A,A)') '  No companion restart H (skip box/N check): ', &
+            TRIM(companion_h)
+       RETURN
+    END IF
+
+    WRITE(logunit,'(A,A)') '  Checking Box_Info / molecule counts vs ', TRIM(companion_h)
+
+    OPEN(unit=old_config_unit, file=TRIM(companion_h), status='OLD', &
+         action='READ', iostat=ios)
+    IF (ios /= 0) THEN
+       err_msg = ''
+       err_msg(1) = 'Unable to open companion H file: ' // TRIM(companion_h)
+       CALL Clean_Abort(err_msg, 'Check_Restart_H_Consistency')
+    END IF
+
+    READ(old_config_unit, *, iostat=ios) vol_file
+    IF (ios /= 0) THEN
+       err_msg = ''
+       err_msg(1) = 'Error reading volume from ' // TRIM(companion_h)
+       CALL Clean_Abort(err_msg, 'Check_Restart_H_Consistency')
+    END IF
+
+    DO ii = 1, 3
+       READ(old_config_unit, *, iostat=ios) (length_file(ii,jj), jj=1,3)
+       IF (ios /= 0) THEN
+          err_msg = ''
+          err_msg(1) = 'Error reading cell matrix from ' // TRIM(companion_h)
+          CALL Clean_Abort(err_msg, 'Check_Restart_H_Consistency')
+       END IF
+    END DO
+
+    READ(old_config_unit, *, iostat=ios)  ! blank line
+    READ(old_config_unit, *, iostat=ios) n_spec_file
+    IF (ios /= 0) THEN
+       err_msg = ''
+       err_msg(1) = 'Error reading nspecies from ' // TRIM(companion_h)
+       CALL Clean_Abort(err_msg, 'Check_Restart_H_Consistency')
+    END IF
+
+    IF (n_spec_file /= nspecies) THEN
+       err_msg = ''
+       err_msg(1) = 'nspecies in companion H does not match input'
+       err_msg(2) = 'Companion H: ' // TRIM(Int_To_String(n_spec_file))
+       err_msg(3) = 'Input:       ' // TRIM(Int_To_String(nspecies))
+       err_msg(4) = 'File: ' // TRIM(companion_h)
+       CALL Clean_Abort(err_msg, 'Check_Restart_H_Consistency')
+    END IF
+
+    DO is = 1, nspecies
+       READ(old_config_unit, *, iostat=ios) is_file, n_mol_file
+       IF (ios /= 0) THEN
+          err_msg = ''
+          err_msg(1) = 'Error reading molecule counts from ' // TRIM(companion_h)
+          CALL Clean_Abort(err_msg, 'Check_Restart_H_Consistency')
+       END IF
+       IF (n_mol_file /= nmols_to_read(is,ibox)) THEN
+          err_msg = ''
+          err_msg(1) = 'Molecule count mismatch for species ' // TRIM(Int_To_String(is))
+          err_msg(2) = 'Companion H nmols: ' // TRIM(Int_To_String(n_mol_file))
+          err_msg(3) = 'read_config nmols:  ' // TRIM(Int_To_String(nmols_to_read(is,ibox)))
+          err_msg(4) = 'File: ' // TRIM(companion_h)
+          err_msg(5) = 'Fix # Start_Type counts or use the matching restart files.'
+          CALL Clean_Abort(err_msg, 'Check_Restart_H_Consistency')
+       END IF
+    END DO
+
+    CLOSE(unit=old_config_unit)
+
+    ! Volume / cell vs Box_Info
+    vol_tol = MAX(1.0e-6_DP * ABS(box_list(ibox)%volume), 1.0e-6_DP)
+    IF (ABS(vol_file - box_list(ibox)%volume) > vol_tol) THEN
+       WRITE(s_vol_inp,'(ES16.6)') box_list(ibox)%volume
+       WRITE(s_vol_file,'(ES16.6)') vol_file
+       err_msg = ''
+       err_msg(1) = 'Box volume in # Box_Info does not match companion restart H'
+       err_msg(2) = 'Box_Info volume:    ' // TRIM(ADJUSTL(s_vol_inp))
+       err_msg(3) = 'Companion H volume: ' // TRIM(ADJUSTL(s_vol_file))
+       err_msg(4) = 'File: ' // TRIM(companion_h)
+       err_msg(5) = 'Copy final equilibration box into # Box_Info (NPT density).'
+       CALL Clean_Abort(err_msg, 'Check_Restart_H_Consistency')
+    END IF
+
+    len_tol = 1.0e-6_DP
+    DO ii = 1, 3
+       DO jj = 1, 3
+          IF (ABS(length_file(ii,jj) - box_list(ibox)%length(ii,jj)) > &
+               MAX(len_tol, 1.0e-6_DP * ABS(box_list(ibox)%length(ii,jj)))) THEN
+             WRITE(s_len_inp,'(ES16.6)') box_list(ibox)%length(ii,jj)
+             WRITE(s_len_file,'(ES16.6)') length_file(ii,jj)
+             err_msg = ''
+             err_msg(1) = 'Box cell matrix in # Box_Info does not match companion restart H'
+             err_msg(2) = 'Element (' // TRIM(Int_To_String(ii)) // ',' // &
+                  TRIM(Int_To_String(jj)) // ')'
+             err_msg(3) = 'Box_Info:    ' // TRIM(ADJUSTL(s_len_inp))
+             err_msg(4) = 'Companion H: ' // TRIM(ADJUSTL(s_len_file))
+             err_msg(5) = 'File: ' // TRIM(companion_h)
+             CALL Clean_Abort(err_msg, 'Check_Restart_H_Consistency')
+          END IF
+       END DO
+    END DO
+
+    WRITE(logunit,'(A)') '  Companion restart H agrees with Box_Info and molecule counts'
+
+  END SUBROUTINE Check_Restart_H_Consistency
 !*******************************************************************************
 
 SUBROUTINE Write_Trials_Success
