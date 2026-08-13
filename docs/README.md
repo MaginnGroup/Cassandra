@@ -50,14 +50,23 @@ now. On the front end, CRC’s Python module provides `python3` (not always
 
 Working style for this project: plan → approve → implement; document durable
 workflow changes under `docs/`; stage → commit → push on `modernization` (no
-PR unless asked). Keep `diagnostics/` for reliability checks only — research
-post-processing (block averages, RDF, …) stays separate later.
+PR unless asked). When changing a Fortran routine, add a brief dated revision
+note in that routine’s header (and the module header if one exists) — see
+[V2_GIT_WORKFLOW.md](V2_GIT_WORKFLOW.md) § Fortran revision history. Keep
+`diagnostics/` for reliability checks only — research post-processing (block
+averages, RDF, …) stays separate later.
+
+**Deferred work:** When something should be done later (not this session), add
+a full entry to [future-fixes.md](future-fixes.md) instead of implementing it.
+Agents are instructed to do the same when you say “later,” “defer,” “park,” etc.
 
 ## Guides
 
 | Doc | What it covers |
 |-----|----------------|
 | [mcf-setup-workflow.md](mcf-setup-workflow.md) | New molecule checklist: PDB → FF → MCF → fragments → inp |
+| [dihedral-opls-rb.md](dihedral-opls-rb.md) | OPLS dihedrals → Ryckaert–Bellemans conversion at MCF read |
+| [future-fixes.md](future-fixes.md) | Deferred bugfixes / consistency items (not current-session work) |
 | [output-formats.md](output-formats.md) | `.xyz` / `.prp` precision, layout, and analysis assumptions |
 | [logfile-format.md](logfile-format.md) | Simulation `.log` structure, progress snapshots, intensive energies |
 | [smoke-test.md](smoke-test.md) | How to run `run_test.py`, input/output files, what to expect |

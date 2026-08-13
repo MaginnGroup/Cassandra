@@ -65,6 +65,12 @@ configuration, and whenever `# Energy_Check` / `echeck` fires.
 |--------|---------|
 | Extensive | Total for the box (kJ/mol) |
 | Intensive | Extensive ÷ \(N_{\mathrm{mol}}\) in that box (kJ/mol per molecule) |
+| Relative_Error | \|E_full − E_bookkeeping\| / \|E_full\| (final / energy-check tables only) |
+
+`Relative_Error` compares the running bookkeeping energy (sum of MC ΔE)
+with a full recomputation from coordinates. Near machine precision
+(~1e−12 or smaller) means OK; much larger means energy bookkeeping drifted.
+The initial-energy table omits this column (no prior bookkeeping yet).
 
 If the box has zero molecules, intensive is printed as `n/a`. Multi-box
 ensembles (GEMC, etc.) print one table (or progress line) **per box**.

@@ -21,164 +21,92 @@
 
 MODULE Energy_Routines
   !-----------------------------------------------------------------------------
-  ! This modules contains a collection of all the routines involved in computing
-  ! energies and associated quantities.
+  ! Energy and associated quantities (virial / pressure tensors, cutoffs, checks).
   !
-  ! Compute_Molecule_Bond_Energy: passed a molecule and species index, this
-  !                       returns the total bond energy associated with that
-  !                       molecule
-  !                       Currently supports none and harmonic.
+  ! Details live in each routine header. Grouping below is thematic (not source
+  ! order). Routines named *_Force build virial/pressure tensors — not atomic
+  ! force vectors. Callers: drivers and MC moves (grep: USE Energy_Routines).
   !
-  ! Compute_Molecule_Angle_Energy: Passed a molecule and species index, it
-  !                       returns the total energy of that molecule due to bond
-  !                       angles.
-  !                       Currently supports none and harmonic.
+  ! --- Intramolecular ---
+  !   Compute_Molecule_Bond_Energy       Fixed/harmonic bond energy (+ integrity)
+  !   Compute_Molecule_Angle_Energy      Fixed/harmonic angle energy (+ integrity)
+  !   Compute_Molecule_Dihedral_Energy   Proper dihedrals (RB / CHARMM / …)
+  !   Compute_Molecule_Improper_Energy   Impropers (harmonic / CVFF)
+  !   Compute_Ring_Fragment_Energy       Ring-fragment intra energy for CBMC bias
   !
-  ! Compute_Molecule_Dihedral_Energy: Passed a molecule and species index, it
-  !                       returns the total dihedral energy of that molecule.
-  !                       Currently supports none and OPLS.
+  ! --- Nonbond: atom / molecule ---
+  !   Compute_Atom_Nonbond_Energy        One atom vs all others (intra + inter)
+  !   Compute_Atom_Nonbond_Intra_Energy   One atom vs others in same molecule
+  !   Compute_Atom_Nonbond_Inter_Energy_Cells
+  !                                      One atom vs neighbors via cell list
+  !   Compute_Molecule_Nonbond_Intra_Energy
+  !                                      Full molecule intramolecular nonbond
+  !   Compute_Molecule_Nonbond_Inter_Energy
+  !                                      Molecule vs box (inter workhorse)
+  !   Compute_Molecule_Nonbond_Inter_Energy_Widom
+  !                                      Widom/CBMC trial molecule vs box
+  !   Compute_MoleculeCollection_Nonbond_Inter_Energy
+  !                                      Molecule list vs itself + box
+  !   Estimate_MoleculePair_Energy       CBMC table lookup for a molecule pair
+  !   Compute_MoleculePair_Energy        Exact intermolecular molecule-pair energy
+  !   Compute_AtomPair_Energy            Pair vdW / qq for two atoms
+  !   AtomPair_VdW_Energy_Vector         Vectorized type–type vdW (tables)
+  !   Compute_AtomPair_Ewald_Real        Real-space Ewald qq (erfc + intra scale)
+  !   Compute_AtomPair_DSF_Energy        Damped shifted force (DSF) pair qq
   !
-  ! Compute_Molecule_Improper_Energy: Passed molecule and species indices, this
-  !                       computes the total improper energy of the molecule.
-  !                       Not yet tested!!!
-  !                       Currently supports harmonic.
+  ! --- Electrostatics / LRC ---
+  !   Ewald_Reciprocal_Lattice_Vector_Setup
+  !                                      k-list and Cn(k) (rebuild on volume change)
+  !   Compute_System_Ewald_Reciprocal_Energy
+  !                                      Full reciprocal rebuild via S(k)
+  !   Update_System_Ewald_Reciprocal_Energy
+  !                                      Incremental S(k) update; returns new total
+  !   Update_System_Ewald_Reciprocal_Energy_Widom
+  !                                      Ghost probe; new total, does not mutate S(k)
+  !   Compute_System_Self_Energy         Box-wide Ewald/DSF self → energy%self
+  !   Compute_Molecule_Self_Energy       Species-template self for ΔE bookkeeping
+  !   Compute_LR_Correction              vdW energy tail (cut_tail)
   !
-  ! Compute_Atom_Nonbond_Energy: passed indices of an atom, molecule and
-  !                       species, this returns the vdw and either direct
-  !                       charge-charge or the real space part of the Ewald
-  !                       energy of this atom with all existing atoms in the
-  !                       system. It accounts for intramolecular scaling of 1-2,
-  !                       1-3 and 1-4.
+  ! --- Virial / pressure (named *_Force) ---
+  !   Compute_System_Total_Force         Assemble W_tensor_* for the box
+  !   Compute_MoleculePair_Force         Molecular virial tensor for one pair
+  !   Compute_AtomPair_Force             Pair Wij scalars for the pressure tensor
+  !   Compute_System_Ewald_Reciprocal_Force
+  !                                      Reciprocal Ewald virial/pressure tensor
+  !   Compute_LR_Force                   vdW LRC contribution to the virial
   !
-  !                       Supports vdw_style = none or LJ
-  !                       For LJ, it supports rcut, cut_tail and cut_shift,
-  !                       though TAIL CORRECTIONS HAVE NOT YET BEEN ADDED.
-  !                       LJ is assumed to be 12-6 LJ.
-  !
-  !                       Supports charge_style none or coul.
-  !                       For charge_style = coul, it supports rcut and Ewald is
-  !                       roughed in. However, the Ewald parts of the code need
-  !                       some thought, especially in light of computing energy
-  !                       differences. This routine also returns the virial
-  !                       contribution. It needs more testing, but I believe it
-  !                       works.
-  !
-  ! Compute_Molecule_Nonbond_Intra_Energy: passed molecule and species indices,
-  !                       returns the intramolecular LJ and electrostatic energy
-  !                       of the molecule.
-  !
-  ! Compute_Molecule_Nonbond_Inter_Energy: passed molecule and species indices,
-  !                       returns the intermolecular LJ and electrostatic energy
-  !                       between this molecule and all other molecules in the
-  !                       system.
-  !
-  ! Compute_MoleculePair_Energy:
-  ! Compute_MoleculePair_Force:
-  !                       Computes the intermolecular energy/force between a
-  !                       pair of input molecules.
-  !
-  ! Compute_AtomPair_Energy:
-  ! Compute_AtomPair_Force:
-  !                       Computes the vdw and q-q pair energy/force between i
-  !                       atoms ia and ja of molecules im and jm of species is
-  !                       and js, given their separation rijsq. I have passed
-  !                       each component of separation nut right now this is
-  !                       unnecessary.
-  !                       It also computes the real space part of the Ewald sum
-  !                       if necessary.
-  !
-  !                       LJ potential:
-  !                         Eij = 4*epsilon(i,j) *
-  !                                 [ (sigma(i,j)/rij)^12 - (sigma(i,j)/rij)^6 ]
-  !                         Wij = -rij/3 * d Eij / d rij.
-  !                         Use the virial in: P = NkBT + < W >
-  !
-  ! Compute_AtomPair_Ewald_Real: Real space part of Ewald sum. Need to add
-  !                       reciprocal, self and energy difference sin and cos
-  !                       sums. Contains erfc function.
-  !
-  ! Ewald_Reciprocal_Lattice_Vector_Setup : Sets up lattice vectors for Ewald
-  !                       Summation for the input box.
-  !
-  ! Compute_System_Ewald_Reciprocal_Energy:
-  ! Compute_System_Ewald_Reciprocal_Force:
-  !                       Computes reciprocal space energy/force for a given box
-  !
-  ! Update_System_Ewald_Reciprocal_Energy:
-  !                       Updates the
-  !                       reciprocal space energy due to various moves. The
-  !                       routine makes use of the fact that for a given move,
-  !                       the coordinates of only one molecule are perturbed.
-  !                       Hence cos_sum and sin_sum arrays can be computed by
-  !                       taking differences of q_i cos(k * r_i) terms in new
-  !                       and old configurations.
-  !
-  ! Compute_System_Ewald_Self_Energy: Calculation of self energy for the Ewald
-  !                       summation is obtained from this subroutine.
-  !
-  ! Compute_Molecule_Ewald_Self_Energy: Computes the self energy of the given
-  !                       molecule.
-  !
-  ! Compute_System_Total_Energy:
-  ! Compute_System_Total_Force:
-  !                       Computes the total system energy/forces within a given
-  !                       box. Forces are then used to compute the pressure
-  !                       tensor.
-  !
-  ! Compute_LR_Correction:
-  ! Compute_LR_Force:
-  !                       Determines long range correction when the flag is set
-  !                       to 'cut_tail'.
-  !
-  ! Check_MoleculePair_Cutoff:
-  !
-  ! Check_AtomPair_Cutoff:
-  !
-  ! Get_Molecule_Energy: Computes the intra- and inter-molecular energy of
-  !                       a given molecule interacting with all other molecules.
-  !
-  ! Compute_Ring_Fragment_Energy: Computes the energy of a ring fragment in its
-  !                       old conformation.
-  !
-  ! Check_System_Energy:
-  !
-  !
-  !
-  !
-  ! Used by
-  !
-  !   angle_distortion
-  !   atom_displacement
-  !   chempot
-  !   cutNgrow
-  !   deletion
-  !   fragment_growth
-  !   gcmc_control
-  !   gcmc_driver
-  !   gemc_control
-  !   gemc_driver
-  !
-  !   gemc_particle_transfer
-  !   make_config
-  !   input_routines
-  !   insertion
-  !   main
-  !   nptmc_control
-  !   nptmc_driver
-  !   nvtmc_control
-  !   nvtmc_driver
-  !   nvt_mc_fragment_driver
-  !   nvt_mc_ring_fragment
-  !   precalculate
-  !   rotate
-  !   translate
-  !   volume_change
-  !   write_properties
+  ! --- System totals / cutoffs / checks ---
+  !   Compute_System_Total_Energy        Full energy rebuild for a box
+  !   Check_MoleculePair_Cutoff          Coarse COM skip + return R
+  !   Check_AtomPair_Cutoff              Set get_vdw / get_qq from rijsq
+  !   Check_System_Energy                Rebuild + optional bookkeeping compare
   !
   ! Revision history
   !
   !   12/10/13  : Beta Release
   !   08/12/26 (EJM) : Intensive (E/N) column in Check_System_Energy logfile tables
+  !   08/13/26 (EJM) : Explanatory headers (and related notes) for energy routines:
+  !                    intramolecular — Bond, Angle, Dihedral (OPLS→RB docs),
+  !                      Improper (harmonic/CVFF);
+  !                    atom/molecule nonbond — Atom_Nonbond, Atom_Intra,
+  !                      Atom_Inter_Cells, Molecule_Intra, Molecule_Inter,
+  !                      Molecule_Inter_Widom, MoleculeCollection_Inter,
+  !                      Estimate/Compute_MoleculePair, AtomPair,
+  !                      AtomPair_VdW_Energy_Vector, AtomPair_DSF,
+  !                      AtomPair_Ewald_Real;
+  !                    Ewald/self/LRC — Ewald_Reciprocal_Lattice_Vector_Setup,
+  !                      Update_System_Ewald_Reciprocal(_Widom),
+  !                      Compute_System_Ewald_Reciprocal_Energy/Force,
+  !                      System/Molecule_Self_Energy, LR_Correction, LR_Force;
+  !                    system/cutoff — System_Total_Energy,
+  !                      System_Total_Force, MoleculePair_Force,
+  !                      AtomPair_Force (Wij note), Check_Molecule/AtomPair_Cutoff;
+  !                    logfile — Relative_Error note in Check_System_Energy;
+  !                    CBMC — Compute_Ring_Fragment_Energy;
+  !                    also fixed-bond scope / flexible bonds → docs/future-fixes.md
+  !   08/13/26 (EJM) : Header consistency pass (TOC, clarifications; see
+  !                    docs/future-fixes.md for deferred API / %exist items)
+  !   08/13/26 (EJM) : Thematic module TOC (drop stale Used-by; group by role)
   !-----------------------------------------------------------------------------
 
   USE Type_Definitions
@@ -196,46 +124,49 @@ CONTAINS
   !-----------------------------------------------------------------------------
 
   SUBROUTINE Compute_Molecule_Bond_Energy(im,is,energy)
-
     !**************************************************************************
-    ! This subroutine computes the total bond energy of a selected molecule
-    ! Currently, the available potential functions are none or harmonic.
-    ! If none, the code will do a check for fixed bond lengths.
+    ! Total bond ENERGY of one molecule (im,is).
     !
-    ! As of now, the code can only support fixed bond length simulations.
-    ! Effectively, this subroutine will act as a check for fixed bond length
-    ! (useful if using a restart configuration from other packages)
+    ! Arguments
+    !   im     : locate index
+    !   is     : species type
+    !   energy : OUT — sum of energetic bonds for that molecule
     !
-    ! CALLED BY
+    ! Geometry: Get_Bond_Length(ib,im,is,length) for atoms
+    !   bond_list(ib,is)%atom(1:2); length in Angstroms.
     !
-    !         Compute_System_Total_Energy.
-    !         Angle_Distortion
-    !         Deletion
-    !         Rotate_Dihedral
-    !         Insertion
-    !         GEMC_Particle_Transfer
-    !         Cut_N_Grow
+    ! Supported types (MCF "# Bond_Info" / Get_Bond_Info)
+    !   fixed (int_none):
+    !     bond_param(1) = l0 (Angstroms, as in MCF)
+    !     bond_param(2) = tolerance (Angstroms; default 0.01 if omitted)
+    !     Contributes eb = 0. Aborts via Clean_Abort if |l0 - length| >
+    !     tolerance, except when int_sim_type == sim_pregen (foreign
+    !     trajectories / Widom-on-traj may not match MCF lengths).
     !
-    ! CALLS
+    !   harmonic (int_harmonic):
+    !     E = k (r - r0)^2
+    !     k  = bond_param(1)  (MCF K in K/Ang^2 * kboltz → atomic / Ang^2)
+    !     r0 = bond_param(2)  (Angstroms)
+    !     No factor of 1/2: MCF K is the full quadratic coefficient.
+    !     Allowed only for single-fragment species (enforced at MCF read).
     !
-    !         Get_Bond_Length
+    ! Practical scope
+    !   Production molecules use fixed bonds. Even NVT runs rely on CBMC
+    !   (insert/regrow/angle/dihedral moves) for intramolecular DOF sampling,
+    !   so flexible bonds are not practically feasible today — only fixed
+    !   lengths work with that construction. Harmonic is allowed only for
+    !   single-fragment species (Get_Bond_Info). Fragment growth places atoms
+    !   at l0 on a sphere. General flexible bonds need major CBMC changes
+    !   (length sampling, Rosenbluth weights / Jacobians, regrowth, libraries)
+    !   — deferred; see docs/future-fixes.md.
     !
-    ! INPUT VARIABLES
+    ! Loop: ib = 1 .. nbonds(is); energy = sum eb.
+    ! Role: energy bookkeeping for MC / thermo, plus rigid-bond integrity
+    ! for the common fixed-bond case (typical Cassandra molecules).
     !
-    !         im[INTEGER]:     LOCATE of the molecule.
-    !         is[INTEGER]:     species type of the molecule.
-    !
-    ! OUTPUT VARIABLES
-    !
-    !         energy[REALDP]: total bond energy of molecule
-    !
-    ! RAISES
-    !         It will throw an error if bond lenghts do not match
-    !         the MCF specifications within a tolerance.
-    !
-    !
-    ! DOCUMENTATION LAST UPDATED: 08/10/2016
-    !
+    ! Revision history
+    !   08/13/26 (EJM) : Added explanatory header for molecule bond energy
+    !   08/13/26 (EJM) : Note fixed-bond scope; flexible bonds deferred
     !**************************************************************************
 
 
@@ -283,27 +214,36 @@ CONTAINS
 
   SUBROUTINE Compute_Molecule_Angle_Energy(im,is,energy)
     !**************************************************************************
-    ! This subroutine is passed a molecule and species index. It then
-    ! computes the total bond angle energy of this molecule.
+    ! Total bond-angle ENERGY of one molecule (im,is).
     !
-    ! Currently, the available potential functions are none or harmonic.
-    ! If none, the code will do a check for fixed angles.
+    ! Arguments
+    !   im     : locate index
+    !   is     : species type
+    !   energy : OUT — sum of energetic angles for that molecule
     !
-    ! INPUT VARIABLES
+    ! Geometry: Get_Bond_Angle(ia,im,is,theta) for atoms
+    !   angle_list(ia,is)%atom(1:3); theta returned in radians.
     !
-    !         im[INTEGER]:     LOCATE of the molecule.
-    !         is[INTEGER]:     species type of the molecule.
+    ! Supported types (MCF "# Angle_Info" / Get_Angle_Info)
+    !   fixed (int_none):
+    !     angle_param(1) = theta0 (degrees, as in MCF)
+    !     angle_param(2) = tolerance (degrees; default 1.0 if omitted)
+    !     Converts Get_Bond_Angle result to degrees and aborts via
+    !     Clean_Abort if |theta0 - theta| > tolerance. Contributes ea = 0.
+    !     (Unlike fixed bonds, this check is NOT skipped for sim_pregen —
+    !     see docs/future-fixes.md.)
     !
-    ! OUTPUT VARIABLES
+    !   harmonic (int_harmonic):
+    !     E = k (theta - theta0)^2
+    !     k      = angle_param(1)  (MCF value * kboltz → atomic energy / rad^2)
+    !     theta0 = angle_param(2)  (MCF degrees → radians at read time)
+    !     No factor of 1/2: MCF K is the full quadratic coefficient.
     !
-    !         energy[REALDP]:      total bond energy of molecule
+    ! Loop: ia = 1 .. nangles(is); energy = sum ea.
+    ! Only fixed and harmonic are implemented (comment in body for extensions).
     !
-    ! RAISES
-    !         It will throw an error if angles do not match
-    !         the MCF specifications within a tolerance.
-    !
-    !
-    ! DOCUMENTATION LAST UPDATED: 08/10/2016
+    ! Revision history
+    !   08/13/26 (EJM) : Added explanatory header for molecule angle energy
     !**************************************************************************
 
     USE Random_Generators
@@ -316,6 +256,8 @@ CONTAINS
     energy = 0.0_DP
     DO ia=1,nangles(is)
        IF (angle_list(ia,is)%int_angle_type == int_none) THEN
+          ! Fixed angle: zero energy contribution; enforce MCF geometry.
+          ! theta0 / theta_tol are degrees (same as MCF); Get_Bond_Angle is radians.
           theta0 = angle_list(ia,is)%angle_param(1) ! in degrees
           theta_tol = angle_list(ia,is)%angle_param(2) ! in degrees
           CALL Get_Bond_Angle(ia,im,is,theta)
@@ -324,9 +266,9 @@ CONTAINS
              WRITE(mcf_angle,'(F7.3)') theta0
              WRITE(current_angle,'(F7.3)') theta
              err_msg = ''
-             err_msg(1) = 'Fixed angle is broken between atoms ' &
-                        // TRIM(Int_To_String(angle_list(ia,is)%atom(1))) // ' and ' &
-                        // TRIM(Int_To_String(angle_list(ia,is)%atom(2))) // ' and ' &
+             err_msg(1) = 'Fixed angle is broken for atoms ' &
+                        // TRIM(Int_To_String(angle_list(ia,is)%atom(1))) // '-' &
+                        // TRIM(Int_To_String(angle_list(ia,is)%atom(2))) // '-' &
                         // TRIM(Int_To_String(angle_list(ia,is)%atom(3))) &
                         // ' of molecule ' // TRIM(Int_To_String(im)) &
                         // ' of species ' // TRIM(Int_To_String(is))
@@ -349,26 +291,66 @@ CONTAINS
   !-----------------------------------------------------------------------------
 
   SUBROUTINE Compute_Molecule_Dihedral_Energy(molecule,species,energy_dihed)
-    !**************************************************************************
-    ! This routine is passed a molecule and species index. It then computes
-    !the total dihedral angle energy of this molecule.
+    !***************************************************************************
+    ! Total proper dihedral ENERGY of one molecule (molecule,species).
     !
-    ! Currently, the available potential functions are OPLS, CHARMM, harmonic,
-    ! and none.
+    ! Arguments
+    !   molecule     : locate index (Widom: uses widom_atoms)
+    !   species      : species type
+    !   energy_dihed : OUT — sum of all energetic dihedrals for that molecule
     !
-    ! INPUT VARIABLES
+    ! Dihedrals with missing atoms are skipped (partial CBMC growth).
+    ! Angle convention: Get_Dihedral_Angle_COS -> cosphi; phi = sign(acos(cosphi), r12dn).
     !
-    !         im[INTEGER]:     LOCATE of the molecule.
-    !         is[INTEGER]:     species type of the molecule.
+    ! Two passes over dihedral_list
+    !   1) RB / Ryckaert–Bellemans  (idihed = 1 .. ndihedrals_rb)
+    !        E = sum_{k=0}^5 C_k * cos^k(phi)
+    !        with C = dihedral_list%rb_c  (atomic units)
+    !        OPLS dihedrals from the MCF are converted to RB at input time, so
+    !        they normally hit this pass (legacy int_opls case below is fallback).
     !
-    ! OUTPUT VARIABLES
+    !   2) Remaining energetic types (idihed = ndihedrals_rb .. ndihedrals_energetic)
+    !        CHARMM:   E = K [ 1 + cos(n*phi - delta) ]
+    !                  K,n,delta = dihedral_param(1:3)
+    !        harmonic: E = K (phi - phi0)^2
+    !                  K,phi0 = dihedral_param(1:2); if phi0>0 and phi<0, phi += 2*pi
+    !        OPLS (legacy): E = a0 + a1(1+cos phi) + a2(1-cos 2phi) + a3(1+cos 3phi)
     !
-    !         energy[REALDP]:      total dihedral energy of molecule
+    ! OPLS dihedrals in Cassandra (see also docs/dihedral-opls-rb.md)
+    !   MCF form (kJ/mol):
+    !     E_OPLS = a0 + a1(1+cos phi) + a2(1-cos 2phi) + a3(1+cos 3phi)
+    !   At read time (Get_Dihedral_Info), a0..a3 are converted to atomic units and
+    !   rewritten as a Ryckaert–Bellemans series
+    !     E_RB = sum_{k=0}^{5} C_k cos^k(phi)
+    !   with (C4=C5=0 for pure OPLS):
+    !     C0 = a2 + (a0+a1+a2+a3)
+    !     C1 = a1 - 3 a3
+    !     C2 = -2 a2
+    !     C3 = 4 a3
+    !   The dihedral is marked l_rb_formatted and stored as type "RB torsion".
     !
-    ! RAISES
+    !   Combining same-atom torsions (Get_Dihedral_Info):
+    !   Force fields often list several Fourier / OPLS / RB contributions that
+    !   act on the SAME four atoms (e.g. multiple CHARMM multiplicities, or
+    !   duplicate MCF lines). After each is mapped to a C_k vector, Cassandra
+    !   searches existing RB entries for a match on atom indices
+    !     (a1,a2,a3,a4)  or the reverse  (a4,a3,a2,a1).
+    !   Reverse is allowed because E_RB depends only on cos(phi), and
+    !   cos(-phi)=cos(phi). On a match, rb_c := rb_c + C_new (coefficient-wise
+    !   add). If no match, a new RB list entry is created. Because energy is
+    !   linear in the C_k, summing coefficients is exactly summing the
+    !   potentials. Harmonic (and CHARMM that cannot be RB-mapped) stay as
+    !   separate non-RB entries and are NOT merged this way.
     !
-    ! DOCUMENTATION LAST UPDATED: 08/10/2016
-    !**************************************************************************
+    !   Consequently CASE(int_opls) in this routine is almost never hit; keep
+    !   typing OPLS in the MCF — conversion is automatic.
+    !
+    ! MCF: "# Dihedral_Info" (Get_Dihedral_Info in input_routines.f90).
+    !
+    ! Revision history
+    !   08/13/26 (EJM) : Added explanatory header for molecule dihedral energy
+    !   08/13/26 (EJM) : Documented OPLS -> RB conversion and combining
+    !***************************************************************************
   USE Global_Variables
     INTEGER :: molecule,species
     REAL(DP) :: energy_dihed
@@ -450,24 +432,53 @@ CONTAINS
 
 
   SUBROUTINE Compute_Molecule_Improper_Energy(molecule,species,energy)
-    !**************************************************************************
-    ! This routine is passed the molecule and species index, and returns the
-    ! total improper energy of that molecule. Only "none" and "harmonic" types
-    ! are supported.
+    !***************************************************************************
+    ! Total improper torsion ENERGY of one molecule (molecule,species).
+    ! Impropers restrain out-of-plane geometry (e.g. planar rings / sp2 centers).
     !
-    ! INPUT VARIABLES
+    ! Arguments
+    !   molecule : locate index into atom_list / molecule_list
+    !   species  : species type
+    !   energy   : OUT — sum of all improper terms for that molecule
     !
-    !         im[INTEGER]:     LOCATE of the molecule.
-    !         is[INTEGER]:     species type of the molecule.
+    ! For each improper iimprop = 1 .. nimpropers(species), Get_Improper_Angle
+    ! returns the torsion angle phi (radians). Forms:
     !
-    ! OUTPUT VARIABLES
+    !   none:
+    !     E = 0
     !
-    !         energy[REALDP]:      total dihedral energy of molecule
+    !   harmonic:
+    !     E = k (phi - phi0)^2
+    !     with k = improper_param(1),  phi0 = improper_param(2)
+    !     (quadratic well about the reference improper angle phi0)
     !
-    ! RAISES
+    !   cvff:  (cosine / “dihedral-style” improper)
+    !     E = k [ 1 + d cos(n phi) ]
+    !     with k = improper_param(1),  d = improper_param(2),  n = improper_param(3)
+    !     d is typically ±1 (phase); n is the periodicity. Minima occur where
+    !     cos(n phi) = -d, so d = +1 favors odd multiples of pi/n, etc.
     !
-    ! DOCUMENTATION LAST UPDATED: 08/10/2016
-    !**************************************************************************
+    !   else: Clean_Abort
+    !
+    ! Input: MCF section "# Improper_Info" (parsed by Get_Improper_Info in
+    ! input_routines.f90). Type keyword may be none, harmonic, or cvff — CVFF
+    ! is fully supported (K in kJ/mol, d, n on the MCF line; K converted to
+    ! atomic units on read). Harmonic MCF: K then phi0 in degrees (converted
+    ! to K/rad^2 and radians).
+    !
+    ! Partial CBMC: unlike Compute_Molecule_Dihedral_Energy, this routine does
+    ! NOT skip impropers when atoms have exist=.FALSE. — it assumes a full
+    ! molecule. See docs/future-fixes.md.
+    !
+    ! Note: an older header said only none/harmonic and mislabeled the output as
+    ! “dihedral” energy — CVFF is implemented, and this is improper energy.
+    !
+    ! Revision history
+    !   08/13/26 (EJM) : Added explanatory header for molecule improper energy
+    !   08/13/26 (EJM) : Expanded harmonic and CVFF improper energy formulas
+    !   08/13/26 (EJM) : Note MCF # Improper_Info / CVFF input support
+    !   08/13/26 (EJM) : Note no %exist skip (unlike dihedrals)
+    !***************************************************************************
     INTEGER :: molecule,species,iimprop
     REAL(DP) :: energy
     REAL(DP) :: eimprop,k,phi0,phi,n_imp,d_imp
@@ -499,37 +510,40 @@ CONTAINS
 
   SUBROUTINE Compute_Atom_Nonbond_Energy(ia,im,is, &
        E_intra_vdw,E_inter_vdw,E_intra_qq,E_inter_qq,overlap)
-
-    !**************************************************************************
-    ! Computes the energy components between one particular atom and ALL others
-    ! in its box, accounting for exclusions, scalings and existence. It returns
-    ! energy components.
+    !***************************************************************************
+    ! Nonbonded ENERGY of one existing atom (ia,im,is) with ALL other atoms in
+    ! its box — both intramolecular and intermolecular — split into four buckets.
+    ! Older, general atom-vs-box path (full molecule list). Prefer cell-list
+    ! routines when available for Widom/CBMC.
     !
+    ! Arguments
+    !   ia, im, is     : atom, molecule locate, species (Widom: widom_*)
+    !   E_intra_vdw    : OUT — intramolecular vdW involving ia
+    !   E_inter_vdw    : OUT — intermolecular vdW involving ia
+    !   E_intra_qq     : OUT — intramolecular qq (scaled / Ewald split)
+    !   E_inter_qq     : OUT — intermolecular qq PLUS any same-molecule Ewald/DSF
+    !                    screening piece returned by Compute_AtomPair_Energy
+    !   overlap        : OUT — true on hard core (early return)
     !
-    ! Note that the VDW energy (without LRC) is returned as is the real space
-    ! part of the q-q interactions (for Ewald and DSF). These two contributions
-    ! are categorized into intra or intermolecular energy.
+    ! Algorithm (key points)
+    !   1. Abort if atom ia does not exist.
+    !   2. Loop every species / live molecule in this_box:
+    !        Check_MoleculePair_Cutoff (COM + max_dcom) — cheap skip of far molecules.
+    !   3. For each atom ja on surviving molecules:
+    !        SAME molecule (js,jm)==(is,im):
+    !          Skip ja==ia. No PBC — use stored coordinate difference.
+    !          If rijsq <= rcut_lowsq and .NOT. l_bonded -> overlap.
+    !        DIFFERENT molecule:
+    !          Minimum_Image_Separation. Any rijsq < rcut_lowsq -> overlap.
+    !   4. Check_AtomPair_Cutoff -> Compute_AtomPair_Energy; accumulate the four
+    !      Eij_* contributions into the matching outs.
     !
-    ! INPUT VARIABLES
+    ! Cost: O(N_molecules × N_atoms) with COM filtering; hot work is atom–atom
+    ! pairs that pass cutoffs. No LRC, reciprocal, or self terms here.
     !
-    !         ia[INTEGER]:         atom number
-    !         im[INTEGER]:     LOCATE of the molecule.
-    !         is[INTEGER]:      species type of the molecule.
-    !
-    ! OUTPUT VARIABLES
-    !
-    !         E_intra_vdw[REALDP]:        Intramolecular vdw energy of atom
-    !         E_inter_vdw[REALDP]:        Intermolecular vdw energy of atom
-    !         E_intra_qq[REALDP]:         Intramolecular qq energy of atom
-    !         E_inter_qq[REALDP]:         Intermolecular qq energy of atom
-    !         Overlap[LOGICAL]:           Flag that gets triggered if atom
-    !                                     has a core overlap with another
-    !
-    ! RAISES
-    !
-    ! DOCUMENTATION LAST UPDATED: 08/10/2016
-    !**************************************************************************
-
+    ! Revision history
+    !   08/13/26 (EJM) : Added explanatory header for atom-vs-box nonbond energy
+    !***************************************************************************
 
     INTEGER, INTENT(IN) :: ia,im,is
     REAL(DP), INTENT(OUT) :: E_intra_vdw,E_inter_vdw,E_intra_qq,E_inter_qq
@@ -691,6 +705,33 @@ CONTAINS
 
   SUBROUTINE Compute_Atom_Nonbond_Intra_Energy(ia,im,is, &
                   E_intra_vdw,E_intra_qq,E_inter_qq,overlap)
+          !***************************************************************************
+          ! Intramolecular nonbonded ENERGY of one atom (ia,im,is) with all other
+          ! existing atoms in the same molecule. Atom-level counterpart of
+          ! Compute_Molecule_Nonbond_Intra_Energy (which does all unique pairs ia < ja).
+          !
+          ! Arguments
+          !   ia, im, is     : atom, molecule locate, species (Widom: widom_atoms)
+          !   E_intra_vdw    : OUT — intramolecular vdW involving ia
+          !   E_intra_qq     : OUT — intramolecular qq involving ia (scaled / Ewald split)
+          !   E_inter_qq     : OUT — same-molecule screening piece from pair routines
+          !                    (Ewald -erf term, etc.; not another molecule)
+          !   overlap        : OUT — true if a hard-core hit; starts true, cleared only
+          !                    after a clean finish
+          !
+          ! Loop over ja ≠ ia (existing atoms only):
+          !   Skip if both vdw_intra_scale and charge_intra_scale are zero (excluded
+          !   1-2 / fully scaled-out pairs).
+          !   Separation from stored coordinates (no Minimum_Image_Separation).
+          !   If rijsq < rcut_lowsq and vdw scale > 0 -> overlap return.
+          !   Check_AtomPair_Cutoff, then AND with nonzero scales; Compute_AtomPair_Energy.
+          !
+          ! Typical use: CBMC / fragment growth when only one atom’s intra interactions
+          ! need updating. Cost O(N_atoms) for that atom.
+          !
+          ! Revision history
+          !   08/13/26 (EJM) : Added explanatory header for atom intramolecular nonbond
+          !***************************************************************************
           INTEGER, INTENT(IN) :: ia,im,is
           REAL(DP), INTENT(OUT) :: E_intra_vdw, E_intra_qq, E_inter_qq
           LOGICAL, INTENT(OUT) :: overlap
@@ -870,6 +911,34 @@ CONTAINS
   !-----------------------------------------------------------------------------
   SUBROUTINE Compute_Atom_Nonbond_Inter_Energy_Cells(ia,im,is, &
                   E_inter_vdw, E_inter_qq, overlap, Eij_qq)
+          !***************************************************************************
+          ! Intermolecular nonbonded ENERGY of one atom (ia,im,is) vs neighboring
+          ! atoms found via a cell / sector list. Used for Widom and CBMC when
+          ! cell lists are active — avoids looping the whole box.
+          !
+          ! Arguments
+          !   ia, im, is     : atom, molecule locate, species (Widom: widom_atoms)
+          !   E_inter_vdw/qq : OUT — summed intermolecular vdW / qq vs neighbors
+          !   overlap        : OUT — true if a hard-core hit (rijsq < rcut_lowsq);
+          !                    starts true and is cleared only on a clean finish
+          !   Eij_qq (optional): OUT — accumulated bare/reference qq when present
+          !
+          ! Algorithm
+          !   1. Map atom position to cell index (cbmc or full cell_length_inv)
+          !   2. Visit the 3×3×3 block of cells centered on that cell
+          !   3. For each atom in those sectors: MI distance, then
+          !      Check_AtomPair_Cutoff FIRST; hard-core (rijsq < rcut_lowsq)
+          !      and Compute_AtomPair_Energy run only if get_vdw .OR. get_qq.
+          !      So pairs outside both cutoffs but inside rcut_low are NOT
+          !      flagged as overlap here (order differs from some other paths).
+          !
+          ! Cost: O(atoms in neighboring cells) instead of O(N_box). Requires
+          ! cell lists to be built/updated for the current configuration.
+          !
+          ! Revision history
+          !   08/13/26 (EJM) : Added explanatory header for cell-list atom inter energy
+          !   08/13/26 (EJM) : Clarify cutoff-before-hard-core order
+          !***************************************************************************
           !
           INTEGER, INTENT(IN) :: ia, im, is
           REAL(DP), INTENT(OUT) :: E_inter_vdw, E_inter_qq
@@ -980,25 +1049,42 @@ CONTAINS
 
   SUBROUTINE Compute_Molecule_Nonbond_Intra_Energy(im,is, &
     E_intra_vdw,E_intra_qq,E_inter_qq,intra_overlap)
-    !---------------------------------------------------------------------------
-    ! The subroutine calculates the intramolecular LJ potential energy and
-    ! electrostatic energy of an entire molecule. The routine takes care of
-    ! double counting by looping only over i+1 to natoms for ith atom interaction.
+    !***************************************************************************
+    ! Intramolecular nonbonded ENERGY of molecule (im,is): all unique atom pairs
+    ! ia < ja. Returns scaled vdW/qq for the molecule plus any Ewald/DSF
+    ! “screening” piece that Compute_AtomPair_* parks in E_inter_qq.
     !
-    ! Only the minimum image electrostatic energy is stored in E_intra_qq. The
-    ! periodic image electrostatic energy is stored in E_inter_qq.
+    ! Arguments
+    !   im, is         : molecule locate and species (Widom: uses widom_atoms)
+    !   E_intra_vdw    : OUT — intramolecular vdW (with vdw_intra_scale)
+    !   E_intra_qq     : OUT — intramolecular qq (scaled 1-2/1-3/1-4 / Ewald split)
+    !   E_inter_qq     : OUT — extra qq from the pair routines for same-molecule
+    !                    pairs (Ewald: -erf*Eij screening; not “another molecule”;
+    !                    callers often name this E_periodic_qq)
+    !   intra_overlap  : set .true. on hard-core hit (early return). Never cleared
+    !                    to .false. here — callers MUST initialize .false. before
+    !                    calling. See docs/future-fixes.md (API contract).
     !
-    ! CALLS
+    ! Loop
+    !   For ia = 1..N, ja = ia+1..N (no double counting), existing atoms only:
+    !     1. Separation from coordinates AS STORED (no Minimum_Image_Separation —
+    !        molecules are assumed unwrapped / contiguous in the box)
+    !     2. Hard-core: if rijsq <= rcut_lowsq and .NOT. l_bonded(ia,ja,is) -> overlap
+    !        (bonded 1-2 pairs are allowed inside rcut_low)
+    !     3. Check_AtomPair_Cutoff; CBMC may clear get_qq via L_Coul_CBMC
+    !     4. Compute_AtomPair_Energy(same molecule) -> accumulate E_intra_* and
+    !        E_inter_qq
     !
-    ! Compute_AtomPair_Energy
+    ! Cost: O(N_atoms^2) over the molecule — usually cheap vs intermolecular
+    ! workhorses unless the molecule is large.
     !
-    ! CALLED BY
+    ! Not included: bonds/angles/dihedrals/impropers (separate routines).
+    ! Called by dihedral/angle moves, full energy rebuild, insert/delete, …
+    ! Written by Jindal Shah on 12/05/07.
     !
-    ! Rotate_Dihedral
-    ! Angle_Distortion
-    !
-    !
-    ! Written by Jindal Shah on 12/05/07
+    ! Revision history
+    !   08/13/26 (EJM) : Added explanatory header for intramolecular nonbond energy
+    !   08/13/26 (EJM) : Clarify intra_overlap caller-init contract
     !***************************************************************************
 
     IMPLICIT NONE
@@ -1089,26 +1175,46 @@ CONTAINS
   SUBROUTINE Compute_Molecule_Nonbond_Inter_Energy(im,is, &
     E_inter_vdw,E_inter_qq,overlap)
     !***************************************************************************
-    ! This subroutine computes interatomic LJ and charge interactions as well as
-    ! virials associated with these interactions.
+    ! Intermolecular nonbonded ENERGY of molecule (im,is) with every other live
+    ! molecule in its box. Primary workhorse for MC ΔE on translate / rotate /
+    ! insert / delete / related moves. Energy only — despite an older comment,
+    ! this does NOT compute virials or forces.
     !
-    ! CALLS
+    ! Arguments
+    !   im, is          : locate and species of the molecule of interest
+    !   E_inter_vdw     : OUT — sum of intermolecular vdW vs all other molecules
+    !   E_inter_qq      : OUT — sum of intermolecular qq (see CBMC note below)
+    !   overlap         : OUT — true on hard overlap (rcut_low); early return
     !
-    ! Minimum_Image_Separation
-    ! Compute_MoleculePair_Energy
-    ! Clean_Abort
+    ! Cost model
+    !   Outer loops: all species × all live molecules in this_box (skip self).
+    !   Cheap filter: Check_MoleculePair_Cutoff uses COM distance + max_dcom
+    !     padding to skip pairs that cannot touch within the longest cutoff.
+    !   Hot path: surviving pairs call Compute_MoleculePair_Energy, which loops
+    !     every atom of im vs every atom of the partner (MI + cutoff + LJ/qq).
+    !   Wall time is dominated by atom–atom work on nearby molecule pairs, not
+    !   by the outer molecule loop itself. OpenMP parallelizes over partner
+    !   molecules (DYNAMIC schedule).
     !
-    ! CALLED BY
+    ! Algorithm per partner molecule
+    !   1. Optionally zero pair_nrg_*(im,partner) if l_pair_nrg and not CBMC
+    !   2. Check_MoleculePair_Cutoff -> get_interaction, COM vector
+    !   3. If interacting:
+    !        CBMC + precalc_atompair_nrg:
+    !          Estimate_MoleculePair_Energy -> combined table energy into Eij_vdw
+    !          (added only to E_inter_vdw; E_inter_qq left alone)
+    !        else:
+    !          Compute_MoleculePair_Energy -> Eij_vdw, Eij_qq (exact)
     !
-    ! Translate
-    ! Rotation
-    ! Rotate_Dihedral
-    ! Angle_Distortion
-    ! Insertion
-    ! Deletion
-    ! Reaction
+    ! Not included here: intramolecular nonbond, Ewald reciprocal/self, vdW LRC
+    ! (those are separate ΔE pieces in the move routines / full rebuild).
     !
-    ! Written by Jindal Shah on 12/07/07
+    ! Widom/ghost counterpart: Compute_Molecule_Nonbond_Inter_Energy_Widom.
+    ! Called by: Translate, Rotation, Rotate_Dihedral, Angle_Distortion,
+    ! Insertion, Deletion, Reaction, …  Written by Jindal Shah 12/07/07.
+    !
+    ! Revision history
+    !   08/13/26 (EJM) : Detailed teaching header for molecule–box inter energy
     !***************************************************************************
 
     IMPLICIT NONE
@@ -1210,17 +1316,29 @@ CONTAINS
   SUBROUTINE Compute_Molecule_Nonbond_Inter_Energy_Widom(im,is, &
     E_inter,overlap)
     !***************************************************************************
-    ! This subroutine computes interatomic LJ and charge interactions as well as
-    ! virials associated with these interactions.
+    ! Intermolecular nonbonded ENERGY of a Widom (or CBMC) trial molecule (im,is)
+    ! with all other live molecules in its box. Coordinates come from widom_atoms /
+    ! widom_molecule. Returns a single combined E_inter = sum(vdW + qq).
     !
-    ! CALLS
+    ! Note: despite an older comment, this does NOT compute virials.
     !
-    ! Minimum_Image_Separation
-    ! Compute_MoleculePair_Energy
+    ! Arguments
+    !   im, is    : locate and species of the trial molecule
+    !   E_inter   : OUT — total intermolecular nonbond energy vs the box
+    !   overlap   : OUT — true on hard overlap; early return
     !
-    ! CALLED BY
+    ! Paths
+    !   Cell list (cbmc_cell_list_flag/.OR. full_cell_list_flag):
+    !     per existing Widom atom -> Compute_Atom_Nonbond_Inter_Energy_Cells
+    !   Otherwise: loop all live molecules; skip self;
+    !     Check_MoleculePair_Cutoff, then either
+    !       Estimate_MoleculePair_Energy (CBMC + precalc_atompair_nrg) or
+    !       Compute_MoleculePair_Energy (exact; optional Eij_qq when est_emax)
     !
+    ! Production counterpart: Compute_Molecule_Nonbond_Inter_Energy.
     !
+    ! Revision history
+    !   08/13/26 (EJM) : Teaching header for Widom/CBMC inter nonbond energy
     !***************************************************************************
 
     IMPLICIT NONE
@@ -1369,20 +1487,33 @@ CONTAINS
   SUBROUTINE Compute_MoleculeCollection_Nonbond_Inter_Energy(n_list,lm_list,is_list, &
     E_inter_vdw,E_inter_qq,overlap)
     !***************************************************************************
-    ! This subroutine computes interatomic LJ and charge interactions as well as
-    ! virials associated with these interactions.
+    ! Intermolecular nonbonded ENERGY between a specified collection of molecules
+    ! and (a) each other, plus (b) all other live molecules in the same box.
+    ! Used by reaction / multi-molecule moves that need ΔE for a set of particles
+    ! without rebuilding the whole box.
     !
-    ! CALLS
+    ! Note: despite an older comment, this routine does NOT compute virials —
+    ! only E_inter_vdw and E_inter_qq.
     !
-    ! Minimum_Image_Separation
-    ! Compute_MoleculePair_Energy
-    ! Clean_Abort
+    ! Arguments
+    !   n_list           : number of molecules in the collection
+    !   lm_list(n_list)  : molecule locates
+    !   is_list(n_list)  : species indices (paired with lm_list)
+    !   E_inter_vdw/qq   : OUT — summed intermolecular vdW / qq for the collection
+    !   overlap          : OUT — true on hard overlap (rcut_low); early return
     !
-    ! CALLED BY
+    ! All molecules in the list must share one box (else Clean_Abort).
     !
-    ! Reaction
+    ! For each molecule i in the list:
+    !   1. Pair i with later list members j>i (unique pairs inside the collection)
+    !   2. Pair i with every other live molecule not in the list
+    !   Each candidate: Check_MoleculePair_Cutoff -> Compute_MoleculePair_Energy
     !
-    ! Written by Jindal Shah on 12/07/07
+    ! May reset/update pair_nrg_* when l_pair_nrg and not CBMC.
+    ! Written by Jindal Shah on 12/07/07.
+    !
+    ! Revision history
+    !   08/13/26 (EJM) : Teaching header; clarify energy-only (no virials)
     !***************************************************************************
 
     IMPLICIT NONE
@@ -1527,11 +1658,26 @@ CONTAINS
   !-----------------------------------------------------------------------------
 
   SUBROUTINE Estimate_MoleculePair_Energy(im,is,jm,js,this_box,mpnrg,overlap)
-          ! Only for use during CBMC trials
+          !***************************************************************************
+          ! Fast approximate intermolecular energy for CBMC trials via precomputed
+          ! atom-pair tables (atompair_nrg_table). Not for production bookkeeping —
+          ! use Compute_MoleculePair_Energy for exact pair energies.
           !
+          ! Arguments
+          !   im, is : “solute” molecule (table column / solute_base indexing)
+          !   jm, js : “solvent” molecule (table row / solvent_base indexing)
+          !   this_box : box (CBMC cutoff, table slice)
+          !   mpnrg    : OUT — summed table energy for all existing atom pairs in range
+          !   overlap  : OUT — true if any pair is inside the table’s hard-core bin
+          !              (rijsq_shift < rsq_step); then returns with mpnrg incomplete
           !
-          ! molecule i is the "solute" molecule and molecule j
-          !    is the "solvent" molecule
+          ! For each existing atom pair: MI distance -> bin INT((r^2 - rsq_shifter)/rsq_step)
+          ! and add atompair_nrg_table(bin, ja, ia). Pairs beyond rcut_cbmc are skipped.
+          ! Widom ghosts supported via widom_atoms.
+          !
+          ! Revision history
+          !   08/13/26 (EJM) : Teaching header for CBMC table-based pair estimate
+          !***************************************************************************
           IMPLICIT NONE
           INTEGER, INTENT(IN) :: im, is, jm, js, this_box
           REAL(DP), INTENT(OUT) :: mpnrg
@@ -1590,21 +1736,36 @@ CONTAINS
   SUBROUTINE Compute_MoleculePair_Energy(im,is,jm,js,this_box, &
     vlj_pair,vqq_pair,overlap,Eij_qq)
     !***************************************************************************
-    ! The subroutine returns the interaction energy of the input molecule with
-    ! another molecule. Thus, it computes the intermolecular vdw and
-    ! electrostatic interactions.
+    ! Intermolecular nonbonded ENERGY between molecules (im,is) and (jm,js) in
+    ! this_box. Sums atom–atom vdW and real-space qq into vlj_pair and vqq_pair.
+    ! Energy counterpart of Compute_MoleculePair_Force (virial tensors).
     !
-    ! CALLS
+    ! Arguments
+    !   im, is / jm, js : molecule locate and species (Widom ghosts via widom_*)
+    !   this_box        : box for MI, cutoffs, charge style
+    !   vlj_pair        : OUT — total intermolecular vdW for the pair
+    !   vqq_pair        : OUT — total intermolecular qq for the pair
+    !   overlap         : OUT — true if any atom pair has rijsq < rcut_lowsq
+    !                     (hard core); then returns immediately
+    !   Eij_qq (optional): OUT — sum of bare/reference qq from Compute_AtomPair_Energy
+    !                     (used in Widom diagnostics when present)
     !
-    ! Minimum_Image_Separation
-    ! Check_AtomPair_Cutoff
-    ! Compute_AtomPair_Energy
-    ! Get_Position_Alive
+    ! Loop (existing atoms only):
+    !   1. Minimum_Image_Separation -> rijsq
+    !   2. Hard-overlap test vs rcut_lowsq
+    !   3. Check_AtomPair_Cutoff -> get_vdw, get_qq
+    !      (CBMC may force get_qq=.false. if .NOT. L_Coul_CBMC)
+    !   4. Compute_AtomPair_Energy; accumulate only E_inter_vdw / E_inter_qq
+    !      (E_intra_* should be zero for distinct molecules)
     !
-    ! CALLED BY
+    ! Side effects
+    !   If l_pair_nrg and not (CBMC or Widom): store vlj/vqq in pair_nrg_* tables
+    !   Optional Widom rmin tracking when est_atompair_rminsq
     !
-    ! Compute_Molecule_Nonbond_Inter_Energy
-    ! Compute_System_Total_Energy
+    ! Called by Compute_Molecule_Nonbond_Inter_Energy, Compute_System_Total_Energy.
+    !
+    ! Revision history
+    !   08/13/26 (EJM) : Detailed teaching header for molecule-pair energy
     !***************************************************************************
 
     IMPLICIT NONE
@@ -1732,6 +1893,32 @@ CONTAINS
   !-----------------------------------------------------------------------------
 
   FUNCTION AtomPair_VdW_Energy_Vector(rijsq,itype,jtype,ibox)
+    !***************************************************************************
+    ! Vectorized vdW pair energy for atom types (itype,jtype) in box ibox.
+    ! Evaluates E_vdw at every squared distance in the input vector rijsq
+    ! (length atompair_nrg_res) and returns the matching energy vector.
+    !
+    ! Used to build atom-pair energy tables (atompair_nrg_table_routines), not
+    ! for ordinary MC pair loops — those call Compute_AtomPair_Energy.
+    !
+    ! Arguments
+    !   rijsq(atompair_nrg_res) : squared distances (table grid)
+    !   itype, jtype            : indices into vdw_param*_table
+    !   ibox                    : box (cutoffs / sum style)
+    !
+    ! Same functional forms as Compute_AtomPair_Energy’s vdW branch:
+    !   LJ:  4*eps*[(sig/r)^12-(sig/r)^6]
+    !        + cut_shift / cut_switch / CHARMM / cut_shift_force as configured
+    !   Mie: mie_coeff*eps*[(sig/r)^n-(sig/r)^m]  (+ optional cut_shift)
+    !
+    ! Differences from Compute_AtomPair_Energy:
+    !   - No intramolecular vdw_intra_scale (tables are type–type, not bonded)
+    !   - No electrostatics; vdW only
+    !   - Array-valued: most ops are elemental over the rijsq vector
+    !
+    ! Revision history
+    !   08/13/26 (EJM) : Teaching header for table-building vdW vector function
+    !***************************************************************************
       REAL(DP), DIMENSION(atompair_nrg_res) :: atompair_vdw_energy_vector
       REAL(DP), DIMENSION(atompair_nrg_res), INTENT(IN) :: rijsq
       INTEGER, INTENT(IN) :: itype, jtype, ibox
@@ -1831,24 +2018,41 @@ CONTAINS
 
   SUBROUTINE Compute_AtomPair_Energy(rxij,ryij,rzij,rijsq,is,im,ia,js,jm,ja, &
     get_vdw,get_qq,E_intra_vdw,E_intra_qq,E_inter_vdw,E_inter_qq,Eij_qq_o)
-
-    ! Computes the vdw and q-q pair energy between atoms ia and ja of molecules
-    ! im and jm and species is and js, given their separation rijsq. I have
-    ! passed each component of separation but right now this is unnecessary.
+    !***************************************************************************
+    ! Nonbonded pair ENERGY for atoms (ia,im,is) and (ja,jm,js) at separation rijsq.
+    ! Energy counterpart of Compute_AtomPair_Force (which returns virial scalars).
     !
-    ! LJ potential:
-    !      Eij =  4*epsilon(i,j) * [ (sigma(i,j)/rij)^12 - (sigma(i,j)/rij)^6 ]
+    ! Arguments
+    !   rxij,ryij,rzij : atom–atom MI components (currently unused; only rijsq used)
+    !   rijsq         : squared minimum-image distance
+    !   is,im,ia / js,jm,ja : species, molecule, atom indices (Widom ghosts OK)
+    !   get_vdw,get_qq : from Check_AtomPair_Cutoff — which pieces to evaluate
+    !   E_intra_vdw, E_intra_qq   : OUT — same-molecule contributions
+    !   E_inter_vdw, E_inter_qq   : OUT — different-molecule contributions
+    !   Eij_qq_o (optional)       : OUT — bare/reference qq if the charge branch sets it
     !
+    ! Returns zeros if either atom has exist=.false. (partial CBMC growth).
     !
+    ! vdW (if get_vdw; types from vdw_param*_table)
+    !   LJ:  E = 4*eps*[(sig/r)^12 - (sig/r)^6]
+    !        (+ cut_shift / cut_switch / CHARMM / cut_shift_force variants)
+    !   Mie: E = mie_coeff*eps*[(sig/r)^n - (sig/r)^m]  (+ optional cut_shift)
+    !   Same molecule: eps *= vdw_intra_scale(ia,ja,is); result -> E_intra_vdw
+    !   Else: E_inter_vdw
+    !   Tail correction is NOT here (Compute_LR_Correction).
+    !
+    ! Electrostatics (if get_qq)
+    !   Ewald:  Compute_AtomPair_Ewald_Real  (real-space only; recip/self elsewhere)
+    !   DSF:    Compute_AtomPair_DSF_Energy
+    !   cut / minimum_image / igas_flag:  charge_factor*qi*qj/r
+    !        with charge_intra_scale for same-molecule pairs
+    !
+    ! Called by Compute_Atom_Nonbond_Energy / molecule-level nonbond drivers.
+    !
+    ! Revision history
+    !   08/13/26 (EJM) : Detailed teaching header for atom-pair nonbond energy
+    !***************************************************************************
 
-    ! It also computes the real space part of the Ewald sum if necessary.
-
-    ! Called by:
-    !   Compute_Atom_Nonbond_Energy
-    !   Compute_Molecule_Nonbond_Energy
-    ! Calls:
-    !   Compute_AtomPair_Ewald_Real
-  !----------------------------------------------------------------------------
     ! Passed to
     REAL(DP) :: rxij,ryij,rzij,rijsq
     INTEGER :: is,im,ia,js,jm,ja,ibox
@@ -2055,6 +2259,46 @@ CONTAINS
 
 
 SUBROUTINE Compute_AtomPair_DSF_Energy(ia,im,is,qi,ja,jm,js,qj,rijsq,E_intra_qq,E_inter_qq,ibox,Eij_qq_o)
+  !***************************************************************************
+  ! Pair electrostatic energy via the damped shifted force (DSF) Coulomb model
+  ! (Fennell & Gezelter, J. Chem. Phys. 124, 234104, 2006) — a pairwise O(N)
+  ! alternative to Ewald. Potential and force go continuously to zero at rcut_coul.
+  !
+  ! Arguments
+  !   ia,im,is / ja,jm,js : atom, molecule, species of the two sites
+  !   qi, qj              : charges
+  !   rijsq               : squared minimum-image distance
+  !   E_intra_qq / E_inter_qq : OUT — intra vs inter bookkeeping split
+  !   ibox                : box (alpha_dsf, rcut_coul, dsf_factor1/2)
+  !   Eij_qq_o (optional) : OUT — bare charge_factor*qi*qj/rij
+  !
+  ! Prefactors (set once in input_routines from alpha, Rc = rcut_coul):
+  !   dsf_factor1 = erfc(alpha*Rc) / Rc
+  !   dsf_factor2 = erfc(alpha*Rc)/Rc^2
+  !              + 2*alpha*exp(-(alpha*Rc)^2) / (sqrt(pi)*Rc)
+  !
+  ! Pair DSF energy (cfqq = charge_factor*qi*qj):
+  !
+  !   E_DSF = cfqq * [ erfc(alpha*r)/r - dsf_factor1
+  !                    + dsf_factor2 * (r - Rc) ]
+  !
+  ! At r = Rc this is identically zero (shifted + force-matched).
+  !
+  ! Intermolecular (different molecules):
+  !   E_inter_qq = E_DSF ;  E_intra_qq = 0
+  !
+  ! Intramolecular (same molecule), scale = charge_intra_scale(ia,ja,is):
+  !   E_intra_qq = E_DSF - (1 - scale) * (cfqq/r)
+  !              = scale*(cfqq/r) + (E_DSF - cfqq/r)
+  !     → scaled bare Coulomb plus the DSF damping/shift corrections.
+  !   E_inter_qq = 0
+  !
+  ! Self term for DSF is handled separately (Compute_*_Self_Energy), not here.
+  ! No reciprocal space. Same 1/r hazard as Ewald real for rij → 0.
+  !
+  ! Revision history
+  !   08/13/26 (EJM) : Detailed teaching header for DSF pair electrostatics
+  !***************************************************************************
 USE Global_Variables
 IMPLICIT NONE
 INTEGER :: ia,im,is,ja,jm,js,ibox
@@ -2088,20 +2332,42 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
 
   SUBROUTINE Compute_AtomPair_Ewald_Real(ia,im,is,qi,ja,jm,js,qj,rijsq, &
     E_intra_qq,E_inter_qq,ibox,Eij_qq_o)
-  !-----------------------------------------------------------------------------
-    ! Real space part of the Ewald sum between atoms ia and ja with
-    ! charges qi and qj.
-    !
-    ! Miniumum image charges interact via Coulomb's law: qi*qj/rij
-    !   * Intramolecular: scaled for 1-2, 1-3 and 1-4 interactions
-    !
-    ! The real space part of the periodic image charge is qi*qj/rij*erf
-    !
-    !
-    ! CALLED BY:
-    !
-    ! Compute_AtomPair_Energy
-  !-----------------------------------------------------------------------------
+  !***************************************************************************
+  ! Real-space Ewald electrostatic energy for one atom pair (ia,im,is)–(ja,jm,js)
+  ! at separation rijsq. Builds the usual erfc-screened Coulomb interaction by
+  ! starting from full Coulomb and subtracting the erf piece (so net ~ erfc).
+  !
+  ! Arguments
+  !   ia,im,is / ja,jm,js : atom, molecule, species of the two sites
+  !   qi, qj              : charges (passed in; not re-looked-up)
+  !   rijsq               : squared minimum-image distance
+  !   E_intra_qq          : OUT — intramolecular qq (scaled 1-2/1-3/1-4), else 0
+  !   E_inter_qq          : OUT — intermolecular / screening piece (see below)
+  !   ibox                : overwritten from molecule_list(im,is)%which_box
+  !   Eij_qq_o (optional) : OUT — unscreened qi*qj/rij*charge_factor
+  !
+  ! Let Eij = charge_factor * qi*qj / rij
+  !     erf_val = erf(alpha_ewald * rij) = 1 - erfc(alpha*rij)
+  !
+  ! Same molecule (intra):
+  !   E_intra_qq = charge_intra_scale(ia,ja,is) * Eij
+  !   E_inter_qq = - erf_val * Eij
+  !   Net pair = (scale - erf)*Eij
+  !            = erfc*Eij + (scale-1)*Eij
+  !     → standard real-space Ewald plus the (scale-1) correction so 1-2/1-3/1-4
+  !       get the desired fraction of full Coulomb while reciprocal space still
+  !       “sees” the full charges.
+  !
+  ! Different molecules (inter):
+  !   E_intra_qq = 0
+  !   E_inter_qq = Eij - erf_val*Eij = erfc(alpha*rij)*Eij
+  !
+  ! Reciprocal + self terms are NOT computed here (see Compute_System_Ewald_*
+  ! and Compute_*_Self_Energy). Called by Compute_AtomPair_Energy.
+  !
+  ! Revision history
+  !   08/13/26 (EJM) : Detailed teaching header for real-space Ewald pair qq
+  !***************************************************************************
     ! Arguments
     INTEGER :: ia,im,is
     REAL(DP) :: qi
@@ -2170,13 +2436,37 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
 
   SUBROUTINE Ewald_Reciprocal_Lattice_Vector_Setup(this_box)
     !***************************************************************************
-    ! This subroutine sets up the reciprocal lattice vector constants required in the reciprocal
-    ! space summation. Note that these constants need to be recomputed every time a volume
-    ! change move is attempted.
-    ! Based on the APSS code, ewald_setup.f90
+    ! Build the reciprocal-space k-list and prefactors Cn(k) for Ewald summation
+    ! in box this_box. Must be recomputed whenever the box volume/shape changes
+    ! (volume moves), because both k = 2*pi*B^{-T}*n and Cn ~ 1/V depend on the
+    ! cell. Does NOT compute structure factors or energy — only the k-grid.
     !
-    ! Added by Jindal Shah on 12/05/07
+    ! Argument
+    !   this_box : box; fills hx/hy/hz, hsq, Cn(:,this_box) and nvecs(this_box)
     !
+    ! Wavevectors
+    !   General cell:  h = 2*pi * B^{-T} * n
+    !                  (B^{-1} stored as box_list%length_inv; n = (nx,ny,nz))
+    !   Ortho-style else-branch: h_a = 2*pi * n_a / L_a  (basis_length)
+    !
+    ! Half-space trick: loop nx = 0 … nmax (and full +/- for ny,nz), skip n=0.
+    !   Cn(nx=0)  = (2*pi/V) * exp(-k^2/(4 alpha^2)) / k^2
+    !   Cn(nx>0)  = 2 * that   ← folds in the missing -nx partners
+    !
+    ! Truncation: keep only k with |k| < h_ewald_cut (hsq < hcutsq).
+    ! First branch (int_cell / int_ortho) uses fixed n loops ±20; else branch
+    ! sets kx_max etc. from h_ewald_cut * L / (2*pi).
+    !
+    ! Outputs used later
+    !   hx,hy,hz,hsq : Cartesian components and |k|^2
+    !   Cn           : weight in E_recip = charge_factor * sum_k Cn |S(k)|^2
+    !   nvecs        : number of retained k’s
+    ! Arrays cos_sum/sin_sum are NOT allocated here (sized later from max nvecs).
+    !
+    ! Based on APSS ewald_setup.f90; added by Jindal Shah 12/05/07.
+    !
+    ! Revision history
+    !   08/13/26 (EJM) : Detailed teaching header for k-list / Cn setup
     !***************************************************************************
 
     USE Type_Definitions
@@ -2327,17 +2617,39 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
   SUBROUTINE Update_System_Ewald_Reciprocal_Energy(im,is,ibox, &
     move_flag,E_reciprocal)
     !***************************************************************************
-    ! The subroutine computes the difference in Ewald reciprocal space energy
-    ! for a given move.
+    ! Incremental Ewald reciprocal update for a REAL Monte Carlo move that
+    ! perturbs one molecule. Mutates cos_sum/sin_sum (and cos_mol/sin_mol) and
+    ! returns the NEW total reciprocal energy
+    !   E_reciprocal = charge_factor * sum_k Cn(k) |S_new(k)|^2
+    ! Callers form ΔE as (E_reciprocal - energy%reciprocal). On reject they restore
+    ! cos_sum/sin_sum from the snapshots saved here in cos_sum_old/sin_sum_old.
     !
-    ! We will develop this routine for a number of moves.
+    ! Arguments
+    !   im, is     : molecule locate and species being moved
+    !   ibox       : box
+    !   move_flag  : which update branch (see below)
+    !   E_reciprocal : OUT — new full reciprocal energy (not ΔE)
     !
-    ! Translation of COM
-    ! Rotation about COM
-    ! Angle distortion
-    ! Rigid dihedral rotation
-    ! Molecule insertion
-    ! Molecule deletion
+    ! move_flag branches
+    !   int_translation / int_rotation / int_intra :
+    !     S_mol_new from current atom_list; then
+    !     S := S - S_mol_old + S_mol_new; store S_mol_new in cos_mol/sin_mol
+    !     (covers COM moves and intramolecular DOF changes)
+    !   int_deletion :
+    !     S := S - S_mol (using stored cos_mol/sin_mol); molecule terms left as-is
+    !   int_insertion :
+    !     build S_mol from atom_list, store in cos_mol/sin_mol; S := S + S_mol
+    !
+    ! Contrast: Update_System_Ewald_Reciprocal_Energy_Widom probes a ghost without
+    ! mutating S. Full rebuild: Compute_System_Ewald_Reciprocal_Energy.
+    !
+    ! Assumption: translation/rotation/intra branches loop ia = 1..natoms(is)
+    ! with NO atom_list%exist filter — partial-CBMC molecules are treated as
+    ! fully present in S_mol. See docs/future-fixes.md.
+    !
+    ! Revision history
+    !   08/13/26 (EJM) : Teaching header; clarify returns new total, not ΔE
+    !   08/13/26 (EJM) : Note full-species loop (no %exist filter)
     !***************************************************************************
 
     USE Type_Definitions
@@ -2501,9 +2813,36 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
   SUBROUTINE Update_System_Ewald_Reciprocal_Energy_Widom(im,is,ibox, &
     E_reciprocal)
     !***************************************************************************
-    ! The subroutine computes the difference in Ewald reciprocal space energy
-    ! for a Widom insertion.
+    ! Ewald reciprocal energy for a trial Widom ghost insertion. Returns the
+    ! reciprocal energy the box WOULD have if the ghost molecule were present,
+    ! without modifying cos_sum / sin_sum / cos_mol / sin_mol (ghost is never
+    ! accepted into the real system).
     !
+    ! Arguments
+    !   im, is : molecule locate and species (im unused in the body; charges from
+    !            species is, coordinates from widom_atoms)
+    !   ibox   : box whose current structure factors cos_sum/sin_sum are read
+    !   E_reciprocal : OUT — full reciprocal energy with ghost included
+    !                  (= charge_factor * sum_k Cn(k) |S(k) + S_ghost(k)|^2)
+    !
+    ! For each wavevector k:
+    !   S_ghost(k) = sum_ia q_ia exp(i k · r_ia)   (from widom_atoms)
+    !   S'(k)      = cos_sum(k) + i sin_sum(k) + S_ghost(k)
+    !   accumulate Cn(k) * |S'|^2
+    !
+    ! Contrast with Update_System_Ewald_Reciprocal_Energy, which mutates the
+    ! running S(k) for real MC moves. Widom ΔE bookkeeping subtracts the old
+    ! energy%reciprocal elsewhere (see widom_insert: E_inter_constant), so this
+    ! routine must return the NEW total, not a difference — despite the older
+    ! comment that said “difference”.
+    !
+    ! Assumption: S_ghost uses ALL natoms(is) charges and widom_atoms coordinates
+    ! with NO %exist filter (same full-species assumption as the real update).
+    ! See docs/future-fixes.md.
+    !
+    ! Revision history
+    !   08/13/26 (EJM) : Teaching header; clarify returns new total, not ΔE
+    !   08/13/26 (EJM) : Note full-species ghost S(k) (no %exist filter)
     !***************************************************************************
 
     USE Type_Definitions
@@ -2553,10 +2892,31 @@ END SUBROUTINE Compute_AtomPair_DSF_Energy
 
   SUBROUTINE Compute_System_Self_Energy(this_box)
     !***************************************************************************
-    ! This subroutine calculates the constant term that arises from particles
-    ! interacting with themselves in the reciprocal space. The subroutine needs
-    ! to be called only once as it is a constant term as long as the particles
-    ! and their charges remain the same.
+    ! Box-wide electrostatic self energy for this_box. Sums the per-charge self
+    ! terms over all live molecules and stores energy(this_box)%self.
+    !
+    ! Argument
+    !   this_box : box whose energy%self is overwritten
+    !
+    ! For each live atom with charge q:
+    !
+    !   Ewald:  energy%self = - (alpha_ewald / sqrt(pi)) * charge_factor * sum q^2
+    !
+    !   DSF:    energy%self = - (alpha_dsf/sqrt(pi) + dsf_factor1/2)
+    !                         * charge_factor * sum q^2
+    !
+    ! Configuration-independent while N, charges, and alpha are fixed — so a full
+    ! rebuild only needs this when composition or electrostatic parameters change.
+    ! Molecule-level counterpart Compute_Molecule_Self_Energy returns one molecule’s
+    ! share for insert/delete/swap ΔE without touching energy%self.
+    !
+    ! Called from Compute_System_Total_Energy (and similar full rebuilds). The old
+    ! note “call only once” is true for a fixed charge set; after insertions/
+    ! deletions the global self term must be updated (via this routine or by
+    ! adding/subtracting molecule self energies).
+    !
+    ! Revision history
+    !   08/13/26 (EJM) : Teaching header for box-wide Ewald/DSF self energy
     !***************************************************************************
 
     USE Type_Definitions
@@ -2606,17 +2966,33 @@ END SUBROUTINE Compute_System_Self_Energy
 
 SUBROUTINE Compute_Molecule_Self_Energy(im,is,this_box,E_self)
   !***************************************************************************
-  ! This subroutine calculates the self Ewald energy for the
-  ! input molecule.
+  ! Electrostatic self energy for species is in this_box (used as the
+  ! per-molecule ΔE self term on insert/delete/swap/Widom).
   !
-  ! CALLED BY:
+  ! IMPORTANT: This is a SPECIES-TEMPLATE sum over all MCF atoms of species is
+  ! (nonbond_list(:,is)%charge). Argument im is unused. Coordinates and
+  ! atom_list%exist are ignored — partial-CBMC / ghost molecules with missing
+  ! atoms still get the full-species self energy. See docs/future-fixes.md.
   !
-  ! Chempot
-  ! GEMC_Particle_Transfer
-  ! Insertion
-  ! Deletion
-  ! Reaction
+  ! Arguments
+  !   im, is   : molecule locate (unused) and species
+  !   this_box : box (alpha_ewald / alpha_dsf, charge_factor, sum style)
+  !   E_self   : OUT — template self energy (not written to energy%self)
   !
+  ! Formula (sum over atoms ia of the species template):
+  !
+  !   Ewald:  E_self = - (alpha / sqrt(pi)) * charge_factor * sum_ia q_ia^2
+  !
+  !   DSF:    E_self = - (alpha/sqrt(pi) + dsf_factor1/2) * charge_factor
+  !                    * sum_ia q_ia^2
+  !
+  ! Independent of configuration — changes only if charges or alpha change.
+  ! System-wide counterpart Compute_System_Self_Energy loops all molecules and
+  ! stores energy(this_box)%self.
+  !
+  ! Revision history
+  !   08/13/26 (EJM) : Teaching header for molecule self (Ewald/DSF) energy
+  !   08/13/26 (EJM) : Clarify species-template (im unused; no %exist)
   !***************************************************************************
 
   USE Type_Definitions
@@ -2648,11 +3024,51 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
   SUBROUTINE Compute_System_Total_Energy(this_box,intra_flag,overlap)
     !***************************************************************************
-    ! The subroutine calculates the total energy of a given box. The identity of
-    ! the box is passed to the routine along with the intra_flag to indicate
-    ! whether intramolecular computation is required. The flag will mostly be
-    ! set to true except in the case of volume change move that is designed so
-    ! that the intramolecular DOFs do not change.
+    ! Full rebuild of the configurational energy for box this_box from coordinates.
+    ! Writes into the global energy(this_box) components (and optionally pair_nrg_*).
+    ! Counterpart for pressure: Compute_System_Total_Force.
+    !
+    ! Arguments
+    !   this_box   : box to evaluate
+    !   intra_flag : if true, recompute all intramolecular terms; if false, leave
+    !                energy%intra (and bond/angle/…) unchanged — used by volume
+    !                moves that scale positions without changing internal DOFs
+    !   overlap    : OUT — true if any hard overlap was found (then early return)
+    !
+    ! What is always reset: total, inter, inter_vdw, inter_q, lrc, reciprocal.
+    ! What is reset only if intra_flag: intra, bond, angle, dihedral, improper,
+    !   intra_vdw, intra_q, self.
+    !
+    ! Steps
+    !   1. Intramolecular (if intra_flag), per live molecule:
+    !        bond, angle, dihedral, improper
+    !        + nonbond intra (scaled 1-2/1-3/1-4) via
+    !          Compute_Molecule_Nonbond_Intra_Energy
+    !        Note: that call’s “periodic image” qq piece is accumulated into
+    !        energy%inter_q (not intra_q).
+    !
+    !   2. Intermolecular pairs (same species, then cross-species):
+    !        Check_MoleculePair_Cutoff -> Compute_MoleculePair_Energy
+    !        -> accumulate inter_vdw, inter_q
+    !        If l_pair_nrg and not CBMC, also refresh pair_nrg_vdw/qq tables.
+    !
+    !   3. Long-range electrostatics (if coulomb):
+    !        Ewald: Compute_System_Ewald_Reciprocal_Energy (+ reciprocal into inter)
+    !        Always for coul: Compute_System_Self_Energy (+ self into inter)
+    !
+    !   4. vdW tail (if vdw_cut_tail): Compute_LR_Correction -> energy%lrc
+    !
+    !   5. Totals:
+    !        inter = inter_vdw + inter_q (+ reciprocal + self + lrc as applicable)
+    !        total = intra + inter
+    !      (If intra_flag was false, “intra” is the previous global value.)
+    !
+    ! Overlaps abort the rebuild with overlap=.true. so callers can reject a move.
+    ! This is the expensive “truth” energy used by Check_System_Energy; MC moves
+    ! normally update energy(this_box) incrementally via ΔE instead.
+    !
+    ! Revision history
+    !   08/13/26 (EJM) : Detailed teaching header for full energy rebuild
     !***************************************************************************
 
     IMPLICIT NONE
@@ -2956,8 +3372,29 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
   SUBROUTINE Compute_LR_Correction(this_box, e_lrc)
     !***************************************************************************
-    ! The subroutine calculates the long range correction for the given box.
+    ! Long-range (tail) correction to the vdW energy for box this_box.
+    ! Companion: Compute_LR_Force returns the analogous virial w_lrc.
     !
+    ! Arguments
+    !   this_box : box (volume, cutoffs, bead counts nint_beads)
+    !   e_lrc    : OUT — scalar tail energy added to energy%lrc when
+    !              int_vdw_sum_style == vdw_cut_tail
+    !
+    ! Beyond rcut the fluid is treated as uniform with pair density n_i*n_j/V.
+    !
+    ! Lennard-Jones  4*eps*[(sig/r)^12 - (sig/r)^6], integrated rc -> infinity:
+    !
+    !   E_LRC = (2*pi/V) * sum_{i,j} n_i n_j * 4*eps
+    !           * [ sig^12/(9 rc^9) - sig^6/(3 rc^3) ]
+    !
+    ! Mie: same homogeneous-fluid integral with exponents (n,m) and the standard
+    ! Mie prefactor; see body. (Note the overall sign convention differs from LJ
+    ! in the final 2*pi/V factor — keep energy and virial LRC consistent.)
+    !
+    ! Does not touch the pressure tensor; use Compute_LR_Force for that.
+    !
+    ! Revision history
+    !   08/13/26 (EJM) : Teaching header for vdW energy LRC
     !***************************************************************************
     INTEGER, INTENT(IN) :: this_box
     REAL(DP), INTENT(OUT) :: e_lrc
@@ -3027,6 +3464,35 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
   SUBROUTINE Check_MoleculePair_Cutoff(im_1,is_1,im_2,is_2,get_interaction, &
     rcom,rxcom,rycom,rzcom)
+    !*******************************************************************************
+    ! Coarse gatekeeper for a molecule–molecule pair: decide whether any atom–atom
+    ! interactions might fall inside the longest relevant cutoff, and return the
+    ! COM–COM minimum-image vector used later for the molecular virial.
+    !
+    ! Arguments
+    !   im_1, is_1 / im_2, is_2 : molecule and species indices of the two molecules
+    !                             (Widom ghost molecule supported via widom_*)
+    !   get_interaction         : OUT — false if COM separation is large enough that
+    !                             all atom pairs are outside the interaction range
+    !   rcom                    : OUT — |R|, COM–COM minimum-image distance
+    !   rxcom, rycom, rzcom     : OUT — COM–COM minimum-image vector R
+    !
+    ! Logic
+    !   get_interaction starts true. Skip the distance test for vdw_minimum.
+    !   Otherwise compute R from COM positions (Minimum_Image_Separation).
+    !   Reject the pair if
+    !     rcom > rcut + max_dcom_1 + max_dcom_2
+    !   where rcut is rcut_max (production) or rcut_cbmc (when CBMC_flag), and
+    !   max_dcom is each molecule’s farthest atom-from-COM extent. That padding
+    !   ensures a pair is only skipped when every atom–atom distance is safely
+    !   beyond cutoff.
+    !
+    ! Does not evaluate energies/virials. Surviving pairs go on to atom loops and
+    ! Check_AtomPair_Cutoff / Compute_AtomPair_*.
+    !
+    ! Revision history
+    !   08/13/26 (EJM) : Teaching header for molecule-pair cutoff gatekeeper
+    !*******************************************************************************
 
     REAL(DP) :: rxijp, ryijp, rzijp, rcom, rxcom, rycom, rzcom, rinteraction
 
@@ -3091,6 +3557,29 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
 !*******************************************************************************
  SUBROUTINE Check_AtomPair_Cutoff(rijsq,get_vdw,get_qq,this_box)
+   !*******************************************************************************
+   ! Gatekeeper for a single atom–atom pair: given rijsq, decide whether vdW and/or
+   ! real-space electrostatics should be evaluated for this_box.
+   !
+   ! Arguments
+   !   rijsq     : squared minimum-image atom–atom separation
+   !   this_box  : box (supplies cutoffs and style flags)
+   !   get_vdw   : OUT — true if pair is inside the vdW cutoff / always-on style
+   !   get_qq    : OUT — true if pair is inside the Coulomb cutoff / always-on style
+   !
+   ! Logic (both flags start false)
+   !   vdW:  off if vdw_none; else compare rijsq to the active cutoff
+   !         (rcut_vdwsq, roff_switch_sq, or rcut_cbmcsq when CBMC_flag);
+   !         vdw_minimum / vdw_charmm always on.
+   !   qq:   off if charge_none; for coul + cut/ewald/dsf compare rijsq to
+   !         rcut_coulsq (or rcut_cbmcsq when CBMC); charge_minimum always on.
+   !
+   ! Does not compute energies or virials — only the two logicals. Callers such as
+   ! Compute_AtomPair_Energy / Force use these to skip work outside cutoffs.
+   !
+   ! Revision history
+   !   08/13/26 (EJM) : Teaching header for atom-pair cutoff gatekeeper
+   !*******************************************************************************
 
    INTEGER  :: this_box
    REAL(DP) :: rijsq
@@ -3196,20 +3685,34 @@ END SUBROUTINE Compute_Molecule_Self_Energy
  END SUBROUTINE Check_AtomPair_Cutoff
 
  SUBROUTINE Compute_System_Total_Force(this_box)
-
    !****************************************************************************
-   ! The subroutine calculates the total forces of a given box.
-   ! The identity of the box is passed to the routine.
-   ! The forces are then used to compute the pressure tensor.
+   ! Assemble the intermolecular virial / pressure tensors for box this_box.
+   ! Despite the routine name, atomic force vectors are not stored — only the
+   ! molecular stress pieces used for pressure (and volume moves).
    !
-   ! CALLS
+   ! Argument
+   !   this_box : box whose W_tensor_* globals are filled
    !
-   ! CALLED BY
+   ! Steps
+   !   1. Zero W_tensor_vdw, W_tensor_charge, W_tensor_recip, W_tensor_elec.
+   !   2. Loop unique molecule pairs (same species, then cross-species):
+   !        Check_MoleculePair_Cutoff -> COM vector R=(rx,ry,rz)
+   !        Compute_MoleculePair_Force -> pair tensors tv_pair, tc_pair
+   !        Accumulate into W_tensor_vdw and W_tensor_charge.
+   !   3. If Ewald: Compute_System_Ewald_Reciprocal_Force -> W_tensor_recip,
+   !        copy into W_tensor_elec.
+   !   4. If vdw_cut_tail: Compute_LR_Force -> virial%lrc (scalar; not folded
+   !        into W_tensor_* here).
+   !   5. Finish:
+   !        W_tensor_elec  = (W_tensor_elec + W_tensor_charge) * charge_factor
+   !        W_tensor_total = W_tensor_vdw + W_tensor_elec
    !
-   ! Volume_Change
-   ! Main
-   ! Write_Properties_Buffer
+   ! Pair / reciprocal / LRC math: see the headers of the callees above.
    !
+   ! Called by: Volume_Change, Main, Write_Properties_Buffer
+   !
+   ! Revision history
+   !   08/13/26 (EJM) : Teaching header clarifying virial assembly (not forces)
    !****************************************************************************
 
    IMPLICIT NONE
@@ -3330,13 +3833,38 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
   SUBROUTINE Compute_MoleculePair_Force(im,is,jm,js,this_box,tens_vdw,tens_charge,rabx,raby,rabz)
     !***************************************************************************
-    ! The subroutine returns the interaction force of the input molecule with
-    ! another molecule. Thus,
-    ! it computes the intermolecular vdw and electrostatic interactions.
+    ! Intermolecular vdW + real-space electrostatic contribution to the virial
+    ! tensor for molecule pair (im,is)–(jm,js). Despite the routine name, this
+    ! does not return force vectors — it fills 3x3 tensors tens_vdw and
+    ! tens_charge for the molecular pressure.
     !
-    ! CALLED BY
+    ! Arguments
+    !   im, is     : molecule index and species of molecule 1
+    !   jm, js     : molecule index and species of molecule 2
+    !   this_box   : box containing the pair (cutoffs, alpha, etc.)
+    !   rabx,raby,rabz : COM–COM minimum-image vector R of the pair
+    !                    (supplied by caller; not recomputed here)
+    !   tens_vdw, tens_charge : OUT for this pair — zeroed on entry, then filled
+    !                    with this pair’s virial tensor contributions (callers
+    !                    that need a system total must accumulate themselves)
     !
-    ! Added by Jindal Shah on 12/10/07
+    ! For every atom pair (ia of mol 1, ja of mol 2) within cutoff:
+    !   1. Minimum-image atom–atom vector r = (rxij,ryij,rzij), rsq = |r|^2
+    !   2. Compute_AtomPair_Force -> Wij_vdw, Wij_qq
+    !        with Wij := -r dE/dr  (see that routine’s header)
+    !   3. Molecular virial (atomic r, molecular R):
+    !
+    !        W_ab += (Wij / r^2) * r_a * R_b
+    !
+    !      Off-diagonals use the symmetrized form
+    !        0.5*(r_a*R_b + r_b*R_a)
+    !
+    ! Reciprocal Ewald / vdW LRC are added elsewhere in
+    ! Compute_System_Total_Force. Added by Jindal Shah on 12/10/07.
+    !
+    ! Revision history
+    !   08/13/26 (EJM) : Teaching header clarifying molecular virial (not forces)
+    !   08/13/26 (EJM) : Clarify tens_* are OUT (zeroed), not accumulators
     !***************************************************************************
 
     IMPLICIT NONE
@@ -3422,17 +3950,36 @@ END SUBROUTINE Compute_Molecule_Self_Energy
   !-----------------------------------------------------------------------------
   SUBROUTINE Compute_AtomPair_Force &
        (rijsq,is,im,ia,js,jm,ja,get_vdw,get_qq,Wij_vdw,Wij_qq)
+    !***************************************************************************
+    ! Pair virial contribution for atoms (ia,im,is) and (ja,jm,js) at separation
+    ! rijsq. Despite the routine name, it does not return force vectors — it
+    ! returns scalars Wij_vdw and Wij_qq used to build the pressure tensor:
+    !
+    !   Wij := -r * dEij/dr     (= r * F_magnitude along the pair)
+    !
+    ! Caller Compute_MoleculePair_Force forms tensor pieces via
+    !   W_ab += (Wij / r^2) * r_a * R_b
+    ! (R = COM–COM vector). Isotropic pressure uses (1/3) Tr(W) later; do not
+    ! put the 1/3 inside Wij here.
+    !
+    ! vdW (if get_vdw):
+    !   LJ:     Wij = 24*eps * [ 2*(sig/r)^12 - (sig/r)^6 ]
+    !           (+ cut-switch / CHARMM / shifted-force variants)
+    !   Mie:    Wij = mie_coeff*eps * [ n*(sig/r)^n - m*(sig/r)^m ]
+    !
+    ! Electrostatics (if get_qq), real-space only:
+    !   Ewald:  Wij = (qi*qj/r)*erfc(alpha*r)
+    !               + qi*qj*(2*alpha/sqrt(pi))*exp(-(alpha*r)^2)
+    !           (charge_factor applied later on the assembled elec tensor)
+    !   DSF / plain cut: analogous -r dE/dr forms in the body
+    !
+    ! Reciprocal Ewald and vdW LRC are handled in separate routines.
+    ! Called by: Compute_MoleculePair_Force <- Compute_System_Total_Force
+    !
+    ! Revision history
+    !   08/13/26 (EJM) : Teaching header; fix misleading Wij = -r/3 dE/dr note
+    !***************************************************************************
 
-    ! LJ potential:  Wij = -rij/3 * d Eij / d rij.
-    ! Use the virial in: P = NkT + < W >
-
-    ! Computes the vdw and q-q pair force between atoms ia and ja of molecules
-    ! im and jm and species is and js, given their separation rijsq. I have
-    ! passed each component of separation but right now this is unnecessary.
-    ! It also computes the real space part of the Ewald sum if necessary.
-
-    ! Called by: Compute_System_Total_Force
-  !-----------------------------------------------------------------------------
     ! Passed to
     REAL(DP) :: rxij,ryij,rzij,rijsq
     INTEGER :: is,im,ia,js,jm,ja
@@ -3597,13 +4144,28 @@ END SUBROUTINE Compute_Molecule_Self_Energy
   !-----------------------------------------------------------------------------
   SUBROUTINE Compute_LR_Force(this_box, w_lrc)
     !***************************************************************************
-    ! The subroutine calculates the long range correction for the given box.
+    ! Long-range (tail) correction to the vdW virial for box this_box.
+    ! Despite the routine name, this does not compute atomic forces — it returns
+    ! the scalar virial contribution w_lrc used for pressure (virial%lrc).
     !
-    ! Called by
+    ! Companion: Compute_LR_Correction returns the analogous energy e_lrc.
+    ! Used when int_vdw_sum_style == vdw_cut_tail. Beyond rcut, the fluid is
+    ! treated as uniform with pair density n_i*n_j/V (nint_beads counts).
     !
-    ! First written by Jindal Shah on 01/10/08
+    ! Lennard-Jones  4*eps*[(sig/r)^12 - (sig/r)^6], integrated rc -> infinity:
     !
+    !   W_LRC = (16*pi/(3 V)) * sum_{i,j} n_i n_j * eps
+    !           * [ (2/3) sig^12 / rc^9  -  sig^6 / rc^3 ]
     !
+    ! (Virial weights differ from the energy LRC because W ~ (n/3) for r^{-n}.)
+    !
+    ! Mie potential: same idea with repulsive/dispersive exponents (n,m) and the
+    ! standard Mie prefactor; see body for the closed-form integral.
+    !
+    ! First written by Jindal Shah on 01/10/08.
+    !
+    ! Revision history
+    !   08/13/26 (EJM) : Teaching header clarifying LRC virial (not forces)
     !***************************************************************************
 
     INTEGER, INTENT(IN) :: this_box
@@ -3668,13 +4230,31 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
   SUBROUTINE Compute_System_Ewald_Reciprocal_Force(this_box)
     !***************************************************************************
-    ! This subroutine computes the long range forces due to electrostatics
+    ! Reciprocal-space Ewald contribution to the virial/pressure tensor
+    ! W_tensor_recip(:,:,this_box). Despite the routine name, atomic forces are
+    ! not written here — only the stress/virial used for pressure.
     !
-    ! Based on APSS code reciprocal_ewald.f90
+    ! Requires current cos_sum/sin_sum (and Cn, hx/hy/hz, hsq) for this_box.
+    ! Two pieces are summed (Wheeler, Mol. Phys. 1997, 92, 55):
     !
-    ! Added by Tom Rosch on 06/11/09
-    ! (See Wheeler, Mol. Phys. 1997 Vol. 92 pg. 55)
+    ! (1) Explicit k-dependence of Cn(k) ~ (2*pi/V) exp(-k^2/(4 alpha^2))/k^2.
+    !     With un(k) = Cn(k) * |S(k)|^2 and const = 1/(4 alpha^2):
     !
+    !       W_ab += un * [ delta_ab - 2*(1/k^2 + const)*k_a*k_b ]
+    !
+    ! (2) Implicit dependence through S(k): each charge contributes a force-like
+    !     factor along k, contracted with (r_i - r_com) into the molecular virial:
+    !
+    !       factor = 2*q_i*Cn(k)*(-cos_sum*sin(k·r) + sin_sum*cos(k·r))
+    !       W_ab  += factor * (k_a * pii_b)   [off-diagonals symmetrized]
+    !
+    ! Symmetric W_ba = W_ab entries are filled at the end. Real-space and
+    ! self electrostatics are handled elsewhere.
+    !
+    ! Based on APSS reciprocal_ewald.f90; added by Tom Rosch 06/11/09.
+    !
+    ! Revision history
+    !   08/13/26 (EJM) : Teaching header clarifying virial tensor (not forces)
     !***************************************************************************
 
     USE Type_Definitions
@@ -3807,19 +4387,42 @@ END SUBROUTINE Compute_Molecule_Self_Energy
   SUBROUTINE Compute_Ring_Fragment_Energy(this_frag,this_im,is,this_box, &
     nrg_ring_frag)
     !***************************************************************************
+    ! Intramolecular ENERGY of one ring fragment (subset of molecule atoms).
+    ! Used in CBMC fragment growth / regrowth so ring conformation energy
+    ! enters the Rosenbluth bias (see fragment_growth.f90).
     !
-    ! This subroutine calculates the energy of a ring fragment in its old
-    ! conformation
+    ! Arguments
+    !   this_frag     : fragment index (must be frag_list%ring)
+    !   this_im, is   : molecule locate and species
+    !   this_box      : box (overwritten from molecule_list%which_box; fragment-
+    !                   specific cutoff/Ewald overrides are currently disabled)
+    !   nrg_ring_frag : OUT — E_vdw + E_qq + E_inter_qq + E_dihed + E_improper
     !
-    ! CALLED BY:
-    !       fragment_growth.f90
+    ! Method
+    !   1) Save atom_list%exist for the molecule.
+    !   2) Set exist=.FALSE. for all atoms, then .TRUE. only for
+    !      frag_list(this_frag,is)%atoms(:).
+    !   3) Call Compute_Molecule_Dihedral_Energy,
+    !      Compute_Molecule_Improper_Energy, and
+    !      Compute_Molecule_Nonbond_Intra_Energy (those routines skip
+    !      missing atoms via %exist).
+    !   4) Restore exist flags.
     !
-    ! CALLS :
-    !       Compute_Molecule_Dihedral_Energy
-    !       Compute_Molecule_Nonbond_Intra_Energy
+    ! What is NOT included (intentional)
+    !   Bond energy: fixed lengths → zero / integrity-only elsewhere.
+    !   Angle energy: omitted because it cancels in the CBMC acceptance
+    !   rule when comparing library vs old ring energies (fragment_growth).
     !
-    ! Written by Jindal Shah on 10/03/09
+    ! Typical use
+    !   Deletion / reverse CBMC: evaluate energy of the current (old) ring
+    !   coordinates. Insertion / forward: often uses pre-tabulated library
+    !   energy nrg_frag%this_config_energy instead of this routine.
     !
+    ! Note: intra_overlap from Nonbond_Intra is computed but not returned.
+    !
+    ! Revision history
+    !   10/03/09 (JS)  : Original
+    !   08/13/26 (EJM) : Added explanatory header for ring fragment energy
     !***************************************************************************
 
     INTEGER, INTENT(IN) :: this_frag, this_im, is
@@ -3907,8 +4510,29 @@ END SUBROUTINE Compute_Molecule_Self_Energy
   END SUBROUTINE Compute_Ring_Fragment_Energy
 
   !-----------------------------------------------------------------------------
-
   SUBROUTINE Check_System_Energy(ibox,check_inp)
+    !***************************************************************************
+    ! Consistency check / logfile dump for box ibox energy.
+    !
+    ! Arguments
+    !   ibox       : box to check
+    !   check_inp  : optional; default .TRUE. When true, compare recomputed
+    !                energy to the running bookkeeping energy (sum of MC ΔE)
+    !                and report Relative_Error per component.
+    !
+    ! Method
+    !   1) Optionally snapshot energy(ibox) into e_check.
+    !   2) CALL Compute_System_Total_Energy(ibox,.TRUE.,overlap); abort on overlap.
+    !   3) If check: form relative diffs |E_new - E_book| / |E_new| (when
+    !      |E_new| > tiny) into e_diff; write component table to logfile.
+    !   4) Logfile table includes intensive (E/N) columns (08/12/26) and a brief
+    !      Relative_Error explanation (08/13/26). See docs/logfile-format.md.
+    !
+    ! Revision history
+    !   08/12/26 (EJM) : Intensive (E/N) column in logfile tables
+    !   08/13/26 (EJM) : Brief Relative_Error explanation above the energy table
+    !   08/13/26 (EJM) : Expanded explanatory header (consistency pass)
+    !***************************************************************************
 
      USE Global_Variables
      USE IO_Utilities
@@ -4045,6 +4669,10 @@ END SUBROUTINE Compute_Molecule_Self_Energy
      WRITE(logunit,*)
      WRITE(logunit,'(X,A,X,I0)') 'Energy components for box', ibox
      IF (check) THEN
+        WRITE(logunit,'(X,A)') &
+             'Relative_Error: |E_full - E_bookkeeping| / |E_full|. Near machine precision'
+        WRITE(logunit,'(X,A)') &
+             '(~1e-12 or smaller) means OK; much larger means energy bookkeeping drifted.'
         WRITE(logunit,'(X,A,T35,A14,X,A18,X,A16)') &
              'Component', 'Extensive', 'Intensive', 'Relative_Error'
         WRITE(logunit,'(X,A,T35,A14,X,A18,X,A16)') &
@@ -4131,8 +4759,26 @@ END SUBROUTINE Compute_Molecule_Self_Energy
 
   SUBROUTINE Compute_System_Ewald_Reciprocal_Energy(this_box)
     !***************************************************************************
-    ! This subroutine computes the sin and cos sum terms for the calculation of
-    ! reciprocal energy of the input box.
+    ! Reciprocal-space Ewald energy for box this_box (full rebuild).
+    !
+    ! Electrostatics are split with a Gaussian screening parameter alpha.
+    ! The long-range part is a Fourier sum over wavevectors k = 2*pi * B^{-T} * n
+    ! (k=0 excluded; list and Cn weights set in Ewald_Reciprocal_Lattice_Vector_Setup):
+    !
+    !   S(k) = sum_j q_j exp(i k · r_j)
+    !        = cos_sum(k) + i sin_sum(k)
+    !
+    !   E_recip = charge_factor * sum_k  Cn(k) * |S(k)|^2
+    !
+    ! with Cn(k) ~ (2*pi/V) * exp(-k^2/(4 alpha^2)) / k^2
+    ! (nx>0 terms already doubled for +/- kx symmetry).
+    !
+    ! This routine rebuilds cos_sum/sin_sum from all charges, caches per-molecule
+    ! cos_mol/sin_mol for later incremental MC updates, then sets
+    ! energy(this_box)%reciprocal. Real-space erfc and self terms are elsewhere.
+    !
+    ! Revision history
+    !   08/13/26 (EJM) : Updated header for reciprocal Ewald math / bookkeeping
     !***************************************************************************
 
     USE Type_Definitions

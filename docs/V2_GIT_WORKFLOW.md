@@ -166,6 +166,29 @@ V2 Python wrapper files live in:
 
 See `python/README.md` for how to run simulations.
 
+#### Fortran revision history
+
+When you change a Fortran routine, add a **brief dated note** in that routine’s
+header comment block (create a short header if none exists). If the file also
+has a module-level `Revision history` section, add a matching one-line entry
+there.
+
+Use this style (match existing `(EJM)` entries in `Src/`):
+
+```text
+! Revision history
+!   08/13/26 (EJM) : Brief Relative_Error explanation above the energy table
+```
+
+When adding an explanatory routine header (not a behavior change), prefer:
+
+```text
+!   08/13/26 (EJM) : Added explanatory header for <short topic>
+```
+
+Avoid calling these “teaching” headers in the revision line. Keep entries to one
+line when possible. This is part of the edit, not a separate commit.
+
 ### 2. Review changes
 
 ```bash

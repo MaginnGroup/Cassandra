@@ -98,6 +98,9 @@ Edit `r125.ff` by hand with literature parameters. **Cassandra units:**
 | OPLS / CHARMM dihedral coeffs | kJ/mol |
 | Harmonic dihedral / improper \(K\) | K/rad² |
 
+OPLS dihedrals are converted to Ryckaert–Bellemans form when the MCF is read —
+see [dihedral-opls-rb.md](dihedral-opls-rb.md).
+
 If a published angle \(K\) is in kJ/mol/rad²:
 
 \[
@@ -302,6 +305,7 @@ Or via the Python wrapper once paths are set (see [python/README.md](../python/R
 ## Related docs
 
 - [docs/README.md](README.md) — V2 docs index
+- [dihedral-opls-rb.md](dihedral-opls-rb.md) — OPLS → RB conversion at MCF read
 - [smoke-test.md](smoke-test.md) — running the Python smoke test
 - [diagnostics/README.md](../diagnostics/README.md) — bond / angle / dihedral checks
 - [V2_DEVELOPMENT_ENVIRONMENT.md](V2_DEVELOPMENT_ENVIRONMENT.md) — conda / compile
