@@ -19,6 +19,106 @@ here. See also `.cursor/rules/future-fixes.mdc` and the note in [README.md](READ
 
 ## Open items
 
+### Expand utilities for structure and fluctuation properties
+
+| | |
+|--|--|
+| **Filed** | 2026-10-16 |
+| **Area** | Scientific post-processing in `utilities/` |
+| **Likely inputs** | Cassandra `.xyz`, `.H`, and `.prp` files; shared readers where practical |
+
+**Requested utilities**
+
+1. **Radial distribution functions:** support center-of-mass–center-of-mass
+   and selected atom-type/atom-index pairs. Handle periodic boundaries,
+   changing NPT cells, normalization, species selection, and trajectory
+   stride. Define intramolecular exclusions explicitly.
+2. **Coordination numbers:** support the same COM and atom–atom selections.
+   Integrate \(4\pi\rho_j r^2 g_{ij}(r)\) to a user cutoff or an identified
+   first minimum, and report the convention and uncertainty.
+3. **Thermophysical properties from fluctuations:** before coding, recommend
+   which properties Cassandra can obtain reliably from each ensemble and
+   which additional instantaneous quantities must be written.
+
+**Fluctuation-method candidates to assess**
+
+- \(C_V\) from energy fluctuations in NVT.
+- \(C_P\), isothermal compressibility, and thermal expansion from enthalpy,
+  volume, and enthalpy–volume fluctuations in NPT.
+- Enthalpy of vaporization from liquid and ideal-gas/residual enthalpies,
+  including the molecular and \(RT\) conventions.
+- Dielectric constant from total-dipole fluctuations when molecular charges
+  and the electrostatic boundary convention make that meaningful.
+
+For each property, document the exact ensemble formula, extensive versus
+per-molecule units, finite-size and long-range corrections, required sampling,
+and uncertainty propagation using correlated-data/block analysis. Do not infer
+a property from a `.prp` file unless all required instantaneous observables are
+present.
+
+**Why it matters**
+
+- These are the next core research-analysis capabilities after averaging and
+  restart generation. Shared selection, periodic-boundary, and uncertainty
+  code should be designed once rather than duplicated across scripts.
+
+**Risks / decisions**
+
+- COM RDFs require molecules to be reconstructed consistently across periodic
+  boundaries before their centers are calculated.
+- A coordination number is not unique until the neighbor species, density
+  convention, intramolecular exclusions, and integration cutoff are defined.
+- Fluctuation estimates can converge much more slowly than mean density or
+  energy and may require additional `.prp` columns or longer simulations.
+
+**Status:** deferred — utilities roadmap; review formulas and data requirements
+before implementation.
+
+---
+
+### Pressure-test NVT restarts from the four HFC-125 NPT runs
+
+| | |
+|--|--|
+| **Filed** | 2026-10-16 |
+| **Area** | `utilities/` workflow, not a Fortran change |
+| **Files** | `utilities/npt_restart.py`, `utilities/block_average.py` |
+| **Runs** | `~/CassandraV2/projects/hfc125/NPT-Runs/` (outside git) |
+
+**What happens today**
+
+- The NPT → NVT tool has synthetic tests only. It has not been used to start a real NVT simulation.
+- Four finished NPT productions are ready. Density chose the average. Only 298.15 K dropped a prefix (before sweep 81,000).
+
+| T (K) | Production stem | Density (kg/m³) | Volume (Å³) | L (Å) |
+|--|--|--|--|--|
+| 243.15 | `NPT-243/R125-T243-P2-prod` | 1433.71 ± 0.67 | 111217.43 | 48.090315 |
+| 258.15 | `NPT-258/R125-T258-P4-prod` | 1374.17 ± 0.80 | 116039.43 | 48.775515 |
+| 273.15 | `NPT-273/R125-T273-P6-prod` | 1309.89 ± 0.99 | 121741.83 | 49.561747 |
+| 298.15 | `NPT-298/R125-T298-P13-prod` | 1180.91 ± 1.22 | 135056.58 | 51.306444 |
+
+The ± values are the larger standard error (autocorrelation). Each directory also has `r125-prod.inp`, `*.restart.xyz`, and `*.restart.H`.
+
+**Why it matters**
+
+- The next scientific step is an NVT run at the equilibrated NPT density. The tool should be tried on these four cases before anyone trusts it for a long job.
+
+**Proposed fix (when ready)**
+
+1. For each temperature, run `utilities/npt_restart.py` with that directory’s `r125-prod.inp` and production `.prp`. Write a **new** folder. Do not modify the NPT directory.
+2. Check the new input: `nvt_mc`, `# Box_Info` equal to L above, `read_config 800` pointed at the scaled XYZ, no `# Prob_Volume` or `# Pressure_Info`, move probabilities sum to 1, and the written `.H` volume matches the table.
+3. Run a short NVT (laptop smoke length is enough) at each temperature and confirm Cassandra starts from the scaled configuration and the density stays near the NPT average.
+4. Leave GCMC for later. This test is NVT only.
+
+**Risks / decisions**
+
+- The last NPT frame is scaled to the average box. A short run that drifts is a force-field or sampling question, not automatically a bug in the restart writer.
+- Stale pentane comments in the four `.inp` files will be copied into the new inputs. Cleaning those comments is a separate item below.
+
+**Status:** deferred — next session; do not generate the NVT files until then.
+
+---
+
 ### Stale comments in the R125 NPT input files
 
 | | |
@@ -248,5 +348,6 @@ implement until explicitly picked up.
 
 ## Done / cancelled
 
+- **2026-10-16:** Started `utilities/`, separate from `diagnostics/`. Block averages (density chooses the cut; autocorrelation and blocking uncertainties; optional standard-error band plot) and an NPT restart at the average volume are in place. Further research post-processing belongs there too; it is not a parked item.
 - **2026-10-16:** The end-of-run logfile block now labels CPU time and prints wall-clock time from `DATE_AND_TIME` (`Main` in `Src/main.f90`). `docs/logfile-format.md` matches. Per-move subroutine timers were left as they were.
 - **2026-10-16:** Fixed-angle integrity checks now skip `sim_pregen`, matching fixed bonds (`Compute_Molecule_Angle_Energy`). Normal Monte Carlo still aborts.
