@@ -1,0 +1,36 @@
+---
+description: Park deferred work in docs/future-fixes.md when the user says later
+alwaysApply: true
+---
+
+# Deferred work → future-fixes.md
+
+Cassandra V2 keeps a parking lot for work that should **not** be done in the
+current session:
+
+**File:** [`docs/future-fixes.md`](docs/future-fixes.md)
+
+## When to use it
+
+If the user says to do something **later**, **not now**, **defer**, **park**,
+**add to the todo list**, or similar — **do not implement**. Instead add a
+proper new entry at the **top** of the Open items list in `docs/future-fixes.md`.
+
+## What a proper entry includes
+
+Follow the template of existing items:
+
+- Short title
+- Filed date, area, key files, related routines/PRs if known
+- What happens today / symptom
+- Why it matters
+- Proposed fix (when ready)
+- Risks / decisions
+- Status: deferred
+
+Enough context that a future session can pick it up without re-reading chat.
+
+## Also
+
+- Link stays in `docs/README.md` Guides table (`future-fixes.md`).
+- Do not create parallel TODO files; use this one list.

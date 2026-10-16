@@ -71,7 +71,7 @@ Agents are instructed to do the same when you say “later,” “defer,” “p
 | [logfile-format.md](logfile-format.md) | Simulation `.log` structure, progress snapshots, intensive energies |
 | [smoke-test.md](smoke-test.md) | How to run `run_test.py`, input/output files, what to expect |
 | [V2_DEVELOPMENT_ENVIRONMENT.md](V2_DEVELOPMENT_ENVIRONMENT.md) | Conda environments, compilers, compile & run workflow |
-| [V2_CRC_WORKFLOW.md](V2_CRC_WORKFLOW.md) | maginnfe / CRC: Git, rsync, OpenMP, Python module / `.bashrc`, `qsub` |
+| [V2_CRC_WORKFLOW.md](V2_CRC_WORKFLOW.md) | maginnfe / CRC: Maginn host groups, `free_nodes`, Git, rsync, OpenMP, `qsub` |
 | [V2_GIT_WORKFLOW.md](V2_GIT_WORKFLOW.md) | Branch strategy, commit/push, SSH authentication |
 | [VS-CODE-Guide.md](VS-CODE-Guide.md) | VS Code / Cursor workspace, tasks, and run setup |
 | [../python/README.md](../python/README.md) | Python `run_cassandra()` API |

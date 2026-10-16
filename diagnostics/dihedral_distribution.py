@@ -9,16 +9,20 @@
 #  Why look at dihedral distributions?
 #  ----------------------------
 #  The MCF dihedral potential is only *part* of what shapes the torsion
-#  probability density in a condensed-phase simulation.  Cassandra also has
-#  intramolecular 1–4 nonbonded (LJ / Coulomb) interactions, and the torsion
-#  is coupled to other degrees of freedom.  Comparing the sampled PDF to the
-#  **ideal-gas Boltzmann curve of the bare dihedral potential** is therefore
-#  especially instructive:
+#  probability density in a condensed-phase simulation.  Cassandra can also
+#  include intramolecular 1–4 nonbonded (LJ / Coulomb) interactions, and the
+#  torsion is coupled to other degrees of freedom.  Comparing the sampled PDF
+#  to the **ideal-gas Boltzmann curve of the bare dihedral potential** is
+#  therefore especially instructive:
 #
 #    * Agreement near the minima → the MCF dihedral term dominates there.
 #    * Systematic shifts / suppressed barriers → 1–4 and packing effects
 #      (exactly what students should expect — not a bug by itself).
-#    * Completely wrong shape → wrong MCF, wrong dihedral index, or T.
+#    * A completely different shape → first check the MCF, dihedral index,
+#      and temperature.  Strong 1–4 interactions can also reshape the
+#      distribution substantially, so a large deviation is not automatically
+#      a setup error.
+
 #
 #  Two analysis modes
 #  ------------------

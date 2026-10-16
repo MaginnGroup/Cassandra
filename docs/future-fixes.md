@@ -19,6 +19,47 @@ here. See also `.cursor/rules/future-fixes.mdc` and the note in [README.md](READ
 
 ## Open items
 
+### Sphinx / Read the Docs — restart.xyz/H equil→prod workflow
+
+| | |
+|--|--|
+| **Filed** | 2026-08-13 |
+| **Area** | Public user documentation (Read the Docs) |
+| **Files** | `Documentation/source/guides/input_files.rst` (`# Start_Type` / `read_config`); `Documentation/source/getting_started/cassandra_basics.rst` (output files) |
+| **Related** | Local notes already on `modernization`: `docs/V2_CRC_WORKFLOW.md` §5, `docs/output-formats.md`, `docs/mcf-setup-workflow.md` |
+
+**What happens today**
+
+- Cassandra writes `*.restart.xyz` + companion `*.restart.H` (latest single
+  frame) for equilibration → production handoff; `read_config` aborts if
+  companion `.H` disagrees with `# Box_Info` / molecule counts.
+- Movie `*.xyz` is multi-frame; `read_config` only uses the **first** frame —
+  wrong for production start after equilibration.
+- V2 `docs/` describe this; Sphinx sources that feed
+  [cassandra-mc.readthedocs.io](https://cassandra-mc.readthedocs.io/) still
+  document only generic `.xyz` / `.H` / `.chk` and old `read_config` examples.
+
+**Why it matters**
+
+- Without Sphinx updates, RTD users will not see the recommended workflow after
+  a docs rebuild/publish.
+
+**Proposed fix (when ready)** — treat as a dedicated docs pass
+
+1. **Output files** (`cassandra_basics.rst`): document overwrite
+   `run_name.restart.xyz` / `.H` (and GEMC `boxN` variants); contrast with
+   movie `.xyz` / `.H` and checkpoint `.chk`.
+2. **`read_config`** (`input_files.rst`): prefer `*.restart.xyz`; warn not to
+   pass the movie; set `# Box_Info` and \(N\) from companion `*.restart.H`;
+   document abort-on-mismatch when companion `.H` exists.
+3. Short equil → production example; clarify checkpoint = same-run continue,
+   restart XYZ/H = fresh production start.
+
+**Status:** deferred — local `docs/` coverage is enough for now; Sphinx/RTD
+later as a larger task.
+
+---
+
 ### `intra_overlap` API — never cleared to false
 
 | | |

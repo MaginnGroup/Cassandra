@@ -39,9 +39,9 @@ maginnfe --scp-->  laptop  -->  diagnostics/{property_plotter,angle_distribution
 | NetID | `ed` |
 | Front end | `maginnfe.crc.nd.edu` (use this, not `crcfe01` / `crcfe02`) |
 | Home | `/users/ed` (100 GB quota) |
-| Login | `ssh ed@maginnfe.crc.nd.edu` |
-| First production queue | Public `long` (`#$ -q long`) |
-| Later | Maginn-owned / priority host groups (document when you switch) |
+| Login | `ssh ed@maginnfe.crc.nd.edu` (add `-Y` or `-X` if you need plots to display; see §8) |
+| Default shared queue | Public `long` (`#$ -q long`) |
+| Maginn-owned nodes | Host groups `@maginn…` — see **§ Maginn-owned nodes** below |
 
 ```bash
 ssh ed@maginnfe.crc.nd.edu
@@ -51,6 +51,166 @@ pwd         # /users/ed
 ```
 
 Off campus: ND VPN (or CRC’s off-campus instructions) before SSH.
+
+---
+
+## Maginn-owned nodes and queues
+
+The Maginn group has a dedicated front end (**maginnfe**) and privately purchased
+CPU/GPU nodes reserved for group use. Those machines are **not** shared with the
+rest of the university, so queue wait times are often shorter than on CRC’s
+general pools. You still have access to CRC’s shared resources (e.g. public
+`long`); use whichever fits the job.
+
+CRC’s own queue documentation and generic submission examples:
+[Submitting Batch Jobs](https://docs.crc.nd.edu/new_user/submitting_batch_jobs.html).
+
+### Login to maginnfe
+
+```bash
+ssh -Y ed@maginnfe.crc.nd.edu
+# or: ssh -X ed@maginnfe.crc.nd.edu
+```
+
+`-X` and `-Y` both forward X11 so GUI windows (e.g. matplotlib) can appear on
+your laptop. **`-Y`** is “trusted” forwarding — usually the more convenient
+choice on a machine you control; **`-X`** is stricter and sometimes breaks
+apps. Prefer laptop plotting with `cassandra-dev` when practical (§9).
+
+### Which Maginn host groups exist?
+
+After your CRC account is active, list university nodes and filter to Maginn:
+
+```bash
+free_nodes.sh -H                 # all host-group names CRC knows about
+free_nodes.sh -H | grep maginn   # Maginn-only aliases
+```
+
+Host groups observed **Fall 2024** (re-check with `free_nodes.sh -H | grep maginn`
+if anything looks stale):
+
+| Host group | Meaning |
+|------------|---------|
+| `@maginn` | Any Maginn-group node (broad alias) |
+| `@maginn_a10` | GPU nodes |
+| `@maginn_d12chas` | 24-core CPU nodes |
+| `@maginn_d32cepyc` | Any 64-core EPYC nodes |
+| `@maginn_d32cepyc-eth` | 64-core EPYC, Ethernet (no InfiniBand) |
+| `@maginn_d32cepyc-ib` | 64-core EPYC with InfiniBand (useful for **MPI across nodes**) |
+
+Cassandra V2 OpenMP builds stay on **one node**, so Ethernet (`-eth`) is usually
+fine. Prefer `-ib` when you later run multi-node MPI codes.
+
+### How many free cores / nodes?
+
+Ask about a specific host group:
+
+```bash
+free_nodes.sh @maginn_d32cepyc
+```
+
+Example output shape:
+
+```text
+@maginn_d32cepyc
+----------------------------------------
+Total Cores   : 1152
+Used Cores    : 771
+Disabled Cores: 0
+Free Cores    : 381
+
+Total Nodes   : 18
+Used Nodes    : 14
+Disabled Nodes: 0
+Free Nodes    : 4
+```
+
+### How to request Maginn nodes in a job script
+
+UGE syntax is `queue@@hostgroup`. Common Maginn patterns:
+
+```bash
+#$ -q long@@maginn
+#$ -q hpc@@maginn
+#$ -q *@@maginn_d32cepyc-eth
+#$ -q *@@maginn_d32cepyc-ib
+```
+
+`*@@…` means “any suitable queue on that host group.” Prefer a specific
+`@maginn_…` host group when you care about CPU type (24-core vs 64-core, eth
+vs ib). Use plain `#$ -q long` for CRC’s shared pool.
+
+### Example Maginn submission scripts
+
+Skeleton aimed at `@maginn_d32cepyc-eth` (replace NetID / pe / payload):
+
+```bash
+#!/bin/bash
+#$ -N job_name
+#$ -pe smp 32
+#$ -r n
+#$ -m ae
+#$ -q *@@maginn_d32cepyc-eth
+#$ -M ed@nd.edu
+
+# Your run commands here (or: source run2.sh)
+```
+
+Same idea for InfiniBand nodes — only the queue line changes:
+
+```bash
+#$ -q *@@maginn_d32cepyc-ib
+```
+
+Cassandra OpenMP example (Maginn nodes, 8 threads; paths as in §6):
+
+```bash
+#!/bin/bash
+#$ -M ed@nd.edu
+#$ -m abe
+#$ -pe smp 8
+#$ -q *@@maginn_d32cepyc-eth
+#$ -N r125_equil
+#$ -cwd
+
+module load gcc/15.2.0
+export OMP_NUM_THREADS=$NSLOTS
+
+cd /users/ed/CassandraV2/projects/hfc125
+/users/ed/CassandraV2/Cassandra/Src/cassandra_gfortran_openMP.exe r125-equil-restart.inp
+```
+
+Same pattern on the slower 24-core `@maginn_d12chas` nodes, requesting **4 cores**
+(good for a short test or light NPT run):
+
+```bash
+#!/bin/bash
+#$ -M ed@nd.edu
+#$ -m abe
+#$ -pe smp 4
+#$ -q *@@maginn_d12chas
+#$ -N r125_equil_d12
+#$ -cwd
+
+module load gcc/15.2.0
+export OMP_NUM_THREADS=$NSLOTS
+
+cd /users/ed/CassandraV2/projects/hfc125
+/users/ed/CassandraV2/Cassandra/Src/cassandra_gfortran_openMP.exe r125-equil-restart.inp
+```
+
+Match `#$ -pe smp N` to `OMP_NUM_THREADS` (same rule as public `long`).
+(`$NSLOTS` is set by UGE to the number of cores you reserved.)
+
+### Rough performance ordering (CPU)
+
+For typical CPU codes in the group:
+
+**`d32cepyc-eth` ≈ `d32cepyc-ib` > `d12chas`**
+
+(InfiniBand mainly helps multi-node MPI; single-node OpenMP Cassandra should be
+similar on eth vs ib.) GPU nodes (`@maginn_a10`) help only codes that actually
+use GPUs — Cassandra’s current OpenMP binary does not.
 
 ---
 
@@ -170,7 +330,7 @@ make -f Makefile.gfortran.openMP
 
 (Use the same compiler module you used for the previous build.)
 
-Layout on CRC mirrors the laptop idea:
+Layout on CRC mirrors the laptop idea. For example:
 
 ```
 /users/ed/CassandraV2/
@@ -343,6 +503,8 @@ Notes:
 - Start with 4–8 threads for NPT; scaling may be sublinear — time a short test
   before asking for many cores.
 - Do **not** use MPI parallel environments for this OpenMP binary.
+- For Maginn-owned machines, change the queue line (see **Maginn-owned nodes**
+  above), e.g. `#$ -q *@@maginn_d32cepyc-eth` or `#$ -q long@@maginn`.
 
 ```bash
 cd /users/ed/CassandraV2/projects/hfc125
@@ -418,6 +580,10 @@ Diagnostics need **numpy** (and **matplotlib** for plots). Prefer bringing
 results home and using `cassandra-dev` on the laptop (next section). A conda
 env on maginnfe for in-cluster plotting is still deferred.
 
+If you plot **on maginnfe** and want windows on your laptop, log in with X11
+forwarding (`ssh -Y …` or `ssh -X …` — see **Maginn-owned nodes**). Forwarding
+is often slow; laptop diagnostics are usually smoother.
+
 ---
 
 ## 9. Bring results home for diagnostics
@@ -448,9 +614,6 @@ python diagnostics/dihedral_distribution.py \
   path/to/run.out.xyz path/to/species.mcf \
   --inp path/to/run.inp --dihedral 1 --save dih1.png --no-show
 ```
-
-A conda env on maginnfe for plotting is optional later; laptop plotting is enough
-for now.
 
 ---
 
@@ -484,7 +647,7 @@ for now.
 
 ## Deferred / later
 
-- Maginn priority queues and owned-machine host groups  
-- `/groups/...` storage if home fills up  
-- Conda on maginnfe for in-cluster diagnostics  
-- Intel compiler comparison for wall-time tuning  
+- `/groups/...` storage if home fills up
+- Conda on maginnfe for in-cluster diagnostics
+- Intel compiler comparison for wall-time tuning
+- Re-verify Maginn host-group list / core counts vs Fall 2024 table after CRC changes
