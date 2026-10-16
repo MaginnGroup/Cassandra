@@ -31,7 +31,7 @@ logs). Instantaneous properties belong in `.prp`; coordinates in `.xyz` / `.H`.
 | Begin Cassandra simulation | Initial configuration energy table |
 | **Run simulation** | Progress snapshots only (see below) |
 | Final configuration | Full energy table + acceptance + fragment stats + subroutine times |
-| Cassandra simulation complete | Wall-clock execution time breakdown |
+| Cassandra simulation complete | CPU time and wall-clock time |
 
 ### Preamble style (V2)
 
@@ -76,6 +76,47 @@ If the box has zero molecules, intensive is printed as `n/a`. Multi-box
 ensembles (GEMC, etc.) print one table (or progress line) **per box**.
 
 Code: `Check_System_Energy` in `Src/energy_routines.f90`.
+
+---
+
+## Program execution time
+
+After `Cassandra simulation complete`, the log prints two clocks for the whole run.
+
+| Clock | What it measures |
+|-------|------------------|
+| CPU time | `cpu_time` at the end minus `cpu_time` at the start. With OpenMP this is the **sum of the thread CPU times**, so an 8-thread job that ran for a week can show about a month. |
+| Wall-clock time | Elapsed time from the start `DATE_AND_TIME` call to the end one. Each reading is converted to UTC, so a daylight-saving change during the run does not add or drop an hour. |
+
+Both are broken into years, months (30 days), days, hours, minutes, seconds, and milliseconds. The per-move `Subroutine times` list is separate. Those timers use wall-clock time when the OpenMP binary is used.
+
+```text
+Program execution time
+----------------------
+  CPU time is the sum of thread times when OpenMP is on.
+
+  CPU time
+  --------
+  years:             0
+  months:            0
+  days:              0
+  hours:             0
+  minutes:           1
+  seconds:           12
+  ms:                40
+
+  Wall-clock time
+  ---------------
+  years:             0
+  months:            0
+  days:              0
+  hours:             0
+  minutes:           0
+  seconds:           9
+  ms:                200
+```
+
+Code: end of `Main` in `Src/main.f90`.
 
 ---
 

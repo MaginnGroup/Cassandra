@@ -76,6 +76,7 @@ Agents are instructed to do the same when you say “later,” “defer,” “p
 | [VS-CODE-Guide.md](VS-CODE-Guide.md) | VS Code / Cursor workspace, tasks, and run setup |
 | [../python/README.md](../python/README.md) | Python `run_cassandra()` API |
 | [../diagnostics/README.md](../diagnostics/README.md) | Post-run diagnostics (property plots, …) |
+| [../utilities/README.md](../utilities/README.md) | Block averages and NPT → NVT / GCMC restart |
 
 ## Project layout (reminder)
 
@@ -85,6 +86,7 @@ Agents are instructed to do the same when you say “later,” “defer,” “p
 │   ├── docs/             ← you are here
 │   ├── python/           ← V2 Python wrapper
 │   ├── diagnostics/      ← post-run checks and plots
+│   ├── utilities/        ← block averages and NPT restart inputs
 │   ├── Scripts/          ← helpers (molecule_to_pdb, mcfgen, library_setup, …)
 │   ├── Src/              ← Fortran source; compile here
 │   ├── Examples/         ← input files for test runs

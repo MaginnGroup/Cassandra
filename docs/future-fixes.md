@@ -19,6 +19,38 @@ here. See also `.cursor/rules/future-fixes.mdc` and the note in [README.md](READ
 
 ## Open items
 
+### Stale comments in the R125 NPT input files
+
+| | |
+|--|--|
+| **Filed** | 2026-10-16 |
+| **Area** | Project inputs, not the Cassandra parser |
+| **Files** | `projects/hfc125/NPT-Runs/NPT-{243,258,273,298}/r125-prod.inp` (outside the git repo) |
+
+**What happens today**
+
+- Those files still say “short simulation of pentane” and comments such as
+  “run 1000 sweeps”, left over from an example that was copied forward.
+- Cassandra does not use that text. `Parse_String` in `Src/io_utilities.f90`
+  skips a line whose first character is `!`, and an inline `!` ends a data
+  line. `Copy_Inputfile` strips `!` lines from the logfile echo.
+- The production runs completed with the numeric settings (500,000 sweeps,
+  HFC-125, the pressures in `# Pressure_Info`).
+
+**Why it matters**
+
+- The comments will mislead the next person who opens the input. They are not
+  a parser bug.
+
+**Proposed fix (when ready)**
+
+- Edit those four project `.inp` files so the comments match HFC-125 and the
+  real run length. No Cassandra source change.
+
+**Status:** deferred — no code change required.
+
+---
+
 ### Sphinx / Read the Docs — restart.xyz/H equil→prod workflow
 
 | | |
@@ -214,61 +246,7 @@ implement until explicitly picked up.
 
 ---
 
-### Align fixed-angle integrity check with fixed bonds for `sim_pregen`
-
-| | |
-|--|--|
-| **Filed** | 2026-08-13 |
-| **Area** | Intramolecular energy / pregenerated trajectory analysis |
-| **Files** | `Src/energy_routines.f90` — `Compute_Molecule_Angle_Energy`, `Compute_Molecule_Bond_Energy` |
-| **Related** | `Src/pregen_driver.f90` (calls `Compute_System_Total_Energy` when `need_energy`); trajectory/Widom-from-LAMMPS path (`sim_pregen`) |
-
-**What happens today**
-
-- Both routines treat MCF type `fixed` (`int_none`) as **zero energy** plus a
-  geometry integrity check against MCF value ± tolerance.
-- Fixed **bonds** skip that abort when `int_sim_type == sim_pregen`:
-
-  ```fortran
-  IF ((int_sim_type /= sim_pregen) .AND. (abs(l0 - length) > ltol)) THEN
-  ```
-
-- Fixed **angles** always abort if `|theta0 - theta| > theta_tol` (degrees).
-  There is no `sim_pregen` gate.
-
-**Why it matters**
-
-- Pregen is meant to score / analyze existing frames (e.g. LAMMPS → XYZ/H →
-  Cassandra Widom). Those frames often do not match MCF fixed lengths/angles
-  within tolerance.
-- Bonds were gated for that workflow in PR #106 (commit `81acea75`, 2022:
-  “Add trajectory reader and enhance Widom insertion support”). Angles were
-  left ungated — almost certainly an oversight, not a second check elsewhere.
-- Fixed bonds/angles are **not** re-validated in another routine; fragment
-  growth uses fixed values for *placement*, not for checking loaded coords.
-
-**Proposed fix (when ready)**
-
-1. Mirror the bond condition in `Compute_Molecule_Angle_Energy` for the fixed
-   (`int_none`) branch.
-2. Update the angle routine header note that currently says the check is
-   *not* skipped for `sim_pregen`.
-3. Optional: one-line comments on both bond and angle checks explaining that
-   pregen skips rigid-geometry aborts so foreign trajectories can be analyzed.
-4. Smoke / mental test: pregen + `need_energy` with a molecule that has fixed
-   angles slightly off MCF should complete; normal MC should still abort.
-
-**Risks / decisions**
-
-- Aligning weakens pregen as a rigidity sanity check for angles (bonds already
-  weak). If someone relied on angle aborts during pregen, they lose that signal.
-- Alternative (probably worse): remove the bond skip — would break the intended
-  LAMMPS-trajectory use case.
-
-**Status:** deferred — documented only; do not implement until explicitly picked up.
-
----
-
 ## Done / cancelled
 
-_(Move completed items here with a one-line note and date, or delete them.)_
+- **2026-10-16:** The end-of-run logfile block now labels CPU time and prints wall-clock time from `DATE_AND_TIME` (`Main` in `Src/main.f90`). `docs/logfile-format.md` matches. Per-move subroutine timers were left as they were.
+- **2026-10-16:** Fixed-angle integrity checks now skip `sim_pregen`, matching fixed bonds (`Compute_Molecule_Angle_Energy`). Normal Monte Carlo still aborts.

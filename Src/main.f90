@@ -73,6 +73,8 @@ PROGRAM Main
   !  08/07/26 (EJM) : interactive setup message; call Write_Stdout_Run_Banner
   !  08/12/26 (EJM) : Logfile redesign — Run info / initial / charge / energy /
   !                   run / complete sections use underlined headings
+  !  10/16/26 (EJM) : Label the cpu_time total as CPU time and also print
+  !                   elapsed wall-clock time from DATE_AND_TIME
   !
 !*******************************************************************************
 
@@ -95,7 +97,6 @@ PROGRAM Main
   INTEGER :: i, j, is, im, ia, lm, ibox
   INTEGER :: t_num
 
-  INTEGER :: nyears, nmonths, ndays, nhours, nmin, nsec, nms
   CHARACTER(120) :: version
   CHARACTER(120) filename1
   CHARACTER(80) :: name
@@ -106,8 +107,6 @@ PROGRAM Main
   INTEGER :: nskips, i_tol
 
   REAL(DP) :: q_box
-
-  REAL(DP) :: month_time, day_time, hour_time, min_time, sec_time, ms_time
 
   INTEGER :: IARGC
 
@@ -559,27 +558,87 @@ PROGRAM Main
   WRITE(logunit,*)
   WRITE(logunit,'(A)') 'Program execution time'
   WRITE(logunit,'(A)') '----------------------'
+  WRITE(logunit,'(A)') '  CPU time is the sum of thread times when OpenMP is on.'
+  WRITE(logunit,*)
+  CALL Write_Elapsed_Time('CPU time', tot_time)
+  WRITE(logunit,*)
+  CALL Write_Elapsed_Time('Wall-clock time', &
+       Elapsed_Wall_Seconds(begin_values, end_values))
 
-  nyears = INT(tot_time/3600.0_DP/24.0_DP/365.0_DP)
-  month_time = tot_time - REAL(nyears,DP) * 3600.0_DP * 24.0_DP * 365.0_DP
-  nmonths = INT(month_time/3600_DP/24.0_DP/30.0_DP)
-  day_time = month_time - REAL(nmonths,DP) * 3600_DP * 24.0_DP * 30.0_DP
-  ndays = INT(day_time/3600.0_DP/24.0_DP)
-  hour_time = day_time - REAL(ndays,DP) * 3600.0_DP * 24.0_DP
-  nhours = INT(hour_time/3600.0_DP)
-  min_time = hour_time - REAL(nhours,DP) * 3600.0_DP
-  nmin = INT(min_time/60.0_DP)
-  sec_time = min_time - REAL(nmin,DP) * 60.0_DP
-  nsec = INT(sec_time)
-  ms_time = sec_time - REAL(nsec,DP)
-  nms = INT(ms_time*1000_DP)
+CONTAINS
 
-  WRITE(logunit,'(A,I0)') '  years:             ', nyears
-  WRITE(logunit,'(A,I0)') '  months:            ', nmonths
-  WRITE(logunit,'(A,I0)') '  days:              ', ndays
-  WRITE(logunit,'(A,I0)') '  hours:             ', nhours
-  WRITE(logunit,'(A,I0)') '  minutes:           ', nmin
-  WRITE(logunit,'(A,I0)') '  seconds:           ', nsec
-  WRITE(logunit,'(A,I0)') '  ms:                ', nms
+  FUNCTION Elapsed_Wall_Seconds(t0, t1) RESULT(seconds)
+    ! Elapsed seconds between two DATE_AND_TIME value arrays.
+    ! Each clock is converted to UTC, so a daylight-saving change
+    ! during the run does not add or drop an hour.
+    INTEGER, INTENT(IN) :: t0(8), t1(8)
+    REAL(DP) :: seconds
+    INTEGER :: jd0, jd1
+
+    jd0 = Ymd_To_Jdn(t0(1), t0(2), t0(3))
+    jd1 = Ymd_To_Jdn(t1(1), t1(2), t1(3))
+    seconds = REAL(jd1 - jd0, DP) * 86400.0_DP &
+         + Clock_Seconds(t1) - Clock_Seconds(t0)
+  END FUNCTION Elapsed_Wall_Seconds
+
+  FUNCTION Ymd_To_Jdn(year, month, day) RESULT(jdn)
+    ! Julian day number. The result fits in a default integer.
+    INTEGER, INTENT(IN) :: year, month, day
+    INTEGER :: jdn
+    INTEGER :: a, yy, mm
+
+    a = (14 - month) / 12
+    yy = year + 4800 - a
+    mm = month + 12 * a - 3
+    jdn = day + (153 * mm + 2) / 5 + 365 * yy &
+         + yy / 4 - yy / 100 + yy / 400 - 32045
+  END FUNCTION Ymd_To_Jdn
+
+  FUNCTION Clock_Seconds(vals) RESULT(seconds)
+    ! Seconds past local midnight, shifted to UTC by vals(4).
+    ! vals(4) is the local offset from UTC in minutes.
+    INTEGER, INTENT(IN) :: vals(8)
+    REAL(DP) :: seconds
+
+    seconds = REAL(vals(5), DP) * 3600.0_DP &
+         + REAL(vals(6), DP) * 60.0_DP &
+         + REAL(vals(7), DP) &
+         + REAL(vals(8), DP) * 0.001_DP &
+         - REAL(vals(4), DP) * 60.0_DP
+  END FUNCTION Clock_Seconds
+
+  SUBROUTINE Write_Elapsed_Time(heading, seconds)
+    ! Break an elapsed-second count into the years/months/days lines
+    ! the logfile has always used. A month is 30 days and a year is 365.
+    CHARACTER(LEN=*), INTENT(IN) :: heading
+    REAL(DP), INTENT(IN) :: seconds
+    INTEGER :: nyears, nmonths, ndays, nhours, nmin, nsec, nms
+    REAL(DP) :: month_time, day_time, hour_time, min_time, sec_time, ms_time
+
+    WRITE(logunit,'(A)') '  ' // TRIM(heading)
+    WRITE(logunit,'(A)') '  ' // REPEAT('-', LEN_TRIM(heading))
+
+    nyears = INT(seconds / 3600.0_DP / 24.0_DP / 365.0_DP)
+    month_time = seconds - REAL(nyears, DP) * 3600.0_DP * 24.0_DP * 365.0_DP
+    nmonths = INT(month_time / 3600.0_DP / 24.0_DP / 30.0_DP)
+    day_time = month_time - REAL(nmonths, DP) * 3600.0_DP * 24.0_DP * 30.0_DP
+    ndays = INT(day_time / 3600.0_DP / 24.0_DP)
+    hour_time = day_time - REAL(ndays, DP) * 3600.0_DP * 24.0_DP
+    nhours = INT(hour_time / 3600.0_DP)
+    min_time = hour_time - REAL(nhours, DP) * 3600.0_DP
+    nmin = INT(min_time / 60.0_DP)
+    sec_time = min_time - REAL(nmin, DP) * 60.0_DP
+    nsec = INT(sec_time)
+    ms_time = sec_time - REAL(nsec, DP)
+    nms = INT(ms_time * 1000.0_DP)
+
+    WRITE(logunit,'(A,I0)') '  years:             ', nyears
+    WRITE(logunit,'(A,I0)') '  months:            ', nmonths
+    WRITE(logunit,'(A,I0)') '  days:              ', ndays
+    WRITE(logunit,'(A,I0)') '  hours:             ', nhours
+    WRITE(logunit,'(A,I0)') '  minutes:           ', nmin
+    WRITE(logunit,'(A,I0)') '  seconds:           ', nsec
+    WRITE(logunit,'(A,I0)') '  ms:                ', nms
+  END SUBROUTINE Write_Elapsed_Time
 
 END PROGRAM Main

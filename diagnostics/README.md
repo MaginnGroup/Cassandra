@@ -2,14 +2,15 @@
 
 Post-run tools that check whether a simulation looks **reliable**. These are
 **not** full scientific post-processing (block averages, \(g(r)\), production
-averages, etc.) — that will live separately later.
+averages, etc.). Block averages and an NPT → NVT restart live in
+[`utilities/`](../utilities/README.md).
 
 | Location | Role |
 |----------|------|
 | `python/` | Launch Cassandra (`run_cassandra`) |
 | `Scripts/` | Setup helpers and legacy regression tests |
 | `diagnostics/` | Reliability / teaching checks on output files |
-| *(planned)* post-processing | Research analysis: block averages, \(g(r)\), … |
+| `utilities/` | Block averages and NVT/GCMC inputs from an NPT run |
 
 Use after a run produces `.prp`, `.xyz`, etc. Prefer reading those files over
 parsing interactive stdout.

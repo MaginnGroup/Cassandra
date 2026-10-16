@@ -107,6 +107,7 @@ MODULE Energy_Routines
   !   08/13/26 (EJM) : Header consistency pass (TOC, clarifications; see
   !                    docs/future-fixes.md for deferred API / %exist items)
   !   08/13/26 (EJM) : Thematic module TOC (drop stale Used-by; group by role)
+  !   10/16/26 (EJM) : Skip fixed-angle integrity abort for sim_pregen, matching bonds
   !-----------------------------------------------------------------------------
 
   USE Type_Definitions
@@ -167,6 +168,7 @@ CONTAINS
     ! Revision history
     !   08/13/26 (EJM) : Added explanatory header for molecule bond energy
     !   08/13/26 (EJM) : Note fixed-bond scope; flexible bonds deferred
+    !   10/16/26 (EJM) : Note that pregen skips the fixed-bond geometry abort
     !**************************************************************************
 
 
@@ -183,6 +185,7 @@ CONTAINS
           l0 = bond_list(ib,is)%bond_param(1)
           ltol = bond_list(ib,is)%bond_param(2)
           CALL Get_Bond_Length(ib,im,is,length)
+          ! Skip for pregen: foreign frames need not match the rigid MCF geometry.
           IF ((int_sim_type /= sim_pregen) .AND. (abs(l0 - length) > ltol)) THEN
              WRITE(mcf_bond_length,'(F7.3)') l0
              WRITE(current_bond_length,'(F7.3)') length
@@ -229,9 +232,9 @@ CONTAINS
     !     angle_param(1) = theta0 (degrees, as in MCF)
     !     angle_param(2) = tolerance (degrees; default 1.0 if omitted)
     !     Converts Get_Bond_Angle result to degrees and aborts via
-    !     Clean_Abort if |theta0 - theta| > tolerance. Contributes ea = 0.
-    !     (Unlike fixed bonds, this check is NOT skipped for sim_pregen —
-    !     see docs/future-fixes.md.)
+    !     Clean_Abort if |theta0 - theta| > tolerance, except when
+    !     int_sim_type == sim_pregen (foreign trajectories may not match
+    !     MCF angles). Contributes ea = 0.
     !
     !   harmonic (int_harmonic):
     !     E = k (theta - theta0)^2
@@ -244,6 +247,7 @@ CONTAINS
     !
     ! Revision history
     !   08/13/26 (EJM) : Added explanatory header for molecule angle energy
+    !   10/16/26 (EJM) : Skip fixed-angle integrity abort for sim_pregen
     !**************************************************************************
 
     USE Random_Generators
@@ -262,7 +266,8 @@ CONTAINS
           theta_tol = angle_list(ia,is)%angle_param(2) ! in degrees
           CALL Get_Bond_Angle(ia,im,is,theta)
           theta = theta * 180.0_DP / PI
-          IF (abs(theta0 - theta) > theta_tol) THEN
+          ! Skip for pregen: foreign frames need not match the rigid MCF geometry.
+          IF ((int_sim_type /= sim_pregen) .AND. (abs(theta0 - theta) > theta_tol)) THEN
              WRITE(mcf_angle,'(F7.3)') theta0
              WRITE(current_angle,'(F7.3)') theta
              err_msg = ''

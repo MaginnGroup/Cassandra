@@ -113,10 +113,20 @@ python --version
 # expect: Python 3.10.x
 
 gfortran --version
-# expect: GNU Fortran version ...
+# expect: GNU Fortran (GCC) 15.1.0 (or the current cassandra-dev version)
+
+echo "$MACOSX_DEPLOYMENT_TARGET"
+# expect on this Mac (2026-10): 26.0
 ```
 
 If `gfortran` is not found, you are in the wrong environment.
+
+On this Mac, Homebrew's GCC remains installed because Homebrew Open MPI depends
+on it, but it is **unlinked** so `/opt/homebrew/bin/gfortran` cannot override
+the conda compiler. The `cassandra-dev` environment also stores
+`MACOSX_DEPLOYMENT_TARGET=26.0`; conda sets it each time the environment is
+activated. This avoids the compiler error
+`invalid version number in '-mmacosx-version-min=18.0'` on macOS 27.
 
 ---
 
@@ -209,6 +219,29 @@ You are not in `cassandra-dev`. Run:
 ```bash
 conda activate cassandra-dev
 ```
+
+### Wrong `gfortran` or invalid macOS deployment target
+
+Check the compiler and target after activating the environment:
+
+```bash
+which gfortran
+gfortran --version
+echo "$MACOSX_DEPLOYMENT_TARGET"
+```
+
+Expected values are the conda path
+`/opt/anaconda3/envs/cassandra-dev/bin/gfortran` and deployment target `26.0`.
+If the target setting is lost, restore it with:
+
+```bash
+conda env config vars set MACOSX_DEPLOYMENT_TARGET=26.0 -n cassandra-dev
+conda deactivate
+conda activate cassandra-dev
+```
+
+Homebrew GCC was unlinked with `brew unlink gcc`. Do not uninstall it while
+Homebrew Open MPI depends on it.
 
 ### `make` fails after a long absence
 
