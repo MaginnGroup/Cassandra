@@ -17,8 +17,10 @@
 #  ----------------------------------------
 #  By default the choice is made from ``Mass_Density`` (else ``Volume``, else
 #  the first property column).  Every other column is then averaged over that
-#  same window.  Density is the right guide for an NPT liquid: it is the
-#  quantity we later use to set the box for an NVT restart.
+#  same window.  Density is the right guide for an NPT liquid: a drifting
+#  density is the sign that the box has not settled.  The NVT restart box
+#  itself is set from the mean volume, not from the mean of the density
+#  column.  See "Two densities" below.
 #
 #  Equilibration rule (Chodera, J. Chem. Theory Comput. 2016, 12, 1799)
 #  -------------------------------------------------------------------
@@ -86,6 +88,21 @@
 #  The column drawn is the one that chose the discard point, unless
 #  ``--plot-property`` names another column.  That option does not move the
 #  discard point.  A prefix left out of the average is shaded on the figure.
+#
+#  Two densities
+#  ------------
+#  For a fixed number of molecules the instantaneous density is proportional
+#  to 1/V.  The mean of the Mass_Density column is therefore proportional to
+#  <1/V>.  The density of the same molecules placed in the mean volume <V>
+#  is proportional to 1/<V>.  These are not the same number:
+#
+#      <1/V>  >  1/<V>
+#
+#  whenever the volume fluctuates.  The difference is small, usually well
+#  inside the uncertainty on <rho>, but an NVT run built from <V> will sit
+#  on the second number.  The report prints both when Volume and
+#  Mass_Density are present.  The total mass used for the second number is
+#  the average of (instantaneous density) * (instantaneous volume).
 #
 #  A separate "flat?" flag is printed for the series that chose t0.  The
 #  kept half-means must agree within two combined standard errors, and a
@@ -169,6 +186,8 @@ class AverageReport:
     properties: list[PropertyAverage]
     volume_average: float | None
     cubic_length: float | None
+    density_mean: float | None = None
+    density_at_mean_volume: float | None = None
     error_method: str = "both"
 
     def as_dict(self) -> dict:
@@ -185,6 +204,8 @@ class AverageReport:
             "flat_notes": list(self.flat_notes),
             "volume_average": self.volume_average,
             "cubic_length_A": self.cubic_length,
+            "density_mean": self.density_mean,
+            "density_at_mean_volume": self.density_at_mean_volume,
             "error_method": self.error_method,
             "properties": [
                 {
@@ -504,6 +525,16 @@ def analyze_prp(
     by_name = {item.name: item for item in averages}
     volume = by_name["Volume"].mean if "Volume" in by_name else None
     length = float(volume ** (1.0 / 3.0)) if volume is not None and volume > 0.0 else None
+    density_mean = by_name["Mass_Density"].mean if "Mass_Density" in by_name else None
+    density_from_volume = None
+    if density_mean is not None and volume is not None and volume > 0.0:
+        kept_density = data.column("Mass_Density")[discard_index:]
+        kept_volume = data.column("Volume")[discard_index:]
+        if np.all(kept_volume > 0.0):
+            # Instantaneous density times volume is the fixed total mass,
+            # in the units Cassandra used for those two columns.
+            total_mass = float(np.mean(kept_density * kept_volume))
+            density_from_volume = total_mass / volume
 
     return AverageReport(
         source=data.path,
@@ -518,6 +549,8 @@ def analyze_prp(
         properties=averages,
         volume_average=volume,
         cubic_length=length,
+        density_mean=density_mean,
+        density_at_mean_volume=density_from_volume,
         error_method=error_method,
     )
 
@@ -556,8 +589,23 @@ def format_report(report: AverageReport) -> str:
     lines.extend(f"  {note}" for note in report.flat_notes)
     if report.volume_average is not None and report.cubic_length is not None:
         lines.append(
-            f"Average volume: {report.volume_average:.8g} A^3"
-            f"    cubic length L = V^(1/3) = {report.cubic_length:.8g} A"
+            f"Average volume <V>: {report.volume_average:.8g} A^3"
+            f"    cubic length L = <V>^(1/3) = {report.cubic_length:.8g} A"
+        )
+    if report.density_mean is not None and report.density_at_mean_volume is not None:
+        unit = next(item.unit for item in report.properties if item.name == "Mass_Density")
+        lines.append(
+            f"Mean instantaneous density <rho>: {report.density_mean:.8g} {unit}"
+        )
+        lines.append(
+            "  <rho> is the average of the Mass_Density column. For fixed N it is proportional to <1/V>."
+        )
+        lines.append(
+            f"Density at the mean volume: {report.density_at_mean_volume:.8g} {unit}"
+        )
+        lines.append(
+            "  This is (total mass)/<V>, proportional to 1/<V>. "
+            "An NVT box built from <V> has this density."
         )
     lines.append("")
     if report.error_method == "both":

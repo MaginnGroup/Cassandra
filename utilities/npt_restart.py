@@ -10,16 +10,37 @@
 #  An NVT simulation needs one fixed box.  Using the last frame unchanged
 #  would freeze in a random fluctuation.  This script:
 #
-#    1. Reads the equilibrated average volume from block_average.py
+#    1. Reads the equilibrated average volume, <V>, from block_average.py
 #       (or from a JSON file that script already wrote).
 #    2. Reads the single-frame ``*.restart.xyz`` and ``*.restart.H``.
 #       It refuses the multi-frame movie, because ``read_config`` would
 #       load the first frame of that movie.
-#    3. Scales the cubic cell and the coordinates by L_avg / L_last.
-#       Coordinates have to move with the box.  Otherwise the molecules
-#       would still be packed at the last-frame density.
+#    3. Maps each molecular center of mass from its old fractional coordinate
+#       into the new cubic cell, then translates the whole molecule.  It
+#       reconstructs molecules across PBC before finding each COM, so bonds,
+#       angles, and dihedrals are not scaled or otherwise changed.
 #    4. Writes a new ``.inp``, ``.xyz``, and ``.H`` in a directory you
 #       choose.  The original NPT directory is not modified.
+#
+#  Which density the new box has
+#  ---------------------------
+#  block_average.py prints two densities, and they are not interchangeable.
+#
+#  Mean instantaneous density, <rho>
+#      The average of the Mass_Density column.  Density is proportional to
+#      1/V, so this average is proportional to <1/V>.
+#
+#  Density at the mean volume
+#      (total mass) / <V>, proportional to 1/<V>.  Because <1/V> is larger
+#      than 1/<V> whenever V fluctuates, <rho> is slightly larger than the
+#      density of the mean-volume box.  The gap is second order in the
+#      volume fluctuations and is usually smaller than the uncertainty on
+#      <rho>.  At 243.15 K for the HFC-125 production run it was
+#      1433.71 versus 1433.57 kg/m^3.
+#
+#  This script fixes the NVT cell at <V>.  The NVT density is therefore the
+#  second number, the density at the mean volume.  It does not adjust the
+#  box until the NVT density equals <rho>.
 #
 #  NVT versus muVT
 #  ---------------
@@ -56,6 +77,8 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 from diagnostics.io.hfile import read_h
+from diagnostics.io.inp import read_molecule_files_from_inp
+from diagnostics.io.mcf import McfData, read_mcf
 from diagnostics.io.prp import read_prp
 from diagnostics.io.xyz import read_xyz
 from utilities.block_average import analyze_prp
@@ -118,7 +141,9 @@ def _retarget(token: str, inp_dir: Path, out_dir: Path) -> str:
     """
     source = Path(token)
     target = source if source.is_absolute() else inp_dir / source
-    return Path(os.path.relpath(target, out_dir)).as_posix()
+    # Resolve both sides: macOS exposes /tmp as /private/tmp, and a relative
+    # path calculated from the alias is wrong when Cassandra opens it later.
+    return Path(os.path.relpath(target.resolve(), out_dir.resolve())).as_posix()
 
 
 def parse_move_probabilities(lines: list[str]) -> dict[str, float]:
@@ -280,15 +305,154 @@ def _load_average(prp: Path | None, averages: Path | None, discard_sweeps: float
     return report
 
 
+def _mic_delta(delta: np.ndarray, cell: np.ndarray) -> np.ndarray:
+    """Minimum-image displacement in a cell stored as a 3-by-3 H matrix."""
+    fractional = np.linalg.solve(cell, delta)
+    fractional -= np.rint(fractional)
+    return cell @ fractional
+
+
+def _unwrapped_molecule(
+    coords: np.ndarray,
+    mcf: McfData,
+    cell: np.ndarray,
+) -> np.ndarray:
+    """Make one molecular image contiguous by traversing its MCF bond graph."""
+    n_atoms = mcf.n_atoms
+    if coords.shape != (n_atoms, 3):
+        raise ValueError(
+            f"{mcf.path}: expected {n_atoms} coordinates per molecule, got {coords.shape}"
+        )
+    if n_atoms == 1:
+        return coords.copy()
+
+    neighbors: list[list[int]] = [[] for _ in range(n_atoms)]
+    for bond in mcf.bonds:
+        neighbors[bond.i].append(bond.j)
+        neighbors[bond.j].append(bond.i)
+    if not mcf.bonds:
+        raise ValueError(
+            f"{mcf.path}: a multi-atom molecule needs bonds to reconstruct it across PBC"
+        )
+
+    unwrapped = np.empty_like(coords)
+    visited = np.zeros(n_atoms, dtype=bool)
+    visited[0] = True
+    unwrapped[0] = coords[0]
+    queue = [0]
+    while queue:
+        parent = queue.pop(0)
+        for child in neighbors[parent]:
+            candidate = unwrapped[parent] + _mic_delta(coords[child] - coords[parent], cell)
+            if not visited[child]:
+                unwrapped[child] = candidate
+                visited[child] = True
+                queue.append(child)
+            elif not np.allclose(
+                unwrapped[child],
+                candidate,
+                rtol=0.0,
+                atol=1.0e-6,
+            ):
+                # A closed path may reach the same atom through a different
+                # periodic image. It is consistent when the difference is a
+                # lattice vector, i.e. its minimum-image value is zero.
+                if np.allclose(
+                    _mic_delta(candidate - unwrapped[child], cell),
+                    0.0,
+                    rtol=0.0,
+                    atol=1.0e-6,
+                ):
+                    continue
+                raise ValueError(
+                    f"{mcf.path}: periodic bond graph is inconsistent for a ring; "
+                    "cannot reconstruct one contiguous molecular image"
+                )
+    if not np.all(visited):
+        missing = ", ".join(str(i + 1) for i in np.where(~visited)[0])
+        raise ValueError(
+            f"{mcf.path}: disconnected multi-atom topology; atoms {missing} "
+            "cannot share one molecule-wide COM"
+        )
+    return unwrapped
+
+
+def _move_molecule_com(
+    coords: np.ndarray,
+    mcf: McfData,
+    old_cell: np.ndarray,
+    new_cell: np.ndarray,
+) -> np.ndarray:
+    """Map a molecule COM between cells without altering its internal vectors."""
+    contiguous = _unwrapped_molecule(coords, mcf, old_cell)
+    masses = np.asarray([atom.mass for atom in mcf.atoms], dtype=float)
+    total_mass = float(masses.sum())
+    if total_mass <= 0.0:
+        raise ValueError(f"{mcf.path}: molecule has nonpositive total mass")
+
+    com_old = np.average(contiguous, axis=0, weights=masses)
+    fractional_com = np.linalg.solve(old_cell, com_old)
+    com_new = new_cell @ fractional_com
+    moved = contiguous + (com_new - com_old)
+
+    # Keep one molecular image together. Read_Config will apply the same
+    # whole-molecule PBC shift when it loads this configuration.
+    new_fractional_com = np.linalg.solve(new_cell, com_new)
+    lattice_shift = new_cell @ (-np.floor(new_fractional_com))
+    return moved + lattice_shift
+
+
+def _move_all_molecule_coms(
+    coords: np.ndarray,
+    *,
+    inp_path: Path,
+    nmols: list[int],
+    old_cell: np.ndarray,
+    new_cell: np.ndarray,
+) -> np.ndarray:
+    """Move every molecular COM while preserving coordinates within molecules."""
+    entries = read_molecule_files_from_inp(inp_path)
+    if len(entries) != len(nmols):
+        raise ValueError(
+            f"{inp_path}: # Molecule_Files has {len(entries)} species but {len(nmols)} "
+            f"counts appear in the restart .H"
+        )
+
+    moved = np.empty_like(coords)
+    offset = 0
+    for entry, count in zip(entries, nmols):
+        mcf = read_mcf(entry.mcf_path)
+        if count < 0:
+            raise ValueError(f"Restart .H has a negative molecule count for species {entry.species_index}")
+        for _ in range(count):
+            end = offset + mcf.n_atoms
+            if end > coords.shape[0]:
+                raise ValueError(
+                    f"Restart XYZ ends inside species {entry.species_index}; "
+                    "atom count disagrees with the .H and MCF files"
+                )
+            moved[offset:end] = _move_molecule_com(
+                coords[offset:end], mcf, old_cell, new_cell
+            )
+            offset = end
+    if offset != coords.shape[0]:
+        raise ValueError(
+            f"Restart XYZ has {coords.shape[0]} atoms but the .H and MCF files "
+            f"describe {offset}"
+        )
+    return moved
+
+
 def scale_configuration(
     xyz_path: Path,
     h_path: Path,
     length_avg: float,
+    inp_path: Path,
 ) -> tuple[list[str], np.ndarray, np.ndarray, float, list[int]]:
-    """Scale one cubic restart frame to ``length_avg``.
+    """Move molecular COMs into a cubic cell of side ``length_avg``.
 
     Returns elements are ``(xyz_lines, cell, coords, last_length, nmols)``.
-    ``coords`` in the returned tuple are the scaled coordinates.
+    ``coords`` preserve every molecule's internal Cartesian geometry.
     """
     xyz = read_xyz(xyz_path)
     if xyz.n_frames != 1:
@@ -319,12 +483,17 @@ def scale_configuration(
     if np.max(np.abs(diagonal - diagonal[0])) > 1.0e-4 * length_last:
         raise ValueError("Cell is not cubic (the three edge lengths differ)")
 
-    scale = length_avg / length_last
-    new_cell = cell * scale
-    new_coords = xyz.coords[0] * scale
+    new_cell = cell * (length_avg / length_last)
+    new_coords = _move_all_molecule_coms(
+        xyz.coords[0],
+        inp_path=inp_path,
+        nmols=list(frame.nmols),
+        old_cell=cell,
+        new_cell=new_cell,
+    )
     lines = [
         f"{xyz.n_atoms:8d}",
-        f" RESTART scaled L={length_avg:.8f} from {xyz_path.name}",
+        f" RESTART COM-mapped L={length_avg:.8f} from {xyz_path.name}",
     ]
     for element, xyz_row in zip(xyz.elements, new_coords):
         lines.append(
@@ -389,7 +558,7 @@ def build_restart(
 
     length = float(report["cubic_length_A"])
     xyz_lines, cell, _coords, length_last, nmols = scale_configuration(
-        restart_xyz, restart_h, length
+        restart_xyz, restart_h, length, inp
     )
     inp_lines = inp.read_text(encoding="utf-8").splitlines()
     name = run_name or (original_run_name(inp_lines) + ("-nvt" if ensemble == "nvt" else "-gcmc"))
@@ -417,7 +586,7 @@ def build_restart(
 
     print(f"Last-frame length: {length_last:.8f} A")
     print(f"Average length:    {length:.8f} A")
-    print(f"Scale factor:      {length / length_last:.8f}")
+    print(f"Cell scale factor: {length / length_last:.8f}")
     print(f"Wrote {inp_path}")
     print(f"Wrote {xyz_path}")
     print(f"Wrote {h_path}")
@@ -430,7 +599,10 @@ def build_restart(
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Scale the last NPT frame to the average volume and write an NVT input or a GCMC template."
+        description=(
+            "Map last-frame molecular COMs into the NPT average-volume cell "
+            "and write an NVT input or a GCMC template."
+        )
     )
     parser.add_argument("--inp", type=Path, required=True, help="NPT Cassandra input file")
     parser.add_argument("--out-dir", type=Path, required=True, help="New directory for the restart files")

@@ -91,9 +91,20 @@ def main() -> int:
         expected_l = flat_report.volume_average ** (1.0 / 3.0)
         if abs(flat_report.cubic_length - expected_l) > 1e-8:
             raise SystemExit("cubic length is not V^(1/3)")
+        if flat_report.density_mean is None or flat_report.density_at_mean_volume is None:
+            raise SystemExit("the two density averages were not reported")
+        if flat_report.density_mean + 1.0e-8 < flat_report.density_at_mean_volume:
+            raise SystemExit("mean density fell below the density at the mean volume")
 
         plot_path = root / "flat.png"
         flat_data = read_prp(flat_path)
+        rho = flat_data.column("Mass_Density")[flat_report.discard_index :]
+        vol = flat_data.column("Volume")[flat_report.discard_index :]
+        expected_from_volume = float(np.mean(rho * vol) / np.mean(vol))
+        if abs(flat_report.density_at_mean_volume - expected_from_volume) > 1.0e-8:
+            raise SystemExit(
+                "density at the mean volume is not (density * volume) / <V> on the kept window"
+            )
         write_plot(flat_data, flat_report, plot_path, property_name="Volume", sem_band=2)
         if not plot_path.is_file() or plot_path.stat().st_size < 1000:
             raise SystemExit("standard-error band figure was not written")

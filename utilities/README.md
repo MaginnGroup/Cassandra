@@ -23,7 +23,12 @@ header is the explanation; this page is only the command reminder.
   - `both` (the default) prints the two error bars and the full blocking table.
     The average itself does not depend on this choice.
 - When the file has a `Volume` column, it also reports the cubic box length
-  `L = V^(1/3)` that matches the average volume.
+  `L = <V>^(1/3)`.
+- When both `Mass_Density` and `Volume` are present it reports two densities.
+  The mean of the density column, `<rho>`, is proportional to `<1/V>`.
+  The density at the mean volume, `(total mass)/<V>`, is proportional to
+  `1/<V>`.  Volume fluctuations make `<rho>` slightly larger.  The NVT
+  restart uses `<V>`, so its density is the second number.
 
 ```bash
 conda activate cassandra-dev
@@ -61,10 +66,19 @@ python utilities/test_block_average.py
 `npt_restart.py` does not modify the NPT directory. It writes a new folder.
 
 The coordinates come from the single-frame `*.restart.xyz` and `*.restart.H`
-files (the last configuration). The box volume is the **average** volume from
-the block-average report, not the volume of that last frame. Coordinates and
-the cell are scaled by `L_average / L_last`, so the starting density is the
-average density.
+files (the last configuration). The box volume is the **mean volume** `<V>`
+from the block-average report, not the volume of that last frame. The cell
+changes from `L_last` to `<V>^(1/3)`. The script reconstructs each molecule
+across periodic boundaries, maps its mass-weighted center of mass to the same
+fractional coordinate in the new cell, and translates the whole molecule.
+It does not scale internal coordinates, so bond lengths, angles, and
+dihedrals remain unchanged.
+
+The NVT density is the density at that mean volume, `(total mass)/<V>`.
+It is not the mean of the NPT `Mass_Density` column. That column average is
+proportional to `<1/V>`, and `<1/V>` is slightly larger than `1/<V>` when the
+NPT volume fluctuates. `block_average.py` prints both numbers. The difference
+is normally smaller than the uncertainty on `<rho>`.
 
 ```bash
 python utilities/npt_restart.py \
@@ -78,8 +92,10 @@ to the `.prp`. Pass `--restart-xyz` and `--restart-h` if they live elsewhere.
 `--averages run.averages.json` reuses a report you already inspected.
 
 The new input is `nvt_mc`, with `# Box_Info` set to `L_average`, `# Start_Type
-read_config` pointed at the scaled XYZ, and the volume move removed. Molecule
-and fragment filenames are rewritten relative to `--out-dir`.
+read_config` pointed at the COM-mapped XYZ, and the volume move removed.
+Molecule and fragment filenames are rewritten relative to `--out-dir`.
+The tool supports one cubic box, matching Cassandra’s NPT volume-move
+restriction; it stops rather than guessing how to transform a non-cubic cell.
 
 ### μVT (GCMC) template
 
@@ -91,7 +107,8 @@ python utilities/npt_restart.py \
   --out-dir path/to/R125-T243-gcmc
 ```
 
-The box and coordinates are scaled in the same way. The script then writes
+The box changes and molecular centers of mass are mapped in the same way. The
+script then writes
 placeholders rather than pretending the NPT run produced a chemical potential:
 
 - `# Chemical_Potential_Info` is `0.0` kJ/mol. Replace it before running.
