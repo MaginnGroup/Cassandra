@@ -1,10 +1,74 @@
 # Output file formats (`.xyz`, `.prp`, and `.log`)
 
-Brief notes for V2 modernization: how Cassandra writes trajectory, property,
-and logfile outputs, and what future analysis tools should assume.
+Brief notes for V2 modernization: how Cassandra names its output files, how
+it writes trajectory, property, and logfile outputs, and what future analysis
+tools should assume.
 
 **Related:** [docs index](README.md) · [smoke test](smoke-test.md) ·
-[MCF setup](mcf-setup-workflow.md) · [logfile format](logfile-format.md)
+[MCF setup](mcf-setup-workflow.md) · [logfile format](logfile-format.md) ·
+[NVT restart utility](../utilities/README.md)
+
+---
+
+## File names
+
+`# Run_Name` is the prefix for every file Cassandra creates. Call that
+prefix `[run_name]`. One example is `R125-T243-NVT`; the names below use
+`[run_name]` so the same pattern applies to any run. The files are written
+in the directory where you launched the job. One box produces:
+
+| File | Written | What a killed job leaves |
+|------|---------|--------------------------|
+| `[run_name].log` | Throughout the run | The log up to the last flush |
+| `[run_name].prp` | Every `prop_freq` | Properties through the last sample |
+| `[run_name].chk` | Every `coord_freq` | A checkpoint only if a dump finished. There is no checkpoint at the end of a run unless that step lands on `coord_freq` |
+| `[run_name].xyz` | Every `coord_freq`, appended | The coordinate movie. This file stays open, so a kill can leave the last frame short |
+| `[run_name].H` | Every `coord_freq`, appended | Volume, cell matrix, and molecule counts for the movie. Same risk as the `.xyz` |
+| `[run_name].restart.xyz` | Every `coord_freq`, replaced | One complete frame at `F18.8`, if that dump finished. Cassandra closes this file before returning |
+| `[run_name].restart.H` | Every `coord_freq`, replaced | The cell and molecule counts for that frame. Closed with the restart `.xyz` |
+
+Two or more boxes insert `.box1`, `.box2`, and so on before the coordinate
+suffix: `[run_name].box1.xyz`, `[run_name].box1.restart.H`. A property file for
+box 2 is `[run_name].box2.prp`. Code: `Name_Files` in `Src/io_utilities.f90`
+and the assignments in `Get_Simulation_Length_Info` (`Src/input_routines.f90`).
+
+`read_config` reads exactly the number of atoms implied by the molecule
+counts. It does not stop at the atom count on the first XYZ line. If the
+chosen file ends early, the run aborts with an end-of-file error while
+reading coordinates. When that file's name ends in `.xyz`, Cassandra also
+looks for the companion formed by replacing `.xyz` with `.H` and checks the
+cell and molecule counts against `# Box_Info`.
+
+### Naming practice
+
+Give the starting configuration a name the run will not open for writing.
+
+```text
+# Run_Name
+[run_name]
+
+# Start_Type
+read_config 800 [run_name].start.xyz
+```
+
+Keep `[run_name].start.H` beside that XYZ. Cassandra will check it
+against `# Box_Info`.
+
+Leave these names for Cassandra:
+
+- `[run_name].xyz` and `[run_name].H` are the movie. Pointing
+  `read_config` at the movie stores the input and the output in one file.
+  The first coordinate dump opens it, and deleting the job can leave it
+  short. The next submission then reads the damaged file.
+- `[run_name].restart.xyz` and `[run_name].restart.H` are the latest
+  finished frame. They are the right source for a later run. Copy them to
+  a new `.start` pair, or start a new `# Run_Name`, before submitting.
+  The next dump replaces the `.restart` files, so a kill during that
+  replacement can damage the file the job is also reading.
+
+The multi-frame movie is also the wrong start for another reason: `read_config`
+uses its first frame, which is the beginning of the trajectory rather than
+the latest configuration.
 
 ---
 
@@ -63,9 +127,11 @@ Written on every coordinate dump and again at a successful end of run
 
 Multi-box: `run_name.boxN.restart.xyz` / `.H`.
 
-**Do not** pass the multi-frame movie `.xyz` to `read_config` (that reads the
-first frame only). Use `*.restart.xyz` and set `# Box_Info` / molecule counts
-from `*.restart.H`. See [V2_CRC_WORKFLOW.md](V2_CRC_WORKFLOW.md) §5.
+Pass `*.restart.xyz` to `read_config` only after copying it to a name the
+next run will not overwrite. The movie `.xyz` is the wrong start: `read_config`
+uses its first frame, and that file is also the movie Cassandra keeps open.
+Set `# Box_Info` and the molecule counts from the matching `.restart.H`.
+See [File names](#file-names) above and [V2_CRC_WORKFLOW.md](V2_CRC_WORKFLOW.md) §5.
 
 ---
 
@@ -142,7 +208,8 @@ Diagnostic tools live in [`diagnostics/`](../diagnostics/README.md) (not
 | Dihedral PDF + bare-potential Boltzmann | `.xyz` + MCF; \(T\) / species from `.inp` | `dihedral_distribution.py` (**diagnostic**) |
 | Multi-species fixed-\(N\) layout | `# Molecule_Files` (+ `--nmols`) | supported in bond/angle/dihedral tools |
 | COM MSD vs sweep (NVT/NPT exploration; not MD \(D\)) | `.xyz` + MCF + `.inp` (+ `.H` for NPT) | `msd_com.py` (**diagnostic**) |
-| Block averages, \(g(r)\), … | `.prp` / `.xyz` | planned **post-processing** (separate) |
+| Block averages | `.prp` | `utilities/block_average.py` |
+| \(g(r)\) and coordination number | `.xyz` + `.H` + MCF | `utilities/rdf.py` |
 | Variable-\(N\) (GCMC) from `.H` | `.xyz` + `.H` + MCF | planned |
 
 Keep XYZ as plain XYZ (VMD-compatible). Do not require molecule IDs in the

@@ -121,7 +121,7 @@ The `Run_Name` field in `nvt.inp` controls the filename prefix. With
 | `nvt.out.prp` | Thermodynamic properties (energy, pressure, etc.) |
 | `nvt.out.xyz` | Coordinate trajectory |
 | `nvt.out.chk` | Updated checkpoint for restarts |
-| `nvt.out.H` | Energy histogram |
+| `nvt.out.H` | Cell history for the coordinate movie (volume, H-matrix, molecule counts) |
 
 List outputs after a run, newest first:
 

@@ -471,6 +471,10 @@ Example: restart from 1000 with `coord_freq 500` and stop at 1100 → **no new
 
 - Use a **new** `# Run_Name` (e.g. `R125equil_cont1.out`) so you do not overwrite
   the original equilibration outputs unless you intend to.
+- Point `read_config` at a `.start.xyz` that this run will not write.
+  `Run_Name.xyz` is the movie, and a killed job can leave it short.
+  Copy `Run_Name.restart.xyz` and `.restart.H` to that `.start` pair before
+  resubmitting. The full list is in [output-formats.md](output-formats.md).
 - Prefer a **copy** of the `.inp` (`r125-equil-restart.inp`) rather than editing
   the only copy of the initial setup.
 

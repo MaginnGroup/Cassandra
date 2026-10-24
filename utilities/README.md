@@ -97,6 +97,15 @@ Molecule and fragment filenames are rewritten relative to `--out-dir`.
 The tool supports one cubic box, matching Cassandra’s NPT volume-move
 restriction; it stops rather than guessing how to transform a non-cubic cell.
 
+You will likely need to edit the new `.inp` before submitting. Below,
+`[run_name]` means its `# Run_Name` (for example `R125-T243-NVT`). The
+generated start file is `[run_name].xyz`, which is also the name Cassandra
+uses for the coordinate movie. Rename it and its `.H` companion to
+`[run_name].start.xyz` and `[run_name].start.H`, and point `read_config`
+at the `.start.xyz`. How Cassandra names every output file, and how to
+resume a killed run, is in
+[docs/output-formats.md](../docs/output-formats.md).
+
 ### μVT (GCMC) template
 
 ```bash
@@ -121,4 +130,64 @@ Check the scaling logic with:
 
 ```bash
 python utilities/test_npt_restart.py
+```
+
+## Radial distribution and coordination number
+
+`rdf.py` reads a coordinate movie, the matching `.H` file, and the species
+MCF.
+
+- `--mode com` is the center-of-mass RDF. Each molecule is rebuilt across
+  the periodic boundary before its center is calculated.
+- `--mode atom` is an atom–atom RDF. Choose each side with `--element-i`,
+  `--atom-type-i`, or `--atom-index-i`, and the matching `--element-j`,
+  `--atom-type-j`, or `--atom-index-j`. Prefer exact MCF atom types—for
+  example `c3_1_s1`—when sites with the same element need separate RDFs.
+  Omitting the `j` selector pairs the selection with itself.
+- Pairs inside one molecule are left out unless `--include-intramolecular`
+  is set. COM pairs are always between different molecules. Atom pairs use
+  the per-frame minimum-image distance directly; only COMs need molecular
+  reconstruction across a periodic boundary.
+- `g(r)` divides the pair count by the ideal-gas shell. A selection paired
+  with itself uses `N-1` neighbors so `g(r)` approaches 1 at large `r`.
+  With intramolecular atom pairs excluded, the ideal count and coordination
+  density include only sites on other molecules. This is exact even when an
+  atom type occurs more than once in a molecule.
+- The coordination number integrates `4 pi r^2 rho g(r)` out to `--r-cut`.
+  Omit `--r-cut` and the cutoff is the lowest bin between the second and
+  third crossings of `g(r)=1`: out of the first peak and into the second
+  shell. The CN figure axis ends at that cutoff. The RDF and combined figures
+  run to `--r-max`.
+- The standard error is the scatter across frames. Those frames are
+  correlated, so the error bar is not a production uncertainty.
+
+`--r-max` is how far the table goes. The default is half the shortest box
+edge. `--r-cut` is only the coordination integral.
+
+With `--plot`, the script writes a table and a figure next to the movie.
+The pair name is `com`, or the MCF atom types, such as `c3_1_s1-f_2_s1`.
+Pass `--atom-type-i` and, for a different second type, `--atom-type-j`. For
+`[run_name].xyz` the COM files are `[run_name]_com.rdf`,
+`[run_name]_com_rdf.png`, `[run_name]_com_cn.png`, and
+`[run_name]_com_rdf_cn.png`. `--plot` chooses `rdf`, `cn`, or `both`
+(g(r) on the left axis and n(r) on the right). The RDF figure does not mark
+the coordination cutoff unless `--mark-r-cut` is set. Default titles name
+the pair, such as `COM-COM RDF, species 1` and `COM-COM CN, species 1`.
+Replace the figure you are writing with `--title-rdf`, `--title-cn`, or
+`--title-both`. `--legend` is `none`, `curves`, or `with-cutoff`. RDF and CN
+figures have no legend unless you set one. The combined figure names
+`g(r)`, `n(r)`, and the cutoff. The uncertainty band is never listed.
+`--x-unit` is `nm` by default, or `A` for angstroms, drawn as Å. `--r-cut`,
+`--r-max`, and the table stay in angstroms. `--out` replaces the table path.
+
+```bash
+python utilities/rdf.py movie.xyz species.mcf --h movie.H --mode com --r-cut 6 --plot both
+python utilities/rdf.py movie.xyz species.mcf --h movie.H --mode atom --atom-type-i c3_1_s1 --plot both
+python utilities/rdf.py movie.xyz species.mcf --h movie.H --mode atom --atom-type-i c3_1_s1 --atom-type-j c3_2_s1 --plot both
+```
+
+Check the synthetic cases with:
+
+```bash
+python utilities/test_rdf.py
 ```

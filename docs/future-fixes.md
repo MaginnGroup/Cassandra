@@ -19,60 +19,92 @@ here. See also `.cursor/rules/future-fixes.mdc` and the note in [README.md](READ
 
 ## Open items
 
-### Expand utilities for structure and fluctuation properties
+### NVT and NPT fluctuation formulas
 
 | | |
 |--|--|
-| **Filed** | 2026-10-16 |
+| **Filed** | 2026-10-16; specified as the next session on 2026-10-24 |
 | **Area** | Scientific post-processing in `utilities/` |
-| **Likely inputs** | Cassandra `.xyz`, `.H`, and `.prp` files; shared readers where practical |
+| **Files** | A new utility beside `utilities/block_average.py`. Read `.prp` columns; use `.H` only if a formula needs the cell. |
+| **Runs** | HFC-125 NPT production, including `projects/hfc125/NPT-Runs/NPT-243/R125-T243-P2-prod.prp`. NVT comparison data are the short local movie in `projects/hfc125/NVT-243` and the CRC production runs. |
 
-**Requested utilities**
+**What happens today**
 
-1. **Radial distribution functions:** support center-of-mass–center-of-mass
-   and selected atom-type/atom-index pairs. Handle periodic boundaries,
-   changing NPT cells, normalization, species selection, and trajectory
-   stride. Define intramolecular exclusions explicitly.
-2. **Coordination numbers:** support the same COM and atom–atom selections.
-   Integrate \(4\pi\rho_j r^2 g_{ij}(r)\) to a user cutoff or an identified
-   first minimum, and report the convention and uncertainty.
-3. **Thermophysical properties from fluctuations:** before coding, recommend
-   which properties Cassandra can obtain reliably from each ensemble and
-   which additional instantaneous quantities must be written.
+No utility computes a heat capacity, compressibility, or thermal expansion coefficient. `block_average.py` reports means of the columns Cassandra already writes. RDF and coordination numbers are in `utilities/rdf.py`.
 
-**Fluctuation-method candidates to assess**
+**Requested next session**
 
-- \(C_V\) from energy fluctuations in NVT.
-- \(C_P\), isothermal compressibility, and thermal expansion from enthalpy,
-  volume, and enthalpy–volume fluctuations in NPT.
-- Enthalpy of vaporization from liquid and ideal-gas/residual enthalpies,
-  including the molecular and \(RT\) conventions.
-- Dielectric constant from total-dipole fluctuations when molecular charges
-  and the electrostatic boundary convention make that meaningful.
+Implement fluctuation formulas for:
 
-For each property, document the exact ensemble formula, extensive versus
-per-molecule units, finite-size and long-range corrections, required sampling,
-and uncertainty propagation using correlated-data/block analysis. Do not infer
-a property from a `.prp` file unless all required instantaneous observables are
-present.
+- NVT: \(C_V\), \(\kappa_T\), and \(\alpha_P\).
+- NPT: the corresponding fluctuation formulas, including \(C_P\) where the required columns exist.
+
+Start by writing each formula down and agreeing on it before coding. The usual ensemble split is \(C_V\) from energy fluctuations at fixed volume, and \(\kappa_T\) and \(\alpha_P\) from volume and enthalpy–volume fluctuations at fixed pressure. Volume does not fluctuate in NVT, so an NVT route to \(\kappa_T\) or \(\alpha_P\) has to be stated explicitly if that is the formula wanted. Check the `.prp` header and compute a property only when every instantaneous quantity in its formula is present.
+
+For fixed \(N\), do not require both `Volume` and `Mass_Density`. They are the same information: \(\rho = m/V\), with \(m\) from the MCF masses and the molecule count. If one column is missing, compute the other. An NVT run normally stores density and not volume; the constant volume can also come from the `.H` cell or `# Box_Info`. Prefer the cell when it is available, because the printed density has less precision. In NPT the same identity holds at each sample, but \(\langle\rho\rangle\) is proportional to \(\langle 1/V\rangle\) and is not the density at \(\langle V\rangle\). A changing molecule count, as in GCMC, breaks the conversion unless the instantaneous mass is known.
+
+Still deferred inside this topic, after the heat capacity, compressibility, and expansion coefficient: enthalpy of vaporization, and the dielectric constant from the total dipole.
+
+For each property, record the ensemble formula, extensive versus per-molecule units, finite-size and long-range corrections, and how the correlated samples enter the uncertainty. The separate item on production uncertainties covers the error bar itself.
 
 **Why it matters**
 
-- These are the next core research-analysis capabilities after averaging and
-  restart generation. Shared selection, periodic-boundary, and uncertainty
-  code should be designed once rather than duplicated across scripts.
+These are the next thermophysical properties after the averages, the NPT restart, and \(g(r)\). They are also the quantities to use in class once the formulas are settled.
 
 **Risks / decisions**
 
-- COM RDFs require molecules to be reconstructed consistently across periodic
-  boundaries before their centers are calculated.
-- A coordination number is not unique until the neighbor species, density
-  convention, intramolecular exclusions, and integration cutoff are defined.
-- Fluctuation estimates can converge much more slowly than mean density or
-  energy and may require additional `.prp` columns or longer simulations.
+- Agree on the NVT formulas for \(\kappa_T\) and \(\alpha_P\) before implementing them. Do not silently replace that request with the NPT volume-fluctuation formulas.
+- Fluctuation estimates converge more slowly than the mean energy or density and may need longer runs or extra `.prp` columns.
+- The local 243 K NVT movie has 10 frames. It can exercise the script. It cannot support a quoted fluctuation property.
 
-**Status:** deferred — utilities roadmap; review formulas and data requirements
-before implementation.
+**Status:** deferred — next session. Do not implement in the current session.
+
+---
+
+### Production uncertainties for averages and reported values
+
+| | |
+|--|--|
+| **Filed** | 2026-10-24 |
+| **Area** | Statistical analysis in `utilities/`, for publication and for class |
+| **Files** | `utilities/rdf.py`, `utilities/block_average.py` |
+| **Related** | The fluctuation-formula item above is separate. That item is about which properties to compute. This item is about the error bar on a value once the samples exist. |
+
+**What happens today**
+
+`rdf.py` shades \(g(r)\) with the frame standard error: the scatter of the saved frames divided by \(\sqrt{N_\mathrm{frames}}\). That treats every saved configuration as an independent sample. Neighboring frames from one Monte Carlo trajectory are correlated, so this bar is too small for a quoted result. The simple shading stays as it is until this item is picked up.
+
+`block_average.py` is further along for scalar `.prp` columns. It estimates the statistical inefficiency from the autocorrelation (Geyer's initial positive sequence) and can also report a blocking standard error (Flyvbjerg and Petersen). Those two methods are not yet applied to \(g(r)\) or to the coordination number.
+
+**Why it matters**
+
+Publication figures and class examples need an error bar that says how well the mean is known, not how noisy one saved frame is. The same question applies to every reported average: density, energy, \(g(r)\), and \(n(R)\). Maginn wants to choose the method together before it is coded. He is not asking for a statistics package; he wants the standard best practice for correlated simulation data, explained clearly enough to teach.
+
+**Proposed fix (when ready)**
+
+Agree on the procedure first, using one long equilibrated trajectory as the example. Then implement it.
+
+For \(g(r)\), keep the per-frame value in each radial bin and analyze that time series. The autocorrelation route estimates
+
+\[
+g = 1 + 2 \sum_t C(t)
+\]
+
+while \(C(t)\) stays positive, then multiplies the ordinary standard error by \(\sqrt{g}\). The blocking route increases the block length until the standard error of the block means levels off. Report that plateau. If the curve is still rising at the longest usable block, say that the trajectory is too short to quote.
+
+For the coordination number, compute \(n(R)\) on every frame at one fixed cutoff, then apply the same analysis to that one series. Do not add the bin error bars along \(r\); those bins are correlated. Do not re-pick the first minimum inside each block, because that mixes uncertainty in the shell location into the uncertainty of \(n(R)\).
+
+A second check is several independent trajectories: one mean per trajectory, then the standard error across those means. Agreement with the blocked error from one long run is evidence that the blocks were long enough.
+
+Apply the same standard to the scalar averages already produced by `block_average.py`, and document which number is the one to quote. Keep the current RDF frame-SEM band available so a short movie can still be inspected.
+
+**Risks / decisions**
+
+- Choose autocorrelation, blocking, or both before writing the RDF path. `block_average.py` already prints both for scalars; matching that convention would keep one definition of "the error bar" across utilities.
+- The save interval (`coord_freq` or `prop_freq`) has to be stated with the result. A small interval does not create more independent samples.
+- Class use needs a short explanation of why the naive standard error is too small, not only a new command flag.
+
+**Status:** deferred — do not replace the RDF frame-SEM shading until this is explicitly picked up.
 
 ---
 
@@ -348,6 +380,7 @@ implement until explicitly picked up.
 
 ## Done / cancelled
 
+- **2026-10-24:** `utilities/rdf.py` computes COM and atom–atom \(g(r)\) and the coordination number. The default cutoff is the lowest bin between the second and third \(g(r)=1\) crossings. The CN figure axis ends at that cutoff.
 - **2026-10-16:** Started `utilities/`, separate from `diagnostics/`. Block averages (density chooses the cut; autocorrelation and blocking uncertainties; optional standard-error band plot) and an NPT restart at the average volume are in place. Further research post-processing belongs there too; it is not a parked item.
 - **2026-10-16:** The end-of-run logfile block now labels CPU time and prints wall-clock time from `DATE_AND_TIME` (`Main` in `Src/main.f90`). `docs/logfile-format.md` matches. Per-move subroutine timers were left as they were.
 - **2026-10-16:** Fixed-angle integrity checks now skip `sim_pregen`, matching fixed bonds (`Compute_Molecule_Angle_Energy`). Normal Monte Carlo still aborts.

@@ -22,6 +22,27 @@
 #    4. Writes a new ``.inp``, ``.xyz``, and ``.H`` in a directory you
 #       choose.  The original NPT directory is not modified.
 #
+#  Name the start file before you submit
+#  -------------------------------------
+#  You will likely need to edit the new ``.inp`` before submitting the job.
+#  Below, ``[run_name]`` means the ``# Run_Name`` of that new run.  One
+#  example is ``R125-T243-NVT``.
+#
+#  The files written here are ``[run_name].xyz`` and ``[run_name].H``, and
+#  ``read_config`` points at ``[run_name].xyz``.  Cassandra also uses those
+#  two names, for the coordinate movie and its cell history.  Rename the
+#  start pair before ``qsub``:
+#
+#      [run_name].xyz  ->  [run_name].start.xyz
+#      [run_name].H    ->  [run_name].start.H
+#
+#  and point ``read_config`` at ``[run_name].start.xyz``.  A killed job
+#  can leave the movie files short.  The next submission then reads a
+#  damaged file if the start file and the movie are the same path.
+#  ``[run_name].restart.xyz`` and ``[run_name].restart.H`` are the latest
+#  finished frame; copy them to a new ``.start`` pair before using them
+#  to resume.  The full set of names is in ``docs/output-formats.md``.
+#
 #  Which density the new box has
 #  ---------------------------
 #  block_average.py prints two densities, and they are not interchangeable.
@@ -82,6 +103,8 @@ from diagnostics.io.mcf import McfData, read_mcf
 from diagnostics.io.prp import read_prp
 from diagnostics.io.xyz import read_xyz
 from utilities.block_average import analyze_prp
+from utilities.pbc import mic_delta as _mic_delta
+from utilities.pbc import unwrapped_molecule as _unwrapped_molecule
 
 # Move sections whose first data line is a probability.  Volume is removed
 # rather than rescaled.  Insertion and deletion are added for GCMC and are
@@ -303,78 +326,6 @@ def _load_average(prp: Path | None, averages: Path | None, discard_sweeps: float
     if report.get("cubic_length_A") is None or report.get("volume_average") is None:
         raise ValueError("Average report has no Volume column, so no cubic length is available")
     return report
-
-
-def _mic_delta(delta: np.ndarray, cell: np.ndarray) -> np.ndarray:
-    """Minimum-image displacement in a cell stored as a 3-by-3 H matrix."""
-    fractional = np.linalg.solve(cell, delta)
-    fractional -= np.rint(fractional)
-    return cell @ fractional
-
-
-def _unwrapped_molecule(
-    coords: np.ndarray,
-    mcf: McfData,
-    cell: np.ndarray,
-) -> np.ndarray:
-    """Make one molecular image contiguous by traversing its MCF bond graph."""
-    n_atoms = mcf.n_atoms
-    if coords.shape != (n_atoms, 3):
-        raise ValueError(
-            f"{mcf.path}: expected {n_atoms} coordinates per molecule, got {coords.shape}"
-        )
-    if n_atoms == 1:
-        return coords.copy()
-
-    neighbors: list[list[int]] = [[] for _ in range(n_atoms)]
-    for bond in mcf.bonds:
-        neighbors[bond.i].append(bond.j)
-        neighbors[bond.j].append(bond.i)
-    if not mcf.bonds:
-        raise ValueError(
-            f"{mcf.path}: a multi-atom molecule needs bonds to reconstruct it across PBC"
-        )
-
-    unwrapped = np.empty_like(coords)
-    visited = np.zeros(n_atoms, dtype=bool)
-    visited[0] = True
-    unwrapped[0] = coords[0]
-    queue = [0]
-    while queue:
-        parent = queue.pop(0)
-        for child in neighbors[parent]:
-            candidate = unwrapped[parent] + _mic_delta(coords[child] - coords[parent], cell)
-            if not visited[child]:
-                unwrapped[child] = candidate
-                visited[child] = True
-                queue.append(child)
-            elif not np.allclose(
-                unwrapped[child],
-                candidate,
-                rtol=0.0,
-                atol=1.0e-6,
-            ):
-                # A closed path may reach the same atom through a different
-                # periodic image. It is consistent when the difference is a
-                # lattice vector, i.e. its minimum-image value is zero.
-                if np.allclose(
-                    _mic_delta(candidate - unwrapped[child], cell),
-                    0.0,
-                    rtol=0.0,
-                    atol=1.0e-6,
-                ):
-                    continue
-                raise ValueError(
-                    f"{mcf.path}: periodic bond graph is inconsistent for a ring; "
-                    "cannot reconstruct one contiguous molecular image"
-                )
-    if not np.all(visited):
-        missing = ", ".join(str(i + 1) for i in np.where(~visited)[0])
-        raise ValueError(
-            f"{mcf.path}: disconnected multi-atom topology; atoms {missing} "
-            "cannot share one molecule-wide COM"
-        )
-    return unwrapped
 
 
 def _move_molecule_com(

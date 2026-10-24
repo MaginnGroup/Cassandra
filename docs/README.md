@@ -53,8 +53,9 @@ workflow changes under `docs/`; stage → commit → push on `modernization` (no
 PR unless asked). When changing a Fortran routine, add a brief dated revision
 note in that routine’s header (and the module header if one exists) — see
 [V2_GIT_WORKFLOW.md](V2_GIT_WORKFLOW.md) § Fortran revision history. Keep
-`diagnostics/` for reliability checks only — research post-processing (block
-averages, RDF, …) stays separate later.
+`diagnostics/` for reliability checks. Research post-processing lives in
+`utilities/`: block averages, the NPT restart, and radial distribution /
+coordination numbers.
 
 **Deferred work:** When something should be done later (not this session), add
 a full entry to [future-fixes.md](future-fixes.md) instead of implementing it.
@@ -67,7 +68,7 @@ Agents are instructed to do the same when you say “later,” “defer,” “p
 | [mcf-setup-workflow.md](mcf-setup-workflow.md) | New molecule checklist: PDB → FF → MCF → fragments → inp |
 | [dihedral-opls-rb.md](dihedral-opls-rb.md) | OPLS dihedrals → Ryckaert–Bellemans conversion at MCF read |
 | [future-fixes.md](future-fixes.md) | Deferred bugfixes / consistency items (not current-session work) |
-| [output-formats.md](output-formats.md) | `.xyz` / `.prp` precision, layout, and analysis assumptions |
+| [output-formats.md](output-formats.md) | Output file names, `.xyz` / `.prp` precision, and analysis assumptions |
 | [logfile-format.md](logfile-format.md) | Simulation `.log` structure, progress snapshots, intensive energies |
 | [smoke-test.md](smoke-test.md) | How to run `run_test.py`, input/output files, what to expect |
 | [V2_DEVELOPMENT_ENVIRONMENT.md](V2_DEVELOPMENT_ENVIRONMENT.md) | Conda environments, compilers, compile & run workflow |
@@ -76,7 +77,7 @@ Agents are instructed to do the same when you say “later,” “defer,” “p
 | [VS-CODE-Guide.md](VS-CODE-Guide.md) | VS Code / Cursor workspace, tasks, and run setup |
 | [../python/README.md](../python/README.md) | Python `run_cassandra()` API |
 | [../diagnostics/README.md](../diagnostics/README.md) | Post-run diagnostics (property plots, …) |
-| [../utilities/README.md](../utilities/README.md) | Block averages and NPT → NVT / GCMC restart |
+| [../utilities/README.md](../utilities/README.md) | Block averages, RDF and coordination numbers, NPT → NVT / GCMC restart |
 
 ## Project layout (reminder)
 
@@ -86,7 +87,7 @@ Agents are instructed to do the same when you say “later,” “defer,” “p
 │   ├── docs/             ← you are here
 │   ├── python/           ← V2 Python wrapper
 │   ├── diagnostics/      ← post-run checks and plots
-│   ├── utilities/        ← block averages and NPT restart inputs
+│   ├── utilities/        ← block averages, RDF / coordination numbers, NPT restart inputs
 │   ├── Scripts/          ← helpers (molecule_to_pdb, mcfgen, library_setup, …)
 │   ├── Src/              ← Fortran source; compile here
 │   ├── Examples/         ← input files for test runs
