@@ -63,8 +63,14 @@ libgmxfortbuild := ${librariespath}/Src/libgmxfort/build/
 libxdrfilebuild := ${librariespath}/Src/libxdrfile/build/
 localdir := ${librariespath}/locals/${FC}/local
 locallib := ${localdir}/lib
-libxdrfilepath = ${locallib}/libxdrfile.so
-libgmxfortpath = ${locallib}/libgmxfort.so
+# macOS builds .dylib shared libraries, Linux builds .so
+ifeq ($(shell uname),Darwin)
+  shlibext = dylib
+else
+  shlibext = so
+endif
+libxdrfilepath = ${locallib}/libxdrfile.${shlibext}
+libgmxfortpath = ${locallib}/libgmxfort.${shlibext}
 
 LIBS = -I${localdir}/include -L${locallib} -lgmxfort # `pkg-config --cflags --libs libgmxfort`
 INCS = -I${localdir}/include -L${locallib} -lgmxfort # `pkg-config --cflags --libs libgmxfort`

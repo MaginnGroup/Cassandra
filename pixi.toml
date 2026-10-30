@@ -1,0 +1,40 @@
+[workspace]
+authors = ["Edward Maginn <ed@nd.edu>"]
+channels = ["conda-forge"]
+name = "cassandra"
+description = "Cassandra Monte Carlo code: build, test and analysis environment"
+platforms = ["osx-arm64"]
+version = "0.1.0"
+
+# Build and test tasks. `pixi run build` compiles Src/cassandra_gfortran.exe
+# with XTC support, building libxdrfile and libgmxfort into Libraries/locals
+# on the first run. `pixi run test` runs the regression suite against it.
+# Run these outside any activated conda environment: conda's compiler
+# packages export FC, LDFLAGS, CMAKE_ARGS, ... that override pixi's compilers.
+[tasks]
+build = { cmd = "make -f Makefile.gfortran", cwd = "Src" }
+clean = { cmd = "make -f Makefile.gfortran clean", cwd = "Src" }
+test = { cmd = "python testSuite.py ../../Src/cassandra_gfortran.exe", cwd = "Scripts/testSuite", depends-on = ["build"] }
+test-utilities = "python utilities/test_block_average.py && python utilities/test_npt_restart.py && python utilities/test_rdf.py"
+smoke = { cmd = "python run_test.py", depends-on = ["build"] }
+
+# Pinned to match the `cassandra-dev` conda environment it replaces
+# (recorded 2026-10-30), so laptop builds keep the same compiler and Python.
+[dependencies]
+python = "3.10.19.*"
+gfortran = "15.1.0.*"
+libgfortran5 = "15.2.0.*"
+llvm-openmp = "21.1.4.*"
+cmake = "4.1.2.*"
+numpy = "2.2.6.*"
+libopenblas = "0.3.30.*"
+libblas = "3.9.0.*"
+pandas = "2.3.3.*"
+matplotlib-base = "3.10.8.*"
+future = "1.0.0.*"
+rdkit = "2025.09.5.*"
+
+[activation.env]
+# Avoids "invalid version number in '-mmacosx-version-min=18.0'" on macOS 27
+# (see docs/V2_DEVELOPMENT_ENVIRONMENT.md).
+MACOSX_DEPLOYMENT_TARGET = "26.0"

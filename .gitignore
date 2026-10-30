@@ -57,3 +57,5 @@ build/
 locals/
 # Ignore any credential/token files
 *token*
+# pixi
+.pixi/
