@@ -37,39 +37,28 @@ HETATM    1  C  ...                      C  CT
 
 ## Setup
 
-This project uses the existing `cassandra-dev` Conda environment. Activate the Conda environment and install RDKit from `conda-forge`:
+RDKit is already a dependency of the laptop Pixi environment. From the
+Cassandra repo, outside any activated Conda environment:
 
 ```bash
-conda activate cassandra-dev
-conda install -c conda-forge rdkit
+cd ~/CassandraV2/Cassandra
+pixi shell
 ```
 
-RDKit is then part of `cassandra-dev` and is available whenever that environment is active. 
-Prefer conda-forge into cassandra-dev. requirements.txt is only a pip fallback if you are not using Conda.
-
-Confirm that the shell is using the intended Python interpreter and that RDKit imports successfully:
+Confirm that the shell is using that Python and that RDKit imports:
 
 ```bash
-echo "$CONDA_DEFAULT_ENV"
 which python
 python --version
 python -c "import rdkit; print('RDKit:', rdkit.__version__)"
 ```
 
-The environment name should be `cassandra-dev`, and `which python` should
-normally report:
+`which python` should report a path under
+`~/CassandraV2/Cassandra/.pixi/envs/default/bin/`.
 
-```text
-/opt/anaconda3/envs/cassandra-dev/bin/python
-```
-
-If both `(cassandra-dev)` and `(.venv)` appear in the shell prompt, deactivate
-the `.venv` environment before continuing:
-
-```bash
-deactivate
-conda activate cassandra-dev
-```
+If a Conda environment or a `.venv` is also active, leave it before
+`pixi shell`. An active Conda environment overrides Pixi's compiler and
+Python.
 
 ## Examples
 

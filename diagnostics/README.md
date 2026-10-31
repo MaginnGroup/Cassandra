@@ -22,9 +22,8 @@ parsing interactive stdout.
 Instantaneous property vs MC sweep/step + running average (equilibration eye-check).
 
 ```bash
-conda activate cassandra-dev
 cd ~/CassandraV2/Cassandra
-python diagnostics/property_plotter.py Examples/NVT/water_spc/nvt.out.prp -p Energy_Total
+pixi run python diagnostics/property_plotter.py Examples/NVT/water_spc/nvt.out.prp -p Energy_Total
 ```
 
 ### `bond_distribution.py`
@@ -87,13 +86,15 @@ diagnostics/io/
 |------|--------|
 | Acceptance rates from `.log` | Moves working? |
 
-## Planned post-processing (separate later)
+## Post-processing
 
-Block averages / error bars, \(g(r)\), production averages, advanced statistics.
+Block averages and radial distribution functions live in `utilities/`. See
+[utilities/README.md](../utilities/README.md). Production uncertainties are
+still deferred; see `docs/future-fixes.md`.
 
 ## Dependencies
 
-`numpy` and `matplotlib` (`cassandra-dev` conda env).
+`numpy` and `matplotlib` (the Pixi environment in `pixi.toml`).
 
 ## Related docs
 

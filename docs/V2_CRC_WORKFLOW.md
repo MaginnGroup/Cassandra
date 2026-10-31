@@ -75,7 +75,7 @@ ssh -Y ed@maginnfe.crc.nd.edu
 `-X` and `-Y` both forward X11 so GUI windows (e.g. matplotlib) can appear on
 your laptop. **`-Y`** is “trusted” forwarding — usually the more convenient
 choice on a machine you control; **`-X`** is stricter and sometimes breaks
-apps. Prefer laptop plotting with `cassandra-dev` when practical (§9).
+apps. Prefer laptop plotting with Pixi when practical (§9).
 
 ### Which Maginn host groups exist?
 
@@ -285,9 +285,11 @@ See also [V2_GIT_WORKFLOW.md](V2_GIT_WORKFLOW.md) for laptop Git habits.
 
 ---
 
-## 2. Clone or update Cassandra (`modernization`) on maginnfe
+## 2. Clone or update Cassandra (`pixi-env`) on maginnfe
 
 **Source code** travels via GitHub. Do not SFTP the whole `Src/` tree every time.
+Pixi is not used on maginnfe. Check out `pixi-env` so the source matches the
+laptop, then compile with the `gcc` module in §4.
 
 ### First clone
 
@@ -296,7 +298,7 @@ mkdir -p /users/ed/CassandraV2
 cd /users/ed/CassandraV2
 git clone git@github.com:MaginnGroup/Cassandra.git
 cd Cassandra
-git checkout modernization
+git checkout pixi-env
 git pull
 ```
 
@@ -309,12 +311,12 @@ git status
 # If Example smoke outputs are dirty, discard them (do not commit):
 git restore Examples/NVT/water_spc/nvt.out.* 2>/dev/null || true
 
-git checkout modernization
-git pull origin modernization
+git checkout pixi-env
+git pull origin pixi-env
 # then recompile if Fortran changed (see §3)
 ```
 
-`Your branch is up to date with 'origin/modernization'` only means **local
+`Your branch is up to date with 'origin/pixi-env'` only means **local
 tracking info** is current — it does **not** fetch new commits until `git pull`
 succeeds. If pull fails with `Permission denied (publickey)`, fix §1 first.
 
@@ -334,7 +336,7 @@ Layout on CRC mirrors the laptop idea. For example:
 
 ```
 /users/ed/CassandraV2/
-├── Cassandra/          ← git clone (modernization)
+├── Cassandra/          ← git clone (pixi-env)
 └── projects/
     └── hfc125/         ← R125 inputs / outputs (NOT in git)
 ```
@@ -369,10 +371,12 @@ GUI alternative: [Cyberduck](https://cyberduck.io/) (CRC recommends it for Mac).
 
 ---
 
-## 4. Compile with OpenMP (modules, not conda)
+## 4. Compile with OpenMP (modules, not Pixi)
 
 On CRC, use **modules** for the Fortran toolchain. Do **not** compile Cassandra
-with a conda `gfortran` on maginnfe (mismatched compilers break `.mod` files).
+on maginnfe with the laptop Pixi environment or with a Conda `gfortran`.
+Mismatched compilers break `.mod` files. `pixi.toml` is for the Apple Silicon
+laptop only.
 
 Confirmed modules on maginnfe (2026-08):
 
@@ -581,8 +585,8 @@ Job scripts must still `module load` what they need; do not rely on `.bashrc`
 for `qsub`.
 
 Diagnostics need **numpy** (and **matplotlib** for plots). Prefer bringing
-results home and using `cassandra-dev` on the laptop (next section). A conda
-env on maginnfe for in-cluster plotting is still deferred.
+results home and using Pixi on the laptop (next section). A Conda env on
+maginnfe for in-cluster plotting is still deferred.
 
 If you plot **on maginnfe** and want windows on your laptop, log in with X11
 forwarding (`ssh -Y …` or `ssh -X …` — see **Maginn-owned nodes**). Forwarding
@@ -597,9 +601,8 @@ is often slow; laptop diagnostics are usually smoother.
 scp ed@maginnfe.crc.nd.edu:/users/ed/CassandraV2/projects/hfc125/R125equil_cont1.out.prp \
   ~/CassandraV2/projects/hfc125/
 
-conda activate cassandra-dev
 cd ~/CassandraV2/Cassandra
-python diagnostics/property_plotter.py \
+pixi run python diagnostics/property_plotter.py \
   ~/CassandraV2/projects/hfc125/R125equil_cont1.out.prp -p Mass_Density
 ```
 

@@ -7,7 +7,7 @@ from the legacy scripts in `Scripts/testSuite/`.
 For git branch strategy, commit/push workflow, and authentication troubleshooting,
 see [`docs/V2_GIT_WORKFLOW.md`](../docs/V2_GIT_WORKFLOW.md).
 
-For conda environments, compiling, and the day-to-day dev workflow, see
+For the laptop Pixi environment, compiling, and the day-to-day dev workflow, see
 [`docs/V2_DEVELOPMENT_ENVIRONMENT.md`](../docs/V2_DEVELOPMENT_ENVIRONMENT.md).
 
 **All V2 reminders:** [`docs/README.md`](../docs/README.md)

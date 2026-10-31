@@ -2,7 +2,7 @@
 
 Parked ideas that are **not** being done in the current session.
 Add new items at the top of the list (newest first). When you pick one up,
-move it out (fix or delete) and implement on `modernization` as usual.
+move it out (fix or delete) and implement on `pixi-env` as usual.
 
 **Agent / session rule:** If Maginn says to do something later (defer, park,
 “not now,” add to the list, etc.), **do not implement** — add a proper entry

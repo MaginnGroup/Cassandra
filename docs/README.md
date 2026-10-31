@@ -2,30 +2,31 @@
 
 **Start here when you return to the modernization project after time away.**
 
-These notes live on the `modernization` branch and are meant as practical
+These notes live on the `pixi-env` branch and are meant as practical
 reminders — not a replacement for the public
 [Cassandra documentation](https://cassandra-mc.readthedocs.io/).
+`pixi-env` continues `modernization` and uses Pixi on the laptop instead of
+the `cassandra-dev` Conda environment.
 
 ## Quick start (60 seconds)
 
 ```bash
-conda activate cassandra-dev
 cd ~/CassandraV2/Cassandra
-git branch --show-current          # expect: modernization
+git branch --show-current          # expect: pixi-env
 git remote -v                      # expect: git@github.com:MaginnGroup/Cassandra.git
 ssh-add --apple-use-keychain ~/.ssh/id_ed25519
-python run_test.py                 # smoke test
+pixi run smoke                     # compile if needed, then run the smoke test
 ```
 
 ## Session start protocol
 
-Use this checklist at the start of every modernization session (laptop). It
-avoids the common traps: wrong conda env, wrong branch, and stale local code.
+Use this checklist at the start of every session (laptop). It avoids the
+common traps: an active Conda environment, the wrong branch, and stale local
+code. Do not `conda activate cassandra-dev` in this shell.
 
 ```bash
-conda activate cassandra-dev       # not thermo2026 / base
 cd ~/CassandraV2/Cassandra
-git branch --show-current          # expect: modernization
+git branch --show-current          # expect: pixi-env
 git status -sb                     # see untracked plots / Examples outputs
 git pull                           # when you want latest from origin
 git log --oneline -8               # what changed since last time
@@ -34,14 +35,14 @@ git log --oneline -8               # what changed since last time
 Optional after a `git pull` that touched Fortran, or when something feels off:
 
 ```bash
-python run_test.py                 # smoke test; see smoke-test.md
+pixi run smoke                     # smoke test; see smoke-test.md
 ```
 
 **Laptop vs CRC reminder**
 
 | Where | Typical work |
 |-------|----------------|
-| **Laptop** (`cassandra-dev`) | Edit inputs, Git commits, Python diagnostics |
+| **Laptop** (Pixi, `pixi-env`) | Edit inputs, Git commits, Python diagnostics |
 | **maginnfe** | Compile OpenMP binary, `git pull`, `qsub` long runs |
 
 Bring `.prp` / `.xyz` / `.H` home with `scp`/`rsync` and plot on the laptop for
@@ -49,7 +50,7 @@ now. On the front end, CRC’s Python module provides `python3` (not always
 `python`) — see [V2_CRC_WORKFLOW.md](V2_CRC_WORKFLOW.md) § Python on maginnfe.
 
 Working style for this project: plan → approve → implement; document durable
-workflow changes under `docs/`; stage → commit → push on `modernization` (no
+workflow changes under `docs/`; stage → commit → push on `pixi-env` (no
 PR unless asked). When changing a Fortran routine, add a brief dated revision
 note in that routine’s header (and the module header if one exists) — see
 [V2_GIT_WORKFLOW.md](V2_GIT_WORKFLOW.md) § Fortran revision history. Keep
@@ -71,7 +72,7 @@ Agents are instructed to do the same when you say “later,” “defer,” “p
 | [output-formats.md](output-formats.md) | Output file names, `.xyz` / `.prp` precision, and analysis assumptions |
 | [logfile-format.md](logfile-format.md) | Simulation `.log` structure, progress snapshots, intensive energies |
 | [smoke-test.md](smoke-test.md) | How to run `run_test.py`, input/output files, what to expect |
-| [V2_DEVELOPMENT_ENVIRONMENT.md](V2_DEVELOPMENT_ENVIRONMENT.md) | Conda environments, compilers, compile & run workflow |
+| [V2_DEVELOPMENT_ENVIRONMENT.md](V2_DEVELOPMENT_ENVIRONMENT.md) | Pixi environment, compilers, compile & run workflow |
 | [V2_CRC_WORKFLOW.md](V2_CRC_WORKFLOW.md) | maginnfe / CRC: Maginn host groups, `free_nodes`, Git, rsync, OpenMP, `qsub` |
 | [V2_GIT_WORKFLOW.md](V2_GIT_WORKFLOW.md) | Branch strategy, commit/push, SSH authentication |
 | [VS-CODE-Guide.md](VS-CODE-Guide.md) | VS Code / Cursor workspace, tasks, and run setup |
@@ -83,13 +84,14 @@ Agents are instructed to do the same when you say “later,” “defer,” “p
 
 ```
 ~/CassandraV2/
-├── Cassandra/              ← git repo (modernization branch)
+├── Cassandra/              ← git repo (pixi-env branch)
 │   ├── docs/             ← you are here
 │   ├── python/           ← V2 Python wrapper
 │   ├── diagnostics/      ← post-run checks and plots
 │   ├── utilities/        ← block averages, RDF / coordination numbers, NPT restart inputs
 │   ├── Scripts/          ← helpers (molecule_to_pdb, mcfgen, library_setup, …)
-│   ├── Src/              ← Fortran source; compile here
+│   ├── Src/              ← Fortran source; compile with `pixi run build`
+│   ├── pixi.toml         ← laptop Pixi environment and tasks
 │   ├── Examples/         ← input files for test runs
 │   └── run_test.py       ← smoke test script
 ├── projects/             ← research runs (e.g. hfc125); not in git
@@ -98,8 +100,8 @@ Agents are instructed to do the same when you say “later,” “defer,” “p
 
 ## Key facts easy to forget
 
-- V2 work uses branch **`modernization`** on **MaginnGroup/Cassandra** (not a separate repo).
-- Use conda env **`cassandra-dev`** for Cassandra — not your class env (`thermo2026`).
+- V2 work continues on branch **`pixi-env`** of **MaginnGroup/Cassandra** (not a separate repo). `modernization` is the last Conda-based snapshot.
+- On the laptop, use **Pixi** from this repo (`pixi run …`). Do not use `thermo2026` or an activated `cassandra-dev` shell.
 - Git push needs **SSH** (`git@github.com:...`), not your GitHub password.
 - CRC front end for this group: **`maginnfe.crc.nd.edu`** — see [V2_CRC_WORKFLOW.md](V2_CRC_WORKFLOW.md).
 - OpenMP binary name: **`cassandra_gfortran_openMP.exe`** (not `cassandra_gfortran.exe`).

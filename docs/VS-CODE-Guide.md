@@ -1,4 +1,4 @@
-# VS Code Guide for Cassandra Modernization
+# VS Code Guide for Cassandra
 
 ## Recommended setup
 
@@ -11,36 +11,39 @@
   - GitLens (optional)
   - Emacs keymap (optional)
 
+The workspace files under `CassandraV2/.vscode/` are outside the Cassandra git
+repo. They are local editor settings, not part of `pixi-env`.
+
 ## Workspace settings
 
-The workspace file `.vscode/settings.json` is configured to:
+`.vscode/settings.json` should point Python at the Pixi interpreter, after
+`pixi install` has created it:
 
-- Use `/opt/anaconda3/envs/cassandra-dev/bin/python`
-- Activate Conda in the integrated terminal
-- Find `conda` at `/opt/anaconda3/bin/conda`
-- Hide `.git`, `build`, and `dist` folders in Explorer
+```text
+~/CassandraV2/Cassandra/.pixi/envs/default/bin/python
+```
+
+Do not set `python.terminal.activateEnv` to a Conda environment. An active
+`cassandra-dev` shell overrides Pixi's compiler.
 
 ## Tasks
 
-The workspace has three tasks:
+The workspace tasks run through Pixi, from the Cassandra repo:
 
 1. **Build Cassandra (gfortran)**
-   - Runs `make -f Makefile.gfortran` inside `Cassandra/Src`
-   - Activates the `cassandra-dev` Conda environment first
+   - `pixi run build` (`make -f Makefile.gfortran` in `Cassandra/Src`)
 
 2. **Run NVT water_spc**
-   - Runs the built executable `Cassandra/Src/cassandra_gfortran.exe`
-   - Passes `nvt.inp` as the input file
-   - Runs from `Cassandra/Examples/NVT/water_spc`
+   - Runs `Cassandra/Src/cassandra_gfortran.exe` on `nvt.inp`
+   - Working directory: `Cassandra/Examples/NVT/water_spc`
 
 3. **Run NVT water_spc and save log**
-   - Same as above, but also writes output to `CassandraV2/run_logs/nvt_water_spc.log`
+   - Same as above, and writes `CassandraV2/run_logs/nvt_water_spc.log`
 
 4. **Run any example**
    - Prompts for a relative example folder (for example `NVT/water_spc`)
    - Prompts for the input filename inside that folder
    - Prompts for a log filename to save under `CassandraV2/run_logs`
-   - Runs the chosen example with the built executable and saves output
 
 ## Running tasks
 
@@ -50,25 +53,25 @@ The workspace has three tasks:
 
 ## Running examples manually
 
-If you prefer terminal commands:
+From the Cassandra repo, outside any activated Conda environment:
 
 ```bash
-conda activate cassandra-dev
-cd Cassandra/Src
-make -f Makefile.gfortran
-cd ../Examples/NVT/water_spc
-../../Src/cassandra_gfortran.exe nvt.inp
+cd ~/CassandraV2/Cassandra
+pixi run build
+cd Examples/NVT/water_spc
+pixi run -- ../../Src/cassandra_gfortran.exe nvt.inp
 ```
 
-If you want a specific example, replace the folder and input file accordingly.
+Pixi finds `pixi.toml` in the parent repo. Replace the folder and input file
+for a different example. The smoke test is `pixi run smoke` from the repo root.
 
 ## Notes capture
 
-Use `run_logs/` to keep run outputs, and add notes in `Cassandra/docs/VS-CODE-Guide.md` or a new notes file.
+Use `run_logs/` to keep run outputs, and add notes in `Cassandra/docs/`.
 
 Example note format:
 
 - Example: `Examples/NVT/water_spc`
-- Command: `./cassandra_gfortran.exe nvt.inp`
+- Command: `pixi run -- ../../Src/cassandra_gfortran.exe nvt.inp`
 - Output log: `run_logs/nvt_water_spc.log`
 - Observations: ...

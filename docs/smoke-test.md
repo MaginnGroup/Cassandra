@@ -28,25 +28,22 @@ confirms the toolchain works.
 From the **repo root** (not `Src/`):
 
 ```bash
-conda activate cassandra-dev
 cd ~/CassandraV2/Cassandra
-python run_test.py
+pixi run smoke
 ```
 
 ### Prerequisites
 
 | Requirement | Location |
 |-------------|----------|
-| Conda environment | `cassandra-dev` |
-| Compiled executable | `Src/cassandra_gfortran.exe` |
+| Pixi environment | `pixi.toml` in the repo; `pixi install` once |
+| Compiled executable | `Src/cassandra_gfortran.exe` (`pixi run smoke` builds it) |
 | Input file | `Examples/NVT/water_spc/nvt.inp` |
 
 If the executable is missing, compile first:
 
 ```bash
-cd Src
-make -f Makefile.gfortran
-cd ..
+pixi run build
 ```
 
 ---
@@ -185,10 +182,10 @@ statistics, but the file should exist and contain numeric data.
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| `Cassandra executable not found` | Not compiled | `make -f Makefile.gfortran` in `Src/` |
+| `Cassandra executable not found` | Not compiled | `pixi run build` from the repo root |
 | `Input file not found` | Wrong working directory | Run from repo root, not `Src/` |
 | `Cassandra exited with status 1` | Simulation error | Read `nvt.out.log` or stderr in terminal |
-| `gfortran: command not found` | Wrong conda env | `conda activate cassandra-dev` |
+| `gfortran: command not found` | Command ran outside Pixi | `pixi run build` from the repo root; leave any active Conda shell |
 | `Could not find the 'api.py' module` | Missing `python/` folder | Check repo is intact |
 
 On failure, `run_cassandra()` raises `CassandraRunError` with the exit code and
@@ -218,9 +215,8 @@ git add .                              # risky — may pick up .out.* files
 
 ```bash
 # Run
-conda activate cassandra-dev
 cd ~/CassandraV2/Cassandra
-python run_test.py
+pixi run smoke
 
 # Check outputs
 ls -lt Examples/NVT/water_spc/nvt.out.*

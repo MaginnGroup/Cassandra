@@ -17,7 +17,7 @@ a long-lived branch of the public Cassandra repo:
 |------|-------|
 | GitHub repo | [github.com/MaginnGroup/Cassandra](https://github.com/MaginnGroup/Cassandra) |
 | Public default branch | `master` (stable releases) |
-| V2 development branch | `modernization` |
+| V2 development branch | `pixi-env` (continues `modernization`; laptop environment is Pixi) |
 | Local clone location | `~/CassandraV2/Cassandra` (your machine) |
 | Git remote (SSH) | `git@github.com:MaginnGroup/Cassandra.git` |
 
@@ -25,8 +25,9 @@ a long-lived branch of the public Cassandra repo:
 
 - `master` stays stable for users and CI while V2 work proceeds.
 - All history is preserved in one place.
-- When V2 is ready, you merge `modernization` into `master` (or open a PR) to
-  replace the public code — no repo migration required.
+- When V2 is ready, you merge `pixi-env` into `master` (or open a PR) to
+  replace the public code — no repo migration required. `modernization` is the
+  earlier Conda-based snapshot and is no longer the working branch.
 
 The parent folder `~/CassandraV2/` (notes, workspace files, etc.) is **outside**
 the git repo and is for your personal project notes only.
@@ -41,7 +42,7 @@ Run this 30-second checklist before you edit or push:
 cd ~/CassandraV2/Cassandra
 
 # 1. Correct branch?
-git branch --show-current          # expect: modernization
+git branch --show-current          # expect: pixi-env
 
 # 2. Remote using SSH (not HTTPS)?
 git remote -v
@@ -71,8 +72,8 @@ successful entry, macOS Keychain usually remembers it.
 ```bash
 git clone git@github.com:MaginnGroup/Cassandra.git   # use SSH from the start
 cd Cassandra
-git checkout modernization    # branch already exists on GitHub
-git branch                  # expect: * modernization
+git checkout pixi-env          # branch already exists on GitHub
+git branch                  # expect: * pixi-env
 ```
 
 If you cloned with HTTPS earlier, switch to SSH:
@@ -126,23 +127,22 @@ git remote -v    # confirm both fetch and push show git@github.com
 
 ```bash
 ssh -T git@github.com
-git push origin modernization   # should NOT ask for username/password
+git push origin pixi-env   # should NOT ask for username/password
 ```
 
 > **Common mistake:** Steps 3 and 5 can succeed (`Identity added`, `Hi ejmaginn!`)
 > but `git push` still asks for username/password if step 4 was skipped.
 > Loading the SSH key and switching the remote URL are **both** required.
 
-### Conda build environment
+### Pixi build environment
 
-Use the **`cassandra-dev`** conda environment. See
-[V2_DEVELOPMENT_ENVIRONMENT.md](V2_DEVELOPMENT_ENVIRONMENT.md) for full setup,
-switching between environments, and compile/run workflow.
+On the laptop, use Pixi. See
+[V2_DEVELOPMENT_ENVIRONMENT.md](V2_DEVELOPMENT_ENVIRONMENT.md). Do not activate
+`cassandra-dev` in the same shell.
 
 ```bash
-conda activate cassandra-dev
-cd Src
-make -f Makefile.gfortran
+cd ~/CassandraV2/Cassandra
+pixi run build
 ```
 
 ---
@@ -153,7 +153,7 @@ Always confirm your branch before editing:
 
 ```bash
 git branch --show-current
-# Must print: modernization
+# Must print: pixi-env
 ```
 
 ### 1. Edit code
@@ -246,13 +246,13 @@ git remote get-url origin
 Then push:
 
 ```bash
-git push origin modernization
+git push origin pixi-env
 ```
 
 First push of a new branch:
 
 ```bash
-git push -u origin modernization
+git push -u origin pixi-env
 ```
 
 No username or password prompt should appear.
@@ -261,7 +261,7 @@ No username or password prompt should appear.
 
 Open:
 
-[github.com/MaginnGroup/Cassandra/tree/modernization](https://github.com/MaginnGroup/Cassandra/tree/modernization)
+[github.com/MaginnGroup/Cassandra/tree/pixi-env](https://github.com/MaginnGroup/Cassandra/tree/pixi-env)
 
 Confirm your latest commit appears at the top.
 
@@ -278,7 +278,7 @@ Confirm your latest commit appears at the top.
 ```bash
 git remote set-url origin git@github.com:MaginnGroup/Cassandra.git
 git remote -v
-git push origin modernization
+git push origin pixi-env
 ```
 
 ### `Invalid username or token. Password authentication is not supported`
@@ -331,7 +331,7 @@ macOS Keychain will store it.
 ```bash
 brew install gh
 gh auth login
-git push origin modernization
+git push origin pixi-env
 ```
 
 ---
@@ -340,10 +340,11 @@ git push origin modernization
 
 When V2 is ready for release:
 
-1. Ensure `modernization` passes the test suite and smoke tests.
-2. Open a pull request: `modernization` → `master` on GitHub.
+1. Ensure `pixi-env` passes the test suite and smoke tests.
+2. Open a pull request: `pixi-env` → `master` on GitHub.
 3. Review, merge, and tag a release.
-4. Update conda-forge / documentation as needed.
+4. Update conda-forge / documentation as needed. The public user install can
+   remain conda-forge; Pixi is the laptop development environment.
 
 Until that merge, users on `master` are unaffected.
 
@@ -363,15 +364,15 @@ ssh -T git@github.com
 git status -sb
 
 # What is not on GitHub yet?
-git log origin/modernization..HEAD --oneline
+git log origin/pixi-env..HEAD --oneline
 
 # Safe commit cycle
 git add python/ run_test.py docs/
 git commit -m "Describe why"
-git push origin modernization
+git push origin pixi-env
 
 # Run smoke test (generates local output — do not commit blindly)
-python run_test.py
+pixi run smoke
 ```
 
 ---
@@ -379,7 +380,7 @@ python run_test.py
 ## Related docs
 
 - [docs/README.md](README.md) — index of all V2 developer reminders
-- [V2_DEVELOPMENT_ENVIRONMENT.md](V2_DEVELOPMENT_ENVIRONMENT.md) — conda, compile, run
+- [V2_DEVELOPMENT_ENVIRONMENT.md](V2_DEVELOPMENT_ENVIRONMENT.md) — Pixi, compile, run
 - `python/README.md` — Python wrapper usage
 - `CONTRIBUTING.md` — upstream contribution guidelines for `master`
 - `~/CassandraV2/Notes on Cassandra modernization` — personal notes (outside repo)

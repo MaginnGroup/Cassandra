@@ -31,9 +31,8 @@ header is the explanation; this page is only the command reminder.
   restart uses `<V>`, so its density is the second number.
 
 ```bash
-conda activate cassandra-dev
 cd ~/CassandraV2/Cassandra
-python utilities/block_average.py path/to/run.prp
+pixi run python utilities/block_average.py path/to/run.prp
 python utilities/block_average.py path/to/run.prp --error-method autocorr
 python utilities/block_average.py path/to/run.prp --error-method blocking
 python utilities/block_average.py path/to/run.prp --json run.averages.json --plot density.png

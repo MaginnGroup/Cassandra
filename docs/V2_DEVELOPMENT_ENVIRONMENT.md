@@ -1,7 +1,13 @@
 # Cassandra V2 Development Environment
 
-A practical guide to conda environments, compilers, and the day-to-day workflow
-for building and running Cassandra on your Mac.
+A practical guide to the laptop Pixi environment, the compiler, and the
+day-to-day workflow for building and running Cassandra on your Mac.
+
+The development branch is `pixi-env`. It continues `modernization` and replaces
+the `cassandra-dev` Conda environment with the Pixi environment in
+[`pixi.toml`](../pixi.toml). CRC compilation is separate: on maginnfe, use the
+`gcc` module, not this Pixi environment. See
+[V2_CRC_WORKFLOW.md](V2_CRC_WORKFLOW.md).
 
 **Related docs:** [docs index](README.md) · [Git workflow](V2_GIT_WORKFLOW.md) ·
 [CRC / maginnfe](V2_CRC_WORKFLOW.md) ·
@@ -11,202 +17,133 @@ for building and running Cassandra on your Mac.
 
 ## Returning after time away? Start here.
 
+From the repo root, outside any activated Conda environment:
+
 ```bash
-conda activate cassandra-dev
 cd ~/CassandraV2/Cassandra
-which python gfortran
-python run_test.py
+git branch --show-current          # expect: pixi-env
+pixi install                       # first time, or after pixi.toml changes
+pixi run smoke
 ```
 
-If all three commands succeed, your environment is ready.
+`pixi run smoke` compiles `Src/cassandra_gfortran.exe` if needed, then runs
+`run_test.py`. If that finishes, the laptop environment is ready.
+
+Do not `conda activate cassandra-dev` in the same shell. An active Conda
+environment exports `FC`, `LDFLAGS`, and `CMAKE_ARGS`, and those override
+Pixi's compiler.
 
 ---
 
-## What is a conda environment?
+## What Pixi is doing
 
-Conda environments are isolated sets of installed packages. Each project (or class)
-can have its own Python version, compilers, and libraries without conflicts.
+Pixi installs the packages named in `pixi.toml` into `.pixi/` inside this
+repo. `.pixi/` is gitignored. `pixi.lock` records the exact versions. The
+laptop platform is `osx-arm64`.
 
-Your terminal prompt shows which environment is active:
-
-| Prompt | Meaning |
-|--------|---------|
-| `(thermo2026) edwardmaginn@... %` | In your **thermodynamics class** environment |
-| `(cassandra-dev) edwardmaginn@... %` | In the **Cassandra development** environment |
-| `edwardmaginn@... %` (no prefix) | In `base` (default conda) — avoid doing project work here |
-
-**Rule:** activate the right environment *before* compiling or running code.
-
----
-
-## Essential conda commands
-
-```bash
-# List all environments (* marks the active one)
-conda env list
-
-# Switch to an environment
-conda activate cassandra-dev
-
-# Leave the current environment
-conda deactivate
-
-# See what is installed in the active environment
-conda list
-
-# Install a package (while environment is active)
-conda install -c conda-forge package-name
-```
-
-### Creating a new environment (rarely needed)
-
-```bash
-conda create -n my-env-name python=3.10 -y
-conda activate my-env-name
-conda install -c conda-forge some-package -y
-```
-
-You already have `cassandra-dev` set up — you usually just `conda activate` it.
-
----
-
-## Recommended environment: `cassandra-dev`
-
-Use **`cassandra-dev`** for all Cassandra V2 work on this machine.
+The pins match the old `cassandra-dev` Conda environment as of 2026-10-30:
+Python 3.10.19, gfortran 15.1.0, CMake, NumPy, pandas, matplotlib, and RDKit.
+`MACOSX_DEPLOYMENT_TARGET=26.0` is set whenever a Pixi task or `pixi shell`
+runs. That avoids `invalid version number in '-mmacosx-version-min=18.0'`
+on macOS 27.
 
 | Package | Purpose |
 |---------|---------|
-| Python 3.10 | Python wrapper (`python/`), test scripts |
-| gfortran | Compile `Src/cassandra_gfortran.exe` |
+| Python 3.10 | Python wrapper (`python/`), tests, analysis scripts |
+| gfortran 15.1 | Compile `Src/cassandra_gfortran.exe` |
 | cmake | Build bundled libraries under `Libraries/` |
-| numpy, pandas | Test suite and analysis scripts |
-| RDKit | Optional; needed for `Scripts/molecule_to_pdb` (`conda install -c conda-forge rdkit`) |
+| numpy, pandas, matplotlib | Test suite and analysis scripts |
+| RDKit | `Scripts/molecule_to_pdb` |
 
-### Do not use `thermo2026` for Cassandra
-
-`thermo2026` is for your thermodynamics class. It has a different Python version
-(3.11) and lacks the Fortran compiler Cassandra needs. Switching environments is
-normal — you are not doing anything wrong by having both.
-
-```bash
-# Class homework
-conda activate thermo2026
-
-# Cassandra modernization
-conda activate cassandra-dev
-```
+`thermo2026` remains the thermodynamics class environment. Leave it for class
+work. It is not used for Cassandra.
 
 ---
 
-## Verify your environment
+## Essential Pixi commands
 
-Run these after `conda activate cassandra-dev`:
+Run these from `~/CassandraV2/Cassandra`:
 
 ```bash
-which python
-# expect: /opt/anaconda3/envs/cassandra-dev/bin/python
-
-which gfortran
-# expect: /opt/anaconda3/envs/cassandra-dev/bin/gfortran
-
-python --version
-# expect: Python 3.10.x
-
-gfortran --version
-# expect: GNU Fortran (GCC) 15.1.0 (or the current cassandra-dev version)
-
-echo "$MACOSX_DEPLOYMENT_TARGET"
-# expect on this Mac (2026-10): 26.0
+pixi install                              # create or update .pixi/
+pixi shell                                # interactive shell with Python and gfortran
+pixi run build                            # compile Src/cassandra_gfortran.exe
+pixi run clean                            # make clean
+pixi run smoke                            # build if needed, then python run_test.py
+pixi run test                             # legacy regression suite; builds first
+pixi run test-utilities                   # block-average, restart, and RDF tests
+pixi run python utilities/rdf.py --help   # any command, inside the environment
+pixi add package-name                     # add a conda-forge package to pixi.toml
 ```
 
-If `gfortran` is not found, you are in the wrong environment.
+`pixi shell` changes the prompt. Leave it with `exit`. One-shot commands are
+clearer as `pixi run ...`, because they do not depend on the shell already
+being activated.
 
-On this Mac, Homebrew's GCC remains installed because Homebrew Open MPI depends
-on it, but it is **unlinked** so `/opt/homebrew/bin/gfortran` cannot override
-the conda compiler. The `cassandra-dev` environment also stores
-`MACOSX_DEPLOYMENT_TARGET=26.0`; conda sets it each time the environment is
-activated. This avoids the compiler error
-`invalid version number in '-mmacosx-version-min=18.0'` on macOS 27.
+---
+
+## Verify the environment
+
+```bash
+cd ~/CassandraV2/Cassandra
+pixi run which python
+pixi run which gfortran
+pixi run python --version          # Python 3.10.19
+pixi run gfortran --version        # GNU Fortran (GCC) 15.1.0
+pixi run printenv MACOSX_DEPLOYMENT_TARGET   # 26.0
+```
+
+The Python and gfortran paths should be under
+`~/CassandraV2/Cassandra/.pixi/envs/default/bin/`.
+
+Homebrew's GCC stays installed because Homebrew Open MPI depends on it, but it
+is unlinked so `/opt/homebrew/bin/gfortran` does not override Pixi's compiler.
+Do not `brew uninstall gcc` while that dependency remains.
 
 ---
 
 ## Daily development workflow
 
-### 1. Activate and go to the repo
+### 1. Go to the repo
 
 ```bash
-conda activate cassandra-dev
 cd ~/CassandraV2/Cassandra
+git branch --show-current          # expect: pixi-env
 ```
 
-### 2. Compile (after Fortran or library changes)
+### 2. Compile
 
 ```bash
-cd Src
-make -f Makefile.gfortran
+pixi run build
 ```
 
-This produces `Src/cassandra_gfortran.exe`.
+This produces `Src/cassandra_gfortran.exe`. The first build also compiles
+libxdrfile and libgmxfort into `Libraries/locals`.
 
 A clean rebuild:
 
 ```bash
-make -f Makefile.gfortran clean
-make -f Makefile.gfortran
+pixi run clean
+pixi run build
 ```
 
-### 3. Run the Python smoke test
+### 3. Smoke test
 
 ```bash
-cd ~/CassandraV2/Cassandra
-python run_test.py
+pixi run smoke
 ```
 
 This calls `python/api.py` to run the SPC water NVT example at
-`Examples/NVT/water_spc/nvt.inp`. See [smoke-test.md](../docs/smoke-test.md) for
-input/output file locations and what to expect.
+`Examples/NVT/water_spc/nvt.inp`. See [smoke-test.md](smoke-test.md).
 
-### 4. Run the legacy test suite (optional, slower)
-
-```bash
-cd Scripts/testSuite
-python testSuite.py ../../Src/cassandra_gfortran.exe
-```
-
----
-
-## Other environments on this machine
-
-You may see these in `conda env list`:
-
-| Environment | Use for |
-|-------------|---------|
-| `cassandra-dev` | **Cassandra V2 modernization** (recommended) |
-| `thermo2026` | Thermodynamics class |
-| `mosdef_cassandra125` | MoSDeF-Cassandra interface (separate project) |
-| `cassandra`, `cassandra-tutorial` | Older Cassandra-related setups |
-
-When in doubt, use `cassandra-dev`.
-
----
-
-## Recreate `cassandra-dev` from scratch
-
-Only if the environment is corrupted or you are setting up a new machine:
+### 4. Utility tests and the legacy suite
 
 ```bash
-conda create -n cassandra-dev python=3.10 -y
-conda activate cassandra-dev
-conda install -c conda-forge cmake gfortran numpy pandas -y
+pixi run test-utilities
+pixi run test
 ```
 
-Then recompile:
-
-```bash
-cd ~/CassandraV2/Cassandra/Src
-make -f Makefile.gfortran clean
-make -f Makefile.gfortran
-```
+`pixi run test` is the older regression suite. It is slower than the smoke test.
 
 ---
 
@@ -214,76 +151,51 @@ make -f Makefile.gfortran
 
 ### `gfortran: command not found`
 
-You are not in `cassandra-dev`. Run:
+The command ran outside Pixi. Use `pixi run gfortran` or `pixi shell`, from
+the repo root, after `pixi install`.
 
-```bash
-conda activate cassandra-dev
-```
+### Wrong compiler or deployment target
 
-### Wrong `gfortran` or invalid macOS deployment target
-
-Check the compiler and target after activating the environment:
-
-```bash
-which gfortran
-gfortran --version
-echo "$MACOSX_DEPLOYMENT_TARGET"
-```
-
-Expected values are the conda path
-`/opt/anaconda3/envs/cassandra-dev/bin/gfortran` and deployment target `26.0`.
-If the target setting is lost, restore it with:
-
-```bash
-conda env config vars set MACOSX_DEPLOYMENT_TARGET=26.0 -n cassandra-dev
-conda deactivate
-conda activate cassandra-dev
-```
-
-Homebrew GCC was unlinked with `brew unlink gcc`. Do not uninstall it while
-Homebrew Open MPI depends on it.
+`pixi.toml` sets `MACOSX_DEPLOYMENT_TARGET=26.0`. If a Conda environment is
+also active, leave it (`conda deactivate`) and run the Pixi command again.
 
 ### `make` fails after a long absence
 
-Try a clean rebuild:
-
 ```bash
-conda activate cassandra-dev
-cd ~/CassandraV2/Cassandra/Src
-make -f Makefile.gfortran clean
-make -f Makefile.gfortran
+pixi run clean
+pixi run build
 ```
 
 ### `python run_test.py` — executable not found
 
-Compile first (see above). The smoke test expects
-`Src/cassandra_gfortran.exe`.
+`pixi run smoke` compiles first. A bare `python run_test.py` uses whatever
+Python is on your path and expects `Src/cassandra_gfortran.exe` to exist already.
 
-### Wrong Python packages / import errors
-
-Confirm which Python is running:
+### Wrong Python packages
 
 ```bash
-which python
-conda list numpy
+pixi run which python
+pixi run python -c "import numpy, matplotlib, rdkit"
 ```
 
-If it points outside `cassandra-dev`, activate the correct environment.
+If the path is not under `.pixi/envs/default/`, the shell is not using this
+environment.
 
-### Accidentally ran smoke test in wrong directory
+### Smoke test started in the wrong directory
 
-`run_test.py` must be run from the repo root (`~/CassandraV2/Cassandra`), not
-from `Src/`.
+`run_test.py` is run from the repo root. `pixi run smoke` does that. Do not
+launch it from `Src/`.
 
 ---
 
 ## Quick reference card
 
 ```bash
-conda activate cassandra-dev
 cd ~/CassandraV2/Cassandra
-cd Src && make -f Makefile.gfortran && cd ..
-python run_test.py
+git branch --show-current          # pixi-env
+pixi run build
+pixi run smoke
+pixi run test-utilities
 ```
 
 ---

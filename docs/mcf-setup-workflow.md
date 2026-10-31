@@ -25,10 +25,12 @@ SMILES/name
 ```
 
 Work in the directory that will hold the molecule files (PDB, FF, MCF, inp).
-Activate `cassandra-dev` first.
+From the Cassandra repo, enter the Pixi environment first. RDKit is already
+in `pixi.toml`.
 
 ```bash
-conda activate cassandra-dev
+cd ~/CassandraV2/Cassandra
+pixi shell
 cd /path/to/your/molecule/project   # e.g. ~/CassandraV2/projects/hfc125
 ```
 
@@ -299,7 +301,7 @@ and [output-formats.md](output-formats.md).
 
 ## Quick “did I forget?” list
 
-- [ ] `cassandra-dev` active; RDKit installed if using molecule_to_pdb
+- [ ] Pixi shell active (`pixi shell` from the Cassandra repo); RDKit is already installed
 - [ ] Atom types on every PDB atom line
 - [ ] FF filled in Cassandra units (angle \(K\) in K/rad²)
 - [ ] Understand PDB ≠ MCF geometry; MCF + fragments/`make_config` set bonds
@@ -316,4 +318,4 @@ and [output-formats.md](output-formats.md).
 - [dihedral-opls-rb.md](dihedral-opls-rb.md) — OPLS → RB conversion at MCF read
 - [smoke-test.md](smoke-test.md) — running the Python smoke test
 - [diagnostics/README.md](../diagnostics/README.md) — bond / angle / dihedral checks
-- [V2_DEVELOPMENT_ENVIRONMENT.md](V2_DEVELOPMENT_ENVIRONMENT.md) — conda / compile
+- [V2_DEVELOPMENT_ENVIRONMENT.md](V2_DEVELOPMENT_ENVIRONMENT.md) — Pixi / compile
